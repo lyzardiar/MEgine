@@ -694,3 +694,12 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 快速检查：`node --test packages/editor/tests/nativeViewportRequests.test.mjs packages/editor/tests/nativeSceneCompletionScheduling.test.mjs packages/editor/tests/nativeViewportTransport.test.mjs packages/editor/tests/viewportSceneCompletion.test.mjs` 初轮54项通过；新增Stop检查随4项受影响用例补测通过，合计55项不同用例；新增timings字段断言单独复查已有world-request-telemetry用例通过；`pnpm --dir packages/editor exec tsc --noEmit -p tsconfig.json` 与QA语法检查通过。日志及机制见performance-risk-todo第六十五阶段。
 
 状态：实现完成，原生验收待本批累计3项后合并。合并构建后执行 `qa-frost-map-session.mjs --detached-profile-only`，核对Scene延期／回退次数、呈现间隔、逐帧实体数量，以及Pause／Step、截图、新开窗口、地图重载、Stop。增加原生持续过期时仍能呈现与暂停／截图立即回退的针对性验证；保留真实输入到显示延迟和长期内存专项。当前没有新的FPS结论。
+
+
+### 新批次任务2/3：独立窗口运行面板合并刷新
+
+变更：App的远端scene-state接收、remotePanelRefresh调度器及workspaceSelectionSync／remotePanelRefresh测试。运行增量立即进入Store和视口，常规面板发布合并到100ms；选择、场景／会话／模式变化与完整检查点立即发布，取消和清理阻止旧回调覆盖新状态。
+
+快速检查：`node --test packages/editor/tests/remotePanelRefresh.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs` 16项通过；`pnpm --dir packages/editor exec tsc --noEmit -p tsconfig.json` 通过。证据、发布次数及限制见performance-risk-todo第六十六阶段。
+
+状态：实现完成，待累计第3项后合并前端和原生Release构建。执行 `node scripts/qa-frost-map-session.mjs --detached-only`，覆盖三窗口运行与Inspector双向编辑、Play中新开窗口、选择／可见性、Pause／Step／Stop、地图重载和窗口重开；合并检查第六十五阶段Scene重试及逐帧实体数量，并记录呈现间隔和进程内存。真实输入延迟、长期运行及强制原生竞态仍需专项，不扩大到无关全库或资源热更测试。

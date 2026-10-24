@@ -21,16 +21,18 @@ async function withPair(run){
     const {createEditorStore}=await server.ssrLoadModule('/src/store.ts');
     const {applyPlaybackAction}=await server.ssrLoadModule('/src/editorPlayback.ts');
     const {createSessionSceneReceiver}=await server.ssrLoadModule('/src/sessionSceneSerialization.ts');
+    const {createRemotePanelRefresh,remoteScenePanelKey}=await server.ssrLoadModule('/src/remotePanelRefresh.ts');
     const host=(sender,detachedPanel)=>{
       const store=createEditorStore();store.loadSceneJson(JSON.stringify({version:1,name:'Map',world:{entities:[{entity:1,name:'Root',components:{}},{entity:2,name:'Child',parent:1,components:{Text:{text:'original'}}}]}}));
-      const sent=[],timers=new Map();let timerId=0,snapshot=store.presentationSnapshot(),observations=0,fullRefreshes=0;
+      const sent=[],timers=new Map();let timerId=0,snapshot=store.presentationSnapshot(),observations=0,fullRefreshes=0,now=0,publications=0;
       const env={Date:{now:()=>1000},applyPlaybackAction,log(){},setViewTab(){},store,props:{detachedPanel},syncSender:ref(sender),syncChannel:ref({postMessage:message=>sent.push(structuredClone(message))}),syncReady:ref(true),applyingRemote:ref(false),booted:ref(true),syncTimer:ref(null),sceneSyncId:ref(null),sceneSyncSequence:ref(0),selectionSyncOrder:ref({revision:0,sender:''}),sceneNameRef:ref('Map'),lastSceneTimestamp:ref(0),remoteDirtyPeers:ref(new Map([['peer',{timestamp:Date.now()}]])),logsRef:ref([]),sceneDirtyRef:ref(false),resourceDocumentPathsRef:ref({}),localTimelinePreview:ref(null),remoteTimelinePreview:ref(null),remoteSceneFingerprint:ref(''),remoteSceneDirty:ref(false),savedSceneFingerprint:ref(store.sceneContentFingerprint()),logEnd:ref(0),
-        setSnap:value=>{snapshot=typeof value==='function'?value(snapshot):value;},setSelected:()=>{},setSelectedIds:()=>{},setSceneDirty:()=>{},setSceneName:()=>{},setMode:()=>{},setGizmo:()=>{},setGameResolution:()=>{},setGameDisplay:()=>{},setLogs:()=>{},setTreeTick:()=>{},
+        setSnap:value=>{publications++;snapshot=typeof value==='function'?value(snapshot):value;},setSelected:()=>{},setSelectedIds:()=>{},setSceneDirty:()=>{},setSceneName:()=>{},setMode:()=>{},setGizmo:()=>{},setGameResolution:()=>{},setGameDisplay:()=>{},setLogs:()=>{},setTreeTick:()=>{},
         agentBridge:{observeSelection:()=>observations++},refresh:()=>fullRefreshes++,logService:{syncConsoleLines:()=>{},getEntries:()=>[]},formatConsoleLog:value=>value,
-        window:{setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id)},console:{error:(...args)=>assert.fail(args.join(' '))}};
+        window:{setTimeout:(fn,delay=0)=>{const id=++timerId;timers.set(id,{fn,at:now+delay});return id;},clearTimeout:id=>timers.delete(id)},console:{error:(...args)=>assert.fail(args.join(' '))}};
       env.sessionSceneReceiver=ref(createSessionSceneReceiver());env.channel=env.syncChannel.current;
+      env.remoteScenePanelKey=remoteScenePanelKey;env.remotePanelRefresh=ref(createRemotePanelRefresh(()=>now,env.window.setTimeout,env.window.clearTimeout));
       const handlers=vm.runInNewContext(compiled,env);
-      return {...handlers,env,store,sent,get snapshot(){return snapshot;},get observations(){return observations;},get fullRefreshes(){return fullRefreshes;},flush(){for(const [id,fn] of timers){timers.delete(id);fn();}},deliver(to){for(const message of sent.splice(0))to.receive({data:message});}};
+      return {...handlers,env,store,sent,get snapshot(){return snapshot;},get publications(){return publications;},get observations(){return observations;},get fullRefreshes(){return fullRefreshes;},flush(){for(const [id,timer] of timers){timers.delete(id);timer.fn();}},advance(delta){const target=now+delta;for(;;){const next=[...timers].filter(([,t])=>t.at<=target).sort((a,b)=>a[1].at-b[1].at)[0];if(!next)break;now=next[1].at;timers.delete(next[0]);next[1].fn();}now=target;},deliver(to){for(const message of sent.splice(0))to.receive({data:message});}};
     };
     await run(host('main',undefined),host('hierarchy','hierarchy'),host('inspector','inspector'));
   }finally{await server.close();}
@@ -152,4 +154,39 @@ test('runtime deltas recover a missed publication through the main owner and kee
  assert.equal(third.env.sceneSyncId.current,initial.stateId);assert.equal(third.sent.length,1);third.receive({data:next});assert.equal(third.sent.length,1);
  const request=third.sent.shift();assert.equal(request.type,'request-scene');detached.receive({data:request});assert.equal(detached.sent.length,0);main.receive({data:request});
  const checkpoint=main.sent.shift();assert.equal(checkpoint.sceneDelta.base,null);for(const peer of [detached,third]){peer.receive({data:checkpoint});assert.equal(peer.store.nativePlayRevision,2);assert.equal(peer.store.entitySnapshot(2).components.Text.text,'changed');peer.receive({data:missed});assert.equal(peer.store.nativePlayRevision,2);}
+}));
+
+test('detached panels coalesce runtime bursts while every revision reaches the viewport store immediately',async()=>withPair(async(main,detached)=>{
+ const document=JSON.parse(main.store.saveSessionSceneJson('Map'));main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,0);main.broadcastScene(true);main.deliver(detached);
+ let frames=0;const unsubscribe=detached.store.subscribePlayFrames(()=>frames++);
+ for(let revision=1;revision<=30;revision++){
+  detached.advance(33);document.world.frame=revision;document.world.simulationTime=revision/30;
+  main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,revision);main.broadcastScene();main.flush();main.deliver(detached);
+  assert.equal(detached.store.nativePlayRevision,revision);assert.equal(detached.store.playRenderSnapshot().frame,revision);
+ }
+ assert.ok(detached.snapshot.frame<30);detached.advance(10);assert.equal(detached.snapshot.frame,30);assert.equal(detached.publications,11);assert.equal(detached.sent.length,0);
+ await Promise.resolve();assert.equal(frames,30);unsubscribe();
+}));
+
+test('selection, visibility, preferences, pause, Stop, session and checkpoint boundaries publish immediately',async()=>withPair((main,detached)=>{
+ const document=JSON.parse(main.store.saveSessionSceneJson('Map')),json=JSON.stringify(document);
+ for(const boundary of ['selection','visibility','camera','resolution','pause','stop','session','checkpoint']){
+  main.store.loadRemoteSceneJson(json,'play',41,0);main.broadcastScene(true);main.deliver(detached);detached.advance(10);
+  const before=detached.publications;main.broadcastScene();main.flush();main.deliver(detached);assert.equal(detached.publications,before,boundary+' queued');
+  if(boundary==='selection')main.store.selectMany([2],'replace');
+  if(boundary==='visibility')main.store.setSceneInteractionState([2],[1]);
+  if(boundary==='camera')main.store.setSceneCamera({yaw:77});
+  if(boundary==='resolution')main.store.loadRemoteSceneJson(JSON.stringify({...document,gameResolution:{width:640,height:360}}),'play',41,1);
+  if(boundary==='pause')main.store.pause();
+  if(boundary==='stop')main.store.stop();
+  if(boundary==='session')main.store.loadRemoteSceneJson(json,'play',73,0);
+  main.broadcastScene(boundary==='checkpoint');main.flush();main.deliver(detached);assert.equal(detached.publications,before+1,boundary+' immediate');
+  detached.advance(200);assert.equal(detached.publications,before+1,boundary+' cancels old publication');assert.equal(detached.store.mode,main.store.mode);
+ }
+}));
+
+test('a pending panel callback reads current local edits and never republishes them to the workspace',async()=>withPair((main,detached)=>{
+ const json=main.store.saveSessionSceneJson('Map');main.store.loadRemoteSceneJson(json,'play',41,0);main.broadcastScene(true);main.deliver(detached);
+ detached.advance(10);main.broadcastScene();main.flush();main.deliver(detached);detached.store.setComponent(2,'Text',{text:'local latest'});
+ detached.advance(90);assert.equal(detached.snapshot.entities[1].components.Text.text,'local latest');assert.equal(detached.sent.length,0);
 }));

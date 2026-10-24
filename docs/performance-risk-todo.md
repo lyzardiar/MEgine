@@ -1241,3 +1241,14 @@ Node局部基准以同进程加载提交51890a5的原Store和当前Store，读�
 55项不同的定向检查最终通过（初轮54项；新增Stop用例随4项受影响用例补测），TypeScript检查及QA语法检查通过；补充timings字段断言后单独复查已有观测用例通过，不重复计数。生产Scene调度代码与真实请求包装器共同验证：新世界到达时无需旧快照上传、持续过期两次后必然回退、暂停／截图立即回退、并发预算／所有者切换、隐藏窗口继续调度、陈旧结果不发布和截图屏障。证据为 `tmp/docs-artifacts/editor-performance-risk/scene-expiry-tests.log`、`scene-expiry-types.log` 和 `scene-expiry-owner-final.log`。Stop用例首次观察窗口覆盖了合法的新编辑请求，缩短到旧请求完成后、新请求完成前验证隔离；失败记录保留在scene-expiry-owner-recheck.log，不计为通过。
 
 当前为新批次第1/3项，未执行原生构建或FPS复测。下一批需要观察实际Scene延期数量、过期回退次数、完整帧呈现间隔与输入延迟；若频繁用尽预算，需继续处理跨窗口接收或原生请求等待。局部确定性检查不证明真实帧率已改善。
+
+
+### 第六十六阶段：独立窗口运行面板合并刷新
+
+独立窗口接收每条运行增量后立即更新Store、原生session/revision和视口帧通知；React面板快照、选择数组、分辨率、日志及节点刷新合并到100ms节拍。只对同场景、同会话、持续Play且面板状态未变化的增量延迟发布。首次／完整检查点、场景或会话切换、选择／可见性／相机／分辨率变化、暂停和Stop立即发布并取消待执行工作。资源路径、场景名和dirty状态仍立即更新，本机制不限制全部React渲染。
+
+调度器仅保留一个最新回调和一个计时器；取消代次保护已进入事件队列的旧回调。执行时读取当前Store，不捕获旧快照，不广播同步消息；异常和工作区清理取消待执行任务。
+
+快速检查：`node --test packages/editor/tests/remotePanelRefresh.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs` 共16项通过；`pnpm --dir packages/editor exec tsc --noEmit -p tsconfig.json` 通过。实际App消息处理与Store测试中，990ms内30次更新全部立即推进原生版本和视口帧，面板在1000ms内发布11次（含首次）；边界操作、取消旧回调、重入和延迟期间本地编辑保留均通过。证据为 `tmp/docs-artifacts/editor-performance-risk/remote-panel-tests.log` 和 `remote-panel-types.log`。
+
+当前新批次第2/3项，未执行原生构建或帧率复测。合并验证需要覆盖三窗口运行、Inspector操作、选择与可见性、Pause／Step／Stop、换图及重开，检查面板最终状态、Scene延期／回退次数、实际呈现间隔和内存。此处测试数字仅证明面板发布节拍，不能作为真实FPS或输入到显示延迟。

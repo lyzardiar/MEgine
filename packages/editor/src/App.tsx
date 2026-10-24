@@ -1,5 +1,6 @@
 import { loadModelPreview } from './modelPreview';
 import { createSessionSceneReceiver, type SessionSceneDelta } from './sessionSceneSerialization';
+import { createRemotePanelRefresh, remoteScenePanelKey } from './remotePanelRefresh';
 import { sceneFrameEntities } from './sceneFraming';
 import { pointBounds, type Bounds } from './viewportSpatial';
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -385,6 +386,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const syncSender = useRef(crypto.randomUUID());
   const syncChannel = useRef<BroadcastChannel | null>(null);
   const sessionSceneReceiver = useRef(createSessionSceneReceiver());
+  const remotePanelRefresh = useRef(createRemotePanelRefresh());
   const refreshRef = useRef<() => void>(() => {});
   const localTimelinePreview = useRef<TimelineScenePreview | null>(null);
   const remoteTimelinePreview = useRef<{
@@ -1501,6 +1503,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         applyingRemote.current = true;
         syncReady.current = true;
         lastSceneTimestamp.current = message.timestamp;
+        const deferPanels = !!props.detachedPanel && message.mode === 'play' && store.mode === 'play' && message.playSessionId === store.playSessionId && message.sceneName === sceneNameRef.current && message.sceneDelta?.base != null;
+        const previousPanelKey = deferPanels ? remoteScenePanelKey(store) : undefined;
         store.loadRemoteSceneJson(sceneData, message.mode, message.playSessionId, message.playRevision);
         sceneSyncId.current = message.stateId ?? null;
         selectionSyncOrder.current = { revision: 0, sender: '' };
@@ -1536,13 +1540,6 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           setSpriteAtlasPath(message.spriteAtlasPath ?? null);
         }
         if ('timelineAssetPath' in message) setTimelineAssetPath(message.timelineAssetPath ?? null);
-        setSnap(store.presentationSnapshot());
-        setMode(store.mode);
-        setGizmo(store.gizmo);
-        setSelected(store.selected);
-        setSelectedIds(store.selectedIds);
-        setGameResolution(store.gameResolution);
-        setGameDisplay(store.gameDisplay);
         if (Array.isArray(message.logs)) {
           logService.syncConsoleLines(
             message.logs,
@@ -1551,10 +1548,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           const nextLogs = logService.getEntries().map(formatConsoleLog);
           logsRef.current = nextLogs;
           logEnd.current = nextLogs.length;
-          setLogs(nextLogs);
         }
-        setTreeTick((tick) => tick + 1);
+        remotePanelRefresh.current.publish(() => {
+          setSnap(store.presentationSnapshot());
+          setMode(store.mode);
+          setGizmo(store.gizmo);
+          setSelected(store.selected);
+          setSelectedIds(store.selectedIds);
+          setGameResolution(store.gameResolution);
+          setGameDisplay(store.gameDisplay);
+          setLogs(logsRef.current);
+          setTreeTick((tick) => tick + 1);
+        }, deferPanels && previousPanelKey === remoteScenePanelKey(store));
       } catch (reason) {
+        remotePanelRefresh.current.cancel();
         sessionSceneReceiver.current.reset();
         console.error('Failed to apply detached-window scene state', reason);
       } finally {
@@ -1592,6 +1599,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       window.clearInterval(heartbeat);
       window.clearInterval(peerLease);
       if (syncTimer.current != null) window.clearTimeout(syncTimer.current);
+      remotePanelRefresh.current.cancel();
       if (localTimelinePreview.current) {
         channel.postMessage({
           type: 'timeline-preview',
