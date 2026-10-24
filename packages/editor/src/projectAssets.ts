@@ -78,6 +78,8 @@ export function listProjectFiles(): ProjectFileAsset[] {
   return projectFiles;
 }
 
+export function projectAssetSessionGeneration(): number { return assetSessionGeneration; }
+
 export function resetProjectAssetState(): void {
   assetSessionGeneration += 1;
   projectFiles = [];

@@ -80,7 +80,7 @@ function UnityPackageImportDialog({ project, generation, close, log, refresh }: 
       setResult(imported);
       log(`Imported Unity package into ${imported.destination}; ${imported.prefab_paths.length} prefab(s). Report: ${imported.manifest_path}`);
       if (isCurrent()) {
-        await Promise.all([refreshProjectFiles({ force: true }), refreshSprites()]);
+        await Promise.all([refreshProjectFiles(), refreshSprites()]);
         if (isCurrent()) {
           refresh();
           window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'project' }));

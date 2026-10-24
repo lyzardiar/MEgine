@@ -43,3 +43,15 @@ Unitypackage 同任务收尾补充：导入器 1.3.0 将原始资产移至工程
 结果分列：**导入成功、播放通过、视觉对照待验收**。结构为 53 资源、15 Prefab 节点、11 粒子系统、4 模型和 9 运行材质，运行依赖已解析。相同相机、背景、Linear 处理及材质动画时间下，Unity 和 MEngine 均采样 0.1/0.3/0.6/1/1.5/3 秒；MEngine 绘制数为 13/17/19/28/10/0。0.6 秒所有粒子系统计数与 Unity 一致，精确寿命端点采用明确浮点容差；部分帧仍有粒子分布、环形纹理和消散外观差异，不能判为视觉还原通过。无雾、无曝光后处理；不保证与 Unity 相同随机序列。对照位于 `tmp/docs-artifacts/unitypackage/unity-reference/`、`mengine-reference-complete/`，逐系统计数位于 `particle-count-comparison.tsv`。
 
 可直接打开 `samples/unity-package-preview/LocalPreview/project.json` 实验本次导入；其中专有美术资产和 SourceAssets 仅保留本地。长期维护的空 sample、导入工具及说明纳入提交。本批集成执行完成，剩余视觉差异和正式分发验收保持待测，不计作通过。
+
+### Unitypackage 主干集成验证
+
+以主干 `ecebf76` 为基线，纳入本功能五项提交 `9fbd094`、`c92f3e8`、`7a9ae2b`、`be044ba`、`cc220c8`。沿用主干材质、纹理绑定与 FrameCompiler 接口；导入粒子使用独立播放时钟，桌面刷新使用主干资产 API。原生 QA 使用独立运行目录和通用实例关闭助手。
+
+主干定向验证通过：导入器 24/24、导入运行时 17/17、WGSL/实际 GPU 2/2、播放时钟 2/2、前端导入及打包依赖 7/7。粒子回归 20/20（包含 14 项导入模拟测试及 6 项旧粒子测试，与运行时结果存在覆盖重叠，不累计计数）。前端 production build、CLI 构建、JS 语法和 PowerShell 解析检查通过。
+
+Windows 主干原生完整 QA 通过：真实包分析/导入、重复导入、包指纹及工程守卫、定义引用与 JSON 编辑、播放/清空/重播、相机/背景、保存关闭重开均执行。清单为 53 资产、1 Prefab、11 粒子系统、4 模型和 21 纹理；播放/清空/重播/结束对象数为 40/0/38/0，控制台错误和材质管线拒绝均为 0。自有隐藏测试实例正常退出。
+
+原生编译及链接成功，Cargo 最终复制目标 EXE 因现有用户进程占用失败；从本次新链接的 deps EXE 复制独立程序执行完整 QA，未关闭用户实例。已验证程序 SHA256 为 `AB37CC09500F2D5FEA9023384CAA3825140A814C95FDEF02B0768A9BB0AEC0A7`。日志、截图、报告及该程序保存在 `G:/work/github/MEgine/tmp/docs-artifacts/unitypackage-mainline/`，完整原生报告为 `native-full/report.json`。
+
+主干结果：导入成功、播放通过；Unity 视觉还原仍待验收，系统文件选择器及正式 SDK/安装包分发未执行。本项为同功能主干适配与验证，不新增待测任务计数。

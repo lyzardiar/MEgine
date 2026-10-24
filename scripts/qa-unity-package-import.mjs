@@ -5,7 +5,7 @@ import path from 'node:path';
 import net from 'node:net';
 import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { configureNativeQa, closeNativeQa } from './frost-native-qa-runtime.mjs';
+import { configureNativeQa, closeNativeQa } from './native-qa-runtime.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const executable = path.resolve(process.argv[2] ?? 'target/debug/mengine-editor-tauri.exe');
@@ -63,9 +63,10 @@ async function evaluate(expression) {
 const native = (command, args) => evaluate(`globalThis.__TAURI_INTERNALS__.invoke(${JSON.stringify(command)}, ${JSON.stringify(args)})`);
 const click = text => evaluate(`(() => { const scope = document.querySelector('.unity-package-dialog') ?? document; const b = [...scope.querySelectorAll('button')].find(b => b.textContent.trim() === ${JSON.stringify(text)}); if (!b || b.disabled) throw Error('Button unavailable: '+${JSON.stringify(text)}); b.click(); return true; })()`);
 const capture = async name => {
-  const shot = await waitUntil(async () => { try { return await query('view.screenshot', { target: 'game', maxSize: 1280, includeNativeProfile: true }); } catch (error) { if (/canvas is not available yet/.test(error.message)) return null; throw error; } }, 'Game viewport did not mount');
-  report.nativeProfiles ??= {}; report.nativeProfiles[name] = shot.nativeProfile;
-  fs.writeFileSync(path.join(root, `${name}.png`), Buffer.from(shot.dataUrl.split(',')[1], 'base64'));
+  const world = await query('scene.snapshot');
+  const shot = await native('render_native_game_view', { width: 1280, height: 720, snapshot: { entities: world.entities, clearColor: world.clearColor, simulationTime: world.simulationTime } });
+  report.nativeProfiles ??= {}; report.nativeProfiles[name] = shot.profile;
+  fs.writeFileSync(path.join(root, `${name}.png`), Buffer.from(shot.pngBase64, 'base64'));
 };
 try {
   await query('project.state');

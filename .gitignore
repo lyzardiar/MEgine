@@ -33,3 +33,6 @@ packages/editor/src-tauri/target
 packages/editor/src-tauri/gen/schemas
 packages/editor/src-tauri/build-sdk/*
 !packages/editor/src-tauri/build-sdk/.gitkeep
+
+# Local import tools and validation artifacts
+/tmp/
