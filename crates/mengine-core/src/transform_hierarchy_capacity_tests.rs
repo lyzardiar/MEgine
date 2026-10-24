@@ -5,7 +5,7 @@ use std::{hint::black_box, time::Instant};
 fn incremental(world: &World) -> TransformHierarchy {
     let mut nodes = HierarchyNodes::default();
     for entity in world.iter_entities().filter(|entity| world.entity_active(*entity)) { resolve_node(world, entity, &mut nodes); }
-    TransformHierarchy { nodes }
+    TransformHierarchy { nodes: Arc::new(nodes) }
 }
 
 fn assert_equal(world: &World, left: &TransformHierarchy, right: &TransformHierarchy) {

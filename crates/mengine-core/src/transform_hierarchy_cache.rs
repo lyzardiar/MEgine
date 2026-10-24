@@ -20,13 +20,27 @@ pub struct TransformHierarchyCache {
     frame: u64,
     version: u64,
     entries: Vec<Option<CachedNode>>,
+    inputs: Vec<(Entity, Option<u64>, bool)>,
+    input_slots: usize,
+    reusable: bool,
+    hierarchy: Option<TransformHierarchy>,
 }
 
 impl TransformHierarchyCache {
     pub fn build(&mut self, world: &World) -> TransformHierarchy {
+        // Compare every alive record in author order, including inactive ancestors and generations.
+        if self.world_id == world.snapshot_id && self.reusable && self.frame != u64::MAX && self.version <= u64::MAX - self.input_slots as u64 - 1 {
+            if let Some(hierarchy) = &self.hierarchy {
+                if world.iter_entities().map(|entity| (entity, world.stable_hierarchy_revision(entity), world.entity_active(entity))).eq(self.inputs.iter().copied()) {
+                    self.frame += 1; return hierarchy.clone();
+                }
+            }
+        }
         let mut slots = 0;
+        let mut inputs = std::mem::take(&mut self.inputs); inputs.clear();
         let entities: Vec<_> = world.iter_entities().filter(|entity| {
-            slots = slots.max(entity.index as usize + 1); world.entity_active(*entity)
+            let active = world.entity_active(*entity); inputs.push((*entity, world.stable_hierarchy_revision(*entity), active));
+            slots = slots.max(entity.index as usize + 1); active
         }).collect();
         if self.world_id != world.snapshot_id || self.frame == u64::MAX || self.version > u64::MAX - slots as u64 - 1 { *self = Self { world_id: world.snapshot_id, ..Default::default() }; }
         self.frame += 1;
@@ -34,13 +48,21 @@ impl TransformHierarchyCache {
         if slots > entities.len().saturating_mul(2) {
             self.entries = Vec::new(); let mut nodes = HierarchyNodes::with_capacity(entities.len());
             for entity in entities { resolve_node(world, entity, &mut nodes); }
-            return TransformHierarchy { nodes };
+            return self.retain_hierarchy(inputs, slots, nodes);
         }
         self.entries.resize_with(slots, || None);
         if self.entries.capacity() > slots.saturating_mul(2) { self.entries.shrink_to_fit(); }
         let mut nodes = HierarchyNodes::Dense(vec![None; slots]);
         for entity in entities { self.resolve(world, entity, &mut nodes); }
-        TransformHierarchy { nodes }
+        self.retain_hierarchy(inputs, slots, nodes)
+    }
+
+    fn retain_hierarchy(&mut self, mut inputs: Vec<(Entity, Option<u64>, bool)>, slots: usize, nodes: HierarchyNodes) -> TransformHierarchy {
+        // Custom Any projections can change without a revision and always keep the resolver path.
+        self.reusable = inputs.iter().all(|(_, revision, _)| revision.is_some());
+        if inputs.capacity() > inputs.len().saturating_mul(2) { inputs.shrink_to_fit(); }
+        self.inputs = inputs; self.input_slots = slots;
+        let hierarchy = TransformHierarchy { nodes: Arc::new(nodes) }; self.hierarchy = Some(hierarchy.clone()); hierarchy
     }
 
     fn resolve(&mut self, world: &World, entity: Entity, nodes: &mut HierarchyNodes) -> (ResolvedNode, u64) {
@@ -73,3 +95,6 @@ impl TransformHierarchyCache {
 #[cfg(test)]
 #[path = "transform_hierarchy_cache_tests.rs"]
 mod tests;
+#[cfg(test)]
+#[path = "transform_hierarchy_frame_tests.rs"]
+mod frame_tests;

@@ -3,6 +3,7 @@ use crate::generated::Transform;
 use crate::{Entity, Parent, World};
 use glam::{Mat4, Quat, Vec3};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 #[path = "transform_hierarchy_cache.rs"]
 mod cache;
@@ -125,7 +126,7 @@ impl HierarchyNodes {
 /// Immutable per-frame hierarchy cache shared by render, physics, audio, and tooling systems.
 #[derive(Clone, Debug, Default)]
 pub struct TransformHierarchy {
-    nodes: HierarchyNodes,
+    nodes: Arc<HierarchyNodes>,
 }
 
 impl TransformHierarchy {
@@ -139,7 +140,7 @@ impl TransformHierarchy {
         // Include inactive ancestors in the slot bound without allocating for sparse high-index worlds.
         let mut nodes = if slots <= entities.len().saturating_mul(2) { HierarchyNodes::Dense(vec![None; slots]) } else { HierarchyNodes::with_capacity(entities.len()) };
         for entity in entities { resolve_node(world, entity, &mut nodes); }
-        Self { nodes }
+        Self { nodes: Arc::new(nodes) }
     }
 
     /// Resolves the requested entities and their ancestors without traversing unrelated branches.
@@ -147,7 +148,7 @@ impl TransformHierarchy {
         let entities = entities.into_iter();
         let mut nodes = HierarchyNodes::with_capacity(entities.size_hint().0);
         for entity in entities { resolve_node(world, entity, &mut nodes); }
-        Self { nodes }
+        Self { nodes: Arc::new(nodes) }
     }
 
     pub fn is_active(&self, entity: Entity) -> bool {

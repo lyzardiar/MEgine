@@ -64,7 +64,7 @@ fn dense_storage_matches_hashes_across_generation_parent_activity_and_order_chan
         world.insert_component(*entity, Transform { position: [i as f32, 2.0, -1.0], rotation: Quat::from_rotation_y(i as f32 * 0.03).to_array(), scale: [2.0, 1.0, -1.0] });
         if i > 0 { world.set_parent(*entity, Some(entities[(i - 1) / 2])); }
     }
-    let old = TransformHierarchy::build(&world); assert!(matches!(old.nodes, HierarchyNodes::Dense(_)));
+    let old = TransformHierarchy::build(&world); assert!(matches!(&*old.nodes, HierarchyNodes::Dense(_)));
     assert_equivalent(&world, &old, &[Entity::INVALID, Entity::new(u32::MAX - 1, 2)]);
     // Replace an entity at the same slot and keep an explicit stale parent reference.
     let stale = entities[17]; world.despawn(stale); let replacement = world.spawn_empty();
@@ -80,7 +80,7 @@ fn dense_storage_matches_hashes_across_generation_parent_activity_and_order_chan
     changed.position = [f32::INFINITY, f32::NAN, -3.0]; changed.rotation = [0.0; 4]; changed.scale = [f32::NAN, 2.0, 1.0];
     for reverse in [false, true] {
         if reverse { let mut order: Vec<_> = world.iter_entities().collect(); order.reverse(); assert!(world.set_entity_iteration_order(&order)); }
-        let hierarchy = TransformHierarchy::build(&world); assert!(matches!(hierarchy.nodes, HierarchyNodes::Dense(_)));
+        let hierarchy = TransformHierarchy::build(&world); assert!(matches!(&*hierarchy.nodes, HierarchyNodes::Dense(_)));
         assert_equivalent(&world, &hierarchy, &[stale, Entity::INVALID]);
         assert_eq!(hierarchy.get(stale), None); assert!(hierarchy.get(replacement).is_some());
     }
@@ -92,17 +92,17 @@ fn density_limit_includes_inactive_ancestors_and_keeps_sparse_storage_bounded() 
     let mut world = World::new(); let entities: Vec<_> = (0..128).map(|_| world.spawn_empty()).collect();
     for entity in &entities { world.insert_component(*entity, Transform::default()); }
     world.set_parent(entities[0], Some(entities[127])); world.set_editor_state(entities[127], 0, false);
-    let dense = TransformHierarchy::build(&world); assert!(matches!(dense.nodes, HierarchyNodes::Dense(_))); assert!(!dense.is_active(entities[0])); assert_equivalent(&world, &dense, &[]);
+    let dense = TransformHierarchy::build(&world); assert!(matches!(&*dense.nodes, HierarchyNodes::Dense(_))); assert!(!dense.is_active(entities[0])); assert_equivalent(&world, &dense, &[]);
     for entity in &entities[64..127] { world.set_editor_state(*entity, 0, false); }
-    let half = TransformHierarchy::build(&world); assert!(matches!(half.nodes, HierarchyNodes::Dense(_))); assert_equivalent(&world, &half, &[]);
+    let half = TransformHierarchy::build(&world); assert!(matches!(&*half.nodes, HierarchyNodes::Dense(_))); assert_equivalent(&world, &half, &[]);
     world.set_editor_state(entities[63], 0, false);
-    let below_half = TransformHierarchy::build(&world); assert!(matches!(below_half.nodes, HierarchyNodes::Sparse(_))); assert_equivalent(&world, &below_half, &[]);
+    let below_half = TransformHierarchy::build(&world); assert!(matches!(&*below_half.nodes, HierarchyNodes::Sparse(_))); assert_equivalent(&world, &below_half, &[]);
     for entity in &entities[1..127] { world.set_editor_state(*entity, 0, false); }
-    let sparse = TransformHierarchy::build(&world); assert!(matches!(sparse.nodes, HierarchyNodes::Sparse(_))); assert!(sparse.nodes.capacity() < 8); assert_equivalent(&world, &sparse, &[]);
+    let sparse = TransformHierarchy::build(&world); assert!(matches!(&*sparse.nodes, HierarchyNodes::Sparse(_))); assert!(sparse.nodes.capacity() < 8); assert_equivalent(&world, &sparse, &[]);
     world.set_parent(entities[0], None); world.despawn_many(entities[..127].iter().copied()); world.set_editor_state(entities[127], 0, true);
-    let high_slot = TransformHierarchy::build(&world); assert!(matches!(high_slot.nodes, HierarchyNodes::Sparse(_))); assert!(high_slot.nodes.capacity() < 8); assert_equivalent(&world, &high_slot, &entities[..127]);
+    let high_slot = TransformHierarchy::build(&world); assert!(matches!(&*high_slot.nodes, HierarchyNodes::Sparse(_))); assert!(high_slot.nodes.capacity() < 8); assert_equivalent(&world, &high_slot, &entities[..127]);
     let empty = TransformHierarchy::build(&World::new()); assert_eq!(empty.nodes.capacity(), 0);
-    let subset = TransformHierarchy::build_for_entities(&world, [entities[127]]); assert!(matches!(subset.nodes, HierarchyNodes::Sparse(_))); assert_eq!(subset.get(entities[127]), high_slot.get(entities[127]));
+    let subset = TransformHierarchy::build_for_entities(&world, [entities[127]]); assert!(matches!(&*subset.nodes, HierarchyNodes::Sparse(_))); assert_eq!(subset.get(entities[127]), high_slot.get(entities[127]));
 }
 
 #[test]
@@ -129,7 +129,7 @@ fn benchmark_dense_hierarchy() {
             }
         }
         let raw = samples.clone(); for values in &mut samples { values.sort_by(f64::total_cmp); }
-        reports.push(serde_json::json!({"scene":scene,"entities":snapshot.entities.len(),"resolved":actual.nodes.len(),"dense":matches!(actual.nodes, HierarchyNodes::Dense(_)),"storage_capacity":actual.nodes.capacity(),"dense_slot_bytes":std::mem::size_of::<Option<(u32, ResolvedNode)>>(),"baseline_ms":samples[0][4],"current_ms":samples[1][4],"samples_ms":raw,"iterations_per_sample":30,"equal":true}));
+        reports.push(serde_json::json!({"scene":scene,"entities":snapshot.entities.len(),"resolved":actual.nodes.len(),"dense":matches!(&*actual.nodes, HierarchyNodes::Dense(_)),"storage_capacity":actual.nodes.capacity(),"dense_slot_bytes":std::mem::size_of::<Option<(u32, ResolvedNode)>>(),"baseline_ms":samples[0][4],"current_ms":samples[1][4],"samples_ms":raw,"iterations_per_sample":30,"equal":true}));
     }
     println!("DENSE_HIERARCHY={}", serde_json::json!(reports));
 }
