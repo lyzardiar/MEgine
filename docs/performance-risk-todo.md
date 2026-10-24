@@ -1261,3 +1261,12 @@ App的updateSceneDirty仅在edit模式读取远端指纹；独立窗口的Play�
 快速检查：workspaceSelectionSync的15项测试通过，TypeScript及QA脚本语法检查通过。新增实际App处理器测试确认运行完整检查点、增量、暂停和新会话零次接收端指纹调用，Stop重新计算，停止后本地修改／还原及主窗口dirty与清洁检查点正确；未重复已通过的调度器单元测试。证据为 `tmp/docs-artifacts/editor-performance-risk/runtime-dirty-tests.log` 和 `runtime-dirty-types.log`。
 
 本项为新批次第3/3项，提交后与第六十五／六十六阶段合并构建及原生验证。qa-frost-map-session新增Stop未污染作者dirty状态、独立Inspector作者修改标脏、还原后清洁的检查；原生结果另记。局部调用计数不代表实际FPS收益。
+
+
+本批原生集成完成：cb20d61、51dab64、e633561合并前端构建3.14秒及Release构建1分05秒通过，仅已有world_from_snapshot未使用告警。`node scripts/qa-frost-map-session.mjs --detached-only` 报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792803627596.json` 通过，0 error、正常退出，EXE SHA256为 `506e871e825fafc1fe462ab63f24d2c448d8060fd3377550ed7cac637bdcd77b`。三窗口Inspector双向修改及3步原生保留、Play中新Game加入、暂停／单步、独立窗口播放快捷键、地图重载及Inspector重开、Stop完整作者集合恢复、停止后编辑／还原和dirty恢复均通过。Scene／Game截图已目视查看，WebView隔离缓存因EPERM保留，发现文件已清理。
+
+7,411实体、5秒窗口，Scene920×658：88个间隔、平均17.7119次呈现/秒、P95为96.5ms；Game920×518：92个间隔、18.5062次呈现/秒、P95为77.7ms。请求平均26.92／27.60ms，原生渲染13.98／15.93ms。Scene89个profile中1次完整回退，Game93个profile中0次；Scene63个成功profile记录共72次延期，单帧最大2次，回退帧记录2次延期、上传／渲染均5,410实体、请求177.2ms。所有成功profile逐一核对实体数通过，指定版本帧为7,411实体。与上一独立运行10.2661／14.8504次呈现每秒、Scene13/49次回退相比改善，但不是严格A/B或长期稳定结论，不能归因给单项修改。
+
+原生worldLockWait／workerQueue／rendererLockWait均值不足0.02ms；Game前端prepare／complete平均0.35／0.75ms。实际呈现间隔仍约54至56ms，下一步应观测前端跨窗口接收、事件循环和实际请求起点之间的等待。延期减少完整上传但仍频繁出现，尚未消除版本过期来源。暂停时Inspector自动化写入至主窗口观察为934.95ms，包含自动化调用／快照／轮询，不是硬件输入到显示延迟。
+
+进程树privateBytes依次为4,716,380,160（分离前）、6,589,648,896（三窗口）、6,953,811,968（重载）、6,046,130,176（Stop并停靠）；工作集求和分别2,927,726,592／4,638,593,024／4,966,989,824／3,462,840,320字节，可能重复统计共享页。尚未证明长期内存回收或无泄漏。汇总为 `tmp/docs-artifacts/editor-performance-risk/panel-cadence-native-summary.json`，构建及QA日志为同目录panel-cadence-*。保留实际输入延迟、长期／跨机器、强制原生竞态、可见性交互和行为字段热更新专项；不扩展为全库测试。

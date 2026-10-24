@@ -710,3 +710,8 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 变更：App运行接收路径、workspaceSelectionSync测试及qa-frost-map-session原生dirty断言。独立窗口Play／Pause采用主窗口dirty字段，编辑检查点恢复指纹基线；主窗口比较和打开／保存逻辑继续保留。15项同步测试、TypeScript和QA语法检查通过，日志见performance-risk-todo第六十七阶段。
 
 累计三项：cb20d61、51dab64及本项。提交后执行一次 `pnpm --dir packages/editor build`、`cargo build -p mengine-editor-tauri --release --features custom-protocol`，然后 `node scripts/qa-frost-map-session.mjs --detached-only`。检查三窗口运行、Inspector双向修改／还原、Pause／Step、窗口重开与地图重载、Stop作者实体及dirty恢复；合并采样Scene延期／回退、每帧实体数量、呈现间隔和进程内存。实际结果待补记，尚未关闭本批。
+
+
+本批正常原生集成已通过并关闭：报告 `B001/map-session-1792803627596.json`，0 error、正常退出，EXE `506e871e825fafc1fe462ab63f24d2c448d8060fd3377550ed7cac637bdcd77b`。前端和Release各构建一次；三窗口Inspector双向修改／原生步骤保留、Play中新窗口、Pause／Step、快捷键、地图重载、Stop作者集合与dirty恢复及停靠通过，截图已目视核对。每个成功profile的实体数对照通过，包含一次Scene回退5,410实体。
+
+Scene17.71／Game18.51次呈现每秒，Scene1/89完整回退、72次已记录延期，Game0/93回退。结果为5秒单次采样，仍未达到流畅目标；真实输入延迟、长期内存／跨机器、强制原生竞态、可见性交互及字段热更新保留专项。详细计时、内存和限制见performance-risk-todo第六十七阶段，产物仅存tmp/docs-artifacts。下一批从0/3开始，不重复本批已通过的正常集成范围。
