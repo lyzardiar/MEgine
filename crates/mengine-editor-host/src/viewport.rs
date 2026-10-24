@@ -14,7 +14,7 @@ use mengine_runtime::effekseer::EffekseerWorld;
 use mengine_runtime::fonts::RuntimeFontCache;
 use mengine_runtime::frame_compiler::{
     parse_camera_clear_flags, ActiveFrameCamera, CameraClearFlags, FrameCompileRequest,
-    FrameCompiler,
+    FrameCompiler, FrameMeshInputs,
 };
 use mengine_runtime::materials::RuntimeMaterialCache;
 use mengine_runtime::meshes::RuntimeMeshCache;
@@ -301,6 +301,7 @@ fn camera_preview_frame(
 
 /// RHI host for captured editor views and native window presentation.
 pub struct EditorViewportRenderer {
+    mesh_inputs: FrameMeshInputs,
     hierarchy_cache: TransformHierarchyCache,
     renderer: Renderer,
     target: Option<OffscreenRenderTarget>,
@@ -351,6 +352,7 @@ impl EditorViewportRenderer {
             renderer,
             target: None,
             materials: RuntimeMaterialCache::new(Some(project_root.clone())),
+            mesh_inputs: FrameMeshInputs::default(),
             meshes: RuntimeMeshCache::new(Some(project_root.clone())),
             textures: RuntimeTextureCache::new(Some(project_root.clone())),
             fonts: RuntimeFontCache::new(Some(project_root.clone())),
@@ -701,6 +703,7 @@ impl EditorViewportRenderer {
         let button_tints = HashMap::new();
         let stage_started = Instant::now();
         let mut frame = FrameCompiler {
+            mesh_inputs: Some(&mut self.mesh_inputs),
             materials: &mut self.materials,
             particles: &mut self.particles,
             trails: &mut self.trails,

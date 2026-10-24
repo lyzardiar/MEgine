@@ -66,6 +66,19 @@ fn original_get_mut<T: Any + Send + Sync>(world: &mut World, entity: Entity) -> 
 }
 
 #[test]
+fn derived_cache_identity_and_revisions_reject_dead_reused_and_custom_views() {
+    let mut world = World::new(); let entity = world.spawn_empty(); world.insert_component(entity, Transform::default());
+    let first = world.stable_entity_revision(entity).unwrap(); let identity = world.cache_identity();
+    assert_eq!(world.stable_entity_revision(entity), Some(first));
+    world.get_component_mut::<Transform>(entity).unwrap().position[0] = 1.; assert_ne!(world.stable_entity_revision(entity), Some(first));
+    let current = world.stable_entity_revision(entity); world.set_editor_state(entity, 1, false); assert_ne!(world.stable_entity_revision(entity), current);
+    world.despawn(entity); assert!(world.stable_entity_revision(entity).is_none());
+    let reused = world.spawn_empty(); assert_eq!(reused.index, entity.index); assert_ne!(reused.generation, entity.generation); assert!(world.stable_entity_revision(entity).is_none());
+    assert!(world.stable_entity_revision(reused).is_some()); world.insert_component(reused, ViewB(4)); assert!(world.stable_entity_revision(reused).is_none());
+    assert_eq!(world.cache_identity(), identity); assert_ne!(World::new().cache_identity(), identity);
+}
+
+#[test]
 fn component_lookup_handles_typed_dynamic_and_custom_lifecycles() {
     let mut world = World::new(); let entity = world.spawn_empty();
     assert!(world.get_component::<Transform>(entity).is_none());

@@ -1086,3 +1086,15 @@ DotA的5秒窗口，Game最近240间隔16.952ms／58.99FPS、paint3.09ms；Scene
 B001/map-session-1792824239313.json覆盖7434实体、多窗口Game重开与版本追赶、Scene／Game持续采样、Pause／Step／快捷键、两窗口截图、Stop、编辑及undo／redo／回停靠。采样前额外等待324ms有18个当前Game原生样本，起点在固定启动等候与内存采样之后。5秒窗口最近240间隔Scene54.44／Game55.59FPS、paint7.00／2.19ms；前一多窗口样本51.57／55.44FPS在alpha修复之前，不能单独归因为指令缓存。两窗口均未达到稳定60FPS。
 
 本批相关集成完成，未重跑无关导入／层级／Spine全套；LOD、完整JASS玩法、长期内存和物理输入延迟仍待后续工作。原始日志、报告与图像仅在tmp/docs-artifacts，QA编辑器正常退出，WebView的EPERM缓存保留，用户编辑器未关闭。
+
+### 第九十五阶段／新批次任务1/3：按实体修订复用网格绘制输入
+
+FrameMeshInputs由每个编辑器视口／独立运行器持有，使用World进程内身份、完整Entity句柄及可信实体修订复用网格路径、投影后的材质和阴影标志；每次提取仍读取当前层级矩阵与遍历顺序。自定义Any视图没有可信修订，逐次读取。材质源在本次实际使用时通过原RuntimeMaterialCache轮询一次，源Arc变化重新应用属性覆盖，保留材质／shader热更新；不再使用的实体及材质源在提取结束释放，源索引重排同步更新存活输入。复制后的RenderObject可独立由动画、billboard及视图处理修改。
+
+变更Core修订查询、runtime FrameCompiler／FrameMeshInputs及测试、runtime主循环、EditorViewportRenderer和CPU诊断示例。所有FrameCompiler构造点已补齐缓存参数；主视图缓存收集的实体顺序继续供嵌入SceneView使用，UI-only视图保留原提取路径。benchmark_frame_compile新增--uncached-mesh-inputs对照开关。
+
+11项runtime网格／共享视图定向检查及1项Core修订查询检查通过，另11项手动基准默认忽略。覆盖父变换不改子实体修订、激活／失活、MeshRenderer／PbrMaterial／属性覆盖编辑、遍历顺序、删除／槽位复用、World更换、来源清理、自定义Any原地切换、材质改写／缺失及旧帧材质独立性。cargo check -p mengine-editor-host -p mengine-runtime --release --all-targets通过，包含宿主、独立运行器及示例的构造点。
+
+实际DotA保留工程的局部Release对照，5376绘制对象、139个材质源，10轮交替先后、排除2轮预热，每模式8组且每组20次提取，每轮结束逐项比较完整RenderObject输出。静态提取均值4.723225→1.775136ms；每次修改200个Transform的提取均值5.798501→2.340243ms。此处只计网格输入提取，层级构建、脚本、GPU和IPC不在计时内，不直接外推原生FPS。日志tmp/docs-artifacts/editor-performance-risk/mesh-inputs-{dota-bench,final-tests,core-tests,integration-check}.log。
+
+当前新批次1/3，Tauri原生构建、DotA与多窗口持续FPS、缓存驻留内存、模型／材质热更新、Scene父变换与Stop后重开／场景切换待第三项后统一验证。真实编辑器收益、稳定60FPS、LOD和完整JASS玩法尚未完成；本项不触发无关全库及地图遍历。

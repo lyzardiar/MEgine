@@ -43,7 +43,7 @@ use mengine_runtime::frame_compiler::{
     resolve_camera_background, ActiveFrameCamera, CameraClearFlags,
 };
 use mengine_runtime::frame_compiler::{
-    collect_objects, material_preset, FrameCompileRequest, FrameCompiler,
+    collect_objects, material_preset, FrameCompileRequest, FrameCompiler, FrameMeshInputs,
 };
 use mengine_runtime::materials::{
     resolve_surface_shader_material, validate_material_property_block, RuntimeMaterialCache,
@@ -151,6 +151,7 @@ struct App {
     timelines: TimelineRuntime,
     audio: AudioRuntime,
     materials: RuntimeMaterialCache,
+    mesh_inputs: FrameMeshInputs,
     meshes: RuntimeMeshCache,
     physics: PhysicsWorld,
     physics_2d: PhysicsWorld2D,
@@ -222,6 +223,7 @@ impl App {
             textures,
             fonts,
             ui_batch_order: mengine_rhi::UiBatchOrderCache::default(),
+            mesh_inputs: FrameMeshInputs::default(),
             animations,
             timelines,
             audio,
@@ -1660,6 +1662,7 @@ function onTick(dt, frame) {
                         .map(|window| window.inner_size())
                         .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
                     let mut frame = FrameCompiler {
+                        mesh_inputs: Some(&mut self.mesh_inputs),
                         materials: &mut self.materials,
                         particles: &mut self.particles,
                         trails: &mut self.trails,

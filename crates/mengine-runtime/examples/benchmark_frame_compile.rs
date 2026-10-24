@@ -1,6 +1,6 @@
 // Author: MiYu. Measure complete-scene CPU frame extraction and verify its deterministic output.
 use mengine_core::{TransformHierarchy, World};
-use mengine_runtime::{fonts::RuntimeFontCache, frame_compiler::{FrameCompileRequest, FrameCompiler}, materials::RuntimeMaterialCache, particles::ParticleWorld, sorting::SortingLayers, textures::RuntimeTextureCache, trails::TrailWorld, ui::UiInteractionState};
+use mengine_runtime::{fonts::RuntimeFontCache, frame_compiler::{FrameCompileRequest, FrameCompiler, FrameMeshInputs}, materials::RuntimeMaterialCache, particles::ParticleWorld, sorting::SortingLayers, textures::RuntimeTextureCache, trails::TrailWorld, ui::UiInteractionState};
 use sha2::{Digest, Sha256};
 use std::{collections::{BTreeMap, HashMap}, path::PathBuf, time::Instant};
 
@@ -24,6 +24,7 @@ fn main() -> anyhow::Result<()> {
     let authored_hierarchy = TransformHierarchy::build(&world);
     let animated_entity = world.entities_with_components(&["RectTransform", "RawImage"]).find(|&entity| authored_hierarchy.is_active(entity));
     let original_position = animated_entity.and_then(|entity| world.get_component::<mengine_core::generated::RectTransform>(entity)).map(|rect| rect.anchored_position);
+    let mut mesh_inputs = FrameMeshInputs::default(); let uncached_mesh_inputs = std::env::args().any(|arg| arg == "--uncached-mesh-inputs");
     let uncached = std::env::args().any(|arg| arg == "--uncached-ui-order");
     for iteration in 0..iterations + 2 {
         if animate {
@@ -35,7 +36,7 @@ fn main() -> anyhow::Result<()> {
         let hierarchy = TransformHierarchy::build(&world);
         let hierarchy_elapsed = start.elapsed().as_secs_f64() * 1000.0;
         let start = Instant::now();
-        let frame = FrameCompiler { materials: &mut materials, particles: &mut particles, trails: &mut trails, textures: &mut textures, fonts: &mut fonts, ui_batch_order: (!uncached).then_some(&mut ui_batch_order) }.compile(FrameCompileRequest {
+        let frame = FrameCompiler { mesh_inputs: (!uncached_mesh_inputs).then_some(&mut mesh_inputs), materials: &mut materials, particles: &mut particles, trails: &mut trails, textures: &mut textures, fonts: &mut fonts, ui_batch_order: (!uncached).then_some(&mut ui_batch_order) }.compile(FrameCompileRequest {
             world: &world, hierarchy: &hierarchy, viewport: [1280, 720], scene_clear: world.time.clear_color,
             camera_override: None, view_camera: None, include_ui: true, target_display: 0, interaction: UiInteractionState::default(),
             button_tints: &tints, focused_ui: None, sorting_layers: &sorting, delta_seconds: 0.0,
@@ -56,6 +57,6 @@ fn main() -> anyhow::Result<()> {
     }
     hierarchy_ms.sort_by(f64::total_cmp); compile_ms.sort_by(f64::total_cmp);
     let stages: BTreeMap<_, _> = stages.into_iter().map(|(name, mut samples)| { samples.sort_by(f64::total_cmp); (name, samples[iterations / 2]) }).collect();
-    println!("{}", serde_json::json!({"scope":"Release CPU extraction from authored Main.mscene; no scripts, GPU, IPC or gameplay FPS", "iterations":iterations,"cachedUiOrder":!uncached,"animatedUi":animate, "counts":counts, "outputSha256":signature, "completeOutputSha256":complete_signature, "medianStagesMs":stages, "medianHierarchyMs":hierarchy_ms[iterations / 2], "medianCompileMs":compile_ms[iterations / 2], "hierarchyMs":hierarchy_ms, "compileMs":compile_ms}));
+    println!("{}", serde_json::json!({"scope":"Release CPU extraction from authored Main.mscene; no scripts, GPU, IPC or gameplay FPS", "iterations":iterations,"cachedUiOrder":!uncached,"cachedMeshInputs":!uncached_mesh_inputs,"animatedUi":animate, "counts":counts, "outputSha256":signature, "completeOutputSha256":complete_signature, "medianStagesMs":stages, "medianHierarchyMs":hierarchy_ms[iterations / 2], "medianCompileMs":compile_ms[iterations / 2], "hierarchyMs":hierarchy_ms, "compileMs":compile_ms}));
     Ok(())
 }

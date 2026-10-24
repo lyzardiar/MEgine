@@ -29,6 +29,10 @@ use mengine_rhi::{
 };
 use std::collections::HashMap;
 
+#[path = "frame_mesh_inputs.rs"]
+mod mesh_inputs;
+pub use mesh_inputs::FrameMeshInputs;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CameraClearFlags {
     Scene,
@@ -106,6 +110,7 @@ pub struct FrameCompileRequest<'a> {
 
 /// Stateful caches needed while compiling a frame. None of these select a GPU target.
 pub struct FrameCompiler<'a> {
+    pub mesh_inputs: Option<&'a mut FrameMeshInputs>,
     pub materials: &'a mut RuntimeMaterialCache,
     pub particles: &'a mut ParticleWorld,
     pub trails: &'a mut TrailWorld,
@@ -177,7 +182,8 @@ impl FrameCompiler<'_> {
         phase("Camera selection");
         let mut mesh_entities = Vec::new();
         let mut objects = if has_scene_camera {
-            collect_mesh_objects(request.world, request.hierarchy, self.materials, None, request.include_ui.then_some(&mut mesh_entities))
+            if let Some(inputs) = self.mesh_inputs.as_deref_mut() { inputs.collect(request.world, request.hierarchy, self.materials, request.include_ui.then_some(&mut mesh_entities)) }
+            else { collect_mesh_objects(request.world, request.hierarchy, self.materials, None, request.include_ui.then_some(&mut mesh_entities)) }
         } else {
             Vec::new()
         };
@@ -846,7 +852,7 @@ mod scene_view_tests {
         let mut materials = RuntimeMaterialCache::new(None);
         let mut particles = ParticleWorld::default(); let mut trails = TrailWorld::default();
         let mut textures = RuntimeTextureCache::new(None); let mut fonts = RuntimeFontCache::new(None);
-        let frame = FrameCompiler { materials:&mut materials, particles:&mut particles, trails:&mut trails, textures:&mut textures, fonts:&mut fonts, ui_batch_order:None }.compile(FrameCompileRequest {
+        let frame = FrameCompiler { mesh_inputs: None, materials:&mut materials, particles:&mut particles, trails:&mut trails, textures:&mut textures, fonts:&mut fonts, ui_batch_order:None }.compile(FrameCompileRequest {
             world:&world, hierarchy:&TransformHierarchy::build(&world), viewport:[128,128], scene_clear:Vec4::ZERO,
             camera_override:None, view_camera:None, include_ui:true, target_display:0, interaction:UiInteractionState::default(),
             button_tints:&HashMap::new(), focused_ui:None, sorting_layers:&SortingLayers::default(), delta_seconds:0.0,

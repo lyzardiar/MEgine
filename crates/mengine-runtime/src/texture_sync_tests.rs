@@ -14,7 +14,7 @@ fn benchmark_material_texture_sync_cadence() {
         if activate { for entity in world.iter_entities().collect::<Vec<_>>() { world.set_editor_state(entity, 0, true); } }
         let mut materials = RuntimeMaterialCache::new(Some(root.clone())); let mut textures = RuntimeTextureCache::new(Some(root.clone())); let mut fonts = RuntimeFontCache::new(Some(root.clone()));
         let mut particles = ParticleWorld::default(); let mut trails = TrailWorld::default();
-        let frame = FrameCompiler { materials: &mut materials, particles: &mut particles, trails: &mut trails, textures: &mut textures, fonts: &mut fonts, ui_batch_order: None }.compile(FrameCompileRequest {
+        let frame = FrameCompiler { mesh_inputs: None, materials: &mut materials, particles: &mut particles, trails: &mut trails, textures: &mut textures, fonts: &mut fonts, ui_batch_order: None }.compile(FrameCompileRequest {
             world: &world, hierarchy: &TransformHierarchy::build(&world), viewport: [960, 540], scene_clear: glam::Vec4::ZERO, camera_override: None, view_camera: None,
             include_ui: false, target_display: 0, interaction: UiInteractionState::default(), button_tints: &HashMap::new(), focused_ui: None, sorting_layers: &SortingLayers::default(), delta_seconds: 0.0,
         });
@@ -49,7 +49,7 @@ fn benchmark_ui_texture_sync() {
         let mut world = World::new(); mengine_scene::apply_snapshot(&mut world, &serde_json::from_value(value).unwrap());
         let mut materials = RuntimeMaterialCache::new(Some(root.clone())); let mut textures = RuntimeTextureCache::new(Some(root.clone())); let mut fonts = RuntimeFontCache::new(Some(root.clone()));
         let mut particles = ParticleWorld::default(); let mut trails = TrailWorld::default();
-        let frame = FrameCompiler { materials: &mut materials, particles: &mut particles, trails: &mut trails, textures: &mut textures, fonts: &mut fonts, ui_batch_order: None }.compile(FrameCompileRequest {
+        let frame = FrameCompiler { mesh_inputs: None, materials: &mut materials, particles: &mut particles, trails: &mut trails, textures: &mut textures, fonts: &mut fonts, ui_batch_order: None }.compile(FrameCompileRequest {
             world: &world, hierarchy: &TransformHierarchy::build(&world), viewport: [850, 478], scene_clear: glam::Vec4::ZERO, camera_override: None, view_camera: None,
             include_ui: true, target_display: 0, interaction: UiInteractionState::default(), button_tints: &HashMap::new(), focused_ui: None, sorting_layers: &SortingLayers::default(), delta_seconds: 0.0,
         });

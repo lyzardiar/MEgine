@@ -255,6 +255,15 @@ impl World {
 
     pub(crate) fn entity_revision(&self, entity: Entity) -> u64 { self.entities[entity.index as usize].revision }
 
+    /// Process-local identity for derived caches; never persist this value as an entity or asset ID.
+    pub fn cache_identity(&self) -> u64 { self.snapshot_id }
+
+    /// Native component revisions are stable until a World mutation. Custom Any views must be reread.
+    pub fn stable_entity_revision(&self, entity: Entity) -> Option<u64> {
+        let record = self.entities.get(entity.index as usize)?;
+        (record.alive && record.generation == entity.generation && !record.component_lookup_fallback).then_some(record.revision)
+    }
+
     // Custom Any projections may change through interior state without a World mutation.
     pub(crate) fn stable_hierarchy_revision(&self, entity: Entity) -> Option<u64> {
         let record = self.entities.get(entity.index as usize)?;
