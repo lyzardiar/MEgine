@@ -4,6 +4,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
 import {configureNativeQa,closeNativeQa} from './frost-native-qa-runtime.mjs';
 import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),out=path.join(repo,'tmp/docs-artifacts/testing-batches/B001');
@@ -165,6 +166,8 @@ async function checkHierarchyPresentation(s){
   report.checks.push('Native hierarchy collapse/expand, hidden descendant reveal, scrolling and left/right keys for runtime root '+root.entity);
 }
 async function checkDetachedRuntime(authored){
+  const sampleMemory=stage=>{const owner=JSON.parse(fs.readFileSync(process.env.MENGINE_AGENT_BRIDGE_FILE,'utf8'));assert.equal(owner.background,true);assert.ok(Number.isSafeInteger(owner.pid));const sample=JSON.parse(execFileSync('pwsh.exe',['-NoProfile','-File',path.join(repo,'scripts/sample-native-qa-memory.ps1'),'-EditorPid',String(owner.pid),'-ExpectedExecutable',process.env.MENGINE_EDITOR_EXECUTABLE],{encoding:'utf8',windowsHide:true,timeout:20000}));(report.detachedMemory??=[]).push({stage,...sample});};
+  sampleMemory('before-detach');
   const before=await snapshot(),target=before.entities.find(e=>e.name.startsWith('Doodad-')&&e.parent==null&&e.components.Transform&&Math.abs(e.components.Transform.position[1]*10-Math.round(e.components.Transform.position[1]*10))<1e-6);assert.ok(target);
   const original=target.components.Transform.position[1],edited=original+3.2;
   await execute('selection.set',{ids:[target.entity]});await execute('view.set_camera',{pivot:target.components.Transform.position,yaw:35,pitch:35,distance:10});
@@ -174,17 +177,18 @@ async function checkDetachedRuntime(authored){
   async function mainHeight(expected){const deadline=Date.now()+30000;for(;;){const entity=await query('entity.get',{id:target.entity});if(Math.abs(entity.components.Transform.position[1]-expected)<1e-5)return;assert.ok(Date.now()<deadline,'Main received detached height '+expected);await sleep(150);}}
   if(!detachedAuthoringOnly){
   await field(original);const {page,item}=await field();
-  await execute('window.ui_set_value',{windowLabel:'panel-inspector',selector:item.selector,expectedSnapshotRevision:page.snapshotRevision,value:String(edited)});
-  await mainHeight(edited);await step(3);await mainHeight(edited);await field(edited);
+  const editStarted=performance.now();await execute('window.ui_set_value',{windowLabel:'panel-inspector',selector:item.selector,expectedSnapshotRevision:page.snapshotRevision,value:String(edited)});
+  await mainHeight(edited);report.detachedEditObservedMs=performance.now()-editStarted;await step(3);await mainHeight(edited);await field(edited);
   report.checks.push('Detached Inspector edit reaches native simulation and persists after 3 steps');
   await execute('panel.dock',{kind:'inspector'});await execute('panel.focus',{kind:'inspector'});
   const mainPage=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000}),mainField=mainPage.elements.find(e=>e.name==='Transform Position Y');assert.ok(mainField);
   await execute('window.ui_set_value',{windowLabel:'main',selector:mainField.selector,expectedSnapshotRevision:mainPage.snapshotRevision,value:String(original)});await step(2);await mainHeight(original);
   await execute('panel.detach',{kind:'inspector'});await field(original);
   report.checks.push('Detached Inspector transform reaches main native simulation and persists after 3 steps; main component restore reaches detached Inspector');
-  await execute('playback.play');await sleep(2500);await execute('profiler.clear');const started=performance.now();await sleep(5000);
+  await execute('playback.play');await execute('panel.dock',{kind:'game'});await execute('panel.detach',{kind:'game'});await sleep(2500);sampleMemory('three-panels-live');await execute('profiler.clear');const started=performance.now();await sleep(5000);
   report.detachedProfiles={elapsedMs:performance.now()-started};
-  for(const source of ['scene','game']){const profiles=await query('profiler.get_samples',{source,limit:240});assert.ok(profiles.nativeSummary?.intervals>5,source+' detached native presents');assert.equal(profiles.nativeLatest?.counts.entities,before.entities.length);report.detachedProfiles[source]={nativeSummary:profiles.nativeSummary,counts:profiles.nativeLatest.counts,worldRevision:profiles.nativeLatest.worldRevision};}
+  for(const source of ['scene','game']){const profiles=await query('profiler.get_samples',{source,limit:240,includeNativeTimings:true});assert.ok(profiles.nativeSummary?.intervals>5,source+' detached native presents');assert.equal(profiles.nativeLatest?.counts.entities,before.entities.length);assert.ok(profiles.nativeTimings?.every(frame=>frame.worldRequest&&frame.worldRequest.elapsedMs>=0),source+' request telemetry');report.detachedProfiles[source]={nativeSummary:profiles.nativeSummary,counts:profiles.nativeLatest.counts,worldRevision:profiles.nativeLatest.worldRevision,timings:profiles.nativeTimings};}
+  report.checks.push('Game window reopens during Play and catches up with revisioned native frames');
   await execute('playback.pause');await sleep(300);const paused=await snapshot();await sleep(300);assert.deepEqual((await snapshot()).entities,paused.entities);await step(2);assert.ok((await snapshot()).simulationTime>paused.simulationTime);
   for(const windowLabel of ['panel-scene','panel-game']){const shot=await query('view.window_screenshot',{windowLabel,maxSize:1280});fs.writeFileSync(path.join(out,label+'-'+windowLabel+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));}
   report.checks.push('Three detached panels sustain native Scene/Game frames, pause freezes main world, Step advances, and both view windows capture');
@@ -192,6 +196,7 @@ async function checkDetachedRuntime(authored){
   report.checks.push('Detached Game Ctrl+Shift+P resumes and pauses the main native owner');
   await click('Map session restart');await waitMap('amazonia');await execute('panel.dock',{kind:'inspector'});await execute('panel.detach',{kind:'inspector'});
   const reloaded=await snapshot(),again=reloaded.entities.find(e=>e.name===target.name);assert.ok(again);await execute('selection.set',{ids:[again.entity]});await field(original);
+  sampleMemory('after-map-reload');
   }
   await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);
   report.checks.push('Stop restores the complete authored entity set');
@@ -202,6 +207,7 @@ async function checkDetachedRuntime(authored){
   const deadline=Date.now()+30000;for(;;){const e=await query('entity.get',{id:authorTarget.entity});if(Math.abs(e.components.Transform.position[1]-authorEdited)<1e-5)break;assert.ok(Date.now()<deadline,'Authoring remains editable after Stop');await sleep(150);}
   await execute('component.set',{entity:authorTarget.entity,type:'Transform',value:authorTarget.components.Transform});await field(authorTarget.components.Transform.position[1]);assert.deepEqual((await snapshot()).entities,authored.entities);
   report.windows=await query('window.list');for(const kind of ['game','scene','inspector'])await execute('panel.dock',{kind});
+  sampleMemory('after-stop-and-dock');
   report.checks.push('Detached authoring edit/restore after Stop; auxiliary panels dock normally');
 }
 try{

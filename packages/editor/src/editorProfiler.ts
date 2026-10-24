@@ -1,6 +1,6 @@
 // Author: MiYu. Retain owned native frames without copying their resource snapshots again.
 import type { PlayStepTiming } from './playStepTiming';
-import type { SharedNativeViewportTransportProfile } from './nativeViewportTransport';
+import type { SharedNativeViewportTransportProfile, NativeViewportWorldRequestProfile } from './nativeViewportTransport';
 import { createEditorBroadcastChannel } from './editorInstance.ts';
 
 export const EDITOR_PROFILER_SAMPLE_INTERVAL_MS = 250;
@@ -98,6 +98,7 @@ export type NativeViewportProfile = {
   frontendCompleteMs?: number;
   commandMs?: number;
   sharedTransport?: SharedNativeViewportTransportProfile;
+  worldRequest?: NativeViewportWorldRequestProfile;
   simulationMs?: number;
   worldRevision?: number;
   worldSyncMs?: number;
@@ -334,7 +335,7 @@ export function summarizeEditorProfilerSamples(
 /** MiYu: bounded diagnostic responses carry timings without copying resource inventories or call trees. */
 export function nativeViewportTimingSample(profile: NativeViewportProfile) {
   const { source, timestamp, worldRevision, updateMode, nativeTransport, totalMs, transportMs, frontendPrepareMs, frontendCompleteMs, commandMs, simulationMs, simulationRequestMs, worldSyncMs, worldLockWaitMs, workerQueueMs, rendererLockWaitMs, uploadMs, presentIntervalMs } = profile;
-  return { source, timestamp, worldRevision, updateMode, nativeTransport, totalMs, transportMs, frontendPrepareMs, frontendCompleteMs, commandMs, simulationMs, simulationRequestMs, simulationTiming: profile.simulationTiming ? { ...profile.simulationTiming, native: profile.simulationTiming.native && { ...profile.simulationTiming.native } } : undefined, worldSyncMs, worldLockWaitMs, workerQueueMs, rendererLockWaitMs, uploadMs, presentIntervalMs, renderSize: profile.renderSize?.slice(), sharedTransport: profile.sharedTransport ? { ...profile.sharedTransport } : undefined };
+  return { source, timestamp, worldRevision, updateMode, nativeTransport, totalMs, transportMs, frontendPrepareMs, frontendCompleteMs, commandMs, simulationMs, simulationRequestMs, simulationTiming: profile.simulationTiming ? { ...profile.simulationTiming, native: profile.simulationTiming.native && { ...profile.simulationTiming.native } } : undefined, worldSyncMs, worldLockWaitMs, workerQueueMs, rendererLockWaitMs, uploadMs, presentIntervalMs, renderSize: profile.renderSize?.slice(), sharedTransport: profile.sharedTransport ? { ...profile.sharedTransport } : undefined, worldRequest: profile.worldRequest ? { ...profile.worldRequest } : undefined };
 }
 
 /** Completed native frames, independent of WebView paints and bounded history length. */

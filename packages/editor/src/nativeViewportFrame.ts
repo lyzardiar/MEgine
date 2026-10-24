@@ -1,7 +1,7 @@
 // Author: MiYu. Keep browser frame ownership complete while pruning inactive Scene render payloads.
 import type { NativeViewportProfilePayload } from './editorProfiler';
 import { createHierarchyActiveLookup } from './hierarchyActivation.ts';
-import { isSharedNativeViewportFrame, nativeViewportTransportProfile, releaseNativeViewportFrame } from './nativeViewportTransport.ts';
+import { isSharedNativeViewportFrame, nativeViewportTransportProfile, nativeViewportWorldRequestProfile, releaseNativeViewportFrame } from './nativeViewportTransport.ts';
 
 /** Browser-owned drawing and UI hit testing require the same snapshot as the native base image. */
 export function requiresBrowserViewportSnapshot(entities: readonly { active?: boolean; components: Record<string, unknown> }[]): boolean {
@@ -98,7 +98,7 @@ export function uploadNativeViewportFrame(buffer: ArrayBuffer, previous?: HTMLIm
     const context = image.getContext('2d');
     if (!context) throw new Error('Native viewport canvas is unavailable');
     context.putImageData(new ImageData(frame.rgba, frame.width, frame.height), 0, 0);
-    const profile = { ...frame.profile, sharedTransport: nativeViewportTransportProfile(buffer), uploadMs: performance.now() - started, nativeTransport: isSharedNativeViewportFrame(buffer) ? 'shared-buffer' as const : 'binary-ipc' as const };
+    const profile = { ...frame.profile, worldRequest: nativeViewportWorldRequestProfile(buffer), sharedTransport: nativeViewportTransportProfile(buffer), uploadMs: performance.now() - started, nativeTransport: isSharedNativeViewportFrame(buffer) ? 'shared-buffer' as const : 'binary-ipc' as const };
     return { width: frame.width, height: frame.height, hasAuthoredCamera: frame.hasAuthoredCamera, profile, image };
   } finally { releaseNativeViewportFrame(buffer); }
 }

@@ -3,6 +3,9 @@ import { invoke } from '@tauri-apps/api/core';
 
 type NativeSharedTransportProfile = { uiQueueMs: number; setupMs: number; allocateMs: number; copyMs: number; bytes: number; publicationReadyEpochMs?: number; pooled?: boolean; poolHit?: boolean; bufferId?: number };
 export type SharedNativeViewportTransportProfile = NativeSharedTransportProfile & { requestId: string; receivedEpochMs: number; getBufferMs: number; requestElapsedMs: number; publicationReadyToEventMs?: number; releaseMs?: number };
+export type NativeViewportWorldRequestProfile = { source: 'snapshot' | 'play-revision' | 'play-latest' | 'scene-cache'; sessionId?: number; revision?: number; attempts: number; fallback?: 'play-revision-expired' | 'scene-revision-expired'; expiredRequestMs?: number; snapshotPrepareMs?: number; elapsedMs: number };
+const worldRequestProfiles = new WeakMap<ArrayBuffer, NativeViewportWorldRequestProfile>();
+export function nativeViewportWorldRequestProfile(buffer: ArrayBuffer) { return worldRequestProfiles.get(buffer); }
 type SharedFrameEvent = { additionalData?: { nativeViewportRequest?: string; nativeViewportPooled?: boolean; nativeViewportLease?: string; nativeViewportTransport?: NativeSharedTransportProfile }; getBuffer(): ArrayBuffer };
 type SharedFrameWebView = { addEventListener(type: 'sharedbufferreceived', listener: (event: SharedFrameEvent) => void): void; releaseBuffer(buffer: ArrayBuffer): void };
 const pending = new Map<string, { resolve(buffer: ArrayBuffer): void; reject(error: unknown): void; timer: ReturnType<typeof setTimeout>; startedAt: number }>();
@@ -52,6 +55,7 @@ const requestEpoch = crypto.randomUUID();
 export function isSharedNativeViewportFrame(buffer: ArrayBuffer): boolean { return leases.has(buffer); }
 
 export function releaseNativeViewportFrame(buffer: ArrayBuffer): void {
+  worldRequestProfiles.delete(buffer);
   const lease = leases.get(buffer);
   if (lease) {
     const profile = transportProfiles.get(buffer), startedAt = performance.now();
@@ -124,17 +128,28 @@ export function requestNativeViewportFrame(command: string, args: Record<string,
 }
 
 /** Only an evicted revision falls back to the same owned browser snapshot; other failures propagate. */
-export async function requestRevisionedNativeViewport<T>(args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>, request: (args: Record<string, unknown>) => Promise<T>): Promise<T> {
-  try { return await request(args); }
+export async function requestRevisionedNativeViewport<T>(args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>, request: (args: Record<string, unknown>) => Promise<T>, completed?: (result: T, profile: NativeViewportWorldRequestProfile) => void): Promise<T> {
+  const started = performance.now();
+  const profile: NativeViewportWorldRequestProfile = { source: args.snapshot != null ? 'snapshot' : args.playRevision != null ? 'play-revision' : args.playSessionId != null ? 'play-latest' : 'scene-cache', sessionId: typeof args.playSessionId === 'number' ? args.playSessionId : undefined, revision: typeof args.playRevision === 'number' ? args.playRevision : undefined, attempts: 1, elapsedMs: 0 };
+  let result: T;
+  try { result = await request(args); }
   catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (args.sceneWorldKey != null && message.includes('Scene viewport revision expired')) return request({ ...args, ...snapshotFallback() });
-    if (args.playRevision == null || !message.includes('Play viewport revision expired')) throw error;
+    const sceneExpired = args.sceneWorldKey != null && message.includes('Scene viewport revision expired');
+    if (!sceneExpired && (args.playRevision == null || !message.includes('Play viewport revision expired'))) throw error;
+    profile.fallback = sceneExpired ? 'scene-revision-expired' : 'play-revision-expired';
+    profile.expiredRequestMs = performance.now() - started;
+    const preparing = performance.now(), snapshot = snapshotFallback();
+    profile.snapshotPrepareMs = performance.now() - preparing;
+    profile.attempts = 2;
     const { playSessionId: _session, playRevision: _revision, ...view } = args;
-    return request({ ...view, ...snapshotFallback() });
+    result = await request({ ...(sceneExpired ? args : view), ...snapshot });
   }
+  profile.elapsedMs = performance.now() - started;
+  completed?.(result, profile);
+  return result;
 }
 
 export function requestRevisionedNativeViewportFrame(command: string, args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>): Promise<ArrayBuffer> {
-  return requestRevisionedNativeViewport(args, snapshotFallback, next => requestNativeViewportFrame(command, next));
+  return requestRevisionedNativeViewport(args, snapshotFallback, next => requestNativeViewportFrame(command, next), (buffer, profile) => worldRequestProfiles.set(buffer, profile));
 }

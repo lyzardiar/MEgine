@@ -100,8 +100,30 @@ test('evicted revision falls back to its owned snapshot and other errors propaga
   assert.equal(fallbacks,1);assert.equal(requests[1].args.snapshot,snapshot);
   assert.equal(requests[1].args.playSessionId,undefined);assert.equal(requests[1].args.playRevision,undefined);
   assert.deepEqual([requests[1].args.width,requests[1].args.height],[1920,1080]);
+  const profile=transport.nativeViewportWorldRequestProfile(bytes);assert.equal(profile.source,'play-revision');assert.equal(profile.revision,4);assert.equal(profile.sessionId,7);assert.equal(profile.fallback,'play-revision-expired');assert.equal(profile.attempts,2);assert.ok(profile.elapsedMs>=profile.expiredRequestMs+profile.snapshotPrepareMs);
+  transport.releaseNativeViewportFrame(bytes);assert.equal(transport.nativeViewportWorldRequestProfile(bytes),undefined);assert.equal(profile.revision,4);
   error='Play session expired';await assert.rejects(transport.requestRevisionedNativeViewportFrame('game',{playSessionId:7,playRevision:4},fallback),/session expired/);
   assert.equal(fallbacks,1);
+});
+
+test('world request telemetry distinguishes direct sources and exact Scene fallback timings', async t => {
+  const {requestRevisionedNativeViewport}=await import('../src/nativeViewportTransport.ts?world-request-timings');
+  const {nativeViewportTimingSample}=await import('../src/editorProfiler.ts');
+  for(const [args,source]of [[{snapshot:{}},'snapshot'],[{playSessionId:3},'play-latest'],[{playSessionId:3,playRevision:0},'play-revision'],[{sceneWorldKey:'cache'},'scene-cache']]){
+    let recorded;const value={};assert.equal(await requestRevisionedNativeViewport(args,()=>assert.fail('unexpected fallback'),async()=>value,(result,profile)=>{assert.equal(result,value);recorded=profile;}),value);
+    assert.equal(recorded.source,source);assert.equal(recorded.attempts,1);assert.equal(recorded.fallback,undefined);assert.ok(recorded.elapsedMs>=0);
+    const sample=nativeViewportTimingSample({worldRequest:recorded});recorded.elapsedMs=-1;assert.ok(sample.worldRequest.elapsedMs>=0);
+  }
+  let tick=10; t.mock.method(performance,'now',()=>tick++);const args={sceneWorldKey:'a',width:20},requests=[],snapshot={entities:[]};let recorded;
+  await requestRevisionedNativeViewport(args,()=>({snapshot}),async next=>{requests.push(next);if(requests.length===1)throw Error('Scene viewport revision expired');return 1;},(_,profile)=>recorded=profile);
+  assert.equal(recorded.source,'scene-cache');assert.equal(recorded.fallback,'scene-revision-expired');assert.equal(recorded.expiredRequestMs,1);assert.equal(recorded.snapshotPrepareMs,1);assert.equal(recorded.elapsedMs,4);assert.equal(recorded.attempts,2);assert.equal(requests[1].sceneWorldKey,'a');assert.equal(requests[1].snapshot,snapshot);
+});
+
+test('failed requests and failed snapshot fallback never publish completion telemetry', async () => {
+  const {requestRevisionedNativeViewport}=await import('../src/nativeViewportTransport.ts');let completed=0,attempts=0;
+  await assert.rejects(requestRevisionedNativeViewport({playRevision:1},()=>({snapshot:{}}),async()=>{attempts++;throw Error(attempts===1?'Play viewport revision expired':'render failed');},()=>completed++),/render failed/);
+  assert.equal(attempts,2);assert.equal(completed,0);
+  await assert.rejects(requestRevisionedNativeViewport({playRevision:1},()=>{throw Error('snapshot failed');},async()=>{throw Error('Play viewport revision expired');},()=>completed++),/snapshot failed/);assert.equal(completed,0);
 });
 
 test('evicted filtered Scene revisions retain visibility and use their exact owned payload', async t => {

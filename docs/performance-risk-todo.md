@@ -1215,3 +1215,11 @@ Node局部基准以同进程加载提交51890a5的原Store和当前Store，读�
 局部CPU对照基线0752409，使用同一作者Amazonia7,410实体，经发送端Store迁移为真实会话版本3；双方解码、远端加载、指纹和面板快照纳入计时，4次预热、9组交替×6次，最终状态与指纹相等。组均值的中位数：仅时钟20.06675→5.30240ms；一个Transform19.86245→5.12345ms；全部7,403个Transform100.04758→90.16325ms。源文件为版本1，直接发送该旧版文档会进入兼容加载路径，相关诊断保存在session-reception-legacy-diagnostic.json，不作为当前会话链路结果。正式脚本／输入SHA／原始样本为 `tmp/docs-artifacts/editor-performance-risk/session-reception-benchmark.{mjs,json,log}`。
 
 接收器额外保留解析后的冻结树，Store弱缓存规范化记录；这是CPU和内存之间的取舍，尚未测量进程总内存或长期回收。没有新的原生FPS结论。正常运行、窗口重开、换图、Stop、输入延迟、原生版本回退与总内存继续纳入当前批次集成验证。
+
+### 第六十四阶段：原生视口世界请求观测
+
+完成帧的profile新增worldRequest：区分完整快照、指定原生版本、最新运行世界及编辑缓存，记录请求会话／版本、尝试次数、版本过期原因、首次失败耗时、回退快照准备耗时及总请求耗时。数据跟随帧buffer传入Profiler，释放buffer后不再保留其索引；紧凑timings响应复制字段，失败请求不发布成功观测。不改变原生版本选择、回退内容或历史容量。
+
+18项传输／步骤观测定向检查通过，QA脚本语法检查通过。新增检查覆盖直接来源分类、Scene版本过期的准确分段时间、Play过期／buffer释放、失败的快照与渲染不记成功、Profiler字段隔离。证据为 `tmp/docs-artifacts/editor-performance-risk/world-request-tests.log`。
+
+当前三项合并原生验证：增量传输、增量解析／规范化复用、世界请求观测。`qa-frost-map-session.mjs --detached-only` 新增Play中新开Game窗口、完整请求timings、Inspector操作至主窗口观察耗时、四个阶段的编辑器及后代进程内存采样。操作耗时包含自动化调用和轮询，不等于硬件输入到显示延迟；工作集求和可能重复统计共享页，不能称为物理内存占用。合并构建及实际结果另记。

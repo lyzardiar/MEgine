@@ -676,3 +676,9 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 快速检查完成：46项相关测试最终通过，初次两项夹具错误修正后定向复查；TypeScript通过。命令：`node --test packages/editor/tests/sessionSceneReception.test.mjs packages/editor/tests/sessionSceneDelta.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs packages/editor/tests/remoteRuntimeReuse.test.mjs packages/editor/tests/playWorldSync.test.mjs`；两项补测用 `--test-name-pattern="runtime store|behavior entity"`，追加版本断言用 `--test-name-pattern="runtime store"`。局部Amazonia CPU对照及证据见performance-risk-todo第六十三阶段。
 
 状态：实现完成，与任务1合并待原生验证；当前累计2/3，本次未构建Release或重复原生QA。合并覆盖任务1场景，追加相机聚焦／操控、运行组件编辑后后续帧不回退、行为字段更新、窗口关闭重开与地图往返后的总内存观察。确认视口版本引用与显示帧一致；局部CPU下降不替代真实多窗口帧率和输入延迟验收。
+
+### 当前批次任务3/3：原生视口世界请求观测
+
+变更：nativeViewportTransport／nativeViewportFrame／editorProfiler，传输测试，以及qa-frost-map-session和sample-native-qa-memory.ps1。worldRequest明确指定版本、直接快照、过期回退、尝试次数和请求耗时。18项传输／步骤观测检查通过，QA语法通过。命令：`node --test packages/editor/tests/nativeViewportTransport.test.mjs packages/editor/tests/playStepTiming.test.mjs`。
+
+三项实现已累计，提交后合并执行前端及原生Release构建，再运行 `node scripts/qa-frost-map-session.mjs --detached-only`。验收覆盖三窗口编辑／播放／重载／Stop，Play中新窗口加入、请求版本／回退采样和进程树内存。脚本操作至主窗口观察时间仅作为自动化链路指标；真实输入到显示延迟、强制原生乱序和长期回收另保留。结果待补记。
