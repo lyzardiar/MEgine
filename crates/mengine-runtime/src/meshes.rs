@@ -221,6 +221,7 @@ impl RuntimeMeshCache {
         let mut frame_keys = HashSet::new();
         let mut checked_poses = HashSet::new();
         for object in objects {
+            if object.material.particle.is_some() { continue; }
             let key = object.mesh_key.trim();
             if key.starts_with("meshpatch:") {
                 if let Some(used) = self.pose_usage.get_mut(key) { used.frame = self.frame; } else { self.pose_usage.insert(key.into(), PoseUsage { frame:self.frame, bytes:0 }); }

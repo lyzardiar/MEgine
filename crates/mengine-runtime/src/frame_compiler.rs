@@ -173,7 +173,7 @@ impl FrameCompiler<'_> {
         let has_authored_camera = active_camera.entity.is_some();
         let has_scene_camera = has_authored_camera || request.view_camera.is_some();
         phase("Camera selection");
-        let objects = if has_scene_camera {
+        let mut objects = if has_scene_camera {
             collect_objects(request.world, request.hierarchy, self.materials)
         } else {
             Vec::new()
@@ -223,6 +223,8 @@ impl FrameCompiler<'_> {
             Vec::new()
         };
         phase("World sprites");
+        let imported_particles = self.particles.imported.collect(request.world, request.hierarchy, camera, request.delta_seconds, self.textures.project_root());
+        if has_scene_camera { objects.extend(imported_particles); }
         let particle_primitives = self.particles.update_and_collect_world_with_hierarchy(
             request.world,
             request.hierarchy,

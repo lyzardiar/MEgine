@@ -1,6 +1,8 @@
 //! Asset database, handles, glTF import helpers.
 
 mod animation;
+pub mod particle_definition;
+pub use particle_definition::*;
 mod animator;
 mod asset_sidecar;
 mod avatar_mask;

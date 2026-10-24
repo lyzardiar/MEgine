@@ -1589,6 +1589,7 @@ impl Component for ParticleEmitter2D {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ParticleEmitter3D {
+    pub definition: String,
     pub playing: bool,
     pub looping: bool,
     pub duration: f32,
@@ -1619,6 +1620,7 @@ pub struct ParticleEmitter3D {
 impl Default for ParticleEmitter3D {
     fn default() -> Self {
         Self {
+            definition: "".into(),
             playing: true,
             looping: true,
             duration: 5.0,

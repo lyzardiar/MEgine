@@ -89,6 +89,7 @@ pub struct SurfaceShaderParameterBinding {
 
 #[derive(Clone, Debug)]
 pub struct RenderMaterial {
+    pub particle: Option<Arc<crate::ParticleRenderData>>,
     pub base_color: [f32; 4],
     pub metallic: f32,
     pub roughness: f32,
@@ -205,6 +206,7 @@ pub struct MaterialPipelinePrewarmReport {
 impl Default for RenderMaterial {
     fn default() -> Self {
         Self {
+            particle: None,
             base_color: [0.8, 0.8, 0.8, 1.0],
             metallic: 0.0,
             roughness: 0.5,
@@ -656,6 +658,7 @@ fn material_has_missing_textures(
 pub struct SpatialCullingStats { pub total: usize, pub camera_visible: usize, pub shadow_visible: usize, pub submitted: usize }
 
 pub struct Renderer {
+    particle_renderer: crate::particle_render::ParticleRenderer,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     surface: Option<wgpu::Surface<'static>>,
@@ -1279,6 +1282,7 @@ impl Renderer {
         let (depth_texture, depth_view) = create_depth(&device, config.width, config.height, sample_count);
         let mut meshes = HashMap::new();
         meshes.insert("cube".into(), MeshGpu::unit_cube(&device));
+        let particle_renderer = crate::particle_render::ParticleRenderer::new(&device, &material_texture_layout, sample_count);
         let post_process = HdrPostProcess::new(&device, format, config.width, config.height, sample_count);
         let ui = UiRenderer::new(
             &device,
@@ -1348,6 +1352,7 @@ impl Renderer {
             sky,
             post_process,
             ui,
+            particle_renderer,
             clear: ClearColor {
                 r: 0.1,
                 g: 0.1,
@@ -1690,6 +1695,7 @@ impl Renderer {
             self.ensure_material_texture_set(&object.material);
         }
         self.prune_material_pipeline_cache();
+        self.particle_renderer.prepare(&self.device, &self.queue, camera, objects);
         self.submission_profile.material_prepare_ms += material_started.elapsed().as_secs_f64() * 1000.0;
         let acquire_started = Instant::now();
         let surface_frame = match target {
@@ -1838,6 +1844,11 @@ impl Renderer {
 
             for index in draw_order {
                 let object = &objects[index];
+                if let Some(particle) = object.material.particle.as_deref() {
+                    let texture_key = MaterialTextureSetKey::from(&object.material);
+                    if let Some(textures) = self.material_texture_sets.get(&texture_key) { self.particle_renderer.draw(&mut pass, index, particle, textures); }
+                    continue;
+                }
                 let Some(mesh) = self.meshes.get(&object.mesh_key) else {
                     continue;
                 };
@@ -2788,10 +2799,12 @@ fn sort_render_indices(indices: &mut [usize], objects: &[RenderObject], camera_p
                 if !left_object.material.transparent || !right_object.material.transparent {
                     return left.cmp(right);
                 }
-                let left_distance =
-                    (left_object.model.w_axis.truncate() - camera_position).length_squared();
-                let right_distance =
-                    (right_object.model.w_axis.truncate() - camera_position).length_squared();
+                let distance = |object: &RenderObject| match object.material.particle.as_deref() {
+                    Some(particle) => (Vec3::from_array(particle.sorting_position) - camera_position).length() + particle.sorting_fudge,
+                    None => (object.model.w_axis.truncate() - camera_position).length(),
+                };
+                let left_distance = distance(left_object);
+                let right_distance = distance(right_object);
                 right_distance.total_cmp(&left_distance)
             })
             .then_with(|| left.cmp(right))
