@@ -1273,3 +1273,19 @@ B001/map-session-1792838172058.json的7434实体多窗口重开／版本追赶�
 日志mesh-input-entry-{tests,benchmark}.log、benchmark-summary.json和旧实现／基准源码在tmp/docs-artifacts/editor-performance-risk；摘要记录实际场景和新实现SHA256。临时基准模块入口已移除，生产和提交内容没有本机绝对路径测试依赖。定向命令为cargo test -p mengine-runtime --release --lib mesh_inputs:: -- --nocapture；手动基准的旧实现仅用于本地对照，不作为生产依赖。
 
 当前2677114、6148060及本项达到3/3，开始统一当前前端及Tauri Release构建。合并验证实际DotA／姿态选取／辅助节点／多窗口／Stop重开、六段CPU数据与界面，并记录持续FPS及进程树内存；不重复不受影响的地图转换与全量资产检查。实际运行性能仍以61990bf最近原生结果为准，当前优化尚待本批集成验收。
+
+### 第一百零四至一百零六阶段合并原生验证
+
+2677114、6148060、9c251d1已提交推送。当前前端Vite构建3.17秒、Tauri Release构建1分19秒通过，仅有已有world_from_snapshot未使用警告。固定程序tmp/docs-artifacts/editor-performance-risk/build-9c251d1/mengine-editor-tauri.exe的SHA256为3729e87303b753183130a5d551789017fad541d88b41d9acdaf4401b53940b5f，receipt.json记录源码及前端摘要。
+
+最终B001/spatial-picking-1792840650696.json的5项模型热更／父变换／原点在相机后／姿态推进及锁定过滤／透明切换检查通过，0控制台错误、正常退出。透明夹具包含独立可见的非网格辅助节点，alpha 1→0→1对应浏览器drawItems 0→1→0，三个状态均能选取原生网格；透明图像已检查。首轮spatial-picking-1792840466302在旧网格条目计数断言失败，前四项通过；该断言未表达当前浏览器普通网格被原生token处理的范围。首轮清理等待超时，随后确认其QA进程和discovery已退出；最终复验使用同一固定程序。当前夹具验证实际非网格浏览器分支，未放宽网格选取要求。
+
+B001/arbitrary-map-1792840702987.json以实际DotA_v6.83d.w3x匹配缓存进入14437实体，2.279秒；进度、地图选取、返回、Stop及同路径关闭重开通过。Game59.93／Scene51.70FPS，Scene最近240个间隔均值19.344ms、P95 33.8ms，原生渲染均值16.453ms；前次Scene46.56FPS、原生16.614ms，浏览器paint采样桶均值9.382→8.354ms。此次短窗口显示Scene改善，不能严格归因单项或宣称稳定60FPS。Game前次60.05FPS，本次相近。Scene仍为5376总对象／5342可见／4675网格调用／153材质来源及解析，没有新增LOD或削减可见几何。
+
+DotA Scene覆盖305次实际绘制的CPU分段加权均值为请求派发0.440ms、世界准备4.826ms、世界合成0.599ms、选择与操作柄0.064ms、UI 2.380ms、最终合成0.024ms，合计8.332ms；Game覆盖294次、加权合计3.180ms。每个采样桶六段合计等于其paintMs，覆盖数与完整绘制数一致，汇总按覆盖次数加权、峰值等于各桶最大值的断言通过。请求后跳过绘制的唤醒、异步原生执行及上传回调仍不包含在这些CPU范围。新增--profiler-ui实际切换Profiler的Scene／CPU页并截图，表格与选中状态已检查；该图取暂停后最近桶，不与前述连续运行均值混同。
+
+3次地图UI动作与选取RPC往返186.07／175.04／155.43ms，不是物理输入延迟。进程树PrivateBytes关闭前／欢迎页／重开为6779.38／2508.22／3518.96MiB，关闭释放仍有效，短流程不能证明长期无泄漏。错误断言位于关闭重开之前。Game与Scene图像已检查。
+
+B001/map-session-1792840827243.json通过7434实体的三窗口重开／修订追赶、Pause／Step／快捷键、Stop、undo／redo及停靠，0控制台错误、正常退出。既有固定等待及内存采样后，额外323ms出现18个新Game样本。Scene57.47／Game55.89FPS，前次55.78／56.69；原生渲染均值8.530／10.059ms，浏览器paint桶均值5.777／2.116ms。Scene覆盖298次绘制、CPU世界准备4.042ms、UI 1.082ms；Game覆盖272次绘制。六段覆盖／加权／合计断言通过。进程树PrivateBytes为5207.35／6910.75／7973.09／6404.84MiB（detach前／三窗口／重载／Stop停靠），结束仍高于起点，长期驻留待查；Scene图像已检查。
+
+最终三项QA均正常退出，用户编辑器未关闭，EPERM的WebView缓存保留。日志paint-batch-*、分段校验脚本assert-paint-batch-profile.py及摘要paint-batch-profile-*.json均在tmp/docs-artifacts/editor-performance-risk，B001报告及截图仅在tmp/docs-artifacts/testing-batches。复现沿用qa-viewport-spatial-picking --opacity-cases --pose-cases、qa-frost-map-import的实际DotA缓存／profile／pick／project-reopen参数（另加--profiler-ui）、qa-frost-map-session --detached-profile-only；不重复无关转换和资产全检。本编辑器批次验证完成，下一批0/3。下一重点为浏览器世界准备及UI，稳定60FPS、长期驻留、LOD、姿态聚焦范围、alpha选取及完整JASS／War3保真继续待办。

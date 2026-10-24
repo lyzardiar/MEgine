@@ -14,6 +14,7 @@ const cacheProject=process.argv.includes('--cache-project')?path.resolve(process
 const profileMap=process.argv.includes('--profile-map');
 const pickMap=process.argv.includes('--pick-map');
 const projectReopen=process.argv.includes('--project-reopen');
+const profilerUi=process.argv.includes('--profiler-ui');
 let expectedMapTitle='任意岛屿';
 const label='arbitrary-map-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
@@ -55,6 +56,16 @@ async function profileImportedMap(){
     assert.ok(profile.nativeProfileCount>=20,source+' must present fresh imported-map frames');
     report.liveProfiles[source]={elapsedMs,...profile};
     const shot=await query('view.screenshot',{target:source,maxSize:1280});fs.writeFileSync(path.join(out,label+'-live-'+source+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));
+  }
+  if(profilerUi){
+    await execute('panel.focus',{kind:'profiler'});await sleep(300);
+    let page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});
+    const source=page.elements.find(e=>e.selector?.includes('profiler-source-tab-scene'));assert.ok(source,'Profiler Scene source tab');
+    await execute('window.ui_click',{windowLabel:'main',selector:source.selector,expectedSnapshotRevision:page.snapshotRevision});await sleep(300);
+    page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});const cpu=page.elements.find(e=>e.name==='CPU'&&e.role==='tab');assert.ok(cpu,'Profiler CPU module tab');
+    await execute('window.ui_click',{windowLabel:'main',selector:cpu.selector,expectedSnapshotRevision:page.snapshotRevision});await sleep(300);
+    const shot=await query('view.window_screenshot',{windowLabel:'main',maxSize:1920});fs.writeFileSync(path.join(out,label+'-profiler-cpu.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));
+    report.profilerCpuUi={source:'scene',snapshot:await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000})};
   }
   await execute('panel.focus',{kind:'game'});
   report.checks.push('Imported map advances continuously in Game and Scene with five-second profiler windows without Agent polling; native timing buffer is limited to the most recent 240 samples');

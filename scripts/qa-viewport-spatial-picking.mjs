@@ -36,6 +36,7 @@ function mesh(offset,zOffset=0){
   return result;
 }
 write('Assets/Models/pick.gltf',mesh(0));
+if(opacityCases){const scene=JSON.parse(fs.readFileSync(path.join(project,'Assets/Scenes/Main.mscene'),'utf8'));scene.world.entities.push({entity:6,name:'QA browser helper',components:{Transform:transform([-1.5,1,0])}});write('Assets/Scenes/Main.mscene',scene);}
 Object.assign(process.env,{MENGINE_AGENT_EDITOR_MODE:'auto-background',MENGINE_EDITOR_CONFIG_DIR:path.join(root,'config'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows'});fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(name,args={})=>{const result=await bridgeExecute(name,args,{requestId:crypto.randomUUID(),timeoutMs:120000});assert.ok(result.ok,JSON.stringify(result));return result.result;};
