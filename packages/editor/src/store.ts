@@ -89,7 +89,7 @@ import {
   type EditorUndoService,
   type EditorUndoToken,
 } from './editorUndoService';
-import { sceneContentFingerprint } from './sceneFingerprint';
+import { createSceneFingerprint, sceneContentFingerprint } from './sceneFingerprint';
 import { normalizeEntityTag, normalizeGameLayerIndex } from './sortingLayerModel';
 import type { GizmoMode } from './editorTool';
 import {
@@ -180,6 +180,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let selectionAnchor: number | null = null;
   let playSpin = 0;
   let editEntities: EntityRec[] = [];
+  let remoteAuthorFingerprintEntities: EntityRec[] | null = null;
+  const fingerprintRemoteAuthor = createSceneFingerprint();
   let playEntities: EntityRec[] | null = null;
   let clearColor: [number, number, number, number] = [0.22, 0.24, 0.28, 1];
   let frame = 0;
@@ -213,6 +215,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let playPending: Promise<void> = Promise.resolve();
   let playBusy = false;
   let playGeneration = 0;
+  let remotePlayEditVersion = 0, remotePlayNeedsUpload = false;
   const playFrameListeners = new Set<() => void>();
   let playError: unknown = null;
   let playInput = emptyPlayInput();
@@ -268,7 +271,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let playWorldSessionId: number | undefined;
   let playWorldSimulationTime = 0;
   const playWorldMatches = () => playWorldSync.matches(playEntities, playClearColor ?? clearColor);
-  const nativePlaySessionId = (verified?: boolean) => { const sessionId = playRuntime?.sessionId ?? remotePlaySessionId; return mode !== 'edit' && (playRuntime != null || playWorldRevision != null) && (playWorldRevision == null || playWorldSessionId === sessionId) && (verified ?? playWorldMatches()) ? sessionId : undefined; };
+  const nativePlaySessionId = (verified?: boolean) => { if (remotePlayNeedsUpload) return undefined; const sessionId = playRuntime?.sessionId ?? remotePlaySessionId; return mode !== 'edit' && (playRuntime != null || playWorldRevision != null) && (playWorldRevision == null || playWorldSessionId === sessionId) && (verified ?? playWorldMatches()) ? sessionId : undefined; };
   const nativeWorldReference = (verifiedWorld?: { entities: EntityRec[]; clearColor: WorldSnapshotView['clearColor'] }) => {
     if (playWorldRevision == null || playWorldSessionId == null || playWorldSessionId !== (playRuntime?.sessionId ?? remotePlaySessionId)) return undefined;
     const sessionId = nativePlaySessionId(verifiedWorld ? true : undefined), world = sessionId != null ? verifiedWorld ?? playWorldSync.viewportSnapshot() : undefined;
@@ -295,6 +298,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   };
 
   const stopPlay = () => {
+    remoteAuthorFingerprintEntities = null;
+    remotePlayNeedsUpload = false;
     playGeneration++;
     playRuntime?.stop();
     playBusy = false;
@@ -315,18 +320,19 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   const runPlayFrame = (dt: number) => {
     if (!playRuntime || !playEntities) return;
     const started = performance.now();
-    const generation = playGeneration;
+    const generation = playGeneration, editVersion = remotePlayEditVersion;
     const input = structuredClone(playInput);
     playInput.uiSubmits = [];
     playInput.pressedKeys = []; playInput.releasedKeys = [];
     playInput.pressedButtons = []; playInput.releasedButtons = []; playInput.pointerDelta = [0, 0];
-    const snapshot = playRuntime.retainsWorld && playWorldMatches() ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: (playClearColor ?? clearColor).slice() as WorldSnapshotView['clearColor'], selected: primarySelected() };
+    const snapshot = playRuntime.retainsWorld && !remotePlayNeedsUpload && playWorldMatches() ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: (playClearColor ?? clearColor).slice() as WorldSnapshotView['clearColor'], selected: primarySelected() };
     const prepared = performance.now();
     const runtime = playRuntime;
     trackPlayOperation(runtime.step(snapshot, input, dt).then((result) => {
-      if (generation !== playGeneration || mode === 'edit') return;
+      if (generation !== playGeneration || mode === 'edit' || editVersion !== remotePlayEditVersion) return;
       if (playRuntime?.quitRequested) { stopPlay(); return; }
       const accepting = performance.now();
+      remotePlayNeedsUpload = false;
       acceptRuntimeWorld(result);
       const completed = performance.now();
       playStepRequestMs = completed - started;
@@ -971,14 +977,15 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       gameAspect?: unknown;
       gameOrientation?: unknown;
     };
+    const preserveAuthoring = retainRemoteRuntime && playRuntime != null && mode !== 'edit';
     if (recordUndo) pushUndo('Load Scene');
-    else {
+    else if (!preserveAuthoring) {
       undoService.clear('scene');
       lastUndoState = null;
     }
     behaviourRunner.unmount();
     const ents = (data.world?.entities ?? data.entities ?? []) as EntityRec[];
-    if (!retainRemoteRuntime) { privatePlayEntities = null; ownedPlayWorld = undefined; }
+    if (!retainRemoteRuntime) { privatePlayEntities = null; ownedPlayWorld = undefined; remoteAuthorFingerprintEntities = null; }
     if (!retainRemoteRuntime || mode === 'edit') remoteAuthorCopies = new WeakMap();
     const loadedEntities = ents.map((e, i) =>
       normalizeEntity({
@@ -993,6 +1000,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     if (retainRemoteRuntime) {
       playWorldSync.capture(loadedEntities, clearColor);
       retained = retainPlayWorld({ ...playWorldSync.viewportSnapshot()!, frame: data.world?.frame ?? frame, simFrame: data.world?.frame ?? frame, simulationTime: data.world?.simulationTime ?? 0, selected: null }, ownedPlayWorld);
+      remoteAuthorFingerprintEntities = retained.entities;
       editEntities = retained.entities.map(entity => {
         let editable = remoteAuthorCopies.get(entity);
         if (!editable) { editable = cloneRetainedPlayRecord(entity); remoteAuthorCopies.set(entity, editable); }
@@ -1156,7 +1164,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     /** Read-only hierarchy search source, without copying large mesh/component payloads. */
     hierarchySearchSource(): readonly EntityRec[] { return mode === 'edit' ? editEntities : this.presentationSnapshot().entities.map(entity => isRetainedPlayRecord(entity) ? entity as EntityRec : normalizeEntity(entity)); },
     sceneContentFingerprint() {
-      return sceneContentFingerprint(editEntities, clearColor);
+      return mode !== 'edit' && remoteAuthorFingerprintEntities ? fingerprintRemoteAuthor(remoteAuthorFingerprintEntities, clearColor) : sceneContentFingerprint(editEntities, clearColor);
     },
     setAnimationPreview(root: number, samples: AnimationPreviewSample[]) {
       if (mode !== 'edit' || !editEntities.some((entity) => entity.entity === root)) return false;
@@ -1699,6 +1707,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         mode = 'play';
         return;
       }
+      remoteAuthorFingerprintEntities = null;
+      remotePlayNeedsUpload = false;
       animationPreview = null;
       timelinePreview = null;
       playEntities = structuredClone(editEntities);
@@ -1708,10 +1718,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (!playRuntime) behaviourRunner.mount(playEntities);
       playInput = emptyPlayInput();
       playError = null;
-      const generation = ++playGeneration;
+      const generation = ++playGeneration, editVersion = remotePlayEditVersion;
       if (playRuntime) trackPlayOperation(playRuntime.start(this.snapshot()).then(result => {
         if (generation === playGeneration && mode !== 'edit') {
-          if (result) {
+          if (result && editVersion === remotePlayEditVersion) {
             acceptRuntimeWorld(result);
           }
           if (playEntities) behaviourRunner.mount(playEntities);
@@ -2930,7 +2940,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return true;
     },
     loadRemoteSceneJson(json: string, remoteMode: EditorMode, nativeSessionId?: number, nativeRevision?: number) {
+      const authoring = remoteMode !== 'edit' && mode !== 'edit' && playRuntime != null ? { entities: editEntities, clearColor, nextId, fingerprintEntities: remoteAuthorFingerprintEntities } : null;
       const retained = applySceneJson(json, remoteMode, false, true, remoteMode !== 'edit');
+      remotePlayEditVersion++;
+      remotePlayNeedsUpload = remoteMode !== 'edit' && playRuntime != null;
+      if (authoring) { editEntities = authoring.entities; clearColor = authoring.clearColor; nextId = authoring.nextId; remoteAuthorFingerprintEntities = authoring.fingerprintEntities; }
       remotePlaySessionId = nativeSessionId;
       if (retained) acceptRuntimeWorld({ ...retained, nativeSessionId, nativeRevision }, retained);
       else {

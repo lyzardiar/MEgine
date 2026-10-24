@@ -195,6 +195,7 @@ function sameAssetPath(left: string | null, right: string): boolean {
 
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
+  | { type: 'playback-request'; sender: string; sceneName: string | null; mode: EditorMode; sessionId?: number; action: PlaybackAction }
   | { type: 'scene-camera'; sender: string; sceneName: string | null; camera: SceneCamera }
   | { type: 'scene-selection'; sender: string; sceneName: string | null; stateId: string; revision: number; selectedIds: number[] }
   | { type: 'play-input'; sender: string; sessionId: number; input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'viewport' | 'buttons'>> }
@@ -1144,6 +1145,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   logRef.current = (message) => log(message);
 
   const playback = async (action: PlaybackAction) => {
+    if (props.detachedPanel) { syncChannel.current?.postMessage({ type: 'playback-request', sender: syncSender.current, sceneName: sceneNameRef.current, mode: store.mode, sessionId: store.playSessionId, action } satisfies WorkspaceSyncMessage); return; }
     try {
       if (action !== 'toggle') await store.waitForPlayRuntime();
       if (!applyPlaybackAction(store, action)) return;
@@ -1300,6 +1302,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           store.selectMany(message.selectedIds, 'replace');
           refreshSelection(false);
         }
+        return;
+      }
+      if (message.type === 'playback-request') {
+        if (!props.detachedPanel && message.sceneName === sceneNameRef.current && message.mode === store.mode && message.sessionId === store.playSessionId && ['toggle', 'pause', 'step'].includes(message.action)) void playback(message.action);
         return;
       }
       if (message.type === 'play-input') {
@@ -1478,6 +1484,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (message.type !== 'scene-state' || message.timestamp < lastSceneTimestamp.current) return;
       if (message.timestamp === lastSceneTimestamp.current && (message.stateId ?? '') <= (sceneSyncId.current ?? '')) return;
+      if (!props.detachedPanel && (message.mode !== store.mode || message.mode !== 'edit' && (message.playSessionId !== store.playSessionId || message.sceneName !== sceneNameRef.current))) {
+        lastSceneTimestamp.current = message.timestamp;
+        broadcastScene(true);
+        return;
+      }
       try {
         applyingRemote.current = true;
         syncReady.current = true;

@@ -1168,4 +1168,26 @@ Play模拟、Game和连续Scene请求按60Hz固定时间轴推进截止时刻。
 
 Node局部基准以同进程加载提交51890a5的原Store和当前Store，读取同一作者Amazonia地图7,410实体。预热2轮、9组交替×6次；两侧解析结果和作者指纹一致。接收加载本身26.6516→14.0709ms；包含实际接收端的指纹计算和面板快照68.4152→38.1849ms。只改一个Transform时完整接收链路69.2313→38.2900ms；全部7,403个Transform变化时93.0478→82.9847ms。稳定输入下7,410个冻结实体身份复用。仍有全量JSON.parse、规范化和作者指纹遍历；不宣称无分配、恒定时间、进程内存下降或FPS改善。
 
-本次没有前端／原生打包或真实多窗口QA，现有EXE不含本项。与第五十九阶段累计两项，后续相关任务合并验收。证据：tmp/docs-artifacts/editor-performance-risk/remote-runtime-reuse-{tests.log,app-tests.log,types.log,benchmark.mjs,benchmark.json,benchmark-final.log}；基准保留输入SHA及原始分组。后续重点是作者指纹成本、接收消息增量化和原生跨窗口交互延迟／竞态／总内存。
+本项与第五十九／六十一阶段已合并构建，正常原生多窗口覆盖见第六十一阶段。证据：tmp/docs-artifacts/editor-performance-risk/remote-runtime-reuse-{tests.log,app-tests.log,types.log,benchmark.mjs,benchmark.json,benchmark-final.log}；基准保留输入SHA及原始分组。后续重点是作者指纹成本、接收消息增量化和原生跨窗口交互延迟／竞态／总内存。
+
+
+## 第六十一阶段远端作者指纹与原生修改归属
+
+独立窗口的运行作者镜像使用已冻结实体计算规范化JSON片段，WeakMap仅复用未变化实体；输出与原完整规范化指纹逐字节一致。颜色、顺序、替换和元数据继续参与；可变作者场景、稀疏数组及自定义全局序列化走原完整路径。Stop、进入本地Play或普通场景加载解除远端作者指纹引用，运行组件编辑不污染作者脏状态。
+
+主窗口拥有原生运行会话时，收到跨窗口运行内容保留原作者场景、背景色、下一实体ID及撤销历史，仅替换运行世界。收到的数据标记为待上传；在原生接受前不发布原生世界引用。模拟提交记录远端修改版本，较早的启动／单步结果不会覆盖后来到达的编辑，下一次模拟上传当前完整运行世界。只有当前修改版本的原生结果恢复已同步状态。
+
+38项定向检查通过：sceneFingerprint、remoteRuntimeReuse、workspaceSelectionSync、playWorldSync的去重用例，含播放归属和过期模式消息校验。新增覆盖规范化字节一致、缓存／可变数据、镜像与本地Play切换，以及原生启动和步骤在途时收到编辑、修改上传、后续免上传、Stop作者还原与撤销能力。命令与结果在tmp/docs-artifacts/editor-performance-risk/remote-{fingerprint-tests.log,fingerprint-final.log,edit-ownership-tests.log,edit-authoring-tests-final.log}。
+
+局部Node对照基线ec60762、同一作者Amazonia7,410实体，2轮预热、9组交替×6次，结果相等。包含接收、指纹和面板快照：稳定输入48.7993→19.1200ms；一个Transform变化42.3295→17.3810ms；全部7,403个Transform变化84.8907→84.0420ms，密集变化基本持平。单独接收加载15.8239→17.0311ms，不能据此宣称所有阶段提速。完整JSON解析和规范化仍存在；缓存保留规范化字符串，不把CPU结果解释成FPS或进程内存下降。证据remote-fingerprint-benchmark.{mjs,json,log}记录输入SHA和全部样本。
+
+本阶段与第五十九／六十阶段合并原生多窗口验收，使用qa-frost-map-session.mjs --detached-only。范围是原菜单载入Amazonia、独立Inspector双向变换编辑与原生保留、独立Scene／Game呈现、暂停／单步、换图重载、窗口重开、Stop还原、停止后作者编辑和正常窗口回收；不重复全库、全部地图或资源热更。原生结果另记。
+
+
+播放模式由主窗口负责。独立窗口的播放操作通过携带场景、模式和会话的请求发往主窗口；过期请求不执行。主窗口拒绝独立窗口发来的不同模式、会话或运行场景的完整状态，并用更高同步序号重新发布当前状态，避免晚到的窗口启动回复把Stop后的编辑状态切回Pause。复现报告1792799649484记录了Stop实体还原后主窗口再次处于pause、Inspector显示旧运行相机的实际故障；新定向测试覆盖同类乱序与多窗口收敛。
+
+最终原生报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792799928856.json` 全部通过，0 error、正常退出。EXE SHA256 `f4b4b4d323fc70630932d4aa7a73e7797b90d75d4aec03786a7f8a37b8845bf0`，最终Release构建1分09秒，仅既有world_from_snapshot未使用告警。真实独立Inspector编辑经3步原生模拟保留，主窗口恢复同步到Inspector；Scene／Game持续呈现并截图；暂停稳定、单步前进，独立Game的Ctrl+Shift+P能恢复／暂停主窗口；地图重载、Inspector重开、Stop全部作者实体还原、停止后独立Inspector编辑／恢复及窗口停靠均通过。最终Scene／Game截图已目视查看。测试WebView缓存因EPERM保留在隔离runtime目录，发现文件已清理。
+
+三独立面板、7,411实体、5秒窗口：Scene平均5.9700次呈现/秒（29个间隔），Game4.8956（24个间隔），请求平均169.07／203.46ms，而原生渲染19.63／21.39ms。多窗口性能仍明显不足；这与此前单视口近60次/秒不是同一负载，不能宣称解决流畅度。Game最新profile未带worldRevision，需要继续核对是否走了完整snapshot渲染路径。汇总为tmp/docs-artifacts/editor-performance-risk/remote-sync-native-summary.json。
+
+此前失败报告保留：1792799235274的QA用了Play不可调用的component.set，改为主窗口Inspector；1792799314125完成运行阶段后被QA固定Camera名称假设中断；后续authoring-only补测暴露晚到pause状态，诊断代码的空名称过滤错误也已修正。这些整份报告均不记为通过。修复播放归属后重新执行受影响的多窗口专项，最终报告覆盖全部正常路径；未重跑全库或资源热更。真实输入延迟分布、总内存、原生强制在途竞态和长期／跨机器性能继续待测。

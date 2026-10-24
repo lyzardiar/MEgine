@@ -640,11 +640,23 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 
 变更：store.ts、sessionSceneSerialization.ts和对应测试。会话采用紧凑JSON，复用冻结实体的序列化片段；实时直接编辑回退，作者场景落盘格式保持不变。Node局部结果15.9624→4.9892ms／消息6,062,161→3,347,805字节，范围与内存口径见performance-risk-todo第五十九阶段。
 
-快速检查：相关31项与TypeScript通过。未重建原生编辑器；当前EXE不包含此优化。待合并验证：同时打开独立Scene、Game和Inspector，持续Play／Pause／Step／Stop，主窗口和独立窗口分别编辑组件，切换地图／重开，核对选择、相机、动画、原生session/revision及停止恢复；记录主窗口输入延迟、BroadcastChannel传输与接收端重建、窗口关闭后的内存。测试不重复无关地图转换／全库资源遍历。
+快速检查：相关31项与TypeScript通过。现已与第六十／六十一阶段合并完成正常原生多窗口覆盖，见后续验收结果。原定验证范围：同时打开独立Scene、Game和Inspector，持续Play／Pause／Step／Stop，主窗口和独立窗口分别编辑组件，切换地图／重开，核对选择、相机、动画、原生session/revision及停止恢复；记录主窗口输入延迟、BroadcastChannel传输与接收端重建、窗口关闭后的内存。测试不重复无关地图转换／全库资源遍历。
 
 
 ### B001 独立窗口运行副本复用
 
 变更：store.ts远端运行加载与私有副本复用；App接收发布保留的面板快照；remoteRuntimeReuse及workspaceSelectionSync定向测试。相关36项与TypeScript通过，Node接收链路的静态／单Transform／全Transform对照见performance-risk-todo第六十阶段。
 
-状态：实现与快速检查完成，原生待合并。与第五十九阶段发送端合计两项，当前EXE尚不包含这两项。合并验收同时覆盖独立Scene／Game／Inspector的持续播放、双向组件编辑后下一消息覆盖、展开状态／选择／冻结旧帧、换图／重开／Stop后再次编辑、原生session/revision、收到乱序旧消息、关闭窗口与内存；记录发送、接收、指纹及真实输入延迟。完整JSON解析／规范化、作者指纹与跨窗口原生竞态尚未优化或验收，不重复无关资源热更和全库。
+状态：已与第五十九／六十一阶段合并完成正常原生多窗口覆盖。合并验收同时覆盖独立Scene／Game／Inspector的持续播放、双向组件编辑后下一消息覆盖、展开状态／选择／冻结旧帧、换图／重开／Stop后再次编辑、原生session/revision、收到乱序旧消息、关闭窗口与内存；记录发送、接收、指纹及真实输入延迟。完整JSON解析／规范化、作者指纹与跨窗口原生竞态尚未优化或验收，不重复无关资源热更和全库。
+
+
+### B001 远端作者指纹与跨窗口运行修改
+
+第三项：远端冻结作者镜像的规范化指纹复用；原生主窗口收到运行修改后强制上传，丢弃旧在途结果，保留作者场景及撤销历史。相关38项定向检查通过。与51890a5、ec60762合并执行原生多窗口专项，命令qa-frost-map-session.mjs --detached-only；本次不扩大为全库QA。
+
+验收覆盖独立Inspector修改→主窗口→原生步骤、主窗口恢复→独立Inspector、Scene／Game持续呈现、暂停／单步、地图重载及Inspector重开、Stop完整作者实体恢复、停止后继续编辑及回收窗口。长期运行、输入延迟分布、总内存、强制原生竞态和跨机器性能仍需后续专项；确定性在途测试不替代原生强制竞态。
+
+
+最终合并原生验收通过：B001/map-session-1792799928856.json，EXE f4b4b4d323fc70630932d4aa7a73e7797b90d75d4aec03786a7f8a37b8845bf0，0 error、正常退出。上述正常同步／播放／恢复覆盖全部通过，新增真实独立Game播放快捷键验收。晚到窗口启动回复复活Pause的问题已通过主窗口模式归属与重新同步修复；确定性消息乱序测试及最终原生Stop后编辑均通过。失败报告及QA修正范围见performance-risk-todo第六十一阶段。
+
+本批关闭上述三项的正常集成验证，性能目标仍开放：三独立窗口5秒实测Scene5.97／Game4.90次呈现/秒，完整同步及请求等待仍需优化；Game最新profile缺worldRevision需定位。保留输入延迟、总内存、长期运行、跨机器和强制原生竞态专项。截图／原始JSON仅存tmp/docs-artifacts，未纳入docs提交。

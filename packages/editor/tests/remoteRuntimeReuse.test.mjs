@@ -81,3 +81,34 @@ test('remote legacy document migration and mutable custom component values retai
   assert.equal(store.presentationSnapshot().entities[0], first.entities[0]);
   store.stop();
 }));
+
+
+test('cached remote author fingerprints stay exact across runtime edits, Stop, local Play and new messages',async()=>withStore(createEditorStore=>{
+ const store=createEditorStore(),doc=document(),original=JSON.stringify(doc);
+ const expected=()=>{const check=createEditorStore();check.loadSceneJson(store.saveSceneJson());return check.sceneContentFingerprint();};
+ store.loadRemoteSceneJson(original,'play',41,0);const initial=store.sceneContentFingerprint();assert.equal(initial,expected());
+ store.setComponent(2,'Text',{text:'runtime-only'});assert.equal(store.sceneContentFingerprint(),initial);
+ doc.world.entities[1].components.Text.text='remote-author-mirror';store.loadRemoteSceneJson(JSON.stringify(doc),'pause',41,1);assert.notEqual(store.sceneContentFingerprint(),initial);assert.equal(store.sceneContentFingerprint(),expected());
+ store.stop();store.setComponent(1,'Custom',{values:[99]});const edited=store.sceneContentFingerprint();assert.equal(edited,expected());
+ store.play();assert.equal(store.sceneContentFingerprint(),edited);assert.equal(store.sceneContentFingerprint(),expected());store.stop();
+ store.loadRemoteSceneJson(original,'pause',73,0);assert.equal(store.sceneContentFingerprint(),initial);assert.equal(store.sceneContentFingerprint(),expected());store.stop();
+}));
+
+
+test('the native owner uploads remote edits and rejects an older in-flight result',async()=>withStore(async createEditorStore=>{
+ const store=createEditorStore();store.loadSceneJson(JSON.stringify(document()));store.setComponent(1,'Custom',{values:[44]});const authored=store.snapshot().entities,canUndo=store.canUndo;let world,release,hold=false,revision=0;const uploads=[];
+ store.setPlayRuntime({retainsWorld:true,sessionId:41,start:async snapshot=>world={...snapshot,nativeSessionId:41,nativeRevision:0},step:async snapshot=>{uploads.push(snapshot);const result={...(snapshot??world),nativeSessionId:41,nativeRevision:++revision};if(hold)await new Promise(resolve=>release=resolve);return world=result;},stop(){},onError(error){throw error;}});
+ store.play();await store.waitForPlayRuntime();store.pause();hold=true;store.step(.1);
+ const incoming=JSON.parse(store.saveSessionSceneJson());incoming.world.entities[1].components.Text.text='remote edit during step';
+ store.loadRemoteSceneJson(JSON.stringify(incoming),'pause',41);assert.equal(store.nativePlaySessionId,undefined);
+ release();await store.waitForPlayRuntime();assert.equal(store.entitySnapshot(2).components.Text.text,'remote edit during step');assert.equal(store.nativePlaySessionId,undefined);
+ hold=false;store.step(.1);await store.waitForPlayRuntime();assert.ok(uploads[1]);assert.equal(uploads[1].entities[1].components.Text.text,'remote edit during step');assert.equal(store.nativePlaySessionId,41);
+ assert.equal(store.entitySnapshot(2).components.Text.text,'remote edit during step');store.step(.1);await store.waitForPlayRuntime();assert.equal(uploads[2],undefined);store.stop();assert.deepEqual(store.snapshot().entities,authored);assert.equal(store.canUndo,canUndo);
+}));
+
+test('a remote edit received during native startup survives until the first upload',async()=>withStore(async createEditorStore=>{
+ const store=createEditorStore();store.loadSceneJson(JSON.stringify(document()));let release,world,uploaded;
+ store.setPlayRuntime({retainsWorld:true,sessionId:41,start:async snapshot=>{await new Promise(resolve=>release=resolve);return world={...snapshot,nativeSessionId:41,nativeRevision:0};},step:async snapshot=>{uploaded=snapshot;return world={...(snapshot??world),nativeSessionId:41,nativeRevision:1};},stop(){},onError(error){throw error;}});
+ store.play();const incoming=JSON.parse(store.saveSessionSceneJson());incoming.world.entities[1].components.Text.text='startup edit';store.loadRemoteSceneJson(JSON.stringify(incoming),'pause',41);release();await store.waitForPlayRuntime();
+ assert.equal(store.entitySnapshot(2).components.Text.text,'startup edit');assert.equal(store.nativePlaySessionId,undefined);store.step(.1);await store.waitForPlayRuntime();assert.equal(uploaded.entities[1].components.Text.text,'startup edit');assert.equal(store.nativePlaySessionId,41);store.stop();
+}));

@@ -11,7 +11,7 @@ const source=fs.readFileSync(new URL('../src/App.tsx',import.meta.url),'utf8'),t
 const find=(node,predicate)=>predicate(node)?node:ts.forEachChild(node,child=>find(child,predicate));
 const variable=name=>find(tree,node=>ts.isVariableDeclaration(node)&&node.name.getText(tree)===name).initializer.getText(tree);
 const receiver=find(tree,node=>ts.isBinaryExpression(node)&&node.left.getText(tree)==='channel.onmessage').right.getText(tree);
-const code=['broadcastScene','broadcastSelection','refreshSelection'].map(name=>`const ${name}=${variable(name)};`).join('\n')+`({broadcastScene,broadcastSelection,refreshSelection,receive:${receiver}})`;
+const code=['broadcastScene','broadcastSelection','refreshSelection','playback'].map(name=>`const ${name}=${variable(name)};`).join('\n')+`({broadcastScene,broadcastSelection,refreshSelection,playback,receive:${receiver}})`;
 const compiled=ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;
 const ref=current=>({current});
 
@@ -19,10 +19,11 @@ async function withPair(run){
   const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
   try{
     const {createEditorStore}=await server.ssrLoadModule('/src/store.ts');
+    const {applyPlaybackAction}=await server.ssrLoadModule('/src/editorPlayback.ts');
     const host=(sender,detachedPanel)=>{
       const store=createEditorStore();store.loadSceneJson(JSON.stringify({version:1,name:'Map',world:{entities:[{entity:1,name:'Root',components:{}},{entity:2,name:'Child',parent:1,components:{Text:{text:'original'}}}]}}));
       const sent=[],timers=new Map();let timerId=0,snapshot=store.presentationSnapshot(),observations=0,fullRefreshes=0;
-      const env={Date:{now:()=>1000},store,props:{detachedPanel},syncSender:ref(sender),syncChannel:ref({postMessage:message=>sent.push(structuredClone(message))}),syncReady:ref(true),applyingRemote:ref(false),booted:ref(true),syncTimer:ref(null),sceneSyncId:ref(null),sceneSyncSequence:ref(0),selectionSyncOrder:ref({revision:0,sender:''}),sceneNameRef:ref('Map'),lastSceneTimestamp:ref(0),remoteDirtyPeers:ref(new Map([['peer',{timestamp:Date.now()}]])),logsRef:ref([]),sceneDirtyRef:ref(false),resourceDocumentPathsRef:ref({}),localTimelinePreview:ref(null),remoteTimelinePreview:ref(null),remoteSceneFingerprint:ref(''),remoteSceneDirty:ref(false),savedSceneFingerprint:ref(store.sceneContentFingerprint()),logEnd:ref(0),
+      const env={Date:{now:()=>1000},applyPlaybackAction,log(){},setViewTab(){},store,props:{detachedPanel},syncSender:ref(sender),syncChannel:ref({postMessage:message=>sent.push(structuredClone(message))}),syncReady:ref(true),applyingRemote:ref(false),booted:ref(true),syncTimer:ref(null),sceneSyncId:ref(null),sceneSyncSequence:ref(0),selectionSyncOrder:ref({revision:0,sender:''}),sceneNameRef:ref('Map'),lastSceneTimestamp:ref(0),remoteDirtyPeers:ref(new Map([['peer',{timestamp:Date.now()}]])),logsRef:ref([]),sceneDirtyRef:ref(false),resourceDocumentPathsRef:ref({}),localTimelinePreview:ref(null),remoteTimelinePreview:ref(null),remoteSceneFingerprint:ref(''),remoteSceneDirty:ref(false),savedSceneFingerprint:ref(store.sceneContentFingerprint()),logEnd:ref(0),
         setSnap:value=>{snapshot=typeof value==='function'?value(snapshot):value;},setSelected:()=>{},setSelectedIds:()=>{},setSceneDirty:()=>{},setSceneName:()=>{},setMode:()=>{},setGizmo:()=>{},setGameResolution:()=>{},setGameDisplay:()=>{},setLogs:()=>{},setTreeTick:()=>{},
         agentBridge:{observeSelection:()=>observations++},refresh:()=>fullRefreshes++,logService:{syncConsoleLines:()=>{},getEntries:()=>[]},formatConsoleLog:value=>value,
         window:{setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id)},console:{error:(...args)=>assert.fail(args.join(' '))}};
@@ -119,4 +120,22 @@ test('runtime content publishes retained panel records and keeps earlier windows
  detached.receive({data:initial});assert.equal(detached.snapshot.entities[1].components.Text.text,'runtime change');
  main.store.stop();main.broadcastScene(true);main.deliver(detached);assert.equal(detached.store.mode,'edit');
  detached.store.setComponent(2,'Text',{text:'editable after Stop'});assert.equal(detached.store.entitySnapshot(2).components.Text.text,'editable after Stop');
+}));
+
+
+test('late detached bootstrap cannot revive Play after main Stop and receives a newer owner state',async()=>withPair((main,detached,third)=>{
+ main.store.play();main.broadcastScene(true);const playing=main.sent.shift();detached.receive({data:playing});third.receive({data:playing});
+ detached.store.pause();detached.broadcastScene(true);const stale=detached.sent.shift();
+ main.store.stop();main.broadcastScene(true);const stopped=main.sent.shift();
+ main.receive({data:{...stale,timestamp:stopped.timestamp+1}});assert.equal(main.store.mode,'edit');const correction=main.sent.shift();assert.ok(correction.timestamp>stopped.timestamp+1);
+ for(const peer of [detached,third]){peer.receive({data:stale});peer.receive({data:correction});assert.equal(peer.store.mode,'edit');assert.deepEqual(peer.store.snapshot().entities,main.store.snapshot().entities);}
+}));
+
+test('detached playback controls request the main owner and stale requests are ignored',async()=>withPair(async(main,detached)=>{
+ const settle=()=>new Promise(resolve=>setImmediate(resolve));
+ main.broadcastScene(true);main.deliver(detached);await detached.playback('toggle');assert.equal(detached.store.mode,'edit');
+ const start=detached.sent.shift();assert.equal(start.type,'playback-request');main.receive({data:start});await main.store.waitForPlayRuntime();await settle();assert.equal(main.store.mode,'play');
+ main.broadcastScene(true);main.deliver(detached);await detached.playback('pause');const pause=detached.sent.shift();main.receive({data:pause});await settle();assert.equal(main.store.mode,'pause');
+ main.receive({data:start});await settle();assert.equal(main.store.mode,'pause');
+ main.broadcastScene(true);main.deliver(detached);await detached.playback('toggle');main.deliver(detached);detached.deliver(main);await settle();assert.equal(main.store.mode,'edit');
 }));

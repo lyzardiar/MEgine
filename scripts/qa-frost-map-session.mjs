@@ -29,6 +29,8 @@ const cameraOnly=process.argv.includes('--camera-only');
 const hierarchyOnly=process.argv.includes('--hierarchy-only');
 const unitInitializationOnly=process.argv.includes('--unit-initialization-only');
 const unitSelectionOnly=process.argv.includes('--unit-selection-only');
+const detachedAuthoringOnly=process.argv.includes('--detached-authoring-only');
+const detachedOnly=process.argv.includes('--detached-only')||detachedAuthoringOnly;
 const hierarchyInteractions=process.argv.includes('--hierarchy-interactions');
 const label='map-session-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
@@ -162,6 +164,46 @@ async function checkHierarchyPresentation(s){
   report.checks.push('Native Ctrl+A on collapsed roots, expanded Edit menu Select All and Shift-click range selection');
   report.checks.push('Native hierarchy collapse/expand, hidden descendant reveal, scrolling and left/right keys for runtime root '+root.entity);
 }
+async function checkDetachedRuntime(authored){
+  const before=await snapshot(),target=before.entities.find(e=>e.name.startsWith('Doodad-')&&e.parent==null&&e.components.Transform&&Math.abs(e.components.Transform.position[1]*10-Math.round(e.components.Transform.position[1]*10))<1e-6);assert.ok(target);
+  const original=target.components.Transform.position[1],edited=original+3.2;
+  await execute('selection.set',{ids:[target.entity]});await execute('view.set_camera',{pivot:target.components.Transform.position,yaw:35,pitch:35,distance:10});
+  for(const kind of detachedAuthoringOnly?['inspector']:['inspector','scene','game'])await execute('panel.detach',{kind});
+  const ui=()=>query('window.ui_snapshot',{windowLabel:'panel-inspector',maxElements:5000});
+  async function field(expected){const deadline=Date.now()+30000;for(;;){const page=await ui(),item=page.elements.find(e=>e.name==='Transform Position Y');report.detachedLastUi={snapshotRevision:page.snapshotRevision,elements:page.elements.filter(e=>e.name==='GameObject name'||String(e.name??'').includes('Position')||String(e.name??'').includes('Inspector'))};if(item&&(expected===undefined||Math.abs(Number(item.value)-expected)<1e-5))return {page,item};if(Date.now()>=deadline){report.failedEditorState=await query('editor.state');report.failedSelection=await query('selection.get');assert.fail('Detached Inspector height '+expected);}await sleep(150);}}
+  async function mainHeight(expected){const deadline=Date.now()+30000;for(;;){const entity=await query('entity.get',{id:target.entity});if(Math.abs(entity.components.Transform.position[1]-expected)<1e-5)return;assert.ok(Date.now()<deadline,'Main received detached height '+expected);await sleep(150);}}
+  if(!detachedAuthoringOnly){
+  await field(original);const {page,item}=await field();
+  await execute('window.ui_set_value',{windowLabel:'panel-inspector',selector:item.selector,expectedSnapshotRevision:page.snapshotRevision,value:String(edited)});
+  await mainHeight(edited);await step(3);await mainHeight(edited);await field(edited);
+  report.checks.push('Detached Inspector edit reaches native simulation and persists after 3 steps');
+  await execute('panel.dock',{kind:'inspector'});await execute('panel.focus',{kind:'inspector'});
+  const mainPage=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000}),mainField=mainPage.elements.find(e=>e.name==='Transform Position Y');assert.ok(mainField);
+  await execute('window.ui_set_value',{windowLabel:'main',selector:mainField.selector,expectedSnapshotRevision:mainPage.snapshotRevision,value:String(original)});await step(2);await mainHeight(original);
+  await execute('panel.detach',{kind:'inspector'});await field(original);
+  report.checks.push('Detached Inspector transform reaches main native simulation and persists after 3 steps; main component restore reaches detached Inspector');
+  await execute('playback.play');await sleep(2500);await execute('profiler.clear');const started=performance.now();await sleep(5000);
+  report.detachedProfiles={elapsedMs:performance.now()-started};
+  for(const source of ['scene','game']){const profiles=await query('profiler.get_samples',{source,limit:240});assert.ok(profiles.nativeSummary?.intervals>5,source+' detached native presents');assert.equal(profiles.nativeLatest?.counts.entities,before.entities.length);report.detachedProfiles[source]={nativeSummary:profiles.nativeSummary,counts:profiles.nativeLatest.counts,worldRevision:profiles.nativeLatest.worldRevision};}
+  await execute('playback.pause');await sleep(300);const paused=await snapshot();await sleep(300);assert.deepEqual((await snapshot()).entities,paused.entities);await step(2);assert.ok((await snapshot()).simulationTime>paused.simulationTime);
+  for(const windowLabel of ['panel-scene','panel-game']){const shot=await query('view.window_screenshot',{windowLabel,maxSize:1280});fs.writeFileSync(path.join(out,label+'-'+windowLabel+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));}
+  report.checks.push('Three detached panels sustain native Scene/Game frames, pause freezes main world, Step advances, and both view windows capture');
+  for(const expected of ['play','pause']){const keyPage=await query('window.ui_snapshot',{windowLabel:'panel-game',maxElements:5000}),canvas=keyPage.elements.find(e=>e.name==='Game viewport');assert.ok(canvas);await execute('window.ui_press_key',{windowLabel:'panel-game',selector:canvas.selector,expectedSnapshotRevision:keyPage.snapshotRevision,key:'p',ctrlKey:true,shiftKey:true});const deadline=Date.now()+20000;while((await query('editor.state')).mode!==expected){assert.ok(Date.now()<deadline,'Detached playback request reaches main '+expected);await sleep(100);}await sleep(500);}
+  report.checks.push('Detached Game Ctrl+Shift+P resumes and pauses the main native owner');
+  await click('Map session restart');await waitMap('amazonia');await execute('panel.dock',{kind:'inspector'});await execute('panel.detach',{kind:'inspector'});
+  const reloaded=await snapshot(),again=reloaded.entities.find(e=>e.name===target.name);assert.ok(again);await execute('selection.set',{ids:[again.entity]});await field(original);
+  }
+  await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);
+  report.checks.push('Stop restores the complete authored entity set');
+  const authorTarget=authored.entities.find(e=>e.components.Transform&&(e.components.Camera3D||e.components.Camera2D))??authored.entities.find(e=>e.components.Transform);assert.ok(authorTarget);report.authorTarget=authorTarget;await execute('selection.set',{ids:[authorTarget.entity]});
+  const {page:editPage,item:editItem}=await field(authorTarget.components.Transform.position[1]);
+  const authorEdited=authorTarget.components.Transform.position[1]+1;
+  await execute('window.ui_set_value',{windowLabel:'panel-inspector',selector:editItem.selector,expectedSnapshotRevision:editPage.snapshotRevision,value:String(authorEdited)});
+  const deadline=Date.now()+30000;for(;;){const e=await query('entity.get',{id:authorTarget.entity});if(Math.abs(e.components.Transform.position[1]-authorEdited)<1e-5)break;assert.ok(Date.now()<deadline,'Authoring remains editable after Stop');await sleep(150);}
+  await execute('component.set',{entity:authorTarget.entity,type:'Transform',value:authorTarget.components.Transform});await field(authorTarget.components.Transform.position[1]);assert.deepEqual((await snapshot()).entities,authored.entities);
+  report.windows=await query('window.list');for(const kind of ['game','scene','inspector'])await execute('panel.dock',{kind});
+  report.checks.push('Detached authoring edit/restore after Stop; auxiliary panels dock normally');
+}
 try{
   for(let i=0;;i++)try{await query('project.state');break;}catch(e){if(i===20||!/BridgeConnectionError|request timed out|not ready/.test(e.message))throw e;await sleep(500);}
   await execute('project.open',{root:sample});const authored=await snapshot();await execute('panel.focus',{kind:'game'});await execute('playback.play',{paused:true});await step(2);
@@ -169,7 +211,9 @@ try{
   let s=await snapshot();assert.equal(telemetry(s).mode,'custom');assert.equal(s.entities.find(e=>e.name==='Map name').components.Text.text,'Amazonia');assert.equal(s.entities.find(e=>e.name==='Map preview backing').components.Image.sprite,'Assets/Maps/amazonia/Textures/MapPreview.png');for(const name of ['map2 box','map3 box','faction box','heroChoice box','Hero preview','Map tile 0'])assert.equal(clientWorldFixture(s).visible(name),false,name);await capture('selection');
   await click('mapStart box');s=await waitMap('amazonia');assert.deepEqual(status(s).pathing.size,[384,384]);assert.equal(status(s).pathing.revision,0);assert.ok(s.entities.some(e=>e.name.startsWith('Doodad-'))&&s.entities.some(e=>e.name.startsWith('Unit-')));report.map=status(s);report.entities=s.entities.length;
   if(editorFeedback)await checkHierarchyFocus(s);
-  if(unitSelectionOnly){
+  if(detachedOnly){
+    await checkDetachedRuntime(authored);
+  }else if(unitSelectionOnly){
     assert.deepEqual(status(s).unitBindings,{status:'ready',count:96,selected:null});
     await execute('playback.input',{keys:['KeyD','KeyW'],buttons:[],viewport:[1280,720]});await step(10);await input({});
     function projectUnit(world,viewport){
@@ -257,4 +301,4 @@ try{
   report.errors=(await query('console.get_logs',{limit:300})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));report.passed=true;
   console.log(JSON.stringify({passed:true,label,entities:report.entities,changed:report.changed,checks:report.checks}));
 }catch(error){report.error=error.stack;process.exitCode=1;console.error(error.stack);try{report.errors=await query('console.get_logs',{limit:80});const s=await snapshot();report.failureState=s.entities.filter(e=>['QA map session','Camera','Frost telemetry','Map loading status'].includes(e.name));}catch{} }
-finally{try{await execute('playback.stop');await execute('scene.open',{name:'Main',discardDirty:true});}catch{}closeBridgeConnection();try{report.cleanup=await closeNativeQa(root);}catch(error){report.cleanupError=error.message;process.exitCode=1;}fs.writeFileSync(path.join(out,label+'.json'),JSON.stringify(report,null,2));}
+finally{if(detachedOnly)for(const kind of ['game','scene','inspector'])try{await execute('panel.dock',{kind});}catch{}try{await execute('playback.stop');await execute('scene.open',{name:'Main',discardDirty:true});}catch{}closeBridgeConnection();try{report.cleanup=await closeNativeQa(root);}catch(error){report.cleanupError=error.message;process.exitCode=1;}fs.writeFileSync(path.join(out,label+'.json'),JSON.stringify(report,null,2));}
