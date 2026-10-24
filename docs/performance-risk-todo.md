@@ -1252,3 +1252,12 @@ Node局部基准以同进程加载提交51890a5的原Store和当前Store，读�
 快速检查：`node --test packages/editor/tests/remotePanelRefresh.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs` 共16项通过；`pnpm --dir packages/editor exec tsc --noEmit -p tsconfig.json` 通过。实际App消息处理与Store测试中，990ms内30次更新全部立即推进原生版本和视口帧，面板在1000ms内发布11次（含首次）；边界操作、取消旧回调、重入和延迟期间本地编辑保留均通过。证据为 `tmp/docs-artifacts/editor-performance-risk/remote-panel-tests.log` 和 `remote-panel-types.log`。
 
 当前新批次第2/3项，未执行原生构建或帧率复测。合并验证需要覆盖三窗口运行、Inspector操作、选择与可见性、Pause／Step／Stop、换图及重开，检查面板最终状态、Scene延期／回退次数、实际呈现间隔和内存。此处测试数字仅证明面板发布节拍，不能作为真实FPS或输入到显示延迟。
+
+
+### 第六十七阶段：运行接收端按需计算编辑指纹
+
+App的updateSceneDirty仅在edit模式读取远端指纹；独立窗口的Play／Pause未保存状态由主窗口dirty字段提供。接收运行消息时不再规范化和拼接整场景指纹，编辑检查点（包括Stop）在加载完成后重新建立比较基线。主窗口接收远端修改仍计算作者内容指纹，保持保存基线、运行作者隔离和未保存判定；直接打开／保存场景的基线逻辑继续执行。
+
+快速检查：workspaceSelectionSync的15项测试通过，TypeScript及QA脚本语法检查通过。新增实际App处理器测试确认运行完整检查点、增量、暂停和新会话零次接收端指纹调用，Stop重新计算，停止后本地修改／还原及主窗口dirty与清洁检查点正确；未重复已通过的调度器单元测试。证据为 `tmp/docs-artifacts/editor-performance-risk/runtime-dirty-tests.log` 和 `runtime-dirty-types.log`。
+
+本项为新批次第3/3项，提交后与第六十五／六十六阶段合并构建及原生验证。qa-frost-map-session新增Stop未污染作者dirty状态、独立Inspector作者修改标脏、还原后清洁的检查；原生结果另记。局部调用计数不代表实际FPS收益。

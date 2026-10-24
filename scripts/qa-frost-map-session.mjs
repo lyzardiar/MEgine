@@ -203,14 +203,15 @@ async function checkDetachedRuntime(authored){
   const reloaded=await snapshot(),again=reloaded.entities.find(e=>e.name===target.name);assert.ok(again);await execute('selection.set',{ids:[again.entity]});await field(original);
   sampleMemory('after-map-reload');
   }
-  await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);
+  await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);assert.equal((await query('editor.state')).dirty,false,'Runtime changes do not dirty the authored scene');
   report.checks.push('Stop restores the complete authored entity set');
   const authorTarget=authored.entities.find(e=>e.components.Transform&&(e.components.Camera3D||e.components.Camera2D))??authored.entities.find(e=>e.components.Transform);assert.ok(authorTarget);report.authorTarget=authorTarget;await execute('selection.set',{ids:[authorTarget.entity]});
   const {page:editPage,item:editItem}=await field(authorTarget.components.Transform.position[1]);
   const authorEdited=authorTarget.components.Transform.position[1]+1;
   await execute('window.ui_set_value',{windowLabel:'panel-inspector',selector:editItem.selector,expectedSnapshotRevision:editPage.snapshotRevision,value:String(authorEdited)});
   const deadline=Date.now()+30000;for(;;){const e=await query('entity.get',{id:authorTarget.entity});if(Math.abs(e.components.Transform.position[1]-authorEdited)<1e-5)break;assert.ok(Date.now()<deadline,'Authoring remains editable after Stop');await sleep(150);}
-  await execute('component.set',{entity:authorTarget.entity,type:'Transform',value:authorTarget.components.Transform});await field(authorTarget.components.Transform.position[1]);assert.deepEqual((await snapshot()).entities,authored.entities);
+  assert.equal((await query('editor.state')).dirty,true,'Detached authoring edit marks main scene dirty');
+  await execute('component.set',{entity:authorTarget.entity,type:'Transform',value:authorTarget.components.Transform});await field(authorTarget.components.Transform.position[1]);assert.deepEqual((await snapshot()).entities,authored.entities);assert.equal((await query('editor.state')).dirty,false,'Restoring authored content clears dirty state');
   report.windows=await query('window.list');for(const kind of ['game','scene','inspector'])await execute('panel.dock',{kind});
   sampleMemory('after-stop-and-dock');
   report.checks.push('Detached authoring edit/restore after Stop; auxiliary panels dock normally');

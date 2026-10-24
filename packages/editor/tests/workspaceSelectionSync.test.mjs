@@ -11,7 +11,7 @@ const source=fs.readFileSync(new URL('../src/App.tsx',import.meta.url),'utf8'),t
 const find=(node,predicate)=>predicate(node)?node:ts.forEachChild(node,child=>find(child,predicate));
 const variable=name=>find(tree,node=>ts.isVariableDeclaration(node)&&node.name.getText(tree)===name).initializer.getText(tree);
 const receiver=find(tree,node=>ts.isBinaryExpression(node)&&node.left.getText(tree)==='channel.onmessage').right.getText(tree);
-const code=['broadcastScene','broadcastSelection','refreshSelection','playback'].map(name=>`const ${name}=${variable(name)};`).join('\n')+`({broadcastScene,broadcastSelection,refreshSelection,playback,receive:${receiver}})`;
+const code=['broadcastScene','broadcastSelection','refreshSelection','playback','updateSceneDirty'].map(name=>`const ${name}=${variable(name)};`).join('\n')+`({broadcastScene,broadcastSelection,refreshSelection,playback,updateSceneDirty,receive:${receiver}})`;
 const compiled=ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;
 const ref=current=>({current});
 
@@ -189,4 +189,32 @@ test('a pending panel callback reads current local edits and never republishes t
  const json=main.store.saveSessionSceneJson('Map');main.store.loadRemoteSceneJson(json,'play',41,0);main.broadcastScene(true);main.deliver(detached);
  detached.advance(10);main.broadcastScene();main.flush();main.deliver(detached);detached.store.setComponent(2,'Text',{text:'local latest'});
  detached.advance(90);assert.equal(detached.snapshot.entities[1].components.Text.text,'local latest');assert.equal(detached.sent.length,0);
+}));
+
+
+test('detached runtime dirty state follows the owner without fingerprinting and Stop rebuilds the edit baseline',async()=>withPair((main,detached)=>{
+ main.broadcastScene(true);main.deliver(detached);
+ const fingerprint=detached.store.sceneContentFingerprint;let calls=0;detached.store.sceneContentFingerprint=()=>{calls++;return fingerprint();};
+ const document=JSON.parse(main.store.saveSessionSceneJson('Map'));
+ for(const [mode,session,dirty,full] of [['play',41,false,true],['play',41,true,false],['pause',41,true,false],['play',73,false,true]]){
+  main.store.loadRemoteSceneJson(JSON.stringify(document),mode,session,1);main.env.sceneDirtyRef.current=dirty;main.broadcastScene(full);main.flush();main.deliver(detached);
+  assert.equal(detached.env.sceneDirtyRef.current,dirty);assert.equal(detached.env.remoteSceneDirty.current,dirty);detached.updateSceneDirty();assert.equal(calls,0);
+ }
+ main.store.stop();main.store.rename(2,'Latest author');main.env.sceneDirtyRef.current=false;main.broadcastScene(true);main.deliver(detached);
+ assert.equal(calls,1);assert.equal(detached.env.remoteSceneFingerprint.current,fingerprint());assert.equal(detached.store.entitySnapshot(2).name,'Latest author');
+ detached.updateSceneDirty();assert.equal(detached.env.sceneDirtyRef.current,false);
+ detached.store.rename(2,'Local edit');detached.updateSceneDirty();assert.equal(detached.env.sceneDirtyRef.current,true);
+ detached.store.rename(2,'Latest author');detached.updateSceneDirty();assert.equal(detached.env.sceneDirtyRef.current,false);
+ main.env.sceneDirtyRef.current=true;main.broadcastScene(true);main.deliver(detached);detached.updateSceneDirty();assert.equal(detached.env.sceneDirtyRef.current,true);
+ main.env.sceneDirtyRef.current=false;main.broadcastScene(true);main.deliver(detached);detached.updateSceneDirty();assert.equal(detached.env.sceneDirtyRef.current,false);
+ assert.equal(detached.sent.length,0);
+}));
+
+test('main owner still compares author content on incoming edits and adopts explicit clean checkpoints',async()=>withPair((main,detached)=>{
+ main.broadcastScene(true);main.deliver(detached);
+ const saved=main.env.savedSceneFingerprint.current,fingerprint=main.store.sceneContentFingerprint;let calls=0;main.store.sceneContentFingerprint=()=>{calls++;return fingerprint();};
+ detached.store.rename(2,'Remote edit');detached.env.sceneDirtyRef.current=true;detached.broadcastScene(true);detached.deliver(main);
+ assert.equal(calls,1);assert.equal(main.env.sceneDirtyRef.current,true);assert.equal(main.env.savedSceneFingerprint.current,saved);
+ detached.env.sceneDirtyRef.current=false;detached.broadcastScene(true);detached.deliver(main);
+ assert.equal(calls,2);assert.equal(main.env.sceneDirtyRef.current,false);assert.equal(main.env.savedSceneFingerprint.current,fingerprint());
 }));

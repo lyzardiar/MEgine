@@ -1515,13 +1515,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         );
         const preview = localTimelinePreview.current ?? remoteTimelinePreview.current?.preview ?? null;
         if (preview && message.mode === 'edit') store.setTimelinePreview(preview);
-        const remoteFingerprint = store.sceneContentFingerprint();
         if (props.detachedPanel) {
-          remoteSceneFingerprint.current = remoteFingerprint;
+          // MiYu: Runtime dirty state belongs to the main window; edit checkpoints establish the comparison baseline.
+          if (store.mode === 'edit') remoteSceneFingerprint.current = store.sceneContentFingerprint();
           remoteSceneDirty.current = message.dirty === true;
           sceneDirtyRef.current = remoteSceneDirty.current;
           setSceneDirty(remoteSceneDirty.current);
         } else {
+          const remoteFingerprint = store.sceneContentFingerprint();
           if (message.dirty === false) savedSceneFingerprint.current = remoteFingerprint;
           const dirty = remoteFingerprint !== savedSceneFingerprint.current;
           sceneDirtyRef.current = dirty;

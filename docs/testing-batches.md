@@ -703,3 +703,10 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 快速检查：`node --test packages/editor/tests/remotePanelRefresh.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs` 16项通过；`pnpm --dir packages/editor exec tsc --noEmit -p tsconfig.json` 通过。证据、发布次数及限制见performance-risk-todo第六十六阶段。
 
 状态：实现完成，待累计第3项后合并前端和原生Release构建。执行 `node scripts/qa-frost-map-session.mjs --detached-only`，覆盖三窗口运行与Inspector双向编辑、Play中新开窗口、选择／可见性、Pause／Step／Stop、地图重载和窗口重开；合并检查第六十五阶段Scene重试及逐帧实体数量，并记录呈现间隔和进程内存。真实输入延迟、长期运行及强制原生竞态仍需专项，不扩大到无关全库或资源热更测试。
+
+
+### 新批次任务3/3：运行接收端编辑指纹按需计算
+
+变更：App运行接收路径、workspaceSelectionSync测试及qa-frost-map-session原生dirty断言。独立窗口Play／Pause采用主窗口dirty字段，编辑检查点恢复指纹基线；主窗口比较和打开／保存逻辑继续保留。15项同步测试、TypeScript和QA语法检查通过，日志见performance-risk-todo第六十七阶段。
+
+累计三项：cb20d61、51dab64及本项。提交后执行一次 `pnpm --dir packages/editor build`、`cargo build -p mengine-editor-tauri --release --features custom-protocol`，然后 `node scripts/qa-frost-map-session.mjs --detached-only`。检查三窗口运行、Inspector双向修改／还原、Pause／Step、窗口重开与地图重载、Stop作者实体及dirty恢复；合并采样Scene延期／回退、每帧实体数量、呈现间隔和进程内存。实际结果待补记，尚未关闭本批。
