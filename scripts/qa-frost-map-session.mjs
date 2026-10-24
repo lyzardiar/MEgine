@@ -59,6 +59,16 @@ async function checkViewportTransitions(){
   await execute('view.set_camera',{pivot:root.components.Transform.position,yaw:25,pitch:45,distance:30});
   async function sceneShot(name){const shot=await query('view.screenshot',{target:'scene',maxSize:1280});const bytes=Buffer.from(shot.dataUrl.split(',')[1],'base64');fs.writeFileSync(path.join(out,label+'-'+name+'.png'),bytes);return hash(bytes);}
   const first=await sceneShot('scene-camera-preview');
+  await execute('selection.set',{ids:[]});await execute('profiler.clear');
+  for(let yaw=30;yaw<=120;yaw+=10){await execute('view.set_camera',{yaw});await sleep(20);}
+  const motion=await query('profiler.get_samples',{source:'scene',limit:240,includeNativeTimings:true});assert.ok(motion.nativeProfileCount>=3,'Scene presents during continuous camera input');
+  const page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000}),splitter=page.elements.find(e=>e.role==='separator'&&e.actions?.includes('dragBy'));
+  if(splitter){await execute('window.ui_drag_by',{windowLabel:'main',selector:splitter.selector,expectedSnapshotRevision:page.snapshotRevision,deltaX:80,deltaY:0});await sleep(50);const shot=await query('view.window_screenshot',{windowLabel:'main',maxSize:1280});fs.writeFileSync(path.join(out,label+'-scene-resized.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));}
+  await execute('panel.focus',{kind:'game'});await sleep(500);await execute('profiler.clear');await sleep(900);
+  const hidden=await query('profiler.get_samples',{source:'scene',limit:240,includeNativeTimings:true});assert.equal(hidden.nativeProfileCount,0,'inactive dock Scene submits no native frames');assert.equal(hidden.samples.length,0,'inactive dock Scene performs no browser paints');
+  await execute('panel.focus',{kind:'scene'});await sleep(800);const resumed=await query('profiler.get_samples',{source:'scene',limit:240});assert.ok(resumed.nativeProfileCount>0,'Scene resumes when its tab is selected');
+  report.sceneFeedback={motionFrames:motion.nativeProfileCount,hiddenFrames:hidden.nativeProfileCount,hiddenPaints:hidden.samples.length,resumedFrames:resumed.nativeProfileCount,resizeExercised:!!splitter};
+  report.checks.push('Scene presents during repeated camera changes; inactive dock tab stops native and browser rendering, selecting it resumes');
   await execute('view.set_camera',{yaw:115});
   const moved=await sceneShot('scene-moved');assert.notEqual(moved,first,'Scene camera changes render new pixels');
   const profiles=await query('profiler.get_samples',{source:'scene',limit:1});assert.ok(profiles.nativeProfileCount>0,'Scene completion publishes native profiles');
@@ -238,7 +248,7 @@ try{
     }
     for(const viewport of [[1280,720],[960,900]]){
       await execute('view.set_game_resolution',{resolution:{width:viewport[0],height:viewport[1]}});s=await snapshot();const target=projectUnit(s,viewport);await input({pointer:target.pointer,buttons:[0],viewport});await input({pointer:target.pointer,viewport});s=await snapshot();
-      const circle=s.entities.find(e=>e.name==='Map unit selection'),label=s.entities.find(e=>e.name==='Map session status').components.Text.text;assert.ok(status(s).unitBindings.selected);assert.equal(circle.active,true);assert.ok(Math.abs(circle.components.Transform.position[0]-target.unit.components.Transform.position[0])<1e-5);assert.ok(Math.abs(circle.components.Transform.position[2]-target.unit.components.Transform.position[2])<1e-5);assert.equal(circle.components.Transform.scale[0],360/128);assert.deepEqual(circle.components.MaterialPropertyBlock.base_color,[1,1,0,1]);assert.match(label,/金矿/);assert.match(label,/12500/);await capture('unit-selection-'+viewport.join('x'));
+      const circle=s.entities.find(e=>e.name==='Map unit selection'),label=s.entities.find(e=>e.name==='Map session status').components.Text.text;assert.ok(status(s).unitBindings.selected);assert.equal(circle.active,true);assert.ok(Math.abs(circle.components.Transform.position[0]-target.unit.components.Transform.position[0])<1e-5);assert.ok(Math.abs(circle.components.Transform.position[2]-target.unit.components.Transform.position[2])<1e-5);assert.equal(circle.components.Transform.scale[0],360/128);assert.deepEqual(circle.components.MaterialPropertyBlock.base_color,[1,1,0,1]);assert.match(label,/閲戠熆/);assert.match(label,/12500/);await capture('unit-selection-'+viewport.join('x'));
       report.checks.push('Native source gold-mine picking and selection circle at '+viewport.join('x'));
     }
     await execute('view.set_game_resolution',{resolution:{width:1280,height:720}});await input({pointer:[20,680],buttons:[0]});await input({pointer:[20,680]});s=await snapshot();assert.equal(status(s).unitBindings.selected,null);assert.equal(s.entities.find(e=>e.name==='Map unit selection').active,false);

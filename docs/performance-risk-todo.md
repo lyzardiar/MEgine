@@ -1339,3 +1339,8 @@ App完成运行帧后触发broadcastScene；此前每次发送后，下一次完
 Dock提供页签可见性，Scene／Game不可见时取消rAF与重试计时器、使在途请求失效，并停止运行通知触发绘制；切回恢复调度。可见的独立窗口仍可在WebView节流时完成绘制，显式截图按请求执行。41项Scene调度／呈现／采样测试与TypeScript通过；连续4ms相机输入、24ms原生延迟仍能持续呈现，隐藏后丢弃在途帧且不再续约，覆盖三类视口定时器清理。证据为scene-interaction-final-tests.log和scene-interaction-types.log，位于tmp/docs-artifacts/editor-performance-risk。前次夹具断言按保留的17ms节拍及生产隐藏入口修正，原日志保留。
 
 这是当前第3/3项，与e468673、5df28a8合并构建／原生验证；尚不宣称实时旋转手感或FPS达标。
+
+
+本批原生验证完成：e468673、5df28a8、c274d2e；Release构建1分26秒，EXE SHA256 1d22aaaa8cb680c5e02cb16014dd4f27ca4f72076ad66ef33823a2af25fa34d2。Scene专项报告B001/map-session-1792806256160.json通过：连续相机输入期间呈现14帧、分隔条尺寸拖动、隐藏900ms内0原生帧／0paint、恢复后33帧，Scene/Game切换、分辨率和Stop内容恢复通过。已目视检查Scene尺寸变化与旋转截图。
+
+多窗口报告B001/map-session-1792806323286.json通过，0error、正常退出，覆盖Inspector双向编辑、运行三步保留、重开／重载、Pause／Step、Stop作者数据／dirty／新ID／undo恢复。两个隔离WebView缓存因EPERM保留，发现文件已清理。5秒样本Scene22.17／Game27.70次呈现每秒、完整回退均0；前端paint加权17.08／2.05ms。该采样与独立地图转换复现并行，存在CPU争用，不能用于与上批做性能收益比较；后续性能专项应在无转换任务时采集。正常功能集成关闭，新批0/3。日志／报告／截图仅在tmp/docs-artifacts，长期流畅、真实输入延迟和完整地图功能仍待处理。
