@@ -1,3 +1,4 @@
+// Author: MiYu. Sort compact cached keys while preserving world draw order and payloads.
 use mengine_rhi::UiPrimitive;
 use serde::Deserialize;
 use std::collections::HashSet;
@@ -142,6 +143,21 @@ pub struct WorldPrimitive {
 }
 
 pub fn sort_world_primitives(primitives: &mut [WorldPrimitive], layers: &SortingLayers) {
+    let sort_key = |value: &WorldPrimitive| {
+        // Signed-bit ordering matches f32::total_cmp, including signed zero and NaN payloads.
+        let bits = value.depth.to_bits() as i32;
+        let depth = std::cmp::Reverse(bits ^ (((bits >> 31) as u32 >> 1) as i32));
+        match value.kind {
+            WorldPrimitiveKind::ThreeD => (0, 0, 0, depth),
+            WorldPrimitiveKind::TwoD => (1, layers.rank(&value.sorting_layer), value.sorting_order, depth),
+        }
+    };
+    if primitives.is_sorted_by_key(&sort_key) { return; }
+    primitives.sort_by_cached_key(sort_key);
+}
+
+#[cfg(test)]
+fn baseline_sort_world_primitives(primitives: &mut [WorldPrimitive], layers: &SortingLayers) {
     primitives.sort_by(|left, right| {
         let kind_rank = |kind: WorldPrimitiveKind| match kind {
             WorldPrimitiveKind::ThreeD => 0,
@@ -159,6 +175,10 @@ pub fn sort_world_primitives(primitives: &mut [WorldPrimitive], layers: &Sorting
             })
     });
 }
+
+#[cfg(test)]
+#[path = "world_sort_tests.rs"]
+mod order_tests;
 
 #[cfg(test)]
 mod tests {

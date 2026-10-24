@@ -1098,3 +1098,13 @@ FrameMeshInputs由每个编辑器视口／独立运行器持有，使用World进
 实际DotA保留工程的局部Release对照，5376绘制对象、139个材质源，10轮交替先后、排除2轮预热，每模式8组且每组20次提取，每轮结束逐项比较完整RenderObject输出。静态提取均值4.723225→1.775136ms；每次修改200个Transform的提取均值5.798501→2.340243ms。此处只计网格输入提取，层级构建、脚本、GPU和IPC不在计时内，不直接外推原生FPS。日志tmp/docs-artifacts/editor-performance-risk/mesh-inputs-{dota-bench,final-tests,core-tests,integration-check}.log。
 
 当前新批次1/3，Tauri原生构建、DotA与多窗口持续FPS、缓存驻留内存、模型／材质热更新、Scene父变换与Stop后重开／场景切换待第三项后统一验证。真实编辑器收益、稳定60FPS、LOD和完整JASS玩法尚未完成；本项不触发无关全库及地图遍历。
+
+### 第九十六阶段／新批次任务2/3：世界图元使用紧凑排序键
+
+世界图元排序先检查输入是否有序；需要排序时缓存种类、2D图层序、sorting_order和与f32::total_cmp一致的深度键，由标准库稳定排序键及置换图元。3D仍只按深度，2D仍先图层再sorting_order再深度，同值保持原输入顺序。图层序每个条目计算一次，避免比较中重复查找及反复移动568字节的完整WorldPrimitive。
+
+变更sorting及world_sort_tests。4项定向检查通过，覆盖旧排序逐项对照、空／单条目、3D／2D／混合、正序／倒序、稳定同值、未知及大小写图层、i32边界、正负零、无穷、正负NaN及payload；生产cargo check -p mengine-runtime --release --lib通过。
+
+局部Release基准使用实际DotA资源显式采样1秒后的2521图元，另测同一数据正序／倒序和4096多图层条目；12轮交替先后，排除2轮预热，每模式10组，每组20次排序，复制不计入计时。完整图元输出与旧排序一致。排序均值：实际DotA0.834955→0.173579ms，已排序0.020809→0.011823ms，倒序0.866816→0.145654ms，多图层5.280150→0.512108ms。只衡量排序CPU，不能外推实际FPS；日志tmp/docs-artifacts/editor-performance-risk/world-sort-{tests,bench,check}.log。
+
+当前50fc516及本项为2/3。第三项后统一生产构建并验证DotA／多窗口、透明特效与2D图层、模型／材质热更新、父变换、Stop／重开与场景切换；缓存驻留内存和真实FPS仍待确认。
