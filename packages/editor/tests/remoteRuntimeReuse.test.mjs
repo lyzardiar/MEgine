@@ -112,3 +112,23 @@ test('a remote edit received during native startup survives until the first uplo
  store.play();const incoming=JSON.parse(store.saveSessionSceneJson());incoming.world.entities[1].components.Text.text='startup edit';store.loadRemoteSceneJson(JSON.stringify(incoming),'pause',41);release();await store.waitForPlayRuntime();
  assert.equal(store.entitySnapshot(2).components.Text.text,'startup edit');assert.equal(store.nativePlaySessionId,undefined);store.step(.1);await store.waitForPlayRuntime();assert.equal(uploaded.entities[1].components.Text.text,'startup edit');assert.equal(store.nativePlaySessionId,41);store.stop();
 }));
+
+
+test('scene loading preserves selection, folds and allocation after remote topology replacement',async()=>withStore(createEditorStore=>{
+ const store=createEditorStore(),doc=document();doc.world.entities.push({entity:40,parent:2,name:'Leaf',components:{}});doc.world.selectedIds=[40,99,40,2];doc.world.selected=40;
+ store.loadSceneJson(JSON.stringify(doc));assert.deepEqual(store.selectedIds,[2,40]);assert.equal(store.isExpanded(1),true);assert.equal(store.isExpanded(2),true);assert.equal(store.isExpanded(40),false);
+ store.collapse(1);store.expand(40);store.loadRemoteSceneJson(JSON.stringify(doc),'play',41,1);
+ assert.equal(store.isExpanded(1),false,'runtime selection does not open collapsed ancestors');assert.equal(store.isExpanded(40),true);
+ doc.world.entities=[{entity:8,name:'Replacement',components:{}}];doc.world.selectedIds=[40,99];doc.world.selected=40;
+ store.loadRemoteSceneJson(JSON.stringify(doc),'pause',41,2);assert.deepEqual(store.selectedIds,[8]);assert.equal(store.isExpanded(2),false);assert.equal(store.isExpanded(40),false);
+ store.stop();assert.equal(store.createEmpty(),9);
+ doc.world.entities=[];store.loadSceneJson(JSON.stringify(doc));assert.deepEqual(store.selectedIds,[]);assert.equal(store.createEmpty(),1);
+}));
+
+test('scene interaction synchronization filters stale IDs and clears either or both lists',async()=>withStore(createEditorStore=>{
+ const store=createEditorStore();store.loadRemoteSceneJson(JSON.stringify(document()),'play',41,1);
+ store.setSceneInteractionState([1,99],[2,99]);assert.deepEqual(store.sceneHiddenIds,[1]);assert.deepEqual(store.sceneUnpickableIds,[2]);
+ store.setSceneInteractionState([],[1,99]);assert.deepEqual(store.sceneHiddenIds,[]);assert.deepEqual(store.sceneUnpickableIds,[1]);
+ store.setSceneInteractionState([2,99],[]);assert.deepEqual(store.sceneHiddenIds,[2]);assert.deepEqual(store.sceneUnpickableIds,[]);
+ store.setSceneInteractionState([],[]);assert.deepEqual(store.sceneHiddenIds,[]);assert.deepEqual(store.sceneUnpickableIds,[]);
+}));

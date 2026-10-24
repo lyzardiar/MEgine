@@ -1270,3 +1270,14 @@ App的updateSceneDirty仅在edit模式读取远端指纹；独立窗口的Play�
 原生worldLockWait／workerQueue／rendererLockWait均值不足0.02ms；Game前端prepare／complete平均0.35／0.75ms。实际呈现间隔仍约54至56ms，下一步应观测前端跨窗口接收、事件循环和实际请求起点之间的等待。延期减少完整上传但仍频繁出现，尚未消除版本过期来源。暂停时Inspector自动化写入至主窗口观察为934.95ms，包含自动化调用／快照／轮询，不是硬件输入到显示延迟。
 
 进程树privateBytes依次为4,716,380,160（分离前）、6,589,648,896（三窗口）、6,953,811,968（重载）、6,046,130,176（Stop并停靠）；工作集求和分别2,927,726,592／4,638,593,024／4,966,989,824／3,462,840,320字节，可能重复统计共享页。尚未证明长期内存回收或无泄漏。汇总为 `tmp/docs-artifacts/editor-performance-risk/panel-cadence-native-summary.json`，构建及QA日志为同目录panel-cadence-*。保留实际输入延迟、长期／跨机器、强制原生竞态、可见性交互和行为字段热更新专项；不扩展为全库测试。
+
+
+### 第六十八阶段：场景加载ID扫描合并
+
+运行消息加载时，实体ID数组与集合只建立一次，供最大ID、选择恢复和展开节点过滤共用。父级查询表只在新场景需要展开已选节点祖先时建立；远端运行快照保留现有展开状态，无需创建该表。同步空隐藏／不可选列表时直接清空，不再建立整场景集合。非空列表继续过滤失效ID，普通场景打开、删除／重排和Stop保持原有语义。没有跨帧拓扑缓存。
+
+18项定向检查及TypeScript通过：selectionRestore、remoteRuntimeReuse、sessionSceneReception。新增覆盖初次选择祖先展开、运行接收保留折叠、拓扑替换清理旧展开／选择、Stop后按最新最大ID创建节点、空场景从1分配，以及隐藏／不可选列表单独与同时清空。日志为 `tmp/docs-artifacts/editor-performance-risk/load-index-tests.log`、`load-index-types.log`。
+
+局部CPU基线ec56d7f，Amazonia作者场景7,410实体，经Store迁移后生成真实增量；测量解析接收、运行加载、选择与空可见性同步，排除指纹、React面板和原生渲染。6次预热后9组交替各8次，组均值中位数：仅时钟1.88319→1.07469ms、单Transform2.31457→1.13338ms、全部7,403个Transform67.65552→67.91697ms。最终完整快照及指纹一致。密集变更无明显收益；这只减少接收端一部分扫描与分配，不能解释或消除上一批54至56ms呈现间隔。脚本、输入SHA及原始样本为 `tmp/docs-artifacts/editor-performance-risk/load-index-benchmark.{mjs,json,log}`。
+
+当前新批次第1/3项，未构建或重跑原生QA。合并验证覆盖地图加载／重载、运行中节点展开／选择／隐藏、Stop后新增节点和多窗口呈现。下一步仍需测量前端实际paint、消息接收及请求调度等待；Profiler已有浏览器paint样本，下次原生专项应保留这些字段，不能仅依赖原生request耗时推断瓶颈。

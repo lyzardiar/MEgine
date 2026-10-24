@@ -1024,7 +1024,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         return editable;
       });
     } else editEntities = loadedEntities;
-    nextId = Math.max(1, ...editEntities.map((e) => e.entity + 1), 1);
+    // MiYu: share the loaded ID index across allocation, selection and fold restoration.
+    const loadedEntityIds = editEntities.map(entity => entity.entity), loadedIds = new Set(loadedEntityIds);
+    nextId = 1;
+    for (const id of loadedEntityIds) nextId = Math.max(nextId, id + 1);
     if (applyScenePreferences) {
       if (data.sceneCamera) sceneCamera = sessionData ? structuredClone(data.sceneCamera) : data.sceneCamera;
       gameResolution = Object.prototype.hasOwnProperty.call(data, 'gameResolution')
@@ -1033,22 +1036,24 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       gameDisplay = normalizeGameDisplay(data.gameDisplay);
     }
     // New scenes start collapsed; remote snapshots retain the user's existing folds.
-    const loadedIds = new Set(editEntities.map((e) => e.entity));
     const newScene = recordUndo && applyScenePreferences;
     expanded = newScene ? new Set() : new Set([...expanded].filter((id) => loadedIds.has(id)));
     sceneHiddenIds = new Set();
     sceneUnpickableIds = new Set();
     selectedIds = restoreSceneSelection(
-      editEntities.map((entity) => entity.entity),
+      loadedEntityIds,
       data.world?.selectedIds,
       data.world?.selected,
+      loadedIds,
     );
     selectionAnchor = selectedIds[selectedIds.length - 1] ?? null;
-    const loadedById = new Map(editEntities.map((e) => [e.entity, e]));
-    for (const id of newScene ? selectedIds : []) {
-      let parent = loadedById.get(id)?.parent ?? null;
-      const visited = new Set<number>();
-      while (parent != null && !visited.has(parent)) { visited.add(parent); expanded.add(parent); parent = loadedById.get(parent)?.parent ?? null; }
+    if (newScene && selectedIds.length) {
+      const loadedById = new Map(editEntities.map(entity => [entity.entity, entity]));
+      for (const id of selectedIds) {
+        let parent = loadedById.get(id)?.parent ?? null;
+        const visited = new Set<number>();
+        while (parent != null && !visited.has(parent)) { visited.add(parent); expanded.add(parent); parent = loadedById.get(parent)?.parent ?? null; }
+      }
     }
     if (!retainRemoteRuntime) playEntities = targetMode === 'edit' ? null : structuredClone(editEntities);
     mode = targetMode;
@@ -1302,7 +1307,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return changed;
     },
     setSceneInteractionState(hiddenIds: readonly number[], unpickableIds: readonly number[]) {
-      const existing = new Set(editEntities.map((entity) => entity.entity));
+      const existing = hiddenIds.length || unpickableIds.length ? new Set(editEntities.map(entity => entity.entity)) : new Set<number>();
       sceneHiddenIds = new Set(hiddenIds.filter((id) => existing.has(id)));
       sceneUnpickableIds = new Set(unpickableIds.filter((id) => existing.has(id)));
     },

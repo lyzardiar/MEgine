@@ -1,9 +1,10 @@
+// Author: MiYu. Restore selection against the available IDs of the loaded scene.
 export function restoreSceneSelection(
   entityIds: number[],
   selectedIds: unknown,
   primarySelected: unknown,
+  available: ReadonlySet<number> = new Set(entityIds),
 ): number[] {
-  const available = new Set(entityIds);
   const seen = new Set<number>();
   const restored = (Array.isArray(selectedIds) ? selectedIds : [])
     .filter((id): id is number => typeof id === 'number' && available.has(id))
