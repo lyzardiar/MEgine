@@ -1567,3 +1567,17 @@ CPU对照使用已保留的196份DotA自包含GLB文件清单，5376条循环引
 6项针对性检查通过：3新增（2项GPU）及3项材质／Sprite／UI材质兼容。覆盖帧龄边界、epoch回绕、数量／字节压力与当前帧超预算保护；GPU验证闲置淘汰后返回的完整RGBA一致、invalidate后淘汰、同mtime但长度变化热更新、删除错误去重与恢复、工程切换／清空，以及字体／相机／3D材质隔离。130份1×2纹理当前全需时保留130份，下一帧仅引用1份后保留128份，两项闲置GPU资源确认已移除，剩余RGBA8逻辑载荷1024字节。这是夹具资源检查，不是进程或驱动分配字节。命令：cargo test -p mengine-runtime --release --lib ui_texture_retention -- --nocapture --test-threads=1；兼容筛选material_sync_preserves_variants_hot_reload_removal_and_project_ownership、sprite_subresources_compose_uvs_and_share_the_base_texture_batch_key、sparse_ui_material_textures_stay_warm_but_the_cache_is_bounded。日志ui-texture-retention-{tests,material-compatibility,sprite-compatibility,custom-compatibility}.log均在tmp/docs-artifacts/editor-performance-risk。
 
 122、123、124达到3/3，提交后统一custom-protocol Release验证实际DotA、Amazonia、多窗口、Scene选取／Stop重启、来源校验并发及帧间隔、菜单／地图纹理返回与热更新，并增加同进程多轮Stop驻留采样。当前最近原生程序仍13ef6a4，尚未据预算或夹具声称实际内存下降；隐藏视图不产生渲染帧时不推进120帧闲置计数，长期驻留、稳定60、LOD和完整War3目标继续待办。
+
+### 第一百二十二至一百二十四阶段合并原生结论
+
+统一036f284前端与custom-protocol Release，前端构建8.64秒（Vite3.21秒）、原生78.72秒；冻结程序SHA256为071f5825b9ae7ccae48747e6ce447e07516548965fd739bf02fa2286fc5707d7。B001/spatial-picking-1792868773656的7项选取／隐藏恢复／跨Play代次检查、arbitrary-map-1792868810072的实际DotA流程、map-session-1792868881400的7项多窗口及3轮延伸流程、profiler-bundles-1792869083299均通过并正常退出，使用同一程序、错误断言为0。DotA错误断言仍位于关闭重开前，重开图像另行检查。已检查真实Scene／Game／相机预览、Profiler、菜单重开、多窗口、各轮Amazonia和负缩放重启图像。用户编辑器64664保持运行；验证结束仅该编辑器存活。
+
+DotA14437实体，缓存进入3.312秒，上次同流程2.334秒，本次没有证明进入速度改善。Scene59.84／Game60.01FPS、原生平均14.771／11.415ms，上次13ef6a4为60.06／59.97FPS、14.861／11.678ms。相同5376对象／5342可见／4675调用／1123实例组内对象，无LOD削减。Scene paint3.836ms、UI0.384ms；两视图各240个完成间隔，p95为25.6／23.2ms，上次24.4／22.1ms，仍未稳定60。最新单个Game有7次来源校验／0.509ms；最新Scene未发生来源校验，不能把它写成校验平均0ms或尖峰已消失。122的CPU对照按其定向结果保留，不由本次单样本推断阶段收益。实际Profiler仍0构建／19命中／4675复用指令。
+
+多窗口7434实体，Scene59.19／Game56.24FPS、原生8.081／9.343ms，上次59.20／55.56FPS、8.106／9.667ms；p95间隔25.6／27.1ms，仍未稳定满帧。Scene paint2.956ms、UI0.300ms。assert-ranges-hierarchy-batch.py核对逐帧计数与paint分段／加权样本；summarize-source-pick-ui-batch.py核对四份报告、程序摘要、正常退出、版本2进程身份／求和及延伸采样阶段，输出source-pick-ui-batch-runtime-summary.json。没有将本次小幅整帧差异归因于单个改动。
+
+新增qa-frost-map-session.mjs --residency-cycles 3，在同一进程内额外三次进入Amazonia，每次运行15秒、Stop恢复作者内容、空闲20秒后采样。每轮约43.95／44.47／44.28秒，整个多窗口流程201.91秒；该参数允许0到5，需搭配--detached-profile-only --restart-after-stop。14份版本2采样的根PID及创建时间一致，三个空闲点均7进程。根进程私有内存依次5247.38／5492.90／5769.68MiB，同等空闲阶段从第一轮到第三轮增加522.30MiB；进程树对应5824.59／6063.64／6392.68MiB，增加568.09MiB。Game各轮live样本姿态缓存均约31.36MiB、4059项，当前已统计逻辑估算约115MiB；它不覆盖全部原生对象和驱动分配，不能据此归因。重复驻留仍增长，长期内存验收未通过，不能把123／124所有权修复写成完整解决。
+
+同次多窗口起点5229.46MiB／7进程、三面板6983.55MiB／10进程、地图重载7804.50MiB／10进程、Stop停靠6706.99MiB／7进程、第二次Stop6486.88MiB／7进程。各延伸轮Stop后再等20秒时部分内存回落，因此使用三个同等空闲点作重复趋势比较。DotA关闭前6788.89MiB、关闭工程2688.39MiB、重开3324.23MiB，均7进程。不同运行的私有内存差异不作单项改动因果对照；旧PID-only结果不参与比较，working set不当独占字节，孤儿进程不在范围。
+
+本批功能／连续帧及延伸采样已执行完，下一批独立计数0/3；重复驻留增长保留在失败／待修队列，优先继续定位其原生所有者或分配保留路径。原始PNG／JSON／日志及build-036f284收据都在tmp/docs-artifacts，docs只保存结论。稳定60、多窗口整帧、来源校验尖峰、长期内存、LOD、姿态聚焦／alpha选取和完整JASS／War3保真继续待办。

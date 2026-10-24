@@ -36,6 +36,9 @@ const detachedProfileOnly=process.argv.includes('--detached-profile-only');
 const detachedOnly=process.argv.includes('--detached-only')||detachedAuthoringOnly||detachedProfileOnly;
 const restartAfterStop=process.argv.includes('--restart-after-stop');
 assert.ok(!restartAfterStop||detachedOnly,'--restart-after-stop requires a detached test');
+const residencyIndex=process.argv.indexOf('--residency-cycles'),residencyCycles=residencyIndex<0?0:Number(process.argv[residencyIndex+1]);
+assert.ok(Number.isInteger(residencyCycles)&&residencyCycles>=0&&residencyCycles<=5,'--residency-cycles must be 0 through 5');
+assert.ok(!residencyCycles||(detachedProfileOnly&&restartAfterStop),'--residency-cycles requires --detached-profile-only --restart-after-stop');
 const restartOnly=process.argv.includes('--restart-only');
 const hierarchyInteractions=process.argv.includes('--hierarchy-interactions');
 const label='map-session-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -57,12 +60,13 @@ async function key(key){await input({keys:[key]});await input({});await step();}
 async function click(name){const s=await snapshot(),pointer=clientWorldFixture(s).canvasPoint(name,[1280,720],false);await input({pointer,buttons:[0]});await input({pointer});await step();}
 async function capture(name){const deadline=Date.now()+30000;for(;;)try{const shot=await query('view.screenshot',{target:'game',maxSize:1280,includeNativeProfile:true});if(name)fs.writeFileSync(path.join(out,label+'-'+name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));report.frames.push(shot.nativeProfile);return shot.dataUrl;}catch(e){if(Date.now()>=deadline||!/NOT_READY|canvas is not available yet/.test(e.message))throw e;await sleep(500);}}
 function sampleProcessMemory(stage,field='detachedMemory'){const owner=JSON.parse(fs.readFileSync(process.env.MENGINE_AGENT_BRIDGE_FILE,'utf8'));assert.equal(owner.background,true);assert.ok(Number.isSafeInteger(owner.pid));const sample=JSON.parse(execFileSync('pwsh.exe',['-NoProfile','-File',path.join(repo,'scripts/sample-native-qa-memory.ps1'),'-EditorPid',String(owner.pid),'-ExpectedExecutable',process.env.MENGINE_EDITOR_EXECUTABLE],{encoding:'utf8',windowsHide:true,timeout:20000}));(report[field]??=[]).push({stage,...sample});}
-async function checkRestartAfterStop(authored,entityCount,sampleMemory){
+async function checkRestartAfterStop(authored,entityCount,sampleMemory,{name='restarted-map',liveMs=0}={}){
   await execute('panel.focus',{kind:'game'});await execute('playback.play',{paused:true});await step(2);
   assert.equal(clientWorldFixture(await snapshot()).visible('solo box'),true,'Restart opens a fresh main menu');
   await click('solo box');await click('custom box');await click('map4 box');await click('map1 box');
   assert.equal((await snapshot()).entities.find(e=>e.name==='Map name').components.Text.text,'Amazonia');await click('mapStart box');
-  const restarted=await waitMap('amazonia');assert.equal(restarted.entities.length,entityCount);await capture('restarted-map');
+  const restarted=await waitMap('amazonia');assert.equal(restarted.entities.length,entityCount);await capture(name);
+  if(liveMs){await execute('playback.play');await sleep(liveMs);await execute('playback.pause');await capture(name+'-live');sampleMemory('live');}
   await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);assert.equal((await query('editor.state')).dirty,false);
   await sleep(1000);sampleMemory('after-second-stop');report.checks.push('Fresh Play after Stop enters Amazonia again, presents Game pixels, and a second Stop restores authored content');
 }
@@ -248,6 +252,11 @@ async function checkDetachedRuntime(authored){
   sampleMemory('after-stop-and-dock');
   report.checks.push('Detached authoring edit/restore after Stop; auxiliary panels dock normally');
   if(restartAfterStop)await checkRestartAfterStop(authored,before.entities.length,sampleMemory);
+  if(residencyCycles){report.residencyCycles=[];for(let cycle=1;cycle<=residencyCycles;cycle++){
+    const started=performance.now(),prefix='residency-cycle-'+cycle;
+    await checkRestartAfterStop(authored,before.entities.length,stage=>sampleMemory(prefix+'-'+stage),{name:prefix+'-map',liveMs:15000});
+    await sleep(20000);sampleMemory(prefix+'-idle-20s');report.residencyCycles.push({cycle,liveMs:15000,idleMs:20000,elapsedMs:performance.now()-started});
+  }}
 }
 try{
   for(let i=0;;i++)try{await query('project.state');break;}catch(e){if(i===20||!/BridgeConnectionError|request timed out|not ready/.test(e.message))throw e;await sleep(500);}
