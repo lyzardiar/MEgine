@@ -21,6 +21,17 @@ test('native mesh hit regions retain translated, mirrored, rotated and near-plan
 });
 
 const noRaster = new Proxy({}, { get() { throw Error('Mesh picking must not rasterize'); }, set() { throw Error('Mesh picking must not rasterize'); } });
+test('offset geometry is picked at its visible bounds even when the origin is offscreen or behind the camera', () => {
+  const cam = { eye: [0, 0, 5], target: [0, 0, 0], fovYDeg: 60 };
+  for (const origin of [[10, 0, 0], [0, 0, 10]]) {
+    const vertices = [[-1,-1,0],[1,-1,0],[1,1,0],[-1,1,0]].map(point => point.map((v, axis) => v - origin[axis]));
+    for (const hitOnly of [false, true]) {
+      const hit = drawTriangleMesh(hitOnly ? noRaster : context(), cam, viewport, origin, [1,1,1], vertices, [0,1,2,0,2,3], false, undefined, undefined, hitOnly);
+      assert.ok(hit); assert.ok(Math.abs(hit.x - 400) < 1e-9); assert.ok(Math.abs(hit.y - 300) < 1e-9);
+      assert.ok(hit.r > 100 && hit.r < 120);
+    }
+  }
+});
 const oracle = (cam, vp, center, scale, vertices, triangles, rotation, selected = false) => drawTriangleMesh(context(), cam, vp, center, scale, vertices, triangles, selected, rotation);
 
 test('direct mesh picking exactly matches rasterized selection across clipping, projection and deterministic geometry', () => {

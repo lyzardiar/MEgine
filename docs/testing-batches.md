@@ -849,3 +849,9 @@ Viewport的原生帧拥有固定实体记录，worldTransform已有父变换身�
 必要检查：`cargo test -p mengine-unity-import --lib` 15 通过／0 失败。真实包转换：53 资产、15 节点、11 粒子系统、4 模型、9 运行材质，无缺失运行依赖。FBX 与现有 Unity Editor Mesh 比对，位置/UV/法线误差小于 1.1e-7，Color32 量化后顶点色误差小于 3e-8。17 张实际绑定纹理均双线性且无 mipmap，采样包含 Repeat、Clamp 和混合轴。预览关闭源雾，保留非运行依赖诊断。
 
 证据：`tmp/docs-artifacts/unity-import-samplers/`、`tmp/docs-artifacts/unity-import-inspect/mesh-attribute-fidelity.json`。桌面菜单、模型/材质/Prefab 回归、停止重播、父级变换和渲染在三项任务完成后合并验证。导入通过不代表播放或视觉对照通过。
+
+### 第八十二阶段：偏移网格鼠标选取修复（本批回归修复）
+
+真实原生模型热更新复现中，模型从视口外移入后画面正确，但鼠标选取区域仍以Transform原点为中心。导入网格现在按可见三角形的投影边界确定选取中心；通过空间视锥的网格不再因为原点在相机后面而跳过选取准备。原生延迟选取和浏览器预览使用同一边界语义。
+
+变更math3d.ts、Viewport.tsx及nativeSceneMeshSelection.test.mjs；新增scripts/qa-viewport-spatial-picking.mjs，覆盖资源热替换、父节点位移和原点位于相机后的实际Scene画布选取，失败画面与诊断写入tmp/docs-artifacts/testing-batches/B001。12项相关投影／选取缓存测试通过，日志editor-performance-risk/offset-mesh-picking-tests.log；原生修复验证待构建。此项属于第七十九至八十一阶段集成发现的修复，仅重测受影响选取及本批尚未执行范围。

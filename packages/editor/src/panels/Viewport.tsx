@@ -2085,7 +2085,7 @@ export function Viewport(props: {
           editorGizmo: boolean;
           renderKind: 'entity' | 'trail' | 'particle' | 'spine';
         }> = [];
-        if (!nativeGameReady && (pr || camComp || isLight || hasCollider || e.components.Tilemap)) {
+        if (!nativeGameReady && (pr || camComp || isLight || hasCollider || e.components.Tilemap || e.components.MeshRenderer)) {
           const renderer2D = (e.components.Tilemap
             ?? e.components.Line2D
             ?? e.components.AnimatedSprite2D
@@ -2614,7 +2614,6 @@ export function Viewport(props: {
         continue;
       }
 
-      if (!pr) continue;
       const half: Vec3 = [0.5 * t.scale[0], 0.5 * t.scale[1], 0.5 * t.scale[2]];
       const rot = t.rotation as [number, number, number, number] | undefined;
       // Project selection geometry on demand using the camera and mesh of the displayed native frame.

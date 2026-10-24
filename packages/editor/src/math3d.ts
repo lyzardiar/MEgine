@@ -386,8 +386,8 @@ export function projectTriangleMeshHit(cam: Camera, viewport: { x: number; y: nu
     minX = Math.min(minX, a.x, b.x, c.x); minY = Math.min(minY, a.y, b.y, c.y);
     maxX = Math.max(maxX, a.x, b.x, c.x); maxY = Math.max(maxY, a.y, b.y, c.y);
   }
-  const projectedCenter = projectPoint(center);
-  return projectedCenter && visible ? { x: projectedCenter.x, y: projectedCenter.y, r: Math.max(8, Math.max(maxX - minX, maxY - minY) * 0.55) } : null;
+  // MiYu: imported geometry can be offset from its transform origin.
+  return visible ? { x: (minX + maxX) * 0.5, y: (minY + maxY) * 0.5, r: Math.max(8, Math.max(maxX - minX, maxY - minY) * 0.55) } : null;
 }
 
 /** Canvas preview for imported triangle meshes. Runtime uses the full GPU mesh. */
@@ -467,11 +467,10 @@ export function drawTriangleMesh(
       maxY = Math.max(maxY, point.y);
     }
   }
-  const projectedCenter = projectPoint(center);
-  if (!projectedCenter || triangles.length === 0) return null;
+  if (triangles.length === 0) return null;
   return {
-    x: projectedCenter.x,
-    y: projectedCenter.y,
+    x: (minX + maxX) * 0.5,
+    y: (minY + maxY) * 0.5,
     r: Math.max(8, Math.max(maxX - minX, maxY - minY) * 0.55),
   };
 }
