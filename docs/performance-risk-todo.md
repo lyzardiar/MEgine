@@ -1433,3 +1433,9 @@ Viewport的原生帧拥有固定实体记录，worldTransform已有父变换身�
 Scene连续旋转期间13帧，隐藏页签原生／浏览器均0，切回30帧；尺寸变化、原始资源热更新、父变换、选取、层级聚焦、地图重载与Stop恢复通过。多窗口Inspector编辑、窗口重开和Pause／Step／Stop通过。证据B001/map-session-1792809672118.json、map-session-1792810463601.json及spatial-picking-1792810589579.json，日志位于tmp/docs-artifacts/editor-performance-risk/。
 
 继续保留待办：多窗口稳定60FPS、长时间内存与真实输入延迟、DotA持续运行场景性能。八叉树已生效，本批优化更新成本与发布节奏；LOD尚未实现，应依据后续渲染和阴影采样决定，不从未满帧直接推定缺少空间剔除。
+
+### 第八十三阶段：显示帧层级激活索引复用
+
+固定显示帧的激活索引按实体顺序／ID／parent／active复用，组件动画不再重复建立全场景索引。父子关系、启用状态或实体集合变化会重新解析；作者态可变查询保留原实现。旧帧持有独立的精简层级记录，原生delta、重排、缺失父节点、循环和旧帧回读由17项定向检查覆盖，TypeScript通过。
+
+7434实体、每帧200变换更新的3组局部样本，显示数据准备均值2.242→1.403ms，校验和一致；不代表整个Scene或原生FPS。实现位于hierarchyActivation／nativeViewportPresentation，证据tmp/docs-artifacts/editor-performance-risk/owned-activation-*。本批1/3，原生动画、层级显隐、地图切换及多窗口帧率待累计三项合并验证；完整记录见testing-batches.md。

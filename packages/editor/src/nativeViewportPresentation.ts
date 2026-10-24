@@ -1,5 +1,5 @@
 // Author: MiYu. Reuse derived hierarchy and camera data for the same owned displayed entity records.
-import { createHierarchyActiveLookup } from './hierarchyActivation';
+import { createOwnedHierarchyActiveReader } from './hierarchyActivation';
 import { timelineGameCamera, type ResolvedGameCamera } from './gameCamera';
 import type { TimelineCameraPreview } from './timelineScenePreview';
 import { requiresBrowserViewportSnapshot, type NativeViewportFrameWorld } from './nativeViewportFrame';
@@ -21,8 +21,9 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
   let presentation: ReturnType<typeof prepare> | undefined;
   const readTransforms = createOwnedWorldTransformReader();
   const readSceneUiEntities = createSceneUiEntityReader<E>();
+  const readActive = createOwnedHierarchyActiveReader();
   function prepare(world: NativeViewportFrameWorld<E>) {
-    const active = createHierarchyActiveLookup(world.entities);
+    const active = readActive(world.entities);
     let transforms: ReturnType<typeof buildWorldTransforms> | undefined;
     let uiEntities: E[] | undefined;
     let entries: Array<{ e: E; t: NonNullable<ReturnType<typeof resolvedTransform>>; hierarchyOrder: number }> | undefined;

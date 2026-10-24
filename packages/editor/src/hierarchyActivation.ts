@@ -1,5 +1,20 @@
 // Author: MiYu. Resolve Play activation once per paint without repeated whole-scene searches.
 type Entity = { entity: number; parent?: number | null; active?: boolean };
+/** Fixed displayed records can share activation while animation changes only component values. */
+export function createOwnedHierarchyActiveReader() {
+  let previous: readonly Entity[] | undefined;
+  let lookup: ReturnType<typeof createHierarchyActiveLookup> | undefined;
+  return (entities: readonly Entity[]) => {
+    if (previous === entities) return lookup!;
+    const unchanged = previous?.length === entities.length && entities.every((entity, index) => {
+      const old = previous![index];
+      return old === entity || Object.is(old.entity, entity.entity) && Object.is(old.parent ?? null, entity.parent ?? null) && (old.active === false) === (entity.active === false);
+    });
+    if (!unchanged) lookup = createHierarchyActiveLookup(entities.map(({ entity, parent, active }) => ({ entity, parent, active })));
+    previous = entities;
+    return lookup!;
+  };
+}
 export function createHierarchyActiveLookup(entities: readonly Entity[]) {
   const byId = new Map<number, Entity>(), active = new Map<number, boolean>();
   for (const entity of entities) if (!byId.has(entity.entity)) byId.set(entity.entity, entity);

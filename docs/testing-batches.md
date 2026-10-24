@@ -879,3 +879,13 @@ VFX 适配器以共享 WGSL 和参数数据实现本包启用的主纹理、遮�
 
 
 Unitypackage 同任务收尾补充：导入器 1.3.0 将原始资产移至工程级 `SourceAssets/UnityPackages/`，暂存目录也置于 Assets 外，采用两目录发布与本次文件回滚。所有运行资产生成独立 MEngine JSON meta，纳入 manifest；20 项导入测试通过。真实注册表连续重建两次，49 个原生 GUID 与 Unity GUID 无重叠，sidecar 字节不变，再次导入复用成功；清单为 runtime 97 项及 source 163 项。证据 `tmp/docs-artifacts/unity-import-v1-3-metadata/`。材质顶点流按实际序列解码并校验，不匹配的 CustomData 排布阻断。寿命精确端点浮点残留补充测试 1/1 通过；未知 Shader 显示紫色棋盘预览。以上均为前两任务补充，不增加批次计数。
+
+### 第八十三阶段／新批次任务1/3：显示帧层级激活索引复用
+
+原生显示帧现在复用层级激活索引：实体顺序、ID、父节点及启用状态相同时，Transform或其他组件动画不重新建立索引和遍历祖先。只接入拥有固定实体记录的显示帧；作者态可变查询保留原行为。层级变化时生成只含ID／parent／active的索引记录，旧显示帧查询不会被新帧污染，也不会额外保留整份旧组件数据。
+
+变更packages/editor/src/hierarchyActivation.ts、nativeViewportPresentation.ts及对应两份测试。17项定向检查和TypeScript通过，覆盖原生delta复用、父节点显隐／重挂、重复ID顺序、缺失父节点、循环、增删与旧帧回读；日志tmp/docs-artifacts/editor-performance-risk/owned-activation-tests.log和owned-activation-types.log。
+
+局部7434实体／每帧200个组件变换更新，3组交替先后顺序、每组30帧预热＋120帧测量，完整显示数据准备（含世界变换、条目、overlay分类）均值2.242→1.403ms；每组结果校验和一致。三组P95分别3.637／3.965／3.974→1.537／2.021／2.441ms。此数据仅证明局部准备成本，不作为原生FPS或稳定满帧结论；脚本及摘要owned-activation-bench.mjs／json留在上述本地目录。
+
+当前1/3；累计三项后统一构建与原生验证。待测Amazonia／DotA持续动画、Scene显隐与层级编辑、地图切换、独立窗口、旧帧呈现及Stop恢复，观察Scene paint和呈现间隔。频繁改变层级仍重建索引，需在后续原生样本中检查其峰值；本项不重跑整库或原生QA。

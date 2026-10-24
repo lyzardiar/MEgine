@@ -184,9 +184,11 @@ test('native delta revisions share static resolved nodes and invalidate retained
     owned = retainPlayWorld(update(previous, revision - 1, { snapshot, baseRevision: revision - 1, revision, reset: false }), previous);
   };
   present(0); advance(1, []); present(1);
+  assert.equal(read(worlds[0]).active, read(worlds[1]).active, 'native delta revisions with unchanged hierarchy share activation');
   assert.notEqual(worlds[0].entities, worlds[1].entities); assert.equal(worlds[0].entities[1], worlds[1].entities[1]);
   for (const id of [1, 2, 3, 4]) assert.equal(results[0].get(id), results[1].get(id));
   advance(2, [{ entity: 1, active: false, components: { Transform: transform(12) } }]); present(2);
+  assert.notEqual(read(worlds[1]).active, read(worlds[2]).active, 'ancestor activation changes invalidate the displayed lookup');
   assert.equal(worlds[1].entities[1], worlds[2].entities[1]); assert.notEqual(results[1].get(2), results[2].get(2));
   assert.equal(results[2].get(2).active, false); assert.equal(results[2].get(2).transform.position[0], 12);
   assert.equal(results[1].get(4), results[2].get(4));
