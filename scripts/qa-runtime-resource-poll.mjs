@@ -51,7 +51,7 @@ try{
   fs.unlinkSync(path.join(project,'Assets/Base.mmat'));await waitPixels('missing-parent',value=>value!==blue);
   write('Assets/Base.mmat',material([0,0,1,1]));await waitPixels('parent-recovered',value=>value===blue);
   report.checks.push('A deleted parent produces visible failure and recreating it restores exact native pixels');
-  report.errors=(await query('console.get_logs',{limit:1000})).filter(entry=>entry.level==='error');
+  report.errors=await query('console.get_logs',{level:'error',limit:300});assert.ok(report.errors.length<300,'Error log must fit in the native query limit');
   assert.ok(report.errors.every(entry=>JSON.stringify(entry).includes('Base.mmat')),'Only the intentionally deleted parent may report an error');
   report.profile=await query('profiler.get_samples',{source:'scene',limit:24,includeNativeTimings:true});assert.ok(report.profile.nativeLatest.counts.cameraVisibleObjects>0);
   report.passed=true;
