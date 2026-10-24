@@ -1713,3 +1713,13 @@ DotA14437实体，缓存进入2.357秒；Scene59.58／Game59.63FPS，原生平�
 多窗口流程291.07秒，5轮均运行15秒、Stop后空闲20秒。20份版本2样本核对同根PID／创建时间、子进程身份、唯一PID及私有字节求和，五个等时空闲点均7进程。根进程私有内存4648.6914／4767.2031／4738.7227／4751.8789／4741.7422MiB，首末增加93.0508MiB、后三轮增加3.0195MiB；进程树5222.3359／5302.0039／5287.6484／5287.6523／5302.0352MiB，首末增加79.6992MiB、后三轮增加14.3867MiB。有限流程中后段呈平台附近波动，不能作为小时级稳定或所有保留风险均解决的依据，也不把跨运行字节差异归因于本批缓存。CPU像素池最多16MiB闲置容量及UI索引的逻辑持有规则仍是明确取舍。
 
 已查看绿色Shader夹具、DotA Game、重开后的War3菜单及第五轮Amazonia Game图像。10次资源像素转换另以PNG摘要核对；assert-ranges-hierarchy-batch.py验证本次DotA与多窗口的全部采样、分段及绘制计数，summarize-readback-ui-batch.py验证五份报告、冻结程序、正常退出、20份内存身份／求和及五轮时间。证据readback-ui-batch-*.log／json、ui-index-runtime-check.log与对应PNG均在tmp/docs-artifacts，程序收据在build-847e5af。该批功能与上述驻留范围验证完成，下一批0/3。后续继续定位呈现间隔尖峰与多窗口稳定60，长期驻留、LOD及完整JASS／War3对局保真仍未完成。
+
+### 第一百三十四阶段／编辑器新批次任务1/3：播放帧完成时发布分离视口增量
+
+App.tsx的模拟完成回调使用broadcastScene(false, true)：主窗口处于Play且有5秒内活跃的Scene／Game分离面板时，直接发布该完成帧并清除旧的合并计时器；消息继续使用既有增量序列、状态ID与会话所有权，未将完成标记改成强制完整快照。普通编辑、Pause、无活跃视口、过期面板以及分离窗口自身的发布仍走原有合并路径。已排队的选择／内容随最新状态一并发布，旧计时器不能重复发送；旧代次与卸载后的模拟回调仍在原有检查处拒绝。Inspector／层级的React刷新保持原有10Hz。
+
+依据为上一批统一847e5af的map-session-1792885194376：240份Game完成样本的239个间隔中，223次版本差1、16次差2，版本推进约60.224次/秒而完成帧率56.39；Scene另有18次重复版本。Game平均请求12.417ms，平均worker排队0.017ms、renderer锁等待0.000195ms，不能据此认定线程池或渲染锁瓶颈。由timestamp减transportMs估算的部分下一请求起点距上次完成16–29ms；这是已发布完成样本的近似推导，不含全部提交／丢弃请求，不能单独证明全部尖峰成因。实际调用链确认模拟完成后仍进入16ms合并计时器，本项消除该额外等待，不改变模拟／渲染的固定截止时间逻辑。可复现分析脚本analyze-completed-frame-sync.py及结果completed-frame-sync-baseline.json在tmp/docs-artifacts/editor-performance-risk，保留原报告摘要和程序SHA。
+
+node --test packages/editor/tests/workspaceSelectionSync.test.mjs packages/editor/tests/playbackCompletionScheduling.test.mjs首次35项中34通过，1项新夹具在微任务通知前统计回调而失败；夹具改为每次消息后等待微任务，仅用--test-name-pattern='completed Play frames reach detached stores immediately'重跑该项通过，最终35项相关检查均通过，未重复其余34项。覆盖120个非匀速完成版本立即到达真实独立store、全部按上个stateId继续增量、每版本一次帧通知、排队选择随最新状态到达、旧计时器清除、Pause／过期视口／分离作者模式合并、旧代次／卸载拒绝，以及原有跨窗口选择、不可变快照、Stop与播放节拍兼容。App.tsx整文件TypeScript转译0错误，diff检查通过。日志completed-frame-sync-tests.log保存首轮结果，completed-frame-sync-retest.log保存失败项复测；未把初次失败日志写成全通过。
+
+本项可使此前被计时器合并的完成帧增加实际消息数，主窗口发布成本与分离视口帧间隔须在批次中共同评估。当前仅实现及定向检查完成，尚未对本项重新构建前端／原生或测量实际FPS。当前新批次1/3，第三项后统一验证真实Amazonia／DotA多窗口、输入与选择同步、Pause／Step／Stop及重启、隐藏恢复和性能分布。最近完整原生程序仍847e5af，稳定60、长期驻留、LOD和完整War3目标继续进行中。

@@ -14,14 +14,14 @@ const loop = ts.transpileModule(`(function () { ${source.slice(start, end)} })`,
 
 function fixture(duration, completionDelay = 0, wakeDelay = 0) {
   let now = 0, serial = 0, pending = Promise.resolve(), active = 0, maximumActive = 0, completionSchedules = 0;
-  const tasks = new Map(), starts = [], deltas = [], refreshes = [];
+  const tasks = new Map(), starts = [], deltas = [], refreshes = [], broadcasts = [];
   const schedule = (callback, delay, repeat = false) => { if (delay === 0) completionSchedules++; const id = ++serial; tasks.set(id, { callback, at: now + (delay === 0 ? completionDelay : delay + wakeDelay), interval: repeat ? delay : null }); return id; };
   const store = { mode: 'play', playBusy: false, playGeneration: 1, tick(dt) {
     assert.equal(this.playBusy, false); this.playBusy = true; starts.push(now); deltas.push(dt); maximumActive = Math.max(maximumActive, ++active);
     const generation = this.playGeneration;
     pending = new Promise(resolve => schedule(() => { if (generation === this.playGeneration) this.playBusy = false; active--; resolve(); }, typeof duration === 'function' ? duration(starts.length) : duration));
   }, waitForPlayRuntime() { return pending; } };
-  const dispose = vm.runInNewContext(loop, { advanceFrameDeadline, frameCadenceDelay, store, props: { detachedPanel: false }, performance: { now: () => now }, window: { setTimeout: schedule, clearTimeout: id => tasks.delete(id) }, setInterval: (callback, delay) => schedule(callback, delay, true), clearInterval: id => tasks.delete(id), broadcastScene() {}, refresh: value => refreshes.push(value) })();
+  const dispose = vm.runInNewContext(loop, { advanceFrameDeadline, frameCadenceDelay, store, props: { detachedPanel: false }, performance: { now: () => now }, window: { setTimeout: schedule, clearTimeout: id => tasks.delete(id) }, setInterval: (callback, delay) => schedule(callback, delay, true), clearInterval: id => tasks.delete(id), broadcastScene(...args) { broadcasts.push({at:now,args}); }, refresh: value => refreshes.push(value) })();
   async function advance(to) {
     for (;;) {
       const next = [...tasks].filter(([, task]) => task.at <= to).sort((a, b) => a[1].at - b[1].at || a[0] - b[0])[0];
@@ -33,7 +33,7 @@ function fixture(duration, completionDelay = 0, wakeDelay = 0) {
     }
     now = to;
   }
-  return { store, starts, deltas, refreshes, dispose, advance, get maximumActive() { return maximumActive; }, get completionSchedules() { return completionSchedules; }, externalStep(duration) { assert.equal(store.mode, 'pause'); store.playBusy = true; pending = new Promise(resolve => schedule(() => { store.playBusy = false; resolve(); }, duration)); } };
+  return { store, starts, deltas, refreshes, broadcasts, dispose, advance, get maximumActive() { return maximumActive; }, get completionSchedules() { return completionSchedules; }, externalStep(duration) { assert.equal(store.mode, 'pause'); store.playBusy = true; pending = new Promise(resolve => schedule(() => { store.playBusy = false; resolve(); }, duration)); } };
 }
 
 test('overdue native steps resume at completion without waiting for the next interval', async () => {
@@ -48,6 +48,13 @@ test('fast native steps retain the 60 Hz cadence', async () => {
   assert.equal(f.starts.length, 5);
   assert.deepEqual(f.starts,[17,34,50,67,84]);
   assert.equal(f.maximumActive, 1); f.dispose();
+});
+
+test('completed frames publish deltas at completion and reject retired owner callbacks', async () => {
+  const f=fixture(5);await f.advance(21);assert.equal(f.broadcasts.length,0);await f.advance(22);
+  assert.deepEqual(f.broadcasts,[{at:22,args:[false,true]}]);
+  await f.advance(35);f.store.playGeneration++;await f.advance(39);assert.equal(f.broadcasts.length,1);
+  f.dispose();await f.advance(100);assert.equal(f.broadcasts.length,1);
 });
 
 test('slow-to-fast steps recover their timebase without burst catch-up', async () => {

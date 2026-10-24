@@ -763,7 +763,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  const broadcastScene = (immediate = false) => {
+  const broadcastScene = (immediate = false, completedPlayFrame = false) => {
     const channel = syncChannel.current;
     if (!channel || !syncReady.current || applyingRemote.current || !booted.current) return;
     const send = () => {
@@ -792,13 +792,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         ...resourceDocumentPathsRef.current,
       } satisfies WorkspaceSyncMessage);
     };
-    if (immediate) {
+    const liveViewport = !props.detachedPanel && store.mode === 'play' && [...remoteDirtyPeers.current.values()].some(peer => peer.timestamp >= Date.now() - 5_000 && (peer.panel === 'scene' || peer.panel === 'game'));
+    if (immediate || completedPlayFrame && liveViewport) {
       if (syncTimer.current != null) window.clearTimeout(syncTimer.current);
       send();
       return;
     }
-    // Running detached viewports consume completed frames at the simulation cadence; authoring stays coalesced.
-    const liveViewport = !props.detachedPanel && store.mode === 'play' && [...remoteDirtyPeers.current.values()].some(peer => peer.timestamp >= Date.now() - 5_000 && (peer.panel === 'scene' || peer.panel === 'game'));
+    // Completed Play frames publish at completion; other changes retain bounded coalescing.
     const interval = liveViewport ? 16 : 33;
     if (syncTimer.current == null) syncTimer.current = window.setTimeout(send, lastSceneBroadcastAt.current == null ? interval : Math.max(0, Math.ceil(interval - (performance.now() - lastSceneBroadcastAt.current))));
   };
@@ -2814,10 +2814,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       store.tick(Math.min((now - lastTick) / 1000, 0.25));
       lastTick = now;
       // Viewports read completed Play frames directly. Inspector and hierarchy refresh
-      // at 10 Hz; detached viewports receive coalesced completed frames at the simulation cadence.
+      // at 10 Hz; detached viewports receive each completed frame without another coalescing delay.
       void store.waitForPlayRuntime().then(() => {
         if (disposed || generation !== store.playGeneration) return;
-        if (!disposed && !props.detachedPanel) broadcastScene();
+        if (!disposed && !props.detachedPanel) broadcastScene(false, true);
         if (disposed || performance.now() - lastPanelRefresh < 100) return;
         lastPanelRefresh = performance.now();
         refresh(!props.detachedPanel);

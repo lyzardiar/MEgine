@@ -250,7 +250,7 @@ test('running detached viewports receive each completed simulation frame without
  }
 }));
 
-test('viewport cadence remains coalesced and returns to authoring on Pause or stale peers',async()=>withPair((main,detached)=>{
+test('ordinary viewport changes remain coalesced and return to authoring on Pause or stale peers',async()=>withPair((main,detached)=>{
  const document=JSON.parse(main.store.saveSessionSceneJson('Map'));
  main.env.remoteDirtyPeers.current.set('viewport',{timestamp:1000,panel:'game'});
  main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,0);main.broadcastScene(true);main.deliver(detached);
@@ -263,4 +263,31 @@ test('viewport cadence remains coalesced and returns to authoring on Pause or st
   main.store.loadRemoteSceneJson(JSON.stringify(document),mode,41,15);main.broadcastScene(true);main.deliver(detached);
   main.advance(1);main.broadcastScene();main.advance(31);assert.equal(main.sent.length,0);main.advance(1);assert.equal(main.sent.length,1);main.deliver(detached);
  }
+}));
+
+test('completed Play frames reach detached stores immediately through ordered deltas',async()=>withPair(async(main,detached)=>{
+ const document=JSON.parse(main.store.saveSessionSceneJson('Map'));
+ main.env.remoteDirtyPeers.current.set('viewport',{timestamp:1000,panel:'game'});
+ main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,0);main.broadcastScene(true);
+ let prior=main.sent[0].stateId;main.deliver(detached);let frames=0;const unsubscribe=detached.store.subscribePlayFrames(()=>frames++);
+ for(let revision=1;revision<=120;revision++){
+  main.advance([13,19,14,21][revision%4]);document.world.frame=revision;
+  main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,revision);main.broadcastScene(false,true);
+  assert.equal(main.sent.length,1);const message=main.sent[0];assert.equal(message.sceneDelta.base,prior);prior=message.stateId;
+  assert.equal(main.env.syncTimer.current,null);main.deliver(detached);assert.equal(detached.store.nativePlayRevision,revision);await Promise.resolve();
+ }
+ assert.equal(frames,120);assert.equal(detached.sent.length,0);unsubscribe();
+ main.advance(1);main.broadcastScene();assert.notEqual(main.env.syncTimer.current,null);
+ main.store.selectMany([2],'replace');main.broadcastScene(false,true);assert.equal(main.sent.length,1);main.deliver(detached);
+ assert.deepEqual(detached.store.selectedIds,[2]);main.advance(40);assert.equal(main.sent.length,0,'the superseded timer cannot publish another state');
+}));
+
+test('completion hints preserve Pause, stale-peer and detached-authoring coalescing',async()=>withPair((main,detached)=>{
+ const document=JSON.parse(main.store.saveSessionSceneJson('Map'));
+ for(const mode of ['pause','play']){
+  main.env.remoteDirtyPeers.current.set('viewport',{timestamp:mode==='play'?-5000:1000,panel:'game'});
+  main.store.loadRemoteSceneJson(JSON.stringify(document),mode,41,0);main.broadcastScene(true);main.deliver(detached);
+  main.advance(1);main.broadcastScene(false,true);assert.equal(main.sent.length,0);main.advance(31);assert.equal(main.sent.length,0);main.advance(1);assert.equal(main.sent.length,1);main.deliver(detached);
+ }
+ detached.broadcastScene(false,true);assert.equal(detached.sent.length,0);detached.advance(32);assert.equal(detached.sent.length,0);detached.advance(1);assert.equal(detached.sent.length,1);
 }));
