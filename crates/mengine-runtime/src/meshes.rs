@@ -92,6 +92,8 @@ fn discard_failed_mesh(renderer: &mut Renderer, key: &str, usage: &mut HashMap<S
 pub struct RuntimeMeshCache {
     #[cfg(test)]
     sequential_source_checks: bool,
+    #[cfg(test)]
+    parse_cached_mesh_keys: bool,
     project_root: Option<PathBuf>,
     attempted: HashMap<String, FileStamp>,
     last_poll: Option<Instant>,
@@ -115,6 +117,8 @@ impl RuntimeMeshCache {
         Self {
             #[cfg(test)]
             sequential_source_checks: false,
+            #[cfg(test)]
+            parse_cached_mesh_keys: false,
             project_root,
             attempted: HashMap::new(),
             last_poll: None,
@@ -250,6 +254,14 @@ impl RuntimeMeshCache {
             let key = object.mesh_key.trim();
             // Main and embedded views share GPU keys; parse and touch usage once per frame.
             if !frame_keys.insert(key) { continue; }
+            #[cfg(not(test))]
+            let probe_cache = true;
+            #[cfg(test)]
+            let probe_cache = !self.parse_cached_mesh_keys;
+            if probe_cache && !poll && self.attempted.contains_key(key) {
+                // Keep active sampled meshes resident without reparsing their unchanged references.
+                if let Some(used) = self.pose_usage.get_mut(key) { used.frame = self.frame; continue; }
+            }
             if key.starts_with("meshpatch:") {
                 if let Some(used) = self.pose_usage.get_mut(key) { used.frame = self.frame; } else { self.pose_usage.insert(key.into(), PoseUsage { frame:self.frame, bytes:0 }); }
                 if !poll && self.attempted.contains_key(key) { continue; }
@@ -665,3 +677,7 @@ mod billboard_prepare_tests;
 #[cfg(test)]
 #[path = "mesh_parallel_validation_tests.rs"]
 mod parallel_validation_tests;
+
+#[cfg(test)]
+#[path = "mesh_cached_key_tests.rs"]
+mod cached_key_tests;

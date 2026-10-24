@@ -1645,3 +1645,13 @@ DotA14437实体，缓存进入2.302秒。Scene59.68／Game59.85FPS，原生平�
 针对保留Amazonia场景286条有效材质路径，3次独立进程、每次同进程交替比较原有按读取年龄检查与固定相位截止时间；60Hz共180帧，前30帧预热，150帧计量，真实文件查询，初末渲染材质载荷逐项相等且无诊断错误。命令：cargo test -p mengine-runtime --release --lib benchmark_phased_material_checks -- --ignored --nocapture --test-threads=1。三次统计的中位数：解析阶段p95 1.7487→0.6325ms、最大值2.3507→0.7739ms、单帧文件检查峰值180→33；平均耗时0.4397→0.5056ms，中位耗时0.2815→0.4932ms，计量窗口内总检查2772→2880。固定周期比受帧边界延后的年龄轮询略多检查，并将检查工作分散到普通帧；该取舍用于降低尖峰，不声称平均CPU或原生FPS已改善。数据、来源SHA及全部样本见material-phased-poll-benchmarks.json／material-phased-poll-summary.json。
 
 本轮实现／针对性检查完成，当前新批次1/3；最近完整原生验收仍为40be271的125–127批次。满3项后验证实际DotA／Amazonia的材质与Shader热更新／错误恢复、连续帧均值及p95、暂停／恢复与跨工程来源隔离。网格来源校验约3ms的独立轮询尖峰、实际多窗口满帧及长时间内存继续待办；不得把局部文件轮询结果写成其已解决。
+
+### 第一百二十九阶段／编辑器新批次任务2/3：已驻留网格引用直接命中
+
+修改runtime的meshes.rs，新增mesh_cached_key_tests.rs。非轮询帧在GPU键去重后，对已尝试且具有使用记录的网格直接更新当前帧龄，省去姿态／公告板引用、扩展名及类别的重复解析。缺少使用记录时走完整路径补建；首次加载、新采样键、失效、来源／外部缓冲变化、每250ms轮询和失败重试沿用既有检查。粒子仍在此路径前排除，不增加跨帧来源快照或放宽路径身份校验。对Windows元数据API的既有对照没有发现收益，本项没有修改该校验链。
+
+新增2项GPU检查通过：10个阶段的主／嵌入视图完整RGBA、上传／检查次数、使用记录与错误恢复逐项相等，覆盖普通网格、姿态、公告板、地形、拼接、空／无效引用、显式失效、工程切换和删除恢复；预算检查确认当前网格保持驻留、未使用网格退役。既有main_and_nested_views_keep_used_sources_while_evicting_stale_meshes复测通过，确认缺少使用记录时补建；另外19项既有网格检查通过。日志cached-mesh-key-tests.log、cached-mesh-residency-regression.log及cached-mesh-compatibility-tests.log保存在tmp/docs-artifacts/editor-performance-risk，后者保留边界修复前的失败记录，最终复测见单独日志。命令：cargo test -p mengine-runtime --release --lib meshes::cached_key_tests -- --nocapture --test-threads=1；既有回归按完整名称单独执行。
+
+手动benchmark_cached_mesh_key_traversal通过，同一生产函数仅在测试中切换提前命中分支，基线不执行新增查找，9组计量／2组预热，每组200帧且交替顺序。只预置合法类别的已尝试键和零字节使用记录，不加载地图几何。作者Amazonia2747对象／246键中位数0.136739→0.110548ms，作者场景219对象／156键0.038187→0.021282ms；保留实际DotA导入场景5376对象／177键0.176102→0.161644ms。不是实际Game运行、GPU或FPS测量，来源校验约3ms的尖峰仍待解决。cached-mesh-key-summary.json记录输入场景与源码SHA和全部样本，cached-mesh-key-benchmark.log保存原始结果。复现命令cargo test -p mengine-runtime --release --lib benchmark_cached_mesh_key_traversal -- --ignored --nocapture --test-threads=1；MENGINE_CACHED_KEY_PROJECT与MENGINE_CACHED_KEY_SCENE可指定保留项目及场景，本次DotA为arbitrary-map-1792808418421/sample下user-v2-4491bb39adc21485c832cb95648faf352261e2df0242862bc82a17830b60d001/Scenes/Main.mscene。
+
+当前128、129为2/3；第三项后统一原生验证实际地图连续帧、热更新／失效、多视图公告板、缓存预算／Stop重启，以及材质相位与此命中路径的集成。最近完整原生版本仍40be271，保持来源尖峰、多窗口稳定60、长时间驻留、LOD与完整War3保真待办。
