@@ -22,6 +22,45 @@ test('large bounds across the screen and mirrored/rotated sprites remain candida
   const bounds = transformBounds({min:[-2,-1,-.5],max:[2,1,.5]},{position:[1,0,0],scale:[-2,3,1],rotation:[0,0,0,1]});
   assert.deepEqual(bounds,{min:[-3,-3,-.5],max:[5,3,.5]});
 });
+
+test('animated bounds, cell migration and unknown bounds preserve exact candidates without duplicate ownership', () => {
+  const index = createViewportSpatialIndex();
+  let entries = Array.from({length:1800},(_,i)=>box(i%60-30,Math.floor(i/60)-15,(i%5)-2));
+  const check = () => {
+    index.update(entries);
+    for (const x of [-25,0,25]) {
+      const planes = viewportPlanes({eye:[x,0,8],target:[x,0,0],fovYDeg:60,near:.1,far:100},1.4);
+      assert.deepEqual(index.query(planes),entries.flatMap((b,i)=>!b||boundsVisible(b,planes)?[i]:[]));
+    }
+    assert.deepEqual(index.query([]),entries.map((_,i)=>i),'every slot has exactly one owner or unknown entry');
+  };
+  check();
+  for (let frame=0;frame<70;frame++) {
+    for (let i=0;i<40;i++) {
+      const id=(i*43+frame*7)%entries.length;
+      entries[id]=frame%7===0?null:box(Math.sin(frame+i)*28,Math.cos(frame-i)*13,(i%5)-2);
+    }
+    if(frame===20)entries.reverse();
+    if(frame===30)entries.splice(100,20);
+    if(frame===40)entries.push(box(300,0,0),null);
+    if(frame===50)for(let i=0;i<500;i++)entries[i]=box(25,10,1);
+    check();
+  }
+  const known=entries.findIndex(Boolean);entries[known].min[0]=-500;entries[known].max[0]=-499;check();
+  entries=entries.map(()=>null);check();
+  entries[0]=box(-200,0,0);check();
+  entries=[];check();entries=[null,box(0,0,0)];check();
+});
+
+test('small pose changes do not revisit unchanged input bounds for octree construction', () => {
+  const index = createViewportSpatialIndex();let reads=0;
+  const entries=Array.from({length:3000},(_,i)=>{
+    const value=box(i%100-50,Math.floor(i/100)-15,0);
+    return i===1500?value:{get min(){reads++;return value.min;},get max(){reads++;return value.max;}};
+  });
+  index.update(entries);reads=0;entries[1500]=box(-49.99,0,0);index.update(entries);
+  assert.ok(reads<=4*2999,'unchanged inputs are compared once; their geometry is not reread to rebuild cells');
+});
 test('frustum planes agree with independently projected screen points', () => {
   for (const projection of ['perspective','orthographic']) {
     const camera={eye:[3,4,6],target:[1,0,0],up:[0,1,0],fovYDeg:60,projection,orthographicSize:3,near:.1,far:100};

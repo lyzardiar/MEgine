@@ -2,7 +2,7 @@
 import { dot, lookBasis, quatRotateVec, type Camera, type Vec3 } from './math3d.ts';
 export type Bounds = { min: Vec3; max: Vec3 };
 type Plane = { normal: Vec3; distance: number };
-type Branch = { bounds: Bounds; entries: number[]; children: Branch[] };
+type Branch = { bounds: Bounds; entries: number[]; children: Branch[]; residentLimit: number };
 export function pointBounds(points: readonly Vec3[]): Bounds | null {
   if (!points.length) return null;
   const min: Vec3 = [Infinity, Infinity, Infinity], max: Vec3 = [-Infinity, -Infinity, -Infinity];
@@ -48,29 +48,60 @@ export function boundsVisible(bounds: Bounds, planes: readonly Plane[]) {
 }
 const contains = (outer: Bounds, inner: Bounds) => outer.min.every((v, axis) => v <= inner.min[axis] && outer.max[axis] >= inner.max[axis]);
 function branch(bounds: Bounds, entries: number[], all: readonly (Bounds | null)[], depth = 0): Branch {
-  if (entries.length <= 32 || depth >= 8) return { bounds, entries, children: [] };
+  if (entries.length <= 32 || depth >= 8) return { bounds, entries, children: [], residentLimit: entries.length + 32 };
   const center = bounds.min.map((v, axis) => (v + bounds.max[axis]) / 2);
   const boxes: Bounds[] = Array.from({ length: 8 }, (_, i) => ({ min: bounds.min.map((v, axis) => (i & (1 << axis)) ? center[axis] : v) as Vec3, max: bounds.max.map((v, axis) => (i & (1 << axis)) ? v : center[axis]) as Vec3 }));
   const buckets: number[][] = boxes.map(() => []), resident: number[] = [];
   for (const i of entries) { const child = boxes.findIndex((box) => contains(box, all[i]!)); if (child < 0) resident.push(i); else buckets[child].push(i); }
-  return { bounds, entries: resident, children: buckets.flatMap((bucket, i) => bucket.length ? [branch(boxes[i], bucket, all, depth + 1)] : []) };
+  return { bounds, entries: resident, children: buckets.flatMap((bucket, i) => bucket.length ? [branch(boxes[i], bucket, all, depth + 1)] : []), residentLimit: resident.length + 32 };
 }
 export function createViewportSpatialIndex() {
-  let bounds: readonly (Bounds | null)[] = [], root: Branch | null = null, unknown: number[] = [];
+  let bounds: (Bounds | null)[] = [], root: Branch | null = null, owners: Array<Branch | undefined> = [];
+  const unknown = new Set<number>();
+  const copy = (b: Bounds | null): Bounds | null => b ? { min: [...b.min], max: [...b.max] } : null;
+  const same = (a: Bounds | null, b: Bounds | null) => a === b || !!(a && b && a.min.every((v, axis) => v === b.min[axis] && a.max[axis] === b.max[axis]));
+  const rebuild = (next: readonly (Bounds | null)[]) => {
+    bounds = next.map(copy); owners = new Array(bounds.length); unknown.clear();
+    const known: number[] = [], total: Bounds = { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
+    bounds.forEach((b, i) => {
+      if (!b) { unknown.add(i); return; } known.push(i);
+      for (let axis = 0; axis < 3; axis++) { total.min[axis] = Math.min(total.min[axis], b.min[axis]); total.max[axis] = Math.max(total.max[axis], b.max[axis]); }
+    });
+    // Root slack absorbs small edge animation; queries still test each object's exact bounds.
+    if (known.length) for (let axis = 0; axis < 3; axis++) {
+      const padding = Math.max(0.001, (total.max[axis] - total.min[axis]) * 0.05);
+      total.min[axis] -= padding; total.max[axis] += padding;
+    }
+    root = known.length ? branch(total, known, bounds) : null;
+    const remember = (node: Branch) => { for (const i of node.entries) owners[i] = node; for (const child of node.children) remember(child); };
+    if (root) remember(root);
+  };
   return {
     update(next: readonly (Bounds | null)[]) {
-      if (next.length === bounds.length && next.every((b, i) => b === bounds[i] || (b && bounds[i] && b.min.every((v, axis) => v === bounds[i]!.min[axis] && b.max[axis] === bounds[i]!.max[axis])))) return;
-      bounds = next.map((b) => b ? { min: [...b.min], max: [...b.max] } : null);
-      unknown = []; const known: number[] = [];
-      const total: Bounds = { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
-      next.forEach((b, i) => {
-        if (!b) { unknown.push(i); return; } known.push(i);
-        for (let axis = 0; axis < 3; axis++) { total.min[axis] = Math.min(total.min[axis], b.min[axis]); total.max[axis] = Math.max(total.max[axis], b.max[axis]); }
-      });
-      root = known.length ? branch(total, known, bounds) : null;
+      if (next.length !== bounds.length) { rebuild(next); return; }
+      const changed: number[] = [];
+      for (let i = 0; i < next.length; i++) {
+        if (same(next[i], bounds[i])) continue;
+        if (next[i] && (!root || !contains(root.bounds, next[i]!))) { rebuild(next); return; }
+        changed.push(i);
+      }
+      const touched = new Set<Branch>();
+      for (const i of changed) {
+        const b = bounds[i] = copy(next[i]), owner = owners[i];
+        // Fixed spatial cells remain conservative as poses change inside them.
+        if (b && owner && contains(owner.bounds, b) && !owner.children.some(child => contains(child.bounds, b))) continue;
+        if (owner) { owner.entries.splice(owner.entries.indexOf(i), 1); owners[i] = undefined; }
+        if (!b) { unknown.add(i); continue; }
+        unknown.delete(i);
+        let node = root!, child: Branch | undefined;
+        while ((child = node.children.find(candidate => contains(candidate.bounds, b)))) node = child;
+        node.entries.push(i); owners[i] = node; touched.add(node);
+      }
+      // Repartition crowded cells after migration instead of accumulating a linear resident list.
+      if ([...touched].some(node => node.entries.length > node.residentLimit)) rebuild(next);
     },
     query(planes: readonly Plane[]) {
-      const result = unknown.slice();
+      const result = [...unknown];
       const visit = (node: Branch) => {
         if (!boundsVisible(node.bounds, planes)) return;
         for (const i of node.entries) if (boundsVisible(bounds[i]!, planes)) result.push(i);
