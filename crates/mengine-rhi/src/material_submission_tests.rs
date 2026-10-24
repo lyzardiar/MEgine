@@ -20,9 +20,9 @@ fn cached_world_bundles_preserve_dynamic_pixels_and_resource_replacements() {
             renderer.submit_frame_to(&RenderFrame { clear: ClearColor { r: 0., g: 0., b: 0., a: 1. }, camera, objects, lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(target)).unwrap();
             let pixels = renderer.read_offscreen_rgba8(target).unwrap();
             if let Some(reference) = &reference { assert_eq!(&pixels, reference); } else { reference = Some(pixels); }
-            if mode == 3 { assert_eq!(renderer.submission_profile().world_bundle_hits, 1); }
+            if mode == 3 { let profile = renderer.submission_profile(); assert!(profile.world_bundle_hits > 0); assert!(profile.world_bundle_reused_draws >= profile.world_mesh_draw_calls.saturating_sub(63)); }
         }
-        let counts = renderer.world_bundles.counts(); assert!(counts.0 <= 4 && counts.1 <= 32_768);
+        let counts = renderer.world_bundles.counts(); assert!(counts.0 <= 64 && counts.1 <= 32_768);
         reference.unwrap()
     };
     let first = compare(&mut renderer, &objects, camera, &lighting, &target);
@@ -100,7 +100,7 @@ fn benchmark_cached_world_bundles() {
             renderer.disable_world_bundles = mode == 0; let mut elapsed = 0.;
             for _ in 0..4 {
                 renderer.submit_frame_to(&frame, RenderTarget::Offscreen(&target)).unwrap(); let profile = renderer.submission_profile(); elapsed += profile.world_encode_ms;
-                if round >= 2 && mode == 1 { assert_eq!(profile.world_bundle_hits, 1); }
+                if round >= 2 && mode == 1 { assert!(profile.world_bundle_reused_draws >= profile.world_mesh_draw_calls.saturating_sub(63)); }
                 let pixels = renderer.read_offscreen_rgba8(&target).unwrap();
                 if let Some(reference) = &reference { assert_eq!(&pixels, reference); } else { reference = Some(pixels); }
             }

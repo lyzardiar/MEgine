@@ -1413,3 +1413,15 @@ B001/arbitrary-map-1792848530368整体报告保留失败：两个连续采样已
 指标卡片增加group语义和包含当前数值的可读名称。仅对该界面问题重建前端3.01秒／原生1分11秒，没有重复实际地图采样；build-bb11f29-readout的SHA256为395b10a824889502830cb2701852df5d229dde336eeb4968b1647050c4518a4f，收据另记录Profiler源文件及前端摘要。新增scripts/qa-profiler-bundles.mjs使用128个固定对象的小型独立工程，B001/profiler-bundles-1792849169077通过生产计数／逐帧响应和真实Profiler名称数值读取，界面显示World Bundle Builds: 0、World Bundle Hits: 1，截图已检查；0控制台错误、正常退出。--bundle-ui用于以后地图诊断时读取这两项，并要求--profiler-ui。日志bundle-{evidence,readout}-*与JSON／截图均在tmp/docs-artifacts，用户编辑器64664保持运行。
 
 后续先区分整份绘制列表、GPU资源句柄及共享绑定变化导致的失效，再决定分段复用方案。常规原生回归仍留待三项合并；本补充及界面修复同属113，独立任务计数仍1/3，未提前完成整个新批次。
+
+### 第一百一十四阶段／编辑器新批次任务2/3：按连续范围复用世界绘制指令
+
+变更RHI的world_bundles.rs／renderer.rs、editor-host视口计数、editorProfiler.ts和Profiler面板，以及相关GPU检查与QA脚本。相邻实例合并后按至少256条绘制指令划分连续范围，大列表自适应扩大范围以限制至64段；保持当前透明排序、对象参数槽和全部绘制顺序。每段仍逐项核对pipeline、纹理、顶点／索引缓冲、索引数、对象槽和实例数，以及全局／阴影／环境绑定、采样数和stride。首次登记候选，第二次构建，其后复用；变化分段可直接绘制，其余已缓存分段继续执行。缓存总预算仍为32768个逻辑对象，最多64条目，按世界pass推进闲置时间并在超过8次未使用后清理。预算满时优先替换同范围旧版本，避免局部变化淘汰本次尚未遍历的其他静态范围。
+
+生产计数新增worldBundleDraws与worldBundleReusedDraws，分别表示新建／复用bundle覆盖的绘制指令及已有bundle复用的绘制指令，均为相邻实例合并后的命令数，不是实例／实体数。逐帧nativeTimings保留它们，Profiler Overview显示Reused World Draws；旧采样缺失继续显示—。QA的--bundle-ui及128对象夹具增加该指标的后续原生断言。
+
+2项新增实际GPU检查、1项既有资源兼容检查、1项editor-host实际GPU／serde检查，以及2项前端计数检查通过，TypeScript和两个QA脚本语法检查通过。1024条交替网格命令中连续6次替换第370项的GPU缓冲，每次首次只失效对应256条，其余768条继续复用，随后该段构建并全部复用；与禁用bundle的完整RGBA一致。另含8阶段跨段透明重叠／排序、纹理alpha／shader／网格与环境替换、相机／对象参数、对象增减／容量增长及resize完整RGBA对照。17000和32768条指令的自适应范围、64条目／逻辑对象预算压力、局部替换保留其他范围及9个空pass回收通过。既有检查另覆盖阴影、动态顶点内容、粒子回退和资源移除。证据world-chunks-{tests,compatibility,host-test,profiler-tests,typecheck}.log位于tmp/docs-artifacts/editor-performance-risk。
+
+针对本项性能取舍单独执行benchmark_sparse_resource_world_chunks：两个独立预热Renderer、4096条交替网格命令、12轮交替顺序、每样本4帧，逐帧完整RGBA一致。每帧替换一个网格缓冲时，世界编码CPU样本中位数为整份缓存1.934950ms、分段0.623350ms；分段复用3840条，整份缓存0条。完全静态时为0.513313／0.536563ms，分段增加0.023250ms。该固定代理几何基准不包含地图逻辑／IPC，不是实际DotA的GPU时间或FPS；world-chunks-benchmark.log保留实际输出。其手动ignored入口已单独执行通过，不据常规测试中的ignored状态声称未执行。
+
+当前113、114为2/3。实际DotA的完整失效原因比例仍未测定，下一次合并构建后需读取逐帧复用命令覆盖，比较Scene／Game编码及连续FPS，验证真实Profiler读数、相机／resize、透明／shader／姿态资源变化、嵌套视图与多窗口、Stop／重开。继续保留111局部Canvas合成的原生收益待测；本次没有重跑完整地图QA、全量资产遍历或Tauri生产构建，没有新增LOD／减少场景对象，也未宣称稳定60FPS。

@@ -17,6 +17,8 @@ fn viewport_profiles_export_bundle_admission_build_and_reuse_without_changing_pi
         let frame = viewport.submit_scene(&world, 64, 64, camera).unwrap().finish().unwrap();
         let counts = serde_json::to_value(&frame.profile.counts).unwrap();
         assert_eq!(counts["worldBundleBuilds"], builds); assert_eq!(counts["worldBundleHits"], hits);
+        assert_eq!(counts["worldBundleDraws"], if builds + hits == 0 { 0 } else { frame.profile.counts.world_mesh_draw_calls });
+        assert_eq!(counts["worldBundleReusedDraws"], if hits == 0 { 0 } else { frame.profile.counts.world_mesh_draw_calls });
         if let Some(pixels) = previous { assert_eq!(frame.rgba, pixels); } previous = Some(frame.rgba);
     }
 }

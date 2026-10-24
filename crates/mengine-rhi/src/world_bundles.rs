@@ -2,7 +2,7 @@
 use super::HDR_COLOR_FORMAT;
 
 const MIN_DRAWS: usize = 64;
-const MAX_ENTRIES: usize = 4;
+const MAX_ENTRIES: usize = 64;
 const MAX_DRAWS: usize = 32_768;
 const MAX_IDLE_SUBMISSIONS: u64 = 8;
 
@@ -32,6 +32,7 @@ pub(super) fn coalesce(draws: &mut Vec<WorldDraw<'_>>) {
     draws.truncate(kept);
 }
 
+#[derive(Clone, Copy)]
 pub(super) struct WorldBindings<'a> {
     pub globals: &'a wgpu::BindGroup,
     pub shadows: &'a wgpu::BindGroup,
@@ -71,10 +72,13 @@ struct Entry {
     draws: Vec<CachedDraw>, samples: u32, last_used: u64, bundle: Option<wgpu::RenderBundle>,
     indexed_objects: bool, object_stride: u64,
     objects: usize,
+    range: Option<usize>,
 }
 
 #[derive(Default)]
 pub(super) struct WorldBundleCache { entries: Vec<Entry>, epoch: u64 }
+
+pub(super) struct WorldChunk { pub range: std::ops::Range<usize>, pub bundle: Option<wgpu::RenderBundle>, pub reused: bool }
 
 impl WorldBundleCache {
     pub fn accepts_count(count: usize) -> bool { (MIN_DRAWS..=MAX_DRAWS).contains(&count) }
@@ -82,11 +86,30 @@ impl WorldBundleCache {
     #[cfg(test)]
     pub fn counts(&self) -> (usize, usize) { (self.entries.len(), self.entries.iter().map(|entry| entry.objects).sum()) }
 
-    // Exact handle equality prevents stale bindings after hot reload or buffer growth; no hash-only hits.
-    // A draw list is admitted on its second occurrence so changing lists do not encode unused bundles.
-    pub fn prepare(&mut self, device: &wgpu::Device, samples: u32, bindings: WorldBindings<'_>, draws: &[WorldDraw<'_>]) -> Option<(&wgpu::RenderBundle, bool)> {
+    fn begin_pass(&mut self) {
         self.epoch = self.epoch.wrapping_add(1);
         self.entries.retain(|entry| self.epoch.wrapping_sub(entry.last_used) <= MAX_IDLE_SUBMISSIONS);
+    }
+
+    /// Chunk ownership keeps earlier bundles valid while later cache admissions can evict entries.
+    pub fn prepare_chunks(&mut self, device: &wgpu::Device, samples: u32, bindings: WorldBindings<'_>, draws: &[WorldDraw<'_>], minimum_chunk_draws: usize) -> Vec<WorldChunk> {
+        self.begin_pass();
+        let chunk_draws = minimum_chunk_draws.max(1).max(draws.len().div_ceil(MAX_ENTRIES));
+        draws.chunks(chunk_draws).enumerate().map(|(index, chunk)| {
+            let start = index * chunk_draws;
+            let (bundle, reused) = self.prepare_current_pass(device, samples, bindings, chunk, Some(start)).map_or((None, false), |(bundle, reused)| (Some(bundle.clone()), reused));
+            WorldChunk { range: start..start + chunk.len(), bundle, reused }
+        }).collect()
+    }
+
+    #[cfg(test)]
+    pub fn prepare(&mut self, device: &wgpu::Device, samples: u32, bindings: WorldBindings<'_>, draws: &[WorldDraw<'_>]) -> Option<(&wgpu::RenderBundle, bool)> {
+        self.begin_pass(); self.prepare_current_pass(device, samples, bindings, draws, None)
+    }
+
+    // Exact handle equality prevents stale bindings after hot reload or buffer growth; no hash-only hits.
+    // A draw list is admitted on its second occurrence so changing lists do not encode unused bundles.
+    fn prepare_current_pass(&mut self, device: &wgpu::Device, samples: u32, bindings: WorldBindings<'_>, draws: &[WorldDraw<'_>], range: Option<usize>) -> Option<(&wgpu::RenderBundle, bool)> {
         let objects = draws.iter().map(|draw| draw.instances as usize).sum();
         if !Self::accepts_count(objects) { return None; }
         if let Some(index) = self.entries.iter().position(|entry| entry.indexed_objects == bindings.indexed_objects && entry.object_stride == bindings.object_stride && entry.samples == samples && entry.globals == *bindings.globals && entry.shadows == *bindings.shadows && entry.environment == *bindings.environment && entry.draws.len() == draws.len() && entry.draws.iter().zip(draws).all(|(cached, draw)| cached.matches(draw))) {
@@ -114,11 +137,12 @@ impl WorldBundleCache {
             return Some((bundle, reused));
         }
         while self.entries.len() >= MAX_ENTRIES || self.entries.iter().map(|entry| entry.objects).sum::<usize>() + objects > MAX_DRAWS {
-            let index = self.entries.iter().enumerate().max_by_key(|(_, entry)| self.epoch.wrapping_sub(entry.last_used)).unwrap().0;
+            let index = self.entries.iter().enumerate().filter(|(_, entry)| entry.last_used != self.epoch && entry.range == range).max_by_key(|(_, entry)| self.epoch.wrapping_sub(entry.last_used))
+                .or_else(|| self.entries.iter().enumerate().max_by_key(|(_, entry)| self.epoch.wrapping_sub(entry.last_used))).unwrap().0;
             self.entries.swap_remove(index);
         }
         self.entries.push(Entry {
-            globals: bindings.globals.clone(), shadows: bindings.shadows.clone(), environment: bindings.environment.clone(), samples, indexed_objects: bindings.indexed_objects, object_stride: bindings.object_stride, objects, last_used: self.epoch, bundle: None,
+            globals: bindings.globals.clone(), shadows: bindings.shadows.clone(), environment: bindings.environment.clone(), samples, indexed_objects: bindings.indexed_objects, object_stride: bindings.object_stride, objects, range, last_used: self.epoch, bundle: None,
             draws: draws.iter().map(|draw| CachedDraw { pipeline: draw.pipeline.clone(), textures: draw.textures.clone(), vertices: draw.vertices.clone(), indices: draw.indices.clone(), count: draw.count, object_index: draw.object_index, instances: draw.instances }).collect(),
         });
         None

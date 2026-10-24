@@ -67,7 +67,7 @@ async function profileImportedMap(){
     page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});
     if(bundleUi){
       const overview=page.elements.find(e=>e.name==='Overview'&&e.role==='tab');assert.ok(overview,'Profiler Overview module tab');await execute('window.ui_click',{windowLabel:'main',selector:overview.selector,expectedSnapshotRevision:page.snapshotRevision});await sleep(300);
-      page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});const labels=['World Bundle Builds','World Bundle Hits'];for(const label of labels)assert.ok(page.elements.some(e=>String(e.name).includes(label)),label+' is visible in the real Profiler');
+      page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});const labels=['World Bundle Builds','World Bundle Hits','Reused World Draws'];for(const label of labels)assert.ok(page.elements.some(e=>String(e.name).includes(label)),label+' is visible in the real Profiler');
       const shot=await query('view.window_screenshot',{windowLabel:'main',maxSize:1920});fs.writeFileSync(path.join(out,label+'-profiler-bundles.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));report.profilerBundleUi={elements:page.elements.filter(e=>labels.some(label=>String(e.name).includes(label)))};
     }
     const cpu=page.elements.find(e=>e.name==='CPU'&&e.role==='tab');assert.ok(cpu,'Profiler CPU module tab');

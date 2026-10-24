@@ -76,7 +76,7 @@ fn benchmark_material_draw_bindings() {
                 let submitted = started.elapsed().as_secs_f64() * 1000.; let pixels = renderer.read_offscreen_rgba8(target).unwrap(); let profile = renderer.submission_profile();
                 times[0] += profile.material_prepare_ms; times[1] += profile.world_encode_ms; times[2] += submitted; times[3] += started.elapsed().as_secs_f64() * 1000.;
                 assert_eq!(profile.material_preparations, 128); assert_eq!(profile.material_binding_resolutions, if mode == 0 { 4096 } else { 128 });
-                if round >= 2 { assert_eq!(profile.world_bundle_hits, 1); }
+                if round >= 2 { assert!(profile.world_bundle_reused_draws >= profile.world_mesh_draw_calls.saturating_sub(63)); }
                 if let Some(reference) = &reference { assert_eq!(&pixels, reference); } else { reference = Some(pixels); }
             }
             if round >= 2 { samples[mode].push(times.map(|time| time / 4.)); }

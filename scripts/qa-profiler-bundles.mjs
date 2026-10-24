@@ -22,11 +22,12 @@ try{
   await query('project.state');await execute('project.open',{root:project});await execute('panel.focus',{kind:'scene'});await execute('view.set_camera',{pivot:[0,0,0],yaw:0,pitch:0,distance:5});
   const deadline=Date.now()+30000;
   for(;;){const p=await query('profiler.get_samples',{source:'scene',limit:24,includeNativeTimings:true});if(p.nativeLatest?.counts.worldBundleHits===1&&p.nativeProfileCount>=3){report.profile=p;break;}assert.ok(Date.now()<deadline,'Native fixture must reuse one world bundle');await sleep(200);}
+  const counts=report.profile.nativeLatest.counts;assert.ok(counts.worldBundleReusedDraws>0);assert.equal(counts.worldBundleDraws,counts.worldBundleReusedDraws);
   await execute('panel.focus',{kind:'profiler'});await sleep(500);
   let page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});const scene=page.elements.find(e=>e.selector?.includes('profiler-source-tab-scene'));assert.ok(scene);await execute('window.ui_click',{windowLabel:'main',selector:scene.selector,expectedSnapshotRevision:page.snapshotRevision});await sleep(300);
   page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});const overview=page.elements.find(e=>e.name==='Overview'&&e.role==='tab');assert.ok(overview);await execute('window.ui_click',{windowLabel:'main',selector:overview.selector,expectedSnapshotRevision:page.snapshotRevision});await sleep(500);
   report.ui=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});
-  for(const name of ['World Bundle Builds: 0','World Bundle Hits: 1'])assert.ok(report.ui.elements.some(e=>e.role==='group'&&e.name===name),name+' must be exposed with its current value');
+  for(const name of ['World Bundle Builds: 0','World Bundle Hits: 1',`Reused World Draws: ${counts.worldBundleReusedDraws.toLocaleString('en-US')}`])assert.ok(report.ui.elements.some(e=>e.role==='group'&&e.name===name),name+' must be exposed with its current value');
   const shot=await query('view.window_screenshot',{windowLabel:'main',maxSize:1920});fs.writeFileSync(path.join(out,label+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));
   report.errors=(await query('console.get_logs',{limit:100})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));report.passed=true;
 }catch(error){report.error=error.stack;process.exitCode=1;try{const shot=await query('view.window_screenshot',{windowLabel:'main',maxSize:1920});fs.writeFileSync(path.join(out,label+'-failure.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));}catch{}}

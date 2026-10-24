@@ -4,12 +4,15 @@ import test from 'node:test';
 import { clearEditorProfilerSamples, nativeViewportTimingSample, recordOwnedNativeViewportProfile, readNativeViewportProfiles } from '../src/editorProfiler.ts';
 
 test('bounded native timing samples preserve explicit zero counters and omit unavailable legacy counters', () => {
-  const frame = { source: 'scene', timestamp: 1, counts: { entities: 14437, worldBundleBuilds: 0, worldBundleHits: 2 } };
+  const frame = { source: 'scene', timestamp: 1, counts: { entities: 14437, worldBundleBuilds: 0, worldBundleHits: 2, worldBundleDraws: 512, worldBundleReusedDraws: 512 } };
   const first = nativeViewportTimingSample(frame); assert.equal(first.worldBundleBuilds, 0); assert.equal(first.worldBundleHits, 2);
-  const next = nativeViewportTimingSample({ ...frame, timestamp: 2, counts: { ...frame.counts, worldBundleBuilds: 1, worldBundleHits: 0 } });
+  assert.equal(first.worldBundleDraws, 512); assert.equal(first.worldBundleReusedDraws, 512);
+  const next = nativeViewportTimingSample({ ...frame, timestamp: 2, counts: { ...frame.counts, worldBundleBuilds: 1, worldBundleHits: 0, worldBundleDraws: 256, worldBundleReusedDraws: 0 } });
+  assert.equal(next.worldBundleDraws, 256); assert.equal(next.worldBundleReusedDraws, 0); assert.equal(first.worldBundleReusedDraws, 512);
   assert.equal(next.worldBundleBuilds, 1); assert.equal(next.worldBundleHits, 0); assert.equal(first.worldBundleHits, 2);
   for (const counts of [undefined, { entities: 1 }]) {
     const legacy = nativeViewportTimingSample({ ...frame, counts }); assert.equal(legacy.worldBundleHits, undefined); assert.equal(legacy.worldBundleBuilds, undefined);
+    assert.equal(legacy.worldBundleDraws, undefined); assert.equal(legacy.worldBundleReusedDraws, undefined);
     assert.ok(!JSON.stringify(legacy).includes('worldBundle'));
   }
 });

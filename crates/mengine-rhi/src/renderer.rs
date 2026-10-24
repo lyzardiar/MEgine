@@ -32,6 +32,9 @@ mod adjacent_instancing_tests;
 #[path = "material_draw_bindings_tests.rs"]
 mod material_draw_bindings_tests;
 #[cfg(test)]
+#[path = "world_bundle_chunks_tests.rs"]
+mod world_bundle_chunks_tests;
+#[cfg(test)]
 thread_local! { static UNIFORM_OBJECT_REFERENCE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) }; }
 use world_bundles::{WorldBindings, WorldBundleCache, WorldDraw};
 
@@ -444,6 +447,10 @@ pub struct FrameSubmissionProfile {
     pub world_instanced_objects: usize,
     pub world_bundle_builds: usize,
     pub world_bundle_hits: usize,
+    /// Mesh draw commands covered by new or reused bundles, after adjacent instancing.
+    pub world_bundle_draws: usize,
+    /// Mesh draw commands covered by bundles encoded in an earlier submission.
+    pub world_bundle_reused_draws: usize,
     pub material_preparations: usize,
     pub material_binding_resolutions: usize,
     pub target_prepare_ms: f64,
@@ -727,6 +734,8 @@ pub struct Renderer {
     world_bundles: WorldBundleCache,
     #[cfg(test)]
     disable_world_bundles: bool,
+    #[cfg(test)]
+    disable_world_bundle_chunks: bool,
     #[cfg(test)]
     disable_world_instancing: bool,
     particle_renderer: crate::particle_render::ParticleRenderer,
@@ -1385,6 +1394,8 @@ impl Renderer {
             #[cfg(test)]
             disable_world_bundles: false,
             #[cfg(test)]
+            disable_world_bundle_chunks: false,
+            #[cfg(test)]
             disable_world_instancing: false,
             #[cfg(test)]
             repeat_draw_bindings: false,
@@ -1823,8 +1834,18 @@ impl Renderer {
             if instance_meshes { world_bundles::coalesce(&mut world_draws); }
             self.submission_profile.world_mesh_draw_calls += world_draws.len();
             self.submission_profile.world_instanced_objects += world_draws.iter().filter(|draw| draw.instances > 1).map(|draw| draw.instances as usize).sum::<usize>();
-            let bundle = if use_world_bundles { self.world_bundles.prepare(&self.device, self.sample_count, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group, indexed_objects: self.indexed_objects, object_stride: self.object_stride }, &world_draws) } else { None };
-            if let Some((_, reused)) = &bundle { if *reused { self.submission_profile.world_bundle_hits += 1; } else { self.submission_profile.world_bundle_builds += 1; } }
+            #[cfg(test)]
+            let chunk_draws = if self.disable_world_bundle_chunks { usize::MAX } else { 256 };
+            #[cfg(not(test))]
+            let chunk_draws = 256;
+            let chunks = if use_world_bundles { self.world_bundles.prepare_chunks(&self.device, self.sample_count, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group, indexed_objects: self.indexed_objects, object_stride: self.object_stride }, &world_draws, chunk_draws) } else { Vec::new() };
+            for chunk in &chunks {
+                if chunk.bundle.is_some() {
+                    self.submission_profile.world_bundle_draws += chunk.range.len();
+                    if chunk.reused { self.submission_profile.world_bundle_hits += 1; self.submission_profile.world_bundle_reused_draws += chunk.range.len(); }
+                    else { self.submission_profile.world_bundle_builds += 1; }
+                }
+            }
             self.sky.prepare(
                 &self.queue,
                 camera,
@@ -1881,8 +1902,12 @@ impl Renderer {
             });
 
             // MiYu: all forward/error pipelines share pipeline_layout; bindings live only in this pass.
-            if let Some((bundle, _)) = bundle { pass.execute_bundles(std::iter::once(bundle)); }
-            else if !world_draws.is_empty() { world_bundles::draw(&mut pass, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group, indexed_objects: self.indexed_objects, object_stride: self.object_stride }, &world_draws); }
+            if !world_draws.is_empty() {
+                for chunk in &chunks {
+                    if let Some(bundle) = &chunk.bundle { pass.execute_bundles(std::iter::once(bundle)); }
+                    else { world_bundles::draw(&mut pass, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group, indexed_objects: self.indexed_objects, object_stride: self.object_stride }, &world_draws[chunk.range.clone()]); }
+                }
+            }
             else {
             let (mut bound_pipeline, mut bound_textures, mut bound_mesh) = (None, None, None);
             let mut shared_bindings_set = false;

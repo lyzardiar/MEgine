@@ -84,7 +84,7 @@ fn benchmark_adjacent_instancing() {
                 renderer.submit_frame_to(&RenderFrame { clear: ClearColor { r: 0., g: 0., b: 0., a: 1. }, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(target)).unwrap();
                 let submitted = started.elapsed().as_secs_f64() * 1000.; let pixels = renderer.read_offscreen_rgba8(target).unwrap(); let profile = renderer.submission_profile();
                 times[0] += profile.world_encode_ms; times[1] += submitted; times[2] += started.elapsed().as_secs_f64() * 1000.;
-                if round >= 2 { assert_eq!(profile.world_bundle_hits, 1, "each independent renderer remains warm across alternating samples"); }
+                if round >= 2 { assert!(profile.world_bundle_reused_draws >= profile.world_mesh_draw_calls.saturating_sub(63), "each independent renderer remains warm across alternating samples"); }
                 assert_eq!(profile.world_mesh_draw_calls, if mode == 0 { groups.len() } else { expected_groups });
                 if let Some(reference) = &reference { assert_eq!(&pixels, reference); } else { assert!(pixels.chunks_exact(4).any(|pixel| pixel[..3] != [0, 0, 0])); reference = Some(pixels); }
             }
