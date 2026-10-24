@@ -1191,3 +1191,15 @@ Node局部基准以同进程加载提交51890a5的原Store和当前Store，读�
 三独立面板、7,411实体、5秒窗口：Scene平均5.9700次呈现/秒（29个间隔），Game4.8956（24个间隔），请求平均169.07／203.46ms，而原生渲染19.63／21.39ms。多窗口性能仍明显不足；这与此前单视口近60次/秒不是同一负载，不能宣称解决流畅度。Game最新profile未带worldRevision，需要继续核对是否走了完整snapshot渲染路径。汇总为tmp/docs-artifacts/editor-performance-risk/remote-sync-native-summary.json。
 
 此前失败报告保留：1792799235274的QA用了Play不可调用的component.set，改为主窗口Inspector；1792799314125完成运行阶段后被QA固定Camera名称假设中断；后续authoring-only补测暴露晚到pause状态，诊断代码的空名称过滤错误也已修正。这些整份报告均不记为通过。修复播放归属后重新执行受影响的多窗口专项，最终报告覆盖全部正常路径；未重跑全库或资源热更。真实输入延迟分布、总内存、原生强制在途竞态和长期／跨机器性能继续待测。
+
+### 第六十二阶段：跨窗口实体增量传输
+
+主窗口发布已认证的原生运行世界时，以同步状态ID作为基线，仅传输变化位置的实体JSON和当前场景／帧元数据。首次同步、显式同步、换场景和换会话发送完整检查点；未上传的本地编辑、编辑模式及自定义全局JSON序列化保持完整JSON。稳定实体复用已有不可变记录的序列化缓存，每端只保留一个传输基线，删除和重排按实体数组位置准确还原。
+
+接收端在应用前核对基线。缺失或乱序消息不推进已接受状态、不使用错误原生版本，并向主窗口请求一次完整检查点。启动和补齐请求只由主窗口响应，避免独立窗口旧状态与完整检查点竞争。编辑对象不作为传输缓存，运行编辑及Stop仍沿现有作者／原生归属规则执行。
+
+快速检查：19项定向测试通过（18项首次检查及新增自定义序列化用例单独1项），TypeScript无输出通过。覆盖实体插入／删除／重排／ID复用、空场景、错误索引、漏收与乱序、三窗口补齐、运行编辑、会话切换和Stop。证据为 `tmp/docs-artifacts/editor-performance-risk/session-delta-tests.log`、`session-delta-types.log`，新增用例见 `packages/editor/tests/sessionSceneDelta.test.mjs`；未执行全套构建或原生QA。
+
+同一作者Amazonia场景7,410实体的载荷检查逐条重建并对比完整JSON，均相等。仅场景字段按UTF-8 JSON编码计数：完整检查点3,679,246字节（完整JSON消息3,613,615）；仅时钟404字节（完整消息3,613,634）；一个Transform870字节（完整消息3,613,638）；全部7,403个Transform变化3,701,125字节（完整消息3,638,909）。这不是BroadcastChannel实际传输字节、CPU基准或原生FPS；完整和密集变化约增加1.7%至1.8%的编码载荷。输入SHA及明细见 `tmp/docs-artifacts/editor-performance-risk/session-delta-payload.json`。
+
+接收端仍重建完整JSON并沿既有解析／规范化路径加载。原生 `PlayRenderHistory` 只保留3版，版本过期会走 `requestRevisionedNativeViewport` 的完整snapshot回退；这是已确认的代码机制，本次没有请求级证据证明上一批Game缺少worldRevision全部由此造成。多窗口约5 FPS问题仍开放，下一批需要复测呈现、版本回退、输入延迟和总内存；本阶段不扩大历史保留容量。

@@ -660,3 +660,11 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 最终合并原生验收通过：B001/map-session-1792799928856.json，EXE f4b4b4d323fc70630932d4aa7a73e7797b90d75d4aec03786a7f8a37b8845bf0，0 error、正常退出。上述正常同步／播放／恢复覆盖全部通过，新增真实独立Game播放快捷键验收。晚到窗口启动回复复活Pause的问题已通过主窗口模式归属与重新同步修复；确定性消息乱序测试及最终原生Stop后编辑均通过。失败报告及QA修正范围见performance-risk-todo第六十一阶段。
 
 本批关闭上述三项的正常集成验证，性能目标仍开放：三独立窗口5秒实测Scene5.97／Game4.90次呈现/秒，完整同步及请求等待仍需优化；Game最新profile缺worldRevision需定位。保留输入延迟、总内存、长期运行、跨机器和强制原生竞态专项。截图／原始JSON仅存tmp/docs-artifacts，未纳入docs提交。
+
+### 下一批任务1/3：原生运行世界跨窗口增量传输
+
+变更：`sessionSceneSerialization.ts`、`store.ts`、`App.tsx`，以及 `sessionSceneDelta.test.mjs`、`workspaceSelectionSync.test.mjs`。主窗口发布带状态基线的实体增量，独立窗口缺失基线时请求完整检查点；启动／补齐只由主窗口响应。编辑模式及未上传修改仍完整同步。
+
+快速检查完成：19项相关测试、TypeScript检查通过；7,410实体Amazonia载荷重建与完整JSON逐项相等。命令为 `node --test packages/editor/tests/sessionSceneDelta.test.mjs packages/editor/tests/sessionSceneSerialization.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs` 和 `pnpm --dir packages/editor exec tsc --noEmit -p tsconfig.json`。最后新增的自定义序列化用例用 `--test-name-pattern="custom serialization"` 单独执行，未重复前18项。证据和载荷数字见performance-risk-todo第六十二阶段及tmp/docs-artifacts/editor-performance-risk/session-delta-*。
+
+状态：实现完成，原生集成待本批累计3项后合并执行。合并构建后运行 `node scripts/qa-frost-map-session.mjs --detached-only`，检查三窗口呈现、双向Inspector修改与原生步骤、Pause／Step、主窗口播放归属、地图重载／窗口重开、Stop与停止后编辑。补测正在运行时新窗口加入及缺基线补齐，采样Game／Scene呈现间隔、worldRevision／回退情况和输入延迟。风险：漏收或乱序恢复、检查点竞争、密集变化载荷略增，接收端完整解析仍可能主导卡顿。本次没有新的原生FPS结论。

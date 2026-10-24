@@ -20,6 +20,7 @@ async function withPair(run){
   try{
     const {createEditorStore}=await server.ssrLoadModule('/src/store.ts');
     const {applyPlaybackAction}=await server.ssrLoadModule('/src/editorPlayback.ts');
+    const {createSessionSceneReceiver}=await server.ssrLoadModule('/src/sessionSceneSerialization.ts');
     const host=(sender,detachedPanel)=>{
       const store=createEditorStore();store.loadSceneJson(JSON.stringify({version:1,name:'Map',world:{entities:[{entity:1,name:'Root',components:{}},{entity:2,name:'Child',parent:1,components:{Text:{text:'original'}}}]}}));
       const sent=[],timers=new Map();let timerId=0,snapshot=store.presentationSnapshot(),observations=0,fullRefreshes=0;
@@ -27,6 +28,7 @@ async function withPair(run){
         setSnap:value=>{snapshot=typeof value==='function'?value(snapshot):value;},setSelected:()=>{},setSelectedIds:()=>{},setSceneDirty:()=>{},setSceneName:()=>{},setMode:()=>{},setGizmo:()=>{},setGameResolution:()=>{},setGameDisplay:()=>{},setLogs:()=>{},setTreeTick:()=>{},
         agentBridge:{observeSelection:()=>observations++},refresh:()=>fullRefreshes++,logService:{syncConsoleLines:()=>{},getEntries:()=>[]},formatConsoleLog:value=>value,
         window:{setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id)},console:{error:(...args)=>assert.fail(args.join(' '))}};
+      env.sessionSceneReceiver=ref(createSessionSceneReceiver());env.channel=env.syncChannel.current;
       const handlers=vm.runInNewContext(compiled,env);
       return {...handlers,env,store,sent,get snapshot(){return snapshot;},get observations(){return observations;},get fullRefreshes(){return fullRefreshes;},flush(){for(const [id,fn] of timers){timers.delete(id);fn();}},deliver(to){for(const message of sent.splice(0))to.receive({data:message});}};
     };
@@ -68,7 +70,7 @@ test('bootstrap, scene identity, playback and readiness retain full synchronizat
 test('three windows converge after concurrent bootstrap replies and same-time content publications',async()=>withPair((main,detached,third)=>{
   main.broadcastScene(true);const initial=main.sent.shift();detached.receive({data:initial});third.receive({data:initial});
   for(const host of [main,detached])host.receive({data:{type:'request-scene',sender:'inspector'}});
-  const replies=[main.sent.shift(),detached.sent.shift()];
+  const replies=[main.sent.shift()];assert.equal(detached.sent.length,0);
   for(const host of [main,detached,third])for(const message of host===third?[...replies].reverse():replies)host.receive({data:message});
   assert.equal(new Set([main,detached,third].map(h=>h.env.sceneSyncId.current)).size,1);
   main.store.rename(2,'main edit');detached.store.rename(2,'detached edit');
@@ -138,4 +140,16 @@ test('detached playback controls request the main owner and stale requests are i
  main.broadcastScene(true);main.deliver(detached);await detached.playback('pause');const pause=detached.sent.shift();main.receive({data:pause});await settle();assert.equal(main.store.mode,'pause');
  main.receive({data:start});await settle();assert.equal(main.store.mode,'pause');
  main.broadcastScene(true);main.deliver(detached);await detached.playback('toggle');main.deliver(detached);detached.deliver(main);await settle();assert.equal(main.store.mode,'edit');
+}));
+
+test('runtime deltas recover a missed publication through the main owner and keep revisions aligned',async()=>withPair((main,detached,third)=>{
+ const document=JSON.parse(main.store.saveSessionSceneJson('Map'));main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,0);
+ main.broadcastScene(true);const initial=main.sent.shift();assert.equal(initial.sceneDelta.base,null);detached.receive({data:initial});third.receive({data:initial});
+ document.world.frame=1;main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,1);main.broadcastScene();main.flush();const missed=main.sent.shift();
+ assert.equal(missed.sceneDelta.base,initial.stateId);assert.equal(missed.sceneDelta.changed.length,0);detached.receive({data:missed});
+ document.world.frame=2;document.world.entities[1].components.Text.text='changed';main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,2);main.broadcastScene();main.flush();const next=main.sent.shift();
+ detached.receive({data:next});third.receive({data:next});assert.equal(detached.store.nativePlayRevision,2);assert.equal(third.store.nativePlayRevision,0);
+ assert.equal(third.env.sceneSyncId.current,initial.stateId);assert.equal(third.sent.length,1);third.receive({data:next});assert.equal(third.sent.length,1);
+ const request=third.sent.shift();assert.equal(request.type,'request-scene');detached.receive({data:request});assert.equal(detached.sent.length,0);main.receive({data:request});
+ const checkpoint=main.sent.shift();assert.equal(checkpoint.sceneDelta.base,null);for(const peer of [detached,third]){peer.receive({data:checkpoint});assert.equal(peer.store.nativePlayRevision,2);assert.equal(peer.store.entitySnapshot(2).components.Text.text,'changed');peer.receive({data:missed});assert.equal(peer.store.nativePlayRevision,2);}
 }));

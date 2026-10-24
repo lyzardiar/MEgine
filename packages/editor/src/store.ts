@@ -4,7 +4,7 @@ import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
 import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord, retainedPlayWorldChanges, retainPlayWorld } from './playWorldSync';
 import { normalizeEntity, type EntityRec } from './entityRecord';
-import { createSessionSceneSerializer } from './sessionSceneSerialization';
+import { createSessionSceneSerializer, createSessionScenePublisher, type SessionSceneMessage } from './sessionSceneSerialization';
 export type { EntityRec } from './entityRecord';
 import {
   createBehaviourRunner,
@@ -939,6 +939,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   );
   const serializeScene = (sceneName: string, source: EntityRec[], runtime = false, space?: number) => JSON.stringify(sceneDocument(sceneName, source.map(snapshotEntity), runtime), null, space);
   const serializeSessionScene = createSessionSceneSerializer();
+  const sessionScenePublisher = createSessionScenePublisher();
 
   const revealEntityAncestors = (id: number) => {
     const byId = new Map(list().map((e) => [e.entity, e]));
@@ -2923,6 +2924,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     saveSessionSceneJson(sceneName = 'Untitled') {
       const retained = mode !== 'edit' ? playWorldSync.presentationSnapshot(playEntities, playClearColor ?? clearColor) : undefined;
       return retained ? serializeSessionScene(sceneDocument(sceneName, retained.entities as EntityRec[], true)) : serializeScene(sceneName, list(), mode !== 'edit');
+    },
+    publishSessionScene(stateId: string, allowDelta: boolean, sceneName = 'Untitled'): SessionSceneMessage {
+      const retained = mode !== 'edit' && nativePlaySessionId() != null ? playWorldSync.presentationSnapshot(playEntities, playClearColor ?? clearColor) : undefined;
+      if (retained) return sessionScenePublisher.publish(sceneDocument(sceneName, retained.entities as EntityRec[], true), stateId, JSON.stringify([sceneName, playRuntime?.sessionId ?? remotePlaySessionId]), allowDelta);
+      sessionScenePublisher.reset();
+      return { sceneJson: serializeScene(sceneName, list(), mode !== 'edit') };
     },
     newScene() {
       if (mode !== 'edit') return false;

@@ -1,4 +1,5 @@
 import { loadModelPreview } from './modelPreview';
+import { createSessionSceneReceiver, type SessionSceneDelta } from './sessionSceneSerialization';
 import { sceneFrameEntities } from './sceneFraming';
 import { pointBounds, type Bounds } from './viewportSpatial';
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -236,7 +237,8 @@ type WorkspaceSyncMessage =
       timestamp: number;
       mode: EditorMode;
       sceneName: string | null;
-      sceneJson: string;
+      sceneJson?: string;
+      sceneDelta?: SessionSceneDelta;
       playSessionId?: number;
       playRevision?: number;
       selectedIds: number[];
@@ -382,6 +384,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const remoteSceneDirty = useRef(false);
   const syncSender = useRef(crypto.randomUUID());
   const syncChannel = useRef<BroadcastChannel | null>(null);
+  const sessionSceneReceiver = useRef(createSessionSceneReceiver());
   const refreshRef = useRef<() => void>(() => {});
   const localTimelinePreview = useRef<TimelineScenePreview | null>(null);
   const remoteTimelinePreview = useRef<{
@@ -774,7 +777,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         timestamp: lastSceneTimestamp.current,
         sceneName: sceneNameRef.current,
         mode: store.mode,
-        sceneJson: store.saveSessionSceneJson(sceneNameRef.current ?? 'Untitled'),
+        ...(props.detachedPanel ? { sceneJson: store.saveSessionSceneJson(sceneNameRef.current ?? 'Untitled') } : store.publishSessionScene(sceneSyncId.current!, !immediate, sceneNameRef.current ?? 'Untitled')),
         playSessionId: store.playSessionId,
         playRevision: store.nativePlayRevision,
         selectedIds: store.selectedIds,
@@ -1468,7 +1471,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         return;
       }
       if (message.type === 'request-scene') {
-        broadcastScene(true);
+        if (!props.detachedPanel) broadcastScene(true);
         return;
       }
       if (message.type === 'scene-library-changed') {
@@ -1490,10 +1493,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         return;
       }
       try {
+        const sceneJson = sessionSceneReceiver.current.read(message, message.stateId);
+        if (sceneJson === undefined) {
+          if (sessionSceneReceiver.current.requestCheckpoint()) channel.postMessage({ type: 'request-scene', sender: syncSender.current } satisfies WorkspaceSyncMessage);
+          return;
+        }
         applyingRemote.current = true;
         syncReady.current = true;
         lastSceneTimestamp.current = message.timestamp;
-        store.loadRemoteSceneJson(message.sceneJson, message.mode, message.playSessionId, message.playRevision);
+        store.loadRemoteSceneJson(sceneJson, message.mode, message.playSessionId, message.playRevision);
         sceneSyncId.current = message.stateId ?? null;
         selectionSyncOrder.current = { revision: 0, sender: '' };
         store.selectMany(message.selectedIds, 'replace');
@@ -1547,6 +1555,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         }
         setTreeTick((tick) => tick + 1);
       } catch (reason) {
+        sessionSceneReceiver.current.reset();
         console.error('Failed to apply detached-window scene state', reason);
       } finally {
         applyingRemote.current = false;
