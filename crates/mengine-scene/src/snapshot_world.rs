@@ -10,6 +10,7 @@ pub struct SharedSnapshotWorld {
     source_ids: HashMap<u64, u64>,
     previous: HashMap<u64, Arc<EntitySnapshot>>,
     order: Vec<(u64, Entity)>,
+    ambiguous_sources: HashSet<u64>,
 }
 
 impl SharedSnapshotWorld {
@@ -34,13 +35,14 @@ impl SharedSnapshotWorld {
                 if Arc::ptr_eq(&self.previous[&id], record) { continue; }
                 let parent = record.parent.and_then(|id| self.entities.get(&id)).copied();
                 if self.world.get_component::<mengine_core::Parent>(entity).map(|value| value.entity) != parent { self.world.set_parent(entity, parent); }
-                self.apply_record(entity, record);
+                self.apply_record(entity, record, true);
                 self.previous.insert(id, Arc::clone(record));
             }
             self.apply_metadata(snapshot);
             return;
         }
         let incoming: HashSet<_> = snapshot.entities.iter().map(|entity| entity.entity).collect();
+        self.ambiguous_sources.retain(|id| incoming.contains(id));
         let mut changed_ids: HashSet<_> = incoming.iter().filter(|id| !self.entities.contains_key(id)).copied().collect();
         let mut removed = Vec::new();
         self.entities.retain(|id, entity| {
@@ -51,7 +53,7 @@ impl SharedSnapshotWorld {
         let mut hierarchy_changed = !changed_ids.is_empty() || snapshot.entities.iter().any(|record| self.previous.get(&record.entity).is_none_or(|previous| previous.parent != record.parent));
         for record in &snapshot.entities { self.entities.entry(record.entity).or_insert_with(|| self.world.spawn_empty()); }
         let mut order: Vec<_> = snapshot.entities.iter().map(|record| (record.entity, self.entities[&record.entity])).collect();
-        if order.len() != incoming.len() { let mut seen = HashSet::new(); order.retain(|(id, _)| seen.insert(*id)); }
+        if order.len() != incoming.len() { let mut seen = HashSet::new(); order.retain(|(id, _)| { let unique = seen.insert(*id); if !unique { self.ambiguous_sources.insert(*id); } unique }); }
         if !self.world.iter_entities().eq(order.iter().map(|(_, entity)| *entity)) {
             assert!(self.world.set_entity_iteration_order(&order.iter().map(|(_, entity)| *entity).collect::<Vec<_>>()));
             hierarchy_changed = true;
@@ -64,7 +66,7 @@ impl SharedSnapshotWorld {
             if self.world.get_component::<mengine_core::Parent>(entity).map(|value| value.entity) != parent { self.world.set_parent(entity, parent); }
             let references_changed = !changed_ids.is_empty() && crate::entity_reference::scene_reference_mapping_changed(&record.components, &changed_ids);
             if !references_changed && same { continue; }
-            self.apply_record(entity, record);
+            self.apply_record(entity, record, snapshot.entities.len() == incoming.len());
         }
         if hierarchy_changed {
             let mut children = HashMap::<Entity, Vec<Entity>>::new();
@@ -86,11 +88,38 @@ impl SharedSnapshotWorld {
         self.apply_metadata(snapshot);
     }
 
-    fn apply_record(&mut self, entity: Entity, record: &EntitySnapshot) {
+    fn apply_record(&mut self, entity: Entity, record: &EntitySnapshot, component_delta: bool) {
+        if let Some(previous) = self.previous.get(&record.entity).filter(|_| component_delta && !self.ambiguous_sources.contains(&record.entity)) {
+            if Self::supports_component_delta(&self.world, previous) && Self::supports_component_delta(&self.world, record) {
+                Self::apply_component_delta(&mut self.world, entity, previous, record); return;
+            }
+        }
         let old: Vec<_> = self.world.serialized_components(entity).into_iter().flat_map(|values| values.keys().cloned()).collect();
         for name in old { if !matches!(name.as_str(), "Parent" | "Children") { self.world.remove_component_by_name(entity, &name); } }
         if let Some(name) = &record.name { self.world.set_component_value(entity, "Name", serde_json::json!({"value":name})); }
         crate::scene_file::apply_snapshot_entity(&mut self.world, record, &self.entities, false);
+        // A unique full application restores the component baseline after duplicate source records.
+        if component_delta { self.ambiguous_sources.remove(&record.entity); }
+    }
+
+    fn supports_component_delta(world: &World, record: &EntitySnapshot) -> bool {
+        !crate::entity_reference::scene_components_require_remap(&record.components) && record.components.keys().all(|name| !matches!(name.as_str(), "Name" | "Parent" | "Children") && world.component_id(name).is_some())
+    }
+
+    fn apply_component_delta(world: &mut World, entity: Entity, previous: &EntitySnapshot, record: &EntitySnapshot) {
+        world.set_editor_state(entity, record.sibling_index, record.active);
+        if previous.tag != record.tag || previous.layer != record.layer { world.set_entity_metadata(entity, record.tag.clone(), record.layer); }
+        if previous.name != record.name {
+            if previous.name.is_some() { world.remove_component_by_name(entity, "Name"); }
+            if let Some(name) = &record.name { world.set_component_value(entity, "Name", serde_json::json!({"value":name})); }
+        }
+        for name in previous.components.keys() { if !record.components.contains_key(name) { world.remove_component_by_name(entity, name); } }
+        for (name, value) in &record.components {
+            if previous.components.get(name) == Some(value) { continue; }
+            // Remove the typed value before parsing its replacement, including invalid serialized values.
+            if previous.components.contains_key(name) { world.remove_component_by_name(entity, name); }
+            world.set_component_value(entity, name, value.clone());
+        }
     }
 
     fn apply_metadata(&mut self, snapshot: &SharedWorldSnapshot) {
@@ -292,3 +321,6 @@ mod tests {
 #[cfg(test)]
 #[path = "snapshot_world_stability_tests.rs"]
 mod stability_tests;
+#[cfg(test)]
+#[path = "snapshot_world_component_tests.rs"]
+mod component_tests;

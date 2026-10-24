@@ -1,3 +1,4 @@
+// Author: MiYu. Preserve reference remapping contracts during incremental snapshot materialization.
 use crate::SceneError;
 use mengine_core::Entity;
 use serde_json::{json, Value};
@@ -18,6 +19,10 @@ const COMPONENT_ENTITY_REFERENCE_FIELDS: [(&str, &str); 10] = [
     ("TabView", "on_value_changed"),
 ];
 const COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS: [(&str, &str); 3] = [("Canvas", "render_camera"), ("RawImage", "render_camera"), ("RawImage", "render_root")];
+
+pub(crate) fn scene_components_require_remap(components: &HashMap<String, Value>) -> bool {
+    components.iter().any(|(name, component)| name == "TimelineDirector" || COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS.iter().any(|(kind, _)| name.as_str() == *kind) || COMPONENT_ENTITY_REFERENCE_FIELDS.iter().any(|(kind, _)| name.as_str() == *kind) || component.get(REFERENCE_FIELDS_KEY).is_some())
+}
 
 /// MiYu: unchanged source records only need remapping when one of their target mappings changed.
 pub(crate) fn scene_reference_mapping_changed(components: &HashMap<String, Value>, changed: &HashSet<u64>) -> bool {

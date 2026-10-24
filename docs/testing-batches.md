@@ -1457,3 +1457,13 @@ B001/map-session-1792852382058的7项多窗口／Stop后重启检查通过，Sce
 以缓存DotA的14437实体地图Scenes/Main.mscene为输入，固定f68f6ce入口对照、独立预热缓存、9组每组40帧，计时外逐项核对完整结果。旧／新CPU中位数：无变化0.039442／0.046270ms，64个Transform只变版本1.005273／0.050630ms，单节点数值变化0.967712／0.486862ms，小分支0.945395／0.467913ms，大分支1.157375／1.165285ms，密集更新2.078507／1.959693ms。单节点及小分支含预热各440次使用增量解析；大分支和密集更新均走完整路径。该固定地图输入不是持续播放FPS或GPU测量，密集路径的样本差不外推收益。命令：设置MENGINE_HIERARCHY_PROJECT及MENGINE_HIERARCHY_SCENE后运行cargo test -p mengine-core --release benchmark_sparse_hierarchy_frames -- --ignored --nocapture；日志sparse-hierarchy-{tests,map-benchmark,mirror-test}.log与输入／源码摘要在tmp/docs-artifacts/editor-performance-risk。
 
 本补充同属115，不新增独立任务，计数仍0/3。实际Game／Scene、多窗口、相机／父子活动切换与动画热更的原生集成随下一批合并；最近完整原生结果仍为5e507b6的DotA58.02／59.98FPS，未把该结果归给补充实现。新口径内存驻留比较继续待测。
+
+### 第一百一十六阶段／编辑器新批次任务1/3：播放镜像按组件更新
+
+变更mengine-scene的snapshot_world.rs／entity_reference.rs及新增snapshot_world_component_tests.rs。普通内建组件的唯一源记录比较前后组件JSON，只移除已删除的组件、替换变化值，保留未变化的Transform和其他数据；名字、活动／兄弟顺序、标签及层仍正确更新。替换无效值前移除旧typed组件，保留既有序列化数据行为。带实体引用、TimelineDirector、引用字段注解、别名、未知组件或显式Name／Parent／Children的记录沿用完整应用，保留引用重映射和整份记录错误处理。重复源ID记录完整应用，并跟踪其组件基线是否可靠；后续唯一记录完整重建后恢复组件增量，删除源ID时清理该状态。实体／源ID映射、遍历顺序、父子维护与时间／选择元数据路径保持完整。
+
+12项镜像定向检查通过，普通入口忽略2项手动基准；新基准单独执行通过。包含新增4项与固定9f352cb实现的逐项对照，覆盖组件增删、无效typed替换／恢复、名字来源、别名／未知数据、父子／活动／顺序／代次／反向更新、相同JSON的新Arc无世界写入、重复ID转回唯一记录及状态释放。13种独立相机／UI回调字段各自验证目标删除与恢复，另核对Timeline和动态注解错误恢复；比较完整规范化世界、缓存名字及native到源ID的映射。既有115镜像消费检查仍通过，未变化Transform保持只读层级结果共享。证据component-delta-world-tests.log；初始重复记录差异与基准缺省position夹具的诊断日志单独保留，未修改失败日志冒充通过。
+
+14437实体地图输入、固定9f352cb入口、独立预热镜像、9组每组40次交替更新，计时外核对全部值与源ID映射。旧／新同步CPU中位数：无记录变化0.275298／0.286840ms，64条网格变化0.475627／0.331977ms，64条Transform变化0.456593／0.322547ms，512条网格变化2.586083／0.963520ms，64条名字／标签／层变化0.454575／0.321267ms。测量不含脚本、IPC、层级构建和GPU，不是实际FPS；静态样本增加0.011542ms。设置MENGINE_HIERARCHY_PROJECT及MENGINE_HIERARCHY_SCENE后运行cargo test -p mengine-scene --release --lib benchmark_snapshot_component_deltas -- --ignored --nocapture，日志及输入／源码摘要component-delta-world-*位于tmp/docs-artifacts/editor-performance-risk。
+
+当前独立批次1/3，115稀疏层级补充一并待原生集成。第三项后统一构建，验证实际DotA／多窗口连续帧、姿态／材质／组件增删、实体引用和UI事件／Timeline、选择／父子切换、Pause／Step／Stop及项目关闭重开；使用版本2采样器继续Stop／长期驻留比较。本次未重跑整库测试、完整地图QA或Tauri构建，最新完整原生验收仍为5e507b6。稳定60FPS、LOD与完整War3保真继续未完成。
