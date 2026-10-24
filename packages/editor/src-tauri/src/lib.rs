@@ -4323,13 +4323,14 @@ fn filter_scene_view_snapshot(snapshot: &mut WorldSnapshot, request: &mut Native
     }
 }
 
-async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: &str, shared_request: Option<String>, shared_buffer_reuse: bool, window: tauri::WebviewWindow, started: Instant) -> Result<tauri::ipc::Response, String> {
+async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: &str, shared_request: Option<String>, shared_buffer_reuse: bool, check_opacity: bool, window: tauri::WebviewWindow, started: Instant) -> Result<tauri::ipc::Response, String> {
     if !raw {
         let label = label.to_owned();
         return tauri::async_runtime::spawn_blocking(move || serde_json::to_string(&encode_native_viewport_frame(frame, &label)?).map(tauri::ipc::Response::new).map_err(|error| error.to_string())).await.map_err(|error| error.to_string())?;
     }
     let preparation_at = Instant::now();
-    let mut metadata = serde_json::json!({"hasAuthoredCamera":frame.has_authored_camera,"profile":frame.profile});
+    let opaque_pixels = check_opacity && native_viewport_transport::opaque_rgba_pixels(&frame.rgba);
+    let mut metadata = serde_json::json!({"hasAuthoredCamera":frame.has_authored_camera,"opaquePixels":opaque_pixels,"profile":frame.profile});
     let metadata_value_ms = preparation_at.elapsed().as_secs_f64() * 1000.0;
     metadata["profile"]["commandMs"] = serde_json::json!(started.elapsed().as_secs_f64() * 1000.0);
     let encode_at = Instant::now();
@@ -4472,7 +4473,7 @@ async fn render_native_game_view(
     .await
     .map_err(|error| format!("Game viewport worker failed: {error}"))??;
     if state.play_runtime.generation() != runtime_generation { return Err("Viewport session expired".into()); }
-    native_viewport_response(frame, raw.unwrap_or(false), "viewport", shared_request, shared_buffer_reuse.unwrap_or(false), window, started).await
+    native_viewport_response(frame, raw.unwrap_or(false), "viewport", shared_request, shared_buffer_reuse.unwrap_or(false), false, window, started).await
 }
 
 #[tauri::command]
@@ -4619,7 +4620,7 @@ async fn render_native_scene_view(
     .await
     .map_err(|error| format!("Scene viewport worker failed: {error}"))??;
     if state.play_runtime.generation() != runtime_generation { return Err("Viewport session expired".into()); }
-    native_viewport_response(frame, raw.unwrap_or(false), "Scene viewport", shared_request, shared_buffer_reuse.unwrap_or(false), window, started).await
+    native_viewport_response(frame, raw.unwrap_or(false), "Scene viewport", shared_request, shared_buffer_reuse.unwrap_or(false), !camera_preview, window, started).await
 }
 
 #[tauri::command]

@@ -716,6 +716,7 @@ export function Viewport(props: {
   const nativeGameRequestRef = useRef(createNativeViewportRequestState());
   const nativeSceneFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
+    opaquePixels: boolean;
     width: number;
     height: number;
     key: string;
@@ -1674,6 +1675,7 @@ export function Viewport(props: {
         const firstFrame = nativeSceneFrameRef.current == null;
         nativeSceneFrameRef.current = {
           image,
+          opaquePixels: result.opaquePixels,
           width: result.width,
           height: result.height,
           key: nativeSceneIdentity!.key,
@@ -1821,36 +1823,38 @@ export function Viewport(props: {
     ctx.rect(vp.x, vp.y, vp.w, vp.h);
     ctx.clip();
 
-    let drewEnvironment = false;
-    if (isGame && gameCamera?.clearFlags === 'solid_color') {
-      const [r, g, b, a] = gameCamera.backgroundColor;
-      ctx.fillStyle = `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
-      ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
-    } else {
-      const environmentBackground = isGame && gameCamera?.clearFlags === 'skybox'
-        ? { ...(environment ?? {}), background_enabled: true }
-        : environment;
-      drewEnvironment = scene2DActive
-        ? false
-        : drawEnvironmentBackground(ctx, vp, cam, environmentBackground);
-    }
-    if (isGame && gameCamera?.clearFlags !== 'solid_color' && !drewEnvironment) {
-      const [r, g, b, a] = p.clearColor;
-      ctx.fillStyle = `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
-      ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
-    } else if (!isGame) {
-      if (scene2DActive) {
-        ctx.fillStyle = '#2a3038';
+    if (!nativeSceneFrame?.opaquePixels) {
+      let drewEnvironment = false;
+      if (isGame && gameCamera?.clearFlags === 'solid_color') {
+        const [r, g, b, a] = gameCamera.backgroundColor;
+        ctx.fillStyle = `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
         ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
-      } else if (!drewEnvironment) {
-        const sky = ctx.createLinearGradient(vp.x, vp.y, vp.x, vp.y + vp.h);
-        sky.addColorStop(0, '#6a8aaa');
-        sky.addColorStop(0.5, '#3d4858');
-        sky.addColorStop(1, '#2a3038');
-        ctx.fillStyle = sky;
-        ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+      } else {
+        const environmentBackground = isGame && gameCamera?.clearFlags === 'skybox'
+          ? { ...(environment ?? {}), background_enabled: true }
+          : environment;
+        drewEnvironment = scene2DActive
+          ? false
+          : drawEnvironmentBackground(ctx, vp, cam, environmentBackground);
       }
-      if (!scene2DActive) drawGroundGrid(ctx, cam, vp, cam.target, Math.hypot(...cam.eye.map((value, axis) => value - cam.target[axis])));
+      if (isGame && gameCamera?.clearFlags !== 'solid_color' && !drewEnvironment) {
+        const [r, g, b, a] = p.clearColor;
+        ctx.fillStyle = `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
+        ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+      } else if (!isGame) {
+        if (scene2DActive) {
+          ctx.fillStyle = '#2a3038';
+          ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+        } else if (!drewEnvironment) {
+          const sky = ctx.createLinearGradient(vp.x, vp.y, vp.x, vp.y + vp.h);
+          sky.addColorStop(0, '#6a8aaa');
+          sky.addColorStop(0.5, '#3d4858');
+          sky.addColorStop(1, '#2a3038');
+          ctx.fillStyle = sky;
+          ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+        }
+        if (!scene2DActive) drawGroundGrid(ctx, cam, vp, cam.target, Math.hypot(...cam.eye.map((value, axis) => value - cam.target[axis])));
+      }
     }
 
     const transformSource = nativeGameReady && !(displayedPresentation?.hasSpine ?? p.entities.some(entity => entity.components.SpineSkeleton)) ? [] : p.entities;
@@ -2573,10 +2577,12 @@ export function Viewport(props: {
           continue;
         }
         if (isGame || !pr) continue;
-        ctx.fillStyle = selected ? '#fff' : '#888';
-        ctx.beginPath();
-        ctx.arc(pr.x, pr.y, 4, 0, Math.PI * 2);
-        ctx.fill();
+        if (!nativeSceneFrame?.opaquePixels) {
+          ctx.fillStyle = selected ? '#fff' : '#888';
+          ctx.beginPath();
+          ctx.arc(pr.x, pr.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
         hitsRef.current.push({ kind: 'object', id: e.entity, x: pr.x, y: pr.y, r: 10 });
         continue;
       }

@@ -33,6 +33,10 @@ pub fn take_traces() -> Vec<TransportTrace> {
 #[cfg(windows)]
 fn epoch_ms() -> f64 { std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|time| time.as_secs_f64() * 1000.0).unwrap_or(0.0) }
 
+const MAX_OPACITY_SCAN_BYTES: usize = 16 * 1024 * 1024;
+/// MiYu: bound alpha scanning; only a proven complete opaque image can replace the browser underlay.
+pub fn opaque_rgba_pixels(rgba: &[u8]) -> bool { !rgba.is_empty() && rgba.len() <= MAX_OPACITY_SCAN_BYTES && rgba.len().is_multiple_of(4) && rgba.chunks_exact(4).all(|pixel| pixel[3] == 255) }
+
 /// MiYu: retain the renderer's RGBA allocation until writing the final transport buffer.
 pub struct FramePayload { header: [u8; 16], metadata: Vec<u8>, rgba: Vec<u8> }
 
@@ -405,6 +409,17 @@ mod tests {
         assert!(history.take().is_empty());
         history.push(TransportTrace { request: "next-frame".into(), ..Default::default() });
         assert_eq!(history.take()[0].request, "next-frame");
+    }
+
+    #[test]
+    fn opacity_requires_complete_nonempty_rgba_and_every_alpha_byte() {
+        for bytes in [vec![], vec![255], vec![255; 7]] { assert!(!opaque_rgba_pixels(&bytes)); }
+        assert!(!opaque_rgba_pixels(&vec![255; MAX_OPACITY_SCAN_BYTES + 4]));
+        let bytes = vec![7, 0, 22, 255, 255, 1, 0, 255, 9, 9, 9, 255];
+        assert!(opaque_rgba_pixels(&bytes));
+        for index in [3, 7, 11] {
+            for alpha in [0, 1, 127, 254] { let mut transparent = bytes.clone(); transparent[index] = alpha; assert!(!opaque_rgba_pixels(&transparent)); }
+        }
     }
 
     #[test]

@@ -994,3 +994,13 @@ Game复用Scene的运行版本过期策略：Play期间前两次过期请求释�
 DotA缓存进入2.271秒；Game5秒采样最近240个原生间隔16.742ms／59.73FPS、P95 22.2ms、浏览器paint3.00ms；全图Scene151个间隔32.925ms／30.37FPS、P95 55.1ms、paint16.74ms，drawItems10723，仍显示选中Camera预览。此前样本Game58.51／Scene28.77FPS、paint3.13／17.71ms；顺序短样本受缓存与系统负载影响，不将所有FPS差异归因于本批优化。
 
 本批相关集成完成，未重跑无关的全库、地图转换或层级测试。用户编辑器未关闭；QA编辑器正常退出，WebView缓存因EPERM保留。原始证据在tmp/docs-artifacts/testing-batches/B001/及editor-performance-risk/draw-batch-*。继续待办：多窗口稳定60FPS、DotA全图Scene和Camera预览成本、首次renderer冷初始化、长期内存与真实输入延迟；LOD及完整DotA JASS玩法仍未实现。
+
+### 第八十九阶段／新批次任务1/3：不透明Scene图像下的覆盖绘制省略
+
+原生Scene原始帧附带opaquePixels：逐个检查最终RGBA的alpha，仅完整图像全部为255时置true。检查只用于Scene主视图，Game、相机预览及PNG截图不扫描；超过16MiB的图像保守置false以限制CPU开销。前端把标记与实际接受的原生Scene图像一起保存，true时省略随后被整幅原生图像覆盖的浏览器背景／初次网格及空节点圆点，命中区位置和顺序保留。透明像素、缺少标记、超预算图像及浏览器回退保留完整绘制。
+
+变更native_viewport_transport、Tauri响应、nativeViewportFrame、Viewport和对应测试。17项前端帧／背景／节点命中定向检查、TypeScript通过；从生产源码提取实际Rust检查函数和其单测，rustc优化测试1/1通过。覆盖任一位置的半透明alpha、不完整／空RGBA、扫描预算、严格布尔及旧帧、图像覆盖时仍可选取。扫描局部均值850×507为0.106ms、1280×720为0.228ms；4096×4096跳过检查，不增加整幅alpha扫描。证据tmp/docs-artifacts/editor-performance-risk/scene-underlay-*及scene-opacity-*。
+
+改动前临时分段诊断arbitrary-map-1792816702380得到23个DotA全图样本，浏览器paint均值16.674ms：请求0.357、背景0.835、世界准备1.765、空间索引2.674、绘制条目3.426、世界绘制4.361、原生合成0.243、辅助层0.526、UI2.365、收尾0.030ms。首次采集因console查询limit400超上限而失败，修正为300后完成；QA均正常退出。临时插桩已从隔离源码移除，脚本及原始日志留在tmp/docs-artifacts，未进入提交。
+
+当前1/3，Tauri完整编译及同一生产版本上的不透明／透明Scene、选取、尺寸变化、Game／相机预览、多窗口和DotA持续帧率待第三项合并验证。本项尚无生产FPS结论。继续优先优化实际绘制条目和原生网格命中准备；不重跑无关地图导入和全库检查。

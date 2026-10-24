@@ -11,8 +11,8 @@ test('browser overlays and interactive UI retain a matching snapshot', () => {
   }
 });
 
-function packet(width=2,height=1){
-  const metadata=new TextEncoder().encode(JSON.stringify({hasAuthoredCamera:true,profile:{schemaVersion:1,totalMs:1}}));
+function packet(width=2,height=1,opaquePixels){
+  const metadata=new TextEncoder().encode(JSON.stringify({hasAuthoredCamera:true,opaquePixels,profile:{schemaVersion:1,totalMs:1}}));
   const buffer=new ArrayBuffer(16+metadata.length+width*height*4),view=new DataView(buffer);
   [0x3146474d,width,height,metadata.length].forEach((value,index)=>view.setUint32(index*4,value,true));
   new Uint8Array(buffer,16,metadata.length).set(metadata);
@@ -29,6 +29,13 @@ test('native frame preserves exact RGBA pixels and metadata without copying the 
   const buffer=packet(),frame=parseNativeViewportFrame(buffer);
   assert.equal(frame.width,2);assert.equal(frame.height,1);assert.equal(frame.hasAuthoredCamera,true);
   assert.deepEqual([...frame.rgba],[255,12,34,255,56,78,90,128]);assert.equal(frame.rgba.buffer,buffer);
+});
+
+test('only an explicit opaque-pixel boolean enables underlay elision and legacy frames remain conservative',()=>{
+  for(const flag of [undefined,false,true,0,1,'true',null]){
+    const buffer=packet(2,1,flag);if(flag===true){const pixels=new Uint8Array(buffer,buffer.byteLength-8);pixels[7]=255;}
+    const frame=parseNativeViewportFrame(buffer);assert.equal(frame.opaquePixels,flag===true);assert.equal(frame.rgba.buffer,buffer);
+  }
 });
 
 test('padded shared metadata parses without copying or accepting trailing RGBA capacity',()=>{
