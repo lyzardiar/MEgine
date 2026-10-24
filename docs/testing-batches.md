@@ -722,3 +722,10 @@ Scene17.71／Game18.51次呈现每秒，Scene1/89完整回退、72次已记录�
 变更：store、selectionRestore及remoteRuntimeReuse测试。一次加载共用ID数组／集合，按需建立祖先索引，空交互列表无需扫描实体。相关18项测试和TypeScript通过，Amazonia局部CPU与语义对照见performance-risk-todo第六十八阶段及load-index-*产物。
 
 状态：实现完成，原生验证待累计3项后合并构建。覆盖地图加载／重载，运行中节点选择、展开／折叠与隐藏／不可选，Stop后新增节点ID及三窗口呈现。保留前端paint采样、消息接收和请求调度等待数据，再判断多窗口收益；不重复无关资产转换和全库测试。
+
+
+### 新批次任务2/3：后台视口前端绘制采样
+
+变更：Viewport、editorProfiler采样器、viewportPaintProfiling测试及qa-frost-map-session。记录所有实际完成的绘制，跳过无变化帧，测量与唤醒时钟分离；隐藏／切换来源重置测量窗口。原生专项报告保留前端汇总和样本，避免只凭原生请求耗时推断前端瓶颈。
+
+快速检查：19项不同用例最终通过，TypeScript及QA语法通过；首轮边界失败、修复及受影响复查见performance-risk-todo第六十九阶段。当前2/3，原生待合并。下一次验证检查后台Scene／Game均有前端样本、正常绘制和新帧呈现，分别报告paint耗时与native呈现间隔；同时覆盖第六十八阶段场景加载／选择／隐藏／新节点ID。此项改善观测完整性，不作为帧率提升。

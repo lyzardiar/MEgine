@@ -240,8 +240,7 @@ export function createEditorProfilerSampler(
     const frame = normalizeFrame(input);
     if (!frame) return null;
     let bucket = buckets.get(frame.source);
-    if (!bucket || frame.timestamp < bucket.startedAt
-      || (frame.frameIntervalMs === 0 && bucket.sampleCount > 0)) {
+    if (!bucket || frame.timestamp < bucket.startedAt || frame.frameIntervalMs === 0) {
       bucket = {
         source: frame.source,
         startedAt: frame.timestamp,

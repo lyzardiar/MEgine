@@ -822,6 +822,7 @@ export function Viewport(props: {
     performance.now(),
   ));
   const lastProfilerFrameRef = useRef(0);
+  const lastMeasuredPaintRef = useRef<{ source: 'scene' | 'game'; at: number } | null>(null);
   const lastViewportPaintRef = useRef(0);
   const lastAnimationFrameAtRef = useRef(0);
   const scenePaintInputsRef = useRef<unknown[]>([]);
@@ -1412,6 +1413,7 @@ export function Viewport(props: {
     const rect = canvas.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) {
       lastProfilerFrameRef.current = 0;
+      lastMeasuredPaintRef.current = null;
       return;
     }
     const nativeScene3D = propsRef.current.tab === 'scene' && !scene2DRef.current && '__TAURI_INTERNALS__' in window;
@@ -1776,8 +1778,8 @@ export function Viewport(props: {
     }
     if (skipUnchangedScenePaint && scenePaintState.frame === nativeSceneFrameRef.current && scenePaintState.preview === nativeCameraPreviewFrameRef.current) return;
     lastViewportPaintRef.current = now;
-    const frameIntervalMs = lastProfilerFrameRef.current > 0
-      ? now - lastProfilerFrameRef.current
+    const frameIntervalMs = lastMeasuredPaintRef.current?.source === p.tab
+      ? now - lastMeasuredPaintRef.current.at
       : 0;
     if (animationFrame || nativeGamePaint) lastProfilerFrameRef.current = now;
     if (nativeScene3D) clearViewport();
@@ -3440,7 +3442,9 @@ export function Viewport(props: {
     }
 
     ctx.restore();
-    if (animationFrame || nativeGamePaint) recordViewportProfilerFrame({
+    // MiYu: completion and interaction paints contribute CPU work even without animation callbacks.
+    lastMeasuredPaintRef.current = { source: p.tab, at: now };
+    recordViewportProfilerFrame({
       source: p.tab,
       timestamp: now,
       frameIntervalMs,

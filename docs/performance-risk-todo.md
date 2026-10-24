@@ -1281,3 +1281,14 @@ App的updateSceneDirty仅在edit模式读取远端指纹；独立窗口的Play�
 局部CPU基线ec56d7f，Amazonia作者场景7,410实体，经Store迁移后生成真实增量；测量解析接收、运行加载、选择与空可见性同步，排除指纹、React面板和原生渲染。6次预热后9组交替各8次，组均值中位数：仅时钟1.88319→1.07469ms、单Transform2.31457→1.13338ms、全部7,403个Transform67.65552→67.91697ms。最终完整快照及指纹一致。密集变更无明显收益；这只减少接收端一部分扫描与分配，不能解释或消除上一批54至56ms呈现间隔。脚本、输入SHA及原始样本为 `tmp/docs-artifacts/editor-performance-risk/load-index-benchmark.{mjs,json,log}`。
 
 当前新批次第1/3项，未构建或重跑原生QA。合并验证覆盖地图加载／重载、运行中节点展开／选择／隐藏、Stop后新增节点和多窗口呈现。下一步仍需测量前端实际paint、消息接收及请求调度等待；Profiler已有浏览器paint样本，下次原生专项应保留这些字段，不能仅依赖原生request耗时推断瓶颈。
+
+
+### 第六十九阶段：补齐后台视口前端绘制采样
+
+Viewport在所有真正完成的绘制结束时记录浏览器paint耗时，包括原生Scene完成回调、交互及非动画回调。未变化帧的提前返回不计样本；绘制前准备、Canvas提交等同步耗时计入paintMs，异步原生等待不计入。独立测量时钟在无尺寸或Scene／Game切换后重置，不更改原有请求唤醒时钟。浏览器绘制间隔与原生新帧呈现间隔是不同指标，不能互相充当FPS证明。
+
+采样器在首帧frameIntervalMs为0时重建统计窗口，即使旧窗口刚输出、当前桶为空也会重新计时，避免把隐藏期间跨度带入下一采样窗口。qa-frost-map-session的独立窗口专项同时保存frontendSummary／frontendSamples及已有nativeSummary／timings，并检查两视口均有有效浏览器绘制样本。数据继续只写入tmp/docs-artifacts。
+
+19项不同定向用例最终通过：editorProfiler的16项与新增viewportPaintProfiling的3项；TypeScript及QA语法通过。新增测试提取实际Viewport的提前返回、时钟及记录语句，验证无rAF的Scene完成绘制、未变化帧跳过、Game交互与动画只记录一次、原唤醒时钟不随新测量推进、无尺寸和切换视口的首帧重置，并通过真实采样器聚合。首轮17通过／1失败暴露空桶重新显示时计时未重置，修复后18通过；补充来源切换后仅重跑受影响3项通过。日志为 `tmp/docs-artifacts/editor-performance-risk/paint-coverage-tests.log`、`paint-coverage-final-tests.log`、`paint-coverage-source-tests.log` 和对应types日志。
+
+当前新批次第2/3项，未构建或原生复测；尚无新的前端耗时数值或FPS结论。第三项完成后合并观察后台Scene、Game的新帧呈现与前端paint样本，结合实际请求起点／完成间隔继续定位等待；保留长期、真实输入延迟、内存和强制原生竞态专项。
