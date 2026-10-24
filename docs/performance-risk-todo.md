@@ -1563,3 +1563,11 @@ DotA14437实体，Game58.99FPS／paint3.09ms，全图Scene42.09FPS／paint10.20m
 采样特效直接按最终UiBatchKey构造UiPrimitive，原solid默认行为保留；裁剪、UV、Multiply预乘和深度字段保持一致。6项采样特效检查及1项原solid默认UV检查通过，实际DotA2521图元的完整收集对照均值1.197697→1.033828ms，每组完整绘制与灯光输出一致。
 
 当前批次3/3，开始统一当前分支前端／原生构建和实际地图、多窗口、资源热更新及父变换选取验证。此处仍为CPU局部收益，真实FPS及内存待采样，证据effect-keys-*，完整范围见testing-batches.md。
+
+### 第九十五至九十七阶段原生集成与下一阶段
+
+23项相关检查及3份局部对照通过；当前分支前端与Tauri生产构建通过，同一固定EXE完成模型／透明度热更新、父变换／偏心选取、真实DotA持续Game／全图Scene／点击、多窗口重开／Pause／Step／截图／Stop／undo／redo。3份报告均0error、正常退出，详见testing-batches.md及B001/spatial-picking-1792826667371、arbitrary-map-1792826765617、map-session-1792826856467。
+
+DotA Game60.00FPS／paint3.53ms，全图Scene43.49FPS／paint10.39ms；Scene原生render均值22.013→18.669ms，最后一帧编译5.120ms／网格提取1.838ms，仍有世界编码4.517ms、GPU回读等待3.455ms。几何仍5342个提交对象。多窗口Scene53.82／Game56.40FPS、paint7.11／2.05ms，原生render成本下降但展示仍未稳定60FPS。对照前一隔离基线的范围不同，不能把所有差异都归因于本批。
+
+进程树PrivateBytes短流程4520.62→6372.90→6947.46→5690.37MiB（detach前／三窗口／重载／Stop停靠）；不等于缓存独立占用，Stop后尚未回到起点，长期驻留待查。下一阶段优先测量原生绘制与回读、浏览器Scene paint及窗口／地图切换后的驻留资源，再确定优化方案；LOD、真实输入延迟和完整JASS玩法继续未完成。

@@ -1116,3 +1116,19 @@ UiPrimitive提供solid_with_key，原solid继续使用原默认键。采样特�
 6项采样特效检查通过，覆盖原版Multiply透明度、模型粒子层／年龄／UV／缩放、暂停／seek／热更新／失活、共享资源独立播放、材质参数及相机变换。原solid默认UV检查通过。实际DotA资源显式采样1秒后2521图元，完整SampledEffectWorld.collect的12轮交替对照、排除2轮预热，每模式10组20次收集，每组末尾完整图元与灯光输出一致；均值1.197697→1.033828ms，中位1.196420→1.032380ms。只计CPU收集，包含资源检查，不含GPU／IPC，不直接外推FPS。日志tmp/docs-artifacts/editor-performance-risk/effect-keys-{tests,bench,rhi-test}.log。
 
 本批50fc516、0eb7a3a及本项达到3/3。统一构建当前分支前端与原生Release，验证实际DotA／多窗口持续采样、模型／材质热更新、Scene父变换与选取、Stop／重开／场景切换；复用不受影响的地图转换、层级和Spine结果。真实FPS与进程内存、稳定60FPS和LOD仍待确认。
+
+### 第九十五至九十七阶段合并原生验证
+
+实现50fc516、0eb7a3a、6aa764b已提交推送。累计23项相关定向检查通过，3份手动局部对照完成。当前主工作区前端TypeScript／Vite及Tauri Release构建通过；此次包含当前分支的Unity／粒子集成源码，未使用旧隔离工作区。固定EXE为tmp/docs-artifacts/editor-performance-risk/build-6aa764b/mengine-editor-tauri.exe，SHA256 274c02def166d1478b1308a655c813e56f9d47db4a531fabe4f6abfd47802f8a；receipt.json记录前端入口摘要及源码范围。构建仅有已有world_from_snapshot未使用警告；这不等同于所有并行功能均已运行验收。
+
+同一EXE的三份原生报告全部通过、0控制台error、QA正常退出。B001/spatial-picking-1792826667371.json验证模型文件热更新后原生像素与选取同步、父变换、原点在相机后的可见网格，以及opaque→transparent→opaque切换后的当前几何选取；热更新／父变换图像已检查。该路径确认网格输入复用仍允许资源与层级变化生效。
+
+B001/arbitrary-map-1792826765617.json使用实际DotA_v6.83d.w3x匹配缓存，14437实体，缓存进入2.595秒；通过进度条／返回、Game及全图Scene持续采样和3次点击。Game的最近240个原生间隔均值16.665ms／60.00FPS、P95 22.4ms、浏览器paint3.53ms；全图Scene间隔均值22.994ms／43.49FPS、P95 40.3ms、paint10.39ms。原生仍5376对象／5342提交，图像已检查。3次点击均选择4294981705，UI动作及selection RPC往返169.26／157.02／141.73ms，不是物理输入延迟。
+
+上一生产样本为Game58.99／Scene42.09FPS；Scene原生render窗口均值22.013→18.669ms，Game16.632→12.554ms，编译路径的成本实际下降。当前Scene最后一帧编译5.120ms、网格提取1.838ms、特效与排序0.447ms，backend10.163ms，其中世界编码4.517ms、GPU回读等待3.455ms；分段是最后一帧而非均值。前一EXE来自不含并行粒子路径的隔离基线，不能将所有差异严格归因于本批，也不能用单次短窗口宣称全图或Game稳定60FPS。没有新LOD或可见几何省略。
+
+B001/map-session-1792826856467.json覆盖7434实体、多窗口重开／版本追赶、持续Scene／Game、Pause／Step／快捷键／截图、Stop、编辑、undo／redo及回停靠。采样前额外等待318ms有17个当前Game样本，起点在已有固定启动等候与内存采样之后。最近240间隔Scene53.82／Game56.40FPS、paint7.11／2.05ms；上次54.44／55.59FPS。原生render均值Scene10.319→8.773ms、Game11.768→10.135ms，但展示帧率仍未稳定满帧。
+
+该流程的编辑器与当前子进程PrivateBytes合计依次为4520.62／6372.90／6947.46／5690.37MiB（detach前／三窗口／重载后／Stop并停靠后）。此为短流程进程树指标，不是网格缓存独立占用；Stop后仍高于起点，不能证明长期内存无增长。网格输入与来源的逻辑释放由定向检查覆盖，长期驻留仍待调查。原始证据只保存在tmp/docs-artifacts；WebView退出后的EPERM缓存保留，用户编辑器未关闭。
+
+本批相关集成完成，未重跑无关地图转换、完整层级或Spine验证。继续待办：全图Scene／多窗口稳定60FPS、原生绘制编码／GPU回读、浏览器Scene约10ms paint、长期内存与物理输入延迟、LOD和完整JASS／DotA玩法。
