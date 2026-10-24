@@ -119,6 +119,12 @@ copyFileSync(
   join(sdkDir, 'licenses', 'THIRD_PARTY_NOTICES.md'),
 );
 cpSync(join(root, 'packages', 'editor', 'licenses', 'v8'), join(sdkDir, 'licenses', 'v8'), { recursive: true });
+if (process.platform === 'win32') {
+  await run('python', [join(root, 'scripts', 'prepare-unity-import.py')], 'Preparing pinned Unity package mesh converter');
+  const converterDir = join(root, 'tmp', 'tools', 'unity-import', 'package', 'bin', 'Windows_NT');
+  requireFile(join(converterDir, 'FBX2glTF.exe'), 'Unity package mesh converter');
+  cpSync(converterDir, join(sdkDir, 'tools', 'unity-import'), { recursive: true, dereference: true });
+}
 if (process.platform !== 'win32') {
   chmodSync(join(sdkDir, nodeName), 0o755);
   chmodSync(join(sdkDir, 'runtimes', 'debug', runtimeName), 0o755);

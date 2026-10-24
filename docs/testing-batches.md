@@ -20,3 +20,12 @@ VFX 适配器以共享 WGSL 和参数数据实现本包启用的主纹理、遮�
 
 
 Unitypackage 同任务收尾补充：导入器 1.3.0 将原始资产移至工程级 `SourceAssets/UnityPackages/`，暂存目录也置于 Assets 外，采用两目录发布与本次文件回滚。所有运行资产生成独立 MEngine JSON meta，纳入 manifest；20 项导入测试通过。真实注册表连续重建两次，49 个原生 GUID 与 Unity GUID 无重叠，sidecar 字节不变，再次导入复用成功；清单为 runtime 97 项及 source 163 项。证据 `tmp/docs-artifacts/unity-import-v1-3-metadata/`。材质顶点流按实际序列解码并校验，不匹配的 CustomData 排布阻断。寿命精确端点浮点残留补充测试 1/1 通过；未知 Shader 显示紫色棋盘预览。以上均为前两任务补充，不增加批次计数。
+
+
+### Unitypackage 导入批次：任务 3/3，桌面入口与预览 sample
+
+桌面 Assets 菜单增加 Unity Package 分析/导入，支持文件选择或直接输入路径，锁定目标工程并校验指纹，完成后统一刷新和定位结果。组件目录和 Inspector 增加 `.mparticle` 资产引用；Project 双击定义打开带 revision/工程守卫的 JSON 编辑器。资产重命名引用扫描与 Player 打包追踪定义、模型及材质纹理。构建 SDK 部署固定转换器与许可。
+
+`samples/unity-package-preview` 提供中性 3D 场景、HUD、播放/停止/重播、相机环绕/缩放及背景切换。`prepare-preview.mjs` 将已有导入复制到忽略的 LocalPreview 工程，保留独立源资产目录；专有特效不入 Git。增加 native QA 脚本与 GPU 截图示例，所有产物写入 tmp/docs-artifacts。
+
+快速检查：前端 production build、Tauri cargo check 通过；导入模型与 Player 依赖检查 7/7 通过。三项任务已齐，统一原生验证正在执行：真实指定路径的分析/导入、刷新后复导、Prefab 实例化、播放与 X/R、相机、JSON 参数保存/非法拒绝、保存重开和控制台检查。GPU/Unity 同条件对照另行记录；不将成功播放计为视觉还原通过。

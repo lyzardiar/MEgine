@@ -136,6 +136,14 @@ IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ```
 
+## FBX2glTF
+
+The Windows editor bundles FBX2glTF 0.9.7-p1 for Unity package mesh import.
+Copyright (c) Facebook, Inc. and its affiliates. Distributed under the BSD
+3-Clause license, included at `build-sdk/tools/unity-import/LICENSE.txt`.
+The pinned download URL and archive/executable hashes are recorded alongside
+the converter in `provenance.json`.
+
 ## Microsoft mimalloc
 
 ```text

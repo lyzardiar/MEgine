@@ -4,6 +4,9 @@ import {
   importProjectAssetsFromPicker,
 } from '../assetImport';
 import { registerMenuItem } from './registry';
+import { openUnityPackageImport } from '../unityPackageImport';
+
+registerMenuItem('Assets/Import Unity Package...', (context) => openUnityPackageImport(context.log, context.refresh), { priority: 11, agentInvokable: false });
 
 registerMenuItem(
   'Assets/Import New Assets...',

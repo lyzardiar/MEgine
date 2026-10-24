@@ -26,6 +26,7 @@ parking_lot = "0.12"
 mengine-editor-host = { path = "../../../crates/mengine-editor-host", default-features = false }
 mengine-core = { path = "../../../crates/mengine-core" }
 mengine-assets = { path = "../../../crates/mengine-assets" }
+mengine-unity-import = { path = "../../../crates/mengine-unity-import" }
 mengine-scene = { path = "../../../crates/mengine-scene" }
 mengine-rhi = { path = "../../../crates/mengine-rhi" }
 log = "0.4"
