@@ -1185,3 +1185,16 @@ B001/map-session-1792831470405.json通过7434实体、多窗口重开／版本�
 多窗口进程树PrivateBytes为4550.07／6442.46／7450.48／5998.75MiB（detach前／三窗口／重载／Stop停靠）；这一短流程结束仍高于起点，长期驻留继续待查。三份QA均正常退出，WebView EPERM缓存保留，用户编辑器未关闭。脚本／原始报告只在tmp/docs-artifacts；本批不重复无关转换、完整层级及Spine验证。
 
 本批3/3相关集成完成，下一批从0/3累计。继续待办：Scene及多窗口稳定60FPS、绘制编码／回读与浏览器paint、长期驻留、姿态选择框／聚焦范围及纹理alpha选取、LOD、完整JASS／DotA对局与War3界面保真。
+
+
+### 第一百零一阶段／新批次任务1/3：对象参数按实例索引读取
+
+原生主绘制、阴影和绘制bundle共用对象参数数组，通过first_instance及flat片元索引读取对应模型／法线矩阵、颜色、材质与自定义参数，减少逐网格的动态uniform绑定。GPU支持的存储绑定范围能覆盖原有max_buffer_size时启用；上限较低的设备继续沿用动态uniform路径，保持原有可容纳对象范围。材质hook中的object名称和参数、绘制顺序、粒子自身绑定、可见几何及阴影规则保持原语义。Profiler的indexedObjectSlots记录数组路径实际打包槽数，为0时可能是uniform路径或当前无提交对象。
+
+实际DotA作者场景静态清点为5376活动网格／177种网格键；按当前源序连续网格及材质分组仍有4705段，单纯相邻实例合并最多减少约12.5%的调用。本项直接降低每次对象参数绑定成本，没有宣称减少绘制数量或加入LOD。
+
+8项相关定向检查通过：新数组与uniform对照包含12阶段96帧的完整RGBA一致性（阴影、材质参数、shader与错误fallback、纹理／网格热替换、剔除、容量增长、相机／透明顺序、环境、resize及粒子之后的网格恢复），3种shader解析／布局验证，以及既有材质／绘制bundle4项、嵌套Scene View和原生几何选取GPU检查。RHI与editor-host Release库检查通过。未增加生产对照开关；强制uniform参考只存在于cfg(test)线程局部状态。
+
+4096混合材质绘制、缓存bundle的12轮交替对照，排除2轮预热，10组各4帧；每帧128×128完整回读像素相同。世界编码CPU均值1.962848→1.694805ms，提交CPU3.194753→2.838718ms，提交加GPU回读5.135708→4.810100ms；不含IPC和游戏逻辑，不直接外推真实地图FPS。原始日志及摘要为tmp/docs-artifacts/editor-performance-risk/indexed-objects-{final-tests,gpu-final,material-tests,embedded-view-test,picking-test,benchmark,host-check}.log和indexed-objects-benchmark-summary.json。
+
+当前新批次1/3。第三项后统一构建并验证实际DotA／多窗口持续FPS、indexedObjectSlots、材质／shader热更新、姿态选取／阴影与Stop／重开；本次没有重跑完整原生QA。最新已验证实际全图Scene仍为4bca411的46.69FPS、Game59.90FPS，完整JASS／War3保真、稳定60FPS、长期驻留和LOD继续待办。

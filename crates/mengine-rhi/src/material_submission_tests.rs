@@ -164,7 +164,7 @@ fn benchmark_shared_material_preparation() {
     assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
 }
 
-fn binding_test_objects(count: usize, mixed: bool) -> Vec<RenderObject> {
+pub(super) fn binding_test_objects(count: usize, mixed: bool) -> Vec<RenderObject> {
     let side = (count as f32).sqrt().ceil() as usize;
     (0..count).map(|index| {
         let step = 1.8 / side as f32;

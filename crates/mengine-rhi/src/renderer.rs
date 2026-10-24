@@ -23,6 +23,10 @@ use winit::dpi::PhysicalSize;
 
 #[path = "world_bundles.rs"]
 mod world_bundles;
+#[path = "object_indexing.rs"]
+mod object_indexing;
+#[cfg(test)]
+thread_local! { static UNIFORM_OBJECT_REFERENCE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) }; }
 use world_bundles::{WorldBindings, WorldBundleCache, WorldDraw};
 
 const MAX_POINT_LIGHTS: usize = 4;
@@ -764,6 +768,7 @@ pub struct Renderer {
     material_data_textures: HashMap<String, MaterialTextureGpu>,
     material_texture_sets: HashMap<MaterialTextureSetKey, wgpu::BindGroup>,
     object_stride: u64,
+    indexed_objects: bool,
     object_capacity: usize,
     sky: SkyBackground,
     post_process: HdrPostProcess,
@@ -780,6 +785,8 @@ pub struct Renderer {
 impl Renderer {
     /// Scene color, depth and UI coverage sample count; presentation and readback remain single-sampled.
     pub fn sample_count(&self) -> u32 { self.sample_count }
+
+    pub fn indexed_object_data(&self) -> bool { self.indexed_objects }
 
     pub async fn new(window: Arc<winit::window::Window>) -> Result<Self, RhiError> {
         let size = window.inner_size();
@@ -824,12 +831,17 @@ impl Renderer {
             .flags
             .contains(wgpu::DownlevelFlags::ANISOTROPIC_FILTERING);
 
+        let mut required_limits = wgpu::Limits::default();
+        let indexed_objects = adapter.limits().max_storage_buffer_binding_size as u64 >= required_limits.max_buffer_size;
+        #[cfg(test)]
+        let indexed_objects = indexed_objects && !UNIFORM_OBJECT_REFERENCE.with(std::cell::Cell::get);
+        if indexed_objects { required_limits.max_storage_buffer_binding_size = required_limits.max_buffer_size as u32; }
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: Some("mengine"),
                     required_features: profiling_features(adapter.features(), true),
-                    required_limits: wgpu::Limits::default(),
+                    required_limits,
                     memory_hints: Default::default(),
                 },
                 None,
@@ -871,7 +883,7 @@ impl Renderer {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("forward_material"),
-            source: wgpu::ShaderSource::Wgsl(FORWARD_WGSL.into()),
+            source: wgpu::ShaderSource::Wgsl(object_indexing::shader(FORWARD_WGSL, indexed_objects, object_indexing::Pass::Forward)),
         });
 
         let bind_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -893,8 +905,8 @@ impl Renderer {
                     binding: 1,
                     visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: true,
+                        ty: if indexed_objects { wgpu::BufferBindingType::Storage { read_only: true } } else { wgpu::BufferBindingType::Uniform },
+                        has_dynamic_offset: !indexed_objects,
                         min_binding_size: NonZeroU64::new(
                             std::mem::size_of::<ObjectUniforms>() as u64
                         ),
@@ -1080,8 +1092,8 @@ impl Renderer {
                         binding: 1,
                         visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: true,
+                            ty: if indexed_objects { wgpu::BufferBindingType::Storage { read_only: true } } else { wgpu::BufferBindingType::Uniform },
+                            has_dynamic_offset: !indexed_objects,
                             min_binding_size: NonZeroU64::new(
                                 std::mem::size_of::<ObjectUniforms>() as u64,
                             ),
@@ -1203,13 +1215,10 @@ impl Renderer {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let object_stride = align_to(
-            std::mem::size_of::<ObjectUniforms>() as u64,
-            device.limits().min_uniform_buffer_offset_alignment as u64,
-        );
+        let object_stride = if indexed_objects { std::mem::size_of::<ObjectUniforms>() as u64 } else { align_to(std::mem::size_of::<ObjectUniforms>() as u64, device.limits().min_uniform_buffer_offset_alignment as u64) };
         let object_capacity = 64;
-        let object_buf = create_object_buffer(&device, object_stride, object_capacity);
-        let bind_group = create_bind_group(&device, &bind_layout, &global_buf, &object_buf);
+        let object_buf = create_object_buffer(&device, object_stride, object_capacity, indexed_objects);
+        let bind_group = create_bind_group(&device, &bind_layout, &global_buf, &object_buf, indexed_objects);
         let shadow_uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("directional_shadow_uniforms"),
             size: std::mem::size_of::<ShadowUniforms>() as u64,
@@ -1240,10 +1249,11 @@ impl Renderer {
             &shadow_pass_layout,
             &shadow_uniform_buf,
             &object_buf,
+            indexed_objects,
         );
         let shadow_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("directional_shadow_depth"),
-            source: wgpu::ShaderSource::Wgsl(SHADOW_WGSL.into()),
+            source: wgpu::ShaderSource::Wgsl(object_indexing::shader(SHADOW_WGSL, indexed_objects, object_indexing::Pass::Shadow)),
         });
         let shadow_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -1410,6 +1420,7 @@ impl Renderer {
             material_data_textures: HashMap::new(),
             material_texture_sets: HashMap::new(),
             object_stride,
+            indexed_objects,
             object_capacity,
             sky,
             post_process,
@@ -1720,6 +1731,7 @@ impl Renderer {
                 ..Default::default()
             });
             pass.set_pipeline(&self.shadow_pipeline);
+            if self.indexed_objects { pass.set_bind_group(0, &self.shadow_pass_bind_group, &[]); }
             let (mut bound_textures, mut bound_mesh) = (None, None);
             for &index in &shadow_order {
                 let object = &objects[index];
@@ -1732,11 +1744,7 @@ impl Renderer {
                     continue;
                 };
                 if mesh.index_count == 0 { continue; }
-                pass.set_bind_group(
-                    0,
-                    &self.shadow_pass_bind_group,
-                    &[(uniform_slots[index] as u64 * self.object_stride) as u32],
-                );
+                if !self.indexed_objects { pass.set_bind_group(0, &self.shadow_pass_bind_group, &[(uniform_slots[index] as u64 * self.object_stride) as u32]); }
                 let material = &prepared_materials[material_slots[uniform_slots[index]]];
                 let texture_set = self
                     .material_texture_sets
@@ -1747,7 +1755,8 @@ impl Renderer {
                     pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
                     pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                 }
-                pass.draw_indexed(0..mesh.index_count, 0, 0..1);
+                let instance = if self.indexed_objects { uniform_slots[index] as u32 } else { 0 };
+                pass.draw_indexed(0..mesh.index_count, 0, instance..instance + 1);
             }
         }
         self.submission_profile.shadow_encode_ms += shadow_started.elapsed().as_secs_f64() * 1000.0;
@@ -1773,9 +1782,9 @@ impl Renderer {
                 let material = &prepared_materials[material_slots[uniform_slots[index]]]; let key = material.pipeline;
                 let pipeline = if material.use_error_pipeline { self.error_material_pipelines.get(&error_material_pipeline_key(key)) }
                     else { self.material_pipelines.get(&key).or_else(|| self.material_pipelines.get(&MaterialPipelineKey { shader_fingerprint: 0, ..key })) }.expect("world material pipeline prepared before render pass");
-                Some(WorldDraw { pipeline, textures: self.material_texture_sets.get(&material.textures).expect("world texture set prepared before render pass"), vertices: &mesh.vertex_buffer, indices: &mesh.index_buffer, count: mesh.index_count, offset: (uniform_slots[index] as u64 * self.object_stride) as u32 })
+                Some(WorldDraw { pipeline, textures: self.material_texture_sets.get(&material.textures).expect("world texture set prepared before render pass"), vertices: &mesh.vertex_buffer, indices: &mesh.index_buffer, count: mesh.index_count, object_index: uniform_slots[index] as u32 })
             }).collect() } else { Vec::new() };
-            let bundle = if use_world_bundles { self.world_bundles.prepare(&self.device, self.sample_count, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group }, &world_draws) } else { None };
+            let bundle = if use_world_bundles { self.world_bundles.prepare(&self.device, self.sample_count, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group, indexed_objects: self.indexed_objects, object_stride: self.object_stride }, &world_draws) } else { None };
             #[cfg(test)]
             if let Some((_, reused)) = &bundle { if *reused { self.submission_profile.world_bundle_hits += 1; } else { self.submission_profile.world_bundle_builds += 1; } }
             self.sky.prepare(
@@ -1868,17 +1877,14 @@ impl Renderer {
                         .expect("built-in material pipeline variants are created at startup")
                 };
                 if !reuse_draw_bindings || draw_binding_changed(&mut bound_pipeline, pipeline) { pass.set_pipeline(pipeline); }
-                pass.set_bind_group(
-                    0,
-                    &self.bind_group,
-                    &[(uniform_slots[index] as u64 * self.object_stride) as u32],
-                );
+                if !self.indexed_objects { pass.set_bind_group(0, &self.bind_group, &[(uniform_slots[index] as u64 * self.object_stride) as u32]); }
                 let texture_set = self
                     .material_texture_sets
                     .get(&material.textures)
                     .expect("material texture set prepared before render pass");
                 if !reuse_draw_bindings || draw_binding_changed(&mut bound_textures, texture_set) { pass.set_bind_group(1, texture_set, &[]); }
                 if !reuse_draw_bindings || !shared_bindings_set {
+                    if self.indexed_objects { pass.set_bind_group(0, &self.bind_group, &[]); }
                     pass.set_bind_group(2, &self.shadow_sample_bind_group, &[]);
                     pass.set_bind_group(3, environment_bind_group, &[]);
                     shared_bindings_set = true;
@@ -1887,7 +1893,8 @@ impl Renderer {
                     pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
                     pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                 }
-                pass.draw_indexed(0..mesh.index_count, 0, 0..1);
+                let instance = if self.indexed_objects { uniform_slots[index] as u32 } else { 0 };
+                pass.draw_indexed(0..mesh.index_count, 0, instance..instance + 1);
             }
             }
         }
@@ -2022,18 +2029,20 @@ impl Renderer {
         }
         self.object_capacity = required.next_power_of_two();
         self.object_buf =
-            create_object_buffer(&self.device, self.object_stride, self.object_capacity);
+            create_object_buffer(&self.device, self.object_stride, self.object_capacity, self.indexed_objects);
         self.bind_group = create_bind_group(
             &self.device,
             &self.bind_layout,
             &self.global_buf,
             &self.object_buf,
+            self.indexed_objects,
         );
         self.shadow_pass_bind_group = create_shadow_pass_bind_group(
             &self.device,
             &self.shadow_pass_layout,
             &self.shadow_uniform_buf,
             &self.object_buf,
+            self.indexed_objects,
         );
     }
 
@@ -2101,7 +2110,7 @@ impl Renderer {
             .device
             .create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: Some("custom_surface_material"),
-                source: wgpu::ShaderSource::Wgsl(source.into()),
+                source: wgpu::ShaderSource::Wgsl(object_indexing::shader(&source, self.indexed_objects, object_indexing::Pass::Forward)),
             });
         self.material_pipelines.insert(
             key,
@@ -2128,7 +2137,7 @@ impl Renderer {
             .device
             .create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: Some("error_surface_material"),
-                source: wgpu::ShaderSource::Wgsl(source.into()),
+                source: wgpu::ShaderSource::Wgsl(object_indexing::shader(&source, self.indexed_objects, object_indexing::Pass::Forward)),
             });
         self.error_material_pipelines.insert(
             key,
@@ -3287,11 +3296,11 @@ fn material_blend_state(blend: MaterialPipelineBlend) -> wgpu::BlendState {
     }
 }
 
-fn create_object_buffer(device: &wgpu::Device, stride: u64, capacity: usize) -> wgpu::Buffer {
+fn create_object_buffer(device: &wgpu::Device, stride: u64, capacity: usize, indexed_objects: bool) -> wgpu::Buffer {
     device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("object_uniforms"),
         size: stride * capacity.max(1) as u64,
-        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        usage: (if indexed_objects { wgpu::BufferUsages::STORAGE } else { wgpu::BufferUsages::UNIFORM }) | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     })
 }
@@ -3301,6 +3310,7 @@ fn create_bind_group(
     layout: &wgpu::BindGroupLayout,
     global_buf: &wgpu::Buffer,
     object_buf: &wgpu::Buffer,
+    indexed_objects: bool,
 ) -> wgpu::BindGroup {
     device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("forward_bg"),
@@ -3315,7 +3325,7 @@ fn create_bind_group(
                 resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
                     buffer: object_buf,
                     offset: 0,
-                    size: NonZeroU64::new(std::mem::size_of::<ObjectUniforms>() as u64),
+                    size: if indexed_objects { None } else { NonZeroU64::new(std::mem::size_of::<ObjectUniforms>() as u64) },
                 }),
             },
         ],
@@ -3354,6 +3364,7 @@ fn create_shadow_pass_bind_group(
     layout: &wgpu::BindGroupLayout,
     shadow_uniform_buf: &wgpu::Buffer,
     object_buf: &wgpu::Buffer,
+    indexed_objects: bool,
 ) -> wgpu::BindGroup {
     device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("directional_shadow_pass_bg"),
@@ -3368,7 +3379,7 @@ fn create_shadow_pass_bind_group(
                 resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
                     buffer: object_buf,
                     offset: 0,
-                    size: NonZeroU64::new(std::mem::size_of::<ObjectUniforms>() as u64),
+                    size: if indexed_objects { None } else { NonZeroU64::new(std::mem::size_of::<ObjectUniforms>() as u64) },
                 }),
             },
         ],

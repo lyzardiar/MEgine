@@ -135,6 +135,7 @@ pub struct EditorViewportResource {
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EditorViewportProfileCounts {
+    pub indexed_object_slots: usize,
     pub msaa_samples: u32,
     pub entities: usize,
     pub render_objects: usize,
@@ -1127,6 +1128,7 @@ fn build_viewport_profile(
         resource_sample_age_ms,
         resource_sampling: ResourceSamplingProfile::default(),
         counts: EditorViewportProfileCounts {
+            indexed_object_slots: if renderer.indexed_object_data() { renderer.spatial_culling_stats().submitted } else { 0 },
             msaa_samples: renderer.sample_count(),
             entities: world.iter_entities().count(),
             render_objects: frame.objects.len(),
