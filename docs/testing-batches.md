@@ -1433,3 +1433,19 @@ B001/arbitrary-map-1792848530368整体报告保留失败：两个连续采样已
 14项层级定向检查通过，4项手动基准在普通检查中忽略；新增的不可变帧基准单独执行通过。覆盖60次只改MeshRenderer仍共享节点、父变换后旧帧不变、弱引用释放、稀疏／未激活祖先、环与作者顺序、代次复用、序列化修改和自定义投影视图；与无状态解析器逐项结果一致。证据immutable-hierarchy-{tests,benchmark}.log位于tmp/docs-artifacts/editor-performance-risk。以保留的DotA导入工程作者快照4374实体运行两个独立预热缓存，9个测量组／每组40帧：不变输入旧入口0.182192ms／共享0.010815ms，仅MeshRenderer材质变更0.174673／0.011055ms；稀疏Transform更新0.169932／0.174810ms，增加0.004878ms。基线入口固定4b63aab，只适配只读结果的Arc包装；计时外逐项比较输出。该4374实体作者快照不是运行中14437实体的全图负载，不能作为实际FPS结论。
 
 113、114、115达到3/3。接下来在同一提交版本统一前端与带custom-protocol的原生Release，合并检查Profiler计数／界面、实际DotA连续Scene／Game及复用命令覆盖、相机／resize／透明与资源更新、嵌套和多窗口、Stop／关闭重开。按影响选择core层级、RHI分段缓存及相关宿主／前端检查；不重复未受影响的地图转换与全量资产遍历。原生验证结果仍待登记，完整War3保真、稳定60FPS、LOD和长期驻留继续未完成。
+
+### 第一百一十三至一百一十五阶段合并验证
+
+5e507b6整合113、114、115。前端生产构建3.15秒、带custom-protocol的原生Release构建1分35秒通过；固定程序build-5e507b6/mengine-editor-tauri.exe，SHA256为f13c885af35b04f3fd3d3748ee2f3b30ad8491aeb94a0fbf04b4e909827382d9。receipt.json保留源码及前端摘要。core库37通过、7项手动基准忽略，前端Profiler18通过；114的GPU／宿主检查和已单独执行的两项基准复用既有结果，不重复未改变的GPU夹具及全量资产遍历。
+
+B001/spatial-picking-1792852216644完成6项原生检查：网格热更、父级替换、原点在视野后的可见几何、姿态／锁定选取、透明切换、空节点首次选取。B001/profiler-bundles-1792852694991完成128对象夹具的生产计数及实际语义读数，World Bundle Builds=0、Hits=1、Reused World Draws=1；实际DotA的读数为0／19／4675。两份报告通过，无错误日志、正常退出。场景／姿态、游戏、多窗口与Profiler图像已检查，原始PNG／JSON仅存tmp。
+
+B001/arbitrary-map-1792852278723完整流程通过：实际DotA缓存进入2.302秒、14437实体，连续Scene／Game采样、三次全图选取、进度与返回、Stop及项目关闭重开。Game59.98／Scene58.02FPS，Scene平均原生15.893ms、浏览器paint5.540ms、UI2.171ms；上次完整验收90c5501为Game59.99／Scene58.58FPS、原生16.266ms、UI2.141ms，未证明稳定满帧或UI收益。仍5376对象／5342可见／4675网格指令／1123实例组内对象，无LOD削减。三次动作与选取RPC为173.566／164.092／160.143ms，不是物理输入延迟。错误日志断言在关闭重开前；后续重开场景及新Game图像单独通过。
+
+240个Scene完成帧中182帧复用分段，逐帧复用命令均值1079.458、范围0–4675；Game为99帧、均值40.654。113的整份缓存诊断Scene仅4帧复用，但两种粒度不同，不能把帧数差当成同一种命中率。当前Scene覆盖均值仍不高。最新一个Scene样本的层级／世界编码为0.139／2.745ms，Game层级为1.136ms；均为单帧，不代表这些阶段的持续均值。
+
+B001/map-session-1792852382058的7项多窗口／Stop后重启检查通过，Scene57.43／Game56.06FPS、平均原生8.495／10.065ms；前次57.77／55.66FPS。Scene浏览器paint3.730ms、UI0.8505ms（前次0.8518），仍未稳定60。Scene／Game分别覆盖301／273次浏览器绘制，各240个原生间隔；分段复用发生于18／236帧。相同程序的四份原生报告均正常退出，QA编辑器与发现文件已关闭，WebView的EPERM缓存保留，用户64664未重启。assert-ranges-hierarchy-batch.py逐项核对帧计数、分段覆盖与paint六段之和／加权；ranges-hierarchy-batch-runtime-summary.json保留结果与限制。
+
+本轮发现旧内存采样的PID父链可混入PID复用前的系统进程：DotA报告中csrss45480／winlogon20360于10月23日创建，却沿已复用的父PID32984进入10月24日的QA进程树。原始数字保留，但本批不用于驻留比较；采用旧采样器的历史数据也需按新口径复测。sample-native-qa-memory.ps1改为校验根与每级父子创建时间，并在读取内存后再次核对进程身份，输出samplingSchemaVersion=2及创建时间；只统计可验证的存活父链，孤儿进程排除，working set仍可能重复计算共享页。5个定向场景通过，覆盖父PID复用、逆序清单、根身份失效和CIM时间精度；现有64664的只读实机采样仅包含编辑器与6个WebView进程。没有重跑已通过的地图／多窗口流程，新口径的Stop与长期驻留比较保留待测。
+
+本批功能与连续帧采样范围完成，新独立任务计数0/3；内存比较仍在待测队列。复现日志ranges-hierarchy-batch-*及memory-identity-*均位于tmp/docs-artifacts/editor-performance-risk。下一步继续定位实际分段失效与网格源校验尖峰、Game层级变化及Scene整帧成本；稳定60FPS、长期驻留、LOD、姿态聚焦／alpha选取、完整JASS／DotA玩法及War3保真尚未完成。
