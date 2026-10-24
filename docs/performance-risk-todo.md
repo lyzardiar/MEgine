@@ -1741,3 +1741,6 @@ Canvas独立WebGL投影器按实际Float32顶点、输出尺寸及纹理来源�
 90c5501固定程序（26dcbafddc124ec7a75dc03549aada2963abd0fdb6efbeb85ab552e5bbb9c616）完成实际DotA、六项多窗口和定向Play／Stop重启范围；首轮尾部QA选错地图页的整体失败报告保留，修正后只重测失败部分，详见testing-batches.md。实际GPU投影152对完整RGBA一致，固定120帧真实WebGL绘制120→1，不是原生RHI或FPS结果。27项前端与29项运行时检查通过，4项ignored基准未执行。
 
 DotA Scene57.25→58.58FPS、Game59.99FPS；浏览器paint5.999→5.633ms，UI2.518→2.141ms，原生渲染16.266ms。多窗口Scene57.77／Game55.66FPS、Scene UI1.093→0.852ms、paint3.549ms，整帧仍未稳定60。多窗口Stop停靠6196.53MiB仍高于起点5320.32MiB；独立两次Stop短流程5319.93／5238.88MiB不能证明长期稳定。世界镜像及弱引用回收已针对性验证，其他资源与分配器驻留仍待分析。证据ui-mirror-batch-*及gpu-projection-check；本批范围完成、下一批0/3。继续UI／原生整帧、长期内存、LOD与完整War3目标。
+
+
+第一百一十一阶段补充：纯source-over按实际Float32投影顶点的保守范围合成；离屏／空几何省略无效复制，目标敏感模式、滤镜／阴影和不安全权重保持整幅语义。8项检查、TypeScript及实际GPU的172对完整RGBA通过；固定夹具每帧复制196608→73326像素，不是FPS或CPU测量。证据cropped-ui-projection-*及gpu-projection-crop-check，完整范围见testing-batches.md。作为投影补充不新增任务计数，独立队列仍0/3，原生收益待下一批。

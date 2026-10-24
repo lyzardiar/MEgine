@@ -1390,3 +1390,8 @@ B001/map-session-1792846908698完成7434实体的原有六项：三窗口重开�
 原始失败报告没有修改或重标通过。局部采样校验assert-ui-mirror-batch-completed-profiles.py明确保留overallReportPassed=false，只接受上述已完成六项与指定尾部夹具失败；整份DotA及重启重测仍各自要求passed=true。构建／QA日志ui-mirror-batch-*及ui-mirror-batch-runtime-summary.json位于tmp/docs-artifacts/editor-performance-risk，截图和JSON只在tmp/docs-artifacts/testing-batches。复现实际DotA沿用缓存／profile／pick／project-reopen／profiler-ui；多窗口为qa-frost-map-session --detached-profile-only --restart-after-stop，失败尾部可单独--restart-only。未受影响的空间／Spine检查复用上一批。所有所属QA编辑器正常退出，EPERM的WebView缓存保留，用户编辑器64664未重启。
 
 本批所需范围验证完成，下一批0/3。继续定位浏览器UI和原生16ms整帧瓶颈、Stop后的其他驻留资源；稳定60FPS、多窗口、LOD、姿态聚焦范围／alpha选取、完整JASS／DotA玩法及War3保真继续待办。
+
+
+第一百一十一阶段补充：source-over且无滤镜／阴影范围扩展时，Scene投影只合成实际Float32齐次顶点的保守像素范围，四边留1像素并裁到输出尺寸；要求权重为正且有限。完全离屏／空几何可省略无效合成。目标敏感的合成模式、滤镜／阴影及不安全权重保留整幅合成，画布清理、GPU缓存、当前裁剪与透明度语义保留。此项属于投影优化的补充，不计独立任务，下一批独立任务计数仍0/3。
+
+8项定向检查、TypeScript和实际AMD／ANGLE D3D11对照通过：27组场景、172对完整RGBA一致；GPU绘制23／23、纹理上传11／11未变。120个固定输入夹具每帧合成面积196608→73326像素；全部阶段总面积60948480→27492442，离屏／空几何使合成调用172→168。覆盖亚像素与越界位置、DPR／resize、相机、纹理更新、部分globalAlpha、滤镜／阴影回退、负权重、空几何、copy／source-in／destination-in／xor及context恢复。面积／调用数不是实际CPU或FPS收益。复现prepare-gpu-projection-crop-check.mjs及gpu-projection-crop-check的源码、HTML、结果和截图均在tmp/docs-artifacts/editor-performance-risk；页面及HTTP服务已关闭。日志cropped-ui-projection-{tests,typecheck}.log。原生DotA／多窗口集成和UI计时待下一批合并，不复跑未受影响的原生与地图全检。

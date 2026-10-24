@@ -4,6 +4,21 @@ import type { SceneCanvasSurface } from './uiLayout';
 type Projector = { canvas: HTMLCanvasElement; gl: WebGLRenderingContext; program: WebGLProgram; buffer: WebGLBuffer; texture: WebGLTexture; position: number; uv: number; maxTextureSize: number; maxSurfaceSize: number; image?: HTMLCanvasElement; revision?: number; imageWidth?: number; imageHeight?: number; vertices?: Float32Array };
 const projectors = new WeakMap<HTMLCanvasElement, Projector | null>();
 
+/** Positive homogeneous weights keep rasterized triangles within their projected vertex bounds. */
+function projectionCopyRect(vertices: Float32Array, width: number, height: number) {
+  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+  for (let index = 0; index < vertices.length; index += 5) {
+    const w = vertices[index + 2];
+    if (!(w > 0) || !Number.isFinite(w)) return null;
+    const x = (vertices[index] / w + 1) * width * .5, y = (1 - vertices[index + 1] / w) * height * .5;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    left = Math.min(left, x); top = Math.min(top, y); right = Math.max(right, x); bottom = Math.max(bottom, y);
+  }
+  if (!vertices.length) return { x: 0, y: 0, w: 0, h: 0 };
+  const x = Math.min(width, Math.max(0, Math.floor(left) - 1)), y = Math.min(height, Math.max(0, Math.floor(top) - 1));
+  return { x, y, w: Math.max(0, Math.min(width, Math.ceil(right) + 1) - x), h: Math.max(0, Math.min(height, Math.ceil(bottom) + 1) - y) };
+}
+
 function createProjector(destination: HTMLCanvasElement): Projector | null {
   const canvas = destination.ownerDocument?.createElement('canvas');
   const gl = canvas?.getContext('webgl', { alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true, antialias: false });
@@ -65,6 +80,11 @@ export function projectSceneCanvasTexture(ctx: CanvasRenderingContext2D, surface
     gl.drawArrays(gl.TRIANGLE_FAN, 0, surface.pixels.length);
     projector.vertices = vertices;
   }
-  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(canvas, 0, 0); ctx.restore();
+  const copy = ctx.globalCompositeOperation === 'source-over' && ctx.filter === 'none' && ctx.shadowBlur === 0 && ctx.shadowOffsetX === 0 && ctx.shadowOffsetY === 0 ? projectionCopyRect(vertices, canvas.width, canvas.height) : null;
+  if (copy && !(copy.w > 0 && copy.h > 0)) return true;
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (copy) ctx.drawImage(canvas, copy.x, copy.y, copy.w, copy.h, copy.x, copy.y, copy.w, copy.h);
+  else ctx.drawImage(canvas, 0, 0);
+  ctx.restore();
   return true;
 }

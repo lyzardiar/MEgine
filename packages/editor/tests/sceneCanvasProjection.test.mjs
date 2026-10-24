@@ -9,7 +9,7 @@ function fixture() {
   for (const name of ['shaderSource', 'compileShader', 'deleteShader', 'attachShader', 'linkProgram', 'bindTexture', 'texParameteri', 'viewport', 'clearColor', 'clear', 'useProgram', 'activeTexture', 'pixelStorei', 'bindBuffer', 'enableVertexAttribArray', 'vertexAttribPointer']) gl[name] = () => {};
   const gpuCanvas = { width: 0, height: 0, getContext(type) { assert.equal(type, 'webgl'); return gl; }, addEventListener(name, fn) { listeners[name] = fn; } };
   const canvas = { width: 200, height: 100, ownerDocument: { createElement() { return gpuCanvas; } } };
-  const ctx = { canvas, transform: { a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 }, getTransform() { return this.transform; }, save() {}, restore() {}, setTransform(...args) { calls.push(['transform', ...args]); }, drawImage(image) { calls.push(['composite', image]); } };
+  const ctx = { canvas, globalCompositeOperation: 'source-over', filter: 'none', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, transform: { a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 }, getTransform() { return this.transform; }, save() {}, restore() {}, setTransform(...args) { calls.push(['transform', ...args]); }, drawImage(image, ...args) { calls.push(['composite', image, ...args]); } };
   return { ctx, calls, gl, listeners, gpuCanvas };
 }
 
@@ -81,4 +81,26 @@ test('unversioned content redraws and separate destinations never share a projec
   projectSceneCanvasTexture(first.ctx, surface, image, 1); projectSceneCanvasTexture(second.ctx, surface, image, 1);
   assert.equal(second.calls.filter(c => c[0] === 'draw').length, 1); assert.equal(second.calls.filter(c => c[0] === 'upload').length, 1);
   assert.equal(second.calls.find(c => c[0] === 'composite')[1], second.gpuCanvas);
+});
+
+test('source-over copies only conservative raster bounds while destination-sensitive operations and effects retain the full image', () => {
+  const { ctx, calls } = fixture(), image = { width: 100, height: 50 };
+  ctx.transform = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+  projectSceneCanvasTexture(ctx, surface, image, 1);
+  const copy = calls.find(c => c[0] === 'composite'); assert.deepEqual(copy.slice(2), [0, 0, 101, 51, 0, 0, 101, 51]);
+  for (const key of ['copy', 'source-in', 'destination-in', 'xor']) { ctx.globalCompositeOperation = key; projectSceneCanvasTexture(ctx, surface, image, 1); assert.deepEqual(calls.at(-1)[0], 'composite'); assert.deepEqual(calls.at(-1).slice(2), [0, 0]); }
+  ctx.globalCompositeOperation = 'source-over';
+  for (const effects of [{ filter: 'blur(3px)' }, { shadowBlur: 2 }, { shadowOffsetX: 2 }, { shadowOffsetY: -1 }]) {
+    Object.assign(ctx, { filter: 'none', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }, effects);
+    projectSceneCanvasTexture(ctx, surface, image, 1); assert.deepEqual(calls.at(-1).slice(2), [0, 0]);
+  }
+});
+
+test('offscreen and empty source-over geometry skip composition; unsafe homogeneous weights retain full-image semantics', () => {
+  const { ctx, calls } = fixture(), image = { width: 100, height: 50 }, far = { ...surface, corners: surface.corners.map(p => ({ x: p.x + 2000, y: p.y })) };
+  projectSceneCanvasTexture(ctx, far, image, 1); assert.equal(calls.filter(c => c[0] === 'composite').length, 0);
+  const empty = { ...surface, corners: [], pixels: [], inverseW: [] };
+  projectSceneCanvasTexture(ctx, empty, image, 1); assert.equal(calls.filter(c => c[0] === 'composite').length, 0);
+  ctx.globalCompositeOperation = 'copy'; projectSceneCanvasTexture(ctx, empty, image, 1); assert.deepEqual(calls.find(c => c[0] === 'composite').slice(2), [0, 0]);
+  ctx.globalCompositeOperation = 'source-over'; projectSceneCanvasTexture(ctx, { ...surface, inverseW: [1, -1, 1, 1] }, image, 1); assert.deepEqual(calls.at(-1).slice(2), [0, 0]);
 });
