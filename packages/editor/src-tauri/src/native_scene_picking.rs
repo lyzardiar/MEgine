@@ -11,15 +11,20 @@ const MAX_BYTES: usize = 256 * 1024 * 1024;
 pub(crate) struct Owner { pub project: PathBuf, pub window: String, pub generation: u64 }
 struct Entry { token: String, owner: Owner, frame: Arc<MeshPickFrame>, bytes: usize }
 #[derive(Default)]
-struct Frames { next: u64, entries: VecDeque<Entry>, bytes: usize }
+struct Frames { next: u64, generation: u64, entries: VecDeque<Entry>, bytes: usize }
 static FRAMES: OnceLock<Mutex<Frames>> = OnceLock::new();
 fn frames() -> &'static Mutex<Frames> { FRAMES.get_or_init(Mutex::default) }
 
 impl Frames {
+    fn retire_before(&mut self, generation: u64) {
+        self.generation = self.generation.max(generation);let current = self.generation;
+        self.retain(|entry| entry.owner.generation >= current);
+    }
     fn retain(&mut self, mut keep: impl FnMut(&Entry) -> bool) {
         self.entries.retain(|entry| keep(entry)); self.bytes = self.entries.iter().map(|entry| entry.bytes).sum();
     }
     fn insert(&mut self, owner: Owner, frame: MeshPickFrame) -> Option<String> {
+        if owner.generation < self.generation { return None; }
         // Geometry is shared within a frame; counting it again across frames conservatively bounds retention.
         let mut geometries = HashSet::new();
         let bytes = std::mem::size_of::<MeshPickFrame>().checked_add(std::mem::size_of_val(frame.objects.as_slice()))?.checked_add(frame.objects.iter().filter(|object| geometries.insert(Arc::as_ptr(&object.geometry))).try_fold(0usize, |bytes, object| bytes.checked_add(object.geometry.bytes()))?)?;
@@ -41,6 +46,7 @@ pub(crate) fn publish(owner: Owner, frame: Option<MeshPickFrame>) -> Option<Stri
 pub(crate) fn read(owner: &Owner, token: &str) -> Option<Arc<MeshPickFrame>> { frames().lock().get(owner, token) }
 pub(crate) fn destroy_window(window: &str) { frames().lock().retain(|entry| entry.owner.window != window); }
 pub(crate) fn clear() { frames().lock().retain(|_| false); }
+pub(crate) fn retire_before(generation: u64) { frames().lock().retire_before(generation); }
 
 #[cfg(test)]
 mod tests {
@@ -64,3 +70,7 @@ mod tests {
         frames.retain(|_| false); assert_eq!(frames.bytes, 0); assert!(frames.entries.is_empty());
     }
 }
+
+#[cfg(test)]
+#[path = "native_scene_picking_lifetime_tests.rs"]
+mod lifetime_tests;

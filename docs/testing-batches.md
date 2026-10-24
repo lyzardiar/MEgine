@@ -1551,3 +1551,11 @@ V8与QuickJS各7项定向检查通过，普通入口各忽略1项手动基准；
 CPU对照使用已保留的196份DotA自包含GLB文件清单，5376条循环引用、预热后9组交错样本，每组20次。测量当前生产billboard预备路径，包含新增并行预检的对象扫描／去重、stamp表、共同的对象复制及相机key改写；对照只跳过预检，保留原顺序validate_at路径。旧／新每次中位数9.122745／6.088905ms，196个校验stamp与5376个最终mesh key逐项一致。不是实际地图帧率、GPU或进程内存测量，没有重跑全量资产遍历。命令：设置MENGINE_METADATA_PATHS为metadata-probe-paths.txt、MENGINE_METADATA_PROJECT为对应保留工程，运行cargo test -p mengine-runtime --release --lib benchmark_parallel_source_validation -- --ignored --nocapture；最终日志parallel-source-benchmark.log。仅比较底层校验调用的早期原型日志不用于此生产预备路径结论。
 
 当前新批次1/3。第三项后统一custom-protocol Release验证实际DotA／Amazonia及多窗口来源校验尖峰、整帧间隔、模型与外部buffer热更新、选取／相机／预览、Stop／重开及版本2驻留采样；当前原生验收程序仍13ef6a4，本项尚未证明实际满帧改善。JobSystem为既有全局执行器，最多4个任务指每次sync批次，不是全进程线程上限；后续原生验收需关注多窗口并发下的开销。长期内存、LOD及完整War3目标保持待办。
+
+### 第一百二十三阶段／编辑器新批次任务2/3：按播放代次退役Scene选取快照
+
+变更Tauri的lib.rs／native_scene_picking.rs，新增native_scene_picking_lifetime_tests.rs。工程替换、开始Play和Stop后，用当前播放代次更新选取注册表的单调下限，在同一互斥锁内移除更早快照并拒绝旧代次发布；晚到的旧帧不会移除同窗口的新快照，晚到的旧Stop不会倒退下限。token继续递增，项目／窗口归属及既有帧数／字节预算不变。正在读取的Arc快照可完成自身工作，调用者仍按原代次检查拒绝失效查询结果；完成读取后自然释放。工程关闭继续通过既有视口生命周期排空和注册表清空，不重置Renderer或GPU设备。
+
+5项定向检查通过：选取注册表3项（2新增，含1项真实GPU几何），工程关闭／镜像兼容2项。GPU测试从实际离屏提交捕获实体73的三角形，移除Renderer的该网格后由注册表／在途读者持有；退役使注册表测试载荷320→0字节，在途读者仍准确选中73，释放读者后Weak几何及Weak帧失效。新会话的真实几何选中91，旧发布和旧退役不破坏新快照，最终退役释放新几何。线程屏障检查旧发布晚于退役、三个窗口的新快照保留、代次不倒退；既有检查保留窗口／项目隔离、12帧／每窗口3帧／256MiB保守预算及关闭后旧请求失效。命令：cargo test -p mengine-editor-tauri --release --lib native_scene_picking -- --nocapture，以及筛选native_viewport_lifetime。日志pick-generation-{tests,project-compatibility}.log在tmp/docs-artifacts/editor-performance-risk；早期离屏夹具的失败日志保留，不作通过证据。
+
+这是已失效选取快照的所有权修复。注册表预算按帧保守累计几何，释放的唯一几何字节取决于其他所有者；320字节是定向夹具的逻辑计数，不是实际地图内存收益，256MiB预算也不能解释全部约5.98GiB驻留。当前122、123为2/3，第三项后统一原生验证实际Scene选取、隐藏恢复／项目切换、Stop／再次Play及多窗口长驻留，122的来源校验和并发路径一并合并。最近原生验收仍为13ef6a4，长期内存、稳定60、LOD和完整War3保真继续待办。

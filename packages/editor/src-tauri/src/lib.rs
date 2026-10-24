@@ -4190,6 +4190,7 @@ where
         .unwrap_or_else(|| session.snapshot());
     *project = Some(session);
     state.play_runtime.stop();
+    native_scene_picking::retire_before(state.play_runtime.generation());
     mengine_editor_host::invalidate_resource_samples();
     Ok(snapshot)
 }
@@ -4383,6 +4384,7 @@ async fn pick_native_scene_frame(token: String, point: [f32; 2], excluded_entity
 async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state: State<'_, AppState>) -> Result<serde_json::Value, String> {
     let (project, build_scenes) = state.project.lock().as_ref().map(|session| (session.snapshot(), session.build_scenes())).ok_or_else(|| no_project().message)?;
     let generation = state.play_runtime.begin();
+    native_scene_picking::retire_before(generation);
     let project_root = project.project_root.clone();
     let bundled_sdk = app.path().resolve("build-sdk", BaseDirectory::Resource).ok().filter(|path| path.join("sdk.json").is_file());
     let source = {
@@ -4416,6 +4418,7 @@ async fn step_editor_play(session_id: u64, snapshot: Option<WorldSnapshot>, inpu
 #[tauri::command]
 fn stop_editor_play(session_id: u64, state: State<'_, AppState>) {
     state.play_runtime.stop_session(session_id);
+    native_scene_picking::retire_before(state.play_runtime.generation());
 }
 
 #[tauri::command]
