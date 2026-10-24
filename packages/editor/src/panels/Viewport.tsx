@@ -1447,6 +1447,7 @@ export function Viewport(props: {
 
     const isGame = p.tab === 'game';
     const nativeGameReady = isGame && nativeGameFrameRef.current != null;
+    const nativeGamePending = isGame && '__TAURI_INTERNALS__' in window && !nativeGameReady && !nativeGameRequestRef.current.reportedError;
     let profilerUiPrimitives = 0;
     let profilerUiBatches = 0;
     const clearViewport = () => {
@@ -2020,7 +2021,8 @@ export function Viewport(props: {
     }
 
     const projectEntityCenter = createProjection(cam, vp);
-    const worldEntries = displayedPresentation ? displayedPresentation.worldEntries(nativeGameReady) : p.entities.flatMap((e, hierarchyOrder) => {
+    // Native startup keeps UI responsive without loading a second copy of the 3D scene in the browser.
+    const worldEntries = nativeGamePending ? [] : displayedPresentation ? displayedPresentation.worldEntries(nativeGameReady) : p.entities.flatMap((e, hierarchyOrder) => {
       if ((nativeGameReady && !e.components.SpineSkeleton) || !isActive(e.entity)) return [];
       const t = resolvedTransform(worldTransforms, e.entity);
       return t ? [{ e, t, hierarchyOrder }] : [];

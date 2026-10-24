@@ -946,3 +946,13 @@ B001/spatial-picking-1792811986575.json通过、0error、正常退出：模型�
 真实DotA_v6.83d.w3x的缓存菜单与持续运行报告B001/arbitrary-map-1792813844205.json通过、0error、正常退出，14437实体，缓存进入2.652秒。新--profile-map在Game／Scene分别预热1秒后记录5秒无Agent轮询窗口：Game最近240个原生间隔均值17.091ms（58.51FPS）、P95 23.7ms、浏览器paint3.13ms；Scene143个间隔均值34.757ms（28.77FPS）、P95 57.5ms、paint17.71ms。Scene为距离150的全图视角，含选中Camera的预览，浏览器drawItems10723；图像确认实际地图和原始模型呈现。此结果不代表完整JASS／DotA玩法已接入。
 
 本批必要功能集成完成。继续待办：独立Game重开后首帧约17秒等待的原生／共享交付阶段定位，多窗口持续帧率，DotA全图Scene绘制与相机预览成本，长期内存与真实输入延迟。QA窗口均正常退出，WebView缓存EPERM保留；用户编辑器未关闭。日志／图片／JSON位于tmp/docs-artifacts/editor-performance-risk/及testing-batches/B001，没有提交原始产物。
+
+### 第八十六阶段／新批次任务1/3：原生Game首帧期间避免重复网格准备
+
+桌面Game尚未得到原生图像、且原生渲染尚未报告失败时，不再建立浏览器世界网格条目、计算模型包围盒和启动网格预览加载；Canvas UI与原生请求调度继续运行。已有完整图像仍使用原生路径；原生失败后恢复浏览器网格回退，浏览器平台与Scene保持现有流程。
+
+变更Viewport及nativeGamePending.test。8项首帧／包围盒定向检查、TypeScript通过：待原生图像时不读取网格来源，原生失败与浏览器Game仍绘制，Scene不受影响，完成帧保留Spine浏览器覆盖。日志tmp/docs-artifacts/editor-performance-risk/game-pending-tests.log、game-pending-types.log。
+
+独立Game重开停顿的阶段探针已运行，报告B001/map-session-1792814341838.json。该次采样准备等待7.531秒；部分原生重开请求提交／回读／交付在几十毫秒完成，首轮提交约0.9秒，尚不足以确认全部等待的根因。诊断插桩仅在隔离工作区使用，不进入提交。此项减少明确存在的双路网格工作；不据此宣称约17秒等待已修复。
+
+当前1/3。因已有独立窗口首帧停顿，按已知故障最小复现例外及时执行相同重开路径的原生对照，仅测首帧、独立窗口原生连续帧与相关Stop，不重跑已通过的地图全套／导入／选取QA。更广集成仍累计三项后合并。
