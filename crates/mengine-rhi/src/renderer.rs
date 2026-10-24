@@ -442,9 +442,7 @@ pub struct OffscreenReadbackProfile {
 pub struct FrameSubmissionProfile {
     pub world_mesh_draw_calls: usize,
     pub world_instanced_objects: usize,
-    #[cfg(test)]
     pub world_bundle_builds: usize,
-    #[cfg(test)]
     pub world_bundle_hits: usize,
     pub material_preparations: usize,
     pub material_binding_resolutions: usize,
@@ -1826,7 +1824,6 @@ impl Renderer {
             self.submission_profile.world_mesh_draw_calls += world_draws.len();
             self.submission_profile.world_instanced_objects += world_draws.iter().filter(|draw| draw.instances > 1).map(|draw| draw.instances as usize).sum::<usize>();
             let bundle = if use_world_bundles { self.world_bundles.prepare(&self.device, self.sample_count, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group, indexed_objects: self.indexed_objects, object_stride: self.object_stride }, &world_draws) } else { None };
-            #[cfg(test)]
             if let Some((_, reused)) = &bundle { if *reused { self.submission_profile.world_bundle_hits += 1; } else { self.submission_profile.world_bundle_builds += 1; } }
             self.sky.prepare(
                 &self.queue,

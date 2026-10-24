@@ -1744,3 +1744,8 @@ DotA Scene57.25→58.58FPS、Game59.99FPS；浏览器paint5.999→5.633ms，UI2.
 
 
 第一百一十一阶段补充：纯source-over按实际Float32投影顶点的保守范围合成；离屏／空几何省略无效复制，目标敏感模式、滤镜／阴影和不安全权重保持整幅语义。8项检查、TypeScript及实际GPU的172对完整RGBA通过；固定夹具每帧复制196608→73326像素，不是FPS或CPU测量。证据cropped-ui-projection-*及gpu-projection-crop-check，完整范围见testing-batches.md。作为投影补充不新增任务计数，独立队列仍0/3，原生收益待下一批。
+
+
+### 第一百一十三阶段：原生bundle构建与复用取证
+
+生产RHI／editor-host输出当前提交worldBundleBuilds／worldBundleHits，Profiler Overview及逐帧nativeTimings可读取；旧帧缺失显示—。18项前端检查、TypeScript和1项实际GPU集成检查通过，固定128对象的候选／构建／命中计数及完整RGBA一致。当前新批次1/3，详见testing-batches.md与world-bundle-profile-*。上一DotA单样本世界编码3.853ms缺少缓存命中证据，下一步先以最小实际地图诊断确定方向，常规多窗口和全批验收仍按三项合并。

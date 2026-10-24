@@ -4,6 +4,24 @@ use super::*;
 fn project_root() -> PathBuf { Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms") }
 
 #[test]
+fn viewport_profiles_export_bundle_admission_build_and_reuse_without_changing_pixels() {
+    use mengine_core::generated::MeshRenderer;
+    let mut world = World::new();
+    for index in 0..128 {
+        let entity = world.spawn_empty(); world.insert_component(entity, Transform { position: [(index % 16) as f32 * 0.2 - 1.5, (index / 16) as f32 * 0.2 - 0.7, 0.], scale: [0.1; 3], ..Default::default() });
+        world.insert_component(entity, MeshRenderer { mesh: "cube".into(), ..Default::default() });
+    }
+    let camera = EditorSceneCamera { eye: [0., 0., 5.], target: [0.; 3], orthographic: true, orthographic_size: 3., fov_y_degrees: 60. };
+    let mut viewport = pollster::block_on(EditorViewportRenderer::new(project_root(), 64, 64)).unwrap(); let mut previous = None;
+    for (builds, hits) in [(0, 0), (1, 0), (0, 1)] {
+        let frame = viewport.submit_scene(&world, 64, 64, camera).unwrap().finish().unwrap();
+        let counts = serde_json::to_value(&frame.profile.counts).unwrap();
+        assert_eq!(counts["worldBundleBuilds"], builds); assert_eq!(counts["worldBundleHits"], hits);
+        if let Some(pixels) = previous { assert_eq!(frame.rgba, pixels); } previous = Some(frame.rgba);
+    }
+}
+
+#[test]
 fn submitted_pose_picking_tracks_skin_parent_transform_and_preserves_displayed_geometry() {
     use mengine_core::generated::MeshRenderer;
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tmp/docs-artifacts/native-picking").join(uuid::Uuid::new_v4().to_string());

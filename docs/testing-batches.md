@@ -1395,3 +1395,12 @@ B001/map-session-1792846908698完成7434实体的原有六项：三窗口重开�
 第一百一十一阶段补充：source-over且无滤镜／阴影范围扩展时，Scene投影只合成实际Float32齐次顶点的保守像素范围，四边留1像素并裁到输出尺寸；要求权重为正且有限。完全离屏／空几何可省略无效合成。目标敏感的合成模式、滤镜／阴影及不安全权重保留整幅合成，画布清理、GPU缓存、当前裁剪与透明度语义保留。此项属于投影优化的补充，不计独立任务，下一批独立任务计数仍0/3。
 
 8项定向检查、TypeScript和实际AMD／ANGLE D3D11对照通过：27组场景、172对完整RGBA一致；GPU绘制23／23、纹理上传11／11未变。120个固定输入夹具每帧合成面积196608→73326像素；全部阶段总面积60948480→27492442，离屏／空几何使合成调用172→168。覆盖亚像素与越界位置、DPR／resize、相机、纹理更新、部分globalAlpha、滤镜／阴影回退、负权重、空几何、copy／source-in／destination-in／xor及context恢复。面积／调用数不是实际CPU或FPS收益。复现prepare-gpu-projection-crop-check.mjs及gpu-projection-crop-check的源码、HTML、结果和截图均在tmp/docs-artifacts/editor-performance-risk；页面及HTTP服务已关闭。日志cropped-ui-projection-{tests,typecheck}.log。原生DotA／多窗口集成和UI计时待下一批合并，不复跑未受影响的原生与地图全检。
+
+
+### 第一百一十三阶段／编辑器新批次任务1/3：原生绘制bundle构建与命中取证
+
+变更RHI的FrameSubmissionProfile、editor-host视口计数、editorProfiler.ts和Profiler面板。将原本仅cfg(test)的world_bundle_builds／world_bundle_hits计数用于生产构建，按当前提交累计实际构建和复用次数（含嵌套视图）；首次只登记候选而未构建仍为0／0。JSON以worldBundleBuilds／worldBundleHits提供，Profiler Overview显示当前值，受限的nativeTimings逐帧响应也携带它们。旧采样没有字段时保持缺失，界面显示—，不按0计。
+
+18项前端Profiler检查及TypeScript通过。新增实际editor-host／RHI GPU集成检查用128个固定对象依次验证候选0／0、构建1／0、命中0／1，三个阶段完整RGBA一致，serde输出字段与提交统计对应；不是只在RHI cfg(test)中运行计数。日志world-bundle-profile-{tests,typecheck,host-test}.log位于tmp/docs-artifacts/editor-performance-risk。
+
+当前独立批次1/3，常规原生回归仍待三项合并。上一已验收实际DotA的单个最近样本世界编码3.853ms，但此前生产输出缺少bundle命中证据，无法判定缓存是否有效。为确定下一项优化方向，需要一次带计数的实际DotA最小诊断（统一正确Release后仅缓存进入／profile，不执行项目重开、多窗口或全资产覆盖）；属于继续定位必需的即时检查，结果单独登记，不将整个待测批次提前标绿。Canvas局部合成补充随同一程序观察，尚不代表完整原生回归。
