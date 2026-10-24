@@ -8,6 +8,14 @@ impl Default for ViewportEffectClock {
 }
 
 impl ViewportEffectClock {
+    /// Absolute-time particle samplers consume the full simulation interval, including a late first frame.
+    pub(super) fn simulation_delta(&self, session: Option<u64>, elapsed: f64) -> Option<f32> {
+        let session = session?;
+        if !elapsed.is_finite() { return Some(0.0); }
+        let elapsed = elapsed.max(0.0);
+        Some(match self.play { Some((id, previous)) if id == session && elapsed >= previous => elapsed - previous, _ => elapsed } as f32)
+    }
+
     pub(super) fn sample(&mut self, session: Option<u64>, elapsed: f64, now: Instant) -> (f32, bool) {
         let wall_delta = now.saturating_duration_since(self.wall).as_secs_f32().min(0.25);
         self.wall = now;
@@ -27,6 +35,19 @@ impl ViewportEffectClock {
 mod tests {
     use super::*;
     use std::time::Duration;
+
+    #[test]
+    fn sampled_particles_consume_late_first_frame_and_full_step_once() {
+        let mut clock = ViewportEffectClock::default(); let now = clock.wall;
+        assert_eq!(clock.simulation_delta(None, 0.8), None);
+        assert_eq!(clock.simulation_delta(Some(7), 0.8), Some(0.8));
+        clock.sample(Some(7), 0.8, now);
+        assert_eq!(clock.simulation_delta(Some(7), 0.8), Some(0.0));
+        assert_eq!(clock.simulation_delta(Some(7), 1.6), Some(0.8));
+        assert_eq!(clock.simulation_delta(Some(8), 0.6), Some(0.6));
+        assert_eq!(clock.simulation_delta(Some(7), 0.2), Some(0.2));
+        assert_eq!(clock.simulation_delta(Some(7), f64::NAN), Some(0.0));
+    }
 
     #[test]
     fn play_consumes_each_simulation_interval_once_and_preview_keeps_wall_time() {

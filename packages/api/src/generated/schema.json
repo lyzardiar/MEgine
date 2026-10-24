@@ -2011,6 +2011,12 @@
       "max_particles": {
         "type": "number"
       },
+      "playback_generation": {
+        "type": "number"
+      },
+      "playback_time": {
+        "type": "number"
+      },
       "playing": {
         "type": "boolean"
       },
@@ -2059,6 +2065,8 @@
     },
     "required": [
       "definition",
+      "playback_time",
+      "playback_generation",
       "playing",
       "looping",
       "duration",

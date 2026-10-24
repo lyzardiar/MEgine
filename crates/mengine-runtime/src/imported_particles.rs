@@ -1,4 +1,6 @@
 //! Deterministic simulation for normalized `.mparticle` assets.
+// Author: MiYu.
+use std::collections::HashMap;
 use glam::{EulerRot, Mat4, Quat, Vec3};
 use mengine_assets::particle_definition::*;
 
@@ -41,6 +43,8 @@ struct SimParticle {
 #[derive(Clone)]
 pub struct ImportedParticleSimulation {
     particles: Vec<SimParticle>,
+    preview_births: HashMap<ParticleBirth, Mat4>,
+    cache_births: bool,
     tick: u64,
     random: u32,
     remainder: f32,
@@ -48,8 +52,10 @@ pub struct ImportedParticleSimulation {
     delay: f32,
     last_requested: f32,
 }
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+enum ParticleBirth { Rate(u32), Burst(u32, usize, u32, u32) }
 impl Default for ImportedParticleSimulation {
-    fn default() -> Self { Self { particles: Vec::new(), tick: 0, random: 1, remainder: 0.0, initialized: false, delay: 0.0, last_requested: 0.0 } }
+    fn default() -> Self { Self { particles: Vec::new(), preview_births: HashMap::new(), cache_births: false, tick: 0, random: 1, remainder: 0.0, initialized: false, delay: 0.0, last_requested: 0.0 } }
 }
 
 impl ImportedParticleSimulation {
@@ -77,12 +83,16 @@ impl ImportedParticleSimulation {
         while self.tick < target_tick {
             let start = self.tick as f32 * fixed_step;
             self.step(definition, start, (self.tick + 1) as f32 * fixed_step, parent);
+            self.preview_births.clear();
             self.tick += 1;
         }
         let start = self.tick as f32 * fixed_step;
         if time_seconds > start + 1e-7 {
             let mut preview = self.clone();
+            preview.cache_births = true;
             preview.step(definition, start, time_seconds, parent);
+            // Keep world-space births already displayed until their fixed step is committed.
+            self.preview_births = std::mem::take(&mut preview.preview_births);
             return preview.output(definition, parent, camera);
         }
         self.output(definition, parent, camera)
@@ -111,7 +121,8 @@ impl ImportedParticleSimulation {
             let count = (emission + 1e-5).floor().min(100_000.0) as u32;
             for index in 0..count {
                 let born = emission_start + ((index as f32 + 1.0 - self.remainder) / rate.max(f32::EPSILON)).clamp(0.0, span);
-                self.spawn(d, born, end - born, parent);
+                if !d.looping && self.delay + d.duration - born <= d.duration * (8.0 * f32::EPSILON) { continue; }
+                self.spawn(d, born, end - born, parent, ParticleBirth::Rate(index));
             }
             self.remainder = (emission - count as f32).max(0.0);
         }
@@ -125,7 +136,7 @@ impl ImportedParticleSimulation {
         for cycle in first_cycle..=last_cycle {
             if !d.looping && cycle != 0 { break; }
             let cycle_start = self.delay + cycle as f32 * d.duration;
-            for burst in &d.bursts {
+            for (burst_index, burst) in d.bursts.iter().enumerate() {
                 for repeat in 0..burst.cycles.clamp(1, 100_000) {
                     let offset = burst.time + repeat as f32 * burst.interval;
                     if offset >= d.duration { break; }
@@ -134,13 +145,13 @@ impl ImportedParticleSimulation {
                     if self.random() > burst.probability.clamp(0.0, 1.0) { continue; }
                     let random = self.random();
                     let count = burst.count.evaluate(offset / d.duration, random).round().clamp(0.0, 100_000.0) as u32;
-                    for _ in 0..count { self.spawn(d, born, end - born, parent); }
+                    for index in 0..count { self.spawn(d, born, end - born, parent, ParticleBirth::Burst(cycle, burst_index, repeat, index)); }
                 }
             }
         }
     }
 
-    fn spawn(&mut self, d: &ParticleDefinition, born: f32, elapsed: f32, parent: Mat4) {
+    fn spawn(&mut self, d: &ParticleDefinition, born: f32, elapsed: f32, parent: Mat4, birth: ParticleBirth) {
         if self.particles.len() >= d.max_particles.min(100_000) as usize { return; }
         let random: [f32; 8] = std::array::from_fn(|_| self.random());
         let phase = (born - self.delay).max(0.0).rem_euclid(d.duration.max(0.001)) / d.duration.max(0.001);
@@ -151,6 +162,7 @@ impl ImportedParticleSimulation {
         let rotation = Vec3::from_array(std::array::from_fn(|i| d.start_rotation[i].evaluate(phase, random[3])));
         let size = Vec3::from_array(std::array::from_fn(|i| d.start_size[i].evaluate(phase, random[2])));
         let world = d.simulation_space == "world";
+        let parent = if world && self.cache_births { *self.preview_births.entry(birth).or_insert(parent) } else if world { self.preview_births.get(&birth).copied().unwrap_or(parent) } else { parent };
         let direction_rotation = if d.shape.align_to_direction { Quat::from_rotation_arc(Vec3::Z, direction.normalize_or_zero()) } else { Quat::IDENTITY };
         let mut particle = SimParticle { position: if world { parent.transform_point3(position) } else { position }, velocity: if world { parent.transform_vector3(direction * speed) } else { direction * speed }, rotation, size, color: d.start_color.evaluate(phase, random[4]), age: 0.0, custom_age: 0.0, lifetime, random, birth_transform: parent, direction_rotation };
         integrate(&mut particle, d, elapsed);
@@ -322,6 +334,57 @@ mod tests {
         for (a, b) in a.iter().zip(b) { assert_eq!(a.position, b.position); }
     }
     #[test]
+    fn fractional_world_birth_survives_parent_move_commit_and_resets() {
+        let mut d = burst_definition();
+        d.simulation_space = "world".into();
+        d.start_speed = ParticleCurve::constant(0.0);
+        d.bursts[0].time = 0.01;
+        d.bursts[0].count = ParticleCurve::constant(1.0);
+        let moved = Mat4::from_translation(Vec3::X * 5.0);
+        let camera = ParticleCameraBasis::default();
+        for space in ["engine", "unity"] {
+            d.coordinate_space = space.into();
+            let mut sim = ImportedParticleSimulation::default();
+            let first = sim.sample(&d, 0.015, true, Mat4::IDENTITY, camera);
+            assert_eq!(first.len(), 1);
+            assert_eq!(sim.sample(&d, 0.015, true, moved, camera)[0].position, first[0].position);
+            assert_eq!(sim.sample(&d, 0.025, true, moved, camera)[0].position, first[0].position);
+            assert!(sim.preview_births.is_empty());
+            let replayed = sim.sample(&d, 0.015, true, moved, camera);
+            assert_eq!(replayed[0].position, first[0].position + Vec3::X * 5.0);
+            assert_eq!(sim.preview_births.len(), 1);
+            sim.reset();
+            assert!(sim.preview_births.is_empty());
+            assert_eq!(sim.sample(&d, 0.015, true, Mat4::IDENTITY, camera)[0].position, first[0].position);
+        }
+    }
+    #[test]
+    fn fractional_rate_and_burst_births_keep_distinct_world_transforms() {
+        let mut d = burst_definition();
+        d.simulation_space = "world".into();
+        d.start_speed = ParticleCurve::constant(0.0);
+        d.rate_over_time = ParticleCurve::constant(100.0);
+        d.bursts[0].time = 0.01;
+        d.bursts[0].count = ParticleCurve::constant(1.0);
+        let camera = ParticleCameraBasis::default();
+        let moved = Mat4::from_translation(Vec3::X * 5.0);
+        for space in ["engine", "unity"] {
+            d.coordinate_space = space.into();
+            let mut sim = ImportedParticleSimulation::default();
+            assert_eq!(sim.sample(&d, 0.015, true, Mat4::IDENTITY, camera).len(), 2);
+            for (seconds, count) in [(0.025, 3), (0.045, 5)] {
+                let particles = sim.sample(&d, seconds, true, moved, camera);
+                assert_eq!(particles.len(), count);
+                assert_eq!(particles.iter().filter(|p| p.position == Vec3::ZERO).count(), 2);
+                assert_eq!(particles.iter().filter(|p| p.position == Vec3::X * 5.0).count(), count - 2);
+            }
+            let partitioned = sim.sample(&d, 1.0, true, moved, camera);
+            let direct = ImportedParticleSimulation::default().sample(&d, 1.0, true, moved, camera);
+            assert_eq!(partitioned.len(), direct.len());
+            for (left, right) in partitioned.iter().zip(direct) { assert_eq!(left.color, right.color); assert_eq!(left.normalized_age, right.normalized_age); }
+        }
+    }
+    #[test]
     fn parent_matrix_and_world_birth_transform() {
         let mut d = burst_definition();
         d.renderer.mode = "mesh".into();
@@ -448,5 +511,18 @@ mod tests {
             assert!(sim.sample(&d, 1.0, true, Mat4::IDENTITY, ParticleCameraBasis::default()).is_empty());
             assert!(ImportedParticleSimulation::default().sample(&d, 1.0, true, Mat4::IDENTITY, ParticleCameraBasis::default()).is_empty());
         }
+    }
+    #[test]
+    fn nonlooping_continuous_emission_excludes_duration_endpoint() {
+        let mut d = burst_definition();
+        d.coordinate_space = "unity".into();
+        d.duration = 0.4;
+        d.start_lifetime = ParticleCurve::constant(0.8);
+        d.rate_over_time = ParticleCurve::constant(5.0);
+        d.bursts[0].count = ParticleCurve::constant(1.0);
+        let particles = ImportedParticleSimulation::default().sample(&d, 0.6, true, Mat4::IDENTITY, ParticleCameraBasis::default());
+        assert_eq!(particles.len(), 2);
+        assert!((particles[0].normalized_age - 0.75).abs() < 1e-6);
+        assert!((particles[1].normalized_age - 0.5).abs() < 1e-6);
     }
 }

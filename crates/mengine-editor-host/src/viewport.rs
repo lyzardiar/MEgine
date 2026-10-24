@@ -676,12 +676,14 @@ impl EditorViewportRenderer {
         let stage_started = Instant::now();
         let hierarchy = self.hierarchy_cache.build(world);
         finish_stage(&mut stages, "TransformHierarchy.build", stage_started);
+        let particle_delta = self.effect_clock.simulation_delta(self.play_session, world.time.elapsed);
         let (effect_delta, restart_effects) = self.effect_clock.sample(self.play_session, world.time.elapsed, Instant::now());
         if restart_effects {
             self.particles.restart();
             self.trails.restart();
             if let Some(effekseer) = self.effekseer.as_mut() { effekseer.restart(); }
         }
+        self.particles.imported.set_frame_delta(particle_delta);
         let stage_started = Instant::now();
         if let Some(effekseer) = self.effekseer.as_mut() {
             for failure in

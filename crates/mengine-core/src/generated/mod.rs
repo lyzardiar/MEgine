@@ -1590,6 +1590,8 @@ impl Component for ParticleEmitter2D {
 #[serde(default)]
 pub struct ParticleEmitter3D {
     pub definition: String,
+    pub playback_time: f32,
+    pub playback_generation: i32,
     pub playing: bool,
     pub looping: bool,
     pub duration: f32,
@@ -1621,6 +1623,8 @@ impl Default for ParticleEmitter3D {
     fn default() -> Self {
         Self {
             definition: "".into(),
+            playback_time: -1.0,
+            playback_generation: 0,
             playing: true,
             looping: true,
             duration: 5.0,

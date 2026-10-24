@@ -7,10 +7,11 @@ use mengine_rhi::{FrameCamera, ParticleGeometry, ParticleRenderData, ParticleVer
 use crate::{imported_particles::{ImportedParticleSimulation, ParticleCameraBasis}, textures::resolve_project_asset_path};
 
 #[derive(Default)]
-struct Emitter { simulation: ImportedParticleSimulation, seconds: f32, definition: String, revision: Option<SystemTime>, seek: Option<f32> }
+struct Emitter { simulation: ImportedParticleSimulation, seconds: f32, definition: String, revision: Option<SystemTime>, seek: Option<f32>, playback_generation: i32 }
 struct DefinitionAsset { modified: Option<SystemTime>, length: u64, definition: Arc<ParticleDefinition>, geometry: Arc<ParticleGeometry>, mesh_stamp: Option<(PathBuf,Option<SystemTime>,u64)>, material: RenderMaterial, parameters: Arc<[[f32;4]; PARTICLE_PARAMETER_COUNT]> }
 #[derive(Default)]
 pub struct ImportedParticleWorld {
+    frame_delta: Option<f32>,
     shader_seconds: f32, root: Option<PathBuf>, definitions: HashMap<String, DefinitionAsset>, emitters: HashMap<Entity, Emitter>, errors: HashMap<String, String>,
 }
 
@@ -43,12 +44,15 @@ fn prepare_material(material: &ParticleMaterial) -> (RenderMaterial, Arc<[[f32;4
 }
 
 impl ImportedParticleWorld {
+    /// Override the next render interval when a host advances simulation without drawing every step.
+    pub fn set_frame_delta(&mut self, delta: Option<f32>) { self.frame_delta = delta; }
     pub fn restart(&mut self) { self.emitters.clear(); }
     pub fn reset_entity(&mut self, entity: Entity) { self.emitters.remove(&entity); }
     pub fn seek_entity(&mut self, entity: Entity, seconds: f32) { let emitter = self.emitters.entry(entity).or_default(); emitter.simulation.reset(); emitter.seek = Some(seconds); }
     pub fn diagnostics(&self) -> &HashMap<String,String> { &self.errors }
 
     pub fn collect(&mut self, world: &World, hierarchy: &TransformHierarchy, camera: FrameCamera, delta: f32, root: Option<&Path>) -> Vec<RenderObject> {
+        let delta = self.frame_delta.take().unwrap_or(delta);
         if self.root.as_deref() != root { if self.root.is_some() {self.emitters.clear();} self.shader_seconds=0.; self.root = root.map(Path::to_path_buf); self.definitions.clear(); self.errors.clear(); }
         let Some(root) = self.root.clone() else { return Vec::new(); };
         if delta.is_finite() && delta>0. {self.shader_seconds+=delta;}
@@ -71,8 +75,10 @@ impl ImportedParticleWorld {
             }
             let asset = &self.definitions[key]; let definition = &asset.definition;
             let emitter = self.emitters.entry(entity).or_default();
-            if emitter.definition != key || emitter.revision != modified { emitter.simulation.reset(); emitter.seconds=0.; emitter.definition=key.into(); emitter.revision=modified; }
-            if let Some(seconds) = emitter.seek.take() { emitter.seconds=seconds; } else if delta.is_finite() && delta > 0. { emitter.seconds += delta.min(0.25); }
+            if emitter.definition != key || emitter.revision != modified || emitter.playback_generation != component.playback_generation { emitter.simulation.reset(); emitter.seconds=0.; emitter.definition=key.into(); emitter.revision=modified; emitter.playback_generation=component.playback_generation; }
+            if let Some(seconds) = emitter.seek.take() { emitter.seconds=seconds; }
+            else if component.playback_time.is_finite() && component.playback_time >= 0. { emitter.seconds=component.playback_time; }
+            else if delta.is_finite() && delta > 0. { emitter.seconds += delta; }
             live.insert(entity);
             let particles = emitter.simulation.sample(definition,emitter.seconds,true,if definition.coordinate_space=="unity" {transform.matrix*Mat4::from_scale(Vec3::new(1.,1.,-1.))} else {transform.matrix},basis);
             let mut features = ["_CustomData_ON","_MASK_ON","_NOISE_ON","_DISSOLVE_SOFT","_Sub_ON"].iter().enumerate().fold(0,|bits,(index,key)|bits | if definition.material.keywords.iter().any(|k|k==key) {1<<index} else {0});
@@ -143,13 +149,26 @@ mod tests {
     #[test] fn first_seek_stop_replay_and_inactive_parent() {
         use mengine_core::generated::Transform;
         let root=std::env::temp_dir().join(format!("mengine-particles-{}",uuid::Uuid::new_v4()));std::fs::create_dir_all(root.join("Assets")).unwrap();
-        let definition=ParticleDefinition {start_speed:mengine_assets::ParticleCurve::constant(0.),..Default::default()};
+        let definition=ParticleDefinition {simulation_space:"world".into(),start_speed:mengine_assets::ParticleCurve::constant(0.),..Default::default()};
         std::fs::write(root.join("Assets/test.mparticle"),serde_json::to_vec(&definition).unwrap()).unwrap();
         let mut world=World::new();let parent=world.spawn_empty();world.insert_component(parent,Transform::default());let entity=world.spawn_empty();world.insert_component(entity,Transform::default());world.set_parent(entity,Some(parent));world.insert_component(entity,ParticleEmitter3D {definition:"Assets/test.mparticle".into(),playing:true,..Default::default()});
         let mut particles=ImportedParticleWorld::default();particles.seek_entity(entity,0.5);
         let camera=FrameCamera {view:Mat4::IDENTITY,proj:Mat4::IDENTITY,position:Vec3::ZERO};
         let hierarchy=TransformHierarchy::build(&world);
         let first=particles.collect(&world,&hierarchy,camera,0.,Some(&root));assert_eq!(first.len(),5,"first-frame seek must survive root initialization");
+        particles.restart();particles.set_frame_delta(Some(0.8));assert_eq!(particles.collect(&world,&hierarchy,camera,0.,Some(&root)).len(),8,"late first render consumes simulation time");
+        assert_eq!(particles.collect(&world,&hierarchy,camera,0.,Some(&root)).len(),8,"frame override is consumed once");
+        world.get_component_mut::<ParticleEmitter3D>(entity).unwrap().playback_time=0.2;
+        assert_eq!(particles.collect(&world,&hierarchy,camera,0.5,Some(&root)).len(),2,"explicit replay time survives skipped display frames");
+        assert_eq!(particles.collect(&world,&hierarchy,camera,0.5,Some(&root)).len(),2,"paused preview time does not advance with rendering");
+        let before=particles.collect(&world,&hierarchy,camera,0.,Some(&root))[0].model.w_axis.x;
+        world.get_component_mut::<Transform>(parent).unwrap().position[0]=5.;let hierarchy=TransformHierarchy::build(&world);
+        let continued=particles.collect(&world,&hierarchy,camera,0.,Some(&root))[0].model.w_axis.x;
+        assert_eq!(continued,before,"world particles retain their original birth transform");
+        world.get_component_mut::<ParticleEmitter3D>(entity).unwrap().playback_generation+=1;
+        let replayed=particles.collect(&world,&hierarchy,camera,0.,Some(&root))[0].model.w_axis.x;
+        assert!((replayed-before-5.).abs()<1e-5,"replay generation resets births even when no zero-time frame was rendered");
+        world.get_component_mut::<ParticleEmitter3D>(entity).unwrap().playback_time=-1.;
         world.get_component_mut::<ParticleEmitter3D>(entity).unwrap().playing=false;assert!(particles.collect(&world,&hierarchy,camera,0.,Some(&root)).is_empty());
         world.get_component_mut::<ParticleEmitter3D>(entity).unwrap().playing=true;particles.seek_entity(entity,0.5);assert_eq!(particles.collect(&world,&hierarchy,camera,0.,Some(&root)).len(),5);
         world.set_editor_state(parent,0,false);let hierarchy=TransformHierarchy::build(&world);assert!(particles.collect(&world,&hierarchy,camera,0.,Some(&root)).is_empty());

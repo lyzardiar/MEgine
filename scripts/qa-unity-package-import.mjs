@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { configureNativeQa, closeNativeQa } from './frost-native-qa-runtime.mjs';
 
@@ -13,10 +13,12 @@ const packagePath = process.argv[3] && path.resolve(process.argv[3]);
 assert.ok(packagePath && fs.existsSync(packagePath), 'Usage: node scripts/qa-unity-package-import.mjs EDITOR_EXE SOURCE.unitypackage');
 const root = path.join(repo, 'tmp/docs-artifacts/unity-import', `native-${Date.now()}`);
 configureNativeQa(root);
+const resumeSample = process.argv[4] && path.resolve(process.argv[4]);
 const sample = path.join(root, 'sample');
 fs.mkdirSync(sample);
-fs.cpSync(path.join(repo, 'samples/unity-package-preview/Assets'), path.join(sample, 'Assets'), { recursive: true });
-fs.copyFileSync(path.join(repo, 'samples/unity-package-preview/project.json'), path.join(sample, 'project.json'));
+fs.cpSync(path.join(resumeSample ?? path.join(repo, 'samples/unity-package-preview'), 'Assets'), path.join(sample, 'Assets'), { recursive: true });
+fs.copyFileSync(path.join(resumeSample ?? path.join(repo, 'samples/unity-package-preview'), 'project.json'), path.join(sample, 'project.json'));
+if (resumeSample) fs.cpSync(path.join(repo, 'samples/unity-package-preview/Assets/Scripts'), path.join(sample, 'Assets/Scripts'), { recursive: true });
 const server = net.createServer();
 await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
 const debugPort = server.address().port;
@@ -29,7 +31,7 @@ Object.assign(process.env, {
 });
 fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR);
 const { bridgeQuery, bridgeExecute, closeBridgeConnection } = await import('../packages/agent/mcp/server.mjs');
-const report = { passed: false, root, executable, packagePath, checks: [], picker: 'The package path input supplies the explicitly selected source; analysis, conversion, commit and refresh use real native commands. OS file picker is not exercised.' };
+const report = { passed: false, root, executable, executableSha256: createHash('sha256').update(fs.readFileSync(executable)).digest('hex'), packagePath, checks: [], picker: 'The package path input supplies the explicitly selected source; analysis, conversion, commit and refresh use real native commands. OS file picker is not exercised.' };
 const save = () => fs.writeFileSync(path.join(root, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
 const query = (id, args = {}) => bridgeQuery(id, args, { timeoutMs: 60000 });
 const execute = async (id, args = {}) => { const result = await bridgeExecute(id, args, { requestId: randomUUID(), timeoutMs: 120000 }); assert.ok(result.ok, JSON.stringify(result.error)); return result; };
@@ -61,7 +63,8 @@ async function evaluate(expression) {
 const native = (command, args) => evaluate(`globalThis.__TAURI_INTERNALS__.invoke(${JSON.stringify(command)}, ${JSON.stringify(args)})`);
 const click = text => evaluate(`(() => { const scope = document.querySelector('.unity-package-dialog') ?? document; const b = [...scope.querySelectorAll('button')].find(b => b.textContent.trim() === ${JSON.stringify(text)}); if (!b || b.disabled) throw Error('Button unavailable: '+${JSON.stringify(text)}); b.click(); return true; })()`);
 const capture = async name => {
-  const shot = await waitUntil(async () => { try { return await query('view.screenshot', { target: 'game', maxSize: 1280 }); } catch (error) { if (/canvas is not available yet/.test(error.message)) return null; throw error; } }, 'Game viewport did not mount');
+  const shot = await waitUntil(async () => { try { return await query('view.screenshot', { target: 'game', maxSize: 1280, includeNativeProfile: true }); } catch (error) { if (/canvas is not available yet/.test(error.message)) return null; throw error; } }, 'Game viewport did not mount');
+  report.nativeProfiles ??= {}; report.nativeProfiles[name] = shot.nativeProfile;
   fs.writeFileSync(path.join(root, `${name}.png`), Buffer.from(shot.dataUrl.split(',')[1], 'base64'));
 };
 try {
@@ -74,6 +77,8 @@ try {
   const schema = await query('schema.component', { type: 'ParticleEmitter3D' });
   report.schemaHasDefinition = schema.fields.some(field => field.name === 'definition' && field.assetKinds?.includes('particle'));
   assert.ok(report.schemaHasDefinition, 'Particle definition must expose a typed asset reference');
+  let expectedParticleCount;
+  if (!resumeSample) {
   await click('Assets');
   await click('Import Unity Package...');
   await waitUntil(() => evaluate(`!!document.querySelector('.unity-package-dialog')`), 'Import dialog did not mount');
@@ -117,31 +122,51 @@ try {
   assert.equal(JSON.parse(fs.readFileSync(path.join(sample, definitionPath), 'utf8')).duration, changedDefinition.duration);
   report.checks.push('Particle definition has typed Inspector asset reference; Project double-click editor rejects invalid JSON and persists valid edits');
   await execute('scene.save');
+  expectedParticleCount = analysis.particle_count;
+  } else {
+    expectedParticleCount = (await query('scene.snapshot')).entities.filter(entity => entity.components.ParticleEmitter3D?.definition).length;
+    assert.ok(expectedParticleCount > 0);
+    report.resumeSample = resumeSample;
+  }
   await execute('view.set_game_resolution', { resolution: { width: 1280, height: 720 } });
   await execute('panel.focus', { kind: 'game' });
   await execute('playback.play', { paused: true });
-  await execute('playback.step', { steps: 12 });
+  await execute('playback.step', { steps: 80, deltaTime: 0.01 });
+  const firstPlayback = (await query('scene.snapshot')).entities.filter(entity => entity.components.ParticleEmitter3D?.definition);
+  assert.ok(firstPlayback.every(entity => Math.abs(entity.components.ParticleEmitter3D.playback_time - 0.8) < 0.02));
   await capture('playing');
+  assert.ok(report.nativeProfiles.playing.counts.renderObjects > 0, 'First capture must include live particles');
   const particles = snapshot => snapshot.entities.filter(entity => entity.components.ParticleEmitter3D?.definition);
   await execute('playback.input', { keys: ['KeyX'] });
   await execute('playback.step');
   assert.ok(particles(await query('scene.snapshot')).every(entity => !entity.components.ParticleEmitter3D.playing));
+  await capture('cleared');
+  assert.equal(report.nativeProfiles.cleared.counts.renderObjects, 0, 'Clear must remove every particle');
   await execute('playback.input', { keys: ['KeyR'] });
   await execute('playback.step', { steps: 4 });
   assert.ok(particles(await query('scene.snapshot')).every(entity => entity.components.ParticleEmitter3D.playing));
+  assert.ok(particles(await query('scene.snapshot')).every(entity => entity.components.ParticleEmitter3D.playback_generation > 0 && entity.components.ParticleEmitter3D.playback_time < 0.1));
   await execute('playback.input', { keys: ['ArrowRight', 'KeyB'] });
   await execute('playback.step', { steps: 4 });
   await execute('playback.input', { keys: [] });
+  await execute('playback.step', { steps: 80, deltaTime: 0.01 });
   await capture('replayed-camera');
+  assert.ok(report.nativeProfiles['replayed-camera'].counts.renderObjects > 0, 'Replay must restart visible particles');
   const replayed = await query('scene.snapshot');
   report.status = replayed.entities.find(entity => entity.name === 'Preview Status')?.components.Text.text;
   assert.match(report.status ?? '', /11 imported emitters|imported emitters/);
   report.checks.push('Particle preview scripts stop/replay emitters, update camera/background and HUD in the native player');
+  const elapsed = particles(replayed)[0].components.ParticleEmitter3D.playback_time;
+  await execute('playback.step', { steps: Math.ceil((3 - elapsed) / 0.01), deltaTime: 0.01 });
+  await capture('finished');
+  assert.equal(report.nativeProfiles.finished.counts.renderObjects, 0, 'Non-looping source effect must dissipate by three seconds');
+  report.checks.push('Native captures show first-frame playback, clear, replay and non-looping completion');
   await execute('playback.stop');
   await execute('project.close');
+  await waitUntil(async () => { try { const state = await query('project.state'); return !state.project && !state.ready && !state.editorReady && state.phase === 'welcome'; } catch { return null; } }, 'Closed project did not return to the project hub');
   await execute('project.open', { root: sample });
   await waitUntil(async () => (await query('project.state')).editorReady, 'Reopened project did not mount');
-  assert.equal(particles(await query('scene.snapshot')).length, analysis.particle_count);
+  assert.equal(particles(await query('scene.snapshot')).length, expectedParticleCount);
   report.checks.push('Saved imported prefab hierarchy survives project close/reopen');
   report.errors = await query('console.get_logs', { level: 'error', limit: 40 });
   assert.equal(report.errors.length, 0, JSON.stringify(report.errors));

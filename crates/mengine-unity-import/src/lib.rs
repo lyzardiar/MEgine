@@ -1,5 +1,6 @@
 //! Unity package analysis and transactional native asset import. Author: MiYu.
 mod particle;
+mod shader;
 
 use anyhow::{ensure, Context, Result};
 use flate2::read::GzDecoder;
@@ -17,7 +18,7 @@ use std::{
 const MAX_FILE: u64 = 256 * 1024 * 1024;
 const MAX_TOTAL: u64 = 1024 * 1024 * 1024;
 const MAX_ENTRIES: usize = 100_000;
-pub const IMPORTER_VERSION: &str = "1.3.0";
+pub const IMPORTER_VERSION: &str = "1.4.0";
 pub const CONVERTER_ARCHIVE_SHA256: &str =
     "9ff30dc5839155aead31ddadce99884773f8bf81678f3ac9a97ca24f8d58d64c";
 const CONVERTER_EXE_SHA256: &str =
@@ -318,13 +319,19 @@ fn package(package: &Path) -> Result<(AnalysisReport, Vec<Asset>)> {
             "material" => {
                 for d in documents(&a.bytes)? {
                     let used = d.class == 21 && used_materials.contains(&a.summary.guid);
-                    if used && d.value["m_Shader"]["guid"] != "f31c201e480f44f9a78911601ee5cab2" {
-                        report.warnings.push(format!(
-                            "{}: unknown shader uses an approximate native particle preview; shader source is retained",
-                            a.summary.path
-                        ));
-                    }
                     if used {
+                        let verification = shader::verify(
+                            &assets,
+                            d.value["m_Shader"]["guid"].as_str().unwrap_or(""),
+                        );
+                        if let Some(reason) = verification.reason {
+                            report.warnings.push(format!(
+                                "{}: {reason}; native particle preview is approximate",
+                                a.summary.path
+                            ));
+                        } else {
+                            report.warnings.push(shader::URP_BASELINE_NOTICE.into());
+                        }
                         particle::material_diagnostics(
                             &d.value,
                             &mut report.warnings,
@@ -336,7 +343,13 @@ fn package(package: &Path) -> Result<(AnalysisReport, Vec<Asset>)> {
                     } else {
                         &mut report.warnings
                     };
-                    missing_refs(&d.value, &guids, issues, &a.summary.path);
+                    // Missing shader source is an explicit approximate adapter;
+                    // missing textures and other material references still block.
+                    for (field, value) in d.value.as_object().into_iter().flatten() {
+                        if field != "m_Shader" {
+                            missing_refs(value, &guids, issues, &a.summary.path);
+                        }
+                    }
                 }
             }
             "mesh" => report.mesh_count += 1,
@@ -783,7 +796,11 @@ fn import_staged(
                     .iter()
                     .find(|d| d.class == 21)
                     .context("Material has no class 21 document")?;
-                let mut value = particle::material(&source.value, &paths);
+                let verification = shader::verify(
+                    assets,
+                    source.value["m_Shader"]["guid"].as_str().unwrap_or(""),
+                );
+                let mut value = particle::material(&source.value, &paths, &verification);
                 value["source_guid"] = json!(asset.summary.guid);
                 if let Some(textures) = value["textures"].as_object_mut() {
                     for texture in textures.values_mut() {
@@ -1146,6 +1163,37 @@ mod tests {
             ],
         );
         assert!(analyze(&p).unwrap_err().to_string().contains("Duplicate"));
+    }
+    #[test]
+    fn missing_shader_source_warns_and_serializes_approximate_adapter() {
+        let temp = tempfile::tempdir().unwrap();
+        let package = temp.path().join("p.unitypackage");
+        let material_guid = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        let material = b"%YAML 1.1\n--- !u!21 &2100000\nMaterial:\n  m_Shader: {fileID: 4800000, guid: f31c201e480f44f9a78911601ee5cab2}\n  m_SavedProperties: {}\n";
+        archive(&package, &[
+            (&format!("{GUID}/pathname"), b"Assets/test.prefab"),
+            (&format!("{GUID}/asset.meta"), format!("guid: {GUID}\n").as_bytes()),
+            (&format!("{GUID}/asset"), format!("%YAML 1.1\n--- !u!199 &1\nParticleSystemRenderer:\n  m_RenderMode: 0\n  m_VertexStreams: '00010304'\n  m_Materials: [{{fileID: 2100000, guid: {material_guid}}}]\n").as_bytes()),
+            (&format!("{material_guid}/pathname"), b"Assets/test.mat"),
+            (&format!("{material_guid}/asset.meta"), format!("guid: {material_guid}\n").as_bytes()),
+            (&format!("{material_guid}/asset"), material),
+        ]);
+        let report = analyze(&package).unwrap();
+        assert!(report.blockers.is_empty(), "{:?}", report.blockers);
+        assert!(report
+            .warnings
+            .iter()
+            .any(|warning| warning.contains("shader source is missing")
+                && warning.contains("approximate")));
+        let document = documents(material).unwrap();
+        let verification = shader::verify(&[], "f31c201e480f44f9a78911601ee5cab2");
+        let converted = particle::material(&document[0].value, &BTreeMap::new(), &verification);
+        assert_eq!(converted["shader"], "unsupported");
+        assert_eq!(converted["shader_verification"]["status"], "approximate");
+        assert_eq!(
+            converted["shader_verification"]["external_urp_baseline"],
+            "14.0.11"
+        );
     }
     #[test]
     fn native_sidecars_survive_registry_refresh_for_every_generated_kind() {

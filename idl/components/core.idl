@@ -447,6 +447,8 @@ component ParticleEmitter2D {
 /// Deterministic XYZ particle emitter rendered as camera-facing billboards.
 component ParticleEmitter3D {
   definition:       string = ""
+  playback_time:    float  = -1
+  playback_generation: int = 0
   playing:          bool   = true
   looping:          bool   = true
   duration:         float  = 5

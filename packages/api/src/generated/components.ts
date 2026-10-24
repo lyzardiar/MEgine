@@ -397,6 +397,8 @@ export interface ParticleEmitter2D {
 
 export interface ParticleEmitter3D {
   definition: string;
+  playbackTime: number;
+  playbackGeneration: number;
   playing: boolean;
   looping: boolean;
   duration: number;
@@ -1169,6 +1171,8 @@ export type SerializedComponentMap = {
   };
   ParticleEmitter3D: {
     definition: string;
+    playback_time: number;
+    playback_generation: number;
     playing: boolean;
     looping: boolean;
     duration: number;
