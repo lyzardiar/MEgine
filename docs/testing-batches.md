@@ -1371,3 +1371,22 @@ B001/map-session-1792845027720的7434实体三窗口重开／修订追赶、Paus
 新最小复现先失败：Stop和脚本worker屏障后发布历史为空，镜像仍有1个实体／保留源记录。修复后3项新增及26项既有运行时检查通过，4项原有性能基准按ignored保留未执行。新增覆盖三份空闲镜像和弱引用释放、绘制中Stop／不等待重启、旧Stop、锁释放竞争与较新镜像保护；已有阻塞绘制、独立视图、修订过期、脚本／物理和作者快照检查一并通过。日志play-mirror-release-{before,final-tests}.log位于tmp/docs-artifacts/editor-performance-risk。测试证明记录与镜像释放，不代表进程PrivateBytes／长期驻留问题已全部解决。
 
 110、111、112达3/3。接下来统一前端与带custom-protocol的Tauri Release，检查真实GPU Canvas投影与像素、相机／resize／资源刷新、实际DotA和多窗口重开／Stop／快速重启，比较UI分段及进程树内存。对照最近2573607的DotA Scene57.25FPS、UI2.518ms；多窗口Stop停靠6520.68MiB仍高于起点5138.23MiB。未执行的原生验收保持待测。
+
+
+### 第一百一十至一百一十二阶段合并验证
+
+49d04dd、92ae27c、90c5501已提交推送。27项前端定向检查与29项运行时检查通过，4项原有ignored基准未运行；前端生产构建3.13秒、cargo build -p mengine-editor-tauri --release --features custom-protocol构建1分14秒通过，仅已有world_from_snapshot未使用警告。固定程序tmp/docs-artifacts/editor-performance-risk/build-90c5501/mengine-editor-tauri.exe，SHA256为26dcbafddc124ec7a75dc03549aada2963abd0fdb6efbeb85ab552e5bbb9c616；收据记录源码和前端摘要。
+
+Canvas投影在实际AMD Radeon RX6800XT／ANGLE D3D11中对照49d04dd源码。152对完整RGBA画面一致，17组范围包含固定输入、相机与透视权重、目标变换、DPR和resize、裁剪三角形、UV与源范围、显式纹理更新／源尺寸、copy／source-in／destination-in／xor合成、无版本更新和context loss／恢复。固定120帧真实WebGL绘制120→1、纹理上传1→1；全部阶段绘制152→16、纹理上传10→10。通过实际GPU函数计数与像素读回验证，不是替身，也不是编辑器原生RHI调用数／FPS。tmp/docs-artifacts/editor-performance-risk/gpu-projection-check保存HTML、前后编译源码、完整结果、截图及摘要；prepare-gpu-projection-check.mjs生成源码。测试页和本地HTTP服务已关闭。
+
+B001/arbitrary-map-1792846818895以实际DotA匹配缓存加载14437实体，2.598秒；进度、三次地图选取、返回、Stop及项目关闭重开通过，0控制台错误断言在关闭重开前，正常退出。Game59.99／Scene58.58FPS，前次59.66／57.25；Scene最近240间隔均值17.070ms、P95 26.2ms、原生渲染均值16.266ms（前次16.345）。浏览器paint桶均值5.999→5.633ms、覆盖345次绘制的加权均值5.633ms；UI 2.518→2.141ms、世界准备2.293→2.315ms。其他段为请求0.447、世界合成0.649、操作0.056、最终合成0.025ms。仍5376总对象／5342可见／4675网格调用，没有新增LOD或削减几何。短窗口不足以证明稳定60或单项因果。
+
+DotA 3次动作及选取RPC为185.878／180.409／163.535ms，不是物理输入延迟。进程树PrivateBytes为6430.21／2125.21／3386.07MiB（关闭前／欢迎页／重开），完整长期驻留仍未证实。Scene、Game及暂停后Profiler CPU页图像与连续采样分开检查。
+
+B001/map-session-1792846908698完成7434实体的原有六项：三窗口重开与修订追赶、Pause／Step／快捷键、Stop恢复、作者编辑undo／redo及停靠。其五秒采样与这些检查发生在新增重启检查之前，均保留为有效局部证据。Scene57.77／Game55.66FPS，前次58.09／55.64；原生渲染8.557／10.127ms、浏览器paint桶3.549／1.958ms。Scene覆盖280次、世界准备2.034ms、UI 1.093→0.852ms；Game覆盖282次。逐桶六段合计、覆盖及加权断言通过。进程树PrivateBytes为5320.32／7200.48／7883.43／6196.53MiB（detach前／三窗口／重载／Stop停靠）；前次起点5138.23、结束6520.68MiB。本次结束仍高于起点，不能据此宣称Stop全进程驻留已解决。
+
+该报告整体保留失败状态：尾部新增重启用例漏了地图列表翻页，选择内置MOBA，随后map为null的Amazonia断言失败；诊断中的mode=playing、mapChoice=1及Ancients地图对应此选择。QA脚本补齐与初次选择相同的翻页操作，进入前断言Map name=Amazonia，并新增--restart-only定向入口。未重复已通过的六项和连续采样。相同固定程序的B001/map-session-1792847109619定向重测通过：初次加载地图并Stop、重新Play显示新菜单、再选Amazonia并获得新的Game图像、第二次Stop恢复完整作者内容且dirty=false。两次Stop后PrivateBytes 5319.93／5238.88MiB；这是独立短流程，不与多窗口结束值混作连续测量。重测0控制台错误、正常退出；多窗口首轮同样无错误级日志且正常退出。
+
+原始失败报告没有修改或重标通过。局部采样校验assert-ui-mirror-batch-completed-profiles.py明确保留overallReportPassed=false，只接受上述已完成六项与指定尾部夹具失败；整份DotA及重启重测仍各自要求passed=true。构建／QA日志ui-mirror-batch-*及ui-mirror-batch-runtime-summary.json位于tmp/docs-artifacts/editor-performance-risk，截图和JSON只在tmp/docs-artifacts/testing-batches。复现实际DotA沿用缓存／profile／pick／project-reopen／profiler-ui；多窗口为qa-frost-map-session --detached-profile-only --restart-after-stop，失败尾部可单独--restart-only。未受影响的空间／Spine检查复用上一批。所有所属QA编辑器正常退出，EPERM的WebView缓存保留，用户编辑器64664未重启。
+
+本批所需范围验证完成，下一批0/3。继续定位浏览器UI和原生16ms整帧瓶颈、Stop后的其他驻留资源；稳定60FPS、多窗口、LOD、姿态聚焦范围／alpha选取、完整JASS／DotA玩法及War3保真继续待办。

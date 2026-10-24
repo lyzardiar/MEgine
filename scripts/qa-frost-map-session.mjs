@@ -34,6 +34,9 @@ const unitSelectionOnly=process.argv.includes('--unit-selection-only');
 const detachedAuthoringOnly=process.argv.includes('--detached-authoring-only');
 const detachedProfileOnly=process.argv.includes('--detached-profile-only');
 const detachedOnly=process.argv.includes('--detached-only')||detachedAuthoringOnly||detachedProfileOnly;
+const restartAfterStop=process.argv.includes('--restart-after-stop');
+assert.ok(!restartAfterStop||detachedOnly,'--restart-after-stop requires a detached test');
+const restartOnly=process.argv.includes('--restart-only');
 const hierarchyInteractions=process.argv.includes('--hierarchy-interactions');
 const label='map-session-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
@@ -53,6 +56,16 @@ async function waitMap(map){let s=await snapshot();for(let i=0;status(s).map!==m
 async function key(key){await input({keys:[key]});await input({});await step();}
 async function click(name){const s=await snapshot(),pointer=clientWorldFixture(s).canvasPoint(name,[1280,720],false);await input({pointer,buttons:[0]});await input({pointer});await step();}
 async function capture(name){const deadline=Date.now()+30000;for(;;)try{const shot=await query('view.screenshot',{target:'game',maxSize:1280,includeNativeProfile:true});if(name)fs.writeFileSync(path.join(out,label+'-'+name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));report.frames.push(shot.nativeProfile);return shot.dataUrl;}catch(e){if(Date.now()>=deadline||!/NOT_READY|canvas is not available yet/.test(e.message))throw e;await sleep(500);}}
+function sampleProcessMemory(stage,field='detachedMemory'){const owner=JSON.parse(fs.readFileSync(process.env.MENGINE_AGENT_BRIDGE_FILE,'utf8'));assert.equal(owner.background,true);assert.ok(Number.isSafeInteger(owner.pid));const sample=JSON.parse(execFileSync('pwsh.exe',['-NoProfile','-File',path.join(repo,'scripts/sample-native-qa-memory.ps1'),'-EditorPid',String(owner.pid),'-ExpectedExecutable',process.env.MENGINE_EDITOR_EXECUTABLE],{encoding:'utf8',windowsHide:true,timeout:20000}));(report[field]??=[]).push({stage,...sample});}
+async function checkRestartAfterStop(authored,entityCount,sampleMemory){
+  await execute('panel.focus',{kind:'game'});await execute('playback.play',{paused:true});await step(2);
+  assert.equal(clientWorldFixture(await snapshot()).visible('solo box'),true,'Restart opens a fresh main menu');
+  await click('solo box');await click('custom box');await click('map4 box');await click('map1 box');
+  assert.equal((await snapshot()).entities.find(e=>e.name==='Map name').components.Text.text,'Amazonia');await click('mapStart box');
+  const restarted=await waitMap('amazonia');assert.equal(restarted.entities.length,entityCount);await capture('restarted-map');
+  await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);assert.equal((await query('editor.state')).dirty,false);
+  await sleep(1000);sampleMemory('after-second-stop');report.checks.push('Fresh Play after Stop enters Amazonia again, presents Game pixels, and a second Stop restores authored content');
+}
 async function checkViewportTransitions(){
   const before=await snapshot(),camera=before.entities.find(e=>e.name==='Camera'&&e.components.Camera3D),root=before.entities.find(e=>e.name.startsWith('Doodad-')&&e.components.Transform);assert.ok(camera&&root);
   await execute('panel.focus',{kind:'scene'});await execute('selection.set',{ids:[camera.entity]});
@@ -179,7 +192,7 @@ async function checkHierarchyPresentation(s){
   report.checks.push('Native hierarchy collapse/expand, hidden descendant reveal, scrolling and left/right keys for runtime root '+root.entity);
 }
 async function checkDetachedRuntime(authored){
-  const sampleMemory=stage=>{const owner=JSON.parse(fs.readFileSync(process.env.MENGINE_AGENT_BRIDGE_FILE,'utf8'));assert.equal(owner.background,true);assert.ok(Number.isSafeInteger(owner.pid));const sample=JSON.parse(execFileSync('pwsh.exe',['-NoProfile','-File',path.join(repo,'scripts/sample-native-qa-memory.ps1'),'-EditorPid',String(owner.pid),'-ExpectedExecutable',process.env.MENGINE_EDITOR_EXECUTABLE],{encoding:'utf8',windowsHide:true,timeout:20000}));(report.detachedMemory??=[]).push({stage,...sample});};
+  const sampleMemory=stage=>sampleProcessMemory(stage);
   sampleMemory('before-detach');
   const before=await snapshot(),target=before.entities.find(e=>e.name.startsWith('Doodad-')&&!e.components.MeshRenderer&&!e.components.SampledEffect&&e.components.Transform&&Math.abs(e.components.Transform.position[1]*10-Math.round(e.components.Transform.position[1]*10))<1e-6);assert.ok(target);
   const original=target.components.Transform.position[1],edited=original+3.2;
@@ -234,6 +247,7 @@ async function checkDetachedRuntime(authored){
   report.windows=await query('window.list');for(const kind of ['game','scene','inspector'])await execute('panel.dock',{kind});
   sampleMemory('after-stop-and-dock');
   report.checks.push('Detached authoring edit/restore after Stop; auxiliary panels dock normally');
+  if(restartAfterStop)await checkRestartAfterStop(authored,before.entities.length,sampleMemory);
 }
 try{
   for(let i=0;;i++)try{await query('project.state');break;}catch(e){if(i===20||!/BridgeConnectionError|request timed out|not ready/.test(e.message))throw e;await sleep(500);}
@@ -242,7 +256,10 @@ try{
   let s=await snapshot();assert.equal(telemetry(s).mode,'custom');assert.equal(s.entities.find(e=>e.name==='Map name').components.Text.text,'Amazonia');assert.equal(s.entities.find(e=>e.name==='Map preview backing').components.Image.sprite,'Assets/Maps/amazonia/Textures/MapPreview.png');for(const name of ['map2 box','map3 box','faction box','heroChoice box','Hero preview','Map tile 0'])assert.equal(clientWorldFixture(s).visible(name),false,name);await capture('selection');
   await click('mapStart box');s=await waitMap('amazonia');assert.deepEqual(status(s).pathing.size,[384,384]);assert.equal(status(s).pathing.revision,0);assert.ok(s.entities.some(e=>e.name.startsWith('Doodad-'))&&s.entities.some(e=>e.name.startsWith('Unit-')));report.map=status(s);report.entities=s.entities.length;
   if(editorFeedback)await checkHierarchyFocus(s);
-  if(detachedOnly){
+  if(restartOnly){
+    await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);sampleProcessMemory('after-first-stop','restartMemory');
+    await checkRestartAfterStop(authored,s.entities.length,stage=>sampleProcessMemory(stage,'restartMemory'));
+  }else if(detachedOnly){
     await checkDetachedRuntime(authored);
   }else if(unitSelectionOnly){
     assert.deepEqual(status(s).unitBindings,{status:'ready',count:96,selected:null});
