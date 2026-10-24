@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {composeGameModules,gameScriptPrefix,readMapPackages} from './frost-script-bundle.mjs';
 import {attachUnitInitialization} from './frost-unit-initialization-package.mjs';
 import {prepareSharedMapAssets,rewriteGlb} from './frost-shared-map-assets.mjs';
+import {groupMapScene} from './frost-map-hierarchy.mjs';
 
 const gameSource=fileURLToPath(new URL('../samples/frostbound-realms/',import.meta.url));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -17,6 +18,7 @@ const walk=folder=>fs.readdirSync(folder,{withFileTypes:true}).flatMap(e=>{const
 const json=value=>JSON.stringify(value,null,2)+'\n';
 function write(file,bytes){fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,bytes);}
 function addControls(scene,project,title){
+  groupMapScene(scene);
   const base=read(path.join(project,'Assets/Scenes/Main.mscene')).world.entities,templates=new Map(base.map(e=>[e.name,e]));
   let next=Math.max(...scene.world.entities.map(e=>e.entity))+1;
   const clone=name=>structuredClone(templates.get(name)?.components||{}),entities=scene.world.entities;

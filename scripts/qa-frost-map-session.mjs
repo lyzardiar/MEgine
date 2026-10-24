@@ -80,7 +80,7 @@ async function checkViewportTransitions(){
   report.checks.push('Paused Amazonia Scene/Game transitions, selected camera preview, orbit changes, exact Game resize and unchanged entities');
 }
 async function checkRuntimeEdits(){
-  const before=await snapshot(),target=before.entities.find(e=>e.name.startsWith('Doodad-')&&e.parent==null&&e.components.Transform&&Math.abs(e.components.Transform.position[1]*10-Math.round(e.components.Transform.position[1]*10))<1e-6);assert.ok(target,'Static authored doodad root with an exact Inspector step value');
+  const before=await snapshot(),target=before.entities.find(e=>e.name.startsWith('Doodad-')&&!e.components.MeshRenderer&&!e.components.SampledEffect&&e.components.Transform&&Math.abs(e.components.Transform.position[1]*10-Math.round(e.components.Transform.position[1]*10))<1e-6);assert.ok(target,'Static authored doodad root with an exact Inspector step value');
   const original=target.components.Transform.position[1],edited=original+3.2;
   await execute('selection.set',{ids:[target.entity]});await execute('panel.focus',{kind:'inspector'});
   async function setHeight(value){
@@ -180,7 +180,7 @@ async function checkHierarchyPresentation(s){
 async function checkDetachedRuntime(authored){
   const sampleMemory=stage=>{const owner=JSON.parse(fs.readFileSync(process.env.MENGINE_AGENT_BRIDGE_FILE,'utf8'));assert.equal(owner.background,true);assert.ok(Number.isSafeInteger(owner.pid));const sample=JSON.parse(execFileSync('pwsh.exe',['-NoProfile','-File',path.join(repo,'scripts/sample-native-qa-memory.ps1'),'-EditorPid',String(owner.pid),'-ExpectedExecutable',process.env.MENGINE_EDITOR_EXECUTABLE],{encoding:'utf8',windowsHide:true,timeout:20000}));(report.detachedMemory??=[]).push({stage,...sample});};
   sampleMemory('before-detach');
-  const before=await snapshot(),target=before.entities.find(e=>e.name.startsWith('Doodad-')&&e.parent==null&&e.components.Transform&&Math.abs(e.components.Transform.position[1]*10-Math.round(e.components.Transform.position[1]*10))<1e-6);assert.ok(target);
+  const before=await snapshot(),target=before.entities.find(e=>e.name.startsWith('Doodad-')&&!e.components.MeshRenderer&&!e.components.SampledEffect&&e.components.Transform&&Math.abs(e.components.Transform.position[1]*10-Math.round(e.components.Transform.position[1]*10))<1e-6);assert.ok(target);
   const original=target.components.Transform.position[1],edited=original+3.2;
   await execute('selection.set',{ids:[target.entity]});await execute('view.set_camera',{pivot:target.components.Transform.position,yaw:35,pitch:35,distance:10});
   for(const kind of detachedAuthoringOnly?['inspector']:['inspector','scene','game'])await execute('panel.detach',{kind});

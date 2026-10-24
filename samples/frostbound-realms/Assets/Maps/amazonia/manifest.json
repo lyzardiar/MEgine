@@ -4609,8 +4609,8 @@
     {
       "path": "Assets/Maps/amazonia/Scenes/Main.mscene",
       "sourceSha256": "9b78e84725d0634395789e58947b86fb2a58fa5c54d21ab7ba75e62244d5283c",
-      "sha256": "40744836f96f5c160a48983ddc31514fe325f4cb872ac16ccd2e71b75abe2ac7",
-      "bytes": 5430563
+      "sha256": "4c64656fc92b4e648264449a46f527e267c70c87e8b41eacc31e07357cacf6e4",
+      "bytes": 5503290
     },
     {
       "path": "Assets/Maps/amazonia/Scripts/Main.js",
@@ -5327,46 +5327,46 @@
       "version": 2,
       "projectionAspect": 1.7777777777777777,
       "bounds": [
-        -36.0,
-        36.0,
-        -36.0,
-        40.0
+        -36,
+        36,
+        -36,
+        40
       ],
       "target": [
-        26.0,
-        -24.0
+        26,
+        -24
       ],
-      "yaw": 0.0,
+      "yaw": 0,
       "presets": [
         {
           "pitch": -0.9773843811168246,
           "distance": 12.890625,
-          "fov": 70.0
+          "fov": 70
         },
         {
           "pitch": -0.8552113334772214,
           "distance": 12.5,
-          "fov": 70.0
+          "fov": 70
         },
         {
           "pitch": -0.7330382858376184,
           "distance": 11.71875,
-          "fov": 70.0
+          "fov": 70
         },
         {
           "pitch": -0.6108652381980153,
           "distance": 10.9375,
-          "fov": 70.0
+          "fov": 70
         },
         {
           "pitch": -0.4886921905584123,
           "distance": 9.9609375,
-          "fov": 70.0
+          "fov": 70
         },
         {
           "pitch": -0.3665191429188092,
           "distance": 8.59375,
-          "fov": 70.0
+          "fov": 70
         }
       ],
       "near": 0.78125,
@@ -5423,5 +5423,11 @@
     "data": "Assets/Maps/amazonia/Data/OriginalUnitBindings.json",
     "generator": "scripts/warcraft_unit_bindings.py",
     "generatorSha256": "ccd487b0d85321004e44c1f30166ed33d80b4328954037476d5148bb081b6605"
+  },
+  "hierarchy": {
+    "version": 1,
+    "cellSize": 32,
+    "generator": "scripts/frost-map-hierarchy.mjs",
+    "generatorSha256": "310cdd7a35667f28524a34cdde17ec25918b33f5be34ac2ba8a12196b4d25848"
   }
 }

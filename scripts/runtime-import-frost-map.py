@@ -90,6 +90,7 @@ def import_environment(args):
     package_inputs += [ROOT / 'asset-library/warcraft-iii' / pack / 'asset-sources.json' for pack in ['game-ready', 'remaining-ready']]
     package_inputs += [ROOT / 'samples/frostbound-realms' / name for name in ['game/warcraft-pathing.js', 'game/warcraft-jass.js', 'game/warcraft-unit-initialization.js', 'game/warcraft-map-units.js', 'classic-cliff-sources.json', 'Assets/WarcraftIII/classic-cliff-catalog.json', 'Assets/WarcraftIII/Models/Terrain/ClassicCliffs.mpatch']]
     package_inputs.append(args.project.resolve() / 'Assets/Scenes/Main.mscene')
+    package_inputs.append(ROOT / 'scripts/frost-map-hierarchy.mjs')
     archives = []
     for name in ARCHIVES:
         file = args.game / name
