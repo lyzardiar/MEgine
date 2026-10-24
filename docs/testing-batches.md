@@ -1685,3 +1685,11 @@ cargo test -p mengine-rhi --release --lib readback -- --nocapture --test-threads
 真实GPU的benchmark_reusable_cpu_readback通过。每种RGBA／BGRA格式按920×518、1280×720、1920×1080三种尺寸比较原有新分配与生产复用API，同进程交替顺序、2组预热／9组计量，每组20帧，每帧完整像素核对。RGBA行转换中位数依次0.311705→0.096895、0.583455→0.172325、1.326065→0.389265ms；含GPU映射等待的finish依次0.548515→0.324630、0.945500→0.518805、2.000375→1.028000ms。BGRA行转换依次0.494625→0.198610、1.006660→0.387690、2.403340→0.977935ms，finish依次0.728025→0.425905、1.378035→0.731380、3.109990→1.646500ms。这里使用已写入纹理的实际GPU映射，不含场景绘制、模拟、IPC和实际地图FPS；不能将其换算成帧率改善。原始cpu-readback-benchmark.log／json保存全部样本。复现命令cargo test -p mengine-rhi --release --lib benchmark_reusable_cpu_readback -- --ignored --nocapture --test-threads=1。早期rgba-reuse-prototype.log只用驻留CPU数据，不作为GPU数据替代。
 
 当前新批次1/3，最近完整原生程序仍ee33d5f。第三项后统一验证实际DotA／Amazonia、多窗口两请求与相机预览、截图／过期请求、隐藏恢复／尺寸变化，以及Stop／工程切换后的版本2驻留。保留最多16MiB全局CPU容量的代价须与实际驻留一起检查；用户现有编辑器保持运行，实际多窗口满帧、长期驻留、LOD与完整War3保真继续待办。
+
+### 第一百三十二阶段／编辑器新批次任务2/3：Scene透明度分块检查
+
+native_viewport_transport.rs每次读取16字节，用小端u128掩码同时检查4份alpha，末尾1–3像素沿用逐像素检查。空图像、不完整RGBA、超过16MiB均不判为不透明；任意alpha不是255立即返回。检查仍基于当前帧，无跨帧缓存、unsafe或新依赖。调用链确认仅普通Scene raw帧启用，Game及Camera Preview禁用，PNG路径不执行；因此本项收益仅适用于Scene透明度判定，不扩大到Game。
+
+cargo test -p mengine-editor-tauri --release --features custom-protocol --lib native_viewport_transport::tests -- --nocapture --test-threads=1为10通过、0失败、1手动基准忽略。覆盖16种切片偏移、1–70像素的所有block／tail位置、0–255全部alpha、RGB独立性、16MiB边界及原共享／IPC字节与消费确认。生产函数benchmark_opacity_blocks另行通过：同进程交替顺序，2组预热、9组计量，常规每组100次、首像素透明每组100000次，完整记录判定一致。全不透明920×518／1280×720／1920×1080／2048×2048的CPU中位数分别0.151429→0.039754、0.273657→0.083024、0.643312→0.215600、2.229768→0.801930ms。首像素透明约0.8→1.1ns，保留即时退出；末尾／中间透明另有原始样本。这是驻留CPU数据扫描，不含GPU、IPC或实际编辑器FPS，不能据此宣称满帧。
+
+证据opacity-transport-tests.log、opacity-benchmark.log／json及仅供探索的opacity-prototype.*均在tmp/docs-artifacts/editor-performance-risk。手动命令cargo test -p mengine-editor-tauri --release --features custom-protocol --lib benchmark_opacity_blocks -- --ignored --nocapture --test-threads=1。131、132为2/3，第三项后合并构建原生验证Scene透明切换／alpha选取／尺寸变化、Game及相机预览、实际地图与多窗口及Stop驻留；未执行本项完整原生QA，最近原生程序仍ee33d5f。

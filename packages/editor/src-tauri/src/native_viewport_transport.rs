@@ -1,4 +1,4 @@
-// Author: MiYu. Recycle independent RGBA capacity after the final transport payload owner releases it.
+// Author: MiYu. Bound native pixel transport, opacity checks and reusable CPU capacity.
 use std::sync::Arc;
 
 /// MiYu: bounded opt-in native timings correlated with the browser's shared-buffer request.
@@ -36,7 +36,13 @@ fn epoch_ms() -> f64 { std::time::SystemTime::now().duration_since(std::time::UN
 
 const MAX_OPACITY_SCAN_BYTES: usize = 16 * 1024 * 1024;
 /// MiYu: bound alpha scanning; only a proven complete opaque image can replace the browser underlay.
-pub fn opaque_rgba_pixels(rgba: &[u8]) -> bool { !rgba.is_empty() && rgba.len() <= MAX_OPACITY_SCAN_BYTES && rgba.len().is_multiple_of(4) && rgba.chunks_exact(4).all(|pixel| pixel[3] == 255) }
+pub fn opaque_rgba_pixels(rgba: &[u8]) -> bool {
+    if rgba.is_empty() || rgba.len() > MAX_OPACITY_SCAN_BYTES || !rgba.len().is_multiple_of(4) { return false; }
+    const ALPHA: u128 = 0xff000000ff000000ff000000ff000000;
+    let mut chunks = rgba.chunks_exact(16);
+    for chunk in chunks.by_ref() { if u128::from_le_bytes(chunk.try_into().unwrap()) & ALPHA != ALPHA { return false; } }
+    chunks.remainder().chunks_exact(4).all(|pixel| pixel[3] == 255)
+}
 
 /// MiYu: retain the renderer's RGBA allocation until writing the final transport buffer.
 pub struct FramePayload { header: [u8; 16], metadata: Vec<u8>, rgba: Vec<u8> }
@@ -423,6 +429,48 @@ mod tests {
         for index in [3, 7, 11] {
             for alpha in [0, 1, 127, 254] { let mut transparent = bytes.clone(); transparent[index] = alpha; assert!(!opaque_rgba_pixels(&transparent)); }
         }
+    }
+
+    #[test]
+    fn opacity_checks_all_block_and_tail_alphas_for_unaligned_slices() {
+        for offset in 0..16 { for pixels in 1..=70 {
+            let mut storage = vec![0; offset + pixels * 4];
+            let bytes = &mut storage[offset..];
+            for (index, pixel) in bytes.chunks_exact_mut(4).enumerate() { pixel.copy_from_slice(&[(index % 251) as u8, 0, 255, 255]); }
+            assert!(opaque_rgba_pixels(bytes), "{offset} {pixels}");
+            for index in (3..bytes.len()).step_by(4) { for alpha in [0, 1, 127, 254] {
+                bytes[index] = alpha; assert!(!opaque_rgba_pixels(bytes), "{offset} {pixels} {index} {alpha}"); bytes[index] = 255;
+            }}
+        }}
+        let mut bytes = vec![255; 32];
+        for index in (3..bytes.len()).step_by(4) { for alpha in 0..=255 { bytes[index] = alpha; assert_eq!(opaque_rgba_pixels(&bytes), alpha == 255); bytes[index] = 255; } }
+        let mut bytes = vec![255; MAX_OPACITY_SCAN_BYTES + 4];
+        assert!(opaque_rgba_pixels(&bytes[..MAX_OPACITY_SCAN_BYTES]));
+        bytes[MAX_OPACITY_SCAN_BYTES - 1] = 254; assert!(!opaque_rgba_pixels(&bytes[..MAX_OPACITY_SCAN_BYTES]));
+        assert!(!opaque_rgba_pixels(&bytes));
+        for len in [MAX_OPACITY_SCAN_BYTES - 3, MAX_OPACITY_SCAN_BYTES - 2, MAX_OPACITY_SCAN_BYTES - 1] { assert!(!opaque_rgba_pixels(&bytes[..len])); }
+    }
+
+    #[test]
+    #[ignore = "manual CPU comparison of production alpha scan against scalar transport baseline"]
+    fn benchmark_opacity_blocks() {
+        #[inline(never)]
+        fn scalar(rgba: &[u8]) -> bool { !rgba.is_empty() && rgba.len() <= MAX_OPACITY_SCAN_BYTES && rgba.len().is_multiple_of(4) && rgba.chunks_exact(4).all(|pixel| pixel[3] == 255) }
+        for (width, height) in [(920, 518), (1280, 720), (1920, 1080), (2048, 2048)] { for case in ["opaque", "last", "middle", "first"] {
+            let mut rgba = vec![0; width * height * 4];
+            for (index, pixel) in rgba.chunks_exact_mut(4).enumerate() { pixel.copy_from_slice(&[(index % 251) as u8, 17, 29, 255]); }
+            let len = rgba.len();
+            match case { "last" => rgba[len - 1] = 254, "middle" => rgba[(len / 8) * 4 + 3] = 0, "first" => rgba[3] = 127, _ => {} }
+            let expected = scalar(&rgba); assert_eq!(opaque_rgba_pixels(&rgba), expected);
+            let mut samples = [Vec::new(), Vec::new()]; let count = if case == "first" { 100_000 } else { 100 };
+            for round in 0..11 { for mode in [round % 2, 1 - round % 2] {
+                let scan: fn(&[u8]) -> bool = if mode == 0 { scalar } else { opaque_rgba_pixels }; let started = std::time::Instant::now();
+                for _ in 0..count { assert_eq!(std::hint::black_box(std::hint::black_box(scan)(std::hint::black_box(&rgba))), expected); }
+                if round >= 2 { samples[mode].push(started.elapsed().as_secs_f64() * 1000. / count as f64); }
+            }}
+            let medians = samples.each_ref().map(|values| { let mut values = values.clone(); values.sort_by(f64::total_cmp); values[values.len() / 2] });
+            println!("OPACITY_BENCH {}", serde_json::json!({"width":width,"height":height,"case":case,"scalarMs":medians[0],"blockMs":medians[1],"samples":samples}));
+        }}
     }
 
     #[test]
