@@ -10,6 +10,7 @@ assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE')
 const label='spatial-picking-'+Date.now(),root=path.join(out,'native-qa',label),project=path.join(root,'sample');
 const opacityCases=process.argv.includes('--opacity-cases');
 const spineOnly=process.argv.includes('--spine-only');
+const poseCases=process.argv.includes('--pose-cases');
 configureNativeQa(root);
 for(const folder of ['Assets/Scenes','Assets/Scripts','Assets/Models'])fs.mkdirSync(path.join(project,folder),{recursive:true});
 const write=(name,value)=>fs.writeFileSync(path.join(project,name),JSON.stringify(value));
@@ -18,12 +19,21 @@ fs.writeFileSync(path.join(project,'Assets/Scripts/Main.js'),'function onTick() 
 const transform=position=>({position,rotation:[0,0,0,1],scale:[1,1,1]});
 const spine={skeleton:'Assets/Spine/spineboy/spineboy-pro.json',atlas:'Assets/Spine/spineboy/spineboy-pma.atlas',animation:'run',skin:'default',loop_animation:true,playing:true,time_scale:1,scale:.7,color:[1,1,1,1],premultiplied_alpha:true,sorting_layer:'default',sorting_order:0};
 if(spineOnly){const folder='Assets/Spine/spineboy';fs.mkdirSync(path.join(project,folder),{recursive:true});for(const file of ['spineboy-pro.json','spineboy-pma.atlas','spineboy-pma.png','LICENSE.txt'])fs.copyFileSync(path.join(repo,'samples/spine-showcase',folder,file),path.join(project,folder,file));}
-write('Assets/Scenes/Main.mscene',{version:1,name:'Main',world:{entities:[{entity:1,name:'Parent',components:{Transform:transform([10,0,0])}},{entity:2,name:'Pickable mesh',parent:1,components:{Transform:transform([0,0,0]),MeshRenderer:{mesh:'Assets/Models/pick.gltf',material:'default'}}},...(opacityCases?[{entity:3,name:'QA opacity environment',components:{EnvironmentLight:{background_enabled:false}}}]:[]),...(spineOnly?[{entity:4,name:'QA animated Spine',components:{Transform:transform([-1,-1,0]),SpineSkeleton:spine}}]:[])]}});
+write('Assets/Scenes/Main.mscene',{version:1,name:'Main',world:{entities:[{entity:1,name:'Parent',components:{Transform:transform([10,0,0])}},{entity:2,name:'Pickable mesh',parent:1,components:{Transform:transform([0,0,0]),MeshRenderer:{mesh:poseCases?'Assets/Models/pick.gltf#pose=0:0@30':'Assets/Models/pick.gltf',material:'default'}}},...(poseCases?[{entity:5,name:'QA mesh behind',components:{Transform:transform([0,0,-2]),MeshRenderer:{mesh:'cube',material:'default'}}}]:[]),...(opacityCases?[{entity:3,name:'QA opacity environment',components:{EnvironmentLight:{background_enabled:false}}}]:[]),...(spineOnly?[{entity:4,name:'QA animated Spine',components:{Transform:transform([-1,-1,0]),SpineSkeleton:spine}}]:[])]}});
 function mesh(offset,zOffset=0){
   const positions=Array.from({length:8},(_,i)=>[(i&1?.5:-.5)+offset,i&2?.5:-.5,(i&4?.5:-.5)+zOffset]).flat();
   const indices=[0,2,1,1,2,3,4,5,6,5,7,6,0,1,4,1,5,4,2,6,3,3,6,7,0,4,2,2,4,6,1,3,5,3,7,5];
   const vertex=Buffer.from(new Float32Array(positions).buffer),index=Buffer.from(new Uint16Array(indices).buffer),buffer=Buffer.concat([vertex,index]);
-  return {asset:{version:'2.0'},buffers:[{byteLength:buffer.length,uri:'data:application/octet-stream;base64,'+buffer.toString('base64')}],bufferViews:[{buffer:0,byteOffset:0,byteLength:vertex.length},{buffer:0,byteOffset:vertex.length,byteLength:index.length}],accessors:[{bufferView:0,componentType:5126,count:8,type:'VEC3',min:[offset-.5,-.5,zOffset-.5],max:[offset+.5,.5,zOffset+.5]},{bufferView:1,componentType:5123,count:indices.length,type:'SCALAR'}],meshes:[{primitives:[{attributes:{POSITION:0},indices:1}]}],nodes:[{mesh:0}],scenes:[{nodes:[0]}],scene:0};
+  const result={asset:{version:'2.0'},buffers:[{byteLength:buffer.length,uri:'data:application/octet-stream;base64,'+buffer.toString('base64')}],bufferViews:[{buffer:0,byteOffset:0,byteLength:vertex.length},{buffer:0,byteOffset:vertex.length,byteLength:index.length}],accessors:[{bufferView:0,componentType:5126,count:8,type:'VEC3',min:[offset-.5,-.5,zOffset-.5],max:[offset+.5,.5,zOffset+.5]},{bufferView:1,componentType:5123,count:indices.length,type:'SCALAR'}],meshes:[{primitives:[{attributes:{POSITION:0},indices:1}]}],nodes:[{mesh:0}],scenes:[{nodes:[0]}],scene:0};
+  if(poseCases){
+    const animation=Buffer.from(new Float32Array([0,1,0,0,0,2,0,0]).buffer);
+    result.buffers.push({byteLength:animation.length,uri:'data:application/octet-stream;base64,'+animation.toString('base64')});
+    result.bufferViews.push({buffer:1,byteOffset:0,byteLength:8},{buffer:1,byteOffset:8,byteLength:24});
+    result.accessors.push({bufferView:2,componentType:5126,count:2,type:'SCALAR',min:[0],max:[1]},{bufferView:3,componentType:5126,count:2,type:'VEC3'});
+    result.nodes.push({children:[0]});result.scenes[0].nodes=[1];
+    result.animations=[{samplers:[{input:2,output:3,interpolation:'LINEAR'}],channels:[{sampler:0,target:{node:1,path:'translation'}}]}];
+  }
+  return result;
 }
 write('Assets/Models/pick.gltf',mesh(0));
 Object.assign(process.env,{MENGINE_AGENT_EDITOR_MODE:'auto-background',MENGINE_EDITOR_CONFIG_DIR:path.join(root,'config'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows'});fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});
@@ -76,6 +86,14 @@ try{
   await execute('component.set',{entity:parent.entity,type:'Transform',value:transform([10,0,10])});
   await execute('view.set_camera',{pivot:[0,0,0],yaw:0,pitch:0,distance:5});write('Assets/Models/pick.gltf',mesh(-10,-10));await pickCenter(child.entity);await pixels('origin-behind');
   report.checks.push('Visible mesh remains pickable when its transform origin is behind the camera');
+  if(poseCases){
+    const behind=original.find(e=>e.name==='QA mesh behind');assert.ok(behind);
+    await execute('view.set_scene_pickability',{id:child.entity,pickable:false});await pickCenter(behind.entity);
+    await execute('view.set_scene_pickability',{id:child.entity,pickable:true});await pickCenter(child.entity);
+    await execute('component.set',{entity:child.entity,type:'MeshRenderer',value:{mesh:'Assets/Models/pick.gltf#pose=0:15@30',material:'default'}});
+    await execute('view.set_camera',{pivot:[1,0,0],yaw:0,pitch:0,distance:5});await pickCenter(child.entity);await pixels('pose-advanced');
+    report.checks.push('Posed references follow animated root geometry; locked front mesh permits selecting the mesh behind it');
+  }
   if(opacityCases){await checkOpacity(1);await pickCenter(child.entity);await checkOpacity(0);await pickCenter(child.entity);await checkOpacity(1);await pickCenter(child.entity);report.checks.push('Opaque Scene frames defer world hits; transparent frames retain immediate drawing; both paths and their transitions pick the current native mesh');}
   }
   report.errors=(await query('console.get_logs',{limit:100})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));await execute('scene.save');report.passed=true;

@@ -1603,3 +1603,22 @@ Tauri把镜像实体映射回源节点ID，随实际图像返回选取token。�
 2项定向检查通过：在途工作与关闭竞态、已排队旧请求拒绝／新代次可重建、资源Arc释放，以及全部镜像修订和token清空。Tauri测试目标编译通过，地图QA脚本语法检查通过。qa-frost-map-import新增--project-reopen，在真实地图流程后采样关闭前／欢迎页／同路径重开后的进程树PrivateBytes并验证实体与原生Game图像。日志viewport-lifetime-test.log；尚未据此报告实际内存下降或FPS变化。
 
 本批6283871、f212fab及本项达到3/3。接下来统一构建当前前端与Tauri Release，执行原生选取／热更新／透明切换、实际DotA与项目关闭重开、多窗口持续采样；复用不受影响的转换、层级和Spine结果。长时间驻留、LOD、稳定60FPS及完整JASS玩法仍待完成。
+
+
+### 第九十八至一百阶段合并原生验证
+
+实现6283871、f212fab、4bca411已提交推送。相关定向检查通过；当前分支前端TypeScript／Vite（3.14秒）及Tauri Release（1分21秒）构建通过，只有已有world_from_snapshot未使用警告。固定EXE为tmp/docs-artifacts/editor-performance-risk/build-4bca411/mengine-editor-tauri.exe，SHA256 34b35a468c9c8ec1d55600ecfbfa123978e8e819f4b76e131a774b9f8ad2bee7，receipt.json记录源码及前端摘要。
+
+B001/spatial-picking-1792831338865.json的5项原生检查通过、0控制台error、正常退出。--pose-cases让生产Scene加载带动画根节点的#pose路径，验证文件热更新、父节点移动、原点在相机后的可见几何、姿态推进和锁定前方网格后选择后方对象；同时执行opaque→transparent→opaque选取。9次UI操作与selection RPC往返56.72～77.82ms，只是该小夹具下的合成操作往返，不是物理输入延迟。姿态图像已检查；骨骼／外部bin／旧帧版本由宿主定向回归覆盖。
+
+B001/arbitrary-map-1792831389250.json使用实际DotA_v6.83d.w3x匹配缓存，14437实体，缓存进入2.291秒；进度、返回、持续Game／全图Scene和3次地图点击通过。最近240个Game间隔均值16.694ms、59.90FPS、P95 23.3ms，浏览器paint均值3.35ms；Scene233个间隔均值21.418ms、46.69FPS、P95 36.4ms、paint9.36ms。上一生产样本Scene43.49FPS／paint10.39ms；此次单次短窗口有改善，Game59.90与此前60.00接近，不能宣称稳定60或严格归因某一改动。原生仍5376对象／5342提交，没有新增LOD或删减可见几何。Game／Scene图像已检查，完整JASS／DotA对局规则仍未接入。
+
+DotA Scene原生render均值18.895ms（上一18.669ms）；最后一帧compile5.677ms、world编码5.790ms、回读等待2.993ms、选取捕获0.335ms；分段不是窗口均值。当前renderer选取几何逻辑长度4708152字节，旧快照独占版本及分配器开销另计。3次全图点击均选择4294981705，UI动作与selection RPC往返132.61／123.96／119.28ms；上次169.26／157.02／141.73ms，不作为物理输入延迟或单因素对照。
+
+同次DotA流程执行--project-reopen：关闭项目返回欢迎页，同路径重开恢复原始实体并产生新的原生Game图像。进程树PrivateBytes为6176.82→2801.60→2903.35MiB（关闭前／欢迎页／重开），包含当前编辑器和WebView子进程，不是GPU缓存单项或长期泄漏测试。该流程验证项目关闭资源释放；Stop时仍保留当前项目缓存，不能由此认定Stop后所有驻留已解决。0控制台error的断言位于地图运行／Stop之后、关闭重开之前。
+
+B001/map-session-1792831470405.json通过7434实体、多窗口重开／版本追赶、Pause／Step／快捷键／截图、Stop、编辑与undo／redo及停靠，0控制台error、正常退出。既有固定启动等候和内存采样后，额外315ms内出现18个新Game样本。最近240间隔Scene54.16／Game55.52FPS、paint7.60／2.16ms；上一53.82／56.40FPS，尚未稳定满帧。原生render均值Scene9.041／Game10.255ms。场景图像已检查。
+
+多窗口进程树PrivateBytes为4550.07／6442.46／7450.48／5998.75MiB（detach前／三窗口／重载／Stop停靠）；这一短流程结束仍高于起点，长期驻留继续待查。三份QA均正常退出，WebView EPERM缓存保留，用户编辑器未关闭。脚本／原始报告只在tmp/docs-artifacts；本批不重复无关转换、完整层级及Spine验证。
+
+本批3/3相关集成完成，下一批从0/3累计。继续待办：Scene及多窗口稳定60FPS、绘制编码／回读与浏览器paint、长期驻留、姿态选择框／聚焦范围及纹理alpha选取、LOD、完整JASS／DotA对局与War3界面保真。
