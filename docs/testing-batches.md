@@ -1222,3 +1222,14 @@ B001/map-session-1792831470405.json通过7434实体、多窗口重开／版本�
 从实际DotA作者场景提取5376活动网格的网格／材质路径源序，得到187类、4705连续组。输入及源文件SHA256保存在tmp/docs-artifacts/editor-performance-risk/dota-adjacent-draw-groups.receipt.json；基准用代理立方体和颜色替换组内真实几何、纹理及材质，不代表真实地图完整渲染。两个独立renderer交替12轮、排除2轮预热，每模式10组4帧，每个测量帧均命中自己的缓存且完整128×128回读像素一致。调用5376→4705；世界编码CPU均值1.238800→1.223598ms，提交CPU4.193785→4.181793ms，提交加回读4.921560→4.885898ms。完整时间变化很小，本项不据此宣称真实FPS提高。
 
 命令：设置MENGINE_DRAW_GROUPS为上述txt后运行cargo test -p mengine-rhi --release --lib benchmark_adjacent_instancing -- --ignored --nocapture。日志adjacent-instancing-{gpu-final,cache-test,host-check,dota-groups-final-benchmark}.log及adjacent-instancing-dota-groups-final-summary.json；构造兼容回归为indexed-objects-constructors-after.log。当前编辑器／RHI队列的504b42c（含3af8e85补充）及本项为2/3；第三项后统一原生构建，验证真实DotA／多窗口的调用数与持续FPS、材质热更、透明／阴影／姿态选取、Stop和重开。真实场景最新仍为4bca411的Scene46.69／Game59.90FPS，稳定满帧、LOD与完整JASS继续待办。
+
+
+### 第一百零三阶段／编辑器批次任务3/3：按材质来源解析GPU绘制资源
+
+材质准备和pipeline清理完成后，在本次提交内按材质来源解析GPU管线及纹理绑定引用，供阴影、主世界、bundle列表和粒子路径读取。引用只在该提交内有效；shader、纹理到达／移除／替换及错误fallback仍按当前准备结果解析。只需纹理的阴影／粒子来源可保留空的主绘制管线，实际网格绘制时验证管线。Profiler新增materialSources和materialBindingResolutions；后者按来源解析次数统计，单次解析可读取管线与纹理两个映射，不是底层HashMap调用次数。
+
+48帧／12阶段的重复查表与来源引用完整RGBA一致；覆盖资源缺失／到达、纹理热替换和移除、shader错误及恢复、独立参数修改、相机／顺序／resize／环境、容量增长和缩短、粒子交错及空帧。来源解析数等于当次材质来源数；显式验证仅有纹理的部分来源有效。已有材质／bundle相关4项检查通过，editor-host Release库检查通过。对照开关只存在于cfg(test)，没有生产选项或跨帧GPU引用缓存。
+
+4096绘制／128共享来源、两个独立renderer的12轮交替对照（2轮预热，10组各4帧）每个测量帧均命中自身bundle缓存，完整128×128像素一致。解析次数4096→128；材质准备CPU均值0.071653→0.085298ms，世界编码1.698693→1.246758ms，提交CPU2.860855→2.391148ms，提交加GPU回读4.845425→4.350050ms。该窗口包含新准备成本；不含IPC及游戏逻辑，不直接外推实际地图FPS。日志material-bindings-{gpu-final,existing-tests,host-check,benchmark}.log，摘要material-bindings-benchmark-summary.json，均在tmp/docs-artifacts/editor-performance-risk。
+
+本批504b42c（含3af8e85补充）、48f317e及本项达到3/3。接下来在当前整合分支统一构建前端与Tauri Release，执行姿态／锁定选取／资源热更／透明切换、实际DotA与多窗口持续采样、Stop和关闭重开。记录indexedObjectSlots、worldMeshDrawCalls、worldInstancedObjects、materialSources、materialBindingResolutions及真实FPS／进程树内存；复用不受影响的地图转换、层级和Spine检查。完整JASS、War3保真、LOD、长期驻留与稳定满帧仍待完成。

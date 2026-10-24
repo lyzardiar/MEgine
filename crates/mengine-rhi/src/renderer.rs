@@ -29,6 +29,9 @@ mod object_indexing;
 #[path = "adjacent_instancing_tests.rs"]
 mod adjacent_instancing_tests;
 #[cfg(test)]
+#[path = "material_draw_bindings_tests.rs"]
+mod material_draw_bindings_tests;
+#[cfg(test)]
 thread_local! { static UNIFORM_OBJECT_REFERENCE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) }; }
 use world_bundles::{WorldBindings, WorldBundleCache, WorldDraw};
 
@@ -443,8 +446,8 @@ pub struct FrameSubmissionProfile {
     pub world_bundle_builds: usize,
     #[cfg(test)]
     pub world_bundle_hits: usize,
-    #[cfg(test)]
     pub material_preparations: usize,
+    pub material_binding_resolutions: usize,
     pub target_prepare_ms: f64,
     pub camera_uniform_ms: f64,
     pub culling_ms: f64,
@@ -606,6 +609,16 @@ struct PreparedObjectMaterial {
     use_error_pipeline: bool,
 }
 
+#[derive(Clone, Copy)]
+struct MaterialDrawBindings<'a> { pipeline: Option<&'a wgpu::RenderPipeline>, textures: &'a wgpu::BindGroup }
+
+fn resolve_material_draw_bindings<'a>(material: &PreparedObjectMaterial, pipelines: &'a HashMap<MaterialPipelineKey, wgpu::RenderPipeline>, errors: &'a HashMap<MaterialPipelineKey, wgpu::RenderPipeline>, textures: &'a HashMap<MaterialTextureSetKey, wgpu::BindGroup>) -> MaterialDrawBindings<'a> {
+    let key = material.pipeline;
+    let pipeline = if material.use_error_pipeline { errors.get(&error_material_pipeline_key(key)) }
+        else { pipelines.get(&key).or_else(|| pipelines.get(&MaterialPipelineKey { shader_fingerprint: 0, ..key })) };
+    MaterialDrawBindings { pipeline, textures: textures.get(&material.textures).expect("material texture set prepared before rendering") }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum MaterialPipelinePrepareResult {
     BuiltIn,
@@ -723,6 +736,8 @@ pub struct Renderer {
     repeat_draw_bindings: bool,
     #[cfg(test)]
     repeat_material_preparation: bool,
+    #[cfg(test)]
+    repeat_material_binding_lookups: bool,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     surface: Option<wgpu::Surface<'static>>,
@@ -1377,6 +1392,8 @@ impl Renderer {
             repeat_draw_bindings: false,
             #[cfg(test)]
             repeat_material_preparation: false,
+            #[cfg(test)]
+            repeat_material_binding_lookups: false,
             device,
             queue,
             surface,
@@ -1678,11 +1695,25 @@ impl Renderer {
                 else { let slot = unique_materials.len(); unique_materials.push(material); slot };
             material_slots.push(slot);
         }
-        #[cfg(test)]
-        { self.submission_profile.material_preparations += unique_materials.len(); }
+        self.submission_profile.material_preparations += unique_materials.len();
         let prepared_materials: Vec<_> = unique_materials.into_iter().map(|material| self.prepare_object_material(material)).collect();
         self.prune_material_pipeline_cache();
         self.particle_renderer.prepare(&self.device, &self.queue, camera, objects);
+        #[cfg(test)]
+        let reuse_material_bindings = !self.repeat_material_binding_lookups;
+        #[cfg(not(test))]
+        let reuse_material_bindings = true;
+        let binding_resolutions = std::cell::Cell::new(0usize);
+        let resolve = |slot: usize| {
+            binding_resolutions.set(binding_resolutions.get() + 1);
+            resolve_material_draw_bindings(&prepared_materials[slot], &self.material_pipelines, &self.error_material_pipelines, &self.material_texture_sets)
+        };
+        let material_bindings: Option<Vec<_>> = reuse_material_bindings.then(|| (0..prepared_materials.len()).map(resolve).collect());
+        let bindings_for = |slot: usize| material_bindings.as_ref().map(|bindings| bindings[slot]).unwrap_or_else(|| resolve(slot));
+        let textures_for = |slot: usize| material_bindings.as_ref().map(|bindings| bindings[slot].textures).unwrap_or_else(|| {
+            binding_resolutions.set(binding_resolutions.get() + 1);
+            self.material_texture_sets.get(&prepared_materials[slot].textures).expect("material texture set prepared before rendering")
+        });
         self.submission_profile.material_prepare_ms += material_started.elapsed().as_secs_f64() * 1000.0;
         let acquire_started = Instant::now();
         let surface_frame = match target {
@@ -1754,11 +1785,7 @@ impl Renderer {
                 };
                 if mesh.index_count == 0 { continue; }
                 if !self.indexed_objects { pass.set_bind_group(0, &self.shadow_pass_bind_group, &[(uniform_slots[index] as u64 * self.object_stride) as u32]); }
-                let material = &prepared_materials[material_slots[uniform_slots[index]]];
-                let texture_set = self
-                    .material_texture_sets
-                    .get(&material.textures)
-                    .expect("material texture set prepared before shadow pass");
+                let texture_set = textures_for(material_slots[uniform_slots[index]]);
                 if !reuse_draw_bindings || draw_binding_changed(&mut bound_textures, texture_set) { pass.set_bind_group(1, texture_set, &[]); }
                 if !reuse_draw_bindings || draw_binding_changed(&mut bound_mesh, mesh) {
                     pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
@@ -1788,10 +1815,8 @@ impl Renderer {
             let mut world_draws: Vec<_> = if bundle_eligible { draw_order.iter().filter_map(|&index| {
                 let mesh = self.meshes.get(&objects[index].mesh_key)?;
                 if mesh.index_count == 0 { return None; }
-                let material = &prepared_materials[material_slots[uniform_slots[index]]]; let key = material.pipeline;
-                let pipeline = if material.use_error_pipeline { self.error_material_pipelines.get(&error_material_pipeline_key(key)) }
-                    else { self.material_pipelines.get(&key).or_else(|| self.material_pipelines.get(&MaterialPipelineKey { shader_fingerprint: 0, ..key })) }.expect("world material pipeline prepared before render pass");
-                Some(WorldDraw { pipeline, textures: self.material_texture_sets.get(&material.textures).expect("world texture set prepared before render pass"), vertices: &mesh.vertex_buffer, indices: &mesh.index_buffer, count: mesh.index_count, object_index: uniform_slots[index] as u32, instances: 1 })
+                let bindings = bindings_for(material_slots[uniform_slots[index]]);
+                Some(WorldDraw { pipeline: bindings.pipeline.expect("world material pipeline prepared before rendering"), textures: bindings.textures, vertices: &mesh.vertex_buffer, indices: &mesh.index_buffer, count: mesh.index_count, object_index: uniform_slots[index] as u32, instances: 1 })
             }).collect() } else { Vec::new() };
             #[cfg(test)]
             let instance_meshes = self.indexed_objects && !self.disable_world_instancing;
@@ -1867,8 +1892,7 @@ impl Renderer {
             for index in draw_order {
                 let object = &objects[index];
                 if let Some(particle) = object.material.particle.as_deref() {
-                    let material = &prepared_materials[material_slots[uniform_slots[index]]];
-                    if let Some(textures) = self.material_texture_sets.get(&material.textures) { self.particle_renderer.draw(&mut pass, index, particle, textures); }
+                    self.particle_renderer.draw(&mut pass, index, particle, textures_for(material_slots[uniform_slots[index]]));
                     bound_pipeline = None; bound_textures = None; bound_mesh = None; shared_bindings_set = false;
                     continue;
                 }
@@ -1876,29 +1900,10 @@ impl Renderer {
                     continue;
                 };
                 if mesh.index_count == 0 { continue; }
-                let material = &prepared_materials[material_slots[uniform_slots[index]]];
-                let pipeline_key = material.pipeline;
-                let pipeline = if material.use_error_pipeline {
-                    self.error_material_pipelines
-                        .get(&error_material_pipeline_key(pipeline_key))
-                        .expect("error material pipeline prepared before render pass")
-                } else {
-                    self.material_pipelines
-                        .get(&pipeline_key)
-                        .or_else(|| {
-                            self.material_pipelines.get(&MaterialPipelineKey {
-                                shader_fingerprint: 0,
-                                ..pipeline_key
-                            })
-                        })
-                        .expect("built-in material pipeline variants are created at startup")
-                };
+                let bindings = bindings_for(material_slots[uniform_slots[index]]); let pipeline = bindings.pipeline.expect("world material pipeline prepared before rendering");
                 if !reuse_draw_bindings || draw_binding_changed(&mut bound_pipeline, pipeline) { pass.set_pipeline(pipeline); }
                 if !self.indexed_objects { pass.set_bind_group(0, &self.bind_group, &[(uniform_slots[index] as u64 * self.object_stride) as u32]); }
-                let texture_set = self
-                    .material_texture_sets
-                    .get(&material.textures)
-                    .expect("material texture set prepared before render pass");
+                let texture_set = bindings.textures;
                 if !reuse_draw_bindings || draw_binding_changed(&mut bound_textures, texture_set) { pass.set_bind_group(1, texture_set, &[]); }
                 if !reuse_draw_bindings || !shared_bindings_set {
                     if self.indexed_objects { pass.set_bind_group(0, &self.bind_group, &[]); }
@@ -1917,6 +1922,7 @@ impl Renderer {
             }
         }
         self.submission_profile.world_encode_ms += world_started.elapsed().as_secs_f64() * 1000.0;
+        self.submission_profile.material_binding_resolutions += binding_resolutions.get();
 
         let postprocess_started = Instant::now();
         {
