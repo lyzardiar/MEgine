@@ -914,11 +914,22 @@ export function sceneUiEntities<E extends UiEnt>(entities: E[]): E[] {
 
 /** Reuse topology only; every returned record belongs to the current frame, including in-place edits. */
 export function createSceneUiEntityReader<E extends UiEnt>() {
+  return createSceneUiReader<E>(false);
+}
+
+/** Fixed native records need topology checks only for replaced records; editable arrays use the live reader. */
+export function createOwnedSceneUiEntityReader<E extends UiEnt>() {
+  return createSceneUiReader<E>(true);
+}
+
+function createSceneUiReader<E extends UiEnt>(owned: boolean) {
   let topology: Array<[number, number | null, boolean]> = [];
   let indices: number[] = [];
+  let previousEntities: E[] | undefined;
   const root = (entity: E) => !!(entity.components.Canvas || entity.components.Camera2D || entity.components.Camera3D);
   return (entities: E[]): E[] => {
     if (topology.length !== entities.length || entities.some((entity, index) => {
+      if (owned && previousEntities?.[index] === entity) return false;
       const previous = topology[index];
       return previous[0] !== entity.entity || previous[1] !== (entity.parent ?? null) || previous[2] !== root(entity);
     })) {
@@ -929,6 +940,7 @@ export function createSceneUiEntityReader<E extends UiEnt>() {
         return [entity.entity, entity.parent ?? null, root(entity)];
       });
     }
+    if (owned) previousEntities = entities;
     return indices.map(index => entities[index]);
   };
 }

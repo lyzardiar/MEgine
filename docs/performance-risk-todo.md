@@ -1719,3 +1719,8 @@ DotA关闭前／欢迎页／重开PrivateBytes为6779.38／2508.22／3518.96MiB�
 2573607固定原生程序（650705e7406fc04321cd04523cf70a5163d182100b7ea4d30fa942e095127204）的最终空间选取6项、Spine、实际DotA关闭重开及多窗口QA通过；构建参数、初轮启动和Spine夹具断言失败及复验范围见testing-batches.md。61项合并定向检查通过。DotA Scene51.70→57.25FPS，Game59.66FPS；Scene浏览器paint均值8.354→5.999ms、世界准备4.826→2.293ms，UI 2.380→2.518ms未改善，原生渲染均值16.345ms。仍5376对象／5342可见／4675调用，无LOD删减；短窗口不能证明稳定60或单项因果。
 
 多窗口Scene58.09／Game55.64FPS，paint3.851／1.967ms；Scene世界准备2.092ms、UI1.093ms。关闭仍释放资源，DotA PrivateBytes 6737.58→2371.95→3323.42MiB；多窗口Stop停靠6520.68MiB仍高于起点5138.23MiB。完整证据与计时口径见tmp/docs-artifacts/editor-performance-risk/owned-ui-batch-*及testing-batches.md。本批完成、下一批0/3；后续优先UI扫描／绘制与原生整帧瓶颈，并继续长期驻留、LOD、姿态聚焦／alpha选取与JASS／War3保真。所有最终QA正常退出，用户编辑器保留。
+
+
+### 第一百一十阶段：固定UI记录跳过重复拓扑解引用
+
+Scene固定显示记录的UI子集读取按相邻记录身份跳过未替换记录的ID／父节点／Canvas／Camera检查，替换记录仍验证拓扑；实时可变编辑入口保留。21项定向检查及TypeScript通过。实际DotA作者场景拓扑读取微基准0.213044→0.064036ms，相机与UI同时替换0.222220→0.066373ms，结果及顺序一致。仅测子集读取，不是UI整段或FPS。证据owned-ui-topology-*与范围见testing-batches.md；新批次1/3，实际收益按三项合并验收。

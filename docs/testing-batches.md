@@ -1344,3 +1344,12 @@ DotA 3次地图动作与选取RPC为192.734／174.690／164.702ms；并未证明
 B001/map-session-1792845027720的7434实体三窗口重开／修订追赶、Pause／Step／快捷键、Stop、作者编辑undo／redo及停靠通过。Scene58.09／Game55.64FPS，前次57.47／55.89；原生渲染均值8.513／10.241ms，浏览器paint桶均值3.851／1.967ms。Scene世界准备4.042→2.092ms、UI 1.082→1.093ms，覆盖288次绘制；Game覆盖282次。CPU六段覆盖、逐桶合计及加权汇总断言通过。进程树PrivateBytes为5138.23／6854.73／7950.76／6520.68MiB（detach前／三窗口／重载／Stop停靠），Stop后仍高于起点，长期驻留未解决；Scene图像已检查。
 
 最终4项QA均0控制台错误、正常退出，用户编辑器64664保持运行；WebView EPERM缓存保留。构建与QA日志owned-ui-batch-*、分段校验assert-owned-ui-batch-profile.py、运行摘要owned-ui-batch-runtime-summary.json均在tmp/docs-artifacts/editor-performance-risk，B001报告及截图只在tmp/docs-artifacts/testing-batches。复现使用同一固定程序依次执行qa-viewport-spatial-picking --opacity-cases --pose-cases及--spine-only、qa-frost-map-import实际DotA缓存／profile／pick／project-reopen／profiler-ui、qa-frost-map-session --detached-profile-only。未重复不受影响的转换和全资产检查。本批验收完成，下一批0/3；继续定位UI及原生整帧成本，稳定满帧、长期驻留、LOD、姿态聚焦范围、alpha选取、完整JASS／DotA玩法与War3保真仍待完成。
+
+
+### 第一百一十阶段／编辑器新批次任务1/3：固定UI记录跳过重复拓扑解引用
+
+变更packages/editor/src/ui/uiLayout.ts、nativeViewportPresentation.ts及ownedSceneUiTopology.test.mjs。新增拥有固定记录的UI子集读取入口，逐项比较上一数组中的记录引用；未替换记录不再读取ID、父节点及Canvas／Camera组件，替换记录仍检查既有拓扑签名，拓扑变化重建完整索引。当前帧记录和作者顺序保留，不缓存可变编辑数据；原有实时入口继续观察原地修改。21项定向检查和TypeScript通过，覆盖固定记录访问次数、增量修订、旧帧恢复、重排／根节点／重复ID／缺失与循环父链、100轮拓扑修订及实时编辑。
+
+实际DotA作者场景14437实体、7个UI相关记录，独立读取器12轮交替／排除2轮预热、10组各120帧：仅无关特效记录变化的拓扑读取0.213044→0.064036ms；同时替换相机与UI文字记录0.222220→0.066373ms。成员、顺序及当前记录所有权一致。计时只含子集拓扑读取，不含构造呈现记录、激活判断、完整UI布局／绘制、原生、模拟和IPC，不代表UI整段或FPS。日志owned-ui-topology-{tests,typecheck,benchmark}.log、复现owned-ui-topology-bench.mjs及摘要位于tmp/docs-artifacts/editor-performance-risk。
+
+本项为新批次1/3，原生集成及实际UI收益待三项后合并验证；后续覆盖UI／相机／祖先变化、编辑原地修改、场景切换及多窗口。最近已验收的实际DotA Scene仍为2573607的57.25FPS／UI2.518ms，稳定60与长期驻留继续待办。

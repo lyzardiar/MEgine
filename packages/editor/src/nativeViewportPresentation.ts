@@ -4,7 +4,7 @@ import { timelineGameCamera, type ResolvedGameCamera } from './gameCamera';
 import type { TimelineCameraPreview } from './timelineScenePreview';
 import { requiresBrowserViewportSnapshot, type NativeViewportFrameWorld } from './nativeViewportFrame';
 import { buildWorldTransforms, createOwnedWorldTransformReader, resolvedTransform } from './worldTransform';
-import { createSceneUiEntityReader } from './ui/uiLayout';
+import { createOwnedSceneUiEntityReader } from './ui/uiLayout';
 
 type Entity = { entity: number; parent?: number | null; active?: boolean; components: Record<string, unknown> };
 
@@ -20,7 +20,7 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
   let previousEntities: E[] | undefined;
   let presentation: ReturnType<typeof prepare> | undefined;
   const readTransforms = createOwnedWorldTransformReader();
-  const readSceneUiEntities = createSceneUiEntityReader<E>();
+  const readSceneUiEntities = createOwnedSceneUiEntityReader<E>();
   let previousUiEntities: E[] | undefined;
   const readOwnedUiEntities = (entities: E[]) => {
     const current = readSceneUiEntities(entities);
