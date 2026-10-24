@@ -131,3 +131,13 @@ export function createViewportSpatialIndex() {
     },
   };
 }
+
+/** One displayed paint owns its eager bounds and camera planes; prepare its index only when requested. */
+export function createViewportSpatialFrame(index: ReturnType<typeof createViewportSpatialIndex>, bounds: readonly (Bounds | null)[], planes: readonly Plane[], owned = false) {
+  let candidates: number[] | undefined;
+  return () => {
+    if (candidates) return candidates;
+    index.update(bounds, owned);
+    return candidates = index.query(planes);
+  };
+}

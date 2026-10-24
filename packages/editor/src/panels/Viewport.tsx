@@ -54,7 +54,7 @@ import {
   scale as vscale,
 } from '../math3d';
 import { clearModelPreview, modelPreview } from '../modelPreview';
-import { createViewportSpatialIndex, viewportPlanes } from '../viewportSpatial';
+import { createViewportSpatialFrame, createViewportSpatialIndex, viewportPlanes } from '../viewportSpatial';
 import { createViewportEntityBoundsReader } from '../viewportEntityBounds';
 import { projectAssetSessionGeneration } from '../projectAssets';
 import { beginNativeViewportRequest, nativeViewportRequestDelay, captureLatestNativeViewportFrames, createNativeViewportRequestState, deferNativeViewportRevision, finishNativeViewportRequest, nativeViewportReadbackBusy, nativeViewportRevisionDeferred, nativeViewportSessionExpired, nativeViewportRequestCanPublish, retryNativeViewportReadback, synchronizeNativeViewportRequestOwner, waitNativeViewportRequests } from '../nativeViewportRequests';
@@ -2039,9 +2039,9 @@ export function Viewport(props: {
       const t = resolvedTransform(worldTransforms, e.entity);
       return t ? [{ e, t, hierarchyOrder }] : [];
     });
-    spatialIndexRef.current.update(worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : entityBoundsRef.current(e.components, t, !!displayedPresentation)), !!displayedPresentation);
-    const spatialCandidates = spatialIndexRef.current.query(viewportPlanes(cam, vp.w / Math.max(1, vp.h)));
-    const prepareDrawn = (candidates = spatialCandidates) => {
+    const spatialBounds = worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : entityBoundsRef.current(e.components, t, !!displayedPresentation));
+    const spatialCandidates = createViewportSpatialFrame(spatialIndexRef.current, spatialBounds, viewportPlanes(cam, vp.w / Math.max(1, vp.h)), !!displayedPresentation);
+    const prepareDrawn = (candidates = spatialCandidates()) => {
     const drawn: Array<{
       e: Ent;
       t: TransformData;
@@ -2142,7 +2142,7 @@ export function Viewport(props: {
       return drawn;
     };
     const deferSceneHits = nativeSceneFrame?.opaquePixels === true;
-    const drawn = prepareDrawn(deferSceneHits ? spatialCandidates.filter(index => selSet.has(worldEntries[index].e.entity)) : spatialCandidates);
+    const drawn = prepareDrawn(deferSceneHits ? worldEntries.reduce<number[]>((indices, { e }, index) => { if (selSet.has(e.entity)) indices.push(index); return indices; }, []) : spatialCandidates());
 
     const drawWorld = (ctx: CanvasRenderingContext2D, items: typeof drawn, hits: HitCandidate[], hitOnly = false) => {
     for (const { e, t, pr, renderKind } of nativeGameReady ? [] : items) {

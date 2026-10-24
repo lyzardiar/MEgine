@@ -51,14 +51,15 @@ test('helpers and complex renderers remain unbounded even when they also carry a
   assert.equal(read({},transform(),true),null);
 });
 
-test('actual Viewport culling keeps selected and simulated effects conservative and passes frame ownership', () => {
+test('actual Viewport eagerly prepares conservative bounds and passes frame ownership to lazy culling', () => {
   const source=readFileSync(new URL('../src/panels/Viewport.tsx',import.meta.url),'utf8');
-  const line=source.split('\n').find(line=>line.includes('spatialIndexRef.current.update(worldEntries.map('));assert.ok(line);
-  const submit=new Function('worldEntries','selSet','trailDrawByEntity','particleDrawByEntity','entityBoundsRef','displayedPresentation','spatialIndexRef',line);
+  const lines=source.split('\n').filter(line=>line.includes('const spatialBounds = worldEntries.map(')||line.includes('const spatialCandidates = createViewportSpatialFrame('));assert.equal(lines.length,2);
+  const submit=new Function('worldEntries','selSet','trailDrawByEntity','particleDrawByEntity','entityBoundsRef','displayedPresentation','spatialIndexRef','createViewportSpatialFrame','viewportPlanes','cam','vp',lines.join('\n'));
   const worldEntries=[1,2,3,4].map(entity=>({e:{entity,components:{MeshRenderer:{}}},t:transform(entity)}));
   for(const owned of [undefined,{}]){
     const calls=[];let bounds,indexOwned;
-    submit(worldEntries,new Set([1]),new Map([[2,{}]]),new Map([[3,{}]]),{current:(...args)=>{calls.push(args);return 'bound';}},owned,{current:{update:(value,owned)=>{bounds=value;indexOwned=owned;}}});
+    const index={update:()=>assert.fail('paint does not update the index before requesting candidates')};
+    submit(worldEntries,new Set([1]),new Map([[2,{}]]),new Map([[3,{}]]),{current:(...args)=>{calls.push(args);return 'bound';}},owned,{current:index},(actual,value,planes,owned)=>{assert.equal(actual,index);assert.equal(planes,'planes');bounds=value;indexOwned=owned;return()=>[];},()=> 'planes',{}, {w:100,h:50});
     assert.deepEqual(bounds,[null,null,null,'bound']);assert.deepEqual(calls,[[worldEntries[3].e.components,worldEntries[3].t,!!owned]]);
     assert.equal(indexOwned,!!owned);
   }
