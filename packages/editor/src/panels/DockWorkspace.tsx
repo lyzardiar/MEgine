@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { cursorPosition, getCurrentWindow } from '@tauri-apps/api/window';
+import { PanelVisibilityContext } from '../panelVisibility';
 import {
   Box,
   Clapperboard,
@@ -962,9 +963,11 @@ function DockLeaf(props: {
                 aria-labelledby={tabId}
                 aria-hidden={active !== panel}
               >
-                <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLES[panel]}…</div>}>
-                  {props.panelContent(panel)}
-                </Suspense>
+                <PanelVisibilityContext.Provider value={active === panel}>
+                  <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLES[panel]}…</div>}>
+                    {props.panelContent(panel)}
+                  </Suspense>
+                </PanelVisibilityContext.Provider>
               </div>
             );
           })}

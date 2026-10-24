@@ -33,7 +33,7 @@ export function nativeSceneFrameRequestIdentity(
   );
   const width = Math.max(1, Math.round(viewport.w * scale));
   const height = Math.max(1, Math.round(viewport.h * scale));
-  const presentationKey = JSON.stringify({ width, height, hiddenEntityIds: [...hiddenEntityIds].sort((left, right) => left - right) });
+  const presentationKey = JSON.stringify({ hiddenEntityIds: [...hiddenEntityIds].sort((left, right) => left - right) });
   const key = JSON.stringify({
     width,
     height,

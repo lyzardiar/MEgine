@@ -755,3 +755,8 @@ Scene24.01／Game19.87次呈现每秒；Scene0/121完整回退、81次已记录�
 变更：App的broadcastScene计时及workspaceSelectionSync测试。常规发布等待上次发送后的剩余33ms，保持单计时器／最新世界合并；立即同步取消待发送并重置间隔。实际处理器复现由960ms内19次恢复为29次，17项同步测试和TypeScript通过，日志见performance-risk-todo第七十二阶段。
 
 状态：当前2/3，原生待合并。下一项完成后验证三窗口Play／Pause／Step／Stop、检查点与重开、Inspector编辑和最新原生版本；比较Game呈现及消息处理负载，合并第七十一阶段Scene绘制／延期与截图检查。发送次数是确定性调度测试，暂不宣称真实FPS提高。
+
+
+### 新批次任务3/3：Scene交互呈现与隐藏页签停绘
+
+变更：nativeSceneFrame、Viewport、DockWorkspace、panelVisibility及定向测试。保留尺寸变化期间的完整画面、连续相机帧按序显示，隐藏Dock页签停止rAF／重试及通知绘制。41项定向测试、TypeScript通过。提交后合并e468673、5df28a8构建一次，执行多窗口原生QA；补查Scene持续旋转、尺寸变化、切走页签后原生请求停止与切回恢复，避免截图强制绘制干扰隐藏采样。真实鼠标手感与持续满帧不据单元测试判定。

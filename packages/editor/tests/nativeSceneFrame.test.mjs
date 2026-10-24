@@ -39,7 +39,11 @@ test('continuous camera movement retains completed pixels and their camera until
     if (step % 3 === 0) frame = { presentationKey: next.presentationKey, camera: nextCamera, image: `frame ${step}` };
     assert.equal(nativeSceneFrameForPresentation(frame, next).camera, frame.camera);
   }
-  for (const identity of [null, nativeSceneFrameRequestIdentity(camera, viewport, 2, [2]), nativeSceneFrameRequestIdentity(camera, { w: 900, h: 600 }, 2, [9, 2]), nativeSceneFrameRequestIdentity(camera, viewport, 1, [9, 2])]) assert.equal(nativeSceneFrameForPresentation(frame, identity), null);
+  for (const identity of [null, nativeSceneFrameRequestIdentity(camera, viewport, 2, [2])]) assert.equal(nativeSceneFrameForPresentation(frame, identity), null);
+  for (const identity of [nativeSceneFrameRequestIdentity(camera, { w: 900, h: 600 }, 2, [9, 2]), nativeSceneFrameRequestIdentity(camera, viewport, 1, [9, 2])]) {
+    assert.notEqual(identity.key, first.key, 'resize and DPI changes request fresh pixels');
+    assert.equal(nativeSceneFrameForPresentation(frame, identity), frame, 'retain complete pixels while resizing');
+  }
   assert.equal(nativeSceneFrameForPresentation(null, first), null);
 });
 

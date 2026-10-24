@@ -26,14 +26,15 @@ function fixture(duration, playing = true, wakeDelay = 0) {
   const scene2DRef = { current: false }, draggingRef = { current: false }, lastProfilerFrameRef = { current: 1 };
   const setTimeout = (callback, delay) => { const id = ++serial; tasks.set(id, { callback, at: now + Math.trunc(delay) + wakeDelay }); return id; };
   const canvasRef = { current: { width: 640, height: 360, toDataURL: () => 'data:image/png;frame=' + shown } };
-  const env = { window: { __TAURI_INTERNALS__: {}, setTimeout, clearTimeout: id => tasks.delete(id) }, performance: { now: () => now }, lastAnimationFrameAtRef: { current: -Infinity }, structuredClone, propsRef, nativeSceneRequestRef, nativeSceneFrameRef, nativeCameraPreviewRequestRef: { current: { inFlight: false, ready: null, lastRequestAt: 0 } }, scene2DRef, draggingRef, lastProfilerFrameRef, currentViewportOwner: () => propsRef.current, currentViewportProps: () => propsRef.current, nativeWorld: { frameWorld: () => ({ runtimeSessionId: 1 }) }, nativeViewportFrameWorldCurrent: (world, props) => world.runtimeSessionId === props.runtimeSessionId, releaseNativeViewportFrame: () => released++, uploadNativeViewportFrame: buffer => { uploaded.push(buffer); return { profile: {}, image: {}, width: 640, height: 360 }; }, recordNativeViewportProfile() {}, console: { warn() {} }, canvasRef, NATIVE_CAPTURE_READY_TIMEOUT_MS: 8000 };
-  Object.assign(env, { clearTimeout: env.window.clearTimeout, setTimeout, projectGeneration: 0, projectAssetSessionGeneration: () => 0, canvas: { getBoundingClientRect: () => ({ width: 640, height: 360 }) }, liveCam: { current: { pivot: 'camera-a' } }, orbitEye: pivot => [pivot, 4, 7], nativeSceneFrameRequestIdentity: camera => ({ key: camera.eye[0] }), MAX_NATIVE_SCENE_VIEW_DIMENSION: 4096, cameraPreviewKey: undefined, recordOwnedNativeViewportProfile() {}, isGame: false, p: propsRef.current });
+  const env = { panelVisibleRef: { current: true }, window: { __TAURI_INTERNALS__: {}, setTimeout, clearTimeout: id => tasks.delete(id) }, performance: { now: () => now }, lastAnimationFrameAtRef: { current: -Infinity }, structuredClone, propsRef, nativeSceneRequestRef, nativeSceneFrameRef, nativeCameraPreviewRequestRef: { current: { inFlight: false, ready: null, lastRequestAt: 0 } }, scene2DRef, draggingRef, lastProfilerFrameRef, currentViewportOwner: () => propsRef.current, currentViewportProps: () => propsRef.current, nativeWorld: { frameWorld: () => ({ runtimeSessionId: 1 }) }, nativeViewportFrameWorldCurrent: (world, props) => world.runtimeSessionId === props.runtimeSessionId, releaseNativeViewportFrame: () => released++, uploadNativeViewportFrame: buffer => { uploaded.push(buffer); return { profile: {}, image: {}, width: 640, height: 360 }; }, recordNativeViewportProfile() {}, console: { warn() {} }, canvasRef, NATIVE_CAPTURE_READY_TIMEOUT_MS: 8000 };
+  Object.assign(env, { clearTimeout: env.window.clearTimeout, setTimeout, projectGeneration: 0, projectAssetSessionGeneration: () => 0, canvas: { getBoundingClientRect: () => ({ width: 640, height: 360 }) }, liveCam: { current: { pivot: 'camera-a' } }, orbitEye: pivot => [pivot, 4, 7], nativeSceneFrameRequestIdentity: camera => ({ key: camera.eye[0], presentationKey: 'size' }), MAX_NATIVE_SCENE_VIEW_DIMENSION: 4096, cameraPreviewKey: undefined, recordOwnedNativeViewportProfile() {}, isGame: false, p: propsRef.current });
   const context = vm.createContext(env); vm.runInContext(helpers, context); vm.runInContext(scheduler, context);
   nativeSceneRequestRef.current = vm.runInContext('createNativeViewportRequestState()', context);
   env.nativeCameraPreviewRequestRef.current = vm.runInContext('createNativeViewportRequestState(1)', context);
   env.syncRequestOwner = vm.runInContext('(state, key) => synchronizeNativeViewportRequestOwner(state, propsRef.current.runtimeSessionId, key)', context);
   const request = vm.runInContext(requestBlock, context);
   const paint = (animationFrame = false, completedSceneFrame = false, resumeSceneRequest = false, captureSceneFrame = false) => {
+    if (!env.panelVisibleRef.current && !captureSceneFrame) return;
     env.captureSceneFrame = captureSceneFrame; env.completedSceneFrame = completedSceneFrame; env.resumeSceneRequest = resumeSceneRequest;
     const p = { ...propsRef.current };
     env.liveCam.current.pivot = p.key; env.nativeWorld = { requestKey: () => `${p.runtimeSessionId}:${now}`, frameWorld: () => ({ runtimeSessionId: p.runtimeSessionId }) };
@@ -91,7 +92,7 @@ test('fast Scene renders respect 60 Hz with integer WebView timers', async () =>
 });
 test('final camera changes continue at the deadline after dragging stops', async () => {
   const f = fixture(5, false); f.draggingRef.current = true; f.propsRef.current = { ...f.propsRef.current, key: 'camera-b' }; await f.advance(6); f.draggingRef.current = false;
-  await f.advance(40); assert.deepEqual(f.starts.map(s => [s.at, s.key]), [[0, 'camera-a'], [5, 'camera-b']]); assert.deepEqual(Array.from(f.nativeSceneFrameRef.current.camera.eye), ['camera-b', 4, 7]); assert.equal(f.maxActive, 1); f.dispose();
+  await f.advance(40); assert.deepEqual(f.starts.map(s => [s.at, s.key]), [[0, 'camera-a'], [17, 'camera-b']]); assert.deepEqual(Array.from(f.nativeSceneFrameRef.current.camera.eye), ['camera-b', 4, 7]); assert.equal(f.maxActive, 1); f.dispose();
 });
 test('an unchanged static Scene does not create a completion rendering loop', async () => {
   const f = fixture(5, false); await f.advance(95); assert.equal(f.starts.length, 1); assert.equal(f.nativeSceneRequestRef.current.resumeTimer, null); f.dispose();
@@ -240,4 +241,34 @@ test('completion paint coalescing keeps presentation and interaction invalidatio
  }
  const animated=paintFixture(false,{ParticleEmitter3D:{}});animated.env.animationFrame=false;animated.env.completedSceneFrame=true;assert.equal(animated.draw(),'paint');
  const fallback=paintFixture(true);fallback.env.animationFrame=false;fallback.env.completedSceneFrame=true;fallback.env.nativeSceneFrameRef.current=null;assert.equal(fallback.draw(),'paint');fallback.sc.yaw++;assert.equal(fallback.draw(),'paint');
+});
+
+
+test('continuous orbit presents completed cameras while requesting the newest camera', async () => {
+  const f = fixture(24, false); f.draggingRef.current = true;
+  for (let at = 4; at <= 100; at += 4) { await f.advance(at); f.propsRef.current.key = `camera-${at}`; f.paint(true); }
+  assert.ok(f.uploaded.length >= 4, 'continuous input must not starve native presentation');
+  assert.ok(f.maxActive <= 2, 'camera motion retains the bounded in-flight queue');
+  assert.ok(f.uploaded.some(frame => frame.key !== 'camera-a'));
+  f.draggingRef.current = false; await f.advance(160);
+  assert.equal(f.nativeSceneFrameRef.current.camera.eye[0], 'camera-100'); f.dispose();
+});
+
+test('inactive dock Scene discards in-flight pixels and schedules no continuation', async () => {
+  const f = fixture(24); f.env.panelVisibleRef.current = false; await f.advance(100);
+  assert.equal(f.uploaded.length, 0); assert.equal(f.starts.length, 1); assert.equal(f.released, 1);
+  assert.equal(f.nativeSceneRequestRef.current.resumeTimer, null);
+  f.env.panelVisibleRef.current = true; f.paint(); await f.advance(140); assert.ok(f.uploaded.length > 0); f.dispose();
+});
+
+test('dock visibility suspends animation and cancels Scene, Game and preview timers', () => {
+  const start = source.indexOf('  // Continuous render loop'), end = source.indexOf('  const currentNativeGamePaintState', start);
+  const requests = Array.from({length:3}, (_, i) => ({current:{generation:1,resumeTimer:i+1}})), cleared = [];
+  let callback; const env = {useEffect: fn => {callback=fn;}, panelVisible:false, nativeGameRequestRef:requests[0], nativeSceneRequestRef:requests[1], nativeCameraPreviewRequestRef:requests[2], navigationKeysRef:{current:new Set(['KeyW'])}, navigationTimeRef:{current:7}, lastMeasuredPaintRef:{current:{}}, window:{clearTimeout:id=>cleared.push(id)}, requestAnimationFrame:()=>assert.fail('inactive panel must not schedule rAF')};
+  vm.runInNewContext(compile(source.slice(start,end)), env); callback();
+  assert.deepEqual(cleared,[1,2,3]);for(const r of requests){assert.equal(r.current.generation,2);assert.equal(r.current.resumeTimer,null);}
+  assert.equal(env.navigationKeysRef.current.size,0);assert.equal(env.lastMeasuredPaintRef.current,null);
+  const paintStart=source.indexOf('  const paint ='), guard=source.indexOf('    const paintStartedAt',paintStart);
+  const early=vm.runInNewContext(compile(source.slice(paintStart,guard)+' return "paint"; }; paint;'),{panelVisibleRef:{current:false}});
+  assert.equal(early(),undefined);assert.equal(early(false,false,false,true),'paint','explicit captures may render on request');
 });

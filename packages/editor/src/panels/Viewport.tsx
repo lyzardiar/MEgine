@@ -1,5 +1,6 @@
 // Author: MiYu. Editor Scene/Game drawing and interaction with owned native frame presentation.
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { PanelVisibilityContext } from '../panelVisibility';
 import { invoke } from '@tauri-apps/api/core';
 import { dollySceneCamera, flySceneCamera, sceneNavigationKeys } from '../sceneNavigation';
 import { listen } from '@tauri-apps/api/event';
@@ -720,6 +721,9 @@ export function Viewport(props: {
   ) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const panelVisible = useContext(PanelVisibilityContext);
+  const panelVisibleRef = useRef(panelVisible);
+  panelVisibleRef.current = panelVisible;
   const spatialIndexRef = useRef(createViewportSpatialIndex());
   const nativeGpuTimingRevisionRef = useRef(0);
   const nativeGameFrameRef = useRef<{
@@ -1340,7 +1344,7 @@ export function Viewport(props: {
   }, []);
 
   useEffect(() => props.subscribeRuntimeFrames?.(() => {
-    if (propsRef.current.tab !== 'game') return;
+    if (!panelVisibleRef.current || propsRef.current.tab !== 'game') return;
     paint();
     const request = nativeGameRequestRef.current, generation = request.generation;
     const remaining = nativeViewportRequestDelay(request, performance.now(), 1000 / 60);
@@ -1364,6 +1368,17 @@ export function Viewport(props: {
 
   // Continuous render loop
   useEffect(() => {
+    if (!panelVisible) {
+      for (const request of [nativeGameRequestRef.current, nativeSceneRequestRef.current, nativeCameraPreviewRequestRef.current]) {
+        request.generation++;
+        if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
+        request.resumeTimer = null;
+      }
+      navigationKeysRef.current.clear();
+      navigationTimeRef.current = 0;
+      lastMeasuredPaintRef.current = null;
+      return;
+    }
     let raf = 0;
     const frame = (now: number) => {
       if (propsRef.current.tab === 'scene' && !scene2DRef.current && document.activeElement === canvasRef.current && navigationKeysRef.current.size) {
@@ -1383,7 +1398,7 @@ export function Viewport(props: {
       request.resumeTimer = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [panelVisible]);
 
   const currentNativeGamePaintState = (canvas: HTMLCanvasElement, presentationKey: string, vp: ReturnType<typeof letterbox>, dpr: number, playing: boolean): NativeGamePaintState => {
     const frame = nativeGameFrameRef.current;
@@ -1402,6 +1417,7 @@ export function Viewport(props: {
     return request.compatibilityKey === `${projectGeneration}:${compatibilityKey}` && nativeGamePaintUnchanged(previousGamePaintRef.current, currentNativeGamePaintState(canvas, presentationKey, vp, dpr, true));
   };
   const paint = (animationFrame = false, completedSceneFrame = false, resumeSceneRequest = false, captureSceneFrame = false) => {
+    if (!panelVisibleRef.current && !captureSceneFrame) return;
     const paintStartedAt = performance.now();
     if (animationFrame) lastAnimationFrameAtRef.current = paintStartedAt;
     const canvas = canvasRef.current;
@@ -1473,7 +1489,7 @@ export function Viewport(props: {
 
     if (!nativeScene3D && !isGame) clearViewport();
 
-    const vp = isGame
+    let vp = isGame
       ? letterbox(pw, ph, p.gameResolution)
       : { x: 0, y: 0, w: pw, h: ph };
     lastVpRef.current = vp;
@@ -1629,11 +1645,11 @@ export function Viewport(props: {
         )
       : null;
     const sceneRequest = nativeSceneRequestRef.current;
-    syncRequestOwner(sceneRequest, JSON.stringify([p.tab, p.playing, p.runtimeSessionId, nativeSceneIdentity?.key]));
-    const currentSceneRequestKey = (current: ReturnType<typeof currentViewportProps>) => {
+    syncRequestOwner(sceneRequest, JSON.stringify([p.tab, p.playing, p.runtimeSessionId, nativeSceneIdentity?.presentationKey]));
+    const currentScenePresentationKey = (current: ReturnType<typeof currentViewportProps>) => {
       const live = liveCam.current, bounds = canvas.getBoundingClientRect();
       if (current.tab !== 'scene' || scene2DRef.current) return null;
-      return nativeSceneFrameRequestIdentity({ eye: orbitEye(live.pivot, live.yaw, live.pitch, live.distance), target: live.pivot, fovYDeg: 60, projection: 'perspective' }, { w: Math.max(1, Math.floor(bounds.width)), h: Math.max(1, Math.floor(bounds.height)) }, window.devicePixelRatio || 1, current.sceneHiddenIds ?? [], MAX_NATIVE_SCENE_VIEW_DIMENSION).key;
+      return nativeSceneFrameRequestIdentity({ eye: orbitEye(live.pivot, live.yaw, live.pitch, live.distance), target: live.pivot, fovYDeg: 60, projection: 'perspective' }, { w: Math.max(1, Math.floor(bounds.width)), h: Math.max(1, Math.floor(bounds.height)) }, window.devicePixelRatio || 1, current.sceneHiddenIds ?? [], MAX_NATIVE_SCENE_VIEW_DIMENSION).presentationKey;
     };
     const sceneRenderNeeded = (sceneRequest.captures === 0 || captureSceneFrame) && (!completedSceneFrame || now - lastAnimationFrameAtRef.current > 100) && !isGame && !scene2DActive && '__TAURI_INTERNALS__' in window && (draggingRef.current || p.playing || (!sceneRequest.reportedError && nativeSceneFrameRef.current?.key !== nativeSceneIdentity?.key) || now - sceneRequest.lastRequestAt >= 200);
     const sceneRequestInterval = p.playing || now - lastAnimationFrameAtRef.current > 100 ? 1000 / 60 : 0;
@@ -1669,7 +1685,7 @@ export function Viewport(props: {
       }).then((buffer) => {
         if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket)) { releaseNativeViewportFrame(buffer); return; }
         const current = propsRef.current;
-        if (currentSceneRequestKey(current) !== nativeSceneIdentity?.key || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) { releaseNativeViewportFrame(buffer); return; }
+        if ((!panelVisibleRef.current && !captureSceneFrame) || currentScenePresentationKey(current) !== nativeSceneIdentity?.presentationKey || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) { releaseNativeViewportFrame(buffer); return; }
         const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
         recordOwnedNativeViewportProfile('scene', { ...result.profile, deferredRevisionRetries: request.deferredRevisionRetries, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, simulationTiming: p.simulationTiming, transportMs: performance.now() - now });
         request.deferredRevisionRetries = 0;
@@ -1698,8 +1714,8 @@ export function Viewport(props: {
         }
       }).finally(() => {
         finishNativeViewportRequest(request, ticket);
-        // Present Play pixels before yielding to the next request; background Scene views continue without rAF.
-        if (request.generation !== generation || request.reportedError || request.captures > 0 || propsRef.current.tab !== 'scene' || scene2DRef.current) return;
+        // Visible panels present completed pixels even when their WebView throttles rAF.
+        if (!panelVisibleRef.current || request.generation !== generation || request.reportedError || request.captures > 0 || propsRef.current.tab !== 'scene' || scene2DRef.current) return;
         if (!propsRef.current.playing && performance.now() - lastAnimationFrameAtRef.current <= 100) return;
         paint(false, true);
         if (request.full || request.resumeTimer != null || !propsRef.current.playing) return;
@@ -1784,7 +1800,12 @@ export function Viewport(props: {
     if (animationFrame || nativeGamePaint) lastProfilerFrameRef.current = now;
     if (nativeScene3D) clearViewport();
     const nativeSceneFrame = !isGame && !scene2DActive && !nativeSceneRequestRef.current.reportedError ? nativeSceneFrameForPresentation(nativeSceneFrameRef.current, nativeSceneIdentity) : null;
-    if (nativeSceneFrame) cam = nativeSceneFrame.camera;
+    if (nativeSceneFrame) {
+      cam = nativeSceneFrame.camera;
+      // Preserve the displayed camera's aspect for overlays and picking during resize.
+      vp = letterbox(vp.w, vp.h, { width: nativeSceneFrame.width, height: nativeSceneFrame.height });
+      lastVpRef.current = vp;
+    }
     nativeSceneMeshHitRef.current.beginFrame(nativeSceneFrame, vp);
     const displayedWorld = isGame ? nativeGameFrameRef.current?.world : nativeSceneFrame?.world;
     const browserWorld = displayedWorld ?? (editScene ? nativeWorld.frameWorld() : undefined);

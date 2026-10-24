@@ -1330,3 +1330,12 @@ App完成运行帧后触发broadcastScene；此前每次发送后，下一次完
 实际App发送／接收处理器与Store的定向复现：每16ms完成一帧，960ms内原逻辑发送19次，新逻辑29次；990ms内完成30次常规发布并接收最后第60帧，之后无新帧不再发送。另验立即同步在待发送期间插入、后续满33ms才发送、长空档后无需额外33ms等待。17项workspaceSelectionSync测试与TypeScript通过。证据为 `tmp/docs-artifacts/editor-performance-risk/broadcast-cadence-repro.log`（旧逻辑预期失败）、`broadcast-cadence-tests.log`、`broadcast-cadence-types.log`。
 
 当前新批次第2/3项，未原生构建或实测FPS。改动恢复既定发送节拍，也可能增加接收端每秒处理的消息，需在合并验证同时观察Game呈现、Scene延期、前端paint及进程内存。常规发送仍受33ms间隔约束；这不是独立Game达到60FPS的实现或保证，后续需按实际负载继续优化运行数据传递。
+
+
+### 第七十三阶段：Scene连续相机呈现与页签可见性
+
+相机与尺寸仍生成新的请求键，但不使同一世界／隐藏列表的在途帧失效；完成帧按序发布，使用该帧相机及等比例视口绘制与拾取。尺寸／DPI变化期间保留完整原生图像，避免回退成方块。世界、项目、隐藏列表、2D切换和过期序号仍拒绝旧结果。
+
+Dock提供页签可见性，Scene／Game不可见时取消rAF与重试计时器、使在途请求失效，并停止运行通知触发绘制；切回恢复调度。可见的独立窗口仍可在WebView节流时完成绘制，显式截图按请求执行。41项Scene调度／呈现／采样测试与TypeScript通过；连续4ms相机输入、24ms原生延迟仍能持续呈现，隐藏后丢弃在途帧且不再续约，覆盖三类视口定时器清理。证据为scene-interaction-final-tests.log和scene-interaction-types.log，位于tmp/docs-artifacts/editor-performance-risk。前次夹具断言按保留的17ms节拍及生产隐藏入口修正，原日志保留。
+
+这是当前第3/3项，与e468673、5df28a8合并构建／原生验证；尚不宣称实时旋转手感或FPS达标。
