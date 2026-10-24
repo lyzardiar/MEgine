@@ -1481,3 +1481,11 @@ Game在Play期间最多两次延后过期请求，让新世界进入请求槽位
 可见实体直接写入同一数组，MeshRenderer不再读取多余灯光名称和碰撞体字段；排序、独立特效与网格选取规则保留。4项实际代码块定向检查及TypeScript通过。10723候选的3组局部样本准备加排序均值2.537→1.665ms，完整输出一致，详见testing-batches.md及tmp/docs-artifacts/editor-performance-risk/draw-preparation-*。
 
 当前批次3/3，统一原生构建与多窗口／选取／DotA持续场景验证开始。此优化减少CPU准备和短期分配，尚不作为全图Scene或多窗口稳定60FPS结论。
+
+### 第八十六至八十八阶段原生集成结论
+
+102项定向检查、隔离前端和原生生产构建通过；同一固定EXE完成模型热更新／父变换／偏心选取、多窗口重开／版本追赶／Pause／Step／截图／Stop／undo／redo，以及真实DotA持续采样，三份报告均0error、正常退出。版本范围、EXE指纹与复现路径见testing-batches.md，证据B001/spatial-picking-1792816005183、map-session-1792816039577、arbitrary-map-1792816112092。
+
+多窗口5秒样本Scene53.33／Game56.13FPS、paint7.61／2.25ms；采样前额外等待318ms后有当前原生帧，该等待不包含已有固定启动等候与内存采样。实际DotA14437实体，缓存进入2.271秒，Game59.73FPS／paint3.00ms；全图Scene30.37FPS／paint16.74ms、drawItems10723并显示Camera预览。短样本较上次略有改善，未达到多窗口及全图Scene稳定60FPS；稳定Game窗口未出现过期回退，重试分支收益不从该窗口推算。
+
+本批集成完成。后续优先测量全图Scene逐实体准备、相机预览与原生渲染成本，再确定下一项优化；首次renderer冷初始化、长期内存和真实输入延迟继续待查。LOD、完整JASS／DotA玩法仍未实现。

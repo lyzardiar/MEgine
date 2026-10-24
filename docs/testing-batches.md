@@ -982,3 +982,15 @@ Game复用Scene的运行版本过期策略：Play期间前两次过期请求释�
 变更Viewport及viewportDrawPreparation测试。4项实际代码块定向检查与TypeScript通过，覆盖投影外原点的网格、相机／灯光／碰撞体／Tilemap、不同图层的trail／particle／Spine、缺少Game相机及原生Game覆盖。10723候选、10745条目的3组交替先后局部样本，每组40次预热与160次测量，包含排序的准备均值2.537→1.665ms；三组P95为3.053／2.833／3.335→2.107／1.895／2.370ms。旧新实际代码结果逐项一致，所有样本校验和相同。日志和脚本位于tmp/docs-artifacts/editor-performance-risk/draw-preparation-*；局部收益不直接代表整个视口FPS。
 
 本批45c5372、dbd6726及本项达到3/3，统一隔离生产构建及原生验证。范围合并为多窗口重开与版本追赶、Play／Pause／Step／Stop、原生截图、偏心网格／父变换／资源热替换选取，并复测实际DotA全图Scene持续采样。复用已经通过且不受改动影响的导入、地图菜单和层级功能结果。
+
+### 第八十六至八十八阶段合并验证
+
+实现45c5372、dbd6726、db6e418均已提交推送。102项相关定向检查通过；隔离验证43f49c8以0601e1c为基础，只接入后两项生产Viewport差异，前端与原生Release构建通过。固定EXE为tmp/docs-artifacts/editor-performance-risk/build-db6e418/mengine-editor-tauri.exe，SHA256 100de6ddd608d231cfe363f96959fe39ce8e407a52953f32cb11786e397d88ab。未纳入共享工作区并行Unity导入／粒子改动，不代表整个共享HEAD的完整构建。
+
+同一EXE的三份报告全部通过、0控制台error、正常退出：B001/spatial-picking-1792816005183.json覆盖模型热更新、父变换及原点在相机后方的可见网格选取；map-session-1792816039577.json覆盖独立Game重开与版本追赶、多窗口Scene／Game、Pause／Step／快捷键／截图、Stop、后续undo／redo及回停靠；arbitrary-map-1792816112092.json使用实际DotA_v6.83d.w3x、14437实体，验证缓存加载及Game／Scene持续原生采样。选取、Game和Scene图像已检查。
+
+多窗口采样前额外等待318ms有18个当前地图Game原生样本，统计仍在固定2.5秒启动等候和内存采样之后。5秒样本最近240个原生间隔：Scene18.751ms／53.33FPS、P95 34.8ms；Game17.817ms／56.13FPS、P95 28.2ms。浏览器paint均值7.61／2.25ms；前一生产样本53.32／55.53FPS、paint7.75／2.21ms。此轮未出现初测约17秒等待，但不证明全部冷初始化停顿已消除。保留的Game稳定窗口没有过期延后或完整快照回退，不能从该窗口单独估算重试改动收益；其边界由定向测试覆盖。
+
+DotA缓存进入2.271秒；Game5秒采样最近240个原生间隔16.742ms／59.73FPS、P95 22.2ms、浏览器paint3.00ms；全图Scene151个间隔32.925ms／30.37FPS、P95 55.1ms、paint16.74ms，drawItems10723，仍显示选中Camera预览。此前样本Game58.51／Scene28.77FPS、paint3.13／17.71ms；顺序短样本受缓存与系统负载影响，不将所有FPS差异归因于本批优化。
+
+本批相关集成完成，未重跑无关的全库、地图转换或层级测试。用户编辑器未关闭；QA编辑器正常退出，WebView缓存因EPERM保留。原始证据在tmp/docs-artifacts/testing-batches/B001/及editor-performance-risk/draw-batch-*。继续待办：多窗口稳定60FPS、DotA全图Scene和Camera预览成本、首次renderer冷初始化、长期内存与真实输入延迟；LOD及完整DotA JASS玩法仍未实现。
