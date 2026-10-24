@@ -11,24 +11,7 @@ impl SceneSnapshotWorld {
 
     /// Filter source IDs and inactive ancestry before the mirror allocates native entity IDs.
     pub fn update_filtered(&mut self, snapshot: &SharedWorldSnapshot, hidden_ids: &[u64]) -> &World {
-        let hidden: HashSet<_> = hidden_ids.iter().copied().collect();
-        let records: HashMap<_, _> = snapshot.entities.iter().map(|record| (record.entity, record)).collect();
-        let mut active = HashMap::new();
-        let mut filtered = snapshot.clone();
-        filtered.entities.retain(|record| {
-            let mut current = Some(record.entity); let mut allowed = true;
-            let mut path = Vec::new(); let mut visiting = HashSet::new();
-            while let Some(id) = current {
-                if let Some(cached) = active.get(&id) { allowed = *cached; break; }
-                if hidden.contains(&id) { allowed = false; break; }
-                let Some(record) = records.get(&id) else { allowed = false; break; };
-                if !record.active { allowed = false; break; }
-                if !visiting.insert(id) { break; }
-                path.push(id); current = record.parent;
-            }
-            for id in path { active.insert(id, allowed); }
-            allowed
-        });
+        let filtered = filter_scene_snapshot(snapshot, hidden_ids);
         self.mirror.update(&filtered); self.key = None;
         self.mirror.world()
     }
@@ -42,6 +25,28 @@ impl SceneSnapshotWorld {
         }
         Ok(self.mirror.world())
     }
+}
+
+pub(crate) fn filter_scene_snapshot(snapshot: &SharedWorldSnapshot, hidden_ids: &[u64]) -> SharedWorldSnapshot {
+    let hidden: HashSet<_> = hidden_ids.iter().copied().collect();
+    let records: HashMap<_, _> = snapshot.entities.iter().map(|record| (record.entity, record)).collect();
+    let mut active = HashMap::new();
+    let mut filtered = snapshot.clone();
+    filtered.entities.retain(|record| {
+        let mut current = Some(record.entity); let mut allowed = true;
+        let mut path = Vec::new(); let mut visiting = HashSet::new();
+        while let Some(id) = current {
+            if let Some(cached) = active.get(&id) { allowed = *cached; break; }
+            if hidden.contains(&id) { allowed = false; break; }
+            let Some(record) = records.get(&id) else { allowed = false; break; };
+            if !record.active { allowed = false; break; }
+            if !visiting.insert(id) { break; }
+            path.push(id); current = record.parent;
+        }
+        for id in path { active.insert(id, allowed); }
+        allowed
+    });
+    filtered
 }
 
 #[cfg(test)]

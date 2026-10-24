@@ -51,10 +51,10 @@ mod tests {
 
     #[test]
     fn project_release_clears_all_mirror_revisions_and_retained_pick_frames() {
-        use crate::{CAMERA_PREVIEW_SNAPSHOT_WORLD, FILTERED_PLAY_SCENE_WORLD, GAME_SNAPSHOT_WORLD, SCENE_SNAPSHOT_WORLD, native_scene_picking};
+        use crate::{CAMERA_PREVIEW_SNAPSHOT_WORLD, GAME_SNAPSHOT_WORLD, SCENE_SNAPSHOT_WORLD, native_scene_picking};
         use mengine_core::{World, snapshot::WorldSnapshot};
         let mut source = World::new(); source.spawn_empty(); let generation = current();
-        for slot in [&GAME_SNAPSHOT_WORLD, &SCENE_SNAPSHOT_WORLD, &CAMERA_PREVIEW_SNAPSHOT_WORLD, &FILTERED_PLAY_SCENE_WORLD] {
+        for slot in [&GAME_SNAPSHOT_WORLD, &SCENE_SNAPSHOT_WORLD, &CAMERA_PREVIEW_SNAPSHOT_WORLD] {
             let mut mirror = slot.get_or_init(Default::default).lock();
             assert_eq!(mirror.update(Some("retained".into()), Some(WorldSnapshot::from_world(&source))).unwrap().iter_entities().count(), 1);
         }
@@ -62,7 +62,7 @@ mod tests {
         let token = native_scene_picking::publish(owner.clone(), Some(mengine_rhi::MeshPickFrame { camera: mengine_rhi::FrameCamera { view: Default::default(), proj: Default::default(), position: Default::default() }, objects: vec![] })).unwrap();
         crate::release_project_viewports(); assert!(enter(generation).is_err());
         assert!(native_scene_picking::read(&owner, &token).is_none());
-        for slot in [&GAME_SNAPSHOT_WORLD, &SCENE_SNAPSHOT_WORLD, &CAMERA_PREVIEW_SNAPSHOT_WORLD, &FILTERED_PLAY_SCENE_WORLD] {
+        for slot in [&GAME_SNAPSHOT_WORLD, &SCENE_SNAPSHOT_WORLD, &CAMERA_PREVIEW_SNAPSHOT_WORLD] {
             assert!(slot.get().unwrap().lock().update(Some("retained".into()), None).is_err());
         }
     }

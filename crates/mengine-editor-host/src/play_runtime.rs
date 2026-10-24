@@ -286,24 +286,38 @@ impl EditorPlayRuntime {
         self.render_revision_from_world(generation, revision, &self.scene_render_world, render)
     }
 
+    /// Filter the exact published revision into the session-owned Scene mirror and publish source picking IDs.
+    pub fn submit_scene_revision_with_filter(&self, generation: u64, revision: Option<u64>, hidden_ids: Vec<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<crate::EditorViewportSubmission, String> + Send + 'static) -> Result<crate::EditorViewportSubmission, String> {
+        let published = self.published_snapshot(generation, revision)?;
+        self.render_published_snapshot_with_filter(generation, revision, published, &self.scene_render_world, Some(&hidden_ids), render)
+    }
+
     pub fn submit_preview_revision_with_snapshot(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<crate::EditorViewportSubmission, String> + Send + 'static) -> Result<crate::EditorViewportSubmission, String> {
         self.render_revision_from_world(generation, revision, &self.preview_render_world, render)
     }
 
     fn render_revision_from_world<T: AsMut<EditorViewportFrame>>(&self, generation: u64, revision: Option<u64>, render_world: &PlayRenderWorld, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<T, String> + Send + 'static) -> Result<T, String> {
-        let published = if let Some(revision) = revision {
-            let history = self.render_history.lock();
-            if self.generation() != generation { return Err("Play session expired".into()); }
-            history.as_ref().filter(|(id, _)| *id == generation).ok_or_else(|| "Play session expired".to_string())?.1.snapshot(revision)?
-        } else {
-            let (reply, result) = mpsc::channel();
-            self.sender.send(Request::RenderSnapshot { generation, revision, reply }).map_err(|error| error.to_string())?;
-            result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play rendering: {error}"))??
-        };
+        let published = self.published_snapshot(generation, revision)?;
         self.render_published_snapshot(generation, revision, published, render_world, render)
     }
 
+    fn published_snapshot(&self, generation: u64, revision: Option<u64>) -> Result<PlayRenderSnapshot, String> {
+        if let Some(revision) = revision {
+            let history = self.render_history.lock();
+            if self.generation() != generation { return Err("Play session expired".into()); }
+            history.as_ref().filter(|(id, _)| *id == generation).ok_or_else(|| "Play session expired".to_string())?.1.snapshot(revision)
+        } else {
+            let (reply, result) = mpsc::channel();
+            self.sender.send(Request::RenderSnapshot { generation, revision, reply }).map_err(|error| error.to_string())?;
+            result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play rendering: {error}"))?
+        }
+    }
+
     fn render_published_snapshot<T: AsMut<EditorViewportFrame>>(&self, generation: u64, revision: Option<u64>, published: PlayRenderSnapshot, render_world: &PlayRenderWorld, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<T, String>) -> Result<T, String> {
+        self.render_published_snapshot_with_filter(generation, revision, published, render_world, None, render)
+    }
+
+    fn render_published_snapshot_with_filter<T: AsMut<EditorViewportFrame>>(&self, generation: u64, revision: Option<u64>, published: PlayRenderSnapshot, render_world: &PlayRenderWorld, hidden_ids: Option<&[u64]>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<T, String>) -> Result<T, String> {
         let (snapshot, step_ms, stages) = published;
         let waiting = Instant::now();
         let mut mirror = render_world.lock().map_err(|error| format!("Play render world: {error}"))?;
@@ -311,12 +325,14 @@ impl EditorPlayRuntime {
         if self.generation() != generation { return Err("Play session expired".into()); }
         let started = Instant::now();
         if mirror.0 != generation { *mirror = (generation, mengine_scene::SharedSnapshotWorld::default()); }
-        mirror.1.update(&snapshot);
+        let filtered = hidden_ids.filter(|ids| !ids.is_empty()).map(|ids| crate::scene_snapshot_world::filter_scene_snapshot(&snapshot, ids));
+        mirror.1.update(filtered.as_ref().unwrap_or(&snapshot));
         let world_sync_ms = started.elapsed().as_secs_f64() * 1000.0;
         let frame = render(mirror.1.world(), &snapshot);
         if self.generation() != generation { return Err("Play session expired".into()); }
         let mut output = frame?;
         let frame = output.as_mut();
+        if let Some(picking) = frame.mesh_picking.as_mut().filter(|_| hidden_ids.is_some()) { picking.remap_entities(|id| mirror.1.source_entity(id)); }
         frame.profile.world_lock_wait_ms = Some(world_lock_wait_ms);
         frame.profile.world_sync_ms = Some(world_sync_ms + frame.profile.world_sync_ms.unwrap_or(0.0));
         frame.profile.simulation_ms = Some(step_ms);
@@ -325,6 +341,10 @@ impl EditorPlayRuntime {
         Ok(output)
     }
 }
+
+#[cfg(test)]
+#[path = "play_filtered_scene_tests.rs"]
+mod filtered_scene_tests;
 
 struct PlaySession {
     quit_requested: bool,

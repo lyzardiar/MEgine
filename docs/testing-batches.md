@@ -1499,3 +1499,13 @@ V8与QuickJS各7项定向检查通过，普通入口各忽略1项手动基准；
 版本2内存采样已完成同进程的短流程取证：DotA进程树私有内存关闭前6922.62MiB、关闭工程2288.21MiB、重新打开2868.11MiB，均7个进程。多窗口为起点5258.24MiB／7个进程、三面板7200.43MiB／10个、重载地图7628.28MiB／10个、Stop并停靠6624.68MiB／7个、第二次Stop6382.27MiB／7个（约6.23GiB）。采样逐项核对创建时间、成员类型及私有字节总和；旧PID-only结果不参与比较。两次Stop后仍高于本次起点，尚未证明长期稳定或解决驻留问题；working set不用于求独占内存，孤儿进程不在统计范围。
 
 本批功能／连续帧及版本2短期采样范围完成，下一批独立任务计数0/3。前述115／116的层级、组件／引用／Timeline定向结果及117的动态UI／回退／GPU像素结果按无相关改动复用，本次没有把它们改写为新增原生交互覆盖。原始日志component-ui-node-batch-*、冻结程序与收据build-ec31723、所有PNG／JSON均在tmp/docs-artifacts；docs仅保留结论。后续优先来源校验尖峰与多窗口整帧、Stop后驻留；长期内存、LOD、姿态聚焦／alpha选取及完整JASS／War3保真继续未完成。
+
+### 第一百一十九阶段／编辑器新批次任务1/3：过滤Scene镜像归属播放会话
+
+变更editor-host的play_runtime.rs／scene_snapshot_world.rs及新增play_filtered_scene_tests.rs，Tauri的lib.rs／native_viewport_lifetime.rs同步接入。按隐藏列表与祖先活动状态过滤发布快照，再直接更新播放会话拥有的同一份Scene世界；原始发布快照仍交给回调，Game／Camera Preview保留各自世界。源ID选取映射在Scene镜像锁内完成，包含隐藏／恢复后实体槽代次变化。Stop／重启沿用会话的镜像退役与代次检查，移除项目级FILTERED_PLAY_SCENE_WORLD及重复的完整世界物化；不在Stop重建GPU设备。
+
+37项针对性检查通过：新增3项（含1项真实GPU）、既有3项过滤／编辑镜像、29项播放生命周期及Tauri的2项项目视口释放。普通播放检查另忽略4项既有手动基准，新模块忽略1项新增基准；新增基准已单独执行通过。验证闲置Stop释放记录的Weak引用、忙帧与Stop／重启交错及旧Stop不清除新会话、Game／Preview隔离，以及6阶段隐藏／恢复、Transform／父级／活动修改、反向请求旧revision的完整RGBA和384次选取对照。Tauri测试同时完成当前接入代码的编译；未重跑完整地图QA或打包构建。日志owned-filtered-world-{tests,runtime-compatibility,tauri-compatibility}.log位于tmp/docs-artifacts/editor-performance-risk。
+
+以摘要匹配的14437实体DotA地图快照、独立预热镜像、9组每组40次交错更新作CPU对照，计时后比较完整WorldSnapshot。541d0c2的完整镜像后再过滤策略与当前实现均包含镜像锁、快照释放及回调路径。旧／新中位数：无过滤0.327828／0.311750ms，静态过滤2.516355／2.144865ms，过滤并交替修改64个Transform为2.670120／2.196878ms。过滤场景中渲染镜像实体合计从25188降到10751，消除一份14437实体的完整渲染镜像；这不是进程私有内存字节或实际FPS测量。命令：设置MENGINE_FILTERED_SCENE后运行cargo test -p mengine-editor-host --release --lib benchmark_owned_filtered_scene_world -- --ignored --nocapture；输入与源码摘要为owned-filtered-world-summary.json。调整两路径计时范围前的诊断日志独立保留，不用作最终结论。
+
+当前新批次1/3。第三项后统一原生验证隐藏／恢复、变更父级与活动、普通／过滤Scene及相机预览切换、选取源ID、Pause／Step／Stop与项目关闭重开，并以版本2采样重复Stop驻留。最近完整原生程序仍为ec31723，本项尚未证明其可回收多少进程内存；长期驻留、来源校验尖峰、多窗口稳定60、LOD和完整War3保真继续待办。
