@@ -1707,3 +1707,8 @@ DotA关闭前／欢迎页／重开PrivateBytes为6779.38／2508.22／3518.96MiB�
 ### 第一百零八阶段：按需计算Game呈现标记
 
 固定显示记录的Spine与交互快照标记按首次读取计算并缓存，Scene免除未使用的两次全量扫描；无Spine的Game帧不再重复收集空条目。局部active、非活动Spine、旧帧和字段枚举语义保留。27项定向检查和TypeScript通过。实际DotA作者场景新不透明修订准备微基准2.003232→1.510236ms，透明2.645024→2.182571ms；Game标记／Spine条目0.701847→0.525838ms。完整范围及本地证据见testing-batches.md与tmp/docs-artifacts/editor-performance-risk/presentation-flags-*；不是FPS测量。批次2/3，实际原生与多窗口验收在第三项后合并执行。
+
+
+### 第一百零九阶段：复用未变化的Scene UI输入与画布
+
+固定显示记录的UI子集按记录身份及顺序复用；场景Canvas像素缓存依据该子集，避免无关世界修订触发栅格重建。UI／父节点／相机／层级／画布范围、资源事件与250ms刷新继续失效，投影／选择／标签仍逐帧执行。18项定向检查和TypeScript通过；实际DotA的7个UI相关实体模拟120次无关更新，数组120→1、布局缓存失效120→8，完整布局一致。这是计数验证，不是CPU或FPS结果。证据owned-scene-ui-*及细节见testing-batches.md。107–109批次达到3/3，开始统一原生构建与实际DotA／多窗口验收。

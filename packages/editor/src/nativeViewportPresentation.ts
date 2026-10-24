@@ -21,6 +21,12 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
   let presentation: ReturnType<typeof prepare> | undefined;
   const readTransforms = createOwnedWorldTransformReader();
   const readSceneUiEntities = createSceneUiEntityReader<E>();
+  let previousUiEntities: E[] | undefined;
+  const readOwnedUiEntities = (entities: E[]) => {
+    const current = readSceneUiEntities(entities);
+    if (!previousUiEntities || current.length !== previousUiEntities.length || current.some((entity, index) => entity !== previousUiEntities![index])) previousUiEntities = current;
+    return previousUiEntities;
+  };
   const readActive = createOwnedHierarchyActiveReader();
   function prepare(world: NativeViewportFrameWorld<E>) {
     const active = readActive(world.entities);
@@ -89,7 +95,7 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
           return !!(c.Camera2D || c.Camera3D || c.SpineSkeleton || !c.MeshRenderer && (c.PointLight || c.SpotLight || c.Light2D || c.DirectionalLight));
         }, sceneFrame?.transforms);
       },
-      sceneUiEntities() { return uiEntities ??= readSceneUiEntities(world.entities); },
+      sceneUiEntities() { return uiEntities ??= readOwnedUiEntities(world.entities); },
       gameCamera(preview: TimelineCameraPreview | null | undefined, display: number) {
         const input = [!!preview, preview?.source, preview?.target, preview?.weight, display];
         if (!cameraInput || input.some((value, index) => !Object.is(value, cameraInput![index]))) { camera = timelineGameCamera(world.entities, preview, active, display); cameraInput = input; }

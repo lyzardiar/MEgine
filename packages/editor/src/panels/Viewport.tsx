@@ -3268,13 +3268,13 @@ export function Viewport(props: {
           if (sceneSurface) {
             const key = JSON.stringify([sceneSurface.bounds, sceneSurface.items.map(item => item.entity)]);
             let cached = sceneCanvasSurfaceRef.current;
-            if (!cached || cached.source !== p.entities || cached.key !== key || now - cached.updatedAt >= 250) {
+            if (!cached || cached.source !== uiSource || cached.key !== key || now - cached.updatedAt >= 250) {
               const layer = cached?.canvas ?? document.createElement('canvas');
               layer.width = Math.ceil(sceneSurface.bounds.w); layer.height = Math.ceil(sceneSurface.bounds.h);
               const context = layer.getContext('2d')!;
               context.translate(-sceneSurface.bounds.x, -sceneSurface.bounds.y);
               const localStats = drawUiItems(context, sceneSurface.items.filter(item => item.role !== 'canvas'), null, null);
-              cached = { source: p.entities, key, updatedAt: now, canvas: layer, stats: localStats };
+              cached = { source: uiSource, key, updatedAt: now, canvas: layer, stats: localStats };
               sceneCanvasSurfaceRef.current = cached;
             }
             drawSceneCanvasSurface(ctx, sceneSurface, cached.canvas, cached.updatedAt);

@@ -1316,3 +1316,14 @@ B001/map-session-1792840827243.json通过7434实体的三窗口重开／修订�
 新增5项和既有22项定向检查通过，TypeScript通过；日志presentation-flags-{tests,typecheck}.log。实际DotA作者场景14437实体，对照58457db的独立读取器12轮交替／排除2轮预热，10组各120帧：新不透明修订浏览器准备2.003232→1.510236ms，透明2.645024→2.182571ms；仅Game标记与Spine条目读取0.701847→0.525838ms。绘制输入、完整浏览器命中／边界／顺序一致，即时6节点／1条目、完整命中5371条目未变；此作者夹具无Spine与交互控件。计时不含完整Canvas／UI、原生渲染、模拟及IPC，不是实际FPS。复现与摘要presentation-flags-{bench.mjs,benchmark.log,benchmark-summary.json}保留于tmp/docs-artifacts/editor-performance-risk。
 
 当前批次2/3，第三项后统一构建与原生验收；增加无Spine的Game、含Spine与交互控件的快照路径、场景修订／相机单独发布及透明切换，合并107的实际DotA与多窗口检查。最近真实运行仍为9c251d1，稳定满帧与长期驻留继续待办。
+
+
+### 第一百零九阶段／编辑器批次任务3/3：复用未变化的Scene UI输入与画布
+
+变更packages/editor/src/nativeViewportPresentation.ts、panels/Viewport.tsx及nativeSceneUiReuse.test.mjs。固定显示帧的UI子集在记录身份、数量与顺序完全一致时复用数组，避免无关网格／特效修订使布局缓存失效。场景Canvas栅格缓存按该UI子集而非整个世界数组判断来源；投影、选择和标签仍每帧绘制。UI记录、保留祖先／相机、层级、根节点、顺序或画布范围改变仍重建；原有250ms刷新与资源事件清理保留。可变编辑数据不进入拥有固定记录的呈现读取器，通用UI子集读取器语义不变。
+
+新增3项与既有15项定向检查、TypeScript通过，包含实际retainPlayWorldPatch增量、旧帧、UI文字／激活／相机／层级／根变更、空子集、完整布局对照及生产Viewport画布分支执行。该分支验证无关世界不重绘像素、UI／范围改变、250ms刷新与资源失效后重绘，而投影／选择／标签每次执行。日志owned-scene-ui-{tests,typecheck}.log。
+
+实际DotA作者场景14437实体、7个UI相关实体，120次模拟60Hz无关特效修订，UI子集数组120→1份；按生产250ms条件的布局缓存重建120→8次。子集值／当前记录所有权及完整屏幕／世界UI布局一致。该计数并非CPU或FPS测量，含UI／相机记录变化的帧仍会重建。脚本owned-scene-ui-counts.mjs、摘要json和日志位于tmp/docs-artifacts/editor-performance-risk。
+
+107（含补充）、108、109现达3/3。接下来统一前端及Tauri Release构建，复验实际DotA的原生选取、首次延迟命中、透明／姿态／资源热更、Game含控件／Spine、项目重开与多窗口；采样paintStages.world／ui、持续FPS和内存。复用未受影响的导入转换与全量资产检查；未完成集成前不将上述源代码检查写成实际运行验收。
