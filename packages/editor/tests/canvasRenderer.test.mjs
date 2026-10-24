@@ -273,6 +273,22 @@ function imageItem(canvasRenderer, color = [1, 1, 1, 0]) {
   return { entities, item: items.find((candidate) => candidate.entity === 2), items };
 }
 
+test('Canvas reports active ColorTint samples until the disabled transition settles', (t) => {
+  let clock = 0, animations = 0;
+  t.mock.method(globalThis.performance, 'now', () => clock);
+  const { entities } = imageItem({}, [1, 1, 1, 1]);
+  entities[1].components.Button = { transition: 'ColorTint', fade_duration: .1, normal_color: [1, 1, 1, 1], disabled_color: [.5, .5, .5, 1] };
+  const ctx = new FakeCanvas(new FakeDocument(), 'tint').context;
+  const draw = () => drawUiItems(ctx, layoutUiOverlay(entities, { x: 0, y: 0, w: 100, h: 100 }, new Set()), null, null, { onAnimation: () => animations++ });
+  draw(); assert.equal(animations, 0, 'initial normal color is already settled');
+  entities[1].components.Button.interactable = false;
+  clock = 10; draw(); assert.equal(animations, 1);
+  clock = 60; draw(); assert.equal(animations, 2);
+  clock = 109; draw(); assert.equal(animations, 3);
+  clock = 111; draw(); assert.equal(animations, 3, 'no redundant redraw after the target color');
+  clock = 200; draw(); assert.equal(animations, 3);
+});
+
 test('CanvasRenderer defaults to culling fully transparent legacy Graphic geometry', () => {
   const { item, items } = imageItem(undefined);
   assert.ok(item);

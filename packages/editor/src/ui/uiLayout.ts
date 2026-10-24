@@ -2521,6 +2521,9 @@ export function layoutUiScene3D(
 
       const itemSceneScale = drawWidth / Math.max(0.0001, it.rect.w);
       const sceneItem = scaleSceneVisuals(it, itemSceneScale);
+      if (sceneItem.image && sceneItem.button?.transition.toLowerCase() === 'spriteswap') {
+        sceneItem.image.alphaHitTestSprite = buttonTargetSprite(sceneItem.image.sprite, buttonVisualState(sceneItem.button.interactable, false, false, false), sceneItem.button.spriteState);
+      }
       const maskRegions = it.maskRegions?.flatMap((mask) => {
         const maskCorners = pixelCorners(mask.rect, mask.rotation, mask.pivot)
           .map(([px, py]) => projectPoint(pixelToWorld(px, py)));
@@ -3567,6 +3570,7 @@ export function drawUiItems(
     focusId?: number | null;
     customOnly?: boolean;
     customDraw?: (ctx: CanvasRenderingContext2D, item: UiDrawItem) => void;
+    onAnimation?: () => void;
   },
 ) {
   const showLabel = !!opts?.sceneLabel;
@@ -3786,6 +3790,7 @@ export function drawUiItems(
         [{ ...mask, mask: undefined, maskStack: [], selected: false }],
         null,
         null,
+        { onAnimation: opts?.onAnimation },
       );
       content.save();
       content.setTransform(1, 0, 0, 1, 0, 0);
@@ -4033,6 +4038,7 @@ export function drawUiItems(
         now,
       );
       buttonTints.set(it.entity, tween);
+      if (tween.current.some((channel, index) => channel !== tween.target[index])) opts?.onAnimation?.();
       [r, g, b, a] = multiplyButtonTint([r, g, b, a], tween.current);
     }
 

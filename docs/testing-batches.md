@@ -1467,3 +1467,13 @@ B001/map-session-1792852382058的7项多窗口／Stop后重启检查通过，Sce
 14437实体地图输入、固定9f352cb入口、独立预热镜像、9组每组40次交替更新，计时外核对全部值与源ID映射。旧／新同步CPU中位数：无记录变化0.275298／0.286840ms，64条网格变化0.475627／0.331977ms，64条Transform变化0.456593／0.322547ms，512条网格变化2.586083／0.963520ms，64条名字／标签／层变化0.454575／0.321267ms。测量不含脚本、IPC、层级构建和GPU，不是实际FPS；静态样本增加0.011542ms。设置MENGINE_HIERARCHY_PROJECT及MENGINE_HIERARCHY_SCENE后运行cargo test -p mengine-scene --release --lib benchmark_snapshot_component_deltas -- --ignored --nocapture，日志及输入／源码摘要component-delta-world-*位于tmp/docs-artifacts/editor-performance-risk。
 
 当前独立批次1/3，115稀疏层级补充一并待原生集成。第三项后统一构建，验证实际DotA／多窗口连续帧、姿态／材质／组件增删、实体引用和UI事件／Timeline、选择／父子切换、Pause／Step／Stop及项目关闭重开；使用版本2采样器继续Stop／长期驻留比较。本次未重跑整库测试、完整地图QA或Tauri构建，最新完整原生验收仍为5e507b6。稳定60FPS、LOD与完整War3保真继续未完成。
+
+### 第一百一十七阶段／编辑器新批次任务2/3：播放Scene复用覆盖层Canvas
+
+变更Viewport.tsx、uiLayout.ts及3份相关检查。原生3D Scene在播放时也使用既有单覆盖层Canvas的布局与整张纹理投影缓存；保留每帧相机／视口投影、独立逐Graphic命中几何、选择框和Canvas名称。UI记录、逻辑分辨率、选择、资源事件或250ms异步资源刷新使相应缓存失效。Spine／Effekseer、展开下拉、Canvas遮罩、多Canvas及Camera／WorldSpace继续沿用逐图元路径。ColorTint尚未到达目标色时通知缓存逐帧重绘，结束后恢复像素复用；SpriteSwap的Scene命中数据直接解析当前Normal／Disabled纹理，不依赖逐图元绘制写回。
+
+新增检查先在旧代码复现播放状态没有surface。42项针对性前端检查、4项既有投影兼容检查及TypeScript通过。覆盖真实生产准备分支、40次无关播放记录变化、相机／尺寸立即重新投影、选择／分辨率／资源刷新、编辑／播放与非原生模式转换、7类回退及恢复、禁用SpriteSwap命中源，以及ColorTint连续采样和结束后复用。命令：node --test packages/editor/tests/{nativePlaySceneUi,nativeSceneUiReuse,canvasRenderer,sceneCanvasProjection,uiMultiCanvasLayout}.test.mjs（PowerShell逐项传入文件名）；兼容检查用canvasRenderModes.test.mjs的single overlay Canvas surfaces、large offscreen text、Canvas masks retain、projected Canvas selection名称筛选。日志play-scene-ui-{before,tests,typecheck,layout-compatibility}.log位于tmp/docs-artifacts/editor-performance-risk。
+
+独立Chrome夹具执行生产准备／光栅代码及实际AMD RX6800XT／ANGLE D3D11 WebGL。50次缓存与强制重新光栅化的完整RGBA对照通过，逐项核对命中几何和实际选取；包含相机、resize、选择、文字、分辨率、250ms刷新、资源清理和近面裁切。最初41个UI未变的播放帧只准备一次覆盖层、上传一次纹理并执行一次GPU投影，画面仍每帧合成；全部50个状态共9次GPU投影／7次上传，强制重新光栅化参考为50／50。该夹具不是完整编辑器地图、CPU耗时或FPS测量。截图已检查，报告、PNG、源码摘要及复现脚本保存在tmp/docs-artifacts/editor-performance-risk/play-scene-ui-gpu-1792859134602及verify-play-scene-ui-gpu.mjs；两次早期夹具路由／比较元数据诊断保留原始失败证据。
+
+本项修复播放路径的缓存缺口，作为独立任务117；当前116、117为2/3。第三项后统一正确Release，测量实际DotA的Scene UI／paint／原生连续帧及Game、多窗口，并复验按钮变化／自定义动画／遮罩、resize／旋转／选择、Pause／Step／Stop／重开；与115稀疏补充、116组件增量及版本2驻留采样一起集成。本次未重跑完整地图QA、Tauri构建或全量资产；最新完整原生结果仍为5e507b6，尚不能证明本项提高地图FPS。

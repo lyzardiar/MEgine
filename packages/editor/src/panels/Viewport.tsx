@@ -770,7 +770,7 @@ export function Viewport(props: {
     counts: new Map(),
     diagnostics: new Map(),
   });
-  const sceneCanvasSurfaceRef = useRef<{ source: Ent[]; key: string; updatedAt: number; canvas: HTMLCanvasElement; stats: ReturnType<typeof drawUiItems> } | null>(null);
+  const sceneCanvasSurfaceRef = useRef<{ source: Ent[]; key: string; updatedAt: number; canvas: HTMLCanvasElement; stats: ReturnType<typeof drawUiItems>; animating: boolean } | null>(null);
   const uiLayoutScaleRef = useRef(1);
   const usingRectGizmoRef = useRef(false);
   const uiHoverRef = useRef<number | null>(null);
@@ -3202,7 +3202,7 @@ export function Viewport(props: {
           const sceneCanvasSize = sceneCanvasLogicalSize(p.gameResolution, gameBox);
           let overlayLayout: SceneUiOverlayLayout | undefined;
           const overlayCanvases = uiSource.filter(entity => entity.components.Canvas);
-          if (editScene && overlayCanvases.length === 1 && String((overlayCanvases[0].components.Canvas as { render_mode?: string; renderMode?: string }).render_mode ?? (overlayCanvases[0].components.Canvas as { renderMode?: string }).renderMode ?? 'ScreenSpaceOverlay') === 'ScreenSpaceOverlay') {
+          if (nativeScene3D && overlayCanvases.length === 1 && String((overlayCanvases[0].components.Canvas as { render_mode?: string; renderMode?: string }).render_mode ?? (overlayCanvases[0].components.Canvas as { renderMode?: string }).renderMode ?? 'ScreenSpaceOverlay') === 'ScreenSpaceOverlay') {
             const key = JSON.stringify([sceneCanvasSize, [...selSet].sort((a, b) => a - b)]);
             let cached = sceneOverlayLayoutRef.current;
             if (!cached || cached.source !== uiSource || cached.key !== key || now - cached.updatedAt >= 250) {
@@ -3221,7 +3221,7 @@ export function Viewport(props: {
             overlayLayout,
           );
           layoutScale = screenLayout.layoutScale;
-          if (editScene) sceneSurface = screenLayout.surface;
+          if (nativeScene3D) sceneSurface = screenLayout.surface;
           uiItems = [
             ...layoutUiWorldSpace(uiSource, cam, vp, selSet, textMeasurement),
             ...screenLayout.items,
@@ -3268,13 +3268,14 @@ export function Viewport(props: {
           if (sceneSurface) {
             const key = JSON.stringify([sceneSurface.bounds, sceneSurface.items.map(item => item.entity)]);
             let cached = sceneCanvasSurfaceRef.current;
-            if (!cached || cached.source !== uiSource || cached.key !== key || now - cached.updatedAt >= 250) {
+            if (!cached || cached.source !== uiSource || cached.key !== key || cached.animating || now - cached.updatedAt >= 250) {
               const layer = cached?.canvas ?? document.createElement('canvas');
               layer.width = Math.ceil(sceneSurface.bounds.w); layer.height = Math.ceil(sceneSurface.bounds.h);
               const context = layer.getContext('2d')!;
               context.translate(-sceneSurface.bounds.x, -sceneSurface.bounds.y);
-              const localStats = drawUiItems(context, sceneSurface.items.filter(item => item.role !== 'canvas'), null, null);
-              cached = { source: uiSource, key, updatedAt: now, canvas: layer, stats: localStats };
+              let animating = false;
+              const localStats = drawUiItems(context, sceneSurface.items.filter(item => item.role !== 'canvas'), null, null, { onAnimation: () => { animating = true; } });
+              cached = { source: uiSource, key, updatedAt: now, canvas: layer, stats: localStats, animating };
               sceneCanvasSurfaceRef.current = cached;
             }
             drawSceneCanvasSurface(ctx, sceneSurface, cached.canvas, cached.updatedAt);

@@ -63,12 +63,12 @@ test('production Scene surface reuses pixels across unrelated worlds and redraws
   const end = source.indexOf('stats = cached.stats;', start) + 'stats = cached.stats;'.length;
   assert.ok(start >= 0 && end > start);
   const body = ts.transpileModule(source.slice(start, end), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-  let raster = 0, project = 0, select = 0, labels = 0;
+  let raster = 0, project = 0, select = 0, labels = 0, animating = false;
   const draw = new Function('p', 'uiSource', 'sceneSurface', 'now', 'sceneCanvasSurfaceRef', 'document', 'drawUiItems', 'drawSceneCanvasSurface', 'drawSceneUiSelection', 'ctx', 'uiItems', 'let stats;\n' + body + '\nreturn stats;');
   const document = { createElement: () => ({ getContext: () => ({ translate() {} }) }) }, ref = { current: null };
   const ui = [{ entity: 1, role: 'canvas' }, { entity: 2, role: 'graphic', text: { text: 'old' } }], uiSource = [{ entity: 1, components: {} }];
   const surface = { bounds: { x: 0, y: 0, w: 800, h: 600 }, items: ui };
-  const paint = (p, source, s, now) => draw(p, source, s, now, ref, document, (_ctx, items, _a, _b, options) => { if (options?.sceneLabel) labels++; else { raster++; assert.ok(items.every(item => item.role !== 'canvas')); } return { primitives: items.length, batches: 1 }; }, () => project++, () => select++, {}, ui);
+  const paint = (p, source, s, now) => draw(p, source, s, now, ref, document, (_ctx, items, _a, _b, options) => { if (options?.sceneLabel) labels++; else { raster++; assert.ok(items.every(item => item.role !== 'canvas')); if (animating) options.onAnimation(); } return { primitives: items.length, batches: 1 }; }, () => project++, () => select++, {}, ui);
   const stats = paint({ entities: [] }, uiSource, surface, 0);
   assert.equal(paint({ entities: [{}] }, uiSource, surface, 100), stats); assert.equal(raster, 1);
   assert.equal(project, 2); assert.equal(select, 2); assert.equal(labels, 2, 'projection, selection and labels still draw every frame');
@@ -76,4 +76,8 @@ test('production Scene surface reuses pixels across unrelated worlds and redraws
   paint({}, ref.current.source, { ...surface, bounds: { ...surface.bounds, w: 640 } }, 120); assert.equal(raster, 3);
   paint({}, ref.current.source, { ...surface, bounds: { ...surface.bounds, w: 640 } }, 370); assert.equal(raster, 4, 'periodic async resource refresh remains');
   ref.current = null; paint({}, uiSource, surface, 380); assert.equal(raster, 5, 'resource event cache invalidation remains effective');
+  animating = true; paint({}, [...uiSource], surface, 390); assert.equal(raster, 6);
+  paint({}, ref.current.source, surface, 400); assert.equal(raster, 7, 'active transitions redraw each displayed frame');
+  animating = false; paint({}, ref.current.source, surface, 410); assert.equal(raster, 8, 'the final animation sample is rasterized');
+  paint({}, ref.current.source, surface, 420); assert.equal(raster, 8, 'settled transitions resume pixel reuse');
 });
