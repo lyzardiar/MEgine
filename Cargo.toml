@@ -21,6 +21,10 @@ default-members = [
     "crates/mengine-runtime",
     "crates/mengine-idl",
 ]
+exclude = ["third_party/wgpu"]
+
+[patch.crates-io]
+wgpu = { path = "third_party/wgpu" }
 
 [workspace.package]
 version = "0.1.0"

@@ -574,6 +574,10 @@ struct MaterialTextureGpu {
 #[path = "material_submission_tests.rs"]
 mod material_submission_tests;
 
+#[cfg(test)]
+#[path = "material_texture_lifetime_tests.rs"]
+mod material_texture_lifetime_tests;
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct MaterialTextureSetKey {
     base_color: String,

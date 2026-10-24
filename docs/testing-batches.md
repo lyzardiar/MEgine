@@ -1581,3 +1581,19 @@ DotA14437实体，缓存进入3.312秒，上次同流程2.334秒，本次没有�
 同次多窗口起点5229.46MiB／7进程、三面板6983.55MiB／10进程、地图重载7804.50MiB／10进程、Stop停靠6706.99MiB／7进程、第二次Stop6486.88MiB／7进程。各延伸轮Stop后再等20秒时部分内存回落，因此使用三个同等空闲点作重复趋势比较。DotA关闭前6788.89MiB、关闭工程2688.39MiB、重开3324.23MiB，均7进程。不同运行的私有内存差异不作单项改动因果对照；旧PID-only结果不参与比较，working set不当独占字节，孤儿进程不在范围。
 
 本批功能／连续帧及延伸采样已执行完，下一批独立计数0/3；重复驻留增长保留在失败／待修队列，优先继续定位其原生所有者或分配保留路径。原始PNG／JSON／日志及build-036f284收据都在tmp/docs-artifacts，docs只保存结论。稳定60、多窗口整帧、来源校验尖峰、长期内存、LOD、姿态聚焦／alpha选取和完整JASS／War3保真继续待办。
+
+
+### 第一百二十五阶段／编辑器新批次任务1/3：原生渲染包资源退役
+
+工作区通过 Cargo.toml／Cargo.lock 固定使用 third_party/wgpu 的 24.0.5 副本。上游 gfx-rs/wgpu 的 99e6524b2b03cc35733f199bb5cb28787e8d42de 提交、crates.io 包校验值、179份原始文件哈希及双许可证均保留，维护入口 README-MENGINE.md。上游原生 CoreRenderBundle 只保存ID，没有释放实现；API句柄消失后，core表仍持有渲染包及其材质纹理。补丁仅让该包装保存context，在最后一个API句柄释放时调用 render_bundle_drop。已提交命令的core跟踪器保留正常所有权，不提前销毁纹理，不增加GPU等待，不改变缓存容量／淘汰规则。
+
+新增RHI的 material_texture_lifetime_tests.rs 及模块入口。2项真实GPU回归通过：上传／提交后不先等待GPU即移除纹理，12个空帧及完成等待后，连续4轮分配均归零；另验证两个克隆句柄、跨线程最终释放，以及同路径线性／sRGB变体分别退役。修复前最小复现失败：引擎包缓存已为空，仍保留1份384KiB材质分配；关闭包缓存的4轮对照均归零。既有 cached_world_bundles_preserve_dynamic_pixels_and_resource_replacements 也通过，覆盖动态uniform／相机／材质、纹理／网格／环境热更新、粒子及完整RGBA对照。命令：cargo test -p mengine-rhi --release --lib material_texture_lifetime -- --nocapture；兼容检查按上述完整函数名筛选。日志 material-texture-lifetime-{before,tests}.log、material-texture-no-bundles-before.log、material-texture-pixel-compatibility.log 均在 tmp/docs-artifacts/editor-performance-risk。
+
+保留的Amazonia工程用于同条件单视口诊断：每轮60个VM步、Stop后121个作者场景帧及20秒空闲，共3轮，不含WebView或IPC。修复前材质GPU分配40／57／74份、107.1875／207.375／307.5625MiB；修复后均31份／67.25MiB，所有GPU分配项数均2132，当前材质缓存均30彩色／1数据／20绑定。活跃GPU总分配467.3125／469.125／469.0625MiB，剩余差异来自其他标签。修复前后进程首末空闲私有内存仍分别增加276.1914／277.7422MiB，没有据纹理释放声称整个进程驻留改善。它与旧930步探针不是同负载；本地 native-gpu-texture-lifetime{,-after}.log、material-texture-probe-summary.json 保留具体数据。临时allocator诊断接口已从产品移除，诊断补丁及独立探针源码只保存在tmp。
+
+前端构建及custom-protocol原生Release已完成，原生81秒；已知失败的原生多窗口／3轮Stop驻留范围已复核，见下段。全批其他地图／选取／Profiler检查待累计3项后合并执行，当前1/3。风险为所有原生渲染包的退役链路，待批次覆盖实际DotA、Scene／Game／相机预览、隐藏恢复、热更新、项目关闭／重开及多窗口；完整长期内存、稳定60、LOD和War3保真仍待办。
+
+
+原生map-session-1792872217387报告通过，10项功能记录包含分离Game重开／追帧、三面板帧、暂停／单步、快捷键、Stop完整作者世界恢复、作者编辑／undo／redo及4次再次Play；错误日志0，进程42340正常退出。冻结程序build-task125/mengine-editor-tauri.exe的SHA256为44e1bd85f13fed4934f786da74e64db07904b68e2f140b46ff370247f9419b37。已核对Scene及第三轮Game真实图像，用户编辑器64664保持运行。临时QA runtime目录存在权限残留，原始报告及目录留在tmp，程序退出与发现文件移除均已确认。
+
+版本2的14份私有内存采样均核对相同根进程PID／创建时间、各子进程创建先后和求和；三个等时空闲点均7进程，每轮实际运行15秒、Stop后空闲20秒。根进程4551.2383／4665.3125／4691.3594MiB，首末仍增加140.1211MiB；进程树5143.8359／5195.3594／5229.0547MiB，首末增加85.2188MiB。此前036f284记录分别增长522.3008／568.0938MiB，但两次运行的私有字节不可直接用于单项因果归因；本次仍未达到长期稳定验收。三面板时6580.5664MiB、重载7499.9375MiB、Stop停靠5885.7930MiB、第二次Stop5855.6680MiB均为本次进程树。material-texture-native-summary.json保留程序摘要、身份核对、功能结果、各阶段及周期；本轮修复完成并登记新批次1/3，剩余驻留增长及稳定60继续跟进。
