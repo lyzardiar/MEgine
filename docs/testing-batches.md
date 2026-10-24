@@ -1559,3 +1559,11 @@ CPU对照使用已保留的196份DotA自包含GLB文件清单，5376条循环引
 5项定向检查通过：选取注册表3项（2新增，含1项真实GPU几何），工程关闭／镜像兼容2项。GPU测试从实际离屏提交捕获实体73的三角形，移除Renderer的该网格后由注册表／在途读者持有；退役使注册表测试载荷320→0字节，在途读者仍准确选中73，释放读者后Weak几何及Weak帧失效。新会话的真实几何选中91，旧发布和旧退役不破坏新快照，最终退役释放新几何。线程屏障检查旧发布晚于退役、三个窗口的新快照保留、代次不倒退；既有检查保留窗口／项目隔离、12帧／每窗口3帧／256MiB保守预算及关闭后旧请求失效。命令：cargo test -p mengine-editor-tauri --release --lib native_scene_picking -- --nocapture，以及筛选native_viewport_lifetime。日志pick-generation-{tests,project-compatibility}.log在tmp/docs-artifacts/editor-performance-risk；早期离屏夹具的失败日志保留，不作通过证据。
 
 这是已失效选取快照的所有权修复。注册表预算按帧保守累计几何，释放的唯一几何字节取决于其他所有者；320字节是定向夹具的逻辑计数，不是实际地图内存收益，256MiB预算也不能解释全部约5.98GiB驻留。当前122、123为2/3，第三项后统一原生验证实际Scene选取、隐藏恢复／项目切换、Stop／再次Play及多窗口长驻留，122的来源校验和并发路径一并合并。最近原生验收仍为13ef6a4，长期内存、稳定60、LOD和完整War3保真继续待办。
+
+### 第一百二十四阶段／编辑器新批次任务3/3：普通UI文件纹理驻留预算
+
+变更runtime的textures.rs，新增ui_texture_retention.rs和ui_texture_retention_tests.rs。普通UI文件纹理记录最近使用帧及成功上传的RGBA8逻辑字节；超过120个渲染帧闲置，或缓存超过128项／64MiB时，优先移除闲置最久的GPU纹理及其attempt记录，再次出现按既有路径加载。当前帧引用始终保留，当前资源本身超过预算时允许超出，预算约束可回收闲置项。工程根变化把旧拥有项排队，在下次sync开始时移除；invalidate后仍保留GPU所有权记录，闲置淘汰不遗漏。字体、相机视图和white保留既有独立路径，3D材质与UI材质变体继续各自管理。文件stamp检查及加载失败时保留现有纹理的行为不变，不改变alpha命中缓存。
+
+6项针对性检查通过：3新增（2项GPU）及3项材质／Sprite／UI材质兼容。覆盖帧龄边界、epoch回绕、数量／字节压力与当前帧超预算保护；GPU验证闲置淘汰后返回的完整RGBA一致、invalidate后淘汰、同mtime但长度变化热更新、删除错误去重与恢复、工程切换／清空，以及字体／相机／3D材质隔离。130份1×2纹理当前全需时保留130份，下一帧仅引用1份后保留128份，两项闲置GPU资源确认已移除，剩余RGBA8逻辑载荷1024字节。这是夹具资源检查，不是进程或驱动分配字节。命令：cargo test -p mengine-runtime --release --lib ui_texture_retention -- --nocapture --test-threads=1；兼容筛选material_sync_preserves_variants_hot_reload_removal_and_project_ownership、sprite_subresources_compose_uvs_and_share_the_base_texture_batch_key、sparse_ui_material_textures_stay_warm_but_the_cache_is_bounded。日志ui-texture-retention-{tests,material-compatibility,sprite-compatibility,custom-compatibility}.log均在tmp/docs-artifacts/editor-performance-risk。
+
+122、123、124达到3/3，提交后统一custom-protocol Release验证实际DotA、Amazonia、多窗口、Scene选取／Stop重启、来源校验并发及帧间隔、菜单／地图纹理返回与热更新，并增加同进程多轮Stop驻留采样。当前最近原生程序仍13ef6a4，尚未据预算或夹具声称实际内存下降；隐藏视图不产生渲染帧时不推进120帧闲置计数，长期驻留、稳定60、LOD和完整War3目标继续待办。

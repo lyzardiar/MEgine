@@ -13,6 +13,12 @@ use std::time::{Duration, Instant, SystemTime};
 #[cfg(test)]
 #[path = "texture_sync_tests.rs"]
 mod sync_tests;
+#[path = "ui_texture_retention.rs"]
+mod ui_texture_retention;
+use ui_texture_retention::{UiTextureUsage, ui_texture_evictions};
+#[cfg(test)]
+#[path = "ui_texture_retention_tests.rs"]
+mod ui_texture_retention_tests;
 
 const UI_MATERIAL_TEXTURE_GRACE_FRAMES: u64 = 120;
 const MAX_CACHED_UI_MATERIAL_TEXTURES: usize = 128;
@@ -28,6 +34,9 @@ pub struct TextureLoadFailure {
 pub struct RuntimeTextureCache {
     project_root: Option<PathBuf>,
     attempted_ui: HashMap<String, FileStamp>,
+    ui_usage: HashMap<String, UiTextureUsage>,
+    ui_epoch: u64,
+    retired_ui: Vec<String>,
     attempted_material: [HashMap<String, FileStamp>; 2],
     material_last_poll: Option<Instant>,
     attempted_ui_material: HashMap<String, FileStamp>,
@@ -89,6 +98,9 @@ impl RuntimeTextureCache {
         Self {
             project_root,
             attempted_ui: HashMap::new(),
+            ui_usage: HashMap::new(),
+            ui_epoch: 0,
+            retired_ui: Vec::new(),
             attempted_material: Default::default(),
             material_last_poll: None,
             attempted_ui_material: HashMap::new(),
@@ -105,6 +117,7 @@ impl RuntimeTextureCache {
             return;
         }
         self.project_root = project_root;
+        self.retired_ui.extend(std::mem::take(&mut self.ui_usage).into_keys());self.ui_epoch = 0;
         self.attempted_ui.clear();
         for variants in &mut self.attempted_material { variants.clear(); }
         self.material_last_poll = None;
@@ -261,9 +274,11 @@ impl RuntimeTextureCache {
     }
 
     pub fn sync(&mut self, renderer: &mut Renderer, plan: &UiBatchPlan) -> Vec<TextureLoadFailure> {
+        for key in self.retired_ui.drain(..) { renderer.remove_ui_texture(&key); }
         let Some(root) = self.project_root.as_deref() else {
             return Vec::new();
         };
+        self.ui_epoch = self.ui_epoch.wrapping_add(1);
         let mut failures = Vec::new();
         let mut checked = HashSet::new();
         for batch in &plan.batches {
@@ -276,6 +291,8 @@ impl RuntimeTextureCache {
             {
                 continue;
             }
+            if let Some(used) = self.ui_usage.get_mut(key) { used.frame = self.ui_epoch; }
+            else { self.ui_usage.insert(key.into(), UiTextureUsage {frame:self.ui_epoch,bytes:0}); }
             let Some(path) = resolve_texture_path(root, key) else {
                 if should_attempt(&mut self.attempted_ui, key, FileStamp::default()) {
                     failures.push(TextureLoadFailure {
@@ -302,6 +319,8 @@ impl RuntimeTextureCache {
                             path,
                             error: error.to_string(),
                         });
+                    } else {
+                        self.ui_usage.get_mut(key).expect("current UI texture tracked").bytes = u64::from(texture.width).saturating_mul(u64::from(texture.height)).saturating_mul(4);
                     }
                 }
                 Err(error) => failures.push(TextureLoadFailure {
@@ -310,6 +329,9 @@ impl RuntimeTextureCache {
                     error: error.to_string(),
                 }),
             }
+        }
+        for key in ui_texture_evictions(&self.ui_usage, self.ui_epoch) {
+            self.ui_usage.remove(&key);self.attempted_ui.remove(&key);renderer.remove_ui_texture(&key);
         }
         failures
     }
