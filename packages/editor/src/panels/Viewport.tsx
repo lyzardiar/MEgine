@@ -1811,6 +1811,7 @@ export function Viewport(props: {
     const displayedWorld = isGame ? nativeGameFrameRef.current?.world : nativeSceneFrame?.world;
     const browserWorld = displayedWorld ?? (editScene ? nativeWorld.frameWorld() : undefined);
     const displayedPresentation = browserWorld ? nativePresentationRef.current(browserWorld) : undefined;
+    const sceneConsumers = !isGame ? displayedPresentation?.sceneConsumers() : undefined;
     if (browserWorld) {
       // Browser drawing and hit regions use the same owned entity records as the decoded image.
       p = Object.assign(Object.create(requestedProps), { entities: browserWorld.entities, clearColor: browserWorld.clearColor, simulationTime: browserWorld.simulationTime });
@@ -1880,7 +1881,7 @@ export function Viewport(props: {
     const transformSource = nativeGameReady && !(displayedPresentation?.hasSpine ?? p.entities.some(entity => entity.components.SpineSkeleton)) ? [] : p.entities;
     const worldTransforms = nativeSceneBrowser?.transforms ?? (transformSource.length && displayedPresentation ? displayedPresentation.worldTransforms() : editScene && sceneTransformsRef.current?.source === transformSource ? sceneTransformsRef.current.transforms : buildWorldTransforms(transformSource));
     sceneTransformsRef.current = editScene && !nativeSceneBrowser ? { source: transformSource, transforms: worldTransforms } : null;
-    const lights2D = prepareLight2DLights((nativeGameReady ? [] : p.entities).flatMap<Light2DInstance>((entity) => {
+    const lights2D = prepareLight2DLights((nativeGameReady ? [] : sceneConsumers?.lights ?? p.entities).flatMap<Light2DInstance>((entity) => {
       if (displayedPresentation && !entity.components.Light2D) return [];
       if (!isActive(entity.entity)) return [];
       const component = entity.components.Light2D as Light2DComponent | undefined;
@@ -1904,7 +1905,7 @@ export function Viewport(props: {
     const timelineParticleByEntity = new Map(
       (p.timelineParticlePreviews ?? []).map((preview) => [preview.target, preview]),
     );
-    for (const entity of nativeGameReady ? [] : p.entities) {
+    for (const entity of nativeGameReady ? [] : sceneConsumers?.emitters ?? p.entities) {
       if (displayedPresentation && !entity.components.ParticleEmitter2D && !entity.components.ParticleEmitter3D) continue;
       if (!isActive(entity.entity)) continue;
       const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
@@ -1996,7 +1997,7 @@ export function Viewport(props: {
       additive: boolean;
       component: Record<string, unknown>;
     }>();
-    for (const entity of nativeGameReady ? [] : p.entities) {
+    for (const entity of nativeGameReady ? [] : sceneConsumers?.trails ?? p.entities) {
       if (displayedPresentation && !entity.components.TrailRenderer2D) continue;
       if (!isActive(entity.entity)) continue;
       const component = entity.components.TrailRenderer2D as Record<string, unknown> | undefined;
@@ -2020,7 +2021,7 @@ export function Viewport(props: {
     }
 
     const liveSpineIds = new Set<number>();
-    for (const entity of p.entities) {
+    for (const entity of sceneConsumers?.spines ?? p.entities) {
       if (
         entity.components.SpineSkeleton
         && isActive(entity.entity)

@@ -5,6 +5,7 @@ import type { TimelineCameraPreview } from './timelineScenePreview';
 import { requiresBrowserViewportSnapshot, type NativeViewportFrameWorld } from './nativeViewportFrame';
 import { buildWorldTransforms, createOwnedWorldTransformReader, resolvedTransform } from './worldTransform';
 import { createOwnedSceneUiEntityReader } from './ui/uiLayout';
+import { createOwnedViewportBrowserConsumerReader } from './viewportBrowserConsumers';
 
 type Entity = { entity: number; parent?: number | null; active?: boolean; components: Record<string, unknown> };
 
@@ -28,10 +29,12 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
     return previousUiEntities;
   };
   const readActive = createOwnedHierarchyActiveReader();
+  const readSceneConsumers = createOwnedViewportBrowserConsumerReader<E>();
   function prepare(world: NativeViewportFrameWorld<E>) {
     const active = readActive(world.entities);
     let transforms: ReturnType<typeof buildWorldTransforms> | undefined;
     let uiEntities: E[] | undefined;
+    let consumers: ReturnType<typeof readSceneConsumers> | undefined;
     type Entry = { e: E; t: NonNullable<ReturnType<typeof resolvedTransform>>; hierarchyOrder: number };
     let entries: Entry[] | undefined;
     let spineEntries: typeof entries, overlayEntries: typeof entries;
@@ -96,6 +99,7 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
         }, sceneFrame?.transforms);
       },
       sceneUiEntities() { return uiEntities ??= readOwnedUiEntities(world.entities); },
+      sceneConsumers() { return consumers ??= readSceneConsumers(world.entities); },
       gameCamera(preview: TimelineCameraPreview | null | undefined, display: number) {
         const input = [!!preview, preview?.source, preview?.target, preview?.weight, display];
         if (!cameraInput || input.some((value, index) => !Object.is(value, cameraInput![index]))) { camera = timelineGameCamera(world.entities, preview, active, display); cameraInput = input; }

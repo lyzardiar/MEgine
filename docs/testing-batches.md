@@ -1608,3 +1608,14 @@ DotA14437实体，缓存进入3.312秒，上次同流程2.334秒，本次没有�
 对同一保留Amazonia工程做修复前后各8轮单视口对照，每轮60个VM步、Stop屏障、121个作者场景帧及20秒空闲，两个独立进程均完成。125版本第2到第8轮私有内存净变化0.5078MiB、范围2052.3906–2068.3477MiB，表明该短负载主要在第二轮预热到平台；它不能证明真实多窗口长期稳定。126版本8轮GPU保留空间均640MiB，125版本为首轮640、后7轮896MiB；两侧每轮活跃材质均31份／67.25MiB、GPU分配项均2132。第2–8轮进程私有均值2059.2160→1798.3488MiB，减少260.8672MiB；新范围1791.4414–1802.8047MiB、首末变化6.0195MiB。该结果是带临时allocator只读诊断的独立进程／单Renderer对照，未覆盖WebView、IPC、多窗口或真实编辑器FPS；不能写成实际编辑器总内存下降260MiB。native-eight-cycle-residency{,-summary}、native-eight-cycle-retirement-after.log及material-bundle-retirement-probe-summary.json保留明细，临时诊断接口已移除。
 
 本轮实现及针对性检查完成，当前125、126为2/3。第三项提交后合并构建同一原生版本，检查实际DotA／Amazonia、Scene／Game／相机预览、热更新、隐藏恢复、Stop／再次Play、关闭工程与多窗口长驻留；剩余完整JASS、War3保真、LOD及稳定60继续待办。
+
+
+### 第一百二十七阶段／编辑器新批次任务3/3：显示帧浏览器消费者索引
+
+新增viewportBrowserConsumers.ts，在NativeViewportPresentation的已拥有显示帧上惰性建立Light2D、ParticleEmitter2D／3D、TrailRenderer2D及SpineSkeleton的有序实体组。按前一帧相同位置的记录身份复用一字节分类掩码，来源数组只保存WeakRef，记录替换或位置变化即时重新分类。Viewport的Scene准备阶段复用这些组，保留当前帧的激活／变换／模拟／绘制路径；普通可变编辑及Game路径沿用原来源。旧显示帧保持自己拥有的记录与分组，空列表释放分类载荷，缓存不按实体ID跨版本复用。
+
+新增viewportBrowserConsumers.test.mjs的5项检查与原有NativePresentation／flags共22项通过、0跳过，覆盖16种组合、重复ID／顺序、失活记录、多组件、记录替换／旧帧恢复、可变编辑与显示快照隔离、惰性构建、3000个不变记录跨30帧的分类读取复用、GC后旧记录释放。命令：node --expose-gc --test packages/editor/tests/viewportBrowserConsumers.test.mjs packages/editor/tests/nativeViewportPresentation.test.mjs packages/editor/tests/nativeViewportPresentationFlags.test.mjs。前端TypeScript／Vite构建通过。日志browser-consumer-tests.log、browser-consumer-frontend-build.log位于tmp/docs-artifacts/editor-performance-risk。
+
+新增benchmark-frost-browser-consumers.mjs，命令node scripts/benchmark-frost-browser-consumers.mjs；同进程交替对照4次类型筛选与生产索引，每种输入120帧／20帧预热，每帧只测一次首次集合构建并逐项核对相同记录。4374实体作者场景静态0.1121→0.0123ms、1%记录替换0.1236→0.0141ms、全替换0.1075→0.0672ms；7433实体Amazonia对应0.3035→0.0226、0.3063→0.0260、0.2531→0.1352ms。原始browser-consumer-benchmark.json保留来源摘要及全部样本。这是Node集合扫描范围，未覆盖React、激活／变换、特效模拟、IPC或GPU，不能换算为实际2ms世界准备的完整收益或FPS。
+
+125、126、127达到3/3，提交后统一custom-protocol Release执行原生Scene隐藏／恢复／选择、实际DotA、Amazonia多窗口／重启、材质热更新与Profiler包统计，并将同进程Stop驻留延长为5轮。沿用版本2进程身份与等时空闲采样，未完成的长期稳定、满帧、LOD及完整War3保真保留；本批原生结果另记。
