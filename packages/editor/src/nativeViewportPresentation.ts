@@ -33,6 +33,8 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
     let sceneSelection: ReadonlySet<number> | undefined;
     let scenePrimary: number | null | undefined;
     let sceneDeferred = false;
+    let spinePresent: boolean | undefined, browserSnapshotRequired: boolean | undefined;
+    const hasSpine = () => spinePresent ??= world.entities.some(entity => !!entity.components.SpineSkeleton);
     let cameraInput: readonly unknown[] | undefined, camera: ResolvedGameCamera | null = null;
     const collectEntries = (include: (entity: E) => boolean = () => true, nodes?: ReturnType<typeof buildWorldTransforms>) => world.entities.flatMap((e, hierarchyOrder) => {
       if (!include(e) || !active(e.entity)) return [];
@@ -68,11 +70,12 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
     };
     return {
       active,
-      hasSpine: world.entities.some(entity => !!entity.components.SpineSkeleton),
-      requiresBrowserSnapshot: requiresBrowserViewportSnapshot(world.entities),
+      get hasSpine() { return hasSpine(); },
+      get requiresBrowserSnapshot() { return browserSnapshotRequired ??= requiresBrowserViewportSnapshot(world.entities); },
       worldTransforms() { return transforms ??= readTransforms(world.entities); },
       worldEntries(spineOnly = false) {
-        return spineOnly ? spineEntries ??= collectEntries(e => !!e.components.SpineSkeleton) : entries ??= collectEntries();
+        if (spineOnly) return spineEntries ??= hasSpine() ? collectEntries(e => !!e.components.SpineSkeleton) : [];
+        return entries ??= collectEntries();
       },
       /** Only browser consumers and their ancestor chains resolve transforms for token-owned Scene frames. */
       sceneBrowserFrame,

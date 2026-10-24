@@ -1307,3 +1307,12 @@ B001/map-session-1792840827243.json通过7434实体的三窗口重开／修订�
 对照3580fb8的12轮交替微基准，2轮预热，10组各120帧：相同不透明固定帧均值0.181945→0.018548ms；新不透明修订2.717726→2.024139ms；每30帧一次命中查询2.671435→2.093199ms；新透明修订2.580525→2.659146ms，透明样本略增，集成时继续观察。独立冷缓存12轮／排除2轮的首次绘制均值9.316520→2.668300ms，紧接的首次点击准备0.284320→6.441270ms，合计9.600840→9.109570ms；每轮重新创建派生层级、条目、边界和索引缓存，JS代码与资产字节已预热。延迟准备将成本移到实际点击，不代表物理输入延迟。上述计时不含完整Canvas／UI、原生渲染、模拟及IPC，不外推FPS。
 
 本地复现脚本deferred-scene-{bench,cold-bench}.mjs、日志及两个benchmark-summary.json在tmp/docs-artifacts/editor-performance-risk，记录源码和场景摘要。批次原生验收增加首次点击、连续空节点／Sprite／相机辅助选择、透明切换、重复／旧帧查询、Spine与混合粒子状态检查，并对比真实paintStages.world、输入操作往返与持续FPS。
+
+
+### 第一百零八阶段／编辑器批次任务2/3：按需计算Game呈现标记
+
+变更packages/editor/src/nativeViewportPresentation.ts及nativeViewportPresentationFlags.test.mjs。Spine存在与浏览器交互快照标记在首次读取时计算，按固定实体记录数组缓存真／假结果；Scene不读取时免除两次全量扫描。无Spine的Game帧复用缓存的否定结果，跳过Spine条目收集。保持原有局部active判定、非活动Spine存在标记、枚举时的布尔字段、相机单独发布与旧显示帧语义。
+
+新增5项和既有22项定向检查通过，TypeScript通过；日志presentation-flags-{tests,typecheck}.log。实际DotA作者场景14437实体，对照58457db的独立读取器12轮交替／排除2轮预热，10组各120帧：新不透明修订浏览器准备2.003232→1.510236ms，透明2.645024→2.182571ms；仅Game标记与Spine条目读取0.701847→0.525838ms。绘制输入、完整浏览器命中／边界／顺序一致，即时6节点／1条目、完整命中5371条目未变；此作者夹具无Spine与交互控件。计时不含完整Canvas／UI、原生渲染、模拟及IPC，不是实际FPS。复现与摘要presentation-flags-{bench.mjs,benchmark.log,benchmark-summary.json}保留于tmp/docs-artifacts/editor-performance-risk。
+
+当前批次2/3，第三项后统一构建与原生验收；增加无Spine的Game、含Spine与交互控件的快照路径、场景修订／相机单独发布及透明切换，合并107的实际DotA与多窗口检查。最近真实运行仍为9c251d1，稳定满帧与长期驻留继续待办。

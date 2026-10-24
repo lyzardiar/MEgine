@@ -1702,3 +1702,8 @@ DotA关闭前／欢迎页／重开PrivateBytes为6779.38／2508.22／3518.96MiB�
 新增7项与已有32项相关检查、TypeScript通过。实际DotA作者场景的解析节点14437→5377，5371个浏览器条目及其变换／边界／覆盖层保持一致；源码准备微基准固定帧0.265521→0.229528ms、新实体修订3.301939→2.586000ms，不含完整Canvas／UI、原生、模拟或IPC，不据此声明FPS变化。完整范围与证据见testing-batches.md同阶段记录和tmp/docs-artifacts/editor-performance-risk/sparse-scene-*。本项为新批次1/3，实际收益待第三项后统一原生验证；最近运行Scene51.70FPS仍未稳定60。
 
 第一百零七阶段补充：不透明token帧将普通节点的条目、父链和空间候选准备延至首次普通命中，灯光／粒子／Spine／辅助图形及选择操作仍即时；固定帧选区副本与旧帧结果保持独立。44项相关检查、TypeScript通过。DotA单选夹具即时节点5377→6、条目5371→1，查询恢复完整5371个条目并保持边界及顺序。不透明新修订准备微基准2.717726→2.024139ms，每30帧查询一次2.671435→2.093199ms；透明2.580525→2.659146ms。冷缓存首次绘制9.316520→2.668300ms，首次点击准备0.284320→6.441270ms，合计9.600840→9.109570ms。成本按实际操作延后，不能作为物理输入延迟或FPS结论。证据、范围与待测项见testing-batches.md同阶段补充及tmp/docs-artifacts/editor-performance-risk/deferred-scene-*；同一任务计数仍1/3。
+
+
+### 第一百零八阶段：按需计算Game呈现标记
+
+固定显示记录的Spine与交互快照标记按首次读取计算并缓存，Scene免除未使用的两次全量扫描；无Spine的Game帧不再重复收集空条目。局部active、非活动Spine、旧帧和字段枚举语义保留。27项定向检查和TypeScript通过。实际DotA作者场景新不透明修订准备微基准2.003232→1.510236ms，透明2.645024→2.182571ms；Game标记／Spine条目0.701847→0.525838ms。完整范围及本地证据见testing-batches.md与tmp/docs-artifacts/editor-performance-risk/presentation-flags-*；不是FPS测量。批次2/3，实际原生与多窗口验收在第三项后合并执行。
