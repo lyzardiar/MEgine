@@ -686,3 +686,11 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 本批常规集成覆盖已完成，性能目标继续开放。0752409、a5b9c95及世界请求观测合并构建；18项观测测试通过，上传实体数补充断言单独复查通过。原生 `1792801709656` 的Inspector双向编辑及原生步骤保留通过，后续数量断言失败；`1792801839175` 同样在数量口径检查处失败，不能称为整份通过。修正为使用实际帧上传数量后，`node scripts/qa-frost-map-session.mjs --detached-profile-only` 报告 `1792802023180` 全部通过、0 error、正常退出，覆盖后续播放、重载、Stop和作者编辑；此模式保留菜单→地图初始化并跳过已通过的Inspector前置编辑。相机画面已截图核对，行为字段热更新仅定向测试覆盖，尚未原生验证。
 
 本次三窗口Scene10.27／Game14.85次呈现每秒，Scene13/49帧过期回退而Game0/74；最新profile的实体数与请求内容一致，回退历史尚未逐一比对渲染实体数量。短时内存采样完成，尚不代表长期回收验收。原始结果／图片仅在tmp/docs-artifacts，详细限制及EXE哈希见performance-risk-todo第六十四阶段。下一批应围绕Scene版本过期回退和实际请求等待优化；不重复本批已通过的无关范围。
+
+### 新批次任务1/3：实时Scene版本过期限次重试
+
+变更：nativeViewportRequests／nativeViewportTransport／Viewport／App／editorProfiler，相关请求及Scene调度测试、qa-frost-map-session。实时Scene共享两次过期重试预算，成功发布／所有者变更重置；暂停、截图和相机预览保持精确快照回退。timings增加延期次数与渲染实体数，QA按每个成功帧核对实际上传数量。
+
+快速检查：`node --test packages/editor/tests/nativeViewportRequests.test.mjs packages/editor/tests/nativeSceneCompletionScheduling.test.mjs packages/editor/tests/nativeViewportTransport.test.mjs packages/editor/tests/viewportSceneCompletion.test.mjs` 初轮54项通过；新增Stop检查随4项受影响用例补测通过，合计55项不同用例；新增timings字段断言单独复查已有world-request-telemetry用例通过；`pnpm --dir packages/editor exec tsc --noEmit -p tsconfig.json` 与QA语法检查通过。日志及机制见performance-risk-todo第六十五阶段。
+
+状态：实现完成，原生验收待本批累计3项后合并。合并构建后执行 `qa-frost-map-session.mjs --detached-profile-only`，核对Scene延期／回退次数、呈现间隔、逐帧实体数量，以及Pause／Step、截图、新开窗口、地图重载、Stop。增加原生持续过期时仍能呈现与暂停／截图立即回退的针对性验证；保留真实输入到显示延迟和长期内存专项。当前没有新的FPS结论。

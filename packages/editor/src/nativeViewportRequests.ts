@@ -5,7 +5,7 @@ export function createNativeViewportRequestState(capacity = 2) {
   const pending = new Map<number, NativeViewportRequestTicket>();
   return {
     owner: undefined as unknown, compatibilityKey: '', generation: 0, nextSequence: 0, presentedSequence: 0, pending, capacity,
-    lastRequestAt: 0, nextRequestAt: -Infinity, retryAt: 0, reportedError: false, resumeTimer: null as number | null, captures: 0,
+    lastRequestAt: 0, nextRequestAt: -Infinity, retryAt: 0, deferredRevisionRetries: 0, reportedError: false, resumeTimer: null as number | null, captures: 0,
     get inFlight() { return pending.size > 0; },
     get full() { return pending.size >= capacity; },
     get ready(): Promise<void> | null { return pending.size ? Promise.all([...pending.values()].map(ticket => ticket.ready)).then(() => {}) : null; },
@@ -16,7 +16,7 @@ export function synchronizeNativeViewportRequestOwner(state: NativeViewportReque
   if (state.owner === owner && state.compatibilityKey === compatibilityKey) return;
   state.owner = owner; state.compatibilityKey = compatibilityKey; state.generation++;
   if (state.resumeTimer != null) clearTimeout(state.resumeTimer);
-  state.resumeTimer = null; state.lastRequestAt = -Infinity; state.nextRequestAt = -Infinity; state.retryAt = 0; state.reportedError = false;
+  state.resumeTimer = null; state.lastRequestAt = -Infinity; state.nextRequestAt = -Infinity; state.retryAt = 0; state.deferredRevisionRetries = 0; state.reportedError = false;
 }
 export function nativeViewportRequestDelay(state: NativeViewportRequestState, now: number, interval: number): number {
   return interval === 1000 / 60 && Number.isFinite(state.lastRequestAt) ? frameCadenceDelay(state.nextRequestAt, state.lastRequestAt, now, interval) : Math.max(0, interval - (now - state.lastRequestAt));
@@ -33,6 +33,17 @@ export function nativeViewportRequestCanPublish(state: NativeViewportRequestStat
 }
 export function finishNativeViewportRequest(state: NativeViewportRequestState, ticket: NativeViewportRequestTicket): void {
   state.pending.delete(ticket.sequence);
+}
+export const NATIVE_VIEWPORT_REVISION_DEFERRED = 'Play viewport revision deferred';
+export function nativeViewportRevisionDeferred(error: unknown): boolean {
+  return (error instanceof Error ? error.message : String(error)).includes(NATIVE_VIEWPORT_REVISION_DEFERRED);
+}
+/** Two expired live requests may yield to a newer world; captures and a persistent miss keep exact snapshot fallback. */
+export function deferNativeViewportRevision(state: NativeViewportRequestState, ticket: NativeViewportRequestTicket): boolean {
+  if (!nativeViewportRequestCanPublish(state, ticket)) return true;
+  if (state.captures > 0 || state.deferredRevisionRetries >= 2) return false;
+  state.deferredRevisionRetries++;
+  return true;
 }
 export function nativeViewportReadbackBusy(error: unknown): boolean {
   return (error instanceof Error ? error.message : String(error)).includes('offscreen readback busy:');

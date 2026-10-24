@@ -55,7 +55,7 @@ import {
 import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
 import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
 import { projectAssetSessionGeneration } from '../projectAssets';
-import { beginNativeViewportRequest, nativeViewportRequestDelay, captureLatestNativeViewportFrames, createNativeViewportRequestState, finishNativeViewportRequest, nativeViewportReadbackBusy, nativeViewportSessionExpired, nativeViewportRequestCanPublish, retryNativeViewportReadback, synchronizeNativeViewportRequestOwner, waitNativeViewportRequests } from '../nativeViewportRequests';
+import { beginNativeViewportRequest, nativeViewportRequestDelay, captureLatestNativeViewportFrames, createNativeViewportRequestState, deferNativeViewportRevision, finishNativeViewportRequest, nativeViewportReadbackBusy, nativeViewportRevisionDeferred, nativeViewportSessionExpired, nativeViewportRequestCanPublish, retryNativeViewportReadback, synchronizeNativeViewportRequestOwner, waitNativeViewportRequests } from '../nativeViewportRequests';
 import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGameRequestInterval, nativeGamePreviewSize, nativeSceneWorldReference, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
 import { releaseNativeViewportFrame, requestRevisionedNativeViewport, requestRevisionedNativeViewportFrame } from '../nativeViewportTransport';
 import {
@@ -623,6 +623,7 @@ export function Viewport(props: {
   nativeSessionId?: number;
   runtimeSessionId?: number;
   readRuntimeSessionId?: () => number | undefined;
+  readPlaybackMode?: () => 'edit' | 'play' | 'pause';
   simulationRequestMs?: number;
   simulationTiming?: Readonly<PlayStepTiming>;
   subscribeRuntimeFrames?: (listener: () => void) => () => void;
@@ -1430,13 +1431,13 @@ export function Viewport(props: {
     if (cacheEditWorld) sceneWorldArgsRef.current = { source: requestedProps.entities, key: worldKey, args: nativeWorld };
     else sceneWorldArgsRef.current = null;
     let requestPreparedAt = now;
-    const requestWorldFrame = (command: string, args: Record<string, unknown>) => {
+    const requestWorldFrame = (command: string, args: Record<string, unknown>, deferExpiredPlayRevision?: () => boolean) => {
       const retainedEdit = cacheEditWorld && (command === 'render_native_game_view' || editScene && command === 'render_native_scene_view');
       const sceneView = command === 'render_native_scene_view' && (args.request as { cameraEntity?: number } | undefined)?.cameraEntity == null;
       const worldArgs = retainedEdit ? nativeWorld.sceneWorldArgs() : sceneView ? nativeWorld.scenePlayWorldArgs() : nativeWorld.worldArgs();
       nativeWorld.frameWorld();
       requestPreparedAt = performance.now();
-      return requestRevisionedNativeViewportFrame(command, { ...args, ...worldArgs }, nativeWorld.snapshotArgs).then(buffer => { if (retainedEdit) nativeWorld.markSceneWorldUploaded(); return buffer; });
+      return requestRevisionedNativeViewportFrame(command, { ...args, ...worldArgs }, nativeWorld.snapshotArgs, deferExpiredPlayRevision).then(buffer => { if (retainedEdit) nativeWorld.markSceneWorldUploaded(); return buffer; });
     };
     const presentationKey = JSON.stringify([p.gameResolution, p.gameDisplay, p.timelineCameraPreview]);
     if (nativeGameFrameRef.current && (!nativeViewportFrameWorldCurrent(nativeGameFrameRef.current.world, requestedProps) || nativeGameFrameRef.current.presentationKey !== presentationKey)) nativeGameFrameRef.current = null;
@@ -1660,12 +1661,16 @@ export function Viewport(props: {
           fovYDegrees: cam.fovYDeg,
           hiddenEntityIds: p.sceneHiddenIds ?? [],
         },
+      }, () => {
+        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) return true;
+        return propsRef.current.readPlaybackMode?.() === 'play' && deferNativeViewportRevision(request, ticket);
       }).then((buffer) => {
         if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket)) { releaseNativeViewportFrame(buffer); return; }
         const current = propsRef.current;
         if (currentSceneRequestKey(current) !== nativeSceneIdentity?.key || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) { releaseNativeViewportFrame(buffer); return; }
         const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
-        recordOwnedNativeViewportProfile('scene', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, simulationTiming: p.simulationTiming, transportMs: performance.now() - now });
+        recordOwnedNativeViewportProfile('scene', { ...result.profile, deferredRevisionRetries: request.deferredRevisionRetries, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, simulationTiming: p.simulationTiming, transportMs: performance.now() - now });
+        request.deferredRevisionRetries = 0;
         const image = result.image;
         const firstFrame = nativeSceneFrameRef.current == null;
         nativeSceneFrameRef.current = {
@@ -1683,6 +1688,7 @@ export function Viewport(props: {
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
         if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) return;
+        if (nativeViewportRevisionDeferred(error)) { request.retryAt = performance.now() + 16; return; }
         if (nativeViewportReadbackBusy(error) || nativeViewportSessionExpired(error)) { request.retryAt = performance.now() + 16; return; }
         if (!request.reportedError) {
           console.warn('Native Scene View rendering is unavailable', error);

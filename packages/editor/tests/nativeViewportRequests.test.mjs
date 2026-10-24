@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { beginNativeViewportRequest, captureLatestNativeViewportFrames, createNativeViewportRequestState, finishNativeViewportRequest, nativeViewportReadbackBusy, nativeViewportSessionExpired, nativeViewportRequestCanPublish, retryNativeViewportReadback, synchronizeNativeViewportRequestOwner } from '../src/nativeViewportRequests.ts';
+import { beginNativeViewportRequest, captureLatestNativeViewportFrames, createNativeViewportRequestState, deferNativeViewportRevision, finishNativeViewportRequest, nativeViewportReadbackBusy, nativeViewportSessionExpired, nativeViewportRequestCanPublish, retryNativeViewportReadback, synchronizeNativeViewportRequestOwner } from '../src/nativeViewportRequests.ts';
 
 function deferredRequest(state, key, publish = true) {
   const ticket = beginNativeViewportRequest(state, key);
@@ -14,6 +14,15 @@ function deferredRequest(state, key, publish = true) {
   }; });
   return { ticket, finish };
 }
+
+test('live expiry retries share a bounded budget across concurrent requests and reset with ownership', () => {
+  const state=createNativeViewportRequestState(3),tickets=[0,1,2].map(i=>beginNativeViewportRequest(state,String(i)));
+  assert.equal(deferNativeViewportRevision(state,tickets[0]),true);assert.equal(deferNativeViewportRevision(state,tickets[1]),true);assert.equal(deferNativeViewportRevision(state,tickets[2]),false);assert.equal(state.deferredRevisionRetries,2);
+  state.presentedSequence=tickets[2].sequence;assert.equal(deferNativeViewportRevision(state,tickets[0]),true);assert.equal(state.deferredRevisionRetries,2);
+  synchronizeNativeViewportRequestOwner(state,2,'new');assert.equal(state.deferredRevisionRetries,0);assert.equal(deferNativeViewportRevision(state,tickets[1]),true);assert.equal(state.deferredRevisionRetries,0);
+  for(const ticket of tickets)finishNativeViewportRequest(state,ticket);
+  const capture=beginNativeViewportRequest(state,'capture');state.captures=1;assert.equal(deferNativeViewportRevision(state,capture),false);assert.equal(state.deferredRevisionRetries,0);
+});
 
 test('only an accepted request advances the pacing timestamp', () => {
   const state = createNativeViewportRequestState();

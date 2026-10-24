@@ -1,5 +1,6 @@
 // Author: MiYu. Correlate shared viewport leases and native transport measurements.
 import { invoke } from '@tauri-apps/api/core';
+import { NATIVE_VIEWPORT_REVISION_DEFERRED } from './nativeViewportRequests.ts';
 
 type NativeSharedTransportProfile = { uiQueueMs: number; setupMs: number; allocateMs: number; copyMs: number; bytes: number; publicationReadyEpochMs?: number; pooled?: boolean; poolHit?: boolean; bufferId?: number };
 export type SharedNativeViewportTransportProfile = NativeSharedTransportProfile & { requestId: string; receivedEpochMs: number; getBufferMs: number; requestElapsedMs: number; publicationReadyToEventMs?: number; releaseMs?: number };
@@ -132,7 +133,7 @@ export function requestNativeViewportFrame(command: string, args: Record<string,
 }
 
 /** Only an evicted revision falls back to the same owned browser snapshot; other failures propagate. */
-export async function requestRevisionedNativeViewport<T>(args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>, request: (args: Record<string, unknown>) => Promise<T>, completed?: (result: T, profile: NativeViewportWorldRequestProfile) => void): Promise<T> {
+export async function requestRevisionedNativeViewport<T>(args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>, request: (args: Record<string, unknown>) => Promise<T>, completed?: (result: T, profile: NativeViewportWorldRequestProfile) => void, deferExpiredPlayRevision?: () => boolean): Promise<T> {
   const started = performance.now();
   const profile: NativeViewportWorldRequestProfile = { source: args.snapshot != null ? 'snapshot' : args.playRevision != null ? 'play-revision' : args.playSessionId != null ? 'play-latest' : 'scene-cache', sessionId: typeof args.playSessionId === 'number' ? args.playSessionId : undefined, revision: typeof args.playRevision === 'number' ? args.playRevision : undefined, snapshotEntityCount: snapshotEntityCount(args), attempts: 1, elapsedMs: 0 };
   let result: T;
@@ -141,6 +142,7 @@ export async function requestRevisionedNativeViewport<T>(args: Record<string, un
     const message = error instanceof Error ? error.message : String(error);
     const sceneExpired = args.sceneWorldKey != null && message.includes('Scene viewport revision expired');
     if (!sceneExpired && (args.playRevision == null || !message.includes('Play viewport revision expired'))) throw error;
+    if (!sceneExpired && deferExpiredPlayRevision?.()) throw new Error(NATIVE_VIEWPORT_REVISION_DEFERRED);
     profile.fallback = sceneExpired ? 'scene-revision-expired' : 'play-revision-expired';
     profile.expiredRequestMs = performance.now() - started;
     const preparing = performance.now(), snapshot = snapshotFallback();
@@ -155,6 +157,6 @@ export async function requestRevisionedNativeViewport<T>(args: Record<string, un
   return result;
 }
 
-export function requestRevisionedNativeViewportFrame(command: string, args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>): Promise<ArrayBuffer> {
-  return requestRevisionedNativeViewport(args, snapshotFallback, next => requestNativeViewportFrame(command, next), (buffer, profile) => worldRequestProfiles.set(buffer, profile));
+export function requestRevisionedNativeViewportFrame(command: string, args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>, deferExpiredPlayRevision?: () => boolean): Promise<ArrayBuffer> {
+  return requestRevisionedNativeViewport(args, snapshotFallback, next => requestNativeViewportFrame(command, next), (buffer, profile) => worldRequestProfiles.set(buffer, profile), deferExpiredPlayRevision);
 }

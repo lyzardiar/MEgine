@@ -3104,6 +3104,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               entities={viewportEntities}
               runtimeSnapshot={store.playRenderSnapshot}
               readRuntimeSessionId={() => store.playSessionId}
+                  readPlaybackMode={() => store.mode}
               subscribeRuntimeFrames={store.subscribePlayFrames}
               selected={viewportSelected}
               selectedIds={viewportSelectedIds}

@@ -112,7 +112,7 @@ test('world request telemetry distinguishes direct sources and exact Scene fallb
   for(const [args,source]of [[{snapshot:{}},'snapshot'],[{playSessionId:3},'play-latest'],[{playSessionId:3,playRevision:0},'play-revision'],[{sceneWorldKey:'cache'},'scene-cache']]){
     let recorded;const value={};assert.equal(await requestRevisionedNativeViewport(args,()=>assert.fail('unexpected fallback'),async()=>value,(result,profile)=>{assert.equal(result,value);recorded=profile;}),value);
     assert.equal(recorded.source,source);assert.equal(recorded.attempts,1);assert.equal(recorded.fallback,undefined);assert.ok(recorded.elapsedMs>=0);
-    const sample=nativeViewportTimingSample({worldRequest:recorded});recorded.elapsedMs=-1;assert.ok(sample.worldRequest.elapsedMs>=0);
+    const sample=nativeViewportTimingSample({worldRequest:recorded,counts:{entities:3},deferredRevisionRetries:2});recorded.elapsedMs=-1;assert.ok(sample.worldRequest.elapsedMs>=0);assert.equal(sample.entityCount,3);assert.equal(sample.deferredRevisionRetries,2);
   }
   let tick=10; t.mock.method(performance,'now',()=>tick++);const args={sceneWorldKey:'a',width:20},requests=[],snapshot={entities:[]};let recorded;
   await requestRevisionedNativeViewport(args,()=>({snapshot}),async next=>{requests.push(next);if(requests.length===1)throw Error('Scene viewport revision expired');return 1;},(_,profile)=>recorded=profile);

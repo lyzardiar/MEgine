@@ -5,6 +5,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import ts from '../node_modules/typescript/lib/typescript.js';
 import { pendingNativeScenePaintUnchanged } from '../src/nativeSceneFrame.ts';
+import { requestRevisionedNativeViewport } from '../src/nativeViewportTransport.ts';
 const source = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
 const start = source.indexOf('    const sceneRequest = nativeSceneRequestRef.current;'), end = source.indexOf('    if (\n      selectedCamera', start);
 assert.ok(start > 0 && end > start);
@@ -20,6 +21,7 @@ function fixture(duration, playing = true, wakeDelay = 0) {
   let now = 0, serial = 0, active = 0, maxActive = 0, released = 0, shown = 0;
   const tasks = new Map(), starts = [], uploaded = [];
   const propsRef = { current: { tab: 'scene', playing, runtimeSessionId: 1, key: 'camera-a' } };
+  propsRef.current.mode=playing?'play':'edit';propsRef.current.readPlaybackMode=()=>propsRef.current.mode;
   const nativeSceneRequestRef = { current: null }, nativeSceneFrameRef = { current: null };
   const scene2DRef = { current: false }, draggingRef = { current: false }, lastProfilerFrameRef = { current: 1 };
   const setTimeout = (callback, delay) => { const id = ++serial; tasks.set(id, { callback, at: now + Math.trunc(delay) + wakeDelay }); return id; };
@@ -37,10 +39,10 @@ function fixture(duration, playing = true, wakeDelay = 0) {
     env.liveCam.current.pivot = p.key; env.nativeWorld = { requestKey: () => `${p.runtimeSessionId}:${now}`, frameWorld: () => ({ runtimeSessionId: p.runtimeSessionId }) };
     env.isGame = p.tab === 'game'; env.scene2DActive = scene2DRef.current;
     const camera = { eye: [p.key, 4, 7], target: [0, 0, 0], fovYDeg: 60 };
-    request(p, now, { key: p.key, presentationKey: 'size', width: 640, height: 360 }, camera, () => {
+    request(p, now, { key: p.key, presentationKey: 'size', width: 640, height: 360 }, camera, (_command,_args,deferExpired) => requestRevisionedNativeViewport({playSessionId:p.runtimeSessionId,playRevision:now},()=>{env.snapshotFallbacks=(env.snapshotFallbacks??0)+1;return {snapshot:{}};},args => {
       starts.push({ at: now, key: p.key }); maxActive = Math.max(maxActive, ++active);
-      return new Promise((resolve, reject) => { const id = ++serial; tasks.set(id, { at: now + duration, callback: () => { active--; env.fail ? reject(env.error ?? Error('render failed')) : resolve({ key: p.key, runtimeSessionId: p.runtimeSessionId }); } }); });
-    });
+      return new Promise((resolve, reject) => { const id = ++serial; tasks.set(id, { at: now + duration, callback: () => { active--; env.expireRevision&&args.snapshot==null ? reject(Error('Play viewport revision expired')) : env.fail ? reject(env.error ?? Error('render failed')) : resolve({ key: p.key, runtimeSessionId: p.runtimeSessionId }); } }); });
+    },undefined,deferExpired));
     shown = uploaded.length;
   };
   env.paint = paint;
@@ -62,6 +64,27 @@ function fixture(duration, playing = true, wakeDelay = 0) {
 }
 test('slow Scene renders present and continue on completion without animation', async () => {
   const f = fixture(24); await f.advance(95); assert.deepEqual(f.starts.map(s => s.at), [0, 17, 34, 50, 67, 84]); assert.equal(f.maxActive, 2); f.dispose();
+});
+
+test('live Scene expiry yields to a fresh request without uploading the obsolete snapshot', async () => {
+  const f=fixture(5),profiles=[];f.env.recordOwnedNativeViewportProfile=(_source,profile)=>profiles.push(profile);f.env.expireRevision=true;
+  await f.advance(6);assert.equal(f.nativeSceneRequestRef.current.deferredRevisionRetries,1);assert.equal(f.env.snapshotFallbacks,undefined);assert.equal(f.nativeSceneRequestRef.current.reportedError,false);
+  f.env.expireRevision=false;await f.advance(35);assert.ok(f.uploaded.length>0);assert.equal(profiles[0].deferredRevisionRetries,1);assert.equal(f.nativeSceneRequestRef.current.deferredRevisionRetries,0);assert.equal(f.env.snapshotFallbacks,undefined);f.dispose();
+});
+
+test('persistent Scene expiry falls back after two retries so live presentation cannot starve', async () => {
+  const f=fixture(5),profiles=[];f.env.recordOwnedNativeViewportProfile=(_source,profile)=>profiles.push(profile);f.env.expireRevision=true;
+  await f.advance(55);assert.ok(f.uploaded.length>0);assert.equal(f.env.snapshotFallbacks,1);assert.equal(profiles[0].deferredRevisionRetries,2);assert.equal(f.nativeSceneRequestRef.current.reportedError,false);f.dispose();
+});
+
+test('paused Scene and explicit captures retain immediate exact fallback', async () => {
+  for(const mode of ['pause','capture']){const f=fixture(5);f.env.expireRevision=true;if(mode==='pause')f.propsRef.current.mode='pause';else f.nativeSceneRequestRef.current.captures=1;
+    await f.advance(11);assert.equal(f.env.snapshotFallbacks,1);assert.ok(f.uploaded.length>0);assert.equal(f.nativeSceneRequestRef.current.deferredRevisionRetries,0);f.dispose();}
+});
+
+test('a superseded expired Scene request cannot upload an old snapshot after Stop', async () => {
+  const f=fixture(5);f.env.expireRevision=true;f.propsRef.current.mode='edit';f.propsRef.current.playing=false;f.propsRef.current.runtimeSessionId=undefined;
+  await f.advance(6);assert.equal(f.env.snapshotFallbacks,undefined);assert.equal(f.uploaded.length,0);assert.equal(f.nativeSceneRequestRef.current.deferredRevisionRetries,0);assert.equal(f.nativeSceneRequestRef.current.reportedError,false);f.dispose();
 });
 test('fast Scene renders respect 60 Hz with integer WebView timers', async () => {
   const f = fixture(5); await f.advance(95); assert.deepEqual(f.starts.map(s => s.at), [0, 17, 34, 50, 67, 84]); assert.equal(f.maxActive, 1); f.dispose();
