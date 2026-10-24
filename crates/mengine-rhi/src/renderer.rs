@@ -25,6 +25,12 @@ use winit::dpi::PhysicalSize;
 mod world_bundles;
 #[path = "object_indexing.rs"]
 mod object_indexing;
+#[path = "object_packets.rs"]
+mod object_packets;
+use object_packets::ObjectPacketCache;
+#[cfg(test)]
+#[path = "object_packet_tests.rs"]
+mod object_packet_tests;
 #[cfg(test)]
 #[path = "adjacent_instancing_tests.rs"]
 mod adjacent_instancing_tests;
@@ -745,6 +751,8 @@ pub struct Renderer {
     repeat_material_preparation: bool,
     #[cfg(test)]
     repeat_material_binding_lookups: bool,
+    #[cfg(test)]
+    repeat_object_packets: bool,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     surface: Option<wgpu::Surface<'static>>,
@@ -799,6 +807,7 @@ pub struct Renderer {
     object_stride: u64,
     indexed_objects: bool,
     object_capacity: usize,
+    object_packets: ObjectPacketCache,
     sky: SkyBackground,
     post_process: HdrPostProcess,
     ui: UiRenderer,
@@ -1403,6 +1412,8 @@ impl Renderer {
             repeat_material_preparation: false,
             #[cfg(test)]
             repeat_material_binding_lookups: false,
+            #[cfg(test)]
+            repeat_object_packets: false,
             device,
             queue,
             surface,
@@ -1457,6 +1468,7 @@ impl Renderer {
             object_stride,
             indexed_objects,
             object_capacity,
+            object_packets: ObjectPacketCache::default(),
             sky,
             post_process,
             ui,
@@ -1670,7 +1682,18 @@ impl Renderer {
         let object_started = Instant::now();
         self.ensure_object_capacity(submitted.len().max(1));
         let mut uniform_slots = vec![0_usize; objects.len()];
-        if !submitted.is_empty() {
+        let retain_packet = self.object_packets.begin(self.object_stride as usize * submitted.len());
+        #[cfg(test)]
+        let retain_packet = retain_packet && !self.repeat_object_packets;
+        if retain_packet {
+            for (slot, &index) in submitted.iter().enumerate() {
+                uniform_slots[index] = slot;
+                let uniform = make_object_uniforms(&objects[index]);
+                self.object_packets.update(slot * self.object_stride as usize, bytemuck::bytes_of(&uniform));
+            }
+            for range in self.object_packets.ranges() { self.queue.write_buffer(&self.object_buf, range.start as u64, &self.object_packets.bytes()[range.clone()]); }
+            self.object_packets.uploaded();
+        } else if !submitted.is_empty() {
             let mut packed = vec![0_u8; self.object_stride as usize * submitted.len()];
             for (slot, &index) in submitted.iter().enumerate() {
                 uniform_slots[index] = slot;
@@ -2074,6 +2097,7 @@ impl Renderer {
             return;
         }
         self.object_capacity = required.next_power_of_two();
+        self.object_packets.invalidate();
         self.object_buf =
             create_object_buffer(&self.device, self.object_stride, self.object_capacity, self.indexed_objects);
         self.bind_group = create_bind_group(
