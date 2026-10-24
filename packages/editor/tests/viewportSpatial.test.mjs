@@ -36,6 +36,20 @@ test('large bounds across the screen and mirrored/rotated sprites remain candida
   assert.deepEqual(bounds,{min:[-3,-3,-.5],max:[5,3,.5]});
 });
 
+test('plane culling agrees with all eight corners and retains nonfinite conservative behavior', () => {
+  let seed=91213;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  for(let i=0;i<3000;i++){
+    const min=[0,1,2].map(()=>random()*40-20),max=min.map(v=>v+random()*5),normal=[0,1,2].map(()=>random()*2-1),distance=random()*30-15;
+    const values=Array.from({length:8},(_,bits)=>normal.reduce((sum,v,axis)=>sum+v*((bits&(1<<axis))?max[axis]:min[axis]),0)+distance);
+    assert.equal(boundsVisible({min,max},[{normal,distance}]),Math.max(...values)>=-.0001);
+  }
+  const b=box(0,0,0);
+  for(const distance of [NaN,Infinity,-Infinity])assert.equal(boundsVisible(b,[{normal:[1,0,0],distance}]),true);
+  for(const value of [NaN,Infinity,-Infinity])assert.equal(boundsVisible(b,[{normal:[value,0,0],distance:0}]),true);
+  assert.equal(boundsVisible(b,[{normal:[1,0,0],distance:NaN},{normal:[1,0,0],distance:-10}]),false);
+  assert.equal(boundsVisible(b,[{normal:[0,0,0],distance:-.0001}]),true);
+});
+
 test('animated bounds, cell migration and unknown bounds preserve exact candidates without duplicate ownership', () => {
   const index = createViewportSpatialIndex();
   let entries = Array.from({length:1800},(_,i)=>box(i%60-30,Math.floor(i/60)-15,(i%5)-2));
@@ -73,6 +87,34 @@ test('small pose changes do not revisit unchanged input bounds for octree constr
   });
   index.update(entries);reads=0;entries[1500]=box(-49.99,0,0);index.update(entries);
   assert.ok(reads<=4*2999,'unchanged inputs are compared once; their geometry is not reread to rebuild cells');
+});
+
+test('owned index skips unchanged geometry while fresh bounds and mutable mode still invalidate', () => {
+  const index=createViewportSpatialIndex();let reads=0;
+  const entries=Array.from({length:3000},(_,i)=>{
+    const value=box(i%100-50,Math.floor(i/100)-15,0);
+    return i===1500?value:{get min(){reads++;return value.min;},get max(){reads++;return value.max;}};
+  });
+  index.update(entries,true);reads=0;entries[1500]=box(-49.99,0,0);index.update(entries,true);assert.equal(reads,0);
+  const planes=viewportPlanes({eye:[0,0,8],target:[0,0,0],fovYDeg:60,near:.1,far:100},1.5);
+  assert.deepEqual(index.query(planes),entries.flatMap((b,i)=>boundsVisible(b,planes)?[i]:[]));
+  const replacement=box(-49.99,0,0);entries[1500]=replacement;index.update(entries,true);
+  index.update(entries);replacement.min[0]=-.1;replacement.max[0]=.1;index.update(entries);
+  assert.deepEqual(index.query(planes),entries.flatMap((b,i)=>boundsVisible(b,planes)?[i]:[]));
+  reads=0;index.update(entries,true);const initialReads=reads;index.update(entries,true);assert.equal(reads,initialReads);
+});
+
+test('owned bounds follow migration, unknown entries, reorder, rebuilds and earlier frame restoration', () => {
+  const index=createViewportSpatialIndex(),planes=viewportPlanes({eye:[0,0,8],target:[0,0,0],fovYDeg:60,near:.1,far:100},1.5);
+  const first=Array.from({length:1800},(_,i)=>i%17?box(i%60-30,Math.floor(i/60)-15,(i%5)-2):null);
+  let entries=first;
+  const check=()=>{index.update(entries,true);assert.deepEqual(index.query(planes),entries.flatMap((b,i)=>!b||boundsVisible(b,planes)?[i]:[]));assert.deepEqual(index.query([]),entries.map((_,i)=>i));};
+  check();
+  for(let frame=0;frame<50;frame++){
+    entries=entries.slice();for(let i=0;i<40;i++)entries[(i*43+frame*7)%entries.length]=frame%7?box(Math.sin(frame+i)*28,Math.cos(frame-i)*13,(i%5)-2):null;
+    if(frame===10)entries.reverse();if(frame===20)entries.splice(100,20);if(frame===30)entries.push(box(300,0,0),null);if(frame===40)for(let i=0;i<500;i++)entries[i]=box(25,10,1);check();
+  }
+  entries=entries.map(()=>null);check();entries[0]=box(-200,0,0);check();entries=[];check();entries=first;check();
 });
 test('frustum planes agree with independently projected screen points', () => {
   for (const projection of ['perspective','orthographic']) {

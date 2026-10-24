@@ -51,11 +51,11 @@ export function viewportPlanes(camera: Camera, aspect: number): Plane[] {
   return planes;
 }
 export function boundsVisible(bounds: Bounds, planes: readonly Plane[]) {
-  return planes.every(({ normal, distance }) => {
-    const positive = normal.map((v, axis) => v >= 0 ? bounds.max[axis] : bounds.min[axis]) as Vec3;
-    const value = dot(normal, positive) + distance;
-    return !Number.isFinite(value) || value >= -0.0001;
-  });
+  for (const { normal, distance } of planes) {
+    const value = normal[0] * (normal[0] >= 0 ? bounds.max[0] : bounds.min[0]) + normal[1] * (normal[1] >= 0 ? bounds.max[1] : bounds.min[1]) + normal[2] * (normal[2] >= 0 ? bounds.max[2] : bounds.min[2]) + distance;
+    if (Number.isFinite(value) && value < -0.0001) return false;
+  }
+  return true;
 }
 const contains = (outer: Bounds, inner: Bounds) => outer.min.every((v, axis) => v <= inner.min[axis] && outer.max[axis] >= inner.max[axis]);
 function branch(bounds: Bounds, entries: number[], all: readonly (Bounds | null)[], depth = 0): Branch {
@@ -68,10 +68,12 @@ function branch(bounds: Bounds, entries: number[], all: readonly (Bounds | null)
 }
 export function createViewportSpatialIndex() {
   let bounds: (Bounds | null)[] = [], root: Branch | null = null, owners: Array<Branch | undefined> = [];
+  let ownedSources: (Bounds | null)[] | null = null;
   const unknown = new Set<number>();
   const copy = (b: Bounds | null): Bounds | null => b ? { min: [...b.min], max: [...b.max] } : null;
   const same = (a: Bounds | null, b: Bounds | null) => a === b || !!(a && b && a.min.every((v, axis) => v === b.min[axis] && a.max[axis] === b.max[axis]));
-  const rebuild = (next: readonly (Bounds | null)[]) => {
+  const rebuild = (next: readonly (Bounds | null)[], owned: boolean) => {
+    ownedSources = owned ? next.slice() : null;
     bounds = next.map(copy); owners = new Array(bounds.length); unknown.clear();
     const known: number[] = [], total: Bounds = { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
     bounds.forEach((b, i) => {
@@ -88,12 +90,18 @@ export function createViewportSpatialIndex() {
     if (root) remember(root);
   };
   return {
-    update(next: readonly (Bounds | null)[]) {
-      if (next.length !== bounds.length) { rebuild(next); return; }
+    // Fixed displayed bounds can use identity; mutable authoring retains coordinate comparisons.
+    update(next: readonly (Bounds | null)[], owned = false) {
+      if (next.length !== bounds.length) { rebuild(next, owned); return; }
+      ownedSources = owned ? ownedSources ?? new Array(next.length) : null;
       const changed: number[] = [];
       for (let i = 0; i < next.length; i++) {
+        if (ownedSources) {
+          if (ownedSources[i] === next[i]) continue;
+          ownedSources[i] = next[i];
+        }
         if (same(next[i], bounds[i])) continue;
-        if (next[i] && (!root || !contains(root.bounds, next[i]!))) { rebuild(next); return; }
+        if (next[i] && (!root || !contains(root.bounds, next[i]!))) { rebuild(next, owned); return; }
         changed.push(i);
       }
       const touched = new Set<Branch>();
@@ -109,7 +117,7 @@ export function createViewportSpatialIndex() {
         node.entries.push(i); owners[i] = node; touched.add(node);
       }
       // Repartition crowded cells after migration instead of accumulating a linear resident list.
-      if ([...touched].some(node => node.entries.length > node.residentLimit)) rebuild(next);
+      if ([...touched].some(node => node.entries.length > node.residentLimit)) rebuild(next, owned);
     },
     query(planes: readonly Plane[]) {
       const result = [...unknown];

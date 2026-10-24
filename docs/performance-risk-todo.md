@@ -1445,3 +1445,9 @@ Scene连续旋转期间13帧，隐藏页签原生／浏览器均0，切回30帧�
 固定components记录的组件分类和局部范围复用，模型预览身份逐次检查以响应资源热更新；作者态可变数据继续直接计算。相关代码拆入viewportEntityBounds，Viewport保留原有选中／粒子／轨迹的保守规则。6项定向检查及TypeScript通过。
 
 7434实体、每帧200模型组件／变换变化的3组局部样本，包围盒准备均值1.401→0.687ms、校验和一致；不作为FPS结论。证据tmp/docs-artifacts/editor-performance-risk/entity-bounds-*。本批2/3，模型热更新、地图动画、多窗口和实际Scene paint待三项后统一验证，详见testing-batches.md。
+
+### 第八十五阶段：八叉树平面检查与固定输入
+
+固定显示帧的包围盒身份参与索引增量判断，未变化输入无需重复读取坐标；编辑态保留原地修改检测。平面检查改为标量计算，保持容差及非有限数据保守纳入规则。16项相关检查和TypeScript通过，包含八角点独立判定、索引迁移／重建和模式切换。
+
+7400范围／300变化项的3组局部样本，索引更新加查询均值1.975→0.297ms，校验和一致。证据tmp/docs-artifacts/editor-performance-risk/owned-index-*。本批3/3，开始合并原生构建和实际帧率采样；该局部收益不直接外推FPS，详见testing-batches.md。

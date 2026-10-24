@@ -57,8 +57,9 @@ test('actual Viewport culling keeps selected and simulated effects conservative 
   const submit=new Function('worldEntries','selSet','trailDrawByEntity','particleDrawByEntity','entityBoundsRef','displayedPresentation','spatialIndexRef',line);
   const worldEntries=[1,2,3,4].map(entity=>({e:{entity,components:{MeshRenderer:{}}},t:transform(entity)}));
   for(const owned of [undefined,{}]){
-    const calls=[];let bounds;
-    submit(worldEntries,new Set([1]),new Map([[2,{}]]),new Map([[3,{}]]),{current:(...args)=>{calls.push(args);return 'bound';}},owned,{current:{update:value=>{bounds=value;}}});
+    const calls=[];let bounds,indexOwned;
+    submit(worldEntries,new Set([1]),new Map([[2,{}]]),new Map([[3,{}]]),{current:(...args)=>{calls.push(args);return 'bound';}},owned,{current:{update:(value,owned)=>{bounds=value;indexOwned=owned;}}});
     assert.deepEqual(bounds,[null,null,null,'bound']);assert.deepEqual(calls,[[worldEntries[3].e.components,worldEntries[3].t,!!owned]]);
+    assert.equal(indexOwned,!!owned);
   }
 });

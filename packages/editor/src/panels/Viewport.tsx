@@ -2025,7 +2025,7 @@ export function Viewport(props: {
       const t = resolvedTransform(worldTransforms, e.entity);
       return t ? [{ e, t, hierarchyOrder }] : [];
     });
-    spatialIndexRef.current.update(worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : entityBoundsRef.current(e.components, t, !!displayedPresentation)));
+    spatialIndexRef.current.update(worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : entityBoundsRef.current(e.components, t, !!displayedPresentation)), !!displayedPresentation);
     const spatialCandidates = spatialIndexRef.current.query(viewportPlanes(cam, vp.w / Math.max(1, vp.h)));
     const drawn = (isGame && !gameCamera ? [] : spatialCandidates
       .flatMap((index) => {
