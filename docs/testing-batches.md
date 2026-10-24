@@ -1066,3 +1066,11 @@ RHI按本次提交中SharedRenderMaterial的源身份准备一次材质，未共
 变更renderer及material_submission_tests。3项真实GPU定向检查通过，覆盖共享绑定、资源刷新及新增64对象／8源的逐像素对照：共享准备64→8、单对象写时复制后9、独立材质64；开启阴影并校验纹理缺失后上传。最终生产cargo check -p mengine-rhi --release --lib通过。手动局部GPU基准4096对象／128源，12轮交替先后、排除2轮预热，每模式10组且每组4帧，96帧像素完全一致；材质准备CPU均值1.014100→0.084892ms、中位1.018150→0.084050ms、P95 1.119000→0.101900ms。只衡量该准备阶段，不作为真实地图FPS。
 
 日志tmp/docs-artifacts/editor-performance-risk/shared-material-preparation-{tests,bench,final-check}.log、shared-material-bindings-tests.log及shared-material-resources-tests.log。当前096b624与本项为2/3；下一项独立性能任务完成后统一原生构建与实际DotA／多窗口验证，真实地图材质数量、帧率和完整集成尚待确认。
+
+### 第九十四阶段／新批次任务3/3：复用稳定世界绘制指令
+
+RHI在同一绘制列表再次出现时编译forward render bundle，后续精确匹配GPU pipeline／bind group／顶点与索引buffer句柄、index数量、uniform偏移及绘制顺序后复用。相机、灯光、对象uniform和顶点内容仍照常上传；透明顺序、资源替换和uniform扩容改变匹配输入。阴影保留原路径，包含原生粒子或不足64／超过32768候选的列表直接编码。缓存最多4份、累计32768绘制条目，超过8次提交未使用的记录释放；第一次出现只登记，不编译未复用的bundle。
+
+变更renderer、world_bundles及material_submission_tests。新增真实GPU逐像素检查通过，覆盖opaque／透明／加法／镂空／自定义shader、相机和透明顺序、纹理缺失后上传／替换／删除、shader错误与恢复、网格buffer及index数量替换／删除、同句柄顶点更新、uniform扩容、视口尺寸、阴影、环境贴图替换／移除、粒子回退及空帧后的缓存释放。4096对象、12轮交替且排除2轮预热，每模式10组4帧，96帧像素一致；世界编码CPU均值3.097237→1.905038ms、中位3.104275→1.917550ms、P95 3.175600→1.972150ms。仅为局部CPU样本，真实地图FPS待验证。生产cargo check通过；日志tmp/docs-artifacts/editor-performance-risk/world-bundles-{tests,bench,check}.log。
+
+当前096b624、d2cbff9与本项达到3/3。统一隔离生产构建，合并验证实际DotA缓存进入、Game／全图Scene持续采样与选取，以及多窗口重开／Pause／Step／Stop／截图；复用不受影响的导入、层级和Spine证据。稳定60FPS、完整JASS玩法和LOD仍未完成，不将指令缓存描述为几何数量减少。

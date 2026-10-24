@@ -21,6 +21,10 @@ use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use winit::dpi::PhysicalSize;
 
+#[path = "world_bundles.rs"]
+mod world_bundles;
+use world_bundles::{WorldBindings, WorldBundleCache, WorldDraw};
+
 const MAX_POINT_LIGHTS: usize = 4;
 const MAX_SPOT_LIGHTS: usize = 4;
 const DIRECTIONAL_SHADOW_MAP_SIZE: u32 = 2048;
@@ -427,6 +431,10 @@ pub struct OffscreenReadbackProfile {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct FrameSubmissionProfile {
     #[cfg(test)]
+    pub world_bundle_builds: usize,
+    #[cfg(test)]
+    pub world_bundle_hits: usize,
+    #[cfg(test)]
     pub material_preparations: usize,
     pub target_prepare_ms: f64,
     pub camera_uniform_ms: f64,
@@ -694,6 +702,9 @@ fn draw_binding_changed<'a, T>(bound: &mut Option<&'a T>, next: &'a T) -> bool {
 }
 
 pub struct Renderer {
+    world_bundles: WorldBundleCache,
+    #[cfg(test)]
+    disable_world_bundles: bool,
     particle_renderer: crate::particle_render::ParticleRenderer,
     #[cfg(test)]
     repeat_draw_bindings: bool,
@@ -1336,6 +1347,9 @@ impl Renderer {
 
         let gpu_profiler = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1").then(|| GpuFrameProfiler::new(&device)).flatten();
         Ok(Self {
+            world_bundles: WorldBundleCache::default(),
+            #[cfg(test)]
+            disable_world_bundles: false,
             #[cfg(test)]
             repeat_draw_bindings: false,
             #[cfg(test)]
@@ -1734,6 +1748,10 @@ impl Renderer {
         self.submission_profile.shadow_encode_ms += shadow_started.elapsed().as_secs_f64() * 1000.0;
 
         let world_started = Instant::now();
+        #[cfg(test)]
+        let use_world_bundles = reuse_draw_bindings && !self.disable_world_bundles;
+        #[cfg(not(test))]
+        let use_world_bundles = true;
         {
             let environment_bind_group = if has_environment_texture {
                 self.environment_bind_groups
@@ -1742,6 +1760,19 @@ impl Renderer {
             } else {
                 &self.fallback_environment_bind_group
             };
+            // MiYu: particles retain their own encoder; all mesh draws keep their exact sorted order.
+            let bundle_eligible = use_world_bundles && WorldBundleCache::accepts_count(draw_order.len()) && !draw_order.iter().any(|&index| objects[index].material.particle.is_some());
+            let world_draws: Vec<_> = if bundle_eligible { draw_order.iter().filter_map(|&index| {
+                let mesh = self.meshes.get(&objects[index].mesh_key)?;
+                if mesh.index_count == 0 { return None; }
+                let material = &prepared_materials[material_slots[uniform_slots[index]]]; let key = material.pipeline;
+                let pipeline = if material.use_error_pipeline { self.error_material_pipelines.get(&error_material_pipeline_key(key)) }
+                    else { self.material_pipelines.get(&key).or_else(|| self.material_pipelines.get(&MaterialPipelineKey { shader_fingerprint: 0, ..key })) }.expect("world material pipeline prepared before render pass");
+                Some(WorldDraw { pipeline, textures: self.material_texture_sets.get(&material.textures).expect("world texture set prepared before render pass"), vertices: &mesh.vertex_buffer, indices: &mesh.index_buffer, count: mesh.index_count, offset: (uniform_slots[index] as u64 * self.object_stride) as u32 })
+            }).collect() } else { Vec::new() };
+            let bundle = if use_world_bundles { self.world_bundles.prepare(&self.device, self.sample_count, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group }, &world_draws) } else { None };
+            #[cfg(test)]
+            if let Some((_, reused)) = &bundle { if *reused { self.submission_profile.world_bundle_hits += 1; } else { self.submission_profile.world_bundle_builds += 1; } }
             self.sky.prepare(
                 &self.queue,
                 camera,
@@ -1798,6 +1829,8 @@ impl Renderer {
             });
 
             // MiYu: all forward/error pipelines share pipeline_layout; bindings live only in this pass.
+            if let Some((bundle, _)) = bundle { pass.execute_bundles(std::iter::once(bundle)); }
+            else {
             let (mut bound_pipeline, mut bound_textures, mut bound_mesh) = (None, None, None);
             let mut shared_bindings_set = false;
             for index in draw_order {
@@ -1850,6 +1883,7 @@ impl Renderer {
                     pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                 }
                 pass.draw_indexed(0..mesh.index_count, 0, 0..1);
+            }
             }
         }
         self.submission_profile.world_encode_ms += world_started.elapsed().as_secs_f64() * 1000.0;

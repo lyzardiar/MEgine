@@ -2,6 +2,118 @@
 use super::*;
 
 #[test]
+fn cached_world_bundles_preserve_dynamic_pixels_and_resource_replacements() {
+    let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(128, 128))).unwrap();
+    renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    renderer.meshes.insert("alternate-cube".into(), MeshGpu::unit_cube(&renderer.device));
+    renderer.upload_material_texture_rgba8("binding-red", 1, 1, &[255, 20, 10, 255], true).unwrap();
+    renderer.upload_material_texture_rgba8("binding-blue", 1, 1, &[10, 20, 255, 255], true).unwrap();
+    let mut objects = binding_test_objects(128, true);
+    let mut camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+    let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false;
+    lighting.directional = Some(DirectionalLightData { direction: -Vec3::Z, color: [1.; 3], intensity: 1., cast_shadows: true, shadow_strength: 1., shadow_bias: 0.001, shadow_normal_bias: 0.001, shadow_distance: 10. });
+    let target = renderer.create_offscreen_target(PhysicalSize::new(128, 128));
+    let compare = |renderer: &mut Renderer, objects: &[RenderObject], camera, lighting: &FrameLighting, target: &OffscreenRenderTarget| {
+        let mut reference = None;
+        for mode in 0..4 {
+            renderer.disable_world_bundles = mode == 0;
+            renderer.submit_frame_to(&RenderFrame { clear: ClearColor { r: 0., g: 0., b: 0., a: 1. }, camera, objects, lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(target)).unwrap();
+            let pixels = renderer.read_offscreen_rgba8(target).unwrap();
+            if let Some(reference) = &reference { assert_eq!(&pixels, reference); } else { reference = Some(pixels); }
+            if mode == 3 { assert_eq!(renderer.submission_profile().world_bundle_hits, 1); }
+        }
+        let counts = renderer.world_bundles.counts(); assert!(counts.0 <= 4 && counts.1 <= 32_768);
+        reference.unwrap()
+    };
+    let first = compare(&mut renderer, &objects, camera, &lighting, &target);
+    assert!(first.chunks_exact(4).any(|pixel| pixel[..3] != [0, 0, 0]));
+    // Uniform contents change while exact GPU draw commands remain reusable.
+    objects[0].model.w_axis.x += 0.08; objects[1].material.base_color = [0., 1., 0., 1.];
+    assert_ne!(compare(&mut renderer, &objects, camera, &lighting, &target), first);
+    objects[3].model.w_axis.z = 0.2; objects[11].model = objects[3].model; objects[11].model.w_axis.z = 0.7;
+    compare(&mut renderer, &objects, camera, &lighting, &target);
+    camera.position = -Vec3::Z; camera.view = Mat4::from_translation(Vec3::new(0.1, 0., 0.));
+    compare(&mut renderer, &objects, camera, &lighting, &target); objects.reverse();
+    compare(&mut renderer, &objects, camera, &lighting, &target);
+    renderer.upload_material_texture_rgba8("missing-binding-texture", 1, 1, &[20, 255, 10, 255], true).unwrap();
+    renderer.upload_material_texture_rgba8("binding-red", 1, 1, &[10, 20, 255, 255], true).unwrap();
+    compare(&mut renderer, &objects, camera, &lighting, &target);
+    renderer.remove_material_texture("binding-blue"); compare(&mut renderer, &objects, camera, &lighting, &target);
+    objects[0].material.surface_shader = Arc::from("fn mengine_surface_hook() {}");
+    compare(&mut renderer, &objects, camera, &lighting, &target);
+    objects[0].material.surface_shader = Arc::from("fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, position: vec3<f32>, normal: vec3<f32>) -> vec4<f32> { return vec4<f32>(color.bgr, color.a); }");
+    compare(&mut renderer, &objects, camera, &lighting, &target);
+    let mut replacement = MeshGpu::unit_cube(&renderer.device); replacement.index_count = 3;
+    renderer.meshes.insert("alternate-cube".into(), replacement); compare(&mut renderer, &objects, camera, &lighting, &target);
+    let mut vertices: Vec<_> = [[-0.5, -0.5, 0.], [0.5, -0.5, 0.], [0., 0.5, 0.]].into_iter().map(|position| Vertex { position, normal: [0., 0., 1.], uv: [0.5; 2] }).collect();
+    renderer.upload_gltf_static("alternate-cube", &vertices, &[0, 1, 2]);
+    let before_pose = compare(&mut renderer, &objects, camera, &lighting, &target);
+    for vertex in &mut vertices { vertex.position[0] += 0.4; }
+    let pose = renderer.upload_gltf_static_profiled("alternate-cube", &vertices, &[0, 1, 2]); assert!(pose.vertex_buffer_reused && pose.index_buffer_reused);
+    assert_ne!(compare(&mut renderer, &objects, camera, &lighting, &target), before_pose);
+    renderer.remove_mesh("alternate-cube"); compare(&mut renderer, &objects, camera, &lighting, &target);
+    let capacity = renderer.object_capacity; objects.extend(binding_test_objects(256, false));
+    compare(&mut renderer, &objects, camera, &lighting, &target); assert!(renderer.object_capacity > capacity);
+    let resized = renderer.create_offscreen_target(PhysicalSize::new(160, 96));
+    lighting.directional = None; compare(&mut renderer, &objects, camera, &lighting, &resized);
+    lighting.environment.texture = "bundle-env".into();
+    for color in [[255, 20, 10, 255], [10, 20, 255, 255]] {
+        renderer.upload_environment_texture_rgba8("bundle-env", 1, 1, &color).unwrap(); compare(&mut renderer, &objects, camera, &lighting, &target);
+    }
+    renderer.remove_environment_texture("bundle-env"); compare(&mut renderer, &objects, camera, &lighting, &target);
+    use crate::particle_render::{ParticleGeometry, ParticleRenderData, ParticleVertex, PARTICLE_PARAMETER_COUNT};
+    let mut parameters = [[0.; 4]; PARTICLE_PARAMETER_COUNT]; parameters[3][0] = 1.; parameters[57][0] = 1.;
+    for slot in 116..121 { parameters[slot] = [1., 1., 0., 0.]; }
+    parameters[121] = [1.; 4]; parameters[124] = [1.; 4]; parameters[125] = [1., 1., 1., 0.];
+    let particle = ParticleRenderData { geometry: Arc::new(ParticleGeometry { vertices: vertices.iter().map(|vertex| ParticleVertex { position: vertex.position, uv: vertex.uv, color: [1.; 4] }).collect(), indices: vec![0, 1, 2] }), color: [1., 0., 0., 0.5], custom1: [0.; 4], custom2: [0.; 4], uv_transform: [1., 1., 0., 0.], parameters: Arc::new(parameters), seconds: 0., features: 0, sorting_position: [0.; 3], sorting_fudge: 0., source_blend: 5, destination_blend: 10, depth_compare: 2, cull: 0, depth_write: false };
+    objects[0].material.particle = Some(Arc::new(particle)); objects[0].material.transparent = true;
+    let mut particle_reference = None;
+    for disabled in [true, false, false] {
+        renderer.disable_world_bundles = disabled;
+        renderer.submit_frame_to(&RenderFrame { clear: ClearColor { r: 0., g: 0., b: 0., a: 1. }, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        let pixels = renderer.read_offscreen_rgba8(&target).unwrap();
+        if let Some(reference) = &particle_reference { assert_eq!(&pixels, reference); } else { particle_reference = Some(pixels); }
+        assert_eq!(renderer.submission_profile().world_bundle_hits, 0); assert_eq!(renderer.submission_profile().world_bundle_builds, 0);
+    }
+    for _ in 0..9 {
+        renderer.submit_frame_to(&RenderFrame { clear: ClearColor { r: 0., g: 0., b: 0., a: 1. }, camera, objects: &[], lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+    }
+    assert_eq!(renderer.world_bundles.counts(), (0, 0));
+    assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+}
+
+#[test]
+#[ignore = "manual alternating world bundle submission CPU profile"]
+fn benchmark_cached_world_bundles() {
+    let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(128, 128))).unwrap(); renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    renderer.meshes.insert("alternate-cube".into(), MeshGpu::unit_cube(&renderer.device));
+    for (key, pixel) in [("binding-red", [255, 20, 10, 255]), ("binding-blue", [10, 20, 255, 255]), ("missing-binding-texture", [20, 255, 10, 255])] { renderer.upload_material_texture_rgba8(key, 1, 1, &pixel, true).unwrap(); }
+    let mut objects = binding_test_objects(4096, true); let palette: Vec<_> = objects[..8].iter().map(|object| object.material.clone()).collect();
+    for (index, object) in objects.iter_mut().enumerate() { object.material = palette[index % 8].clone(); }
+    let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+    let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false; lighting.directional = None;
+    let target = renderer.create_offscreen_target(PhysicalSize::new(128, 128));
+    let frame = RenderFrame { clear: ClearColor { r: 0., g: 0., b: 0., a: 1. }, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] };
+    let mut samples = [Vec::new(), Vec::new()]; let mut reference = None;
+    for round in 0..12 {
+        for mode in if round % 2 == 0 { [0, 1] } else { [1, 0] } {
+            renderer.disable_world_bundles = mode == 0; let mut elapsed = 0.;
+            for _ in 0..4 {
+                renderer.submit_frame_to(&frame, RenderTarget::Offscreen(&target)).unwrap(); let profile = renderer.submission_profile(); elapsed += profile.world_encode_ms;
+                if round >= 2 && mode == 1 { assert_eq!(profile.world_bundle_hits, 1); }
+                let pixels = renderer.read_offscreen_rgba8(&target).unwrap();
+                if let Some(reference) = &reference { assert_eq!(&pixels, reference); } else { reference = Some(pixels); }
+            }
+            if round >= 2 { samples[mode].push(elapsed / 4.); }
+        }
+    }
+    let summary = |mut values: Vec<f64>| { let mean = values.iter().sum::<f64>() / values.len() as f64; values.sort_by(f64::total_cmp); [mean, values[values.len() / 2], values[values.len() * 95 / 100]] };
+    let before = summary(samples[0].clone()); let after = summary(samples[1].clone());
+    println!("WORLD_BUNDLES objects=4096 samples=10 framesPerSample=4 before_mean_ms={:.6} before_median_ms={:.6} before_p95_ms={:.6} after_mean_ms={:.6} after_median_ms={:.6} after_p95_ms={:.6}", before[0], before[1], before[2], after[0], after[1], after[2]);
+    assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+}
+
+#[test]
 fn shared_material_preparation_preserves_pass_pixels_private_overrides_and_texture_refresh() {
     let mut renderer=pollster::block_on(Renderer::new_headless(PhysicalSize::new(128,128))).unwrap();renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
     renderer.meshes.insert("alternate-cube".into(),MeshGpu::unit_cube(&renderer.device));
@@ -108,6 +220,7 @@ fn reused_draw_bindings_match_repeated_bindings_across_passes_and_resource_chang
 #[ignore = "manual alternating draw binding GPU submission benchmark"]
 fn benchmark_reused_draw_bindings() {
     let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(128, 128))).unwrap();
+    renderer.disable_world_bundles = true;
     renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
     renderer.meshes.insert("alternate-cube".into(), MeshGpu::unit_cube(&renderer.device));
     renderer.upload_material_texture_rgba8("binding-red", 1, 1, &[220, 180, 100, 255], true).unwrap();

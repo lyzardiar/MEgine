@@ -1529,3 +1529,9 @@ Game在Play期间最多两次延后过期请求，让新世界进入请求槽位
 RHI通过共享材质源身份复用一次提交内的材质准备，各对象变换和uniform仍独立，阴影／粒子／世界使用相同映射。未共享源跳过索引，提交之间重新准备以保持纹理刷新、shader及单对象写时复制覆盖。
 
 3项真实GPU定向检查、最终生产cargo check通过。4096对象／128源交替基准，96帧像素一致；材质准备CPU均值1.014100→0.084892ms、P95 1.119000→0.101900ms，不能外推真实地图FPS。当前批次2/3，实际DotA及多窗口待第三项统一集成；证据shared-material-preparation-*、shared-material-bindings-tests.log及shared-material-resources-tests.log，完整范围见testing-batches.md。
+
+### 第九十四阶段：复用稳定forward绘制列表
+
+RHI对重复列表复用render bundle，按实际GPU资源句柄、顺序及uniform偏移精确匹配；变换、灯光和顶点内容仍每帧更新。缓存最多4份／32768条目，8次提交未用则释放；首遇列表登记，粒子及规模不适合的列表保留直接编码。
+
+真实GPU对照覆盖动态uniform／透明排序、纹理／shader／网格／环境热更新、顶点buffer内容复用、扩容、尺寸、阴影、粒子回退和释放。96帧像素一致的局部4096对象基准，世界编码均值3.097237→1.905038ms、P95 3.175600→1.972150ms。当前批次3/3，开始统一原生生产集成及DotA／多窗口实际性能验证。证据world-bundles-*，具体范围见testing-batches.md；尚无本项真实FPS结论。
