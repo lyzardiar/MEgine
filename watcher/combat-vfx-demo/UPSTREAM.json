@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "name": "combat-vfx-demo",
+  "repository": "https://github.com/yuewen-huang/combat-vfx-demo.git",
+  "branch": "main",
+  "versionType": "git-commit",
+  "version": "aee3b51bb2f2",
+  "commit": "aee3b51bb2f22bd0262a4e191ac706e2cc0f82a5",
+  "tree": "325163d249e6928118f9c6262ef0416fc596c2f6",
+  "commitUrl": "https://github.com/yuewen-huang/combat-vfx-demo/commit/aee3b51bb2f22bd0262a4e191ac706e2cc0f82a5",
+  "committedAt": "2026-10-23T11:28:00Z",
+  "commitSubject": "Relicense under PolyForm Noncommercial 1.0.0",
+  "importedAt": "2026-10-24T17:59:32+08:00",
+  "archive": "https://codeload.github.com/yuewen-huang/combat-vfx-demo/zip/aee3b51bb2f22bd0262a4e191ac706e2cc0f82a5",
+  "archiveSha256": "39570d031f8589b74001c81fe799d9377ad6b89f2c07fa5bbdcbeff9caee6211",
+  "upstreamFileCount": 272,
+  "upstreamBytes": 36832842,
+  "license": "PolyForm Noncommercial License 1.0.0",
+  "licenseFile": "LICENSE",
+  "syncPolicy": "manual-on-request",
+  "localOnlyFiles": [
+    "README-MENGINE.md",
+    "UPSTREAM.json"
+  ]
+}

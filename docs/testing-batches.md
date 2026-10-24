@@ -1201,3 +1201,13 @@ B001/map-session-1792831470405.json通过7434实体、多窗口重开／版本�
 
 
 第一百零一阶段补充：通过独立渲染阶段包装传递实例索引，保留材质辅助函数可用的VsOut结构、位置构造参数与成员；自动避开辅助函数、类型和私有变量的同名符号。构造函数及命名兼容回归通过，12阶段96帧uniform／数组完整像素对照仍一致。日志indexed-objects-constructor-before.log和indexed-objects-constructors-after.log。该补充属于同一功能，批次计数不增加。
+
+### 2026-10-24／新批次任务2/3：combat-vfx-demo 外部工程快照
+
+变更路径：`watcher/README.md`、`watcher/combat-vfx-demo/**` 及本台账。`watcher/` 为多个待跟踪工程的总目录，本工程独占子目录；完整导入 `https://github.com/yuewen-huang/combat-vfx-demo.git` 的 `main` 提交 `aee3b51bb2f22bd0262a4e191ac706e2cc0f82a5`，原样保留源码、配置、媒体及许可证。项目内 `UPSTREAM.json` 记录来源、分支、提交版本和归档摘要，`README-MENGINE.md` 记录手动同步流程；不包含 `.git`。
+
+本次快速检查：GitHub 固定提交归档与完整 Git tree 清单逐文件比对，272 个上游文件、36,832,842 字节的大小和 Git blob SHA-1 全部一致；来源 JSON 可解析，项目内无 Git 元数据，新增维护文件与上游路径无冲突。入库前复核暂存文件清单及内容摘要，确保没有被忽略的上游文件、临时归档或其他任务改动。原始清单、归档、校验脚本及报告在 `tmp/docs-artifacts/watcher-import/`；文件摘要结果见 `verification.json`。
+
+待测场景／操作：后续实际使用该 Godot 工程时，按上游 `README.zh-CN.md` 导入 `watcher/combat-vfx-demo/project.godot`，检查示例选择、组合回放及手动编辑器。版本检查命令：`git ls-remote --heads https://github.com/yuewen-huang/combat-vfx-demo.git main`。风险：Godot 项目尚未在本机运行验收；源码及资产沿用上游 PolyForm Noncommercial 1.0.0 许可证；后续同步需以记录的提交为基线保留本地改动。
+
+状态：快照导入与完整性快速检查完成；接入远程已登记的对象参数索引任务后，本项作为新批次2/3登记。Godot 运行检查待实际使用时纳入相应批次，本次没有执行引擎构建、整库测试或原生QA，也不将文件完整性检查视为运行验收。
