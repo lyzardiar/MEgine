@@ -14,6 +14,7 @@ export type ProjectFileAsset = {
     | 'animator-controller'
     | 'avatar-mask'
     | 'timeline'
+    | 'particle'
     | 'audio'
     | 'font'
     | 'material'
@@ -364,6 +365,7 @@ export function isProjectTextAssetPath(relativePath: string): boolean {
     '.mcontroller',
     '.mavatar',
     '.mtimeline',
+    '.mparticle',
     '.mmat',
     '.mat',
     '.minst',

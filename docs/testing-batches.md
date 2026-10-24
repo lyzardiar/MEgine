@@ -889,3 +889,12 @@ Unitypackage 同任务收尾补充：导入器 1.3.0 将原始资产移至工程
 局部7434实体／每帧200个组件变换更新，3组交替先后顺序、每组30帧预热＋120帧测量，完整显示数据准备（含世界变换、条目、overlay分类）均值2.242→1.403ms；每组结果校验和一致。三组P95分别3.637／3.965／3.974→1.537／2.021／2.441ms。此数据仅证明局部准备成本，不作为原生FPS或稳定满帧结论；脚本及摘要owned-activation-bench.mjs／json留在上述本地目录。
 
 当前1/3；累计三项后统一构建与原生验证。待测Amazonia／DotA持续动画、Scene显隐与层级编辑、地图切换、独立窗口、旧帧呈现及Stop恢复，观察Scene paint和呈现间隔。频繁改变层级仍重建索引，需在后续原生样本中检查其峰值；本项不重跑整库或原生QA。
+
+
+### Unitypackage 导入批次：任务 3/3，桌面入口与预览 sample
+
+桌面 Assets 菜单增加 Unity Package 分析/导入，支持文件选择或直接输入路径，锁定目标工程并校验指纹，完成后统一刷新和定位结果。组件目录和 Inspector 增加 `.mparticle` 资产引用；Project 双击定义打开带 revision/工程守卫的 JSON 编辑器。资产重命名引用扫描与 Player 打包追踪定义、模型及材质纹理。构建 SDK 部署固定转换器与许可。
+
+`samples/unity-package-preview` 提供中性 3D 场景、HUD、播放/停止/重播、相机环绕/缩放及背景切换。`prepare-preview.mjs` 将已有导入复制到忽略的 LocalPreview 工程，保留独立源资产目录；专有特效不入 Git。增加 native QA 脚本与 GPU 截图示例，所有产物写入 tmp/docs-artifacts。
+
+快速检查：前端 production build、Tauri cargo check 通过；导入模型与 Player 依赖检查 7/7 通过。三项任务已齐，统一原生验证正在执行：真实指定路径的分析/导入、刷新后复导、Prefab 实例化、播放与 X/R、相机、JSON 参数保存/非法拒绝、保存重开和控制台检查。GPU/Unity 同条件对照另行记录；不将成功播放计为视觉还原通过。

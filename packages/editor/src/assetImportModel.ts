@@ -5,7 +5,7 @@ export const ASSET_IMPORT_ACCEPT = [
   '.gltf', '.glb',
   '.ttf', '.otf',
   '.atlas', '.skel', '.json',
-  '.mmat', '.mat', '.minst', '.mshader', '.prefab', '.matlas', '.manim', '.mcontroller', '.mavatar', '.mtimeline',
+  '.mmat', '.mat', '.minst', '.mshader', '.prefab', '.matlas', '.manim', '.mcontroller', '.mavatar', '.mtimeline', '.mparticle',
 ].join(',');
 
 const SUPPORTED_EXTENSIONS = new Set(ASSET_IMPORT_ACCEPT.split(','));

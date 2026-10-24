@@ -52,6 +52,7 @@ export type InspectorFieldMeta = {
     | 'spine-binary'
     | 'spine-atlas'
     | 'effekseer-effect'
+    | 'particle'
   >;
   referenceType?: string;
   allowNone?: boolean;
@@ -747,6 +748,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
   },
   ParticleEmitter3D: {
+    definition: { kind: 'project-asset', assetKinds: ['particle'], referenceType: 'Native Particle Definition', allowNone: true, noneValue: '' },
     duration: { min: 0, step: 0.1 },
     start_delay: { min: 0, step: 0.1 },
     rate_over_time: { min: 0, step: 1 },

@@ -27,6 +27,8 @@ mod native_gpu_timings;
 use native_gpu_timings::{get_native_gpu_timings, set_native_gpu_timings, GpuTimingSource};
 mod play_compiler;
 mod project_asset_index;
+mod unity_package_import;
+use unity_package_import::{analyze_unity_package, import_unity_package};
 use agent_bridge::{
     agent_bridge_broadcast, agent_bridge_respond, agent_bridge_set_transport_ready,
     capture_editor_window, capture_editor_window_element, cleanup_bridge_discovery,
@@ -3647,6 +3649,7 @@ const IMPORTABLE_ASSET_EXTENSIONS: &[&str] = &[
     ".mcontroller",
     ".mavatar",
     ".mtimeline",
+    ".mparticle",
 ];
 
 fn importable_asset_extension(name: &str) -> Option<&'static str> {
@@ -3676,6 +3679,8 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
         Some("avatar-mask")
     } else if lower.ends_with(".mtimeline") {
         Some("timeline")
+    } else if lower.ends_with(".mparticle") {
+        Some("particle")
     } else if lower.ends_with(".wav")
         || lower.ends_with(".ogg")
         || lower.ends_with(".mp3")
@@ -6583,6 +6588,8 @@ pub fn run() {
             read_project_asset,
             write_project_asset,
             import_project_asset,
+            analyze_unity_package,
+            import_unity_package,
             rename_project_asset,
             duplicate_project_asset,
             get_project_asset_delete_snapshot,

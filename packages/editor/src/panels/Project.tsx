@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { openParticleDefinitionEditor } from '../particleDefinitionEditor';
 import {
   Bone,
   Box,
@@ -111,7 +112,7 @@ type AssetItem = {
   assetPath?: string;
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'effekseer-effect' | 'effekseer-catalog' | 'font' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'particle' | 'audio' | 'effekseer-effect' | 'effekseer-catalog' | 'font' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
   spawn: string | null;
   icon: ReactNode;
   sceneName?: string;
@@ -411,6 +412,8 @@ export function Project(props: {
         ? 'avatar-mask'
       : asset.kind === 'timeline'
         ? 'timeline'
+      : asset.kind === 'particle'
+        ? 'particle'
       : asset.kind === 'sprite-atlas'
         ? 'sprite-atlas'
       : asset.kind === 'texture'
@@ -455,7 +458,7 @@ export function Project(props: {
         ? <Music size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'font'
         ? <Type size={24} strokeWidth={1.4} aria-hidden="true" />
-        : kind === 'effekseer-effect' || kind === 'effekseer-catalog'
+        : kind === 'effekseer-effect' || kind === 'effekseer-catalog' || kind === 'particle'
         ? <Sparkles size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'animation'
         ? <Film size={24} strokeWidth={1.4} aria-hidden="true" />
@@ -604,6 +607,10 @@ export function Project(props: {
   const onCardDoubleClick = (a: AssetItem) => {
     if (a.kind === 'scene' && a.sceneName) {
       props.onOpenScene(a.sceneName);
+      return;
+    }
+    if (a.kind === 'particle' && a.assetPath) {
+      void openParticleDefinitionEditor(a.assetPath, (message) => props.onLog?.(message));
       return;
     }
     if (a.kind === 'script') {
@@ -1317,6 +1324,7 @@ export function Project(props: {
             'animator-controller',
             'avatar-mask',
             'timeline',
+            'particle',
             'sprite-atlas',
             'texture',
             'audio',
@@ -1415,6 +1423,8 @@ export function Project(props: {
                             ? `Avatar Mask - double-click to edit - ${a.spriteId}`
                           : a.kind === 'timeline'
                             ? `Timeline Sequencer - double-click to edit - ${a.spriteId}`
+                          : a.kind === 'particle'
+                            ? `Particle Effect - drag to a Particle System asset field - ${a.spriteId}`
                           : a.kind === 'material'
                             ? `Material Asset · ${a.spriteId}`
                             : a.kind === 'model'

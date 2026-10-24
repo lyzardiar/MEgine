@@ -1295,6 +1295,7 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('TimelineDirector'), 'asset'), from, 'Timeline asset');
     enqueue(stringValue(component('AudioSource'), 'clip'), from, 'audio clip');
     enqueue(stringValue(component('SampledEffect'), 'effect'), from, 'sampled effect');
+    enqueue(stringValue(component('ParticleEmitter3D'), 'definition'), from, 'particle definition');
     enqueue(
       stringValue(component('EffekseerEffect'), 'effect'),
       from,
@@ -1356,6 +1357,15 @@ function scanBuildAssetDependencies(
           }
         };
         walk(effectDirectory);
+      }
+    } else if (extension === '.mparticle') {
+      const particle = readJsonAsset(absolute, root, 'particle definition');
+      if (particle.version !== 1) throw new Error(`invalid particle definition ${source}: unsupported version`);
+      const renderer = jsonObject(particle.renderer);
+      enqueue(stringValue(renderer, 'mesh'), source, 'particle mesh');
+      const textures = jsonObject(jsonObject(particle.material)?.textures);
+      for (const value of Object.values(textures ?? {})) {
+        enqueue(stringValue(jsonObject(value), 'path'), source, 'particle texture');
       }
     } else if (extension === '.mfx') {
       const effect = readJsonAsset(absolute, root, 'sampled effect');
@@ -2410,7 +2420,7 @@ function scanBuildAssetDependencies(
   if (project.assetMode === 'all') {
     for (const contentRoot of roots) {
       for (const candidate of collectPackageCandidateFiles(contentRoot, [], isCancelled)) {
-        if (!/\.(?:mscene|prefab|mmat|mat|minst|mshader|mcontroller|mavatar|manim|mtimeline|gltf|atlas)$/i.test(candidate.path)
+        if (!/\.(?:mscene|prefab|mmat|mat|minst|mshader|mcontroller|mavatar|manim|mtimeline|mparticle|gltf|atlas)$/i.test(candidate.path)
           && !/\.sprite\.json$/i.test(candidate.path)) continue;
         enqueue(
           portablePath(relative(root, candidate.path)),

@@ -1,0 +1,14 @@
+.unity-package-backdrop { z-index: 10000; }
+.editor-dialog.unity-package-dialog { width: min(850px, 92vw); max-height: 88vh; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+.unity-package-dialog p { margin: 0; }
+.unity-package-dialog progress { width: 100%; }
+.unity-package-path { overflow-wrap: anywhere; font-size: 12px; opacity: .8; }
+.unity-package-error { color: #f18c8c; white-space: pre-wrap; overflow-wrap: anywhere; }
+.unity-package-assets { max-height: 280px; overflow: auto; border: 1px solid #484848; }
+.unity-package-assets table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.unity-package-assets th, .unity-package-assets td { text-align: left; padding: 5px 9px; border-bottom: 1px solid #383838; overflow-wrap: anywhere; }
+.unity-package-assets th { position: sticky; top: 0; background: #292929; }
+.unity-package-dialog details ul { max-height: 160px; overflow: auto; }
+
+.unity-package-dialog input { width: min(560px, 60vw); }
+.particle-definition-dialog textarea { min-height: 50vh; resize: vertical; font-family: monospace; font-size: 12px; white-space: pre; }

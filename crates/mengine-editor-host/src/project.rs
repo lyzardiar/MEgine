@@ -2301,6 +2301,7 @@ fn is_reference_text_asset(path: &Path) -> bool {
             | "mcontroller"
             | "mavatar"
             | "mtimeline"
+            | "mparticle"
             | "mmat"
             | "mat"
             | "minst"
