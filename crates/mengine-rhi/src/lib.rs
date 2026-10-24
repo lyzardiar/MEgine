@@ -3,6 +3,8 @@
 mod ibl;
 mod gpu_profiler;
 mod mesh;
+mod picking;
+pub use picking::{MeshPickFrame, MeshPickGeometry, MeshPickHit, MeshPickObject};
 mod post_process;
 mod particle_render;
 pub use particle_render::{ParticleGeometry, ParticleVertex, ParticleRenderData, PARTICLE_PARAMETER_COUNT};

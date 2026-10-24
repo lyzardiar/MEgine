@@ -50,6 +50,7 @@ pub fn invalidate_resource_samples() { resource_sampling::invalidate(); }
 pub fn resource_sample_generation() -> u64 { resource_sampling::generation() }
 
 pub struct EditorViewportFrame {
+    pub mesh_picking: Option<mengine_rhi::MeshPickFrame>,
     pub width: u32,
     pub height: u32,
     pub rgba: Vec<u8>,
@@ -378,6 +379,9 @@ impl EditorViewportRenderer {
 
     /// Bind profiling to the project session that supplied this render request.
     pub fn with_resource_generation(&mut self, generation: u64) -> &mut Self { self.resource_generation = generation; self }
+
+    /// Retain the exact submitted meshes only on viewports that expose native mesh picking.
+    pub fn with_mesh_picking(&mut self) -> &mut Self { if self.renderer.enable_mesh_picking() { self.meshes.invalidate_uploaded_geometry(); } self }
 
     pub fn with_gpu_timings(&mut self, enabled: bool) -> &mut Self { self.renderer.set_gpu_timings(enabled); self }
 
@@ -869,6 +873,13 @@ impl EditorViewportRenderer {
             pipelines.self_ms = (pipelines.total_ms - pipelines.children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.);
             ui.self_ms = (ui.total_ms - ui.children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.);
         }
+        let mesh_picking = if self.renderer.mesh_picking_enabled() {
+            let stage_started = Instant::now();
+            let entities: Vec<_> = self.mesh_inputs.last_entities().iter().map(|entity| entity.to_u64()).collect();
+            let picking = self.renderer.capture_mesh_pick_frame(frame.camera, &frame.objects, &entities);
+            finish_stage(&mut stages, "Renderer.capture_mesh_pick_frame", stage_started);
+            picking
+        } else { None };
         let readback = if destination == ViewportDestination::Window { None } else {
             Some(self.renderer.begin_offscreen_rgba8_profiled(self.target.as_ref().expect("capture target initialized")).context("could not submit editor viewport readback")?)
         };
@@ -909,6 +920,11 @@ impl EditorViewportRenderer {
         profile.counts.mesh_evictions = mesh_cache.evictions;
         profile.memory.push(EditorViewportMemoryCategory { name:"GPU sampled mesh cache".into(), domain:"gpu".into(), bytes:mesh_cache.bytes as u64, certainty:"estimate".into(), source:"Logical per-mesh vertex/index bytes; shared indices may be counted repeatedly; retained index-cache handles, driver overhead and static meshes are excluded".into() });
         profile.resident_memory_estimate_bytes += mesh_cache.bytes as u64;
+        if self.renderer.mesh_picking_enabled() {
+            let bytes = self.renderer.mesh_picking_bytes() as u64;
+            profile.memory.push(EditorViewportMemoryCategory { name: "CPU current mesh picking geometry".into(), domain: "cpu".into(), bytes, certainty: "lower-bound".into(), source: "Current renderer-owned position/index lengths; allocation overhead and geometry retained only by older frame snapshots excluded".into() });
+            profile.resident_memory_estimate_bytes += bytes;
+        }
         profile.memory.push(EditorViewportMemoryCategory { name:"GPU idle mesh vertex buffers".into(), domain:"gpu".into(), bytes:vertex_pool_bytes as u64, certainty:"estimate".into(), source:"Retained idle vertex-buffer payload capacities; active meshes and driver overhead are excluded".into() });
         profile.resident_memory_estimate_bytes += vertex_pool_bytes as u64;
         // Snapshot construction is intentionally reported as profiler overhead.
@@ -934,7 +950,7 @@ impl EditorViewportRenderer {
                 children: resource_stages,
             }],
         });
-        Ok(EditorViewportSubmission { frame: EditorViewportFrame { width: size.width, height: size.height, rgba: Vec::new(), has_authored_camera: frame.has_authored_camera, profile }, readback, started: render_started, submitted: Instant::now() })
+        Ok(EditorViewportSubmission { frame: EditorViewportFrame { mesh_picking, width: size.width, height: size.height, rgba: Vec::new(), has_authored_camera: frame.has_authored_camera, profile }, readback, started: render_started, submitted: Instant::now() })
     }
 }
 

@@ -221,6 +221,7 @@ import {
 } from '../sceneOrientation';
 import { nativeSceneFrameForPresentation, nativeSceneFrameRequestIdentity, pendingNativeScenePaintUnchanged, type NativeScenePaintState } from '../nativeSceneFrame';
 import { createNativeSceneMeshHitCache } from '../nativeSceneMeshHit';
+import { createNativeScenePickQueue, nativeScenePickPoint, type NativeScenePickFrame } from '../nativeScenePick';
 import {
   rectAxisTranslationAmount,
   rectTranslationAlongAxis,
@@ -717,6 +718,7 @@ export function Viewport(props: {
   const nativeSceneFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
     opaquePixels: boolean;
+    meshPickToken: string | null;
     width: number;
     height: number;
     key: string;
@@ -725,6 +727,8 @@ export function Viewport(props: {
     world: NativeViewportFrameWorld<Ent>;
   } | null>(null);
   const nativeSceneMeshHitRef = useRef(createNativeSceneMeshHitCache());
+  const nativeScenePickRef = useRef<(NativeScenePickFrame & { world: NativeViewportFrameWorld<Ent> }) | null>(null);
+  const nativeScenePickQueueRef = useRef(createNativeScenePickQueue());
   const nativeSceneRequestRef = useRef(createNativeViewportRequestState());
   const nativeCameraPreviewFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
@@ -1299,6 +1303,8 @@ export function Viewport(props: {
       // MiYu: keep the displayed image during asset reload while forcing a fresh native request.
       if (nativeGameFrameRef.current) nativeGameFrameRef.current = { ...nativeGameFrameRef.current, requestKey: '' };
       nativeSceneFrameRef.current = null;
+      nativeScenePickRef.current = null;
+      nativeScenePickQueueRef.current.invalidate();
       nativeCameraPreviewFrameRef.current = null;
       sceneWorldArgsRef.current = null;
       sceneCanvasSurfaceRef.current = null;
@@ -1310,6 +1316,12 @@ export function Viewport(props: {
     window.addEventListener('mengine:project-assets-changed', clear);
     window.addEventListener('mengine-ui-font-loaded', clearUiLayout);
     return () => { window.removeEventListener('mengine:project-assets-changed', clear); window.removeEventListener('mengine-ui-font-loaded', clearUiLayout); };
+  }, []);
+
+  useEffect(() => {
+    const cancelExternalPick = (event: MouseEvent) => { if (event.target !== canvasRef.current) nativeScenePickQueueRef.current.invalidate(); };
+    window.addEventListener('mousedown', cancelExternalPick, true);
+    return () => { window.removeEventListener('mousedown', cancelExternalPick, true); nativeScenePickQueueRef.current.invalidate(); };
   }, []);
 
   useEffect(() => () => {
@@ -1679,6 +1691,7 @@ export function Viewport(props: {
         nativeSceneFrameRef.current = {
           image,
           opaquePixels: result.opaquePixels,
+          meshPickToken: result.meshPickToken,
           width: result.width,
           height: result.height,
           key: nativeSceneIdentity!.key,
@@ -1793,6 +1806,7 @@ export function Viewport(props: {
       lastVpRef.current = vp;
     }
     nativeSceneMeshHitRef.current.beginFrame(nativeSceneFrame, vp);
+    nativeScenePickRef.current = nativeSceneFrame?.meshPickToken ? { meshPickToken: nativeSceneFrame.meshPickToken, viewport: { ...vp }, world: nativeSceneFrame.world } : null;
     const displayedWorld = isGame ? nativeGameFrameRef.current?.world : nativeSceneFrame?.world;
     const browserWorld = displayedWorld ?? (editScene ? nativeWorld.frameWorld() : undefined);
     const displayedPresentation = browserWorld ? nativePresentationRef.current(browserWorld) : undefined;
@@ -2601,6 +2615,7 @@ export function Viewport(props: {
       const rot = t.rotation as [number, number, number, number] | undefined;
       // Project selection geometry on demand using the camera and mesh of the displayed native frame.
       if (nativeSceneFrame?.image) {
+        if (nativeSceneFrame.meshPickToken) continue;
         const meshPath = String((mesh as Record<string, unknown>).mesh ?? 'cube');
         const imported = /\.(?:gltf|glb)$/i.test(meshPath) ? modelPreview(meshPath) : null;
         hits.push({ kind: 'native-mesh', id: e.entity, resolve: () => nativeSceneMeshHitRef.current.read(e.entity, imported, () => imported
@@ -3644,6 +3659,7 @@ export function Viewport(props: {
 
   const onPointerDown = (ev: React.MouseEvent) => {
     const { x, y } = localPos(ev);
+    if (ev.button !== 0 || ev.altKey || scene2DRef.current || propsRef.current.tab !== 'scene') nativeScenePickQueueRef.current.invalidate();
     smartGuidesRef.current = [];
     // Game 视图：只做运行时交互（如 Button），不可点选编辑物体
     if (propsRef.current.tab === 'game') {
@@ -3826,6 +3842,7 @@ export function Viewport(props: {
           ? null
           : hitTestLinePoint(linePointHitsRef.current, x, y);
         if (linePoint && propsRef.current.onLinePointChange) {
+          nativeScenePickQueueRef.current.invalidate();
           draggingRef.current = true;
           dragRef.current = {
             type: 'linePoint',
@@ -3839,6 +3856,7 @@ export function Viewport(props: {
           return;
         }
         const hit = hitTest(x, y);
+        if (hit) nativeScenePickQueueRef.current.invalidate();
         if (hit?.kind === 'gizmo' && propsRef.current.selected != null) {
           const ent = propsRef.current.entities.find(
             (e) => e.entity === propsRef.current.selected,
@@ -4025,6 +4043,23 @@ export function Viewport(props: {
             toggle: ev.ctrlKey || ev.metaKey,
             additive: ev.shiftKey,
           });
+          return;
+        }
+        const nativePick = nativeScenePickRef.current;
+        if (!scene2DRef.current && nativePick) {
+          const point = nativeScenePickPoint(nativePick, x, y);
+          if (!point) return;
+          const projectGeneration = projectAssetSessionGeneration(), toggle = ev.ctrlKey || ev.metaKey, additive = ev.shiftKey;
+          const excludedEntityIds = nativePick.world.entities.filter(entity => propsRef.current.isPickable?.(entity.entity) === false).map(entity => entity.entity);
+          nativeScenePickQueueRef.current.enqueue(
+            () => invoke<{ entity: number } | null>('pick_native_scene_frame', { token: nativePick.meshPickToken, point, excludedEntityIds }),
+            () => panelVisibleRef.current && propsRef.current.tab === 'scene' && !scene2DRef.current && projectAssetSessionGeneration() === projectGeneration && nativeViewportFrameWorldCurrent(nativePick.world, currentViewportOwner()),
+            result => {
+              if (result) { if (propsRef.current.isPickable?.(result.entity) !== false && currentViewportProps().entities.some(entity => entity.entity === result.entity)) propsRef.current.onPick(result.entity, { toggle, additive }); }
+              else if (!toggle && !additive) propsRef.current.onMarqueeSelect([], 'replace');
+            },
+            error => { if (!String(error).includes('expired')) console.warn('Native Scene picking failed', error); },
+          );
           return;
         }
         if (scene2DRef.current) {
@@ -4695,6 +4730,7 @@ export function Viewport(props: {
   }, []);
 
   const onWheel = (ev: React.WheelEvent) => {
+    nativeScenePickQueueRef.current.invalidate();
     if (propsRef.current.tab === 'game') {
       const { x, y } = localPos(ev);
       const ui = hitTestUi(currentUiItems(), x, y, {
@@ -5681,7 +5717,7 @@ export function Viewport(props: {
         onMouseMove={sendPlayPointer}
         onMouseUp={sendPlayPointer}
         onMouseLeave={() => { if (props.tab === 'game') props.onPlayInput?.({ buttons: [] }); }}
-        onDoubleClick={(event) => { if (props.tab === 'scene' && !scene2DRef.current) { event.preventDefault(); props.onFrame(); } }}
+        onDoubleClick={(event) => { if (props.tab === 'scene' && !scene2DRef.current) { event.preventDefault(); void nativeScenePickQueueRef.current.afterPending(() => propsRef.current.onFrame()); } }}
         onKeyDown={(event) => {
           if (props.tab === 'scene' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.nativeEvent.isComposing) {
             navigationFastRef.current = event.shiftKey;

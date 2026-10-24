@@ -104,6 +104,9 @@ pub struct RuntimeMeshCache {
 }
 
 impl RuntimeMeshCache {
+    /// Reupload through the same validated sources after enabling CPU geometry retention.
+    pub fn invalidate_uploaded_geometry(&mut self) { self.attempted.clear(); }
+
     pub fn new(project_root: Option<PathBuf>) -> Self {
         Self {
             project_root,

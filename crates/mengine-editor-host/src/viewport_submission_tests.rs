@@ -4,6 +4,51 @@ use super::*;
 fn project_root() -> PathBuf { Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms") }
 
 #[test]
+fn submitted_pose_picking_tracks_skin_parent_transform_and_preserves_displayed_geometry() {
+    use mengine_core::generated::MeshRenderer;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tmp/docs-artifacts/native-picking").join(uuid::Uuid::new_v4().to_string());
+    std::fs::create_dir_all(&root).unwrap();
+    let mut buffer = Vec::new();
+    for value in [-0.4f32, -0.6, 0., 0.4, -0.6, 0., 0., 0.6, 0.] { buffer.extend(value.to_le_bytes()); }
+    for value in [0u16, 1, 2] { buffer.extend(value.to_le_bytes()); } buffer.extend([0; 2]);
+    buffer.extend([0; 24]);
+    for value in [1f32, 0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 0., 2., 0., 0., 0., 2., 0., 0.] { buffer.extend(value.to_le_bytes()); }
+    std::fs::write(root.join("pose.bin"), &buffer).unwrap();
+    let document = serde_json::json!({"asset":{"version":"2.0"},"buffers":[{"uri":"pose.bin","byteLength":buffer.len()}],
+        "bufferViews":[{"buffer":0,"byteOffset":0,"byteLength":36},{"buffer":0,"byteOffset":36,"byteLength":6},{"buffer":0,"byteOffset":44,"byteLength":24},{"buffer":0,"byteOffset":68,"byteLength":48},{"buffer":0,"byteOffset":116,"byteLength":8},{"buffer":0,"byteOffset":124,"byteLength":24}],
+        "accessors":[{"bufferView":0,"componentType":5126,"count":3,"type":"VEC3","min":[-0.4,-0.6,0],"max":[0.4,0.6,0]},{"bufferView":1,"componentType":5123,"count":3,"type":"SCALAR"},{"bufferView":2,"componentType":5123,"count":3,"type":"VEC4"},{"bufferView":3,"componentType":5126,"count":3,"type":"VEC4"},{"bufferView":4,"componentType":5126,"count":2,"type":"SCALAR","min":[0],"max":[2]},{"bufferView":5,"componentType":5126,"count":2,"type":"VEC3"}],
+        "meshes":[{"primitives":[{"attributes":{"POSITION":0,"JOINTS_0":2,"WEIGHTS_0":3},"indices":1}]}],"skins":[{"joints":[1]}],
+        "nodes":[{"translation":[-4,0,0],"children":[1,2]},{},{"mesh":0,"skin":0}],"scenes":[{"nodes":[0]}],"scene":0,
+        "animations":[{"samplers":[{"input":4,"output":5,"interpolation":"LINEAR"}],"channels":[{"sampler":0,"target":{"node":1,"path":"translation"}}]}]});
+    std::fs::write(root.join("pose.gltf"), document.to_string()).unwrap();
+    let mut world = World::new(); let parent = world.spawn_empty(); world.insert_component(parent, Transform { position: [4., 0., 0.], ..Default::default() });
+    let entity = world.spawn_empty(); world.insert_component(entity, Transform::default()); world.set_parent(entity, Some(parent));
+    world.insert_component(entity, MeshRenderer { mesh: "pose.gltf#pose=0:0@30".into(), ..Default::default() });
+    let camera = EditorSceneCamera { eye: [0., 0., 5.], target: [0.; 3], orthographic: true, orthographic_size: 2., fov_y_degrees: 60. };
+    let mut viewport = pollster::block_on(EditorViewportRenderer::new(root.clone(), 64, 64)).unwrap();
+    let bare = viewport.submit_scene(&world, 64, 64, camera).unwrap().finish().unwrap(); assert!(bare.mesh_picking.is_none());
+    viewport.with_mesh_picking();
+    let old = viewport.submit_scene(&world, 64, 64, camera).unwrap();
+    assert_eq!(old.mesh_picking.as_ref().unwrap().pick([0.5, 0.5], |_| true).unwrap().entity, entity.to_u64());
+    world.get_component_mut::<MeshRenderer>(entity).unwrap().mesh = "pose.gltf#pose=0:30@30".into();
+    let next = viewport.submit_scene(&world, 64, 64, camera).unwrap();
+    assert!(next.mesh_picking.as_ref().unwrap().pick([0.5, 0.5], |_| true).is_none());
+    assert_eq!(next.mesh_picking.as_ref().unwrap().pick([0.75, 0.5], |_| true).unwrap().entity, entity.to_u64());
+    let next = next.finish().unwrap(); let old = old.finish().unwrap(); assert_ne!(next.rgba, old.rgba);
+    world.get_component_mut::<Transform>(parent).unwrap().position[0] = 8.;
+    let changed = viewport.submit_scene(&world, 64, 64, camera).unwrap().finish().unwrap(); assert!(changed.mesh_picking.as_ref().unwrap().pick([0.75, 0.5], |_| true).is_none());
+    world.get_component_mut::<Transform>(parent).unwrap().position[0] = 4.;
+    buffer[136..140].copy_from_slice(&3f32.to_le_bytes()); std::fs::write(root.join("pose.bin"), buffer).unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(260));
+    let reloaded = viewport.submit_scene(&world, 64, 64, camera).unwrap().finish().unwrap();
+    assert!(reloaded.mesh_picking.as_ref().unwrap().pick([0.75, 0.5], |_| true).is_none());
+    assert_eq!(reloaded.mesh_picking.as_ref().unwrap().pick([0.875, 0.5], |_| true).unwrap().entity, entity.to_u64());
+    assert_eq!(next.mesh_picking.as_ref().unwrap().pick([0.75, 0.5], |_| true).unwrap().entity, entity.to_u64());
+    drop(viewport); assert_eq!(old.mesh_picking.unwrap().pick([0.5, 0.5], |_| true).unwrap().entity, entity.to_u64());
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn play_effects_freeze_step_restart_and_return_to_edit_preview() {
     use mengine_core::generated::{Camera2D, ParticleEmitter2D, TrailRenderer2D};
     let mut world = World::new();

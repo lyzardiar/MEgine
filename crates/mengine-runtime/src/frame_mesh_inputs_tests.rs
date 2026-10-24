@@ -6,6 +6,7 @@ use std::{any::Any, sync::{Arc, atomic::{AtomicBool, Ordering}}, time::Instant};
 fn compare(cache: &mut FrameMeshInputs, world: &World, materials: &mut RuntimeMaterialCache) -> Vec<RenderObject> {
     let hierarchy = TransformHierarchy::build(world); let expected = collect_objects(world, &hierarchy, materials);
     let mut entities = Vec::new(); let current = cache.collect(world, &hierarchy, materials, Some(&mut entities));
+    assert_eq!(cache.last_entities(), entities);
     assert_eq!(entities.len(), current.len()); assert_eq!(expected.len(), current.len());
     for (old, new) in expected.iter().zip(&current) {
         assert_eq!(old.mesh_key, new.mesh_key); assert_eq!(old.model, new.model); assert_eq!(old.cast_shadows, new.cast_shadows); assert_eq!(old.receive_shadows, new.receive_shadows);

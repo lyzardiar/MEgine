@@ -702,6 +702,8 @@ fn draw_binding_changed<'a, T>(bound: &mut Option<&'a T>, next: &'a T) -> bool {
 }
 
 pub struct Renderer {
+    mesh_picking: bool,
+    mesh_pick_order: Vec<usize>,
     world_bundles: WorldBundleCache,
     #[cfg(test)]
     disable_world_bundles: bool,
@@ -1347,6 +1349,8 @@ impl Renderer {
 
         let gpu_profiler = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1").then(|| GpuFrameProfiler::new(&device)).flatten();
         Ok(Self {
+            mesh_picking: false,
+            mesh_pick_order: Vec::new(),
             world_bundles: WorldBundleCache::default(),
             #[cfg(test)]
             disable_world_bundles: false,
@@ -1608,6 +1612,7 @@ impl Renderer {
         self.spatial_index.update(objects.iter().map(|object| self.meshes.get(&object.mesh_key).and_then(|mesh| mesh.bounds).and_then(|bounds| bounds.transformed(object.model))).collect());
         let mut draw_order = self.spatial_index.query(&Frustum::from_wgpu_matrix(camera.proj * camera.view));
         sort_render_indices(&mut draw_order, objects, camera.position);
+        if self.mesh_picking { self.mesh_pick_order.clone_from(&draw_order); }
         let shadow_order: Vec<_> = if shadow.params[3] > 0.5 {
             self.spatial_index.query(&Frustum::from_wgpu_matrix(Mat4::from_cols_array_2d(&shadow.light_view_proj))).into_iter().filter(|&i| objects[i].cast_shadows && (!objects[i].material.transparent || objects[i].material.alpha_cutoff > 0.0)).collect()
         } else { vec![] };
@@ -2533,6 +2538,27 @@ impl Renderer {
 
     pub fn spatial_culling_stats(&self) -> SpatialCullingStats { self.spatial_stats }
 
+    /// Enable CPU geometry retention for future uploads; the host resynchronizes meshes when first enabled.
+    pub fn enable_mesh_picking(&mut self) -> bool { let changed = !self.mesh_picking; self.mesh_picking = true; changed }
+
+    pub fn mesh_picking_enabled(&self) -> bool { self.mesh_picking }
+
+    /// Current renderer-owned logical payload; geometry retained only by older frame snapshots is excluded.
+    pub fn mesh_picking_bytes(&self) -> usize { self.meshes.values().filter_map(|mesh| mesh.picking.as_ref()).map(|geometry| geometry.bytes()).sum() }
+
+    /// Capture only meshes submitted to this camera, in the same order used by its forward pass.
+    pub fn capture_mesh_pick_frame(&self, camera: FrameCamera, objects: &[RenderObject], entities: &[u64]) -> Option<crate::MeshPickFrame> {
+        if !self.mesh_picking { return None; }
+        let mut picked = Vec::with_capacity(self.mesh_pick_order.len());
+        for &index in &self.mesh_pick_order {
+            let Some(&entity) = entities.get(index) else { continue; }; let object = &objects[index];
+            if object.material.particle.is_some() { continue; }
+            let Some(mesh) = self.meshes.get(&object.mesh_key) else { continue; }; if mesh.index_count == 0 { continue; }
+            picked.push(crate::MeshPickObject { entity, model: object.model, geometry: mesh.picking.as_ref()?.clone(), index_count: mesh.index_count, double_sided: object.material.double_sided });
+        }
+        Some(crate::MeshPickFrame { camera, objects: picked })
+    }
+
     pub fn register_mesh(&mut self, key: &str, mut mesh: MeshGpu) {
         self.remove_mesh(key);
         mesh.recyclable_vertices = false;
@@ -2546,6 +2572,7 @@ impl Renderer {
     pub fn upload_gltf_static_profiled(&mut self, key: &str, vertices: &[Vertex], indices: &[u32]) -> crate::MeshUploadProfile {
         self.remove_mesh(key);
         let (mut mesh, profile) = MeshGpu::upload_with_buffers(vertices, indices, || self.mesh_vertices.upload(&self.device, &self.queue, vertices), || self.mesh_indices.acquire(&self.device, indices));
+        if self.mesh_picking { mesh.picking = Some(Arc::new(crate::MeshPickGeometry::new(vertices, indices))); }
         mesh.recyclable_vertices = true;
         self.meshes.insert(key.to_string(), mesh);
         profile

@@ -7,12 +7,15 @@ use std::sync::Arc;
 pub struct SharedSnapshotWorld {
     world: World,
     entities: HashMap<u64, Entity>,
+    source_ids: HashMap<u64, u64>,
     previous: HashMap<u64, Arc<EntitySnapshot>>,
     order: Vec<(u64, Entity)>,
 }
 
 impl SharedSnapshotWorld {
     pub fn world(&self) -> &World { &self.world }
+
+    pub fn source_entity(&self, native: u64) -> Option<u64> { self.source_ids.get(&native).copied() }
 
     /// Browser snapshots own their payloads; retain equal records to preserve native component revisions.
     pub fn update_owned(&mut self, snapshot: WorldSnapshot) {
@@ -75,6 +78,8 @@ impl SharedSnapshotWorld {
                 else if current.is_none_or(|value| value.entities != expected) { self.world.insert_component(entity, mengine_core::Children { entities: expected }); }
             }
         }
+        self.source_ids.clear();
+        self.source_ids.extend(order.iter().map(|(source, native)| (native.to_u64(), *source)));
         self.order = order;
         self.previous.clear();
         self.previous.extend(snapshot.entities.iter().map(|record| (record.entity, Arc::clone(record))));
@@ -101,6 +106,20 @@ impl SharedSnapshotWorld {
 mod tests {
     use super::*;
     use mengine_core::{generated::{Name, RawImage, Transform}, snapshot::WorldSnapshotCache, Parent};
+
+    #[test]
+    fn native_source_ids_follow_stable_records_reorder_despawn_and_reused_slots() {
+        let mut snapshot: WorldSnapshot = serde_json::from_value(serde_json::json!({"entities":[{"entity":99,"components":{}},{"entity":8589934593u64,"components":{}}]})).unwrap();
+        let mut mirror = SharedSnapshotWorld::default(); mirror.update_owned(snapshot.clone());
+        let original: Vec<_> = mirror.world().iter_entities().collect();
+        assert_eq!(mirror.source_entity(original[0].to_u64()), Some(99)); assert_eq!(mirror.source_entity(original[1].to_u64()), Some(8589934593));
+        snapshot.entities.reverse(); mirror.update_owned(snapshot.clone()); mirror.update_owned(snapshot.clone());
+        assert_eq!(mirror.source_entity(original[0].to_u64()), Some(99));
+        snapshot.entities.pop(); mirror.update_owned(snapshot.clone()); assert_eq!(mirror.source_entity(original[0].to_u64()), None);
+        snapshot.entities[0].entity = 123; mirror.update_owned(snapshot);
+        let replacement = mirror.world().iter_entities().next().unwrap(); assert_eq!(mirror.source_entity(replacement.to_u64()), Some(123));
+        assert_eq!(mirror.source_entity(original[1].to_u64()), None);
+    }
 
     #[test]
     fn topology_edits_preserve_survivors_and_snapshot_traversal_order() {

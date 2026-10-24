@@ -11,6 +11,7 @@ pub struct Vertex {
 }
 
 pub struct MeshGpu {
+    pub(crate) picking: Option<std::sync::Arc<crate::MeshPickGeometry>>,
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub index_count: u32,
@@ -137,7 +138,7 @@ impl MeshGpu {
         let started = Instant::now();
         let bounds = crate::spatial::Aabb::from_points(vertices.iter().map(|v| glam::Vec3::from_array(v.position)));
         let bounds_ms = started.elapsed().as_secs_f64() * 1000.0;
-        (Self { vertex_buffer, index_buffer, index_count: indices.len() as u32, bounds, recyclable_vertices: false }, MeshUploadProfile { vertex_buffer_ms, index_buffer_ms, bounds_ms, index_buffer_reused, vertex_buffer_reused })
+        (Self { picking: None, vertex_buffer, index_buffer, index_count: indices.len() as u32, bounds, recyclable_vertices: false }, MeshUploadProfile { vertex_buffer_ms, index_buffer_ms, bounds_ms, index_buffer_reused, vertex_buffer_reused })
     }
 
     pub fn unit_cube(device: &wgpu::Device) -> Self {
@@ -218,7 +219,8 @@ impl MeshGpu {
             }
             indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
         }
-        Self::upload(device, &vertices, &indices)
+        let mut mesh = Self::upload(device, &vertices, &indices);
+        mesh.picking = Some(std::sync::Arc::new(crate::MeshPickGeometry::new(&vertices, &indices))); mesh
     }
 }
 

@@ -84,8 +84,8 @@ export function parseNativeViewportFrame(buffer: ArrayBuffer) {
   const width = header.getUint32(4, true), height = header.getUint32(8, true), metadataBytes = header.getUint32(12, true);
   const pixelsOffset = 16 + metadataBytes;
   if (header.getUint32(0, true) !== 0x3146474d || width < 1 || height < 1 || width > 4096 || height > 4096 || pixelsOffset + width * height * 4 !== buffer.byteLength) throw new Error('Invalid native viewport frame');
-  const metadata = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 16, metadataBytes))) as { hasAuthoredCamera: boolean; opaquePixels?: unknown; profile: NativeViewportProfilePayload };
-  return { width, height, ...metadata, opaquePixels: metadata.opaquePixels === true, rgba: new Uint8ClampedArray(buffer, pixelsOffset, width * height * 4) };
+  const metadata = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 16, metadataBytes))) as { hasAuthoredCamera: boolean; opaquePixels?: unknown; meshPickToken?: unknown; profile: NativeViewportProfilePayload };
+  return { width, height, ...metadata, meshPickToken: typeof metadata.meshPickToken === 'string' ? metadata.meshPickToken : null, opaquePixels: metadata.opaquePixels === true, rgba: new Uint8ClampedArray(buffer, pixelsOffset, width * height * 4) };
 }
 
 export function uploadNativeViewportFrame(buffer: ArrayBuffer, previous?: HTMLImageElement | HTMLCanvasElement) {
@@ -99,6 +99,6 @@ export function uploadNativeViewportFrame(buffer: ArrayBuffer, previous?: HTMLIm
     if (!context) throw new Error('Native viewport canvas is unavailable');
     context.putImageData(new ImageData(frame.rgba, frame.width, frame.height), 0, 0);
     const profile = { ...frame.profile, worldRequest: nativeViewportWorldRequestProfile(buffer), sharedTransport: nativeViewportTransportProfile(buffer), uploadMs: performance.now() - started, nativeTransport: isSharedNativeViewportFrame(buffer) ? 'shared-buffer' as const : 'binary-ipc' as const };
-    return { width: frame.width, height: frame.height, hasAuthoredCamera: frame.hasAuthoredCamera, opaquePixels: frame.opaquePixels, profile, image };
+    return { width: frame.width, height: frame.height, hasAuthoredCamera: frame.hasAuthoredCamera, opaquePixels: frame.opaquePixels, meshPickToken: frame.meshPickToken, profile, image };
   } finally { releaseNativeViewportFrame(buffer); }
 }

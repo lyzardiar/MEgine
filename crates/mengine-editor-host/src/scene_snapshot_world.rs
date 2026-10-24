@@ -7,6 +7,8 @@ use std::collections::{HashMap, HashSet};
 pub struct SceneSnapshotWorld { mirror: SharedSnapshotWorld, key: Option<String> }
 
 impl SceneSnapshotWorld {
+    pub fn source_entity(&self, native: u64) -> Option<u64> { self.mirror.source_entity(native) }
+
     /// Filter source IDs and inactive ancestry before the mirror allocates native entity IDs.
     pub fn update_filtered(&mut self, snapshot: &SharedWorldSnapshot, hidden_ids: &[u64]) -> &World {
         let hidden: HashSet<_> = hidden_ids.iter().copied().collect();
@@ -74,6 +76,7 @@ mod tests {
         let world = cache.update_filtered(&shared, &[4294967297]);
         assert_eq!(world.time.frame, 4); assert_eq!(world.time.elapsed, 2.0);
         let native = captures.capture(world); let visible = native.entities.iter().find(|entity| entity.name.as_deref() == Some("Visible")).unwrap().clone();
+        assert_eq!(cache.source_entity(visible.entity), Some(1));
         let mut changed = (*shared.entities[4]).clone(); changed.components.get_mut("Transform").unwrap()["position"][0] = serde_json::json!(7);
         shared.entities[4] = Arc::new(changed); shared.frame = 5;
         let world = cache.update_filtered(&shared, &[4294967297]);

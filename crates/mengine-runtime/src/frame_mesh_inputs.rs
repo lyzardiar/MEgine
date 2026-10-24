@@ -7,6 +7,7 @@ struct CachedInput { revision: Option<u64>, frame: u64, source: Option<usize>, b
 /// Renderer-owned authored mesh inputs. Entries and material sources follow the current active mesh set.
 #[derive(Default)]
 pub struct FrameMeshInputs {
+    last_entities: Vec<Entity>,
     world_id: u64, frame: u64, entries: HashMap<Entity, CachedInput>,
     sources: Vec<Source>, source_indices: HashMap<String, usize>,
     #[cfg(test)]
@@ -14,10 +15,14 @@ pub struct FrameMeshInputs {
 }
 
 impl FrameMeshInputs {
+    /// Entity order belonging to the mesh prefix of the most recent collected object list.
+    pub fn last_entities(&self) -> &[Entity] { &self.last_entities }
+
     /// Matrices come from this hierarchy; material polling and custom Any projections remain live.
     pub fn collect(&mut self, world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, mut entities: Option<&mut Vec<Entity>>) -> Vec<RenderObject> {
         if self.world_id != world.cache_identity() || self.frame == u64::MAX { *self = Self { world_id: world.cache_identity(), ..Default::default() }; }
         self.frame += 1;
+        self.last_entities.clear();
         #[cfg(test)]
         { self.rebuilt = 0; }
         let mut tinted = HashMap::new();
@@ -56,6 +61,7 @@ impl FrameMeshInputs {
                 { self.rebuilt += 1; }
             }
             let entry = &self.entries[&entity]; let mut object = entry.object.clone(); object.model = transform.matrix; out.push(object);
+            self.last_entities.push(entity);
             if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
         }
         self.entries.retain(|_, entry| entry.frame == self.frame);
@@ -70,6 +76,7 @@ impl FrameMeshInputs {
             if self.source_indices.capacity() > self.source_indices.len().saturating_mul(4).max(64) { self.source_indices.shrink_to_fit(); }
         }
         if self.entries.capacity() > self.entries.len().saturating_mul(4).max(64) { self.entries.shrink_to_fit(); }
+        if self.last_entities.capacity() > self.last_entities.len().saturating_mul(4).max(64) { self.last_entities.shrink_to_fit(); }
         out
     }
 }
