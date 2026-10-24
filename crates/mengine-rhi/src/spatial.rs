@@ -16,7 +16,22 @@ impl Aabb {
     }
     pub fn transformed(self, model: Mat4) -> Option<Self> {
         if !model.is_finite() { return None; }
-        // All corners retain parent shear, nonuniform scale and negative scale.
+        if !model.row(3).abs_diff_eq(Vec4::W, 1e-6) { return self.transformed_corners(model); }
+        if !self.min.is_finite() || !self.max.is_finite() { return None; }
+        let lower = self.min.min(self.max); let upper = self.min.max(self.max);
+        let endpoints = |axis: Vec4, low: f32, high: f32| {
+            let positive = axis.cmpge(Vec4::ZERO);
+            (Vec4::select(positive, Vec4::splat(low), Vec4::splat(high)), Vec4::select(positive, Vec4::splat(high), Vec4::splat(low)))
+        };
+        let (low_x, high_x) = endpoints(model.x_axis, lower.x, upper.x);
+        let (low_y, high_y) = endpoints(model.y_axis, lower.y, upper.y);
+        let (low_z, high_z) = endpoints(model.z_axis, lower.z, upper.z);
+        // Match transform_point3's multiplication/addition order for each output lane.
+        let point = |x: Vec4, y: Vec4, z: Vec4| (model.w_axis + (model.z_axis * z + (model.y_axis * y + model.x_axis * x))).truncate();
+        let min = point(low_x, low_y, low_z); let max = point(high_x, high_y, high_z);
+        (min.is_finite() && max.is_finite()).then_some(Self { min, max })
+    }
+    fn transformed_corners(self, model: Mat4) -> Option<Self> {
         Self::from_points((0..8).map(|i| model.transform_point3(Vec3::new(
             if i & 1 == 0 { self.min.x } else { self.max.x },
             if i & 2 == 0 { self.min.y } else { self.max.y },
@@ -144,6 +159,10 @@ impl SpatialIndex {
         result
     }
 }
+
+#[cfg(test)]
+#[path = "spatial_bounds_tests.rs"]
+mod bounds_tests;
 
 #[cfg(test)]
 mod tests {

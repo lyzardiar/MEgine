@@ -1509,3 +1509,13 @@ V8与QuickJS各7项定向检查通过，普通入口各忽略1项手动基准；
 以摘要匹配的14437实体DotA地图快照、独立预热镜像、9组每组40次交错更新作CPU对照，计时后比较完整WorldSnapshot。541d0c2的完整镜像后再过滤策略与当前实现均包含镜像锁、快照释放及回调路径。旧／新中位数：无过滤0.327828／0.311750ms，静态过滤2.516355／2.144865ms，过滤并交替修改64个Transform为2.670120／2.196878ms。过滤场景中渲染镜像实体合计从25188降到10751，消除一份14437实体的完整渲染镜像；这不是进程私有内存字节或实际FPS测量。命令：设置MENGINE_FILTERED_SCENE后运行cargo test -p mengine-editor-host --release --lib benchmark_owned_filtered_scene_world -- --ignored --nocapture；输入与源码摘要为owned-filtered-world-summary.json。调整两路径计时范围前的诊断日志独立保留，不用作最终结论。
 
 当前新批次1/3。第三项后统一原生验证隐藏／恢复、变更父级与活动、普通／过滤Scene及相机预览切换、选取源ID、Pause／Step／Stop与项目关闭重开，并以版本2采样重复Stop驻留。最近完整原生程序仍为ec31723，本项尚未证明其可回收多少进程内存；长期驻留、来源校验尖峰、多窗口稳定60、LOD和完整War3保真继续待办。
+
+### 第一百二十阶段／编辑器新批次任务2/3：区间计算世界包围盒
+
+变更RHI的spatial.rs及新增spatial_bounds_tests.rs。仿射矩阵按各输出分量的系数符号选择局部边界端点，以两组向量计算世界最小／最大值，沿用glam transform_point3的乘法与加法顺序。保留旋转、父级剪切、非均匀与负缩放；退化／反向局部边界、非有限值和溢出的处理与八角点参照一致。非仿射矩阵继续沿用角点路径及其断言行为。每次仍读取当前网格边界和最终model，不新增跨帧缓存、不改变八叉树或相机／阴影查询规则。
+
+默认向量后端10项空间检查、标量后端4项兼容检查通过；普通入口分别忽略2／1项手动基准，新区间基准单独执行通过。覆盖100000组确定性有限浮点输入（含输出溢出）、旋转／剪切／镜像／零尺度、反向与零尺寸边界、subnormal／极值／NaN／Infinity及抵消、非仿射回退，并比较八叉树查询和移动／未知边界变化。命令：cargo test -p mengine-rhi --release --lib spatial:: -- --nocapture；标量兼容用--features glam/scalar-math筛选spatial::bounds_tests。日志interval-bounds-{tests,scalar-tests}.log在tmp/docs-artifacts/editor-performance-risk。
+
+10000对象的固定CPU微基准，两个预热步骤后9组交错样本、每组100次，完整输出与原八角点计算逐项相等。轴对齐旧／新为0.348030／0.146317ms，旋转／剪切／镜像为0.343235／0.144550ms。包括输出数组写入，不是实际地图、GPU或FPS测量；输入是固定代理边界和矩阵，没有重新遍历地图资产。手动入口benchmark_interval_bounds -- --ignored --nocapture，结果及源码摘要interval-bounds-*均保存在tmp。
+
+当前119、120为2/3。第三项后统一原生构建，验证实际DotA／多窗口连续帧、动态姿态和网格替换、相机／阴影裁剪、负缩放／父级变化、选取及Stop／重开；119的驻留验证一并执行。最近完整原生验收仍为ec31723，尚不能据微基准声称实际满帧或长期内存已解决。
