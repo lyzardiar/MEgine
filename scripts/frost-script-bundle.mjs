@@ -1,6 +1,7 @@
 // Author: MiYu. Compose the shared game and installed map runtimes without regenerating assets.
 import fs from 'node:fs';
 import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {WARCRAFT_OPTION_BINDINGS} from './frost-warcraft-options.mjs';
 export const gameModules=['warcraft-jass','warcraft-unit-initialization','warcraft-map-units','night-elf-ai-source','night-elf-ai','demon-hunter','keeper','priestess','warden','blood-mage','archmage','paladin','lich','dreadlord','crypt-lord','death-knight','mountain-king','blademaster','farseer','tauren','shadowhunter','moba-objectives','simulation','terrain','visuals','effects','effect-pool','hud','ui-manager','portrait-camera','warcraft-options','client','map-session'];
 export function readMapPackages(project){
@@ -35,4 +36,9 @@ export function gameScriptPrefix(source,text){
   const start=text.indexOf(marker)>=0?text.indexOf(marker):text.indexOf(legacy);
   if(start<0)throw Error('Cannot locate generated game module boundary');
   return text.slice(0,start);
+}
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+  const [source,project=source]=process.argv.slice(2);
+  if(!source||process.argv.length>4)throw Error('Usage: node scripts/frost-script-bundle.mjs <game-source> [project]');
+  console.log(JSON.stringify(syncGameScript(source,project)));
 }

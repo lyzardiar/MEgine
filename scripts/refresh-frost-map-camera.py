@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from warcraft_map import load_map
 from warcraft_mpq import mpyq, read_archive
@@ -63,6 +64,9 @@ def upgrade(project, identifier, game):
         file = project/record['path']
         if file in (scene_path,script_path): record.update(sha256=digest(file),bytes=file.stat().st_size)
     manifest_path.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8',newline='\n')
+    catalog = project/'Assets/Maps/catalog.json'
+    if catalog.is_file() and any(entry['id'] == identifier for entry in json.loads(catalog.read_bytes())['maps']):
+        subprocess.run(['node', str(ROOT/'scripts/frost-script-bundle.mjs'), str(ROOT/'samples/frostbound-realms'), str(project)], check=True)
     print(json.dumps(dict(map=identifier,camera=config['target'],source=archive_name),ensure_ascii=False))
 
 

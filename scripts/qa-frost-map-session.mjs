@@ -41,7 +41,7 @@ fs.cpSync(source,sample,{recursive:true,filter:file=>!['SourceAssets','.mengine'
 const config=JSON.parse(fs.readFileSync(path.join(sample,'project.json'),'utf8'));config.storageId=label;fs.writeFileSync(path.join(sample,'project.json'),JSON.stringify(config));
 // The fixture adds one hidden observation entity per scene; runtime code and assets remain unchanged.
 for(const file of config.buildScenes){const scene=JSON.parse(fs.readFileSync(path.join(sample,file),'utf8')),id=Math.max(...scene.world.entities.map(e=>e.entity))+1;scene.world.entities.push({entity:id,name:'QA map session',active:false,components:{Text:{text:'{}'}}});fs.writeFileSync(path.join(sample,file),JSON.stringify(scene));}
-fs.appendFileSync(path.join(sample,config.startupScript),`\nvar qaMapTick=onTick;onTick=function(dt){qaMapTick(dt);const e=engine.findEntitiesByName(['QA map session'])[0];if(e)engine.pushCommandJson(JSON.stringify({op:'setComponent',entity:e.entity,component:'Text',value:{text:JSON.stringify(FrostMapSession.status())}}));};\n`);
+fs.appendFileSync(path.join(sample,config.startupScript),`\nvar qaMapTick=onTick;onTick=function(dt){qaMapTick(dt);const e=engine.findEntitiesByName(['QA map session'])[0];if(e)engine.pushCommandJson(JSON.stringify({op:'setComponent',entity:e.entity,component:'Text',value:{text:JSON.stringify({...FrostMapSession.status(),qaWheel:engine.input.wheelDelta})}}));};\n`);
 Object.assign(process.env,{MENGINE_AGENT_EDITOR_MODE:'auto-background',MENGINE_EDITOR_CONFIG_DIR:path.join(root,'config'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows'});fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(name,args={})=>{const r=await bridgeExecute(name,args,{requestId:crypto.randomUUID(),timeoutMs:120000});assert.ok(r.ok,JSON.stringify(r));return r.result;};
@@ -147,22 +147,23 @@ async function checkHierarchyFocus(s){
 }
 async function checkHierarchyPresentation(s){
   const root=s.entities.find(e=>e.name.startsWith('Doodad-')&&s.entities.some(child=>child.parent===e.entity)),child=s.entities.find(e=>e.parent===root?.entity);assert.ok(root&&child);
+  const byId=new Map(s.entities.map(e=>[e.entity,e]));let topRoot=root;while(topRoot.parent!=null)topRoot=byId.get(topRoot.parent);assert.ok(topRoot);
   await execute('panel.focus',{kind:'hierarchy'});
   const ui=()=>query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});
   async function element(name){for(let attempt=0;attempt<20;attempt++){const snapshot=await ui(),item=snapshot.elements.find(e=>e.name===name);if(item)return {snapshot,item};await sleep(100);}throw Error('Hierarchy item missing: '+name);}
   async function button(name){const {snapshot,item}=await element(name);await execute('window.ui_click',{windowLabel:'main',selector:item.selector,expectedSnapshotRevision:snapshot.snapshotRevision});}
   const search=await element('Search hierarchy');await execute('window.ui_set_value',{windowLabel:'main',selector:search.item.selector,expectedSnapshotRevision:search.snapshot.snapshotRevision,value:''});
   await execute('selection.set',{ids:[root.entity]});await element(root.name);
-  await button('Collapse all hierarchy nodes');await element('Expand '+root.name);
-  await button('Expand all hierarchy nodes');await element('Collapse '+root.name);
+  await button('Collapse all hierarchy nodes');await element('Expand '+topRoot.name);
+  await button('Expand all hierarchy nodes');await execute('selection.reveal',{id:root.entity});await element('Collapse '+root.name);
   await button('Collapse all hierarchy nodes');await execute('selection.reveal',{id:child.entity});await element(child.name);await element('Collapse '+root.name);
   await execute('selection.set',{ids:[root.entity]});const item=await element(root.name);
   await execute('window.ui_press_key',{windowLabel:'main',selector:item.item.selector,expectedSnapshotRevision:item.snapshot.snapshotRevision,key:'ArrowLeft'});await element('Expand '+root.name);
   const folded=await element(root.name);await execute('window.ui_press_key',{windowLabel:'main',selector:folded.item.selector,expectedSnapshotRevision:folded.snapshot.snapshotRevision,key:'ArrowRight'});await element('Collapse '+root.name);
   const selected=async()=>new Set((await query('selection.get')).selectedIds);
   const roots=s.entities.filter(e=>e.parent==null).map(e=>e.entity);
-  await button('Collapse all hierarchy nodes');await execute('selection.reveal',{id:root.entity});
-  const selectRow=await element(root.name);
+  await button('Collapse all hierarchy nodes');await execute('selection.reveal',{id:topRoot.entity});
+  const selectRow=await element(topRoot.name);
   await execute('window.ui_press_key',{windowLabel:'main',selector:selectRow.item.selector,expectedSnapshotRevision:selectRow.snapshot.snapshotRevision,key:'a',ctrlKey:true});
   assert.deepEqual(await selected(),new Set(roots),'Ctrl+A selects collapsed roots');
   await button('Expand all hierarchy nodes');await button('Edit');
@@ -269,11 +270,16 @@ try{
     await key('Equal');s=await snapshot();assert.ok(readCamera(s).Transform.rotation[0]>initial.Transform.rotation[0]);assert.ok(Math.abs(readCamera(s).Camera3D.fov_y_degrees-expectedFov)<1e-5);
     const wheelPage=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000}),gameCanvas=wheelPage.elements.find(e=>e.name==='Game viewport');assert.ok(gameCanvas);
     const beforeWheel=structuredClone(readCamera(s).Transform);
-    await execute('window.ui_scroll',{windowLabel:'main',selector:gameCanvas.selector,expectedSnapshotRevision:wheelPage.snapshotRevision,deltaY:-100});await step();s=await snapshot();assert.notDeepEqual(readCamera(s).Transform,beforeWheel,'physical Game canvas wheel reaches the camera');
+    await execute('window.ui_scroll',{windowLabel:'main',selector:gameCanvas.selector,expectedSnapshotRevision:wheelPage.snapshotRevision,deltaY:-100});await step();s=await snapshot();assert.equal(status(s).qaWheel,-1,'canvas wheel reaches frame input');assert.notDeepEqual(readCamera(s).Transform,beforeWheel,'physical Game canvas wheel reaches the camera');
     await input({wheelDelta:-100});const near=structuredClone(readCamera(await snapshot()).Transform);await input({wheelDelta:-100});assert.deepEqual(readCamera(await snapshot()).Transform,near,'minimum camera distance');
     await input({wheelDelta:100});const far=structuredClone(readCamera(await snapshot()).Transform);await input({wheelDelta:100});assert.deepEqual(readCamera(await snapshot()).Transform,far,'maximum camera distance');assert.notDeepEqual(near,far);
     report.checks.push('Game canvas wheel reaches native camera; source minimum/maximum distance and idle bounds hold');
+    await execute('panel.detach',{kind:'game'});await sleep(300);
+    const detachedPage=await query('window.ui_snapshot',{windowLabel:'panel-game',maxElements:5000}),detachedCanvas=detachedPage.elements.find(e=>e.name==='Game viewport');assert.ok(detachedCanvas);
+    await execute('window.ui_scroll',{windowLabel:'panel-game',selector:detachedCanvas.selector,expectedSnapshotRevision:detachedPage.snapshotRevision,deltaY:-100});await sleep(150);await step();assert.notDeepEqual(readCamera(await snapshot()).Transform,far,'detached wheel reaches native owner');await execute('panel.dock',{kind:'game'});
+    report.checks.push('Detached Game wheel input is forwarded to the native playback owner');
     await execute('view.set_game_resolution',{resolution:{width:960,height:900}});await input({viewport:[960,900]});s=await snapshot();assert.ok(Math.abs(readCamera(s).Camera3D.fov_y_degrees-expectedFov)<1e-5);await capture('camera-tall');
+    if(hierarchyInteractions){await checkHierarchyPresentation(s);await checkHierarchyFocus(s);}
     report.camera={initial,afterMoveAndZoom:readCamera(s)};report.checks.push('Source logical camera projection, movement, zoom and 960x900 rendering');await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);
   }else if(runtimeEditsOnly){
     await checkRuntimeEdits();await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores authored entities after runtime Inspector edits');
