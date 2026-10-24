@@ -1423,3 +1423,13 @@ Viewport的原生帧拥有固定实体记录，worldTransform已有父变换身�
 19项实际App同步处理器与Store测试、TypeScript通过：16ms模拟输入960ms内向活跃视口发送60个世界，停止完成通知后不继续发送；1ms密集通知合并为一个最新版本，暂停及视口心跳失效恢复33ms。日志tmp/docs-artifacts/editor-performance-risk/viewport-cadence-tests.log和viewport-cadence-types.log。该检查证明调度上限解除，不保证实际FPS；更频繁的增量收发可能增加主线程负载，须用原生采样判断。
 
 累计99498c9、76c5e1e及本项达到3/3，开始合并构建与原生验证。主工作区另有并发Unity包／粒子改动，本批复用干净验证worktree，仅构建本批已提交版本。合并检查多窗口Play／Pause／Step／Stop、Inspector编辑与重开、Scene选择／旋转／尺寸／隐藏、模型热加载及运行世界一致性，报告FPS和浏览器paint，逐项保留未覆盖范围。
+
+### 第七十九至八十二阶段性能与交互验证
+
+浏览器八叉树增量更新、固定帧world AABB复用、独立视口16ms发布节奏已提交推送；集成补充修复偏移网格选取中心，避免导入模型可见而点不到。实现范围99498c9、76c5e1e、9d275fc、66a2739，相关7项空间／19项同步／12项选取测试通过，隔离前端和原生构建通过。
+
+5秒多窗口样本Scene41.37／Game51.00FPS，Scene浏览器paint10.32ms；上一样本24.88／28.10FPS和Scene paint17.65ms。单Game10.01秒采样中最近240个原生帧间隔平均16.645ms、P95 26.3ms（约60.08FPS），浏览器平均17.18ms、paint3.35ms。短时采样与原生保留窗口限制详见testing-batches.md，不视为稳定满帧结论。
+
+Scene连续旋转期间13帧，隐藏页签原生／浏览器均0，切回30帧；尺寸变化、原始资源热更新、父变换、选取、层级聚焦、地图重载与Stop恢复通过。多窗口Inspector编辑、窗口重开和Pause／Step／Stop通过。证据B001/map-session-1792809672118.json、map-session-1792810463601.json及spatial-picking-1792810589579.json，日志位于tmp/docs-artifacts/editor-performance-risk/。
+
+继续保留待办：多窗口稳定60FPS、长时间内存与真实输入延迟、DotA持续运行场景性能。八叉树已生效，本批优化更新成本与发布节奏；LOD尚未实现，应依据后续渲染和阴影采样决定，不从未满帧直接推定缺少空间剔除。
