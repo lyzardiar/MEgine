@@ -1953,3 +1953,13 @@ ff02e3b的启动、资源热更新、空间选取及DotA缓存／重开检查通
 5轮各运行15秒／Stop空闲20秒，20份内存样本的进程身份、创建时间及求和已核对，空闲均7进程。根私有内存3204.688／3437.773／3487.355／3470.293／3464.289MiB，首末+259.602MiB、后三轮-23.066MiB；进程树首末+330.957MiB、后三轮+5.383MiB。较旧版本绝对占用降低，当前增长非单调且原因未确定，不能据此判定长期稳定或排除泄漏。
 
 执行入口`tmp/docs-artifacts/editor-performance-risk/run-shared-poll-batch.ps1`，汇总`shared-poll-batch-{driver,summary}.json`，逐项日志`shared-poll-batch-native-*.log`；实际地图／窗口报告与截图在`tmp/docs-artifacts/testing-batches/B001/`。相关本机批次结束，下一批0/3；尾延迟、长期驻留、LOD及完整War3规则继续待办。
+
+### 第一百四十九阶段／新批次任务1/3：按需核对GPU分配器占用
+
+已有每视图约78／82MiB的逻辑统计不覆盖完整设备分配、驱动私有堆及流水线，不能解释根进程3GiB以上占用或反复运行后的增长。新增`profiler.get_samples`参数`includeGpuAllocator`（默认false），按需读取现有原生视口所属GPU设备的分配字节、内存块预留字节、分配数、块数、耗时和最多64组资源标签汇总。每个进程的GpuContext分配单调设备标识，共享视图返回相同deviceId；这些总量只能按设备计一次，不能再加到逐视图逻辑估算。没有视口返回null，后端不支持时available=false且计数字节为null；不将缺失值写成0。后端报告不代表系统GPU驻留、驱动私有堆或进程CPU内存。
+
+变更路径：`crates/mengine-rhi/src/{headless_context.rs,renderer.rs,lib.rs,headless_context_tests.rs}`、`crates/mengine-editor-host/src/{lib.rs,viewport.rs,viewport_gpu_memory.rs}`、`packages/editor/src-tauri/src/{lib.rs,native_gpu_memory.rs}`、AgentBridge／querySchemas及MCP server、`scripts/qa-frost-map-session.mjs`。不在逐帧路径采集分配器，也不为查询创建renderer；原生命令在工作线程读取现有视口，显式查询期间持该视口锁，耗时单独返回。QA的`--gpu-memory-diagnostics`在既有进程内存采样阶段同时留存Scene／Game设备数据。
+
+3项定向检查通过：后端不支持与有效空报告的区分、标签合并／稳定排序／64组上限，以及真实GPU共享／独立设备标识和新增8MiB缓冲区归属。该GPU夹具实测已分配85983232字节、预留335544320字节，说明预留与有效分配不能混用；不是实际地图或进程内存结论。TypeScript、Tauri Release接口检查、两份JS语法检查通过。日志`tmp/docs-artifacts/editor-performance-risk/gpu-memory-diagnostics-{tests,gpu-test,typescript,tauri-check}.log`；筛选`viewport::gpu_memory::tests`（editor-host）与`gpu_allocator_diagnostics_`（rhi）。
+
+为定位上一批已知的驻留增长，单独构建并执行一次带分配器采样的3轮Amazonia运行／停止诊断，核对同设备总量、资源标签和进程内存趋势；不将该诊断当作整批性能验收。完整默认关闭／按需采样、空工程、共享视图、项目关闭／重开和其他工具兼容场景，留待本批累计3项后的合并验证。当前1/3，尚未宣称内存增长已修复。

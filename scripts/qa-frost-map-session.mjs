@@ -49,6 +49,8 @@ const cpuDebuggerPort=mainThreadCpuProfile?await reserveNativeQaDebuggerPort():n
 const detachedOnly=process.argv.includes('--detached-only')||detachedAuthoringOnly||detachedProfileOnly;
 const restartAfterStop=process.argv.includes('--restart-after-stop');
 assert.ok(!restartAfterStop||detachedOnly,'--restart-after-stop requires a detached test');
+const gpuMemoryDiagnostics=process.argv.includes('--gpu-memory-diagnostics');
+assert.ok(!gpuMemoryDiagnostics||detachedProfileOnly,'--gpu-memory-diagnostics requires --detached-profile-only');
 const residencyIndex=process.argv.indexOf('--residency-cycles'),residencyCycles=residencyIndex<0?0:Number(process.argv[residencyIndex+1]);
 assert.ok(Number.isInteger(residencyCycles)&&residencyCycles>=0&&residencyCycles<=5,'--residency-cycles must be 0 through 5');
 assert.ok(!residencyCycles||(detachedProfileOnly&&restartAfterStop),'--residency-cycles requires --detached-profile-only --restart-after-stop');
@@ -73,16 +75,16 @@ async function waitMap(map){let s=await snapshot();for(let i=0;status(s).map!==m
 async function key(key){await input({keys:[key]});await input({});await step();}
 async function click(name){const s=await snapshot(),pointer=clientWorldFixture(s).canvasPoint(name,[1280,720],false);await input({pointer,buttons:[0]});await input({pointer});await step();}
 async function capture(name){const deadline=Date.now()+30000;for(;;)try{const shot=await query('view.screenshot',{target:'game',maxSize:1280,includeNativeProfile:true});if(name)fs.writeFileSync(path.join(out,label+'-'+name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));report.frames.push(shot.nativeProfile);return shot.dataUrl;}catch(e){if(Date.now()>=deadline||!/NOT_READY|canvas is not available yet/.test(e.message))throw e;await sleep(500);}}
-function sampleProcessMemory(stage,field='detachedMemory'){const owner=JSON.parse(fs.readFileSync(process.env.MENGINE_AGENT_BRIDGE_FILE,'utf8'));assert.equal(owner.background,true);assert.ok(Number.isSafeInteger(owner.pid));const sample=JSON.parse(execFileSync('pwsh.exe',['-NoProfile','-File',path.join(repo,'scripts/sample-native-qa-memory.ps1'),'-EditorPid',String(owner.pid),'-ExpectedExecutable',process.env.MENGINE_EDITOR_EXECUTABLE],{encoding:'utf8',windowsHide:true,timeout:20000}));(report[field]??=[]).push({stage,...sample});}
+async function sampleProcessMemory(stage,field='detachedMemory'){const owner=JSON.parse(fs.readFileSync(process.env.MENGINE_AGENT_BRIDGE_FILE,'utf8'));assert.equal(owner.background,true);assert.ok(Number.isSafeInteger(owner.pid));const sample=JSON.parse(execFileSync('pwsh.exe',['-NoProfile','-File',path.join(repo,'scripts/sample-native-qa-memory.ps1'),'-EditorPid',String(owner.pid),'-ExpectedExecutable',process.env.MENGINE_EDITOR_EXECUTABLE],{encoding:'utf8',windowsHide:true,timeout:20000}));(report[field]??=[]).push({stage,...sample});if(gpuMemoryDiagnostics){const entry={stage};for(const source of ['scene','game']){const result=await query('profiler.get_samples',{source,limit:1,includeGpuAllocator:true});entry[source]=result.gpuAllocator;}(report.gpuMemory??=[]).push(entry);}}
 async function checkRestartAfterStop(authored,entityCount,sampleMemory,{name='restarted-map',liveMs=0}={}){
   await execute('panel.focus',{kind:'game'});await execute('playback.play',{paused:true});await step(2);
   assert.equal(clientWorldFixture(await snapshot()).visible('solo box'),true,'Restart opens a fresh main menu');
   await click('solo box');await click('custom box');await click('map4 box');await click('map1 box');
   assert.equal((await snapshot()).entities.find(e=>e.name==='Map name').components.Text.text,'Amazonia');await click('mapStart box');
   const restarted=await waitMap('amazonia');assert.equal(restarted.entities.length,entityCount);await capture(name);
-  if(liveMs){await execute('playback.play');await sleep(liveMs);await execute('playback.pause');await capture(name+'-live');sampleMemory('live');}
+  if(liveMs){await execute('playback.play');await sleep(liveMs);await execute('playback.pause');await capture(name+'-live');await sampleMemory('live');}
   await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);assert.equal((await query('editor.state')).dirty,false);
-  await sleep(1000);sampleMemory('after-second-stop');report.checks.push('Fresh Play after Stop enters Amazonia again, presents Game pixels, and a second Stop restores authored content');
+  await sleep(1000);await sampleMemory('after-second-stop');report.checks.push('Fresh Play after Stop enters Amazonia again, presents Game pixels, and a second Stop restores authored content');
 }
 async function checkViewportTransitions(){
   const before=await snapshot(),camera=before.entities.find(e=>e.name==='Camera'&&e.components.Camera3D),root=before.entities.find(e=>e.name.startsWith('Doodad-')&&e.components.Transform);assert.ok(camera&&root);
@@ -211,7 +213,7 @@ async function checkHierarchyPresentation(s){
 }
 async function checkDetachedRuntime(authored){
   const sampleMemory=stage=>sampleProcessMemory(stage);
-  sampleMemory('before-detach');
+  await sampleMemory('before-detach');
   const before=await snapshot(),target=before.entities.find(e=>e.name.startsWith('Doodad-')&&!e.components.MeshRenderer&&!e.components.SampledEffect&&e.components.Transform&&Math.abs(e.components.Transform.position[1]*10-Math.round(e.components.Transform.position[1]*10))<1e-6);assert.ok(target);
   const original=target.components.Transform.position[1],edited=original+3.2;
   await execute('selection.set',{ids:[target.entity]});await execute('view.set_camera',{pivot:target.components.Transform.position,yaw:35,pitch:35,distance:10});
@@ -231,7 +233,7 @@ async function checkDetachedRuntime(authored){
   await execute('panel.detach',{kind:'inspector'});await field(original);
   report.checks.push('Detached Inspector transform reaches main native simulation and persists after 3 steps; main component restore reaches detached Inspector');
   }
-  await execute('playback.play');await execute('panel.dock',{kind:'game'});await execute('panel.detach',{kind:'game'});await sleep(2500);sampleMemory('three-panels-live');
+  await execute('playback.play');await execute('panel.dock',{kind:'game'});await execute('panel.detach',{kind:'game'});await sleep(2500);await sampleMemory('three-panels-live');
   {
     await execute('profiler.clear');const started=performance.now();report.nativeWarmup=[];
     for(;;){const profiles=await query('profiler.get_samples',{source:'game',limit:1});report.nativeWarmup.push({elapsedMs:performance.now()-started,count:profiles.nativeProfileCount,entities:profiles.nativeLatest?.counts.entities});if(profiles.nativeLatest?.counts.entities===before.entities.length&&profiles.nativeProfileCount>=2)break;assert.ok(performance.now()-started<30000,'Detached Game native warmup timeout');await sleep(300);}
@@ -288,7 +290,7 @@ async function checkDetachedRuntime(authored){
   report.checks.push('Detached Game Ctrl+Shift+P resumes and pauses the main native owner');
   await click('Map session restart');await waitMap('amazonia');await execute('panel.dock',{kind:'inspector'});await execute('panel.detach',{kind:'inspector'});
   const reloaded=await snapshot(),again=reloaded.entities.find(e=>e.name===target.name);assert.ok(again);await execute('selection.set',{ids:[again.entity]});await field(original);
-  sampleMemory('after-map-reload');
+  await sampleMemory('after-map-reload');
   }
   await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);assert.equal((await query('editor.state')).dirty,false,'Runtime changes do not dirty the authored scene');
   report.checks.push('Stop restores the complete authored entity set');
@@ -303,13 +305,13 @@ async function checkDetachedRuntime(authored){
   await execute('history.undo');assert.deepEqual((await snapshot()).entities,authored.entities);await execute('history.redo');assert.ok((await snapshot()).entities.some(e=>e.entity===created.entity));await execute('history.undo');assert.deepEqual((await snapshot()).entities,authored.entities);assert.equal((await query('editor.state')).dirty,false);
   report.checks.push('Stop authoring allocates a new entity ID and supports undo/redo without changing retained author content');
   report.windows=await query('window.list');for(const kind of ['game','scene','inspector'])await execute('panel.dock',{kind});
-  sampleMemory('after-stop-and-dock');
+  await sampleMemory('after-stop-and-dock');
   report.checks.push('Detached authoring edit/restore after Stop; auxiliary panels dock normally');
   if(restartAfterStop)await checkRestartAfterStop(authored,before.entities.length,sampleMemory);
   if(residencyCycles){report.residencyCycles=[];for(let cycle=1;cycle<=residencyCycles;cycle++){
     const started=performance.now(),prefix='residency-cycle-'+cycle;
     await checkRestartAfterStop(authored,before.entities.length,stage=>sampleMemory(prefix+'-'+stage),{name:prefix+'-map',liveMs:15000});
-    await sleep(20000);sampleMemory(prefix+'-idle-20s');report.residencyCycles.push({cycle,liveMs:15000,idleMs:20000,elapsedMs:performance.now()-started});
+    await sleep(20000);await sampleMemory(prefix+'-idle-20s');report.residencyCycles.push({cycle,liveMs:15000,idleMs:20000,elapsedMs:performance.now()-started});
   }}
 }
 try{
@@ -320,7 +322,7 @@ try{
   await click('mapStart box');s=await waitMap('amazonia');assert.deepEqual(status(s).pathing.size,[384,384]);assert.equal(status(s).pathing.revision,0);assert.ok(s.entities.some(e=>e.name.startsWith('Doodad-'))&&s.entities.some(e=>e.name.startsWith('Unit-')));report.map=status(s);report.entities=s.entities.length;
   if(editorFeedback)await checkHierarchyFocus(s);
   if(restartOnly){
-    await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);sampleProcessMemory('after-first-stop','restartMemory');
+    await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);await sampleProcessMemory('after-first-stop','restartMemory');
     await checkRestartAfterStop(authored,s.entities.length,stage=>sampleProcessMemory(stage,'restartMemory'));
   }else if(detachedOnly){
     await checkDetachedRuntime(authored);

@@ -35,6 +35,10 @@ use winit::dpi::PhysicalSize;
 mod resource_sampling;
 use resource_sampling::ResourceSampler;
 
+#[path = "viewport_gpu_memory.rs"]
+mod gpu_memory;
+pub use gpu_memory::ViewportGpuMemory;
+
 #[path = "viewport_effect_clock.rs"]
 mod effect_clock;
 use effect_clock::ViewportEffectClock;

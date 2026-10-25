@@ -81,6 +81,22 @@ fn lost_shared_device_is_not_reused_by_a_new_viewport() {
 }
 
 #[test]
+fn gpu_allocator_diagnostics_identify_shared_devices_and_account_live_buffers() {
+    let size = PhysicalSize::new(16,16);
+    let scene = Renderer::new_shared_headless(size).unwrap(); let game = Renderer::new_shared_headless(size).unwrap();
+    let isolated = pollster::block_on(Renderer::new_headless(size)).unwrap();
+    let (device, before) = scene.gpu_allocator_report(); assert_eq!(device, game.gpu_allocator_report().0); assert_ne!(device, isolated.gpu_allocator_report().0);
+    let bytes = 8 * 1024 * 1024;
+    let buffer = scene.device.create_buffer(&wgpu::BufferDescriptor { label: Some("diagnostic-live-buffer"), size: bytes, usage: wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    if let Some(before) = before {
+        let live = game.gpu_allocator_report().1.unwrap(); assert!(live.allocated_bytes >= before.allocated_bytes + bytes); assert!(live.reserved_bytes >= live.allocated_bytes);
+        assert!(live.allocations.iter().any(|(name, size)| name.contains("diagnostic-live-buffer") && *size >= bytes));
+        println!("GPU_ALLOCATOR allocated={} reserved={} allocations={} blocks={}", live.allocated_bytes, live.reserved_bytes, live.allocations.len(), live.blocks);
+    }
+    drop(buffer);
+}
+
+#[test]
 fn concurrent_shared_device_readbacks_complete_without_stalled_viewports() {
     let size = PhysicalSize::new(1280,720);
     let views = [Renderer::new_shared_headless(size).unwrap(), Renderer::new_shared_headless(size).unwrap()];

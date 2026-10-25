@@ -2388,6 +2388,7 @@ const TOOLS = [
           description: 'Recent samples to return; defaults to 120',
         },
         includeNativeTimings: { type: 'boolean', description: 'Include compact native frame timings, bounded by limit and retained history; defaults to false' },
+        includeGpuAllocator: { type: 'boolean', description: 'Read device-wide backend GPU allocation/reservation totals on demand; shared deviceId totals must not be added per viewport; defaults to false' },
       },
       additionalProperties: false,
     },

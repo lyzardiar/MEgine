@@ -5594,6 +5594,7 @@ class AgentBridge {
           nativeLatest: nativeProfiles.length ? structuredClone(nativeProfiles.at(-1)) : null,
           nativeProfileCount: nativeProfiles.length,
           nativeSummary: summarizeNativeViewportProfiles(nativeProfiles),
+          ...(params.includeGpuAllocator ? { gpuAllocator: await invoke('get_native_gpu_memory', { source }), gpuAllocatorScope: 'Device-wide backend allocations and reserved blocks; viewports with the same deviceId share these totals. Excludes driver private heap, pipelines and OS residency; null means no renderer, available=false means unsupported backend.' } : {}),
           ...(params.includeNativeTimings ? { nativeTimings: nativeProfiles.slice(-Number(limit)).map(nativeViewportTimingSample) } : {}),
           totalSamples: allSamples.length,
           returnedSamples: samples.length,

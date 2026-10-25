@@ -1,11 +1,12 @@
 // Author: MiYu. Share native headless devices while viewport targets and resource caches stay independent.
 use crate::{gpu_profiler::profiling_features, RhiError};
-use std::sync::{Arc, Mutex, OnceLock, Weak, atomic::{AtomicBool, Ordering}};
+use std::sync::{Arc, Mutex, OnceLock, Weak, atomic::{AtomicBool, AtomicU64, Ordering}};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) struct ContextKey { pub backends: wgpu::Backends, pub uniform_objects: bool }
 
 pub(super) struct GpuContext {
+    pub id: u64,
     _instance: wgpu::Instance,
     pub adapter: wgpu::Adapter,
     pub device: wgpu::Device,
@@ -27,7 +28,8 @@ impl GpuContext {
         let lost = Arc::new(AtomicBool::new(false));
         let notification = Arc::clone(&lost);
         device.set_device_lost_callback(move |_, _| notification.store(true, Ordering::Release));
-        Ok(Self { _instance: instance, adapter, device, queue, poll_gate: Arc::new(Mutex::new(())), supports_anisotropy, indexed_objects, lost })
+        static NEXT_ID: AtomicU64 = AtomicU64::new(1);
+        Ok(Self { id: NEXT_ID.fetch_add(1, Ordering::Relaxed), _instance: instance, adapter, device, queue, poll_gate: Arc::new(Mutex::new(())), supports_anisotropy, indexed_objects, lost })
     }
 }
 

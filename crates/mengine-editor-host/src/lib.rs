@@ -27,4 +27,5 @@ pub use viewport::{
     EditorCameraPreview, EditorSceneCamera, EditorViewportFrame, EditorViewportSubmission, EditorViewportMemoryCategory, EditorViewportPresentation,
     EditorViewportProfile, EditorViewportProfileCounts, EditorViewportProfileNode,
     EditorViewportRenderer, EditorViewportResource,
+    ViewportGpuMemory,
 };

@@ -27,6 +27,7 @@ mod native_scene_picking;
 mod native_play_response;
 mod native_viewport_lifetime;
 mod native_gpu_timings;
+mod native_gpu_memory;
 use native_gpu_timings::{get_native_gpu_timings, set_native_gpu_timings, GpuTimingSource};
 mod play_compiler;
 mod project_asset_index;
@@ -6589,6 +6590,7 @@ pub fn run() {
             render_native_scene_view,
             pick_native_scene_frame,
             get_native_gpu_timings,
+            native_gpu_memory::get_native_gpu_memory,
             set_native_gpu_timings,
             take_native_viewport_transport_traces,
             release_native_viewport_frame,

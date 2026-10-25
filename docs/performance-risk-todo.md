@@ -1957,3 +1957,9 @@ EditorViewportRenderer的headless入口以backend及对象布局共享Adapter／
 146–148及5a25c50补充已完成同一冻结Release的8项原生集成：Game首个接受帧2693.850ms（不含进程启动及1882.664ms工程打开）、相机预览、资源恢复、空间选取、DotA14437实体有效缓存／重开、Amazonia7434实体多窗口及5轮停止重启、隐藏旋转尺寸、双视口GPU硬件计时和Profiler界面均通过。58个前端产物摘要未变并复用，未重跑冷转换；所有测试进程正常退出，用户编辑器保持原进程。范围和证据在testing-batches.md本阶段补充及tmp/docs-artifacts/editor-performance-risk/shared-poll-batch-summary.json。
 
 普通多窗口Scene59.429／Game59.924FPS，p9523.8／21.7ms；DotA59.979／59.381FPS，p9524.0／22.7ms，稳定满帧仍未达成。5轮等时空闲根私有内存3204.688／3437.773／3487.355／3470.293／3464.289MiB，首末+259.602、后三轮-23.066MiB，进程树首末+330.957、后三轮+5.383MiB；20份样本身份和求和已核对，增长非单调，长期驻留仍待定位。当前本机相关批次结束，下一批0/3；LOD、完整开局／军队／HUD／命令／寻路／原图脚本及War3保真继续待办。
+
+### 第一百四十九阶段：按需核对GPU分配器占用
+
+MCP的`profiler.get_samples`增加`includeGpuAllocator`（默认false），按需返回现有设备的已分配／预留字节、块数／分配数、最多64组标签及采集耗时。共享设备标识相同，按设备去重，未创建视口返回null、后端不支持返回available=false及null计数。逐帧不采集，不把设备预留混入逐视图逻辑估算，也不将其解释为系统GPU驻留或CPU私有堆。
+
+3项定向CPU／GPU检查、TypeScript及Tauri接口检查通过，真实GPU夹具新增8MiB缓冲区归属正确，夹具分配约82MiB、预留320MiB，不能外推实际地图。为上一批已知增长执行一次3轮诊断，其他集成场景按新批次1/3待合并验证。路径、命令和gpu-memory-diagnostics-*证据见testing-batches.md；内存增长、稳定满帧、LOD及完整War3仍未完成。

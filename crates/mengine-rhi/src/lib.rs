@@ -19,6 +19,7 @@ mod ui;
 pub use mesh::{MeshGpu, MeshUploadProfile, Vertex};
 // Author: MiYu. Safe owned window targets for native editor panels and host windows.
 pub use wgpu::SurfaceTarget;
+pub use renderer::GpuAllocatorReport;
 pub use gpu_profiler::{GpuFrameProfile, GpuProfileStage};
 pub use readback::{recycle_readback_rgba, OffscreenReadbackTicket};
 pub use render_graph::{PassDesc, RenderGraph};

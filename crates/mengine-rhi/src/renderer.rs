@@ -748,7 +748,11 @@ fn draw_binding_changed<'a, T>(bound: &mut Option<&'a T>, next: &'a T) -> bool {
     *bound = Some(next); true
 }
 
+/// Owned allocator payload read explicitly for diagnostics; absent when the backend cannot report it.
+pub struct GpuAllocatorReport { pub allocated_bytes: u64, pub reserved_bytes: u64, pub allocations: Vec<(String, u64)>, pub blocks: usize }
+
 pub struct Renderer {
+    gpu_device_id: u64,
     mesh_picking: bool,
     mesh_pick_order: Vec<usize>,
     world_bundles: WorldBundleCache,
@@ -842,6 +846,11 @@ impl Renderer {
     pub fn sample_count(&self) -> u32 { self.sample_count }
 
     pub fn indexed_object_data(&self) -> bool { self.indexed_objects }
+
+    /// On-demand backend allocator data for this device, shared by all of its viewports.
+    pub fn gpu_allocator_report(&self) -> (u64, Option<GpuAllocatorReport>) {
+        (self.gpu_device_id, self.device.generate_allocator_report().map(|report| GpuAllocatorReport { allocated_bytes: report.total_allocated_bytes, reserved_bytes: report.total_reserved_bytes, blocks: report.blocks.len(), allocations: report.allocations.into_iter().map(|allocation| (allocation.name, allocation.size)).collect() }))
+    }
 
     pub async fn new(window: Arc<winit::window::Window>) -> Result<Self, RhiError> {
         let size = window.inner_size();
@@ -1360,6 +1369,7 @@ impl Renderer {
 
         let gpu_profiler = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1").then(|| GpuFrameProfiler::new(&device)).flatten();
         Ok(Self {
+            gpu_device_id: context.id,
             _headless_context: shared_headless_context,
             mesh_picking: false,
             mesh_pick_order: Vec::new(),
