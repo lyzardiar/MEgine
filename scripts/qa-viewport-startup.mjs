@@ -32,6 +32,12 @@ try{
   }
   const previous=report.allocatorLifecycle.live.game.deviceId;assert.equal(previous,report.allocatorLifecycle.live.scene.deviceId,'Live views report one shared device');
   await execute('project.close',{discardDirty:true});
+  const closedDeadline=performance.now()+15000;report.allocatorLifecycle.closedWait=[];
+  for(;;){
+   try{const state=await query('project.state');report.allocatorLifecycle.closedWait.push({phase:state.phase,editorReady:state.editorReady});if(state.phase==='welcome'&&!state.editorReady)break;}
+   catch(error){if(!/BridgeConnectionError|request timed out|not ready|connection closed/i.test(String(error)))throw error;}
+   assert.ok(performance.now()<closedDeadline,'Close must finish its page reload and reach welcome before reopen');await sleep(150);
+  }
   for(const source of ['game','scene']){const sampled=(await query('profiler.get_samples',{source,limit:1,includeGpuAllocator:true})).gpuAllocator;assert.equal(sampled,null,'Closed project has no viewport device');report.allocatorLifecycle.closed[source]=sampled;}
   await execute('project.open',{root:sample});await execute('panel.focus',{kind:'game'});await execute('profiler.clear');const deadline=performance.now()+budget;
   for(;;){const p=await query('profiler.get_samples',{source:'game',limit:1});if(p.nativeProfileCount)break;assert.ok(performance.now()<deadline,'Reopened project must present fresh native pixels');await sleep(200);}

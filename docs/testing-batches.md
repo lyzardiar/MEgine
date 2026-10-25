@@ -2017,3 +2017,20 @@ CPU比对载荷上限64MiB／设备，最多2048个哈希键、每键4个Weak候
 2026-10-25核实并补交827个已跟踪资产的既有sidecar，保留原文件GUID与导入参数；当前10,915个受支持资产的暂存区配对完整、格式合法，新增GUID在本工程内无碰撞。另1个无原资源的孤立meta保持原状。新增Git提交hook及安装入口、AGENTS必检规则和npm检查命令，覆盖表补齐原生粒子格式mparticle；克隆后执行npm run setup:git-hooks，已有自定义hook配置保持不变。
 
 必要检查：4项元数据测试、3项材质身份测试通过；真实临时Git仓库验证缺meta被hook拦截、配对后放行、两种既有自定义hook不被覆盖。原827文件哈希与暂存内容核对，原始审计和hook验证在tmp/docs-artifacts/asset-meta-audit。此项为资产提交完整性补充，不增加功能批次计数，不重跑地图转换或整库测试。远程本地meta可能含不同GUID，先保留metadata-only stash再拉取；具体命令与引用核对要求见docs/designs/frostbound-realms/asset-metadata-coverage.md，未操作远程工作区。
+
+
+### 第一百四十九至一百五十一阶段批次验证：共享不可变资源
+
+149–151及其补充已完成一次统一Release构建与8项原生集成，下一功能批次0/3。原生生产来源2e6cd5c，冻结程序SHA256为f5eba6e30e0d01c13675a64402d4afcbd8d1da99a1ab0c1abc597ae62b12ede1；构建82秒，61个前端产物摘要未变并复用。45项源码／输入摘要已核对，最终DotA使用外部导入脚本9e4e686，差异单列在收据validationOverrides，不改写原生构建来源。8项测试进程均正常退出且发现文件移除；用户编辑器PID64664保持原进程。
+
+覆盖：编辑态启动／项目关闭重开和设备分配生命周期；Amazonia多窗口、二进制Play同步、暂停步进、Stop恢复与5轮等时驻留；资源热更新；几何／姿态／透明／父子变换／Play可见性选取；隐藏页签停刷、旋转尺寸及相机预览；硬件GPU计时；Profiler界面；DotA14437实体的有效缓存进入、3次场景选取及项目关闭重开。另补充512对象／32网格别名／2纹理键的完整RGBA对照，实例化与bundle路径和直接绘制在材质热更新前后像素完全一致，2次绘制、512实例、1次bundle命中；仅测试代码变更。
+
+启动：工程打开1749.449ms，Game首个接受原生帧2674.588ms，后者不含进程启动和工程打开；Scene10.618ms已预热，不能解释为冷启动。共享设备1→项目关闭无设备→重开设备2，默认不采集分配器；已查看菜单、重开、相机预览、DotA、Amazonia最终驻留和Profiler截图。
+
+普通Amazonia多窗口Scene／Game为59.530／59.825FPS、平均原生8.109／8.581ms、完成间隔p95为23.0／21.3ms。DotA为59.925／59.990FPS、14.048／9.550ms、p95为24.2／24.4ms。GPU计时另开独立短程，普通样本关闭；不将两者混作同一帧率基线。稳定满帧仍未达成。
+
+5轮各运行15秒、Stop后空闲20秒，共20份进程身份与总和核对通过。根私有内存3169.504／3272.359／3297.867／3289.719／3304.715MiB，首末+135.211、后三轮+6.848MiB；进程树首末+215.145、后三轮+43.645MiB。空闲GPU已分配734.000／730.125／727.250／727.313／728.938MiB，预留均1408MiB；最后mesh_vb为4147份／270.500MiB，material_texture为31份／67.250MiB。上一149定向样本为7940份／509.938MiB与93份／201.750MiB，轮次及时间不同，只用于分配对照；设备预留不等于系统驻留，额外CPU比对载荷合计上限128MiB／设备，未证明长期私有内存增长已解决。
+
+启动QA曾在project.close的页面reload完成前重开，现等待welcome且editorReady=false；只重测启动。DotA两次有效缓存断言失败分别由d4bc3b3、9e4e686改变外部导入脚本指纹引起，转换结果cached=false；复用新指纹完成的缓存后重测DotA通过，未重复其他通过项。最终DotA执行前后脚本SHA一致。早期失败日志与最终driver均保留，不写成产品缓存失效故障。
+
+入口：tmp/docs-artifacts/editor-performance-risk下run-immutable-resources-batch.ps1及其continue脚本、build-2e6cd5c/receipt.json、immutable-resources-batch-driver.json、immutable-resources-batch-summary.json与native日志；原生截图／各场景JSON在tmp/docs-artifacts/testing-batches/B001。全部原始产物留本地，文档只记录结论。相关批次验证完成，LOD、长期内存、稳定帧延迟及完整War3规则／开局／军队／HUD／命令／寻路／JASS仍待实现。

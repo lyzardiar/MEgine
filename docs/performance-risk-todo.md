@@ -1977,3 +1977,6 @@ MCP的`profiler.get_samples`增加`includeGpuAllocator`（默认false），按�
 完整尺寸／sRGB格式／RGBA字节确认后共享材质纹理，Mip在共享锁外准备并再次合并GPU创建，sampler与逐视图材质映射独立。查找仅Weak、视图持Arc，替换和释放保持其他视图有效；CPU比对载荷上限64MiB／设备，2048个哈希键、每键4个候选，超预算私有路径。字体及动态UI路径保持原实现，逻辑估算来源说明已更新。
 
 9项定向检查通过，覆盖完整像素、碰撞／尺寸／格式、Mip、热更新及GPU生命周期。双视图各16纹理夹具material_texture32份／44MiB→16份／22MiB，分配器预留均320MiB；CPU比对载荷增加16MiB，首视图单次墙钟232.2939→238.5665ms，第二视图232.7657→4.9652ms，含GPU等待，实际私有内存／FPS不能直接外推。范围和shared-textures-*证据见testing-batches.md。149–151达到3/3，提交后统一原生验证实际地图、设备报告、5轮Stop驻留、关闭重开和GPU／Profiler；未变化前端及无关检查复用，稳定满帧、长期内存、LOD和完整War3仍未完成。
+
+
+149–151已完成冻结Release的8项原生集成，下一功能批次0/3。普通Amazonia Scene／Game59.530／59.825FPS，p9523.0／21.3ms；DotA59.925／59.990FPS，p9524.2／24.4ms，稳定满帧仍未达成。5轮等时空闲根私有内存3169.504／3272.359／3297.867／3289.719／3304.715MiB，首末+135.211、后三轮+6.848MiB，进程树首末+215.145、后三轮+43.645MiB。设备最后已分配728.938MiB、预留1408MiB，mesh_vb4147份／270.500MiB、material_texture31份／67.250MiB；共享CPU比对载荷合计上限128MiB／设备，未解决长期私有内存问题。启动Game首个接受帧2674.588ms（不含进程启动及1749.449ms工程打开），关闭后设备空值、重开新设备通过；相机预览、隐藏尺寸旋转、资源与空间选取、DotA缓存重开、GPU和Profiler均通过。512对象共享别名在实例化／bundle与直接绘制及热更新前后完整像素一致。范围、外部导入脚本指纹变更与失败补测记录见testing-batches.md；证据为tmp/docs-artifacts/editor-performance-risk/immutable-resources-batch-summary.json和build-2e6cd5c/receipt.json。LOD、长期内存、稳定帧延迟和完整War3继续待办。
