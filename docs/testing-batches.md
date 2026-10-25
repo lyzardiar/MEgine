@@ -1743,3 +1743,15 @@ node --test packages/editor/tests/sessionSparseReception.test.mjs packages/edito
 手动benchmark-sparse-receiver.mjs对照修改前保存的接收器源码与当前生产接收器，4374实体原始保存场景、合成相邻变化；同进程交替顺序，2轮预热／9轮计量，每轮25帧，帧间另起事件任务，每帧完整文档一致。无变化CPU中位数0.097716→0.009772ms，64变化0.207892→0.139216ms，全部4374变化9.865936→9.749108ms，不宣称密集收益；不含发送端、IPC、脚本、store规范化和实际FPS。最终源码基线session-receiver-baseline.ts、脚本与sparse-receiver-benchmark.log／json在tmp/docs-artifacts/editor-performance-risk，源码输入与样本随本地收据保留。
 
 134、135、136达到3/3。统一构建前端（含tsc）和custom-protocol Release，验证实际DotA加载／选取／工程关闭重开、Amazonia多窗口／Pause／Step／Stop／重启与五轮等时驻留，检查版本推进、平均耗时、呈现FPS和p95。自847e5af起crates、src-tauri和Viewport.tsx没有变化，本批不重跑无关资源热更新、空间透明选取和Profiler界面夹具，复用上一批对应结果。真实跨窗口收益和消息开销以本批同版本报告为准；稳定60、长期驻留、LOD与完整War3目标继续进行中。
+
+### 第一百三十四至一百三十六阶段合并原生结论
+
+统一d6aa964前端／custom-protocol Release，tsc及Vite通过（Vite3.19秒），原生构建72秒通过。冻结程序build-d6aa964/mengine-editor-tauri.exe的SHA256为c5b81c541daf4cef3fada1da8435d815d4dc62886e053b552449ff4fccf407e9，前端index摘要7d2e94898d714148254ae9ad84934d1929683dc26494693561c3f158a0dac1a7；已检查程序包含新版index-CjyD2PFj.js／App-Cf6sC-I7.js资源键，资源摘要在本地receipt.json。两份相关原生报告arbitrary-map-1792887806369、map-session-1792887877205通过，自有进程正常退出，发现文件移除；console错误记录为0。DotA的错误断言仍在关闭重开之前，重开菜单图像单独核对。用户编辑器64664保持运行。未受影响的资源热更新、空间透明选取和独立Profiler夹具复用上一批结果，本批没有将其计为新通过项。
+
+DotA14437实体，缓存进入2.279秒；Scene60.31／Game59.96FPS，原生14.579／9.445ms、p95呈现间隔25.4／23.6ms。上一批59.58／59.63FPS、14.756／9.584ms、23.4／25.2ms；单窗口p95未一致改善，缓存加载跨次差异不归因于本批同步代码。相同5376对象，Scene5342可见／4675调用，Game116可见／99调用，没有内容或LOD削减。前端world准备分别1.593／1.216ms。本次DotA仍覆盖真实地图缓存加载／进度条、全图选取、工程关闭重开及Profiler／bundle界面。
+
+多窗口7434实体，Scene59.77／Game59.11FPS，原生平均7.740／8.379ms、p95呈现间隔20.9／22.6ms。上一批59.66／56.39FPS、7.821／8.344ms、21.3／29.2ms；Game完成帧率增加约2.72FPS，p95缩短6.6ms，但原生Game平均成本没有下降，不将其写成GPU／原生渲染优化。240份Game完成样本的239个间隔中，238次版本差1、1次差2；上一批223次差1、16次差2。本次完成样本所见版本推进约59.248次/秒，上一批60.224；Game更接近模拟版本节奏，但模拟和呈现仍未稳定60。Scene有169次差1、34次差2、36次重复版本，均保留原始样本；只比较已完成记录，不扩写为全部提交／丢弃请求统计。前端world准备Scene1.529／Game0.613ms。综合结果验证本批同步方向有改善，不单独归因于某一项微基准。
+
+多窗口流程292.11秒，五轮均运行15秒、Stop后空闲20秒；20份版本2样本通过根PID／创建时间、子进程身份、唯一PID和私有字节求和检查，各空闲点均7进程。根私有内存4575.8281／4697.7461／4661.8828／4669.3906／4673.1953MiB，首末增加97.3672MiB、后三轮增加11.3125MiB；进程树5162.9414／5242.3828／5209.1328／5218.5039／5247.4258MiB，首末增加84.4844MiB、后三轮增加38.2930MiB。五轮有预热和波动，首末仍上升，不据此宣称长期驻留通过、全部内存风险解决或跨进程内存下降由本批引起。
+
+已查看DotA Game、重开War3菜单、第五轮Amazonia Game。assert-ranges-hierarchy-batch.py已分别验证两份报告的采样／计数／分段，summarize-session-sync-batch.py核对同一冻结程序、两报告正常退出和20份内存数据；session-sync-batch-revisions.json保留版本差分。所有日志、JSON、PNG及收据均在tmp/docs-artifacts/editor-performance-risk／testing-batches/B001，本次未提交原始产物。该批范围验证完成，下一批0/3；后续继续定位模拟与呈现尾部延迟，稳定60、长期驻留、LOD和完整JASS／War3对局仍未完成。
