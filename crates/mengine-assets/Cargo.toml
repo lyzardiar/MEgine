@@ -14,6 +14,8 @@ thiserror.workspace = true
 log.workspace = true
 uuid.workspace = true
 image.workspace = true
+zune-core = "0.5.1"
+zune-jpeg = "0.5.15"
 gltf = { workspace = true, features = ["extras"] }
 glam.workspace = true
 parking_lot.workspace = true

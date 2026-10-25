@@ -1,6 +1,6 @@
 # Warcraft 地图运行时资源加载调查
 
-Author: MiYu. 2026-10-25。状态：资源字节与MPQ挂载基础层已实现；游戏运行入口和原生格式解码待接入。
+Author: MiYu. 2026-10-25。状态：资源字节、MPQ挂载与BLP内存解码基础层已实现；游戏运行入口、MDX与地图会话待接入。
 
 ## 结论与边界
 
@@ -76,6 +76,20 @@ mengine-assets新增 AssetByteSource／AssetMounts、MpqAssetSource 和 Warcraft
 新增REA探针 node scripts/probe-frost-rea-archive-loading.mjs <game-directory>，3组静态证据确认受检Game.dll的Storm.dll导入、MPQ名称与Storm导出表，保存原件前后哈希和上游REA身份。没有把ordinal自行映射成SFile函数，也没有执行游戏或将静态表解释为运行耗时。产物在tmp/docs-artifacts/warcraft-archives/rea，源码与FFI检查日志在tmp/docs-artifacts/map-loading-audit/，最终字节探针在tmp/docs-artifacts/warcraft-archives/native-probe-final.json。
 
 当前产品选图仍走原有离线转换链路。本阶段提供可复用的原生读取与资源字节基础，下一任务将BLP／模型解码和地图会话接入这些字节；完整Editor集成、同图／跨图切换、失败取消及磁盘增长按后续3任务批次去重验证。
+
+## 第一百五十三阶段：BLP内存纹理解码（新批次2/3）
+
+新增 `decode_blp_mip_rgba8`、`decode_texture_rgba8` 与 `texture_dimensions_from_bytes`。原生资源层直接从字节解码BLP1调色板／JPEG、BLP2调色板／BGRA／BC1／BC2／BC3，可选择归档中已有的mip。BLP1支持picture type 3／4／5，调色板第四字节不作为透明度，0／1／4／8位透明度从独立平面读取；JPEG保留原始BGR(A)通道，随后排成RGBA。直接使用已存在的zune JPEG依赖，避免印刷CMYK转换覆盖透明度。
+
+每边最多16384像素；BLP调用者传入RGBA输出预算，通用内存纹理入口默认256MiB。分配输出前检查所选mip范围、像素数据最短长度与尺寸，JPEG实际尺寸／组件数必须与BLP一致。输出预算不包含JPEG工作缓冲、归档原始字节或输入重组，不能当作进程总内存上限。PNG／TGA等内存解码也在RGBA扩张前检查预算，TGA使用实际成员名提示格式。既有文件纹理API增加BLP支持，尺寸查询只读最多156字节头；此阶段未增加编辑器BLP资源浏览、缩略图或属性选择支持。
+
+`AssetMounts::read_texture_bytes` 在每个来源内依次尝试精确成员与TGA／BLP别名，再检查下一个归档；返回实际来源和实际成员键。地图BLP可覆盖已经预热的公共TGA，删除标记或读取错误阻断回落。原始字节沿用152的有界缓存，本阶段没有新增解码RGBA缓存或磁盘派生产物。
+
+必要检查为10项BLP格式／边界与8项资源字节检查，通过后对独立审核发现的picture type 3兼容补充只复测受影响的调色板和拒绝边界。测试包含3／4组件JPEG独立常量参考、共享JPEG头、mip、透明度位序、BC插值和不满4像素边缘、损坏与预算拒绝、PNG／TGA、文件BLP及来源别名。两个JPEG夹具由常量图本地生成，生成参数、原始通道参考、Pillow版本和SHA保留在 `scripts/fixtures/warcraft/blp-jpeg-planes.source.json`，不含游戏原图。命令为 `cargo test -p mengine-assets --lib blp` 与 `cargo test -p mengine-assets --lib asset_byte`。
+
+新增消费者示例 `cargo run -p mengine-assets --example warcraft_archive_texture -- <game-directory> <map-path> <member> [reference-rgba-file]`，执行归档查找→成员内存读取→RGBA解码，输出来源、摘要与参考差异，不导出PNG或生成meta。实际DotA挂载下验证公共BTNFootman、菜单边框、Lords_Grass及地图自带war3mapMap：源字节SHA与Python一致；调色板RGBA逐字节一致，3张JPEG相对独立Pillow参考每通道最大差值1，不能写成RGBA哈希一致。三个公共成员重挂地图后保持同一原始字节Arc；地图成员按新的挂载身份隔离。探针为Debug单纹理读取，无GPU上传，不代表整图加载速度或完整游戏运行。
+
+定向测试／构建日志、原始失败与最终对照在 `tmp/docs-artifacts/warcraft-archives/`，最终4成员汇总为 `texture-reference/comparison-final.json`。仅验证用RGBA参考落在该临时目录，产品资源路径不写出纹理。编辑器现有进程未停止或重启，未运行完整地图转换或Editor构建。MDX／MDL、地图数据、GPU消费、会话切换与选图入口仍需接入；152–154相关集成在第3个功能任务完成后统一执行。
 
 ## 验收标准
 

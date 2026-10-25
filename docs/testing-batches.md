@@ -2052,3 +2052,14 @@ CPU比对载荷上限64MiB／设备，最多2048个哈希键、每键4个Weak候
 REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖／MPQ名称／导出表，未推断ordinal函数语义或运行时耗时。源站与更新入口在third_party/rea/README-MENGINE.md、third_party/stormlib/README-MENGINE.md。原始REA和最终原生字节记录在tmp/docs-artifacts/warcraft-archives，编译／单测日志在tmp/docs-artifacts/map-loading-audit。
 
 待批次：结合后续原生BLP／模型消费者、地图会话切换执行同一版本Host／Tauri构建，验证真实覆盖、热／冷加载与公共复用、取消失败和资源释放、磁盘增长与错误隔离；未变化的传统地图转换不重复。当前1/3，原游戏选择入口仍走离线流程；P0挂载／解码整项及完整War3目标保持未完成。本阶段未触碰用户编辑器、state.json或既有缓存。
+
+
+### 第一百五十三阶段／新批次任务2/3：原生BLP内存纹理解码
+
+变更：`crates/mengine-assets/src/{blp.rs,blp_tests.rs,texture.rs,asset_bytes.rs,asset_bytes_tests.rs,lib.rs}`、纹理读取示例、Cargo的既有zune直接依赖和两个本地生成JPEG夹具。BLP1调色板／JPEG、BLP2调色板／BGRA／BC1／BC2／BC3在内存解码，支持选择已有mip；BLP与其他内存图像在RGBA分配／扩张前检查预算。TGA／BLP别名在每个归档来源内解析，返回实际键，覆盖删除／错误不回落。既有文件纹理API可读BLP；编辑器资源浏览／缩略图与GPU归档消费者未接入，没有解码纹理缓存。
+
+必要定向检查：10项BLP检查、8项资源层检查通过，命令 `cargo test -p mengine-assets --lib blp`、`cargo test -p mengine-assets --lib asset_byte`；后者包括6项既有检查，原因是通用来源查找抽出共用路径。独立只读审核发现picture type 3兼容缺口，补上后仅重测调色板／拒绝边界；未重复其他通过项。示例Debug构建通过。真实MPQ选取4个成员，源SHA与Python相同；菜单调色板RGBA精确相等，3张JPEG每通道最大差值1；公共原始字节Arc跨地图重挂载共享，地图成员保持来源隔离。JPEG常量夹具的原始3／4通道参考精确通过，未将JPEG差异写成像素一致或整图性能收益。
+
+证据：`tmp/docs-artifacts/warcraft-archives/blp-*.log`、`texture-alias-tests.log`、`texture-reference/comparison-final.json`；初始无效成员选择的失败原件保留，补测实际菜单成员成功。探针不导出产品PNG或meta，只在tmp保存独立验证参考。未重复完整地图转换、Editor构建或全库测试，用户编辑器PID64664未动。
+
+待批次：152–154达到3项后，按累计消费者接入范围统一构建Host／Tauri并验证归档覆盖、热／冷加载、同图／跨图资源复用、失败取消、生命周期及磁盘写出边界。当前2/3；MDX／MDL、地图数据和GPU消费、原选图入口替换、delta链及完整War3仍待完成，P0整项保持未完成。下一任务不将局部纹理解码探针当作完整地图运行验收。

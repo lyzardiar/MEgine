@@ -103,16 +103,29 @@ impl AssetMounts {
     pub fn cache(&self) -> &Arc<AssetByteCache> { &self.cache }
     pub fn read(&self, member: &str) -> Result<AssetBytes, AssetError> {
         let member = normalize_member(member)?;
+        self.read_candidates(&[member])
+    }
+
+    /// Texture aliases are resolved within each source before considering a lower-priority archive.
+    pub fn read_texture_bytes(&self, member: &str) -> Result<AssetBytes, AssetError> {
+        let member = normalize_member(member)?; let mut candidates = vec![member.clone()];
+        if let Some((stem, extension)) = member.rsplit_once('.') { if extension == "blp" { candidates.push(format!("{stem}.tga")); } else if extension == "tga" { candidates.push(format!("{stem}.blp")); } }
+        self.read_candidates(&candidates)
+    }
+
+    fn read_candidates(&self, members: &[String]) -> Result<AssetBytes, AssetError> {
         for source in &self.sources {
-            let location = AssetLocation { source: source.identity(), member: member.clone() };
-            if let Some(bytes) = self.cache.get(&location) { return Ok(AssetBytes { location, bytes }); }
-            match source.read(&member)? {
-                AssetSourceRead::Missing => continue,
-                AssetSourceRead::Deleted => break,
-                AssetSourceRead::Bytes(bytes) => return Ok(AssetBytes { bytes: self.cache.intern(location.clone(), bytes), location }),
+            for member in members {
+                let location = AssetLocation { source: source.identity(), member: member.clone() };
+                if let Some(bytes) = self.cache.get(&location) { return Ok(AssetBytes { location, bytes }); }
+                match source.read(member)? {
+                    AssetSourceRead::Missing => continue,
+                    AssetSourceRead::Deleted => return Err(AssetError::NotFound(member.clone())),
+                    AssetSourceRead::Bytes(bytes) => return Ok(AssetBytes { bytes: self.cache.intern(location.clone(), bytes), location }),
+                }
             }
         }
-        Err(AssetError::NotFound(member))
+        Err(AssetError::NotFound(members.join(" / ")))
     }
 }
 

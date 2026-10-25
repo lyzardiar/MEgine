@@ -16,7 +16,7 @@ B001地图视觉修复补充：地表图集按64像素对齐、逐mip夹紧并�
 - [ ] P1：可选派生缓存移出Assets、按输出兼容版本细分失效、容量与引用回收、失败／取消清理；现有缓存先预览归属再处理。
 - [ ] P1：地图自定义载入资源及读取／解码／GPU／脚本初始化进度，联机等待独立显示；同图3次与跨图复用、首帧及磁盘增长验收。
 
-152已完成原生MPQ只读边界与资源字节挂载基础，当前新批次1/3；12项边界／缓存检查及真实DotA四成员SHA对照通过。游戏入口、原生BLP／MDX解码、地图会话与delta链仍待接入，以上P0整项保持未完成；现有缓存未清理。
+152–153已完成原生MPQ只读边界、资源字节挂载及BLP内存解码基础，当前新批次2/3；边界／缓存／格式检查及真实DotA代表成员对照通过。游戏入口、MDX／MDL、GPU消费、地图会话与delta链仍待接入，以上P0整项保持未完成；现有缓存未清理。
 
 ## 已完成
 
@@ -1999,3 +1999,9 @@ MCP的`profiler.get_samples`增加`includeGpuAllocator`（默认false），按�
 固定上游StormLib构建输入并用Rust／C ABI封装只读归档与受限成员读取，语言查找在全局锁内恢复原locale，同归档读由Mutex串行。AssetMounts保持地图覆盖公共资源优先序，真实来源身份＋规范成员路径作为进程内键；原始字节LRU默认64MiB／4096项，保留读者Arc，调用者指定单成员限额。完整模型／纹理消费者和运行会话尚未接入；二进制delta需基础／补丁链，当前明确拒绝。Windows依赖安装补齐CMake3.25+，上游源码、许可证及312文件哈希在third_party/stormlib。
 
 6原生＋6资源层定向检查通过，真实DotA四成员SHA与先前读取一致，公共Footman Arc跨地图挂载复用；3组REA静态证据已保存。原生API的unsafe边界完成独立审核并修复发现项。仅验证读取基础，没有重跑完整地图转换或Editor；新功能批次1/3，剩余解码与会话接入后统一相关集成。具体边界、命令与产物见map-runtime-archive-loading.md及testing-batches.md。
+
+### 第一百五十三阶段：BLP内存纹理解码
+
+原生资源层可从挂载归档字节解码BLP1调色板／JPEG、BLP2调色板／BGRA／BC1／BC2／BC3和已有mip，检查尺寸、mip范围、载荷长度与RGBA预算。JPEG保留原始通道，调色板透明度取独立平面；PNG／TGA内存入口也在RGBA扩张前检查输出预算。纹理TGA／BLP别名按来源优先解析，地图覆盖与实际来源键保持一致；原始字节缓存沿用有界152基础，不新增磁盘纹理或meta。
+
+10项BLP＋8项资源层检查通过，独立审核发现的picture type 3已补齐并定向复核。4个真实MPQ纹理源SHA一致，1个调色板RGBA精确一致，3个JPEG相对Pillow每通道最大差值1；Debug读取示例无GPU上传，不代表完整地图加载收益。新批次2/3，原选图入口仍离线转换，MDX／MDL、GPU消费、地图会话和delta链待实现。详细边界及批次证据见[地图运行时资源加载](designs/frostbound-realms/map-runtime-archive-loading.md#第一百五十三阶段blp内存纹理解码新批次23)与testing-batches.md。

@@ -74,3 +74,24 @@ fn asset_byte_cache_concurrent_cold_reads_converge_to_one_retained_payload() {
     let result = joined.into_iter().map(Result::unwrap).collect::<Vec<_>>();
     assert!(result.iter().all(|r| Arc::ptr_eq(&r.bytes, &result[0].bytes))); assert_eq!(cache.stats().entries, 1); assert_eq!(cache.stats().resident_bytes, 9);
 }
+
+#[test]
+fn asset_byte_texture_aliases_keep_map_priority_and_resolved_identity() {
+    let base = MemorySource::new(&[("cliff.tga", b"base")]); let custom = MemorySource::new(&[("cliff.blp", b"custom")]); let cache = Arc::new(AssetByteCache::default());
+    AssetMounts::new(vec![base.clone()], cache.clone()).read("cliff.tga").unwrap();
+    let mounted = AssetMounts::new(vec![custom.clone(), base], cache); let tga = mounted.read_texture_bytes("Cliff.TGA").unwrap(); let blp = mounted.read_texture_bytes("cliff.blp").unwrap();
+    assert_eq!(&*tga.bytes, b"custom"); assert_eq!(tga.location.member, "cliff.blp"); assert_eq!(tga.location.source, custom.id); assert!(Arc::ptr_eq(&tga.bytes, &blp.bytes));
+    let exact = MemorySource::new(&[("cliff.tga", b"exact"), ("cliff.blp", b"alias")]); let mounted = AssetMounts::new(vec![exact], Arc::new(AssetByteCache::default())); assert_eq!(&*mounted.read_texture_bytes("cliff.tga").unwrap().bytes, b"exact");
+    assert!(mounted.read_texture_bytes("cliff.mdx").is_err());
+}
+
+#[test]
+fn asset_byte_texture_alias_errors_and_deletion_block_public_fallback() {
+    let base = MemorySource::new(&[("cliff.tga", b"public")]);
+    for broken in [false, true] {
+        let custom = Arc::new(MemorySource { id: AssetSourceId::fresh(), files: HashMap::new(), deleted: vec!["cliff.blp".into()], broken, reads: AtomicUsize::new(0) });
+        let mounted = AssetMounts::new(vec![custom, base.clone()], Arc::new(AssetByteCache::default()));
+        if broken { assert!(matches!(mounted.read_texture_bytes("cliff.tga"), Err(AssetError::Invalid(_)))); } else { assert!(matches!(mounted.read_texture_bytes("cliff.tga"), Err(AssetError::NotFound(_)))); }
+    }
+    assert_eq!(base.reads.load(Ordering::Relaxed), 0);
+}

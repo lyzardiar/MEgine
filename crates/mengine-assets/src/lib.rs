@@ -21,6 +21,7 @@ mod sprite;
 mod surface_shader;
 mod terrain_mesh;
 mod texture;
+mod blp;
 mod timeline;
 
 pub use animation::{
@@ -64,7 +65,8 @@ pub use surface_shader::{
     load_surface_shader, parse_surface_shader, LIT_SURFACE_SHADER_HOOK_NAME,
     SURFACE_SHADER_HOOK_NAME, UI_SHADER_HOOK_NAME,
 };
-pub use texture::{load_environment_texture, load_texture_rgba8, texture_dimensions};
+pub use texture::{decode_texture_rgba8, load_environment_texture, load_texture_rgba8, texture_dimensions, texture_dimensions_from_bytes};
+pub use blp::decode_blp_mip_rgba8;
 pub use timeline::{
     load_timeline_asset, normalize_prefab_asset_path, normalize_timeline_asset_path,
     normalize_timeline_target, parse_timeline_asset, parse_timeline_binding_table,
