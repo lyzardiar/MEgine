@@ -29,9 +29,9 @@ fn terrain(size:[i32;2])->Vec<u8> {
     for index in 0..size[0]*size[1] {b.extend((8192+index as i16*512).to_le_bytes()); b.extend(0xe200u16.to_le_bytes()); b.extend([0xf3,0xab,0x72]);} b
 }
 fn pathing(size:[i32;2])->Vec<u8> {let mut b=b"MP3W".to_vec(); for n in [0,size[0],size[1]] {int(&mut b,n);} b.extend((0..size[0]*size[1]).map(|n|n as u8)); b}
-fn defaults()->WarcraftMapLimits {WarcraftMapLimits::default()}
-fn is_format<T>(r:Result<T>) {assert!(matches!(r,Err(WarcraftMapError::Format {..})));}
-fn is_limit<T>(r:Result<T>) {assert!(matches!(r,Err(WarcraftMapError::Limit {..})));}
+pub(super) fn defaults()->WarcraftMapLimits {WarcraftMapLimits::default()}
+pub(super) fn is_format<T>(r:Result<T>) {assert!(matches!(r,Err(WarcraftMapError::Format {..})));}
+pub(super) fn is_limit<T>(r:Result<T>) {assert!(matches!(r,Err(WarcraftMapError::Limit {..})));}
 
 #[test]
 fn native_warcraft_map_terrain_preserves_packed_corners_and_shared_bytes() {
@@ -109,14 +109,14 @@ fn native_warcraft_map_strings_reject_duplicate_normalized_ids_bad_syntax_and_qu
     for limits in [WarcraftMapLimits {max_text_bytes:5,..defaults()},WarcraftMapLimits {max_string_bytes:2,..defaults()},WarcraftMapLimits {max_records:1,..defaults()},WarcraftMapLimits {max_decoded_bytes:1,..defaults()},WarcraftMapLimits {max_member_bytes:5,..defaults()}] {is_limit(WarcraftStringTable::parse(Arc::from(b),limits));}
 }
 
-struct MemorySource {id:AssetSourceId,files:BTreeMap<String,Arc<[u8]>>,reads:Mutex<Vec<String>>}
-impl MemorySource {fn new(files:Vec<(&str,Vec<u8>)>)->Arc<Self> {Arc::new(Self {id:AssetSourceId::fresh(),files:files.into_iter().map(|(k,v)|(k.into(),v.into())).collect(),reads:Mutex::new(vec![])})}}
+pub(super) struct MemorySource {pub(super) id:AssetSourceId,pub(super) files:BTreeMap<String,Arc<[u8]>>,pub(super) reads:Mutex<Vec<String>>}
+impl MemorySource {pub(super) fn new(files:Vec<(&str,Vec<u8>)>)->Arc<Self> {Arc::new(Self {id:AssetSourceId::fresh(),files:files.into_iter().map(|(k,v)|(k.into(),v.into())).collect(),reads:Mutex::new(vec![])})}}
 impl AssetByteSource for MemorySource {
     fn identity(&self)->AssetSourceId {self.id}
     fn read(&self,member:&str)->std::result::Result<AssetSourceRead,AssetError> {self.reads.lock().unwrap().push(member.into()); Ok(self.files.get(member).map(|b|AssetSourceRead::Bytes(b.clone())).unwrap_or(AssetSourceRead::Missing))}
 }
-fn map_source()->Arc<MemorySource> {MemorySource::new(vec![("war3map.w3i",info(25).bytes),("war3map.w3e",terrain([3,2])),("war3map.wpm",pathing([8,4])),("war3map.wts",b"STRING 1\n{\nMap name\n}\n".to_vec()),("units/a.mdx",b"override".to_vec())])}
-fn scope(source:Arc<MemorySource>,common:Arc<MemorySource>,cache:Arc<AssetByteCache>)->ScopedWarcraftMap {ScopedWarcraftMap::new("authored-map.w3x".into(),source,vec![common],cache)}
+pub(super) fn map_source()->Arc<MemorySource> {MemorySource::new(vec![("war3map.w3i",info(25).bytes),("war3map.w3e",terrain([3,2])),("war3map.wpm",pathing([8,4])),("war3map.wts",b"STRING 1\n{\nMap name\n}\n".to_vec()),("units/a.mdx",b"override".to_vec())])}
+pub(super) fn scope(source:Arc<MemorySource>,common:Arc<MemorySource>,cache:Arc<AssetByteCache>)->ScopedWarcraftMap {ScopedWarcraftMap::new("authored-map.w3x".into(),source,vec![common],cache)}
 
 #[test]
 fn native_warcraft_map_session_shares_common_assets_and_releases_only_its_map() {

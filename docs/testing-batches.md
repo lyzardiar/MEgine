@@ -2119,3 +2119,11 @@ REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖
 最终GPU：Amazonia／DotA／BootyBay为93／143／177块，近景实际提交3／8／10块，透明水面贡献124325／309／119341变化像素，推进一帧改变112019／265／107419像素。第二视图的93／143／177份顶点缓冲全部复用，设备材质纹理分配保持5→5。数据会话在GPU绑定前关闭，地图缓存分别减少214082／383608／426678字节，已编译数据继续有效。错误Renderer释放拒绝，正确卸载后旧对象为空帧，另一视图像素不变；最终两Renderer的地形纹理键都为0。原生shader无拒绝诊断，已查看最终BootyBay全景／DotA近景。初版探针也通过；最终补充数据会话关闭检查并调整验证相机后只重建探针、重验三图，产品源码及Tauri程序未变。
 
 证据入口`tmp/docs-artifacts/warcraft-archives/batch-155-157-receipt.json`、`terrain-gpu-final/*/receipt.json`、`native-water/`、`water-comparison.{json,log}`及`compare-native-water.py`；CPU日志`map-terrain-water-batch-tests.log`、`terrain-host-plan-tests.log`，原生构建日志`terrain-gpu-final-build.log`与`terrain-batch-tauri-release.log`，前端`terrain-batch-frontend.json`。原始截图／JSON均不提交。产品源没有资产／meta／离线作业写出，用户编辑器PID64664未停止或重启，既有缓存未清理。未进行完整游戏世界／原选图接入、全部mip边界像素参考、编辑器FPS／长期内存或原版War3画面验收，这些仍在后续队列，不能由本批CPU/GPU结果替代。
+
+### 第一百五十八阶段／新批次任务1/3：原生放置与对象覆盖读取
+
+变更：`mengine-assets/src/warcraft_map/{placements,objects,world,world_tests}.rs`、模块导出、相邻测试夹具可见性及`examples/warcraft_archive_world.rs`。直接从地图MPQ读取装饰／单位放置和七类对象覆盖，保留源字段／类型／顺序及原始Arc；map-only查找、core＋world原始预算、共享decoded预算和协作取消限制不可信输入，释放session不破坏已返回WorldData。没有产品文件写出，不执行脚本或实例化世界。
+
+必要检查：`cargo test -p mengine-assets --lib native_warcraft_world -- --test-threads=1`通过9项，涵盖全部经典版本／随机模式／对象值类型、嵌套记录、截断／尾随／非有限／编码／预算、map-only、归档释放及读取后取消；独立只读审核无新缺陷。Debug源数据示例编译并读取DotA／Amazonia／BootyBay通过，8成员1477584字节逐字节重建一致，9661装饰／159单位／1407对象／39535修改全字段对照通过。公共Arc复用、三次释放仅留公共缓存105022字节、世界数据仍有效。日志与比较脚本在`tmp/docs-artifacts/warcraft-archives/world-*`及`compare-native-world.py`。未重跑既有地图／地形／水面全套、全图转换、全库或完整Editor构建；PID64664未触碰。
+
+待批次：当前1/3，累计三任务后统一相关Host／Tauri消费者编译和世界／视口集成验证；未受影响的155–157结果复用。后续覆盖地图SLK／对象定义、模型共享／来源覆盖、随机配置求值、脚本创建、世界释放及选图worker。DotA没有单位放置成员，919处CreateUnit脚本调用不属于本读取器消费范围。经典DOO不含1.32 skin，不能扩大为Reforged兼容或完整War3加载／性能验收；旧选图仍离线转换，既有缓存不清理。

@@ -5,7 +5,14 @@ use std::{path::Path,sync::{Arc,atomic::{AtomicBool,Ordering}}};
 mod reader;
 mod info;
 mod strings;
+mod placements;
+mod objects;
+mod world;
+#[cfg(test)] mod world_tests;
 #[cfg(test)] mod tests;
+pub use placements::*;
+pub use objects::*;
+pub use world::WarcraftMapWorldData;
 pub use info::*;
 pub use strings::WarcraftStringTable;
 

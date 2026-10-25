@@ -162,3 +162,13 @@ Host新增`MountedWarcraftTerrain`与`WarcraftTerrainView`。CPU句柄可跨视�
 - 自定义加载画面、取消／失败恢复、超大及加密／PKWARE地图分别验证；没有完整原图脚本支持时继续明确兼容性，不宣称完整Warcraft运行等价。
 
 运行时完整接入仍在实施队列中，现有磁盘缓存未执行清理。
+
+## 原生世界源数据（第一百五十八阶段）
+
+`WarcraftMapSession::load_world_data`从当前地图读取可选DOO装饰、单位／物品放置及七类对象覆盖，不写资产、meta或转换作业。经典装饰7／8、单位7/9与8/11、对象1／2保留源顺序、四字节ID、原始坐标／缩放、状态、保留字段、嵌套掉落／背包／能力、四种随机配置及原表／自定义表。对象值保留整数、real、unreal和UTF-8字符串类型、扩展level／pointer及末尾marker；TRIGSTR和未消费字段保持原值。
+
+原始字节限额包含核心成员，世界数据的全部数组／字符串共享独立decoded预算；缺失可选成员为空，存在但畸形／超限则报错。只访问地图源，不向公共MPQ查找同名DOO或覆盖文件。WorldData保留记录和原始Arc，不持有归档；session释放清地图缓存，公共缓存和活跃数据继续有效。失败时已读取成员可在session有界缓存中复用，随session关闭释放。同步加载仅供工作线程，取消仍需等待正在执行的归档调用。
+
+9项定向格式／安全／生命周期检查通过，独立只读审核未发现新缺陷。`cargo run -p mengine-assets --example warcraft_archive_world -- <game-directory> <map-paths...>`只输出JSON；三张代表地图的8成员共1477584字节、9661装饰、159单位放置、1407对象和39535修改完成全字段对照及逐字节重建。三次关闭session均仅留同一公共Footman缓存105022字节，WorldData仍有效。证据为`tmp/docs-artifacts/warcraft-archives/world-{tests,real,comparison}*`与`compare-native-world.py`；原件不提交。该结果没有全图转换、完整Editor构建或FPS结论。
+
+真实DotA没有`war3mapUnits.doo`，其`Scripts/war3map.j`约3MB且包含919处CreateUnit调用；缺少放置成员不能解释为地图无单位。仍须读取地图SLK／对象定义、解析模型外观和随机配置、接入脚本创建与完整世界，再替换现有离线选图入口。此接口不执行JASS、不求值继承、不创建模型或规则。仅支持经典pre-1.32布局，DOO版本本身无法识别Reforged skin；独立parse调用者必须依据地图build选择布局。新功能批次1/3，旧选图仍落盘，缓存问题保持未完成。

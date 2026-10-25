@@ -1,4 +1,5 @@
 //! Asset database, handles, glTF import helpers.
+// Author: MiYu.
 
 mod animation;
 pub mod particle_definition;
@@ -45,6 +46,7 @@ pub use asset_sidecar::{
 pub use asset_bytes::{AssetByteCache, AssetByteCacheStats, AssetByteSource, AssetBytes, AssetLocation, AssetMounts, AssetSourceId, AssetSourceRead};
 pub use warcraft_archives::{MpqAssetSource, WarcraftArchives};
 pub use warcraft_map::{WarcraftMapCancelToken,WarcraftMapError,WarcraftMapLimits,WarcraftMapLoadPhase,WarcraftMapLoadProgress,WarcraftMapPathing,WarcraftMapSession,WarcraftMapTerrain,WarcraftTerrainCorner,WarcraftStringTable};
+pub use warcraft_map::{WarcraftMapWorldData,WarcraftMapDoodads,WarcraftMapDoodad,WarcraftMapTerrainDoodad,WarcraftMapUnits,WarcraftMapUnit,WarcraftMapItemChoice,WarcraftMapInventoryItem,WarcraftMapModifiedAbility,WarcraftMapRandomPlacement,WarcraftMapObjects,WarcraftMapObject,WarcraftMapObjectKind,WarcraftMapObjectModification,WarcraftMapObjectValue};
 pub use warcraft_map::{WarcraftMapInfo,WarcraftMapPlayer,WarcraftMapForce,WarcraftMapScreen,WarcraftMapFog,WarcraftMapUpgrade,WarcraftMapTech,WarcraftMapRandomUnits,WarcraftMapRandomUnitChoice,WarcraftMapRandomItems,WarcraftMapRandomItemChoice};
 pub use warcraft_terrain::{WarcraftTerrain,WarcraftTerrainLimits,WarcraftTerrainLayout,WarcraftGroundTile,WarcraftCliffPlacement,WarcraftTerrainChunk,WarcraftTerrainMaterial,WarcraftTerrainResource,WarcraftWater,WarcraftWaterSettings,WarcraftGroundLayers,warcraft_ground_layers};
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
