@@ -19,7 +19,7 @@ Author: MiYu。
 
 ## 地形布局与原生场景
 
-Rust原生实现位于`crates/mengine-assets/src/warcraft_terrain/`，沿用本节固定上游与MIT来源，直接消费挂载MPQ中的SLK／BLP／MDX及W3E。当前覆盖CPU地表／悬崖与图集合成，模板按实际请求增量读取，动态／billboard和不兼容材质明确拒绝；水面及原生视口接入另行验证。定向命令为`cargo test -p mengine-assets --lib native_warcraft_terrain`，真实核心数据／模板／像素对照证据放在`tmp/docs-artifacts/warcraft-archives/`，不提交游戏原始资源或验证快照。Rust地图读取器在相邻`warcraft_map/`，实现W3I18／25、W3E11、WPM0和可选WTS。
+Rust原生实现位于`crates/mengine-assets/src/warcraft_terrain/`，沿用本节固定上游与MIT来源，直接消费挂载MPQ中的SLK／BLP／MDX及W3E。覆盖CPU地表／悬崖／水面和图集合成，Host可直接上传原生视图；模板按实际请求增量读取，动态／billboard和不兼容材质明确拒绝，完整地图选图及游戏世界仍待接入。定向命令为`cargo test -p mengine-assets --lib native_warcraft_terrain`，真实核心数据／模板／像素对照证据放在`tmp/docs-artifacts/warcraft-archives/`，不提交游戏原始资源或验证快照。Rust地图读取器在相邻`warcraft_map/`，实现W3I18／25、W3E11、WPM0和可选WTS。
 
 `scripts/warcraft_terrain.py` 与 `scripts/build-frost-original-terrain.py` 使用相同固定提交的 `src/viewer/handlers/w3x/map.ts`、地面／水面 shader，核对四角顺序、图集掩码、变体与源高度。坡道入口和双格占用同时参考 [Retera/WarsmashModEngine](https://github.com/Retera/WarsmashModEngine)，固定提交 `f1bcb4ae54f0ff4a8d5e4bd5892b6a6622441b15` 的 `core/src/com/etheller/warsmash/viewer5/handlers/w3x/environment/Terrain.java`。其 MIT 许可保留在 [LICENSE-Warsmash](LICENSE-Warsmash)。原版 MDX 顶点及本仓库已验证的 ClassicCliffs 模板用于生成实际几何。
 

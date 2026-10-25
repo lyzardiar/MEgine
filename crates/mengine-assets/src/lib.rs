@@ -46,7 +46,7 @@ pub use asset_bytes::{AssetByteCache, AssetByteCacheStats, AssetByteSource, Asse
 pub use warcraft_archives::{MpqAssetSource, WarcraftArchives};
 pub use warcraft_map::{WarcraftMapCancelToken,WarcraftMapError,WarcraftMapLimits,WarcraftMapLoadPhase,WarcraftMapLoadProgress,WarcraftMapPathing,WarcraftMapSession,WarcraftMapTerrain,WarcraftTerrainCorner,WarcraftStringTable};
 pub use warcraft_map::{WarcraftMapInfo,WarcraftMapPlayer,WarcraftMapForce,WarcraftMapScreen,WarcraftMapFog,WarcraftMapUpgrade,WarcraftMapTech,WarcraftMapRandomUnits,WarcraftMapRandomUnitChoice,WarcraftMapRandomItems,WarcraftMapRandomItemChoice};
-pub use warcraft_terrain::{WarcraftTerrain,WarcraftTerrainLimits,WarcraftTerrainLayout,WarcraftGroundTile,WarcraftCliffPlacement,WarcraftTerrainChunk,WarcraftTerrainMaterial,WarcraftTerrainResource,WarcraftGroundLayers,warcraft_ground_layers};
+pub use warcraft_terrain::{WarcraftTerrain,WarcraftTerrainLimits,WarcraftTerrainLayout,WarcraftGroundTile,WarcraftCliffPlacement,WarcraftTerrainChunk,WarcraftTerrainMaterial,WarcraftTerrainResource,WarcraftWater,WarcraftWaterSettings,WarcraftGroundLayers,warcraft_ground_layers};
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use gltf_pose::{parse_gltf_pose, parse_gltf_pose_sample, GltfAttachmentPose, GltfBillboardCamera, GltfNodePose, GltfPoseSource, SharedGltfPoseSource, SharedPoseLoad};

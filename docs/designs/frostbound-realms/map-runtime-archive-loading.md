@@ -1,6 +1,6 @@
 # Warcraft 地图运行时资源加载调查
 
-Author: MiYu. 2026-10-25。状态：MPQ、BLP、经典MDX／Host消费、地图数据会话和CPU地表／悬崖编译已实现；水面、地形GPU消费、游戏世界和选图入口待接入。
+Author: MiYu. 2026-10-25。状态：MPQ、BLP、MDX、地图会话、地表／悬崖／水面编译及Host地形消费已实现；155–157批次待原生验证，游戏世界和选图入口待接入。
 
 ## 结论与边界
 
@@ -136,6 +136,16 @@ Host新增 `MountedWarcraftModel`：同步加载接口供后续会话工作线�
 命令：`cargo test -p mengine-assets --lib native_warcraft_terrain -- --test-threads=1`、`cargo test -p mengine-assets --lib native_mdx_static_consumer -- --test-threads=1`、`cargo test -p mengine-assets --lib asset_byte_texture -- --test-threads=1`。CPU消费者：`cargo run -p mengine-assets --example warcraft_archive_terrain -- <game-directory> <map-path> [validation-directory]`，省略验证目录只输出摘要，指定临时目录才导出参考几何／PNG。证据在`tmp/docs-artifacts/warcraft-archives/native-terrain/`、`terrain-*.log`、`terrain-comparison.json`及`compare-native-terrain.py`。
 
 155–156为2/3，下一相关任务后统一Host／Tauri及实际GPU集成。水面／水深、Host地形上传、实际分块裁剪、视口、世界和选图仍待接入；CPU一致性不等于完整War3画面或帧率验收。现有编辑器和缓存未触碰，常规选图仍使用离线流程，缓存问题尚未整体关闭。
+
+## 第一百五十七阶段：水面与原生地形视图（155–157批次待验证）
+
+地形编译器读取当前地图优先的`Water.slk`及动画纹理，使用W3E水位、湿格、原始surface高度生成水面块和float32小端深度纹理；水深作为线性数据上传，水纹理按sRGB上传。源帧数／速率、格距和浅／深颜色驱动shader，采样在每个动画帧内部重复并隔离mip。无湿格时不读取水面来源；字段、帧尺寸、合成图集和累计布局／纹理／网格预算在生成前检查，水面块与地面／悬崖共享总chunk和网格限额。岸边装饰模型、完整原游戏水面规则和视觉等价不在本阶段完成声明内。
+
+Host新增`MountedWarcraftTerrain`与`WarcraftTerrainView`。CPU句柄可跨视图共享，GPU绑定使用每次独立键并复用既有RHI不可变几何／纹理缓存。上传前预检几何、引用、基级纹理、draw及计划字节；默认4096draw、256MiB网格上传、128MiB基级纹理、64MiB计划，mip／RHI缓存另计。材质使用白色源albedo；水面透明且不写深度，动画只在源帧变化时替换共享材质参数，不重传网格或纹理。释放必须使用原Renderer的稳定资源身份，清除本绑定的mesh／texture键和CPU引用；另一视图有独立绑定。调用者须在卸载时显式release，Renderer本身销毁也会释放其资源。
+
+必要快速检查为2项水位／水深／帧／预算及畸形源检查通过，Host与GPU示例接口编译通过；独立审核发现的悬崖默认灰色已设为白色。新增原生GPU探针`cargo run -p mengine-editor-host --release --example render_warcraft_terrain -- <game-directory> <map-path> [validation-directory]`，默认验证目录位于tmp，只在探针输出截图。产品编译／Host绑定不导出资产或meta。
+
+155–157达到3/3，提交后统一执行：Host规划检查、受本阶段影响的地图／地形检查、同一Release的Host／Tauri构建、真实水面地图CPU对照和GPU近景／全景、动画／透明叠加、块裁剪、双Renderer共享与错误释放／卸载、前端摘要和磁盘写出边界。复用未变化的MPQ／BLP／MDX参考，不重跑旧离线地图转换或完整编辑器UI流程。当前记录是实现和接口检查，尚未宣称实际GPU或批次验收通过；用户既有编辑器与缓存保持原状，旧选图入口仍需替换。
 
 ## 验收标准
 

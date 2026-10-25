@@ -2103,3 +2103,11 @@ REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖
 三图311来源SHA、38344地块、5587悬崖、323抬高角点、264坡道入口、318块、272405顶点和462216索引对照通过；索引相等，最大位置差7.569789886474609e-6、法线1.1920928955078125e-7、UV2.9038160320737916e-8。地表每通道差最多2、悬崖1；Debug CPU编译不是整图性能基准。最终资格补修后仅补三图编译并核对数量，复用几何／像素对照。证据：`tmp/docs-artifacts/warcraft-archives/native-terrain/`、`terrain-comparison.{json,log}`、`terrain-{tests-final,byte-alias-tests,static-model-test,example-final-build}.log`、`terrain-final-*.json`及`compare-native-terrain.py`；原始产物不提交。
 
 待批次：155–156为2/3，下一相关任务后统一Host／Tauri构建、实际GPU地形／水面、mip接缝与近景、多视图共享／释放、取消／失败和磁盘写出边界。水面／水深、Host、世界和选图入口尚未接入；CPU一致性不代表War3画面／FPS。用户PID64664保持原进程，现有缓存未清理。
+
+### 第一百五十七阶段／新批次任务3/3：水面与Host原生地形消费
+
+变更：`mengine-assets/src/warcraft_terrain/{water,mod,surface,tests}.rs`及CPU示例／导出、`mengine-editor-host/src/warcraft_terrain.rs`及GPU示例／导出、RHI Renderer稳定资源身份。水位／水深、源动画纹理和浅深色值生成原生水面块，水深使用线性纹理；Host预检后直接上传地表／悬崖／水面。句柄跨视图共享，独立绑定键、所有者校验、失败回滚及显式release保证释放范围；水动画仅更新材质。源albedo明确白色。
+
+必要检查：2项水面源字段／高度／深度／帧／预算／取消检查通过，`cargo check -p mengine-editor-host --example render_warcraft_terrain`通过。独立只读审核已完成，悬崖默认灰色修正为白色；GPU结果待下述批次。日志`tmp/docs-artifacts/warcraft-archives/water-{tests,host-check,gpu-example-check}.log`。未完整构建Editor、未转换地图、未触碰用户进程或清理缓存。
+
+当前155–157=3/3，提交后先执行本批相关验证再开始下一功能任务：Host2项规划检查、受影响地图／地形及水面小范围检查、统一Release Host GPU示例与Tauri custom-protocol构建、真实地图CPU水深／几何／帧对照、GPU透明水面／动画／地形裁剪、跨Renderer相同像素与设备资源共享、错误Renderer释放拒绝、旧对象卸载为空及另一视图保留、最后纹理键释放和前端摘要。CPU命令`cargo test -p mengine-assets --lib native_warcraft`及Host的`native_warcraft_terrain_plan`筛选；GPU入口`render_warcraft_terrain`默认只在tmp保存证据。复用未变的归档／解码器／模型参考；不重复离线转换、全库或无关原生UI场景。

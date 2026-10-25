@@ -61,7 +61,7 @@ fn memory_mounts()->AssetMounts {
     fn png(pixel:[u8;4])->Vec<u8> {let image=image::RgbaImage::from_pixel(256,256,image::Rgba(pixel)); let mut out=std::io::Cursor::new(Vec::new()); image.write_to(&mut out,image::ImageFormat::Png).unwrap(); out.into_inner()}
     let ground=b"ID;P\nC;X1;Y1;K\"tileID\"\nC;X2;K\"dir\"\nC;X3;K\"file\"\nC;X1;Y2;K\"Ldrt\"\nC;X2;K\"tex\"\nC;X3;K\"ground\"\n".to_vec();
     let cliff=b"ID;P\nC;X1;Y1;K\"id\"\nC;X2;K\"cliffModelDir\"\nC;X3;K\"rampModelDir\"\nC;X4;K\"groundTile\"\nC;X5;K\"texDir\"\nC;X6;K\"texFile\"\nC;X1;Y2;K\"CLdi\"\nC;X2;K\"Cliffs\"\nC;X3;K\"CliffTrans\"\nC;X4;K\"Ldrt\"\nC;X5;K\"tex\"\nC;X6;K\"cliff\"\nC;X1;Y3;K\"CLgr\"\nC;X2;K\"Cliffs\"\nC;X3;K\"CliffTrans\"\nC;X4;K\"Ldrt\"\nC;X5;K\"tex\"\nC;X6;K\"cliff\"\n".to_vec();
-    let files=[("terrainart/terrain.slk",ground),("terrainart/clifftypes.slk",cliff),("tex/ground.blp",png([10,20,30,0])),("tex/cliff.blp",png([40,50,60,255])),("terrainart/blight/lords_blight.blp",png([70,80,90,255]))].into_iter().map(|(k,v)|(k.into(),Arc::from(v))).collect(); AssetMounts::new(vec![Arc::new(MemorySource {id:AssetSourceId::fresh(),files})],Arc::new(AssetByteCache::default()))
+    let mut files:HashMap<String,Arc<[u8]>>=[("terrainart/terrain.slk",ground),("terrainart/clifftypes.slk",cliff),("tex/ground.blp",png([10,20,30,0])),("tex/cliff.blp",png([40,50,60,255])),("terrainart/blight/lords_blight.blp",png([70,80,90,255]))].into_iter().map(|(k,v)|(k.into(),Arc::from(v))).collect(); files.extend(water_files(&[])); AssetMounts::new(vec![Arc::new(MemorySource {id:AssetSourceId::fresh(),files})],Arc::new(AssetByteCache::default()))
 }
 
 #[test]
@@ -95,4 +95,26 @@ fn native_warcraft_terrain_rejects_unrepresented_cliff_materials() {
     let g=crate::MdxGeosetPose {mesh:mesh([1,1]),geoset:0,material:0,alpha:1.,color:[1.;3],layers:vec![layer.clone()].into()}; let texture=crate::MdxTexture {path:String::new(),replaceable_id:11,flags:0}; assert!(cliff_material(&g,&[texture.clone()]).is_ok());
     for mode in 0..7 {let mut g=g.clone(); let mut layers=g.layers.to_vec(); let mut texture=texture.clone(); match mode {0=>layers.push(layer.clone()),1=>layers[0].uv_set=1,2=>layers[0].uv[4]=0.5,3=>g.alpha=0.5,4=>g.color[0]=0.5,5=>texture.replaceable_id=0,6=>layers[0].filter=2,_=>unreachable!()} g.layers=layers.into(); assert!(cliff_material(&g,&[texture]).is_err());}
     let mounts=memory_mounts(); let cancel=WarcraftMapCancelToken::default(); let t=terrain([3,2],|_,_,_|{}); let compiled=WarcraftTerrain::compile(&t,&mounts,WarcraftTerrainLimits::default(),&cancel).unwrap(); assert!(Arc::ptr_eq(&compiled.cliff_textures[0],&compiled.cliff_textures[1]));
+}
+
+fn water_files(overrides:&[(&str,&str)])->HashMap<String,Arc<[u8]>> {
+    let mut fields=vec![("waterID".to_owned(),"LSha".to_owned()),("height".into(),"0.1".into()),("numTex".into(),"2".into()),("texRate".into(),"4".into()),("cells".into(),"3".into()),("texFile".into(),"water/frame".into())];
+    for (i,prefix) in ["Smin","Smax","Dmin","Dmax"].into_iter().enumerate() {for (j,channel) in ["R","G","B","A"].into_iter().enumerate() {fields.push((format!("{prefix}_{channel}"),(10+i*40+j*10).to_string()));}}
+    for &(key,value) in overrides {fields.iter_mut().find(|(k,_)|k==key).unwrap().1=value.into();} let mut slk=String::from("ID;P\n"); for (i,(key,value)) in fields.iter().enumerate() {slk.push_str(&format!("C;X{};Y1;K\"{key}\"\nC;Y2;K\"{value}\"\n",i+1));}
+    let mut files=HashMap::new(); files.insert("terrainart/water.slk".into(),Arc::from(slk.into_bytes()));
+    for (i,pixel) in [[8,16,32,128],[64,96,128,192]].into_iter().enumerate() {let image=image::RgbaImage::from_pixel(16,16,image::Rgba(pixel)); let mut bytes=std::io::Cursor::new(Vec::new()); image.write_to(&mut bytes,image::ImageFormat::Png).unwrap(); files.insert(format!("water/frame{i:02}.blp"),Arc::from(bytes.into_inner()));} files
+}
+
+#[test]
+fn native_warcraft_water_source_heights_depth_frames_and_chunk_budget() {
+    let mounts=memory_mounts(); let cancel=WarcraftMapCancelToken::default(); let t=terrain([3,2],|x,y,b|if x==0 && y==0 {b[4]=64; b[2..4].copy_from_slice(&0xe100u16.to_le_bytes());}); let compiled=WarcraftTerrain::compile(&t,&mounts,WarcraftTerrainLimits::default(),&cancel).unwrap(); let water=compiled.water.as_ref().unwrap(); assert_eq!(water.tiles,[[0,0]]); assert_eq!(water.heights[0],0.6); assert_eq!(&water.depth.pixels[..4],&0.6f32.to_le_bytes()); assert_eq!([water.atlas.width,water.atlas.height],[128,16]); assert_eq!(water.atlas.pixels[..4],[8,16,32,128]); assert_eq!(water.atlas.pixels[64..68],[64,96,128,192]); assert_eq!(water.settings.colors[0],[10./255.,20./255.,30./255.,40./255.]);
+    for (ms,expected) in [(0,0),(249,0),(250,1),(499,1),(500,0)] {assert_eq!(water.frame_at(ms),expected);} let mesh=&compiled.chunks.iter().find(|c|c.material==WarcraftTerrainMaterial::Water).unwrap().mesh; assert_eq!(mesh.positions[0],[-2.,0.6,1.]); assert_eq!(mesh.uvs[0],[0.6,0.]); assert!(crate::parse_surface_shader(water.shader().as_bytes()).is_ok()); assert!(WarcraftTerrain::compile(&t,&mounts,WarcraftTerrainLimits {max_chunks:1,..Default::default()},&cancel).is_err());
+}
+
+#[test]
+fn native_warcraft_water_rejects_bad_source_fields_and_cancellation() {
+    for change in [("numTex","0"),("numTex","129"),("numTex","1.5"),("texRate","-1"),("texRate","NaN"),("cells","0"),("cells","1e-35"),("height","inf"),("Smin_A","256"),("texFile","../escape")] {
+        let source=MemorySource {id:AssetSourceId::fresh(),files:water_files(&[change])}; let mounts=AssetMounts::new(vec![Arc::new(source)],Arc::new(AssetByteCache::default())); let cancel=WarcraftMapCancelToken::default(); let mut c=compiler(&mounts,&cancel); let t=terrain([3,2],|_,_,b|b[4]=64); let layout=layout::compile(&t,&defs(),&mut c).unwrap(); assert!(water::compile(&t,&layout,&mut c).is_err(),"{change:?}");
+    }
+    let mounts=memory_mounts(); let cancel=WarcraftMapCancelToken::default(); let mut c=compiler(&mounts,&cancel); let t=terrain([3,2],|_,_,b|b[4]=64); let layout=layout::compile(&t,&defs(),&mut c).unwrap(); c.textures=Budget(1); assert!(matches!(water::compile(&t,&layout,&mut c),Err(WarcraftMapError::Limit {..}))); cancel.cancel(); assert!(matches!(water::compile(&t,&layout,&mut c),Err(WarcraftMapError::Cancelled)));
 }

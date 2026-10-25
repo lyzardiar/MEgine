@@ -761,7 +761,9 @@ fn draw_binding_changed<'a, T>(bound: &mut Option<&'a T>, next: &'a T) -> bool {
 /// Owned allocator payload read explicitly for diagnostics; absent when the backend cannot report it.
 pub struct GpuAllocatorReport { pub allocated_bytes: u64, pub reserved_bytes: u64, pub allocations: Vec<(String, u64)>, pub blocks: usize }
 
+static NEXT_RENDERER_RESOURCE_ID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 pub struct Renderer {
+    resource_identity: u64,
     gpu_device_id: u64,
     mesh_picking: bool,
     mesh_pick_order: Vec<usize>,
@@ -854,6 +856,8 @@ pub struct Renderer {
 }
 
 impl Renderer {
+    /// Stable identity of this renderer's resource namespace, independent of its shared GPU device or memory address.
+    pub fn resource_identity(&self) -> u64 { self.resource_identity }
     /// Scene color, depth and UI coverage sample count; presentation and readback remain single-sampled.
     pub fn sample_count(&self) -> u32 { self.sample_count }
 
@@ -1381,6 +1385,7 @@ impl Renderer {
 
         let gpu_profiler = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1").then(|| GpuFrameProfiler::new(&device)).flatten();
         Ok(Self {
+            resource_identity: NEXT_RENDERER_RESOURCE_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             gpu_device_id: context.id,
             _headless_context: shared_headless_context,
             mesh_picking: false,

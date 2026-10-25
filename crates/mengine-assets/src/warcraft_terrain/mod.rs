@@ -4,6 +4,8 @@ use std::{collections::HashMap,sync::Arc};
 mod slk;
 mod layout;
 mod surface;
+mod water;
+pub use water::{WarcraftWater,WarcraftWaterSettings};
 #[cfg(test)] mod tests;
 pub use layout::{WarcraftTerrainLayout,WarcraftGroundTile,WarcraftCliffPlacement};
 pub use surface::{WarcraftGroundLayers,warcraft_ground_layers};
@@ -21,11 +23,11 @@ fn filled<T:Clone>(count:usize,value:T,budget:&mut Budget)->Result<Vec<T>> {let 
 pub struct WarcraftTerrainLimits {pub max_member_bytes:usize,pub max_layout_bytes:usize,pub max_mesh_bytes:usize,pub max_texture_bytes:usize,pub max_template_bytes:usize,pub max_templates:usize,pub max_atlas_tiles:usize,pub max_chunks:usize,pub chunk_size:u32}
 impl Default for WarcraftTerrainLimits {fn default()->Self {Self {max_member_bytes:16*1024*1024,max_layout_bytes:128*1024*1024,max_mesh_bytes:256*1024*1024,max_texture_bytes:128*1024*1024,max_template_bytes:32*1024*1024,max_templates:512,max_atlas_tiles:4096,max_chunks:4096,chunk_size:16}}}
 #[derive(Clone,Copy,Debug,PartialEq,Eq,Hash,serde::Serialize)]
-pub enum WarcraftTerrainMaterial {Ground,Cliff(u8)}
+pub enum WarcraftTerrainMaterial {Ground,Cliff(u8),Water}
 #[derive(serde::Serialize)]
 pub struct WarcraftTerrainChunk {pub cell:[u32;2],pub material:WarcraftTerrainMaterial,pub mesh:MeshData}
 pub struct WarcraftTerrainResource {pub location:AssetLocation,pub bytes:usize}
-pub struct WarcraftTerrain {pub layout:WarcraftTerrainLayout,pub chunks:Vec<WarcraftTerrainChunk>,pub ground_atlas:TextureRgba8,pub cliff_textures:Vec<Arc<TextureRgba8>>,pub resources:Vec<WarcraftTerrainResource>}
+pub struct WarcraftTerrain {pub layout:WarcraftTerrainLayout,pub chunks:Vec<WarcraftTerrainChunk>,pub ground_atlas:TextureRgba8,pub cliff_textures:Vec<Arc<TextureRgba8>>,pub resources:Vec<WarcraftTerrainResource>,pub water:Option<WarcraftWater>}
 
 struct CliffDef {family:String,ramp:String,ground:[u8;4],texture:String}
 struct Pattern {variants:Vec<usize>,complete:bool}
@@ -67,7 +69,7 @@ fn cliff_material(g:&crate::MdxGeosetPose,textures:&[crate::MdxTexture])->Result
 
 impl WarcraftTerrain {
     pub fn ground_shader(&self)->String {surface::ground_shader([self.ground_atlas.width,self.ground_atlas.height])}
-    /// Compile ground and cliffs from original members. Water and world instantiation are separate consumers.
+    /// Compile source ground, cliffs and water in memory; world instantiation is a separate consumer.
     pub fn compile(terrain:&WarcraftMapTerrain,mounts:&AssetMounts,limits:WarcraftTerrainLimits,cancel:&WarcraftMapCancelToken)->Result<Self> {
         check(cancel)?; if !matches!(limits.chunk_size,8|16|32) {return Err(invalid("chunk size must be8,16 or32"));} if terrain.ground_tilesets().is_empty() || terrain.ground_tilesets().len()>16 || terrain.cliff_tilesets().len()>16 {return Err(invalid("invalid classic tileset slot count"));}
         let mut c=Compiler {mounts,cancel,limits,layout:Budget(limits.max_layout_bytes),textures:Budget(limits.max_texture_bytes),templates_budget:Budget(limits.max_template_bytes),templates:vec![],patterns:HashMap::new(),resources:vec![],decoded:HashMap::new()};
@@ -77,6 +79,6 @@ impl WarcraftTerrain {
         let layout=layout::compile(terrain,&cliffs,&mut c)?;
         let mut textures=Vec::new(); for member in grounds {textures.push(c.texture(&member)?);} let blight=match terrain.tileset() {b'A'=>"Ashen",b'B'=>"Barrens",b'C'=>"Felwood",b'D'=>"Cave",b'F'=>"Lordf",b'G'=>"Dungeon",b'I'=>"Ice",b'J'=>"DRuins",b'K'=>"Citadel",b'L'=>"Lords",b'N'=>"North",b'O'=>"Outland",b'Q'=>"VillageFall",b'V'|b'X'|b'Y'=>"Village",b'W'=>"Lordw",b'Z'=>"Ruins",_=>return Err(invalid("unsupported source blight tileset"))}; textures.push(c.texture(&format!("TerrainArt/Blight/{blight}_Blight.blp"))?);
         let (ground_atlas,tiles)=surface::atlas(&layout.ground,&textures,&mut c)?; drop(textures); let mut cliff_textures=Vec::new(); for cliff in cliffs {cliff_textures.push(c.texture(&cliff.texture)?);}
-        let chunks=surface::meshes(terrain,&layout,&c.templates,&tiles,&ground_atlas,limits,cancel)?; Ok(Self {layout,chunks,ground_atlas,cliff_textures,resources:c.resources})
+        let water=water::compile(terrain,&layout,&mut c)?; let chunks=surface::meshes(terrain,&layout,&c.templates,&tiles,&ground_atlas,water.as_ref(),limits,cancel)?; Ok(Self {layout,chunks,ground_atlas,cliff_textures,resources:c.resources,water})
     }
 }
