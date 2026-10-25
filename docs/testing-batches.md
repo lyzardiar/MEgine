@@ -1852,7 +1852,7 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 
 ### 第一百四十四阶段／新批次任务2/3：原生场景观察复用可信增量
 
-`agent/eventJournal.ts`的SceneChangeTracker接收可选工厂世界证明，严格要求playWorldSync已认证的世界、相同实体数组和普通JSON序列化／数组迭代环境。初次完整观察仍验证全部ID并生成签名；相同数组直接复用，已验证相邻稀疏补丁只读取变化位置并在场景状态序列化成功后更新私有签名表。密集变化、跳过版本、拓扑变化、伪造／复制数组、JSON原型hook或WeakRef失效均回到完整逻辑。上个世界仅保留WeakRef，不延长旧世界链寿命。场景状态getter引入hook时取消下一次资格；getter重入／reset跟踪器时，使用原观察完成的签名恢复完整表，保留原有回调顺序与异常重试行为。revision、delta排序、历史容量、diff载荷与修改隔离不变。
+`agent/eventJournal.ts`的SceneChangeTracker接收可选工厂世界证明，严格要求playWorldSync已认证的世界、相同实体数组和普通JSON序列化／数组迭代环境。初次完整观察仍验证全部ID并生成签名；相同数组直接复用，相邻稀疏补丁读取变化位置；跨多个模拟版本时，对照一份冻结指针列表验证相同ID顺序并定位变化项，再于场景状态序列化成功后更新签名表。密集变化、拓扑变化、伪造／复制数组、JSON原型hook或缺少可信基线时回到完整逻辑。上个世界仅保留WeakRef，额外保存一份冻结实体列表；WeakRef回收后仍可校验列表，不保留世界历史链。场景状态getter引入hook时取消下一次资格；getter重入／reset跟踪器时，使用原观察完成的签名恢复完整表，保留原有回调顺序与异常重试行为。revision、delta排序、历史容量、diff载荷与修改隔离不变。
 
 `store.ts`新增sceneObservationSnapshot，只有可编辑运行数据重新通过既有retainedPresentation结构校验时才返回完整不可变工厂世界，否则使用普通presentationSnapshot。`AgentBridge.ts`消费该入口并传递认证，`App.tsx`仅在Edit继续复用已有preparedSnapshot；运行态让观察器按原100ms节流取可信世界，避免把复制的指针列表冒充不可变索引。普通Edit／脚本直接编辑仍完整检测，输入与乐观revision检查不变。
 
@@ -1861,6 +1861,20 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 同进程原版Amazonia场景7433实体的局部CPU对照，2轮预热／7轮计量、每轮12帧、交替顺序并逐帧核对delta和完整diff：无实体变化中位数1.087675→0.013267ms，64记录变化1.100358→0.135233ms，全部7433记录变化走完整比较15.757475→15.654883ms，密集路径不宣称收益。此范围只含observe，不含工厂构建、store校验、整个AgentBridge、模拟、IPC或实际FPS。脚本`benchmark-sparse-observation.mjs`及`sparse-observation-{benchmark,tests,new-tests,retest,reentrant-tests,final-typecheck}.log/json`均保留在`tmp/docs-artifacts/editor-performance-risk/`。
 
 本项实现及定向检查完成，批次2/3；没有重新构建前端／原生程序或运行地图矩阵。下一独立任务完成后统一构建，合并143–145的Amazonia／DotA加载与各材质状态、首帧、Play／Pause／Step／Stop与重启、多窗口revision与scene.diff／乐观写入、暴露编辑／隐藏恢复及普通FPS／CPU采样验证。最近原生程序仍df7f1cd，稳定60、LOD和完整War3继续待完成。
+
+### 第一百四十五阶段／新批次任务3/3：原生Play私有JSON解析与保留
+
+`src-tauri/src/native_play_response.rs`供start／step_editor_play使用：可选raw参数返回同一JSON内容的二进制响应，默认仍返回原JSON对象契约。`playRuntime.ts`请求该格式，旧后端／对象响应保持原有复制路径。纯HostWorldSnapshot与形状转换提取至`worldSnapshotView.ts`，`editorTransport.ts`保留原导出。`playWorldSync.ts`的parseRetainedNativePlayResponse只接受字节，使用内置解析器建立私有树，转换／归一化后冻结并认证实体根；已拥有的组件无需再次逐实体JSON stringify／parse。可变对象不会进入采用路径，普通保留API不变；自定义映射／归一化、JSON原型hook等仍执行复制，非有限数与负零保持JSON往返语义，非法字节和快照拒绝发布。返回容器中的组件别名也已冻结，组件子对象不单独取得实体资格。
+
+`playStepTiming.ts`的可选responseTransport明确binary-json／json来源，复制时只读取一次，未知值不认证。二进制响应的解析和保留计入applyMs，Profiler对应标为“IPC encode and delivery”与“Decode, apply and retain delta”；对象路径沿用原阶段口径，不能把解析移动解释为IPC总收益。QA可选`--binary-play-response`在两个分离视口逐份核对实际所有者来源，`--scene-observation`检查真实scene.diff重建Step后的完整世界、静止空diff及过期／当前revision乐观写入。
+
+运行态观察每100ms一次，通常跨多个模拟版本。144的同ID顺序指针对照覆盖这一实际节奏；额外只保留一份冻结实体列表，reset／无资格观察时清除，不持有世界链。每次跨6个模拟版本、64记录变化的7433实体对照中，observe中位数1.166342→0.193742ms，逐份delta和完整diff一致；重排和重复ID仍完整校验。此为144同一功能的补充，不增加任务计数。
+
+必要定向检查：既有playRuntime／playWorldSync／观察路径33项、新增原生响应7项、既有计时3项及跳帧1项最终通过，共44项去重逻辑检查；覆盖大ID／中文／特殊键、冻结与外部修改隔离、子对象资格、负零／溢出、非法UTF8／结构、原型hook／映射／归一化覆写、真实driver的二进制启动／reset／稀疏／重排／旧对象混合／quit／stop、来源元数据及阶段口径。Rust `native_play_response`的1项确认二进制和JSON解码载荷完全相同，默认契约与字段值保留；原生测试构建39.73秒通过。TypeScript最终接口、QA语法与差异检查通过。
+
+同一Amazonia输入的相同JSON字节，2轮预热／7轮计量、每轮12次并交替顺序，完整核对结果：0实体解析／转换／保留中位数0.004025→0.004458ms，64实体0.181392→0.093850ms，7433实体／3003930字节27.328067→15.875867ms。包含首次JSON解码及保留，排除Rust序列化、IPC交付、后续元数据发布／store与实际FPS；空包没有收益，不以此声称整帧改善。脚本`benchmark-owned-play-response.mjs`、原件／样本和`owned-response-*`日志，及跳帧对照均在`tmp/docs-artifacts/editor-performance-risk/`。
+
+143–145达到3/3，先提交本项及待测记录，然后一次前端／custom-protocol Release构建和相关合并验证：同一冻结程序跑启动8秒预算、DotA有效缓存加载／全景选取／工程重开、Amazonia多窗口来源与scene.diff／乐观写入／Pause／Step／Stop／重启、隐藏／旋转／尺寸切换及独立CPU采样。JSON采用改变组件树寿命，因此在该批执行5轮等时Play／Stop驻留；复用143未改变RHI代码的36种管线和透明混合GPU检查，不重复资产遍历。当前是实现与定向检查完成，原生消费及实际性能仍待本批证明。
 
 
 ### 地图导入依赖自动准备：远程 Git 拉取故障修复

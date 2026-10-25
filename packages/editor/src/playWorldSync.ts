@@ -1,6 +1,7 @@
 // Author: MiYu. Compare live Play data with an owned JSON baseline, including direct reference edits.
 import type { WorldSnapshotView } from '@mengine/api';
 import { normalizeEntity, type EntityRec } from './entityRecord.ts';
+import { toWorldSnapshotView, type HostWorldSnapshot } from './worldSnapshotView.ts';
 
 const retainedRecords = new WeakSet<object>();
 const retainedWorlds = new WeakSet<object>();
@@ -91,15 +92,17 @@ function plainJson(value: unknown, ancestors = new Set<object>()): boolean {
 }
 
 // MiYu: callers supply fresh JSON.parse trees. Nested values stay frozen; only published roots certify record ownership.
-function freezeJsonTree(value: object): void {
+function freezeJsonTree(value: object, normalizeNumbers = false): void {
   if (isArray(value)) {
     for (let i = 0; i < value.length; i++) {
       const child = value[i];
-      if (child !== null && typeof child === 'object') freezeJsonTree(child);
+      if (child !== null && typeof child === 'object') freezeJsonTree(child, normalizeNumbers);
+      else if (normalizeNumbers && typeof child === 'number' && (!Number.isFinite(child) || Object.is(child, -0))) value[i] = Number.isFinite(child) ? 0 : null;
     }
   } else for (const key of keys(value)) {
     const child = (value as Record<string, unknown>)[key];
-    if (child !== null && typeof child === 'object') freezeJsonTree(child);
+    if (child !== null && typeof child === 'object') freezeJsonTree(child, normalizeNumbers);
+    else if (normalizeNumbers && typeof child === 'number' && (!Number.isFinite(child) || Object.is(child, -0))) (value as Record<string, unknown>)[key] = Number.isFinite(child) ? 0 : null;
   }
   Object.freeze(value);
 }
@@ -114,6 +117,42 @@ function freezeJson<T>(value: T): T {
 /** Own one normalized JSON record; certified immutable roots keep their identity. */
 export function retainPlayRecord(entity: WorldSnapshotView['entities'][number]): EntityRec {
   return isRetainedPlayRecord(entity) ? entity as EntityRec : freezeJson(JSON.parse(JSON.stringify(normalizeEntity(entity))) as EntityRec);
+}
+
+const parseOwnedJson = JSON.parse, stringifyOwnedJson = JSON.stringify;
+const nativeOwnedJsonParser = Function.prototype.toString.call(parseOwnedJson).includes('[native code]');
+const ownedJsonIntrinsics = [Array.prototype.map, Array.prototype.some, Array.isArray, String.prototype.trim, String.prototype.slice, Number, Number.isInteger, Number.isFinite, Object.is, Object.freeze];
+const nativeOwnedJsonIntrinsics = [stringifyOwnedJson, ...ownedJsonIntrinsics].every(fn => Function.prototype.toString.call(fn).includes('[native code]'));
+function ordinaryOwnedJson(): boolean {
+  if (!nativeOwnedJsonIntrinsics || JSON.stringify !== stringifyOwnedJson || 'toJSON' in Object.prototype || 'toJSON' in Array.prototype) return false;
+  const current = [Array.prototype.map, Array.prototype.some, Array.isArray, String.prototype.trim, String.prototype.slice, Number, Number.isInteger, Number.isFinite, Object.is, Object.freeze];
+  for (let i = 0; i < current.length; i++) if (current[i] !== ownedJsonIntrinsics[i]) return false;
+  const fields = ['entities','entity','name','parent','sibling_index','active','tag','layer','components','frame','sim_frame','elapsed','clear_color','selected'];
+  for (let i = 0; i < fields.length; i++) if (fields[i] in Object.prototype) return false;
+  return true;
+}
+/** Decode immutable bytes privately; object responses still use retainPlayWorld's copying boundary. */
+export function parseRetainedNativePlayResponse(buffer: ArrayBuffer): { response: Record<string, unknown>; world: RetainedPlayWorld } {
+  if (!nativeOwnedJsonParser) throw new Error('Owned native Play responses require the native JSON parser');
+  const response = parseOwnedJson(new TextDecoder('utf-8', { fatal: true }).decode(buffer)) as Record<string, unknown>;
+  if (!response || typeof response !== 'object' || !response.snapshot || typeof response.snapshot !== 'object') throw new Error('Invalid native Play response');
+  const adopt = ordinaryOwnedJson();
+  const host = response.snapshot as HostWorldSnapshot;
+  if (!Array.isArray(host.entities) || !Array.isArray(host.clear_color) || host.clear_color.length !== 4 || host.entities.some(entity => !entity || typeof entity !== 'object' || typeof entity.entity !== 'number' || !entity.components || typeof entity.components !== 'object' || Array.isArray(entity.components) || entity.tag != null && typeof entity.tag !== 'string' || entity.layer != null && typeof entity.layer !== 'number')) throw new Error('Invalid native Play snapshot');
+  const input = toWorldSnapshotView(response.snapshot as HostWorldSnapshot);
+  const entities = input.entities.map(entity => {
+    const normalized = normalizeEntity(entity);
+    if (!adopt) return freezeJson(parseOwnedJson(JSON.stringify(normalized)) as EntityRec);
+    freezeJsonTree(normalized, true); retainedRecords.add(normalized); return normalized;
+  });
+  const { entities: inputEntities, clearColor: inputColor, ...metadata } = input;
+  const clearColor = adopt ? inputColor : parseOwnedJson(JSON.stringify(inputColor)) as WorldSnapshotView['clearColor'];
+  if (clearColor !== null && typeof clearColor === 'object') { freezeJsonTree(clearColor, true); retainedRecords.add(clearColor); }
+  const ownedMetadata = parseOwnedJson(JSON.stringify(metadata));
+  freezeJson(ownedMetadata);
+  const world = Object.freeze({ ...ownedMetadata, entities: Object.freeze(entities) as EntityRec[], clearColor }) as RetainedPlayWorld;
+  retainedWorlds.add(world);
+  return { response, world };
 }
 
 /** Own native JSON data once; unchanged immutable records and colors retain their identity. */

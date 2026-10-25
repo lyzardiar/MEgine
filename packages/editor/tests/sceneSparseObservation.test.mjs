@@ -67,13 +67,23 @@ test('a failed scene-state serialization leaves the prior map available for spar
  assert.equal(tracker.revision,1);assert.deepEqual(tracker.observe('Main',world.entities,{},world).changed,[2]);assert.equal(tracker.revision,2);
 });
 
-test('expired weak worlds fall back to complete observations without retaining stale baselines',()=>{
+test('expired weak worlds compare one retained frozen pointer list without retaining a world chain',()=>{
  const Weak=globalThis.WeakRef;
  try{
   globalThis.WeakRef=class extends Weak{deref(){return undefined;}};
   const fast=new SceneChangeTracker(),full=new SceneChangeTracker();let world=retainPlayWorld(frame([entity(1),entity(2),entity(3)]));
   for(let n=0;n<4;n++){if(n)world=retainPlayWorldPatch(world,frame([entity(2,n)],n));assert.deepEqual(fast.observe('Main',world.entities,{},world),full.observe('Main',world.entities));}
  }finally{globalThis.WeakRef=Weak;}
+});
+
+test('skipped native versions inspect only changed records and preserve full ID validation after reorder',()=>{
+ const tracker=new SceneChangeTracker();let world=retainPlayWorld(frame(Array.from({length:8},(_,i)=>entity(i+1))));tracker.observe('Main',world.entities,{},world);
+ for(let n=1;n<=6;n++)world=retainPlayWorldPatch(world,frame([entity(2,n),entity(7,n)],n));
+ const original=Map.prototype.get;let reads=0;
+ Map.prototype.get=function(key){if(typeof key==='number')reads++;return original.call(this,key);};
+ try{assert.deepEqual(tracker.observe('Main',world.entities,{},world).changed,[2,7]);assert.equal(reads,2);}finally{Map.prototype.get=original;}
+ const reordered=retainPlayWorld(frame([...world.entities].reverse()));assert.equal(tracker.observe('Main',reordered.entities,{},reordered),null);
+ const invalid=retainPlayWorld(frame([world.entities[0],world.entities[0],...world.entities.slice(2)]));assert.throws(()=>tracker.observe('Main',invalid.entities,{},invalid),/duplicate entity id/);
 });
 
 test('reentrant state getters cannot replace unchanged native signatures with a nested world',()=>{

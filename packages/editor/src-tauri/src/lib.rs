@@ -24,6 +24,7 @@ use tauri::{path::BaseDirectory, Emitter, Manager, State};
 mod agent_bridge;
 mod native_viewport_transport;
 mod native_scene_picking;
+mod native_play_response;
 mod native_viewport_lifetime;
 mod native_gpu_timings;
 use native_gpu_timings::{get_native_gpu_timings, set_native_gpu_timings, GpuTimingSource};
@@ -4381,7 +4382,7 @@ async fn pick_native_scene_frame(token: String, point: [f32; 2], excluded_entity
 }
 
 #[tauri::command]
-async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state: State<'_, AppState>) -> Result<serde_json::Value, String> {
+async fn start_editor_play(snapshot: WorldSnapshot, raw: Option<bool>, app: tauri::AppHandle, state: State<'_, AppState>) -> Result<tauri::ipc::Response, String> {
     let (project, build_scenes) = state.project.lock().as_ref().map(|session| (session.snapshot(), session.build_scenes())).ok_or_else(|| no_project().message)?;
     let generation = state.play_runtime.begin();
     native_scene_picking::retire_before(generation);
@@ -4401,18 +4402,18 @@ async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state
     let name = project.scene_path.as_deref().and_then(|path| Path::new(path).file_stem()).and_then(|stem| stem.to_str()).unwrap_or("Untitled").to_owned();
     let snapshot = tauri::async_runtime::spawn_blocking(move || runtime.start(generation, source, snapshot, mengine_editor_host::PlayProject { root: Some(PathBuf::from(project.project_root)), scene: PathBuf::from(project.scene_path.unwrap_or_default()), name, build_scenes: build_scenes.into_iter().map(PathBuf::from).collect() })).await.map_err(|error| error.to_string())??;
     if state.play_runtime.generation() != generation { return Err("Play initialization was superseded".into()); }
-    Ok(serde_json::json!({ "sessionId": generation, "snapshot": snapshot }))
+    native_play_response::encode(&serde_json::json!({ "sessionId": generation, "snapshot": snapshot }), raw.unwrap_or(false))
 }
 
 #[tauri::command]
-async fn step_editor_play(session_id: u64, snapshot: Option<WorldSnapshot>, input: mengine_editor_host::ScriptInput, dt: f32, state: State<'_, AppState>) -> Result<mengine_editor_host::PlayWorldUpdate<mengine_core::snapshot::SharedWorldSnapshot>, String> {
+async fn step_editor_play(session_id: u64, snapshot: Option<WorldSnapshot>, input: mengine_editor_host::ScriptInput, dt: f32, raw: Option<bool>, state: State<'_, AppState>) -> Result<tauri::ipc::Response, String> {
     let started = std::time::Instant::now();
     if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
     let runtime = state.play_runtime.clone();
     let mut result = tauri::async_runtime::spawn_blocking(move || runtime.advance_shared_update(session_id, snapshot, input, dt)).await.map_err(|error| error.to_string())??;
     if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
     if let Some(timing) = &mut result.timing { timing.command_ms = Some(started.elapsed().as_secs_f64() * 1000.0); }
-    Ok(result)
+    native_play_response::encode(&result, raw.unwrap_or(false))
 }
 
 #[tauri::command]

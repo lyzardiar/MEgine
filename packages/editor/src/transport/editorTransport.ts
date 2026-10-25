@@ -5,26 +5,8 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { CURRENT_SCENE_VERSION } from '../sceneMigration.ts';
-
-type HostEntitySnapshot = {
-  entity: number;
-  name?: string | null;
-  parent?: number | null;
-  sibling_index?: number;
-  active?: boolean;
-  tag?: string;
-  layer?: number;
-  components: Record<string, unknown>;
-};
-
-export type HostWorldSnapshot = {
-  entities: HostEntitySnapshot[];
-  frame: number;
-  sim_frame: number;
-  elapsed?: number;
-  clear_color: [number, number, number, number];
-  selected?: number | null;
-};
+import { toWorldSnapshotView, type HostWorldSnapshot } from '../worldSnapshotView.ts';
+export { toWorldSnapshotView, type HostWorldSnapshot } from '../worldSnapshotView.ts';
 
 export type ProjectSnapshot = {
   projectId: string;
@@ -438,29 +420,6 @@ export async function runFigmaAgentOperation(
 
 export async function isPrimaryPointerDown(): Promise<boolean> {
   return isDesktopEditor() ? invoke<boolean>('is_primary_pointer_down') : false;
-}
-
-export function toWorldSnapshotView(snapshot: HostWorldSnapshot): WorldSnapshotView & {
-  selectedIds: number[];
-} {
-  return {
-    entities: snapshot.entities.map((entity) => ({
-      entity: entity.entity,
-      name: entity.name,
-      parent: entity.parent,
-      siblingIndex: entity.sibling_index ?? 0,
-      active: entity.active ?? true,
-      tag: entity.tag ?? 'Untagged',
-      layer: entity.layer ?? 0,
-      components: entity.components,
-    })),
-    frame: snapshot.frame,
-    simFrame: snapshot.sim_frame,
-    ...(snapshot.elapsed === undefined ? {} : { simulationTime: snapshot.elapsed }),
-    clearColor: snapshot.clear_color,
-    selected: snapshot.selected,
-    selectedIds: snapshot.selected == null ? [] : [snapshot.selected],
-  };
 }
 
 export function projectSnapshotAsSceneJson(snapshot: ProjectSnapshot): string {

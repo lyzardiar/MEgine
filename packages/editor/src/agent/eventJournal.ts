@@ -231,6 +231,7 @@ export class SceneChangeTracker {
   private entities = new Map<number, string>();
   private immutableSignatures = new WeakMap<SceneEntityView, string>();
   private retainedWorld: WeakRef<RetainedPlayWorld> | undefined;
+  private retainedEntities: RetainedPlayWorld['entities'] | undefined;
   private readonly deltas: SceneDelta[] = [];
   private readonly capacity: number;
 
@@ -252,6 +253,7 @@ export class SceneChangeTracker {
     this.entities.clear();
     this.immutableSignatures = new WeakMap();
     this.retainedWorld = undefined;
+    this.retainedEntities = undefined;
     this.deltas.splice(0);
   }
 
@@ -263,7 +265,19 @@ export class SceneChangeTracker {
   ): SceneDelta | null {
     const retained = owned && isRetainedPlayWorld(owned) && (owned.entities as readonly unknown[]) === entities && ordinarySerialization() ? owned : undefined;
     const previousWorld = retained ? this.retainedWorld?.deref() : undefined;
-    const indices = previousWorld && retained ? previousWorld.entities === retained.entities ? [] : retainedPlayWorldChanges(previousWorld, retained) : undefined;
+    let indices = previousWorld && retained ? previousWorld.entities === retained.entities ? [] : retainedPlayWorldChanges(previousWorld, retained) : undefined;
+    const previousEntities = this.retainedEntities;
+    if (!indices && retained && previousEntities?.length === entities.length) {
+      // Observations can skip simulation versions; retain one frozen pointer list, never a world chain.
+      const changedIndices: number[] = [];
+      let stable = true;
+      for (let i = 0; i < entities.length; i++) {
+        if ((previousEntities[i] as object) === entities[i]) continue;
+        if (previousEntities[i].entity !== entities[i].entity || changedIndices.length >= entities.length / 2) { stable = false; break; }
+        changedIndices.push(i);
+      }
+      if (stable) indices = changedIndices;
+    }
     let sparse = indices && indices.length <= entities.length / 2;
     const baseline = this.entities, observedRevision = this.revisionValue, signatures = this.immutableSignatures;
     let current: Map<number, string>;
@@ -281,12 +295,14 @@ export class SceneChangeTracker {
     }
     // MiYu: state getters can install serialization hooks; only ordinary completed observations certify reuse.
     const nextRetained = retained && ordinarySerialization() ? new WeakRef(retained) : undefined;
+    const nextEntities = nextRetained ? retained!.entities : undefined;
     if (this.revisionValue === 0) {
       this.revisionValue = 1;
       this.sceneName = sceneName;
       this.sceneStateSignature = currentSceneStateSignature;
       this.entities = current;
       this.retainedWorld = nextRetained;
+      this.retainedEntities = nextEntities;
       return this.pushDelta({
         previousRevision: 0,
         revision: 1,
@@ -321,7 +337,7 @@ export class SceneChangeTracker {
       && !added.length
       && !removed.length
       && !changed.length
-    ) { this.retainedWorld = nextRetained; return null; }
+    ) { this.retainedWorld = nextRetained; this.retainedEntities = nextEntities; return null; }
 
     const previousRevision = this.revisionValue;
     this.revisionValue += 1;
@@ -330,6 +346,7 @@ export class SceneChangeTracker {
     if (sparse) for (const [id, signature] of current) this.entities.set(id, signature);
     else this.entities = current;
     this.retainedWorld = nextRetained;
+    this.retainedEntities = nextEntities;
     return this.pushDelta({
       previousRevision,
       revision: this.revisionValue,

@@ -3,6 +3,7 @@ export type NativePlayStepTiming = { workerQueueMs: number; simulationMs: number
 export type PlayStepTiming = {
   sessionId: number; revision: number; invokeMs: number; applyMs: number;
   native?: NativePlayStepTiming;
+  responseTransport?: 'binary-json' | 'json';
   prepareMs?: number; acceptMs?: number; totalMs?: number;
 };
 
@@ -12,6 +13,8 @@ export function retainPlayStepTiming(timing: Readonly<PlayStepTiming> | undefine
   const valid = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0;
   const owned: PlayStepTiming = { sessionId: timing.sessionId, revision: timing.revision, invokeMs: timing.invokeMs, applyMs: timing.applyMs };
   if (owned.sessionId !== sessionId || owned.revision !== revision || !valid(owned.invokeMs) || !valid(owned.applyMs)) return;
+  const responseTransport = timing.responseTransport;
+  if (responseTransport === 'binary-json' || responseTransport === 'json') owned.responseTransport = responseTransport;
   for (const key of ['prepareMs', 'acceptMs', 'totalMs'] as const) { const duration = timing[key]; if (duration !== undefined) { if (!valid(duration)) return; owned[key] = duration; } }
   const input = timing.native;
   if (input !== undefined) {
@@ -40,8 +43,8 @@ export function playStepTimingStages(timing: PlayStepTiming): { name: string; ms
     { name: 'Simulation and snapshot delta', ms: valid(native?.simulationMs) },
     { name: 'Worker publication and bookkeeping', ms: rest(native?.workerMs, [native?.simulationMs]) },
     { name: 'Command scheduling and return', ms: rest(native?.commandMs, [native?.workerQueueMs, native?.workerMs]) },
-    { name: 'IPC encode, delivery and decode', ms: rest(timing.invokeMs, [native?.commandMs]) },
-    { name: 'Apply and retain delta', ms: valid(timing.applyMs) },
+    { name: timing.responseTransport === 'binary-json' ? 'IPC encode and delivery' : 'IPC encode, delivery and decode', ms: rest(timing.invokeMs, [native?.commandMs]) },
+    { name: timing.responseTransport === 'binary-json' ? 'Decode, apply and retain delta' : 'Apply and retain delta', ms: valid(timing.applyMs) },
     { name: 'Accept runtime world', ms: valid(timing.acceptMs) },
     { name: 'Other frontend work', ms: rest(timing.totalMs, [timing.prepareMs, timing.invokeMs, timing.applyMs, timing.acceptMs]) },
   ];

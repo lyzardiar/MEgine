@@ -3,7 +3,7 @@ import type { NativePlayStepTiming, PlayStepTiming } from './playStepTiming';
 import { invoke } from '@tauri-apps/api/core';
 import type { WorldSnapshotView } from '@mengine/api';
 import { toWorldSnapshotView, type HostWorldSnapshot } from './transport/editorTransport';
-import { retainPlayWorld, retainPlayWorldPatch, type RetainedPlayWorld } from './playWorldSync';
+import { parseRetainedNativePlayResponse, retainPlayWorld, retainPlayWorldPatch, type RetainedPlayWorld } from './playWorldSync';
 
 export type PlayUiSubmit = { entity: number; component: 'InputField'; value: string };
 
@@ -48,10 +48,10 @@ export type PlayWorldUpdate = {
   timing?: NativePlayStepTiming;
 };
 
-export function applyPlayWorldUpdate(previous: WorldSnapshotView, revision: number, update: PlayWorldUpdate): WorldSnapshotView {
+export function applyPlayWorldUpdate(previous: WorldSnapshotView, revision: number, update: PlayWorldUpdate, prepared?: WorldSnapshotView): WorldSnapshotView {
   if (update.baseRevision !== revision || update.revision !== revision + 1) throw new Error('Play snapshot revision mismatch');
   if (update.reset && update.entityOrder === undefined) throw new Error('Invalid Play snapshot entity order');
-  const changed = toWorldSnapshotView(update.snapshot);
+  const changed = prepared ?? toWorldSnapshotView(update.snapshot);
   const entities = new Map((update.reset ? [] : previous.entities).map(entity => [entity.entity, entity]));
   for (const entity of changed.entities) {
     if (update.entityOrder === undefined && !entities.has(entity.entity)) throw new Error('Invalid Play snapshot entity order');
@@ -109,31 +109,36 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
       const current = ++generation;
       const starting = lifecycle.then(async () => {
         if (current !== generation) return;
-        const result = await invoke<{ sessionId: number; snapshot: HostWorldSnapshot }>('start_editor_play', { snapshot });
+        const payload = await invoke<{ sessionId: number; snapshot: HostWorldSnapshot } | ArrayBuffer>('start_editor_play', { snapshot, raw: true });
+        const decoded = payload instanceof ArrayBuffer ? parseRetainedNativePlayResponse(payload) : undefined;
+        const result = (decoded?.response ?? payload) as { sessionId: number; snapshot: HostWorldSnapshot };
         backendSessionId = result.sessionId;
-        return result;
+        return { result, owned: decoded?.world };
       });
       lifecycle = starting.then(() => {}, () => {});
-      const result = await starting;
-      if (result && current === generation) { sessionId = result.sessionId; revision = 0; world = publishNativeWorld({ ...toWorldSnapshotView(result.snapshot), nativeSessionId: result.sessionId, nativeRevision: 0 }); return world; }
+      const publication = await starting;
+      if (publication && current === generation) { const { result, owned } = publication; sessionId = result.sessionId; revision = 0; world = publishNativeWorld({ ...(owned ?? toWorldSnapshotView(result.snapshot)), nativeSessionId: result.sessionId, nativeRevision: 0 }); return world; }
     },
     async step(snapshot, input, dt) {
       if (sessionId === null || world === null) throw new Error('Play Mode is initializing');
       const current = generation;
       const started = performance.now();
-      const update = await invoke<PlayWorldUpdate>('step_editor_play', { sessionId, snapshot, input, dt });
+      const payload = await invoke<PlayWorldUpdate | ArrayBuffer>('step_editor_play', { sessionId, snapshot, input, dt, raw: true });
       const received = performance.now();
       if (current !== generation || world === null) throw new Error('Play session expired');
+      const decoded = payload instanceof ArrayBuffer ? parseRetainedNativePlayResponse(payload) : undefined;
+      const update = (decoded?.response ?? payload) as PlayWorldUpdate;
       if (update.baseRevision !== revision || update.revision !== revision + 1) throw new Error('Play snapshot revision mismatch');
+      const changed = decoded?.world ?? toWorldSnapshotView(update.snapshot);
       if (!update.reset && update.entityOrder === undefined) {
-        world = retainPlayWorldPatch(world as RetainedPlayWorld, { ...toWorldSnapshotView(update.snapshot), nativeSessionId: sessionId, nativeRevision: update.revision } as PlayRuntimeWorld);
+        world = retainPlayWorldPatch(world as RetainedPlayWorld, { ...changed, nativeSessionId: sessionId, nativeRevision: update.revision } as PlayRuntimeWorld);
         nativePublications.add(world);
       } else {
-        world = publishNativeWorld({ ...applyPlayWorldUpdate(world, revision, update), nativeSessionId: sessionId, nativeRevision: update.revision }, world);
+        world = publishNativeWorld({ ...applyPlayWorldUpdate(world, revision, update, changed), nativeSessionId: sessionId, nativeRevision: update.revision }, world);
       }
       revision = update.revision;
       quitRequested = update.quitRequested === true;
-      stepTiming = Object.freeze({ sessionId, revision, invokeMs: received - started, applyMs: performance.now() - received, native: update.timing && Object.freeze({ ...update.timing }) });
+      stepTiming = Object.freeze({ sessionId, revision, invokeMs: received - started, applyMs: performance.now() - received, responseTransport: decoded ? 'binary-json' : 'json', native: update.timing && Object.freeze({ ...update.timing }) });
       return world;
     },
     stop() {

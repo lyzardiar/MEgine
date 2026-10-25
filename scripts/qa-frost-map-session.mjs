@@ -37,6 +37,10 @@ assert.ok(!unitData||unitSelectionOnly,'--unit-data requires --unit-selection-on
 const detachedAuthoringOnly=process.argv.includes('--detached-authoring-only');
 const detachedProfileOnly=process.argv.includes('--detached-profile-only');
 const detachedSimulationTiming=process.argv.includes('--detached-simulation-timing');
+const binaryPlayResponse=process.argv.includes('--binary-play-response');
+const sceneObservation=process.argv.includes('--scene-observation');
+assert.ok(!binaryPlayResponse||detachedSimulationTiming,'--binary-play-response requires --detached-simulation-timing');
+assert.ok(!sceneObservation||detachedProfileOnly,'--scene-observation requires --detached-profile-only');
 assert.ok(!detachedSimulationTiming||detachedProfileOnly,'--detached-simulation-timing requires --detached-profile-only');
 const mainThreadCpuProfile=process.argv.includes('--main-thread-cpu-profile');
 assert.ok(!mainThreadCpuProfile||detachedProfileOnly,'--main-thread-cpu-profile requires --detached-profile-only');
@@ -248,6 +252,7 @@ async function checkDetachedRuntime(authored){
       assert.ok(timings.length>=15&&revisions.size>=15,source+' owns multiple correlated simulation requests');
       for(const frame of timings){
         const timing=frame.simulationTiming;assert.equal(timing.sessionId,frame.worldRequest.sessionId);
+        if(binaryPlayResponse)assert.equal(timing.responseTransport,'binary-json',source+' receives the binary Play response on the actual native owner');
         if(frame.worldRequest.revision!==undefined)assert.equal(timing.revision,frame.worldRequest.revision);
         assert.equal(frame.simulationRequestMs,timing.totalMs);
         for(const value of [timing.totalMs,timing.prepareMs,timing.invokeMs,timing.applyMs,timing.acceptMs,timing.native?.workerQueueMs,timing.native?.workerMs,timing.native?.simulationMs,timing.native?.commandMs])assert.ok(Number.isFinite(value)&&value>=0,source+' nonnegative owner duration');
@@ -256,8 +261,17 @@ async function checkDetachedRuntime(authored){
       report.detachedSimulationTimings[source]={samples:timings.length,distinctRevisions:revisions.size,averageRequestMs:profile.nativeSummary.averageSimulationRequestMs};
     }
     report.checks.push('Detached Scene and Game preserve accepted owner simulation durations and exact requested session/revision');
+    if(binaryPlayResponse)report.checks.push('Accepted owner timings confirm binary JSON Play delivery in both detached viewports');
   }
-  await execute('playback.pause');await sleep(300);const paused=await snapshot();await sleep(300);assert.deepEqual((await snapshot()).entities,paused.entities);await step(2);assert.ok((await snapshot()).simulationTime>paused.simulationTime);
+  await execute('playback.pause');await sleep(300);const paused=await snapshot();await sleep(300);assert.deepEqual((await snapshot()).entities,paused.entities);await step(2);const advanced=await snapshot();assert.ok(advanced.simulationTime>paused.simulationTime);
+  if(sceneObservation){
+    const diff=await query('scene.diff',{fromRevision:paused.revision});assert.equal(diff.toRevision,advanced.revision);assert.equal(diff.resetRequired,false);assert.deepEqual(diff.added,[]);assert.deepEqual(diff.removed,[]);
+    const changed=new Map(diff.entities.map(entity=>[entity.entity,entity]));assert.deepEqual(paused.entities.map(entity=>changed.get(entity.entity)??entity),advanced.entities);
+    const empty=await query('scene.diff',{fromRevision:advanced.revision});assert.deepEqual([empty.added,empty.removed,empty.changed],[[],[],[]]);assert.equal(empty.toRevision,advanced.revision);
+    assert.ok(advanced.revision>paused.revision);await assert.rejects(()=>bridgeExecute('playback.input',{keys:[]},{requestId:crypto.randomUUID(),expectedSceneRevision:paused.revision}),error=>error.code==='STALE_REVISION');
+    const current=await bridgeExecute('playback.input',{keys:[]},{requestId:crypto.randomUUID(),expectedSceneRevision:advanced.revision});assert.equal(current.ok,true);
+    report.sceneObservation={fromRevision:paused.revision,toRevision:advanced.revision,changed:diff.changed};report.checks.push('Native sparse scene.diff exactly reconstructs paused Step output, stays empty without edits, and enforces stale/current optimistic writes');
+  }
   for(const windowLabel of ['panel-scene','panel-game']){const shot=await query('view.window_screenshot',{windowLabel,maxSize:1280});fs.writeFileSync(path.join(out,label+'-'+windowLabel+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));}
   report.checks.push('Three detached panels sustain native Scene/Game frames, pause freezes main world, Step advances, and both view windows capture');
   for(const expected of ['play','pause']){const keyPage=await query('window.ui_snapshot',{windowLabel:'panel-game',maxElements:5000}),canvas=keyPage.elements.find(e=>e.name==='Game viewport');assert.ok(canvas);await execute('window.ui_press_key',{windowLabel:'panel-game',selector:canvas.selector,expectedSnapshotRevision:keyPage.snapshotRevision,key:'p',ctrlKey:true,shiftKey:true});const deadline=Date.now()+20000;while((await query('editor.state')).mode!==expected){assert.ok(Date.now()<deadline,'Detached playback request reaches main '+expected);await sleep(100);}await sleep(500);}
