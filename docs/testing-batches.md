@@ -1941,4 +1941,15 @@ ff02e3b的启动、资源热更新、空间选取及DotA缓存／重开检查通
 
 同一最小复现修复后120次完整像素对照通过；纳入常规GPU回归。4项共享设备与5项回读定向检查通过，覆盖最后所有者释放、设备丢失、独立布局、取消与反序完成、尺寸／格式／映射失败恢复及GPU查询。命令：`cargo test -p mengine-rhi --release --lib headless_context_tests -- --nocapture --test-threads=1`与同参数`offscreen_readback_`筛选。日志在`tmp/docs-artifacts/editor-performance-risk/shared-poll-{before-stress,after-stress,context-tests,readback-tests}.log`。
 
-待验证：同一新冻结Release上的实际首帧／相机预览、多窗口关闭重开／暂停步进停止重启、隐藏尺寸、GPU阶段和5轮Stop驻留；因修改公共回读路径，同步覆盖实际资源恢复、选取和DotA缓存场景，复用未变化前端、导入转换和不相关CPU检查。旧多窗口失败保留记录，本批完成状态取修复后的实际结果。
+统一原生验证完成：146–148及补充5a25c50在同一custom-protocol Release上通过8个用例。构建81秒，58个前端产物摘要未变并复用；冻结程序`tmp/docs-artifacts/editor-performance-risk/build-5a25c50/mengine-editor-tauri.exe`，SHA256为`1b5b78b518e9d2c228b3c2829e710698c32c29878a25a09a290be858c66766a2`。因修改公共回读路径，同步覆盖实际资源恢复、选取和DotA缓存，复用未变化的导入转换、前端逻辑及不相关CPU检查。8个测试进程均正常退出、发现文件移除，记录中无控制台error；WebView隔离缓存因EPERM保留。用户编辑器PID64664保持原进程，未重启。旧多窗口失败保留诊断记录，修复后的本机集成通过。
+
+- 启动`viewport-startup-1792907609807`：打开工程1882.664ms；随后Game首次接受原生帧2693.850ms，不含进程启动／工程打开。Scene已预热，切换后30.594ms，不能视为冷启动。主菜单及相机预览截图已检查。
+- 资源热更新`resource-poll-1792907925560`、空间选取`spatial-picking-1792907932984`通过；覆盖材质／实例／Shader／父资源恢复、姿态／透明／父级／可见性／Play重启选取。DotA有效缓存／选取／关闭重开`arbitrary-map-1792907955225`通过，14437实体；导入器未变，未重复冷转换。
+- Amazonia多窗口`map-session-1792907633375`通过7434实体、Game关闭重开、精确版本关联、稀疏scene.diff、Pause／Step／快捷键、Stop作者恢复和undo／redo、再次运行及5轮驻留。隐藏／尺寸／旋转`map-session-1792908015446`通过，隐藏Scene停止原生与浏览器绘制，恢复后继续出帧。Game与第五轮再次运行截图已检查。
+- GPU多窗口`map-session-1792908051954`和Profiler界面`profiler-bundles-1792908110787`通过；Scene／Game均启用硬件计时，timestamp period为10ns，各自产生有限Forward HDR及Texture readback copy等6个阶段。普通FPS用例关闭GPU计时，不能混用采样比较。
+
+普通多窗口最近240间隔：Scene59.429／Game59.924FPS，p95间隔23.8／21.7ms，平均原生render7.897／8.397ms。DotA Scene59.979／Game59.381FPS，p9524.0／22.7ms，render14.580／9.591ms。单次数据未证明稳定60或整帧收益；本批确认首帧准备优化与并发回读故障修复，不新增LOD削减。
+
+5轮各运行15秒／Stop空闲20秒，20份内存样本的进程身份、创建时间及求和已核对，空闲均7进程。根私有内存3204.688／3437.773／3487.355／3470.293／3464.289MiB，首末+259.602MiB、后三轮-23.066MiB；进程树首末+330.957MiB、后三轮+5.383MiB。较旧版本绝对占用降低，当前增长非单调且原因未确定，不能据此判定长期稳定或排除泄漏。
+
+执行入口`tmp/docs-artifacts/editor-performance-risk/run-shared-poll-batch.ps1`，汇总`shared-poll-batch-{driver,summary}.json`，逐项日志`shared-poll-batch-native-*.log`；实际地图／窗口报告与截图在`tmp/docs-artifacts/testing-batches/B001/`。相关本机批次结束，下一批0/3；尾延迟、长期驻留、LOD及完整War3规则继续待办。
