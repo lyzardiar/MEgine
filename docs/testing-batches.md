@@ -2034,3 +2034,10 @@ CPU比对载荷上限64MiB／设备，最多2048个哈希键、每键4个Weak候
 启动QA曾在project.close的页面reload完成前重开，现等待welcome且editorReady=false；只重测启动。DotA两次有效缓存断言失败分别由d4bc3b3、9e4e686改变外部导入脚本指纹引起，转换结果cached=false；复用新指纹完成的缓存后重测DotA通过，未重复其他通过项。最终DotA执行前后脚本SHA一致。早期失败日志与最终driver均保留，不写成产品缓存失效故障。
 
 入口：tmp/docs-artifacts/editor-performance-risk下run-immutable-resources-batch.ps1及其continue脚本、build-2e6cd5c/receipt.json、immutable-resources-batch-driver.json、immutable-resources-batch-summary.json与native日志；原生截图／各场景JSON在tmp/docs-artifacts/testing-batches/B001。全部原始产物留本地，文档只记录结论。相关批次验证完成，LOD、长期内存、稳定帧延迟及完整War3规则／开局／军队／HUD／命令／寻路／JASS仍待实现。
+
+
+### 地图加载架构调查：MPQ字节来源与离线物化边界
+
+用户要求排查Warcraft归档直读与现有慢加载／缓存增长差异。已核对Rust ContentImports→Python环境指纹／地图包选择→地形／模型转换→内容地址发布→磁盘mscene／glTF／纹理加载完整路径。进度代码改动触发整图包新指纹、逐文件热缓存校验、阶段重复读图／写出／复制、失败作业及旧包无界保留均有当前源码与既有收据证据；公共成员／派生／最终内容复用也确实存在。StormLib读取接口及现有Python探针证明成员可解压到内存，直接读取DotA脚本和公共MDX／BLP，BLP解码为64×64 RGBA，无资产导出。探针不代表完整地图运行或Warcraft耗时。
+
+本机存储清单与两次指纹失效／最终有效缓存收据比较、外部来源及探针在tmp/docs-artifacts/map-loading-audit。设计、实际存储数、实施优先级和验收入口在docs/designs/frostbound-realms/map-runtime-archive-loading.md，并登记performance-risk-todo的未完成P0项。本次为只读调查与文档交付，不修改产品代码、不删除既有缓存、不新增功能批次；实际原生挂载／解码和缓存治理仍待实现。复用已完成的原生和转换记录，未重复完整构建、地图转换或全库测试。
