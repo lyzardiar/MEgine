@@ -49,8 +49,9 @@ fn cloned_material_bundle_preserves_texture_until_final_handle_release() {
     let mesh = &renderer.meshes["cube"];
     let draws = [WorldDraw { pipeline, textures, vertices: &mesh.vertex_buffer, indices: &mesh.index_buffer, count: mesh.index_count, object_index: 0, instances: 128 }];
     let bindings = WorldBindings { globals: &renderer.bind_group, shadows: &renderer.shadow_sample_bind_group, environment: &renderer.fallback_environment_bind_group, indexed_objects: renderer.indexed_objects, object_stride: renderer.object_stride };
-    assert!(cache.prepare(&renderer.device, renderer.sample_count, bindings, &draws).is_none());
-    let bundle = cache.prepare(&renderer.device, renderer.sample_count, bindings, &draws).unwrap().0.clone();
+    let (bundle, reused) = cache.prepare(&renderer.device, renderer.sample_count, bindings, &draws).unwrap();
+    assert!(!reused);
+    let bundle = bundle.clone();
     let clone = bundle.clone();
     drop(cache);
     assert!(renderer.remove_material_texture("shared"));

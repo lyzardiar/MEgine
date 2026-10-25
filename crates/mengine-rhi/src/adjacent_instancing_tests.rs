@@ -46,7 +46,7 @@ fn adjacent_instances_match_individual_draws_and_keep_cache_range_limits() {
             if let Some(reference) = &reference { assert_eq!(&pixels, reference, "phase {phase}, mode {mode}"); assert!(profile.world_mesh_draw_calls <= reference_calls); }
             else { reference = Some(pixels); reference_calls = profile.world_mesh_draw_calls; }
             if phase == 0 && mode > 0 { assert_eq!(profile.world_mesh_draw_calls, 1); assert_eq!(profile.world_instanced_objects, 128); }
-            if phase == 0 && mode == 1 { assert_eq!(profile.world_bundle_builds, 0); assert_eq!(profile.world_bundle_hits, 0); }
+            if phase == 0 && mode == 1 { assert_eq!(profile.world_bundle_builds, 1); assert_eq!(profile.world_bundle_hits, 0); }
             if phase == 1 && mode > 0 { assert_eq!(renderer.spatial_stats.camera_visible, 127); assert_eq!(renderer.spatial_stats.submitted, 128); assert_eq!(profile.world_mesh_draw_calls, 2); assert_eq!(profile.world_instanced_objects, 127); }
             if phase == 10 && mode == 1 { assert_eq!(profile.world_bundle_hits, 0, "a shorter range must not reuse the previous instance count"); }
         }
