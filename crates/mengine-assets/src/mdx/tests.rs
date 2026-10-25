@@ -145,3 +145,53 @@ fn native_mdx_checks_node_output_even_without_geometry() {
     let nodes=[bone(0,-1,&[scale,translation].concat()),bone(1,0,&[])].concat(); let pivots=chunk(b"PIVT",&floats(&[0.,0.,0.,256.,0.,0.]));
     let raw=model_with(&nodes,&[],&[],&sequence("Stand",0,1000,0),&pivots); assert!(parse(&raw).sample(Some(0),0,None).is_err());
 }
+
+fn rotation_track(q:Quat)->Vec<u8> {[b"KGRT".to_vec(),word(1),word(0),word(u32::MAX),word(0),floats(&q.to_array())].concat()}
+fn scale_track(s:[f32;3])->Vec<u8> {[b"KGSC".to_vec(),word(1),word(0),word(u32::MAX),word(0),floats(&s)].concat()}
+fn near(actual:Vec3,expected:Vec3) {assert!((actual-expected).length()<2e-5,"{actual:?} != {expected:?}");}
+
+#[test]
+fn native_mdx_rotation_noninherit_keeps_parent_displacement_and_nonuniform_scale() {
+    let parent=[rotation_track(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),scale_track([2.,3.,4.]),translation(0,-1,&[(0,[256.,128.,64.])])].concat();
+    let child=[rotation_track(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),translation(0,-1,&[(0,[16.,32.,8.])])].concat();
+    let nodes=[bone(1,0,&child),bone(0,-1,&parent)].concat(); let raw=model_with(&nodes,&geometry(&[1],0,1),&material(1,0,&[]),&sequence("Stand",0,1000,0),&chunk(b"PIVT",&floats(&[0.,0.,0.,128.,0.,0.])));
+    let mut model=parse(&raw); model.nodes[0].flags|=4; let pose=model.sample(Some(0),0,None).unwrap(); let matrix=pose.node_matrices[0];
+    near(matrix.w_axis.truncate(),Vec3::new(1.25,0.75,-3.25)); near(matrix.x_axis.truncate(),Vec3::new(3.,0.,0.)); near(matrix.y_axis.truncate(),Vec3::new(0.,0.,2.)); near(matrix.z_axis.truncate(),Vec3::new(0.,-4.,0.));
+    for (p,expected) in pose.geosets[0].mesh.positions.iter().zip([[1.25,0.75,-3.25],[-1.75,4.75,-3.25],[-1.75,0.75,-1.25]]) {near(Vec3::from_array(*p),Vec3::from_array(expected));}
+    model.nodes[0].flags&=!4; let inherited=model.sample(Some(0),0,None).unwrap(); near(inherited.node_matrices[0].w_axis.truncate(),matrix.w_axis.truncate()); assert!((inherited.node_matrices[0].x_axis-matrix.x_axis).length()>1.);
+}
+
+#[test]
+fn native_mdx_rotation_noninherit_uses_accumulated_parent_rotation_and_corrects_descendants() {
+    let root=bone(0,-1,&rotation_track(Quat::from_rotation_z(0.7))); let parent=bone(1,0,&rotation_track(Quat::from_rotation_y(-0.6))); let child=bone(2,1,&rotation_track(Quat::from_rotation_x(0.4))); let leaf=bone(3,2,&rotation_track(Quat::from_rotation_y(0.2)));
+    let raw=model_with(&[leaf,child,parent,root].concat(),&geometry(&[2],0,1),&material(1,0,&[]),&sequence("Stand",0,1000,0),&[]); let mut model=parse(&raw); model.nodes[1].flags|=4;
+    let pose=model.sample(Some(0),500,None).unwrap(); let source_vector=Vec3::new(0.3,-0.5,0.7); let input=Vec3::new(source_vector.x,source_vector.z,-source_vector.y);
+    let child=Quat::from_rotation_x(0.4)*source_vector; near(pose.node_matrices[1].transform_vector3(input),Vec3::new(child.x,child.z,-child.y));
+    let leaf=Quat::from_rotation_x(0.4)*Quat::from_rotation_y(0.2)*source_vector; near(pose.node_matrices[0].transform_vector3(input),Vec3::new(leaf.x,leaf.z,-leaf.y));
+}
+
+#[test]
+fn native_mdx_rotation_noninherit_is_stateless_across_animation_samples_and_roots() {
+    let root_track=[b"KGRT".to_vec(),word(2),word(1),word(u32::MAX),word(0),floats(&[0.,0.,0.,1.]),word(1000),floats(&[0.,0.,1.,0.])].concat();
+    let child=rotation_track(Quat::from_rotation_x(0.4)); let raw=model_with(&[bone(0,-1,&root_track),bone(1,0,&child),bone(2,-1,&child)].concat(),&geometry(&[1],0,1),&material(1,0,&[]),&sequence("Stand",0,1000,0),&[]); let mut model=parse(&raw); model.nodes[1].flags|=4; model.nodes[2].flags|=4;
+    let base=model.sample(Some(0),0,None).unwrap(); for time in [999,500,1,2000,500] {let pose=model.sample(Some(0),time,None).unwrap(); for index in [1,2] {for (a,b) in pose.node_matrices[index].to_cols_array().chunks_exact(4).zip(base.node_matrices[index].to_cols_array().chunks_exact(4)) {for (a,b) in a.iter().zip(b) {assert!((a-b).abs()<1e-5);}}}}
+    let rest=model.sample(None,0,None).unwrap(); assert_eq!(rest.node_matrices[1],Mat4::IDENTITY);
+}
+
+#[test]
+fn native_mdx_rotation_noninherit_cancels_billboard_parent_even_when_collapsed() {
+    for collapsed in [false,true] {let raw=model_with(&[bone(0,-1,&scale_track(if collapsed {[0.;3]} else {[1.;3]})),bone(1,0,&[])].concat(),&geometry(&[1],0,1),&material(1,0,&[]),&sequence("Stand",0,1000,0),&[]); let mut model=parse(&raw); model.nodes[0].flags|=8; model.nodes[1].flags|=4;
+        let camera=MdxBillboardCamera {model:Mat4::IDENTITY,look:-Vec3::Z,up:Vec3::Y}; let pose=model.sample(Some(0),0,Some(camera)).unwrap(); near(pose.node_matrices[1].x_axis.truncate(),if collapsed {Vec3::ZERO} else {Vec3::X}); near(pose.node_matrices[1].y_axis.truncate(),if collapsed {Vec3::ZERO} else {Vec3::Y}); near(pose.node_matrices[1].z_axis.truncate(),if collapsed {Vec3::ZERO} else {Vec3::Z});
+    }
+}
+
+#[test]
+fn native_mdx_rotation_noninherit_plans_scratch_only_for_models_that_need_it() {
+    let mut model=parse(&fixture()); let baseline=model.pose_allocation_bytes().unwrap(); model.nodes[0].flags|=4; let planned=model.pose_allocation_bytes().unwrap(); assert_eq!(planned-baseline,model.nodes.len()*std::mem::size_of::<Quat>()); model.max_pose_bytes=planned-1; assert!(model.sample(Some(0),0,None).is_err()); model.max_pose_bytes=planned; assert!(model.sample(Some(0),0,None).is_ok());
+}
+
+#[test]
+fn native_mdx_rotation_noninherit_keeps_unsupported_node_rules_explicit() {
+    for flags in [1,2,3,0x80,0x84] {let mut model=parse(&fixture()); model.nodes[0].flags|=flags; assert!(model.sample(Some(0),0,None).unwrap_err().to_string().contains("translation/scale non-inheritance or camera-anchoring"));}
+    for flags in [0x0c,0x14,0x24,0x44] {let mut model=parse(&fixture()); model.nodes[0].flags|=flags; assert!(model.sample(Some(0),0,None).unwrap_err().to_string().contains("combined node billboarding and rotation non-inheritance"));}
+}

@@ -37,6 +37,12 @@
       "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
       "path": "src/parsers/mdlx/genericobject.ts",
       "sha256": "dcd5920803823efeb2a42fb020a30d3675dba76df715bb59d9e33137639a9b15"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/skeletalnode.ts",
+      "sha256": "5a520864532c8b829434a0e055f522d4f63a39a74637e36cd4c0022e5bef962d"
     }
   ],
   "licenses": [

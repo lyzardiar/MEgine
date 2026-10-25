@@ -2151,3 +2151,12 @@ GPU可见集选取Amazonia两个原始sheep节点，2实例／1pose／2绘制对
 共享SYLK相关Amazonia地形／水面GPU回归通过：93块／近景3提交，第二视图93顶点缓冲复用，设备材质纹理分配5→5，动画改变112019像素；既有155–157其他地图几何／像素结果复用。Tauri构建99.78秒通过，仅既有world_from_snapshot未使用警告。用户PID64664保持原进程，现有缓存未清理。原选图仍离线转换，完整游戏世界、自动可见集／LOD、特殊节点／全部材质和效果、结束调度／创建顺序与JASS留在P0队列；本批按数据和消费者范围关闭，不作完整War3就绪结论。
 
 命令／原始日志由`tmp/docs-artifacts/warcraft-archives/run-batch-158-160.py`和`batch-158-160-progress.json`记录，收据为`batch-158-160-receipt.json`。原始GPU在`placed-gpu/`与`batch-158-160-terrain-gpu/`，源对照`placed-world-real-final.json`、`placed-world-comparison.json`及`compare-native-placed.py`；所有截图／JSON均不提交。产品构建包含d1d8504，后续批次结论文档不改变运行代码。
+
+
+## 第一百六十一项：原生节点旋转非继承（新批次1/3）
+
+变更`mengine-assets/src/mdx/{mod,pose,tests}.rs`及模型参考来源说明。以父链累计四元数处理非billboard节点的DontInheritRotation，保持继承的pivot位置与缩放，并给后代传递修正后的旋转。billboard父节点的旋转来自相机基向量；含该标志时才分配旋转数组，规划计费每节点16字节。平移／缩放非继承、camera anchoring和同节点billboard＋旋转非继承继续显式拒绝。
+
+必要快速检查：`cargo test -p mengine-assets --lib native_mdx_rotation_noninherit -- --test-threads=1` **6通过／0失败**，覆盖非均匀缩放与pivot、反序父链／后代、多时刻独立采样／根节点、billboard父节点／零缩放、预算边界和未实现组合。为解除已知真实地图阻塞，运行单模型`warcraft_archive_model`消费Amazonia公共归档BanditMage，通过117节点、5geoset、12sequence、792预览顶点和6张原始BLP内存解码；不写工程资产或meta。源SHA为0a2b7f1d6a7e8a2981c45e1c5eaf00ccc4099cc2bc1edb9f61cad9c09da7eea3。PRE2效果诊断继续保留；未进行完整模型效果／GPU或原版动画逐帧验收。
+
+后续合并验证：累计3项后运行相关MDX回归、Host规划／消费者构建与代表原生模型GPU路径；用修复后的BanditMage核对附件朝向及双视图生命周期，复用本批未变地图／地形／水面结果。原选图仍在旧离线入口，本项不能作为选图切换或缓存清理完成。完整入口就绪并验证通过后，清理已失去用途的旧地图解包／转换缓存，核对引用／Git状态／绝对路径并记录回收空间。原始日志`tmp/docs-artifacts/warcraft-archives/rotation-{tests,real}.log`、`task161-runs.json`与`inheritance-reference/`。

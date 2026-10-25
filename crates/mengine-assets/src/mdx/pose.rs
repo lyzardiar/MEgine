@@ -27,12 +27,13 @@ fn engine(v: Vec3) -> Vec3 { Vec3::new(v.x,v.z,-v.y)/128. }
 fn direction(v: Vec3) -> Vec3 { Vec3::new(v.x,v.z,-v.y) }
 fn source(v: Vec3) -> Vec3 { Vec3::new(v.x,-v.z,v.y) }
 
-fn billboard(node: &Node, world: Mat4, camera: MdxBillboardCamera) -> Mat4 {
+fn billboard(node: &Node, world: Mat4, camera: MdxBillboardCamera) -> (Mat4,Option<Quat>) {
     let inverse=camera.model.inverse(); let view=source(-inverse.transform_vector3(camera.look)).normalize_or_zero(); let up=source(inverse.transform_vector3(camera.up)).normalize_or_zero();
     let (x,y,z)=if node.flags&8!=0 {let x=view; let z=(up-x*up.dot(x)).normalize_or_zero(); (x,z.cross(x),z)} else if node.flags&0x40!=0 {let z=Vec3::Z; let x=(view-z*view.dot(z)).normalize_or_zero(); (x,z.cross(x),z)} else if node.flags&0x20!=0 {let y=Vec3::Y; let x=(view-y*view.dot(y)).normalize_or_zero(); (x,y,x.cross(y))} else {let x=Vec3::X; let z=(up-x*up.dot(x)).normalize_or_zero(); (x,z.cross(x),z)};
-    if x.length_squared()<0.5 || y.length_squared()<0.5 || z.length_squared()<0.5 {return world;}
+    if x.length_squared()<0.5 || y.length_squared()<0.5 || z.length_squared()<0.5 {return (world,None);}
     let scale=Vec3::new(world.x_axis.truncate().length(),world.y_axis.truncate().length(),world.z_axis.truncate().length()); let position=world.transform_point3(node.pivot);
-    Mat4::from_cols((x*scale.x).extend(0.),(y*scale.y).extend(0.),(z*scale.z).extend(0.),position.extend(1.))*Mat4::from_translation(-node.pivot)
+    let rotation=Quat::from_mat4(&Mat4::from_cols(x.extend(0.),y.extend(0.),z.extend(0.),Vec4::W));
+    (Mat4::from_cols((x*scale.x).extend(0.),(y*scale.y).extend(0.),(z*scale.z).extend(0.),position.extend(1.))*Mat4::from_translation(-node.pivot),Some(rotation))
 }
 
 fn collapse_scale(track: &Track, sequence: Option<&MdxSequence>) -> bool {
@@ -42,6 +43,7 @@ fn collapse_scale(track: &Track, sequence: Option<&MdxSequence>) -> bool {
 pub(super) fn allocation_bytes(model: &MdxModel) -> Result<usize,AssetError> {
     let mut total=0usize; let mut add=|count:usize,stride:usize|->Result<(),AssetError> {total=total.checked_add(count.checked_mul(stride).ok_or_else(||invalid("pose allocation overflow"))?).filter(|n|*n<=model.max_pose_bytes).ok_or_else(||invalid("sampled pose exceeds byte budget"))?; Ok(())};
     add(model.nodes.len(),std::mem::size_of::<Mat4>()*2)?; add(model.geosets.len(),std::mem::size_of::<MdxGeosetPose>())?; add(model.materials.len(),std::mem::size_of::<Option<Arc<[MdxLayerPose]>>>()+1)?;
+    if model.nodes.iter().any(|n|n.flags&4!=0) {add(model.nodes.len(),std::mem::size_of::<Quat>())?;}
     let mut used=vec![false;model.materials.len()]; let mut max_groups=0; let mut max_normals=0;
     for g in &model.geosets {
         add(g.positions.len(),32)?; add(g.indices.len(),4)?; max_groups=max_groups.max(g.groups.len()); if g.normals.is_empty() {max_normals=max_normals.max(g.positions.len());}
@@ -57,16 +59,22 @@ pub(super) fn sample(model: &MdxModel, sequence: Option<usize>, elapsed: u64, ca
     let sequence=sequence.map(|i|model.sequences.get(i).ok_or_else(||invalid("sequence index is missing"))).transpose()?;
     let time=sequence.map_or(0,|s|{let duration=(s.end_ms-s.start_ms) as u64; s.start_ms+if duration==0 {0} else if s.non_looping || force_clamp {elapsed.min(duration) as i64} else {(elapsed%duration) as i64}});
     if camera.is_some_and(|c|!c.model.is_finite() || !c.look.is_finite() || !c.up.is_finite() || c.model.determinant().abs()<1e-12) {return Err(invalid("invalid billboard camera"));}
-    // These source behaviors need a session/world origin and complete inheritance solver before game use.
-    if model.nodes.iter().any(|n|n.flags&(7|0x80)!=0) {return Err(invalid("node non-inheritance or camera-anchoring requires the runtime node solver"));}
+    if model.nodes.iter().any(|n|n.flags&(3|0x80)!=0) {return Err(invalid("node translation/scale non-inheritance or camera-anchoring requires the runtime node solver"));}
+    if model.nodes.iter().any(|n|n.flags&4!=0 && n.flags&0x78!=0) {return Err(invalid("combined node billboarding and rotation non-inheritance requires the runtime node solver"));}
     let value=|track:&Option<Track>,rest,rotation|track.as_ref().map_or(rest,|t|t.sample(model,sequence,time,elapsed,rest,rotation));
     let mut world=vec![Mat4::IDENTITY;model.nodes.len()];
+    let mut rotations=if model.nodes.iter().any(|n|n.flags&4!=0) {vec![Quat::IDENTITY;model.nodes.len()]} else {Vec::new()};
     for &index in &model.order {
         let node=&model.nodes[index]; let t=value(&node.translation,Vec4::ZERO,false).truncate(); let q=value(&node.rotation,Vec4::W,true); let mut s=value(&node.scale,Vec4::ONE,false).truncate();
+        let parent_rotation=model.parents[index].filter(|_|!rotations.is_empty()).map_or(Quat::IDENTITY,|p|rotations[p]);
+        // Cancel the parent's accumulated quaternion in local space; keep its pivot displacement and scale.
+        let q=if node.flags&4!=0 {Vec4::from_array((parent_rotation.conjugate()*Quat::from_array(q.to_array())).to_array())} else {q};
         if node.scale.as_ref().is_some_and(|t|collapse_scale(t,sequence)) {s=Vec3::ZERO;}
         let local=transform(node.pivot+t,q,s)*Mat4::from_translation(-node.pivot); let mut matrix=model.parents[index].map_or(local,|p|world[p]*local);
-        if let Some(camera)=camera {if node.flags&0x78!=0 {matrix=billboard(node,matrix,camera);}}
+        let mut rotation=parent_rotation; if !rotations.is_empty() {rotation*=Quat::from_array(q.to_array());}
+        if let Some(camera)=camera {if node.flags&0x78!=0 {let (billboard_matrix,billboard_rotation)=billboard(node,matrix,camera); matrix=billboard_matrix; if let Some(q)=billboard_rotation {rotation=q;}}}
         if !matrix.is_finite() {return Err(invalid("non-finite sampled node"));} world[index]=matrix;
+        if !rotations.is_empty() {if !rotation.is_finite() {return Err(invalid("non-finite sampled node rotation"));} rotations[index]=rotation;}
     }
     let mut geosets=Vec::with_capacity(model.geosets.len()); let mut layer_states:Vec<Option<Arc<[MdxLayerPose]>>>=vec![None;model.materials.len()];
     for (index,g) in model.geosets.iter().enumerate() {

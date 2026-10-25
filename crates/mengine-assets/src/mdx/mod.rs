@@ -1,6 +1,6 @@
 // Author: MiYu. Native classic Warcraft model data; format references and licenses are retained in third_party/warcraft-model-reference.
 use crate::{AssetError, MeshData};
-use glam::{Mat4, Vec3, Vec4};
+use glam::{Mat4, Quat, Vec3, Vec4};
 use std::sync::Arc;
 
 mod reader;
