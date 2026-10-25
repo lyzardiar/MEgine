@@ -1,2 +1,2 @@
 * text=auto eol=lf
-third_party/stormlib/source/** -text
+third_party/stormlib/source/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof,-space-before-tab
