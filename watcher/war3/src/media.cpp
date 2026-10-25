@@ -38,8 +38,7 @@ Text::Text(Renderer& renderer, std::span<const std::uint8_t> font) : renderer_(r
     SelectObject(context_, font_);
 }
 Text::~Text() { if (context_) DeleteDC(context_); if (font_) DeleteObject(font_); if (resource_) RemoveFontMemResourceEx(resource_); }
-void Text::draw(std::wstring_view text, float x, float y, float height, DWORD color, bool centered) {
-    if (text.empty()) return;
+const Text::Label& Text::label(std::wstring_view text) {
     std::wstring key(text);
     auto found = cache_.find(key);
     if (found == cache_.end()) {
@@ -65,28 +64,41 @@ void Text::draw(std::wstring_view text, float x, float y, float height, DWORD co
         if (cache_.size() >= 256) cache_.clear();
         found = cache_.emplace(std::move(key), Label{std::move(texture), w, h}).first;
     }
-    auto& label = found->second;
-    auto width = height * label.width / label.height;
-    renderer_.rect(centered ? x - width / 2 : x, y, width, height, color, label.texture.Get());
+    return found->second;
+}
+float Text::width(std::wstring_view text, float height, bool padding) { if(text.empty())return 0;auto& value=label(text);return height*(value.width-(padding?0:4))/value.height; }
+void Text::draw(std::wstring_view text, float x, float y, float height, DWORD color, bool centered) {
+    if(text.empty())return;auto& value=label(text);float width=height*value.width/value.height;
+    renderer_.rect(centered ? x-width/2 : x,y,width,height,color,value.texture.Get());
 }
 Music::Music(const fs::path& dataRoot, std::shared_ptr<const Member> music) : library_(dataRoot / L"mss32.dll", "1f9a83f42de0e7899a7f6772e5cbad6ed10c16cc5f15246c8d80b9f4fe25fc4a"), bytes_(std::move(music)) {
     auto startup = library_.symbol<Start>("_AIL_startup@0");
     shutdown_ = library_.symbol<Void>("_AIL_shutdown@0"); close_ = library_.symbol<One>("_AIL_close_digital_driver@4"); release_ = library_.symbol<One>("_AIL_release_sample_handle@4"); end_ = library_.symbol<One>("_AIL_end_sample@4");
     auto open = library_.symbol<Open>("_AIL_open_digital_driver@16");
     auto allocate = library_.symbol<Allocate>("_AIL_allocate_sample_handle@4");
+    auto initialize = library_.symbol<One>("_AIL_init_sample@4");
     auto named = library_.symbol<Named>("_AIL_set_named_sample_file@20");
     auto loop = library_.symbol<Loop>("_AIL_set_sample_loop_count@8");
     auto play = library_.symbol<One>("_AIL_start_sample@4");
     auto redist = library_.symbol<Redist>("_AIL_set_redist_directory@4");
+    auto error = library_.symbol<const char*(__stdcall*)()>("_AIL_last_error@0");
+    auto failure = [&](const char* message) { auto detail = error(); return std::runtime_error(std::string(message) + (detail && *detail ? std::string(": ") + detail : "")); };
     if (!bytes_ || bytes_->bytes.empty() || bytes_->bytes.size() > INT_MAX) throw std::runtime_error("Missing original menu music");
-    if (!startup()) throw std::runtime_error("Miles startup failed");
+    auto codecDirectory = dataRoot / L"redist" / L"miles";
+    if (!fs::is_regular_file(codecDirectory / L"Mp3dec.asi")) throw std::runtime_error("Missing original Miles MP3 decoder");
+    verifyPe32(codecDirectory / L"Mp3dec.asi");
+    if(sha256(codecDirectory / L"Mp3dec.asi")!="45295e1aae5211d2d32dae22fcc1d328db9d15d5a37bd0af3b4eb1a9a24c275a")throw std::runtime_error("Unsupported Miles MP3 decoder version");
+    auto path = codecDirectory.string();
+    if (path.size() > MAX_PATH - 2) throw std::runtime_error("Miles codec path exceeds legacy limit");
+    redist(path.c_str());
+    if (!startup()) throw failure("Miles startup failed");
     try {
-        auto path = utf8(dataRoot.wstring()); redist(path.c_str());
         driver_ = open(44100, 16, 2, 0);
-        if (!driver_) throw std::runtime_error("Miles digital driver unavailable");
+        if (!driver_) throw failure("Miles digital driver unavailable");
         sample_ = allocate(driver_);
-        if (!sample_) throw std::runtime_error("Miles sample allocation failed");
-        if (!named(sample_, ".mp3", bytes_->bytes.data(), static_cast<int>(bytes_->bytes.size()), 0)) throw std::runtime_error("Miles cannot decode menu MP3");
+        if (!sample_) throw failure("Miles sample allocation failed");
+        initialize(sample_);
+        if (!named(sample_, ".mp3", bytes_->bytes.data(), static_cast<int>(bytes_->bytes.size()), 0)) throw failure("Miles cannot decode menu MP3");
         loop(sample_, 0); play(sample_);
     } catch (...) { if (sample_) release_(sample_); if (driver_) close_(driver_); shutdown_(); throw; }
 }

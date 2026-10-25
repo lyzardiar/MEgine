@@ -12,6 +12,6 @@ public:
     ~Model();
     Model(const Model&) = delete;
     Model& operator=(const Model&) = delete;
-    void draw(std::uint64_t elapsed, float aspect);
+    void draw(std::uint64_t elapsed, float aspect, bool twoSided = false);
 };
 }

@@ -77,6 +77,8 @@ Options Options::parse() {
         else if (argument == L"--probe") options.probe = true;
         else if (argument == L"--hidden") options.hidden = true;
         else if (argument == L"--mute") options.mute = true;
+        else if (argument == L"--window-check") options.windowCheck = true;
+        else if (argument == L"--time-ms") {auto text=value(i);size_t end=0;auto n=std::stoull(text,&end);if(end!=text.size() || n>86400000)throw std::runtime_error("Invalid animation time");options.timeMs=n;}
         else throw std::runtime_error("Unknown option: " + utf8(argument));
     }
     if (options.dataRoot.empty()) throw std::runtime_error("Usage: war3.exe --data-root <Warcraft III directory> [--map <w3x/w3m>] [--renderer d3d9]");
@@ -85,6 +87,7 @@ Options Options::parse() {
     if (!options.map.empty()) { if (options.map.is_relative()) options.map = options.dataRoot / options.map; options.map = fs::canonical(options.map); }
     if (options.hidden && !options.probe && !options.frames) throw std::runtime_error("Hidden run requires --frames or --probe");
     if (!options.capture.empty() && !options.frames) throw std::runtime_error("Capture requires --frames");
+    if (options.windowCheck && (options.probe || options.frames<120)) throw std::runtime_error("Window check requires a render run with at least 120 frames");
     if (options.log.empty()) {
         wchar_t directory[32768]{};
         DWORD length = GetEnvironmentVariableW(L"LOCALAPPDATA", directory, 32768);

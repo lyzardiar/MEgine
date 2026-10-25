@@ -11,8 +11,10 @@ cmake --build --preset release --parallel
 
 可指定 `--map Maps/FrozenThrone/(2)Amazonia.w3x`、`--renderer d3d9`、`--mute`、`--log <路径>`。开发检查入口为 `--probe` 和 `--hidden --frames 120`。默认日志位于 `%LOCALAPPDATA%/MEgine/War3/Logs/client.log`；地图运行不生成解包目录。
 
-开发帧输出可加`--capture <PNG路径>`，仅在限定帧数结束时写出指定证据。`d3d9-reference`显式选择系统参考光栅器用于正确性检查，不用于性能结论。原生D3D9不可用时尝试系统D3D9On12兼容设备；当前远程会话尚未成功创建设备，不能以编译或CPU probe宣称菜单运行通过。灯光、粒子、完整布局和交互按矩阵继续实现。
+开发帧输出可加 `--capture <PNG路径>`，仅在限定帧数或退出按钮结束运行时写出指定证据。`--time-ms 0` 固定动画时间；`--window-check --frames 120` 检查缩放、最小化恢复、鼠标取消与 Q 退出。`--renderer d3d9-reference` 选择系统参考光栅器，仅用于正确性检查。
 
-完整内容按 [功能矩阵](docs/acceptance.md) 跟进，独立验证见 [测试队列](docs/testing-batches.md)。当前版本是客户端基础设施，完整战斗、JASS、战役和网络仍待实现。原版菜单的三维场景必须经 MDX 渲染恢复，窗口启动不等于菜单还原验收。
+渲染器优先使用 Direct3D 9；设备能力不可用时依次尝试 Direct3D 9Ex、系统 D3D9On12Ex。实际驱动名称写入日志。D3D9 与 D3D9Ex 的菜单帧输出、窗口缩放及恢复均已有运行证据。主菜单从原版 FDF 读取模板、中文、布局和快捷键，从 `war3skins.txt` 选择字体；原版 Miles 从 `redist/miles` 加载 MP3 codec，直接播放 MPQ 内存中的音乐。
+
+完整内容按 [功能矩阵](docs/acceptance.md) 跟进，独立验证见 [测试队列](docs/testing-batches.md)。当前版本是客户端基础设施，主菜单仅退出按钮已接入动作；选图、载入、完整战斗、JASS、战役和网络仍待实现。菜单 MDX 已绘制，logo 精确比例、灯光、雾、粒子、完整 FDF 与交互仍需还原和对照验收。`--map` 当前只挂载归档，不运行地图。
 
 StormLib 来源、版本和逐文件摘要见 [source-info.json](third_party/stormlib/source-info.json)，许可证在 [LICENSE](third_party/stormlib/source/LICENSE)。原安装资源和 DLL 不随项目分发。REA 作为开发分析工具，不参与游戏运行。

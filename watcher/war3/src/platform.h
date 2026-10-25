@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <optional>
 
 namespace war3 {
 using Bytes = std::vector<std::uint8_t>;
@@ -27,6 +28,8 @@ struct Options {
     bool probe = false;
     bool hidden = false;
     bool mute = false;
+    bool windowCheck = false;
+    std::optional<std::uint64_t> timeMs;
     static Options parse();
 };
 class Log {

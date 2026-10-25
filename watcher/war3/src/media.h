@@ -12,12 +12,14 @@ class Text {
     HDC context_ = nullptr;
     struct Label { Com<IDirect3DTexture9> texture; unsigned width, height; };
     std::unordered_map<std::wstring, Label> cache_;
+    const Label& label(std::wstring_view text);
 public:
     Text(Renderer& renderer, std::span<const std::uint8_t> font);
     ~Text();
     Text(const Text&) = delete;
     Text& operator=(const Text&) = delete;
     void draw(std::wstring_view text, float x, float y, float height, DWORD color = 0xffffcc55, bool centered = false);
+    float width(std::wstring_view text, float height, bool padding = true);
 };
 class Music {
     Library library_;

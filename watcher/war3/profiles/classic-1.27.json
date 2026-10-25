@@ -4,7 +4,8 @@
   "referenceGame": { "file": "Game.dll", "sha256": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a", "runtimeLoad": false },
   "libraries": [
     { "file": "ijl15.dll", "sha256": "334aa12f7dee453d1c6cb1b661a3bb3494d3e4cc9c2ff3f9002064c78404e43a", "abi": "stdcall, JPEG_CORE_PROPERTIES=0x4e68", "source": "User supplied Warcraft III installation; Intel JPEG Library", "redistributed": false },
-    { "file": "mss32.dll", "sha256": "1f9a83f42de0e7899a7f6772e5cbad6ed10c16cc5f15246c8d80b9f4fe25fc4a", "abi": "stdcall", "source": "User supplied Warcraft III installation; RAD Miles Sound System", "redistributed": false }
+    { "file": "mss32.dll", "sha256": "1f9a83f42de0e7899a7f6772e5cbad6ed10c16cc5f15246c8d80b9f4fe25fc4a", "abi": "stdcall", "source": "User supplied Warcraft III installation; RAD Miles Sound System", "redistributed": false },
+    { "file": "redist/miles/Mp3dec.asi", "sha256": "45295e1aae5211d2d32dae22fcc1d328db9d15d5a37bd0af3b4eb1a9a24c275a", "abi": "Win32 Miles ASI provider", "source": "User supplied Warcraft III installation; RAD Miles MPEG decoder", "redistributed": false }
   ],
   "archivePriority": ["selected map", "War3Patch.mpq", "War3xLocal.mpq", "War3x.mpq", "war3.mpq"],
   "analysisTool": { "upstream": "https://github.com/morluto/rea", "version": "6.5.0", "repositoryRecord": "third_party/rea/README-MENGINE.md", "runtimeDependency": false },

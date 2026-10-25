@@ -2,6 +2,7 @@
 #include "archive.h"
 #include "binary.h"
 #include "image.h"
+#include "fdf.h"
 #include <StormLib.h>
 #include <iostream>
 #include <functional>
@@ -29,7 +30,7 @@ int wmain(int argc, wchar_t** argv) {
     unsigned passed = 0, failed = 0;
     auto test = [&](const char* name, const std::function<void()>& run) { try { run(); ++passed; std::cout << "PASS " << name << '\n'; } catch (const std::exception& error) { ++failed; std::cout << "FAIL " << name << ": " << error.what() << '\n'; } };
     try {
-        Images images(fs::canonical(argv[1])); auto scratch = fs::absolute(argv[2])/std::to_wstring(GetCurrentProcessId()); require(!fs::exists(scratch),"Scratch already exists"); fs::create_directories(scratch);
+        Images images(fs::canonical(argv[1])); auto scratch = fs::absolute(argv[2])/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64())); require(!fs::exists(scratch),"Scratch already exists"); fs::create_directories(scratch);
         mpq(scratch/L"war3.mpq",{{"value.txt","base"},{"common.txt","common"},{"skin.tga","base-tga"}}); mpq(scratch/L"War3Patch.mpq",{{"value.txt","patch"},{"skin.blp","patch-blp"}}); mpq(scratch/L"map.w3x",{{"value.txt","map"},{"skin.blp","map-blp"}});
         test("map_overlay_and_shared_lifetime",[&] { Archives a(scratch); auto common=a.read("common.txt"); require(text(a.read("value.txt"))=="patch","Patch precedence failed"); a.mountMap(scratch/L"map.w3x"); auto member=a.read("value.txt"); require(text(member)=="map","Map precedence failed"); a.unmountMap(); require(text(a.read("value.txt"))=="patch" && text(member)=="map","Unmount lifetime failed"); require(a.read("common.txt")==common,"Common member not shared"); });
         test("texture_alias_source_precedence",[&] { Archives a(scratch); require(text(a.read("skin.tga"))=="base-tga","Base fixture missing"); require(text(a.readTexture("skin.tga"))=="patch-blp","Cached base shadowed patch alias"); a.mountMap(scratch/L"map.w3x"); require(text(a.readTexture("skin.tga"))=="map-blp","Map alias failed"); a.unmountMap(); require(text(a.readTexture("skin.tga"))=="patch-blp","Map alias survived unmount"); });
@@ -41,6 +42,9 @@ int wmain(int argc, wchar_t** argv) {
         test("tga_orientation_and_rle",[&] { Bytes b(18); b[2]=2; b[12]=2; b[14]=2; b[16]=24; b.insert(b.end(),{255,0,0,0,255,0,0,0,255,255,255,255}); auto image=images.decode(b); require(image.pixels==std::vector<unsigned>({0xffff0000,0xffffffff,0xff0000ff,0xff00ff00}),"TGA orientation mismatch"); b.resize(18); b[2]=10; b.insert(b.end(),{0x83,0,0,255}); image=images.decode(b); for (auto pixel:image.pixels) require(pixel==0xffff0000,"TGA RLE mismatch"); b[18]=0x84; rejects([&] { images.decode(b); }); });
         test("image_truncation_and_budget",[&] { auto b=blp1(2,2,8,{0,0,0,0,255,255,255,255}); for (size_t n : {size_t(0),size_t(4),size_t(100),b.size()-1}) rejects([&] { images.decode(std::span(b).first(n)); }); put(b,12,0xffffffff); rejects([&] { images.decode(b); }); rejects([&] { images.decode(blp1(2,2,0,{0,0,0,0}),16); }); });
         test("binary_record_bounds",[&] { Bytes data(8); put(data,0,100); Binary b(data); rejects([&] { b.record(4); }); Bytes zero{0,0,0,0}; Binary s(zero); require(s.u32()==0,"LE reader mismatch"); rejects([&] { s.u8(); }); });
+        test("fdf_original_templates_and_strings",[&] {Archives a(fs::canonical(argv[1]));FrameDefinitions d;d.load(a,"UI\\FrameDef\\GlobalStrings.fdf");d.load(a,"UI\\FrameDef\\Glue\\MainMenu.fdf");auto border=d.frame("SinglePlayerBackdrop");auto button=d.frame("SinglePlayerButton");require(std::abs(border.number("Width")-.256f)<1e-6f && std::abs(button.number("Width")-.179f)<1e-6f,"Original template width mismatch");require(button.children.size()>=4 && d.frame("ExitButton").property("ControlShortcutKey")==std::vector<std::string>{"Q"},"FDF inheritance or shortcut missing");require(d.string("KEY_SINGLE_PLAYER")!="KEY_SINGLE_PLAYER","Original localization missing");require(bool(a.read(skinValue(a,"MasterFont",""))),"Original decorated font missing");});
+        test("source_text_bom_and_utf16",[&] {Bytes utf8bom={0xef,0xbb,0xbf,'a','b'};Bytes utf16={0xff,0xfe,'a',0,'b',0};require(sourceText(utf8bom)=="ab" && sourceText(utf16)=="ab","Source BOM decode failed");utf16.push_back(0);rejects([&]{sourceText(utf16);});});
+        test("fdf_cycles_and_inheritance_bounds",[&] {mpq(scratch/L"fdf.w3x",{{"a.fdf","IncludeFile \"b.fdf\",\n"},{"b.fdf","IncludeFile \"a.fdf\",\n"},{"inherit.fdf","Frame \"FRAME\" \"A\" INHERITS \"B\" {\n}\nFrame \"FRAME\" \"B\" INHERITS \"A\" {\n}\n"}});Archives a(scratch);a.mountMap(scratch/L"fdf.w3x");FrameDefinitions cyclic;rejects([&]{cyclic.load(a,"a.fdf");});FrameDefinitions inheritance;inheritance.load(a,"inherit.fdf");rejects([&]{inheritance.frame("A");});});
         require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded into independent tests");
     } catch (const std::exception& error) { std::cerr << "SETUP " << error.what() << '\n'; return 2; }
     std::cout << "RESULT passed=" << passed << " failed=" << failed << '\n'; return failed ? 1 : 0;
