@@ -1,0 +1,4 @@
+#!/bin/sh
+# Author: MiYu. Keep tracked Frostbound assets and their identities together.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+exec python scripts/check-frost-asset-meta.py

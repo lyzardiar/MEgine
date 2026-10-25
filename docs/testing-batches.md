@@ -2011,3 +2011,9 @@ CPU比对载荷上限64MiB／设备，最多2048个哈希键、每键4个Weak候
 `python scripts/test-frost-map-cache.py` 10项通过，新增覆盖真实 Windows 句柄占用／释放恢复、WinError 5 注入后的原子快照与节流、临时文件写入拒绝不打断缓存资源验证；既有损坏资产和路径越界拒绝检查继续通过。实际转换复用隔离工具与资源缓存，在独立目标工程运行 DotA_v6.83d，整个转换期间持续持有 progress.json 读句柄：退出码0、cached=false、461个资源校验成功、旧进度快照未被破坏、进度警告恰好1条。未将结果写成远程机器验收。
 
 证据位于 `tmp/docs-artifacts/map-import-progress-lock/`：`baseline-lock.log`、`progress-tests.log`、`verification.json` 和 `locked-job/converter.log`；实际锁定导入复现入口为该目录的 `verify-locked-import.py`。同一地图导入故障补充不增加独立任务计数。远程拉取后的实际导入仍待重试；未重编译编辑器或扩大到全库测试，其他批次队列保持原状态。
+
+### 资产交付补充：配对提交 Frostbound 元数据
+
+2026-10-25核实并补交827个已跟踪资产的既有sidecar，保留原文件GUID与导入参数；当前10,915个受支持资产的暂存区配对完整、格式合法，新增GUID在本工程内无碰撞。另1个无原资源的孤立meta保持原状。新增Git提交hook及安装入口、AGENTS必检规则和npm检查命令，覆盖表补齐原生粒子格式mparticle；克隆后执行npm run setup:git-hooks，已有自定义hook配置保持不变。
+
+必要检查：4项元数据测试、3项材质身份测试通过；真实临时Git仓库验证缺meta被hook拦截、配对后放行、两种既有自定义hook不被覆盖。原827文件哈希与暂存内容核对，原始审计和hook验证在tmp/docs-artifacts/asset-meta-audit。此项为资产提交完整性补充，不增加功能批次计数，不重跑地图转换或整库测试。远程本地meta可能含不同GUID，先保留metadata-only stash再拉取；具体命令与引用核对要求见docs/designs/frostbound-realms/asset-metadata-coverage.md，未操作远程工作区。

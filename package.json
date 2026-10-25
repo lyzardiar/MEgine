@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "description": "MEngine — cross-platform game engine (Rust core + TypeScript)",
   "scripts": {
+    "check:asset-meta": "python scripts/check-frost-asset-meta.py",
+    "setup:git-hooks": "node scripts/install-git-hooks.mjs",
     "rea:install": "npm --prefix third_party/rea ci --omit=dev --ignore-scripts --no-audit --no-fund --workspaces=false",
     "rea": "node third_party/rea/node_modules/rea-agents/scripts/rea.mjs",
     "test:rea": "node scripts/test-rea-mcp.mjs",

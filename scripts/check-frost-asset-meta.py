@@ -10,7 +10,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 PREFIX = 'samples/frostbound-realms/Assets/'
 IMPORTERS = {suffix: kind for kind, suffixes in {
     'scene': ['mscene'], 'script': ['ts', 'js', 'mjs'], 'sprite-atlas': ['matlas'],
-    'animation': ['manim'], 'animator-controller': ['mcontroller'], 'avatar-mask': ['mavatar'], 'timeline': ['mtimeline'],
+    'animation': ['manim'], 'animator-controller': ['mcontroller'], 'avatar-mask': ['mavatar'], 'timeline': ['mtimeline'], 'particle': ['mparticle'],
     'audio': ['wav', 'ogg', 'mp3', 'flac'], 'material': ['mmat', 'mat', 'minst'], 'shader': ['mshader'],
     'prefab': ['prefab'], 'model': ['gltf', 'glb'], 'effekseer-effect': ['efkefc', 'efk'], 'effekseer-catalog': ['meffect'],
     'font': ['ttf', 'otf'], 'texture': ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'tga', 'tif', 'tiff', 'hdr', 'exr'],

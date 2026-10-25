@@ -1,4 +1,5 @@
 asset-library/**/*.glb binary
+.githooks/* text eol=lf
 samples/frostbound-realms/SourceAssets/WarcraftUI/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof,-space-before-tab
 samples/frostbound-realms/Assets/DeathKnightEffects/** -text whitespace=cr-at-eol
 samples/frostbound-realms/SourceAssets/DeathKnight/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof

@@ -13,6 +13,7 @@ Cross-platform game engine: **Rust** core + **TypeScript** scripting/tools.
 ```bash
 # Prerequisites: Rust stable, Node 20+
 npm install   # or pnpm.cmd install
+npm run setup:git-hooks  # requires Python 3; checks asset/.meta pairs before commits
 npm run codegen
 npm run prepare:native
 cargo run -p mengine-runtime -- --sample spinning-cube
