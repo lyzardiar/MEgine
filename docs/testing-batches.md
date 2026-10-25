@@ -1823,3 +1823,15 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 新增`playBehaviourDiscovery.test.mjs`的9项与既有behaviourLifecycle／behaviourSparseWorld的4项定向逻辑检查最终通过，覆盖扫描次数、相邻／跳过版本、拓扑、密集回退与恢复、注册键与可变entry元数据、注册替换／重置、伪造冻结世界／getter／Proxy、枚举变化与恢复后保留的可变别名、WeakRef失效、非激活实例、真实createNativePlayRuntime mock、多数私有但含暴露记录、同值编辑、迟注册、删除onDisable、非枚举转枚举、Pause／Step／Tick和Stop。首轮3项夹具失败分别源于SSR与Node注册器实例不同和首个完整reset生成新记录；后续夹具属性描述符及map回调入参修正分别定向复测，失败日志保留，未重复其余通过项。行为包实际dist构建、编辑器TypeScript接口和差异检查通过。
 
 真实保存地图输入4374实体，同进程交替顺序、2轮预热／9轮计量、每轮25帧并逐帧核对完整数据，空行为发现CPU中位数：无实体变化0.383020→0.012508ms，64记录变化0.378656→0.064756ms。密集4374记录变化走既有扫描，最终0.336604→0.351468ms，不宣称密集收益。此范围不含世界创建／克隆／接受、模拟、IPC、跨窗口呈现或实际FPS；脚本`benchmark-behaviour-discovery.mjs`、原始与最终密集样本及定向日志均在`tmp/docs-artifacts/editor-performance-risk/`。本项按三任务规则先提交，140–142达到3/3；接下来统一前端／原生构建，在同一冻结程序验证Amazonia／DotA、分离窗口耗时、播放与隐藏恢复，CPU采样与普通FPS分开解读。稳定60、LOD、长期驻留及完整War3仍待完成。
+
+### 第一百四十至一百四十二阶段合并验证结论
+
+统一`729876c`前端构建（含tsc，Vite3.27秒）及custom-protocol Release构建72秒通过；冻结程序SHA256为`b743137d1218140803f7afb3545467dbefc1c13be77c512136779a0f64e46ac9`，核对12个源码／实际behaviour dist摘要与内嵌`index-Dr9oUWzv.js`、`App-C1WSm7zI.js`、`agent-schemas-DZwafEfU.js`。9个相关测试文件合计91项通过、0失败，141工具此前最终5项通过结果复用。没有重复执行全库、资产遍历或五轮驻留。
+
+原生`map-session-1792896042264`、`arbitrary-map-1792896122283`、`map-session-1792896203361`、`map-session-1792896265259`全部通过，错误日志均为空，自有进程正常退出且发现文件移除；WebView临时缓存有EPERM，保留在各自已验证的tmp目录。Amazonia7434实体的三分离窗口、Game重开、耗时来源、Pause／Step／快捷键、地图重载、Stop作者内容与Undo／Redo、重新Play通过；Scene／Game各240份耗时样本，分别238／240个不同模拟版本。DotA14437实体复用当前有效转换缓存，加载进度、Scene／Game连续运行、全景选取、工程关闭重开与新Game像素通过；未重复冷转换或扩大脚本能力验收。Scene连续旋转19个原生帧，隐藏时原生帧与浏览器paint均0，恢复51帧，分隔条调整与960×900／1280×720切换、Stop后场景恢复通过。
+
+普通采样的多窗口Scene59.26／Game59.84FPS，p95呈现间隔22.5／27.5ms，原生平均7.876／8.372ms；上一批对应59.76／58.15FPS、22.7／29.6ms、7.872／8.491ms，不能由单次波动归因于本项。DotA Scene59.65／Game59.78FPS，p9525.4／26.0ms，原生平均14.355／9.551ms；同样保留5376渲染对象、Scene4675／Game99个世界绘制，没有LOD削减。满帧尾延迟仍未达成。
+
+独立CPU窗口5320.659ms／2860样本；完整原件中BehaviourRunner.tick的采样self从上一窗口107.830ms变为未采到（0），结合定向扫描次数断言确认重复组件发现快路径已生效，不解释为真实执行成本为零，也不将含Profiler开销的FPS当普通性能结果。当前SceneChangeTracker.observe采样self162.719ms、保留记录107.261ms、publish89.880ms，仍需继续分析主线程工作。汇总脚本曾把空URL视作assets目录而失败，改为只读文件后重放同一原件成功，未重跑原生采样。
+
+已查看Amazonia分离Game和DotA实际Game图像；玩法、完整开局军队／HUD／寻路、LOD及小时级驻留仍未完成。`behaviour-batch-{summary,cpu-comparison,cpu-code-context}.json`、构建／测试／原生日志、原始截图和冻结收据全部保存在`tmp/docs-artifacts/editor-performance-risk/`与`testing-batches/B001/`；文档只提交本结论。本批相关验证结束，下一批0/3；用户编辑器64664保持运行。新反馈的启动Game首帧长等待单独跟进，不计作已修复。
