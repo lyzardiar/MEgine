@@ -159,6 +159,8 @@ export function createBehaviourRunner(onMutableEntity?: (entity: EntityLike) => 
   };
 
   return {
+    get hasInstances() { return instances.length > 0; },
+
     mount(entities: EntityLike[]) {
       this.unmount();
       const activeStates = activeInHierarchy(entities);

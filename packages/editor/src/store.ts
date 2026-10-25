@@ -3,6 +3,7 @@ import { retainPlayStepTiming, type PlayStepTiming } from './playStepTiming';
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
 import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord, retainedPlayWorldChanges, retainPlayRecord, retainPlayWorld } from './playWorldSync';
+import { createPlayBehaviourDiscovery } from './playBehaviourDiscovery';
 import { normalizeEntity, type EntityRec } from './entityRecord';
 import { createSessionSceneSerializer, createSessionScenePublisher, isSessionSceneDocument, canReuseSessionSceneParsing, type SessionSceneDocument, type SessionSceneMessage } from './sessionSceneSerialization';
 export type { EntityRec } from './entityRecord';
@@ -226,6 +227,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let privatePlayEntities: EntityRec[] | null = null;
   let ownedPlayWorld: ReturnType<typeof retainedNativePlayWorld>;
   const exposePlayEntities = () => { privatePlayEntities = null; if (playEntities) for (const entity of playEntities) exposePlayRecord(entity); };
+  const playBehaviourDiscovery = createPlayBehaviourDiscovery(exposePlayEntities);
+  const tickBehaviours = (entities: EntityRec[], dt: number) => {
+    if (!behaviourRunner.hasInstances && privatePlayEntities != null && entities === privatePlayEntities && privatePlayComparisonIndices.length === 0 && playExposureVersion === privatePlayExposureVersion && playBehaviourDiscovery.hasNoBehaviours(ownedPlayWorld)) return;
+    behaviourRunner.tick(entities, dt);
+  };
   const playWorldSync = createPlayWorldSync({ owns: entities => entities === privatePlayEntities && privatePlayEntities != null, unchanged: (entity, baseline) => !exposedPlayRecords.has(entity) && editableNativeRecords.get(baseline as EntityRec) === entity, comparisonIndices: (entities, retained) => entities === privatePlayEntities && playExposureVersion === privatePlayExposureVersion && retained === ownedPlayWorld?.entities ? privatePlayComparisonIndices : undefined, expose: exposePlayEntities });
   const acceptRuntimeWorld = (result: PlayRuntimeWorld, owned = retainedNativePlayWorld(result)) => {
     const changes = owned && ownedPlayWorld && privatePlayEntities === playEntities && privatePlayEntities != null && privatePlayComparisonIndices.length === 0 && playExposureVersion === privatePlayExposureVersion ? retainedPlayWorldChanges(ownedPlayWorld, owned) : undefined;
@@ -1775,7 +1781,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (mode !== 'play') return;
       playSpin += dt;
       const src = playEntities ?? editEntities;
-      behaviourRunner.tick(src, dt);
+      tickBehaviours(src, dt);
       runPlayFrame(dt);
     },
     step(dt = 1 / 60) {
@@ -1783,7 +1789,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       frame++;
       playSpin += dt;
       const src = playEntities ?? editEntities;
-      behaviourRunner.tick(src, dt);
+      tickBehaviours(src, dt);
       runPlayFrame(dt);
       return true;
     },

@@ -1,3 +1,4 @@
+// Author: MiYu. Public script component and lifecycle APIs.
 export { Behaviour } from './Behaviour.js';
 export {
   SerializeField,
@@ -47,6 +48,7 @@ export {
 } from './decorators.js';
 export {
   getBehaviour,
+  getBehaviourRegistrationToken,
   listBehaviours,
   isBehaviourType,
   buildDefaults,

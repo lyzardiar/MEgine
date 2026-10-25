@@ -1,3 +1,4 @@
+// Author: MiYu. Register script metadata and invalidate component discovery on membership changes.
 import type { Behaviour } from './Behaviour.js';
 import type {
   BehaviourCtor,
@@ -9,6 +10,7 @@ import type {
 import { ENTITY_REFERENCE_FIELDS_KEY } from './types.js';
 
 const registry = new Map<string, BehaviourEntry>();
+let registrationToken: object = {};
 
 /** Pending field patches keyed by constructor, then field name. */
 const pendingFields = new WeakMap<object, Map<string, Partial<FieldMeta>>>();
@@ -98,7 +100,11 @@ function cloneDefault(value: unknown): unknown {
 
 export function registerBehaviourEntry(entry: BehaviourEntry) {
   registry.set(entry.type, entry);
+  registrationToken = {};
 }
+
+/** Identity changes on registration, replacement and registry reset. */
+export function getBehaviourRegistrationToken(): object { return registrationToken; }
 
 export function getBehaviour(type: string): BehaviourEntry | undefined {
   return registry.get(type);
@@ -204,4 +210,5 @@ export function takeClassMeta(ctor: BehaviourCtor): {
 
 export function clearRegistryForTests() {
   registry.clear();
+  registrationToken = {};
 }

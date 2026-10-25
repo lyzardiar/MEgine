@@ -1815,3 +1815,11 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 复用同一冻结程序启用CPU采样，`map-session-1792894356592`通过；进程24768正常退出，发现文件已移除，用户编辑器64664保持运行。采样目标`http://tauri.localhost/`，请求间隔1,000微秒，实际窗口5,315.878ms／2,873样本，timeDeltas合计5,315.663ms，idle归属3,566.901ms。按样本权重汇总的self归属：BehaviourRunner.tick107.830ms、SceneChangeTracker.observe107.436ms、跨窗口publish86.753ms、GC142.782ms；bundle位置片段与`packages/behaviour/src/runner.ts`的每帧Object.keys组件发现循环相符。这些不是完整函数inclusive耗时，也不是进程CPU用量，含Profiler开销，不能将采样时FPS用于普通性能对照。下一项优先验证行为组件发现的重复扫描与兼容边界。
 
 工具／原生日志为`tmp/docs-artifacts/editor-performance-risk/main-thread-cpu-{tests,final-tests,native}.log`与`owner-timing-{frontend-build,native-build,native-repro,summary,analysis}`；原件、片段和冻结收据均在tmp。最终校验补充后重放同一CPU原件，汇总一致，没有重复原生采样。本批计数2/3，下一独立修复后合并验证受影响的播放、原地图和分离窗口路径；不把这次必要复现写成完整批次或长期稳定通过，完整War3／LOD／稳定60继续进行中。
+
+### 第一百四十二阶段／新批次任务3/3：私有原生世界复用空行为发现
+
+`packages/behaviour/src/{registry,index,runner}.ts`提供注册身份token与只读实例状态；注册、替换和测试重置均更新token。`packages/editor/src/playBehaviourDiscovery.ts`只认证playWorldSync工厂拥有的不可变世界和记录，按实际注册键判断组件；同一实体数组复用空结果，相邻稀疏补丁只检查变化记录，记录缓存随注册token失效，上一个世界仅保留WeakRef。超过半数记录替换时交回既有扫描，避免每帧填充完整记录缓存。`store.ts`仅在没有已有实例、当前实体数组全部私有且未暴露、没有待比较的暴露记录时使用该证明；Tick／Step共享入口。普通输入、迟注册、可变编辑、已有实例移除、枚举函数或数组迭代器变化均保留完整协调路径。
+
+新增`playBehaviourDiscovery.test.mjs`的9项与既有behaviourLifecycle／behaviourSparseWorld的4项定向逻辑检查最终通过，覆盖扫描次数、相邻／跳过版本、拓扑、密集回退与恢复、注册键与可变entry元数据、注册替换／重置、伪造冻结世界／getter／Proxy、枚举变化与恢复后保留的可变别名、WeakRef失效、非激活实例、真实createNativePlayRuntime mock、多数私有但含暴露记录、同值编辑、迟注册、删除onDisable、非枚举转枚举、Pause／Step／Tick和Stop。首轮3项夹具失败分别源于SSR与Node注册器实例不同和首个完整reset生成新记录；后续夹具属性描述符及map回调入参修正分别定向复测，失败日志保留，未重复其余通过项。行为包实际dist构建、编辑器TypeScript接口和差异检查通过。
+
+真实保存地图输入4374实体，同进程交替顺序、2轮预热／9轮计量、每轮25帧并逐帧核对完整数据，空行为发现CPU中位数：无实体变化0.383020→0.012508ms，64记录变化0.378656→0.064756ms。密集4374记录变化走既有扫描，最终0.336604→0.351468ms，不宣称密集收益。此范围不含世界创建／克隆／接受、模拟、IPC、跨窗口呈现或实际FPS；脚本`benchmark-behaviour-discovery.mjs`、原始与最终密集样本及定向日志均在`tmp/docs-artifacts/editor-performance-risk/`。本项按三任务规则先提交，140–142达到3/3；接下来统一前端／原生构建，在同一冻结程序验证Amazonia／DotA、分离窗口耗时、播放与隐藏恢复，CPU采样与普通FPS分开解读。稳定60、LOD、长期驻留及完整War3仍待完成。
