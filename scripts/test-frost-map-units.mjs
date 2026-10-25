@@ -12,6 +12,7 @@ Object.defineProperty(engine,'snapshot',{get(){assert.fail('Unit binding must no
 const context=vm.createContext({engine});for(const name of ['warcraft-jass','warcraft-unit-initialization','warcraft-map-units'])vm.runInContext(fs.readFileSync(sample+'game/'+name+'.js','utf8'),context);
 const init=context.FrostWarcraftUnitInitialization.initialize(source),M=context.FrostWarcraftMapUnits,units=M.create(init,data);assert.equal(units.status,'ready',units.error);assert.equal(units.count,96);world.commit();
 assert.equal(world.queries(),1);assert.equal(new Set(init.units.map(u=>u.visual.entity)).size,96);
+for(const u of init.units){const profile=data.definitions[u.typeId].movement;assert.deepEqual(JSON.parse(JSON.stringify(u.movement)),profile??null);if(profile)assert.ok(Object.isFrozen(u.movement));}
 for(const u of init.units){const p=data.placements.find(p=>p.index===u.visual.placementIndex),root=world.entity(p.name);assert.equal(root.entity,u.visual.entity);assert.equal(p.creationNumber,u.visual.creationNumber);assert.equal(root.components.Transform.position[0],u.sourcePosition[0]/128);assert.equal(root.components.Transform.position[2],-u.sourcePosition[1]/128||0);assert.ok(root.entity>4294967296);}
 const gold=init.units.find(u=>u.typeId==='ngol'),root=world.snapshot.entities.find(e=>e.entity===gold.visual.entity),camera=world.entity('Camera'),circle=world.entity('Map unit selection');
 assert.equal(gold.name,'金矿');assert.equal(gold.states.MAX_LIFE,150000);assert.equal(gold.resourceAmount,12500);
@@ -32,4 +33,13 @@ const fresh=context.FrostWarcraftUnitInitialization.initialize(source),broken=st
 assert.equal(M.create(fresh,broken).status,'unsupported');assert.equal(writes,count);assert.equal(fresh.units[0].visual,undefined,'ambiguous bindings publish no partial unit/visual association');
 const missing=structuredClone(data);missing.placements[0].name='missing visual';assert.equal(M.create(fresh,missing).status,'unsupported');assert.equal(writes,count);
 const second=M.create(context.FrostWarcraftUnitInitialization.initialize(source),data);assert.equal(second.selected(),null);assert.equal(M.create({status:'unsupported'},data),null);assert.equal(M.create(init,null),null);
-console.log('PASS 96 source bindings, source HP/mana/names, 64-bit entity IDs, oblique and square picking, source size/color, clear/reload, atomic failures and 600 idle frames without queries/writes');
+const legacy=structuredClone(data);for(const definition of Object.values(legacy.definitions))delete definition.movement;
+const legacyInit=context.FrostWarcraftUnitInitialization.initialize(source);assert.equal(M.create(legacyInit,legacy).status,'ready');assert.ok(legacyInit.units.every(u=>u.movement===null));
+const enriched=structuredClone(data),kind=init.units[0].typeId;enriched.definitions[kind].movement={type:'foot',speed:270,turnRate:.6,collisionSize:31};
+const moving=context.FrostWarcraftUnitInitialization.initialize(source);assert.equal(M.create(moving,enriched).status,'ready');const member=moving.units.find(u=>u.typeId===kind),same=moving.units.filter(u=>u.typeId===kind);
+enriched.definitions[kind].movement.speed=999;assert.equal(member.movement.speed,270);for(const u of same)assert.equal(u.movement,member.movement);
+for(const profile of [null,{}, {type:' foot',speed:270,turnRate:.6,collisionSize:31},{type:'foot',speed:NaN,turnRate:.6,collisionSize:31},{type:'foot',speed:270,turnRate:Infinity,collisionSize:31}]){
+ const invalid=structuredClone(data),fresh=context.FrostWarcraftUnitInitialization.initialize(source);invalid.definitions[kind].movement=profile;const before=writes;
+ assert.equal(M.create(fresh,invalid).status,'unsupported');assert.equal(writes,before);assert.equal(fresh.units[0].visual,undefined);assert.equal(fresh.units[0].movement,undefined);
+}
+console.log('PASS 96 source bindings, source HP/mana/names/movement, frozen shared profiles, legacy packages, 64-bit IDs, oblique picking, atomic failures and 600 idle frames without queries/writes');

@@ -4,7 +4,7 @@ import struct
 import unittest
 from unittest.mock import patch
 from warcraft_object_data import parse_objects, unit_tables, doodad_tables
-from warcraft_unit_bindings import ini
+from warcraft_unit_bindings import ini, movement_profile
 
 
 def objects(original=(), custom=(), version=1, levels=None):
@@ -69,6 +69,16 @@ class ObjectDataTests(unittest.TestCase):
             resolved=self.resolve(self.tables(),{file:objects(custom=[('phea','I001',[('ihtp',0,200),('unam',3,'Potion')])])})
             self.assertEqual(resolved['ui']['I001']['file'],'chest.mdl');self.assertEqual(resolved['balance']['I001']['HP'],'200');self.assertEqual(resolved['names']['I001'],'Potion')
             self.assertEqual(resolved['movement']['I001']['moveHeight'],'0')
+
+    def test_movement_overrides_inherit_modified_base_and_keep_siblings_isolated(self):
+        tables=self.tables();tables['UnitData']['hfoo'].update(movetp='foot',turnRate='0.6');tables['UnitBalance']['hfoo'].update(spd='270',collision='31')
+        for key,table,field in [('umvs','UnitBalance','spd'),('umvt','UnitData','movetp'),('umvr','UnitData','turnRate'),('ucol','UnitBalance','collision')]:tables['UnitMetaData'][key]=dict(slk=table,field=field,index='-1')
+        before=copy.deepcopy(tables)
+        raw=objects(original=[('hfoo','\0'*4,[('umvs',0,300)])],custom=[('hfoo','H001',[('umvs',0,400),('umvt',3,'fly'),('umvr',1,1.5),('ucol',1,16)]),('hfoo','H002',[])])
+        resolved=self.resolve(tables,{'war3map.w3u':raw})
+        self.assertEqual(movement_profile(resolved['movement']['H001'],resolved['balance']['H001']),dict(type='fly',speed=400,turnRate=1.5,collisionSize=16))
+        self.assertEqual(movement_profile(resolved['movement']['H002'],resolved['balance']['H002']),dict(type='foot',speed=300,turnRate=.6,collisionSize=31))
+        self.assertEqual(resolved['overrides'][1]['applied'],['umvs','umvt','umvr','ucol']);self.assertEqual(tables,before)
 
     def test_missing_base_duplicate_and_nonfinite_rejected(self):
         for entries in [[('none','H001',[])],[('hfoo','H001',[]),('hfoo','H001',[])]]:

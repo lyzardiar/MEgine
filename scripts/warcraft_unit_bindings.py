@@ -36,11 +36,22 @@ def model_bounds(raw):
     raise ValueError('Missing source model bounds')
 
 
+def movement_profile(movement, balance):
+    def number(row, field):
+        value = row.get(field, '-').strip(); result = 0 if value in ('', '-', '_') else float(value)
+        if not math.isfinite(result): raise ValueError('Non-finite movement field '+field)
+        return result
+    kind = movement.get('movetp', '_').strip()
+    return dict(type='none' if kind in ('', '-', '_') else kind, speed=number(balance, 'spd'), turnRate=number(movement, 'turnRate'), collisionSize=number(balance, 'collision'))
+
+
 def build_bindings(data, source_read, project, prefix='Assets/OriginalUnits/Selection/', resource_cache=None, ground_meshes=(), definitions=None):
     sources = {}; object_definitions = definitions
     def read(name):
         raw = source_read(name); sources[name] = dict(path=name,sha256=sha(raw),bytes=len(raw)); return raw
-    ui = definitions['ui'] if definitions else rows(read('Units/UnitUI.slk')); balance = definitions['balance'] if definitions else rows(read('Units/UnitBalance.slk')); movement = definitions['movement'] if definitions else rows(read('Units/UnitData.slk'))
+    source_tables = {name: read('Units/'+name+'.slk') for name in ['UnitUI', 'UnitBalance', 'UnitData']}
+    ui = definitions['ui'] if definitions else rows(source_tables['UnitUI']); balance = definitions['balance'] if definitions else rows(source_tables['UnitBalance']); movement = definitions['movement'] if definitions else rows(source_tables['UnitData'])
+    if definitions: read('Units/UnitMetaData.slk')
     placements = [dict(index=i,creationNumber=u['creationNumber'],typeId=u['id'],player=u['player'],sourcePosition=u['location'][:2],facing=u['angle']*180/math.pi,name=f'Unit-{i}-{u["id"]}-{u["creationNumber"]}') for i,u in enumerate(data['units']['units']) if u['id'] != 'sloc']
     kinds = {p['typeId'] for p in placements}; names = {kind:name for kind,name in (definitions or {}).get('names',{}).items() if kind in kinds}
     aliases = (definitions or {}).get('aliases',{})
@@ -59,7 +70,7 @@ def build_bindings(data, source_read, project, prefix='Assets/OriginalUnits/Sele
     for kind in sorted(kinds):
         row,stats = ui[kind],balance[kind]; model = row['file'].replace('\\','/')
         if model.lower().endswith(('.mdl','.mdx')): model=model[:-4]
-        definitions[kind] = dict(name=names[kind],maxLife=number(stats,'HP'),maxMana=number(stats,'manaN'),initialMana=number(stats,'mana0'),selectionScale=number(row,'scale'),selectionZ=number(row,'selZ')/128,moveHeight=number(movement[kind],'moveHeight')/128,bounds=model_bounds(read(model+'.mdx')))
+        definitions[kind] = dict(name=names[kind],maxLife=number(stats,'HP'),maxMana=number(stats,'manaN'),initialMana=number(stats,'mana0'),selectionScale=number(row,'scale'),selectionZ=number(row,'selZ')/128,moveHeight=number(movement[kind],'moveHeight')/128,movement=movement_profile(movement[kind],stats),bounds=model_bounds(read(model+'.mdx')))
         if definitions[kind]['selectionScale'] <= 0 or definitions[kind]['maxLife'] <= 0: raise ValueError('Invalid unit selection or life definition '+kind)
     misc = ini(read('UI/MiscData.txt'))['SelectionCircle']; sizes = []
     project = Path(project)

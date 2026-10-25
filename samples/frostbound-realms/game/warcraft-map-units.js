@@ -23,12 +23,18 @@ var FrostWarcraftMapUnits=(()=>{
   function bind(initialization,data){
     if(data.version!==1||!Array.isArray(data.placements)||!data.definitions||!data.selection)throw Error('Invalid unit binding data');
     const index=new Map(),used=new Set(),bound=[],key=(type,player,x,y)=>type+'/'+player+'/'+x+'/'+y;
+    const profiles=new Map();
     for(const p of data.placements){const k=key(p.typeId,p.player,Math.floor(p.sourcePosition[0]),Math.floor(p.sourcePosition[1]));if(!index.has(k))index.set(k,[]);index.get(k).push(p);}
     for(const u of initialization.units){
       const candidates=[],[x,y]=u.sourcePosition;
       for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const p of index.get(key(u.typeId,u.player,Math.floor(x)+dx,Math.floor(y)+dy))||[])if(!used.has(p.index)&&Math.abs(p.sourcePosition[0]-x)<.052&&Math.abs(p.sourcePosition[1]-y)<.052&&Math.abs((p.facing-u.facing+540)%360-180)<.001)candidates.push(p);
       if(candidates.length!==1)throw Error('Missing or ambiguous visual placement for unit '+u.id);
       const placement=candidates[0],definition=data.definitions[u.typeId];if(!definition||!finite3(definition.bounds?.min)||!finite3(definition.bounds?.max))throw Error('Missing source unit definition '+u.typeId);
+      if(!profiles.has(u.typeId)){
+        const profile=definition.movement;
+        if(profile!==undefined&&(!profile||typeof profile.type!=='string'||!profile.type.length||profile.type!==profile.type.trim()||!['speed','turnRate','collisionSize'].every(key=>Number.isFinite(profile[key]))))throw Error('Invalid source movement definition '+u.typeId);
+        profiles.set(u.typeId,profile?Object.freeze({type:profile.type,speed:profile.speed,turnRate:profile.turnRate,collisionSize:profile.collisionSize}):null);
+      }
       used.add(placement.index);bound.push({unit:u,placement,definition});
     }
     if(used.size!==data.placements.length)throw Error('Uncreated source unit placements');
@@ -42,7 +48,7 @@ var FrostWarcraftMapUnits=(()=>{
       b.entity=e.entity;b.transform={...t,position:[b.unit.sourcePosition[0]/128,t.position[1],-b.unit.sourcePosition[1]/128],rotation:[0,Math.sin(b.unit.facing*Math.PI/360),0,Math.cos(b.unit.facing*Math.PI/360)]};
       if(JSON.stringify(t)!==JSON.stringify(b.transform))commands.push({op:'setComponent',entity:e.entity,component:'Transform',value:b.transform});
     }
-    for(const b of bound){const u=b.unit,d=b.definition;u.visual={entity:b.entity,placementIndex:b.placement.index,creationNumber:b.placement.creationNumber};u.name=d.name;u.states={MAX_LIFE:d.maxLife,LIFE:d.maxLife,MAX_MANA:d.maxMana,MANA:d.initialMana,...u.states};}
+    for(const b of bound){const u=b.unit,d=b.definition;u.visual={entity:b.entity,placementIndex:b.placement.index,creationNumber:b.placement.creationNumber};u.name=d.name;u.movement=profiles.get(u.typeId);u.states={MAX_LIFE:d.maxLife,LIFE:d.maxLife,MAX_MANA:d.maxMana,MANA:d.initialMana,...u.states};}
     if(commands.length)engine.pushCommandsJson(JSON.stringify(commands));
     let selected=null,selectionKey='';
     function select(next){

@@ -270,3 +270,13 @@ REA 复核命令为 `node scripts/probe-frost-rea-map-formats.mjs --unit-init`�
 REA 6.5.0 源站 https://github.com/morluto/rea；`node scripts/probe-frost-rea-map-formats.mjs --unit-selection` 对固定 Game.dll 摘要执行名称查询，证据在 `tmp/docs-artifacts/frost-original-maps/unit-selection-evidence/`。该查询只证明名称存在，不证明原客户端拾取或选择圈投射语义。版本与更新方法见[REA维护说明](../../../third_party/rea/README-MENGINE.md)。
 
 验证：源定义／坐标／地形裁切 5 项、BLP alpha 5 项、96 单位绑定脚本、数据打包边界及菜单会话检查通过。原生单位选择专项报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792795243536.json` 通过，0 error、正常退出；1280×720 与 960×900 截图人工核对金矿完整贴地选择圈，清除／重载／返回／Stop 恢复通过。复用 EXE `7e8e4e9b2f32cec3c8a75342ba0bf5932d2c7a12856bd778718cd670ee87f93a`。高窗口中的现有状态条位置仍需按原版 HUD 布局修正；该结果不表示完整 War3 界面／对局兼容，不包含新增 FPS 或内存结论。
+
+## 原地图单位移动原始参数
+
+导入器把UnitData.slk的movetp、turnRate和UnitBalance.slk的spd、collision写入OriginalUnitBindings.json的definitions[typeId].movement，对应type、turnRate、speed、collisionSize。值保留原表单位，空白数值按0、空白移动类型按none处理，非有限数值拒绝。自定义单位先按UnitMetaData.slk的umvs／umvt／umvr／ucol覆盖基类，再生成参数；原表、对象修改和生成器摘要继续随地图包维护。运行绑定全部成功后，以不可变对象公开在单位的movement，相同类型共享一份；旧包无此字段时为null，仍可选择单位。
+
+内置Amazonia已更新96个单位、37种定义；金矿为none／0移速／0转速／50碰撞尺寸。转换器已在任意地图导入缓存身份中，生成器改变会建立新包身份，公共资源继续按原缓存复用。升级入口仍为`node scripts/attach-frost-unit-bindings.mjs samples/frostbound-realms amazonia`，不重新生成地图模型或地形。本次更新的数据、地图脚本、manifest与主脚本一并提交。
+
+REA入口为`node scripts/probe-frost-rea-map-formats.mjs --unit-movement`。固定Game.dll SHA256为e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a；注册链定位SetUnitMoveSpeed→0x6f1f7850、GetUnitMoveSpeed→0x6f1e62e0、IssuePointOrder→0x6f1e9450，setter经0x6f67b3c0访问单位的0x1ec组件，再分派到0x6f5e1740。两组探针保留前后摘要、未修改证明、完整输出与来源。该证据覆盖注册及分派；有效移速的加成／钳制、转速单位、寻路和原客户端运动一致性仍需独立验证。REA源站https://github.com/morluto/rea，固定6.5.0，更新方式见[维护说明](../../../third_party/rea/README-MENGINE.md)。原始探针与原表对照位于tmp/docs-artifacts/frost-original-maps/unit-movement-evidence。
+
+定向验证通过：7项单位源数据检查、7项对象修改检查、96单位运行绑定脚本（不可变共享参数／旧包兼容／无效数据原子拒绝／600空闲帧零查询写入）、初始化打包和菜单会话脚本；37份实际MPQ定义、96个放置记录、数据／脚本／生成器／实现摘要另行核对。此阶段接通原始参数。原地图运行仍只执行CreateAllUnits，Amazonia的InitCustomTriggers→RunInitializationTriggers→MeleeStartingUnits等完整开局、可控制的玩家单位及移动命令仍待接入；完整对局状态不变。新增原生行为与地图流程按[测试批次](../../testing-batches.md)安排验证。

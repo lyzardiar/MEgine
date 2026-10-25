@@ -1,7 +1,7 @@
 """Author: MiYu. Check original unit binding source parsing and coordinate conversion."""
 import struct
 import unittest
-from warcraft_unit_bindings import model_bounds, ini
+from warcraft_unit_bindings import model_bounds, ini, movement_profile
 from warcraft_selection_ground import selection_patch, ground_triangles
 import tempfile
 from pathlib import Path
@@ -16,6 +16,20 @@ class BindingSourceTests(unittest.TestCase):
     def test_model_coordinate_axes_and_scale(self):
         result=model_bounds(self.model([500,-128,-256,-64,384,512,640]))
         self.assertEqual(result,dict(min=[-1,-.5,-4],max=[3,5,2]))
+
+    def test_original_movement_fields_and_static_units(self):
+        self.assertEqual(movement_profile(dict(movetp='foot',turnRate='0.6'),dict(spd='270',collision='31')),dict(type='foot',speed=270,turnRate=.6,collisionSize=31))
+        self.assertEqual(movement_profile(dict(movetp='_',turnRate='-'),dict(spd='-',collision='50')),dict(type='none',speed=0,turnRate=0,collisionSize=50))
+        self.assertEqual(movement_profile({},{}),dict(type='none',speed=0,turnRate=0,collisionSize=0))
+        self.assertEqual(movement_profile(dict(movetp='fly',turnRate='2'),dict(spd='522',collision='0'))['speed'],522)
+        self.assertEqual(movement_profile(dict(movetp='custom'),dict(spd='600'))['speed'],600)
+
+    def test_nonfinite_movement_data_is_rejected(self):
+        for field in ['speed','turnRate','collisionSize']:
+            for value in ['nan','inf','-inf']:
+                movement=dict(movetp='foot',turnRate='0.6');balance=dict(spd='270',collision='31')
+                (movement if field=='turnRate' else balance)[dict(speed='spd',turnRate='turnRate',collisionSize='collision')[field]]=value
+                with self.assertRaises(ValueError):movement_profile(movement,balance)
 
     def test_invalid_extents_do_not_produce_pickable_objects(self):
         for bounds in [[1,2,0,0,1,1,1],[1,0,0,0,float('nan'),1,1]]:

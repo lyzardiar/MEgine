@@ -1755,3 +1755,11 @@ DotA14437实体，缓存进入2.279秒；Scene60.31／Game59.96FPS，原生14.57
 多窗口流程292.11秒，五轮均运行15秒、Stop后空闲20秒；20份版本2样本通过根PID／创建时间、子进程身份、唯一PID和私有字节求和检查，各空闲点均7进程。根私有内存4575.8281／4697.7461／4661.8828／4669.3906／4673.1953MiB，首末增加97.3672MiB、后三轮增加11.3125MiB；进程树5162.9414／5242.3828／5209.1328／5218.5039／5247.4258MiB，首末增加84.4844MiB、后三轮增加38.2930MiB。五轮有预热和波动，首末仍上升，不据此宣称长期驻留通过、全部内存风险解决或跨进程内存下降由本批引起。
 
 已查看DotA Game、重开War3菜单、第五轮Amazonia Game。assert-ranges-hierarchy-batch.py已分别验证两份报告的采样／计数／分段，summarize-session-sync-batch.py核对同一冻结程序、两报告正常退出和20份内存数据；session-sync-batch-revisions.json保留版本差分。所有日志、JSON、PNG及收据均在tmp/docs-artifacts/editor-performance-risk／testing-batches/B001，本次未提交原始产物。该批范围验证完成，下一批0/3；后续继续定位模拟与呈现尾部延迟，稳定60、长期驻留、LOD和完整JASS／War3对局仍未完成。
+
+### 第一百三十七阶段／新批次任务1/3：原地图单位移动参数贯穿导入和运行绑定
+
+warcraft_unit_bindings.py读取原UnitData／UnitBalance的移动类型、基础移速、转速与碰撞字段，保存原单位和源表摘要；对象修改沿用UnitMetaData解析，覆盖后的定义再打包。warcraft-map-units.js在全部绑定成功后发布共享不可变movement对象，旧包缺失字段为null，非法字段不产生部分绑定或场景写入。内置Amazonia的96单位／37定义、数据／地图脚本／manifest／主脚本同步更新，模型、地形和选择网格字节未变。任意地图导入的包身份已包含该转换器，公共转换资源缓存继续复用。
+
+使用REA 6.5.0对原Game.dll执行注册和组件分派探针，两组通过，前后SHA一致且artifact_changed=false；可复现命令node scripts/probe-frost-rea-map-formats.mjs --unit-movement，官方源站与固定版本仍在third_party/rea/README-MENGINE.md。7项Python源解析、7项对象继承／四字段覆盖检查通过，node scripts/test-frost-map-units.mjs、test-frost-unit-initialization-package.mjs、test-frost-map-session.mjs三项定向脚本通过。覆盖96单位、类型共享和深度冻结、旧包、字段源对象后续修改隔离、无效参数原子拒绝及600空闲帧无新增查询／写入。实际37份定义逐一与原MPQ表匹配，96放置身份及最终数据／脚本字节数、manifest、生成器与嵌入实现摘要一致；修改JS及打包主脚本语法检查通过。日志、REA原始JSON及表摘要在tmp/docs-artifacts/frost-original-maps/unit-movement-evidence，未运行完整资产遍历或原生QA。
+
+范围为原始参数接入。当前只执行CreateAllUnits，Melee完整开局、动态玩家单位、寻路、右键命令、加成／钳制／转速算法与原客户端一致性仍未完成；不把静态注册证据写成原版运动验收。本批1/3，后续两项后合并验证新增单位数据、选择／重载／返回、旧包／自定义单位、任意地图新缓存转换及实际工具包消费路径、初始化失败边界及原生流程；编辑器稳定60、长期驻留、LOD和完整War3目标继续进行中。最新编辑器原生结果仍为134–136的d6aa964。

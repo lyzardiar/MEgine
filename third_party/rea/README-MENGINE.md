@@ -124,3 +124,5 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 
 
 原地图相机：`node scripts/probe-frost-rea-camera.mjs`复核原FOV字段、投影矩阵、GameUI逻辑坐标与普通游戏WorldFrame布局；`scripts/probe-frost-camera-binary.py`执行30个原矩阵CPU用例。普通游戏源FOV与引擎垂直角的换算、地图增量更新命令和电影模式等待验边界见[原地图镜头维护说明](../../docs/designs/frostbound-realms/original-map-import.md#原地图运行镜头)。探针固定二进制摘要，更新Game.dll时需重新定位并复核，不自动接受新版本地址。
+
+原地图单位移动参数：`node scripts/probe-frost-rea-map-formats.mjs --unit-movement` 复核固定Game.dll中的SetUnitMoveSpeed／GetUnitMoveSpeed／IssuePointOrder注册及移动组件分派，保留未修改证明。UnitData／UnitBalance／UnitMetaData字段、地图包更新、运行单位接口和待验算法见[原地图单位移动原始参数](../../docs/designs/frostbound-realms/original-map-import.md#原地图单位移动原始参数)。本页固定的GitHub源站、6.5.0版本和工具更新流程继续适用；更换Game.dll版本须先重新定位和复核，不能沿用旧地址。
