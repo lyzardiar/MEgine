@@ -9,7 +9,7 @@ mod placements;
 mod objects;
 mod world;
 #[cfg(test)] mod world_tests;
-#[cfg(test)] mod tests;
+#[cfg(test)] pub(crate) mod tests;
 pub use placements::*;
 pub use objects::*;
 pub use world::WarcraftMapWorldData;
@@ -84,7 +84,7 @@ impl WarcraftMapPathing {
 }
 
 /// Retain one handle for the map lifetime. Geometry, gameplay and views borrow the same data and mounted namespaces.
-pub struct WarcraftMapSession {mount:ScopedWarcraftMap,info:WarcraftMapInfo,terrain:WarcraftMapTerrain,pathing:WarcraftMapPathing,strings:Option<WarcraftStringTable>,members:Vec<AssetBytes>,diagnostics:Vec<String>}
+pub struct WarcraftMapSession {mount:ScopedWarcraftMap,info:WarcraftMapInfo,terrain:WarcraftMapTerrain,pathing:WarcraftMapPathing,strings:Option<Arc<WarcraftStringTable>>,members:Vec<AssetBytes>,diagnostics:Vec<String>}
 impl WarcraftMapSession {
     pub fn open(archives:&WarcraftArchives,path:&Path,limits:WarcraftMapLimits,cancel:&WarcraftMapCancelToken)->Result<Self> {Self::open_with_progress(archives,path,limits,cancel,|_|{})}
     /// Synchronous core-data load for a worker. Progress precedes terrain/model compilation, GPU uploads and scripts.
@@ -98,7 +98,7 @@ impl WarcraftMapSession {
         report(cancel,&mut progress,WarcraftMapLoadPhase::Terrain,2)?; let bytes=read_member(&mount,"war3map.w3e",limits,&mut retained)?; let terrain=reader::terrain(bytes.bytes.clone(),&limits,cancel,&mut budget)?; members.push(bytes);
         report(cancel,&mut progress,WarcraftMapLoadPhase::Pathing,3)?; let bytes=read_member(&mount,"war3map.wpm",limits,&mut retained)?; let pathing=reader::pathing(bytes.bytes.clone(),&limits,cancel)?; members.push(bytes);
         report(cancel,&mut progress,WarcraftMapLoadPhase::Strings,4)?; let mut diagnostics=Vec::new(); let strings=match read_member(&mount,"war3map.wts",limits,&mut retained) {
-            Ok(bytes)=>{let parsed=strings::parse(bytes.bytes.clone(),&limits,cancel,&mut budget); members.push(bytes); match parsed {Ok(table)=>Some(table),Err(e@WarcraftMapError::Format {..})=>{let text=format!("{e}; unresolved TRIGSTR values and original WTS bytes are retained"); budget.charge("war3map.wts",text.len()+std::mem::size_of::<String>()*2)?; diagnostics.push(text); None},Err(e)=>return Err(e)}},
+            Ok(bytes)=>{let parsed=strings::parse(bytes.bytes.clone(),&limits,cancel,&mut budget); members.push(bytes); match parsed {Ok(table)=>Some(Arc::new(table)),Err(e@WarcraftMapError::Format {..})=>{let text=format!("{e}; unresolved TRIGSTR values and original WTS bytes are retained"); budget.charge("war3map.wts",text.len()+std::mem::size_of::<String>()*2)?; diagnostics.push(text); None},Err(e)=>return Err(e)}},
             Err(WarcraftMapError::Resource(AssetError::NotFound(_)))=>None,Err(e)=>return Err(e),
         };
         report(cancel,&mut progress,WarcraftMapLoadPhase::Validate,5)?; let size=terrain.tile_size(); if Some(pathing.size())!=size[0].checked_mul(4).zip(size[1].checked_mul(4)).map(|(x,y)|[x,y]) {return Err(WarcraftMapError::Format {member:"war3map.wpm",offset:8,message:"WPM must have four cells per W3E tile on both axes".into()});}
@@ -111,7 +111,8 @@ impl WarcraftMapSession {
     pub fn info(&self)->&WarcraftMapInfo {&self.info}
     pub fn terrain(&self)->&WarcraftMapTerrain {&self.terrain}
     pub fn pathing(&self)->&WarcraftMapPathing {&self.pathing}
-    pub fn strings(&self)->Option<&WarcraftStringTable> {self.strings.as_ref()}
+    pub fn strings(&self)->Option<&WarcraftStringTable> {self.strings.as_deref()}
+    pub(crate) fn string_table_handle(&self)->Option<Arc<WarcraftStringTable>> {self.strings.clone()}
     pub fn members(&self)->&[AssetBytes] {&self.members}
     pub fn diagnostics(&self)->&[String] {&self.diagnostics}
     pub fn display_name(&self)->&str {self.strings.as_ref().map_or(&self.info.name,|table|table.resolve(&self.info.name))}

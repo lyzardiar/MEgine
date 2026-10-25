@@ -109,13 +109,13 @@ fn native_warcraft_map_strings_reject_duplicate_normalized_ids_bad_syntax_and_qu
     for limits in [WarcraftMapLimits {max_text_bytes:5,..defaults()},WarcraftMapLimits {max_string_bytes:2,..defaults()},WarcraftMapLimits {max_records:1,..defaults()},WarcraftMapLimits {max_decoded_bytes:1,..defaults()},WarcraftMapLimits {max_member_bytes:5,..defaults()}] {is_limit(WarcraftStringTable::parse(Arc::from(b),limits));}
 }
 
-pub(super) struct MemorySource {pub(super) id:AssetSourceId,pub(super) files:BTreeMap<String,Arc<[u8]>>,pub(super) reads:Mutex<Vec<String>>}
-impl MemorySource {pub(super) fn new(files:Vec<(&str,Vec<u8>)>)->Arc<Self> {Arc::new(Self {id:AssetSourceId::fresh(),files:files.into_iter().map(|(k,v)|(k.into(),v.into())).collect(),reads:Mutex::new(vec![])})}}
+pub(crate) struct MemorySource {pub(crate) id:AssetSourceId,pub(crate) files:BTreeMap<String,Arc<[u8]>>,pub(crate) reads:Mutex<Vec<String>>}
+impl MemorySource {pub(crate) fn new(files:Vec<(&str,Vec<u8>)>)->Arc<Self> {Arc::new(Self {id:AssetSourceId::fresh(),files:files.into_iter().map(|(k,v)|(k.into(),v.into())).collect(),reads:Mutex::new(vec![])})}}
 impl AssetByteSource for MemorySource {
     fn identity(&self)->AssetSourceId {self.id}
     fn read(&self,member:&str)->std::result::Result<AssetSourceRead,AssetError> {self.reads.lock().unwrap().push(member.into()); Ok(self.files.get(member).map(|b|AssetSourceRead::Bytes(b.clone())).unwrap_or(AssetSourceRead::Missing))}
 }
-pub(super) fn map_source()->Arc<MemorySource> {MemorySource::new(vec![("war3map.w3i",info(25).bytes),("war3map.w3e",terrain([3,2])),("war3map.wpm",pathing([8,4])),("war3map.wts",b"STRING 1\n{\nMap name\n}\n".to_vec()),("units/a.mdx",b"override".to_vec())])}
+pub(crate) fn map_source()->Arc<MemorySource> {MemorySource::new(vec![("war3map.w3i",info(25).bytes),("war3map.w3e",terrain([3,2])),("war3map.wpm",pathing([8,4])),("war3map.wts",b"STRING 1\n{\nMap name\n}\n".to_vec()),("units/a.mdx",b"override".to_vec())])}
 pub(super) fn scope(source:Arc<MemorySource>,common:Arc<MemorySource>,cache:Arc<AssetByteCache>)->ScopedWarcraftMap {ScopedWarcraftMap::new("authored-map.w3x".into(),source,vec![common],cache)}
 
 #[test]
@@ -164,3 +164,6 @@ fn native_warcraft_map_session_rejects_mismatch_and_limits_but_keeps_recoverable
         assert_eq!(cache.stats().entries,0);
     }
 }
+
+// Author: MiYu. Reuse real core-session fixture loading in native definition tests.
+pub(crate) fn authored_session(map:Arc<MemorySource>,common:Arc<MemorySource>,cache:Arc<AssetByteCache>)->WarcraftMapSession {WarcraftMapSession::load(scope(map,common,cache),defaults(),&WarcraftMapCancelToken::default(),|_|{}).unwrap()}

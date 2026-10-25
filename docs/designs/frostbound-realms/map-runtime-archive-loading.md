@@ -172,3 +172,15 @@ Host新增`MountedWarcraftTerrain`与`WarcraftTerrainView`。CPU句柄可跨视�
 9项定向格式／安全／生命周期检查通过，独立只读审核未发现新缺陷。`cargo run -p mengine-assets --example warcraft_archive_world -- <game-directory> <map-paths...>`只输出JSON；三张代表地图的8成员共1477584字节、9661装饰、159单位放置、1407对象和39535修改完成全字段对照及逐字节重建。三次关闭session均仅留同一公共Footman缓存105022字节，WorldData仍有效。证据为`tmp/docs-artifacts/warcraft-archives/world-{tests,real,comparison}*`与`compare-native-world.py`；原件不提交。该结果没有全图转换、完整Editor构建或FPS结论。
 
 真实DotA没有`war3mapUnits.doo`，其`Scripts/war3map.j`约3MB且包含919处CreateUnit调用；缺少放置成员不能解释为地图无单位。仍须读取地图SLK／对象定义、解析模型外观和随机配置、接入脚本创建与完整世界，再替换现有离线选图入口。此接口不执行JASS、不求值继承、不创建模型或规则。仅支持经典pre-1.32布局，DOO版本本身无法识别Reforged skin；独立parse调用者必须依据地图build选择布局。新功能批次1/3，旧选图仍落盘，缓存问题保持未完成。
+
+## 公共定义表共享与对象继承（第一百五十九阶段）
+
+`WarcraftMapDefinitions::load`读取地图优先的11张源表：单位UI／移动／属性／武器／能力、物品、装饰、可破坏物及三类元数据。地图SLK按成员替换公共表；不能假定优化地图一定含W3U／W3T。公共表按实际`AssetLocation`解析并在`WarcraftDefinitionCache`共享，默认保留上限256MiB／64来源；地图表只由当前定义句柄持有。淘汰不破坏活跃Arc，共享预算统计是分配规划口径，不能视为进程RSS。SYLK读取与地形复用同一有界实现，保留引号／分号、持续坐标和重复检查。
+
+所有原表覆盖先应用，再构建自定义继承；基表保持不可变，每对象只存改变的字段与源修改索引，兄弟对象隔离，链式继承保留根ID。查询按table／index／field查找，不复制整张公共表或展平所有字符串。元数据决定字段、重复变体和索引；未知元数据、目标、dataPointer及未消费家族分别保留明确disposition，原始修改始终在WorldData。单位名等Profile覆盖可按索引读取，WTS通过共享句柄在session关闭后继续解析。TXT基表、完整ability／buff／upgrade求值及玩法仍待接入；当前不把索引字段静默写成普通标量。
+
+源成员默认单项16MiB／累计32MiB，逻辑decoded上限256MiB，覆盖计划32MiB／65536对象；热缓存同样检查请求预算，地图来源不匹配拒绝。取消在归档调用前后、源表记录及覆盖循环检查；活跃归档调用仍需等返回。产品不导出资产、meta、缓存文件或转换作业。
+
+必要检查为7项定义／缓存／继承测试、1项共享SYLK、2项WTS和1项session生命周期回归通过；独立只读审核完成。`cargo run -p mengine-assets --example warcraft_archive_definitions -- <game-directory> <map-paths...>`在DotA／Amazonia／BootyBay验证33来源记录、22753源行、759844源字段和741788有效字段，与现有独立Python读取／覆盖结果一致；DotA使用6张地图SLK，111项装饰／可破坏物修改生效，39424项ability修改明确保留。三图共复用11公共解析表，累计16次命中，规划驻留68974815字节；session关闭后定义仍可读。结果只证明定义数据与复用，不是整图加载或FPS基准。
+
+证据`tmp/docs-artifacts/warcraft-archives/definition-{tests,sylk-test,wts-tests,session-test,real,comparison}*`及`compare-native-definitions.py`；探针只向stdout输出，本地收据写tmp，不提交原表。新批次2/3；下一任务后统一相关Host／Tauri和世界消费验证。原选图仍使用离线转换，后续继续TXT定义、原生模型／世界、脚本初始化和选图worker接入，缓存问题保持未完成。

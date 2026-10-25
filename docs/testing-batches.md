@@ -2127,3 +2127,11 @@ REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖
 必要检查：`cargo test -p mengine-assets --lib native_warcraft_world -- --test-threads=1`通过9项，涵盖全部经典版本／随机模式／对象值类型、嵌套记录、截断／尾随／非有限／编码／预算、map-only、归档释放及读取后取消；独立只读审核无新缺陷。Debug源数据示例编译并读取DotA／Amazonia／BootyBay通过，8成员1477584字节逐字节重建一致，9661装饰／159单位／1407对象／39535修改全字段对照通过。公共Arc复用、三次释放仅留公共缓存105022字节、世界数据仍有效。日志与比较脚本在`tmp/docs-artifacts/warcraft-archives/world-*`及`compare-native-world.py`。未重跑既有地图／地形／水面全套、全图转换、全库或完整Editor构建；PID64664未触碰。
 
 待批次：当前1/3，累计三任务后统一相关Host／Tauri消费者编译和世界／视口集成验证；未受影响的155–157结果复用。后续覆盖地图SLK／对象定义、模型共享／来源覆盖、随机配置求值、脚本创建、世界释放及选图worker。DotA没有单位放置成员，919处CreateUnit脚本调用不属于本读取器消费范围。经典DOO不含1.32 skin，不能扩大为Reforged兼容或完整War3加载／性能验收；旧选图仍离线转换，既有缓存不清理。
+
+### 第一百五十九阶段／新批次任务2/3：源定义表共享与对象继承
+
+变更：`mengine-assets/src/warcraft_definitions/{mod,tables,overrides,tests}.rs`、共享`warcraft_slk.rs`及地形适配、WTS Arc生命周期、测试夹具和`examples/warcraft_archive_definitions.rs`。11源表按地图优先读取，公共解析结果按实际来源共享并有界保留，地图源不强驻留；自定义只复制字段引用，原表先于自定义，兄弟隔离，未支持字段有明确保留状态。产品无文件写出，现有选图入口未替换。
+
+必要定向检查：`cargo test -p mengine-assets --lib native_warcraft_definitions -- --test-threads=1`通过7项；共享读取相关`native_warcraft_terrain_sylk`1项、`native_warcraft_map_strings`2项、`native_warcraft_map_session_shares`1项通过。独立只读审核完成。三图33来源、22753行／759844源字段和741788有效字段对照通过；DotA6张地图表、111覆盖生效／39424能力修改保留，公共解析缓存11项／16次命中，地图表随定义句柄释放。证据在`tmp/docs-artifacts/warcraft-archives/definition-*`及`compare-native-definitions.py`；首次编译发现并修正借用声明／测试类型问题，后续11项通过，无重复完整构建。
+
+当前158–159为2/3。下个功能后合并Host／Tauri消费者编译、真实原生世界消费、共享／地图覆盖／释放及取消／失败验证；SYLK重用影响的地形结果在该批核对，不提前重跑全库、全图转换或完整Editor。TXT基表、能力／buff／upgrade求值、JASS与原选图入口仍待完成；不以数据对照宣称完整War3加载、稳定FPS或缓存问题结案。用户PID64664和既有缓存保持。
