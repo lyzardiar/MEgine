@@ -67,6 +67,14 @@ public:
 };
 }
 const std::vector<std::string>& FrameDefinition::property(const std::string& key) const { static const std::vector<std::string> empty; auto it=properties.find(key); return it==properties.end() ? empty : it->second; }
+std::string nextFrameFocus(const std::vector<FrameFocus>& frames,const std::string& current,bool reverse) {
+    std::map<std::string,size_t> names;std::vector<size_t> enabled;for(size_t i=0;i<frames.size();++i){names.try_emplace(frames[i].name,i);if(frames[i].enabled)enabled.push_back(i);}if(enabled.empty())return {};
+    auto follow=[&](size_t index,bool include){for(size_t i=0;i<=frames.size();++i){if(include && frames[index].enabled)return frames[index].name;auto next=names.find(frames[index].next);if(next==names.end())break;index=next->second;include=true;}return std::string{};};
+    if(current.empty()){for(size_t i=0;i<frames.size();++i)if(frames[i].initial){auto first=follow(i,true);if(!first.empty())return first;}return frames[enabled.front()].name;}
+    if(!reverse){auto found=names.find(current);if(found!=names.end()){auto next=follow(found->second,false);if(!next.empty() && next!=current)return next;}}
+    else for(auto i:enabled){auto next=follow(i,false);if(next==current && frames[i].name!=current)return frames[i].name;}
+    auto found=std::find_if(enabled.begin(),enabled.end(),[&](auto i){return frames[i].name==current;});if(found==enabled.end())return frames[reverse?enabled.back():enabled.front()].name;auto index=size_t(found-enabled.begin());return frames[enabled[(index+(reverse?enabled.size()-1:1))%enabled.size()]].name;
+}
 float FrameDefinition::number(const std::string& key, float fallback) const { auto& p=property(key); if(p.empty())return fallback; size_t end=0; float value=std::stof(p.front(),&end); if(end<p.front().size() && p.front()[end]=='f')++end; if(end!=p.front().size() || !std::isfinite(value))throw std::runtime_error("Invalid FDF number"); return value; }
 void FrameDefinitions::registerFrame(const FrameDefinition& frame) {if(frames_.size()>=16384)throw std::runtime_error("FDF definition budget exceeded");frames_[frame.name]=frame;for(auto& child:frame.children)registerFrame(child);}
 void FrameDefinitions::load(Archives& archives, const std::string& member) {

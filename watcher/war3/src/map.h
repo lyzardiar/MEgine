@@ -6,6 +6,12 @@
 
 namespace war3 {
 using MapStrings = std::map<unsigned,std::string>;
+struct MapHeader {
+    unsigned reserved=0,flags=0,players=0;
+    std::string name;
+    static std::optional<MapHeader> parse(std::span<const std::uint8_t> bytes);
+    static std::optional<MapHeader> read(const fs::path& path);
+};
 MapStrings mapStrings(std::span<const std::uint8_t> bytes);
 std::string mapString(const std::string& value,const MapStrings& strings);
 struct MapPlayer {
@@ -42,6 +48,7 @@ struct MapInfo {
     std::vector<MapItemTable> randomItems;
     bool omittedEditorTables=false;
     unsigned playablePlayers() const;
+    unsigned humanPlayers() const;
     static MapInfo parse(std::span<const std::uint8_t> bytes,const MapStrings& strings={});
 };
 struct TerrainCorner { std::int16_t ground; std::uint16_t water; std::uint8_t flags,variation,cliff; };

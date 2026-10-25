@@ -22,6 +22,8 @@ Game.dll 的 `0x6f142407` 设置 redist，`0x6f142412` startup；`0x6f141d72` �
 
 菜单三维模型为 `UI\Glues\MainMenu\MainMenu3d_exp\MainMenu3d_exp.mdx`，当前仅此场景显式启用双面绘制，普通模型沿用材质标志。原版 logo 的精确 UI sprite 比例、灯光、雾和粒子仍需继续对照；基础帧输出不等同于完整视觉还原。
 
+地图信息面板的运行时布局、标题偏移、尺寸分类与地形标签由本轮 REA 调用链和限定 CPU 对照补齐。地址、配置成员、复现入口及探针边界见 [原生地图与选图流程](map-loading.md)。原始 REA JSON 与 CPU 输出保存在 `tmp/docs-artifacts/war3/map-menu/`；原件始终只读。
+
 ## 后续对照
 
 模拟步进、随机数、句柄、计时器、命令顺序、JASS执行、存档和回放尚未取得完整行为证据，保持验收矩阵待实现状态，不能以格式解析或窗口运行代替游戏规则验收。

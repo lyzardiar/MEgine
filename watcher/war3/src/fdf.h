@@ -2,6 +2,7 @@
 #pragma once
 #include "archive.h"
 #include <map>
+#include <set>
 
 namespace war3 {
 std::string sourceText(std::span<const std::uint8_t> bytes);
@@ -15,6 +16,8 @@ struct FrameDefinition {
     const std::vector<std::string>& property(const std::string& key) const;
     float number(const std::string& key, float fallback = 0) const;
 };
+struct FrameFocus {std::string name,next;bool enabled=false,initial=false;};
+std::string nextFrameFocus(const std::vector<FrameFocus>& frames,const std::string& current,bool reverse=false);
 class FrameDefinitions {
     std::map<std::string,FrameDefinition> frames_;
     std::map<std::string,std::string> strings_;

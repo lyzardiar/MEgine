@@ -14,6 +14,10 @@ std::array<float,2> point(Binary& b) {return {b.f32(),b.f32()};}
 std::array<std::uint8_t,4> color(Binary& b) {auto value=b.take(4);return {value[0],value[1],value[2],value[3]};}
 std::string extension(const fs::path& path) {auto ext=path.extension().wstring();for(auto& c:ext)c=wchar_t(towlower(c));return utf8(ext);}
 }
+std::optional<MapHeader> MapHeader::parse(std::span<const std::uint8_t> bytes) {
+    if(bytes.size()<4 || std::memcmp(bytes.data(),"HM3W",4))return std::nullopt;if(bytes.size()>512)bytes=bytes.first(512);Binary b(bytes);b.expect(tag("HM3W"));MapHeader m;m.reserved=b.u32();m.name=text(b);m.flags=b.u32();m.players=b.u32();if(m.players>16)throw std::runtime_error("Invalid classic map header player count");return m;
+}
+std::optional<MapHeader> MapHeader::read(const fs::path& path) {std::ifstream file(path,std::ios::binary);if(!file)throw std::runtime_error("Cannot read map header");Bytes b(512);file.read(reinterpret_cast<char*>(b.data()),static_cast<std::streamsize>(b.size()));if(file.bad())throw std::runtime_error("Cannot read map header");b.resize(size_t(file.gcount()));return parse(b);}
 MapStrings mapStrings(std::span<const std::uint8_t> bytes) {
     if(bytes.size()>16*1024*1024)throw std::runtime_error("WTS exceeds source budget");auto source=sourceText(bytes);MapStrings result;size_t at=0;int state=0;unsigned id=0;std::string value;
     while(at<source.size()) {
@@ -28,6 +32,7 @@ MapStrings mapStrings(std::span<const std::uint8_t> bytes) {
 }
 std::string mapString(const std::string& value,const MapStrings& strings) {if(!value.starts_with("TRIGSTR_") || value.size()==8)return value;auto id=value.substr(8);if(!std::all_of(id.begin(),id.end(),[](unsigned char c){return c>='0' && c<='9';}))return value;auto found=strings.find(integer(id));return found==strings.end()?value:found->second;}
 unsigned MapInfo::playablePlayers() const {return static_cast<unsigned>(std::count_if(players.begin(),players.end(),[](auto& p){return p.type==1 || p.type==2;}));}
+unsigned MapInfo::humanPlayers() const {return static_cast<unsigned>(std::count_if(players.begin(),players.end(),[](auto& p){return p.type==1;}));}
 MapInfo MapInfo::parse(std::span<const std::uint8_t> bytes,const MapStrings& strings) {
     Binary b(bytes);MapInfo m;m.version=b.u32();if(m.version!=18 && m.version!=25)throw std::runtime_error("Unsupported classic W3I version");m.saves=b.u32();m.editor=b.u32();
     auto string=[&] {return mapString(text(b),strings);};m.name=string();m.author=string();m.description=string();m.recommendedPlayers=string();

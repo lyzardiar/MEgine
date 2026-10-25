@@ -54,7 +54,7 @@ void GlueScreen::label(const FrameDefinition& f,Rect r,bool enabled,bool highlig
         size_t start=i++;while(i<value.size() && value[i]!='|')++i;auto part=wide(value.substr(start,i-start));for(auto c:part){if(content.size()>=4096)break;if(c!='\r'){content+=c;colors.push_back(color);}}
     }
     struct Line{size_t begin,end;};std::vector<Line> lines;
-    for(size_t at=0;at<content.size() && lines.size()<1+size_t(r.h/height);) {auto end=content.find(L'\n',at);if(end==std::wstring::npos)end=content.size();auto part=std::wstring_view(content).substr(at,end-at);auto count=text_.fit(part,r.w,height);if(!part.empty() && !count)count=1;if(count<part.size()){auto space=part.substr(0,count).find_last_of(L' ');if(space!=std::wstring_view::npos && space)count=space;}lines.push_back({at,at+count});at+=count;if(at<content.size() && (content[at]=='\n' || content[at]==' '))++at;}
+    for(size_t at=0;at<content.size() && lines.size()<std::max<size_t>(1,size_t(r.h/height+1e-5f));) {auto end=content.find(L'\n',at);if(end==std::wstring::npos)end=content.size();auto part=std::wstring_view(content).substr(at,end-at);auto count=text_.fit(part,r.w,height);if(!part.empty() && !count)count=1;if(count<part.size()){auto space=part.substr(0,count).find_last_of(L' ');if(space!=std::wstring_view::npos && space)count=space;}lines.push_back({at,at+count});at+=count;if(at<content.size() && (content[at]=='\n' || content[at]==' '))++at;}
     float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f);float left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;
     float h=height*scale,total=height*float(lines.size()),y=top+(r.y+(first(f,"FontJustificationV")=="JUSTIFYTOP"?0:first(f,"FontJustificationV")=="JUSTIFYBOTTOM"?r.h-total:(r.h-total)/2))*scale;
     auto shadow=f.property("FontShadowOffset");float dx=shadow.size()==2?number(shadow[0])*scale:1,dy=shadow.size()==2?-number(shadow[1])*scale:1;
@@ -66,32 +66,41 @@ void GlueScreen::label(const FrameDefinition& f,Rect r,bool enabled,bool highlig
 }
 std::string GlueScreen::drawNode(unsigned index,const UiInput& input,const std::set<std::string>& enabled) {
     auto& n=nodes_[index];if(n.hidden)return {};auto& f=n.frame;
-    if(f.type=="BACKDROP")backdrop(f,n.rect);
+    if(f.type=="BACKDROP" && !n.image)backdrop(f,n.rect);
     if(f.type=="TEXT")label(f,n.rect,true,false);
-    if(f.type=="SPRITE" && n.image){auto r=n.rect;float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f);renderer_.rect((renderer_.width()-.8f*scale)/2+r.x*scale,(renderer_.height()-.6f*scale)/2+r.y*scale,r.w*scale,r.h*scale,0xffffffff,n.image.Get());}
+    if((f.type=="SPRITE" || f.type=="BACKDROP") && n.image){auto r=n.rect;float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f);renderer_.rect((renderer_.width()-.8f*scale)/2+r.x*scale,(renderer_.height()-.6f*scale)/2+r.y*scale,r.w*scale,r.h*scale,0xffffffff,n.image.Get());}
     bool button=f.type=="GLUETEXTBUTTON" || f.type=="TEXTBUTTON" || f.type=="GLUEBUTTON";
     if(button) {
         bool active=enabled.contains(f.name),hover=input.x>=n.rect.x && input.y>=n.rect.y && input.x<n.rect.x+n.rect.w && input.y<n.rect.y+n.rect.h;
         bool origin=input.startX>=n.rect.x && input.startY>=n.rect.y && input.startX<n.rect.x+n.rect.w && input.startY<n.rect.y+n.rect.h;
         auto backdropName=first(f,!active?"ControlDisabledBackdrop":hover&&origin&&input.down?"ControlPushedBackdrop":"ControlBackdrop");auto labelName=first(f,"ButtonText"),highlight=first(f,"ControlMouseOverHighlight");
-        for(auto child:n.children) {auto& c=nodes_[child];if(c.frame.name==backdropName)backdrop(c.frame,n.rect);if(c.frame.name==labelName)label(c.frame,n.rect,active,hover);if(active&&hover&&c.frame.name==highlight){auto file=first(c.frame,"HighlightAlphaFile");if(!file.empty())quad(n.rect,0xffffffff,file,0,0,1,1,false,first(c.frame,"HighlightAlphaMode")=="ADD");}}
+        bool highlighted=hover || (focusEnabled_ && focused_==f.name);for(auto child:n.children) {auto& c=nodes_[child];if(c.frame.name==backdropName)backdrop(c.frame,n.rect);if(c.frame.name==labelName)label(c.frame,n.rect,active,highlighted);if(active&&highlighted&&c.frame.name==highlight){auto file=first(c.frame,"HighlightAlphaFile");if(!file.empty())quad(n.rect,0xffffffff,file,0,0,1,1,false,first(c.frame,"HighlightAlphaMode")=="ADD");}}
+        if(active && hover && origin && input.pressed && focusEnabled_)focused_=f.name;
         auto shortcut=first(f,"ControlShortcutKey");if(active && ((hover&&origin&&input.pressed) || (shortcut.size()==1 && input.key==unsigned(std::towupper(shortcut[0])))))return f.name;
         return {};
     }
-    if(f.type=="FRAME" || f.type=="BACKDROP")for(auto child:n.children){auto action=drawNode(child,input,enabled);if(!action.empty())return action;}
-    return {};
+    std::string action;if(f.type=="FRAME" || f.type=="BACKDROP")for(auto child:n.children){auto next=drawNode(child,input,enabled);if(action.empty())action=std::move(next);}return action;
 }
-std::string GlueScreen::draw(const std::string& subtree,const UiInput& input,const std::set<std::string>& enabled) {auto node=names_.find(subtree);if(node==names_.end())throw std::runtime_error("Missing glue subtree: "+subtree);return drawNode(node->second,input,enabled);}
+std::string GlueScreen::draw(const std::string& subtree,const UiInput& input,const std::set<std::string>& enabled) {
+    auto node=names_.find(subtree);if(node==names_.end())throw std::runtime_error("Missing glue subtree: "+subtree);
+    if(focusEnabled_) {std::vector<FrameFocus> frames;auto visit=[&](auto&& self,unsigned id,bool visible)->void{auto& n=nodes_[id];visible=visible&&!n.hidden;if(n.frame.properties.contains("TabFocusNext") || n.frame.properties.contains("TabFocusDefault") || enabled.contains(n.frame.name))frames.push_back({n.frame.name,first(n.frame,"TabFocusNext"),visible&&enabled.contains(n.frame.name),n.frame.properties.contains("TabFocusDefault")});for(auto child:n.children)self(self,child,visible);};visit(visit,node->second,true);
+        if(!std::any_of(frames.begin(),frames.end(),[&](auto& f){return f.enabled && f.name==focused_;}))focused_=nextFrameFocus(frames,{});if(input.key==VK_TAB)focused_=nextFrameFocus(frames,focused_,input.shift);
+    }
+    auto action=drawNode(node->second,input,enabled);if(action.empty() && focusEnabled_ && (input.key==VK_RETURN || input.key==VK_SPACE))action=focused_;return action;
+}
 std::pair<float,float> GlueScreen::center(const std::string& name) const {auto node=names_.find(name);if(node==names_.end())throw std::runtime_error("Missing glue frame: "+name);auto& r=nodes_[node->second].rect;return {r.x+r.w/2,r.y+r.h/2};}
 GlueScreen::Rect GlueScreen::bounds(const std::string& name) const {return nodes_.at(names_.at(name)).rect;}
 void GlueScreen::relayout() {for(auto& n:nodes_)n.mark=0;for(unsigned i=0;i<nodes_.size();++i)layout(i);}
 void GlueScreen::attach(const std::string& member,const std::string& root,const std::string& container) {definitions_.load(archives_,member);auto parent=names_.at(container);auto node=add(definitions_.frame(root),int(parent));nodes_[parent].children.push_back(node);relayout();}
 void GlueScreen::visible(const std::string& name,bool visible) {nodes_.at(names_.at(name)).hidden=!visible;}
 void GlueScreen::place(const std::string& name,Rect rect) {nodes_.at(names_.at(name)).placed=rect;relayout();}
+void GlueScreen::anchor(const std::string& name,const std::string& point,const std::string& relative,const std::string& target,float x,float y) {auto& n=nodes_.at(names_.at(name));n.placed.reset();n.frame.points={{point,relative,target,std::to_string(x),std::to_string(y)}};relayout();}
+void GlueScreen::size(const std::string& name,float width,float height) {if(!std::isfinite(width) || !std::isfinite(height) || width<0 || height<0)throw std::runtime_error("Invalid glue dimensions");auto& f=nodes_.at(names_.at(name)).frame;f.properties["Width"]={std::to_string(width)};f.properties["Height"]={std::to_string(height)};relayout();}
+float GlueScreen::textWidth(const std::string& name,const std::string& text) {auto& f=nodes_.at(names_.at(name)).frame;auto font=f.property("FrameFont");auto value=wide(plain(text));if(value.size()>4096)value.resize(4096);return text_.width(value,font.size()>1?number(font[1]):.013f);}
 void GlueScreen::setText(const std::string& name,const std::string& text) {auto& f=nodes_.at(names_.at(name)).frame;f.properties["Text"]={text};f.properties["RuntimeText"]={};relayout();}
 void GlueScreen::image(const std::string& name,const std::string& member) {image(name,texture(member).gpu.Get());}
 void GlueScreen::image(const std::string& name,IDirect3DTexture9* texture) {nodes_.at(names_.at(name)).image=texture;}
 void GlueScreen::backdropAt(const std::string& frame,Rect rect) {backdrop(definitions_.frame(frame),rect);}
 void GlueScreen::imageAt(const std::string& member,Rect rect) {quad(rect,0xffffffff,member);}
-void GlueScreen::textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled,bool highlight,bool left) {auto f=definitions_.frame(frame);f.properties["Text"]={text};f.properties["RuntimeText"]={};if(left)f.properties["FontJustificationH"]={"JUSTIFYLEFT"};label(f,rect,enabled,highlight);}
+void GlueScreen::textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled,bool highlight,bool left,float fontHeight) {auto f=definitions_.frame(frame);f.properties["Text"]={text};f.properties["RuntimeText"]={};if(left)f.properties["FontJustificationH"]={"JUSTIFYLEFT"};if(fontHeight>0)f.properties["FrameFont"]={"MasterFont",std::to_string(fontHeight),""};label(f,rect,enabled,highlight);}
 }

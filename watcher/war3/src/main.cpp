@@ -91,15 +91,23 @@ int run(HINSTANCE instance) {
             if(windowStage==5 && frames==90) {PostMessageW(window,WM_KEYDOWN,'Q',0);windowStage=6;}
         }
         if(options.menuCheck) {
-            if(frames==10)PostMessageW(window,WM_KEYDOWN,'S',0);
-            if(frames==25)PostMessageW(window,WM_KEYDOWN,'G',0);
+            if(frames==10)PostMessageW(window,WM_KEYDOWN,VK_RETURN,0);
+            if(frames==25)PostMessageW(window,WM_KEYDOWN,VK_SPACE,0);
             if(frames==40){if(screen!=Screen::Maps || !browser || !browser->info() || !fs::equivalent(browser->selectedMap(),options.map))throw std::runtime_error("Menu selection check failed");log.write("menu_check=selected "+utf8(browser->selectedMap().wstring()));}
             if(frames==42){auto [x,y]=browser->selectedCenter();float scale=std::min(renderer.width()/.8f,renderer.height()/.6f);auto pos=MAKELPARAM(int((renderer.width()-.8f*scale)/2+x*scale),int((renderer.height()-.6f*scale)/2+y*scale));SendMessageW(window,WM_MOUSEMOVE,0,pos);SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,pos);SendMessageW(window,WM_LBUTTONUP,0,pos);}
             if(frames==45)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,-WHEEL_DELTA),0);
             if(frames==46)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,WHEEL_DELTA),0);
-            if(frames==60)PostMessageW(window,WM_KEYDOWN,'A',0);
-            if(frames==70){if(screen!=Screen::Single)throw std::runtime_error("Map browser cancel check failed");PostMessageW(window,WM_KEYDOWN,VK_ESCAPE,0);}
-            if(frames==85){if(screen!=Screen::Main)throw std::runtime_error("Single-player cancel check failed");PostMessageW(window,WM_KEYDOWN,'Q',0);}
+            if(frames==52 || frames==55 || frames==60)PostMessageW(window,WM_KEYDOWN,VK_TAB,0);
+            if(frames==58)PostMessageW(window,WM_KEYDOWN,VK_RETURN,0);
+            if(frames==59 && screen!=Screen::Maps)throw std::runtime_error("Map list Enter activated an unrelated control");
+            if(frames==62)PostMessageW(window,WM_KEYDOWN,VK_SPACE,0);
+            if(frames==70){if(screen!=Screen::Single)throw std::runtime_error("Map browser cancel check failed");PostMessageW(window,WM_KEYDOWN,VK_TAB,0);}
+            if(frames==72)PostMessageW(window,WM_KEYDOWN,VK_RETURN,0);
+            if(frames==80){if(screen!=Screen::Main)throw std::runtime_error("Single-player keyboard cancel check failed");PostMessageW(window,WM_KEYDOWN,'S',0);}
+            if(frames==82)PostMessageW(window,WM_KEYDOWN,'G',0);
+            if(frames==84){if(screen!=Screen::Maps)throw std::runtime_error("Menu shortcut check failed");PostMessageW(window,WM_KEYDOWN,'A',0);}
+            if(frames==86)PostMessageW(window,WM_KEYDOWN,VK_ESCAPE,0);
+            if(frames==90){if(screen!=Screen::Main)throw std::runtime_error("Single-player cancel check failed");PostMessageW(window,WM_KEYDOWN,'Q',0);}
         }
         if (state.minimized) { WaitMessage(); continue; }
         if (!renderer.begin()) { MsgWaitForMultipleObjectsEx(0, nullptr, 50, QS_ALLINPUT, MWMO_INPUTAVAILABLE); continue; }
@@ -107,7 +115,7 @@ int run(HINSTANCE instance) {
         float left = (renderer.width() - 800 * scale) / 2, top = (renderer.height() - 600 * scale) / 2;
         auto draw = [&](float x, float y, float w, float h, DWORD color, IDirect3DTexture9* texture) { renderer.rect(left + x * scale, top + y * scale, w * scale, h * scale, color, texture); };
         menu.draw(options.timeMs.value_or(GetTickCount64()-started), float(renderer.width()) / renderer.height(),true);
-        UiInput input{(state.mouseX-left)/(scale*1000),(state.mouseY-top)/(scale*1000),(state.pressX-left)/(scale*1000),(state.pressY-top)/(scale*1000),state.click,state.down,state.key,state.wheel/WHEEL_DELTA,state.doubleClick};
+        UiInput input{(state.mouseX-left)/(scale*1000),(state.mouseY-top)/(scale*1000),(state.pressX-left)/(scale*1000),(state.pressY-top)/(scale*1000),state.click,state.down,state.key,state.wheel/WHEEL_DELTA,state.doubleClick,(GetKeyState(VK_SHIFT)&0x8000)!=0};
         std::string action;
         if(screen==Screen::Main){draw(90,15,512,256,0xffffffff,logo.Get());action=mainMenu.draw("ControlLayer",input,{"SinglePlayerButton","ExitButton"});if(input.key==VK_ESCAPE)action="ExitButton";if(action=="SinglePlayerButton"){if(!singleMenu){singleMenu=std::make_unique<GlueScreen>(archives,images,renderer,text,"UI\\FrameDef\\Glue\\SinglePlayerMenu.fdf","SinglePlayerMenu");singleMenu->visible("ProfilePanel",false);}screen=Screen::Single;}if(action=="ExitButton"){if(options.windowCheck && windowStage<6)throw std::runtime_error("Cancelled pointer input activated ExitButton");running=false;}}
         else if(screen==Screen::Single){action=singleMenu->draw("SinglePlayerMenu",input,{"SkirmishButton","CancelButton"});if(input.key==VK_ESCAPE)action="CancelButton";if(action=="CancelButton")screen=Screen::Main;if(action=="SkirmishButton"){if(!browser)browser=std::make_unique<MapBrowser>(archives,images,renderer,text,log,options.dataRoot,options.map);screen=Screen::Maps;}}

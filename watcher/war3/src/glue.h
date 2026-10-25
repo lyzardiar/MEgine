@@ -6,7 +6,7 @@
 #include <set>
 
 namespace war3 {
-struct UiInput { float x=0,y=0,startX=0,startY=0; bool pressed=false,down=false; unsigned key=0; int wheel=0; bool doubleClick=false; };
+struct UiInput { float x=0,y=0,startX=0,startY=0; bool pressed=false,down=false; unsigned key=0; int wheel=0; bool doubleClick=false,shift=false; };
 class GlueScreen {
 public:
     struct Rect { float x=0,y=0,w=.8f,h=.6f; };
@@ -21,6 +21,8 @@ private:
     std::vector<Node> nodes_;
     std::map<std::string,unsigned> names_;
     std::map<std::string,Texture> textures_;
+    std::string focused_;
+    bool focusEnabled_=true;
     unsigned add(FrameDefinition frame, int parent);
     Rect layout(unsigned index);
     Texture& texture(const std::string& member);
@@ -32,16 +34,20 @@ private:
 public:
     GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const std::string& member,const std::string& root);
     std::pair<float,float> center(const std::string& name) const;
+    void focusEnabled(bool enabled) {focusEnabled_=enabled;if(!enabled)focused_.clear();}
     std::string draw(const std::string& subtree,const UiInput& input,const std::set<std::string>& enabled);
     Rect bounds(const std::string& name) const;
     void attach(const std::string& member,const std::string& root,const std::string& container);
     void visible(const std::string& name,bool visible);
     void place(const std::string& name,Rect rect);
+    void anchor(const std::string& name,const std::string& point,const std::string& relative,const std::string& target,float x,float y);
+    void size(const std::string& name,float width,float height);
+    float textWidth(const std::string& name,const std::string& text);
     void setText(const std::string& name,const std::string& text);
     void image(const std::string& name,const std::string& member);
     void image(const std::string& name,IDirect3DTexture9* texture);
     void backdropAt(const std::string& frame,Rect rect);
     void imageAt(const std::string& member,Rect rect);
-    void textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled=true,bool highlight=false,bool left=false);
+    void textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled=true,bool highlight=false,bool left=false,float fontHeight=0);
 };
 }
