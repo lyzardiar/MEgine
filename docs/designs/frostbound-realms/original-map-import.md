@@ -240,7 +240,7 @@ python scripts/prepare-frost-map-import.py
 
 ## 原脚本单位初始化
 
-`game/warcraft-jass.js` 解析原 JASS，`game/warcraft-unit-initialization.js` 以显式 native 绑定执行 `CreateAllUnits`。支持 typed locals／globals、数组、函数、分支、循环与整数／单精度表达式；调用仅能进入已解析函数和绑定表，原 JASS 不作为 JavaScript 执行。源文本上限 8 MiB、250,000 token、解析嵌套 128、表达式求值嵌套 256、函数深度 128、每次执行 100,000 指令、数组索引 0–8191、拼接字符串 1 Mi 字符。这里只覆盖已实现的类型与语法，尚无完整 common.j 类型继承、native／type 声明或完整 JASS 兼容性。
+`game/warcraft-jass.js` 解析原 JASS，`game/warcraft-unit-initialization.js` 以显式 native 绑定执行 `CreateAllUnits`。支持 typed locals／globals、数组、函数、分支、循环与整数／单精度表达式；调用仅能进入已解析函数和绑定表，原 JASS 不作为 JavaScript 执行。源文本上限 8 MiB、250,000 token、解析嵌套 128、表达式求值嵌套 256、函数深度 128、每次外部执行 100,000 指令、数组索引 0–8191、拼接字符串 1 Mi 字符。这里只覆盖已实现的类型与语法，完整 common.j 声明、native／type 声明读取和完整 JASS 兼容性仍未实现。
 
 绑定包含 Player、ConvertPlayerColor、CreateUnit、SetResourceAmount、SetUnitState、SetUnitAcquireRange、SetUnitColor、CreateTrigger、TriggerRegisterUnitEvent、TriggerAddAction。每次进入／重载地图创建独立的单位和触发器集合；返回菜单清除引用。`FrostMapSession.unitInitialization()` 提供完整状态，`status().initialization` 只输出状态、数量和错误，避免每帧序列化单位清单。未设置的对象属性保持未设置；解析／执行失败时返回 unsupported 和空集合，不发布部分结果。非 UTF-8 或超过大小上限的 JASS 仍保留原件，场景可加载，单位初始化标记 unsupported。
 
@@ -253,6 +253,14 @@ Amazonia 的原 `war3map.j` SHA256 为 `01ac6ca37873461f490e8db4b5798fceaf60b94f
 REA 复核命令为 `node scripts/probe-frost-rea-map-formats.mjs --unit-init`，固定 Game.dll SHA256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。结果仅证明 native 名称字符串存在，不证明其实现语义或原客户端运行一致。REA 6.5.0 源站为 https://github.com/morluto/rea，固定版本及更新方法见[维护说明](../../../third_party/rea/README-MENGINE.md)。证据位于 `tmp/docs-artifacts/frost-original-maps/unit-init-evidence/`。
 
 定向检查：`node scripts/test-frost-jass.mjs`、`node scripts/test-frost-unit-initialization-package.mjs`、`node scripts/test-frost-map-session.mjs` 通过；`node scripts/test-frost-map-import.mjs <已导入地图的entry.json> --unit-initialization` 对 Amazonia 和 Echo Isles 均通过。覆盖类型／资源边界、源数据不执行为 JS、摘要拒绝、幂等打包、编码／大小回退、生成脚本边界兼容、菜单与动态导入、重载隔离及失败不遗留部分单位；原生结果和待测范围见[批次台账](../../testing-batches.md)。
+
+### JASS 库链接与句柄类型
+
+`FrostWarcraftJass.link(sources)` 将有序源模块合并为一个程序，函数可跨模块调用，全局声明按模块顺序初始化，重复函数或全局名拒绝。最多64个模块，合计不超过8 Mi字符与250,000 token。函数表不继承对象原型，`constructor`／`__proto__`按显式声明查找。`create(program, {handleTypes})` 可登记最多128个附加句柄类型；内置 unit／item／destructable→widget→agent→handle 等 common.j 关系，附加类型使用同一继承校验。只允许向父类型转换以及有关联类型之间比较；未知父类型、循环、基本类型覆盖和内置父关系改变均拒绝。原生函数同步回调 `run()` 共享当前指令预算和调用深度，下一次外部 `run()` 才重置预算，全局状态继续保留。
+
+`scripts/fixtures/warcraft/melee-starting-resources.j` 保存原 `MeleeStartingResources` 函数及其五个常量，文本仅归一化为LF；相邻 `.source.json` 保留 `War3Patch.mpq/Scripts/Blizzard.j` 的451,847字节、SHA256 `d290865bd673f8394f4e6fb7b4d6720412fed3a447877523cec9e54e65b8e62c` 与片段摘要。更新游戏档案时重新提取函数和对应常量、核对 common.j 类型／native 签名，再更新来源收据与参考检查，不直接替换为估算值。`node --test scripts/test-frost-jass-modules.mjs` 覆盖模块边界、继承拒绝、特殊名称、回调预算和调用深度，并以独立 native 模拟验证ROC的750金／200木、TFT的500金／150木及非playing槽位保留资源。原件和提取对照产物在 `tmp/docs-artifacts/frost-original-maps/melee-initialization-evidence/`，本次日志在 `jass-library-evidence/`。
+
+该参考函数尚未接到地图启动入口；实际地图仍只执行 `CreateAllUnits`。完整原版开局、玩家军队、运行时原生行为和对局验收继续待实现；本节的解释器检查不作为这些功能完成的证明。
 
 
 ## 原地图单位视觉绑定与选择

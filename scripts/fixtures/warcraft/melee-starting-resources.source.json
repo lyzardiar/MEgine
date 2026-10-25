@@ -1,0 +1,19 @@
+{
+  "source": {
+    "path": "Scripts/Blizzard.j",
+    "archive": "War3Patch.mpq",
+    "sha256": "d290865bd673f8394f4e6fb7b4d6720412fed3a447877523cec9e54e65b8e62c",
+    "bytes": 451847
+  },
+  "function": "MeleeStartingResources",
+  "constants": [
+    "bj_MAX_PLAYERS",
+    "bj_MELEE_STARTING_GOLD_V0",
+    "bj_MELEE_STARTING_LUMBER_V0",
+    "bj_MELEE_STARTING_GOLD_V1",
+    "bj_MELEE_STARTING_LUMBER_V1"
+  ],
+  "fragmentSha256": "a93f7da0cb231edab5d6e6f7570eefd9426a03c974551be624e081978ed5dc7b",
+  "extraction": "Original function and constant declaration text; line endings normalized to LF",
+  "scope": "Interpreter reference fixture, not complete map initialization or native gameplay parity"
+}

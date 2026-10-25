@@ -1763,3 +1763,11 @@ warcraft_unit_bindings.py读取原UnitData／UnitBalance的移动类型、基础
 使用REA 6.5.0对原Game.dll执行注册和组件分派探针，两组通过，前后SHA一致且artifact_changed=false；可复现命令node scripts/probe-frost-rea-map-formats.mjs --unit-movement，官方源站与固定版本仍在third_party/rea/README-MENGINE.md。7项Python源解析、7项对象继承／四字段覆盖检查通过，node scripts/test-frost-map-units.mjs、test-frost-unit-initialization-package.mjs、test-frost-map-session.mjs三项定向脚本通过。覆盖96单位、类型共享和深度冻结、旧包、字段源对象后续修改隔离、无效参数原子拒绝及600空闲帧无新增查询／写入。实际37份定义逐一与原MPQ表匹配，96放置身份及最终数据／脚本字节数、manifest、生成器与嵌入实现摘要一致；修改JS及打包主脚本语法检查通过。日志、REA原始JSON及表摘要在tmp/docs-artifacts/frost-original-maps/unit-movement-evidence，未运行完整资产遍历或原生QA。
 
 范围为原始参数接入。当前只执行CreateAllUnits，Melee完整开局、动态玩家单位、寻路、右键命令、加成／钳制／转速算法与原客户端一致性仍未完成；不把静态注册证据写成原版运动验收。本批1/3，后续两项后合并验证新增单位数据、选择／重载／返回、旧包／自定义单位、任意地图新缓存转换及实际工具包消费路径、初始化失败边界及原生流程；编辑器稳定60、长期驻留、LOD和完整War3目标继续进行中。最新编辑器原生结果仍为134–136的d6aa964。
+
+### 第一百三十八阶段／新批次任务2/3：JASS库链接、句柄继承与回调执行预算
+
+`game/warcraft-jass.js` 新增最多64个模块的链接接口，合计8 Mi字符与250,000 token，拒绝重复函数／全局名。内置common.j常用句柄父链，可显式登记最多128个附加类型；校验未知父类型、循环、内置／基本类型覆盖，参数／赋值／返回仅允许向父类型转换。函数表和父链使用无原型对象；原生同步回调共享指令预算和深度，外部调用重新获得预算并保留全局状态。主脚本与Amazonia实现摘要同步，地图运行脚本、数据、模型、地形和选择网格字节未变。
+
+`node --test scripts/test-frost-jass-modules.mjs` 的9组检查通过，覆盖跨模块函数／全局状态、源长度与token合计、继承和无效图、特殊名称、同步回调预算／深度及失败后恢复。原 `War3Patch.mpq/Scripts/Blizzard.j` 的MeleeStartingResources与五个常量保存为带摘要的固定夹具，6种ROC／TFT和玩家槽位组合通过独立native模拟；原件提取和类型关系已对照common.j。`node scripts/test-frost-jass.mjs` 保持Amazonia96单位／26触发器、1,800指令；来源打包定向检查通过。细节与复现入口见[JASS说明](designs/frostbound-realms/original-map-import.md#jass-库链接与句柄类型)，本地日志和收据在`tmp/docs-artifacts/frost-original-maps/jass-library-evidence/`。
+
+本批计数2/3，尚未运行新的原生QA或整库测试。原资源函数仅为解释器参考验证，没有改变实际CreateAllUnits入口；完整Melee开局、玩家军队、寻路／移动、编辑器稳定60、长期驻留和LOD仍未完成。下一独立任务后，合并137–139的相关原生范围，在同版本验证单位数据、加载／重载／返回、失败边界与实际新缓存／工具消费路径；不重复未受影响的完整资源或Profiler夹具。

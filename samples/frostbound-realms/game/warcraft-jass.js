@@ -54,11 +54,31 @@ var FrostWarcraftJass=(()=>{
       if(peek()==='nothing')take();else do{parameters.push({type:identifier(),name:identifier()});if(peek()!==',')break;take();}while(true);
       take('returns');const returns=identifier(),body=block(['endfunction']);take('endfunction');functions[name]={parameters,returns,body};
     }
-    return {functions,globals};
+    return {functions,globals,tokenCount:tokens.length-1};
   }
-  function create(program,{natives={},constants={},instructionLimit=100000,callLimit=128}={}){
+  function link(sources){
+    if(!Array.isArray(sources)||sources.length>64||sources.some(source=>typeof source!=='string')||sources.reduce((n,source)=>n+source.length,0)>8*1024*1024)throw Error('Invalid JASS module sources');
+    const functions=Object.create(null),globals=[],names=new Set();let tokenCount=0;
+    for(const source of sources){
+      const program=parse(source);tokenCount+=program.tokenCount;if(tokenCount>250000)throw Error('JASS module token limit exceeded');
+      for(const [name,fn] of Object.entries(program.functions)){if(own(functions,name))throw Error('Duplicate JASS module function '+name);functions[name]=fn;}
+      for(const declaration of program.globals){if(names.has(declaration.name))throw Error('Duplicate JASS module global '+declaration.name);names.add(declaration.name);globals.push(declaration);}
+    }
+    return {functions,globals,tokenCount};
+  }
+  function create(program,{natives={},constants={},handleTypes={},instructionLimit=100000,callLimit=128}={}){
     if(!Number.isSafeInteger(instructionLimit)||instructionLimit<1||!Number.isSafeInteger(callLimit)||callLimit<1)throw Error('Invalid JASS execution limits');
-    const globals=Object.create(null),types=new Set(['integer','real','boolean','string','code','nothing','handle','widget','unit','item','destructable','player','trigger','event','triggeraction','unitstate','unitevent','playercolor']);let remaining=instructionLimit,depth=0,expressionDepth=0;
+    const globals=Object.create(null),parents=Object.assign(Object.create(null),{agent:'handle',widget:'agent',unit:'widget',item:'widget',destructable:'widget',player:'agent',trigger:'agent',event:'agent',triggeraction:'handle',unitstate:'handle',eventid:'handle',unitevent:'eventid',playercolor:'handle'}),types=new Set(['integer','real','boolean','string','code','nothing','handle',...Object.keys(parents)]);let remaining=instructionLimit,depth=0,expressionDepth=0;
+    if(!handleTypes||typeof handleTypes!=='object'||Array.isArray(handleTypes)||Object.keys(handleTypes).length>128)throw Error('Invalid JASS handle types');
+    for(const [name,parent] of Object.entries(handleTypes)){
+      if(!/^[A-Za-z_][A-Za-z_0-9]*$/.test(name)||typeof parent!=='string'||!/^[A-Za-z_][A-Za-z_0-9]*$/.test(parent)||types.has(name)&&parents[name]!==parent)throw Error('Invalid JASS handle inheritance '+name);
+      parents[name]=parent;types.add(name);
+    }
+    for(const name of Object.keys(parents)){
+      const seen=new Set([name]);let current=name;
+      while(current!=='handle'){const parent=parents[current];if(!own(parents,parent)&&parent!=='handle')throw Error('Unknown JASS parent type '+parent);if(seen.has(parent))throw Error('Cyclic JASS handle inheritance');seen.add(parent);current=parent;}
+    }
+    const inherits=(child,parent)=>{while(child!==parent&&own(parents,child))child=parents[child];return child===parent;};
     const value=(type,v)=>({type,value:v}),step=()=>{if(--remaining<0)throw Error('JASS instruction limit exceeded');};
     const checkType=type=>{if(!types.has(type))throw Error('Unsupported JASS type '+type);};
     const defaults=type=>{checkType(type);return value(type,type==='integer'||type==='real'?0:type==='boolean'?false:null);};
@@ -68,7 +88,7 @@ var FrostWarcraftJass=(()=>{
       if(type===v.type)return type==='integer'?value(type,v.value|0):type==='real'?value(type,Math.fround(v.value)):v;
       if(type==='real'&&v.type==='integer')return value(type,Math.fround(v.value));
       if(v.type==='null'&&!['integer','real','boolean'].includes(type))return value(type,null);
-      if(type==='handle'&&!['integer','real','boolean','string','code','nothing'].includes(v.type))return value(type,v.value);
+      if(own(parents,v.type)&&inherits(v.type,type))return value(type,v.value);
       throw Error('JASS type mismatch: '+v.type+' to '+type);
     }
     const bool=v=>{if(v.type!=='boolean')throw Error('Expected JASS boolean');return v.value;};
@@ -89,7 +109,7 @@ var FrostWarcraftJass=(()=>{
       const b=evaluate(node.right,locals);if(op==='and'||op==='or')return value('boolean',bool(b));
       const numeric=['integer','real'].includes(a.type)&&['integer','real'].includes(b.type),real=numeric&&(a.type==='real'||b.type==='real');
       const x=real?Math.fround(a.value):a.value,y=real?Math.fround(b.value):b.value;
-      if(op==='=='||op==='!='){if(!numeric&&a.type!==b.type){if(a.type==='null')convert(b.type,a);else if(b.type==='null')convert(a.type,b);else throw Error('JASS incompatible equality operands');}const equal=x===y;return value('boolean',op==='=='?equal:!equal);}
+      if(op==='=='||op==='!='){if(!numeric&&a.type!==b.type){if(a.type==='null')convert(b.type,a);else if(b.type==='null')convert(a.type,b);else if(!inherits(a.type,b.type)&&!inherits(b.type,a.type))throw Error('JASS incompatible equality operands');}const equal=x===y;return value('boolean',op==='=='?equal:!equal);}
       if(op==='+'&&a.type==='string'&&b.type==='string'){if((a.value?.length||0)+(b.value?.length||0)>1048576)throw Error('JASS string limit exceeded');return value('string',(a.value||'')+(b.value||''));}
       if(!numeric)throw Error('Expected JASS numeric operands');
       if(['<','<=','>','>='].includes(op))return value('boolean',op==='<'?x<y:op==='<='?x<=y:op==='>'?x>y:x>=y);
@@ -124,8 +144,8 @@ var FrostWarcraftJass=(()=>{
     }
     for(const [name,v] of Object.entries(constants))globals[name]={type:v.type,array:false,constant:true,value:v};
     for(const declaration of program.globals)declare(globals,declaration);
-    return {run(name,args=[]){remaining=instructionLimit;return invoke(name,args);},get instructionsRemaining(){return remaining;}};
+    return {run(name,args=[]){if(depth===0)remaining=instructionLimit;return invoke(name,args);},get instructionsRemaining(){return remaining;}};
   }
-  return {parse,create};
+  return {parse,link,create};
 })();
 if(typeof module!=='undefined')module.exports=FrostWarcraftJass;

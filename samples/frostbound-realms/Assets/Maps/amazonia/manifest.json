@@ -5411,7 +5411,7 @@
     "execution": "bounded-jass",
     "fullMapScript": false,
     "implementation": {
-      "samples/frostbound-realms/game/warcraft-jass.js": "ed22c5c9daf74eaa39ecfb249f4d27671b2d26aac549d80f09e10dfa358e2de7",
+      "samples/frostbound-realms/game/warcraft-jass.js": "6c861878b8f8de14a58fd48361efd69d7f5c35bcbc681a362fe6efc8051a53b0",
       "samples/frostbound-realms/game/warcraft-unit-initialization.js": "565dfec4aa9b258375d17b13e092aca6e434265329556e53f5d7634b86aecd34",
       "samples/frostbound-realms/game/warcraft-map-units.js": "499863988b204e52915451cdbc91983dc27be945c15587cee282077b27f678b1"
     }
