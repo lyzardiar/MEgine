@@ -2063,3 +2063,12 @@ REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖
 证据：`tmp/docs-artifacts/warcraft-archives/blp-*.log`、`texture-alias-tests.log`、`texture-reference/comparison-final.json`；初始无效成员选择的失败原件保留，补测实际菜单成员成功。探针不导出产品PNG或meta，只在tmp保存独立验证参考。未重复完整地图转换、Editor构建或全库测试，用户编辑器PID64664未动。
 
 待批次：152–154达到3项后，按累计消费者接入范围统一构建Host／Tauri并验证归档覆盖、热／冷加载、同图／跨图资源复用、失败取消、生命周期及磁盘写出边界。当前2/3；MDX／MDL、地图数据和GPU消费、原选图入口替换、delta链及完整War3仍待完成，P0整项保持未完成。下一任务不将局部纹理解码探针当作完整地图运行验收。
+
+
+### 第一百五十四阶段／新批次任务3/3：经典MDX与Host模型消费
+
+变更：`mengine-assets/src/mdx`与CPU模型示例、`mengine-editor-host/src/warcraft_model.rs`与GPU示例、模块导出、两份固定参考的来源／哈希／MIT许可证及对应gitattributes。原始version800的几何／骨骼／轨道／材质／纹理／UV／附件在内存读取与采样，Host直接上传现有RHI。共享材质求值、预编译序列资格／动画目标、来源身份、解析／pose／展开预算和稳定slot键为本阶段边界。
+
+必要检查：14项MDX格式／引用／预算／采样检查通过，真实Footman45姿态／26190顶点位置最大差2.0771026609800458e-7、法线4.1403175354837174e-7。Host与GPU示例的接口检查已通过；独立审核发现的共享层乘法放大、序列扫描、UV缺失引用、展开预算和共享命中后的非有限颜色均已处理，相关定向检查随代码保留。仅一个C#独立模型参考落在tmp，不再转换整图，不更新项目Assets。原生模型读取不依赖外部采样器。
+
+当前3/3，提交后立即执行本批相关验证：Host绘制规划回归、同一Release的Host／Tauri兼容与实际GPU模型读取／动画／旧对象释放／另一slot保留；复用152／153未变化的MPQ、BLP和字节缓存边界结果。模型句柄总RGBA限额、实际归档读取与公共字节重挂共享在消费探针中检查。完整地图会话、原选图替换和其取消／失败／磁盘增长验收尚无对应消费者，不冒充已覆盖。未触碰用户编辑器PID64664；原始记录在 `tmp/docs-artifacts/warcraft-archives/`。批次关闭前不开始下一功能任务。

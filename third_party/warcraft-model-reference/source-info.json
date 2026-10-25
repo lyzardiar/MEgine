@@ -1,0 +1,52 @@
+{
+  "author": "MiYu",
+  "purpose": "Fixed external format and animation references for native Rust implementation; upstream executables and game assets are not bundled.",
+  "references": [
+    {
+      "repository": "https://github.com/Darithos/W3ModelViewer",
+      "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e",
+      "path": "src/Wc3ModelViewer.Core/Formats/MdxReader.cs",
+      "sha256": "4cd165f17bb929d94424457fa7cdf42f9dc49dbfc51d93d53c9423f1441a99c1"
+    },
+    {
+      "repository": "https://github.com/Darithos/W3ModelViewer",
+      "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e",
+      "path": "src/Wc3ModelViewer.Core/Formats/MdxAnimator.cs",
+      "sha256": "83ffde4c3d71d724b22ece317d3ef8410e3442265e0bb828005af19d7fa0e675"
+    },
+    {
+      "repository": "https://github.com/Darithos/W3ModelViewer",
+      "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e",
+      "path": "src/Wc3ModelViewer.Core/Formats/MdxModel.cs",
+      "sha256": "c4d464c26bc21ceae76d133af66b062b185441708fe6596f1f9f7e88fe6efcdd"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/parsers/mdlx/eventobject.ts",
+      "sha256": "a8fa456661b67cf14991acd3f504fb05ed2c363d7ecdfa7fd6afe7e97238ed8f"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/parsers/mdlx/collisionshape.ts",
+      "sha256": "723c93b7adedce4e64391c29bb21b499aa48f9b00303ca2c93e0bfdb6c9e53d8"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/parsers/mdlx/genericobject.ts",
+      "sha256": "dcd5920803823efeb2a42fb020a30d3675dba76df715bb59d9e33137639a9b15"
+    }
+  ],
+  "licenses": [
+    {
+      "file": "LICENSE-mdx-m3-viewer.txt",
+      "sha256": "fde2be4674e506cd2044a2d8c4318495b96b794c0d9d2a7af1add44944a0ac22"
+    },
+    {
+      "file": "LICENSE-W3ModelViewer.txt",
+      "sha256": "0c7bd7da2ae92c2326fe12ca36bceb720f8f4323dbb20ea5983c40bd7646de83"
+    }
+  ]
+}

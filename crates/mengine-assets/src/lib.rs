@@ -22,6 +22,7 @@ mod surface_shader;
 mod terrain_mesh;
 mod texture;
 mod blp;
+mod mdx;
 mod timeline;
 
 pub use animation::{
@@ -67,6 +68,7 @@ pub use surface_shader::{
 };
 pub use texture::{decode_texture_rgba8, load_environment_texture, load_texture_rgba8, texture_dimensions, texture_dimensions_from_bytes};
 pub use blp::decode_blp_mip_rgba8;
+pub use mdx::{MdxAttachmentPose, MdxBillboardCamera, MdxGeosetPose, MdxLayerPose, MdxModel, MdxPose, MdxReadLimits, MdxSequence, MdxTexture};
 pub use timeline::{
     load_timeline_asset, normalize_prefab_asset_path, normalize_timeline_asset_path,
     normalize_timeline_target, parse_timeline_asset, parse_timeline_binding_table,

@@ -1,6 +1,6 @@
 # Warcraft 地图运行时资源加载调查
 
-Author: MiYu. 2026-10-25。状态：资源字节、MPQ挂载与BLP内存解码基础层已实现；游戏运行入口、MDX与地图会话待接入。
+Author: MiYu. 2026-10-25。状态：MPQ字节、BLP内存解码及经典MDX模型／Host消费基础已实现；完整地图会话与游戏选图入口待接入。
 
 ## 结论与边界
 
@@ -90,6 +90,20 @@ mengine-assets新增 AssetByteSource／AssetMounts、MpqAssetSource 和 Warcraft
 新增消费者示例 `cargo run -p mengine-assets --example warcraft_archive_texture -- <game-directory> <map-path> <member> [reference-rgba-file]`，执行归档查找→成员内存读取→RGBA解码，输出来源、摘要与参考差异，不导出PNG或生成meta。实际DotA挂载下验证公共BTNFootman、菜单边框、Lords_Grass及地图自带war3mapMap：源字节SHA与Python一致；调色板RGBA逐字节一致，3张JPEG相对独立Pillow参考每通道最大差值1，不能写成RGBA哈希一致。三个公共成员重挂地图后保持同一原始字节Arc；地图成员按新的挂载身份隔离。探针为Debug单纹理读取，无GPU上传，不代表整图加载速度或完整游戏运行。
 
 定向测试／构建日志、原始失败与最终对照在 `tmp/docs-artifacts/warcraft-archives/`，最终4成员汇总为 `texture-reference/comparison-final.json`。仅验证用RGBA参考落在该临时目录，产品资源路径不写出纹理。编辑器现有进程未停止或重启，未运行完整地图转换或Editor构建。MDX／MDL、地图数据、GPU消费、会话切换与选图入口仍需接入；152–154相关集成在第3个功能任务完成后统一执行。
+
+## 第一百五十四阶段：经典MDX与Host原生消费（新批次3/3，待统一验证）
+
+`MdxModel`直接读取version800的模型、序列、全局序列、材质／纹理动画、geoset、节点、附件与pivot。原始轨道按毫秒求值，处理step／linear／Hermite／Bezier与四元数曲线、非循环终点、全局wall时间、无序父级、矩阵组等权蒙皮、UV层／变换、透明度与BGR颜色；转换到现有引擎的轴向与1/128单位。事件与碰撞节点按独立格式来源的bare generic object布局读取，事件／碰撞行为本身没有执行。
+
+默认输入128MiB、解析分配预算256MiB、累计200万顶点／1200万索引／100万keys／8192节点；另限64个顶层chunk、4096序列／材质／geoset、每材质4096层、8组UV。分配前检查记录范围与计数，解析后检查目标引用和拓扑循环。诊断字符串与节点映射计入预算；同一解析预算也用于单次pose输出预检，JPEG工作缓冲、其他资源与GPU缓存分别核算。材质层在每次pose按实际材质求值一次并共享不可变Arc，折叠缩放资格与geoset动画目标在解析期确定。颜色有限性独立于材质共享命中检查。
+
+Host新增 `MountedWarcraftModel`：同步加载接口供后续会话工作线程调用，句柄可通过Arc跨视图共享；纹理按实际归档来源去重，RGBA总量由调用者限定，示例128MiB。它直接向现有RHI上传解码纹理和模型姿态，实例slot使用固定网格键更新；释放slot不删除另一实例或公共纹理。GPU变更前预检展开后的draw、Vertex／index和对象／键预算，默认1024draw、128MiB上传字节、64MiB计划对象字节，可显式调额。这些是单次展开限额，不是整个设备或进程驻留上限。公共纹理引用管理与切图释放仍由后续会话负责。
+
+14项MDX定向检查通过；新增Host纯CPU绘制规划检查和原生GPU示例在本批次执行。真实Footman源SHA与先前归档探针一致，45个有效姿态／26190顶点对照固定C#参考：位置最大差2.0771026609800458e-7引擎单位，法线最大差4.1403175354837174e-7。循环动画的源区间终点与运行API回绕语义分别处理，未把源终点当作运行首帧；参考采样器49节点，原生57节点包含另8个事件节点，不声称节点计数相同。证据在 `tmp/docs-artifacts/warcraft-archives/mdx-*.log` 与 `native-model-reference/`。
+
+来源、固定提交、参考文件SHA和两份MIT许可证保存在 `third_party/warcraft-model-reference/`。原生读取不调用.NET或外部转换器；独立C#采样器只为本地验证一个模型，原始MDX与参考JSON留在tmp。CPU示例为 `cargo run -p mengine-assets --example warcraft_archive_model -- <game> <map> <member> [reference-json]`；GPU入口为 `cargo run -p mengine-editor-host --release --example render_warcraft_archive -- <game> <map> <member> [capture-directory]`，默认截图目录在tmp。
+
+当前不支持MDL文本、Reforged布局、特殊继承／camera anchoring、完整billboard原游戏对照、粒子／ribbon／light／事件行为。Host对尚未精确支持的filter3／6、sphere mapping、no-depth-test明确拒绝；其他材质属性、替换纹理上下文及整图视觉仍需按原游戏验证。常规选图仍使用离线流程，不能把这次模型消费当作地图加载替换完成。152–154达到3项后只执行累计接口、同一原生版本与代表模型的相关验证，复用未变化的前两阶段结果。
 
 ## 验收标准
 

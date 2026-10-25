@@ -9,7 +9,9 @@ mod session;
 mod undo;
 mod viewport;
 mod scene_snapshot_world;
+mod warcraft_model;
 pub use scene_snapshot_world::SceneSnapshotWorld;
+pub use warcraft_model::{MountedWarcraftModel,WarcraftModelRenderLimits};
 
 pub use gizmo::{GizmoMode, GizmoState};
 pub use play_runtime::{EditorPlayRuntime, PlayProject, PlayWorldUpdate, ScriptInput};
