@@ -1914,3 +1914,13 @@ Amazonia7434实体多窗口报告逐份验证Scene／Game耗时的binary-json来
 必要定向基准：同一冻结example分别以`isolated`／`shared`启动独立进程，3组反转顺序对照，每进程同时保留3个1280×720空视口。初始化总时长中位数6035.395→4059.539ms，第三个视口存活时的进程私有内存1317.480→738.992MiB，减少578.488MiB。采样PowerShell进程不计入根进程私有字节，采样耗时排除在构造计时外；不是VRAM、地图加载、首个Game画面、FPS或长期驻留结果，也不能据此认定上一批108.191MiB波动的原因已经解决。冻结example SHA256为`921ac0cdf525e8df68ebd0e145eed1e4f1a76cd61195273d69a199a5d2f3bd3a`。
 
 复现：`cargo test -p mengine-rhi --release --lib headless_context -- --nocapture --test-threads=1`及`material_alpha_preserves_opaque`筛选；`cargo run -p mengine-rhi --release --example benchmark_headless_viewports -- isolated`／`-- shared`。分段测试、最终接口检查、基准原件／汇总与源码摘要均在`tmp/docs-artifacts/editor-performance-risk/headless-context-*`。当前1/3，待另外两项合并构建后验证真实启动、Scene／Game／相机预览并发、材质／纹理热更新与GPU计时、旋转／尺寸／隐藏、项目关闭重开和5轮Stop／Play内存；普通FPS与CPU采样继续分开。用户编辑器未重启，稳定60、长期驻留、LOD和完整War3保持待办。
+
+### 第一百四十七阶段／新批次任务2/3：内置UI管线按批次状态创建
+
+变更路径：`crates/mengine-rhi/src/ui.rs`。分段采样确认共享设备后的三个视口，UI初始化分别723.516／702.010／695.157ms；272e65b中的UiRenderer在构造时创建20种混合／深度／模板状态管线。现在保留设备自己的内置ShaderModule，初始缓存为空，仅在prepare遇到对应普通UI批次时创建，后续复用同一GPU管线。Push／Pop仍规范化为Alpha，状态范围仍20种；空UI不创建内置管线，模板引用、格式／采样数、自定义与错误材质路径保持原语义。首次状态编译计入既有pipeline_prepare_ms，首次使用新状态仍需编译，不能把构造阶段减少的时间当成全部消失。
+
+4项去重GPU检查通过：新增BGRA单采样20状态首次创建／第二次复用与空计划检查，既有软裁剪像素、模板／自定义／错误管线及采样特效参数检查。软裁剪用例修改前后各运行一次，12种输入×32／48尺寸的159744字节完整RGBA逐字节相同，涵盖模板、深度投影和自定义／错误材质；不是全地图视觉验收。最终Editor Host Release接口检查通过，前端及完整Editor未重建。测试命令为`cargo test -p mengine-rhi --release --lib`分别筛选`builtin_ui_pipelines_are_created`、`soft_clip_transitions_match_explicit_full_viewport_clips_on_gpu`、`stencil_pipelines_encode_on_an_available`、`sampled_effect_parameters_match_custom_hooks_pixels`，均带`-- --nocapture --test-threads=1`。
+
+定向构造对照复用146冻结程序与本项冻结example，3组反转顺序、每次独立进程，各保留3个共享设备的1280×720空视口，均未绘制UI。总构造中位数4050.630→1945.799ms；根进程私有内存738.820／735.828MiB，没有证明实质内存收益。这是空视口准备时间，不是Game首帧、地图加载、FPS或长期驻留结果。新增example SHA256为`8d6b7b262c2fbfb531b9bfa68c4f383620cd75d74ef6e23a90988269e3f4c4ae`。`headless-init-trace.log`、`ui-pipeline-{benchmark,benchmark-summary,pixel-proof}.json`、分段测试和原始RGBA均在`tmp/docs-artifacts/editor-performance-risk/`。
+
+当前2/3，先提交实现与待测记录；第三项后统一构建，承接146的真实启动／并发视口／热更新／隐藏尺寸／关闭重开及驻留场景，并检查UI首帧与首次出现模板／混合状态、错误材质恢复和普通FPS。用户编辑器保持原进程；稳定60、长期驻留、LOD、完整原图脚本与War3保真继续待办。

@@ -1,4 +1,4 @@
-// Author: MiYu. Reuse exact Canvas overlap ordering while retaining current-frame drawing payloads.
+// Author: MiYu. Prepare UI render states on first use and preserve current Canvas drawing payloads.
 use bytemuck::{Pod, Zeroable};
 use mengine_core::surface_shader::{
     parse_surface_shader_schema, MAX_SURFACE_SHADER_PARAMETERS, MAX_SURFACE_SHADER_TEXTURES,
@@ -911,6 +911,7 @@ impl UiPrepareProfile {
 }
 
 pub(crate) struct UiRenderer {
+    built_in_shader: wgpu::ShaderModule,
     pipelines: HashMap<UiPipelineKey, wgpu::RenderPipeline>,
     custom_pipelines: HashMap<UiMaterialPipelineKey, wgpu::RenderPipeline>,
     custom_pipeline_last_used: HashMap<UiMaterialPipelineKey, u64>,
@@ -1189,43 +1190,9 @@ impl UiRenderer {
             ],
             push_constant_ranges: &[],
         });
-        let mut pipelines = HashMap::new();
-        for blend in [
-            UiBlendMode::Alpha,
-            UiBlendMode::Premultiplied,
-            UiBlendMode::Additive,
-            UiBlendMode::Multiply,
-        ] {
-            for depth_test in [false, true] {
-                for stencil in [UiStencilPipeline::Disabled, UiStencilPipeline::Test] {
-                    let key = UiPipelineKey {
-                        blend,
-                        depth_test,
-                        stencil,
-                    };
-                    pipelines.insert(
-                        key,
-                        create_ui_pipeline(device, &pipeline_layout, &shader, format, key, sample_count),
-                    );
-                }
-            }
-        }
-        for depth_test in [false, true] {
-            for stencil in [UiStencilPipeline::Push, UiStencilPipeline::Pop] {
-                let key = UiPipelineKey {
-                    blend: UiBlendMode::Alpha,
-                    depth_test,
-                    stencil,
-                };
-                pipelines.insert(
-                    key,
-                    create_ui_pipeline(device, &pipeline_layout, &shader, format, key, sample_count),
-                );
-            }
-        }
-
         Self {
-            pipelines,
+            built_in_shader: shader,
+            pipelines: HashMap::new(),
             custom_pipelines: HashMap::new(),
             custom_pipeline_last_used: HashMap::new(),
             error_pipelines: HashMap::new(),
@@ -1490,6 +1457,9 @@ impl UiRenderer {
                 self.prepare_profile.pipeline_prepare_ms += started.elapsed().as_secs_f64() * 1000.0;
             } else {
                 self.prepare_profile.material_prepare_ms += started.elapsed().as_secs_f64() * 1000.0;
+                let started = Instant::now();
+                self.ensure_builtin_pipeline(device, ui_pipeline_state(&batch.key));
+                self.prepare_profile.pipeline_prepare_ms += started.elapsed().as_secs_f64() * 1000.0;
             }
         }
         let started = Instant::now();
@@ -1551,6 +1521,10 @@ impl UiRenderer {
                 _padding: 0,
             }),
         );
+    }
+
+    fn ensure_builtin_pipeline(&mut self, device: &wgpu::Device, state: UiPipelineKey) {
+        self.pipelines.entry(state).or_insert_with(|| create_ui_pipeline(device, &self.pipeline_layout, &self.built_in_shader, self.format, state, self.sample_count));
     }
 
     fn ensure_material_pipeline(
@@ -1704,7 +1678,7 @@ impl UiRenderer {
             } else {
                 self.pipelines
                     .get(&pipeline_key)
-                    .expect("all built-in UI pipeline variants are created at startup")
+                    .expect("built-in UI pipelines must be prepared before drawing")
             };
             pass.set_pipeline(pipeline);
             pass.set_stencil_reference(batch.key.stencil.reference());
@@ -2537,6 +2511,40 @@ mod batch_density_tests;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn builtin_ui_pipelines_are_created_for_prepared_states_and_reused() {
+        let gpu = pollster::block_on(crate::Renderer::new_headless(winit::dpi::PhysicalSize::new(16,16))).expect("GPU for first-use UI pipeline validation");
+        gpu.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let mut renderer = UiRenderer::new(&gpu.device, &gpu.queue, wgpu::TextureFormat::Bgra8UnormSrgb, 16, 16, false, 1);
+        assert!(renderer.pipelines.is_empty());
+        renderer.prepare(&gpu.device, &gpu.queue, &UiBatchPlan::default());
+        assert!(renderer.pipelines.is_empty());
+        let mut states = Vec::new();
+        for blend in [UiBlendMode::Alpha, UiBlendMode::Premultiplied, UiBlendMode::Additive, UiBlendMode::Multiply] {
+            for depth in [false, true] {
+                for stencil in [UiStencilMode::Disabled, UiStencilMode::Test { reference:0 }] { states.push((blend, depth, stencil)); }
+            }
+        }
+        for depth in [false, true] {
+            for stencil in [UiStencilMode::Push { reference:0 }, UiStencilMode::Pop { reference:1 }] { states.push((UiBlendMode::Alpha, depth, stencil)); }
+        }
+        for (index, (blend, depth_test, stencil)) in states.into_iter().enumerate() {
+            let mut primitive = UiPrimitive::solid([0.,0.,16.,16.], [1.;4]);
+            primitive.key.blend = blend; primitive.key.depth_test = depth_test; primitive.key.stencil = stencil;
+            let plan = UiBatchPlan::build(vec![primitive]); let state = ui_pipeline_state(&plan.batches[0].key);
+            renderer.prepare(&gpu.device, &gpu.queue, &plan);
+            assert_eq!(renderer.pipelines.len(), index + 1);
+            assert_eq!(renderer.prepare_profile.custom_pipeline_attempts, 0);
+            assert_eq!(renderer.prepare_profile.error_pipeline_builds, 0);
+            let first = renderer.pipelines[&state].clone();
+            renderer.prepare(&gpu.device, &gpu.queue, &plan);
+            assert_eq!(renderer.pipelines[&state], first);
+            assert_eq!(renderer.pipelines.len(), index + 1);
+        }
+        assert_eq!(renderer.pipelines.len(), 20);
+        assert!(pollster::block_on(gpu.device.pop_error_scope()).is_none());
+    }
 
     fn primitive(texture: &str, clip: Option<UiClipRect>) -> UiPrimitive {
         let mut primitive = UiPrimitive::solid([0.0, 0.0, 10.0, 10.0], [1.0; 4]);
