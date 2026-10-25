@@ -3,7 +3,9 @@
 #include "renderer.h"
 #include "image.h"
 #include "media.h"
+#include "model.h"
 #include <memory>
+#include <shellapi.h>
 
 namespace war3 {
 struct WindowState { Renderer* renderer = nullptr; bool minimized = false; int mouseX = 0, mouseY = 0; bool click = false; };
@@ -39,7 +41,7 @@ int run(HINSTANCE instance) {
     auto buttonImage = loadImage("UI\\Widgets\\EscMenu\\Human\\human-options-button-border-up.blp");
     auto footmanImage = loadImage("ReplaceableTextures\\CommandButtons\\BTNFootman.blp");
     if (GetModuleHandleW(L"Game.dll")) throw std::runtime_error("Game.dll must not be loaded");
-    if (options.probe) { log.write("probe=passed game_dll_loaded=false"); return 0; }
+    if (options.probe) { Model menu(archives, images, nullptr, "UI\\Glues\\MainMenu\\MainMenu3d_exp\\MainMenu3d_exp.mdx", log); log.write("probe=passed game_dll_loaded=false"); return 0; }
     SetProcessDPIAware();
     WNDCLASSEXW type{sizeof(type)};
     type.lpfnWndProc = windowProc; type.hInstance = instance; type.hCursor = LoadCursorW(nullptr, IDC_ARROW); type.lpszClassName = L"War3NativeClient";
@@ -48,12 +50,14 @@ int run(HINSTANCE instance) {
     auto window = CreateWindowExW(0, type.lpszClassName, L"Warcraft III — Native Client", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 960, nullptr, nullptr, instance, &state);
     if (!window) throw std::runtime_error("Cannot create native window");
     struct Close { HWND window; ~Close() { if (IsWindow(window)) DestroyWindow(window); } } close{window};
-    Renderer renderer(window);
+    Renderer renderer(window, options.renderer == "d3d9-reference");
+    log.write(std::string("driver=") + renderer.driver());
     state.renderer = &renderer;
     Text text(renderer, font->bytes);
     auto logo = renderer.texture(logoImage.width, logoImage.height, logoImage.pixels);
     auto panel = renderer.texture(panelImage.width, panelImage.height, panelImage.pixels);
     auto button = renderer.texture(buttonImage.width, buttonImage.height, buttonImage.pixels);
+    Model menu(archives, images, &renderer, "UI\\Glues\\MainMenu\\MainMenu3d_exp\\MainMenu3d_exp.mdx", log);
     std::unique_ptr<Music> music;
     if (!options.mute) {
         try { music = std::make_unique<Music>(options.dataRoot, archives.read("Sound\\Music\\mp3Music\\War3XMainScreen.mp3")); log.write("music=miles_mp3_memory_playing"); }
@@ -62,6 +66,7 @@ int run(HINSTANCE instance) {
     if (!options.hidden) ShowWindow(window, SW_SHOW);
     unsigned frames = 0;
     bool running = true;
+    auto started = GetTickCount64();
     while (running) {
         MSG message{};
         while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) { if (message.message == WM_QUIT) running = false; TranslateMessage(&message); DispatchMessageW(&message); }
@@ -72,7 +77,7 @@ int run(HINSTANCE instance) {
         float left = (renderer.width() - 800 * scale) / 2, top = (renderer.height() - 600 * scale) / 2;
         auto draw = [&](float x, float y, float w, float h, DWORD color, IDirect3DTexture9* texture) { renderer.rect(left + x * scale, top + y * scale, w * scale, h * scale, color, texture); };
         auto label = [&](std::wstring_view value, float x, float y, float h, DWORD color = 0xffffcc55) { text.draw(value, left + x * scale, top + y * scale, h * scale, color, true); };
-        draw(0, 0, 800, 600, 0xff7088aa, panel.Get());
+        menu.draw(GetTickCount64() - started, float(renderer.width()) / renderer.height());
         draw(90, 15, 512, 256, 0xffffffff, logo.Get());
         std::wstring_view labels[] = {L"Single Player", L"Battle.net", L"Local Area Network", L"Options", L"Credits", L"Quit"};
         for (unsigned i = 0; i < 6; ++i) {
@@ -86,7 +91,7 @@ int run(HINSTANCE instance) {
         }
         label(L"Warcraft III 1.27 — Native Client", 620, 568, 16, 0xffc0c5d0);
         state.click = false;
-        if (renderer.end()) ++frames;
+        if (renderer.end(options.frames && frames + 1 == options.frames ? options.capture : fs::path{})) ++frames;
         if (options.frames && frames >= options.frames) break;
     }
     state.renderer = nullptr;
@@ -95,6 +100,9 @@ int run(HINSTANCE instance) {
 }
 }
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
+    bool silent = false;
+    int count = 0; auto arguments = CommandLineToArgvW(GetCommandLineW(), &count);
+    if (arguments) { for (int i = 1; i < count; ++i) if (!wcscmp(arguments[i], L"--hidden") || !wcscmp(arguments[i], L"--probe")) silent = true; LocalFree(arguments); }
     try { return war3::run(instance); }
-    catch (const std::exception& error) { OutputDebugStringA(error.what()); std::ofstream log; try { auto options = war3::Options::parse(); log.open(options.log, std::ios::binary | std::ios::app); log << "fatal=" << error.what() << '\n'; if (options.hidden || options.probe) return 1; } catch (...) {} MessageBoxW(nullptr, war3::wide(error.what()).c_str(), L"War3", MB_OK | MB_ICONERROR); return 1; }
+    catch (const std::exception& error) { OutputDebugStringA(error.what()); try { auto options = war3::Options::parse(); std::ofstream log(options.log, std::ios::binary | std::ios::app); log << "fatal=" << error.what() << '\n'; } catch (...) {} if (!silent) MessageBoxW(nullptr, war3::wide(error.what()).c_str(), L"War3", MB_OK | MB_ICONERROR); return 1; }
 }

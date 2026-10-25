@@ -21,6 +21,7 @@ struct Options {
     fs::path dataRoot;
     fs::path map;
     fs::path log;
+    fs::path capture;
     std::string renderer = "d3d9";
     unsigned frames = 0;
     bool probe = false;

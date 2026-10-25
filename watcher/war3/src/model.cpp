@@ -1,0 +1,103 @@
+// Author: MiYu. MDX800 bounds, geometry, hierarchy and texture ownership.
+#include "model_data.h"
+#include <map>
+#include <numeric>
+#include <unordered_set>
+
+namespace war3 {
+using namespace mdx;
+namespace {
+XMFLOAT4 vector(Binary& b, unsigned n) { XMFLOAT4 v{}; for (unsigned i = 0; i < n; ++i) (&v.x)[i] = b.f32(); return v; }
+Track track(Binary& b, unsigned width, bool integer = false) {
+    Track t; auto count = b.u32(); t.mode = b.u32(); t.global = b.i32();
+    if (count > 1000000 || t.mode > 3 || t.global < -1 || (integer && t.mode)) throw std::runtime_error("Invalid MDX track");
+    if (count > b.left() / (4 + width * 4 * (t.mode > 1 ? 3 : 1))) throw std::runtime_error("Truncated MDX track");
+    t.keys.reserve(count);
+    for (unsigned i = 0; i < count; ++i) { Key k; k.time = b.i32(); k.value = integer ? XMFLOAT4(float(b.u32()),0,0,0) : vector(b,width); if (t.mode > 1) { k.incoming = vector(b,width); k.outgoing = vector(b,width); } if (i && k.time < t.keys.back().time) throw std::runtime_error("Unsorted MDX track"); t.keys.push_back(k); }
+    return t;
+}
+void transformTracks(Binary& b, Transform& t, unsigned translation, unsigned rotation, unsigned scale) {
+    while (b.left()) { auto kind = b.u32(); if (kind == translation) t.translation = track(b,3); else if (kind == rotation) t.rotation = track(b,4); else if (kind == scale) t.scale = track(b,3); else throw std::runtime_error("Unsupported MDX transform record"); }
+}
+std::vector<unsigned> words(Binary& b, unsigned limit) { auto count = b.count(4,limit); std::vector<unsigned> out; out.reserve(count); for (unsigned i = 0; i < count; ++i) out.push_back(b.u32()); return out; }
+std::vector<XMFLOAT4> vectors(Binary& b, unsigned width, unsigned limit) { auto count = b.count(width*4,limit); std::vector<XMFLOAT4> out; out.reserve(count); for (unsigned i = 0; i < count; ++i) out.push_back(vector(b,width)); return out; }
+}
+void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
+    if (bytes.size() > 32*1024*1024) throw std::runtime_error("MDX input budget exceeded");
+    Binary b(bytes); b.expect(tag("MDLX")); std::vector<XMFLOAT4> pivots;
+    std::map<unsigned,std::tuple<float,XMFLOAT4,Track,Track>> animations; std::unordered_set<unsigned> chunks; unsigned version = 0;
+    while (b.left()) {
+        auto kind = b.u32(), length = b.u32(); Binary r(b.take(length));
+        if (chunks.size() >= 64 || !chunks.insert(kind).second) throw std::runtime_error("Duplicate MDX chunk");
+        if (kind == tag("VERS")) { version = r.u32(); r.finish(); }
+        else if (kind == tag("SEQS")) {
+            while (r.left()) { Sequence s; s.name = r.string(80); s.start = r.i32(); s.end = r.i32(); r.take(4); s.flags = r.u32(); r.take(36); if (s.end < s.start || sequences.size() >= 4096) throw std::runtime_error("Invalid sequence"); sequences.push_back(s); }
+        } else if (kind == tag("GLBS")) { while (r.left()) globals.push_back(r.u32()); }
+        else if (kind == tag("TEXS")) {
+            while (r.left()) { auto replacement = r.u32(); Texture t; t.path = r.string(260); t.flags = r.u32(); if (t.path.empty() && replacement == 1) t.path = "ReplaceableTextures\\TeamColor\\TeamColor00.blp"; if (t.path.empty() && replacement == 2) t.path = "ReplaceableTextures\\TeamGlow\\TeamGlow00.blp"; if (textures.size() >= 4096) throw std::runtime_error("Texture count exceeded"); textures.push_back(std::move(t)); }
+        } else if (kind == tag("MTLS")) {
+            while (r.left()) {
+                auto m = r.record(20); Material material; material.priority = m.i32(); m.u32(); m.expect(tag("LAYS")); auto count = m.count(28,4096);
+                for (unsigned i = 0; i < count; ++i) { auto l = m.record(28); Layer layer; layer.filter = l.u32(); layer.flags = l.u32(); layer.texture = l.u32(); layer.animation = l.i32(); layer.coord = l.u32(); layer.alpha = l.f32(); if (layer.filter > 6 || layer.animation < -1) throw std::runtime_error("Invalid classic layer"); while (l.left()) { auto k = l.u32(); if (k == tag("KMTA")) layer.opacity = track(l,1); else if (k == tag("KMTF")) layer.textureTrack = track(l,1,true); else throw std::runtime_error("Unsupported layer track"); } material.layers.push_back(std::move(layer)); }
+                m.finish(); if (materials.size() >= 4096) throw std::runtime_error("Material count exceeded"); materials.push_back(std::move(material));
+            }
+        } else if (kind == tag("GEOS")) {
+            size_t totalVertices = 0;
+            while (r.left()) {
+                auto g = r.record(4); Geoset mesh; g.expect(tag("VRTX")); mesh.positions = vectors(g,3,65536); totalVertices += mesh.positions.size(); if (totalVertices > 1000000) throw std::runtime_error("Vertex budget exceeded");
+                g.expect(tag("NRMS")); g.take(size_t(g.count(12,65536))*12);
+                g.expect(tag("PTYP")); auto types = words(g,4096); for (auto type : types) if (type != 4) throw std::runtime_error("Non-triangle geoset");
+                g.expect(tag("PCNT")); auto counts = words(g,4096); g.expect(tag("PVTX")); auto count = g.count(2,3000000); mesh.indices.reserve(count);
+                for (unsigned i = 0; i < count; ++i) { auto index = g.u16(); if (index >= mesh.positions.size()) throw std::runtime_error("Index out of range"); mesh.indices.push_back(index); }
+                if (count%3 || counts.size() != types.size() || std::accumulate(counts.begin(),counts.end(),std::uint64_t(0)) != count) throw std::runtime_error("Invalid primitive counts");
+                g.expect(tag("GNDX")); auto groups = g.take(g.count(1,65536)); mesh.group.assign(groups.begin(),groups.end()); g.expect(tag("MTGC")); auto sizes = words(g,256); g.expect(tag("MATS")); auto matrices = words(g,4096*256); size_t at = 0;
+                for (auto size : sizes) { if (!size || size > matrices.size()-at) throw std::runtime_error("Invalid matrix group"); std::vector<int> ids; ids.reserve(size); for (unsigned j = 0; j < size; ++j) ids.push_back(int(matrices[at++])); mesh.matrices.push_back(std::move(ids)); }
+                if (at != matrices.size() || (!mesh.matrices.empty() && mesh.group.size() != mesh.positions.size())) throw std::runtime_error("Incomplete matrix groups");
+                for (auto group : mesh.group) if (group >= mesh.matrices.size()) throw std::runtime_error("Missing matrix group");
+                mesh.material = g.u32(); g.take(8+28); g.take(size_t(g.count(28,65536))*28); g.expect(tag("UVAS")); auto sets = g.u32(); if (sets > 8) throw std::runtime_error("UV set count exceeded");
+                for (unsigned i = 0; i < sets; ++i) { g.expect(tag("UVBS")); auto uv = vectors(g,2,65536); if (uv.size() != mesh.positions.size()) throw std::runtime_error("UV count mismatch"); mesh.uv.push_back(std::move(uv)); }
+                g.finish(); mesh.sampled.resize(mesh.positions.size()); if (geosets.size() >= 4096) throw std::runtime_error("Geoset count exceeded"); geosets.push_back(std::move(mesh));
+            }
+        } else if (kind == tag("GEOA")) {
+            while (r.left()) { auto a = r.record(28); float alpha = a.f32(); auto flags = a.u32(); auto tint = vector(a,3); if (flags&2) std::swap(tint.x,tint.z); else tint = {1,1,1,1}; auto id = a.u32(); Track opacity, color; while (a.left()) { auto k = a.u32(); if (k == tag("KGAO")) opacity = track(a,1); else if (k == tag("KGAC")) color = track(a,3); else throw std::runtime_error("Invalid geoset track"); } if (!animations.emplace(id,std::make_tuple(alpha,tint,std::move(opacity),std::move(color))).second) throw std::runtime_error("Duplicate geoset animation"); }
+        } else if (kind == tag("TXAN")) { while (r.left()) { auto a = r.record(4); Transform t; transformTracks(a,t,tag("KTAT"),tag("KTAR"),tag("KTAS")); textureAnimations.push_back(std::move(t)); } }
+        else if (kind == tag("PIVT")) { while (r.left()) pivots.push_back(vector(r,3)); }
+        else if (kind == tag("CAMS")) {
+            bool first = true;
+            while (r.left()) { auto c = r.record(120); c.take(80); auto p = vector(c,3); auto field = c.f32(), farValue = c.f32(), nearValue = c.f32(); auto look = vector(c,3); Track position, destination; while (c.left()) { auto k = c.u32(); if (k == tag("KCTR")) position = track(c,3); else if (k == tag("KTTR")) destination = track(c,3); else if (k == tag("KCRL")) track(c,1); else throw std::runtime_error("Unknown camera track"); } if (first) { eye = p; target = look; fov = field; nearPlane = nearValue; farPlane = farValue; cameraPosition = std::move(position); cameraTarget = std::move(destination); first = false; } }
+        } else if (kind == tag("BONE") || kind == tag("HELP") || kind == tag("LITE") || kind == tag("PRE2") || kind == tag("PREM") || kind == tag("RIBB") || kind == tag("ATCH")) {
+            bool outer = kind != tag("BONE") && kind != tag("HELP"); if (outer) log.write("mdx_effect_payload_pending="+std::to_string(kind));
+            while (r.left()) { auto payload = outer ? r.record(100) : Binary({}); auto& source = outer ? payload : r; auto n = source.record(96); n.take(80); Node node; node.id = n.i32(); node.parent = n.i32(); node.flags = n.u32(); transformTracks(n,node.tracks,tag("KGTR"),tag("KGRT"),tag("KGSC")); if (node.id < 0 || node.parent < -1 || nodes.size() >= 4096) throw std::runtime_error("Invalid node"); nodes.push_back(std::move(node)); if (kind == tag("BONE")) source.take(8); if (outer) source.take(source.left()); }
+        }
+    }
+    if (version != 800 || geosets.empty()) throw std::runtime_error("Expected classic MDX800 geometry");
+    if (!(fov > 0 && fov < XM_PI && nearPlane > 0 && farPlane > nearPlane)) throw std::runtime_error("Invalid camera");
+    std::map<int,unsigned> ids;
+    for (unsigned i = 0; i < nodes.size(); ++i) { if (!ids.emplace(nodes[i].id,i).second) throw std::runtime_error("Duplicate node id"); if (unsigned(nodes[i].id) < pivots.size()) nodes[i].pivot = pivots[nodes[i].id]; }
+    for (auto& n : nodes) if (n.parent >= 0) { auto p = ids.find(n.parent); if (p == ids.end()) throw std::runtime_error("Missing parent node"); n.parent = int(p->second); }
+    std::vector<unsigned char> marks(nodes.size()); std::vector<unsigned> path;
+    for (unsigned i = 0; i < nodes.size(); ++i) { int next = int(i); while (next >= 0 && marks[next] != 2) { if (marks[next] == 1) throw std::runtime_error("Cyclic hierarchy"); marks[next] = 1; path.push_back(unsigned(next)); next = nodes[next].parent; } while (!path.empty()) { auto index = path.back(); path.pop_back(); marks[index] = 2; order.push_back(index); } }
+    world.resize(nodes.size());
+    for (auto& g : geosets) {
+        if (g.material >= materials.size()) throw std::runtime_error("Missing material");
+        for (auto& group : g.matrices) for (auto& id : group) { auto node = ids.find(id); if (node == ids.end()) throw std::runtime_error("Missing matrix node"); id = int(node->second); }
+        for (auto& l : materials[g.material].layers) if (l.texture >= textures.size() || l.coord >= g.uv.size() || (l.animation >= 0 && unsigned(l.animation) >= textureAnimations.size())) throw std::runtime_error("Invalid layer reference");
+    }
+    for (auto& [index,a] : animations) { if (index >= geosets.size()) throw std::runtime_error("Missing animation target"); auto& g = geosets[index]; g.alpha = std::get<0>(a); g.color = std::get<1>(a); g.opacity = std::move(std::get<2>(a)); g.colorTrack = std::move(std::get<3>(a)); }
+    for (unsigned g = 0; g < geosets.size(); ++g) for (unsigned l = 0; l < materials[geosets[g].material].layers.size(); ++l) draws.emplace_back(g,l);
+    std::stable_sort(draws.begin(),draws.end(),[&](auto a, auto b) { auto& am = materials[geosets[a.first].material]; auto& bm = materials[geosets[b.first].material]; auto af = am.layers[a.second].filter, bf = bm.layers[b.second].filter; if ((af>=2)!=(bf>=2)) return af<2; if (af<2) return false; return std::tie(am.priority,af,a)<std::tie(bm.priority,bf,b); });
+    for (unsigned i = 0; i < sequences.size(); ++i) if (sequences[i].name.starts_with("Stand")) { sequence = i; break; }
+    log.write("mdx_geosets="+std::to_string(geosets.size())+" nodes="+std::to_string(nodes.size())+" textures="+std::to_string(textures.size())+" layers="+std::to_string(draws.size()));
+}
+Model::Model(Archives& archives, Images& images, Renderer* renderer, const char* name, Log& log) : data_(std::make_unique<Data>(renderer)) {
+    auto member = archives.read(name); if (!member) throw std::runtime_error(std::string("Missing MDX: ")+name); data_->parse(member->bytes,log);
+    size_t decoded = 0; std::map<std::string,Com<IDirect3DTexture9>> shared;
+    for (auto& texture : data_->textures) {
+        if (auto found = shared.find(texture.path); found != shared.end()) { texture.gpu = found->second; continue; }
+        Image image; if (!texture.path.empty()) { auto bytes = archives.readTexture(texture.path); if (!bytes) throw std::runtime_error("Missing model texture: "+texture.path); image = images.decode(bytes->bytes); } else image = {1,1,{0xffffffff}};
+        decoded += image.pixels.size()*4; if (decoded > 256*1024*1024) throw std::runtime_error("Model texture budget exceeded"); if (renderer) texture.gpu = renderer->texture(image.width,image.height,image.pixels); shared.emplace(texture.path,texture.gpu);
+    }
+    log.write("mdx_texture_bytes="+std::to_string(decoded));
+}
+Model::~Model() = default;
+}

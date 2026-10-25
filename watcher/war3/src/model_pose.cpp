@@ -1,0 +1,59 @@
+// Author: MiYu. Source-space skeletal animation and classic D3D9 material submission.
+#include "model_data.h"
+
+namespace war3 {
+using namespace mdx;
+namespace {
+void matrix(IDirect3DDevice9* device, D3DTRANSFORMSTATETYPE type, FXMMATRIX value) { XMFLOAT4X4 f; XMStoreFloat4x4(&f,value); D3DMATRIX d; std::memcpy(&d,&f,sizeof(d)); device->SetTransform(type,&d); }
+DWORD packedColor(FXMVECTOR value, float alpha) { XMFLOAT4 f; XMStoreFloat4(&f,value); auto byte = [](float x) { return unsigned(std::clamp(x,0.f,1.f)*255+.5f); }; return (byte(alpha)<<24)|(byte(f.x)<<16)|(byte(f.y)<<8)|byte(f.z); }
+}
+XMVECTOR Model::Data::sample(const Track& t, std::uint64_t elapsed, FXMVECTOR rest, bool rotation) const {
+    if (t.keys.empty()) return rest;
+    auto begin = t.keys.begin(), end = t.keys.end(); std::int64_t time = 0;
+    if (t.global >= 0) { if (unsigned(t.global) >= globals.size()) throw std::runtime_error("Animation global missing"); auto period = globals[t.global]; time = period ? elapsed%period : 0; }
+    else if (!sequences.empty()) { auto& s = sequences[sequence]; auto duration = std::uint64_t(std::int64_t(s.end)-s.start); time = s.start + std::int64_t(s.flags&1 ? std::min(elapsed,duration) : duration ? elapsed%duration : 0); begin = std::lower_bound(begin,end,s.start,[](const Key& k,int t) { return k.time<t; }); end = std::upper_bound(begin,end,s.end,[](int t,const Key& k) { return t<k.time; }); }
+    else return rest;
+    if (begin == end) return rest;
+    if (time <= begin->time) return XMLoadFloat4(&begin->value);
+    if (time >= (end-1)->time) return XMLoadFloat4(&(end-1)->value);
+    auto b = std::upper_bound(begin,end,time,[](std::int64_t t,const Key& k) { return t<k.time; }); auto a = b-1;
+    float u = float(time-a->time)/float(std::int64_t(b->time)-a->time); auto x = XMLoadFloat4(&a->value), y = XMLoadFloat4(&b->value);
+    if (!t.mode) return x;
+    if (t.mode == 1) return rotation ? XMQuaternionSlerp(x,y,u) : XMVectorLerp(x,y,u);
+    auto out = XMLoadFloat4(&a->outgoing), in = XMLoadFloat4(&b->incoming);
+    if (rotation) return XMQuaternionSlerp(XMQuaternionSlerp(x,y,u),XMQuaternionSlerp(out,in,u),2*u*(1-u));
+    if (t.mode == 2) return XMVectorHermite(x,out,y,in,u);
+    return x*((1-u)*(1-u)*(1-u))+out*(3*(1-u)*(1-u)*u)+in*(3*(1-u)*u*u)+y*(u*u*u);
+}
+void Model::draw(std::uint64_t elapsed, float aspect) {
+    auto& d = *data_; if (!d.renderer) throw std::runtime_error("Model has no rendering device"); auto device = d.renderer->device();
+    auto eye = XMLoadFloat4(&d.eye)+d.sample(d.cameraPosition,elapsed,XMVectorZero()); auto target = XMLoadFloat4(&d.target)+d.sample(d.cameraTarget,elapsed,XMVectorZero());
+    auto view = XMMatrixLookAtRH(eye,target,XMVectorSet(0,0,1,0)); matrix(device,D3DTS_VIEW,view); matrix(device,D3DTS_PROJECTION,XMMatrixPerspectiveFovRH(d.fov,aspect,d.nearPlane,d.farPlane)); matrix(device,D3DTS_WORLD,XMMatrixIdentity());
+    for (auto i : d.order) {
+        auto& n = d.nodes[i]; auto p = XMLoadFloat4(&n.pivot); auto t = d.sample(n.tracks.translation,elapsed,XMVectorZero()); auto q = d.sample(n.tracks.rotation,elapsed,XMQuaternionIdentity(),true); auto s = d.sample(n.tracks.scale,elapsed,XMVectorSet(1,1,1,0)); auto parent = n.parent>=0 ? XMLoadFloat4x4(&d.world[n.parent]) : XMMatrixIdentity();
+        if (n.flags&4) { XMVECTOR ps,pq,pt; if (XMMatrixDecompose(&ps,&pq,&pt,parent)) q = XMQuaternionMultiply(q,XMQuaternionInverse(pq)); }
+        auto world = XMMatrixTranslationFromVector(-p)*XMMatrixScalingFromVector(s)*XMMatrixRotationQuaternion(q)*XMMatrixTranslationFromVector(p+t)*parent;
+        if (n.flags&8) { XMVECTOR ws,wq,wt; if (XMMatrixDecompose(&ws,&wq,&wt,world)) { auto position = XMVector3TransformCoord(p,world); auto facing = XMMatrixInverse(nullptr,view); facing.r[3] = XMVectorSet(0,0,0,1); world = XMMatrixTranslationFromVector(-p)*XMMatrixScalingFromVector(ws)*facing*XMMatrixTranslationFromVector(position); } }
+        XMStoreFloat4x4(&d.world[i],world);
+    }
+    for (auto& g : d.geosets) for (unsigned i = 0; i < g.positions.size(); ++i) { auto p = XMLoadFloat4(&g.positions[i]); if (!g.matrices.empty()) { auto sum = XMVectorZero(); auto& group = g.matrices[g.group[i]]; for (auto node : group) sum += XMVector3TransformCoord(p,XMLoadFloat4x4(&d.world[node])); p = sum/float(group.size()); } XMFLOAT4 v; XMStoreFloat4(&v,p); g.sampled[i].x = v.x; g.sampled[i].y = v.y; g.sampled[i].z = v.z; }
+    device->SetFVF(D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1);
+    device->SetTextureStageState(0,D3DTSS_COLOROP,D3DTOP_MODULATE); device->SetTextureStageState(0,D3DTSS_COLORARG1,D3DTA_TEXTURE); device->SetTextureStageState(0,D3DTSS_COLORARG2,D3DTA_DIFFUSE);
+    device->SetTextureStageState(0,D3DTSS_ALPHAOP,D3DTOP_MODULATE); device->SetTextureStageState(0,D3DTSS_ALPHAARG1,D3DTA_TEXTURE); device->SetTextureStageState(0,D3DTSS_ALPHAARG2,D3DTA_DIFFUSE);
+    device->SetSamplerState(0,D3DSAMP_MINFILTER,D3DTEXF_LINEAR); device->SetSamplerState(0,D3DSAMP_MAGFILTER,D3DTEXF_LINEAR);
+    for (auto [gi,li] : d.draws) {
+        auto& g = d.geosets[gi]; auto& l = d.materials[g.material].layers[li]; float a = XMVectorGetX(d.sample(g.opacity,elapsed,XMVectorReplicate(g.alpha)))*XMVectorGetX(d.sample(l.opacity,elapsed,XMVectorReplicate(l.alpha)));
+        if (a <= .01f || g.indices.empty()) continue;
+        float textureIndex = XMVectorGetX(d.sample(l.textureTrack,elapsed,XMVectorReplicate(float(l.texture)))); if (!std::isfinite(textureIndex) || textureIndex < 0 || textureIndex >= d.textures.size()) throw std::runtime_error("Animated texture out of range"); auto texture = unsigned(textureIndex);
+        auto tint = d.sample(g.colorTrack,elapsed,XMLoadFloat4(&g.color)); if (!g.colorTrack.keys.empty()) tint = XMVectorSwizzle<2,1,0,3>(tint); auto color = packedColor(tint,a); auto uvMatrix = XMMatrixIdentity();
+        if (l.animation >= 0) { auto& t = d.textureAnimations[l.animation]; uvMatrix = XMMatrixTranslation(-.5f,-.5f,0)*XMMatrixScalingFromVector(d.sample(t.scale,elapsed,XMVectorSet(1,1,1,0)))*XMMatrixRotationQuaternion(d.sample(t.rotation,elapsed,XMQuaternionIdentity(),true))*XMMatrixTranslationFromVector(XMVectorSet(.5f,.5f,0,0)+d.sample(t.translation,elapsed,XMVectorZero())); }
+        for (unsigned i = 0; i < g.sampled.size(); ++i) { XMFLOAT4 uv; XMStoreFloat4(&uv,XMVector3TransformCoord(XMLoadFloat4(&g.uv[l.coord][i]),uvMatrix)); g.sampled[i].color = color; g.sampled[i].u = uv.x; g.sampled[i].v = uv.y; }
+        device->SetTexture(0,d.textures[texture].gpu.Get()); device->SetSamplerState(0,D3DSAMP_ADDRESSU,d.textures[texture].flags&1 ? D3DTADDRESS_WRAP : D3DTADDRESS_CLAMP); device->SetSamplerState(0,D3DSAMP_ADDRESSV,d.textures[texture].flags&2 ? D3DTADDRESS_WRAP : D3DTADDRESS_CLAMP);
+        device->SetRenderState(D3DRS_ZENABLE,!(l.flags&0x40)); device->SetRenderState(D3DRS_ZWRITEENABLE,l.filter<=1 && !(l.flags&0xc0)); device->SetRenderState(D3DRS_ZFUNC,D3DCMP_LESSEQUAL); device->SetRenderState(D3DRS_CULLMODE,l.flags&0x10 ? D3DCULL_NONE : D3DCULL_CW);
+        device->SetRenderState(D3DRS_ALPHATESTENABLE,l.filter==1 || l.filter>=5); device->SetRenderState(D3DRS_ALPHAFUNC,D3DCMP_GREATER); device->SetRenderState(D3DRS_ALPHAREF,l.filter==1 ? 191 : 5); device->SetRenderState(D3DRS_ALPHABLENDENABLE,l.filter>=2);
+        D3DBLEND src = D3DBLEND_ONE, dst = D3DBLEND_ZERO; if (l.filter>=2 && l.filter<=4) { src = D3DBLEND_SRCALPHA; dst = l.filter==2 ? D3DBLEND_INVSRCALPHA : D3DBLEND_ONE; } if (l.filter==5) { src = D3DBLEND_ZERO; dst = D3DBLEND_SRCCOLOR; } if (l.filter==6) { src = D3DBLEND_DESTCOLOR; dst = D3DBLEND_SRCCOLOR; } device->SetRenderState(D3DRS_SRCBLEND,src); device->SetRenderState(D3DRS_DESTBLEND,dst);
+        auto result = device->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST,0,static_cast<UINT>(g.sampled.size()),static_cast<UINT>(g.indices.size()/3),g.indices.data(),D3DFMT_INDEX16,g.sampled.data(),sizeof(Vertex)); if (FAILED(result)) throw std::runtime_error("MDX draw failed");
+    }
+    device->SetRenderState(D3DRS_ALPHATESTENABLE,FALSE); device->SetRenderState(D3DRS_CULLMODE,D3DCULL_NONE);
+}
+}

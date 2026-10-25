@@ -72,6 +72,7 @@ Options Options::parse() {
         else if (argument == L"--map") options.map = value(i);
         else if (argument == L"--renderer") options.renderer = utf8(value(i));
         else if (argument == L"--log") options.log = value(i);
+        else if (argument == L"--capture") options.capture = value(i);
         else if (argument == L"--frames") { auto text = value(i); size_t end = 0; auto n = std::stoul(text, &end); if (end != text.size() || n == 0 || n > 1000000) throw std::runtime_error("Invalid frame limit"); options.frames = n; }
         else if (argument == L"--probe") options.probe = true;
         else if (argument == L"--hidden") options.hidden = true;
@@ -80,9 +81,10 @@ Options Options::parse() {
     }
     if (options.dataRoot.empty()) throw std::runtime_error("Usage: war3.exe --data-root <Warcraft III directory> [--map <w3x/w3m>] [--renderer d3d9]");
     options.dataRoot = fs::canonical(options.dataRoot);
-    if (options.renderer != "d3d9") throw std::runtime_error("Renderer not implemented: " + options.renderer);
+    if (options.renderer != "d3d9" && options.renderer != "d3d9-reference") throw std::runtime_error("Renderer not implemented: " + options.renderer);
     if (!options.map.empty()) { if (options.map.is_relative()) options.map = options.dataRoot / options.map; options.map = fs::canonical(options.map); }
     if (options.hidden && !options.probe && !options.frames) throw std::runtime_error("Hidden run requires --frames or --probe");
+    if (!options.capture.empty() && !options.frames) throw std::runtime_error("Capture requires --frames");
     if (options.log.empty()) {
         wchar_t directory[32768]{};
         DWORD length = GetEnvironmentVariableW(L"LOCALAPPDATA", directory, 32768);

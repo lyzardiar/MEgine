@@ -36,6 +36,8 @@ public:
     void mountMap(const fs::path& path);
     void unmountMap();
     std::shared_ptr<const Member> read(std::string name);
+    std::shared_ptr<const Member> readTexture(std::string name);
+    std::shared_ptr<const Member> readCandidates(std::vector<std::string> names);
     std::size_t cachedBytes() const { return cacheBytes_; }
     std::size_t commonCount() const { return common_.size(); }
 };

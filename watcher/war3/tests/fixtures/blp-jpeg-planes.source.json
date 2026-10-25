@@ -1,0 +1,60 @@
+{
+  "author": "MiYu",
+  "generator": "Pillow Image.new, JPEG quality100 subsampling0; raw reference disables component transform and CMYK inversion",
+  "fixtures": [
+    {
+      "file": "blp-jpeg-four-planes.jpg",
+      "inputMode": "CMYK",
+      "inputPlanes": [
+        31,
+        79,
+        143,
+        199
+      ],
+      "size": [
+        8,
+        8
+      ],
+      "rawDecodedPlanes": [
+        224,
+        176,
+        112,
+        56
+      ],
+      "rgba": [
+        112,
+        176,
+        224,
+        56
+      ],
+      "sha256": "fc2bcb1921ea2a356ba501b768d2beb1d124f9905374e67b9331be570db1dfb6"
+    },
+    {
+      "file": "blp-jpeg-three-planes.jpg",
+      "inputMode": "RGB",
+      "inputPlanes": [
+        31,
+        79,
+        143
+      ],
+      "size": [
+        8,
+        8
+      ],
+      "rawDecodedPlanes": [
+        72,
+        168,
+        99
+      ],
+      "rgba": [
+        99,
+        168,
+        72,
+        255
+      ],
+      "sha256": "daca0f05c5d287d90f81b4ea64805aa4ec7b2f26da8f99da9abd4e19cace664c"
+    }
+  ],
+  "pillowVersion": "12.2.0",
+  "provenance": "Locally generated constant images; no Warcraft game texture bytes."
+}
