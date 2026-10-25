@@ -11,7 +11,6 @@ import shutil
 import subprocess
 import time
 import uuid
-from warcraft_resource_cache import ResourceCache, encoded
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = 2
@@ -78,13 +77,11 @@ def validate_cached(project, entry, source_sha, progress=None):
     return entry
 
 
-def import_environment(args):
-    sampler = ROOT / 'tmp/warcraft-effects/sentinel-bin/MdxExport.dll'
-    metadata = ROOT / 'tmp/warcraft-effects/node-metadata/NodeMetadata.dll'
-    if not sampler.is_file() or not metadata.is_file():
-        raise FileNotFoundError('地图转换工具未准备：运行 python scripts/prepare-frost-map-import.py')
+def import_environment(args, progress=None):
+    sampler, metadata, blast = importlib.import_module('prepare-frost-map-import').ensure_tools(lambda message: progress.report(0, message) if progress else None)
+    from warcraft_resource_cache import ResourceCache
     files = [ROOT / 'scripts' / name for name in ['warcraft_resource_cache.py', 'convert-warcraft-assets.py', 'convert-frost-classic-billboards.py', 'build-frost-original-doodads.py']]
-    files += [sampler, metadata, sampler.with_name('Wc3ModelViewer.Core.dll'), metadata.with_name('Wc3ModelViewer.Core.dll')]
+    files += [sampler, metadata, sampler.with_name('Wc3ModelViewer.Core.dll'), metadata.with_name('Wc3ModelViewer.Core.dll'), blast]
     cache = ResourceCache(getattr(args, 'cache_root', ROOT / 'tmp/warcraft-resource-cache/v1'), files)
     package_inputs = [ROOT / 'scripts' / name for name in ['runtime-import-frost-map.py', 'import-frost-original-map.py', 'import-frost-wisp-rules.py', 'warcraft_mpq.py', 'warcraft_map.py', 'warcraft_doodads.py', 'warcraft_terrain.py', 'warcraft_units.py', 'warcraft_unit_bindings.py', 'warcraft_selection_ground.py', 'build-frost-original-terrain.py', 'build-frost-original-units.py', 'install-frost-original-pathing.py', 'frost-original-doodads-client.js', 'warcraft_camera.py', 'frost-original-camera-client.js', 'install-frost-map-package.mjs', 'frost-shared-map-assets.mjs', 'frost-unit-initialization-package.mjs', 'export-frost-map-preview.py']]
     package_inputs += [ROOT / 'asset-library/warcraft-iii' / pack / 'asset-sources.json' for pack in ['game-ready', 'remaining-ready']]
@@ -109,7 +106,8 @@ def run(args):
     if source.suffix.lower() not in ('.w3m', '.w3x') or not source.is_file():
         raise ValueError('请选择已有的 .w3m 或 .w3x 文件')
     source_sha = digest(source)
-    resource_cache, sampler, metadata, environment = import_environment(args)
+    resource_cache, sampler, metadata, environment = import_environment(args, progress)
+    from warcraft_resource_cache import encoded
     # Environment changes select a fresh map package; older packages remain intact.
     identity = hashlib.sha256(encoded(dict(source=source_sha, environment=environment))).hexdigest()
     identifier = 'user-v' + str(VERSION) + '-' + identity
@@ -119,9 +117,6 @@ def run(args):
         return dict(validate_cached(project, json.loads(cache.read_bytes()), source_sha, lambda done, total: progress.report(7, '校验缓存资源', done, total)), cached=True, resourceCache=dict(resource_cache.stats))
     if destination.exists():
         raise ValueError('地图缓存不完整，请移走该目录后重试：' + str(destination))
-    for tool in ['node', 'dotnet']:
-        if not shutil.which(tool):
-            raise ValueError('首次地图转换需要 ' + tool + '，请安装后重试')
     # Each conversion builds in its own job directory; a failed job cannot publish a partial cache.
     work = result.parent
     for name in ['source-map', 'doodad-project', 'converted', 'stage']:

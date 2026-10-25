@@ -1861,3 +1861,14 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 同进程原版Amazonia场景7433实体的局部CPU对照，2轮预热／7轮计量、每轮12帧、交替顺序并逐帧核对delta和完整diff：无实体变化中位数1.087675→0.013267ms，64记录变化1.100358→0.135233ms，全部7433记录变化走完整比较15.757475→15.654883ms，密集路径不宣称收益。此范围只含observe，不含工厂构建、store校验、整个AgentBridge、模拟、IPC或实际FPS。脚本`benchmark-sparse-observation.mjs`及`sparse-observation-{benchmark,tests,new-tests,retest,reentrant-tests,final-typecheck}.log/json`均保留在`tmp/docs-artifacts/editor-performance-risk/`。
 
 本项实现及定向检查完成，批次2/3；没有重新构建前端／原生程序或运行地图矩阵。下一独立任务完成后统一构建，合并143–145的Amazonia／DotA加载与各材质状态、首帧、Play／Pause／Step／Stop与重启、多窗口revision与scene.diff／乐观写入、暴露编辑／隐藏恢复及普通FPS／CPU采样验证。最近原生程序仍df7f1cd，稳定60、LOD和完整War3继续待完成。
+
+
+### 地图导入依赖自动准备：远程 Git 拉取故障修复
+
+变更路径：`scripts/prepare-frost-map-import.py`、`scripts/runtime-import-frost-map.py`、`scripts/convert-warcraft-assets.py`、`scripts/test-frost-import-tools.py`、`docs/designs/frostbound-realms/original-map-import.md`。首次导入自动准备 MdxExport、NodeMetadata 和 PKWARE blast，源码指纹及完整运行文件摘要决定复用／重建，工具在独立目录完成后原子发布。并行准备采用进程锁；下载中断、残缺 ZIP 和损坏 DEFLATE 可重新下载。Python 依赖检查移到作业异常处理内，失败可写入 result.json。基础环境仍需 Python/NumPy/Pillow、Node.js、.NET 10 SDK、微软 C++ x64 工具及 Windows SDK；完整工具复用只需 .NET 10 运行时。原版 MPQ 路径须符合目标机器，工具不会安装系统软件。
+
+本次按已知故障执行最小复现与定向验证：`python scripts/test-frost-import-tools.py` 10 项、`python scripts/test-frost-map-cache.py` 7 项、使用新构建 blast 的 `python scripts/test-warcraft-mpq.py` 6 项通过。覆盖首次准备、离线复用、运行配置缺失、DLL 损坏、源码升级、构建失败／部分产物、外部 blast 覆盖、进程被终止后锁释放、缺少 NumPy 的实际 CLI 错误收据、下载中断与压缩数据损坏恢复。
+
+真实验证在 `tmp/docs-artifacts/map-import-dependencies/cold-checkout/` 复制受 Git 管理的脚本与第三方源码，资产库和样例只读复用当前工程，输出写独立 project。首次手动准备及 DotA 转换通过后，将其工具和下载源码移到证据目录，再由实际导入入口从空工具／源码缓存自动下载构建并转换 `DotA_v6.83d.w3x`；原图 SHA256 为 `c06547206849f7931ad61509e21b76d22d63ae38d05fe7f35dab48c3dff56ddf`，461 个输出文件校验完成，cached=false。自动入口第二次使用了首轮 MPQ 成员缓存，模型派生产物重新生成；不将其写成所有资源缓存均为空。随后禁止下载和构建函数，实际入口仍成功复用 cached=true。补充 DEFLATE 异常恢复后仅重跑受影响的工具测试，不重复全图转换。结果在 `verification.json`、`auto-job/{result,progress}.json`、`auto-job/converter.log`、`tools-tests.log`、`mpq-tests.log`。
+
+本项实现及故障定向验证完成。承接前两项已提交任务，本项提交后该批达 3/3；前两项登记的统一原生视口／多窗口／Play 生命周期集成及本项远程电脑重试仍待执行，保留原队列，不开始下一批或标记整批通过。本项没有修改编辑器代码，也未重建编辑器；DotA 验证范围为地图转换与缓存，完整对局规则及远程本机运行不在已通过结论中。

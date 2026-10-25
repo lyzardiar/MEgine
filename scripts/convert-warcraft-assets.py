@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import math
+import os
 import pathlib
 import shutil
 import struct
@@ -12,6 +13,7 @@ import subprocess
 import urllib.request
 import uuid
 import zipfile
+import zlib
 
 import numpy as np
 from PIL import Image
@@ -82,13 +84,33 @@ def sidecar(path, output):
         json_write(path.with_name(path.name + '.meta'), dict(schemaVersion=1, guid=str(identifier), importer=kind))
 
 
+def upstream_archive(cache):
+    def valid(path):
+        try:
+            with zipfile.ZipFile(path) as package:
+                names = package.namelist()
+                return any(name.endswith('/src/Wc3ModelViewer.Core/Wc3ModelViewer.Core.csproj') for name in names) and package.testzip() is None
+        except (OSError, zipfile.BadZipFile, EOFError, zlib.error):
+            return False
+    archive = cache / 'upstream.zip'
+    if valid(archive):
+        return archive
+    temporary = cache / ('download-' + uuid.uuid4().hex + '.zip')
+    try:
+        urllib.request.urlretrieve(f'https://codeload.github.com/Darithos/W3ModelViewer/zip/{COMMIT}', temporary)
+        if not valid(temporary):
+            raise ValueError('地图模型转换器源码下载不完整，请检查网络后重试')
+        os.replace(temporary, archive)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return archive
+
+
 def sampler():
     cache = ROOT / 'tmp/warcraft-converter' / COMMIT
     cache.mkdir(parents=True, exist_ok=True)
     core = cache / 'upstream/src/Wc3ModelViewer.Core'
-    archive = cache / 'upstream.zip'
-    if not archive.exists():
-        urllib.request.urlretrieve(f'https://codeload.github.com/Darithos/W3ModelViewer/zip/{COMMIT}', archive)
+    archive = upstream_archive(cache)
     with zipfile.ZipFile(archive) as package:
         for member in package.infolist():
             parts = pathlib.PurePosixPath(member.filename).parts[1:]

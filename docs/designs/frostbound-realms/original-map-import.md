@@ -183,13 +183,13 @@ node scripts/sync-frostbound-script.mjs
 
 进入“单人游戏 → 自定义游戏 → 打开地图文件”，在 Windows 文件选择框中选择任意目录的 `.w3m` 或 `.w3x`。后台转换完成后，在同一次 Play 中加载地图；转换期间仍能切换列表、取消导入或返回。取消后的迟到结果不会加载场景，Stop／退出会等待本次转换进程树结束。当前打开的地图加入本次运行的选图列表；重新启动游戏后，再次打开原文件即可复用缓存。
 
-`project.json.contentImporters.warcraft-map` 配置转换程序、支持扩展名、文件框初始目录、魔兽资源目录和作业目录。样例使用给定的 `E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne`；迁移机器时修改其中 `args` 的 `--game` 参数和 `initialDirectory`。完整场景生成器保留此配置。首次转换需要 Python（现有 NumPy／Pillow 依赖）、Node.js、.NET 10 及原版 MPQ；缺少本地模型转换器时先执行：
+`project.json.contentImporters.warcraft-map` 配置转换程序、支持扩展名、文件框初始目录、魔兽资源目录和作业目录。样例使用给定的 `E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne`；迁移机器时修改其中 `args` 的 `--game` 参数和 `initialDirectory`。完整场景生成器保留此配置。Windows 工程拉取后，首次导入会自动准备模型、节点元数据和 PKWARE 解压工具，不需要复制其他电脑的 `tmp/`，也不需要预先执行准备命令。基础环境需要 Python（`python -m pip install -r scripts/warcraft-assets/requirements.txt` 安装 NumPy／Pillow）、Node.js、.NET 10 SDK、Microsoft C++ Build Tools（x64 工具链与 Windows SDK）及原版 MPQ；首次构建需要访问 GitHub 和 .NET 还原源。已有完整工具只需 .NET 10 运行时，不再调用构建器或下载。可以提前准备工具：
 
 ```powershell
 python scripts/prepare-frost-map-import.py
 ```
 
-准备工具使用 [W3ModelViewer](https://github.com/Darithos/W3ModelViewer) 固定提交 `4fe46a0772520fc7b55078bf32cda1237d1b5f2e`，复用 `convert-warcraft-assets.py` 的下载、来源摘要和构建逻辑。运行时入口为 `scripts/runtime-import-frost-map.py`，通用引擎 API 是 `engine.importContent(importer, path?)`、`engine.cancelContentImport()` 和 `onContentImport(event)`；不传路径时显示文件选择框。转换程序从项目配置读取，不接受游戏脚本指定任意命令。回调只登记生成脚本工厂，实际地图实例在 `onSceneLoaded` 后创建。
+准备工具使用 [W3ModelViewer](https://github.com/Darithos/W3ModelViewer) 固定提交 `4fe46a0772520fc7b55078bf32cda1237d1b5f2e`，复用 `convert-warcraft-assets.py` 的下载、来源摘要和构建逻辑。完整工具保存到 `tmp/warcraft-map-import/<源码摘要>/`，按源码和运行文件摘要检查，缺失、损坏或源码更新时重建；同机并行导入用进程锁串行准备，进程退出自动释放。下载先验证 ZIP 再原子发布，构建完成后才发布工具目录，失败可重试。`blast.exe` 随工具准备，并纳入资源转换缓存身份；显式 `MENGINE_BLAST_EXECUTABLE` 仍可覆盖。缺失 Python 包等启动错误写入该作业的 `result.json`，详细构建输出保存在 `converter.log`。运行时入口为 `scripts/runtime-import-frost-map.py`，通用引擎 API 是 `engine.importContent(importer, path?)`、`engine.cancelContentImport()` 和 `onContentImport(event)`；不传路径时显示文件选择框。转换程序从项目配置读取，不接受游戏脚本指定任意命令。回调只登记生成脚本工厂，实际地图实例在 `onSceneLoaded` 后创建。
 
 地图包位于 `Assets/Maps/user-v2-<地图与转换环境摘要>/`，场景、运行脚本、路径格与缩略图保留在包内，公共资源引用 `Assets/WarcraftShared/v1/<内容SHA256>.<扩展名>`。运行时不修改 catalog、应用 Main.js 或项目构建列表。引擎只登记验证过的本次导入场景。原图、源成员、转换来源和安装摘要保留在 `Source/`、`Provenance/` 与 `manifest.json`；清单中的 `storage` 区分包内与共享资源，并记录源路径、源摘要和最终摘要。命中地图缓存时校验原件与所有依赖；损坏或缺失直接报告错误，不覆盖现有内容。地图包身份包含原图、按优先级排列的游戏档案摘要、转换工具与实际生成输入，输入变化会生成新版本。已预装地图和旧 v1 缓存保留兼容，新文件导入采用共享结构；不自动删除或改写旧资产。地图缓存与生成的共享资源均不提交 Git。
 
