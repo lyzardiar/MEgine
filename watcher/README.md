@@ -5,5 +5,6 @@
 | 工程 | 上游仓库 | 本地版本 | 维护记录 |
 | --- | --- | --- | --- |
 | [combat-vfx-demo](combat-vfx-demo/) | [yuewen-huang/combat-vfx-demo](https://github.com/yuewen-huang/combat-vfx-demo.git) | `aee3b51bb2f2` | [UPSTREAM.json](combat-vfx-demo/UPSTREAM.json)、[同步说明](combat-vfx-demo/README-MENGINE.md) |
+| [war3](war3/) | 本仓库独立 C++20 / Win32 客户端；StormLib 上游见来源记录 | Warcraft III 1.27.0.52240 对照 | [构建入口](war3/README.md)、[验收矩阵](war3/docs/acceptance.md)、[来源](war3/third_party/stormlib/source-info.json) |
 
 后续工程放在 `watcher/<工程名>/`，分别记录仓库地址、分支及完整 Git 提交号。同步时只处理对应工程的子目录，并更新其来源记录与本表版本。

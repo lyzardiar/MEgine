@@ -1,0 +1,14 @@
+{
+  "version": 6,
+  "configurePresets": [{
+    "name": "windows-x86",
+    "displayName": "MSVC Win32 standalone client",
+    "generator": "Visual Studio 18 2026",
+    "architecture": "Win32",
+    "binaryDir": "${sourceDir}/build/windows-x86"
+  }],
+  "buildPresets": [
+    { "name": "release", "configurePreset": "windows-x86", "configuration": "Release" },
+    { "name": "debug", "configurePreset": "windows-x86", "configuration": "Debug" }
+  ]
+}
