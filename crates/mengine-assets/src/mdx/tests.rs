@@ -195,3 +195,16 @@ fn native_mdx_rotation_noninherit_keeps_unsupported_node_rules_explicit() {
     for flags in [1,2,3,0x80,0x84] {let mut model=parse(&fixture()); model.nodes[0].flags|=flags; assert!(model.sample(Some(0),0,None).unwrap_err().to_string().contains("translation/scale non-inheritance or camera-anchoring"));}
     for flags in [0x0c,0x14,0x24,0x44] {let mut model=parse(&fixture()); model.nodes[0].flags|=flags; assert!(model.sample(Some(0),0,None).unwrap_err().to_string().contains("combined node billboarding and rotation non-inheritance"));}
 }
+
+fn sorted_material(priority:i32,filters:&[u32])->Vec<u8> {let mut m=material(filters.len(),0,&[]); m[4..8].copy_from_slice(&priority.to_le_bytes()); for (i,filter) in filters.iter().enumerate() {let at=24+i*28; m[at..at+4].copy_from_slice(&filter.to_le_bytes());} m}
+#[test]
+fn native_mdx_draw_order_preserves_opaque_source_and_signed_translucent_priority() {
+    let entries=[(6,0),(1,50),(4,-1),(0,-90),(3,0),(2,0),(3,0),(2,i32::MIN),(6,i32::MAX)]; let materials=entries.iter().flat_map(|(filter,priority)|sorted_material(*priority,&[*filter])).collect::<Vec<_>>(); let geometry=entries.iter().enumerate().flat_map(|(i,_)|geometry(&[],i as u32,1)).collect::<Vec<_>>(); let model=parse(&model_with(&[],&geometry,&materials,&[],&[]));
+    assert_eq!(model.draw_order(),[(1,0),(3,0),(7,0),(2,0),(5,0),(4,0),(6,0),(0,0),(8,0)]);
+}
+#[test]
+fn native_mdx_draw_order_is_static_and_keeps_source_ties_without_sample_allocations() {
+    let raw=model_with(&[],&geometry(&[],0,1).repeat(2),&sorted_material(0,&[4,2,2]),&[],&[]); let model=parse(&raw); let address=model.draw_order().as_ptr(); assert_eq!(model.draw_order(),[(0,1),(0,2),(1,1),(1,2),(0,0),(1,0)]);
+    for time in [0,500,1000] {model.sample(None,time,None).unwrap(); assert_eq!(model.draw_order().as_ptr(),address);}
+    assert!(model.decoded_bytes()>=6*std::mem::size_of::<(usize,usize)>()); let limits=MdxReadLimits {max_decoded_bytes:model.decoded_bytes()-1,..Default::default()}; assert!(MdxModel::parse_with_limits(&raw,limits).is_err());
+}

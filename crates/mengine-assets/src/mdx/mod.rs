@@ -51,7 +51,7 @@ struct Node { name: String, kind: [u8;4], id: i32, parent_id: i32, flags: u32, p
 #[derive(Clone, Debug)]
 struct TextureAnimation { translation: Option<Track>, rotation: Option<Track>, scale: Option<Track> }
 
-pub struct MdxModel { name: String, version: u32, sequences: Vec<MdxSequence>, globals: Vec<u32>, textures: Vec<MdxTexture>, materials: Vec<Material>, geosets: Vec<Geoset>, geoset_animations: Vec<GeosetAnimation>, nodes: Vec<Node>, order: Vec<usize>, parents: Vec<Option<usize>>, texture_animations: Vec<TextureAnimation>, diagnostics: Vec<String>, pub(crate) max_pose_bytes: usize, decoded_bytes:usize }
+pub struct MdxModel { name: String, version: u32, sequences: Vec<MdxSequence>, globals: Vec<u32>, textures: Vec<MdxTexture>, materials: Vec<Material>, geosets: Vec<Geoset>, geoset_animations: Vec<GeosetAnimation>, nodes: Vec<Node>, order: Vec<usize>, parents: Vec<Option<usize>>, draw_order:Vec<(usize,usize)>, texture_animations: Vec<TextureAnimation>, diagnostics: Vec<String>, pub(crate) max_pose_bytes: usize, decoded_bytes:usize }
 
 /// Camera vectors are in engine coordinates. The model transform maps model space into that world.
 #[derive(Clone, Copy, Debug)]
@@ -80,6 +80,8 @@ impl MdxModel {
     pub fn node_count(&self) -> usize { self.nodes.len() }
     pub fn node_name(&self, index: usize) -> Option<&str> { self.nodes.get(index).map(|n|n.name.as_str()) }
     pub fn geoset_count(&self) -> usize { self.geosets.len() }
+    /// Static opaque/source and translucent priority/filter/source order, shared by every sampled pose and view.
+    pub fn draw_order(&self)->&[(usize,usize)] {&self.draw_order}
     pub fn geoset_layer_count(&self, geoset: usize) -> Option<usize> { Some(self.materials.get(self.geosets.get(geoset)?.material)?.layers.len()) }
     pub fn geoset_uvs(&self, geoset: usize, uv_set: usize) -> Option<&[[f32;2]]> { self.geosets.get(geoset)?.uvs.get(uv_set).map(Vec::as_slice) }
     pub fn diagnostics(&self) -> &[String] { &self.diagnostics }

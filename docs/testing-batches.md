@@ -2171,3 +2171,12 @@ GPU可见集选取Amazonia两个原始sheep节点，2实例／1pose／2绘制对
 161–162累计2/3，**合并验证待执行**：新增`native_warcraft_material_state_gpu`两项比较真实RGBA像素的五组独立混合公式、遮挡／关闭深度测试／不写深度；包含已有普通材质coverage-alpha、惰性管线与相关缓存键回归，原生BanditMage附件方向／双视图GPU，相关Host／Tauri消费者编译。下一功能达到3项后先关闭该批。复用不变地图／地形／水面证据，不重复旧离线地图转换。实现不写地图缓存，实际选图和完整世界尚未切换，旧缓存保留至直接加载完整验收通过后按清单清理。
 
 原始日志和运行结果：`tmp/docs-artifacts/warcraft-archives/material-state-{rhi-cpu,host-cpu,consumer-check}.log`、`task162-runs.json`、`task162-receipt.json`；固定源码与摘要在`material-reference/`。所有验证JSON／原始源码缓存留在tmp，提交只含源码、固定来源摘要和精简说明。
+
+
+## 第一百六十三项：原生MDX固定层序与Host可见性（新批次3/3，合并验证延期）
+
+变更`mengine-assets/src/mdx/{mod,reader,tests}.rs`与Host的`warcraft_model.rs`、`warcraft_world.rs`。解析时编译一次绘制层序并计入解码预算：opaque/alpha-test保持源顺序，透明层按有符号priority、filter与源索引排列；采样和视图共享该顺序，避免每帧重新排序。Host提交前核对pose布局，上传、实例规划与世界可见集统一使用0.01可见阈值，原生材质共用LessEqual深度比较。
+
+源码已核对交接收据中的全部5个SHA-256，内容与既有通过记录一致。复用`cargo test -p mengine-assets --lib native_mdx_draw_order -- --test-threads=1`的2通过／0失败及`cargo test -p mengine-editor-host --lib native_warcraft_layer_order -- --test-threads=1`的1通过／0失败。范围包含opaque源序、正负priority与边界值、透明filter和源序tie、跨采样静态地址、解码预算以及Host可见阈值／实际提交计费。此次仅完成遗留源码审查与提交，没有重新运行功能测试或全库构建。
+
+161–163共3项的合并GPU／Host／Tauri、BanditMage附件与双视图验证按独立客户端主线决策延期，未关闭、未标记通过。新项目使用`watcher/war3/docs/testing-batches.md`的独立队列，不与本批计数混合。原始证据为`tmp/docs-artifacts/warcraft-archives/layer-order-{source,host}-tests.log`；源码补丁与摘要仍保留在`tmp/docs-artifacts/war3-handoff/`。此次不清理地图缓存、不变更用户编辑器进程与本地临时脚本。

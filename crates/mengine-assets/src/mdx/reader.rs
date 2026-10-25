@@ -114,7 +114,7 @@ fn nodes(r: &mut Reader<'_>, kind: &[u8;4], output: &mut Vec<Node>, diagnostics:
 pub(super) fn parse(bytes: &[u8], limits: MdxReadLimits) -> Result<MdxModel,AssetError> {
     if bytes.len()>limits.max_input_bytes {return Err(invalid("source exceeds input byte limit"));} let mut r=Reader::new(bytes); r.expect(b"MDLX")?;
     let mut budget=Budget {remaining:limits.max_decoded_bytes,vertices:0,indices:0,keys:0,limits};
-    let mut model=MdxModel {name:String::new(),version:0,sequences:Vec::new(),globals:Vec::new(),textures:Vec::new(),materials:Vec::new(),geosets:Vec::new(),geoset_animations:Vec::new(),nodes:Vec::new(),order:Vec::new(),parents:Vec::new(),texture_animations:Vec::new(),diagnostics:Vec::new(),max_pose_bytes:limits.max_decoded_bytes,decoded_bytes:0};
+    let mut model=MdxModel {name:String::new(),version:0,sequences:Vec::new(),globals:Vec::new(),textures:Vec::new(),materials:Vec::new(),geosets:Vec::new(),geoset_animations:Vec::new(),nodes:Vec::new(),order:Vec::new(),parents:Vec::new(),draw_order:Vec::new(),texture_animations:Vec::new(),diagnostics:Vec::new(),max_pose_bytes:limits.max_decoded_bytes,decoded_bytes:0};
     let mut pivots=Vec::new(); let mut seen=Vec::new();
     while r.remaining()!=0 {
         let tag=r.tag()?; let length=r.u32()? as usize; let mut body=Reader::new(r.take(length)?);
@@ -164,6 +164,10 @@ fn validate(model: &mut MdxModel, pivots: &[Vec3], budget: &mut Budget) -> Resul
     }}
     for (index,animation) in model.geoset_animations.iter().enumerate() {let geoset=model.geosets.get_mut(animation.geoset).ok_or_else(||invalid("geoset animation target is missing"))?; if geoset.animation.replace(index).is_some() {return Err(invalid("duplicate geoset animation target"));} for track in [&animation.alpha_track,&animation.color_track].into_iter().flatten() {validate_track(track,model.globals.len())?;}}
     for animation in &model.texture_animations {for track in [&animation.translation,&animation.rotation,&animation.scale].into_iter().flatten() {validate_track(track,model.globals.len())?;}}
+    let count=model.geosets.iter().try_fold(0usize,|count,g|count.checked_add(model.materials[g.material].layers.len()).ok_or_else(||invalid("draw-order count overflow")))?;
+    model.draw_order=budget.array(count)?; for (g,geoset) in model.geosets.iter().enumerate() {for l in 0..model.materials[geoset.material].layers.len() {model.draw_order.push((g,l));}}
+    let geosets=&model.geosets; let materials=&model.materials;
+    model.draw_order.sort_unstable_by(|a,b|{let (xm,ym)=(&materials[geosets[a.0].material],&materials[geosets[b.0].material]); let (x,y)=(&xm.layers[a.1],&ym.layers[b.1]); (x.filter>=2).cmp(&(y.filter>=2)).then_with(||if x.filter<2 {a.cmp(b)} else {xm.priority.cmp(&ym.priority).then(x.filter.cmp(&y.filter)).then(a.cmp(b))})});
     Ok(())
 }
 
