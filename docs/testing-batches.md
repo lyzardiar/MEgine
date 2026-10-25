@@ -1862,7 +1862,7 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 
 本项实现及定向检查完成，批次2/3；没有重新构建前端／原生程序或运行地图矩阵。下一独立任务完成后统一构建，合并143–145的Amazonia／DotA加载与各材质状态、首帧、Play／Pause／Step／Stop与重启、多窗口revision与scene.diff／乐观写入、暴露编辑／隐藏恢复及普通FPS／CPU采样验证。最近原生程序仍df7f1cd，稳定60、LOD和完整War3继续待完成。
 
-### 第一百四十五阶段／新批次任务3/3：原生Play私有JSON解析与保留
+### 第一百四十五阶段／批次补充任务：原生Play私有JSON解析与保留
 
 `src-tauri/src/native_play_response.rs`供start／step_editor_play使用：可选raw参数返回同一JSON内容的二进制响应，默认仍返回原JSON对象契约。`playRuntime.ts`请求该格式，旧后端／对象响应保持原有复制路径。纯HostWorldSnapshot与形状转换提取至`worldSnapshotView.ts`，`editorTransport.ts`保留原导出。`playWorldSync.ts`的parseRetainedNativePlayResponse只接受字节，使用内置解析器建立私有树，转换／归一化后冻结并认证实体根；已拥有的组件无需再次逐实体JSON stringify／parse。可变对象不会进入采用路径，普通保留API不变；自定义映射／归一化、JSON原型hook等仍执行复制，非有限数与负零保持JSON往返语义，非法字节和快照拒绝发布。返回容器中的组件别名也已冻结，组件子对象不单独取得实体资格。
 
@@ -1874,7 +1874,7 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 
 同一Amazonia输入的相同JSON字节，2轮预热／7轮计量、每轮12次并交替顺序，完整核对结果：0实体解析／转换／保留中位数0.004025→0.004458ms，64实体0.181392→0.093850ms，7433实体／3003930字节27.328067→15.875867ms。包含首次JSON解码及保留，排除Rust序列化、IPC交付、后续元数据发布／store与实际FPS；空包没有收益，不以此声称整帧改善。脚本`benchmark-owned-play-response.mjs`、原件／样本和`owned-response-*`日志，及跳帧对照均在`tmp/docs-artifacts/editor-performance-risk/`。
 
-143–145达到3/3，先提交本项及待测记录，然后一次前端／custom-protocol Release构建和相关合并验证：同一冻结程序跑启动8秒预算、DotA有效缓存加载／全景选取／工程重开、Amazonia多窗口来源与scene.diff／乐观写入／Pause／Step／Stop／重启、隐藏／旋转／尺寸切换及独立CPU采样。JSON采用改变组件树寿命，因此在该批执行5轮等时Play／Stop驻留；复用143未改变RHI代码的36种管线和透明混合GPU检查，不重复资产遍历。当前是实现与定向检查完成，原生消费及实际性能仍待本批证明。
+本批实际包括143、144、并发提交的地图导入依赖修复01102d4和145，共4项；合并验证使用包含全部变更的cab5035。统一构建后以同一冻结程序检查启动8秒预算、DotA当前导入器冷转换／缓存加载／全景选取／工程重开、Amazonia多窗口来源与scene.diff／乐观写入／Pause／Step／Stop／重启、隐藏／旋转／尺寸切换及独立CPU采样。私有解析改变组件树寿命，因此合并执行5轮等时Play／Stop驻留；复用143未改变RHI代码的36种管线和透明混合GPU检查，不重复资产遍历。结果见本批结论。
 
 
 ### 地图导入依赖自动准备：远程 Git 拉取故障修复
@@ -1886,3 +1886,21 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 真实验证在 `tmp/docs-artifacts/map-import-dependencies/cold-checkout/` 复制受 Git 管理的脚本与第三方源码，资产库和样例只读复用当前工程，输出写独立 project。首次手动准备及 DotA 转换通过后，将其工具和下载源码移到证据目录，再由实际导入入口从空工具／源码缓存自动下载构建并转换 `DotA_v6.83d.w3x`；原图 SHA256 为 `c06547206849f7931ad61509e21b76d22d63ae38d05fe7f35dab48c3dff56ddf`，461 个输出文件校验完成，cached=false。自动入口第二次使用了首轮 MPQ 成员缓存，模型派生产物重新生成；不将其写成所有资源缓存均为空。随后禁止下载和构建函数，实际入口仍成功复用 cached=true。补充 DEFLATE 异常恢复后仅重跑受影响的工具测试，不重复全图转换。结果在 `verification.json`、`auto-job/{result,progress}.json`、`auto-job/converter.log`、`tools-tests.log`、`mpq-tests.log`。
 
 本项实现及故障定向验证完成。承接前两项已提交任务，本项提交后该批达 3/3；前两项登记的统一原生视口／多窗口／Play 生命周期集成及本项远程电脑重试仍待执行，保留原队列，不开始下一批或标记整批通过。本项没有修改编辑器代码，也未重建编辑器；DotA 验证范围为地图转换与缓存，完整对局规则及远程本机运行不在已通过结论中。
+
+### 第一百四十三至一百四十五阶段及地图导入修复：合并验证结论
+
+统一cab5035（包含01102d4）前端构建含tsc通过，Vite3.26秒；custom-protocol Release构建73秒通过。119项相关JavaScript检查全部通过、0失败；Rust响应契约1项通过，143的2项GPU检查因RHI源码未变直接复用。冻结程序SHA256为`f4457eb31274e5ade35c9f1b9c9146b426d6914162d551f4761d37d10ae7fe4f`，18份源码／脚本及58份前端文件摘要与当前文件一致，核对内嵌index-DApOw4OS、App-JFgrg38u、Viewport-BXhlENF_及agent-schemas-DZwafEfU。没有逐任务重跑完整地图矩阵。
+
+5份原生报告全部通过、错误日志0，自有进程正常退出且发现文件移除：`viewport-startup-1792900009477`、`arbitrary-map-1792900034708`、`map-session-1792900137550`、`map-session-1792900426831`、`map-session-1792900461657`。WebView缓存仍可能因EPERM留在各自tmp目录。相同4374实体／Main.mscene摘要的Game首个已接受原生帧3965.720ms，通过8秒预算；此前旧版10420.539ms。计时从聚焦Game和清理Profiler后开始，不含进程启动／工程打开，工程打开2373.451ms单记；Scene11.407ms已在Game初始化期间预热，不作为冷Scene耗时。已查看启动场景与Strategy camera预览、DotA Game及Amazonia重启Game，画面有真实内容。
+
+DotA使用当前导入器实际冷转换37.187秒、相同包缓存加载3.630秒，选择／取消、持续进度、全景选取与关闭重开通过。新包`user-v2-706842d1b8edf6050903938f6c385fe96ed489fd72cc2a7fb0a66af4e76ad810`重新核对身份、原图摘要、32项当前packageInputs、JASS实现与单位绑定生成器；缓存入口已校验461个输出文件。源码和转换器指纹变化后未复制旧包充当新缓存。DotA无编辑器单位放置，绑定定义／放置均0，CreateAllUnits入口及fullMapScript=false、gameplay=false保持能力边界。当前本机的原生消费已验证，远程电脑重试和独立Player／SDK分发仍待确认。
+
+Amazonia7434实体多窗口报告逐份验证Scene／Game耗时的binary-json来源；真实scene.diff可重建暂停Step后的世界，静止diff为空，过期revision写入被拒绝、当前写入被接受。Game重开、Pause／Step／快捷键、地图重载、Stop作者恢复与Undo／Redo、重启通过。隐藏Scene原生帧与浏览器paint均0，恢复、连续旋转、分隔条及960×900／1280×720尺寸切换通过。
+
+普通多窗口Scene59.789／Game59.613FPS，p95呈现间隔21.8／26.6ms，原生平均7.775／8.235ms；上一批59.26／59.84FPS、22.5／27.5ms，不能用单次差异确认整帧收益。DotA Scene60.016／Game59.248FPS，p9523.5／21.3ms，原生14.310／10.568ms；仍有5376对象及Scene4675／Game99绘制，没有LOD削减，稳定满帧尚未达成。
+
+独立主WebView CPU窗口5279.169ms／2844样本，SceneChangeTracker.observe加权采样self从旧窗口167.731降到9.444ms。旧值合计同一callFrame的多个调用节点，历史162.719ms仅为其中单节点。retainPlayRecord本次未采到，旧值107.261ms，不解释为实际零成本；新私有解析器self41.947ms。解析阶段归属已移动，不能直接相减作为总CPU收益，也不把采样运行FPS当普通基线。
+
+驻留报告289秒，5轮各运行15秒、Stop后空闲20秒；20份内存样本核对相同根PID／创建时间、唯一子PID、私有字节求和和5轮持续时间，空闲均7进程。根私有内存依次4593.688／4721.277／4686.602／4703.551／4701.879MiB，首末+108.191、后三轮+15.277MiB；进程树首末+91.582、后三轮+45.633MiB。走势非单调，不能判定泄漏，也不能证明长期稳定；原因尚未确定，不归因于私有解析或分配器预热。长期驻留风险继续保留。
+
+构建收据、5份原生原件、CPU对照、来源核对和汇总位于`tmp/docs-artifacts/editor-performance-risk/build-cab5035/receipt.json`、`owned-response-batch-{driver,summary,cpu-comparison}.json`、`owned-response-fresh-map-proof.json`；地图／多窗口截图与原始报告在`tmp/docs-artifacts/testing-batches/B001/`。本批4项的本机相关集成结束，下一批0/3；用户编辑器64664保持运行。尾延迟、长期驻留、LOD、完整开局军队／HUD／寻路与命令、完整原图脚本及War3保真继续待办，未标记完整游戏目标完成。
