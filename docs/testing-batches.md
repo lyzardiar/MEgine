@@ -1805,3 +1805,13 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 `node --test packages/editor/tests/playStepTiming.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs`的26项通过；随后新增Profiler未知值断言，运行workspaceSelectionSync、remoteRuntimeReuse、playRuntime和editorProfiler四文件57项通过。两轮覆盖存在重叠，不重复累计。耗时复制按每个已知字段读取一次后校验，完善访问器隔离后仅复测受影响的5项全部通过；最终helper单文件语义检查及前述接口检查`pnpm --filter @mengine/editor exec tsc --noEmit`通过，QA脚本语法与差异检查通过。覆盖实际App广播／接收函数、原生mock生命周期、有序增量、缺失检查点、冻结副本与后续修改隔离、旧消息／缺失值、错会话／版本、非法数字、0值、主窗口编辑归属、Stop／重启及Profiler null展示。日志为`tmp/docs-artifacts/editor-performance-risk/remote-play-timing-{tests,integration,final-tests,typecheck,helper-typecheck}.log`。
 
 `qa-frost-map-session.mjs`新增可选`--detached-simulation-timing`，与`--detached-profile-only`同时使用；在既有5秒采样中检查Scene／Game至少15个不同模拟版本、请求会话／版本、分项duration、总请求时长与Profiler平均值一致，不改变默认QA负载。本批1/3，未构建新原生程序或重跑完整QA。第三项后统一前端／原生构建，执行该断言并复核Pause／Step／Stop、分离窗口重建和真实FPS／尾间隔；最新完整原生证据仍是137–139的60ac662，稳定60、长期驻留、LOD和完整War3继续进行中。
+
+### 第一百四十一阶段／新批次任务2/3：主窗口JavaScript CPU定向采样
+
+`scripts/frost-native-qa-cpu.mjs`通过Windows WebView2本地调试端口获取QA主窗口CPU profile。先检查qa-owner、后台编辑器身份、唯一无分离参数的Tauri主页和同端口环回WebSocket，只发送Profiler指令，不执行页面脚本。`qa-frost-map-session.mjs --detached-profile-only --main-thread-cpu-profile`按需开启，普通运行不开放调试端口或启动采样；Profiler围绕既有5秒窗口启动／停止，关闭连接与重复stop均处理，原始`main-thread.cpuprofile`和汇总只写入QA目录。`test-frost-native-qa-cpu.mjs`的5项检查通过，覆盖采样权重、重复／未知节点、截断／负数、主页面／环回隔离、所有权、协议序列、原件保存、失败与重复停止清理；最终5项复测通过，两个入口语法与差异检查通过。
+
+为继续定位已复现的多窗口掉帧，执行必要的5秒定向复现，没有运行完整地图矩阵或驻留循环。313a8ca前端构建（含tsc，Vite3.12秒）和custom-protocol原生构建74秒通过；冻结程序SHA256为`b4eaa52f99793afa443a3d827254d00fcc106ac61dc9a909a8c3b1d8a9a47133`，确认内嵌`index-CoOJVaB-.js`／`App-B8AxD5rl.js`及对应dist摘要。`map-session-1792893578122`通过，Scene／Game均有240份带有效来源的请求样本，会话／版本与完整duration断言通过；合并去重得到242个模拟请求。总请求均值6.4657ms、p9512.1ms；IPC编码／交付／解码区间均值3.2663、p956.5485ms，模拟与快照差分2.2793、p953.8648ms，应用／保留差分0.5244ms、接受世界0.1293ms，模拟工作线程排队0.0105ms。该区间包括交付和调用方调度，不能据此确认JSON编码为瓶颈；本机Tauri2.11.5已使用fetch／response.json，未修改返回格式。140的来源耗时同步已由此验证，完整批次状态仍按本节范围保留。
+
+复用同一冻结程序启用CPU采样，`map-session-1792894356592`通过；进程24768正常退出，发现文件已移除，用户编辑器64664保持运行。采样目标`http://tauri.localhost/`，请求间隔1,000微秒，实际窗口5,315.878ms／2,873样本，timeDeltas合计5,315.663ms，idle归属3,566.901ms。按样本权重汇总的self归属：BehaviourRunner.tick107.830ms、SceneChangeTracker.observe107.436ms、跨窗口publish86.753ms、GC142.782ms；bundle位置片段与`packages/behaviour/src/runner.ts`的每帧Object.keys组件发现循环相符。这些不是完整函数inclusive耗时，也不是进程CPU用量，含Profiler开销，不能将采样时FPS用于普通性能对照。下一项优先验证行为组件发现的重复扫描与兼容边界。
+
+工具／原生日志为`tmp/docs-artifacts/editor-performance-risk/main-thread-cpu-{tests,final-tests,native}.log`与`owner-timing-{frontend-build,native-build,native-repro,summary,analysis}`；原件、片段和冻结收据均在tmp。最终校验补充后重放同一CPU原件，汇总一致，没有重复原生采样。本批计数2/3，下一独立修复后合并验证受影响的播放、原地图和分离窗口路径；不把这次必要复现写成完整批次或长期稳定通过，完整War3／LOD／稳定60继续进行中。

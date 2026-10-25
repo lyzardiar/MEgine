@@ -2,7 +2,7 @@
 
 后续实现按[批次测试台账](testing-batches.md)执行：逐任务提交代码和资产，登记待测内容，默认累计3个功能／修复任务后合并验证。下文已完成阶段的历史测试结果保留；其中的全量命令不作为每次提交的必跑清单。
 
-2026-10-25：编辑器性能实施推进至第一百三十一阶段，最近完整原生合并验证为第一百二十八至一百三十阶段。统一ee33d5f Release的五份报告及五轮Stop驻留检查通过，覆盖材质／Shader热更新、网格缓存与来源分批检查、实际DotA和多窗口。实际DotA Scene／Game约59.74／60.01FPS，多窗口Game约56.58FPS；五轮空闲根私有内存后三轮净减少19.28MiB，长时间稳定与满帧仍待完成。来源检查微基准平滑了p95，但平均CPU略增，原生平均渲染成本未见下降。保留Rust + TypeScript + Tauri技术栈；范围、限制和本地产物入口见末尾阶段及testing-batches.md。
+2026-10-25：编辑器性能推进至第一百四十一阶段，最近按批次完成的原生验证为137–139的60ac662；140耗时同步另以313a8ca进行必要定向复现，141增加可选主窗口CPU采样。当前批次2/3。上一批多窗口Game约58.15FPS，满帧、呈现尾延迟和长期稳定仍未达成；新计时证明模拟请求中IPC区间需要继续分析，CPU采样发现行为发现循环等主线程工作。保留Rust + TypeScript + Tauri技术栈，完整War3仍在推进；范围、限制和本地产物入口见末尾阶段及testing-batches.md。
 
 B001地图视觉修复补充：地表图集按64像素对齐、逐mip夹紧并限制至单图块1×1级；水面按128像素帧对齐、帧内循环过滤并限制至单帧1×1级，避免跨块／跨帧串色。Amazonia地表与水面图集基础像素量分别减少约11.4%／6%。原生地表六色与水面16组RGBA对照、实际地图动画／暂停／恢复通过。相同场景1280×720硬件timestamp对照中，地表GPU pass增加约0.02ms，水面增加约0.11ms；不能从贴图缩小推断FPS提升。复现入口与原始报告路径见[图集性能说明](designs/frostbound-realms/original-terrain-scene.md#同场景图集性能)，归入B001-01，不新开测试批次。
 
@@ -1917,3 +1917,9 @@ DotA Scene59.24／Game59.83FPS，原生14.304／10.309ms、p95间隔24.7／21.4m
 模拟所有者的已接受session／revision耗时随现有scene-state发布，分离窗口只接受相同世界的有限非负duration，复制并冻结已知字段；缺失或不匹配时为未知，有效0保留。Stop／新Play和旧消息清理测量，辅助窗口不产生所有者耗时。修复此前分离store初值0被展示为请求耗时的问题，既有Rust simulationMs仍独立计量。没有新增查询、计时器或播放／渲染策略，实际FPS改善尚未验证。
 
 跨窗口与相邻兼容57项、耗时3项及TypeScript接口检查通过；实际App广播／接收、有序增量／缺口、旧消息、会话与版本隔离、数据冻结、有效0与未知null、Stop／重启均覆盖。范围与remote-play-timing-*日志见testing-batches.md。新批次1/3，下一次合并原生QA启用`--detached-profile-only --detached-simulation-timing`，检查来源请求分项、版本与呈现尾延迟；最近完整程序仍60ac662，稳定60、长期驻留、LOD及完整War3待完成。
+
+### 第一百四十一阶段：主窗口JavaScript CPU定向采样
+
+`qa-frost-map-session.mjs --detached-profile-only --detached-simulation-timing --main-thread-cpu-profile`可采集独立QA主WebView的CPU profile。仅在Windows显式开启时选择空闲环回端口并让QA的WebView2启用本地调试，校验任务目录所有权、唯一Tauri主页和环回WebSocket；正常验证默认关闭。请求1,000微秒采样间隔，仅围绕既有5秒窗口启动／停止Profiler，按timeDeltas汇总self归属，原件保留tmp。失败清理连接，重复stop复用同一结果；不读取用户当前编辑器或执行页面脚本。
+
+5项协议／所有权／数据汇总／失败清理检查通过；313a8ca前端构建与74秒原生构建通过，内嵌资源摘要已核对。必要定向报告1792893578122通过，242个不同模拟请求总耗时均值6.466ms、p9512.1ms，其中IPC编码／交付／解码区间均值3.266ms、模拟2.279ms；现有Tauri已用fetch／response.json，未确认编码瓶颈。开启CPU采样的1792894356592通过并正常退出：窗口5,315.878ms，2,873样本，timeDeltas合计5,315.663ms；BehaviourRunner.tick的组件发现循环归属107.830ms，事件observe107.436ms、跨窗口publish86.753ms，GC归属142.782ms。采样值不是整机CPU或函数inclusive时长，采样运行的FPS不作普通基线。后续优先处理有源码证据的每帧组件发现；作用和边界见testing-batches.md。本批2/3，未重跑完整批次或五轮驻留，稳定60、长期稳定、LOD和完整War3继续进行中。

@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {configureNativeQa,closeNativeQa} from './frost-native-qa-runtime.mjs';
+import {reserveNativeQaDebuggerPort,startNativeQaCpuProfile} from './frost-native-qa-cpu.mjs';
 import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 import {createHierarchyActiveLookup} from '../packages/editor/src/hierarchyActivation.ts';
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),out=path.join(repo,'tmp/docs-artifacts/testing-batches/B001');
@@ -37,6 +38,10 @@ const detachedAuthoringOnly=process.argv.includes('--detached-authoring-only');
 const detachedProfileOnly=process.argv.includes('--detached-profile-only');
 const detachedSimulationTiming=process.argv.includes('--detached-simulation-timing');
 assert.ok(!detachedSimulationTiming||detachedProfileOnly,'--detached-simulation-timing requires --detached-profile-only');
+const mainThreadCpuProfile=process.argv.includes('--main-thread-cpu-profile');
+assert.ok(!mainThreadCpuProfile||detachedProfileOnly,'--main-thread-cpu-profile requires --detached-profile-only');
+assert.ok(!mainThreadCpuProfile||process.platform==='win32','--main-thread-cpu-profile requires Windows WebView2');
+const cpuDebuggerPort=mainThreadCpuProfile?await reserveNativeQaDebuggerPort():null;
 const detachedOnly=process.argv.includes('--detached-only')||detachedAuthoringOnly||detachedProfileOnly;
 const restartAfterStop=process.argv.includes('--restart-after-stop');
 assert.ok(!restartAfterStop||detachedOnly,'--restart-after-stop requires a detached test');
@@ -53,7 +58,7 @@ const config=JSON.parse(fs.readFileSync(path.join(sample,'project.json'),'utf8')
 for(const file of config.buildScenes){const scene=JSON.parse(fs.readFileSync(path.join(sample,file),'utf8')),id=Math.max(...scene.world.entities.map(e=>e.entity))+1;scene.world.entities.push({entity:id,name:'QA map session',active:false,components:{Text:{text:'{}'}}});fs.writeFileSync(path.join(sample,file),JSON.stringify(scene));}
 const unitObservation=unitData?`var qaObservedUnits=null,qaUnitData=null;function qaObserveUnits(){const current=FrostMapSession.unitInitialization();if(current===qaObservedUnits)return qaUnitData;qaObservedUnits=current;if(!current)return qaUnitData=null;const definitions={},profiles=new Map();let shared=true,frozen=true;for(const unit of current.units){if(profiles.has(unit.typeId)&&profiles.get(unit.typeId)!==unit.movement)shared=false;profiles.set(unit.typeId,unit.movement);definitions[unit.typeId]=unit.movement;frozen=frozen&&Object.isFrozen(unit.movement);}const library=FrostWarcraftJass.create(FrostWarcraftJass.link(['function Upcast takes unit u returns handle\\nreturn u\\nendfunction','function main takes nothing returns handle\\nreturn Upcast(GetUnit())\\nendfunction']),{natives:{GetUnit:{parameters:[],returns:'unit',call:function(){return current.units[0];}}}}).run('main');return qaUnitData={count:current.units.length,definitions,shared,frozen,library:{type:library.type,identity:library.value===current.units[0]}};}`:'';
 fs.appendFileSync(path.join(sample,config.startupScript),`\n${unitObservation}\nvar qaMapTick=onTick;onTick=function(dt){qaMapTick(dt);const e=engine.findEntitiesByName(['QA map session'])[0];if(e)engine.pushCommandJson(JSON.stringify({op:'setComponent',entity:e.entity,component:'Text',value:{text:JSON.stringify({...FrostMapSession.status(),qaWheel:engine.input.wheelDelta${unitData?',qaUnitData:qaObserveUnits()':''}})}}));};\n`);
-Object.assign(process.env,{MENGINE_AGENT_EDITOR_MODE:'auto-background',MENGINE_EDITOR_CONFIG_DIR:path.join(root,'config'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows'});fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});
+Object.assign(process.env,{MENGINE_AGENT_EDITOR_MODE:'auto-background',MENGINE_EDITOR_CONFIG_DIR:path.join(root,'config'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows'+(mainThreadCpuProfile?' --remote-debugging-port='+cpuDebuggerPort:'')});fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(name,args={})=>{const r=await bridgeExecute(name,args,{requestId:crypto.randomUUID(),timeoutMs:120000});assert.ok(r.ok,JSON.stringify(r));return r.result;};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)),snapshot=()=>query('scene.snapshot'),step=(steps=1)=>execute('playback.step',{steps,deltaTime:1/60});
@@ -227,8 +232,11 @@ async function checkDetachedRuntime(authored){
     await execute('profiler.clear');const started=performance.now();report.nativeWarmup=[];
     for(;;){const profiles=await query('profiler.get_samples',{source:'game',limit:1});report.nativeWarmup.push({elapsedMs:performance.now()-started,count:profiles.nativeProfileCount,entities:profiles.nativeLatest?.counts.entities});if(profiles.nativeLatest?.counts.entities===before.entities.length&&profiles.nativeProfileCount>=2)break;assert.ok(performance.now()-started<30000,'Detached Game native warmup timeout');await sleep(300);}
   }
-  await execute('profiler.clear');const started=performance.now();await sleep(5000);
-  report.detachedProfiles={elapsedMs:performance.now()-started};
+  const cpuProfile=mainThreadCpuProfile?await startNativeQaCpuProfile(root,cpuDebuggerPort):null;
+  let profileElapsedMs;
+  try{await execute('profiler.clear');const started=performance.now();await sleep(5000);profileElapsedMs=performance.now()-started;}finally{if(cpuProfile)report.mainThreadCpu=await cpuProfile.stop();}
+  if(mainThreadCpuProfile){assert.ok(report.mainThreadCpu.samples>0&&report.mainThreadCpu.durationMs>0);report.checks.push('Owned main WebView JavaScript CPU samples captured during the live profile window');}
+  report.detachedProfiles={elapsedMs:profileElapsedMs};
   const active=createHierarchyActiveLookup(before.entities),activeEntities=before.entities.filter(entity=>active(entity.entity)).length;
   for(const source of ['scene','game']){const profiles=await query('profiler.get_samples',{source,limit:240,includeNativeTimings:true}),request=profiles.nativeLatest?.worldRequest,filtered=source==='scene'&&(request?.source==='snapshot'||request?.fallback==='play-revision-expired');report.detachedProfiles[source]={frontendSummary:profiles.summary,frontendSamples:profiles.samples,nativeSummary:profiles.nativeSummary,counts:profiles.nativeLatest?.counts,worldRevision:profiles.nativeLatest?.worldRevision,worldRequest:request,expectedTotal:before.entities.length,initialActive:activeEntities,timings:profiles.nativeTimings};assert.ok(profiles.nativeSummary?.intervals>5,source+' detached native presents');assert.ok(profiles.samples?.length&&profiles.samples.every(frame=>frame.sampleCount>0&&Number.isFinite(frame.paintMs)&&frame.paintMs>=0),source+' browser paint samples');if(filtered)assert.ok(Number.isSafeInteger(request.snapshotEntityCount)&&request.snapshotEntityCount>0&&request.snapshotEntityCount<=before.entities.length);assert.equal(profiles.nativeLatest?.counts.entities,filtered?request.snapshotEntityCount:before.entities.length);assert.ok(profiles.nativeTimings?.length&&profiles.nativeTimings.every(frame=>frame.worldRequest&&frame.worldRequest.elapsedMs>=0),source+' request telemetry');for(const frame of profiles.nativeTimings)assert.equal(frame.entityCount,frame.worldRequest.snapshotEntityCount??before.entities.length,source+' native count matches each submitted world');}
   report.checks.push('Game window reopens during Play and catches up with revisioned native frames');
