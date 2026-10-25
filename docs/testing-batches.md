@@ -1723,3 +1723,13 @@ App.tsx的模拟完成回调使用broadcastScene(false, true)：主窗口处于P
 node --test packages/editor/tests/workspaceSelectionSync.test.mjs packages/editor/tests/playbackCompletionScheduling.test.mjs首次35项中34通过，1项新夹具在微任务通知前统计回调而失败；夹具改为每次消息后等待微任务，仅用--test-name-pattern='completed Play frames reach detached stores immediately'重跑该项通过，最终35项相关检查均通过，未重复其余34项。覆盖120个非匀速完成版本立即到达真实独立store、全部按上个stateId继续增量、每版本一次帧通知、排队选择随最新状态到达、旧计时器清除、Pause／过期视口／分离作者模式合并、旧代次／卸载拒绝，以及原有跨窗口选择、不可变快照、Stop与播放节拍兼容。App.tsx整文件TypeScript转译0错误，diff检查通过。日志completed-frame-sync-tests.log保存首轮结果，completed-frame-sync-retest.log保存失败项复测；未把初次失败日志写成全通过。
 
 本项可使此前被计时器合并的完成帧增加实际消息数，主窗口发布成本与分离视口帧间隔须在批次中共同评估。当前仅实现及定向检查完成，尚未对本项重新构建前端／原生或测量实际FPS。当前新批次1/3，第三项后统一验证真实Amazonia／DotA多窗口、输入与选择同步、Pause／Step／Stop及重启、隐藏恢复和性能分布。最近完整原生程序仍847e5af，稳定60、长期驻留、LOD和完整War3目标继续进行中。
+
+### 第一百三十五阶段／编辑器新批次任务2/3：跨窗口发布复用原生稀疏实体变化
+
+playWorldSync.ts提供注册世界身份与retainedPresentation：必须是工厂创建的不可变世界、与当前捕获的实体和颜色索引完全相同，并重新通过可编辑数据的结构比较，才能交给发布器。store.ts在既有native会话有效性检查之后使用该引用，不再为此路径复制完整实体指针列表。sessionSceneSerialization.ts的发布器接收可选owned提示，仅在相同作用域／长度和已验证相邻补丁时使用变化索引；空变化复用私有片段列表，最多半数变化时复制片段列表并只处理变化位置，输出按位置升序。密集变化、非相邻版本、不同数组、拓扑／作用域变化、检查点、失效身份或可编辑数据均完整比较。原消息形状、base／stateId、header和逐项JSON保持一致。上一世界只存WeakRef，回收后完整比较，不用发布器延长整个World的生命周期。
+
+新增sessionSparsePublication.test.mjs。publication／serialization／Play结构校验的31项逻辑检查与workspaceSelectionSync的21项合计52项通过，覆盖原型／自定义序列化、直接编辑、稀疏索引乱序／重复位置、跳过版本、重排／增删／空世界、强制检查点、伪造世界／相同内容不同数组、捕获基线变化、弱引用失效以及真实createNativePlayRuntime mock到两个独立store的完整状态对照。首次新增原生夹具内容断言通过，但恢复window mock早于异步stop完成而触发文件级清理失败；延后清理并单项复测通过。WeakRef和索引排序完善后4项新路径再次通过；其余已通过且路径未变的结果复用，不将文件级失败计为一个额外逻辑测试。三个修改源文件TypeScript转译0错误，diff检查通过。原始sparse-session-tests.log／retest.log／final-tests.log、sparse-session-workspace-tests.log均在tmp/docs-artifacts/editor-performance-risk。
+
+生产发布器手动CPU对照benchmark-sparse-session.mjs通过：输入为保留原始Main.mscene的4374实体，先经实际Host→World转换，再比较不传owned提示的完整比较与传提示的当前生产路径；同进程交替顺序，2轮预热／9轮计量，每轮25个相邻帧，每帧核对完整消息。每帧另起事件任务，避免WeakRef的任务内保活将整个基准串成一个帧生命周期。无实体变化中位数0.101564→0.001696ms，合成64实体变化0.185488→0.090696ms，全部4374变化走完整比较为9.462052→9.353388ms，密集变化未宣称有收益。此范围仅含发送端发布，不含World资格校验／构建补丁、模拟、IPC、接收端或实际FPS。最终日志和全部样本为sparse-session-benchmark.log／json，脚本与输入／探索记录均保留在tmp；同步单任务探索数据不用于实际帧生命周期结论。
+
+134、135为2/3，当前只完成实现和定向检查，没有重跑完整前端／原生QA。下一独立任务后统一构建并验证实际Amazonia／DotA多窗口的版本推进、增量／完整检查点恢复、选择与输入、Pause／Step／Stop与重启、隐藏恢复、消息负担和FPS／p95分布。最近完整原生程序仍847e5af，稳定60、长期驻留、LOD与完整War3目标继续进行中。

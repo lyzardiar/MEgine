@@ -2951,8 +2951,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return retained ? serializeSessionScene(sceneDocument(sceneName, retained.entities as EntityRec[], true)) : serializeScene(sceneName, list(), mode !== 'edit');
     },
     publishSessionScene(stateId: string, allowDelta: boolean, sceneName = 'Untitled'): SessionSceneMessage {
-      const retained = mode !== 'edit' && nativePlaySessionId() != null ? playWorldSync.presentationSnapshot(playEntities, playClearColor ?? clearColor) : undefined;
-      if (retained) return sessionScenePublisher.publish(sceneDocument(sceneName, retained.entities as EntityRec[], true), stateId, JSON.stringify([sceneName, playRuntime?.sessionId ?? remotePlaySessionId]), allowDelta);
+      const native = mode !== 'edit' && nativePlaySessionId() != null;
+      const owned = native ? playWorldSync.retainedPresentation(ownedPlayWorld, playEntities, playClearColor ?? clearColor) : undefined;
+      const retained = owned ?? (native ? playWorldSync.presentationSnapshot(playEntities, playClearColor ?? clearColor) : undefined);
+      if (retained) return sessionScenePublisher.publish(sceneDocument(sceneName, retained.entities as EntityRec[], true), stateId, JSON.stringify([sceneName, playRuntime?.sessionId ?? remotePlaySessionId]), allowDelta, owned);
       sessionScenePublisher.reset();
       return { sceneJson: serializeScene(sceneName, list(), mode !== 'edit') };
     },

@@ -5,6 +5,7 @@ import { normalizeEntity, type EntityRec } from './entityRecord.ts';
 const retainedRecords = new WeakSet<object>();
 const retainedWorlds = new WeakSet<object>();
 export type RetainedPlayWorld = Omit<WorldSnapshotView, 'entities'> & { entities: EntityRec[] };
+export function isRetainedPlayWorld(value: object): value is RetainedPlayWorld { return retainedWorlds.has(value); }
 /** Only explicitly retained JSON roots can share record serialization results. */
 export function isRetainedPlayRecord(value: object): boolean { return retainedRecords.has(value); }
 
@@ -193,6 +194,10 @@ export function createPlayWorldSync(copies?: PrivatePlayCopies) {
     /** Presentation preserves structured data, so it cannot use the serialization fallback in matches(). */
     presentationSnapshot(entities: Entities, color: Color) {
       return this.presentationMatches(entities, color) ? this.viewportSnapshot() : undefined;
+    },
+    /** Only the exact captured immutable world may carry sparse native changes into a publication. */
+    retainedPresentation(world: RetainedPlayWorld | undefined, entities: Entities, color: Color) {
+      return world && retainedWorlds.has(world) && baseline?.[0] === world.entities && baseline[1] === world.clearColor && this.presentationMatches(entities, color) ? world : undefined;
     },
     matches(entities: Entities, color: Color) {
       if (!baseline) return false;

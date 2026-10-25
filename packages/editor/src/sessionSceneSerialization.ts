@@ -1,5 +1,5 @@
 // Author: MiYu. Reuse immutable runtime entity JSON in compact cross-window scene messages.
-import { isRetainedPlayRecord } from './playWorldSync.ts';
+import { isRetainedPlayRecord, isRetainedPlayWorld, retainedPlayWorldChanges, type RetainedPlayWorld } from './playWorldSync.ts';
 import type { EntityRec } from './entityRecord.ts';
 import { CURRENT_SCENE_VERSION } from './sceneMigration.ts';
 
@@ -51,20 +51,28 @@ function sceneFromFragments(header: string, entities: readonly string[]): string
 /** MiYu: publish only changed entity JSON; each delta names its exact predecessor. */
 export function createSessionScenePublisher() {
   const serialize = createSessionSceneSerializer();
-  let records = new WeakMap<EntityRec, string>(), previous: string[] = [], state: string | null = null, scope: string | null = null;
-  const reset = () => { previous = []; state = null; scope = null; records = new WeakMap(); };
-  return { reset, publish(document: SessionDocument, stateId: string, scopeId: string, allowDelta: boolean): SessionSceneMessage {
+  let records = new WeakMap<EntityRec, string>(), previous: string[] = [], previousWorld: WeakRef<RetainedPlayWorld> | undefined, state: string | null = null, scope: string | null = null;
+  const reset = () => { previous = []; previousWorld = undefined; state = null; scope = null; records = new WeakMap(); };
+  return { reset, publish(document: SessionDocument, stateId: string, scopeId: string, allowDelta: boolean, owned?: RetainedPlayWorld): SessionSceneMessage {
     if (!ordinarySerialization()) { reset(); return { sceneJson: serialize(document) }; }
-    const fragments = document.world.entities.map(entity => {
+    const world = owned && isRetainedPlayWorld(owned) && owned.entities === document.world.entities ? owned : undefined;
+    const base = allowDelta && scope === scopeId ? state : null;
+    const priorWorld = previousWorld?.deref();
+    const patch = base !== null && world && priorWorld && world.entities.length === previous.length ? world.entities === priorWorld.entities ? [] : retainedPlayWorldChanges(priorWorld, world) : undefined;
+    const indices = patch && patch.length <= previous.length / 2 ? patch : undefined;
+    const fragment = (entity: EntityRec) => {
       let json = isRetainedPlayRecord(entity) ? records.get(entity) : undefined;
       if (json === undefined) { json = JSON.stringify(entity); if (isRetainedPlayRecord(entity)) records.set(entity, json); }
       return json;
-    });
-    const base = allowDelta && scope === scopeId ? state : null;
+    };
+    const fragments = indices ? indices.length ? previous.slice() : previous : document.world.entities.map(fragment);
     const changed: [number, string][] = [];
-    for (let index = 0; index < fragments.length; index++) if (base === null || fragments[index] !== previous[index]) changed.push([index, fragments[index]]);
+    if (indices) {
+      for (const index of indices) { const json = fragment(document.world.entities[index]); fragments[index] = json; if (json !== previous[index]) changed.push([index, json]); }
+      if (changed.length > 1) changed.sort((a, b) => a[0] - b[0]);
+    } else for (let index = 0; index < fragments.length; index++) if (base === null || fragments[index] !== previous[index]) changed.push([index, fragments[index]]);
     const header = serialize({ ...document, world: { ...document.world, entities: [] } });
-    previous = fragments; state = stateId; scope = scopeId;
+    previous = fragments; previousWorld = world ? new WeakRef(world) : undefined; state = stateId; scope = scopeId;
     return { sceneDelta: { base, header, length: fragments.length, changed } };
   } };
 }
