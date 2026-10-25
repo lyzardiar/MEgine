@@ -6,12 +6,13 @@ namespace war3 {
 namespace {
 bool hit(GlueScreen::Rect r,float x,float y) {return x>=r.x && y>=r.y && x<r.x+r.w && y<r.y+r.h;}
 bool click(GlueScreen::Rect r,const UiInput& i) {return i.pressed && hit(r,i.x,i.y) && hit(r,i.startX,i.startY);}
+bool within(const fs::path& root,const fs::path& path) {auto parent=root.wstring(),child=path.wstring();if(CompareStringOrdinal(parent.c_str(),-1,child.c_str(),-1,TRUE)==CSTR_EQUAL)return true;if(parent.back()!=L'\\')parent+=L'\\';return child.size()>=parent.size() && CompareStringOrdinal(parent.c_str(),int(parent.size()),child.c_str(),int(parent.size()),TRUE)==CSTR_EQUAL;}
 }
-MapBrowser::MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\Skirmish.fdf","Skirmish"),renderer_(renderer),images_(images),log_(log),root_(fs::canonical(preferred.empty()?dataRoot/L"Maps":preferred.parent_path())) {
+MapBrowser::MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\Skirmish.fdf","Skirmish"),renderer_(renderer),images_(images),log_(log),root_(fs::canonical(dataRoot/L"Maps")) {
     screen_.visible("AdvancedOptionsPanel",false);
     screen_.attach("UI\\FrameDef\\Glue\\MapListBox.fdf","MapListBox","MapListContainer");
     screen_.attach("UI\\FrameDef\\Glue\\MapInfoPane.fdf","MapInfoPane","MapInfoPaneContainer");
-    infoLayout();screen_.visible("MapInfoPane",false);enter(root_,preferred);
+    infoLayout();screen_.visible("MapInfoPane",false);auto initial=preferred.empty()?root_:preferred.parent_path();if(!within(root_,initial))root_=initial;enter(initial,preferred);
 }
 void MapBrowser::infoLayout() {
     auto pane=screen_.bounds("MapInfoPaneContainer");auto put=[&](const char* name,float x,float y,float w,float h){screen_.place(name,{pane.x+x,pane.y+y,w,h});};
@@ -20,13 +21,13 @@ void MapBrowser::infoLayout() {
     put("MapDescValue",0,.245f,pane.w,pane.h-.245f);screen_.visible("AuthIcon",false);
 }
 void MapBrowser::enter(const fs::path& path,const fs::path& preferred) {
-    try {auto directory=fs::canonical(path);auto entries=mapDirectory(directory);if(directory!=root_)entries.insert(entries.begin(),{directory.parent_path(),true});directory_=std::move(directory);entries_=std::move(entries);selected_=scroll_=0;info_.reset();error_.clear();screen_.visible("MapInfoPane",false);
+    try {auto directory=fs::canonical(path);auto entries=mapDirectory(directory);if(directory!=root_)entries.insert(entries.begin(),{directory.parent_path(),true});directory_=std::move(directory);entries_=std::move(entries);selected_=scroll_=0;info_.reset();error_.clear();screen_.visible("MapInfoPane",false);screen_.image("MinimapImage",nullptr);
         if(!preferred.empty()){auto found=std::find_if(entries_.begin(),entries_.end(),[&](auto& e){return !e.directory && CompareStringOrdinal(e.path.c_str(),-1,preferred.c_str(),-1,TRUE)==CSTR_EQUAL;});if(found!=entries_.end())select(size_t(found-entries_.begin()));}
         log_.write("map_directory="+utf8(directory_.wstring())+" entries="+std::to_string(entries_.size()));
     }catch(const std::exception& e){error_="无法打开地图文件夹。";log_.write(std::string("map_directory_error=")+e.what());}
 }
 void MapBrowser::select(size_t index) {
-    if(index>=entries_.size())return;selected_=index;if(index<scroll_)scroll_=index;if(index>=scroll_+rows_)scroll_=index-rows_+1;info_.reset();error_.clear();screen_.visible("MapInfoPane",false);if(entries_[index].directory)return;
+    if(index>=entries_.size())return;selected_=index;if(index<scroll_)scroll_=index;if(index>=scroll_+rows_)scroll_=index-rows_+1;info_.reset();error_.clear();screen_.visible("MapInfoPane",false);screen_.image("MinimapImage",nullptr);if(entries_[index].directory)return;
     try {Archive archive(entries_[index].path);auto w3i=archive.read("war3map.w3i");if(!w3i)throw std::runtime_error("Missing war3map.w3i");MapStrings strings;if(auto wts=archive.read("war3map.wts"))strings=mapStrings(*wts);auto info=MapInfo::parse(*w3i,strings);
         screen_.image("MinimapImage","UI\\Widgets\\Glues\\Minimap-Unknown.blp");
         try {auto bytes=archive.read("war3mapPreview.tga");if(!bytes)bytes=archive.read("war3mapMap.blp");if(bytes){auto image=images_.decode(*bytes);auto gpu=renderer_.texture(image.width,image.height,image.pixels);screen_.image("MinimapImage",gpu.Get());}}catch(const std::exception& e){log_.write(std::string("map_preview_unavailable=")+e.what());}

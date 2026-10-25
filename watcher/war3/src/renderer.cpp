@@ -10,22 +10,7 @@ void check(HRESULT result, const char* operation) { if (FAILED(result)) throw st
 struct Vertex { float x, y, z, rhw; DWORD color; float u, v; };
 }
 Renderer::Renderer(HWND window, bool reference) : window_(window), reference_(reference) {
-    api_.Attach(Direct3DCreate9(D3D_SDK_VERSION));
-    if (!api_) throw std::runtime_error("Direct3D 9 unavailable");
     auto deviceType = reference ? D3DDEVTYPE_REF : D3DDEVTYPE_HAL;
-    D3DCAPS9 initialCaps{};
-    if (FAILED(api_->GetDeviceCaps(D3DADAPTER_DEFAULT, deviceType, &initialCaps))) {
-        Com<IDirect3D9Ex> compatible;
-        if (SUCCEEDED(Direct3DCreate9Ex(D3D_SDK_VERSION, &compatible)) && SUCCEEDED(compatible->GetDeviceCaps(D3DADAPTER_DEFAULT, deviceType, &initialCaps))) api_ = compatible;
-    }
-    if (!reference && FAILED(api_->GetDeviceCaps(D3DADAPTER_DEFAULT, deviceType, &initialCaps))) {
-        auto createOn12 = reinterpret_cast<PFN_Direct3DCreate9On12Ex>(GetProcAddress(GetModuleHandleW(L"d3d9.dll"), "Direct3DCreate9On12Ex"));
-        if (createOn12) {
-            D3D9ON12_ARGS override{}; override.Enable9On12 = TRUE;
-            Com<IDirect3D9Ex> compatible;
-            if (SUCCEEDED(createOn12(D3D_SDK_VERSION, &override, 1, &compatible)) && SUCCEEDED(compatible->GetDeviceCaps(D3DADAPTER_DEFAULT, deviceType, &initialCaps))) { api_ = compatible; translated_ = true; }
-        }
-    }
     RECT area{};
     GetClientRect(window, &area);
     parameters_.BackBufferWidth = area.right;
@@ -36,21 +21,25 @@ Renderer::Renderer(HWND window, bool reference) : window_(window), reference_(re
     parameters_.hDeviceWindow = window;
     parameters_.Windowed = TRUE;
     parameters_.EnableAutoDepthStencil = TRUE;
-    D3DDISPLAYMODE display{};
-    check(api_->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &display), "Adapter display mode");
-    parameters_.AutoDepthStencilFormat = D3DFMT_D16;
-    for (auto format : {D3DFMT_D24S8, D3DFMT_D24X8, D3DFMT_D16}) {
-        if (SUCCEEDED(api_->CheckDeviceFormat(D3DADAPTER_DEFAULT, deviceType, display.Format, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, format)) && SUCCEEDED(api_->CheckDepthStencilMatch(D3DADAPTER_DEFAULT, deviceType, display.Format, display.Format, format))) { parameters_.AutoDepthStencilFormat = format; break; }
-    }
     parameters_.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
-    auto attempt = parameters_;
-    auto result = api_->CreateDevice(D3DADAPTER_DEFAULT, deviceType, window, D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &attempt, &device_);
-    if (FAILED(result)) { attempt = parameters_; result = api_->CreateDevice(D3DADAPTER_DEFAULT, deviceType, window, D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &attempt, &device_); }
-    if (FAILED(result)) {
-        D3DCAPS9 caps{}; auto capability = api_->GetDeviceCaps(D3DADAPTER_DEFAULT, deviceType, &caps);
-        throw std::runtime_error("Create D3D9 device: HRESULT " + std::to_string(static_cast<unsigned long>(result)) + " caps=" + std::to_string(static_cast<unsigned long>(capability)) + " adapters=" + std::to_string(api_->GetAdapterCount()) + " depth=" + std::to_string(parameters_.AutoDepthStencilFormat));
+    std::string failures;
+    for(unsigned backend=0;backend<3;++backend) {
+        Com<IDirect3D9> candidate;
+        const char* name=backend==0?"d3d9":backend==1?"d3d9ex":"d3d9on12ex";
+        if(backend==0)candidate.Attach(Direct3DCreate9(D3D_SDK_VERSION));
+        else {Com<IDirect3D9Ex> extended;HRESULT result=E_NOTIMPL;if(backend==1)result=Direct3DCreate9Ex(D3D_SDK_VERSION,&extended);else if(!reference){auto create=reinterpret_cast<PFN_Direct3DCreate9On12Ex>(GetProcAddress(GetModuleHandleW(L"d3d9.dll"),"Direct3DCreate9On12Ex"));if(create){D3D9ON12_ARGS args{};args.Enable9On12=TRUE;result=create(D3D_SDK_VERSION,&args,1,&extended);}}if(SUCCEEDED(result))candidate=extended;}
+        if(!candidate){failures+=std::string(name)+" unavailable; ";continue;}
+        D3DCAPS9 caps{};D3DDISPLAYMODE display{};auto capability=candidate->GetDeviceCaps(D3DADAPTER_DEFAULT,deviceType,&caps),mode=candidate->GetAdapterDisplayMode(D3DADAPTER_DEFAULT,&display);
+        if(FAILED(capability) || FAILED(mode)){failures+=std::string(name)+" caps="+std::to_string(ULONG(capability))+" mode="+std::to_string(ULONG(mode))+"; ";continue;}
+        HRESULT result=D3DERR_NOTAVAILABLE;
+        for(auto depth:{D3DFMT_D24S8,D3DFMT_D24X8,D3DFMT_D16}) {
+            if(FAILED(candidate->CheckDeviceFormat(D3DADAPTER_DEFAULT,deviceType,display.Format,D3DUSAGE_DEPTHSTENCIL,D3DRTYPE_SURFACE,depth)) || FAILED(candidate->CheckDepthStencilMatch(D3DADAPTER_DEFAULT,deviceType,display.Format,display.Format,depth)))continue;
+            parameters_.AutoDepthStencilFormat=depth;
+            for(auto processing:{D3DCREATE_HARDWARE_VERTEXPROCESSING,D3DCREATE_SOFTWARE_VERTEXPROCESSING}){auto attempt=parameters_;Com<IDirect3DDevice9> gpu;result=candidate->CreateDevice(D3DADAPTER_DEFAULT,deviceType,window,processing|D3DCREATE_FPU_PRESERVE,&attempt,&gpu);if(SUCCEEDED(result)){api_=candidate;device_=gpu;device_.As(&extended_);translated_=backend==2;return;}}
+        }
+        failures+=std::string(name)+" create="+std::to_string(ULONG(result))+"; ";
     }
-    device_.As(&extended_);
+    throw std::runtime_error("Create D3D9 device: "+failures);
 }
 void Renderer::resize(unsigned width, unsigned height) {
     if (!width || !height || (width == parameters_.BackBufferWidth && height == parameters_.BackBufferHeight)) return;
