@@ -13,6 +13,7 @@ const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import(pathT
 const execute=async(name,args={})=>{const r=await bridgeExecute(name,args,{requestId:crypto.randomUUID(),timeoutMs:120000});assert.ok(r.ok,JSON.stringify(r));return r.result;},sleep=ms=>new Promise(r=>setTimeout(r,ms));
 assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE');
 const budgetIndex=process.argv.indexOf('--first-frame-timeout-ms'),budget=budgetIndex<0?15000:Number(process.argv[budgetIndex+1]);assert.ok(Number.isFinite(budget)&&budget>0&&budget<=60000,'First frame timeout must be 1 through 60000 ms');
+const allocatorLifecycle=process.argv.includes('--allocator-lifecycle');
 const report={label,exe:process.env.MENGINE_EDITOR_EXECUTABLE,editorSha256:crypto.createHash('sha256').update(fs.readFileSync(process.env.MENGINE_EDITOR_EXECUTABLE)).digest('hex'),inputSha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(sample,'Assets/Scenes/Main.mscene'))).digest('hex'),budgetMs:budget,passed:false,timings:[],profiles:{}};
 try{
  await query('project.state');let started=performance.now();await execute('project.open',{root:sample});report.projectOpenMs=performance.now()-started;
@@ -22,6 +23,20 @@ try{
   const started=performance.now();
   for(;;){const p=await query('profiler.get_samples',{source,limit:5,includeNativeTimings:true});report.timings.push({source,elapsedMs:performance.now()-started,nativeProfiles:p.nativeProfileCount,paint:p.summary});if(p.nativeProfileCount){report.profiles[source]=p;break;}if(performance.now()-started>budget)throw Error(source+' native first frame timed out');await sleep(200);}
   const image=await query('view.screenshot',{target:source,maxSize:1280,includeNativeProfile:source==='game'});fs.writeFileSync(path.join(root,source+'.png'),Buffer.from(image.dataUrl.split(',')[1],'base64'));
+ }
+ if(allocatorLifecycle){
+  report.allocatorLifecycle={live:{},closed:{}};
+  for(const source of ['game','scene']){
+   const regular=await query('profiler.get_samples',{source,limit:1});assert.equal(Object.hasOwn(regular,'gpuAllocator'),false,'Allocator diagnostics stay opt-in');
+   const sampled=(await query('profiler.get_samples',{source,limit:1,includeGpuAllocator:true})).gpuAllocator;assert.ok(sampled&&Number.isSafeInteger(sampled.deviceId));report.allocatorLifecycle.live[source]=sampled;
+  }
+  const previous=report.allocatorLifecycle.live.game.deviceId;assert.equal(previous,report.allocatorLifecycle.live.scene.deviceId,'Live views report one shared device');
+  await execute('project.close',{discardDirty:true});
+  for(const source of ['game','scene']){const sampled=(await query('profiler.get_samples',{source,limit:1,includeGpuAllocator:true})).gpuAllocator;assert.equal(sampled,null,'Closed project has no viewport device');report.allocatorLifecycle.closed[source]=sampled;}
+  await execute('project.open',{root:sample});await execute('panel.focus',{kind:'game'});await execute('profiler.clear');const deadline=performance.now()+budget;
+  for(;;){const p=await query('profiler.get_samples',{source:'game',limit:1});if(p.nativeProfileCount)break;assert.ok(performance.now()<deadline,'Reopened project must present fresh native pixels');await sleep(200);}
+  const reopened=(await query('profiler.get_samples',{source:'game',limit:1,includeGpuAllocator:true})).gpuAllocator;assert.ok(reopened);assert.notEqual(reopened.deviceId,previous,'Reopened project owns a new GPU context');report.allocatorLifecycle.reopened=reopened;
+  const image=await query('view.screenshot',{target:'game',maxSize:1280});fs.writeFileSync(path.join(root,'game-reopened.png'),Buffer.from(image.dataUrl.split(',')[1],'base64'));
  }
  report.logs=await query('console.get_logs',{limit:40});assert.deepEqual(report.logs.filter(log=>log.level==='error'),[]);report.passed=true;
 }catch(e){report.error=e.stack;try{report.logs=await query('console.get_logs',{limit:40});}catch{}process.exitCode=1;}

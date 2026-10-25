@@ -1982,6 +1982,18 @@ ff02e3b的启动、资源热更新、空间选取及DotA缓存／重开检查通
 
 夹具`cargo run -p mengine-rhi --release --example shared_mesh_memory`，原始`shared-vertices-{before,after}.jsonl`、冻结EXE及`shared-vertices-memory-summary.json`均在上述临时目录；基线生产来源ce5f016，前后夹具代码相同。当前149–150为2/3，第三项后统一原生构建并验证Amazonia／DotA的实际分配、FPS、Pose／材质／几何热更新、选取／阴影／视图隔离、项目关闭重开及Stop驻留；本项未重建完整Editor或重复地图转换，当前用户进程保持原版本。
 
+### 第一百五十一阶段／新批次任务3/3：同设备复用不可变材质纹理
+
+变更路径：`crates/mengine-rhi/src/{headless_context.rs,renderer.rs,shared_material_textures.rs,shared_material_texture_tests.rs}`、`crates/mengine-rhi/examples/shared_texture_memory.rs`、host纹理内存来源说明及`scripts/qa-viewport-startup.mjs`。GpuContext以尺寸、sRGB／线性格式和完整RGBA8字节查找不可变材质纹理，哈希后逐字节确认；网格材质槽和sampler保持独立。先查询已有纹理，未命中时在共享锁外计算原有Mip链，再次检查并合并GPU创建。各视图持Arc，查找仅Weak；替换只改本视图的材质映射，原有绑定和bundle失效逻辑保持，其他视图继续使用各自内容。字体、动态UI及其他纹理路径保持原有实现。
+
+CPU比对载荷上限64MiB／设备，最多2048个哈希键、每键4个Weak候选，超预算使用私有纹理，不延长已释放资源的GPU寿命。该载荷有额外CPU内存成本；与150的顶点载荷分别计量。逐视图逻辑纹理估算可能重复计数，物理分配使用149的设备报告去重核对。
+
+9项定向检查通过：2项Mip过滤／非二次幂边界、2项新GPU完整像素／并发合并／不同尺寸与格式／热更新／无效数据／最后所有者及碰撞／预算／Weak元数据检查，另有2项纹理生命周期、1项材质bundle即时释放、1项角色参数及1项缺失纹理错误回退。筛选`material_mips_`、`shared_material_texture`、`material_texture_lifetime_tests`、`material_changes_release_obsolete_bundle`、`material_texture_roles_and_map_parameters_remain_distinct`、`only_non_empty_unavailable_material_textures`，命令为`cargo test -p mengine-rhi --release --lib <筛选> -- --nocapture --test-threads=1`；启动QA新增`--allocator-lifecycle`核对默认不采样、共享设备、项目关闭空值及重开新设备，JS语法检查通过。
+
+修改前后各1个独立进程，两视图各上传16种512×512 RGBA8纹理，视图内容相同、键名不同。material_texture分配32份／44MiB→16份／22MiB，设备全部分配减少22MiB，预留均320MiB。首视图单次墙钟232.2939→238.5665ms，第二视图232.7657→4.9652ms，含队列flush和GPU等待；夹具新增CPU比对载荷16MiB，不能把GPU节省直接当成进程私有内存或FPS收益。原始`shared-textures-{before,after}.jsonl`、冻结EXE及`shared-textures-memory-summary.json`在`tmp/docs-artifacts/editor-performance-risk/`，夹具命令`cargo run -p mengine-rhi --release --example shared_texture_memory`，基线135b7ab。
+
+149–151已达3/3，提交后统一构建并验证：真实启动／相机预览和分配器生命周期；资源／材质／几何／姿态／透明选取及视图隔离；DotA有效缓存／关闭重开；Amazonia多窗口、暂停步进、Stop恢复、5轮等时驻留与设备分配；隐藏旋转尺寸；双视口硬件GPU计时和Profiler。统一使用新冻结程序；前端61文件摘要未变则复用，不重复无关检查或冷地图转换。地图资源设置补充d4bc3b3已保留，诊断程序采用进程级游戏目录配置验证其消费链。当前为实现与定向检查完成，实际地图收益与长期内存结论待该批结果。
+
 
 ### 地图导入故障补充：机器级公共资源目录与 sample setup
 

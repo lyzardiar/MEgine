@@ -1,4 +1,4 @@
-// Author: MiYu. Share native headless devices and immutable vertices while viewport targets stay independent.
+// Author: MiYu. Share native headless devices and immutable resources while viewport targets stay independent.
 use crate::{gpu_profiler::profiling_features, RhiError};
 use std::sync::{Arc, Mutex, OnceLock, Weak, atomic::{AtomicBool, AtomicU64, Ordering}};
 
@@ -13,6 +13,7 @@ pub(super) struct GpuContext {
     pub queue: wgpu::Queue,
     pub poll_gate: Arc<Mutex<()>>,
     pub shared_vertices: Arc<Mutex<crate::mesh::SharedVertexCache>>,
+    pub shared_material_textures: Arc<Mutex<super::SharedMaterialTextureCache>>,
     pub supports_anisotropy: bool,
     pub indexed_objects: bool,
     lost: Arc<AtomicBool>,
@@ -30,7 +31,7 @@ impl GpuContext {
         let notification = Arc::clone(&lost);
         device.set_device_lost_callback(move |_, _| notification.store(true, Ordering::Release));
         static NEXT_ID: AtomicU64 = AtomicU64::new(1);
-        Ok(Self { id: NEXT_ID.fetch_add(1, Ordering::Relaxed), _instance: instance, adapter, device, queue, poll_gate: Arc::new(Mutex::new(())), shared_vertices: Arc::new(Mutex::new(crate::mesh::SharedVertexCache::default())), supports_anisotropy, indexed_objects, lost })
+        Ok(Self { id: NEXT_ID.fetch_add(1, Ordering::Relaxed), _instance: instance, adapter, device, queue, poll_gate: Arc::new(Mutex::new(())), shared_vertices: Arc::new(Mutex::new(crate::mesh::SharedVertexCache::default())), shared_material_textures: Arc::new(Mutex::new(super::SharedMaterialTextureCache::default())), supports_anisotropy, indexed_objects, lost })
     }
 }
 

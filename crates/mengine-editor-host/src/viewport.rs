@@ -1066,7 +1066,7 @@ fn build_viewport_profile(
             domain: "gpu".into(),
             bytes: texture_gpu_bytes,
             certainty: "estimate".into(),
-            source: "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded".into(),
+            source: "Logical render-bound dimensions x 4 RGBA8 bytes; shared textures may be counted across views; mipmaps and unused cached textures excluded".into(),
         },
         EditorViewportMemoryCategory {
             name: "GPU live scene views".into(), domain: "gpu".into(),

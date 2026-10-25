@@ -4,6 +4,12 @@ use crate::gpu_profiler::GpuFrameProfiler;
 #[path = "headless_context.rs"]
 mod headless_context;
 use headless_context::GpuContext;
+#[path = "shared_material_textures.rs"]
+mod shared_material_textures;
+use shared_material_textures::SharedMaterialTextureCache;
+#[cfg(test)]
+#[path = "shared_material_texture_tests.rs"]
+mod shared_material_texture_tests;
 #[cfg(test)]
 #[path = "shared_mesh_vertex_tests.rs"]
 mod shared_mesh_vertex_tests;
@@ -577,6 +583,7 @@ struct ShadowUniforms {
 struct MaterialTextureGpu {
     _texture: wgpu::Texture,
     view: wgpu::TextureView,
+    content_key: Option<shared_material_textures::TextureContentKey>,
 }
 
 #[cfg(test)]
@@ -824,8 +831,9 @@ pub struct Renderer {
     fallback_metallic_roughness_texture: MaterialTextureGpu,
     fallback_occlusion_texture: MaterialTextureGpu,
     fallback_emissive_texture: MaterialTextureGpu,
-    material_color_textures: HashMap<String, MaterialTextureGpu>,
-    material_data_textures: HashMap<String, MaterialTextureGpu>,
+    material_color_textures: HashMap<String, Arc<MaterialTextureGpu>>,
+    material_data_textures: HashMap<String, Arc<MaterialTextureGpu>>,
+    shared_material_textures: Arc<Mutex<SharedMaterialTextureCache>>,
     material_texture_sets: HashMap<MaterialTextureSetKey, wgpu::BindGroup>,
     object_stride: u64,
     indexed_objects: bool,
@@ -1444,6 +1452,7 @@ impl Renderer {
             fallback_emissive_texture,
             material_color_textures: HashMap::new(),
             material_data_textures: HashMap::new(),
+            shared_material_textures: Arc::clone(&context.shared_material_textures),
             material_texture_sets: HashMap::new(),
             object_stride,
             indexed_objects,
@@ -2271,32 +2280,39 @@ impl Renderer {
         let base_color = self
             .material_color_textures
             .get(&key.base_color)
+            .map(Arc::as_ref)
             .unwrap_or(&self.fallback_base_color_texture);
         let normal = self
             .material_data_textures
             .get(&key.normal)
+            .map(Arc::as_ref)
             .unwrap_or(&self.fallback_normal_texture);
         let metallic_roughness = self
             .material_data_textures
             .get(&key.metallic_roughness)
+            .map(Arc::as_ref)
             .unwrap_or(&self.fallback_metallic_roughness_texture);
         let occlusion = self
             .material_data_textures
             .get(&key.occlusion)
+            .map(Arc::as_ref)
             .unwrap_or(&self.fallback_occlusion_texture);
         let emissive = self
             .material_color_textures
             .get(&key.emissive)
+            .map(Arc::as_ref)
             .unwrap_or(&self.fallback_emissive_texture);
         let custom: [&MaterialTextureGpu; MAX_SURFACE_SHADER_TEXTURES] =
             std::array::from_fn(|index| {
                 if key.custom_srgb[index] {
                     self.material_color_textures
                         .get(&key.custom[index])
+                        .map(Arc::as_ref)
                         .unwrap_or(&self.fallback_base_color_texture)
                 } else {
                     self.material_data_textures
                         .get(&key.custom[index])
+                        .map(Arc::as_ref)
                         .unwrap_or(&self.fallback_occlusion_texture)
                 }
             });
@@ -2488,15 +2504,12 @@ impl Renderer {
         srgb: bool,
     ) -> Result<(), UiTextureError> {
         validate_rgba_texture_data(width, height, rgba8.len())?;
-        let texture = create_material_texture_rgba8(
-            &self.device,
-            &self.queue,
-            "material_texture",
-            width,
-            height,
-            rgba8,
-            srgb,
-        );
+        let descriptor = (width,height,srgb); let hash = SharedMaterialTextureCache::fingerprint(descriptor,rgba8);
+        let cached = self.shared_material_textures.lock().unwrap_or_else(std::sync::PoisonError::into_inner).find(hash,descriptor,rgba8);
+        let texture = if let Some(texture) = cached { texture } else {
+            let mips = build_material_mip_chain(width,height,rgba8,srgb);
+            self.shared_material_textures.lock().unwrap_or_else(std::sync::PoisonError::into_inner).acquire(hash,descriptor,rgba8,|| create_material_texture_mips(&self.device,&self.queue,"material_texture",width,height,&mips,srgb))
+        };
         if srgb {
             self.material_color_textures.insert(key.to_owned(), texture);
         } else {
@@ -3528,6 +3541,10 @@ fn create_material_texture_rgba8(
     srgb: bool,
 ) -> MaterialTextureGpu {
     let mip_levels = build_material_mip_chain(width, height, rgba8, srgb);
+    create_material_texture_mips(device,queue,label,width,height,&mip_levels,srgb)
+}
+
+fn create_material_texture_mips(device: &wgpu::Device, queue: &wgpu::Queue, label: &str, width: u32, height: u32, mip_levels: &[MaterialMipLevel], srgb: bool) -> MaterialTextureGpu {
     let size = wgpu::Extent3d {
         width,
         height,
@@ -3572,6 +3589,7 @@ fn create_material_texture_rgba8(
     MaterialTextureGpu {
         _texture: texture,
         view,
+        content_key: None,
     }
 }
 
