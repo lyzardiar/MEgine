@@ -25,6 +25,7 @@ impl ReadbackPool {
 /// Owns one exact submitted image. Finish outside renderer/world locks; dropping cancels its maps.
 pub struct OffscreenReadbackTicket {
     device: wgpu::Device,
+    poll_gate: Arc<Mutex<()>>,
     submission: wgpu::SubmissionIndex,
     pool: Arc<Mutex<ReadbackPool>>,
     slot: Option<usize>,
@@ -44,7 +45,7 @@ fn map_buffer(buffer: &wgpu::Buffer, bytes: u64) -> MapResult {
     receiver
 }
 
-pub(crate) fn begin_readback(device: &wgpu::Device, queue: &wgpu::Queue, texture: &wgpu::Texture, width: u32, height: u32, format: wgpu::TextureFormat, profiler: Option<&GpuFrameProfiler>, pool: &Arc<Mutex<ReadbackPool>>) -> Result<OffscreenReadbackTicket, RhiError> {
+pub(crate) fn begin_readback(device: &wgpu::Device, queue: &wgpu::Queue, texture: &wgpu::Texture, width: u32, height: u32, format: wgpu::TextureFormat, profiler: Option<&GpuFrameProfiler>, pool: &Arc<Mutex<ReadbackPool>>, poll_gate: &Arc<Mutex<()>>) -> Result<OffscreenReadbackTicket, RhiError> {
     let started = Instant::now();
     let bgra = matches!(format, wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb);
     if !bgra && !matches!(format, wgpu::TextureFormat::Rgba8Unorm | wgpu::TextureFormat::Rgba8UnormSrgb) { return Err(RhiError::InvalidTarget(format!("RGBA8 readback does not support {format:?}"))); }
@@ -74,7 +75,7 @@ pub(crate) fn begin_readback(device: &wgpu::Device, queue: &wgpu::Queue, texture
     let mapped = map_buffer(&buffer, required_bytes);
     let query = query.map(|(buffer, active, period)| { let mapped = map_buffer(&buffer, buffer.size()); (buffer, mapped, active, period) });
     cache.slots[slot].busy = true;
-    Ok(OffscreenReadbackTicket { device: device.clone(), submission, pool: Arc::clone(pool), slot: Some(slot), buffer, mapped, query, row_bytes, padded_row_bytes, height, bgra, profile })
+    Ok(OffscreenReadbackTicket { device: device.clone(), poll_gate: Arc::clone(poll_gate), submission, pool: Arc::clone(pool), slot: Some(slot), buffer, mapped, query, row_bytes, padded_row_bytes, height, bgra, profile })
 }
 
 impl OffscreenReadbackTicket {
@@ -85,7 +86,11 @@ impl OffscreenReadbackTicket {
 
     fn finish_pixels(mut self, reuse: bool) -> Result<(Vec<u8>, OffscreenReadbackProfile), RhiError> {
         let started = Instant::now();
-        let _ = self.device.poll(wgpu::Maintain::WaitForSubmissionIndex(self.submission.clone()));
+        {
+            // DX12 uses one device event for fence waits; concurrent waits can consume another viewport's signal.
+            let _poll = self.poll_gate.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+            let _ = self.device.poll(wgpu::Maintain::WaitForSubmissionIndex(self.submission.clone()));
+        }
         let mapped = self.mapped.recv().map_err(|error| RhiError::InvalidTarget(format!("readback callback failed: {error}"))).and_then(|result| result.map_err(|error| RhiError::InvalidTarget(format!("readback mapping failed: {error}"))));
         self.profile.gpu_wait_ms = started.elapsed().as_secs_f64() * 1000.0;
         let started = Instant::now();

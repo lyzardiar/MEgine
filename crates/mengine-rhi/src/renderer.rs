@@ -831,6 +831,7 @@ pub struct Renderer {
     size: PhysicalSize<u32>,
     scene_textures: HashMap<String, SceneTextureGpu>,
     offscreen_readback: Arc<Mutex<ReadbackPool>>,
+    poll_gate: Arc<Mutex<()>>,
     gpu_profiler: Option<GpuFrameProfiler>,
     submission_profile: FrameSubmissionProfile,
     _headless_context: Option<Arc<GpuContext>>,
@@ -1447,6 +1448,7 @@ impl Renderer {
             size,
             scene_textures: HashMap::new(),
             offscreen_readback: Arc::new(Mutex::new(ReadbackPool::default())),
+            poll_gate: Arc::clone(&context.poll_gate),
             gpu_profiler,
             submission_profile: FrameSubmissionProfile::default(),
         })
@@ -1536,7 +1538,7 @@ impl Renderer {
 
     /// MiYu: submit this image's copy and maps without waiting for GPU completion.
     pub fn begin_offscreen_rgba8_profiled(&self, target: &OffscreenRenderTarget) -> Result<OffscreenReadbackTicket, RhiError> {
-        begin_readback(&self.device, &self.queue, &target.texture, target.size.width, target.size.height, target.format, self.gpu_profiler.as_ref(), &self.offscreen_readback)
+        begin_readback(&self.device, &self.queue, &target.texture, target.size.width, target.size.height, target.format, self.gpu_profiler.as_ref(), &self.offscreen_readback, &self.poll_gate)
     }
 
     /// Read one exact image using an owned staging slot; at most three tickets may be outstanding.

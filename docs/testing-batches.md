@@ -1932,3 +1932,13 @@ Amazonia7434实体多窗口报告逐份验证Scene／Game耗时的binary-json来
 3项定向CPU／Shader契约检查通过，含3个并发调用的同一只读数据、全部32768个编码值与逐次计算对照、固定逻辑字节数、原有有限性／范围和环境预滤波WGSL校验。手动基准在修改前单独运行通过，2轮预热后7轮完整积分／编码耗时中位数78.4483ms，校验和372753845；该成本现在只在进程首次发生，不把省去的重复计算直接外推并发启动墙钟或FPS。复现：`cargo test -p mengine-rhi --release --lib ibl::tests -- --nocapture --test-threads=1`；手动筛选`benchmark_brdf_lut_encoding -- --ignored --nocapture --test-threads=1`。日志为`tmp/docs-artifacts/editor-performance-risk/brdf-encoding-{before-benchmark,tests,final-test}.log`。
 
 146–148达到3/3，提交后统一构建custom-protocol Release；前端源码／dist未变且摘要匹配时复用已验证前端。合并验证实际首次Game画面、材质／纹理热更新与错误恢复、姿态／透明选取、DotA有效缓存与关闭重开、Amazonia多窗口／scene.diff／暂停步进停止重启、5轮等时驻留、隐藏旋转尺寸及Profiler。普通FPS与硬件计时单独采样，复用未受影响的导入转换、前端逻辑和已通过GPU范围；当前仍是实现与定向检查完成，实际程序收益另记，不宣称稳定60、长期驻留或完整War3完成。
+
+#### 146–148批次补充：共享设备回读等待
+
+ff02e3b的启动、资源热更新、空间选取及DotA缓存／重开检查通过；实际多窗口在Game重开后停止原生出帧，Scene和Game均报告shared frame timed out。最小复现以两个共享设备的1280×720视口并发渲染／回读，120次预期只完成13次即超时。当前wgpu 24 DX12设备的fence等待复用同一event；并发阻塞poll可消耗其他等待者的信号。此故障属于本批共享设备实现的补充修复，不增加任务计数。
+
+变更路径：`crates/mengine-rhi/src/{headless_context.rs,renderer.rs,readback.rs,headless_context_tests.rs}`、`scripts/qa-frost-map-session.mjs`。每个GpuContext创建独立poll门闩，Renderer与回读ticket共享其Arc，仅在阻塞device.poll期间持锁；渲染提交、RGBA整理、每视图资源和回读池继续独立。ticket保留门闩所有权，设备布局／独立设备仍使用不同门闩。QA记录两个视口的GPU状态、阶段及逻辑内存，开启硬件计时时检查实际Forward HDR和Texture readback copy结果。
+
+同一最小复现修复后120次完整像素对照通过；纳入常规GPU回归。4项共享设备与5项回读定向检查通过，覆盖最后所有者释放、设备丢失、独立布局、取消与反序完成、尺寸／格式／映射失败恢复及GPU查询。命令：`cargo test -p mengine-rhi --release --lib headless_context_tests -- --nocapture --test-threads=1`与同参数`offscreen_readback_`筛选。日志在`tmp/docs-artifacts/editor-performance-risk/shared-poll-{before-stress,after-stress,context-tests,readback-tests}.log`。
+
+待验证：同一新冻结Release上的实际首帧／相机预览、多窗口关闭重开／暂停步进停止重启、隐藏尺寸、GPU阶段和5轮Stop驻留；因修改公共回读路径，同步覆盖实际资源恢复、选取和DotA缓存场景，复用未变化前端、导入转换和不相关CPU检查。旧多窗口失败保留记录，本批完成状态取修复后的实际结果。

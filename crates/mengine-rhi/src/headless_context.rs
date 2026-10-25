@@ -10,6 +10,7 @@ pub(super) struct GpuContext {
     pub adapter: wgpu::Adapter,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
+    pub poll_gate: Arc<Mutex<()>>,
     pub supports_anisotropy: bool,
     pub indexed_objects: bool,
     lost: Arc<AtomicBool>,
@@ -26,7 +27,7 @@ impl GpuContext {
         let lost = Arc::new(AtomicBool::new(false));
         let notification = Arc::clone(&lost);
         device.set_device_lost_callback(move |_, _| notification.store(true, Ordering::Release));
-        Ok(Self { _instance: instance, adapter, device, queue, supports_anisotropy, indexed_objects, lost })
+        Ok(Self { _instance: instance, adapter, device, queue, poll_gate: Arc::new(Mutex::new(())), supports_anisotropy, indexed_objects, lost })
     }
 }
 
