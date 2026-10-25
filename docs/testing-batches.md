@@ -2108,6 +2108,14 @@ REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖
 
 变更：`mengine-assets/src/warcraft_terrain/{water,mod,surface,tests}.rs`及CPU示例／导出、`mengine-editor-host/src/warcraft_terrain.rs`及GPU示例／导出、RHI Renderer稳定资源身份。水位／水深、源动画纹理和浅深色值生成原生水面块，水深使用线性纹理；Host预检后直接上传地表／悬崖／水面。句柄跨视图共享，独立绑定键、所有者校验、失败回滚及显式release保证释放范围；水动画仅更新材质。源albedo明确白色。
 
-必要检查：2项水面源字段／高度／深度／帧／预算／取消检查通过，`cargo check -p mengine-editor-host --example render_warcraft_terrain`通过。独立只读审核已完成，悬崖默认灰色修正为白色；GPU结果待下述批次。日志`tmp/docs-artifacts/warcraft-archives/water-{tests,host-check,gpu-example-check}.log`。未完整构建Editor、未转换地图、未触碰用户进程或清理缓存。
+必要检查：2项水面源字段／高度／深度／帧／预算／取消检查通过，`cargo check -p mengine-editor-host --example render_warcraft_terrain`通过。源材质显式采用白色，独立只读审核完成；GPU结果见下述批次结论。日志`tmp/docs-artifacts/warcraft-archives/water-{tests,host-check,gpu-example-check}.log`。未完整构建Editor、未转换地图、未触碰用户进程或清理缓存。
 
-当前155–157=3/3，提交后先执行本批相关验证再开始下一功能任务：Host2项规划检查、受影响地图／地形及水面小范围检查、统一Release Host GPU示例与Tauri custom-protocol构建、真实地图CPU水深／几何／帧对照、GPU透明水面／动画／地形裁剪、跨Renderer相同像素与设备资源共享、错误Renderer释放拒绝、旧对象卸载为空及另一视图保留、最后纹理键释放和前端摘要。CPU命令`cargo test -p mengine-assets --lib native_warcraft`及Host的`native_warcraft_terrain_plan`筛选；GPU入口`render_warcraft_terrain`默认只在tmp保存证据。复用未变的归档／解码器／模型参考；不重复离线转换、全库或无关原生UI场景。
+155–157相关批次已验证，下一功能批次0/3。CPU命令`cargo test -p mengine-assets --lib native_warcraft -- --test-threads=1`通过25项；`cargo test -p mengine-editor-host --release --lib native_warcraft_terrain_plan -- --test-threads=1`通过2项。Host Release GPU示例构建通过，Tauri custom-protocol Release构建99秒通过，61份前端产物摘要相同。既有归档／解码器／模型参考及未变化检查复用；没有离线转换、全库或无关原生UI场景重跑。
+
+### 第一百五十五至一百五十七阶段：地图数据／地形／水面批次完成
+
+功能范围183ef05、d85489d、4a5e1cb。三图CPU对照通过449条来源记录、11461水格／135帧／45844水面顶点／68766索引；水位／网格与float32参考一致，179084深度字节精确一致，纹理每通道最大差1。地表／悬崖算法未被水面追加改变，复用156对照。27项本批CPU检查通过；未变化的MDX静态资格及纹理别名结果复用。
+
+最终GPU：Amazonia／DotA／BootyBay为93／143／177块，近景实际提交3／8／10块，透明水面贡献124325／309／119341变化像素，推进一帧改变112019／265／107419像素。第二视图的93／143／177份顶点缓冲全部复用，设备材质纹理分配保持5→5。数据会话在GPU绑定前关闭，地图缓存分别减少214082／383608／426678字节，已编译数据继续有效。错误Renderer释放拒绝，正确卸载后旧对象为空帧，另一视图像素不变；最终两Renderer的地形纹理键都为0。原生shader无拒绝诊断，已查看最终BootyBay全景／DotA近景。初版探针也通过；最终补充数据会话关闭检查并调整验证相机后只重建探针、重验三图，产品源码及Tauri程序未变。
+
+证据入口`tmp/docs-artifacts/warcraft-archives/batch-155-157-receipt.json`、`terrain-gpu-final/*/receipt.json`、`native-water/`、`water-comparison.{json,log}`及`compare-native-water.py`；CPU日志`map-terrain-water-batch-tests.log`、`terrain-host-plan-tests.log`，原生构建日志`terrain-gpu-final-build.log`与`terrain-batch-tauri-release.log`，前端`terrain-batch-frontend.json`。原始截图／JSON均不提交。产品源没有资产／meta／离线作业写出，用户编辑器PID64664未停止或重启，既有缓存未清理。未进行完整游戏世界／原选图接入、全部mip边界像素参考、编辑器FPS／长期内存或原版War3画面验收，这些仍在后续队列，不能由本批CPU/GPU结果替代。

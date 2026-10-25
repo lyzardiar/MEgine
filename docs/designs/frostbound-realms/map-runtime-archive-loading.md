@@ -1,6 +1,6 @@
 # Warcraft 地图运行时资源加载调查
 
-Author: MiYu. 2026-10-25。状态：MPQ、BLP、MDX、地图会话、地表／悬崖／水面编译及Host地形消费已实现；155–157批次待原生验证，游戏世界和选图入口待接入。
+Author: MiYu. 2026-10-25。状态：MPQ、BLP、MDX、地图会话、地表／悬崖／水面编译及Host地形消费已实现，155–157批次已验证；游戏世界和选图入口待接入。
 
 ## 结论与边界
 
@@ -137,7 +137,7 @@ Host新增 `MountedWarcraftModel`：同步加载接口供后续会话工作线�
 
 155–156为2/3，下一相关任务后统一Host／Tauri及实际GPU集成。水面／水深、Host地形上传、实际分块裁剪、视口、世界和选图仍待接入；CPU一致性不等于完整War3画面或帧率验收。现有编辑器和缓存未触碰，常规选图仍使用离线流程，缓存问题尚未整体关闭。
 
-## 第一百五十七阶段：水面与原生地形视图（155–157批次待验证）
+## 第一百五十七阶段：水面与原生地形视图（155–157批次已验证）
 
 地形编译器读取当前地图优先的`Water.slk`及动画纹理，使用W3E水位、湿格、原始surface高度生成水面块和float32小端深度纹理；水深作为线性数据上传，水纹理按sRGB上传。源帧数／速率、格距和浅／深颜色驱动shader，采样在每个动画帧内部重复并隔离mip。无湿格时不读取水面来源；字段、帧尺寸、合成图集和累计布局／纹理／网格预算在生成前检查，水面块与地面／悬崖共享总chunk和网格限额。岸边装饰模型、完整原游戏水面规则和视觉等价不在本阶段完成声明内。
 
@@ -145,7 +145,13 @@ Host新增`MountedWarcraftTerrain`与`WarcraftTerrainView`。CPU句柄可跨视�
 
 必要快速检查为2项水位／水深／帧／预算及畸形源检查通过，Host与GPU示例接口编译通过；独立审核发现的悬崖默认灰色已设为白色。新增原生GPU探针`cargo run -p mengine-editor-host --release --example render_warcraft_terrain -- <game-directory> <map-path> [validation-directory]`，默认验证目录位于tmp，只在探针输出截图。产品编译／Host绑定不导出资产或meta。
 
-155–157达到3/3，提交后统一执行：Host规划检查、受本阶段影响的地图／地形检查、同一Release的Host／Tauri构建、真实水面地图CPU对照和GPU近景／全景、动画／透明叠加、块裁剪、双Renderer共享与错误释放／卸载、前端摘要和磁盘写出边界。复用未变化的MPQ／BLP／MDX参考，不重跑旧离线地图转换或完整编辑器UI流程。当前记录是实现和接口检查，尚未宣称实际GPU或批次验收通过；用户既有编辑器与缓存保持原状，旧选图入口仍需替换。
+155–157相关验证已完成，下一功能批次0/3。25项地图／地形／水面及2项Host规划检查通过，Release Host／GPU示例和Tauri custom-protocol构建通过；61份前端摘要未变并复用。既有MPQ／BLP／MDX参考及未受影响检查复用，没有重跑旧离线转换或完整编辑器UI流程。实际覆盖范围如下；用户编辑器保持原进程，游戏世界与原选图入口仍需接入。
+
+三图CPU对照验证449条实际来源记录、11461个水格、135帧纹理、45844个水面顶点和68766索引。水位／水面网格与float32参考一致，179084个深度字节精确一致；水纹理相对Pillow每通道最大差1。此前地表／悬崖几何与像素对照未受水面追加影响，复用156结论；本批小夹具覆盖共同chunk／网格预算及取消／失败。
+
+最终Release GPU近景／全景均已生成：Amazonia／DotA／BootyBay分别93／143／177块，近景实际提交3／8／10块；水面相对不绘制水面改变124325／309／119341像素，推进一帧改变112019／265／107419像素。三图第二Renderer的顶点缓冲复用93／143／177份，设备材质纹理分配均保持5→5。先关闭地图数据会话分别释放214082／383608／426678字节地图缓存，之后仍能绘制已编译数据；错误Renderer释放被拒绝，正确释放后旧objects得到空帧，另一视图保持完全相同画面，最后两视图的纹理键均为空。已查看最终BootyBay全景和DotA近景；原生shader未出现拒绝诊断。该结果证明代表输入的地形／水面消费、裁剪和资源生命周期，未测实际编辑器FPS、长期驻留、完整地图启动或原游戏视觉等价。
+
+最终收据为`tmp/docs-artifacts/warcraft-archives/batch-155-157-receipt.json`，GPU原件在`terrain-gpu-final/`，CPU对照为`water-comparison.json`和`compare-native-water.py`，构建／测试日志为`map-terrain-water-batch-tests.log`、`terrain-host-plan-tests.log`、`terrain-gpu-final-build.log`、`terrain-batch-tauri-release.log`。GPU探针只在验证目录导出PNG；产品路径没有工程资产、meta或离线转换作业写出。Tauri构建仍有既有`world_from_snapshot`未使用警告；构建不等于选图入口已经使用新接口。
 
 ## 验收标准
 
