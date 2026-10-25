@@ -7,6 +7,7 @@ mod animator;
 mod asset_sidecar;
 mod asset_bytes;
 mod warcraft_archives;
+mod warcraft_map;
 mod avatar_mask;
 mod gltf_import;
 mod gltf_pose;
@@ -42,6 +43,8 @@ pub use asset_sidecar::{
 };
 pub use asset_bytes::{AssetByteCache, AssetByteCacheStats, AssetByteSource, AssetBytes, AssetLocation, AssetMounts, AssetSourceId, AssetSourceRead};
 pub use warcraft_archives::{MpqAssetSource, WarcraftArchives};
+pub use warcraft_map::{WarcraftMapCancelToken,WarcraftMapError,WarcraftMapLimits,WarcraftMapLoadPhase,WarcraftMapLoadProgress,WarcraftMapPathing,WarcraftMapSession,WarcraftMapTerrain,WarcraftTerrainCorner,WarcraftStringTable};
+pub use warcraft_map::{WarcraftMapInfo,WarcraftMapPlayer,WarcraftMapForce,WarcraftMapScreen,WarcraftMapFog,WarcraftMapUpgrade,WarcraftMapTech,WarcraftMapRandomUnits,WarcraftMapRandomUnitChoice,WarcraftMapRandomItems,WarcraftMapRandomItemChoice};
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use gltf_pose::{parse_gltf_pose, parse_gltf_pose_sample, GltfAttachmentPose, GltfBillboardCamera, GltfNodePose, GltfPoseSource, SharedGltfPoseSource, SharedPoseLoad};

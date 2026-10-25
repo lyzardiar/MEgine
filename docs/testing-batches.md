@@ -2083,3 +2083,13 @@ REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖
 最终Tauri custom-protocol Release构建78秒通过，SHA256 `e7132970fa81dedd96000a3e62184d37ddac62e6f5b83bf617cdb4983515028b`；GPU示例SHA256 `c3a124c70a1bef451dd93309bd5986b9db92c336e343c4371cde650db0e410c8`。61个前端产物摘要未变并复用。现有world_from_snapshot dead_code警告保留，未扩大修改；Tauri构建不等于实际编辑器选图入口验收。用户PID64664仍是2026-10-24 10:39:13启动的Debug编辑器，没有停止／重启或替换该进程。
 
 证据：`tmp/docs-artifacts/warcraft-archives/batch-152-154/final-receipt.json`、`native-render-final/{receipt.json,pose0.png,pose250.png}`、`tauri-release-final-build.log`；同级上层`mdx-consumer-tests.log`、`mdx-gpu-overlay-{build,probe}.log`、`mdx-reference-comparison.log`及MDX定向记录。当前只证明资源与模型消费者，尚无完整地图会话、原选图入口替换、MDL／全部原生效果／特殊继承、delta基础链、原图载入画面和整图磁盘增长／性能验收，仍在P0队列；公共缓存既有文件未清理。
+
+### 第一百五十五阶段／新批次任务1/3：原生核心地图数据会话
+
+变更：`crates/mengine-assets/src/warcraft_map/{mod,reader,info,strings,tests}.rs`、模块导出、`asset_bytes{,_tests}.rs`、`warcraft_archives.rs`及`examples/warcraft_archive_map.rs`。原生作用域直接从地图读取W3I／W3E／WPM／WTS，原始corner和cell共享成员Arc；地图专属核心数据不回落公共来源。数据、解码元数据、记录与字符串设置预算，MPQ输出分配前使用剩余原始预算。Drop清除本地图缓存来源，公共字节和活跃Arc保持有效。进度只覆盖核心数据；同步接口及协作取消尚未接入UI或游戏世界。
+
+必要定向检查：13项地图格式／边界／预算／取消／生命周期和10项资源字节检查通过，Debug示例编译通过。首次测试编译的数值类型和测试私有字段访问已修正，功能测试13/13通过；新增WTS迭代接口后只补测相关2项并扩展真实对照。DotA25／Amazonia25／BootyBay18的12成员SHA、44771地形corner、704512寻路cell、完整W3I元数据与30项WTS内容摘要对照通过；公共Footman跨会话共享同一Arc，三次释放均仅留公共缓存1项／105022字节，地图活跃读者仍有效。单次Debug核心读取不当作整图性能收益。独立审核未发现格式／预算／Drop缺陷；归档锁等待及StormLib调用不可即时取消，已记录接口限制。未构建完整Editor、未运行全图转换、未触碰用户编辑器PID64664。
+
+命令：`cargo test -p mengine-assets --lib native_warcraft_map -- --test-threads=1`、`cargo test -p mengine-assets --lib asset_byte -- --test-threads=1`；真实消费为 `cargo run -p mengine-assets --example warcraft_archive_map -- <game-directory> <DotA-path> <Amazonia-path> <BootyBay-path>`。本地产物：`tmp/docs-artifacts/warcraft-archives/map-{session,byte-limit}*`、`map-strings-iter-tests.log`及`compare-map-session.py`；原始JSON和诊断不提交。
+
+待批次：累计3项后统一Host／Tauri消费者编译、真实地形及地图会话与视口接入、切图／失败／取消过期发布、公共CPU／GPU复用和磁盘增长验证。当前1/3。W3E源顶点不是完整坡道／悬崖表面；完整地图启动、原选图替换、单位／规则／脚本初始化、delta链和稳定帧延迟仍待实现。游戏选图仍走旧转换，缓存问题未整体关闭；不清理既有用户缓存。

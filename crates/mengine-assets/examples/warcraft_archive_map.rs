@@ -1,0 +1,22 @@
+// Author: MiYu. Read real map sessions directly from MPQs and report data integrity and shared-cache lifetime without exporting assets.
+use mengine_assets::{AssetByteCache,WarcraftArchives,WarcraftMapCancelToken,WarcraftMapError,WarcraftMapLimits,WarcraftMapSession};
+use sha2::{Digest,Sha256};
+use std::{path::PathBuf,sync::Arc,time::Instant};
+
+fn main()->Result<(),Box<dyn std::error::Error>> {
+    let mut args=std::env::args_os().skip(1); let game=PathBuf::from(args.next().ok_or("Provide game directory and one or more map paths")?); let paths=args.map(PathBuf::from).collect::<Vec<_>>(); if paths.is_empty() {return Err("Provide at least one map path".into());}
+    let cache=Arc::new(AssetByteCache::default()); let started=Instant::now(); let archives=WarcraftArchives::open(&game,0,cache.clone(),32*1024*1024)?; let archive_open_ms=started.elapsed().as_secs_f64()*1000.;
+    let common=archives.common().read("Units/Human/Footman/Footman.mdx")?; let baseline=cache.stats(); let mut results=vec![];
+    let cancelled=WarcraftMapCancelToken::default(); cancelled.cancel(); if !matches!(WarcraftMapSession::open(&archives,&paths[0],WarcraftMapLimits::default(),&cancelled),Err(WarcraftMapError::Cancelled)) {return Err("Pre-cancelled session was opened".into());}
+    for path in paths {
+        let started=Instant::now(); let mut progress=vec![]; let session=WarcraftMapSession::open_with_progress(&archives,&path,WarcraftMapLimits::default(),&WarcraftMapCancelToken::default(),|p|progress.push(serde_json::json!({"phase":format!("{:?}",p.phase),"completed":p.completed,"total":p.total,"elapsedMs":started.elapsed().as_secs_f64()*1000.})))?; let open_ms=started.elapsed().as_secs_f64()*1000.;
+        let public_shared=Arc::ptr_eq(&common.bytes,&session.assets().read("Units/Human/Footman/Footman.mdx")?.bytes); if !public_shared {return Err("Map overrides the chosen common resource; choose a different sharing probe".into());}
+        let terrain=session.terrain(); let size=terrain.size(); let samples=[[0,0],[size[0]-1,0],[0,size[1]-1],[size[0]-1,size[1]-1],[size[0]/2,size[1]/2]].map(|[x,y]|{let c=terrain.corner(x,y).unwrap(); serde_json::json!({"xy":[x,y],"ground":c.ground,"water":c.water,"flags":c.flags,"variation":c.variation,"cliff":c.cliff,"sourceVertex":terrain.source_vertex(x,y)})});
+        let members=session.members().iter().map(|m|serde_json::json!({"member":m.location.member,"bytes":m.bytes.len(),"sha256":format!("{:x}",Sha256::digest(&m.bytes))})).collect::<Vec<_>>(); let retained=session.members().iter().map(|m|m.bytes.len()).sum::<usize>(); let live=session.members()[1].bytes.clone(); let live_sha=format!("{:x}",Sha256::digest(&live));
+        let mut result=serde_json::json!({"path":session.path(),"sessionOpenMs":open_ms,"progress":progress,"info":session.info(),"displayName":session.display_name(),"terrain":{"size":size,"origin":terrain.origin(),"tileset":terrain.tileset(),"customTileset":terrain.custom_tileset(),"groundTilesets":terrain.ground_tilesets(),"cliffTilesets":terrain.cliff_tilesets(),"packedSha256":format!("{:x}",Sha256::digest(terrain.packed_corners())),"samples":samples},"pathing":{"size":session.pathing().size(),"cellsSha256":format!("{:x}",Sha256::digest(session.pathing().cells()))},"stringCount":session.strings().map(|s|s.len()),"diagnostics":session.diagnostics(),"members":members,"retainedMemberBytes":retained,"publicArcShared":public_shared});
+        result["strings"]=serde_json::json!(session.strings().map(|table|table.iter().map(|(id,value)|serde_json::json!({"id":id,"sha256":format!("{:x}",Sha256::digest(value.as_bytes()))})).collect::<Vec<_>>()));
+        drop(session); let after=cache.stats(); let released=after.entries==baseline.entries && after.resident_bytes==baseline.resident_bytes; if !released || format!("{:x}",Sha256::digest(&live))!=live_sha {return Err("Session release changed a live payload or retained map cache entries".into());}
+        result["release"]=serde_json::json!({"mapCacheReleased":released,"liveBytesValid":true,"commonCacheEntries":after.entries,"commonCacheBytes":after.resident_bytes}); results.push(result);
+    }
+    println!("{}",serde_json::json!({"scope":"Native core map data only; no terrain compilation, GPU, scripts or game startup","profile":"Debug example timings are diagnostic, not a loading benchmark","archiveOpenMs":archive_open_ms,"cancelledBeforeMount":true,"maps":results})); Ok(())
+}

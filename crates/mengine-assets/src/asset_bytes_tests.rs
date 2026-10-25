@@ -95,3 +95,16 @@ fn asset_byte_texture_alias_errors_and_deletion_block_public_fallback() {
     }
     assert_eq!(base.reads.load(Ordering::Relaxed), 0);
 }
+
+#[test]
+fn asset_byte_read_limits_apply_to_cold_and_shared_payloads() {
+    let source=MemorySource::new(&[("a",b"1234"),("empty",b"")]); let cache=Arc::new(AssetByteCache::default()); let mounts=AssetMounts::new(vec![source.clone()],cache.clone());
+    assert!(mounts.read_limited("a",3).is_err()); assert_eq!(cache.stats().entries,0); assert_eq!(mounts.read_limited("a",4).unwrap().bytes.len(),4); let reads=source.reads.load(Ordering::Relaxed);
+    assert!(mounts.read_limited("a",3).is_err()); assert_eq!(source.reads.load(Ordering::Relaxed),reads); assert!(mounts.read_limited("empty",0).unwrap().bytes.is_empty());
+}
+
+#[test]
+fn asset_byte_read_limits_do_not_fall_through_oversized_overrides() {
+    let base=MemorySource::new(&[("a",b"ok")]); let custom=MemorySource::new(&[("a",b"override")]); let mounts=AssetMounts::new(vec![custom,base.clone()],Arc::new(AssetByteCache::default()));
+    assert!(mounts.read_limited("a",2).is_err()); assert_eq!(base.reads.load(Ordering::Relaxed),0);
+}

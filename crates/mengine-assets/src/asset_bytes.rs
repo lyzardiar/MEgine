@@ -22,7 +22,11 @@ pub trait AssetByteSource: Send + Sync {
     fn identity(&self) -> AssetSourceId;
     /// member is normalized by AssetMounts. Errors in an overriding source must not fall through.
     fn read(&self, member: &str) -> Result<AssetSourceRead, AssetError>;
+    /// Allocating sources should override this to enforce the limit before allocating. The default checks returned bytes.
+    fn read_limited(&self, member: &str, max_bytes: usize) -> Result<AssetSourceRead, AssetError> { let value=self.read(member)?; check_read_limit(&value,max_bytes)?; Ok(value) }
 }
+
+fn check_read_limit(value: &AssetSourceRead, max_bytes: usize) -> Result<(),AssetError> { if matches!(value,AssetSourceRead::Bytes(bytes) if bytes.len()>max_bytes) {return Err(AssetError::Invalid("resource member exceeds requested byte limit".into()));} Ok(()) }
 
 pub(crate) fn normalize_member(member: &str) -> Result<String, AssetError> {
     let member = member.replace('\\', "/");
@@ -102,26 +106,29 @@ impl AssetMounts {
     pub fn new(sources: Vec<Arc<dyn AssetByteSource>>, cache: Arc<AssetByteCache>) -> Self { Self { sources, cache } }
     pub fn cache(&self) -> &Arc<AssetByteCache> { &self.cache }
     pub fn read(&self, member: &str) -> Result<AssetBytes, AssetError> {
+        self.read_limited(member,usize::MAX)
+    }
+    pub fn read_limited(&self, member: &str, max_bytes: usize) -> Result<AssetBytes, AssetError> {
         let member = normalize_member(member)?;
-        self.read_candidates(&[member])
+        self.read_candidates(&[member],max_bytes)
     }
 
     /// Texture aliases are resolved within each source before considering a lower-priority archive.
     pub fn read_texture_bytes(&self, member: &str) -> Result<AssetBytes, AssetError> {
         let member = normalize_member(member)?; let mut candidates = vec![member.clone()];
         if let Some((stem, extension)) = member.rsplit_once('.') { if extension == "blp" { candidates.push(format!("{stem}.tga")); } else if extension == "tga" { candidates.push(format!("{stem}.blp")); } }
-        self.read_candidates(&candidates)
+        self.read_candidates(&candidates,usize::MAX)
     }
 
-    fn read_candidates(&self, members: &[String]) -> Result<AssetBytes, AssetError> {
+    fn read_candidates(&self, members: &[String], max_bytes: usize) -> Result<AssetBytes, AssetError> {
         for source in &self.sources {
             for member in members {
                 let location = AssetLocation { source: source.identity(), member: member.clone() };
-                if let Some(bytes) = self.cache.get(&location) { return Ok(AssetBytes { location, bytes }); }
-                match source.read(member)? {
+                if let Some(bytes) = self.cache.get(&location) { if bytes.len()>max_bytes {return Err(AssetError::Invalid("cached resource member exceeds requested byte limit".into()));} return Ok(AssetBytes { location, bytes }); }
+                match source.read_limited(member,max_bytes)? {
                     AssetSourceRead::Missing => continue,
                     AssetSourceRead::Deleted => return Err(AssetError::NotFound(member.clone())),
-                    AssetSourceRead::Bytes(bytes) => return Ok(AssetBytes { bytes: self.cache.intern(location.clone(), bytes), location }),
+                    AssetSourceRead::Bytes(bytes) => {if bytes.len()>max_bytes {return Err(AssetError::Invalid("resource member exceeds requested byte limit".into()));} let bytes=self.cache.intern(location.clone(),bytes); if bytes.len()>max_bytes {return Err(AssetError::Invalid("shared resource member exceeds requested byte limit".into()));} return Ok(AssetBytes {bytes,location});},
                 }
             }
         }

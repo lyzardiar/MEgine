@@ -1,6 +1,6 @@
 # Warcraft 地图运行时资源加载调查
 
-Author: MiYu. 2026-10-25。状态：MPQ字节、BLP内存解码及经典MDX模型／Host消费基础已实现；完整地图会话与游戏选图入口待接入。
+Author: MiYu. 2026-10-25。状态：MPQ字节、BLP内存解码、经典MDX模型／Host消费及核心地图数据会话已实现；地形编译、游戏世界和选图入口待接入。
 
 ## 结论与边界
 
@@ -106,6 +106,22 @@ Host新增 `MountedWarcraftModel`：同步加载接口供后续会话工作线�
 来源、固定提交、参考文件SHA和两份MIT许可证保存在 `third_party/warcraft-model-reference/`。原生读取不调用.NET或外部转换器；独立C#采样器只为本地验证一个模型，原始MDX与参考JSON留在tmp。CPU示例为 `cargo run -p mengine-assets --example warcraft_archive_model -- <game> <map> <member> [reference-json]`；GPU入口为 `cargo run -p mengine-editor-host --release --example render_warcraft_archive -- <game> <map> <member> [capture-directory]`，默认截图目录在tmp。
 
 当前不支持MDL文本、Reforged布局、特殊继承／camera anchoring、完整billboard原游戏对照、粒子／ribbon／light／事件行为。Host对尚未精确支持的filter3／6、sphere mapping、no-depth-test明确拒绝；其他材质属性、替换纹理上下文及整图视觉仍需按原游戏验证。常规选图仍使用离线流程，不能把这次模型消费当作地图加载替换完成。152–154达到3项后只执行累计接口、同一原生版本与代表模型的相关验证，复用未变化的前两阶段结果。
+
+## 第一百五十五阶段：原生地图数据会话（新批次1/3）
+
+`WarcraftMapSession`在一个地图归档作用域内读取W3I18／25、W3E11、WPM0及可选WTS，保留来源身份、原成员字节、地图信息和字符串表。核心地图成员只查当前地图，不会从公共归档借用同名地形或寻路文件；模型等资源命名空间则继续使用地图覆盖＋公共归档。会话成功释放、解析失败和取消均清除该地图来源的缓存引用并关闭归档，公共来源与活跃读者持有的不可变Arc继续有效。每次重新挂载地图使用独立来源身份，不让一个会话释放另一个会话。
+
+默认单成员32MiB、会话原始数据64MiB、解析元数据64MiB、地形1025×1025顶点、寻路4096×4096格、单数组65536项、单字符串1MiB、WTS总内容8MiB。`read_limited`同时检查冷读、缓存命中及并发共享结果；原生MPQ读取在输出分配前应用单成员与会话剩余预算。通用来源的默认实现检查返回长度，其他分配型来源须覆盖此接口才能保证分配前限制。预算约束相应载荷和元数据，不是整个进程、解压工作缓冲或GPU内存上限。
+
+地形七字节corner与寻路cell直接引用原始成员，无逐顶点／逐格堆展开；保留高度、纹理、变体、悬崖层和完整标志位。WPM每轴必须为W3E格数×4，源坐标查询采用半开边界，拒绝非有限坐标。`source_vertex`仅提供原始高度公式，真实坡道／悬崖几何仍需地形编译器，不能当作完整渲染或物理表面。W3I完整读取载入／序章、雾、玩家／阵营、科技及随机尾表，源顺序保留；`game_data_set`对应旧Python字段`loadingScreen`，并非载入背景。分发地图省略编辑器尾表时明确诊断并保留原始尾字节。WTS索引原始UTF-8多行文本，正规化数字ID，未知TRIGSTR保留；语法／编码错误保留原WTS并报告诊断，预算、读取错误与取消继续失败。
+
+同步接口供工作线程调用，阶段为Mount／Info／Terrain／Pathing／Strings／Validate／DataReady。DataReady只表示核心数据可用，不表示GPU、脚本或游戏启动结束。取消在阶段及解析读取处检查，当前不能中断等待中的来源锁或正在执行的StormLib读取；后续UI协调器仍须按加载generation拒绝过期发布。本阶段没有后台任务、UI桥、地形编译、单位放置／对象规则解析或游戏选图替换。
+
+13项地图格式／预算／生命周期检查、10项资源字节检查通过，命令为 `cargo test -p mengine-assets --lib native_warcraft_map -- --test-threads=1` 与 `cargo test -p mengine-assets --lib asset_byte -- --test-threads=1`。新增消费者 `cargo run -p mengine-assets --example warcraft_archive_map -- <game-directory> <map-path> [more-map-paths]` 不写资产、工程或meta，只向stdout报告数据与生命周期。独立只读审核核对固定上游格式及预算／Drop边界；归档调用期间取消延迟已作为接口限制记录。
+
+真实DotA_v6.83d、Amazonia与BootyBay依次打开，12个核心成员SHA、44771个地形corner、704512个寻路cell、W3I全字段及30项WTS内容摘要与既有Python读取器对照通过。涵盖25／18版本、DotA省略尾表及193×97非方形地形。三次释放后只保留公共Footman的同一Arc，缓存1项／105022字节；持有的地图字节在释放后仍有效。Debug核心数据读取仅作诊断，不代表整图启动或冷盘基准。原始收据／对照脚本与日志位于 `tmp/docs-artifacts/warcraft-archives/map-session-*` 和 `compare-map-session.py`。
+
+本项计新批次1/3；后续接入真实地形、世界实例及选图后合并原生验证。不重复完整Editor构建或旧地图转换，不清理用户现有缓存。当前游戏选图仍产生离线文件，运行缓存堆积问题尚未整体关闭。
 
 ## 验收标准
 
