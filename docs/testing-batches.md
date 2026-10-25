@@ -1924,3 +1924,11 @@ Amazonia7434实体多窗口报告逐份验证Scene／Game耗时的binary-json来
 定向构造对照复用146冻结程序与本项冻结example，3组反转顺序、每次独立进程，各保留3个共享设备的1280×720空视口，均未绘制UI。总构造中位数4050.630→1945.799ms；根进程私有内存738.820／735.828MiB，没有证明实质内存收益。这是空视口准备时间，不是Game首帧、地图加载、FPS或长期驻留结果。新增example SHA256为`8d6b7b262c2fbfb531b9bfa68c4f383620cd75d74ef6e23a90988269e3f4c4ae`。`headless-init-trace.log`、`ui-pipeline-{benchmark,benchmark-summary,pixel-proof}.json`、分段测试和原始RGBA均在`tmp/docs-artifacts/editor-performance-risk/`。
 
 当前2/3，先提交实现与待测记录；第三项后统一构建，承接146的真实启动／并发视口／热更新／隐藏尺寸／关闭重开及驻留场景，并检查UI首帧与首次出现模板／混合状态、错误材质恢复和普通FPS。用户编辑器保持原进程；稳定60、长期驻留、LOD、完整原图脚本与War3保真继续待办。
+
+### 第一百四十八阶段／新批次任务3/3：复用固定BRDF积分编码
+
+变更路径：`crates/mengine-rhi/src/ibl.rs`。128×128、每像素256次积分的固定BRDF查找表，以进程内OnceLock保留只读u16编码数据；首次调用计算，后续视口直接读取相同65536字节载荷。每个视口仍创建自己的纹理与sampler，GPU上传和格式保持，缓存不持有项目或GPU设备；关闭项目后只保留这份固定CPU数据。积分公式、尺寸、采样数及f16转换不变，首次计算成本仍存在。
+
+3项定向CPU／Shader契约检查通过，含3个并发调用的同一只读数据、全部32768个编码值与逐次计算对照、固定逻辑字节数、原有有限性／范围和环境预滤波WGSL校验。手动基准在修改前单独运行通过，2轮预热后7轮完整积分／编码耗时中位数78.4483ms，校验和372753845；该成本现在只在进程首次发生，不把省去的重复计算直接外推并发启动墙钟或FPS。复现：`cargo test -p mengine-rhi --release --lib ibl::tests -- --nocapture --test-threads=1`；手动筛选`benchmark_brdf_lut_encoding -- --ignored --nocapture --test-threads=1`。日志为`tmp/docs-artifacts/editor-performance-risk/brdf-encoding-{before-benchmark,tests,final-test}.log`。
+
+146–148达到3/3，提交后统一构建custom-protocol Release；前端源码／dist未变且摘要匹配时复用已验证前端。合并验证实际首次Game画面、材质／纹理热更新与错误恢复、姿态／透明选取、DotA有效缓存与关闭重开、Amazonia多窗口／scene.diff／暂停步进停止重启、5轮等时驻留、隐藏旋转尺寸及Profiler。普通FPS与硬件计时单独采样，复用未受影响的导入转换、前端逻辑和已通过GPU范围；当前仍是实现与定向检查完成，实际程序收益另记，不宣称稳定60、长期驻留或完整War3完成。

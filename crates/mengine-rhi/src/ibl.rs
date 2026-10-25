@@ -1,5 +1,7 @@
+// Author: MiYu. Reuse immutable BRDF integration data across renderer instances.
 use glam::Vec3;
 use half::f16;
+use std::sync::OnceLock;
 use wgpu::util::DeviceExt;
 
 const BRDF_LUT_SIZE: u32 = 128;
@@ -18,16 +20,7 @@ pub(crate) struct BrdfLut {
 impl BrdfLut {
     pub(crate) fn new(device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
         let size = BRDF_LUT_SIZE;
-        let integrated = build_brdf_lut(size, BRDF_LUT_SAMPLES);
-        let encoded = integrated
-            .iter()
-            .flat_map(|value| {
-                [
-                    f16::from_f32(value[0]).to_bits(),
-                    f16::from_f32(value[1]).to_bits(),
-                ]
-            })
-            .collect::<Vec<_>>();
+        let encoded = encoded_brdf_lut();
         let texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("split_sum_brdf_lut"),
             size: wgpu::Extent3d {
@@ -49,7 +42,7 @@ impl BrdfLut {
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            bytemuck::cast_slice(&encoded),
+            bytemuck::cast_slice(encoded),
             wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(size * 4),
@@ -495,6 +488,11 @@ fn sanitize_alpha(value: f32) -> f32 {
     }
 }
 
+fn encoded_brdf_lut() -> &'static [u16] {
+    static DATA: OnceLock<Vec<u16>> = OnceLock::new();
+    DATA.get_or_init(|| build_brdf_lut(BRDF_LUT_SIZE, BRDF_LUT_SAMPLES).iter().flat_map(|value| [f16::from_f32(value[0]).to_bits(), f16::from_f32(value[1]).to_bits()]).collect())
+}
+
 fn build_brdf_lut(size: u32, sample_count: u32) -> Vec<[f32; 2]> {
     let size = size.max(1);
     let sample_count = sample_count.max(1);
@@ -691,6 +689,35 @@ fn cs_irradiance(@builtin(global_invocation_id) global_id: vec3<u32>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn shared_brdf_encoding_matches_every_fresh_value_and_has_a_fixed_payload() {
+        let views = std::thread::scope(|scope| {
+            let jobs = (0..3).map(|_| scope.spawn(encoded_brdf_lut)).collect::<Vec<_>>();
+            jobs.into_iter().map(|job| job.join().unwrap()).collect::<Vec<_>>()
+        });
+        assert!(views.iter().all(|view| std::ptr::eq(*view, views[0])));
+        assert_eq!(std::mem::size_of_val(views[0]), 65536);
+        let expected = build_brdf_lut(BRDF_LUT_SIZE, BRDF_LUT_SAMPLES).iter().flat_map(|value| [f16::from_f32(value[0]).to_bits(), f16::from_f32(value[1]).to_bits()]).collect::<Vec<_>>();
+        assert_eq!(views[0], expected.as_slice());
+    }
+
+    #[test]
+    #[ignore = "manual fixed BRDF integration and encoding CPU benchmark"]
+    fn benchmark_brdf_lut_encoding() {
+        let mut times = Vec::new(); let mut expected = None;
+        for round in 0..9 {
+            let started = std::time::Instant::now();
+            let values = build_brdf_lut(BRDF_LUT_SIZE, BRDF_LUT_SAMPLES);
+            let encoded = values.iter().flat_map(|value| [f16::from_f32(value[0]).to_bits(), f16::from_f32(value[1]).to_bits()]).collect::<Vec<_>>();
+            let elapsed = started.elapsed().as_secs_f64() * 1000.0;
+            assert_eq!(encoded.len(), 32768);
+            let checksum = std::hint::black_box(&encoded).iter().map(|value| u64::from(*value)).sum::<u64>();
+            assert_eq!(*expected.get_or_insert(checksum), checksum);
+            if round >= 2 { times.push(elapsed); }
+        }
+        println!("{{\"freshEncodingMs\":{times:?},\"encodedBytes\":65536,\"checksum\":{}}}", expected.unwrap());
+    }
 
     #[test]
     fn split_sum_brdf_lut_is_deterministic_finite_and_bounded() {
