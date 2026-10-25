@@ -76,7 +76,11 @@ struct Entry {
 }
 
 #[derive(Default)]
-pub(super) struct WorldBundleCache { entries: Vec<Entry>, epoch: u64 }
+pub(super) struct WorldBundleCache {
+    entries: Vec<Entry>, epoch: u64,
+    #[cfg(test)]
+    pub(super) defer_admission: bool,
+}
 
 pub(super) struct WorldChunk { pub range: std::ops::Range<usize>, pub bundle: Option<wgpu::RenderBundle>, pub reused: bool }
 
@@ -110,43 +114,45 @@ impl WorldBundleCache {
     }
 
     // Exact handle equality prevents stale bindings after hot reload or buffer growth; no hash-only hits.
-    // A draw list is admitted on its second occurrence so changing lists do not encode unused bundles.
+    // Encode eligible chunks on their first submission, then reuse exact cached commands.
     fn prepare_current_pass(&mut self, device: &wgpu::Device, samples: u32, bindings: WorldBindings<'_>, draws: &[WorldDraw<'_>], range: Option<usize>) -> Option<(&wgpu::RenderBundle, bool)> {
         let objects = draws.iter().map(|draw| draw.instances as usize).sum();
         if !Self::accepts_count(objects) { return None; }
-        if let Some(index) = self.entries.iter().position(|entry| entry.indexed_objects == bindings.indexed_objects && entry.object_stride == bindings.object_stride && entry.samples == samples && entry.globals == *bindings.globals && entry.shadows == *bindings.shadows && entry.environment == *bindings.environment && entry.draws.len() == draws.len() && entry.draws.iter().zip(draws).all(|(cached, draw)| cached.matches(draw))) {
-            let entry = &mut self.entries[index]; entry.last_used = self.epoch;
-            let reused = entry.bundle.is_some();
-            let bundle = entry.bundle.get_or_insert_with(|| {
-                let mut encoder = device.create_render_bundle_encoder(&wgpu::RenderBundleEncoderDescriptor {
-                    label: Some("cached forward draws"), color_formats: &[Some(HDR_COLOR_FORMAT)],
-                    depth_stencil: Some(wgpu::RenderBundleDepthStencil { format: wgpu::TextureFormat::Depth24PlusStencil8, depth_read_only: false, stencil_read_only: true }), sample_count: samples, multiview: None,
-                });
-                encoder.set_bind_group(2, bindings.shadows, &[]); encoder.set_bind_group(3, bindings.environment, &[]);
-                if bindings.indexed_objects { encoder.set_bind_group(0, bindings.globals, &[]); }
-                let (mut pipeline, mut textures, mut vertices, mut indices) = (None, None, None, None);
-                for draw in draws {
-                    if pipeline != Some(draw.pipeline) { encoder.set_pipeline(draw.pipeline); pipeline = Some(draw.pipeline); }
-                    if !bindings.indexed_objects { encoder.set_bind_group(0, bindings.globals, &[(draw.object_index as u64 * bindings.object_stride) as u32]); }
-                    if textures != Some(draw.textures) { encoder.set_bind_group(1, draw.textures, &[]); textures = Some(draw.textures); }
-                    if vertices != Some(draw.vertices) { encoder.set_vertex_buffer(0, draw.vertices.slice(..)); vertices = Some(draw.vertices); }
-                    if indices != Some(draw.indices) { encoder.set_index_buffer(draw.indices.slice(..), wgpu::IndexFormat::Uint32); indices = Some(draw.indices); }
-                    let instance = if bindings.indexed_objects { draw.object_index } else { 0 };
-                    encoder.draw_indexed(0..draw.count, 0, instance..instance + draw.instances);
-                }
-                encoder.finish(&wgpu::RenderBundleDescriptor { label: Some("cached forward draws") })
+        let index = if let Some(index) = self.entries.iter().position(|entry| entry.indexed_objects == bindings.indexed_objects && entry.object_stride == bindings.object_stride && entry.samples == samples && entry.globals == *bindings.globals && entry.shadows == *bindings.shadows && entry.environment == *bindings.environment && entry.draws.len() == draws.len() && entry.draws.iter().zip(draws).all(|(cached, draw)| cached.matches(draw))) { index } else {
+            while self.entries.len() >= MAX_ENTRIES || self.entries.iter().map(|entry| entry.objects).sum::<usize>() + objects > MAX_DRAWS {
+                let index = self.entries.iter().enumerate().filter(|(_, entry)| entry.last_used != self.epoch && entry.range == range).max_by_key(|(_, entry)| self.epoch.wrapping_sub(entry.last_used))
+                    .or_else(|| self.entries.iter().enumerate().max_by_key(|(_, entry)| self.epoch.wrapping_sub(entry.last_used))).unwrap().0;
+                self.entries.swap_remove(index);
+            }
+            self.entries.push(Entry {
+                globals: bindings.globals.clone(), shadows: bindings.shadows.clone(), environment: bindings.environment.clone(), samples, indexed_objects: bindings.indexed_objects, object_stride: bindings.object_stride, objects, range, last_used: self.epoch, bundle: None,
+                draws: draws.iter().map(|draw| CachedDraw { pipeline: draw.pipeline.clone(), textures: draw.textures.clone(), vertices: draw.vertices.clone(), indices: draw.indices.clone(), count: draw.count, object_index: draw.object_index, instances: draw.instances }).collect(),
             });
-            return Some((bundle, reused));
-        }
-        while self.entries.len() >= MAX_ENTRIES || self.entries.iter().map(|entry| entry.objects).sum::<usize>() + objects > MAX_DRAWS {
-            let index = self.entries.iter().enumerate().filter(|(_, entry)| entry.last_used != self.epoch && entry.range == range).max_by_key(|(_, entry)| self.epoch.wrapping_sub(entry.last_used))
-                .or_else(|| self.entries.iter().enumerate().max_by_key(|(_, entry)| self.epoch.wrapping_sub(entry.last_used))).unwrap().0;
-            self.entries.swap_remove(index);
-        }
-        self.entries.push(Entry {
-            globals: bindings.globals.clone(), shadows: bindings.shadows.clone(), environment: bindings.environment.clone(), samples, indexed_objects: bindings.indexed_objects, object_stride: bindings.object_stride, objects, range, last_used: self.epoch, bundle: None,
-            draws: draws.iter().map(|draw| CachedDraw { pipeline: draw.pipeline.clone(), textures: draw.textures.clone(), vertices: draw.vertices.clone(), indices: draw.indices.clone(), count: draw.count, object_index: draw.object_index, instances: draw.instances }).collect(),
+            #[cfg(test)]
+            if self.defer_admission { return None; }
+            self.entries.len() - 1
+        };
+        let entry = &mut self.entries[index]; entry.last_used = self.epoch;
+        let reused = entry.bundle.is_some();
+        let bundle = entry.bundle.get_or_insert_with(|| {
+            let mut encoder = device.create_render_bundle_encoder(&wgpu::RenderBundleEncoderDescriptor {
+                label: Some("cached forward draws"), color_formats: &[Some(HDR_COLOR_FORMAT)],
+                depth_stencil: Some(wgpu::RenderBundleDepthStencil { format: wgpu::TextureFormat::Depth24PlusStencil8, depth_read_only: false, stencil_read_only: true }), sample_count: samples, multiview: None,
+            });
+            encoder.set_bind_group(2, bindings.shadows, &[]); encoder.set_bind_group(3, bindings.environment, &[]);
+            if bindings.indexed_objects { encoder.set_bind_group(0, bindings.globals, &[]); }
+            let (mut pipeline, mut textures, mut vertices, mut indices) = (None, None, None, None);
+            for draw in draws {
+                if pipeline != Some(draw.pipeline) { encoder.set_pipeline(draw.pipeline); pipeline = Some(draw.pipeline); }
+                if !bindings.indexed_objects { encoder.set_bind_group(0, bindings.globals, &[(draw.object_index as u64 * bindings.object_stride) as u32]); }
+                if textures != Some(draw.textures) { encoder.set_bind_group(1, draw.textures, &[]); textures = Some(draw.textures); }
+                if vertices != Some(draw.vertices) { encoder.set_vertex_buffer(0, draw.vertices.slice(..)); vertices = Some(draw.vertices); }
+                if indices != Some(draw.indices) { encoder.set_index_buffer(draw.indices.slice(..), wgpu::IndexFormat::Uint32); indices = Some(draw.indices); }
+                let instance = if bindings.indexed_objects { draw.object_index } else { 0 };
+                encoder.draw_indexed(0..draw.count, 0, instance..instance + draw.instances);
+            }
+            encoder.finish(&wgpu::RenderBundleDescriptor { label: Some("cached forward draws") })
         });
-        None
+        Some((bundle, reused))
     }
 }

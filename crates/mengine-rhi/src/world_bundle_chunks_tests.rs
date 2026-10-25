@@ -22,7 +22,7 @@ fn sparse_mesh_replacements_reuse_other_world_chunks_with_exact_pixels() {
     let target = renderer.create_offscreen_target(PhysicalSize::new(128, 128));
     let first = submit(&mut renderer, &target, &objects, camera, &lighting, true);
     assert!(first.chunks_exact(4).any(|pixel| pixel[..3] != [0, 0, 0]));
-    for (builds, hits, covered, reused) in [(0, 0, 0, 0), (4, 0, 1024, 0), (0, 4, 1024, 1024)] {
+    for (builds, hits, covered, reused) in [(4, 0, 1024, 0), (0, 4, 1024, 1024)] {
         assert_eq!(submit(&mut renderer, &target, &objects, camera, &lighting, false), first);
         let p = renderer.submission_profile(); assert_eq!((p.world_bundle_builds, p.world_bundle_hits, p.world_bundle_draws, p.world_bundle_reused_draws), (builds, hits, covered, reused)); assert_eq!(p.world_mesh_draw_calls, 1024);
     }
@@ -30,7 +30,7 @@ fn sparse_mesh_replacements_reuse_other_world_chunks_with_exact_pixels() {
         let mut mesh = MeshGpu::unit_cube(&renderer.device); if phase % 2 == 0 { mesh.index_count = 3; }
         renderer.meshes.insert("dynamic-cube".into(), mesh);
         let expected = submit(&mut renderer, &target, &objects, camera, &lighting, true);
-        for (builds, hits, covered, reused) in [(0, 3, 768, 768), (1, 3, 1024, 768), (0, 4, 1024, 1024)] {
+        for (builds, hits, covered, reused) in [(1, 3, 1024, 768), (0, 4, 1024, 1024)] {
             assert_eq!(submit(&mut renderer, &target, &objects, camera, &lighting, false), expected, "replacement {phase}");
             let p = renderer.submission_profile(); assert_eq!((p.world_bundle_builds, p.world_bundle_hits, p.world_bundle_draws, p.world_bundle_reused_draws), (builds, hits, covered, reused));
         }
@@ -45,7 +45,7 @@ fn sparse_mesh_replacements_reuse_other_world_chunks_with_exact_pixels() {
     assert_eq!(renderer.submission_profile().world_bundle_hits, 1); assert_eq!(renderer.submission_profile().world_bundle_reused_draws, 1024);
     renderer.meshes.insert("dynamic-cube".into(), MeshGpu::unit_cube(&renderer.device));
     let expected = submit(&mut renderer, &target, &objects, camera, &lighting, true);
-    assert_eq!(submit(&mut renderer, &target, &objects, camera, &lighting, false), expected); assert_eq!(renderer.submission_profile().world_bundle_reused_draws, 0);
+    assert_eq!(submit(&mut renderer, &target, &objects, camera, &lighting, false), expected); assert_eq!(renderer.submission_profile().world_bundle_reused_draws, 0); assert_eq!(renderer.submission_profile().world_bundle_builds, 1);
     renderer.disable_world_bundle_chunks = false;
     objects = binding_test_objects(1024, true);
     for index in [3, 515, 771] { objects[index].model.w_axis = Vec4::new(0., 0., 0.3 + index as f32 * 0.0005, 1.); objects[index].material.base_color = [index as f32 / 1024., 0.1, 0.5, 0.5]; }
@@ -89,14 +89,14 @@ fn adaptive_world_chunks_bound_cache_and_preserve_other_ranges_at_budget_pressur
         for pass in 0..3 {
             let chunks = cache.prepare_chunks(&renderer.device, renderer.sample_count, bindings, &draws, 256);
             assert_eq!(chunks.len(), expected_chunks); assert_eq!(chunks.iter().map(|chunk| chunk.range.len()).sum::<usize>(), count);
-            assert_eq!(chunks.iter().filter(|chunk| chunk.bundle.is_some()).count(), if pass == 0 { 0 } else { expected_chunks });
-            assert_eq!(chunks.iter().filter(|chunk| chunk.reused).count(), if pass < 2 { 0 } else { expected_chunks });
+            assert_eq!(chunks.iter().filter(|chunk| chunk.bundle.is_some()).count(), expected_chunks);
+            assert_eq!(chunks.iter().filter(|chunk| chunk.reused).count(), if pass == 0 { 0 } else { expected_chunks });
             let counts = cache.counts(); assert!(counts.0 <= 64 && counts.1 <= 32768);
         }
         draws[1200].vertices = &alternate.vertex_buffer;
         let chunks = cache.prepare_chunks(&renderer.device, renderer.sample_count, bindings, &draws, 256);
         assert_eq!(chunks.iter().filter(|chunk| chunk.reused).map(|chunk| chunk.range.len()).sum::<usize>(), count - chunk_size);
-        assert!(chunks[1200 / chunk_size].bundle.is_none()); let counts = cache.counts(); assert!(counts.0 <= 64 && counts.1 <= 32768);
+        assert!(chunks[1200 / chunk_size].bundle.is_some()); let counts = cache.counts(); assert!(counts.0 <= 64 && counts.1 <= 32768);
         let chunks = cache.prepare_chunks(&renderer.device, renderer.sample_count, bindings, &draws, 256);
         assert_eq!(chunks.iter().filter(|chunk| chunk.bundle.is_some()).map(|chunk| chunk.range.len()).sum::<usize>(), count);
         for _ in 0..9 { assert!(cache.prepare_chunks(&renderer.device, renderer.sample_count, bindings, &[], 0).is_empty()); }
@@ -104,6 +104,75 @@ fn adaptive_world_chunks_bound_cache_and_preserve_other_ranges_at_budget_pressur
     }
     assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
     println!("WORLD_CHUNKS_BUDGET adaptiveCounts=17000,32768 maxEntries=64 logicalObjectBudget=32768 idlePasses=9");
+}
+
+#[test]
+fn immediate_world_chunks_draw_current_pixels_and_reuse_when_stable() {
+    let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(96, 96))).unwrap();
+    renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    renderer.upload_material_texture_rgba8("binding-red", 1, 1, &[255, 20, 10, 255], true).unwrap();
+    let mut objects = binding_test_objects(1024, false);
+    for (index, object) in objects.iter_mut().enumerate() { object.mesh_key = if index % 2 == 0 { "cube" } else { "changing-cube" }.into(); }
+    let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+    let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false; lighting.directional = None;
+    let target = renderer.create_offscreen_target(PhysicalSize::new(96, 96));
+    let mut images = Vec::new();
+    for phase in 0..8 {
+        let mut mesh = MeshGpu::unit_cube(&renderer.device); if phase % 2 == 0 { mesh.index_count = 3; }
+        renderer.meshes.insert("changing-cube".into(), mesh);
+        let expected = submit(&mut renderer, &target, &objects, camera, &lighting, true); images.push(expected.clone());
+        for repeat in 0..2 {
+            assert_eq!(submit(&mut renderer, &target, &objects, camera, &lighting, false), expected);
+            let profile = renderer.submission_profile();
+            assert_eq!((profile.world_bundle_builds, profile.world_bundle_hits, profile.world_bundle_draws), if repeat == 0 { (4, 0, 1024) } else { (0, 4, 1024) }); assert_eq!(profile.world_mesh_draw_calls, 1024);
+        }
+    }
+    assert_ne!(images[0], images[1]);
+    let expected = images.last().unwrap();
+    assert_eq!(&submit(&mut renderer, &target, &objects, camera, &lighting, false), expected); assert_eq!(renderer.submission_profile().world_bundle_reused_draws, 1024);
+    // Retired candidates release their ownership on the existing idle boundary.
+    for _ in 0..9 { submit(&mut renderer, &target, &[], camera, &lighting, false); }
+    assert_eq!(renderer.world_bundles.counts(), (0, 0));
+    assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+    println!("WORLD_IMMEDIATE changingPhases=8 framesPerPhase=2 firstBuilds=4 secondReusedDraws=1024 fullPixelsEqual=true");
+}
+
+#[test]
+#[ignore = "manual alternating current-frame world bundle encoding CPU profile"]
+fn benchmark_immediate_world_bundle_encoding() {
+    let mut renderers: Vec<_> = [true, false].into_iter().map(|defer| {
+        let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(96, 96))).unwrap();
+        renderer.world_bundles.defer_admission = defer; renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        renderer.upload_material_texture_rgba8("binding-red", 1, 1, &[255, 20, 10, 255], true).unwrap(); renderer
+    }).collect();
+    let targets: Vec<_> = renderers.iter().map(|renderer| renderer.create_offscreen_target(PhysicalSize::new(96, 96))).collect();
+    let mut objects = binding_test_objects(4096, false);
+    for (index, object) in objects.iter_mut().enumerate() { object.mesh_key = if index % 2 == 0 { "cube" } else { "changing-cube" }.into(); }
+    let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+    let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false; lighting.directional = None;
+    for frequency in [1, 2, 0] {
+        let mut samples = [Vec::new(), Vec::new()]; let mut builds = [0, 0]; let mut hits = [0, 0];
+        for round in 0..13 {
+            let mut reference = None;
+            for mode in if round % 2 == 0 { [0, 1] } else { [1, 0] } {
+                let renderer = &mut renderers[mode]; let mut elapsed = 0.;
+                for frame in 0..8 {
+                    if frequency > 0 && frame % frequency == 0 || frequency == 0 && round == 0 && frame == 0 { renderer.meshes.insert("changing-cube".into(), MeshGpu::unit_cube(&renderer.device)); }
+                    let pixels = submit(renderer, &targets[mode], &objects, camera, &lighting, false);
+                    if let Some(reference) = &reference { assert_eq!(&pixels, reference); } else { reference = Some(pixels); }
+                    let p = renderer.submission_profile(); elapsed += p.world_encode_ms;
+                    if round >= 2 { builds[mode] += p.world_bundle_builds; hits[mode] += p.world_bundle_hits; }
+                }
+                if round >= 2 { samples[mode].push(elapsed / 8.); }
+            }
+        }
+        for values in &mut samples { values.sort_by(f64::total_cmp); }
+        if frequency == 1 { assert_eq!(builds, [0, 1408]); assert_eq!(hits, [0, 0]); }
+        else if frequency == 2 { assert_eq!(builds, [704, 704]); assert_eq!(hits, [0, 704]); }
+        else { assert_eq!(builds, [0, 0]); assert_eq!(hits[0], hits[1]); assert!(hits[1] > 0); }
+        println!("WORLD_IMMEDIATE_CPU frequency={frequency} deferredMs={:.6} immediateMs={:.6} builds={builds:?} hits={hits:?} objects=4096 framesPerSample=8 samples=11 fullPixelsEqual=true", samples[0][5], samples[1][5]);
+    }
+    for renderer in &renderers { assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none()); }
 }
 
 #[test]

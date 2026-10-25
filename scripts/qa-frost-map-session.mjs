@@ -31,6 +31,8 @@ const cameraOnly=process.argv.includes('--camera-only');
 const hierarchyOnly=process.argv.includes('--hierarchy-only');
 const unitInitializationOnly=process.argv.includes('--unit-initialization-only');
 const unitSelectionOnly=process.argv.includes('--unit-selection-only');
+const unitData=process.argv.includes('--unit-data');
+assert.ok(!unitData||unitSelectionOnly,'--unit-data requires --unit-selection-only');
 const detachedAuthoringOnly=process.argv.includes('--detached-authoring-only');
 const detachedProfileOnly=process.argv.includes('--detached-profile-only');
 const detachedOnly=process.argv.includes('--detached-only')||detachedAuthoringOnly||detachedProfileOnly;
@@ -47,7 +49,8 @@ fs.cpSync(source,sample,{recursive:true,filter:file=>!['SourceAssets','.mengine'
 const config=JSON.parse(fs.readFileSync(path.join(sample,'project.json'),'utf8'));config.storageId=label;fs.writeFileSync(path.join(sample,'project.json'),JSON.stringify(config));
 // The fixture adds one hidden observation entity per scene; runtime code and assets remain unchanged.
 for(const file of config.buildScenes){const scene=JSON.parse(fs.readFileSync(path.join(sample,file),'utf8')),id=Math.max(...scene.world.entities.map(e=>e.entity))+1;scene.world.entities.push({entity:id,name:'QA map session',active:false,components:{Text:{text:'{}'}}});fs.writeFileSync(path.join(sample,file),JSON.stringify(scene));}
-fs.appendFileSync(path.join(sample,config.startupScript),`\nvar qaMapTick=onTick;onTick=function(dt){qaMapTick(dt);const e=engine.findEntitiesByName(['QA map session'])[0];if(e)engine.pushCommandJson(JSON.stringify({op:'setComponent',entity:e.entity,component:'Text',value:{text:JSON.stringify({...FrostMapSession.status(),qaWheel:engine.input.wheelDelta})}}));};\n`);
+const unitObservation=unitData?`var qaObservedUnits=null,qaUnitData=null;function qaObserveUnits(){const current=FrostMapSession.unitInitialization();if(current===qaObservedUnits)return qaUnitData;qaObservedUnits=current;if(!current)return qaUnitData=null;const definitions={},profiles=new Map();let shared=true,frozen=true;for(const unit of current.units){if(profiles.has(unit.typeId)&&profiles.get(unit.typeId)!==unit.movement)shared=false;profiles.set(unit.typeId,unit.movement);definitions[unit.typeId]=unit.movement;frozen=frozen&&Object.isFrozen(unit.movement);}const library=FrostWarcraftJass.create(FrostWarcraftJass.link(['function Upcast takes unit u returns handle\\nreturn u\\nendfunction','function main takes nothing returns handle\\nreturn Upcast(GetUnit())\\nendfunction']),{natives:{GetUnit:{parameters:[],returns:'unit',call:function(){return current.units[0];}}}}).run('main');return qaUnitData={count:current.units.length,definitions,shared,frozen,library:{type:library.type,identity:library.value===current.units[0]}};}`:'';
+fs.appendFileSync(path.join(sample,config.startupScript),`\n${unitObservation}\nvar qaMapTick=onTick;onTick=function(dt){qaMapTick(dt);const e=engine.findEntitiesByName(['QA map session'])[0];if(e)engine.pushCommandJson(JSON.stringify({op:'setComponent',entity:e.entity,component:'Text',value:{text:JSON.stringify({...FrostMapSession.status(),qaWheel:engine.input.wheelDelta${unitData?',qaUnitData:qaObserveUnits()':''}})}}));};\n`);
 Object.assign(process.env,{MENGINE_AGENT_EDITOR_MODE:'auto-background',MENGINE_EDITOR_CONFIG_DIR:path.join(root,'config'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows'});fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(name,args={})=>{const r=await bridgeExecute(name,args,{requestId:crypto.randomUUID(),timeoutMs:120000});assert.ok(r.ok,JSON.stringify(r));return r.result;};
@@ -272,6 +275,13 @@ try{
     await checkDetachedRuntime(authored);
   }else if(unitSelectionOnly){
     assert.deepEqual(status(s).unitBindings,{status:'ready',count:96,selected:null});
+    const checkUnitData=world=>{
+      if(!unitData)return;
+      const observed=status(world).qaUnitData,expected=JSON.parse(fs.readFileSync(path.join(source,'Assets/Maps/amazonia/Data/OriginalUnitBindings.json'),'utf8'));
+      assert.deepEqual(observed,{count:96,definitions:Object.fromEntries(Object.entries(expected.definitions).map(([id,definition])=>[id,definition.movement])),shared:true,frozen:true,library:{type:'handle',identity:true}});
+      report.unitData={units:observed.count,types:Object.keys(observed.definitions).length,shared:observed.shared,frozen:observed.frozen,library:observed.library};
+    };
+    checkUnitData(s);
     await execute('playback.input',{keys:['KeyD','KeyW'],buttons:[],viewport:[1280,720]});await step(10);await input({});
     function projectUnit(world,viewport){
       const camera=world.entities.find(e=>e.name==='Camera').components,t=camera.Transform,unit=world.entities.find(e=>e.name==='Unit-45-ngol-3'),p=unit.components.Transform.position,[x,y,z,w]=t.rotation.map((v,i)=>i===3?v:-v),v=p.map((n,i)=>n-t.position[i]);
@@ -284,7 +294,7 @@ try{
       report.checks.push('Native source gold-mine picking and selection circle at '+viewport.join('x'));
     }
     await execute('view.set_game_resolution',{resolution:{width:1280,height:720}});await input({pointer:[20,680],buttons:[0]});await input({pointer:[20,680]});s=await snapshot();assert.equal(status(s).unitBindings.selected,null);assert.equal(s.entities.find(e=>e.name==='Map unit selection').active,false);
-    await click('Map session restart');s=await waitMap('amazonia');assert.deepEqual(status(s).unitBindings,{status:'ready',count:96,selected:null});await click('Map session return');assert.equal(status(await snapshot()).unitBindings,null);await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.checks.push('Empty-world selection clears; map reload/return/Stop release unit bindings');
+    await click('Map session restart');s=await waitMap('amazonia');assert.deepEqual(status(s).unitBindings,{status:'ready',count:96,selected:null});checkUnitData(s);await click('Map session return');const returned=status(await snapshot());assert.equal(returned.unitBindings,null);if(unitData)assert.equal(returned.qaUnitData,null);await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.checks.push('Empty-world selection clears; map reload/return/Stop release unit bindings');if(unitData)report.checks.push('Native source movement profiles, shared frozen type data and linked JASS handle upcasts match before and after reload, and clear on return');
   }else if(unitInitializationOnly){
     const expected={status:'ready',units:96,triggers:26};assert.deepEqual(status(s).initialization,expected);
     await step(3);assert.deepEqual(status(await snapshot()).initialization,expected);await click('Map session restart');s=await waitMap('amazonia');assert.deepEqual(status(s).initialization,expected);

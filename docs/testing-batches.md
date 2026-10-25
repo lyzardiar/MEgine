@@ -1771,3 +1771,15 @@ warcraft_unit_bindings.py读取原UnitData／UnitBalance的移动类型、基础
 `node --test scripts/test-frost-jass-modules.mjs` 的9组检查通过，覆盖跨模块函数／全局状态、源长度与token合计、继承和无效图、特殊名称、同步回调预算／深度及失败后恢复。原 `War3Patch.mpq/Scripts/Blizzard.j` 的MeleeStartingResources与五个常量保存为带摘要的固定夹具，6种ROC／TFT和玩家槽位组合通过独立native模拟；原件提取和类型关系已对照common.j。`node scripts/test-frost-jass.mjs` 保持Amazonia96单位／26触发器、1,800指令；来源打包定向检查通过。细节与复现入口见[JASS说明](designs/frostbound-realms/original-map-import.md#jass-库链接与句柄类型)，本地日志和收据在`tmp/docs-artifacts/frost-original-maps/jass-library-evidence/`。
 
 本批计数2/3，尚未运行新的原生QA或整库测试。原资源函数仅为解释器参考验证，没有改变实际CreateAllUnits入口；完整Melee开局、玩家军队、寻路／移动、编辑器稳定60、长期驻留和LOD仍未完成。下一独立任务后，合并137–139的相关原生范围，在同版本验证单位数据、加载／重载／返回、失败边界与实际新缓存／工具消费路径；不重复未受影响的完整资源或Profiler夹具。
+
+### 第一百三十九阶段／新批次任务3/3：首次绘制使用分块渲染包
+
+`crates/mengine-rhi/src/world_bundles.rs` 在合格分块首次出现时编码并提交渲染包，后续按精确管线／资源／索引／对象槽匹配复用。64项、32,768逻辑对象和8次闲置提交的预算、资源替换与在途所有权沿用既有机制；对象uniform继续逐帧更新，绘制顺序、几何和材质内容不变。测试中的延后准入开关只用于同进程对照，不进入生产构建。即时建包会让仅出现一次的合格块也持有GPU命令；保留成本受同一缓存预算约束，不由CPU基准推断实际内存或FPS。
+
+`cargo check -p mengine-rhi --lib`、world_chunks的3项GPU检查和既有完整材质／资源替换GPU检查通过。新增8组每两帧更换网格的对照，首帧4块建包、次帧复用1,024绘制，完整RGBA与直接绘制一致；预算检查覆盖17,000／32,768对象、替换后其他分块继续复用及9次闲置淘汰。既有检查继续覆盖稀疏替换、透明顺序、相机／uniform／纹理／Shader／环境更新、扩缩容、粒子回退和资源释放。
+
+手动命令`cargo test -p mengine-rhi --release --lib benchmark_immediate_world_bundle_encoding -- --ignored --nocapture --test-threads=1`使用4,096对象，双Renderer按轮交替先后顺序，2轮预热／11轮计量，每样本8帧，全部完整像素一致。世界编码CPU中位数：每帧替换1.866713→1.215137ms，每两帧替换1.445713→0.862800ms，静态0.546300→0.539662ms；静态不宣称明确收益。这是合成资源变化负载，未含实际地图模拟、IPC或呈现。最终日志为`tmp/docs-artifacts/editor-performance-risk/bundle-immediate-{check,tests,compatibility,benchmark}.log`。
+
+`scripts/qa-frost-map-session.mjs --unit-selection-only --unit-data`新增可选观察：在真实脚本引擎读取96单位／37类型移动数据，检查共享和冻结，并调用已链接函数进行unit→handle转换；重载重新检查，返回清除引用。只在该开关启用时添加观察，默认性能场景保持原采样负载。生成源码语法、默认路径隔离及参考数据的定向检查通过，真实原生验收待下述合并执行。
+
+137–139达到3/3，提交后统一构建custom-protocol Release，前端源码自d6aa964未变，复用其已验证dist。合并执行DotA新包冷转换／缓存进入／Scene与Game连续采样／全景选取／关闭重开、Amazonia单位数据与两种分辨率选择／重载／返回、分离多窗口／Pause／Step／Stop／重启及5轮等时驻留。转换器包身份已变化，不能将复制旧包当作新缓存命中；本批从实际contentImporter触发新转换。完整资源热更新、独立Profiler和空间小夹具没有新增受影响路径，复用既有结果。稳定60、长期驻留、LOD和完整War3仍未完成。
