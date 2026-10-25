@@ -43,6 +43,30 @@
       "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
       "path": "src/viewer/skeletalnode.ts",
       "sha256": "5a520864532c8b829434a0e055f522d4f63a39a74637e36cd4c0022e5bef962d"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/layer.ts",
+      "sha256": "1c37a84801b2331b74fa6a251a56d0c126535fc878188eb6517a0213b13aad28"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/filtermode.ts",
+      "sha256": "96e164dc7c10065f4d9075f8ca5ee799d63453750e72416ac2ba8274f641d94e"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/parsers/mdlx/layer.ts",
+      "sha256": "e50fd97a211ad808bf7961a3e64d7c1933ee2fdab066cb71b4338a77957a466f"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/shaders/sd.frag.ts",
+      "sha256": "7b53e470e99a00604425a0e39a9e4c80a68d0c22bbca71a3bea84e4ca8fdd54d"
     }
   ],
   "licenses": [

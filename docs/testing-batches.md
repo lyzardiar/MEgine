@@ -2160,3 +2160,14 @@ GPU可见集选取Amazonia两个原始sheep节点，2实例／1pose／2绘制对
 必要快速检查：`cargo test -p mengine-assets --lib native_mdx_rotation_noninherit -- --test-threads=1` **6通过／0失败**，覆盖非均匀缩放与pivot、反序父链／后代、多时刻独立采样／根节点、billboard父节点／零缩放、预算边界和未实现组合。为解除已知真实地图阻塞，运行单模型`warcraft_archive_model`消费Amazonia公共归档BanditMage，通过117节点、5geoset、12sequence、792预览顶点和6张原始BLP内存解码；不写工程资产或meta。源SHA为0a2b7f1d6a7e8a2981c45e1c5eaf00ccc4099cc2bc1edb9f61cad9c09da7eea3。PRE2效果诊断继续保留；未进行完整模型效果／GPU或原版动画逐帧验收。
 
 后续合并验证：累计3项后运行相关MDX回归、Host规划／消费者构建与代表原生模型GPU路径；用修复后的BanditMage核对附件朝向及双视图生命周期，复用本批未变地图／地形／水面结果。原选图仍在旧离线入口，本项不能作为选图切换或缓存清理完成。完整入口就绪并验证通过后，清理已失去用途的旧地图解包／转换缓存，核对引用／Git状态／绝对路径并记录回收空间。原始日志`tmp/docs-artifacts/warcraft-archives/rotation-{tests,real}.log`、`task161-runs.json`与`inheritance-reference/`。
+
+
+## 第一百六十二项：原生模型材质混合与深度（新批次2/3）
+
+变更RHI的RenderMaterial／管线键与混合状态、Host的原生模型材质消费，以及Runtime完整结构初始化。显式源／目标因子同时作用RGBA；普通材质的既有覆盖alpha策略保持。深度测试与深度写入独立控制，关闭测试同时禁止写入。不透明材质可不写深度，错误shader管线保留这些状态。Host接收filter0–6、no-depth-test／no-depth-set和调制低alpha剔除，sphere环境映射仍拒绝。格式依据是已固定并登记SHA的第三方layer／filtermode／SD fragment，不代替原Game.dll逐像素验收。
+
+必要检查：`cargo test -p mengine-rhi --lib native_warcraft_material_state_cpu -- --test-threads=1` **3通过／0失败**；`cargo test -p mengine-editor-host --lib native_warcraft_material_state -- --test-threads=1` **2通过／0失败**。`cargo check -p mengine-runtime --bins -p mengine-editor-host --examples`通过；最后仅新增字段说明与展开新factor match分支，不改变语义。没有执行GPU／Tauri完整构建或全库检查。
+
+161–162累计2/3，**合并验证待执行**：新增`native_warcraft_material_state_gpu`两项比较真实RGBA像素的五组独立混合公式、遮挡／关闭深度测试／不写深度；包含已有普通材质coverage-alpha、惰性管线与相关缓存键回归，原生BanditMage附件方向／双视图GPU，相关Host／Tauri消费者编译。下一功能达到3项后先关闭该批。复用不变地图／地形／水面证据，不重复旧离线地图转换。实现不写地图缓存，实际选图和完整世界尚未切换，旧缓存保留至直接加载完整验收通过后按清单清理。
+
+原始日志和运行结果：`tmp/docs-artifacts/warcraft-archives/material-state-{rhi-cpu,host-cpu,consumer-check}.log`、`task162-runs.json`、`task162-receipt.json`；固定源码与摘要在`material-reference/`。所有验证JSON／原始源码缓存留在tmp，提交只含源码、固定来源摘要和精简说明。

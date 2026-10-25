@@ -1,6 +1,6 @@
 // Author: MiYu. Consume mounted native MDX/BLP resources on the existing Rust renderer without project files or meta.
-use mengine_assets::{decode_texture_rgba8, texture_dimensions_from_bytes, AssetError, AssetLocation, AssetMounts, MdxBillboardCamera, MdxModel, MdxPose, TextureRgba8};
-use mengine_rhi::{MaterialBlendMode, MaterialWrap, RenderMaterial, RenderObject, Renderer, Vertex};
+use mengine_assets::{decode_texture_rgba8, texture_dimensions_from_bytes, AssetError, AssetLocation, AssetMounts, MdxBillboardCamera, MdxLayerPose, MdxModel, MdxPose, TextureRgba8};
+use mengine_rhi::{MaterialBlendFactor, MaterialBlendMode, MaterialWrap, RenderMaterial, RenderObject, Renderer, Vertex};
 use glam::Mat4;
 use std::{collections::HashMap,sync::Arc};
 
@@ -29,6 +29,13 @@ fn plan_upload(pose: &MdxPose, prefix_len: usize, texture_keys: &[String], limit
 fn resource_key(location: &AssetLocation) -> String {format!("warcraft:{:?}:{}",location.source,location.member)}
 fn transformed_uv([u,v]:[f32;2],m:[f32;6])->Result<[f32;2],AssetError> {let uv=[u*m[0]+v*m[2]+m[4],u*m[1]+v*m[3]+m[5]]; if uv.iter().any(|n|!n.is_finite()) {return Err(AssetError::Invalid("native MDX transformed UV is not finite".into()));} Ok(uv)}
 
+// Source layer blendFunc applies the same factors to RGBA, including alpha on additive and modulate passes.
+fn layer_material(color:[f32;3],alpha:f32,layer:&MdxLayerPose,texture:&str,layer_index:usize)->RenderMaterial {
+    use MaterialBlendFactor::{Zero,One,SourceAlpha,OneMinusSourceAlpha,SourceColor,DestinationColor};
+    let factors=match layer.filter {2=>(SourceAlpha,OneMinusSourceAlpha),3|4=>(SourceAlpha,One),5=>(Zero,SourceColor),6=>(DestinationColor,SourceColor),_=>(One,Zero)};
+    RenderMaterial {base_color:[color[0],color[1],color[2],alpha*layer.alpha],base_color_texture:texture.into(),roughness:0.95,unlit:layer.flags&(1|0x100)!=0,double_sided:layer.flags&0x10!=0,transparent:layer.filter>=2,blend_mode:MaterialBlendMode::Explicit {source:factors.0,destination:factors.1},depth_write:layer.flags&(0x40|0x80)==0 && layer.filter<=1,depth_test:layer.flags&0x40==0,depth_equal:layer_index>0,alpha_cutoff:match layer.filter {1=>0.75,5|6=>0.02,_=>0.},render_queue:if layer.filter<=1 {2000} else {3000},wrap_u:if layer.texture_flags&1!=0 {MaterialWrap::Repeat} else {MaterialWrap::Clamp},wrap_v:if layer.texture_flags&2!=0 {MaterialWrap::Repeat} else {MaterialWrap::Clamp},..Default::default()}
+}
+
 impl MountedWarcraftModel {
     /// The texture byte limit bounds retained decoded RGBA for this handle; archive and decoder work buffers are separate.
     pub fn load(mounts: &AssetMounts, member: &str, team: u8, max_texture_bytes: usize) -> Result<Arc<Self>,AssetError> {
@@ -50,7 +57,7 @@ impl MountedWarcraftModel {
     pub(crate) fn release_textures(&self,renderer:&mut Renderer) {for t in &self.textures {renderer.remove_material_texture(&t.key);}}
     pub(crate) fn binding_plan_bytes(&self)->usize {self.key.len().saturating_add(self.location.member.len()).saturating_add(512).saturating_add(self.texture_keys.iter().map(|s|s.len().saturating_mul(2).saturating_add(384)).fold(0usize,usize::saturating_add))}
     pub(crate) fn instance_plan_bytes(&self,pose:&MdxPose)->Result<usize,AssetError> {let mut total=0usize; for g in &pose.geosets {for l in g.layers.iter() {if g.alpha<=0. || l.alpha<=0. || g.mesh.indices.is_empty() {continue;} let texture=self.texture_keys.get(l.texture).ok_or_else(||AssetError::Invalid("missing instance texture key".into()))?; let n=self.key.len().saturating_add(128).saturating_mul(3).saturating_add(texture.len().saturating_add(128).saturating_mul(3)).saturating_add(std::mem::size_of::<RenderObject>()+std::mem::size_of::<RenderMaterial>()+256); total=total.checked_add(n.checked_mul(2).ok_or_else(||AssetError::Invalid("instance metadata overflow".into()))?).ok_or_else(||AssetError::Invalid("instance metadata overflow".into()))?;}} Ok(total)}
-    pub(crate) fn validate_pose(&self,pose:&MdxPose,limits:WarcraftModelRenderLimits)->Result<usize,AssetError> {let draws=plan_upload(pose,self.key.len(),&self.texture_keys,limits)?; if pose.geosets.iter().flat_map(|g|g.layers.iter()).any(|l|matches!(l.filter,3|6) || l.flags&(2|0x40)!=0) {return Err(AssetError::Invalid("native MDX renderer requires exact additive/modulate2x, sphere mapping or no-depth-test support for these material flags".into()));} Ok(draws)}
+    pub(crate) fn validate_pose(&self,pose:&MdxPose,limits:WarcraftModelRenderLimits)->Result<usize,AssetError> {let draws=plan_upload(pose,self.key.len(),&self.texture_keys,limits)?; if pose.geosets.iter().flat_map(|g|g.layers.iter()).any(|l|l.flags&2!=0) {return Err(AssetError::Invalid("native MDX renderer requires sphere environment mapping for this layer".into()));} Ok(draws)}
     pub fn model(&self) -> &MdxModel {&self.model}
     pub fn location(&self) -> &AssetLocation {&self.location}
     pub fn decoded_texture_bytes(&self) -> usize {self.textures.iter().map(|t|t.rgba.pixels.len()).sum()}
@@ -74,7 +81,7 @@ impl MountedWarcraftModel {
             let mut vertices=Vec::new(); vertices.try_reserve_exact(g.mesh.positions.len()).map_err(|_|AssetError::Invalid("cannot reserve native MDX render vertices".into()))?;
             for ((position,normal),uv) in g.mesh.positions.iter().zip(&g.mesh.normals).zip(uv) {vertices.push(Vertex {position:*position,normal:*normal,uv:transformed_uv(*uv,m)?});}
             let mesh_key=self.mesh_key(slot,g.geoset,layer_index); renderer.upload_gltf_static_profiled(&mesh_key,&vertices,&g.mesh.indices);
-            let material=RenderMaterial {base_color:[g.color[0],g.color[1],g.color[2],g.alpha*layer.alpha],base_color_texture:self.texture_keys[layer.texture].clone(),roughness:0.95,unlit:layer.flags&(1|0x100)!=0,double_sided:layer.flags&0x10!=0,transparent:layer.filter>=2,blend_mode:match layer.filter {4=>MaterialBlendMode::Additive,5=>MaterialBlendMode::Multiply,_=>MaterialBlendMode::Alpha},depth_write:layer.flags&0x80==0 && layer.filter<=1,depth_equal:layer_index>0,alpha_cutoff:if layer.filter==1 {0.75} else {0.},render_queue:if layer.filter<=1 {2000} else {3000},wrap_u:if layer.texture_flags&1!=0 {MaterialWrap::Repeat} else {MaterialWrap::Clamp},wrap_v:if layer.texture_flags&2!=0 {MaterialWrap::Repeat} else {MaterialWrap::Clamp},..Default::default()};
+            let material=layer_material(g.color,g.alpha,layer,&self.texture_keys[layer.texture],layer_index);
             objects.push(RenderObject {mesh_key,model:Mat4::IDENTITY,material:material.into(),cast_shadows:false,receive_shadows:false});
         }} Ok(objects)
     }
@@ -103,4 +110,16 @@ mod tests {
     }
     #[test]
     fn native_warcraft_model_rejects_nonfinite_expanded_uvs() {assert!(transformed_uv([f32::MAX,0.],[2.,0.,0.,1.,0.,0.]).is_err()); assert_eq!(transformed_uv([0.5,0.25],[1.,0.,0.,1.,0.25,0.5]).unwrap(),[0.75,0.75]);}
+
+    #[test]
+    fn native_warcraft_material_state_source_modes_keep_separate_alpha_factors() {
+        use MaterialBlendFactor::{Zero,One,SourceAlpha,OneMinusSourceAlpha,SourceColor,DestinationColor};
+        let pose=expanded_pose(1,1); let mut layer=pose.geosets[0].layers[0].clone(); let modes=[(One,Zero),(One,Zero),(SourceAlpha,OneMinusSourceAlpha),(SourceAlpha,One),(SourceAlpha,One),(Zero,SourceColor),(DestinationColor,SourceColor)];
+        for (filter,(source,destination)) in modes.into_iter().enumerate() {layer.filter=filter as u32; layer.alpha=0.4; let material=layer_material([0.2,0.3,0.4],0.5,&layer,"t",0); assert_eq!(material.blend_mode,MaterialBlendMode::Explicit {source,destination}); assert_eq!(material.transparent,filter>=2); assert_eq!(material.depth_write,filter<=1); assert_eq!(material.alpha_cutoff,match filter {1=>0.75,5|6=>0.02,_=>0.}); assert_eq!(material.base_color,[0.2,0.3,0.4,0.2]);}
+    }
+    #[test]
+    fn native_warcraft_material_state_depth_flags_keep_opaque_no_depth_set() {
+        let pose=expanded_pose(1,1); let mut layer=pose.geosets[0].layers[0].clone();
+        for flags in [0,0x40,0x80,0xc0] {layer.flags=flags; let material=layer_material([1.;3],1.,&layer,"t",1); assert!(!material.transparent); assert_eq!(material.depth_test,flags&0x40==0); assert_eq!(material.depth_write,flags==0); assert!(material.depth_equal);}
+    }
 }

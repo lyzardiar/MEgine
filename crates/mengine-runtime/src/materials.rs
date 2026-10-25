@@ -753,6 +753,7 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         },
         depth_write: material.surface != MaterialSurface::Transparent
             || material.transparent_depth_write,
+        depth_test: true,
         depth_equal: material.depth_equal,
         render_queue: if material.render_queue >= 0 {
             material.render_queue

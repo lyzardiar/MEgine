@@ -107,7 +107,7 @@ Host新增 `MountedWarcraftModel`：同步加载接口供后续会话工作线�
 
 来源、固定提交、参考文件SHA和两份MIT许可证保存在 `third_party/warcraft-model-reference/`。原生读取不调用.NET或外部转换器；独立C#采样器只为本地验证一个模型，原始MDX与参考JSON留在tmp。CPU示例为 `cargo run -p mengine-assets --example warcraft_archive_model -- <game> <map> <member> [reference-json]`；GPU入口为 `cargo run -p mengine-editor-host --release --example render_warcraft_archive -- <game> <map> <member> [capture-directory]`，默认截图目录在tmp。
 
-当前不支持MDL文本、Reforged布局、特殊继承／camera anchoring、完整billboard原游戏对照、粒子／ribbon／light／事件行为。Host对尚未精确支持的filter3／6、sphere mapping、no-depth-test明确拒绝；其他材质属性、替换纹理上下文及整图视觉仍需按原游戏验证。常规选图仍使用离线流程，不能把这次模型消费当作地图加载替换完成。152–154达到3项后只执行累计接口、同一原生版本与代表模型的相关验证，复用未变化的前两阶段结果。
+当前不支持MDL文本、Reforged布局、特殊继承／camera anchoring、完整billboard原游戏对照、粒子／ribbon／light／事件行为。Host的sphere mapping仍明确拒绝；filter0–6与深度标志的当前实现及待批次验证见第一百六十二阶段，其他材质属性、替换纹理上下文及整图视觉仍需按原游戏验证。常规选图仍使用离线流程，不能把这次模型消费当作地图加载替换完成。152–154达到3项后只执行累计接口、同一原生版本与代表模型的相关验证，复用未变化的前两阶段结果。
 
 ## 第一百五十五阶段：原生地图数据会话（新批次1/3）
 
@@ -207,3 +207,12 @@ Host的`MountedWarcraftPlacedWorld`共享模型和实际纹理句柄，RGBA累�
 原生MDX求值器支持非billboard节点的`DontInheritRotation`：以父链累计四元数抵消父旋转，再组合源局部旋转，保留父变换对pivot位置及缩放的作用。后代消费修正后的累计旋转；billboard父节点使用实际相机基向量，不依赖可能因零缩放退化的矩阵分解。旋转数组仅为含该标志的模型分配，并纳入pose规划预算。规则参考固定mdx-m3-viewer的`src/viewer/skeletalnode.ts`，来源与摘要已登记。
 
 Amazonia的BanditMage中Chest Ref与Weapon Ref为0x804附件节点，本项解除整模型在这些节点处的拒绝。平移／缩放非继承、camera anchoring及同节点billboard＋旋转非继承继续明确报错，未宣称完整原版节点兼容。6项定向检查通过，真实模型结果和后续批次范围登记testing-batches.md；实际选图仍在旧离线入口。完成完整入口切换后执行前述旧地图缓存清理验收。
+
+
+## 第一百六十二阶段：原生模型材质混合与深度状态（新批次2/3）
+
+RHI新增受限的显式源／目标混合因子，RGBA使用相同因子，片段输出保持straight alpha；原有Alpha／Premultiplied／Additive／Multiply的覆盖alpha行为不变。显式因子和`depth_test`纳入完整管线键，诊断／custom shader／绘制绑定沿用该键，继续按实际使用惰性创建管线。不透明材质可独立关闭深度写入；关闭深度测试时使用Always且不写深度。普通工程资产默认保留深度测试，Runtime消费者已适配字段。
+
+原生Host消费filter0–6：0／1为替换／alpha-test；2为SrcAlpha／OneMinusSrcAlpha；3／4为SrcAlpha／One；5为Zero／SrcColor；6为DstColor／SrcColor。RGBA因子、no-depth-test／no-depth-set及0.75／0.02阈值来自固定mdx-m3-viewer的layer／filtermode／SD fragment源码，来源摘要已保留。该固定参考中3／4使用相同因子，不能据此宣称所有原版Game.dll渲染细节等价。sphere mapping继续明确拒绝；完整灯光／雾、层级排序、粒子及原版像素对照仍待完成。
+
+3项RHI CPU管线状态与2项Host材质状态检查通过，受接口影响的Runtime二进制和Host示例`cargo check`通过。两项真实GPU RGBA／深度观察用例已经纳入代码，执行留给161–163合并批次，并回归普通材质覆盖alpha／惰性管线和代表原始模型。当前2/3，未执行完整构建或全库测试。实现不产生解包资产／meta或地图缓存，实际选图仍使用离线入口；完整入口就绪后执行存量缓存清理验收。

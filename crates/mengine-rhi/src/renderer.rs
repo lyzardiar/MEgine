@@ -44,6 +44,9 @@ mod object_indexing;
 mod object_packets;
 use object_packets::ObjectPacketCache;
 #[cfg(test)]
+#[path = "warcraft_material_state_tests.rs"]
+mod warcraft_material_state_tests;
+#[cfg(test)]
 #[path = "object_packet_tests.rs"]
 mod object_packet_tests;
 #[cfg(test)]
@@ -143,6 +146,8 @@ pub struct RenderMaterial {
     pub transparent: bool,
     pub blend_mode: MaterialBlendMode,
     pub depth_write: bool,
+    /// Disabled testing also disables depth writes, matching a disabled graphics depth stage.
+    pub depth_test: bool,
     pub depth_equal: bool,
     pub render_queue: i32,
     pub alpha_cutoff: f32,
@@ -200,6 +205,9 @@ pub enum MaterialFilter {
     Linear,
 }
 
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum MaterialBlendFactor { Zero, One, SourceAlpha, OneMinusSourceAlpha, SourceColor, DestinationColor }
+
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum MaterialBlendMode {
     #[default]
@@ -207,6 +215,8 @@ pub enum MaterialBlendMode {
     Premultiplied,
     Additive,
     Multiply,
+    /// Identical source/destination factors for color and alpha; fragment output remains unpremultiplied.
+    Explicit { source: MaterialBlendFactor, destination: MaterialBlendFactor },
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -260,6 +270,7 @@ impl Default for RenderMaterial {
             transparent: false,
             blend_mode: MaterialBlendMode::Alpha,
             depth_write: true,
+            depth_test: true,
             depth_equal: false,
             render_queue: 2000,
             alpha_cutoff: 0.0,
@@ -626,6 +637,8 @@ enum MaterialPipelineBlend {
     Premultiplied,
     Additive,
     Multiply,
+    /// Identical source/destination factors for color and alpha; fragment output remains unpremultiplied.
+    Explicit { source: MaterialBlendFactor, destination: MaterialBlendFactor },
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -633,6 +646,7 @@ struct MaterialPipelineKey {
     blend: MaterialPipelineBlend,
     double_sided: bool,
     depth_write: bool,
+    depth_test: bool,
     depth_equal: bool,
     shader_fingerprint: u64,
 }
@@ -680,10 +694,12 @@ impl From<&RenderMaterial> for MaterialPipelineKey {
                     MaterialBlendMode::Premultiplied => MaterialPipelineBlend::Premultiplied,
                     MaterialBlendMode::Additive => MaterialPipelineBlend::Additive,
                     MaterialBlendMode::Multiply => MaterialPipelineBlend::Multiply,
+                    MaterialBlendMode::Explicit {source,destination} => MaterialPipelineBlend::Explicit {source,destination},
                 }
             },
             double_sided: material.double_sided,
-            depth_write: !material.transparent || material.depth_write,
+            depth_write: material.depth_test && material.depth_write,
+            depth_test: material.depth_test,
             depth_equal: material.depth_equal,
             shader_fingerprint: surface_shader_fingerprint(
                 &material.surface_shader,
@@ -2972,6 +2988,7 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
                     MaterialBlendMode::Premultiplied => 1.0,
                     MaterialBlendMode::Additive => 2.0,
                     MaterialBlendMode::Multiply => 3.0,
+                    MaterialBlendMode::Explicit {..} => 0.0,
                 }
             } else {
                 0.0
@@ -3300,7 +3317,7 @@ fn create_pipeline(
         depth_stencil: Some(wgpu::DepthStencilState {
             format: wgpu::TextureFormat::Depth24PlusStencil8,
             depth_write_enabled: key.depth_write,
-            depth_compare: if key.depth_equal { wgpu::CompareFunction::LessEqual } else { wgpu::CompareFunction::Less },
+            depth_compare: if !key.depth_test { wgpu::CompareFunction::Always } else if key.depth_equal { wgpu::CompareFunction::LessEqual } else { wgpu::CompareFunction::Less },
             stencil: Default::default(),
             bias: Default::default(),
         }),
@@ -3359,12 +3376,21 @@ fn create_shadow_pipeline(
 }
 
 fn material_blend_state(blend: MaterialPipelineBlend) -> wgpu::BlendState {
+    let factor=|value|match value {
+        MaterialBlendFactor::Zero=>wgpu::BlendFactor::Zero,
+        MaterialBlendFactor::One=>wgpu::BlendFactor::One,
+        MaterialBlendFactor::SourceAlpha=>wgpu::BlendFactor::SrcAlpha,
+        MaterialBlendFactor::OneMinusSourceAlpha=>wgpu::BlendFactor::OneMinusSrcAlpha,
+        MaterialBlendFactor::SourceColor=>wgpu::BlendFactor::Src,
+        MaterialBlendFactor::DestinationColor=>wgpu::BlendFactor::Dst,
+    };
     let component = |src_factor, dst_factor| wgpu::BlendComponent {
         src_factor,
         dst_factor,
         operation: wgpu::BlendOperation::Add,
     };
     match blend {
+        MaterialPipelineBlend::Explicit {source,destination} => {let value=component(factor(source),factor(destination)); wgpu::BlendState {color:value,alpha:value}},
         MaterialPipelineBlend::Replace => wgpu::BlendState::REPLACE,
         MaterialPipelineBlend::Alpha => wgpu::BlendState::ALPHA_BLENDING,
         MaterialPipelineBlend::Premultiplied => wgpu::BlendState {
@@ -4408,7 +4434,7 @@ mod tests {
                 for blend in [MaterialPipelineBlend::Replace, MaterialPipelineBlend::Alpha, MaterialPipelineBlend::Premultiplied, MaterialPipelineBlend::Additive, MaterialPipelineBlend::Multiply] {
                     for depth_write in [false, true] {
                         if blend == MaterialPipelineBlend::Replace && !depth_write { continue; }
-                        let key = MaterialPipelineKey { blend, double_sided, depth_write, depth_equal, shader_fingerprint:0 };
+                        let key = MaterialPipelineKey { blend, double_sided, depth_write, depth_test:true, depth_equal, shader_fingerprint:0 };
                         assert_eq!(renderer.ensure_material_pipeline_with_key(&material, key), MaterialPipelinePrepareResult::BuiltIn);
                         count += 1; assert_eq!(renderer.material_pipeline_stats().built_in, count);
                         let first = renderer.material_pipelines[&key].clone();
@@ -4922,6 +4948,7 @@ mod tests {
             blend: MaterialPipelineBlend::Additive,
             double_sided: true,
             depth_write: false,
+            depth_test: true,
             depth_equal: false,
             shader_fingerprint: 42,
         };
@@ -5281,6 +5308,7 @@ mod tests {
                 blend: MaterialPipelineBlend::Premultiplied,
                 double_sided: true,
                 depth_write: false,
+                depth_test: true,
                 depth_equal: false,
                 shader_fingerprint: 0,
             }
@@ -5313,6 +5341,7 @@ mod tests {
             blend: MaterialPipelineBlend::Replace,
             double_sided: false,
             depth_write: true,
+            depth_test: true,
             depth_equal: false,
             shader_fingerprint: fingerprint,
         };
