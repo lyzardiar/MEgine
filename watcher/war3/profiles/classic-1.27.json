@@ -7,6 +7,6 @@
     { "file": "mss32.dll", "sha256": "1f9a83f42de0e7899a7f6772e5cbad6ed10c16cc5f15246c8d80b9f4fe25fc4a", "abi": "stdcall", "source": "User supplied Warcraft III installation; RAD Miles Sound System", "redistributed": false }
   ],
   "archivePriority": ["selected map", "War3Patch.mpq", "War3xLocal.mpq", "War3x.mpq", "war3.mpq"],
-  "analysisTool": { "upstream": "https://github.com/morluto/rea", "version": "6.5.0", "record": "../../third_party/rea/source-info.json", "runtimeDependency": false },
+  "analysisTool": { "upstream": "https://github.com/morluto/rea", "version": "6.5.0", "repositoryRecord": "third_party/rea/README-MENGINE.md", "runtimeDependency": false },
   "resourcePolicy": "Read only; original game resources and libraries are not distributed. Settings, saves and replays belong in the independent user directory."
 }
