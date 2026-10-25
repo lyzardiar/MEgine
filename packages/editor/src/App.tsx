@@ -837,7 +837,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setGameDisplay(store.gameDisplay);
     setTreeTick((t) => t + 1);
     updateSceneDirty();
-    if (!props.detachedPanel) agentBridge.observe(false, snapshot);
+    if (!props.detachedPanel) agentBridge.observe(false, store.mode === 'edit' ? snapshot : undefined);
     if (publish) broadcastScene();
   };
   refreshRef.current = refresh;

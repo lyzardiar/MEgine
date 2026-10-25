@@ -1,5 +1,9 @@
 // Author: MiYu. Editor event cursors and scene changes, including immutable Play record signatures.
-import { isRetainedPlayRecord } from '../playWorldSync.ts';
+import { isRetainedPlayRecord, isRetainedPlayWorld, retainedPlayWorldChanges, type RetainedPlayWorld } from '../playWorldSync.ts';
+
+const nativeStringify = JSON.stringify, arrayIterator = Array.prototype[Symbol.iterator];
+const nativeSerialization = [nativeStringify, arrayIterator].every(fn => Function.prototype.toString.call(fn).includes('[native code]'));
+function ordinarySerialization(): boolean { return nativeSerialization && JSON.stringify === nativeStringify && Array.prototype[Symbol.iterator] === arrayIterator && !('toJSON' in Object.prototype) && !('toJSON' in Array.prototype); }
 
 export const AGENT_EVENT_TOPICS = [
   'scene.changed',
@@ -226,6 +230,7 @@ export class SceneChangeTracker {
   private sceneStateSignature = '';
   private entities = new Map<number, string>();
   private immutableSignatures = new WeakMap<SceneEntityView, string>();
+  private retainedWorld: WeakRef<RetainedPlayWorld> | undefined;
   private readonly deltas: SceneDelta[] = [];
   private readonly capacity: number;
 
@@ -246,6 +251,7 @@ export class SceneChangeTracker {
     this.sceneStateSignature = '';
     this.entities.clear();
     this.immutableSignatures = new WeakMap();
+    this.retainedWorld = undefined;
     this.deltas.splice(0);
   }
 
@@ -253,14 +259,34 @@ export class SceneChangeTracker {
     sceneName: string | null,
     entities: readonly SceneEntityView[],
     sceneState: SceneStateView = {},
+    owned?: RetainedPlayWorld,
   ): SceneDelta | null {
-    const current = entitySignatures(entities, this.immutableSignatures);
+    const retained = owned && isRetainedPlayWorld(owned) && (owned.entities as readonly unknown[]) === entities && ordinarySerialization() ? owned : undefined;
+    const previousWorld = retained ? this.retainedWorld?.deref() : undefined;
+    const indices = previousWorld && retained ? previousWorld.entities === retained.entities ? [] : retainedPlayWorldChanges(previousWorld, retained) : undefined;
+    let sparse = indices && indices.length <= entities.length / 2;
+    const baseline = this.entities, observedRevision = this.revisionValue, signatures = this.immutableSignatures;
+    let current: Map<number, string>;
+    if (sparse && indices) {
+      const records: SceneEntityView[] = [];
+      for (const index of indices) records.push(entities[index]);
+      current = entitySignatures(records, this.immutableSignatures);
+    } else current = entitySignatures(entities, this.immutableSignatures);
     const currentSceneStateSignature = JSON.stringify(clone(sceneState));
+    if (sparse && (this.entities !== baseline || this.revisionValue !== observedRevision)) {
+      // A state getter may reenter/reset this tracker; restore the complete pre-getter signatures.
+      current = new Map();
+      for (const entity of entities) current.set(entity.entity, signatures.get(entity)!);
+      sparse = false;
+    }
+    // MiYu: state getters can install serialization hooks; only ordinary completed observations certify reuse.
+    const nextRetained = retained && ordinarySerialization() ? new WeakRef(retained) : undefined;
     if (this.revisionValue === 0) {
       this.revisionValue = 1;
       this.sceneName = sceneName;
       this.sceneStateSignature = currentSceneStateSignature;
       this.entities = current;
+      this.retainedWorld = nextRetained;
       return this.pushDelta({
         previousRevision: 0,
         revision: 1,
@@ -287,9 +313,7 @@ export class SceneChangeTracker {
         if (!previous) added.push(id);
         else if (previous !== record) changed.push(id);
       }
-      for (const id of this.entities.keys()) {
-        if (!current.has(id)) removed.push(id);
-      }
+      if (!sparse) for (const id of this.entities.keys()) if (!current.has(id)) removed.push(id);
     }
     if (
       !sceneChanged
@@ -297,13 +321,15 @@ export class SceneChangeTracker {
       && !added.length
       && !removed.length
       && !changed.length
-    ) return null;
+    ) { this.retainedWorld = nextRetained; return null; }
 
     const previousRevision = this.revisionValue;
     this.revisionValue += 1;
     this.sceneName = sceneName;
     this.sceneStateSignature = currentSceneStateSignature;
-    this.entities = current;
+    if (sparse) for (const [id, signature] of current) this.entities.set(id, signature);
+    else this.entities = current;
+    this.retainedWorld = nextRetained;
     return this.pushDelta({
       previousRevision,
       revision: this.revisionValue,

@@ -1179,6 +1179,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (!retained) { const snapshot = this.snapshot(); return { ...snapshot, clearColor: [...snapshot.clearColor] }; }
       return { ...retained, frame, simFrame: frame, simulationTime: playSpin, selected: primarySelected(), selectedIds: [...selectedIds] };
     },
+    /** Agent observations can consume the exact immutable native world after verifying editable data. */
+    sceneObservationSnapshot() {
+      return mode !== 'edit' && playWorldSync.retainedPresentation(ownedPlayWorld, playEntities, playClearColor ?? clearColor) || this.presentationSnapshot();
+    },
     /** Live presentation data; verify the retained native world only when a render request reads its session ID. */
     playViewportSnapshot: mutablePlayViewportSnapshot,
     subscribePlayFrames(listener: () => void) { const subscribed = () => listener(); playFrameListeners.add(subscribed); return () => { playFrameListeners.delete(subscribed); }; },

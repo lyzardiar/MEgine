@@ -1849,3 +1849,15 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 143必要定向原生结论：统一`df7f1cd`custom-protocol Release构建83秒通过，冻结程序SHA256为`9f0fb764ed886e291dde8f20c7d9383d37b98f7d7c614d81eaa2bcdc07d8a3be`，确认内嵌当前index／App／Viewport键。`viewport-startup-1792897166495/report.json`通过8000ms首帧预算，Console错误0，自有进程59600正常退出且发现文件移除；WebView临时缓存因EPERM留在自有tmp目录。核对前后Main.mscene摘要同为`882258f7ac4a660635dc6d2d4008e1014d139f8d155f1871d8e93fe51f0dde61`。首次已接受Game原生采样从10420.539降为4164.863ms，约减少60%；该计时从聚焦Game并清理Profiler后开始，不含启动进程和工程打开，也不是稳态FPS。新版工程打开1931.545ms单独记录，不拿两种时间口径混算。
 
 实际Game仅创建5种内置管线、Scene1种；已查看游戏菜单完整画面与Strategy camera预览，均有真实内容。Scene在Game等待期间已经后台准备，因此切换后31.976ms获得样本不能解释为Scene冷初始化耗时。`startup-native-comparison.json`保存相同输入、EXE与计时口径；构建／GPU／前端日志及冻结收据均在同一tmp任务目录。首轮探针失败及旧夹具失败记录保留。新QA脚本换行为LF后差异检查通过；生产源码与已构建程序一致，没有重复构建或原生复测。当前任务实现与必要复现验证完成并提交推送，批次仍为1/3，其他集成范围按累计规则待测；用户编辑器64664保持原进程。
+
+### 第一百四十四阶段／新批次任务2/3：原生场景观察复用可信增量
+
+`agent/eventJournal.ts`的SceneChangeTracker接收可选工厂世界证明，严格要求playWorldSync已认证的世界、相同实体数组和普通JSON序列化／数组迭代环境。初次完整观察仍验证全部ID并生成签名；相同数组直接复用，已验证相邻稀疏补丁只读取变化位置并在场景状态序列化成功后更新私有签名表。密集变化、跳过版本、拓扑变化、伪造／复制数组、JSON原型hook或WeakRef失效均回到完整逻辑。上个世界仅保留WeakRef，不延长旧世界链寿命。场景状态getter引入hook时取消下一次资格；getter重入／reset跟踪器时，使用原观察完成的签名恢复完整表，保留原有回调顺序与异常重试行为。revision、delta排序、历史容量、diff载荷与修改隔离不变。
+
+`store.ts`新增sceneObservationSnapshot，只有可编辑运行数据重新通过既有retainedPresentation结构校验时才返回完整不可变工厂世界，否则使用普通presentationSnapshot。`AgentBridge.ts`消费该入口并传递认证，`App.tsx`仅在Edit继续复用已有preparedSnapshot；运行态让观察器按原100ms节流取可信世界，避免把复制的指针列表冒充不可变索引。普通Edit／脚本直接编辑仍完整检测，输入与乐观revision检查不变。
+
+新增`sceneSparseObservation.test.mjs`8项，加上既有agentEventJournal／presentationSnapshot的17项及agentPlaybackCost的1项，最终26项去重逻辑检查通过。覆盖与完整跟踪器逐项delta／全部revision的diff对照、无变化0次Map比较、两记录变化仅2次比较、密集／跳过版本／重排／增删／空世界／切场景／reset、复制与伪造证明、getter和JSON hook、异常回滚／重入恢复、WeakRef失效，以及真实store→AgentBridge的直接编辑回退与乐观输入保护。首轮两个新夹具分别把构建补丁的Map访问计入观察器、漏设桥接boot-ready而失败；修正后仅复测两项通过，新增重入项单独通过。TypeScript接口最终通过，未重复已通过逻辑或扩大范围。
+
+同进程原版Amazonia场景7433实体的局部CPU对照，2轮预热／7轮计量、每轮12帧、交替顺序并逐帧核对delta和完整diff：无实体变化中位数1.087675→0.013267ms，64记录变化1.100358→0.135233ms，全部7433记录变化走完整比较15.757475→15.654883ms，密集路径不宣称收益。此范围只含observe，不含工厂构建、store校验、整个AgentBridge、模拟、IPC或实际FPS。脚本`benchmark-sparse-observation.mjs`及`sparse-observation-{benchmark,tests,new-tests,retest,reentrant-tests,final-typecheck}.log/json`均保留在`tmp/docs-artifacts/editor-performance-risk/`。
+
+本项实现及定向检查完成，批次2/3；没有重新构建前端／原生程序或运行地图矩阵。下一独立任务完成后统一构建，合并143–145的Amazonia／DotA加载与各材质状态、首帧、Play／Pause／Step／Stop与重启、多窗口revision与scene.diff／乐观写入、暴露编辑／隐藏恢复及普通FPS／CPU采样验证。最近原生程序仍df7f1cd，稳定60、LOD和完整War3继续待完成。

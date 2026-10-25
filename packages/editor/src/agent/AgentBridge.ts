@@ -15,6 +15,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { INTENT_DEFINITIONS } from '@mengine/agent';
 import type { EditorStore } from '../store';
+import { isRetainedPlayWorld } from '../playWorldSync';
 import {
   isDesktopEditor,
   type ProjectSnapshot,
@@ -2257,12 +2258,13 @@ class AgentBridge {
       || this.sceneChanges.revision === 0
       || now - this.lastPlaySceneObservationAt >= 100
     );
-    const snapshot = shouldObserveScene ? preparedSnapshot ?? store.presentationSnapshot() : null;
+    const snapshot = shouldObserveScene ? preparedSnapshot ?? store.sceneObservationSnapshot() : null;
     const sceneDelta = shouldObserveScene
       ? this.sceneChanges.observe(
         sceneName,
         snapshot!.entities as unknown as SceneEntityView[],
         { clearColor: snapshot!.clearColor },
+        isRetainedPlayWorld(snapshot!) ? snapshot! : undefined,
       )
       : null;
     if (shouldObserveScene && store.mode === 'play') {
