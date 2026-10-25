@@ -1545,6 +1545,7 @@ export function Viewport(props: {
           };
           request.presentedSequence = ticket.sequence; request.retryAt = 0;
           request.reportedError = false;
+          request.error = null;
           // Hidden WebViews may suspend requestAnimationFrame. Commit the decoded frame
           // immediately so first-open output never waits for a click or resize event.
           if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
@@ -1556,6 +1557,8 @@ export function Viewport(props: {
           if (nativeViewportReadbackBusy(error) || nativeViewportSessionExpired(error)) { request.retryAt = performance.now() + 16; return; }
           if (!request.reportedError) {
             console.warn('Native Game View rendering is unavailable', error);
+            request.error = error instanceof Error ? error.message : String(error);
+            p.onLog?.(`Game View: ${request.error}`, 'error');
             request.reportedError = true;
           }
         })
@@ -1776,6 +1779,7 @@ export function Viewport(props: {
         };
         request.presentedSequence = ticket.sequence; request.retryAt = 0;
         request.reportedError = false;
+        request.error = null;
         if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
@@ -1783,6 +1787,7 @@ export function Viewport(props: {
         if (nativeViewportReadbackBusy(error) || nativeViewportSessionExpired(error)) { request.lastRequestAt = -Infinity; request.retryAt = performance.now() + 16; return; }
         if (!request.reportedError) {
           console.warn('Native Camera Preview rendering is unavailable', error);
+          request.error = error instanceof Error ? error.message : String(error);
           p.onLog?.(`Camera Preview: ${error instanceof Error ? error.message : String(error)}`, 'error');
           request.reportedError = true;
         }
@@ -3426,7 +3431,9 @@ export function Viewport(props: {
         ctx.font = '11px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('Rendering Game View…', vp.x + vp.w / 2, vp.y + vp.h / 2);
+        const error = nativeGameRequestRef.current.error;
+        ctx.fillText(error ? 'Game View rendering failed' : 'Preparing Game View…', vp.x + vp.w / 2, vp.y + vp.h / 2);
+        if (error) ctx.fillText(error.slice(0, 180), vp.x + vp.w / 2, vp.y + vp.h / 2 + 20, Math.max(1, vp.w - 24));
       }
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 2;
@@ -3487,7 +3494,8 @@ export function Viewport(props: {
         ctx.fillRect(x + 1, y + headerHeight, panelWidth - 2, imageHeight - 1);
         ctx.fillStyle = '#8d949c';
         ctx.textAlign = 'center';
-        ctx.fillText('Rendering camera…', x + panelWidth / 2, y + headerHeight + imageHeight / 2);
+        const error = nativeCameraPreviewRequestRef.current.error;
+        ctx.fillText(error ? 'Camera preview failed' : 'Preparing camera…', x + panelWidth / 2, y + headerHeight + imageHeight / 2);
       }
       ctx.restore();
     }

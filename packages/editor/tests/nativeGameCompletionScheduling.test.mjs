@@ -140,6 +140,7 @@ test('unmount clears its timer and ignores pending native results', async () => 
 
 test('render errors rely on animation retry and do not create a completion loop', async () => {
   const f = fixture(24); f.env.fail = true; await f.advance(95, false);
+  assert.match(f.nativeGameRequestRef.current.error, /render failed/);
   assert.equal(f.starts.length, 2); assert.equal(f.nativeGameRequestRef.current.reportedError, true); assert.equal(f.nativeGameRequestRef.current.resumeTimer, null); f.dispose();
 });
 
@@ -182,6 +183,7 @@ test('full unmount unsubscribes simulation notifications before clearing pending
 test('failed requests from an expired session leave the current Game renderer available', async () => {
   const f = fixture(24); f.env.fail = true; f.propsRef.current = { ...f.propsRef.current, runtimeSessionId: 2 }; await f.advance(25, false);
   assert.equal(f.nativeGameRequestRef.current.reportedError, false); f.env.fail = false; await f.advance(55, false);
+  assert.equal(f.nativeGameRequestRef.current.error, null);
   assert.ok(f.uploaded.some(buffer => buffer.runtimeSessionId === 2)); f.dispose();
 });
 

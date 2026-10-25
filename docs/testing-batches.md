@@ -1835,3 +1835,13 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 独立CPU窗口5320.659ms／2860样本；完整原件中BehaviourRunner.tick的采样self从上一窗口107.830ms变为未采到（0），结合定向扫描次数断言确认重复组件发现快路径已生效，不解释为真实执行成本为零，也不将含Profiler开销的FPS当普通性能结果。当前SceneChangeTracker.observe采样self162.719ms、保留记录107.261ms、publish89.880ms，仍需继续分析主线程工作。汇总脚本曾把空URL视作assets目录而失败，改为只读文件后重放同一原件成功，未重跑原生采样。
 
 已查看Amazonia分离Game和DotA实际Game图像；玩法、完整开局军队／HUD／寻路、LOD及小时级驻留仍未完成。`behaviour-batch-{summary,cpu-comparison,cpu-code-context}.json`、构建／测试／原生日志、原始截图和冻结收据全部保存在`tmp/docs-artifacts/editor-performance-risk/`与`testing-batches/B001/`；文档只提交本结论。本批相关验证结束，下一批0/3；用户编辑器64664保持运行。新反馈的启动Game首帧长等待单独跟进，不计作已修复。
+
+### 第一百四十三阶段／新批次任务1/3：启动视口按需编译内置材质
+
+用户反馈的4374实体工程在独立729876c Release进程复现Game首帧等待10420.539ms；探针报告`viewport-startup-1792896631527/report.json`保留有效Game计时，随后Scene截图误用了仅Game支持的profile参数而使整份探针标记失败，未将其写成完整通过。`crates/mengine-rhi/src/renderer.rs`原先每次初始化视口均同步编译36种内置材质管线；现在保留该设备自己的ShaderModule，只为实际材质键创建管线，随后复用。混合、深度写入／相等和单双面键保持完整；自定义／错误材质路径沿用既有逻辑。
+
+`nativeViewportRequests.ts`保存当前错误，切换请求归属和成功返回时清除；`panels/Viewport.tsx`区分首帧准备与真实Game／相机预览失败，Game失败原因同时写入Console。避免原生失败仍显示永久渲染占位。`scripts/qa-viewport-startup.mjs`复制同一游戏工程，在独立配置中只测Edit模式首次Game／Scene，不启动Play；记录第一帧、输入／EXE摘要、原生profile和截图，可用`--first-frame-timeout-ms`指定本机预算，默认15000ms，正常关闭仅限自有QA进程。
+
+针对性GPU检查：初始化内置管线为0，全部36种首次创建／第二次复用与GPU Validation通过；本机初始化2162.097ms，另外编译全部36种用时6600.044ms。既有透明／cutout／混合像素检查通过。四个相关前端文件43项逻辑检查最终通过，覆盖请求失败／恢复与状态文案、瞬时错误、归属切换、资产刷新及首帧期间不重复加载浏览器模型；首次4项失败为旧源提取夹具缺少后续新增的Scene变量与空间查询，补齐后仅复测对应两文件5项全部通过，失败记录保留。前端构建（含tsc，Vite3.17秒）、QA语法及差异检查通过。
+
+当前1/3，按已复现故障执行必要首帧定向验证：构建新原生程序，运行`node scripts/qa-viewport-startup.mjs --first-frame-timeout-ms 8000`并对照上述相同输入；确认首帧实际出现、相机预览与Scene正常、错误日志为空。这里不触发完整地图矩阵、全库测试或驻留循环；其他地图／跨窗口集成登记在后续累计批次。原始产物统一位于`tmp/docs-artifacts/editor-performance-risk/`，稳定60和完整War3继续待完成。

@@ -766,6 +766,7 @@ pub struct Renderer {
     surface: Option<wgpu::Surface<'static>>,
     config: wgpu::SurfaceConfiguration,
     sample_count: u32,
+    built_in_shader: wgpu::ShaderModule,
     material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
     error_material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
     material_pipeline_last_used: HashMap<MaterialPipelineKey, u64>,
@@ -1218,43 +1219,6 @@ impl Renderer {
             ],
             push_constant_ranges: &[],
         });
-        let mut material_pipelines = HashMap::new();
-        for double_sided in [false, true] {
-            for depth_equal in [false, true] {
-                let opaque = MaterialPipelineKey {
-                    blend: MaterialPipelineBlend::Replace,
-                    double_sided,
-                    depth_write: true,
-                    depth_equal,
-                    shader_fingerprint: 0,
-                };
-                material_pipelines.insert(
-                    opaque,
-                    create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, opaque, sample_count),
-                );
-                for blend in [
-                    MaterialPipelineBlend::Alpha,
-                    MaterialPipelineBlend::Premultiplied,
-                    MaterialPipelineBlend::Additive,
-                    MaterialPipelineBlend::Multiply,
-                ] {
-                    for depth_write in [false, true] {
-                        let key = MaterialPipelineKey {
-                            blend,
-                            double_sided,
-                            depth_write,
-                            depth_equal,
-                            shader_fingerprint: 0,
-                        };
-                        material_pipelines.insert(
-                            key,
-                            create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, key, sample_count),
-                        );
-                    }
-                }
-            }
-        }
-
         let global_buf = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("frame_uniforms"),
             size: std::mem::size_of::<GlobalUniforms>() as u64,
@@ -1427,7 +1391,8 @@ impl Renderer {
             surface,
             config,
             sample_count,
-            material_pipelines,
+            built_in_shader: shader,
+            material_pipelines: HashMap::new(),
             error_material_pipelines: HashMap::new(),
             material_pipeline_last_used: HashMap::new(),
             resident_material_pipelines: HashSet::new(),
@@ -2151,6 +2116,8 @@ impl Renderer {
             return MaterialPipelinePrepareResult::ErrorFallback;
         }
         if key.shader_fingerprint == 0 {
+            // MiYu: a new viewport compiles only the variants required by its actual draws.
+            self.material_pipelines.entry(key).or_insert_with(|| create_pipeline(&self.device, HDR_COLOR_FORMAT, &self.built_in_shader, &self.pipeline_layout, key, self.sample_count));
             return MaterialPipelinePrepareResult::BuiltIn;
         }
         self.material_pipeline_last_used
@@ -4383,6 +4350,36 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn built_in_pipelines_start_empty_and_compile_each_variant_once() {
+        let started = Instant::now();
+        let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(16,16))).expect("GPU for first-use pipeline acceptance");
+        let initialize_ms = started.elapsed().as_secs_f64() * 1000.0;
+        assert_eq!(renderer.material_pipeline_stats().built_in, 0);
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let material = RenderMaterial::default();
+        let mut count = 0;
+        for double_sided in [false, true] {
+            for depth_equal in [false, true] {
+                for blend in [MaterialPipelineBlend::Replace, MaterialPipelineBlend::Alpha, MaterialPipelineBlend::Premultiplied, MaterialPipelineBlend::Additive, MaterialPipelineBlend::Multiply] {
+                    for depth_write in [false, true] {
+                        if blend == MaterialPipelineBlend::Replace && !depth_write { continue; }
+                        let key = MaterialPipelineKey { blend, double_sided, depth_write, depth_equal, shader_fingerprint:0 };
+                        assert_eq!(renderer.ensure_material_pipeline_with_key(&material, key), MaterialPipelinePrepareResult::BuiltIn);
+                        count += 1; assert_eq!(renderer.material_pipeline_stats().built_in, count);
+                        let first = renderer.material_pipelines[&key].clone();
+                        assert_eq!(renderer.ensure_material_pipeline_with_key(&material, key), MaterialPipelinePrepareResult::BuiltIn);
+                        assert_eq!(renderer.material_pipelines[&key], first);
+                        assert_eq!(renderer.material_pipeline_stats().built_in, count);
+                    }
+                }
+            }
+        }
+        assert_eq!(count,36);
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+        eprintln!("viewport_initialize_ms={initialize_ms:.3}, all_36_pipeline_ms={:.3}", started.elapsed().as_secs_f64() * 1000.0 - initialize_ms);
+    }
 
     #[test]
     fn material_alpha_preserves_opaque_coverage_and_transparent_clear() {
