@@ -2072,3 +2072,14 @@ REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖
 必要检查：14项MDX格式／引用／预算／采样检查通过，真实Footman45姿态／26190顶点位置最大差2.0771026609800458e-7、法线4.1403175354837174e-7。Host与GPU示例的接口检查已通过；独立审核发现的共享层乘法放大、序列扫描、UV缺失引用、展开预算和共享命中后的非有限颜色均已处理，相关定向检查随代码保留。仅一个C#独立模型参考落在tmp，不再转换整图，不更新项目Assets。原生模型读取不依赖外部采样器。
 
 当前3/3，提交后立即执行本批相关验证：Host绘制规划回归、同一Release的Host／Tauri兼容与实际GPU模型读取／动画／旧对象释放／另一slot保留；复用152／153未变化的MPQ、BLP和字节缓存边界结果。模型句柄总RGBA限额、实际归档读取与公共字节重挂共享在消费探针中检查。完整地图会话、原选图替换和其取消／失败／磁盘增长验收尚无对应消费者，不冒充已覆盖。未触碰用户编辑器PID64664；原始记录在 `tmp/docs-artifacts/warcraft-archives/`。批次关闭前不开始下一功能任务。
+
+
+### 第一百五十二至一百五十四阶段：资源／模型批次验证完成
+
+功能范围9222144、a79c40e、ae5b3e3及154同面材质叠层补修。本批验证完成，下一功能批次0/3。14项MDX定向检查、3项Host绘制规划检查通过，后者覆盖共享材质展开限额、上传／对象字节与溢出、缺失纹理键及UV扩张非有限值。152的6项原生与153的10项BLP／8项字节结果未涉及代码变更，直接复用；没有重跑整库或完整地图转换。CPU参考45姿态／26190顶点的位置／法线最大差分别2.0771026609800458e-7／4.1403175354837174e-7。
+
+最终Release GPU示例从4个公共MPQ＋DotA挂载读取Footman，解析57节点／5geoset／13序列，当前3个可见绘制对象与3张纹理共327936字节RGBA。640×480画面可见7733像素，0→250ms动画改变10915像素；有叠层相对仅底层改变5110像素。同面后续材质层通过RHI的LessEqual深度比较。释放slot17后仍提交其旧objects得到空帧，slot18保持首帧，释放slot18后旧objects也为空；源公共字节Arc重挂相同。已查看最终pose0／pose250 PNG。初始GPU有可见与动画变化，但截图暴露盾牌纹理叠层未呈现，补修后只重建受影响原生模块并补测GPU，原始画面和日志保留。
+
+最终Tauri custom-protocol Release构建78秒通过，SHA256 `e7132970fa81dedd96000a3e62184d37ddac62e6f5b83bf617cdb4983515028b`；GPU示例SHA256 `c3a124c70a1bef451dd93309bd5986b9db92c336e343c4371cde650db0e410c8`。61个前端产物摘要未变并复用。现有world_from_snapshot dead_code警告保留，未扩大修改；Tauri构建不等于实际编辑器选图入口验收。用户PID64664仍是2026-10-24 10:39:13启动的Debug编辑器，没有停止／重启或替换该进程。
+
+证据：`tmp/docs-artifacts/warcraft-archives/batch-152-154/final-receipt.json`、`native-render-final/{receipt.json,pose0.png,pose250.png}`、`tauri-release-final-build.log`；同级上层`mdx-consumer-tests.log`、`mdx-gpu-overlay-{build,probe}.log`、`mdx-reference-comparison.log`及MDX定向记录。当前只证明资源与模型消费者，尚无完整地图会话、原选图入口替换、MDL／全部原生效果／特殊继承、delta基础链、原图载入画面和整图磁盘增长／性能验收，仍在P0队列；公共缓存既有文件未清理。
