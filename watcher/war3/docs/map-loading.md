@@ -7,3 +7,5 @@ W3I18/25、W3E11、WPM0 和 WTS 的布局沿用仓库已核对的经典格式，
 原版入口依次为 `MainMenu/SinglePlayerButton`、`SinglePlayerMenu/SkirmishButton`、`Skirmish`。单人模式快捷键 S，自定义游戏快捷键 G，开始游戏快捷键 S，取消为 A。原版 FDF 定义 `MapListContainer` 与 `MapInfoPaneContainer`，Game.dll 在 `0x6f2b8f04`、`0x6f2b907a` 查找这些容器，再通过 `0x6f0bd750` 挂接动态控件。REA 静态证据与原版 FDF 存于 `tmp/docs-artifacts/war3/map-menu/`，不能替代原版运行对照。
 
 目录列表按需枚举当前层的文件夹、w3m 和 w3x，不扫描或解包全部地图；公共 MPQ 使用进程内共享缓存。地图数据从 StormLib 内存读取，不生成转换工程。地图元数据解析、可视化与完整 JASS 初始化/玩法分别验收。
+
+GlueScreen 支持把原版 FDF 根控件挂到既有容器、设置可见性、源坐标矩形、运行时文本和内存图像。文字按原版字体测量，支持颜色转义、换行、对齐及边界裁剪；测量不分配 GPU 纹理。仍只支持已消费的 FDF 子集，完整锚点/控件规则和原版逐帧一致性待验收。

@@ -66,7 +66,8 @@ const Text::Label& Text::label(std::wstring_view text) {
     }
     return found->second;
 }
-float Text::width(std::wstring_view text, float height, bool padding) { if(text.empty())return 0;auto& value=label(text);return height*(value.width-(padding?0:4))/value.height; }
+float Text::width(std::wstring_view text, float height, bool padding) {if(text.empty())return 0;SIZE size{};if(text.size()>4096 || !GetTextExtentPoint32W(context_,text.data(),static_cast<int>(text.size()),&size))throw std::runtime_error("Font measurement failed");return height*(size.cx+(padding?4:0))/(size.cy+4);}
+size_t Text::fit(std::wstring_view text,float width,float height) {if(text.empty() || width<=0 || height<=0)return 0;TEXTMETRICW metrics{};if(!GetTextMetricsW(context_,&metrics))throw std::runtime_error("Font metrics failed");int count=0;SIZE size{};if(text.size()>4096 || !GetTextExtentExPointW(context_,text.data(),static_cast<int>(text.size()),static_cast<int>(width*(metrics.tmHeight+4)/height),&count,nullptr,&size))throw std::runtime_error("Font fit failed");return size_t(count);}
 void Text::draw(std::wstring_view text, float x, float y, float height, DWORD color, bool centered) {
     if(text.empty())return;auto& value=label(text);float width=height*value.width/value.height;
     renderer_.rect(centered ? x-width/2 : x,y,width,height,color,value.texture.Get());

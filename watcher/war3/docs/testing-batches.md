@@ -40,5 +40,6 @@ CPU 测试只生成临时夹具 MPQ，游戏运行不生成解包资产。无输
 | 任务 | 路径 | 待测内容 | 风险 | 状态 |
 | --- | --- | --- | --- | --- |
 | W004 原生地图定义 | map.h/map.cpp、map_tests.cpp、CMake、map-loading.md | W3I18/25、WTS、W3E11、WPM0，代表地图与畸形输入；当前层地图目录排序 | 源记录边界、缺省编辑器尾表、地图间串资源、路径尺寸 | 编译通过，待批次验证（1/3） |
+| W005 动态 FDF 控件与文本 | glue、media | 原版控件挂接、可见性、运行时文字/图像、文本尺寸、换行/颜色/裁剪与布局 | 控件名与锚点、长地图文字、D3D 状态恢复 | 编译通过，待批次验证（2/3） |
 
 W004 定向命令：`build/windows-x86/bin/Release/war3_map_tests.exe <原安装目录> <仓库根目录/tmp/docs-artifacts/war3/map-tests>`。原版格式参考与来源见 `map-loading.md`；CPU 测试不表示原版地图会话已能运行。

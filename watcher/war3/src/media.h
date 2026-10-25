@@ -20,6 +20,7 @@ public:
     Text& operator=(const Text&) = delete;
     void draw(std::wstring_view text, float x, float y, float height, DWORD color = 0xffffcc55, bool centered = false);
     float width(std::wstring_view text, float height, bool padding = true);
+    size_t fit(std::wstring_view text,float width,float height);
 };
 class Music {
     Library library_;
