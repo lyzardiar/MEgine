@@ -78,6 +78,7 @@ Options Options::parse() {
         else if (argument == L"--hidden") options.hidden = true;
         else if (argument == L"--mute") options.mute = true;
         else if (argument == L"--window-check") options.windowCheck = true;
+        else if (argument == L"--menu-check") options.menuCheck = true;
         else if (argument == L"--time-ms") {auto text=value(i);size_t end=0;auto n=std::stoull(text,&end);if(end!=text.size() || n>86400000)throw std::runtime_error("Invalid animation time");options.timeMs=n;}
         else throw std::runtime_error("Unknown option: " + utf8(argument));
     }
@@ -88,6 +89,7 @@ Options Options::parse() {
     if (options.hidden && !options.probe && !options.frames) throw std::runtime_error("Hidden run requires --frames or --probe");
     if (!options.capture.empty() && !options.frames) throw std::runtime_error("Capture requires --frames");
     if (options.windowCheck && (options.probe || options.frames<120)) throw std::runtime_error("Window check requires a render run with at least 120 frames");
+    if (options.menuCheck && (options.probe || options.windowCheck || options.map.empty() || options.frames<120)) throw std::runtime_error("Menu check requires --map, at least 120 frames, and no other check mode");
     if (options.log.empty()) {
         wchar_t directory[32768]{};
         DWORD length = GetEnvironmentVariableW(L"LOCALAPPDATA", directory, 32768);

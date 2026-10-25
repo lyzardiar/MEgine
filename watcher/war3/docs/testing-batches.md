@@ -41,5 +41,8 @@ CPU 测试只生成临时夹具 MPQ，游戏运行不生成解包资产。无输
 | --- | --- | --- | --- | --- |
 | W004 原生地图定义 | map.h/map.cpp、map_tests.cpp、CMake、map-loading.md | W3I18/25、WTS、W3E11、WPM0，代表地图与畸形输入；当前层地图目录排序 | 源记录边界、缺省编辑器尾表、地图间串资源、路径尺寸 | 编译通过，待批次验证（1/3） |
 | W005 动态 FDF 控件与文本 | glue、media | 原版控件挂接、可见性、运行时文字/图像、文本尺寸、换行/颜色/裁剪与布局 | 控件名与锚点、长地图文字、D3D 状态恢复 | 编译通过，待批次验证（2/3） |
+| W006 单人模式与地图目录 | main、map_browser、platform、glue、CMake | S/G/A/Escape 导航，任意 w3m/w3x，选择信息/预览、滚轮、目录与错误恢复、无解包 | 菜单资源不受地图覆盖、失效目录、重复切选释放、超长描述 | 编译通过，待批次验证（3/3） |
 
 W004 定向命令：`build/windows-x86/bin/Release/war3_map_tests.exe <原安装目录> <仓库根目录/tmp/docs-artifacts/war3/map-tests>`。原版格式参考与来源见 `map-loading.md`；CPU 测试不表示原版地图会话已能运行。
+
+本批达到三项，提交后先运行原生地图定向检查、受影响的 FDF 检查及 `--menu-check` 原版路径。导航检查通过实际窗口按键和地图行点击进入选图、读取指定地图并逐级返回；`--window-check` 覆盖窗口恢复与取消捕获。原始证据统一写 `tmp/docs-artifacts/war3/map-menu/`，不执行旧 MEngine 全量验证。

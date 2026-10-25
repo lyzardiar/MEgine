@@ -15,6 +15,8 @@ cmake --build --preset release --parallel
 
 渲染器优先使用 Direct3D 9；设备能力不可用时依次尝试 Direct3D 9Ex、系统 D3D9On12Ex。实际驱动名称写入日志。D3D9 与 D3D9Ex 的菜单帧输出、窗口缩放及恢复均已有运行证据。主菜单从原版 FDF 读取模板、中文、布局和快捷键，从 `war3skins.txt` 选择字体；原版 Miles 从 `redist/miles` 加载 MP3 codec，直接播放 MPQ 内存中的音乐。
 
-完整内容按 [功能矩阵](docs/acceptance.md) 跟进，独立验证见 [测试队列](docs/testing-batches.md)。当前版本是客户端基础设施，主菜单仅退出按钮已接入动作；选图、载入、完整战斗、JASS、战役和网络仍待实现。菜单 MDX 已绘制，logo 精确比例、灯光、雾、粒子、完整 FDF 与交互仍需还原和对照验收。`--map` 当前只挂载归档，不运行地图。
+主菜单的“单人模式(S) → 自定义游戏(G)”进入地图目录列表，可用鼠标选择、双击目录、滚轮、上下/翻页/Home/End、Enter 与 Backspace 浏览。取消(A)或 Escape 返回上一级界面。`--map <路径>` 在选图界面定位任意地图；`--probe --map <路径>` 直接读取 W3I/WTS/W3E/WPM。开发导航检查为 `--menu-check --map <路径> --hidden --frames 120 --capture <PNG路径>`，同时生成单人模式与选图帧。
+
+完整内容按 [功能矩阵](docs/acceptance.md) 跟进，独立验证见 [测试队列](docs/testing-batches.md)。当前版本是客户端基础设施，地图信息与原生记录可读取，“开始游戏”尚未接入会话，完整载入、战斗、JASS、战役和网络仍待实现。菜单 MDX 已绘制，logo 精确比例、灯光、雾、粒子、完整 FDF 与交互仍需还原和对照验收。
 
 StormLib 来源、版本和逐文件摘要见 [source-info.json](third_party/stormlib/source-info.json)，许可证在 [LICENSE](third_party/stormlib/source/LICENSE)。原安装资源和 DLL 不随项目分发。REA 作为开发分析工具，不参与游戏运行。

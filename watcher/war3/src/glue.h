@@ -41,6 +41,7 @@ public:
     void image(const std::string& name,const std::string& member);
     void image(const std::string& name,IDirect3DTexture9* texture);
     void backdropAt(const std::string& frame,Rect rect);
+    void imageAt(const std::string& member,Rect rect);
     void textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled=true,bool highlight=false,bool left=false);
 };
 }

@@ -29,6 +29,7 @@ struct Options {
     bool hidden = false;
     bool mute = false;
     bool windowCheck = false;
+    bool menuCheck = false;
     std::optional<std::uint64_t> timeMs;
     static Options parse();
 };

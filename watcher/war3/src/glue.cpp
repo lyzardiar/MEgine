@@ -92,5 +92,6 @@ void GlueScreen::setText(const std::string& name,const std::string& text) {auto&
 void GlueScreen::image(const std::string& name,const std::string& member) {image(name,texture(member).gpu.Get());}
 void GlueScreen::image(const std::string& name,IDirect3DTexture9* texture) {nodes_.at(names_.at(name)).image=texture;}
 void GlueScreen::backdropAt(const std::string& frame,Rect rect) {backdrop(definitions_.frame(frame),rect);}
+void GlueScreen::imageAt(const std::string& member,Rect rect) {quad(rect,0xffffffff,member);}
 void GlueScreen::textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled,bool highlight,bool left) {auto f=definitions_.frame(frame);f.properties["Text"]={text};f.properties["RuntimeText"]={};if(left)f.properties["FontJustificationH"]={"JUSTIFYLEFT"};label(f,rect,enabled,highlight);}
 }

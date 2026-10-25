@@ -5,22 +5,23 @@
 #include "media.h"
 #include "model.h"
 #include "glue.h"
+#include "map_browser.h"
 #include <memory>
 #include <shellapi.h>
 
 namespace war3 {
-struct WindowState { Renderer* renderer = nullptr; bool minimized = false,hidden = false; int mouseX = 0, mouseY = 0, pressX = 0, pressY = 0; bool click = false, down = false; unsigned key = 0; };
+struct WindowState { Renderer* renderer = nullptr; bool minimized = false,hidden = false; int mouseX = 0, mouseY = 0, pressX = 0, pressY = 0, wheel=0,lastClickX=0,lastClickY=0; bool click = false, down = false,doubleClick=false; unsigned key = 0; DWORD lastClickTime=0; };
 LRESULT CALLBACK windowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     auto state = reinterpret_cast<WindowState*>(GetWindowLongPtrW(window, GWLP_USERDATA));
     if (message == WM_NCCREATE) { auto create = reinterpret_cast<CREATESTRUCTW*>(lParam); state = static_cast<WindowState*>(create->lpCreateParams); SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(state)); }
     if (message == WM_SIZE && state) { state->minimized = wParam == SIZE_MINIMIZED; if (state->renderer) state->renderer->resize(LOWORD(lParam), HIWORD(lParam)); return 0; }
     if (message == WM_MOUSEMOVE && state) { state->mouseX = static_cast<short>(LOWORD(lParam)); state->mouseY = static_cast<short>(HIWORD(lParam)); return 0; }
     if (message == WM_LBUTTONDOWN && state) { state->pressX=state->mouseX=static_cast<short>(LOWORD(lParam));state->pressY=state->mouseY=static_cast<short>(HIWORD(lParam));state->down=true;SetCapture(window);return 0; }
-    if (message == WM_LBUTTONUP && state) { state->mouseX = static_cast<short>(LOWORD(lParam)); state->mouseY = static_cast<short>(HIWORD(lParam)); state->click = state->down; state->down=false;ReleaseCapture();return 0; }
+    if (message == WM_LBUTTONUP && state) { state->mouseX = static_cast<short>(LOWORD(lParam)); state->mouseY = static_cast<short>(HIWORD(lParam)); state->click = state->down;state->doubleClick=state->click && state->lastClickTime && DWORD(GetMessageTime())-state->lastClickTime<=GetDoubleClickTime() && abs(state->mouseX-state->lastClickX)*2<GetSystemMetrics(SM_CXDOUBLECLK) && abs(state->mouseY-state->lastClickY)*2<GetSystemMetrics(SM_CYDOUBLECLK);if(state->click){state->lastClickTime=state->doubleClick?0:DWORD(GetMessageTime());state->lastClickX=state->mouseX;state->lastClickY=state->mouseY;}state->down=false;ReleaseCapture();return 0; }
+    if (message == WM_MOUSEWHEEL && state) {state->wheel+=static_cast<short>(HIWORD(wParam));return 0;}
     if (message == WM_CAPTURECHANGED && state) { state->down=false;return 0; }
     if (message == WM_TIMER && wParam==1 && state) {KillTimer(window,1);ShowWindow(window,SW_RESTORE);if(state->hidden)ShowWindow(window,SW_HIDE);state->minimized=false;return 0;}
     if (message == WM_KEYDOWN && state) state->key=unsigned(wParam);
-    if (message == WM_KEYDOWN && wParam == VK_ESCAPE) { DestroyWindow(window); return 0; }
     if (message == WM_DESTROY) { PostQuitMessage(0); return 0; }
     return DefWindowProcW(window, message, wParam, lParam);
 }
@@ -30,14 +31,12 @@ int run(HINSTANCE instance) {
     log.write("client=war3 architecture=x86 renderer=" + options.renderer);
     Archives archives(options.dataRoot);
     log.write("common_archives=" + std::to_string(archives.commonCount()));
-    if (!options.map.empty()) archives.mountMap(options.map);
     auto font = archives.read(skinValue(archives,"MasterFont","Fonts\\FRIZQT__.TTF"));
     if (!font) throw std::runtime_error("Missing original font");
     log.write("font_bytes=" + std::to_string(font->bytes.size()) + " source=" + font->source);
-    if (!options.map.empty()) {
-        auto terrain = archives.read("war3map.w3e");
-        if (!terrain) throw std::runtime_error("Map has no war3map.w3e");
-        log.write("terrain_bytes=" + std::to_string(terrain->bytes.size()));
+    if (options.probe && !options.map.empty()) {
+        archives.mountMap(options.map);auto map=MapData::read(archives);
+        log.write("map_name="+map.info.name+" vertices="+std::to_string(map.terrain.width)+"x"+std::to_string(map.terrain.height)+" players="+std::to_string(map.info.playablePlayers()));
     }
     Images images(options.dataRoot);
     auto loadImage = [&](const char* name) { auto member = archives.read(name); if (!member) throw std::runtime_error(std::string("Missing image: ") + name); auto image = images.decode(member->bytes); log.write(std::string("image=") + name + " width=" + std::to_string(image.width) + " height=" + std::to_string(image.height)); return image; };
@@ -62,6 +61,9 @@ int run(HINSTANCE instance) {
     auto logo = renderer.texture(logoImage.width, logoImage.height, logoImage.pixels);
     Model menu(archives, images, &renderer, "UI\\Glues\\MainMenu\\MainMenu3d_exp\\MainMenu3d_exp.mdx", log);
     GlueScreen mainMenu(archives,images,renderer,text,"UI\\FrameDef\\Glue\\MainMenu.fdf","MainMenuFrame");
+    enum class Screen {Main,Single,Maps};Screen screen=Screen::Main;
+    std::unique_ptr<GlueScreen> singleMenu;
+    std::unique_ptr<MapBrowser> browser;
     std::unique_ptr<Music> music;
     if (!options.mute) {
         try { music = std::make_unique<Music>(options.dataRoot, archives.read("Sound\\Music\\mp3Music\\War3XMainScreen.mp3")); log.write("music=miles_mp3_memory_playing"); }
@@ -88,18 +90,35 @@ int run(HINSTANCE instance) {
             if(windowStage==4 && frames==80) {auto position=MAKELPARAM(state.mouseX,state.mouseY);SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,position);ReleaseCapture();SendMessageW(window,WM_LBUTTONUP,0,position);SendMessageW(window,WM_MOUSEMOVE,0,MAKELPARAM(-1,-1));windowStage=5;log.write("window_check=cancel_exit_capture");}
             if(windowStage==5 && frames==90) {PostMessageW(window,WM_KEYDOWN,'Q',0);windowStage=6;}
         }
+        if(options.menuCheck) {
+            if(frames==10)PostMessageW(window,WM_KEYDOWN,'S',0);
+            if(frames==25)PostMessageW(window,WM_KEYDOWN,'G',0);
+            if(frames==40){if(screen!=Screen::Maps || !browser || !browser->info() || !fs::equivalent(browser->selectedMap(),options.map))throw std::runtime_error("Menu selection check failed");log.write("menu_check=selected "+utf8(browser->selectedMap().wstring()));}
+            if(frames==42){auto [x,y]=browser->selectedCenter();float scale=std::min(renderer.width()/.8f,renderer.height()/.6f);auto pos=MAKELPARAM(int((renderer.width()-.8f*scale)/2+x*scale),int((renderer.height()-.6f*scale)/2+y*scale));SendMessageW(window,WM_MOUSEMOVE,0,pos);SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,pos);SendMessageW(window,WM_LBUTTONUP,0,pos);}
+            if(frames==45)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,-WHEEL_DELTA),0);
+            if(frames==46)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,WHEEL_DELTA),0);
+            if(frames==60)PostMessageW(window,WM_KEYDOWN,'A',0);
+            if(frames==70){if(screen!=Screen::Single)throw std::runtime_error("Map browser cancel check failed");PostMessageW(window,WM_KEYDOWN,VK_ESCAPE,0);}
+            if(frames==85){if(screen!=Screen::Main)throw std::runtime_error("Single-player cancel check failed");PostMessageW(window,WM_KEYDOWN,'Q',0);}
+        }
         if (state.minimized) { WaitMessage(); continue; }
         if (!renderer.begin()) { MsgWaitForMultipleObjectsEx(0, nullptr, 50, QS_ALLINPUT, MWMO_INPUTAVAILABLE); continue; }
         float scale = std::min(renderer.width() / 800.f, renderer.height() / 600.f);
         float left = (renderer.width() - 800 * scale) / 2, top = (renderer.height() - 600 * scale) / 2;
         auto draw = [&](float x, float y, float w, float h, DWORD color, IDirect3DTexture9* texture) { renderer.rect(left + x * scale, top + y * scale, w * scale, h * scale, color, texture); };
         menu.draw(options.timeMs.value_or(GetTickCount64()-started), float(renderer.width()) / renderer.height(),true);
-        draw(90, 15, 512, 256, 0xffffffff, logo.Get());
-        UiInput input{(state.mouseX-left)/(scale*1000),(state.mouseY-top)/(scale*1000),(state.pressX-left)/(scale*1000),(state.pressY-top)/(scale*1000),state.click,state.down,state.key};
-        if(mainMenu.draw("ControlLayer",input,{"ExitButton"})=="ExitButton") {if(options.windowCheck && windowStage<6)throw std::runtime_error("Cancelled pointer input activated ExitButton");running=false;log.write("ui_action=ExitButton");}
+        UiInput input{(state.mouseX-left)/(scale*1000),(state.mouseY-top)/(scale*1000),(state.pressX-left)/(scale*1000),(state.pressY-top)/(scale*1000),state.click,state.down,state.key,state.wheel/WHEEL_DELTA,state.doubleClick};
+        std::string action;
+        if(screen==Screen::Main){draw(90,15,512,256,0xffffffff,logo.Get());action=mainMenu.draw("ControlLayer",input,{"SinglePlayerButton","ExitButton"});if(input.key==VK_ESCAPE)action="ExitButton";if(action=="SinglePlayerButton"){if(!singleMenu){singleMenu=std::make_unique<GlueScreen>(archives,images,renderer,text,"UI\\FrameDef\\Glue\\SinglePlayerMenu.fdf","SinglePlayerMenu");singleMenu->visible("ProfilePanel",false);}screen=Screen::Single;}if(action=="ExitButton"){if(options.windowCheck && windowStage<6)throw std::runtime_error("Cancelled pointer input activated ExitButton");running=false;}}
+        else if(screen==Screen::Single){action=singleMenu->draw("SinglePlayerMenu",input,{"SkirmishButton","CancelButton"});if(input.key==VK_ESCAPE)action="CancelButton";if(action=="CancelButton")screen=Screen::Main;if(action=="SkirmishButton"){if(!browser)browser=std::make_unique<MapBrowser>(archives,images,renderer,text,log,options.dataRoot,options.map);screen=Screen::Maps;}}
+        else if(screen==Screen::Maps){action=browser->draw(input);if(action=="CancelButton")screen=Screen::Single;}
+        if(!action.empty())log.write("ui_action="+action);
         state.click = false;
         state.key = 0;
-        if (renderer.end(options.frames && (frames+1==options.frames || !running) ? options.capture : fs::path{})) ++frames;
+        state.doubleClick=false;state.wheel%=WHEEL_DELTA;
+        auto capture=options.frames && (frames+1==options.frames || !running)?options.capture:fs::path{};
+        if(options.menuCheck && !options.capture.empty() && (frames==20 || frames==50)){capture=options.capture;capture.replace_filename(capture.stem().wstring()+(frames==20?L"-single":L"-browser")+L".png");}
+        if (renderer.end(capture)) ++frames;
         if (options.frames && frames >= options.frames) break;
     }
     state.renderer = nullptr;
