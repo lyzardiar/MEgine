@@ -184,3 +184,13 @@ Host新增`MountedWarcraftTerrain`与`WarcraftTerrainView`。CPU句柄可跨视�
 必要检查为7项定义／缓存／继承测试、1项共享SYLK、2项WTS和1项session生命周期回归通过；独立只读审核完成。`cargo run -p mengine-assets --example warcraft_archive_definitions -- <game-directory> <map-paths...>`在DotA／Amazonia／BootyBay验证33来源记录、22753源行、759844源字段和741788有效字段，与现有独立Python读取／覆盖结果一致；DotA使用6张地图SLK，111项装饰／可破坏物修改生效，39424项ability修改明确保留。三图共复用11公共解析表，累计16次命中，规划驻留68974815字节；session关闭后定义仍可读。结果只证明定义数据与复用，不是整图加载或FPS基准。
 
 证据`tmp/docs-artifacts/warcraft-archives/definition-{tests,sylk-test,wts-tests,session-test,real,comparison}*`及`compare-native-definitions.py`；探针只向stdout输出，本地收据写tmp，不提交原表。新批次2/3；下一任务后统一相关Host／Tauri和世界消费验证。原选图仍使用离线转换，后续继续TXT定义、原生模型／世界、脚本初始化和选图worker接入，缓存问题保持未完成。
+
+## 原生放置层级与可见实例（第一百六十阶段）
+
+`WarcraftPlacedWorld`将地图DOO与定义解析为Root／装饰／单位／地形装饰分组和源顺序子节点。每节点保留源索引、ID、变换、active、初始序列及held状态；模型和外观按实际来源共享。起点、随机放置和特殊地形装饰保留明确类型及原配置，未求值的节点不使用替代模型。位置为源[x,z,-y]/128，单位叠加modelScale／moveHeight及teamColor，装饰保留变体回退、颜色、纹理替换、flags／life。Stand／Death初选沿用REA已验证标签、rarity和MSVCR120预览流，显式两路seed不代表原版完整共享RNG调用顺序；后续结束重选／创建顺序仍需接入。
+
+`WarcraftResourceCache`按实际AssetLocation共享公共MDX／RGBA，默认256MiB／4096项；地图资源不强驻留。费用计入源字节、解码规划、路径及结构开销，活跃Arc和解码工作缓冲另计；热缓存也验证请求预算。MDL／MDX别名在每个来源内查找，地图文本MDL不被公共MDX遮盖，尚无文本MDL解析时明确拒绝。世界默认131072节点、1024模型、单成员16MiB、模型源128MiB、模型decoded256MiB、布局64MiB；源限额约束保留唯一成员，单次读取工作量由成员上限限制。取消在阶段和解析前后协作检查，不中断正在进行的MDX／图像解码。
+
+Host的`MountedWarcraftPlacedWorld`共享模型和实际纹理句柄，RGBA累计受限，绑定元数据限定64MiB。`bind_nodes`消费调用者给出的可见节点集，同一外观／序列共享pose，billboard按实例相机求值；每个绘制部件可查询原放置父节点。每视图独立资源键，更新保留slot，失败清理上传，显式release只能由原Renderer调用。held使用独立末帧钳制，普通模型不附带billboard相机。完整自动可见集／LOD、原版节点继承、全部材质／效果、动画结束调度及完整世界仍待完成，不能把该接口当作选图已切换。
+
+必要快速检查：6项层级／变换／随机初选／held／资源缓存与预算、2项model alias通过，Host及GPU示例接口编译通过。三图CPU图构建成功，9661装饰和155可视单位的变换、颜色、active、序列与两路RNG状态与独立Python参考一致；4个起点保留。真实模型诊断仍可查询，Amazonia BanditMage的旧节点非继承语义被求值器明确拒绝，效果诊断不等于完整消费。158–160达到3/3，接下来合并相关CPU／Host／Tauri和双视图GPU验证，结果登记testing-batches.md。产品没有工程资产／meta／磁盘缓存写出；旧选图仍离线转换，完整缓存问题保持未完成。

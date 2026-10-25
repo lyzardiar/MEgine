@@ -123,6 +123,11 @@ impl AssetMounts {
         self.read_candidates(&candidates,max_bytes)
     }
 
+    /// Resolve classic model aliases inside each source before searching a lower-priority archive.
+    pub fn read_model_bytes_limited(&self, member:&str, max_bytes:usize)->Result<AssetBytes,AssetError> {
+        let member=normalize_member(member)?; let candidates=if let Some(stem)=member.strip_suffix(".mdl") {vec![format!("{stem}.mdx"),member]} else if let Some(stem)=member.strip_suffix(".mdx") {vec![member.clone(),format!("{stem}.mdl")]} else {return Err(AssetError::Invalid("native model reference must end in .mdl or .mdx".into()));}; self.read_candidates(&candidates,max_bytes)
+    }
+
     fn read_candidates(&self, members: &[String], max_bytes: usize) -> Result<AssetBytes, AssetError> {
         for source in &self.sources {
             for member in members {

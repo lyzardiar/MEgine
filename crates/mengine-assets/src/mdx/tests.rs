@@ -25,7 +25,7 @@ fn material(layers: usize, coord: u32, extra_track: &[u8]) -> Vec<u8> {
 fn model_with(nodes: &[u8], geosets: &[u8], layers: &[u8], seqs: &[u8], extras: &[u8]) -> Vec<u8> {
     [b"MDLX".to_vec(),chunk(b"VERS",&word(800)),chunk(b"SEQS",seqs),chunk(b"TEXS",&[word(0),fixed("Textures/fixture.blp",260),word(0)].concat()),chunk(b"MTLS",layers),chunk(b"GEOS",geosets),chunk(b"BONE",nodes),extras.to_vec()].concat()
 }
-fn fixture() -> Vec<u8> {model_with(&bone(0,-1,&translation(1,-1,&[(0,[0.;3]),(1000,[128.,0.,0.])])),&geometry(&[0],0,1),&material(1,0,&[]),&sequence("Stand",0,1000,0),&[])}
+pub(crate) fn fixture() -> Vec<u8> {model_with(&bone(0,-1,&translation(1,-1,&[(0,[0.;3]),(1000,[128.,0.,0.])])),&geometry(&[0],0,1),&material(1,0,&[]),&sequence("Stand",0,1000,0),&[])}
 fn parse(bytes: &[u8]) -> MdxModel {MdxModel::parse(bytes).unwrap()}
 fn first_x(model: &MdxModel, time: u64) -> f32 {model.sample(Some(0),time,None).unwrap().geosets[0].mesh.positions[0][0]}
 fn offset(bytes: &[u8], tag: &[u8;4]) -> usize {bytes.windows(4).position(|v|v==tag).unwrap()}

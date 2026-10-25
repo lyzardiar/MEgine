@@ -2135,3 +2135,11 @@ REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖
 必要定向检查：`cargo test -p mengine-assets --lib native_warcraft_definitions -- --test-threads=1`通过7项；共享读取相关`native_warcraft_terrain_sylk`1项、`native_warcraft_map_strings`2项、`native_warcraft_map_session_shares`1项通过。独立只读审核完成。三图33来源、22753行／759844源字段和741788有效字段对照通过；DotA6张地图表、111覆盖生效／39424能力修改保留，公共解析缓存11项／16次命中，地图表随定义句柄释放。证据在`tmp/docs-artifacts/warcraft-archives/definition-*`及`compare-native-definitions.py`；首次编译发现并修正借用声明／测试类型问题，后续11项通过，无重复完整构建。
 
 当前158–159为2/3。下个功能后合并Host／Tauri消费者编译、真实原生世界消费、共享／地图覆盖／释放及取消／失败验证；SYLK重用影响的地形结果在该批核对，不提前重跑全库、全图转换或完整Editor。TXT基表、能力／buff／upgrade求值、JASS与原选图入口仍待完成；不以数据对照宣称完整War3加载、稳定FPS或缓存问题结案。用户PID64664和既有缓存保持。
+
+### 第一百六十阶段／新批次任务3/3：原生放置层级与可见模型消费
+
+变更：`mengine-assets/src/warcraft_world/`、`warcraft_resources.rs`、model alias、MDX rarity／预算及末帧钳制、Host `warcraft_world.rs`及共享模型接口、源图与GPU示例。源放置形成合理父子层级，共享解析模型／纹理；可见集按pose分组并保留绘制父节点，独立视图生命周期和累计预算。起点／未求值随机节点与不支持效果明确保留，完整选图、JASS、自动可见集／LOD和原版创建／结束调度未完成。
+
+必要检查：`cargo test -p mengine-assets --lib native_warcraft_placed -- --test-threads=1`6项、`asset_byte_model`2项通过，Host与GPU示例接口编译通过。独立审核修复WTS纹理／目录含点路径、长key与结构计费、首次缓存预算依赖、held循环末帧、普通模型相机以及视图更新预算口径。三图9661装饰／155可视单位的源变换、颜色、状态、初始序列和最终预览RNG一致；4起点保留。首次夹具的变体列／手填RNG断言修正后定向通过。
+
+158–160已累计3/3，**合并验证待执行**：47项native_warcraft及相关MDX／model alias，Host规划检查；一次相关Release Host／GPU示例与Tauri构建；代表CPU源对照、双视图可见实例GPU／动画／父节点／失败／释放，及共享SYLK影响的地形消费。复用不受影响的155–157水面／地形像素和既有参考，禁止重复旧全图转换或全库测试。GPU示例只选择两只原图sheep验证可见集消费者，不作为完整地图、粒子／全部材质、JASS、FPS或新选图入口验收。最终结果与未执行项在本节后补录；在本批关闭前不开始下一功能。原始日志和图片均在`tmp/docs-artifacts/warcraft-archives/`。

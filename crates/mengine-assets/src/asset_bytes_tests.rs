@@ -114,3 +114,15 @@ fn asset_byte_texture_alias_limits_cover_cold_and_cached_overrides() {
     let base=MemorySource::new(&[("a.tga",b"ok")]); let custom=MemorySource::new(&[("a.blp",b"override")]); let mounts=AssetMounts::new(vec![custom,base.clone()],Arc::new(AssetByteCache::default()));
     assert!(mounts.read_texture_bytes_limited("a.tga",2).is_err()); assert_eq!(base.reads.load(Ordering::Relaxed),0); assert_eq!(mounts.read_texture_bytes_limited("a.tga",8).unwrap().location.member,"a.blp"); assert!(mounts.read_texture_bytes_limited("a.tga",2).is_err()); assert_eq!(base.reads.load(Ordering::Relaxed),0);
 }
+
+#[test]
+fn asset_byte_model_aliases_resolve_within_source_and_preserve_actual_identity() {
+    let base=MemorySource::new(&[("a.mdx",b"public"),("b.mdl",b"public")]); let map=MemorySource::new(&[("a.mdl",b"map-text"),("b.mdx",b"map-binary")]); let mounts=AssetMounts::new(vec![map.clone(),base.clone()],Arc::new(AssetByteCache::default()));
+    assert_eq!(&*mounts.read_model_bytes_limited("A.MDX",64).unwrap().bytes,b"map-text"); assert_eq!(mounts.read_model_bytes_limited("a.mdl",64).unwrap().location.source,map.id); assert_eq!(mounts.read_model_bytes_limited("b.mdl",64).unwrap().location.member,"b.mdx"); assert_eq!(base.reads.load(Ordering::Relaxed),0);
+    assert!(mounts.read_model_bytes_limited("b.mdl",2).is_err()); let exact=MemorySource::new(&[("a.mdx",b"binary"),("a.mdl",b"text")]); assert_eq!(&*AssetMounts::new(vec![exact],Arc::new(AssetByteCache::default())).read_model_bytes_limited("a.mdl",64).unwrap().bytes,b"binary"); assert!(mounts.read_model_bytes_limited("../a.mdl",64).is_err());
+}
+
+#[test]
+fn asset_byte_model_alias_deletion_and_errors_never_fall_back_to_public() {
+    let base=MemorySource::new(&[("a.mdx",b"public")]); for broken in [false,true] {let map=Arc::new(MemorySource {id:AssetSourceId::fresh(),files:HashMap::new(),deleted:vec!["a.mdl".into()],broken,reads:AtomicUsize::new(0)}); assert!(AssetMounts::new(vec![map,base.clone()],Arc::new(AssetByteCache::default())).read_model_bytes_limited("a.mdx",64).is_err());} assert_eq!(base.reads.load(Ordering::Relaxed),0);
+}

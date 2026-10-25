@@ -4,10 +4,10 @@ use mengine_rhi::{MaterialBlendMode, MaterialWrap, RenderMaterial, RenderObject,
 use glam::Mat4;
 use std::{collections::HashMap,sync::Arc};
 
-struct Texture { key: String, rgba: TextureRgba8 }
+struct Texture { key: String, rgba: Arc<TextureRgba8> }
 
 /// Load once on a worker, share its Arc between views, and upload its textures to each renderer when attached.
-pub struct MountedWarcraftModel { model: MdxModel, key: String, texture_keys: Vec<String>, textures: Vec<Texture>, location: AssetLocation }
+pub struct MountedWarcraftModel { model: Arc<MdxModel>, key: String, texture_keys: Vec<String>, textures: Vec<Texture>, location: AssetLocation }
 
 /// Per-call expansion limits; renderer caches, archive bytes and retained decoded handles are separate budgets.
 #[derive(Clone,Copy,Debug)]
@@ -32,17 +32,25 @@ fn transformed_uv([u,v]:[f32;2],m:[f32;6])->Result<[f32;2],AssetError> {let uv=[
 impl MountedWarcraftModel {
     /// The texture byte limit bounds retained decoded RGBA for this handle; archive and decoder work buffers are separate.
     pub fn load(mounts: &AssetMounts, member: &str, team: u8, max_texture_bytes: usize) -> Result<Arc<Self>,AssetError> {
-        let bytes=mounts.read(member)?; let model=MdxModel::parse(&bytes.bytes)?; let key=resource_key(&bytes.location); let mut unique=HashMap::new(); let mut textures=Vec::new(); let mut texture_keys=Vec::new(); let mut total=0usize;
+        let bytes=mounts.read_model_bytes_limited(member,128*1024*1024)?; let model=Arc::new(MdxModel::parse(&bytes.bytes)?); let key=resource_key(&bytes.location); let mut unique=HashMap::new(); let mut textures=Vec::new(); let mut texture_keys=Vec::new(); let mut total=0usize;
         for texture in model.textures() {
             let member=texture.default_member(team).ok_or_else(||AssetError::Invalid(format!("MDX replaceable texture {} requires a session replacement",texture.replaceable_id)))?; let bytes=mounts.read_texture_bytes(&member)?;
             let index=if let Some(index)=unique.get(&bytes.location) {*index} else {
                 let size=texture_dimensions_from_bytes(&bytes.bytes,&bytes.location.member)?; total=total.checked_add(size[0] as usize*size[1] as usize*4).filter(|n|*n<=max_texture_bytes).ok_or_else(||AssetError::Invalid("mounted model RGBA textures exceed byte budget".into()))?;
-                let rgba=decode_texture_rgba8(&bytes.bytes,&bytes.location.member)?; let index=textures.len(); textures.push(Texture {key:resource_key(&bytes.location),rgba}); unique.insert(bytes.location,index); index
+                let rgba=decode_texture_rgba8(&bytes.bytes,&bytes.location.member)?; let index=textures.len(); textures.push(Texture {key:resource_key(&bytes.location),rgba:Arc::new(rgba)}); unique.insert(bytes.location,index); index
             };
             texture_keys.push(textures[index].key.clone());
         }
         Ok(Arc::new(Self {model,key,texture_keys,textures,location:bytes.location}))
     }
+    pub(crate) fn from_shared(model:&Arc<mengine_assets::WarcraftDecodedModel>,images:Vec<(AssetLocation,Arc<TextureRgba8>)>)->Arc<Self> {
+        let textures=images.into_iter().map(|(location,rgba)|Texture {key:resource_key(&location),rgba}).collect::<Vec<_>>(); let texture_keys=textures.iter().map(|t|t.key.clone()).collect(); Arc::new(Self {model:model.model.clone(),key:resource_key(&model.source.location),texture_keys,textures,location:model.source.location.clone()})
+    }
+    pub(crate) fn namespaced(&self,prefix:&str)->Arc<Self> {Arc::new(Self {model:self.model.clone(),key:format!("{prefix}:{}",self.key),texture_keys:self.texture_keys.iter().map(|s|format!("{prefix}:{s}")).collect(),textures:self.textures.iter().map(|t|Texture {key:format!("{prefix}:{}",t.key),rgba:t.rgba.clone()}).collect(),location:self.location.clone()})}
+    pub(crate) fn release_textures(&self,renderer:&mut Renderer) {for t in &self.textures {renderer.remove_material_texture(&t.key);}}
+    pub(crate) fn binding_plan_bytes(&self)->usize {self.key.len().saturating_add(self.location.member.len()).saturating_add(512).saturating_add(self.texture_keys.iter().map(|s|s.len().saturating_mul(2).saturating_add(384)).fold(0usize,usize::saturating_add))}
+    pub(crate) fn instance_plan_bytes(&self,pose:&MdxPose)->Result<usize,AssetError> {let mut total=0usize; for g in &pose.geosets {for l in g.layers.iter() {if g.alpha<=0. || l.alpha<=0. || g.mesh.indices.is_empty() {continue;} let texture=self.texture_keys.get(l.texture).ok_or_else(||AssetError::Invalid("missing instance texture key".into()))?; let n=self.key.len().saturating_add(128).saturating_mul(3).saturating_add(texture.len().saturating_add(128).saturating_mul(3)).saturating_add(std::mem::size_of::<RenderObject>()+std::mem::size_of::<RenderMaterial>()+256); total=total.checked_add(n.checked_mul(2).ok_or_else(||AssetError::Invalid("instance metadata overflow".into()))?).ok_or_else(||AssetError::Invalid("instance metadata overflow".into()))?;}} Ok(total)}
+    pub(crate) fn validate_pose(&self,pose:&MdxPose,limits:WarcraftModelRenderLimits)->Result<usize,AssetError> {let draws=plan_upload(pose,self.key.len(),&self.texture_keys,limits)?; if pose.geosets.iter().flat_map(|g|g.layers.iter()).any(|l|matches!(l.filter,3|6) || l.flags&(2|0x40)!=0) {return Err(AssetError::Invalid("native MDX renderer requires exact additive/modulate2x, sphere mapping or no-depth-test support for these material flags".into()));} Ok(draws)}
     pub fn model(&self) -> &MdxModel {&self.model}
     pub fn location(&self) -> &AssetLocation {&self.location}
     pub fn decoded_texture_bytes(&self) -> usize {self.textures.iter().map(|t|t.rgba.pixels.len()).sum()}
@@ -56,8 +64,10 @@ impl MountedWarcraftModel {
     }
     pub fn upload_pose_with_limits(&self, renderer: &mut Renderer, slot: u64, sequence: Option<usize>, elapsed_ms: u64, camera: Option<MdxBillboardCamera>, limits: WarcraftModelRenderLimits) -> Result<Vec<RenderObject>,AssetError> {
         let pose=self.model.sample(sequence,elapsed_ms,camera)?;
-        let draws=plan_upload(&pose,self.key.len(),&self.texture_keys,limits)?;
-        if pose.geosets.iter().flat_map(|g|g.layers.iter()).any(|l|matches!(l.filter,3|6) || l.flags&(2|0x40)!=0) {return Err(AssetError::Invalid("native MDX renderer requires exact additive/modulate2x, sphere mapping or no-depth-test support for these material flags".into()));}
+        self.upload_sampled_pose(renderer,slot,&pose,limits)
+    }
+    pub(crate) fn upload_sampled_pose(&self,renderer:&mut Renderer,slot:u64,pose:&MdxPose,limits:WarcraftModelRenderLimits)->Result<Vec<RenderObject>,AssetError> {
+        let draws=self.validate_pose(pose,limits)?;
         let mut objects=Vec::new(); objects.try_reserve_exact(draws).map_err(|_|AssetError::Invalid("cannot reserve native MDX render objects".into()))?;
         for g in &pose.geosets {if g.alpha<=0. {continue;} for (layer_index,layer) in g.layers.iter().enumerate() {if layer.alpha<=0. || g.mesh.indices.is_empty() {continue;}
             let uv=self.model.geoset_uvs(g.geoset,layer.uv_set).unwrap_or(&g.mesh.uvs); let m=layer.uv;

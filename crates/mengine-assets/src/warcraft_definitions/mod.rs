@@ -3,7 +3,7 @@ use crate::{AssetBytes,AssetSourceId,WarcraftMapCancelToken,WarcraftMapError,War
 use std::{collections::BTreeMap,sync::Arc};
 mod tables;
 mod overrides;
-#[cfg(test)] mod tests;
+#[cfg(test)] pub(crate) mod tests;
 pub use tables::{WarcraftDefinitionTable,WarcraftDefinitionCache,WarcraftDefinitionCacheStats};
 pub use overrides::{WarcraftDefinitionDomain,WarcraftDefinitionOverride,WarcraftDefinitionDisposition};
 type Result<T> = std::result::Result<T,WarcraftMapError>;

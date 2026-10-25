@@ -1,0 +1,12 @@
+// Author: MiYu. Select source Stand/Death sequences using the REA-verified tag ranking and MSVCR120 preview RNG stream.
+use super::*;
+const TAGS:&str="alternate alternateex attack berserk birth chain channel cinematic complete critical death decay defend dissipate drain eattree entangle fast fifth fill fire first five flail flesh four fourth gold hit large left light looping lumber medium moderate morph off one portrait puke ready right second severe slam sleep small spell spiked spin stand swim talk third three throw turn two upgrade victory walk work wounded";
+pub(super) struct Random(pub u32);
+impl Random {fn next(&mut self)->u32 {self.0=self.0.wrapping_mul(214013).wrapping_add(2531011); (self.0>>16)&0x7fff}}
+fn weight(rarity:f32)->Result<i32> {if !rarity.is_finite() || rarity<=-128. {return Err(invalid("unsupported sequence rarity"));} if rarity>=128. {return Ok(0);} let normalized=1f32/2f32.powf(rarity); if normalized as f64>i32::MAX as f64/100. {return Err(invalid("sequence weight exceeds source integer range"));} let weight=normalized*100.; if weight as f64>i32::MAX as f64 {return Err(invalid("sequence weight exceeds source integer range"));} Ok(weight as i32)}
+pub(super) fn select(model:&MdxModel,dead:bool,random:&mut Random)->Result<(Option<usize>,bool)> {
+    let clips=model.sequences(); if dead {if let Some(index)=clips.iter().position(|s|s.end_ms>s.start_ms && s.name.eq_ignore_ascii_case("death")) {return Ok((Some(index),true));}}
+    let mut best=(0,-1000); let mut candidates=Vec::new(); for (index,clip) in clips.iter().enumerate() {if clip.end_ms<=clip.start_ms {continue;} let name=clip.name.to_ascii_lowercase(); let tags=name.split(' ').filter(|word|TAGS.split(' ').any(|tag|tag==*word)).collect::<Vec<_>>(); let matches=i32::from(tags.contains(&"stand")); let score=(matches,matches-tags.len() as i32); if score<best {continue;} if score>best {best=score; candidates.clear();} candidates.push(index);}
+    if candidates.len()<=1 {return Ok((candidates.first().copied(),false));} let mut total=0i32; for &index in &candidates {total=total.checked_add(weight(clips[index].rarity)?).ok_or_else(||invalid("sequence weight sum overflow"))?;}
+    let draw=random.next(); let roll=if total>1 {1+(draw%(total as u32-1)) as i32} else {1}; let mut sum=0i32; for index in candidates {sum+=weight(clips[index].rarity)?; if roll<=sum {return Ok((Some(index),false));}} Ok((Some(0),false))
+}

@@ -6,7 +6,7 @@ use WarcraftDefinitionTable::*;
 use WarcraftDefinitionDomain::UnitsAndItems;
 
 fn slk(headers:&[&str],rows:&[Vec<&str>])->Vec<u8> {let mut b=String::from("ID;P\n"); for (y,row) in std::iter::once(headers.to_vec()).chain(rows.iter().cloned()).enumerate() {for (x,v) in row.iter().enumerate() {b.push_str(&format!("C;X{};Y{};K\"{}\"\n",x+1,y+1,v.replace('"',"\"\"")));}} b.into_bytes()}
-fn files()->Vec<(&'static str,Vec<u8>)> {vec![
+pub(crate) fn files()->Vec<(&'static str,Vec<u8>)> {vec![
     ("units/unitui.slk",slk(&["id","file","modelScale","teamColor"],&[vec!["hfoo","Footman.mdl","1","-1"],vec!["hrif","Rifleman.mdl","1","-1"]])),
     ("units/unitdata.slk",slk(&["id","moveHeight"],&[vec!["hfoo","0"],vec!["hrif","0"]])),
     ("units/unitbalance.slk",slk(&["id","HP"],&[vec!["hfoo","100"],vec!["hrif","120"]])),

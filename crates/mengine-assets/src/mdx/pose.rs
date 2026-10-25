@@ -39,7 +39,7 @@ fn collapse_scale(track: &Track, sequence: Option<&MdxSequence>) -> bool {
     track.collapse_outside && sequence.is_some_and(|s|track.keys.partition_point(|k|k.time<s.start_ms)>=track.keys.partition_point(|k|k.time<=s.end_ms))
 }
 
-fn check_pose_budget(model: &MdxModel) -> Result<(),AssetError> {
+pub(super) fn allocation_bytes(model: &MdxModel) -> Result<usize,AssetError> {
     let mut total=0usize; let mut add=|count:usize,stride:usize|->Result<(),AssetError> {total=total.checked_add(count.checked_mul(stride).ok_or_else(||invalid("pose allocation overflow"))?).filter(|n|*n<=model.max_pose_bytes).ok_or_else(||invalid("sampled pose exceeds byte budget"))?; Ok(())};
     add(model.nodes.len(),std::mem::size_of::<Mat4>()*2)?; add(model.geosets.len(),std::mem::size_of::<MdxGeosetPose>())?; add(model.materials.len(),std::mem::size_of::<Option<Arc<[MdxLayerPose]>>>()+1)?;
     let mut used=vec![false;model.materials.len()]; let mut max_groups=0; let mut max_normals=0;
@@ -49,13 +49,13 @@ fn check_pose_budget(model: &MdxModel) -> Result<(),AssetError> {
     }
     add(max_groups,std::mem::size_of::<Mat4>())?; add(max_normals,std::mem::size_of::<Vec3>())?;
     for node in &model.nodes {if let Some((_,path,_))=&node.attachment {add(1,std::mem::size_of::<MdxAttachmentPose>()*2)?; add(path.len(),1)?;}}
-    Ok(())
+    Ok(total)
 }
 
-pub(super) fn sample(model: &MdxModel, sequence: Option<usize>, elapsed: u64, camera: Option<MdxBillboardCamera>) -> Result<MdxPose,AssetError> {
-    check_pose_budget(model)?;
+pub(super) fn sample(model: &MdxModel, sequence: Option<usize>, elapsed: u64, camera: Option<MdxBillboardCamera>, force_clamp:bool) -> Result<MdxPose,AssetError> {
+    allocation_bytes(model)?;
     let sequence=sequence.map(|i|model.sequences.get(i).ok_or_else(||invalid("sequence index is missing"))).transpose()?;
-    let time=sequence.map_or(0,|s|{let duration=(s.end_ms-s.start_ms) as u64; s.start_ms+if duration==0 {0} else if s.non_looping {elapsed.min(duration) as i64} else {(elapsed%duration) as i64}});
+    let time=sequence.map_or(0,|s|{let duration=(s.end_ms-s.start_ms) as u64; s.start_ms+if duration==0 {0} else if s.non_looping || force_clamp {elapsed.min(duration) as i64} else {(elapsed%duration) as i64}});
     if camera.is_some_and(|c|!c.model.is_finite() || !c.look.is_finite() || !c.up.is_finite() || c.model.determinant().abs()<1e-12) {return Err(invalid("invalid billboard camera"));}
     // These source behaviors need a session/world origin and complete inheritance solver before game use.
     if model.nodes.iter().any(|n|n.flags&(7|0x80)!=0) {return Err(invalid("node non-inheritance or camera-anchoring requires the runtime node solver"));}

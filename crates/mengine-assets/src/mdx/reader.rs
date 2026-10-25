@@ -114,7 +114,7 @@ fn nodes(r: &mut Reader<'_>, kind: &[u8;4], output: &mut Vec<Node>, diagnostics:
 pub(super) fn parse(bytes: &[u8], limits: MdxReadLimits) -> Result<MdxModel,AssetError> {
     if bytes.len()>limits.max_input_bytes {return Err(invalid("source exceeds input byte limit"));} let mut r=Reader::new(bytes); r.expect(b"MDLX")?;
     let mut budget=Budget {remaining:limits.max_decoded_bytes,vertices:0,indices:0,keys:0,limits};
-    let mut model=MdxModel {name:String::new(),version:0,sequences:Vec::new(),globals:Vec::new(),textures:Vec::new(),materials:Vec::new(),geosets:Vec::new(),geoset_animations:Vec::new(),nodes:Vec::new(),order:Vec::new(),parents:Vec::new(),texture_animations:Vec::new(),diagnostics:Vec::new(),max_pose_bytes:limits.max_decoded_bytes};
+    let mut model=MdxModel {name:String::new(),version:0,sequences:Vec::new(),globals:Vec::new(),textures:Vec::new(),materials:Vec::new(),geosets:Vec::new(),geoset_animations:Vec::new(),nodes:Vec::new(),order:Vec::new(),parents:Vec::new(),texture_animations:Vec::new(),diagnostics:Vec::new(),max_pose_bytes:limits.max_decoded_bytes,decoded_bytes:0};
     let mut pivots=Vec::new(); let mut seen=Vec::new();
     while r.remaining()!=0 {
         let tag=r.tag()?; let length=r.u32()? as usize; let mut body=Reader::new(r.take(length)?);
@@ -122,7 +122,7 @@ pub(super) fn parse(bytes: &[u8], limits: MdxReadLimits) -> Result<MdxModel,Asse
         match &tag {
             b"VERS"=>{model.version=body.u32()?;},
             b"MODL"=>{model.name=body.string(80,&mut budget,false)?; body.take(260+28+4)?;},
-            b"SEQS"=>{while body.remaining()!=0 {if model.sequences.len()>=4096 {return Err(invalid("sequence count exceeds limit"));} let name=body.string(80,&mut budget,false)?; let start_ms=body.i32()? as i64; let end_ms=body.i32()? as i64; body.f32()?; let flags=body.u32()?; body.take(36)?; if end_ms<start_ms {return Err(invalid("negative sequence duration"));} budget.push(&mut model.sequences,MdxSequence {name,start_ms,end_ms,non_looping:flags&1!=0})?;}},
+            b"SEQS"=>{while body.remaining()!=0 {if model.sequences.len()>=4096 {return Err(invalid("sequence count exceeds limit"));} let name=body.string(80,&mut budget,false)?; let start_ms=body.i32()? as i64; let end_ms=body.i32()? as i64; body.f32()?; let flags=body.u32()?; let rarity=body.f32()?; body.take(32)?; if end_ms<start_ms {return Err(invalid("negative sequence duration"));} budget.push(&mut model.sequences,MdxSequence {name,start_ms,end_ms,non_looping:flags&1!=0,rarity})?;}},
             b"GLBS"=>{if body.remaining()%4!=0 {return Err(invalid("truncated global sequence table"));} while body.remaining()!=0 {budget.push(&mut model.globals,body.u32()?)?;}},
             b"TEXS"=>{while body.remaining()!=0 {let replaceable_id=body.u32()?; let path=body.string(260,&mut budget,true)?; let flags=body.u32()?; budget.push(&mut model.textures,MdxTexture {path,replaceable_id,flags})?;}},
             b"MTLS"=>materials(&mut body,&mut model.materials,&mut budget)?,
@@ -136,7 +136,7 @@ pub(super) fn parse(bytes: &[u8], limits: MdxReadLimits) -> Result<MdxModel,Asse
         body.finish()?;
     }
     if model.version!=800 {return Err(invalid(format!("unsupported model version {}; this reader requires classic version800",model.version)));}
-    validate(&mut model,&pivots,&mut budget)?; Ok(model)
+    validate(&mut model,&pivots,&mut budget)?; model.decoded_bytes=limits.max_decoded_bytes-budget.remaining; Ok(model)
 }
 
 fn validate(model: &mut MdxModel, pivots: &[Vec3], budget: &mut Budget) -> Result<(),AssetError> {

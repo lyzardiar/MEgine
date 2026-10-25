@@ -11,6 +11,8 @@ mod warcraft_archives;
 mod warcraft_map;
 mod warcraft_slk;
 mod warcraft_definitions;
+mod warcraft_resources;
+mod warcraft_world;
 mod warcraft_terrain;
 mod avatar_mask;
 mod gltf_import;
@@ -48,6 +50,8 @@ pub use asset_sidecar::{
 pub use asset_bytes::{AssetByteCache, AssetByteCacheStats, AssetByteSource, AssetBytes, AssetLocation, AssetMounts, AssetSourceId, AssetSourceRead};
 pub use warcraft_archives::{MpqAssetSource, WarcraftArchives};
 pub use warcraft_map::{WarcraftMapCancelToken,WarcraftMapError,WarcraftMapLimits,WarcraftMapLoadPhase,WarcraftMapLoadProgress,WarcraftMapPathing,WarcraftMapSession,WarcraftMapTerrain,WarcraftTerrainCorner,WarcraftStringTable};
+pub use warcraft_resources::{WarcraftResourceCache,WarcraftResourceCacheStats,WarcraftDecodedModel,WarcraftDecodedTexture};
+pub use warcraft_world::{WarcraftPlacedWorld,WarcraftWorldLimits,WarcraftWorldNode,WarcraftWorldNodeKind,WarcraftWorldAppearance,WarcraftWorldTransform,WarcraftTextureReplacement};
 pub use warcraft_definitions::{WarcraftMapDefinitions,WarcraftDefinitionTable,WarcraftDefinitionDomain,WarcraftDefinitionValue,WarcraftDefinitionLimits,WarcraftDefinitionCache,WarcraftDefinitionCacheStats,WarcraftDefinitionOverride,WarcraftDefinitionDisposition};
 pub use warcraft_map::{WarcraftMapWorldData,WarcraftMapDoodads,WarcraftMapDoodad,WarcraftMapTerrainDoodad,WarcraftMapUnits,WarcraftMapUnit,WarcraftMapItemChoice,WarcraftMapInventoryItem,WarcraftMapModifiedAbility,WarcraftMapRandomPlacement,WarcraftMapObjects,WarcraftMapObject,WarcraftMapObjectKind,WarcraftMapObjectModification,WarcraftMapObjectValue};
 pub use warcraft_map::{WarcraftMapInfo,WarcraftMapPlayer,WarcraftMapForce,WarcraftMapScreen,WarcraftMapFog,WarcraftMapUpgrade,WarcraftMapTech,WarcraftMapRandomUnits,WarcraftMapRandomUnitChoice,WarcraftMapRandomItems,WarcraftMapRandomItemChoice};

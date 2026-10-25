@@ -10,6 +10,8 @@ mod undo;
 mod viewport;
 mod scene_snapshot_world;
 mod warcraft_model;
+mod warcraft_world;
+pub use warcraft_world::{MountedWarcraftPlacedWorld,WarcraftPlacedWorldView,WarcraftWorldRenderLimits};
 mod warcraft_terrain;
 pub use warcraft_terrain::{MountedWarcraftTerrain,WarcraftTerrainView,WarcraftTerrainRenderLimits,WarcraftTerrainUploadStats};
 pub use scene_snapshot_world::SceneSnapshotWorld;
