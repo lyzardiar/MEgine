@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import {fileURLToPath} from 'node:url';
 import {createServer} from 'vite';
 import ts from '../node_modules/typescript/lib/typescript.js';
+import {summarizeNativeViewportProfiles} from '../src/editorProfiler.ts';
 
 const source=fs.readFileSync(new URL('../src/App.tsx',import.meta.url),'utf8'),tree=ts.createSourceFile('App.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
 const find=(node,predicate)=>predicate(node)?node:ts.forEachChild(node,child=>find(child,predicate));
@@ -37,6 +38,45 @@ async function withPair(run){
     await run(host('main',undefined),host('hierarchy','hierarchy'),host('inspector','inspector'));
   }finally{await server.close();}
 }
+
+test('App publishes accepted owner timings with scene deltas and detached stores own the measurements',async()=>withPair(async(main,detached,inspector)=>{
+  let world,revision=0,timing;
+  main.store.setPlayRuntime({sessionId:41,retainsWorld:true,get stepTiming(){return timing;},start:async snapshot=>(world={...snapshot,nativeSessionId:41,nativeRevision:0}),step:async()=>{revision++;timing={sessionId:41,revision,invokeMs:5,applyMs:1,native:{workerQueueMs:0,simulationMs:2,workerMs:3,commandMs:4}};return {...world,frame:revision,nativeRevision:revision};},stop(){},onError(error){throw error;}});
+  main.store.play();await main.store.waitForPlayRuntime();main.broadcastScene(true);main.deliver(detached);
+  assert.equal(detached.store.playRenderSnapshot().simulationRequestMs,undefined);assert.equal(detached.store.playStepTiming,undefined);
+  main.env.remoteDirtyPeers.current.set('game',{timestamp:1000,panel:'game'});
+  main.store.pause();main.store.step(.1);await main.store.waitForPlayRuntime();main.store.play();
+  main.broadcastScene(false,true);const packet=main.sent[0];assert.ok(packet.sceneDelta?.base);assert.equal(packet.playStepTiming.revision,1);
+  main.deliver(detached);inspector.receive({data:structuredClone(packet)});
+  const owned=detached.store.playRenderSnapshot().simulationTiming;
+  assert.deepEqual(owned,main.store.playStepTiming);assert.equal(owned.sessionId,41);assert.equal(owned.revision,1);
+  assert.equal(detached.store.playRenderSnapshot().simulationRequestMs,owned.totalMs);assert.ok(Object.isFrozen(owned));assert.ok(Object.isFrozen(owned.native));
+  assert.equal(summarizeNativeViewportProfiles([{totalMs:1,simulationRequestMs:detached.store.playRenderSnapshot().simulationRequestMs}]).averageSimulationRequestMs,owned.totalMs);
+  // A peer without the preceding delta requests a checkpoint rather than accepting timing alone.
+  assert.equal(inspector.store.playRenderSnapshot(),null);assert.ok(inspector.sent.some(message=>message.type==='request-scene'));
+  packet.playStepTiming.native.workerMs=99;assert.equal(owned.native.workerMs,3);assert.equal(main.store.playStepTiming.native.workerMs,3);
+  assert.equal(detached.store.playViewportSnapshot().simulationTiming,owned);
+  main.store.pause();main.store.step(.1);await main.store.waitForPlayRuntime();main.store.play();main.broadcastScene(false,true);
+  const legacy=main.sent.shift();delete legacy.playStepTiming;detached.receive({data:legacy});
+  assert.equal(detached.store.nativePlayRevision,2);assert.equal(detached.store.playRenderSnapshot().simulationTiming,undefined);assert.equal(detached.store.playRenderSnapshot().simulationRequestMs,undefined);
+  assert.equal(summarizeNativeViewportProfiles([{totalMs:1,simulationRequestMs:detached.store.playRenderSnapshot().simulationRequestMs}]).averageSimulationRequestMs,null);
+  main.broadcastScene(true);main.deliver(detached);assert.equal(detached.store.playStepTiming.revision,2);
+  main.store.stop();main.broadcastScene(true);main.deliver(detached);assert.equal(detached.store.playStepTiming,undefined);assert.equal(detached.store.playRenderSnapshot(),null);
+}));
+
+test('remote timing cannot label a different session/revision or overwrite the native owner measurement',async()=>withPair(async(main,detached)=>{
+  const doc=main.store.saveSessionSceneJson('Map'),timing={sessionId:41,revision:7,invokeMs:2,applyMs:1,totalMs:4};
+  detached.store.loadRemoteSceneJson(doc,'play',41,7,timing);assert.equal(detached.store.playStepTiming.totalMs,4);
+  for(const [session,revision,input] of [[41,8,timing],[42,7,timing],[41,7,{...timing,totalMs:-1}],[41,7,undefined],[41,undefined,timing]]){
+    detached.store.loadRemoteSceneJson(doc,'pause',session,revision,input);const snap=detached.store.playRenderSnapshot();assert.equal(snap.simulationTiming,undefined);assert.equal(snap.simulationRequestMs,undefined);
+  }
+  detached.store.loadRemoteSceneJson(doc,'pause',41,7,{...timing,invokeMs:0,applyMs:0,totalMs:0});assert.equal(detached.store.playRenderSnapshot().simulationRequestMs,0);
+  detached.store.loadRemoteSceneJson(doc,'edit',41,7,timing);assert.equal(detached.store.playStepTiming,undefined);
+  main.store.setPlayRuntime({sessionId:41,start:async snapshot=>({...snapshot,nativeSessionId:41,nativeRevision:7}),step:async()=>{throw Error('not expected');},stop(){},onError(error){throw error;}});
+  main.store.play();await main.store.waitForPlayRuntime();main.store.pause();main.store.loadRemoteSceneJson(doc,'pause',41,7,timing);
+  assert.equal(main.store.playStepTiming,undefined);assert.equal(main.store.playRenderSnapshot().simulationRequestMs,undefined);
+  main.store.stop();
+}));
 
 test('selection crosses windows without world serialization, loading, dirty calculation or an echo',async()=>withPair((main,detached)=>{
   main.broadcastScene(true);assert.equal(main.sent[0].type,'scene-state');main.deliver(detached);

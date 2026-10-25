@@ -17,6 +17,7 @@ import { createEditorUndoService } from './editorUndoService';
 import { applyPlaybackAction, playbackShortcut, type PlaybackAction } from './editorPlayback';
 import { createNativePlayRuntime, type PlayInput } from './playRuntime';
 import { advanceFrameDeadline, frameCadenceDelay } from './frameCadence';
+import type { PlayStepTiming } from './playStepTiming';
 import {
   legacyGameResolution,
   normalizeGameDisplay,
@@ -242,6 +243,7 @@ type WorkspaceSyncMessage =
       sceneDelta?: SessionSceneDelta;
       playSessionId?: number;
       playRevision?: number;
+      playStepTiming?: Readonly<PlayStepTiming>;
       selectedIds: number[];
       sceneHiddenIds?: number[];
       sceneUnpickableIds?: number[];
@@ -784,6 +786,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         ...(props.detachedPanel ? { sceneJson: store.saveSessionSceneJson(sceneNameRef.current ?? 'Untitled') } : store.publishSessionScene(sceneSyncId.current!, !immediate, sceneNameRef.current ?? 'Untitled')),
         playSessionId: store.playSessionId,
         playRevision: store.nativePlayRevision,
+        playStepTiming: props.detachedPanel ? undefined : store.playStepTiming,
         selectedIds: store.selectedIds,
         sceneHiddenIds: store.sceneHiddenIds,
         sceneUnpickableIds: store.sceneUnpickableIds,
@@ -1510,7 +1513,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         lastSceneTimestamp.current = message.timestamp;
         const deferPanels = !!props.detachedPanel && message.mode === 'play' && store.mode === 'play' && message.playSessionId === store.playSessionId && message.sceneName === sceneNameRef.current && message.sceneDelta?.base != null;
         const previousPanelKey = deferPanels ? remoteScenePanelKey(store) : undefined;
-        store.loadRemoteSceneJson(sceneData, message.mode, message.playSessionId, message.playRevision);
+        store.loadRemoteSceneJson(sceneData, message.mode, message.playSessionId, message.playRevision, message.playStepTiming);
         sceneSyncId.current = message.stateId ?? null;
         selectionSyncOrder.current = { revision: 0, sender: '' };
         store.selectMany(message.selectedIds, 'replace');

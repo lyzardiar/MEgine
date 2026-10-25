@@ -1,5 +1,5 @@
 // Author: MiYu. Editor scene state, hierarchy and runtime interaction.
-import type { PlayStepTiming } from './playStepTiming';
+import { retainPlayStepTiming, type PlayStepTiming } from './playStepTiming';
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
 import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord, retainedPlayWorldChanges, retainPlayRecord, retainPlayWorld } from './playWorldSync';
@@ -265,7 +265,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     const generation = playGeneration;
     for (const listener of playFrameListeners) queueMicrotask(() => { if (generation === playGeneration && mode !== 'edit' && playFrameListeners.has(listener)) listener(); });
   };
-  let playStepRequestMs = 0;
+  let playStepRequestMs: number | undefined;
   let playStepTiming: Readonly<PlayStepTiming> | undefined;
   let remotePlaySessionId: number | undefined;
   let playWorldRevision: number | undefined;
@@ -273,6 +273,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let playWorldSimulationTime = 0;
   const playWorldMatches = () => playWorldSync.matches(playEntities, playClearColor ?? clearColor);
   const nativePlaySessionId = (verified?: boolean) => { if (remotePlayNeedsUpload) return undefined; const sessionId = playRuntime?.sessionId ?? remotePlaySessionId; return mode !== 'edit' && (playRuntime != null || playWorldRevision != null) && (playWorldRevision == null || playWorldSessionId === sessionId) && (verified ?? playWorldMatches()) ? sessionId : undefined; };
+  const currentPlayStepTiming = () => mode !== 'edit' && playStepTiming?.sessionId === (playRuntime?.sessionId ?? remotePlaySessionId) && playStepTiming?.revision === playWorldRevision ? playStepTiming : undefined;
   const nativeWorldReference = (verifiedWorld?: { entities: EntityRec[]; clearColor: WorldSnapshotView['clearColor'] }) => {
     if (playWorldRevision == null || playWorldSessionId == null || playWorldSessionId !== (playRuntime?.sessionId ?? remotePlaySessionId)) return undefined;
     const sessionId = nativePlaySessionId(verifiedWorld ? true : undefined), world = sessionId != null ? verifiedWorld ?? playWorldSync.viewportSnapshot() : undefined;
@@ -280,7 +281,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   };
   const mutablePlayViewportSnapshot = () => {
     exposePlayEntities();
-    return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), get nativeSessionId() { return nativePlaySessionId(); }, get nativeWorldReference() { return nativeWorldReference(); }, runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs, simulationTiming: playStepTiming?.sessionId === playRuntime?.sessionId ? playStepTiming : undefined } : null;
+    return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), get nativeSessionId() { return nativePlaySessionId(); }, get nativeWorldReference() { return nativeWorldReference(); }, runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs, simulationTiming: currentPlayStepTiming() } : null;
   };
 
   // MiYu: the remote author mirror becomes writable only when returning to Edit.
@@ -321,6 +322,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     mode = 'edit';
     playSpin = 0;
     playStepTiming = undefined;
+    playStepRequestMs = undefined;
     animationPreview = null;
     timelinePreview = null;
   };
@@ -346,7 +348,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const completed = performance.now();
       playStepRequestMs = completed - started;
       const timing = runtime.stepTiming;
-      playStepTiming = timing && timing.sessionId === result.nativeSessionId && timing.revision === result.nativeRevision ? Object.freeze({ ...timing, prepareMs: prepared - started, acceptMs: completed - accepting, totalMs: playStepRequestMs }) : undefined;
+      playStepTiming = retainPlayStepTiming(timing && { ...timing, prepareMs: prepared - started, acceptMs: completed - accepting, totalMs: playStepRequestMs }, result.nativeSessionId, result.nativeRevision);
     }), generation);
   };
 
@@ -1178,11 +1180,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     playRenderSnapshot() {
       if (!ownedPlayWorld || !playWorldSync.presentationMatches(playEntities, playClearColor ?? clearColor)) return mutablePlayViewportSnapshot();
       const { entities, clearColor: color } = ownedPlayWorld;
-      return { entities, frame, simFrame: frame, simulationTime: playSpin, clearColor: color, selected: primarySelected(), nativeSessionId: nativePlaySessionId(true), nativeWorldReference: nativeWorldReference({ entities, clearColor: color }), runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs, simulationTiming: playStepTiming?.sessionId === playRuntime?.sessionId ? playStepTiming : undefined };
+      return { entities, frame, simFrame: frame, simulationTime: playSpin, clearColor: color, selected: primarySelected(), nativeSessionId: nativePlaySessionId(true), nativeWorldReference: nativeWorldReference({ entities, clearColor: color }), runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs, simulationTiming: currentPlayStepTiming() };
     },
     get nativePlaySessionId() { return nativePlaySessionId(); },
     get nativePlayRevision() { return nativePlaySessionId() === playWorldSessionId ? playWorldRevision : undefined; },
     get playSessionId() { return mode === 'edit' ? undefined : playRuntime?.sessionId ?? remotePlaySessionId; },
+    get playStepTiming() { return currentPlayStepTiming(); },
     authoredEntities() {
       return structuredClone(editEntities);
     },
@@ -1734,6 +1737,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       }
       remoteAuthorFingerprintEntities = null;
       remotePlayNeedsUpload = false;
+      playStepTiming = undefined; playStepRequestMs = undefined;
       animationPreview = null;
       timelinePreview = null;
       playEntities = structuredClone(editEntities);
@@ -2973,7 +2977,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       applySceneJson(json, 'edit', true, false);
       return true;
     },
-    loadRemoteSceneJson(json: string | SessionSceneDocument, remoteMode: EditorMode, nativeSessionId?: number, nativeRevision?: number) {
+    loadRemoteSceneJson(json: string | SessionSceneDocument, remoteMode: EditorMode, nativeSessionId?: number, nativeRevision?: number, timing?: Readonly<PlayStepTiming>) {
       const authoring = remoteMode !== 'edit' && mode !== 'edit' && playRuntime != null ? { entities: editEntities, clearColor, nextId, fingerprintEntities: remoteAuthorFingerprintEntities } : null;
       const retained = applySceneJson(json, remoteMode, false, true, remoteMode !== 'edit');
       remotePlayEditVersion++;
@@ -2985,6 +2989,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         playWorldRevision = nativeRevision; playWorldSessionId = nativeSessionId; playWorldSimulationTime = playSpin;
         playWorldSync.capture(playEntities, playClearColor ?? clearColor);
       }
+      playStepTiming = remoteMode !== 'edit' && !playRuntime ? retainPlayStepTiming(timing, nativeSessionId, nativeRevision) : undefined;
+      playStepRequestMs = playStepTiming?.totalMs;
     },
   };
 }

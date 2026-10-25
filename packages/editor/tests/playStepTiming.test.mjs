@@ -3,8 +3,28 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createServer } from 'vite';
 import { fileURLToPath } from 'node:url';
-import { playStepTimingStages } from '../src/playStepTiming.ts';
+import { playStepTimingStages, retainPlayStepTiming } from '../src/playStepTiming.ts';
 import { nativeViewportTimingSample } from '../src/editorProfiler.ts';
+
+test('retained timing requires the accepted session/revision and owns only finite duration fields', () => {
+  const timing = { sessionId: 9, revision: 3, invokeMs: 5, applyMs: 1, totalMs: 8, prepareMs: 0, acceptMs: 2, native: { workerQueueMs: 0, simulationMs: 2, workerMs: 3, commandMs: 4, unrelated: {} }, unrelated: {} };
+  const retained = retainPlayStepTiming(timing, 9, 3);
+  assert.deepEqual(retained, { sessionId: 9, revision: 3, invokeMs: 5, applyMs: 1, totalMs: 8, prepareMs: 0, acceptMs: 2, native: { workerQueueMs: 0, simulationMs: 2, workerMs: 3, commandMs: 4 } });
+  assert.ok(Object.isFrozen(retained)); assert.ok(Object.isFrozen(retained.native));
+  timing.native.workerMs = 90; timing.totalMs = 90;
+  assert.equal(retained.native.workerMs, 3); assert.equal(retained.totalMs, 8);
+  for (const [session, revision] of [[8, 3], [9, 2], [undefined, 3], [9, undefined], [-1, 3], [9, 2.5], [Infinity, 3]]) assert.equal(retainPlayStepTiming(timing, session, revision), undefined);
+  for (const input of [null, [], {}, { ...timing, invokeMs: NaN }, { ...timing, applyMs: -1 }, { ...timing, totalMs: Infinity }, { ...timing, prepareMs: '1' }, { ...timing, native: null }, { ...timing, native: [] }, { ...timing, native: {} }, { ...timing, native: { ...timing.native, commandMs: -1 } }]) assert.equal(retainPlayStepTiming(input, 9, 3), undefined);
+  const zero = retainPlayStepTiming({ sessionId: 0, revision: 0, invokeMs: 0, applyMs: 0, totalMs: 0 }, 0, 0);
+  assert.equal(zero.totalMs, 0); assert.equal(zero.native, undefined);
+  const partial = retainPlayStepTiming({ sessionId: 9, revision: 3, invokeMs: 2, applyMs: 1 }, 9, 3);
+  assert.equal(partial.totalMs, undefined); assert.ok(!Object.hasOwn(partial, 'totalMs'));
+  let reads=0,nativeReads=0,commandReads=0;
+  const native={workerQueueMs:0,simulationMs:1,workerMs:2,get commandMs(){commandReads++;return commandReads===1?3:Infinity;}};
+  const accessor={sessionId:9,revision:3,invokeMs:1,applyMs:0,get totalMs(){reads++;return reads===1?4:Infinity;},get native(){nativeReads++;return native;},get unrelated(){assert.fail('Unknown properties must not be read');}};
+  const copied=retainPlayStepTiming(accessor,9,3);
+  assert.equal(copied.totalMs,4);assert.equal(copied.native.commandMs,3);assert.deepEqual([reads,nativeReads,commandReads],[1,1,1]);
+});
 
 test('simulation stages partition nested measurements and preserve unknown scopes', () => {
   const timing = { sessionId: 9, revision: 3, totalMs: 20, prepareMs: 2, invokeMs: 12, applyMs: 3, acceptMs: 2, native: { workerQueueMs: 2, simulationMs: 4, workerMs: 5, commandMs: 9 } };
@@ -38,6 +58,7 @@ test('native and store timings belong to accepted revisions and clear across sto
     });
     runtime = createNativePlayRuntime(error => { throw error; }); store.setPlayRuntime(runtime);
     store.play(); await store.waitForPlayRuntime(); store.pause();
+    assert.equal(store.playRenderSnapshot().simulationRequestMs, undefined);
     store.step(.1); await store.waitForPlayRuntime();
     const first = store.playRenderSnapshot().simulationTiming;
     assert.equal(first.sessionId, sessionId); assert.equal(first.revision, 1); assert.ok(first.totalMs >= 0);
@@ -46,6 +67,7 @@ test('native and store timings belong to accepted revisions and clear across sto
     store.step(.1); await store.waitForPlayRuntime(); assert.equal(store.playRenderSnapshot().simulationTiming.revision, 2); assert.equal(first.revision, 1);
     store.stop(); assert.equal(runtime.stepTiming, undefined); assert.equal(store.playRenderSnapshot(), null);
     store.play(); await store.waitForPlayRuntime(); store.pause(); assert.equal(store.playRenderSnapshot().simulationTiming, undefined);
+    assert.equal(store.playRenderSnapshot().simulationRequestMs, undefined);
     let release; pending = new Promise(resolve => { release = resolve; }); const started = new Promise(resolve => { entered = resolve; });
     const old = runtime.step(undefined, emptyPlayInput(), .1); const rejected = assert.rejects(old, /expired/);
     await started; store.stop(); release(); await rejected; assert.equal(runtime.stepTiming, undefined);

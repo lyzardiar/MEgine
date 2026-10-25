@@ -1795,3 +1795,13 @@ DotA14,437实体，Scene59.24／Game59.83FPS、原生平均14.304／10.309ms、p
 多窗口流程293.28秒，5轮均运行15秒、Stop后空闲20秒；20份版本2内存样本通过同根PID／创建时间、子进程身份、唯一PID和私有字节求和检查，各空闲点均7进程。根私有内存4,686.8086／4,688.6914／4,695.0117／4,678.6992／4,690.6523MiB，首末+3.8438MiB、后三轮-4.3594MiB；进程树首末-19.6094MiB、后三轮+10.5MiB。这是短流程平台趋势，不证明小时级驻留稳定，也不把跨次内存差归因于本批建包策略。
 
 已查看DotA Game、Amazonia高窗口金矿选择、第五轮Game和重开菜单。原地图仍显示对局规则未接入，完整开局、动态玩家军队、原地图HUD、寻路／命令、LOD和长期稳定继续待实现。`assert-ranges-hierarchy-batch.py`分别验证两份性能报告的分段与计数，`summarize-bundle-immediate-batch.py`核对同一冻结程序、三份报告与20份内存样本，`bundle-immediate-fresh-map-proof.json`保留新转换来源证明；所有日志、截图、JSON和收据在`tmp/docs-artifacts/editor-performance-risk/`与`testing-batches/B001/`，未提交原始产物。该批功能／来源范围验证完成，下一批0/3；用户编辑器64664未重启，稳定60与完整War3目标继续进行中。
+
+### 第一百四十阶段／新批次任务1/3：分离视口保留模拟来源耗时
+
+主窗口`App.tsx`的scene-state随已接受世界发送`playStepTiming`，分离窗口`store.ts`按相同session／revision保留独立冻结副本，供Scene／Game的既有Profiler记录消费。`playStepTiming.ts`仅复制已知的有限非负时长及会话／版本，丢弃未知字段；错会话／错版本、非法数据和缺失字段不发布测量。初始化、Stop／重新Play及旧格式消息缺失耗时时保持未知，有效的0值保留；主窗口收到辅助窗口的场景编辑时清除测量，下一次本地模拟重新建立，辅助窗口不发布模拟所有者耗时。时间字段均为源窗口内计算的duration，不跨窗口相减时钟。
+
+此前分离窗口没有收到这份元数据，store的模拟请求耗时初值0一直未被更新，因此旧报告的`averageSimulationRequestMs=0`不能解释为真实零开销。该字段修复不改Rust模拟计时、场景JSON／增量格式、播放节奏、渲染范围或输入归属；每次已有广播附加固定数量的小型时长字段，没有新增IPC查询或定时器。
+
+`node --test packages/editor/tests/playStepTiming.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs`的26项通过；随后新增Profiler未知值断言，运行workspaceSelectionSync、remoteRuntimeReuse、playRuntime和editorProfiler四文件57项通过。两轮覆盖存在重叠，不重复累计。耗时复制按每个已知字段读取一次后校验，完善访问器隔离后仅复测受影响的5项全部通过；最终helper单文件语义检查及前述接口检查`pnpm --filter @mengine/editor exec tsc --noEmit`通过，QA脚本语法与差异检查通过。覆盖实际App广播／接收函数、原生mock生命周期、有序增量、缺失检查点、冻结副本与后续修改隔离、旧消息／缺失值、错会话／版本、非法数字、0值、主窗口编辑归属、Stop／重启及Profiler null展示。日志为`tmp/docs-artifacts/editor-performance-risk/remote-play-timing-{tests,integration,final-tests,typecheck,helper-typecheck}.log`。
+
+`qa-frost-map-session.mjs`新增可选`--detached-simulation-timing`，与`--detached-profile-only`同时使用；在既有5秒采样中检查Scene／Game至少15个不同模拟版本、请求会话／版本、分项duration、总请求时长与Profiler平均值一致，不改变默认QA负载。本批1/3，未构建新原生程序或重跑完整QA。第三项后统一前端／原生构建，执行该断言并复核Pause／Step／Stop、分离窗口重建和真实FPS／尾间隔；最新完整原生证据仍是137–139的60ac662，稳定60、长期驻留、LOD和完整War3继续进行中。

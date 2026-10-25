@@ -35,6 +35,8 @@ const unitData=process.argv.includes('--unit-data');
 assert.ok(!unitData||unitSelectionOnly,'--unit-data requires --unit-selection-only');
 const detachedAuthoringOnly=process.argv.includes('--detached-authoring-only');
 const detachedProfileOnly=process.argv.includes('--detached-profile-only');
+const detachedSimulationTiming=process.argv.includes('--detached-simulation-timing');
+assert.ok(!detachedSimulationTiming||detachedProfileOnly,'--detached-simulation-timing requires --detached-profile-only');
 const detachedOnly=process.argv.includes('--detached-only')||detachedAuthoringOnly||detachedProfileOnly;
 const restartAfterStop=process.argv.includes('--restart-after-stop');
 assert.ok(!restartAfterStop||detachedOnly,'--restart-after-stop requires a detached test');
@@ -230,6 +232,23 @@ async function checkDetachedRuntime(authored){
   const active=createHierarchyActiveLookup(before.entities),activeEntities=before.entities.filter(entity=>active(entity.entity)).length;
   for(const source of ['scene','game']){const profiles=await query('profiler.get_samples',{source,limit:240,includeNativeTimings:true}),request=profiles.nativeLatest?.worldRequest,filtered=source==='scene'&&(request?.source==='snapshot'||request?.fallback==='play-revision-expired');report.detachedProfiles[source]={frontendSummary:profiles.summary,frontendSamples:profiles.samples,nativeSummary:profiles.nativeSummary,counts:profiles.nativeLatest?.counts,worldRevision:profiles.nativeLatest?.worldRevision,worldRequest:request,expectedTotal:before.entities.length,initialActive:activeEntities,timings:profiles.nativeTimings};assert.ok(profiles.nativeSummary?.intervals>5,source+' detached native presents');assert.ok(profiles.samples?.length&&profiles.samples.every(frame=>frame.sampleCount>0&&Number.isFinite(frame.paintMs)&&frame.paintMs>=0),source+' browser paint samples');if(filtered)assert.ok(Number.isSafeInteger(request.snapshotEntityCount)&&request.snapshotEntityCount>0&&request.snapshotEntityCount<=before.entities.length);assert.equal(profiles.nativeLatest?.counts.entities,filtered?request.snapshotEntityCount:before.entities.length);assert.ok(profiles.nativeTimings?.length&&profiles.nativeTimings.every(frame=>frame.worldRequest&&frame.worldRequest.elapsedMs>=0),source+' request telemetry');for(const frame of profiles.nativeTimings)assert.equal(frame.entityCount,frame.worldRequest.snapshotEntityCount??before.entities.length,source+' native count matches each submitted world');}
   report.checks.push('Game window reopens during Play and catches up with revisioned native frames');
+  if(detachedSimulationTiming){
+    report.detachedSimulationTimings={};
+    for(const source of ['scene','game']){
+      const profile=report.detachedProfiles[source],timings=profile.timings.filter(frame=>frame.simulationTiming);
+      const revisions=new Set(timings.map(frame=>frame.simulationTiming.sessionId+':'+frame.simulationTiming.revision));
+      assert.ok(timings.length>=15&&revisions.size>=15,source+' owns multiple correlated simulation requests');
+      for(const frame of timings){
+        const timing=frame.simulationTiming;assert.equal(timing.sessionId,frame.worldRequest.sessionId);
+        if(frame.worldRequest.revision!==undefined)assert.equal(timing.revision,frame.worldRequest.revision);
+        assert.equal(frame.simulationRequestMs,timing.totalMs);
+        for(const value of [timing.totalMs,timing.prepareMs,timing.invokeMs,timing.applyMs,timing.acceptMs,timing.native?.workerQueueMs,timing.native?.workerMs,timing.native?.simulationMs,timing.native?.commandMs])assert.ok(Number.isFinite(value)&&value>=0,source+' nonnegative owner duration');
+      }
+      assert.ok(profile.nativeSummary.averageSimulationRequestMs>0,source+' measured owner request average');
+      report.detachedSimulationTimings[source]={samples:timings.length,distinctRevisions:revisions.size,averageRequestMs:profile.nativeSummary.averageSimulationRequestMs};
+    }
+    report.checks.push('Detached Scene and Game preserve accepted owner simulation durations and exact requested session/revision');
+  }
   await execute('playback.pause');await sleep(300);const paused=await snapshot();await sleep(300);assert.deepEqual((await snapshot()).entities,paused.entities);await step(2);assert.ok((await snapshot()).simulationTime>paused.simulationTime);
   for(const windowLabel of ['panel-scene','panel-game']){const shot=await query('view.window_screenshot',{windowLabel,maxSize:1280});fs.writeFileSync(path.join(out,label+'-'+windowLabel+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));}
   report.checks.push('Three detached panels sustain native Scene/Game frames, pause freezes main world, Step advances, and both view windows capture');
