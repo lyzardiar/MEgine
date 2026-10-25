@@ -1,5 +1,7 @@
 # Frostbound Realms / 霜境战纪
 
+首次导入地图前，双击本目录的 `setup.cmd`，按提示输入直接包含 `War3Patch.mpq`、`War3xLocal.mpq`、`War3x.mpq`、`war3.mpq` 的魔兽安装目录。检查通过后，脚本将路径保存为当前 Windows 用户的 `MENGINE_WARCRAFT_ROOT` 环境变量，无需修改 `project.json`。也可从仓库根目录运行 `powershell -NoProfile -ExecutionPolicy Bypass -File samples/frostbound-realms/setup.ps1`；指定 `-GameDirectory "D:\Games\Warcraft III"` 可直接设置，`-SessionOnly` 只设置当前 PowerShell 进程。若编辑器已继承旧值，完全退出后重新启动再导入。
+
 游戏内可从“单人游戏 → 自定义游戏 → 打开地图文件”选择任意位置的 `.w3m` / `.w3x`，后台转换后直接切换地图，无需修改目录或重开 Play。再次打开相同内容使用本地缓存；不同地图共用已解包资源、转换结果和最终资源文件，成功后清理本次中间文件；导入期间可取消。当前接入原地图场景、动画与基础路径格，完整对局／JASS 兼容性仍在建设。环境配置与来源维护见 [地图导入说明](../../docs/designs/frostbound-realms/original-map-import.md#游戏内打开地图文件)。
 
 选图界面提供加载进度条，显示转换步骤及装饰物／单位／缓存文件的处理数量。进入场景时显示等待状态；同步加载阶段没有资源百分比。进度转发需要使用包含该功能的新 Editor／Player 构建，原生验收进度见 [测试批次](../../docs/testing-batches.md#b001-01-地图加载进度条)。

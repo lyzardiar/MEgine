@@ -15,6 +15,32 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = 2
 ARCHIVES = ['War3Patch.mpq', 'War3xLocal.mpq', 'War3x.mpq', 'war3.mpq']
+GAME_DIRECTORY_ENV = 'MENGINE_WARCRAFT_ROOT'
+
+
+def user_game_directory():
+    if os.name == 'nt':
+        import winreg
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, 'Environment') as key:
+                value, kind = winreg.QueryValueEx(key, GAME_DIRECTORY_ENV)
+                if kind in (winreg.REG_SZ, winreg.REG_EXPAND_SZ):
+                    return os.path.expandvars(value)
+        except FileNotFoundError:
+            pass
+    return None
+
+
+def resolve_game_directory(explicit=None):
+    value = explicit or os.environ.get(GAME_DIRECTORY_ENV, '').strip() or user_game_directory()
+    setup = ROOT / 'samples/frostbound-realms/setup.cmd'
+    if not value:
+        raise ValueError(f'未配置魔兽公共资源目录：请运行 {setup} 设置 {GAME_DIRECTORY_ENV}，或使用 --game 指定目录')
+    directory = Path(value).expanduser().resolve()
+    missing = [name for name in ARCHIVES if not (directory / name).is_file()]
+    if missing:
+        raise FileNotFoundError(f'魔兽公共资源目录 {directory} 缺少：{", ".join(missing)}。请运行 {setup} 重新设置 {GAME_DIRECTORY_ENV}；命令行 --game 优先于环境变量')
+    return directory
 
 
 class ImportProgress:
@@ -105,6 +131,7 @@ def run(args):
     source, project, result = args.source.resolve(), args.project.resolve(), args.result.resolve()
     if source.suffix.lower() not in ('.w3m', '.w3x') or not source.is_file():
         raise ValueError('请选择已有的 .w3m 或 .w3x 文件')
+    args.game = resolve_game_directory(args.game)
     source_sha = digest(source)
     resource_cache, sampler, metadata, environment = import_environment(args, progress)
     from warcraft_resource_cache import encoded
@@ -175,7 +202,7 @@ if __name__ == '__main__':
     parser.add_argument('--source', type=Path, required=True)
     parser.add_argument('--project', type=Path, required=True)
     parser.add_argument('--result', type=Path, required=True)
-    parser.add_argument('--game', type=Path, default=Path('E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne'))
+    parser.add_argument('--game', type=Path, help='魔兽公共资源目录；默认读取 ' + GAME_DIRECTORY_ENV)
     parser.add_argument('--cache-root', type=Path, default=ROOT / 'tmp/warcraft-resource-cache/v1')
     args = parser.parse_args()
     args.result.parent.mkdir(parents=True, exist_ok=True)

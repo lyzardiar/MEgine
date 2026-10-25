@@ -1969,3 +1969,12 @@ ff02e3b的启动、资源热更新、空间选取及DotA缓存／重开检查通
 最终设备标签中mesh_vb为7940份、509.938MiB，material_texture为93份、201.750MiB；这是后端分配数据，含多个视口，不能与某个视图的当前可见逻辑字节直接相减。下一步优先核对顶点缓冲的分配粒度与跨视图重复几何，针对实际资源成本优化。进程正常退出、发现文件移除，WebView隔离缓存因EPERM保留，用户原编辑器未重启。日志`gpu-memory-diagnostics-native.log`、汇总`gpu-memory-diagnostics-summary.json`均在上述临时证据目录，原始地图报告在`tmp/docs-artifacts/testing-batches/B001/`。
 
 完整默认关闭／按需采样、空工程、共享视图、项目关闭／重开和其他工具兼容场景，留待本批累计3项后的合并验证。当前1/3，尚未宣称内存增长已修复。
+
+
+### 地图导入故障补充：机器级公共资源目录与 sample setup
+
+变更：`scripts/runtime-import-frost-map.py`、`samples/frostbound-realms/{project.json,setup.cmd,setup.ps1,README.md}`、`scripts/test-frost-game-directory.py` 及既有依赖测试夹具。公共资源位置按显式 `--game`、进程 `MENGINE_WARCRAFT_ROOT`、Windows 当前用户环境变量依次解析；缺失配置或四个 MPQ 不齐时在准备工具之前提示 setup。sample 移除机器路径和固定选图起始目录，构建器继续沿用项目配置。setup 校验输入、允许无效目录重试、保存用户环境变量；`-SessionOnly` 仅设置当前 PowerShell 进程。运行 setup 不写工程配置文件，已继承旧环境值的编辑器需完全退出重开。
+
+针对当前远程缺资源路径故障执行必要定向检查：环境目录测试10项和工具准备测试10项去重通过，包含优先级、用户注册表读取、缺失资源列表、构建前拦截、实际CLI错误收据、Windows PowerShell 5.1参数和交互流程、中文／空格／方括号／带引号路径、Python子进程继承及工程配置字节不变。交互和子进程夹具分别修正输入管道编码及PowerShell原生命令引号传递后仅补测失败项。用真实游戏目录执行 `setup.ps1 -SessionOnly`，同一进程启动 Python，经实际目录解析打开四个 MPQ，并从 War3Patch.mpq 读取 Units/UnitData.slk 共309954字节；验证前后用户环境变量和 project.json 均未变化。校验摘要与日志在 `tmp/docs-artifacts/map-import-environment/`，不提交原始产物。
+
+复现：`python scripts/test-frost-game-directory.py`、`python scripts/test-frost-import-tools.py`；用户入口为 sample 的 `setup.cmd`，或从仓库根目录执行 `powershell -NoProfile -ExecutionPolicy Bypass -File samples/frostbound-realms/setup.ps1`。本项为既有地图导入故障修复补充，不新增独立任务计数；远程用户默认持久化设置和原生选择／导入验收仍待现场或批次执行。本次未重新构建编辑器、未重跑完整地图转换或全库测试；复用已有转换验证，新增验证聚焦环境配置消费链路。

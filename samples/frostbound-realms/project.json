@@ -14,16 +14,13 @@
     "warcraft-map": {
       "program": "python",
       "args": [
-        "../../scripts/runtime-import-frost-map.py",
-        "--game",
-        "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne"
+        "../../scripts/runtime-import-frost-map.py"
       ],
       "extensions": [
         "w3m",
         "w3x"
       ],
       "title": "选择 Warcraft III 地图",
-      "initialDirectory": "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Maps",
       "workDirectory": "../../tmp/docs-artifacts/frost-map-imports"
     }
   }

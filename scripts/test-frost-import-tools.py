@@ -102,7 +102,9 @@ class ImportToolsTests(unittest.TestCase):
         source = self.root / '地图.w3x'
         source.write_bytes(b'fixture')
         result = self.root / 'result.json'
-        run = subprocess.run([sys.executable, '-S', str(ROOT / 'scripts/runtime-import-frost-map.py'), '--source', str(source), '--project', str(self.root), '--result', str(result)], capture_output=True)
+        for name in importlib.import_module('runtime-import-frost-map').ARCHIVES:
+            (self.root / name).write_bytes(b'fixture')
+        run = subprocess.run([sys.executable, '-S', str(ROOT / 'scripts/runtime-import-frost-map.py'), '--source', str(source), '--project', str(self.root), '--result', str(result), '--game', str(self.root)], capture_output=True)
         self.assertNotEqual(run.returncode, 0)
         error = json.loads(result.read_bytes())['error']
         self.assertIn('NumPy', error)

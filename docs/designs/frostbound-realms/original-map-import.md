@@ -183,7 +183,7 @@ node scripts/sync-frostbound-script.mjs
 
 进入“单人游戏 → 自定义游戏 → 打开地图文件”，在 Windows 文件选择框中选择任意目录的 `.w3m` 或 `.w3x`。后台转换完成后，在同一次 Play 中加载地图；转换期间仍能切换列表、取消导入或返回。取消后的迟到结果不会加载场景，Stop／退出会等待本次转换进程树结束。当前打开的地图加入本次运行的选图列表；重新启动游戏后，再次打开原文件即可复用缓存。
 
-`project.json.contentImporters.warcraft-map` 配置转换程序、支持扩展名、文件框初始目录、魔兽资源目录和作业目录。样例使用给定的 `E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne`；迁移机器时修改其中 `args` 的 `--game` 参数和 `initialDirectory`。完整场景生成器保留此配置。Windows 工程拉取后，首次导入会自动准备模型、节点元数据和 PKWARE 解压工具，不需要复制其他电脑的 `tmp/`，也不需要预先执行准备命令。基础环境需要 Python（`python -m pip install -r scripts/warcraft-assets/requirements.txt` 安装 NumPy／Pillow）、Node.js、.NET 10 SDK、Microsoft C++ Build Tools（x64 工具链与 Windows SDK）及原版 MPQ；首次构建需要访问 GitHub 和 .NET 还原源。已有完整工具只需 .NET 10 运行时，不再调用构建器或下载。可以提前准备工具：
+`project.json.contentImporters.warcraft-map` 配置转换程序、支持扩展名和作业目录。公共资源目录使用环境变量 `MENGINE_WARCRAFT_ROOT`，首次在 sample 目录双击 `setup.cmd`，或运行 `powershell -NoProfile -ExecutionPolicy Bypass -File samples/frostbound-realms/setup.ps1`。向导检查目录下四个 MPQ 文件后保存当前 Windows 用户环境变量，不写入工程文件；可用 `-GameDirectory "D:\Games\Warcraft III"` 直接指定，`-SessionOnly` 仅设置当前 PowerShell 进程。导入时按显式 `--game`、进程环境变量、Windows 用户环境变量的顺序读取，未配置或资源不全时在准备工具之前给出设置提示。已有编辑器未继承该变量时可以直接读取用户配置；已继承旧值时需完全退出重开。地图文件选择框使用系统默认位置。完整场景生成器沿用此配置。Windows 工程拉取后，首次导入会自动准备模型、节点元数据和 PKWARE 解压工具，不需要复制其他电脑的 `tmp/`，也不需要预先执行准备命令。基础环境需要 Python（`python -m pip install -r scripts/warcraft-assets/requirements.txt` 安装 NumPy／Pillow）、Node.js、.NET 10 SDK、Microsoft C++ Build Tools（x64 工具链与 Windows SDK）及原版 MPQ；首次构建需要访问 GitHub 和 .NET 还原源。已有完整工具只需 .NET 10 运行时，不再调用构建器或下载。可以提前准备工具：
 
 ```powershell
 python scripts/prepare-frost-map-import.py
