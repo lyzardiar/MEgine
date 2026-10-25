@@ -2002,3 +2002,12 @@ CPU比对载荷上限64MiB／设备，最多2048个哈希键、每键4个Weak候
 针对当前远程缺资源路径故障执行必要定向检查：环境目录测试10项和工具准备测试10项去重通过，包含优先级、用户注册表读取、缺失资源列表、构建前拦截、实际CLI错误收据、Windows PowerShell 5.1参数和交互流程、中文／空格／方括号／带引号路径、Python子进程继承及工程配置字节不变。交互和子进程夹具分别修正输入管道编码及PowerShell原生命令引号传递后仅补测失败项。用真实游戏目录执行 `setup.ps1 -SessionOnly`，同一进程启动 Python，经实际目录解析打开四个 MPQ，并从 War3Patch.mpq 读取 Units/UnitData.slk 共309954字节；验证前后用户环境变量和 project.json 均未变化。校验摘要与日志在 `tmp/docs-artifacts/map-import-environment/`，不提交原始产物。
 
 复现：`python scripts/test-frost-game-directory.py`、`python scripts/test-frost-import-tools.py`；用户入口为 sample 的 `setup.cmd`，或从仓库根目录执行 `powershell -NoProfile -ExecutionPolicy Bypass -File samples/frostbound-realms/setup.ps1`。本项为既有地图导入故障修复补充，不新增独立任务计数；远程用户默认持久化设置和原生选择／导入验收仍待现场或批次执行。本次未重新构建编辑器、未重跑完整地图转换或全库测试；复用已有转换验证，新增验证聚焦环境配置消费链路。
+
+
+### 地图导入故障补充：进度文件占用不终止转换
+
+远程日志在转换第72类装饰模型后，由 `ImportProgress.report` 的 `os.replace(progress.tmp, progress.json)` 抛出 `PermissionError [WinError 5]`，使整个转换退出。日志不能识别占用进程；本机使用不共享删除权限的真实 Windows 读句柄，已复现相同错误。修改 `scripts/runtime-import-frost-map.py`：进度写入／替换的 OSError 保留旧快照，按后续进度调用重试，失败尝试也参与数量节流，同一作业只警告一次；地图转换和资源校验异常继续正常失败。无重试等待，也不修改引擎读取协议。
+
+`python scripts/test-frost-map-cache.py` 10项通过，新增覆盖真实 Windows 句柄占用／释放恢复、WinError 5 注入后的原子快照与节流、临时文件写入拒绝不打断缓存资源验证；既有损坏资产和路径越界拒绝检查继续通过。实际转换复用隔离工具与资源缓存，在独立目标工程运行 DotA_v6.83d，整个转换期间持续持有 progress.json 读句柄：退出码0、cached=false、461个资源校验成功、旧进度快照未被破坏、进度警告恰好1条。未将结果写成远程机器验收。
+
+证据位于 `tmp/docs-artifacts/map-import-progress-lock/`：`baseline-lock.log`、`progress-tests.log`、`verification.json` 和 `locked-job/converter.log`；实际锁定导入复现入口为该目录的 `verify-locked-import.py`。同一地图导入故障补充不增加独立任务计数。远程拉取后的实际导入仍待重试；未重编译编辑器或扩大到全库测试，其他批次队列保持原状态。

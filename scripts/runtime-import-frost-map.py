@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import time
 import uuid
 
@@ -48,6 +49,7 @@ class ImportProgress:
     def __init__(self, path=None):
         self.path = Path(path) if path else None
         self.last_step, self.last_time = None, 0
+        self.warned = False
 
     def report(self, step, message, completed=None, total=None):
         if self.path is None:
@@ -59,9 +61,15 @@ class ImportProgress:
         if total:
             payload.update(completed=completed, total=total)
         temporary = self.path.with_suffix('.tmp')
-        temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding='utf-8')
-        os.replace(temporary, self.path)
+        # Progress is advisory; retry on the next update without interrupting map conversion.
         self.last_step, self.last_time = step, now
+        try:
+            temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding='utf-8')
+            os.replace(temporary, self.path)
+        except OSError as error:
+            if not self.warned:
+                print(f'Warning: map import progress could not be published; conversion continues: {error}', file=sys.stderr)
+                self.warned = True
 
 
 def digest(path):

@@ -1,7 +1,9 @@
 """Author: MiYu. Verify cached map integrity and path confinement without modifying user assets."""
 import hashlib
 import importlib
+import io
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -50,6 +52,57 @@ class CacheTests(unittest.TestCase):
             progress.report(4, '转换单位')
             self.assertEqual(json.loads(target.read_bytes()), dict(step=4, steps=8, message='转换单位'))
         self.assertFalse(target.with_suffix('.tmp').exists())
+
+    def test_progress_replace_denial_preserves_snapshot_and_recovers(self):
+        target = self.project / 'progress.json'
+        progress = ImportProgress(target)
+        with patch('time.monotonic', return_value=10):
+            progress.report(3, '转换装饰物', 0, 100)
+        previous = target.read_bytes()
+        error = PermissionError(13, 'Access denied')
+        error.winerror = 5
+        with patch('time.monotonic', return_value=11), patch('os.replace', side_effect=error) as replace, patch('sys.stderr', new_callable=io.StringIO) as log:
+            progress.report(3, '转换装饰物', 1, 100)
+            progress.report(3, '转换装饰物', 2, 100)
+            self.assertEqual(replace.call_count, 1)
+            self.assertEqual(log.getvalue().count('Warning:'), 1)
+        self.assertEqual(target.read_bytes(), previous)
+        with patch('time.monotonic', return_value=12):
+            progress.report(3, '转换装饰物', 100, 100)
+        self.assertEqual(json.loads(target.read_bytes())['completed'], 100)
+        self.assertFalse(target.with_suffix('.tmp').exists())
+
+    def test_progress_temp_write_failure_does_not_abort_cached_validation(self):
+        progress = ImportProgress(self.project / 'progress.json')
+        with patch.object(Path, 'write_text', side_effect=PermissionError(13, 'Access denied')), patch('sys.stderr', new_callable=io.StringIO) as log:
+            result = validate(self.project, self.entry, self.source_sha, lambda done, total: progress.report(7, '校验缓存资源', done, total))
+        self.assertEqual(result, self.entry)
+        self.assertEqual(log.getvalue().count('Warning:'), 1)
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows file sharing semantics')
+    def test_progress_with_real_windows_reader_lock(self):
+        import ctypes
+        from ctypes import wintypes
+        target = self.project / 'progress.json'
+        progress = ImportProgress(target)
+        progress.report(0, '开始')
+        previous = target.read_bytes()
+        kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+        kernel.CreateFileW.restype = wintypes.HANDLE
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel.CloseHandle.restype = wintypes.BOOL
+        handle = kernel.CreateFileW(str(target), 0x80000000, 3, None, 3, 0, None)
+        self.assertNotEqual(handle, wintypes.HANDLE(-1).value)
+        try:
+            with patch('sys.stderr', new_callable=io.StringIO) as log:
+                progress.report(3, '转换装饰物', 10, 100)
+            self.assertEqual(log.getvalue().count('Warning:'), 1)
+            self.assertEqual(target.read_bytes(), previous)
+        finally:
+            kernel.CloseHandle(handle)
+        progress.report(7, '完成', 100, 100)
+        self.assertEqual(json.loads(target.read_bytes())['completed'], 100)
 
     def test_changed_original(self):
         (self.package/'original.w3x').write_bytes(b'changed')
