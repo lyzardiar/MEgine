@@ -115,9 +115,12 @@ impl AssetMounts {
 
     /// Texture aliases are resolved within each source before considering a lower-priority archive.
     pub fn read_texture_bytes(&self, member: &str) -> Result<AssetBytes, AssetError> {
+        self.read_texture_bytes_limited(member,usize::MAX)
+    }
+    pub fn read_texture_bytes_limited(&self, member: &str, max_bytes: usize) -> Result<AssetBytes, AssetError> {
         let member = normalize_member(member)?; let mut candidates = vec![member.clone()];
         if let Some((stem, extension)) = member.rsplit_once('.') { if extension == "blp" { candidates.push(format!("{stem}.tga")); } else if extension == "tga" { candidates.push(format!("{stem}.blp")); } }
-        self.read_candidates(&candidates,usize::MAX)
+        self.read_candidates(&candidates,max_bytes)
     }
 
     fn read_candidates(&self, members: &[String], max_bytes: usize) -> Result<AssetBytes, AssetError> {

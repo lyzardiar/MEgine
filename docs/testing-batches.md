@@ -2093,3 +2093,13 @@ REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖
 命令：`cargo test -p mengine-assets --lib native_warcraft_map -- --test-threads=1`、`cargo test -p mengine-assets --lib asset_byte -- --test-threads=1`；真实消费为 `cargo run -p mengine-assets --example warcraft_archive_map -- <game-directory> <DotA-path> <Amazonia-path> <BootyBay-path>`。本地产物：`tmp/docs-artifacts/warcraft-archives/map-{session,byte-limit}*`、`map-strings-iter-tests.log`及`compare-map-session.py`；原始JSON和诊断不提交。
 
 待批次：累计3项后统一Host／Tauri消费者编译、真实地形及地图会话与视口接入、切图／失败／取消过期发布、公共CPU／GPU复用和磁盘增长验证。当前1/3。W3E源顶点不是完整坡道／悬崖表面；完整地图启动、原选图替换、单位／规则／脚本初始化、delta链和稳定帧延迟仍待实现。游戏选图仍走旧转换，缓存问题未整体关闭；不清理既有用户缓存。
+
+### 第一百五十六阶段／新批次任务2/3：原生地表与悬崖内存编译
+
+变更：`crates/mengine-assets/src/warcraft_terrain/{mod,slk,layout,surface,tests}.rs`及导出、`asset_bytes{,_tests}.rs`限额纹理别名接口、`mdx/{mod,tests}.rs`静态资格查询、CPU地形示例和固定参考说明。W3E＋源SLK／MDX／BLP生成真实地表／悬崖分块及合成图集，保留坡道共享高度、双格占用、变体、纹理混合和原始relief。按来源共享解码Arc、按请求增量读取变体；布局、网格、纹理、模板与派生字符串设预算。不兼容材质／UV、动态／billboard或非源锚定模板明确拒绝。
+
+必要检查：10项地形、1项静态资格、3项纹理别名通过。命令为`cargo test -p mengine-assets --lib native_warcraft_terrain -- --test-threads=1`、`cargo test -p mengine-assets --lib native_mdx_static_consumer -- --test-threads=1`、`cargo test -p mengine-assets --lib asset_byte_texture -- --test-threads=1`。独立审核指出的派生字符串分配、覆盖材质和动态／billboard资格已修复并定向复核。实际三图编译和参考对照用于确认源几何，没有全图转换、完整Editor构建或原生UI测试。
+
+三图311来源SHA、38344地块、5587悬崖、323抬高角点、264坡道入口、318块、272405顶点和462216索引对照通过；索引相等，最大位置差7.569789886474609e-6、法线1.1920928955078125e-7、UV2.9038160320737916e-8。地表每通道差最多2、悬崖1；Debug CPU编译不是整图性能基准。最终资格补修后仅补三图编译并核对数量，复用几何／像素对照。证据：`tmp/docs-artifacts/warcraft-archives/native-terrain/`、`terrain-comparison.{json,log}`、`terrain-{tests-final,byte-alias-tests,static-model-test,example-final-build}.log`、`terrain-final-*.json`及`compare-native-terrain.py`；原始产物不提交。
+
+待批次：155–156为2/3，下一相关任务后统一Host／Tauri构建、实际GPU地形／水面、mip接缝与近景、多视图共享／释放、取消／失败和磁盘写出边界。水面／水深、Host、世界和选图入口尚未接入；CPU一致性不代表War3画面／FPS。用户PID64664保持原进程，现有缓存未清理。

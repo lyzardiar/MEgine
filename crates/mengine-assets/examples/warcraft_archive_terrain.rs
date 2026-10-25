@@ -1,0 +1,16 @@
+// Author: MiYu. Validate native terrain compilation from one archive; optional reference captures stay in tmp by default.
+use mengine_assets::{AssetByteCache,WarcraftArchives,WarcraftMapSession,WarcraftMapLimits,WarcraftMapCancelToken,WarcraftTerrain,WarcraftTerrainLimits};
+use sha2::{Digest,Sha256};
+use std::{path::PathBuf,sync::Arc,time::Instant,io::BufWriter};
+
+fn main()->Result<(),Box<dyn std::error::Error>> {
+    let mut args=std::env::args_os().skip(1); let game=PathBuf::from(args.next().ok_or("Provide game directory, map path and optional validation output directory")?); let map=PathBuf::from(args.next().ok_or("Provide map path")?); let output=args.next().map(PathBuf::from); if args.next().is_some() {return Err("Unexpected argument".into());}
+    let cache=Arc::new(AssetByteCache::default()); let archives=WarcraftArchives::open(&game,0,cache.clone(),16*1024*1024)?; let cancel=WarcraftMapCancelToken::default(); let session=WarcraftMapSession::open(&archives,&map,WarcraftMapLimits::default(),&cancel)?;
+    let started=Instant::now(); let terrain=WarcraftTerrain::compile(session.terrain(),session.assets(),WarcraftTerrainLimits::default(),&cancel)?; let elapsed_ms=started.elapsed().as_secs_f64()*1000.; let mut resources=Vec::new();
+    for resource in &terrain.resources {let bytes=session.assets().read(&resource.location.member)?; if bytes.location!=resource.location {return Err("Resource source changed during compilation".into());} resources.push(serde_json::json!({"member":bytes.location.member,"bytes":bytes.bytes.len(),"sha256":format!("{:x}",Sha256::digest(&bytes.bytes))}));}
+    let vertices=terrain.chunks.iter().map(|c|c.mesh.positions.len()).sum::<usize>(); let indices=terrain.chunks.iter().map(|c|c.mesh.indices.len()).sum::<usize>();
+    if let Some(output)=&output {std::fs::create_dir_all(output)?; let writer=BufWriter::new(std::fs::File::create(output.join("geometry.json"))?); serde_json::to_writer(writer,&serde_json::json!({"layout":terrain.layout,"chunks":terrain.chunks,"groundAtlasSize":[terrain.ground_atlas.width,terrain.ground_atlas.height],"resources":resources}))?;
+        image::save_buffer(output.join("ground.png"),&terrain.ground_atlas.pixels,terrain.ground_atlas.width,terrain.ground_atlas.height,image::ColorType::Rgba8)?; for (i,texture) in terrain.cliff_textures.iter().enumerate() {image::save_buffer(output.join(format!("cliff{i}.png")),&texture.pixels,texture.width,texture.height,image::ColorType::Rgba8)?;}
+    }
+    println!("{}",serde_json::json!({"scope":"CPU source ground and cliffs only; no water, GPU, game world or selector integration","profile":"Debug diagnostic, not complete loading benchmark","map":map,"compileMs":elapsed_ms,"groundTiles":terrain.layout.ground.len(),"cliffPlacements":terrain.layout.cliffs.len(),"raisedCorners":terrain.layout.raised_corners.len(),"rampEntrances":terrain.layout.ramp_entrances.len(),"chunks":terrain.chunks.len(),"vertices":vertices,"indices":indices,"atlas":[terrain.ground_atlas.width,terrain.ground_atlas.height],"resources":resources.len(),"output":output})); Ok(())
+}

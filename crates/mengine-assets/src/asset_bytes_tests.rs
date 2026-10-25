@@ -108,3 +108,9 @@ fn asset_byte_read_limits_do_not_fall_through_oversized_overrides() {
     let base=MemorySource::new(&[("a",b"ok")]); let custom=MemorySource::new(&[("a",b"override")]); let mounts=AssetMounts::new(vec![custom,base.clone()],Arc::new(AssetByteCache::default()));
     assert!(mounts.read_limited("a",2).is_err()); assert_eq!(base.reads.load(Ordering::Relaxed),0);
 }
+
+#[test]
+fn asset_byte_texture_alias_limits_cover_cold_and_cached_overrides() {
+    let base=MemorySource::new(&[("a.tga",b"ok")]); let custom=MemorySource::new(&[("a.blp",b"override")]); let mounts=AssetMounts::new(vec![custom,base.clone()],Arc::new(AssetByteCache::default()));
+    assert!(mounts.read_texture_bytes_limited("a.tga",2).is_err()); assert_eq!(base.reads.load(Ordering::Relaxed),0); assert_eq!(mounts.read_texture_bytes_limited("a.tga",8).unwrap().location.member,"a.blp"); assert!(mounts.read_texture_bytes_limited("a.tga",2).is_err()); assert_eq!(base.reads.load(Ordering::Relaxed),0);
+}

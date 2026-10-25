@@ -1,6 +1,6 @@
 # Warcraft 地图运行时资源加载调查
 
-Author: MiYu. 2026-10-25。状态：MPQ字节、BLP内存解码、经典MDX模型／Host消费及核心地图数据会话已实现；地形编译、游戏世界和选图入口待接入。
+Author: MiYu. 2026-10-25。状态：MPQ、BLP、经典MDX／Host消费、地图数据会话和CPU地表／悬崖编译已实现；水面、地形GPU消费、游戏世界和选图入口待接入。
 
 ## 结论与边界
 
@@ -122,6 +122,20 @@ Host新增 `MountedWarcraftModel`：同步加载接口供后续会话工作线�
 真实DotA_v6.83d、Amazonia与BootyBay依次打开，12个核心成员SHA、44771个地形corner、704512个寻路cell、W3I全字段及30项WTS内容摘要与既有Python读取器对照通过。涵盖25／18版本、DotA省略尾表及193×97非方形地形。三次释放后只保留公共Footman的同一Arc，缓存1项／105022字节；持有的地图字节在释放后仍有效。Debug核心数据读取仅作诊断，不代表整图启动或冷盘基准。原始收据／对照脚本与日志位于 `tmp/docs-artifacts/warcraft-archives/map-session-*` 和 `compare-map-session.py`。
 
 本项计新批次1/3；后续接入真实地形、世界实例及选图后合并原生验证。不重复完整Editor构建或旧地图转换，不清理用户现有缓存。当前游戏选图仍产生离线文件，运行缓存堆积问题尚未整体关闭。
+
+## 第一百五十六阶段：原生地表与悬崖编译（新批次2/3）
+
+`WarcraftTerrain::compile`直接消费W3E和已挂载归档中的`TerrainArt/Terrain.slk`、`CliffTypes.slk`、悬崖MDX及地表／悬崖BLP，输出真实地形布局、分块网格、合成图集、共享悬崖纹理和实际来源记录。四角顺序、坡道入口共享高度、双格过渡占用、悬崖变体、接缝纹理、地面法线和连续原始高度形变沿用固定参考；没有使用程序化地形替代原图。地表掩码、扩展变体及各tile独立mip采样shader也在内存生成。产品编译接口不写资产、工程或meta。
+
+模型按实际请求的变体增量读取，缓存首个缺失终点并按最后可用变体选择；variation0不会预先解析后续变体。纹理按实际`AssetLocation`在一次编译内共享不可变Arc；跨地图解码缓存尚未实现。当前只接收源锚定的一格悬崖／双格过渡、单geoset、白色全alpha／opaque的UV0恒等材质和cliff replacement11；动画、billboard、多层材质、其他UV和颜色语义明确拒绝，避免静默固定或丢失覆盖行为。
+
+默认16格分块，可选8／16／32格；单成员16MiB、布局128MiB、输出网格256MiB、累计纹理解码／图集128MiB、保留模板32MiB、512模板、4096图集tile及4096输出chunk。大数组预留前检查计数和字节；SYLK坐标、重复单元／表头／行、引号、UTF-8和派生路径／家族先验证再复制，字符串也扣预算。归档、单次MDX解析／采样和图像工作缓冲另有边界，限额不代表整个进程驻留上限；取消沿用协作语义，失败不发布部分地形。
+
+10项地形、1项静态MDX资格及3项纹理别名检查通过，独立审核完成。三图Amazonia／DotA／BootyBay的311来源SHA、38344地块、5587悬崖、323抬高角点、264坡道入口、318块、272405顶点和462216索引与既有Python布局／固定源模板对照通过。索引相等，位置最大差`7.569789886474609e-6`、法线`1.1920928955078125e-7`、UV`2.9038160320737916e-8`；Pillow参考下地表每通道最大差2、悬崖1，不宣称像素精确相等。最终静态资格补修后仅补三图编译，数量一致，复用未变几何／像素对照。Debug CPU耗时仅作诊断，不代表整图加载或FPS。
+
+命令：`cargo test -p mengine-assets --lib native_warcraft_terrain -- --test-threads=1`、`cargo test -p mengine-assets --lib native_mdx_static_consumer -- --test-threads=1`、`cargo test -p mengine-assets --lib asset_byte_texture -- --test-threads=1`。CPU消费者：`cargo run -p mengine-assets --example warcraft_archive_terrain -- <game-directory> <map-path> [validation-directory]`，省略验证目录只输出摘要，指定临时目录才导出参考几何／PNG。证据在`tmp/docs-artifacts/warcraft-archives/native-terrain/`、`terrain-*.log`、`terrain-comparison.json`及`compare-native-terrain.py`。
+
+155–156为2/3，下一相关任务后统一Host／Tauri及实际GPU集成。水面／水深、Host地形上传、实际分块裁剪、视口、世界和选图仍待接入；CPU一致性不等于完整War3画面或帧率验收。现有编辑器和缓存未触碰，常规选图仍使用离线流程，缓存问题尚未整体关闭。
 
 ## 验收标准
 

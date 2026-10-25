@@ -80,6 +80,10 @@ impl MdxModel {
     pub fn geoset_layer_count(&self, geoset: usize) -> Option<usize> { Some(self.materials.get(self.geosets.get(geoset)?.material)?.layers.len()) }
     pub fn geoset_uvs(&self, geoset: usize, uv_set: usize) -> Option<&[[f32;2]]> { self.geosets.get(geoset)?.uvs.get(uv_set).map(Vec::as_slice) }
     pub fn diagnostics(&self) -> &[String] { &self.diagnostics }
+    pub(crate) fn requires_dynamic_pose(&self)->bool {
+        let active=|t:&Option<Track>|t.as_ref().is_some_and(|t|!t.keys.is_empty());
+        self.nodes.iter().any(|n|n.flags&0x78!=0 || n.attachment.as_ref().is_some_and(|(_,_,t)|active(t)) || active(&n.translation) || active(&n.rotation) || active(&n.scale)) || self.geoset_animations.iter().any(|g|active(&g.alpha_track) || active(&g.color_track)) || self.materials.iter().flat_map(|m|&m.layers).any(|l|active(&l.alpha_track) || active(&l.texture_track)) || self.texture_animations.iter().any(|t|active(&t.translation) || active(&t.rotation) || active(&t.scale))
+    }
     /// Sample source keys in milliseconds; globals use unwrapped elapsed time, sequence time loops or clamps.
     pub fn sample(&self, sequence: Option<usize>, elapsed_ms: u64, camera: Option<MdxBillboardCamera>) -> Result<MdxPose,AssetError> { pose::sample(self,sequence,elapsed_ms,camera) }
 }

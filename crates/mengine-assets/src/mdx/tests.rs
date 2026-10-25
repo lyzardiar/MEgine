@@ -37,6 +37,14 @@ fn native_mdx_rejects_empty_or_unbounded_sources() {
 }
 
 #[test]
+fn native_mdx_static_consumer_detects_node_material_and_uv_tracks() {
+    let mut model=parse(&model_with(&bone(0,-1,&[]),&geometry(&[0],0,1),&material(1,0,&[]),&[],&[])); assert!(!model.requires_dynamic_pose()); assert!(parse(&fixture()).requires_dynamic_pose());
+    let track=Track {interpolation:0,global:-1,keys:vec![Key {time:0,value:Vec4::ONE,incoming:Vec4::ZERO,outgoing:Vec4::ZERO}],collapse_outside:false};
+    for mode in 0..11 {let mut model=parse(&model_with(&bone(0,-1,&[]),&geometry(&[0],0,1),&material(1,0,&[]),&[],&[])); match mode {0=>model.nodes[0].translation=Some(track.clone()),1=>model.nodes[0].rotation=Some(track.clone()),2=>model.nodes[0].scale=Some(track.clone()),3=>model.materials[0].layers[0].alpha_track=Some(track.clone()),4=>model.materials[0].layers[0].texture_track=Some(track.clone()),5=>model.texture_animations.push(TextureAnimation {translation:Some(track.clone()),rotation:None,scale:None}),6=>model.geoset_animations.push(GeosetAnimation {geoset:0,alpha:1.,color:Vec3::ONE,alpha_track:Some(track.clone()),color_track:None}),7=>model.geoset_animations.push(GeosetAnimation {geoset:0,alpha:1.,color:Vec3::ONE,alpha_track:None,color_track:Some(track.clone())}),8=>model.nodes[0].flags|=0x8,9=>model.texture_animations.push(TextureAnimation {translation:None,rotation:Some(track.clone()),scale:None}),10=>model.texture_animations.push(TextureAnimation {translation:None,rotation:None,scale:Some(track.clone())}),_=>unreachable!()} assert!(model.requires_dynamic_pose());}
+    model.nodes[0].translation=Some(Track {keys:vec![],..track}); assert!(!model.requires_dynamic_pose());
+}
+
+#[test]
 fn native_mdx_source_tracks_loop_clamp_axes_and_equal_matrix_groups() {
     let model=parse(&fixture()); assert!((first_x(&model,500)-1.5).abs()<1e-6); assert!((first_x(&model,1500)-1.5).abs()<1e-6);
     let pose=model.sample(Some(0),500,None).unwrap(); assert_eq!(pose.geosets[0].mesh.positions[1],[0.5,0.,-1.]); assert_eq!(pose.geosets[0].mesh.normals[0],[0.,1.,0.]);
