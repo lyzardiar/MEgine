@@ -1962,4 +1962,10 @@ ff02e3b的启动、资源热更新、空间选取及DotA缓存／重开检查通
 
 3项定向检查通过：后端不支持与有效空报告的区分、标签合并／稳定排序／64组上限，以及真实GPU共享／独立设备标识和新增8MiB缓冲区归属。该GPU夹具实测已分配85983232字节、预留335544320字节，说明预留与有效分配不能混用；不是实际地图或进程内存结论。TypeScript、Tauri Release接口检查、两份JS语法检查通过。日志`tmp/docs-artifacts/editor-performance-risk/gpu-memory-diagnostics-{tests,gpu-test,typescript,tauri-check}.log`；筛选`viewport::gpu_memory::tests`（editor-host）与`gpu_allocator_diagnostics_`（rhi）。
 
-为定位上一批已知的驻留增长，单独构建并执行一次带分配器采样的3轮Amazonia运行／停止诊断，核对同设备总量、资源标签和进程内存趋势；不将该诊断当作整批性能验收。完整默认关闭／按需采样、空工程、共享视图、项目关闭／重开和其他工具兼容场景，留待本批累计3项后的合并验证。当前1/3，尚未宣称内存增长已修复。
+9471003定向诊断完成：前端生产构建通过，原生custom-protocol Release构建83秒；冻结程序`tmp/docs-artifacts/editor-performance-risk/build-9471003/mengine-editor-tauri.exe`，SHA256为`6504ff4491d876ae31e9d3bdd97047ca5a03222f46f270d2f99f14b482c807df`。33项来源摘要、61个前端文件摘要及4个内嵌入口已核对。为定位上一批已知增长，仅执行带采样的3轮Amazonia运行／停止复现，不作为整批性能验收。
+
+`map-session-1792909115555`通过7434实体的多窗口、暂停步进、停止及3轮各运行15秒／空闲20秒。14个阶段的进程身份、创建时间、求和、GPU数据和同设备标识已核对；所有Scene／Game读取均为deviceId=1，均有有效后端报告，单次后端查询最高3.2301ms。3次等时空闲GPU分配1100.250／1104.250／1102.812MiB，预留均1408MiB；根进程私有内存3217.578／3213.824／3244.965MiB，首末+27.387MiB。本次未重现上一批约260MiB增量，不能据此排除长期增长或将预留容量认定为其原因。
+
+最终设备标签中mesh_vb为7940份、509.938MiB，material_texture为93份、201.750MiB；这是后端分配数据，含多个视口，不能与某个视图的当前可见逻辑字节直接相减。下一步优先核对顶点缓冲的分配粒度与跨视图重复几何，针对实际资源成本优化。进程正常退出、发现文件移除，WebView隔离缓存因EPERM保留，用户原编辑器未重启。日志`gpu-memory-diagnostics-native.log`、汇总`gpu-memory-diagnostics-summary.json`均在上述临时证据目录，原始地图报告在`tmp/docs-artifacts/testing-batches/B001/`。
+
+完整默认关闭／按需采样、空工程、共享视图、项目关闭／重开和其他工具兼容场景，留待本批累计3项后的合并验证。当前1/3，尚未宣称内存增长已修复。

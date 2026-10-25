@@ -1963,3 +1963,5 @@ EditorViewportRenderer的headless入口以backend及对象布局共享Adapter／
 MCP的`profiler.get_samples`增加`includeGpuAllocator`（默认false），按需返回现有设备的已分配／预留字节、块数／分配数、最多64组标签及采集耗时。共享设备标识相同，按设备去重，未创建视口返回null、后端不支持返回available=false及null计数。逐帧不采集，不把设备预留混入逐视图逻辑估算，也不将其解释为系统GPU驻留或CPU私有堆。
 
 3项定向CPU／GPU检查、TypeScript及Tauri接口检查通过，真实GPU夹具新增8MiB缓冲区归属正确，夹具分配约82MiB、预留320MiB，不能外推实际地图。为上一批已知增长执行一次3轮诊断，其他集成场景按新批次1/3待合并验证。路径、命令和gpu-memory-diagnostics-*证据见testing-batches.md；内存增长、稳定满帧、LOD及完整War3仍未完成。
+
+9471003已完成前端／原生诊断构建和3轮Amazonia定向复现（map-session-1792909115555），33项来源及61个前端文件摘要已核对。14个采样阶段Scene／Game均为共享设备1，最高后端查询3.2301ms；3次空闲GPU分配1100.250／1104.250／1102.812MiB，预留均1408MiB，根私有内存3217.578／3213.824／3244.965MiB，首末+27.387MiB。未重现约260MiB增长，不作长期稳定结论。设备mesh_vb7940份、509.938MiB及材质纹理201.750MiB，是下一阶段缓冲分配粒度／跨视图几何复用的直接核对依据。相关完整集成仍为本批1/3待合并验证。
