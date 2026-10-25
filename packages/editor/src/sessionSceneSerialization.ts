@@ -48,6 +48,12 @@ function sceneFromFragments(header: string, entities: readonly string[]): string
   return header.slice(0, -3) + entities.join(',') + ']}}';
 }
 
+function copySessionEntities(source: EntityRec[], length = source.length): EntityRec[] {
+  const result = new Array<EntityRec>(length);
+  for (let index = 0, count = Math.min(length, source.length); index < count; index++) result[index] = source[index];
+  return result;
+}
+
 /** MiYu: publish only changed entity JSON; each delta names its exact predecessor. */
 export function createSessionScenePublisher() {
   const serialize = createSessionSceneSerializer();
@@ -80,29 +86,42 @@ export function createSessionScenePublisher() {
 /** MiYu: keep one transport baseline, independent of editable store objects. Missing bases request a checkpoint. */
 export function createSessionSceneReceiver() {
   type Fragment = { json: string; entity?: EntityRec };
-  let state: string | null = null, previous: Fragment[] = [], resyncPending = false;
-  const reset = () => { state = null; previous = []; resyncPending = false; };
+  let state: string | null = null, previous: Fragment[] = [], previousEntities: EntityRec[] | undefined, resyncPending = false;
+  const reset = () => { state = null; previous = []; previousEntities = undefined; resyncPending = false; };
   const receive = (message: { sceneJson?: string; sceneDelta?: SessionSceneDelta }, stateId: string, structured: boolean): string | SessionSceneDocument | undefined => {
     if (message.sceneJson !== undefined) { reset(); return message.sceneJson; }
     const delta = message.sceneDelta;
     if (!delta) throw new Error('Missing scene delta');
     if (delta.base !== null && delta.base !== state) return undefined;
     if (!Number.isSafeInteger(delta.length) || delta.length < 0 || !delta.header.endsWith('"entities":[]}}')) throw new Error('Invalid scene delta header');
-    const next = delta.base === null ? [] : previous.slice(0, delta.length);
+    let next = delta.base === null ? [] : delta.length === previous.length ? previous : previous.slice(0, delta.length);
+    const put = (index: number, fragment: Fragment) => { if (next === previous) next = previous.slice(); next[index] = fragment; };
     const indices = new Set<number>();
     for (const [index, json] of delta.changed) {
       if (!Number.isSafeInteger(index) || index < 0 || index >= delta.length || indices.has(index) || typeof json !== 'string') throw new Error('Invalid scene delta entity');
-      indices.add(index); next[index] = previous[index]?.json === json ? previous[index] : { json };
+      indices.add(index); const fragment = previous[index]?.json === json ? previous[index] : { json };
+      if (next[index] !== fragment) put(index, fragment);
     }
-    for (let index = 0; index < delta.length; index++) if (next[index] === undefined) throw new Error('Incomplete scene delta');
+    // Accepted prefixes are complete; checkpoints and newly grown slots still require every position.
+    for (let index = delta.base === null ? 0 : Math.min(previous.length, delta.length); index < delta.length; index++) if (next[index] === undefined) throw new Error('Incomplete scene delta');
     let result: string | SessionSceneDocument;
+    let parsedEntities: EntityRec[] | undefined;
     const header = structured && canReuseSessionSceneParsing() ? parse(delta.header) as SessionDocument : undefined;
     if (header?.version === CURRENT_SCENE_VERSION) {
-      for (let index = 0; index < next.length; index++) if (!next[index].entity) next[index] = { json: next[index].json, entity: freezeSessionJson(parse(next[index].json) as EntityRec) };
-      header.world.entities = next.map(fragment => fragment.entity!);
+      const inherited = delta.base !== null && previousEntities != null;
+      parsedEntities = inherited ? delta.length === previousEntities!.length ? previousEntities! : copySessionEntities(previousEntities!, delta.length) : new Array(delta.length);
+      const read = (index: number) => {
+        let fragment = next[index];
+        if (fragment.entity === undefined) { fragment = { json: fragment.json, entity: freezeSessionJson(parse(fragment.json) as EntityRec) }; put(index, fragment); }
+        if (parsedEntities === previousEntities && parsedEntities![index] !== fragment.entity) parsedEntities = copySessionEntities(parsedEntities!);
+        if (parsedEntities !== previousEntities) parsedEntities![index] = fragment.entity!;
+      };
+      if (inherited) { for (const index of indices) read(index); }
+      else for (let index = 0; index < next.length; index++) read(index);
+      header.world.entities = freeze(parsedEntities) as EntityRec[];
       result = freezeSessionJson(header); parsedDocuments.add(result);
     } else result = sceneFromFragments(delta.header, next.map(fragment => fragment.json));
-    previous = next; state = stateId; resyncPending = false;
+    previous = next; previousEntities = parsedEntities; state = stateId; resyncPending = false;
     return result;
   };
   return {

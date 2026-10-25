@@ -1733,3 +1733,13 @@ playWorldSync.ts提供注册世界身份与retainedPresentation：必须是工�
 生产发布器手动CPU对照benchmark-sparse-session.mjs通过：输入为保留原始Main.mscene的4374实体，先经实际Host→World转换，再比较不传owned提示的完整比较与传提示的当前生产路径；同进程交替顺序，2轮预热／9轮计量，每轮25个相邻帧，每帧核对完整消息。每帧另起事件任务，避免WeakRef的任务内保活将整个基准串成一个帧生命周期。无实体变化中位数0.101564→0.001696ms，合成64实体变化0.185488→0.090696ms，全部4374变化走完整比较为9.462052→9.353388ms，密集变化未宣称有收益。此范围仅含发送端发布，不含World资格校验／构建补丁、模拟、IPC、接收端或实际FPS。最终日志和全部样本为sparse-session-benchmark.log／json，脚本与输入／探索记录均保留在tmp；同步单任务探索数据不用于实际帧生命周期结论。
 
 134、135为2/3，当前只完成实现和定向检查，没有重跑完整前端／原生QA。下一独立任务后统一构建并验证实际Amazonia／DotA多窗口的版本推进、增量／完整检查点恢复、选择与输入、Pause／Step／Stop与重启、隐藏恢复、消息负担和FPS／p95分布。最近完整原生程序仍847e5af，稳定60、长期驻留、LOD与完整War3目标继续进行中。
+
+### 第一百三十六阶段／编辑器新批次任务3/3：分离视口接收端复用完整不可变基线
+
+sessionSceneSerialization.ts的receiver保留最新Fragment及已解析实体列表。仅在相同已接受base时复用已证明完整的前缀；检查点仍验证所有位置，增长仍验证每个新增位置。Fragment和实体列表均按需复制，未变时复用；实体列表按长度逐项复制，稀疏更新只解析变化位置，单项JSON深度冻结后再冻结引用列表及header。旧文档保持不可变。原始字符串、旧格式或自定义解析转为原有字符串路径并取消列表资格，下次结构化读取重新建立基线；reset和完整sceneJson清理资格。所有基线、stateId及检查点状态只在解析／冻结成功后提交，错误元组、缺项和错误JSON不污染先前已接受状态。
+
+node --test packages/editor/tests/sessionSparseReception.test.mjs packages/editor/tests/sessionSceneReception.test.mjs packages/editor/tests/sessionSceneDelta.test.mjs packages/editor/tests/sessionSceneSerialization.test.mjs packages/editor/tests/sessionSparsePublication.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs为44通过、0失败；引用列表复制完善后，仅重跑受影响的新接收路径5项全部通过。覆盖数组身份复用与深度冻结、乱序／重复／越界元组、同内容JSON、增长缺项与倒序新增、截断／空列表、强制检查点缺项、错误片段及header回滚、丢帧恢复、raw／旧格式／自定义parser切换、特殊键和JSON原始值、原生mock与独立store以及已有跨窗口选择／播放／Stop语义。修改源文件转译0错误、diff检查通过；完整TypeScript构建归入本批执行。日志sparse-receiver-tests.log／final-tests.log在tmp/docs-artifacts/editor-performance-risk。
+
+手动benchmark-sparse-receiver.mjs对照修改前保存的接收器源码与当前生产接收器，4374实体原始保存场景、合成相邻变化；同进程交替顺序，2轮预热／9轮计量，每轮25帧，帧间另起事件任务，每帧完整文档一致。无变化CPU中位数0.097716→0.009772ms，64变化0.207892→0.139216ms，全部4374变化9.865936→9.749108ms，不宣称密集收益；不含发送端、IPC、脚本、store规范化和实际FPS。最终源码基线session-receiver-baseline.ts、脚本与sparse-receiver-benchmark.log／json在tmp/docs-artifacts/editor-performance-risk，源码输入与样本随本地收据保留。
+
+134、135、136达到3/3。统一构建前端（含tsc）和custom-protocol Release，验证实际DotA加载／选取／工程关闭重开、Amazonia多窗口／Pause／Step／Stop／重启与五轮等时驻留，检查版本推进、平均耗时、呈现FPS和p95。自847e5af起crates、src-tauri和Viewport.tsx没有变化，本批不重跑无关资源热更新、空间透明选取和Profiler界面夹具，复用上一批对应结果。真实跨窗口收益和消息开销以本批同版本报告为准；稳定60、长期驻留、LOD与完整War3目标继续进行中。
