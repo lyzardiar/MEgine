@@ -336,8 +336,7 @@ pub struct EditorViewportRenderer {
 impl EditorViewportRenderer {
     pub async fn new(project_root: PathBuf, width: u32, height: u32) -> Result<Self> {
         let size = normalized_size(width, height);
-        let renderer = Renderer::new_headless(size)
-            .await
+        let renderer = Renderer::new_shared_headless(size)
             .context("could not initialize the headless RHI")?;
         Self::with_renderer(project_root, renderer)
     }

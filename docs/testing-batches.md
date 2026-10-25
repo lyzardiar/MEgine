@@ -1904,3 +1904,13 @@ Amazonia7434实体多窗口报告逐份验证Scene／Game耗时的binary-json来
 驻留报告289秒，5轮各运行15秒、Stop后空闲20秒；20份内存样本核对相同根PID／创建时间、唯一子PID、私有字节求和和5轮持续时间，空闲均7进程。根私有内存依次4593.688／4721.277／4686.602／4703.551／4701.879MiB，首末+108.191、后三轮+15.277MiB；进程树首末+91.582、后三轮+45.633MiB。走势非单调，不能判定泄漏，也不能证明长期稳定；原因尚未确定，不归因于私有解析或分配器预热。长期驻留风险继续保留。
 
 构建收据、5份原生原件、CPU对照、来源核对和汇总位于`tmp/docs-artifacts/editor-performance-risk/build-cab5035/receipt.json`、`owned-response-batch-{driver,summary,cpu-comparison}.json`、`owned-response-fresh-map-proof.json`；地图／多窗口截图与原始报告在`tmp/docs-artifacts/testing-batches/B001/`。本批4项的本机相关集成结束，下一批0/3；用户编辑器64664保持运行。尾延迟、长期驻留、LOD、完整开局军队／HUD／寻路与命令、完整原图脚本及War3保真继续待办，未标记完整游戏目标完成。
+
+### 第一百四十六阶段／新批次任务1/3：原生多视口共享GPU设备
+
+变更路径：`crates/mengine-rhi/src/{renderer,headless_context,headless_context_tests}.rs`、`crates/mengine-rhi/examples/benchmark_headless_viewports.rs`、`crates/mengine-editor-host/src/viewport.rs`。EditorViewportRenderer的原生headless入口按backend和对象布局复用同一Adapter／Device／Queue，并发冷初始化合并为一次；各视口的渲染目标、shader／材质／网格缓存、对象缓冲及回读仍独立。进程池仅持有Weak，最后一个视口释放后不保留上下文；创建失败可重试，收到device-lost通知后新视口建立新上下文，既有使用者自行释放。原有异步独立headless和surface入口保留，surface仍按自身兼容性选择设备。
+
+7项去重定向检查通过：3项纯池逻辑、3项新增GPU及既有1项alpha GPU。覆盖并发一次初始化、弱引用释放／重建、backend与uniform／indexed布局隔离、失败重试、失效上下文替换、同名资源／不同颜色的并发完整像素与独立设备对照、关闭一个视口后另一视口继续绘制，以及真实device.destroy后新上下文成功绘制且GPU Validation无错误。最终`cargo check -p mengine-editor-host --release`通过；没有前端改动，未重建完整Editor或运行地图矩阵。
+
+必要定向基准：同一冻结example分别以`isolated`／`shared`启动独立进程，3组反转顺序对照，每进程同时保留3个1280×720空视口。初始化总时长中位数6035.395→4059.539ms，第三个视口存活时的进程私有内存1317.480→738.992MiB，减少578.488MiB。采样PowerShell进程不计入根进程私有字节，采样耗时排除在构造计时外；不是VRAM、地图加载、首个Game画面、FPS或长期驻留结果，也不能据此认定上一批108.191MiB波动的原因已经解决。冻结example SHA256为`921ac0cdf525e8df68ebd0e145eed1e4f1a76cd61195273d69a199a5d2f3bd3a`。
+
+复现：`cargo test -p mengine-rhi --release --lib headless_context -- --nocapture --test-threads=1`及`material_alpha_preserves_opaque`筛选；`cargo run -p mengine-rhi --release --example benchmark_headless_viewports -- isolated`／`-- shared`。分段测试、最终接口检查、基准原件／汇总与源码摘要均在`tmp/docs-artifacts/editor-performance-risk/headless-context-*`。当前1/3，待另外两项合并构建后验证真实启动、Scene／Game／相机预览并发、材质／纹理热更新与GPU计时、旋转／尺寸／隐藏、项目关闭重开和5轮Stop／Play内存；普通FPS与CPU采样继续分开。用户编辑器未重启，稳定60、长期驻留、LOD和完整War3保持待办。

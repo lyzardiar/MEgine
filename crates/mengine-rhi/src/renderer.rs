@@ -1,6 +1,12 @@
 // Author: MiYu. Reuse unchanged draw bindings within each render pass.
 use crate::ibl::{BrdfLut, EnvironmentPrefilter, PrefilteredEnvironment};
-use crate::gpu_profiler::{profiling_features, GpuFrameProfiler};
+use crate::gpu_profiler::GpuFrameProfiler;
+#[path = "headless_context.rs"]
+mod headless_context;
+use headless_context::GpuContext;
+#[cfg(test)]
+#[path = "headless_context_tests.rs"]
+mod headless_context_tests;
 use crate::GpuFrameProfile;
 use crate::mesh::{MeshGpu, MeshIndexBufferCache, MeshVertexBufferPool, Vertex};
 use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
@@ -827,6 +833,7 @@ pub struct Renderer {
     offscreen_readback: Arc<Mutex<ReadbackPool>>,
     gpu_profiler: Option<GpuFrameProfiler>,
     submission_profile: FrameSubmissionProfile,
+    _headless_context: Option<Arc<GpuContext>>,
 }
 
 impl Renderer {
@@ -860,42 +867,25 @@ impl Renderer {
         Self::new_with_optional_surface(instance, None, size).await
     }
 
+    /// Native worker-thread entry: initialize one device for live headless viewports with identical backend and object layout.
+    pub fn new_shared_headless(size: PhysicalSize<u32>) -> Result<Self, RhiError> {
+        let context = headless_context::shared(headless_context::ContextKey { backends: preferred_backends(), uniform_objects: uniform_object_reference() })?;
+        Self::with_gpu_context(&context, None, size, Some(Arc::clone(&context)))
+    }
+
     async fn new_with_optional_surface(
         instance: wgpu::Instance,
         surface: Option<wgpu::Surface<'static>>,
         size: PhysicalSize<u32>,
     ) -> Result<Self, RhiError> {
-        let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::HighPerformance,
-                compatible_surface: surface.as_ref(),
-                force_fallback_adapter: false,
-            })
-            .await
-            .ok_or(RhiError::NoAdapter)?;
-        let supports_anisotropy = adapter
-            .get_downlevel_capabilities()
-            .flags
-            .contains(wgpu::DownlevelFlags::ANISOTROPIC_FILTERING);
+        let context = GpuContext::new(instance, surface.as_ref(), uniform_object_reference()).await?;
+        Self::with_gpu_context(&context, surface, size, None)
+    }
 
-        let mut required_limits = wgpu::Limits::default();
-        let indexed_objects = adapter.limits().max_storage_buffer_binding_size as u64 >= required_limits.max_buffer_size;
-        #[cfg(test)]
-        let indexed_objects = indexed_objects && !UNIFORM_OBJECT_REFERENCE.with(std::cell::Cell::get);
-        if indexed_objects { required_limits.max_storage_buffer_binding_size = required_limits.max_buffer_size as u32; }
-        let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: Some("mengine"),
-                    required_features: profiling_features(adapter.features(), true),
-                    required_limits,
-                    memory_hints: Default::default(),
-                },
-                None,
-            )
-            .await
-            .map_err(|e| RhiError::RequestDevice(e.to_string()))?;
-
+    fn with_gpu_context(context: &GpuContext, surface: Option<wgpu::Surface<'static>>, size: PhysicalSize<u32>, shared_headless_context: Option<Arc<GpuContext>>) -> Result<Self, RhiError> {
+        let GpuContext { adapter, supports_anisotropy, indexed_objects, .. } = context;
+        let (device, queue) = (context.device.clone(), context.queue.clone());
+        let (supports_anisotropy, indexed_objects) = (*supports_anisotropy, *indexed_objects);
         let caps = surface
             .as_ref()
             .map(|surface| surface.get_capabilities(&adapter));
@@ -1369,6 +1359,7 @@ impl Renderer {
 
         let gpu_profiler = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1").then(|| GpuFrameProfiler::new(&device)).flatten();
         Ok(Self {
+            _headless_context: shared_headless_context,
             mesh_picking: false,
             mesh_pick_order: Vec::new(),
             world_bundles: WorldBundleCache::default(),
@@ -2648,6 +2639,11 @@ impl Renderer {
 
     /// Idle vertex-buffer count and payload bytes, excluding active meshes and driver overhead.
     pub fn mesh_vertex_pool_stats(&self) -> (usize, usize) { (self.mesh_vertices.entries, self.mesh_vertices.bytes) }
+}
+
+fn uniform_object_reference() -> bool {
+    #[cfg(test)] { UNIFORM_OBJECT_REFERENCE.with(std::cell::Cell::get) }
+    #[cfg(not(test))] { false }
 }
 
 fn preferred_backends() -> wgpu::Backends {

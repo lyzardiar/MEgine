@@ -1,0 +1,78 @@
+// Author: MiYu. Verify concurrent viewport ownership on a shared native GPU device.
+use super::*;
+
+fn draw(renderer: &mut Renderer, color: [f32; 4], size: PhysicalSize<u32>) -> Vec<u8> {
+    let target = renderer.create_offscreen_target(size);
+    let vertices = [[-0.8,-0.8,0.5],[0.8,-0.8,0.5],[-0.8,0.8,0.5],[0.8,0.8,0.5]].map(|position| Vertex { position, normal:[0.,0.,1.], uv:[0.5,0.5] });
+    renderer.upload_gltf_static_profiled("same-viewport-key", &vertices, &[0,1,2,2,1,3]);
+    let objects = [RenderObject { mesh_key:"same-viewport-key".into(),model:Mat4::IDENTITY,material:RenderMaterial { unlit:true,base_color:color,..Default::default() }.into(),cast_shadows:false,receive_shadows:false }];
+    let camera = FrameCamera { view:Mat4::IDENTITY, proj:Mat4::IDENTITY, position:Vec3::Z };
+    let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false;
+    for _ in 0..3 { renderer.submit_frame_to(&RenderFrame { clear:ClearColor { r:0.,g:0.,b:0.,a:0. },camera,objects:&objects,lighting:&lighting,ui:None,scene_views:&[] },RenderTarget::Offscreen(&target)).unwrap(); }
+    renderer.read_offscreen_rgba8(&target).unwrap()
+}
+
+#[test]
+fn shared_device_preserves_concurrent_pixels_viewport_ownership_and_last_owner_release() {
+    let size = PhysicalSize::new(32,32);
+    let (mut scene, mut game) = std::thread::scope(|scope| {
+        let scene = scope.spawn(|| Renderer::new_shared_headless(size).unwrap());
+        let game = scope.spawn(|| Renderer::new_shared_headless(size).unwrap());
+        (scene.join().unwrap(), game.join().unwrap())
+    });
+    let context = Arc::downgrade(scene._headless_context.as_ref().unwrap());
+    assert!(Arc::ptr_eq(scene._headless_context.as_ref().unwrap(), game._headless_context.as_ref().unwrap()));
+    scene.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    let red = [1.,0.,0.,1.]; let green = [0.,1.,0.,1.];
+    let (scene_pixels, game_pixels) = std::thread::scope(|scope| {
+        let scene = scope.spawn(|| draw(&mut scene, red, size));
+        let game = scope.spawn(|| draw(&mut game, green, size));
+        (scene.join().unwrap(), game.join().unwrap())
+    });
+    assert_ne!(scene_pixels, game_pixels);
+    let mut isolated = pollster::block_on(Renderer::new_headless(size)).unwrap();
+    assert_eq!(scene_pixels, draw(&mut isolated, red, size));
+    assert_eq!(game_pixels, draw(&mut isolated, green, size));
+    drop(scene);
+    assert!(context.upgrade().is_some());
+    assert_eq!(game_pixels, draw(&mut game, green, size));
+    assert!(pollster::block_on(game.device.pop_error_scope()).is_none());
+    drop(game);
+    assert!(context.upgrade().is_none(), "the process pool must not keep a device alive after its last viewport");
+    let next = Renderer::new_shared_headless(size).unwrap();
+    assert!(!context.ptr_eq(&Arc::downgrade(next._headless_context.as_ref().unwrap())));
+}
+
+#[test]
+fn shared_device_separates_uniform_reference_from_indexed_object_layout() {
+    let size = PhysicalSize::new(32,32);
+    let mut indexed = Renderer::new_shared_headless(size).unwrap();
+    let mut uniform = UNIFORM_OBJECT_REFERENCE.with(|reference| {
+        let previous = reference.replace(true);
+        let result = Renderer::new_shared_headless(size);
+        reference.set(previous);
+        result
+    }).unwrap();
+    assert!(!uniform.indexed_object_data());
+    assert!(!Arc::ptr_eq(indexed._headless_context.as_ref().unwrap(), uniform._headless_context.as_ref().unwrap()));
+    indexed.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    uniform.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    let color = [0.2,0.4,0.8,1.];
+    assert_eq!(draw(&mut indexed, color, size), draw(&mut uniform, color, size));
+    assert!(pollster::block_on(indexed.device.pop_error_scope()).is_none());
+    assert!(pollster::block_on(uniform.device.pop_error_scope()).is_none());
+}
+
+#[test]
+fn lost_shared_device_is_not_reused_by_a_new_viewport() {
+    let size = PhysicalSize::new(32,32);
+    let previous = Renderer::new_shared_headless(size).unwrap();
+    previous.device.destroy();
+    let _ = previous.device.poll(wgpu::Maintain::Wait);
+    let mut replacement = Renderer::new_shared_headless(size).unwrap();
+    assert!(!Arc::ptr_eq(previous._headless_context.as_ref().unwrap(), replacement._headless_context.as_ref().unwrap()));
+    replacement.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    let pixels = draw(&mut replacement, [1.,0.,0.,1.], size);
+    assert!(pixels.chunks_exact(4).any(|pixel| pixel[0] > 200 && pixel[3] > 200));
+    assert!(pollster::block_on(replacement.device.pop_error_scope()).is_none());
+}
