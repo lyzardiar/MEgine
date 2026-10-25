@@ -1,6 +1,9 @@
-// Author: MiYu. GPU mesh uploads share exact index contents within a bounded device cache.
+// Author: MiYu. GPU mesh uploads share immutable vertex contents and cached exact index contents.
 use bytemuck::{Pod, Zeroable};
 use std::{collections::HashMap, time::Instant};
+#[path = "shared_mesh_vertices.rs"]
+mod shared_vertices;
+pub(crate) use shared_vertices::{SharedVertexCache, SharedVertices};
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
@@ -17,6 +20,7 @@ pub struct MeshGpu {
     pub index_count: u32,
     pub(crate) bounds: Option<crate::spatial::Aabb>,
     pub(crate) recyclable_vertices: bool,
+    pub(crate) shared_vertices: Option<std::sync::Arc<SharedVertices>>,
 }
 
 /// CPU wall time in buffer creation and bounds calculation; not GPU execution time.
@@ -138,7 +142,7 @@ impl MeshGpu {
         let started = Instant::now();
         let bounds = crate::spatial::Aabb::from_points(vertices.iter().map(|v| glam::Vec3::from_array(v.position)));
         let bounds_ms = started.elapsed().as_secs_f64() * 1000.0;
-        (Self { picking: None, vertex_buffer, index_buffer, index_count: indices.len() as u32, bounds, recyclable_vertices: false }, MeshUploadProfile { vertex_buffer_ms, index_buffer_ms, bounds_ms, index_buffer_reused, vertex_buffer_reused })
+        (Self { picking: None, vertex_buffer, index_buffer, index_count: indices.len() as u32, bounds, recyclable_vertices: false, shared_vertices: None }, MeshUploadProfile { vertex_buffer_ms, index_buffer_ms, bounds_ms, index_buffer_reused, vertex_buffer_reused })
     }
 
     pub fn unit_cube(device: &wgpu::Device) -> Self {

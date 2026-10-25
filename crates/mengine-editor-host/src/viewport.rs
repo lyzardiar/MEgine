@@ -933,7 +933,7 @@ impl EditorViewportRenderer {
         profile.counts.ui_texture_set_builds = submission.ui_preparation.texture_set_builds;
         profile.counts.ui_buffer_allocations = submission.ui_preparation.buffer_allocations;
         profile.counts.mesh_evictions = mesh_cache.evictions;
-        profile.memory.push(EditorViewportMemoryCategory { name:"GPU sampled mesh cache".into(), domain:"gpu".into(), bytes:mesh_cache.bytes as u64, certainty:"estimate".into(), source:"Logical per-mesh vertex/index bytes; shared indices may be counted repeatedly; retained index-cache handles, driver overhead and static meshes are excluded".into() });
+        profile.memory.push(EditorViewportMemoryCategory { name:"GPU sampled mesh cache".into(), domain:"gpu".into(), bytes:mesh_cache.bytes as u64, certainty:"estimate".into(), source:"Logical per-mesh vertex/index bytes; shared vertices and indices may be counted repeatedly across entries or views; retained cache handles, driver overhead and static meshes are excluded".into() });
         profile.resident_memory_estimate_bytes += mesh_cache.bytes as u64;
         if self.renderer.mesh_picking_enabled() {
             let bytes = self.renderer.mesh_picking_bytes() as u64;

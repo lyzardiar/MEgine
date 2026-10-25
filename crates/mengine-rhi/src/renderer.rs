@@ -5,10 +5,13 @@ use crate::gpu_profiler::GpuFrameProfiler;
 mod headless_context;
 use headless_context::GpuContext;
 #[cfg(test)]
+#[path = "shared_mesh_vertex_tests.rs"]
+mod shared_mesh_vertex_tests;
+#[cfg(test)]
 #[path = "headless_context_tests.rs"]
 mod headless_context_tests;
 use crate::GpuFrameProfile;
-use crate::mesh::{MeshGpu, MeshIndexBufferCache, MeshVertexBufferPool, Vertex};
+use crate::mesh::{MeshGpu, MeshIndexBufferCache, MeshVertexBufferPool, SharedVertexCache, Vertex};
 use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
 use crate::sky::SkyBackground;
@@ -789,6 +792,7 @@ pub struct Renderer {
     meshes: HashMap<String, MeshGpu>,
     mesh_indices: MeshIndexBufferCache,
     mesh_vertices: MeshVertexBufferPool,
+    shared_mesh_vertices: Arc<Mutex<SharedVertexCache>>,
     spatial_index: SpatialIndex,
     spatial_stats: SpatialCullingStats,
     bind_layout: wgpu::BindGroupLayout,
@@ -1406,6 +1410,7 @@ impl Renderer {
             meshes,
             mesh_indices: MeshIndexBufferCache::default(),
             mesh_vertices: MeshVertexBufferPool::default(),
+            shared_mesh_vertices: Arc::clone(&context.shared_vertices),
             spatial_index: SpatialIndex::default(),
             spatial_stats: SpatialCullingStats::default(),
             bind_layout,
@@ -2634,7 +2639,13 @@ impl Renderer {
 
     pub fn upload_gltf_static_profiled(&mut self, key: &str, vertices: &[Vertex], indices: &[u32]) -> crate::MeshUploadProfile {
         self.remove_mesh(key);
-        let (mut mesh, profile) = MeshGpu::upload_with_buffers(vertices, indices, || self.mesh_vertices.upload(&self.device, &self.queue, vertices), || self.mesh_indices.acquire(&self.device, indices));
+        let mut shared_vertices = None;
+        let (mut mesh, profile) = MeshGpu::upload_with_buffers(vertices, indices, || {
+            let hash = SharedVertexCache::fingerprint(vertices);
+            let (buffer, shared, reused) = self.shared_mesh_vertices.lock().unwrap_or_else(std::sync::PoisonError::into_inner).acquire(hash, &self.device, &self.queue, vertices, &mut self.mesh_vertices);
+            shared_vertices = shared; (buffer, reused)
+        }, || self.mesh_indices.acquire(&self.device, indices));
+        mesh.shared_vertices = shared_vertices;
         if self.mesh_picking { mesh.picking = Some(Arc::new(crate::MeshPickGeometry::new(vertices, indices))); }
         mesh.recyclable_vertices = true;
         self.meshes.insert(key.to_string(), mesh);
@@ -2645,7 +2656,8 @@ impl Renderer {
     pub fn remove_mesh(&mut self, key: &str) {
         if let Some(mesh) = self.meshes.remove(key) {
             // Each view is submitted before returning; queued writes run after those prior draws.
-            if mesh.recyclable_vertices { self.mesh_vertices.recycle(mesh.vertex_buffer); }
+            // Weak lookups can race with removal; only an atomic last-owner transfer permits later writes.
+            if mesh.recyclable_vertices && mesh.shared_vertices.is_none_or(|shared| Arc::try_unwrap(shared).is_ok()) { self.mesh_vertices.recycle(mesh.vertex_buffer); }
         }
     }
 
@@ -4498,11 +4510,13 @@ mod tests {
         assert!(renderer.upload_gltf_static_profiled("replacement", &changed, &indices).vertex_buffer_reused);
         assert_eq!(renderer.meshes["replacement"].vertex_buffer, internal);
         assert_ne!(internal, external);
-        assert!(!renderer.upload_gltf_static_profiled("slot", &changed, &indices).vertex_buffer_reused);
+        assert!(renderer.upload_gltf_static_profiled("slot", &changed, &indices).vertex_buffer_reused);
+        assert_eq!(renderer.meshes["slot"].vertex_buffer, internal);
         assert_ne!(renderer.meshes["slot"].vertex_buffer, external, "same-key replacement must not recycle a registered alias");
         renderer.register_mesh("removed", make_external(&renderer.device));
         renderer.remove_mesh("removed");
-        assert!(!renderer.upload_gltf_static_profiled("after_removal", &changed, &indices).vertex_buffer_reused);
+        assert!(renderer.upload_gltf_static_profiled("after_removal", &changed, &indices).vertex_buffer_reused);
+        assert_eq!(renderer.meshes["after_removal"].vertex_buffer, internal);
         assert_ne!(renderer.meshes["after_removal"].vertex_buffer, external);
 
         let bytes = std::mem::size_of_val(&vertices) as u64;

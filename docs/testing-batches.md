@@ -1970,6 +1970,18 @@ ff02e3b的启动、资源热更新、空间选取及DotA缓存／重开检查通
 
 完整默认关闭／按需采样、空工程、共享视图、项目关闭／重开和其他工具兼容场景，留待本批累计3项后的合并验证。当前1/3，尚未宣称内存增长已修复。
 
+### 第一百五十阶段／新批次任务2/3：同设备复用完整相同的顶点数据
+
+变更路径：`crates/mengine-rhi/src/{headless_context.rs,mesh.rs,renderer.rs,shared_mesh_vertices.rs,shared_mesh_vertex_tests.rs}`、`crates/mengine-rhi/examples/shared_mesh_memory.rs`及host的内存来源说明。GpuContext内以完整顶点字节查找不可变GPU缓冲：先哈希，再逐字节确认，覆盖位置／法线／UV和长度；相同字节可以跨网格键及视图复用，索引拓扑、变换、包围盒、选取数据和材质保持各自语义。哈希在设备缓存锁之外计算，查找和首次上传合并；上传准备计时包含该成本，已有顶点不再重复上传。
+
+索引只持Weak，实际网格持Arc；仍有其他所有者时不进入可写空闲池，最后所有者以Arc::try_unwrap原子转移后才允许复用写入，防止并发Weak升级与释放竞争。每设备保留的CPU比对载荷上限64MiB，最多16384个哈希键、每键4个Weak候选；元数据按FIFO替换，不延长GPU所有者寿命，超过载荷预算走原私有缓冲路径。该CPU载荷和元数据有额外成本，不能视为零成本GPU去重；现有逐视图逻辑字节可能重复计数，host来源说明已同步更新。
+
+7项定向GPU检查及最终Editor Host Release接口检查通过，覆盖强制哈希碰撞、法线／UV不同、载荷预算／Weak元数据上限、并发上传合并、完整RGBA与独立renderer对照、热更新／不同拓扑／关闭另一个视图、外部注册缓冲完整字节保持、前一提交的像素保留、空间包围盒更新和120次并发回读。筛选为`shared_vertex_uploads`、`exact_bytes_resolve_collisions`、`recycled_vertices_preserve`、`registered_vertex_aliases`、`shared_device_preserves_concurrent`、`spatial_culling_submits_camera_shadow_union`、`concurrent_shared_device_readbacks_complete`，命令均为`cargo test -p mengine-rhi --release --lib <筛选> -- --nocapture --test-threads=1`。日志`tmp/docs-artifacts/editor-performance-risk/shared-vertices-*.log`。
+
+修改前后各1个独立进程，两个共享设备视图各上传2048份不同小网格、两个视图内容相同但键名不同。设备mesh_vb从4098份／256.125MiB降至2050份／128.125MiB，减少128MiB；第二视图2048次命中。设备全部分配328.625→200.625MiB，分配器预留576→320MiB。单次夹具首视图墙钟49.5478→58.9744ms、第二视图75.4158→2.0864ms，包含队列flush和GPU完成等待，不能作为纯CPU或稳定性能结论。不是实际地图FPS、进程私有内存、系统GPU驻留或长期收益证明。
+
+夹具`cargo run -p mengine-rhi --release --example shared_mesh_memory`，原始`shared-vertices-{before,after}.jsonl`、冻结EXE及`shared-vertices-memory-summary.json`均在上述临时目录；基线生产来源ce5f016，前后夹具代码相同。当前149–150为2/3，第三项后统一原生构建并验证Amazonia／DotA的实际分配、FPS、Pose／材质／几何热更新、选取／阴影／视图隔离、项目关闭重开及Stop驻留；本项未重建完整Editor或重复地图转换，当前用户进程保持原版本。
+
 
 ### 地图导入故障补充：机器级公共资源目录与 sample setup
 
