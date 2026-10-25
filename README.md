@@ -11,7 +11,7 @@ Cross-platform game engine: **Rust** core + **TypeScript** scripting/tools.
 ## Quick start
 
 ```bash
-# Prerequisites: Rust stable, Node 20+
+# Prerequisites: Rust stable, Node 20+, CMake 3.25+, C/C++ compiler
 npm install   # or pnpm.cmd install
 npm run setup:git-hooks  # requires Python 3; checks asset/.meta pairs before commits
 npm run codegen

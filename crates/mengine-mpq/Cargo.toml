@@ -1,0 +1,13 @@
+[package]
+name = "mengine-mpq"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Read-only, bounded MPQ member streams backed by pinned StormLib"
+
+[dependencies]
+thiserror.workspace = true
+
+[build-dependencies]
+cmake = "0.1"
+cc = "1"

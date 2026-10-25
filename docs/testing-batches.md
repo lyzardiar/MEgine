@@ -2041,3 +2041,14 @@ CPU比对载荷上限64MiB／设备，最多2048个哈希键、每键4个Weak候
 用户要求排查Warcraft归档直读与现有慢加载／缓存增长差异。已核对Rust ContentImports→Python环境指纹／地图包选择→地形／模型转换→内容地址发布→磁盘mscene／glTF／纹理加载完整路径。进度代码改动触发整图包新指纹、逐文件热缓存校验、阶段重复读图／写出／复制、失败作业及旧包无界保留均有当前源码与既有收据证据；公共成员／派生／最终内容复用也确实存在。StormLib读取接口及现有Python探针证明成员可解压到内存，直接读取DotA脚本和公共MDX／BLP，BLP解码为64×64 RGBA，无资产导出。探针不代表完整地图运行或Warcraft耗时。
 
 本机存储清单与两次指纹失效／最终有效缓存收据比较、外部来源及探针在tmp/docs-artifacts/map-loading-audit。设计、实际存储数、实施优先级和验收入口在docs/designs/frostbound-realms/map-runtime-archive-loading.md，并登记performance-risk-todo的未完成P0项。本次为只读调查与文档交付，不修改产品代码、不删除既有缓存、不新增功能批次；实际原生挂载／解码和缓存治理仍待实现。复用已完成的原生和转换记录，未重复完整构建、地图转换或全库测试。
+
+
+### 第一百五十二阶段／新批次任务1/3：原生MPQ字节资源基础
+
+变更：新增crates/mengine-mpq与固定StormLib构建源码、mengine-assets的asset_bytes／warcraft_archives和字节读取示例；Cargo依赖与Windows安装器新增CMake3.25+，新增REA归档证据探针。Rust只读边界拥有句柄、成员RAII及分配前限额，shim统一处理Windows DWORD和locale全局状态，按归档Mutex共享。进程级来源身份与规范路径作为缓存键，地图→Patch→Local→扩展→原版优先序；删除／错误阻断，不产生磁盘资产或meta。字节LRU默认64MiB／4096项；缓存淘汰不使活跃Arc失效，实际总内存还受读者与并发载荷影响。二进制delta返回明确的需基础链错误，完整会话／消费者未接入。
+
+必要边界检查：cargo test -p mengine-mpq --lib共6项通过；cargo test -p mengine-assets --lib asset_byte -- --test-threads=1共6项通过。修复独立审核发现的locale恢复、Unix错误映射和测试线程收尾后，仅重测受影响的locale／delta／并发用例；默认原生测试6/6及最终两个线程清理定向用例通过。上游原字节312份哈希匹配，安装器实际CMake版本分支通过；未运行winget安装，也未验证全新机器或Unix编译。native-byte-probe-final四成员SHA与旧探针一致，common Footman在地图重挂载后共享Arc；仅基础字节工作负载，不等于完整地图或4ms加载。
+
+REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖／MPQ名称／导出表，未推断ordinal函数语义或运行时耗时。源站与更新入口在third_party/rea/README-MENGINE.md、third_party/stormlib/README-MENGINE.md。原始REA和最终原生字节记录在tmp/docs-artifacts/warcraft-archives，编译／单测日志在tmp/docs-artifacts/map-loading-audit。
+
+待批次：结合后续原生BLP／模型消费者、地图会话切换执行同一版本Host／Tauri构建，验证真实覆盖、热／冷加载与公共复用、取消失败和资源释放、磁盘增长与错误隔离；未变化的传统地图转换不重复。当前1/3，原游戏选择入口仍走离线流程；P0挂载／解码整项及完整War3目标保持未完成。本阶段未触碰用户编辑器、state.json或既有缓存。

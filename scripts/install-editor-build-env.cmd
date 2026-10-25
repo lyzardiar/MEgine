@@ -47,6 +47,18 @@ if errorlevel 1 (
 call :ensure_msvc
 if errorlevel 1 exit /b 1
 
+set "PATH=%ProgramFiles%\CMake\bin;%PATH%"
+call :cmake_is_supported
+if errorlevel 1 (
+    call :install_package Kitware.CMake "CMake"
+    if errorlevel 1 exit /b 1
+)
+call :cmake_is_supported
+if errorlevel 1 (
+    echo ERROR: CMake 3.25 or newer is required for the native MPQ reader. Upgrade CMake, then run this command again.
+    exit /b 1
+)
+
 rem Refresh the tools installed by winget for this command window.
 set "PATH=%ProgramFiles%\nodejs;%LOCALAPPDATA%\Programs\nodejs;%USERPROFILE%\.cargo\bin;%APPDATA%\npm;%PATH%"
 
@@ -131,6 +143,17 @@ for /f "tokens=1 delims=." %%V in ('pnpm.cmd --version') do set "LOCAL_PNPM_MAJO
 if not defined LOCAL_PNPM_MAJOR exit /b 1
 if !LOCAL_PNPM_MAJOR! LSS 10 exit /b 1
 exit /b 0
+
+:cmake_is_supported
+where cmake.exe >nul 2>&1
+if errorlevel 1 exit /b 1
+for /f "tokens=3" %%V in ('cmake.exe --version 2^>nul ^| findstr.exe /b /c:"cmake version"') do (
+    for /f "tokens=1,2 delims=." %%A in ("%%V") do (
+        if %%A GTR 3 exit /b 0
+        if %%A EQU 3 if %%B GEQ 25 exit /b 0
+    )
+)
+exit /b 1
 
 :ensure_msvc
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"

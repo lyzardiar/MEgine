@@ -4,6 +4,7 @@ members = [
     "crates/mengine-core",
     "crates/mengine-rhi",
     "crates/mengine-assets",
+    "crates/mengine-mpq",
     "crates/mengine-scene",
     "crates/mengine-script",
     "crates/mengine-platform",
@@ -36,6 +37,7 @@ authors = ["MEngine"]
 mengine-core     = { path = "crates/mengine-core" }
 mengine-rhi      = { path = "crates/mengine-rhi" }
 mengine-assets   = { path = "crates/mengine-assets" }
+mengine-mpq      = { path = "crates/mengine-mpq" }
 mengine-scene    = { path = "crates/mengine-scene" }
 mengine-script   = { path = "crates/mengine-script", default-features = false }
 mengine-platform = { path = "crates/mengine-platform" }

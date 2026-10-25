@@ -7,6 +7,7 @@ description = "MEngine asset handles, loading, import cache"
 
 [dependencies]
 mengine-core.workspace = true
+mengine-mpq.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
@@ -17,6 +18,9 @@ gltf = { workspace = true, features = ["extras"] }
 glam.workspace = true
 parking_lot.workspace = true
 walkdir.workspace = true
+
+[dev-dependencies]
+sha2.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_Storage_FileSystem"] }

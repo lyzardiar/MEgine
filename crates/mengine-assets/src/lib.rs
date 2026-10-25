@@ -5,6 +5,8 @@ pub mod particle_definition;
 pub use particle_definition::*;
 mod animator;
 mod asset_sidecar;
+mod asset_bytes;
+mod warcraft_archives;
 mod avatar_mask;
 mod gltf_import;
 mod gltf_pose;
@@ -36,6 +38,8 @@ pub use asset_sidecar::{
     asset_sidecar_path, ensure_asset_sidecar, parse_asset_sidecar, read_asset_sidecar,
     AssetSidecar, ASSET_SIDECAR_SCHEMA_VERSION,
 };
+pub use asset_bytes::{AssetByteCache, AssetByteCacheStats, AssetByteSource, AssetBytes, AssetLocation, AssetMounts, AssetSourceId, AssetSourceRead};
+pub use warcraft_archives::{MpqAssetSource, WarcraftArchives};
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use gltf_pose::{parse_gltf_pose, parse_gltf_pose_sample, GltfAttachmentPose, GltfBillboardCamera, GltfNodePose, GltfPoseSource, SharedGltfPoseSource, SharedPoseLoad};
