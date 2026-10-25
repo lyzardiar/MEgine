@@ -193,4 +193,8 @@ Host新增`MountedWarcraftTerrain`与`WarcraftTerrainView`。CPU句柄可跨视�
 
 Host的`MountedWarcraftPlacedWorld`共享模型和实际纹理句柄，RGBA累计受限，绑定元数据限定64MiB。`bind_nodes`消费调用者给出的可见节点集，同一外观／序列共享pose，billboard按实例相机求值；每个绘制部件可查询原放置父节点。每视图独立资源键，更新保留slot，失败清理上传，显式release只能由原Renderer调用。held使用独立末帧钳制，普通模型不附带billboard相机。完整自动可见集／LOD、原版节点继承、全部材质／效果、动画结束调度及完整世界仍待完成，不能把该接口当作选图已切换。
 
-必要快速检查：6项层级／变换／随机初选／held／资源缓存与预算、2项model alias通过，Host及GPU示例接口编译通过。三图CPU图构建成功，9661装饰和155可视单位的变换、颜色、active、序列与两路RNG状态与独立Python参考一致；4个起点保留。真实模型诊断仍可查询，Amazonia BanditMage的旧节点非继承语义被求值器明确拒绝，效果诊断不等于完整消费。158–160达到3/3，接下来合并相关CPU／Host／Tauri和双视图GPU验证，结果登记testing-batches.md。产品没有工程资产／meta／磁盘缓存写出；旧选图仍离线转换，完整缓存问题保持未完成。
+必要快速检查：6项层级／变换／随机初选／held／资源缓存与预算、2项model alias通过，Host及GPU示例接口编译通过。三图CPU图构建成功，9661装饰和155可视单位的变换、颜色、active、序列与两路RNG状态与独立Python参考一致；4个起点保留。真实模型诊断仍可查询，Amazonia BanditMage的旧节点非继承语义被求值器明确拒绝，效果诊断不等于完整消费。158–160批次已完成相关CPU／Host／Tauri和双视图GPU验证，下一功能批次0/3，结果见testing-batches.md。产品没有工程资产／meta／磁盘缓存写出；旧选图仍离线转换，完整缓存问题保持未完成。
+
+158–160统一版本验证：47项地图／世界、15项MDX及5项Host规划通过；未变化的2项model alias快速检查复用。Release Host／源图示例及Tauri custom-protocol构建通过，61前端产物未变。最终三图源图与325条模型来源对照通过，公共模型缓存累计240项／84次命中，规划驻留12005204字节。选取Amazonia两只原始sheep验证GPU：2实例共用1pose、4506可见像素、500ms改变4522像素，原放置父节点、session先关闭、错误Renderer拒绝、释放后空帧和另一视图继续更新通过，最终纹理键归零。该可见集验证未覆盖完整地图效果或FPS。
+
+共享SYLK影响的Amazonia地形／水面GPU回归通过：93块／近景提交3块，第二视图93份顶点缓冲全部复用，设备材质纹理分配5→5，水帧改变112019像素；原155–157其他未变结果复用。Tauri构建99.78秒，仅保留既有world_from_snapshot未使用警告；没有重启用户编辑器、转换地图或清理缓存。最终证据`tmp/docs-artifacts/warcraft-archives/batch-158-160-receipt.json`、`placed-gpu/`、`placed-world-comparison.json`和`batch-158-160-terrain-gpu/`。选图仍走旧离线入口，完整世界／脚本接入保持未完成。

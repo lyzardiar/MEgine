@@ -2142,4 +2142,12 @@ REA探针通过3组，保留真实Game.dll／Storm.dll前后身份、Storm依赖
 
 必要检查：`cargo test -p mengine-assets --lib native_warcraft_placed -- --test-threads=1`6项、`asset_byte_model`2项通过，Host与GPU示例接口编译通过。独立审核修复WTS纹理／目录含点路径、长key与结构计费、首次缓存预算依赖、held循环末帧、普通模型相机以及视图更新预算口径。三图9661装饰／155可视单位的源变换、颜色、状态、初始序列和最终预览RNG一致；4起点保留。首次夹具的变体列／手填RNG断言修正后定向通过。
 
-158–160已累计3/3，**合并验证待执行**：47项native_warcraft及相关MDX／model alias，Host规划检查；一次相关Release Host／GPU示例与Tauri构建；代表CPU源对照、双视图可见实例GPU／动画／父节点／失败／释放，及共享SYLK影响的地形消费。复用不受影响的155–157水面／地形像素和既有参考，禁止重复旧全图转换或全库测试。GPU示例只选择两只原图sheep验证可见集消费者，不作为完整地图、粒子／全部材质、JASS、FPS或新选图入口验收。最终结果与未执行项在本节后补录；在本批关闭前不开始下一功能。原始日志和图片均在`tmp/docs-artifacts/warcraft-archives/`。
+158–160批次已完成相关验证，下一功能批次0/3。47项native_warcraft、15项native_mdx、5项Release Host规划检查通过；2项未变化model alias快速检查复用。Release Host／GPU及源图示例、Tauri custom-protocol构建通过，61前端产物摘要未变。没有全库测试、旧全图转换或重复原生编辑器流程。
+
+最终三图源图与325条模型SHA来源对照通过：9661装饰、155可视单位、4起点及初始选择／两路RNG保持参考值；公共模型缓存240项／84命中／规划12005204字节。完整字段对照和动态模型诊断保存在本地，不宣称所有模型行为已经消费。
+
+GPU可见集选取Amazonia两个原始sheep节点，2实例／1pose／2绘制对象，4506可见像素，500ms动画改变4522像素；父节点、先关闭session释放347976字节地图缓存、错误Renderer拒绝、第一视图释放后另一视图继续更新及最终旧对象空帧／纹理键归零全部通过。已查看最终截图。仅覆盖所选可见实例，没有完整地图／粒子／JASS／FPS验收。
+
+共享SYLK相关Amazonia地形／水面GPU回归通过：93块／近景3提交，第二视图93顶点缓冲复用，设备材质纹理分配5→5，动画改变112019像素；既有155–157其他地图几何／像素结果复用。Tauri构建99.78秒通过，仅既有world_from_snapshot未使用警告。用户PID64664保持原进程，现有缓存未清理。原选图仍离线转换，完整游戏世界、自动可见集／LOD、特殊节点／全部材质和效果、结束调度／创建顺序与JASS留在P0队列；本批按数据和消费者范围关闭，不作完整War3就绪结论。
+
+命令／原始日志由`tmp/docs-artifacts/warcraft-archives/run-batch-158-160.py`和`batch-158-160-progress.json`记录，收据为`batch-158-160-receipt.json`。原始GPU在`placed-gpu/`与`batch-158-160-terrain-gpu/`，源对照`placed-world-real-final.json`、`placed-world-comparison.json`及`compare-native-placed.py`；所有截图／JSON均不提交。产品构建包含d1d8504，后续批次结论文档不改变运行代码。
