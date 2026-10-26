@@ -18,7 +18,7 @@ Win32 Release 下公共库加 DotA 构建出 91 个扩展类型、3,369 个全�
 
 REA 在固定 Game.dll 找到 `common.j`／`scripts\common.j` 引用，原始记录为 `tmp/docs-artifacts/war3/jass/source-paths-rea.json`，它仅证明字符串存在。语言结构另参考 [lep/pjass](https://github.com/lep/pjass/tree/654c3cf7731eb472518e6915e9d7672a72652165) 的 grammar.y/token.l，固定提交 `654c3cf7731eb472518e6915e9d7672a72652165`，BSD-2-Clause；参考副本和许可证留在本地诊断目录，客户端未复制或链接该项目实现。原件脚本、诊断输出和第三方参考副本不随源码提交。
 
-当前符号/类型解析范围见下节；后续为执行栈、数值与字符串语义、native 绑定以及地图会话。表达式优先级表尚未和原版执行作差分核对，接入 VM 前须验证优先级、结合性、短路与数值精度；不能将当前语法树测试当作原版执行语义证据。触发器、计时器、AI、单位创建和完整玩法仍保持待实现状态，开始游戏保持禁用。
+当前符号/类型、表达式组合与整数字面量范围见下节；后续为执行栈、字符串语义、native 绑定以及地图会话。优先级和结合性已作原版解析状态机对照，短路、调用次序及完整执行仍须单独核验；不能将语法树测试当作原版 VM 执行语义证据。触发器、计时器、AI、单位创建和完整玩法仍保持待实现状态，开始游戏保持禁用。
 
 ## 类型与符号解析
 
@@ -30,6 +30,23 @@ Win32 Release 下 `war3_jass_module_tests` **9 通过、0 失败**，覆盖继�
 
 ```powershell
 ./build/windows-x86/bin/Release/war3_jass_module_tests.exe
+```
+
+## 原版表达式组合与整数 token
+
+固定版本的解析优先级从低到高为：`and`、`or`、`== !=`、`< > <= >=`、`+ -`、`* /`、一元 `not + -`。`and`、`or` 按右结合，其余二元运算按左结合。因此 `true or false and false` 组合为 `(true or false) and false`，`true and false or true` 为 `true and (false or true)`；原版规则直接用于产品解析器。
+
+`src/jass_literal.*` 对十进制、前导 0 的八进制、`$`／`0x`／`0X` 十六进制按无符号 32 位累积，溢出保留低 32 位，不依赖宿主字符串转数值函数。语法树的 `Expression.integerBits` 保存结果，负号仍属于一元表达式；此字段只用于 Integer，Rawcode 与字符串解码后续另行核验。`08` 等非法整数保留源位置报错，不将回绕误报为超出范围。
+
+`war3_jass_frontend_tests` 5 项检查通过，生成 **245 组表达式结构、591 个整数 token**；受影响的语法检查 9 通过、0 失败。`tools/verify_jass_frontend_cpu.py` 核对固定原件摘要，在 Unicorn 中执行整数回调 `0x6f7fb830`／`0x6f7fbab0`／`0x6f7fb970`，199 个十进制、196 个八进制、196 个十六进制逐位一致，591 个 token 另经原版 lexer `0x6f7faff0` 核对分类、长度和结果。
+
+表达式检查执行原版 `0x6f7f9070` 的移进/归约指令及解析表，输入已分类的终结符；在 `0x6f7f92b2` 把语义动作替换为符号归约记录，到 return 表达式归约时停止。245 个组合包含全部二元运算符配对、一元运算、括号和布尔边界，均与 C++ 语法树一致。这证明所测表达式的组合关系，不运行原版 AST 构造、类型检查、编译器或 VM，也不证明完整源文件验收；部分组合仅有语法意义。独立 lexer 的外部 CRT memmove 使用受控内存复制边界，整数回调没有替换游戏函数代码。客户端和原生测试不加载 Game.dll，分析工具仅把它作为 PE 指令数据读取。
+
+DotA 产品 `--script-check` 继续退出 0，声明及表达式/语句数与前批一致；三图合并在 W010–W012 达到 3/3 时执行。证据在 `tmp/docs-artifacts/war3/jass/frontend-{build.log,tests.log,native.json,cpu.json,cpu.log,parser-tests.log,dota.log}`；REA 原始依据为 `frontend-{integers,parser,identifiers}-rea.json`。复现（仓库根目录）：
+
+```powershell
+./watcher/war3/build/windows-x86/bin/Release/war3_jass_frontend_tests.exe tmp/docs-artifacts/war3/jass/frontend-native.json
+python watcher/war3/tools/verify_jass_frontend_cpu.py
 ```
 
 ## 原版整数／实数转换

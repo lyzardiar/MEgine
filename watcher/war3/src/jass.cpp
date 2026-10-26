@@ -2,6 +2,7 @@
 #include "jass.h"
 #include "fdf.h"
 #include "jass_numeric.h"
+#include "jass_literal.h"
 #include <algorithm>
 #include <cctype>
 #include <set>
@@ -36,7 +37,7 @@ public:
         if(std::string_view("()+-*/[]=,<>!").find(c)==std::string_view::npos)error(source_,t.position,"Unexpected JASS byte");t.kind=TokenKind::Symbol;t.text=c;if((c=='=' || c=='!' || c=='<' || c=='>') && peek()=='=')t.text+=take();if(t.text=="!")error(source_,t.position,"Use not for JASS negation");return t;
     }
 };
-int precedence(const std::string& op) {if(op=="or")return 1;if(op=="and")return 2;if(op=="==" || op=="!=")return 3;if(op=="<" || op==">" || op=="<=" || op==">=")return 4;if(op=="+" || op=="-")return 5;if(op=="*" || op=="/")return 6;return -1;}
+int precedence(const std::string& op) {if(op=="and")return 1;if(op=="or")return 2;if(op=="==" || op=="!=")return 3;if(op=="<" || op==">" || op=="<=" || op==">=")return 4;if(op=="+" || op=="-")return 5;if(op=="*" || op=="/")return 6;return -1;}
 }
 class Parser {
     Program& program_;
@@ -51,7 +52,7 @@ class Parser {
     std::string name() {if(token_.kind!=TokenKind::Word)fail("Expected JASS identifier");auto value=token_.text;next();return value;}
     void lines() {while(token_.kind==TokenKind::Newline)next();}
     void endline() {if(token_.kind!=TokenKind::Newline && token_.kind!=TokenKind::End)fail("Expected end of JASS line");lines();}
-    Id expression(Expression e) {if(program_.expressions_.size()>=1000000)fail("JASS expression budget exceeded");if(e.kind==ExpressionKind::Real){try{e.realBits=Real::fromDecimal(e.text).bits();}catch(const std::exception& ex){error(source_,e.position,ex.what());}}auto id=Id(program_.expressions_.size());program_.expressions_.push_back(std::move(e));return id;}
+    Id expression(Expression e) {if(program_.expressions_.size()>=1000000)fail("JASS expression budget exceeded");try{if(e.kind==ExpressionKind::Real)e.realBits=Real::fromDecimal(e.text).bits();else if(e.kind==ExpressionKind::Integer)e.integerBits=integerLiteral(e.text);}catch(const std::exception& ex){error(source_,e.position,ex.what());}auto id=Id(program_.expressions_.size());program_.expressions_.push_back(std::move(e));return id;}
     Id statement(Statement s) {if(program_.statements_.size()>=1000000)fail("JASS statement budget exceeded");auto id=Id(program_.statements_.size());program_.statements_.push_back(std::move(s));return id;}
     Id value(int minimum=0) {
         if(++expressionDepth_>128)fail("JASS expression nesting exceeded");auto position=token_.position;Id left=none;
@@ -61,7 +62,7 @@ class Parser {
         else if(token_.kind==TokenKind::Integer || token_.kind==TokenKind::Real || token_.kind==TokenKind::String || token_.kind==TokenKind::Rawcode){auto token=std::move(token_);next();auto kind=token.kind==TokenKind::Integer?ExpressionKind::Integer:token.kind==TokenKind::Real?ExpressionKind::Real:token.kind==TokenKind::String?ExpressionKind::String:ExpressionKind::Rawcode;left=expression({kind,std::move(token.text),{},position});}
         else if(token_.kind==TokenKind::Word){auto text=name();if(text=="true" || text=="false")left=expression({ExpressionKind::Boolean,std::move(text),{},position});else if(text=="null")left=expression({ExpressionKind::Null,{}, {},position});else if(consume("(")){std::vector<Id> arguments;if(!consume(")")){do {arguments.push_back(value());if(arguments.size()>256)fail("JASS argument budget exceeded");}while(consume(","));expect(")");}left=expression({ExpressionKind::Call,std::move(text),std::move(arguments),position});}else if(consume("[")){auto index=value();expect("]");left=expression({ExpressionKind::Array,std::move(text),{index},position});}else left=expression({ExpressionKind::Variable,std::move(text),{},position});}
         else fail("Expected JASS expression");
-        while((token_.kind==TokenKind::Word || token_.kind==TokenKind::Symbol) && precedence(token_.text)>=minimum){auto op=token_.text;int priority=precedence(op);next();auto right=value(priority+1);left=expression({ExpressionKind::Binary,std::move(op),{left,right},position});}
+        while((token_.kind==TokenKind::Word || token_.kind==TokenKind::Symbol) && precedence(token_.text)>=minimum){auto op=token_.text;int priority=precedence(op);next();auto right=value(priority+(op=="and" || op=="or"?0:1));left=expression({ExpressionKind::Binary,std::move(op),{left,right},position});}
         --expressionDepth_;return left;
     }
     Variable variable(bool constant) {Variable v;v.position=token_.position;v.constant=constant;v.type=name();v.array=consume("array");v.name=name();if(consume("=")){if(v.array)fail("JASS arrays cannot have initializers");v.initializer=value();}endline();return v;}
