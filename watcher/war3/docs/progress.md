@@ -38,7 +38,7 @@ W010 类型与符号解析已接入产品 `--script-check`：Module 拥有 AST�
 
 W011 已按原版状态机修正 `or` 高于 `and`、两者右结合，整数字面量按原版十进制/八进制/十六进制回绕预编译到 AST。245 组表达式组合与原版移进/归约指令一致；591 个整数的回调位型及原版 lexer 分类/边界一致。5 项新夹具与9项受影响的语法检查通过，DotA 最小产品集成退出 0，无 Game.dll。证据为 `jass/frontend-*`，具体受控边界见 `jass.md`；本项未重复数值四则、GUI、旧引擎或全量资产检查。
 
-W012 原生 Runtime 已编译并执行自编脚本：显式帧/槽位/稀疏数组、流程、短路、code 重入、I2R/R2I 与有类型的 native 边界已接入，12项快速检查通过，5组字符串及268组Rawcode与原件解码指令一致。DotA 指令编译通过，共370,552条，原图仍为 initialized=false。W010–W012 达到3/3，合并语法/Module/frontend/Runtime检查、三图编译和补充的嵌套loop/重入预算检查后关闭已实现基础范围。证据为 `jass/runtime-*`，异常/预算及原版未覆盖边界见 `jass.md`。
+W012 原生 Runtime 已执行自编脚本：显式帧/槽位/稀疏数组、流程、短路、code 重入、I2R/R2I 与有类型的 native 边界已接入。W010–W012 在 `d1afdb3` 合并验证通过，语法9／Module9／frontend5／Runtime13，共36项、0失败；Amazonia／BootyBay／DotA 分别编译21,086／19,785／370,552条指令，均无Game.dll、initialized=false。5组字符串及268组Rawcode原版对照、245组解析结构与591个整数对照按当前夹具摘要一致复用。证据为 `jass/batch-runtime-*`、`batch-w010-w012.json`，本批关闭脚本基础范围；原版完整运行/玩法继续在总矩阵中待实现。
 
 接续工作为公共常量与游戏 native 的实际状态、地图 config/main、载入界面和会话，再连通地形/对象、AI 与可玩流程。原版完整调度、随机数、异常线程状态与句柄生命周期尚未完成，不能把自编脚本执行当成完整原图运行。未绑定的 native 带源位置失败，不返回默认值；原图公共/地图全局初始化和 config/main 仍未执行。来源和边界见 `jass.md`，原始证据在 `tmp/docs-artifacts/war3/jass/`。
 

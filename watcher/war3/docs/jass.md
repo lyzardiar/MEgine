@@ -44,7 +44,7 @@ REA 的 AND／OR 发射器 `0x6f7e91d0`／`0x6f7e9bf0` 先发射左表达式，�
 
 当前开发预算默认为每次外部调用 5,000,000 条指令、1,024 个脚本帧、64 层同步 native 重入、各 262,144 个局部槽/操作数值、单字符串 16 MiB；数组只接受 0..8191。越界、零除、INT_MIN/-1、缺少返回及未初始化局部读取均带位置报错。这些诊断/预算是当前实现边界，不声称原版对所有异常输入的线程状态相同。句柄生命周期、挂起/计时器调度、随机数、全部原生函数和完整原版 VM 行为仍待实现/差分。
 
-`war3_jass_runtime_tests` 执行自编脚本，已通过初始化、存储、流程、短路、实参次序、递归/code 同步重入、Real 消费、字符串/Rawcode、native 类型错误、句柄祖先转换、初始化失败与预算/释放等12项快速检查；新增嵌套 loop 和 native 共享预算列入 W010–W012 合并验证。DotA 已编译 370,552 条指令，产品仍未执行其全局初始化或 config/main；开始游戏保持禁用。证据为 `tmp/docs-artifacts/war3/jass/runtime-{build.log,tests.log,dota.log,native.json,literals-cpu.json,literals-cpu.log}`。
+`war3_jass_runtime_tests` 执行自编脚本，13项检查通过，覆盖初始化、存储、流程、短路、实参次序、递归/code 同步重入、Real 消费、字符串/Rawcode、native 类型错误、句柄祖先转换、初始化失败、嵌套 loop、预算共享/释放及长表达式。W010–W012 的36项合并检查与三图产品指令编译已通过；Amazonia／BootyBay／DotA 分别为21,086／19,785／370,552条指令，原图全局初始化和config/main均未执行，开始游戏保持禁用。证据为 `tmp/docs-artifacts/war3/jass/batch-runtime-*.log`、`batch-w010-w012.json` 及 `runtime-{native.json,literals-cpu.json,literals-cpu.log}`。
 
 ```powershell
 ./build/windows-x86/bin/Release/war3_jass_runtime_tests.exe "G:/work/github/MEgine/tmp/docs-artifacts/war3/jass/runtime-native.json"
