@@ -6,7 +6,7 @@
 #include "model.h"
 #include "glue.h"
 #include "map_browser.h"
-#include "jass_module.h"
+#include "jass_runtime.h"
 #include <memory>
 #include <shellapi.h>
 
@@ -33,12 +33,12 @@ int run(HINSTANCE instance) {
     Archives archives(options.dataRoot);
     log.write("common_archives=" + std::to_string(archives.commonCount()));
     if(options.scriptCheck){
-        archives.mountMap(options.map);auto started=GetTickCount64();auto module=jass::Module::compile(jass::Program::read(archives));auto& program=module.program();
+        archives.mountMap(options.map);auto started=GetTickCount64();jass::Runtime runtime(jass::Module::compile(jass::Program::read(archives)));auto& module=runtime.module();auto& program=module.program();
         auto natives=std::count_if(program.functions().begin(),program.functions().end(),[](auto& f){return f.native;});unsigned realLiterals=0;std::uint32_t literalHash=2166136261u;
         for(size_t i=0;i<program.expressionCount();++i){auto& e=program.expression(jass::Id(i));if(e.kind==jass::ExpressionKind::Real){++realLiterals;literalHash=(literalHash^e.realBits)*16777619u;}}
         log.write("jass_real_literals="+std::to_string(realLiterals)+" bits_hash="+std::to_string(literalHash));for(auto& source:program.sources())log.write("jass_source="+source.name+" bytes="+std::to_string(source.text.size())+" origin="+source.origin);
         log.write("jass_types="+std::to_string(program.types().size())+" globals="+std::to_string(program.globals().size())+" natives="+std::to_string(natives)+" functions="+std::to_string(program.functions().size()-natives)+" expressions="+std::to_string(program.expressionCount())+" statements="+std::to_string(program.statementCount())+" elapsed_ms="+std::to_string(GetTickCount64()-started));
-        log.write("jass_link=passed resolved_expressions="+std::to_string(program.expressionCount()));if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll must not be loaded");log.write("script_check=passed game_dll_loaded=false");return 0;
+        log.write("jass_link=passed resolved_expressions="+std::to_string(program.expressionCount()));log.write("jass_bytecode=compiled instructions="+std::to_string(runtime.instructionCount())+" initialized=false");if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll must not be loaded");log.write("script_check=passed game_dll_loaded=false");return 0;
     }
     auto font = archives.read(skinValue(archives,"MasterFont","Fonts\\FRIZQT__.TTF"));
     if (!font) throw std::runtime_error("Missing original font");

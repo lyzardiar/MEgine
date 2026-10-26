@@ -18,13 +18,13 @@ Win32 Release 下公共库加 DotA 构建出 91 个扩展类型、3,369 个全�
 
 REA 在固定 Game.dll 找到 `common.j`／`scripts\common.j` 引用，原始记录为 `tmp/docs-artifacts/war3/jass/source-paths-rea.json`，它仅证明字符串存在。语言结构另参考 [lep/pjass](https://github.com/lep/pjass/tree/654c3cf7731eb472518e6915e9d7672a72652165) 的 grammar.y/token.l，固定提交 `654c3cf7731eb472518e6915e9d7672a72652165`，BSD-2-Clause；参考副本和许可证留在本地诊断目录，客户端未复制或链接该项目实现。原件脚本、诊断输出和第三方参考副本不随源码提交。
 
-当前符号/类型、表达式组合与整数字面量范围见下节；后续为执行栈、字符串语义、native 绑定以及地图会话。优先级和结合性已作原版解析状态机对照，短路、调用次序及完整执行仍须单独核验；不能将语法树测试当作原版 VM 执行语义证据。触发器、计时器、AI、单位创建和完整玩法仍保持待实现状态，开始游戏保持禁用。
+当前符号/类型、表达式组合、字面量与执行栈范围见下节。运行层已接入自编脚本执行，地图游戏 native 和会话仍待实现。优先级和结合性已作原版解析状态机对照，短路/实参顺序有原版发射器依据；完整 VM 行为仍须逐项核验。触发器、计时器、AI、单位创建和完整玩法仍保持待实现状态，开始游戏保持禁用。
 
 ## 类型与符号解析
 
 `src/jass_module.*` 的 Module 拥有 Program、源文本与类型/函数/槽位表。它解析 handle 继承并拒绝未知父类型、非 handle 父类型与继承环；检查赋值、数组形状与整数下标、调用实参、条件和返回值。兼容规则包括 integer 到 real、null 到可空类型以及派生 handle 到祖先。函数签名先注册，表达式的变量、数组、调用与 code 引用保存直接索引；set 目标另存赋值绑定。参数槽在局部变量之前，局部名称覆盖同名全局。表达式使用显式后序栈，20,000 次左结合运算不会递归消耗 Win32 调用栈。
 
-产品 `--script-check` 依次构建语法树和 Module，成功时写入 `jass_link=passed`；失败保留源名、行、列和类型诊断。此入口不执行全局初始化、config/main 或任何 native。当前检查未覆盖全部路径的返回值、确定赋值和 constant 函数纯度；类型规则及原版表达式执行行为仍需差分核验，不能把源脚本可链接作为原版 VM 一致性证明。
+产品 `--script-check` 依次构建语法树、Module 和 Runtime 执行指令，成功时写入 `jass_link=passed`、`jass_bytecode=compiled`；失败保留源名、行、列和类型诊断。此入口不执行全局初始化、config/main 或任何 native。当前静态检查未覆盖全部路径的返回值、确定赋值和 constant 函数纯度；运行层对读未初始化局部或缺少返回值显式报错，不能把源脚本可链接作为原版 VM 一致性证明。
 
 Win32 Release 下 `war3_jass_module_tests` **9 通过、0 失败**，覆盖继承/null、非法类型图、全局/参数/局部及赋值槽位、前向调用/code、数组、初始化与常量、条件/返回/运算符、长表达式、移动后源所有权与绑定完整性。继续开发所需的 DotA 产品集成退出 0，解析 281,324 个表达式、65,968 个语句，无 Game.dll。证据在 `tmp/docs-artifacts/war3/jass/module-{build.log,tests.log,dota.log}`。三图合并与诊断集成列入 W010，累计三个功能任务后执行；已通过且未变化的数值差分不重复运行。
 
@@ -32,11 +32,31 @@ Win32 Release 下 `war3_jass_module_tests` **9 通过、0 失败**，覆盖继�
 ./build/windows-x86/bin/Release/war3_jass_module_tests.exe
 ```
 
+## 原生执行层
+
+`src/jass_runtime.*` 将已绑定 AST 编译为本项目指令：显式调用帧、局部/全局槽位、稀疏数组、if/elseif、loop/exitwhen、return、短路、code 引用和有类型的 native 调用。表达式编译使用显式工作栈，脚本调用使用独立帧向量；20,000 次左结合运算不递归占用宿主栈。模拟指令格式为客户端实现，不声称兼容原版字节码文件。
+
+构造 Runtime 只编译指令。先绑定所需 native，再调用 `initialize()` 按声明顺序执行全局初始化，成功后才允许调用入口；初始化失败的实例保持不可运行。参数、赋值及返回值消费 Module 的兼容规则，integer 到 real 使用原版 Real 转换。I2R/R2I 根据原 native 声明验证签名并自动绑定；其他 native 必须显式实现，未绑定时报告源位置和名称，不返回默认结果。native 可同步调用 code 引用，嵌套调用共享本次指令预算；错误会释放本次帧与操作数，已修改的全局状态保留。
+
+REA 的 AND／OR 发射器 `0x6f7e91d0`／`0x6f7e9bf0` 先发射左表达式，再分别发射 `0x2a`／`0x29` 条件跳转，跳过右表达式并产生 false／true。原版参数列表规则 45／47、构造器 `0x6f7f3470` 和发射器 `0x6f7e92a0` 先消费此前参数列表，再发射新参数，运行层据此从左到右求实参。原始记录为 `runtime-{shortcircuit,call-grammar,parameters}-rea.json`。这些是代码路径依据，完整调用与调度仍需原版执行差分。
+
+字符串支持原版八种转义（反斜杠、两种引号、r/n/b/f/t）。Rawcode 保存单字节及四字节的有符号字节累积，支持转义和 `u`／`U` 四位十六进制。`tools/verify_jass_literals_cpu.py` 对照原版字符串构造器解码循环 `0x6f7f4bb1–0x6f7f4c0c` 与完整 Rawcode 回调 `0x6f7fb5c0`：**5 组字符串、268 组 Rawcode** 一致，无替代函数代码。循环输入均为合法转义；完整分配、驻留、拼接、比较和词法接受范围未由这个对照证明。未知字符串转义在客户端显式拒绝。
+
+当前开发预算默认为每次外部调用 5,000,000 条指令、1,024 个脚本帧、64 层同步 native 重入、各 262,144 个局部槽/操作数值、单字符串 16 MiB；数组只接受 0..8191。越界、零除、INT_MIN/-1、缺少返回及未初始化局部读取均带位置报错。这些诊断/预算是当前实现边界，不声称原版对所有异常输入的线程状态相同。句柄生命周期、挂起/计时器调度、随机数、全部原生函数和完整原版 VM 行为仍待实现/差分。
+
+`war3_jass_runtime_tests` 执行自编脚本，已通过初始化、存储、流程、短路、实参次序、递归/code 同步重入、Real 消费、字符串/Rawcode、native 类型错误、句柄祖先转换、初始化失败与预算/释放等12项快速检查；新增嵌套 loop 和 native 共享预算列入 W010–W012 合并验证。DotA 已编译 370,552 条指令，产品仍未执行其全局初始化或 config/main；开始游戏保持禁用。证据为 `tmp/docs-artifacts/war3/jass/runtime-{build.log,tests.log,dota.log,native.json,literals-cpu.json,literals-cpu.log}`。
+
+```powershell
+./build/windows-x86/bin/Release/war3_jass_runtime_tests.exe "G:/work/github/MEgine/tmp/docs-artifacts/war3/jass/runtime-native.json"
+# 仓库根目录运行
+python watcher/war3/tools/verify_jass_literals_cpu.py
+```
+
 ## 原版表达式组合与整数 token
 
 固定版本的解析优先级从低到高为：`and`、`or`、`== !=`、`< > <= >=`、`+ -`、`* /`、一元 `not + -`。`and`、`or` 按右结合，其余二元运算按左结合。因此 `true or false and false` 组合为 `(true or false) and false`，`true and false or true` 为 `true and (false or true)`；原版规则直接用于产品解析器。
 
-`src/jass_literal.*` 对十进制、前导 0 的八进制、`$`／`0x`／`0X` 十六进制按无符号 32 位累积，溢出保留低 32 位，不依赖宿主字符串转数值函数。语法树的 `Expression.integerBits` 保存结果，负号仍属于一元表达式；此字段只用于 Integer，Rawcode 与字符串解码后续另行核验。`08` 等非法整数保留源位置报错，不将回绕误报为超出范围。
+`src/jass_literal.*` 对十进制、前导 0 的八进制、`$`／`0x`／`0X` 十六进制按无符号 32 位累积，溢出保留低 32 位，不依赖宿主字符串转数值函数。语法树的 `Expression.integerBits` 保存 Integer 与 Rawcode 结果，负号仍属于一元表达式；字符串解码范围见运行层。`08` 等非法整数保留源位置报错，不将回绕误报为超出范围。
 
 `war3_jass_frontend_tests` 5 项检查通过，生成 **245 组表达式结构、591 个整数 token**；受影响的语法检查 9 通过、0 失败。`tools/verify_jass_frontend_cpu.py` 核对固定原件摘要，在 Unicorn 中执行整数回调 `0x6f7fb830`／`0x6f7fbab0`／`0x6f7fb970`，199 个十进制、196 个八进制、196 个十六进制逐位一致，591 个 token 另经原版 lexer `0x6f7faff0` 核对分类、长度和结果。
 
