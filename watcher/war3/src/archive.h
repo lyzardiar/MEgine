@@ -21,6 +21,7 @@ struct Member {
     Bytes bytes;
     std::string source;
 };
+enum class ArchiveScope {Overlay,Common,Map};
 class Archives {
     std::vector<std::unique_ptr<Archive>> common_;
     std::unique_ptr<Archive> map_;
@@ -37,7 +38,7 @@ public:
     void unmountMap();
     std::shared_ptr<const Member> read(std::string name);
     std::shared_ptr<const Member> readTexture(std::string name);
-    std::shared_ptr<const Member> readCandidates(std::vector<std::string> names);
+    std::shared_ptr<const Member> readCandidates(std::vector<std::string> names,ArchiveScope scope=ArchiveScope::Overlay);
     std::size_t cachedBytes() const { return cacheBytes_; }
     std::size_t commonCount() const { return common_.size(); }
 };

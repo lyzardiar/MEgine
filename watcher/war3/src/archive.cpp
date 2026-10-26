@@ -72,18 +72,18 @@ std::shared_ptr<const Member> Archives::readTexture(std::string name) {
     other.replace(dot, std::string::npos, ext == ".tga" ? ".blp" : ".tga");
     return readCandidates({std::move(name), std::move(other)});
 }
-std::shared_ptr<const Member> Archives::readCandidates(std::vector<std::string> names) {
+std::shared_ptr<const Member> Archives::readCandidates(std::vector<std::string> names,ArchiveScope scope) {
     for (auto& name : names) {
         if (name.empty() || name.front() == '/' || name.front() == '\\' || name.find(':') != std::string::npos || name.find("..") != std::string::npos) throw std::runtime_error("Invalid archive path");
         for (auto& c : name) { if (c == '/') c = '\\'; c = static_cast<char>(std::tolower(static_cast<unsigned char>(c))); }
     }
-    if (map_) {
+    if (map_ && scope!=ArchiveScope::Common) {
         for (const auto& name : names) {
             if (auto found = mapCache_.find(name); found != mapCache_.end()) { found->second.stamp = ++stamp_; return found->second.member; }
             if (auto bytes = map_->read(name)) return cache(mapCache_, name, std::move(*bytes), map_->path());
         }
     }
-    for (const auto& archive : common_) for (const auto& name : names) {
+    if(scope!=ArchiveScope::Map)for (const auto& archive : common_) for (const auto& name : names) {
         auto key = utf8(archive->path().wstring()) + ":" + name;
         if (auto found = commonCache_.find(key); found != commonCache_.end()) { found->second.stamp = ++stamp_; return found->second.member; }
         if (auto bytes = archive->read(name)) return cache(commonCache_, key, std::move(*bytes), archive->path());

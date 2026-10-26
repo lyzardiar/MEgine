@@ -79,6 +79,7 @@ Options Options::parse() {
         else if (argument == L"--mute") options.mute = true;
         else if (argument == L"--window-check") options.windowCheck = true;
         else if (argument == L"--menu-check") options.menuCheck = true;
+        else if (argument == L"--script-check") options.scriptCheck = true;
         else if (argument == L"--time-ms") {auto text=value(i);size_t end=0;auto n=std::stoull(text,&end);if(end!=text.size() || n>86400000)throw std::runtime_error("Invalid animation time");options.timeMs=n;}
         else throw std::runtime_error("Unknown option: " + utf8(argument));
     }
@@ -86,10 +87,11 @@ Options Options::parse() {
     options.dataRoot = fs::canonical(options.dataRoot);
     if (options.renderer != "d3d9" && options.renderer != "d3d9-reference") throw std::runtime_error("Renderer not implemented: " + options.renderer);
     if (!options.map.empty()) { if (options.map.is_relative()) options.map = options.dataRoot / options.map; options.map = fs::canonical(options.map); }
-    if (options.hidden && !options.probe && !options.frames) throw std::runtime_error("Hidden run requires --frames or --probe");
+    if (options.hidden && !options.probe && !options.scriptCheck && !options.frames) throw std::runtime_error("Hidden run requires --frames, --probe or --script-check");
     if (!options.capture.empty() && !options.frames) throw std::runtime_error("Capture requires --frames");
     if (options.windowCheck && (options.probe || options.frames<120)) throw std::runtime_error("Window check requires a render run with at least 120 frames");
     if (options.menuCheck && (options.probe || options.windowCheck || options.map.empty() || options.frames<240)) throw std::runtime_error("Menu check requires --map, at least 240 frames, and no other check mode");
+    if(options.scriptCheck && (options.map.empty() || options.probe || options.windowCheck || options.menuCheck || options.frames || !options.capture.empty()))throw std::runtime_error("Script check requires --map and no render/check options");
     if (options.log.empty()) {
         wchar_t directory[32768]{};
         DWORD length = GetEnvironmentVariableW(L"LOCALAPPDATA", directory, 32768);

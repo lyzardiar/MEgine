@@ -6,6 +6,7 @@
 #include "model.h"
 #include "glue.h"
 #include "map_browser.h"
+#include "jass.h"
 #include <memory>
 #include <shellapi.h>
 
@@ -31,6 +32,7 @@ int run(HINSTANCE instance) {
     log.write("client=war3 architecture=x86 renderer=" + options.renderer);
     Archives archives(options.dataRoot);
     log.write("common_archives=" + std::to_string(archives.commonCount()));
+    if(options.scriptCheck){archives.mountMap(options.map);auto started=GetTickCount64();auto program=jass::Program::read(archives);auto natives=std::count_if(program.functions().begin(),program.functions().end(),[](auto& f){return f.native;});for(auto& source:program.sources())log.write("jass_source="+source.name+" bytes="+std::to_string(source.text.size())+" origin="+source.origin);log.write("jass_types="+std::to_string(program.types().size())+" globals="+std::to_string(program.globals().size())+" natives="+std::to_string(natives)+" functions="+std::to_string(program.functions().size()-natives)+" expressions="+std::to_string(program.expressionCount())+" statements="+std::to_string(program.statementCount())+" elapsed_ms="+std::to_string(GetTickCount64()-started));if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll must not be loaded");log.write("script_check=passed game_dll_loaded=false");return 0;}
     auto font = archives.read(skinValue(archives,"MasterFont","Fonts\\FRIZQT__.TTF"));
     if (!font) throw std::runtime_error("Missing original font");
     log.write("font_bytes=" + std::to_string(font->bytes.size()) + " source=" + font->source);
@@ -148,7 +150,7 @@ int run(HINSTANCE instance) {
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     bool silent = false;
     int count = 0; auto arguments = CommandLineToArgvW(GetCommandLineW(), &count);
-    if (arguments) { for (int i = 1; i < count; ++i) if (!wcscmp(arguments[i], L"--hidden") || !wcscmp(arguments[i], L"--probe")) silent = true; LocalFree(arguments); }
+    if (arguments) { for (int i = 1; i < count; ++i) if (!wcscmp(arguments[i], L"--hidden") || !wcscmp(arguments[i], L"--probe") || !wcscmp(arguments[i], L"--script-check")) silent = true; LocalFree(arguments); }
     try { return war3::run(instance); }
     catch (const std::exception& error) { OutputDebugStringA(error.what()); try { auto options = war3::Options::parse(); std::ofstream log(options.log, std::ios::binary | std::ios::app); log << "fatal=" << error.what() << '\n'; } catch (...) {} if (!silent) MessageBoxW(nullptr, war3::wide(error.what()).c_str(), L"War3", MB_OK | MB_ICONERROR); return 1; }
 }
