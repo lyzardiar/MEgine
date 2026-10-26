@@ -35,8 +35,8 @@ void ScriptSession::bindGameNatives() {
     bind("PauseGame","nothing",{"boolean"},[this](auto& vm,auto args){simulationPaused_=args[0].bits!=0;return vm.nothing();});
     bind("IsFogEnabled","boolean",{},[this](auto& vm,auto){return vm.boolean(fogEnabled_);});
     bind("IsFogMaskEnabled","boolean",{},[this](auto& vm,auto){return vm.boolean(fogMaskEnabled_);});
-    bind("FogEnable","nothing",{"boolean"},[this](auto& vm,auto args){fogEnabled_=args[0].bits!=0;return vm.nothing();});
-    bind("FogMaskEnable","nothing",{"boolean"},[this](auto& vm,auto args){fogMaskEnabled_=args[0].bits!=0;return vm.nothing();});
+    bind("FogEnable","nothing",{"boolean"},[this](auto& vm,auto args){fogEnabled_=args[0].bits!=0;++fogRevision_;return vm.nothing();});
+    bind("FogMaskEnable","nothing",{"boolean"},[this](auto& vm,auto args){fogMaskEnabled_=args[0].bits!=0;++fogRevision_;return vm.nothing();});
     bind("SetRandomSeed","nothing",{"integer"},[this](auto& vm,auto args){randomState_=args[0].bits;return vm.nothing();});
     bind("GetRandomInt","integer",{"integer","integer"},[this](auto& vm,auto args){auto low=std::int64_t(std::bit_cast<std::int32_t>(args[0].bits)),high=std::int64_t(std::bit_cast<std::int32_t>(args[1].bits));if(low>high)throw std::runtime_error("Reversed random integer interval");auto count=std::uint64_t(high-low)+1;auto offset=(std::uint64_t(random())*count)>>32;return vm.integer(std::int32_t(low+std::int64_t(offset)));});
     bind("GetRandomReal","real",{"real","real"},[this](auto& vm,auto args){auto low=jass::Real::fromBits(args[0].bits),high=jass::Real::fromBits(args[1].bits);auto first=std::bit_cast<float>(low.bits()),last=std::bit_cast<float>(high.bits());if(!std::isfinite(first) || !std::isfinite(last) || first>last)throw std::runtime_error("Invalid random real interval");auto ratio=jass::Real::fromBits(std::bit_cast<std::uint32_t>(float(random()>>8)/16777216.f));return vm.real(low.add(high.subtract(low).multiply(ratio)));});

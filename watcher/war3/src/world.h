@@ -10,6 +10,8 @@ struct WorldRect {jass::Real minX,minY,maxX,maxY;};
 struct WorldEnvironment {
     std::array<jass::Real,8> cameraBounds{};
     std::string terrainDayNight,unitDayNight;
+    std::string skyModel;
+    bool creepCampFilter=true;
     std::array<std::uint8_t,4> waterColor{};
     bool cameraChanged=false,dayNightChanged=false,waterChanged=false;
     std::optional<WorldPoint> cameraTarget,quickPosition;

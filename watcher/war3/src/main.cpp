@@ -15,11 +15,12 @@
 #include <shellapi.h>
 
 namespace war3 {
-struct WindowState { Renderer* renderer = nullptr; bool minimized = false,hidden = false; int mouseX = 0, mouseY = 0, pressX = 0, pressY = 0, wheel=0,lastClickX=0,lastClickY=0; bool click = false, down = false,doubleClick=false,rightClick=false,rightDown=false; unsigned key = 0; DWORD lastClickTime=0; };
+struct WindowState { Renderer* renderer = nullptr; bool minimized = false,hidden = false; int mouseX = 0, mouseY = 0, pressX = 0, pressY = 0, wheel=0,lastClickX=0,lastClickY=0; bool click = false, down = false,doubleClick=false,rightClick=false,rightDown=false; unsigned key = 0; DWORD lastClickTime=0;std::wstring characters; };
 LRESULT CALLBACK windowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     auto state = reinterpret_cast<WindowState*>(GetWindowLongPtrW(window, GWLP_USERDATA));
     if (message == WM_NCCREATE) { auto create = reinterpret_cast<CREATESTRUCTW*>(lParam); state = static_cast<WindowState*>(create->lpCreateParams); SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(state)); }
     if (message == WM_SIZE && state) { state->minimized = wParam == SIZE_MINIMIZED; if (state->renderer) state->renderer->resize(LOWORD(lParam), HIWORD(lParam)); return 0; }
+    if(message==WM_CHAR && state){if(state->characters.size()<256)state->characters+=wchar_t(wParam);return 0;}
     if (message == WM_MOUSEMOVE && state) { state->mouseX = static_cast<short>(LOWORD(lParam)); state->mouseY = static_cast<short>(HIWORD(lParam)); return 0; }
     if(message==WM_RBUTTONDOWN && state){state->mouseX=static_cast<short>(LOWORD(lParam));state->mouseY=static_cast<short>(HIWORD(lParam));state->rightDown=true;SetCapture(window);return 0;}
     if(message==WM_RBUTTONUP && state){state->mouseX=static_cast<short>(LOWORD(lParam));state->mouseY=static_cast<short>(HIWORD(lParam));state->rightClick=state->rightDown;state->rightDown=false;if(!state->down)ReleaseCapture();return 0;}
@@ -93,6 +94,7 @@ int run(HINSTANCE instance) {
     GlueScreen mainMenu(archives,images,renderer,text,"UI\\FrameDef\\Glue\\MainMenu.fdf","MainMenuFrame");
     enum class Screen {Main,Single,Maps,Loading,Game};Screen screen=Screen::Main;
     std::unique_ptr<GlueScreen> singleMenu;
+    auto prepareSingle=[&]{if(!singleMenu){singleMenu=std::make_unique<GlueScreen>(archives,images,renderer,text,"UI\\FrameDef\\Glue\\SinglePlayerMenu.fdf","SinglePlayerMenu");singleMenu->visible("ProfilePanel",false);}};
     std::unique_ptr<MapBrowser> browser;
     GameLoading loader(log);std::uint64_t loadRequest=0;std::unique_ptr<GameData> uploading;std::unique_ptr<LoadingScreen> loadingScreen;std::unique_ptr<GameView> game;std::string loadError;bool autoStarted=false;
     std::unique_ptr<Music> music;
@@ -101,7 +103,7 @@ int run(HINSTANCE instance) {
         catch (const std::exception& error) { log.write(std::string("audio_unavailable=") + error.what()); }
     };menuMusic();
     if (!options.hidden) ShowWindow(window, SW_SHOW);
-    if(options.play){browser=std::make_unique<MapBrowser>(archives,images,renderer,text,log,options.dataRoot,options.map,options.mute);screen=Screen::Maps;}
+    if(options.play){prepareSingle();browser=std::make_unique<MapBrowser>(archives,images,renderer,text,log,options.dataRoot,options.map,options.mute);screen=Screen::Maps;}
     unsigned frames = 0;
     bool running = true;
     auto started = GetTickCount64();
@@ -157,19 +159,19 @@ int run(HINSTANCE instance) {
         if(screen!=Screen::Loading && screen!=Screen::Game)menu.draw(options.timeMs.value_or(GetTickCount64()-started), float(renderer.width()) / renderer.height(),true);
         UiInput input{(state.mouseX-left)/(scale*1000),(state.mouseY-top)/(scale*1000),(state.pressX-left)/(scale*1000),(state.pressY-top)/(scale*1000),state.click,state.down,state.key,state.wheel/WHEEL_DELTA,state.doubleClick,(GetKeyState(VK_SHIFT)&0x8000)!=0};
         std::string action;
-        if(screen==Screen::Main){draw(90,15,512,256,0xffffffff,logo.Get());action=mainMenu.draw("ControlLayer",input,{"SinglePlayerButton","ExitButton"});if(input.key==VK_ESCAPE)action="ExitButton";if(action=="SinglePlayerButton"){if(!singleMenu){singleMenu=std::make_unique<GlueScreen>(archives,images,renderer,text,"UI\\FrameDef\\Glue\\SinglePlayerMenu.fdf","SinglePlayerMenu");singleMenu->visible("ProfilePanel",false);}screen=Screen::Single;}if(action=="ExitButton"){if(options.windowCheck && windowStage<6)throw std::runtime_error("Cancelled pointer input activated ExitButton");running=false;}}
+        if(screen==Screen::Main){draw(90,15,512,256,0xffffffff,logo.Get());action=mainMenu.draw("ControlLayer",input,{"SinglePlayerButton","ExitButton"});if(input.key==VK_ESCAPE)action="ExitButton";if(action=="SinglePlayerButton"){prepareSingle();screen=Screen::Single;}if(action=="ExitButton"){if(options.windowCheck && windowStage<6)throw std::runtime_error("Cancelled pointer input activated ExitButton");running=false;}}
         else if(screen==Screen::Single){action=singleMenu->draw("SinglePlayerMenu",input,{"SkirmishButton","CancelButton"});if(input.key==VK_ESCAPE)action="CancelButton";if(action=="CancelButton")screen=Screen::Main;if(action=="SkirmishButton"){if(!browser)browser=std::make_unique<MapBrowser>(archives,images,renderer,text,log,options.dataRoot,options.map,options.mute);screen=Screen::Maps;}}
         else if(screen==Screen::Maps){action=browser->draw(input);if(action=="CancelButton")screen=Screen::Single;if(options.play && !autoStarted){if(!browser->error().empty())throw std::runtime_error(browser->error());if(browser->session() && !browser->loading()){action="PlayGameButton";autoStarted=true;}}if(action=="PlayGameButton"){auto session=browser->takeSession();loadingScreen=std::make_unique<LoadingScreen>(*session,renderer,text,log,browser->preview());loadError.clear();uploading.reset();music.reset();loadRequest=loader.request(std::move(session));screen=Screen::Loading;}}
         else if(screen==Screen::Loading){
             if(input.key==VK_ESCAPE){loader.cancel();uploading.reset();loadingScreen.reset();browser->reload();menuMusic();screen=Screen::Maps;action="CancelLoading";}
             else {if(auto result=loader.poll();result && result->request==loadRequest){loadError=std::move(result->error);uploading=std::move(result->data);}if(uploading && loadError.empty())try{auto budget=GetTickCount64()+4;while(GetTickCount64()<budget && uploading->uploadOne(renderer)){}if(uploading->uploaded()==uploading->uploadCount()){game=std::make_unique<GameView>(std::move(uploading),renderer,text,log);screen=Screen::Game;action="EnterGame";}}catch(const std::exception& e){loadError=e.what();uploading.reset();log.write("game_upload_failed="+loadError);}if(!loadError.empty() && options.hidden)throw std::runtime_error(loadError);loadingScreen->draw(GetTickCount64()-started,loader.phase(),uploading?std::optional<std::pair<size_t,size_t>>{{uploading->uploaded(),uploading->uploadCount()}}:std::nullopt,loadError);}
         }
-        else if(screen==Screen::Game){GameInput gameInput{input,state.rightClick,!options.hidden && GetForegroundWindow()==window,(GetKeyState(VK_LEFT)&0x8000)!=0,(GetKeyState(VK_UP)&0x8000)!=0,(GetKeyState(VK_RIGHT)&0x8000)!=0,(GetKeyState(VK_DOWN)&0x8000)!=0};try{if(!game->draw(gameInput)){game.reset();loadingScreen.reset();browser->reload();screen=Screen::Maps;action="LeaveGame";menuMusic();}}catch(const std::exception& e){loadError=e.what();log.write("game_runtime_failed="+loadError);game.reset();screen=Screen::Loading;if(options.hidden)throw;}}
+        else if(screen==Screen::Game){GameInput gameInput{input,state.rightClick,!options.hidden && GetForegroundWindow()==window,(GetKeyState(VK_LEFT)&0x8000)!=0,(GetKeyState(VK_UP)&0x8000)!=0,(GetKeyState(VK_RIGHT)&0x8000)!=0,(GetKeyState(VK_DOWN)&0x8000)!=0};gameInput.characters=state.characters;try{if(!game->draw(gameInput)){game.reset();loadingScreen.reset();browser->reload();screen=Screen::Maps;action="LeaveGame";menuMusic();}}catch(const std::exception& e){loadError=e.what();log.write("game_runtime_failed="+loadError);game.reset();screen=Screen::Loading;if(options.hidden)throw;}}
         if(!action.empty())log.write("ui_action="+action);
         state.click = false;
         state.key = 0;
         state.doubleClick=false;state.wheel%=WHEEL_DELTA;
-        state.rightClick=false;
+        state.rightClick=false;state.characters.clear();
         auto capture=options.frames && (options.play?(game && game->frames()>=options.frames):(frames+1==options.frames || !running))?options.capture:fs::path{};
         if(options.menuCheck && !options.capture.empty() && (frames==20 || (menuReadyFrame && frames==menuReadyFrame+10))){capture=options.capture;capture.replace_filename(capture.stem().wstring()+(frames==20?L"-single":L"-browser")+L".png");}
         if(options.menuCheck && !options.capture.empty() && menuStage==3 && frames%2==0){capture=options.capture;capture.replace_filename(capture.stem().wstring()+L"-popup.png");}

@@ -16,10 +16,11 @@ public:
     Model(const Model&) = delete;
     Model& operator=(const Model&) = delete;
     void draw(std::uint64_t elapsed, float aspect, bool twoSided = false);
-    void draw(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& projection,const D3DMATRIX& world,bool twoSided=false);
+    void draw(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& projection,const D3DMATRIX& world,bool twoSided=false,DWORD tint=0xffffffff);
     void upload(Renderer& renderer,SceneAssets& assets);
     void replace(unsigned id,IDirect3DTexture9* texture);
     bool sequence(const std::string& prefix);
+    bool sequenceIndex(unsigned index);
     ModelGeometry geometry() const;
     float radius() const;
     std::uint64_t sequenceDuration() const;

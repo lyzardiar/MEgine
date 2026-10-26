@@ -3,6 +3,7 @@
 #include "model.h"
 #include "binary.h"
 #include <DirectXMath.h>
+#include <map>
 namespace war3 {
 namespace mdx {
 using namespace DirectX;
@@ -48,6 +49,7 @@ struct Model::Data {
     unsigned poseSequence=0;
     float radius=0;
     bool billboard=false;
+    std::map<std::string,int> sequenceNames;
     explicit Data(Renderer* renderer) : renderer(renderer) {}
     DirectX::XMVECTOR sample(const mdx::Track& track, std::uint64_t elapsed, DirectX::FXMVECTOR rest, bool rotation = false) const;
     void parse(std::span<const std::uint8_t> bytes, Log& log);

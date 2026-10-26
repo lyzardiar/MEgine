@@ -8,6 +8,8 @@
 #include "entities.h"
 #include "script_state.h"
 #include "fdf.h"
+#include "spatial_region.h"
+#include "fog_grid.h"
 #include <variant>
 
 namespace war3 {
@@ -36,13 +38,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog};
+enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     using Timer=ScriptTimer;
     using Trigger=ScriptTrigger;
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -72,6 +74,11 @@ class ScriptSession {
     std::vector<std::string> preloadMissing_;
     std::optional<FrameDefinitions> localized_;
     std::map<std::uint32_t,std::shared_ptr<ScriptTimerDialog>> timerDialogs_;
+    std::array<std::unique_ptr<FogGrid>,16> fogGrids_;
+    std::map<std::uint32_t,std::shared_ptr<FogModifier>> fogModifiers_;
+    std::uint64_t fogRevision_=1,fogTicks_=0;
+    std::map<std::string,std::uint32_t> caches_;
+    std::vector<ScriptText> texts_;
     jass::Value create(NativeKind kind);
     Object& object(jass::Value handle,NativeKind kind);
     SessionPlayer& player(jass::Value handle);
@@ -85,6 +92,16 @@ class ScriptSession {
     void bindMusicNatives();
     void bindEntityNatives();
     void bindOrderNatives();
+    void bindVisualNatives();
+    void bindSpatialEvents();
+    void bindInventoryNatives();
+    void bindFogNatives();
+    void bindTextNatives();
+    void bindCacheNatives();
+    void bindHashtableNatives();
+    unsigned inventorySize(const UnitState& unit);
+    bool giveItem(std::uint32_t unit,std::uint32_t item,std::optional<unsigned> slot={});
+    void spatialEvents();
     void moveUnits(double delta);
     void bindWeatherNatives();
     void bindCallbackNatives();
@@ -124,6 +141,11 @@ public:
     void selectUnit(std::uint32_t handle,bool selected);
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986);
     bool stopUnit(std::uint32_t handle,bool hold=false);
+    void dropItem(std::uint32_t unit,std::uint32_t item);
+    void chat(unsigned player,const std::string& message);
+    const FogGrid& fog(unsigned player);
+    const std::vector<ScriptText>& texts() const {return texts_;}
+    void displayText(unsigned owner,float x,float y,double duration,std::string text);
     void startMain();
     bool mainCompleted() const {return mainCompleted_ && !failed_;}
     void advance(double elapsed);

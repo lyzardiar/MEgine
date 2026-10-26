@@ -1,0 +1,25 @@
+// Author: MiYu. Unit inventory slots, carried item lifetime and pickup/drop event consumers.
+#include "session.h"
+#include <algorithm>
+
+namespace war3 {
+unsigned ScriptSession::inventorySize(const UnitState& u) {unsigned size=0;for(auto& [ability,level]:u.abilities)if(level>0){auto code=definitions().field(ability,"AbilityData","code");if(code=="AInv" || ObjectData::name(ability)=="AInv"){auto count=definitions().number(ability,"AbilityData",("DataA"+std::to_string(level)),6);size=std::max(size,unsigned(std::clamp(count,0.f,6.f)));}}return size;}
+bool ScriptSession::giveItem(std::uint32_t unitId,std::uint32_t itemId,std::optional<unsigned> slot) {
+    auto unitHandle=runtime_.handle("unit",unitId),itemHandle=runtime_.handle("item",itemId);auto& u=unit(unitHandle);auto& state=item(itemHandle);auto count=inventorySize(u);if(state.holder==unitId || count==0)return false;unsigned target=count;if(slot){if(*slot>=count || u.inventory[*slot])return false;target=*slot;}else for(unsigned i=0;i<count;++i)if(!u.inventory[i]){target=i;break;}if(target>=count)return false;
+    if(state.holder)dropItem(state.holder,itemId);if(!alive(unitId,NativeKind::Unit) || !alive(itemId,NativeKind::Item))return false;auto owner=unit(unitHandle).owner;auto& held=item(itemHandle);held.holder=unitId;held.owner=owner;held.x=unit(unitHandle).x;held.y=unit(unitHandle).y;unit(unitHandle).inventory[target]=itemId;ScriptContext context;context.manipulatedItem=itemId;unitEvent(unitId,49,86,context);return true;
+}
+void ScriptSession::dropItem(std::uint32_t unitId,std::uint32_t itemId) {auto& u=unit(runtime_.handle("unit",unitId));auto& state=item(runtime_.handle("item",itemId));auto found=std::find(u.inventory.begin(),u.inventory.end(),itemId);if(found==u.inventory.end() || state.holder!=unitId)return;*found=0;state.holder=0;state.x=u.x;state.y=u.y;ScriptContext context;context.manipulatedItem=itemId;unitEvent(unitId,48,85,context);}
+void ScriptSession::bindInventoryNatives() {
+    bind("UnitAddItem","boolean",{"unit","item"},[this](auto& vm,auto a){return vm.boolean(a[1].bits && giveItem(a[0].bits,a[1].bits));});
+    bind("UnitAddItemById","item",{"unit","integer"},[this](auto&,auto a){auto& u=unit(a[0]);auto handle=createItem(a[1].bits,u.x,u.y);giveItem(a[0].bits,handle.bits);return handle;});
+    bind("UnitAddItemToSlotById","boolean",{"unit","integer","integer"},[this](auto& vm,auto a){auto& u=unit(a[0]);auto slot=a[2].bits;if(slot>=inventorySize(u) || u.inventory[slot])return vm.boolean(false);auto handle=createItem(a[1].bits,u.x,u.y);return vm.boolean(giveItem(a[0].bits,handle.bits,slot));});
+    bind("UnitRemoveItem","nothing",{"unit","item"},[this](auto& vm,auto a){if(a[1].bits)dropItem(a[0].bits,a[1].bits);return vm.nothing();});
+    bind("UnitRemoveItemFromSlot","item",{"unit","integer"},[this](auto& vm,auto a){auto& u=unit(a[0]);auto id=a[1].bits<u.inventory.size()?u.inventory[a[1].bits]:0;if(id)dropItem(a[0].bits,id);return vm.handle("item",id);});
+    bind("UnitItemInSlot","item",{"unit","integer"},[this](auto& vm,auto a){auto& u=unit(a[0]);return vm.handle("item",a[1].bits<u.inventory.size()?u.inventory[a[1].bits]:0);});
+    bind("UnitInventorySize","integer",{"unit"},[this](auto& vm,auto a){return vm.integer(int(inventorySize(unit(a[0]))));});
+    bind("UnitHasItem","boolean",{"unit","item"},[this](auto& vm,auto a){auto& u=unit(a[0]);return vm.boolean(a[1].bits && std::find(u.inventory.begin(),u.inventory.end(),a[1].bits)!=u.inventory.end());});
+    bind("IsItemOwned","boolean",{"item"},[this](auto& vm,auto a){return vm.boolean(item(a[0]).holder!=0);});
+    bind("GetManipulatingUnit","unit",{},[this](auto& vm,auto){return vm.handle("unit",contexts_.empty() || !contexts_.back().manipulatedItem?0:contexts_.back().triggerUnit);});
+    bind("GetManipulatedItem","item",{},[this](auto& vm,auto){return vm.handle("item",contexts_.empty()?0:contexts_.back().manipulatedItem);});
+}
+}

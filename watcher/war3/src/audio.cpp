@@ -1,5 +1,7 @@
 // Author: MiYu. Miles stdcall ABI, common DLS banks and in-memory MIDI conversion lifetime.
 #include "audio.h"
+#include "audio_duration.h"
+#include <cmath>
 #include <algorithm>
 #include <cstring>
 #include <condition_variable>
@@ -72,6 +74,13 @@ struct AudioVoice::Impl {
     void* handle=nullptr;void* converted=nullptr;
     bool midi=false,counted=false;
     unsigned originalRate=0;
+    bool silent=false,running=false,paused=false,loop=false;
+    unsigned length=0,level=127;
+    double cursor=0,ratio=1;
+    std::uint64_t started=0;
+    double rawPosition() const {return cursor+(running?double(GetTickCount64()-started)*ratio:0);}
+    double silentPosition() const {auto value=rawPosition();return loop && length?std::fmod(value,length):std::min(value,double(length));}
+
     ~Impl(){if(!owner)return;auto& api=*owner->impl_;std::lock_guard lock(api.mutex);if(handle){(midi?api.endSequence:api.endSample)(handle);(midi?api.releaseSequence:api.releaseSample)(handle);}if(converted)api.freeMemory(converted);if(counted)--api.active;}
 };
 MilesDevice::MilesDevice(const fs::path& root) : impl_(std::make_unique<Impl>(root)) {}
@@ -98,16 +107,19 @@ size_t MilesDevice::voices() const {std::lock_guard lock(impl_->mutex);return im
 size_t MilesDevice::banks() const {std::lock_guard lock(impl_->mutex);size_t count=0;for(auto& [key,value]:impl_->banks)if(!value.expired())++count;return count;}
 AudioVoice::AudioVoice(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 AudioVoice::~AudioVoice()=default;
-void AudioVoice::start(bool loop) {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.loopSequence:api.loopSample)(v.handle,loop?0:1);(v.midi?api.startSequence:api.startSample)(v.handle);}
-void AudioVoice::pause() {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.stopSequence:api.stopSample)(v.handle);}
-void AudioVoice::resume() {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.resumeSequence:api.resumeSample)(v.handle);}
-void AudioVoice::stop() {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.endSequence:api.endSample)(v.handle);}
-void AudioVoice::volume(int level) {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);level=std::clamp(level,0,127);if(v.midi)api.volumeSequence(v.handle,level,0);else api.volumeSample(v.handle,level);}
-int AudioVoice::volume() const {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);return int((v.midi?api.readVolumeSequence:api.readVolumeSample)(v.handle));}
-void AudioVoice::position(unsigned milliseconds) {if(milliseconds>INT_MAX)throw std::runtime_error("Sound seek position exceeds range");auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.seekSequence:api.seekSample)(v.handle,int(milliseconds));}
-void AudioVoice::pitch(float ratio) {if(!std::isfinite(ratio) || ratio<=0)throw std::runtime_error("Invalid sound pitch");auto& v=*impl_;if(v.midi)throw std::runtime_error("MIDI pitch is not implemented");auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);if(!v.originalRate)v.originalRate=api.readRateSample(v.handle);double rate=double(v.originalRate)*ratio;if(rate<1 || rate>INT_MAX)throw std::runtime_error("Sound playback rate exceeds range");api.rateSample(v.handle,int(rate));}
-unsigned AudioVoice::status() const {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);return (v.midi?api.statusSequence:api.statusSample)(v.handle);}
-std::pair<unsigned,unsigned> AudioVoice::milliseconds() const {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);int total=0,current=0;(v.midi?api.timeSequence:api.timeSample)(v.handle,&total,&current);return {unsigned(std::max(0,current)),unsigned(std::max(0,total))};}
+std::unique_ptr<AudioVoice> AudioVoice::silent(std::shared_ptr<const Member> bytes,const std::string& extension) {if(!bytes)throw std::runtime_error("Silent audio requires source bytes");auto state=std::make_unique<Impl>();state->length=audioDuration(bytes->bytes,extension);state->silent=true;state->midi=extension==".mid" || extension==".midi";state->bytes=std::move(bytes);return std::unique_ptr<AudioVoice>(new AudioVoice(std::move(state)));}
+bool AudioVoice::silent() const {return impl_->silent;}
+
+void AudioVoice::start(bool loop) {auto& v=*impl_;if(v.silent){v.loop=loop;v.cursor=0;v.started=GetTickCount64();v.running=true;v.paused=false;return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.loopSequence:api.loopSample)(v.handle,loop?0:1);(v.midi?api.startSequence:api.startSample)(v.handle);}
+void AudioVoice::pause() {auto& v=*impl_;if(v.silent){v.cursor=v.silentPosition();v.running=false;v.paused=true;return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.stopSequence:api.stopSample)(v.handle);}
+void AudioVoice::resume() {auto& v=*impl_;if(v.silent){v.running=true;v.paused=false;v.started=GetTickCount64();return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.resumeSequence:api.resumeSample)(v.handle);}
+void AudioVoice::stop() {auto& v=*impl_;if(v.silent){v.running=false;v.paused=false;v.cursor=0;return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.endSequence:api.endSample)(v.handle);}
+void AudioVoice::volume(int level) {auto& v=*impl_;if(v.silent){v.level=unsigned(std::clamp(level,0,127));return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);level=std::clamp(level,0,127);if(v.midi)api.volumeSequence(v.handle,level,0);else api.volumeSample(v.handle,level);}
+int AudioVoice::volume() const {auto& v=*impl_;if(v.silent)return int(v.level);auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);return int((v.midi?api.readVolumeSequence:api.readVolumeSample)(v.handle));}
+void AudioVoice::position(unsigned milliseconds) {if(milliseconds>INT_MAX)throw std::runtime_error("Sound seek position exceeds range");auto& v=*impl_;if(v.silent){v.cursor=milliseconds;v.started=GetTickCount64();return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.seekSequence:api.seekSample)(v.handle,int(milliseconds));}
+void AudioVoice::pitch(float ratio) {if(!std::isfinite(ratio) || ratio<=0)throw std::runtime_error("Invalid sound pitch");auto& v=*impl_;if(v.midi)throw std::runtime_error("MIDI pitch is not implemented");if(v.silent){v.cursor=v.silentPosition();v.started=GetTickCount64();v.ratio=ratio;return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);if(!v.originalRate)v.originalRate=api.readRateSample(v.handle);double rate=double(v.originalRate)*ratio;if(rate<1 || rate>INT_MAX)throw std::runtime_error("Sound playback rate exceeds range");api.rateSample(v.handle,int(rate));}
+unsigned AudioVoice::status() const {auto& v=*impl_;if(v.silent)return v.running && (v.loop || v.rawPosition()<v.length)?4u:v.paused?8u:2u;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);return (v.midi?api.statusSequence:api.statusSample)(v.handle);}
+std::pair<unsigned,unsigned> AudioVoice::milliseconds() const {auto& v=*impl_;if(v.silent)return {unsigned(v.silentPosition()),v.length};auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);int total=0,current=0;(v.midi?api.timeSequence:api.timeSample)(v.handle,&total,&current);return {unsigned(std::max(0,current)),unsigned(std::max(0,total))};}
 Music::Music(const fs::path& root,std::shared_ptr<const Member> music,int volume) {voice_=MilesDevice::open(root)->digital(std::move(music),".mp3");voice_->volume(volume);voice_->start(true);}
 Music::~Music()=default;
 }

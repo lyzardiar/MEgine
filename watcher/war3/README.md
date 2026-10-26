@@ -19,6 +19,8 @@ cmake --build --preset release --target war3 --parallel 8
 
 地图画面已接入原W3E纹理混合、悬崖、坡道、动画水面，原DOO树木/装饰物，脚本创建的单位/物品模型，以及原版ConsoleUI九片控制台。地形使用静态GPU区块，装饰物使用空间区块与视锥裁剪。相机读取原MiscData六档角度/距离，滚轮有界缩放；方向键和边缘滚屏平移，左键/框选/Shift选择单位，右键或M后点地面移动，S停止，H保持位置。移动查询WPM并按模拟步进推进；完整碰撞、编队、战斗和规则继续实现。
 
+运行中单位外观、模型/图标后台读取、区域/接近/聊天事件、基础物品栏、视野、哈希表和会话缓存已接入；显式 `--mute` 的声音状态不依赖输出设备。Amazonia原main及250ms推进已通过，DotA当前停在商店库存。新增GPU画面与完整客户端能力仍待阶段验证，见[运行中世界状态](docs/live-world.md)。
+
 BootyBay已获得原地图画面及20帧开发运行证据，无Game.dll。完整操作、三图、像素还原、性能与切图释放仍在阶段A待测队列。项目尚未完成完整可玩对局、完整JASS/AI、战役、存档/回放、局域网或OpenGL。当前能力与边界见[场景流程](docs/world-rendering.md)、[功能矩阵](docs/acceptance.md)和[集中实现清单](docs/implementation-roadmap.md)。
 
 地图列表支持双击目录、滚轮、方向/翻页/Home/End、Enter与Backspace；按钮使用原FDF焦点链，支持Tab/Shift+Tab和Enter/Space。玩家配置消费源PlayerSlot/TeamSetup、地图玩家ID、势力、颜色与种族限制，保留同图草稿，配置错误可重试。颜色网格、默认AI/占槽时序与完整像素仍待还原或核验。

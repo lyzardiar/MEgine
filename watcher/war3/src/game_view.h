@@ -2,14 +2,19 @@
 #pragma once
 #include "game_loading.h"
 #include "glue.h"
+#include "scene_streaming.h"
+#include "fog_render.h"
 
 namespace war3 {
-struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;};
+struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;};
 class GameView {
     std::unique_ptr<GameData> data_;
     Renderer& renderer_;
     Text& text_;
     Log& log_;
+    std::unique_ptr<SceneStreaming> streaming_;
+    bool streamUpload_=false;
+    FogRender fogRender_;
     std::vector<float> distances_,angles_,fovs_;
     float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,near_=100,far_=5000,speed_=3000;
     unsigned zoom_=0,frames_=0;
@@ -18,6 +23,9 @@ class GameView {
     D3DVIEWPORT9 viewport_{};
     D3DMATRIX view_{},projection_{};
     bool moveMode_=false;
+    bool chatOpen_=false;
+    std::wstring chatText_;
+    std::array<float,3> eye_{};
     size_t drawnChunks_=0,drawnObjects_=0,drawnUnits_=0;
     void camera(const GameInput& input,double delta);
     std::optional<std::array<float,3>> ground(float x,float y) const;
@@ -25,6 +33,7 @@ class GameView {
     void input(const GameInput& input);
     void hud(const GameInput& input);
     void selection();
+    void stream();
     void command(float x,float y);
     std::vector<std::uint32_t> selected(bool owned=false) const;
 public:

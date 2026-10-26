@@ -15,7 +15,6 @@ struct GameData {
     std::string minimap;
     std::array<std::string,3> resourceIcons;
     std::array<std::string,3> commandIcons;
-    std::map<std::uint32_t,std::string> unitIcons;
     void prepareConsole();
     bool uploadOne(Renderer& renderer);
     size_t uploadCount() const {return assets->uploadCount()+terrain->uploadCount();}

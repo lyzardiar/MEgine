@@ -17,11 +17,11 @@ TerrainScene/terrain_layout复用已有 `crates/mengine-assets/src/warcraft_terr
 - 四角按SW/NW/NE/SE组织，从Terrain.slk读取地面BLP，按mask/variation组合64像素图块，去重生成内存atlas。
 - CliffTypes.slk提供悬崖/坡道MDX、地面与replacement11纹理；模板按footprint放置并叠加地形起伏，坡口保留半层高度。
 - Water.slk提供水位、序列、贴图比例及浅/深颜色，按模拟时间选择原BLP帧；SetWaterBaseColor实际乘入水色。
-- 16×16单元区块按材质合并静态顶点/索引缓冲，每帧视锥裁剪；地形光照、迷雾、阴影、天气粒子和LOD待实现。
+- 16×16单元区块按材质合并静态顶点/索引缓冲，每帧视锥裁剪；地形光照、阴影、天气粒子和LOD待实现；基础迷雾与运行中状态见live-world.md。
 
 SceneObjects直接读取classic DOO 7/8及terrain doodad，消费Doodads.slk、DestructableData.slk和元数据映射的w3d/w3b覆盖；保留模型变体、变换、显隐/死亡与replacement纹理。源pathTex的`none`表示没有路径贴图，其余有效贴图按红通道登记静态阻挡。实例按2048世界单位分区并裁剪。完整destructable句柄、采集/死亡/掉落、颜色变体、全部路径贴图变换和桥面寻路待补齐。
 
-Model支持外部world/view/projection、静态模板采样、队伍色/发光替换和Stand/Walk/Death选择；相同模型/时刻/序列复用骨骼采样，billboard逐实例计算。main完成后预载单位/物品模型；运行中出现未准备模型明确报错，动态流式加载待实现。MDL、灯光、粒子和完整节点规则仍未完成。
+Model支持外部world/view/projection、静态模板采样、队伍色/发光替换和Stand/Walk/Death选择；相同模型/时刻/序列复用骨骼采样，billboard逐实例计算。main完成后预载单位/物品模型；运行中未准备模型进入后台读取/GPU交付队列，资源错误明确失败，边界见live-world.md。MDL、灯光、粒子和完整节点规则仍未完成。
 
 ## 相机、输入和HUD
 
@@ -31,7 +31,7 @@ Model支持外部world/view/projection、静态模板采样、队伍色/发光�
 
 动态单位/建筑阻挡、局部避让、编队、攻击、巡逻、采集、建造和完整移动类型尚未实现。未知命令或找不到路径返回失败；选择/命令事件的原版时序和数值仍待验证。
 
-ConsoleUI.fdf的九片原纹理按源UV/锚点及本地种族载入；资源栏读取玩家状态，选择面板使用单位属性/源图标，小地图使用地图自身BLP。完整信息面板、肖像、资源/人口规则、技能命令卡、计时窗口、源游戏内菜单与像素还原待完成。当前Esc/F10直接返回选图。
+ConsoleUI.fdf的九片原纹理按源UV/锚点及本地种族载入；资源栏读取玩家状态，选择面板使用单位属性/源图标，小地图使用地图自身BLP。基础物品栏和脚本文字已接入；完整信息面板、肖像、资源/人口规则、技能命令卡、计时窗口、源游戏内菜单与像素还原待完成。当前Esc/F10直接返回选图。
 
 ## 开发证据和待测
 

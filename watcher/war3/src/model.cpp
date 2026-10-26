@@ -4,6 +4,7 @@
 #include <map>
 #include <numeric>
 #include <unordered_set>
+#include <cctype>
 
 namespace war3 {
 using namespace mdx;
@@ -94,7 +95,7 @@ Model::Model(Archives& archives, Images& images, Renderer* renderer, const char*
     auto member = archives.read(name); if (!member) throw std::runtime_error(std::string("Missing MDX: ")+name); data_->parse(member->bytes,log);
     size_t decoded = 0; std::map<std::string,Com<IDirect3DTexture9>> local;
     for (auto& texture : data_->textures) {
-        if(shared){if(!texture.path.empty())shared->image(texture.path);else shared->image("@white",{1,1,{0xffffffff}});continue;}
+        if(shared){if(!texture.path.empty())shared->prepareTexture(texture.path);else shared->image("@white",{1,1,{0xffffffff}});continue;}
         if (auto found = local.find(texture.path); found != local.end()) { texture.gpu = found->second; continue; }
         Image image; if (!texture.path.empty()) { auto bytes = archives.readTexture(texture.path); if (!bytes) throw std::runtime_error("Missing model texture: "+texture.path); image = images.decode(bytes->bytes); } else image = {1,1,{0xffffffff}};
         decoded += image.pixels.size()*4; if (decoded > 256*1024*1024) throw std::runtime_error("Model texture budget exceeded"); if (renderer) texture.gpu = renderer->texture(image.width,image.height,image.pixels); local.emplace(texture.path,texture.gpu);
@@ -106,7 +107,8 @@ std::uint64_t Model::sequenceDuration() const {return data_->sequences.empty()?0
 float Model::radius() const {return data_->radius;}
 void Model::upload(Renderer& renderer,SceneAssets& assets) {data_->renderer=&renderer;for(auto& texture:data_->textures)texture.gpu=assets.texture(texture.path.empty()?"@white":texture.path);}
 void Model::replace(unsigned id,IDirect3DTexture9* value) {for(auto& texture:data_->textures)if(texture.replacement==id)texture.gpu=value;}
-bool Model::sequence(const std::string& prefix) {for(unsigned i=0;i<data_->sequences.size();++i)if(data_->sequences[i].name.starts_with(prefix)){data_->sequence=i;return true;}return false;}
+bool Model::sequence(const std::string& prefix) {auto lower=[](std::string s){for(auto& c:s)c=char(std::tolower(static_cast<unsigned char>(c)));return s;};auto key=lower(prefix);auto found=data_->sequenceNames.find(key);if(found==data_->sequenceNames.end()){int index=-1;for(unsigned i=0;i<data_->sequences.size();++i)if(lower(data_->sequences[i].name).starts_with(key)){index=int(i);break;}found=data_->sequenceNames.emplace(std::move(key),index).first;}if(found->second<0)return false;data_->sequence=unsigned(found->second);return true;}
+bool Model::sequenceIndex(unsigned index) {if(index>=data_->sequences.size())return false;data_->sequence=index;return true;}
 ModelGeometry Model::geometry() const {
     auto& d=*data_;if(d.geosets.size()!=1 || d.materials.size()!=1 || d.materials[0].layers.size()!=1 || d.materials[0].layers[0].filter!=0)throw std::runtime_error("Terrain template requires a single opaque geoset");auto& g=d.geosets[0];if(g.uv.empty() || g.uv[0].size()!=g.positions.size())throw std::runtime_error("Terrain template has no UV0");std::vector<XMFLOAT4X4> pose(d.nodes.size());
     for(auto i:d.order){auto& n=d.nodes[i];if(n.flags&8)throw std::runtime_error("Terrain cliff cannot use billboard nodes");auto p=XMLoadFloat4(&n.pivot),t=d.sample(n.tracks.translation,0,XMVectorZero()),q=d.sample(n.tracks.rotation,0,XMQuaternionIdentity(),true),s=d.sample(n.tracks.scale,0,XMVectorSet(1,1,1,0));auto parent=n.parent>=0?XMLoadFloat4x4(&pose[n.parent]):XMMatrixIdentity();XMStoreFloat4x4(&pose[i],XMMatrixTranslationFromVector(-p)*XMMatrixScalingFromVector(s)*XMMatrixRotationQuaternion(q)*XMMatrixTranslationFromVector(p+t)*parent);}
