@@ -31,6 +31,7 @@ public:
     void volume(int level);
     int volume() const;
     void position(unsigned milliseconds);
+    void pitch(float ratio);
     unsigned status() const;
     bool playing() const {auto value=status();return value==4 || value==16;}
     std::pair<unsigned,unsigned> milliseconds() const;

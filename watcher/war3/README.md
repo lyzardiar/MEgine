@@ -23,6 +23,8 @@ cmake --build --preset release --parallel
 
 完整内容按 [功能矩阵](docs/acceptance.md) 跟进，独立验证见 [测试队列](docs/testing-batches.md)。当前版本是客户端基础设施，地图信息与原生记录可读取，“开始游戏”尚未接入会话，完整载入、战斗、JASS、战役和网络仍待实现。菜单 MDX 已绘制，logo 精确比例、灯光、雾、粒子、完整 FDF 与交互仍需还原和对照验收。
 
+当前按[集中实现清单](docs/implementation-roadmap.md)先覆盖可运行流程，再集中测试修正。[对象初始化](docs/entities.md)已接入源对象表、单位/物品状态、天气实例和普通数字声音基础，只有编译/静态检查，运行与原版一致性待阶段验证；后续继续连接调度、世界画面、输入和开局。历史测试通过数保留原验证版本范围。
+
 原生脚本开发入口为 `--script-check --map <路径>`，可配合 `--hidden`，直接从公共 MPQ 和地图读取 common.j、Blizzard.j 与地图脚本，解析类型/槽位并编译执行指令，不需要图形设备。Runtime 可执行已绑定 native 的脚本；当前产品检查只编译地图，不执行其全局初始化或 config/main，见 [JASS 链路](docs/jass.md)。
 
 `--config-check --map <路径>` 执行原图全局初始化与config，保存玩家/队伍/出生点等状态；Amazonia、BootyBay、DotA_v6.83d已合并通过。此入口不执行main，开始游戏尚未接通，见[地图配置会话](docs/session.md)。

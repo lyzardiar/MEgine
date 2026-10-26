@@ -3,6 +3,7 @@
 #include "audio.h"
 #include "slk.h"
 #include "sound_fade.h"
+#include <array>
 
 namespace war3 {
 struct MidiDefinition {
@@ -16,6 +17,15 @@ struct ScriptSound {
     bool retired=false;
     SoundFade fade;
     std::unique_ptr<AudioVoice> voice;
+    std::shared_ptr<const Member> digital;
+    std::string extension,eax;
+    bool looping=true,spatial=false,stopWhenOutOfRange=false;
+    int duration=-1;
+    float pitch=1,minDistance=0,maxDistance=10000,cutoff=10000;
+    std::array<float,3> position{},velocity{},orientation{};
+    std::array<float,2> cone{360,360};
+    int outsideVolume=127;
+    std::optional<SourceTable::Row> labelParameters;
 };
 class SoundScene {
     std::unique_ptr<Archives> resources_;
@@ -24,6 +34,7 @@ class SoundScene {
     std::vector<std::weak_ptr<ScriptSound>> sounds_;
     std::vector<std::shared_ptr<ScriptSound>> detached_;
     std::optional<SourceTable::Row> environment_;
+    std::optional<std::vector<SourceTable::Row>> labels_;
     bool muted_=false;
     std::uint64_t nextPulse_=0;
     void collect();
@@ -33,6 +44,10 @@ public:
     explicit SoundScene(Archives& resources);
     MidiDefinition definition(const std::string& label) const;
     std::shared_ptr<ScriptSound> midi(const std::string& label,int fadeIn,int fadeOut);
+    std::shared_ptr<ScriptSound> digital(const std::string& file,bool loop,bool spatial,bool stopOutOfRange,int fadeIn,int fadeOut,const std::string& eax);
+    void parameters(const std::shared_ptr<ScriptSound>& sound,const std::string& label);
+    unsigned duration(const std::shared_ptr<ScriptSound>& sound);
+    void pitch(const std::shared_ptr<ScriptSound>& sound,float ratio);
     void environment(const std::string& name);
     const std::optional<SourceTable::Row>& environment() const {return environment_;}
     void muted(bool value);

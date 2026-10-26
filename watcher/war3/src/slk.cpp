@@ -21,7 +21,7 @@ SourceTable SourceTable::parse(std::span<const std::uint8_t> bytes) {
         if(value){if(!x || !y || value->size()>65536 || cells.size()>=1048576)throw std::runtime_error("Invalid or excessive SYLK cells");cells[{y,x}]=std::move(*value);}
     }
     if(!header || !ended)throw std::runtime_error("Truncated SYLK table");std::map<unsigned,std::string> columns;std::set<std::string> names;for(auto& [position,value]:cells)if(position.first==1){auto name=trim(value);if(name.empty() || !names.insert(name).second)throw std::runtime_error("Invalid SYLK column header");columns[position.second]=std::move(name);}
-    if(columns.empty())throw std::runtime_error("SYLK table has no columns");SourceTable result;unsigned current=0;for(auto& [position,value]:cells)if(position.first>1){auto field=columns.find(position.second);if(field==columns.end())throw std::runtime_error("SYLK cell has no column header");if(current!=position.first){result.rows_.emplace_back();current=position.first;}result.rows_.back()[field->second]=std::move(value);}return result;
+    if(columns.empty())throw std::runtime_error("SYLK table has no columns");SourceTable result;result.idColumn_=columns.begin()->second;unsigned current=0;for(auto& [position,value]:cells)if(position.first>1){auto field=columns.find(position.second);if(field==columns.end())throw std::runtime_error("SYLK cell has no column header");if(current!=position.first){result.rows_.emplace_back();current=position.first;}result.rows_.back()[field->second]=std::move(value);}return result;
 }
 SourceTable SourceTable::read(Archives& archives,const std::string& member) {auto bytes=archives.read(member);if(!bytes)throw std::runtime_error("Missing source table: "+member);return parse(bytes->bytes);}
 }

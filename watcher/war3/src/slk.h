@@ -9,9 +9,11 @@ public:
     using Row=std::map<std::string,std::string>;
 private:
     std::vector<Row> rows_;
+    std::string idColumn_;
 public:
     static SourceTable parse(std::span<const std::uint8_t> bytes);
     static SourceTable read(Archives& archives,const std::string& member);
     const std::vector<Row>& rows() const {return rows_;}
+    const std::string& idColumn() const {return idColumn_;}
 };
 }

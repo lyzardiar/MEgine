@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <map>
 #include <mutex>
+#include <cmath>
 
 namespace war3 {
 struct MilesDevice::Impl {
@@ -21,6 +22,8 @@ struct MilesDevice::Impl {
     Void shutdown;
     One closeDigital,closeMidi,releaseSample,releaseSequence,endSample,endSequence,startSample,startSequence,stopSample,stopSequence,resumeSample,resumeSequence,freeMemory,compactDls;
     Integer loopSample,loopSequence,volumeSample,seekSample,seekSequence;
+    Integer rateSample;
+    Status readRateSample;
     void(__stdcall* volumeSequence)(void*,int,int);
     Status statusSample,statusSequence,readVolumeSample,readVolumeSequence;
     Time timeSample,timeSequence;
@@ -53,6 +56,7 @@ struct MilesDevice::Impl {
         loopSample=library.symbol<Integer>("_AIL_set_sample_loop_count@8");loopSequence=library.symbol<Integer>("_AIL_set_sequence_loop_count@8");volumeSample=library.symbol<Integer>("_AIL_set_sample_volume@8");volumeSequence=library.symbol<decltype(volumeSequence)>("_AIL_set_sequence_volume@12");seekSample=library.symbol<Integer>("_AIL_set_sample_ms_position@8");seekSequence=library.symbol<Integer>("_AIL_set_sequence_ms_position@8");
         statusSample=library.symbol<Status>("_AIL_sample_status@4");statusSequence=library.symbol<Status>("_AIL_sequence_status@4");timeSample=library.symbol<Time>("_AIL_sample_ms_position@12");timeSequence=library.symbol<Time>("_AIL_sequence_ms_position@12");
         readVolumeSample=library.symbol<Status>("_AIL_sample_volume@4");readVolumeSequence=library.symbol<Status>("_AIL_sequence_volume@4");
+        rateSample=library.symbol<Integer>("_AIL_set_sample_playback_rate@8");readRateSample=library.symbol<Status>("_AIL_sample_playback_rate@4");
         allocateSample=library.symbol<decltype(allocateSample)>("_AIL_allocate_sample_handle@4");allocateSequence=library.symbol<decltype(allocateSequence)>("_AIL_allocate_sequence_handle@4");initializeSample=library.symbol<One>("_AIL_init_sample@4");namedSample=library.symbol<decltype(namedSample)>("_AIL_set_named_sample_file@20");initializeSequence=library.symbol<decltype(initializeSequence)>("_AIL_init_sequence@12");convertMidi=library.symbol<decltype(convertMidi)>("_AIL_MIDI_to_XMI@20");freeMemory=library.symbol<One>("_AIL_mem_free_lock@4");
         openMidi=library.symbol<decltype(openMidi)>("_AIL_open_XMIDI_driver@4");openDls=library.symbol<decltype(openDls)>("_AIL_DLS_open@28");closeDls=library.symbol<decltype(closeDls)>("_AIL_DLS_close@8");loadBank=library.symbol<decltype(loadBank)>("_AIL_DLS_load_memory@12");unloadBank=library.symbol<decltype(unloadBank)>("_AIL_DLS_unload@8");compactDls=library.symbol<One>("_AIL_DLS_compact@4");lastError=library.symbol<decltype(lastError)>("_AIL_last_error@0");
         auto codec=root/L"redist/miles/Mp3dec.asi";verifyPe32(codec);if(sha256(codec)!="45295e1aae5211d2d32dae22fcc1d328db9d15d5a37bd0af3b4eb1a9a24c275a")throw std::runtime_error("Unsupported Miles MP3 decoder version");auto directory=codec.parent_path().string();if(directory.size()>MAX_PATH-2)throw std::runtime_error("Miles codec path exceeds legacy limit");library.symbol<const char*(__stdcall*)(const char*)>("_AIL_set_redist_directory@4")(directory.c_str());
@@ -67,6 +71,7 @@ struct AudioVoice::Impl {
     std::shared_ptr<const Member> bytes;
     void* handle=nullptr;void* converted=nullptr;
     bool midi=false,counted=false;
+    unsigned originalRate=0;
     ~Impl(){if(!owner)return;auto& api=*owner->impl_;std::lock_guard lock(api.mutex);if(handle){(midi?api.endSequence:api.endSample)(handle);(midi?api.releaseSequence:api.releaseSample)(handle);}if(converted)api.freeMemory(converted);if(counted)--api.active;}
 };
 MilesDevice::MilesDevice(const fs::path& root) : impl_(std::make_unique<Impl>(root)) {}
@@ -100,6 +105,7 @@ void AudioVoice::stop() {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guar
 void AudioVoice::volume(int level) {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);level=std::clamp(level,0,127);if(v.midi)api.volumeSequence(v.handle,level,0);else api.volumeSample(v.handle,level);}
 int AudioVoice::volume() const {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);return int((v.midi?api.readVolumeSequence:api.readVolumeSample)(v.handle));}
 void AudioVoice::position(unsigned milliseconds) {if(milliseconds>INT_MAX)throw std::runtime_error("Sound seek position exceeds range");auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.seekSequence:api.seekSample)(v.handle,int(milliseconds));}
+void AudioVoice::pitch(float ratio) {if(!std::isfinite(ratio) || ratio<=0)throw std::runtime_error("Invalid sound pitch");auto& v=*impl_;if(v.midi)throw std::runtime_error("MIDI pitch is not implemented");auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);if(!v.originalRate)v.originalRate=api.readRateSample(v.handle);double rate=double(v.originalRate)*ratio;if(rate<1 || rate>INT_MAX)throw std::runtime_error("Sound playback rate exceeds range");api.rateSample(v.handle,int(rate));}
 unsigned AudioVoice::status() const {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);return (v.midi?api.statusSequence:api.statusSample)(v.handle);}
 std::pair<unsigned,unsigned> AudioVoice::milliseconds() const {auto& v=*impl_;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);int total=0,current=0;(v.midi?api.timeSequence:api.timeSample)(v.handle,&total,&current);return {unsigned(std::max(0,current)),unsigned(std::max(0,total))};}
 Music::Music(const fs::path& root,std::shared_ptr<const Member> music,int volume) {voice_=MilesDevice::open(root)->digital(std::move(music),".mp3");voice_->volume(volume);voice_->start(true);}

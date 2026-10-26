@@ -5,6 +5,7 @@
 #include "world.h"
 #include "sound.h"
 #include "music.h"
+#include "entities.h"
 #include <variant>
 
 namespace war3 {
@@ -28,13 +29,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound};
+enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     struct Timer {jass::Real timeout,elapsed;bool running=false,periodic=false;};
     struct Trigger {bool enabled=true,waitOnSleeps=true;unsigned evaluations=0,executions=0;};
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -47,6 +48,10 @@ class ScriptSession {
     std::unique_ptr<SoundScene> audio_;
     std::unique_ptr<MusicScene> music_;
     bool audioMuted_=false;
+    std::unique_ptr<ObjectData> definitions_;
+    std::map<std::uint32_t,std::shared_ptr<UnitState>> units_;
+    std::map<std::uint32_t,std::shared_ptr<ItemState>> items_;
+    std::optional<SourceTable> weather_;
     jass::Value create(NativeKind kind);
     Object& object(jass::Value handle,NativeKind kind);
     SessionPlayer& player(jass::Value handle);
@@ -58,6 +63,13 @@ class ScriptSession {
     void bindWorldNatives();
     void bindSoundNatives();
     void bindMusicNatives();
+    void bindEntityNatives();
+    void bindWeatherNatives();
+    ObjectData& definitions();
+    UnitState& unit(jass::Value value);
+    ItemState& item(jass::Value value);
+    jass::Value createUnit(std::uint32_t owner,std::uint32_t type,jass::Real x,jass::Real y,jass::Real facing);
+    jass::Value createItem(std::uint32_t type,jass::Real x,jass::Real y);
     SoundScene& requireAudio();
     MusicScene& requireMusic();
     World& requireWorld();
@@ -81,5 +93,7 @@ public:
     jass::Runtime& runtime() {return runtime_;}
     const jass::Runtime& runtime() const {return runtime_;}
     size_t liveObjects(NativeKind kind) const;
+    const std::map<std::uint32_t,std::shared_ptr<UnitState>>& units() const {return units_;}
+    const std::map<std::uint32_t,std::shared_ptr<ItemState>>& items() const {return items_;}
 };
 }

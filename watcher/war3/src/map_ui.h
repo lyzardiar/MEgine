@@ -5,7 +5,9 @@
 namespace war3 {
 class SourceSettings {
     std::map<std::string,std::map<std::string,std::string>> sections_;
+    bool exactSections_=false;
 public:
+    explicit SourceSettings(bool exactSections=false) : exactSections_(exactSections) {}
     void parse(std::span<const std::uint8_t> bytes);
     void load(Archives& archives,const std::string& member);
     std::string value(std::string section,std::string key,const std::string& fallback={}) const;
