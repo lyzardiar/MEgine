@@ -1,0 +1,23 @@
+// Author: MiYu. Source QuestDialog FDF consumes live session quests and objectives.
+#pragma once
+#include "session.h"
+#include "glue.h"
+
+namespace war3 {
+class QuestDialog {
+    ScriptSession& session_;
+    Renderer& renderer_;
+    GlueScreen screen_;
+    std::array<std::vector<std::uint32_t>,2> lists_;
+    std::array<size_t,2> scroll_{};
+    size_t itemScroll_=0,textScroll_=0;
+    unsigned capacity_=3;
+    std::uint32_t selected_=0;
+    std::uint64_t revision_=UINT64_MAX;
+    std::map<std::string,std::uint32_t> buttons_;
+    void sync();
+public:
+    QuestDialog(ScriptSession& session,Images& images,Renderer& renderer,Text& text);
+    bool draw(const UiInput& input);
+};
+}

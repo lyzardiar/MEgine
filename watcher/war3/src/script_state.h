@@ -66,4 +66,6 @@ struct ScriptTimerDialog {
 struct ScriptText {unsigned owner=0;float x=0,y=0;double expires=0;std::string text;};
 struct ScriptCache {std::string name;std::map<std::tuple<std::string,std::string,std::string>,jass::Value> values;};
 struct ScriptHashtable {std::map<std::tuple<std::uint32_t,std::uint32_t,std::string>,jass::Value> values;};
+struct ScriptQuestItem {std::uint32_t owner=0;std::string description;bool completed=false;};
+struct ScriptQuest {std::string title,description,icon;bool required=true,completed=false,discovered=false,failed=false,enabled=true;std::vector<std::pair<std::uint32_t,std::shared_ptr<ScriptQuestItem>>> items;};
 }

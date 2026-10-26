@@ -37,7 +37,7 @@ private:
     void quad(Rect rect, DWORD color, const std::string& member, float u0=0,float v0=0,float u1=1,float v1=1,bool tile=false,bool additive=false,bool transpose=false);
     void backdrop(const FrameDefinition& frame, Rect rect, DWORD color=0xffffffff);
     std::string drawNode(unsigned index,const UiInput& input,const std::set<std::string>& enabled);
-    void label(const FrameDefinition& frame,Rect rect,bool enabled,bool highlighted);
+    void label(const FrameDefinition& frame,Rect rect,bool enabled,bool highlighted,size_t lineOffset=0);
     void relayout();
     void choiceControl(unsigned index,const UiInput& input,bool enabled);
     Rect menuBounds(unsigned index);
@@ -71,6 +71,8 @@ public:
     IDirect3DTexture9* image(const std::string& name) const {return nodes_.at(names_.at(name)).image.Get();}
     void backdropAt(const std::string& frame,Rect rect);
     void imageAt(const std::string& member,Rect rect);
-    void textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled=true,bool highlight=false,bool left=false,float fontHeight=0);
+    void textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled=true,bool highlight=false,bool left=false,float fontHeight=0,size_t lineOffset=0);
+    void checkAt(const std::string& frame,Rect rect,bool checked);
+    void highlightAt(const std::string& frame,Rect rect);
 };
 }

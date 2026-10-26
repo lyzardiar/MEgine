@@ -116,6 +116,24 @@ endfunction
 function ProbeResumeIllusion takes nothing returns nothing
     call UnitPauseTimedLife(probe_illusion,false)
 endfunction
+function ProbeQuest takes nothing returns nothing
+    local quest q=CreateQuest()
+    local questitem objective=QuestCreateItem(q)
+    call ProbeAssert(GetItemPlayer(null)==null and GetItemUserData(null)==0 and GetItemCharges(null)==0,"empty_item_slot")
+    call ProbeAssert(IsUnitType(probe_buyer,UNIT_TYPE_MELEE_ATTACKER),"source_melee_class")
+    call QuestSetTitle(q,"Source quest consumer")
+    call QuestSetDescription(q,"First line|nSecond line")
+    call QuestSetIconPath(q,"ReplaceableTextures\\\\CommandButtons\\\\BTNFootman.blp")
+    call QuestSetRequired(q,false)
+    call QuestSetDiscovered(q,true)
+    call QuestSetEnabled(q,true)
+    call QuestItemSetDescription(objective,"Complete the objective")
+    call QuestItemSetCompleted(objective,true)
+    call QuestSetCompleted(q,true)
+    call ProbeAssert(IsQuestItemCompleted(objective) and IsQuestCompleted(q) and IsQuestDiscovered(q) and not IsQuestRequired(q),"quest_state")
+    call FlashQuestDialogButton()
+    call ForceQuestDialogUpdate()
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing

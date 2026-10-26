@@ -6,6 +6,7 @@
 #include "fog_render.h"
 
 namespace war3 {
+class QuestDialog;
 struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;};
 class GameView {
     std::unique_ptr<GameData> data_;
@@ -25,6 +26,8 @@ class GameView {
     bool moveMode_=false;
     bool chatOpen_=false;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
+    std::unique_ptr<QuestDialog> questDialog_;
+    bool questsOpen_=false;
     std::wstring chatText_;
     std::array<float,3> eye_{};
     size_t drawnChunks_=0,drawnObjects_=0,drawnUnits_=0;

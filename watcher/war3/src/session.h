@@ -39,13 +39,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable};
+enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     using Timer=ScriptTimer;
     using Trigger=ScriptTrigger;
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -85,6 +85,9 @@ class ScriptSession {
     std::uint64_t productionTicket_=0;
     std::optional<SourceSettings> gameplay_;
     std::vector<int> heroThresholds_;
+    std::map<std::uint32_t,std::shared_ptr<ScriptQuest>> quests_;
+    std::uint64_t questRevision_=0;
+    bool questFlash_=false;
     jass::Value create(NativeKind kind);
     Object& object(jass::Value handle,NativeKind kind);
     SessionPlayer& player(jass::Value handle);
@@ -111,6 +114,7 @@ class ScriptSession {
     void bindHeroNatives();
     void bindIllusionNatives();
     void bindDamageNatives();
+    void bindQuestNatives();
     void timedLives(double delta);
     std::vector<std::uint32_t> illusions(std::uint32_t caster,std::uint32_t original,unsigned count,float dealt,float taken,double duration,std::uint32_t buff);
     void removeItem(std::uint32_t item);
@@ -191,6 +195,10 @@ public:
     void chat(unsigned player,const std::string& message);
     const FogGrid& fog(unsigned player);
     const std::vector<ScriptText>& texts() const {return texts_;}
+    const auto& quests() const {return quests_;}
+    std::uint64_t questRevision() const {return questRevision_;}
+    bool questFlash() const {return questFlash_;}
+    void acknowledgeQuests() {questFlash_=false;}
     void displayText(unsigned owner,float x,float y,double duration,std::string text);
     void startMain();
     bool mainCompleted() const {return mainCompleted_ && !failed_;}
