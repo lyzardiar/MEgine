@@ -50,6 +50,7 @@ const MapHeader* MapBrowser::header(const fs::path& path) {auto found=headers_.f
 std::pair<float,float> MapBrowser::selectedCenter() const {auto r=screen_.bounds("MapListContainer");return {r.x+r.w/2,r.y+.004f+(float(selected_)-float(scroll_)+.5f)*.01875f};}
 std::string MapBrowser::draw(const UiInput& input) {
     prepared();
+    if(session_)session_->updateAudio();
     auto r=screen_.bounds("MapListContainer");constexpr float step=.01875f;rows_=std::max(1u,unsigned((r.h-.008f)/step));auto maximum=entries_.size()>rows_?entries_.size()-rows_:0;
     if(scroll_>maximum)scroll_=maximum;
     auto choose=[&](size_t n){if(n>=entries_.size())return;select(n);if(selected_<scroll_)scroll_=selected_;if(selected_>=scroll_+rows_)scroll_=selected_-rows_+1;};

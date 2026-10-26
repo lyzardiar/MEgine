@@ -17,6 +17,7 @@ target_compile_definitions(war3_core PUBLIC UNICODE _UNICODE WIN32_LEAN_AND_MEAN
 target_compile_options(war3_core PRIVATE /W4 /permissive- /utf-8)
 target_link_libraries(war3_core PUBLIC StormLib::storm shell32 bcrypt version)
 target_include_directories(war3_core PUBLIC src)
+target_sources(war3_core PRIVATE src/sound_fade.cpp)
 add_executable(war3 WIN32 src/main.cpp src/renderer.cpp src/media.cpp src/model.cpp src/model_pose.cpp src/glue.cpp src/map_browser.cpp src/player_setup_ui.cpp)
 target_compile_options(war3 PRIVATE /W4 /permissive- /utf-8)
 target_link_libraries(war3 PRIVATE war3_core d3d9 gdi32 windowscodecs ole32)

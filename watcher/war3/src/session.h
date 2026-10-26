@@ -67,6 +67,7 @@ public:
     void startMain();
     bool mainCompleted() const {return mainCompleted_ && !failed_;}
     void audioMuted(bool muted);
+    void updateAudio();
     const SoundScene* audio() const {return audio_.get();}
     std::optional<unsigned> localPlayer() const {return localPlayer_;}
     bool configured() const {return configured_ && !failed_;}

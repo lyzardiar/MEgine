@@ -35,3 +35,5 @@ cmake --build --preset release --target war3 war3_audio_tests --parallel 8
 ```
 
 证据为 `tmp/docs-artifacts/war3/audio/miles-{build.log,tests.log,menu.log}`。旧MEngine验证与旧地图转换缓存清理的状态保持不变。
+
+W020新增 `_AIL_sample_volume@4`/`_AIL_sequence_volume@4` 的受锁查询边界，非空间MIDI渐变由[脚本声音层](script-sound.md)按源100ms整数步长更新，Miles每次收到即时音量。10项声音定向检查和3,022次控制/算术原件对照通过；播放保持静音，正音量在未播放声音上核对。物理听感、3D和完整定时器仍未验收。

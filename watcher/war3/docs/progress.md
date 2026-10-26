@@ -58,7 +58,9 @@ W016–W018在 `6557119` 合并验证已实现范围：本次归档7/Miles7/brow
 
 W019接入World持有的源昼夜参数、初始时刻0/倍率1及5个时间控制native；地图Misc覆盖、变量赋值顺序/夹取与零值读取保留原件规则。6项定向检查通过、0失败，3,288次赋值及7次速率计算与原件指令一致。BootyBay真实main通过时间状态读，创建2个真实MIDI声音后在 `Scripts\Blizzard.j:2482:14` StartSound非零fade-in失败，无Game.dll。当前只覆盖同步初始化状态，未驱动模拟tick或派发跨日/昼夜/脚本事件；完整昼夜及main尚未完成。证据为 `clock/{build.log,tests.log,clock-cpu.json,main-bootybay.log,receipt.json}`，边界见 `game-clock.md`。
 
-W019为新批次1/3，三图/选图和相关声音消费待累计3项后合并。接续为声音渐变、时间变量的模拟驱动/边界事件、环境效果、Music及天气/单位native。SetAmbientDaySound/SetAmbientNightSound继续沿用Blizzard.j。后续载入界面、地形/对象渲染、AI与可玩流程、开局时序/随机数/调度和句柄一致性均未完成。来源见 `audio.md`、`script-sound.md`、`game-clock.md`，原始证据在 `tmp/docs-artifacts/war3/`。
+W020接入非空间MIDI的100ms整数渐变、首次/重复StartSound源行为、淡出后延迟释放、独立播放者静音/抢占及会话周期更新。产品/sound构建通过、无警告；10项定向检查通过，2,934组步进/8组速率/80组启动共3,022次原件对照零差异。BootyBay真实main通过StartSound后在 `war3map.j:792:10` SetMapMusic失败，退出1、main_completed=false，无Game.dll。原始证据为 `audio/fade-*`，接口/边界见 `script-sound.md`。
+
+W019–W020为新批次2/3，三图/选图和相关Miles消费待累计3项后合并。接续优先原版音乐列表/控制native，然后时间变量的模拟驱动/边界事件、环境效果与天气/单位native。SetAmbientDaySound/SetAmbientNightSound继续沿用Blizzard.j。后续载入界面、地形/对象渲染、AI与可玩流程、开局时序/随机数/调度和句柄一致性均未完成。来源见 `audio.md`、`script-sound.md`、`game-clock.md`，原始证据在 `tmp/docs-artifacts/war3/`。
 
 菜单已连接单人、自定义游戏、玩家草稿、取消和退出；开始游戏尚未接入。草稿保持当前选图会话，不写设置存档；原版默认AI与JASS config覆盖时序尚未完成对照。颜色网格、组间距、logo精确比例、灯光／雾／粒子、完整FDF控件、动态布局像素、标题截断/列表行高/认证图标、MDL与完整节点规则仍需实现或核验。四族、战役、存档／回放、局域网、OpenGL均未完成。普通启动的 `--map` 定位选图偏好，进入选图后执行globals/config，probe检查原生记录，script-check构建脚本语法树、解析类型/符号并编译指令，都不表示已能运行地图。
 
