@@ -1,5 +1,7 @@
 # 游戏时间与昼夜控制
 
+阶段A接续新增1/32秒会话步进、时刻回绕、计时器和阈值通知；原main直接设置时刻同样通知事件。BootyBay原main/250ms推进及bj_gameStarted回调通过，见 `script-events.md`。下述3,295次数值对照只覆盖同步变量层，不证明新增步进、调度顺序、跨日/多日或源RNG一致性；这些进入阶段验证。
+
 `World` 持有独立 `GameClock`。地图世界在globals之前建立，从 `Units\MiscData.txt` 读取 `[Misc]` 的 `DayLength`、`DayHours`、`Dawn` 和 `Dusk`，再应用本地图 `war3mapMisc.txt` 的逐字段覆盖。公共归档/地图仍直接读入内存，不写配置副本或解包目录；切图创建新的时钟状态。
 
 固定1.27原件默认值为480秒、24小时、黎明6、黄昏18。底层变量初值为0，倍率为1；`Blizzard.j` 的 `MeleeStartingVisibility` 才设置近战起始8点。菜单停留、资源读取和机器时间都不会推进此状态。

@@ -82,6 +82,7 @@ Options Options::parse() {
         else if (argument == L"--script-check") options.scriptCheck = true;
         else if (argument == L"--config-check") options.configCheck = true;
         else if (argument == L"--main-check") options.mainCheck = true;
+        else if(argument==L"--simulate-ms"){auto text=value(i);size_t end=0;auto n=std::stoul(text,&end);if(end!=text.size() || n>60000)throw std::runtime_error("Invalid simulation interval");options.simulateMs=unsigned(n);}
         else if (argument == L"--time-ms") {auto text=value(i);size_t end=0;auto n=std::stoull(text,&end);if(end!=text.size() || n>86400000)throw std::runtime_error("Invalid animation time");options.timeMs=n;}
         else throw std::runtime_error("Unknown option: " + utf8(argument));
     }
@@ -96,6 +97,7 @@ Options Options::parse() {
     if(options.scriptCheck && (options.map.empty() || options.probe || options.configCheck || options.mainCheck || options.windowCheck || options.menuCheck || options.frames || !options.capture.empty()))throw std::runtime_error("Script check requires --map and no render/check options");
     if(options.configCheck && (options.map.empty() || options.probe || options.scriptCheck || options.mainCheck || options.windowCheck || options.menuCheck || options.frames || !options.capture.empty()))throw std::runtime_error("Config check requires --map and no render/check options");
     if(options.mainCheck && (options.map.empty() || options.probe || options.scriptCheck || options.configCheck || options.windowCheck || options.menuCheck || options.frames || !options.capture.empty()))throw std::runtime_error("Main check requires --map and no render/check options");
+    if(options.simulateMs && !options.mainCheck)throw std::runtime_error("Simulation interval requires --main-check");
     if (options.log.empty()) {
         wchar_t directory[32768]{};
         DWORD length = GetEnvironmentVariableW(L"LOCALAPPDATA", directory, 32768);

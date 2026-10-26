@@ -2,6 +2,8 @@
 
 固定对照为Warcraft III 1.27.0.52240。客户端使用原安装的mss32.dll和MP3 codec，摘要与架构按 `profiles/classic-1.27.json` 核对。音频字节由只读归档直接供给，不生成临时音频文件；未分发原DLL、音乐、MIDI或DLS资产。
 
+当前输出采用库内waveOut路径：startup后preference15=1，open_digital_driver flags1，格式仍为44100Hz/16bit/stereo。BootyBay原main/250ms开发复现创建3声音/1DLS库，输出静音；完整音频/MIDI/音乐及听感回归进入阶段A。调用边界依据与必要诊断保留 `tmp/docs-artifacts/war3/stage-a-{miles-open-rea.json,miles-crash-rea.json,crash.json}`。固定原件摘要及运行依赖边界未改变。
+
 ## 设备、声音与寿命
 
 `MilesDevice` 按规范化的安装根目录共享一个Miles启动状态和44100Hz/16bit/stereo数字设备。设备注册表同时管理最后释放与重新创建，避免旧设备shutdown和新startup交错；同一设备的native操作串行。调用方应持有设备用于持续的游戏声音，声音本身也持有设备，防止菜单/调用方释放设备时使仍在播放的声音失效。

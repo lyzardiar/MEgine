@@ -12,6 +12,7 @@ struct WorldEnvironment {
     std::string terrainDayNight,unitDayNight;
     std::array<std::uint8_t,4> waterColor{};
     bool cameraChanged=false,dayNightChanged=false,waterChanged=false;
+    std::optional<WorldPoint> cameraTarget,quickPosition;
 };
 class World {
     MapData data_;

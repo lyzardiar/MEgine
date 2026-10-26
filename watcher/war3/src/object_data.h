@@ -26,6 +26,9 @@ public:
     static std::uint32_t code(std::string_view text);
     static std::string name(std::uint32_t code);
     bool contains(std::uint32_t id,bool item=false) const;
+    bool ability(std::uint32_t id) const;
+    std::uint32_t root(std::uint32_t id) const;
+    std::string property(std::uint32_t id,const char* field,const std::string& fallback={}) const;
     std::string field(std::uint32_t id,const std::string& table,const std::string& key,const std::string& fallback={}) const;
     float number(std::uint32_t id,const std::string& table,const std::string& key,float fallback=0) const;
     const std::vector<ObjectOverride>& objects() const {return objects_;}

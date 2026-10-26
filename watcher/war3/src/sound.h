@@ -40,12 +40,14 @@ class SoundScene {
     void collect();
     void detach(const std::shared_ptr<ScriptSound>& sound);
     void applyVolume(ScriptSound& sound);
+    const SourceTable::Row& label(const std::string& name);
 public:
     explicit SoundScene(Archives& resources);
     MidiDefinition definition(const std::string& label) const;
     std::shared_ptr<ScriptSound> midi(const std::string& label,int fadeIn,int fadeOut);
     std::shared_ptr<ScriptSound> digital(const std::string& file,bool loop,bool spatial,bool stopOutOfRange,int fadeIn,int fadeOut,const std::string& eax);
     void parameters(const std::shared_ptr<ScriptSound>& sound,const std::string& label);
+    std::shared_ptr<ScriptSound> fromLabel(const std::string& name,bool loop,bool spatial,bool stopOutOfRange,int fadeIn,int fadeOut);
     unsigned duration(const std::shared_ptr<ScriptSound>& sound);
     void pitch(const std::shared_ptr<ScriptSound>& sound,float ratio);
     void environment(const std::string& name);

@@ -3,8 +3,10 @@
 
 namespace war3 {
 void ScriptSession::bindWorldNatives() {
+    bind("GetStartLocationLoc","location",{"integer"},[this](auto&,auto args){auto point=start(args[0].bits).position;auto handle=create(NativeKind::Location);std::get<WorldPoint>(object(handle,NativeKind::Location).state)={point[0],point[1]};return handle;});
+    for(auto [name,quick]:std::initializer_list<std::pair<const char*,bool>>{{"SetCameraPosition",false},{"SetCameraQuickPosition",true}})bind(name,"nothing",{"real","real"},[this,quick](auto& vm,auto args){auto point=requireWorld().clamp({jass::Real::fromBits(args[0].bits),jass::Real::fromBits(args[1].bits)});auto& environment=requireWorld().environment();if(quick)environment.quickPosition=point;else environment.cameraTarget=point;return vm.nothing();});
     bind("GetFloatGameState","real",{"fgamestate"},[this](auto& vm,auto args){return vm.real(args[0].bits==2?requireWorld().clock().time():jass::Real{});});
-    bind("SetFloatGameState","nothing",{"fgamestate","real"},[this](auto& vm,auto args){if(args[0].bits==2)requireWorld().clock().time(jass::Real::fromBits(args[1].bits));return vm.nothing();});
+    bind("SetFloatGameState","nothing",{"fgamestate","real"},[this](auto& vm,auto args){if(args[0].bits==2){auto& clock=requireWorld().clock();auto before=clock.time();clock.time(jass::Real::fromBits(args[1].bits));clockChange(before,clock.time(),false);}return vm.nothing();});
     bind("GetTimeOfDayScale","real",{},[this](auto& vm,auto){return vm.real(requireWorld().clock().scale());});
     bind("SetTimeOfDayScale","nothing",{"real"},[this](auto& vm,auto args){requireWorld().clock().scale(jass::Real::fromBits(args[0].bits));return vm.nothing();});
     bind("SuspendTimeOfDay","nothing",{"boolean"},[this](auto& vm,auto args){requireWorld().clock().suspend(args[0].bits!=0);return vm.nothing();});

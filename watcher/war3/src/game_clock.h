@@ -23,5 +23,6 @@ public:
     void suspend(bool value) {suspended_=value;}
     jass::Real rate() const;
     bool daytime() const;
+    void advance(jass::Real seconds);
 };
 }

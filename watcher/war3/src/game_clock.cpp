@@ -24,4 +24,5 @@ void GameClock::time(jass::Real value) {time_=assignment(time(),value,jass::Real
 void GameClock::scale(jass::Real value) {scale_=assignment(scale(),value,jass::Real::fromBits(0xff7fffff),jass::Real::fromBits(0x7f7fffff));}
 jass::Real GameClock::rate() const {return suspended_?jass::Real{}:scale().multiply(rules_.dayHours).divide(rules_.dayLength);}
 bool GameClock::daytime() const {return number(time())>=number(rules_.dawn) && number(time())<number(rules_.dusk);}
+void GameClock::advance(jass::Real seconds) {auto delta=number(seconds);if(!std::isfinite(delta) || delta<0)throw std::runtime_error("Invalid clock timestep");auto next=time().add(rate().multiply(seconds));auto cycle=number(rules_.dayHours),value=number(next);if(!std::isfinite(value))throw std::runtime_error("Clock advance exceeds finite range");value=std::fmod(value,cycle);if(value<0)value+=cycle;time_=jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}
 }

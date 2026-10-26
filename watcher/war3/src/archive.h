@@ -15,6 +15,7 @@ public:
     Archive(const Archive&) = delete;
     Archive& operator=(const Archive&) = delete;
     std::optional<Bytes> read(const std::string& name) const;
+    std::vector<std::string> members(const std::string& pattern) const;
     const fs::path& path() const { return path_; }
 };
 struct Member {
@@ -40,6 +41,7 @@ public:
     std::shared_ptr<const Member> read(std::string name);
     std::shared_ptr<const Member> readTexture(std::string name);
     std::shared_ptr<const Member> readCandidates(std::vector<std::string> names,ArchiveScope scope=ArchiveScope::Overlay);
+    std::vector<std::string> members(const std::string& pattern,ArchiveScope scope=ArchiveScope::Overlay) const;
     std::size_t cachedBytes() const;
     std::size_t commonCount() const;
 };

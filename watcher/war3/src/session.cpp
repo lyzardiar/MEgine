@@ -25,7 +25,7 @@ void ScriptSession::bind(const char* name,const char* result,std::initializer_li
 }
 jass::Value ScriptSession::create(NativeKind kind) {
     if(objects_.size()>=1048576)throw std::runtime_error("Session native object budget exceeded");Object object{kind};const char* type;
-    switch(kind){case NativeKind::Group:type="group";object.state=Group{};break;case NativeKind::Timer:type="timer";object.state=Timer{};break;case NativeKind::Trigger:type="trigger";object.state=Trigger{};break;case NativeKind::Location:type="location";object.state=WorldPoint{};break;case NativeKind::Rect:type="rect";object.state=WorldRect{};break;case NativeKind::Sound:type="sound";object.state=std::shared_ptr<ScriptSound>{};break;case NativeKind::Unit:type="unit";object.state=std::shared_ptr<UnitState>{};break;case NativeKind::Item:type="item";object.state=std::shared_ptr<ItemState>{};break;case NativeKind::Weather:type="weathereffect";object.state=std::shared_ptr<WeatherState>{};break;default:throw std::runtime_error("Player handles are stable session objects");}
+    switch(kind){case NativeKind::Group:type="group";object.state=Group{};break;case NativeKind::Timer:type="timer";object.state=Timer{};break;case NativeKind::Trigger:type="trigger";object.state=Trigger{};break;case NativeKind::Location:type="location";object.state=WorldPoint{};break;case NativeKind::Rect:type="rect";object.state=WorldRect{};break;case NativeKind::Sound:type="sound";object.state=std::shared_ptr<ScriptSound>{};break;case NativeKind::Unit:type="unit";object.state=std::shared_ptr<UnitState>{};break;case NativeKind::Item:type="item";object.state=std::shared_ptr<ItemState>{};break;case NativeKind::Weather:type="weathereffect";object.state=std::shared_ptr<WeatherState>{};break;case NativeKind::Force:type="force";object.state=ScriptForce{};break;case NativeKind::Boolean:type="boolexpr";object.state=std::shared_ptr<ScriptBoolean>{};break;case NativeKind::Action:type="triggeraction";object.state=ScriptCallback{};break;case NativeKind::Condition:type="triggercondition";object.state=ScriptCallback{};break;case NativeKind::Event:type="event";object.state=ScriptEvent{};break;case NativeKind::TimerDialog:type="timerdialog";object.state=std::shared_ptr<ScriptTimerDialog>{};break;default:throw std::runtime_error("Player handles are stable session objects");}
     auto id=handleBase+std::uint32_t(objects_.size());objects_.push_back(std::move(object));return runtime_.handle(type,id);
 }
 ScriptSession::Object& ScriptSession::object(jass::Value handle,NativeKind kind) {if(handle.bits<handleBase || handle.bits-handleBase>=objects_.size())throw std::runtime_error("Unknown session native handle");auto& value=objects_[handle.bits-handleBase];if(!value.alive || value.kind!=kind)throw std::runtime_error("Destroyed or incompatible session native handle");return value;}
@@ -40,7 +40,7 @@ void ScriptSession::applySetup(const PlayerSetup& setup) {
     if(!configured() || mainAttempted_)throw std::runtime_error("Player setup requires a configured session before main");auto next=config_;std::optional<unsigned> local;unsigned seen=0;
     for(auto& slot:setup.slots()){
         auto id=checked(unsigned(slot.source.id),16,"Setup player");if(seen&(1u<<id))throw std::runtime_error("Duplicate setup player");seen|=1u<<id;
-        auto& player=next.players[id];player.team=checked(slot.team,16,"Setup team");player.color=checked(slot.color,16,"Setup color");player.racePreference=slot.racePreference;
+        auto& player=next.players[id];player.team=checked(slot.team,16,"Setup team");player.color=checked(slot.color,16,"Setup color");if(player.racePreference!=slot.racePreference)player.race=0;player.racePreference=slot.racePreference;
         if(slot.handicap<50 || slot.handicap>100 || slot.handicap%10)throw std::runtime_error("Invalid setup handicap");player.handicap=jass::Real::fromInteger(int(slot.handicap)).divide(jass::Real::fromInteger(100));player.slotState=slot.active()?1:0;
         switch(slot.control){case SlotControl::Open:player.controller=0;break;case SlotControl::Closed:player.controller=5;break;case SlotControl::Local:if(local)throw std::runtime_error("Multiple local setup players");local=id;player.controller=0;break;case SlotControl::ComputerEasy:player.controller=1;player.difficulty=0;break;case SlotControl::ComputerNormal:player.controller=1;player.difficulty=1;break;case SlotControl::ComputerInsane:player.controller=1;player.difficulty=2;break;default:throw std::runtime_error("Invalid setup control");}
     }
@@ -72,7 +72,7 @@ void ScriptSession::bindNatives() {
     bind("TimerGetElapsed","real",{"timer"},[this](auto& vm,auto args){return vm.real(std::get<Timer>(object(args[0],NativeKind::Timer).state).elapsed);});
     bind("TimerGetRemaining","real",{"timer"},[this](auto& vm,auto args){auto& timer=std::get<Timer>(object(args[0],NativeKind::Timer).state);return vm.real(timer.timeout.subtract(timer.elapsed));});
     bind("CreateTrigger","trigger",{},[this](auto&,auto){return create(NativeKind::Trigger);});
-    bind("DestroyTrigger","nothing",{"trigger"},[this](auto& vm,auto args){destroy(args[0],NativeKind::Trigger);return vm.nothing();});
+    bind("DestroyTrigger","nothing",{"trigger"},[this](auto& vm,auto args){if(args[0].bits){object(args[0],NativeKind::Trigger);for(auto& child:objects_)if(child.alive && ((child.kind==NativeKind::Event && std::get<ScriptEvent>(child.state).owner==args[0].bits) || ((child.kind==NativeKind::Action || child.kind==NativeKind::Condition) && std::get<ScriptCallback>(child.state).owner==args[0].bits))){child.alive=false;child.state=std::monostate{};}destroy(args[0],NativeKind::Trigger);}return vm.nothing();});
     bind("EnableTrigger","nothing",{"trigger"},[this](auto& vm,auto args){std::get<Trigger>(object(args[0],NativeKind::Trigger).state).enabled=true;return vm.nothing();});
     bind("DisableTrigger","nothing",{"trigger"},[this](auto& vm,auto args){std::get<Trigger>(object(args[0],NativeKind::Trigger).state).enabled=false;return vm.nothing();});
     bind("IsTriggerEnabled","boolean",{"trigger"},[this](auto& vm,auto args){return vm.boolean(std::get<Trigger>(object(args[0],NativeKind::Trigger).state).enabled);});
@@ -105,7 +105,7 @@ void ScriptSession::bindNatives() {
     bind("GetPlayerStartLocation","integer",{"player"},[this](auto& vm,auto args){return vm.integer(player(args[0]).start);});
     bind("SetPlayerColor","nothing",{"player","playercolor"},[this](auto& vm,auto args){player(args[0]).color=checked(args[1].bits,16,"Player color");return vm.nothing();});
     bind("GetPlayerColor","playercolor",{"player"},[this](auto& vm,auto args){return vm.handle("playercolor",player(args[0]).color);});
-    bind("SetPlayerRacePreference","nothing",{"player","racepreference"},[this](auto& vm,auto args){player(args[0]).racePreference=args[1].bits;return vm.nothing();});
+    bind("SetPlayerRacePreference","nothing",{"player","racepreference"},[this](auto& vm,auto args){auto& p=player(args[0]);p.racePreference=args[1].bits;p.race=0;return vm.nothing();});
     bind("IsPlayerRacePrefSet","boolean",{"player","racepreference"},[this](auto& vm,auto args){return vm.boolean((player(args[0]).racePreference&args[1].bits)!=0);});
     bind("SetPlayerRaceSelectable","nothing",{"player","boolean"},[this](auto& vm,auto args){player(args[0]).raceSelectable=args[1].bits!=0;return vm.nothing();});
     bind("GetPlayerSelectable","boolean",{"player"},[this](auto& vm,auto args){return vm.boolean(player(args[0]).raceSelectable);});
@@ -115,11 +115,15 @@ void ScriptSession::bindNatives() {
     bind("SetPlayerName","nothing",{"player","string"},[this](auto& vm,auto args){player(args[0]).name=text(args[1]);return vm.nothing();});
     bind("GetPlayerName","string",{"player"},[this](auto& vm,auto args){return vm.string(player(args[0]).name);});
     bind("SetPlayerOnScoreScreen","nothing",{"player","boolean"},[this](auto& vm,auto args){player(args[0]).onScoreScreen=args[1].bits!=0;return vm.nothing();});
-    bind("SetPlayerAlliance","nothing",{"player","player","alliancetype","boolean"},[this](auto& vm,auto args){auto& flags=player(args[0]).alliances[playerId(args[1])];auto mask=1u<<checked(args[2].bits,16,"Alliance type");if(args[3].bits)flags|=mask;else flags&=~mask;return vm.nothing();});
+    bind("SetPlayerAlliance","nothing",{"player","player","alliancetype","boolean"},[this](auto& vm,auto args){auto owner=playerId(args[0]),other=playerId(args[1]);auto& flags=config_.players[owner].alliances[other];auto mask=1u<<checked(args[2].bits,16,"Alliance type");bool before=(flags&mask)!=0;if(args[3].bits)flags|=mask;else flags&=~mask;playerChange(owner,args[2].bits,before,args[3].bits!=0,true);return vm.nothing();});
     bind("GetPlayerAlliance","boolean",{"player","player","alliancetype"},[this](auto& vm,auto args){return vm.boolean((player(args[0]).alliances[playerId(args[1])]&(1u<<checked(args[2].bits,16,"Alliance type")))!=0);});
-    bind("SetPlayerState","nothing",{"player","playerstate","integer"},[this](auto& vm,auto args){player(args[0]).states[args[1].bits]=integer(args[2]);return vm.nothing();});
+    bind("SetPlayerState","nothing",{"player","playerstate","integer"},[this](auto& vm,auto args){auto owner=playerId(args[0]);auto& states=config_.players[owner].states;auto before=states[args[1].bits],after=integer(args[2]);states[args[1].bits]=after;playerChange(owner,args[1].bits,before,after,false);return vm.nothing();});
     bind("GetPlayerState","integer",{"player","playerstate"},[this](auto& vm,auto args){auto& states=player(args[0]).states;auto found=states.find(args[1].bits);return vm.integer(found==states.end()?0:found->second);});
     bind("SetPlayerTaxRate","nothing",{"player","player","playerstate","integer"},[this](auto& vm,auto args){player(args[0]).taxes[{playerId(args[1]),args[2].bits}]=integer(args[3]);return vm.nothing();});
     bind("GetPlayerTaxRate","integer",{"player","player","playerstate"},[this](auto& vm,auto args){auto& taxes=player(args[0]).taxes;auto found=taxes.find({playerId(args[1]),args[2].bits});return vm.integer(found==taxes.end()?0:found->second);});
+    bindCallbackNatives();
+    bindCollectionNatives();
+    bindGameNatives();
+    bindDialogNatives();
 }
 }

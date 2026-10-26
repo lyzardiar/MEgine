@@ -15,8 +15,8 @@ std::string ObjectData::name(std::uint32_t id) {std::string result(4,'\0');for(i
 void ObjectData::load(Archives& archives,const char* member,const char* table) {
     auto source=SourceTable::read(archives,member);auto& target=tables_[table];
     for(auto& row:source.rows()){
-        const std::string* id=nullptr;if(auto it=row.find(source.idColumn());it!=row.end())id=&it->second;
-        if(!id || id->size()!=4)throw std::runtime_error("Invalid object table ID: "+std::string(member));if(!target.emplace(code(*id),row).second)throw std::runtime_error("Duplicate object table ID");
+        const std::string* id=nullptr;if(auto it=row.find(std::string(table)=="AbilityData"?"alias":source.idColumn());it!=row.end())id=&it->second;
+        if(!id)continue;if(id->size()!=4)throw std::runtime_error("Invalid object table ID: "+std::string(member)+" column="+source.idColumn()+" value="+id->substr(0,64));if(!target.emplace(code(*id),row).second)throw std::runtime_error("Duplicate object table ID");
     }
 }
 void ObjectData::overlay(Archives& archives,const char* member) {
@@ -26,10 +26,11 @@ void ObjectData::overlay(Archives& archives,const char* member) {
     b.finish();
 }
 ObjectData::ObjectData(Archives& archives) {
-    for(auto [member,table]:std::initializer_list<std::pair<const char*,const char*>>{{"Units\\UnitUI.slk","UnitUI"},{"Units\\UnitData.slk","UnitData"},{"Units\\UnitBalance.slk","UnitBalance"},{"Units\\UnitWeapons.slk","UnitWeapons"},{"Units\\UnitAbilities.slk","UnitAbilities"},{"Units\\ItemData.slk","ItemData"}})load(archives,member,table);
+    for(auto [member,table]:std::initializer_list<std::pair<const char*,const char*>>{{"Units\\UnitUI.slk","UnitUI"},{"Units\\UnitData.slk","UnitData"},{"Units\\UnitBalance.slk","UnitBalance"},{"Units\\UnitWeapons.slk","UnitWeapons"},{"Units\\UnitAbilities.slk","UnitAbilities"},{"Units\\ItemData.slk","ItemData"},{"Units\\AbilityData.slk","AbilityData"}})load(archives,member,table);
     auto metadata=SourceTable::read(archives,"Units\\UnitMetaData.slk");for(auto& row:metadata.rows()){auto id=cell(row,"ID");if(id.size()==4)metadata_.emplace(code(id),row);}
     for(auto race:{"Human","Orc","Undead","NightElf","Neutral","Campaign"})for(auto suffix:{"UnitFunc.txt","UnitStrings.txt"})if(auto member=archives.read(std::string("Units\\")+race+suffix))profiles_.parse(member->bytes);
     for(auto name:{"Units\\ItemFunc.txt","Units\\ItemStrings.txt"})if(auto member=archives.read(name))profiles_.parse(member->bytes);
+    for(auto race:{"Human","Orc","Undead","NightElf","Neutral","Common","Campaign","Item"})if(auto member=archives.read(std::string("Units\\")+race+"AbilityFunc.txt"))profiles_.parse(member->bytes);
     overlay(archives,"war3map.w3u");overlay(archives,"war3map.w3t");
     for(bool custom:{false,true})for(auto& object:objects_)if(object.custom==custom){
         if(custom){if(contains(object.id) || contains(object.id,true))throw std::runtime_error("Duplicate custom object: "+name(object.id));if(!contains(object.base) && !contains(object.base,true))throw std::runtime_error("Missing custom object base: "+name(object.base));parents_[object.id]=object.base;}
@@ -41,5 +42,8 @@ std::string ObjectData::field(std::uint32_t id,const std::string& table,const st
     if(table=="Profile")return profiles_.value(name(id),key,fallback);auto source=tables_.find(table);if(source==tables_.end())return fallback;auto row=source->second.find(id);if(row==source->second.end())return fallback;auto result=cell(row->second,key,fallback);return result=="_"?fallback:result;
 }
 bool ObjectData::contains(std::uint32_t id,bool item) const {for(unsigned depth=0;depth<64;++depth){auto parent=parents_.find(id);if(parent==parents_.end()){auto table=tables_.find(item?"ItemData":"UnitData");return table!=tables_.end() && table->second.contains(id);}id=parent->second;}throw std::runtime_error("Excessive object inheritance");}
-float ObjectData::number(std::uint32_t id,const std::string& table,const std::string& key,float fallback) const {auto text=field(id,table,key);if(text.empty() || text=="-")return fallback;float result=0;auto [end,error]=std::from_chars(text.data(),text.data()+text.size(),result);if(error!=std::errc{} || end!=text.data()+text.size() || !std::isfinite(result))throw std::runtime_error("Invalid object numeric field: "+table+"/"+key);return result;}
+bool ObjectData::ability(std::uint32_t id) const {auto table=tables_.find("AbilityData");return table!=tables_.end() && table->second.contains(id);}
+std::uint32_t ObjectData::root(std::uint32_t id) const {for(unsigned i=0;i<64;++i){auto found=parents_.find(id);if(found==parents_.end())return id;id=found->second;}throw std::runtime_error("Excessive object inheritance");}
+std::string ObjectData::property(std::uint32_t id,const char* key,const std::string& fallback) const {auto meta=metadata_.find(code(key));return meta==metadata_.end()?fallback:field(id,cell(meta->second,"slk"),cell(meta->second,"field"),fallback);}
+float ObjectData::number(std::uint32_t id,const std::string& table,const std::string& key,float fallback) const {auto text=field(id,table,key);auto first=text.find_first_not_of(" \t\r\n");if(first==std::string::npos)return fallback;text=text.substr(first,text.find_last_not_of(" \t\r\n")-first+1);if(text=="-")return fallback;if(text.front()=='+')text.erase(0,1);float result=0;auto [end,error]=std::from_chars(text.data(),text.data()+text.size(),result);if(error!=std::errc{} || end!=text.data()+text.size() || !std::isfinite(result))throw std::runtime_error("Invalid object numeric field: "+name(id)+" "+table+"/"+key+"="+text.substr(0,64));return result;}
 }

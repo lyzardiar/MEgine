@@ -10,6 +10,13 @@ struct UnitState {
     jass::Real x,y,facing,life,maxLife,mana,maxMana,moveSpeed,defaultMoveSpeed,acquireRange;
     int resources=0,userData=0,level=1,foodUsed=0,foodMade=0;
     bool visible=true,paused=false,invulnerable=false,pathing=true,selected=false;
+    std::map<std::uint32_t,int> abilities;
+    std::map<std::uint32_t,bool> autocast;
+    std::uint32_t currentOrder=0;
+    bool holding=false;
+    bool building=false,hero=false;
+    std::uint32_t race=7;
+    std::map<std::uint32_t,bool> permanentAbilities;
 };
 struct ItemState {
     std::uint32_t type=0,owner=15;
