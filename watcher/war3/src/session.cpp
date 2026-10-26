@@ -53,7 +53,7 @@ void ScriptSession::bindNatives() {
     bindWorldNatives();bindSpatialEvents();bindFogNatives();bindTextNatives();bindCacheNatives();bindHashtableNatives();
     bindSoundNatives();
     bindMusicNatives();
-    bindEntityNatives();bindFoodNatives();bindCommerceNatives();bindProductionNatives();
+    bindEntityNatives();bindFoodNatives();bindCommerceNatives();bindProductionNatives();bindHeroNatives();
     bindWeatherNatives();
     for(auto entry:enums)bind(entry.name,entry.type,{"integer"},[entry](auto& vm,auto args){return vm.handle(entry.type,args[0].bits);});
     bind("GetHandleId","integer",{"handle"},[](auto& vm,auto args){return vm.integer(integer(args[0]));});

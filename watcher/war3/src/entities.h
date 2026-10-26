@@ -40,6 +40,13 @@ struct UnitState {
     std::deque<ProductionOrder> production;
     std::optional<WorldPoint> rally;
     std::uint32_t rallyTarget=0;
+    int experience=0,skillPoints=1;
+    bool experienceSuspended=false;
+    std::array<float,3> heroAttributes{},heroGrowth{},heroBonuses{};
+    std::array<int,3> appliedHeroStats{};
+    std::vector<std::uint32_t> learnable;
+    std::string properName;
+    std::uint64_t heroRevision=0;
 };
 struct ItemState {
     std::uint32_t type=0,owner=15;

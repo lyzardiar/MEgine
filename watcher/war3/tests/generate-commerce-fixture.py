@@ -19,6 +19,8 @@ integer probe_items=0
 integer probe_started=0
 integer probe_finished=0
 integer probe_cancelled=0
+integer probe_levelled=0
+integer probe_learned=0
 unit probe_trained=null
 endglobals
 function ProbeAssert takes boolean ok, string message returns nothing
@@ -46,6 +48,33 @@ function ProbeTrain takes nothing returns nothing
         set probe_finished=probe_finished+1
         set probe_trained=GetTrainedUnit()
     endif
+endfunction
+function ProbeHeroEvent takes nothing returns nothing
+    if GetTriggerEventId()==EVENT_UNIT_HERO_LEVEL then
+        call ProbeAssert(GetLevelingUnit()==probe_buyer,"levelling_unit")
+        set probe_levelled=probe_levelled+1
+    else
+        call ProbeAssert(GetLearningUnit()==probe_buyer and GetLearnedSkill()=='AHhb' and GetLearnedSkillLevel()==1,"learn_context")
+        set probe_learned=probe_learned+1
+    endif
+endfunction
+function ProbeHero takes nothing returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,probe_buyer,EVENT_UNIT_HERO_LEVEL)
+    call TriggerRegisterUnitEvent(t,probe_buyer,EVENT_UNIT_HERO_SKILL)
+    call TriggerAddAction(t,function ProbeHeroEvent)
+    call SetPlayerHandicapXP(Player(1),2.0)
+    call AddHeroXP(probe_buyer,100,false)
+    call ProbeAssert(GetHeroXP(probe_buyer)==200 and GetHeroLevel(probe_buyer)==2,"xp_handicap")
+    call ProbeAssert(GetHeroStr(probe_buyer,false)==24 and GetHeroSkillPoints(probe_buyer)==2,"growth")
+    call SelectHeroSkill(probe_buyer,'AHhb')
+    call ProbeAssert(GetUnitAbilityLevel(probe_buyer,'AHhb')==1 and GetHeroSkillPoints(probe_buyer)==1,"learned_state")
+    call SuspendHeroXP(probe_buyer,true)
+    call AddHeroXP(probe_buyer,100,false)
+    call ProbeAssert(GetHeroXP(probe_buyer)==200,"suspended")
+    call SetHeroLevel(probe_buyer,3,false)
+    call SetHeroStr(probe_buyer,30,true)
+    call ProbeAssert(GetHeroXP(probe_buyer)==500 and GetHeroStr(probe_buyer,true)==30,"level_and_strength")
 endfunction
 function config takes nothing returns nothing
 endfunction

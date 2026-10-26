@@ -2,7 +2,9 @@
 
 2026-10-27。目标仍为 1.27.0.52240 完整客户端，未完成；MEngine 移植尚未开始。
 
-最新接续：源商店库存/补货、单位/物品购买、7项单位训练队列/取消/退款/完成、人口生命周期和源产品命令区已连接会话及JASS。必要Win32 Release产品和新增消费者程序编译无警告；专项夹具已准备，按阶段集中验证，尚未运行。DotA已越过AddUnitToStock和GetObjectName，当前阻塞SetPlayerHandicapXP（Scripts/war3map.j:8416），完整main未完成。新增GPU界面待测。见[商店与单位训练](commerce.md)和W035–W037。
+最新英雄接续：源经验阈值/成长、等级/属性/生命魔法、技能点/原版学习事件、玩家经验倍率和HUD展示已接入，SetAltMinimapIcon连接小地图资源/绘制，GetItemType读取源物品类别。最新DotA到123单位/1物品/67触发器/700事件，停在IsUnitIllusion（Scripts/war3map.j:17014，经UnitAddItem拾取事件调用），完整main未完成。Win32 Release产品和扩展消费者编译通过；专项夹具待集中运行，新增GPU未实测，完整战斗/技能及原件精度尚未完成。见[英雄经验与成长](heroes.md)及W038。
+
+最新接续：源商店库存/补货、单位/物品购买、7项单位训练队列/取消/退款/完成、人口生命周期和源产品命令区已连接会话及JASS。必要Win32 Release产品和新增消费者程序编译无警告；专项夹具已准备，按阶段集中验证，尚未运行。DotA已越过AddUnitToStock和GetObjectName，1b8d7eb开局复现停在SetPlayerHandicapXP（Scripts/war3map.j:8416），完整main未完成。新增GPU界面待测。见[商店与单位训练](commerce.md)和W035–W037。
 
 e1b5e92阶段A：单位外观/动画、高度、运行中模型/图标后台读取、区域/接近/聊天、基础物品栏、视野网格/GPU投影、天空、typed hashtable及会话gamecache已接入，显式静音不再打开输出设备。Win32 Release产品及消费者程序无警告；1项原图复制夹具的集成检查通过。Amazonia原main和250ms推进退出0，102单位/55触发器/83事件，bj_gameStarted=true；DotA到121单位/13触发器/74事件，在AddUnitToStock失败，完整main未完成。新增GPU路径因当前Disconnected会话不能创建D3D9设备，保持待验证。范围/命令/证据见 `live-world.md`；完整目标未完成。
 

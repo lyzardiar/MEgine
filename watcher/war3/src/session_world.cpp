@@ -3,6 +3,7 @@
 
 namespace war3 {
 void ScriptSession::bindWorldNatives() {
+    bind("SetAltMinimapIcon","nothing",{"string"},[this](auto& vm,auto a){requireWorld().environment().altMinimapIcon=a[0].text?*a[0].text:std::string{};return vm.nothing();});
     bind("GetStartLocationLoc","location",{"integer"},[this](auto&,auto args){auto point=start(args[0].bits).position;auto handle=create(NativeKind::Location);std::get<WorldPoint>(object(handle,NativeKind::Location).state)={point[0],point[1]};return handle;});
     for(auto [name,quick]:std::initializer_list<std::pair<const char*,bool>>{{"SetCameraPosition",false},{"SetCameraQuickPosition",true}})bind(name,"nothing",{"real","real"},[this,quick](auto& vm,auto args){auto point=requireWorld().clamp({jass::Real::fromBits(args[0].bits),jass::Real::fromBits(args[1].bits)});auto& environment=requireWorld().environment();if(quick)environment.quickPosition=point;else environment.cameraTarget=point;return vm.nothing();});
     bind("GetFloatGameState","real",{"fgamestate"},[this](auto& vm,auto args){return vm.real(args[0].bits==2?requireWorld().clock().time():jass::Real{});});

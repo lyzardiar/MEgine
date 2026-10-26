@@ -11,6 +11,7 @@ struct WorldEnvironment {
     std::array<jass::Real,8> cameraBounds{};
     std::string terrainDayNight,unitDayNight;
     std::string skyModel;
+    std::string altMinimapIcon;
     bool creepCampFilter=true;
     std::array<std::uint8_t,4> waterColor{};
     bool cameraChanged=false,dayNightChanged=false,waterChanged=false;
