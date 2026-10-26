@@ -25,4 +25,6 @@ cmake --build --preset release --parallel
 
 原生脚本开发入口为 `--script-check --map <路径>`，可配合 `--hidden`，直接从公共 MPQ 和地图读取 common.j、Blizzard.j 与地图脚本，解析类型/槽位并编译执行指令，不需要图形设备。Runtime 可执行已绑定 native 的脚本；当前产品检查只编译地图，不执行其全局初始化或 config/main，见 [JASS 链路](docs/jass.md)。
 
+`--config-check --map <路径>` 执行原图全局初始化与 config，保存玩家/队伍/出生点等状态；DotA_v6.83d 的最小集成已通过。此入口不执行 main，开始游戏尚未接通，见[地图配置会话](docs/session.md)。
+
 StormLib 来源、版本和逐文件摘要见 [source-info.json](third_party/stormlib/source-info.json)，许可证在 [LICENSE](third_party/stormlib/source/LICENSE)。原安装资源和 DLL 不随项目分发。REA 作为开发分析工具，不参与游戏运行。

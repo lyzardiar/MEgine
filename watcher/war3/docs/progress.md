@@ -40,7 +40,9 @@ W011 已按原版状态机修正 `or` 高于 `and`、两者右结合，整数字
 
 W012 原生 Runtime 已执行自编脚本：显式帧/槽位/稀疏数组、流程、短路、code 重入、I2R/R2I 与有类型的 native 边界已接入。W010–W012 在 `d1afdb3` 合并验证通过，语法9／Module9／frontend5／Runtime13，共36项、0失败；Amazonia／BootyBay／DotA 分别编译21,086／19,785／370,552条指令，均无Game.dll、initialized=false。5组字符串及268组Rawcode原版对照、245组解析结构与591个整数对照按当前夹具摘要一致复用。证据为 `jass/batch-runtime-*`、`batch-w010-w012.json`，本批关闭脚本基础范围；原版完整运行/玩法继续在总矩阵中待实现。
 
-接续工作为公共常量与游戏 native 的实际状态、地图 config/main、载入界面和会话，再连通地形/对象、AI 与可玩流程。原版完整调度、随机数、异常线程状态与句柄生命周期尚未完成，不能把自编脚本执行当成完整原图运行。未绑定的 native 带源位置失败，不返回默认值；原图公共/地图全局初始化和 config/main 仍未执行。来源和边界见 `jass.md`，原始证据在 `tmp/docs-artifacts/war3/jass/`。
+W013 新增 ScriptSession：公共/地图全局初始化、配置native和Group/Timer/Trigger状态已接入。DotA 产品 `--hidden --config-check` 退出0，无Game.dll，globals/config真实执行完成：10名额/10队伍记录，槽位1–5/7–11分别属队伍0/1，出生点0–9，保留3个Group、4个Timer、1个Trigger，main=false。7项session定向检查及44个枚举native/GetHandleId的2,925次原版指令对照通过；新批次1/3，另外两图、选图联动、坏图恢复和切图释放待合并验证。来源、状态与句柄/默认值的未覆盖边界见 `session.md`，证据为 `jass/session-*`。
+
+接续工作为玩家草稿/选图与配置会话的联动、载入界面和main所需游戏native，再连通地形/对象、AI与可玩流程。原版完整调度、随机数、异常线程状态、句柄数值/重用与引用计数尚未完成。未绑定的native带源位置失败，不返回默认值；全部原图main仍未执行，不能将config成功当成对局可玩。来源与边界见 `jass.md`、`session.md`，原始证据在 `tmp/docs-artifacts/war3/jass/`。
 
 菜单已连接单人、自定义游戏、玩家草稿、取消和退出；开始游戏尚未接入。草稿默认 AI、配置持久化及 JASS config 覆盖顺序尚未对照；颜色网格、组间距、logo 精确比例、灯光／雾／粒子、完整 FDF 控件、动态布局像素、标题截断/列表行高/认证图标、MDL 与完整节点规则仍需实现或核验。四族、战役、存档／回放、局域网、OpenGL 均未完成。普通启动的 `--map` 只定位选图偏好，probe 检查原生记录，script-check 构建脚本语法树、解析类型/符号并编译指令，都不表示已能运行地图。
 

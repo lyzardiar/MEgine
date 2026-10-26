@@ -52,6 +52,8 @@ REA 的 AND／OR 发射器 `0x6f7e91d0`／`0x6f7e9bf0` 先发射左表达式，�
 python watcher/war3/tools/verify_jass_literals_cpu.py
 ```
 
+地图 native 的后续集成由 [ScriptSession](session.md) 管理。新增 `--config-check` 已在 DotA 直接执行原公共库/地图全局初始化和 config；它与此处仅编译的 `--script-check` 分开记录。完整main、世界、调度和游戏规则继续待实现。
+
 ## 原版表达式组合与整数 token
 
 固定版本的解析优先级从低到高为：`and`、`or`、`== !=`、`< > <= >=`、`+ -`、`* /`、一元 `not + -`。`and`、`or` 按右结合，其余二元运算按左结合。因此 `true or false and false` 组合为 `(true or false) and false`，`true and false or true` 为 `true and (false or true)`；原版规则直接用于产品解析器。
