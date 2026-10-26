@@ -4,8 +4,8 @@
 
 namespace war3 {
 SoundScene& ScriptSession::requireAudio() {if(!audio_){audio_=std::make_unique<SoundScene>(requireWorld().resources());audio_->muted(audioMuted_);}return *audio_;}
-void ScriptSession::audioMuted(bool muted) {audioMuted_=muted;if(audio_)audio_->muted(muted);}
-void ScriptSession::updateAudio() {if(audio_)audio_->update();}
+void ScriptSession::audioMuted(bool muted) {audioMuted_=muted;if(audio_)audio_->muted(muted);if(music_)music_->muted(muted);}
+void ScriptSession::updateAudio() {if(audio_)audio_->update();if(music_)music_->update();}
 void ScriptSession::bindSoundNatives() {
     auto sound=[this](jass::Value handle)->std::shared_ptr<ScriptSound>{updateAudio();if(!handle.bits)return {};return std::get<std::shared_ptr<ScriptSound>>(object(handle,NativeKind::Sound).state);};
     auto text=[](const jass::Value& value){return value.text?*value.text:std::string{};};

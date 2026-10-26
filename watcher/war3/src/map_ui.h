@@ -9,6 +9,7 @@ public:
     void parse(std::span<const std::uint8_t> bytes);
     void load(Archives& archives,const std::string& member);
     std::string value(std::string section,std::string key,const std::string& fallback={}) const;
+    std::optional<std::string> entry(std::string section,std::string key) const;
 };
 struct FrameAnchor {const char* frame;const char* point;const char* relative;const char* target;float x,y;};
 std::array<FrameAnchor,5> mapInfoAnchors();

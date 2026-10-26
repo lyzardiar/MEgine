@@ -52,6 +52,7 @@ void ScriptSession::startMain() {if(!configured() || !world_ || !setupApplied_ |
 void ScriptSession::bindNatives() {
     bindWorldNatives();
     bindSoundNatives();
+    bindMusicNatives();
     for(auto entry:enums)bind(entry.name,entry.type,{"integer"},[entry](auto& vm,auto args){return vm.handle(entry.type,args[0].bits);});
     bind("GetHandleId","integer",{"handle"},[](auto& vm,auto args){return vm.integer(integer(args[0]));});
     bind("Player","player",{"integer"},[this](auto& vm,auto args){return vm.handle("player",args[0].bits<16?handleBase+args[0].bits:0);});

@@ -4,6 +4,7 @@
 #include "map.h"
 #include "world.h"
 #include "sound.h"
+#include "music.h"
 #include <variant>
 
 namespace war3 {
@@ -44,6 +45,7 @@ class ScriptSession {
     std::unique_ptr<World> world_;
     bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false;
     std::unique_ptr<SoundScene> audio_;
+    std::unique_ptr<MusicScene> music_;
     bool audioMuted_=false;
     jass::Value create(NativeKind kind);
     Object& object(jass::Value handle,NativeKind kind);
@@ -55,7 +57,9 @@ class ScriptSession {
     void bindNatives();
     void bindWorldNatives();
     void bindSoundNatives();
+    void bindMusicNatives();
     SoundScene& requireAudio();
+    MusicScene& requireMusic();
     World& requireWorld();
 public:
     ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings={},std::optional<unsigned> gameType={});
@@ -69,6 +73,7 @@ public:
     void audioMuted(bool muted);
     void updateAudio();
     const SoundScene* audio() const {return audio_.get();}
+    const MusicScene* music() const {return music_.get();}
     std::optional<unsigned> localPlayer() const {return localPlayer_;}
     bool configured() const {return configured_ && !failed_;}
     bool initialized() const {return runtime_.ready() && !failed_;}
