@@ -6,16 +6,19 @@
 
 namespace war3 {
 std::string sourceText(std::span<const std::uint8_t> bytes);
+std::optional<std::uint32_t> inlineTextColor(std::string_view token);
 std::string skinValue(Archives& archives,const std::string& key,const std::string& fallback);
 struct FrameDefinition {
     std::string type, name, inherits;
     bool inheritChildren = false;
     std::map<std::string,std::vector<std::string>> properties;
     std::vector<std::vector<std::string>> points;
+    std::vector<std::vector<std::string>> menuItems;
     std::vector<FrameDefinition> children;
     const std::vector<std::string>& property(const std::string& key) const;
     float number(const std::string& key, float fallback = 0) const;
 };
+FrameDefinition frameContext(FrameDefinition frame,const std::string& prefix);
 struct FrameFocus {std::string name,next;bool enabled=false,initial=false;};
 std::string nextFrameFocus(const std::vector<FrameFocus>& frames,const std::string& current,bool reverse=false);
 class FrameDefinitions {

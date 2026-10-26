@@ -73,7 +73,7 @@ int run(HINSTANCE instance) {
     unsigned frames = 0;
     bool running = true;
     auto started = GetTickCount64();
-    unsigned windowStage=0;
+    unsigned windowStage=0,menuStage=0,menuTabs=0;
     while (running) {
         MSG message{};
         while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) { if (message.message == WM_QUIT) running = false; TranslateMessage(&message); DispatchMessageW(&message); }
@@ -93,21 +93,29 @@ int run(HINSTANCE instance) {
         if(options.menuCheck) {
             if(frames==10)PostMessageW(window,WM_KEYDOWN,VK_RETURN,0);
             if(frames==25)PostMessageW(window,WM_KEYDOWN,VK_SPACE,0);
-            if(frames==40){if(screen!=Screen::Maps || !browser || !browser->info() || !fs::equivalent(browser->selectedMap(),options.map))throw std::runtime_error("Menu selection check failed");log.write("menu_check=selected "+utf8(browser->selectedMap().wstring()));}
+            if(frames==40){if(screen!=Screen::Maps || !browser || !browser->info() || !browser->setup() || !fs::equivalent(browser->selectedMap(),options.map))throw std::runtime_error("Menu selection check failed");auto& players=browser->info()->players;auto first=std::find_if(players.begin(),players.end(),[](auto& p){return p.type==1;});if(first==players.end() || browser->setup()->localPlayer()!=unsigned(first->id))throw std::runtime_error("Menu local player source ID differs");log.write("menu_check=selected "+utf8(browser->selectedMap().wstring())+" local="+std::to_string(first->id));}
             if(frames==42){auto [x,y]=browser->selectedCenter();float scale=std::min(renderer.width()/.8f,renderer.height()/.6f);auto pos=MAKELPARAM(int((renderer.width()-.8f*scale)/2+x*scale),int((renderer.height()-.6f*scale)/2+y*scale));SendMessageW(window,WM_MOUSEMOVE,0,pos);SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,pos);SendMessageW(window,WM_LBUTTONUP,0,pos);}
             if(frames==45)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,-WHEEL_DELTA),0);
             if(frames==46)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,WHEEL_DELTA),0);
-            if(frames==52 || frames==55 || frames==60)PostMessageW(window,WM_KEYDOWN,VK_TAB,0);
-            if(frames==58)PostMessageW(window,WM_KEYDOWN,VK_RETURN,0);
-            if(frames==59 && screen!=Screen::Maps)throw std::runtime_error("Map list Enter activated an unrelated control");
-            if(frames==62)PostMessageW(window,WM_KEYDOWN,VK_SPACE,0);
-            if(frames==70){if(screen!=Screen::Single)throw std::runtime_error("Map browser cancel check failed");PostMessageW(window,WM_KEYDOWN,VK_TAB,0);}
-            if(frames==72)PostMessageW(window,WM_KEYDOWN,VK_RETURN,0);
-            if(frames==80){if(screen!=Screen::Main)throw std::runtime_error("Single-player keyboard cancel check failed");PostMessageW(window,WM_KEYDOWN,'S',0);}
-            if(frames==82)PostMessageW(window,WM_KEYDOWN,'G',0);
-            if(frames==84){if(screen!=Screen::Maps)throw std::runtime_error("Menu shortcut check failed");PostMessageW(window,WM_KEYDOWN,'A',0);}
-            if(frames==86)PostMessageW(window,WM_KEYDOWN,VK_ESCAPE,0);
-            if(frames==90){if(screen!=Screen::Main)throw std::runtime_error("Single-player cancel check failed");PostMessageW(window,WM_KEYDOWN,'Q',0);}
+            if(frames>=52 && frames%2==0){auto key=[&](unsigned value){PostMessageW(window,WM_KEYDOWN,value,0);};switch(menuStage){
+                case 0:if(screen!=Screen::Maps || browser->focus()!="MapListBox")throw std::runtime_error("Map row click did not focus list");key(VK_RETURN);++menuStage;break;
+                case 1:{if(screen!=Screen::Maps || (browser->focus()!="MapListBox" && menuTabs==0))throw std::runtime_error("Map list Enter activated an unrelated control");auto id=browser->setup()->localPlayer();if(!id)throw std::runtime_error("Missing local setup player");auto target="player-"+std::to_string(*id)+"/HandicapMenu";if(browser->focus()!=target){if(++menuTabs>128)throw std::runtime_error("Tab did not reach local handicap");key(VK_TAB);}else{key(VK_RETURN);++menuStage;menuTabs=0;}break;}
+                case 2:if(!browser->popupOpen())throw std::runtime_error("Handicap popup did not open");key(VK_DOWN);++menuStage;break;
+                case 3:if(!browser->popupOpen())throw std::runtime_error("Handicap popup closed during navigation");key(VK_RETURN);++menuStage;break;
+                case 4:{auto id=browser->setup()->localPlayer();if(!id || browser->setup()->find(*id)->handicap!=90 || browser->popupOpen())throw std::runtime_error("Handicap draft edit failed");log.write("menu_check=handicap_90");auto [x,y]=browser->selectedCenter();float factor=std::min(renderer.width()/.8f,renderer.height()/.6f);auto pos=MAKELPARAM(int((renderer.width()-.8f*factor)/2+x*factor),int((renderer.height()-.6f*factor)/2+y*factor));SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,pos);SendMessageW(window,WM_LBUTTONUP,0,pos);++menuStage;break;}
+                case 5:{auto id=browser->setup()->localPlayer();if(!id || browser->setup()->find(*id)->handicap!=90)throw std::runtime_error("Reselecting map discarded setup edits");auto target="player-"+std::to_string(*id)+"/HandicapMenu";if(browser->focus()!=target){if(++menuTabs>128)throw std::runtime_error("Tab did not return to handicap");key(VK_TAB);}else{key(VK_RETURN);++menuStage;menuTabs=0;}break;}
+                case 6:if(!browser->popupOpen())throw std::runtime_error("Handicap popup did not reopen");key(VK_ESCAPE);++menuStage;break;
+                case 7:if(screen!=Screen::Maps || browser->popupOpen())throw std::runtime_error("Popup Escape left map browser");++menuStage;break;
+                case 8:if(browser->focus()!="CancelButton"){if(++menuTabs>128)throw std::runtime_error("Tab did not reach map cancel");key(VK_TAB);}else{key(VK_SPACE);++menuStage;}break;
+                case 9:if(screen!=Screen::Single)throw std::runtime_error("Map browser cancel check failed");key(VK_TAB);++menuStage;break;
+                case 10:if(singleMenu->focus()!="CancelButton")throw std::runtime_error("Single-player cancel focus differs");key(VK_RETURN);++menuStage;break;
+                case 11:if(screen!=Screen::Main)throw std::runtime_error("Single-player keyboard cancel check failed");key('S');++menuStage;break;
+                case 12:if(screen!=Screen::Single)throw std::runtime_error("Single-player shortcut check failed");key('G');++menuStage;break;
+                case 13:if(screen!=Screen::Maps)throw std::runtime_error("Map browser shortcut check failed");key('A');++menuStage;break;
+                case 14:if(screen!=Screen::Single)throw std::runtime_error("Map browser shortcut cancel failed");key(VK_ESCAPE);++menuStage;break;
+                case 15:if(screen!=Screen::Main)throw std::runtime_error("Single-player Escape check failed");log.write("menu_check=passed");key('Q');++menuStage;break;
+                default:break;
+            }}
         }
         if (state.minimized) { WaitMessage(); continue; }
         if (!renderer.begin()) { MsgWaitForMultipleObjectsEx(0, nullptr, 50, QS_ALLINPUT, MWMO_INPUTAVAILABLE); continue; }
@@ -126,10 +134,12 @@ int run(HINSTANCE instance) {
         state.doubleClick=false;state.wheel%=WHEEL_DELTA;
         auto capture=options.frames && (frames+1==options.frames || !running)?options.capture:fs::path{};
         if(options.menuCheck && !options.capture.empty() && (frames==20 || frames==50)){capture=options.capture;capture.replace_filename(capture.stem().wstring()+(frames==20?L"-single":L"-browser")+L".png");}
+        if(options.menuCheck && !options.capture.empty() && menuStage==3 && frames%2==0){capture=options.capture;capture.replace_filename(capture.stem().wstring()+L"-popup.png");}
         if (renderer.end(capture)) ++frames;
         if (options.frames && frames >= options.frames) break;
     }
     state.renderer = nullptr;
+    if(options.menuCheck && (menuStage!=16 || running))throw std::runtime_error("Menu check ended before all navigation stages completed");
     log.write("client_size="+std::to_string(renderer.width())+"x"+std::to_string(renderer.height()));
     log.write("rendered_frames=" + std::to_string(frames) + " game_dll_loaded=" + (GetModuleHandleW(L"Game.dll") ? "true" : "false"));
     return 0;

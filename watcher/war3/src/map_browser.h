@@ -3,11 +3,14 @@
 #include "glue.h"
 #include "map.h"
 #include "map_ui.h"
+#include "player_setup_ui.h"
 
 namespace war3 {
 class MapBrowser {
     GlueScreen screen_;
     MapUiData source_;
+    PlayerSetupUi players_;
+    std::unique_ptr<PlayerSetup> setup_;
     Renderer& renderer_;
     Images& images_;
     Log& log_;
@@ -19,7 +22,6 @@ class MapBrowser {
     size_t selected_=0,scroll_=0;
     unsigned rows_=1;
     float itemFont_=0,playersFont_=0;
-    bool listFocus_=true;
     void enter(const fs::path& path,const fs::path& preferred={});
     void select(size_t index);
     void infoLayout();
@@ -28,6 +30,9 @@ public:
     MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred);
     std::string draw(const UiInput& input);
     const MapInfo* info() const {return info_?&*info_:nullptr;}
+    const PlayerSetup* setup() const {return setup_.get();}
+    const std::string& focus() const {return screen_.focus();}
+    bool popupOpen() const {return screen_.popupOpen();}
     fs::path selectedMap() const;
     std::pair<float,float> selectedCenter() const;
     const std::string& error() const {return error_;}

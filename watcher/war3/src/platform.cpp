@@ -89,7 +89,7 @@ Options Options::parse() {
     if (options.hidden && !options.probe && !options.frames) throw std::runtime_error("Hidden run requires --frames or --probe");
     if (!options.capture.empty() && !options.frames) throw std::runtime_error("Capture requires --frames");
     if (options.windowCheck && (options.probe || options.frames<120)) throw std::runtime_error("Window check requires a render run with at least 120 frames");
-    if (options.menuCheck && (options.probe || options.windowCheck || options.map.empty() || options.frames<120)) throw std::runtime_error("Menu check requires --map, at least 120 frames, and no other check mode");
+    if (options.menuCheck && (options.probe || options.windowCheck || options.map.empty() || options.frames<240)) throw std::runtime_error("Menu check requires --map, at least 240 frames, and no other check mode");
     if (options.log.empty()) {
         wchar_t directory[32768]{};
         DWORD length = GetEnvironmentVariableW(L"LOCALAPPDATA", directory, 32768);

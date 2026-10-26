@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <charconv>
 
 namespace war3 {
+std::optional<std::uint32_t> inlineTextColor(std::string_view token) {if(token.size()!=10 || token[0]!='|' || (token[1]!='c' && token[1]!='C'))return std::nullopt;std::uint32_t value=0;auto [end,error]=std::from_chars(token.data()+2,token.data()+10,value,16);if(error!=std::errc{} || end!=token.data()+10)return std::nullopt;return value|0xff000000u;}
 std::string sourceText(std::span<const std::uint8_t> bytes) {
     if(bytes.size()>=3 && bytes[0]==0xef && bytes[1]==0xbb && bytes[2]==0xbf)bytes=bytes.subspan(3);
     if(bytes.size()>=2 && ((bytes[0]==0xff && bytes[1]==0xfe)||(bytes[0]==0xfe && bytes[1]==0xff))) {
@@ -60,13 +62,18 @@ public:
             if (consume("Frame")) { f.children.push_back(frame(depth+1)); continue; }
             auto key=take(); std::vector<std::string> values;
             while(!empty() && peek().line==key.line && peek().value!="}" && peek().value!="Frame") { auto value=take().value; if(value!="," && value!=";") values.push_back(std::move(value)); }
-            if(key.value=="SetPoint") f.points.push_back(std::move(values)); else f.properties[key.value]=std::move(values);
+            if(key.value=="SetPoint") f.points.push_back(std::move(values));else if(key.value=="MenuItem")f.menuItems.push_back(std::move(values));else f.properties[key.value]=std::move(values);
         }
         return f;
     }
 };
 }
 const std::vector<std::string>& FrameDefinition::property(const std::string& key) const { static const std::vector<std::string> empty; auto it=properties.find(key); return it==properties.end() ? empty : it->second; }
+FrameDefinition frameContext(FrameDefinition frame,const std::string& prefix) {
+    if(prefix.empty())return frame;std::set<std::string> names;auto collect=[&](auto&& self,const FrameDefinition& f)->void{names.insert(f.name);for(auto& child:f.children)self(self,child);};collect(collect,frame);
+    const std::set<std::string> references={"ControlBackdrop","ControlDisabledBackdrop","ControlPushedBackdrop","ControlMouseOverHighlight","ButtonText","PopupTitleFrame","PopupArrowFrame","PopupMenuFrame","TabFocusNext","EditTextFrame","SliderThumbButtonFrame","ScrollBarIncButtonFrame","ScrollBarDecButtonFrame","ListBoxScrollBar"};
+    auto apply=[&](auto&& self,FrameDefinition& f)->void{f.name=prefix+"/"+f.name;for(auto& p:f.points)if(p.size()>1 && names.contains(p[1]))p[1]=prefix+"/"+p[1];for(auto& [key,values]:f.properties)if(references.contains(key))for(auto& value:values)if(names.contains(value))value=prefix+"/"+value;for(auto& child:f.children)self(self,child);};apply(apply,frame);return frame;
+}
 std::string nextFrameFocus(const std::vector<FrameFocus>& frames,const std::string& current,bool reverse) {
     std::map<std::string,size_t> names;std::vector<size_t> enabled;for(size_t i=0;i<frames.size();++i){names.try_emplace(frames[i].name,i);if(frames[i].enabled)enabled.push_back(i);}if(enabled.empty())return {};
     auto follow=[&](size_t index,bool include){for(size_t i=0;i<=frames.size();++i){if(include && frames[index].enabled)return frames[index].name;auto next=names.find(frames[index].next);if(next==names.end())break;index=next->second;include=true;}return std::string{};};
@@ -102,6 +109,7 @@ FrameDefinition FrameDefinitions::resolve(const FrameDefinition& source, unsigne
         auto base=frames_.find(source.inherits); if(base==frames_.end())throw std::runtime_error("Missing FDF template: "+source.inherits);
         auto parent=resolve(base->second,depth+1,budget); result.properties=std::move(parent.properties); for(auto& [key,value]:source.properties)result.properties[key]=value;
         if(source.points.empty()) result.points=std::move(parent.points);
+        if(source.menuItems.empty())result.menuItems=std::move(parent.menuItems);
         if(source.inheritChildren) {result.children=std::move(parent.children);for(auto& child:source.children){auto it=std::find_if(result.children.begin(),result.children.end(),[&](auto& f){return f.name==child.name;});if(it==result.children.end())result.children.push_back(child);else *it=child;}}
     }
     result.inherits.clear();for(auto& child:result.children)child=resolve(child,depth+1,budget);return result;

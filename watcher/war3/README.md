@@ -15,9 +15,11 @@ cmake --build --preset release --parallel
 
 渲染器优先使用 Direct3D 9；设备能力不可用时依次尝试 Direct3D 9Ex、系统 D3D9On12Ex。实际驱动名称写入日志。D3D9 与 D3D9Ex 的菜单帧输出、窗口缩放及恢复均已有运行证据。主菜单从原版 FDF 读取模板、中文、布局和快捷键，从 `war3skins.txt` 选择字体；原版 Miles 从 `redist/miles` 加载 MP3 codec，直接播放 MPQ 内存中的音乐。
 
-主菜单的“单人模式(S) → 自定义游戏(G)”进入地图目录列表，可用鼠标选择、双击目录、滚轮、上下/翻页/Home/End、Enter 与 Backspace 浏览。取消(A)或 Escape 返回上一级界面。`--map <路径>` 在选图界面定位任意地图；`--probe --map <路径>` 直接读取 W3I/WTS/W3E/WPM。开发导航检查为 `--menu-check --map <路径> --hidden --frames 120 --capture <PNG路径>`，同时生成单人模式与选图帧。
+主菜单的“单人模式(S) → 自定义游戏(G)”进入地图目录列表，可用鼠标选择、双击目录、滚轮、上下/翻页/Home/End、Enter 与 Backspace 浏览。取消(A)或 Escape 返回上一级界面。`--map <路径>` 在选图界面定位任意地图；`--probe --map <路径>` 直接读取 W3I/WTS/W3E/WPM。开发导航检查为 `--menu-check --map <路径> --hidden --frames 240 --capture <PNG路径>`，同时生成单人模式、选图和下拉菜单帧；帧数耗尽而步骤未完成时检查失败。
 
-已接入按钮按原版 FDF 焦点链支持 Tab／Shift+Tab 和 Enter／Space；选图中的 Tab 在列表与已接入按钮之间切换。列表名称、人数和类型来自可见地图的 512 字节 HM3W 文件头，选中文件后读取完整元数据与预览。地图尺寸分类、地形中文名和字体尺寸直接使用原版配置。
+已接入按钮按原版 FDF 焦点链支持 Tab／Shift+Tab 和 Enter／Space；选图列表、可编辑玩家控件和取消按钮统一遍历焦点。下拉菜单支持方向键、滚轮、Enter／Space、Esc 和鼠标，展开时消费底层输入。列表名称、人数和类型来自可见地图的 512 字节 HM3W 文件头，选中文件后读取完整元数据与预览。地图尺寸分类、地形中文名和字体尺寸直接使用原版配置。
+
+玩家配置消费原版 PlayerSlot／TeamSetup FDF、中文标签和队伍颜色 BLP，保留地图玩家 ID、原始记录和势力分组，支持本地槽移动、计算机难度、种族、队伍、颜色交换和 50%–100% 障碍值。固定设置限制编辑，重复选择同一地图保留草稿，切图重建草稿。它尚未接入实际开局；原版默认 AI、配置持久化、JASS config 覆盖顺序及颜色菜单网格仍待实现或对照。
 
 完整内容按 [功能矩阵](docs/acceptance.md) 跟进，独立验证见 [测试队列](docs/testing-batches.md)。当前版本是客户端基础设施，地图信息与原生记录可读取，“开始游戏”尚未接入会话，完整载入、战斗、JASS、战役和网络仍待实现。菜单 MDX 已绘制，logo 精确比例、灯光、雾、粒子、完整 FDF 与交互仍需还原和对照验收。
 
