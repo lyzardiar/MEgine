@@ -16,8 +16,9 @@ struct TerrainChunk {
     Com<IDirect3DIndexBuffer9> indexBuffer;
 };
 struct TerrainCliff {std::string family,ramp,texture;unsigned ground=0;};
-struct TerrainCell {std::array<unsigned,4> corners;std::array<unsigned,4> textures;unsigned x,y,variation;};
+struct TerrainCell {std::array<unsigned,4> corners;std::array<unsigned,4> textures;unsigned x,y,variation;std::array<bool,4> blightable{true,true,true,true};};
 class TerrainScene {
+    const World& world_;
     const MapTerrain& source_;
     SceneAssets& assets_;
     std::vector<float> ground_,surface_;
@@ -27,6 +28,16 @@ class TerrainScene {
     float waterRate_=0;
     size_t uploaded_=0;
     size_t meshBytes_=0;
+    std::vector<TerrainChunk> blightChunks_;
+    std::vector<std::vector<TerrainCell>> blightCells_;
+    std::vector<std::uint64_t> blightSeen_;
+    std::vector<unsigned> initialBlightUploads_;
+    std::string blightTexture_;
+    unsigned blightWidth_=0,blightHeight_=0;
+    void initializeBlight(const std::vector<TerrainCell>& cells);
+    void rebuildBlight(unsigned index);
+    void uploadChunk(Renderer& renderer,TerrainChunk& chunk);
+    size_t drawBlight(Renderer& renderer,const DirectX::XMMATRIX& viewProjection);
     void compile(Log& log);
     std::vector<TerrainCell> layout(const std::vector<TerrainCliff>& definitions,Log& log);
     TerrainChunk& chunk(unsigned x,unsigned y,const std::string& texture,bool water=false);
@@ -34,9 +45,9 @@ class TerrainScene {
     float relief(const std::vector<float>& heights,float x,float y) const;
     void water();
 public:
-    TerrainScene(const MapTerrain& source,SceneAssets& assets,Log& log);
+    TerrainScene(const World& world,SceneAssets& assets,Log& log);
     bool uploadOne(Renderer& renderer);
-    size_t uploadCount() const {return chunks_.size();}
+    size_t uploadCount() const {return chunks_.size()+initialBlightUploads_.size();}
     size_t uploaded() const {return uploaded_;}
     size_t draw(Renderer& renderer,const D3DMATRIX& view,const D3DMATRIX& projection,std::uint64_t elapsed,bool water,const WorldEnvironment& environment);
     float height(float x,float y) const {return relief(surface_,(x-source_.origin[0])/128,(y-source_.origin[1])/128);}

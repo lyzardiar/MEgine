@@ -25,6 +25,7 @@ integer probe_learned=0
 integer probe_summons=0
 integer probe_damage=0
 unit probe_illusion=null
+unit probe_acolyte=null
 unit probe_trained=null
 endglobals
 function ProbeAssert takes boolean ok, string message returns nothing
@@ -133,6 +134,25 @@ function ProbeQuest takes nothing returns nothing
     call ProbeAssert(IsQuestItemCompleted(objective) and IsQuestCompleted(q) and IsQuestDiscovered(q) and not IsQuestRequired(q),"quest_state")
     call FlashQuestDialogButton()
     call ForceQuestDialogUpdate()
+endfunction
+function ProbeBlight takes nothing returns nothing
+    local real x=GetStartLocationX(0)+256
+    local real y=GetStartLocationY(0)+256
+    local rect r=Rect(x-128,y-128,x+256,y+256)
+    call SetBlightRect(Player(0),r,false)
+    call ProbeAssert(not IsPointBlighted(x+32,y+32),"clear_blight")
+    call SetBlightPoint(Player(0),x,y,true)
+    call ProbeAssert(IsPointBlighted(x+32,y+32),"point_blight")
+    set probe_acolyte=CreateUnit(Player(0),'uaco',x+32,y+32,270)
+    call SetUnitState(probe_acolyte,UNIT_STATE_LIFE,100)
+    call RemoveRect(r)
+endfunction
+function ProbeRepeatBlight takes nothing returns nothing
+    call SetBlightPoint(Player(0),GetStartLocationX(0)+256,GetStartLocationY(0)+256,true)
+endfunction
+function ProbeClearBlight takes nothing returns nothing
+    call SetBlight(Player(0),GetUnitX(probe_acolyte),GetUnitY(probe_acolyte),256,false)
+    call ProbeAssert(not IsPointBlighted(GetUnitX(probe_acolyte),GetUnitY(probe_acolyte)),"remove_blight")
 endfunction
 function config takes nothing returns nothing
 endfunction

@@ -53,6 +53,8 @@ struct UnitState {
     float damageDealt=1,damageTaken=1;
     std::optional<TimedLife> timedLife;
     std::map<std::string,double> itemCooldowns;
+    float healthRegen=0,manaRegen=0;
+    std::string regenType;
 };
 struct ItemState {
     std::uint32_t type=0,owner=15;

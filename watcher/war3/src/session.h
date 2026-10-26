@@ -115,7 +115,9 @@ class ScriptSession {
     void bindIllusionNatives();
     void bindDamageNatives();
     void bindQuestNatives();
+    void bindBlightNatives();
     void timedLives(double delta);
+    void regenerate(double delta);
     std::vector<std::uint32_t> illusions(std::uint32_t caster,std::uint32_t original,unsigned count,float dealt,float taken,double duration,std::uint32_t buff);
     void removeItem(std::uint32_t item);
     const SourceSettings& gameplay();
