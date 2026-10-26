@@ -33,3 +33,5 @@ python watcher/war3/tools/verify_world_cpu.py
 Game.dll SHA-256：`e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。原件注册、边界/夹取/初始化/颜色等REA证据在 `tmp/docs-artifacts/war3/world/world-*-rea.json`。夹具与报告为 `world-{clamp-native,margin-native,cpu}.json`，源码按LF归一化记录摘要；日志为 `build.log`、`product-build.log`、`tests.log`、`cpu.log`。原始脚本和配置仅供本地分析，不提交原版资源。
 
 Amazonia最小产品执行已进入原图main，97×97角点与路径数据由世界持有；相机、昼夜模型、水色已写入，生成1个矩形，随后在 `war3map.j:1258:14` 的AddWeatherEffect明确失败、退出1，无Game.dll。证据为 `main-amazonia.log`。天气、声音、单位、InitBlizzard、触发器和胜负流程继续实现，不以这次部分初始化替代完整客户端验收。
+
+W013–W015在 `a07fcab` 合并验证已实现范围32项通过，其中复用未变化的world7项/272次CPU比较；三图globals/config和产品导航通过。三图完整main均退出1：Amazonia停在天气，BootyBay/DotA分别在 `war3map.j:789:10`、`Scripts\war3map.j:90177:6` 的NewSoundEnvironment失败。错误与后续实现队列见 `testing-batches.md`，原始证据及摘要见 `batch-w013-w015.json`。

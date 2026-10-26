@@ -42,6 +42,6 @@ Game.dll SHA-256：`e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d
 python watcher/war3/tools/verify_jass_enums_cpu.py
 ```
 
-DotA_v6.83d 产品最小集成退出0，无 Game.dll：10名额、10队伍记录、类型4、放置3；ID 1–5 属队伍0，7–11 属队伍1；出生点0–9，前组种族偏好4、后组8。全局初始化保留3个Group、4个Timer、1个Trigger。这些是脚本配置结果，内部队伍数量与界面势力分组分别由对应源记录消费。W014已接入选图和草稿会话，4项CPU/3项D3D9定向检查通过；DotA产品导航110帧通过、无Game.dll，main仍未执行。三图合并和原版开局时序继续待验证。
+DotA_v6.83d配置保留10名额、10队伍记录、类型4、放置3；ID1–5属队伍0，7–11属队伍1；出生点0–9，前组种族偏好4、后组8，3个Group、4个Timer、1个Trigger。内部队伍数量与界面势力分组分别由对应源记录消费。W013–W015在 `a07fcab` 合并验证session7/setup4/browser14，复用world7，共32项通过；三图globals/config及产品导航104/104/110帧通过，无Game.dll。完整main均在未实现的天气/声音环境native失败，原版开局时序和可玩流程继续待实现/对照。
 
 证据统一在 `tmp/docs-artifacts/war3/jass/`：`session-{build.log,tests-build.log,tests.log,dota.log,enums-native.json,enums-cpu.json,enums-cpu.log,registration-rea.json,enum-conversion-rea.json,handles-rea.json,lookup-rea.json,native-catalog.json,receipt.json}` 及 `setup-{build.log,tests.log,player-natives-rea.json}`；界面检查见 `map-menu/setup-{browser-tests.log,browser-tests/,dota*}`。原始数据不提交。W015已实现世界/main入口，本批3/3，三图与界面/会话合并验证结果统一记录在测试队列；创建游戏与完整运行仍在总矩阵待实现。

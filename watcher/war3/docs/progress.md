@@ -40,11 +40,13 @@ W011 已按原版状态机修正 `or` 高于 `and`、两者右结合，整数字
 
 W012 原生 Runtime 已执行自编脚本：显式帧/槽位/稀疏数组、流程、短路、code 重入、I2R/R2I 与有类型的 native 边界已接入。W010–W012 在 `d1afdb3` 合并验证通过，语法9／Module9／frontend5／Runtime13，共36项、0失败；Amazonia／BootyBay／DotA 分别编译21,086／19,785／370,552条指令，均无Game.dll、initialized=false。5组字符串及268组Rawcode原版对照、245组解析结构与591个整数对照按当前夹具摘要一致复用。证据为 `jass/batch-runtime-*`、`batch-w010-w012.json`，本批关闭脚本基础范围；原版完整运行/玩法继续在总矩阵中待实现。
 
-W013 新增 ScriptSession：公共/地图全局初始化、配置native和Group/Timer/Trigger状态已接入。DotA 产品 `--hidden --config-check` 退出0，无Game.dll，globals/config真实执行完成：10名额/10队伍记录，槽位1–5/7–11分别属队伍0/1，出生点0–9，保留3个Group、4个Timer、1个Trigger，main=false。7项session定向检查及44个枚举native/GetHandleId的2,925次原版指令对照通过；新批次1/3，另外两图、选图联动、坏图恢复和切图释放待合并验证。来源、状态与句柄/默认值的未覆盖边界见 `session.md`，证据为 `jass/session-*`。
+W013新增ScriptSession：公共/地图全局初始化、配置native和Group/Timer/Trigger状态已接入。DotA配置保留10名额/10队伍记录，槽位1–5/7–11分别属队伍0/1，出生点0–9，3个Group、4个Timer、1个Trigger。7项session检查及44枚举/GetHandleId的2,925次原版指令对照通过，已纳入W013–W015合并结果。句柄/默认值未覆盖边界见 `session.md`，证据为 `jass/session-*`。
 
-W014接入单个后台选图线程和配置会话：独立归档/解码器、最新待处理选择、过期结果丢弃及失败清空；GPU/FDF保持界面线程更新。玩家草稿消费脚本控制/队伍/颜色/种族及锁定，保留源ID/势力；修改本地玩家、AI、占槽、种族、颜色、队伍及障碍值写回原会话。4项setup与3项新增D3D9异步定向检查通过、0失败。DotA产品导航110帧通过，无Game.dll；同图保留草稿，配置错误可恢复，main=false。当前批次2/3，旧11项UI、三图合并及W013检查留到W015后；证据见 `jass/setup-*`、`map-menu/setup-*`。
+W014接入单个后台选图线程和配置会话：独立归档/解码器、最新待处理选择、过期结果丢弃及失败清空；GPU/FDF保持界面线程更新。玩家草稿消费脚本控制/队伍/颜色/种族及锁定，保留源ID/势力；修改本地玩家、AI、占槽、种族、颜色、队伍及障碍值写回原会话。4项setup和包含原11项/新增3项的14项D3D9界面检查已合并通过；同图保留草稿，配置错误可恢复。证据见 `jass/setup-*`、`map-menu/setup-*` 及本批world目录。
 
-W015建立原生World，选图/配置在globals前挂接W3E/WPM；21个空间/相机/环境native保存实际会话状态。7项world检查与195组坐标/77组源相机整数的原版指令比较通过，0失败。`--main-check` 接入原图main与严格阶段/失败状态，Amazonia已写入相机、昼夜模型和水色并创建1个矩形，随后在AddWeatherEffect明确失败、退出1，无Game.dll，尚未完成main。世界环境尚未交给渲染器，不能将状态写入当成地图效果已经显示。当前3/3，提交后合并验证；证据为 `tmp/docs-artifacts/war3/world/`，实现边界见 `world.md`。
+W015 `a07fcab`建立World，选图/配置在globals前挂接W3E/WPM；21个空间/相机/环境native保存实际会话状态。7项world与195组坐标/77组相机整数的原版指令比较通过。`--main-check`接入真实main和阶段/失败限制；Amazonia写入相机、昼夜模型、水色及1个矩形后在AddWeatherEffect失败，BootyBay/DotA在NewSoundEnvironment失败，均退出1、无Game.dll，完整main未完成。环境尚未交给渲染器，不能将状态写入当成地图效果已经显示。
+
+W013–W015在 `a07fcab` 合并验证已实现范围：本次session7/setup4/browser14共25项通过，复用未变化的world7项，合计32通过、0失败；三图globals/config均退出0，产品菜单导航分别104/104/110帧通过，无Game.dll。已核对夹具/元数据摘要后复用272次世界和2,925次枚举原件对照；未重复旧JASS、引擎或资产全量检查。三图完整main失败与UI/玩法总矩阵保留待实现，下一批W016从真实声音环境继续。证据为 `tmp/docs-artifacts/war3/world/batch-*`、`batch-w013-w015.json`，细节见 `testing-batches.md`、`world.md`。
 
 接续工作为实际main遇到的天气/声音/单位native、载入界面与地形/对象渲染，再连通AI与可玩流程。原版开局占槽/本地身份顺序、默认AI、完整调度、随机数、异常线程状态、句柄数值/重用与引用计数尚未完成。后台单次解析/编译尚无中途取消，阶段间丢弃旧请求，退出等待线程释放。未绑定的native带源位置失败，不返回默认值；原图main均未完整完成，不能将config或部分main成功当成对局可玩。来源与边界见 `jass.md`、`session.md`、`world.md`，原始证据在 `tmp/docs-artifacts/war3/`。
 
