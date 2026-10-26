@@ -8,7 +8,7 @@ bool hit(GlueScreen::Rect r,float x,float y) {return x>=r.x && y>=r.y && x<r.x+r
 bool click(GlueScreen::Rect r,const UiInput& i) {return i.pressed && hit(r,i.x,i.y) && hit(r,i.startX,i.startY);}
 bool within(const fs::path& root,const fs::path& path) {auto parent=root.wstring(),child=path.wstring();if(CompareStringOrdinal(parent.c_str(),-1,child.c_str(),-1,TRUE)==CSTR_EQUAL)return true;if(parent.back()!=L'\\')parent+=L'\\';return child.size()>=parent.size() && CompareStringOrdinal(parent.c_str(),int(parent.size()),child.c_str(),int(parent.size()),TRUE)==CSTR_EQUAL;}
 }
-MapBrowser::MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\Skirmish.fdf","Skirmish"),source_(archives),players_(screen_),renderer_(renderer),log_(log),preparation_(dataRoot),root_(fs::canonical(dataRoot/L"Maps")) {
+MapBrowser::MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred,bool muted) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\Skirmish.fdf","Skirmish"),source_(archives),players_(screen_),renderer_(renderer),log_(log),preparation_(dataRoot,muted),root_(fs::canonical(dataRoot/L"Maps")) {
     itemFont_=source_.fontHeight("MapListBoxItem",.013f);playersFont_=source_.fontHeight("MapListBoxMaxPlayers",.009f);
     screen_.visible("AdvancedOptionsPanel",false);
     screen_.attach("UI\\FrameDef\\Glue\\MapListBox.fdf","MapListBox","MapListContainer");

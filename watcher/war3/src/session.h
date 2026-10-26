@@ -3,6 +3,7 @@
 #include "jass_runtime.h"
 #include "map.h"
 #include "world.h"
+#include "sound.h"
 #include <variant>
 
 namespace war3 {
@@ -26,13 +27,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect};
+enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     struct Timer {jass::Real timeout,elapsed;bool running=false,periodic=false;};
     struct Trigger {bool enabled=true,waitOnSleeps=true;unsigned evaluations=0,executions=0;};
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -42,6 +43,8 @@ class ScriptSession {
     std::optional<unsigned> localPlayer_;
     std::unique_ptr<World> world_;
     bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false;
+    std::unique_ptr<SoundScene> audio_;
+    bool audioMuted_=false;
     jass::Value create(NativeKind kind);
     Object& object(jass::Value handle,NativeKind kind);
     SessionPlayer& player(jass::Value handle);
@@ -51,6 +54,8 @@ class ScriptSession {
     void bind(const char* name,const char* result,std::initializer_list<const char*> parameters,jass::Runtime::Native native);
     void bindNatives();
     void bindWorldNatives();
+    void bindSoundNatives();
+    SoundScene& requireAudio();
     World& requireWorld();
 public:
     ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings={},std::optional<unsigned> gameType={});
@@ -61,6 +66,8 @@ public:
     const World* world() const {return world_.get();}
     void startMain();
     bool mainCompleted() const {return mainCompleted_ && !failed_;}
+    void audioMuted(bool muted);
+    const SoundScene* audio() const {return audio_.get();}
     std::optional<unsigned> localPlayer() const {return localPlayer_;}
     bool configured() const {return configured_ && !failed_;}
     bool initialized() const {return runtime_.ready() && !failed_;}

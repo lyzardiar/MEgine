@@ -19,6 +19,7 @@ struct PreparedMap {
 class MapPreparation {
     struct Request {std::uint64_t id;fs::path path;};
     fs::path dataRoot_;
+    bool muted_=false;
     std::atomic<std::uint64_t> generation_=0;
     std::mutex mutex_;
     std::condition_variable wake_;
@@ -27,7 +28,7 @@ class MapPreparation {
     std::jthread worker_;
     void run(std::stop_token stop);
 public:
-    explicit MapPreparation(fs::path dataRoot);
+    explicit MapPreparation(fs::path dataRoot,bool muted=false);
     ~MapPreparation();
     std::uint64_t request(fs::path path);
     void clear();

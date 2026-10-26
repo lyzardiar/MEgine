@@ -2,7 +2,7 @@
 #include "map_preparation.h"
 
 namespace war3 {
-MapPreparation::MapPreparation(fs::path dataRoot) : dataRoot_(std::move(dataRoot)),worker_([this](std::stop_token stop){run(stop);}) {}
+MapPreparation::MapPreparation(fs::path dataRoot,bool muted) : dataRoot_(std::move(dataRoot)),muted_(muted),worker_([this](std::stop_token stop){run(stop);}) {}
 MapPreparation::~MapPreparation() {{std::lock_guard lock(mutex_);worker_.request_stop();}wake_.notify_one();}
 std::uint64_t MapPreparation::request(fs::path path) {
     std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,std::move(path)};ready_.reset();wake_.notify_one();return id;
@@ -20,7 +20,7 @@ void MapPreparation::run(std::stop_token stop) {
             auto w3i=archives->readCandidates({"war3map.w3i"},ArchiveScope::Map);if(!w3i)throw std::runtime_error("Missing war3map.w3i");result.info=MapInfo::parse(w3i->bytes,strings);
             if(!stale()){
                 auto module=jass::Module::compile(jass::Program::read(*archives));
-                if(!stale()){auto world=World::read(*archives);if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings));result.session->attachWorld(std::move(world));result.session->configure();}}
+                if(!stale()){auto world=World::read(*archives);if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings));result.session->attachWorld(std::move(world));result.session->audioMuted(muted_);result.session->configure();}}
             }
             if(!stale())try {
                 auto bytes=archives->readCandidates({"war3mapPreview.tga","war3mapMap.blp"},ArchiveScope::Map);

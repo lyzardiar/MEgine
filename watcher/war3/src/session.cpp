@@ -25,7 +25,7 @@ void ScriptSession::bind(const char* name,const char* result,std::initializer_li
 }
 jass::Value ScriptSession::create(NativeKind kind) {
     if(objects_.size()>=1048576)throw std::runtime_error("Session native object budget exceeded");Object object{kind};const char* type;
-    switch(kind){case NativeKind::Group:type="group";object.state=Group{};break;case NativeKind::Timer:type="timer";object.state=Timer{};break;case NativeKind::Trigger:type="trigger";object.state=Trigger{};break;case NativeKind::Location:type="location";object.state=WorldPoint{};break;case NativeKind::Rect:type="rect";object.state=WorldRect{};break;default:throw std::runtime_error("Player handles are stable session objects");}
+    switch(kind){case NativeKind::Group:type="group";object.state=Group{};break;case NativeKind::Timer:type="timer";object.state=Timer{};break;case NativeKind::Trigger:type="trigger";object.state=Trigger{};break;case NativeKind::Location:type="location";object.state=WorldPoint{};break;case NativeKind::Rect:type="rect";object.state=WorldRect{};break;case NativeKind::Sound:type="sound";object.state=std::shared_ptr<ScriptSound>{};break;default:throw std::runtime_error("Player handles are stable session objects");}
     auto id=handleBase+std::uint32_t(objects_.size());objects_.push_back(std::move(object));return runtime_.handle(type,id);
 }
 ScriptSession::Object& ScriptSession::object(jass::Value handle,NativeKind kind) {if(handle.bits<handleBase || handle.bits-handleBase>=objects_.size())throw std::runtime_error("Unknown session native handle");auto& value=objects_[handle.bits-handleBase];if(!value.alive || value.kind!=kind)throw std::runtime_error("Destroyed or incompatible session native handle");return value;}
@@ -51,6 +51,7 @@ void ScriptSession::attachWorld(std::unique_ptr<World> world) {if(!world || worl
 void ScriptSession::startMain() {if(!configured() || !world_ || !setupApplied_ || mainAttempted_)throw std::runtime_error("Map main requires a configured world and player setup");mainAttempted_=true;try{runtime_.invoke("main");mainCompleted_=true;}catch(...){failed_=true;throw;}}
 void ScriptSession::bindNatives() {
     bindWorldNatives();
+    bindSoundNatives();
     for(auto entry:enums)bind(entry.name,entry.type,{"integer"},[entry](auto& vm,auto args){return vm.handle(entry.type,args[0].bits);});
     bind("GetHandleId","integer",{"handle"},[](auto& vm,auto args){return vm.integer(integer(args[0]));});
     bind("Player","player",{"integer"},[this](auto& vm,auto args){return vm.handle("player",args[0].bits<16?handleBase+args[0].bits:0);});

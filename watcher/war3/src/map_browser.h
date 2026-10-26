@@ -33,7 +33,7 @@ class MapBrowser {
     void infoLayout();
     const MapHeader* header(const fs::path& path);
 public:
-    MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred);
+    MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred,bool muted=false);
     std::string draw(const UiInput& input);
     const MapInfo* info() const {return info_?&*info_:nullptr;}
     const PlayerSetup* setup() const {return setup_.get();}
