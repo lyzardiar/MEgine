@@ -10,7 +10,17 @@
 
 公共初始化需要的 Group、Timer、Trigger 拥有实际类型与状态，创建、查询、标志修改、销毁作用于对象表。销毁后释放该对象的容器/状态，旧引用再次访问时报告脚本位置；GetHandleId 原样返回句柄位型。对象表由会话释放，无跨地图全局表。TimerStart、触发器动作/事件执行、单位枚举等尚未接入的 native 保持未绑定错误。
 
-默认游戏类型由 W3I 的 melee 标志选择 MELEE(1) 或 USE_MAP_SETTINGS(4)，后续可由调用方提供选项；GetGameTypeSelected 按原件去掉数值8的标志位（掩码 `~8`）。菜单玩家草稿、占槽、本地玩家、AI 和这些默认值与原版创建对局顺序仍待集成/对照，当前16槽初始为空闲；配置成功不表示已经开始对局。
+默认游戏类型由 W3I 的 melee 标志选择 MELEE(1) 或 USE_MAP_SETTINGS(4)，后续可由调用方提供选项；GetGameTypeSelected 按原件去掉数值8的标志位（掩码 `~8`）。16槽在配置前初始为空闲；选图完成后应用玩家草稿，配置成功不表示已经开始对局。
+
+## 选图与玩家草稿
+
+`MapPreparation` 的单个工作线程独立持有公共归档和解码器，直接读地图成员，执行全局初始化/config 后转交 `unique_ptr<ScriptSession>`，会话地址保持不变。公共成员缓存跨选择复用，每个任务结束卸载地图归档/成员缓存。GPU纹理和FDF更新在界面线程进行。待处理请求只保留最新一个，过期结果丢弃；进入目录、切图或失败会立即清空旧预览、草稿及会话。正在执行的单次解析/编译不能中途打断，阶段间检查过期和停止请求，退出时等待该线程释放；未引入无界后台线程。
+
+玩家槽消费配置后的控制类型、队伍、颜色、种族位型和可选标志，保留稀疏源ID/出生点/势力名称。配置内的队伍数量不替代W3I势力标题。不能用单一种族表示的偏好位组合保留原值，用户选择新种族时才改写。界面种族选项仍为原有五项，组合偏好显示随机。
+
+`applySetup()` 将草稿写回同一个会话：本地玩家/AI占用槽，开放槽为空闲用户控制，关闭槽为空闲且控制类型NONE；AI保存0/1/2难度，障碍值由原数值层转换为Real。出生点、联盟与其余脚本状态保留。配置或修改失败不提交部分状态；同图重选保留编辑。GetLocalPlayer/GetAIDifficulty/GetPlayerHandicap查询当前会话；尚未选择本地玩家时GetLocalPlayer显式报告阶段错误。原版在config前建立本地身份的顺序、空/关闭槽和默认AI策略仍需对照，当前不宣称完整开局一致性。
+
+固定原件注册记录中三个查询入口为 `0x6f1e3150`、`0x6f1e1500`、`0x6f1e3ce0`；REA确认后两者读取玩家字段 `+0x26c`、`+0x29c`，本地玩家入口依赖游戏状态。来源保留在 `tmp/docs-artifacts/war3/jass/setup-player-natives-rea.json`，客户端使用自有状态，不调用原件地址。该检查不证明默认字段与整个生命周期一致。
 
 ## 原版来源与验证边界
 
@@ -32,6 +42,6 @@ Game.dll SHA-256：`e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d
 python watcher/war3/tools/verify_jass_enums_cpu.py
 ```
 
-DotA_v6.83d 产品最小集成退出0，无 Game.dll：10名额、10队伍记录、类型4、放置3；ID 1–5 属队伍0，7–11 属队伍1；出生点0–9，前组种族偏好4、后组8。全局初始化保留3个Group、4个Timer、1个Trigger。这些是脚本配置结果，内部队伍数量与界面势力分组分别由对应源记录消费；完整选图/玩家草稿/会话联动待下一批。
+DotA_v6.83d 产品最小集成退出0，无 Game.dll：10名额、10队伍记录、类型4、放置3；ID 1–5 属队伍0，7–11 属队伍1；出生点0–9，前组种族偏好4、后组8。全局初始化保留3个Group、4个Timer、1个Trigger。这些是脚本配置结果，内部队伍数量与界面势力分组分别由对应源记录消费。W014已接入选图和草稿会话，4项CPU/3项D3D9定向检查通过；DotA产品导航110帧通过、无Game.dll，main仍未执行。三图合并和原版开局时序继续待验证。
 
-证据统一在 `tmp/docs-artifacts/war3/jass/`：`session-{build.log,tests-build.log,tests.log,dota.log,enums-native.json,enums-cpu.json,enums-cpu.log,registration-rea.json,enum-conversion-rea.json,handles-rea.json,lookup-rea.json,native-catalog.json,receipt.json}`。原始数据不提交。W013 为新批次1/3，另外两张代表地图、错误恢复、创建游戏与切图释放等在 W013–W015 合并验证。
+证据统一在 `tmp/docs-artifacts/war3/jass/`：`session-{build.log,tests-build.log,tests.log,dota.log,enums-native.json,enums-cpu.json,enums-cpu.log,registration-rea.json,enum-conversion-rea.json,handles-rea.json,lookup-rea.json,native-catalog.json,receipt.json}` 及 `setup-{build.log,tests.log,player-natives-rea.json}`；界面检查见 `map-menu/setup-{browser-tests.log,browser-tests/,dota*}`。原始数据不提交。W013–W014为新批次2/3，三图合并、创建游戏与持续切图释放等在W015后验证。

@@ -1,5 +1,6 @@
 // Author: MiYu. Real map global initialization and configuration through typed native state.
 #include "session.h"
+#include "setup.h"
 #include <algorithm>
 #include <bit>
 
@@ -35,11 +36,24 @@ void ScriptSession::destroy(jass::Value handle,NativeKind kind) {if(!handle.bits
 size_t ScriptSession::liveObjects(NativeKind kind) const {return std::count_if(objects_.begin(),objects_.end(),[&](auto& value){return value.alive && value.kind==kind;});}
 void ScriptSession::initialize() {if(failed_ || runtime_.ready())throw std::runtime_error("Session initialization requires a fresh instance");try{runtime_.initialize();}catch(...){failed_=true;throw;}}
 void ScriptSession::configure() {if(failed_ || configured_)throw std::runtime_error("Session configuration requires an unconfigured instance");try{if(!runtime_.ready())initialize();runtime_.invoke("config");configured_=true;}catch(...){failed_=true;throw;}}
+void ScriptSession::applySetup(const PlayerSetup& setup) {
+    if(!configured())throw std::runtime_error("Player setup requires a configured session");auto next=config_;std::optional<unsigned> local;unsigned seen=0;
+    for(auto& slot:setup.slots()){
+        auto id=checked(unsigned(slot.source.id),16,"Setup player");if(seen&(1u<<id))throw std::runtime_error("Duplicate setup player");seen|=1u<<id;
+        auto& player=next.players[id];player.team=checked(slot.team,16,"Setup team");player.color=checked(slot.color,16,"Setup color");player.racePreference=slot.racePreference;
+        if(slot.handicap<50 || slot.handicap>100 || slot.handicap%10)throw std::runtime_error("Invalid setup handicap");player.handicap=jass::Real::fromInteger(int(slot.handicap)).divide(jass::Real::fromInteger(100));player.slotState=slot.active()?1:0;
+        switch(slot.control){case SlotControl::Open:player.controller=0;break;case SlotControl::Closed:player.controller=5;break;case SlotControl::Local:if(local)throw std::runtime_error("Multiple local setup players");local=id;player.controller=0;break;case SlotControl::ComputerEasy:player.controller=1;player.difficulty=0;break;case SlotControl::ComputerNormal:player.controller=1;player.difficulty=1;break;case SlotControl::ComputerInsane:player.controller=1;player.difficulty=2;break;default:throw std::runtime_error("Invalid setup control");}
+    }
+    config_=std::move(next);localPlayer_=local;
+}
 void ScriptSession::bindNatives() {
     for(auto entry:enums)bind(entry.name,entry.type,{"integer"},[entry](auto& vm,auto args){return vm.handle(entry.type,args[0].bits);});
     bind("GetHandleId","integer",{"handle"},[](auto& vm,auto args){return vm.integer(integer(args[0]));});
     bind("Player","player",{"integer"},[this](auto& vm,auto args){return vm.handle("player",args[0].bits<16?handleBase+args[0].bits:0);});
     bind("GetPlayerId","integer",{"player"},[this](auto& vm,auto args){return vm.integer(args[0].bits?int(playerId(args[0])):0);});
+    bind("GetLocalPlayer","player",{},[this](auto& vm,auto){if(!localPlayer_)throw std::runtime_error("Local player is unavailable before setup");return vm.handle("player",handleBase+*localPlayer_);});
+    bind("GetAIDifficulty","aidifficulty",{"player"},[this](auto& vm,auto args){return vm.handle("aidifficulty",player(args[0]).difficulty);});
+    bind("GetPlayerHandicap","real",{"player"},[this](auto& vm,auto args){return vm.real(player(args[0]).handicap);});
     bind("CreateGroup","group",{},[this](auto&,auto){return create(NativeKind::Group);});
     bind("DestroyGroup","nothing",{"group"},[this](auto& vm,auto args){destroy(args[0],NativeKind::Group);return vm.nothing();});
     bind("GroupClear","nothing",{"group"},[this](auto& vm,auto args){std::get<Group>(object(args[0],NativeKind::Group).state).units.clear();return vm.nothing();});

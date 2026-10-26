@@ -4,6 +4,7 @@
 #include "map.h"
 #include "map_ui.h"
 #include "player_setup_ui.h"
+#include "map_preparation.h"
 
 namespace war3 {
 class MapBrowser {
@@ -11,9 +12,10 @@ class MapBrowser {
     MapUiData source_;
     PlayerSetupUi players_;
     std::unique_ptr<PlayerSetup> setup_;
+    std::unique_ptr<ScriptSession> session_;
     Renderer& renderer_;
-    Images& images_;
     Log& log_;
+    MapPreparation preparation_;
     fs::path root_,directory_;
     std::vector<MapEntry> entries_;
     std::map<fs::path,std::optional<MapHeader>> headers_;
@@ -22,6 +24,10 @@ class MapBrowser {
     size_t selected_=0,scroll_=0;
     unsigned rows_=1;
     float itemFont_=0,playersFont_=0;
+    std::uint64_t request_=0;
+    bool loading_=false;
+    void clearSelection();
+    void prepared();
     void enter(const fs::path& path,const fs::path& preferred={});
     void select(size_t index);
     void infoLayout();
@@ -31,6 +37,8 @@ public:
     std::string draw(const UiInput& input);
     const MapInfo* info() const {return info_?&*info_:nullptr;}
     const PlayerSetup* setup() const {return setup_.get();}
+    const ScriptSession* session() const {return session_.get();}
+    bool loading() const {return loading_;}
     const std::string& focus() const {return screen_.focus();}
     bool popupOpen() const {return screen_.popupOpen();}
     fs::path selectedMap() const;

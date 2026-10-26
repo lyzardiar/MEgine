@@ -24,7 +24,7 @@ public:
     void bind(PlayerSetup* setup);
     const std::set<std::string>& enabled() const {return enabled_;}
     void input(const UiInput& input);
-    void changed();
+    bool changed();
     void headings();
 };
 }

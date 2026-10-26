@@ -89,7 +89,7 @@ int run(HINSTANCE instance) {
     unsigned frames = 0;
     bool running = true;
     auto started = GetTickCount64();
-    unsigned windowStage=0,menuStage=0,menuTabs=0;
+    unsigned windowStage=0,menuStage=0,menuTabs=0,menuReadyFrame=0;
     while (running) {
         MSG message{};
         while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) { if (message.message == WM_QUIT) running = false; TranslateMessage(&message); DispatchMessageW(&message); }
@@ -109,11 +109,11 @@ int run(HINSTANCE instance) {
         if(options.menuCheck) {
             if(frames==10)PostMessageW(window,WM_KEYDOWN,VK_RETURN,0);
             if(frames==25)PostMessageW(window,WM_KEYDOWN,VK_SPACE,0);
-            if(frames==40){if(screen!=Screen::Maps || !browser || !browser->info() || !browser->setup() || !fs::equivalent(browser->selectedMap(),options.map))throw std::runtime_error("Menu selection check failed");auto& players=browser->info()->players;auto first=std::find_if(players.begin(),players.end(),[](auto& p){return p.type==1;});if(first==players.end() || browser->setup()->localPlayer()!=unsigned(first->id))throw std::runtime_error("Menu local player source ID differs");log.write("menu_check=selected "+utf8(browser->selectedMap().wstring())+" local="+std::to_string(first->id));}
-            if(frames==42){auto [x,y]=browser->selectedCenter();float scale=std::min(renderer.width()/.8f,renderer.height()/.6f);auto pos=MAKELPARAM(int((renderer.width()-.8f*scale)/2+x*scale),int((renderer.height()-.6f*scale)/2+y*scale));SendMessageW(window,WM_MOUSEMOVE,0,pos);SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,pos);SendMessageW(window,WM_LBUTTONUP,0,pos);}
-            if(frames==45)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,-WHEEL_DELTA),0);
-            if(frames==46)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,WHEEL_DELTA),0);
-            if(frames>=52 && frames%2==0){auto key=[&](unsigned value){PostMessageW(window,WM_KEYDOWN,value,0);};switch(menuStage){
+            if(frames>=40 && !menuReadyFrame){if(screen!=Screen::Maps || !browser || !browser->error().empty())throw std::runtime_error("Menu selection check failed");if(GetTickCount64()-started>30000)throw std::runtime_error("Menu configuration check timed out");if(!browser->loading()){if(!browser->info() || !browser->setup() || !browser->session() || !browser->session()->configured() || !fs::equivalent(browser->selectedMap(),options.map))throw std::runtime_error("Menu configured selection unavailable");auto local=browser->setup()->localPlayer();if(!local || browser->session()->localPlayer()!=local)throw std::runtime_error("Menu local player session differs");menuReadyFrame=frames;log.write("menu_check=selected "+utf8(browser->selectedMap().wstring())+" local="+std::to_string(*local)+" config=true");}}
+            if(menuReadyFrame && frames==menuReadyFrame+2){auto [x,y]=browser->selectedCenter();float scale=std::min(renderer.width()/.8f,renderer.height()/.6f);auto pos=MAKELPARAM(int((renderer.width()-.8f*scale)/2+x*scale),int((renderer.height()-.6f*scale)/2+y*scale));SendMessageW(window,WM_MOUSEMOVE,0,pos);SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,pos);SendMessageW(window,WM_LBUTTONUP,0,pos);}
+            if(menuReadyFrame && frames==menuReadyFrame+5)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,-WHEEL_DELTA),0);
+            if(menuReadyFrame && frames==menuReadyFrame+6)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,WHEEL_DELTA),0);
+            if(menuReadyFrame && frames>=menuReadyFrame+12 && frames%2==0){auto key=[&](unsigned value){PostMessageW(window,WM_KEYDOWN,value,0);};switch(menuStage){
                 case 0:if(screen!=Screen::Maps || browser->focus()!="MapListBox")throw std::runtime_error("Map row click did not focus list");key(VK_RETURN);++menuStage;break;
                 case 1:{if(screen!=Screen::Maps || (browser->focus()!="MapListBox" && menuTabs==0))throw std::runtime_error("Map list Enter activated an unrelated control");auto id=browser->setup()->localPlayer();if(!id)throw std::runtime_error("Missing local setup player");auto target="player-"+std::to_string(*id)+"/HandicapMenu";if(browser->focus()!=target){if(++menuTabs>128)throw std::runtime_error("Tab did not reach local handicap");key(VK_TAB);}else{key(VK_RETURN);++menuStage;menuTabs=0;}break;}
                 case 2:if(!browser->popupOpen())throw std::runtime_error("Handicap popup did not open");key(VK_DOWN);++menuStage;break;
@@ -149,7 +149,7 @@ int run(HINSTANCE instance) {
         state.key = 0;
         state.doubleClick=false;state.wheel%=WHEEL_DELTA;
         auto capture=options.frames && (frames+1==options.frames || !running)?options.capture:fs::path{};
-        if(options.menuCheck && !options.capture.empty() && (frames==20 || frames==50)){capture=options.capture;capture.replace_filename(capture.stem().wstring()+(frames==20?L"-single":L"-browser")+L".png");}
+        if(options.menuCheck && !options.capture.empty() && (frames==20 || (menuReadyFrame && frames==menuReadyFrame+10))){capture=options.capture;capture.replace_filename(capture.stem().wstring()+(frames==20?L"-single":L"-browser")+L".png");}
         if(options.menuCheck && !options.capture.empty() && menuStage==3 && frames%2==0){capture=options.capture;capture.replace_filename(capture.stem().wstring()+L"-popup.png");}
         if (renderer.end(capture)) ++frames;
         if (options.frames && frames >= options.frames) break;

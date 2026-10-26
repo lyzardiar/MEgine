@@ -8,7 +8,7 @@ bool hit(GlueScreen::Rect r,float x,float y) {return x>=r.x && y>=r.y && x<r.x+r
 bool click(GlueScreen::Rect r,const UiInput& i) {return i.pressed && hit(r,i.x,i.y) && hit(r,i.startX,i.startY);}
 bool within(const fs::path& root,const fs::path& path) {auto parent=root.wstring(),child=path.wstring();if(CompareStringOrdinal(parent.c_str(),-1,child.c_str(),-1,TRUE)==CSTR_EQUAL)return true;if(parent.back()!=L'\\')parent+=L'\\';return child.size()>=parent.size() && CompareStringOrdinal(parent.c_str(),int(parent.size()),child.c_str(),int(parent.size()),TRUE)==CSTR_EQUAL;}
 }
-MapBrowser::MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\Skirmish.fdf","Skirmish"),source_(archives),players_(screen_),renderer_(renderer),images_(images),log_(log),root_(fs::canonical(dataRoot/L"Maps")) {
+MapBrowser::MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\Skirmish.fdf","Skirmish"),source_(archives),players_(screen_),renderer_(renderer),log_(log),preparation_(dataRoot),root_(fs::canonical(dataRoot/L"Maps")) {
     itemFont_=source_.fontHeight("MapListBoxItem",.013f);playersFont_=source_.fontHeight("MapListBoxMaxPlayers",.009f);
     screen_.visible("AdvancedOptionsPanel",false);
     screen_.attach("UI\\FrameDef\\Glue\\MapListBox.fdf","MapListBox","MapListContainer");
@@ -24,24 +24,32 @@ void MapBrowser::infoLayout() {
     screen_.anchor("MaxPlayersIcon","TOPLEFT","MapInfoPane","TOP",-mapInfoTitleOffset(width,icon.w,auth.w,false),-.002f);screen_.visible("AuthIcon",false);
 }
 void MapBrowser::enter(const fs::path& path,const fs::path& preferred) {
-    try {auto directory=fs::canonical(path);auto entries=mapDirectory(directory);if(directory!=root_)entries.insert(entries.begin(),{directory.parent_path(),true});directory_=std::move(directory);entries_=std::move(entries);headers_.clear();selected_=scroll_=0;info_.reset();players_.bind(nullptr);setup_.reset();error_.clear();screen_.visible("MapInfoPane",false);screen_.image("MinimapImage",nullptr);
+    clearSelection();try {auto directory=fs::canonical(path);auto entries=mapDirectory(directory);if(directory!=root_)entries.insert(entries.begin(),{directory.parent_path(),true});directory_=std::move(directory);entries_=std::move(entries);headers_.clear();selected_=scroll_=0;
         if(!preferred.empty()){auto found=std::find_if(entries_.begin(),entries_.end(),[&](auto& e){return !e.directory && CompareStringOrdinal(e.path.c_str(),-1,preferred.c_str(),-1,TRUE)==CSTR_EQUAL;});if(found!=entries_.end())select(size_t(found-entries_.begin()));}
         log_.write("map_directory="+utf8(directory_.wstring())+" entries="+std::to_string(entries_.size()));
     }catch(const std::exception& e){error_="无法打开地图文件夹。";log_.write(std::string("map_directory_error=")+e.what());}
 }
+void MapBrowser::clearSelection() {preparation_.clear();loading_=false;info_.reset();players_.bind(nullptr);setup_.reset();session_.reset();error_.clear();screen_.visible("MapInfoPane",false);screen_.image("MinimapImage",nullptr);}
 void MapBrowser::select(size_t index) {
-    if(index>=entries_.size() || (index==selected_ && info_ && error_.empty()))return;selected_=index;if(index<scroll_)scroll_=index;if(index>=scroll_+rows_)scroll_=index-rows_+1;info_.reset();players_.bind(nullptr);setup_.reset();error_.clear();screen_.visible("MapInfoPane",false);screen_.image("MinimapImage",nullptr);if(entries_[index].directory)return;
-    try {Archive archive(entries_[index].path);auto w3i=archive.read("war3map.w3i");if(!w3i)throw std::runtime_error("Missing war3map.w3i");MapStrings strings;if(auto wts=archive.read("war3map.wts"))strings=mapStrings(*wts);auto info=MapInfo::parse(*w3i,strings);
+    if(index>=entries_.size() || (index==selected_ && (loading_ || (info_ && error_.empty()))))return;selected_=index;if(index<scroll_)scroll_=index;if(index>=scroll_+rows_)scroll_=index-rows_+1;clearSelection();if(entries_[index].directory)return;
+    request_=preparation_.request(entries_[index].path);loading_=true;log_.write("map_preparation_requested="+utf8(entries_[index].path.wstring()));
+}
+void MapBrowser::prepared() {
+    auto result=preparation_.poll();if(!result || result->request!=request_ || !loading_)return;loading_=false;
+    try {
+        if(!result->error.empty())throw std::runtime_error(result->error);if(!result->session || !result->session->configured())throw std::runtime_error("Map configuration did not complete");auto& info=result->info;auto setup=std::make_unique<PlayerSetup>(info,result->session->config());result->session->applySetup(*setup);
         screen_.image("MinimapImage","UI\\Widgets\\Glues\\Minimap-Unknown.blp");
-        try {auto bytes=archive.read("war3mapPreview.tga");if(!bytes)bytes=archive.read("war3mapMap.blp");if(bytes){auto image=images_.decode(*bytes);auto gpu=renderer_.texture(image.width,image.height,image.pixels);screen_.image("MinimapImage",gpu.Get());}}catch(const std::exception& e){log_.write(std::string("map_preview_unavailable=")+e.what());}
+        if(!result->previewError.empty())log_.write("map_preview_unavailable="+result->previewError);
+        try {if(result->preview){auto& image=*result->preview;auto gpu=renderer_.texture(image.width,image.height,image.pixels);screen_.image("MinimapImage",gpu.Get());}}catch(const std::exception& e){log_.write(std::string("map_preview_unavailable=")+e.what());}
         screen_.setText("MapNameValue",info.name);screen_.setText("MaxPlayersValue",std::to_string(info.humanPlayers()));screen_.setText("SuggestedPlayersValue",info.recommendedPlayers);screen_.setText("MapSizeValue",source_.sizeName(info));screen_.setText("MapTilesetValue",source_.tilesetName(info.tileset));screen_.setText("MapDescValue",info.description);screen_.image("MaxPlayersIcon",info.flags&4?"UI\\Widgets\\Glues\\icon-file-melee.blp":"UI\\Widgets\\Glues\\icon-file-ums.blp");
-        info_=std::move(info);infoLayout();setup_=std::make_unique<PlayerSetup>(*info_);players_.bind(setup_.get());screen_.visible("MapInfoPane",true);log_.write("map_selected="+utf8(entries_[index].path.wstring())+" name="+info_->name+" players="+std::to_string(info_->humanPlayers()));
-    }catch(const std::exception& e){info_.reset();players_.bind(nullptr);setup_.reset();screen_.visible("MapInfoPane",false);screen_.image("MinimapImage",nullptr);error_="无法读取所选地图。请选择其他地图。";log_.write("map_selection_error="+utf8(entries_[index].path.wstring())+": "+e.what());}
+        info_=std::move(info);infoLayout();setup_=std::move(setup);session_=std::move(result->session);players_.bind(setup_.get());screen_.visible("MapInfoPane",true);log_.write("map_selected="+utf8(result->path.wstring())+" name="+info_->name+" players="+std::to_string(info_->humanPlayers())+" config=true main=false");
+    }catch(const std::exception& e){clearSelection();error_="无法读取或配置所选地图。请选择其他地图。";log_.write("map_selection_error="+utf8(result->path.wstring())+": "+e.what());}
 }
 fs::path MapBrowser::selectedMap() const {return info_ && selected_<entries_.size()?entries_[selected_].path:fs::path{};}
 const MapHeader* MapBrowser::header(const fs::path& path) {auto found=headers_.find(path);if(found==headers_.end()){std::optional<MapHeader> h;try{h=MapHeader::read(path);}catch(const std::exception& e){log_.write("map_header_unavailable="+utf8(path.wstring())+": "+e.what());}found=headers_.emplace(path,std::move(h)).first;}return found->second?&*found->second:nullptr;}
 std::pair<float,float> MapBrowser::selectedCenter() const {auto r=screen_.bounds("MapListContainer");return {r.x+r.w/2,r.y+.004f+(float(selected_)-float(scroll_)+.5f)*.01875f};}
 std::string MapBrowser::draw(const UiInput& input) {
+    prepared();
     auto r=screen_.bounds("MapListContainer");constexpr float step=.01875f;rows_=std::max(1u,unsigned((r.h-.008f)/step));auto maximum=entries_.size()>rows_?entries_.size()-rows_:0;
     if(scroll_>maximum)scroll_=maximum;
     auto choose=[&](size_t n){if(n>=entries_.size())return;select(n);if(selected_<scroll_)scroll_=selected_;if(selected_>=scroll_+rows_)scroll_=selected_-rows_+1;};
@@ -56,7 +64,7 @@ std::string MapBrowser::draw(const UiInput& input) {
         if(click(up,input) && scroll_)--scroll_;if(click(down,input) && scroll_<maximum)++scroll_;
         auto trough=GlueScreen::Rect{track.x,track.y+.015f,track.w,track.h-.03f};if(maximum && input.down && hit(trough,input.startX,input.startY))scroll_=size_t(std::clamp((input.y-trough.y-.005f)/travel,0.f,1.f)*float(maximum)+.5f);
     }
-    auto enabled=players_.enabled();enabled.insert("MapListBox");enabled.insert("CancelButton");auto action=screen_.draw("Skirmish",controls,enabled,true);players_.changed();
+    auto enabled=players_.enabled();enabled.insert("MapListBox");enabled.insert("CancelButton");auto action=screen_.draw("Skirmish",controls,enabled,true);if(players_.changed())session_->applySetup(*setup_);
     screen_.backdropAt("MapListBoxBackdrop",r);
     float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;
     auto quad=[&](GlueScreen::Rect area,DWORD color){renderer_.rect(left+area.x*scale,top+area.y*scale,area.w*scale,area.h*scale,color);};
@@ -69,6 +77,7 @@ std::string MapBrowser::draw(const UiInput& input) {
     auto thumb=GlueScreen::Rect{track.x+.00325f,track.y+.015f+(maximum?float(scroll_)/float(maximum)*travel:0),.01f,.01f};screen_.backdropAt("StandardThumbButtonBackdrop",thumb);
     auto title=directory_.lexically_relative(root_).wstring();if(title==L".")title=root_.filename().wstring();screen_.textAt("StandardSmallTextTemplate",utf8(title),{r.x,r.y+r.h+.004f,r.w,.016f},true,false,true);
     if(!error_.empty())screen_.textAt("StandardValueTextTemplate",error_,{.02f,.185f,.45f,.06f},true,false,true);
+    if(loading_)screen_.textAt("StandardValueTextTemplate","正在读取地图配置…",{.02f,.185f,.45f,.06f},true,false,true);
     players_.headings();screen_.overlay();return action=="CancelButton" || (input.key==VK_ESCAPE && !screen_.inputConsumed())?"CancelButton":std::string{};
 }
 }

@@ -5,11 +5,14 @@
 #include <variant>
 
 namespace war3 {
+class PlayerSetup;
 struct StartPriority {unsigned other=0,priority=0;};
 struct SessionStart {bool defined=false;std::array<jass::Real,2> position{};std::vector<StartPriority> priorities;};
 struct SessionPlayer {
     std::string name;
     unsigned team=0,color=0,controller=5,racePreference=0,slotState=0;
+    unsigned difficulty=1;
+    jass::Real handicap=jass::Real::fromBits(0x3f800000);
     int start=-1;
     bool raceSelectable=true,forcedStart=false,onScoreScreen=true;
     std::array<unsigned,16> alliances{};
@@ -35,6 +38,7 @@ class ScriptSession {
     std::vector<Object> objects_;
     jass::Runtime runtime_;
     bool failed_=false,configured_=false;
+    std::optional<unsigned> localPlayer_;
     jass::Value create(NativeKind kind);
     Object& object(jass::Value handle,NativeKind kind);
     SessionPlayer& player(jass::Value handle);
@@ -47,6 +51,8 @@ public:
     ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings={},std::optional<unsigned> gameType={});
     void initialize();
     void configure();
+    void applySetup(const PlayerSetup& setup);
+    std::optional<unsigned> localPlayer() const {return localPlayer_;}
     bool configured() const {return configured_ && !failed_;}
     bool initialized() const {return runtime_.ready() && !failed_;}
     const SessionConfig& config() const {return config_;}
