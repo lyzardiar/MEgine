@@ -26,4 +26,4 @@ cmake --build --preset release --target war3 war3_sound_tests --parallel 8
 ./build/windows-x86/bin/Release/war3_sound_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "G:/work/github/MEgine/tmp/docs-artifacts/war3/audio/sound-tests"
 ```
 
-证据为 `tmp/docs-artifacts/war3/audio/sound-{build.log,tests.log,tests/,main-bootybay.log,main-dota.log,*-rea.json}`。原件摘要/库边界见 `audio.md` 与固定profile。W018为本批第3项，实现提交后合并验证资源、Miles、sound及受影响的选图链路；原图完整main失败项保持实现队列。
+证据为 `tmp/docs-artifacts/war3/audio/sound-{build.log,tests.log,tests/,main-bootybay.log,main-dota.log,*-rea.json}`。原件摘要/库边界见 `audio.md` 与固定profile。W016–W018在 `6557119` 合并验证资源/Miles/界面28项并复用sound6项，已实现范围34通过、0失败；三图配置/菜单通过，完整main失败保留实现队列，见 `batch-w016-w018.json` 和测试队列。

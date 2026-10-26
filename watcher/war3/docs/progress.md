@@ -48,11 +48,13 @@ W015 `a07fcab`建立World，选图/配置在globals前挂接W3E/WPM；21个空�
 
 W013–W015在 `a07fcab` 合并验证已实现范围：本次session7/setup4/browser14共25项通过，复用未变化的world7项，合计32通过、0失败；三图globals/config均退出0，产品菜单导航分别104/104/110帧通过，无Game.dll。已核对夹具/元数据摘要后复用272次世界和2,925次枚举原件对照；未重复旧JASS、引擎或资产全量检查。三图完整main失败与UI/玩法总矩阵保留待实现，下一批W016从真实声音环境继续。证据为 `tmp/docs-artifacts/war3/world/batch-*`、`batch-w013-w015.json`，细节见 `testing-batches.md`、`world.md`。
 
-W016新增共享归档视图：同根公共句柄/64MiB缓存共享并加锁，fork共享地图挂载/16MiB缓存而独立切图；World保留资源视图供加载后继续读成员，最后地图视图释放缓存。7项归档定向检查和DotA产品108帧导航通过，无Game.dll。新批次1/3，未重跑旧全量检查；声音/模型消费与持续切图仍待合并验证，见 `archives.md`，证据为 `audio/archive-*`。
+W016 `98197bd`新增共享归档视图：同根公共句柄/64MiB缓存共享并加锁，fork共享地图挂载/16MiB缓存而独立切图；World保留资源视图供加载后继续读成员，最后地图视图释放缓存。7项归档检查和声音消费已在W016–W018合并通过；模型消费与持续切图性能仍待验证，见 `archives.md`。
 
-W017建立共享Miles设备、WAV/MP3与标准MIDI转XMIDI/DLS后端；菜单音乐也使用共享设备，声音/音色库/转换缓冲保留正确源字节寿命。7项真实Miles定向检查通过，包括原MIDI/DLS双sequence共享库、状态/时间推进、暂停/恢复/定位/结束和并发重开；产品带音乐菜单60帧通过、无Game.dll。当前批次2/3，测试用零音量，听感/3D环境效果待验收。声音native尚未绑定，完整main仍停在天气/声音环境。边界与源调用见 `audio.md`，证据为 `audio/miles-*`。
+W017 `a3bc2f7`建立共享Miles设备、WAV/MP3与标准MIDI转XMIDI/DLS后端；菜单音乐也使用共享设备，声音/音色库/转换缓冲保留正确源字节寿命。7项真实Miles检查在本批合并通过；产品带音乐菜单60帧有效，测试用零音量，听感/3D环境效果待验收。边界与源调用见 `audio.md`，证据为 `audio/miles-*`。
 
-W018接入SYLK常量表、原MIDI/环境定义及10个sound native，声音持有实际Miles资源，支持零渐变率播放控制、查询、通道抢占及退役/独立播放寿命；`--mute`在globals/config前传入。6项定向检查通过。BootyBay/DotA真实main已登记Default环境并创建1个MIDI/DLS声音，随后均在 `Scripts\Blizzard.j:1224:12` GetFloatGameState失败，无Game.dll、main未完成。非零渐变显式报错，环境3D效果未应用。当前3/3，提交后合并验证；边界见 `script-sound.md`，证据为 `audio/sound-*`。
+W018 `6557119`接入SYLK常量表、原MIDI/环境定义及10个sound native，持有实际Miles资源，支持零渐变率播放控制、查询、通道抢占及退役/独立播放寿命；`--mute`在globals/config前传入。6项定向检查通过。BootyBay/DotA真实main已登记Default环境并创建1个MIDI/DLS声音，随后均在 `Scripts\Blizzard.j:1224:12` GetFloatGameState失败，无Game.dll、main未完成。非零渐变显式报错，环境3D效果未应用；边界见 `script-sound.md`。
+
+W016–W018在 `6557119` 合并验证已实现范围：本次归档7/Miles7/browser14共28项通过，复用同一sound二进制/输入的6项，共34通过、0失败；三图globals/config及菜单导航104/104/108帧通过，无Game.dll。三图完整main均未通过：Amazonia停在天气，BootyBay/DotA停在时间状态。未重复旧脚本、数值、图像、旧引擎或全资产测试。证据为 `audio/batch-*` 和 `batch-w016-w018.json`，完整main及UI/玩法/性能总矩阵继续待实现/验收。
 
 接续为GameState时间变量、声音渐变/环境效果、Music及天气/单位native。已查得时间状态2的引用/求值路径 `0x6f2676d0`/`0x6f03adf0`，初值/推进尚未核对；保持未绑定，不填推测初值。SetAmbientDaySound/SetAmbientNightSound继续沿用Blizzard.j。后续载入界面、地形/对象渲染、AI与可玩流程、开局时序/随机数/调度和句柄一致性均未完成。来源见 `audio.md`、`script-sound.md`，原始证据在 `tmp/docs-artifacts/war3/audio/`。
 
