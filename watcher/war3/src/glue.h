@@ -54,6 +54,7 @@ public:
     void focus(const std::string& name);
     const std::string& focus() const {return focused_;}
     bool popupOpen() const {return popup_.has_value();}
+    std::optional<Rect> popupBounds() {return popup_?std::optional<Rect>{menuBounds(*popup_)}:std::nullopt;}
     bool inputConsumed() const {return consumed_;}
     std::optional<ChoiceChange> takeChoice();
     void choices(const std::string& name,std::vector<Choice> values,size_t selected,float width=0,bool label=true);
@@ -67,6 +68,7 @@ public:
     void setText(const std::string& name,const std::string& text);
     void image(const std::string& name,const std::string& member);
     void image(const std::string& name,IDirect3DTexture9* texture);
+    IDirect3DTexture9* image(const std::string& name) const {return nodes_.at(names_.at(name)).image.Get();}
     void backdropAt(const std::string& frame,Rect rect);
     void imageAt(const std::string& member,Rect rect);
     void textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled=true,bool highlight=false,bool left=false,float fontHeight=0);

@@ -36,5 +36,9 @@ public:
     fs::path selectedMap() const;
     std::pair<float,float> selectedCenter() const;
     const std::string& error() const {return error_;}
+    const fs::path& directory() const {return directory_;}
+    const std::vector<MapEntry>& entries() const {return entries_;}
+    GlueScreen::Rect bounds(const std::string& name) const {return screen_.bounds(name);}
+    IDirect3DTexture9* preview() const {return screen_.image("MinimapImage");}
 };
 }
