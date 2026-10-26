@@ -50,7 +50,9 @@ W013–W015在 `a07fcab` 合并验证已实现范围：本次session7/setup4/bro
 
 W016新增共享归档视图：同根公共句柄/64MiB缓存共享并加锁，fork共享地图挂载/16MiB缓存而独立切图；World保留资源视图供加载后继续读成员，最后地图视图释放缓存。7项归档定向检查和DotA产品108帧导航通过，无Game.dll。新批次1/3，未重跑旧全量检查；声音/模型消费与持续切图仍待合并验证，见 `archives.md`，证据为 `audio/archive-*`。
 
-接续声音实现已确认：昼夜环境音由原版MIDISounds.slk解析MIDI+DLS，SetAmbientDaySound/SetAmbientNightSound是Blizzard.j函数，不能误绑成native；它们接着调用GetFloatGameState查询时间。地图Music标签对应种族皮肤Music_V0/V1播放列表。正在对照Miles XMIDI/DLS ABI和环境参数；天气/声音/单位native、载入界面、地形/对象渲染及AI/可玩流程继续推进。原版开局时序、默认AI、完整调度/随机数/异常线程、句柄重用/引用计数仍未完成；main均未完整完成。证据在 `tmp/docs-artifacts/war3/audio/`，其余边界见 `jass.md`、`session.md`、`world.md`。
+W017建立共享Miles设备、WAV/MP3与标准MIDI转XMIDI/DLS后端；菜单音乐也使用共享设备，声音/音色库/转换缓冲保留正确源字节寿命。7项真实Miles定向检查通过，包括原MIDI/DLS双sequence共享库、状态/时间推进、暂停/恢复/定位/结束和并发重开；产品带音乐菜单60帧通过、无Game.dll。当前批次2/3，测试用零音量，听感/3D环境效果待验收。声音native尚未绑定，完整main仍停在天气/声音环境。边界与源调用见 `audio.md`，证据为 `audio/miles-*`。
+
+接续W018为声音表/环境及脚本sound句柄接入：昼夜环境音从MIDISounds.slk读取MIDI+DLS，SetAmbientDaySound/SetAmbientNightSound沿用Blizzard.j，它们还需GetFloatGameState时间状态；Music标签对应种族皮肤Music_V0/V1列表。REA已确认原MIDI转换/XMIDI入口、环境切换5000ms节流及地图音乐标签/索引保存。之后推进天气/声音/单位native、载入界面、地形/对象渲染及AI/可玩流程。原版开局时序、默认AI、完整调度/随机数/异常线程、句柄重用/引用计数仍未完成；main均未完整完成。证据在 `tmp/docs-artifacts/war3/audio/`，其余边界见 `jass.md`、`session.md`、`world.md`。
 
 菜单已连接单人、自定义游戏、玩家草稿、取消和退出；开始游戏尚未接入。草稿保持当前选图会话，不写设置存档；原版默认AI与JASS config覆盖时序尚未完成对照。颜色网格、组间距、logo精确比例、灯光／雾／粒子、完整FDF控件、动态布局像素、标题截断/列表行高/认证图标、MDL与完整节点规则仍需实现或核验。四族、战役、存档／回放、局域网、OpenGL均未完成。普通启动的 `--map` 定位选图偏好，进入选图后执行globals/config，probe检查原生记录，script-check构建脚本语法树、解析类型/符号并编译指令，都不表示已能运行地图。
 

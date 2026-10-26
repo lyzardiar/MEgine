@@ -29,4 +29,6 @@ cmake --build --preset release --parallel
 
 后台选图和配置检查已挂接原地图世界，保留W3E/WPM，并支持位置/矩形及相机/昼夜模型/水色状态。`--main-check --map <路径>` 实际尝试执行原图main；遇到未绑定native会记录源位置并非零退出。Amazonia当前推进至AddWeatherEffect，尚无地图渲染或可玩对局，见[原生世界与主函数](docs/world.md)。
 
+地图会话保留[共享归档视图](docs/archives.md)，加载后仍直接读取地图资源。菜单和后续游戏声音使用[共享Miles后端](docs/audio.md)，已支持内存WAV/MP3、原MIDI+DLS及播放控制；脚本声音/环境、世界渲染和实际开局继续接入。
+
 StormLib 来源、版本和逐文件摘要见 [source-info.json](third_party/stormlib/source-info.json)，许可证在 [LICENSE](third_party/stormlib/source/LICENSE)。原安装资源和 DLL 不随项目分发。REA 作为开发分析工具，不参与游戏运行。

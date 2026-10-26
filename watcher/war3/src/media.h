@@ -1,6 +1,6 @@
-// Author: MiYu. Original font rasterization and Miles in-memory music.
+// Author: MiYu. Native font rasterization and shared in-memory audio interface.
 #pragma once
-#include "archive.h"
+#include "audio.h"
 #include "renderer.h"
 #include <unordered_map>
 
@@ -22,25 +22,5 @@ public:
     float width(std::wstring_view text, float height, bool padding = true);
     size_t fit(std::wstring_view text,float width,float height);
 };
-class Music {
-    Library library_;
-    using Void = void(__stdcall*)();
-    using One = void(__stdcall*)(void*);
-    using Start = int(__stdcall*)();
-    using Open = void*(__stdcall*)(unsigned, int, int, unsigned);
-    using Allocate = void*(__stdcall*)(void*);
-    using Named = int(__stdcall*)(void*, const char*, const void*, int, int);
-    using Loop = void(__stdcall*)(void*, int);
-    using Redist = const char*(__stdcall*)(const char*);
-    Void shutdown_ = nullptr;
-    One close_ = nullptr, release_ = nullptr, end_ = nullptr;
-    void* driver_ = nullptr;
-    void* sample_ = nullptr;
-    std::shared_ptr<const Member> bytes_;
-public:
-    Music(const fs::path& dataRoot, std::shared_ptr<const Member> music);
-    ~Music();
-    Music(const Music&) = delete;
-    Music& operator=(const Music&) = delete;
-};
+
 }
