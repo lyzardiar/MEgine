@@ -3,6 +3,8 @@
 #include <StormLib.h>
 #include <algorithm>
 #include <cctype>
+#include <map>
+#include <mutex>
 
 namespace war3 {
 Archive::Archive(const fs::path& path) : path_(path) {
@@ -26,40 +28,48 @@ std::optional<Bytes> Archive::read(const std::string& name) const {
     if (low && (!SFileReadFile(handle, bytes.data(), low, &read, nullptr) || read != low)) throw std::runtime_error("Cannot read archive member " + name + ": " + winError());
     return bytes;
 }
+struct Archives::Store {
+    fs::path root;
+    std::vector<std::unique_ptr<Archive>> archives;
+    std::mutex mutex;
+    std::unordered_map<std::string,Cached> cache;
+    size_t bytes=0,budget=0;
+    std::uint64_t stamp=0;
+};
 Archives::Archives(const fs::path& root) {
+    struct Less {bool operator()(const fs::path& a,const fs::path& b) const {return CompareStringOrdinal(a.c_str(),-1,b.c_str(),-1,TRUE)==CSTR_LESS_THAN;}};
+    static std::mutex mutex;static std::map<fs::path,std::weak_ptr<Store>,Less> roots;auto key=fs::canonical(root);std::lock_guard lock(mutex);
+    for(auto it=roots.begin();it!=roots.end();)if(it->second.expired())it=roots.erase(it);else ++it;
+    if(auto found=roots.find(key);found!=roots.end())if((common_=found->second.lock()))return;
+    auto store=std::make_shared<Store>();store->root=key;store->budget=64*1024*1024;
     for (auto name : {L"War3Patch.mpq", L"War3xLocal.mpq", L"War3x.mpq", L"war3.mpq"}) {
-        auto path = root / name;
-        if (fs::exists(path)) common_.push_back(std::make_unique<Archive>(path));
+        auto path = key / name;
+        if (fs::exists(path)) store->archives.push_back(std::make_unique<Archive>(path));
     }
-    if (!fs::exists(root / L"war3.mpq")) throw std::runtime_error("Missing base war3.mpq");
+    if (!fs::exists(key / L"war3.mpq")) throw std::runtime_error("Missing base war3.mpq");
+    common_=std::move(store);roots[key]=common_;
 }
+std::unique_ptr<Archives> Archives::fork() const {return std::unique_ptr<Archives>(new Archives(common_,map_));}
+const fs::path& Archives::root() const {return common_->root;}
+fs::path Archives::mapPath() const {return map_?map_->archives.front()->path():fs::path{};}
+size_t Archives::commonCount() const {return common_->archives.size();}
+size_t Archives::cachedBytes() const {if(map_){std::scoped_lock lock(common_->mutex,map_->mutex);return common_->bytes+map_->bytes;}std::lock_guard lock(common_->mutex);return common_->bytes;}
 void Archives::mountMap(const fs::path& path) {
-    auto next = std::make_unique<Archive>(path);
-    unmountMap();
+    auto next=std::make_shared<Store>();next->budget=16*1024*1024;next->archives.push_back(std::make_unique<Archive>(path));
     map_ = std::move(next);
 }
-void Archives::unmountMap() {
-    map_.reset();
-    for (const auto& [name, entry] : mapCache_) cacheBytes_ -= entry.member->bytes.size();
-    mapCache_.clear();
-}
-std::shared_ptr<const Member> Archives::cache(std::unordered_map<std::string, Cached>& entries, std::string name, Bytes bytes, const fs::path& source) {
-    auto member = std::make_shared<Member>(Member{std::move(bytes), utf8(source.wstring())});
-    if (member->bytes.size() > budget) return member;
-    while (cacheBytes_ > budget - member->bytes.size()) {
-        auto* oldest = &commonCache_;
-        auto item = oldest->end();
-        std::uint64_t stamp = UINT64_MAX;
-        for (auto* table : {&commonCache_, &mapCache_}) {
-            for (auto it = table->begin(); it != table->end(); ++it) if (it->second.stamp < stamp) { oldest = table; item = it; stamp = it->second.stamp; }
+void Archives::unmountMap() {map_.reset();}
+std::shared_ptr<const Member> Archives::readStore(Store& store,const std::vector<std::string>& names) {
+    std::lock_guard lock(store.mutex);
+    for(size_t i=0;i<store.archives.size();++i)for(auto& name:names){
+        auto key=std::to_string(i)+":"+name;if(auto found=store.cache.find(key);found!=store.cache.end()){found->second.stamp=++store.stamp;return found->second.member;}
+        auto& archive=*store.archives[i];if(auto bytes=archive.read(name)){
+            auto member=std::make_shared<Member>(Member{std::move(*bytes),utf8(archive.path().wstring())});if(member->bytes.size()>store.budget)return member;
+            while(store.bytes>store.budget-member->bytes.size()){auto oldest=store.cache.end();std::uint64_t stamp=UINT64_MAX;for(auto it=store.cache.begin();it!=store.cache.end();++it)if(it->second.stamp<stamp){oldest=it;stamp=it->second.stamp;}if(oldest==store.cache.end())break;store.bytes-=oldest->second.member->bytes.size();store.cache.erase(oldest);}
+            store.bytes+=member->bytes.size();store.cache.emplace(std::move(key),Cached{member,++store.stamp});return member;
         }
-        if (stamp == UINT64_MAX) break;
-        cacheBytes_ -= item->second.member->bytes.size();
-        oldest->erase(item);
     }
-    cacheBytes_ += member->bytes.size();
-    entries.emplace(std::move(name), Cached{member, ++stamp_});
-    return member;
+    return {};
 }
 std::shared_ptr<const Member> Archives::read(std::string name) {
     return readCandidates({std::move(name)});
@@ -78,16 +88,9 @@ std::shared_ptr<const Member> Archives::readCandidates(std::vector<std::string> 
         for (auto& c : name) { if (c == '/') c = '\\'; c = static_cast<char>(std::tolower(static_cast<unsigned char>(c))); }
     }
     if (map_ && scope!=ArchiveScope::Common) {
-        for (const auto& name : names) {
-            if (auto found = mapCache_.find(name); found != mapCache_.end()) { found->second.stamp = ++stamp_; return found->second.member; }
-            if (auto bytes = map_->read(name)) return cache(mapCache_, name, std::move(*bytes), map_->path());
-        }
+        if(auto member=readStore(*map_,names))return member;
     }
-    if(scope!=ArchiveScope::Map)for (const auto& archive : common_) for (const auto& name : names) {
-        auto key = utf8(archive->path().wstring()) + ":" + name;
-        if (auto found = commonCache_.find(key); found != commonCache_.end()) { found->second.stamp = ++stamp_; return found->second.member; }
-        if (auto bytes = archive->read(name)) return cache(commonCache_, key, std::move(*bytes), archive->path());
-    }
+    if(scope!=ArchiveScope::Map)return readStore(*common_,names);
     return {};
 }
 }

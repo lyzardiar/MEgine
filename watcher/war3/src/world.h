@@ -17,11 +17,13 @@ class World {
     WorldRect bounds_;
     std::array<jass::Real,4> margins_;
     WorldEnvironment environment_;
+    std::unique_ptr<Archives> resources_;
 public:
     World(MapData data,std::array<jass::Real,4> margins);
     static std::unique_ptr<World> read(Archives& archives);
     static jass::Real cameraMarginFromCells(std::int32_t cells);
     const MapData& data() const {return data_;}
+    Archives& resources() const;
     const WorldRect& bounds() const {return bounds_;}
     jass::Real cameraMargin(std::uint32_t side) const;
     WorldPoint clamp(WorldPoint point) const;

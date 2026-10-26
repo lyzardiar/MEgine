@@ -48,7 +48,9 @@ W015 `a07fcab`建立World，选图/配置在globals前挂接W3E/WPM；21个空�
 
 W013–W015在 `a07fcab` 合并验证已实现范围：本次session7/setup4/browser14共25项通过，复用未变化的world7项，合计32通过、0失败；三图globals/config均退出0，产品菜单导航分别104/104/110帧通过，无Game.dll。已核对夹具/元数据摘要后复用272次世界和2,925次枚举原件对照；未重复旧JASS、引擎或资产全量检查。三图完整main失败与UI/玩法总矩阵保留待实现，下一批W016从真实声音环境继续。证据为 `tmp/docs-artifacts/war3/world/batch-*`、`batch-w013-w015.json`，细节见 `testing-batches.md`、`world.md`。
 
-接续工作为实际main遇到的天气/声音/单位native、载入界面与地形/对象渲染，再连通AI与可玩流程。原版开局占槽/本地身份顺序、默认AI、完整调度、随机数、异常线程状态、句柄数值/重用与引用计数尚未完成。后台单次解析/编译尚无中途取消，阶段间丢弃旧请求，退出等待线程释放。未绑定的native带源位置失败，不返回默认值；原图main均未完整完成，不能将config或部分main成功当成对局可玩。来源与边界见 `jass.md`、`session.md`、`world.md`，原始证据在 `tmp/docs-artifacts/war3/`。
+W016新增共享归档视图：同根公共句柄/64MiB缓存共享并加锁，fork共享地图挂载/16MiB缓存而独立切图；World保留资源视图供加载后继续读成员，最后地图视图释放缓存。7项归档定向检查和DotA产品108帧导航通过，无Game.dll。新批次1/3，未重跑旧全量检查；声音/模型消费与持续切图仍待合并验证，见 `archives.md`，证据为 `audio/archive-*`。
+
+接续声音实现已确认：昼夜环境音由原版MIDISounds.slk解析MIDI+DLS，SetAmbientDaySound/SetAmbientNightSound是Blizzard.j函数，不能误绑成native；它们接着调用GetFloatGameState查询时间。地图Music标签对应种族皮肤Music_V0/V1播放列表。正在对照Miles XMIDI/DLS ABI和环境参数；天气/声音/单位native、载入界面、地形/对象渲染及AI/可玩流程继续推进。原版开局时序、默认AI、完整调度/随机数/异常线程、句柄重用/引用计数仍未完成；main均未完整完成。证据在 `tmp/docs-artifacts/war3/audio/`，其余边界见 `jass.md`、`session.md`、`world.md`。
 
 菜单已连接单人、自定义游戏、玩家草稿、取消和退出；开始游戏尚未接入。草稿保持当前选图会话，不写设置存档；原版默认AI与JASS config覆盖时序尚未完成对照。颜色网格、组间距、logo精确比例、灯光／雾／粒子、完整FDF控件、动态布局像素、标题截断/列表行高/认证图标、MDL与完整节点规则仍需实现或核验。四族、战役、存档／回放、局域网、OpenGL均未完成。普通启动的 `--map` 定位选图偏好，进入选图后执行globals/config，probe检查原生记录，script-check构建脚本语法树、解析类型/符号并编译指令，都不表示已能运行地图。
 
