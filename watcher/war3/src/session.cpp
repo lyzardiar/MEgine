@@ -25,7 +25,7 @@ void ScriptSession::bind(const char* name,const char* result,std::initializer_li
 }
 jass::Value ScriptSession::create(NativeKind kind) {
     if(objects_.size()>=1048576)throw std::runtime_error("Session native object budget exceeded");Object object{kind};const char* type;
-    switch(kind){case NativeKind::Group:type="group";object.state=Group{};break;case NativeKind::Timer:type="timer";object.state=Timer{};break;case NativeKind::Trigger:type="trigger";object.state=Trigger{};break;default:throw std::runtime_error("Player handles are stable session objects");}
+    switch(kind){case NativeKind::Group:type="group";object.state=Group{};break;case NativeKind::Timer:type="timer";object.state=Timer{};break;case NativeKind::Trigger:type="trigger";object.state=Trigger{};break;case NativeKind::Location:type="location";object.state=WorldPoint{};break;case NativeKind::Rect:type="rect";object.state=WorldRect{};break;default:throw std::runtime_error("Player handles are stable session objects");}
     auto id=handleBase+std::uint32_t(objects_.size());objects_.push_back(std::move(object));return runtime_.handle(type,id);
 }
 ScriptSession::Object& ScriptSession::object(jass::Value handle,NativeKind kind) {if(handle.bits<handleBase || handle.bits-handleBase>=objects_.size())throw std::runtime_error("Unknown session native handle");auto& value=objects_[handle.bits-handleBase];if(!value.alive || value.kind!=kind)throw std::runtime_error("Destroyed or incompatible session native handle");return value;}
@@ -37,16 +37,20 @@ size_t ScriptSession::liveObjects(NativeKind kind) const {return std::count_if(o
 void ScriptSession::initialize() {if(failed_ || runtime_.ready())throw std::runtime_error("Session initialization requires a fresh instance");try{runtime_.initialize();}catch(...){failed_=true;throw;}}
 void ScriptSession::configure() {if(failed_ || configured_)throw std::runtime_error("Session configuration requires an unconfigured instance");try{if(!runtime_.ready())initialize();runtime_.invoke("config");configured_=true;}catch(...){failed_=true;throw;}}
 void ScriptSession::applySetup(const PlayerSetup& setup) {
-    if(!configured())throw std::runtime_error("Player setup requires a configured session");auto next=config_;std::optional<unsigned> local;unsigned seen=0;
+    if(!configured() || mainAttempted_)throw std::runtime_error("Player setup requires a configured session before main");auto next=config_;std::optional<unsigned> local;unsigned seen=0;
     for(auto& slot:setup.slots()){
         auto id=checked(unsigned(slot.source.id),16,"Setup player");if(seen&(1u<<id))throw std::runtime_error("Duplicate setup player");seen|=1u<<id;
         auto& player=next.players[id];player.team=checked(slot.team,16,"Setup team");player.color=checked(slot.color,16,"Setup color");player.racePreference=slot.racePreference;
         if(slot.handicap<50 || slot.handicap>100 || slot.handicap%10)throw std::runtime_error("Invalid setup handicap");player.handicap=jass::Real::fromInteger(int(slot.handicap)).divide(jass::Real::fromInteger(100));player.slotState=slot.active()?1:0;
         switch(slot.control){case SlotControl::Open:player.controller=0;break;case SlotControl::Closed:player.controller=5;break;case SlotControl::Local:if(local)throw std::runtime_error("Multiple local setup players");local=id;player.controller=0;break;case SlotControl::ComputerEasy:player.controller=1;player.difficulty=0;break;case SlotControl::ComputerNormal:player.controller=1;player.difficulty=1;break;case SlotControl::ComputerInsane:player.controller=1;player.difficulty=2;break;default:throw std::runtime_error("Invalid setup control");}
     }
-    config_=std::move(next);localPlayer_=local;
+    config_=std::move(next);localPlayer_=local;setupApplied_=true;
 }
+World& ScriptSession::requireWorld() {if(!world_)throw std::runtime_error("World native requires attached map terrain");return *world_;}
+void ScriptSession::attachWorld(std::unique_ptr<World> world) {if(!world || world_ || runtime_.ready() || failed_)throw std::runtime_error("World attachment requires a fresh session and valid terrain");world_=std::move(world);}
+void ScriptSession::startMain() {if(!configured() || !world_ || !setupApplied_ || mainAttempted_)throw std::runtime_error("Map main requires a configured world and player setup");mainAttempted_=true;try{runtime_.invoke("main");mainCompleted_=true;}catch(...){failed_=true;throw;}}
 void ScriptSession::bindNatives() {
+    bindWorldNatives();
     for(auto entry:enums)bind(entry.name,entry.type,{"integer"},[entry](auto& vm,auto args){return vm.handle(entry.type,args[0].bits);});
     bind("GetHandleId","integer",{"handle"},[](auto& vm,auto args){return vm.integer(integer(args[0]));});
     bind("Player","player",{"integer"},[this](auto& vm,auto args){return vm.handle("player",args[0].bits<16?handleBase+args[0].bits:0);});

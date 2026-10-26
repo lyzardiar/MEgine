@@ -1,0 +1,55 @@
+// Author: MiYu. World ownership, original map coordinates and script spatial lifecycle.
+#include "session.h"
+#include "setup.h"
+#include <bit>
+#include <functional>
+#include <iostream>
+
+using namespace war3;
+using namespace war3::jass;
+namespace {
+void require(bool value,const char* message) {if(!value)throw std::runtime_error(message);}
+template<class F> void rejects(F run,const char* message) {try{run();}catch(const std::exception& e){require(std::string(e.what()).find(message)!=std::string::npos,"Unexpected world diagnostic");return;}throw std::runtime_error("Invalid world operation accepted");}
+MapData map() {MapData data;data.info.players={{0,1,0,0,"Local",{},0,0}};data.terrain.width=9;data.terrain.height=5;data.terrain.origin={-512,-256};data.terrain.corners.resize(45);return data;}
+std::unique_ptr<World> world() {return std::make_unique<World>(map(),std::array<Real,4>{Real::fromInteger(512),Real::fromInteger(512),Real::fromInteger(256),Real::fromInteger(256)});}
+const std::string api=R"jass(type location extends handle
+type rect extends handle
+native Location takes real x, real y returns location
+native MoveLocation takes location l, real x, real y returns nothing
+native RemoveLocation takes location l returns nothing
+native GetLocationX takes location l returns real
+native GetLocationY takes location l returns real
+native Rect takes real x, real y, real xx, real yy returns rect
+native RectFromLoc takes location a, location b returns rect
+native SetRect takes rect r, real x, real y, real xx, real yy returns nothing
+native SetRectFromLoc takes rect r, location a, location b returns nothing
+native RemoveRect takes rect r returns nothing
+native GetRectMinX takes rect r returns real
+native GetRectMinY takes rect r returns real
+native GetRectMaxX takes rect r returns real
+native GetRectMaxY takes rect r returns real
+native GetRectCenterX takes rect r returns real
+native GetRectCenterY takes rect r returns real
+native GetWorldBounds takes nothing returns rect
+native GetCameraMargin takes integer side returns real
+native SetCameraBounds takes real x, real y, real xx, real yy, real xxx, real yyy, real xxxx, real yyyy returns nothing
+native SetDayNightModels takes string terrain, string units returns nothing
+native SetWaterBaseColor takes integer r, integer g, integer b, integer a returns nothing
+)jass";
+Module compile(std::string body={},std::string globals={},std::string extra={}) {return Module::compile(Program::parse({{"world.j",api+extra+"globals\n"+globals+"endglobals\nfunction config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\n"+body+"endfunction\n","authored world integration"}}));}
+Value call(ScriptSession& session,const char* name,std::initializer_list<Value> args) {return session.runtime().invoke(name,std::span<const Value>(args.begin(),args.size()));}
+Value number(ScriptSession& session,int n) {return session.runtime().real(Real::fromInteger(n));}
+}
+int wmain(int argc,wchar_t** argv) {
+    if(argc!=3){std::cerr<<"Usage: war3_world_tests <data-root> <clamp-fixture.json>\n";return 2;}
+    unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};
+    test("world_full_bounds_and_clamped_rectangles",[]{auto w=world();require(w->bounds().minX.toInteger()==-512 && w->bounds().maxY.toInteger()==256,"Terrain extent used playable camera bounds");auto r=w->rectangle({Real::fromInteger(9999),Real::fromInteger(-9999)},{Real::fromInteger(-9999),Real::fromInteger(9999)});require(r.minX.toInteger()==-512 && r.minY.toInteger()==-256 && r.maxX.toInteger()==480 && r.maxY.toInteger()==224,"Rect clamp or normalization differs");require(w->cameraMargin(0).toInteger()==512 && w->cameraMargin(3).toInteger()==256 && w->cameraMargin(0xffffffff).bits()==0,"Camera cell conversion or invalid side differs");});
+    test("world_camera_margin_source_conversion",[&]{require(World::cameraMarginFromCells(16777219).bits()==0x4f000002,"Camera margin conversion did not use original SSE rounding");auto output=fs::absolute(argv[2]).parent_path()/L"world-margin-native.json";fs::create_directories(output.parent_path());std::ofstream file(output,std::ios::binary);require(bool(file),"Cannot save camera margin fixture");std::vector<std::int32_t> cells={INT32_MIN,-16777219,-4,-2,-1,0,1,2,4,7,16777217,16777219,INT32_MAX};std::uint32_t seed=0x12705224;for(unsigned i=0;i<64;++i){seed=seed*1664525u+1013904223u;cells.push_back(std::bit_cast<std::int32_t>(seed));}file<<"[";bool comma=false;for(auto value:cells){if(comma)file<<',';comma=true;file<<'['<<value<<','<<World::cameraMarginFromCells(value).bits()<<']';}file<<"]\n";file.close();require(bool(file),"Cannot complete camera margin fixture");});
+    test("world_location_global_and_destroyed_handles",[]{ScriptSession session(compile({},"location start=Location(-400.0,800.0)\n"),map().info);session.attachWorld(world());session.configure();auto value=session.runtime().global("start");require(call(session,"GetLocationY",{value}).bits==Real::fromInteger(800).bits(),"Location was incorrectly clamped");call(session,"MoveLocation",{value,number(session,9999),number(session,-9999)});require(call(session,"GetLocationX",{value}).bits==Real::fromInteger(9999).bits(),"Moved location was not retained");call(session,"RemoveLocation",{value});require(session.liveObjects(NativeKind::Location)==0,"Location not released");rejects([&]{call(session,"GetLocationX",{value});},"Destroyed or incompatible");call(session,"RemoveLocation",{session.runtime().handle("location",0)});});
+    test("world_rect_query_mutation_and_full_extent",[]{ScriptSession session(compile({},"rect selected=Rect(100.0,-500.0,-300.0,500.0)\n"),map().info);session.attachWorld(world());session.configure();auto selected=session.runtime().global("selected");require(call(session,"GetRectMinX",{selected}).bits==Real::fromInteger(-300).bits() && call(session,"GetRectMaxY",{selected}).bits==Real::fromInteger(224).bits(),"Global rect was not bounded");require(call(session,"GetRectCenterX",{selected}).bits==Real::fromInteger(-100).bits() && call(session,"GetRectCenterY",{selected}).bits==Real::fromInteger(-16).bits(),"Rectangle centers differ");auto full=call(session,"GetWorldBounds",{}),other=call(session,"GetWorldBounds",{});require(full.bits!=other.bits && call(session,"GetRectMaxX",{full}).bits==Real::fromInteger(512).bits(),"World bounds were clamped or shared as one mutable handle");auto a=call(session,"Location",{number(session,25),number(session,75)}),b=call(session,"Location",{number(session,-100),number(session,-200)});call(session,"SetRectFromLoc",{selected,a,b});require(call(session,"GetRectMinX",{selected}).bits==Real::fromInteger(-100).bits() && call(session,"GetRectMaxY",{selected}).bits==Real::fromInteger(75).bits(),"Location-based rect mutation differs");call(session,"RemoveRect",{selected});rejects([&]{call(session,"GetRectMinX",{selected});},"Destroyed or incompatible");});
+    test("world_main_preserves_session_and_environment",[]{auto module=compile("call SetCameraBounds(-10.0,-20.0,30.0,40.0,-10.0,40.0,30.0,-20.0)\ncall SetDayNightModels(\"Terrain.mdl\",\"Units.mdl\")\ncall SetWaterBaseColor(128,128,255,255)\n");ScriptSession session(std::move(module),map().info);rejects([&]{session.startMain();},"configured world");session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& e=session.world()->environment();require(session.mainCompleted() && session.configured() && session.localPlayer()==0u && e.cameraChanged && e.dayNightChanged && e.waterChanged,"Main did not keep valid session state");require(e.cameraBounds[3].bits()==Real::fromInteger(40).bits() && e.terrainDayNight=="Terrain.mdl" && e.unitDayNight=="Units.mdl" && e.waterColor==std::array<std::uint8_t,4>{128,128,255,255},"World environment mutation lost");rejects([&]{session.startMain();},"configured world");rejects([&]{session.applySetup(setup);},"before main");});
+    test("world_main_failure_is_terminal",[]{ScriptSession session(compile("call SetCameraBounds(1.0,2.0,3.0,4.0,1.0,4.0,3.0,2.0)\ncall Unavailable()\n",{},"native Unavailable takes nothing returns nothing\n"),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);rejects([&]{session.startMain();},"Unbound JASS native: Unavailable");require(!session.mainCompleted() && !session.configured() && session.world()->environment().cameraChanged,"Partial main was accepted or diagnostics lost");rejects([&]{session.startMain();},"configured world");rejects([&]{session.applySetup(setup);},"configured session");});
+    test("world_original_archive_ownership_and_settings",[&]{Archives archives(argv[1]);archives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");auto w=World::read(archives);archives.unmountMap();require(w->data().terrain.width>2 && w->data().pathing && w->data().terrain.corners.size()==size_t(w->data().terrain.width)*w->data().terrain.height,"World lost source terrain/pathing after unmount");require(w->cameraMargin(0).bits()==Real::fromInteger(512).bits() && w->cameraMargin(2).bits()==Real::fromInteger(256).bits(),"Original MiscData margins differ");});
+    if(!failed){auto output=fs::absolute(argv[2]);fs::create_directories(output.parent_path());std::ofstream file(output,std::ios::binary);require(bool(file),"Cannot save world clamp fixture");file<<"{\"bounds\":[";auto w=world();bool comma=false;for(auto value:{w->bounds().minX,w->bounds().minY,w->bounds().maxX,w->bounds().maxY}){if(comma)file<<',';comma=true;file<<value.bits();}file<<"],\"cases\":[";comma=false;for(float x:{-20000.f,-512.f,-511.5f,-256.f,-0.f,0.f,.125f,224.f,255.f,256.f,479.f,480.f,481.f,512.f,20000.f})for(float y:{-20000.f,-512.f,-256.f,-255.5f,-0.f,0.f,.125f,223.f,224.f,225.f,256.f,512.f,20000.f}){WorldPoint input{Real::fromBits(std::bit_cast<std::uint32_t>(x)),Real::fromBits(std::bit_cast<std::uint32_t>(y))};auto result=w->clamp(input);if(comma)file<<',';comma=true;file<<'['<<input.x.bits()<<','<<input.y.bits()<<','<<result.x.bits()<<','<<result.y.bits()<<']';}file<<"]}\n";file.close();require(bool(file),"Cannot complete world clamp fixture");}
+    require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded into world checks");std::cout<<"RESULT passed="<<passed<<" failed="<<failed<<'\n';return failed?1:0;
+}

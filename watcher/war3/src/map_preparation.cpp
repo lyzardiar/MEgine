@@ -20,7 +20,7 @@ void MapPreparation::run(std::stop_token stop) {
             auto w3i=archives->readCandidates({"war3map.w3i"},ArchiveScope::Map);if(!w3i)throw std::runtime_error("Missing war3map.w3i");result.info=MapInfo::parse(w3i->bytes,strings);
             if(!stale()){
                 auto module=jass::Module::compile(jass::Program::read(*archives));
-                if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings));result.session->configure();}
+                if(!stale()){auto world=World::read(*archives);if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings));result.session->attachWorld(std::move(world));result.session->configure();}}
             }
             if(!stale())try {
                 auto bytes=archives->readCandidates({"war3mapPreview.tga","war3mapMap.blp"},ArchiveScope::Map);

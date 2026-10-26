@@ -27,4 +27,6 @@ cmake --build --preset release --parallel
 
 `--config-check --map <路径>` 执行原图全局初始化与 config，保存玩家/队伍/出生点等状态；DotA_v6.83d 的最小集成已通过。此入口不执行 main，开始游戏尚未接通，见[地图配置会话](docs/session.md)。
 
+后台选图和配置检查已挂接原地图世界，保留W3E/WPM，并支持位置/矩形及相机/昼夜模型/水色状态。`--main-check --map <路径>` 实际尝试执行原图main；遇到未绑定native会记录源位置并非零退出。Amazonia当前推进至AddWeatherEffect，尚无地图渲染或可玩对局，见[原生世界与主函数](docs/world.md)。
+
 StormLib 来源、版本和逐文件摘要见 [source-info.json](third_party/stormlib/source-info.json)，许可证在 [LICENSE](third_party/stormlib/source/LICENSE)。原安装资源和 DLL 不随项目分发。REA 作为开发分析工具，不参与游戏运行。

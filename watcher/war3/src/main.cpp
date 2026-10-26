@@ -9,6 +9,7 @@
 #include "jass_runtime.h"
 #include "session.h"
 #include <memory>
+#include <bit>
 #include <shellapi.h>
 
 namespace war3 {
@@ -33,8 +34,14 @@ int run(HINSTANCE instance) {
     log.write("client=war3 architecture=x86 renderer=" + options.renderer);
     Archives archives(options.dataRoot);
     log.write("common_archives=" + std::to_string(archives.commonCount()));
+    if(options.mainCheck){
+        archives.mountMap(options.map);auto world=World::read(archives);auto& info=world->data().info;MapStrings strings;if(auto member=archives.readCandidates({"war3map.wts"},ArchiveScope::Map))strings=mapStrings(member->bytes);
+        ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info,std::move(strings));session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);
+        auto state=[&]{auto& world=*session.world();auto& environment=world.environment();std::string camera;for(auto value:environment.cameraBounds)camera+=" "+std::to_string(std::bit_cast<float>(value.bits()));log.write("world_vertices="+std::to_string(world.data().terrain.width)+"x"+std::to_string(world.data().terrain.height)+" pathing="+(world.data().pathing?"true":"false")+" camera_changed="+(environment.cameraChanged?"true":"false")+" daynight_changed="+(environment.dayNightChanged?"true":"false")+" water_changed="+(environment.waterChanged?"true":"false"));log.write("world_camera_bounds="+camera);log.write("session_spatial locations="+std::to_string(session.liveObjects(NativeKind::Location))+" rects="+std::to_string(session.liveObjects(NativeKind::Rect))+" game_dll_loaded="+(GetModuleHandleW(L"Game.dll")?"true":"false"));};
+        log.write("main_check=starting initialized=true config=true");try{session.startMain();}catch(const std::exception& e){state();log.write(std::string("main_check=failed main_completed=false error=")+e.what());throw;}state();if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll must not be loaded");log.write("main_check=passed main_completed=true game_dll_loaded=false");return 0;
+    }
     if(options.configCheck){
-        archives.mountMap(options.map);MapStrings strings;if(auto member=archives.readCandidates({"war3map.wts"},ArchiveScope::Map))strings=mapStrings(member->bytes);auto member=archives.readCandidates({"war3map.w3i"},ArchiveScope::Map);if(!member)throw std::runtime_error("Map configuration requires war3map.w3i");auto info=MapInfo::parse(member->bytes,strings);ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info,std::move(strings));session.configure();auto& config=session.config();
+        archives.mountMap(options.map);MapStrings strings;if(auto member=archives.readCandidates({"war3map.wts"},ArchiveScope::Map))strings=mapStrings(member->bytes);auto world=World::read(archives);auto& info=world->data().info;ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info,std::move(strings));session.attachWorld(std::move(world));session.configure();auto& config=session.config();
         log.write("session_players="+std::to_string(config.playerCount)+" teams="+std::to_string(config.teamCount)+" game_type="+std::to_string(config.gameType)+" placement="+std::to_string(config.placement));
         for(unsigned i=0;i<16;++i){auto& player=config.players[i];if(player.controller!=5)log.write("session_player="+std::to_string(i)+" team="+std::to_string(player.team)+" start="+std::to_string(player.start)+" color="+std::to_string(player.color)+" controller="+std::to_string(player.controller)+" race_pref="+std::to_string(player.racePreference));}
         log.write("session_objects groups="+std::to_string(session.liveObjects(NativeKind::Group))+" timers="+std::to_string(session.liveObjects(NativeKind::Timer))+" triggers="+std::to_string(session.liveObjects(NativeKind::Trigger)));if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll must not be loaded");log.write("config_check=passed initialized=true config=true main=false game_dll_loaded=false");return 0;
@@ -164,7 +171,7 @@ int run(HINSTANCE instance) {
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     bool silent = false;
     int count = 0; auto arguments = CommandLineToArgvW(GetCommandLineW(), &count);
-    if (arguments) { for (int i = 1; i < count; ++i) if (!wcscmp(arguments[i], L"--hidden") || !wcscmp(arguments[i], L"--probe") || !wcscmp(arguments[i], L"--script-check") || !wcscmp(arguments[i], L"--config-check")) silent = true; LocalFree(arguments); }
+    if (arguments) { for (int i = 1; i < count; ++i) if (!wcscmp(arguments[i], L"--hidden") || !wcscmp(arguments[i], L"--probe") || !wcscmp(arguments[i], L"--script-check") || !wcscmp(arguments[i], L"--config-check") || !wcscmp(arguments[i], L"--main-check")) silent = true; LocalFree(arguments); }
     try { return war3::run(instance); }
     catch (const std::exception& error) { OutputDebugStringA(error.what()); try { auto options = war3::Options::parse(); std::ofstream log(options.log, std::ios::binary | std::ios::app); log << "fatal=" << error.what() << '\n'; } catch (...) {} if (!silent) MessageBoxW(nullptr, war3::wide(error.what()).c_str(), L"War3", MB_OK | MB_ICONERROR); return 1; }
 }

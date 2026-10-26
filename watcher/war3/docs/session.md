@@ -4,7 +4,7 @@
 
 ## 生命周期与配置
 
-构造时读取 W3I/WTS 的名称、玩家 ID、控制类型、种族、固定出生点、势力和坐标，建立16个稳定玩家对象。`initialize()` 通过 Runtime 执行公共库及地图的全部全局初始化；重复初始化拒绝执行。`configure()` 在全局初始化成功后执行原地图 `config`，包括它调用的 Blizzard.j 与地图辅助函数。初始化或配置失败的会话不标记为可用，调用方应丢弃；当前不提供 `main` 的启动流程。
+构造时读取 W3I/WTS 的名称、玩家 ID、控制类型、种族、固定出生点、势力和坐标，建立16个稳定玩家对象。`initialize()` 通过 Runtime 执行公共库及地图的全部全局初始化；重复初始化拒绝执行。`configure()` 在全局初始化成功后执行原地图 `config`，包括它调用的 Blizzard.j 与地图辅助函数。初始化或配置失败的会话不标记为可用，调用方应丢弃。W015增加globals前的世界挂接及应用草稿后的 `startMain()`；main只尝试一次，失败会使会话失效，实际原图main仍未完整完成，见[世界与主函数](world.md)。
 
 配置 native 将人数/队伍数、放置方式、出生点及优先级、玩家队伍/颜色/控制/种族偏好/姓名/联盟/状态等写入会话，查询读取同一状态。SetMapName/SetMapDescription 解析地图 WTS。Player(index) 返回本会话玩家句柄；枚举保留原始整数位型，不经过对象分配。脚本中的 GetPlayerStartLocationX/Y 沿用 Blizzard.j 函数，再调用 GetStartLocationX/Y，执行原脚本实现。
 
@@ -32,7 +32,7 @@ Game.dll SHA-256：`e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d
 
 ## 产品入口与证据
 
-`--config-check` 在同一个独立 EXE 内直接读取地图元数据、源脚本并运行全局初始化/config，不创建图形设备。它与 script-check/probe/render 检查互斥。日志区分 `initialized=true config=true main=false`，并记录人数/队伍、有效控制槽位和 native 对象数量。
+`--config-check` 在同一个独立EXE内直接读取地图元数据、地形/路径、源脚本并运行全局初始化/config，不创建图形设备。它与script-check/main-check/probe/render检查互斥。日志区分 `initialized=true config=true main=false`，并记录人数/队伍、有效控制槽位和native对象数量。
 
 ```powershell
 # watcher/war3
@@ -44,4 +44,4 @@ python watcher/war3/tools/verify_jass_enums_cpu.py
 
 DotA_v6.83d 产品最小集成退出0，无 Game.dll：10名额、10队伍记录、类型4、放置3；ID 1–5 属队伍0，7–11 属队伍1；出生点0–9，前组种族偏好4、后组8。全局初始化保留3个Group、4个Timer、1个Trigger。这些是脚本配置结果，内部队伍数量与界面势力分组分别由对应源记录消费。W014已接入选图和草稿会话，4项CPU/3项D3D9定向检查通过；DotA产品导航110帧通过、无Game.dll，main仍未执行。三图合并和原版开局时序继续待验证。
 
-证据统一在 `tmp/docs-artifacts/war3/jass/`：`session-{build.log,tests-build.log,tests.log,dota.log,enums-native.json,enums-cpu.json,enums-cpu.log,registration-rea.json,enum-conversion-rea.json,handles-rea.json,lookup-rea.json,native-catalog.json,receipt.json}` 及 `setup-{build.log,tests.log,player-natives-rea.json}`；界面检查见 `map-menu/setup-{browser-tests.log,browser-tests/,dota*}`。原始数据不提交。W013–W014为新批次2/3，三图合并、创建游戏与持续切图释放等在W015后验证。
+证据统一在 `tmp/docs-artifacts/war3/jass/`：`session-{build.log,tests-build.log,tests.log,dota.log,enums-native.json,enums-cpu.json,enums-cpu.log,registration-rea.json,enum-conversion-rea.json,handles-rea.json,lookup-rea.json,native-catalog.json,receipt.json}` 及 `setup-{build.log,tests.log,player-natives-rea.json}`；界面检查见 `map-menu/setup-{browser-tests.log,browser-tests/,dota*}`。原始数据不提交。W015已实现世界/main入口，本批3/3，三图与界面/会话合并验证结果统一记录在测试队列；创建游戏与完整运行仍在总矩阵待实现。

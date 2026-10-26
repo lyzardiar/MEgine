@@ -32,6 +32,7 @@ struct Options {
     bool menuCheck = false;
     bool scriptCheck = false;
     bool configCheck = false;
+    bool mainCheck = false;
     std::optional<std::uint64_t> timeMs;
     static Options parse();
 };
