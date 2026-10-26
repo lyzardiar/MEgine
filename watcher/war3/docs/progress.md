@@ -2,7 +2,9 @@
 
 2026-10-27。目标仍为 1.27.0.52240 完整客户端，未完成；MEngine 移植尚未开始。
 
-最新阶段A：单位外观/动画、高度、运行中模型/图标后台读取、区域/接近/聊天、基础物品栏、视野网格/GPU投影、天空、typed hashtable及会话gamecache已接入，显式静音不再打开输出设备。Win32 Release产品及消费者程序无警告；1项原图复制夹具的集成检查通过。Amazonia原main和250ms推进退出0，102单位/55触发器/83事件，bj_gameStarted=true；DotA到121单位/13触发器/74事件，在AddUnitToStock失败，完整main未完成。新增GPU路径因当前Disconnected会话不能创建D3D9设备，保持待验证。范围/命令/证据见 `live-world.md`；完整目标未完成。
+最新接续：源商店库存/补货、单位/物品购买、7项单位训练队列/取消/退款/完成、人口生命周期和源产品命令区已连接会话及JASS。必要Win32 Release产品和新增消费者程序编译无警告；专项夹具已准备，按阶段集中验证，尚未运行。DotA已越过AddUnitToStock和GetObjectName，当前阻塞SetPlayerHandicapXP（Scripts/war3map.j:8416），完整main未完成。新增GPU界面待测。见[商店与单位训练](commerce.md)和W035–W037。
+
+e1b5e92阶段A：单位外观/动画、高度、运行中模型/图标后台读取、区域/接近/聊天、基础物品栏、视野网格/GPU投影、天空、typed hashtable及会话gamecache已接入，显式静音不再打开输出设备。Win32 Release产品及消费者程序无警告；1项原图复制夹具的集成检查通过。Amazonia原main和250ms推进退出0，102单位/55触发器/83事件，bj_gameStarted=true；DotA到121单位/13触发器/74事件，在AddUnitToStock失败，完整main未完成。新增GPU路径因当前Disconnected会话不能创建D3D9设备，保持待验证。范围/命令/证据见 `live-world.md`；完整目标未完成。
 
 已有3fc434c的BootyBay原地图画面和基本窗口输入证据保留对应版本：65单位、2011放置物、177区块、192纹理，选择/移动命令/滚轮/返回退出曾通过；不能用这些图像为本批新增迷雾、外观、流式GPU和聊天界面背书。
 

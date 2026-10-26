@@ -1,0 +1,16 @@
+// Author: MiYu. Cross-API shop, queue and food consumers on copied original geometry; run with the stage batch.
+#include "session.h"
+#include "setup.h"
+#include <bit>
+#include <iostream>
+#include <algorithm>
+
+using namespace war3;
+int wmain(int argc,wchar_t** argv) {
+    try {
+        if(argc!=3)throw std::runtime_error("Usage: war3_commerce_tests <data-root> <generated-map>");Archives archives(argv[1]);archives.mountMap(argv[2]);auto world=World::read(archives);auto info=world->data().info;ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info);session.attachWorld(std::move(world));session.audioMuted(true);session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();
+        auto& vm=session.runtime();auto id=vm.global("probe_barracks").bits,buyer=vm.global("probe_buyer").bits,shop=vm.global("probe_shop").bits;auto& states=session.config().players[0].states;auto check=[](bool ok,const char* text){if(!ok)throw std::runtime_error(text);};check(vm.global("probe_sold").bits==1 && vm.global("probe_items").bits==1,"Sale event context did not reach actual script consumer");check(states.at(1)==8930 && session.units().at(id)->production.size()==1,"Paid queue cancellation/refund differs");check(session.units().at(buyer)->inventory[0]!=0,"Purchased item not carried");check(states.at(5)==7,"Food reservation was not released by cancellation");auto commands=session.commands(shop,0);check(std::any_of(commands.begin(),commands.end(),[](auto& b){return b.type==ObjectData::code("hfoo") && b.stock==0 && !b.enabled;}),"Empty stock was not consumed by command model");
+        session.advance(21);check(vm.global("probe_finished").bits==1 && vm.global("probe_started").bits==2 && vm.global("probe_cancelled").bits==1,"Training lifecycle event consumer differs");auto trained=vm.global("probe_trained").bits;check(session.units().contains(trained) && session.units().at(id)->production.empty(),"Training completion did not create unit");check(states.at(5)==9,"Completed unit double-counted reserved food");check(!session.units().at(trained)->route.empty(),"Rally command was not consumed");session.advance(10);commands=session.commands(shop,0);check(std::any_of(commands.begin(),commands.end(),[](auto& b){return b.type==ObjectData::code("hfoo") && b.stock==1 && b.enabled;}),"Shop stock did not replenish");
+        auto handle=vm.handle("unit",trained);vm.invoke("KillUnit",std::array{handle});check(states.at(5)==7,"Death did not release food");vm.invoke("RemoveUnit",std::array{handle});check(states.at(5)==7,"Removal released dead unit food twice");auto hero=vm.handle("unit",buyer);vm.invoke("SetUnitOwner",std::array{hero,vm.handle("player",0x100001),vm.boolean(true)});check(states.at(5)==2 && session.config().players[1].states.at(5)==5,"Ownership did not transfer food");if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll loaded");std::cout<<"PASS commerce consumers: stock/sales/items, paid queue/refund, training events, food lifetime and rally\n";return 0;
+    }catch(const std::exception& e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}
+}

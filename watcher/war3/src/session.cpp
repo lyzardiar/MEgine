@@ -16,7 +16,7 @@ constexpr EnumNative enums[]={
 }
 ScriptSession::ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings,std::optional<unsigned> gameType) : strings_(std::move(strings)),runtime_(std::move(module)) {
     config_.name=info.name;config_.description=info.description;config_.playerCount=info.playablePlayers();config_.teamCount=unsigned(info.forces.size());config_.gameType=gameType.value_or((info.flags&4)?1u:4u);config_.supportedGameTypes=config_.gameType;
-    for(unsigned i=0;i<16;++i){config_.players[i].team=i;config_.players[i].color=i;config_.players[i].name="Player "+std::to_string(i+1);objects_.push_back({NativeKind::Player,true,PlayerRef{i}});}
+    for(unsigned i=0;i<16;++i){config_.players[i].team=i;config_.players[i].color=i;config_.players[i].name="Player "+std::to_string(i+1);config_.players[i].states[6]=100;objects_.push_back({NativeKind::Player,true,PlayerRef{i}});}
     for(size_t i=0;i<info.players.size();++i){auto& source=info.players[i];if(source.id<0 || source.id>=16 || i>=16)throw std::runtime_error("Invalid classic source player");auto& player=config_.players[source.id];constexpr unsigned races[]={32,1,2,8,4};player.name=source.name;player.controller=source.type==1?0:source.type==2?1:source.type==3?3:5;player.racePreference=source.race>=0 && source.race<=4?races[source.race]:32;player.start=int(i);player.forcedStart=source.fixedStart!=0;config_.starts[i].defined=true;config_.starts[i].position={jass::Real::fromBits(std::bit_cast<std::uint32_t>(source.start[0])),jass::Real::fromBits(std::bit_cast<std::uint32_t>(source.start[1]))};if(info.flags&0x40)for(size_t force=0;force<info.forces.size();++force)if(info.forces[force].players&(1u<<source.id)){player.team=unsigned(force);break;}}
     bindNatives();
 }
@@ -53,7 +53,7 @@ void ScriptSession::bindNatives() {
     bindWorldNatives();bindSpatialEvents();bindFogNatives();bindTextNatives();bindCacheNatives();bindHashtableNatives();
     bindSoundNatives();
     bindMusicNatives();
-    bindEntityNatives();
+    bindEntityNatives();bindFoodNatives();bindCommerceNatives();bindProductionNatives();
     bindWeatherNatives();
     for(auto entry:enums)bind(entry.name,entry.type,{"integer"},[entry](auto& vm,auto args){return vm.handle(entry.type,args[0].bits);});
     bind("GetHandleId","integer",{"handle"},[](auto& vm,auto args){return vm.integer(integer(args[0]));});

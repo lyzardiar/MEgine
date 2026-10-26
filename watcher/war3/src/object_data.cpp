@@ -30,7 +30,7 @@ ObjectData::ObjectData(Archives& archives) {
     auto metadata=SourceTable::read(archives,"Units\\UnitMetaData.slk");for(auto& row:metadata.rows()){auto id=cell(row,"ID");if(id.size()==4)metadata_.emplace(code(id),row);}
     for(auto race:{"Human","Orc","Undead","NightElf","Neutral","Campaign"})for(auto suffix:{"UnitFunc.txt","UnitStrings.txt"})if(auto member=archives.read(std::string("Units\\")+race+suffix))profiles_.parse(member->bytes);
     for(auto name:{"Units\\ItemFunc.txt","Units\\ItemStrings.txt"})if(auto member=archives.read(name))profiles_.parse(member->bytes);
-    for(auto race:{"Human","Orc","Undead","NightElf","Neutral","Common","Campaign","Item"})if(auto member=archives.read(std::string("Units\\")+race+"AbilityFunc.txt"))profiles_.parse(member->bytes);
+    for(auto race:{"Human","Orc","Undead","NightElf","Neutral","Common","Campaign","Item"})for(auto suffix:{"AbilityFunc.txt","AbilityStrings.txt"})if(auto member=archives.read(std::string("Units\\")+race+suffix))profiles_.parse(member->bytes);
     overlay(archives,"war3map.w3u");overlay(archives,"war3map.w3t");
     for(bool custom:{false,true})for(auto& object:objects_)if(object.custom==custom){
         if(custom){if(contains(object.id) || contains(object.id,true))throw std::runtime_error("Duplicate custom object: "+name(object.id));if(!contains(object.base) && !contains(object.base,true))throw std::runtime_error("Missing custom object base: "+name(object.base));parents_[object.id]=object.base;}

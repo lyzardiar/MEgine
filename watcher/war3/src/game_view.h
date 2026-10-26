@@ -32,6 +32,7 @@ class GameView {
     std::optional<std::pair<float,float>> project(float x,float y,float z) const;
     void input(const GameInput& input);
     void hud(const GameInput& input);
+    void commandPanel(const GameInput& input,std::uint32_t unit);
     void selection();
     void stream();
     void command(float x,float y);

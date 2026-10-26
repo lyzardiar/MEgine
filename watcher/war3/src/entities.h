@@ -2,6 +2,7 @@
 #pragma once
 #include "world.h"
 #include "object_data.h"
+#include "commerce.h"
 
 namespace war3 {
 struct UnitState {
@@ -32,6 +33,13 @@ struct UnitState {
     std::vector<std::string> animationQueue;
     std::array<std::uint32_t,6> inventory{};
     std::map<std::uint32_t,bool> permanentAbilities;
+    bool foodCounted=false,useFood=true,removing=false;
+    std::vector<std::uint32_t> trainables;
+    std::vector<StockEntry> stock;
+    int unitStockSlots=-1,itemStockSlots=-1;
+    std::deque<ProductionOrder> production;
+    std::optional<WorldPoint> rally;
+    std::uint32_t rallyTarget=0;
 };
 struct ItemState {
     std::uint32_t type=0,owner=15;

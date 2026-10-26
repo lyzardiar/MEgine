@@ -79,6 +79,9 @@ class ScriptSession {
     std::uint64_t fogRevision_=1,fogTicks_=0;
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;
+    std::map<std::pair<std::uint32_t,bool>,ProductInfo> products_;
+    std::map<std::pair<std::uint32_t,bool>,std::optional<std::pair<int,int>>> globalStock_;
+    std::uint64_t productionTicket_=0;
     jass::Value create(NativeKind kind);
     Object& object(jass::Value handle,NativeKind kind);
     SessionPlayer& player(jass::Value handle);
@@ -99,6 +102,23 @@ class ScriptSession {
     void bindTextNatives();
     void bindCacheNatives();
     void bindHashtableNatives();
+    void bindCommerceNatives();
+    void bindFoodNatives();
+    void bindProductionNatives();
+    void removeUnit(std::uint32_t unit);
+    std::optional<WorldPoint> spawnPoint(const UnitState& producer,std::uint32_t type);
+    void initializeCommerce(UnitState& unit);
+    void setStock(UnitState& unit,std::uint32_t type,bool item,int current,int maximum);
+    bool sells(const UnitState& unit,bool item) const;
+    std::shared_ptr<UnitState> shopper(std::uint32_t shop,unsigned owner,std::uint32_t requested=0,bool inventory=false);
+    bool productAllowed(unsigned owner,const ProductInfo& product,std::string& reason,bool food=true);
+    unsigned techCount(unsigned owner,std::uint32_t type,bool queued);
+    void restock();
+    void production(double delta);
+    void adjustFood(unsigned owner,int used,int capacity);
+    void unitFood(std::uint32_t unit,bool counted,int reserved=0);
+    void transferFood(const UnitState& unit,unsigned oldOwner,unsigned newOwner);
+    bool startProduction(std::uint32_t unit);
     unsigned inventorySize(const UnitState& unit);
     bool giveItem(std::uint32_t unit,std::uint32_t item,std::optional<unsigned> slot={});
     void spatialEvents();
@@ -125,7 +145,7 @@ class ScriptSession {
     ObjectData& definitions();
     UnitState& unit(jass::Value value);
     ItemState& item(jass::Value value);
-    jass::Value createUnit(std::uint32_t owner,std::uint32_t type,jass::Real x,jass::Real y,jass::Real facing);
+    jass::Value createUnit(std::uint32_t owner,std::uint32_t type,jass::Real x,jass::Real y,jass::Real facing,int reservedFood=0);
     jass::Value createItem(std::uint32_t type,jass::Real x,jass::Real y);
     SoundScene& requireAudio();
     MusicScene& requireMusic();
@@ -142,6 +162,12 @@ public:
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986);
     bool stopUnit(std::uint32_t handle,bool hold=false);
     void dropItem(std::uint32_t unit,std::uint32_t item);
+    const ProductInfo& product(std::uint32_t type,bool item=false);
+    std::vector<CommandButton> commands(std::uint32_t unit,unsigned player);
+    bool purchase(std::uint32_t shop,unsigned player,std::uint32_t type,bool item,std::uint32_t buyer=0);
+    bool train(std::uint32_t unit,std::uint32_t type);
+    bool cancelProduction(std::uint32_t unit,size_t index=0,bool refund=true);
+    bool setRally(std::uint32_t unit,WorldPoint point,std::uint32_t target=0);
     void chat(unsigned player,const std::string& message);
     const FogGrid& fog(unsigned player);
     const std::vector<ScriptText>& texts() const {return texts_;}

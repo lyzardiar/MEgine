@@ -1,0 +1,19 @@
+// Author: MiYu. Source product buttons, stock, tooltips and cancellable training progress consume live session commerce.
+#include "game_view.h"
+#include <algorithm>
+#include <cwctype>
+
+namespace war3 {
+namespace {
+bool hit(float x,float y,float left,float top,float w,float h){return x>=left && y>=top && x<left+w && y<top+h;}
+std::wstring plain(std::string_view value){std::string text;for(size_t i=0;i<value.size();){auto part=value.substr(i);if(part.size()>=10 && (part.starts_with("|c") || part.starts_with("|C")))i+=10;else if(part.starts_with("|r") || part.starts_with("|R"))i+=2;else if(part.starts_with("|n") || part.starts_with("|N")){text+=' ';i+=2;}else text+=value[i++];}return wide(text);}
+}
+void GameView::commandPanel(const GameInput& input,std::uint32_t handle) {
+    auto& session=*data_->session;if(!session.units().contains(handle))return;auto unit=session.units().at(handle);auto local=session.localPlayer().value_or(0);auto buttons=session.commands(handle,local);float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;
+    auto quad=[&](float x,float y,float w,float h,DWORD color,IDirect3DTexture9* image=nullptr){renderer_.rect(left+x*scale,top+y*scale,w*scale,h*scale,color,image);};auto label=[&](const std::wstring& text,float x,float y,float height,DWORD color=0xffffffff){text_.draw(text,left+x*scale,top+y*scale,height*scale,color);};std::optional<CommandButton> hover;
+    for(auto button:buttons){float x=.636f+button.x*.04f,y=.456f+button.y*.044f;quad(x,y,.037f,.037f,button.enabled?0xff303030:0xff101010);if(auto image=data_->assets->cachedTexture(button.icon))quad(x,y,.037f,.037f,button.enabled?0xffffffff:0xff666666,image);if(button.stock>=0)label(std::to_wstring(button.stock),x+.025f,y+.024f,.01f);bool over=hit(input.ui.x,input.ui.y,x,y,.037f,.037f);if(over)hover=button;bool hotkey=button.hotkey.size()==1 && input.ui.key==unsigned(std::towupper(wchar_t(static_cast<unsigned char>(button.hotkey[0]))));if((input.ui.pressed && over) || hotkey){if(!button.enabled){session.displayText(local,0,0,2,button.reason);continue;}bool accepted=button.action==CommandAction::Train?session.train(handle,button.type):session.purchase(handle,local,button.type,button.action==CommandAction::BuyItem);if(!accepted)session.displayText(local,0,0,2,"当前无法执行该命令");}}
+    if(buttons.empty() && unit->owner==local && !unit->building)for(unsigned i=0;i<3;++i){float x=.636f+i*.04f;quad(x,.456f,.037f,.037f,0xffffffff,data_->assets->texture(data_->commandIcons[i]));if(input.ui.pressed && hit(input.ui.x,input.ui.y,x,.456f,.037f,.037f)){if(!i)moveMode_=true;else for(auto id:selected(true))if(session.units().contains(id))session.stopUnit(id,i==2);}}
+    auto jobs=unit->production;if(!jobs.empty()){float progress=float(std::clamp(jobs.front().elapsed/jobs.front().duration,0.,1.));quad(.27f,.526f,.24f,.006f,0xff101010);quad(.27f,.526f,.24f*progress,.006f,0xffddbb44);label(jobs.front().started?L"训练中":L"等待人口",.27f,.512f,.01f);for(size_t i=0;i<jobs.size();++i){float x=.27f+float(i)*.034f;auto& info=session.product(jobs[i].type);quad(x,.54f,.03f,.03f,0xff333333);if(auto image=data_->assets->cachedTexture(info.icon))quad(x,.54f,.03f,.03f,0xffffffff,image);if(hit(input.ui.x,input.ui.y,x,.54f,.03f,.03f)){label(L"取消 "+plain(info.name),.27f,.577f,.011f);if(input.ui.pressed && unit->owner==local)session.cancelProduction(handle,i);}}}
+    if(hover){auto& b=*hover;quad(.47f,.346f,.32f,.095f,0xee101010);label(plain(b.name)+(b.hotkey.empty()?L"":L" ("+wide(b.hotkey)+L")"),.48f,.352f,.012f,0xffffcc55);label(L"金币 "+std::to_wstring(b.gold)+L"   木材 "+std::to_wstring(b.lumber),.48f,.373f,.011f);auto line=plain(b.enabled?b.tip:b.reason);if(line.size()>48)line.resize(48);label(line,.48f,.395f,.01f,b.enabled?0xffffffff:0xffff5555);}
+}
+}
