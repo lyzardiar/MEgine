@@ -20,7 +20,7 @@
 | 原版存档、回放 | 待实现 | 格式互通、确定性、载入与播放 |
 | 局域网 | 待实现 | 双客户端命令同步、校验和重连边界 |
 | OpenGL 兼容路径 | 待实现 | 相同场景、材质、输入与资源生命周期 |
-| Amazonia、BootyBay、DotA_v6.83d | 源记录/probe、指令编译、三图globals/config/菜单通过；Amazonia的main仍在天气，BootyBay已通过音乐配置并在CreateUnit失败，DotA待本批复查；完整main、玩法、UI和性能待实现/验收 | 初始化、玩法、性能与持续切图 |
+| Amazonia、BootyBay、DotA_v6.83d | 源记录/probe、指令编译、三图globals/config/菜单通过，W019–W021已实现范围52项合并通过；三图main分别在AddWeatherEffect、CreateUnit、CreateSound失败；完整main、玩法、UI和性能待实现/验收 | 初始化、玩法、性能与持续切图 |
 | 性能、无解包与资源释放 | 待验收 | 同机冷/热载入、帧耗时、内存与磁盘增长 |
 | 旧转换缓存清理 | 等待直接加载验收 | 核对引用和目录边界，记录回收空间 |
 

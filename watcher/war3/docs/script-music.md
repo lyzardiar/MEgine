@@ -31,4 +31,4 @@ cmake --build --preset release --target war3 war3_music_tests --parallel 8
 python tools/verify_music_cpu.py
 ```
 
-W019–W021达到3项，合并验证在[独立测试队列](testing-batches.md)记录；旧MEngine161–163批次继续延期。
+W019–W021已在 `e073a7d` 合并验证已实现范围52项（执行44项、复用music8项），0失败。三图配置/菜单通过，完整main分别在天气/单位/普通声音失败，详情见[独立测试队列](testing-batches.md)；旧MEngine161–163批次继续延期。

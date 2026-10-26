@@ -18,7 +18,7 @@
 
 REA核对Game.dll：MIDI转换调用 `0x6f141bc5` 传入源指针/长度、输出指针/长度、flags=0，成功后通过AIL_init_sequence(...,0)初始化；另一个调用点为 `0x6f16a765`。XMIDI打开调用 `0x6f14259d` 使用配置标志0/1，当前后端为0。所有边界使用原DLL导出的stdcall签名，不调用Game.dll。MSS及codec摘要保持原固定版本。
 
-声音环境来自 `UI\SoundInfo\EnvironmentSounds.slk`，Default为MOUNTAINS，包含衰减/反射等参数；NewSoundEnvironment入口 `0x6f1f15b0` 进入 `0x6f33afa0`，含5000ms切换节流和延迟调用。地图SetMapMusic入口 `0x6f1f5ef0` 将random转换为index=-1，再交给 `0x6f33ce60` 保存标签/索引。Music标签的实际曲目来自 `UI\war3skins.txt` 各种族Music_V0/V1列表。这些环境、时间与播放列表行为留给下一项实现，保持原脚本函数路径。
+声音环境来自 `UI\SoundInfo\EnvironmentSounds.slk`，Default为MOUNTAINS，包含衰减/反射等参数；NewSoundEnvironment入口 `0x6f1f15b0` 进入 `0x6f33afa0`，含5000ms切换节流和延迟调用。地图SetMapMusic入口 `0x6f1f5ef0` 将random转换为index=-1，再交给 `0x6f33ce60` 保存标签/索引。Music标签的实际曲目来自 `UI\war3skins.txt` 各种族Music_V0/V1列表。[脚本声音](script-sound.md)已保存环境并实现非空间MIDI渐变，[时间变量](game-clock.md)支持同步初始化，[脚本音乐](script-music.md)已接入源列表和播放控制；3D环境/节流、完整音频与模拟调度仍待实现。
 
 源表原件仅供本地分析，保存在 `tmp/docs-artifacts/war3/audio/{EnvironmentSounds.slk,MIDISounds.slk,EAXDefs.slk,AmbienceSounds.slk,MiscData.txt}`；REA为 `audio-{native,routing,midi-calls,midi-abi}-rea.json`。这些原始资产/诊断不提交。
 

@@ -62,7 +62,9 @@ W020接入非空间MIDI的100ms整数渐变、首次/重复StartSound源行为�
 
 W021接入8个脚本音乐native、原版skin/地图覆盖曲目表、独立声音RNG、实际内存播放、暂停/恢复、定位、曲终20秒排队和50ms渐变。8项定向检查通过，5,070组RNG/360组渐变/4个回调边界共5,434次原件对照一致。BootyBay真实main通过SetMapMusic后在 `war3map.j:643:13` CreateUnit失败，退出1、main_completed=false，无Game.dll；没有提前播放音乐。ThematicMusic、最终种族/版本上下文与完整声音随机消费/调度尚未完成，见 `script-music.md`。
 
-W019–W021已达到3项，接下来合并三图/选图及相关时间/MIDI/Miles消费检查。接续为时间变量的模拟驱动/边界事件、环境效果与天气/单位native。SetAmbientDaySound/SetAmbientNightSound继续沿用Blizzard.j。后续载入界面、地形/对象渲染、AI与可玩流程、开局时序/随机数/调度和句柄一致性均未完成。来源见 `audio.md`、`script-sound.md`、`script-music.md`、`game-clock.md`，原始证据在 `tmp/docs-artifacts/war3/`。
+W019–W021在 `e073a7d` 合并验证已实现范围：本批执行clock6/sound10/Miles7/world7/browser14共44通过、0失败，复用刚通过的music8项，共52通过、0失败。三图globals/config均退出0，产品菜单导航104/104/108帧通过，无Game.dll。三图完整main均退出1：Amazonia停AddWeatherEffect，BootyBay停CreateUnit，DotA停 `Scripts\war3map.j:90181:8` CreateSound。按新夹具/源码摘要复用clock3,295、sound3,022及music5,434次原件对照。产品摘要与证据见 `audio/batch-w019-w021.json` 及测试队列；未重跑旧引擎、全资产或性能基准，旧161–163批次仍延期。
+
+接续为普通声音/单位/天气native及时间变量的模拟驱动/边界事件。SetAmbientDaySound/SetAmbientNightSound继续沿用Blizzard.j。后续载入界面、地形/对象渲染、AI与可玩流程、开局时序/随机数/调度和句柄一致性均未完成。来源见 `audio.md`、`script-sound.md`、`script-music.md`、`game-clock.md`，原始证据在 `tmp/docs-artifacts/war3/`。
 
 菜单已连接单人、自定义游戏、玩家草稿、取消和退出；开始游戏尚未接入。草稿保持当前选图会话，不写设置存档；原版默认AI与JASS config覆盖时序尚未完成对照。颜色网格、组间距、logo精确比例、灯光／雾／粒子、完整FDF控件、动态布局像素、标题截断/列表行高/认证图标、MDL与完整节点规则仍需实现或核验。四族、战役、存档／回放、局域网、OpenGL均未完成。普通启动的 `--map` 定位选图偏好，进入选图后执行globals/config，probe检查原生记录，script-check构建脚本语法树、解析类型/符号并编译指令，都不表示已能运行地图。
 

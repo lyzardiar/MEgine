@@ -22,3 +22,9 @@
 用户编辑器PID64664保持原进程，启动于2026-10-24 10:39:13，不停止或重启。`.editor/state.json`与仓库版本逐字节一致，已刷新索引消除伪改动；sample `.mengine/`、孤立 `asset-sources.json.meta` 与五个 `.frost-worker-*.mjs` 属于保留内容，不纳入源码提交。
 
 用户已授权在原生直接加载完整验收后清理失去用途的旧地图解包／转换缓存。执行前核对活动引用、Git状态与解析后的绝对路径边界，保留原图／MPQ、版本资产及meta、可编辑导入和用户改动，记录清理数量与回收空间。当前条件尚未满足，未清理缓存。
+
+## 遗留文件核对（2026-10-26）
+
+截图中的5个Rust源码已包含在远端分支的 `5df88b2`；这些路径及 `packages/editor/project/.editor/state.json` 当前与HEAD一致，没有漏提交的源码差异。War3剩余音乐源码、测试、原件对照工具与说明已在 `e073a7d` 提交推送，W019–W021已实现范围52项合并通过，完整开局保持未完成，入口见 `watcher/war3/docs/progress.md`。
+
+6个既有未跟踪文件继续保留：`samples/frostbound-realms/Assets/Licenses/asset-sources.json.meta` 缺少同名资产，不能单独作为完整资产提交；`scripts/.frost-worker-{main-body,network-batch,no-ai,regression,tail-batch}.mjs` 是旧批次本地入口。它们不纳入War3提交、不删除、不重建GUID。sample `.mengine/` 的Library/Recovery本地内容继续保留。旧161–163验证及缓存清理的前置条件不变；本次未重启用户编辑器。
