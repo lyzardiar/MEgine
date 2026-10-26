@@ -109,6 +109,11 @@ class ScriptSession {
     void bindFoodNatives();
     void bindProductionNatives();
     void bindHeroNatives();
+    void bindIllusionNatives();
+    void bindDamageNatives();
+    void timedLives(double delta);
+    std::vector<std::uint32_t> illusions(std::uint32_t caster,std::uint32_t original,unsigned count,float dealt,float taken,double duration,std::uint32_t buff);
+    void removeItem(std::uint32_t item);
     const SourceSettings& gameplay();
     float gameplayNumber(const char* key,float fallback);
     void initializeHero(UnitState& unit);
@@ -148,7 +153,7 @@ class ScriptSession {
     void triggerExecute(std::uint32_t handle);
     void fire(std::uint32_t event,ScriptContext context={});
     void unitEvent(std::uint32_t unit,unsigned playerEvent,unsigned unitEvent,ScriptContext context={});
-    void unitLife(jass::Value handle,jass::Real value);
+    void unitLife(jass::Value handle,jass::Real value,std::uint32_t killer=0);
     void playerChange(unsigned player,std::uint32_t field,int before,int after,bool alliance);
     void tick(double delta);
     void clockChange(jass::Real before,jass::Real after,bool cyclic);
@@ -156,7 +161,7 @@ class ScriptSession {
     ObjectData& definitions();
     UnitState& unit(jass::Value value);
     ItemState& item(jass::Value value);
-    jass::Value createUnit(std::uint32_t owner,std::uint32_t type,jass::Real x,jass::Real y,jass::Real facing,int reservedFood=0);
+    jass::Value createUnit(std::uint32_t owner,std::uint32_t type,jass::Real x,jass::Real y,jass::Real facing,int reservedFood=0,const UnitState* illusionSource=nullptr);
     jass::Value createItem(std::uint32_t type,jass::Real x,jass::Real y);
     SoundScene& requireAudio();
     MusicScene& requireMusic();
@@ -173,6 +178,10 @@ public:
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986);
     bool stopUnit(std::uint32_t handle,bool hold=false);
     void dropItem(std::uint32_t unit,std::uint32_t item);
+    bool itemNeedsTarget(std::uint32_t item);
+    double itemCooldown(std::uint32_t unit,std::uint32_t item);
+    bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
+    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     std::vector<CommandButton> commands(std::uint32_t unit,unsigned player);
     bool purchase(std::uint32_t shop,unsigned player,std::uint32_t type,bool item,std::uint32_t buyer=0);

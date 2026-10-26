@@ -24,6 +24,7 @@ class GameView {
     D3DMATRIX view_{},projection_{};
     bool moveMode_=false;
     bool chatOpen_=false;
+    std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
     std::wstring chatText_;
     std::array<float,3> eye_{};
     size_t drawnChunks_=0,drawnObjects_=0,drawnUnits_=0;
@@ -36,6 +37,7 @@ class GameView {
     void selection();
     void stream();
     void command(float x,float y);
+    void activateItem(std::uint32_t unit,std::uint32_t item);
     std::vector<std::uint32_t> selected(bool owned=false) const;
 public:
     GameView(std::unique_ptr<GameData> data,Renderer& renderer,Text& text,Log& log);

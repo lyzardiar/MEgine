@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import io
 import pathlib
+import struct
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 spec = importlib.util.spec_from_file_location('live_fixture', pathlib.Path(__file__).with_name('generate-live-world-fixture.py'))
@@ -21,6 +22,9 @@ integer probe_finished=0
 integer probe_cancelled=0
 integer probe_levelled=0
 integer probe_learned=0
+integer probe_summons=0
+integer probe_damage=0
+unit probe_illusion=null
 unit probe_trained=null
 endglobals
 function ProbeAssert takes boolean ok, string message returns nothing
@@ -76,6 +80,42 @@ function ProbeHero takes nothing returns nothing
     call SetHeroStr(probe_buyer,30,true)
     call ProbeAssert(GetHeroXP(probe_buyer)==500 and GetHeroStr(probe_buyer,true)==30,"level_and_strength")
 endfunction
+function ProbeSummon takes nothing returns nothing
+    call ProbeAssert(GetSummoningUnit()==probe_buyer,"summoner")
+    set probe_illusion=GetSummonedUnit()
+    call ProbeAssert(IsUnitIllusion(probe_illusion),"illusion_flag")
+    set probe_summons=probe_summons+1
+endfunction
+function ProbeDamage takes nothing returns nothing
+    call ProbeAssert(GetEventDamageSource()==probe_buyer and GetEventDamage()==300.0,"illusion_damage")
+    set probe_damage=probe_damage+1
+endfunction
+function ProbeIllusion takes nothing returns nothing
+    local trigger t=CreateTrigger()
+    local item wand=UnitAddItemById(probe_buyer,'will')
+    local item potion
+    call TriggerRegisterUnitEvent(t,probe_buyer,EVENT_UNIT_SUMMON)
+    call TriggerAddAction(t,function ProbeSummon)
+    call ProbeAssert(not IsUnitIllusion(probe_buyer),"real_unit")
+    call ProbeAssert(UnitUseItemTarget(probe_buyer,wand,probe_buyer),"wand_use")
+    call ProbeAssert(GetItemCharges(wand)==2 and GetUnitFoodUsed(probe_illusion)==5,"wand_charge")
+    set t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,probe_illusion,EVENT_UNIT_DAMAGED)
+    call TriggerAddAction(t,function ProbeDamage)
+    call ProbeAssert(UnitDamageTarget(probe_buyer,probe_illusion,100,false,false,ATTACK_TYPE_CHAOS,DAMAGE_TYPE_UNIVERSAL,WEAPON_TYPE_WHOKNOWS),"damage_illusion")
+    call ProbeAssert(GetUnitState(probe_illusion,UNIT_STATE_LIFE)==550,"illusion_taken")
+    call ProbeAssert(UnitDamageTarget(probe_illusion,probe_buyer,100,false,false,ATTACK_TYPE_CHAOS,DAMAGE_TYPE_UNIVERSAL,WEAPON_TYPE_WHOKNOWS),"damage_by_illusion")
+    call ProbeAssert(GetUnitState(probe_buyer,UNIT_STATE_LIFE)==800,"illusion_dealt")
+    set potion=UnitAddItemById(probe_buyer,'phea')
+    call ProbeAssert(UnitUseItem(probe_buyer,potion),"heal_use")
+    call ProbeAssert(GetUnitState(probe_buyer,UNIT_STATE_LIFE)==850,"heal_result")
+    set potion=UnitAddItemById(probe_buyer,'phea')
+    call ProbeAssert(not UnitUseItem(probe_buyer,potion),"shared_cooldown")
+    call UnitPauseTimedLife(probe_illusion,true)
+endfunction
+function ProbeResumeIllusion takes nothing returns nothing
+    call UnitPauseTimedLife(probe_illusion,false)
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing
@@ -122,6 +162,11 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
+    ability_id = b'A0IL'
+    changes = b''.join(field + struct.pack('<III f', 2, 1, slot, value) + ability_id for field, slot, value in [(b'Iild', 1, .5), (b'Iilw', 2, 3.), (b'adur', 0, 2.), (b'ahdu', 0, 2.)])
+    files['war3map.w3a'] = struct.pack('<III', 2, 0, 1) + b'AIil' + ability_id + struct.pack('<I', 4) + changes
+    files['war3map.w3t'] = struct.pack('<II', 2, 1) + b'will' + bytes(4) + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + ability_id + bytes(1) + b'will' + struct.pack('<I', 0)
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))

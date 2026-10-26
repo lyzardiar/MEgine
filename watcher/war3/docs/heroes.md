@@ -7,7 +7,7 @@
 - SetHeroXP/SetHeroLevel/UnitStripHeroLevel改变经验和等级，增长/减少对应属性和技能点，升级发送玩家/单位事件。升级回调可以修改英雄或删除单位，旧升级过程通过版本号结束。
 - Get/SetHeroStr/Agi/Int、GetHeroXP/Level/SkillPoints、UnitModifySkillPoints、经验暂停和专有名称提供真实状态；力量/智力变化更新当前生命/魔法及上限。
 - SetPlayerHandicapXP保存每个玩家的经验倍率，AddHeroXP当前按所属玩家倍率计入经验，经验暂停会阻止该增加入口。绝对设置经验和等级使用指定值。倍率适用范围及原件舍入仍待REA/运行精确对照，不代表击杀分配已实现。
-- SelectHeroSkill验证源学习列表、等级要求、已学等级和技能点，再改变实际能力等级，并发送学习事件及上下文。尚不支持自定义w3a定义，也不表示完整施法/效果已实现；遇到缺失定义明确失败。
+- SelectHeroSkill验证源学习列表、等级要求、已学等级和技能点，再改变实际能力等级，并发送学习事件及上下文。自定义w3a定义已由ObjectData读取；完整施法/效果仍按能力代码接续，缺失定义明确失败。
 - SetHeroLevel的下降由独立UnitStripHeroLevel入口处理，与原版Blizzard.j的SetHeroLevelBJ调用结构一致。升级视觉效果、复活完整规则、技能降级重分配、物品属性叠加、名称池随机选择及不同历史规则集仍待实现/验收。
 
 DotA已越过SetPlayerHandicapXP、SetAltMinimapIcon和GetItemType。最新123单位/1物品/67触发器/700事件，停在UnitAddItem拾取事件调用的IsUnitIllusion（Scripts/war3map.j:17014）；幻象创建和生命周期尚未实现，没有添加固定false占位。main仍未完成。

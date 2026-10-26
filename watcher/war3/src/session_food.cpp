@@ -11,7 +11,7 @@ void ScriptSession::adjustFood(unsigned owner,int used,int capacity) {
     playerChange(owner,5,beforeUsed,afterUsed,false);playerChange(owner,4,beforeCap,afterCap,false);
 }
 void ScriptSession::unitFood(std::uint32_t handle,bool counted,int reserved) {
-    if(!alive(handle,NativeKind::Unit))return;auto state=units_.at(handle);counted=counted && state->useFood && !state->removing && number(state->life)>0;int sign=int(counted)-int(state->foodCounted);state->foodCounted=counted;adjustFood(state->owner,sign*state->foodUsed-reserved,sign*state->foodMade);
+    if(!alive(handle,NativeKind::Unit))return;auto state=units_.at(handle);counted=counted && !state->illusion && state->useFood && !state->removing && number(state->life)>0;int sign=int(counted)-int(state->foodCounted);state->foodCounted=counted;adjustFood(state->owner,sign*state->foodUsed-reserved,sign*state->foodMade);
 }
 void ScriptSession::transferFood(const UnitState& u,unsigned oldOwner,unsigned newOwner) {
     int used=u.foodCounted?u.foodUsed:0,capacity=u.foodCounted?u.foodMade:0;for(auto& job:u.production)if(job.reserved)used+=job.food;
@@ -26,7 +26,7 @@ void ScriptSession::removeUnit(std::uint32_t handle) {
 void ScriptSession::bindFoodNatives() {
     bind("SetUnitUseFood","nothing",{"unit","boolean"},[this](auto& vm,auto a){auto& u=unit(a[0]);u.useFood=a[1].bits!=0;unitFood(a[0].bits,u.useFood);return vm.nothing();});
     for(auto [name,capacity]:std::initializer_list<std::pair<const char*,bool>>{{"GetFoodUsed",false},{"GetFoodMade",true}})bind(name,"integer",{"integer"},[this,capacity](auto& vm,auto a){if(!definitions().contains(a[0].bits))return vm.integer(0);return vm.integer(int(definitions().number(a[0].bits,"UnitBalance",capacity?"fmade":"fused")));});
-    auto revive=[this](std::uint32_t handle,WorldPoint point){if(!alive(handle,NativeKind::Unit))return false;auto u=units_.at(handle);if(!u->hero || u->removing || number(u->life)>0)return false;point=requireWorld().clamp(point);u->x=point.x;u->y=point.y;u->life=u->maxLife;u->route.clear();u->waypoint=0;u->animation="Stand";u->animationIndex.reset();u->animationTime=0;unitFood(handle,true);return true;};
+    auto revive=[this](std::uint32_t handle,WorldPoint point){if(!alive(handle,NativeKind::Unit))return false;auto u=units_.at(handle);if(!u->hero || u->illusion || u->removing || number(u->life)>0)return false;point=requireWorld().clamp(point);u->x=point.x;u->y=point.y;u->life=u->maxLife;u->route.clear();u->waypoint=0;u->animation="Stand";u->animationIndex.reset();u->animationTime=0;unitFood(handle,true);return true;};
     bind("ReviveHero","boolean",{"unit","real","real","boolean"},[revive](auto& vm,auto a){return vm.boolean(revive(a[0].bits,{jass::Real::fromBits(a[1].bits),jass::Real::fromBits(a[2].bits)}));});
     bind("ReviveHeroLoc","boolean",{"unit","location","boolean"},[this,revive](auto& vm,auto a){return vm.boolean(revive(a[0].bits,std::get<WorldPoint>(object(a[1],NativeKind::Location).state)));});
 }

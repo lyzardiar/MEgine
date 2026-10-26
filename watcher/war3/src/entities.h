@@ -5,6 +5,7 @@
 #include "commerce.h"
 
 namespace war3 {
+struct TimedLife {std::uint32_t buff=0;double duration=0,remaining=0;bool paused=false;};
 struct UnitState {
     std::uint32_t type=0,owner=0;
     std::string name,model,icon;
@@ -47,6 +48,11 @@ struct UnitState {
     std::vector<std::uint32_t> learnable;
     std::string properName;
     std::uint64_t heroRevision=0;
+    bool illusion=false;
+    std::uint32_t summoner=0,illusionOriginal=0;
+    float damageDealt=1,damageTaken=1;
+    std::optional<TimedLife> timedLife;
+    std::map<std::string,double> itemCooldowns;
 };
 struct ItemState {
     std::uint32_t type=0,owner=15;

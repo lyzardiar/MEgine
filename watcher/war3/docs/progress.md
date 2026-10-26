@@ -2,7 +2,9 @@
 
 2026-10-27。目标仍为 1.27.0.52240 完整客户端，未完成；MEngine 移植尚未开始。
 
-最新英雄接续：源经验阈值/成长、等级/属性/生命魔法、技能点/原版学习事件、玩家经验倍率和HUD展示已接入，SetAltMinimapIcon连接小地图资源/绘制，GetItemType读取源物品类别。最新DotA到123单位/1物品/67触发器/700事件，停在IsUnitIllusion（Scripts/war3map.j:17014，经UnitAddItem拾取事件调用），完整main未完成。Win32 Release产品和扩展消费者编译通过；专项夹具待集中运行，新增GPU未实测，完整战斗/技能及原件精度尚未完成。见[英雄经验与成长](heroes.md)及W038。
+最新能力/物品接续：w3a元数据/继承、魔棒幻象实例/倍率/召唤/定时生命、基础药水/冷却/使用输入、基础脚本伤害/死亡已接入。DotA原main首次完成：123单位/1物品/205触发器/1,303事件，无Game.dll；推进250ms仍在CreateQuest失败，完整开局未完成。必要Release及扩展消费者编译通过，专项夹具和新GPU/输入待集中验证。见[自定义能力、物品使用与幻象](illusions-items.md)。
+
+bfb0a58英雄接续：源经验阈值/成长、等级/属性/生命魔法、技能点/原版学习事件、玩家经验倍率和HUD展示已接入，SetAltMinimapIcon连接小地图资源/绘制，GetItemType读取源物品类别。最新DotA到123单位/1物品/67触发器/700事件，停在IsUnitIllusion（Scripts/war3map.j:17014，经UnitAddItem拾取事件调用），完整main未完成。Win32 Release产品和扩展消费者编译通过；专项夹具待集中运行，新增GPU未实测，完整战斗/技能及原件精度尚未完成。见[英雄经验与成长](heroes.md)及W038。
 
 最新接续：源商店库存/补货、单位/物品购买、7项单位训练队列/取消/退款/完成、人口生命周期和源产品命令区已连接会话及JASS。必要Win32 Release产品和新增消费者程序编译无警告；专项夹具已准备，按阶段集中验证，尚未运行。DotA已越过AddUnitToStock和GetObjectName，1b8d7eb开局复现停在SetPlayerHandicapXP（Scripts/war3map.j:8416），完整main未完成。新增GPU界面待测。见[商店与单位训练](commerce.md)和W035–W037。
 
