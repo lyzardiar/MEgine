@@ -1,0 +1,50 @@
+// Author: MiYu. Source clock rules, native session state and original assignment fixtures.
+#include "session.h"
+#include "setup.h"
+#include <StormLib.h>
+#include <bit>
+#include <functional>
+#include <iostream>
+
+using namespace war3;
+using namespace war3::jass;
+namespace {
+void require(bool value,const char* message) {if(!value)throw std::runtime_error(message);}
+template<class F> void rejects(F run,const char* message) {try{run();}catch(const std::exception& e){require(std::string(e.what()).find(message)!=std::string::npos,"Unexpected clock diagnostic");return;}throw std::runtime_error("Invalid clock operation accepted");}
+Real real(float value) {return Real::fromBits(std::bit_cast<std::uint32_t>(value));}
+void mpq(const fs::path& path,const std::string& name,const std::string& value) {
+    HANDLE archive=nullptr;require(SFileCreateArchive(path.c_str(),MPQ_CREATE_ARCHIVE_V1,16,&archive),"Cannot create clock archive");struct Close {HANDLE value;~Close(){SFileCloseArchive(value);}}close{archive};HANDLE member=nullptr;require(SFileCreateFile(archive,name.c_str(),0,DWORD(value.size()),0,MPQ_FILE_COMPRESS,&member),"Cannot create clock member");bool written=SFileWriteFile(member,value.data(),DWORD(value.size()),MPQ_COMPRESSION_ZLIB),finished=SFileFinishFile(member);require(written && finished,"Cannot write clock member");
+}
+MapData map() {MapData data;data.info.players={{0,1,0,0,"Local",{},0,0}};data.terrain.width=data.terrain.height=2;data.terrain.corners.resize(4);return data;}
+std::unique_ptr<World> world() {return std::make_unique<World>(map(),std::array<Real,4>{});}
+const std::string api=R"jass(type fgamestate extends handle
+native ConvertFGameState takes integer value returns fgamestate
+constant native GetFloatGameState takes fgamestate state returns real
+native SetFloatGameState takes fgamestate state, real value returns nothing
+native GetTimeOfDayScale takes nothing returns real
+native SetTimeOfDayScale takes real value returns nothing
+native SuspendTimeOfDay takes boolean value returns nothing
+globals
+real initial=GetFloatGameState(ConvertFGameState(2))
+endglobals
+function config takes nothing returns nothing
+endfunction
+function main takes nothing returns nothing
+call SetFloatGameState(ConvertFGameState(2),8.0)
+call SetTimeOfDayScale(2.0)
+call SuspendTimeOfDay(true)
+endfunction
+)jass";
+Module compile() {return Module::compile(Program::parse({{"clock.j",api,"authored clock integration"}}));}
+Value call(ScriptSession& session,const char* name,std::initializer_list<Value> args={}) {return session.runtime().invoke(name,std::span<const Value>(args.begin(),args.size()));}
+}
+int wmain(int argc,wchar_t** argv) {
+    if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("clock_initial_state_scale_and_suspend",[]{GameClock clock;require(clock.time().bits()==0 && clock.scale().bits()==0x3f800000 && !clock.suspended() && !clock.daytime(),"Source initial clock state differs");auto rate=clock.rate();require(std::bit_cast<float>(rate.bits())>.0499f && std::bit_cast<float>(rate.bits())<.0501f,"Source day rate differs");clock.time(real(6));require(clock.daytime(),"Dawn not inclusive");clock.time(real(18));require(!clock.daytime(),"Dusk not exclusive");clock.scale(real(-2));clock.suspend(true);clock.suspend(true);require(clock.rate().bits()==0 && clock.scale().bits()==real(-2).bits() && clock.time().bits()==real(18).bits(),"Suspension changed clock value or scale");clock.suspend(false);require(std::bit_cast<float>(clock.rate().bits())<0,"Resume lost negative source scale");});
+    test("clock_map_misc_overlay_and_cycle_validation",[&]{auto scratch=output/(L"rules-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));fs::create_directories(scratch);mpq(scratch/L"war3.mpq","Units\\MiscData.txt","[Misc]\nDayLength=480\nDayHours=24\nDawn=6\nDusk=18\n");mpq(scratch/L"custom.w3x","war3mapMisc.txt","[Misc]\nDayLength=240\nDayHours=12\nDawn=+3\n");Archives archives(scratch);archives.mountMap(scratch/L"custom.w3x");GameClock custom(DayNightRules::read(archives));require(custom.rules().dayLength.bits()==real(240).bits() && custom.rules().dayHours.bits()==real(12).bits() && custom.rules().dawn.bits()==real(3).bits() && custom.rules().dusk.bits()==real(18).bits(),"Map clock override lost an inherited source field");custom.time(real(50));require(custom.time().bits()==real(12).bits(),"Custom source upper bound ignored");archives.unmountMap();require(DayNightRules::read(archives).dayLength.bits()==real(480).bits(),"Map clock override leaked after unmount");auto bad=custom.rules();bad.dayLength=Real{};rejects([&]{GameClock invalid(bad);},"positive");bad.dayLength=Real::fromBits(0x7f800000);rejects([&]{GameClock invalid(bad);},"Non-finite");});
+    test("clock_native_globals_main_and_world_lifetime",[]{ScriptSession session(compile(),map().info);session.attachWorld(world());session.configure();require(session.runtime().global("initial").bits==0,"Globals did not observe source zero time");PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();require(session.mainCompleted() && session.world()->clock().time().bits()==real(8).bits() && session.world()->clock().suspended(),"Main did not retain time controls in world");require(call(session,"GetTimeOfDayScale").bits==real(2).bits() && call(session,"GetFloatGameState",{session.runtime().handle("fgamestate",2)}).bits==real(8).bits(),"Native getter disagrees with world clock");ScriptSession next(compile(),map().info);next.attachWorld(world());next.initialize();require(next.runtime().global("initial").bits==0 && next.world()->clock().scale().bits()==real(1).bits() && !next.world()->clock().suspended(),"Clock leaked into another session");});
+    test("clock_native_invalid_state_and_missing_world",[]{ScriptSession session(compile(),map().info);session.attachWorld(world());session.initialize();auto& vm=session.runtime();call(session,"SetFloatGameState",{vm.handle("fgamestate",2),vm.real(real(10))});for(auto id:{0u,1u,3u,0xffffffffu}){auto state=vm.handle("fgamestate",id);call(session,"SetFloatGameState",{state,vm.real(real(20))});require(call(session,"GetFloatGameState",{state}).bits==0 && session.world()->clock().time().bits()==real(10).bits(),"Unknown float state modified source state two");}ScriptSession unattached(compile(),map().info);rejects([&]{unattached.initialize();},"attached map terrain");});
+    test("clock_original_world_source_defaults",[&]{Archives archives(argv[1]);archives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");auto source=World::read(archives);auto& clock=source->clock();require(clock.rules().dayLength.bits()==real(480).bits() && clock.rules().dayHours.bits()==real(24).bits() && clock.rules().dawn.bits()==real(6).bits() && clock.rules().dusk.bits()==real(18).bits() && clock.time().bits()==0,"Original world clock values differ");archives.unmountMap();require(source->clock().rules().dayLength.bits()==real(480).bits(),"Loader unmount invalidated world rules");});
+    test("clock_original_assignment_fixture",[&]{std::ofstream file(output/L"clock-native.json",std::ios::binary);require(bool(file),"Cannot save clock fixture");file<<"{\"assignments\":[";bool comma=false;std::vector<float> values={-1000000,-24,-1,-0.f,0,.00001f,.125f,1,5.999f,6,8,12,17.999f,18,23.999f,24,25,1000000};unsigned seed=0x43adf0;for(unsigned i=0;i<256;++i){seed=seed*1664525u+1013904223u;values.push_back(float(int(seed%200000)-100000)/1024.f);}for(bool scale:{false,true})for(float initial:{0.f,.125f,6.f,8.f,18.f,24.f})for(float requested:values){GameClock clock;if(scale)clock.scale(real(initial));else clock.time(real(initial));auto before=scale?clock.scale():clock.time();if(scale)clock.scale(real(requested));else clock.time(real(requested));if(comma)file<<',';comma=true;file<<'['<<scale<<','<<before.bits()<<','<<real(requested).bits()<<','<<(scale?clock.scale():clock.time()).bits()<<']';}file<<"],\"rates\":[";comma=false;for(float scale:{-100.f,-2.f,0.f,.25f,1.f,2.f,100.f}){GameClock clock;clock.scale(real(scale));if(comma)file<<',';comma=true;file<<'['<<clock.scale().bits()<<','<<clock.rules().dayHours.bits()<<','<<clock.rules().dayLength.bits()<<','<<clock.rate().bits()<<']';}file<<"]}\n";file.close();require(bool(file),"Cannot complete clock fixture");});
+    require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded into clock checks");std::cout<<"RESULT passed="<<passed<<" failed="<<failed<<'\n';return failed?1:0;
+}

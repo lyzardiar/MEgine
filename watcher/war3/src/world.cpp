@@ -19,7 +19,7 @@ World::World(MapData data,std::array<jass::Real,4> margins) : data_(std::move(da
 std::unique_ptr<World> World::read(Archives& archives) {
     auto data=MapData::read(archives);SourceSettings settings;settings.load(archives,"UI\\MiscData.txt");if(auto overlay=archives.readCandidates({"war3mapMisc.txt"},ArchiveScope::Map))settings.parse(overlay->bytes);
     std::array<jass::Real,4> margins;unsigned i=0;for(auto key:{"left","right","top","bottom"}){auto text=settings.value("CameraMargins",key);int cells=0;auto [end,error]=std::from_chars(text.data(),text.data()+text.size(),cells);if(error!=std::errc{} || end!=text.data()+text.size())throw std::runtime_error("Invalid source camera margin: "+std::string(key));margins[i++]=cameraMarginFromCells(cells);}
-    auto result=std::make_unique<World>(std::move(data),margins);result->resources_=archives.fork();return result;
+    auto result=std::make_unique<World>(std::move(data),margins);result->clock_=GameClock(DayNightRules::read(archives));result->resources_=archives.fork();return result;
 }
 Archives& World::resources() const {if(!resources_)throw std::runtime_error("World resources require archive-backed terrain");return *resources_;}
 jass::Real World::cameraMarginFromCells(std::int32_t cells) {return jass::Real::fromBits(std::bit_cast<std::uint32_t>(static_cast<float>(cells)*128.f));}

@@ -2,6 +2,7 @@
 #pragma once
 #include "map.h"
 #include "jass_numeric.h"
+#include "game_clock.h"
 
 namespace war3 {
 struct WorldPoint {jass::Real x,y;};
@@ -17,6 +18,7 @@ class World {
     WorldRect bounds_;
     std::array<jass::Real,4> margins_;
     WorldEnvironment environment_;
+    GameClock clock_;
     std::unique_ptr<Archives> resources_;
 public:
     World(MapData data,std::array<jass::Real,4> margins);
@@ -30,5 +32,7 @@ public:
     WorldRect rectangle(WorldPoint first,WorldPoint second) const;
     WorldEnvironment& environment() {return environment_;}
     const WorldEnvironment& environment() const {return environment_;}
+    GameClock& clock() {return clock_;}
+    const GameClock& clock() const {return clock_;}
 };
 }

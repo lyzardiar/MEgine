@@ -3,6 +3,11 @@
 
 namespace war3 {
 void ScriptSession::bindWorldNatives() {
+    bind("GetFloatGameState","real",{"fgamestate"},[this](auto& vm,auto args){return vm.real(args[0].bits==2?requireWorld().clock().time():jass::Real{});});
+    bind("SetFloatGameState","nothing",{"fgamestate","real"},[this](auto& vm,auto args){if(args[0].bits==2)requireWorld().clock().time(jass::Real::fromBits(args[1].bits));return vm.nothing();});
+    bind("GetTimeOfDayScale","real",{},[this](auto& vm,auto){return vm.real(requireWorld().clock().scale());});
+    bind("SetTimeOfDayScale","nothing",{"real"},[this](auto& vm,auto args){requireWorld().clock().scale(jass::Real::fromBits(args[0].bits));return vm.nothing();});
+    bind("SuspendTimeOfDay","nothing",{"boolean"},[this](auto& vm,auto args){requireWorld().clock().suspend(args[0].bits!=0);return vm.nothing();});
     auto point=[this](jass::Value value)->WorldPoint&{return std::get<WorldPoint>(object(value,NativeKind::Location).state);};
     auto rect=[this](jass::Value value)->WorldRect&{return std::get<WorldRect>(object(value,NativeKind::Rect).state);};
     auto makeRect=[this](WorldRect value){auto handle=create(NativeKind::Rect);std::get<WorldRect>(object(handle,NativeKind::Rect).state)=value;return handle;};

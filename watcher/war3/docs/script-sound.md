@@ -18,7 +18,7 @@ NewSoundEnvironment登记完整源环境请求，例如Default的MOUNTAINS和衰
 
 BootyBay和DotA的真实main均完成Default环境请求、1个sound和1个真实MIDI/DLS库创建；之后在 `Scripts\Blizzard.j:1224:12` 的GetFloatGameState明确失败，退出1、main_completed=false，无Game.dll。这两图尚未进入后续StartSound或单位/对战流程。Amazonia仍需天气native。
 
-REA核对CreateMIDISound入口 `0x6f1de400`、创建封装 `0x6f21a980`，保留循环与源输入；GetSoundIsPlaying `0x6f1e4c40`、StopSound `0x6f1f8200`、KillSoundWhenDone `0x6f1efcb0` 关联实际对象。声音的普通/旧MIDI组件路径不同，当前完整渐变仍未还原。GetFloatGameState `0x6f1e2500` 只处理状态2，引用经 `0x6f2676d0` 定位并由 `0x6f03adf0` 求值/夹取；Set入口为 `0x6f1f4da0`/`0x6f03afb0`。初始时间与该变量的推进/事件机制尚未查明，保持未绑定错误。
+REA核对CreateMIDISound入口 `0x6f1de400`、创建封装 `0x6f21a980`，保留循环与源输入；GetSoundIsPlaying `0x6f1e4c40`、StopSound `0x6f1f8200`、KillSoundWhenDone `0x6f1efcb0` 关联实际对象。声音的普通/旧MIDI组件路径不同，当前完整渐变仍未还原。W019已接入[同步初始化时间状态](game-clock.md)，BootyBay在 `Scripts\Blizzard.j:2482:14` 到达StartSound后因非零fade-in明确失败，已持有2个真实MIDI声音/1个DLS库，无Game.dll；完整main与声音渐变继续待实现。时钟模拟推进/事件尚未接入。
 
 ```powershell
 # watcher/war3
