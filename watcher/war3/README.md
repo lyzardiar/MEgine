@@ -23,6 +23,6 @@ cmake --build --preset release --parallel
 
 完整内容按 [功能矩阵](docs/acceptance.md) 跟进，独立验证见 [测试队列](docs/testing-batches.md)。当前版本是客户端基础设施，地图信息与原生记录可读取，“开始游戏”尚未接入会话，完整载入、战斗、JASS、战役和网络仍待实现。菜单 MDX 已绘制，logo 精确比例、灯光、雾、粒子、完整 FDF 与交互仍需还原和对照验收。
 
-原生脚本开发入口为 `--script-check --map <路径>`，可配合 `--hidden`，直接从公共 MPQ 和地图读取 common.j、Blizzard.j 与地图脚本并构建语法树，不需要图形设备。DotA 的 Scripts 路径和 CR 换行已有定向检查；语法树尚未接入执行，见 [JASS 链路](docs/jass.md)。
+原生脚本开发入口为 `--script-check --map <路径>`，可配合 `--hidden`，直接从公共 MPQ 和地图读取 common.j、Blizzard.j 与地图脚本，构建语法树并解析类型、函数和变量槽位，不需要图形设备。DotA 的 Scripts 路径、CR 换行与类型/符号解析已有定向检查；尚未执行地图脚本，见 [JASS 链路](docs/jass.md)。
 
 StormLib 来源、版本和逐文件摘要见 [source-info.json](third_party/stormlib/source-info.json)，许可证在 [LICENSE](third_party/stormlib/source/LICENSE)。原安装资源和 DLL 不随项目分发。REA 作为开发分析工具，不参与游戏运行。

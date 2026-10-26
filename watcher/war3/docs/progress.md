@@ -34,8 +34,10 @@ W004–W006 的基础实现批次已关闭。`war3_browser_tests` 11 项原生 D
 
 W007–W009 的语法与数值批次已关闭：9 项 JASS 检查通过，三图脚本装配/实数字面量预编译均退出 0、无 Game.dll；三图声明数与独立文本计数一致。Amazonia/BootyBay/DotA 的预编译实数分别为 569/428/4,687，来源成员为根 war3map.j／根 war3map.j／Scripts\war3map.j。证据为 `tmp/docs-artifacts/war3/jass/batch-{jass-tests.log,amazonia.log,bootybay.log,dota.log,w007-w009.json}`，已通过且未变化的数值差分沿用。
 
-接续工作为原版表达式绑定、符号/类型、字符串语义和执行栈，再实现 native 绑定，连通地图 config/main、载入界面、会话、地形/对象、AI 和可玩流程。底层 Real 除法与 VM 零除策略保持分层，不能用数值函数结果代替脚本错误路径；未绑定的 native 应显式失败并保留源位置，不能返回默认值伪装执行成功。语法树保留源文本并预编译实数位型，当前没有执行 globals initializer 或 config/main。来源和边界见 `jass.md`，原始证据在 `tmp/docs-artifacts/war3/jass/`。
+W010 类型与符号解析已接入产品 `--script-check`：Module 拥有 AST、handle 继承和函数/局部槽表，表达式与 set 目标保存直接索引，诊断包含源位置。Win32 Release 编译、9 项定向检查和 DotA 原脚本的最小产品集成通过，无 Game.dll；证据为 `tmp/docs-artifacts/war3/jass/module-{build.log,tests.log,dota.log}`。新批次 1/3，三图合并、跨源诊断及后续执行层消费待批次验证。原版完整类型规则、确定赋值、全部路径返回与 constant 纯度尚未完成核验。
 
-菜单已连接单人、自定义游戏、玩家草稿、取消和退出；开始游戏尚未接入。草稿默认 AI、配置持久化及 JASS config 覆盖顺序尚未对照；颜色网格、组间距、logo 精确比例、灯光／雾／粒子、完整 FDF 控件、动态布局像素、标题截断/列表行高/认证图标、MDL 与完整节点规则仍需实现或核验。四族、战役、存档／回放、局域网、OpenGL 均未完成。普通启动的 `--map` 只定位选图偏好，probe 检查原生记录，script-check 构建脚本语法树，都不表示已能运行地图。
+接续工作为原版表达式优先级、字符串语义和执行栈，再实现 native 绑定，连通地图 config/main、载入界面、会话、地形/对象、AI 和可玩流程。底层 Real 除法与 VM 零除策略保持分层，不能用数值函数结果代替脚本错误路径；未绑定的 native 应显式失败并保留源位置，不能返回默认值伪装执行成功。语法树保留源文本并预编译实数位型，当前没有执行 globals initializer 或 config/main。来源和边界见 `jass.md`，原始证据在 `tmp/docs-artifacts/war3/jass/`。
+
+菜单已连接单人、自定义游戏、玩家草稿、取消和退出；开始游戏尚未接入。草稿默认 AI、配置持久化及 JASS config 覆盖顺序尚未对照；颜色网格、组间距、logo 精确比例、灯光／雾／粒子、完整 FDF 控件、动态布局像素、标题截断/列表行高/认证图标、MDL 与完整节点规则仍需实现或核验。四族、战役、存档／回放、局域网、OpenGL 均未完成。普通启动的 `--map` 只定位选图偏好，probe 检查原生记录，script-check 构建脚本语法树并解析类型/符号，都不表示已能运行地图。
 
 完整直接加载验收前不清理旧地图解包缓存；保留 sample 的 `.mengine/`、孤立 `asset-sources.json.meta` 和五个 `.frost-worker-*.mjs`，不纳入本次源码提交。不关闭或重启用户编辑器。
