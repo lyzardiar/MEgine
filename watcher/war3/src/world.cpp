@@ -14,6 +14,7 @@ jass::Real bounded(jass::Real value,jass::Real minimum,jass::Real maximum) {auto
 World::World(MapData data,std::array<jass::Real,4> margins) : data_(std::move(data)),margins_(margins) {
     auto& terrain=data_.terrain;if(terrain.width<2 || terrain.height<2 || std::uint64_t(terrain.width)*terrain.height>4*1024*1024 || std::uint64_t(terrain.width)*terrain.height!=terrain.corners.size())throw std::runtime_error("World terrain dimensions disagree with corners");
     bounds_={real(terrain.origin[0]),real(terrain.origin[1]),real(terrain.origin[0]).add(jass::Real::fromInteger(int((terrain.width-1)*128))),real(terrain.origin[1]).add(jass::Real::fromInteger(int((terrain.height-1)*128)))};
+    if(data_.pathing)obstacles_.resize(data_.pathing->cells.size());
     for(unsigned i=0;i<8;++i)environment_.cameraBounds[i]=real(data_.info.camera[i]);auto& color=data_.info.waterColor;environment_.waterColor={color[2],color[1],color[0],color[3]};
 }
 std::unique_ptr<World> World::read(Archives& archives) {

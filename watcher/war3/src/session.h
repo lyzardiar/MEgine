@@ -84,6 +84,8 @@ class ScriptSession {
     void bindSoundNatives();
     void bindMusicNatives();
     void bindEntityNatives();
+    void bindOrderNatives();
+    void moveUnits(double delta);
     void bindWeatherNatives();
     void bindCallbackNatives();
     void bindCollectionNatives();
@@ -118,6 +120,10 @@ public:
     void applySetup(const PlayerSetup& setup);
     void attachWorld(std::unique_ptr<World> world);
     const World* world() const {return world_.get();}
+    World* world() {return world_.get();}
+    void selectUnit(std::uint32_t handle,bool selected);
+    bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986);
+    bool stopUnit(std::uint32_t handle,bool hold=false);
     void startMain();
     bool mainCompleted() const {return mainCompleted_ && !failed_;}
     void advance(double elapsed);

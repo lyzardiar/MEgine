@@ -9,6 +9,7 @@
 #include <vector>
 #include <stdexcept>
 #include <optional>
+#include <mutex>
 
 namespace war3 {
 using Bytes = std::vector<std::uint8_t>;
@@ -33,12 +34,14 @@ struct Options {
     bool scriptCheck = false;
     bool configCheck = false;
     bool mainCheck = false;
+    bool play = false;
     std::optional<std::uint64_t> timeMs;
     std::optional<unsigned> simulateMs;
     static Options parse();
 };
 class Log {
     std::ofstream stream_;
+    std::mutex mutex_;
 public:
     explicit Log(const fs::path& path);
     void write(std::string_view message);

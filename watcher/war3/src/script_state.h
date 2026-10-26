@@ -1,6 +1,7 @@
 // Author: MiYu. Session callbacks, filters and deterministic timer/event records.
 #pragma once
 #include "jass_runtime.h"
+#include "world.h"
 #include <array>
 
 namespace war3 {
@@ -39,6 +40,8 @@ struct ScriptContext {
     std::uint32_t filterUnit=0,enumUnit=0,filterPlayer=0,enumPlayer=0;
     std::uint32_t previousOwner=0,killingUnit=0;
     std::uint32_t playerState=0;
+    std::uint32_t issuedOrder=0;
+    WorldPoint orderPoint;
 };
 struct ScriptTimerDialog {
     std::uint32_t timer=0;

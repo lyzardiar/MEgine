@@ -1,38 +1,39 @@
 # War3 原生客户端
 
-使用 C++20、Win32 x86、MSVC 和 CMake 独立重建 Warcraft III 1.27.0.52240 客户端。运行不依赖 MEngine、Rust、Tauri、Node.js，不加载原版 Game.dll。原安装只读，StormLib 直接将 MPQ 和地图成员读取到内存。
+使用 C++20、Win32 x86、MSVC 和 CMake 独立重建 Warcraft III 1.27.0.52240 客户端。运行不依赖 MEngine、Rust、Tauri、Node.js，不加载原版 Game.dll。原安装只读，StormLib 直接将公共 MPQ 和地图成员读取到内存；运行地图不生成解包目录。
 
 ```powershell
 cd watcher/war3
 cmake --preset windows-x86
-cmake --build --preset release --parallel
+cmake --build --preset release --target war3 --parallel 8
 ./build/windows-x86/bin/Release/war3.exe --data-root "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne"
 ```
 
-可指定 `--map Maps/FrozenThrone/(2)Amazonia.w3x`、`--renderer d3d9`、`--mute`、`--log <路径>`。开发检查入口为 `--probe` 和 `--hidden --frames 120`。默认日志位于 `%LOCALAPPDATA%/MEgine/War3/Logs/client.log`；地图运行不生成解包目录。
+主菜单通过“单人模式 → 自定义游戏”进入地图目录。选择地图、调整玩家配置后，点击原版“开始游戏”按钮，后台运行原图main并准备场景，在窗口线程分帧上传GPU，进入游戏画面。载入阶段按Esc取消；游戏阶段Esc、F10或顶部菜单入口返回选图。完整游戏内暂停菜单仍待实现。
 
-开发帧输出可加 `--capture <PNG路径>`，仅在限定帧数或退出按钮结束运行时写出指定证据。`--time-ms 0` 固定动画时间；`--window-check --frames 120` 检查缩放、最小化恢复、鼠标取消与 Q 退出。`--renderer d3d9-reference` 选择系统参考光栅器，仅用于正确性检查。
+`--map <w3m/w3x路径>` 定位选图；增加 `--play` 自动进入所选地图，支持原安装内相对路径或外部绝对路径。例如：
 
-渲染器优先使用 Direct3D 9；设备能力不可用时依次尝试 Direct3D 9Ex、系统 D3D9On12Ex。实际驱动名称写入日志。D3D9 与 D3D9Ex 的菜单帧输出、窗口缩放及恢复均已有运行证据。主菜单从原版 FDF 读取模板、中文、布局和快捷键，从 `war3skins.txt` 选择字体；原版 Miles 从 `redist/miles` 加载 MP3 codec，直接播放 MPQ 内存中的音乐。
+```powershell
+./build/windows-x86/bin/Release/war3.exe --data-root "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" --map 'Maps/(2)BootyBay.w3m' --play
+```
 
-主菜单的“单人模式(S) → 自定义游戏(G)”进入地图目录列表，可用鼠标选择、双击目录、滚轮、上下/翻页/Home/End、Enter 与 Backspace 浏览。取消(A)或 Escape 返回上一级界面。`--map <路径>` 在选图界面定位任意地图；`--probe --map <路径>` 直接读取 W3I/WTS/W3E/WPM。开发导航检查为 `--menu-check --map <路径> --hidden --frames 10000 --capture <PNG路径>`，等待配置完成后生成选图和下拉菜单帧，完成导航即退出；配置等待超过30秒或帧数耗尽而步骤未完成时检查失败。
+地图画面已接入原W3E纹理混合、悬崖、坡道、动画水面，原DOO树木/装饰物，脚本创建的单位/物品模型，以及原版ConsoleUI九片控制台。地形使用静态GPU区块，装饰物使用空间区块与视锥裁剪。相机读取原MiscData六档角度/距离，滚轮有界缩放；方向键和边缘滚屏平移，左键/框选/Shift选择单位，右键或M后点地面移动，S停止，H保持位置。移动查询WPM并按模拟步进推进；完整碰撞、编队、战斗和规则继续实现。
 
-已接入按钮按原版 FDF 焦点链支持 Tab／Shift+Tab 和 Enter／Space；选图列表、可编辑玩家控件和取消按钮统一遍历焦点。下拉菜单支持方向键、滚轮、Enter／Space、Esc 和鼠标，展开时消费底层输入。列表名称、人数和类型来自可见地图的 512 字节 HM3W 文件头，选中文件后读取完整元数据与预览。地图尺寸分类、地形中文名和字体尺寸直接使用原版配置。
+BootyBay已获得原地图画面及20帧开发运行证据，无Game.dll。完整操作、三图、像素还原、性能与切图释放仍在阶段A待测队列。项目尚未完成完整可玩对局、完整JASS/AI、战役、存档/回放、局域网或OpenGL。当前能力与边界见[场景流程](docs/world-rendering.md)、[功能矩阵](docs/acceptance.md)和[集中实现清单](docs/implementation-roadmap.md)。
 
-玩家配置消费原版 PlayerSlot／TeamSetup FDF、中文标签和队伍颜色 BLP，保留地图玩家 ID、原始记录和势力分组，支持本地槽移动、计算机难度、种族、队伍、颜色交换和 50%–100% 障碍值。选图时后台读取元数据/预览并执行原图 globals/config，完成后按脚本配置生成玩家槽；同一工作线程只保留最新待处理选择，切图立即清空旧会话。固定设置及脚本种族锁定限制编辑，界面修改写回会话；同图重选保留草稿。配置失败会清空选择并允许重试。实际开局、原版默认 AI/占槽时序及颜色菜单网格仍待实现或对照。
+地图列表支持双击目录、滚轮、方向/翻页/Home/End、Enter与Backspace；按钮使用原FDF焦点链，支持Tab/Shift+Tab和Enter/Space。玩家配置消费源PlayerSlot/TeamSetup、地图玩家ID、势力、颜色与种族限制，保留同图草稿，配置错误可重试。颜色网格、默认AI/占槽时序与完整像素仍待还原或核验。
 
-完整内容按 [功能矩阵](docs/acceptance.md) 跟进，独立验证见 [测试队列](docs/testing-batches.md)。当前版本是客户端基础设施，地图信息与原生记录可读取，“开始游戏”尚未接入会话，完整载入、战斗、JASS、战役和网络仍待实现。菜单 MDX 已绘制，logo 精确比例、灯光、雾、粒子、完整 FDF 与交互仍需还原和对照验收。
+其他选项为 `--renderer d3d9`、`--renderer d3d9-reference`、`--mute` 和 `--log <路径>`。默认日志为 `%LOCALAPPDATA%/MEgine/War3/Logs/client.log`。渲染器按D3D9、D3D9Ex、D3D9On12Ex顺序尝试可用设备；原版字体/BLP使用原资源及固定版本IJL，Miles从指定安装加载音频库与codec，辅助DLL检查架构和摘要。
 
-最新已打通[原图初始化与早期调度](docs/script-events.md)：BootyBay原main及250ms推进退出0，创建65单位，原bj_gameStarted已置true。开发入口为 `--main-check --simulate-ms 250`，运行不加载Game.dll；开始游戏按钮、地图画面/操作、完整规则与原版模拟一致性仍待完成，历史通过数保留原验证版本范围。
+开发入口按用途选择，避免无关重复检查：
 
-当前按[集中实现清单](docs/implementation-roadmap.md)先覆盖可运行流程，再集中测试修正。[对象初始化](docs/entities.md)已接入源对象表、单位/物品状态、天气实例和普通数字声音基础，只有编译/静态检查，运行与原版一致性待阶段验证；后续继续连接调度、世界画面、输入和开局。历史测试通过数保留原验证版本范围。
+- `--probe --map <路径>`：原生资源/地图记录读取。
+- `--script-check --map <路径>`：读取、解析、链接和编译公共及地图JASS。
+- `--config-check --map <路径>`：原图globals/config和配置状态。
+- `--main-check --map <路径> --simulate-ms 250`：main及指定早期模拟区间；未知native记录源位置并非零退出。
+- `--hidden --frames 120 --capture <PNG路径>`：限定帧输出；配合 `--play` 时帧数统计游戏画面，等待开局上限120秒。
+- `--menu-check --map <路径> --hidden --frames 10000`：已有菜单导航检查；`--window-check --frames 120`：已有窗口/输入恢复检查。
 
-原生脚本开发入口为 `--script-check --map <路径>`，可配合 `--hidden`，直接从公共 MPQ 和地图读取 common.j、Blizzard.j 与地图脚本，解析类型/槽位并编译执行指令，不需要图形设备。Runtime 可执行已绑定 native 的脚本；当前产品检查只编译地图，不执行其全局初始化或 config/main，见 [JASS 链路](docs/jass.md)。
+开发截图、日志、JSON与采样统一放仓库根目录 `tmp/docs-artifacts/war3/`，不提交。实现期间只执行必要编译、静态检查与开发阻塞的最小复现；按[测试队列](docs/testing-batches.md)在功能阶段集中验证和修正。旧MEngine待测批次继续延期；旧转换缓存清理等待完整直接加载验收。
 
-`--config-check --map <路径>` 执行原图全局初始化与config，保存玩家/队伍/出生点等状态；Amazonia、BootyBay、DotA_v6.83d已合并通过。此入口不执行main，开始游戏尚未接通，见[地图配置会话](docs/session.md)。
-
-后台选图和配置检查已挂接原地图世界，保留W3E/WPM，并支持位置/矩形及相机/昼夜模型/水色状态。`--main-check --map <路径>` 实际尝试执行原图main；遇到未绑定native会记录源位置并非零退出。Amazonia当前推进至AddWeatherEffect，尚无地图渲染或可玩对局，见[原生世界与主函数](docs/world.md)。
-
-地图会话保留[共享归档视图](docs/archives.md)，加载后仍直接读取地图资源。菜单和游戏声音使用[共享Miles后端](docs/audio.md)，支持内存WAV/MP3及原MIDI+DLS。[脚本MIDI对象](docs/script-sound.md)已接入源表、实际播放和非空间MIDI渐变，[脚本音乐](docs/script-music.md)支持原版曲目表、独立声音随机流、暂停/恢复、定位与50ms渐变；[游戏时间控制](docs/game-clock.md)已接入同步初始化状态。BootyBay原main已推进至CreateUnit，模拟推进/事件、3D环境、世界渲染和实际开局继续实现。
-
-StormLib 来源、版本和逐文件摘要见 [source-info.json](third_party/stormlib/source-info.json)，许可证在 [LICENSE](third_party/stormlib/source/LICENSE)。原安装资源和 DLL 不随项目分发。REA 作为开发分析工具，不参与游戏运行。
+已有实现依据见[脚本调度](docs/script-events.md)、[JASS](docs/jass.md)、[对象定义](docs/entities.md)、[共享归档](docs/archives.md)、[音频](docs/audio.md)及[REA边界](docs/rea-boundaries.md)。StormLib源站、版本和摘要见[source-info.json](third_party/stormlib/source-info.json)，许可证在[LICENSE](third_party/stormlib/source/LICENSE)。原安装资源和DLL不随项目分发。REA仅用于开发分析。

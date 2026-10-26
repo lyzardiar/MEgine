@@ -82,6 +82,7 @@ Options Options::parse() {
         else if (argument == L"--script-check") options.scriptCheck = true;
         else if (argument == L"--config-check") options.configCheck = true;
         else if (argument == L"--main-check") options.mainCheck = true;
+        else if (argument == L"--play") options.play = true;
         else if(argument==L"--simulate-ms"){auto text=value(i);size_t end=0;auto n=std::stoul(text,&end);if(end!=text.size() || n>60000)throw std::runtime_error("Invalid simulation interval");options.simulateMs=unsigned(n);}
         else if (argument == L"--time-ms") {auto text=value(i);size_t end=0;auto n=std::stoull(text,&end);if(end!=text.size() || n>86400000)throw std::runtime_error("Invalid animation time");options.timeMs=n;}
         else throw std::runtime_error("Unknown option: " + utf8(argument));
@@ -89,6 +90,7 @@ Options Options::parse() {
     if (options.dataRoot.empty()) throw std::runtime_error("Usage: war3.exe --data-root <Warcraft III directory> [--map <w3x/w3m>] [--renderer d3d9]");
     options.dataRoot = fs::canonical(options.dataRoot);
     if (options.renderer != "d3d9" && options.renderer != "d3d9-reference") throw std::runtime_error("Renderer not implemented: " + options.renderer);
+    if(options.play && (options.map.empty() || options.probe || options.mainCheck || options.configCheck || options.scriptCheck || options.menuCheck || options.windowCheck))throw std::runtime_error("Play requires --map and no check mode");
     if (!options.map.empty()) { if (options.map.is_relative()) options.map = options.dataRoot / options.map; options.map = fs::canonical(options.map); }
     if (options.hidden && !options.probe && !options.scriptCheck && !options.configCheck && !options.mainCheck && !options.frames) throw std::runtime_error("Hidden run requires --frames or a native check");
     if (!options.capture.empty() && !options.frames) throw std::runtime_error("Capture requires --frames");
@@ -111,7 +113,7 @@ Log::Log(const fs::path& path) {
     stream_.open(path, std::ios::binary | std::ios::trunc);
     if (!stream_) throw std::runtime_error("Cannot create diagnostic log");
 }
-void Log::write(std::string_view message) { stream_ << message << '\n'; stream_.flush(); }
+void Log::write(std::string_view message) { std::lock_guard lock(mutex_);stream_ << message << '\n'; stream_.flush(); }
 Library::Library(const fs::path& path, std::string_view digest) {
     verifyPe32(path);
     if (sha256(path) != digest) throw std::runtime_error("Unsupported DLL version: " + utf8(path.wstring()));

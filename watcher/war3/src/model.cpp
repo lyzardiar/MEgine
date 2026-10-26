@@ -1,5 +1,6 @@
 // Author: MiYu. MDX800 bounds, geometry, hierarchy and texture ownership.
 #include "model_data.h"
+#include "scene_assets.h"
 #include <map>
 #include <numeric>
 #include <unordered_set>
@@ -34,7 +35,7 @@ void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
             while (r.left()) { Sequence s; s.name = r.string(80); s.start = r.i32(); s.end = r.i32(); r.take(4); s.flags = r.u32(); r.take(36); if (s.end < s.start || sequences.size() >= 4096) throw std::runtime_error("Invalid sequence"); sequences.push_back(s); }
         } else if (kind == tag("GLBS")) { while (r.left()) globals.push_back(r.u32()); }
         else if (kind == tag("TEXS")) {
-            while (r.left()) { auto replacement = r.u32(); Texture t; t.path = r.string(260); t.flags = r.u32(); if (t.path.empty() && replacement == 1) t.path = "ReplaceableTextures\\TeamColor\\TeamColor00.blp"; if (t.path.empty() && replacement == 2) t.path = "ReplaceableTextures\\TeamGlow\\TeamGlow00.blp"; if (textures.size() >= 4096) throw std::runtime_error("Texture count exceeded"); textures.push_back(std::move(t)); }
+            while (r.left()) { auto replacement = r.u32(); Texture t; t.replacement=replacement;t.path = r.string(260); t.flags = r.u32(); if (t.path.empty() && replacement == 1) t.path = "ReplaceableTextures\\TeamColor\\TeamColor00.blp"; if (t.path.empty() && replacement == 2) t.path = "ReplaceableTextures\\TeamGlow\\TeamGlow00.blp"; if (textures.size() >= 4096) throw std::runtime_error("Texture count exceeded"); textures.push_back(std::move(t)); }
         } else if (kind == tag("MTLS")) {
             while (r.left()) {
                 auto m = r.record(20); Material material; material.priority = m.i32(); m.u32(); m.expect(tag("LAYS")); auto count = m.count(28,4096);
@@ -77,7 +78,7 @@ void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
     for (auto& n : nodes) if (n.parent >= 0) { auto p = ids.find(n.parent); if (p == ids.end()) throw std::runtime_error("Missing parent node"); n.parent = int(p->second); }
     std::vector<unsigned char> marks(nodes.size()); std::vector<unsigned> path;
     for (unsigned i = 0; i < nodes.size(); ++i) { int next = int(i); while (next >= 0 && marks[next] != 2) { if (marks[next] == 1) throw std::runtime_error("Cyclic hierarchy"); marks[next] = 1; path.push_back(unsigned(next)); next = nodes[next].parent; } while (!path.empty()) { auto index = path.back(); path.pop_back(); marks[index] = 2; order.push_back(index); } }
-    world.resize(nodes.size());
+    world.resize(nodes.size());billboard=std::any_of(nodes.begin(),nodes.end(),[](auto& node){return (node.flags&8)!=0;});float squared=0;for(auto& geoset:geosets)for(auto& p:geoset.positions)squared=std::max(squared,p.x*p.x+p.y*p.y+p.z*p.z);radius=std::sqrt(squared);
     for (auto& g : geosets) {
         if (g.material >= materials.size()) throw std::runtime_error("Missing material");
         for (auto& group : g.matrices) for (auto& id : group) { auto node = ids.find(id); if (node == ids.end()) throw std::runtime_error("Missing matrix node"); id = int(node->second); }
@@ -89,15 +90,26 @@ void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
     for (unsigned i = 0; i < sequences.size(); ++i) if (sequences[i].name.starts_with("Stand")) { sequence = i; break; }
     log.write("mdx_geosets="+std::to_string(geosets.size())+" nodes="+std::to_string(nodes.size())+" textures="+std::to_string(textures.size())+" layers="+std::to_string(draws.size()));
 }
-Model::Model(Archives& archives, Images& images, Renderer* renderer, const char* name, Log& log) : data_(std::make_unique<Data>(renderer)) {
+Model::Model(Archives& archives, Images& images, Renderer* renderer, const char* name, Log& log,SceneAssets* shared) : data_(std::make_unique<Data>(renderer)) {
     auto member = archives.read(name); if (!member) throw std::runtime_error(std::string("Missing MDX: ")+name); data_->parse(member->bytes,log);
-    size_t decoded = 0; std::map<std::string,Com<IDirect3DTexture9>> shared;
+    size_t decoded = 0; std::map<std::string,Com<IDirect3DTexture9>> local;
     for (auto& texture : data_->textures) {
-        if (auto found = shared.find(texture.path); found != shared.end()) { texture.gpu = found->second; continue; }
+        if(shared){if(!texture.path.empty())shared->image(texture.path);else shared->image("@white",{1,1,{0xffffffff}});continue;}
+        if (auto found = local.find(texture.path); found != local.end()) { texture.gpu = found->second; continue; }
         Image image; if (!texture.path.empty()) { auto bytes = archives.readTexture(texture.path); if (!bytes) throw std::runtime_error("Missing model texture: "+texture.path); image = images.decode(bytes->bytes); } else image = {1,1,{0xffffffff}};
-        decoded += image.pixels.size()*4; if (decoded > 256*1024*1024) throw std::runtime_error("Model texture budget exceeded"); if (renderer) texture.gpu = renderer->texture(image.width,image.height,image.pixels); shared.emplace(texture.path,texture.gpu);
+        decoded += image.pixels.size()*4; if (decoded > 256*1024*1024) throw std::runtime_error("Model texture budget exceeded"); if (renderer) texture.gpu = renderer->texture(image.width,image.height,image.pixels); local.emplace(texture.path,texture.gpu);
     }
     log.write("mdx_texture_bytes="+std::to_string(decoded));
 }
 Model::~Model() = default;
+std::uint64_t Model::sequenceDuration() const {return data_->sequences.empty()?0:std::uint64_t(data_->sequences[data_->sequence].end-data_->sequences[data_->sequence].start);}
+float Model::radius() const {return data_->radius;}
+void Model::upload(Renderer& renderer,SceneAssets& assets) {data_->renderer=&renderer;for(auto& texture:data_->textures)texture.gpu=assets.texture(texture.path.empty()?"@white":texture.path);}
+void Model::replace(unsigned id,IDirect3DTexture9* value) {for(auto& texture:data_->textures)if(texture.replacement==id)texture.gpu=value;}
+bool Model::sequence(const std::string& prefix) {for(unsigned i=0;i<data_->sequences.size();++i)if(data_->sequences[i].name.starts_with(prefix)){data_->sequence=i;return true;}return false;}
+ModelGeometry Model::geometry() const {
+    auto& d=*data_;if(d.geosets.size()!=1 || d.materials.size()!=1 || d.materials[0].layers.size()!=1 || d.materials[0].layers[0].filter!=0)throw std::runtime_error("Terrain template requires a single opaque geoset");auto& g=d.geosets[0];if(g.uv.empty() || g.uv[0].size()!=g.positions.size())throw std::runtime_error("Terrain template has no UV0");std::vector<XMFLOAT4X4> pose(d.nodes.size());
+    for(auto i:d.order){auto& n=d.nodes[i];if(n.flags&8)throw std::runtime_error("Terrain cliff cannot use billboard nodes");auto p=XMLoadFloat4(&n.pivot),t=d.sample(n.tracks.translation,0,XMVectorZero()),q=d.sample(n.tracks.rotation,0,XMQuaternionIdentity(),true),s=d.sample(n.tracks.scale,0,XMVectorSet(1,1,1,0));auto parent=n.parent>=0?XMLoadFloat4x4(&pose[n.parent]):XMMatrixIdentity();XMStoreFloat4x4(&pose[i],XMMatrixTranslationFromVector(-p)*XMMatrixScalingFromVector(s)*XMMatrixRotationQuaternion(q)*XMMatrixTranslationFromVector(p+t)*parent);}
+    ModelGeometry result;result.indices=g.indices;for(size_t i=0;i<g.positions.size();++i){auto p=XMLoadFloat4(&g.positions[i]);if(!g.matrices.empty()){auto sum=XMVectorZero();auto& group=g.matrices[g.group[i]];for(auto node:group)sum+=XMVector3TransformCoord(p,XMLoadFloat4x4(&pose[node]));p=sum/float(group.size());}XMFLOAT3 vertex;XMStoreFloat3(&vertex,p);auto& uv=g.uv[0][i];result.vertices.push_back({vertex.x,vertex.y,vertex.z,uv.x,uv.y});}return result;
+}
 }

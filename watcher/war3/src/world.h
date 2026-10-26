@@ -21,6 +21,7 @@ class World {
     WorldEnvironment environment_;
     GameClock clock_;
     std::unique_ptr<Archives> resources_;
+    Bytes obstacles_;
 public:
     World(MapData data,std::array<jass::Real,4> margins);
     static std::unique_ptr<World> read(Archives& archives);
@@ -31,6 +32,8 @@ public:
     jass::Real cameraMargin(std::uint32_t side) const;
     WorldPoint clamp(WorldPoint point) const;
     WorldRect rectangle(WorldPoint first,WorldPoint second) const;
+    void block(float x,float y);
+    std::vector<WorldPoint> route(WorldPoint from,WorldPoint to,float radius=0,bool flying=false) const;
     WorldEnvironment& environment() {return environment_;}
     const WorldEnvironment& environment() const {return environment_;}
     GameClock& clock() {return clock_;}

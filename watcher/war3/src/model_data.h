@@ -13,7 +13,7 @@ struct Sequence { std::string name; int start, end; unsigned flags; };
 struct Node { int id, parent; unsigned flags; XMFLOAT4 pivot{}; Transform tracks; };
 struct Layer { unsigned filter, flags, texture, coord; int animation; float alpha; Track opacity, textureTrack; };
 struct Material { int priority; std::vector<Layer> layers; };
-struct Texture { std::string path; unsigned flags; Com<IDirect3DTexture9> gpu; };
+struct Texture { std::string path; unsigned flags,replacement=0; Com<IDirect3DTexture9> gpu; };
 struct Vertex { float x, y, z; DWORD color; float u, v; };
 struct Geoset {
     std::vector<XMFLOAT4> positions;
@@ -44,6 +44,10 @@ struct Model::Data {
     mdx::Track cameraPosition, cameraTarget;
     float fov = 0.7854f, nearPlane = 8, farPlane = 10000;
     unsigned sequence = 0;
+    std::optional<std::uint64_t> poseTime;
+    unsigned poseSequence=0;
+    float radius=0;
+    bool billboard=false;
     explicit Data(Renderer* renderer) : renderer(renderer) {}
     DirectX::XMVECTOR sample(const mdx::Track& track, std::uint64_t elapsed, DirectX::FXMVECTOR rest, bool rotation = false) const;
     void parse(std::span<const std::uint8_t> bytes, Log& log);

@@ -52,14 +52,15 @@ public:
     Token take() { auto t=peek(); ++at_; return t; }
     bool consume(std::string_view value) { if(!empty() && peek().value==value) {++at_;return true;} return false; }
     void expect(std::string_view value) { if(!consume(value)) throw std::runtime_error("Expected FDF token: "+std::string(value)); }
-    FrameDefinition frame(unsigned depth=0) {
+    FrameDefinition frame(unsigned depth=0,bool anonymous=false) {
         if (depth>32 || ++frames_>16384) throw std::runtime_error("FDF frame budget exceeded");
-        FrameDefinition f; f.type=take().value; f.name=take().value;
+        FrameDefinition f;if(anonymous)f.type="TEXTURE";else {f.type=take().value;f.name=take().value;}
         if (consume("INHERITS")) { f.inheritChildren=consume("WITHCHILDREN"); f.inherits=take().value; }
         expect("{");
         while (!consume("}")) {
             if (consume(",") || consume(";")) continue;
             if (consume("Frame")) { f.children.push_back(frame(depth+1)); continue; }
+            if (consume("Texture")) {f.children.push_back(frame(depth+1,true));continue;}
             auto key=take(); std::vector<std::string> values;
             while(!empty() && peek().line==key.line && peek().value!="}" && peek().value!="Frame") { auto value=take().value; if(value!="," && value!=";") values.push_back(std::move(value)); }
             if(key.value=="SetPoint") f.points.push_back(std::move(values));else if(key.value=="MenuItem")f.menuItems.push_back(std::move(values));else f.properties[key.value]=std::move(values);
@@ -83,7 +84,7 @@ std::string nextFrameFocus(const std::vector<FrameFocus>& frames,const std::stri
     auto found=std::find_if(enabled.begin(),enabled.end(),[&](auto i){return frames[i].name==current;});if(found==enabled.end())return frames[reverse?enabled.back():enabled.front()].name;auto index=size_t(found-enabled.begin());return frames[enabled[(index+(reverse?enabled.size()-1:1))%enabled.size()]].name;
 }
 float FrameDefinition::number(const std::string& key, float fallback) const { auto& p=property(key); if(p.empty())return fallback; size_t end=0; float value=std::stof(p.front(),&end); if(end<p.front().size() && p.front()[end]=='f')++end; if(end!=p.front().size() || !std::isfinite(value))throw std::runtime_error("Invalid FDF number"); return value; }
-void FrameDefinitions::registerFrame(const FrameDefinition& frame) {if(frames_.size()>=16384)throw std::runtime_error("FDF definition budget exceeded");frames_[frame.name]=frame;for(auto& child:frame.children)registerFrame(child);}
+void FrameDefinitions::registerFrame(const FrameDefinition& frame) {if(frames_.size()>=16384)throw std::runtime_error("FDF definition budget exceeded");if(!frame.name.empty())frames_[frame.name]=frame;for(auto& child:frame.children)registerFrame(child);}
 void FrameDefinitions::load(Archives& archives, const std::string& member) {
     if (std::find(loaded_.begin(),loaded_.end(),member)!=loaded_.end())return;
     if (loading_.size()>=16 || loaded_.size()>=128 || std::find(loading_.begin(),loading_.end(),member)!=loading_.end()) throw std::runtime_error("Cyclic FDF include");

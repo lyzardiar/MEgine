@@ -65,7 +65,7 @@ std::string MapBrowser::draw(const UiInput& input) {
         if(click(up,input) && scroll_)--scroll_;if(click(down,input) && scroll_<maximum)++scroll_;
         auto trough=GlueScreen::Rect{track.x,track.y+.015f,track.w,track.h-.03f};if(maximum && input.down && hit(trough,input.startX,input.startY))scroll_=size_t(std::clamp((input.y-trough.y-.005f)/travel,0.f,1.f)*float(maximum)+.5f);
     }
-    auto enabled=players_.enabled();enabled.insert("MapListBox");enabled.insert("CancelButton");auto action=screen_.draw("Skirmish",controls,enabled,true);if(players_.changed())session_->applySetup(*setup_);
+    auto enabled=players_.enabled();enabled.insert("MapListBox");enabled.insert("CancelButton");if(session_ && session_->configured() && !loading_)enabled.insert("PlayGameButton");auto action=screen_.draw("Skirmish",controls,enabled,true);if(players_.changed())session_->applySetup(*setup_);
     screen_.backdropAt("MapListBoxBackdrop",r);
     float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;
     auto quad=[&](GlueScreen::Rect area,DWORD color){renderer_.rect(left+area.x*scale,top+area.y*scale,area.w*scale,area.h*scale,color);};
@@ -79,6 +79,8 @@ std::string MapBrowser::draw(const UiInput& input) {
     auto title=directory_.lexically_relative(root_).wstring();if(title==L".")title=root_.filename().wstring();screen_.textAt("StandardSmallTextTemplate",utf8(title),{r.x,r.y+r.h+.004f,r.w,.016f},true,false,true);
     if(!error_.empty())screen_.textAt("StandardValueTextTemplate",error_,{.02f,.185f,.45f,.06f},true,false,true);
     if(loading_)screen_.textAt("StandardValueTextTemplate","正在读取地图配置…",{.02f,.185f,.45f,.06f},true,false,true);
-    players_.headings();screen_.overlay();return action=="CancelButton" || (input.key==VK_ESCAPE && !screen_.inputConsumed())?"CancelButton":std::string{};
+    players_.headings();screen_.overlay();if(action=="PlayGameButton")return action;return action=="CancelButton" || (input.key==VK_ESCAPE && !screen_.inputConsumed())?"CancelButton":std::string{};
 }
+std::unique_ptr<ScriptSession> MapBrowser::takeSession() {if(!session_ || !setup_ || loading_)throw std::runtime_error("Map is not ready to start");session_->applySetup(*setup_);players_.bind(nullptr);setup_.reset();return std::move(session_);}
+void MapBrowser::reload() {auto index=selected_;clearSelection();select(index);}
 }

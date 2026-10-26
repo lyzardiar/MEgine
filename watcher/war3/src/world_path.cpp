@@ -1,0 +1,22 @@
+// Author: MiYu. Bounded eight-neighbour source WPM search with clearance and diagonal corner checks.
+#include "world.h"
+#include <bit>
+#include <cmath>
+#include <queue>
+#include <unordered_map>
+#include <algorithm>
+
+namespace war3 {
+namespace {float number(jass::Real v){return std::bit_cast<float>(v.bits());}jass::Real real(float v){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(v));}}
+void World::block(float x,float y) {if(!data_.pathing)return;auto& p=*data_.pathing;int cx=int(std::floor((x-data_.terrain.origin[0])/32)),cy=int(std::floor((y-data_.terrain.origin[1])/32));if(cx>=0 && cy>=0 && unsigned(cx)<p.width && unsigned(cy)<p.height)obstacles_[size_t(cy)*p.width+cx]=2;}
+std::vector<WorldPoint> World::route(WorldPoint from,WorldPoint to,float radius,bool flying) const {
+    if(!std::isfinite(radius) || radius<0 || radius>512)throw std::runtime_error("Invalid unit pathing radius");if(!data_.pathing)return {};auto& p=*data_.pathing;auto& t=data_.terrain;to=clamp(to);float tx=number(to.x),ty=number(to.y);int sx=int(std::floor((number(from.x)-t.origin[0])/32)),sy=int(std::floor((number(from.y)-t.origin[1])/32)),gx=int(std::floor((tx-t.origin[0])/32)),gy=int(std::floor((ty-t.origin[1])/32));unsigned mask=flying?4:2;
+    auto free=[&](int x,int y){if(x<0 || y<0 || unsigned(x)>=p.width || unsigned(y)>=p.height)return false;int clearance=flying?0:std::max(0,int(std::ceil(radius/32-.5f)));for(int dy=-clearance;dy<=clearance;++dy)for(int dx=-clearance;dx<=clearance;++dx){if(dx*dx+dy*dy>clearance*clearance)continue;int cx=x+dx,cy=y+dy;if(cx<0 || cy<0 || unsigned(cx)>=p.width || unsigned(cy)>=p.height)return false;auto at=size_t(cy)*p.width+cx;if((p.cells[at]|(flying?0:obstacles_[at]))&mask)return false;}return true;};
+    if(sx<0 || sy<0 || unsigned(sx)>=p.width || unsigned(sy)>=p.height)return {};if(!free(gx,gy)){bool found=false;for(int ring=1;ring<=8 && !found;++ring)for(int dy=-ring;dy<=ring && !found;++dy)for(int dx=-ring;dx<=ring;++dx)if((abs(dx)==ring || abs(dy)==ring) && free(gx+dx,gy+dy)){gx+=dx;gy+=dy;tx=t.origin[0]+gx*32+16;ty=t.origin[1]+gy*32+16;found=true;break;}if(!found)return {};}
+    auto line=[&](int x,int y,int ex,int ey){int dx=abs(ex-x),dy=abs(ey-y),stepX=x<ex?1:-1,stepY=y<ey?1:-1,error=dx-dy;while(x!=ex || y!=ey){int beforeX=x,beforeY=y,two=error*2;if(two>-dy){error-=dy;x+=stepX;}if(two<dx){error+=dx;y+=stepY;}if(!free(x,y) || (x!=beforeX && y!=beforeY && (!free(x,beforeY)||!free(beforeX,y))))return false;}return true;};
+    if(line(sx,sy,gx,gy))return {{real(tx),real(ty)}};
+    auto id=[&](int x,int y){return unsigned(y)*p.width+unsigned(x);};auto heuristic=[&](int x,int y){auto dx=abs(gx-x),dy=abs(gy-y);return unsigned(10*std::max(dx,dy)+4*std::min(dx,dy));};struct Node {unsigned cost=UINT_MAX,parent=UINT_MAX;bool closed=false;};struct Pending {unsigned score,id,cost;bool operator<(const Pending& b) const{return score>b.score || (score==b.score && id>b.id);}};std::unordered_map<unsigned,Node> nodes;std::priority_queue<Pending> pending;unsigned first=id(sx,sy),goal=id(gx,gy);nodes[first]={0,UINT_MAX,false};pending.push({heuristic(sx,sy),first,0});bool reached=false;
+    while(!pending.empty() && nodes.size()<131072){auto current=pending.top();pending.pop();auto& node=nodes.at(current.id);if(node.closed || node.cost!=current.cost)continue;node.closed=true;if(current.id==goal){reached=true;break;}int x=int(current.id%p.width),y=int(current.id/p.width);for(int dy=-1;dy<=1;++dy)for(int dx=-1;dx<=1;++dx){if(!dx && !dy)continue;int nx=x+dx,ny=y+dy;if(!free(nx,ny) || (dx && dy && (!free(nx,y)||!free(x,ny))))continue;unsigned next=id(nx,ny),cost=current.cost+(dx && dy?14:10);auto& other=nodes[next];if(cost<other.cost){other.cost=cost;other.parent=current.id;pending.push({cost+heuristic(nx,ny),next,cost});}}}
+    if(!reached)return {};std::vector<unsigned> reverse;for(auto at=goal;at!=first;at=nodes.at(at).parent){if(reverse.size()>=nodes.size())throw std::runtime_error("Cyclic path parent chain");reverse.push_back(at);}std::reverse(reverse.begin(),reverse.end());std::vector<WorldPoint> result;int x=sx,y=sy;for(size_t i=0;i<reverse.size();){size_t end=i;while(end+1<reverse.size() && line(x,y,int(reverse[end+1]%p.width),int(reverse[end+1]/p.width)))++end;x=int(reverse[end]%p.width);y=int(reverse[end]/p.width);result.push_back({real(t.origin[0]+x*32+16),real(t.origin[1]+y*32+16)});i=end+1;}if(result.empty() || line(x,y,gx,gy)){if(result.empty())result.push_back({real(tx),real(ty)});else result.back()={real(tx),real(ty)};}return result;
+}
+}

@@ -16,6 +16,12 @@ struct UnitState {
     bool holding=false;
     bool building=false,hero=false;
     std::uint32_t race=7;
+    float scale=1,collision=16,flyHeight=0;
+    float selectionSize=128;
+    std::string movementType;
+    std::vector<WorldPoint> route;
+    size_t waypoint=0;
+    double animationStart=0;
     std::map<std::uint32_t,bool> permanentAbilities;
 };
 struct ItemState {

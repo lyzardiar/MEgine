@@ -1,0 +1,27 @@
+// Author: MiYu. Keep archive decode and geometry compilation off the window thread without extracted caches.
+#include "game_loading.h"
+#include "model.h"
+#include <chrono>
+
+namespace war3 {
+void GameData::prepareConsole() {
+    FrameDefinitions definitions;auto& archives=assets->resources();definitions.load(archives,"UI\\FrameDef\\UI\\ConsoleUI.fdf");auto frame=definitions.frame("ConsoleUI");auto local=session->localPlayer().value_or(0);auto race=session->config().players[local].race;std::string name=race==2?"Orc":race==3?"Undead":race==4?"NightElf":"Human";
+    for(auto& piece:frame.children)if(piece.type=="TEXTURE"){auto& file=piece.property("File");auto& uv=piece.property("TexCoord");auto& anchor=piece.property("Anchor");if(file.size()!=1 || uv.size()!=4 || anchor.size()!=3 || !file[0].starts_with("ConsoleTexture"))throw std::runtime_error("Unsupported source console texture layout");float w=piece.number("Width"),h=piece.number("Height"),dx=std::stof(anchor[1]),dy=std::stof(anchor[2]);float x=anchor[0].ends_with("LEFT")?dx:.8f+dx-w,y=anchor[0].starts_with("TOP")?-dy:.6f-dy-h;auto member="UI\\Console\\"+name+"\\"+name+"UITile"+file[0].substr(14)+".blp";assets->image(member);console.push_back({x,y,w,h,std::stof(uv[0]),std::stof(uv[2]),std::stof(uv[1]),std::stof(uv[3]),member});}
+    if(console.size()!=9)throw std::runtime_error("Source console requires nine texture pieces");unsigned i=0;for(auto label:{"Gold","Lumber","Supply"}){resourceIcons[i]="UI\\Feedback\\Resources\\Resource"+std::string(label)+".blp";assets->image(resourceIcons[i++]);}
+    for(auto size:{"Small","Med","Large"})assets->image("ReplaceableTextures\\Selection\\SelectionCircle"+std::string(size)+".blp");
+    i=0;for(auto label:{"Move","Stop","HoldPosition"}){commandIcons[i]="ReplaceableTextures\\CommandButtons\\BTN"+std::string(label)+".blp";assets->image(commandIcons[i++]);}
+    if(auto member=archives.readCandidates({"war3mapMap.blp"},ArchiveScope::Map)){minimap="war3mapMap.blp";assets->image(minimap);}ObjectData unitData(archives);for(auto& [handle,unit]:session->units()){auto path=unitData.field(unit->type,"Profile","Art");auto comma=path.find(',');if(comma!=std::string::npos)path.resize(comma);if(!path.empty() && path!="_"){assets->image(path);unitIcons[unit->type]=std::move(path);}}
+}
+bool GameData::uploadOne(Renderer& renderer) {if(assets->uploadOne(renderer))return true;if(terrain->uploadOne(renderer))return true;return false;}
+GameLoading::GameLoading(Log& log) : log_(log),worker_([this](std::stop_token stop){run(stop);}) {}
+GameLoading::~GameLoading() {{std::lock_guard lock(mutex_);worker_.request_stop();++generation_;}wake_.notify_one();}
+std::uint64_t GameLoading::request(std::unique_ptr<ScriptSession> session) {if(!session || !session->configured() || !session->world())throw std::runtime_error("Cannot start unconfigured map");std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,std::move(session)};ready_.reset();phase_=0;wake_.notify_one();return id;}
+void GameLoading::cancel() {std::lock_guard lock(mutex_);++generation_;pending_.reset();ready_.reset();}
+std::optional<GameLoadResult> GameLoading::poll() {std::lock_guard lock(mutex_);auto result=std::move(ready_);ready_.reset();return result;}
+void GameLoading::run(std::stop_token stop) {
+    while(!stop.stop_requested()){Request request;{std::unique_lock lock(mutex_);wake_.wait(lock,[&]{return stop.stop_requested() || pending_.has_value();});if(stop.stop_requested())return;request=std::move(*pending_);pending_.reset();}auto started=GetTickCount64();auto stale=[&]{return stop.stop_requested() || generation_.load()!=request.id;};GameLoadResult result;result.request=request.id;
+        try{auto game=std::make_unique<GameData>();game->session=std::move(request.session);auto checkpoint=[&,id=request.id]{if(stop.stop_requested() || generation_.load()!=id)throw std::runtime_error("Map load canceled");};checkpoint();phase_=1;game->session->startMain();checkpoint();phase_=2;game->assets=std::make_unique<SceneAssets>(game->session->world()->resources(),checkpoint);game->terrain=std::make_unique<TerrainScene>(game->session->world()->data().terrain,*game->assets,log_);checkpoint();phase_=3;game->objects=std::make_unique<SceneObjects>(*game->session,*game->assets,log_);checkpoint();phase_=4;game->prepareConsole();checkpoint();game->assets->clearCheck();if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll must not be loaded");log_.write("game_cpu_ready elapsed_ms="+std::to_string(GetTickCount64()-started)+" textures="+std::to_string(game->assets->uploadCount())+" chunks="+std::to_string(game->terrain->uploadCount())+" units="+std::to_string(game->session->units().size())+" game_dll_loaded=false");result.data=std::move(game);
+        }catch(const std::exception& e){result.error=e.what();if(!stale())log_.write("game_load_failed="+result.error);}std::lock_guard lock(mutex_);if(!stale())ready_=std::move(result);
+    }
+}
+}

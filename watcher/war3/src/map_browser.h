@@ -35,6 +35,8 @@ class MapBrowser {
 public:
     MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred,bool muted=false);
     std::string draw(const UiInput& input);
+    std::unique_ptr<ScriptSession> takeSession();
+    void reload();
     const MapInfo* info() const {return info_?&*info_:nullptr;}
     const PlayerSetup* setup() const {return setup_.get();}
     const ScriptSession* session() const {return session_.get();}
