@@ -19,3 +19,11 @@ Win32 Release 下公共库加 DotA 构建出 91 个扩展类型、3,369 个全�
 REA 在固定 Game.dll 找到 `common.j`／`scripts\common.j` 引用，原始记录为 `tmp/docs-artifacts/war3/jass/source-paths-rea.json`，它仅证明字符串存在。语言结构另参考 [lep/pjass](https://github.com/lep/pjass/tree/654c3cf7731eb472518e6915e9d7672a72652165) 的 grammar.y/token.l，固定提交 `654c3cf7731eb472518e6915e9d7672a72652165`，BSD-2-Clause；参考副本和许可证留在本地诊断目录，客户端未复制或链接该项目实现。原件脚本、诊断输出和第三方参考副本不随源码提交。
 
 下一步为符号/类型解析、执行栈、数值与字符串语义、native 绑定以及地图会话。表达式绑定表尚未和原版执行作差分核对，接入 VM 前须验证优先级、结合性、短路与数值精度；不能将当前语法树测试当作原版执行语义证据。触发器、计时器、AI、单位创建和完整玩法仍保持待实现状态，开始游戏保持禁用。
+
+## 原版整数／实数转换
+
+`src/jass_numeric.*` 的 `Real` 保存原始 32 位位型，供后续执行层使用。`fromInteger` 对应 I2R，`toInteger` 对应 R2I；不通过宿主浮点强转决定结果。原版较大整数的 I2R 会直接截断尾数，例如 `16777219` 得到位型 `0x4b800001`（16777218），`INT32_MAX` 得到 `0x4effffff`。R2I 向零截断，越界、无穷及 NaN 按符号饱和到 INT32_MAX／INT32_MIN；零与次正规数转为 0。该行为由固定版本指令直接核对，不将其推广为其他版本规则。
+
+REA 注册调用位于 `0x6f1e9b31–0x6f1e9b54`，把 I2R 绑定到 `0x6f1e7230`、R2I 绑定到 `0x6f1f2710`；实际转换函数为 `0x6f053b90`／`0x6f052f80`，前者使用 `0x6f052b50` 计算位长。原始证据为本地 `jass/numeric-{bindings,i2r,r2i}-rea.json`。
+
+`war3_jass_numeric_tests` 检查已知边界并生成 C++ 结果；`tools/verify_jass_numeric_cpu.py` 在 Unicorn 中执行原版 native 包装和转换函数，没有替换代码边界。**695 组 I2R、3,072 组 R2I** 逐位一致，覆盖整数幂边界、精度边界、固定随机样本、所有 256 种指数、符号、尾数边界、NaN 和无穷。此检查不证明加减乘除、十进制读取、表达式排序、VM 或玩法已经一致。
