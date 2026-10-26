@@ -1,6 +1,6 @@
 # 原生 JASS 脚本链路
 
-`src/jass.h/.cpp` 为独立客户端构建带源位置的语法树。类型、全局变量、常量、数组、native/函数签名、局部变量、调用、函数引用、条件、循环、exitwhen、return 和 debug 标记均保留，数字与字符串转义保留源文本供后续 VM 消费。当前阶段不执行脚本，也不把 native 声明当作已实现的游戏 API。
+`src/jass.h/.cpp` 为独立客户端构建带源位置的语法树。类型、全局变量、常量、数组、native/函数签名、局部变量、调用、函数引用、条件、循环、exitwhen、return 和 debug 标记均保留，数字与字符串转义保留源文本供后续 VM 消费。实数字面量同时编译为 `Expression.realBits`，执行时可直接读取原版格式位型。当前阶段不执行脚本，也不把 native 声明当作已实现的游戏 API。
 
 归档装配为公共 `Scripts\common.j`、公共 `Scripts\Blizzard.j`、地图 `war3map.j`；地图缺少根成员时读取 `Scripts\war3map.j`。`ArchiveScope::Common` 仅访问公共归档和共享公共缓存，避免地图替换基础声明；`ArchiveScope::Map` 仅访问当前地图，缺失时不退回公共同名成员。普通资源读取继续使用 Overlay。装配次序是当前实现边界，原版 VM 初始化和 config/main 的执行、配置覆盖次序仍需行为对照。
 
@@ -27,3 +27,15 @@ REA 在固定 Game.dll 找到 `common.j`／`scripts\common.j` 引用，原始记
 REA 注册调用位于 `0x6f1e9b31–0x6f1e9b54`，把 I2R 绑定到 `0x6f1e7230`、R2I 绑定到 `0x6f1f2710`；实际转换函数为 `0x6f053b90`／`0x6f052f80`，前者使用 `0x6f052b50` 计算位长。原始证据为本地 `jass/numeric-{bindings,i2r,r2i}-rea.json`。
 
 `war3_jass_numeric_tests` 检查已知边界并生成 C++ 结果；`tools/verify_jass_numeric_cpu.py` 在 Unicorn 中执行原版 native 包装和转换函数，没有替换代码边界。**695 组 I2R、3,072 组 R2I** 逐位一致，覆盖整数幂边界、精度边界、固定随机样本、所有 256 种指数、符号、尾数边界、NaN 和无穷。此检查不证明加减乘除、十进制读取、表达式排序、VM 或玩法已经一致。
+
+## 实数算术与字面量编译
+
+`Real::add/subtract/multiply/divide` 对应原版 `0x6f0529d0`、`0x6f0528b0`、`0x6f0527e0`、`0x6f052af0`，VM 的实数运算分支分别在 `0x6f7f25a6`、`0x6f7f2617`、`0x6f7f2688`、`0x6f7f270a` 调用这些函数。实现使用整数位运算，保留移位、截断、符号和 32 位回绕行为。除法使用原版倒数插值 `0x6f053ff0`；运行时系数为固定的 1,025 项 DWORD，来自原件 RVA `0x952fc0`，表 SHA-256 为 `00217ccf4688f6710bf65f677a8f4a81e535ab86997bcdbb2ce76c49265269b1`。
+
+系数以 `src/jass_reciprocal.inc` 编入程序，来源/摘要写在文件头；`tools/generate_jass_reciprocal.py` 核对原件摘要后可复现生成。生成器仅用于开发，独立构建使用已提交的系数，不读取或加载 Game.dll，也不要求 Python。
+
+`Real::fromDecimal` 对应十进制 token 回调 `0x6f7fb880`：整数部分、分数及分母按 32 位累积，再经过原版 I2R 和实数除法/加法得到位型，保留长十进制的回绕行为。接口接受无符号十进制整数或小数，符号由表达式层处理；科学计数和完整 token 分类尚未通过原版词法差分。当前不消费科学计数式实数字面量，错误保留源位置。
+
+定向原版对照通过 **13,824 组操作数、55,296 次四则运算、2,061 个十进制 token**，覆盖零/符号、指数与尾数边界、NaN/无穷、倒数表全部 1,024 个插值区间、固定随机样本与长小数。原版函数在 Unicorn 中完整执行，token 接收对象和 ASCII 缓冲由检查提供，没有替换函数代码；不表示整个 tokenizer、VM 或对局通过。
+
+底层除法函数与脚本零除策略分层验证：VM 在 `0x6f7f26e0–0x6f7f26f0` 先比较除数，再决定是否进入零除分支 `0x6f7f286f`。不能把数值函数对相同位型（包括零）的返回值直接当成脚本除零结果。该分支的线程/诊断行为、表达式绑定和完整 VM 仍待实现/对照。

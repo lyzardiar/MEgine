@@ -9,7 +9,7 @@ inline constexpr Id none=UINT32_MAX;
 struct Position {unsigned source=0,line=1,column=1;};
 struct Source {std::string name,text,origin;};
 enum class ExpressionKind {Integer,Real,String,Rawcode,Boolean,Null,Variable,Array,Call,Function,Unary,Binary};
-struct Expression {ExpressionKind kind;std::string text;std::vector<Id> operands;Position position;};
+struct Expression {ExpressionKind kind;std::string text;std::vector<Id> operands;Position position;std::uint32_t realBits=0;};
 enum class StatementKind {Set,Call,If,Loop,ExitWhen,Return};
 struct Branch {Id condition=none;std::vector<Id> statements;};
 struct Statement {StatementKind kind;std::string variable;Id index=none,value=none;std::vector<Id> body;std::vector<Branch> branches;bool debug=false;Position position;};

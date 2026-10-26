@@ -1,6 +1,7 @@
 // Author: MiYu. Bounded classic JASS lexer/parser, retaining syntax for native execution.
 #include "jass.h"
 #include "fdf.h"
+#include "jass_numeric.h"
 #include <algorithm>
 #include <cctype>
 #include <set>
@@ -50,7 +51,7 @@ class Parser {
     std::string name() {if(token_.kind!=TokenKind::Word)fail("Expected JASS identifier");auto value=token_.text;next();return value;}
     void lines() {while(token_.kind==TokenKind::Newline)next();}
     void endline() {if(token_.kind!=TokenKind::Newline && token_.kind!=TokenKind::End)fail("Expected end of JASS line");lines();}
-    Id expression(Expression e) {if(program_.expressions_.size()>=1000000)fail("JASS expression budget exceeded");auto id=Id(program_.expressions_.size());program_.expressions_.push_back(std::move(e));return id;}
+    Id expression(Expression e) {if(program_.expressions_.size()>=1000000)fail("JASS expression budget exceeded");if(e.kind==ExpressionKind::Real){try{e.realBits=Real::fromDecimal(e.text).bits();}catch(const std::exception& ex){error(source_,e.position,ex.what());}}auto id=Id(program_.expressions_.size());program_.expressions_.push_back(std::move(e));return id;}
     Id statement(Statement s) {if(program_.statements_.size()>=1000000)fail("JASS statement budget exceeded");auto id=Id(program_.statements_.size());program_.statements_.push_back(std::move(s));return id;}
     Id value(int minimum=0) {
         if(++expressionDepth_>128)fail("JASS expression nesting exceeded");auto position=token_.position;Id left=none;
