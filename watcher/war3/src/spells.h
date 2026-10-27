@@ -5,7 +5,7 @@
 #include <set>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon};
 inline bool casterSpell(SpellKind kind){return kind>=SpellKind::Heal && kind<=SpellKind::AntiMagicShell;}
 enum class SpellTargeting {Unit,Point,None,Either};
 struct SpellInfo {
@@ -21,7 +21,7 @@ struct SpellInfo {
     float maxDamage=0,distance=0,endRadius=0,moveReduction=0,attackReduction=0,impactDelay=0,summonDuration=0;
     std::uint32_t summonType=0;
     unsigned summonCount=0;
-    bool channelled=false,disableOthers=false;
+    bool channelled=false,disableOthers=false,unlimitedRange=false;
     std::uint32_t effectAlias=0,channelOptions=0;
     unsigned pulses=0,shards=0;
     float channelTime=0,period=0,castDelay=0,buildingFactor=1,extraDamage=0,artPeriod=0,fullTime=0,fullPeriod=0,burnPeriod=0;

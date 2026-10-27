@@ -36,4 +36,6 @@ cmake --build --preset release --target war3 war3_ai_tests --parallel 8
 
 SetSlowChopping、SetCaptainChanges、TeleportCaptain、SuicideUnit/Ex已接到实际伐木、互斥编组/补员、位置与持续出击。原CampaignAI的4秒开局检查通过：2常驻线程、6名工人采集、2项生产队列；专项行为与原版精度仍待阶段验证。
 
-当前common.ai专用native接续清单（未绑定，调用会明确失败）：Unsummon、PurchaseZeppelin、MergeUnits、ConvertUnits、SetRandomPaths、LoadZepWave、UnitInvis、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。
+Unsummon已连接已有工人的Auns目标施法和建筑持续消退/返还；GetBuilding按目标玩家查实际建筑并排除反召唤中的对象，详见[反召唤](unsummon.md)。原AI完整循环待阶段验证。
+
+当前common.ai专用native接续清单（未绑定，调用会明确失败）：PurchaseZeppelin、MergeUnits、ConvertUnits、SetRandomPaths、LoadZepWave、UnitInvis、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。

@@ -27,7 +27,8 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"Ainf",SpellKind::InnerFire,SpellTargeting::Unit},{"Ablo",SpellKind::Bloodlust,SpellTargeting::Unit},
         {"Arej",SpellKind::Rejuvenation,SpellTargeting::Unit},{"Auhf",SpellKind::Frenzy,SpellTargeting::Unit},
         {"Acrs",SpellKind::Curse,SpellTargeting::Unit},{"Adis",SpellKind::Dispel,SpellTargeting::Point},
-        {"Aadm",SpellKind::Abolish,SpellTargeting::Unit},{"Aams",SpellKind::AntiMagicShell,SpellTargeting::Unit}
+        {"Aadm",SpellKind::Abolish,SpellTargeting::Unit},{"Aams",SpellKind::AntiMagicShell,SpellTargeting::Unit},
+        {"Auns",SpellKind::Unsummon,SpellTargeting::Unit}
     };
     auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& p:prototypes)if(code==p.code){s.kind=p.kind;s.targeting=p.targeting;break;}if(s.kind==SpellKind::Unsupported)return spellInfo_.emplace(key,std::move(s)).first->second;
     auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};
@@ -40,6 +41,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     {std::stringstream required(data.field(ability,"Profile","Requires")),counts(data.field(ability,"Profile","Requiresamount"));std::string requirement,amount;while(std::getline(required,requirement,',')){auto first=requirement.find_first_not_of(" \t");if(first==std::string::npos)continue;requirement=requirement.substr(first,requirement.find_last_not_of(" \t")-first+1);if(requirement=="_" || requirement=="-")continue;if(requirement.size()!=4 || s.prerequisites.size()>=64)throw std::runtime_error("Invalid source spell prerequisite");amount.clear();std::getline(counts,amount,',');s.prerequisites.emplace_back(ObjectData::code(requirement),amount.empty()?1:count(std::stof(amount),65536));}}
     s.orderOn=orderId(data.field(ability,"Profile","Orderon"));s.orderOff=orderId(data.field(ability,"Profile","Orderoff"));s.onArt=data.field(ability,"Profile","Art");if(auto comma=s.onArt.find(',');comma!=std::string::npos)s.onArt.resize(comma);s.offArt=data.field(ability,"Profile","Unart");if(auto comma=s.offArt.find(',');comma!=std::string::npos)s.offArt.resize(comma);
     if(s.kind==SpellKind::Slow){s.moveReduction=s.amount;s.attackReduction=s.secondary;s.alwaysAuto=field("DataC")!=0;}
+    if(s.kind==SpellKind::Unsummon){s.unlimitedRange=true;if(s.amount>10 || s.secondary>99999 || s.secondary!=std::floor(s.secondary))throw std::runtime_error("Unsummon refund or accumulation outside supported range");}
     if(s.kind==SpellKind::InnerFire){s.damageBonus=s.amount;s.armor=s.secondary;s.autoRange=field("DataC");s.healthRegen=field("DataD");}
     if(s.kind==SpellKind::Bloodlust){s.attackBonus=s.amount;s.moveBonus=s.secondary;s.scaleBonus=field("DataC");}
     if(s.kind==SpellKind::Frenzy)s.attackBonus=s.amount;

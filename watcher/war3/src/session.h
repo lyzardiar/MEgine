@@ -105,6 +105,11 @@ class ScriptSession {
     void aiSuicide(ScriptAI& ai,int quantity,std::uint32_t type,int targetPlayer);
     void aiSuicideTick(ScriptAI& ai);
     void aiTeleportCaptain(ScriptAI& ai,WorldPoint point);
+    void aiUnsummon(ScriptAI& ai,std::uint32_t target);
+    bool unsummonTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell);
+    void startUnsummon(std::uint32_t caster,const CastOrder& cast);
+    void cancelUnsummon(UnitState& unit);
+    void unsummonTick(double delta);
     std::uint32_t aiMine(ScriptAI& ai,int town);
     std::uint32_t aiEnemy(ScriptAI& ai,unsigned owner=UINT_MAX,bool buildings=false);
     std::vector<std::uint32_t> aiCaptain(ScriptAI& ai);

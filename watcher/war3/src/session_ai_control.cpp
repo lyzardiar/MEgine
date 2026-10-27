@@ -20,6 +20,7 @@ void ScriptSession::bindAiGuardNatives(ScriptAI& ai){
     bind("SetReplacementCount","nothing",{"integer"},[&ai](auto& vm,auto args){auto count=std::bit_cast<int>(args[0].bits);if(count< -1 || count>10000)throw std::runtime_error("AI guard replacement limit outside budget");ai.replacementCount=count;return vm.nothing();});
     bind("SetNewHeroes","nothing",{"boolean"},[&ai](auto& vm,auto args){ai.newHeroes=args[0].bits!=0;return vm.nothing();});
     bind("SetSlowChopping","nothing",{"boolean"},[&ai](auto& vm,auto args){ai.slowChopping=args[0].bits!=0;return vm.nothing();});
+    bind("Unsummon","nothing",{"unit"},[this,&ai](auto& vm,auto args){aiUnsummon(ai,args[0].bits);return vm.nothing();});
     bind("SetCaptainChanges","nothing",{"boolean"},[this,&ai](auto& vm,auto args){ai.captainChanges=args[0].bits!=0;aiFormCaptains(ai);return vm.nothing();});
     bind("TeleportCaptain","nothing",{"real","real"},[this,&ai](auto& vm,auto args){aiTeleportCaptain(ai,{jass::Real::fromBits(args[0].bits),jass::Real::fromBits(args[1].bits)});return vm.nothing();});
     bind("SuicideUnit","nothing",{"integer","integer"},[this,&ai](auto& vm,auto args){aiSuicide(ai,std::bit_cast<int>(args[0].bits),args[1].bits,-1);return vm.nothing();});
