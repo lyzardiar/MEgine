@@ -20,7 +20,7 @@ void ScriptSession::finishCast(std::uint32_t id,std::uint64_t ticket) {
 void ScriptSession::startChannel(std::uint32_t id) {
     auto u=units_.at(id);if(!u->cast)return;auto& cast=*u->cast;auto& s=cast.spell;cast.phase=CastOrder::Phase::Channel;cast.channelElapsed=0;cast.nextPulse=s.period;cast.nextArt=s.artPeriod;cast.pulses=0;
     auto add=[&](const SpellInfo& visual,const char* field,std::uint32_t target,WorldPoint point){auto ids=spellVisual(visual,field,target,point,false);cast.visuals.insert(cast.visuals.end(),ids.begin(),ids.end());};
-    add(s,"CasterArt",id,{u->x,u->y});if(s.kind==SpellKind::Channel){if(cast.target)add(s,"TargetArt",cast.target,cast.point);add(s,"EffectArt",s.targeting==SpellTargeting::None?id:0,cast.point);}else if(s.effectAlias && s.kind!=SpellKind::Blizzard){auto visual=s;visual.ability=s.effectAlias;add(visual,"EffectArt",s.targeting==SpellTargeting::None?id:0,cast.point);}
+    add(s,"CasterArt",id,{u->x,u->y});if(s.kind==SpellKind::Channel){if(cast.target)add(s,"TargetArt",cast.target,cast.point);add(s,"EffectArt",s.targeting==SpellTargeting::None?id:0,cast.point);}else if(s.effectAlias && s.kind!=SpellKind::Blizzard && s.kind!=SpellKind::RainFire){auto visual=s;visual.ability=s.effectAlias;add(visual,"EffectArt",s.targeting==SpellTargeting::None?id:0,cast.point);}
     if(s.kind==SpellKind::Stampede){applyBuff(id,id,s,BuffKind::Mark);auto found=u->buffs.find(s.buff);if(found!=u->buffs.end() && found->second.kind==BuffKind::Mark){found->second.applied=cast.ticket;found->second.positive=true;found->second.dispellable=false;}}
     if(s.channelTime<=0)finishCast(id,cast.ticket);
 }
@@ -29,8 +29,8 @@ void ScriptSession::persistentSpellPulse(std::uint32_t source,const SpellInfo& s
     if(!active())return;auto caster=units_.at(source);auto victims=spellTargets(source,s,point,owner);float allocated=0;
     for(auto id:victims){
         if(!active())return;if(!alive(id,NativeKind::Unit))continue;auto u=units_.at(id);if(!spellTarget(*caster,*u,s,false,owner))continue;float value=percent?number(u->maxLife)*amount:amount;if(s.maxDamage>0)value=std::min(value,std::max(0.f,s.maxDamage-allocated));if(value<=0)continue;allocated+=value;if(u->building)value*=s.buildingFactor;
-        if(s.kind==SpellKind::Tranquility)unitLife(runtime_.handle("unit",id),real(number(u->life)+spellHealAmount(*u,value)));else damageUnit(source,id,value,0,percent?26:14);
-        if(!active())return;if(alive(id,NativeKind::Unit)){auto mark=s;mark.duration=mark.heroDuration=std::max(.0625f,s.period>0?s.period+.03125f:s.burnPeriod+.03125f);applyBuff(id,source,mark,BuffKind::Mark);}
+        auto death=u->deathRevision;if(s.kind==SpellKind::Tranquility)unitLife(runtime_.handle("unit",id),real(number(u->life)+spellHealAmount(*u,value)));else damageUnit(source,id,value,0,percent?26:14);
+        if(!active())return;if(alive(id,NativeKind::Unit) && !u->removing && number(u->life)>0 && u->deathRevision==death){if(s.kind==SpellKind::RainFire){applyBuff(id,source,s,BuffKind::RainBurn);auto found=u->buffs.find(s.buff);if(found!=u->buffs.end() && found->second.kind==BuffKind::RainBurn){found->second.damage=s.extraDamage*(u->building?s.buildingFactor:1);found->second.sourceOwner=owner;}}else {auto mark=s;mark.duration=mark.heroDuration=std::max(.0625f,s.period>0?s.period+.03125f:s.burnPeriod+.03125f);applyBuff(id,source,mark,BuffKind::Mark);}}
     }
     if(!active() || (!s.allowed.contains("tree") && !s.allowed.contains("debris")))return;std::vector<std::pair<float,std::uint32_t>> props;
     for(auto& [id,d]:destructables_){if(d->removed || d->life<=0 || d->invulnerable || (d->tree?!s.allowed.contains("tree"):!s.allowed.contains("debris")))continue;float distance=std::hypot(number(d->position.x)-number(point.x),number(d->position.y)-number(point.y));if(distance<=s.area+d->radius)props.emplace_back(distance,id);}std::sort(props.begin(),props.end());
@@ -38,7 +38,7 @@ void ScriptSession::persistentSpellPulse(std::uint32_t source,const SpellInfo& s
 }
 void ScriptSession::channelPulse(std::uint32_t id,const CastOrder& cast) {
     auto& s=cast.spell;if(s.kind==SpellKind::Stampede){stampedePulse(id,cast);return;}if(s.kind==SpellKind::Drain){drainPulse(id,cast);return;}if(s.kind==SpellKind::Channel)return;
-    if(s.kind==SpellKind::Blizzard && s.effectAlias){auto visual=s;visual.ability=s.effectAlias;std::uint32_t noise=std::uint32_t(cast.ticket)^std::uint32_t(cast.pulses*2654435761u);for(unsigned i=0;i<s.shards;++i){noise=noise*1664525u+1013904223u;float angle=float(noise&0xffff)*6.28318530718f/65536;noise=noise*1664525u+1013904223u;float radius=std::sqrt(float(noise&0xffff)/65535)*s.area;spellVisual(visual,"EffectArt",0,{real(number(cast.point.x)+std::cos(angle)*radius),real(number(cast.point.y)+std::sin(angle)*radius)});}}
+    if((s.kind==SpellKind::Blizzard || s.kind==SpellKind::RainFire) && s.effectAlias){auto visual=s;visual.ability=s.effectAlias;std::uint32_t noise=std::uint32_t(cast.ticket)^std::uint32_t(cast.pulses*2654435761u);for(unsigned i=0;i<s.shards;++i){noise=noise*1664525u+1013904223u;float angle=float(noise&0xffff)*6.28318530718f/65536;noise=noise*1664525u+1013904223u;float radius=std::sqrt(float(noise&0xffff)/65535)*s.area;spellVisual(visual,"EffectArt",0,{real(number(cast.point.x)+std::cos(angle)*radius),real(number(cast.point.y)+std::sin(angle)*radius)});}}
     persistentSpellPulse(id,s,cast.point,cast.owner,s.kind==SpellKind::Blizzard?s.amount+s.extraDamage*s.period:s.amount,s.kind==SpellKind::DeathDecay,cast.ticket);
 }
 void ScriptSession::channelTick(std::uint32_t id,double delta) {

@@ -262,6 +262,12 @@ class ScriptSession {
     bool absorbTarget(const UnitState& unit,const UnitState& target,const SpellInfo& spell);
     const SpellInfo* attackOrb(const UnitState& unit,const UnitState& target,std::uint32_t forced=0);
     void orbWeapon(WeaponDefinition& weapon,const SpellInfo& spell);
+    void neutralSpellInfo(SpellInfo& spell);
+    bool neutralSpellImpact(const SpellMissile& missile);
+    void howlTerror(std::uint32_t source,const SpellInfo& spell,unsigned owner);
+    void breathFireHit(std::uint32_t source,std::uint32_t target,const SpellInfo& spell,unsigned owner,float amount);
+    float neutralBurnTick(UnitBuff& buff,double elapsed);
+    void doomDeath(const UnitState& victim);
     void arrowStatusInfo(SpellInfo& spell);
     std::map<std::uint64_t,StampedeBeast> stampedeBeasts_;
     StampedeIndex stampedeUnitIndex_,stampedePropIndex_;
@@ -685,7 +691,7 @@ public:
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
     bool useItemAt(std::uint32_t unit,std::uint32_t item,WorldPoint point);
     bool itemNeedsPoint(std::uint32_t item);
-    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true);
+    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={});
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);

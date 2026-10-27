@@ -73,7 +73,10 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"ANbs",SpellKind::BlackArrow,SpellTargeting::Unit},{"ANsi",SpellKind::Silence,SpellTargeting::Point},
         {"ANsg",SpellKind::Grizzly,SpellTargeting::None},{"ANsq",SpellKind::Quilbeast,SpellTargeting::None},
         {"ANsw",SpellKind::Hawk,SpellTargeting::None},{"ANst",SpellKind::Stampede,SpellTargeting::Point},
-        {"Afzy",SpellKind::Bloodlust,SpellTargeting::None}
+        {"Afzy",SpellKind::Bloodlust,SpellTargeting::None},
+        {"ANbf",SpellKind::BreathFire,SpellTargeting::Point},{"ANdh",SpellKind::DrunkenHaze,SpellTargeting::Unit},
+        {"ANht",SpellKind::HowlTerror,SpellTargeting::None},{"ANrf",SpellKind::RainFire,SpellTargeting::Point},
+        {"ANdo",SpellKind::Doom,SpellTargeting::Unit},{"ANfl",SpellKind::ForkedLightning,SpellTargeting::Unit}
     };
     auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& p:prototypes)if(code==p.code){s.kind=p.kind;s.targeting=p.targeting;break;}if(s.kind==SpellKind::Unsupported)return spellInfo_.emplace(key,std::move(s)).first->second;
     auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};
@@ -100,6 +103,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(s.kind==SpellKind::Root){s.rootedWeapons=count(s.amount,3);s.uprootedWeapons=count(s.secondary,3);s.rootedTurn=count(s.loss,1)!=0;s.uprootedDefense=count(field("DataD"),7);s.unorder=orderId(data.field(ability,"Profile","Unorder"));if(!s.unorder || s.duration<=0 || s.duration>300 || s.heroDuration<=0 || s.heroDuration>300)throw std::runtime_error("Root requires source transition times and reverse order");}
     if(s.kind==SpellKind::RaiseDead || cappedCorpseSummon(s.kind)){for(auto [amountKey,typeKey]:std::initializer_list<std::pair<const char*,const char*>>{{"DataA","DataC"},{"DataB","DataD"}}){auto amount=count(field(amountKey),64);if(!amount)continue;auto type=data.field(ability,"AbilityData",std::string(typeKey)+std::to_string(level));if(type.size()!=4 || !data.contains(ObjectData::code(type)))throw std::runtime_error("Corpse summon requires source unit types");s.summonCount+=amount;if(s.summonCount>64)throw std::runtime_error("Corpse summon count exceeds budget");s.corpseSummons.emplace_back(ObjectData::code(type),amount);}if(s.corpseSummons.empty() || !s.buff || (s.kind==SpellKind::RaiseDead && s.duration<=0))throw std::runtime_error("Invalid corpse summon count, buff or duration");if(cappedCorpseSummon(s.kind)){s.summonLimit=count(field("DataE"),1024);s.summonsDieWithCaster=count(field("DataF"),1)!=0;if(!s.summonLimit)throw std::runtime_error("Capped corpse summon requires a positive source limit");}}
     if(s.kind==SpellKind::Stampede)stampedeInfo(s);
+    if(s.kind>=SpellKind::BreathFire && s.kind<=SpellKind::ForkedLightning)neutralSpellInfo(s);
     if(s.kind==SpellKind::ColdArrows || s.kind==SpellKind::BlackArrow || s.kind==SpellKind::Silence)arrowStatusInfo(s);
     if(s.kind==SpellKind::SearingArrows){s.missileHoming=count(data.number(ability,"Profile","MissileHoming",1),1)!=0;if(s.amount>1000000 || s.speed<=0)throw std::runtime_error("Invalid source Searing Arrows damage or missile speed");}
     if(s.kind==SpellKind::Impale){s.distance=s.amount;s.amount=s.loss;s.endRadius=s.area;s.heightTime=field("DataD");if(!s.buff || s.distance<=0 || s.distance>100000 || s.secondary<1.f/1024 || s.secondary>300 || s.amount<0 || s.amount>1000000 || s.heightTime<0 || s.heightTime>300 || s.duration<0 || s.heroDuration<0)throw std::runtime_error("Invalid source Impale wave, damage or airborne time");s.speed=s.distance/s.secondary;}

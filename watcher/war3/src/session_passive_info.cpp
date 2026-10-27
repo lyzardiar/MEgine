@@ -11,7 +11,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
         {"AHab",PassiveKind::Brilliance,true},{"AHad",PassiveKind::Devotion,true},{"AOae",PassiveKind::Endurance,true},
         {"AUau",PassiveKind::Unholy,true},{"AUav",PassiveKind::Vampiric,true},{"AEar",PassiveKind::Trueshot,true},
         {"AEah",PassiveKind::Thorns,true},{"AOac",PassiveKind::Command,true},{"Aakb",PassiveKind::WarDrums,true},
-        {"Aoar",PassiveKind::Regeneration,true},{"AHbh",PassiveKind::Bash,false},{"AOcr",PassiveKind::Critical,false},
+        {"Aoar",PassiveKind::Regeneration,true},{"AHbh",PassiveKind::Bash,false},{"AOcr",PassiveKind::Critical,false},{"ANdb",PassiveKind::Critical,false},
         {"AEev",PassiveKind::Evasion,false},{"ANca",PassiveKind::Cleave,false},{"AUts",PassiveKind::SpikedCarapace,false},
         {"Apiv",PassiveKind::PermanentInvisibility,false},{"Adet",PassiveKind::Detection,false},
         {"Atru",PassiveKind::Detection,false},{"Agyv",PassiveKind::Detection,false},{"Adts",PassiveKind::Detection,false},
