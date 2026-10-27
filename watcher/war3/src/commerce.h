@@ -17,7 +17,7 @@ struct ProductInfo {
     std::vector<std::pair<std::uint32_t,unsigned>> prerequisites;
 };
 struct StockEntry {std::uint32_t type=0;bool item=false;int current=0,maximum=0;double interval=0,due=0;};
-struct ProductionOrder {std::uint32_t type=0;int gold=0,lumber=0,food=0;double duration=0,elapsed=0;bool started=false,reserved=false;std::uint64_t ticket=0;bool research=false;unsigned level=0;};
+struct ProductionOrder {std::uint32_t type=0;int gold=0,lumber=0,food=0;double duration=0,elapsed=0;bool started=false,reserved=false;std::uint64_t ticket=0;bool research=false;unsigned level=0;bool revival=false;std::uint32_t hero=0;};
 struct ResearchInfo {ProductInfo product;unsigned level=1,maximum=1;std::string unsupported;};
 struct BuildOrder {std::uint32_t type=0;WorldPoint point;std::uint32_t base=0;};
 struct Construction {
@@ -44,6 +44,6 @@ struct TechnologyStats {
     unsigned weapons=0;
     std::map<std::uint32_t,int> abilityLevels;
 };
-enum class CommandAction {Train,BuyUnit,BuyItem,Research,Harvest,ReturnResources,Build,OpenBuild,CancelTarget,CancelBuild,Entangle,Upgrade,CancelUpgrade,Repair,LearnSkill,CastSpell,OpenSkills,PassiveSkill};
+enum class CommandAction {Revive,CancelProduction,Train,BuyUnit,BuyItem,Research,Harvest,ReturnResources,Build,OpenBuild,CancelTarget,CancelBuild,Entangle,Upgrade,CancelUpgrade,Repair,LearnSkill,CastSpell,OpenSkills,PassiveSkill};
 struct CommandButton {CommandAction action;std::uint32_t type=0;std::string icon,name,tip,hotkey,reason;int x=0,y=0,stock=-1,gold=0,lumber=0;bool enabled=false;};
 }

@@ -17,7 +17,7 @@ struct GameData {
     std::array<std::string,3> resourceIcons;
     std::array<GameCommand,5> commands;
     std::array<GameCommand,4> buildCommands;
-    GameCommand cancelCommand,cancelBuildCommand,selectSkillCommand;
+    GameCommand cancelCommand,cancelBuildCommand,cancelReviveCommand,selectSkillCommand;
     void prepareConsole();
     bool uploadOne(Renderer& renderer);
     size_t uploadCount() const {return assets->uploadCount()+terrain->uploadCount();}

@@ -22,7 +22,7 @@ struct ScriptAI {
     std::set<std::uint32_t> captain,guardUnits;
     std::map<std::uint64_t,AIGuardPost> guards;
     std::uint64_t guardTicket=0;
-    bool fillGuards=false,groupTimedLife=true;
+    bool fillGuards=false,groupTimedLife=true,newHeroes=true;
     int replacementCount=0;
     std::optional<WorldPoint> townSpot;
     std::deque<std::pair<int,int>> commands;

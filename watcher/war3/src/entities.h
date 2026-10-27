@@ -68,6 +68,8 @@ struct UnitState {
     std::optional<WorldPoint> rally;
     std::uint32_t rallyTarget=0;
     int experience=0,skillPoints=1;
+    std::uint32_t revivalBuilding=0;
+    std::uint64_t revivalTicket=0;
     bool experienceSuspended=false;
     std::array<float,3> heroAttributes{},heroGrowth{},heroBonuses{};
     std::array<int,3> appliedHeroStats{};
