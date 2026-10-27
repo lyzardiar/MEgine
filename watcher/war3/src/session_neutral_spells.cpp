@@ -32,6 +32,7 @@ void ScriptSession::breathFireHit(std::uint32_t source,std::uint32_t target,cons
     if(!alive(source,NativeKind::Unit) || !alive(target,NativeKind::Unit))return;auto victim=units_.at(target);auto revision=victim->deathRevision;bool hazed=false;for(auto& [id,b]:victim->buffs)if(b.kind==BuffKind::DrunkenHaze && b.remaining>0){hazed=true;break;}damageUnit(source,target,amount,0,14);if(!hazed || s.extraDamage<=0 || !alive(target,NativeKind::Unit) || victim->removing || number(victim->life)<=0 || victim->deathRevision!=revision)return;applyBuff(target,source,s,BuffKind::BreathBurn);auto found=victim->buffs.find(s.buff);if(found!=victim->buffs.end() && found->second.kind==BuffKind::BreathBurn){found->second.damage=s.extraDamage;found->second.sourceOwner=owner;}
 }
 float ScriptSession::neutralBurnTick(UnitBuff& b,double elapsed){
+    if(b.kind==BuffKind::AcidBomb)return acidBombTick(b,elapsed);
     if(b.kind==BuffKind::SoulBurn)return firelordBuffTick(b,elapsed);
     if(b.kind!=BuffKind::BreathBurn && b.kind!=BuffKind::RainBurn && b.kind!=BuffKind::Doom)return 0;b.period+=elapsed;float damage=0;while(b.period>=1){b.period-=1;damage+=b.damage;}return damage;
 }

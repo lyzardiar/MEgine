@@ -19,6 +19,7 @@
 #include "phoenix_fire.h"
 #include "swarm.h"
 #include "stampede.h"
+#include "alchemist.h"
 #include <variant>
 
 namespace war3 {
@@ -262,6 +263,16 @@ class ScriptSession {
     bool absorbTarget(const UnitState& unit,const UnitState& target,const SpellInfo& spell);
     const SpellInfo* attackOrb(const UnitState& unit,const UnitState& target,std::uint32_t forced=0);
     void orbWeapon(WeaponDefinition& weapon,const SpellInfo& spell);
+    void alchemistSpellInfo(SpellInfo& spell);
+    bool alchemistImpact(const SpellMissile& missile);
+    float acidBombTick(UnitBuff& buff,double elapsed);
+    void healingSprayPulse(std::uint32_t source,const CastOrder& cast);
+    void healingSprayImpact(const HealingSprayWave& wave);
+    void healingSpraysTick(double delta);
+    std::map<std::uint64_t,HealingSprayWave> healingSprays_;
+    void transmute(std::uint32_t source,std::uint32_t target,const SpellInfo& spell,unsigned owner);
+    void creditKillResources(unsigned owner,int gold,int lumber);
+    void awardKillBounty(std::uint32_t killer,const UnitState& victim);
     void firelordSpellInfo(SpellInfo& spell);
     bool firelordTarget(unsigned owner,const UnitState& target,const SpellInfo& spell,bool living=true);
     bool firelordImpact(const SpellMissile& missile);
@@ -662,7 +673,7 @@ class ScriptSession {
     jass::ThreadId triggerExecute(std::uint32_t handle,bool wait=false);
     void fire(std::uint32_t event,ScriptContext context={});
     void unitEvent(std::uint32_t unit,unsigned playerEvent,unsigned unitEvent,ScriptContext context={});
-    void unitLife(jass::Value handle,jass::Real value,std::uint32_t killer=0);
+    void unitLife(jass::Value handle,jass::Real value,std::uint32_t killer=0,bool bounty=true);
     void playerChange(unsigned player,std::uint32_t field,int before,int after,bool alliance);
     void tick(double delta);
     void clockChange(jass::Real before,jass::Real after,bool cyclic);
