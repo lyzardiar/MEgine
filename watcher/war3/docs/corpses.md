@@ -1,6 +1,6 @@
 # 尸体、食尸与复活
 
-尸体生命周期、食尸、亡者复生、复活、操纵死尸、先祖之魂及复活物品已连接实际单位/命令/资源/事件。实现与运行证据分别记录；完整亡灵玩法、尸体运输/挖掘、原件精度、UI/GPU及完整客户端仍未完成。
+尸体生命周期、食尸、亡者复生、复活、操纵死尸、先祖之魂及复活物品已连接实际单位/命令/资源/事件。实现与运行证据分别记录；完整亡灵玩法、原件精度、UI/GPU及完整客户端仍未完成。
 
 ## 尸体生命周期
 
@@ -33,6 +33,6 @@ python tests/generate-corpse-fixture.py --data-root "E:/Program Files (x86)/dzcl
 ./build/windows-x86/bin/Release/war3_corpse_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/corpses/fixture.w3m" freeze
 ~~~
 
-spirit/items/decay/autocast模式已编译、未执行，阶段合并验证先祖之魂/操纵死尸/定时消失、符文/库存/失败冷却/重入、自然衰败/事件/暂停/英雄复活、全等级/w3a/尸体类型/占用/剩余可回复生命量/目标选择、食尸打断/恢复/源序列及三图长局/声音/UI/GPU/CPU/内存/切图释放。绞肉车尸体货舱、挖掘尸体、完整阵营AI和其余能力继续实现；没有旧全套、三图、GPU、性能或原件逐函数通过结论。
+spirit/items/decay/autocast模式已编译、未执行，阶段合并验证先祖之魂/操纵死尸/定时消失、符文/库存/失败冷却/重入、自然衰败/事件/暂停/英雄复活、全等级/w3a/尸体类型/占用/剩余可回复生命量/目标选择、食尸打断/恢复/源序列及三图长局/声音/UI/GPU/CPU/内存/切图释放。绞肉车尸体货舱/挖掘已接入，见[尸体货舱](corpse-cargo.md)；完整阵营AI和其余能力继续实现；没有旧全套、三图、GPU、性能或原件逐函数通过结论。
 
 本地原始记录为根tmp/docs-artifacts/war3/corpses/中的build.log、items-build.log、delivery-build.log、final-build.log、freeze-build.log、fixture-build.log、clean-build.log、flow.log和freeze.log。旧MEngine延期队列及完整客户端验收保持开放。

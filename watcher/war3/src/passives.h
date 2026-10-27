@@ -4,14 +4,15 @@
 #include <set>
 
 namespace war3 {
-enum class PassiveKind {Unsupported,Brilliance,Devotion,Endurance,Unholy,Vampiric,Trueshot,Thorns,Command,WarDrums,Regeneration,Bash,Critical,Evasion,Cleave,PermanentInvisibility,Detection,Ghost};
+enum class PassiveKind {Unsupported,Brilliance,Devotion,Endurance,Unholy,Vampiric,Trueshot,Thorns,Command,WarDrums,Regeneration,Bash,Critical,Evasion,Cleave,PermanentInvisibility,Detection,Ghost,Exhume};
 struct PassiveInfo {
-    std::uint32_t ability=0,buff=0;
+    std::uint32_t ability=0,buff=0,corpseType=0;
     unsigned level=0;
     PassiveKind kind=PassiveKind::Unsupported;
     bool aura=false,percent=false,melee=true,ranged=true,neverMiss=false;
     float area=0,amount=0,secondary=0,bonus=0,evasion=0,duration=0,heroDuration=0;
     std::set<std::string> allowed;
+    std::vector<std::pair<std::uint32_t,unsigned>> prerequisites;
     std::vector<std::string> visualModels;
     std::vector<std::pair<std::string,std::string>> targetModels;
 };

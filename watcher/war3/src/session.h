@@ -196,6 +196,10 @@ class ScriptSession {
     void startCannibalize(std::uint32_t caster,const CastOrder& cast);
     void cannibalizeTick(std::uint32_t caster,double delta);
     void bindCorpseNatives();
+    jass::Value createCorpse(unsigned owner,std::uint32_t type,WorldPoint point,jass::Real facing);
+    void exhumeCorpses(std::uint32_t transport,double delta);
+    std::map<std::uint32_t,bool> corpseHoldAbilities_;
+    bool corpseCargoCandidate(const UnitState& unit);
     bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;
@@ -447,6 +451,7 @@ class ScriptSession {
     World& requireWorld();
 public:
     bool corpseAvailable(std::uint32_t corpse,std::uint32_t claimant=0);
+    bool corpseCarrier(std::uint32_t transport);
     unsigned cargoCapacity(std::uint32_t transport);
     unsigned cargoUsed(std::uint32_t transport);
     unsigned cargoCost(std::uint32_t passenger);

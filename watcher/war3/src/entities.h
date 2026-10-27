@@ -32,6 +32,7 @@ struct UnitState {
     std::optional<CargoReturnOrder> cargoReturn;
     std::optional<DigestionState> digestion;
     std::optional<CorpseState> corpse;
+    std::optional<ExhumeState> exhume;
     bool decaySuspended=false,noCorpse=false,exploded=false;
     std::set<unsigned> visionPlayers;
     bool holding=false,creepGuard=false,guardRemoved=false;
