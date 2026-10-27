@@ -47,6 +47,8 @@ class GameView {
     void hud(const GameInput& input);
     void commandPanel(const GameInput& input,std::uint32_t unit);
     void selection();
+    bool castSelection(std::uint32_t caster,std::uint32_t ability,std::uint32_t target=0,std::optional<WorldPoint> point={});
+    void spellPreview(const GameInput& input);
     void buildingPreview(const GameInput& input);
     void stream();
     void command(float x,float y,OrderMode mode);

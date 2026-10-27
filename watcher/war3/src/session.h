@@ -124,6 +124,14 @@ class ScriptSession {
     std::uint64_t spellTicket_=0;
     std::map<std::uint64_t,SpellWave> spellWaves_;
     std::map<std::uint64_t,DelayedSpell> delayedSpells_;
+    std::map<std::uint64_t,GroundSpell> groundSpells_;
+    void startChannel(std::uint32_t unit);
+    void channelTick(std::uint32_t unit,double delta);
+    void channelPulse(std::uint32_t unit,const CastOrder& cast);
+    void finishCast(std::uint32_t unit,std::uint64_t ticket);
+    void releaseCastVisuals(CastOrder& cast);
+    void groundSpellsTick(double delta);
+    void persistentSpellPulse(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner,float amount,bool percent,std::optional<std::uint64_t> cast={});
     bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting);
     bool spellPoint(const UnitState& unit,const SpellInfo& spell,WorldPoint point);
     void releaseSpell(std::uint32_t unit,const CastOrder& cast,unsigned owner);
@@ -344,6 +352,7 @@ public:
     std::vector<CommandButton> abilityCommands(std::uint32_t unit,unsigned player,bool learning=false);
     const auto& spellMissiles() const {return spellMissiles_;}
     const auto& spellWaves() const {return spellWaves_;}
+    const auto& groundSpells() const {return groundSpells_;}
     const auto& effects() const {return effects_;}
     const auto& lightnings() const {return lightnings_;}
     void effectExpires(std::uint32_t id,double time);

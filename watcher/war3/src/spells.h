@@ -4,8 +4,8 @@
 #include <set>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants};
-enum class SpellTargeting {Unit,Point,None};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel};
+enum class SpellTargeting {Unit,Point,None,Either};
 struct SpellInfo {
     std::uint32_t ability=0,order=0,buff=0;
     unsigned level=0,targets=1;
@@ -19,9 +19,13 @@ struct SpellInfo {
     float maxDamage=0,distance=0,endRadius=0,moveReduction=0,attackReduction=0,impactDelay=0,summonDuration=0;
     std::uint32_t summonType=0;
     unsigned summonCount=0;
+    bool channelled=false,disableOthers=false;
+    std::uint32_t effectAlias=0,channelOptions=0;
+    unsigned pulses=0,shards=0;
+    float channelTime=0,period=0,castDelay=0,buildingFactor=1,extraDamage=0,artPeriod=0,fullTime=0,fullPeriod=0,burnPeriod=0;
 };
 struct CastOrder {
-    enum class Phase {Approach,Windup,Backswing};
+    enum class Phase {Approach,Windup,Backswing,Channel};
     Phase phase=Phase::Approach;
     SpellInfo spell;
     std::uint32_t target=0,abilityHandle=0;
@@ -29,8 +33,11 @@ struct CastOrder {
     std::uint64_t ticket=0;
     double remaining=0,repath=0;
     bool started=false;
+    double channelElapsed=0,nextPulse=0,nextArt=0;
+    unsigned pulses=0,owner=0;
+    std::vector<std::uint32_t> visuals;
 };
-enum class BuffKind {Stun,Roots,Frost,Slow};
+enum class BuffKind {Stun,Roots,Frost,Slow,Mark};
 struct UnitBuff {
     std::uint32_t id=0,source=0;
     BuffKind kind=BuffKind::Stun;
@@ -59,4 +66,5 @@ struct SpellWave {
     std::set<std::uint32_t> hit;
 };
 struct DelayedSpell {SpellInfo spell;std::uint32_t source=0;unsigned owner=0;WorldPoint point;double due=0;};
+struct GroundSpell {SpellInfo spell;std::uint32_t source=0;unsigned owner=0;WorldPoint point;double elapsed=0,nextPulse=0;bool started=false,burn=false;std::vector<std::uint32_t> visuals;};
 }
