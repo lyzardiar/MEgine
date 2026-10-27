@@ -103,7 +103,8 @@ struct UnitState {
     float damageDealt=1,damageTaken=1;
     std::optional<TimedLife> timedLife;
     std::map<std::string,double> itemCooldowns;
-    float healthRegen=0,manaRegen=0;
+    float healthRegen=0,manaRegen=0,formHealthRegen=0;
+    bool burrowed=false;
     std::string regenType;
     CombatOrder combat;
     std::optional<CastOrder> cast;

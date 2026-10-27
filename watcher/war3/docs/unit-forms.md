@@ -14,7 +14,7 @@
 
 飞行落地检查地图路径及其他单位碰撞，MorphLandClosest启用时在当前位置周围有界搜索；实际提交类型时重新检查落点。转换票据接入施法结束/取消事件，锁定标志进入实际命令/移动/攻击消费者。仅对存在转换或计时形态的单位维护更新集合，永久熊/鸦形态不逐帧扫描。地图/公共资源继续只读、MPQ内存读取，不加载Game.dll。
 
-来源为本机Warcraft III 1.27.0.52240的AbilityData/AbilityMetaData、NightElfAbilityFunc/Strings、UnitAbilities/Balance/Data/UI/Weapons、NightElfUnitFunc、MiscGame与UI/UnitEditorData的morphFlags；各成员来源归档和SHA-256保存在本地证据source.json。morphFlags依次为1不可打断、2即时落地、4即时起飞、8永久、16需要付费。需要付费的转换明确拒绝；毁灭者/复合变身、其他原型及完整战役能力继续实现。
+来源为本机Warcraft III 1.27.0.52240的AbilityData/AbilityMetaData、NightElfAbilityFunc/Strings、UnitAbilities/Balance/Data/UI/Weapons、NightElfUnitFunc、MiscGame与UI/UnitEditorData的morphFlags；各成员来源归档和SHA-256保存在本地证据source.json。morphFlags依次为1不可打断、2即时落地、4即时起飞、8永久、16需要付费。付费转换、毁灭者、石像形态与钻地已接入，见[亡灵形态](undead-forms.md)；复合变身、其他原型及完整战役能力继续实现。
 
 本批必要Win32 Release产品和新消费者编译通过。复制BootyBay地形的最小检查最终3通过/0失败，无Game.dll，覆盖熊往返/生命比例/人口/免费返回/动画状态，乌鸦起飞/高度/速度/落地，恶魔成长/库存/生命奖励/到期/死亡恢复。GPU、原版数值/转换时序、完整碰撞/路径类型、全部自定义覆盖/标志组合、取消/控制/所有权/回调重入、复活/运输/幻象组合、AI、音效和长局/性能/切图释放进入阶段合并验证，不能由上述结果推断通过。
 

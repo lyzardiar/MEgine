@@ -3,5 +3,5 @@
 #include "spells.h"
 namespace war3 {
 struct UnitFormState {SpellInfo spell;bool active=false;float healthApplied=0;double remaining=-1;};
-struct UnitFormTransition {SpellInfo spell;std::uint32_t type=0;std::uint64_t ticket=0;double remaining=0;float previousHeight=0,previousRate=0;bool reverse=false,committed=false;};
+struct UnitFormTransition {SpellInfo spell;std::uint32_t type=0;std::uint64_t ticket=0;double remaining=0;float previousHeight=0,previousRate=0;bool reverse=false,committed=false;int gold=0,lumber=0,food=0;unsigned payer=0;};
 }
