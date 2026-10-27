@@ -42,13 +42,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition};
+enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     using Timer=ScriptTimer;
     using Trigger=ScriptTrigger;
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -117,6 +117,20 @@ class ScriptSession {
     std::map<std::uint32_t,std::array<WeaponDefinition,2>> weapons_;
     std::map<std::uint64_t,CombatProjectile> projectiles_;
     std::uint64_t projectileId_=0,combatTicks_=0;
+    std::map<std::pair<std::uint32_t,unsigned>,SpellInfo> spellInfo_;
+    std::map<std::pair<std::uint32_t,std::uint32_t>,std::uint32_t> abilityHandles_;
+    std::map<std::uint64_t,SpellMissile> spellMissiles_;
+    std::uint64_t spellTicket_=0;
+    void bindSpellNatives();
+    bool spellTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility=true,unsigned owner=UINT_MAX);
+    bool cancelCast(UnitState& unit,bool preserveRoute=false);
+    void spellEvent(std::uint32_t unit,const CastOrder& cast,unsigned stage);
+    void spellsTick(double delta);
+    void buffsTick(double delta);
+    void spellImpact(SpellMissile missile);
+    void applyBuff(std::uint32_t target,std::uint32_t source,const SpellInfo& spell,BuffKind kind);
+    void releaseAbility(std::uint32_t unit,std::uint32_t ability);
+    std::uint32_t abilityHandle(std::uint32_t unit,std::uint32_t ability);
     jass::Value create(NativeKind kind);
     Object& object(jass::Value handle,NativeKind kind);
     SessionPlayer& player(jass::Value handle);
@@ -202,7 +216,7 @@ class ScriptSession {
     bool enemy(unsigned owner,unsigned other) const;
     bool weaponTarget(const UnitState& source,const UnitState& target,const WeaponDefinition& weapon,bool automatic=false,bool splash=false);
     std::optional<unsigned> weaponFor(const UnitState& source,const UnitState& target,bool automatic=false);
-    void cancelCombat(UnitState& unit);
+    bool cancelCombat(UnitState& unit);
     bool chase(UnitState& unit,WorldPoint target,float standoff);
     void combat(double delta);
     void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon);
@@ -289,6 +303,14 @@ public:
     bool attackUnit(std::uint32_t source,std::uint32_t target,bool forced=true);
     bool attackMove(std::uint32_t source,WorldPoint target,bool patrol=false);
     bool hasWeapon(std::uint32_t unit);
+    const SpellInfo& spellInfo(std::uint32_t ability,unsigned level);
+    bool castSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target);
+    bool castOrder(std::uint32_t unit,std::uint32_t order,std::uint32_t target);
+    bool learnHeroSkill(std::uint32_t unit,std::uint32_t ability) {return learnSkill(unit,ability);}
+    bool canLearnSkill(std::uint32_t unit,std::uint32_t ability);
+    double spellCooldown(std::uint32_t unit,std::uint32_t ability) const;
+    std::vector<CommandButton> abilityCommands(std::uint32_t unit,unsigned player,bool learning=false);
+    const auto& spellMissiles() const {return spellMissiles_;}
     const auto& projectiles() const {return projectiles_;}
     const auto& destructables() const {return destructables_;}
     std::uint64_t destructableRevision() const {return destructableRevision_;}

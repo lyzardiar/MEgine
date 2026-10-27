@@ -1,0 +1,43 @@
+// Author: MiYu. Source-backed ability orders, cast phases and dispellable unit effects.
+#pragma once
+#include "world.h"
+#include <set>
+
+namespace war3 {
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave};
+struct SpellInfo {
+    std::uint32_t ability=0,order=0,buff=0;
+    unsigned level=0,targets=1;
+    SpellKind kind=SpellKind::Unsupported;
+    float mana=0,cooldown=0,range=0,area=0,amount=0,secondary=0,loss=0,duration=0,heroDuration=0,speed=0;
+    std::string animation,missile;
+    std::set<std::string> allowed;
+};
+struct CastOrder {
+    enum class Phase {Approach,Windup,Backswing};
+    Phase phase=Phase::Approach;
+    SpellInfo spell;
+    std::uint32_t target=0,abilityHandle=0;
+    WorldPoint point;
+    std::uint64_t ticket=0;
+    double remaining=0,repath=0;
+    bool started=false;
+};
+enum class BuffKind {Stun,Roots,Frost};
+struct UnitBuff {
+    std::uint32_t id=0,source=0;
+    BuffKind kind=BuffKind::Stun;
+    double remaining=0,period=0;
+    float damage=0,moveReduction=0,attackReduction=0;
+    bool positive=false,physical=false;
+};
+struct SpellMissile {
+    SpellInfo spell;
+    std::uint32_t source=0,target=0;
+    unsigned owner=0;
+    WorldPoint position;
+    float amount=0;
+    std::vector<std::uint32_t> visited;
+};
+struct ScriptAbility {std::uint32_t unit=0,type=0;};
+}

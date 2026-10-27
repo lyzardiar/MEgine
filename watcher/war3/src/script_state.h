@@ -53,6 +53,8 @@ struct ScriptContext {
     std::uint32_t learnedSkill=0,learnedLevel=0;
     std::uint32_t summoningUnit=0,summonedUnit=0,damageSource=0,orderTarget=0;
     std::uint32_t attacker=0;
+    std::uint32_t spellUnit=0,spellId=0,spellAbility=0,spellTarget=0;
+    WorldPoint spellPoint;
     std::uint32_t researched=0,clickedDialog=0,clickedButton=0;
     std::uint32_t constructing=0,cancelled=0,constructed=0;
     std::uint32_t triggerWidget=0,triggerDestructable=0,filterDestructable=0,enumDestructable=0;

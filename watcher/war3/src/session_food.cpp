@@ -21,7 +21,7 @@ void ScriptSession::transferFood(const UnitState& u,unsigned oldOwner,unsigned n
 void ScriptSession::removeUnit(std::uint32_t handle) {
     if(!alive(handle,NativeKind::Unit))return;auto state=units_.at(handle);if(state->removing)return;state->removing=true;cancelCombat(*state);unitFootprint(*state);auto held=state->inventory;auto jobs=std::move(state->production);state->production.clear();int reserved=state->construction?state->construction->food:0;state->construction.reset();if(state->buildingUpgrade)reserved+=state->buildingUpgrade->food;state->buildingUpgrade.reset();for(auto& job:jobs)if(job.reserved)reserved+=job.food;releaseBuilder(handle,false);unitFood(handle,false,reserved);releaseMine(*state);
     for(auto id:held)if(alive(handle,NativeKind::Unit) && id && alive(id,NativeKind::Item) && items_.at(id)->holder==handle)dropItem(handle,id);
-    for(auto& o:objects_)if(o.alive && o.kind==NativeKind::Group)std::erase(std::get<Group>(o.state).units,handle);units_.erase(handle);destroy(runtime_.handle("unit",handle),NativeKind::Unit);
+    for(auto& o:objects_)if(o.alive && o.kind==NativeKind::Group)std::erase(std::get<Group>(o.state).units,handle);for(auto it=abilityHandles_.begin();it!=abilityHandles_.end();)if(it->first.first==handle){destroy(runtime_.handle("ability",it->second),NativeKind::Ability);it=abilityHandles_.erase(it);}else ++it;units_.erase(handle);destroy(runtime_.handle("unit",handle),NativeKind::Unit);
 }
 void ScriptSession::bindFoodNatives() {
     bind("SetUnitUseFood","nothing",{"unit","boolean"},[this](auto& vm,auto a){auto& u=unit(a[0]);u.useFood=a[1].bits!=0;unitFood(a[0].bits,u.useFood);return vm.nothing();});

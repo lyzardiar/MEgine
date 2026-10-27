@@ -4,11 +4,13 @@
 #include "object_data.h"
 #include "commerce.h"
 #include "combat.h"
+#include "spells.h"
+#include <algorithm>
 
 namespace war3 {
 struct TimedLife {std::uint32_t buff=0;double duration=0,remaining=0;bool paused=false;};
 struct UnitState {
-    std::uint32_t type=0,owner=0;
+    std::uint32_t handle=0,type=0,owner=0;
     std::string name,model,icon;
     jass::Real x,y,facing,life,maxLife,mana,maxMana,moveSpeed,defaultMoveSpeed,acquireRange;
     int resources=0,userData=0,level=1,foodUsed=0,foodMade=0;
@@ -77,6 +79,14 @@ struct UnitState {
     float healthRegen=0,manaRegen=0;
     std::string regenType;
     CombatOrder combat;
+    std::optional<CastOrder> cast;
+    std::uint64_t castRevision=0;
+    std::map<std::uint32_t,double> spellCooldowns;
+    std::map<std::uint32_t,UnitBuff> buffs;
+    bool stunned() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun)return true;return false;}
+    bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots)return true;return false;}
+    float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction);}
+    float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
     bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0;}
 };
 struct DestructableState {

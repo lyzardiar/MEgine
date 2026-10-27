@@ -44,6 +44,6 @@ struct TechnologyStats {
     unsigned weapons=0;
     std::map<std::uint32_t,int> abilityLevels;
 };
-enum class CommandAction {Train,BuyUnit,BuyItem,Research,Harvest,ReturnResources,Build,OpenBuild,CancelTarget,CancelBuild,Entangle,Upgrade,CancelUpgrade,Repair};
+enum class CommandAction {Train,BuyUnit,BuyItem,Research,Harvest,ReturnResources,Build,OpenBuild,CancelTarget,CancelBuild,Entangle,Upgrade,CancelUpgrade,Repair,LearnSkill,CastSpell,OpenSkills};
 struct CommandButton {CommandAction action;std::uint32_t type=0;std::string icon,name,tip,hotkey,reason;int x=0,y=0,stock=-1,gold=0,lumber=0;bool enabled=false;};
 }
