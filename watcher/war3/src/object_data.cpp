@@ -1,5 +1,6 @@
 // Author: MiYu. Reuse classic source tables and original-before-custom object inheritance.
 #include "object_data.h"
+#include <cctype>
 #include "binary.h"
 #include <charconv>
 #include <set>
@@ -48,6 +49,7 @@ bool ObjectData::contains(std::uint32_t id,bool item) const {for(unsigned depth=
 bool ObjectData::ability(std::uint32_t id) const {auto table=tables_.find("AbilityData");return table!=tables_.end() && table->second.contains(root(id));}
 bool ObjectData::upgrade(std::uint32_t id) const {auto table=tables_.find("UpgradeData");return table!=tables_.end() && table->second.contains(root(id));}
 std::uint32_t ObjectData::root(std::uint32_t id) const {for(unsigned i=0;i<64;++i){auto found=parents_.find(id);if(found==parents_.end())return id;id=found->second;}throw std::runtime_error("Excessive object inheritance");}
+std::string ObjectData::unitClasses(std::uint32_t id) const {auto value=property(id,"utyp");for(auto& c:value)c=char(std::tolower(static_cast<unsigned char>(c)));return value;}
 std::string ObjectData::property(std::uint32_t id,const char* key,const std::string& fallback) const {auto meta=metadata_.find(code(key));return meta==metadata_.end()?fallback:field(id,cell(meta->second,"slk"),cell(meta->second,"field"),fallback);}
 float ObjectData::number(std::uint32_t id,const std::string& table,const std::string& key,float fallback) const {auto text=field(id,table,key);auto first=text.find_first_not_of(" \t\r\n");if(first==std::string::npos)return fallback;text=text.substr(first,text.find_last_not_of(" \t\r\n")-first+1);if(text=="-")return fallback;if(text.front()=='+')text.erase(0,1);float result=0;auto [end,error]=std::from_chars(text.data(),text.data()+text.size(),result);if(error!=std::errc{} || end!=text.data()+text.size() || !std::isfinite(result))throw std::runtime_error("Invalid object numeric field: "+name(id)+" "+table+"/"+key+"="+text.substr(0,64));return result;}
 }

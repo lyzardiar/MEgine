@@ -34,6 +34,7 @@ public:
     bool ability(std::uint32_t id) const;
     bool upgrade(std::uint32_t id) const;
     std::uint32_t root(std::uint32_t id) const;
+    std::string unitClasses(std::uint32_t id) const;
     std::string property(std::uint32_t id,const char* field,const std::string& fallback={}) const;
     std::string field(std::uint32_t id,const std::string& table,const std::string& key,const std::string& fallback={}) const;
     float number(std::uint32_t id,const std::string& table,const std::string& key,float fallback=0) const;

@@ -14,6 +14,7 @@
 #include "placed_definition.h"
 #include "image.h"
 #include "effects.h"
+#include "ai.h"
 #include <variant>
 
 namespace war3 {
@@ -82,6 +83,20 @@ class ScriptSession {
     std::map<jass::ThreadId,std::vector<ScriptContext>> threadContexts_{{0,{}}};
     void bindThreadNatives();
     double simulationTime_=0,accumulator_=0;
+    std::array<std::unique_ptr<ScriptAI>,16> ais_;
+    void bindAiNatives();
+    void bindAiRuntime(ScriptAI& ai);
+    void aiTick();
+    void aiTowns(ScriptAI& ai);
+    int aiTown(ScriptAI& ai,const UnitState& unit);
+    unsigned aiCount(ScriptAI& ai,std::uint32_t type,bool done,int town=-1);
+    bool aiProduce(ScriptAI& ai,unsigned quantity,std::uint32_t type,int town);
+    bool aiUpgrade(ScriptAI& ai,std::uint32_t type);
+    void aiHarvest(ScriptAI& ai);
+    std::uint32_t aiMine(ScriptAI& ai,int town);
+    std::uint32_t aiEnemy(ScriptAI& ai,unsigned owner=UINT_MAX,bool buildings=false);
+    std::vector<std::uint32_t> aiCaptain(ScriptAI& ai);
+    void aiAttack(ScriptAI& ai,WorldPoint point,std::uint32_t target=0);
     std::array<std::optional<unsigned>,16> results_;
     std::array<PlayerStatistics,16> statistics_{};
     std::array<std::vector<HeroSummary>,16> heroSummaries_;
@@ -422,6 +437,8 @@ public:
     bool questFlash() const {return questFlash_;}
     void acknowledgeQuests() {questFlash_=false;}
     void displayText(unsigned owner,float x,float y,double duration,std::string text);
+    void startAI(unsigned player,const std::string& script,bool campaign=false);
+    const auto& ais() const {return ais_;}
     void startMain();
     void finishGame(bool scores,SessionExit action=SessionExit::Return);
     void removePlayer(unsigned owner,unsigned result);

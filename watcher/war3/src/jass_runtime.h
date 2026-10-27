@@ -6,7 +6,8 @@
 #include <functional>
 
 namespace war3::jass {
-struct Value {Id type=none;std::uint32_t bits=0;std::shared_ptr<const std::string> text;};
+class Runtime;
+struct Value {Id type=none;std::uint32_t bits=0;std::shared_ptr<const std::string> text;Runtime* codeOwner=nullptr;};
 struct RuntimeLimits {std::uint64_t steps=5000000;size_t frames=1024,values=262144,stringBytes=16*1024*1024;bool debug=false;size_t threads=1024;};
 class Runtime {
     struct Impl;
@@ -20,6 +21,8 @@ public:
     const Module& module() const;
     size_t instructionCount() const;
     void bind(const std::string& name,Native function);
+    void shareThreads(Runtime& owner);
+    void inheritNatives(const Runtime& owner);
     void initialize();
     bool ready() const;
     Value invoke(const std::string& function,std::span<const Value> arguments={});
