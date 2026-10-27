@@ -1,6 +1,7 @@
 // Author: MiYu. Persistent source-backed unit, item and weather state for native sessions.
 #pragma once
 #include "equipment.h"
+#include "rebirth.h"
 #include "world.h"
 #include "object_data.h"
 #include "commerce.h"
@@ -107,6 +108,8 @@ struct UnitState {
     std::uint32_t summoner=0,summonAbility=0,illusionOriginal=0;
     float damageDealt=1,damageTaken=1;
     std::optional<TimedLife> timedLife;
+    std::optional<RebirthState> rebirth;
+    std::optional<PhoenixCycle> phoenixCycle;
     std::map<std::string,double> itemCooldowns;
     float healthRegen=0,manaRegen=0,formHealthRegen=0;
     bool burrowed=false;

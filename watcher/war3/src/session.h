@@ -161,6 +161,15 @@ class ScriptSession {
     void blinkSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point);
     void startMirrorImage(std::uint32_t unit,const CastOrder& cast);
     void mobilityTick(double delta);
+    const DeathPassiveInfo* deathPassiveInfo(std::uint32_t ability,unsigned level);
+    void initializeDeathRestart(UnitState& unit);
+    void clearDeathRestart(UnitState& unit);
+    bool cancelDeathActivities(UnitState& unit);
+    bool tryDeathRestart(std::uint32_t unit);
+    void deathRestartsTick(double delta);
+    void summonPhoenix(std::uint32_t unit,const SpellInfo& spell,unsigned owner);
+    std::map<std::pair<std::uint32_t,unsigned>,std::optional<DeathPassiveInfo>> deathPassives_;
+    std::set<std::uint32_t> deathRestartActors_;
     void heroUltimateInfo(SpellInfo& spell);
     bool ultimateEffectActive(std::uint32_t unit,unsigned owner,std::uint64_t ticket,std::uint32_t buff=0);
     void ultimateAreaDamage(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,float amount,bool buildingsOnly,unsigned owner,std::uint64_t ticket,std::uint32_t buff=0);

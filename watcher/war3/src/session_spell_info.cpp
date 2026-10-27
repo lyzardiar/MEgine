@@ -62,7 +62,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"AHmt",SpellKind::MassTeleport,SpellTargeting::Unit},{"AItp",SpellKind::TownPortal,SpellTargeting::Unit},
         {"AIrt",SpellKind::Recall,SpellTargeting::Either},
         {"AOww",SpellKind::Bladestorm,SpellTargeting::None},{"AOeq",SpellKind::Earthquake,SpellTargeting::Point},
-        {"AOvd",SpellKind::Voodoo,SpellTargeting::None}
+        {"AOvd",SpellKind::Voodoo,SpellTargeting::None},{"AHpx",SpellKind::Phoenix,SpellTargeting::None}
     };
     auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& p:prototypes)if(code==p.code){s.kind=p.kind;s.targeting=p.targeting;break;}if(s.kind==SpellKind::Unsupported)return spellInfo_.emplace(key,std::move(s)).first->second;
     auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};
@@ -109,6 +109,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(s.kind==SpellKind::ThunderClap){s.moveReduction=field("DataC");s.attackReduction=field("DataD");}
     if(s.kind==SpellKind::Shockwave || s.kind==SpellKind::CarrionSwarm){s.maxDamage=field("DataB");s.distance=field("DataC");s.endRadius=field("DataD");if(s.distance<=0 || s.distance>100000 || s.speed<=0 || s.endRadius<0 || s.endRadius>100000)throw std::runtime_error("Source wave geometry outside supported range");}
     if(s.kind==SpellKind::FanKnives){s.maxDamage=field("DataB");s.targets=count(field("DataC"),1024);}
+    if(s.kind==SpellKind::Phoenix){auto type=data.field(ability,"AbilityData","UnitID"+std::to_string(level));if(type.size()!=4 || !data.contains(ObjectData::code(type)))throw std::runtime_error("Phoenix requires source summon type");s.summonType=ObjectData::code(type);s.summonCount=count(s.amount,64);if(!s.summonCount)throw std::runtime_error("Phoenix requires a positive summon count");}
     bool summon=s.kind==SpellKind::WaterElemental || s.kind==SpellKind::SpiritWolf || s.kind==SpellKind::SerpentWard || s.kind==SpellKind::Treants || s.kind==SpellKind::Inferno;
     if(summon){auto type=data.field(ability,"AbilityData","UnitID"+std::to_string(level));if(type.size()!=4 || !data.contains(ObjectData::code(type)))throw std::runtime_error("Unknown source summoned type: "+type);s.summonType=ObjectData::code(type);s.summonCount=s.kind==SpellKind::Inferno?1:count(field(s.kind==SpellKind::SpiritWolf?"DataB":"DataA"),64);s.summonDuration=s.kind==SpellKind::Inferno?field("DataB"):s.duration;if(s.kind==SpellKind::Inferno)s.impactDelay=field("DataC");if(!s.summonCount || s.summonDuration<=0 || s.summonDuration>86400 || s.impactDelay<0 || s.impactDelay>86400)throw std::runtime_error("Source summon lifetime outside supported range");}
     if(s.kind==SpellKind::Blizzard || s.kind==SpellKind::Tranquility || s.kind==SpellKind::Starfall || s.kind==SpellKind::DeathDecay || s.kind==SpellKind::Channel){s.channelled=true;s.channelTime=s.duration;s.period=s.secondary;}
