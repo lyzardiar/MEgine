@@ -72,7 +72,7 @@ struct UnitState {
     std::string properName;
     std::uint64_t heroRevision=0;
     bool illusion=false;
-    std::uint32_t summoner=0,illusionOriginal=0;
+    std::uint32_t summoner=0,summonAbility=0,illusionOriginal=0;
     float damageDealt=1,damageTaken=1;
     std::optional<TimedLife> timedLife;
     std::map<std::string,double> itemCooldowns;

@@ -1,0 +1,43 @@
+// Author: MiYu. Point and immediate spells consume source area, wave geometry, caps and impact delays.
+#include "session.h"
+#include <algorithm>
+#include <bit>
+#include <cmath>
+
+namespace war3 {
+namespace {
+float number(jass::Real v){return std::bit_cast<float>(v.bits());}
+float distance(const UnitState& u,WorldPoint p){return std::hypot(number(u.x)-number(p.x),number(u.y)-number(p.y));}
+}
+std::vector<std::uint32_t> ScriptSession::spellTargets(std::uint32_t source,const SpellInfo& s,WorldPoint point,unsigned owner) {
+    std::vector<std::pair<float,std::uint32_t>> candidates;if(!alive(source,NativeKind::Unit))return {};auto caster=units_.at(source);for(auto& [id,u]:units_){float d=distance(*u,point);if(d<=s.area+u->collision && spellTarget(*caster,*u,s,false,owner))candidates.emplace_back(d,id);}std::sort(candidates.begin(),candidates.end());std::vector<std::uint32_t> result;for(auto [d,id]:candidates)result.push_back(id);return result;
+}
+void ScriptSession::releaseSpell(std::uint32_t source,const CastOrder& cast,unsigned owner) {
+    if(!alive(source,NativeKind::Unit))return;auto u=units_.at(source);auto& s=cast.spell;
+    if(s.targeting==SpellTargeting::Unit){SpellMissile missile;missile.spell=s;missile.source=source;missile.target=cast.target;missile.owner=owner;missile.position={u->x,u->y};missile.amount=s.amount;if(s.speed>0)spellMissiles_.emplace(++spellTicket_,std::move(missile));else spellImpact(std::move(missile));return;}
+    WorldPoint point=s.targeting==SpellTargeting::None?WorldPoint{u->x,u->y}:cast.point;
+    if(s.kind==SpellKind::Shockwave || s.kind==SpellKind::CarrionSwarm){if(spellWaves_.size()>=4096)throw std::runtime_error("Active spell wave budget exceeded");SpellWave wave;wave.spell=s;wave.source=source;wave.owner=owner;wave.origin={u->x,u->y};float dx=number(point.x)-number(u->x),dy=number(point.y)-number(u->y),length=std::hypot(dx,dy);if(length>.001f){wave.directionX=dx/length;wave.directionY=dy/length;}else{float angle=number(u->facing)*3.14159265359f/180;wave.directionX=std::cos(angle);wave.directionY=std::sin(angle);}spellWaves_.emplace(++spellTicket_,std::move(wave));return;}
+    if(s.impactDelay>0){if(delayedSpells_.size()>=4096)throw std::runtime_error("Delayed spell budget exceeded");delayedSpells_.emplace(++spellTicket_,DelayedSpell{s,source,owner,point,simulationTime_+s.impactDelay});return;}areaSpell(source,s,point,owner);
+}
+void ScriptSession::areaSpell(std::uint32_t source,const SpellInfo& s,WorldPoint point,unsigned owner) {
+    if(!alive(source,NativeKind::Unit))return;
+    if(s.kind==SpellKind::WaterElemental || s.kind==SpellKind::SpiritWolf || s.kind==SpellKind::SerpentWard || s.kind==SpellKind::Treants){summonSpell(source,s,point,owner);return;}
+    auto victims=spellTargets(source,s,point,owner);float allocated=0;unsigned count=0;
+    for(auto id:victims){
+        if(!alive(source,NativeKind::Unit))break;if(!alive(id,NativeKind::Unit))continue;
+        if(s.kind==SpellKind::FanKnives){if(s.targets && count>=s.targets)break;float amount=s.maxDamage>0?std::min(s.amount,std::max(0.f,s.maxDamage-allocated)):s.amount;if(amount<=0)break;allocated+=amount;++count;SpellMissile missile;missile.spell=s;missile.source=source;missile.target=id;missile.owner=owner;missile.position=point;missile.amount=amount;if(s.speed>0)spellMissiles_.emplace(++spellTicket_,std::move(missile));else spellImpact(std::move(missile));continue;}
+        damageUnit(source,id,s.amount,0,14);if(s.kind==SpellKind::ThunderClap)applyBuff(id,source,s,BuffKind::Slow);else if(s.kind==SpellKind::WarStomp)applyBuff(id,source,s,BuffKind::Stun);else if(s.kind==SpellKind::Inferno){auto stun=s;stun.buff=ObjectData::code("BPSE");applyBuff(id,source,stun,BuffKind::Stun);}else throw std::runtime_error("Area spell consumer is missing");
+    }
+    if(s.kind==SpellKind::Inferno && alive(source,NativeKind::Unit))summonSpell(source,s,point,owner);
+}
+void ScriptSession::areaSpellsTick(double delta) {
+    std::vector<std::uint64_t> delayed,waves;for(auto& [id,s]:delayedSpells_)if(s.due<=simulationTime_)delayed.push_back(id);for(auto& [id,w]:spellWaves_)waves.push_back(id);
+    for(auto id:delayed){auto found=delayedSpells_.find(id);if(found==delayedSpells_.end())continue;auto spell=std::move(found->second);delayedSpells_.erase(found);areaSpell(spell.source,spell.spell,spell.point,spell.owner);}
+    for(auto id:waves){
+        auto found=spellWaves_.find(id);if(found==spellWaves_.end())continue;auto wave=std::move(found->second);spellWaves_.erase(found);if(!alive(wave.source,NativeKind::Unit))continue;auto caster=units_.at(wave.source);auto& s=wave.spell;float previous=wave.travelled,next=std::min(s.distance,previous+float(delta)*s.speed);std::vector<std::pair<float,std::uint32_t>> hits;
+        for(auto& [target,u]:units_){if(wave.hit.contains(target))continue;float dx=number(u->x)-number(wave.origin.x),dy=number(u->y)-number(wave.origin.y),along=dx*wave.directionX+dy*wave.directionY;if(along<0 || along>s.distance+u->collision)continue;float closest=std::clamp(along,previous,next),radius=s.area+(s.endRadius-s.area)*std::clamp(along/s.distance,0.f,1.f);float x=dx-wave.directionX*closest,y=dy-wave.directionY*closest;if(x*x+y*y>(radius+u->collision)*(radius+u->collision) || !spellTarget(*caster,*u,s,false,wave.owner))continue;hits.emplace_back(along,target);}
+        std::sort(hits.begin(),hits.end());for(auto [along,target]:hits){if(!alive(wave.source,NativeKind::Unit))break;if(!alive(target,NativeKind::Unit) || !spellTarget(*caster,*units_.at(target),s,false,wave.owner))continue;float amount=s.maxDamage>0?std::min(s.amount,std::max(0.f,s.maxDamage-wave.dealt)):s.amount;if(amount<=0)break;wave.hit.insert(target);wave.dealt+=amount;damageUnit(wave.source,target,amount,0,14);}wave.travelled=next;
+        if(next<s.distance && alive(wave.source,NativeKind::Unit) && (s.maxDamage<=0 || wave.dealt<s.maxDamage))spellWaves_.emplace(id,std::move(wave));
+    }
+}
+}

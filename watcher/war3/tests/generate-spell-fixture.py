@@ -17,6 +17,7 @@ integer probe_cast=0
 integer probe_effect=0
 integer probe_finish=0
 integer probe_end=0
+integer probe_summons=0
 boolean probe_interrupt=false
 boolean probe_remove=false
 endglobals
@@ -59,6 +60,12 @@ function ProbeSpell takes nothing returns nothing
         set probe_end=probe_end+1
     endif
 endfunction
+function ProbeSummon takes nothing returns nothing
+    if GetSummoningUnit()!=probe_caster or GetSummonedUnit()==null or not IsUnitType(GetSummonedUnit(),UNIT_TYPE_SUMMONED) then
+        call ExecuteFunc("SpellFailure_summon_context")
+    endif
+    set probe_summons=probe_summons+1
+endfunction
 function ProbeRegister takes nothing returns nothing
     local trigger t=CreateTrigger()
     call TriggerRegisterUnitEvent(t,probe_caster,EVENT_UNIT_SPELL_CHANNEL)
@@ -67,6 +74,9 @@ function ProbeRegister takes nothing returns nothing
     call TriggerRegisterUnitEvent(t,probe_caster,EVENT_UNIT_SPELL_FINISH)
     call TriggerRegisterUnitEvent(t,probe_caster,EVENT_UNIT_SPELL_ENDCAST)
     call TriggerAddAction(t,function ProbeSpell)
+    set t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,probe_caster,EVENT_UNIT_SUMMON)
+    call TriggerAddAction(t,function ProbeSummon)
 endfunction
 function config takes nothing returns nothing
 endfunction

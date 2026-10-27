@@ -1,0 +1,38 @@
+// Author: MiYu. Source ability prototypes and level fields select real unit, point, area and summon consumers.
+#include "session.h"
+#include "order_ids.h"
+#include <algorithm>
+#include <cmath>
+#include <cctype>
+#include <sstream>
+
+namespace war3 {
+const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) {
+    auto key=std::pair{ability,level};if(auto found=spellInfo_.find(key);found!=spellInfo_.end())return found->second;SpellInfo s;s.ability=ability;s.level=level;auto& data=definitions();if(!level || !data.ability(ability))return spellInfo_.emplace(key,std::move(s)).first->second;
+    struct Prototype {const char* code;SpellKind kind;SpellTargeting targeting;};
+    constexpr Prototype prototypes[]={
+        {"AHhb",SpellKind::HolyLight,SpellTargeting::Unit},{"AHtb",SpellKind::StormBolt,SpellTargeting::Unit},
+        {"AUdc",SpellKind::DeathCoil,SpellTargeting::Unit},{"AUfn",SpellKind::FrostNova,SpellTargeting::Unit},
+        {"AEer",SpellKind::Roots,SpellTargeting::Unit},{"AOcl",SpellKind::ChainLightning,SpellTargeting::Unit},
+        {"AOhw",SpellKind::HealingWave,SpellTargeting::Unit},{"AHtc",SpellKind::ThunderClap,SpellTargeting::None},
+        {"AOws",SpellKind::WarStomp,SpellTargeting::None},{"AOsh",SpellKind::Shockwave,SpellTargeting::Point},
+        {"AUcs",SpellKind::CarrionSwarm,SpellTargeting::Point},{"AEfk",SpellKind::FanKnives,SpellTargeting::None},
+        {"AHwe",SpellKind::WaterElemental,SpellTargeting::None},{"AOsf",SpellKind::SpiritWolf,SpellTargeting::None},
+        {"AOsw",SpellKind::SerpentWard,SpellTargeting::Point},{"AUin",SpellKind::Inferno,SpellTargeting::Point},
+        {"AEfn",SpellKind::Treants,SpellTargeting::Point}
+    };
+    auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& p:prototypes)if(code==p.code){s.kind=p.kind;s.targeting=p.targeting;break;}if(s.kind==SpellKind::Unsupported)return spellInfo_.emplace(key,std::move(s)).first->second;
+    auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};
+    auto count=[](float value,unsigned maximum){if(value<0 || value>maximum || value!=std::floor(value))throw std::runtime_error("Ability count outside supported range");return unsigned(value);};
+    s.order=orderId(data.field(ability,"Profile","Order"));if(!s.order)throw std::runtime_error("Missing source spell order: "+ObjectData::name(ability));s.mana=field("Cost");s.cooldown=field("Cool");s.range=field("Rng");s.area=field("Area");s.amount=field("DataA");s.secondary=field("DataB");s.loss=field("DataC");s.duration=field("Dur");s.heroDuration=field("HeroDur");s.speed=data.number(ability,"Profile","Missilespeed");s.missile=data.field(ability,"Profile","Missileart");if(auto comma=s.missile.find(',');comma!=std::string::npos)s.missile.resize(comma);
+    auto animation=data.field(ability,"Profile","Animnames","spell");std::replace(animation.begin(),animation.end(),',',' ');std::stringstream names(animation);std::string name;while(names>>name){for(auto& c:name)c=char(std::tolower(static_cast<unsigned char>(c)));name[0]=char(std::toupper(static_cast<unsigned char>(name[0])));if(!s.animation.empty())s.animation+=' ';s.animation+=name;}if(s.animation.empty())s.animation="Spell";
+    auto buff=data.field(ability,"AbilityData","BuffID"+std::to_string(level));if(buff.size()>=4 && buff!="-" && buff!="_")s.buff=ObjectData::code(buff.substr(0,4));std::stringstream targets(data.field(ability,"AbilityData","targs"+std::to_string(level)));std::string part;while(std::getline(targets,part,',')){auto first=part.find_first_not_of(" \t");if(first!=std::string::npos)s.allowed.insert(part.substr(first,part.find_last_not_of(" \t")-first+1));}
+    if(s.kind==SpellKind::ChainLightning || s.kind==SpellKind::HealingWave){s.targets=count(s.secondary,1024);if(!s.targets || s.loss<0 || s.loss>1)throw std::runtime_error("Source spell chain outside supported range");}
+    if(s.kind==SpellKind::ThunderClap){s.moveReduction=field("DataC");s.attackReduction=field("DataD");}
+    if(s.kind==SpellKind::Shockwave || s.kind==SpellKind::CarrionSwarm){s.maxDamage=field("DataB");s.distance=field("DataC");s.endRadius=field("DataD");if(s.distance<=0 || s.distance>100000 || s.speed<=0 || s.endRadius<0 || s.endRadius>100000)throw std::runtime_error("Source wave geometry outside supported range");}
+    if(s.kind==SpellKind::FanKnives){s.maxDamage=field("DataB");s.targets=count(field("DataC"),1024);}
+    bool summon=s.kind==SpellKind::WaterElemental || s.kind==SpellKind::SpiritWolf || s.kind==SpellKind::SerpentWard || s.kind==SpellKind::Treants || s.kind==SpellKind::Inferno;
+    if(summon){auto type=data.field(ability,"AbilityData","UnitID"+std::to_string(level));if(type.size()!=4 || !data.contains(ObjectData::code(type)))throw std::runtime_error("Unknown source summoned type: "+type);s.summonType=ObjectData::code(type);s.summonCount=s.kind==SpellKind::Inferno?1:count(field(s.kind==SpellKind::SpiritWolf?"DataB":"DataA"),64);s.summonDuration=s.kind==SpellKind::Inferno?field("DataB"):s.duration;if(s.kind==SpellKind::Inferno)s.impactDelay=field("DataC");if(!s.summonCount || s.summonDuration<=0 || s.summonDuration>86400 || s.impactDelay<0 || s.impactDelay>86400)throw std::runtime_error("Source summon lifetime outside supported range");}
+    if(s.mana<0 || s.cooldown<0 || s.range<0 || s.range>100000 || s.area<0 || s.area>100000 || s.amount<0 || s.secondary<0 || s.duration<0 || s.heroDuration<0 || s.speed<0 || s.maxDamage<0 || s.moveReduction<0 || s.moveReduction>1 || s.attackReduction<0)throw std::runtime_error("Source spell parameters outside supported range");return spellInfo_.emplace(key,std::move(s)).first->second;
+}
+}

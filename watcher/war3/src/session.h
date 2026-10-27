@@ -121,6 +121,17 @@ class ScriptSession {
     std::map<std::pair<std::uint32_t,std::uint32_t>,std::uint32_t> abilityHandles_;
     std::map<std::uint64_t,SpellMissile> spellMissiles_;
     std::uint64_t spellTicket_=0;
+    std::map<std::uint64_t,SpellWave> spellWaves_;
+    std::map<std::uint64_t,DelayedSpell> delayedSpells_;
+    bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting);
+    bool spellPoint(const UnitState& unit,const SpellInfo& spell,WorldPoint point);
+    void releaseSpell(std::uint32_t unit,const CastOrder& cast,unsigned owner);
+    void areaSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner);
+    void areaSpellsTick(double delta);
+    std::vector<std::uint32_t> spellTargets(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner);
+    std::vector<std::uint32_t> spellTrees(const SpellInfo& spell,WorldPoint point);
+    std::optional<WorldPoint> summonPoint(WorldPoint point,std::uint32_t type,float minimum=0);
+    void summonSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner);
     void bindSpellNatives();
     bool spellTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility=true,unsigned owner=UINT_MAX);
     bool cancelCast(UnitState& unit,bool preserveRoute=false);
@@ -304,7 +315,10 @@ public:
     bool attackMove(std::uint32_t source,WorldPoint target,bool patrol=false);
     bool hasWeapon(std::uint32_t unit);
     const SpellInfo& spellInfo(std::uint32_t ability,unsigned level);
-    bool castSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target);
+    bool castSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target=0);
+    bool castSpellAt(std::uint32_t unit,std::uint32_t ability,WorldPoint point);
+    bool castPointOrder(std::uint32_t unit,std::uint32_t order,WorldPoint point);
+    bool castImmediateOrder(std::uint32_t unit,std::uint32_t order);
     bool castOrder(std::uint32_t unit,std::uint32_t order,std::uint32_t target);
     bool learnHeroSkill(std::uint32_t unit,std::uint32_t ability) {return learnSkill(unit,ability);}
     bool canLearnSkill(std::uint32_t unit,std::uint32_t ability);
