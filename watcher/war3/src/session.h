@@ -15,6 +15,7 @@
 #include "image.h"
 #include "effects.h"
 #include "ai.h"
+#include "consumables.h"
 #include <variant>
 
 namespace war3 {
@@ -493,6 +494,9 @@ class ScriptSession {
     void refreshEquipment(UnitState& unit);
     void permanentItem(std::uint32_t unit,std::uint32_t ability);
     std::map<std::pair<std::uint32_t,unsigned>,std::optional<EquipmentBonuses>> equipmentInfo_;
+    const ConsumableInfo* consumableInfo(std::uint32_t ability);
+    bool useConsumable(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point,const ConsumableInfo& info);
+    std::map<std::uint32_t,std::optional<ConsumableInfo>> consumableInfo_;
     bool giveItem(std::uint32_t unit,std::uint32_t item,std::optional<unsigned> slot={});
     void spatialEvents();
     void moveUnits(double delta);

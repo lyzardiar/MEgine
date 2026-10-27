@@ -80,7 +80,7 @@ struct CastOrder {
 };
 struct PossessionClaim {std::uint32_t source=0;std::uint64_t ticket=0;bool locked=false;};
 struct MorphAppearance {std::uint32_t type=0;std::string model,icon;float scale=1;jass::Real speed;};
-enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Morph,Cyclone,UnitForm,EatTree,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,DrainBonus,PossessionCaster,PossessionTarget,Controlled,Count};
+enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Morph,Cyclone,UnitForm,EatTree,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,DrainBonus,PossessionCaster,PossessionTarget,Controlled,ItemRecovery,ItemInvulnerability,ItemSpeed,Count};
 struct UnitBuff {
     std::uint32_t id=0,source=0,target=0;
     BuffKind kind=BuffKind::Stun;
@@ -94,7 +94,8 @@ struct UnitBuff {
     float damage=0,moveReduction=0,attackReduction=0;
     bool positive=false,physical=false,persistent=false;
     float armor=0,damageBonus=0,attackBonus=0,moveBonus=0,scaleBonus=0,healthRegen=0,healRate=0,manaRate=0,missChance=0,shield=0,spellReduction=0;
-    bool magicImmune=false,backstab=false,invulnerable=false;
+    bool magicImmune=false,backstab=false,invulnerable=false,breakOnDamage=false;
+    float moveLimit=0;
     std::uint32_t ability=0;
     float flatDamage=0,healthBonus=0,damageTakenBonus=0,pierceFactor=1,attackFactor=1,magicFactor=1,deflectChance=0,deflectPierce=0,deflectMagic=1;
     float manaEfficiency=0,absorbFraction=0,manaBonus=0,lifeDecay=0,manaDecay=0,damageTakenFactor=1;
