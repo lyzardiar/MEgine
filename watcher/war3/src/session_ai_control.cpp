@@ -19,6 +19,11 @@ void ScriptSession::bindAiGuardNatives(ScriptAI& ai){
     bind("ReturnGuardPosts","nothing",{},[this,&ai](auto& vm,auto){aiReturnGuards(ai,true);return vm.nothing();});
     bind("SetReplacementCount","nothing",{"integer"},[&ai](auto& vm,auto args){auto count=std::bit_cast<int>(args[0].bits);if(count< -1 || count>10000)throw std::runtime_error("AI guard replacement limit outside budget");ai.replacementCount=count;return vm.nothing();});
     bind("SetNewHeroes","nothing",{"boolean"},[&ai](auto& vm,auto args){ai.newHeroes=args[0].bits!=0;return vm.nothing();});
+    bind("SetSlowChopping","nothing",{"boolean"},[&ai](auto& vm,auto args){ai.slowChopping=args[0].bits!=0;return vm.nothing();});
+    bind("SetCaptainChanges","nothing",{"boolean"},[this,&ai](auto& vm,auto args){ai.captainChanges=args[0].bits!=0;aiFormCaptains(ai);return vm.nothing();});
+    bind("TeleportCaptain","nothing",{"real","real"},[this,&ai](auto& vm,auto args){aiTeleportCaptain(ai,{jass::Real::fromBits(args[0].bits),jass::Real::fromBits(args[1].bits)});return vm.nothing();});
+    bind("SuicideUnit","nothing",{"integer","integer"},[this,&ai](auto& vm,auto args){aiSuicide(ai,std::bit_cast<int>(args[0].bits),args[1].bits,-1);return vm.nothing();});
+    bind("SuicideUnitEx","nothing",{"integer","integer","integer"},[this,&ai](auto& vm,auto args){aiSuicide(ai,std::bit_cast<int>(args[0].bits),args[1].bits,std::bit_cast<int>(args[2].bits));return vm.nothing();});
     bind("GroupTimedLife","nothing",{"boolean"},[this,&ai](auto& vm,auto args){ai.groupTimedLife=args[0].bits!=0;if(!ai.groupTimedLife)for(auto it=ai.captain.begin();it!=ai.captain.end();)if(!alive(*it,NativeKind::Unit) || units_.at(*it)->timedLife)it=ai.captain.erase(it);else ++it;return vm.nothing();});
     bind("IgnoredUnits","integer",{"integer"},[this,&ai](auto& vm,auto args){unsigned count=0;for(auto& [id,u]:units_)if(u->owner==ai.owner && u->type==args[0].bits && !u->removing && std::bit_cast<float>(u->life.bits())>0 && (ai.guardUnits.contains(id) || (!ai.groupTimedLife && u->timedLife)))++count;return vm.integer(int(count));});
     bind("ResetCaptainLocs","nothing",{},[this,&ai](auto& vm,auto){ai.homeOverride=false;aiTowns(ai);ai.goal=ai.stage=ai.home;return vm.nothing();});

@@ -101,6 +101,10 @@ class ScriptSession {
     bool aiProduce(ScriptAI& ai,unsigned quantity,std::uint32_t type,int town);
     bool aiUpgrade(ScriptAI& ai,std::uint32_t type);
     void aiHarvest(ScriptAI& ai);
+    void aiFormCaptains(ScriptAI& ai,bool force=false);
+    void aiSuicide(ScriptAI& ai,int quantity,std::uint32_t type,int targetPlayer);
+    void aiSuicideTick(ScriptAI& ai);
+    void aiTeleportCaptain(ScriptAI& ai,WorldPoint point);
     std::uint32_t aiMine(ScriptAI& ai,int town);
     std::uint32_t aiEnemy(ScriptAI& ai,unsigned owner=UINT_MAX,bool buildings=false);
     std::vector<std::uint32_t> aiCaptain(ScriptAI& ai);

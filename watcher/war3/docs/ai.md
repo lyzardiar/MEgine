@@ -7,7 +7,7 @@ StartMeleeAI/StartCampaignAI从挂载归档读取策略成员，地图覆盖优�
 - Sleep/StartThread使用会话共享fiber调度，代码值记录所属VM；触发器/计时器/过滤和延迟回调返回所属脚本的变量空间。ExecuteFunc在调用它的VM启动函数。公共类型布局和签名一致才复用native，未知native明确失败。
 - GetUnitCount/Done/Town及造价/时间、科技等级/价格查询实际单位、施工/升级/待建订单和生产队列。SetProduce/SetUpgrade调用实际付费训练、建造、升级、研究及已有英雄复活；SetNewHeroes控制是否允许新增英雄，旧英雄复活保留原句柄/成长/库存，见[英雄复活](hero-revival.md)。
 - 城镇以源分类及稳定大厅句柄识别；矿井/剩余金量、扩张候选、位置与工人来自实际地图，指令经过现有路径/建造接口。
-- HarvestGold/Wood累计同镇配额，ClearHarvestAI清除配额，StopGathering停止当前采集；空闲工人执行采金/伐木。支持原版-1全镇参数。
+- HarvestGold/Wood累计同镇配额，ClearHarvestAI清除配额，StopGathering停止当前采集；下一AI心跳统一保留、补足或释放配额，携带资源经过返还。支持-1全镇参数，详见[战役AI](campaign-ai.md)。
 - 队长需求/组建、准备度/生命/魔法、目标/归家/撤退、敌基地/扩张/野怪营地、盟友目标和攻击指令消费实际部队。策略选项连接基础防守、受伤撤退、英雄拾物/治疗药品购买使用、工人修理和目标优先；英雄技能回调连接实际学习。
 - CommandAI及查询/弹出使用有界FIFO；调试记录有界，脚本文本连接会话显示。
 
@@ -34,4 +34,6 @@ cmake --build --preset release --target war3 war3_ai_tests --parallel 8
 
 阶段合并验证四族持续运行、建造/训练/研究完成、资源/前置/人口/阻塞/重试、配额再分配/下降/返还、扩张/矿井耗尽、英雄/队长和攻击。覆盖多AI独立globals、跨VM回调/上下文、类型诊断/故障取消/切图释放，以及分类修正对修理/目标/古树/被动伤害的影响。GPU、三图长局、CPU/内存/磁盘和原版对照保持待验证；完整AI和客户端验收保持开放。
 
-当前common.ai专用native接续清单（未绑定，调用会明确失败）：Unsummon、PurchaseZeppelin、MergeUnits、ConvertUnits、SetRandomPaths、SetSlowChopping、SetCaptainChanges、LoadZepWave、TeleportCaptain、SuicideUnit、SuicideUnitEx、UnitInvis、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。
+SetSlowChopping、SetCaptainChanges、TeleportCaptain、SuicideUnit/Ex已接到实际伐木、互斥编组/补员、位置与持续出击。原CampaignAI的4秒开局检查通过：2常驻线程、6名工人采集、2项生产队列；专项行为与原版精度仍待阶段验证。
+
+当前common.ai专用native接续清单（未绑定，调用会明确失败）：Unsummon、PurchaseZeppelin、MergeUnits、ConvertUnits、SetRandomPaths、LoadZepWave、UnitInvis、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。
