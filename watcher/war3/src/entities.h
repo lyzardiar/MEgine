@@ -10,6 +10,7 @@
 #include "transport.h"
 #include "spirit_split.h"
 #include "firelord.h"
+#include "tinker.h"
 #include "corpses.h"
 #include "unit_forms.h"
 #include <algorithm>
@@ -33,6 +34,7 @@ struct UnitState {
     std::optional<MirrorImageState> mirrorImage;
     std::shared_ptr<SpiritSplitState> spiritSplit;
     std::optional<LavaSpawnState> lavaSpawn;
+    std::optional<EngineeringState> engineering;
     std::uint32_t spiritParent=0;
     std::uint64_t spiritTicket=0;
     std::uint32_t transport=0;
@@ -166,7 +168,7 @@ struct UnitState {
     bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots || b.kind==BuffKind::Net || (b.kind==BuffKind::Purge && b.lockRemaining>0))return true;return false;}
     float spellBonus(float UnitBuff::* field) const {std::array<float,size_t(BuffKind::Count)> values{};for(auto& [id,b]:buffs)values[size_t(b.kind)]=std::max(values[size_t(b.kind)],b.*field);float value=0;for(auto part:values)value+=part;return value;}
     float displayScale() const {auto form=morphAppearance();return (form?form->scale:scale)*(1+spellBonus(&UnitBuff::scaleBonus));}
-    float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus));}
+    float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus)+(engineering && !morphed()?engineering->movement:0));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
     bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
 };

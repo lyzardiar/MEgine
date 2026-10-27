@@ -37,7 +37,7 @@ void ScriptSession::persistentSpellPulse(std::uint32_t source,const SpellInfo& s
     for(auto [distance,id]:props){if(!active())return;if(!alive(id,NativeKind::Destructable))continue;auto d=destructables_.at(id);if(d->removed || d->life<=0 || d->invulnerable)continue;float value=percent?d->maxLife*amount:amount;destructableLife(id,d->life-value);}
 }
 void ScriptSession::channelPulse(std::uint32_t id,const CastOrder& cast) {
-    auto& s=cast.spell;if(s.kind==SpellKind::HealingSpray){healingSprayPulse(id,cast);return;}if(s.kind==SpellKind::Stampede){stampedePulse(id,cast);return;}if(s.kind==SpellKind::Drain){drainPulse(id,cast);return;}if(s.kind==SpellKind::Channel)return;
+    auto& s=cast.spell;if(s.kind==SpellKind::ClusterRockets){tinkerVolley(id,cast);return;}if(s.kind==SpellKind::HealingSpray){healingSprayPulse(id,cast);return;}if(s.kind==SpellKind::Stampede){stampedePulse(id,cast);return;}if(s.kind==SpellKind::Drain){drainPulse(id,cast);return;}if(s.kind==SpellKind::Channel)return;
     if((s.kind==SpellKind::Blizzard || s.kind==SpellKind::RainFire) && s.effectAlias){auto visual=s;visual.ability=s.effectAlias;std::uint32_t noise=std::uint32_t(cast.ticket)^std::uint32_t(cast.pulses*2654435761u);for(unsigned i=0;i<s.shards;++i){noise=noise*1664525u+1013904223u;float angle=float(noise&0xffff)*6.28318530718f/65536;noise=noise*1664525u+1013904223u;float radius=std::sqrt(float(noise&0xffff)/65535)*s.area;spellVisual(visual,"EffectArt",0,{real(number(cast.point.x)+std::cos(angle)*radius),real(number(cast.point.y)+std::sin(angle)*radius)});}}
     persistentSpellPulse(id,s,cast.point,cast.owner,s.kind==SpellKind::Blizzard?s.amount+s.extraDamage*s.period:s.amount,s.kind==SpellKind::DeathDecay,cast.ticket);
 }

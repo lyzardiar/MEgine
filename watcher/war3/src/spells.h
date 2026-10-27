@@ -6,12 +6,12 @@
 #include <memory>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,ManaBurn,DarkRitual,DeathPact,Possession,Charm,ControlMagic,MassTeleport,TownPortal,Recall,Bladestorm,Earthquake,Voodoo,Phoenix,PhoenixFire,FrostArmor,ShadowStrike,CarrionBeetles,Impale,LocustSwarm,SearingArrows,Scout,VengeanceAvatar,VengeanceSpirits,ColdArrows,BlackArrow,Silence,Grizzly,Quilbeast,Hawk,Stampede,BreathFire,DrunkenHaze,HowlTerror,RainFire,Doom,ForkedLightning,SpiritSplit,Tornado,Taunt,SoulBurn,LavaSpawn,Incinerate,Volcano,HealingSpray,AcidBomb,ChemicalRage,Transmute};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,ManaBurn,DarkRitual,DeathPact,Possession,Charm,ControlMagic,MassTeleport,TownPortal,Recall,Bladestorm,Earthquake,Voodoo,Phoenix,PhoenixFire,FrostArmor,ShadowStrike,CarrionBeetles,Impale,LocustSwarm,SearingArrows,Scout,VengeanceAvatar,VengeanceSpirits,ColdArrows,BlackArrow,Silence,Grizzly,Quilbeast,Hawk,Stampede,BreathFire,DrunkenHaze,HowlTerror,RainFire,Doom,ForkedLightning,SpiritSplit,Tornado,Taunt,SoulBurn,LavaSpawn,Incinerate,Volcano,HealingSpray,AcidBomb,ChemicalRage,Transmute,PocketFactory,ClusterRockets,RoboGoblin,SelfDestruct};
 inline bool heroUltimate(SpellKind kind){return kind>=SpellKind::Bladestorm && kind<=SpellKind::Voodoo;}
 inline bool teleportSpell(SpellKind kind){return kind>=SpellKind::MassTeleport && kind<=SpellKind::Recall;}
 inline bool ownershipSpell(SpellKind kind){return kind>=SpellKind::Possession && kind<=SpellKind::ControlMagic;}
 inline bool selfSpell(SpellKind kind){return kind>=SpellKind::Avatar && kind<=SpellKind::ManaShield;}
-inline bool unitFormSpell(SpellKind kind){return (kind>=SpellKind::BearForm && kind<=SpellKind::Burrow) || kind==SpellKind::ChemicalRage;}
+inline bool unitFormSpell(SpellKind kind){return (kind>=SpellKind::BearForm && kind<=SpellKind::Burrow) || kind==SpellKind::ChemicalRage || kind==SpellKind::RoboGoblin;}
 inline bool controlSpell(SpellKind kind){return kind>=SpellKind::Ensnare && kind<=SpellKind::Cyclone;}
 inline bool attackEnhancement(SpellKind kind){return kind==SpellKind::OrbAnnihilation || kind==SpellKind::SearingArrows || kind==SpellKind::ColdArrows || kind==SpellKind::BlackArrow || kind==SpellKind::Incinerate;}
 inline bool cappedCorpseSummon(SpellKind kind){return kind==SpellKind::CarrionBeetles || kind==SpellKind::VengeanceSpirits;}
@@ -40,6 +40,9 @@ struct SpellInfo {
     unsigned summonCount=0,summonLimit=0;
     unsigned splitAttacks=0,splitGenerations=0;
     float splitDelay=0,splitLifeRatio=0,splitLifeBonus=0;
+    std::uint32_t spawnType=0;
+    float spawnDuration=0,spawnOffset=0,spawnLeash=0,roboStrength=0,roboArmor=0;
+    bool explodeCorpse=false;
     std::uint32_t destructableType=0;
     std::vector<std::uint32_t> summonTypes;
     std::vector<std::string> summonMissiles;
