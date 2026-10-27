@@ -45,6 +45,7 @@ struct ScriptContext {
     std::uint32_t trigger=0,event=0,expiredTimer=0,triggerPlayer=0,triggerUnit=0;
     std::uint32_t filterUnit=0,enumUnit=0,filterPlayer=0,enumPlayer=0;
     std::uint32_t previousOwner=0,killingUnit=0;
+    std::uint32_t transportUnit=0,loadedUnit=0;
     std::uint32_t playerState=0;
     std::uint32_t issuedOrder=0;
     WorldPoint orderPoint;

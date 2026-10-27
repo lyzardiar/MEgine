@@ -16,7 +16,7 @@ struct WeaponDefinition {
 };
 struct AttackWindup {std::uint32_t target=0;unsigned weapon=0;double due=0;std::uint64_t revision=0;float stealthDamage=0;bool backstab=false;};
 struct CombatOrder {
-    std::uint32_t target=0,follow=0,pickup=0;
+    std::uint32_t target=0,follow=0,pickup=0,board=0;
     std::optional<WorldPoint> attackMove,patrolStart,patrolEnd;
     WorldPoint home;
     bool forced=false,automatic=false,returning=false;

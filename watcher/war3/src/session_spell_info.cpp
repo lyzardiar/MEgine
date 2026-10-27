@@ -33,7 +33,9 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"AIta",SpellKind::Reveal,SpellTargeting::Point},{"AIrv",SpellKind::Reveal,SpellTargeting::None},
         {"AItb",SpellKind::Dust,SpellTargeting::None},
         {"AOwk",SpellKind::WindWalk,SpellTargeting::None},{"AEbl",SpellKind::Blink,SpellTargeting::Point},
-        {"AOmi",SpellKind::MirrorImage,SpellTargeting::None}
+        {"AOmi",SpellKind::MirrorImage,SpellTargeting::None},
+        {"Aloa",SpellKind::Load,SpellTargeting::Unit},{"Adro",SpellKind::Unload,SpellTargeting::Point},
+        {"Adri",SpellKind::UnloadInstant,SpellTargeting::None}
     };
     auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& p:prototypes)if(code==p.code){s.kind=p.kind;s.targeting=p.targeting;break;}if(s.kind==SpellKind::Unsupported)return spellInfo_.emplace(key,std::move(s)).first->second;
     auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};

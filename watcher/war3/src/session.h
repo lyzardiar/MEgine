@@ -160,6 +160,20 @@ class ScriptSession {
     void blinkSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point);
     void startMirrorImage(std::uint32_t unit,const CastOrder& cast);
     void mobilityTick(double delta);
+    std::map<std::pair<std::uint32_t,unsigned>,CargoInfo> cargoInfo_;
+    const CargoInfo* cargoInfo(const UnitState& unit);
+    unsigned cargoSize(const UnitState& unit);
+    bool cargoReady(const UnitState& unit);
+    bool cargoCanUnload(const UnitState& unit);
+    bool canLoad(const UnitState& transport,const UnitState& passenger);
+    bool loadUnit(std::uint32_t transport,std::uint32_t passenger);
+    std::optional<WorldPoint> cargoPoint(const UnitState& transport,const UnitState& passenger,WorldPoint point);
+    bool unloadPassenger(std::uint32_t transport,std::uint32_t passenger,WorldPoint point);
+    void startCargoDrop(std::uint32_t transport,const CastOrder& cast);
+    void detachCargo(UnitState& passenger);
+    void releaseCargo(UnitState& transport,std::uint32_t killer=0);
+    void transportTick(double delta);
+    void bindTransportNatives();
     bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;
@@ -203,7 +217,7 @@ class ScriptSession {
     void releaseCastVisuals(CastOrder& cast);
     void groundSpellsTick(double delta);
     void persistentSpellPulse(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner,float amount,bool percent,std::optional<std::uint64_t> cast={});
-    bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting,bool automatic=false);
+    bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting,bool automatic=false,std::uint32_t issuedOrder=0);
     void casterEffect(const SpellMissile& missile);
     bool usefulDispel(const UnitState& caster,const UnitState& target,const SpellInfo& spell);
     void dispelSpell(std::uint32_t source,std::uint32_t target,const SpellInfo& spell);
@@ -410,6 +424,12 @@ class ScriptSession {
     MusicScene& requireMusic();
     World& requireWorld();
 public:
+    unsigned cargoCapacity(std::uint32_t transport);
+    unsigned cargoUsed(std::uint32_t transport);
+    unsigned cargoCost(std::uint32_t passenger);
+    bool boardUnit(std::uint32_t passenger,std::uint32_t transport);
+    bool unloadUnit(std::uint32_t transport,std::uint32_t passenger);
+    bool unloadAll(std::uint32_t transport,WorldPoint point);
     ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings={},std::optional<unsigned> gameType={});
     ~ScriptSession();
     void initialize();
