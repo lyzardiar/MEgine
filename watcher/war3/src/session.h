@@ -166,7 +166,7 @@ class ScriptSession {
     bool cargoReady(const UnitState& unit);
     bool cargoCanUnload(const UnitState& unit);
     bool canLoad(const UnitState& transport,const UnitState& passenger);
-    bool loadUnit(std::uint32_t transport,std::uint32_t passenger);
+    bool loadUnit(std::uint32_t transport,std::uint32_t passenger,const SpellInfo* devour=nullptr);
     std::optional<WorldPoint> cargoPoint(const UnitState& transport,const UnitState& passenger,WorldPoint point);
     bool unloadPassenger(std::uint32_t transport,std::uint32_t passenger,WorldPoint point);
     void startCargoDrop(std::uint32_t transport,const CastOrder& cast);
@@ -174,6 +174,15 @@ class ScriptSession {
     void releaseCargo(UnitState& transport,std::uint32_t killer=0);
     void transportTick(double delta);
     void bindTransportNatives();
+    unsigned garrisonCount(const UnitState& unit);
+    bool canDevour(const UnitState& carrier,const UnitState& victim,const SpellInfo& spell);
+    void battleStations(std::uint32_t burrow,const SpellInfo& spell);
+    bool garrisonLoadOrder(std::uint32_t burrow,std::uint32_t peon);
+    void resumeCargoWork(std::uint32_t passenger);
+    void beginDigestion(std::uint32_t carrier,std::uint32_t victim,const SpellInfo& spell,WorldPoint point);
+    void endDigestion(UnitState& victim);
+    void releaseDevoured(std::uint32_t victim);
+    void devourTick(double delta);
     bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;

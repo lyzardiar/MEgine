@@ -28,6 +28,8 @@ struct UnitState {
     std::vector<std::uint32_t> cargo;
     double cargoDue=0;
     std::optional<CargoDropOrder> cargoDrop;
+    std::optional<CargoReturnOrder> cargoReturn;
+    std::optional<DigestionState> digestion;
     std::set<unsigned> visionPlayers;
     bool holding=false,creepGuard=false,guardRemoved=false;
     std::optional<WorldPoint> guardHome;

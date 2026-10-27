@@ -30,6 +30,6 @@ python tests/generate-transport-fixture.py --data-root "E:/Program Files (x86)/d
 ./build/windows-x86/bin/Release/war3_transport_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/transport/fixture.w3m" flow
 ~~~
 
-capacity/lifecycle/orders模式已编译，尚未执行；阶段合并满舱/递归拒绝、普通卸载间隔/取消、乘员移除与载具终止、全等级/w3a/禁用/容量变化/多人联盟/所有权/事件重入/暂停/死亡/复活、阻挡/无落点/持续移动/源声音及真实窗口/鼠标/热键/肖像布局、三图长局/CPU/GPU/内存和切图释放。原载具坠毁效果、海军浮航路径、地洞驻军/射击、吞噬、尸体货舱、驾驶员、金矿货舱与运输查询统一及完整运输AI仍待实现或核对。原版逐位/事件时序/资源释放与视觉精度不记为通过。
+capacity/lifecycle/orders模式已编译，尚未执行；阶段合并满舱/递归拒绝、普通卸载间隔/取消、乘员移除与载具终止、全等级/w3a/禁用/容量变化/多人联盟/所有权/事件重入/暂停/死亡/复活、阻挡/无落点/持续移动/源声音及真实窗口/鼠标/热键/肖像布局、三图长局/CPU/GPU/内存和切图释放。地洞驻军/射击和吞噬增量见[兽族货舱玩法](orc-cargo.md)。原载具坠毁效果、海军浮航路径、尸体货舱、驾驶员、金矿货舱与运输查询统一及完整运输AI仍待实现或核对。原版逐位/事件时序/资源释放与视觉精度不记为通过。
 
 原始构建/流程记录位于根tmp/docs-artifacts/war3/transport/：build.log、delivery-build.log、final-build.log、queue-build.log、consumer-build.log、fixture-build.log及flow.log。完整客户端和旧MEngine延期队列保持开放。

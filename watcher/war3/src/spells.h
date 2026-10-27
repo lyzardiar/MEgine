@@ -5,11 +5,14 @@
 #include <set>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour};
 inline bool casterSpell(SpellKind kind){return (kind>=SpellKind::Heal && kind<=SpellKind::AntiMagicShell) || kind==SpellKind::Invisibility;}
 enum class SpellTargeting {Unit,Point,None,Either};
 struct SpellInfo {
     std::uint32_t ability=0,order=0,buff=0;
+    std::uint32_t cargoType=0,victimBuff=0;
+    unsigned creepLevel=0;
+    bool temporaryControl=false;
     unsigned level=0,targets=1;
     SpellKind kind=SpellKind::Unsupported;
     SpellTargeting targeting=SpellTargeting::Unit;
@@ -49,13 +52,13 @@ struct CastOrder {
     std::uint32_t resumeOrder=0;
     bool resumeHolding=false;
 };
-enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Count};
+enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Count};
 struct UnitBuff {
     std::uint32_t id=0,source=0;
     BuffKind kind=BuffKind::Stun;
     double remaining=0,period=0,fadeRemaining=0;
     float damage=0,moveReduction=0,attackReduction=0;
-    bool positive=false,physical=false;
+    bool positive=false,physical=false,persistent=false;
     float armor=0,damageBonus=0,attackBonus=0,moveBonus=0,scaleBonus=0,healthRegen=0,healRate=0,manaRate=0,missChance=0,shield=0,spellReduction=0;
     bool magicImmune=false,backstab=false;
     float stealthDamage=0;
