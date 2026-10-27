@@ -110,6 +110,13 @@ struct UnitState {
     std::map<std::pair<std::string,std::string>,std::uint32_t> auraVisuals;
     AuraBonuses aura;
     std::optional<GroundingState> grounding;
+    const MorphAppearance* morphAppearance() const {const UnitBuff* newest=nullptr;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Morph && b.form && (!newest || b.applied>newest->applied))newest=&b;return newest?newest->form.get():nullptr;}
+    bool morphed() const {return morphAppearance()!=nullptr;}
+    bool cycloned() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Cyclone)return true;return false;}
+    const UnitBuff* cyclone() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Cyclone)return &b;return nullptr;}
+    const std::string& displayModel() const {auto form=morphAppearance();return form?form->model:model;}
+    const std::string& displayIcon() const {auto form=morphAppearance();return form?form->icon:icon;}
+    jass::Real currentMoveSpeed() const {auto form=morphAppearance();return form?form->speed:moveSpeed;}
     bool sleeping() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Sleep)return true;return false;}
     bool sleepProtected() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Sleep && b.damageGuard>0)return true;return false;}
     bool grounded() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Net && b.groundsAir)return true;return false;}
@@ -117,10 +124,11 @@ struct UnitState {
     bool groundTarget() const {return movementType!="fly" || grounded();}
     bool ethereal() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Banish)return true;return false;}
     float displayFlyHeight() const {return grounding?grounding->height:flyHeight;}
-    bool stunned() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun || b.kind==BuffKind::Sleep)return true;return false;}
+    bool stunned() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
+    bool abilitiesDisabled() const {return stunned() || morphed();}
     bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots || b.kind==BuffKind::Net || (b.kind==BuffKind::Purge && b.lockRemaining>0))return true;return false;}
     float spellBonus(float UnitBuff::* field) const {std::array<float,size_t(BuffKind::Count)> values{};for(auto& [id,b]:buffs)values[size_t(b.kind)]=std::max(values[size_t(b.kind)],b.*field);float value=0;for(auto part:values)value+=part;return value;}
-    float displayScale() const {return scale*(1+spellBonus(&UnitBuff::scaleBonus));}
+    float displayScale() const {auto form=morphAppearance();return (form?form->scale:scale)*(1+spellBonus(&UnitBuff::scaleBonus));}
     float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
     bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || transport!=0 || (corpse && corpse->gone);}

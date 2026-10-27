@@ -33,9 +33,9 @@ void ScriptSession::aurasTick(double delta) {
     if((auraTicks_++%8)!=0)return;
     std::unordered_map<std::uint64_t,std::vector<std::uint32_t>> grid;for(auto& [id,u]:units_)if(!u->removing && !u->hidden() && number(u->life)>0)grid[gridKey(cell(number(u->x)),cell(number(u->y)))].push_back(id);
     std::map<std::pair<std::uint32_t,std::uint32_t>,UnitAura> incoming;std::set<std::pair<std::uint32_t,std::uint32_t>> emitters;
-    bool illusions=gameplayNumber("IllusionsBestowAuras",0)!=0,flyingHeroes=gameplayNumber("FlyingHeroesBestowAuras",0)!=0;
+    bool illusions=gameplayNumber("IllusionsBestowAuras",0)!=0,flyingHeroes=gameplayNumber("FlyingHeroesBestowAuras",0)!=0,morphed=gameplayNumber("PolymorphedUnitsBestowAuras",0)!=0;
     for(auto& [id,u]:units_){
-        if(u->removing || u->hidden() || u->construction || number(u->life)<=0 || (u->illusion && !illusions) || (u->hero && u->movementType=="fly" && !flyingHeroes))continue;
+        if(u->removing || u->hidden() || u->construction || number(u->life)<=0 || (u->illusion && !illusions) || (u->morphed() && !morphed) || (u->hero && (u->movementType=="fly" || u->cycloned()) && !flyingHeroes))continue;
         for(auto [ability,level]:passiveAbilities(*u)){
             auto& p=passiveInfo(ability,level);if(!p.aura)continue;auto source=std::pair{id,ability};emitters.insert(source);auto& visual=auraEmitters_[source];if(visual.level!=level){for(auto effect:visual.effects)destroyEffect(effect);visual.effects.clear();visual.level=level;SpellInfo art;art.ability=ability;for(auto field:{"CasterArt","TargetArt"}){auto ids=spellVisual(art,field,id,{u->x,u->y},false);visual.effects.insert(visual.effects.end(),ids.begin(),ids.end());}}
             auto consider=[&](std::uint32_t target){auto to=units_.at(target);if(std::hypot(number(u->x)-number(to->x),number(u->y)-number(to->y))>p.area || !passiveTarget(*u,*to,p))return;UnitAura entry;entry.definition=&p;entry.source=id;entry.remaining=to->hero?p.heroDuration:p.duration;if(entry.remaining<=0)entry.remaining=2;entry.positive=p.amount>=0 && p.secondary>=0;auto key=std::pair{target,p.buff?p.buff:ability};auto found=incoming.find(key);if(found==incoming.end())incoming.emplace(key,std::move(entry));else if(stronger(entry,found->second))found->second=std::move(entry);};

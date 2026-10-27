@@ -67,6 +67,7 @@ class GameView {
     ModelInstance& modelInstance(std::uint64_t id) {modelInstancesSeen_.insert(id);return modelInstances_[id];}
     struct EffectPresentation {bool birth=false,stand=false,death=false,loops=false,missingAttachment=false;std::uint64_t birthTime=0,standTime=0,deathTime=0;};
     std::map<std::uint32_t,EffectPresentation> effectPresentations_;
+    std::optional<D3DMATRIX> unitWorld(const UnitState& unit) const;
     void activateItem(std::uint32_t unit,std::uint32_t item);
     std::vector<std::uint32_t> selected(bool owned=false) const;
 public:

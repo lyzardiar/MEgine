@@ -3,10 +3,11 @@
 #include "world.h"
 #include "combat.h"
 #include <set>
+#include <memory>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish};
-inline bool controlSpell(SpellKind kind){return kind>=SpellKind::Ensnare && kind<=SpellKind::Banish;}
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone};
+inline bool controlSpell(SpellKind kind){return kind>=SpellKind::Ensnare && kind<=SpellKind::Cyclone;}
 inline bool corpseSpell(SpellKind kind){return kind>=SpellKind::Cannibalize && kind<=SpellKind::AncestralSpirit;}
 inline bool casterSpell(SpellKind kind){return (kind>=SpellKind::Heal && kind<=SpellKind::AntiMagicShell) || kind==SpellKind::Invisibility;}
 enum class SpellTargeting {Unit,Point,None,Either};
@@ -38,7 +39,8 @@ struct SpellInfo {
     float armor=0,damageBonus=0,attackBonus=0,moveBonus=0,scaleBonus=0,healthRegen=0,shield=0,spellReduction=0,manaLoss=0,autoRange=0;
     unsigned allowFull=0,recoveryMoveSteps=0,recoveryAttackSteps=0;
     std::uint32_t groundBuff=0,guardBuff=0;
-    bool magicControl=false;
+    bool magicControl=false,dispellable=true;
+    std::array<std::vector<std::uint32_t>,4> morphTypes;
     bool alwaysAuto=false;
     std::vector<std::pair<std::uint32_t,unsigned>> prerequisites;
 };
@@ -58,12 +60,16 @@ struct CastOrder {
     std::uint32_t resumeOrder=0;
     bool resumeHolding=false;
 };
-enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Count};
+struct MorphAppearance {std::uint32_t type=0;std::string model,icon;float scale=1;jass::Real speed;};
+enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Morph,Cyclone,Count};
 struct UnitBuff {
-    std::uint32_t id=0,source=0;
+    std::uint32_t id=0,source=0,target=0;
     BuffKind kind=BuffKind::Stun;
     double remaining=0,period=0,fadeRemaining=0,total=0,lockRemaining=0,damageGuard=0;
-    bool groundsAir=false;
+    bool groundsAir=false,dispellable=true;
+    std::uint64_t applied=0;
+    std::shared_ptr<const MorphAppearance> form;
+    std::string cycloneAttachment;
     float groundHeight=0,landTime=0;
     unsigned recoveryMoveSteps=0,recoveryAttackSteps=0;
     float damage=0,moveReduction=0,attackReduction=0;

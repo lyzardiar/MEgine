@@ -197,6 +197,10 @@ class ScriptSession {
     void cannibalizeTick(std::uint32_t caster,double delta);
     void bindCorpseNatives();
     void bindControlNatives();
+    std::map<std::uint32_t,std::shared_ptr<const MorphAppearance>> morphAppearances_;
+    std::shared_ptr<const MorphAppearance> morphAppearance(std::uint32_t type);
+    void morphEffect(std::uint32_t source,std::uint32_t target,const SpellInfo& spell);
+    void cycloneEffect(std::uint32_t source,std::uint32_t target,const SpellInfo& spell);
     bool controlTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility,unsigned owner);
     std::optional<WorldPoint> spellWidgetPoint(std::uint32_t target);
     bool spellWidgetTarget(const UnitState& caster,std::uint32_t target,const SpellInfo& spell,bool visibility=true);
