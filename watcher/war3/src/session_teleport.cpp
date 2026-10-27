@@ -1,0 +1,58 @@
+// Author: MiYu. Source teleport spells and inventory channels move existing units through legal reserved destinations.
+#include "session.h"
+#include <algorithm>
+#include <bit>
+#include <cmath>
+
+namespace war3 {
+namespace {
+float number(jass::Real value){return std::bit_cast<float>(value.bits());}
+jass::Real real(float value){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}
+float distance(WorldPoint a,WorldPoint b){return std::hypot(number(a.x)-number(b.x),number(a.y)-number(b.y));}
+struct TeleportOccupant {std::uint32_t id;float x,y,radius;bool flying;};
+class TeleportPlacement {
+    World& world_;
+    std::map<std::pair<int,int>,std::vector<TeleportOccupant>> cells_;
+    static int cell(float value){return int(std::floor(value/128));}
+public:
+    explicit TeleportPlacement(World& world):world_(world){}
+    void add(const UnitState& u){if(u.hidden() || !u.pathing || number(u.life)<=0 || u.removing)return;TeleportOccupant entry{u.handle,number(u.x),number(u.y),u.collision,u.airborne()};for(int y=cell(entry.y-entry.radius);y<=cell(entry.y+entry.radius);++y)for(int x=cell(entry.x-entry.radius);x<=cell(entry.x+entry.radius);++x)cells_[{x,y}].push_back(entry);}
+    void remove(const UnitState& u){float x=number(u.x),y=number(u.y);for(int cy=cell(y-u.collision);cy<=cell(y+u.collision);++cy)for(int cx=cell(x-u.collision);cx<=cell(x+u.collision);++cx)if(auto found=cells_.find({cx,cy});found!=cells_.end()){std::erase_if(found->second,[&](const auto& other){return other.id==u.handle;});if(found->second.empty())cells_.erase(found);}}
+    std::optional<WorldPoint> find(const UnitState& u,WorldPoint point){
+        if(!u.pathing)return world_.clamp(point);
+        bool flying=u.airborne();for(unsigned ring=0;ring<=32;++ring)for(unsigned side=0;side<(ring?32u:1u);++side){float angle=float(side)*6.28318530718f/32;auto candidate=world_.clamp({real(number(point.x)+std::cos(angle)*ring*32),real(number(point.y)+std::sin(angle)*ring*32)});float x=number(candidate.x),y=number(candidate.y);if(u.pathing){auto route=world_.route(candidate,candidate,u.collision,flying);if(route.empty() || distance(route.back(),candidate)>1)continue;}bool free=true;for(int cy=cell(y-u.collision);free && cy<=cell(y+u.collision);++cy)for(int cx=cell(x-u.collision);free && cx<=cell(x+u.collision);++cx)if(auto found=cells_.find({cx,cy});found!=cells_.end())for(auto& other:found->second){float dx=x-other.x,dy=y-other.y,radius=u.collision+other.radius;if(other.id!=u.handle && other.flying==flying && dx*dx+dy*dy<radius*radius){free=false;break;}}if(free)return candidate;}return {};
+    }
+};
+}
+void ScriptSession::teleportSpellInfo(SpellInfo& s){
+    auto field=[&](const char* key){return definitions().number(s.ability,"AbilityData",std::string(key)+std::to_string(s.level));};if(s.amount<1 || s.amount>4096 || s.amount!=std::floor(s.amount))throw std::runtime_error("Teleport unit count outside supported range");s.targets=unsigned(s.amount);s.channelled=s.unlimitedRange=true;s.period=0;s.channelTime=s.kind==SpellKind::MassTeleport?s.secondary:field("Cast");float cluster=s.kind==SpellKind::MassTeleport?field("DataC"):s.secondary;if(cluster!=0 && cluster!=1)throw std::runtime_error("Invalid source teleport clustering flag");s.teleportCluster=cluster!=0;s.teleportProtection=s.kind==SpellKind::TownPortal;
+}
+bool ScriptSession::teleportTarget(const UnitState& caster,const UnitState& target,const SpellInfo& s,bool visibility){
+    if(caster.handle==target.handle || target.removing || target.hidden() || number(target.life)<=0 || target.cycloned() || (visibility && !unitVisibleTo(target.handle,caster.owner)))return false;auto& mask=s.allowed;bool same=caster.owner==target.owner,allied=!same && !enemy(caster.owner,target.owner);if(s.kind==SpellKind::TownPortal)return target.building && (same || allied);bool permitted=same?mask.contains("player") || mask.contains("self") || mask.contains("friend"):target.owner>=12?mask.contains("neutral") && allied:allied && (mask.contains("ally") || mask.contains("allies") || mask.contains("friend"));if(!permitted)return false;if(target.building?!mask.contains("structure"):(target.airborne()?!mask.contains("air"):!mask.contains("ground")))return false;auto classes=definitions().unitClasses(target.type);if(mask.contains("nonancient") && classes.find("ancient")!=std::string::npos)return false;if(classes.find("ward")!=std::string::npos && !mask.contains("ward"))return false;if((target.invulnerable || target.sleepProtected() || capability(target,"Avul")) && !mask.contains("invu") && !mask.contains("invulnerable"))return false;return true;
+}
+std::uint32_t ScriptSession::teleportAnchor(const UnitState& caster,const SpellInfo& s,WorldPoint point,bool automatic){
+    std::uint32_t result=0;float nearest=INFINITY;for(auto& [id,u]:units_){if(!teleportTarget(caster,*u,s,true))continue;if(automatic && (u->owner!=caster.owner || !u->building || definitions().unitClasses(u->type).find("townhall")==std::string::npos))continue;float d=distance({u->x,u->y},point);if(!automatic && d>std::max(128.f,u->collision+64))continue;if(d<nearest || (d==nearest && id<result)){result=id;nearest=d;}}return result;
+}
+bool ScriptSession::teleportReady(const UnitState& caster,const SpellInfo& s,WorldPoint point){
+    if(caster.building || caster.rooted() || caster.transport || caster.formTransition || caster.rootTransition)return false;if(s.kind!=SpellKind::Recall)return true;for(auto& [id,u]:units_)if(id!=caster.handle && u->owner==caster.owner && !u->building && !u->paused && !u->rooted() && teleportTarget(caster,*u,s,false) && distance({u->x,u->y},point)<=s.area+u->collision)return true;return false;
+}
+bool ScriptSession::itemSpellReady(const UnitState& u,const SpellInfo& s,std::uint32_t itemId){
+    if(!alive(itemId,NativeKind::Item) || !inventoryFlag(u,"DataC"))return false;auto item=items_.at(itemId);auto& data=definitions();if(item->holder!=u.handle || data.number(item->type,"ItemData","usable")==0 || (data.number(item->type,"ItemData","uses")>0 && item->charges<=0) || number(u.mana)<s.mana)return false;auto abilities=itemActiveAbilities(item->type);if(abilities.size()!=1 || abilities.front()!=s.ability)return false;auto group=data.field(item->type,"ItemData","cooldownID",ObjectData::name(s.ability));auto cd=u.itemCooldowns.find(group);return cd==u.itemCooldowns.end() || cd->second<=simulationTime_;
+}
+bool ScriptSession::commitItemSpell(std::uint32_t id,const CastOrder& cast){
+    auto u=units_.at(id);if(!itemSpellReady(*u,cast.spell,cast.item))return false;auto held=items_.at(cast.item);auto& data=definitions();bool limited=held->charges>0 || data.number(held->type,"ItemData","uses")>0,perishable=data.number(held->type,"ItemData","perishable")!=0;if(limited && held->charges<=0)return false;u->cast->itemPaid=true;u->mana=real(number(u->mana)-cast.spell.mana);u->itemCooldowns[data.field(held->type,"ItemData","cooldownID",ObjectData::name(cast.spell.ability))]=simulationTime_+cast.spell.cooldown;if(limited)--held->charges;ScriptContext context;context.manipulatedItem=cast.item;unitEvent(id,50,87,context);if(perishable && limited && held->charges==0 && alive(cast.item,NativeKind::Item))removeItem(cast.item);return alive(id,NativeKind::Unit) && !u->removing && number(u->life)>0 && u->owner==cast.owner && u->cast && u->cast->ticket==cast.ticket;
+}
+bool ScriptSession::useTeleportItem(std::uint32_t id,std::uint32_t itemId,std::uint32_t target,std::optional<WorldPoint> point){
+    auto u=units_.at(id);auto held=items_.at(itemId);auto abilities=itemActiveAbilities(held->type);if(abilities.size()!=1)return false;auto& s=spellInfo(abilities.front(),1);if(!teleportSpell(s.kind) || !itemSpellReady(*u,s,itemId))return false;if(point && (!std::isfinite(number(point->x)) || !std::isfinite(number(point->y))))throw std::runtime_error("Invalid teleport item point");if(s.kind!=SpellKind::Recall && !target)target=teleportAnchor(*u,s,point.value_or(WorldPoint{u->x,u->y}),!point);auto targeting=target?SpellTargeting::Unit:SpellTargeting::Point;if(s.kind!=SpellKind::Recall && !target)return false;auto slot=std::find(u->inventory.begin(),u->inventory.end(),itemId);if(slot==u->inventory.end())return false;return beginSpell(id,s.ability,target,point.value_or(WorldPoint{u->x,u->y}),targeting,false,852008u+unsigned(slot-u->inventory.begin()),itemId);
+}
+void ScriptSession::startTeleport(std::uint32_t id,const CastOrder& issued){
+    if(!alive(id,NativeKind::Unit))return;auto u=units_.at(id);if(!u->cast || u->cast->ticket!=issued.ticket)return;auto& cast=*u->cast;cast.phase=CastOrder::Phase::Channel;cast.channelElapsed=0;u->route.clear();u->waypoint=0;auto add=[&](const char* field,std::uint32_t target,WorldPoint point){auto effects=spellVisual(cast.spell,field,target,point,false);cast.visuals.insert(cast.visuals.end(),effects.begin(),effects.end());};add("CasterArt",id,{u->x,u->y});add("Areaeffectart",cast.target,cast.point);if(cast.spell.channelTime<=0)teleportTick(id,0);
+}
+void ScriptSession::teleportTick(std::uint32_t id,double delta){
+    auto caster=units_.at(id);auto cast=*caster->cast;auto active=[&]{return alive(id,NativeKind::Unit) && !caster->removing && number(caster->life)>0 && caster->owner==cast.owner && caster->cast && caster->cast->ticket==cast.ticket;};if(!teleportReady(*caster,cast.spell,cast.point)){cancelCast(*caster);return;}caster->cast->channelElapsed+=delta;if(caster->cast->channelElapsed+1e-7<cast.spell.channelTime)return;auto& s=cast.spell;WorldPoint origin=s.kind==SpellKind::Recall?cast.point:WorldPoint{caster->x,caster->y},destination=s.kind==SpellKind::Recall?WorldPoint{caster->x,caster->y}:cast.point;std::vector<std::pair<float,std::uint32_t>> nearby;
+    for(auto& [handle,u]:units_){if(handle==id || u->owner!=cast.owner || u->building || u->removing || u->hidden() || u->paused || u->rooted() || u->formTransition || u->rootTransition || number(u->life)<=0 || definitions().unitClasses(u->type).find("ward")!=std::string::npos)continue;if(s.kind==SpellKind::Recall && !teleportTarget(*caster,*u,s,false))continue;float d=distance({u->x,u->y},origin);if(d<=s.area+u->collision)nearby.emplace_back(d,handle);}std::sort(nearby.begin(),nearby.end());std::vector<std::uint32_t> travelers;if(s.kind!=SpellKind::Recall)travelers.push_back(id);for(auto [d,handle]:nearby){if(travelers.size()>=s.targets)break;travelers.push_back(handle);}
+    std::erase_if(travelers,[&](auto handle){if(!active() || !alive(handle,NativeKind::Unit))return true;if(handle==id)return false;return !cancelCombat(*units_.at(handle));});if(!active())return;TeleportPlacement placement(requireWorld());for(auto& [handle,u]:units_)placement.add(*u);
+    for(auto handle:travelers){if(!active())return;if(!alive(handle,NativeKind::Unit))continue;auto u=units_.at(handle);if(u->owner!=cast.owner || u->removing || u->hidden() || u->paused || u->rooted() || number(u->life)<=0)continue;auto desired=destination;if(!s.teleportCluster)desired=requireWorld().clamp({real(number(destination.x)+number(u->x)-number(origin.x)),real(number(destination.y)+number(u->y)-number(origin.y))});auto at=placement.find(*u,desired);if(!at){if(handle==id)break;continue;}spellVisual(s,"Specialart",0,{u->x,u->y});placement.remove(*u);u->x=at->x;u->y=at->y;u->route.clear();u->waypoint=0;u->holding=false;u->combat.home=*at;u->animation.clear();u->animationTime=0;if(handle!=id)u->currentOrder=0;unitFootprint(*u);placement.add(*u);spellVisual(s,"Specialart",handle,*at);++fogRevision_;}
+    if(active())finishCast(id,cast.ticket);
+}
+}

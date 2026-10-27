@@ -161,6 +161,15 @@ class ScriptSession {
     void blinkSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point);
     void startMirrorImage(std::uint32_t unit,const CastOrder& cast);
     void mobilityTick(double delta);
+    void teleportSpellInfo(SpellInfo& spell);
+    bool teleportTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility);
+    std::uint32_t teleportAnchor(const UnitState& caster,const SpellInfo& spell,WorldPoint point,bool automatic=false);
+    bool teleportReady(const UnitState& caster,const SpellInfo& spell,WorldPoint point);
+    void startTeleport(std::uint32_t unit,const CastOrder& cast);
+    void teleportTick(std::uint32_t unit,double delta);
+    bool useTeleportItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
+    bool itemSpellReady(const UnitState& unit,const SpellInfo& spell,std::uint32_t item);
+    bool commitItemSpell(std::uint32_t unit,const CastOrder& cast);
     std::map<std::pair<std::uint32_t,unsigned>,CargoInfo> cargoInfo_;
     const CargoInfo* cargoInfo(const UnitState& unit);
     unsigned cargoSize(const UnitState& unit);
@@ -309,7 +318,7 @@ class ScriptSession {
     void releaseCastVisuals(CastOrder& cast);
     void groundSpellsTick(double delta);
     void persistentSpellPulse(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner,float amount,bool percent,std::optional<std::uint64_t> cast={});
-    bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting,bool automatic=false,std::uint32_t issuedOrder=0);
+    bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting,bool automatic=false,std::uint32_t issuedOrder=0,std::uint32_t item=0);
     void casterEffect(const SpellMissile& missile);
     bool usefulDispel(const UnitState& caster,const UnitState& target,const SpellInfo& spell);
     void dispelSpell(std::uint32_t source,std::uint32_t target,const SpellInfo& spell);
