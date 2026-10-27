@@ -53,6 +53,7 @@ class GameView {
     std::uint32_t widget(float x,float y,bool items) const;
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
+    void drawLightning(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     std::map<std::uint64_t,ModelInstance> modelInstances_;
     std::set<std::uint64_t> modelInstancesSeen_;
     ModelInstance& modelInstance(std::uint64_t id) {modelInstancesSeen_.insert(id);return modelInstances_[id];}

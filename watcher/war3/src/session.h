@@ -43,13 +43,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect};
+enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     using Timer=ScriptTimer;
     using Trigger=ScriptTrigger;
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility,std::shared_ptr<ScriptEffect>> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility,std::shared_ptr<ScriptEffect>,std::shared_ptr<ScriptLightning>> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -135,6 +135,15 @@ class ScriptSession {
     void summonSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner);
     void bindSpellNatives();
     void bindEffectNatives();
+    void bindLightningNatives();
+    std::map<std::string,LightningInfo> lightningInfo_;
+    std::map<std::uint32_t,std::shared_ptr<ScriptLightning>> lightnings_;
+    const LightningInfo& lightningInfo(const std::string& type);
+    jass::Value createLightning(const std::string& type,bool visibility,std::array<jass::Real,3> from,std::array<jass::Real,3> to,std::optional<double> duration={});
+    bool moveLightning(std::uint32_t id,bool visibility,std::array<jass::Real,3> from,std::array<jass::Real,3> to);
+    bool destroyLightning(std::uint32_t id);
+    void lightningTick();
+    void spellLightning(const SpellMissile& missile);
     std::map<std::uint32_t,std::shared_ptr<ScriptEffect>> effects_;
     jass::Value createEffect(const std::string& model,WorldPoint point,std::uint32_t target=0,const std::string& attachment={},bool automatic=false);
     void destroyEffect(std::uint32_t id);
@@ -336,6 +345,7 @@ public:
     const auto& spellMissiles() const {return spellMissiles_;}
     const auto& spellWaves() const {return spellWaves_;}
     const auto& effects() const {return effects_;}
+    const auto& lightnings() const {return lightnings_;}
     void effectExpires(std::uint32_t id,double time);
     const auto& projectiles() const {return projectiles_;}
     const auto& destructables() const {return destructables_;}

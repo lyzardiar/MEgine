@@ -36,11 +36,13 @@ public:
     float radius() const;
     std::uint64_t sequenceDuration() const;
     size_t particleEmitters() const;
+    size_t ribbonEmitters() const;
     bool hasAttachment(const std::string& name) const;
     float particleLifetime() const;
     bool sequenceLoops() const;
     std::optional<D3DMATRIX> attachment(const std::string& name,const D3DMATRIX& world,std::uint64_t elapsed,const D3DMATRIX& view) const;
 private:
+    void ribbons(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& world,DWORD tint,ModelInstance& instance,bool emit,float delta);
     void particles(std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& view,const D3DMATRIX& world,DWORD tint,ModelInstance& instance,bool emit);
 };
 }

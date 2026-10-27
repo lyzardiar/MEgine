@@ -27,6 +27,8 @@ class World {
     GameClock clock_;
     std::unique_ptr<Archives> resources_;
     Bytes obstacles_;
+    std::vector<float> surface_;
+    void buildSurface();
     struct ObstacleOwners {std::array<std::uint32_t,3> counts{};std::uint8_t fixed=0;};
     std::unordered_map<size_t,ObstacleOwners> obstacleOwners_;
     std::uint64_t pathingRevision_=1;
@@ -46,6 +48,8 @@ public:
     const WorldRect& bounds() const {return bounds_;}
     jass::Real cameraMargin(std::uint32_t side) const;
     WorldPoint clamp(WorldPoint point) const;
+    float height(WorldPoint point) const;
+    std::span<const float> surface() const {return surface_;}
     WorldRect rectangle(WorldPoint first,WorldPoint second) const;
     bool blighted(WorldPoint point) const;
     std::uint32_t terrainType(WorldPoint point) const;

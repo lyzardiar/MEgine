@@ -21,7 +21,8 @@ class TerrainScene {
     const World& world_;
     const MapTerrain& source_;
     SceneAssets& assets_;
-    std::vector<float> ground_,surface_;
+    std::vector<float> ground_;
+    std::span<const float> surface_;
     std::vector<TerrainChunk> chunks_;
     std::map<std::tuple<unsigned,unsigned,std::string,bool>,size_t> lookup_;
     std::vector<std::string> waterFrames_;
@@ -42,7 +43,7 @@ class TerrainScene {
     std::vector<TerrainCell> layout(const std::vector<TerrainCliff>& definitions,Log& log);
     TerrainChunk& chunk(unsigned x,unsigned y,const std::string& texture,bool water=false);
     void append(TerrainChunk& target,std::span<const SceneVertex> vertices,std::span<const std::uint32_t> indices);
-    float relief(const std::vector<float>& heights,float x,float y) const;
+    float relief(std::span<const float> heights,float x,float y) const;
     void water();
 public:
     TerrainScene(const World& world,SceneAssets& assets,Log& log);

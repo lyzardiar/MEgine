@@ -22,6 +22,7 @@ struct ParticleEmitter2 {
     std::array<std::array<unsigned,3>,4> intervals{};
     Track speedTrack,variationTrack,latitudeTrack,gravityTrack,rateTrack,widthTrack,lengthTrack,visibility;
 };
+struct RibbonEmitter {unsigned node=0,slot=0,rate=0,rows=1,columns=1,material=0;float above=0,below=0,alpha=1,life=0,gravity=0;XMFLOAT4 color{1,1,1,1};Track aboveTrack,belowTrack,alphaTrack,colorTrack,slotTrack,visibility;};
 struct Attachment {unsigned node=0,id=0;std::string path;Track visibility;};
 struct Layer { unsigned filter, flags, texture, coord; int animation; float alpha; Track opacity, textureTrack; };
 struct Material { int priority; std::vector<Layer> layers; };
@@ -52,6 +53,7 @@ struct Model::Data {
     std::vector<mdx::Transform> textureAnimations;
     std::vector<mdx::Geoset> geosets;
     std::vector<mdx::ParticleEmitter2> emitters;
+    std::vector<mdx::RibbonEmitter> ribbons;
     std::vector<mdx::Attachment> attachments;
     ModelInstance defaultInstance;
     std::optional<std::uint64_t> globalTime;

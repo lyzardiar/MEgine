@@ -32,4 +32,4 @@
 
 此检查未创建图形设备，没有Game.dll；不作为GPU/视觉通过证据。命令为`build/windows-x86/bin/Release/war3_effects_tests.exe <data-root> <log>`，日志必须指向tmp/docs-artifacts/war3/effects/。war3_spell_tests增加effect实际状态、typed storage、销毁/退休断言，尚未执行。
 
-阶段合并验证17种技能/状态特效、单模型多单位隔离、挂点/动画/可见性/缩放、出生/循环/死亡/立即DestroyEffect、squirt/图集/过滤/排序、冷加载首次施法、视野/离屏重入、暂停与长帧、三图持续切图、资源/CPU/GPU预算。PREM模型发射器、RIBB条带、闪电、事件型SPN/SPL/SND、子附件模型、完整灯光/环境雾、其他替换纹理、全部特效native与声音仍需实现；源发射数、粒子轨迹/尺寸/颜色和销毁语义的原版精度也未验收。完整客户端目标保持未完成。
+阶段合并验证17种技能/状态特效、单模型多单位隔离、挂点/动画/可见性/缩放、出生/循环/死亡/立即DestroyEffect、squirt/图集/过滤/排序、冷加载首次施法、视野/离屏重入、暂停与长帧、三图持续切图、资源/CPU/GPU预算。[RIBB和源闪电](ribbons-lightning.md)已接入；PREM模型发射器、事件型SPN/SPL/SND、子附件模型、完整灯光/环境雾、其他替换纹理、全部特效native与声音仍需实现；源发射数、粒子轨迹/尺寸/颜色和销毁语义的原版精度也未验收。完整客户端目标保持未完成。
