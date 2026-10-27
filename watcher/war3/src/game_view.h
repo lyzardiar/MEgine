@@ -52,6 +52,12 @@ class GameView {
     void command(float x,float y,OrderMode mode);
     std::uint32_t widget(float x,float y,bool items) const;
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
+    void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
+    std::map<std::uint64_t,ModelInstance> modelInstances_;
+    std::set<std::uint64_t> modelInstancesSeen_;
+    ModelInstance& modelInstance(std::uint64_t id) {modelInstancesSeen_.insert(id);return modelInstances_[id];}
+    struct EffectPresentation {bool birth=false,stand=false,death=false,loops=false,missingAttachment=false;std::uint64_t birthTime=0,standTime=0,deathTime=0;};
+    std::map<std::uint32_t,EffectPresentation> effectPresentations_;
     void activateItem(std::uint32_t unit,std::uint32_t item);
     std::vector<std::uint32_t> selected(bool owned=false) const;
 public:

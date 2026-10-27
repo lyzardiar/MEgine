@@ -13,6 +13,7 @@
 #include "fog_grid.h"
 #include "placed_definition.h"
 #include "image.h"
+#include "effects.h"
 #include <variant>
 
 namespace war3 {
@@ -42,13 +43,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability};
+enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     using Timer=ScriptTimer;
     using Trigger=ScriptTrigger;
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility,std::shared_ptr<ScriptEffect>> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -133,12 +134,20 @@ class ScriptSession {
     std::optional<WorldPoint> summonPoint(WorldPoint point,std::uint32_t type,float minimum=0);
     void summonSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner);
     void bindSpellNatives();
+    void bindEffectNatives();
+    std::map<std::uint32_t,std::shared_ptr<ScriptEffect>> effects_;
+    jass::Value createEffect(const std::string& model,WorldPoint point,std::uint32_t target=0,const std::string& attachment={},bool automatic=false);
+    void destroyEffect(std::uint32_t id);
+    void effectsTick();
+    std::vector<std::uint32_t> spellVisual(const SpellInfo& spell,const char* field,std::uint32_t target,WorldPoint point,bool automatic=true);
+    void releaseBuff(UnitBuff& buff);
     bool spellTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility=true,unsigned owner=UINT_MAX);
     bool cancelCast(UnitState& unit,bool preserveRoute=false);
     void spellEvent(std::uint32_t unit,const CastOrder& cast,unsigned stage);
     void spellsTick(double delta);
     void buffsTick(double delta);
     void spellImpact(SpellMissile missile);
+    void launchSpellMissile(SpellMissile missile);
     void applyBuff(std::uint32_t target,std::uint32_t source,const SpellInfo& spell,BuffKind kind);
     void releaseAbility(std::uint32_t unit,std::uint32_t ability);
     std::uint32_t abilityHandle(std::uint32_t unit,std::uint32_t ability);
@@ -325,6 +334,9 @@ public:
     double spellCooldown(std::uint32_t unit,std::uint32_t ability) const;
     std::vector<CommandButton> abilityCommands(std::uint32_t unit,unsigned player,bool learning=false);
     const auto& spellMissiles() const {return spellMissiles_;}
+    const auto& spellWaves() const {return spellWaves_;}
+    const auto& effects() const {return effects_;}
+    void effectExpires(std::uint32_t id,double time);
     const auto& projectiles() const {return projectiles_;}
     const auto& destructables() const {return destructables_;}
     std::uint64_t destructableRevision() const {return destructableRevision_;}

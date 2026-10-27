@@ -1,6 +1,6 @@
 {
   "author": "MiYu",
-  "purpose": "Fixed external format and animation references for native Rust implementation; upstream executables and game assets are not bundled.",
+  "purpose": "Fixed external format, animation and effect references for native implementations; upstream executables and game assets are not bundled.",
   "references": [
     {
       "repository": "https://github.com/Darithos/W3ModelViewer",
@@ -67,6 +67,54 @@
       "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
       "path": "src/viewer/handlers/mdx/shaders/sd.frag.ts",
       "sha256": "7b53e470e99a00604425a0e39a9e4c80a68d0c22bbca71a3bea84e4ca8fdd54d"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/parsers/mdlx/particleemitter2.ts",
+      "sha256": "46244dced233086fc710e614b9c8af6d82b1980790507ea50794b79a72b9184a"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/parsers/mdlx/attachment.ts",
+      "sha256": "e41a08e1e9b88de3c5f213ad434fa7decc6718575165074e65b191102953ccd4"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/particle2.ts",
+      "sha256": "129706e715a095214a5a0cdbb1dd4319c9399beaae62fb0e25d83057b09a10a5"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/particleemitter2.ts",
+      "sha256": "0410b4395a64d99f2229e5338e975f5c61a49eab8e91277f4a0ac676fb2ec57c"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/particleemitter2object.ts",
+      "sha256": "3e6931b07b139b5c627abf69d5771fafdec9098ed26795a8bdcc0f427f1c9814"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/geometryemitterfuncs.ts",
+      "sha256": "b8a312b64a60deddd19063a7f95ec9d904e79d69fe3226862547a5215a8a5b88"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/shaders/particles.vert.ts",
+      "sha256": "68f1c3740a3ef02f490403e533199870a52b4f32716c7347f02db6998db0a6ff"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/shaders/particles.frag.ts",
+      "sha256": "d08512f52ec00ba47754637eaa4090a4c5e4895b02dc6086eb12666fcd2ab071"
     }
   ],
   "licenses": [

@@ -13,10 +13,10 @@ std::vector<std::uint32_t> ScriptSession::spellTargets(std::uint32_t source,cons
     std::vector<std::pair<float,std::uint32_t>> candidates;if(!alive(source,NativeKind::Unit))return {};auto caster=units_.at(source);for(auto& [id,u]:units_){float d=distance(*u,point);if(d<=s.area+u->collision && spellTarget(*caster,*u,s,false,owner))candidates.emplace_back(d,id);}std::sort(candidates.begin(),candidates.end());std::vector<std::uint32_t> result;for(auto [d,id]:candidates)result.push_back(id);return result;
 }
 void ScriptSession::releaseSpell(std::uint32_t source,const CastOrder& cast,unsigned owner) {
-    if(!alive(source,NativeKind::Unit))return;auto u=units_.at(source);auto& s=cast.spell;
-    if(s.targeting==SpellTargeting::Unit){SpellMissile missile;missile.spell=s;missile.source=source;missile.target=cast.target;missile.owner=owner;missile.position={u->x,u->y};missile.amount=s.amount;if(s.speed>0)spellMissiles_.emplace(++spellTicket_,std::move(missile));else spellImpact(std::move(missile));return;}
+    if(!alive(source,NativeKind::Unit))return;auto u=units_.at(source);auto& s=cast.spell;spellVisual(s,"CasterArt",source,{u->x,u->y});
+    if(s.targeting==SpellTargeting::Unit){SpellMissile missile;missile.spell=s;missile.source=source;missile.target=cast.target;missile.owner=owner;missile.position={u->x,u->y};missile.amount=s.amount;missile.born=simulationTime_;launchSpellMissile(std::move(missile));return;}
     WorldPoint point=s.targeting==SpellTargeting::None?WorldPoint{u->x,u->y}:cast.point;
-    if(s.kind==SpellKind::Shockwave || s.kind==SpellKind::CarrionSwarm){if(spellWaves_.size()>=4096)throw std::runtime_error("Active spell wave budget exceeded");SpellWave wave;wave.spell=s;wave.source=source;wave.owner=owner;wave.origin={u->x,u->y};float dx=number(point.x)-number(u->x),dy=number(point.y)-number(u->y),length=std::hypot(dx,dy);if(length>.001f){wave.directionX=dx/length;wave.directionY=dy/length;}else{float angle=number(u->facing)*3.14159265359f/180;wave.directionX=std::cos(angle);wave.directionY=std::sin(angle);}spellWaves_.emplace(++spellTicket_,std::move(wave));return;}
+    if(s.kind==SpellKind::Shockwave || s.kind==SpellKind::CarrionSwarm){if(spellWaves_.size()>=4096)throw std::runtime_error("Active spell wave budget exceeded");SpellWave wave;wave.spell=s;wave.born=simulationTime_;wave.source=source;wave.owner=owner;wave.origin={u->x,u->y};float dx=number(point.x)-number(u->x),dy=number(point.y)-number(u->y),length=std::hypot(dx,dy);if(length>.001f){wave.directionX=dx/length;wave.directionY=dy/length;}else{float angle=number(u->facing)*3.14159265359f/180;wave.directionX=std::cos(angle);wave.directionY=std::sin(angle);}spellWaves_.emplace(++spellTicket_,std::move(wave));return;}
     if(s.impactDelay>0){if(delayedSpells_.size()>=4096)throw std::runtime_error("Delayed spell budget exceeded");delayedSpells_.emplace(++spellTicket_,DelayedSpell{s,source,owner,point,simulationTime_+s.impactDelay});return;}areaSpell(source,s,point,owner);
 }
 void ScriptSession::areaSpell(std::uint32_t source,const SpellInfo& s,WorldPoint point,unsigned owner) {
@@ -25,10 +25,10 @@ void ScriptSession::areaSpell(std::uint32_t source,const SpellInfo& s,WorldPoint
     auto victims=spellTargets(source,s,point,owner);float allocated=0;unsigned count=0;
     for(auto id:victims){
         if(!alive(source,NativeKind::Unit))break;if(!alive(id,NativeKind::Unit))continue;
-        if(s.kind==SpellKind::FanKnives){if(s.targets && count>=s.targets)break;float amount=s.maxDamage>0?std::min(s.amount,std::max(0.f,s.maxDamage-allocated)):s.amount;if(amount<=0)break;allocated+=amount;++count;SpellMissile missile;missile.spell=s;missile.source=source;missile.target=id;missile.owner=owner;missile.position=point;missile.amount=amount;if(s.speed>0)spellMissiles_.emplace(++spellTicket_,std::move(missile));else spellImpact(std::move(missile));continue;}
+        if(s.kind==SpellKind::FanKnives){if(s.targets && count>=s.targets)break;float amount=s.maxDamage>0?std::min(s.amount,std::max(0.f,s.maxDamage-allocated)):s.amount;if(amount<=0)break;allocated+=amount;++count;SpellMissile missile;missile.spell=s;missile.source=source;missile.target=id;missile.owner=owner;missile.position=point;missile.amount=amount;missile.born=simulationTime_;launchSpellMissile(std::move(missile));continue;}
         damageUnit(source,id,s.amount,0,14);if(s.kind==SpellKind::ThunderClap)applyBuff(id,source,s,BuffKind::Slow);else if(s.kind==SpellKind::WarStomp)applyBuff(id,source,s,BuffKind::Stun);else if(s.kind==SpellKind::Inferno){auto stun=s;stun.buff=ObjectData::code("BPSE");applyBuff(id,source,stun,BuffKind::Stun);}else throw std::runtime_error("Area spell consumer is missing");
     }
-    if(s.kind==SpellKind::Inferno && alive(source,NativeKind::Unit))summonSpell(source,s,point,owner);
+    if(s.kind==SpellKind::Inferno && alive(source,NativeKind::Unit))summonSpell(source,s,point,owner);spellVisual(s,"EffectArt",0,point);
 }
 void ScriptSession::areaSpellsTick(double delta) {
     std::vector<std::uint64_t> delayed,waves;for(auto& [id,s]:delayedSpells_)if(s.due<=simulationTime_)delayed.push_back(id);for(auto& [id,w]:spellWaves_)waves.push_back(id);

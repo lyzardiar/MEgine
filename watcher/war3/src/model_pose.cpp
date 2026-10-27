@@ -9,7 +9,7 @@ DWORD packedColor(FXMVECTOR value, float alpha) { XMFLOAT4 f; XMStoreFloat4(&f,v
 XMVECTOR Model::Data::sample(const Track& t, std::uint64_t elapsed, FXMVECTOR rest, bool rotation) const {
     if (t.keys.empty()) return rest;
     auto begin = t.keys.begin(), end = t.keys.end(); std::int64_t time = 0;
-    if (t.global >= 0) { if (unsigned(t.global) >= globals.size()) throw std::runtime_error("Animation global missing"); auto period = globals[t.global]; time = period ? elapsed%period : 0; }
+    if (t.global >= 0) { if (unsigned(t.global) >= globals.size()) throw std::runtime_error("Animation global missing"); auto period = globals[t.global]; time = period ? globalTime.value_or(elapsed)%period : 0; }
     else if (!sequences.empty()) { auto& s = sequences[sequence]; auto duration = std::uint64_t(std::int64_t(s.end)-s.start); time = s.start + std::int64_t(s.flags&1 ? std::min(elapsed,duration) : duration ? elapsed%duration : 0); begin = std::lower_bound(begin,end,s.start,[](const Key& k,int t) { return k.time<t; }); end = std::upper_bound(begin,end,s.end,[](int t,const Key& k) { return t<k.time; }); }
     else return rest;
     if (begin == end) return rest;
@@ -24,30 +24,37 @@ XMVECTOR Model::Data::sample(const Track& t, std::uint64_t elapsed, FXMVECTOR re
     if (t.mode == 2) return XMVectorHermite(x,out,y,in,u);
     return x*((1-u)*(1-u)*(1-u))+out*(3*(1-u)*(1-u)*u)+in*(3*(1-u)*u*u)+y*(u*u*u);
 }
-void Model::draw(std::uint64_t elapsed, float aspect, bool twoSided) {
-    auto& d = *data_; if (!d.renderer) throw std::runtime_error("Model has no rendering device");
-    auto eye = XMLoadFloat4(&d.eye)+d.sample(d.cameraPosition,elapsed,XMVectorZero()); auto target = XMLoadFloat4(&d.target)+d.sample(d.cameraTarget,elapsed,XMVectorZero());
-    auto view=XMMatrixLookAtRH(eye,target,XMVectorSet(0,0,1,0));XMFLOAT4X4 v,p,w;XMStoreFloat4x4(&v,view);XMStoreFloat4x4(&p,XMMatrixPerspectiveFovRH(d.fov,aspect,d.nearPlane,d.farPlane));XMStoreFloat4x4(&w,XMMatrixIdentity());D3DMATRIX dv,dp,dw;std::memcpy(&dv,&v,sizeof(dv));std::memcpy(&dp,&p,sizeof(dp));std::memcpy(&dw,&w,sizeof(dw));draw(elapsed,dv,dp,dw,twoSided);
-}
-void Model::draw(std::uint64_t elapsed,const D3DMATRIX& sourceView,const D3DMATRIX& projection,const D3DMATRIX& worldMatrix,bool twoSided,DWORD instanceColor) {
-    if(!(instanceColor>>24))return;auto& d=*data_;if(!d.renderer)throw std::runtime_error("Model has no rendering device");auto device=d.renderer->device();device->SetTransform(D3DTS_VIEW,&sourceView);device->SetTransform(D3DTS_PROJECTION,&projection);device->SetTransform(D3DTS_WORLD,&worldMatrix);XMFLOAT4X4 v,w;std::memcpy(&v,&sourceView,sizeof(v));std::memcpy(&w,&worldMatrix,sizeof(w));auto view=XMLoadFloat4x4(&w)*XMLoadFloat4x4(&v);
-    bool sample=!d.poseTime || *d.poseTime!=elapsed || d.poseSequence!=d.sequence || d.billboard;
+void Model::Data::pose(std::uint64_t elapsed,const D3DMATRIX& sourceView,const D3DMATRIX& worldMatrix,bool skin) {
+    auto& d=*this;XMFLOAT4X4 v,w;std::memcpy(&v,&sourceView,sizeof(v));std::memcpy(&w,&worldMatrix,sizeof(w));auto view=XMLoadFloat4x4(&w)*XMLoadFloat4x4(&v);
+    bool sample=!d.poseTime || *d.poseTime!=elapsed || d.poseSequence!=d.sequence || d.billboard || (d.globalPose && d.poseGlobalTime!=d.globalTime);
     if(sample) {
     for (auto i : d.order) {
         auto& n = d.nodes[i]; auto p = XMLoadFloat4(&n.pivot); auto t = d.sample(n.tracks.translation,elapsed,XMVectorZero()); auto q = d.sample(n.tracks.rotation,elapsed,XMQuaternionIdentity(),true); auto s = d.sample(n.tracks.scale,elapsed,XMVectorSet(1,1,1,0)); auto parent = n.parent>=0 ? XMLoadFloat4x4(&d.world[n.parent]) : XMMatrixIdentity();
         if (n.flags&4) { XMVECTOR ps,pq,pt; if (XMMatrixDecompose(&ps,&pq,&pt,parent)) q = XMQuaternionMultiply(q,XMQuaternionInverse(pq)); }
-        auto world = XMMatrixTranslationFromVector(-p)*XMMatrixScalingFromVector(s)*XMMatrixRotationQuaternion(q)*XMMatrixTranslationFromVector(p+t)*parent;
-        if (n.flags&8) { XMVECTOR ws,wq,wt; if (XMMatrixDecompose(&ws,&wq,&wt,world)) { auto position = XMVector3TransformCoord(p,world); auto facing = XMMatrixInverse(nullptr,view); facing.r[3] = XMVectorSet(0,0,0,1); world = XMMatrixTranslationFromVector(-p)*XMMatrixScalingFromVector(ws)*facing*XMMatrixTranslationFromVector(position); } }
-        XMStoreFloat4x4(&d.world[i],world);
+        auto posed = XMMatrixTranslationFromVector(-p)*XMMatrixScalingFromVector(s)*XMMatrixRotationQuaternion(q)*XMMatrixTranslationFromVector(p+t)*parent;
+        if (n.flags&8) { XMVECTOR ws,wq,wt; if (XMMatrixDecompose(&ws,&wq,&wt,posed)) { auto position = XMVector3TransformCoord(p,posed); auto facing = XMMatrixInverse(nullptr,view); facing.r[3] = XMVectorSet(0,0,0,1); posed = XMMatrixTranslationFromVector(-p)*XMMatrixScalingFromVector(ws)*facing*XMMatrixTranslationFromVector(position); } }
+        XMStoreFloat4x4(&d.world[i],posed);
     }
+    ++d.poseRevision;d.poseTime=elapsed;d.poseSequence=d.sequence;d.poseGlobalTime=d.globalTime;
+    }
+    if(skin && d.skinRevision!=d.poseRevision){
     for (auto& g : d.geosets) for (unsigned i = 0; i < g.positions.size(); ++i) { auto p = XMLoadFloat4(&g.positions[i]); if (!g.matrices.empty()) { auto sum = XMVectorZero(); auto& group = g.matrices[g.group[i]]; for (auto node : group) sum += XMVector3TransformCoord(p,XMLoadFloat4x4(&d.world[node])); p = sum/float(group.size()); } XMFLOAT4 position; XMStoreFloat4(&position,p); g.sampled[i].x = position.x; g.sampled[i].y = position.y; g.sampled[i].z = position.z; }
-    d.poseTime=elapsed;d.poseSequence=d.sequence;
+    d.skinRevision=d.poseRevision;
     }
+}
+void Model::draw(std::uint64_t elapsed, float aspect, bool twoSided) {
+    auto& d = *data_;d.globalTime=elapsed; if (!d.renderer) throw std::runtime_error("Model has no rendering device");
+    auto eye = XMLoadFloat4(&d.eye)+d.sample(d.cameraPosition,elapsed,XMVectorZero()); auto target = XMLoadFloat4(&d.target)+d.sample(d.cameraTarget,elapsed,XMVectorZero());
+    auto view=XMMatrixLookAtRH(eye,target,XMVectorSet(0,0,1,0));XMFLOAT4X4 v,p,w;XMStoreFloat4x4(&v,view);XMStoreFloat4x4(&p,XMMatrixPerspectiveFovRH(d.fov,aspect,d.nearPlane,d.farPlane));XMStoreFloat4x4(&w,XMMatrixIdentity());D3DMATRIX dv,dp,dw;std::memcpy(&dv,&v,sizeof(dv));std::memcpy(&dp,&p,sizeof(dp));std::memcpy(&dw,&w,sizeof(dw));draw(elapsed,dv,dp,dw,twoSided);
+}
+void Model::draw(std::uint64_t elapsed,const D3DMATRIX& sourceView,const D3DMATRIX& projection,const D3DMATRIX& worldMatrix,bool twoSided,DWORD instanceColor,ModelInstance* instance,std::uint64_t clock,bool emit,bool geometry) {
+    if(!(instanceColor>>24))return;auto& d=*data_;d.globalTime=clock==UINT64_MAX?elapsed:clock;if(!d.renderer)throw std::runtime_error("Model has no rendering device");auto device=d.renderer->device();device->SetTransform(D3DTS_VIEW,&sourceView);device->SetTransform(D3DTS_PROJECTION,&projection);device->SetTransform(D3DTS_WORLD,&worldMatrix);
+    d.pose(elapsed,sourceView,worldMatrix);
     device->SetFVF(D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1);
     device->SetTextureStageState(0,D3DTSS_COLOROP,D3DTOP_MODULATE); device->SetTextureStageState(0,D3DTSS_COLORARG1,D3DTA_TEXTURE); device->SetTextureStageState(0,D3DTSS_COLORARG2,D3DTA_DIFFUSE);
     device->SetTextureStageState(0,D3DTSS_ALPHAOP,D3DTOP_MODULATE); device->SetTextureStageState(0,D3DTSS_ALPHAARG1,D3DTA_TEXTURE); device->SetTextureStageState(0,D3DTSS_ALPHAARG2,D3DTA_DIFFUSE);
     device->SetSamplerState(0,D3DSAMP_MINFILTER,D3DTEXF_LINEAR); device->SetSamplerState(0,D3DSAMP_MAGFILTER,D3DTEXF_LINEAR);
-    for (auto [gi,li] : d.draws) {
+    if(geometry)for (auto [gi,li] : d.draws) {
         auto& g = d.geosets[gi]; auto& l = d.materials[g.material].layers[li]; float a = XMVectorGetX(d.sample(g.opacity,elapsed,XMVectorReplicate(g.alpha)))*XMVectorGetX(d.sample(l.opacity,elapsed,XMVectorReplicate(l.alpha)));
         if (a <= .01f || g.indices.empty()) continue;
         float textureIndex = XMVectorGetX(d.sample(l.textureTrack,elapsed,XMVectorReplicate(float(l.texture)))); if (!std::isfinite(textureIndex) || textureIndex < 0 || textureIndex >= d.textures.size()) throw std::runtime_error("Animated texture out of range"); auto texture = unsigned(textureIndex);
@@ -60,6 +67,7 @@ void Model::draw(std::uint64_t elapsed,const D3DMATRIX& sourceView,const D3DMATR
         D3DBLEND src = (instanceColor>>24)<255?D3DBLEND_SRCALPHA:D3DBLEND_ONE, dst = (instanceColor>>24)<255?D3DBLEND_INVSRCALPHA:D3DBLEND_ZERO; if (l.filter>=2 && l.filter<=4) { src = D3DBLEND_SRCALPHA; dst = l.filter==2 ? D3DBLEND_INVSRCALPHA : D3DBLEND_ONE; } if (l.filter==5) { src = D3DBLEND_ZERO; dst = D3DBLEND_SRCCOLOR; } if (l.filter==6) { src = D3DBLEND_DESTCOLOR; dst = D3DBLEND_SRCCOLOR; } device->SetRenderState(D3DRS_SRCBLEND,src); device->SetRenderState(D3DRS_DESTBLEND,dst);
         auto result = device->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST,0,static_cast<UINT>(g.sampled.size()),static_cast<UINT>(g.indices.size()/3),g.indices.data(),D3DFMT_INDEX16,g.sampled.data(),sizeof(Vertex)); if (FAILED(result)) throw std::runtime_error("MDX draw failed");
     }
+    particles(elapsed,clock==UINT64_MAX?elapsed:clock,sourceView,worldMatrix,instanceColor,instance?*instance:d.defaultInstance,emit);
     device->SetRenderState(D3DRS_ALPHATESTENABLE,FALSE); device->SetRenderState(D3DRS_CULLMODE,D3DCULL_NONE);
 }
 }

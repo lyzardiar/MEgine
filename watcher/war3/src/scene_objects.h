@@ -10,6 +10,7 @@ struct SceneObject {
     std::uint32_t type=0;
     std::shared_ptr<DestructableState> source;
     Model* model=nullptr;
+    ModelInstance particles;
     std::array<float,3> position{},scale{1,1,1};
     float angle=0,radius=0;
     unsigned replacement=0;
