@@ -23,7 +23,7 @@ class GameView {
     std::uint64_t last_=0;
     D3DVIEWPORT9 viewport_{};
     D3DMATRIX view_{},projection_{};
-    enum class OrderMode {None,Move,Attack,Patrol};
+    enum class OrderMode {None,Move,Attack,Patrol,Harvest};
     OrderMode orderMode_=OrderMode::None;
     bool chatOpen_=false;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;

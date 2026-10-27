@@ -122,6 +122,14 @@ class ScriptSession {
     void bindBlightNatives();
     void bindCombatNatives();
     void bindResearchNatives();
+    void bindHarvestNatives();
+    std::pair<std::uint32_t,unsigned> sourceAbility(const UnitState& unit,const char* code);
+    void initializeHarvest(UnitState& unit);
+    void cancelGather(UnitState& unit);
+    void harvestTick(double delta);
+    bool acceptsResource(const UnitState& depot,unsigned resource);
+    std::uint32_t resourceDepot(const UnitState& unit,unsigned resource);
+    void creditResource(unsigned owner,unsigned resource,int amount);
     unsigned researchLevel(unsigned owner,std::uint32_t type) const;
     void setResearch(unsigned owner,std::uint32_t type,int level);
     void refreshResearch(UnitState& unit);
@@ -220,6 +228,8 @@ public:
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);
+    bool harvest(std::uint32_t unit,std::uint32_t mine);
+    bool returnResources(std::uint32_t unit,std::uint32_t depot=0);
     std::vector<CommandButton> commands(std::uint32_t unit,unsigned player);
     bool purchase(std::uint32_t shop,unsigned player,std::uint32_t type,bool item,std::uint32_t buyer=0);
     bool train(std::uint32_t unit,std::uint32_t type);

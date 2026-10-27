@@ -19,7 +19,7 @@ void ScriptSession::transferFood(const UnitState& u,unsigned oldOwner,unsigned n
     playerChange(oldOwner,5,oldUsed,std::max(0,oldUsed-used),false);playerChange(oldOwner,4,oldCap,std::max(0,oldCap-capacity),false);playerChange(newOwner,5,newUsed,afterUsed,false);playerChange(newOwner,4,newCap,afterCap,false);
 }
 void ScriptSession::removeUnit(std::uint32_t handle) {
-    if(!alive(handle,NativeKind::Unit))return;auto state=units_.at(handle);if(state->removing)return;state->removing=true;auto held=state->inventory;auto jobs=std::move(state->production);state->production.clear();int reserved=0;for(auto& job:jobs)if(job.reserved)reserved+=job.food;unitFood(handle,false,reserved);
+    if(!alive(handle,NativeKind::Unit))return;auto state=units_.at(handle);if(state->removing)return;state->removing=true;cancelGather(*state);auto held=state->inventory;auto jobs=std::move(state->production);state->production.clear();int reserved=0;for(auto& job:jobs)if(job.reserved)reserved+=job.food;unitFood(handle,false,reserved);
     for(auto id:held)if(alive(handle,NativeKind::Unit) && id && alive(id,NativeKind::Item) && items_.at(id)->holder==handle)dropItem(handle,id);
     for(auto& o:objects_)if(o.alive && o.kind==NativeKind::Group)std::erase(std::get<Group>(o.state).units,handle);units_.erase(handle);destroy(runtime_.handle("unit",handle),NativeKind::Unit);
 }

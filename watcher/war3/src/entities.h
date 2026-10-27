@@ -39,6 +39,8 @@ struct UnitState {
     std::vector<std::uint32_t> trainables;
     std::vector<std::uint32_t> researches,upgrades;
     TechnologyStats technology;
+    GatherOrder gather;
+    int carriedGold=0,carriedLumber=0;
     std::vector<StockEntry> stock;
     int unitStockSlots=-1,itemStockSlots=-1;
     std::deque<ProductionOrder> production;
