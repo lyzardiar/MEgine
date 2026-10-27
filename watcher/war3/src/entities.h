@@ -107,7 +107,7 @@ struct UnitState {
     std::uint64_t heroRevision=0;
     bool illusion=false;
     std::uint32_t summoner=0,summonAbility=0,illusionOriginal=0;
-    bool diesWithSummoner=false;
+    bool diesWithSummoner=false,swarmAgent=false;
     float damageDealt=1,damageTaken=1;
     std::optional<TimedLife> timedLife;
     std::optional<RebirthState> rebirth;
@@ -131,6 +131,8 @@ struct UnitState {
     const MorphAppearance* morphAppearance() const {const UnitBuff* newest=nullptr;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Morph && b.form && (!newest || b.applied>newest->applied))newest=&b;return newest?newest->form.get():nullptr;}
     bool morphed() const {return morphAppearance()!=nullptr;}
     bool cycloned() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Cyclone)return true;return false;}
+    bool impaledAir() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Impale && b.lockRemaining>0)return true;return false;}
+    const UnitBuff* impaleCarrier() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Impale && b.lockRemaining>0)return &b;return nullptr;}
     const UnitBuff* cyclone() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Cyclone)return &b;return nullptr;}
     const std::string& displayModel() const {auto form=morphAppearance();return form?form->model:model;}
     const std::string& displayIcon() const {auto form=morphAppearance();return form?form->icon:icon;}
@@ -148,7 +150,7 @@ struct UnitState {
     bool formLocked() const {return rootTransition || (formTransition && (formTransition->spell.formFlags&1));}
     bool spinning() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Bladestorm && b.remaining>0)return true;return false;}
     std::string sequenceName(const std::string& sequence) const {if(spinning() && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")))return "Attack Walk Stand Spin";if(morphed())return sequence;auto result=sequence;if(!animationProperties.empty() && !sequence.starts_with("Morph") && sequence.find("Alternate")==std::string::npos)result+=" "+animationProperties;for(auto& [id,b]:buffs){if(b.kind==BuffKind::Avatar && result.find("Alternate")==std::string::npos)result+=" Alternate";if(b.kind==BuffKind::Defend && result.find("Defend")==std::string::npos)result+=" Defend";}return result;}
-    bool stunned() const {if(formLocked() || (possessionClaim && possessionClaim->locked))return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
+    bool stunned() const {if(formLocked() || (possessionClaim && possessionClaim->locked))return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun || b.kind==BuffKind::Impale || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
     bool abilitiesDisabled() const {return stunned() || morphed() || spinning();}
     bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots || b.kind==BuffKind::Net || (b.kind==BuffKind::Purge && b.lockRemaining>0))return true;return false;}
     float spellBonus(float UnitBuff::* field) const {std::array<float,size_t(BuffKind::Count)> values{};for(auto& [id,b]:buffs)values[size_t(b.kind)]=std::max(values[size_t(b.kind)],b.*field);float value=0;for(auto part:values)value+=part;return value;}

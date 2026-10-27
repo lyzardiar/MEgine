@@ -17,6 +17,7 @@
 #include "ai.h"
 #include "consumables.h"
 #include "phoenix_fire.h"
+#include "swarm.h"
 #include <variant>
 
 namespace war3 {
@@ -317,6 +318,20 @@ class ScriptSession {
     std::map<std::pair<std::uint32_t,unsigned>,PassiveInfo> passiveInfo_;
     std::map<std::uint32_t,std::vector<std::uint32_t>> itemPassives_;
     std::map<std::pair<std::uint32_t,std::uint32_t>,AuraEmitterVisual> auraEmitters_;
+    std::map<std::pair<std::uint32_t,std::uint32_t>,std::shared_ptr<LocustSwarm>> locustSwarms_;
+    std::map<std::uint32_t,LocustAgent> locustAgents_;
+    std::uint64_t locustTicket_=0;
+    void startLocustSwarm(std::uint32_t caster,const SpellInfo& spell,unsigned owner);
+    void clearLocustSwarm(const std::shared_ptr<LocustSwarm>& swarm);
+    void removeLocust(std::uint32_t unit);
+    void locustsTick(double delta);
+    bool locustTarget(const LocustSwarm& swarm,const UnitState& target);
+    void locustDamage(std::uint32_t locust,float damage);
+    bool flyLocust(UnitState& locust,WorldPoint point,float height,float stop,double delta);
+    void startImpale(std::uint32_t caster,const CastOrder& cast,unsigned owner);
+    void impaleWaveArt(SpellWave& wave,float next);
+    void impaleHit(std::uint32_t caster,std::uint32_t target,const SpellInfo& spell,unsigned owner);
+    float impaleLanding(UnitBuff& buff,double elapsed);
     unsigned auraTicks_=0;
     std::vector<std::pair<std::uint32_t,unsigned>> passiveAbilities(const UnitState& unit);
     bool passiveTarget(const UnitState& source,const UnitState& target,const PassiveInfo& definition);
@@ -604,6 +619,7 @@ public:
     void attachWorld(std::unique_ptr<World> world);
     const World* world() const {return world_.get();}
     World* world() {return world_.get();}
+    bool unitSelectable(std::uint32_t handle);
     void selectUnit(std::uint32_t handle,bool selected);
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986);
     bool stopUnit(std::uint32_t handle,bool hold=false);
