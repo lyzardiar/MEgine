@@ -24,7 +24,7 @@ class GameView {
     std::uint64_t last_=0;
     D3DVIEWPORT9 viewport_{};
     D3DMATRIX view_{},projection_{};
-    enum class OrderMode {None,Move,Attack,Patrol,Harvest,Entangle};
+    enum class OrderMode {None,Move,Attack,Patrol,Harvest,Entangle,Repair};
     OrderMode orderMode_=OrderMode::None;
     std::uint32_t buildMenuUnit_=0;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> buildTarget_;

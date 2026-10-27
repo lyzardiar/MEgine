@@ -68,9 +68,11 @@ class ScriptSession {
     std::optional<PlacedDefinitions> destructableDefinitions_;
     std::optional<SourceSettings> destructableStrings_;
     std::map<std::string,Image> pathImages_;
+    std::map<std::pair<std::uint32_t,std::uint32_t>,ProductInfo> buildingUpgradeProducts_;
     std::unique_ptr<Images> pathDecoder_;
     std::vector<std::uint32_t> placedDestructables_;
     std::map<std::pair<int,int>,std::vector<std::uint32_t>> treeGrid_;
+    std::map<std::pair<std::uint32_t,std::uint32_t>,bool> techAliases_;
     size_t footprintCells_=0,pathImageBytes_=0;
     std::uint64_t destructableRevision_=1;
     std::optional<SourceTable> weather_;
@@ -137,6 +139,16 @@ class ScriptSession {
     void bindHarvestNatives();
     void bindDestructableNatives();
     void bindConstructionNatives();
+    void initializeUnitType(UnitState& unit,std::uint32_t type);
+    bool upgradeAllowed(const UnitState& unit,const ProductInfo& product,std::string& reason);
+    void buildingUpgrades(double delta);
+    void finishBuildingUpgrade(std::uint32_t unit);
+    void repairTick(double delta);
+    std::pair<std::uint32_t,unsigned> repairAbility(const UnitState& unit);
+    double humanConstruction(std::uint32_t building,double delta);
+    bool payWork(std::uint32_t worker,double gold,double lumber);
+    bool repairTarget(const UnitState& worker,const UnitState& target,std::uint32_t ability,unsigned level);
+    void blightGrowth(double delta);
     const Image* footprintImage(const std::string& path);
     std::vector<PathCell> pathFootprint(const std::string& path,WorldPoint point,float angle);
     void replaceFootprint(std::vector<PathCell>& current,std::vector<PathCell> next);
@@ -204,6 +216,7 @@ class ScriptSession {
     bool sells(const UnitState& unit,bool item) const;
     std::shared_ptr<UnitState> shopper(std::uint32_t shop,unsigned owner,std::uint32_t requested=0,bool inventory=false);
     bool productAllowed(unsigned owner,const ProductInfo& product,std::string& reason,bool food=true);
+    bool techEquivalent(std::uint32_t actual,std::uint32_t required);
     unsigned techCount(unsigned owner,std::uint32_t type,bool queued);
     void restock();
     void production(double delta);
@@ -274,6 +287,11 @@ public:
     float buildingAngle();
     std::array<float,2> buildingSize(std::uint32_t type);
     bool build(std::uint32_t worker,std::uint32_t type,WorldPoint point);
+    const ProductInfo& buildingUpgradeInfo(std::uint32_t from,std::uint32_t to);
+    bool upgradeBuilding(std::uint32_t unit,std::uint32_t type);
+    bool cancelBuildingUpgrade(std::uint32_t unit,bool refund=true);
+    bool repair(std::uint32_t worker,std::uint32_t target);
+    bool repairAutocast(std::uint32_t worker,bool enabled);
     bool cancelConstruction(std::uint32_t building,bool refund=true);
     bool entangleMine(std::uint32_t tree,std::uint32_t mine,bool instant=false);
     int remainingResources(std::uint32_t unit) const;

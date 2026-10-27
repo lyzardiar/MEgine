@@ -1,0 +1,23 @@
+# 基地升级、修理与荒芜能力
+
+2026-10-27。源建筑升级、付费修理、人族协作施工与荒芜扩张已连接同一个会话、命令区及地形状态。此为基础玩法实现，专项行为、GPU与原版精度尚待阶段验收。
+
+## 实际消费
+
+- Profile/Upgrade 提供主基地、箭塔与分支建筑的升级目标。价格由目标累计造价减当前造价得出，例如 Town Hall→Keep 为320金、210木；时长、图标、前置与热键取目标源数据。升级期间显示进度、限制训练/研究，可取消并按源UpgradeRefundRate退款，开始/取消/完成派发真实单位与玩家事件。
+- 完成升级保留单位句柄、脚本数据、选择、所有权、集结、矿井关联与永久/自定义能力，更新类型、模型、源属性、生产/科技清单、能力、人口和计数占地。科技查询消费显式DependencyOr及源Upgrade链，较高主基地可满足较低等级的前置。死亡、移除、所有权变化释放或转移升级人口预留。
+- UnitSetUpgradeProgress 修改真实进度并可完成升级。REA确认原入口0x6f1fb2d0使用无符号夹取100，再调用0x6f471b90；负整数位型进入100。本实现保留该入口行为。
+- Arep/Ahrp、Aren、Arst 的修理、更新、恢复接入友方建筑/机械单位的实际生命。使用源Rng、DataA修理费用系数、DataB时间系数，以及目标goldRep/lumberRep/reptm；按实际恢复生命付费，工人保留不足1资源的结算余数，换令不清空余额。暂停、满血、目标删除/死亡、敌对目标及资源不足参与调度。
+- 原修理图标/热键连接目标模式，右键按钮及源on/off订单更新自动施放；空闲工人按源索敌范围寻找可修理目标。右键HUD不再下发透过面板的地面命令。REA订单表确认repair=852024、renew=852161、restoration=852202，各自on/off为随后两个ID；命令事件使用实际能力对应的ID。
+- 人族工人可共同施工，源Ahrp的DataD=0.6提供额外建造速率，DataC=0.15提供额外费用系数；协作工人实际接近建筑、付费、改变进度并在停工/取消/完工时释放。其他种族沿用其施工方式。
+- Abli/Ablp能力的Area、Dur、DataA和DataB驱动荒芜范围逐步扩张或驱散，直接更新已有World路径位、查询和渲染脏区域。原Abgs/Abgl以及Abds/Abdl分别提供小/大范围生长和驱散，已抵达最大范围后不重复写入整片地形。建筑和矿井上的原能力可支持后续亡灵建造及荒芜恢复。
+
+## 来源、检查与待验收
+
+原MPQ字段与metadata记录在 `tmp/docs-artifacts/war3/construction/repair-upgrade-source.json`；REA订单及升级入口记录在同目录 `development_{orders,order_refs,order_ids,upgrade_progress}.json`。原件仍只读，运行不加载Game.dll，也不写解包目录。
+
+Win32 Release产品与扩展war3_construction_tests必要编译通过，无编译警告。Python生成器语法和原版UnitSetUpgradeProgress声明核对通过。因单位类型初始化与模拟消费改变，执行DotA原main/首250ms最小检查，退出0，123单位/3,871可破坏物、bj_gameStarted=true、无Game.dll。证据为同目录development-build.log、development-consumer-build.log、development-dota-250.log；不作为新增修理/升级操作或GPU通过证据。
+
+扩展消费者尚未运行，仍使用construction.md中的隔离夹具生成器与war3_construction_tests命令。阶段检查累计造价差、升级取消/事件/句柄/属性/人口、前置等价、修理消费/资源/自动施放、人族协作进度及源荒芜生长；合并受影响的训练、研究、采集和三图真实操作。
+
+以下仍待完成或精确对照：升级中间模型/动画与生命变化、完整升级相对造价特例、对象科技等价边界、修理/协作费用与速率的舍入和回调重入、naval及桥/可破坏物修复、完整目标分类、声音/光效、自动修理选择时序、荒芜覆盖/驱散交叠和建筑移动/能力增删的精确规则。当前升级采用完成时应用类型与生命上限差，修理以目标最大生命和源reptm计算速率；不能据此宣称与原版逐帧一致。

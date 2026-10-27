@@ -14,6 +14,10 @@ integer probe_started=0
 integer probe_cancelled=0
 integer probe_finished=0
 unit probe_structure=null
+unit probe_upgrade=null
+integer probe_upgrade_started=0
+integer probe_upgrade_cancelled=0
+integer probe_upgrade_finished=0
 endglobals
 function ProbeStart takes nothing returns nothing
     set probe_started=probe_started+1
@@ -31,6 +35,22 @@ function ProbeFinish takes nothing returns nothing
     endif
     set probe_finished=probe_finished+1
 endfunction
+function ProbeUpgradeStart takes nothing returns nothing
+    set probe_upgrade=GetTriggerUnit()
+    set probe_upgrade_started=probe_upgrade_started+1
+endfunction
+function ProbeUpgradeCancel takes nothing returns nothing
+    if GetTriggerUnit()!=probe_upgrade then
+        call ExecuteFunc("ConstructionFailure_upgrade_cancel_context")
+    endif
+    set probe_upgrade_cancelled=probe_upgrade_cancelled+1
+endfunction
+function ProbeUpgradeFinish takes nothing returns nothing
+    if GetTriggerUnit()!=probe_upgrade then
+        call ExecuteFunc("ConstructionFailure_upgrade_finish_context")
+    endif
+    set probe_upgrade_finished=probe_upgrade_finished+1
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing
@@ -43,6 +63,15 @@ function main takes nothing returns nothing
     set t=CreateTrigger()
     call TriggerRegisterPlayerUnitEvent(t,Player(0),EVENT_PLAYER_UNIT_CONSTRUCT_FINISH,null)
     call TriggerAddAction(t,function ProbeFinish)
+    set t=CreateTrigger()
+    call TriggerRegisterPlayerUnitEvent(t,Player(0),EVENT_PLAYER_UNIT_UPGRADE_START,null)
+    call TriggerAddAction(t,function ProbeUpgradeStart)
+    set t=CreateTrigger()
+    call TriggerRegisterPlayerUnitEvent(t,Player(0),EVENT_PLAYER_UNIT_UPGRADE_CANCEL,null)
+    call TriggerAddAction(t,function ProbeUpgradeCancel)
+    set t=CreateTrigger()
+    call TriggerRegisterPlayerUnitEvent(t,Player(0),EVENT_PLAYER_UNIT_UPGRADE_FINISH,null)
+    call TriggerAddAction(t,function ProbeUpgradeFinish)
 endfunction
 '''
 

@@ -38,10 +38,17 @@ struct UnitState {
     std::map<std::uint32_t,bool> permanentAbilities;
     bool foodCounted=false,useFood=true,removing=false;
     std::vector<std::uint32_t> trainables;
-    std::vector<std::uint32_t> researches,upgrades;
+    std::vector<std::uint32_t> researches,upgrades,upgradeables;
     std::vector<std::uint32_t> buildables;
     std::optional<BuildOrder> buildOrder;
     std::optional<Construction> construction;
+    std::optional<BuildingUpgrade> buildingUpgrade;
+    std::optional<RepairOrder> repair;
+    double repairGold=0,repairLumber=0;
+    std::uint32_t blightAbility=0;
+    unsigned blightLevel=0;
+    float blightRadius=0;
+    double blightDue=0;
     std::uint32_t workingOn=0,mineSource=0,mineCover=0;
     std::uint32_t mineParent=0,mineChild=0,entangleTarget=0,entangleType=0;
     double entangleDue=0;

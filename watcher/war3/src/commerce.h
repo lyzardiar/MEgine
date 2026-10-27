@@ -28,6 +28,8 @@ struct Construction {
     double elapsed=0,duration=0;
     bool consumeBuilder=false;
 };
+struct BuildingUpgrade {std::uint32_t type=0;int gold=0,lumber=0,food=0;double duration=0,elapsed=0;std::uint64_t ticket=0;};
+struct RepairOrder {std::uint32_t target=0;double repath=0;};
 struct GatherOrder {
     enum class Phase {None,Approach,Mine,Return,Chop};
     Phase phase=Phase::None;
@@ -42,6 +44,6 @@ struct TechnologyStats {
     unsigned weapons=0;
     std::map<std::uint32_t,int> abilityLevels;
 };
-enum class CommandAction {Train,BuyUnit,BuyItem,Research,Harvest,ReturnResources,Build,OpenBuild,CancelTarget,CancelBuild,Entangle};
+enum class CommandAction {Train,BuyUnit,BuyItem,Research,Harvest,ReturnResources,Build,OpenBuild,CancelTarget,CancelBuild,Entangle,Upgrade,CancelUpgrade,Repair};
 struct CommandButton {CommandAction action;std::uint32_t type=0;std::string icon,name,tip,hotkey,reason;int x=0,y=0,stock=-1,gold=0,lumber=0;bool enabled=false;};
 }
