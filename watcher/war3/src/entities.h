@@ -83,6 +83,9 @@ struct UnitState {
     std::uint64_t castRevision=0;
     std::map<std::uint32_t,double> spellCooldowns;
     std::map<std::uint32_t,UnitBuff> buffs;
+    std::map<std::uint32_t,UnitAura> auras;
+    std::map<std::pair<std::string,std::string>,std::uint32_t> auraVisuals;
+    AuraBonuses aura;
     bool stunned() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun)return true;return false;}
     bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots)return true;return false;}
     float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction);}

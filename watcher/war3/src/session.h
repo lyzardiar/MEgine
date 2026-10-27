@@ -119,6 +119,20 @@ class ScriptSession {
     std::map<std::uint64_t,CombatProjectile> projectiles_;
     std::uint64_t projectileId_=0,combatTicks_=0;
     std::map<std::pair<std::uint32_t,unsigned>,SpellInfo> spellInfo_;
+    std::map<std::pair<std::uint32_t,unsigned>,PassiveInfo> passiveInfo_;
+    std::map<std::uint32_t,std::vector<std::uint32_t>> itemPassives_;
+    std::map<std::pair<std::uint32_t,std::uint32_t>,AuraEmitterVisual> auraEmitters_;
+    unsigned auraTicks_=0;
+    std::vector<std::pair<std::uint32_t,unsigned>> passiveAbilities(const UnitState& unit);
+    bool passiveTarget(const UnitState& source,const UnitState& target,const PassiveInfo& definition);
+    void aurasTick(double delta);
+    void aggregateAuras(UnitState& unit,bool visuals=true);
+    void clearAuras(UnitState& unit);
+    void releaseAuraSource(std::uint32_t unit);
+    bool passiveChance(float chance);
+    void prepareAttack(const UnitState& source,const UnitState& target,CombatProjectile& projectile);
+    bool evadeAttack(const UnitState& target,const CombatProjectile& projectile);
+    void attackPassives(const CombatProjectile& projectile,float damage,const AuraBonuses& defense);
     std::map<std::pair<std::uint32_t,std::uint32_t>,std::uint32_t> abilityHandles_;
     std::map<std::uint64_t,SpellMissile> spellMissiles_;
     std::uint64_t spellTicket_=0;
@@ -165,7 +179,7 @@ class ScriptSession {
     void buffsTick(double delta);
     void spellImpact(SpellMissile missile);
     void launchSpellMissile(SpellMissile missile);
-    void applyBuff(std::uint32_t target,std::uint32_t source,const SpellInfo& spell,BuffKind kind);
+    void applyBuff(std::uint32_t target,std::uint32_t source,const SpellInfo& spell,BuffKind kind,bool physical=false);
     void releaseAbility(std::uint32_t unit,std::uint32_t ability);
     std::uint32_t abilityHandle(std::uint32_t unit,std::uint32_t ability);
     jass::Value create(NativeKind kind);
@@ -341,6 +355,7 @@ public:
     bool attackMove(std::uint32_t source,WorldPoint target,bool patrol=false);
     bool hasWeapon(std::uint32_t unit);
     const SpellInfo& spellInfo(std::uint32_t ability,unsigned level);
+    const PassiveInfo& passiveInfo(std::uint32_t ability,unsigned level);
     bool castSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target=0);
     bool castSpellAt(std::uint32_t unit,std::uint32_t ability,WorldPoint point);
     bool castPointOrder(std::uint32_t unit,std::uint32_t order,WorldPoint point);
@@ -365,7 +380,7 @@ public:
     bool itemNeedsTarget(std::uint32_t item);
     double itemCooldown(std::uint32_t unit,std::uint32_t item);
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
-    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false);
+    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);

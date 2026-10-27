@@ -1,0 +1,42 @@
+"""Author: MiYu. Isolated source map geometry with deterministic boundary inputs for stage passive checks."""
+import argparse
+import importlib.util
+import io
+import struct
+from pathlib import Path
+
+spec = importlib.util.spec_from_file_location('channel_fixture', Path(__file__).with_name('generate-channel-fixture.py'))
+fixture = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(fixture)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--data-root', type=Path, required=True)
+    parser.add_argument('--output', type=Path, default=fixture.fixture.ROOT/'tmp/docs-artifacts/war3/auras-passives/fixture.w3m')
+    args = parser.parse_args()
+    if args.output.resolve().is_relative_to(args.data_root.resolve()):
+        raise ValueError('Fixture output must stay outside the read-only installation')
+    original = (args.data_root/'Maps/(2)BootyBay.w3m').read_bytes()
+    offset = original.index(b'MPQ\x1a')
+    helper = fixture.fixture.fixture
+    archive = helper.mpyq.MPQArchive(io.BytesIO(original[offset:]), listfile=False)
+    names = helper.read_archive(archive, '(listfile)').decode('ascii').splitlines()
+    files = {name: helper.read_archive(archive, name) for name in names if name and name != '(listfile)'}
+    files['war3map.j'] = b'function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n'
+    records = []
+    for base, marker, changes in [
+        (b'AOcr', b'A0CR', [('Ocr1', 2, 100., 1), ('Ocr2', 2, 2., 2)]),
+        (b'AOcr', b'A0NM', [('Ocr1', 2, 100., 1), ('Ocr2', 2, 2., 2), ('Ocr5', 0, 1, 5)]),
+        (b'AEev', b'A0EV', [('Eev1', 2, 1., 1)]),
+        (b'AHbh', b'A0BH', [('Hbh1', 2, 100., 1)])
+    ]:
+        records.append(base+marker+struct.pack('<I', len(changes))+b''.join(fixture.modification(field, kind, value, slot, marker) for field, kind, value, slot in changes))
+    files['war3map.w3a'] = struct.pack('<III', 2, 0, len(records))+b''.join(records)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_bytes(original[:offset]+helper.build_archive(files))
+    print('fixture='+str(args.output.resolve()))
+
+
+if __name__ == '__main__':
+    main()

@@ -1,6 +1,7 @@
 // Author: MiYu. Source weapon definitions, cancellable orders and live projectile state for native combat.
 #pragma once
 #include "world.h"
+#include "passives.h"
 #include <set>
 
 namespace war3 {
@@ -33,5 +34,7 @@ struct CombatProjectile {
     WorldPoint start,position,endpoint;
     double born=0;
     std::vector<std::uint32_t> visited;
+    bool neverMiss=false,forcedMiss=false;
+    std::vector<PassiveInfo> procs;
 };
 }

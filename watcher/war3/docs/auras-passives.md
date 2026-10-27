@@ -1,0 +1,50 @@
+# 光环与攻击被动
+
+十种光环和四种攻击被动已接入源定义、真实单位/库存状态、数值计算和原版按钮。已有二十三种主动/持续施法原型保持独立；此增量不代表全部技能、完整对战规则或原版一致性完成。产品、原spell/channel消费者和新passive专项已编译，专项行为与GPU保持待阶段验证。
+
+## 实际消费
+
+| 原型 | 源等级1 | 实际消费者 |
+| --- | --- | --- |
+| AHab 辉煌光环 | 区域900，魔法恢复0.75/秒，非百分比 | 单位魔法恢复；百分比模式按最大魔法参与计算 |
+| AHad 专注光环 | 区域900，护甲1.5，非百分比 | 真实护甲减伤计算；百分比模式参与基础护甲倍率 |
+| AOae 耐久光环 | 区域900，移速10%、攻速5% | 移动距离、攻击前摇/间隔/动画速度 |
+| AUau 邪恶光环 | 区域900，移速10%、生命恢复0.5/秒 | 移动与独立于自然恢复条件的光环治疗 |
+| AUav 吸血光环 | 区域900，15%，organic | 近战有效命中的实际生命损失转为攻击者治疗 |
+| AEar 强击光环 | 区域900，10%，近战关闭/远程开启 | 武器伤害百分比；消费近战/远程及固定奖励选项 |
+| AOac 命令光环，源能力ACac | 区域900，10%，近战/远程开启 | 同一武器伤害消费者 |
+| Aakb 战鼓 | 区域900，10%，近战/远程开启 | 同一武器伤害消费者，独立源buff |
+| AEah 荆棘光环 | 区域900，10%，百分比 | 敌方近战有效命中后反伤，使用Defensive分类；派生伤害不递归触发攻击被动 |
+| Aoar 治疗守卫光环 | 区域500，最大生命2%/秒 | 范围内符合organic/关系条件的实际生命恢复 |
+| AHbh 重击 | 20%概率，奖励25，普通2秒/英雄1秒 | 命中时的奖励伤害和实际眩晕/打断；近战按physical状态处理 |
+| AOcr 致命一击 | 15%概率，2倍伤害 | 发射前生成伤害与命中快照，暴击伤害进入实际武器/护甲路径 |
+| AEev 闪避 | 10% | 普通主目标攻击落地时取消被闪避的命中 |
+| ANca 分裂攻击 | 区域200，30% | 近战主目标周围符合源目标条件的次级伤害及源SpecialArt |
+
+能力按AbilityData/code分类，w3a自定义克隆与逐等级覆盖沿用同一消费者。概率、倍率、奖励、Never Miss、Critical附带闪避、Bash失误字段进入攻击快照/命中流程；0和100%边界不消耗随机抽样，其余使用现有会话随机数。多份Critical/Bash各按当前最大效果选择，Cleave独立消费。伪随机分布、完整叠加与原版随机调用顺序尚未实现或验证。
+
+英雄可学习上述被动/光环，使用源ResearchArt、坐标、等级说明和学习条件；已学技能使用PassiveButtons图标及原说明展示，不进入目标施法。运行中按持有者读取物品abilList中的已支持被动/光环，拾取/转移/丢弃/移除影响后续范围刷新。完整物品属性和全部物品技能仍待实现。
+
+## 范围与生命周期
+
+每八个1/32秒步进刷新一次范围，使用512世界单位的空间格。超大范围在格数超过单位规模时直接筛选单位。目标参与地面/空中/结构、ward、organic、英雄、敌我、自身、neutral及无敌分类；光环本身不排除魔免。IllusionsBestowAuras和FlyingHeroesBestowAuras消费源MiscGame设置。
+
+同一buff在当前范围来源中按效果强度、等级和稳定句柄顺序选取一份，失去较强来源后可切换到剩余来源。不同buff的修正相加；离开全部来源后保留原状态，普通/英雄持续时间大于0时消费相应源覆盖，否则当前保留2秒。单位暂停冻结残留时间，死亡/隐藏/移除清理受益状态，死亡/移除立即退役施放者光环模型。刷新周期、默认残留、来源切换/所有权/暂停、结构目标规则和跨原型叠加仍待原版运行对照。
+
+UnitAura只引用会话内稳定的逐等级定义，避免为每个受益者复制目标集合和模型路径。能力TargetArt保留施放者光圈，buff TargetArt挂接受益者；同一单位的相同模型/挂点共享一个实际特效实例，最后一份效果退出后退休。GeneralAuraTarget不随光环数量重复创建。吸血/荆棘和分裂使用源SpecialArt，模型和纹理由归档直接读入内存。
+
+GetUnitAbilityLevel查询实际光环buff。UnitRemoveAbility可移除目标上的光环状态，UnitRemoveBuffsEx/HasBuffsEx/CountBuffsEx消费aura分类；仍存在的来源会在范围刷新后重新应用。常规buff、定时生命及光环分别保留实际生命状态；完整魔法/物理/autoDispel类别语义继续排队。
+
+## 尚未完成及阶段入口
+
+当前数值/叠加规则是实际实现，尚未证明与原版逐项一致。重点对照百分比恢复的基数、护甲/伤害奖励顺序、近战/远程重击分类、魔免/虚无/无敌、暴击与闪避发生时机、吸血/反伤的过量伤害及死亡回调、分裂几何/护甲/次级伤害、幻象/建筑/目标丢失、来源移除/升级/转让、视觉退休和长时间性能。暴击/闪避浮字、状态栏完整布局、音效、技能AI、其他光环/被动/自动施放及完整战斗规则仍需实现。
+
+war3_passive_tests与隔离生成器已加入，尚未执行；覆盖被动学习/展示、源等级与最强来源/回退/范围残留、武器掩码/恢复、通用视觉共享、实际buff查询/移除/重应用、物品光环生命周期、100% Critical/Bash/Evasion与Never Miss、分裂敌我、吸血/反伤及死亡清理。它不覆盖全部上述原版边界。按功能阶段合并原spell/channel、三图/实际键鼠/GPU、冷首次效果、切图/CPU/GPU/内存验证。
+
+```powershell
+cmake --build --preset release --target war3 war3_spell_tests war3_channel_tests war3_passive_tests --parallel 8
+python tests/generate-passive-fixture.py --data-root 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne'
+build/windows-x86/bin/Release/war3_passive_tests.exe 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne' '../../tmp/docs-artifacts/war3/auras-passives/fixture.w3m'
+```
+
+源数据来自固定1.27.0.52240公共MPQ中的AbilityData/AbilityMetaData、能力/效果Profile、WorldEditStrings、MiscGame及地图覆盖。原始字段/标签、buff资料及编译/静态记录在根目录tmp/docs-artifacts/war3/auras-passives/，不提交原资源或诊断产物。运行不读取或加载Game.dll；本次只执行必要编译、生成器AST和差异检查。
