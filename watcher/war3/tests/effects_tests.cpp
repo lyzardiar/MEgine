@@ -10,9 +10,10 @@
 using namespace war3;
 int wmain(int argc,wchar_t** argv) {
     try {
-        if(argc!=3 && argc!=4)throw std::runtime_error("Usage: war3_effects_tests <data-root> <log> [--ribbons]");Archives archives(argv[1]);SceneAssets assets(archives);Log log(argv[2]);unsigned count=0;
+        if(argc!=3 && argc!=4)throw std::runtime_error("Usage: war3_effects_tests <data-root> <log> [--ribbons|--autocast]");Archives archives(argv[1]);SceneAssets assets(archives);Log log(argv[2]);unsigned count=0;
 
         if(argc==4){
+            if(!wcscmp(argv[3],L"--autocast")){auto& model=assets.model("UI\\Feedback\\Autocast\\UI-ModalButtonOn.mdl",log);if(model.particleEmitters()!=4 || model.particleLifetime()<=0)throw std::runtime_error("Original autocast PRE2 model was not consumed");if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll loaded");std::cout<<"PASS original autocast model: PRE2=4 GPU=pending\n";return 0;}
             if(wcscmp(argv[3],L"--ribbons"))throw std::runtime_error("Unknown effect import mode");
             for(auto path:{"Abilities\\Spells\\Undead\\DeathCoil\\DeathCoilMissile.mdl","Abilities\\Spells\\NightElf\\FanOfKnives\\FanOfKnivesCaster.mdl","Abilities\\Spells\\Undead\\FrostNova\\FrostNovaTarget.mdl"}){auto& model=assets.model(path,log);if(!model.ribbonEmitters() || model.particleLifetime()<=0 || model.radius()<=0)throw std::runtime_error("Source ribbon definition was not consumed");std::cout<<path<<" ribbons="<<model.ribbonEmitters()<<" life="<<model.particleLifetime()<<'\n';++count;}
             auto table=SourceTable::read(archives,"Splats\\LightningData.slk");for(auto type:{"CLPB","CLSB","HWPB","HWSB"}){bool found=false;for(auto& row:table.rows())if(row.at("Name")==type){auto& image=assets.image(row.at("Dir")+"\\"+row.at("file"));if(!image.width || !image.height || std::stof(row.at("AvgSegLen"))<=0 || std::stof(row.at("Width"))<=0)throw std::runtime_error("Invalid source lightning dimensions");found=true;}if(!found)throw std::runtime_error("Missing source lightning type");}

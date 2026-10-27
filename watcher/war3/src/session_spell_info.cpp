@@ -22,7 +22,12 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"AEfn",SpellKind::Treants,SpellTargeting::Point},
         {"AHbz",SpellKind::Blizzard,SpellTargeting::Point},{"AHfs",SpellKind::FlameStrike,SpellTargeting::Point},
         {"AEtq",SpellKind::Tranquility,SpellTargeting::None},{"AEsf",SpellKind::Starfall,SpellTargeting::None},
-        {"AUdd",SpellKind::DeathDecay,SpellTargeting::Point},{"ANcl",SpellKind::Channel,SpellTargeting::None}
+        {"AUdd",SpellKind::DeathDecay,SpellTargeting::Point},{"ANcl",SpellKind::Channel,SpellTargeting::None},
+        {"Ahea",SpellKind::Heal,SpellTargeting::Unit},{"Aslo",SpellKind::Slow,SpellTargeting::Unit},
+        {"Ainf",SpellKind::InnerFire,SpellTargeting::Unit},{"Ablo",SpellKind::Bloodlust,SpellTargeting::Unit},
+        {"Arej",SpellKind::Rejuvenation,SpellTargeting::Unit},{"Auhf",SpellKind::Frenzy,SpellTargeting::Unit},
+        {"Acrs",SpellKind::Curse,SpellTargeting::Unit},{"Adis",SpellKind::Dispel,SpellTargeting::Point},
+        {"Aadm",SpellKind::Abolish,SpellTargeting::Unit},{"Aams",SpellKind::AntiMagicShell,SpellTargeting::Unit}
     };
     auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& p:prototypes)if(code==p.code){s.kind=p.kind;s.targeting=p.targeting;break;}if(s.kind==SpellKind::Unsupported)return spellInfo_.emplace(key,std::move(s)).first->second;
     auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};
@@ -32,6 +37,15 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     for(auto artField:{"CasterArt","TargetArt","EffectArt","MissileArt"}){std::stringstream paths(data.field(ability,"Profile",artField));std::string path;while(std::getline(paths,path,',')){auto first=path.find_first_not_of(" \t\"");if(first!=std::string::npos)s.visualModels.push_back(path.substr(first,path.find_last_not_of(" \t\"")-first+1));}}
     auto buff=data.field(ability,"AbilityData","BuffID"+std::to_string(level));if(buff.size()>=4 && buff!="-" && buff!="_")s.buff=ObjectData::code(buff.substr(0,4));std::stringstream targets(data.field(ability,"AbilityData","targs"+std::to_string(level)));std::string part;while(std::getline(targets,part,',')){auto first=part.find_first_not_of(" \t");if(first!=std::string::npos)s.allowed.insert(part.substr(first,part.find_last_not_of(" \t")-first+1));}
     if(s.buff){std::stringstream paths(data.field(s.buff,"Profile","Targetart"));std::string path;while(std::getline(paths,path,',')){auto first=path.find_first_not_of(" \t\"");if(first!=std::string::npos && path!="_")s.visualModels.push_back(path.substr(first,path.find_last_not_of(" \t\"")-first+1));}}
+    {std::stringstream required(data.field(ability,"Profile","Requires")),counts(data.field(ability,"Profile","Requiresamount"));std::string requirement,amount;while(std::getline(required,requirement,',')){auto first=requirement.find_first_not_of(" \t");if(first==std::string::npos)continue;requirement=requirement.substr(first,requirement.find_last_not_of(" \t")-first+1);if(requirement=="_" || requirement=="-")continue;if(requirement.size()!=4 || s.prerequisites.size()>=64)throw std::runtime_error("Invalid source spell prerequisite");amount.clear();std::getline(counts,amount,',');s.prerequisites.emplace_back(ObjectData::code(requirement),amount.empty()?1:count(std::stof(amount),65536));}}
+    s.orderOn=orderId(data.field(ability,"Profile","Orderon"));s.orderOff=orderId(data.field(ability,"Profile","Orderoff"));s.onArt=data.field(ability,"Profile","Art");if(auto comma=s.onArt.find(',');comma!=std::string::npos)s.onArt.resize(comma);s.offArt=data.field(ability,"Profile","Unart");if(auto comma=s.offArt.find(',');comma!=std::string::npos)s.offArt.resize(comma);
+    if(s.kind==SpellKind::Slow){s.moveReduction=s.amount;s.attackReduction=s.secondary;s.alwaysAuto=field("DataC")!=0;}
+    if(s.kind==SpellKind::InnerFire){s.damageBonus=s.amount;s.armor=s.secondary;s.autoRange=field("DataC");s.healthRegen=field("DataD");}
+    if(s.kind==SpellKind::Bloodlust){s.attackBonus=s.amount;s.moveBonus=s.secondary;s.scaleBonus=field("DataC");}
+    if(s.kind==SpellKind::Frenzy)s.attackBonus=s.amount;
+    if(s.kind==SpellKind::Rejuvenation){s.allowFull=count(field("DataC"),3);if(field("DataD")!=0)s.targeting=SpellTargeting::None;if(s.duration<=0 || s.heroDuration<=0)throw std::runtime_error("Rejuvenation requires positive source duration");}
+    if(s.kind==SpellKind::Curse && s.amount>1)throw std::runtime_error("Curse miss probability outside supported range");
+    if(s.kind==SpellKind::AntiMagicShell){s.shield=field("DataC");s.spellReduction=s.secondary;s.manaLoss=field("DataD");if(s.shield>0){auto comma=buff.find(',');if(comma!=std::string::npos && buff.size()>=comma+5)s.buff=ObjectData::code(buff.substr(comma+1,4));}if(s.spellReduction>1 || s.shield<0 || s.manaLoss<0)throw std::runtime_error("Anti-magic shell parameters outside supported range");}
     if(s.kind==SpellKind::ChainLightning || s.kind==SpellKind::HealingWave){s.targets=count(s.secondary,1024);if(!s.targets || s.loss<0 || s.loss>1)throw std::runtime_error("Source spell chain outside supported range");}
     if(s.kind==SpellKind::ThunderClap){s.moveReduction=field("DataC");s.attackReduction=field("DataD");}
     if(s.kind==SpellKind::Shockwave || s.kind==SpellKind::CarrionSwarm){s.maxDamage=field("DataB");s.distance=field("DataC");s.endRadius=field("DataD");if(s.distance<=0 || s.distance>100000 || s.speed<=0 || s.endRadius<0 || s.endRadius>100000)throw std::runtime_error("Source wave geometry outside supported range");}
@@ -48,6 +62,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(s.effectAlias){for(auto artField:{"CasterArt","TargetArt","EffectArt"}){std::stringstream paths(data.field(s.effectAlias,"Profile",artField));std::string path;while(std::getline(paths,path,','))if(!path.empty() && path!="_")s.visualModels.push_back(path);}}
     if(s.kind==SpellKind::FlameStrike){std::stringstream paths(data.field(ability,"Profile","Specialart"));std::string path;while(std::getline(paths,path,','))if(!path.empty() && path!="_")s.visualModels.push_back(path);}
     if((s.period>0 && s.channelTime/s.period>262144) || (s.artPeriod>0 && s.channelTime/s.artPeriod>262144) || (s.fullPeriod>0 && s.fullTime/s.fullPeriod>262144) || (s.burnPeriod>0 && s.duration/s.burnPeriod>262144))throw std::runtime_error("Persistent spell tick budget exceeded");
+    if(s.damageBonus<0 || s.armor<0 || s.attackBonus<0 || s.moveBonus<0 || s.scaleBonus<0 || s.healthRegen<0 || s.autoRange<0 || s.autoRange>100000)throw std::runtime_error("Caster modifier outside supported range");
     if(s.channelTime<0 || s.channelTime>86400 || s.artPeriod<0 || s.artPeriod>86400 || s.buildingFactor<0 || s.extraDamage<0 || (s.channelled && s.kind!=SpellKind::Channel && s.period<=0))throw std::runtime_error("Channel duration or period exceeds supported range");
     if(s.mana<0 || s.cooldown<0 || s.range<0 || s.range>100000 || s.area<0 || s.area>100000 || s.amount<0 || s.secondary<0 || s.duration<0 || s.heroDuration<0 || s.speed<0 || s.maxDamage<0 || s.moveReduction<0 || s.moveReduction>1 || s.attackReduction<0)throw std::runtime_error("Source spell parameters outside supported range");return spellInfo_.emplace(key,std::move(s)).first->second;
 }

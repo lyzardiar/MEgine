@@ -88,7 +88,9 @@ struct UnitState {
     AuraBonuses aura;
     bool stunned() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun)return true;return false;}
     bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots)return true;return false;}
-    float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction);}
+    float spellBonus(float UnitBuff::* field) const {std::array<float,size_t(BuffKind::Count)> values{};for(auto& [id,b]:buffs)values[size_t(b.kind)]=std::max(values[size_t(b.kind)],b.*field);float value=0;for(auto part:values)value+=part;return value;}
+    float displayScale() const {return scale*(1+spellBonus(&UnitBuff::scaleBonus));}
+    float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
     bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0;}
 };

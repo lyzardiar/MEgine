@@ -14,7 +14,8 @@ std::string levelArt(const std::string& source,unsigned level){std::stringstream
 void ScriptSession::releaseCastVisuals(CastOrder& cast){for(auto id:cast.visuals)destroyEffect(id);cast.visuals.clear();}
 void ScriptSession::finishCast(std::uint32_t id,std::uint64_t ticket) {
     if(!alive(id,NativeKind::Unit))return;auto u=units_.at(id);if(!u->cast || u->cast->ticket!=ticket)return;auto cast=*u->cast;spellEvent(id,cast,3);
-    if(!alive(id,NativeKind::Unit) || !u->cast || u->cast->ticket!=ticket)return;u->cast.reset();++u->castRevision;u->currentOrder=0;u->animation.clear();u->animationTime=0;releaseCastVisuals(cast);spellEvent(id,cast,4);
+    if(!alive(id,NativeKind::Unit) || !u->cast || u->cast->ticket!=ticket)return;u->cast.reset();++u->castRevision;u->currentOrder=0;u->animation.clear();u->animationTime=0;releaseCastVisuals(cast);auto revision=u->castRevision,combatRevision=u->combat.revision;spellEvent(id,cast,4);
+    if(cast.resume && alive(id,NativeKind::Unit) && !u->cast && u->castRevision==revision && u->combat.revision==combatRevision && !u->currentOrder && !u->paused && !u->stunned() && !u->hidden() && !u->removing && number(u->life)>0 && u->owner==cast.owner){auto resume=*cast.resume;resume.windup.reset();resume.revision=u->combat.revision+1;resume.nextAttack=std::max(resume.nextAttack,u->combat.nextAttack);resume.repath=0;u->combat=std::move(resume);u->currentOrder=cast.resumeOrder;u->holding=cast.resumeHolding;}
 }
 void ScriptSession::startChannel(std::uint32_t id) {
     auto u=units_.at(id);if(!u->cast)return;auto& cast=*u->cast;auto& s=cast.spell;cast.phase=CastOrder::Phase::Channel;cast.channelElapsed=0;cast.nextPulse=s.period;cast.nextArt=s.artPeriod;cast.pulses=0;

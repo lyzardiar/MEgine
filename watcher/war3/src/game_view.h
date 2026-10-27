@@ -46,6 +46,8 @@ class GameView {
     void input(const GameInput& input);
     void hud(const GameInput& input);
     void commandPanel(const GameInput& input,std::uint32_t unit);
+    void drawAutocast(float x,float y,std::uint32_t unit,std::uint32_t ability);
+    std::map<std::pair<std::uint32_t,std::uint32_t>,ModelInstance> autocastInstances_;
     void selection();
     bool castSelection(std::uint32_t caster,std::uint32_t ability,std::uint32_t target=0,std::optional<WorldPoint> point={});
     void spellPreview(const GameInput& input);

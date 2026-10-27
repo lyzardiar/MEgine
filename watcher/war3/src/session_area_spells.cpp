@@ -14,6 +14,7 @@ std::vector<std::uint32_t> ScriptSession::spellTargets(std::uint32_t source,cons
 }
 void ScriptSession::releaseSpell(std::uint32_t source,const CastOrder& cast,unsigned owner) {
     if(!alive(source,NativeKind::Unit))return;auto u=units_.at(source);auto& s=cast.spell;if(s.channelled){startChannel(source);return;}if(s.kind==SpellKind::FlameStrike){if(groundSpells_.size()>=4096)throw std::runtime_error("Active ground spell budget exceeded");GroundSpell ground;ground.spell=s;ground.source=source;ground.owner=owner;ground.point=cast.point;ground.nextPulse=s.castDelay+(s.fullPeriod<=s.fullTime?s.fullPeriod:s.fullTime+s.burnPeriod);ground.visuals=spellVisual(s,"EffectArt",0,cast.point,false);groundSpells_.emplace(++spellTicket_,std::move(ground));spellVisual(s,"CasterArt",source,{u->x,u->y});return;}spellVisual(s,"CasterArt",source,{u->x,u->y});
+    if(s.kind==SpellKind::Rejuvenation && s.targeting==SpellTargeting::None){SpellMissile missile;missile.spell=s;missile.source=source;missile.target=source;missile.owner=owner;missile.position={u->x,u->y};spellImpact(std::move(missile));return;}
     if(s.targeting==SpellTargeting::Unit){SpellMissile missile;missile.spell=s;missile.source=source;missile.target=cast.target;missile.owner=owner;missile.position={u->x,u->y};missile.amount=s.amount;missile.born=simulationTime_;launchSpellMissile(std::move(missile));return;}
     WorldPoint point=s.targeting==SpellTargeting::None?WorldPoint{u->x,u->y}:cast.point;
     if(s.kind==SpellKind::Shockwave || s.kind==SpellKind::CarrionSwarm){if(spellWaves_.size()>=4096)throw std::runtime_error("Active spell wave budget exceeded");SpellWave wave;wave.spell=s;wave.born=simulationTime_;wave.source=source;wave.owner=owner;wave.origin={u->x,u->y};float dx=number(point.x)-number(u->x),dy=number(point.y)-number(u->y),length=std::hypot(dx,dy);if(length>.001f){wave.directionX=dx/length;wave.directionY=dy/length;}else{float angle=number(u->facing)*3.14159265359f/180;wave.directionX=std::cos(angle);wave.directionY=std::sin(angle);}spellWaves_.emplace(++spellTicket_,std::move(wave));return;}
@@ -21,6 +22,7 @@ void ScriptSession::releaseSpell(std::uint32_t source,const CastOrder& cast,unsi
 }
 void ScriptSession::areaSpell(std::uint32_t source,const SpellInfo& s,WorldPoint point,unsigned owner) {
     if(!alive(source,NativeKind::Unit))return;
+    if(s.kind==SpellKind::Dispel){auto targets=spellTargets(source,s,point,owner);for(auto target:targets){if(!alive(source,NativeKind::Unit))break;if(alive(target,NativeKind::Unit))dispelSpell(source,target,s);}spellVisual(s,"EffectArt",0,point);return;}
     if(s.kind==SpellKind::WaterElemental || s.kind==SpellKind::SpiritWolf || s.kind==SpellKind::SerpentWard || s.kind==SpellKind::Treants){summonSpell(source,s,point,owner);return;}
     auto victims=spellTargets(source,s,point,owner);float allocated=0;unsigned count=0;
     for(auto id:victims){

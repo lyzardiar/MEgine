@@ -22,7 +22,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
     if(p.kind==PassiveKind::Bash || p.kind==PassiveKind::Critical){p.amount/=100;p.evasion=field("DataD");p.neverMiss=field("DataE")!=0;if(p.amount<0 || p.amount>1 || p.evasion<0 || p.evasion>1 || p.secondary<0 || p.bonus<0)throw std::runtime_error("Attack passive probability or multiplier outside supported range");}
     if(p.kind==PassiveKind::Evasion && (p.amount<0 || p.amount>1))throw std::runtime_error("Evasion probability outside supported range");
     if(p.area<0 || p.area>100000 || std::abs(p.amount)>1000000 || std::abs(p.secondary)>1000000 || p.duration<0 || p.duration>86400 || p.heroDuration<0 || p.heroDuration>86400)throw std::runtime_error("Passive source field outside supported range");
-    for(auto id:{ability,p.buff})if(id)for(auto field:{"CasterArt","TargetArt","SpecialArt"})for(auto& path:split(data.field(id,"Profile",field)))p.visualModels.push_back(path);
+    for(auto id:{ability,p.buff})if(id)for(auto artField:{"CasterArt","TargetArt","SpecialArt"})for(auto& path:split(data.field(id,"Profile",artField)))p.visualModels.push_back(path);
     if(p.buff)for(auto& path:split(data.field(p.buff,"Profile","TargetArt")))p.targetModels.emplace_back(path,data.field(p.buff,"Profile","Targetattach","origin"));
     return passiveInfo_.emplace(key,std::move(p)).first->second;
 }

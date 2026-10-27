@@ -146,7 +146,13 @@ class ScriptSession {
     void releaseCastVisuals(CastOrder& cast);
     void groundSpellsTick(double delta);
     void persistentSpellPulse(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner,float amount,bool percent,std::optional<std::uint64_t> cast={});
-    bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting);
+    bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting,bool automatic=false);
+    void casterEffect(const SpellMissile& missile);
+    bool usefulDispel(const UnitState& caster,const UnitState& target,const SpellInfo& spell);
+    void dispelSpell(std::uint32_t source,std::uint32_t target,const SpellInfo& spell);
+    void autocastTick();
+    bool spellRequirements(unsigned owner,const SpellInfo& spell);
+    unsigned autocastTicks_=0;
     bool spellPoint(const UnitState& unit,const SpellInfo& spell,WorldPoint point);
     void releaseSpell(std::uint32_t unit,const CastOrder& cast,unsigned owner);
     void areaSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner);
@@ -360,6 +366,7 @@ public:
     bool castSpellAt(std::uint32_t unit,std::uint32_t ability,WorldPoint point);
     bool castPointOrder(std::uint32_t unit,std::uint32_t order,WorldPoint point);
     bool castImmediateOrder(std::uint32_t unit,std::uint32_t order);
+    bool abilityAutocast(std::uint32_t unit,std::uint32_t ability,bool active);
     bool castOrder(std::uint32_t unit,std::uint32_t order,std::uint32_t target);
     bool learnHeroSkill(std::uint32_t unit,std::uint32_t ability) {return learnSkill(unit,ability);}
     bool canLearnSkill(std::uint32_t unit,std::uint32_t ability);
