@@ -196,6 +196,18 @@ class ScriptSession {
     void startCannibalize(std::uint32_t caster,const CastOrder& cast);
     void cannibalizeTick(std::uint32_t caster,double delta);
     void bindCorpseNatives();
+    void bindControlNatives();
+    bool controlTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility,unsigned owner);
+    std::optional<WorldPoint> spellWidgetPoint(std::uint32_t target);
+    bool spellWidgetTarget(const UnitState& caster,std::uint32_t target,const SpellInfo& spell,bool visibility=true);
+    float spellTargetCollision(std::uint32_t target) const;
+    void controlEffect(const SpellMissile& missile);
+    void purgeSpell(std::uint32_t source,std::uint32_t target,const SpellInfo& spell);
+    void controlBuff(UnitState& unit,UnitBuff& buff,const SpellInfo& spell);
+    void controlBuffTick(UnitBuff& buff,double elapsed);
+    void updateGrounding(UnitState& unit,double delta);
+    void wakeUnit(std::uint32_t unit);
+    float spellHealAmount(const UnitState& unit,float amount);
     jass::Value createCorpse(unsigned owner,std::uint32_t type,WorldPoint point,jass::Real facing);
     void exhumeCorpses(std::uint32_t transport,double delta);
     std::map<std::uint32_t,bool> corpseHoldAbilities_;
@@ -375,7 +387,7 @@ class ScriptSession {
     const std::array<WeaponDefinition,2>& weapons(std::uint32_t type);
     bool capability(const UnitState& unit,const char* code);
     bool enemy(unsigned owner,unsigned other) const;
-    bool weaponTarget(const UnitState& source,const UnitState& target,const WeaponDefinition& weapon,bool automatic=false,bool splash=false);
+    bool weaponTarget(const UnitState& source,const UnitState& target,const WeaponDefinition& weapon,bool automatic=false,bool splash=false,bool committed=false);
     std::optional<unsigned> weaponFor(const UnitState& source,const UnitState& target,bool automatic=false);
     bool cancelCombat(UnitState& unit);
     bool chase(UnitState& unit,WorldPoint target,float standoff);

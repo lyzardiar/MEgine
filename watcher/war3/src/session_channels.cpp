@@ -28,7 +28,7 @@ void ScriptSession::persistentSpellPulse(std::uint32_t source,const SpellInfo& s
     if(!active())return;auto caster=units_.at(source);auto victims=spellTargets(source,s,point,owner);float allocated=0;
     for(auto id:victims){
         if(!active())return;if(!alive(id,NativeKind::Unit))continue;auto u=units_.at(id);if(!spellTarget(*caster,*u,s,false,owner))continue;float value=percent?number(u->maxLife)*amount:amount;if(s.maxDamage>0)value=std::min(value,std::max(0.f,s.maxDamage-allocated));if(value<=0)continue;allocated+=value;if(u->building)value*=s.buildingFactor;
-        if(s.kind==SpellKind::Tranquility)unitLife(runtime_.handle("unit",id),real(number(u->life)+value));else damageUnit(source,id,value,0,percent?26:14);
+        if(s.kind==SpellKind::Tranquility)unitLife(runtime_.handle("unit",id),real(number(u->life)+spellHealAmount(*u,value)));else damageUnit(source,id,value,0,percent?26:14);
         if(!active())return;if(alive(id,NativeKind::Unit)){auto mark=s;mark.duration=mark.heroDuration=std::max(.0625f,s.period>0?s.period+.03125f:s.burnPeriod+.03125f);applyBuff(id,source,mark,BuffKind::Mark);}
     }
     if(!active() || (!s.allowed.contains("tree") && !s.allowed.contains("debris")))return;std::vector<std::pair<float,std::uint32_t>> props;
