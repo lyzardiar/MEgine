@@ -261,6 +261,14 @@ class ScriptSession {
     bool absorbTarget(const UnitState& unit,const UnitState& target,const SpellInfo& spell);
     const SpellInfo* attackOrb(const UnitState& unit,const UnitState& target,std::uint32_t forced=0);
     void orbWeapon(WeaponDefinition& weapon,const SpellInfo& spell);
+    void arrowStatusInfo(SpellInfo& spell);
+    bool arrowTarget(unsigned owner,const UnitState& target,const SpellInfo& spell);
+    void prepareArrowHit(const CombatProjectile& projectile,std::uint32_t target);
+    void finishArrowHit(const CombatProjectile& projectile,std::uint32_t target,std::uint64_t revision);
+    void blackArrowDeath(const UnitState& victim);
+    void summonedEvent(std::uint32_t source,std::uint32_t summoned,unsigned owner);
+    void silenceEffect(std::uint32_t source,const SpellInfo& spell,WorldPoint point,unsigned owner);
+    bool useSilenceItem(std::uint32_t unit,std::uint32_t item,WorldPoint point);
     std::set<std::uint32_t> rootActors_;
     void initializeRoot(UnitState& unit);
     void prepareRootSpell(const UnitState& unit,SpellInfo& spell);

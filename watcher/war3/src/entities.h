@@ -151,6 +151,9 @@ struct UnitState {
     bool spinning() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Bladestorm && b.remaining>0)return true;return false;}
     std::string sequenceName(const std::string& sequence) const {if(spinning() && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")))return "Attack Walk Stand Spin";if(morphed())return sequence;auto result=sequence;if(!animationProperties.empty() && !sequence.starts_with("Morph") && sequence.find("Alternate")==std::string::npos)result+=" "+animationProperties;for(auto& [id,b]:buffs){if(b.kind==BuffKind::Avatar && result.find("Alternate")==std::string::npos)result+=" Alternate";if(b.kind==BuffKind::Defend && result.find("Defend")==std::string::npos)result+=" Defend";}return result;}
     bool stunned() const {if(formLocked() || (possessionClaim && possessionClaim->locked))return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun || b.kind==BuffKind::Impale || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
+    unsigned preventedAttacks() const {unsigned result=0;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Silence)result|=b.disableMask;return result;}
+    bool silenced() const {return (preventedAttacks()&8)!=0;}
+    bool attackPrevented(bool ranged) const {return (preventedAttacks()&(ranged?2u:1u))!=0;}
     bool abilitiesDisabled() const {return stunned() || morphed() || spinning();}
     bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots || b.kind==BuffKind::Net || (b.kind==BuffKind::Purge && b.lockRemaining>0))return true;return false;}
     float spellBonus(float UnitBuff::* field) const {std::array<float,size_t(BuffKind::Count)> values{};for(auto& [id,b]:buffs)values[size_t(b.kind)]=std::max(values[size_t(b.kind)],b.*field);float value=0;for(auto part:values)value+=part;return value;}
