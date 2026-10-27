@@ -23,7 +23,7 @@ void ScriptSession::releaseSpell(std::uint32_t source,const CastOrder& cast,unsi
 void ScriptSession::areaSpell(std::uint32_t source,const SpellInfo& s,WorldPoint point,unsigned owner) {
     if(!alive(source,NativeKind::Unit))return;
     if(s.kind==SpellKind::Dispel){auto targets=spellTargets(source,s,point,owner);for(auto target:targets){if(!alive(source,NativeKind::Unit))break;if(alive(target,NativeKind::Unit))dispelSpell(source,target,s);}spellVisual(s,"EffectArt",0,point);return;}
-    if(s.kind==SpellKind::WaterElemental || s.kind==SpellKind::SpiritWolf || s.kind==SpellKind::SerpentWard || s.kind==SpellKind::Treants){summonSpell(source,s,point,owner);return;}
+    if(s.kind==SpellKind::WaterElemental || s.kind==SpellKind::SpiritWolf || s.kind==SpellKind::SerpentWard || s.kind==SpellKind::Treants || s.kind==SpellKind::Scout || s.kind==SpellKind::VengeanceAvatar){summonSpell(source,s,point,owner);return;}
     auto victims=spellTargets(source,s,point,owner);float allocated=0;unsigned count=0;
     for(auto id:victims){
         if(!alive(source,NativeKind::Unit))break;if(!alive(id,NativeKind::Unit))continue;

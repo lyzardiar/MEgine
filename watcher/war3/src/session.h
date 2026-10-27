@@ -239,12 +239,12 @@ class ScriptSession {
     void consumeCorpse(std::uint32_t corpse);
     bool restoreCorpse(std::uint32_t corpse,float health,float mana,bool invulnerable);
     void corpseSpellEffect(std::uint32_t caster,const SpellInfo& spell,std::uint32_t target,WorldPoint point,unsigned owner);
-    std::map<std::pair<std::uint32_t,std::uint32_t>,std::set<std::uint32_t>> carrionSummons_;
-    unsigned carrionCount(std::uint32_t caster,std::uint32_t ability);
-    bool carrionReady(const UnitState& caster,const SpellInfo& spell);
-    void summonCarrion(std::uint32_t caster,const SpellInfo& spell,unsigned owner);
-    void releaseCarrionSummon(const UnitState& unit);
-    void killCarrionSummons(std::uint32_t caster);
+    std::map<std::pair<std::uint32_t,std::uint32_t>,std::set<std::uint32_t>> corpseSummons_;
+    unsigned corpseSummonCount(std::uint32_t caster,std::uint32_t ability);
+    bool corpseSummonReady(const UnitState& caster,const SpellInfo& spell);
+    void summonCorpseUnits(std::uint32_t caster,const SpellInfo& spell,unsigned owner);
+    void releaseCorpseSummon(const UnitState& unit);
+    void killDependentSummons(std::uint32_t caster);
     void startCannibalize(std::uint32_t caster,const CastOrder& cast);
     void cannibalizeTick(std::uint32_t caster,double delta);
     void bindCorpseNatives();
