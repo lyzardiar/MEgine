@@ -24,8 +24,10 @@ class GameView {
     std::uint64_t last_=0;
     D3DVIEWPORT9 viewport_{};
     D3DMATRIX view_{},projection_{};
-    enum class OrderMode {None,Move,Attack,Patrol,Harvest};
+    enum class OrderMode {None,Move,Attack,Patrol,Harvest,Entangle};
     OrderMode orderMode_=OrderMode::None;
+    std::uint32_t buildMenuUnit_=0;
+    std::optional<std::pair<std::uint32_t,std::uint32_t>> buildTarget_;
     bool chatOpen_=false;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
     std::unique_ptr<QuestDialog> questDialog_;
@@ -40,6 +42,7 @@ class GameView {
     void hud(const GameInput& input);
     void commandPanel(const GameInput& input,std::uint32_t unit);
     void selection();
+    void buildingPreview(const GameInput& input);
     void stream();
     void command(float x,float y,OrderMode mode);
     std::uint32_t widget(float x,float y,bool items) const;

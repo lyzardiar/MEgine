@@ -57,7 +57,7 @@ public:
     const auto& blightChunks() const {return blightChunks_;}
     void block(float x,float y);
     std::optional<size_t> pathCell(float x,float y) const;
-    unsigned pathMask(WorldPoint point) const;
+    unsigned pathMask(WorldPoint point,std::span<const PathCell> ignored={}) const;
     void footprint(std::span<const PathCell> cells,bool add);
     std::uint64_t pathingRevision() const {return pathingRevision_;}
     std::uint64_t blockingRevision() const {return blockingRevision_;}

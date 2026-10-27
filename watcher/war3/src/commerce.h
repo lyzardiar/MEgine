@@ -8,6 +8,8 @@ struct ProductInfo {
     std::uint32_t type=0;
     bool item=false;
     std::string name,icon,tip,hotkey;
+    std::string model;
+    float modelScale=1;
     int gold=0,lumber=0,food=0,stockMaximum=0;
     float stockInterval=0,stockDelay=0,trainTime=0;
     std::array<int,2> button{0,0};
@@ -17,6 +19,15 @@ struct ProductInfo {
 struct StockEntry {std::uint32_t type=0;bool item=false;int current=0,maximum=0;double interval=0,due=0;};
 struct ProductionOrder {std::uint32_t type=0;int gold=0,lumber=0,food=0;double duration=0,elapsed=0;bool started=false,reserved=false;std::uint64_t ticket=0;bool research=false;unsigned level=0;};
 struct ResearchInfo {ProductInfo product;unsigned level=1,maximum=1;std::string unsupported;};
+struct BuildOrder {std::uint32_t type=0;WorldPoint point;std::uint32_t base=0;};
+struct Construction {
+    enum class Method {Human,Inside,Summon};
+    Method method=Method::Human;
+    std::uint32_t builder=0;
+    int gold=0,lumber=0,food=0;
+    double elapsed=0,duration=0;
+    bool consumeBuilder=false;
+};
 struct GatherOrder {
     enum class Phase {None,Approach,Mine,Return,Chop};
     Phase phase=Phase::None;
@@ -31,6 +42,6 @@ struct TechnologyStats {
     unsigned weapons=0;
     std::map<std::uint32_t,int> abilityLevels;
 };
-enum class CommandAction {Train,BuyUnit,BuyItem,Research,Harvest,ReturnResources};
+enum class CommandAction {Train,BuyUnit,BuyItem,Research,Harvest,ReturnResources,Build,OpenBuild,CancelTarget,CancelBuild,Entangle};
 struct CommandButton {CommandAction action;std::uint32_t type=0;std::string icon,name,tip,hotkey,reason;int x=0,y=0,stock=-1,gold=0,lumber=0;bool enabled=false;};
 }

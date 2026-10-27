@@ -54,6 +54,7 @@ struct ScriptContext {
     std::uint32_t summoningUnit=0,summonedUnit=0,damageSource=0,orderTarget=0;
     std::uint32_t attacker=0;
     std::uint32_t researched=0;
+    std::uint32_t constructing=0,cancelled=0,constructed=0;
     std::uint32_t triggerWidget=0,triggerDestructable=0,filterDestructable=0,enumDestructable=0;
     bool damageAttack=false,damageRanged=false;
     jass::Real damage;
