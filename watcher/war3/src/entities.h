@@ -22,6 +22,7 @@ struct UnitState {
     double stealthLastAction=0;
     bool shadowNight=false;
     std::optional<ShadowMeldState> shadowMeld;
+    std::optional<MirrorImageState> mirrorImage;
     std::set<unsigned> visionPlayers;
     bool holding=false,creepGuard=false,guardRemoved=false;
     std::optional<WorldPoint> guardHome;
@@ -103,7 +104,7 @@ struct UnitState {
     float displayScale() const {return scale*(1+spellBonus(&UnitBuff::scaleBonus));}
     float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
-    bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0;}
+    bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value();}
 };
 struct DestructableState {
     std::uint32_t type=0;

@@ -155,6 +155,11 @@ class ScriptSession {
     void cancelShadowMeld(UnitState& unit);
     void addReveal(unsigned owner,const SpellInfo& spell,WorldPoint point);
     void dustSpell(std::uint32_t source,const SpellInfo& spell,WorldPoint point,unsigned owner);
+    std::pair<float,bool> windWalkStrike(const UnitState& unit);
+    std::optional<WorldPoint> blinkPoint(const UnitState& unit,const SpellInfo& spell,WorldPoint point);
+    void blinkSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point);
+    void startMirrorImage(std::uint32_t unit,const CastOrder& cast);
+    void mobilityTick(double delta);
     bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;
@@ -335,13 +340,13 @@ class ScriptSession {
     bool cancelCombat(UnitState& unit);
     bool chase(UnitState& unit,WorldPoint target,float standoff);
     void combat(double delta);
-    void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon);
+    void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon,float stealthDamage=0,bool backstab=false);
     void projectiles(double delta);
     void impact(const CombatProjectile& projectile);
     void awardExperience(std::uint32_t killer,const UnitState& victim);
     void timedLives(double delta);
     void regenerate(double delta);
-    std::vector<std::uint32_t> illusions(std::uint32_t caster,std::uint32_t original,unsigned count,float dealt,float taken,double duration,std::uint32_t buff);
+    std::vector<std::uint32_t> illusions(std::uint32_t caster,std::uint32_t original,unsigned count,float dealt,float taken,double duration,std::uint32_t buff,std::uint32_t ability=0);
     void removeItem(std::uint32_t item);
     const SourceSettings& gameplay();
     float gameplayNumber(const char* key,float fallback);

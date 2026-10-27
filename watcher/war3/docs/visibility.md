@@ -31,4 +31,4 @@ python tests/generate-invisibility-fixture.py --data-root "E:/Program Files (x86
 ./build/windows-x86/bin/Release/war3_visibility_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/invisibility/fixture.w3m" spell
 ~~~
 
-阶段合并passive/potion模式及既有战斗/技能/物品/AI消费者，验证持续/淡入/等级/w3a/英雄/被动拾取丢弃、驱散/死亡/所有权/回调重入、技能禁用/范围/类型/多玩家及同帧更新、地形迷雾/共享视野/附着视觉/目标丢失/在途弹道/范围伤害、订单映射与三图长局/CPU/GPU/内存。Ghost、Shadow Meld及显形/水晶球/显形之尘已接入，增量及其独立待测项见[影遁与主动显形](stealth-reveal.md)。风步、潜地、中立付费显形、完整状态栏和声音仍待实现；淡入/破隐时机、侦测计数/边界、半透明材质及完整原版一致性未验收。
+阶段合并passive/potion模式及既有战斗/技能/物品/AI消费者，验证持续/淡入/等级/w3a/英雄/被动拾取丢弃、驱散/死亡/所有权/回调重入、技能禁用/范围/类型/多玩家及同帧更新、地形迷雾/共享视野/附着视觉/目标丢失/在途弹道/范围伤害、订单映射与三图长局/CPU/GPU/内存。Ghost、Shadow Meld及显形/水晶球/显形之尘已接入，增量及其独立待测项见[影遁与主动显形](stealth-reveal.md)。风步增量见[机动与镜像](mobility.md)，潜地、中立付费显形、完整状态栏和声音仍待实现；淡入/破隐时机、侦测计数/边界、半透明材质及完整原版一致性未验收。

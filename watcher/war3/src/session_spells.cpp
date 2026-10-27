@@ -37,7 +37,7 @@ bool ScriptSession::castImmediateOrder(std::uint32_t id,std::uint32_t order) {
 bool ScriptSession::castSpell(std::uint32_t id,std::uint32_t ability,std::uint32_t target) {return beginSpell(id,ability,target,{},target?SpellTargeting::Unit:SpellTargeting::None);}
 bool ScriptSession::castSpellAt(std::uint32_t id,std::uint32_t ability,WorldPoint point) {return beginSpell(id,ability,0,point,SpellTargeting::Point);}
 bool ScriptSession::spellPoint(const UnitState& u,const SpellInfo& s,WorldPoint point) {
-    if(s.kind==SpellKind::ShadowMeld)return (!s.nightOnly || !requireWorld().clock().daytime()) && (!u.shadowMeld || u.shadowMeld->remaining>0);if(s.kind==SpellKind::Treants)return !spellTrees(s,point).empty();if(s.summonType){float minimum=s.targeting==SpellTargeting::None?u.collision+32:0;return summonPoint(point,s.summonType,minimum).has_value();}return true;
+    if(s.kind==SpellKind::Blink)return !u.building && !u.rooted() && blinkPoint(u,s,point).has_value();if(s.kind==SpellKind::MirrorImage)return !u.building && !u.illusion && !u.mirrorImage && spawnPoint(u,u.type).has_value();if(s.kind==SpellKind::ShadowMeld)return (!s.nightOnly || !requireWorld().clock().daytime()) && (!u.shadowMeld || u.shadowMeld->remaining>0);if(s.kind==SpellKind::Treants)return !spellTrees(s,point).empty();if(s.summonType){float minimum=s.targeting==SpellTargeting::None?u.collision+32:0;return summonPoint(point,s.summonType,minimum).has_value();}return true;
 }
 bool ScriptSession::beginSpell(std::uint32_t id,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting,bool automatic) {
     if(!alive(id,NativeKind::Unit))return false;auto u=units_.at(id);auto found=u->abilities.find(ability);if(found==u->abilities.end() || found->second<=0 || u->paused || u->stunned() || u->hidden() || u->removing || u->construction || u->unsummon || u->illusion || number(u->life)<=0)return false;auto s=spellInfo(ability,unsigned(found->second));if(s.kind==SpellKind::Unsupported)throw std::runtime_error("Active ability consumer is not implemented: "+ObjectData::name(ability));if(s.targeting!=targeting && !(s.targeting==SpellTargeting::Either && (targeting==SpellTargeting::Unit || targeting==SpellTargeting::Point)))return false;s.targeting=targeting;if(u->cast && u->cast->phase==CastOrder::Phase::Channel && u->cast->spell.disableOthers && u->cast->spell.ability!=ability)return false;
@@ -49,7 +49,7 @@ bool ScriptSession::beginSpell(std::uint32_t id,std::uint32_t ability,std::uint3
 void ScriptSession::spellsTick(double delta) {
     autocastTick();areaSpellsTick(delta);groundSpellsTick(delta);std::vector<std::uint32_t> actors;for(auto& [id,u]:units_)if(u->cast)actors.push_back(id);
     for(auto id:actors){
-        if(!alive(id,NativeKind::Unit))continue;auto u=units_.at(id);if(!u->cast || u->paused)continue;auto cast=*u->cast;
+        if(!alive(id,NativeKind::Unit))continue;auto u=units_.at(id);if(!u->cast || u->paused || u->mirrorImage)continue;auto cast=*u->cast;
         auto valid=[&]{return alive(id,NativeKind::Unit) && !u->paused && !u->stunned() && !u->removing && number(u->life)>0 && u->cast && u->cast->ticket==cast.ticket;};
         if(u->removing || u->stunned() || u->hidden() || number(u->life)<=0 || (!u->abilities.contains(cast.spell.ability) || u->abilities.at(cast.spell.ability)<=0) || u->owner!=cast.owner){cancelCast(*u);continue;}
         if(cast.phase==CastOrder::Phase::Backswing){u->cast->remaining-=delta;if(u->cast->remaining<=0)finishCast(id,cast.ticket);continue;}
