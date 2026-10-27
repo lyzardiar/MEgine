@@ -24,6 +24,7 @@ struct UnitState {
     std::string movementType;
     std::vector<WorldPoint> route;
     size_t waypoint=0;
+    std::uint64_t pathingRevision=0;
     double animationStart=0;
     double animationTime=0;
     float animationRate=1,targetFlyHeight=0,flyRate=0;
@@ -61,6 +62,20 @@ struct UnitState {
     float healthRegen=0,manaRegen=0;
     std::string regenType;
     CombatOrder combat;
+};
+struct DestructableState {
+    std::uint32_t type=0;
+    WorldPoint position;
+    float z=0,angle=0,life=0,maxLife=0,occluder=0,radius=0;
+    std::array<float,3> scale{1,1,1};
+    int variation=0,editorId=-1;
+    bool tree=false,visible=true,invulnerable=false,removed=false,solid=true,initialDead=false;
+    std::string model,name,texture,alivePath,deadPath,animation;
+    unsigned replacement=0;
+    std::vector<PathCell> footprint;
+    double animationStart=0;
+    float animationRate=1;
+    std::vector<std::string> animationQueue;
 };
 struct ItemState {
     std::uint32_t type=0,owner=15;

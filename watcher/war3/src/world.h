@@ -3,10 +3,12 @@
 #include "map.h"
 #include "jass_numeric.h"
 #include "game_clock.h"
+#include <unordered_map>
 
 namespace war3 {
 struct WorldPoint {jass::Real x,y;};
 struct WorldRect {jass::Real minX,minY,maxX,maxY;};
+struct PathCell {size_t index=0;std::uint8_t mask=0;};
 struct WorldEnvironment {
     std::array<jass::Real,8> cameraBounds{};
     std::string terrainDayNight,unitDayNight;
@@ -25,6 +27,10 @@ class World {
     GameClock clock_;
     std::unique_ptr<Archives> resources_;
     Bytes obstacles_;
+    struct ObstacleOwners {std::array<std::uint32_t,3> counts{};std::uint8_t fixed=0;};
+    std::unordered_map<size_t,ObstacleOwners> obstacleOwners_;
+    std::uint64_t pathingRevision_=1;
+    std::uint64_t blockingRevision_=1;
     Bytes blightPathing_;
     std::vector<std::uint64_t> blightChunks_;
     std::uint64_t blightRevision_=1;
@@ -50,6 +56,11 @@ public:
     std::uint64_t blightRevision() const {return blightRevision_;}
     const auto& blightChunks() const {return blightChunks_;}
     void block(float x,float y);
+    std::optional<size_t> pathCell(float x,float y) const;
+    unsigned pathMask(WorldPoint point) const;
+    void footprint(std::span<const PathCell> cells,bool add);
+    std::uint64_t pathingRevision() const {return pathingRevision_;}
+    std::uint64_t blockingRevision() const {return blockingRevision_;}
     std::vector<WorldPoint> route(WorldPoint from,WorldPoint to,float radius=0,bool flying=false) const;
     WorldEnvironment& environment() {return environment_;}
     const WorldEnvironment& environment() const {return environment_;}

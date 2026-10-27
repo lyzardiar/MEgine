@@ -15,6 +15,7 @@ class GameView {
     Log& log_;
     std::unique_ptr<SceneStreaming> streaming_;
     bool streamUpload_=false;
+    std::uint64_t destructableStreamRevision_=0;
     FogRender fogRender_;
     std::vector<float> distances_,angles_,fovs_;
     float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,near_=100,far_=5000,speed_=3000;

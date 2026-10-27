@@ -8,6 +8,7 @@
 namespace war3 {
 struct SceneObject {
     std::uint32_t type=0;
+    std::shared_ptr<DestructableState> source;
     Model* model=nullptr;
     std::array<float,3> position{},scale{1,1,1};
     float angle=0,radius=0;
@@ -17,6 +18,11 @@ struct SceneObject {
 };
 class SceneObjects {
     SceneAssets& assets_;
+    ScriptSession& session_;
+    std::set<std::uint32_t> liveHandles_;
+    std::uint64_t liveRevision_=0;
+    void append(SceneObject object);
+    void sync();
     std::vector<SceneObject> placed_;
     std::map<std::pair<int,int>,std::pair<SceneBounds,std::vector<size_t>>> blocks_;
 public:

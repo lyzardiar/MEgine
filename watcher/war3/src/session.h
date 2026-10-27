@@ -10,6 +10,8 @@
 #include "fdf.h"
 #include "spatial_region.h"
 #include "fog_grid.h"
+#include "placed_definition.h"
+#include "image.h"
 #include <variant>
 
 namespace war3 {
@@ -39,17 +41,18 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem};
+enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     using Timer=ScriptTimer;
     using Trigger=ScriptTrigger;
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
     std::vector<Object> objects_;
+    std::vector<std::uint32_t> eventHandles_,timerHandles_;
     jass::Runtime runtime_;
     bool failed_=false,configured_=false;
     std::optional<unsigned> localPlayer_;
@@ -61,6 +64,15 @@ class ScriptSession {
     std::unique_ptr<ObjectData> definitions_;
     std::map<std::uint32_t,std::shared_ptr<UnitState>> units_;
     std::map<std::uint32_t,std::shared_ptr<ItemState>> items_;
+    std::map<std::uint32_t,std::shared_ptr<DestructableState>> destructables_;
+    std::optional<PlacedDefinitions> destructableDefinitions_;
+    std::optional<SourceSettings> destructableStrings_;
+    std::map<std::string,Image> pathImages_;
+    std::unique_ptr<Images> pathDecoder_;
+    std::vector<std::uint32_t> placedDestructables_;
+    std::map<std::pair<int,int>,std::vector<std::uint32_t>> treeGrid_;
+    size_t destructableFootprintCells_=0,pathImageBytes_=0;
+    std::uint64_t destructableRevision_=1;
     std::optional<SourceTable> weather_;
     std::vector<ScriptContext> contexts_;
     double simulationTime_=0,accumulator_=0;
@@ -123,10 +135,21 @@ class ScriptSession {
     void bindCombatNatives();
     void bindResearchNatives();
     void bindHarvestNatives();
+    void bindDestructableNatives();
+    const PlacedDefinitions& destructableDefinitions();
+    std::string destructableName(const std::string& name);
+    void loadDestructables();
+    jass::Value createDestructable(std::uint32_t type,WorldPoint point,float z,float angle,std::array<float,3> scale,int variation,float lifePercent=100,bool visible=true,bool solid=true,int editorId=-1);
+    void destructableFootprint(DestructableState& destructable);
+    void destructableLife(std::uint32_t id,float value);
+    void widgetDeath(std::uint32_t id,ScriptContext context={});
+    std::uint32_t nearestTree(WorldPoint point,float range,std::uint32_t exclude=0);
     std::pair<std::uint32_t,unsigned> sourceAbility(const UnitState& unit,const char* code);
     void initializeHarvest(UnitState& unit);
     void cancelGather(UnitState& unit);
     void harvestTick(double delta);
+    bool harvestTree(std::uint32_t unit,std::uint32_t tree);
+    void lumberTick(std::uint32_t unit);
     bool acceptsResource(const UnitState& depot,unsigned resource);
     std::uint32_t resourceDepot(const UnitState& unit,unsigned resource);
     void creditResource(unsigned owner,unsigned resource,int amount);
@@ -219,6 +242,9 @@ public:
     bool attackMove(std::uint32_t source,WorldPoint target,bool patrol=false);
     bool hasWeapon(std::uint32_t unit);
     const auto& projectiles() const {return projectiles_;}
+    const auto& destructables() const {return destructables_;}
+    std::uint64_t destructableRevision() const {return destructableRevision_;}
+    std::uint32_t placedDestructable(size_t index) const {return index<placedDestructables_.size()?placedDestructables_[index]:0;}
     const WeaponDefinition& projectileWeapon(const CombatProjectile& projectile) const {return projectile.definition;}
     void dropItem(std::uint32_t unit,std::uint32_t item);
     bool itemNeedsTarget(std::uint32_t item);

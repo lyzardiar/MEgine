@@ -7,6 +7,7 @@ struct Image {
     unsigned width = 0, height = 0;
     std::vector<std::uint32_t> pixels;
 };
+Image decodeTga(std::span<const std::uint8_t> bytes);
 class Images {
     Library ijl_;
     using Init = int(__stdcall*)(void*);

@@ -86,6 +86,7 @@ Image tga(std::span<const std::uint8_t> bytes) {
     return image;
 }
 }
+Image decodeTga(std::span<const std::uint8_t> bytes) {return tga(bytes);}
 Images::Images(const fs::path& dataRoot) : ijl_(dataRoot / L"ijl15.dll", "334aa12f7dee453d1c6cb1b661a3bb3494d3e4cc9c2ff3f9002064c78404e43a"), init_(ijl_.symbol<Init>("ijlInit")), free_(ijl_.symbol<Init>("ijlFree")), read_(ijl_.symbol<Read>("ijlRead")) {}
 Image Images::jpeg(std::span<const std::uint8_t> bytes, unsigned width, unsigned height, bool alpha) const {
     auto image = output(width, height);

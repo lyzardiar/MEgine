@@ -18,9 +18,11 @@ struct StockEntry {std::uint32_t type=0;bool item=false;int current=0,maximum=0;
 struct ProductionOrder {std::uint32_t type=0;int gold=0,lumber=0,food=0;double duration=0,elapsed=0;bool started=false,reserved=false;std::uint64_t ticket=0;bool research=false;unsigned level=0;};
 struct ResearchInfo {ProductInfo product;unsigned level=1,maximum=1;std::string unsupported;};
 struct GatherOrder {
-    enum class Phase {None,Approach,Mine,Return};
+    enum class Phase {None,Approach,Mine,Return,Chop};
     Phase phase=Phase::None;
     std::uint32_t mine=0,depot=0;
+    std::uint32_t tree=0;
+    WorldPoint treePoint;
     double due=0,repath=0,yieldRemainder=0;
     bool inside=false;
 };
