@@ -1,7 +1,9 @@
 // Author: MiYu. Keep archive decode and geometry compilation off the window thread without extracted caches.
 #include "game_loading.h"
 #include "model.h"
+#include "fdf.h"
 #include <chrono>
+#include <charconv>
 
 namespace war3 {
 void GameData::prepareConsole() {
@@ -9,7 +11,7 @@ void GameData::prepareConsole() {
     for(auto& piece:frame.children)if(piece.type=="TEXTURE"){auto& file=piece.property("File");auto& uv=piece.property("TexCoord");auto& anchor=piece.property("Anchor");if(file.size()!=1 || uv.size()!=4 || anchor.size()!=3 || !file[0].starts_with("ConsoleTexture"))throw std::runtime_error("Unsupported source console texture layout");float w=piece.number("Width"),h=piece.number("Height"),dx=std::stof(anchor[1]),dy=std::stof(anchor[2]);float x=anchor[0].ends_with("LEFT")?dx:.8f+dx-w,y=anchor[0].starts_with("TOP")?-dy:.6f-dy-h;auto member="UI\\Console\\"+name+"\\"+name+"UITile"+file[0].substr(14)+".blp";assets->image(member);console.push_back({x,y,w,h,std::stof(uv[0]),std::stof(uv[2]),std::stof(uv[1]),std::stof(uv[3]),member});}
     if(console.size()!=9)throw std::runtime_error("Source console requires nine texture pieces");unsigned i=0;for(auto label:{"Gold","Lumber","Supply"}){resourceIcons[i]="UI\\Feedback\\Resources\\Resource"+std::string(label)+".blp";assets->image(resourceIcons[i++]);}
     for(auto size:{"Small","Med","Large"})assets->image("ReplaceableTextures\\Selection\\SelectionCircle"+std::string(size)+".blp");
-    i=0;for(auto label:{"Move","Stop","HoldPosition"}){commandIcons[i]="ReplaceableTextures\\CommandButtons\\BTN"+std::string(label)+".blp";assets->image(commandIcons[i++]);}
+    SourceSettings commandSource;commandSource.load(archives,"Units\\CommandFunc.txt");i=0;for(auto section:{"CmdAttack","CmdMove","CmdStop","CmdHoldPos","CmdPatrol"}){auto& button=commands[i++];auto art=commandSource.value(section,"Art");if(art.empty())throw std::runtime_error(std::string("Missing source command art: ")+section);button.icon=skinValue(archives,art,art);if(button.icon.empty() || button.icon=="_")throw std::runtime_error(std::string("Missing source command icon: ")+section);auto position=commandSource.value(section,"Buttonpos");auto comma=position.find(',');if(comma==std::string::npos)throw std::runtime_error(std::string("Missing source command position: ")+section);auto parse=[&](std::string_view value){value.remove_prefix(std::min(value.find_first_not_of(" \t"),value.size()));value.remove_suffix(value.size()-std::min(value.find_last_not_of(" \t")+1,value.size()));unsigned result=0;auto [end,error]=std::from_chars(value.data(),value.data()+value.size(),result);if(error!=std::errc{} || end!=value.data()+value.size() || result>3)throw std::runtime_error(std::string("Invalid source command position: ")+section);return result;};button.x=parse(std::string_view(position).substr(0,comma));button.y=parse(std::string_view(position).substr(comma+1));if(button.y>2)throw std::runtime_error(std::string("Invalid source command row: ")+section);button.hotkey=commandSource.value(section,"Hotkey");button.name=commandSource.value(section,"Tip",section);assets->image(button.icon);}
     if(auto member=archives.readCandidates({"war3mapMap.blp"},ArchiveScope::Map)){minimap="war3mapMap.blp";assets->image(minimap);}for(auto& [handle,unit]:session->units()){auto path=unit->icon;auto comma=path.find(',');if(comma!=std::string::npos)path.resize(comma);if(!path.empty() && path!="_"){assets->image(path);}}
 }
 bool GameData::uploadOne(Renderer& renderer) {if(assets->uploadOne(renderer))return true;if(terrain->uploadOne(renderer))return true;return false;}

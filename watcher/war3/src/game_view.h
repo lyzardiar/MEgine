@@ -23,7 +23,8 @@ class GameView {
     std::uint64_t last_=0;
     D3DVIEWPORT9 viewport_{};
     D3DMATRIX view_{},projection_{};
-    bool moveMode_=false;
+    enum class OrderMode {None,Move,Attack,Patrol};
+    OrderMode orderMode_=OrderMode::None;
     bool chatOpen_=false;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
     std::unique_ptr<QuestDialog> questDialog_;
@@ -39,7 +40,9 @@ class GameView {
     void commandPanel(const GameInput& input,std::uint32_t unit);
     void selection();
     void stream();
-    void command(float x,float y);
+    void command(float x,float y,OrderMode mode);
+    std::uint32_t widget(float x,float y,bool items) const;
+    void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void activateItem(std::uint32_t unit,std::uint32_t item);
     std::vector<std::uint32_t> selected(bool owned=false) const;
 public:

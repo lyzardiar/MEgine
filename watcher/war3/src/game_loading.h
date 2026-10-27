@@ -6,6 +6,7 @@
 
 namespace war3 {
 struct ConsolePiece {float x,y,w,h,u0,v0,u1,v1;std::string image;};
+struct GameCommand {std::string icon,hotkey,name;unsigned x=0,y=0;};
 struct GameData {
     std::unique_ptr<ScriptSession> session;
     std::unique_ptr<SceneAssets> assets;
@@ -14,7 +15,7 @@ struct GameData {
     std::vector<ConsolePiece> console;
     std::string minimap;
     std::array<std::string,3> resourceIcons;
-    std::array<std::string,3> commandIcons;
+    std::array<GameCommand,5> commands;
     void prepareConsole();
     bool uploadOne(Renderer& renderer);
     size_t uploadCount() const {return assets->uploadCount()+terrain->uploadCount();}

@@ -3,6 +3,7 @@
 #include "world.h"
 #include "object_data.h"
 #include "commerce.h"
+#include "combat.h"
 
 namespace war3 {
 struct TimedLife {std::uint32_t buff=0;double duration=0,remaining=0;bool paused=false;};
@@ -55,6 +56,7 @@ struct UnitState {
     std::map<std::string,double> itemCooldowns;
     float healthRegen=0,manaRegen=0;
     std::string regenType;
+    CombatOrder combat;
 };
 struct ItemState {
     std::uint32_t type=0,owner=15;
@@ -62,7 +64,7 @@ struct ItemState {
     jass::Real x,y,life,maxLife;
     int charges=0,userData=0,level=0;
     std::uint32_t holder=0;
-    bool visible=true,invulnerable=false,droppable=true,pawnable=true,dropOnDeath=true;
+    bool visible=true,invulnerable=false,droppable=true,pawnable=true,dropOnDeath=false;
 };
 struct WeatherState {std::uint32_t type=0;WorldRect region;SourceTable::Row definition;bool enabled=false;};
 }
