@@ -115,6 +115,8 @@ struct UnitState {
     std::map<std::uint32_t,double> spellCooldowns;
     std::map<std::uint32_t,UnitBuff> buffs;
     bool selfCasting=false;
+    std::optional<PossessionClaim> possessionClaim;
+    std::uint64_t ownerRevision=0;
     std::map<std::uint32_t,UnitAura> auras;
     std::map<std::pair<std::string,std::string>,std::uint32_t> auraVisuals;
     AuraBonuses aura;
@@ -138,7 +140,7 @@ struct UnitState {
     bool productionBlocked() const {return roots && (roots->uprooted || rootTransition);}
     bool formLocked() const {return rootTransition || (formTransition && (formTransition->spell.formFlags&1));}
     std::string sequenceName(const std::string& sequence) const {if(morphed())return sequence;auto result=sequence;if(!animationProperties.empty() && !sequence.starts_with("Morph") && sequence.find("Alternate")==std::string::npos)result+=" "+animationProperties;for(auto& [id,b]:buffs){if(b.kind==BuffKind::Avatar && result.find("Alternate")==std::string::npos)result+=" Alternate";if(b.kind==BuffKind::Defend && result.find("Defend")==std::string::npos)result+=" Defend";}return result;}
-    bool stunned() const {if(formLocked())return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
+    bool stunned() const {if(formLocked() || (possessionClaim && possessionClaim->locked))return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
     bool abilitiesDisabled() const {return stunned() || morphed();}
     bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots || b.kind==BuffKind::Net || (b.kind==BuffKind::Purge && b.lockRemaining>0))return true;return false;}
     float spellBonus(float UnitBuff::* field) const {std::array<float,size_t(BuffKind::Count)> values{};for(auto& [id,b]:buffs)values[size_t(b.kind)]=std::max(values[size_t(b.kind)],b.*field);float value=0;for(auto part:values)value+=part;return value;}

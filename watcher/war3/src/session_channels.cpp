@@ -11,7 +11,7 @@ float number(jass::Real v){return std::bit_cast<float>(v.bits());}
 jass::Real real(float v){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(v));}
 std::string levelArt(const std::string& source,unsigned level){std::stringstream input(source);std::vector<std::string> models;std::string model;while(std::getline(input,model,',')){auto first=model.find_first_not_of(" \t\"");models.push_back(first==std::string::npos?"":model.substr(first,model.find_last_not_of(" \t\"")-first+1));}return models.empty()?"":models[std::min(size_t(level?level-1:0),models.size()-1)];}
 }
-void ScriptSession::releaseCastVisuals(CastOrder& cast){releaseDrain(cast);if(cast.spell.kind==SpellKind::Cannibalize)releaseCorpseClaim(cast.target,cast.caster,cast.ticket);for(auto id:cast.visuals)destroyEffect(id);cast.visuals.clear();}
+void ScriptSession::releaseCastVisuals(CastOrder& cast){releasePossession(cast);releaseDrain(cast);if(cast.spell.kind==SpellKind::Cannibalize)releaseCorpseClaim(cast.target,cast.caster,cast.ticket);for(auto id:cast.visuals)destroyEffect(id);cast.visuals.clear();}
 void ScriptSession::finishCast(std::uint32_t id,std::uint64_t ticket) {
     if(!alive(id,NativeKind::Unit))return;auto u=units_.at(id);if(!u->cast || u->cast->ticket!=ticket)return;auto cast=*u->cast;spellEvent(id,cast,3);
     if(!alive(id,NativeKind::Unit) || !u->cast || u->cast->ticket!=ticket)return;u->cast.reset();++u->castRevision;u->currentOrder=0;u->animation.clear();u->animationTime=0;releaseCastVisuals(cast);auto revision=u->castRevision,combatRevision=u->combat.revision;spellEvent(id,cast,4);
@@ -41,7 +41,7 @@ void ScriptSession::channelPulse(std::uint32_t id,const CastOrder& cast) {
     persistentSpellPulse(id,s,cast.point,cast.owner,s.kind==SpellKind::Blizzard?s.amount+s.extraDamage*s.period:s.amount,s.kind==SpellKind::DeathDecay,cast.ticket);
 }
 void ScriptSession::channelTick(std::uint32_t id,double delta) {
-    if(units_.at(id)->cast->spell.kind==SpellKind::Cannibalize){cannibalizeTick(id,delta);return;}
+    if(units_.at(id)->cast->spell.kind==SpellKind::Possession){possessionTick(id,delta);return;}if(units_.at(id)->cast->spell.kind==SpellKind::Cannibalize){cannibalizeTick(id,delta);return;}
     auto u=units_.at(id);auto ticket=u->cast->ticket;auto valid=[&]{return alive(id,NativeKind::Unit) && u->cast && u->cast->ticket==ticket && !u->paused && !u->stunned() && !u->removing && !u->hidden() && number(u->life)>0 && u->owner==u->cast->owner;};
     if(u->cast->spell.kind==SpellKind::Drain){auto& cast=*u->cast;auto& s=cast.spell;bool marked=true;for(auto [target,buff]:cast.drainMarks){if(!alive(target,NativeKind::Unit)){marked=false;break;}auto state=units_.at(target);auto b=state->buffs.find(buff);if(b==state->buffs.end() || !b->second.channelSources.contains(id) || b->second.channelSources.at(id)!=ticket){marked=false;break;}}if(!marked || !alive(cast.target,NativeKind::Unit)){cancelCast(*u);return;}auto target=units_.at(cast.target);if(std::hypot(number(u->x)-number(target->x),number(u->y)-number(target->y))>(s.area>0?s.area:s.range)+u->collision+target->collision){cancelCast(*u);return;}}
     u->cast->channelElapsed=std::min(u->cast->channelElapsed+delta,double(u->cast->spell.channelTime));auto s=u->cast->spell;

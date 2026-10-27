@@ -283,6 +283,14 @@ class ScriptSession {
     std::map<std::uint64_t,SpellWave> spellWaves_;
     std::map<std::uint64_t,DelayedSpell> delayedSpells_;
     std::map<std::uint64_t,GroundSpell> groundSpells_;
+    bool changeUnitOwner(std::uint32_t unit,unsigned owner,bool color,bool stop=false);
+    void ownershipSpellInfo(SpellInfo& spell);
+    bool ownershipTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility,unsigned owner=UINT_MAX);
+    float ownershipMana(const SpellInfo& spell,const UnitState& target) const;
+    void startPossession(std::uint32_t caster,const CastOrder& cast);
+    void possessionTick(std::uint32_t caster,double delta);
+    void releasePossession(CastOrder& cast);
+    bool ownershipEffect(std::uint32_t caster,std::uint32_t target,const SpellInfo& spell,unsigned owner);
     void resourceSpellInfo(SpellInfo& spell);
     bool resourceSpellTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility,unsigned owner=UINT_MAX);
     void startDrain(std::uint32_t unit);
