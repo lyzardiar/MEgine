@@ -107,6 +107,7 @@ struct UnitState {
     std::uint64_t heroRevision=0;
     bool illusion=false;
     std::uint32_t summoner=0,summonAbility=0,illusionOriginal=0;
+    bool diesWithSummoner=false;
     float damageDealt=1,damageTaken=1;
     std::optional<TimedLife> timedLife;
     std::optional<RebirthState> rebirth;

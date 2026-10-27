@@ -238,6 +238,12 @@ class ScriptSession {
     void consumeCorpse(std::uint32_t corpse);
     bool restoreCorpse(std::uint32_t corpse,float health,float mana,bool invulnerable);
     void corpseSpellEffect(std::uint32_t caster,const SpellInfo& spell,std::uint32_t target,WorldPoint point,unsigned owner);
+    std::map<std::pair<std::uint32_t,std::uint32_t>,std::set<std::uint32_t>> carrionSummons_;
+    unsigned carrionCount(std::uint32_t caster,std::uint32_t ability);
+    bool carrionReady(const UnitState& caster,const SpellInfo& spell);
+    void summonCarrion(std::uint32_t caster,const SpellInfo& spell,unsigned owner);
+    void releaseCarrionSummon(const UnitState& unit);
+    void killCarrionSummons(std::uint32_t caster);
     void startCannibalize(std::uint32_t caster,const CastOrder& cast);
     void cannibalizeTick(std::uint32_t caster,double delta);
     void bindCorpseNatives();
@@ -321,6 +327,8 @@ class ScriptSession {
     bool passiveChance(float chance);
     void prepareAttack(const UnitState& source,const UnitState& target,CombatProjectile& projectile);
     bool evadeAttack(const UnitState& target,const CombatProjectile& projectile);
+    const PassiveInfo* spikedCarapace(const UnitState& unit);
+    void carapaceReflect(const CombatProjectile& projectile,float damage,const PassiveInfo& passive,std::uint64_t attackerRevision,std::uint64_t defenderRevision);
     void attackPassives(const CombatProjectile& projectile,float damage,const AuraBonuses& defense);
     std::map<std::pair<std::uint32_t,std::uint32_t>,std::uint32_t> abilityHandles_;
     std::map<std::uint64_t,SpellMissile> spellMissiles_;

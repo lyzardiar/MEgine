@@ -12,7 +12,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
         {"AUau",PassiveKind::Unholy,true},{"AUav",PassiveKind::Vampiric,true},{"AEar",PassiveKind::Trueshot,true},
         {"AEah",PassiveKind::Thorns,true},{"AOac",PassiveKind::Command,true},{"Aakb",PassiveKind::WarDrums,true},
         {"Aoar",PassiveKind::Regeneration,true},{"AHbh",PassiveKind::Bash,false},{"AOcr",PassiveKind::Critical,false},
-        {"AEev",PassiveKind::Evasion,false},{"ANca",PassiveKind::Cleave,false},
+        {"AEev",PassiveKind::Evasion,false},{"ANca",PassiveKind::Cleave,false},{"AUts",PassiveKind::SpikedCarapace,false},
         {"Apiv",PassiveKind::PermanentInvisibility,false},{"Adet",PassiveKind::Detection,false},
         {"Atru",PassiveKind::Detection,false},{"Agyv",PassiveKind::Detection,false},{"Adts",PassiveKind::Detection,false},
         {"Agho",PassiveKind::Ghost,false},{"Aexh",PassiveKind::Exhume,false},
@@ -28,6 +28,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
     if(p.kind==PassiveKind::Trueshot || p.kind==PassiveKind::Command || p.kind==PassiveKind::WarDrums){p.melee=p.secondary!=0;p.ranged=p.bonus!=0;p.percent=field("DataD")==0;}
     if(p.kind==PassiveKind::Vampiric){p.melee=true;p.ranged=false;}
     if(p.kind==PassiveKind::Bash || p.kind==PassiveKind::Critical){p.amount/=100;p.evasion=field("DataD");p.neverMiss=field("DataE")!=0;if(p.amount<0 || p.amount>1 || p.evasion<0 || p.evasion>1 || p.secondary<0 || p.bonus<0)throw std::runtime_error("Attack passive probability or multiplier outside supported range");}
+    if(p.kind==PassiveKind::SpikedCarapace && (p.amount<0 || p.amount>1000 || p.secondary<0 || p.secondary>1000 || std::abs(p.bonus)>1000000))throw std::runtime_error("Spiked Carapace reflection, incoming factor or armor outside supported range");
     if(p.kind==PassiveKind::Evasion && (p.amount<0 || p.amount>1))throw std::runtime_error("Evasion probability outside supported range");
     if(p.kind==PassiveKind::Detection){p.area=field("Rng");if(p.amount<0 || p.amount>3 || p.amount!=std::floor(p.amount))throw std::runtime_error("Detection type outside source mask");}
     if(p.kind==PassiveKind::PermanentInvisibility && p.amount!=0 && p.amount!=1)throw std::runtime_error("Permanent invisibility acquire flag is not boolean");
