@@ -25,6 +25,7 @@ struct CombatOrder {
     std::optional<AttackWindup> windup;
 };
 struct CombatProjectile {
+    WeaponDefinition definition;
     std::uint64_t id=0;
     std::uint32_t source=0,target=0,sourceType=0,owner=0;
     unsigned weapon=0;

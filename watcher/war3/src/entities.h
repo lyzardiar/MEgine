@@ -37,6 +37,8 @@ struct UnitState {
     std::map<std::uint32_t,bool> permanentAbilities;
     bool foodCounted=false,useFood=true,removing=false;
     std::vector<std::uint32_t> trainables;
+    std::vector<std::uint32_t> researches,upgrades;
+    TechnologyStats technology;
     std::vector<StockEntry> stock;
     int unitStockSlots=-1,itemStockSlots=-1;
     std::deque<ProductionOrder> production;

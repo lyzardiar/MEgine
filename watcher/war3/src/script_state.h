@@ -53,6 +53,7 @@ struct ScriptContext {
     std::uint32_t learnedSkill=0,learnedLevel=0;
     std::uint32_t summoningUnit=0,summonedUnit=0,damageSource=0,orderTarget=0;
     std::uint32_t attacker=0;
+    std::uint32_t researched=0;
     bool damageAttack=false,damageRanged=false;
     jass::Real damage;
     std::string chat,chatMatch;

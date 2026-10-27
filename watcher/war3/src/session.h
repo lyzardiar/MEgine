@@ -81,6 +81,7 @@ class ScriptSession {
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;
     std::map<std::pair<std::uint32_t,bool>,ProductInfo> products_;
+    std::map<std::pair<std::uint32_t,unsigned>,ResearchInfo> researchInfo_;
     std::map<std::pair<std::uint32_t,bool>,std::optional<std::pair<int,int>>> globalStock_;
     std::uint64_t productionTicket_=0;
     std::optional<SourceSettings> gameplay_;
@@ -120,6 +121,12 @@ class ScriptSession {
     void bindQuestNatives();
     void bindBlightNatives();
     void bindCombatNatives();
+    void bindResearchNatives();
+    unsigned researchLevel(unsigned owner,std::uint32_t type) const;
+    void setResearch(unsigned owner,std::uint32_t type,int level);
+    void refreshResearch(UnitState& unit);
+    bool researchAllowed(const UnitState& unit,const ResearchInfo& info,std::string& reason);
+    WeaponDefinition unitWeapon(const UnitState& unit,unsigned slot);
     const std::array<WeaponDefinition,2>& weapons(std::uint32_t type);
     bool capability(const UnitState& unit,const char* code);
     bool enemy(unsigned owner,unsigned other) const;
@@ -204,13 +211,15 @@ public:
     bool attackMove(std::uint32_t source,WorldPoint target,bool patrol=false);
     bool hasWeapon(std::uint32_t unit);
     const auto& projectiles() const {return projectiles_;}
-    const WeaponDefinition& projectileWeapon(const CombatProjectile& projectile) {return weapons(projectile.sourceType)[projectile.weapon];}
+    const WeaponDefinition& projectileWeapon(const CombatProjectile& projectile) const {return projectile.definition;}
     void dropItem(std::uint32_t unit,std::uint32_t item);
     bool itemNeedsTarget(std::uint32_t item);
     double itemCooldown(std::uint32_t unit,std::uint32_t item);
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
     bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false);
     const ProductInfo& product(std::uint32_t type,bool item=false);
+    const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
+    bool research(std::uint32_t unit,std::uint32_t type);
     std::vector<CommandButton> commands(std::uint32_t unit,unsigned player);
     bool purchase(std::uint32_t shop,unsigned player,std::uint32_t type,bool item,std::uint32_t buyer=0);
     bool train(std::uint32_t unit,std::uint32_t type);
