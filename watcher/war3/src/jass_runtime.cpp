@@ -2,6 +2,7 @@
 #include "jass_runtime.h"
 #include "jass_literal.h"
 #include <bit>
+#include <map>
 
 namespace war3::jass {
 namespace {
@@ -25,6 +26,11 @@ struct Runtime::Impl {
     State state=State::Created;
     std::uint64_t remaining=0;
     size_t active=0;
+    size_t noYield=0;
+    ThreadScheduler threads;
+    struct Execution {std::uint64_t remaining=0;size_t active=0,noYield=0;};
+    std::map<ThreadId,Execution> executions{{0,{}}};
+    ThreadHooks threadHooks;
     Id integer,real,boolean,string,codeType,nothing;
     [[noreturn]] void fail(Position p,const std::string& message) const {auto& sources=module.program().sources();auto name=p.source<sources.size()?sources[p.source].name:"<runtime>";throw std::runtime_error(name+":"+std::to_string(p.line)+":"+std::to_string(p.column)+": "+message);}
     Value empty(Id type) const {return {type,0,{}};}
@@ -74,8 +80,9 @@ struct Runtime::Impl {
             case StatementKind::Return:if(s.value!=none)expression(out,s.value);emit(out,Op::Return,s.value,s.position);break;
         }}
     }
-    Impl(Runtime& runtime,Module source,RuntimeLimits budget) : owner(runtime),module(std::move(source)),limits(budget) {
+    Impl(Runtime& runtime,Module source,RuntimeLimits budget) : owner(runtime),module(std::move(source)),limits(budget),threads(budget.threads) {
         integer=module.typeId("integer");real=module.typeId("real");boolean=module.typeId("boolean");string=module.typeId("string");codeType=module.typeId("code");nothing=module.typeId("nothing");
+        threads.hooks({[this](ThreadId id,ThreadId parent){executions.emplace(id,Execution{});if(threadHooks.created)threadHooks.created(id,parent);},[this](ThreadId from,ThreadId to){executions.at(from)={remaining,active,noYield};auto& next=executions.at(to);remaining=from==0 && next.active?limits.steps:next.remaining;active=next.active;noYield=next.noYield;if(threadHooks.switched)threadHooks.switched(from,to);},[this](ThreadId id){executions.erase(id);if(threadHooks.finished)threadHooks.finished(id);}});
     }
     void compile() {
         auto& program=module.program();code.resize(program.functions().size()+1);natives.resize(program.functions().size());globals.reserve(module.globals().size());
@@ -137,14 +144,26 @@ struct Runtime::Impl {
 Runtime::Runtime(Module module,RuntimeLimits limits) : impl_(std::make_unique<Impl>(*this,std::move(module),limits)) {
     impl_->compile();for(auto name:{"I2R","R2I"}){auto id=this->module().functionId(name);if(id==none || !this->module().program().functions()[id].native)continue;auto& signature=this->module().functions()[id];bool toReal=std::string_view(name)=="I2R";if(signature.parameters!=std::vector<Id>{toReal?impl_->integer:impl_->real} || signature.result!=(toReal?impl_->real:impl_->integer))throw std::runtime_error("Invalid numeric native signature: "+std::string(name));bind(name,[toReal](Runtime& runtime,std::span<const Value> values){return toReal?runtime.real(Real::fromInteger(signedBits(values[0].bits))):runtime.integer(Real::fromBits(values[0].bits).toInteger());});}
 }
-Runtime::~Runtime()=default;
+Runtime::~Runtime(){cancelThreads();}
 const Module& Runtime::module() const {return impl_->module;}
 size_t Runtime::instructionCount() const {size_t count=0;for(auto& code:impl_->code)count+=code.size();return count;}
-void Runtime::bind(const std::string& name,Native function) {auto id=module().functionId(name);if(impl_->active || id==none || !module().program().functions()[id].native || !function)throw std::runtime_error("Invalid JASS native binding: "+name);impl_->natives[id]=std::move(function);}
+void Runtime::bind(const std::string& name,Native function) {auto id=module().functionId(name);if(impl_->active || impl_->threads.count() || id==none || !module().program().functions()[id].native || !function)throw std::runtime_error("Invalid JASS native binding: "+name);impl_->natives[id]=std::move(function);}
 void Runtime::initialize() {if(impl_->state!=State::Created)throw std::runtime_error("JASS runtime initialization requires a fresh instance");impl_->state=State::Initializing;try{impl_->run(Id(module().functions().size()),{},{});impl_->state=State::Ready;}catch(...){impl_->state=State::Failed;throw;}}
 bool Runtime::ready() const {return impl_->state==State::Ready;}
-Value Runtime::invoke(const std::string& name,std::span<const Value> arguments) {if(!ready() && !(impl_->state==State::Initializing && impl_->active))throw std::runtime_error("JASS runtime is not initialized");auto id=module().functionId(name);if(id==none)throw std::runtime_error("Unknown JASS entry: "+name);return impl_->run(id,arguments,module().program().functions()[id].position);}
+Value Runtime::invoke(const std::string& name,std::span<const Value> arguments) {if(!ready() && !(impl_->state==State::Initializing && (impl_->active || impl_->threads.current())))throw std::runtime_error("JASS runtime is not initialized");auto id=module().functionId(name);if(id==none)throw std::runtime_error("Unknown JASS entry: "+name);return impl_->run(id,arguments,module().program().functions()[id].position);}
 Value Runtime::invoke(const Value& code,std::span<const Value> arguments) {if(code.type!=impl_->codeType || !code.bits || code.bits-1>=module().functions().size())throw std::runtime_error("Invalid JASS code reference");return invoke(module().program().functions()[code.bits-1].name,arguments);}
+Value Runtime::invokeNoYield(const Value& code,std::span<const Value> arguments){++impl_->noYield;struct Guard{size_t& value;~Guard(){--value;}}guard{impl_->noYield};return invoke(code,arguments);}
+ThreadId Runtime::start(std::function<void()> entry){if(!ready() && !(impl_->state==State::Initializing && impl_->active))throw std::runtime_error("Script threads require initialized runtime state");return impl_->threads.start(std::move(entry));}
+ThreadId Runtime::start(const std::string& name,std::span<const Value> arguments){auto id=module().functionId(name);if(id==none || module().functions()[id].result!=impl_->nothing)throw std::runtime_error("Invalid script thread entry: "+name);return start([this,name,args=std::vector<Value>(arguments.begin(),arguments.end())]{invoke(name,args);});}
+ThreadId Runtime::start(const Value& code,std::span<const Value> arguments){if(code.type!=impl_->codeType || !code.bits || code.bits-1>=module().functions().size())throw std::runtime_error("Invalid script thread code");return start(module().program().functions()[code.bits-1].name,arguments);}
+void Runtime::sleep(double seconds){if(impl_->noYield)throw std::runtime_error("Script wait is not allowed in a synchronous condition");impl_->threads.sleep(seconds);}
+void Runtime::waitThread(ThreadId thread){if(impl_->noYield)throw std::runtime_error("Trigger wait is not allowed in a synchronous condition");impl_->threads.wait(thread);}
+void Runtime::threadClock(double time){impl_->threads.clock(time);}
+void Runtime::advanceThreads(double time){impl_->threads.advance(time);}
+void Runtime::cancelThreads(){impl_->threads.cancelAll();}
+void Runtime::threadHooks(ThreadHooks hooks){if(impl_->threads.count())throw std::runtime_error("Cannot change active script contexts");impl_->threadHooks=std::move(hooks);}
+ThreadId Runtime::currentThread() const{return impl_->threads.current();}
+size_t Runtime::threadCount() const{return impl_->threads.count();}
 Value Runtime::global(const std::string& name,std::optional<std::uint32_t> index) const {if(!ready())throw std::runtime_error("JASS runtime is not initialized");auto& list=module().program().globals();for(size_t i=0;i<list.size();++i)if(list[i].name==name)return impl_->load(impl_->globals[i],index,list[i].position);throw std::runtime_error("Unknown JASS global: "+name);}
 Value Runtime::integer(std::int32_t value) const {return {impl_->integer,std::bit_cast<std::uint32_t>(value),{}};}
 Value Runtime::real(Real value) const {return {impl_->real,value.bits(),{}};}

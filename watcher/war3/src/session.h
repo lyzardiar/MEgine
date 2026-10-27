@@ -79,6 +79,8 @@ class ScriptSession {
     std::uint64_t destructableRevision_=1;
     std::optional<SourceTable> weather_;
     std::vector<ScriptContext> contexts_;
+    std::map<jass::ThreadId,std::vector<ScriptContext>> threadContexts_{{0,{}}};
+    void bindThreadNatives();
     double simulationTime_=0,accumulator_=0;
     std::array<std::optional<unsigned>,16> results_;
     std::array<PlayerStatistics,16> statistics_{};
@@ -329,7 +331,7 @@ class ScriptSession {
     std::shared_ptr<ScriptBoolean> expression(jass::Value handle);
     bool evaluate(const std::shared_ptr<ScriptBoolean>& expression,unsigned depth=0);
     bool triggerEvaluate(std::uint32_t handle);
-    void triggerExecute(std::uint32_t handle);
+    jass::ThreadId triggerExecute(std::uint32_t handle,bool wait=false);
     void fire(std::uint32_t event,ScriptContext context={});
     void unitEvent(std::uint32_t unit,unsigned playerEvent,unsigned unitEvent,ScriptContext context={});
     void unitLife(jass::Value handle,jass::Real value,std::uint32_t killer=0);
@@ -347,6 +349,7 @@ class ScriptSession {
     World& requireWorld();
 public:
     ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings={},std::optional<unsigned> gameType={});
+    ~ScriptSession();
     void initialize();
     void configure();
     void applySetup(const PlayerSetup& setup);
@@ -439,6 +442,7 @@ public:
     const auto& buttons() const {return buttons_;}
     const auto& defeatConditions() const {return defeatConditions_;}
     bool mainCompleted() const {return mainCompleted_ && !failed_;}
+    bool mainStarted() const {return mainAttempted_ && !failed_;}
     void advance(double elapsed);
     double simulationTime() const {return simulationTime_;}
     void audioMuted(bool muted);
