@@ -138,6 +138,16 @@ class ScriptSession {
     std::array<std::unique_ptr<FogGrid>,16> fogGrids_;
     std::map<std::uint32_t,std::shared_ptr<FogModifier>> fogModifiers_;
     std::uint64_t fogRevision_=1,fogTicks_=0;
+    struct Detector {unsigned owner=0,mask=0;float x=0,y=0,range=0;std::uint32_t vision=0;};
+    std::map<std::pair<int,int>,std::vector<Detector>> detectors_;
+    std::vector<Detector> wideDetectors_;
+    double detectorTime_=-1;
+    std::uint64_t detectorFogRevision_=0;
+    size_t detectorUnits_=0;
+    void updateDetectors();
+    bool detection(std::uint32_t unit,unsigned player,unsigned mask);
+    void breakInvisibility(UnitState& unit);
+    bool stealthAcquire(const UnitState& unit);
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;
     std::map<std::pair<std::uint32_t,bool>,ProductInfo> products_;
@@ -457,6 +467,10 @@ public:
     bool setRally(std::uint32_t unit,WorldPoint point,std::uint32_t target=0);
     void chat(unsigned player,const std::string& message);
     const FogGrid& fog(unsigned player);
+    bool unitInvisible(std::uint32_t unit);
+    bool unitDetected(std::uint32_t unit,unsigned player);
+    bool unitInvisibleTo(std::uint32_t unit,unsigned player);
+    bool unitVisibleTo(std::uint32_t unit,unsigned player);
     const std::vector<ScriptText>& texts() const {return texts_;}
     const auto& quests() const {return quests_;}
     std::uint64_t questRevision() const {return questRevision_;}

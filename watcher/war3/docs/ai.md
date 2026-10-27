@@ -38,4 +38,6 @@ SetSlowChopping、SetCaptainChanges、TeleportCaptain、SuicideUnit/Ex已接到�
 
 Unsummon已连接已有工人的Auns目标施法和建筑持续消退/返还；GetBuilding按目标玩家查实际建筑并排除反召唤中的对象，详见[反召唤](unsummon.md)。原AI完整循环待阶段验证。
 
-当前common.ai专用native接续清单（未绑定，调用会明确失败）：PurchaseZeppelin、MergeUnits、ConvertUnits、SetRandomPaths、LoadZepWave、UnitInvis、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。
+UnitInvis已使用AI所属玩家的实际隐形/侦测判定，敌情查询排除无法侦测的隐形目标；实际隐形术/真实视域、native和AI之间的最小流程通过，见[隐形与侦测](visibility.md)。完整原件语义继续阶段对照。
+
+当前common.ai专用native接续清单（未绑定，调用会明确失败）：PurchaseZeppelin、MergeUnits、ConvertUnits、SetRandomPaths、LoadZepWave、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。

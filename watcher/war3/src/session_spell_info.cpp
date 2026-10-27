@@ -28,7 +28,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"Arej",SpellKind::Rejuvenation,SpellTargeting::Unit},{"Auhf",SpellKind::Frenzy,SpellTargeting::Unit},
         {"Acrs",SpellKind::Curse,SpellTargeting::Unit},{"Adis",SpellKind::Dispel,SpellTargeting::Point},
         {"Aadm",SpellKind::Abolish,SpellTargeting::Unit},{"Aams",SpellKind::AntiMagicShell,SpellTargeting::Unit},
-        {"Auns",SpellKind::Unsummon,SpellTargeting::Unit}
+        {"Auns",SpellKind::Unsummon,SpellTargeting::Unit},{"Aivs",SpellKind::Invisibility,SpellTargeting::Unit}
     };
     auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& p:prototypes)if(code==p.code){s.kind=p.kind;s.targeting=p.targeting;break;}if(s.kind==SpellKind::Unsupported)return spellInfo_.emplace(key,std::move(s)).first->second;
     auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};

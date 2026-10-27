@@ -19,6 +19,8 @@ struct UnitState {
     std::map<std::uint32_t,int> abilities;
     std::map<std::uint32_t,bool> autocast;
     std::uint32_t currentOrder=0;
+    double stealthLastAction=0;
+    std::set<unsigned> visionPlayers;
     bool holding=false,creepGuard=false,guardRemoved=false;
     std::optional<WorldPoint> guardHome;
     unsigned guardOwner=UINT_MAX;
