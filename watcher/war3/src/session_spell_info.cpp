@@ -60,7 +60,9 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"ANch",SpellKind::Charm,SpellTargeting::Unit},{"AIco",SpellKind::Charm,SpellTargeting::Unit},
         {"Acmg",SpellKind::ControlMagic,SpellTargeting::Unit},
         {"AHmt",SpellKind::MassTeleport,SpellTargeting::Unit},{"AItp",SpellKind::TownPortal,SpellTargeting::Unit},
-        {"AIrt",SpellKind::Recall,SpellTargeting::Either}
+        {"AIrt",SpellKind::Recall,SpellTargeting::Either},
+        {"AOww",SpellKind::Bladestorm,SpellTargeting::None},{"AOeq",SpellKind::Earthquake,SpellTargeting::Point},
+        {"AOvd",SpellKind::Voodoo,SpellTargeting::None}
     };
     auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& p:prototypes)if(code==p.code){s.kind=p.kind;s.targeting=p.targeting;break;}if(s.kind==SpellKind::Unsupported)return spellInfo_.emplace(key,std::move(s)).first->second;
     auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};
@@ -78,6 +80,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(s.kind==SpellKind::Drain || s.kind==SpellKind::ManaBurn || s.kind==SpellKind::DarkRitual || s.kind==SpellKind::DeathPact)resourceSpellInfo(s);
     if(ownershipSpell(s.kind))ownershipSpellInfo(s);
     if(teleportSpell(s.kind))teleportSpellInfo(s);
+    if(heroUltimate(s.kind))heroUltimateInfo(s);
     if(selfSpell(s.kind))selfSpellInfo(s);
     if(s.kind==SpellKind::EatTree){s.castDelay=s.amount;s.channelTime=s.secondary;s.animation="Spell Eat Tree";if(!s.buff || s.duration<=0 || s.channelTime<=0 || s.castDelay<0 || s.castDelay>s.channelTime || s.loss<=0)throw std::runtime_error("Invalid source Eat Tree timing or recovery");}
     if(s.kind==SpellKind::DevourMagic){s.buffHealth=s.loss;s.buffMana=field("DataD");s.maxDamage=field("DataE");s.ignoreFriendlyBuffs=count(field("DataF"),1)!=0;if(s.buffHealth<0 || s.buffMana<0 || s.buffHealth>1000000 || s.buffMana>1000000)throw std::runtime_error("Invalid source Devour Magic buff rewards");}
@@ -119,7 +122,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(s.kind==SpellKind::FlameStrike){std::stringstream paths(data.field(ability,"Profile","Specialart"));std::string path;while(std::getline(paths,path,','))if(!path.empty() && path!="_")s.visualModels.push_back(path);}
     if((s.period>0 && s.channelTime/s.period>262144) || (s.artPeriod>0 && s.channelTime/s.artPeriod>262144) || (s.fullPeriod>0 && s.fullTime/s.fullPeriod>262144) || (s.burnPeriod>0 && s.duration/s.burnPeriod>262144))throw std::runtime_error("Persistent spell tick budget exceeded");
     if(s.damageBonus<0 || s.armor<0 || s.attackBonus<0 || s.moveBonus<0 || s.scaleBonus<0 || s.healthRegen<0 || s.autoRange<0 || s.autoRange>100000)throw std::runtime_error("Caster modifier outside supported range");
-    if(s.channelTime<0 || s.channelTime>86400 || s.artPeriod<0 || s.artPeriod>86400 || s.buildingFactor<0 || s.extraDamage<0 || (s.channelled && s.kind!=SpellKind::Channel && s.kind!=SpellKind::Cannibalize && s.kind!=SpellKind::Possession && !teleportSpell(s.kind) && s.period<=0))throw std::runtime_error("Channel duration or period exceeds supported range");
+    if(s.channelTime<0 || s.channelTime>86400 || s.artPeriod<0 || s.artPeriod>86400 || s.buildingFactor<0 || s.extraDamage<0 || (s.channelled && s.kind!=SpellKind::Channel && s.kind!=SpellKind::Cannibalize && s.kind!=SpellKind::Possession && !teleportSpell(s.kind) && !heroUltimate(s.kind) && s.period<=0))throw std::runtime_error("Channel duration or period exceeds supported range");
     if(s.mana<0 || s.cooldown<0 || s.range<0 || s.range>100000 || s.area<0 || s.area>100000 || s.amount<0 || s.secondary<0 || s.duration<0 || s.heroDuration<0 || s.speed<0 || s.maxDamage<0 || s.moveReduction<0 || s.moveReduction>1 || s.attackReduction<0)throw std::runtime_error("Source spell parameters outside supported range");return spellInfo_.emplace(key,std::move(s)).first->second;
 }
 }

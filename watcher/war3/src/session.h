@@ -161,6 +161,15 @@ class ScriptSession {
     void blinkSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point);
     void startMirrorImage(std::uint32_t unit,const CastOrder& cast);
     void mobilityTick(double delta);
+    void heroUltimateInfo(SpellInfo& spell);
+    bool ultimateEffectActive(std::uint32_t unit,unsigned owner,std::uint64_t ticket,std::uint32_t buff=0);
+    void ultimateAreaDamage(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,float amount,bool buildingsOnly,unsigned owner,std::uint64_t ticket,std::uint32_t buff=0);
+    void startHeroUltimate(std::uint32_t unit,const CastOrder& cast);
+    void releaseUltimateMark(std::uint32_t source,std::uint64_t ticket,std::uint32_t unit,std::uint32_t buff);
+    void releaseHeroUltimate(CastOrder& cast);
+    void heroUltimateChannelTick(std::uint32_t unit,double delta);
+    void heroUltimatesTick(double delta);
+    std::set<std::uint32_t> bladestormActors_;
     void teleportSpellInfo(SpellInfo& spell);
     bool teleportTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility);
     std::uint32_t teleportAnchor(const UnitState& caster,const SpellInfo& spell,WorldPoint point,bool automatic=false);

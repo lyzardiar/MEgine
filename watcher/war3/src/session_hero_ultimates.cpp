@@ -1,0 +1,42 @@
+// Author: MiYu. Mobile Bladestorm and cancellable Earthquake/Voodoo consume source rules and shared live states.
+#include "session.h"
+#include <algorithm>
+#include <bit>
+#include <cmath>
+
+namespace war3 {
+namespace {float number(jass::Real value){return std::bit_cast<float>(value.bits());}}
+void ScriptSession::heroUltimateInfo(SpellInfo& s){
+    auto field=[&](const char* key){return definitions().number(s.ability,"AbilityData",std::string(key)+std::to_string(s.level));};if(!s.buff || s.duration<=0 || s.duration>86400 || s.area<=0)throw std::runtime_error("Hero ultimate requires source buff, duration and area");s.period=0;
+    if(s.kind==SpellKind::Bladestorm){s.magicFactor=s.secondary;if(s.amount<0 || s.amount>1000000 || s.magicFactor<0 || s.magicFactor>100)throw std::runtime_error("Invalid source Bladestorm damage factors");return;}
+    s.channelled=true;s.channelTime=s.duration;auto buffs=definitions().field(s.ability,"AbilityData","BuffID"+std::to_string(s.level));if(buffs.size()>=9 && buffs[4]==',')s.guardBuff=ObjectData::code(buffs.substr(5,4));
+    if(s.kind==SpellKind::Earthquake){s.castDelay=s.amount;s.amount=s.secondary;s.moveReduction=s.loss;s.endRadius=field("DataD");if(s.castDelay<0 || s.castDelay>86400 || s.amount<0 || s.amount>1000000 || s.moveReduction<0 || s.moveReduction>1 || s.endRadius<0 || s.endRadius>100000)throw std::runtime_error("Invalid source Earthquake effect geometry or rates");}
+}
+bool ScriptSession::ultimateEffectActive(std::uint32_t id,unsigned owner,std::uint64_t ticket,std::uint32_t buff){
+    if(!alive(id,NativeKind::Unit))return false;auto u=units_.at(id);if(u->removing || u->paused || u->hidden() || u->owner!=owner || number(u->life)<=0)return false;if(!buff)return u->cast && u->cast->ticket==ticket;auto found=u->buffs.find(buff);return found!=u->buffs.end() && found->second.kind==BuffKind::Bladestorm && found->second.applied==ticket;
+}
+void ScriptSession::ultimateAreaDamage(std::uint32_t source,const SpellInfo& s,WorldPoint point,float amount,bool buildingsOnly,unsigned owner,std::uint64_t ticket,std::uint32_t buff){
+    auto active=[&]{return ultimateEffectActive(source,owner,ticket,buff);};if(amount<=0 || !active())return;auto caster=units_.at(source);auto targets=spellTargets(source,s,point,owner);for(auto id:targets){if(!active())return;if(!alive(id,NativeKind::Unit))continue;auto u=units_.at(id);if((buildingsOnly && !u->building) || std::hypot(number(u->x)-number(point.x),number(u->y)-number(point.y))>s.area+u->collision || !spellTarget(*caster,*u,s,false,owner))continue;damageUnit(source,id,amount,0,5);}
+    if(!active() || (!s.allowed.contains("tree") && !s.allowed.contains("debris")))return;std::vector<std::uint32_t> props;for(auto& [id,d]:destructables_)if(!d->removed && d->life>0 && !d->invulnerable && (d->tree?s.allowed.contains("tree"):s.allowed.contains("debris")) && std::hypot(number(d->position.x)-number(point.x),number(d->position.y)-number(point.y))<=s.area+d->radius)props.push_back(id);for(auto id:props){if(!active())return;if(alive(id,NativeKind::Destructable)){auto d=destructables_.at(id);if(!d->removed && !d->invulnerable && d->life>0)destructableLife(id,d->life-amount);}}
+}
+void ScriptSession::startHeroUltimate(std::uint32_t id,const CastOrder& issued){
+    if(!alive(id,NativeKind::Unit))return;auto u=units_.at(id);if(!u->cast || u->cast->ticket!=issued.ticket)return;auto& s=issued.spell;
+    if(s.kind==SpellKind::Bladestorm){if(auto old=u->buffs.find(s.buff);old!=u->buffs.end()){releaseBuff(old->second);u->buffs.erase(old);}UnitBuff b;b.id=s.buff;b.ability=s.ability;b.source=b.target=id;b.sourceLevel=s.level;b.sourceOwner=issued.owner;b.kind=BuffKind::Bladestorm;b.applied=issued.ticket;b.remaining=s.duration;b.positive=b.physical=true;b.dispellable=false;b.magicFactor=s.magicFactor;b.magicImmune=s.magicFactor==0;auto art=s;art.ability=s.buff;b.visuals=spellVisual(art,"TargetArt",id,{u->x,u->y},false);auto effects=spellVisual(s,"CasterArt",id,{u->x,u->y},false);b.visuals.insert(b.visuals.end(),effects.begin(),effects.end());u->buffs.emplace(s.buff,std::move(b));bladestormActors_.insert(id);finishCast(id,issued.ticket);return;}
+    startChannel(id);if(!alive(id,NativeKind::Unit) || !u->cast || u->cast->ticket!=issued.ticket)return;if(s.guardBuff){auto art=s;art.ability=s.guardBuff;auto effects=spellVisual(art,"TargetArt",s.kind==SpellKind::Voodoo?id:0,issued.point,false);u->cast->visuals.insert(u->cast->visuals.end(),effects.begin(),effects.end());}heroUltimateChannelTick(id,0);
+}
+void ScriptSession::releaseUltimateMark(std::uint32_t source,std::uint64_t ticket,std::uint32_t target,std::uint32_t buff){
+    if(!alive(target,NativeKind::Unit))return;auto u=units_.at(target);auto found=u->buffs.find(buff);if(found==u->buffs.end())return;auto& b=found->second;if(b.kind!=BuffKind::Voodoo && b.kind!=BuffKind::Earthquake)return;auto entry=b.channelSources.find(source);if(entry==b.channelSources.end() || entry->second!=ticket)return;b.channelSources.erase(entry);b.channelSlow.erase(source);if(b.channelSources.empty()){releaseBuff(b);u->buffs.erase(found);}else if(b.kind==BuffKind::Earthquake){b.moveReduction=0;for(auto [id,slow]:b.channelSlow)b.moveReduction=std::max(b.moveReduction,slow);}
+}
+void ScriptSession::releaseHeroUltimate(CastOrder& cast){for(auto [target,buff]:cast.ultimateMarks)releaseUltimateMark(cast.caster,cast.ticket,target,buff);cast.ultimateMarks.clear();}
+void ScriptSession::heroUltimateChannelTick(std::uint32_t id,double delta){
+    auto u=units_.at(id);auto cast=*u->cast;auto s=cast.spell;auto active=[&]{return ultimateEffectActive(id,cast.owner,cast.ticket);};if(!active())return;double previous=cast.channelElapsed,elapsed=std::min(previous+delta,double(s.channelTime));u->cast->channelElapsed=elapsed;if(s.kind==SpellKind::Earthquake)s.area+=float(elapsed/s.channelTime)*(s.endRadius-s.area);bool ready=s.kind==SpellKind::Voodoo || elapsed>=s.castDelay;auto targets=ready?spellTargets(id,s,cast.point,cast.owner):std::vector<std::uint32_t>{};std::set<std::uint32_t> desired(targets.begin(),targets.end());
+    for(auto [target,buff]:cast.ultimateMarks)if(!desired.contains(target))releaseUltimateMark(id,cast.ticket,target,buff);if(!active())return;u->cast->ultimateMarks.clear();auto kind=s.kind==SpellKind::Voodoo?BuffKind::Voodoo:BuffKind::Earthquake;
+    for(auto target:targets){if(!active())return;if(!alive(target,NativeKind::Unit))continue;auto to=units_.at(target);auto found=to->buffs.find(s.buff);if(found!=to->buffs.end() && found->second.kind!=kind)throw std::runtime_error("Incompatible hero ultimate source buff");if(found==to->buffs.end()){UnitBuff b;b.id=s.buff;b.source=id;b.target=target;b.kind=kind;b.persistent=b.physical=true;b.positive=b.invulnerable=s.kind==SpellKind::Voodoo;b.dispellable=false;auto art=s;art.ability=s.buff;b.visuals=spellVisual(art,"TargetArt",target,{to->x,to->y},false);found=to->buffs.emplace(s.buff,std::move(b)).first;}auto& b=found->second;b.channelSources[id]=cast.ticket;if(kind==BuffKind::Earthquake){b.channelSlow[id]=s.moveReduction;b.moveReduction=0;for(auto [source,slow]:b.channelSlow)b.moveReduction=std::max(b.moveReduction,slow);}u->cast->ultimateMarks.emplace_back(target,s.buff);}
+    if(s.kind==SpellKind::Earthquake){auto duration=std::max(0.,elapsed-s.castDelay)-std::max(0.,previous-s.castDelay);ultimateAreaDamage(id,s,cast.point,float(duration)*s.amount,true,cast.owner,cast.ticket);}if(active() && elapsed>=s.channelTime)finishCast(id,cast.ticket);
+}
+void ScriptSession::heroUltimatesTick(double delta){
+    std::vector<std::uint32_t> actors(bladestormActors_.begin(),bladestormActors_.end());for(auto id:actors){if(!alive(id,NativeKind::Unit)){bladestormActors_.erase(id);continue;}auto u=units_.at(id);std::vector<std::uint32_t> buffs;for(auto& [buff,b]:u->buffs)if(b.kind==BuffKind::Bladestorm)buffs.push_back(buff);if(buffs.empty()){bladestormActors_.erase(id);continue;}if(u->paused)continue;
+        for(auto buff:buffs){auto found=u->buffs.find(buff);if(found==u->buffs.end())continue;auto b=found->second;auto known=u->abilities.find(b.ability);if(u->removing || number(u->life)<=0 || u->owner!=b.sourceOwner || known==u->abilities.end() || known->second<=0 || u->morphed()){releaseBuff(found->second);u->buffs.erase(found);continue;}if(u->hidden())continue;auto& s=spellInfo(b.ability,b.sourceLevel);ultimateAreaDamage(id,s,{u->x,u->y},float(std::min(delta,b.remaining))*s.amount,false,b.sourceOwner,b.applied,buff);}
+    }
+}
+}
