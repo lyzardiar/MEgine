@@ -197,6 +197,17 @@ class ScriptSession {
     void cannibalizeTick(std::uint32_t caster,double delta);
     void bindCorpseNatives();
     void bindControlNatives();
+    std::set<std::uint32_t> unitFormActors_;
+    bool alternateForm(const UnitState& unit,const SpellInfo& spell);
+    bool unitFormReady(const UnitState& unit,const SpellInfo& spell);
+    void prepareUnitFormSpell(const UnitState& unit,SpellInfo& spell);
+    std::optional<WorldPoint> formLanding(const UnitState& unit,std::uint32_t type);
+    bool changeUnitForm(std::uint32_t unit,std::uint32_t type,float healthBonus,bool heroForm);
+    void startUnitForm(std::uint32_t unit,const CastOrder& cast);
+    void returnUnitForm(std::uint32_t unit);
+    void unitFormsTick(double delta);
+    void cancelUnitForm(UnitState& unit,std::uint64_t ticket);
+    void unitFormDeath(UnitState& unit);
     std::map<std::uint32_t,std::shared_ptr<const MorphAppearance>> morphAppearances_;
     std::shared_ptr<const MorphAppearance> morphAppearance(std::uint32_t type);
     void morphEffect(std::uint32_t source,std::uint32_t target,const SpellInfo& spell);
