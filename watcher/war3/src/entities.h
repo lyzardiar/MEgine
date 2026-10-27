@@ -34,6 +34,8 @@ struct UnitState {
     std::optional<DigestionState> digestion;
     std::optional<CorpseState> corpse;
     std::optional<ExhumeState> exhume;
+    std::optional<RootState> roots;
+    std::optional<RootTransition> rootTransition;
     std::optional<UnitFormState> unitForm;
     std::optional<UnitFormTransition> formTransition;
     std::string animationProperties;
@@ -129,7 +131,10 @@ struct UnitState {
     bool groundTarget() const {return movementType!="fly" || grounded();}
     bool ethereal() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Banish)return true;return false;}
     float displayFlyHeight() const {return grounding?grounding->height:flyHeight;}
-    bool formLocked() const {return formTransition && (formTransition->spell.formFlags&1);}
+    bool mobileBuilding() const {return building && roots && roots->uprooted;}
+    bool stationaryBuilding() const {return building && !mobileBuilding();}
+    bool productionBlocked() const {return roots && (roots->uprooted || rootTransition);}
+    bool formLocked() const {return rootTransition || (formTransition && (formTransition->spell.formFlags&1));}
     std::string sequenceName(const std::string& sequence) const {return morphed() || animationProperties.empty() || sequence.starts_with("Morph") || sequence.find("Alternate")!=std::string::npos?sequence:sequence+" "+animationProperties;}
     bool stunned() const {if(formLocked())return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
     bool abilitiesDisabled() const {return stunned() || morphed();}

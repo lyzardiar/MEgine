@@ -25,6 +25,6 @@ python tests/generate-undead-forms-fixture.py --data-root "E:/Program Files (x86
 ./build/windows-x86/bin/Release/war3_undead_forms_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/advanced-forms/fixture.w3m"
 ```
 
-待实现/阶段验证：古树扎根拔根、毁灭者吞噬魔法/吸收魔法/毁灭之球，其他原型与完整AI；全部等级/w3a/付费标志组合/永久语义、原版魔法与恢复/石像冷却起止精度、侦测分类/隐形组合、取消/脚本资源事件/人口关闭/转让/死亡移除/回调重入、特殊路径/合法落地、源动画/附件/音效/按钮画面、三图长局/帧耗时/内存/切图释放。测试夹具为便于隔离禁用了路径阻挡，不能作为WPM落地验证。
+古树扎根拔根已接入，见[古树流程](ancient-roots.md)。待实现/阶段验证：吞树、毁灭者吞噬魔法/吸收魔法/毁灭之球，其他原型与完整AI；全部等级/w3a/付费标志组合/永久语义、原版魔法与恢复/石像冷却起止精度、侦测分类/隐形组合、取消/脚本资源事件/人口关闭/转让/死亡移除/回调重入、特殊路径/合法落地、源动画/附件/音效/按钮画面、三图长局/帧耗时/内存/切图释放。测试夹具为便于隔离禁用了路径阻挡，不能作为WPM落地验证。
 
 原始证据位于仓库根tmp/docs-artifacts/war3/advanced-forms/：source.json、source-rows.log、rea-forms.json、rea-orders.json、model-sequences.log、detection-source.log、build.log、check-build.log、flow.log、shared-forms.log、fixture.w3m及读取脚本；均不提交。

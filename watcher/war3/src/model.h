@@ -32,6 +32,7 @@ public:
     void replace(unsigned id,IDirect3DTexture9* texture);
     bool sequence(const std::string& prefix);
     bool sequenceIndex(unsigned index);
+    std::string sequenceName() const;
     ModelGeometry geometry() const;
     float radius() const;
     std::uint64_t sequenceDuration() const;

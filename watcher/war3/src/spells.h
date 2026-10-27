@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root};
 inline bool unitFormSpell(SpellKind kind){return kind>=SpellKind::BearForm && kind<=SpellKind::Burrow;}
 inline bool controlSpell(SpellKind kind){return kind>=SpellKind::Ensnare && kind<=SpellKind::Cyclone;}
 inline bool corpseSpell(SpellKind kind){return kind>=SpellKind::Cannibalize && kind<=SpellKind::AncestralSpirit;}
@@ -43,6 +43,8 @@ struct SpellInfo {
     unsigned formFlags=0;
     float heightTime=0,landDelay=0,formHealth=0;
     int formGold=0,formLumber=0,formFood=0;
+    unsigned rootedWeapons=0,uprootedWeapons=0,uprootedDefense=0;
+    bool rootedTurn=false;
     bool magicControl=false,dispellable=true;
     std::array<std::vector<std::uint32_t>,4> morphTypes;
     bool alwaysAuto=false;

@@ -197,6 +197,13 @@ class ScriptSession {
     void cannibalizeTick(std::uint32_t caster,double delta);
     void bindCorpseNatives();
     void bindControlNatives();
+    std::set<std::uint32_t> rootActors_;
+    void initializeRoot(UnitState& unit);
+    void prepareRootSpell(const UnitState& unit,SpellInfo& spell);
+    bool rootReady(const UnitState& unit,const SpellInfo& spell);
+    void startRoot(std::uint32_t unit,const CastOrder& cast);
+    void rootsTick(double delta);
+    void cancelRoot(UnitState& unit,std::uint64_t ticket);
     std::set<std::uint32_t> unitFormActors_;
     bool alternateForm(const UnitState& unit,const SpellInfo& spell);
     bool unitFormReady(const UnitState& unit,const SpellInfo& spell,bool placement=true);
@@ -402,6 +409,7 @@ class ScriptSession {
     WeaponDefinition unitWeapon(const UnitState& unit,unsigned slot);
     const std::array<WeaponDefinition,2>& weapons(std::uint32_t type);
     bool capability(const UnitState& unit,const char* code);
+    bool weaponEnabled(const UnitState& unit,unsigned slot);
     bool enemy(unsigned owner,unsigned other) const;
     bool weaponTarget(const UnitState& source,const UnitState& target,const WeaponDefinition& weapon,bool automatic=false,bool splash=false,bool committed=false);
     std::optional<unsigned> weaponFor(const UnitState& source,const UnitState& target,bool automatic=false);
@@ -502,6 +510,8 @@ public:
     bool attackMove(std::uint32_t source,WorldPoint target,bool patrol=false);
     bool hasWeapon(std::uint32_t unit);
     const SpellInfo& spellInfo(std::uint32_t ability,unsigned level);
+    SpellTargeting spellTargeting(const UnitState& unit,const SpellInfo& spell) const {return spell.kind==SpellKind::Root && (!unit.roots || !unit.roots->uprooted)?SpellTargeting::None:spell.targeting;}
+    std::optional<WorldPoint> rootSite(std::uint32_t unit,WorldPoint point,std::string& reason,WorldPoint* preview=nullptr);
     const PassiveInfo& passiveInfo(std::uint32_t ability,unsigned level);
     bool castSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target=0);
     bool castSpellAt(std::uint32_t unit,std::uint32_t ability,WorldPoint point);

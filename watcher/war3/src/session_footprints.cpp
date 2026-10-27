@@ -15,5 +15,5 @@ std::vector<PathCell> ScriptSession::pathFootprint(const std::string& path,World
 void ScriptSession::replaceFootprint(std::vector<PathCell>& current,std::vector<PathCell> next) {
     if(current.size()==next.size() && std::equal(next.begin(),next.end(),current.begin(),[](auto a,auto b){return a.index==b.index && a.mask==b.mask;}))return;if(next.size()>8000000-(footprintCells_-current.size()))throw std::runtime_error("Live footprint budget exceeded");footprintCells_=footprintCells_-current.size()+next.size();if(!current.empty())requireWorld().footprint(current,false);if(!next.empty())requireWorld().footprint(next,true);current=std::move(next);
 }
-void ScriptSession::unitFootprint(UnitState& u) {auto next=u.building && u.pathing && !u.removing && std::bit_cast<float>(u.life.bits())>0?pathFootprint(definitions().field(u.type,"UnitData","pathTex"),{u.x,u.y},buildingAngle()*3.14159265359f/180):std::vector<PathCell>{};replaceFootprint(u.footprint,std::move(next));}
+void ScriptSession::unitFootprint(UnitState& u) {auto next=(u.stationaryBuilding() || (u.rootTransition && u.rootTransition->rooting)) && u.pathing && !u.removing && std::bit_cast<float>(u.life.bits())>0?pathFootprint(definitions().field(u.type,"UnitData","pathTex"),{u.x,u.y},buildingAngle()*3.14159265359f/180):std::vector<PathCell>{};replaceFootprint(u.footprint,std::move(next));}
 }
