@@ -283,6 +283,16 @@ class ScriptSession {
     std::map<std::uint64_t,SpellWave> spellWaves_;
     std::map<std::uint64_t,DelayedSpell> delayedSpells_;
     std::map<std::uint64_t,GroundSpell> groundSpells_;
+    void resourceSpellInfo(SpellInfo& spell);
+    bool resourceSpellTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility,unsigned owner=UINT_MAX);
+    void startDrain(std::uint32_t unit);
+    void releaseDrain(CastOrder& cast);
+    void drainPulse(std::uint32_t unit,const CastOrder& cast);
+    void drainRestore(std::uint32_t unit,const SpellInfo& spell,float life,float mana);
+    void drainBonusTick(UnitState& unit,UnitBuff& buff,double delta);
+    void startManaBurn(std::uint32_t unit,const CastOrder& cast,unsigned owner);
+    void manaBurn(std::uint32_t unit,std::uint32_t target,const SpellInfo& spell,unsigned owner);
+    void sacrifice(std::uint32_t unit,std::uint32_t target,const SpellInfo& spell,unsigned owner);
     void startChannel(std::uint32_t unit);
     void channelTick(std::uint32_t unit,double delta);
     void channelPulse(std::uint32_t unit,const CastOrder& cast);
@@ -561,7 +571,7 @@ public:
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
     bool useItemAt(std::uint32_t unit,std::uint32_t item,WorldPoint point);
     bool itemNeedsPoint(std::uint32_t item);
-    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false);
+    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);

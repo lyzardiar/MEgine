@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,ManaBurn,DarkRitual,DeathPact};
 inline bool selfSpell(SpellKind kind){return kind>=SpellKind::Avatar && kind<=SpellKind::ManaShield;}
 inline bool unitFormSpell(SpellKind kind){return kind>=SpellKind::BearForm && kind<=SpellKind::Burrow;}
 inline bool controlSpell(SpellKind kind){return kind>=SpellKind::Ensnare && kind<=SpellKind::Cyclone;}
@@ -48,6 +48,8 @@ struct SpellInfo {
     bool rootedTurn=false,ignoreFriendlyBuffs=false;
     float buffHealth=0,buffMana=0,fullArea=0,halfArea=0;
     float flatDamage=0,healthBonus=0,damageTakenBonus=0,pierceFactor=1,attackFactor=1,magicFactor=1,deflectChance=0,deflectPierce=0,deflectMagic=1;
+    float drainLifeTransfer=0,drainManaTransfer=0,drainLifeBonus=0,drainManaBonus=0,drainLifeDecay=0,drainManaDecay=0;
+    bool sacrificeManaPercent=false,sacrificeLifePercent=false,leaveTargetAlive=false;
     bool magicControl=false,dispellable=true;
     std::array<std::vector<std::uint32_t>,4> morphTypes;
     bool alwaysAuto=false;
@@ -65,13 +67,14 @@ struct CastOrder {
     bool started=false;
     double channelElapsed=0,nextPulse=0,nextArt=0;
     unsigned pulses=0,owner=0;
-    std::vector<std::uint32_t> visuals;
+    std::vector<std::uint32_t> visuals,lightnings;
+    std::vector<std::pair<std::uint32_t,std::uint32_t>> drainMarks;
     std::optional<CombatOrder> resume;
     std::uint32_t resumeOrder=0;
     bool resumeHolding=false;
 };
 struct MorphAppearance {std::uint32_t type=0;std::string model,icon;float scale=1;jass::Real speed;};
-enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Morph,Cyclone,UnitForm,EatTree,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Count};
+enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Morph,Cyclone,UnitForm,EatTree,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,DrainBonus,Count};
 struct UnitBuff {
     std::uint32_t id=0,source=0,target=0;
     BuffKind kind=BuffKind::Stun;
@@ -88,7 +91,8 @@ struct UnitBuff {
     bool magicImmune=false,backstab=false,invulnerable=false;
     std::uint32_t ability=0;
     float flatDamage=0,healthBonus=0,damageTakenBonus=0,pierceFactor=1,attackFactor=1,magicFactor=1,deflectChance=0,deflectPierce=0,deflectMagic=1;
-    float manaEfficiency=0,absorbFraction=0;
+    float manaEfficiency=0,absorbFraction=0,manaBonus=0,lifeDecay=0,manaDecay=0;
+    std::map<std::uint32_t,std::uint64_t> channelSources;
     float stealthDamage=0;
     std::map<unsigned,std::pair<unsigned,double>> detection;
     std::vector<std::uint32_t> visuals;
@@ -112,7 +116,7 @@ struct SpellWave {
     double born=0;
     std::set<std::uint32_t> hit;
 };
-struct DelayedSpell {SpellInfo spell;std::uint32_t source=0;unsigned owner=0;WorldPoint point;double due=0;};
+struct DelayedSpell {SpellInfo spell;std::uint32_t source=0;unsigned owner=0;WorldPoint point;double due=0;std::uint32_t target=0;};
 struct GroundSpell {SpellInfo spell;std::uint32_t source=0;unsigned owner=0;WorldPoint point;double elapsed=0,nextPulse=0;bool started=false,burn=false;std::vector<std::uint32_t> visuals;};
 struct GroundingState {float height=0,rate=0;};
 struct ShadowMeldState {std::uint32_t ability=0;unsigned level=0,owner=0;double remaining=0;bool nightOnly=true,manual=false;};
