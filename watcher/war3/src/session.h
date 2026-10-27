@@ -322,6 +322,15 @@ class ScriptSession {
     void effectsTick();
     std::vector<std::uint32_t> spellVisual(const SpellInfo& spell,const char* field,std::uint32_t target,WorldPoint point,bool automatic=true);
     void releaseBuff(UnitBuff& buff);
+    void selfSpellInfo(SpellInfo& spell);
+    bool selfSpellActive(const UnitState& unit,const SpellInfo& spell) const;
+    void prepareSelfSpell(const UnitState& unit,SpellInfo& spell);
+    bool selfSpellReady(const UnitState& unit,const SpellInfo& spell) const;
+    void selfSpellEffect(std::uint32_t unit,const SpellInfo& spell,bool ownedAbility=true);
+    void selfSpellsTick(double delta);
+    std::set<std::uint32_t> selfSpellActors_;
+    bool defendProjectile(const CombatProjectile& projectile);
+    bool instantSelfSpell(std::uint32_t unit,const SpellInfo& spell);
     bool spellTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility=true,unsigned owner=UINT_MAX);
     bool cancelCast(UnitState& unit,bool preserveRoute=false);
     void spellEvent(std::uint32_t unit,const CastOrder& cast,unsigned stage);
@@ -552,7 +561,7 @@ public:
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
     bool useItemAt(std::uint32_t unit,std::uint32_t item,WorldPoint point);
     bool itemNeedsPoint(std::uint32_t item);
-    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr);
+    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);

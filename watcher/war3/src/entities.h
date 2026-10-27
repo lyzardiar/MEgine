@@ -114,6 +114,7 @@ struct UnitState {
     std::uint64_t castRevision=0;
     std::map<std::uint32_t,double> spellCooldowns;
     std::map<std::uint32_t,UnitBuff> buffs;
+    bool selfCasting=false;
     std::map<std::uint32_t,UnitAura> auras;
     std::map<std::pair<std::string,std::string>,std::uint32_t> auraVisuals;
     AuraBonuses aura;
@@ -136,7 +137,7 @@ struct UnitState {
     bool stationaryBuilding() const {return building && !mobileBuilding();}
     bool productionBlocked() const {return roots && (roots->uprooted || rootTransition);}
     bool formLocked() const {return rootTransition || (formTransition && (formTransition->spell.formFlags&1));}
-    std::string sequenceName(const std::string& sequence) const {return morphed() || animationProperties.empty() || sequence.starts_with("Morph") || sequence.find("Alternate")!=std::string::npos?sequence:sequence+" "+animationProperties;}
+    std::string sequenceName(const std::string& sequence) const {if(morphed())return sequence;auto result=sequence;if(!animationProperties.empty() && !sequence.starts_with("Morph") && sequence.find("Alternate")==std::string::npos)result+=" "+animationProperties;for(auto& [id,b]:buffs){if(b.kind==BuffKind::Avatar && result.find("Alternate")==std::string::npos)result+=" Alternate";if(b.kind==BuffKind::Defend && result.find("Defend")==std::string::npos)result+=" Defend";}return result;}
     bool stunned() const {if(formLocked())return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
     bool abilitiesDisabled() const {return stunned() || morphed();}
     bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots || b.kind==BuffKind::Net || (b.kind==BuffKind::Purge && b.lockRemaining>0))return true;return false;}

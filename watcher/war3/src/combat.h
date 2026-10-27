@@ -34,7 +34,7 @@ struct CombatProjectile {
     WorldPoint start,position,endpoint;
     double born=0;
     std::vector<std::uint32_t> visited;
-    bool neverMiss=false,forcedMiss=false;
+    bool neverMiss=false,forcedMiss=false,reflected=false;
     std::vector<PassiveInfo> procs;
 };
 }
