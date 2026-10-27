@@ -18,7 +18,10 @@ struct UnitState {
     std::map<std::uint32_t,int> abilities;
     std::map<std::uint32_t,bool> autocast;
     std::uint32_t currentOrder=0;
-    bool holding=false;
+    bool holding=false,creepGuard=false,guardRemoved=false;
+    std::optional<WorldPoint> guardHome;
+    unsigned guardOwner=UINT_MAX;
+    std::uint64_t guardPost=0;
     bool building=false,hero=false;
     std::uint32_t race=7;
     float scale=1,collision=16,flyHeight=0;

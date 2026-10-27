@@ -7,6 +7,7 @@
 
 namespace war3::jass {
 using ThreadId=std::uint64_t;
+using ThreadOwner=std::uintptr_t;
 struct ThreadHooks {std::function<void(ThreadId,ThreadId)> created,switched;std::function<void(ThreadId)> finished;};
 class ThreadScheduler {
     struct Impl;
@@ -17,7 +18,9 @@ public:
     ThreadScheduler(const ThreadScheduler&)=delete;
     ThreadScheduler& operator=(const ThreadScheduler&)=delete;
     void hooks(ThreadHooks hooks);
-    ThreadId start(std::function<void()> entry);
+    ThreadId start(std::function<void()> entry,ThreadOwner owner=0);
+    void pause(ThreadOwner owner,bool paused);
+    void checkpoint();
     void sleep(double seconds);
     void wait(ThreadId thread);
     void clock(double time);

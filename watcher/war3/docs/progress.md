@@ -2,6 +2,8 @@
 
 2026-10-27。目标为独立还原1.27.0.52240完整客户端，尚未完成；MEngine移植未开始。
 
+AI暂停计数/玩家线程隔离、守卫岗位/回收/付费补员、追击返回、定时生命部队筛选及基础队长控制已接通。新增2项调度和3组会话最小检查通过，亡灵原AI由BootyBay原main启动并推进2秒，产生1生产队列/2待建施工，无Game.dll。原件暂停计数及非零判断、守卫开关已有REA/Rizin指令依据；完整AI/GPU/时序/性能仍待阶段实现与验证，见[AI控制](ai-control.md)。
+
 原版AI加载器已连接StartMeleeAI/StartCampaignAI、每玩家独立VM/变量、共享句柄/调度、实际生产/研究/采集、城镇/扩张与基础队长/英雄策略。BootyBay原main启动人族电脑后2秒通过，产生真实队列/采集/待建订单，无Game.dll；共享VM安全检查11项/会话5组通过。完整四族/战役AI、守卫/运输/暂停及长局/GPU/原版精度仍未完成，见[原版AI](ai.md)。
 
 JASS等待、独立ExecuteFunc/触发器/计时器动作线程、TriggerExecuteWait和每线程上下文已接通；map main可等待并如实报告完成状态。VM最小检查10项、实际会话5组最终通过，BootyBay原main/250ms集成退出0、无Game.dll。原版等待精度/事件顺序、完整AI、GPU/三图/性能仍待阶段实现或验证，见[脚本线程](script-threads.md)。

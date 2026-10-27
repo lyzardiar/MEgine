@@ -84,6 +84,14 @@ class ScriptSession {
     void bindThreadNatives();
     double simulationTime_=0,accumulator_=0;
     std::array<std::unique_ptr<ScriptAI>,16> ais_;
+    std::array<std::uint32_t,16> aiPauseDepth_{};
+    void pauseAI(unsigned player,bool paused);
+    void bindAiControlNatives();
+    void bindAiGuardNatives(ScriptAI& ai);
+    void aiFillGuards(ScriptAI& ai);
+    void aiReturnGuards(ScriptAI& ai,bool force=false);
+    void aiRemoveGuard(std::uint32_t unit);
+    void aiRecycleGuard(std::uint32_t unit);
     void bindAiNatives();
     void bindAiRuntime(ScriptAI& ai);
     void aiTick();

@@ -36,6 +36,8 @@ public:
     void threadClock(double time);
     void advanceThreads(double time);
     void cancelThreads();
+    void pauseThreads(bool paused);
+    bool threadsPaused() const;
     void threadHooks(ThreadHooks hooks);
     ThreadId currentThread() const;
     size_t threadCount() const;

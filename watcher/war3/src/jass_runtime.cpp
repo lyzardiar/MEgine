@@ -28,6 +28,7 @@ struct Runtime::Impl {
     std::uint64_t remaining=0;
     size_t active=0;
     size_t noYield=0;
+    bool paused=false;
     struct Domain {ThreadScheduler threads;std::vector<Impl*> members;std::map<ThreadId,bool> live;explicit Domain(size_t count):threads(count){}};
     std::shared_ptr<Domain> domain;
     struct Execution {std::uint64_t remaining=0;size_t active=0,noYield=0;};
@@ -119,6 +120,7 @@ struct Runtime::Impl {
         if(function<module.functions().size() && module.program().functions()[function].native)return callNative(function,arguments,caller);
         pushFrame(function,arguments,caller);
         while(!frames.empty()){
+            if(paused && domain->threads.current())domain->threads.checkpoint();
             auto& frame=frames.back();auto& instructions=code.at(frame.function);if(frame.pc>=instructions.size())fail(caller,"JASS instruction pointer outside function");auto instruction=instructions[frame.pc++];auto p=instruction.position;if(!remaining)fail(p,"JASS instruction budget exceeded");--remaining;
             switch(instruction.op){
                 case Op::Literal:values.push_back(literals.at(instruction.id));break;
@@ -146,7 +148,7 @@ struct Runtime::Impl {
 Runtime::Runtime(Module module,RuntimeLimits limits) : impl_(std::make_unique<Impl>(*this,std::move(module),limits)) {
     impl_->compile();for(auto name:{"I2R","R2I"}){auto id=this->module().functionId(name);if(id==none || !this->module().program().functions()[id].native)continue;auto& signature=this->module().functions()[id];bool toReal=std::string_view(name)=="I2R";if(signature.parameters!=std::vector<Id>{toReal?impl_->integer:impl_->real} || signature.result!=(toReal?impl_->real:impl_->integer))throw std::runtime_error("Invalid numeric native signature: "+std::string(name));bind(name,[toReal](Runtime& runtime,std::span<const Value> values){return toReal?runtime.real(Real::fromInteger(signedBits(values[0].bits))):runtime.integer(Real::fromBits(values[0].bits).toInteger());});}
 }
-Runtime::~Runtime(){if(!impl_->domain->threads.current())cancelThreads();auto& members=impl_->domain->members;members.erase(std::find(members.begin(),members.end(),impl_.get()));}
+Runtime::~Runtime(){if(!impl_->domain->threads.current())cancelThreads();impl_->domain->threads.pause(reinterpret_cast<ThreadOwner>(impl_.get()),false);auto& members=impl_->domain->members;members.erase(std::find(members.begin(),members.end(),impl_.get()));}
 const Module& Runtime::module() const {return impl_->module;}
 size_t Runtime::instructionCount() const {size_t count=0;for(auto& code:impl_->code)count+=code.size();return count;}
 void Runtime::bind(const std::string& name,Native function) {auto id=module().functionId(name);if(impl_->active || (impl_->state!=State::Created && impl_->domain->threads.count()) || id==none || !module().program().functions()[id].native || !function)throw std::runtime_error("Invalid JASS native binding: "+name);impl_->natives[id]=std::move(function);}
@@ -157,13 +159,15 @@ bool Runtime::ready() const {return impl_->state==State::Ready;}
 Value Runtime::invoke(const std::string& name,std::span<const Value> arguments) {if(!ready() && !(impl_->state==State::Initializing && (impl_->active || impl_->domain->threads.current())))throw std::runtime_error("JASS runtime is not initialized");auto id=module().functionId(name);if(id==none)throw std::runtime_error("Unknown JASS entry: "+name);return impl_->run(id,arguments,module().program().functions()[id].position);}
 Value Runtime::invoke(const Value& code,std::span<const Value> arguments) {if(code.codeOwner && code.codeOwner!=this)return code.codeOwner->invoke(code,arguments);if(code.type!=impl_->codeType || !code.bits || code.bits-1>=module().functions().size())throw std::runtime_error("Invalid JASS code reference");return invoke(module().program().functions()[code.bits-1].name,arguments);}
 Value Runtime::invokeNoYield(const Value& code,std::span<const Value> arguments){if(code.codeOwner && code.codeOwner!=this)return code.codeOwner->invokeNoYield(code,arguments);++impl_->noYield;struct Guard{size_t& value;~Guard(){--value;}}guard{impl_->noYield};return invoke(code,arguments);}
-ThreadId Runtime::start(std::function<void()> entry){if(!ready() && !(impl_->state==State::Initializing && impl_->active))throw std::runtime_error("Script threads require initialized runtime state");return impl_->domain->threads.start(std::move(entry));}
+ThreadId Runtime::start(std::function<void()> entry){if(!ready() && !(impl_->state==State::Initializing && impl_->active))throw std::runtime_error("Script threads require initialized runtime state");return impl_->domain->threads.start(std::move(entry),reinterpret_cast<ThreadOwner>(impl_.get()));}
 ThreadId Runtime::start(const std::string& name,std::span<const Value> arguments){auto id=module().functionId(name);if(id==none || module().functions()[id].result!=impl_->nothing)throw std::runtime_error("Invalid script thread entry: "+name);return start([this,name,args=std::vector<Value>(arguments.begin(),arguments.end())]{invoke(name,args);});}
 ThreadId Runtime::start(const Value& code,std::span<const Value> arguments){if(code.codeOwner && code.codeOwner!=this)return code.codeOwner->start(code,arguments);if(code.type!=impl_->codeType || !code.bits || code.bits-1>=module().functions().size())throw std::runtime_error("Invalid script thread code");return start(module().program().functions()[code.bits-1].name,arguments);}
 void Runtime::sleep(double seconds){if(impl_->noYield)throw std::runtime_error("Script wait is not allowed in a synchronous condition");impl_->domain->threads.sleep(seconds);}
 void Runtime::waitThread(ThreadId thread){if(impl_->noYield)throw std::runtime_error("Trigger wait is not allowed in a synchronous condition");impl_->domain->threads.wait(thread);}
 void Runtime::threadClock(double time){impl_->domain->threads.clock(time);}
 void Runtime::advanceThreads(double time){impl_->domain->threads.advance(time);}
+void Runtime::pauseThreads(bool paused){impl_->paused=paused;impl_->domain->threads.pause(reinterpret_cast<ThreadOwner>(impl_.get()),paused);}
+bool Runtime::threadsPaused() const{return impl_->paused;}
 void Runtime::cancelThreads(){impl_->domain->threads.cancelAll();}
 void Runtime::threadHooks(ThreadHooks hooks){if(impl_->domain->threads.count())throw std::runtime_error("Cannot change active script contexts");impl_->threadHooks=std::move(hooks);}
 ThreadId Runtime::currentThread() const{return impl_->domain->threads.current();}

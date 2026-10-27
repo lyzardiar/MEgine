@@ -21,7 +21,7 @@ UnitMetaData中utyp的caseSens=0，原TownHall/Mechanical/Peon等字段含大写
 
 证据在根tmp/docs-artifacts/war3/ai/：source.json、town-source.json、build-final.log、classes-build.log、delivery-build.log、vm-safety.log、session-safety.log及human-startup-final.log。没有运行三图/全族/GPU/性能回归。
 
-common.ai来自War3Patch.mpq，SHA256为29f51929ff3c09988a77748dbefea319b72b32bf4bb1a5f6997760a621454818；human.ai来自War3x.mpq，SHA256为e89a747eb5dbb881e72850af12418677e01549cbf8dff7fc57c556c2a33170c8。其余三族摘要在本地source.json，不提交原资源。REA打开Game.dll确认x86及SHA256 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a；深度查询因本次服务未配置Ghidra/IDA不可用，没有新增反编译行为证据。本实现依据原AI源声明/调用及现有状态消费者，原件精度待对照。
+common.ai来自War3Patch.mpq，SHA256为29f51929ff3c09988a77748dbefea319b72b32bf4bb1a5f6997760a621454818；human.ai来自War3x.mpq，SHA256为e89a747eb5dbb881e72850af12418677e01549cbf8dff7fc57c556c2a33170c8。其余三族摘要在本地source.json，不提交原资源。REA打开Game.dll确认x86及SHA256 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a；REA/Rizin已补充定位玩家暂停计数/非零判断、守卫开关及Remove/Recycle调用链，见[AI控制](ai-control.md)。完整策略规则的原件精度仍待对照。
 
 ~~~powershell
 cmake --build --preset release --target war3 war3_ai_tests --parallel 8
@@ -30,8 +30,8 @@ cmake --build --preset release --target war3 war3_ai_tests --parallel 8
 
 ## 继续实现与阶段验证
 
-完整四族/战役AI尚未完成。守卫位置/回收、PauseCompAI、完整战术/施法/物品选择、舰船/飞艇/运输、合并/变形、重开AI、全部策略native和原版同步仍待实现。当前城镇归属、编组/准备度、扩张/野怪分组与配额规则不能视为原版精度结果。
+完整四族/战役AI尚未完成。完整守卫自动登记、战术/施法/物品选择、舰船/飞艇/运输、合并/变形、重开AI、全部策略native和原版同步仍待实现。当前城镇归属、编组/准备度、扩张/野怪分组与配额规则不能视为原版精度结果。
 
 阶段合并验证四族持续运行、建造/训练/研究完成、资源/前置/人口/阻塞/重试、配额再分配/下降/返还、扩张/矿井耗尽、英雄/队长和攻击。覆盖多AI独立globals、跨VM回调/上下文、类型诊断/故障取消/切图释放，以及分类修正对修理/目标/古树/被动伤害的影响。GPU、三图长局、CPU/内存/磁盘和原版对照保持待验证；完整AI和客户端验收保持开放。
 
-当前common.ai专用native接续清单（未绑定，调用会明确失败）：Unsummon、SetNewHeroes、PurchaseZeppelin、MergeUnits、ConvertUnits、SetRandomPaths、SetSlowChopping、SetCaptainChanges、SetReplacementCount、GroupTimedLife、LoadZepWave、AddGuardPost、FillGuardPosts、ReturnGuardPosts、ResetCaptainLocs、ShiftTownSpot、TeleportCaptain、ClearCaptainTargets、SuicideUnit、SuicideUnitEx、UnitInvis、IgnoredUnits、DisablePathing、SetAmphibious。common.j中的守卫与AI暂停接口另行实现。
+当前common.ai专用native接续清单（未绑定，调用会明确失败）：Unsummon、SetNewHeroes、PurchaseZeppelin、MergeUnits、ConvertUnits、SetRandomPaths、SetSlowChopping、SetCaptainChanges、LoadZepWave、TeleportCaptain、SuicideUnit、SuicideUnitEx、UnitInvis、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。
