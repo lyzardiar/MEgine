@@ -9,6 +9,7 @@
 #include "spells.h"
 #include "transport.h"
 #include "spirit_split.h"
+#include "firelord.h"
 #include "corpses.h"
 #include "unit_forms.h"
 #include <algorithm>
@@ -31,6 +32,7 @@ struct UnitState {
     std::optional<ShadowMeldState> shadowMeld;
     std::optional<MirrorImageState> mirrorImage;
     std::shared_ptr<SpiritSplitState> spiritSplit;
+    std::optional<LavaSpawnState> lavaSpawn;
     std::uint32_t spiritParent=0;
     std::uint64_t spiritTicket=0;
     std::uint32_t transport=0;
@@ -156,7 +158,7 @@ struct UnitState {
     std::uint64_t animationFrame(std::uint64_t duration) const {auto time=std::uint64_t(std::max(0.,animationTime)*1000);return cast && cast->phase==CastOrder::Phase::Channel && cast->spell.animationLooping && duration?time%duration:time;}
     std::string sequenceName(const std::string& sequence) const {if(spinning() && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")))return "Attack Walk Stand Spin";if(morphed())return sequence;auto result=sequence;if(!animationProperties.empty() && !sequence.starts_with("Morph") && sequence.find("Alternate")==std::string::npos)result+=" "+animationProperties;for(auto& [id,b]:buffs){if(b.kind==BuffKind::Avatar && result.find("Alternate")==std::string::npos)result+=" Alternate";if(b.kind==BuffKind::Defend && result.find("Defend")==std::string::npos)result+=" Defend";}return result;}
     bool stunned() const {if(formLocked() || (possessionClaim && possessionClaim->locked))return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Stun || b.kind==BuffKind::Impale || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
-    unsigned preventedAttacks() const {unsigned result=0;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Silence || b.kind==BuffKind::DrunkenHaze)result|=b.disableMask;return result;}
+    unsigned preventedAttacks() const {unsigned result=0;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Silence || b.kind==BuffKind::DrunkenHaze || b.kind==BuffKind::SoulBurn)result|=b.disableMask;return result;}
     bool doomed() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Doom)return true;return false;}
     bool silenced() const {return doomed() || (preventedAttacks()&8)!=0;}
     bool attackPrevented(bool ranged) const {return (preventedAttacks()&(ranged?2u:1u))!=0;}
@@ -166,7 +168,7 @@ struct UnitState {
     float displayScale() const {auto form=morphAppearance();return (form?form->scale:scale)*(1+spellBonus(&UnitBuff::scaleBonus));}
     float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
-    bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || transport!=0 || (corpse && corpse->gone);}
+    bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
 };
 struct DestructableState {
     std::uint32_t type=0;

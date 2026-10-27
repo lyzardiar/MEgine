@@ -17,7 +17,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
         {"Atru",PassiveKind::Detection,false},{"Agyv",PassiveKind::Detection,false},{"Adts",PassiveKind::Detection,false},
         {"Agho",PassiveKind::Ghost,false},{"Aexh",PassiveKind::Exhume,false},
         {"AOre",PassiveKind::Reincarnation,false},{"ACrn",PassiveKind::Reincarnation,false},
-        {"AIrc",PassiveKind::Reincarnation,false},{"Aphx",PassiveKind::PhoenixMorph,false},{"Apxf",PassiveKind::PhoenixFire,false},{"ANbs",PassiveKind::AttackModifier,false},{"Alit",PassiveKind::LightningAttack,false},{"Aasl",PassiveKind::SlowAura,true},
+        {"AIrc",PassiveKind::Reincarnation,false},{"Aphx",PassiveKind::PhoenixMorph,false},{"Apxf",PassiveKind::PhoenixFire,false},{"ANbs",PassiveKind::AttackModifier,false},{"ANic",PassiveKind::AttackModifier,false},{"Alit",PassiveKind::LightningAttack,false},{"Aasl",PassiveKind::SlowAura,true},
         {"Apig",PassiveKind::PermanentImmolation,false},{"Awar",PassiveKind::Pulverize,false},
         {"Atdg",PassiveKind::TornadoDamage,false},{"Atsp",PassiveKind::TornadoSpin,false},{"Atwa",PassiveKind::TornadoWander,false}
     };auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& source:prototypes)if(source.code==code){p.kind=source.kind;p.aura=source.aura;break;}if(p.kind==PassiveKind::Unsupported)return passiveInfo_.emplace(key,std::move(p)).first->second;

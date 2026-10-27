@@ -6,14 +6,14 @@
 #include <memory>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,ManaBurn,DarkRitual,DeathPact,Possession,Charm,ControlMagic,MassTeleport,TownPortal,Recall,Bladestorm,Earthquake,Voodoo,Phoenix,PhoenixFire,FrostArmor,ShadowStrike,CarrionBeetles,Impale,LocustSwarm,SearingArrows,Scout,VengeanceAvatar,VengeanceSpirits,ColdArrows,BlackArrow,Silence,Grizzly,Quilbeast,Hawk,Stampede,BreathFire,DrunkenHaze,HowlTerror,RainFire,Doom,ForkedLightning,SpiritSplit,Tornado,Taunt};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,ManaBurn,DarkRitual,DeathPact,Possession,Charm,ControlMagic,MassTeleport,TownPortal,Recall,Bladestorm,Earthquake,Voodoo,Phoenix,PhoenixFire,FrostArmor,ShadowStrike,CarrionBeetles,Impale,LocustSwarm,SearingArrows,Scout,VengeanceAvatar,VengeanceSpirits,ColdArrows,BlackArrow,Silence,Grizzly,Quilbeast,Hawk,Stampede,BreathFire,DrunkenHaze,HowlTerror,RainFire,Doom,ForkedLightning,SpiritSplit,Tornado,Taunt,SoulBurn,LavaSpawn,Incinerate,Volcano};
 inline bool heroUltimate(SpellKind kind){return kind>=SpellKind::Bladestorm && kind<=SpellKind::Voodoo;}
 inline bool teleportSpell(SpellKind kind){return kind>=SpellKind::MassTeleport && kind<=SpellKind::Recall;}
 inline bool ownershipSpell(SpellKind kind){return kind>=SpellKind::Possession && kind<=SpellKind::ControlMagic;}
 inline bool selfSpell(SpellKind kind){return kind>=SpellKind::Avatar && kind<=SpellKind::ManaShield;}
 inline bool unitFormSpell(SpellKind kind){return kind>=SpellKind::BearForm && kind<=SpellKind::Burrow;}
 inline bool controlSpell(SpellKind kind){return kind>=SpellKind::Ensnare && kind<=SpellKind::Cyclone;}
-inline bool attackEnhancement(SpellKind kind){return kind==SpellKind::OrbAnnihilation || kind==SpellKind::SearingArrows || kind==SpellKind::ColdArrows || kind==SpellKind::BlackArrow;}
+inline bool attackEnhancement(SpellKind kind){return kind==SpellKind::OrbAnnihilation || kind==SpellKind::SearingArrows || kind==SpellKind::ColdArrows || kind==SpellKind::BlackArrow || kind==SpellKind::Incinerate;}
 inline bool cappedCorpseSummon(SpellKind kind){return kind==SpellKind::CarrionBeetles || kind==SpellKind::VengeanceSpirits;}
 inline bool corpseSpell(SpellKind kind){return (kind>=SpellKind::Cannibalize && kind<=SpellKind::AncestralSpirit) || cappedCorpseSummon(kind);}
 inline bool casterSpell(SpellKind kind){return (kind>=SpellKind::Heal && kind<=SpellKind::AntiMagicShell) || kind==SpellKind::Invisibility || kind==SpellKind::FrostArmor;}
@@ -38,6 +38,9 @@ struct SpellInfo {
     float maxDamage=0,distance=0,endRadius=0,moveReduction=0,attackReduction=0,impactDelay=0,summonDuration=0;
     std::uint32_t summonType=0;
     unsigned summonCount=0,summonLimit=0;
+    unsigned splitAttacks=0,splitGenerations=0;
+    float splitDelay=0,splitLifeRatio=0,splitLifeBonus=0;
+    std::uint32_t destructableType=0;
     std::vector<std::uint32_t> summonTypes;
     std::vector<std::string> summonMissiles;
     bool summonsDieWithCaster=false;
@@ -74,7 +77,7 @@ struct CastOrder {
     enum class Phase {Approach,Windup,Backswing,Channel};
     Phase phase=Phase::Approach;
     SpellInfo spell;
-    std::uint32_t target=0,abilityHandle=0,caster=0,companion=0;
+    std::uint32_t target=0,abilityHandle=0,caster=0,companion=0,destructable=0;
     std::uint32_t item=0;
     bool itemPaid=false;
     WorldPoint point;
@@ -93,7 +96,7 @@ struct CastOrder {
 };
 struct PossessionClaim {std::uint32_t source=0;std::uint64_t ticket=0;bool locked=false;};
 struct MorphAppearance {std::uint32_t type=0;std::string model,icon;float scale=1;jass::Real speed;};
-enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Morph,Cyclone,UnitForm,EatTree,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,DrainBonus,PossessionCaster,PossessionTarget,Controlled,ItemRecovery,ItemInvulnerability,ItemSpeed,Bladestorm,Earthquake,Voodoo,FrostArmor,ShadowStrike,Impale,ColdArrows,BlackArrow,Silence,DrunkenHaze,BreathBurn,RainBurn,HowlTerror,Doom,Count};
+enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Morph,Cyclone,UnitForm,EatTree,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,DrainBonus,PossessionCaster,PossessionTarget,Controlled,ItemRecovery,ItemInvulnerability,ItemSpeed,Bladestorm,Earthquake,Voodoo,FrostArmor,ShadowStrike,Impale,ColdArrows,BlackArrow,Silence,DrunkenHaze,BreathBurn,RainBurn,HowlTerror,Doom,SoulBurn,Incinerate,Count};
 struct UnitBuff {
     std::uint32_t id=0,source=0,target=0;
     BuffKind kind=BuffKind::Stun;
@@ -114,7 +117,8 @@ struct UnitBuff {
     float manaEfficiency=0,absorbFraction=0,manaBonus=0,lifeDecay=0,manaDecay=0,damageTakenFactor=1;
     std::map<std::uint32_t,std::uint64_t> channelSources;
     std::map<std::uint32_t,float> channelSlow;
-    unsigned sourceOwner=UINT_MAX,sourceLevel=0;
+    unsigned sourceOwner=UINT_MAX,sourceLevel=0,stacks=0;
+    float tickInterval=1;
     float stealthDamage=0;
     std::map<unsigned,std::pair<unsigned,double>> detection;
     std::vector<std::uint32_t> visuals;

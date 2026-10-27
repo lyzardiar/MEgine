@@ -27,7 +27,7 @@ struct CombatOrder {
 };
 struct CombatProjectile {
     WeaponDefinition definition;
-    std::uint64_t id=0;
+    std::uint64_t id=0,lavaTicket=0;
     std::uint32_t source=0,target=0,sourceType=0,owner=0,ability=0,visualAbility=0,visualLevel=0;
     unsigned weapon=0,abilityLevel=0;
     float damage=0,travelled=0,distance=0,startHeight=0,endHeight=0,stealthDamage=0;
