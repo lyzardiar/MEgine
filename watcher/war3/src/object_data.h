@@ -21,6 +21,7 @@ class ObjectData {
     std::map<std::uint32_t,std::map<std::string,std::string>> overrides_;
     SourceSettings profiles_{true};
     std::vector<ObjectOverride> objects_;
+    mutable std::optional<std::map<std::string,std::uint32_t>> unitNames_;
     size_t unknown_=0;
     void load(Archives& archives,const char* member,const char* table);
     void overlay(Archives& archives,const char* member,bool ability=false,bool upgrade=false);
@@ -28,6 +29,7 @@ public:
     explicit ObjectData(Archives& archives);
     static std::uint32_t code(std::string_view text);
     static std::string name(std::uint32_t code);
+    std::uint32_t unitId(const std::string& name) const;
     bool contains(std::uint32_t id,bool item=false) const;
     bool ability(std::uint32_t id) const;
     bool upgrade(std::uint32_t id) const;

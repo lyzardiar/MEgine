@@ -10,7 +10,7 @@ jass::Real real(double value) {return jass::Real::fromBits(std::bit_cast<std::ui
 bool limit(float value,float target,unsigned operation) {switch(operation){case 0:return value<target;case 1:return value<=target;case 2:return value==target;case 3:return value>=target;case 4:return value>target;case 5:return value!=target;default:throw std::runtime_error("Unknown time limit operation");}}
 }
 void ScriptSession::advance(double elapsed) {
-    if(!mainCompleted())throw std::runtime_error("Simulation requires completed map main");if(!std::isfinite(elapsed) || elapsed<0 || elapsed>60)throw std::runtime_error("Invalid simulation elapsed interval");if(simulationPaused_)return;accumulator_+=elapsed;
+    if(!mainCompleted())throw std::runtime_error("Simulation requires completed map main");if(!std::isfinite(elapsed) || elapsed<0 || elapsed>60)throw std::runtime_error("Invalid simulation elapsed interval");if(simulationPaused_){updateAudio();return;}accumulator_+=elapsed;
     try{while(accumulator_>=1./32 && !simulationPaused_){accumulator_-=1./32;tick(1./32);}if(simulationPaused_)accumulator_=0;}catch(...){failed_=true;throw;}updateAudio();
 }
 void ScriptSession::tick(double delta) {

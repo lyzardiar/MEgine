@@ -7,6 +7,7 @@
 
 namespace war3 {
 class QuestDialog;
+class GameFlowUi;
 struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;};
 class GameView {
     std::unique_ptr<GameData> data_;
@@ -32,6 +33,8 @@ class GameView {
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
     std::unique_ptr<QuestDialog> questDialog_;
     bool questsOpen_=false;
+    std::unique_ptr<GameFlowUi> flow_;
+    bool appExit_=false;
     std::wstring chatText_;
     std::array<float,3> eye_{};
     size_t drawnChunks_=0,drawnObjects_=0,drawnUnits_=0;
@@ -53,6 +56,8 @@ public:
     GameView(std::unique_ptr<GameData> data,Renderer& renderer,Text& text,Log& log);
     ~GameView();
     bool draw(const GameInput& input);
+    bool appExitRequested() const {return appExit_;}
+    bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}
     unsigned frames() const {return frames_;}
 };
 }

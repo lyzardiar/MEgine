@@ -6,6 +6,7 @@
 #include "sound.h"
 #include "music.h"
 #include "entities.h"
+#include "game_state.h"
 #include "script_state.h"
 #include "fdf.h"
 #include "spatial_region.h"
@@ -41,13 +42,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable};
+enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     using Timer=ScriptTimer;
     using Trigger=ScriptTrigger;
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -78,6 +79,16 @@ class ScriptSession {
     std::optional<SourceTable> weather_;
     std::vector<ScriptContext> contexts_;
     double simulationTime_=0,accumulator_=0;
+    std::array<std::optional<unsigned>,16> results_;
+    std::array<PlayerStatistics,16> statistics_{};
+    std::array<std::vector<HeroSummary>,16> heroSummaries_;
+    std::array<bool,16> heroSnapshotValid_{};
+    std::map<std::uint32_t,std::shared_ptr<ScriptDialog>> dialogs_;
+    std::map<std::uint32_t,std::shared_ptr<ScriptButton>> buttons_;
+    std::map<std::uint32_t,std::shared_ptr<ScriptDefeatCondition>> defeatConditions_;
+    SessionExit exit_=SessionExit::None;
+    bool showScores_=false,userControl_=true,userUI_=true,selectionEnabled_=true,selectionUI_=true;
+    unsigned gameDifficulty_=1,defaultDifficulty_=1;
     bool simulationPaused_=false,fogEnabled_=true,fogMaskEnabled_=true;
     unsigned gameSpeed_=2;
     unsigned version_=1;
@@ -233,6 +244,14 @@ class ScriptSession {
     void bindCollectionNatives();
     void bindGameNatives();
     void bindDialogNatives();
+    void bindScriptDialogNatives();
+    void bindMatchNatives();
+    void playerEvent(unsigned player,unsigned event);
+    void clearDialog(std::uint32_t dialog);
+    unsigned playerUnitCount(unsigned player,bool structures,bool incomplete,std::optional<std::uint32_t> type={},bool upgrades=false);
+    std::string localized(const std::string& key);
+    void cacheHeroes(unsigned owner);
+    void recordStat(unsigned owner,int PlayerStatistics::* field,int amount=1);
     void preload(const std::string& member);
     void preloader(const std::string& member);
     bool alive(std::uint32_t handle,NativeKind kind) const;
@@ -312,6 +331,24 @@ public:
     void acknowledgeQuests() {questFlash_=false;}
     void displayText(unsigned owner,float x,float y,double duration,std::string text);
     void startMain();
+    void finishGame(bool scores,SessionExit action=SessionExit::Return);
+    void removePlayer(unsigned owner,unsigned result);
+    void leaveGame();
+    bool clickDialog(unsigned owner,std::uint32_t button);
+    void pause(bool value) {simulationPaused_=value;}
+    bool paused() const {return simulationPaused_;}
+    bool userControl() const {return userControl_;}
+    bool userUI() const {return userUI_;}
+    bool selectionEnabled() const {return selectionEnabled_;}
+    bool selectionUI() const {return selectionUI_;}
+    SessionExit exitRequest() const {return exit_;}
+    bool showScores() const {return showScores_;}
+    const auto& results() const {return results_;}
+    const auto& statistics() const {return statistics_;}
+    const auto& heroSummaries() const {return heroSummaries_;}
+    const auto& dialogs() const {return dialogs_;}
+    const auto& buttons() const {return buttons_;}
+    const auto& defeatConditions() const {return defeatConditions_;}
     bool mainCompleted() const {return mainCompleted_ && !failed_;}
     void advance(double elapsed);
     double simulationTime() const {return simulationTime_;}

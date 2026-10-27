@@ -29,7 +29,7 @@ struct ScriptTrigger {
 };
 struct ScriptForce {std::uint32_t players=0;};
 struct ScriptEvent {
-    enum class Kind {Timer,TimerExpire,Clock,Player,PlayerUnit,Unit,Game,Alliance,PlayerState,RegionEnter,RegionLeave,UnitRange,Chat,WidgetDeath};
+    enum class Kind {Timer,TimerExpire,Clock,Player,PlayerUnit,Unit,Game,Alliance,PlayerState,RegionEnter,RegionLeave,UnitRange,Chat,WidgetDeath,Dialog,DialogButton};
     Kind kind=Kind::Game;
     std::uint32_t owner=0,target=0,event=0,comparison=0;
     std::uint32_t stateKey=0;
@@ -53,7 +53,7 @@ struct ScriptContext {
     std::uint32_t learnedSkill=0,learnedLevel=0;
     std::uint32_t summoningUnit=0,summonedUnit=0,damageSource=0,orderTarget=0;
     std::uint32_t attacker=0;
-    std::uint32_t researched=0;
+    std::uint32_t researched=0,clickedDialog=0,clickedButton=0;
     std::uint32_t constructing=0,cancelled=0,constructed=0;
     std::uint32_t triggerWidget=0,triggerDestructable=0,filterDestructable=0,enumDestructable=0;
     bool damageAttack=false,damageRanged=false;
