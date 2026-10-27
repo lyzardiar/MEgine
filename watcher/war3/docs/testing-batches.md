@@ -8,6 +8,14 @@
 | W002 图像、字体和音频边界 | image、media、main、rea-boundaries | BLP1/JPEG/palette、BLP2/BC、TGA、原版中文字体、Miles 内存 MP3 | IJL 调用约定、透明平面、codec 路径与 sample 生命周期 | 基础范围通过，批次关闭；音效与听感仍待验收 |
 | W003 原版 MDX 菜单场景 | model、model_pose、binary、archive、renderer、main、fdf、glue、tests | MDX800 基础场景、纹理来源、FDF 模板与字符串、真实帧、退出输入 | 不可信记录边界、FDF 预算、菜单按钮输入边界 | 基础范围通过，批次关闭；完整还原留在功能矩阵 |
 
+## 破法者与龙鹰阶段待验证
+
+路径：session_spell_steal/human_channels/feedback，源spell_info/passive_info/spells/channel/attack/projectiles、buff出处/成员与实际状态、structures分类、自动施法/库存选目标与支付。消费Asps/Amls/Aclf、Afbk及原派生。必要产品编译无警告，差异检查通过。
+
+状态：实现接入；只执行开发必需Win32 Release产品编译、差异和源消费者审查。新增专项、三图、原版精度、UI/GPU/声音/AI及性能待阶段集中验证。源表/Profile/优先级/单位/归档摘要、REA类依据及构建日志在tmp/docs-artifacts/war3/human-casters/。
+
+阶段合并盗取源优先级/正负状态/实际迁移/接收者/魔免/剩余时间/模型/源/自动与候选缓存，反馈真实魔法/英雄与召唤/同次伤害/全部攻击组合，锁镣目标/控制/多来源/伤害/光束/打断/驱散/死亡重入，乌云范围/结构目标/远程攻击/重叠/退出/结束/移除和物品目标/次数/费用/冷却/六槽/事件；三图长局、完整原UI/GPU/声音/AI、CPU/内存/连续切图无解包增长。精确规则及库存Cloud独立寿命等开放边界见[破法者与龙鹰](human-casters.md)，旧MEngine队列继续延期。
+
 ## 单位护盾、链接、削弱与灵魂行者阶段待验证
 
 路径：session_unit_casters、spell_info/spells/caster_spells/autocast、实际buff替换/释放/tick，damage的真实分摊与递归/倍率隔离，fog/visibility，entities/unit_forms的原类型和虚无，以及item_use的目标/六槽/次数/冷却/事件。消费Alsh/Aspl/Afae/Acri、Acpf和源野外/库存派生。必要Win32 Release产品编译无警告，差异检查通过。
