@@ -17,6 +17,7 @@ struct TimedLife {std::uint32_t buff=0;double duration=0,remaining=0;bool paused
 struct UnsummonOrder {unsigned owner=0;std::uint32_t caster=0,ability=0;std::uint64_t ticket=0;float initialLife=0,maximumLife=0,rate=0,factor=0;double drained=0;int gold=0,lumber=0,returnedGold=0,returnedLumber=0;};
 struct UnitState {
     std::uint32_t handle=0,type=0,owner=0;
+    std::uint64_t deathRevision=0;
     std::string name,model,icon;
     jass::Real x,y,facing,life,maxLife,mana,maxMana,moveSpeed,defaultMoveSpeed,acquireRange;
     int resources=0,userData=0,level=1,foodUsed=0,foodMade=0;

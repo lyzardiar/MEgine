@@ -16,6 +16,7 @@
 #include "effects.h"
 #include "ai.h"
 #include "consumables.h"
+#include "phoenix_fire.h"
 #include <variant>
 
 namespace war3 {
@@ -170,6 +171,17 @@ class ScriptSession {
     void summonPhoenix(std::uint32_t unit,const SpellInfo& spell,unsigned owner);
     std::map<std::pair<std::uint32_t,unsigned>,std::optional<DeathPassiveInfo>> deathPassives_;
     std::set<std::uint32_t> deathRestartActors_;
+    const SpellInfo& phoenixFireInfo(std::uint32_t ability,unsigned level);
+    void refreshPhoenixFire(UnitState& unit);
+    void removePhoenixFire(std::uint32_t unit);
+    void clearPhoenixBurn(std::uint32_t target,std::uint64_t ticket=0);
+    void phoenixFireImpact(const SpellMissile& missile);
+    void phoenixFireTick(double delta);
+    std::map<std::pair<std::uint32_t,unsigned>,SpellInfo> phoenixFireInfo_;
+    std::map<std::pair<std::uint32_t,std::uint32_t>,PhoenixFireClock> phoenixFireClocks_;
+    std::set<std::uint32_t> phoenixFireActors_;
+    std::map<std::uint32_t,PhoenixBurn> phoenixBurns_;
+    std::uint64_t phoenixBurnTicket_=0;
     void heroUltimateInfo(SpellInfo& spell);
     bool ultimateEffectActive(std::uint32_t unit,unsigned owner,std::uint64_t ticket,std::uint32_t buff=0);
     void ultimateAreaDamage(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,float amount,bool buildingsOnly,unsigned owner,std::uint64_t ticket,std::uint32_t buff=0);
