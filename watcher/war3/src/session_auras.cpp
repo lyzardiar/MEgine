@@ -16,7 +16,7 @@ void ScriptSession::aggregateAuras(UnitState& u,bool visuals) {
     AuraBonuses result;for(auto& [id,entry]:u.auras){auto& p=*entry.definition;switch(p.kind){
         case PassiveKind::Brilliance:(p.percent?result.manaPercent:result.mana)+=p.amount;break;
         case PassiveKind::Devotion:(p.percent?result.armorPercent:result.armor)+=p.amount;break;
-        case PassiveKind::Endurance:result.movement+=p.amount;result.attackSpeed+=p.secondary;break;
+        case PassiveKind::SlowAura:case PassiveKind::Endurance:result.movement+=p.amount;result.attackSpeed+=p.secondary;break;
         case PassiveKind::Unholy:result.movement+=p.amount;(p.percent?result.healthPercent:result.health)+=p.secondary;break;
         case PassiveKind::Regeneration:(p.percent?result.healthPercent:result.health)+=p.amount;break;
         case PassiveKind::Vampiric:result.vampiric+=p.amount;break;

@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,ManaBurn,DarkRitual,DeathPact,Possession,Charm,ControlMagic,MassTeleport,TownPortal,Recall,Bladestorm,Earthquake,Voodoo,Phoenix,PhoenixFire,FrostArmor,ShadowStrike,CarrionBeetles,Impale,LocustSwarm,SearingArrows,Scout,VengeanceAvatar,VengeanceSpirits,ColdArrows,BlackArrow,Silence,Grizzly,Quilbeast,Hawk,Stampede,BreathFire,DrunkenHaze,HowlTerror,RainFire,Doom,ForkedLightning};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,ManaBurn,DarkRitual,DeathPact,Possession,Charm,ControlMagic,MassTeleport,TownPortal,Recall,Bladestorm,Earthquake,Voodoo,Phoenix,PhoenixFire,FrostArmor,ShadowStrike,CarrionBeetles,Impale,LocustSwarm,SearingArrows,Scout,VengeanceAvatar,VengeanceSpirits,ColdArrows,BlackArrow,Silence,Grizzly,Quilbeast,Hawk,Stampede,BreathFire,DrunkenHaze,HowlTerror,RainFire,Doom,ForkedLightning,SpiritSplit,Tornado,Taunt};
 inline bool heroUltimate(SpellKind kind){return kind>=SpellKind::Bladestorm && kind<=SpellKind::Voodoo;}
 inline bool teleportSpell(SpellKind kind){return kind>=SpellKind::MassTeleport && kind<=SpellKind::Recall;}
 inline bool ownershipSpell(SpellKind kind){return kind>=SpellKind::Possession && kind<=SpellKind::ControlMagic;}
@@ -38,6 +38,8 @@ struct SpellInfo {
     float maxDamage=0,distance=0,endRadius=0,moveReduction=0,attackReduction=0,impactDelay=0,summonDuration=0;
     std::uint32_t summonType=0;
     unsigned summonCount=0,summonLimit=0;
+    std::vector<std::uint32_t> summonTypes;
+    std::vector<std::string> summonMissiles;
     bool summonsDieWithCaster=false;
     bool channelled=false,animationLooping=false,disableOthers=false,unlimitedRange=false,nightOnly=false,wholeReveal=false;
     unsigned detectionMask=0;
@@ -72,7 +74,7 @@ struct CastOrder {
     enum class Phase {Approach,Windup,Backswing,Channel};
     Phase phase=Phase::Approach;
     SpellInfo spell;
-    std::uint32_t target=0,abilityHandle=0,caster=0;
+    std::uint32_t target=0,abilityHandle=0,caster=0,companion=0;
     std::uint32_t item=0;
     bool itemPaid=false;
     WorldPoint point;

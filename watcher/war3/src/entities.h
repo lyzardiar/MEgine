@@ -8,6 +8,7 @@
 #include "combat.h"
 #include "spells.h"
 #include "transport.h"
+#include "spirit_split.h"
 #include "corpses.h"
 #include "unit_forms.h"
 #include <algorithm>
@@ -29,6 +30,9 @@ struct UnitState {
     bool shadowNight=false;
     std::optional<ShadowMeldState> shadowMeld;
     std::optional<MirrorImageState> mirrorImage;
+    std::shared_ptr<SpiritSplitState> spiritSplit;
+    std::uint32_t spiritParent=0;
+    std::uint64_t spiritTicket=0;
     std::uint32_t transport=0;
     std::vector<std::uint32_t> cargo;
     double cargoDue=0;
@@ -162,7 +166,7 @@ struct UnitState {
     float displayScale() const {auto form=morphAppearance();return (form?form->scale:scale)*(1+spellBonus(&UnitBuff::scaleBonus));}
     float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
-    bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || transport!=0 || (corpse && corpse->gone);}
+    bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || transport!=0 || (corpse && corpse->gone);}
 };
 struct DestructableState {
     std::uint32_t type=0;
