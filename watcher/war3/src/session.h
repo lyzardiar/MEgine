@@ -18,6 +18,7 @@
 #include "consumables.h"
 #include "phoenix_fire.h"
 #include "swarm.h"
+#include "stampede.h"
 #include <variant>
 
 namespace war3 {
@@ -262,6 +263,24 @@ class ScriptSession {
     const SpellInfo* attackOrb(const UnitState& unit,const UnitState& target,std::uint32_t forced=0);
     void orbWeapon(WeaponDefinition& weapon,const SpellInfo& spell);
     void arrowStatusInfo(SpellInfo& spell);
+    std::map<std::uint64_t,StampedeBeast> stampedeBeasts_;
+    StampedeIndex stampedeUnitIndex_,stampedePropIndex_;
+    std::uint64_t stampedePropRevision_=UINT64_MAX;
+    void rebuildStampedeIndexes();
+    std::map<std::uint64_t,AttackLightning> attackLightnings_;
+    std::uint64_t stampedeTicket_=0,attackLightningTicket_=0;
+    void stampedeInfo(SpellInfo& spell);
+    void stampedePulse(std::uint32_t caster,const CastOrder& cast);
+    void stampedeTick(double delta);
+    void releaseStampede(const CastOrder& cast);
+    bool stampedeActive(const StampedeBeast& beast);
+    void stampedeImpact(const StampedeBeast& beast);
+    void retireStampedeEffect(std::uint32_t effect);
+    const PassiveInfo* lightningAttack(const UnitState& unit);
+    void lightningWeapon(WeaponDefinition& weapon,const PassiveInfo& passive);
+    void queueAttackLightning(const CombatProjectile& projectile,const PassiveInfo& passive);
+    void attackLightningsTick();
+    void lightningAttackHit(const CombatProjectile& projectile,std::uint32_t target);
     bool arrowTarget(unsigned owner,const UnitState& target,const SpellInfo& spell);
     void prepareArrowHit(const CombatProjectile& projectile,std::uint32_t target);
     void finishArrowHit(const CombatProjectile& projectile,std::uint32_t target,std::uint64_t revision);

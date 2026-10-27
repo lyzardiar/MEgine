@@ -8,7 +8,7 @@ struct ScriptEffect {
     WorldPoint point;
     float z=0,facing=0,scale=1;
     double born=0;
-    std::optional<double> destroyed,expires;
+    std::optional<double> destroyed,expires,fallbackExpires;
     bool automatic=false,groundAnchor=false;
 };
 struct LightningInfo {std::string type,texture;float segment=100,width=0,noise=0,texCoordScale=1,duration=0;std::array<float,4> color{1,1,1,1};};

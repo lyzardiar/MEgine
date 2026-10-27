@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,ManaBurn,DarkRitual,DeathPact,Possession,Charm,ControlMagic,MassTeleport,TownPortal,Recall,Bladestorm,Earthquake,Voodoo,Phoenix,PhoenixFire,FrostArmor,ShadowStrike,CarrionBeetles,Impale,LocustSwarm,SearingArrows,Scout,VengeanceAvatar,VengeanceSpirits,ColdArrows,BlackArrow,Silence};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,ManaBurn,DarkRitual,DeathPact,Possession,Charm,ControlMagic,MassTeleport,TownPortal,Recall,Bladestorm,Earthquake,Voodoo,Phoenix,PhoenixFire,FrostArmor,ShadowStrike,CarrionBeetles,Impale,LocustSwarm,SearingArrows,Scout,VengeanceAvatar,VengeanceSpirits,ColdArrows,BlackArrow,Silence,Grizzly,Quilbeast,Hawk,Stampede};
 inline bool heroUltimate(SpellKind kind){return kind>=SpellKind::Bladestorm && kind<=SpellKind::Voodoo;}
 inline bool teleportSpell(SpellKind kind){return kind>=SpellKind::MassTeleport && kind<=SpellKind::Recall;}
 inline bool ownershipSpell(SpellKind kind){return kind>=SpellKind::Possession && kind<=SpellKind::ControlMagic;}
@@ -39,7 +39,7 @@ struct SpellInfo {
     std::uint32_t summonType=0;
     unsigned summonCount=0,summonLimit=0;
     bool summonsDieWithCaster=false;
-    bool channelled=false,disableOthers=false,unlimitedRange=false,nightOnly=false,wholeReveal=false;
+    bool channelled=false,animationLooping=false,disableOthers=false,unlimitedRange=false,nightOnly=false,wholeReveal=false;
     unsigned detectionMask=0;
     std::uint32_t effectAlias=0,channelOptions=0;
     unsigned pulses=0,shards=0;
@@ -60,7 +60,7 @@ struct SpellInfo {
     bool sacrificeManaPercent=false,sacrificeLifePercent=false,leaveTargetAlive=false;
     bool possessionLocks=false,controlInvulnerable=false,controlMagicImmune=false,controlCurrentLife=false;
     float controlBaseMana=0,possessionDamage=1;
-    float decayPeriod=0,initialDamage=0;
+    float decayPeriod=0,initialDamage=0,collisionRadius=0;
     bool magicControl=false,dispellable=true;
     bool teleportCluster=true,teleportProtection=false;
     std::array<std::vector<std::uint32_t>,4> morphTypes;
