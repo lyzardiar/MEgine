@@ -6,6 +6,7 @@
 #include "combat.h"
 #include "spells.h"
 #include "transport.h"
+#include "corpses.h"
 #include <algorithm>
 
 namespace war3 {
@@ -30,6 +31,8 @@ struct UnitState {
     std::optional<CargoDropOrder> cargoDrop;
     std::optional<CargoReturnOrder> cargoReturn;
     std::optional<DigestionState> digestion;
+    std::optional<CorpseState> corpse;
+    bool decaySuspended=false,noCorpse=false,exploded=false;
     std::set<unsigned> visionPlayers;
     bool holding=false,creepGuard=false,guardRemoved=false;
     std::optional<WorldPoint> guardHome;
@@ -111,7 +114,7 @@ struct UnitState {
     float displayScale() const {return scale*(1+spellBonus(&UnitBuff::scaleBonus));}
     float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
-    bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || transport!=0;}
+    bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || transport!=0 || (corpse && corpse->gone);}
 };
 struct DestructableState {
     std::uint32_t type=0;

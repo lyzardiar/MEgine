@@ -183,6 +183,19 @@ class ScriptSession {
     void endDigestion(UnitState& victim);
     void releaseDevoured(std::uint32_t victim);
     void devourTick(double delta);
+    std::set<std::uint32_t> corpseHandles_;
+    void beginCorpse(UnitState& unit,bool immediate=false);
+    void clearCorpse(UnitState& unit);
+    void corpsesTick(double delta);
+    bool corpseTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility=true);
+    std::vector<std::uint32_t> corpseTargets(const UnitState& caster,const SpellInfo& spell,WorldPoint point,float radius=-1);
+    void releaseCorpseClaim(std::uint32_t corpse,std::uint32_t caster,std::uint64_t ticket);
+    void consumeCorpse(std::uint32_t corpse);
+    bool restoreCorpse(std::uint32_t corpse,float health,float mana,bool invulnerable);
+    void corpseSpellEffect(std::uint32_t caster,const SpellInfo& spell,std::uint32_t target,WorldPoint point,unsigned owner);
+    void startCannibalize(std::uint32_t caster,const CastOrder& cast);
+    void cannibalizeTick(std::uint32_t caster,double delta);
+    void bindCorpseNatives();
     bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;
@@ -433,6 +446,7 @@ class ScriptSession {
     MusicScene& requireMusic();
     World& requireWorld();
 public:
+    bool corpseAvailable(std::uint32_t corpse,std::uint32_t claimant=0);
     unsigned cargoCapacity(std::uint32_t transport);
     unsigned cargoUsed(std::uint32_t transport);
     unsigned cargoCost(std::uint32_t passenger);
