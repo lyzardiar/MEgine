@@ -12,6 +12,7 @@ void ScriptSession::dropItem(std::uint32_t unitId,std::uint32_t itemId) {auto& u
 void ScriptSession::bindInventoryNatives() {
     bind("UnitUseItem","boolean",{"unit","item"},[this](auto& vm,auto a){return vm.boolean(useItem(a[0].bits,a[1].bits));});
     bind("UnitUseItemTarget","boolean",{"unit","item","widget"},[this](auto& vm,auto a){return vm.boolean(useItem(a[0].bits,a[1].bits,a[2].bits));});
+    bind("UnitUseItemPoint","boolean",{"unit","item","real","real"},[this](auto& vm,auto a){return vm.boolean(useItemAt(a[0].bits,a[1].bits,{jass::Real::fromBits(a[2].bits),jass::Real::fromBits(a[3].bits)}));});
 
 
     bind("GetItemType","itemtype",{"item"},[this](auto& vm,auto a){auto& state=item(a[0]);auto value=definitions().field(state.type,"ItemData","class");constexpr const char* classes[]={"Permanent","Charged","PowerUp","Artifact","Purchasable","Campaign","Miscellaneous"};for(unsigned i=0;i<7;++i)if(value==classes[i])return vm.handle("itemtype",i);throw std::runtime_error("Unknown source item class: "+value);});

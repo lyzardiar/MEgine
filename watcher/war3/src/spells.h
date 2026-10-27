@@ -5,7 +5,7 @@
 #include <set>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust};
 inline bool casterSpell(SpellKind kind){return (kind>=SpellKind::Heal && kind<=SpellKind::AntiMagicShell) || kind==SpellKind::Invisibility;}
 enum class SpellTargeting {Unit,Point,None,Either};
 struct SpellInfo {
@@ -21,7 +21,8 @@ struct SpellInfo {
     float maxDamage=0,distance=0,endRadius=0,moveReduction=0,attackReduction=0,impactDelay=0,summonDuration=0;
     std::uint32_t summonType=0;
     unsigned summonCount=0;
-    bool channelled=false,disableOthers=false,unlimitedRange=false;
+    bool channelled=false,disableOthers=false,unlimitedRange=false,nightOnly=false,wholeReveal=false;
+    unsigned detectionMask=0;
     std::uint32_t effectAlias=0,channelOptions=0;
     unsigned pulses=0,shards=0;
     float channelTime=0,period=0,castDelay=0,buildingFactor=1,extraDamage=0,artPeriod=0,fullTime=0,fullPeriod=0,burnPeriod=0;
@@ -48,7 +49,7 @@ struct CastOrder {
     std::uint32_t resumeOrder=0;
     bool resumeHolding=false;
 };
-enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Count};
+enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,Count};
 struct UnitBuff {
     std::uint32_t id=0,source=0;
     BuffKind kind=BuffKind::Stun;
@@ -57,6 +58,7 @@ struct UnitBuff {
     bool positive=false,physical=false;
     float armor=0,damageBonus=0,attackBonus=0,moveBonus=0,scaleBonus=0,healthRegen=0,healRate=0,manaRate=0,missChance=0,shield=0,spellReduction=0;
     bool magicImmune=false;
+    std::map<unsigned,std::pair<unsigned,double>> detection;
     std::vector<std::uint32_t> visuals;
 };
 struct SpellMissile {
@@ -80,4 +82,6 @@ struct SpellWave {
 };
 struct DelayedSpell {SpellInfo spell;std::uint32_t source=0;unsigned owner=0;WorldPoint point;double due=0;};
 struct GroundSpell {SpellInfo spell;std::uint32_t source=0;unsigned owner=0;WorldPoint point;double elapsed=0,nextPulse=0;bool started=false,burn=false;std::vector<std::uint32_t> visuals;};
+struct ShadowMeldState {std::uint32_t ability=0;unsigned level=0,owner=0;double remaining=0;bool nightOnly=true,manual=false;};
+struct RevealArea {unsigned owner=0,mask=0;WorldPoint point;float radius=0;double expires=0;bool whole=false;};
 }

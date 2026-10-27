@@ -14,7 +14,8 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
         {"Aoar",PassiveKind::Regeneration,true},{"AHbh",PassiveKind::Bash,false},{"AOcr",PassiveKind::Critical,false},
         {"AEev",PassiveKind::Evasion,false},{"ANca",PassiveKind::Cleave,false},
         {"Apiv",PassiveKind::PermanentInvisibility,false},{"Adet",PassiveKind::Detection,false},
-        {"Atru",PassiveKind::Detection,false},{"Agyv",PassiveKind::Detection,false},{"Adts",PassiveKind::Detection,false}
+        {"Atru",PassiveKind::Detection,false},{"Agyv",PassiveKind::Detection,false},{"Adts",PassiveKind::Detection,false},
+        {"Agho",PassiveKind::Ghost,false}
     };auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& source:prototypes)if(source.code==code){p.kind=source.kind;p.aura=source.aura;break;}if(p.kind==PassiveKind::Unsupported)return passiveInfo_.emplace(key,std::move(p)).first->second;
     auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};p.area=field("Area");p.amount=field("DataA");p.secondary=field("DataB");p.bonus=field("DataC");p.duration=field("Dur");p.heroDuration=field("HeroDur");
     auto split=[](const std::string& text){std::stringstream input(text);std::vector<std::string> parts;std::string part;while(std::getline(input,part,',')){auto first=part.find_first_not_of(" \t\"");if(first==std::string::npos)continue;part=part.substr(first,part.find_last_not_of(" \t\"")-first+1);if(part!="_" && part!="-")parts.push_back(part);}return parts;};for(auto& target:split(data.field(ability,"AbilityData","targs"+std::to_string(level))))p.allowed.insert(target);auto buffs=split(data.field(ability,"AbilityData","BuffID"+std::to_string(level)));if(!buffs.empty() && buffs.front().size()==4)p.buff=ObjectData::code(buffs.front());
@@ -25,6 +26,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
     if(p.kind==PassiveKind::Evasion && (p.amount<0 || p.amount>1))throw std::runtime_error("Evasion probability outside supported range");
     if(p.kind==PassiveKind::Detection){p.area=field("Rng");if(p.amount<0 || p.amount>3 || p.amount!=std::floor(p.amount))throw std::runtime_error("Detection type outside source mask");}
     if(p.kind==PassiveKind::PermanentInvisibility && p.amount!=0 && p.amount!=1)throw std::runtime_error("Permanent invisibility acquire flag is not boolean");
+    if(p.kind==PassiveKind::Ghost)for(auto value:{p.amount,p.secondary,p.bonus})if(value!=0 && value!=1)throw std::runtime_error("Ghost source flag is not boolean");
     if(p.area<0 || p.area>100000 || std::abs(p.amount)>1000000 || std::abs(p.secondary)>1000000 || p.duration<0 || p.duration>86400 || p.heroDuration<0 || p.heroDuration>86400)throw std::runtime_error("Passive source field outside supported range");
     for(auto id:{ability,p.buff})if(id)for(auto artField:{"CasterArt","TargetArt","SpecialArt"})for(auto& path:split(data.field(id,"Profile",artField)))p.visualModels.push_back(path);
     if(p.buff)for(auto& path:split(data.field(p.buff,"Profile","TargetArt")))p.targetModels.emplace_back(path,data.field(p.buff,"Profile","Targetattach","origin"));

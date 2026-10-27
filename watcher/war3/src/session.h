@@ -148,6 +148,14 @@ class ScriptSession {
     bool detection(std::uint32_t unit,unsigned player,unsigned mask);
     void breakInvisibility(UnitState& unit);
     bool stealthAcquire(const UnitState& unit);
+    std::map<std::uint64_t,RevealArea> revealAreas_;
+    std::uint64_t revealTicket_=0;
+    void stealthTick(double delta);
+    void startShadowMeld(std::uint32_t unit,const SpellInfo& spell);
+    void cancelShadowMeld(UnitState& unit);
+    void addReveal(unsigned owner,const SpellInfo& spell,WorldPoint point);
+    void dustSpell(std::uint32_t source,const SpellInfo& spell,WorldPoint point,unsigned owner);
+    bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;
     std::map<std::pair<std::uint32_t,bool>,ProductInfo> products_;
@@ -439,6 +447,8 @@ public:
     bool itemNeedsTarget(std::uint32_t item);
     double itemCooldown(std::uint32_t unit,std::uint32_t item);
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
+    bool useItemAt(std::uint32_t unit,std::uint32_t item,WorldPoint point);
+    bool itemNeedsPoint(std::uint32_t item);
     bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
