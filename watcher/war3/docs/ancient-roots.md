@@ -14,7 +14,7 @@
 
 生命之树拔根时释放缠绕矿覆盖与父子关联，底层金矿恢复可用并保留剩余储量；移动中的古树不能继续缠绕矿井或作为资源返还站。护甲分类与实际武器选择进入伤害、目标合法性、自动索敌、命令和IsUnitType武器查询；已发射攻击保留其既有武器资格。
 
-原MDX动画采用动作词与Alternate模式匹配，并缓存匹配结果。Stand Alternate可以选择远古守护者的Stand Walk Alternate；普通黑曜石雕像不再选中毁灭者的Stand Alternate。吞树动画的EatTree/Eat Tree源拼写可匹配。原模型没有交替版的建造动作时保留普通源动作回退。吞树玩法本身尚未实现。
+原MDX动画采用动作词与Alternate模式匹配，并缓存匹配结果。Stand Alternate可以选择远古守护者的Stand Walk Alternate；普通黑曜石雕像不再选中毁灭者的Stand Alternate。吞树动画的EatTree/Eat Tree源拼写可匹配。原模型没有交替版的建造动作时保留普通源动作回退。吞树玩法已接入，见[吞树与魔法吞噬](consumption.md)。
 
 来源为本机Warcraft III 1.27.0.52240的AbilityData/AbilityMetaData、NightElfAbilityFunc/Strings、UnitBalance/Data/UI/Weapons/Abilities、NightElfUnitFunc、原WPM/路径纹理及MDX序列。源成员归档和SHA-256见本地source.json；Root的字段标签为扎根武器、拔根武器、扎根转向、拔根防御模式。既有REA证据观察到Game.dll的CAbilityRoot RTTI（0x6fb8fb6c），仅确认类存在，不证明完整行为。产品不加载Game.dll，原安装保持只读。
 
@@ -28,6 +28,6 @@ python tests/generate-construction-fixture.py --data-root "E:/Program Files (x86
 ./build/windows-x86/bin/Release/war3_roots_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/ancient-roots/fixture.w3m" models
 ```
 
-阶段合并验证：全部古树/中立古树/w3a/武器和转向开关，原版建筑分类/碰撞/路线/高度与生产规则精度、多人抢位/路径缺失/边界/取消/暂停/死亡转让/能力增删/事件重入、矿内工人返还与完整经济/AI，源按钮/网格/模型变体/动作过渡/附件/音效/GPU及三图长局/CPU/内存/切图释放。全客户端范围及吞树、毁灭者技能等仍继续实现。
+阶段合并验证：全部古树/中立古树/w3a/武器和转向开关，原版建筑分类/碰撞/路线/高度与生产规则精度、多人抢位/路径缺失/边界/取消/暂停/死亡转让/能力增删/事件重入、矿内工人返还与完整经济/AI，源按钮/网格/模型变体/动作过渡/附件/音效/GPU及三图长局/CPU/内存/切图释放。吞树与毁灭者能力已接入对应队列，完整客户端继续实现。
 
 原始证据：仓库根tmp/docs-artifacts/war3/ancient-roots/{source.json,source-rows.log,read-source.py,model-sequences.log,read-sequences.py,build.log,check-build.log,flow.log,models.log,model-import.log,fixture.w3m}；RTTI依据复用advanced-forms/rea-forms.json。原图、截图及诊断产物不提交。

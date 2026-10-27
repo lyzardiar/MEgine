@@ -14,9 +14,9 @@ struct WeaponDefinition {
     std::string kind,model;
     std::set<std::string> targets,splashTargets;
 };
-struct AttackWindup {std::uint32_t target=0;unsigned weapon=0;double due=0;std::uint64_t revision=0;float stealthDamage=0;bool backstab=false;};
+struct AttackWindup {std::uint32_t target=0;unsigned weapon=0;double due=0;std::uint64_t revision=0;float stealthDamage=0;bool backstab=false;std::uint32_t ability=0;};
 struct CombatOrder {
-    std::uint32_t target=0,follow=0,pickup=0,board=0;
+    std::uint32_t target=0,follow=0,pickup=0,board=0,attackAbility=0;
     std::optional<WorldPoint> attackMove,patrolStart,patrolEnd;
     WorldPoint home;
     bool forced=false,automatic=false,returning=false;
@@ -28,7 +28,7 @@ struct CombatOrder {
 struct CombatProjectile {
     WeaponDefinition definition;
     std::uint64_t id=0;
-    std::uint32_t source=0,target=0,sourceType=0,owner=0;
+    std::uint32_t source=0,target=0,sourceType=0,owner=0,ability=0;
     unsigned weapon=0;
     float damage=0,travelled=0,distance=0,startHeight=0,endHeight=0,stealthDamage=0;
     WorldPoint start,position,endpoint;

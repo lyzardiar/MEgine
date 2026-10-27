@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace war3 {
-enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root};
+enum class SpellKind {Unsupported,HolyLight,StormBolt,DeathCoil,FrostNova,Roots,ChainLightning,HealingWave,ThunderClap,WarStomp,Shockwave,CarrionSwarm,FanKnives,WaterElemental,SpiritWolf,SerpentWard,Inferno,Treants,Blizzard,FlameStrike,Tranquility,Starfall,DeathDecay,Channel,Heal,Slow,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Dispel,Abolish,AntiMagicShell,Unsummon,Invisibility,ShadowMeld,Reveal,Dust,WindWalk,Blink,MirrorImage,Load,Unload,UnloadInstant,BattleStations,StandDown,Devour,Cannibalize,RaiseDead,Resurrection,AnimateDead,AncestralSpirit,LoadCorpse,UnloadCorpse,Ensnare,Web,Sleep,Purge,Banish,Hex,Polymorph,Cyclone,BearForm,CrowForm,Metamorphosis,AvengerForm,StoneForm,Burrow,Root,EatTree,DevourMagic,AbsorbMana,OrbAnnihilation};
 inline bool unitFormSpell(SpellKind kind){return kind>=SpellKind::BearForm && kind<=SpellKind::Burrow;}
 inline bool controlSpell(SpellKind kind){return kind>=SpellKind::Ensnare && kind<=SpellKind::Cyclone;}
 inline bool corpseSpell(SpellKind kind){return kind>=SpellKind::Cannibalize && kind<=SpellKind::AncestralSpirit;}
@@ -44,7 +44,8 @@ struct SpellInfo {
     float heightTime=0,landDelay=0,formHealth=0;
     int formGold=0,formLumber=0,formFood=0;
     unsigned rootedWeapons=0,uprootedWeapons=0,uprootedDefense=0;
-    bool rootedTurn=false;
+    bool rootedTurn=false,ignoreFriendlyBuffs=false;
+    float buffHealth=0,buffMana=0,fullArea=0,halfArea=0;
     bool magicControl=false,dispellable=true;
     std::array<std::vector<std::uint32_t>,4> morphTypes;
     bool alwaysAuto=false;
@@ -68,7 +69,7 @@ struct CastOrder {
     bool resumeHolding=false;
 };
 struct MorphAppearance {std::uint32_t type=0;std::string model,icon;float scale=1;jass::Real speed;};
-enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Morph,Cyclone,UnitForm,Count};
+enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Morph,Cyclone,UnitForm,EatTree,Count};
 struct UnitBuff {
     std::uint32_t id=0,source=0,target=0;
     BuffKind kind=BuffKind::Stun;
@@ -92,7 +93,7 @@ struct SpellMissile {
     std::uint32_t source=0,target=0;
     unsigned owner=0;
     WorldPoint position,start;
-    float amount=0,startHeight=0,endHeight=0,distance=0,travelled=0;
+    float amount=0,mana=0,startHeight=0,endHeight=0,distance=0,travelled=0;
     double born=0;
     std::vector<std::uint32_t> visited;
 };

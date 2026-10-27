@@ -34,6 +34,7 @@ struct UnitState {
     std::optional<DigestionState> digestion;
     std::optional<CorpseState> corpse;
     std::optional<ExhumeState> exhume;
+    std::optional<EatTreeState> eatTree;
     std::optional<RootState> roots;
     std::optional<RootTransition> rootTransition;
     std::optional<UnitFormState> unitForm;

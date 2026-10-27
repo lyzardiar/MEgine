@@ -1,7 +1,8 @@
-// Author: MiYu. Source unit-type morphs retain the unit handle, transition ticket and timed form health separately from cosmetic control forms.
+// Author: MiYu. Unit ability transitions retain identity, cast tickets and timed form or consumption state.
 #pragma once
 #include "spells.h"
 namespace war3 {
+struct EatTreeState {SpellInfo spell;std::uint32_t tree=0;std::uint64_t ticket=0;double elapsed=0;bool ripped=false;};
 struct RootState {SpellInfo spell;bool uprooted=false;};
 struct RootTransition {SpellInfo spell;WorldPoint point;std::uint64_t ticket=0;double remaining=0;bool rooting=false;};
 struct UnitFormState {SpellInfo spell;bool active=false;float healthApplied=0;double remaining=-1;};

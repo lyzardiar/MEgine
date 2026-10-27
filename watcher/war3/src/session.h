@@ -197,6 +197,18 @@ class ScriptSession {
     void cannibalizeTick(std::uint32_t caster,double delta);
     void bindCorpseNatives();
     void bindControlNatives();
+    std::set<std::uint32_t> eatTreeActors_;
+    std::map<std::uint32_t,std::pair<std::uint32_t,std::uint64_t>> eatenTrees_;
+    bool eatTreeTarget(const UnitState& unit,std::uint32_t tree,bool visibility);
+    void startEatTree(std::uint32_t unit,const CastOrder& cast);
+    void cancelEatTree(UnitState& unit,std::uint64_t ticket);
+    void eatTreesTick(double delta);
+    void devourMagic(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner);
+    void startAbsorb(std::uint32_t unit,const CastOrder& cast);
+    void absorbImpact(const SpellMissile& missile);
+    bool absorbTarget(const UnitState& unit,const UnitState& target,const SpellInfo& spell);
+    const SpellInfo* attackOrb(const UnitState& unit,const UnitState& target,std::uint32_t forced=0);
+    void orbWeapon(WeaponDefinition& weapon,const SpellInfo& spell);
     std::set<std::uint32_t> rootActors_;
     void initializeRoot(UnitState& unit);
     void prepareRootSpell(const UnitState& unit,SpellInfo& spell);
@@ -416,7 +428,7 @@ class ScriptSession {
     bool cancelCombat(UnitState& unit);
     bool chase(UnitState& unit,WorldPoint target,float standoff);
     void combat(double delta);
-    void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon,float stealthDamage=0,bool backstab=false);
+    void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon,float stealthDamage=0,bool backstab=false,std::uint32_t ability=0);
     void projectiles(double delta);
     void impact(const CombatProjectile& projectile);
     void awardExperience(std::uint32_t killer,const UnitState& victim);
@@ -506,7 +518,7 @@ public:
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986);
     bool stopUnit(std::uint32_t handle,bool hold=false);
     bool targetOrder(std::uint32_t source,std::uint32_t target,std::uint32_t order=851971);
-    bool attackUnit(std::uint32_t source,std::uint32_t target,bool forced=true);
+    bool attackUnit(std::uint32_t source,std::uint32_t target,bool forced=true,std::uint32_t ability=0);
     bool attackMove(std::uint32_t source,WorldPoint target,bool patrol=false);
     bool hasWeapon(std::uint32_t unit);
     const SpellInfo& spellInfo(std::uint32_t ability,unsigned level);
