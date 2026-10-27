@@ -183,6 +183,11 @@ class ScriptSession {
     std::map<std::uint32_t,PhoenixBurn> phoenixBurns_;
     std::uint64_t phoenixBurnTicket_=0;
     void heroUltimateInfo(SpellInfo& spell);
+    void frostPoisonInfo(SpellInfo& spell);
+    const SpellInfo* frostArmorReaction(const UnitState& unit);
+    void frostArmorChill(std::uint32_t protectedUnit,std::uint32_t attacker,const SpellInfo& spell,std::uint64_t deathRevision);
+    void shadowStrikeImpact(const SpellMissile& missile);
+    float shadowStrikeTick(UnitBuff& buff,double elapsed);
     bool ultimateEffectActive(std::uint32_t unit,unsigned owner,std::uint64_t ticket,std::uint32_t buff=0);
     void ultimateAreaDamage(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,float amount,bool buildingsOnly,unsigned owner,std::uint64_t ticket,std::uint32_t buff=0);
     void startHeroUltimate(std::uint32_t unit,const CastOrder& cast);

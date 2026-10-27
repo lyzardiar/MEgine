@@ -45,7 +45,7 @@ target_sources(war3_core PRIVATE src/session_corpses.cpp src/session_corpse_spel
 target_sources(war3_core PRIVATE src/session_control_spells.cpp src/session_morph_spells.cpp src/session_unit_forms.cpp src/session_roots.cpp src/session_eat_tree.cpp src/session_magic_consumption.cpp src/session_orb_attacks.cpp src/session_self_spells.cpp src/session_resource_spells.cpp src/session_ownership.cpp src/session_equipment.cpp)
 target_sources(war3_core PRIVATE src/session_caster_spells.cpp src/session_autocast.cpp)
 target_sources(war3_core PRIVATE src/session_passive_info.cpp src/session_auras.cpp src/session_attack_passives.cpp)
-target_sources(war3_core PRIVATE src/session_illusion.cpp src/session_item_use.cpp src/session_consumables.cpp src/session_teleport.cpp src/session_hero_ultimates.cpp src/session_rebirth.cpp src/session_phoenix_fire.cpp src/session_damage.cpp)
+target_sources(war3_core PRIVATE src/session_illusion.cpp src/session_item_use.cpp src/session_consumables.cpp src/session_teleport.cpp src/session_hero_ultimates.cpp src/session_rebirth.cpp src/session_phoenix_fire.cpp src/session_frost_poison.cpp src/session_damage.cpp)
 target_sources(war3_core PRIVATE src/session_quest.cpp)
 target_sources(war3_core PRIVATE src/world_blight.cpp src/session_blight.cpp)
 target_sources(war3_core PRIVATE src/session_regeneration.cpp)

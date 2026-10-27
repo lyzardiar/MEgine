@@ -62,7 +62,9 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"AHmt",SpellKind::MassTeleport,SpellTargeting::Unit},{"AItp",SpellKind::TownPortal,SpellTargeting::Unit},
         {"AIrt",SpellKind::Recall,SpellTargeting::Either},
         {"AOww",SpellKind::Bladestorm,SpellTargeting::None},{"AOeq",SpellKind::Earthquake,SpellTargeting::Point},
-        {"AOvd",SpellKind::Voodoo,SpellTargeting::None},{"AHpx",SpellKind::Phoenix,SpellTargeting::None}
+        {"AOvd",SpellKind::Voodoo,SpellTargeting::None},{"AHpx",SpellKind::Phoenix,SpellTargeting::None},
+        {"AUfa",SpellKind::FrostArmor,SpellTargeting::Unit},{"AUfu",SpellKind::FrostArmor,SpellTargeting::Unit},
+        {"AEsh",SpellKind::ShadowStrike,SpellTargeting::Unit},{"AOfs",SpellKind::Reveal,SpellTargeting::Point}
     };
     auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& p:prototypes)if(code==p.code){s.kind=p.kind;s.targeting=p.targeting;break;}if(s.kind==SpellKind::Unsupported)return spellInfo_.emplace(key,std::move(s)).first->second;
     auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};
@@ -81,6 +83,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(ownershipSpell(s.kind))ownershipSpellInfo(s);
     if(teleportSpell(s.kind))teleportSpellInfo(s);
     if(heroUltimate(s.kind))heroUltimateInfo(s);
+    if(s.kind==SpellKind::FrostArmor || s.kind==SpellKind::ShadowStrike)frostPoisonInfo(s);
     if(selfSpell(s.kind))selfSpellInfo(s);
     if(s.kind==SpellKind::EatTree){s.castDelay=s.amount;s.channelTime=s.secondary;s.animation="Spell Eat Tree";if(!s.buff || s.duration<=0 || s.channelTime<=0 || s.castDelay<0 || s.castDelay>s.channelTime || s.loss<=0)throw std::runtime_error("Invalid source Eat Tree timing or recovery");}
     if(s.kind==SpellKind::DevourMagic){s.buffHealth=s.loss;s.buffMana=field("DataD");s.maxDamage=field("DataE");s.ignoreFriendlyBuffs=count(field("DataF"),1)!=0;if(s.buffHealth<0 || s.buffMana<0 || s.buffHealth>1000000 || s.buffMana>1000000)throw std::runtime_error("Invalid source Devour Magic buff rewards");}
