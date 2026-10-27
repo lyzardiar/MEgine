@@ -15,6 +15,7 @@ void ScriptSession::dispelSpell(std::uint32_t source,std::uint32_t id,const Spel
 }
 void ScriptSession::casterEffect(const SpellMissile& missile) {
     if(!alive(missile.source,NativeKind::Unit) || !alive(missile.target,NativeKind::Unit))return;auto target=units_.at(missile.target);auto& s=missile.spell;
+    if(unitCasterSpell(s.kind)){unitCasterEffect(missile);return;}
     if(s.kind==SpellKind::Heal){unitLife(runtime_.handle("unit",missile.target),real(number(target->life)+spellHealAmount(*target,s.amount)));return;}if(s.kind==SpellKind::Abolish){dispelSpell(missile.source,missile.target,s);return;}
     BuffKind kind;switch(s.kind){case SpellKind::Slow:kind=BuffKind::Slow;break;case SpellKind::InnerFire:kind=BuffKind::InnerFire;break;case SpellKind::FrostArmor:kind=BuffKind::FrostArmor;break;case SpellKind::Bloodlust:kind=BuffKind::Bloodlust;break;case SpellKind::Rejuvenation:kind=BuffKind::Rejuvenation;break;case SpellKind::Frenzy:kind=BuffKind::Frenzy;break;case SpellKind::Curse:kind=BuffKind::Curse;break;case SpellKind::AntiMagicShell:kind=BuffKind::Shell;break;case SpellKind::Invisibility:kind=BuffKind::Invisibility;break;default:throw std::runtime_error("Missing caster effect consumer");}
     if(s.kind==SpellKind::AntiMagicShell){target->mana=real(std::max(0.f,number(target->mana)-s.manaLoss));if(s.amount>0 && !capability(*target,"Arsk") && (target->summoner || target->timedLife))damageUnit(missile.source,missile.target,s.amount,0,26);}applyBuff(missile.target,missile.source,s,kind);

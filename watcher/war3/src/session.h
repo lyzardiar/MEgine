@@ -263,6 +263,15 @@ class ScriptSession {
     bool absorbTarget(const UnitState& unit,const UnitState& target,const SpellInfo& spell);
     const SpellInfo* attackOrb(const UnitState& unit,const UnitState& target,std::uint32_t forced=0);
     void orbWeapon(WeaponDefinition& weapon,const SpellInfo& spell);
+    void unitCasterInfo(SpellInfo& spell);
+    void unitCasterEffect(const SpellMissile& missile);
+    void retireUnitCasterBuff(const UnitBuff& buff);
+    void unitCastersTick(double delta);
+    float spiritLinkDamage(std::uint32_t source,std::uint32_t target,float damage,unsigned owner);
+    bool faerieFireVision(const UnitState& unit,unsigned viewer) const;
+    bool useUnitCasterItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target);
+    std::map<std::pair<unsigned,std::uint32_t>,std::set<std::uint32_t>> spiritLinks_;
+    std::set<std::pair<std::uint32_t,std::uint32_t>> lightningShieldActors_;
     void refreshEngineering(UnitState& unit);
     std::uint32_t engineeringAbility(const UnitState& unit,std::uint32_t ability,bool reverse=false) const;
     void tinkerSpellInfo(SpellInfo& spell);
@@ -755,7 +764,7 @@ public:
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
     bool useItemAt(std::uint32_t unit,std::uint32_t item,WorldPoint point);
     bool itemNeedsPoint(std::uint32_t item);
-    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={});
+    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);

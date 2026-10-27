@@ -8,6 +8,14 @@
 | W002 图像、字体和音频边界 | image、media、main、rea-boundaries | BLP1/JPEG/palette、BLP2/BC、TGA、原版中文字体、Miles 内存 MP3 | IJL 调用约定、透明平面、codec 路径与 sample 生命周期 | 基础范围通过，批次关闭；音效与听感仍待验收 |
 | W003 原版 MDX 菜单场景 | model、model_pose、binary、archive、renderer、main、fdf、glue、tests | MDX800 基础场景、纹理来源、FDF 模板与字符串、真实帧、退出输入 | 不可信记录边界、FDF 预算、菜单按钮输入边界 | 基础范围通过，批次关闭；完整还原留在功能矩阵 |
 
+## 单位护盾、链接、削弱与灵魂行者阶段待验证
+
+路径：session_unit_casters、spell_info/spells/caster_spells/autocast、实际buff替换/释放/tick，damage的真实分摊与递归/倍率隔离，fog/visibility，entities/unit_forms的原类型和虚无，以及item_use的目标/六槽/次数/冷却/事件。消费Alsh/Aspl/Afae/Acri、Acpf和源野外/库存派生。必要Win32 Release产品编译无警告，差异检查通过。
+
+状态：实现接入；只做开发必需Win32 Release产品编译、差异和源消费者检查。新增专项、三图、原版精度、UI/GPU/声音/AI及性能保持阶段待验证。源表/归档/字段/摘要、REA类证据及编译日志在tmp/docs-artifacts/war3/unit-casters/。
+
+阶段合并闪电护盾源目标/范围/友伤/双buff/叠加/周期/来源消失/载体/驱散与空间边界；链接集合/选取/护甲和护盾/真实分摊/归属/失效成员/死亡重入与事件；精灵之火负甲/自动开关/昼夜和共享视野/隐形与清理；残废三类实际削弱/叠加/分类；灵魂行者源类型/虚无/过渡/取消/研究/库存、法杖目标/费用/次数/冷却/六槽和使用事件，以及三图长局/UI/GPU/AI/音效/CPU/内存/切图无解包增长。双buff、原分摊/视野/形态语义和Aspp拾取符文仍开放，详见[施法单位补齐](unit-casters.md)。旧MEngine队列继续延期。
+
 ## 地精修补匠阶段待验证
 
 路径：tinker状态、session_engineering/tinker与源spell_info/passive_info、equipment/hero学习/原生能力级别/research/unit_forms、原Channel/施法/自动开关/攻击/集结/死亡/tick及真实模型/资源。ANsy/ANcs/ANeg/ANrg、工程派生、ANde拆毁家族与Asds自爆家族有实际消费者。必要产品编译无警告，差异检查通过。原24英雄/96能力登记核对补齐AOsw实际AOwd蛇棒原型，仅作静态入口证据，未宣称完整玩法通过。
