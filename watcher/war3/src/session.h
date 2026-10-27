@@ -486,6 +486,13 @@ class ScriptSession {
     void transferFood(const UnitState& unit,unsigned oldOwner,unsigned newOwner);
     bool startProduction(std::uint32_t unit);
     unsigned inventorySize(const UnitState& unit);
+    bool inventoryFlag(const UnitState& unit,const char* field);
+    const std::vector<std::uint32_t>& itemAbilities(std::uint32_t type);
+    std::vector<std::uint32_t> itemActiveAbilities(std::uint32_t type);
+    const EquipmentBonuses* equipmentInfo(std::uint32_t ability,unsigned level);
+    void refreshEquipment(UnitState& unit);
+    void permanentItem(std::uint32_t unit,std::uint32_t ability);
+    std::map<std::pair<std::uint32_t,unsigned>,std::optional<EquipmentBonuses>> equipmentInfo_;
     bool giveItem(std::uint32_t unit,std::uint32_t item,std::optional<unsigned> slot={});
     void spatialEvents();
     void moveUnits(double delta);

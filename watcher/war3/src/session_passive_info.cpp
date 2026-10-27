@@ -35,7 +35,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
 }
 std::vector<std::pair<std::uint32_t,unsigned>> ScriptSession::passiveAbilities(const UnitState& unit) {
     std::map<std::uint32_t,unsigned> combined;for(auto [ability,level]:unit.abilities)if(level>0)combined[ability]=unsigned(level);
-    for(auto id:unit.inventory)if(id && alive(id,NativeKind::Item) && items_.at(id)->holder==unit.handle){auto type=items_.at(id)->type;auto found=itemPassives_.find(type);if(found==itemPassives_.end()){std::vector<std::uint32_t> abilities;std::stringstream input(definitions().field(type,"ItemData","abilList"));std::string name;while(std::getline(input,name,',')){auto first=name.find_first_not_of(" \t");if(first!=std::string::npos)name=name.substr(first,name.find_last_not_of(" \t")-first+1);if(name.size()==4)abilities.push_back(ObjectData::code(name));}found=itemPassives_.emplace(type,std::move(abilities)).first;}for(auto ability:found->second)combined[ability]=std::max(1u,combined[ability]);}
+    if(inventoryFlag(unit,"DataC"))for(auto id:unit.inventory)if(id && alive(id,NativeKind::Item) && items_.at(id)->holder==unit.handle)for(auto ability:itemAbilities(items_.at(id)->type))combined[ability]=std::max(1u,combined[ability]);
     bool morphed=unit.morphed(),auras=!morphed || gameplayNumber("PolymorphedUnitsBestowAuras",0)!=0;std::vector<std::pair<std::uint32_t,unsigned>> result;for(auto [ability,level]:combined)if(passiveInfo(ability,level).kind!=PassiveKind::Unsupported && (!morphed || (auras && passiveInfo(ability,level).aura)))result.emplace_back(ability,level);return result;
 }
 bool ScriptSession::passiveTarget(const UnitState& source,const UnitState& target,const PassiveInfo& p) {

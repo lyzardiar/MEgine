@@ -28,7 +28,7 @@ ANdr与AHdr共用原版AHdr原型。ACdr/ACsm及AEmb派生别名复用各自等�
 
 原摘录、提取脚本及编译日志为 `tmp/docs-artifacts/war3/drains/{source.json,source-rows.log,read-source.py,implementation-build.log}`，不提交原版资源或原始诊断。REA识别原Game.dll为x86，SHA-256为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`；本机REA深度provider未配置，本轮不据此声称已验证原版公式或调用顺序。
 
-只执行开发必需Win32 Release产品编译和差异审查，未运行新专项、三图、GPU或性能回归。命令为 `cmake --build --preset release --target war3 --parallel 8`。新原型均有实际资源/目标/事件消费者，未实现的其他主动能力及复合物品继续明确失败。
+只执行开发必需Win32 Release产品编译和差异审查，未运行新专项、三图、GPU或性能回归。命令为 `cmake --build --preset release --target war3 --parallel 8`。新原型均有实际资源/目标/事件消费者，未实现的其他主动能力、多主动复合物品继续明确失败；一个已支持主动能力与已支持被动能力的组合使用装备消费者。
 
 ## 阶段验证和剩余项
 

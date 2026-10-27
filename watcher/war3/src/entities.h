@@ -1,5 +1,6 @@
 // Author: MiYu. Persistent source-backed unit, item and weather state for native sessions.
 #pragma once
+#include "equipment.h"
 #include "world.h"
 #include "object_data.h"
 #include "commerce.h"
@@ -98,6 +99,7 @@ struct UnitState {
     bool experienceSuspended=false;
     std::array<float,3> heroAttributes{},heroGrowth{},heroBonuses{};
     std::array<int,3> appliedHeroStats{};
+    EquipmentBonuses equipment,inventoryBonuses;
     std::vector<std::uint32_t> learnable;
     std::string properName;
     std::uint64_t heroRevision=0;
