@@ -1,6 +1,7 @@
 // Author: MiYu. Internal classic model records shared by parser and pose evaluator.
 #pragma once
 #include "model.h"
+#include "model_sequence.h"
 #include "binary.h"
 #include <DirectXMath.h>
 #include <map>
@@ -11,7 +12,6 @@ using namespace DirectX;
 struct Key { int time; XMFLOAT4 value{}, incoming{}, outgoing{}; };
 struct Track { unsigned mode = 0; int global = -1; std::vector<Key> keys; };
 struct Transform { Track translation, rotation, scale; };
-struct Sequence { std::string name; int start, end; unsigned flags; };
 struct Camera {std::string name;XMFLOAT4 eye{},target{};float fov=0,nearPlane=0,farPlane=0;Track position,destination,roll;};
 struct Node { int id, parent; unsigned flags; std::string name;XMFLOAT4 pivot{}; Transform tracks; };
 struct ParticleEmitter2 {

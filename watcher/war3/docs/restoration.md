@@ -24,4 +24,6 @@ Arpl枯萎精髓、Arpm灵魂触摸、Arpb生命／魔法恢复、Ambt月亮井�
 
 表现缺口：Ambt DataD水面高度及与当前魔法量联动的原水位／单位动画尚未接入；目前有原能力模型与种族单模型选择，不能视为月亮井完整画面还原。自动默认状态、Amb2的全部原移动分类，以及所有窗口／GPU／声音／性能仍待阶段实现或验证。
 
+源 MoonWell.mdx 的骨骼和附件中没有可直接识别的水面节点或水纹理；需继续追踪原客户端使用 DataD 时创建的资源、位置和变化公式，再实现水面表现。资源来自 war3.mpq，SHA-256 为 `32c9cc736ae4ebf3d23cc37f46cb6f6ff6f0bb1dbed03d72a8a063dc95921686`。
+
 检查记录：Win32 Release产品增量编译通过，无编译警告；差异检查通过。原始日志为该证据目录build.log和final-build.log。未运行新增玩法夹具、三图、UI／GPU、AI、音频或性能回归。对应队列见testing-batches.md；旧MEngine队列保持延期。

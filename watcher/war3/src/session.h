@@ -22,6 +22,7 @@
 #include "alchemist.h"
 #include "camera_control.h"
 #include "indicator.h"
+#include "model_sequence.h"
 #include <variant>
 
 namespace war3 {
@@ -86,6 +87,11 @@ class ScriptSession {
     bool audioMuted_=false,audioSimulationClock_=false;
     std::unique_ptr<ObjectData> definitions_;
     std::map<std::uint32_t,std::shared_ptr<UnitState>> units_;
+    std::map<std::string,std::vector<mdx::Sequence>> animationSequences_;
+    std::set<std::uint32_t> animatedDestructables_;
+    const std::vector<mdx::Sequence>& sequencesForModel(const std::string& model);
+    void updateUnitAnimation(UnitState& unit);
+    void updateDestructableAnimations();
     std::map<std::uint32_t,std::shared_ptr<ItemState>> items_;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> requestedBook_;
     std::map<std::uint32_t,std::shared_ptr<DestructableState>> destructables_;

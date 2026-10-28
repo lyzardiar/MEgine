@@ -1211,3 +1211,7 @@ Win32 Release 产品编译通过；BootyBay 探针覆盖本地／远端同单位
 路径：lan_action_encoder、lan_simulation、game_view、game_flow_ui、game_commands、game_spells、game_transport、game_alliance_dialog、CMakeLists。新增有界选择和基础订单编码，要求调用方提供对象双向映射及原始动作字段；游戏视图可显式接收时间片并将玩家命令交给外部提交器，网络模式不按本地帧推进模拟。未知命令和排队标志明确拒绝；网络模式的选择、脚本对话框与部分菜单操作暂不可用。
 
 Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集中验证编码／解码边界、选区和命令的时序及重入、单机行为、原版 1.27 对象编号与动作字段、双端同步和相机／UI 状态。大厅、对象编号来源、网络提交器、选择同步、完整命令、校验与断线处理仍待实现；目前不能启动联网对局。
+
+## 排队动画模拟时钟阶段待验证
+
+路径：model_sequence、model、scene_assets、session_animation、session_orders、session_destructables、session_volcano、game_view、scene_objects、CMakeLists。单位及可破坏物动画队列按模拟步进及源 MDX 序列时长推进，渲染和模拟共享序列匹配；常规队列出队不再由场景绘制推进；区域装饰物动画仍在绘制时清空可破坏物队列，尚需迁移。真实地图、隐藏／离屏、暂停／倍速、形态和死亡切换、模型缺失、多客户端与原版时序待集中验证，见[单位动画](animation-simulation.md)。

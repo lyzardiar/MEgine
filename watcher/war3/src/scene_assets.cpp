@@ -1,6 +1,7 @@
 // Author: MiYu. Decode each map texture once, then upload bounded work on the render thread.
 #include "scene_assets.h"
 #include "model.h"
+#include "model_sequence.h"
 #include <algorithm>
 #include <cctype>
 
@@ -8,7 +9,7 @@ namespace war3 {
 namespace {std::string key(std::string value) {for(auto& c:value){if(c=='/')c='\\';c=char(std::tolower(static_cast<unsigned char>(c)));}return value;}}
 SceneAssets::SceneAssets(Archives& resources,std::function<void()> check,std::set<std::string> externalTextures) : resources_(resources.fork()),images_(resources.root()),check_(std::move(check)),externalTextures_(std::move(externalTextures)) {}
 SceneAssets::~SceneAssets()=default;
-std::string SceneAssets::modelKey(std::string path) {auto name=key(std::move(path));if(name.ends_with(".mdl"))name.replace(name.size()-4,4,".mdx");if(!name.ends_with(".mdx"))name+=".mdx";return name;}
+std::string SceneAssets::modelKey(std::string path) {return mdx::modelPath(std::move(path));}
 void SceneAssets::prepareTexture(const std::string& path) {if(!externalTextures_.contains(key(path)))image(path);}
 IDirect3DTexture9* SceneAssets::cachedTexture(const std::string& path) const {auto found=textures_.find(key(path));return found==textures_.end()?nullptr:found->second.Get();}
 bool SceneAssets::hasImage(const std::string& path) const {return imagesCache_.contains(key(path));}
