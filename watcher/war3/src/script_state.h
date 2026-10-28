@@ -74,6 +74,7 @@ struct ScriptTimerDialog {
     std::optional<std::pair<std::uint64_t,float>> realTime;
 };
 struct ScriptText {unsigned owner=0;float x=0,y=0;double expires=0;std::string text;};
+struct ScriptMinimapPing {std::uint64_t id=0;float x=0,y=0;double started=0,expires=0;std::uint32_t color=0xff00ff00;bool extra=false;};
 struct ScriptCinematicScene {std::uint32_t portrait=0,color=0;std::string model,speaker,dialogue;double started=0,expires=0,voiceUntil=0;};
 struct ScriptCameraSetup {std::array<float,7> fields{},durations{};float x=0,y=0,panDuration=0;};
 struct ScriptCineFilter {

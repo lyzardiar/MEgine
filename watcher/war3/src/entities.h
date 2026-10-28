@@ -21,6 +21,7 @@ struct UnsummonOrder {unsigned owner=0;std::uint32_t caster=0,ability=0;std::uin
 struct BookSelection {unsigned level=0;std::vector<std::uint32_t> spells;};
 struct BookGrant {int base=0,granted=0,borrowed=1;};
 struct ActiveSpellBook {std::uint32_t ability=0,item=0,order=0;bool shared=false;std::vector<std::uint32_t> spells;};
+struct UnitLookAt {std::uint32_t target=0;std::array<float,3> offset{};};
 struct UnitState {
     std::uint32_t handle=0,type=0,owner=0;
     std::uint64_t deathRevision=0;
@@ -79,6 +80,7 @@ struct UnitState {
     std::string animation;
     std::optional<unsigned> animationIndex;
     std::vector<std::string> animationQueue;
+    std::map<std::string,UnitLookAt> lookAt;
     std::array<std::uint32_t,6> inventory{};
     std::map<std::uint32_t,bool> permanentAbilities;
     bool foodCounted=false,useFood=true,removing=false;

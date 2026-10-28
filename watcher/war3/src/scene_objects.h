@@ -7,7 +7,7 @@
 
 namespace war3 {
 struct SceneObject {
-    std::uint32_t type=0;
+    std::uint32_t type=0,handle=0;
     std::shared_ptr<DestructableState> source;
     Model* model=nullptr;
     ModelInstance particles;

@@ -971,3 +971,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：object_data单位枚举／地图覆盖、spell_info源动物地形池、库存施法／召唤／状态、自动攻击过滤、敌方中立外观／库存隐藏、现有移动／驱散与反馈。Amec／Bmec及地图派生有实际消费者。
 
 状态：实现接入，必要Win32 Release产品编译与差异检查通过、无编译警告；未运行新增玩法夹具、三图／原件精度、UI／GPU／AI／声音或性能回归。集中验证地形池／通配／回退／源特殊和战役标志／飞行水上／自定义动物／原随机顺序、碰撞落点与多数量；6槽／持续标记／召唤／驱散／反馈／回调／移除／易主／死亡复活、敌我普通自动攻击／自动施法／凤凰火焰与强制攻击／侦测／原中立外观／控制／声音及完整UI，三图长局／帧耗时／内存／切图释放。原候选序、标记移除和敌方伪装精度未对照。原表／摘要／REA和产品构建证据在tmp/docs-artifacts/war3/item-summons/，边界见[实现说明](mechanical-critters.md)。旧MEngine队列保持延期。
+
+## 战役提示、目标朝向与跳过阶段待验证
+
+路径：session_text／session_indicators／game_indicators／session_match、实体／模型姿态、场景与 GameView、小地图资源流。必要 Win32 Release 产品编译与差异检查通过；Prologue01 原 main 初始化通过，静音模拟越过原 PingMinimap 阻塞，随后遇到未绑定的 TriggerWaitForSound，未完成 20 秒模拟。证据：tmp/docs-artifacts/war3/campaign/prologue-next-integrated.log。
+
+集中验证 Ping 动画／大小／颜色／声音／重叠和 GPU 状态；单位／物品／可破坏物指示的叠色／透明度／时序；LookAt 的骨骼轴、目标生命周期／附件／插值；Esc 在不同控制、界面和触发器状态下的事件与原版行为。完整战役画面、声音、性能与三图继续留功能阶段；旧 MEngine 队列保持延期。

@@ -21,6 +21,7 @@
 #include "stampede.h"
 #include "alchemist.h"
 #include "camera_control.h"
+#include "indicator.h"
 #include <variant>
 
 namespace war3 {
@@ -92,6 +93,7 @@ class ScriptSession {
     std::map<jass::ThreadId,std::vector<ScriptContext>> threadContexts_{{0,{}}};
     void bindThreadNatives();
     double simulationTime_=0,accumulator_=0;
+    IndicatorState indicators_;
     std::array<std::unique_ptr<ScriptAI>,16> ais_;
     std::array<std::uint32_t,16> aiPauseDepth_{};
     void pauseAI(unsigned player,bool paused);
@@ -522,6 +524,9 @@ class ScriptSession {
     bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;
+    std::vector<ScriptMinimapPing> minimapPings_;
+    std::uint64_t nextMinimapPing_=0;
+    std::optional<std::pair<std::uint32_t,std::uint32_t>> minimapPingColors_;
     std::map<std::pair<std::uint32_t,bool>,ProductInfo> products_;
     std::map<std::pair<std::uint32_t,unsigned>,ResearchInfo> researchInfo_;
     std::map<std::pair<std::uint32_t,bool>,std::optional<std::pair<int,int>>> globalStock_;
@@ -674,6 +679,7 @@ class ScriptSession {
     void bindInventoryNatives();
     void bindFogNatives();
     void bindTextNatives();
+    void bindIndicatorNatives();
     void bindCacheNatives();
     void bindCampaignNatives();
     void bindHashtableNatives();
@@ -928,6 +934,7 @@ public:
     bool unitInvisibleTo(std::uint32_t unit,unsigned player);
     bool unitVisibleTo(std::uint32_t unit,unsigned player);
     const std::vector<ScriptText>& texts() const {return texts_;}
+    const std::vector<ScriptMinimapPing>& minimapPings() const {return minimapPings_;}
     const auto& quests() const {return quests_;}
     std::uint64_t questRevision() const {return questRevision_;}
     bool questFlash() const {return questFlash_;}
@@ -943,6 +950,8 @@ public:
     bool forceCampaignSelection() const {return forceCampaignSelect_;}
     void removePlayer(unsigned owner,unsigned result);
     void leaveGame();
+    bool endCinematic(unsigned owner);
+    std::uint32_t indicatorColor(std::uint32_t id,std::uint32_t base) const {return indicators_.color(id,base,simulationTime_);}
     bool clickDialog(unsigned owner,std::uint32_t button);
     void pause(bool value) {simulationPaused_=value;}
     bool paused() const {return simulationPaused_;}

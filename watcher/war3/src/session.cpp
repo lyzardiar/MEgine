@@ -50,7 +50,7 @@ World& ScriptSession::requireWorld() {if(!world_)throw std::runtime_error("World
 void ScriptSession::attachWorld(std::unique_ptr<World> world) {if(!world || world_ || runtime_.ready() || failed_)throw std::runtime_error("World attachment requires a fresh session and valid terrain");world_=std::move(world);loadDestructables();}
 void ScriptSession::startMain() {if(!configured() || !world_ || !setupApplied_ || mainAttempted_)throw std::runtime_error("Map main requires a configured world and player setup");mainAttempted_=true;try{runtime_.start([this]{runtime_.invoke("main");mainCompleted_=true;});}catch(...){failed_=true;throw;}}
 void ScriptSession::bindNatives() {
-    bindWorldNatives();bindCameraSetupNatives();bindSpatialEvents();bindFogNatives();bindTextNatives();bindCacheNatives();bindCampaignNatives();bindHashtableNatives();
+    bindWorldNatives();bindCameraSetupNatives();bindSpatialEvents();bindFogNatives();bindTextNatives();bindIndicatorNatives();bindCacheNatives();bindCampaignNatives();bindHashtableNatives();
     bindSoundNatives();
     bindMusicNatives();
     bindEntityNatives();bindCorpseNatives();bindControlNatives();bindTransportNatives();bindFoodNatives();bindCommerceNatives();bindProductionNatives();bindHeroNatives();bindSpellNatives();bindEffectNatives();bindLightningNatives();bindIllusionNatives();bindDamageNatives();bindQuestNatives();bindBlightNatives();bindCombatNatives();bindResearchNatives();bindHarvestNatives();bindDestructableNatives();bindConstructionNatives();bindScriptDialogNatives();bindMatchNatives();

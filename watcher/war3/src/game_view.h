@@ -46,6 +46,7 @@ class GameView {
     void camera(const GameInput& input,double delta);
     void drawCineFilter();
     void drawCinematicPanel();
+    void drawMinimapPings();
     std::optional<std::array<float,3>> ground(float x,float y) const;
     std::optional<std::pair<float,float>> project(float x,float y,float z) const;
     void input(const GameInput& input);
@@ -67,7 +68,7 @@ class GameView {
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawLightning(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
-    std::map<std::uint64_t,ModelInstance> modelInstances_;
+    std::map<std::uint64_t,ModelInstance> modelInstances_,pingInstances_;
     std::set<std::uint64_t> modelInstancesSeen_;
     ModelInstance& modelInstance(std::uint64_t id) {modelInstancesSeen_.insert(id);return modelInstances_[id];}
     struct EffectPresentation {bool birth=false,stand=false,death=false,loops=false,missingAttachment=false;std::uint64_t birthTime=0,standTime=0,deathTime=0;};

@@ -3,6 +3,8 @@
 #include "archive.h"
 #include "image.h"
 #include "renderer.h"
+#include <array>
+#include <span>
 namespace war3 {
 class SceneAssets;
 class ModelInstance {
@@ -19,6 +21,7 @@ public:
 struct ModelVertex {float x,y,z,u,v;};
 struct ModelGeometry {std::vector<ModelVertex> vertices;std::vector<std::uint16_t> indices;};
 struct ModelEvent {std::string name;int parent=-1,global=-1;bool animated=false;std::vector<int> times;};
+struct ModelLookAt {std::string bone;std::array<float,3> target;};
 class Model {
     struct Data;
     std::unique_ptr<Data> data_;
@@ -28,7 +31,7 @@ public:
     Model(const Model&) = delete;
     Model& operator=(const Model&) = delete;
     void draw(std::uint64_t elapsed, float aspect, bool twoSided = false,std::uint64_t clock=UINT64_MAX);
-    void draw(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& projection,const D3DMATRIX& world,bool twoSided=false,DWORD tint=0xffffffff,ModelInstance* instance=nullptr,std::uint64_t clock=UINT64_MAX,bool emit=true,bool geometry=true);
+    void draw(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& projection,const D3DMATRIX& world,bool twoSided=false,DWORD tint=0xffffffff,ModelInstance* instance=nullptr,std::uint64_t clock=UINT64_MAX,bool emit=true,bool geometry=true,std::span<const ModelLookAt> lookAt={});
     void upload(Renderer& renderer,SceneAssets& assets);
     void replace(unsigned id,IDirect3DTexture9* texture);
     bool sequence(const std::string& prefix);
