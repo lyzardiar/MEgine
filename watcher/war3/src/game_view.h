@@ -19,9 +19,9 @@ class GameView {
     std::uint64_t destructableStreamRevision_=0;
     FogRender fogRender_;
     std::vector<float> distances_,angles_,fovs_;
-    float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,near_=100,far_=5000,speed_=3000;
+    float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,roll_=0,zOffset_=0,near_=100,far_=5000,speed_=3000;
     unsigned zoom_=0,frames_=0;
-    std::optional<WorldPoint> cameraTarget_;
+    std::uint64_t cameraRevision_=0;
     std::uint64_t last_=0;
     D3DVIEWPORT9 viewport_{};
     D3DMATRIX view_{},projection_{};
@@ -80,6 +80,7 @@ public:
     bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}
     const std::string& nextLevel() const {return data_->session->nextLevel();}
     std::optional<std::pair<std::string,bool>> takeCinematic(){return data_->session->takeCinematic();}
+    bool cinematicTransition() const {auto exit=data_->session->exitRequest();return exit==SessionExit::Return || exit==SessionExit::ChangeLevel;}
     void resumeAfterCinematic(){last_=GetTickCount64();}
     Archives& resources() const {return data_->session->world()->resources();}
     fs::path mapPath() const {auto world=data_->session->world();return world?world->resources().mapPath():fs::path{};}

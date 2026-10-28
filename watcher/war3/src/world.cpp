@@ -17,12 +17,12 @@ World::World(MapData data,std::array<jass::Real,4> margins) : data_(std::move(da
     bounds_={real(terrain.origin[0]),real(terrain.origin[1]),real(terrain.origin[0]).add(jass::Real::fromInteger(int((terrain.width-1)*128))),real(terrain.origin[1]).add(jass::Real::fromInteger(int((terrain.height-1)*128)))};
     if(data_.pathing)obstacles_.resize(data_.pathing->cells.size());
     else {unsigned width=(terrain.width-1)*4,height=(terrain.height-1)*4;blightPathing_.resize(size_t(width)*height);for(unsigned y=0;y<height;++y)for(unsigned x=0;x<width;++x)if(terrain.corners[size_t((y+2)/4)*terrain.width+(x+2)/4].flags&0x20)blightPathing_[size_t(y)*width+x]=0x20;}blightChunks_.assign(size_t((terrain.width-2)/16+1)*((terrain.height-2)/16+1),1);
-    for(unsigned i=0;i<8;++i)environment_.cameraBounds[i]=real(data_.info.camera[i]);auto& color=data_.info.waterColor;environment_.waterColor={color[2],color[1],color[0],color[3]};
+    for(unsigned i=0;i<8;++i)environment_.cameraBounds[i]=real(data_.info.camera[i]);environment_.cameraMotion.sync((number(bounds_.minX)+number(bounds_.maxX))/2,(number(bounds_.minY)+number(bounds_.maxY))/2);auto& color=data_.info.waterColor;environment_.waterColor={color[2],color[1],color[0],color[3]};
 }
 std::unique_ptr<World> World::read(Archives& archives) {
     auto data=MapData::read(archives);SourceSettings settings;settings.load(archives,"UI\\MiscData.txt");if(auto overlay=archives.readCandidates({"war3mapMisc.txt"},ArchiveScope::Map))settings.parse(overlay->bytes);
     std::array<jass::Real,4> margins;unsigned i=0;for(auto key:{"left","right","top","bottom"}){auto text=settings.value("CameraMargins",key);int cells=0;auto [end,error]=std::from_chars(text.data(),text.data()+text.size(),cells);if(error!=std::errc{} || end!=text.data()+text.size())throw std::runtime_error("Invalid source camera margin: "+std::string(key));margins[i++]=cameraMarginFromCells(cells);}
-    auto result=std::make_unique<World>(std::move(data),margins);result->clock_=GameClock(DayNightRules::read(archives));result->resources_=archives.fork();return result;
+    auto result=std::make_unique<World>(std::move(data),margins);for(auto [index,key]:std::initializer_list<std::pair<unsigned,const char*>>{{0,"Distance"},{1,"FarZ"},{2,"AOA"},{3,"FOV"},{5,"Rotation"},{6,"Height"}}){auto text=settings.value("Camera",key);if(!text.empty()){size_t end=0;auto value=std::stof(text,&end);if(!std::isfinite(value) || !end)throw std::runtime_error("Invalid source camera field");result->environment_.cameraFields[index].sync(value);}}result->clock_=GameClock(DayNightRules::read(archives));result->resources_=archives.fork();return result;
 }
 Archives& World::resources() const {if(!resources_)throw std::runtime_error("World resources require archive-backed terrain");return *resources_;}
 jass::Real World::cameraMarginFromCells(std::int32_t cells) {return jass::Real::fromBits(std::bit_cast<std::uint32_t>(static_cast<float>(cells)*128.f));}

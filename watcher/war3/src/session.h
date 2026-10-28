@@ -130,7 +130,7 @@ class ScriptSession {
     SessionExit exit_=SessionExit::None;
     bool campaignExpansion_=true,forceCampaignSelect_=false;
     std::string nextLevel_;
-    std::vector<std::pair<std::string,bool>> cinematics_;
+    std::string modelCinematic_,movieCinematic_;
     bool showScores_=false,userControl_=true,userUI_=true,selectionEnabled_=true,selectionUI_=true;
     ScriptCineFilter cineFilter_;
     unsigned gameDifficulty_=1,defaultDifficulty_=1;
@@ -928,7 +928,7 @@ public:
     void finishGame(bool scores,SessionExit action=SessionExit::Return);
     void campaignContext(bool expansion,unsigned difficulty) {if(mainAttempted_ || difficulty>2)throw std::runtime_error("Invalid campaign session context");campaignExpansion_=expansion;gameDifficulty_=defaultDifficulty_=difficulty;}
     const std::string& nextLevel() const {return nextLevel_;}
-    std::optional<std::pair<std::string,bool>> takeCinematic(){if(cinematics_.empty())return {};auto result=std::move(cinematics_.front());cinematics_.erase(cinematics_.begin());return result;}
+    std::optional<std::pair<std::string,bool>> takeCinematic(){if(!modelCinematic_.empty()){auto value=std::move(modelCinematic_);modelCinematic_.clear();return std::pair{std::move(value),true};}if(!movieCinematic_.empty()){auto value=std::move(movieCinematic_);movieCinematic_.clear();return std::pair{std::move(value),false};}return {};}
     bool forceCampaignSelection() const {return forceCampaignSelect_;}
     void removePlayer(unsigned owner,unsigned result);
     void leaveGame();

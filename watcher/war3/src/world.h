@@ -4,11 +4,25 @@
 #include "jass_numeric.h"
 #include "game_clock.h"
 #include <unordered_map>
+#include <algorithm>
+#include <cmath>
 
 namespace war3 {
 struct WorldPoint {jass::Real x,y;};
 struct WorldRect {jass::Real minX,minY,maxX,maxY;};
 struct PathCell {size_t index=0;std::uint8_t mask=0;};
+struct CameraScalar {
+    float from=0,to=0;double started=0,duration=0;bool overridden=false;
+    float value(double now) const {return duration>0?std::lerp(from,to,float(std::clamp((now-started)/duration,0.,1.))):to;}
+    void set(float target,double now,double seconds){from=value(now);to=target;started=now;duration=seconds;overridden=true;}
+    void sync(float value){from=to=value;duration=0;}
+};
+struct CameraMotion {
+    float fromX=0,fromY=0,toX=0,toY=0;double started=0,duration=0;std::uint64_t revision=0;
+    std::pair<float,float> value(double now) const {float t=duration>0?float(std::clamp((now-started)/duration,0.,1.)):1.f;return {std::lerp(fromX,toX,t),std::lerp(fromY,toY,t)};}
+    void set(float x,float y,double now,double seconds){auto current=value(now);fromX=current.first;fromY=current.second;toX=x;toY=y;started=now;duration=seconds;++revision;}
+    void sync(float x,float y){fromX=toX=x;fromY=toY=y;duration=0;}
+};
 struct WorldEnvironment {
     std::array<jass::Real,8> cameraBounds{};
     std::string terrainDayNight,unitDayNight;
@@ -18,6 +32,8 @@ struct WorldEnvironment {
     std::array<std::uint8_t,4> waterColor{};
     bool cameraChanged=false,dayNightChanged=false,waterChanged=false;
     std::optional<WorldPoint> cameraTarget,quickPosition;
+    CameraMotion cameraMotion;
+    std::array<CameraScalar,7> cameraFields{{{1650,1650},{5000,5000},{304,304},{70,70},{0,0},{90,90},{0,0}}};
 };
 class World {
     MapData data_;

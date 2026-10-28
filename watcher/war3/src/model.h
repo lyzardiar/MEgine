@@ -18,6 +18,7 @@ public:
 };
 struct ModelVertex {float x,y,z,u,v;};
 struct ModelGeometry {std::vector<ModelVertex> vertices;std::vector<std::uint16_t> indices;};
+struct ModelEvent {std::string name;int parent=-1,global=-1;bool animated=false;std::vector<int> times;};
 class Model {
     struct Data;
     std::unique_ptr<Data> data_;
@@ -33,6 +34,8 @@ public:
     bool sequence(const std::string& prefix);
     bool sequenceIndex(unsigned index);
     size_t sequenceCount() const;
+    int sequenceStart() const;
+    const std::vector<ModelEvent>& events() const;
     bool cameraIndex(unsigned index);
     size_t cameraCount() const;
     std::string sequenceName() const;

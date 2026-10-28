@@ -3,10 +3,14 @@
 #include "model.h"
 #include "sound.h"
 #include "map_ui.h"
+#include "morph_mesh.h"
 namespace war3 {
 class ModelCinematic {
     Model model_;
     SoundScene sound_;
+    Renderer& renderer_;
+    struct MorphCue {size_t scene;std::uint64_t begin,end;std::unique_ptr<MorphMesh> mesh;};
+    std::vector<MorphCue> morphs_;
     std::vector<std::uint64_t> durations_;
     std::vector<std::string> labels_;
     std::vector<std::shared_ptr<ScriptSound>> prepared_;

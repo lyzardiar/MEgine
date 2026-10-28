@@ -44,7 +44,7 @@ void ScriptSession::applySetup(const PlayerSetup& setup) {
         if(slot.handicap<50 || slot.handicap>100 || slot.handicap%10)throw std::runtime_error("Invalid setup handicap");player.handicap=jass::Real::fromInteger(int(slot.handicap)).divide(jass::Real::fromInteger(100));player.slotState=slot.active()?1:0;
         switch(slot.control){case SlotControl::Open:player.controller=0;break;case SlotControl::Closed:player.controller=5;break;case SlotControl::Local:if(local)throw std::runtime_error("Multiple local setup players");local=id;player.controller=0;break;case SlotControl::ComputerEasy:player.controller=1;player.difficulty=0;break;case SlotControl::ComputerNormal:player.controller=1;player.difficulty=1;break;case SlotControl::ComputerInsane:player.controller=1;player.difficulty=2;break;default:throw std::runtime_error("Invalid setup control");}
     }
-    config_=std::move(next);localPlayer_=local;setupApplied_=true;
+    config_=std::move(next);localPlayer_=local;setupApplied_=true;if(world_ && local && !world_->environment().cameraMotion.revision){auto index=config_.players[*local].start;if(index>=0 && unsigned(index)<config_.starts.size()){auto& p=config_.starts[index].position;world_->environment().cameraMotion.sync(std::bit_cast<float>(p[0].bits()),std::bit_cast<float>(p[1].bits()));}}
 }
 World& ScriptSession::requireWorld() {if(!world_)throw std::runtime_error("World native requires attached map terrain");return *world_;}
 void ScriptSession::attachWorld(std::unique_ptr<World> world) {if(!world || world_ || runtime_.ready() || failed_)throw std::runtime_error("World attachment requires a fresh session and valid terrain");world_=std::move(world);loadDestructables();}

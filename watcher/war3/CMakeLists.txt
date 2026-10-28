@@ -51,7 +51,7 @@ target_sources(war3_core PRIVATE src/session_quest.cpp src/campaign_profile.cpp 
 target_sources(war3_core PRIVATE src/world_blight.cpp src/session_blight.cpp)
 target_sources(war3_core PRIVATE src/session_regeneration.cpp)
 target_sources(war3_core PRIVATE src/session_weapons.cpp src/session_combat.cpp src/session_combat_orders.cpp src/session_projectiles.cpp src/session_rewards.cpp src/session_research.cpp src/session_harvest.cpp src/placed_definition.cpp src/session_destructables.cpp src/session_lumber.cpp src/session_footprints.cpp src/session_construction.cpp src/session_mines.cpp src/session_building_upgrades.cpp src/session_repair.cpp src/session_blight_growth.cpp src/session_match.cpp src/session_script_dialogs.cpp)
-add_executable(war3 WIN32 src/main.cpp src/renderer.cpp src/media.cpp src/model.cpp src/model_pose.cpp src/model_particles.cpp src/glue.cpp src/map_browser.cpp src/campaign_browser.cpp src/cinematic.cpp src/model_cinematic.cpp src/game_cine_filter.cpp src/player_setup_ui.cpp)
+add_executable(war3 WIN32 src/main.cpp src/renderer.cpp src/media.cpp src/model.cpp src/model_pose.cpp src/model_particles.cpp src/glue.cpp src/map_browser.cpp src/campaign_browser.cpp src/cinematic.cpp src/model_cinematic.cpp src/morph_mesh.cpp src/game_cine_filter.cpp src/player_setup_ui.cpp)
 target_sources(war3 PRIVATE src/scene_assets.cpp src/terrain_scene.cpp src/terrain_layout.cpp)
 target_sources(war3 PRIVATE src/scene_objects.cpp src/game_loading.cpp src/loading_screen.cpp src/game_view.cpp)
 target_sources(war3 PRIVATE src/scene_streaming.cpp)

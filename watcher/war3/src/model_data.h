@@ -45,6 +45,7 @@ struct Geoset {
 struct Model::Data {
     Renderer* renderer;
     std::vector<mdx::Sequence> sequences;
+    std::vector<ModelEvent> events;
     std::vector<unsigned> globals;
     std::vector<mdx::Node> nodes;
     std::vector<unsigned> order;
