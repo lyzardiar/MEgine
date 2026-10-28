@@ -38,6 +38,7 @@ class GameView {
     std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_,multiboardPanel_,timerDialogPanel_,alliancePanel_;
     bool allianceOpen_=false;
     std::array<std::array<std::string,2>,12> allianceAmounts_{};
+    std::array<unsigned,12> allianceOptions_{},allianceEdited_{};
     int allianceFocusPlayer_=-1,allianceFocusResource_=0;
     std::string allianceError_,allianceDisabledCheck_;
     std::map<std::string,bool> multiboardIcons_;

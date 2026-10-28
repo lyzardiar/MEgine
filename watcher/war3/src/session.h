@@ -966,6 +966,7 @@ public:
     std::optional<std::pair<std::string,bool>> takeCinematic(){if(!modelCinematic_.empty()){auto value=std::move(modelCinematic_);modelCinematic_.clear();return std::pair{std::move(value),true};}if(!movieCinematic_.empty()){auto value=std::move(movieCinematic_);movieCinematic_.clear();return std::pair{std::move(value),false};}return {};}
     bool forceCampaignSelection() const {return forceCampaignSelect_;}
     void removePlayer(unsigned owner,unsigned result);
+    bool setAllianceOption(unsigned from,unsigned to,unsigned option,bool enabled);
     bool transferResources(unsigned from,unsigned to,int gold,int lumber);
     void leaveGame();
     bool endCinematic(unsigned owner);

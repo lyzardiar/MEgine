@@ -1073,3 +1073,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：session／session_match／game_state／game_view／game_alliance_dialog。Win32 Release 产品编译通过；BootyBay 会话最小检查转账余额、余额不足原子拒绝及税率边界通过；原版 FDF 隐藏窗口构造及绘制通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/transfer-probe/、alliance-probe/。
 
 集中验证真实窗口输入／金额多玩家转移、资源不足／取消／关闭、联盟变化与离场、余额上限、转账中的脚本状态事件及重入、金币／木材税率方向／取整、统计和原版行为；联盟关系设置、共享控制及局域网同步仍待实现。
+
+## 联盟与共享视野设置阶段待验证
+
+路径：game_alliance_dialog／game_view／session_match。Win32 Release 产品编译通过；BootyBay 最小会话验证联盟五个状态、共享视野及地图锁标志通过，未加载 Game.dll。
+
+集中验证面板接受／取消与脚本重入、玩家离开、联盟变化事件和共享视野生效、原版强制联盟／地图锁／隐藏规则及视觉一致性；共享单位控制、共同胜利及局域网同步尚待实现。
