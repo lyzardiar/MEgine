@@ -1580,3 +1580,9 @@ Win32 Release 客户端增量编译通过。阶段验证技能/商店/建造/学
 路径：`session_trackable.cpp`、`game_trackable.cpp`、`session.*`、`script_state.h`、`session_hashtable.cpp`、`game_view.*`、`CMakeLists.txt`、`docs/trackable.md`。地图可创建模型并注册鼠标命中/跟踪事件，单机拾取和触发器上下文连接实际会话；句柄可用 hashtable 保存。
 
 Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠标遮挡/范围/雾与 UI 优先级、跟踪/命中时序、触发器销毁/回调重入、模型消失与切图/GPU、原版操作与视觉；局域网事件同步尚未实现。
+
+## 编队移动选项待验证
+
+路径：`game_preferences.*`、`game_flow_ui.cpp`、`game_view.cpp`、`player_commands.*`、`docs/game-options.md`。游戏性选项控制单机多选移动／攻击移动／巡逻目标分配，排队命令保存提交时状态；设置保存至 camera.bin 并兼容旧版本。联机暂固定开启。
+
+阶段核对 FDF 控件／标签输入、游戏中 Alt+F 与聊天／菜单隔离、重复键抑制、确认取消／Esc、旧版迁移／损坏设置／跨会话保存、单多选与 Shift 队列／拥挤障碍，以及原版编队速度、默认值和联机同步。原版行为、实际窗口和对局尚未验收。

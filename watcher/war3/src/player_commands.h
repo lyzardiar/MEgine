@@ -23,6 +23,7 @@ struct PlayerCommand {
     bool queued=false;
     bool hasFormationDestination=false;
     std::uint32_t formationXBits=0,formationYBits=0;
+    bool formationMovement=true;
 };
 bool playerCommandQueueable(PlayerCommandKind kind);
 unsigned dispatchPlayerCommand(ScriptSession& session,const PlayerCommand& command,const std::function<bool()>& keepGoing={},bool fromQueue=false);
