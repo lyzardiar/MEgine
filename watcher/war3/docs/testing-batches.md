@@ -1127,3 +1127,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：player_commands／game_view／game_transport。Win32 Release 产品编译通过；BootyBay 最小会话检查高级共享丢弃、普通共享拒绝库存操作通过，未加载 Game.dll，证据 tmp/docs-artifacts/war3/transfer-probe/。
 
 集中验证即时／点／单位物品使用、热键／鼠标丢弃、权限撤销及物品移除重入、普通／高级共享拾取和库存权限、货舱乘员卸载、原版事件与多客户端同步。
+
+## 局域网大厅聊天阶段待验证
+
+路径：lan_join／lan_lobby／lan_browser。Win32 Release 产品编译通过；本机模拟 TCP 主机检查 0x28／0x0F 收发、UTF-8、发收方、长度限制、过滤和畸形包，原版 FDF 隐藏窗口绘制通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/lan-join-probe/chat-result.log。
+
+集中验证原版 1.27 主机、真实窗口中文与长消息、焦点／滚动／断线、恶意网络字符串显示、消息顺序及地图未就绪超时；对局内聊天与同步仍待实现。

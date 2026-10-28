@@ -5,12 +5,14 @@
 #include <chrono>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace war3 {
 enum class LanJoinState {Connecting,Joining,Lobby,Rejected,Closed,Error};
 struct LanSlot {std::uint8_t playerId=0,download=0,status=0,computer=0,team=0,color=0,race=0,difficulty=0,handicap=0;};
 struct LanPlayer {std::uint8_t id=0;std::string name;};
+struct LanChatMessage {std::uint8_t sender=0;std::string text;};
 struct LanMapAnnouncement {bool received=false;std::string path;std::uint32_t size=0,info=0,crc=0;std::array<std::uint8_t,20> sha1{};};
 class LanJoin {
     std::uintptr_t socket_=~std::uintptr_t{};
@@ -21,6 +23,7 @@ class LanJoin {
     std::uint8_t localPlayerId_=0;
     std::vector<LanSlot> slots_;
     std::vector<LanPlayer> players_;
+    std::vector<LanChatMessage> chat_;
     LanMapAnnouncement map_;
     std::vector<std::uint8_t> input_,output_;
     std::size_t sent_=0;
@@ -36,12 +39,14 @@ public:
     LanJoin& operator=(const LanJoin&)=delete;
     void poll();
     void cancel();
+    bool sendChat(std::string_view message);
     LanJoinState state() const {return state_;}
     const std::string& error() const {return error_;}
     std::uint32_t rejectionCode() const {return rejectionCode_;}
     std::uint8_t localPlayerId() const {return localPlayerId_;}
     const std::vector<LanSlot>& slots() const {return slots_;}
     const std::vector<LanPlayer>& players() const {return players_;}
+    const std::vector<LanChatMessage>& chat() const {return chat_;}
     const LanMapAnnouncement& mapCheck() const {return map_;}
 };
 }

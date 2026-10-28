@@ -27,3 +27,9 @@ Win32 Release 产品编译通过；本机 UDP 模拟主机验证搜索及房间�
 Win32 Release 编译通过；本机临时 TCP 主机覆盖 REQJOIN、分片 SLOTINFOJOIN、合包 PLAYERINFO／PING／MAPCHECK、PONG 和退出，原版大厅及槽位 FDF 隐藏窗口绘制通过。BootyBay 文件大小和 CRC32 经 Python 独立核对，非法路径拒绝和后台结果检查通过；XORRotate／SHA-1 尚未与独立原版实现核对。证据 `tmp/docs-artifacts/war3/lan-join-probe/result.log`。真实主机、大厅完整交互、跨客户端同步未验收。
 
 `W3GS_MAPSIZE` 的公开参考为 `0x42`、13 字节（常量 1、状态字节和地图大小）；部分主机要求短时间内收到就绪，否则会踢出。由于当前尚未实现对局同步，本客户端不发送就绪以免主机误启动；本机 1.27 报文仍待实测。
+
+## 大厅聊天
+
+加入房间后，原版 GameChatroom 的聊天输入与消息区域连接实际 W3GS `CHAT_TO_HOST`（0x28）／`CHAT_FROM_HOST`（0x0F）；使用主机分配的玩家 ID 和当前人类槽位，消息与发送缓冲有界，显示时处理控制字符和格式标记。断线或离开释放会话聊天状态。
+
+Win32 Release 产品编译通过；本机模拟 TCP 主机检查 UTF-8 消息、发送者／接收者、254 字节边界、非法输入、接收过滤和畸形包；原版聊天 FDF 隐藏窗口绘制通过，未加载 Game.dll。证据 `tmp/docs-artifacts/war3/lan-join-probe/chat-result.log`。原版 1.27 主机互通、真实窗口输入和外观仍待验证；地图 ready、创建及对局同步尚未实现。
