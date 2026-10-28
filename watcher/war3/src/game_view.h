@@ -36,7 +36,7 @@ class GameView {
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
     std::unique_ptr<QuestDialog> questDialog_;
     std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_,multiboardPanel_,timerDialogPanel_,alliancePanel_;
-    bool allianceOpen_=false;
+    bool allianceOpen_=false,allianceVictory_=false,allianceVictoryEdited_=false;
     std::array<std::array<std::string,2>,12> allianceAmounts_{};
     std::array<unsigned,12> allianceOptions_{},allianceEdited_{};
     int allianceFocusPlayer_=-1,allianceFocusResource_=0;

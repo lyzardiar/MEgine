@@ -968,6 +968,7 @@ public:
     void removePlayer(unsigned owner,unsigned result);
     bool canControlUnit(unsigned viewer,const UnitState& unit) const;
     bool canManageUnitInventory(unsigned viewer,const UnitState& unit) const;
+    bool setAlliedVictory(unsigned owner,bool enabled);
     bool setAllianceOption(unsigned from,unsigned to,unsigned option,bool enabled);
     bool transferResources(unsigned from,unsigned to,int gold,int lumber);
     void leaveGame();

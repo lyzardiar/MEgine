@@ -20,6 +20,9 @@ bool ScriptSession::canControlUnit(unsigned viewer,const UnitState& unit) const 
 bool ScriptSession::canManageUnitInventory(unsigned viewer,const UnitState& unit) const {
     return viewer<16 && unit.owner<16 && (viewer==unit.owner || (config_.players[unit.owner].alliances[viewer]&(1u<<7))!=0);
 }
+bool ScriptSession::setAlliedVictory(unsigned owner,bool enabled) {
+    if(owner>=12 || !setupApplied_ || exit_!=SessionExit::None || (config_.mapFlags&(1024u|2048u)) || config_.players[owner].slotState!=1)return false;auto& state=config_.players[owner].states[8];int before=state;state=enabled?1:0;playerChange(owner,8,before,state,false);return true;
+}
 bool ScriptSession::setAllianceOption(unsigned from,unsigned to,unsigned option,bool enabled) {
     if(from>=12 || to>=12 || from==to || !setupApplied_ || exit_!=SessionExit::None || (config_.mapFlags&(1024u|2048u)) || (option!=0 && option!=5 && option!=6))return false;auto& sender=config_.players[from];if(sender.slotState!=1 || config_.players[to].slotState!=1)return false;auto& flags=sender.alliances[to];unsigned mask=option==0?31u:1u<<option,before=flags;flags=enabled?flags|mask:flags&~mask;unsigned after=flags;if(after==before)return true;++fogRevision_;for(unsigned bit=0;bit<8;++bit)if((mask&(1u<<bit)) && ((before^after)&(1u<<bit)) && ((flags^after)&(1u<<bit))==0)playerChange(from,bit,(before&(1u<<bit))!=0,(after&(1u<<bit))!=0,true);return true;
 }
