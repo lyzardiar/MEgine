@@ -51,13 +51,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Leaderboard,Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning,CameraSetup};
+enum class NativeKind {Multiboard,MultiboardItem,Leaderboard,Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning,CameraSetup};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     using Timer=ScriptTimer;
     using Trigger=ScriptTrigger;
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<ScriptLeaderboard>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility,std::shared_ptr<ScriptEffect>,std::shared_ptr<ScriptLightning>,ScriptCameraSetup> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<ScriptLeaderboard>,std::shared_ptr<ScriptMultiboard>,ScriptMultiboardItem,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility,std::shared_ptr<ScriptEffect>,std::shared_ptr<ScriptLightning>,ScriptCameraSetup> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -67,6 +67,8 @@ class ScriptSession {
     bool failed_=false,configured_=false;
     std::optional<unsigned> localPlayer_;
     std::array<std::uint32_t,16> playerLeaderboards_{};
+    std::map<std::uint32_t,std::shared_ptr<ScriptMultiboard>> multiboards_;
+    bool multiboardsSuppressed_=false;
     std::array<std::set<std::uint32_t>,16> synchronizedSelections_;
     void syncLocalSelection();
     std::unique_ptr<World> world_;
@@ -812,6 +814,7 @@ class ScriptSession {
     void bindGameNatives();
     void bindDialogNatives();
     void bindLeaderboardNatives();
+    void bindMultiboardNatives();
     void bindScriptDialogNatives();
     void bindMatchNatives();
     void playerEvent(unsigned player,unsigned event);
@@ -988,6 +991,9 @@ public:
     const SoundScene* audio() const {return audio_.get();}
     const MusicScene* music() const {return music_.get();}
     const ScriptLeaderboard* leaderboard(unsigned player) const;
+    const std::map<std::uint32_t,std::shared_ptr<ScriptMultiboard>>& multiboards() const {return multiboards_;}
+    bool multiboardsSuppressed() const {return multiboardsSuppressed_;}
+    void toggleMultiboard(std::uint32_t id);
     std::optional<unsigned> localPlayer() const {return localPlayer_;}
     bool configured() const {return configured_ && !failed_;}
     bool initialized() const {return runtime_.ready() && !failed_;}

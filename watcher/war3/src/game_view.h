@@ -35,7 +35,10 @@ class GameView {
     bool chatOpen_=false;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
     std::unique_ptr<QuestDialog> questDialog_;
-    std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_;
+    std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_,multiboardPanel_;
+    std::map<std::string,bool> multiboardIcons_;
+    std::set<std::string> multiboardQueued_;
+    std::string multiboardDefaultIcon_;
     std::string cinematicSpeaker_,cinematicDialogue_;
     float leaderboardFont_=.007f;
     bool questsOpen_=false;
@@ -48,6 +51,8 @@ class GameView {
     void drawCineFilter();
     void drawCinematicPanel();
     void drawLeaderboard();
+    void drawMultiboards(const GameInput& input);
+    bool multiboardHit(float x,float y) const;
     void drawMinimapPings();
     std::optional<std::array<float,3>> ground(float x,float y) const;
     std::optional<std::pair<float,float>> project(float x,float y,float z) const;
