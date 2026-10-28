@@ -1215,3 +1215,7 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 ## 排队动画模拟时钟阶段待验证
 
 路径：model_sequence、model、scene_assets、session_animation、session_doodads、session_orders、session_destructables、session_volcano、session_world、world、game_view、scene_objects、CMakeLists。单位及可破坏物动画队列按模拟步进及源 MDX 序列时长推进，渲染和模拟共享序列匹配；常规队列出队不再由场景绘制推进；区域装饰物动画目标选择和状态变更已移入会话，需集中验证最近目标、随机相位、动态对象创建／删除／复用及动画命令先后。真实地图、隐藏／离屏、暂停／倍速、形态和死亡切换、模型缺失、多客户端与原版时序待集中验证，见[单位动画](animation-simulation.md)。
+
+## 脚本物件伤害与死亡轮次阶段待验证
+
+路径：session_damage、session_destructables、session、entities。UnitDamageTarget 消费可破坏物和物品生命、无敌及死亡事件；widget 死亡事件检查对象和生命轮次。集中验证单位／物品／可破坏物有效及空句柄、无敌／死亡与返回值、各种伤害类型／幻象倍率、触发器回调删除／复活／再次致死、物品持有／装备清理、重叠路径占用，以及原版伤害与事件时序。范围伤害 UnitDamagePoint 仍待实现；见[脚本物件伤害](widget-damage.md)。

@@ -771,7 +771,7 @@ class ScriptSession {
     void loadDestructables();
     jass::Value createDestructable(std::uint32_t type,WorldPoint point,float z,float angle,std::array<float,3> scale,int variation,float lifePercent=100,bool visible=true,bool solid=true,int editorId=-1);
     void destructableFootprint(DestructableState& destructable);
-    void destructableLife(std::uint32_t id,float value);
+    void destructableLife(std::uint32_t id,float value,ScriptContext context={});
     void widgetDeath(std::uint32_t id,ScriptContext context={});
     std::uint32_t nearestTree(WorldPoint point,float range,std::uint32_t exclude=0);
     std::pair<std::uint32_t,unsigned> sourceAbility(const UnitState& unit,const char* code);
