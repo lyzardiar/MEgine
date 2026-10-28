@@ -12,7 +12,7 @@
 
 DotA已越过SetPlayerHandicapXP、SetAltMinimapIcon和GetItemType。最新123单位/1物品/67触发器/700事件，停在UnitAddItem拾取事件调用的IsUnitIllusion（Scripts/war3map.j:17014）；幻象创建和生命周期尚未实现，没有添加固定false占位。main仍未完成。
 
-SetAltMinimapIcon写入WorldEnvironment，地图归档资源经现有后台队列读取，Alt小地图标记使用该纹理；GetItemType从ItemData类别返回原版itemtype，拾取脚本实际消费分类。原版切换交互、标记尺寸/颜色和新增GPU均待集中验证。
+SetAltMinimapIcon写入WorldEnvironment，地图归档资源经现有后台队列读取；UnitSetUsesAltIcon按单位切换实际小地图纹理，空或尚未加载的替代纹理不绘制默认标记。GetItemType从ItemData类别返回原版itemtype，拾取脚本实际消费分类。原版默认纹理、标记尺寸/颜色和新增GPU均待集中验证。
 
 必要Win32 Release产品及扩展消费者编译通过，源字面量native签名静态核对通过；只进行了开局阻塞定位，未执行专项夹具。英雄夹具与商店消费者共用复制BootyBay，检查经验倍率/暂停、升级/学习事件、技能点、成长、力量与生命上限；按用户要求保留待阶段执行。专项夹具编译不等于运行通过。
 

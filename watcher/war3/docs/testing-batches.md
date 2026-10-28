@@ -1544,3 +1544,9 @@ Win32 Release 客户端增量编译通过。阶段核对类型增删/重复/无�
 路径：`effects.h`、`session.h/.cpp`、`session_effects.cpp`、`session_hashtable.cpp`、`session_tick.cpp`、`game_effects.cpp`、`docs/ubersplats.md`。源表驱动地表特效的句柄、RGBA 时钟、纹理与五类混合绘制，并支持显示/完成/重置和迷雾控制。
 
 Win32 Release 客户端增量编译通过。阶段核对 DotA 与战役特效、声音／暂停／完成／重置、哈希句柄、纹理加载／透明／雾／地形、GPU状态与切图、高密度性能及原版播放时序/混合/尺寸；原版一致性尚未验收。
+
+## 单位替代小地图图标待验证
+
+路径：`entities.h`、`session_entities.cpp`、`game_view.cpp`、`docs/heroes.md`。UnitSetUsesAltIcon 保存单位图标开关，小地图读取 SetAltMinimapIcon 的流式纹理，不再由键盘 Alt 状态为所有单位切换；原件 1.27 的 native 入口 `0x6f1fb310` 设置单位偏移 0x280 的 0x200 位，`0x6f3bdb33` 消费该位，REA 证据 `ev_3aa460d02faad8c26a1bd1a5acbb7bc2047b26e1dfa825e8139cf6ea54f519db`、`ev_aa8124b93fe2ccb66b20873526ac5734998e46314e3981e50b5750881e319a3a`。
+
+Win32 Release 客户端增量编译通过。阶段验证 DotA 的 GetLocalPlayer 分支、单单位启停、空／透明／缺失及地图覆盖纹理、颜色和图标尺寸、可见性／共享视野、地图切换和 GPU；当前空或未加载纹理不画默认标记，原版默认纹理与时序尚未核对。

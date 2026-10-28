@@ -32,7 +32,7 @@ struct UnitState {
     float turnSpeed=0.6f,defaultTurnSpeed=0.6f,propWindow=1.04719755f,defaultPropWindow=60;
     bool turnApplied=false;
     int resources=0,userData=0,level=1,foodUsed=0,foodMade=0;
-    bool visible=true,paused=false,invulnerable=false,pathing=true,selected=false;
+    bool visible=true,paused=false,invulnerable=false,pathing=true,selected=false,usesAltMinimapIcon=false;
     std::uint32_t addedTypes=0,removedTypes=0;
     bool typeFlag(unsigned id,bool original) const {auto bit=std::uint32_t(1)<<id;return (addedTypes&bit) || (!(removedTypes&bit) && original);}
     std::string classifications(std::string original) const {
