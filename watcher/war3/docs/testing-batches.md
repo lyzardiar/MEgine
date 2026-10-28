@@ -1223,3 +1223,7 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 ## 游戏内选项与鼠标边缘滚动阶段待验证
 
 路径：game_flow_ui、game_view、game_preferences、platform、CMakeLists。原 FDF 导航和游戏性复选框已接入；确认后改变本地相机边缘滚动并写入独立用户目录。集中验证真实窗口布局／字体／焦点、键盘与鼠标点击及拖入拖出、确定／取消／Esc、选中施工或升级建筑时菜单按 Esc 不取消施工、边缘与键盘同时输入、暂停／局域网、切图／重启后的设置、只读安装边界、不可写／损坏／未来版本设置、遗留临时文件和多进程写入。其他选项与原版还原度待继续实现，见[游戏内选项](game-options.md)。
+
+## 游戏内声音选项阶段待验证
+
+路径：game_flow_ui、game_view、game_preferences、map_preparation、game_loading、sound、music、session_sound、session_music、main、cinematic、model_cinematic。原声音页的音效／音乐开关和滑块接入本地音量与设置文件。集中验证鼠标拖动／键盘焦点、确认／取消／Esc、已有与新建音效／堆叠声音、地图／主题／主菜单音乐、AVI 与模型过场、脚本音量组和淡入淡出叠加、--mute、不支持的音频设备、切图／重启及异常设置文件。原版音量曲线／控件外观和细分声音选项仍待对照或实现，见[游戏内选项](game-options.md)。

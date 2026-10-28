@@ -1,6 +1,7 @@
 // Author: MiYu. Source camera presets, rendered world, unit selection and local player commands.
 #pragma once
 #include "game_loading.h"
+#include "game_preferences.h"
 #include "glue.h"
 #include "scene_streaming.h"
 #include "fog_render.h"
@@ -57,6 +58,8 @@ class GameView {
     bool questsOpen_=false;
     std::unique_ptr<GameFlowUi> flow_;
     bool edgeScrollCommitted_=true,edgeScrollPersistable_=true;
+    GameAudioPreferences audioCommitted_{};
+    bool audioPersistable_=true;
     bool appExit_=false;
     std::wstring chatText_;
     std::array<float,3> eye_{};
@@ -110,6 +113,7 @@ public:
     std::optional<LanStepResult> consumeLanSlot(std::uint64_t sequence,const LanTimeSlot& slot);
     const LanSimulation* lanSimulation() const {return lanSimulation_.get();}
     bool appExitRequested() const {return appExit_;}
+    GameAudioPreferences audioPreferences() const {return audioCommitted_;}
     bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}
     const std::string& nextLevel() const {return data_->session->nextLevel();}
     std::optional<std::pair<std::string,bool>> takeCinematic(){return data_->session->takeCinematic();}

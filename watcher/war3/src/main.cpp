@@ -14,6 +14,8 @@
 #include "session.h"
 #include "loading_screen.h"
 #include "game_view.h"
+#include "game_preferences.h"
+#include <cmath>
 #include <memory>
 #include <bit>
 #include <shellapi.h>
@@ -106,11 +108,12 @@ int run(HINSTANCE instance) {
     std::unique_ptr<Music> music;std::unique_ptr<Cinematic> cinematic;std::unique_ptr<ModelCinematic> modelCinematic;bool cinematicFromGame=false;
     auto prepareCampaign=[&]{if(!campaign)campaign=std::make_unique<CampaignBrowser>(archives,images,renderer,text,log,options.dataRoot,options.mute);};
     auto startLoading=[&](std::unique_ptr<ScriptSession> session,IDirect3DTexture9* preview,bool fromCampaign){if(!session)throw std::runtime_error("Missing prepared game session");campaignOrigin=fromCampaign;campaignMode=fromCampaign && campaign && campaign->campaignSession();loadingScreen=std::make_unique<LoadingScreen>(*session,renderer,text,log,preview);loadError.clear();uploading.reset();music.reset();loadRequest=loader.request(std::move(session));screen=Screen::Loading;};
+    auto audioSettings=[&]{try{return loadAudioPreferences(options.dataRoot);}catch(const std::exception& e){log.write(std::string("audio_preferences_load_error=")+e.what());return GameAudioPreferences{};}};
     auto menuMusic=[&]{if(options.mute || music)return;
-        try { music = std::make_unique<Music>(options.dataRoot, archives.read("Sound\\Music\\mp3Music\\War3XMainScreen.mp3")); log.write("music=miles_mp3_memory_playing"); }
+        try { auto preferences=audioSettings();if(preferences.musicGain()==0){log.write("music=user_muted");return;}music = std::make_unique<Music>(options.dataRoot, archives.read("Sound\\Music\\mp3Music\\War3XMainScreen.mp3"),int(std::lround(127*preferences.musicGain()))); log.write("music=miles_mp3_memory_playing"); }
         catch (const std::exception& error) { log.write(std::string("audio_unavailable=") + error.what()); }
     };menuMusic();
-    auto playCinematic=[&](const std::string& name,bool isModel,bool fromGame){try{music.reset();if(isModel)modelCinematic=std::make_unique<ModelCinematic>(fromGame?game->resources():archives,images,renderer,log,name,options.mute);else cinematic=std::make_unique<Cinematic>(options.dataRoot,name,window,options.mute);cinematicFromGame=fromGame;frontError.clear();screen=Screen::Cinematic;log.write("cinematic_started="+name);}catch(const std::exception& e){cinematic.reset();modelCinematic.reset();frontError="无法播放过场。";log.write(std::string("cinematic_start_failed=")+e.what());if(!fromGame)menuMusic();}};
+    auto playCinematic=[&](const std::string& name,bool isModel,bool fromGame){try{music.reset();auto preferences=fromGame?game->audioPreferences():audioSettings();if(isModel)modelCinematic=std::make_unique<ModelCinematic>(fromGame?game->resources():archives,images,renderer,log,name,options.mute,preferences.soundGain());else cinematic=std::make_unique<Cinematic>(options.dataRoot,name,window,options.mute,preferences.soundGain());cinematicFromGame=fromGame;frontError.clear();screen=Screen::Cinematic;log.write("cinematic_started="+name);}catch(const std::exception& e){cinematic.reset();modelCinematic.reset();frontError="无法播放过场。";log.write(std::string("cinematic_start_failed=")+e.what());if(!fromGame)menuMusic();}};
     if (!options.hidden) ShowWindow(window, SW_SHOW);
     if(options.play){prepareSingle();browser=std::make_unique<MapBrowser>(archives,images,renderer,text,log,options.dataRoot,options.map,options.mute);screen=Screen::Maps;}
     unsigned frames = 0;

@@ -1,5 +1,6 @@
 // Author: MiYu. Read map members in memory and transfer configured sessions without moving their addresses.
 #include "map_preparation.h"
+#include "game_preferences.h"
 
 namespace war3 {
 namespace {bool under(const fs::path& path,const fs::path& directory){auto child=fs::weakly_canonical(path).wstring(),parent=fs::weakly_canonical(directory).wstring();if(parent.empty())return false;if(parent.back()!=L'\\')parent+=L'\\';return child.size()>=parent.size() && CompareStringOrdinal(parent.c_str(),int(parent.size()),child.c_str(),int(parent.size()),TRUE)==CSTR_EQUAL;}}
@@ -25,7 +26,7 @@ void MapPreparation::run(std::stop_token stop) {
             auto w3i=archives->readCandidates({"war3map.w3i"},ArchiveScope::Map);if(!w3i)throw std::runtime_error("Missing war3map.w3i");result.info=MapInfo::parse(w3i->bytes,strings);
             if(!stale()){
                 auto module=jass::Module::compile(jass::Program::read(*archives));
-                if(!stale()){auto world=World::read(*archives);if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings),std::nullopt,request.initialRandomSeed);if(request.campaign)result.session->campaignContext(request.campaign->first,request.campaign->second);else if(request.inferCampaign && under(request.path,dataRoot_/L"Maps"/L"Campaign"))result.session->campaignContext(false,1);result.session->attachWorld(std::move(world));result.session->audioMuted(muted_);result.session->configure();}}
+                if(!stale()){auto world=World::read(*archives);if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings),std::nullopt,request.initialRandomSeed);if(request.campaign)result.session->campaignContext(request.campaign->first,request.campaign->second);else if(request.inferCampaign && under(request.path,dataRoot_/L"Maps"/L"Campaign"))result.session->campaignContext(false,1);result.session->attachWorld(std::move(world));result.session->audioMuted(muted_);try{auto preferences=loadAudioPreferences(dataRoot_);result.session->localAudioGains(preferences.soundGain(),preferences.musicGain());}catch(const std::exception&){}result.session->configure();}}
             }
             if(!stale())try {
                 auto bytes=archives->readCandidates({"war3mapPreview.tga","war3mapMap.blp"},ArchiveScope::Map);

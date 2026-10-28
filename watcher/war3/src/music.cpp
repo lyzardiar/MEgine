@@ -19,7 +19,7 @@ std::optional<std::string> MusicScene::lookup(const std::string& key) {
 }
 void MusicScene::map(const std::string& name,bool random,int index) {tracks_.clear();mapName_=nativeText(name,259);mapIndex_=random?-1:index;}
 void MusicScene::clear() {map({},true,0);}
-void MusicScene::applyVolume() {if(voice_){auto level=std::clamp<std::int32_t>(std::bit_cast<std::int32_t>(level_),0,127);voice_->volume(muted_?0:int(std::clamp(std::lround(level*groupVolume_.value(GetTickCount())),0l,127l)));}}
+void MusicScene::applyVolume() {if(voice_){auto level=std::clamp<std::int32_t>(std::bit_cast<std::int32_t>(level_),0,127);voice_->volume(muted_?0:int(std::clamp(std::lround(level*groupVolume_.value(GetTickCount())*localGain_),0l,127l)));}}
 void MusicScene::file(const std::string& name,unsigned offset,unsigned fade,bool loop) {
     if(offset>INT_MAX || fade>INT_MAX)throw std::runtime_error("Music offset or fade exceeds supported milliseconds");fade_.reset();pending_.reset();if(voice_ && voice_->playing() && !offset && lower(name)==lower(currentFile_))return;
     voice_.reset();currentFile_=name;paused_=false;auto member=resources_->read(name);if(!member)throw std::runtime_error("Missing music archive member: "+name);auto extension=lower(fs::path(wide(name)).extension().string());voice_=muted_?AudioVoice::silent(member,extension):MilesDevice::open(resources_->root())->digital(member,extension);loop_=loop;level_=fade?0:volume_;applyVolume();voice_->start(loop_);if(offset)voice_->position(offset);if(fade)fade_=Fade{fade,GetTickCount()+50,0,false,false};
@@ -35,6 +35,7 @@ void MusicScene::volume(std::uint32_t value) {update();volume_=std::min(value,12
 void MusicScene::groupVolume(float level) {if(!std::isfinite(level))throw std::runtime_error("Invalid music volume group");update();groupVolume_.set(level,GetTickCount());groupAnimating_=true;}
 void MusicScene::position(unsigned value) {update();if(voice_)voice_->position(value);}
 void MusicScene::muted(bool value) {update();muted_=value;if(!value && voice_ && voice_->silent()){auto position=voice_->milliseconds().first;bool playing=voice_->playing(),paused=paused_;auto name=currentFile_;voice_.reset();file(name,position,0,loop_);if(!playing)voice_->pause();paused_=paused;}applyVolume();}
+void MusicScene::localGain(float value) {if(!std::isfinite(value) || value<0 || value>1)throw std::runtime_error("Invalid local music gain");if(localGain_==value)return;localGain_=value;applyVolume();}
 unsigned MusicScene::fadeLevel(unsigned volume,unsigned elapsed,unsigned duration,bool out) {if(!duration)throw std::runtime_error("Zero music fade duration");float ratio=static_cast<float>(elapsed)/static_cast<float>(duration);float scaled=ratio*static_cast<float>(volume);auto value=static_cast<unsigned>(scaled);return out?volume-value:value;}
 void MusicScene::update(std::uint32_t now) {
     if(groupAnimating_){applyVolume();groupAnimating_=groupVolume_.changing(now);}

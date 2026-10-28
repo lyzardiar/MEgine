@@ -17,6 +17,7 @@ class MusicScene {
     size_t selected_=0;
     std::unique_ptr<AudioVoice> voice_;
     bool muted_=false,paused_=false,loop_=false;
+    float localGain_=1;
     std::uint32_t volume_=127,level_=127;
     VolumeRamp groupVolume_;
     bool groupAnimating_=false;
@@ -41,6 +42,7 @@ public:
     void groupVolume(float level);
     void position(unsigned value);
     void muted(bool value);
+    void localGain(float value);
     void update(std::uint32_t now=GetTickCount());
     static unsigned fadeLevel(unsigned volume,unsigned elapsed,unsigned duration,bool out);
     const std::string& mapName() const {return mapName_;}

@@ -3,8 +3,8 @@
 #include <bit>
 
 namespace war3 {
-MusicScene& ScriptSession::requireMusic() {if(!music_){music_=std::make_unique<MusicScene>(requireWorld().resources());music_->muted(audioMuted_);}return *music_;}
-MusicScene& ScriptSession::requireThematicMusic() {if(!thematicMusic_){thematicMusic_=std::make_unique<MusicScene>(requireWorld().resources());thematicMusic_->muted(audioMuted_);}return *thematicMusic_;}
+MusicScene& ScriptSession::requireMusic() {if(!music_){music_=std::make_unique<MusicScene>(requireWorld().resources());music_->localGain(localMusicGain_);music_->muted(audioMuted_);}return *music_;}
+MusicScene& ScriptSession::requireThematicMusic() {if(!thematicMusic_){thematicMusic_=std::make_unique<MusicScene>(requireWorld().resources());thematicMusic_->localGain(localMusicGain_);thematicMusic_->muted(audioMuted_);}return *thematicMusic_;}
 void ScriptSession::bindMusicNatives() {
     auto text=[](const jass::Value& value){return value.text?*value.text:std::string{};};
     bind("SetMapMusic","nothing",{"string","boolean","integer"},[this,text](auto& vm,auto args){requireMusic().map(text(args[0]),args[1].bits!=0,std::bit_cast<std::int32_t>(args[2].bits));return vm.nothing();});

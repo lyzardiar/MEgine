@@ -7,7 +7,7 @@ class Cinematic {
     struct Data;
     std::unique_ptr<Data> data_;
 public:
-    Cinematic(const fs::path& root,const std::string& name,HWND owner,bool muted);
+    Cinematic(const fs::path& root,const std::string& name,HWND owner,bool muted,float soundGain=1);
     ~Cinematic();
     Cinematic(const Cinematic&)=delete;
     Cinematic& operator=(const Cinematic&)=delete;

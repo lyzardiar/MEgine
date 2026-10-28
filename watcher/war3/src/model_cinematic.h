@@ -19,7 +19,7 @@ class ModelCinematic {
     size_t scene_=0;
     void select(size_t index);
 public:
-    ModelCinematic(Archives& archives,Images& images,Renderer& renderer,Log& log,const std::string& source,bool muted);
+    ModelCinematic(Archives& archives,Images& images,Renderer& renderer,Log& log,const std::string& source,bool muted,float soundGain=1);
     bool draw(float aspect);
 };
 }
