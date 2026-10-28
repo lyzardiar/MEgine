@@ -36,6 +36,7 @@ struct SessionPlayer {
     jass::Real handicapXP=jass::Real::fromBits(0x3f800000);
     int start=-1;
     bool raceSelectable=true,forcedStart=false,onScoreScreen=true;
+    std::array<bool,2> upkeepOverride{};
     std::array<unsigned,16> alliances{};
     std::map<unsigned,int> states;
     std::map<std::pair<unsigned,unsigned>,int> taxes;
@@ -538,6 +539,8 @@ class ScriptSession {
     std::map<std::pair<std::uint32_t,bool>,std::optional<std::pair<int,int>>> globalStock_;
     std::uint64_t productionTicket_=0;
     std::optional<SourceSettings> gameplay_;
+    struct UpkeepRules {std::array<int,10> usage{};std::array<std::array<int,10>,2> rates{};};
+    std::optional<UpkeepRules> upkeepRules_;
     std::vector<int> heroThresholds_;
     std::map<std::uint32_t,std::shared_ptr<ScriptQuest>> quests_;
     std::uint64_t questRevision_=0;
@@ -777,6 +780,7 @@ class ScriptSession {
     void regenerate(double delta);
     std::vector<std::uint32_t> illusions(std::uint32_t caster,std::uint32_t original,unsigned count,float dealt,float taken,double duration,std::uint32_t buff,std::uint32_t ability=0);
     void removeItem(std::uint32_t item);
+    void refreshUpkeep(unsigned owner);
     const SourceSettings& gameplay();
     float gameplayNumber(const char* key,float fallback);
     void initializeHero(UnitState& unit);

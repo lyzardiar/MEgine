@@ -1061,3 +1061,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：entities／spells／session_weapon_effects／session_spell_effects。Win32 Release 产品增量编译、差异检查通过，未运行玩法测试。
 
 集中验证 Recb 前置、建筑命中与持续伤害、刷新／多来源叠加、非整秒时限、暂停／死亡／易主／来源移除、免疫和护甲、事件顺序及原版画面；法球缺省飞行速度仍待实现。
+
+## 人口维护费阶段待验证
+
+路径：session／session_food／session_callbacks／game_view。Win32 Release 产品增量编译、差异检查通过，未执行玩法测试。
+
+集中验证 ROC／TFT 阈值边界、地图配置覆盖与短列表、脚本修改维护率、人口预留／取消／易主及状态事件重入、金币／木材入账与取整、原版顶栏文字与布局。跨玩家资源转移及其交易税仍待实现；三图、完整对局与性能按阶段验证。

@@ -3,9 +3,18 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <sstream>
 
 namespace war3 {
 namespace {float number(jass::Real v){return std::bit_cast<float>(v.bits());}}
+void ScriptSession::refreshUpkeep(unsigned owner) {
+    if(!upkeepRules_){
+        UpkeepRules rules;rules.usage.fill(10000);rules.usage[0]=campaignExpansion_?50:40;rules.usage[1]=campaignExpansion_?80:70;rules.rates[0].fill(60);rules.rates[0][0]=0;rules.rates[0][1]=30;rules.rates[1].fill(0);
+        auto parse=[&](const char* key,auto& values,bool rate){auto value=gameplay().value("Misc",key);if(value.empty())return;std::istringstream input(value);std::string part;unsigned count=0;while(std::getline(input,part,',')){if(count>=values.size())throw std::runtime_error(std::string("Upkeep list exceeds source limit: ")+key);size_t end=0;float n=std::stof(part,&end);while(end<part.size() && (part[end]==' ' || part[end]=='\t' || part[end]=='\r'))++end;if(end!=part.size() || !std::isfinite(n) || n<0 || (rate?n>1:n>10000000) || (!rate && n!=std::floor(n)))throw std::runtime_error(std::string("Invalid upkeep source: ")+key);values[count++]=rate?int(std::lround(n*100)):int(n);}if(!count)throw std::runtime_error(std::string("Empty upkeep source: ")+key);for(unsigned i=count;i<values.size();++i)values[i]=values[count-1];};
+        parse("UpkeepUsage",rules.usage,false);parse("UpkeepGoldTax",rules.rates[0],true);parse("UpkeepLumberTax",rules.rates[1],true);for(unsigned i=1;i<rules.usage.size();++i)if(rules.usage[i]<rules.usage[i-1])throw std::runtime_error("Unordered upkeep thresholds");upkeepRules_=std::move(rules);
+    }
+    auto& player=config_.players.at(owner);unsigned level=0;int food=player.states[5];while(level+1<upkeepRules_->usage.size() && food>upkeepRules_->usage[level])++level;std::array<int,2> before{},after{};for(unsigned i=0;i<2;++i){before[i]=player.states[13+i];after[i]=player.upkeepOverride[i]?before[i]:upkeepRules_->rates[i][level];player.states[13+i]=after[i];}for(unsigned i=0;i<2;++i)if(before[i]!=after[i] && player.states[13+i]==after[i])playerChange(owner,13+i,before[i],after[i],false);
+}
 void ScriptSession::adjustFood(unsigned owner,int used,int capacity) {
     auto& states=config_.players.at(owner).states;int beforeUsed=states[5],beforeCap=states[4];auto sum=[](int value,int delta){return int(std::clamp(std::int64_t(value)+delta,std::int64_t(0),std::int64_t(INT_MAX)));};int afterUsed=states[5]=sum(beforeUsed,used),afterCap=states[4]=sum(beforeCap,capacity);
     playerChange(owner,5,beforeUsed,afterUsed,false);playerChange(owner,4,beforeCap,afterCap,false);
