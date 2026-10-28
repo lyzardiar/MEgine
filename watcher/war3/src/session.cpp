@@ -34,7 +34,7 @@ ScriptSession::Object& ScriptSession::object(jass::Value handle,NativeKind kind)
 unsigned ScriptSession::playerId(jass::Value handle) {return std::get<PlayerRef>(object(handle,NativeKind::Player).state).id;}
 SessionPlayer& ScriptSession::player(jass::Value handle) {return config_.players[playerId(handle)];}
 SessionStart& ScriptSession::start(std::uint32_t index) {return config_.starts[checked(index,16,"Start location")];}
-void ScriptSession::destroy(jass::Value handle,NativeKind kind) {if(!handle.bits)return;auto& value=object(handle,kind);value.alive=false;value.state=std::monostate{};}
+void ScriptSession::destroy(jass::Value handle,NativeKind kind) {if(!handle.bits)return;auto& value=object(handle,kind);if(kind==NativeKind::Destructable){auto state=std::get<std::shared_ptr<DestructableState>>(value.state);removeDoodad(state->doodadIndex);animatedDestructables_.erase(handle.bits);}value.alive=false;value.state=std::monostate{};}
 size_t ScriptSession::liveObjects(NativeKind kind) const {return std::count_if(objects_.begin(),objects_.end(),[&](auto& value){return value.alive && value.kind==kind;});}
 void ScriptSession::initialize() {if(failed_ || runtime_.ready())throw std::runtime_error("Session initialization requires a fresh instance");try{runtime_.initialize();}catch(...){failed_=true;throw;}}
 void ScriptSession::configure() {if(failed_ || configured_)throw std::runtime_error("Session configuration requires an unconfigured instance");try{if(!runtime_.ready())initialize();runtime_.invoke("config");configured_=true;}catch(...){failed_=true;throw;}}

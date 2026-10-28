@@ -1214,4 +1214,4 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 
 ## 排队动画模拟时钟阶段待验证
 
-路径：model_sequence、model、scene_assets、session_animation、session_orders、session_destructables、session_volcano、game_view、scene_objects、CMakeLists。单位及可破坏物动画队列按模拟步进及源 MDX 序列时长推进，渲染和模拟共享序列匹配；常规队列出队不再由场景绘制推进；区域装饰物动画仍在绘制时清空可破坏物队列，尚需迁移。真实地图、隐藏／离屏、暂停／倍速、形态和死亡切换、模型缺失、多客户端与原版时序待集中验证，见[单位动画](animation-simulation.md)。
+路径：model_sequence、model、scene_assets、session_animation、session_doodads、session_orders、session_destructables、session_volcano、session_world、world、game_view、scene_objects、CMakeLists。单位及可破坏物动画队列按模拟步进及源 MDX 序列时长推进，渲染和模拟共享序列匹配；常规队列出队不再由场景绘制推进；区域装饰物动画目标选择和状态变更已移入会话，需集中验证最近目标、随机相位、动态对象创建／删除／复用及动画命令先后。真实地图、隐藏／离屏、暂停／倍速、形态和死亡切换、模型缺失、多客户端与原版时序待集中验证，见[单位动画](animation-simulation.md)。

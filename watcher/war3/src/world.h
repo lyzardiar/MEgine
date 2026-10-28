@@ -45,7 +45,6 @@ class World {
     WorldRect bounds_;
     std::array<jass::Real,4> margins_;
     WorldEnvironment environment_;
-    std::vector<DoodadAnimation> doodadAnimations_;
     GameClock clock_;
     std::unique_ptr<Archives> resources_;
     Bytes obstacles_;
@@ -68,8 +67,6 @@ public:
     const MapData& data() const {return data_;}
     Archives& resources() const;
     const WorldRect& bounds() const {return bounds_;}
-    void animateDoodads(DoodadAnimation animation){if(doodadAnimations_.size()>=16384)throw std::runtime_error("Doodad animation queue exceeds budget");doodadAnimations_.push_back(std::move(animation));}
-    std::vector<DoodadAnimation> takeDoodadAnimations(){auto result=std::move(doodadAnimations_);doodadAnimations_.clear();return result;}
     jass::Real cameraMargin(std::uint32_t side) const;
     WorldPoint clamp(WorldPoint point) const;
     float height(WorldPoint point) const;

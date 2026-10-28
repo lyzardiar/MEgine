@@ -54,6 +54,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
+struct DoodadState {
+    std::uint32_t type=0,handle=0,randomPhase=0;
+    float x=0,y=0;
+    std::string animation,randomAnimation;
+    double animationStart=0,randomStart=-1;
+    bool active=true;
+};
 enum class NativeKind {TextTag,Multiboard,MultiboardItem,Leaderboard,Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning,CameraSetup};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
@@ -101,6 +108,13 @@ class ScriptSession {
     std::map<std::pair<std::uint32_t,std::uint32_t>,ProductInfo> buildingUpgradeProducts_;
     std::unique_ptr<Images> pathDecoder_;
     std::vector<std::uint32_t> placedDestructables_;
+    std::vector<DoodadState> doodads_;
+    std::vector<size_t> freeDoodads_;
+    std::map<std::pair<int,int>,std::vector<size_t>> doodadGrid_;
+    bool loadingDoodads_=false;
+    size_t addDoodad(std::uint32_t type,float x,float y,std::uint32_t handle);
+    void removeDoodad(size_t index);
+    void animateDoodads(const DoodadAnimation& animation);
     std::map<std::pair<int,int>,std::vector<std::uint32_t>> treeGrid_;
     std::map<std::pair<std::uint32_t,std::uint32_t>,bool> techAliases_;
     size_t footprintCells_=0,pathImageBytes_=0;
@@ -923,6 +937,7 @@ public:
     const auto& destructables() const {return destructables_;}
     std::uint64_t destructableRevision() const {return destructableRevision_;}
     std::uint32_t placedDestructable(size_t index) const {return index<placedDestructables_.size()?placedDestructables_[index]:0;}
+    const DoodadState* doodad(size_t index) const {return index<doodads_.size() && doodads_[index].active?&doodads_[index]:nullptr;}
     const WeaponDefinition& projectileWeapon(const CombatProjectile& projectile) const {return projectile.definition;}
     void dropItem(std::uint32_t unit,std::uint32_t item);
     bool itemNeedsTarget(std::uint32_t item);

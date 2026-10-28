@@ -22,7 +22,7 @@ target_sources(war3_core PRIVATE src/audio_random.cpp src/music.cpp src/session_
 target_sources(war3_core PRIVATE src/object_data.cpp src/session_entities.cpp src/session_weather.cpp)
 target_sources(war3_core PRIVATE src/session_callbacks.cpp src/session_collections.cpp src/session_tick.cpp src/session_game.cpp)
 target_sources(war3_core PRIVATE src/session_multiboard.cpp src/session_leaderboard.cpp src/session_dialogs.cpp src/session_indicators.cpp src/game_indicators.cpp)
-target_sources(war3_core PRIVATE src/world_path.cpp src/session_orders.cpp src/player_commands.cpp src/model_sequence.cpp src/session_animation.cpp)
+target_sources(war3_core PRIVATE src/world_path.cpp src/session_orders.cpp src/player_commands.cpp src/model_sequence.cpp src/session_animation.cpp src/session_doodads.cpp)
 target_sources(war3_core PRIVATE src/lan_actions.cpp src/lan_action_encoder.cpp src/lan_time_driver.cpp src/lan_simulation.cpp src/lan_setup.cpp)
 target_sources(war3_core PRIVATE src/session_visual.cpp)
 target_sources(war3_core PRIVATE src/spatial_region.cpp src/session_spatial_events.cpp)

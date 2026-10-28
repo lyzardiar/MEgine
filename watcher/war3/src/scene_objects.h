@@ -8,6 +8,7 @@
 namespace war3 {
 struct SceneObject {
     std::uint32_t type=0,handle=0;
+    size_t doodadIndex=SIZE_MAX;
     std::shared_ptr<DestructableState> source;
     Model* model=nullptr;
     ModelInstance particles;
@@ -18,10 +19,6 @@ struct SceneObject {
     std::uint64_t occlusionFrame=0,occlusionVisit=0;
     unsigned replacement=0;
     std::string texture;
-    std::string animation;
-    double animationStart=0,randomStart=-1;
-    std::string randomAnimation;
-    std::uint32_t randomPhase=0;
     bool visible=true,dead=false;
 };
 class SceneObjects {
@@ -34,7 +31,6 @@ class SceneObjects {
     double occlusionFade_=0.3;
     void append(SceneObject object);
     void sync();
-    void animate();
     void occlude(const std::array<float,3>& eye,const DirectX::XMMATRIX& viewProjection);
     DWORD tint(SceneObject& object,double now);
     std::vector<SceneObject> placed_;
