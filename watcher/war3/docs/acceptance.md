@@ -65,3 +65,5 @@
 基础批次证据见 [测试队列](testing-batches.md)，仅覆盖已实现范围，不能替代完整客户端验收。World Editor 和在线平台服务不在此次范围。旧 MEngine 批次继续延期，见仓库根目录 `docs/designs/frostbound-realms/native-loading-handoff.md`。
 
 攻城兵种进度：高射炮、碎片攻击、燃烧之油、液体炸弹和弹幕已连接真实武器／多目标弹道／额外伤害／地面脉冲／禁修理及原被动按钮。完整事件／原版精度／GPU／音效／AI／三图及性能留阶段验收，见[siege-attacks.md](siege-attacks.md)。
+
+疾病云雾进度：Aapl家族与Apts已连接真实感染／来源归属／疾病伤害、死亡与落弹云雾单位及限时生命／原表现／科技与不可选取消费。源精度、完整组合／事件和窗口／GPU／音效／AI／三图及性能留阶段验收，见[plague.md](plague.md)。

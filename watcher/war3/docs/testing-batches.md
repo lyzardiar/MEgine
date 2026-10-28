@@ -891,3 +891,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：session_siege_attacks、passives／combat／spells／session、被动源定义／前置／登记／调度、攻击发射与命中、buff伤害／修理、源资源流。Aflk／Afsh／Abof／Aliq／Aroc及w3a派生有真实消费者。
 
 状态：实现接入；Win32 Release产品增量编译通过、无警告，差异检查通过；不执行新增专项、三图、GPU、原版精度或性能回归。集中验证三档范围／固定伤害／主目标排除／中甲与无甲、原武器载荷／miss／防御／多能力、火场时序／持续／叠加／空间查询／孤立来源、液体炸弹禁修理／恢复／重复刷新／清理，弹幕第二武器／多目标／预算／对地并行／命令与时钟、研究／可用开关／w3a／形态／库存／回调死亡移除易主、UI／GPU／音效／AI／三图长局和内存释放。证据与构建日志在tmp/docs-artifacts/war3/siege-attacks/；原版精度边界见[实现说明](siege-attacks.md)。旧MEngine队列保持延期。
+
+## 疾病云雾与瘟疫投掷阶段待验证
+
+路径：session_plague、passives／entities／spells／session、被动源定义／前置／登记与空间调度、攻击载荷／落弹、死亡／限时生命、buff周期伤害和damageUnit疾病光环魔免分支。Aapl／Aap1–Aap4、Apts及原地图覆盖有真实消费者。
+
+状态：实现接入；必要Win32 Release产品编译通过、无警告，差异审查通过。未执行新增专项、三图／原版精度、UI／GPU／音效／AI和性能回归，均留功能阶段合并。集中验证源感染时限／秒脉冲／多源与重复、离开范围／来源死亡移除易主／归因、亡灵／目标与魔免／驱散／虚无分类、checkDep／研究／开关／变形／幻象、真实云雾死亡和落弹生成／数量／原事件／原模型／不可选取与人口路径、脚本枚举／归属／限时清理／复活重入、地形对象攻击和三图长局／内存／切图释放。证据与构建日志在tmp/docs-artifacts/war3/plague/；原版边界见[实现说明](plague.md)。旧MEngine队列继续延期。

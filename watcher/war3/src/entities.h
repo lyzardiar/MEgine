@@ -53,7 +53,7 @@ struct UnitState {
     std::optional<UnitFormState> unitForm;
     std::optional<UnitFormTransition> formTransition;
     std::string animationProperties;
-    bool decaySuspended=false,noCorpse=false,exploded=false;
+    bool decaySuspended=false,noCorpse=false,exploded=false,plagueWard=false;
     std::set<unsigned> visionPlayers;
     bool holding=false,creepGuard=false,guardRemoved=false;
     std::optional<WorldPoint> guardHome;

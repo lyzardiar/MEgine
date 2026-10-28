@@ -272,6 +272,11 @@ class ScriptSession {
     void barrageVolley(const CombatProjectile& projectile);
     void barragePulse(std::uint32_t unit,const PassiveInfo& passive,AmbientClock& clock);
     void siegeFiresTick(double delta);
+    void plaguePassiveInfo(PassiveInfo& passive);
+    void plaguePulse(std::uint32_t source,const PassiveInfo& passive);
+    void createPlagueWard(unsigned owner,std::uint32_t type,WorldPoint point,double duration,std::uint32_t source,std::uint32_t ability);
+    void plagueDeath(const UnitState& unit);
+    void plagueTossImpact(const CombatProjectile& projectile);
     void startGrabTree(std::uint32_t unit,const CastOrder& cast);
     void cancelGrabTree(UnitState& unit,std::uint64_t ticket);
     void clearWarClub(UnitState& unit,bool cancelGrab=true);
@@ -827,7 +832,7 @@ public:
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
     bool useItemAt(std::uint32_t unit,std::uint32_t item,WorldPoint point);
     bool itemNeedsPoint(std::uint32_t item);
-    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false);
+    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false,bool diseaseAura=false);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);
