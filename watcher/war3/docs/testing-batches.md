@@ -1444,8 +1444,8 @@ Win32 Release 产品增量编译通过，BootyBay 派生的最小会话检查通
 
 ## 科技防御类型增量待验证
 
-路径：`commerce.h`、`session.h`、`session_research.cpp`、`session_damage.cpp`、`session_siege_attacks.cpp`、`tests/fortified_tests.cpp`、`tests/generate-fortified-fixture.py`。原版 Rorb 与有界整数 rart 效果连接研究刷新及实际防御类型，普通伤害和碎片攻击共同消费，已有／新单位与易主重新计算。
+路径：`commerce.h`、`session.h`、`session_research.cpp`、`session_damage.cpp`、`session_siege_attacks.cpp`、`session_corpse_spells.cpp`、`tests/fortified_tests.cpp`、`tests/generate-fortified-fixture.py`。原版 Rorb 与有界 rart 效果连接研究刷新及实际防御类型；研究变更按新旧浮点效果差值向零截断并逐次处理边界，碎片攻击只匹配防御类型 1 和 7。新增单位、易主、变形和建筑升级按当前科技重建，幻象和复活路径保留对应状态。
 
-原安装 Game.dll 的 SHA-256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。只读 REA/Rizin 证据：`0x6f6ac913` 识别 rart，`0x6f6986a0` 对等级效果差值执行整数转换后调整防御类型；`0x6f689b40` 的零级为零、正等级为 base+(level−1)×mod；`0x6f052f30` 在有限常规范围内向零截断。该证据不证明全局研究顺序和索引 8 的后续语义。
+原安装 Game.dll 的 SHA-256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。只读 REA/Rizin 证据：`0x6f6ac913` 识别 rart，`0x6f6986a0` 和 `0x6f0528b0` 计算新旧等级效果差值；`0x6f689b40` 的零级为零、正等级为 base+(level−1)×mod；`0x6f052f30` 向零截断，结果小于 0 时置 0、大于 8 时置 7、等于 8 时保留；`0x6f573a9f` 的碎片攻击只匹配类型 1 和 7。普通伤害对索引 8 的语义尚未确认。
 
-Win32 Release 产品增量编译通过。原版 Rorb 的三个建筑实际研究和伤害倍率、新建筑及易主检查通过；BootyBay 派生的自定义 w3q 会话检查通过两级／双科技、伤害倍率、新单位和易主。测试目标 `war3_fortified_tests`，原版夹具 `tmp/docs-artifacts/war3/destructables/fixture.w3m`，自定义夹具 `tmp/docs-artifacts/war3/fortified/custom-fixture.w3m`，生成命令见对应 `tests/generate-*-fixture.py`；不加载 Game.dll。阶段集中核对真实原版不同研究顺序、饱和后升降级、古树拔起优先级及碎片攻击。当前仅支持有界整数 base/mod；分数／超范围在研究前拒绝，索引 8 的伤害消费明确失败；当前按单位升级列表重建，可能与原版按研究变更顺序的饱和结果不同。
+本次 Win32 Release 客户端增量编译通过。此前原版 Rorb 的三个建筑实际研究和伤害倍率、新建筑及易主检查通过；BootyBay 派生的整数 w3q 会话检查通过两级／双科技、伤害倍率、新单位和易主。本次新增分数、研究顺序和生命周期夹具尚待阶段执行：测试目标 `war3_fortified_tests`，原版夹具 `tmp/docs-artifacts/war3/destructables/fixture.w3m`，自定义夹具 `tmp/docs-artifacts/war3/fortified/custom-fixture.w3m`，生成命令见对应 `tests/generate-*-fixture.py`；不加载 Game.dll。阶段集中核对分数及饱和、不同研究顺序、升降级、创建／易主／变形／幻象／复活、古树拔起优先级及碎片攻击的实际行为和原版一致性。超范围数值在研究前拒绝，索引 8 的普通伤害消费仍明确失败；生命周期重建和多个效果移除的顺序尚无原版证据。

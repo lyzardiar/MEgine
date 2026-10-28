@@ -12,11 +12,11 @@ spec.loader.exec_module(fixture)
 
 
 def modification(field, value, marker, upgrade):
-    kind = 3 if isinstance(value, str) else 0
+    kind = 3 if isinstance(value, str) else 1 if isinstance(value, float) else 0
     result = field.encode('ascii') + struct.pack('<I', kind)
     if upgrade:
         result += struct.pack('<II', 0, 0)
-    result += value.encode('utf-8') + b'\0' if kind == 3 else struct.pack('<i', value)
+    result += value.encode('utf-8') + b'\0' if kind == 3 else struct.pack('<f' if kind == 1 else '<i', value)
     return result + marker
 
 
@@ -33,9 +33,9 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = b'function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n'
-    upgrades = [(b'R0F1', [('glvl', 2), ('gba1', 1), ('gmo1', 1)]), (b'R0F2', [('glvl', 1), ('gba1', 1), ('gmo1', 0)])]
+    upgrades = [(b'R0F1', [('glvl', 2), ('gba1', 1), ('gmo1', 1)]), (b'R0F2', [('glvl', 1), ('gba1', 1), ('gmo1', 0)]), (b'R0F3', [('glvl', 2), ('gba1', 0.6), ('gmo1', 0.6)]), (b'R0F4', [('glvl', 1), ('gba1', 7), ('gmo1', 0)]), (b'R0F5', [('glvl', 1), ('gba1', -3), ('gmo1', 0)]), (b'R0F6', [('glvl', 2), ('gba1', -0.6), ('gmo1', -0.6)])]
     files['war3map.w3q'] = struct.pack('<III', 2, 0, len(upgrades)) + b''.join(b'Rorb' + custom + struct.pack('<I', len(changes)) + b''.join(modification(field, value, custom, True) for field, value in changes) for custom, changes in upgrades)
-    files['war3map.w3u'] = struct.pack('<II', 2, 1) + b'otrb' + bytes(4) + struct.pack('<I', 1) + modification('upgr', 'R0F1,R0F2', b'otrb', False) + struct.pack('<I', 0)
+    files['war3map.w3u'] = struct.pack('<II', 2, 1) + b'otrb' + bytes(4) + struct.pack('<I', 1) + modification('upgr', 'R0F1,R0F2,R0F3,R0F4,R0F5,R0F6', b'otrb', False) + struct.pack('<I', 0)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
