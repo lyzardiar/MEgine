@@ -1185,3 +1185,7 @@ Win32 Release 产品编译通过；本机两客户端并发接收真实 BootyBay
 ## 玩家对话框及过场命令阶段待验证
 
 路径：player_commands、game_flow_ui、game_view。对话框点击和过场跳过进入玩家命令入口，Win32 Release 集成版本编译通过；BootyBay 最小会话探针覆盖权限、隐藏／重复点击及过场事件归属，未加载 Game.dll，证据 tmp/docs-artifacts/war3/ui-event-command-probe/result.log。集中验证真实输入、回调销毁／重入、原版事件时序和后续网络身份；玩家选择及暂停／退出等仍待同步设计。
+
+## 局域网动作与时间片传输阶段待验证
+
+路径：lan_host、lan_join。显式启用后传输有界 W3GS 动作、时间片分片和逐玩家逐轮校验；动作字节尚不连接游戏模拟。Win32 Release 集成版本编译通过，本机三端探针覆盖空帧、跨分片动作顺序、逐轮校验一致及不一致后停止，模拟主机的错误 CRC 与不完整时间片拒绝通过；证据 tmp/docs-artifacts/war3/lan-timeslot-probe/result.log、lan-timeslot-invalid-probe/result.log。集中验证原版 1.27 互通、其他异常报文及延迟／断线、原版动作编码与对象映射、校验语义和网络时间驱动；失步分组恢复、锁步对局和大厅启用仍未实现。

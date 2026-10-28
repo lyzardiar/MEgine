@@ -6,6 +6,7 @@
 #include <string_view>
 #include <vector>
 namespace war3 {
+struct LanChecksumMismatch {std::uint64_t round=0;std::uint8_t playerId=0;std::uint32_t expected=0,actual=0;};
 struct LanHostSettings {
     std::string gameName,playerName,mapPath;
     LanMapCheck map;
@@ -36,6 +37,13 @@ public:
     LanLoadPhase loadPhase() const;
     const std::vector<std::uint8_t>& loadPlayers() const;
     const std::vector<std::uint8_t>& loadedPlayers() const;
+    // Opaque W3GS action data; callers must separately implement simulation and original action semantics.
+    bool enableTimeSlotProtocol();
+    bool submitHostAction(std::span<const std::uint8_t> action);
+    bool emitTimeSlot(std::uint16_t elapsedMs);
+    std::optional<LanTimeSlot> takeTimeSlot();
+    bool submitHostChecksum(std::uint32_t checksum);
+    std::optional<LanChecksumMismatch> checksumMismatch() const;
     // The remote peer's assertion, not host-side verification of its file.
     bool playerReportsMapReady(std::uint8_t playerId) const;
     bool playerRequestsMap(std::uint8_t playerId) const;

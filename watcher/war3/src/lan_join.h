@@ -4,7 +4,10 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <deque>
 #include <memory>
+#include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -16,6 +19,8 @@ enum class LanLoadPhase {Lobby,Countdown,Loading,Ready,Failed};
 struct LanSlot {std::uint8_t playerId=0,download=0,status=0,computer=0,team=0,color=0,race=0,difficulty=0,handicap=0;};
 struct LanPlayer {std::uint8_t id=0;std::string name;};
 struct LanChatMessage {std::uint8_t sender=0;std::string text;};
+struct LanAction {std::uint8_t playerId=0;std::vector<std::uint8_t> bytes;};
+struct LanTimeSlot {std::uint16_t elapsedMs=0;std::vector<LanAction> actions;};
 struct LanMapAnnouncement {bool received=false;std::string path;std::uint32_t size=0,info=0,crc=0;std::array<std::uint8_t,20> sha1{};};
 struct LanMapCheck;
 class LanJoin {
@@ -34,6 +39,10 @@ class LanJoin {
     LanLoadPhase loadPhase_=LanLoadPhase::Lobby;
     std::chrono::steady_clock::time_point loadStarted_{};
     std::vector<std::uint8_t> loadPlayers_,loadedPlayers_;
+    bool timeSlotsEnabled_=false;
+    std::vector<LanAction> timeSlotFragments_;
+    std::deque<LanTimeSlot> timeSlots_;
+    std::size_t fragmentBytes_=0,queuedTimeSlotBytes_=0,fragmentCount_=0;
     LanMapDownloadState downloadState_=LanMapDownloadState::Idle;
     std::uint8_t downloadHostId_=0;
     std::vector<std::uint8_t> downloading_;
@@ -48,6 +57,7 @@ class LanJoin {
     void closeSocket();
     void clearDownload();
     void updateLoadPhase();
+    void receiveTimeSlot(const std::uint8_t* data,std::size_t length);
 public:
     LanJoin(const LanGame& game,std::string playerName);
     ~LanJoin();
@@ -62,6 +72,11 @@ public:
     // Opt in only when a session can actually prepare and synchronize the game.
     bool enableLoadingProtocol();
     bool reportLocalLoaded();
+    // Explicitly enable raw W3GS transport; action bytes are not decoded by this layer.
+    bool enableTimeSlotProtocol();
+    bool sendAction(std::span<const std::uint8_t> action);
+    bool sendChecksum(std::uint32_t checksum);
+    std::optional<LanTimeSlot> takeTimeSlot();
     LanLoadPhase loadPhase() const {return loadPhase_;}
     const std::vector<std::uint8_t>& loadPlayers() const {return loadPlayers_;}
     const std::vector<std::uint8_t>& loadedPlayers() const {return loadedPlayers_;}
