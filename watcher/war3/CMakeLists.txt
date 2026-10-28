@@ -56,7 +56,7 @@ target_sources(war3 PRIVATE src/scene_assets.cpp src/terrain_scene.cpp src/terra
 target_sources(war3 PRIVATE src/scene_objects.cpp src/game_loading.cpp src/loading_screen.cpp src/game_view.cpp)
 target_sources(war3 PRIVATE src/scene_streaming.cpp)
 target_sources(war3 PRIVATE src/fog_render.cpp)
-target_sources(war3 PRIVATE src/terrain_fog_render.cpp src/game_text_tag.cpp src/game_timer_dialog.cpp src/game_multiboard.cpp src/game_leaderboard.cpp src/game_commands.cpp src/game_autocast.cpp src/game_spells.cpp src/game_transport.cpp src/game_corpses.cpp src/game_morph.cpp src/game_effects.cpp src/game_lightning.cpp src/game_building.cpp src/game_flow_ui.cpp)
+target_sources(war3 PRIVATE src/terrain_fog_render.cpp src/game_alliance_dialog.cpp src/game_text_tag.cpp src/game_timer_dialog.cpp src/game_multiboard.cpp src/game_leaderboard.cpp src/game_commands.cpp src/game_autocast.cpp src/game_spells.cpp src/game_transport.cpp src/game_corpses.cpp src/game_morph.cpp src/game_effects.cpp src/game_lightning.cpp src/game_building.cpp src/game_flow_ui.cpp)
 target_sources(war3 PRIVATE src/quest_dialog.cpp)
 target_sources(war3 PRIVATE src/terrain_blight.cpp)
 target_compile_options(war3 PRIVATE /W4 /permissive- /utf-8 /MP8)

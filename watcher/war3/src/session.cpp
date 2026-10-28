@@ -121,7 +121,7 @@ void ScriptSession::bindNatives() {
     bind("GetPlayerAlliance","boolean",{"player","player","alliancetype"},[this](auto& vm,auto args){return vm.boolean((player(args[0]).alliances[playerId(args[1])]&(1u<<checked(args[2].bits,16,"Alliance type")))!=0);});
     bind("SetPlayerState","nothing",{"player","playerstate","integer"},[this](auto& vm,auto args){auto owner=playerId(args[0]);auto& states=config_.players[owner].states;auto before=states[args[1].bits],after=integer(args[2]);states[args[1].bits]=after;if(args[1].bits==13 || args[1].bits==14)config_.players[owner].upkeepOverride[args[1].bits-13]=true;playerChange(owner,args[1].bits,before,after,false);return vm.nothing();});
     bind("GetPlayerState","integer",{"player","playerstate"},[this](auto& vm,auto args){auto& states=player(args[0]).states;auto found=states.find(args[1].bits);return vm.integer(found==states.end()?0:found->second);});
-    bind("SetPlayerTaxRate","nothing",{"player","player","playerstate","integer"},[this](auto& vm,auto args){player(args[0]).taxes[{playerId(args[1]),args[2].bits}]=integer(args[3]);return vm.nothing();});
+    bind("SetPlayerTaxRate","nothing",{"player","player","playerstate","integer"},[this](auto& vm,auto args){auto& source=player(args[0]);auto other=playerId(args[1]);if(args[2].bits==1 || args[2].bits==2)source.taxes[{other,args[2].bits}]=int(std::min(args[3].bits,100u));return vm.nothing();});
     bind("GetPlayerTaxRate","integer",{"player","player","playerstate"},[this](auto& vm,auto args){auto& taxes=player(args[0]).taxes;auto found=taxes.find({playerId(args[1]),args[2].bits});return vm.integer(found==taxes.end()?0:found->second);});
     bindCallbackNatives();
     bindCollectionNatives();

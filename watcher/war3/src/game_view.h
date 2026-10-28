@@ -35,7 +35,11 @@ class GameView {
     bool chatOpen_=false;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
     std::unique_ptr<QuestDialog> questDialog_;
-    std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_,multiboardPanel_,timerDialogPanel_;
+    std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_,multiboardPanel_,timerDialogPanel_,alliancePanel_;
+    bool allianceOpen_=false;
+    std::array<std::array<std::string,2>,12> allianceAmounts_{};
+    int allianceFocusPlayer_=-1,allianceFocusResource_=0;
+    std::string allianceError_,allianceDisabledCheck_;
     std::map<std::string,bool> multiboardIcons_;
     std::set<std::string> multiboardQueued_;
     std::string multiboardDefaultIcon_;
@@ -53,6 +57,8 @@ class GameView {
     void drawLeaderboard();
     void drawTimerDialogs();
     void drawTextTags();
+    void openAlliance();
+    bool drawAlliance(const GameInput& input);
     void drawMultiboards(const GameInput& input);
     bool multiboardHit(float x,float y) const;
     void drawMinimapPings();
