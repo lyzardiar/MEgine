@@ -59,6 +59,7 @@ std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> byt
         if(opcode==0x01)result.emplace_back(LanActionPause{});
         else if(opcode==0x02)result.emplace_back(LanActionResume{});
         else if(opcode>=0x10 && opcode<=0x14)result.emplace_back(readAbility(reader,opcode));
+        else if(opcode==0x1e){LanActionCancelQueue cancel;cancel.slot=reader.u8();cancel.type=reader.u32();if(cancel.slot>6 || !cancel.type)throw std::runtime_error("Invalid LAN queue cancellation at byte "+std::to_string(offset));result.emplace_back(cancel);}
         else if(opcode==0x16){LanActionSelection selection;selection.mode=reader.u8();if(selection.mode!=1 && selection.mode!=2)throw std::runtime_error("Invalid LAN selection mode at byte "+std::to_string(offset));auto count=reader.u16();reader.need(std::size_t(count)*8);selection.objects.reserve(count);for(unsigned i=0;i<count;++i)selection.objects.push_back(reader.object());result.emplace_back(std::move(selection));}
         else throw std::runtime_error("Unsupported LAN action opcode "+std::to_string(opcode)+" at byte "+std::to_string(offset));
     }
@@ -70,6 +71,7 @@ std::vector<std::uint8_t> encodeLanActions(std::span<const LanDecodedAction> act
         if constexpr(std::is_same_v<T,LanActionPause>)writer.u8(0x01);
         else if constexpr(std::is_same_v<T,LanActionResume>)writer.u8(0x02);
         else if constexpr(std::is_same_v<T,LanActionAbility>)writeAbility(writer,value);
+        else if constexpr(std::is_same_v<T,LanActionCancelQueue>){if(value.slot>6 || !value.type)throw std::runtime_error("Invalid LAN queue cancellation");writer.u8(0x1e);writer.u8(value.slot);writer.u32(value.type);}
         else {if(value.mode!=1 && value.mode!=2)throw std::runtime_error("Invalid LAN selection mode");if(value.objects.size()>std::numeric_limits<std::uint16_t>::max())throw std::runtime_error("LAN selection exceeds object limit");writer.u8(0x16);writer.u8(value.mode);writer.u16(std::uint16_t(value.objects.size()));for(auto object:value.objects)writer.object(object);}
     },action);
     return writer.finish();

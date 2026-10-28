@@ -14,7 +14,7 @@ public:
     using ObjectResolver=std::function<std::optional<std::uint32_t>(LanObjectId)>;
 private:
     struct Selection {unsigned player;bool add;std::vector<std::uint32_t> units;};
-    struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0;};
+    struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0;bool constructionCancel=false;};
     using Event=std::variant<LanActionPause,LanActionResume,Selection,Command>;
     ScriptSession& session_;
     ObjectResolver resolve_;

@@ -10,6 +10,7 @@ namespace war3 {
 struct LanObjectId {std::uint32_t first=0,second=0;bool operator==(const LanObjectId&) const=default;};
 struct LanActionPause {bool operator==(const LanActionPause&) const=default;};
 struct LanActionResume {bool operator==(const LanActionResume&) const=default;};
+struct LanActionCancelQueue {std::uint8_t slot=0;std::uint32_t type=0;bool operator==(const LanActionCancelQueue&) const=default;};
 struct LanActionSelection {
     std::uint8_t mode=0;
     std::vector<LanObjectId> objects;
@@ -26,7 +27,7 @@ struct LanActionAbility {
     std::uint32_t secondaryXBits=0,secondaryYBits=0;
     bool operator==(const LanActionAbility&) const=default;
 };
-using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionSelection,LanActionAbility>;
+using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionSelection,LanActionAbility,LanActionCancelQueue>;
 
 // Classic 1.13+ action layout, bounded to 256 KiB and 4096 actions per block.
 // A malformed or unsupported opcode fails the entire block; IDs are original wire pairs.
