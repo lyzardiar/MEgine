@@ -73,7 +73,8 @@ public:
     // Opt in only when a session can actually prepare and synchronize the game.
     bool enableLoadingProtocol();
     bool reportLocalLoaded();
-    // Explicitly enable raw W3GS transport; action bytes are not decoded by this layer.
+    // Arm after countdown begins, before reporting local load; frames still require the ready barrier.
+    // Action bytes are not decoded by this layer.
     bool enableTimeSlotProtocol();
     bool sendAction(std::span<const std::uint8_t> action);
     bool sendChecksum(std::uint32_t checksum);
