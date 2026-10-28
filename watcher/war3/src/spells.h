@@ -120,6 +120,7 @@ struct MorphAppearance {std::uint32_t type=0;std::string model,icon;float scale=
 enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation,Frenzy,Curse,Shell,Invisibility,Detection,WindWalk,Digestion,Net,Sleep,Purge,Banish,Morph,Cyclone,UnitForm,EatTree,Avatar,Berserk,Defend,DivineShield,Immolation,ManaShield,Drain,DrainBonus,PossessionCaster,PossessionTarget,Controlled,ItemRecovery,ItemInvulnerability,ItemSpeed,Bladestorm,Earthquake,Voodoo,FrostArmor,ShadowStrike,Impale,ColdArrows,BlackArrow,Silence,DrunkenHaze,BreathBurn,RainBurn,HowlTerror,Doom,SoulBurn,Incinerate,AcidBomb,LightningShield,SpiritLink,FaerieFire,Cripple,ShacklesCaster,ShacklesTarget,Cloud,Roar,PhaseShift,ManaFlare,WarClub,LiquidFire,Plague,FreezingBreath,AttackPoison,OrbCorruption,Replenish,MechanicalCritter,Count};
 struct SpellSuppression {std::uint64_t ticket=0;unsigned disableMask=0;float missChance=0,moveReduction=0,attackReduction=0;};
 struct PoisonDose {std::uint32_t source=0,ability=0;unsigned owner=0,flags=0;float damage=0,moveReduction=0,attackReduction=0;double remaining=0,period=0;};
+struct CorrosiveDose {std::uint32_t source=0;unsigned owner=0;std::uint64_t targetDeathRevision=0;float damage=0;double remaining=0,period=0;};
 struct StatusDamage {std::uint32_t source=0;float amount=0;unsigned type=14;std::optional<unsigned> owner;bool diseaseAura=false,nonlethal=false;};
 struct UnitBuff {
     std::vector<PoisonDose> poison;

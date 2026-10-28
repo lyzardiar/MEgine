@@ -1055,3 +1055,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：world／session_world／terrain_fog_render／session_dialogs／game_timer_dialog／game_view。Win32 Release 产品编译通过；会话定向检查雾设置／重置、计时倍率／覆盖清除及原 TimerDialog.fdf 隐藏窗口绘制通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/terrain-handicap-timer-probe/result.log 与 timer-dialog-probe/。未覆盖实际 GameView。
 
 集中验证 W3I／地图覆盖／Reset、线性／指数雾／范围／颜色、硬件能力／深度／透明模型／天空／水和玩家视野遮罩；计时器启动／暂停／重置／销毁／周期、实时覆盖／速度／颜色／多个窗口与计分板并存、字号／布局和原版准确性。完整战役、三图、性能及旧 MEngine 队列保持阶段待验证。
+
+## 腐蚀喷吐持续伤害阶段待验证
+
+路径：entities／spells／session_weapon_effects／session_spell_effects。Win32 Release 产品增量编译、差异检查通过，未运行玩法测试。
+
+集中验证 Recb 前置、建筑命中与持续伤害、刷新／多来源叠加、非整秒时限、暂停／死亡／易主／来源移除、免疫和护甲、事件顺序及原版画面；法球缺省飞行速度仍待实现。
