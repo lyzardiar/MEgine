@@ -7,7 +7,7 @@
 namespace war3 {
 namespace {float number(jass::Real value){return std::bit_cast<float>(value.bits());}jass::Real real(float value){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}}
 void ScriptSession::aiFormCaptains(ScriptAI& ai,bool force){
-    auto eligible=[&](std::uint32_t id){if(!alive(id,NativeKind::Unit))return false;auto& u=*units_.at(id);return u.owner==ai.owner && !u.removing && !u.building && !u.construction && number(u.life)>0 && hasWeapon(id) && !ai.guardUnits.contains(id) && !ai.suicideUnits.contains(id) && (ai.groupTimedLife || !u.timedLife);};
+    auto eligible=[&](std::uint32_t id){if(!alive(id,NativeKind::Unit))return false;auto& u=*units_.at(id);return u.owner==ai.owner && !u.removing && !u.building && !u.construction && number(u.life)>0 && hasWeapon(id) && !ai.guardUnits.contains(id) && !ai.suicideUnits.contains(id) && !ai.reservesUnit(id) && (ai.groupTimedLife || !u.timedLife);};
     for(auto* members:{&ai.captain,&ai.defenderUnits})for(auto it=members->begin();it!=members->end();)if(!eligible(*it))it=members->erase(it);else ++it;
     if(!force && !ai.captainChanges)return;auto previous=ai.captain;std::map<std::uint32_t,unsigned> attacking,defending;std::set<std::uint32_t> taken;auto desired=[](auto& goals,std::uint32_t type){auto it=goals.find(type);return it==goals.end()?0u:it->second;};
     auto retain=[&](auto& members,auto& goals,auto& counts){for(auto it=members.begin();it!=members.end();){auto type=units_.at(*it)->type;if(taken.contains(*it) || counts[type]>=desired(goals,type))it=members.erase(it);else{++counts[type];taken.insert(*it);++it;}}};retain(ai.captain,ai.assault,attacking);retain(ai.defenderUnits,ai.defenders,defending);
@@ -16,7 +16,7 @@ void ScriptSession::aiFormCaptains(ScriptAI& ai,bool force){
 }
 void ScriptSession::aiSuicide(ScriptAI& ai,int quantity,std::uint32_t type,int targetPlayer){
     if(quantity<=0)return;if(quantity>4096 || targetPlayer< -1 || targetPlayer>=16)throw std::runtime_error("AI suicide wave exceeds supported limits");if(!definitions().contains(type))throw std::runtime_error("Unknown suicide wave unit type");std::vector<std::uint32_t> candidates;
-    for(auto& [id,u]:units_)if(u->owner==ai.owner && u->type==type && !u->removing && !u->hidden() && !u->building && !u->construction && !u->paused && !u->stunned() && number(u->life)>0 && !u->workingOn && !u->buildOrder && !u->repair && !u->cast && u->gather.phase==GatherOrder::Phase::None && !ai.suicideUnits.contains(id) && hasWeapon(id))candidates.push_back(id);
+    for(auto& [id,u]:units_)if(u->owner==ai.owner && u->type==type && !u->removing && !u->hidden() && !u->building && !u->construction && !u->paused && !u->stunned() && number(u->life)>0 && !u->workingOn && !u->buildOrder && !u->repair && !u->cast && u->gather.phase==GatherOrder::Phase::None && !ai.suicideUnits.contains(id) && !ai.reservesUnit(id) && hasWeapon(id))candidates.push_back(id);
     for(auto id:candidates){if(quantity<=0)break;if(!alive(id,NativeKind::Unit) || units_.at(id)->owner!=ai.owner)continue;aiRemoveGuard(id);ai.captain.erase(id);ai.defenderUnits.erase(id);ai.suicideUnits[id]=targetPlayer;--quantity;}aiSuicideTick(ai);
 }
 void ScriptSession::aiSuicideTick(ScriptAI& ai){

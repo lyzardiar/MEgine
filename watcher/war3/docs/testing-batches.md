@@ -1239,3 +1239,7 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 ## AI 合并与转换待验证
 
 路径：session_ai_natives、session_ai_economy、session_coupling、session_unit_forms、session_spells。集中验证原 common.ai 对骑乘单位和毁灭者的需求、已有和在途数量、多次调用、来源不足、停止／移动／占用／死亡／易主、多个 AI 与自定义能力；检查骑乘位置与人口，变形科技／资源／人口费用、取消和事件重入，数量边界和 native 返回值与原版对照。执行暗夜及亡灵实际长局并观察单位形成、原版画面及性能。
+
+## AI 飞艇购买待验证
+
+路径：session_ai_transport、session_ai_natives、session_ai、session_ai_armies、session_ai_economy、session_ai_guards、session_commerce。集中验证原 AI 的购买请求，地精实验室库存／资源／人口／售卖事件、附近与远程购买者、单位行走与采集恢复、多商店／路线阻塞、暂停／超时／取消／死亡／易主和交易回调；比较原版候选与购买行为并执行实际对局。运输波次 LoadZepWave 仍待实现。

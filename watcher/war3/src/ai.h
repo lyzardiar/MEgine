@@ -9,6 +9,7 @@
 
 namespace war3 {
 struct AIGuardPost {std::uint32_t type=0,unit=0;WorldPoint point;unsigned losses=0;bool filled=false,requested=false;};
+struct AIZeppelinPurchase {std::uint32_t shop=0,buyer=0;double deadline=0;std::uint64_t revision=0;};
 struct ScriptAI {
     enum Policy {DefendPlayer,GroupsFlee,HeroesBuy,HeroesFlee,HeroesTake,IgnoreInjured,PeonsRepair,SmartArtillery,TargetHeroes,UnitsFlee,WatchMega,PolicyCount};
     unsigned owner=0;
@@ -26,6 +27,8 @@ struct ScriptAI {
     bool fillGuards=false,groupTimedLife=true,newHeroes=true,slowChopping=false,captainChanges=true;
     int replacementCount=0;
     std::optional<WorldPoint> townSpot;
+    std::optional<AIZeppelinPurchase> zeppelinPurchase;
+    bool reservesUnit(std::uint32_t unit) const {return zeppelinPurchase && zeppelinPurchase->buyer==unit;}
     std::deque<std::pair<int,int>> commands;
     WorldPoint home,goal,stage;
     std::uint32_t allianceTarget=0,enemyBase=0,expansion=0,hero=0;

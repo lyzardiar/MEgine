@@ -40,10 +40,16 @@ Unsummon已连接已有工人的Auns目标施法和建筑持续消退/返还；G
 
 UnitInvis已使用AI所属玩家的实际隐形/侦测判定，敌情查询排除无法侦测的隐形目标；实际隐形术/真实视域、native和AI之间的最小流程通过，见[隐形与侦测](visibility.md)。完整原件语义继续阶段对照。
 
-当前common.ai专用native接续清单（未绑定，调用会明确失败）：PurchaseZeppelin、SetRandomPaths、LoadZepWave、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。
+当前common.ai专用native接续清单（未绑定，调用会明确失败）：SetRandomPaths、LoadZepWave、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。
 
 ## AI 单位合并与转换
 
 原 common.ai 的 MergeUnits 使用目标数量、两类来源和结果类型；ConvertUnits 使用数量与来源类型。AI 现在选取自身可用单位，通过真实骑乘／合并能力和毁灭者形态能力下达命令，复用技能前置、占用、移动、人口与变形费用和事件。已有进行中的同类命令计入本次需求，避免反复调用重复下达；候选不足时返回失败，已接受的命令继续执行。当前转换针对 Aave 原型及其派生，完整 AI 行为仍待实现。
 
 REA 核对 Game.dll 1.27 的真实注册入口 MergeUnits `0x6f891f20` 与 ConvertUnits `0x6f88e350`：前者比较结果数量与在途数量，后者遍历来源类型并对已有动作及发出的命令计数。证据 `ev_5bf1dc3654a6e4ff9c1a59cb0ad047872eb3dd0e4ed6a51f382d6c156ca5c`、`ev_f2d525151c2b862726f6176f410a62ba46b615ad1239c5c0a6b026d694b89333`。候选优先级、零／负数边界、动作状态和返回时序尚未完整对照；实际玩法、四族和战役 AI 留待集中验证。
+
+## AI 飞艇购买
+
+PurchaseZeppelin 查找原地精实验室 `ngad` 的飞艇 `nzep` 库存，通过现有商店交易处理单位、资源、人口、库存与购买事件。附近已有可用购买者时立即交易；否则安排空闲单位或采集工人前往商店，抵达后购买，购买期间避免 AI 采集、建造、守卫或编队重新指派该单位。目标失效、单位死亡／易主、路径中断或等待超时会解除预留。无商店、库存、可用单位或资源时不创建飞艇。
+
+REA 对 Game.dll 1.27 的入口 `0x6f892930` 和调用链确认搜索 `ngad`、读取售卖能力并请求 `nzep`；证据 `ev_dcd43783d6e9e06e87cc54c9740307265e8450b978811e246b21c956612d11d9`。购买者选择、寻路、60 秒等待和失败重试是当前实现的调度方式，尚未证明与原版一致；LoadZepWave 与完整运输波次继续实现。

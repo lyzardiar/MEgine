@@ -36,6 +36,7 @@ target_sources(war3_core PRIVATE src/session_hero.cpp src/session_revival.cpp sr
 target_sources(war3_core PRIVATE src/session_channels.cpp src/session_neutral_spells.cpp src/session_spirit_split.cpp src/session_ambient_passives.cpp src/session_firelord.cpp src/session_lava_spawn.cpp src/session_volcano.cpp src/session_alchemist.cpp src/session_engineering.cpp src/session_tinker.cpp src/session_unit_casters.cpp src/session_spell_steal.cpp src/session_human_channels.cpp src/session_feedback.cpp)
 target_sources(war3_core PRIVATE src/jass_threads.cpp src/session_threads.cpp src/session_ai.cpp src/session_ai_economy.cpp src/session_ai_natives.cpp src/session_ai_control.cpp src/session_ai_guards.cpp)
 target_sources(war3_core PRIVATE src/session_ai_armies.cpp)
+target_sources(war3_core PRIVATE src/session_ai_transport.cpp)
 target_sources(war3_core PRIVATE src/session_unsummon.cpp)
 target_sources(war3_core PRIVATE src/session_visibility.cpp)
 target_sources(war3_core PRIVATE src/session_stealth_reveal.cpp)

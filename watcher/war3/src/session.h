@@ -154,6 +154,8 @@ class ScriptSession {
     bool aiUpgrade(ScriptAI& ai,std::uint32_t type);
     bool aiMergeUnits(ScriptAI& ai,int quantity,std::uint32_t first,std::uint32_t second,std::uint32_t result);
     bool aiConvertUnits(ScriptAI& ai,int quantity,std::uint32_t type);
+    void aiPurchaseZeppelin(ScriptAI& ai);
+    void aiPurchaseZeppelinTick(ScriptAI& ai);
     void aiHarvest(ScriptAI& ai);
     void aiFormCaptains(ScriptAI& ai,bool force=false);
     void aiSuicide(ScriptAI& ai,int quantity,std::uint32_t type,int targetPlayer);
