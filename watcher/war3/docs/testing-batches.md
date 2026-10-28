@@ -1532,3 +1532,9 @@ Win32 Release 客户端增量编译通过。阶段检查 DotA 动态图像、对
 路径：`world.h`、`world_path.cpp`、`session_world.cpp`、`docs/terrain-pathability.md`。八种类别可读写会话 WPM，变化进入寻路和建筑放置；动态足迹保留，路径阻挡触发路线重试。REA 静态核对掩码及布尔方向，采木 PEONHARVEST 位、荒芜外观及原版边界仍待完成或验证。
 
 Win32 Release 客户端增量编译通过。阶段核对原版类型/位置/障碍、WPM 与动态足迹重叠、进行中寻路/放置、建筑/古树、地图切换和局域网；无完整运行或原版一致性结论。
+
+## 单位分类变化待验证
+
+路径：`entities.h`、`session_entities.cpp`及相关战斗／施法／修理／运输／AI／经验消费者，见 `docs/unit-classifications.md`。UnitAddType／UnitRemoveType 对原版支持的九类更新实例，分类进入实际目标与行为；其他类型按原版静态入口返回 false。
+
+Win32 Release 客户端增量编译通过。阶段核对类型增删/重复/无效、召唤／机械／古树等实际目标和伤害、修理/运输/AI、幻象/变形/死亡/易主、地图覆盖及回调重入；gamecache 保存和原版行为仍待完成或验证。

@@ -7,7 +7,7 @@
 namespace war3 {
 namespace {float number(jass::Real value){return std::bit_cast<float>(value.bits());}jass::Real real(float value){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}float distance(WorldPoint a,WorldPoint b){return std::hypot(number(a.x)-number(b.x),number(a.y)-number(b.y));}}
 void ScriptSession::aiTowns(ScriptAI& ai){
-    for(auto& [id,u]:units_)if(u->owner==ai.owner && !u->removing && number(u->life)>0 && definitions().unitClasses(u->type).find("townhall")!=std::string::npos && std::find(ai.towns.begin(),ai.towns.end(),id)==ai.towns.end())ai.towns.push_back(id);
+    for(auto& [id,u]:units_)if(u->owner==ai.owner && !u->removing && number(u->life)>0 && u->classifications(definitions().unitClasses(u->type)).find("townhall")!=std::string::npos && std::find(ai.towns.begin(),ai.towns.end(),id)==ai.towns.end())ai.towns.push_back(id);
     if(ai.homeOverride)return;for(auto id:ai.towns)if(alive(id,NativeKind::Unit) && units_.at(id)->owner==ai.owner && number(units_.at(id)->life)>0){ai.home={units_.at(id)->x,units_.at(id)->y};return;}auto index=config_.players[ai.owner].start;if(index>=0 && config_.starts[index].defined)ai.home={config_.starts[index].position[0],config_.starts[index].position[1]};
 }
 int ScriptSession::aiTown(ScriptAI& ai,const UnitState& unit){int result=-1;float best=FLT_MAX;for(size_t i=0;i<ai.towns.size();++i)if(alive(ai.towns[i],NativeKind::Unit)){auto hall=units_.at(ai.towns[i]);if(hall->owner!=ai.owner || number(hall->life)<=0)continue;auto d=distance({unit.x,unit.y},{hall->x,hall->y});if(d<best){best=d;result=int(i);}}return result;}
