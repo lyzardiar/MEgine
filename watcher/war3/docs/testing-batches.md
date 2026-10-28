@@ -1078,4 +1078,10 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 
 路径：game_alliance_dialog／game_view／session_match。Win32 Release 产品编译通过；BootyBay 最小会话验证联盟五个状态、共享视野及地图锁标志通过，未加载 Game.dll。
 
-集中验证面板接受／取消与脚本重入、玩家离开、联盟变化事件和共享视野生效、原版强制联盟／地图锁／隐藏规则及视觉一致性；共享单位控制、共同胜利及局域网同步尚待实现。
+集中验证面板接受／取消与脚本重入、玩家离开、联盟变化事件和共享视野生效、原版强制联盟／地图锁／隐藏规则及视觉一致性；共享单位控制基础消费已接入并另列阶段待测；共同胜利及局域网同步尚待实现。
+
+## 共享单位控制阶段待验证
+
+路径：session_match／session_ability_commands／session_commerce／game_view／game_commands／game_spells／game_transport／game_alliance_dialog。Win32 Release 编译通过；BootyBay 会话最小检查权限方向、撤销、高级控制和按单位拥有者检查建造资金通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/transfer-probe/。
+
+集中验证真实面板勾选／取消、框选／多单位下令、施法／建造／生产／研究／修理／货舱、授权撤销时目标和队列、原版普通／高级共享对英雄／物品／商店的权限和费用，及多客户端同步。

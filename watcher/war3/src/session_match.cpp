@@ -14,8 +14,14 @@ void ScriptSession::removePlayer(unsigned owner,unsigned result) {if(owner>=16 |
 void ScriptSession::finishGame(bool scores,SessionExit action) {if(action==SessionExit::None)throw std::runtime_error("Invalid session exit action");showScores_=scores;exit_=action;simulationPaused_=true;for(unsigned owner=0;owner<16;++owner)if(!heroSnapshotValid_[owner])cacheHeroes(owner);}
 bool ScriptSession::endCinematic(unsigned owner) {bool registered=false;for(auto id:eventHandles_)if(alive(id,NativeKind::Event)){auto& event=std::get<ScriptEvent>(objects_[id-handleBase].state);if(event.kind==ScriptEvent::Kind::Player && event.target==owner && event.event==17 && alive(event.owner,NativeKind::Trigger) && std::get<Trigger>(objects_[event.owner-handleBase].state).enabled){registered=true;break;}}if(registered)playerEvent(owner,17);return registered;}
 
+bool ScriptSession::canControlUnit(unsigned viewer,const UnitState& unit) const {
+    return viewer<16 && unit.owner<16 && (viewer==unit.owner || (config_.players[unit.owner].alliances[viewer]&((1u<<6)|(1u<<7)))!=0);
+}
+bool ScriptSession::canManageUnitInventory(unsigned viewer,const UnitState& unit) const {
+    return viewer<16 && unit.owner<16 && (viewer==unit.owner || (config_.players[unit.owner].alliances[viewer]&(1u<<7))!=0);
+}
 bool ScriptSession::setAllianceOption(unsigned from,unsigned to,unsigned option,bool enabled) {
-    if(from>=12 || to>=12 || from==to || !setupApplied_ || exit_!=SessionExit::None || (config_.mapFlags&(1024u|2048u)) || (option!=0 && option!=5))return false;auto& sender=config_.players[from];if(sender.slotState!=1 || config_.players[to].slotState!=1)return false;auto& flags=sender.alliances[to];unsigned mask=option==0?31u:1u<<option,before=flags;flags=enabled?flags|mask:flags&~mask;unsigned after=flags;if(after==before)return true;++fogRevision_;for(unsigned bit=0;bit<8;++bit)if((mask&(1u<<bit)) && ((before^after)&(1u<<bit)) && ((flags^after)&(1u<<bit))==0)playerChange(from,bit,(before&(1u<<bit))!=0,(after&(1u<<bit))!=0,true);return true;
+    if(from>=12 || to>=12 || from==to || !setupApplied_ || exit_!=SessionExit::None || (config_.mapFlags&(1024u|2048u)) || (option!=0 && option!=5 && option!=6))return false;auto& sender=config_.players[from];if(sender.slotState!=1 || config_.players[to].slotState!=1)return false;auto& flags=sender.alliances[to];unsigned mask=option==0?31u:1u<<option,before=flags;flags=enabled?flags|mask:flags&~mask;unsigned after=flags;if(after==before)return true;++fogRevision_;for(unsigned bit=0;bit<8;++bit)if((mask&(1u<<bit)) && ((before^after)&(1u<<bit)) && ((flags^after)&(1u<<bit))==0)playerChange(from,bit,(before&(1u<<bit))!=0,(after&(1u<<bit))!=0,true);return true;
 }
 bool ScriptSession::transferResources(unsigned from,unsigned to,int gold,int lumber) {
     if(from>=12 || to>=12 || from==to || gold<0 || lumber<0 || !setupApplied_ || exit_!=SessionExit::None || (config_.mapFlags&256u))return false;auto& sender=config_.players[from];auto& recipient=config_.players[to];if(sender.slotState!=1 || recipient.slotState!=1 || !(sender.alliances[to]&1))return false;
