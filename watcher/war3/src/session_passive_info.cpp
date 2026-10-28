@@ -13,6 +13,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
         {"AEah",PassiveKind::Thorns,true},{"AOac",PassiveKind::Command,true},{"Aakb",PassiveKind::WarDrums,true},
         {"Aoar",PassiveKind::Regeneration,true},{"AHbh",PassiveKind::Bash,false},{"AOcr",PassiveKind::Critical,false},{"ANdb",PassiveKind::Critical,false},
         {"AEev",PassiveKind::Evasion,false},{"ANca",PassiveKind::Cleave,false},{"AUts",PassiveKind::SpikedCarapace,false},
+        {"Amin",PassiveKind::Mine,false},{"Adda",PassiveKind::DeathDamage,false},
         {"Apiv",PassiveKind::PermanentInvisibility,false},{"Adet",PassiveKind::Detection,false},
         {"Atru",PassiveKind::Detection,false},{"Agyv",PassiveKind::Detection,false},{"Adts",PassiveKind::Detection,false},
         {"Agho",PassiveKind::Ghost,false},{"Aexh",PassiveKind::Exhume,false},
@@ -34,6 +35,8 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
     if(p.kind>=PassiveKind::PoisonAttack && p.kind<=PassiveKind::OrbSpell)weaponEffectInfo(p);
     if(p.kind==PassiveKind::HardenedSkin){p.amount/=100;float ranged=field("DataD"),melee=field("DataE");if(p.amount<0 || p.amount>1 || p.secondary<0 || p.secondary>1000000 || p.bonus<0 || p.bonus>1000000 || (ranged!=0 && ranged!=1) || (melee!=0 && melee!=1))throw std::runtime_error("Invalid source Hardened Skin chance, minimum, reduction or attack category");p.ranged=ranged!=0;p.melee=melee!=0;}
     if(p.kind==PassiveKind::MissileDefense){p.magicFactor=field("DataE");if(p.amount<0 || p.amount>10 || p.secondary<0 || p.secondary>10 || p.magicFactor<0 || p.magicFactor>10)throw std::runtime_error("Passive defense factors outside supported range");if(p.bonus!=0 || field("DataD")!=0 || field("DataF")!=0 || field("DataI")!=0)throw std::runtime_error("Passive defend speed, reflection or additional flags are not implemented");}
+    if(p.kind==PassiveKind::Mine){p.area=field("Rng");p.period=.125f;p.allowed={"ground","enemy"};if(p.amount<0 || p.amount>86400 || p.secondary<0 || p.secondary>86400 || p.area<=0 || p.area>100000)throw std::runtime_error("Invalid source Mine activation, stealth or radius");}
+    if(p.kind==PassiveKind::DeathDamage){p.nearDamage=field("DataD");if(p.amount<0 || p.bonus<p.amount || p.bonus>100000 || p.secondary<0 || p.secondary>1000000 || p.nearDamage<0 || p.nearDamage>1000000 || p.duration<0 || p.duration>86400)throw std::runtime_error("Invalid source death damage zones or delay");}
     if(p.kind==PassiveKind::AttackModifier)p.duration=field("Cool");
     if(p.kind==PassiveKind::SlowAura && (p.amount< -1 || p.amount>1 || p.secondary< -5 || p.secondary>5))throw std::runtime_error("Slow aura source factors outside supported range");
     if(p.kind==PassiveKind::PermanentImmolation){p.period=p.duration;if(p.period<=0 || p.period>300 || p.amount<0 || p.amount>1000000 || p.area<=0)throw std::runtime_error("Permanent Immolation requires source damage, area and interval");}

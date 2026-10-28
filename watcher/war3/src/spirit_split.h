@@ -17,7 +17,7 @@ struct SpiritSplitState {
 struct AmbientClock {
     unsigned level=0;
     std::uint64_t deathRevision=0,ownerRevision=0;
-    double remaining=0;
+    double remaining=0,elapsed=0;
     WorldPoint home;
     std::vector<std::uint32_t> visuals;
 };

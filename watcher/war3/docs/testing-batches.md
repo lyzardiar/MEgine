@@ -927,3 +927,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：session_item_summons、item_use／spell_info／spells／area_spells／session、玩家种族解析、原建筑物理放置、GameView建筑预览／模型流式加载。AIfs／AIsh／ANwm／AIrd／AUin／AIbl及原版派生与地图覆盖连接真实消费者。
 
 状态：实现接入，必要Win32 Release产品增量编译通过、无编译警告，差异检查通过；未运行新增玩法夹具、三图／原件精度、UI／GPU／AI／声音或性能回归。集中验证两组／重复／数量与预算／落点不足、尸体与地狱火延迟／伤害／事件，六槽／次数／共享冷却／取消／库存及回调清理；玩家种族与英雄种族不同／原列表／单条及5条／源时长／0时限、预览模型／网格／物理放置／远距接近／免费自动施工／人口／受伤／暂停冻结／完成取消／易主销毁。原布局、随机、事件次序、施工及位移精度／完整表现待对照。机械小动物／地雷／诱饵未实现。证据与构建记录在tmp/docs-artifacts/war3/item-summons/，边界见[实现说明](item-summons-buildings.md)。旧MEngine队列保持延期。
+
+## 地雷与怪物诱饵阶段待验证
+
+路径：spells／passives／spirit_split／combat定义、session_item_summons／item_use／spell_info／spells／area_spells／summons、活跃被动注册与空间检索、隐形／侦测、守卫时钟／引诱命令、战斗目标／返航和Adda死亡爆炸。AIpm／Amin／Adda／AImo及原派生和地图覆盖有真实消费者。
+
+状态：实现接入，必要Win32 Release产品增量编译通过、无编译警告，差异检查通过。未运行新增玩法夹具、三图／原版精度、UI／GPU／AI／声音或性能回归。集中验证原激活／隐形／侦测／暂停／禁用／复活／易主、触发分类／范围边界、击杀与触发死亡后的延迟／双区域／魔免建筑／地形对象／多能力和回调归因，诱饵原数量／周期／目标／多人来源／无视野命令／守卫距离／失效返航与取消，以及库存／UI／音效／三图长局／帧耗时／内存释放。触发精度、伤害类型／多源顺序、诱饵选怪／睡眠和周期语义保持原版待对照；机械小动物未实现。源表／原字段名／摘要／脚本及构建日志在tmp/docs-artifacts/war3/item-summons/，消费和边界见[实现说明](mines-lure.md)。旧MEngine队列保持延期。
