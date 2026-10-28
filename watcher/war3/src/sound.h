@@ -3,7 +3,9 @@
 #include "audio.h"
 #include "slk.h"
 #include "sound_fade.h"
+#include "volume_ramp.h"
 #include <array>
+#include <functional>
 
 namespace war3 {
 struct MidiDefinition {
@@ -23,6 +25,9 @@ struct ScriptSound {
     int duration=-1;
     float pitch=1,minDistance=0,maxDistance=10000,cutoff=10000;
     std::array<float,3> position{},velocity{},orientation{};
+    bool positionSet=false;
+    std::uint32_t attachedUnit=0;
+    bool spatialStopped=false;
     std::array<float,2> cone{360,360};
     int outsideVolume=127;
     std::optional<SourceTable::Row> labelParameters;
@@ -35,11 +40,20 @@ class SoundScene {
     std::vector<std::shared_ptr<ScriptSound>> detached_;
     std::optional<SourceTable::Row> environment_;
     std::optional<std::vector<SourceTable::Row>> labels_;
+    std::array<VolumeRamp,8> groups_{};
+    struct StackedArea {float x=0,y=0,width=0,height=0;std::uint32_t unit=0;};
+    struct Stacked {std::weak_ptr<ScriptSound> sound;std::vector<StackedArea> areas;std::unique_ptr<AudioVoice> voice;};
+    std::vector<Stacked> stacked_;
+    std::array<float,3> listener_{};
+    bool listenerSet_=false;
     bool muted_=false;
+    bool groupsAnimating_=false;
     std::uint64_t nextPulse_=0;
     void collect();
     void detach(const std::shared_ptr<ScriptSound>& sound);
     void applyVolume(ScriptSound& sound);
+    float groupGain(const ScriptSound& sound) const;
+    float spatialGain(const ScriptSound& sound) const;
     const SourceTable::Row& label(const std::string& name);
 public:
     explicit SoundScene(Archives& resources);
@@ -57,6 +71,13 @@ public:
     void stop(const std::shared_ptr<ScriptSound>& sound,bool kill,bool fade);
     void releaseWhenDone(const std::shared_ptr<ScriptSound>& sound);
     void volume(const std::shared_ptr<ScriptSound>& sound,int level);
+    void channel(const std::shared_ptr<ScriptSound>& sound,unsigned channel);
+    void groupVolume(unsigned group,float level);
+    void resetGroups();
+    void registerStacked(const std::shared_ptr<ScriptSound>& sound,bool byPosition,float width,float height);
+    void unregisterStacked(const std::shared_ptr<ScriptSound>& sound,bool byPosition,float width,float height);
+    void listener(float x,float y,float z);
+    void updateAttachments(const std::function<std::optional<std::array<float,3>>(std::uint32_t)>& resolve);
     void pulse();
     void update();
     size_t voices() const {return device_?device_->voices():0;}

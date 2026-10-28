@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 战役镜头、字幕与装饰物阶段待验证
+
+路径：camera_control／session_camera_setup／session_world、world／game_view 相机，session_text／game_cinematic_panel／GlueScreen 原 FDF 与阵营皮肤，world／scene_objects 动画请求，music／session_music 主题音乐。支持实际相机配置／单位跟随／震动、过场界面／肖像和字幕、矩形／圆形装饰物动画遮挡物空间块淡化／独立边界雾，以及主题音乐、原版声道音量组、区域／单位附着空间音。源 FDF 和原图启动证据位于 tmp/docs-artifacts/war3/campaign/。
+
+序章 Prologue01 的静音最小检查已通过原图 main 初始化和前 2 秒模拟，未加载 Game.dll；界面隐藏窗口检查绘制四种皮肤。大范围对局／可见画面／肖像和听感尚未验收。功能阶段合并验证源镜头字段／时长／跟随／震动和用户控制、HUD 淡入淡出／字幕换行／声音／肖像／四族皮肤、装饰物过滤／随机相位／直接操作次序、主题音乐与游戏音乐恢复、八组一秒渐变／切换声道／多区域注册注销／镜头进出及暂停／3D 声像、退出／性能／资源释放；精确相机波形、界面渐变、空间声像／声锥、遮挡轮廓／几何与雾边界精度及其他脚本仍开放。
+
 ## MRF 披风、战役转场与脚本相机阶段待验证
 
 路径：morph_mesh、model 事件、model_cinematic、session_campaign／main 和 world／session_world／game_view。原版六个 Morf 文件的纹理、索引、UV、帧顶点与法线按事件读入内存、线性插值并绘制；脚本独立影片／模型槽在结束转场按模型优先顺序消费。相机位置、定时平移、距离／角度／旋转／滚转／高度字段接入实际视图。原版资源格式、转场反汇编和相机字段依据在 tmp/docs-artifacts/war3/campaign/。

@@ -20,6 +20,7 @@
 #include "swarm.h"
 #include "stampede.h"
 #include "alchemist.h"
+#include "camera_control.h"
 #include <variant>
 
 namespace war3 {
@@ -49,13 +50,13 @@ struct SessionConfig {
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
-enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning};
+enum class NativeKind {Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning,CameraSetup};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     using Timer=ScriptTimer;
     using Trigger=ScriptTrigger;
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility,std::shared_ptr<ScriptEffect>,std::shared_ptr<ScriptLightning>> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,PlayerRef,Group,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility,std::shared_ptr<ScriptEffect>,std::shared_ptr<ScriptLightning>,ScriptCameraSetup> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -68,6 +69,8 @@ class ScriptSession {
     bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false;
     std::unique_ptr<SoundScene> audio_;
     std::unique_ptr<MusicScene> music_;
+    std::unique_ptr<MusicScene> thematicMusic_;
+    bool resumeMapAfterThematic_=false;
     bool audioMuted_=false;
     std::unique_ptr<ObjectData> definitions_;
     std::map<std::uint32_t,std::shared_ptr<UnitState>> units_;
@@ -132,7 +135,13 @@ class ScriptSession {
     std::string nextLevel_;
     std::string modelCinematic_,movieCinematic_;
     bool showScores_=false,userControl_=true,userUI_=true,selectionEnabled_=true,selectionUI_=true;
+    bool occlusionEnabled_=true;
     ScriptCineFilter cineFilter_;
+    bool interfaceVisible_=true;
+    float interfaceFrom_=1;
+    double interfaceChanged_=0,interfaceDuration_=0;
+    std::optional<ScriptCinematicScene> cinematicScene_;
+    CameraControl cameraControl_;
     unsigned gameDifficulty_=1,defaultDifficulty_=1;
     bool simulationPaused_=false,fogEnabled_=true,fogMaskEnabled_=true;
     unsigned gameSpeed_=2;
@@ -655,6 +664,7 @@ class ScriptSession {
     void bind(const char* name,const char* result,std::initializer_list<const char*> parameters,jass::Runtime::Native native);
     void bindNatives();
     void bindWorldNatives();
+    void bindCameraSetupNatives();
     void bindSoundNatives();
     void bindMusicNatives();
     void bindEntityNatives();
@@ -821,6 +831,7 @@ class ScriptSession {
     jass::Value createItem(std::uint32_t type,jass::Real x,jass::Real y);
     SoundScene& requireAudio();
     MusicScene& requireMusic();
+    MusicScene& requireThematicMusic();
     World& requireWorld();
 public:
     bool corpseAvailable(std::uint32_t corpse,std::uint32_t claimant=0);
@@ -937,7 +948,12 @@ public:
     bool paused() const {return simulationPaused_;}
     bool userControl() const {return userControl_;}
     bool userUI() const {return userUI_;}
+    bool occlusionEnabled() const {return occlusionEnabled_;}
     const ScriptCineFilter& cineFilter() const {return cineFilter_;}
+    float interfaceAmount() const {auto progress=interfaceDuration_>0?float(std::clamp((simulationTime_-interfaceChanged_)/interfaceDuration_,0.,1.)):1.f;return std::lerp(interfaceFrom_,interfaceVisible_?1.f:0.f,progress);}
+    bool interfaceVisible() const {return interfaceAmount()>.5f;}
+    const std::optional<ScriptCinematicScene>& cinematicScene() const {return cinematicScene_;}
+    CameraControl& cameraControl() {return cameraControl_;}
     bool selectionEnabled() const {return selectionEnabled_;}
     bool selectionUI() const {return selectionUI_;}
     SessionExit exitRequest() const {return exit_;}
@@ -954,6 +970,7 @@ public:
     double simulationTime() const {return simulationTime_;}
     void audioMuted(bool muted);
     void updateAudio();
+    void updateAudioListener(float x,float y,float z);
     const SoundScene* audio() const {return audio_.get();}
     const MusicScene* music() const {return music_.get();}
     std::optional<unsigned> localPlayer() const {return localPlayer_;}

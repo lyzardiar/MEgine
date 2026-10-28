@@ -5,7 +5,7 @@
 namespace war3 {
 struct FogModifier {unsigned owner=0,state=4;WorldRect rect;WorldPoint center;jass::Real radius;bool radial=false,shared=false,afterUnits=false,enabled=false;};
 class FogGrid {
-    Bytes explored_,visible_;
+    Bytes explored_,visible_,boundary_,states_;
 public:
     unsigned width,height;
     std::array<float,2> origin;
@@ -15,7 +15,7 @@ public:
     void begin();
     void rect(WorldRect area,unsigned state);
     void circle(WorldPoint center,jass::Real radius,unsigned state);
-    void finish(bool fog,bool mask);
+    void finish(bool fog,bool mask,bool worldBoundary=true);
     unsigned state(WorldPoint point) const;
 };
 }

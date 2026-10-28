@@ -3,6 +3,7 @@
 #include "audio.h"
 #include "audio_random.h"
 #include "map_ui.h"
+#include "volume_ramp.h"
 
 namespace war3 {
 class MusicScene {
@@ -17,6 +18,8 @@ class MusicScene {
     std::unique_ptr<AudioVoice> voice_;
     bool muted_=false,paused_=false,loop_=false;
     std::uint32_t volume_=127,level_=127;
+    VolumeRamp groupVolume_;
+    bool groupAnimating_=false;
     struct Fade {std::uint32_t duration,next,start=0;bool out,begun=false;};
     struct Pending {std::string file;std::uint32_t due;};
     std::optional<Fade> fade_;
@@ -31,9 +34,11 @@ public:
     void map(const std::string& name,bool random,int index);
     void clear();
     void play(const std::string& name,unsigned offset=0,unsigned fade=0);
+    void thematic(const std::string& name,unsigned offset=0);
     void stop(bool fade);
     void resume();
     void volume(std::uint32_t value);
+    void groupVolume(float level);
     void position(unsigned value);
     void muted(bool value);
     void update(std::uint32_t now=GetTickCount());

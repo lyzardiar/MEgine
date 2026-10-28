@@ -3,6 +3,7 @@
 #include "fdf.h"
 #include "media.h"
 #include "image.h"
+#include "map_ui.h"
 #include <set>
 
 namespace war3 {
@@ -23,6 +24,9 @@ private:
     std::vector<Node> nodes_;
     std::map<std::string,unsigned> names_;
     std::map<std::string,Texture> textures_;
+    std::map<std::string,std::string> skinTextures_;
+    std::optional<SourceSettings> skins_;
+    std::string skinSection_="Default";
     std::string focused_;
     bool focusEnabled_=true;
     std::optional<unsigned> popup_;
@@ -48,6 +52,7 @@ public:
     GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const std::string& member,const std::string& root);
     std::pair<float,float> center(const std::string& name) const;
     void focusEnabled(bool enabled) {focusEnabled_=enabled;if(!enabled)focused_.clear();}
+    void skinSection(const std::string& section) {if(skinSection_!=section){skinSection_=section;skinTextures_.clear();}}
     std::string draw(const std::string& subtree,const UiInput& input,const std::set<std::string>& enabled,bool deferOverlay=false);
     Rect bounds(const std::string& name) const;
     void attach(const std::string& member,const std::string& root,const std::string& container,const std::string& context={});

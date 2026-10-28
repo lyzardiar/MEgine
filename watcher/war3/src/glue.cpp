@@ -35,6 +35,7 @@ void GlueScreen::quad(Rect rect,DWORD color,const std::string& member,float u0,f
 }
 void GlueScreen::backdrop(const FrameDefinition& f,Rect r,DWORD color) {
     auto background=first(f,"BackdropBackground"),edge=first(f,"BackdropEdgeFile");auto inset=f.property("BackdropBackgroundInsets");Rect fill=r;
+    if(f.properties.contains("DecorateFileNames")){auto resolve=[&](std::string& name){if(name.empty())return;auto found=skinTextures_.find(name);if(found==skinTextures_.end()){if(!skins_){skins_.emplace();skins_->load(archives_,"UI\\war3skins.txt");}auto value=skins_->value(skinSection_,name,skins_->value("Default",name,name));found=skinTextures_.emplace(name,std::move(value)).first;}name=found->second;};resolve(background);resolve(edge);}
     if(inset.size()==4){fill.x+=number(inset[0]);fill.y+=number(inset[2]);fill.w-=number(inset[0])+number(inset[1]);fill.h-=number(inset[2])+number(inset[3]);}
     bool tile=f.properties.contains("BackdropTileBackground");float size=f.number("BackdropBackgroundSize",.032f);
     if(!background.empty())quad(fill,color,background,0,0,tile&&size>0?fill.w/size:1,tile&&size>0?fill.h/size:1,tile);

@@ -11,6 +11,7 @@ namespace war3 {
 struct WorldPoint {jass::Real x,y;};
 struct WorldRect {jass::Real minX,minY,maxX,maxY;};
 struct PathCell {size_t index=0;std::uint8_t mask=0;};
+struct DoodadAnimation {std::uint32_t type=0;std::string animation;WorldRect rectangle{};float x=0,y=0,radius=0;double started=0;bool circular=false,nearest=false,random=false;};
 struct CameraScalar {
     float from=0,to=0;double started=0,duration=0;bool overridden=false;
     float value(double now) const {return duration>0?std::lerp(from,to,float(std::clamp((now-started)/duration,0.,1.))):to;}
@@ -29,17 +30,20 @@ struct WorldEnvironment {
     std::string skyModel;
     std::string altMinimapIcon;
     bool creepCampFilter=true;
+    bool fogBoundary=true;
     std::array<std::uint8_t,4> waterColor{};
     bool cameraChanged=false,dayNightChanged=false,waterChanged=false;
     std::optional<WorldPoint> cameraTarget,quickPosition;
     CameraMotion cameraMotion;
     std::array<CameraScalar,7> cameraFields{{{1650,1650},{5000,5000},{304,304},{70,70},{0,0},{90,90},{0,0}}};
+    std::array<float,7> cameraDefaults{1650,5000,304,70,0,90,0};
 };
 class World {
     MapData data_;
     WorldRect bounds_;
     std::array<jass::Real,4> margins_;
     WorldEnvironment environment_;
+    std::vector<DoodadAnimation> doodadAnimations_;
     GameClock clock_;
     std::unique_ptr<Archives> resources_;
     Bytes obstacles_;
@@ -62,6 +66,8 @@ public:
     const MapData& data() const {return data_;}
     Archives& resources() const;
     const WorldRect& bounds() const {return bounds_;}
+    void animateDoodads(DoodadAnimation animation){if(doodadAnimations_.size()>=16384)throw std::runtime_error("Doodad animation queue exceeds budget");doodadAnimations_.push_back(std::move(animation));}
+    std::vector<DoodadAnimation> takeDoodadAnimations(){auto result=std::move(doodadAnimations_);doodadAnimations_.clear();return result;}
     jass::Real cameraMargin(std::uint32_t side) const;
     WorldPoint clamp(WorldPoint point) const;
     float height(WorldPoint point) const;
