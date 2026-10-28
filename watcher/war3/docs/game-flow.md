@@ -8,6 +8,7 @@
 - 近战关键建筑查询解析UnitUI/name的townhall、greathall、treeoflife、necropolis等原内部名称，统计实际单位、未完成状态/队列及升级等价。GetPlayerTechCount也使用真实单位/科技消费，允许高级主基地满足低级前置。当前离线会话提供未断开的GAME_STATE_DISCONNECTED状态；其他整数游戏状态仍明确失败。
 - Dialog/button/defeatcondition使用真实句柄与生命周期，消息/按钮/快捷键/玩家显示进入ScriptDialog.fdf。按钮和对话框事件携带GetClickedButton/GetClickedDialog/GetTriggerPlayer；点击、清理、销毁、重新显示和退出按钮连接脚本及前端。hashtable可保存这些句柄，失败条件说明进入菜单帮助内容。
 - F10、Esc及游戏菜单按钮打开EscMenuMainPanel.fdf，原控件连接暂停/继续、返回、结束游戏、退出确认和重开。重开复用当前选图与玩家配置重新创建会话；退出程序由自己的客户端事件循环处理。菜单与脚本对话框隔离世界输入，EnableUserControl/UI/Select连接实际消费，暂停期间继续维护声音时钟。
+- 游戏内选项入口与游戏性页面接入原 FDF，鼠标边缘滚动开关连接本地相机和独立用户设置；其他选项及实际窗口验收待完成，见[游戏内选项](game-options.md)。
 - 结算使用ScoreScreen.fdf及其原背景/页签/顶栏模型，按源控件展示单位、英雄和资源的实际观测值。训练、击杀、建造、摧毁、物品、雇佣、人口峰值及采集计数由实际消费者更新。支持的GetPlayerScore类别返回对应记录，未实现的总分/科技/维护费等类别明确失败，不合成原版总分。
 
 主菜单/地图资源仍直接从MPQ读取；原安装只读，运行不加载Game.dll，不生成地图解包工程。

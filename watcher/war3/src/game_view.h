@@ -56,6 +56,7 @@ class GameView {
     float leaderboardFont_=.007f;
     bool questsOpen_=false;
     std::unique_ptr<GameFlowUi> flow_;
+    bool edgeScrollCommitted_=true,edgeScrollPersistable_=true;
     bool appExit_=false;
     std::wstring chatText_;
     std::array<float,3> eye_{};
