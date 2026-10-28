@@ -1007,5 +1007,6 @@ public:
     const std::map<std::uint32_t,std::shared_ptr<ItemState>>& items() const {return items_;}
     const std::vector<std::string>& preloadMissing() const {return preloadMissing_;}
     const std::map<std::uint32_t,std::shared_ptr<ScriptTimerDialog>>& timerDialogs() const {return timerDialogs_;}
+    double timerDialogRemaining(const ScriptTimerDialog& dialog) const;
 };
 }

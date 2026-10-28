@@ -35,7 +35,7 @@ class GameView {
     bool chatOpen_=false;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
     std::unique_ptr<QuestDialog> questDialog_;
-    std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_,multiboardPanel_;
+    std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_,multiboardPanel_,timerDialogPanel_;
     std::map<std::string,bool> multiboardIcons_;
     std::set<std::string> multiboardQueued_;
     std::string multiboardDefaultIcon_;
@@ -51,6 +51,7 @@ class GameView {
     void drawCineFilter();
     void drawCinematicPanel();
     void drawLeaderboard();
+    void drawTimerDialogs();
     void drawMultiboards(const GameInput& input);
     bool multiboardHit(float x,float y) const;
     void drawMinimapPings();

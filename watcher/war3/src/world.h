@@ -24,6 +24,7 @@ struct CameraMotion {
     void set(float x,float y,double now,double seconds){auto current=value(now);fromX=current.first;fromY=current.second;toX=x;toY=y;started=now;duration=seconds;++revision;}
     void sync(float x,float y){fromX=toX=x;fromY=toY=y;duration=0;}
 };
+struct TerrainFog {int style=0;float start=3000,end=5000,density=.5f;std::uint32_t color=0xff000000;};
 struct WorldEnvironment {
     std::array<jass::Real,8> cameraBounds{};
     std::string terrainDayNight,unitDayNight;
@@ -31,6 +32,7 @@ struct WorldEnvironment {
     std::string altMinimapIcon;
     bool creepCampFilter=true;
     bool fogBoundary=true;
+    TerrainFog terrainFog,terrainFogDefaults;
     std::array<std::uint8_t,4> waterColor{};
     bool cameraChanged=false,dayNightChanged=false,waterChanged=false;
     std::optional<WorldPoint> cameraTarget,quickPosition;

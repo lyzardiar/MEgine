@@ -1043,3 +1043,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：session／session_entities／session_ownership／session_building_upgrades。Win32 Release 产品编译通过；BootyBay 定向检查新旧单位倍率、生命比例和易主通过，未加载 Game.dll；日志 tmp/docs-artifacts/war3/terrain-handicap-timer-probe/result.log。
 
 集中验证菜单／脚本倍率、极值／精度／取整、英雄生命／力量／装备／研究、建造升级／变形／幻象／易主／复活／跨关恢复、原版数值和事件顺序。完整对战与旧 MEngine 队列按阶段验证。
+
+## 地形雾与计时窗口阶段待验证
+
+路径：world／session_world／terrain_fog_render／session_dialogs／game_timer_dialog／game_view。Win32 Release 产品编译通过；会话定向检查雾设置／重置、计时倍率／覆盖清除及原 TimerDialog.fdf 隐藏窗口绘制通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/terrain-handicap-timer-probe/result.log 与 timer-dialog-probe/。未覆盖实际 GameView。
+
+集中验证 W3I／地图覆盖／Reset、线性／指数雾／范围／颜色、硬件能力／深度／透明模型／天空／水和玩家视野遮罩；计时器启动／暂停／重置／销毁／周期、实时覆盖／速度／颜色／多个窗口与计分板并存、字号／布局和原版准确性。完整战役、三图、性能及旧 MEngine 队列保持阶段待验证。
