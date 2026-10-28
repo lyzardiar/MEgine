@@ -2,6 +2,7 @@
 #pragma once
 #include "slk.h"
 #include "map_ui.h"
+#include <tuple>
 #include <variant>
 
 namespace war3 {
@@ -22,6 +23,8 @@ class ObjectData {
     SourceSettings profiles_{true};
     std::vector<ObjectOverride> objects_;
     mutable std::optional<std::map<std::string,std::uint32_t>> unitNames_;
+    mutable std::map<std::pair<int,int>,std::vector<std::uint32_t>> randomItems_;
+    mutable std::map<std::tuple<int,int,char>,std::vector<std::uint32_t>> randomUnits_;
     size_t unknown_=0;
     void load(Archives& archives,const char* member,const char* table);
     void overlay(Archives& archives,const char* member,bool ability=false,bool upgrade=false);
@@ -31,6 +34,9 @@ public:
     static std::string name(std::uint32_t code);
     std::uint32_t unitId(const std::string& name) const;
     std::vector<std::uint32_t> unitTypes() const;
+    std::vector<std::uint32_t> itemTypes() const;
+    const std::vector<std::uint32_t>& randomItems(int itemClass,int level) const;
+    const std::vector<std::uint32_t>& randomUnits(bool building,int level,char tileset) const;
     bool contains(std::uint32_t id,bool item=false) const;
     bool ability(std::uint32_t id) const;
     bool upgrade(std::uint32_t id) const;

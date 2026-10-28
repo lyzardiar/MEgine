@@ -1472,3 +1472,9 @@ Win32 Release 客户端增量编译通过。阶段核对玩家离场／中立单
 路径：`session_entities.cpp`。物品创建从 ItemData `Level`、`droppable`、`pawnable` 和物编覆盖初始化等级与实例权限；`IsItemPowerup`／`IsItemSellable`／`IsItemPawnable` 与对应 `IsItemId*` 连接源类型与实例状态。原版 Blizzard.j 的市场刷新消费类型级可售查询，显式商店库存保留现有消费方式。
 
 Win32 Release 客户端增量编译通过。阶段检查原资源与 w3t 覆盖、等级、符文／不可售／不可典当／不可丢弃物品、实例开关与类型查询隔离、空或无效句柄、商店库存刷新及脚本触发器，和原版比较边界与事件；当前实现和原版一致性尚未验证。
+
+## 随机中立单位与物品待验证
+
+路径：`object_data.h/.cpp`、`session_game.cpp`、`docs/random-choices.md`。四个 ChooseRandom native 按源单位／物品表、地图覆盖及相关分类、等级和地形集构建候选，使用会话 RNG 返回类型；候选为空返回 0。筛选标志与原版 RNG、顺序的细节仍待对照。
+
+Win32 Release 客户端增量编译通过。阶段核对常见地形集和玩家数量、原版及自定义对象筛选、随机建筑／野怪／物品分类与等级、空结果、地图掉落／中立商店脚本、候选缓存和固定随机种子的双客户端同步；运行与原版一致性未验证。
