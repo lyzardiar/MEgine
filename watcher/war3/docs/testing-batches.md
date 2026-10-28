@@ -995,3 +995,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：session_world／session_collections／session。GetCameraTargetPositionLoc 为镜头目标生成独立 location，SyncSelections 与 GroupEnumUnitsSelected 连接单机选择快照。Win32 Release 产品编译与差异检查通过；之前版本的 Prologue01 原 main 和 60 秒静音模拟通过，未执行本次教程交互或三图回归，证据 tmp/docs-artifacts/war3/campaign/prologue-60-next.log。
 
 集中验证 SmartCameraPanBJ 在静止／手动平移／跟随／镜头过渡时的目标查询与位置句柄生命周期；本地选择／取消／隐藏移除／过滤回调／连续同步、多人选择交换和等待，及教程实际救援／编组完整输入。SetItemDropID 的原版物品来源字段消费者未明，仍为未实现项；原版画面／声音／性能及旧 MEngine 待测项保持原状态。
+
+## 模型动态光源阶段待验证
+
+路径：model／model_data／model_pose。Win32 Release 产品编译通过；原 ArthasIllidanFight 模型解析 5 个灯光并完成 19 秒隐藏窗口绘制，日志 tmp/docs-artifacts/war3/campaign/model-probe/。
+
+集中验证法线／骨骼／非均匀缩放、点／方向／环境灯、所有源动画／多光混合／Unshaded、材质／滤色／环境光与原版画面，以及跨模型／昼夜光、性能和资源释放。当前仅模型自身灯光，基础环境为近似值；旧 MEngine 队列保持延期。

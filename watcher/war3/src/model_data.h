@@ -25,12 +25,14 @@ struct ParticleEmitter2 {
 };
 struct RibbonEmitter {unsigned node=0,slot=0,rate=0,rows=1,columns=1,material=0;float above=0,below=0,alpha=1,life=0,gravity=0;XMFLOAT4 color{1,1,1,1};Track aboveTrack,belowTrack,alphaTrack,colorTrack,slotTrack,visibility;};
 struct Attachment {unsigned node=0,id=0;std::string path;Track visibility;};
+struct Light {unsigned node=0,type=0;float attenuationStart=0,attenuationEnd=0,intensity=0,ambientIntensity=0;XMFLOAT4 color{},ambientColor{};Track attenuationStartTrack,attenuationEndTrack,colorTrack,intensityTrack,ambientColorTrack,ambientIntensityTrack,visibility;};
 struct Layer { unsigned filter, flags, texture, coord; int animation; float alpha; Track opacity, textureTrack; };
 struct Material { int priority; std::vector<Layer> layers; };
 struct Texture { std::string path; unsigned flags,replacement=0; Com<IDirect3DTexture9> gpu; };
 struct Vertex { float x, y, z; DWORD color; float u, v; };
 struct Geoset {
-    std::vector<XMFLOAT4> positions;
+    std::vector<XMFLOAT4> positions,normals;
+    std::vector<XMFLOAT4> sampledNormals,lighting;
     std::vector<std::vector<XMFLOAT4>> uv;
     std::vector<std::uint16_t> indices;
     std::vector<unsigned char> group;
@@ -57,6 +59,7 @@ struct Model::Data {
     std::vector<mdx::ParticleEmitter2> emitters;
     std::vector<mdx::RibbonEmitter> ribbons;
     std::vector<mdx::Attachment> attachments;
+    std::vector<mdx::Light> lights;
     ModelInstance defaultInstance;
     std::optional<std::uint64_t> globalTime;
     std::vector<std::pair<unsigned, unsigned>> draws;
