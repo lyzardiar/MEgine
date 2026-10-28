@@ -1550,3 +1550,9 @@ Win32 Release 客户端增量编译通过。阶段核对 DotA 与战役特效、
 路径：`entities.h`、`session_entities.cpp`、`game_view.cpp`、`docs/heroes.md`。UnitSetUsesAltIcon 保存单位图标开关，小地图读取 SetAltMinimapIcon 的流式纹理，不再由键盘 Alt 状态为所有单位切换；原件 1.27 的 native 入口 `0x6f1fb310` 设置单位偏移 0x280 的 0x200 位，`0x6f3bdb33` 消费该位，REA 证据 `ev_3aa460d02faad8c26a1bd1a5acbb7bc2047b26e1dfa825e8139cf6ea54f519db`、`ev_aa8124b93fe2ccb66b20873526ac5734998e46314e3981e50b5750881e319a3a`。
 
 Win32 Release 客户端增量编译通过。阶段验证 DotA 的 GetLocalPlayer 分支、单单位启停、空／透明／缺失及地图覆盖纹理、颜色和图标尺寸、可见性／共享视野、地图切换和 GPU；当前空或未加载纹理不画默认标记，原版默认纹理与时序尚未核对。
+
+## 动态地表类型待验证
+
+路径：`world.h/.cpp`、`world_blight.cpp`、`session_world.cpp`、`terrain_scene.h/.cpp`、`terrain_blight.cpp`、`docs/terrain-type-mutation.md`。SetTerrainType 修改会话地表角点和变体，地表查询与可见脏区的局部混合纹理／GPU 网格使用新值；仅支持地图已声明的地表材质。
+
+Win32 Release 客户端增量编译通过。阶段验证 DotA 修改、地图边界与各面积形状、随机变体和联机同步、原／混合／荒芜／水面／悬崖、连续修改性能和设备恢复。非地图原材质和悬崖几何尚未实现，面积及原版纹理表现未验收。

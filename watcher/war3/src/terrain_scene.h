@@ -3,6 +3,7 @@
 #include "scene_assets.h"
 #include "scene_math.h"
 #include "world.h"
+#include <climits>
 
 namespace war3 {
 struct SceneVertex {float x,y,z;DWORD color;float u,v;};
@@ -12,6 +13,9 @@ struct TerrainChunk {
     std::string texture;
     SceneBounds bounds;
     bool water=false;
+    unsigned groundIndex=UINT_MAX;
+    size_t dynamicTextureBytes=0;
+    Com<IDirect3DTexture9> dynamicTexture;
     Com<IDirect3DVertexBuffer9> vertexBuffer;
     Com<IDirect3DIndexBuffer9> indexBuffer;
 };
@@ -30,6 +34,9 @@ class TerrainScene {
     std::array<float,4> waterAlpha_{};
     size_t uploaded_=0;
     size_t meshBytes_=0;
+    size_t dynamicTextureBytes_=0;
+    std::vector<std::string> groundNames_;
+    std::vector<std::uint64_t> groundSeen_;
     std::vector<TerrainChunk> blightChunks_;
     std::vector<std::vector<TerrainCell>> blightCells_;
     std::vector<std::uint64_t> blightSeen_;
@@ -38,6 +45,7 @@ class TerrainScene {
     unsigned blightWidth_=0,blightHeight_=0;
     void initializeBlight(const std::vector<TerrainCell>& cells);
     void rebuildBlight(unsigned index);
+    void rebuildGround(unsigned index,TerrainChunk& target,Renderer& renderer);
     void uploadChunk(Renderer& renderer,TerrainChunk& chunk);
     size_t drawBlight(Renderer& renderer,const DirectX::XMMATRIX& viewProjection);
     void compile(Log& log);

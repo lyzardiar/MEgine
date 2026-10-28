@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <string_view>
+#include <functional>
 
 namespace war3 {
 enum class PathMovement {Ground,Air,Water,Amphibious};
@@ -60,6 +61,8 @@ class World {
     Bytes blightPathing_;
     std::vector<std::uint64_t> blightChunks_;
     std::uint64_t blightRevision_=1;
+    std::vector<std::uint64_t> terrainChunks_;
+    std::uint64_t terrainRevision_=1;
     void changeBlight(WorldRect rectangle,std::optional<WorldPoint> center,float radius,bool add);
     void dirtyBlight(unsigned x,unsigned y);
     std::optional<size_t> terrainCorner(WorldPoint point) const;
@@ -80,6 +83,8 @@ public:
     bool blighted(WorldPoint point) const;
     std::uint32_t terrainType(WorldPoint point) const;
     unsigned terrainVariation(WorldPoint point) const;
+    void setTerrainType(WorldPoint point,std::uint32_t type,int variation,int area,int shape,const std::function<std::uint32_t()>& random);
+    const auto& terrainChunks() const {return terrainChunks_;}
     void blight(WorldRect rectangle,bool add);
     void blight(WorldPoint center,float radius,bool add);
     void blightPoint(WorldPoint point,bool add);
