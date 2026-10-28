@@ -21,3 +21,5 @@ Win32 Release 产品编译通过；Prologue01 原 main 及静音模拟已越过 
 SetUnitFacingTimed 在固定模拟步进中沿最短角度更新单位朝向；即时设定、移动、战斗、施法及扎根等朝向写入会覆盖转向。原版插值曲线、180 度方向、暂停与命令优先级待阶段对照。
 
 Win32 Release 产品编译通过；Prologue01 原 main 与前 20 秒静音模拟通过，bj_gameStarted=true，仍有 1 个脚本线程，未加载 Game.dll。日志：tmp/docs-artifacts/war3/campaign/prologue-facing.log。此结果不代表完整战役通过。
+
+GetCameraTargetPositionLoc 创建独立 location 并读取当前相机目标位置，供原版 SmartCameraPanBJ 教程救援路径使用；该位置与现有相机目标 X／Y 查询共享同一状态。镜头跟随和玩家操作与脚本查询的时序仍需阶段验证。

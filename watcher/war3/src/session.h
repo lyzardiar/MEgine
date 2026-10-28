@@ -66,6 +66,8 @@ class ScriptSession {
     jass::Runtime runtime_;
     bool failed_=false,configured_=false;
     std::optional<unsigned> localPlayer_;
+    std::array<std::set<std::uint32_t>,16> synchronizedSelections_;
+    void syncLocalSelection();
     std::unique_ptr<World> world_;
     bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false;
     std::unique_ptr<SoundScene> audio_;
