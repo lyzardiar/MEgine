@@ -13,3 +13,7 @@ EnableOcclusion 使用镜头到可见单位的空间块查询，将挡路物件�
 小地图 PingMinimap／PingMinimapEx 连接提示状态、皮肤模型与声音，多个提示使用独立模型实例；UnitAddIndicator／AddIndicator 将临时颜色连接单位、物品和可破坏物，保留现有透明度。SetUnitLookAt／ResetUnitLookAt 将目标和偏移连接单位骨骼姿态；过场禁用操作时，Esc 将玩家结束过场事件发送给已启用的注册触发器。模型朝向、闪烁叠色／时间、小地图尺寸／粒子／声音、Esc 条件和原版精度均待阶段验证。
 
 Win32 Release 产品编译通过；Prologue01 的 20 秒静音模拟通过初始化及此前 PingMinimap 阻塞，随后在 TriggerWaitForSound 未绑定处停止，尚不能认为 20 秒模拟完成。日志：tmp/docs-artifacts/war3/campaign/prologue-next-integrated.log。
+
+TriggerWaitForSound 将脚本线程挂起并跟踪当前声音播放位置，声音停止或达到正偏移提前点后恢复；释放句柄后的独立播放继续供等待使用。静音离线模拟使用模拟时钟推进声音，普通游戏仍使用实际音频时钟。原版入口会保存声音指针及偏移，空声音、负偏移、等待唤醒时序和变速精度仍待原版对照。
+
+Win32 Release 产品编译通过；Prologue01 原 main 及静音模拟已越过 TriggerWaitForSound，随后在 SetUnitFacingTimed 未绑定处停止。日志：tmp/docs-artifacts/war3/campaign/prologue-sound-wait.log。

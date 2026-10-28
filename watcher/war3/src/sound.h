@@ -19,6 +19,7 @@ struct ScriptSound {
     bool retired=false;
     SoundFade fade;
     std::unique_ptr<AudioVoice> voice;
+    std::weak_ptr<ScriptSound> detachedPlayback;
     std::shared_ptr<const Member> digital;
     std::string extension,eax;
     bool looping=true,spatial=false,stopWhenOutOfRange=false;
@@ -47,6 +48,7 @@ class SoundScene {
     std::array<float,3> listener_{};
     bool listenerSet_=false;
     bool muted_=false;
+    const double* simulationTime_=nullptr;
     bool groupsAnimating_=false;
     std::uint64_t nextPulse_=0;
     void collect();
@@ -56,7 +58,7 @@ class SoundScene {
     float spatialGain(const ScriptSound& sound) const;
     const SourceTable::Row& label(const std::string& name);
 public:
-    explicit SoundScene(Archives& resources);
+    explicit SoundScene(Archives& resources,const double* simulationTime=nullptr);
     MidiDefinition definition(const std::string& label) const;
     std::shared_ptr<ScriptSound> midi(const std::string& label,int fadeIn,int fadeOut);
     std::shared_ptr<ScriptSound> digital(const std::string& file,bool loop,bool spatial,bool stopOutOfRange,int fadeIn,int fadeOut,const std::string& eax);

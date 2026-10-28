@@ -72,7 +72,7 @@ class ScriptSession {
     std::unique_ptr<MusicScene> music_;
     std::unique_ptr<MusicScene> thematicMusic_;
     bool resumeMapAfterThematic_=false;
-    bool audioMuted_=false;
+    bool audioMuted_=false,audioSimulationClock_=false;
     std::unique_ptr<ObjectData> definitions_;
     std::map<std::uint32_t,std::shared_ptr<UnitState>> units_;
     std::map<std::uint32_t,std::shared_ptr<ItemState>> items_;
@@ -978,6 +978,7 @@ public:
     void advance(double elapsed);
     double simulationTime() const {return simulationTime_;}
     void audioMuted(bool muted);
+    void audioSimulationClock() {if(audio_)throw std::runtime_error("Audio simulation clock must be set before audio initialization");audioSimulationClock_=true;}
     void updateAudio();
     void updateAudioListener(float x,float y,float z);
     const SoundScene* audio() const {return audio_.get();}

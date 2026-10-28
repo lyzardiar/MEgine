@@ -4,7 +4,7 @@
 #include <cmath>
 
 namespace war3 {
-SoundScene& ScriptSession::requireAudio() {if(!audio_){audio_=std::make_unique<SoundScene>(requireWorld().resources());audio_->muted(audioMuted_);}return *audio_;}
+SoundScene& ScriptSession::requireAudio() {if(!audio_){audio_=std::make_unique<SoundScene>(requireWorld().resources(),audioSimulationClock_?&simulationTime_:nullptr);audio_->muted(audioMuted_);}return *audio_;}
 void ScriptSession::audioMuted(bool muted) {audioMuted_=muted;if(audio_)audio_->muted(muted);if(music_)music_->muted(muted);if(thematicMusic_)thematicMusic_->muted(muted);}
 void ScriptSession::updateAudio() {if(audio_)audio_->update();if(music_)music_->update();if(thematicMusic_)thematicMusic_->update();}
 void ScriptSession::updateAudioListener(float x,float y,float z) {if(audio_){audio_->updateAttachments([this](std::uint32_t id)->std::optional<std::array<float,3>>{auto found=units_.find(id);if(found==units_.end() || found->second->removing || !world_)return {};auto& unit=*found->second;return std::array{std::bit_cast<float>(unit.x.bits()),std::bit_cast<float>(unit.y.bits()),world_->height({unit.x,unit.y})+unit.displayFlyHeight()};});audio_->listener(x,y,z);}}
@@ -20,6 +20,7 @@ void ScriptSession::bindSoundNatives() {
     bind("StartSound","nothing",{"sound"},[this,sound](auto& vm,auto args){auto value=sound(args[0]);if(value)requireAudio().start(value);return vm.nothing();});
     bind("StopSound","nothing",{"sound","boolean","boolean"},[this,sound](auto& vm,auto args){auto value=sound(args[0]);if(value)requireAudio().stop(value,args[1].bits!=0,args[2].bits!=0);return vm.nothing();});
     bind("KillSoundWhenDone","nothing",{"sound"},[this,sound](auto& vm,auto args){auto value=sound(args[0]);if(value)requireAudio().releaseWhenDone(value);return vm.nothing();});
+    bind("TriggerWaitForSound","nothing",{"sound","real"},[this,sound](auto& vm,auto args){auto value=sound(args[0]);float offset=std::bit_cast<float>(args[1].bits);if(!std::isfinite(offset))throw std::runtime_error("Invalid sound wait offset");for(;;){updateAudio();auto playback=value && value->retired?value->detachedPlayback.lock():value;if(!playback || !playback->voice || !playback->voice->playing())break;auto [position,length]=playback->voice->milliseconds();if(double(position)+double(offset)*1000>=double(length))break;vm.sleep(1./32);}return vm.nothing();});
     bind("GetSoundIsPlaying","boolean",{"sound"},[sound](auto& vm,auto args){auto value=sound(args[0]);return vm.boolean(value && value->voice && value->voice->playing());});
     bind("GetSoundIsLoading","boolean",{"sound"},[sound](auto& vm,auto args){sound(args[0]);return vm.boolean(false);});
     bind("GetSoundDuration","integer",{"sound"},[this,sound](auto& vm,auto args){return vm.integer(int(requireAudio().duration(sound(args[0]))));});

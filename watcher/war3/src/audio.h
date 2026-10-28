@@ -24,7 +24,7 @@ class AudioVoice {
     explicit AudioVoice(std::unique_ptr<Impl> impl);
 public:
     ~AudioVoice();
-    static std::unique_ptr<AudioVoice> silent(std::shared_ptr<const Member> bytes,const std::string& extension);
+    static std::unique_ptr<AudioVoice> silent(std::shared_ptr<const Member> bytes,const std::string& extension,const double* simulationTime=nullptr);
     bool silent() const;
     void start(bool loop);
     void pause();
