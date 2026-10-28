@@ -156,6 +156,9 @@ class ScriptSession {
     bool aiConvertUnits(ScriptAI& ai,int quantity,std::uint32_t type);
     void aiPurchaseZeppelin(ScriptAI& ai);
     void aiPurchaseZeppelinTick(ScriptAI& ai);
+    void aiLoadZeppelinWave(ScriptAI& ai,WorldPoint destination);
+    void aiZeppelinWaveTick(ScriptAI& ai);
+    void aiCancelZeppelinWave(ScriptAI& ai);
     void aiHarvest(ScriptAI& ai);
     void aiFormCaptains(ScriptAI& ai,bool force=false);
     void aiSuicide(ScriptAI& ai,int quantity,std::uint32_t type,int targetPlayer);
@@ -900,7 +903,7 @@ public:
     unsigned cargoCapacity(std::uint32_t transport);
     unsigned cargoUsed(std::uint32_t transport);
     unsigned cargoCost(std::uint32_t passenger);
-    bool boardUnit(std::uint32_t passenger,std::uint32_t transport);
+    bool boardUnit(std::uint32_t passenger,std::uint32_t transport,std::uint32_t order=851971);
     bool unloadUnit(std::uint32_t transport,std::uint32_t passenger);
     bool unloadAll(std::uint32_t transport,WorldPoint point);
     ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings={},std::optional<unsigned> gameType={},std::optional<std::uint32_t> initialRandomSeed={});

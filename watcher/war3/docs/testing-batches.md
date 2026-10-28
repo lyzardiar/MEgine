@@ -1242,4 +1242,8 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 
 ## AI 飞艇购买待验证
 
-路径：session_ai_transport、session_ai_natives、session_ai、session_ai_armies、session_ai_economy、session_ai_guards、session_commerce。集中验证原 AI 的购买请求，地精实验室库存／资源／人口／售卖事件、附近与远程购买者、单位行走与采集恢复、多商店／路线阻塞、暂停／超时／取消／死亡／易主和交易回调；比较原版候选与购买行为并执行实际对局。运输波次 LoadZepWave 仍待实现。
+路径：session_ai_transport、session_ai_natives、session_ai、session_ai_armies、session_ai_economy、session_ai_guards、session_commerce。集中验证原 AI 的购买请求，地精实验室库存／资源／人口／售卖事件、附近与远程购买者、单位行走与采集恢复、多商店／路线阻塞、暂停／超时／取消／死亡／易主和交易回调；比较原版候选与购买行为并执行实际对局。运输波次与原版行为见后续专项。
+
+## AI 运输波次待验证
+
+路径：session_ai_transport、session_ai_natives、session_ai、session_transport、session_combat_orders、session_spells。集中验证原 common.ai 的 LoadZepWave 与 AttackMoveXY 连续调用，多载具／容量和乘员体积、满舱／无载具／无法登船、移动中的载具、暂停／死亡／易主／命令回调、登船等待／飞行／卸载／陆路继续、目标变更／撤退／超时，以及战役或海岛地图与原版目标选择／时序对照；覆盖实时画面、长局和多人同步。
