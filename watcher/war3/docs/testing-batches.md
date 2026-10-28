@@ -1440,3 +1440,12 @@ Win32 Release 产品增量编译通过，BootyBay 最小队列会话 20/20 通�
 路径：`commerce.h`、`session_research.cpp`、`session_lumber.cpp`、`tests/destructable_tests.cpp`。源科技效果 `rlum` 随已研究等级重建携木容量增量，实际 Ahar／Ahrl 采集读取该增量；研究完成、创建和易主复用科技刷新，已携木材不截断。小精灵直接收入和 AI 慢速采集逻辑保持原有消费路径。
 
 Win32 Release 产品增量编译通过，BootyBay 派生的最小会话检查通过，覆盖原版 Rhlh 一级实际研究、一级／二级容量、已有与新农民、二级重复设置及携木易主；`war3_destructable_tests` 使用 `tmp/docs-artifacts/war3/destructables/fixture.w3m`，通过 `python watcher/war3/tests/generate-destructable-fixture.py --data-root <原安装目录>` 生成，不加载 Game.dll。阶段集中核对 w3q 自定义 rlum／多科技叠加、升级和移除时已有采集流程、不同等级／背包余量、AI 慢速采集及原版时序。
+
+
+## 科技防御类型增量待验证
+
+路径：`commerce.h`、`session.h`、`session_research.cpp`、`session_damage.cpp`、`session_siege_attacks.cpp`、`tests/fortified_tests.cpp`、`tests/generate-fortified-fixture.py`。原版 Rorb 与有界整数 rart 效果连接研究刷新及实际防御类型，普通伤害和碎片攻击共同消费，已有／新单位与易主重新计算。
+
+原安装 Game.dll 的 SHA-256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。只读 REA/Rizin 证据：`0x6f6ac913` 识别 rart，`0x6f6986a0` 对等级效果差值执行整数转换后调整防御类型；`0x6f689b40` 的零级为零、正等级为 base+(level−1)×mod；`0x6f052f30` 在有限常规范围内向零截断。该证据不证明全局研究顺序和索引 8 的后续语义。
+
+Win32 Release 产品增量编译通过。原版 Rorb 的三个建筑实际研究和伤害倍率、新建筑及易主检查通过；BootyBay 派生的自定义 w3q 会话检查通过两级／双科技、伤害倍率、新单位和易主。测试目标 `war3_fortified_tests`，原版夹具 `tmp/docs-artifacts/war3/destructables/fixture.w3m`，自定义夹具 `tmp/docs-artifacts/war3/fortified/custom-fixture.w3m`，生成命令见对应 `tests/generate-*-fixture.py`；不加载 Game.dll。阶段集中核对真实原版不同研究顺序、饱和后升降级、古树拔起优先级及碎片攻击。当前仅支持有界整数 base/mod；分数／超范围在研究前拒绝，索引 8 的伤害消费明确失败；当前按单位升级列表重建，可能与原版按研究变更顺序的饱和结果不同。

@@ -809,6 +809,7 @@ class ScriptSession {
     unsigned researchLevel(unsigned owner,std::uint32_t type) const;
     void setResearch(unsigned owner,std::uint32_t type,int level);
     void refreshResearch(UnitState& unit);
+    unsigned defenseType(const UnitState& unit);
     bool researchAllowed(const UnitState& unit,const ResearchInfo& info,std::string& reason);
     WeaponDefinition unitWeapon(const UnitState& unit,unsigned slot);
     const std::array<WeaponDefinition,2>& weapons(std::uint32_t type);
