@@ -124,6 +124,15 @@ class ScriptSession {
     std::map<jass::ThreadId,std::vector<ScriptContext>> threadContexts_{{0,{}}};
     void bindThreadNatives();
     double simulationTime_=0,accumulator_=0;
+    struct PointDamage {
+        std::uint32_t source=0,attackType=0,damageType=0;
+        float x=0,y=0,radius=0,amount=0;
+        bool attack=false,ranged=false;
+    };
+    std::multimap<double,PointDamage> pointDamageQueue_;
+    bool scriptDamageWidget(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack,bool ranged);
+    void applyPointDamage(const PointDamage& damage);
+    void pointDamageTick();
     IndicatorState indicators_;
     std::array<std::unique_ptr<ScriptAI>,16> ais_;
     std::array<std::uint32_t,16> aiPauseDepth_{};

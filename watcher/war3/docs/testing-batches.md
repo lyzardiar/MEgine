@@ -1218,4 +1218,4 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 
 ## 脚本物件伤害与死亡轮次阶段待验证
 
-路径：session_damage、session_destructables、session、entities。UnitDamageTarget 消费可破坏物和物品生命、无敌及死亡事件；widget 死亡事件检查对象和生命轮次。集中验证单位／物品／可破坏物有效及空句柄、无敌／死亡与返回值、各种伤害类型／幻象倍率、触发器回调删除／复活／再次致死、物品持有／装备清理、重叠路径占用，以及原版伤害与事件时序。范围伤害 UnitDamagePoint 仍待实现；见[脚本物件伤害](widget-damage.md)。
+路径：session_damage、session_tick、session_destructables、session、entities。UnitDamageTarget 消费可破坏物和物品生命、无敌及死亡事件；widget 死亡事件检查对象和生命轮次。集中验证单位／物品／可破坏物有效及空句柄、无敌／死亡与返回值、各种伤害类型／幻象倍率、触发器回调删除／复活／再次致死、物品持有／装备清理、重叠路径占用，以及原版伤害与事件时序。UnitDamagePoint 已接即时／延迟和范围伤害，集中验证负／零／正延迟、暂停与多次同刻顺序、大小碰撞、单位／可破坏物／物品、己方／来源、移除／复活／移动重入、来源移除、无限大／非法参数、三图、DotA 高频范围伤害的帧耗时和原版目标筛选及时序；见[脚本物件伤害](widget-damage.md)。
