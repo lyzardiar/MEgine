@@ -21,7 +21,7 @@ class GameView {
     std::uint64_t destructableStreamRevision_=0;
     FogRender fogRender_;
     std::vector<float> distances_,angles_,fovs_;
-    float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,roll_=0,zOffset_=0,near_=100,far_=5000,speed_=3000;
+    float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,roll_=0,zOffset_=0,near_=100,far_=5000,forwardSpeed_=3000,strafeSpeed_=3000;
     unsigned zoom_=0,frames_=0;
     std::uint64_t cameraRevision_=0;
     std::uint64_t last_=0;
@@ -57,7 +57,8 @@ class GameView {
     float leaderboardFont_=.007f;
     bool questsOpen_=false;
     std::unique_ptr<GameFlowUi> flow_;
-    bool edgeScrollCommitted_=true,edgeScrollPersistable_=true;
+    GameCameraPreferences cameraCommitted_{};
+    bool cameraPersistable_=true;
     GameAudioPreferences audioCommitted_{};
     bool audioPersistable_=true;
     bool appExit_=false;

@@ -3,6 +3,11 @@
 #include "platform.h"
 
 namespace war3 {
+struct GameCameraPreferences {
+    bool edgeScroll=true;
+    unsigned mouseSpeed=50,keySpeed=50;
+    bool operator==(const GameCameraPreferences&) const = default;
+};
 struct GameAudioPreferences {
     bool sound=true,music=true;
     unsigned soundVolume=100,musicVolume=100;
@@ -10,8 +15,8 @@ struct GameAudioPreferences {
     float musicGain() const {return music?float(musicVolume)/100.f:0.f;}
     bool operator==(const GameAudioPreferences&) const = default;
 };
-bool loadEdgeScrollPreference(const fs::path& dataRoot);
-void saveEdgeScrollPreference(const fs::path& dataRoot,bool enabled);
+GameCameraPreferences loadCameraPreferences(const fs::path& dataRoot);
+void saveCameraPreferences(const fs::path& dataRoot,const GameCameraPreferences& preferences);
 GameAudioPreferences loadAudioPreferences(const fs::path& dataRoot);
 void saveAudioPreferences(const fs::path& dataRoot,const GameAudioPreferences& preferences);
 }
