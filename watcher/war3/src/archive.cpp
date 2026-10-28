@@ -1,14 +1,30 @@
 // Author: MiYu. Map precedence, strict read errors and in-memory MPQ ownership.
 #include "archive.h"
 #include <StormLib.h>
+#include <bcrypt.h>
 #include <algorithm>
+#include <array>
 #include <cctype>
+#include <cstring>
 #include <map>
 #include <mutex>
 
 namespace war3 {
 Archive::Archive(const fs::path& path) : path_(path) {
     if (!SFileOpenArchive(path.c_str(), 0, MPQ_OPEN_READ_ONLY, &handle_)) throw std::runtime_error("Cannot mount " + utf8(path.wstring()) + ": " + winError());
+}
+// StormLib's map provider opens a named pagefile section and retains its own view.
+// The section is page-rounded; validate transferred length and hashes before mounting.
+Archive::Archive(std::shared_ptr<const Bytes> bytes,std::string_view label) {
+    if(!bytes || bytes->empty() || bytes->size()>256u*1024u*1024u || label.empty() || label.size()>1024 || label.find('\0')!=std::string_view::npos)throw std::runtime_error("Invalid in-memory map archive");
+    path_=fs::path(wide(label));
+    std::array<unsigned char,16> random{};if(BCryptGenRandom(nullptr,random.data(),ULONG(random.size()),BCRYPT_USE_SYSTEM_PREFERRED_RNG)<0)throw std::runtime_error("Cannot create in-memory archive identifier");
+    constexpr wchar_t hex[]=L"0123456789abcdef";std::wstring name=L"Local\\War3Map-";for(auto byte:random){name+=hex[byte>>4];name+=hex[byte&15];}name+=L".w3x";
+    struct Handle {HANDLE value;~Handle(){if(value)CloseHandle(value);}} mapping{CreateFileMappingW(INVALID_HANDLE_VALUE,nullptr,PAGE_READWRITE,0,DWORD(bytes->size()),name.c_str())};
+    if(!mapping.value)throw std::runtime_error("Cannot create in-memory map section: "+winError());if(GetLastError()==ERROR_ALREADY_EXISTS)throw std::runtime_error("In-memory map section name collision");
+    struct View {void* value;~View(){if(value)UnmapViewOfFile(value);}} view{MapViewOfFile(mapping.value,FILE_MAP_WRITE,0,0,bytes->size())};
+    if(!view.value)throw std::runtime_error("Cannot map in-memory archive: "+winError());std::memcpy(view.value,bytes->data(),bytes->size());
+    auto source=L"map://"+name;if(!SFileOpenArchive(source.c_str(),0,MPQ_OPEN_READ_ONLY,&handle_))throw std::runtime_error("Cannot mount in-memory map "+std::string(label)+": "+winError());
 }
 Archive::~Archive() { if (handle_) SFileCloseArchive(handle_); }
 std::optional<Bytes> Archive::read(const std::string& name) const {
@@ -59,6 +75,9 @@ size_t Archives::cachedBytes() const {if(map_){std::scoped_lock lock(common_->mu
 void Archives::mountMap(const fs::path& path) {
     auto next=std::make_shared<Store>();next->budget=16*1024*1024;next->archives.push_back(std::make_unique<Archive>(path));
     map_ = std::move(next);
+}
+void Archives::mountMap(std::shared_ptr<const Bytes> bytes,std::string_view label) {
+    auto next=std::make_shared<Store>();next->budget=16*1024*1024;next->archives.push_back(std::make_unique<Archive>(std::move(bytes),label));map_=std::move(next);
 }
 void Archives::unmountMap() {map_.reset();}
 std::shared_ptr<const Member> Archives::readStore(Store& store,const std::vector<std::string>& names) {

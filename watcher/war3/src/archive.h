@@ -11,6 +11,7 @@ class Archive {
     fs::path path_;
 public:
     explicit Archive(const fs::path& path);
+    Archive(std::shared_ptr<const Bytes> bytes, std::string_view label);
     ~Archive();
     Archive(const Archive&) = delete;
     Archive& operator=(const Archive&) = delete;
@@ -37,6 +38,7 @@ public:
     const fs::path& root() const;
     fs::path mapPath() const;
     void mountMap(const fs::path& path);
+    void mountMap(std::shared_ptr<const Bytes> bytes, std::string_view label);
     void unmountMap();
     std::shared_ptr<const Member> read(std::string name);
     std::shared_ptr<const Member> readTexture(std::string name);

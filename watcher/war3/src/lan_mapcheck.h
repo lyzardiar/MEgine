@@ -13,6 +13,8 @@ struct LanMapCheck {
 // The advertised path must identify an existing .w3m/.w3x inside dataRoot/Maps.
 // Throws on invalid paths, incomplete reads or unavailable source scripts.
 LanMapCheck calculateLanMapCheck(Archives& common,std::string_view advertisedPath);
+// Memory maps are bounded to 256 MiB; label is diagnostic only. Keep bytes immutable while checking.
+LanMapCheck calculateLanMapCheck(Archives& common,std::shared_ptr<const Bytes> bytes,std::string_view label);
 struct LanMapCheckOutcome {
     std::optional<LanMapCheck> value;
     std::string error;
@@ -28,6 +30,7 @@ class LanMapCheckTask {
 public:
     // Only one map verification may run or wait at a time. Throws when busy.
     LanMapCheckTask(Archives& common,std::string advertisedPath,bool includeMapInfo=false);
+    LanMapCheckTask(Archives& common,std::shared_ptr<const Bytes> bytes,std::string label,bool includeMapInfo=false);
     ~LanMapCheckTask();
     LanMapCheckTask(const LanMapCheckTask&)=delete;
     LanMapCheckTask& operator=(const LanMapCheckTask&)=delete;

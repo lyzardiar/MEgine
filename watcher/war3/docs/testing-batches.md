@@ -1157,3 +1157,9 @@ Win32 Release 产品编译通过；本机定向双端探针覆盖四类请求、
 路径：lan_host、lan_join。加入端增加四字段匹配后的就绪声明发送能力；主机解析状态并显示声明，界面仍不自动发送，未启用开始。
 
 本机双端定向探针检查匹配／失配与状态广播、断线清理，证据 tmp/docs-artifacts/war3/lan-host-probe/ready-probe/result.log。集中验证畸形报文、重复宣告、原版 1.27 互通及下载／加载／锁步；远端声明不等于服务端验证地图。
+
+## 内存地图归档及字段校验阶段待验证
+
+路径：archive、lan_mapcheck。页面文件映射可在内存挂载地图，单 worker 支持内存地图字段计算与取消；网络下载及会话尚未接入。Win32 Release 编译通过；BootyBay／DotA 实际地图成员、枚举、fork／卸载、并发读取和坏数据失败清理，以及 BootyBay 文件／内存四项字段、异步元数据与取消探针通过。证据 tmp/docs-artifacts/war3/archive-memory-probe/result.log、memory-mapcheck-probe/result.log。
+
+集中验证网络接收与会话所有权、页对齐零填充下畸形／截断文件边界、原版字段和报文、大地图内存峰值、长期切图释放及系统级磁盘活动；校验期间输入须保持不可变。
