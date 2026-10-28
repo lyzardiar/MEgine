@@ -930,11 +930,11 @@ public:
     void selectUnit(std::uint32_t handle,bool selected);
     bool setPlayerUnitSelected(unsigned player,std::uint32_t handle,bool selected);
     std::set<std::uint32_t> playerSelection(unsigned player);
-    bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986);
+    bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986,std::optional<WorldPoint> destination={});
     bool stopUnit(std::uint32_t handle,bool hold=false);
     bool targetOrder(std::uint32_t source,std::uint32_t target,std::uint32_t order=851971);
     bool attackUnit(std::uint32_t source,std::uint32_t target,bool forced=true,std::uint32_t ability=0);
-    bool attackMove(std::uint32_t source,WorldPoint target,bool patrol=false);
+    bool attackMove(std::uint32_t source,WorldPoint target,bool patrol=false,std::optional<WorldPoint> destination={});
     bool hasWeapon(std::uint32_t unit);
     const SpellInfo& spellInfo(std::uint32_t ability,unsigned level);
     SpellTargeting spellTargeting(const UnitState& unit,const SpellInfo& spell) const {return spell.kind==SpellKind::Root && (!unit.roots || !unit.roots->uprooted)?SpellTargeting::None:spell.targeting;}

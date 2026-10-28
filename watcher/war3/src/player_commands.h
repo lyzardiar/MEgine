@@ -1,6 +1,7 @@
 // Author: MiYu. Explicit player-issued ground and stop commands shared by game input and simulation.
 #pragma once
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -20,5 +21,5 @@ struct PlayerCommand {
     bool enabled=false;
     std::string text;
 };
-unsigned dispatchPlayerCommand(ScriptSession& session,const PlayerCommand& command);
+unsigned dispatchPlayerCommand(ScriptSession& session,const PlayerCommand& command,const std::function<bool()>& keepGoing={});
 }
