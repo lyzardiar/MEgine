@@ -39,7 +39,8 @@ public:
     const std::vector<std::uint8_t>& loadedPlayers() const;
     std::uint32_t randomSeed() const;
     std::shared_ptr<const Bytes> mapBytes() const;
-    // Opaque W3GS action data; callers must separately implement simulation and original action semantics.
+    // Arm during loading before the final player reports ready; actions still require Ready.
+    // Opaque W3GS action data requires separate simulation and original action semantics.
     bool enableTimeSlotProtocol();
     bool submitHostAction(std::span<const std::uint8_t> action);
     bool emitTimeSlot(std::uint16_t elapsedMs);
