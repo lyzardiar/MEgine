@@ -23,10 +23,12 @@ class LanBrowser {
     wchar_t highSurrogate_=0;
     std::uint64_t nextSearch_=0;
     size_t selected_=0,scroll_=0;
-    bool nameFocus_=true;
+    bool nameFocus_=true,matchHandoffEnabled_=false;
     void start();
 public:
     LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log);
     std::string draw(const UiInput& input,std::wstring_view characters);
+    void enableMatchHandoff();
+    std::optional<LanLobbyHandoff> takeHandoff();
 };
 }
