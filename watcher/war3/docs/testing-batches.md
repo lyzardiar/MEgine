@@ -1181,3 +1181,7 @@ Win32 Release 产品编译通过；本机两客户端并发接收真实 BootyBay
 ## 局域网加载屏障阶段待验证
 
 路径：lan_host、lan_join。显式倒计时与开始加载、玩家加载完成广播和全部参与者屏障已接入；加载状态冻结槽位并处理断线与超时。Win32 Release 集成版本编译通过，本机双客户端探针覆盖就绪前拒绝、等待最后玩家、断线与未启用拒绝，证据 tmp/docs-artifacts/war3/lan-loading-probe/result.log。集中验证 1.27 互通、真实加载时序／超时／断线以及与会话和模拟锁步的衔接；大厅尚未启用开始。
+
+## 玩家对话框及过场命令阶段待验证
+
+路径：player_commands、game_flow_ui、game_view。对话框点击和过场跳过进入玩家命令入口，Win32 Release 集成版本编译通过；BootyBay 最小会话探针覆盖权限、隐藏／重复点击及过场事件归属，未加载 Game.dll，证据 tmp/docs-artifacts/war3/ui-event-command-probe/result.log。集中验证真实输入、回调销毁／重入、原版事件时序和后续网络身份；玩家选择及暂停／退出等仍待同步设计。
