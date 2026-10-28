@@ -651,6 +651,8 @@ class ScriptSession {
     void channelTick(std::uint32_t unit,double delta);
     void channelPulse(std::uint32_t unit,const CastOrder& cast);
     void finishCast(std::uint32_t unit,std::uint64_t ticket);
+    void restoreCastCombat(UnitState& unit,const CastOrder& cast,std::uint64_t castRevision,std::uint64_t combatRevision);
+    void cancelFailedCast(UnitState& unit);
     void releaseCastVisuals(CastOrder& cast);
     void groundSpellsTick(double delta);
     void persistentSpellPulse(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner,float amount,bool percent,std::optional<std::uint64_t> cast={});

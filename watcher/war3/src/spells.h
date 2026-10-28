@@ -102,7 +102,7 @@ struct CastOrder {
     std::uint32_t item=0;
     bool itemPaid=false;
     WorldPoint point;
-    std::uint64_t ticket=0;
+    std::uint64_t ticket=0,ownerRevision=0,deathRevision=0;
     double remaining=0,repath=0;
     bool started=false;
     double channelElapsed=0,nextPulse=0,nextArt=0;
