@@ -1,0 +1,34 @@
+// Author: MiYu. Bounded native Warcraft III LAN host lobby.
+#pragma once
+#include "lan_join.h"
+#include "lan_mapcheck.h"
+#include <memory>
+#include <string_view>
+#include <vector>
+namespace war3 {
+struct LanHostSettings {
+    std::string gameName,playerName,mapPath;
+    LanMapCheck map;
+    std::uint16_t width=0,height=0;
+    std::uint32_t mapFlags=0,gameType=1;
+    std::vector<LanSlot> slots;
+};
+class LanHost {
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
+public:
+    explicit LanHost(LanHostSettings settings);
+    ~LanHost();
+    LanHost(const LanHost&)=delete;
+    LanHost& operator=(const LanHost&)=delete;
+    void poll();
+    void cancel();
+    bool sendChat(std::string_view message);
+    bool setSlot(std::size_t index,const LanSlot& slot);
+    const std::vector<LanSlot>& slots() const;
+    const std::vector<LanPlayer>& players() const;
+    const std::vector<LanChatMessage>& chat() const;
+    const std::string& error() const;
+    bool running() const;
+};
+}

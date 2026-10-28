@@ -1108,13 +1108,13 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 
 路径：lan_discovery／lan_browser／main。Win32 Release 产品编译通过；本机模拟 UDP 主机的搜索及响应、有效／截断 GAMEINFO、主菜单局域网按钮及原 FDF 隐藏窗口绘制通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/lan-probe/。
 
-集中验证实际 1.27 主机、多网卡／广播／端口占用、房间上线变化／过期、错误恢复、中文名称与键盘鼠标、原版界面；加入大厅及本地地图字段比较已接入并另列待测；创建、地图就绪及双客户端对局同步尚未实现。
+集中验证实际 1.27 主机、多网卡／广播／端口占用、房间上线变化／过期、错误恢复、中文名称与键盘鼠标、原版界面；加入大厅及本地地图字段比较已接入并另列待测；创建大厅已另列待测；地图就绪及双客户端对局同步尚未实现。
 
 ## 局域网加入大厅与地图核对阶段待验证
 
 路径：lan_join／lan_lobby／lan_mapcheck／lan_browser。Win32 Release 产品编译通过；本机模拟 TCP 主机检查加入请求、槽位分片、玩家／PING／地图声明、PONG 与退出；BootyBay 大小／CRC32、非法路径与后台校验以及大厅和槽位 FDF 隐藏绘制通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/lan-join-probe/result.log。
 
-集中验证真实 1.27 互通、槽位更新／拒绝／断线／超时、名字与多字节、路径安全和异步取消、实际游戏地图字段对照、完整大厅交互与重复进出资源释放。加入确认后尚未发送地图就绪，下载、创建房间和对局同步待实现。
+集中验证真实 1.27 互通、槽位更新／拒绝／断线／超时、名字与多字节、路径安全和异步取消、实际游戏地图字段对照、完整大厅交互与重复进出资源释放。加入确认后尚未发送地图就绪，创建大厅已另列待测；下载和对局同步待实现。
 
 ## 玩家建造与生产命令阶段待验证
 
@@ -1139,3 +1139,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：player_commands／game_commands／game_alliance_dialog／game_view。Win32 Release 产品编译通过；BootyBay 最小会话检查统一入口资源转移和共同胜利状态通过，未加载 Game.dll，证据 tmp/docs-artifacts/war3/transfer-probe/。
 
 集中验证真实商店／购买者与费用、游戏聊天事件、联盟变更／取消及资源转移的重入和时序、原版权限、网络身份与同步；其他未迁移的输入和锁步仍待实现。
+
+## 局域网创建房间和主机大厅阶段待验证
+
+路径：lan_host／lan_host_ui／lan_browser／lan_mapcheck／CMakeLists。创建页浏览地图、后台读取地图元数据和校验字段，主机处理搜索、加入、槽位显示、聊天及断线；Win32 Release 产品编译通过；本机探针覆盖 UDP 搜索、两客户端加入、地图声明、槽位广播、双向聊天、断线释放和主机关闭，证据 tmp/docs-artifacts/war3/lan-host-probe/result.log。
+
+集中验证原版 1.27 双向互通、真实创建页及大厅操作、多网卡／端口占用、地图字段／编码、多人加入／拒绝／断线与恶意报文、资源释放；槽位编辑、地图下载与就绪、开始及对局同步尚未实现。

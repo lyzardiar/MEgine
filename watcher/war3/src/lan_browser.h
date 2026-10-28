@@ -3,6 +3,7 @@
 #include "glue.h"
 #include "lan_discovery.h"
 #include "lan_lobby.h"
+#include "lan_host_ui.h"
 #include <memory>
 #include <string_view>
 
@@ -16,6 +17,7 @@ class LanBrowser {
     Log& log_;
     std::unique_ptr<LanDiscovery> discovery_;
     std::unique_ptr<LanLobby> lobby_;
+    std::unique_ptr<LanHostUi> host_;
     std::string error_,selection_;
     std::wstring playerName_=L"Player";
     wchar_t highSurrogate_=0;

@@ -1,6 +1,6 @@
 // Author: MiYu. Classic LAN map integrity fields computed from read-only in-memory archive members.
 #pragma once
-#include "archive.h"
+#include "map.h"
 #include <array>
 #include <string_view>
 
@@ -16,6 +16,7 @@ LanMapCheck calculateLanMapCheck(Archives& common,std::string_view advertisedPat
 struct LanMapCheckOutcome {
     std::optional<LanMapCheck> value;
     std::string error;
+    std::optional<MapInfo> mapInfo;
 };
 class LanMapCheckBusy : public std::runtime_error {
 public:
@@ -26,7 +27,7 @@ class LanMapCheckTask {
     std::shared_ptr<LanMapCheckTaskState> state_;
 public:
     // Only one map verification may run or wait at a time. Throws when busy.
-    LanMapCheckTask(Archives& common,std::string advertisedPath);
+    LanMapCheckTask(Archives& common,std::string advertisedPath,bool includeMapInfo=false);
     ~LanMapCheckTask();
     LanMapCheckTask(const LanMapCheckTask&)=delete;
     LanMapCheckTask& operator=(const LanMapCheckTask&)=delete;
