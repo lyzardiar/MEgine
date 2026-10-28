@@ -30,6 +30,7 @@ public:
     static std::uint32_t code(std::string_view text);
     static std::string name(std::uint32_t code);
     std::uint32_t unitId(const std::string& name) const;
+    std::vector<std::uint32_t> unitTypes() const;
     bool contains(std::uint32_t id,bool item=false) const;
     bool ability(std::uint32_t id) const;
     bool upgrade(std::uint32_t id) const;
