@@ -1526,3 +1526,9 @@ Win32 Release 客户端增量编译通过。阶段核对原 FDF 输入／弹窗�
 路径：`effects.h`、`session.h/.cpp`、`session_effects.cpp`、`session_hashtable.cpp`、`game_view.h/.cpp`、`game_effects.cpp`、`terrain_scene.h/.cpp`、`terrain_layout.cpp`、`docs/map-images.md`。图像 native、句柄存取及纹理内存流式加载连接实际世界绘制，消费显示／位置／颜色／高度／水面／迷雾与类型排序。
 
 Win32 Release 客户端增量编译通过。阶段检查 DotA 动态图像、对象／纹理创建销毁及 hashtable、绘制状态隔离、视口及水面／坡面／恒高／雾效、不同类型／透明度／大尺寸、GPU 恢复与高密度性能；图像尺寸 Z 和原版混合／排序仍未完整还原，原版画面尚未验收。
+
+## 地形路径脚本控制待验证
+
+路径：`world.h`、`world_path.cpp`、`session_world.cpp`、`docs/terrain-pathability.md`。八种类别可读写会话 WPM，变化进入寻路和建筑放置；动态足迹保留，路径阻挡触发路线重试。REA 静态核对掩码及布尔方向，采木 PEONHARVEST 位、荒芜外观及原版边界仍待完成或验证。
+
+Win32 Release 客户端增量编译通过。阶段核对原版类型/位置/障碍、WPM 与动态足迹重叠、进行中寻路/放置、建筑/古树、地图切换和局域网；无完整运行或原版一致性结论。

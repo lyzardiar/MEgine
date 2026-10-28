@@ -90,6 +90,8 @@ public:
     bool pathPointFree(WorldPoint point,float radius,PathMovement movement) const;
     bool pathSegmentFree(WorldPoint from,WorldPoint to,float radius,PathMovement movement) const;
     unsigned pathMask(WorldPoint point,std::span<const PathCell> ignored={}) const;
+    bool terrainUnpathable(WorldPoint point,unsigned type) const;
+    void terrainPathable(WorldPoint point,unsigned type,bool pathable);
     void footprint(std::span<const PathCell> cells,bool add);
     std::uint64_t pathingRevision() const {return pathingRevision_;}
     std::uint64_t blockingRevision() const {return blockingRevision_;}

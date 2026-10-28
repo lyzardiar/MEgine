@@ -1,0 +1,9 @@
+# 地形路径可用性
+
+`SetTerrainPathable` 与 `IsTerrainPathable` 按坐标定位会话 WPM 的 32 单位格。路径类别 ANY、WALKABILITY、FLYABILITY、BUILDABILITY、PEONHARVESTPATHING、BLIGHTPATHING、FLOATABILITY、AMPHIBIOUSPATHING 分别映射为 `0xff`、`0x02`、`0x04`、`0x08`、`0x10`、`0x20`、`0x40`、`0x80`。设置 `true` 清除对应限制位，设置 `false` 增加限制位；查询返回 `true` 表示被阻挡。原 WPM 路径位直接参与当前地图的步行／飞行／水面／两栖寻路和路线检查，也通过 `pathMask` 参与建筑和古树放置。格中重叠的可破坏物／建筑占地是独立计数层，不能被脚本设置清除；水面及两栖查询按当前移动实现同样检查地面动态占用。
+
+新增移动阻挡增加阻挡修订，现有运动中的单位以有界重试重新寻路；解除阻挡更新路径修订，后续寻路可立即读取。BLIGHT 位修改也影响 `IsPointBlighted` 和建造查询，但本操作只修改路径位，不同步地形顶点画面；`SetBlight` 系列仍负责显式地形荒芜绘制。PEONHARVESTPATHING 位可查询并参与已有建造限制，当前采木行为尚未对它作额外判定。缺失 WPM 时两个 native 明确报错；超出网格的查询视为受阻，写入不改变地图。非法路径类别在网格内映射为零，原版边界仍待对照。所有变化只存在当前会话内，切图释放，不写原安装或派生资产。
+
+固定对照 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。REA/Rizin 只读观察：`SetTerrainPathable` 注册入口 `0x6f1f6c60` 反转布尔后写入，`IsTerrainPathable` 入口 `0x6f1e8440` 使用同一个类别映射；`0x6f1e3be0` 跳转表给出 8 种掩码，`0x6f036e20` 按传入值置位或清位。`0x6f0f5100` 匹配禁止位时使查询返回受阻。证据 `ev_7646c886518e6fc6d5aadf7a7b368306c169d0f14fa97be591da56a0ae23c771`、`ev_135698d12e3f810d9c59f009b4e096e74f4af765eb65c6c165874f5d86621fcf`、`ev_d1bcda59a6d6c3e46d3c41cf6411ce632cd90ecbbca5cea87cec7248486f9b63`；这些静态观察不证明实际地图、运行性能或像素一致性。
+
+待功能阶段验证：每种类型和 ANY 的原版查询／置位／清位，陆地／水面／飞行／两栖路径及净空、建筑／古树放置与重叠足迹、执行中路线失效及恢复、荒芜顶点与采木、地图边界／无 WPM／错误类别、地图切换与多客户端同步。原版坐标量化、动态足迹和边界行为仍待运行对照。
