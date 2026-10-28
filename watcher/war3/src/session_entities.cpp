@@ -57,6 +57,8 @@ void ScriptSession::bindEntityNatives() {
     for(auto [name,member]:std::initializer_list<std::pair<const char*,Real UnitState::*>>{{"GetUnitX",&UnitState::x},{"GetUnitY",&UnitState::y},{"GetUnitFacing",&UnitState::facing},{"GetUnitMoveSpeed",&UnitState::moveSpeed},{"GetUnitDefaultMoveSpeed",&UnitState::defaultMoveSpeed},{"GetUnitAcquireRange",&UnitState::acquireRange}})bind(name,"real",{"unit"},[this,member](auto& vm,auto a){return vm.real(alive(a[0].bits,NativeKind::Unit)?(member==&UnitState::moveSpeed?unit(a[0]).currentMoveSpeed():unit(a[0]).*member):Real{});});
     bind("GetUnitLoc","location",{"unit"},[this](auto&,auto a){auto& u=unit(a[0]);auto handle=create(NativeKind::Location);std::get<WorldPoint>(object(handle,NativeKind::Location).state)={u.x,u.y};return handle;});
     bind("GetUnitTypeId","integer",{"unit"},[this](auto& vm,auto a){return vm.integer(alive(a[0].bits,NativeKind::Unit)?std::bit_cast<std::int32_t>(unit(a[0]).type):0);});
+    bind("GetUnitPointValue","integer",{"unit"},[this](auto& vm,auto a){return vm.integer(alive(a[0].bits,NativeKind::Unit)?integer(definitions().number(unit(a[0]).type,"UnitData","points")):0);});
+    bind("GetUnitPointValueByType","integer",{"integer"},[this](auto& vm,auto a){auto& data=definitions();return vm.integer(data.contains(a[0].bits)?integer(data.number(a[0].bits,"UnitData","points")):0);});
     bind("GetUnitName","string",{"unit"},[this](auto& vm,auto a){return vm.string(unit(a[0]).name);});
     bind("GetOwningPlayer","player",{"unit"},[this](auto& vm,auto a){return vm.handle("player",handleBase+unit(a[0]).owner);});
     bind("SetUnitOwner","nothing",{"unit","player","boolean"},[this](auto& vm,auto a){unit(a[0]);changeUnitOwner(a[0].bits,playerId(a[1]),a[2].bits!=0);return vm.nothing();});

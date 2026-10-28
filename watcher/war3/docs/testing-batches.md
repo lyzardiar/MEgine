@@ -1490,3 +1490,9 @@ Win32 Release 客户端增量编译通过。阶段核对常见地形集和玩家
 路径：`entities.h`、`script_state.h`、`session.h`、`session.cpp`、`session_tick.cpp`、`session_ownership.cpp`、`docs/rescue.md`。单位／玩家救援资格、距离与救援事件连接 `GetRescuer`，原版 BJ 利用现有归属转移完成救援；源地图玩家类型 4 映射为 Rescuable。
 
 Win32 Release 客户端增量编译通过。阶段核对 Rescuable 玩家、显式开关／每玩家资格／进入范围、事件及默认 BJ 提示音效／易主／人口／科技、死亡复活／隐藏／暂停／回调重入和多个玩家争抢，并对照原版默认距离、中心距离、事件时序和长局性能。当前范围和筛选边界尚未证实，实际战役未验收。
+
+## DotA 单位点数查询待验证
+
+路径：`session_entities.cpp`。`GetUnitPointValue` 与 `GetUnitPointValueByType` 使用源 `UnitData/points` 和 upoi 对象覆盖，实例读取当前单位类型；空／失效单位及未知类型返回 0。原件 1.27 入口 `0x6f1e6370`／`0x6f1e6390` 的查找与空对象返回行为经静态核对，DotA 脚本分别存在 31／4 处调用。
+
+Win32 Release 客户端增量编译通过。阶段检查 DotA 实际调用和对象查表、英雄／建筑／变形类型、w3u 覆盖、零／负点数和无效句柄；无原版实机或完整对局通过结论。
