@@ -862,6 +862,7 @@ class ScriptSession {
     std::map<std::uint32_t,std::optional<ConsumableInfo>> consumableInfo_;
     bool giveItem(std::uint32_t unit,std::uint32_t item,std::optional<unsigned> slot={});
     bool itemMoveTick(UnitState& unit);
+    bool itemApproach(UnitState& unit,WorldPoint destination,float reach);
     bool issueItemMove(unsigned player,std::uint32_t unit,std::uint32_t item,ItemMoveOrder::Kind kind,WorldPoint point,std::uint32_t target,unsigned slot);
     void spatialEvents();
     void moveUnits(double delta);
