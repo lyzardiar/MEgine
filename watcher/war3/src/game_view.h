@@ -7,6 +7,7 @@
 #include "fog_render.h"
 #include "lan_simulation.h"
 #include "lan_action_encoder.h"
+#include <deque>
 
 namespace war3 {
 class QuestDialog;
@@ -31,6 +32,7 @@ class GameView {
     LanWireObjectResolver lanWireObject_;
     std::function<bool(std::span<const std::uint8_t>)> lanSendSelection_;
     std::vector<std::uint8_t> lanPendingSelection_;
+    std::deque<LanActionAlliance> lanPendingAlliance_;
     std::uint8_t lanPeer_=0;
     bool drawStarted_=false;
     std::string lanMessage_;
@@ -115,7 +117,7 @@ public:
     GameView(std::unique_ptr<GameData> data,Renderer& renderer,Text& text,Log& log);
     ~GameView();
     bool draw(const GameInput& input);
-    // Configure before first draw. sendSelection enqueues exactly these bytes without reentry;
+    // Configure before first draw. sendSelection and submit enqueue in order without reentry;
     // the owner consumes complete slots on this thread and must not submit selection separately.
     bool enableLan(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wireObject,std::function<bool(std::span<const std::uint8_t>)> sendSelection,std::function<unsigned(const PlayerCommand&)> submit);
     std::optional<LanStepResult> consumeLanSlot(std::uint64_t sequence,const LanTimeSlot& slot);

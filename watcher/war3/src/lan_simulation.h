@@ -16,8 +16,9 @@ private:
     struct Selection {unsigned player;bool add;std::vector<std::uint32_t> units;};
     struct CancelRevival {unsigned player;std::uint32_t hero;};
     struct Transfer {unsigned player,recipient;int gold,lumber;};
+    struct Alliance {unsigned player,recipient,flags;};
     struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0;bool constructionCancel=false;};
-    using Event=std::variant<LanActionPause,LanActionResume,Selection,Command,CancelRevival,Transfer>;
+    using Event=std::variant<LanActionPause,LanActionResume,Selection,Command,CancelRevival,Transfer,Alliance>;
     ScriptSession& session_;
     ObjectResolver resolve_;
     std::vector<std::vector<Event>> decoded_;

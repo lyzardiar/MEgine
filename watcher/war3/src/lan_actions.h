@@ -13,6 +13,7 @@ struct LanActionResume {bool operator==(const LanActionResume&) const=default;};
 struct LanActionCancelQueue {std::uint8_t slot=0;std::uint32_t type=0;bool operator==(const LanActionCancelQueue&) const=default;};
 struct LanActionCancelRevival {LanObjectId hero;bool operator==(const LanActionCancelRevival&) const=default;};
 struct LanActionTransfer {std::uint8_t slot=0;std::uint32_t gold=0,lumber=0;bool operator==(const LanActionTransfer&) const=default;};
+struct LanActionAlliance {std::uint8_t slot=0;std::uint32_t flags=0;bool operator==(const LanActionAlliance&) const=default;};
 struct LanActionSelection {
     std::uint8_t mode=0;
     std::vector<LanObjectId> objects;
@@ -29,7 +30,7 @@ struct LanActionAbility {
     std::uint32_t secondaryXBits=0,secondaryYBits=0;
     bool operator==(const LanActionAbility&) const=default;
 };
-using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer>;
+using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance>;
 
 // Classic 1.13+ action layout, bounded to 256 KiB and 4096 actions per block.
 // A malformed or unsupported opcode fails the entire block; IDs are original wire pairs.

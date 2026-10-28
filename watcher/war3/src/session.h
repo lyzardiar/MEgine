@@ -1023,6 +1023,7 @@ public:
     bool canManageUnitInventory(unsigned viewer,const UnitState& unit) const;
     bool setAlliedVictory(unsigned owner,bool enabled);
     bool setAllianceOption(unsigned from,unsigned to,unsigned option,bool enabled);
+    bool setAllianceSnapshot(unsigned from,unsigned to,unsigned flags,bool victory);
     bool transferResources(unsigned from,unsigned to,int gold,int lumber);
     void leaveGame();
     bool endCinematic(unsigned owner);
