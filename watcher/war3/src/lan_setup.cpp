@@ -24,7 +24,9 @@ void ScriptSession::applyLanSetup(const LanSessionSetup& setup) {
         else player.controller=slot.status==0?0:5;
     }
     if(mapped!=sourceMask || !local || peers.size()!=names.size())throw std::runtime_error("Incomplete LAN player mapping");
-    config_=std::move(next);localPlayer_=local;networkPlayers_=std::move(peers);setupApplied_=true;if(!world_->environment().cameraMotion.revision){auto index=config_.players[*local].start;if(index>=0 && unsigned(index)<config_.starts.size()){auto& p=config_.starts[index].position;world_->environment().cameraMotion.sync(std::bit_cast<float>(p[0].bits()),std::bit_cast<float>(p[1].bits()));}}
+    auto slotPlayers=setup.slotPlayerIds;config_=std::move(next);localPlayer_=local;networkPlayers_=std::move(peers);networkSlotPlayers_=std::move(slotPlayers);setupApplied_=true;if(!world_->environment().cameraMotion.revision){auto index=config_.players[*local].start;if(index>=0 && unsigned(index)<config_.starts.size()){auto& p=config_.starts[index].position;world_->environment().cameraMotion.sync(std::bit_cast<float>(p[0].bits()),std::bit_cast<float>(p[1].bits()));}}
 }
 std::optional<unsigned> ScriptSession::networkPlayer(std::uint8_t peerId) const {auto found=networkPlayers_.find(peerId);return found==networkPlayers_.end()?std::nullopt:std::optional<unsigned>{found->second};}
+std::optional<unsigned> ScriptSession::networkSlotPlayer(unsigned slot) const {return slot<networkSlotPlayers_.size()?std::optional<unsigned>{networkSlotPlayers_[slot]}:std::nullopt;}
+std::optional<unsigned> ScriptSession::networkPlayerSlot(unsigned player) const {auto found=std::find(networkSlotPlayers_.begin(),networkSlotPlayers_.end(),player);return found==networkSlotPlayers_.end()?std::nullopt:std::optional<unsigned>{unsigned(found-networkSlotPlayers_.begin())};}
 }

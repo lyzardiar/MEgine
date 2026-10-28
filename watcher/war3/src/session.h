@@ -78,6 +78,7 @@ class ScriptSession {
     std::optional<unsigned> localPlayer_;
     std::optional<std::uint32_t> initialRandomSeed_;
     std::map<std::uint8_t,unsigned> networkPlayers_;
+    std::vector<unsigned> networkSlotPlayers_;
     std::array<std::uint32_t,16> playerLeaderboards_{};
     std::map<std::uint32_t,std::shared_ptr<ScriptMultiboard>> multiboards_;
     bool multiboardsSuppressed_=false;
@@ -916,6 +917,8 @@ public:
     void applySetup(const PlayerSetup& setup);
     void applyLanSetup(const LanSessionSetup& setup);
     std::optional<unsigned> networkPlayer(std::uint8_t peerId) const;
+    std::optional<unsigned> networkSlotPlayer(unsigned slot) const;
+    std::optional<unsigned> networkPlayerSlot(unsigned player) const;
     void attachWorld(std::unique_ptr<World> world);
     const World* world() const {return world_.get();}
     World* world() {return world_.get();}

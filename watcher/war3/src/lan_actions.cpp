@@ -61,6 +61,7 @@ std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> byt
         else if(opcode>=0x10 && opcode<=0x14)result.emplace_back(readAbility(reader,opcode));
         else if(opcode==0x1d){auto hero=reader.object();if(hero.first==0xffffffffu && hero.second==0xffffffffu)throw std::runtime_error("Invalid LAN revival cancellation at byte "+std::to_string(offset));result.emplace_back(LanActionCancelRevival{hero});}
         else if(opcode==0x1e){LanActionCancelQueue cancel;cancel.slot=reader.u8();cancel.type=reader.u32();if(cancel.slot>6 || !cancel.type)throw std::runtime_error("Invalid LAN queue cancellation at byte "+std::to_string(offset));result.emplace_back(cancel);}
+        else if(opcode==0x51){LanActionTransfer transfer;transfer.slot=reader.u8();transfer.gold=reader.u32();transfer.lumber=reader.u32();if(transfer.slot>=12 || transfer.gold>0x7fffffffu || transfer.lumber>0x7fffffffu)throw std::runtime_error("Invalid LAN resource transfer at byte "+std::to_string(offset));result.emplace_back(transfer);}
         else if(opcode==0x16){LanActionSelection selection;selection.mode=reader.u8();if(selection.mode!=1 && selection.mode!=2)throw std::runtime_error("Invalid LAN selection mode at byte "+std::to_string(offset));auto count=reader.u16();reader.need(std::size_t(count)*8);selection.objects.reserve(count);for(unsigned i=0;i<count;++i)selection.objects.push_back(reader.object());result.emplace_back(std::move(selection));}
         else throw std::runtime_error("Unsupported LAN action opcode "+std::to_string(opcode)+" at byte "+std::to_string(offset));
     }
@@ -74,6 +75,7 @@ std::vector<std::uint8_t> encodeLanActions(std::span<const LanDecodedAction> act
         else if constexpr(std::is_same_v<T,LanActionAbility>)writeAbility(writer,value);
         else if constexpr(std::is_same_v<T,LanActionCancelQueue>){if(value.slot>6 || !value.type)throw std::runtime_error("Invalid LAN queue cancellation");writer.u8(0x1e);writer.u8(value.slot);writer.u32(value.type);}
         else if constexpr(std::is_same_v<T,LanActionCancelRevival>){if(value.hero.first==0xffffffffu && value.hero.second==0xffffffffu)throw std::runtime_error("Invalid LAN revival cancellation");writer.u8(0x1d);writer.object(value.hero);}
+        else if constexpr(std::is_same_v<T,LanActionTransfer>){if(value.slot>=12 || value.gold>0x7fffffffu || value.lumber>0x7fffffffu)throw std::runtime_error("Invalid LAN resource transfer");writer.u8(0x51);writer.u8(value.slot);writer.u32(value.gold);writer.u32(value.lumber);}
         else {if(value.mode!=1 && value.mode!=2)throw std::runtime_error("Invalid LAN selection mode");if(value.objects.size()>std::numeric_limits<std::uint16_t>::max())throw std::runtime_error("LAN selection exceeds object limit");writer.u8(0x16);writer.u8(value.mode);writer.u16(std::uint16_t(value.objects.size()));for(auto object:value.objects)writer.object(object);}
     },action);
     return writer.finish();
