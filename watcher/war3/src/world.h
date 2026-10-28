@@ -6,8 +6,11 @@
 #include <unordered_map>
 #include <algorithm>
 #include <cmath>
+#include <string_view>
 
 namespace war3 {
+enum class PathMovement {Ground,Air,Water,Amphibious};
+inline PathMovement pathMovement(std::string_view type){return type=="fly"?PathMovement::Air:type=="float"?PathMovement::Water:(type=="amph" || type=="hover")?PathMovement::Amphibious:PathMovement::Ground;}
 struct WorldPoint {jass::Real x,y;};
 struct WorldRect {jass::Real minX,minY,maxX,maxY;};
 struct PathCell {size_t index=0;std::uint8_t mask=0;};
@@ -86,7 +89,8 @@ public:
     void footprint(std::span<const PathCell> cells,bool add);
     std::uint64_t pathingRevision() const {return pathingRevision_;}
     std::uint64_t blockingRevision() const {return blockingRevision_;}
-    std::vector<WorldPoint> route(WorldPoint from,WorldPoint to,float radius=0,bool flying=false) const;
+    std::vector<WorldPoint> route(WorldPoint from,WorldPoint to,float radius,PathMovement movement) const;
+    std::vector<WorldPoint> route(WorldPoint from,WorldPoint to,float radius=0,bool flying=false) const {return route(from,to,radius,flying?PathMovement::Air:PathMovement::Ground);}
     WorldEnvironment& environment() {return environment_;}
     const WorldEnvironment& environment() const {return environment_;}
     GameClock& clock() {return clock_;}

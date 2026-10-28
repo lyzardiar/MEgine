@@ -1247,3 +1247,7 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 ## AI 运输波次待验证
 
 路径：session_ai_transport、session_ai_natives、session_ai、session_transport、session_combat_orders、session_spells。集中验证原 common.ai 的 LoadZepWave 与 AttackMoveXY 连续调用，多载具／容量和乘员体积、满舱／无载具／无法登船、移动中的载具、暂停／死亡／易主／命令回调、登船等待／飞行／卸载／陆路继续、目标变更／撤退／超时，以及战役或海岛地图与原版目标选择／时序对照；覆盖实时画面、长局和多人同步。
+
+## 水面与两栖路径待验证
+
+路径：world、world_path、session_orders、session_combat_orders、session_production、session_summons、session_coupling、session_mobility、session_teleport、session_transport、session_unit_forms。集中验证不同 WPM 位组合与地图边界、陆地／水面／两栖／飞行路径和目标修正、净空／对角／动态阻挡与重算；在海岛地图验证船厂训练、购买、召唤、移动／追击／卸载／传送和水陆交界，覆盖对象覆盖及多客户端同步，比较原版语义、画面和长局性能。

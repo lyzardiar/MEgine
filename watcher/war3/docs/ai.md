@@ -40,7 +40,7 @@ Unsummon已连接已有工人的Auns目标施法和建筑持续消退/返还；G
 
 UnitInvis已使用AI所属玩家的实际隐形/侦测判定，敌情查询排除无法侦测的隐形目标；实际隐形术/真实视域、native和AI之间的最小流程通过，见[隐形与侦测](visibility.md)。完整原件语义继续阶段对照。
 
-当前common.ai专用native接续清单（未绑定，调用会明确失败）：SetRandomPaths、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。
+当前common.ai专用native接续清单（未绑定，调用会明确失败）：SetRandomPaths、DisablePathing、SetAmphibious。完整原版守卫自动登记/补员细节和策略行为继续实现及对照。 REA 对应入口分别为 `0x6f8949b0`、`0x6f88e730`、`0x6f894200`；前者有目标位置相关消费，后两者目前只确认 AI 状态位写入，不能据此推断普通单位寻路或涉水行为。证据 `ev_7ca3d90c4c7aee5212ab4e97142936e4f199f06407b30fc358d8837f7fd8f4ec`、`ev_71e4745fcae7a9cc230ac590a496a200f89973fc9c06c01b585471bcd758b99e`、`ev_0c2abd68b423678a6bfd52a3057540bf068e7c9cb4c95c2d118e8fbbd4632983`。
 
 ## AI 单位合并与转换
 
