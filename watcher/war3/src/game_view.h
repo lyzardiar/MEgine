@@ -49,6 +49,9 @@ class GameView {
     std::array<std::vector<std::uint32_t>,10> controlGroups_;
     unsigned lastControlGroup_=10;
     std::uint64_t lastControlGroupTime_=0;
+    std::vector<std::uint32_t> heroShortcutIds_;
+    std::uint32_t lastHeroShortcut_=0;
+    std::uint64_t lastHeroShortcutTime_=0;
     std::vector<std::uint32_t> spellBookStack_;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> spellTarget_;
     std::vector<CommandButton> commandButtons(std::uint32_t unit);
@@ -123,6 +126,9 @@ class GameView {
     void syncSubgroup();
     void cycleSubgroup(bool reverse);
     void controlGroup(unsigned group,bool assign,bool append,bool repeat);
+    void refreshHeroShortcuts();
+    void heroShortcutInput(GameInput& input);
+    void drawHeroShortcuts();
 public:
     GameView(std::unique_ptr<GameData> data,Renderer& renderer,Text& text,Log& log);
     ~GameView();

@@ -1,0 +1,31 @@
+// Author: MiYu. Local hero portrait shortcuts use the same session selection and network action path as world input.
+#include "game_view.h"
+#include <algorithm>
+#include <bit>
+#include <set>
+
+namespace war3 {
+namespace {
+float number(jass::Real value){return std::bit_cast<float>(value.bits());}
+bool hitHero(float x,float y,unsigned index){return x>=.008f && x<.048f && y>=.04f+index*.047f && y<.08f+index*.047f;}
+}
+void GameView::refreshHeroShortcuts() {
+    heroShortcutIds_.clear();auto local=data_->session->localPlayer().value_or(0);for(auto& [id,u]:data_->session->units())if(u->owner==local && u->hero && !u->illusion && !u->removing){heroShortcutIds_.push_back(id);if(heroShortcutIds_.size()==7)break;}
+}
+void GameView::heroShortcutInput(GameInput& input) {
+    const auto& heroes=heroShortcutIds_;for(unsigned i=0;i<heroes.size();++i)if(input.ui.down && hitHero(input.ui.startX,input.ui.startY,i)){input.ui.down=false;break;}for(unsigned i=0;i<heroes.size();++i)if(input.ui.pressed && hitHero(input.ui.startX,input.ui.startY,i) && !hitHero(input.ui.x,input.ui.y,i)){input.ui.pressed=false;return;}unsigned index=7;bool repeated=false,clicked=false;if(input.ui.key>=VK_F1 && input.ui.key<=VK_F7){index=input.ui.key-VK_F1;repeated=input.ui.keyRepeat;input.ui.key=0;}else for(unsigned i=0;i<heroes.size();++i)if(input.ui.pressed && hitHero(input.ui.startX,input.ui.startY,i) && hitHero(input.ui.x,input.ui.y,i)){index=i;clicked=true;input.ui.pressed=false;input.ui.down=false;break;}if(index>=heroes.size() || repeated)return;if(!lanPendingSelection_.empty()){localMessage(data_->session->localPlayer().value_or(0),0,0,2,"等待网络确认选择");return;}
+    auto id=heroes[index],local=data_->session->localPlayer().value_or(0);auto& units=data_->session->units();auto found=units.find(id);if(found==units.end() || !data_->session->unitSelectable(id) || found->second->hidden() || number(found->second->life)<=0 || !data_->session->canControlUnit(local,*found->second) || !data_->session->unitVisibleTo(id,local))return;
+    if(clicked && buildTarget_){localMessage(local,0,0,2,"请选择建造位置");return;}
+    if(clicked && spellTarget_){auto [caster,ability]=*spellTarget_;auto source=units.find(caster);if(source==units.end() || !source->second->abilities.contains(ability))return;auto& spell=data_->session->spellInfo(ability,unsigned(source->second->abilities.at(ability)));if(spell.targeting==SpellTargeting::Point){localMessage(local,0,0,2,"请选择技能目标位置");return;}bool ok=castSelection(caster,ability,id);if(ok)spellTarget_.reset();else localMessage(local,0,0,2,"无法对该英雄施放技能");return;}
+    if(clicked && itemTarget_){auto [holder,item]=*itemTarget_;if(!data_->session->items().contains(item))return;PlayerCommand request;request.player=local;request.units={holder};request.item=item;if(data_->session->itemNeedsPoint(item)){localMessage(local,0,0,2,"请选择物品目标位置");return;}request.kind=PlayerCommandKind::ItemUnit;request.target=id;if(submitPlayerCommand(request))itemTarget_.reset();else localMessage(local,0,0,2,"无法对该英雄使用物品");return;}
+    if(clicked && orderMode_!=OrderMode::None){auto mode=orderMode_;if(mode==OrderMode::Patrol){localMessage(local,0,0,2,"请选择巡逻位置");return;}auto order=mode==OrderMode::Attack?851983u:mode==OrderMode::Harvest?852018u:mode==OrderMode::Entangle?852147u:mode==OrderMode::Repair?852024u:851986u;PlayerCommand request{local,PlayerCommandKind::TargetOrder,selected(true),0,0,id,order};if(!submitPlayerCommand(request))localMessage(local,0,0,2,"无法对该英雄执行命令");orderMode_=OrderMode::None;return;}
+    auto now=GetTickCount64();bool focus=lastHeroShortcut_==id && now>=lastHeroShortcutTime_ && now-lastHeroShortcutTime_<=GetDoubleClickTime();lastHeroShortcut_=id;lastHeroShortcutTime_=now;
+    if(focus){x_=number(found->second->x);y_=number(found->second->y);if(!lanSimulation_)data_->session->world()->environment().cameraMotion.sync(x_,y_);}
+    if(lanSimulation_){auto current=data_->session->playerSelection(local);if(current.size()==1 && current.contains(id))return;std::vector<LanSelectionChange> changes;if(!current.empty())changes.push_back({false,{current.begin(),current.end()}});changes.push_back({true,{id}});try{auto bytes=encodeLanSelectionUpdate(*data_->session,lanPeer_,changes,lanWireObject_);if(!bytes.empty()){lanPendingSelection_=std::move(bytes);if(!lanSendSelection_(lanPendingSelection_)){lanPendingSelection_.clear();localMessage(local,0,0,3,"无法发送网络选择");}}}catch(const std::exception& e){log_.write(std::string("lan_hero_selection_error=")+e.what());localMessage(local,0,0,3,"无法同步英雄选择");}return;}
+    auto current=selected();if(current.size()==1 && current.front()==id)return;for(auto selectedId:current)if(units.contains(selectedId))data_->session->selectUnit(selectedId,false);found=units.find(id);if(found!=units.end() && data_->session->unitSelectable(id) && !found->second->hidden() && number(found->second->life)>0 && data_->session->canControlUnit(local,*found->second) && data_->session->unitVisibleTo(id,local))data_->session->selectUnit(id,true);
+}
+void GameView::drawHeroShortcuts() {
+    const auto& heroes=heroShortcutIds_;float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;auto rect=[&](float x,float y,float w,float h,DWORD color,IDirect3DTexture9* image=nullptr){renderer_.rect(left+x*scale,top+y*scale,w*scale,h*scale,color,image);};
+    for(unsigned i=0;i<heroes.size();++i){auto found=data_->session->units().find(heroes[i]);if(found==data_->session->units().end())continue;auto& u=*found->second;float x=.008f,y=.04f+i*.047f;bool alive=number(u.life)>0;rect(x,y,.04f,.04f,u.selected?0xffd6bd63:0xff484138);auto icon=data_->assets->cachedTexture(u.displayIcon());if(icon)rect(x+.002f,y+.002f,.036f,.036f,alive?0xffffffff:0xff777777,icon);else rect(x+.002f,y+.002f,.036f,.036f,0xff181818);float life=std::clamp(number(u.life)/std::max(1.f,number(u.maxLife)),0.f,1.f);rect(x+.002f,y+.037f,.036f,.002f,0xff151515);rect(x+.002f,y+.037f,.036f*life,.002f,0xff30c030);text_.draw(L"F"+std::to_wstring(i+1),left+(x+.002f)*scale,top+(y+.002f)*scale,.008f*scale,0xffffffff);}
+}
+}
