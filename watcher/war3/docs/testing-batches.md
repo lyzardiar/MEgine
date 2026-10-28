@@ -1097,3 +1097,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：player_commands／game_view／game_commands。Win32 Release 产品编译通过；BootyBay 最小会话检查共享单位保持命令及无权限命令拒绝通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/transfer-probe/。
 
 集中验证真实鼠标／热键、移动／攻击移动／巡逻／建筑集结／停止／保持、多选顺序、重入移除与授权撤销、事件顺序及与原先单机行为一致性；其他命令、网络锁步与跨客户端同步待实现。
+
+## 玩家目标命令与施法入口阶段待验证
+
+路径：player_commands／game_view／game_spells。Win32 Release 产品编译通过；BootyBay 最小会话检查目标订单、空目标拒绝、共享单位无目标施法通过，未加载 Game.dll，证据 tmp/docs-artifacts/war3/transfer-probe/。
+
+集中验证实际鼠标／技能输入、单位／物品／可破坏物目标、点目标／即时施法、多单位 Channel、权限撤销与脚本重入、原版事件顺序和单机行为；跨客户端命令队列及网络仍待实现。
