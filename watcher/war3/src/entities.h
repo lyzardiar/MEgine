@@ -53,7 +53,7 @@ struct UnitState {
     std::optional<UnitFormState> unitForm;
     std::optional<UnitFormTransition> formTransition;
     std::string animationProperties;
-    bool decaySuspended=false,noCorpse=false,exploded=false,plagueWard=false;
+    bool decaySuspended=false,noCorpse=false,exploded=false,plagueWard=false,concoction=false;
     std::set<unsigned> visionPlayers;
     bool holding=false,creepGuard=false,guardRemoved=false;
     std::optional<WorldPoint> guardHome;
@@ -134,6 +134,7 @@ struct UnitState {
     bool selfCasting=false;
     std::optional<PossessionClaim> possessionClaim;
     std::uint64_t ownerRevision=0;
+    std::map<std::uint32_t,std::array<jass::Real,2>> pillageBalances;
     std::map<std::uint32_t,UnitAura> auras;
     std::map<std::pair<std::string,std::string>,std::uint32_t> auraVisuals;
     AuraBonuses aura;
@@ -161,7 +162,7 @@ struct UnitState {
     bool spinning() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Bladestorm && b.remaining>0)return true;return false;}
     std::uint64_t animationFrame(std::uint64_t duration) const {auto time=std::uint64_t(std::max(0.,animationTime)*1000);return cast && cast->phase==CastOrder::Phase::Channel && cast->spell.animationLooping && duration?time%duration:time;}
     std::string sequenceName(const std::string& sequence) const {if(spinning() && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")))return "Attack Walk Stand Spin";if(morphed())return sequence;auto result=sequence;if(warClub && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")) && result.find("Alternate")==std::string::npos)result+=" Alternate";if(!animationProperties.empty() && !sequence.starts_with("Morph") && sequence.find("Alternate")==std::string::npos)result+=" "+animationProperties;for(auto& [id,b]:buffs){if(b.kind==BuffKind::Avatar && result.find("Alternate")==std::string::npos)result+=" Alternate";if(b.kind==BuffKind::Defend && result.find("Defend")==std::string::npos)result+=" Defend";}return result;}
-    bool stunned() const {if(formLocked() || (possessionClaim && possessionClaim->locked))return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::ShacklesTarget || b.kind==BuffKind::Stun || b.kind==BuffKind::Impale || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
+    bool stunned() const {if(formLocked() || (possessionClaim && possessionClaim->locked))return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::FreezingBreath || b.kind==BuffKind::ShacklesTarget || b.kind==BuffKind::Stun || b.kind==BuffKind::Impale || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
     unsigned preventedAttacks() const {unsigned result=0;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Silence || b.kind==BuffKind::DrunkenHaze || b.kind==BuffKind::SoulBurn || b.kind==BuffKind::Cloud)result|=b.disableMask;return result;}
     bool doomed() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Doom)return true;return false;}
     bool silenced() const {return doomed() || (preventedAttacks()&8)!=0;}
@@ -173,7 +174,7 @@ struct UnitState {
     float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus)+(engineering && !morphed()?engineering->movement:0));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
     bool phaseShifted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::PhaseShift && b.remaining>0)return true;return false;}
-    bool hidden() const {return phaseShifted() || !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
+    bool hidden() const {return concoction || phaseShifted() || !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
 };
 struct DestructableState {
     std::uint32_t type=0;

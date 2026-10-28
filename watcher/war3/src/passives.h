@@ -5,7 +5,7 @@
 #include <array>
 
 namespace war3 {
-enum class PassiveKind {Unsupported,Brilliance,Devotion,Endurance,Unholy,Vampiric,Trueshot,Thorns,Command,WarDrums,Regeneration,Bash,Critical,Evasion,Cleave,PermanentInvisibility,Detection,Ghost,Exhume,Reincarnation,PhoenixMorph,PhoenixFire,SpikedCarapace,AttackModifier,LightningAttack,SlowAura,PermanentImmolation,Pulverize,TornadoDamage,TornadoSpin,TornadoWander,Engineering,Demolish,Feedback,Ultravision,MissileDefense,HardenedSkin,ResistantSkin,FlakCannon,Fragmentation,BurningOil,LiquidFire,Barrage,PlagueAura,PlagueToss};
+enum class PassiveKind {Unsupported,Brilliance,Devotion,Endurance,Unholy,Vampiric,Trueshot,Thorns,Command,WarDrums,Regeneration,Bash,Critical,Evasion,Cleave,PermanentInvisibility,Detection,Ghost,Exhume,Reincarnation,PhoenixMorph,PhoenixFire,SpikedCarapace,AttackModifier,LightningAttack,SlowAura,PermanentImmolation,Pulverize,TornadoDamage,TornadoSpin,TornadoWander,Engineering,Demolish,Feedback,Ultravision,MissileDefense,HardenedSkin,ResistantSkin,FlakCannon,Fragmentation,BurningOil,LiquidFire,Barrage,PlagueAura,PlagueToss,FrostBreath,FreezingBreath,Pillage};
 struct PassiveInfo {
     std::uint32_t ability=0,buff=0,corpseType=0;
     unsigned level=0;

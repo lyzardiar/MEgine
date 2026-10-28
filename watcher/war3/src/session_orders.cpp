@@ -7,7 +7,7 @@
 
 namespace war3 {
 namespace {float number(jass::Real v){return std::bit_cast<float>(v.bits());}jass::Real real(float v){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(v));}}
-bool ScriptSession::unitSelectable(std::uint32_t handle) {return alive(handle,NativeKind::Unit) && !units_.at(handle)->removing && !units_.at(handle)->swarmAgent && !capability(*units_.at(handle),"Aloc");}
+bool ScriptSession::unitSelectable(std::uint32_t handle) {return alive(handle,NativeKind::Unit) && !units_.at(handle)->removing && !units_.at(handle)->concoction && !units_.at(handle)->swarmAgent && !capability(*units_.at(handle),"Aloc");}
 void ScriptSession::selectUnit(std::uint32_t handle,bool selected) {auto& u=unit(runtime_.handle("unit",handle));if(u.selected==selected || (selected && !unitSelectable(handle)))return;u.selected=selected;unitEvent(handle,selected?24:25,selected?57:58);}
 bool ScriptSession::stopUnit(std::uint32_t handle,bool hold) {auto& u=unit(runtime_.handle("unit",handle));if(u.paused || u.stunned() || u.unsummon || u.hidden() || number(u.life)<=0)return false;if(!cancelCombat(u))return false;u.route.clear();u.waypoint=0;u.currentOrder=hold?851993:851972;u.holding=hold;u.animationStart=simulationTime_;u.animationTime=0;u.animation.clear();u.animationIndex.reset();u.animationQueue.clear();ScriptContext context;context.issuedOrder=u.currentOrder;auto revision=u.combat.revision;unitEvent(handle,38,75,context);if(!hold && alive(handle,NativeKind::Unit) && u.combat.revision==revision && u.currentOrder==851972)u.currentOrder=0;return true;}
 bool ScriptSession::moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order) {

@@ -6,6 +6,8 @@ struct ScriptEffect {
     std::uint32_t id=0,target=0;
     std::string model,attachment,texture;
     unsigned replacement=0;
+    std::optional<unsigned> teamColor;
+    std::uint32_t tint=0xffffffff;
     WorldPoint point;
     float z=0,facing=0,scale=1;
     double born=0;

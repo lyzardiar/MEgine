@@ -184,6 +184,7 @@ class ScriptSession {
     std::map<std::pair<std::uint32_t,std::uint32_t>,PhoenixFireClock> phoenixFireClocks_;
     std::set<std::uint32_t> phoenixFireActors_;
     std::map<std::uint64_t,SiegeFire> siegeFires_;
+    std::map<std::uint32_t,ConcoctionFlight> concoctions_;
     std::map<std::uint32_t,PhoenixBurn> phoenixBurns_;
     std::uint64_t phoenixBurnTicket_=0;
     void heroUltimateInfo(SpellInfo& spell);
@@ -272,6 +273,14 @@ class ScriptSession {
     void barrageVolley(const CombatProjectile& projectile);
     void barragePulse(std::uint32_t unit,const PassiveInfo& passive,AmbientClock& clock);
     void siegeFiresTick(double delta);
+    void frostPillageInfo(PassiveInfo& passive);
+    void frostBreathImpact(const CombatProjectile& projectile);
+    void pillageHit(const CombatProjectile& projectile,float damage,std::uint32_t targetType,jass::Real targetMaxLife,unsigned targetOwner);
+    void concoctionInfo(SpellInfo& spell);
+    void startConcoction(std::uint32_t unit,const CastOrder& cast);
+    void clearConcoction(std::uint32_t unit);
+    void concoctionsTick(double delta);
+    void explodeConcoction(std::uint32_t unit,const ConcoctionFlight& flight);
     void plaguePassiveInfo(PassiveInfo& passive);
     void plaguePulse(std::uint32_t source,const PassiveInfo& passive);
     void createPlagueWard(unsigned owner,std::uint32_t type,WorldPoint point,double duration,std::uint32_t source,std::uint32_t ability);

@@ -11,6 +11,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     auto key=std::pair{ability,level};if(auto found=spellInfo_.find(key);found!=spellInfo_.end())return found->second;SpellInfo s;s.ability=ability;s.level=level;auto& data=definitions();if(!level || !data.ability(ability))return spellInfo_.emplace(key,std::move(s)).first->second;
     struct Prototype {const char* code;SpellKind kind;SpellTargeting targeting;};
     constexpr Prototype prototypes[]={
+        {"Auco",SpellKind::UnstableConcoction,SpellTargeting::Unit},
         {"AHhb",SpellKind::HolyLight,SpellTargeting::Unit},{"AHtb",SpellKind::StormBolt,SpellTargeting::Unit},
         {"AUdc",SpellKind::DeathCoil,SpellTargeting::Unit},{"AUfn",SpellKind::FrostNova,SpellTargeting::Unit},
         {"AEer",SpellKind::Roots,SpellTargeting::Unit},{"AOcl",SpellKind::ChainLightning,SpellTargeting::Unit},
@@ -118,6 +119,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(heroUltimate(s.kind))heroUltimateInfo(s);
     if(s.kind==SpellKind::FrostArmor || s.kind==SpellKind::ShadowStrike)frostPoisonInfo(s);
     if(s.kind==SpellKind::PocketFactory || s.kind==SpellKind::ClusterRockets || s.kind==SpellKind::RoboGoblin || s.kind==SpellKind::SelfDestruct)tinkerSpellInfo(s);
+    if(s.kind==SpellKind::UnstableConcoction)concoctionInfo(s);
     if(s.kind==SpellKind::GrabTree)warClubInfo(s);
     if(couplingSpell(s.kind))couplingInfo(s);
     if(s.kind==SpellKind::PhaseShift || s.kind==SpellKind::ManaFlare)faerieSpellInfo(s);
