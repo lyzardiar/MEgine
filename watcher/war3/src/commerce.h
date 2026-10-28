@@ -40,7 +40,7 @@ struct GatherOrder {
     bool inside=false;
 };
 struct TechnologyStats {
-    float dice=0,damage=0,range=0,armor=0,attackSpeed=0,health=0,mana=0,movement=0,healthRegen=0,manaRegen=0,bounces=0,spillDistance=0,spillRadius=0,damageLoss=0;
+    float dice=0,damage=0,range=0,armor=0,attackSpeed=0,health=0,mana=0,movement=0,healthRegen=0,manaRegen=0,bounces=0,spillDistance=0,spillRadius=0,damageLoss=0,lumberCapacity=0;
     unsigned weapons=0;
     std::map<std::uint32_t,int> abilityLevels;
 };

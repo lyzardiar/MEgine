@@ -1433,3 +1433,10 @@ Win32 Release 产品增量编译通过，BootyBay 最小队列会话 12/12 通�
 路径：`game_waypoints.cpp`、`game_view.*`、`game_loading.*`、`game_inventory_drag.cpp`、`player_commands.cpp`、`session_inventory.cpp`、`session_transport.cpp`、`session_spells.cpp`、`tests/order_queue_tests.cpp`。按住 Shift 时对本地受控选区的待执行目标绘制原版四族 WaypointIndicator 模型，按需从 MPQ 后台读取并过滤失效／不可见目标；物品地面放置、转交和换格可单机排队；脚本物品命令替换旧队列，卸载结束清除自身已完成订单并保留回调中的新状态。
 
 Win32 Release 产品增量编译通过，BootyBay 最小队列会话 20/20 通过，涵盖物品延迟放置／转交／换格、脚本物品命令替换队列以及单体／即时全部卸载后继续移动；测试目标 `war3_order_queue_tests`，参数为原安装目录和 `Maps/(2)BootyBay.w3m`，未加载 Game.dll。阶段集中验证实际窗口按键／拖放、四族模型／颜色／动画、原版队列显隐与目标类型、动态目标及迷雾、模型释放、脚本回调重入、物品转移／失效／不可丢弃与槽位变化、卸载失败／连续卸载；核对原版失败订单清队列与 Shift 物品拖放语义，联机排队仍未实现。原安装 `UI\war3skins.txt` 的 SHA-256 为 `53cedda87d59c6d27ad2d30680d37faa410d37e9917c00b21d473cce9eed70c7`。
+
+
+## 人族伐木升级待验证
+
+路径：`commerce.h`、`session_research.cpp`、`session_lumber.cpp`、`tests/destructable_tests.cpp`。源科技效果 `rlum` 随已研究等级重建携木容量增量，实际 Ahar／Ahrl 采集读取该增量；研究完成、创建和易主复用科技刷新，已携木材不截断。小精灵直接收入和 AI 慢速采集逻辑保持原有消费路径。
+
+Win32 Release 产品增量编译通过，BootyBay 派生的最小会话检查通过，覆盖原版 Rhlh 一级实际研究、一级／二级容量、已有与新农民、二级重复设置及携木易主；`war3_destructable_tests` 使用 `tmp/docs-artifacts/war3/destructables/fixture.w3m`，通过 `python watcher/war3/tests/generate-destructable-fixture.py --data-root <原安装目录>` 生成，不加载 Game.dll。阶段集中核对 w3q 自定义 rlum／多科技叠加、升级和移除时已有采集流程、不同等级／背包余量、AI 慢速采集及原版时序。
