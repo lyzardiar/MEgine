@@ -16,4 +16,12 @@ struct ScriptEffect {
 };
 struct LightningInfo {std::string type,texture;float segment=100,width=0,noise=0,texCoordScale=1,duration=0;std::array<float,4> color{1,1,1,1};};
 struct ScriptLightning {std::uint32_t id=0,fromUnit=0,toUnit=0;LightningInfo source;std::array<jass::Real,3> from{},to{};std::array<float,4> color{1,1,1,1};double born=0;std::optional<double> expires;std::optional<PathMovement> fromSurface,toSurface;float fromHeight=0,toHeight=0;bool checkVisibility=true;};
+struct ScriptImage {
+    std::string texture;
+    std::array<float,3> size{},position{},origin{};
+    std::uint32_t color=0xffffffff;
+    int type=0;
+    float constantHeight=0;
+    bool visible=false,render=true,renderAlways=false,fixedHeight=false,aboveWater=false,useWaterAlpha=false;
+};
 }

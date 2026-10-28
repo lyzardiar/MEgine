@@ -1514,3 +1514,15 @@ Win32 Release 客户端增量编译通过。阶段核对四族与自定义地图
 路径：`session_game.cpp`。`IsHeroUnitId` 读取单位类型继承与英雄分类，`IsItemVisible` 消费物品显示状态，`IsUnitInRange`／`XY`／`Loc` 以当前实体坐标与碰撞半径进行距离判断。
 
 Win32 Release 客户端增量编译通过。阶段验证 DotA 脚本调用、物编继承、空句柄、隐藏物品及位置变化、边界／零／负／无效距离和原版碰撞半径规则；当前算法为实现值，未证明原版精度。
+
+## 视频遮挡设置待验证
+
+路径：`game_flow_ui.cpp`、`game_preferences.*`、`game_view.cpp`、`scene_objects.*`、`docs/game-options.md`。原视频控件连接实际场景遮挡渐隐和脚本 EnableOcclusion，保存至独立用户目录并兼容此前设置格式。
+
+Win32 Release 客户端增量编译通过。阶段核对原 FDF 输入／弹窗／确定取消、旧设置迁移／损坏文件、EnableOcclusion 联合规则、画面恢复／GPU／性能、设备恢复和切图；实际运行及原版一致性尚未验收。
+
+## 自定义地图图像待验证
+
+路径：`effects.h`、`session.h/.cpp`、`session_effects.cpp`、`session_hashtable.cpp`、`game_view.h/.cpp`、`game_effects.cpp`、`terrain_scene.h/.cpp`、`terrain_layout.cpp`、`docs/map-images.md`。图像 native、句柄存取及纹理内存流式加载连接实际世界绘制，消费显示／位置／颜色／高度／水面／迷雾与类型排序。
+
+Win32 Release 客户端增量编译通过。阶段检查 DotA 动态图像、对象／纹理创建销毁及 hashtable、绘制状态隔离、视口及水面／坡面／恒高／雾效、不同类型／透明度／大尺寸、GPU 恢复与高密度性能；图像尺寸 Z 和原版混合／排序仍未完整还原，原版画面尚未验收。

@@ -125,6 +125,7 @@ class GameView {
     std::uint32_t widget(float x,float y,bool items) const;
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
+    void drawImages(bool aboveWater,const DirectX::XMMATRIX& vp);
     void drawLightning(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     std::map<std::uint64_t,ModelInstance> modelInstances_,pingInstances_;
     using WaypointKey=std::tuple<std::uint32_t,std::size_t,std::uint32_t,std::uint32_t,std::uint32_t,std::uint32_t>;

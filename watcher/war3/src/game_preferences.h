@@ -18,6 +18,7 @@ struct GameAudioPreferences {
 };
 struct GameVideoPreferences {
     unsigned particleDetail=2;
+    bool occlusion=true;
     bool operator==(const GameVideoPreferences&) const = default;
 };
 GameCameraPreferences loadCameraPreferences(const fs::path& dataRoot);

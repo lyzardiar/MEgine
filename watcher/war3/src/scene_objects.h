@@ -30,6 +30,7 @@ class SceneObjects {
     std::uint64_t occlusionFrame_=0,occlusionVisit_=0;
     std::array<unsigned,4> occlusionColor_{128,255,255,255};
     double occlusionFade_=0.3;
+    bool occlusionEnabled_=true;
     void append(SceneObject object);
     void sync();
     void occlude(const std::array<float,3>& eye,const DirectX::XMMATRIX& viewProjection,const TerrainScene* terrain);
@@ -39,6 +40,7 @@ class SceneObjects {
 public:
     SceneObjects(ScriptSession& session,SceneAssets& assets,Log& log);
     size_t size() const {return placed_.size();}
+    void occlusionEnabled(bool enabled) {occlusionEnabled_=enabled;}
     size_t draw(Renderer& renderer,const D3DMATRIX& view,const D3DMATRIX& projection,std::uint64_t elapsed,const std::array<float,3>& eye,const TerrainScene* terrain=nullptr);
 };
 }
