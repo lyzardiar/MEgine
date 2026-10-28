@@ -83,3 +83,13 @@ Win32 Release 集成版本编译通过；本机双客户端探针覆盖就绪前
 加载屏障结束后，显式启用的主机可以接收 W3GS `0x26` 动作并按到达顺序组帧，将超过单包大小的动作分成 `0x48` 后接最终 `0x0c`；主机自身也取得同一时间片。加入端检查 CRC、玩家身份和长度后重组分片，按顺序放入有界队列；空时间片保留时间增量。双方可发送或提交 `0x27` 校验值，主机按玩家和轮次比较，发现首个分歧后停止发新帧。收到原版失步通知的加入端当前保守断开，尚无分组恢复。
 
 网络层只承载不透明动作字节，不解析原版动作，也不驱动游戏模拟；校验值的原版计算和时序仍需还原，大厅没有启用这一入口。协议参考为文首固定版本 GHost++ 和 GoWarcraft3，1.27 抓包与实机互通待验。Win32 Release 集成编译通过，本机三端探针覆盖空帧、跨分片保序、逐轮校验一致／不一致及停止发帧，证据 `tmp/docs-artifacts/war3/lan-timeslot-probe/result.log`；模拟主机的错误 CRC 与不完整时间片拒绝检查见 `tmp/docs-artifacts/war3/lan-timeslot-invalid-probe/result.log`。
+
+## 会话配置、动作解析与时间推进
+
+主机保留本局随机种子，加入端读取 SLOTINFO 中的相同字段。会话可在全局初始化与 `config` 执行之前接收种子，再在地图 `main` 前按调用方明确提供的槽位到地图玩家映射应用真人／电脑、队伍、颜色、种族、让分、姓名和本地玩家；无效或重复映射、种子不一致会在提交配置前拒绝。不得以颜色或网络玩家 ID 推断地图玩家 ID。当前使用项目已有随机算法，尚未证明与原版 RNG 一致；实际大厅尚未接入会话配置。
+
+`lan_actions` 按参考资料解析／编码暂停、恢复、选择和 `0x10`–`0x14` 能力记录，保留坐标原始位、双字对象 ID 与未知字段；未知动作或截断拒绝整块。参考为 blue、nagger 的 [w3g_actions.txt v1.00](https://github.com/nielsAD/gowarcraft3/blob/f13251b6caed199c3347214f4591e7ccaa96c7c7/file/w3g/w3g_actions.txt)，其使用条件与署名保留在原文。该文 `0x11`–`0x14` 标题长度与字段总数不一致，本实现按字段解析；不能据此认定原版 1.27 网络字节已验证。
+
+`LanTimeDriver` 接受调用方从 FIFO 分配的本地递增序号，整帧验证后依顺序执行动作，再按收到的毫秒数推进 ScriptSession；应用失败或重入使驱动器永久停止，避免重复执行已发生的副作用。`LanSimulation` 当前只对映射玩家执行暂停／恢复，选择与技能因原版对象映射尚未实现而在整帧产生效果前拒绝。动作相对时间推进的原版边界亦待验证；当前大厅和 GameView 仍未使用该驱动。
+
+REA Rizin 对本机 1.27 Game.dll 的只读 RTTI 观察到 `CNetCommandUnitSelectionModify`、`CNetCommandUnitOrderBasic`、`CNetCommandUnitOrderTargetPoint` 等类型（证据 `ev_f18a41aa24e8c1c28776b89dd55a468e3b31c0f6c79a55eac292a971bd975fb6`，原件 SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`）；类型名不能证明其字节布局或对象 ID。Win32 Release 编译和本机定向检查通过；探针范围及后续验收见测试队列。

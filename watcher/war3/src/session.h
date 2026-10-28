@@ -26,6 +26,7 @@
 
 namespace war3 {
 class PlayerSetup;
+struct LanSessionSetup;
 struct StartPriority {unsigned other=0,priority=0;};
 struct SessionStart {bool defined=false;std::array<jass::Real,2> position{};std::vector<StartPriority> priorities;};
 struct SessionPlayer {
@@ -67,6 +68,8 @@ class ScriptSession {
     jass::Runtime runtime_;
     bool failed_=false,configured_=false;
     std::optional<unsigned> localPlayer_;
+    std::optional<std::uint32_t> initialRandomSeed_;
+    std::map<std::uint8_t,unsigned> networkPlayers_;
     std::array<std::uint32_t,16> playerLeaderboards_{};
     std::map<std::uint32_t,std::shared_ptr<ScriptMultiboard>> multiboards_;
     bool multiboardsSuppressed_=false;
@@ -864,11 +867,13 @@ public:
     bool boardUnit(std::uint32_t passenger,std::uint32_t transport);
     bool unloadUnit(std::uint32_t transport,std::uint32_t passenger);
     bool unloadAll(std::uint32_t transport,WorldPoint point);
-    ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings={},std::optional<unsigned> gameType={});
+    ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings={},std::optional<unsigned> gameType={},std::optional<std::uint32_t> initialRandomSeed={});
     ~ScriptSession();
     void initialize();
     void configure();
     void applySetup(const PlayerSetup& setup);
+    void applyLanSetup(const LanSessionSetup& setup);
+    std::optional<unsigned> networkPlayer(std::uint8_t peerId) const;
     void attachWorld(std::unique_ptr<World> world);
     const World* world() const {return world_.get();}
     World* world() {return world_.get();}

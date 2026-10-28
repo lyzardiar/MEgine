@@ -30,6 +30,7 @@ class LanJoin {
     std::string error_,name_;
     std::uint32_t rejectionCode_=0,hostCounter_=0,entryKey_=0;
     std::uint8_t localPlayerId_=0;
+    std::optional<std::uint32_t> randomSeed_;
     std::vector<LanSlot> slots_;
     std::vector<LanPlayer> players_;
     std::vector<LanChatMessage> chat_;
@@ -90,6 +91,7 @@ public:
     const std::string& error() const {return error_;}
     std::uint32_t rejectionCode() const {return rejectionCode_;}
     std::uint8_t localPlayerId() const {return localPlayerId_;}
+    std::optional<std::uint32_t> randomSeed() const {return randomSeed_;}
     const std::vector<LanSlot>& slots() const {return slots_;}
     const std::vector<LanPlayer>& players() const {return players_;}
     const std::vector<LanChatMessage>& chat() const {return chat_;}

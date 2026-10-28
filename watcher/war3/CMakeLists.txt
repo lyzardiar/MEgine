@@ -23,6 +23,7 @@ target_sources(war3_core PRIVATE src/object_data.cpp src/session_entities.cpp sr
 target_sources(war3_core PRIVATE src/session_callbacks.cpp src/session_collections.cpp src/session_tick.cpp src/session_game.cpp)
 target_sources(war3_core PRIVATE src/session_multiboard.cpp src/session_leaderboard.cpp src/session_dialogs.cpp src/session_indicators.cpp src/game_indicators.cpp)
 target_sources(war3_core PRIVATE src/world_path.cpp src/session_orders.cpp src/player_commands.cpp)
+target_sources(war3_core PRIVATE src/lan_actions.cpp src/lan_time_driver.cpp src/lan_simulation.cpp src/lan_setup.cpp)
 target_sources(war3_core PRIVATE src/session_visual.cpp)
 target_sources(war3_core PRIVATE src/spatial_region.cpp src/session_spatial_events.cpp)
 target_sources(war3_core PRIVATE src/session_inventory.cpp)

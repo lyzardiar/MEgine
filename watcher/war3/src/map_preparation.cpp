@@ -5,12 +5,12 @@ namespace war3 {
 namespace {bool under(const fs::path& path,const fs::path& directory){auto child=fs::weakly_canonical(path).wstring(),parent=fs::weakly_canonical(directory).wstring();if(parent.empty())return false;if(parent.back()!=L'\\')parent+=L'\\';return child.size()>=parent.size() && CompareStringOrdinal(parent.c_str(),int(parent.size()),child.c_str(),int(parent.size()),TRUE)==CSTR_EQUAL;}}
 MapPreparation::MapPreparation(fs::path dataRoot,bool muted) : dataRoot_(std::move(dataRoot)),muted_(muted),worker_([this](std::stop_token stop){run(stop);}) {}
 MapPreparation::~MapPreparation() {{std::lock_guard lock(mutex_);worker_.request_stop();}wake_.notify_one();}
-std::uint64_t MapPreparation::request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign,bool inferCampaign) {
-    std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,std::move(path),{}, {},campaign,inferCampaign};ready_.reset();wake_.notify_one();return id;
+std::uint64_t MapPreparation::request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign,bool inferCampaign,std::optional<std::uint32_t> initialRandomSeed) {
+    std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,std::move(path),{}, {},campaign,inferCampaign,initialRandomSeed};ready_.reset();wake_.notify_one();return id;
 }
-std::uint64_t MapPreparation::requestMemory(std::shared_ptr<const Bytes> bytes,std::string label) {
+std::uint64_t MapPreparation::requestMemory(std::shared_ptr<const Bytes> bytes,std::string label,std::optional<std::uint32_t> initialRandomSeed) {
     if(!bytes || bytes->empty() || bytes->size()>256u*1024u*1024u || label.empty() || label.size()>1024 || label.find('\0')!=std::string::npos)throw std::runtime_error("Invalid in-memory map preparation request");
-    std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,{},std::move(bytes),std::move(label),{},false};ready_.reset();wake_.notify_one();return id;
+    std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,{},std::move(bytes),std::move(label),{},false,initialRandomSeed};ready_.reset();wake_.notify_one();return id;
 }
 void MapPreparation::clear() {std::lock_guard lock(mutex_);++generation_;pending_.reset();ready_.reset();}
 std::optional<PreparedMap> MapPreparation::poll() {std::lock_guard lock(mutex_);auto result=std::move(ready_);ready_.reset();return result;}
@@ -25,7 +25,7 @@ void MapPreparation::run(std::stop_token stop) {
             auto w3i=archives->readCandidates({"war3map.w3i"},ArchiveScope::Map);if(!w3i)throw std::runtime_error("Missing war3map.w3i");result.info=MapInfo::parse(w3i->bytes,strings);
             if(!stale()){
                 auto module=jass::Module::compile(jass::Program::read(*archives));
-                if(!stale()){auto world=World::read(*archives);if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings));if(request.campaign)result.session->campaignContext(request.campaign->first,request.campaign->second);else if(request.inferCampaign && under(request.path,dataRoot_/L"Maps"/L"Campaign"))result.session->campaignContext(false,1);result.session->attachWorld(std::move(world));result.session->audioMuted(muted_);result.session->configure();}}
+                if(!stale()){auto world=World::read(*archives);if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings),std::nullopt,request.initialRandomSeed);if(request.campaign)result.session->campaignContext(request.campaign->first,request.campaign->second);else if(request.inferCampaign && under(request.path,dataRoot_/L"Maps"/L"Campaign"))result.session->campaignContext(false,1);result.session->attachWorld(std::move(world));result.session->audioMuted(muted_);result.session->configure();}}
             }
             if(!stale())try {
                 auto bytes=archives->readCandidates({"war3mapPreview.tga","war3mapMap.blp"},ArchiveScope::Map);

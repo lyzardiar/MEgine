@@ -1189,3 +1189,11 @@ Win32 Release 产品编译通过；本机两客户端并发接收真实 BootyBay
 ## 局域网动作与时间片传输阶段待验证
 
 路径：lan_host、lan_join。显式启用后传输有界 W3GS 动作、时间片分片和逐玩家逐轮校验；动作字节尚不连接游戏模拟。Win32 Release 集成版本编译通过，本机三端探针覆盖空帧、跨分片动作顺序、逐轮校验一致及不一致后停止，模拟主机的错误 CRC 与不完整时间片拒绝通过；证据 tmp/docs-artifacts/war3/lan-timeslot-probe/result.log、lan-timeslot-invalid-probe/result.log。集中验证原版 1.27 互通、其他异常报文及延迟／断线、原版动作编码与对象映射、校验语义和网络时间驱动；失步分组恢复、锁步对局和大厅启用仍未实现。
+
+## 局域网会话配置与动作时间驱动阶段待验证
+
+路径：lan_host、lan_join、lan_setup、session、map_preparation、lan_actions、lan_time_driver、lan_simulation、CMakeLists。SLOTINFO 种子可传到会话初始化；显式槽位映射应用玩家配置。按文档字段编解码部分经典动作，时间驱动器整帧先验证并按网络毫秒推进；模拟桥当前仅消费暂停／恢复，其他动作明确拒绝。大厅和 GameView 尚未使用该链路。
+
+Win32 Release 编译通过。本机 seed 从主机传给双客户端、双会话映射及项目 RNG 序列一致、BootyBay 时间驱动和暂停／恢复／未知动作拒绝、编码边界与截断检查通过；证据 tmp/docs-artifacts/war3/lan-seed-probe/result.log、lan-setup-probe/result.log、lan-time-driver-probe/result-integrated.log、lan-simulation-probe/result.log、lan-action-codec-probe/result.log。
+
+集中验证 1.27 动作字节与事件／时间边界、原版随机与校验、网络 peer 到地图玩家和对象 ID 映射、真实游戏输入、多端模拟／断线、会话生命周期及真实界面。当前尚不能启动联网对局；现有 RNG 一致性仅针对本实现。

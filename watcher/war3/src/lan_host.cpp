@@ -140,6 +140,7 @@ bool LanHost::reportHostLoaded(){return impl_->markLoaded(1);}
 LanLoadPhase LanHost::loadPhase() const{return impl_->loadPhase;}
 const std::vector<std::uint8_t>& LanHost::loadPlayers() const{return impl_->loadPlayers;}
 const std::vector<std::uint8_t>& LanHost::loadedPlayers() const{return impl_->loadedPlayers;}
+std::uint32_t LanHost::randomSeed() const{return impl_->randomSeed;}
 bool LanHost::enableTimeSlotProtocol(){return impl_->enableTimeSlotProtocol();}
 bool LanHost::submitHostAction(std::span<const std::uint8_t> action){return impl_->queueAction(1,action);}
 bool LanHost::emitTimeSlot(std::uint16_t elapsedMs){return impl_->emitTimeSlot(elapsedMs);}

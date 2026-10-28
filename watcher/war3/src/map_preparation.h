@@ -18,7 +18,7 @@ struct PreparedMap {
     std::string error,previewError;
 };
 class MapPreparation {
-    struct Request {std::uint64_t id;fs::path path;std::shared_ptr<const Bytes> memory;std::string label;std::optional<std::pair<bool,unsigned>> campaign;bool inferCampaign;};
+    struct Request {std::uint64_t id;fs::path path;std::shared_ptr<const Bytes> memory;std::string label;std::optional<std::pair<bool,unsigned>> campaign;bool inferCampaign;std::optional<std::uint32_t> initialRandomSeed;};
     fs::path dataRoot_;
     bool muted_=false;
     std::atomic<std::uint64_t> generation_=0;
@@ -31,9 +31,9 @@ class MapPreparation {
 public:
     explicit MapPreparation(fs::path dataRoot,bool muted=false);
     ~MapPreparation();
-    std::uint64_t request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign={},bool inferCampaign=true);
+    std::uint64_t request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign={},bool inferCampaign=true,std::optional<std::uint32_t> initialRandomSeed={});
     // The caller must retain only immutable aliases to these validated map bytes.
-    std::uint64_t requestMemory(std::shared_ptr<const Bytes> bytes,std::string label);
+    std::uint64_t requestMemory(std::shared_ptr<const Bytes> bytes,std::string label,std::optional<std::uint32_t> initialRandomSeed={});
     void clear();
     std::optional<PreparedMap> poll();
 };
