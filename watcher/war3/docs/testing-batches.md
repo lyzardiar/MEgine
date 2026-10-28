@@ -1502,3 +1502,9 @@ Win32 Release 客户端增量编译通过。阶段检查 DotA 实际调用和对
 路径：`game_flow_ui.*`、`game_preferences.*`、`game_view.*`、`glue.h`、`renderer.h`、`model_particles.cpp`、`docs/game-options.md`。原视频页面粒子三级选项连接 PRE2 发射率和独立用户设置，确认应用、取消恢复；联机界面将已支持的 Shift 排队交给已有编码器，未支持命令仍由底层拒绝。
 
 Win32 Release 客户端增量编译通过。阶段核对原 FDF 键鼠／弹出菜单／Esc、确认取消和持久化／坏文件／切图／设备恢复、PRE2 粒子在低中高档的实际 GPU 画面与性能、原版比例；联机真实窗口与双端时间片、技能／建造／物品队列和权限变化仍待测试。当前粒子比例是实现值，非原版验证结论。
+
+## 单位转向与推进角待验证
+
+路径：`entities.h`、`session.h`、`session_entities.cpp`、`session_orders.cpp`、`session_combat.cpp`、`session_unit_forms.cpp`、`session_building_upgrades.cpp`、`docs/unit-turning.md`。源转速及推进角、自定义覆盖、脚本设置／查询、移动路径与攻击方向、幻象和类型变化已接入；原版转向速度公式、角度边界和生命周期规则待对照。
+
+Win32 Release 客户端增量编译通过。阶段核对四族与自定义地图的直行／拐角／避障、脚本属性、极端窗口、攻击前摇与移动施法、暂停／幻象／变形／复活、同步及长局性能；当前无玩法或原版一致性通过结论。
