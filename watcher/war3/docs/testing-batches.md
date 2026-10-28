@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 战役影片阶段待验证
+
+路径：cinematic、campaign_browser、main 和 CMake；从原版 Movies 的 AVI 文件直接构建 DirectShow 图、通过 blizzard.ax 解码 BLZ0、播放 MP3 并支持跳过／返回。影片与资料片模型过场属于不同流程，后者的多动画时间线及声音仍待实现。Win32 产品编译通过；TutorialIn 隐藏窗口最小检查中静音和非静音均构图成功、播放时间推进，2 秒分别收到 50／49 个解码后帧，正常销毁；可见画面、声音听感及原版一致性待功能阶段验证。REA 依据和临时检查位于 tmp/docs-artifacts/war3/campaign/。
+
+集中验证九部影片的完整播放／音画同步／可视比例、静音、跳过、窗口缩放／最小化／设备恢复、错误提示／资源释放／重复播放及只读资源目录；完成模型过场后合并对照其时序、相机、动画、事件和声音。
+
 ## 战役流程与跨地图缓存阶段待验证
 
 路径：campaign_browser、campaign_profile、session_campaign、session_cache、map_preparation、main及相关接口。菜单、章节和难度、进度、ChangeLevel、重新开始及独立 gamecache 与单位快照已接入；完整战役、视频过场、原版 .w3v／存档／回放／局域网未完成。Win32 Release 产品编译通过；功能验证与原版一致性待阶段合并执行。

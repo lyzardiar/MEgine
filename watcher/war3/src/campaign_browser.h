@@ -8,7 +8,7 @@
 
 namespace war3 {
 class CampaignBrowser {
-    struct Entry {std::string header,name,path,extra;unsigned mission=0;bool missionEntry=false,cinematic=false,ending=false;};
+    struct Entry {std::string header,name,path,extra;unsigned mission=0;bool missionEntry=false,cinematic=false,ending=false,intro=false;};
     struct Campaign {std::string section,header,name,background,model;bool expansion=false,defaultOpen=false;unsigned offset=0,sourceIndex=0;std::vector<Entry> entries;};
     Archives& archives_;
     GlueScreen screen_;
@@ -25,7 +25,7 @@ class CampaignBrowser {
     unsigned rows_=1,currentDifficulty_=1;
     std::uint64_t request_=0;
     bool missions_=false,loading_=false,autoStart_=false,currentExpansion_=false,currentCampaignSession_=true;
-    std::string error_,backdrop_;
+    std::string error_,backdrop_,cinematicRequest_;
     void loadCatalog();
     void updateBackdrop();
     void refreshDifficulty();
@@ -43,6 +43,7 @@ public:
     CampaignBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,bool muted=false);
     std::string draw(const UiInput& input);
     std::unique_ptr<ScriptSession> takeSession();
+    std::string takeCinematic();
     void reload(bool campaignList=false);
     void nextLevel(const std::string& path,const fs::path& externalRoot={});
     bool campaignSession() const {return currentCampaignSession_;}
