@@ -17,6 +17,8 @@ namespace fs = std::filesystem;
 std::string utf8(std::wstring_view text);
 std::wstring wide(std::string_view text);
 std::string winError(DWORD code = GetLastError());
+fs::path war3UserDirectory();
+void validateWar3UserDirectory(const fs::path& dataRoot);
 std::string sha256(const fs::path& path);
 void verifyPe32(const fs::path& path);
 struct Options {

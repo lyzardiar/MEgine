@@ -2,10 +2,11 @@
 #include "map_preparation.h"
 
 namespace war3 {
+namespace {bool under(const fs::path& path,const fs::path& directory){auto child=fs::weakly_canonical(path).wstring(),parent=fs::weakly_canonical(directory).wstring();if(parent.empty())return false;if(parent.back()!=L'\\')parent+=L'\\';return child.size()>=parent.size() && CompareStringOrdinal(parent.c_str(),int(parent.size()),child.c_str(),int(parent.size()),TRUE)==CSTR_EQUAL;}}
 MapPreparation::MapPreparation(fs::path dataRoot,bool muted) : dataRoot_(std::move(dataRoot)),muted_(muted),worker_([this](std::stop_token stop){run(stop);}) {}
 MapPreparation::~MapPreparation() {{std::lock_guard lock(mutex_);worker_.request_stop();}wake_.notify_one();}
-std::uint64_t MapPreparation::request(fs::path path) {
-    std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,std::move(path)};ready_.reset();wake_.notify_one();return id;
+std::uint64_t MapPreparation::request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign,bool inferCampaign) {
+    std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,std::move(path),campaign,inferCampaign};ready_.reset();wake_.notify_one();return id;
 }
 void MapPreparation::clear() {std::lock_guard lock(mutex_);++generation_;pending_.reset();ready_.reset();}
 std::optional<PreparedMap> MapPreparation::poll() {std::lock_guard lock(mutex_);auto result=std::move(ready_);ready_.reset();return result;}
@@ -20,7 +21,7 @@ void MapPreparation::run(std::stop_token stop) {
             auto w3i=archives->readCandidates({"war3map.w3i"},ArchiveScope::Map);if(!w3i)throw std::runtime_error("Missing war3map.w3i");result.info=MapInfo::parse(w3i->bytes,strings);
             if(!stale()){
                 auto module=jass::Module::compile(jass::Program::read(*archives));
-                if(!stale()){auto world=World::read(*archives);if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings));result.session->attachWorld(std::move(world));result.session->audioMuted(muted_);result.session->configure();}}
+                if(!stale()){auto world=World::read(*archives);if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings));if(request.campaign)result.session->campaignContext(request.campaign->first,request.campaign->second);else if(request.inferCampaign && under(request.path,dataRoot_/L"Maps"/L"Campaign"))result.session->campaignContext(false,1);result.session->attachWorld(std::move(world));result.session->audioMuted(muted_);result.session->configure();}}
             }
             if(!stale())try {
                 auto bytes=archives->readCandidates({"war3mapPreview.tga","war3mapMap.blp"},ArchiveScope::Map);

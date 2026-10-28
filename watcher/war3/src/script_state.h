@@ -6,6 +6,8 @@
 #include <set>
 #include <map>
 #include <tuple>
+#include <optional>
+#include <vector>
 
 namespace war3 {
 struct ScriptBoolean {
@@ -72,7 +74,29 @@ struct ScriptTimerDialog {
     std::optional<std::pair<std::uint64_t,float>> realTime;
 };
 struct ScriptText {unsigned owner=0;float x=0,y=0;double expires=0;std::string text;};
-struct ScriptCache {std::string name;std::map<std::tuple<std::string,std::string,std::string>,jass::Value> values;};
+struct CachedBook {unsigned level=0;std::vector<std::uint32_t> spells;};
+struct CachedItem {
+    std::uint32_t type=0,life=0,maxLife=0;
+    int charges=0,userData=0,level=0;
+    bool visible=true,invulnerable=false,droppable=true,pawnable=true,dropOnDeath=false;
+    std::map<std::uint32_t,CachedBook> books;
+};
+struct CachedUnit {
+    std::uint32_t type=0,life=0,maxLife=0,mana=0,maxMana=0,moveSpeed=0,defaultMoveSpeed=0;
+    int resources=0,userData=0,level=1,experience=0,skillPoints=0;
+    bool hero=false,visible=true,invulnerable=false,pathing=true,useFood=true,experienceSuspended=false;
+    std::array<float,3> attributes{},growth{},bonuses{};
+    std::string properName;
+    std::map<std::uint32_t,int> abilities;
+    std::map<std::uint32_t,bool> permanent,autocast;
+    std::map<std::uint32_t,CachedBook> books;
+    std::array<std::optional<CachedItem>,6> items;
+};
+struct ScriptCache {
+    std::string name;
+    std::map<std::tuple<std::string,std::string,std::string>,jass::Value> values;
+    std::map<std::pair<std::string,std::string>,CachedUnit> units;
+};
 struct ScriptHashtable {std::map<std::tuple<std::uint32_t,std::uint32_t,std::string>,jass::Value> values;};
 struct ScriptQuestItem {std::uint32_t owner=0;std::string description;bool completed=false;};
 struct ScriptQuest {std::string title,description,icon;bool required=true,completed=false,discovered=false,failed=false,enabled=true;std::vector<std::pair<std::uint32_t,std::shared_ptr<ScriptQuestItem>>> items;};

@@ -128,6 +128,8 @@ class ScriptSession {
     std::map<std::uint32_t,std::shared_ptr<ScriptButton>> buttons_;
     std::map<std::uint32_t,std::shared_ptr<ScriptDefeatCondition>> defeatConditions_;
     SessionExit exit_=SessionExit::None;
+    bool campaignExpansion_=true,forceCampaignSelect_=false;
+    std::string nextLevel_;
     bool showScores_=false,userControl_=true,userUI_=true,selectionEnabled_=true,selectionUI_=true;
     unsigned gameDifficulty_=1,defaultDifficulty_=1;
     bool simulationPaused_=false,fogEnabled_=true,fogMaskEnabled_=true;
@@ -661,6 +663,7 @@ class ScriptSession {
     void bindFogNatives();
     void bindTextNatives();
     void bindCacheNatives();
+    void bindCampaignNatives();
     void bindHashtableNatives();
     void bindCommerceNatives();
     void bindFoodNatives();
@@ -921,6 +924,9 @@ public:
     const auto& ais() const {return ais_;}
     void startMain();
     void finishGame(bool scores,SessionExit action=SessionExit::Return);
+    void campaignContext(bool expansion,unsigned difficulty) {if(mainAttempted_ || difficulty>2)throw std::runtime_error("Invalid campaign session context");campaignExpansion_=expansion;gameDifficulty_=defaultDifficulty_=difficulty;}
+    const std::string& nextLevel() const {return nextLevel_;}
+    bool forceCampaignSelection() const {return forceCampaignSelect_;}
     void removePlayer(unsigned owner,unsigned result);
     void leaveGame();
     bool clickDialog(unsigned owner,std::uint32_t button);

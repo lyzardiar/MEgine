@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 战役流程与跨地图缓存阶段待验证
+
+路径：campaign_browser、campaign_profile、session_campaign、session_cache、map_preparation、main及相关接口。菜单、章节和难度、进度、ChangeLevel、重新开始及独立 gamecache 与单位快照已接入；完整战役、视频过场、原版 .w3v／存档／回放／局域网未完成。Win32 Release 产品编译通过；功能验证与原版一致性待阶段合并执行。
+
+集中验证原版 ROC／TFT 菜单和章节解锁／难度、直接地图及自定义地图的切换／返回／重开、战役进度持久化、英雄及物品跨关恢复、缓存异常与写入边界、多进程和资源释放；同时验证完整剧情、UI／声音、性能及无解包增长。细节和未实现边界见[战役流程](campaign-flow.md)与[游戏缓存](campaign-gamecache.md)。旧 MEngine 待测批次保持延期。
+
 按用户2026-10-26的要求，先按[集中实现清单](implementation-roadmap.md)覆盖可运行流程，再在功能阶段集中测试修正，源码与待测记录持续提交。必要编译和阻塞问题最小复现及时执行；原件逐项精度检查与回归后置，不运行旧MEngine全量检查。此前三项合并批次保留为历史记录。证据保存在仓库根目录 `tmp/docs-artifacts/war3/`。
 
 | 任务 | 路径 | 验证内容 | 风险 | 状态 |

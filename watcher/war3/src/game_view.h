@@ -77,6 +77,9 @@ public:
     bool draw(const GameInput& input);
     bool appExitRequested() const {return appExit_;}
     bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}
+    const std::string& nextLevel() const {return data_->session->nextLevel();}
+    fs::path mapPath() const {auto world=data_->session->world();return world?world->resources().mapPath():fs::path{};}
+    bool forceCampaignSelection() const {return data_->session->forceCampaignSelection();}
     unsigned frames() const {return frames_;}
 };
 }

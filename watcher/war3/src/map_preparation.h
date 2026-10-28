@@ -17,7 +17,7 @@ struct PreparedMap {
     std::string error,previewError;
 };
 class MapPreparation {
-    struct Request {std::uint64_t id;fs::path path;};
+    struct Request {std::uint64_t id;fs::path path;std::optional<std::pair<bool,unsigned>> campaign;bool inferCampaign;};
     fs::path dataRoot_;
     bool muted_=false;
     std::atomic<std::uint64_t> generation_=0;
@@ -30,7 +30,7 @@ class MapPreparation {
 public:
     explicit MapPreparation(fs::path dataRoot,bool muted=false);
     ~MapPreparation();
-    std::uint64_t request(fs::path path);
+    std::uint64_t request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign={},bool inferCampaign=true);
     void clear();
     std::optional<PreparedMap> poll();
 };
