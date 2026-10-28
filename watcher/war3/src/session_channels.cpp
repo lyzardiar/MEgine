@@ -11,7 +11,7 @@ float number(jass::Real v){return std::bit_cast<float>(v.bits());}
 jass::Real real(float v){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(v));}
 std::string levelArt(const std::string& source,unsigned level){std::stringstream input(source);std::vector<std::string> models;std::string model;while(std::getline(input,model,',')){auto first=model.find_first_not_of(" \t\"");models.push_back(first==std::string::npos?"":model.substr(first,model.find_last_not_of(" \t\"")-first+1));}return models.empty()?"":models[std::min(size_t(level?level-1:0),models.size()-1)];}
 }
-void ScriptSession::releaseCastVisuals(CastOrder& cast){releaseHumanChannel(cast);releaseVolcano(cast);releaseTornado(cast);releaseStampede(cast);releaseHeroUltimate(cast);releasePossession(cast);releaseDrain(cast);if(cast.spell.kind==SpellKind::Cannibalize)releaseCorpseClaim(cast.target,cast.caster,cast.ticket);for(auto id:cast.visuals)destroyEffect(id);cast.visuals.clear();}
+void ScriptSession::releaseCastVisuals(CastOrder& cast){releaseManaFlare(cast);releaseHumanChannel(cast);releaseVolcano(cast);releaseTornado(cast);releaseStampede(cast);releaseHeroUltimate(cast);releasePossession(cast);releaseDrain(cast);if(cast.spell.kind==SpellKind::Cannibalize)releaseCorpseClaim(cast.target,cast.caster,cast.ticket);for(auto id:cast.visuals)destroyEffect(id);cast.visuals.clear();}
 void ScriptSession::finishCast(std::uint32_t id,std::uint64_t ticket) {
     if(!alive(id,NativeKind::Unit))return;auto u=units_.at(id);if(!u->cast || u->cast->ticket!=ticket)return;auto cast=*u->cast;spellEvent(id,cast,3);
     if(!alive(id,NativeKind::Unit) || !u->cast || u->cast->ticket!=ticket)return;u->cast.reset();++u->castRevision;u->currentOrder=0;u->animation.clear();u->animationTime=0;releaseCastVisuals(cast);auto revision=u->castRevision,combatRevision=u->combat.revision;spellEvent(id,cast,4);
@@ -43,6 +43,7 @@ void ScriptSession::channelPulse(std::uint32_t id,const CastOrder& cast) {
 }
 void ScriptSession::channelTick(std::uint32_t id,double delta) {
     if(humanChannelTick(id,delta))return;
+    if(auto u=units_.at(id);u->cast && u->cast->spell.kind==SpellKind::ManaFlare){auto buff=u->buffs.find(u->cast->spell.buff);if(buff==u->buffs.end() || buff->second.kind!=BuffKind::ManaFlare || buff->second.applied!=u->cast->ticket){cancelCast(*u);return;}}
     if(units_.at(id)->cast->spell.kind==SpellKind::Volcano){volcanoChannelTick(id,delta);return;}
     if(units_.at(id)->cast->spell.kind==SpellKind::Tornado){tornadoChannelTick(id,delta);return;}
     if(heroUltimate(units_.at(id)->cast->spell.kind)){heroUltimateChannelTick(id,delta);return;}if(teleportSpell(units_.at(id)->cast->spell.kind)){teleportTick(id,delta);return;}if(units_.at(id)->cast->spell.kind==SpellKind::Possession){possessionTick(id,delta);return;}if(units_.at(id)->cast->spell.kind==SpellKind::Cannibalize){cannibalizeTick(id,delta);return;}

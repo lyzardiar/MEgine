@@ -16,6 +16,7 @@ void ScriptSession::launchSpellMissile(SpellMissile missile) {
     if(!alive(missile.source,NativeKind::Unit) || !alive(missile.target,NativeKind::Unit))return;auto u=units_.at(missile.source),target=units_.at(missile.target);auto origin=u;if(!missile.visited.empty() && alive(missile.visited.back(),NativeKind::Unit))origin=units_.at(missile.visited.back());missile.start=missile.position;missile.distance=std::hypot(number(target->x)-number(missile.position.x),number(target->y)-number(missile.position.y));missile.travelled=0;missile.born=simulationTime_;missile.startHeight=origin->displayFlyHeight()+definitions().number(origin->type,"UnitWeapons","launchZ");missile.endHeight=target->displayFlyHeight()+definitions().number(u->type,"UnitWeapons","impactZ",60);spellLightning(missile);if(missile.spell.speed>0 || !missile.visited.empty()){if(spellMissiles_.size()>=8192)throw std::runtime_error("Spell projectile budget exceeded");spellMissiles_.emplace(++spellTicket_,std::move(missile));}else spellImpact(std::move(missile));
 }
 void ScriptSession::spellImpact(SpellMissile missile) {
+    if(manaFlareImpact(missile))return;
     if(missile.spell.kind==SpellKind::SpellSteal){spellStealImpact(missile);return;}
     if(alchemistImpact(missile))return;
     if(firelordImpact(missile))return;

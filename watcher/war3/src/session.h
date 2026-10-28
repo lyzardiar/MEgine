@@ -263,6 +263,17 @@ class ScriptSession {
     bool absorbTarget(const UnitState& unit,const UnitState& target,const SpellInfo& spell);
     const SpellInfo* attackOrb(const UnitState& unit,const UnitState& target,std::uint32_t forced=0);
     void orbWeapon(WeaponDefinition& weapon,const SpellInfo& spell);
+    float defensePassiveDamage(const UnitState& unit,float amount,unsigned attackType,bool attack,bool ranged,bool spellDamage,unsigned owner);
+    void faerieSpellInfo(SpellInfo& spell);
+    bool phaseShift(std::uint32_t unit,const SpellInfo& spell,bool automatic=false);
+    bool phaseShiftReaction(std::uint32_t unit,std::uint32_t attacker);
+    bool manaFlareActive(const UnitState& unit,const SpellInfo& spell) const;
+    bool stopManaFlare(std::uint32_t unit,std::uint32_t ability);
+    void startManaFlare(std::uint32_t unit,const CastOrder& cast);
+    void releaseManaFlare(const CastOrder& cast);
+    void manaFlareReaction(std::uint32_t unit,const CastOrder& cast);
+    bool manaFlareImpact(const SpellMissile& missile);
+    std::set<std::uint32_t> manaFlareActors_;
     void wardSpellInfo(SpellInfo& spell);
     void roarSpellInfo(SpellInfo& spell);
     void roarEffect(std::uint32_t source,const SpellInfo& spell,unsigned owner);

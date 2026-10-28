@@ -166,11 +166,12 @@ struct UnitState {
     bool attackPrevented(bool ranged) const {return (preventedAttacks()&(ranged?2u:1u))!=0;}
     bool abilitiesDisabled() const {return stunned() || morphed() || spinning();}
     bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots || b.kind==BuffKind::Net || (b.kind==BuffKind::Purge && b.lockRemaining>0))return true;return false;}
-    float spellBonus(float UnitBuff::* field) const {std::array<float,size_t(BuffKind::Count)> values{};for(auto& [id,b]:buffs)values[size_t(b.kind)]=std::max(values[size_t(b.kind)],b.*field);float value=0;for(auto part:values)value+=part;return value;}
+    float spellBonus(float UnitBuff::* field) const {if(buffs.empty())return 0;std::array<float,size_t(BuffKind::Count)> positive{},negative{};for(auto& [id,b]:buffs){auto kind=size_t(b.kind);positive[kind]=std::max(positive[kind],b.*field);negative[kind]=std::min(negative[kind],b.*field);}float value=0;for(size_t i=0;i<positive.size();++i)value+=positive[i]+negative[i];return value;}
     float displayScale() const {auto form=morphAppearance();return (form?form->scale:scale)*(1+spellBonus(&UnitBuff::scaleBonus));}
     float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus)+(engineering && !morphed()?engineering->movement:0));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
-    bool hidden() const {return !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
+    bool phaseShifted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::PhaseShift && b.remaining>0)return true;return false;}
+    bool hidden() const {return phaseShifted() || !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
 };
 struct DestructableState {
     std::uint32_t type=0;

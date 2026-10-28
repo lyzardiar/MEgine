@@ -8,6 +8,14 @@
 | W002 图像、字体和音频边界 | image、media、main、rea-boundaries | BLP1/JPEG/palette、BLP2/BC、TGA、原版中文字体、Miles 内存 MP3 | IJL 调用约定、透明平面、codec 路径与 sample 生命周期 | 基础范围通过，批次关闭；音效与听感仍待验收 |
 | W003 原版 MDX 菜单场景 | model、model_pose、binary、archive、renderer、main、fdf、glue、tests | MDX800 基础场景、纹理来源、FDF 模板与字符串、真实帧、退出输入 | 不可信记录边界、FDF 预算、菜单按钮输入边界 | 基础范围通过，批次关闭；完整还原留在功能矩阵 |
 
+## 仙女龙与暗夜防御阶段待验证
+
+路径：session_faerie_dragon、原能力注册／命令／按钮／施法阶段／付费事件，真实攻击／伤害／隐去／移动／视野／弹道／通道清理；session_defense_passives、原被动定义／科技和可用状态、装备夜视、武器与伤害、带符号状态汇总。Apsh／Amfl、Ault、AIdd／Aegr、Assk／Ansk、Arsk及源派生已有实际消费者。
+
+状态：实现接入；必要Win32 Release产品编译通过、无警告，差异审查通过；新增玩法专项、三图、原版精度、UI/GPU/声音/AI和性能留在阶段集中验证。源表／Profile／摘要、REA类型证据及编译日志在tmp/docs-artifacts/war3/faerie-dragon/。
+
+集中范围：手动／自动相位、攻击开始／在途武器／伤害、1.5秒隐去／原命令恢复与生命周期；魔力之焰30秒通道／正反按钮／停止与其他命令／12护甲、付费技能与库存／零费用区别、范围／原弹道／费用及上限／主次目标、来源／目标死亡轮次和事件重入；夜视研究／转让／昼夜／启停与共享视野，艾露恩之优雅／硬化／抗性／被动物品、概率／最低值／魔法与物理分类／叠加、负护甲与实际HUD；原版反应／DataF／减伤次序、全等级／w3a、UI/GPU/AI/声音及三图长局／性能／资源释放／无解包增长。非零被动防御速度／反弹等开放边界见[实现说明](faerie-dragon.md)。旧MEngine队列保持延期。
+
 ## 守卫、吼叫与范围净化阶段待验证
 
 路径：session_wards_roar、spell_info/spells/area_spells/summons、陷阱登记/tick/移除、实际Buff数值/盗取/恢复及库存目标/支付/六槽/符文；caster_spells的范围驱散与自爆、派生源命令。包含治疗／岗哨／观察者／静止陷阱、吼叫／嚎叫／卷轴和自爆／消魔的连续流程。

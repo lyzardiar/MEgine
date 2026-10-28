@@ -4,7 +4,7 @@
 #include <set>
 
 namespace war3 {
-enum class PassiveKind {Unsupported,Brilliance,Devotion,Endurance,Unholy,Vampiric,Trueshot,Thorns,Command,WarDrums,Regeneration,Bash,Critical,Evasion,Cleave,PermanentInvisibility,Detection,Ghost,Exhume,Reincarnation,PhoenixMorph,PhoenixFire,SpikedCarapace,AttackModifier,LightningAttack,SlowAura,PermanentImmolation,Pulverize,TornadoDamage,TornadoSpin,TornadoWander,Engineering,Demolish,Feedback};
+enum class PassiveKind {Unsupported,Brilliance,Devotion,Endurance,Unholy,Vampiric,Trueshot,Thorns,Command,WarDrums,Regeneration,Bash,Critical,Evasion,Cleave,PermanentInvisibility,Detection,Ghost,Exhume,Reincarnation,PhoenixMorph,PhoenixFire,SpikedCarapace,AttackModifier,LightningAttack,SlowAura,PermanentImmolation,Pulverize,TornadoDamage,TornadoSpin,TornadoWander,Engineering,Demolish,Feedback,Ultravision,MissileDefense,HardenedSkin,ResistantSkin};
 struct PassiveInfo {
     std::uint32_t ability=0,buff=0,corpseType=0;
     unsigned level=0;
@@ -13,7 +13,7 @@ struct PassiveInfo {
     float area=0,amount=0,secondary=0,bonus=0,evasion=0,duration=0,heroDuration=0;
     std::string attackMissile,lightningType;
     float missileSpeed=0,missileArc=0;
-    float heroAmount=0,heroFactor=1,summonDamage=0;
+    float heroAmount=0,heroFactor=1,summonDamage=0,magicFactor=1;
     float period=0,innerArea=0,innerDamage=0,nearArea=0,nearDamage=0;
     std::uint32_t effectBuff=0;
     bool missileHoming=true;

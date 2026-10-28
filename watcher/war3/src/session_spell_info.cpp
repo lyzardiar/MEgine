@@ -93,7 +93,8 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"Aclf",SpellKind::Cloud,SpellTargeting::Point},
         {"Ahwd",SpellKind::HealingWard,SpellTargeting::Point},{"Aeye",SpellKind::SentryWard,SpellTargeting::Point},
         {"Asta",SpellKind::StasisTrap,SpellTargeting::Point},{"Aroa",SpellKind::Roar,SpellTargeting::None},
-        {"Adtn",SpellKind::Detonate,SpellTargeting::Point}
+        {"Adtn",SpellKind::Detonate,SpellTargeting::Point},
+        {"Apsh",SpellKind::PhaseShift,SpellTargeting::None},{"Amfl",SpellKind::ManaFlare,SpellTargeting::None}
     };
     auto code=data.field(ability,"AbilityData","code",ObjectData::name(ability));for(auto& p:prototypes)if(code==p.code){s.kind=p.kind;s.targeting=p.targeting;break;}if(s.kind==SpellKind::Unsupported)return spellInfo_.emplace(key,std::move(s)).first->second;
     auto field=[&](const char* name,float fallback=0){return data.number(ability,"AbilityData",std::string(name)+std::to_string(level),fallback);};
@@ -114,6 +115,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(heroUltimate(s.kind))heroUltimateInfo(s);
     if(s.kind==SpellKind::FrostArmor || s.kind==SpellKind::ShadowStrike)frostPoisonInfo(s);
     if(s.kind==SpellKind::PocketFactory || s.kind==SpellKind::ClusterRockets || s.kind==SpellKind::RoboGoblin || s.kind==SpellKind::SelfDestruct)tinkerSpellInfo(s);
+    if(s.kind==SpellKind::PhaseShift || s.kind==SpellKind::ManaFlare)faerieSpellInfo(s);
     if(wardSpell(s.kind))wardSpellInfo(s);
     if(s.kind==SpellKind::Roar || s.kind==SpellKind::HowlTerror)roarSpellInfo(s);
     if(humanCasterSpell(s.kind))humanSpellInfo(s);
@@ -169,7 +171,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(s.kind==SpellKind::FlameStrike){std::stringstream paths(data.field(ability,"Profile","Specialart"));std::string path;while(std::getline(paths,path,','))if(!path.empty() && path!="_")s.visualModels.push_back(path);}
     if((s.period>0 && s.channelTime/s.period>262144) || (s.artPeriod>0 && s.channelTime/s.artPeriod>262144) || (s.fullPeriod>0 && s.fullTime/s.fullPeriod>262144) || (s.burnPeriod>0 && s.duration/s.burnPeriod>262144))throw std::runtime_error("Persistent spell tick budget exceeded");
     if(s.damageBonus<0 || s.armor<0 || s.attackBonus<0 || s.moveBonus<0 || s.scaleBonus<0 || s.healthRegen<0 || s.autoRange<0 || s.autoRange>100000)throw std::runtime_error("Caster modifier outside supported range");
-    if(s.channelTime<0 || s.channelTime>86400 || s.artPeriod<0 || s.artPeriod>86400 || s.buildingFactor<0 || s.extraDamage<0 || (s.channelled && s.kind!=SpellKind::Channel && s.kind!=SpellKind::Cannibalize && s.kind!=SpellKind::Possession && s.kind!=SpellKind::Tornado && !teleportSpell(s.kind) && !heroUltimate(s.kind) && s.period<=0))throw std::runtime_error("Channel duration or period exceeds supported range");
+    if(s.channelTime<0 || s.channelTime>86400 || s.artPeriod<0 || s.artPeriod>86400 || s.buildingFactor<0 || s.extraDamage<0 || (s.channelled && s.kind!=SpellKind::Channel && s.kind!=SpellKind::Cannibalize && s.kind!=SpellKind::Possession && s.kind!=SpellKind::Tornado && s.kind!=SpellKind::ManaFlare && !teleportSpell(s.kind) && !heroUltimate(s.kind) && s.period<=0))throw std::runtime_error("Channel duration or period exceeds supported range");
     if(s.mana<0 || s.cooldown<0 || s.range<0 || s.range>100000 || s.area<0 || s.area>100000 || s.amount<0 || s.secondary<0 || s.duration<0 || s.heroDuration<0 || s.speed<0 || s.maxDamage<0 || s.moveReduction<0 || s.moveReduction>1 || s.attackReduction<0)throw std::runtime_error("Source spell parameters outside supported range");return spellInfo_.emplace(key,std::move(s)).first->second;
 }
 }
