@@ -2,9 +2,10 @@
 #pragma once
 #include "world.h"
 #include <set>
+#include <array>
 
 namespace war3 {
-enum class PassiveKind {Unsupported,Brilliance,Devotion,Endurance,Unholy,Vampiric,Trueshot,Thorns,Command,WarDrums,Regeneration,Bash,Critical,Evasion,Cleave,PermanentInvisibility,Detection,Ghost,Exhume,Reincarnation,PhoenixMorph,PhoenixFire,SpikedCarapace,AttackModifier,LightningAttack,SlowAura,PermanentImmolation,Pulverize,TornadoDamage,TornadoSpin,TornadoWander,Engineering,Demolish,Feedback,Ultravision,MissileDefense,HardenedSkin,ResistantSkin};
+enum class PassiveKind {Unsupported,Brilliance,Devotion,Endurance,Unholy,Vampiric,Trueshot,Thorns,Command,WarDrums,Regeneration,Bash,Critical,Evasion,Cleave,PermanentInvisibility,Detection,Ghost,Exhume,Reincarnation,PhoenixMorph,PhoenixFire,SpikedCarapace,AttackModifier,LightningAttack,SlowAura,PermanentImmolation,Pulverize,TornadoDamage,TornadoSpin,TornadoWander,Engineering,Demolish,Feedback,Ultravision,MissileDefense,HardenedSkin,ResistantSkin,FlakCannon,Fragmentation,BurningOil,LiquidFire,Barrage};
 struct PassiveInfo {
     std::uint32_t ability=0,buff=0,corpseType=0;
     unsigned level=0;
@@ -16,6 +17,9 @@ struct PassiveInfo {
     float heroAmount=0,heroFactor=1,summonDamage=0,magicFactor=1;
     float period=0,innerArea=0,innerDamage=0,nearArea=0,nearDamage=0;
     std::uint32_t effectBuff=0;
+    std::array<float,3> splashRadii{},splashDamage{};
+    unsigned maxTargets=1;
+    bool repairAllowed=true;
     bool missileHoming=true;
     std::set<std::string> allowed;
     std::vector<std::pair<std::uint32_t,unsigned>> prerequisites;

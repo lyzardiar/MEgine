@@ -885,3 +885,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 | W045持续恢复 | session_regeneration/entities/tick；源HP/MP/类型、昼夜/荒芜和英雄属性、实际生命/魔法/死亡 | 精度/负恢复/暂停/重入、全族/英雄/幻象、性能和资源释放 | 已接入；编译通过，数值夹具待测 |
 
 必要Release产品/扩展消费者编译无警告，7个字面量native声明及生成器语法检查通过。DotA原main及250ms、2,000ms模拟均退出0，bj_gameStarted=true，无Game.dll；只定位开局后的首批定时器路径，不代表完整玩法通过。原始记录在tmp/docs-artifacts/war3/blight-{build,dota,dota-2000ms}.log；REA/源统计及边界见blight-regeneration.md。消费者增加荒芜/幂等/恢复开关断言，尚未执行。新增GPU、专项夹具、三图完整回归和性能仍排队；当前会话1为Disconnected，旧MEngine延期状态保持。MSVC核心/客户端已启用并核对8路编译，不改变运行时结论。
+
+## 攻城兵种攻击能力阶段待验证
+
+路径：session_siege_attacks、passives／combat／spells／session、被动源定义／前置／登记／调度、攻击发射与命中、buff伤害／修理、源资源流。Aflk／Afsh／Abof／Aliq／Aroc及w3a派生有真实消费者。
+
+状态：实现接入；Win32 Release产品增量编译通过、无警告，差异检查通过；不执行新增专项、三图、GPU、原版精度或性能回归。集中验证三档范围／固定伤害／主目标排除／中甲与无甲、原武器载荷／miss／防御／多能力、火场时序／持续／叠加／空间查询／孤立来源、液体炸弹禁修理／恢复／重复刷新／清理，弹幕第二武器／多目标／预算／对地并行／命令与时钟、研究／可用开关／w3a／形态／库存／回调死亡移除易主、UI／GPU／音效／AI／三图长局和内存释放。证据与构建日志在tmp/docs-artifacts/war3/siege-attacks/；原版精度边界见[实现说明](siege-attacks.md)。旧MEngine队列保持延期。

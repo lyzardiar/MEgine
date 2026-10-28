@@ -183,6 +183,7 @@ class ScriptSession {
     std::map<std::pair<std::uint32_t,unsigned>,SpellInfo> phoenixFireInfo_;
     std::map<std::pair<std::uint32_t,std::uint32_t>,PhoenixFireClock> phoenixFireClocks_;
     std::set<std::uint32_t> phoenixFireActors_;
+    std::map<std::uint64_t,SiegeFire> siegeFires_;
     std::map<std::uint32_t,PhoenixBurn> phoenixBurns_;
     std::uint64_t phoenixBurnTicket_=0;
     void heroUltimateInfo(SpellInfo& spell);
@@ -265,6 +266,12 @@ class ScriptSession {
     void orbWeapon(WeaponDefinition& weapon,const SpellInfo& spell);
     float defensePassiveDamage(const UnitState& unit,float amount,unsigned attackType,bool attack,bool ranged,bool spellDamage,unsigned owner);
     void warClubInfo(SpellInfo& spell);
+    void siegePassiveInfo(PassiveInfo& passive);
+    void prepareSiegeAttack(const UnitState& unit,CombatProjectile& projectile);
+    void siegeImpact(const CombatProjectile& projectile,bool primary);
+    void barrageVolley(const CombatProjectile& projectile);
+    void barragePulse(std::uint32_t unit,const PassiveInfo& passive,AmbientClock& clock);
+    void siegeFiresTick(double delta);
     void startGrabTree(std::uint32_t unit,const CastOrder& cast);
     void cancelGrabTree(UnitState& unit,std::uint64_t ticket);
     void clearWarClub(UnitState& unit,bool cancelGrab=true);

@@ -63,3 +63,5 @@
 | 旧转换缓存清理 | 等待直接加载验收 | 核对引用和目录边界，记录回收空间 |
 
 基础批次证据见 [测试队列](testing-batches.md)，仅覆盖已实现范围，不能替代完整客户端验收。World Editor 和在线平台服务不在此次范围。旧 MEngine 批次继续延期，见仓库根目录 `docs/designs/frostbound-realms/native-loading-handoff.md`。
+
+攻城兵种进度：高射炮、碎片攻击、燃烧之油、液体炸弹和弹幕已连接真实武器／多目标弹道／额外伤害／地面脉冲／禁修理及原被动按钮。完整事件／原版精度／GPU／音效／AI／三图及性能留阶段验收，见[siege-attacks.md](siege-attacks.md)。
