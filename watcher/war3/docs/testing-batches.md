@@ -1037,3 +1037,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：session_multiboard／session／script_state／session_hashtable／game_multiboard／game_view。Win32 Release 产品编译和差异检查通过；真实 Prologue02 脚本环境下的状态／尺寸／句柄和原 FDF／默认图标隐藏窗口探针通过，未加载 Game.dll，记录在 tmp/docs-artifacts/war3/multiboard-probe/；未覆盖实际 GameView 点击或 DotA。
 
 集中验证行列扩缩／失效句柄／重复释放／销毁／hashtable、所有批量与单项样式／颜色／宽度／UTF-8 和颜色标记、地图覆盖图标／缺图／异步加载、最小化按钮／输入拦截／遮挡／多板、最大尺寸与裁切、多客户端独立显示和原版视觉。原版屏幕锚点／行距／图标边框、清理与样式语义尚待对照；原版性能、三图、GPU、音频及旧 MEngine 队列继续阶段验证。
+
+## 玩家让分生命值阶段待验证
+
+路径：session／session_entities／session_ownership／session_building_upgrades。Win32 Release 产品编译通过；BootyBay 定向检查新旧单位倍率、生命比例和易主通过，未加载 Game.dll；日志 tmp/docs-artifacts/war3/terrain-handicap-timer-probe/result.log。
+
+集中验证菜单／脚本倍率、极值／精度／取整、英雄生命／力量／装备／研究、建造升级／变形／幻象／易主／复活／跨关恢复、原版数值和事件顺序。完整对战与旧 MEngine 队列按阶段验证。

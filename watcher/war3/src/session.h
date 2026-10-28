@@ -709,6 +709,8 @@ class ScriptSession {
     void bindDestructableNatives();
     void bindConstructionNatives();
     void initializeUnitType(UnitState& unit,std::uint32_t type);
+    float handicapBaseLife(std::uint32_t type,jass::Real handicap);
+    void adjustUnitHandicap(UnitState& unit,jass::Real previous,jass::Real next);
     bool upgradeAllowed(const UnitState& unit,const ProductInfo& product,std::string& reason);
     void buildingUpgrades(double delta);
     void finishBuildingUpgrade(std::uint32_t unit);

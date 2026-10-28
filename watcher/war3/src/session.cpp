@@ -3,6 +3,7 @@
 #include "setup.h"
 #include <algorithm>
 #include <bit>
+#include <cmath>
 
 namespace war3 {
 namespace {
@@ -62,6 +63,7 @@ void ScriptSession::bindNatives() {
     bind("GetLocalPlayer","player",{},[this](auto& vm,auto){if(!localPlayer_)throw std::runtime_error("Local player is unavailable before setup");return vm.handle("player",handleBase+*localPlayer_);});
     bind("GetAIDifficulty","aidifficulty",{"player"},[this](auto& vm,auto args){return vm.handle("aidifficulty",player(args[0]).difficulty);});
     bind("GetPlayerHandicap","real",{"player"},[this](auto& vm,auto args){return vm.real(player(args[0]).handicap);});
+    bind("SetPlayerHandicap","nothing",{"player","real"},[this](auto& vm,auto args){auto id=playerId(args[0]);float value=std::bit_cast<float>(args[1].bits);if(!std::isfinite(value))throw std::runtime_error("Non-finite player handicap");value=std::max(.01f,value);auto next=jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));auto previous=config_.players[id].handicap;if(std::abs(value-std::bit_cast<float>(previous.bits()))<.001f)return vm.nothing();config_.players[id].handicap=next;for(auto& [handle,u]:units_)if(u->owner==id && !u->removing)adjustUnitHandicap(*u,previous,next);return vm.nothing();});
     bind("CreateGroup","group",{},[this](auto&,auto){return create(NativeKind::Group);});
     bind("DestroyGroup","nothing",{"group"},[this](auto& vm,auto args){destroy(args[0],NativeKind::Group);return vm.nothing();});
     bind("GroupClear","nothing",{"group"},[this](auto& vm,auto args){std::get<Group>(object(args[0],NativeKind::Group).state).units.clear();return vm.nothing();});
