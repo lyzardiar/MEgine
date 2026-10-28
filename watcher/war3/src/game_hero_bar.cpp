@@ -8,6 +8,19 @@ namespace war3 {
 namespace {
 float number(jass::Real value){return std::bit_cast<float>(value.bits());}
 bool hitHero(float x,float y,unsigned index){return x>=.008f && x<.048f && y>=.04f+index*.047f && y<.08f+index*.047f;}
+bool hitIdleWorker(float x,float y){return x>=.008f && x<.041f && y>=.395f && y<.428f;}
+}
+void GameView::refreshIdleWorkers(bool force) {
+    auto now=GetTickCount64();if(!force && now<nextIdleWorkerRefresh_)return;nextIdleWorkerRefresh_=now+250;idleWorkers_.clear();auto local=data_->session->localPlayer().value_or(0);for(auto& [id,u]:data_->session->units())if(data_->session->idleWorker(id,local))idleWorkers_.push_back(id);std::sort(idleWorkers_.begin(),idleWorkers_.end());
+}
+void GameView::idleWorkerInput(GameInput& input) {
+    bool keyboard=input.ui.key==VK_F8,pressed=!idleWorkers_.empty() && input.ui.pressed && hitIdleWorker(input.ui.startX,input.ui.startY);if(!idleWorkers_.empty() && input.ui.down && hitIdleWorker(input.ui.startX,input.ui.startY))input.ui.down=false;if(pressed){input.ui.pressed=false;if(!hitIdleWorker(input.ui.x,input.ui.y))return;}if(!keyboard && !pressed)return;if(keyboard){input.ui.key=0;if(input.ui.keyRepeat)return;}if(!lanPendingSelection_.empty()){localMessage(data_->session->localPlayer().value_or(0),0,0,2,"等待网络确认选择");return;}if(pressed && (buildTarget_ || spellTarget_ || itemTarget_ || orderMode_!=OrderMode::None)){localMessage(data_->session->localPlayer().value_or(0),0,0,2,"请先选择命令目标");return;}
+    refreshIdleWorkers(true);if(idleWorkers_.empty())return;auto next=std::upper_bound(idleWorkers_.begin(),idleWorkers_.end(),lastIdleWorker_);auto id=next==idleWorkers_.end()?idleWorkers_.front():*next;auto local=data_->session->localPlayer().value_or(0);auto& units=data_->session->units();auto found=units.find(id);if(found==units.end() || !data_->session->idleWorker(id,local))return;lastIdleWorker_=id;x_=number(found->second->x);y_=number(found->second->y);if(!lanSimulation_)data_->session->world()->environment().cameraMotion.sync(x_,y_);
+    if(lanSimulation_){auto current=data_->session->playerSelection(local);if(current.size()==1 && current.contains(id))return;std::vector<LanSelectionChange> changes;if(!current.empty())changes.push_back({false,{current.begin(),current.end()}});changes.push_back({true,{id}});try{auto bytes=encodeLanSelectionUpdate(*data_->session,lanPeer_,changes,lanWireObject_);if(!bytes.empty()){lanPendingSelection_=std::move(bytes);if(!lanSendSelection_(lanPendingSelection_)){lanPendingSelection_.clear();localMessage(local,0,0,3,"无法发送网络选择");}}}catch(const std::exception& e){log_.write(std::string("lan_idle_worker_selection_error=")+e.what());localMessage(local,0,0,3,"无法同步工人选择");}return;}
+    auto current=selected();if(current.size()==1 && current.front()==id)return;for(auto selectedId:current)if(units.contains(selectedId))data_->session->selectUnit(selectedId,false);if(data_->session->idleWorker(id,local))data_->session->selectUnit(id,true);
+}
+void GameView::drawIdleWorkers() {
+    if(idleWorkers_.empty())return;float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;auto rect=[&](float x,float y,float w,float h,DWORD color,IDirect3DTexture9* image=nullptr){renderer_.rect(left+x*scale,top+y*scale,w*scale,h*scale,color,image);};rect(.008f,.395f,.033f,.033f,0xff484138);if(auto icon=data_->assets->cachedTexture(data_->idleWorkerIcon))rect(.010f,.397f,.029f,.029f,0xffffffff,icon);text_.draw(std::to_wstring(idleWorkers_.size()),left+.030f*scale,top+.416f*scale,.009f*scale,0xffffffff);
 }
 void GameView::refreshHeroShortcuts() {
     heroShortcutIds_.clear();auto local=data_->session->localPlayer().value_or(0);for(auto& [id,u]:data_->session->units())if(u->owner==local && u->hero && !u->illusion && !u->removing){heroShortcutIds_.push_back(id);if(heroShortcutIds_.size()==7)break;}

@@ -926,6 +926,7 @@ public:
     const World* world() const {return world_.get();}
     World* world() {return world_.get();}
     bool unitSelectable(std::uint32_t handle);
+    bool idleWorker(std::uint32_t handle,unsigned player);
     void selectUnit(std::uint32_t handle,bool selected);
     bool setPlayerUnitSelected(unsigned player,std::uint32_t handle,bool selected);
     std::set<std::uint32_t> playerSelection(unsigned player);

@@ -13,7 +13,7 @@ struct GameData {
     std::unique_ptr<TerrainScene> terrain;
     std::unique_ptr<SceneObjects> objects;
     std::vector<ConsolePiece> console;
-    std::string minimap,autocastModel,minimapPingModel;
+    std::string minimap,autocastModel,minimapPingModel,idleWorkerIcon;
     std::array<std::string,3> resourceIcons;
     std::array<GameCommand,5> commands;
     std::array<GameCommand,4> buildCommands;
