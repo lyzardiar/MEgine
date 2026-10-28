@@ -87,7 +87,7 @@ struct ScriptCineFilter {
 };
 struct CachedBook {unsigned level=0;std::vector<std::uint32_t> spells;};
 struct CachedItem {
-    std::uint32_t type=0,life=0,maxLife=0;
+    std::uint32_t type=0,life=0,maxLife=0,dropId=0;
     int charges=0,userData=0,level=0;
     bool visible=true,invulnerable=false,droppable=true,pawnable=true,dropOnDeath=false;
     std::map<std::uint32_t,CachedBook> books;

@@ -8,4 +8,4 @@
 
 地图脚本的 PlayCinematic 与 PlayModelCinematic 分别登记影片和模型槽位；对局结束转场时先播放模型，再播放影片，随后继续胜利／切关流程。原版反汇编支持此顺序；退出类型边界及播放期间其他声音的处理仍待对照。
 
-序章组选择流程所用 SyncSelections 已连接单机本地选择快照，GroupEnumUnitsSelected 读取对应玩家的快照并处理本地选择变化；跨客户端选择交换与等待仍随局域网功能实现。序章掉落脚本调用 SetItemDropID：原版将单位类型写入物品对象，但其实际消费者尚未查明，该 native 保持未实现。
+序章组选择流程所用 SyncSelections 已连接单机本地选择快照，GroupEnumUnitsSelected 读取对应玩家的快照并处理本地选择变化；跨客户端选择交换与等待仍随局域网功能实现。序章掉落脚本的 SetItemDropID 将来源类型保存到物品状态，并由独立 gamecache 的单位物品快照保存及恢复；原版普通存档持久化该字段，原版 StoreUnit 是否保留仍待对照。

@@ -1,10 +1,12 @@
 # 原生客户端交接入口
 
+2026-10-28：SetItemDropID 与物品来源状态已接入，独立 gamecache v2 保留该值并兼容读取 v1，见[战役 gamecache](campaign-gamecache.md)。
+
 2026-10-28：普通空间声音接入镜头方向、Miles 左右声像及声锥衰减；听感和原版精度待阶段验证，见[战役镜头与对话](campaign-cinematics.md)。
 
 2026-10-28：模型内 MDX 动态灯光及骨骼法线消费已接入；跨模型光照和原版视觉仍待完成或对照，见[模型光源](model-lighting.md)。
 
-2026-10-28：序章教程镜头目标 location 和单机选择同步接入；掉落来源字段的原版消费者仍待实现，见[战役流程](campaign-flow.md)。
+2026-10-28：序章教程镜头目标 location 和单机选择同步接入；掉落来源字段已按原版普通存档证据接入 gamecache 快照，见[战役流程](campaign-flow.md)。
 
 2026-10-28：战役单位定时转向已连接模拟和朝向消费者；序章原 main 及 20 秒静音模拟通过，完整战役和原版精度待阶段验证，见[战役镜头与对话](campaign-cinematics.md)。
 

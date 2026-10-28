@@ -994,7 +994,7 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 
 路径：session_world／session_collections／session。GetCameraTargetPositionLoc 为镜头目标生成独立 location，SyncSelections 与 GroupEnumUnitsSelected 连接单机选择快照。Win32 Release 产品编译与差异检查通过；之前版本的 Prologue01 原 main 和 60 秒静音模拟通过，未执行本次教程交互或三图回归，证据 tmp/docs-artifacts/war3/campaign/prologue-60-next.log。
 
-集中验证 SmartCameraPanBJ 在静止／手动平移／跟随／镜头过渡时的目标查询与位置句柄生命周期；本地选择／取消／隐藏移除／过滤回调／连续同步、多人选择交换和等待，及教程实际救援／编组完整输入。SetItemDropID 的原版物品来源字段消费者未明，仍为未实现项；原版画面／声音／性能及旧 MEngine 待测项保持原状态。
+集中验证 SmartCameraPanBJ 在静止／手动平移／跟随／镜头过渡时的目标查询与位置句柄生命周期；本地选择／取消／隐藏移除／过滤回调／连续同步、多人选择交换和等待，及教程实际救援／编组完整输入。SetItemDropID 及独立快照见后续物品来源记录；原版画面／声音／性能及旧 MEngine 待测项保持原状态。
 
 ## 模型动态光源阶段待验证
 
@@ -1007,3 +1007,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：audio／sound／session_sound／session／game_view。普通空间声音按监听方向与声源位置设置原版 Miles sample pan，声锥参数改变实际音量；Win32 Release 产品编译通过，实际听感尚未验证。
 
 集中验证左右／正前／正后／垂直位置、转向／滚转／跟随、音量与范围／声锥内外／淡变、位置与朝向改变、静音／释放／抢占及原版 Miles 混音。当前声像及衰减公式为近似，区域堆叠声仍无左右定位；原版精度、音频设备与性能留阶段验证。旧 MEngine 待测队列保持延期。
+
+## 物品掉落来源与缓存版本阶段待验证
+
+路径：entities／script_state／session_entities／session_cache。SetItemDropID 保存物品来源 rawcode，独立 gamecache v2 读写该值并兼容 v1；Win32 Release 产品编译通过，定向检查 v2 保存／读取／恢复与 v1 默认值通过，未加载 Game.dll，产物 tmp/docs-artifacts/war3/drop-cache-probe/。
+
+集中验证空／销毁句柄、原序章死亡掉落及后续商店／拾取、跨关卡和所有物品格、损坏与旧格式迁移、存档／回放字段、原版 StoreUnit 及其他潜在来源字段消费者。原版普通存档保留该字段，但原版 gamecache 是否保留仍待对照；独立缓存格式不是原版格式。旧 MEngine 队列保持延期。
