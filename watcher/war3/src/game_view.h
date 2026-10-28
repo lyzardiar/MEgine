@@ -44,6 +44,7 @@ class GameView {
     enum class OrderMode {None,Move,Attack,Patrol,Harvest,Entangle,Repair};
     OrderMode orderMode_=OrderMode::None;
     std::uint32_t buildMenuUnit_=0,skillMenuUnit_=0,bookMenuUnit_=0;
+    bool buildMenuQueued_=false;
     std::uint32_t subgroupUnit_=0,subgroupType_=0;
     std::vector<std::uint32_t> subgroupSelection_;
     std::array<std::vector<std::uint32_t>,10> controlGroups_;
@@ -57,10 +58,13 @@ class GameView {
     std::uint64_t nextIdleWorkerRefresh_=0;
     std::vector<std::uint32_t> spellBookStack_;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> spellTarget_;
+    bool spellTargetQueued_=false;
     std::vector<CommandButton> commandButtons(std::uint32_t unit);
     std::optional<std::pair<std::uint32_t,std::uint32_t>> buildTarget_;
+    bool buildTargetQueued_=false;
     bool chatOpen_=false;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
+    bool itemTargetQueued_=false;
     struct InventoryDrag {std::uint32_t holder=0,item=0;unsigned slot=0;bool moving=false;};
     std::optional<InventoryDrag> inventoryDrag_;
     bool inventoryDragBlocked_=false;
@@ -110,7 +114,7 @@ class GameView {
     void drawAutocast(float x,float y,std::uint32_t unit,std::uint32_t ability);
     std::map<std::pair<std::uint32_t,std::uint32_t>,ModelInstance> autocastInstances_;
     void selection();
-    bool castSelection(std::uint32_t caster,std::uint32_t ability,std::uint32_t target=0,std::optional<WorldPoint> point={});
+    bool castSelection(std::uint32_t caster,std::uint32_t ability,std::uint32_t target=0,std::optional<WorldPoint> point={},bool queued=false);
     void spellPreview(const GameInput& input);
     void buildingPreview(const GameInput& input);
     void stream();
@@ -125,7 +129,7 @@ class GameView {
     struct EffectPresentation {bool birth=false,stand=false,death=false,loops=false,missingAttachment=false;std::uint64_t birthTime=0,standTime=0,deathTime=0;};
     std::map<std::uint32_t,EffectPresentation> effectPresentations_;
     std::optional<D3DMATRIX> unitWorld(const UnitState& unit) const;
-    void activateItem(std::uint32_t unit,std::uint32_t item);
+    void activateItem(std::uint32_t unit,std::uint32_t item,bool queued=false);
     void inventoryDragInput(GameInput& input);
     void drawInventoryDrag(const GameInput& input);
     std::vector<std::uint32_t> selected(bool owned=false) const;
