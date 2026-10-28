@@ -16,6 +16,7 @@ class Renderer {
     bool resize_ = false;
     bool translated_ = false;
     bool reference_ = false;
+    unsigned particleDetail_=2;
 public:
     explicit Renderer(HWND window, bool reference = false);
     void resize(unsigned width, unsigned height);
@@ -29,6 +30,8 @@ public:
     D3DPOOL resourcePool() const {return extended_?D3DPOOL_DEFAULT:D3DPOOL_MANAGED;}
     unsigned width() const { return parameters_.BackBufferWidth; }
     unsigned height() const { return parameters_.BackBufferHeight; }
+    unsigned particleDetail() const {return particleDetail_;}
+    void particleDetail(unsigned detail) {particleDetail_=detail<=2?detail:2;}
     const char* driver() const { return reference_ ? (extended_ ? "d3d9ex-reference" : "d3d9-reference") : translated_ ? (extended_ ? "d3d9on12ex" : "d3d9on12") : extended_ ? "d3d9ex" : "d3d9"; }
 };
 }

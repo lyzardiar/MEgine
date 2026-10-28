@@ -59,6 +59,7 @@ public:
     void focus(const std::string& name);
     const std::string& focus() const {return focused_;}
     bool popupOpen() const {return popup_.has_value();}
+    void closePopup() {popup_.reset();}
     std::optional<Rect> popupBounds() {return popup_?std::optional<Rect>{menuBounds(*popup_)}:std::nullopt;}
     bool inputConsumed() const {return consumed_;}
     std::optional<ChoiceChange> takeChoice();

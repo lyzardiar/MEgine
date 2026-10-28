@@ -87,6 +87,8 @@ class GameView {
     bool cameraPersistable_=true;
     GameAudioPreferences audioCommitted_{};
     bool audioPersistable_=true;
+    GameVideoPreferences videoCommitted_{};
+    bool videoPersistable_=true;
     bool appExit_=false;
     std::wstring chatText_;
     std::array<float,3> eye_{};

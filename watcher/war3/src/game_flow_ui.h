@@ -10,7 +10,7 @@ class GameFlowUi {
     Renderer& renderer_;
     Text& text_;
     std::unique_ptr<GlueScreen> menu_,options_,dialog_,scores_;
-    enum class Panel {Closed,Main,End,Quit,Help,Tips,Options,Gameplay,Sound};
+    enum class Panel {Closed,Main,End,Quit,Help,Tips,Options,Gameplay,Sound,Video};
     Panel panel_=Panel::Closed;
     std::uint32_t dialogId_=0;
     std::uint64_t dialogRevision_=0;
@@ -19,6 +19,7 @@ class GameFlowUi {
     bool appExit_=false;
     GameCameraPreferences cameraPreferences_{},cameraDraft_{};
     GameAudioPreferences audioPreferences_{},audioDraft_{};
+    GameVideoPreferences videoPreferences_{},videoDraft_{};
     std::string sliderDrag_;
     std::vector<std::string> scoreModels_;
     std::string helpText_,tipsText_;
@@ -40,6 +41,8 @@ public:
     void cameraPreferences(GameCameraPreferences preferences) {if(preferences.mouseSpeed>100)preferences.mouseSpeed=100;if(preferences.keySpeed>100)preferences.keySpeed=100;cameraPreferences_=cameraDraft_=preferences;}
     GameAudioPreferences audioPreferences() const {return audioPreferences_;}
     void audioPreferences(GameAudioPreferences preferences) {if(preferences.soundVolume>100)preferences.soundVolume=100;if(preferences.musicVolume>100)preferences.musicVolume=100;audioPreferences_=audioDraft_=preferences;}
+    GameVideoPreferences videoPreferences() const {return videoPreferences_;}
+    void videoPreferences(GameVideoPreferences preferences) {if(preferences.particleDetail>2)preferences.particleDetail=2;videoPreferences_=videoDraft_=preferences;}
     const std::vector<std::string>& scoreModels();
 };
 }

@@ -1496,3 +1496,9 @@ Win32 Release 客户端增量编译通过。阶段核对 Rescuable 玩家、显�
 路径：`session_entities.cpp`。`GetUnitPointValue` 与 `GetUnitPointValueByType` 使用源 `UnitData/points` 和 upoi 对象覆盖，实例读取当前单位类型；空／失效单位及未知类型返回 0。原件 1.27 入口 `0x6f1e6370`／`0x6f1e6390` 的查找与空对象返回行为经静态核对，DotA 脚本分别存在 31／4 处调用。
 
 Win32 Release 客户端增量编译通过。阶段检查 DotA 实际调用和对象查表、英雄／建筑／变形类型、w3u 覆盖、零／负点数和无效句柄；无原版实机或完整对局通过结论。
+
+## 视频粒子选项与联机排队入口待验证
+
+路径：`game_flow_ui.*`、`game_preferences.*`、`game_view.*`、`glue.h`、`renderer.h`、`model_particles.cpp`、`docs/game-options.md`。原视频页面粒子三级选项连接 PRE2 发射率和独立用户设置，确认应用、取消恢复；联机界面将已支持的 Shift 排队交给已有编码器，未支持命令仍由底层拒绝。
+
+Win32 Release 客户端增量编译通过。阶段核对原 FDF 键鼠／弹出菜单／Esc、确认取消和持久化／坏文件／切图／设备恢复、PRE2 粒子在低中高档的实际 GPU 画面与性能、原版比例；联机真实窗口与双端时间片、技能／建造／物品队列和权限变化仍待测试。当前粒子比例是实现值，非原版验证结论。

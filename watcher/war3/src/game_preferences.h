@@ -16,8 +16,14 @@ struct GameAudioPreferences {
     float musicGain() const {return music?float(musicVolume)/100.f:0.f;}
     bool operator==(const GameAudioPreferences&) const = default;
 };
+struct GameVideoPreferences {
+    unsigned particleDetail=2;
+    bool operator==(const GameVideoPreferences&) const = default;
+};
 GameCameraPreferences loadCameraPreferences(const fs::path& dataRoot);
 void saveCameraPreferences(const fs::path& dataRoot,const GameCameraPreferences& preferences);
 GameAudioPreferences loadAudioPreferences(const fs::path& dataRoot);
 void saveAudioPreferences(const fs::path& dataRoot,const GameAudioPreferences& preferences);
+GameVideoPreferences loadVideoPreferences(const fs::path& dataRoot);
+void saveVideoPreferences(const fs::path& dataRoot,const GameVideoPreferences& preferences);
 }

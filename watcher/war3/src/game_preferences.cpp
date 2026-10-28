@@ -10,6 +10,7 @@ constexpr std::array<std::uint8_t,8> cameraMagic{'W','3','C','A','M',1,0,0};
 constexpr std::array<std::uint8_t,8> cameraMagicV2{'W','3','C','A','M',2,0,0};
 constexpr std::array<std::uint8_t,8> cameraMagicV3{'W','3','C','A','M',3,0,0};
 constexpr std::array<std::uint8_t,8> audioMagic{'W','3','A','U','D',1,0,0};
+constexpr std::array<std::uint8_t,8> videoMagic{'W','3','V','I','D',1,0,0};
 std::atomic<unsigned> serial=0;
 fs::path path(const fs::path& root,const wchar_t* name){validateWar3UserDirectory(root);return war3UserDirectory()/L"Settings"/name;}
 std::optional<Bytes> read(const fs::path& file,std::span<const std::uint8_t> magic,size_t size){
@@ -25,4 +26,6 @@ GameCameraPreferences loadCameraPreferences(const fs::path& root){
 void saveCameraPreferences(const fs::path& root,const GameCameraPreferences& value){if(value.mouseSpeed>100 || value.keySpeed>100)throw std::runtime_error("Invalid camera preference speed");loadCameraPreferences(root);auto file=path(root,L"camera.bin");Bytes bytes(cameraMagicV3.begin(),cameraMagicV3.end());bytes.insert(bytes.end(),{std::uint8_t(value.edgeScroll),std::uint8_t(value.mouseSpeed),std::uint8_t(value.keySpeed),std::uint8_t(value.healthBars)});publish(file,bytes);}
 GameAudioPreferences loadAudioPreferences(const fs::path& root){auto bytes=read(path(root,L"audio.bin"),audioMagic,audioMagic.size()+4);if(!bytes)return {};auto at=audioMagic.size();if((*bytes)[at]>1 || (*bytes)[at+1]>1 || (*bytes)[at+2]>100 || (*bytes)[at+3]>100)throw std::runtime_error("Invalid audio preferences");return {(*bytes)[at]!=0,(*bytes)[at+1]!=0,(*bytes)[at+2],(*bytes)[at+3]};}
 void saveAudioPreferences(const fs::path& root,const GameAudioPreferences& value){if(value.soundVolume>100 || value.musicVolume>100)throw std::runtime_error("Invalid audio preference volume");loadAudioPreferences(root);auto file=path(root,L"audio.bin");Bytes bytes(audioMagic.begin(),audioMagic.end());bytes.insert(bytes.end(),{std::uint8_t(value.sound),std::uint8_t(value.music),std::uint8_t(value.soundVolume),std::uint8_t(value.musicVolume)});publish(file,bytes);}
+GameVideoPreferences loadVideoPreferences(const fs::path& root){auto bytes=read(path(root,L"video.bin"),videoMagic,videoMagic.size()+1);if(!bytes)return {};auto detail=(*bytes)[videoMagic.size()];if(detail>2)throw std::runtime_error("Invalid particle detail");return {detail};}
+void saveVideoPreferences(const fs::path& root,const GameVideoPreferences& value){if(value.particleDetail>2)throw std::runtime_error("Invalid particle detail");loadVideoPreferences(root);Bytes bytes(videoMagic.begin(),videoMagic.end());bytes.push_back(std::uint8_t(value.particleDetail));publish(path(root,L"video.bin"),bytes);}
 }
