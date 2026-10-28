@@ -6,7 +6,7 @@
 
 namespace war3 {
 class ScriptSession;
-enum class PlayerCommandKind : std::uint8_t {GroundMove,GroundAttack,GroundPatrol,Stop,Hold,TargetOrder,SpellUnit,SpellPoint,SpellImmediate,BuildAt,Train,Research,Upgrade,CancelUpgrade,CancelBuild,CancelProduction,Revive,ReturnResources,LearnSkill,ItemImmediate,ItemUnit,ItemPoint,DropItem,UnloadUnit,PurchaseItem,PurchaseUnit,SetAlliance,SetAlliedVictory,TransferResources,Chat};
+enum class PlayerCommandKind : std::uint8_t {GroundMove,GroundAttack,GroundPatrol,Stop,Hold,TargetOrder,SpellUnit,SpellPoint,SpellImmediate,BuildAt,Train,Research,Upgrade,CancelUpgrade,CancelBuild,CancelProduction,Revive,ReturnResources,LearnSkill,ItemImmediate,ItemUnit,ItemPoint,DropItem,UnloadUnit,PurchaseItem,PurchaseUnit,SetAlliance,SetAlliedVictory,TransferResources,Chat,AbilityAutocast,RepairAutocast};
 struct PlayerCommand {
     unsigned player=0;
     PlayerCommandKind kind=PlayerCommandKind::GroundMove;

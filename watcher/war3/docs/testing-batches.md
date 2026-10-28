@@ -1169,3 +1169,7 @@ Win32 Release 产品编译通过；本机定向双端探针覆盖四类请求、
 路径：lan_host、lan_host_ui、lan_join、lan_lobby、lan_mapcheck。建房读取不可变地图快照并从同一快照计算声明；缺图／不匹配时请求地图，按块验证和确认并在内存重算字段，匹配后保留快照。自动就绪、开始和会话接入尚未实现。
 
 Win32 Release 产品编译通过；本机两客户端并发接收真实 BootyBay，逐字节与主机快照一致并核对四项字段，未加载 Game.dll；快照及取消检查通过；模拟主机的错误 CRC、错误偏移与中途取消检查通过。证据 tmp/docs-artifacts/war3/lan-transfer-probe/result.log、lan-snapshot-probe/result.log、client-transfer-invalid-probe/result.log。集中验证 1.27 原版双向互通、缺图／错误块／断线／超时、UI 进度、慢网／大地图与内存、声明变更、系统磁盘活动及会话所有权。当前不支持续传或重试。
+
+## 玩家自动施法命令阶段待验证
+
+路径：player_commands、game_commands。技能及修理自动施法经统一玩家命令入口执行并检查控制权限；Win32 Release 集成版本编译通过，待集中验证真实右键、启停与订单事件、权限撤销和原版行为。网络动作编码及锁步尚未接入。
