@@ -63,6 +63,8 @@ class World {
     void changeBlight(WorldRect rectangle,std::optional<WorldPoint> center,float radius,bool add);
     void dirtyBlight(unsigned x,unsigned y);
     std::optional<size_t> terrainCorner(WorldPoint point) const;
+    bool pathCellFree(int x,int y,float radius,PathMovement movement) const;
+    bool pathCellsConnected(int x,int y,int endX,int endY,float radius,PathMovement movement) const;
 public:
     World(MapData data,std::array<jass::Real,4> margins);
     static std::unique_ptr<World> read(Archives& archives);
@@ -85,6 +87,8 @@ public:
     const auto& blightChunks() const {return blightChunks_;}
     void block(float x,float y);
     std::optional<size_t> pathCell(float x,float y) const;
+    bool pathPointFree(WorldPoint point,float radius,PathMovement movement) const;
+    bool pathSegmentFree(WorldPoint from,WorldPoint to,float radius,PathMovement movement) const;
     unsigned pathMask(WorldPoint point,std::span<const PathCell> ignored={}) const;
     void footprint(std::span<const PathCell> cells,bool add);
     std::uint64_t pathingRevision() const {return pathingRevision_;}
