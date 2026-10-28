@@ -96,6 +96,7 @@ class ScriptSession {
     float localSoundGain_=1,localMusicGain_=1;
     std::unique_ptr<ObjectData> definitions_;
     std::map<std::uint32_t,std::shared_ptr<UnitState>> units_;
+    std::set<std::uint32_t> queuedPlayerUnits_;
     std::map<std::string,std::vector<mdx::Sequence>> animationSequences_;
     std::set<std::uint32_t> animatedDestructables_;
     const std::vector<mdx::Sequence>& sequencesForModel(const std::string& model);
@@ -867,6 +868,7 @@ class ScriptSession {
     bool issueItemMove(unsigned player,std::uint32_t unit,std::uint32_t item,ItemMoveOrder::Kind kind,WorldPoint point,std::uint32_t target,unsigned slot);
     void spatialEvents();
     void moveUnits(double delta);
+    void playerOrderQueueTick();
     void bindWeatherNatives();
     void bindCallbackNatives();
     void bindCollectionNatives();
@@ -927,6 +929,8 @@ public:
     const World* world() const {return world_.get();}
     World* world() {return world_.get();}
     bool unitSelectable(std::uint32_t handle);
+    void clearPlayerOrders(std::uint32_t handle);
+    bool queuePlayerOrder(std::uint32_t handle,const PlayerCommand& command);
     bool idleWorker(std::uint32_t handle,unsigned player);
     void selectUnit(std::uint32_t handle,bool selected);
     bool setPlayerUnitSelected(unsigned player,std::uint32_t handle,bool selected);

@@ -12,7 +12,7 @@
 namespace war3 {
 class QuestDialog;
 class GameFlowUi;
-struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;};
+struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;bool rightShift=false;};
 class GameView {
     std::unique_ptr<GameData> data_;
     Renderer& renderer_;
@@ -114,7 +114,7 @@ class GameView {
     void spellPreview(const GameInput& input);
     void buildingPreview(const GameInput& input);
     void stream();
-    void command(float x,float y,OrderMode mode);
+    void command(float x,float y,OrderMode mode,bool queued);
     std::uint32_t widget(float x,float y,bool items) const;
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);

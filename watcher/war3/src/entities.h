@@ -13,6 +13,7 @@
 #include "tinker.h"
 #include "corpses.h"
 #include "unit_forms.h"
+#include "player_commands.h"
 #include <algorithm>
 
 namespace war3 {
@@ -33,6 +34,7 @@ struct UnitState {
     std::map<std::uint32_t,int> abilities;
     std::map<std::uint32_t,bool> autocast;
     std::uint32_t currentOrder=0;
+    std::vector<PlayerCommand> playerOrders;
     double stealthLastAction=0;
     bool shadowNight=false;
     std::optional<ShadowMeldState> shadowMeld;

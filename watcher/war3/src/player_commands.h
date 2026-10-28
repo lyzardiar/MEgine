@@ -20,6 +20,9 @@ struct PlayerCommand {
     int gold=0,lumber=0;
     bool enabled=false;
     std::string text;
+    bool queued=false;
+    bool hasFormationDestination=false;
+    std::uint32_t formationXBits=0,formationYBits=0;
 };
-unsigned dispatchPlayerCommand(ScriptSession& session,const PlayerCommand& command,const std::function<bool()>& keepGoing={});
+unsigned dispatchPlayerCommand(ScriptSession& session,const PlayerCommand& command,const std::function<bool()>& keepGoing={},bool fromQueue=false);
 }
