@@ -12,6 +12,7 @@ struct Key { int time; XMFLOAT4 value{}, incoming{}, outgoing{}; };
 struct Track { unsigned mode = 0; int global = -1; std::vector<Key> keys; };
 struct Transform { Track translation, rotation, scale; };
 struct Sequence { std::string name; int start, end; unsigned flags; };
+struct Camera {std::string name;XMFLOAT4 eye{},target{};float fov=0,nearPlane=0,farPlane=0;Track position,destination,roll;};
 struct Node { int id, parent; unsigned flags; std::string name;XMFLOAT4 pivot{}; Transform tracks; };
 struct ParticleEmitter2 {
     unsigned node=0,filter=0,rows=1,columns=1,headOrTail=0,squirt=0,texture=0,replacement=0;
@@ -59,7 +60,8 @@ struct Model::Data {
     std::optional<std::uint64_t> globalTime;
     std::vector<std::pair<unsigned, unsigned>> draws;
     DirectX::XMFLOAT4 eye{0,-1000,500,0}, target{0,0,100,0};
-    mdx::Track cameraPosition, cameraTarget;
+    mdx::Track cameraPosition, cameraTarget, cameraRoll;
+    std::vector<mdx::Camera> cameras;
     float fov = 0.7854f, nearPlane = 8, farPlane = 10000;
     unsigned sequence = 0;
     std::optional<std::uint64_t> poseTime;

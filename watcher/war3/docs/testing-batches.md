@@ -1,8 +1,14 @@
 # 独立客户端测试队列
 
+## 模型过场与地图滤镜阶段待验证
+
+路径：model／model_pose 多相机及滚转，model_cinematic 的连续序列／源 Scene 声音，sound 标签匹配，campaign 与 main 入口；session_match、script_state、game_view／game_cine_filter 和 renderer 的脚本滤镜状态／纹理／UV／颜色／混合。原版结局模型十段与对应相机、第二段原音轨已接入；MRF 披风网格及完整模型事件仍未完成；脚本 PlayModelCinematic／PlayCinematic 的顺序请求与返回对局已接入。原件 REA 序列回调与 Scene 配置、模型清单保存在 tmp/docs-artifacts/war3/campaign/。
+
+Win32 Release 编译通过；真实原模型静音最小运行 6,219 ms／185 帧，跨过首段到第二段，音频标签解析问题修复后通过。可见画面、声音听感、全场次、原版精度及滤镜玩法均待功能阶段验证。集中验证原版相机／序列边界／音轨连续性、地图脚本电影／模型排队及胜利切关／播放期间声音，滤镜九个 native／纹理／颜色及 UV 动画／六类混合与边界、覆盖层顺序、暂停／切换／异常和资源释放；MRF 与事件实现后合并验收。
+
 ## 战役影片阶段待验证
 
-路径：cinematic、campaign_browser、main 和 CMake；从原版 Movies 的 AVI 文件直接构建 DirectShow 图、通过 blizzard.ax 解码 BLZ0、播放 MP3 并支持跳过／返回。影片与资料片模型过场属于不同流程，后者的多动画时间线及声音仍待实现。Win32 产品编译通过；TutorialIn 隐藏窗口最小检查中静音和非静音均构图成功、播放时间推进，2 秒分别收到 50／49 个解码后帧，正常销毁；可见画面、声音听感及原版一致性待功能阶段验证。REA 依据和临时检查位于 tmp/docs-artifacts/war3/campaign/。
+路径：cinematic、campaign_browser、main 和 CMake；从原版 Movies 的 AVI 文件直接构建 DirectShow 图、通过 blizzard.ax 解码 BLZ0、播放 MP3 并支持跳过／返回。影片与资料片模型过场属于不同流程，后者的 MRF 披风与完整表现仍待实现。Win32 产品编译通过；TutorialIn 隐藏窗口最小检查中静音和非静音均构图成功、播放时间推进，2 秒分别收到 50／49 个解码后帧，正常销毁；可见画面、声音听感及原版一致性待功能阶段验证。REA 依据和临时检查位于 tmp/docs-artifacts/war3/campaign/。
 
 集中验证九部影片的完整播放／音画同步／可视比例、静音、跳过、窗口缩放／最小化／设备恢复、错误提示／资源释放／重复播放及只读资源目录；完成模型过场后合并对照其时序、相机、动画、事件和声音。
 

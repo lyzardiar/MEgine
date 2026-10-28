@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <bit>
 #include <cctype>
+#include <cmath>
 
 namespace war3 {
 std::string ScriptSession::localized(const std::string& key) {if(!localized_){FrameDefinitions d;d.load(requireWorld().resources(),"UI\\FrameDef\\GlobalStrings.fdf");localized_=std::move(d);}return localized_->string(key);}
@@ -24,6 +25,14 @@ void ScriptSession::bindMatchNatives() {
     for(auto name:{"IsNoVictoryCheat","IsNoDefeatCheat"})bind(name,"boolean",{},[](auto& vm,auto){return vm.boolean(false);});
     bind("EnableUserControl","nothing",{"boolean"},[this](auto& vm,auto a){userControl_=a[0].bits!=0;return vm.nothing();});
     bind("EnableUserUI","nothing",{"boolean"},[this](auto& vm,auto a){userUI_=a[0].bits!=0;return vm.nothing();});
+    bind("SetCineFilterTexture","nothing",{"string"},[this](auto& vm,auto a){auto value=a[0].text?*a[0].text:std::string{};if(value.size()>1024 || value.find('\0')!=std::string::npos)throw std::runtime_error("Invalid cinematic filter texture");cineFilter_.texture=std::move(value);return vm.nothing();});
+    bind("SetCineFilterBlendMode","nothing",{"blendmode"},[this](auto& vm,auto a){if(a[0].bits>5)throw std::runtime_error("Invalid cinematic filter blend mode");cineFilter_.blend=a[0].bits;return vm.nothing();});
+    bind("SetCineFilterTexMapFlags","nothing",{"texmapflags"},[this](auto& vm,auto a){if(a[0].bits>3)throw std::runtime_error("Invalid cinematic filter texture flags");cineFilter_.flags=a[0].bits;return vm.nothing();});
+    for(auto [name,start]:std::initializer_list<std::pair<const char*,bool>>{{"SetCineFilterStartUV",true},{"SetCineFilterEndUV",false}})bind(name,"nothing",{"real","real","real","real"},[this,start](auto& vm,auto a){std::array<float,4> values;for(unsigned i=0;i<4;++i){values[i]=std::bit_cast<float>(a[i].bits);if(!std::isfinite(values[i]))throw std::runtime_error("Invalid cinematic filter UV");}(start?cineFilter_.startUV:cineFilter_.endUV)=values;return vm.nothing();});
+    for(auto [name,start]:std::initializer_list<std::pair<const char*,bool>>{{"SetCineFilterStartColor",true},{"SetCineFilterEndColor",false}})bind(name,"nothing",{"integer","integer","integer","integer"},[this,start](auto& vm,auto a){std::array<unsigned,4> values;for(unsigned i=0;i<4;++i)values[i]=unsigned(std::clamp(std::bit_cast<std::int32_t>(a[i].bits),0,255));(start?cineFilter_.startColor:cineFilter_.endColor)=values;return vm.nothing();});
+    bind("SetCineFilterDuration","nothing",{"real"},[this](auto& vm,auto a){auto duration=std::bit_cast<float>(a[0].bits);if(!std::isfinite(duration))throw std::runtime_error("Invalid cinematic filter duration");cineFilter_.duration=std::max(0.f,duration);return vm.nothing();});
+    bind("DisplayCineFilter","nothing",{"boolean"},[this](auto& vm,auto a){cineFilter_.displayed=a[0].bits!=0;if(cineFilter_.displayed)cineFilter_.started=simulationTime_;return vm.nothing();});
+    bind("IsCineFilterDisplayed","boolean",{},[this](auto& vm,auto){return vm.boolean(cineFilter_.displayed);});
     bind("EnableSelect","nothing",{"boolean","boolean"},[this](auto& vm,auto a){selectionEnabled_=a[0].bits!=0;selectionUI_=a[1].bits!=0;return vm.nothing();});
     bind("SetGameDifficulty","nothing",{"gamedifficulty"},[this](auto& vm,auto a){if(a[0].bits>3)throw std::runtime_error("Invalid game difficulty");gameDifficulty_=a[0].bits;return vm.nothing();});
     bind("GetGameDifficulty","gamedifficulty",{},[this](auto& vm,auto){return vm.handle("gamedifficulty",gameDifficulty_);});

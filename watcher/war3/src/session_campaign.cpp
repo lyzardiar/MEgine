@@ -12,6 +12,7 @@ void ScriptSession::bindCampaignNatives(){
     bind("SetCampaignMenuRace","nothing",{"race"},[protect](auto& vm,auto a){protect();unsigned index=a[0].bits==7?0:a[0].bits==1?1:a[0].bits==3?2:a[0].bits==2?3:a[0].bits==4?4:UINT_MAX;if(index!=UINT_MAX){CampaignProfile profile;profile.select(false,index);}return vm.nothing();});
     bind("SetCampaignMenuRaceEx","nothing",{"integer"},[integer,protect](auto& vm,auto a){protect();auto index=integer(a[0]);if(index>=0 && index<4){CampaignProfile profile;profile.select(true,unsigned(index));}return vm.nothing();});
     bind("ForceCampaignSelectScreen","nothing",{},[this](auto& vm,auto){forceCampaignSelect_=true;return vm.nothing();});
+    for(auto [name,model]:std::initializer_list<std::pair<const char*,bool>>{{"PlayCinematic",false},{"PlayModelCinematic",true}})bind(name,"nothing",{"string"},[this,model](auto& vm,auto a){if(!a[0].text || a[0].text->empty() || a[0].text->size()>1024 || a[0].text->find('\0')!=std::string::npos)throw std::runtime_error("Invalid cinematic request");if(cinematics_.size()>=16)throw std::runtime_error("Cinematic request budget exceeded");cinematics_.emplace_back(*a[0].text,model);return vm.nothing();});
     bind("ChangeLevel","nothing",{"string","boolean"},[this](auto& vm,auto a){if(!a[0].text || a[0].text->empty() || a[0].text->size()>1024)throw std::runtime_error("Invalid next-level path");nextLevel_=*a[0].text;finishGame(a[1].bits!=0,SessionExit::ChangeLevel);return vm.nothing();});
 }
 }

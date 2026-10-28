@@ -1,6 +1,7 @@
 // Author: MiYu. Resizable D3D9 rendering with lost-device recovery.
 #include "renderer.h"
 #include <cstring>
+#include <array>
 #include <wincodec.h>
 #include <d3d9on12.h>
 
@@ -116,6 +117,14 @@ void Renderer::rect(float x, float y, float w, float h, DWORD color, IDirect3DTe
     device_->SetSamplerState(0, D3DSAMP_ADDRESSV, tile ? D3DTADDRESS_WRAP : D3DTADDRESS_CLAMP);
     device_->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
     check(device_->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(Vertex)), "Draw quad");
+}
+void Renderer::cineFilter(float x,float y,float w,float h,DWORD color,IDirect3DTexture9* texture,const std::array<float,4>& uv,unsigned blend,unsigned flags) {
+    if(!texture || blend>5 || flags>3)throw std::runtime_error("Invalid cinematic filter draw");x-=.5f;y-=.5f;
+    Vertex vertices[]={{x,y,0,1,color,uv[0],uv[1]},{x+w,y,0,1,color,uv[2],uv[1]},{x,y+h,0,1,color,uv[0],uv[3]},{x+w,y+h,0,1,color,uv[2],uv[3]}};
+    device_->SetRenderState(D3DRS_ZENABLE,FALSE);device_->SetRenderState(D3DRS_ZWRITEENABLE,FALSE);device_->SetRenderState(D3DRS_ALPHATESTENABLE,blend==1);device_->SetRenderState(D3DRS_ALPHAREF,128);device_->SetRenderState(D3DRS_ALPHAFUNC,D3DCMP_GREATEREQUAL);device_->SetRenderState(D3DRS_ALPHABLENDENABLE,blend>=2);
+    device_->SetRenderState(D3DRS_SRCBLEND,blend==4?D3DBLEND_ZERO:blend==5?D3DBLEND_DESTCOLOR:D3DBLEND_SRCALPHA);device_->SetRenderState(D3DRS_DESTBLEND,blend>=4?D3DBLEND_SRCCOLOR:blend==3?D3DBLEND_ONE:D3DBLEND_INVSRCALPHA);
+    device_->SetTexture(0,texture);device_->SetTextureStageState(0,D3DTSS_COLOROP,D3DTOP_MODULATE);device_->SetTextureStageState(0,D3DTSS_COLORARG1,D3DTA_TEXTURE);device_->SetTextureStageState(0,D3DTSS_COLORARG2,D3DTA_DIFFUSE);device_->SetTextureStageState(0,D3DTSS_ALPHAOP,D3DTOP_MODULATE);device_->SetTextureStageState(0,D3DTSS_ALPHAARG1,D3DTA_TEXTURE);device_->SetTextureStageState(0,D3DTSS_ALPHAARG2,D3DTA_DIFFUSE);
+    device_->SetSamplerState(0,D3DSAMP_MINFILTER,D3DTEXF_LINEAR);device_->SetSamplerState(0,D3DSAMP_MAGFILTER,D3DTEXF_LINEAR);device_->SetSamplerState(0,D3DSAMP_ADDRESSU,flags&1?D3DTADDRESS_WRAP:D3DTADDRESS_CLAMP);device_->SetSamplerState(0,D3DSAMP_ADDRESSV,flags&2?D3DTADDRESS_WRAP:D3DTADDRESS_CLAMP);device_->SetFVF(D3DFVF_XYZRHW|D3DFVF_DIFFUSE|D3DFVF_TEX1);auto result=device_->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP,2,vertices,sizeof(Vertex));device_->SetRenderState(D3DRS_ALPHATESTENABLE,FALSE);check(result,"Draw cinematic filter");
 }
 Com<IDirect3DTexture9> Renderer::texture(unsigned width, unsigned height, std::span<const std::uint32_t> pixels) {
     if (!width || !height || width > 8192 || height > 8192 || pixels.size() != static_cast<size_t>(width) * height) throw std::runtime_error("Invalid texture dimensions");

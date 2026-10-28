@@ -42,6 +42,7 @@ class GameView {
     std::array<float,3> eye_{};
     size_t drawnChunks_=0,drawnObjects_=0,drawnUnits_=0;
     void camera(const GameInput& input,double delta);
+    void drawCineFilter();
     std::optional<std::array<float,3>> ground(float x,float y) const;
     std::optional<std::pair<float,float>> project(float x,float y,float z) const;
     void input(const GameInput& input);
@@ -78,6 +79,9 @@ public:
     bool appExitRequested() const {return appExit_;}
     bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}
     const std::string& nextLevel() const {return data_->session->nextLevel();}
+    std::optional<std::pair<std::string,bool>> takeCinematic(){return data_->session->takeCinematic();}
+    void resumeAfterCinematic(){last_=GetTickCount64();}
+    Archives& resources() const {return data_->session->world()->resources();}
     fs::path mapPath() const {auto world=data_->session->world();return world?world->resources().mapPath():fs::path{};}
     bool forceCampaignSelection() const {return data_->session->forceCampaignSelection();}
     unsigned frames() const {return frames_;}

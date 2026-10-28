@@ -3,6 +3,7 @@
 #include "platform.h"
 #include <d3d9.h>
 #include <wrl/client.h>
+#include <array>
 
 namespace war3 {
 template<class T> using Com = Microsoft::WRL::ComPtr<T>;
@@ -22,6 +23,7 @@ public:
     bool end(const fs::path& capture = {});
     void capture(const fs::path& path);
     void rect(float x, float y, float w, float h, DWORD color, IDirect3DTexture9* texture = nullptr, float u0 = 0, float v0 = 0, float u1 = 1, float v1 = 1, bool tile = false, bool additive = false, bool transpose = false);
+    void cineFilter(float x,float y,float w,float h,DWORD color,IDirect3DTexture9* texture,const std::array<float,4>& uv,unsigned blend,unsigned flags);
     Com<IDirect3DTexture9> texture(unsigned width, unsigned height, std::span<const std::uint32_t> pixels);
     IDirect3DDevice9* device() const { return device_.Get(); }
     D3DPOOL resourcePool() const {return extended_?D3DPOOL_DEFAULT:D3DPOOL_MANAGED;}

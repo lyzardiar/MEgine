@@ -74,6 +74,14 @@ struct ScriptTimerDialog {
     std::optional<std::pair<std::uint64_t,float>> realTime;
 };
 struct ScriptText {unsigned owner=0;float x=0,y=0;double expires=0;std::string text;};
+struct ScriptCineFilter {
+    std::string texture;
+    unsigned blend=2,flags=0;
+    std::array<float,4> startUV{0,0,1,1},endUV{0,0,1,1};
+    std::array<unsigned,4> startColor{255,255,255,255},endColor{255,255,255,255};
+    double duration=0,started=0;
+    bool displayed=false;
+};
 struct CachedBook {unsigned level=0;std::vector<std::uint32_t> spells;};
 struct CachedItem {
     std::uint32_t type=0,life=0,maxLife=0;

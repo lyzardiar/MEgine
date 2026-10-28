@@ -42,10 +42,10 @@ void Model::Data::pose(std::uint64_t elapsed,const D3DMATRIX& sourceView,const D
     d.skinRevision=d.poseRevision;
     }
 }
-void Model::draw(std::uint64_t elapsed, float aspect, bool twoSided) {
-    auto& d = *data_;d.globalTime=elapsed; if (!d.renderer) throw std::runtime_error("Model has no rendering device");
+void Model::draw(std::uint64_t elapsed, float aspect, bool twoSided,std::uint64_t clock) {
+    auto& d = *data_;d.globalTime=clock==UINT64_MAX?elapsed:clock; if (!d.renderer) throw std::runtime_error("Model has no rendering device");
     auto eye = XMLoadFloat4(&d.eye)+d.sample(d.cameraPosition,elapsed,XMVectorZero()); auto target = XMLoadFloat4(&d.target)+d.sample(d.cameraTarget,elapsed,XMVectorZero());
-    auto view=XMMatrixLookAtRH(eye,target,XMVectorSet(0,0,1,0));XMFLOAT4X4 v,p,w;XMStoreFloat4x4(&v,view);XMStoreFloat4x4(&p,XMMatrixPerspectiveFovRH(d.fov,aspect,d.nearPlane,d.farPlane));XMStoreFloat4x4(&w,XMMatrixIdentity());D3DMATRIX dv,dp,dw;std::memcpy(&dv,&v,sizeof(dv));std::memcpy(&dp,&p,sizeof(dp));std::memcpy(&dw,&w,sizeof(dw));draw(elapsed,dv,dp,dw,twoSided);
+    float roll=XMVectorGetX(d.sample(d.cameraRoll,elapsed,XMVectorZero()));auto direction=XMVector3Normalize(target-eye);auto up=XMVector3Rotate(XMVectorSet(0,0,1,0),XMQuaternionRotationAxis(direction,roll));auto view=XMMatrixLookAtRH(eye,target,up);XMFLOAT4X4 v,p,w;XMStoreFloat4x4(&v,view);XMStoreFloat4x4(&p,XMMatrixPerspectiveFovRH(d.fov,aspect,d.nearPlane,d.farPlane));XMStoreFloat4x4(&w,XMMatrixIdentity());D3DMATRIX dv,dp,dw;std::memcpy(&dv,&v,sizeof(dv));std::memcpy(&dp,&p,sizeof(dp));std::memcpy(&dw,&w,sizeof(dw));draw(elapsed,dv,dp,dw,twoSided,0xffffffff,nullptr,clock);
 }
 void Model::draw(std::uint64_t elapsed,const D3DMATRIX& sourceView,const D3DMATRIX& projection,const D3DMATRIX& worldMatrix,bool twoSided,DWORD instanceColor,ModelInstance* instance,std::uint64_t clock,bool emit,bool geometry) {
     if(!(instanceColor>>24))return;auto& d=*data_;d.globalTime=clock==UINT64_MAX?elapsed:clock;if(!d.renderer)throw std::runtime_error("Model has no rendering device");auto device=d.renderer->device();device->SetTransform(D3DTS_VIEW,&sourceView);device->SetTransform(D3DTS_PROJECTION,&projection);device->SetTransform(D3DTS_WORLD,&worldMatrix);
