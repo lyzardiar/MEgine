@@ -861,6 +861,8 @@ class ScriptSession {
     bool useConsumable(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point,const ConsumableInfo& info);
     std::map<std::uint32_t,std::optional<ConsumableInfo>> consumableInfo_;
     bool giveItem(std::uint32_t unit,std::uint32_t item,std::optional<unsigned> slot={});
+    bool itemMoveTick(UnitState& unit);
+    bool issueItemMove(unsigned player,std::uint32_t unit,std::uint32_t item,ItemMoveOrder::Kind kind,WorldPoint point,std::uint32_t target,unsigned slot);
     void spatialEvents();
     void moveUnits(double delta);
     void bindWeatherNatives();
@@ -962,7 +964,10 @@ public:
     std::uint32_t placedDestructable(size_t index) const {return index<placedDestructables_.size()?placedDestructables_[index]:0;}
     const DoodadState* doodad(size_t index) const {return index<doodads_.size() && doodads_[index].active?&doodads_[index]:nullptr;}
     const WeaponDefinition& projectileWeapon(const CombatProjectile& projectile) const {return projectile.definition;}
-    void dropItem(std::uint32_t unit,std::uint32_t item);
+    void dropItem(std::uint32_t unit,std::uint32_t item,std::optional<WorldPoint> point={});
+    bool orderItemDrop(unsigned player,std::uint32_t unit,std::uint32_t item,WorldPoint point);
+    bool orderItemGive(unsigned player,std::uint32_t unit,std::uint32_t item,std::uint32_t target);
+    bool orderItemSlot(unsigned player,std::uint32_t unit,std::uint32_t item,unsigned slot);
     bool itemNeedsTarget(std::uint32_t item);
     double itemCooldown(std::uint32_t unit,std::uint32_t item);
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);

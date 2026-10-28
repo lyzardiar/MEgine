@@ -1370,3 +1370,10 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 路径：`game_hero_bar.cpp`、`game_view.*`、`CMakeLists.txt`。本地英雄头像与生命、F1–F7／点击选择和连续定位已接入现有选区事件与联机回显；单位目标模式复用技能／物品／命令消费者，点目标保持等待。Win32 Release 产品增量编译通过，实际窗口和多人尚未验证。
 
 阶段集中核对三图及自定义英雄数量／顺序／图标／死亡灰态与复活、幻象／易主／隐藏／运输、头像拖入拖出、连续按键／自动重复、相同选区事件、镜头边界、技能／物品／攻击与建造和点目标、聊天／任务／菜单／脚本对话遮挡、回调移除及联机异步回显；对照原版边框、布局、快捷键和脚本接口，性能与切图释放合并验证。
+
+
+## 物品拖放、转交和订单待验证
+
+路径：`session_inventory.cpp`、`session_combat.cpp`、`session_combat_orders.cpp`、`session_orders.cpp`、`combat.h`、`session.h`、`player_commands.*`、`game_inventory_drag.cpp`、`game_view.*`、`lan_action_encoder.cpp`、`lan_simulation.cpp`、`CMakeLists.txt`。地面放置／友方转交／栏位交换进入真实订单与模拟步进，原 native 和 getitem 连接实际消费者，UI 拖拽使用统一玩家命令。Win32 Release 产品增量编译通过；玩法和原版对照未执行。
+
+阶段合并验证六栏、空槽与交换、单位行走／不可达／移动目标／中断、物品不可丢弃／死亡／隐藏／转移／背包满、共享控制／友敌、掉落／拾取事件和回调移除／换槽／易主／重新下令、三个 JASS native 的订单／返回值／时序、拖拽中 Esc／右键／遮挡／失焦和头像／场景命中；原版位置与事件时序、声音和视觉、双客户端同步及三图长局保持待验。联机地面放置／转交／换格尚未实现，详见[物品栏移动与转交](inventory-interactions.md)。

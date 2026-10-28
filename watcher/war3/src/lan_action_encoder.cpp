@@ -19,7 +19,7 @@ constexpr std::size_t maxPayload=1449;
 unsigned playerFor(ScriptSession& session,std::uint8_t peer){auto player=session.networkPlayer(peer);if(!session.mainStarted() || !player || session.localPlayer()!=player)throw std::runtime_error("LAN sender is not the configured local player");return *player;}
 LanObjectId wireId(std::uint32_t handle,const LanWireObjectResolver& resolve){if(!handle || !resolve)throw std::runtime_error("Missing LAN object resolver");auto id=resolve(handle);if(!id || (id->first==0xffffffffu && id->second==0xffffffffu))throw std::runtime_error("Unmapped LAN object");return *id;}
 bool finitePoint(std::uint32_t x,std::uint32_t y){return std::isfinite(std::bit_cast<float>(x)) && std::isfinite(std::bit_cast<float>(y));}
-bool supportedTargetOrder(std::uint32_t order){return order==851971 || order==851983 || order==851986 || order==852018 || order==852024 || order==852147 || order==852148;}
+bool supportedTargetOrder(std::uint32_t order){return order==851971 || order==851981 || order==851983 || order==851986 || order==852018 || order==852024 || order==852147 || order==852148;}
 std::vector<std::uint8_t> one(LanDecodedAction action){std::array<LanDecodedAction,1> actions{std::move(action)};auto bytes=encodeLanActions(actions);if(bytes.size()>maxPayload)throw std::runtime_error("LAN action exceeds transport limit");return bytes;}
 }
 std::vector<std::uint8_t> encodeLanSelectionChange(ScriptSession& session,std::uint8_t peer,bool add,std::span<const std::uint32_t> handles,const LanWireObjectResolver& resolve){

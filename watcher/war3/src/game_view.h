@@ -58,6 +58,9 @@ class GameView {
     std::optional<std::pair<std::uint32_t,std::uint32_t>> buildTarget_;
     bool chatOpen_=false;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
+    struct InventoryDrag {std::uint32_t holder=0,item=0;unsigned slot=0;bool moving=false;};
+    std::optional<InventoryDrag> inventoryDrag_;
+    bool inventoryDragBlocked_=false;
     std::unique_ptr<QuestDialog> questDialog_;
     std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_,multiboardPanel_,timerDialogPanel_,alliancePanel_;
     bool allianceOpen_=false,allianceVictory_=false,allianceVictoryEdited_=false;
@@ -120,6 +123,8 @@ class GameView {
     std::map<std::uint32_t,EffectPresentation> effectPresentations_;
     std::optional<D3DMATRIX> unitWorld(const UnitState& unit) const;
     void activateItem(std::uint32_t unit,std::uint32_t item);
+    void inventoryDragInput(GameInput& input);
+    void drawInventoryDrag(const GameInput& input);
     std::vector<std::uint32_t> selected(bool owned=false) const;
     std::vector<std::uint32_t> primarySelection(std::vector<std::uint32_t> units) const;
     void resetSubgroupInput();
