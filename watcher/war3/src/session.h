@@ -853,7 +853,6 @@ class ScriptSession {
     void unitFood(std::uint32_t unit,bool counted,int reserved=0);
     void transferFood(const UnitState& unit,unsigned oldOwner,unsigned newOwner);
     bool startProduction(std::uint32_t unit);
-    unsigned inventorySize(const UnitState& unit);
     bool inventoryFlag(const UnitState& unit,const char* field);
     const std::vector<std::uint32_t>& itemAbilities(std::uint32_t type);
     std::vector<std::uint32_t> itemActiveAbilities(std::uint32_t type);
@@ -1035,6 +1034,7 @@ public:
     void removePlayer(unsigned owner,unsigned result);
     bool canControlUnit(unsigned viewer,const UnitState& unit) const;
     bool canManageUnitInventory(unsigned viewer,const UnitState& unit) const;
+    unsigned inventorySize(const UnitState& unit);
     bool setAlliedVictory(unsigned owner,bool enabled);
     bool setAllianceOption(unsigned from,unsigned to,unsigned option,bool enabled);
     bool setAllianceSnapshot(unsigned from,unsigned to,unsigned flags,bool victory);

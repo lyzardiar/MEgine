@@ -1473,6 +1473,12 @@ Win32 Release 客户端增量编译通过。阶段核对玩家离场／中立单
 
 Win32 Release 客户端增量编译通过。阶段检查原资源与 w3t 覆盖、等级、符文／不可售／不可典当／不可丢弃物品、实例开关与类型查询隔离、空或无效句柄、商店库存刷新及脚本触发器，和原版比较边界与事件；当前实现和原版一致性尚未验证。
 
+## 联机背包换格待验证
+
+路径：`lan_action_encoder.cpp`、`lan_simulation.cpp`、`session.h`、`tests/order_queue_tests.cpp`、`docs/lan.md`、`docs/inventory-interactions.md`。单选和唯一类型子组支持普通及 Shift 排队换格，编码为暂定 0x12 目标物品及 852002–852007 目标槽；执行前复核物品持有、控制权及可用栏位。
+
+Win32 Release 客户端及 `war3_order_queue_tests` 增量编译通过。阶段运行该目标并核对源槽／目标槽变化、物品转移／销毁／丢弃、背包缩减、权限和事件回调、畸形报文、双方动作同步及原版 1.27 的 opcode／对象和坐标；测试与原版互通尚未执行。
+
 ## 随机中立单位与物品待验证
 
 路径：`object_data.h/.cpp`、`session_game.cpp`、`docs/random-choices.md`。四个 ChooseRandom native 按源单位／物品表、地图覆盖及相关分类、等级和地形集构建候选，使用会话 RNG 返回类型；候选为空返回 0。筛选标志与原版 RNG、顺序的细节仍待对照。
