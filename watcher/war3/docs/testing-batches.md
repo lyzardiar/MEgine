@@ -1538,3 +1538,9 @@ Win32 Release 客户端增量编译通过。阶段核对原版类型/位置/障�
 路径：`entities.h`、`session_entities.cpp`及相关战斗／施法／修理／运输／AI／经验消费者，见 `docs/unit-classifications.md`。UnitAddType／UnitRemoveType 对原版支持的九类更新实例，分类进入实际目标与行为；其他类型按原版静态入口返回 false。
 
 Win32 Release 客户端增量编译通过。阶段核对类型增删/重复/无效、召唤／机械／古树等实际目标和伤害、修理/运输/AI、幻象/变形/死亡/易主、地图覆盖及回调重入；gamecache 保存和原版行为仍待完成或验证。
+
+## 地表特效 Ubersplat 待验证
+
+路径：`effects.h`、`session.h/.cpp`、`session_effects.cpp`、`session_hashtable.cpp`、`session_tick.cpp`、`game_effects.cpp`、`docs/ubersplats.md`。源表驱动地表特效的句柄、RGBA 时钟、纹理与五类混合绘制，并支持显示/完成/重置和迷雾控制。
+
+Win32 Release 客户端增量编译通过。阶段核对 DotA 与战役特效、声音／暂停／完成／重置、哈希句柄、纹理加载／透明／雾／地形、GPU状态与切图、高密度性能及原版播放时序/混合/尺寸；原版一致性尚未验收。

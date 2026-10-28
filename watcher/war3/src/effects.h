@@ -20,8 +20,21 @@ struct ScriptImage {
     std::string texture;
     std::array<float,3> size{},position{},origin{};
     std::uint32_t color=0xffffffff;
-    int type=0;
+    int type=0,blendMode=0;
     float constantHeight=0;
     bool visible=false,render=true,renderAlways=false,fixedHeight=false,aboveWater=false,useWaterAlpha=false;
+};
+struct UbersplatInfo {
+    std::string texture,sound;
+    float scale=0,birth=0,pause=0,decay=0;
+    int blendMode=0;
+    std::array<std::array<float,4>,3> colors{};
+};
+struct ScriptUbersplat {
+    UbersplatInfo source;
+    std::shared_ptr<ScriptImage> image;
+    std::array<float,4> tint{1,1,1,1};
+    double elapsed=0;
+    bool paused=false,initialPaused=false;
 };
 }
