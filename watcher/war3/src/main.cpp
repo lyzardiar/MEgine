@@ -6,6 +6,7 @@
 #include "model.h"
 #include "glue.h"
 #include "map_browser.h"
+#include "lan_browser.h"
 #include "campaign_browser.h"
 #include "cinematic.h"
 #include "model_cinematic.h"
@@ -95,10 +96,11 @@ int run(HINSTANCE instance) {
     auto logo = renderer.texture(logoImage.width, logoImage.height, logoImage.pixels);
     Model menu(archives, images, &renderer, "UI\\Glues\\MainMenu\\MainMenu3d_exp\\MainMenu3d_exp.mdx", log);
     GlueScreen mainMenu(archives,images,renderer,text,"UI\\FrameDef\\Glue\\MainMenu.fdf","MainMenuFrame");
-    enum class Screen {Main,Single,Maps,Campaign,Cinematic,Loading,Game};Screen screen=Screen::Main;
+    enum class Screen {Main,Single,Maps,Campaign,Lan,Cinematic,Loading,Game};Screen screen=Screen::Main;
     std::unique_ptr<GlueScreen> singleMenu;
     auto prepareSingle=[&]{if(!singleMenu){singleMenu=std::make_unique<GlueScreen>(archives,images,renderer,text,"UI\\FrameDef\\Glue\\SinglePlayerMenu.fdf","SinglePlayerMenu");singleMenu->visible("ProfilePanel",false);}};
     std::unique_ptr<MapBrowser> browser;
+    std::unique_ptr<LanBrowser> lan;
     std::unique_ptr<CampaignBrowser> campaign;std::unique_ptr<Model> campaignBackdrop;std::string campaignBackground;bool campaignOrigin=false,campaignMode=false;
     GameLoading loader(log);std::uint64_t loadRequest=0;std::unique_ptr<GameData> uploading;std::unique_ptr<LoadingScreen> loadingScreen;std::unique_ptr<GameView> game;std::string loadError,frontError;bool autoStarted=false,restartPending=false;
     std::unique_ptr<Music> music;std::unique_ptr<Cinematic> cinematic;std::unique_ptr<ModelCinematic> modelCinematic;bool cinematicFromGame=false;
@@ -166,7 +168,8 @@ int run(HINSTANCE instance) {
         if(screen!=Screen::Loading && screen!=Screen::Game && screen!=Screen::Cinematic){if(screen==Screen::Campaign && campaign){auto background=campaign->backdrop();if(background!=campaignBackground){campaignBackdrop.reset();campaignBackground=background;if(!background.empty())try{campaignBackdrop=std::make_unique<Model>(archives,images,&renderer,background.c_str(),log);}catch(const std::exception& e){log.write(std::string("campaign_background_unavailable=")+e.what());}}if(campaignBackdrop)campaignBackdrop->draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);else menu.draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);}else menu.draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);}
         UiInput input{(state.mouseX-left)/(scale*1000),(state.mouseY-top)/(scale*1000),(state.pressX-left)/(scale*1000),(state.pressY-top)/(scale*1000),state.click,state.down,state.key,state.wheel/WHEEL_DELTA,state.doubleClick,(GetKeyState(VK_SHIFT)&0x8000)!=0};
         std::string action;
-        if(screen==Screen::Main){draw(90,15,512,256,0xffffffff,logo.Get());action=mainMenu.draw("ControlLayer",input,{"SinglePlayerButton","ExitButton"});if(input.key==VK_ESCAPE)action="ExitButton";if(action=="SinglePlayerButton"){prepareSingle();screen=Screen::Single;}if(action=="ExitButton"){if(options.windowCheck && windowStage<6)throw std::runtime_error("Cancelled pointer input activated ExitButton");running=false;}}
+        if(screen==Screen::Main){draw(90,15,512,256,0xffffffff,logo.Get());action=mainMenu.draw("ControlLayer",input,{"SinglePlayerButton","LocalAreaNetworkButton","ExitButton"});if(input.key==VK_ESCAPE)action="ExitButton";if(action=="SinglePlayerButton"){prepareSingle();screen=Screen::Single;}if(action=="LocalAreaNetworkButton")try{lan=std::make_unique<LanBrowser>(archives,images,renderer,text,log);frontError.clear();screen=Screen::Lan;}catch(const std::exception& e){lan.reset();frontError="无法打开局域网浏览界面。";log.write(std::string("lan_open_failed=")+e.what());}if(action=="ExitButton"){if(options.windowCheck && windowStage<6)throw std::runtime_error("Cancelled pointer input activated ExitButton");running=false;}}
+        else if(screen==Screen::Lan){action=lan->draw(input,state.characters);if(action=="CancelButton"){lan.reset();screen=Screen::Main;}}
         else if(screen==Screen::Single){action=singleMenu->draw("SinglePlayerMenu",input,{"CampaignButton","SkirmishButton","CancelButton"});if(input.key==VK_ESCAPE)action="CancelButton";if(action=="CancelButton")screen=Screen::Main;if(action=="CampaignButton")try{prepareCampaign();frontError.clear();screen=Screen::Campaign;}catch(const std::exception& e){frontError="无法打开战役菜单。";log.write(std::string("campaign_open_failed=")+e.what());}if(action=="SkirmishButton"){if(!browser)browser=std::make_unique<MapBrowser>(archives,images,renderer,text,log,options.dataRoot,options.map,options.mute);screen=Screen::Maps;}}
         else if(screen==Screen::Maps){action=browser->draw(input);if(action=="CancelButton")screen=Screen::Single;if(options.play && !autoStarted){if(!browser->error().empty())throw std::runtime_error(browser->error());if(browser->session() && !browser->loading()){action="PlayGameButton";autoStarted=true;}}if(restartPending && browser->session() && !browser->loading()){action="PlayGameButton";restartPending=false;}if(action=="PlayGameButton")startLoading(browser->takeSession(),browser->preview(),false);}
         else if(screen==Screen::Campaign){action=campaign->draw(input);if(action=="CancelButton")screen=Screen::Single;else if(action=="PlayGameButton")startLoading(campaign->takeSession(),nullptr,true);else if(action=="PlayCinematic"){auto name=campaign->takeCinematic();auto ext=fs::path(wide(name)).extension().wstring();playCinematic(name,ext==L".mdl" || ext==L".MDL",false);}}

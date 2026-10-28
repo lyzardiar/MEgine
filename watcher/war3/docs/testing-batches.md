@@ -1103,3 +1103,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：player_commands／game_view／game_spells。Win32 Release 产品编译通过；BootyBay 最小会话检查目标订单、空目标拒绝、共享单位无目标施法通过，未加载 Game.dll，证据 tmp/docs-artifacts/war3/transfer-probe/。
 
 集中验证实际鼠标／技能输入、单位／物品／可破坏物目标、点目标／即时施法、多单位 Channel、权限撤销与脚本重入、原版事件顺序和单机行为；跨客户端命令队列及网络仍待实现。
+
+## 局域网房间发现阶段待验证
+
+路径：lan_discovery／lan_browser／main。Win32 Release 产品编译通过；本机模拟 UDP 主机的搜索及响应、有效／截断 GAMEINFO、主菜单局域网按钮及原 FDF 隐藏窗口绘制通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/lan-probe/。
+
+集中验证实际 1.27 主机、多网卡／广播／端口占用、房间上线变化／过期、错误恢复、中文名称与键盘鼠标、原版界面；加入／创建、地图校验及双客户端对局同步尚未实现。
