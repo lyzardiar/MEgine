@@ -1449,3 +1449,8 @@ Win32 Release 产品增量编译通过，BootyBay 派生的最小会话检查通
 原安装 Game.dll 的 SHA-256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。只读 REA/Rizin 证据：`0x6f6ac913` 识别 rart，`0x6f6986a0` 和 `0x6f0528b0` 计算新旧等级效果差值；`0x6f689b40` 的零级为零、正等级为 base+(level−1)×mod；`0x6f052f30` 向零截断，结果小于 0 时置 0、大于 8 时置 7、等于 8 时保留；`0x6f573a9f` 的碎片攻击只匹配类型 1 和 7。普通伤害对索引 8 的语义尚未确认。
 
 本次 Win32 Release 客户端增量编译通过。此前原版 Rorb 的三个建筑实际研究和伤害倍率、新建筑及易主检查通过；BootyBay 派生的整数 w3q 会话检查通过两级／双科技、伤害倍率、新单位和易主。本次新增分数、研究顺序和生命周期夹具尚待阶段执行：测试目标 `war3_fortified_tests`，原版夹具 `tmp/docs-artifacts/war3/destructables/fixture.w3m`，自定义夹具 `tmp/docs-artifacts/war3/fortified/custom-fixture.w3m`，生成命令见对应 `tests/generate-*-fixture.py`；不加载 Game.dll。阶段集中核对分数及饱和、不同研究顺序、升降级、创建／易主／变形／幻象／复活、古树拔起优先级及碎片攻击的实际行为和原版一致性。超范围数值在研究前拒绝，索引 8 的普通伤害消费仍明确失败；生命周期重建和多个效果移除的顺序尚无原版证据。
+## JASS 随机单位池与物品池待验证
+
+路径：`session.h`、`session.cpp`、`session_game.cpp`、`session_hashtable.cpp`、`docs/random-pools.md`。单位池和物品池的创建、增删、销毁与加权随机放置已连接会话随机数和真实单位／物品创建，池句柄支持 hashtable 存取。空池、零／负权重、重复条目、随机数消耗与销毁后的行为以现有实现为限，原版 1.27 规则待对照。
+
+Win32 Release 客户端增量编译通过。阶段集中验证 common.j 调用、地图初始化及触发器、权重组合／重复条目／删除／空池／无效类型、玩家与坐标、固定种子和多客户端同步、句柄存取与释放、对象预算。完整客户端、三图和原版一致性仍未验收。
