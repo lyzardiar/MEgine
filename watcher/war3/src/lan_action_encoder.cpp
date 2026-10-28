@@ -2,6 +2,7 @@
 // Action fields: blue and nagger, w3g_actions.txt v1.00, as pinned in lan_actions.cpp.
 // Original 1.27 network bytes, unknown fields, object mapping and event semantics remain unverified.
 #include "lan_action_encoder.h"
+#include "lan_spell_orders.h"
 #include "session.h"
 #include <algorithm>
 #include <bit>
@@ -28,10 +29,11 @@ std::vector<std::uint8_t> encodeLanSelectionUpdate(ScriptSession& session,std::u
     playerFor(session,peer);std::map<std::pair<std::uint32_t,std::uint32_t>,std::uint32_t> ids;std::vector<std::uint8_t> bytes;for(const auto& change:changes){for(auto handle:change.handles){auto id=wireId(handle,resolve);auto [it,inserted]=ids.emplace(std::make_pair(id.first,id.second),handle);if(!inserted && it->second!=handle)throw std::runtime_error("Duplicate LAN object identity");}auto next=encodeLanSelectionChange(session,peer,change.add,change.handles,resolve);if(next.size()>maxPayload-bytes.size())throw std::runtime_error("LAN action exceeds transport limit");bytes.insert(bytes.end(),next.begin(),next.end());}return bytes;
 }
 std::vector<std::uint8_t> encodeLanPlayerCommand(ScriptSession& session,std::uint8_t peer,const PlayerCommand& command,const LanAbilityWireFields& fields,const LanWireObjectResolver& resolve){
-    auto player=playerFor(session,peer);if(command.player!=player || command.stopOnSuccess || !resolve || (fields.flags!=0 && fields.flags!=8))throw std::runtime_error("Unsupported LAN command context");
-    if(command.units.empty() || command.units.size()>4096 || command.ability || command.objectType || command.queueIndex || command.item || command.otherPlayer || command.allianceOption || command.gold || command.lumber || command.enabled || !command.text.empty())throw std::runtime_error("Unsupported LAN command fields");
+    auto player=playerFor(session,peer);bool spell=command.kind==PlayerCommandKind::SpellUnit || command.kind==PlayerCommandKind::SpellPoint || command.kind==PlayerCommandKind::SpellImmediate;if(command.player!=player || (command.stopOnSuccess && !spell) || !resolve || (fields.flags!=0 && fields.flags!=8))throw std::runtime_error("Unsupported LAN command context");
+    if(command.units.empty() || command.units.size()>4096 || (command.ability && !spell) || (spell && (!command.ability || command.units.size()!=1)) || command.objectType || command.queueIndex || command.item || command.otherPlayer || command.allianceOption || command.gold || command.lumber || command.enabled || !command.text.empty())throw std::runtime_error("Unsupported LAN command fields");
     auto selected=session.playerSelection(player);if(selected.size()!=command.units.size() || !std::equal(selected.begin(),selected.end(),command.units.begin()))throw std::runtime_error("LAN command units must match the current selection and order");
     std::set<std::pair<std::uint32_t,std::uint32_t>> seenIds;for(auto id:command.units){auto unit=session.units().find(id);if(unit==session.units().end() || !session.canControlUnit(player,*unit->second))throw std::runtime_error("LAN command unit is unavailable or not controlled");auto wire=wireId(id,resolve);if(!seenIds.emplace(wire.first,wire.second).second)throw std::runtime_error("Duplicate LAN object identity");}
+    const SpellInfo* spellInfo=nullptr;if(spell){auto unit=session.units().at(command.units.front());auto known=unit->abilities.find(command.ability);if(known==unit->abilities.end() || known->second<=0)throw std::runtime_error("LAN caster lacks ability");spellInfo=&session.spellInfo(command.ability,unsigned(known->second));auto mode=command.kind==PlayerCommandKind::SpellUnit?LanSpellTarget::Unit:command.kind==PlayerCommandKind::SpellPoint?LanSpellTarget::Point:LanSpellTarget::None;auto targeting=mode==LanSpellTarget::Unit?SpellTargeting::Unit:mode==LanSpellTarget::Point?SpellTargeting::Point:SpellTargeting::None;if(!lanSpellOrder(spellInfo->order,mode) || (spellInfo->targeting!=targeting && !(spellInfo->targeting==SpellTargeting::Either && targeting!=SpellTargeting::None)))throw std::runtime_error("Unsupported LAN spell order");for(auto [other,rank]:unit->abilities)if(other!=command.ability && rank>0){auto& candidate=session.spellInfo(other,unsigned(rank));if(candidate.order==spellInfo->order && (candidate.targeting==targeting || (candidate.targeting==SpellTargeting::Either && targeting!=SpellTargeting::None)))throw std::runtime_error("Ambiguous LAN spell order");}}
     LanActionAbility ability;ability.flags=fields.flags;ability.unknownA=fields.unknownA;ability.unknownB=fields.unknownB;
     switch(command.kind){
     case PlayerCommandKind::Stop:ability.opcode=0x10;ability.order=851972;break;
@@ -39,13 +41,16 @@ std::vector<std::uint8_t> encodeLanPlayerCommand(ScriptSession& session,std::uin
     case PlayerCommandKind::GroundMove:ability.opcode=0x11;ability.order=851986;break;
     case PlayerCommandKind::GroundAttack:ability.opcode=0x11;ability.order=851983;break;
     case PlayerCommandKind::GroundPatrol:ability.opcode=0x11;ability.order=851990;break;
+    case PlayerCommandKind::SpellImmediate:ability.opcode=0x10;ability.order=spellInfo->order;break;
+    case PlayerCommandKind::SpellPoint:ability.opcode=0x11;ability.order=spellInfo->order;break;
+    case PlayerCommandKind::SpellUnit:
     case PlayerCommandKind::TargetOrder:
-        if(!command.target || !supportedTargetOrder(command.order) || !fields.targetPosition || !finitePoint((*fields.targetPosition)[0],(*fields.targetPosition)[1]))throw std::runtime_error("Invalid LAN target order");
-        if(!session.units().contains(command.target) && !session.items().contains(command.target) && !session.destructables().contains(command.target))throw std::runtime_error("LAN target object is unavailable");
-        ability.opcode=0x12;ability.order=command.order;ability.xBits=(*fields.targetPosition)[0];ability.yBits=(*fields.targetPosition)[1];ability.target=wireId(command.target,resolve);if(seenIds.contains({ability.target.first,ability.target.second}) && std::find(command.units.begin(),command.units.end(),command.target)==command.units.end())throw std::runtime_error("Duplicate LAN object identity");break;
+        if(!command.target || (spell && (command.xBits || command.yBits || (command.order && command.order!=spellInfo->order))) || (command.kind==PlayerCommandKind::TargetOrder && !supportedTargetOrder(command.order)) || !fields.targetPosition || !finitePoint((*fields.targetPosition)[0],(*fields.targetPosition)[1]))throw std::runtime_error("Invalid LAN target order");
+        if((spell && !session.units().contains(command.target)) || (!session.units().contains(command.target) && !session.items().contains(command.target) && !session.destructables().contains(command.target)))throw std::runtime_error("LAN target object is unavailable");
+        ability.opcode=0x12;ability.order=spell?spellInfo->order:command.order;ability.xBits=(*fields.targetPosition)[0];ability.yBits=(*fields.targetPosition)[1];ability.target=wireId(command.target,resolve);if(seenIds.contains({ability.target.first,ability.target.second}) && std::find(command.units.begin(),command.units.end(),command.target)==command.units.end())throw std::runtime_error("Duplicate LAN object identity");break;
     default:throw std::runtime_error("Unsupported LAN player command");
     }
-    if(command.kind!=PlayerCommandKind::TargetOrder){if(command.target || (command.order && command.order!=ability.order) || fields.targetPosition)throw std::runtime_error("Unexpected LAN command target");if(ability.opcode==0x11){if(!finitePoint(command.xBits,command.yBits))throw std::runtime_error("Invalid LAN ground position");ability.xBits=command.xBits;ability.yBits=command.yBits;}else if(command.xBits || command.yBits)throw std::runtime_error("Unexpected LAN command position");}
+    if(command.kind!=PlayerCommandKind::TargetOrder && command.kind!=PlayerCommandKind::SpellUnit){if(command.target || (command.order && command.order!=ability.order) || fields.targetPosition)throw std::runtime_error("Unexpected LAN command target");if(ability.opcode==0x11){if(!finitePoint(command.xBits,command.yBits))throw std::runtime_error("Invalid LAN ground position");ability.xBits=command.xBits;ability.yBits=command.yBits;}else if(command.xBits || command.yBits)throw std::runtime_error("Unexpected LAN command position");}
     return one(std::move(ability));
 }
 }

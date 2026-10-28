@@ -1,5 +1,6 @@
 // Author: MiYu. Validate complete W3GS slots before consuming supported player actions.
 #include "lan_simulation.h"
+#include "lan_spell_orders.h"
 #include "session.h"
 #include <bit>
 #include <cmath>
@@ -21,10 +22,10 @@ bool LanSimulation::validate(const LanAction& action){
             if(!resolve_)return false;Selection item{*player,selection->mode==1,{}};item.units.reserve(selection->objects.size());for(auto object:selection->objects){auto handle=resolve_(object);if(!handle || !session_.units().contains(*handle))return false;item.units.push_back(*handle);}prepared.emplace_back(std::move(item));continue;
         }
         auto ability=std::get_if<LanActionAbility>(&event);if(!ability || !resolve_ || (ability->flags&~0x0008u))return false;Command command;command.player=*player;command.order=ability->order;command.xBits=ability->xBits;command.yBits=ability->yBits;
-        if(ability->opcode==0x10){if(ability->order==851972)command.kind=PlayerCommandKind::Stop;else if(ability->order==851993)command.kind=PlayerCommandKind::Hold;else return false;}
-        else if(ability->opcode==0x11){auto kind=groundKind(ability->order);if(!kind || !finitePoint(ability->xBits,ability->yBits))return false;command.kind=*kind;}
-        else if(ability->opcode==0x12){if(ability->target.first==0xffffffffu && ability->target.second==0xffffffffu){auto kind=groundKind(ability->order);if(!kind || !finitePoint(ability->xBits,ability->yBits))return false;command.kind=*kind;}else{if(!targetOrder(ability->order))return false;auto handle=resolve_(ability->target);if(!handle || (!session_.units().contains(*handle) && !session_.items().contains(*handle) && !session_.destructables().contains(*handle)))return false;command.kind=PlayerCommandKind::TargetOrder;command.target=*handle;}}
-        else return false;prepared.emplace_back(command);
+        if(ability->opcode==0x10){if(ability->order==851972)command.kind=PlayerCommandKind::Stop;else if(ability->order==851993)command.kind=PlayerCommandKind::Hold;else if(lanSpellOrder(ability->order,LanSpellTarget::None))command.kind=PlayerCommandKind::SpellImmediateOrder;else return false;}
+        else if(ability->opcode==0x11){auto kind=groundKind(ability->order);if(!finitePoint(ability->xBits,ability->yBits))return false;if(kind)command.kind=*kind;else if(lanSpellOrder(ability->order,LanSpellTarget::Point))command.kind=PlayerCommandKind::SpellPointOrder;else return false;}
+        else if(ability->opcode==0x12){if(ability->target.first==0xffffffffu && ability->target.second==0xffffffffu){auto kind=groundKind(ability->order);if(!kind || !finitePoint(ability->xBits,ability->yBits))return false;command.kind=*kind;}else{bool spell=lanSpellOrder(ability->order,LanSpellTarget::Unit);if(!finitePoint(ability->xBits,ability->yBits))return false;if(!spell && !targetOrder(ability->order))return false;auto handle=resolve_(ability->target);if(!handle || (!session_.units().contains(*handle) && !session_.items().contains(*handle) && !session_.destructables().contains(*handle)))return false;if(spell && !session_.units().contains(*handle))return false;command.kind=spell?PlayerCommandKind::SpellUnitOrder:PlayerCommandKind::TargetOrder;command.target=*handle;}}
+        else return false;bool spell=command.kind==PlayerCommandKind::SpellUnitOrder || command.kind==PlayerCommandKind::SpellPointOrder || command.kind==PlayerCommandKind::SpellImmediateOrder;if(spell){auto selected=session_.playerSelection(*player);auto project=[&](const Event& event){if(auto selection=std::get_if<Selection>(&event);selection && selection->player==*player)for(auto id:selection->units){if(selection->add)selected.insert(id);else selected.erase(id);}};for(const auto& block:decoded_)for(const auto& pending:block)project(pending);for(const auto& pending:prepared)project(pending);if(selected.size()!=1)return false;}prepared.emplace_back(command);
     }
     decoded_.push_back(std::move(prepared));return true;
 }
@@ -34,7 +35,7 @@ bool LanSimulation::apply(ScriptSession& session,const LanAction&){
         if(std::holds_alternative<LanActionPause>(event))session.pause(true);
         else if(std::holds_alternative<LanActionResume>(event))session.pause(false);
         else if(auto selection=std::get_if<Selection>(&event)){for(auto id:selection->units){session.setPlayerUnitSelected(selection->player,id,selection->add);if(driver_.failed())return false;}}
-        else if(auto source=std::get_if<Command>(&event)){PlayerCommand command;command.player=source->player;command.kind=source->kind;command.order=source->order;command.target=source->target;command.xBits=source->xBits;command.yBits=source->yBits;auto units=session.playerSelection(source->player);for(auto id:units){command.units={id};dispatchPlayerCommand(session,command);if(driver_.failed())return false;}}
+        else if(auto source=std::get_if<Command>(&event)){PlayerCommand command;command.player=source->player;command.kind=source->kind;command.order=source->order;command.target=source->target;command.xBits=source->xBits;command.yBits=source->yBits;auto units=session.playerSelection(source->player);bool spell=source->kind==PlayerCommandKind::SpellUnitOrder || source->kind==PlayerCommandKind::SpellPointOrder || source->kind==PlayerCommandKind::SpellImmediateOrder;if(spell && units.size()!=1)return false;for(auto id:units){command.units={id};dispatchPlayerCommand(session,command);if(driver_.failed())return false;}}
         else return false;if(driver_.failed())return false;
     }
     return true;
