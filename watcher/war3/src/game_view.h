@@ -6,6 +6,7 @@
 #include "scene_streaming.h"
 #include "fog_render.h"
 #include "lan_simulation.h"
+#include "lan_action_encoder.h"
 
 namespace war3 {
 class QuestDialog;
@@ -27,6 +28,10 @@ class GameView {
     std::uint64_t last_=0;
     std::unique_ptr<LanSimulation> lanSimulation_;
     std::function<unsigned(const PlayerCommand&)> lanSubmit_;
+    LanWireObjectResolver lanWireObject_;
+    std::function<bool(std::span<const std::uint8_t>)> lanSendSelection_;
+    std::vector<std::uint8_t> lanPendingSelection_;
+    std::uint8_t lanPeer_=0;
     bool drawStarted_=false;
     std::string lanMessage_;
     std::uint64_t lanMessageUntil_=0;
@@ -109,8 +114,9 @@ public:
     GameView(std::unique_ptr<GameData> data,Renderer& renderer,Text& text,Log& log);
     ~GameView();
     bool draw(const GameInput& input);
-    // Configure before the first draw; the owner consumes complete slots on this thread.
-    bool enableLan(LanSimulation::ObjectResolver resolve,std::function<unsigned(const PlayerCommand&)> submit);
+    // Configure before first draw. sendSelection enqueues exactly these bytes without reentry;
+    // the owner consumes complete slots on this thread and must not submit selection separately.
+    bool enableLan(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wireObject,std::function<bool(std::span<const std::uint8_t>)> sendSelection,std::function<unsigned(const PlayerCommand&)> submit);
     std::optional<LanStepResult> consumeLanSlot(std::uint64_t sequence,const LanTimeSlot& slot);
     const LanSimulation* lanSimulation() const {return lanSimulation_.get();}
     bool appExitRequested() const {return appExit_;}

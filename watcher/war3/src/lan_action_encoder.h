@@ -23,5 +23,8 @@ struct LanAbilityWireFields {
 // stable resolver, and current authoritative selection are required. Unsupported inputs
 // throw; they must not be silently replaced by a different command or selection.
 std::vector<std::uint8_t> encodeLanSelectionChange(ScriptSession& session,std::uint8_t peerId,bool add,std::span<const std::uint32_t> handles,const LanWireObjectResolver& resolve);
+struct LanSelectionChange {bool add=false;std::vector<std::uint32_t> handles;};
+// Preserves changes in order in a single payload. An empty list produces an empty payload.
+std::vector<std::uint8_t> encodeLanSelectionUpdate(ScriptSession& session,std::uint8_t peerId,std::span<const LanSelectionChange> changes,const LanWireObjectResolver& resolve);
 std::vector<std::uint8_t> encodeLanPlayerCommand(ScriptSession& session,std::uint8_t peerId,const PlayerCommand& command,const LanAbilityWireFields& fields,const LanWireObjectResolver& resolve);
 }

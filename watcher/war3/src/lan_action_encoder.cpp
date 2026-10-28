@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <map>
 #include <set>
 #include <stdexcept>
 #include <utility>
@@ -22,6 +23,9 @@ std::vector<std::uint8_t> one(LanDecodedAction action){std::array<LanDecodedActi
 std::vector<std::uint8_t> encodeLanSelectionChange(ScriptSession& session,std::uint8_t peer,bool add,std::span<const std::uint32_t> handles,const LanWireObjectResolver& resolve){
     playerFor(session,peer);if(handles.empty() || handles.size()>(maxPayload-4)/8)throw std::runtime_error("Invalid LAN selection size");LanActionSelection selection;selection.mode=add?1:2;selection.objects.reserve(handles.size());std::set<std::uint32_t> seenHandles;std::set<std::pair<std::uint32_t,std::uint32_t>> seenIds;
     for(auto handle:handles){if(!seenHandles.insert(handle).second || !session.units().contains(handle) || (add && !session.unitSelectable(handle)))throw std::runtime_error("Invalid LAN selection object");auto id=wireId(handle,resolve);if(!seenIds.emplace(id.first,id.second).second)throw std::runtime_error("Duplicate LAN object identity");selection.objects.push_back(id);}return one(std::move(selection));
+}
+std::vector<std::uint8_t> encodeLanSelectionUpdate(ScriptSession& session,std::uint8_t peer,std::span<const LanSelectionChange> changes,const LanWireObjectResolver& resolve){
+    playerFor(session,peer);std::map<std::pair<std::uint32_t,std::uint32_t>,std::uint32_t> ids;std::vector<std::uint8_t> bytes;for(const auto& change:changes){for(auto handle:change.handles){auto id=wireId(handle,resolve);auto [it,inserted]=ids.emplace(std::make_pair(id.first,id.second),handle);if(!inserted && it->second!=handle)throw std::runtime_error("Duplicate LAN object identity");}auto next=encodeLanSelectionChange(session,peer,change.add,change.handles,resolve);if(next.size()>maxPayload-bytes.size())throw std::runtime_error("LAN action exceeds transport limit");bytes.insert(bytes.end(),next.begin(),next.end());}return bytes;
 }
 std::vector<std::uint8_t> encodeLanPlayerCommand(ScriptSession& session,std::uint8_t peer,const PlayerCommand& command,const LanAbilityWireFields& fields,const LanWireObjectResolver& resolve){
     auto player=playerFor(session,peer);if(command.player!=player || command.stopOnSuccess || !resolve || (fields.flags!=0 && fields.flags!=8))throw std::runtime_error("Unsupported LAN command context");
