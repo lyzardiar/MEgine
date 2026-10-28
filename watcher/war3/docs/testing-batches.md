@@ -1556,3 +1556,9 @@ Win32 Release 客户端增量编译通过。阶段验证 DotA 的 GetLocalPlayer
 路径：`world.h/.cpp`、`world_blight.cpp`、`session_world.cpp`、`terrain_scene.h/.cpp`、`terrain_blight.cpp`、`docs/terrain-type-mutation.md`。SetTerrainType 修改会话地表角点和变体，地表查询与可见脏区的局部混合纹理／GPU 网格使用新值；仅支持地图已声明的地表材质。
 
 Win32 Release 客户端增量编译通过。阶段验证 DotA 修改、地图边界与各面积形状、随机变体和联机同步、原／混合／荒芜／水面／悬崖、连续修改性能和设备恢复。非地图原材质和悬崖几何尚未实现，面积及原版纹理表现未验收。
+
+## 高级工具提示设置待验证
+
+路径：`game_flow_ui.cpp`、`game_preferences.*`、`game_commands.cpp`、`docs/enhanced-tooltips.md`。原 FDF 开关控制命令面板扩展描述，基本信息和不可执行原因保留；确定/取消及 camera.bin 旧版兼容已接入。
+
+Win32 Release 客户端增量编译通过。阶段核对输入/界面布局、单位与物品/商店/建筑的提示、草稿取消/持久化/旧版本/损坏文件、原版默认值与呈现范围。其他界面提示与原版一致性未验收。
