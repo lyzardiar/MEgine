@@ -2,20 +2,28 @@
 #pragma once
 #include "lan_actions.h"
 #include "lan_time_driver.h"
+#include "player_commands.h"
 
 namespace war3 {
-// Entire slots are validated before effects. Only classic pause and resume have a
-// consumer; object selection and orders require a verified original object-ID map.
+// Resolver must be read-only and translate an original wire ID to a verified, stable session handle.
+// Unsupported actions fail the whole slot before any simulation effects.
 class LanSimulation {
+public:
+    using ObjectResolver=std::function<std::optional<std::uint32_t>(LanObjectId)>;
+private:
+    struct Selection {unsigned player;bool add;std::vector<std::uint32_t> units;};
+    struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0;};
+    using Event=std::variant<LanActionPause,LanActionResume,Selection,Command>;
     ScriptSession& session_;
-    std::vector<std::vector<LanDecodedAction>> decoded_;
+    ObjectResolver resolve_;
+    std::vector<std::vector<Event>> decoded_;
     std::size_t cursor_=0;
     bool consuming_=false;
     LanTimeDriver driver_;
     bool validate(const LanAction& action);
     bool apply(ScriptSession& session,const LanAction& action);
 public:
-    explicit LanSimulation(ScriptSession& session);
+    explicit LanSimulation(ScriptSession& session,ObjectResolver resolve={});
     LanSimulation(const LanSimulation&)=delete;
     LanSimulation& operator=(const LanSimulation&)=delete;
     LanSimulation(LanSimulation&&)=delete;

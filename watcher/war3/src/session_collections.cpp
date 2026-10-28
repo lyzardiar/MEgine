@@ -7,6 +7,7 @@
 namespace war3 {
 namespace {struct ContextPop {std::vector<ScriptContext>& stack;~ContextPop(){stack.pop_back();}};float coordinate(jass::Value value) {auto result=std::bit_cast<float>(value.bits);if(!std::isfinite(result))throw std::runtime_error("Non-finite enumeration coordinate");return result;}}
 void ScriptSession::syncLocalSelection() {if(!localPlayer_)return;auto& selected=synchronizedSelections_[*localPlayer_];selected.clear();for(auto& [id,unit]:units_)if(unit->selected && alive(id,NativeKind::Unit))selected.insert(id);}
+std::set<std::uint32_t> ScriptSession::playerSelection(unsigned player) {if(player>=16)throw std::runtime_error("Selection player outside supported range");if(localPlayer_ && *localPlayer_==player)syncLocalSelection();return synchronizedSelections_[player];}
 void ScriptSession::bindCollectionNatives() {
     bind("CreateForce","force",{},[this](auto&,auto){return create(NativeKind::Force);});
     bind("DestroyForce","nothing",{"force"},[this](auto& vm,auto args){destroy(args[0],NativeKind::Force);return vm.nothing();});

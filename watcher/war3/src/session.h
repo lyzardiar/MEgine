@@ -74,7 +74,9 @@ class ScriptSession {
     std::map<std::uint32_t,std::shared_ptr<ScriptMultiboard>> multiboards_;
     bool multiboardsSuppressed_=false;
     std::array<std::set<std::uint32_t>,16> synchronizedSelections_;
+    std::array<std::map<std::uint32_t,std::uint64_t>,16> selectionRevisions_;
     void syncLocalSelection();
+    void selectionEvent(std::uint32_t unit,unsigned player,bool selected,std::uint64_t revision);
     std::unique_ptr<World> world_;
     bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false;
     std::unique_ptr<SoundScene> audio_;
@@ -879,6 +881,8 @@ public:
     World* world() {return world_.get();}
     bool unitSelectable(std::uint32_t handle);
     void selectUnit(std::uint32_t handle,bool selected);
+    bool setPlayerUnitSelected(unsigned player,std::uint32_t handle,bool selected);
+    std::set<std::uint32_t> playerSelection(unsigned player);
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986);
     bool stopUnit(std::uint32_t handle,bool hold=false);
     bool targetOrder(std::uint32_t source,std::uint32_t target,std::uint32_t order=851971);

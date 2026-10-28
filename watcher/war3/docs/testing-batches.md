@@ -1197,3 +1197,11 @@ Win32 Release 产品编译通过；本机两客户端并发接收真实 BootyBay
 Win32 Release 编译通过。本机 seed 从主机传给双客户端、双会话映射及项目 RNG 序列一致、BootyBay 时间驱动和暂停／恢复／未知动作拒绝、编码边界与截断检查通过；证据 tmp/docs-artifacts/war3/lan-seed-probe/result.log、lan-setup-probe/result.log、lan-time-driver-probe/result-integrated.log、lan-simulation-probe/result.log、lan-action-codec-probe/result.log。
 
 集中验证 1.27 动作字节与事件／时间边界、原版随机与校验、网络 peer 到地图玩家和对象 ID 映射、真实游戏输入、多端模拟／断线、会话生命周期及真实界面。当前尚不能启动联网对局；现有 RNG 一致性仅针对本实现。
+
+## 玩家选择与局域网限定动作阶段待验证
+
+路径：session、session_callbacks、session_collections、session_entities、session_food、session_orders、lan_simulation。会话保存每个玩家的选区，LAN 动作在显式对象映射下消费选择及部分基础订单；真实大厅与对象编号映射尚未接入。
+
+Win32 Release 产品编译通过；BootyBay 探针覆盖本地／远端同单位选择、JASS 查询、事件玩家、回调重入与移除清理，同一时间片选择后保持及无效映射／排队标志整帧拒绝，证据 tmp/docs-artifacts/war3/player-selection-probe/result.log、lan-selection-actions-probe/result.log。
+
+集中验证原版 1.27 对象 ID 及动作编码、选区顺序／事件归属、地图物品／技能／排队、动态创建和销毁、变形／货舱自动选中、真实多人同步与界面。现有解析器必须由调用方提供可靠映射；没有原版映射时不能开始联机。

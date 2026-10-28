@@ -78,7 +78,7 @@ void ScriptSession::bindEntityNatives() {
     bind("IsUnitPaused","boolean",{"unit"},[this](auto& vm,auto a){return vm.boolean(unit(a[0]).paused);});
     bind("IsUnitHidden","boolean",{"unit"},[this](auto& vm,auto a){auto& u=unit(a[0]);return vm.boolean(u.hidden());});
     bind("IsUnitOwnedByPlayer","boolean",{"unit","player"},[this](auto& vm,auto a){return vm.boolean(unit(a[0]).owner==playerId(a[1]));});
-    bind("ClearSelection","nothing",{},[this](auto& vm,auto){std::vector<std::uint32_t> selected;for(auto& [id,u]:units_)if(u->selected)selected.push_back(id);for(auto id:selected)if(alive(id,NativeKind::Unit) && units_.at(id)->selected){units_.at(id)->selected=false;unitEvent(id,25,58);}return vm.nothing();});
+    bind("ClearSelection","nothing",{},[this](auto& vm,auto){std::vector<std::uint32_t> selected;for(auto& [id,u]:units_)if(u->selected)selected.push_back(id);for(auto id:selected)if(alive(id,NativeKind::Unit) && units_.at(id)->selected)selectUnit(id,false);return vm.nothing();});
     bind("GroupAddUnit","nothing",{"group","unit"},[this](auto& vm,auto a){auto& list=std::get<Group>(object(a[0],NativeKind::Group).state).units;unit(a[1]);if(std::find(list.begin(),list.end(),a[1].bits)==list.end())list.push_back(a[1].bits);return vm.nothing();});
     bind("GroupRemoveUnit","nothing",{"group","unit"},[this](auto& vm,auto a){auto& list=std::get<Group>(object(a[0],NativeKind::Group).state).units;std::erase(list,a[1].bits);return vm.nothing();});
     bind("IsUnitInGroup","boolean",{"unit","group"},[this](auto& vm,auto a){auto& list=std::get<Group>(object(a[1],NativeKind::Group).state).units;return vm.boolean(std::find(list.begin(),list.end(),a[0].bits)!=list.end());});
