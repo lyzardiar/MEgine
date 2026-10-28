@@ -76,6 +76,7 @@ public:
     void image(const std::string& name,IDirect3DTexture9* texture);
     IDirect3DTexture9* image(const std::string& name) const {return nodes_.at(names_.at(name)).image.Get();}
     void backdropAt(const std::string& frame,Rect rect);
+    void tooltipBackdrop(Rect rect);
     void imageAt(const std::string& member,Rect rect);
     void textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled=true,bool highlight=false,bool left=false,float fontHeight=0,size_t lineOffset=0);
     void checkAt(const std::string& frame,Rect rect,bool checked);

@@ -61,14 +61,14 @@ struct DoodadState {
     double animationStart=0,randomStart=-1;
     bool active=true;
 };
-enum class NativeKind {TextTag,Multiboard,MultiboardItem,Leaderboard,Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning,CameraSetup,UnitPool,ItemPool,Image,Ubersplat};
+enum class NativeKind {Trackable,TextTag,Multiboard,MultiboardItem,Leaderboard,Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning,CameraSetup,UnitPool,ItemPool,Image,Ubersplat};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
     struct RandomPool {std::vector<std::pair<std::uint32_t,float>> entries;};
     using Timer=ScriptTimer;
     using Trigger=ScriptTrigger;
-    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,std::shared_ptr<ScriptTextTag>,PlayerRef,Group,RandomPool,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<ScriptLeaderboard>,std::shared_ptr<ScriptMultiboard>,ScriptMultiboardItem,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility,std::shared_ptr<ScriptEffect>,std::shared_ptr<ScriptLightning>,std::shared_ptr<ScriptImage>,std::shared_ptr<ScriptUbersplat>,ScriptCameraSetup> state;};
+    struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,std::shared_ptr<ScriptTrackable>,std::shared_ptr<ScriptTextTag>,PlayerRef,Group,RandomPool,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<ScriptLeaderboard>,std::shared_ptr<ScriptMultiboard>,ScriptMultiboardItem,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility,std::shared_ptr<ScriptEffect>,std::shared_ptr<ScriptLightning>,std::shared_ptr<ScriptImage>,std::shared_ptr<ScriptUbersplat>,ScriptCameraSetup> state;};
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
@@ -683,6 +683,8 @@ class ScriptSession {
     void summonSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner);
     void bindSpellNatives();
     void bindEffectNatives();
+    void bindTrackableNatives();
+    std::map<std::uint32_t,std::shared_ptr<ScriptTrackable>> trackables_;
     void bindLightningNatives();
     std::map<std::string,LightningInfo> lightningInfo_;
     std::map<std::uint32_t,std::shared_ptr<ScriptLightning>> lightnings_;
@@ -971,6 +973,8 @@ public:
     const auto& spellWaves() const {return spellWaves_;}
     const auto& groundSpells() const {return groundSpells_;}
     const auto& effects() const {return effects_;}
+    const auto& trackables() const {return trackables_;}
+    void trackableEvent(std::uint32_t id,bool hit);
     const auto& images() const {return images_;}
     const auto& lightnings() const {return lightnings_;}
     void effectExpires(std::uint32_t id,double time);

@@ -29,9 +29,10 @@ struct ScriptTrigger {
     unsigned evaluations=0,executions=0;
     std::vector<std::uint32_t> actions,conditions;
 };
+struct ScriptTrackable {std::string model;float x=0,y=0,facing=0;};
 struct ScriptForce {std::uint32_t players=0;};
 struct ScriptEvent {
-    enum class Kind {Timer,TimerExpire,Clock,Player,PlayerUnit,Unit,Game,Alliance,PlayerState,RegionEnter,RegionLeave,UnitRange,Chat,WidgetDeath,Dialog,DialogButton};
+    enum class Kind {Timer,TimerExpire,Clock,Player,PlayerUnit,Unit,Game,Alliance,PlayerState,RegionEnter,RegionLeave,UnitRange,Chat,WidgetDeath,Dialog,DialogButton,TrackableHit,TrackableTrack};
     Kind kind=Kind::Game;
     std::uint32_t owner=0,target=0,event=0,comparison=0;
     std::uint32_t stateKey=0;
@@ -58,7 +59,7 @@ struct ScriptContext {
     std::uint32_t attacker=0;
     std::uint32_t spellUnit=0,spellId=0,spellAbility=0,spellTarget=0;
     WorldPoint spellPoint;
-    std::uint32_t researched=0,clickedDialog=0,clickedButton=0;
+    std::uint32_t researched=0,clickedDialog=0,clickedButton=0,triggeringTrackable=0;
     std::uint32_t constructing=0,cancelled=0,constructed=0;
     std::uint32_t triggerWidget=0,triggerDestructable=0,filterDestructable=0,enumDestructable=0,filterItem=0,enumItem=0;
     bool damageAttack=false,damageRanged=false;

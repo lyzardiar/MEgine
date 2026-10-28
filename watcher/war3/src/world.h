@@ -63,6 +63,11 @@ class World {
     std::uint64_t blightRevision_=1;
     std::vector<std::uint64_t> terrainChunks_;
     std::uint64_t terrainRevision_=1;
+    std::vector<std::uint16_t> terrainSlots_;
+    std::vector<std::uint32_t> terrainTypes_;
+    mutable std::vector<std::string> terrainTextures_;
+    mutable std::optional<std::map<std::uint32_t,std::string>> terrainTextureIndex_;
+    std::string terrainTextureForType(std::uint32_t raw) const;
     void changeBlight(WorldRect rectangle,std::optional<WorldPoint> center,float radius,bool add);
     void dirtyBlight(unsigned x,unsigned y);
     std::optional<size_t> terrainCorner(WorldPoint point) const;
@@ -83,6 +88,9 @@ public:
     bool blighted(WorldPoint point) const;
     std::uint32_t terrainType(WorldPoint point) const;
     unsigned terrainVariation(WorldPoint point) const;
+    unsigned terrainSlot(size_t corner) const {return terrainSlots_.at(corner);}
+    const auto& terrainTypes() const {return terrainTypes_;}
+    const std::string& terrainTexture(unsigned slot) const;
     void setTerrainType(WorldPoint point,std::uint32_t type,int variation,int area,int shape,const std::function<std::uint32_t()>& random);
     const auto& terrainChunks() const {return terrainChunks_;}
     void blight(WorldRect rectangle,bool add);

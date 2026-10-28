@@ -71,6 +71,10 @@ class GameView {
     bool inventoryDragBlocked_=false;
     std::unique_ptr<QuestDialog> questDialog_;
     std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_,multiboardPanel_,timerDialogPanel_,alliancePanel_;
+    std::unique_ptr<GlueScreen> commandTooltip_;
+    std::array<std::string,3> tooltipCostIcons_{};
+    std::string tooltipKey_;
+    size_t tooltipScroll_=0,tooltipTitleLines_=0,tooltipBodyLines_=0;
     bool allianceOpen_=false,allianceVictory_=false,allianceVictoryEdited_=false;
     std::array<std::array<std::string,2>,12> allianceAmounts_{};
     std::array<unsigned,12> allianceOptions_{},allianceEdited_{};
@@ -125,6 +129,10 @@ class GameView {
     std::uint32_t widget(float x,float y,bool items) const;
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
+    void drawTrackables(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
+    void trackableInput(GameInput& input);
+    std::uint32_t hoveredTrackable_=0;
+    float trackableMouseX_=-1,trackableMouseY_=-1;
     void drawImages(bool aboveWater,const DirectX::XMMATRIX& vp);
     void drawLightning(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     std::map<std::uint64_t,ModelInstance> modelInstances_,pingInstances_;

@@ -1562,3 +1562,21 @@ Win32 Release 客户端增量编译通过。阶段验证 DotA 修改、地图边
 路径：`game_flow_ui.cpp`、`game_preferences.*`、`game_commands.cpp`、`docs/enhanced-tooltips.md`。原 FDF 开关控制命令面板扩展描述，基本信息和不可执行原因保留；确定/取消及 camera.bin 旧版兼容已接入。
 
 Win32 Release 客户端增量编译通过。阶段核对输入/界面布局、单位与物品/商店/建筑的提示、草稿取消/持久化/旧版本/损坏文件、原版默认值与呈现范围。其他界面提示与原版一致性未验收。
+
+## 扩展动态地表材质待验证
+
+路径：`world.*`、`world_blight.cpp`、`terrain_layout.cpp`、`terrain_scene.*`、`terrain_blight.cpp`、`game_view.cpp`、`docs/terrain-type-mutation.md`。动态地表类型使用独立会话索引，支持地图原始槽位外最多 256 种源材质；运行期贴图接入 SceneStreaming，未加载时保留原块。
+
+Win32 Release 客户端增量编译通过。阶段检查满 16 原始槽的地图、原版/地图覆盖材质、开局与运行期更新、混合边界/重复变更、资源丢失/切图/设备恢复/多端同步与性能；悬崖处理和原版精度尚待完成或验证。
+
+## 原版命令工具提示待验证
+
+路径：`game_commands.cpp`、`game_view.h`、`glue.*`、`docs/command-tooltips.md`。命令提示使用原皮肤背景/边框/资源图标、源文本颜色和换行，支持高级说明开关及长内容分页；相同悬停内容的行数结果缓存。
+
+Win32 Release 客户端增量编译通过。阶段验证技能/商店/建造/学习/禁用、鼠标悬停和多分辨率、长文本滚动和开关、字体/皮肤/资源释放/设备恢复及原版视觉/交互；当前布局与分页行为未证实原版一致。
+
+## 地图 Trackable 待验证
+
+路径：`session_trackable.cpp`、`game_trackable.cpp`、`session.*`、`script_state.h`、`session_hashtable.cpp`、`game_view.*`、`CMakeLists.txt`、`docs/trackable.md`。地图可创建模型并注册鼠标命中/跟踪事件，单机拾取和触发器上下文连接实际会话；句柄可用 hashtable 保存。
+
+Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠标遮挡/范围/雾与 UI 优先级、跟踪/命中时序、触发器销毁/回调重入、模型消失与切图/GPU、原版操作与视觉；局域网事件同步尚未实现。

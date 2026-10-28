@@ -45,7 +45,7 @@ class TerrainScene {
     unsigned blightWidth_=0,blightHeight_=0;
     void initializeBlight(const std::vector<TerrainCell>& cells);
     void rebuildBlight(unsigned index);
-    void rebuildGround(unsigned index,TerrainChunk& target,Renderer& renderer);
+    bool rebuildGround(unsigned index,TerrainChunk& target,Renderer& renderer);
     void uploadChunk(Renderer& renderer,TerrainChunk& chunk);
     size_t drawBlight(Renderer& renderer,const DirectX::XMMATRIX& viewProjection);
     void compile(Log& log);
