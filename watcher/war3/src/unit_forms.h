@@ -2,6 +2,8 @@
 #pragma once
 #include "spells.h"
 namespace war3 {
+struct GrabTreeState {SpellInfo spell;std::uint32_t tree=0;std::uint64_t ticket=0;double elapsed=0;bool consumed=false;};
+struct WarClubState {SpellInfo spell;unsigned attacks=0;double elapsed=0;bool dropping=false;std::uint32_t visual=0;};
 struct EatTreeState {SpellInfo spell;std::uint32_t tree=0;std::uint64_t ticket=0;double elapsed=0;bool ripped=false;};
 struct RootState {SpellInfo spell;bool uprooted=false;};
 struct RootTransition {SpellInfo spell;WorldPoint point;std::uint64_t ticket=0;double remaining=0;bool rooting=false;};

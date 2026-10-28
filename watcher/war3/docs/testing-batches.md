@@ -8,6 +8,14 @@
 | W002 图像、字体和音频边界 | image、media、main、rea-boundaries | BLP1/JPEG/palette、BLP2/BC、TGA、原版中文字体、Miles 内存 MP3 | IJL 调用约定、透明平面、codec 路径与 sample 生命周期 | 基础范围通过，批次关闭；音效与听感仍待验收 |
 | W003 原版 MDX 菜单场景 | model、model_pose、binary、archive、renderer、main、fdf、glue、tests | MDX800 基础场景、纹理来源、FDF 模板与字符串、真实帧、退出输入 | 不可信记录边界、FDF 预算、菜单按钮输入边界 | 基础范围通过，批次关闭；完整还原留在功能矩阵 |
 
+## 战棍与角鹰兽骑乘阶段待验证
+
+路径：session_war_club/session_coupling、源能力／目标／施法／命令／按钮／取消，树木占用／死亡、武器选择／攻击发射／状态tick／单位死亡移除与变身，真实新单位／人口／选择／物品／分组，持树效果骨骼／尺度／替换贴图及后台资源。Agra、Acoi/Aco2/Aco3、Acoa/Acoh、Adec和w3a派生有实际消费者。
+
+状态：实现接入；Win32 Release产品增量编译通过、无警告，差异审查通过，新增专项、三图、原版精度、UI/GPU/声音/AI及性能统一留功能阶段验证。源表、归档摘要和REA创建／生命／战棍调用证据、构建日志在tmp/docs-artifacts/war3/warclub-coupling/。
+
+集中验证：拔树距离／独占／中断／树死亡与占地、延迟起点／刷新／15次实际攻击／命中和弹道快照／移除／武器恢复／源树类型与贴图／骨骼和Alternate姿态；原按钮／热键／研究／命令／双向寻伴／辅助移动／竞争与取消、三单位类型／新实体／比例生命／库存／buff／定时生命／冷却接续／原事件顺序、海岸／水面／WPM／碰撞／无合法下骑点、人口／选择／所有权／死亡复活／异常回调与资源释放；三图长局、原UI/GPU/音效/AI、CPU／内存／持续切图无解包增长。英雄／建筑合成未实现，精度与搜索边界见[实现说明](warclub-coupling.md)。旧MEngine队列保持延期。
+
 ## 仙女龙与暗夜防御阶段待验证
 
 路径：session_faerie_dragon、原能力注册／命令／按钮／施法阶段／付费事件，真实攻击／伤害／隐去／移动／视野／弹道／通道清理；session_defense_passives、原被动定义／科技和可用状态、装备夜视、武器与伤害、带符号状态汇总。Apsh／Amfl、Ault、AIdd／Aegr、Assk／Ansk、Arsk及源派生已有实际消费者。
