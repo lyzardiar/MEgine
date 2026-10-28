@@ -14,6 +14,7 @@ struct LanSlot {std::uint8_t playerId=0,download=0,status=0,computer=0,team=0,co
 struct LanPlayer {std::uint8_t id=0;std::string name;};
 struct LanChatMessage {std::uint8_t sender=0;std::string text;};
 struct LanMapAnnouncement {bool received=false;std::string path;std::uint32_t size=0,info=0,crc=0;std::array<std::uint8_t,20> sha1{};};
+struct LanMapCheck;
 class LanJoin {
     std::uintptr_t socket_=~std::uintptr_t{};
     bool winsock_=false;
@@ -25,6 +26,7 @@ class LanJoin {
     std::vector<LanPlayer> players_;
     std::vector<LanChatMessage> chat_;
     LanMapAnnouncement map_;
+    bool mapReadyReported_=false;
     std::vector<std::uint8_t> input_,output_;
     std::size_t sent_=0;
     std::chrono::steady_clock::time_point activity_{};
@@ -41,6 +43,8 @@ public:
     void cancel();
     bool sendChat(std::string_view message);
     bool requestSlotChange(std::uint8_t field,std::uint8_t value);
+    // Queue readiness only after every announced map field has been checked.
+    bool reportMapReady(const LanMapCheck& checked);
     LanJoinState state() const {return state_;}
     const std::string& error() const {return error_;}
     std::uint32_t rejectionCode() const {return rejectionCode_;}

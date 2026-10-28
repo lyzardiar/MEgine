@@ -7,6 +7,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "lan_join.h"
+#include "lan_mapcheck.h"
 #include <algorithm>
 #include <array>
 #include <stdexcept>
@@ -44,6 +45,11 @@ bool LanJoin::requestSlotChange(std::uint8_t field,std::uint8_t value) {
     if(targets.empty() || targets.size()>24)return false;size_t size=8+targets.size();if(output_.size()-sent_+size>65536)return false;if(sent_){output_.erase(output_.begin(),output_.begin()+sent_);sent_=0;}
     output_.insert(output_.end(),{0xf7,0x28,std::uint8_t(size),std::uint8_t(size>>8),std::uint8_t(targets.size())});output_.insert(output_.end(),targets.begin(),targets.end());output_.push_back(localPlayerId_);output_.push_back(field);output_.push_back(value);return true;
 }
+bool LanJoin::reportMapReady(const LanMapCheck& checked) {
+    if(state_!=LanJoinState::Lobby || socket_==invalidSocket || !map_.received || !map_.size || checked.size!=map_.size || checked.info!=map_.info || checked.crc!=map_.crc || checked.sha1!=map_.sha1)return false;
+    if(mapReadyReported_)return true;if(output_.size()-sent_+13>65536)return false;if(sent_){output_.erase(output_.begin(),output_.begin()+sent_);sent_=0;}
+    output_.insert(output_.end(),{0xf7,0x42,13,0,1,0,0,0,1});put32(output_,checked.size);mapReadyReported_=true;return true;
+}
 void LanJoin::process(const std::uint8_t* p,std::size_t n){
     auto invalid=[&]{fail("Invalid LAN lobby packet");};switch(p[1]){
     case 0x01:if(n!=8){invalid();return;}if(output_.size()-sent_>65528){fail("LAN send queue exceeded");return;}output_.insert(output_.end(),{0xf7,0x46,8,0,p[4],p[5],p[6],p[7]});break;
@@ -53,7 +59,7 @@ void LanJoin::process(const std::uint8_t* p,std::size_t n){
     case 0x07:if(n!=9){invalid();return;}std::erase_if(players_,[&](const LanPlayer& v){return v.id==p[4];});break;
     case 0x0f:{if(state_!=LanJoinState::Lobby || n<8){invalid();return;}auto count=p[4];if(!count || count>24 || n<std::size_t(8)+count){invalid();return;}auto sender=p[5+count],kind=p[6+count];if(kind!=0x10)break;std::size_t at=7+count;std::string message;if(!sender || sender==255 || !text(p,n,at,254,message) || at!=n){invalid();return;}if(std::find(p+5,p+5+count,localPlayerId_)==p+5+count)break;if(chat_.size()>=200)chat_.erase(chat_.begin());chat_.push_back({sender,std::move(message)});break;}
     case 0x1c:if(n!=8){invalid();return;}fail("LAN host removed this player: "+std::to_string(u32(p+4)));return;
-    case 0x3d:{if(state_!=LanJoinState::Lobby || n<41 || u32(p+4)!=1){invalid();return;}std::size_t at=8;std::string path;if(!text(p,n,at,1024,path) || path.empty() || n-at!=32){invalid();return;}LanMapAnnouncement next;next.received=true;next.path=std::move(path);next.size=u32(p+at);next.info=u32(p+at+4);next.crc=u32(p+at+8);std::copy_n(p+at+12,20,next.sha1.begin());map_=std::move(next);break;}
+    case 0x3d:{if(state_!=LanJoinState::Lobby || n<41 || u32(p+4)!=1){invalid();return;}std::size_t at=8;std::string path;if(!text(p,n,at,1024,path) || path.empty() || n-at!=32){invalid();return;}LanMapAnnouncement next;next.received=true;next.path=std::move(path);next.size=u32(p+at);next.info=u32(p+at+4);next.crc=u32(p+at+8);std::copy_n(p+at+12,20,next.sha1.begin());mapReadyReported_=false;map_=std::move(next);break;}
     case 0x3f:case 0x43:fail("LAN map download is not implemented");return;
     case 0x0a:case 0x0b:fail("LAN match start is not implemented");return;
     default:break;

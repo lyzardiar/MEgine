@@ -27,6 +27,9 @@ public:
     void cancel();
     bool sendChat(std::string_view message);
     bool setSlot(std::size_t index,const LanSlot& slot);
+    // The remote peer's assertion, not host-side verification of its file.
+    bool playerReportsMapReady(std::uint8_t playerId) const;
+    bool playerRequestsMap(std::uint8_t playerId) const;
     const std::vector<LanSlot>& slots() const;
     const std::vector<LanPlayer>& players() const;
     const std::vector<LanChatMessage>& chat() const;

@@ -1151,3 +1151,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：lan_host、lan_host_ui、lan_join、lan_lobby。房主可设置开放／关闭／电脑难度和自身及电脑槽位；加入方请求自身队伍、颜色、种族及让分，主机按地图选项约束并广播。
 
 Win32 Release 产品编译通过；本机定向双端探针覆盖四类请求、颜色交换、固定设置、自定义队伍迁移和电脑专用槽保护，证据 tmp/docs-artifacts/war3/lan-host-probe/slot-probe/result.log。集中验证原版 1.27 双向互通、真实鼠标键盘和弹出菜单、固定选项与队伍迁移、远端广播／断线重入、全部地图和完整对局；ready、下载和同步尚未实现。
+
+## 局域网地图就绪协议阶段待验证
+
+路径：lan_host、lan_join。加入端增加四字段匹配后的就绪声明发送能力；主机解析状态并显示声明，界面仍不自动发送，未启用开始。
+
+本机双端定向探针检查匹配／失配与状态广播、断线清理，证据 tmp/docs-artifacts/war3/lan-host-probe/ready-probe/result.log。集中验证畸形报文、重复宣告、原版 1.27 互通及下载／加载／锁步；远端声明不等于服务端验证地图。
