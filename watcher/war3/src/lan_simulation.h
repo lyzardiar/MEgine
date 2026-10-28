@@ -3,6 +3,8 @@
 #include "lan_actions.h"
 #include "lan_time_driver.h"
 #include "player_commands.h"
+#include <map>
+#include <set>
 
 namespace war3 {
 // Resolver must be read-only and translate an original wire ID to a verified, stable session handle.
@@ -12,11 +14,12 @@ public:
     using ObjectResolver=std::function<std::optional<std::uint32_t>(LanObjectId)>;
 private:
     struct Selection {unsigned player;bool add;std::vector<std::uint32_t> units;};
-    struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0;};
+    struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0;};
     using Event=std::variant<LanActionPause,LanActionResume,Selection,Command>;
     ScriptSession& session_;
     ObjectResolver resolve_;
     std::vector<std::vector<Event>> decoded_;
+    std::map<unsigned,std::set<std::uint32_t>> projectedSelections_;
     std::size_t cursor_=0;
     bool consuming_=false;
     LanTimeDriver driver_;
