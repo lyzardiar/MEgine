@@ -38,6 +38,7 @@ public:
     const std::vector<std::uint8_t>& loadPlayers() const;
     const std::vector<std::uint8_t>& loadedPlayers() const;
     std::uint32_t randomSeed() const;
+    std::shared_ptr<const Bytes> mapBytes() const;
     // Opaque W3GS action data; callers must separately implement simulation and original action semantics.
     bool enableTimeSlotProtocol();
     bool submitHostAction(std::span<const std::uint8_t> action);

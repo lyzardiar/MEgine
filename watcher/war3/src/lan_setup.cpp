@@ -5,6 +5,9 @@
 #include <bit>
 
 namespace war3 {
+std::vector<unsigned> lanHostSlotPlayerIds(const MapInfo& info,std::size_t slotCount) {
+    std::vector<unsigned> ids;unsigned seen=0;for(const auto& player:info.players)if(player.type==1 || player.type==2){if(player.id<0 || player.id>=12 || (seen&(1u<<player.id)))throw std::runtime_error("Unsupported LAN map player");seen|=1u<<player.id;ids.push_back(unsigned(player.id));}if(ids.empty() || ids.size()!=slotCount)throw std::runtime_error("LAN host slot count does not match map players");return ids;
+}
 void ScriptSession::applyLanSetup(const LanSessionSetup& setup) {
     if(!configured() || !world_ || mainAttempted_)throw std::runtime_error("LAN setup requires a configured world before main");
     if(!initialRandomSeed_ || *initialRandomSeed_!=setup.randomSeed)throw std::runtime_error("LAN random seed must be provided before session initialization");

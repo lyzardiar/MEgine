@@ -1227,3 +1227,7 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 ## 游戏内声音选项阶段待验证
 
 路径：game_flow_ui、game_view、game_preferences、map_preparation、game_loading、sound、music、session_sound、session_music、main、cinematic、model_cinematic。原声音页的音效／音乐开关和滑块接入本地音量与设置文件。集中验证鼠标拖动／键盘焦点、确认／取消／Esc、已有与新建音效／堆叠声音、地图／主题／主菜单音乐、AVI 与模型过场、脚本音量组和淡入淡出叠加、--mute、不支持的音频设备、切图／重启及异常设置文件。原版音量曲线／控件外观和细分声音选项仍待对照或实现，见[游戏内选项](game-options.md)。
+
+## 局域网地图快照与会话配置待验证
+
+路径：lan_lobby、lan_mapcheck、lan_host、lan_host_ui、lan_setup。集中验证本地匹配与下载地图的校验、元数据和保留字节一致，校验后原文件替换、声明变更、断线与取消时的资源生命周期；验证自建主机混合人类／电脑、非连续与乱序玩家 ID、固定队伍及槽位变更，种子与槽位映射在 main 前应用，并比较真实双客户端状态、异常报文及大地图内存。原版主机的槽位顺序尚未确认，大厅对局启动与实际网络同步尚未接入。

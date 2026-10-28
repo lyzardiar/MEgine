@@ -21,6 +21,7 @@ class LanLobby {
     std::optional<LanMapAnnouncement> expectedMap_;
     std::unique_ptr<LanMapCheckTask> mapTask_;
     std::shared_ptr<const Bytes> verifiedMap_;
+    std::optional<MapInfo> verifiedMapInfo_;
     MapStatus mapStatus_=MapStatus::Waiting;
     std::uint64_t nextMapAttempt_=0;
     std::size_t scroll_=0;
@@ -32,5 +33,6 @@ public:
     std::string draw(const UiInput& input,std::wstring_view characters);
     // Available only after all fields match the host declaration.
     std::shared_ptr<const Bytes> verifiedMap() const {return verifiedMap_;}
+    const std::optional<MapInfo>& verifiedMapInfo() const {return verifiedMapInfo_;}
 };
 }

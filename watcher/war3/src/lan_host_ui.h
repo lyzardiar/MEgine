@@ -2,6 +2,7 @@
 #pragma once
 #include "glue.h"
 #include "lan_host.h"
+#include "lan_setup.h"
 #include "map.h"
 #include <array>
 #include <memory>
@@ -16,6 +17,7 @@ class LanHostUi {
     std::vector<MapEntry> entries_;
     std::unique_ptr<LanMapCheckTask> task_;
     std::unique_ptr<LanHost> host_;
+    std::optional<MapInfo> mapInfo_;
     std::string playerName_,mapPath_,error_;
     std::wstring gameName_=L"Warcraft III",chatDraft_;
     std::array<std::string,16> slotKeys_{};
@@ -34,5 +36,8 @@ class LanHostUi {
 public:
     LanHostUi(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string playerName);
     std::string draw(const UiInput& input,std::wstring_view characters);
+    const std::optional<MapInfo>& mapInfo() const {return mapInfo_;}
+    std::shared_ptr<const Bytes> mapBytes() const {return host_?host_->mapBytes():nullptr;}
+    std::optional<LanSessionSetup> sessionSetup() const {if(!host_ || !host_->running() || !mapInfo_)return {};return lanHostSessionSetup(*mapInfo_,*host_);}
 };
 }
