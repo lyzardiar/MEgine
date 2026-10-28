@@ -1115,3 +1115,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：lan_join／lan_lobby／lan_mapcheck／lan_browser。Win32 Release 产品编译通过；本机模拟 TCP 主机检查加入请求、槽位分片、玩家／PING／地图声明、PONG 与退出；BootyBay 大小／CRC32、非法路径与后台校验以及大厅和槽位 FDF 隐藏绘制通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/lan-join-probe/result.log。
 
 集中验证真实 1.27 互通、槽位更新／拒绝／断线／超时、名字与多字节、路径安全和异步取消、实际游戏地图字段对照、完整大厅交互与重复进出资源释放。加入确认后尚未发送地图就绪，下载、创建房间和对局同步待实现。
+
+## 玩家建造与生产命令阶段待验证
+
+路径：player_commands／game_commands／game_view。Win32 Release 产品编译通过；BootyBay 最小检查共享单位训练按拥有者扣款及取消生产通过，未加载 Game.dll，证据 tmp/docs-artifacts/war3/transfer-probe/。
+
+集中验证真实界面建造落点、训练／研究／升级／复活／英雄学习、队列索引与取消退款、资源归属、权限撤销、重入和原版时序；网络锁步与剩余输入仍待实现。

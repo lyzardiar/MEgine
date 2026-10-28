@@ -25,3 +25,5 @@ Win32 Release 产品编译通过；本机 UDP 模拟主机验证搜索及房间�
 这些是大厅与地图核对流程，尚未发送地图就绪消息、下载地图或启用开始；校验一致也不代表已可进行对局。W3GS 握手和地图算法根据上述固定来源独立实现，1.27 原版方向、默认数据和互通仍需对照。
 
 Win32 Release 编译通过；本机临时 TCP 主机覆盖 REQJOIN、分片 SLOTINFOJOIN、合包 PLAYERINFO／PING／MAPCHECK、PONG 和退出，原版大厅及槽位 FDF 隐藏窗口绘制通过。BootyBay 文件大小和 CRC32 经 Python 独立核对，非法路径拒绝和后台结果检查通过；XORRotate／SHA-1 尚未与独立原版实现核对。证据 `tmp/docs-artifacts/war3/lan-join-probe/result.log`。真实主机、大厅完整交互、跨客户端同步未验收。
+
+`W3GS_MAPSIZE` 的公开参考为 `0x42`、13 字节（常量 1、状态字节和地图大小）；部分主机要求短时间内收到就绪，否则会踢出。由于当前尚未实现对局同步，本客户端不发送就绪以免主机误启动；本机 1.27 报文仍待实测。
