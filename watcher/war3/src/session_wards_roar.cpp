@@ -1,0 +1,51 @@
+// Author: MiYu. Source wards, armed traps and roar modifiers share real units, visibility, buffs and inventory payment.
+#include "session.h"
+#include <algorithm>
+#include <bit>
+#include <cmath>
+
+namespace war3 {
+namespace {
+float number(jass::Real value){return std::bit_cast<float>(value.bits());}
+jass::Real real(float value){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}
+int cell(float value){return int(std::floor(double(value)/512));}
+}
+void ScriptSession::wardSpellInfo(SpellInfo& s){
+    auto& data=definitions();auto field=[&](const char* key){return data.number(s.ability,"AbilityData",std::string(key)+std::to_string(s.level));};auto type=data.field(s.ability,"AbilityData","UnitID"+std::to_string(s.level));
+    if(type.size()!=4 || !data.contains(ObjectData::code(type)) || !s.buff || s.duration>86400)throw std::runtime_error("Ward requires its source unit, buff and bounded lifetime");s.summonType=ObjectData::code(type);s.summonCount=1;s.summonDuration=s.duration;
+    if(s.kind!=SpellKind::StasisTrap)return;s.castDelay=field("DataA");s.autoRange=field("DataB");s.area=field("DataC");s.extraDamage=field("DataD");s.amount=s.secondary=s.loss=0;
+    if(s.duration<=0 || s.castDelay<0 || s.castDelay>300 || s.autoRange<=0 || s.autoRange>100000 || s.area<=0 || s.area>100000 || s.extraDamage<=0 || s.extraDamage>300 || s.heroDuration<0 || s.heroDuration>300)throw std::runtime_error("Stasis Trap activation, radius or stun outside supported range");
+}
+void ScriptSession::roarSpellInfo(SpellInfo& s){
+    auto& data=definitions();auto field=[&](const char* key){return data.number(s.ability,"AbilityData",std::string(key)+std::to_string(s.level));};s.extraDamage=field("DataD");float hostile=field("DataE"),friendly=field("DataF"),maximum=field("DataG");
+    if(!s.buff || s.amount>10 || s.secondary>99999 || s.loss<0 || s.loss>99999 || s.extraDamage<0 || s.extraDamage>99999 || (hostile!=0 && hostile!=1) || (friendly!=0 && friendly!=1) || maximum<0 || maximum>1024 || maximum!=std::floor(maximum) || s.duration>86400 || s.heroDuration>86400)throw std::runtime_error("Roar modifiers, preference, count or duration outside supported range");s.roarPreferHostile=hostile!=0;s.roarPreferFriendly=friendly!=0;s.targets=unsigned(maximum);
+}
+void ScriptSession::roarEffect(std::uint32_t source,const SpellInfo& s,unsigned owner){
+    if(!alive(source,NativeKind::Unit))return;auto caster=units_.at(source);auto death=caster->deathRevision,ownership=caster->ownerRevision;auto targets=spellTargets(source,s,{caster->x,caster->y},owner);
+    if(s.roarPreferHostile!=s.roarPreferFriendly)std::stable_sort(targets.begin(),targets.end(),[&](auto a,auto b){bool hostileA=enemy(owner,units_.at(a)->owner),hostileB=enemy(owner,units_.at(b)->owner);return hostileA!=hostileB && hostileA==s.roarPreferHostile;});
+    auto kind=s.kind==SpellKind::Roar?BuffKind::Roar:BuffKind::HowlTerror;unsigned applied=0;
+    for(auto id:targets){if(s.targets && applied>=s.targets)break;if(!alive(source,NativeKind::Unit) || caster->removing || number(caster->life)<=0 || caster->owner!=owner || caster->deathRevision!=death || caster->ownerRevision!=ownership)break;if(!alive(id,NativeKind::Unit))continue;auto target=units_.at(id);if(!spellTarget(*caster,*target,s,false,owner) || ((target->hero || capability(*target,"Arsk"))?s.heroDuration:s.duration)<=0)continue;
+        applyBuff(id,source,s,kind);auto found=target->buffs.find(s.buff);if(found==target->buffs.end() || found->second.kind!=kind)continue;for(auto it=target->buffs.begin();it!=target->buffs.end();)if(it->second.kind==(kind==BuffKind::Roar?BuffKind::HowlTerror:BuffKind::Roar)){releaseBuff(it->second);it=target->buffs.erase(it);}else ++it;
+        auto& buff=found->second;bool positive=kind==BuffKind::Roar;float sign=positive?1.f:-1.f;buff.positive=positive;buff.damageBonus=positive?s.amount:0;buff.damageReduction=positive?0:s.amount;buff.armor=sign*s.secondary;buff.healthRegen=sign*s.loss;buff.manaRate=sign*s.extraDamage;++applied;
+    }
+}
+void ScriptSession::initializeWard(std::uint32_t id,const SpellInfo& s){
+    if(s.kind!=SpellKind::StasisTrap || !alive(id,NativeKind::Unit))return;if(stasisWards_.size()>=4096)throw std::runtime_error("Armed ward budget exceeded");stasisWards_[id]={s,s.castDelay,0,units_.at(id)->deathRevision};
+}
+void ScriptSession::wardsTick(double delta){
+    if(stasisWards_.empty())return;std::vector<std::uint32_t> due;
+    for(auto it=stasisWards_.begin();it!=stasisWards_.end();){auto id=it->first;if(!alive(id,NativeKind::Unit)){it=stasisWards_.erase(it);continue;}auto u=units_.at(id);auto& state=it->second;if(u->removing || number(u->life)<=0 || u->deathRevision!=state.deathRevision){it=stasisWards_.erase(it);continue;}if(!u->paused && !u->hidden()){double elapsed=delta;if(state.armRemaining>0){double arm=std::min(elapsed,state.armRemaining);state.armRemaining-=arm;elapsed-=arm;}if(state.armRemaining<=0){state.scanRemaining-=elapsed;if(state.scanRemaining<=0){state.scanRemaining=.125;due.push_back(id);}}}++it;}
+    if(due.empty())return;std::map<std::pair<int,int>,std::vector<std::uint32_t>> grid;std::vector<std::uint32_t> actors;float collision=0;for(auto& [id,u]:units_)if(!u->removing && !u->hidden() && number(u->life)>0){grid[{cell(number(u->x)),cell(number(u->y))}].push_back(id);actors.push_back(id);collision=std::max(collision,u->collision);}
+    auto nearby=[&](const UnitState& ward,float radius){std::vector<std::uint32_t> result;radius+=collision;int left=cell(number(ward.x)-radius),right=cell(number(ward.x)+radius),bottom=cell(number(ward.y)-radius),top=cell(number(ward.y)+radius);if(std::int64_t(right-left+1)*(top-bottom+1)>4096)return actors;for(int x=left;x<=right;++x)for(int y=bottom;y<=top;++y)if(auto found=grid.find({x,y});found!=grid.end())result.insert(result.end(),found->second.begin(),found->second.end());std::sort(result.begin(),result.end());return result;};
+    for(auto id:due){auto found=stasisWards_.find(id);if(found==stasisWards_.end() || !alive(id,NativeKind::Unit))continue;auto ward=units_.at(id);if(ward->paused || ward->hidden() || ward->removing || number(ward->life)<=0 || ward->deathRevision!=found->second.deathRevision)continue;auto spell=found->second.spell;auto owner=ward->owner;bool triggered=false;
+        for(auto target:nearby(*ward,spell.autoRange)){if(!alive(target,NativeKind::Unit))continue;auto u=units_.at(target);if(std::hypot(number(u->x)-number(ward->x),number(u->y)-number(ward->y))<=spell.autoRange+u->collision && spellTarget(*ward,*u,spell,true,owner)){triggered=true;break;}}if(!triggered)continue;
+        std::vector<std::pair<std::uint32_t,std::uint64_t>> victims;for(auto target:nearby(*ward,spell.area)){if(!alive(target,NativeKind::Unit))continue;auto u=units_.at(target);if(std::hypot(number(u->x)-number(ward->x),number(u->y)-number(ward->y))<=spell.area+u->collision && spellTarget(*ward,*u,spell,false,owner))victims.emplace_back(target,u->deathRevision);}stasisWards_.erase(id);spell.duration=spell.extraDamage;spellVisual(spell,"EffectArt",0,{ward->x,ward->y});unitLife(runtime_.handle("unit",id),{});
+        for(auto [target,death]:victims){if(!alive(target,NativeKind::Unit))continue;auto u=units_.at(target);if(u->deathRevision!=death || !spellTarget(*ward,*u,spell,false,owner))continue;applyBuff(target,id,spell,BuffKind::Stun);if(alive(target,NativeKind::Unit)){auto buff=u->buffs.find(spell.buff);if(buff!=u->buffs.end() && buff->second.source==id && buff->second.kind==BuffKind::Stun)buff->second.sourceOwner=owner;}}
+    }
+}
+bool ScriptSession::useWardRoarItem(std::uint32_t id,std::uint32_t itemId,std::uint32_t target,std::optional<WorldPoint> point){
+    if(!alive(id,NativeKind::Unit) || !alive(itemId,NativeKind::Item))return false;auto u=units_.at(id);auto held=items_.at(itemId);auto abilities=itemActiveAbilities(held->type);if(abilities.size()!=1)return false;auto s=spellInfo(abilities.front(),1);if(!wardSpell(s.kind) && s.kind!=SpellKind::Roar)return false;auto& data=definitions();bool powerup=data.number(held->type,"ItemData","powerup")!=0;
+    if(powerup){if(target || point || held->holder!=id || !wardSpell(s.kind))return false;s.targeting=SpellTargeting::None;auto death=u->deathRevision,ownership=u->ownerRevision,revision=u->castRevision;auto owner=u->owner;auto group=data.field(held->type,"ItemData","cooldownID",ObjectData::name(s.ability));if(number(u->mana)<s.mana || (u->itemCooldowns.contains(group) && u->itemCooldowns.at(group)>simulationTime_) || (data.number(held->type,"ItemData","uses")>0 && held->charges<=0) || !spellPoint(*u,s,{u->x,u->y}))return false;u->mana=real(number(u->mana)-s.mana);u->itemCooldowns[group]=simulationTime_+s.cooldown;bool limited=held->charges>0 || data.number(held->type,"ItemData","uses")>0;if(limited)--held->charges;ScriptContext context;context.manipulatedItem=itemId;unitEvent(id,50,87,context);if(limited && held->charges==0 && data.number(held->type,"ItemData","perishable")!=0 && alive(itemId,NativeKind::Item))removeItem(itemId);if(alive(id,NativeKind::Unit) && !u->removing && number(u->life)>0 && u->deathRevision==death && u->ownerRevision==ownership && u->owner==owner && u->castRevision==revision)summonSpell(id,s,{u->x,u->y},owner);return true;}
+    if(!itemSpellReady(*u,s,itemId))return false;if(s.targeting==SpellTargeting::Point && !point){if(!alive(target,NativeKind::Unit))return false;auto to=units_.at(target);if(to->removing || number(to->life)<=0 || !unitVisibleTo(target,u->owner))return false;point=WorldPoint{to->x,to->y};}if(s.targeting==SpellTargeting::None && (point || (target && target!=id)))return false;if(point && (!std::isfinite(number(point->x)) || !std::isfinite(number(point->y))))throw std::runtime_error("Invalid ward item point");auto slot=std::find(u->inventory.begin(),u->inventory.end(),itemId);return slot!=u->inventory.end() && beginSpell(id,s.ability,0,point.value_or(WorldPoint{u->x,u->y}),s.targeting,false,852008u+unsigned(slot-u->inventory.begin()),itemId);
+}
+}

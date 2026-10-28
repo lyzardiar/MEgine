@@ -8,6 +8,14 @@
 | W002 图像、字体和音频边界 | image、media、main、rea-boundaries | BLP1/JPEG/palette、BLP2/BC、TGA、原版中文字体、Miles 内存 MP3 | IJL 调用约定、透明平面、codec 路径与 sample 生命周期 | 基础范围通过，批次关闭；音效与听感仍待验收 |
 | W003 原版 MDX 菜单场景 | model、model_pose、binary、archive、renderer、main、fdf、glue、tests | MDX800 基础场景、纹理来源、FDF 模板与字符串、真实帧、退出输入 | 不可信记录边界、FDF 预算、菜单按钮输入边界 | 基础范围通过，批次关闭；完整还原留在功能矩阵 |
 
+## 守卫、吼叫与范围净化阶段待验证
+
+路径：session_wards_roar、spell_info/spells/area_spells/summons、陷阱登记/tick/移除、实际Buff数值/盗取/恢复及库存目标/支付/六槽/符文；caster_spells的范围驱散与自爆、派生源命令。包含治疗／岗哨／观察者／静止陷阱、吼叫／嚎叫／卷轴和自爆／消魔的连续流程。
+
+状态：实现已接入，执行必要Win32 Release产品编译及差异检查；新增玩法专项、三图、原版精度、UI/GPU/声音/AI及性能统一留在功能阶段，不逐能力运行测试。源表、归档摘要、原行和构建日志在tmp/docs-artifacts/war3/{wards-roar,dispel-casters}/。
+
+集中验证：原能力/研究/按钮/命令/热键与库存目标/次数/冷却/拾取符文；真实单位/寿命/恢复/侦测/共享视野，陷阱激活/范围/原时间与目标分类/空间性能，吼叫正负数值/偏好/数量/互斥/驱散/盗取，敌我驱散/魔法损失/召唤与幻象/抗性/自爆牺牲及保留玩家来源；死亡/移除/归属/暂停/复活/召唤与物品事件重入、三图长局/资源释放/无解包增长。原版精度与完整表现保持开放，见[实现与边界](wards-roar.md)。旧MEngine队列保持延期。
+
 ## 破法者与龙鹰阶段待验证
 
 路径：session_spell_steal/human_channels/feedback，源spell_info/passive_info/spells/channel/attack/projectiles、buff出处/成员与实际状态、structures分类、自动施法/库存选目标与支付。消费Asps/Amls/Aclf、Afbk及原派生。必要产品编译无警告，差异检查通过。

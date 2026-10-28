@@ -263,6 +263,13 @@ class ScriptSession {
     bool absorbTarget(const UnitState& unit,const UnitState& target,const SpellInfo& spell);
     const SpellInfo* attackOrb(const UnitState& unit,const UnitState& target,std::uint32_t forced=0);
     void orbWeapon(WeaponDefinition& weapon,const SpellInfo& spell);
+    void wardSpellInfo(SpellInfo& spell);
+    void roarSpellInfo(SpellInfo& spell);
+    void roarEffect(std::uint32_t source,const SpellInfo& spell,unsigned owner);
+    void initializeWard(std::uint32_t unit,const SpellInfo& spell);
+    void wardsTick(double delta);
+    bool useWardRoarItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
+    std::map<std::uint32_t,StasisWard> stasisWards_;
     void humanSpellInfo(SpellInfo& spell);
     std::optional<std::pair<std::uint32_t,std::uint32_t>> spellStealChoice(const UnitState& caster,const UnitState& holder,const SpellInfo& spell,bool visibility=true,unsigned owner=UINT_MAX);
     const std::vector<std::uint32_t>& spellStealNeighborhood(const UnitState& caster,float radius);
@@ -354,7 +361,7 @@ class ScriptSession {
     void pulverizeDamage(const CombatProjectile& projectile,const PassiveInfo& passive);
     void neutralSpellInfo(SpellInfo& spell);
     bool neutralSpellImpact(const SpellMissile& missile);
-    void howlTerror(std::uint32_t source,const SpellInfo& spell,unsigned owner);
+
     void breathFireHit(std::uint32_t source,std::uint32_t target,const SpellInfo& spell,unsigned owner,float amount);
     float neutralBurnTick(UnitBuff& buff,double elapsed);
     void doomDeath(const UnitState& victim);
@@ -502,7 +509,8 @@ class ScriptSession {
     bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting,bool automatic=false,std::uint32_t issuedOrder=0,std::uint32_t item=0);
     void casterEffect(const SpellMissile& missile);
     bool usefulDispel(const UnitState& caster,const UnitState& target,const SpellInfo& spell);
-    void dispelSpell(std::uint32_t source,std::uint32_t target,const SpellInfo& spell);
+    void dispelSpell(std::uint32_t source,std::uint32_t target,const SpellInfo& spell,unsigned owner=UINT_MAX);
+    void detonateSpell(std::uint32_t source,const SpellInfo& spell,unsigned owner);
     void autocastTick();
     bool spellRequirements(unsigned owner,const SpellInfo& spell);
     unsigned autocastTicks_=0;
