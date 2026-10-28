@@ -1508,3 +1508,9 @@ Win32 Release 客户端增量编译通过。阶段核对原 FDF 键鼠／弹出�
 路径：`entities.h`、`session.h`、`session_entities.cpp`、`session_orders.cpp`、`session_combat.cpp`、`session_unit_forms.cpp`、`session_building_upgrades.cpp`、`docs/unit-turning.md`。源转速及推进角、自定义覆盖、脚本设置／查询、移动路径与攻击方向、幻象和类型变化已接入；原版转向速度公式、角度边界和生命周期规则待对照。
 
 Win32 Release 客户端增量编译通过。阶段核对四族与自定义地图的直行／拐角／避障、脚本属性、极端窗口、攻击前摇与移动施法、暂停／幻象／变形／复活、同步及长局性能；当前无玩法或原版一致性通过结论。
+
+## 地图脚本实体状态查询待验证
+
+路径：`session_game.cpp`。`IsHeroUnitId` 读取单位类型继承与英雄分类，`IsItemVisible` 消费物品显示状态，`IsUnitInRange`／`XY`／`Loc` 以当前实体坐标与碰撞半径进行距离判断。
+
+Win32 Release 客户端增量编译通过。阶段验证 DotA 脚本调用、物编继承、空句柄、隐藏物品及位置变化、边界／零／负／无效距离和原版碰撞半径规则；当前算法为实现值，未证明原版精度。
