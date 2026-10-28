@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 地图漂浮文字阶段待验证
+
+路径：session_text_tag、session／script_state／session_tick、game_text_tag／game_view 与 CMake。texttag 创建／销毁、文字／单位或坐标定位、颜色／速度、可见／暂停／永久、年龄／寿命／淡出连接会话状态和 GameView 绘制，支持内联颜色与换行。Win32 Release 产品增量编译通过。
+
+集中验证 DotA 与其他真实地图的文字显示、坐标／单位定位、颜色／字体尺寸／速度／淡出、暂停／隐藏／过期／重复销毁、地图切换释放及大量文字性能；原版单位换算、时钟、文本遮挡、战争迷雾与本地可见性仍待对照。实际画面、交互及原版一致性未验收。
+
 ## 战役镜头、字幕与装饰物阶段待验证
 
 路径：camera_control／session_camera_setup／session_world、world／game_view 相机，session_text／game_cinematic_panel／GlueScreen 原 FDF 与阵营皮肤，world／scene_objects 动画请求，music／session_music 主题音乐。支持实际相机配置／单位跟随／震动、过场界面／肖像和字幕、矩形／圆形装饰物动画遮挡物空间块淡化／独立边界雾，以及主题音乐、原版声道音量组、区域／单位附着空间音。源 FDF 和原图启动证据位于 tmp/docs-artifacts/war3/campaign/。

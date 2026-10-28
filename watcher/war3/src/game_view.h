@@ -52,6 +52,7 @@ class GameView {
     void drawCinematicPanel();
     void drawLeaderboard();
     void drawTimerDialogs();
+    void drawTextTags();
     void drawMultiboards(const GameInput& input);
     bool multiboardHit(float x,float y) const;
     void drawMinimapPings();
