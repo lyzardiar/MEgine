@@ -33,6 +33,7 @@ struct CombatProjectile {
     unsigned weapon=0,abilityLevel=0;
     std::uint32_t orbProc=0;
     float damage=0,travelled=0,distance=0,startHeight=0,endHeight=0,stealthDamage=0;
+    PathMovement startMovement=PathMovement::Ground,endMovement=PathMovement::Ground;
     WorldPoint start,position,endpoint;
     double born=0;
     std::vector<std::uint32_t> visited;

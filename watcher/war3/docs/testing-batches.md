@@ -1251,3 +1251,7 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 ## 水面与两栖路径待验证
 
 路径：world、world_path、session_orders、session_combat_orders、session_production、session_summons、session_coupling、session_mobility、session_teleport、session_transport、session_unit_forms。集中验证不同 WPM 位组合与地图边界、陆地／水面／两栖／飞行路径和目标修正、净空／对角／动态阻挡与重算；在海岛地图验证船厂训练、购买、召唤、移动／追击／卸载／传送和水陆交界，覆盖对象覆盖及多客户端同步，比较原版语义、画面和长局性能。
+
+## 水面单位与弹道显示待验证
+
+路径：terrain_scene、terrain_layout、game_view、game_morph、game_effects、scene_objects、combat、spells、session_projectiles、session_spell_effects、session_siege_attacks、session_self_spells。集中验证 W3E 干／湿格、非平坦水位、地形与水面交界、源水位偏移、海军／两栖／飞行单位模型与选择圈、点击／相机／遮挡，武器与法术弹道发射者死亡、追踪目标变形、反弹和多目标；覆盖多个地形集、实际 GPU 帧、透明水面与原版对照及长局性能。特殊闪电和水面粒子仍待对照或实现。

@@ -158,6 +158,7 @@ struct SpellMissile {
     WorldPoint position,start;
     std::uint64_t sourceDeath=0,targetDeath=0;
     float amount=0,mana=0,startHeight=0,endHeight=0,distance=0,travelled=0;
+    PathMovement startMovement=PathMovement::Ground,endMovement=PathMovement::Ground;
     double born=0;
     std::vector<std::uint32_t> visited;
 };

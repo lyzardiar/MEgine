@@ -26,7 +26,7 @@ class TerrainScene {
     std::vector<TerrainChunk> chunks_;
     std::map<std::tuple<unsigned,unsigned,std::string,bool>,size_t> lookup_;
     std::vector<std::string> waterFrames_;
-    float waterRate_=0;
+    float waterRate_=0,waterOffset_=0;
     size_t uploaded_=0;
     size_t meshBytes_=0;
     std::vector<TerrainChunk> blightChunks_;
@@ -52,5 +52,8 @@ public:
     size_t uploaded() const {return uploaded_;}
     size_t draw(Renderer& renderer,const D3DMATRIX& view,const D3DMATRIX& projection,std::uint64_t elapsed,bool water,const WorldEnvironment& environment);
     float height(float x,float y) const {return relief(surface_,(x-source_.origin[0])/128,(y-source_.origin[1])/128);}
+    std::optional<float> waterHeight(float x,float y) const;
+    float visibleHeight(float x,float y) const {auto ground=height(x,y);auto water=waterHeight(x,y);return water?std::max(ground,*water):ground;}
+    float unitHeight(float x,float y,PathMovement movement) const {return movement==PathMovement::Water || movement==PathMovement::Amphibious?visibleHeight(x,y):height(x,y);}
 };
 }
