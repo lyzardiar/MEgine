@@ -109,6 +109,8 @@ struct ScriptCache {
     std::map<std::pair<std::string,std::string>,CachedUnit> units;
 };
 struct ScriptHashtable {std::map<std::tuple<std::uint32_t,std::uint32_t,std::string>,jass::Value> values;};
+struct ScriptLeaderboardItem {std::string label;int value=0;unsigned player=0;bool showLabel=true,showValue=true,showIcon=true;std::uint32_t labelColor=0xffffffff,valueColor=0xffffffff;};
+struct ScriptLeaderboard {std::string label;std::vector<ScriptLeaderboardItem> items;bool visible=false,showLabel=true,showNames=true,showValues=true,showIcons=true;std::uint32_t labelColor=0xffffffff,valueColor=0xffffffff;unsigned sizeCount=0;};
 struct ScriptQuestItem {std::uint32_t owner=0;std::string description;bool completed=false;};
 struct ScriptQuest {std::string title,description,icon;bool required=true,completed=false,discovered=false,failed=false,enabled=true;std::vector<std::pair<std::uint32_t,std::shared_ptr<ScriptQuestItem>>> items;};
 }

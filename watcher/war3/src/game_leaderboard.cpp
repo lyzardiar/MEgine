@@ -1,0 +1,15 @@
+// Author: MiYu. Display script leaderboard state with original FDF backdrop and team textures.
+#include "game_view.h"
+#include <algorithm>
+#include <cmath>
+
+namespace war3 {
+void GameView::drawLeaderboard() {
+    auto& session=*data_->session;auto player=session.localPlayer();if(!player)return;auto board=session.leaderboard(*player);if(!board || !board->visible)return;
+    if(!leaderboardPanel_){leaderboardPanel_=std::make_unique<GlueScreen>(session.world()->resources(),data_->assets->decoder(),renderer_,text_,"UI\\FrameDef\\UI\\Leaderboard.fdf","Leaderboard");leaderboardPanel_->focusEnabled(false);leaderboardPanel_->visible("LeaderboardTitle",false);SourceSettings settings;settings.load(session.world()->resources(),"UI\\MiscUI.txt");auto source=settings.value("FontHeights","LeaderBoard","0.007");size_t end=0;leaderboardFont_=std::stof(source,&end);if(end!=source.size() || !std::isfinite(leaderboardFont_) || leaderboardFont_<=0 || leaderboardFont_>.1f)throw std::runtime_error("Invalid leaderboard source font size");}
+    auto race=session.config().players[*player].race;leaderboardPanel_->skinSection(race==2?"Orc":race==3?"Undead":race==4?"NightElf":"Default");auto count=std::max<size_t>(board->items.size(),board->sizeCount);float height=std::clamp(.04f+float(count)*.015f,.075f,.49f);float x=.625f,y=.035f,w=.17f;auto current=leaderboardPanel_->bounds("Leaderboard");if(current.x!=x || current.y!=y || current.w!=w || current.h!=height)leaderboardPanel_->place("Leaderboard",{x,y,w,height});leaderboardPanel_->draw("Leaderboard",{},{});
+    float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;if(board->showLabel){auto title=wide(board->label);if(title.size()>4096)title.resize(4096);title.resize(text_.fit(title,(w-.03f)*scale,.011f*scale));text_.draw(title,left+(x+w/2)*scale,top+(y+.013f)*scale,.011f*scale,board->labelColor,true);}
+    float row=count?std::min(.015f,(height-.04f)/float(count)):.015f;float font=std::min(leaderboardFont_,row*.78f);for(size_t i=0;i<board->items.size();++i){auto& item=board->items[i];float line=y+.034f+float(i)*row;if(board->showIcons && item.showIcon && item.player<16){auto color=std::min(session.config().players[item.player].color,15u);auto suffix=(color<10?"0":"")+std::to_string(color);if(auto texture=data_->assets->cachedTexture("ReplaceableTextures\\TeamColor\\TeamColor"+suffix+".blp"))renderer_.rect(left+(x+.009f)*scale,top+line*scale,row*.64f*scale,row*.64f*scale,0xffffffff,texture);}
+        auto value=board->showValues && item.showValue?std::to_wstring(item.value):std::wstring{};auto valueWidth=text_.width(value,font*scale,false);if(board->showNames && item.showLabel){auto label=wide(item.label);if(label.size()>4096)label.resize(4096);label.resize(text_.fit(label,std::max(0.f,(w-.036f)*scale-valueWidth),font*scale));text_.draw(label,left+(x+.023f)*scale,top+line*scale,font*scale,item.labelColor);}if(!value.empty())text_.draw(value,left+(x+w-.009f)*scale-valueWidth,top+line*scale,font*scale,item.valueColor);}
+}
+}

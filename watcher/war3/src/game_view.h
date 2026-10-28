@@ -35,8 +35,9 @@ class GameView {
     bool chatOpen_=false;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
     std::unique_ptr<QuestDialog> questDialog_;
-    std::unique_ptr<GlueScreen> cinematicPanel_;
+    std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_;
     std::string cinematicSpeaker_,cinematicDialogue_;
+    float leaderboardFont_=.007f;
     bool questsOpen_=false;
     std::unique_ptr<GameFlowUi> flow_;
     bool appExit_=false;
@@ -46,6 +47,7 @@ class GameView {
     void camera(const GameInput& input,double delta);
     void drawCineFilter();
     void drawCinematicPanel();
+    void drawLeaderboard();
     void drawMinimapPings();
     std::optional<std::array<float,3>> ground(float x,float y) const;
     std::optional<std::pair<float,float>> project(float x,float y,float z) const;

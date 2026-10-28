@@ -1018,10 +1018,16 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 
 路径：session_collections／session_world／session_fog／session_inventory／session_research／script_state。Win32 Release 产品编译与差异检查通过；Prologue02 原 main 和 60 秒静音模拟通过，仍有 1 个脚本线程，未加载 Game.dll，日志 tmp/docs-artifacts/war3/campaign/prologue02-next.log；该运行不代表这些玩家交互路径已覆盖。
 
-集中验证编组即时／点／目标命令和 ID 变体、空组／部分失败／回调修改成员、选中玩家和多人同步；移动区域尺寸／边界、地点明暗视野、物品过滤／持有／隐藏／销毁／嵌套上下文及研究开始／取消／完成事件。序章教程计数板尚未实现；三图、GPU／音频和性能留功能阶段。旧 MEngine 队列继续延期。
+集中验证编组即时／点／目标命令和 ID 变体、空组／部分失败／回调修改成员、选中玩家和多人同步；移动区域尺寸／边界、地点明暗视野、物品过滤／持有／隐藏／销毁／嵌套上下文及研究开始／取消／完成事件。序章教程计数板见后续记录；三图、GPU／音频和性能留功能阶段。旧 MEngine 队列继续延期。
 
 ## 区域堆叠声定位阶段待验证
 
 路径：sound。区域堆叠播放选择当前最大增益区域，以区域内最靠近监听点的位置计算左右声像；同增益时选择最近区域。Win32 Release 产品编译与差异检查通过，未执行实际听感检查。
 
 集中验证进入／退出／重叠区域、相同增益及距离、监听方向旋转／高度、范围与声道抢占／静音，以及多声源和原版听感与性能。区域择选和声像公式仍待原版对照。旧 MEngine 待测队列保持延期。
+
+## 战役计数板阶段待验证
+
+路径：session_leaderboard／session／script_state／session_hashtable／game_leaderboard／game_view。Win32 Release 产品编译通过；Prologue02 环境的脚本创建、玩家关联、增项、显示及销毁与原 FDF／皮肤底板隐藏窗口绘制通过，未加载 Game.dll；探针位于 tmp/docs-artifacts/war3/leaderboard-probe/，未运行完整教程交互。
+
+集中验证多玩家关联／更换／销毁、同玩家多项、增删／索引／空列表／排序、颜色覆盖／显示选项／长文本／透明度／hashtable，Prologue02 真实教学计数与事件、原版屏幕锚点／行距／图标／肤色及窗口比例。当前动态行布局和图标是近似实现；三图、GPU／音效／性能与旧 MEngine 队列保持阶段待验证。
