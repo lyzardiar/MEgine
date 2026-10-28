@@ -1013,3 +1013,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：entities／script_state／session_entities／session_cache。SetItemDropID 保存物品来源 rawcode，独立 gamecache v2 读写该值并兼容 v1；Win32 Release 产品编译通过，定向检查 v2 保存／读取／恢复与 v1 默认值通过，未加载 Game.dll，产物 tmp/docs-artifacts/war3/drop-cache-probe/。
 
 集中验证空／销毁句柄、原序章死亡掉落及后续商店／拾取、跨关卡和所有物品格、损坏与旧格式迁移、存档／回放字段、原版 StoreUnit 及其他潜在来源字段消费者。原版普通存档保留该字段，但原版 gamecache 是否保留仍待对照；独立缓存格式不是原版格式。旧 MEngine 队列保持延期。
+
+## 战役编组、区域与物品枚举阶段待验证
+
+路径：session_collections／session_world／session_fog／session_inventory／session_research／script_state。Win32 Release 产品编译与差异检查通过；Prologue02 原 main 和 60 秒静音模拟通过，仍有 1 个脚本线程，未加载 Game.dll，日志 tmp/docs-artifacts/war3/campaign/prologue02-next.log；该运行不代表这些玩家交互路径已覆盖。
+
+集中验证编组即时／点／目标命令和 ID 变体、空组／部分失败／回调修改成员、选中玩家和多人同步；移动区域尺寸／边界、地点明暗视野、物品过滤／持有／隐藏／销毁／嵌套上下文及研究开始／取消／完成事件。序章教程计数板尚未实现；三图、GPU／音频和性能留功能阶段。旧 MEngine 队列继续延期。

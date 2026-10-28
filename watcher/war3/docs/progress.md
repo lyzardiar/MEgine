@@ -1,5 +1,7 @@
 # 原生客户端交接入口
 
+2026-10-28：战役脚本的区域移动、地点视野、物品枚举、编组命令、选择和研究单位查询已接入，见[战役流程](campaign-flow.md)。
+
 2026-10-28：SetItemDropID 与物品来源状态已接入，独立 gamecache v2 保留该值并兼容读取 v1，见[战役 gamecache](campaign-gamecache.md)。
 
 2026-10-28：普通空间声音接入镜头方向、Miles 左右声像及声锥衰减；听感和原版精度待阶段验证，见[战役镜头与对话](campaign-cinematics.md)。
