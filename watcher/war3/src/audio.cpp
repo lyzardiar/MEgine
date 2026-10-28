@@ -23,7 +23,7 @@ struct MilesDevice::Impl {
     size_t active=0;
     Void shutdown;
     One closeDigital,closeMidi,releaseSample,releaseSequence,endSample,endSequence,startSample,startSequence,stopSample,stopSequence,resumeSample,resumeSequence,freeMemory,compactDls;
-    Integer loopSample,loopSequence,volumeSample,seekSample,seekSequence;
+    Integer loopSample,loopSequence,volumeSample,panSample,seekSample,seekSequence;
     Integer rateSample;
     Status readRateSample;
     void(__stdcall* volumeSequence)(void*,int,int);
@@ -55,7 +55,7 @@ struct MilesDevice::Impl {
         closeDigital=library.symbol<One>("_AIL_close_digital_driver@4");closeMidi=library.symbol<One>("_AIL_close_XMIDI_driver@4");
         releaseSample=library.symbol<One>("_AIL_release_sample_handle@4");releaseSequence=library.symbol<One>("_AIL_release_sequence_handle@4");
         endSample=library.symbol<One>("_AIL_end_sample@4");endSequence=library.symbol<One>("_AIL_end_sequence@4");startSample=library.symbol<One>("_AIL_start_sample@4");startSequence=library.symbol<One>("_AIL_start_sequence@4");stopSample=library.symbol<One>("_AIL_stop_sample@4");stopSequence=library.symbol<One>("_AIL_stop_sequence@4");resumeSample=library.symbol<One>("_AIL_resume_sample@4");resumeSequence=library.symbol<One>("_AIL_resume_sequence@4");
-        loopSample=library.symbol<Integer>("_AIL_set_sample_loop_count@8");loopSequence=library.symbol<Integer>("_AIL_set_sequence_loop_count@8");volumeSample=library.symbol<Integer>("_AIL_set_sample_volume@8");volumeSequence=library.symbol<decltype(volumeSequence)>("_AIL_set_sequence_volume@12");seekSample=library.symbol<Integer>("_AIL_set_sample_ms_position@8");seekSequence=library.symbol<Integer>("_AIL_set_sequence_ms_position@8");
+        panSample=library.symbol<Integer>("_AIL_set_sample_pan@8");loopSample=library.symbol<Integer>("_AIL_set_sample_loop_count@8");loopSequence=library.symbol<Integer>("_AIL_set_sequence_loop_count@8");volumeSample=library.symbol<Integer>("_AIL_set_sample_volume@8");volumeSequence=library.symbol<decltype(volumeSequence)>("_AIL_set_sequence_volume@12");seekSample=library.symbol<Integer>("_AIL_set_sample_ms_position@8");seekSequence=library.symbol<Integer>("_AIL_set_sequence_ms_position@8");
         statusSample=library.symbol<Status>("_AIL_sample_status@4");statusSequence=library.symbol<Status>("_AIL_sequence_status@4");timeSample=library.symbol<Time>("_AIL_sample_ms_position@12");timeSequence=library.symbol<Time>("_AIL_sequence_ms_position@12");
         readVolumeSample=library.symbol<Status>("_AIL_sample_volume@4");readVolumeSequence=library.symbol<Status>("_AIL_sequence_volume@4");
         rateSample=library.symbol<Integer>("_AIL_set_sample_playback_rate@8");readRateSample=library.symbol<Status>("_AIL_sample_playback_rate@4");
@@ -117,6 +117,7 @@ void AudioVoice::pause() {auto& v=*impl_;if(v.silent){v.cursor=v.silentPosition(
 void AudioVoice::resume() {auto& v=*impl_;if(v.silent){v.running=true;v.paused=false;v.started=v.now();return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.resumeSequence:api.resumeSample)(v.handle);}
 void AudioVoice::stop() {auto& v=*impl_;if(v.silent){v.running=false;v.paused=false;v.cursor=0;return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.endSequence:api.endSample)(v.handle);}
 void AudioVoice::volume(int level) {auto& v=*impl_;if(v.silent){v.level=unsigned(std::clamp(level,0,127));return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);level=std::clamp(level,0,127);if(v.midi)api.volumeSequence(v.handle,level,0);else api.volumeSample(v.handle,level);}
+void AudioVoice::pan(int position) {auto& v=*impl_;if(v.silent || v.midi)return;auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);api.panSample(v.handle,std::clamp(position,0,127));}
 int AudioVoice::volume() const {auto& v=*impl_;if(v.silent)return int(v.level);auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);return int((v.midi?api.readVolumeSequence:api.readVolumeSample)(v.handle));}
 void AudioVoice::position(unsigned milliseconds) {if(milliseconds>INT_MAX)throw std::runtime_error("Sound seek position exceeds range");auto& v=*impl_;if(v.silent){v.cursor=milliseconds;v.started=v.now();return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.seekSequence:api.seekSample)(v.handle,int(milliseconds));}
 void AudioVoice::pitch(float ratio) {if(!std::isfinite(ratio) || ratio<=0)throw std::runtime_error("Invalid sound pitch");auto& v=*impl_;if(v.midi)throw std::runtime_error("MIDI pitch is not implemented");if(v.silent){v.cursor=v.silentPosition();v.started=v.now();v.ratio=ratio;return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);if(!v.originalRate)v.originalRate=api.readRateSample(v.handle);double rate=double(v.originalRate)*ratio;if(rate<1 || rate>INT_MAX)throw std::runtime_error("Sound playback rate exceeds range");api.rateSample(v.handle,int(rate));}

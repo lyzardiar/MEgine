@@ -1001,3 +1001,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：model／model_data／model_pose。Win32 Release 产品编译通过；原 ArthasIllidanFight 模型解析 5 个灯光并完成 19 秒隐藏窗口绘制，日志 tmp/docs-artifacts/war3/campaign/model-probe/。
 
 集中验证法线／骨骼／非均匀缩放、点／方向／环境灯、所有源动画／多光混合／Unshaded、材质／滤色／环境光与原版画面，以及跨模型／昼夜光、性能和资源释放。当前仅模型自身灯光，基础环境为近似值；旧 MEngine 队列保持延期。
+
+## 空间声像与声锥阶段待验证
+
+路径：audio／sound／session_sound／session／game_view。普通空间声音按监听方向与声源位置设置原版 Miles sample pan，声锥参数改变实际音量；Win32 Release 产品编译通过，实际听感尚未验证。
+
+集中验证左右／正前／正后／垂直位置、转向／滚转／跟随、音量与范围／声锥内外／淡变、位置与朝向改变、静音／释放／抢占及原版 Miles 混音。当前声像及衰减公式为近似，区域堆叠声仍无左右定位；原版精度、音频设备与性能留阶段验证。旧 MEngine 待测队列保持延期。

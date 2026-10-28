@@ -982,7 +982,7 @@ public:
     void audioMuted(bool muted);
     void audioSimulationClock() {if(audio_)throw std::runtime_error("Audio simulation clock must be set before audio initialization");audioSimulationClock_=true;}
     void updateAudio();
-    void updateAudioListener(float x,float y,float z);
+    void updateAudioListener(float x,float y,float z,std::array<float,3> right);
     const SoundScene* audio() const {return audio_.get();}
     const MusicScene* music() const {return music_.get();}
     std::optional<unsigned> localPlayer() const {return localPlayer_;}

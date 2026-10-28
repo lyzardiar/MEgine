@@ -31,6 +31,7 @@ public:
     void resume();
     void stop();
     void volume(int level);
+    void pan(int position);
     int volume() const;
     void position(unsigned milliseconds);
     void pitch(float ratio);
