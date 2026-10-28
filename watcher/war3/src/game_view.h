@@ -46,6 +46,9 @@ class GameView {
     std::uint32_t buildMenuUnit_=0,skillMenuUnit_=0,bookMenuUnit_=0;
     std::uint32_t subgroupUnit_=0,subgroupType_=0;
     std::vector<std::uint32_t> subgroupSelection_;
+    std::array<std::vector<std::uint32_t>,10> controlGroups_;
+    unsigned lastControlGroup_=10;
+    std::uint64_t lastControlGroupTime_=0;
     std::vector<std::uint32_t> spellBookStack_;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> spellTarget_;
     std::vector<CommandButton> commandButtons(std::uint32_t unit);
@@ -119,6 +122,7 @@ class GameView {
     void resetSubgroupInput();
     void syncSubgroup();
     void cycleSubgroup(bool reverse);
+    void controlGroup(unsigned group,bool assign,bool append,bool repeat);
 public:
     GameView(std::unique_ptr<GameData> data,Renderer& renderer,Text& text,Log& log);
     ~GameView();

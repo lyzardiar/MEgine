@@ -21,7 +21,7 @@
 #include <shellapi.h>
 
 namespace war3 {
-struct WindowState { Renderer* renderer = nullptr; bool minimized = false,hidden = false; int mouseX = 0, mouseY = 0, pressX = 0, pressY = 0, wheel=0,lastClickX=0,lastClickY=0; bool click = false, down = false,doubleClick=false,rightClick=false,rightDown=false; unsigned key = 0; DWORD lastClickTime=0;std::wstring characters; };
+struct WindowState { Renderer* renderer = nullptr; bool minimized = false,hidden = false; int mouseX = 0, mouseY = 0, pressX = 0, pressY = 0, wheel=0,lastClickX=0,lastClickY=0; bool click = false, down = false,doubleClick=false,rightClick=false,rightDown=false; unsigned key = 0; bool keyControl=false,keyRepeat=false,keyShift=false; DWORD lastClickTime=0;std::wstring characters; };
 LRESULT CALLBACK windowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     auto state = reinterpret_cast<WindowState*>(GetWindowLongPtrW(window, GWLP_USERDATA));
     if (message == WM_NCCREATE) { auto create = reinterpret_cast<CREATESTRUCTW*>(lParam); state = static_cast<WindowState*>(create->lpCreateParams); SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(state)); }
@@ -35,7 +35,7 @@ LRESULT CALLBACK windowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
     if (message == WM_MOUSEWHEEL && state) {state->wheel+=static_cast<short>(HIWORD(wParam));return 0;}
     if (message == WM_CAPTURECHANGED && state) { state->down=false;state->rightDown=false;return 0; }
     if (message == WM_TIMER && wParam==1 && state) {KillTimer(window,1);ShowWindow(window,SW_RESTORE);if(state->hidden)ShowWindow(window,SW_HIDE);state->minimized=false;return 0;}
-    if (message == WM_KEYDOWN && state) state->key=unsigned(wParam);
+    if (message == WM_KEYDOWN && state) {state->key=unsigned(wParam);state->keyControl=(GetKeyState(VK_CONTROL)&0x8000)!=0;state->keyShift=(GetKeyState(VK_SHIFT)&0x8000)!=0;state->keyRepeat=(lParam&(1ll<<30))!=0;}
     if (message == WM_DESTROY) { PostQuitMessage(0); return 0; }
     return DefWindowProcW(window, message, wParam, lParam);
 }
@@ -169,7 +169,7 @@ int run(HINSTANCE instance) {
         float left = (renderer.width() - 800 * scale) / 2, top = (renderer.height() - 600 * scale) / 2;
         auto draw = [&](float x, float y, float w, float h, DWORD color, IDirect3DTexture9* texture) { renderer.rect(left + x * scale, top + y * scale, w * scale, h * scale, color, texture); };
         if(screen!=Screen::Loading && screen!=Screen::Game && screen!=Screen::Cinematic){if(screen==Screen::Campaign && campaign){auto background=campaign->backdrop();if(background!=campaignBackground){campaignBackdrop.reset();campaignBackground=background;if(!background.empty())try{campaignBackdrop=std::make_unique<Model>(archives,images,&renderer,background.c_str(),log);}catch(const std::exception& e){log.write(std::string("campaign_background_unavailable=")+e.what());}}if(campaignBackdrop)campaignBackdrop->draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);else menu.draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);}else menu.draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);}
-        UiInput input{(state.mouseX-left)/(scale*1000),(state.mouseY-top)/(scale*1000),(state.pressX-left)/(scale*1000),(state.pressY-top)/(scale*1000),state.click,state.down,state.key,state.wheel/WHEEL_DELTA,state.doubleClick,(GetKeyState(VK_SHIFT)&0x8000)!=0};
+        UiInput input{(state.mouseX-left)/(scale*1000),(state.mouseY-top)/(scale*1000),(state.pressX-left)/(scale*1000),(state.pressY-top)/(scale*1000),state.click,state.down,state.key,state.wheel/WHEEL_DELTA,state.doubleClick,(GetKeyState(VK_SHIFT)&0x8000)!=0,state.keyControl,state.keyRepeat,state.keyShift};
         std::string action;
         if(screen==Screen::Main){draw(90,15,512,256,0xffffffff,logo.Get());action=mainMenu.draw("ControlLayer",input,{"SinglePlayerButton","LocalAreaNetworkButton","ExitButton"});if(input.key==VK_ESCAPE)action="ExitButton";if(action=="SinglePlayerButton"){prepareSingle();screen=Screen::Single;}if(action=="LocalAreaNetworkButton")try{lan=std::make_unique<LanBrowser>(archives,images,renderer,text,log);frontError.clear();screen=Screen::Lan;}catch(const std::exception& e){lan.reset();frontError="无法打开局域网浏览界面。";log.write(std::string("lan_open_failed=")+e.what());}if(action=="ExitButton"){if(options.windowCheck && windowStage<6)throw std::runtime_error("Cancelled pointer input activated ExitButton");running=false;}}
         else if(screen==Screen::Lan){action=lan->draw(input,state.characters);if(action=="CancelButton"){lan.reset();screen=Screen::Main;}}
