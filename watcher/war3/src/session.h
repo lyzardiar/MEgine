@@ -273,6 +273,15 @@ class ScriptSession {
     void barrageVolley(const CombatProjectile& projectile);
     void barragePulse(std::uint32_t unit,const PassiveInfo& passive,AmbientClock& clock);
     void siegeFiresTick(double delta);
+    void weaponEffectInfo(PassiveInfo& passive);
+    void refreshWeaponEffects(UnitState& unit);
+    void clearWeaponEffects(UnitState& unit);
+    const PassiveInfo* inventoryOrb(const UnitState& unit);
+    void prepareWeaponEffects(const UnitState& unit,const UnitState& target,CombatProjectile& projectile);
+    void weaponEffectsBeforeHit(const CombatProjectile& projectile,std::uint32_t target);
+    void weaponEffectsAfterHit(const CombatProjectile& projectile,std::uint32_t target,float damage,std::uint64_t targetRevision);
+    void poisonHit(std::uint32_t target,const CombatProjectile& projectile,const PassiveInfo& passive);
+    void poisonTick(UnitBuff& buff,double delta,std::vector<StatusDamage>& damage);
     void frostPillageInfo(PassiveInfo& passive);
     void frostBreathImpact(const CombatProjectile& projectile);
     void pillageHit(const CombatProjectile& projectile,float damage,std::uint32_t targetType,jass::Real targetMaxLife,unsigned targetOwner);
@@ -841,7 +850,7 @@ public:
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
     bool useItemAt(std::uint32_t unit,std::uint32_t item,WorldPoint point);
     bool itemNeedsPoint(std::uint32_t item);
-    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false,bool diseaseAura=false);
+    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false,bool diseaseAura=false,bool nonlethal=false);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);

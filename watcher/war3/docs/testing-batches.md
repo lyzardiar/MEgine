@@ -903,3 +903,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：session_concoction／session_frost_pillage、spells／passives／entities／session、施法目标／命令／支付／释放、独立tick与死亡／移除／形态、攻击发射／命中、效果呈现／颜色／资源、冻结生产／研究／建造／升级／修理／矿井与资源返还、掠夺余量生命周期。Auco／Afrb／Afrz／Asal及原地图覆盖有真实消费者。
 
 状态：实现接入；必要Win32 Release产品增量编译通过、无警告，差异审查通过。未执行新增专项、三图、原件精度、UI／GPU／音效／AI或性能回归，留功能阶段合并。集中验证原手动输入与自动开关依据、飞行／原载体／目标失效／死亡消耗与人口／回调清理、源主次伤害／分类／免疫与叠加、原弹道与霜冻目标／冻结全部建筑消费者及恢复、掠夺实际伤害／费用／两种小数余量／阈值／原舍入／统计和税收／资源事件／删除易主重入；完整UI／GPU／音效／AI、三图长局和内存／切图释放。证据与构建日志在tmp/docs-artifacts/war3/concoction-frost/；边界见[实现说明](concoction-frost-pillage.md)。旧MEngine队列保持延期。
+
+## 毒素攻击、物品法球与腐蚀喷吐阶段待验证
+
+路径：session_weapon_effects、combat／entities／passives／spells／session、被动定义、装备与库存、能力可用开关、武器启用／发射／命中、周期伤害／非致死回调和单位移除。Apoi／Apo2／Aven／Aspo／Acor／Afra、AIfb／AIob／AIcb／AIpb／AIlb／AIsb及派生有实际消费者。
+
+状态：实现接入，必要Win32 Release产品增量编译通过；未执行玩法、三图／原件精度、UI／GPU／声音／AI或性能回归，保持阶段待验证。集中验证毒剂叠加身份／四位标志／时钟／暂停／驱散与免疫／来源死亡移除易主／归因、非致死与伤害事件／护盾／灵魂链接／复活重入；法球库存优先级／主动箭矢冲突／多件加成／首次减甲／火焰范围／英雄及召唤物概率／净化缓慢和死亡奴仆；科技与可用开关／物品增减／形态／幻象／原附件清理、第二武器对空及完整表现。已知实现缺口：Hpal／Obla等缺少源弹道速度时当前即时结算，原缺省飞行尚未还原；Acor DataA持续伤害尚未接入。原始证据与构建记录在tmp/docs-artifacts/war3/weapon-effects/，边界见[实现说明](weapon-effects.md)。旧MEngine队列继续延期。

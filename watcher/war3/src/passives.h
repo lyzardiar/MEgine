@@ -5,7 +5,7 @@
 #include <array>
 
 namespace war3 {
-enum class PassiveKind {Unsupported,Brilliance,Devotion,Endurance,Unholy,Vampiric,Trueshot,Thorns,Command,WarDrums,Regeneration,Bash,Critical,Evasion,Cleave,PermanentInvisibility,Detection,Ghost,Exhume,Reincarnation,PhoenixMorph,PhoenixFire,SpikedCarapace,AttackModifier,LightningAttack,SlowAura,PermanentImmolation,Pulverize,TornadoDamage,TornadoSpin,TornadoWander,Engineering,Demolish,Feedback,Ultravision,MissileDefense,HardenedSkin,ResistantSkin,FlakCannon,Fragmentation,BurningOil,LiquidFire,Barrage,PlagueAura,PlagueToss,FrostBreath,FreezingBreath,Pillage};
+enum class PassiveKind {Unsupported,Brilliance,Devotion,Endurance,Unholy,Vampiric,Trueshot,Thorns,Command,WarDrums,Regeneration,Bash,Critical,Evasion,Cleave,PermanentInvisibility,Detection,Ghost,Exhume,Reincarnation,PhoenixMorph,PhoenixFire,SpikedCarapace,AttackModifier,LightningAttack,SlowAura,PermanentImmolation,Pulverize,TornadoDamage,TornadoSpin,TornadoWander,Engineering,Demolish,Feedback,Ultravision,MissileDefense,HardenedSkin,ResistantSkin,FlakCannon,Fragmentation,BurningOil,LiquidFire,Barrage,PlagueAura,PlagueToss,FrostBreath,FreezingBreath,Pillage,PoisonAttack,SlowPoison,CorrosiveBreath,OrbFire,OrbFrost,OrbCorruption,OrbVenom,OrbLightning,OrbSpell};
 struct PassiveInfo {
     std::uint32_t ability=0,buff=0,corpseType=0;
     unsigned level=0;
@@ -18,7 +18,9 @@ struct PassiveInfo {
     float period=0,innerArea=0,innerDamage=0,nearArea=0,nearDamage=0;
     std::uint32_t effectBuff=0;
     std::array<float,3> splashRadii{},splashDamage{};
-    unsigned maxTargets=1;
+    unsigned maxTargets=1,stackFlags=0,enabledWeapon=0;
+    std::uint32_t procAbility=0;
+    std::array<float,3> procChance{};
     bool repairAllowed=true;
     bool missileHoming=true;
     std::set<std::string> allowed;

@@ -135,6 +135,8 @@ struct UnitState {
     std::optional<PossessionClaim> possessionClaim;
     std::uint64_t ownerRevision=0;
     std::map<std::uint32_t,std::array<jass::Real,2>> pillageBalances;
+    unsigned weaponEffectMask=0;
+    std::map<std::uint32_t,std::vector<std::uint32_t>> weaponVisuals;
     std::map<std::uint32_t,UnitAura> auras;
     std::map<std::pair<std::string,std::string>,std::uint32_t> auraVisuals;
     AuraBonuses aura;
