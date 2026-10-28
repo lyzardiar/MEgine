@@ -593,6 +593,10 @@ class ScriptSession {
     bool spellRequirements(unsigned owner,const SpellInfo& spell);
     unsigned autocastTicks_=0;
     bool spellPoint(const UnitState& unit,const SpellInfo& spell,WorldPoint point);
+    float spellRange(const UnitState& unit,const SpellInfo& spell,WorldPoint point,std::uint32_t target);
+    std::uint32_t itemBuildingType(const UnitState& unit,const SpellInfo& spell);
+    bool useSummonItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
+    void placeItemBuilding(std::uint32_t unit,const CastOrder& cast);
     void releaseSpell(std::uint32_t unit,const CastOrder& cast,unsigned owner);
     void areaSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner);
     void areaSpellsTick(double delta);
@@ -640,6 +644,7 @@ class ScriptSession {
     Object& object(jass::Value handle,NativeKind kind);
     SessionPlayer& player(jass::Value handle);
     unsigned playerId(jass::Value handle);
+    unsigned playerRace(unsigned id);
     SessionStart& start(std::uint32_t index);
     void destroy(jass::Value handle,NativeKind kind);
     void bind(const char* name,const char* result,std::initializer_list<const char*> parameters,jass::Runtime::Native native);
@@ -871,11 +876,12 @@ public:
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
     bool useItemAt(std::uint32_t unit,std::uint32_t item,WorldPoint point);
     bool itemNeedsPoint(std::uint32_t item);
+    std::uint32_t itemBuilding(std::uint32_t unit,std::uint32_t item);
     bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false,bool diseaseAura=false,bool nonlethal=false);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);
-    std::optional<WorldPoint> buildSite(std::uint32_t worker,std::uint32_t type,WorldPoint point,std::string& reason,std::uint32_t* base=nullptr,WorldPoint* preview=nullptr);
+    std::optional<WorldPoint> buildSite(std::uint32_t worker,std::uint32_t type,WorldPoint point,std::string& reason,std::uint32_t* base=nullptr,WorldPoint* preview=nullptr,bool itemBuild=false);
     float buildingAngle();
     std::array<float,2> buildingSize(std::uint32_t type);
     bool build(std::uint32_t worker,std::uint32_t type,WorldPoint point);
