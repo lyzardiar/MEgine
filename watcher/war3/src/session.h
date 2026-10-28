@@ -1030,6 +1030,9 @@ public:
     std::uint32_t indicatorColor(std::uint32_t id,std::uint32_t base) const {return indicators_.color(id,base,simulationTime_);}
     bool clickDialog(unsigned owner,std::uint32_t button);
     void pause(bool value) {simulationPaused_=value;}
+    unsigned gameSpeed() const {return gameSpeed_;}
+    void gameSpeed(unsigned value) {if(value>4)throw std::runtime_error("Unknown game speed");gameSpeed_=value;}
+    double gameSpeedFactor() const {constexpr double factors[]={.5,.75,1.,1.25,1.5};return factors[gameSpeed_];}
     bool paused() const {return simulationPaused_;}
     bool userControl() const {return userControl_;}
     bool userUI() const {return userUI_;}

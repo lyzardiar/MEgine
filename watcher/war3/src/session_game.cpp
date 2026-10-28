@@ -33,7 +33,7 @@ void ScriptSession::bindGameNatives() {
     bind("VersionCompatible","boolean",{"version"},[](auto& vm,auto args){return vm.boolean(args[0].bits<=1);});
     bind("VersionSupported","boolean",{"version"},[](auto& vm,auto args){return vm.boolean(args[0].bits<=1);});
     bind("GetGameSpeed","gamespeed",{},[this](auto& vm,auto){return vm.handle("gamespeed",gameSpeed_);});
-    bind("SetGameSpeed","nothing",{"gamespeed"},[this](auto& vm,auto args){if(args[0].bits>4)throw std::runtime_error("Unknown game speed");gameSpeed_=args[0].bits;return vm.nothing();});
+    bind("SetGameSpeed","nothing",{"gamespeed"},[this](auto& vm,auto args){gameSpeed(args[0].bits);return vm.nothing();});
     bind("PauseGame","nothing",{"boolean"},[this](auto& vm,auto args){simulationPaused_=args[0].bits!=0;return vm.nothing();});
     bind("IsFogEnabled","boolean",{},[this](auto& vm,auto){return vm.boolean(fogEnabled_);});
     bind("IsFogMaskEnabled","boolean",{},[this](auto& vm,auto){return vm.boolean(fogMaskEnabled_);});

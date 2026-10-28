@@ -15,7 +15,7 @@ class GameFlowUi {
     std::uint32_t dialogId_=0;
     std::uint64_t dialogRevision_=0;
     size_t dialogCapacity_=0,dialogScroll_=0,helpScroll_=0;
-    unsigned scoreTab_=1;
+    unsigned scoreTab_=1,gameSpeedDraft_=50;
     bool appExit_=false;
     GameCameraPreferences cameraPreferences_{},cameraDraft_{};
     GameAudioPreferences audioPreferences_{},audioDraft_{};
@@ -24,7 +24,7 @@ class GameFlowUi {
     std::string helpText_,tipsText_;
     void menuPanel(Panel panel);
     void optionsPanel(Panel panel);
-    void drawOptions(const UiInput& input);
+    void drawOptions(const UiInput& input,bool network);
     void prepareScores();
 public:
     GameFlowUi(GameData& data,Renderer& renderer,Text& text) : data_(data),renderer_(renderer),text_(text) {}
