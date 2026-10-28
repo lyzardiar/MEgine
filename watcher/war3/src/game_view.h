@@ -8,6 +8,7 @@
 #include "lan_simulation.h"
 #include "lan_action_encoder.h"
 #include <deque>
+#include <tuple>
 
 namespace war3 {
 class QuestDialog;
@@ -124,8 +125,12 @@ class GameView {
     void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawLightning(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     std::map<std::uint64_t,ModelInstance> modelInstances_,pingInstances_;
+    using WaypointKey=std::tuple<std::uint32_t,std::size_t,std::uint32_t,std::uint32_t,std::uint32_t,std::uint32_t>;
+    std::map<WaypointKey,ModelInstance> waypointInstances_;
+    bool showQueueWaypoints_=false;
     std::set<std::uint64_t> modelInstancesSeen_;
     ModelInstance& modelInstance(std::uint64_t id) {modelInstancesSeen_.insert(id);return modelInstances_[id];}
+    void drawQueuedWaypoints(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     struct EffectPresentation {bool birth=false,stand=false,death=false,loops=false,missingAttachment=false;std::uint64_t birthTime=0,standTime=0,deathTime=0;};
     std::map<std::uint32_t,EffectPresentation> effectPresentations_;
     std::optional<D3DMATRIX> unitWorld(const UnitState& unit) const;

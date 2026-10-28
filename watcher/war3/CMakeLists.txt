@@ -59,7 +59,7 @@ target_sources(war3 PRIVATE src/scene_objects.cpp src/game_loading.cpp src/loadi
 target_sources(war3 PRIVATE src/scene_streaming.cpp src/lan_discovery.cpp src/lan_browser.cpp src/lan_join.cpp src/lan_lobby.cpp src/lan_mapcheck.cpp src/lan_host.cpp src/lan_host_ui.cpp src/lan_runtime.cpp src/lan_match_loading.cpp)
 target_sources(war3 PRIVATE src/fog_render.cpp)
 target_sources(war3 PRIVATE src/terrain_fog_render.cpp src/game_alliance_dialog.cpp src/game_text_tag.cpp src/game_timer_dialog.cpp src/game_multiboard.cpp src/game_leaderboard.cpp src/game_commands.cpp src/game_autocast.cpp src/game_spells.cpp src/game_transport.cpp src/game_corpses.cpp src/game_morph.cpp src/game_effects.cpp src/game_lightning.cpp src/game_building.cpp src/game_flow_ui.cpp)
-target_sources(war3 PRIVATE src/quest_dialog.cpp src/game_hero_bar.cpp src/game_inventory_drag.cpp)
+target_sources(war3 PRIVATE src/quest_dialog.cpp src/game_hero_bar.cpp src/game_inventory_drag.cpp src/game_waypoints.cpp)
 target_sources(war3 PRIVATE src/terrain_blight.cpp)
 target_compile_options(war3 PRIVATE /W4 /permissive- /utf-8 /MP8)
 target_link_libraries(war3 PRIVATE war3_core d3d9 gdi32 windowscodecs ole32 strmiids oleaut32 ws2_32)
