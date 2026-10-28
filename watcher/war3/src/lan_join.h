@@ -4,12 +4,14 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace war3 {
 enum class LanJoinState {Connecting,Joining,Lobby,Rejected,Closed,Error};
+enum class LanMapDownloadState {Idle,Requested,Receiving,Complete};
 struct LanSlot {std::uint8_t playerId=0,download=0,status=0,computer=0,team=0,color=0,race=0,difficulty=0,handicap=0;};
 struct LanPlayer {std::uint8_t id=0;std::string name;};
 struct LanChatMessage {std::uint8_t sender=0;std::string text;};
@@ -27,6 +29,11 @@ class LanJoin {
     std::vector<LanChatMessage> chat_;
     LanMapAnnouncement map_;
     bool mapReadyReported_=false;
+    LanMapDownloadState downloadState_=LanMapDownloadState::Idle;
+    std::uint8_t downloadHostId_=0;
+    std::vector<std::uint8_t> downloading_;
+    std::shared_ptr<const std::vector<std::uint8_t>> downloadedMap_;
+    std::chrono::steady_clock::time_point downloadActivity_{};
     std::vector<std::uint8_t> input_,output_;
     std::size_t sent_=0;
     std::chrono::steady_clock::time_point activity_{};
@@ -34,6 +41,7 @@ class LanJoin {
     void process(const std::uint8_t* data,std::size_t length);
     void fail(std::string reason);
     void closeSocket();
+    void clearDownload();
 public:
     LanJoin(const LanGame& game,std::string playerName);
     ~LanJoin();
@@ -45,6 +53,12 @@ public:
     bool requestSlotChange(std::uint8_t field,std::uint8_t value);
     // Queue readiness only after every announced map field has been checked.
     bool reportMapReady(const LanMapCheck& checked);
+    bool requestMapDownload();
+    void discardDownloadedMap();
+    LanMapDownloadState mapDownloadState() const {return downloadState_;}
+    std::size_t mapDownloadBytes() const {return downloadedMap_?downloadedMap_->size():downloading_.size();}
+    // Complete transport bytes are untrusted until the map declaration fields are verified.
+    std::shared_ptr<const std::vector<std::uint8_t>> downloadedMap() const {return downloadedMap_;}
     LanJoinState state() const {return state_;}
     const std::string& error() const {return error_;}
     std::uint32_t rejectionCode() const {return rejectionCode_;}

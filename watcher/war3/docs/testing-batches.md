@@ -1114,7 +1114,7 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 
 路径：lan_join／lan_lobby／lan_mapcheck／lan_browser。Win32 Release 产品编译通过；本机模拟 TCP 主机检查加入请求、槽位分片、玩家／PING／地图声明、PONG 与退出；BootyBay 大小／CRC32、非法路径与后台校验以及大厅和槽位 FDF 隐藏绘制通过，未加载 Game.dll。证据 tmp/docs-artifacts/war3/lan-join-probe/result.log。
 
-集中验证真实 1.27 互通、槽位更新／拒绝／断线／超时、名字与多字节、路径安全和异步取消、实际游戏地图字段对照、完整大厅交互与重复进出资源释放。加入确认后尚未发送地图就绪，创建大厅已另列待测；下载和对局同步待实现。
+集中验证真实 1.27 互通、槽位更新／拒绝／断线／超时、名字与多字节、路径安全和异步取消、实际游戏地图字段对照、完整大厅交互与重复进出资源释放。加入确认后尚未发送地图就绪，创建大厅与地图传输已另列待测；对局同步待实现。
 
 ## 玩家建造与生产命令阶段待验证
 
@@ -1144,13 +1144,13 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 
 路径：lan_host／lan_host_ui／lan_browser／lan_mapcheck／CMakeLists。创建页浏览地图、后台读取地图元数据和校验字段，主机处理搜索、加入、槽位显示、聊天及断线；Win32 Release 产品编译通过；本机探针覆盖 UDP 搜索、两客户端加入、地图声明、槽位广播、双向聊天、断线释放和主机关闭，证据 tmp/docs-artifacts/war3/lan-host-probe/result.log。
 
-集中验证原版 1.27 双向互通、真实创建页及大厅操作、多网卡／端口占用、地图字段／编码、多人加入／拒绝／断线与恶意报文、资源释放；基础槽位设置已另列待测；地图下载与就绪、开始及对局同步尚未实现。
+集中验证原版 1.27 双向互通、真实创建页及大厅操作、多网卡／端口占用、地图字段／编码、多人加入／拒绝／断线与恶意报文、资源释放；基础槽位设置与地图传输已另列待测；自动就绪、开始及对局同步尚未实现。
 
 ## 局域网槽位设置阶段待验证
 
 路径：lan_host、lan_host_ui、lan_join、lan_lobby。房主可设置开放／关闭／电脑难度和自身及电脑槽位；加入方请求自身队伍、颜色、种族及让分，主机按地图选项约束并广播。
 
-Win32 Release 产品编译通过；本机定向双端探针覆盖四类请求、颜色交换、固定设置、自定义队伍迁移和电脑专用槽保护，证据 tmp/docs-artifacts/war3/lan-host-probe/slot-probe/result.log。集中验证原版 1.27 双向互通、真实鼠标键盘和弹出菜单、固定选项与队伍迁移、远端广播／断线重入、全部地图和完整对局；ready、下载和同步尚未实现。
+Win32 Release 产品编译通过；本机定向双端探针覆盖四类请求、颜色交换、固定设置、自定义队伍迁移和电脑专用槽保护，证据 tmp/docs-artifacts/war3/lan-host-probe/slot-probe/result.log。集中验证原版 1.27 双向互通、真实鼠标键盘和弹出菜单、固定选项与队伍迁移、远端广播／断线重入、全部地图和完整对局；地图传输已另列待测；自动 ready 和同步尚未实现。
 
 ## 局域网地图就绪协议阶段待验证
 
@@ -1160,6 +1160,12 @@ Win32 Release 产品编译通过；本机定向双端探针覆盖四类请求、
 
 ## 内存地图归档及字段校验阶段待验证
 
-路径：archive、lan_mapcheck。页面文件映射可在内存挂载地图，单 worker 支持内存地图字段计算与取消；网络下载及会话尚未接入。Win32 Release 编译通过；BootyBay／DotA 实际地图成员、枚举、fork／卸载、并发读取和坏数据失败清理，以及 BootyBay 文件／内存四项字段、异步元数据与取消探针通过。证据 tmp/docs-artifacts/war3/archive-memory-probe/result.log、memory-mapcheck-probe/result.log。
+路径：archive、lan_mapcheck。页面文件映射可在内存挂载地图，单 worker 支持内存地图字段计算与取消；网络下载已接入，会话尚未接入。Win32 Release 编译通过；BootyBay／DotA 实际地图成员、枚举、fork／卸载、并发读取和坏数据失败清理，以及 BootyBay 文件／内存四项字段、异步元数据与取消探针通过。证据 tmp/docs-artifacts/war3/archive-memory-probe/result.log、memory-mapcheck-probe/result.log。
 
 集中验证网络接收与会话所有权、页对齐零填充下畸形／截断文件边界、原版字段和报文、大地图内存峰值、长期切图释放及系统级磁盘活动；校验期间输入须保持不可变。
+
+## 局域网地图内存传输阶段待验证
+
+路径：lan_host、lan_host_ui、lan_join、lan_lobby、lan_mapcheck。建房读取不可变地图快照并从同一快照计算声明；缺图／不匹配时请求地图，按块验证和确认并在内存重算字段，匹配后保留快照。自动就绪、开始和会话接入尚未实现。
+
+Win32 Release 产品编译通过；本机两客户端并发接收真实 BootyBay，逐字节与主机快照一致并核对四项字段，未加载 Game.dll；快照及取消检查通过；模拟主机的错误 CRC、错误偏移与中途取消检查通过。证据 tmp/docs-artifacts/war3/lan-transfer-probe/result.log、lan-snapshot-probe/result.log、client-transfer-invalid-probe/result.log。集中验证 1.27 原版双向互通、缺图／错误块／断线／超时、UI 进度、慢网／大地图与内存、声明变更、系统磁盘活动及会话所有权。当前不支持续传或重试。

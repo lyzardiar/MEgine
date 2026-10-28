@@ -3,13 +3,14 @@
 // https://github.com/dcramer/ghostplusplus/blob/d25ec63c67330308d93a4f9912c0072f0c034ebf/ghost/gameprotocol.cpp
 // GoWarcraft3 f13251b6caed199c3347214f4591e7ccaa96c7c7 (MPL-2.0),
 // https://github.com/nielsAD/gowarcraft3/blob/f13251b6caed199c3347214f4591e7ccaa96c7c7/protocol/w3gs/packets.go
-// Independently implemented; map verification, downloads and game synchronization are not implemented.
+// Independently implemented; original-client interoperability and game synchronization remain unverified.
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "lan_join.h"
 #include "lan_mapcheck.h"
 #include <algorithm>
 #include <array>
+#include <new>
 #include <stdexcept>
 #include <utility>
 
@@ -20,13 +21,17 @@ constexpr auto invalidSocket=~std::uintptr_t{};
 std::uint16_t u16(const std::uint8_t* p){return std::uint16_t(unsigned(p[0])|(unsigned(p[1])<<8));}
 std::uint32_t u32(const std::uint8_t* p){return std::uint32_t(p[0])|(std::uint32_t(p[1])<<8)|(std::uint32_t(p[2])<<16)|(std::uint32_t(p[3])<<24);}
 void put32(std::vector<std::uint8_t>& out,std::uint32_t n){for(unsigned i=0;i<4;++i)out.push_back(std::uint8_t(n>>(i*8)));}
+constexpr auto crcTable(){std::array<std::uint32_t,256> table{};for(unsigned i=0;i<table.size();++i){auto value=std::uint32_t(i);for(unsigned bit=0;bit<8;++bit)value=(value>>1)^(0xedb88320u & (0u-(value&1u)));table[i]=value;}return table;}
+std::uint32_t crc32(const std::uint8_t* data,size_t size){static constexpr auto table=crcTable();std::uint32_t crc=0xffffffffu;for(size_t i=0;i<size;++i)crc=(crc>>8)^table[(crc^data[i])&255u];return crc^0xffffffffu;}
 bool text(const std::uint8_t* data,std::size_t length,std::size_t& at,std::size_t limit,std::string& result){auto begin=at;while(at<length && data[at] && at-begin<=limit)++at;if(at>=length || at-begin>limit)return false;result.assign(reinterpret_cast<const char*>(data+begin),at-begin);++at;return true;}
 }
 LanJoin::LanJoin(const LanGame& game,std::string playerName):name_(std::move(playerName)),hostCounter_(game.hostCounter),entryKey_(game.entryKey){
     if(name_.empty() || name_.size()>15 || name_.find('\0')!=std::string::npos || !game.port)throw std::runtime_error("Invalid LAN join parameters");sockaddr_in remote{};remote.sin_family=AF_INET;remote.sin_port=htons(game.port);if(InetPtonA(AF_INET,game.address.c_str(),&remote.sin_addr)!=1)throw std::runtime_error("Invalid LAN host address");WSADATA data{};int code=WSAStartup(MAKEWORD(2,2),&data);if(code)throw std::runtime_error("Winsock startup failed: "+std::to_string(code));winsock_=true;SOCKET sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(sock==INVALID_SOCKET){code=WSAGetLastError();WSACleanup();winsock_=false;throw std::runtime_error("LAN socket failed: "+std::to_string(code));}socket_=std::uintptr_t(sock);u_long nonblocking=1;if(ioctlsocket(sock,FIONBIO,&nonblocking)==SOCKET_ERROR){code=WSAGetLastError();closeSocket();throw std::runtime_error("LAN nonblocking setup failed: "+std::to_string(code));}activity_=Clock::now();int result=connect(sock,reinterpret_cast<const sockaddr*>(&remote),sizeof(remote));if(result==0)connected();else{code=WSAGetLastError();if(code!=WSAEWOULDBLOCK && code!=WSAEINPROGRESS){closeSocket();throw std::runtime_error("LAN connect failed: "+std::to_string(code));}}
 }
 LanJoin::~LanJoin(){cancel();}
-void LanJoin::closeSocket(){chat_.clear();if(socket_!=invalidSocket){closesocket(SOCKET(socket_));socket_=invalidSocket;}if(winsock_){WSACleanup();winsock_=false;}}
+void LanJoin::clearDownload(){downloadState_=LanMapDownloadState::Idle;downloadHostId_=0;std::vector<std::uint8_t>().swap(downloading_);downloadedMap_.reset();}
+void LanJoin::discardDownloadedMap(){clearDownload();}
+void LanJoin::closeSocket(){chat_.clear();clearDownload();if(socket_!=invalidSocket){closesocket(SOCKET(socket_));socket_=invalidSocket;}if(winsock_){WSACleanup();winsock_=false;}}
 void LanJoin::fail(std::string reason){error_=std::move(reason);state_=LanJoinState::Error;closeSocket();}
 void LanJoin::connected(){
     sockaddr_in local{};int length=sizeof(local);if(getsockname(SOCKET(socket_),reinterpret_cast<sockaddr*>(&local),&length)==SOCKET_ERROR){fail("Cannot read LAN local address");return;}output_={0xf7,0x1e,0,0};put32(output_,hostCounter_);put32(output_,entryKey_);output_.push_back(0);output_.push_back(0);output_.push_back(0);put32(output_,GetTickCount());output_.insert(output_.end(),name_.begin(),name_.end());output_.push_back(0);output_.push_back(1);output_.push_back(0);output_.push_back(2);output_.push_back(0);output_.push_back(0);output_.push_back(0);auto bytes=reinterpret_cast<const std::uint8_t*>(&local.sin_addr.s_addr);output_.insert(output_.end(),bytes,bytes+4);for(unsigned i=0;i<8;++i)output_.push_back(0);output_[2]=std::uint8_t(output_.size());output_[3]=std::uint8_t(output_.size()>>8);sent_=0;state_=LanJoinState::Joining;activity_=Clock::now();
@@ -50,6 +55,11 @@ bool LanJoin::reportMapReady(const LanMapCheck& checked) {
     if(mapReadyReported_)return true;if(output_.size()-sent_+13>65536)return false;if(sent_){output_.erase(output_.begin(),output_.begin()+sent_);sent_=0;}
     output_.insert(output_.end(),{0xf7,0x42,13,0,1,0,0,0,1});put32(output_,checked.size);mapReadyReported_=true;return true;
 }
+bool LanJoin::requestMapDownload() {
+    if(state_!=LanJoinState::Lobby || socket_==invalidSocket || !map_.received || !map_.size || map_.size>256u*1024u*1024u || downloadState_!=LanMapDownloadState::Idle || output_.size()-sent_+13>65536)return false;
+    try{downloading_.reserve(map_.size);}catch(const std::bad_alloc&){return false;}if(sent_){output_.erase(output_.begin(),output_.begin()+sent_);sent_=0;}
+    output_.insert(output_.end(),{0xf7,0x42,13,0,1,0,0,0,1,0,0,0,0});downloadState_=LanMapDownloadState::Requested;downloadActivity_=Clock::now();return true;
+}
 void LanJoin::process(const std::uint8_t* p,std::size_t n){
     auto invalid=[&]{fail("Invalid LAN lobby packet");};switch(p[1]){
     case 0x01:if(n!=8){invalid();return;}if(output_.size()-sent_>65528){fail("LAN send queue exceeded");return;}output_.insert(output_.end(),{0xf7,0x46,8,0,p[4],p[5],p[6],p[7]});break;
@@ -59,14 +69,15 @@ void LanJoin::process(const std::uint8_t* p,std::size_t n){
     case 0x07:if(n!=9){invalid();return;}std::erase_if(players_,[&](const LanPlayer& v){return v.id==p[4];});break;
     case 0x0f:{if(state_!=LanJoinState::Lobby || n<8){invalid();return;}auto count=p[4];if(!count || count>24 || n<std::size_t(8)+count){invalid();return;}auto sender=p[5+count],kind=p[6+count];if(kind!=0x10)break;std::size_t at=7+count;std::string message;if(!sender || sender==255 || !text(p,n,at,254,message) || at!=n){invalid();return;}if(std::find(p+5,p+5+count,localPlayerId_)==p+5+count)break;if(chat_.size()>=200)chat_.erase(chat_.begin());chat_.push_back({sender,std::move(message)});break;}
     case 0x1c:if(n!=8){invalid();return;}fail("LAN host removed this player: "+std::to_string(u32(p+4)));return;
-    case 0x3d:{if(state_!=LanJoinState::Lobby || n<41 || u32(p+4)!=1){invalid();return;}std::size_t at=8;std::string path;if(!text(p,n,at,1024,path) || path.empty() || n-at!=32){invalid();return;}LanMapAnnouncement next;next.received=true;next.path=std::move(path);next.size=u32(p+at);next.info=u32(p+at+4);next.crc=u32(p+at+8);std::copy_n(p+at+12,20,next.sha1.begin());mapReadyReported_=false;map_=std::move(next);break;}
-    case 0x3f:case 0x43:fail("LAN map download is not implemented");return;
+    case 0x3d:{if(state_!=LanJoinState::Lobby || n<41 || u32(p+4)!=1){invalid();return;}std::size_t at=8;std::string path;if(!text(p,n,at,1024,path) || path.empty() || n-at!=32){invalid();return;}LanMapAnnouncement next;next.received=true;next.path=std::move(path);next.size=u32(p+at);next.info=u32(p+at+4);next.crc=u32(p+at+8);std::copy_n(p+at+12,20,next.sha1.begin());bool changed=map_.received && (map_.path!=next.path || map_.size!=next.size || map_.info!=next.info || map_.crc!=next.crc || map_.sha1!=next.sha1);if(changed && (downloadState_==LanMapDownloadState::Requested || downloadState_==LanMapDownloadState::Receiving)){fail("LAN map changed during transfer");return;}if(changed)clearDownload();mapReadyReported_=false;map_=std::move(next);break;}
+    case 0x3f:{if(state_!=LanJoinState::Lobby || downloadState_!=LanMapDownloadState::Requested || n!=9 || u32(p+4)!=1 || !p[8] || p[8]==255 || p[8]==localPlayerId_){invalid();return;}downloadHostId_=p[8];if(output_.size()-sent_+13>65536){fail("LAN send queue exceeded");return;}if(sent_){output_.erase(output_.begin(),output_.begin()+sent_);sent_=0;}output_.insert(output_.end(),{0xf7,0x42,13,0,1,0,0,0,3,0,0,0,0});downloadState_=LanMapDownloadState::Receiving;downloadActivity_=Clock::now();break;}
+    case 0x43:{if(state_!=LanJoinState::Lobby || downloadState_!=LanMapDownloadState::Receiving || n<=18 || n>1460 || p[4]!=localPlayerId_ || p[5]!=downloadHostId_ || u32(p+6)!=1){invalid();return;}auto offset=u32(p+10);auto length=n-18;if(offset!=downloading_.size() || offset>map_.size || length>map_.size-offset || crc32(p+18,length)!=u32(p+14)){fail("Invalid LAN map block");return;}if(output_.size()-sent_+14>65536){fail("LAN send queue exceeded");return;}try{downloading_.insert(downloading_.end(),p+18,p+n);}catch(const std::bad_alloc&){fail("Insufficient memory for LAN map");return;}if(sent_){output_.erase(output_.begin(),output_.begin()+sent_);sent_=0;}output_.insert(output_.end(),{0xf7,0x44,14,0,localPlayerId_,downloadHostId_,1,0,0,0});put32(output_,offset);downloadActivity_=Clock::now();if(downloading_.size()==map_.size){try{downloadedMap_=std::make_shared<const std::vector<std::uint8_t>>(std::move(downloading_));}catch(const std::bad_alloc&){fail("Insufficient memory for LAN map");return;}downloadState_=LanMapDownloadState::Complete;}break;}
     case 0x0a:case 0x0b:fail("LAN match start is not implemented");return;
     default:break;
     }
 }
 void LanJoin::poll(){
-    if(socket_==invalidSocket)return;auto now=Clock::now();if(now-activity_>(state_==LanJoinState::Lobby?std::chrono::seconds(60):std::chrono::seconds(15))){fail("LAN connection timed out");return;}auto sock=SOCKET(socket_);if(state_==LanJoinState::Connecting){fd_set writable,failed;FD_ZERO(&writable);FD_ZERO(&failed);FD_SET(sock,&writable);FD_SET(sock,&failed);timeval zero{};int result=select(0,nullptr,&writable,&failed,&zero);if(result==SOCKET_ERROR){fail("LAN connect poll failed: "+std::to_string(WSAGetLastError()));return;}if(result){int code=0,length=sizeof(code);if(getsockopt(sock,SOL_SOCKET,SO_ERROR,reinterpret_cast<char*>(&code),&length)==SOCKET_ERROR || code){fail("LAN connect failed: "+std::to_string(code?code:WSAGetLastError()));return;}connected();}if(state_==LanJoinState::Connecting || socket_==invalidSocket)return;}
+    if(socket_==invalidSocket)return;auto now=Clock::now();if((downloadState_==LanMapDownloadState::Requested || downloadState_==LanMapDownloadState::Receiving) && now-downloadActivity_>std::chrono::seconds(60)){fail("LAN map transfer timed out");return;}if(now-activity_>(state_==LanJoinState::Lobby?std::chrono::seconds(60):std::chrono::seconds(15))){fail("LAN connection timed out");return;}auto sock=SOCKET(socket_);if(state_==LanJoinState::Connecting){fd_set writable,failed;FD_ZERO(&writable);FD_ZERO(&failed);FD_SET(sock,&writable);FD_SET(sock,&failed);timeval zero{};int result=select(0,nullptr,&writable,&failed,&zero);if(result==SOCKET_ERROR){fail("LAN connect poll failed: "+std::to_string(WSAGetLastError()));return;}if(result){int code=0,length=sizeof(code);if(getsockopt(sock,SOL_SOCKET,SO_ERROR,reinterpret_cast<char*>(&code),&length)==SOCKET_ERROR || code){fail("LAN connect failed: "+std::to_string(code?code:WSAGetLastError()));return;}connected();}if(state_==LanJoinState::Connecting || socket_==invalidSocket)return;}
     for(unsigned pass=0;pass<32 && sent_<output_.size();++pass){int result=send(sock,reinterpret_cast<const char*>(output_.data()+sent_),int(output_.size()-sent_),0);if(result==SOCKET_ERROR){int code=WSAGetLastError();if(code==WSAEWOULDBLOCK)break;fail("LAN send failed: "+std::to_string(code));return;}if(!result)break;sent_+=std::size_t(result);}if(sent_==output_.size()){output_.clear();sent_=0;}
     for(unsigned pass=0;pass<32;++pass){std::array<std::uint8_t,4096> bytes{};int received=recv(sock,reinterpret_cast<char*>(bytes.data()),int(bytes.size()),0);if(received==0){state_=LanJoinState::Closed;error_="LAN host closed connection";closeSocket();return;}if(received==SOCKET_ERROR){int code=WSAGetLastError();if(code==WSAEWOULDBLOCK)break;fail("LAN receive failed: "+std::to_string(code));return;}activity_=now;if(input_.size()+std::size_t(received)>262144){fail("LAN receive buffer exceeded");return;}input_.insert(input_.end(),bytes.begin(),bytes.begin()+received);}
     std::size_t offset=0;for(unsigned packets=0;packets<256 && input_.size()-offset>=4;++packets){auto* p=input_.data()+offset;auto length=u16(p+2);if(p[0]!=0xf7 || length<4){fail("Invalid LAN packet header");return;}if(input_.size()-offset<length)break;process(p,length);if(socket_==invalidSocket)return;offset+=length;}if(offset)input_.erase(input_.begin(),input_.begin()+offset);

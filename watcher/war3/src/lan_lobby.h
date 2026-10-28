@@ -13,13 +13,14 @@ class LanLobby {
     LanGame game_;
     std::string playerName_;
     std::unique_ptr<LanJoin> join_;
-    enum class MapStatus {Waiting,WaitingWorker,Checking,Matched,Mismatch,Failed};
+    enum class MapStatus {Waiting,WaitingWorker,Checking,Downloading,WaitingDownloadWorker,CheckingDownload,Matched,Downloaded,Failed};
     std::string error_,snapshot_,mapError_,chatError_;
     std::wstring chatDraft_;
     wchar_t chatHighSurrogate_=0;
     bool chatFocus_=true;
     std::optional<LanMapAnnouncement> expectedMap_;
     std::unique_ptr<LanMapCheckTask> mapTask_;
+    std::shared_ptr<const Bytes> verifiedMap_;
     MapStatus mapStatus_=MapStatus::Waiting;
     std::uint64_t nextMapAttempt_=0;
     std::size_t scroll_=0;
@@ -29,5 +30,7 @@ class LanLobby {
 public:
     LanLobby(Archives& archives,Images& images,Renderer& renderer,Text& text,const LanGame& game,std::string playerName);
     std::string draw(const UiInput& input,std::wstring_view characters);
+    // Available only after all fields match the host declaration.
+    std::shared_ptr<const Bytes> verifiedMap() const {return verifiedMap_;}
 };
 }
