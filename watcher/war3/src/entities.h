@@ -18,6 +18,9 @@
 namespace war3 {
 struct TimedLife {std::uint32_t buff=0;double duration=0,remaining=0;bool paused=false;};
 struct UnsummonOrder {unsigned owner=0;std::uint32_t caster=0,ability=0;std::uint64_t ticket=0;float initialLife=0,maximumLife=0,rate=0,factor=0;double drained=0;int gold=0,lumber=0,returnedGold=0,returnedLumber=0;};
+struct BookSelection {unsigned level=0;std::vector<std::uint32_t> spells;};
+struct BookGrant {int base=0,granted=0,borrowed=1;};
+struct ActiveSpellBook {std::uint32_t ability=0,item=0,order=0;bool shared=false;std::vector<std::uint32_t> spells;};
 struct UnitState {
     std::uint32_t handle=0,type=0,owner=0;
     std::uint64_t deathRevision=0;
@@ -135,6 +138,10 @@ struct UnitState {
     std::optional<PossessionClaim> possessionClaim;
     std::uint64_t ownerRevision=0;
     std::map<std::uint32_t,std::array<jass::Real,2>> pillageBalances;
+    std::map<std::uint32_t,BookSelection> bookSelections;
+    std::map<std::uint32_t,BookGrant> bookGrants;
+    std::vector<ActiveSpellBook> spellBooks;
+    bool refreshingBooks=false;
     unsigned weaponEffectMask=0;
     bool nightManaRegen=false;
     std::map<std::uint32_t,std::vector<std::uint32_t>> weaponVisuals;
@@ -194,6 +201,7 @@ struct DestructableState {
     std::vector<std::string> animationQueue;
 };
 struct ItemState {
+    std::map<std::uint32_t,BookSelection> bookSelections;
     std::uint32_t type=0,owner=15;
     std::string name,model,icon;
     jass::Real x,y,life,maxLife;

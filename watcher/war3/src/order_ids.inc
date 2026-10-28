@@ -269,6 +269,7 @@
 {"smart",851971u},
 {"soulburn",852668u},
 {"soulpreservation",852242u},
+{"spellbook",852608u},
 {"spellshield",852571u},
 {"spellshieldaoe",852572u},
 {"spellsteal",852483u},

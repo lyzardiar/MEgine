@@ -72,6 +72,7 @@ class ScriptSession {
     std::unique_ptr<ObjectData> definitions_;
     std::map<std::uint32_t,std::shared_ptr<UnitState>> units_;
     std::map<std::uint32_t,std::shared_ptr<ItemState>> items_;
+    std::optional<std::pair<std::uint32_t,std::uint32_t>> requestedBook_;
     std::map<std::uint32_t,std::shared_ptr<DestructableState>> destructables_;
     std::optional<PlacedDefinitions> destructableDefinitions_;
     std::optional<SourceSettings> destructableStrings_;
@@ -324,6 +325,12 @@ class ScriptSession {
     void manaFlareReaction(std::uint32_t unit,const CastOrder& cast);
     bool manaFlareImpact(const SpellMissile& missile);
     std::set<std::uint32_t> manaFlareActors_;
+    void spellBookInfo(SpellInfo& spell);
+    void refreshSpellBooks(UnitState& unit);
+    void bookSharedCooldown(UnitState& unit,std::uint32_t ability,double duration);
+    int learnedLevel(const UnitState& unit,std::uint32_t ability) const;
+    bool canRetrain(const UnitState& unit);
+    void retrainHero(std::uint32_t unit,const SpellInfo& spell);
     void restorationInfo(SpellInfo& spell);
     void refreshRestoration(UnitState& unit);
     bool restorationTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility,unsigned owner);
@@ -842,7 +849,11 @@ public:
     bool learnHeroSkill(std::uint32_t unit,std::uint32_t ability) {return learnSkill(unit,ability);}
     bool canLearnSkill(std::uint32_t unit,std::uint32_t ability);
     double spellCooldown(std::uint32_t unit,std::uint32_t ability) const;
-    std::vector<CommandButton> abilityCommands(std::uint32_t unit,unsigned player,bool learning=false);
+    std::vector<CommandButton> abilityCommands(std::uint32_t unit,unsigned player,bool learning=false,std::uint32_t book=0);
+    std::vector<std::uint32_t> spellBookContents(const UnitState& unit,std::uint32_t book) const;
+    bool spellBookReady(const UnitState& unit,std::uint32_t book);
+    bool openSpellBook(std::uint32_t unit,std::uint32_t book);
+    std::optional<std::pair<std::uint32_t,std::uint32_t>> takeSpellBookRequest(){auto value=requestedBook_;requestedBook_.reset();return value;}
     const auto& spellMissiles() const {return spellMissiles_;}
     const auto& spellWaves() const {return spellWaves_;}
     const auto& groundSpells() const {return groundSpells_;}

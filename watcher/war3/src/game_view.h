@@ -27,7 +27,8 @@ class GameView {
     D3DMATRIX view_{},projection_{};
     enum class OrderMode {None,Move,Attack,Patrol,Harvest,Entangle,Repair};
     OrderMode orderMode_=OrderMode::None;
-    std::uint32_t buildMenuUnit_=0,skillMenuUnit_=0;
+    std::uint32_t buildMenuUnit_=0,skillMenuUnit_=0,bookMenuUnit_=0;
+    std::vector<std::uint32_t> spellBookStack_;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> spellTarget_;
     std::vector<CommandButton> commandButtons(std::uint32_t unit);
     std::optional<std::pair<std::uint32_t,std::uint32_t>> buildTarget_;
