@@ -76,6 +76,7 @@ class GameView {
     void drawLeaderboard();
     void drawTimerDialogs();
     void drawTextTags();
+    void drawHealthBars();
     void openAlliance();
     bool drawAlliance(const GameInput& input);
     void drawMultiboards(const GameInput& input);

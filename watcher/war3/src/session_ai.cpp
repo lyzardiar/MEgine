@@ -32,6 +32,7 @@ void ScriptSession::aiTick(){
             if(u->hero && ai.policies[ScriptAI::HeroesBuy] && simulationTime_>=ai.nextItems && number(u->life)<number(u->maxLife)*.6f){bool used=false;for(auto item:u->inventory)if(item && alive(item,NativeKind::Item) && sourceAbility(*u,"AInv").first){auto state=items_.at(item);if(definitions().property(state->type,"iabi").find("AIhe")!=std::string::npos){used=useItem(id,item);if(used)break;}}if(!used)for(auto& [shopId,shop]:units_)if(shopId!=id && !shop->removing && number(shop->life)>0 && distance(*u,*shop)<600){for(auto& stock:shop->stock)if(stock.item && stock.current>0 && definitions().property(stock.type,"iabi").find("AIhe")!=std::string::npos){used=purchase(shopId,ai.owner,stock.type,true,id);if(used)break;}if(used)break;}}
             if(ai.policies[ScriptAI::PeonsRepair] && !u->currentOrder && !u->buildables.empty()){for(auto other:owned)if(alive(other,NativeKind::Unit)){auto b=units_.at(other);if(b->building && !b->construction && number(b->life)<number(b->maxLife)*.9f && distance(*u,*b)<900 && repair(id,other))break;}}
             if(!ai.guardUnits.contains(id) && (ai.policies[ScriptAI::DefendPlayer] || defenders.contains(id)) && !u->currentOrder && hasWeapon(id) && u->buildables.empty()){auto enemy=aiEnemy(ai);if(enemy && distance(*units_.at(enemy),ai.home)<(ai.campaign?800:1200))attackUnit(id,enemy);else if(defenders.contains(id) && distance(*u,ai.home)>600)moveUnit(id,ai.home);}
+            aiCombatSpells(ai,id);
         }if(simulationTime_>=ai.nextItems)ai.nextItems=simulationTime_+5;
     }
 }
