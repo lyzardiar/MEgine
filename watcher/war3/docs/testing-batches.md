@@ -1121,3 +1121,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：player_commands／game_commands／game_view。Win32 Release 产品编译通过；BootyBay 最小检查共享单位训练按拥有者扣款及取消生产通过，未加载 Game.dll，证据 tmp/docs-artifacts/war3/transfer-probe/。
 
 集中验证真实界面建造落点、训练／研究／升级／复活／英雄学习、队列索引与取消退款、资源归属、权限撤销、重入和原版时序；网络锁步与剩余输入仍待实现。
+
+## 玩家物品与货舱命令阶段待验证
+
+路径：player_commands／game_view／game_transport。Win32 Release 产品编译通过；BootyBay 最小会话检查高级共享丢弃、普通共享拒绝库存操作通过，未加载 Game.dll，证据 tmp/docs-artifacts/war3/transfer-probe/。
+
+集中验证即时／点／单位物品使用、热键／鼠标丢弃、权限撤销及物品移除重入、普通／高级共享拾取和库存权限、货舱乘员卸载、原版事件与多客户端同步。
