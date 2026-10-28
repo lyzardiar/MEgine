@@ -4,6 +4,7 @@
 #include "glue.h"
 #include "scene_streaming.h"
 #include "fog_render.h"
+#include "lan_simulation.h"
 
 namespace war3 {
 class QuestDialog;
@@ -23,6 +24,13 @@ class GameView {
     unsigned zoom_=0,frames_=0;
     std::uint64_t cameraRevision_=0;
     std::uint64_t last_=0;
+    std::unique_ptr<LanSimulation> lanSimulation_;
+    std::function<unsigned(const PlayerCommand&)> lanSubmit_;
+    bool drawStarted_=false;
+    std::string lanMessage_;
+    std::uint64_t lanMessageUntil_=0;
+    unsigned submitPlayerCommand(const PlayerCommand& command);
+    void localMessage(unsigned owner,float x,float y,double duration,std::string message);
     D3DVIEWPORT9 viewport_{};
     D3DMATRIX view_{},projection_{};
     enum class OrderMode {None,Move,Attack,Patrol,Harvest,Entangle,Repair};
@@ -96,6 +104,10 @@ public:
     GameView(std::unique_ptr<GameData> data,Renderer& renderer,Text& text,Log& log);
     ~GameView();
     bool draw(const GameInput& input);
+    // Configure before the first draw; the owner consumes complete slots on this thread.
+    bool enableLan(LanSimulation::ObjectResolver resolve,std::function<unsigned(const PlayerCommand&)> submit);
+    std::optional<LanStepResult> consumeLanSlot(std::uint64_t sequence,const LanTimeSlot& slot);
+    const LanSimulation* lanSimulation() const {return lanSimulation_.get();}
     bool appExitRequested() const {return appExit_;}
     bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}
     const std::string& nextLevel() const {return data_->session->nextLevel();}

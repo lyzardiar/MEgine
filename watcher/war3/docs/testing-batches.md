@@ -1205,3 +1205,9 @@ Win32 Release 编译通过。本机 seed 从主机传给双客户端、双会话
 Win32 Release 产品编译通过；BootyBay 探针覆盖本地／远端同单位选择、JASS 查询、事件玩家、回调重入与移除清理，同一时间片选择后保持及无效映射／排队标志整帧拒绝，证据 tmp/docs-artifacts/war3/player-selection-probe/result.log、lan-selection-actions-probe/result.log。
 
 集中验证原版 1.27 对象 ID 及动作编码、选区顺序／事件归属、地图物品／技能／排队、动态创建和销毁、变形／货舱自动选中、真实多人同步与界面。现有解析器必须由调用方提供可靠映射；没有原版映射时不能开始联机。
+
+## 局域网输入编码与游戏视图接口阶段待验证
+
+路径：lan_action_encoder、lan_simulation、game_view、game_flow_ui、game_commands、game_spells、game_transport、game_alliance_dialog、CMakeLists。新增有界选择和基础订单编码，要求调用方提供对象双向映射及原始动作字段；游戏视图可显式接收时间片并将玩家命令交给外部提交器，网络模式不按本地帧推进模拟。未知命令和排队标志明确拒绝；网络模式的选择、脚本对话框与部分菜单操作暂不可用。
+
+Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集中验证编码／解码边界、选区和命令的时序及重入、单机行为、原版 1.27 对象编号与动作字段、双端同步和相机／UI 状态。大厅、对象编号来源、网络提交器、选择同步、完整命令、校验与断线处理仍待实现；目前不能启动联网对局。

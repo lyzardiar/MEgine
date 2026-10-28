@@ -26,8 +26,8 @@ public:
     bool menuOpen() const {return panel_!=Panel::Closed;}
     void toggleMenu();
     bool scriptDialog() const;
-    bool drawMenu(const UiInput& input);
-    void drawDialog(const UiInput& input);
+    bool drawMenu(const UiInput& input,bool network=false);
+    void drawDialog(const UiInput& input,bool network=false);
     bool drawScores(const UiInput& input);
     bool appExit() const {return appExit_;}
     const std::vector<std::string>& scoreModels();
