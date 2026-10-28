@@ -1177,3 +1177,7 @@ Win32 Release 产品编译通过；本机两客户端并发接收真实 BootyBay
 ## 内存地图会话准备阶段待验证
 
 路径：map_preparation。已校验的内存地图可后台准备配置完成的会话；World 保留地图视图。Win32 Release 集成版本编译通过，BootyBay 内存准备、线程退出／源缓冲释放后资源读取、玩家设置和 main 启动探针通过，未加载 Game.dll，证据 tmp/docs-artifacts/war3/memory-session-probe/result.log。集中验证 LAN 会话所有权与退出重开、随机种子／槽位、本地玩家、完整界面及多人同步；大厅尚未触发此入口。
+
+## 局域网加载屏障阶段待验证
+
+路径：lan_host、lan_join。显式倒计时与开始加载、玩家加载完成广播和全部参与者屏障已接入；加载状态冻结槽位并处理断线与超时。Win32 Release 集成版本编译通过，本机双客户端探针覆盖就绪前拒绝、等待最后玩家、断线与未启用拒绝，证据 tmp/docs-artifacts/war3/lan-loading-probe/result.log。集中验证 1.27 互通、真实加载时序／超时／断线以及与会话和模拟锁步的衔接；大厅尚未启用开始。

@@ -29,6 +29,13 @@ public:
     void cancel();
     bool sendChat(std::string_view message);
     bool setSlot(std::size_t index,const LanSlot& slot);
+    // Explicit loading protocol; no game simulation is started by these calls.
+    bool beginCountdown();
+    bool beginLoading();
+    bool reportHostLoaded();
+    LanLoadPhase loadPhase() const;
+    const std::vector<std::uint8_t>& loadPlayers() const;
+    const std::vector<std::uint8_t>& loadedPlayers() const;
     // The remote peer's assertion, not host-side verification of its file.
     bool playerReportsMapReady(std::uint8_t playerId) const;
     bool playerRequestsMap(std::uint8_t playerId) const;

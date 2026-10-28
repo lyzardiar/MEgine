@@ -12,6 +12,7 @@
 namespace war3 {
 enum class LanJoinState {Connecting,Joining,Lobby,Rejected,Closed,Error};
 enum class LanMapDownloadState {Idle,Requested,Receiving,Complete};
+enum class LanLoadPhase {Lobby,Countdown,Loading,Ready,Failed};
 struct LanSlot {std::uint8_t playerId=0,download=0,status=0,computer=0,team=0,color=0,race=0,difficulty=0,handicap=0;};
 struct LanPlayer {std::uint8_t id=0;std::string name;};
 struct LanChatMessage {std::uint8_t sender=0;std::string text;};
@@ -29,6 +30,10 @@ class LanJoin {
     std::vector<LanChatMessage> chat_;
     LanMapAnnouncement map_;
     bool mapReadyReported_=false;
+    bool loadingEnabled_=false,localLoaded_=false;
+    LanLoadPhase loadPhase_=LanLoadPhase::Lobby;
+    std::chrono::steady_clock::time_point loadStarted_{};
+    std::vector<std::uint8_t> loadPlayers_,loadedPlayers_;
     LanMapDownloadState downloadState_=LanMapDownloadState::Idle;
     std::uint8_t downloadHostId_=0;
     std::vector<std::uint8_t> downloading_;
@@ -42,6 +47,7 @@ class LanJoin {
     void fail(std::string reason);
     void closeSocket();
     void clearDownload();
+    void updateLoadPhase();
 public:
     LanJoin(const LanGame& game,std::string playerName);
     ~LanJoin();
@@ -53,6 +59,12 @@ public:
     bool requestSlotChange(std::uint8_t field,std::uint8_t value);
     // Queue readiness only after every announced map field has been checked.
     bool reportMapReady(const LanMapCheck& checked);
+    // Opt in only when a session can actually prepare and synchronize the game.
+    bool enableLoadingProtocol();
+    bool reportLocalLoaded();
+    LanLoadPhase loadPhase() const {return loadPhase_;}
+    const std::vector<std::uint8_t>& loadPlayers() const {return loadPlayers_;}
+    const std::vector<std::uint8_t>& loadedPlayers() const {return loadedPlayers_;}
     bool requestMapDownload();
     void discardDownloadedMap();
     LanMapDownloadState mapDownloadState() const {return downloadState_;}
