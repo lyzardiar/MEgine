@@ -12,6 +12,8 @@ struct LanHostSettings {
     std::uint16_t width=0,height=0;
     std::uint32_t mapFlags=0,gameType=1;
     std::vector<LanSlot> slots;
+    std::uint32_t mapOptions=0;
+    std::vector<bool> computerOnly;
 };
 class LanHost {
     struct Impl;

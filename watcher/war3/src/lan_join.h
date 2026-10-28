@@ -40,6 +40,7 @@ public:
     void poll();
     void cancel();
     bool sendChat(std::string_view message);
+    bool requestSlotChange(std::uint8_t field,std::uint8_t value);
     LanJoinState state() const {return state_;}
     const std::string& error() const {return error_;}
     std::uint32_t rejectionCode() const {return rejectionCode_;}

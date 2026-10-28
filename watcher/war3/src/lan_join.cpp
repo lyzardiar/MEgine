@@ -34,6 +34,16 @@ void LanJoin::cancel(){if(socket_!=invalidSocket && state_==LanJoinState::Lobby)
 bool LanJoin::sendChat(std::string_view message) {
     if(state_!=LanJoinState::Lobby || socket_==invalidSocket || !localPlayerId_ || message.empty() || message.size()>254 || message.find('\0')!=std::string_view::npos)return false;for(unsigned char c:message)if(c<32 || c==127)return false;if(!MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,message.data(),int(message.size()),nullptr,0))return false;std::vector<std::uint8_t> targets;for(auto& slot:slots_)if(slot.status==2 && !slot.computer && slot.playerId && slot.playerId!=255 && std::find(targets.begin(),targets.end(),slot.playerId)==targets.end())targets.push_back(slot.playerId);if(std::find(targets.begin(),targets.end(),localPlayerId_)==targets.end())targets.push_back(localPlayerId_);if(targets.size()>24)return false;size_t packetSize=8+targets.size()+message.size();if(output_.size()-sent_+packetSize>65536)return false;if(sent_){output_.erase(output_.begin(),output_.begin()+sent_);sent_=0;}output_.insert(output_.end(),{0xf7,0x28,std::uint8_t(packetSize),std::uint8_t(packetSize>>8),std::uint8_t(targets.size())});output_.insert(output_.end(),targets.begin(),targets.end());output_.push_back(localPlayerId_);output_.push_back(0x10);output_.insert(output_.end(),message.begin(),message.end());output_.push_back(0);return true;
 }
+bool LanJoin::requestSlotChange(std::uint8_t field,std::uint8_t value) {
+    if(state_!=LanJoinState::Lobby || socket_==invalidSocket || !localPlayerId_ || field<0x11 || field>0x14)return false;
+    if((field==0x11 || field==0x12) && value>=12)return false;
+    if(field==0x13 && value!=1 && value!=2 && value!=4 && value!=8 && value!=32)return false;
+    if(field==0x14 && (value<50 || value>100 || value%10))return false;
+    if(std::none_of(slots_.begin(),slots_.end(),[&](const LanSlot& slot){return slot.status==2 && !slot.computer && slot.playerId==localPlayerId_;}))return false;
+    std::vector<std::uint8_t> targets;for(auto& slot:slots_)if(slot.status==2 && !slot.computer && slot.playerId && slot.playerId!=255 && std::find(targets.begin(),targets.end(),slot.playerId)==targets.end())targets.push_back(slot.playerId);
+    if(targets.empty() || targets.size()>24)return false;size_t size=8+targets.size();if(output_.size()-sent_+size>65536)return false;if(sent_){output_.erase(output_.begin(),output_.begin()+sent_);sent_=0;}
+    output_.insert(output_.end(),{0xf7,0x28,std::uint8_t(size),std::uint8_t(size>>8),std::uint8_t(targets.size())});output_.insert(output_.end(),targets.begin(),targets.end());output_.push_back(localPlayerId_);output_.push_back(field);output_.push_back(value);return true;
+}
 void LanJoin::process(const std::uint8_t* p,std::size_t n){
     auto invalid=[&]{fail("Invalid LAN lobby packet");};switch(p[1]){
     case 0x01:if(n!=8){invalid();return;}if(output_.size()-sent_>65528){fail("LAN send queue exceeded");return;}output_.insert(output_.end(),{0xf7,0x46,8,0,p[4],p[5],p[6],p[7]});break;

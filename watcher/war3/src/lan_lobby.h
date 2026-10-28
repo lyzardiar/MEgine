@@ -23,7 +23,8 @@ class LanLobby {
     MapStatus mapStatus_=MapStatus::Waiting;
     std::uint64_t nextMapAttempt_=0;
     std::size_t scroll_=0;
-    void updateSlots();
+    std::set<std::string> updateSlots();
+    void changeSlot(const GlueScreen::ChoiceChange& change);
     void updateMapCheck();
 public:
     LanLobby(Archives& archives,Images& images,Renderer& renderer,Text& text,const LanGame& game,std::string playerName);
