@@ -1454,3 +1454,9 @@ Win32 Release 产品增量编译通过，BootyBay 派生的最小会话检查通
 路径：`session.h`、`session.cpp`、`session_game.cpp`、`session_hashtable.cpp`、`docs/random-pools.md`。单位池和物品池的创建、增删、销毁与加权随机放置已连接会话随机数和真实单位／物品创建，池句柄支持 hashtable 存取。空池、零／负权重、重复条目、随机数消耗与销毁后的行为以现有实现为限，原版 1.27 规则待对照。
 
 Win32 Release 客户端增量编译通过。阶段集中验证 common.j 调用、地图初始化及触发器、权重组合／重复条目／删除／空池／无效类型、玩家与坐标、固定种子和多客户端同步、句柄存取与释放、对象预算。完整客户端、三图和原版一致性仍未验收。
+
+## 联机 Shift 命令队列待验证
+
+路径：`lan_action_encoder.cpp`、`lan_simulation.cpp`、`lan_simulation.h`、`player_commands.cpp`、`player_commands.h`、`tests/order_queue_tests.cpp`。受支持的移动、攻击、巡逻、目标命令、技能、建造和物品操作通过 0x0001 标志传递排队状态，并由时间片消费到实际玩家行动队列；唯一类型子组技能保留选区校验，不支持排队的命令拒绝。参考 w3g_actions.txt 固定版本；原版网络格式及同类型子组仍待核对，物品换格未接入。
+
+Win32 Release 客户端和 `war3_order_queue_tests` 增量编译通过。阶段执行该目标并合并联机动作、锁步和玩家命令验证，覆盖鼠标／键盘 Shift、队列与立即命令交错、地面／单位／技能／建造／物品、同帧选区与子组、权限变更、无效报文、命令取消及回调重入，双客户端同步及 1.27 原版对照。新增测试尚未执行，不代表实际对局通过。
