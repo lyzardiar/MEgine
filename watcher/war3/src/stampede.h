@@ -27,6 +27,7 @@ struct AttackLightning {
     std::uint64_t sourceDeath=0,targetDeath=0;
     WorldPoint start,end;
     float startHeight=0,endHeight=0,sourceFly=0,targetFly=0;
+    PathMovement startMovement=PathMovement::Ground,endMovement=PathMovement::Ground;
     double due=0;
 };
 }

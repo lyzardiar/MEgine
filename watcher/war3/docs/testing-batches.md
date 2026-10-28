@@ -1254,4 +1254,8 @@ Win32 Release 产品编译已执行；功能与原版一致性尚未验证。集
 
 ## 水面单位与弹道显示待验证
 
-路径：terrain_scene、terrain_layout、game_view、game_morph、game_effects、scene_objects、combat、spells、session_projectiles、session_spell_effects、session_siege_attacks、session_self_spells。集中验证 W3E 干／湿格、非平坦水位、地形与水面交界、源水位偏移、海军／两栖／飞行单位模型与选择圈、点击／相机／遮挡，武器与法术弹道发射者死亡、追踪目标变形、反弹和多目标；覆盖多个地形集、实际 GPU 帧、透明水面与原版对照及长局性能。特殊闪电和水面粒子仍待对照或实现。
+路径：terrain_scene、terrain_layout、game_view、game_morph、game_effects、scene_objects、combat、spells、session_projectiles、session_spell_effects、session_siege_attacks、session_self_spells。集中验证 W3E 干／湿格、非平坦水位、地形与水面交界、源水位偏移、海军／两栖／飞行单位模型与选择圈、点击／相机／遮挡，武器与法术弹道发射者死亡、追踪目标变形、反弹和多目标；覆盖多个地形集、实际 GPU 帧、透明水面与原版对照及长局性能。水面闪电见后续专项，水面粒子仍待对照或实现。
+
+## 水面闪电端点待验证
+
+路径：game_lightning、session_lightning、session_lightning_attack、effects、stampede、terrain_scene。集中验证船只／两栖与陆空单位的闪电链、锁镣、资源汲取、攻击延迟，端点跨岸／变形／死亡与回退、显式 AddLightningEx／MoveLightningEx 的绝对坐标、解除跟随、脚本移动、可见性及多个地形集；对照原版 GPU 画面和长局性能。
