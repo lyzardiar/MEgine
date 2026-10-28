@@ -324,6 +324,15 @@ class ScriptSession {
     void manaFlareReaction(std::uint32_t unit,const CastOrder& cast);
     bool manaFlareImpact(const SpellMissile& missile);
     std::set<std::uint32_t> manaFlareActors_;
+    void restorationInfo(SpellInfo& spell);
+    void refreshRestoration(UnitState& unit);
+    bool restorationTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility,unsigned owner);
+    std::vector<std::uint32_t> restorationTargets(const UnitState& caster,const SpellInfo& spell);
+    bool restorationPrepare(const UnitState& caster,SpellInfo& spell);
+    void restorationEffect(std::uint32_t caster,const CastOrder& cast);
+    bool restorationAutocast(UnitState& caster,const SpellInfo& spell);
+    bool smartRecharge(std::uint32_t unit,std::uint32_t well,std::uint32_t ability=0);
+    void rechargeFollow(UnitState& unit);
     void wardSpellInfo(SpellInfo& spell);
     void roarSpellInfo(SpellInfo& spell);
     void roarEffect(std::uint32_t source,const SpellInfo& spell,unsigned owner);
@@ -526,6 +535,7 @@ class ScriptSession {
     unsigned auraTicks_=0;
     std::vector<std::pair<std::uint32_t,unsigned>> passiveAbilities(const UnitState& unit);
     bool passiveTarget(const UnitState& source,const UnitState& target,const PassiveInfo& definition);
+    bool passiveTarget(const UnitState& source,const UnitState& target,const std::set<std::string>& allowed);
     void aurasTick(double delta);
     void aggregateAuras(UnitState& unit,bool visuals=true);
     void clearAuras(UnitState& unit);
