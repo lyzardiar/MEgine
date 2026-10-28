@@ -72,6 +72,8 @@ struct UnitState {
     std::vector<WorldPoint> route;
     size_t waypoint=0;
     std::uint64_t pathingRevision=0;
+    std::uint64_t routeRetryWorldRevision=0;
+    double routeRetryAt=0;
     double animationStart=0;
     double animationTime=0;
     float animationRate=1,targetFlyHeight=0,flyRate=0;

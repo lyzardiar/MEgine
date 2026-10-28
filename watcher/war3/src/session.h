@@ -126,6 +126,7 @@ class ScriptSession {
     std::map<jass::ThreadId,std::vector<ScriptContext>> threadContexts_{{0,{}}};
     void bindThreadNatives();
     double simulationTime_=0,accumulator_=0;
+    std::uint32_t routeRetryCursor_=0;
     struct PointDamage {
         std::uint32_t source=0,attackType=0,damageType=0;
         float x=0,y=0,radius=0,amount=0;
