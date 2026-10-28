@@ -128,6 +128,7 @@ public:
     bool enableLan(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wireObject,std::function<bool(std::span<const std::uint8_t>)> sendSelection,std::function<unsigned(const PlayerCommand&)> submit);
     std::optional<LanStepResult> consumeLanSlot(std::uint64_t sequence,const LanTimeSlot& slot);
     const LanSimulation* lanSimulation() const {return lanSimulation_.get();}
+    ScriptSession& session() const {return *data_->session;}
     bool appExitRequested() const {return appExit_;}
     GameAudioPreferences audioPreferences() const {return audioCommitted_;}
     bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}

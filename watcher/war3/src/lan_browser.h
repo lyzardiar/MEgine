@@ -30,5 +30,6 @@ public:
     std::string draw(const UiInput& input,std::wstring_view characters);
     void enableMatchHandoff();
     std::optional<LanLobbyHandoff> takeHandoff();
+    std::optional<LanHostHandoff> takeHostHandoff();
 };
 }
