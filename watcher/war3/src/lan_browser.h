@@ -2,15 +2,20 @@
 #pragma once
 #include "glue.h"
 #include "lan_discovery.h"
+#include "lan_lobby.h"
 #include <memory>
 #include <string_view>
 
 namespace war3 {
 class LanBrowser {
     GlueScreen screen_;
+    Archives& archives_;
+    Images& images_;
     Renderer& renderer_;
+    Text& text_;
     Log& log_;
     std::unique_ptr<LanDiscovery> discovery_;
+    std::unique_ptr<LanLobby> lobby_;
     std::string error_,selection_;
     std::wstring playerName_=L"Player";
     wchar_t highSurrogate_=0;
