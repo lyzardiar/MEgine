@@ -54,7 +54,7 @@ Win32 Release 产品编译通过；本机模拟 TCP 主机检查 UTF-8 消息、
 
 ## 内存地图归档与校验
 
-新增内存地图挂载和后台校验入口，使用 Windows 页面文件映射与现有 StormLib 只读解析，地图和公共资源优先级、共享视图及缓存沿用现有归档机制；不生成地图解包目录或临时 MPQ。内存数据上限 256 MiB，调用方在校验时须保证输入字节不被其他别名修改。网络下载校验已接入这一入口；游戏会话尚未接入。
+新增内存地图挂载和后台校验入口，使用 Windows 页面文件映射与现有 StormLib 只读解析，地图和公共资源优先级、共享视图及缓存沿用现有归档机制；不生成地图解包目录或临时 MPQ。内存数据上限 256 MiB，调用方在校验时须保证输入字节不被其他别名修改。网络下载校验已接入这一入口；后台会话准备支持内存地图；大厅尚未触发会话启动。
 
 映射的大小按系统页对齐，StormLib 可看到末尾零填充；使用传入地图时必须核对原始长度及各项字段，畸形或截断归档的严格边界仍待验收。原始接收缓冲与映射各占一份空间；x86 构造阶段可能需要约三倍大小的虚拟地址，系统页面文件可能被 Windows 使用。
 
@@ -64,4 +64,10 @@ Win32 Release 编译通过；BootyBay、DotA 的可用成员和枚举与文件�
 
 建房时在后台从只读文件句柄读取最多 256 MiB 的地图快照，地图声明和 W3I 元数据从同一快照计算，主机按 W3GS 发送带 CRC32 的分块并处理确认。加入方缺图或本地字段不匹配时请求地图；块按玩家、长度、顺序、偏移和 CRC 检查，完整接收后在后台重算四项地图字段，仅匹配才保留只读快照。下载进度显示在大厅，离开或断线释放连接的缓冲；不创建本地地图文件或解包目录。
 
-Win32 Release 产品编译通过，本机两名客户端同时接收真实 BootyBay，内容与主机快照逐字节一致，地图字段一致且不自动发送就绪，证据 `tmp/docs-artifacts/war3/lan-transfer-probe/result.log`。建房后台快照的文件与字段一致、取消和生命周期检查见 `tmp/docs-artifacts/war3/lan-snapshot-probe/result.log`。模拟主机的错误 CRC、偏移与中途取消检查通过，证据 `tmp/docs-artifacts/war3/client-transfer-invalid-probe/result.log`。原版 1.27 互通、其他异常报文、真实界面、慢网与大地图仍需阶段验收；尚不支持断点续传或传输重试，下载快照尚未接入游戏会话，自动就绪与开始仍禁用。
+Win32 Release 产品编译通过，本机两名客户端同时接收真实 BootyBay，内容与主机快照逐字节一致，地图字段一致且不自动发送就绪，证据 `tmp/docs-artifacts/war3/lan-transfer-probe/result.log`。建房后台快照的文件与字段一致、取消和生命周期检查见 `tmp/docs-artifacts/war3/lan-snapshot-probe/result.log`。模拟主机的错误 CRC、偏移与中途取消检查通过，证据 `tmp/docs-artifacts/war3/client-transfer-invalid-probe/result.log`。原版 1.27 互通、其他异常报文、真实界面、慢网与大地图仍需阶段验收；尚不支持断点续传或传输重试，下载快照尚未由大厅送入会话准备，自动就绪与开始仍禁用。
+
+## 内存地图会话准备
+
+后台 MapPreparation 可从已校验的只读内存地图准备配置完成的 ScriptSession；World 持有地图归档视图，准备线程结束或源字节释放后仍可读取资源。内存请求不推断战役，返回的标签是诊断标识而不是可重新打开的文件路径。输入在校验和准备期间必须保持不可变。
+
+Win32 Release 集成版本编译通过；BootyBay 探针覆盖内存准备、线程退出后的资源读取、玩家设置与原地图 main 启动，未加载 Game.dll，证据 `tmp/docs-artifacts/war3/memory-session-probe/result.log`。LAN 大厅尚未触发此路径；多人随机种子、槽位、会话同步及完整画面待实现／验证。

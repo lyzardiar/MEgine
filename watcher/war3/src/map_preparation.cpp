@@ -6,7 +6,11 @@ namespace {bool under(const fs::path& path,const fs::path& directory){auto child
 MapPreparation::MapPreparation(fs::path dataRoot,bool muted) : dataRoot_(std::move(dataRoot)),muted_(muted),worker_([this](std::stop_token stop){run(stop);}) {}
 MapPreparation::~MapPreparation() {{std::lock_guard lock(mutex_);worker_.request_stop();}wake_.notify_one();}
 std::uint64_t MapPreparation::request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign,bool inferCampaign) {
-    std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,std::move(path),campaign,inferCampaign};ready_.reset();wake_.notify_one();return id;
+    std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,std::move(path),{}, {},campaign,inferCampaign};ready_.reset();wake_.notify_one();return id;
+}
+std::uint64_t MapPreparation::requestMemory(std::shared_ptr<const Bytes> bytes,std::string label) {
+    if(!bytes || bytes->empty() || bytes->size()>256u*1024u*1024u || label.empty() || label.size()>1024 || label.find('\0')!=std::string::npos)throw std::runtime_error("Invalid in-memory map preparation request");
+    std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,{},std::move(bytes),std::move(label),{},false};ready_.reset();wake_.notify_one();return id;
 }
 void MapPreparation::clear() {std::lock_guard lock(mutex_);++generation_;pending_.reset();ready_.reset();}
 std::optional<PreparedMap> MapPreparation::poll() {std::lock_guard lock(mutex_);auto result=std::move(ready_);ready_.reset();return result;}
@@ -14,9 +18,9 @@ void MapPreparation::run(std::stop_token stop) {
     std::unique_ptr<Archives> archives;std::unique_ptr<Images> images;
     while(!stop.stop_requested()){
         Request request;{std::unique_lock lock(mutex_);wake_.wait(lock,[&]{return stop.stop_requested() || pending_.has_value();});if(stop.stop_requested())return;request=std::move(*pending_);pending_.reset();}
-        auto stale=[&]{return stop.stop_requested() || generation_.load()!=request.id;};PreparedMap result;result.request=request.id;result.path=request.path;
+        auto stale=[&]{return stop.stop_requested() || generation_.load()!=request.id;};PreparedMap result;result.request=request.id;result.path=request.path;result.memoryLabel=request.label;
         try {
-            if(!archives)archives=std::make_unique<Archives>(dataRoot_);archives->mountMap(request.path);
+            if(!archives)archives=std::make_unique<Archives>(dataRoot_);if(request.memory)archives->mountMap(std::move(request.memory),request.label);else archives->mountMap(request.path);
             MapStrings strings;if(auto wts=archives->readCandidates({"war3map.wts"},ArchiveScope::Map))strings=mapStrings(wts->bytes);
             auto w3i=archives->readCandidates({"war3map.w3i"},ArchiveScope::Map);if(!w3i)throw std::runtime_error("Missing war3map.w3i");result.info=MapInfo::parse(w3i->bytes,strings);
             if(!stale()){

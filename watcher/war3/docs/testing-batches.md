@@ -1173,3 +1173,7 @@ Win32 Release 产品编译通过；本机两客户端并发接收真实 BootyBay
 ## 玩家自动施法命令阶段待验证
 
 路径：player_commands、game_commands。技能及修理自动施法经统一玩家命令入口执行并检查控制权限；Win32 Release 集成版本编译通过，待集中验证真实右键、启停与订单事件、权限撤销和原版行为。网络动作编码及锁步尚未接入。
+
+## 内存地图会话准备阶段待验证
+
+路径：map_preparation。已校验的内存地图可后台准备配置完成的会话；World 保留地图视图。Win32 Release 集成版本编译通过，BootyBay 内存准备、线程退出／源缓冲释放后资源读取、玩家设置和 main 启动探针通过，未加载 Game.dll，证据 tmp/docs-artifacts/war3/memory-session-probe/result.log。集中验证 LAN 会话所有权与退出重开、随机种子／槽位、本地玩家、完整界面及多人同步；大厅尚未触发此入口。
