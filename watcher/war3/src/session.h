@@ -894,6 +894,8 @@ class ScriptSession {
     jass::ThreadId triggerExecute(std::uint32_t handle,bool wait=false);
     void fire(std::uint32_t event,ScriptContext context={});
     void unitEvent(std::uint32_t unit,unsigned playerEvent,unsigned unitEvent,ScriptContext context={});
+    void bindRescueNatives();
+    void rescueTick();
     void unitLife(jass::Value handle,jass::Real value,std::uint32_t killer=0,bool bounty=true);
     void playerChange(unsigned player,std::uint32_t field,int before,int after,bool alliance);
     void tick(double delta);

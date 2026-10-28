@@ -31,6 +31,9 @@ struct UnitState {
     jass::Real x,y,facing,life,maxLife,mana,maxMana,moveSpeed,defaultMoveSpeed,acquireRange;
     int resources=0,userData=0,level=1,foodUsed=0,foodMade=0;
     bool visible=true,paused=false,invulnerable=false,pathing=true,selected=false;
+    std::uint16_t rescueEnabled=0,rescueDisabled=0;
+    float rescueRange=600;
+    std::set<std::uint32_t> rescueNearby;
     std::map<std::uint32_t,int> abilities;
     std::map<std::uint32_t,bool> autocast;
     std::uint32_t currentOrder=0;

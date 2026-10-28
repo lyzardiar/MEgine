@@ -1484,3 +1484,9 @@ Win32 Release 客户端及 `war3_order_queue_tests` 增量编译通过。阶段�
 路径：`object_data.h/.cpp`、`session_game.cpp`、`docs/random-choices.md`。四个 ChooseRandom native 按源单位／物品表、地图覆盖及相关分类、等级和地形集构建候选，使用会话 RNG 返回类型；候选为空返回 0。筛选标志与原版 RNG、顺序的细节仍待对照。
 
 Win32 Release 客户端增量编译通过。阶段核对常见地形集和玩家数量、原版及自定义对象筛选、随机建筑／野怪／物品分类与等级、空结果、地图掉落／中立商店脚本、候选缓存和固定随机种子的双客户端同步；运行与原版一致性未验证。
+
+## 战役单位救援待验证
+
+路径：`entities.h`、`script_state.h`、`session.h`、`session.cpp`、`session_tick.cpp`、`session_ownership.cpp`、`docs/rescue.md`。单位／玩家救援资格、距离与救援事件连接 `GetRescuer`，原版 BJ 利用现有归属转移完成救援；源地图玩家类型 4 映射为 Rescuable。
+
+Win32 Release 客户端增量编译通过。阶段核对 Rescuable 玩家、显式开关／每玩家资格／进入范围、事件及默认 BJ 提示音效／易主／人口／科技、死亡复活／隐藏／暂停／回调重入和多个玩家争抢，并对照原版默认距离、中心距离、事件时序和长局性能。当前范围和筛选边界尚未证实，实际战役未验收。
