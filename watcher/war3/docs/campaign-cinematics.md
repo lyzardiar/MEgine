@@ -17,3 +17,7 @@ Win32 Release 产品编译通过；Prologue01 的 20 秒静音模拟通过初始
 TriggerWaitForSound 将脚本线程挂起并跟踪当前声音播放位置，声音停止或达到正偏移提前点后恢复；释放句柄后的独立播放继续供等待使用。静音离线模拟使用模拟时钟推进声音，普通游戏仍使用实际音频时钟。原版入口会保存声音指针及偏移，空声音、负偏移、等待唤醒时序和变速精度仍待原版对照。
 
 Win32 Release 产品编译通过；Prologue01 原 main 及静音模拟已越过 TriggerWaitForSound，随后在 SetUnitFacingTimed 未绑定处停止。日志：tmp/docs-artifacts/war3/campaign/prologue-sound-wait.log。
+
+SetUnitFacingTimed 在固定模拟步进中沿最短角度更新单位朝向；即时设定、移动、战斗、施法及扎根等朝向写入会覆盖转向。原版插值曲线、180 度方向、暂停与命令优先级待阶段对照。
+
+Win32 Release 产品编译通过；Prologue01 原 main 与前 20 秒静音模拟通过，bj_gameStarted=true，仍有 1 个脚本线程，未加载 Game.dll。日志：tmp/docs-artifacts/war3/campaign/prologue-facing.log。此结果不代表完整战役通过。

@@ -983,3 +983,9 @@ Amazonia原globals/config/main与250ms推进退出0：102单位、55触发器、
 路径：session_sound／sound／audio、脚本线程及离线 main-check 时钟。Win32 Release 产品编译通过，序章静音模拟越过 TriggerWaitForSound，随后在 SetUnitFacingTimed 未绑定处停止；日志 tmp/docs-artifacts/war3/campaign/prologue-sound-wait.log。
 
 集中验证原声音自然结束／正负偏移／空与未播放／提前停止／淡出／销毁与独立播放、循环／重复启动／seek／变速／暂停、多个等待线程和上下文；比较真实 Miles 与静音离线时钟的行为以及完整战役声音和画面。原版唤醒条件及空声音／负偏移语义尚未确认。旧 MEngine 队列继续延期。
+
+## 战役单位定时转向阶段待验证
+
+路径：entities／session_entities／session_orders／session_combat／session_spells／session_concoction／session_roots。Win32 Release 产品编译与差异检查通过；Prologue01 原 main 和 20 秒静音模拟通过，1 个脚本线程继续运行，未加载 Game.dll；日志 tmp/docs-artifacts/war3/campaign/prologue-facing.log。
+
+集中验证正负／跨 0 与 180 度、0／极短／长时长、重复和即时覆盖、暂停／死亡／隐藏／移动／战斗／施法与扎根的优先级及原版画面和插值；完整序章、音频与三图性能继续阶段验证。旧 MEngine 队列继续延期。
