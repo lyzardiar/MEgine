@@ -1960,3 +1960,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`session_game.cpp`、`tests/generate-live-world-fixture.py`、`docs/jass.md`。`Pow(real, real)` 返回计算所得单精度实数；DotA `Scripts/war3map.j` 使用该函数计算技能距离。
 
 阶段执行 live-world 夹具及消费者，核对正数、负底数整数指数、小数指数、零、溢出和非法输入，并对照原版结果与 DotA 技能范围；夹具新增正整数、负整数和平方根三种情况。当前尚未运行专项或取得原版浮点精度证据。
+
+## 相机眼睛坐标待验证
+
+路径：`camera_control.h`、`session_world.cpp`、`game_view.cpp`、`tests/game_flow_tests.cpp`、`docs/camera-eye.md`。四个眼睛坐标 native 与绘制共享视角几何；DotA `DD5` 使用眼睛 XY 决定镜头平移。Win32 Release 产品和会话专项增量编译通过，专项未执行。
+
+阶段按 `camera-eye.md` 的夹具和消费者命令核对字段／句柄、真实窗口的平移／旋转／缩放／跟随、噪声和原版坐标；会话水面高度、局域网本地镜头及跟随时序仍有未完成边界。
