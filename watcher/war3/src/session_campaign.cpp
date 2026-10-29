@@ -13,6 +13,6 @@ void ScriptSession::bindCampaignNatives(){
     bind("SetCampaignMenuRaceEx","nothing",{"integer"},[integer,protect](auto& vm,auto a){protect();auto index=integer(a[0]);if(index>=0 && index<4){CampaignProfile profile;profile.select(true,unsigned(index));}return vm.nothing();});
     bind("ForceCampaignSelectScreen","nothing",{},[this](auto& vm,auto){forceCampaignSelect_=true;return vm.nothing();});
     for(auto [name,model]:std::initializer_list<std::pair<const char*,bool>>{{"PlayCinematic",false},{"PlayModelCinematic",true}})bind(name,"nothing",{"string"},[this,model](auto& vm,auto a){auto value=a[0].text?*a[0].text:std::string{};if(value.size()>1024 || value.find('\0')!=std::string::npos)throw std::runtime_error("Invalid cinematic request");(model?modelCinematic_:movieCinematic_)=std::move(value);return vm.nothing();});
-    bind("ChangeLevel","nothing",{"string","boolean"},[this](auto& vm,auto a){if(!a[0].text || a[0].text->empty() || a[0].text->size()>1024)throw std::runtime_error("Invalid next-level path");nextLevel_=*a[0].text;finishGame(a[1].bits!=0,SessionExit::ChangeLevel);return vm.nothing();});
+    bind("ChangeLevel","nothing",{"string","boolean"},[this](auto& vm,auto a){if(!a[0].text || a[0].text->empty() || a[0].text->size()>1024)throw std::runtime_error("Invalid next-level path");if(experimentalSelectionSync_)throw std::runtime_error("ChangeLevel is not yet supported in experimental LAN or replay sessions");nextLevel_=*a[0].text;finishGame(a[1].bits!=0,SessionExit::ChangeLevel);return vm.nothing();});
 }
 }

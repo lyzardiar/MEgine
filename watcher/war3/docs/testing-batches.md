@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 自研联机关卡切换边界待验证
+
+路径：session_campaign、session_match、lan-experimental-flow、game-flow。实验联机和实验回放执行 ChangeLevel／RestartGame 时明确报告未支持，避免暂停共享模拟后静默丢弃切关或重开请求；单机流程沿用原有入口。Win32 Release 产品增量编译通过。待阶段验证真实双端、回放和单机流程及错误传播；多人会话重开、跨关、缓存同步与原版行为仍待实现。
+
 ## 自研联机 EndGame 待验证
 
 路径：session_match／session、lan_simulation／lan_runtime、game_view、main、game_flow_tests 与 generate-game-flow-fixture.py。实验会话的 EndGame 记录本机离开及结算意图，不暂停共享模拟；对话框回调按触发玩家定位，GetLocalPlayer 分支按各端执行；回放丢弃本机离开意图。Win32 Release 产品和专项程序增量编译通过，夹具生成脚本语法检查通过；新增专项尚未执行。阶段先执行 `python tests/generate-game-flow-fixture.py --data-root <data-root>` 更新临时夹具，再执行 `war3_game_flow_tests.exe <data-root> <fixture.w3m> lan-dialog`。合并验证原胜利／失败对话框、Skip 分支、普通／Quit 按钮回调、等待纤程、main 初始化、同时退出／先前退出／事件重入、对话框回调内非点击者本地分支、真实双端与回放、结算及原版时序。多人 RestartGame／ChangeLevel 仍待实现。
