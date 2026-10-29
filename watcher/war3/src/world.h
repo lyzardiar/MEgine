@@ -72,6 +72,9 @@ class World {
     std::uint64_t pathingRevision_=1;
     std::uint64_t blockingRevision_=1;
     Bytes blightPathing_;
+    std::array<std::uint64_t,2> blightFingerprint_{};
+    void initializeBlightFingerprint();
+    void updateBlightFingerprint(size_t index,bool corner,bool add);
     std::vector<std::uint64_t> blightChunks_;
     std::uint64_t blightRevision_=1;
     std::vector<std::uint64_t> terrainChunks_;
@@ -118,6 +121,7 @@ public:
     void blight(WorldPoint center,float radius,bool add);
     void blightPoint(WorldPoint point,bool add);
     std::uint64_t blightRevision() const {return blightRevision_;}
+    const auto& blightFingerprint() const {return blightFingerprint_;}
     const auto& blightChunks() const {return blightChunks_;}
     void block(float x,float y);
     std::optional<size_t> pathCell(float x,float y) const;

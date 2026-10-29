@@ -4,6 +4,7 @@
 #include "jass_numeric.h"
 
 namespace war3 {
+struct ClockAdvance {bool restored=false;jass::Real beforeRestore,restoredTime;};
 struct DayNightRules {
     jass::Real dayLength=jass::Real::fromInteger(480),dayHours=jass::Real::fromInteger(24),dawn=jass::Real::fromInteger(6),dusk=jass::Real::fromInteger(18);
     static DayNightRules read(Archives& archives);
@@ -12,6 +13,7 @@ class GameClock {
     DayNightRules rules_;
     jass::Real time_,scale_=jass::Real::fromBits(0x3f800000);
     bool suspended_=false;
+    jass::Real temporaryTime_,temporaryRemaining_;
 public:
     explicit GameClock(DayNightRules rules={});
     const DayNightRules& rules() const {return rules_;}
@@ -23,6 +25,9 @@ public:
     void suspend(bool value) {suspended_=value;}
     jass::Real rate() const;
     bool daytime() const;
-    void advance(jass::Real seconds);
+    jass::Real temporaryTime() const {return temporaryTime_;}
+    jass::Real temporaryRemaining() const {return temporaryRemaining_;}
+    void temporary(jass::Real value,jass::Real seconds);
+    ClockAdvance advance(jass::Real seconds);
 };
 }

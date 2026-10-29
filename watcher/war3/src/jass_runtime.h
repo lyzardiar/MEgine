@@ -13,6 +13,7 @@ struct RuntimeLimits {std::uint64_t steps=5000000;size_t frames=1024,values=2621
 struct RuntimeSlotInspection {Value value;bool initialized=false,array=false;std::map<std::uint32_t,Value> elements;};
 struct RuntimeFrameInspection {Id function=none;size_t pc=0,base=0;std::vector<RuntimeSlotInspection> locals;};
 struct RuntimeExecutionInspection {ThreadId thread=0;size_t depth=0,localCount=0;Position caller;std::vector<Value> values;std::vector<RuntimeFrameInspection> frames;Id pendingNative=none;std::vector<Value> pendingArguments;};
+struct RuntimeThreadInspection {ThreadId thread=0;std::uint64_t runtime=0;ThreadState state=ThreadState::Ready;bool structured=false;Id function=none;std::vector<Value> arguments;};
 class Runtime {
     struct Impl;
     std::unique_ptr<Impl> impl_;
@@ -35,6 +36,7 @@ public:
     ThreadId start(std::function<void()> entry);
     ThreadId start(const std::string& function,std::span<const Value> arguments={});
     ThreadId start(const Value& code,std::span<const Value> arguments={});
+    ThreadId startDiscard(const std::string& function,std::span<const Value> arguments={});
     void sleep(double seconds);
     void waitThread(ThreadId thread);
     ExternalWaitToken prepareExternalWait();
@@ -52,6 +54,8 @@ public:
     size_t threadCount() const;
     // Inspect on the runtime owner thread; native/fiber continuations and codeOwner pointers are not serializable.
     std::vector<RuntimeExecutionInspection> inspectExecutions() const;
+    // Identities and codeOwner pointers are process-local diagnostics, not saved continuations.
+    std::vector<RuntimeThreadInspection> inspectThreads() const;
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;
     Value integer(std::int32_t value) const;
     Value real(Real value) const;

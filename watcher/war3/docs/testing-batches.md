@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+## 月亮石、荒芜指纹与结构化线程入口待验证
+
+路径：`src/game_clock.h/.cpp`、`src/session_item_use.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_tick.cpp`、`src/session_network_identity.cpp`、`src/world.h/.cpp`、`src/world_blight.cpp`、`src/world_path.cpp`、`src/jass_runtime.h/.cpp`、`src/jass_threads.h/.cpp`、`src/session_callbacks.cpp`；测试目标 `war3_clock_tests`、`war3_consumption_tests`、`war3_blight_fingerprint_tests`、`war3_jass_thread_tests`。阶段核对月亮石实际消费、到期时间事件、重用、暂停、脚本设时及原版行为；核对 WPM／无 WPM 的写入、增删、地图切换和联机摘要；执行 JASS 入口、跨运行时、等待、取消及触发器回归。时间行为为实现假设，指纹有碰撞概率且不涵盖其他寻路位；Fiber、等待关系和宿主调用栈仍不可恢复存档。Win32 Release 客户端及四个相关测试目标编译通过；JASS 结构化入口、跨运行时归属、嵌套等待与取消的最小检查 4 通过、0 失败。阶段执行 `war3_blight_fingerprint_tests.exe`、`war3_jass_thread_tests.exe`；时钟命令见 `game-clock.md`，月亮石物品夹具使用 `consumption.md` 的夹具命令并将模式改为 `moon`。月亮石与荒芜专项、联机、真实对局及原版对照待执行。说明见 `moonstone.md`、`arcane-blight-items.md` 和 `save-runtime-foundation.md`。
+
 ## 抗魔、蛛网、荒芜物品及脚本执行状态待验证
 
-路径：`session_item_use.cpp`、`session_spell_info.cpp`、`session_spells.cpp`、`session_area_spells.cpp`、`session_channels.cpp`、`spells.h`、`session_blight_items.cpp`、`session.h`、`session_tick.cpp`、`session_network_identity.cpp`、`CMakeLists.txt`、`jass_runtime.h/.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`、`tests/jass_thread_tests.cpp`；说明见 `arcane-blight-items.md` 和 `save-runtime-foundation.md`。阶段执行 control 夹具的 item-control／item-blight，核对费用、次数、目标、抗魔、蛛网、扩张／去除／覆盖／离开与联机；扩张结束后的地表状态尚未纳入实验联机摘要；执行 JASS 线程专项，检查嵌套 native 回调、等待、取消、异常和诊断副本。Win32 Release 客户端与三个相关消费者已编译；JASS 核心改造的嵌套等待及 native 取消两项最小检查通过，0 失败。JASS 状态尚不能用于恢复存档；献祭头骨走近／中断、容量与回调重入、原版时序及真实对局尚未验证。
+路径：`session_item_use.cpp`、`session_spell_info.cpp`、`session_spells.cpp`、`session_area_spells.cpp`、`session_channels.cpp`、`spells.h`、`session_blight_items.cpp`、`session.h`、`session_tick.cpp`、`session_network_identity.cpp`、`CMakeLists.txt`、`jass_runtime.h/.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`、`tests/jass_thread_tests.cpp`；说明见 `arcane-blight-items.md` 和 `save-runtime-foundation.md`。阶段执行 control 夹具的 item-control／item-blight，核对费用、次数、目标、抗魔、蛛网、扩张／去除／覆盖／离开与联机；地表荒芜状态以增量指纹纳入实验联机摘要，需验证写入路径、碰撞限制及联机分歧；执行 JASS 线程专项，检查嵌套 native 回调、等待、取消、异常和诊断副本。Win32 Release 客户端与三个相关消费者已编译；JASS 核心改造的嵌套等待及 native 取消两项最小检查通过，0 失败。JASS 状态尚不能用于恢复存档；献祭头骨走近／中断、容量与回调重入、原版时序及真实对局尚未验证。
 
 ## 死亡与复活动画重启待验证
 

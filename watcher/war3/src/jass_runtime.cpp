@@ -3,6 +3,7 @@
 #include "jass_literal.h"
 #include <bit>
 #include <algorithm>
+#include <atomic>
 #include <map>
 
 namespace war3::jass {
@@ -16,9 +17,16 @@ struct RunState {Position caller;std::vector<Value> values;std::vector<Frame> fr
 enum class State {Created,Initializing,Ready,Failed};
 std::int32_t signedBits(std::uint32_t bits) {return std::bit_cast<std::int32_t>(bits);}
 bool zero(Real real) {return (real.bits()&0x7fffffff)==0;}
+std::atomic<std::uint64_t> nextRuntimeId{0};
+struct ScriptEntry final : ThreadEntry {
+    Runtime* runtime;Id function;std::vector<Value> arguments;
+    ScriptEntry(Runtime& vm,Id id,std::span<const Value> args):runtime(&vm),function(id),arguments(args.begin(),args.end()){}
+    void execute() override {runtime->invoke(runtime->module().program().functions()[function].name,arguments);}
+};
 }
 struct Runtime::Impl {
     Runtime& owner;
+    const std::uint64_t identity=++nextRuntimeId;
     Module module;
     RuntimeLimits limits;
     std::vector<Code> code;
@@ -163,8 +171,9 @@ Value Runtime::invoke(const std::string& name,std::span<const Value> arguments) 
 Value Runtime::invoke(const Value& code,std::span<const Value> arguments) {if(code.codeOwner && code.codeOwner!=this)return code.codeOwner->invoke(code,arguments);if(code.type!=impl_->codeType || !code.bits || code.bits-1>=module().functions().size())throw std::runtime_error("Invalid JASS code reference");return invoke(module().program().functions()[code.bits-1].name,arguments);}
 Value Runtime::invokeNoYield(const Value& code,std::span<const Value> arguments){if(code.codeOwner && code.codeOwner!=this)return code.codeOwner->invokeNoYield(code,arguments);++impl_->noYield;struct Guard{size_t& value;~Guard(){--value;}}guard{impl_->noYield};return invoke(code,arguments);}
 ThreadId Runtime::start(std::function<void()> entry){if(!ready() && !(impl_->state==State::Initializing && impl_->active))throw std::runtime_error("Script threads require initialized runtime state");return impl_->domain->threads.start(std::move(entry),reinterpret_cast<ThreadOwner>(impl_.get()));}
-ThreadId Runtime::start(const std::string& name,std::span<const Value> arguments){auto id=module().functionId(name);if(id==none || module().functions()[id].result!=impl_->nothing)throw std::runtime_error("Invalid script thread entry: "+name);return start([this,name,args=std::vector<Value>(arguments.begin(),arguments.end())]{invoke(name,args);});}
+ThreadId Runtime::start(const std::string& name,std::span<const Value> arguments){auto id=module().functionId(name);if(id==none || module().functions()[id].result!=impl_->nothing)throw std::runtime_error("Invalid script thread entry: "+name);return startDiscard(name,arguments);}
 ThreadId Runtime::start(const Value& code,std::span<const Value> arguments){if(code.codeOwner && code.codeOwner!=this)return code.codeOwner->start(code,arguments);if(code.type!=impl_->codeType || !code.bits || code.bits-1>=module().functions().size())throw std::runtime_error("Invalid script thread code");return start(module().program().functions()[code.bits-1].name,arguments);}
+ThreadId Runtime::startDiscard(const std::string& name,std::span<const Value> arguments){auto id=module().functionId(name);if(id==none)throw std::runtime_error("Invalid script thread entry: "+name);if(!ready() && !(impl_->state==State::Initializing && impl_->active))throw std::runtime_error("Script threads require initialized runtime state");return impl_->domain->threads.start(std::make_shared<ScriptEntry>(*this,id,arguments),reinterpret_cast<ThreadOwner>(impl_.get()));}
 void Runtime::sleep(double seconds){if(impl_->noYield)throw std::runtime_error("Script wait is not allowed in a synchronous condition");impl_->domain->threads.sleep(seconds);}
 void Runtime::waitThread(ThreadId thread){if(impl_->noYield)throw std::runtime_error("Trigger wait is not allowed in a synchronous condition");impl_->domain->threads.wait(thread);}
 ExternalWaitToken Runtime::prepareExternalWait(){if(impl_->noYield)throw std::runtime_error("External wait is not allowed in a synchronous condition");return impl_->domain->threads.prepareExternalWait();}
@@ -183,6 +192,7 @@ size_t Runtime::threadCount() const{return impl_->domain->threads.count();}
 std::vector<RuntimeExecutionInspection> Runtime::inspectExecutions() const {
     std::vector<RuntimeExecutionInspection> result;for(auto& [thread,nested]:impl_->runs)for(size_t depth=0;depth<nested.size();++depth){auto& state=*nested[depth];RuntimeExecutionInspection entry;entry.thread=thread;entry.depth=depth;entry.localCount=state.localCount;entry.caller=state.caller;entry.values=state.values;entry.pendingNative=state.pendingNative;entry.pendingArguments=state.pendingArguments;for(auto& frame:state.frames){RuntimeFrameInspection target;target.function=frame.function;target.pc=frame.pc;target.base=frame.base;for(auto& cell:frame.locals){RuntimeSlotInspection slot;slot.value=cell.value;slot.initialized=cell.initialized;slot.array=cell.array;slot.elements.insert(cell.elements.begin(),cell.elements.end());target.locals.push_back(std::move(slot));}entry.frames.push_back(std::move(target));}result.push_back(std::move(entry));}return result;
 }
+std::vector<RuntimeThreadInspection> Runtime::inspectThreads() const {std::vector<RuntimeThreadInspection> result;for(auto& task:impl_->domain->threads.inspect()){if(task.owner!=reinterpret_cast<ThreadOwner>(impl_.get()))continue;RuntimeThreadInspection item;item.thread=task.id;item.runtime=impl_->identity;item.state=task.state;if(auto entry=std::dynamic_pointer_cast<const ScriptEntry>(task.entry)){item.structured=true;item.function=entry->function;item.arguments=entry->arguments;}result.push_back(std::move(item));}return result;}
 Value Runtime::global(const std::string& name,std::optional<std::uint32_t> index) const {if(!ready())throw std::runtime_error("JASS runtime is not initialized");auto& list=module().program().globals();for(size_t i=0;i<list.size();++i)if(list[i].name==name)return impl_->load(impl_->globals[i],index,list[i].position);throw std::runtime_error("Unknown JASS global: "+name);}
 Value Runtime::integer(std::int32_t value) const {return {impl_->integer,std::bit_cast<std::uint32_t>(value),{}};}
 Value Runtime::real(Real value) const {return {impl_->real,value.bits(),{}};}

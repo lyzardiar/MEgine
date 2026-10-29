@@ -21,8 +21,8 @@ struct HostFiber {
 };
 }
 struct ThreadScheduler::Impl {
-    enum class State {Ready,Running,Sleeping,Waiting,External,Done};
-    struct Task {Impl* owner=nullptr;ThreadId id=0,caller=0,waiting=0;ThreadOwner group=0;ExternalWaitToken external=0;void* fiber=nullptr;void* callerFiber=nullptr;State state=State::Running;double due=0;bool cancelled=false,externalSignaled=false;std::function<void()> entry;std::exception_ptr failure;~Task(){if(fiber)DeleteFiber(fiber);}};
+    using State=ThreadState;
+    struct Task {Impl* owner=nullptr;ThreadId id=0,caller=0,waiting=0;ThreadOwner group=0;ExternalWaitToken external=0;void* fiber=nullptr;void* callerFiber=nullptr;State state=State::Running;double due=0;bool cancelled=false,externalSignaled=false;std::function<void()> entry;std::shared_ptr<ThreadEntry> structured;std::exception_ptr failure;~Task(){if(fiber)DeleteFiber(fiber);}};
     size_t maximum;
     ThreadId next=0,current=0;
     ExternalWaitToken nextExternal=0;
@@ -39,20 +39,22 @@ struct ThreadScheduler::Impl {
     void clearExternal(Task& task){if(task.external)externalWaits.erase(task.external);task.external=0;task.externalSignaled=false;}
     void yield(Task& task){switched(task.id,task.caller);SwitchToFiber(task.callerFiber);if(task.cancelled)throw Cancelled{};}
     static VOID WINAPI fiber(void* pointer){auto& task=*static_cast<Task*>(pointer);for(;;){
-        {auto entry=std::move(task.entry);try{if(task.cancelled)throw Cancelled{};entry();}catch(const Cancelled&){}catch(...){task.failure=std::current_exception();}}
+        {auto entry=std::move(task.entry);auto structured=task.structured;try{if(task.cancelled)throw Cancelled{};if(structured)structured->execute();else entry();}catch(const Cancelled&){}catch(...){task.failure=std::current_exception();}}
         task.state=State::Done;task.owner->switched(task.id,task.caller);SwitchToFiber(task.callerFiber);
     }}
     void run(ThreadId id,void* callerFiber){
         auto found=tasks.find(id);if(found==tasks.end())return;auto& task=*found->second;task.caller=current;task.callerFiber=callerFiber;task.state=State::Running;switched(current,id);SwitchToFiber(task.fiber);
-        if(task.state==State::Done){clearExternal(task);auto failure=task.failure;auto finished=std::move(found->second);tasks.erase(found);if(hooks.finished)hooks.finished(id);finished->entry={};finished->failure={};if(pool.size()<32)pool.push_back(std::move(finished));if(failure)std::rethrow_exception(failure);}
+        if(task.state==State::Done){clearExternal(task);auto failure=task.failure;auto finished=std::move(found->second);tasks.erase(found);if(hooks.finished)hooks.finished(id);finished->entry={};finished->structured.reset();finished->failure={};if(pool.size()<32)pool.push_back(std::move(finished));if(failure)std::rethrow_exception(failure);}
     }
 };
 ThreadScheduler::ThreadScheduler(size_t maximum):impl_(std::make_unique<Impl>(maximum)){}
 ThreadScheduler::~ThreadScheduler(){cancelAll();}
 void ThreadScheduler::hooks(ThreadHooks hooks){std::lock_guard lock(impl_->mutex);if(!impl_->tasks.empty())throw std::runtime_error("Cannot change live thread hooks");impl_->hooks=std::move(hooks);}
-ThreadId ThreadScheduler::start(std::function<void()> entry,ThreadOwner owner){
-    std::lock_guard lock(impl_->mutex);if(!entry || impl_->cancelling || impl_->tasks.size()>=impl_->maximum || impl_->next==UINT64_MAX)throw std::runtime_error("Script thread creation or budget rejected");HostFiber host;std::unique_ptr<Impl::Task> task;if(!impl_->pool.empty()){task=std::move(impl_->pool.back());impl_->pool.pop_back();}else{task=std::make_unique<Impl::Task>();task->owner=impl_.get();task->fiber=CreateFiberEx(64*1024,256*1024,FIBER_FLAG_FLOAT_SWITCH,Impl::fiber,task.get());if(!task->fiber)throw std::runtime_error("Cannot allocate script fiber: "+std::to_string(GetLastError()));}
-    task->group=owner;task->id=++impl_->next;task->caller=task->waiting=0;task->external=0;task->externalSignaled=false;task->callerFiber=nullptr;task->cancelled=false;task->due=0;task->state=Impl::State::Running;task->entry=std::move(entry);auto id=task->id;impl_->tasks.emplace(id,std::move(task));try{if(impl_->hooks.created)impl_->hooks.created(id,impl_->current);}catch(...){impl_->tasks.erase(id);if(impl_->hooks.finished)impl_->hooks.finished(id);throw;}if(impl_->paused.contains(owner))impl_->tasks.at(id)->state=Impl::State::Ready;else impl_->run(id,host.fiber);return id;
+ThreadId ThreadScheduler::start(std::function<void()> entry,ThreadOwner owner){return startImpl(std::move(entry),{},owner);}
+ThreadId ThreadScheduler::start(std::shared_ptr<ThreadEntry> entry,ThreadOwner owner){return startImpl({},std::move(entry),owner);}
+ThreadId ThreadScheduler::startImpl(std::function<void()> entry,std::shared_ptr<ThreadEntry> structured,ThreadOwner owner){
+    std::lock_guard lock(impl_->mutex);if((!entry && !structured) || impl_->cancelling || impl_->tasks.size()>=impl_->maximum || impl_->next==UINT64_MAX)throw std::runtime_error("Script thread creation or budget rejected");HostFiber host;std::unique_ptr<Impl::Task> task;if(!impl_->pool.empty()){task=std::move(impl_->pool.back());impl_->pool.pop_back();}else{task=std::make_unique<Impl::Task>();task->owner=impl_.get();task->fiber=CreateFiberEx(64*1024,256*1024,FIBER_FLAG_FLOAT_SWITCH,Impl::fiber,task.get());if(!task->fiber)throw std::runtime_error("Cannot allocate script fiber: "+std::to_string(GetLastError()));}
+    task->group=owner;task->id=++impl_->next;task->caller=task->waiting=0;task->external=0;task->externalSignaled=false;task->callerFiber=nullptr;task->cancelled=false;task->due=0;task->state=Impl::State::Running;task->entry=std::move(entry);task->structured=std::move(structured);auto id=task->id;impl_->tasks.emplace(id,std::move(task));try{if(impl_->hooks.created)impl_->hooks.created(id,impl_->current);}catch(...){impl_->tasks.erase(id);if(impl_->hooks.finished)impl_->hooks.finished(id);throw;}if(impl_->paused.contains(owner))impl_->tasks.at(id)->state=Impl::State::Ready;else impl_->run(id,host.fiber);return id;
 }
 void ThreadScheduler::pause(ThreadOwner owner,bool paused){std::lock_guard lock(impl_->mutex);auto found=impl_->paused.find(owner);if(paused){if(found==impl_->paused.end())impl_->paused.emplace(owner,impl_->time);}else if(found!=impl_->paused.end()){double elapsed=impl_->time-found->second;for(auto& [id,task]:impl_->tasks)if(task->group==owner && task->state==Impl::State::Sleeping)task->due+=elapsed;impl_->paused.erase(found);}}
 void ThreadScheduler::checkpoint(){if(!impl_->current)throw std::runtime_error("Paused script requires a live thread");auto& task=*impl_->tasks.at(impl_->current);if(impl_->paused.contains(task.group)){task.state=Impl::State::Ready;impl_->yield(task);}}
@@ -84,4 +86,5 @@ void ThreadScheduler::cancelAll(){
 }
 ThreadId ThreadScheduler::current() const{return impl_->current;}
 size_t ThreadScheduler::count() const{return impl_->tasks.size();}
+std::vector<ThreadInspection> ThreadScheduler::inspect() const{std::lock_guard lock(impl_->mutex);std::vector<ThreadInspection> result;result.reserve(impl_->tasks.size());for(auto& [id,task]:impl_->tasks)result.push_back({id,task->group,task->state,task->structured});return result;}
 }

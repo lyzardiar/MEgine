@@ -20,9 +20,13 @@ DayNightRules DayNightRules::read(Archives& archives) {
 GameClock::GameClock(DayNightRules rules) : rules_(rules) {
     for(auto value:{rules_.dayLength,rules_.dayHours,rules_.dawn,rules_.dusk})if(!std::isfinite(number(value)))throw std::runtime_error("Non-finite source clock setting");if(number(rules_.dayLength)<=0 || number(rules_.dayHours)<=0)throw std::runtime_error("Source clock cycle must be positive");
 }
-void GameClock::time(jass::Real value) {time_=assignment(time(),value,jass::Real{},rules_.dayHours);}
+void GameClock::time(jass::Real value) {time_=assignment(time(),value,jass::Real{},rules_.dayHours);temporaryRemaining_={};temporaryTime_={};}
 void GameClock::scale(jass::Real value) {scale_=assignment(scale(),value,jass::Real::fromBits(0xff7fffff),jass::Real::fromBits(0x7f7fffff));}
 jass::Real GameClock::rate() const {return suspended_?jass::Real{}:scale().multiply(rules_.dayHours).divide(rules_.dayLength);}
 bool GameClock::daytime() const {return number(time())>=number(rules_.dawn) && number(time())<number(rules_.dusk);}
-void GameClock::advance(jass::Real seconds) {auto delta=number(seconds);if(!std::isfinite(delta) || delta<0)throw std::runtime_error("Invalid clock timestep");auto next=time().add(rate().multiply(seconds));auto cycle=number(rules_.dayHours),value=number(next);if(!std::isfinite(value))throw std::runtime_error("Clock advance exceeds finite range");value=std::fmod(value,cycle);if(value<0)value+=cycle;time_=jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}
+void GameClock::temporary(jass::Real value,jass::Real seconds) {if(!std::isfinite(number(value)) || !std::isfinite(number(seconds)) || number(seconds)<=0)throw std::runtime_error("Invalid temporary clock effect");if(number(temporaryRemaining_)<=0)temporaryTime_=time();time_=assignment(time(),value,jass::Real{},rules_.dayHours);temporaryRemaining_=seconds;}
+ClockAdvance GameClock::advance(jass::Real seconds) {
+    auto delta=number(seconds);if(!std::isfinite(delta) || delta<0)throw std::runtime_error("Invalid clock timestep");auto advanceValue=[this](jass::Real value,jass::Real step){auto next=value.add(rate().multiply(step));auto cycle=number(rules_.dayHours),current=number(next);if(!std::isfinite(current))throw std::runtime_error("Clock advance exceeds finite range");current=std::fmod(current,cycle);if(current<0)current+=cycle;return jass::Real::fromBits(std::bit_cast<std::uint32_t>(current));};
+    if(number(temporaryRemaining_)<=0){time_=advanceValue(time_,seconds);return {};}auto remaining=number(temporaryRemaining_)-delta;if(remaining<=0){auto until=temporaryRemaining_;ClockAdvance result{true,advanceValue(time_,until),advanceValue(temporaryTime_,until)};time_=advanceValue(result.restoredTime,jass::Real::fromBits(std::bit_cast<std::uint32_t>(-remaining)));temporaryTime_={};temporaryRemaining_={};return result;}temporaryTime_=advanceValue(temporaryTime_,seconds);time_=advanceValue(time_,seconds);temporaryRemaining_=jass::Real::fromBits(std::bit_cast<std::uint32_t>(remaining));return {};
+}
 }
