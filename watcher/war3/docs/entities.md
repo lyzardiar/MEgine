@@ -17,3 +17,7 @@ CreateSound/CreateSoundFilenameWithLabel保存真实WAV/MP3成员和参数。数
 实体仍缺模型显示、完整属性/能力、库存、路径/碰撞、移动/战斗、死亡事件与模拟调度。单位位置当前只做世界范围处理；不将位置写入视为已完成寻路。对象覆盖只含w3u/w3t，w3a/w3h/w3q/w3b/w3d及完整放置仍待实现。名称本地化、全部metadata/profile字段和变体列表需要后续消费与验证。
 
 阶段门槛按 `implementation-roadmap.md`：持续补齐地图主函数、调度、渲染、操作与载入，再合并测试修正。未知native保持失败，不以接口数量或编译通过代表可玩对局。
+
+## 单位与玩家组查询
+
+`IsUnit`、`IsUnitRace` 和 `IsUnitInForce` 查询实际单位句柄、当前种族与所属玩家的 force 成员状态；无效或空单位返回 false。`DefineStartLocationLoc` 将地点坐标复制到现有地图起点配置，随后销毁地点不影响已配置坐标。空句柄、非法句柄与原版语义、变形／易主和实际地图流程留待阶段验证。

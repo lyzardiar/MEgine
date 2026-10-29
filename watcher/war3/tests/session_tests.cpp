@@ -97,6 +97,7 @@ endfunction
 type playercolor extends handle
 type mapcontrol extends handle
 type startlocprio extends handle
+type location extends handle
 native Player takes integer i returns player
 native GetPlayerId takes player p returns integer
 native ConvertPlayerColor takes integer i returns playercolor
@@ -106,6 +107,9 @@ native SetMapName takes string s returns nothing
 native SetPlayers takes integer n returns nothing
 native SetTeams takes integer n returns nothing
 native DefineStartLocation takes integer i, real x, real y returns nothing
+native DefineStartLocationLoc takes integer i, location p returns nothing
+native Location takes real x, real y returns location
+native RemoveLocation takes location p returns nothing
 native ForcePlayerStartLocation takes player p, integer i returns nothing
 native SetPlayerTeam takes player p, integer i returns nothing
 native SetPlayerColor takes player p, playercolor c returns nothing
@@ -113,10 +117,13 @@ native SetPlayerController takes player p, mapcontrol c returns nothing
 native SetStartLocPrioCount takes integer i, integer n returns nothing
 native SetStartLocPrio takes integer i, integer n, integer other, startlocprio priority returns nothing
 function config takes nothing returns nothing
+local location p=Location(500.,-100.)
 call SetMapName("TRIGSTR_001")
 call SetPlayers(2)
 call SetTeams(2)
 call DefineStartLocation(0,3328.0,-3072.0)
+call DefineStartLocationLoc(1,p)
+call RemoveLocation(p)
 call ForcePlayerStartLocation(Player(3),0)
 call SetPlayerTeam(Player(3),1)
 call SetPlayerColor(Player(3),ConvertPlayerColor(7))
@@ -124,7 +131,7 @@ call SetPlayerController(Player(3),ConvertMapControl(1))
 call SetStartLocPrioCount(0,1)
 call SetStartLocPrio(0,0,1,ConvertStartLocPrio(2))
 endfunction
-)jass");ScriptSession session(std::move(module),{},{{1,"Authored map"}});session.configure();auto& c=session.config();require(session.configured() && c.name=="Authored map" && c.playerCount==2 && c.teamCount==2,"Metadata not updated by config");require(c.players[3].start==0 && c.players[3].forcedStart && c.players[3].team==1 && c.players[3].color==7 && c.players[3].controller==1,"Player config was not retained");require(c.starts[0].defined && c.starts[0].position[0].bits()==Real::fromDecimal("3328.0").bits() && c.starts[0].position[1].bits()==(Real::fromDecimal("3072.0").bits()^0x80000000) && c.starts[0].priorities[0].other==1 && c.starts[0].priorities[0].priority==2,"Start definition or priority differs");rejects([&]{session.configure();},"unconfigured instance");});
+)jass");ScriptSession session(std::move(module),{},{{1,"Authored map"}});session.configure();auto& c=session.config();require(session.configured() && c.name=="Authored map" && c.playerCount==2 && c.teamCount==2,"Metadata not updated by config");require(c.players[3].start==0 && c.players[3].forcedStart && c.players[3].team==1 && c.players[3].color==7 && c.players[3].controller==1,"Player config was not retained");require(c.starts[0].defined && c.starts[0].position[0].bits()==Real::fromDecimal("3328.0").bits() && c.starts[0].position[1].bits()==(Real::fromDecimal("3072.0").bits()^0x80000000) && c.starts[0].priorities[0].other==1 && c.starts[0].priorities[0].priority==2,"Start definition or priority differs");require(c.starts[1].defined && c.starts[1].position[0].bits()==Real::fromDecimal("500.").bits() && c.starts[1].position[1].bits()==(Real::fromDecimal("100.").bits()^0x80000000),"Location start did not retain its coordinates");rejects([&]{session.configure();},"unconfigured instance");});
     test("session_selected_game_type_and_source_metadata",[]{auto source=std::string("type gametype extends handle\nnative GetGameTypeSelected takes nothing returns gametype\nfunction config takes nothing returns nothing\nendfunction\n");MapInfo info;info.flags=4;info.name="Source map";info.players.push_back({3,2,3,1,"Source slot",{100.0f,-200.0f},0,0});info.forces.push_back({0,1u<<3,"Source force"});ScriptSession melee(compile(source),info);melee.configure();require(melee.config().gameType==1 && melee.runtime().invoke("GetGameTypeSelected").bits==1 && melee.config().name=="Source map","Melee source game type differs");require(melee.config().players[3].controller==1 && melee.config().players[3].racePreference==8 && melee.config().players[3].forcedStart && melee.config().players[3].start==0,"Source player defaults lost");info.flags=0x40;ScriptSession custom(compile(source),info);custom.configure();require(custom.runtime().invoke("GetGameTypeSelected").bits==4 && custom.config().players[3].team==0,"Custom source game type or force differs");ScriptSession flags(compile(source),info,{},9);flags.configure();require(flags.runtime().invoke("GetGameTypeSelected").bits==1,"Original selected game type mask differs");});
     test("session_unknown_native_prevents_configured_state",[]{ScriptSession session(compile("native Missing takes nothing returns nothing\nfunction config takes nothing returns nothing\ncall Missing()\nendfunction\n"),{});rejects([&]{session.configure();},"session.j:3:6: Unbound JASS native: Missing");require(!session.configured() && !session.initialized(),"Failed config was accepted");rejects([&]{session.configure();},"unconfigured instance");});
     test("session_rejects_mismatched_native_signature",[]{rejects([]{ScriptSession session(compile("native ConvertRace takes integer i returns integer\n"),{});},"Invalid session native signature: ConvertRace");});

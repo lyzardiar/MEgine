@@ -95,6 +95,7 @@ void ScriptSession::bindNatives() {
     bind("IsGameTypeSupported","boolean",{"gametype"},[this](auto& vm,auto args){return vm.boolean((config_.supportedGameTypes&args[0].bits)!=0);});
     bind("GetGameTypeSelected","gametype",{},[this](auto& vm,auto){return vm.handle("gametype",config_.gameType&~8u);});
     bind("DefineStartLocation","nothing",{"integer","real","real"},[this](auto& vm,auto args){auto& location=start(args[0].bits);location.defined=true;location.position={jass::Real::fromBits(args[1].bits),jass::Real::fromBits(args[2].bits)};return vm.nothing();});
+    bind("DefineStartLocationLoc","nothing",{"integer","location"},[this](auto& vm,auto args){auto point=std::get<WorldPoint>(object(args[1],NativeKind::Location).state);auto& location=start(args[0].bits);location.defined=true;location.position={point.x,point.y};return vm.nothing();});
     bind("GetStartLocationX","real",{"integer"},[this](auto& vm,auto args){return vm.real(start(args[0].bits).position[0]);});
     bind("GetStartLocationY","real",{"integer"},[this](auto& vm,auto args){return vm.real(start(args[0].bits).position[1]);});
     bind("SetStartLocPrioCount","nothing",{"integer","integer"},[this](auto& vm,auto args){start(args[0].bits).priorities.resize(checked(args[1].bits,17,"Start priority count"));return vm.nothing();});

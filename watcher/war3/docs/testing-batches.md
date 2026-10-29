@@ -2050,3 +2050,11 @@ Win32 Release 客户端与关联会话／亡灵形态消费者程序已合并编
 路径：`game_selection_panel.cpp`、`game_view.cpp/.h`、`CMakeLists.txt`，见 `selection-panel.md`。多选头像、生命、子组、选择操作及单位目标命令连接现有选区、命令和实验联机时间片。
 
 阶段验证真实窗口的多选、Shift／Ctrl、目标与取消、选中单位被回调移除或死亡、图标加载、货舱／物品／命令区，双端确认与回放及原版排布和交互；本次专项未运行。
+
+## 单位关系查询和地点起点待验证
+
+Win32 Release 客户端及关联消费者程序已合并编译通过；专项未执行。
+
+路径：`session.cpp`、`session_entities.cpp`、`tests/session_tests.cpp`、`tests/live_world_tests.cpp`，见 `entities.md`。单位身份、种族和 force 查询使用实际状态；地点起点写入真实地图配置。
+
+阶段运行 session 与 live-world 消费者，验证地点复用／销毁、边界索引、单位易主／变形、force 增删／销毁、空及失效句柄和实际自定义地图；对照原版返回值。专项尚未执行。
