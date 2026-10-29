@@ -35,3 +35,5 @@ python tools/verify_sound_fade_cpu.py --fixture "<FADE_FIXTURE>"
 ```
 
 本项证据为 `tmp/docs-artifacts/war3/audio/fade-{build.log,tests.log,tests/,cpu.json,main-bootybay.log,main-process.json,receipt.json,*-rea.json}`。W016–W018历史结果见 `batch-w016-w018.json`；W019–W021合并52项（执行44项、复用music8项）通过，本批sound10项重新执行，新夹具/源码摘要与原件CPU结果一致。原件摘要/库边界见 `audio.md` 与固定profile。
+
+`GetSoundFileDuration` 按路径从当前地图覆盖及公共归档直接读取 WAV／MP3／MIDI，使用已有音频容器解析器返回毫秒，最多缓存 1024 条结果；不启动声音或创建输出设备。空路径与缺失文件当前返回 0，损坏或不支持的格式明确报错；编码边界、缺失文件和原版时长精度待对照。

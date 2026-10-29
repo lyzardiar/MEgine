@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 脚本音频文件时长待验证
+
+路径：`src/session_sound.cpp`、`tests/sound_tests.cpp`；说明见 `script-sound.md`。Win32 Release 客户端与 sound 目标增量编译通过，专项尚未执行。阶段执行 `war3_sound_tests.exe <data-root> <scratch-root>`，核对 WAV／MP3／MIDI 时长、地图同名覆盖、空路径／缺文件／损坏格式、大小写、静音／无设备、重复查询及缓存上限；在实际过场脚本中比较等待时间，并与原版时长和失败行为对照。仅对可解析归档成员返回实际时长，格式边界和原版精度尚未验收。
+
 ## 双恢复物品待验证
 
 路径：`src/session.h`、`src/session_item_use.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`；说明见 `combined-recovery-items.md`。Win32 Release 客户端和 control 目标编译通过；`item-combined` 最小检查 1 通过／0 失败，覆盖地图字段覆盖、一次费用／次数／事件、共享冷却、满生命／魔法、使用回调删物品、生命变化回调删物品并易主、未知组合拒绝，未加载 Game.dll。阶段继续核对符文、不同顺序／费用／范围／数量、地图自定义覆盖、事件重入／易主／死亡、双端同步与真实地图，并与原版比较费用、冷却和多能力派发；其他多主动组合尚未实现。
