@@ -2590,3 +2590,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役对白表格式坐标（待验证）
 
 路径：`slk.cpp`、`sound.cpp`、`tests/sound_tests.cpp`、`docs/campaign-cinematics.md`。Win32 Release 产品及声音测试目标编译通过；格式游标及普通表各一项定向通过。Human01 原图已越过对白标签阻塞，后续在 w3u 尾字段中止；原始日志见 `tmp/docs-artifacts/war3/campaign/human01-120s-sylk-1030.log`。集中验证源表和地图覆盖的全部相关声音、实际听感、异常及截断、格式／公式与各类对象表兼容，并完成原版战役实际流程。
+
+### 经典对象覆盖尾字段（待验证）
+
+路径：`object_data.cpp`、`tests/map_tests.cpp`、`docs/object-overrides.md`。Win32 Release 产品与地图测试目标编译通过；原 Human01 `oC16/umdl/owar`、合成非零尾字段及截断拒绝一项定向检查通过。Human01 越过对象覆盖后在 `IssueImmediateOrder` 无效句柄处停止，证据 `tmp/docs-artifacts/war3/campaign/human01-120s-objects-1030.log`。阶段覆盖五类覆盖文件、来源继承、不同末尾字段／损坏／截断和实际地图玩法，确认尾字段与原版语义。
