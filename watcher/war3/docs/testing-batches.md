@@ -2955,6 +2955,10 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 路径：`src/session_entities.cpp`、`docs/campaign-null-unit-show.md`。人工驱动原图胜利过场越过失效单位异常；集中验证显示、路径视野及自然护送，见 [失效单位显示](campaign-null-unit-show.md)。
 
+### 资料片第七章关闭 AI 随机路径（待验证）
+
+路径：`src/session_ai_natives.cpp`、`docs/ai-random-paths.md`。隔离原图越过关闭路径调用并推进至 400 秒；集中验证确定性路线、实际任务和同步。开启随机路径的原版算法仍未实现，见 [AI 随机路径](ai-random-paths.md)。
+
 ### 资料片第六章空单位位置（待验证）
 
 路径：`src/session_entities.cpp`、`docs/campaign-null-unit-position.md`。独立原图探针越过空单位位置异常并推进至 400 秒；集中验证有效／失效单位与位置、商队剧情和真实窗口，见 [空单位位置](campaign-null-unit-position.md)。
