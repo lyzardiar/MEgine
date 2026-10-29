@@ -27,7 +27,8 @@ struct LanActionAlliance {std::uint8_t slot=0;std::uint32_t flags=0;bool operato
 struct LanActionPreSubselection {bool operator==(const LanActionPreSubselection&) const=default;};
 struct LanActionSubgroup {std::uint32_t type=0;LanObjectId first;bool operator==(const LanActionSubgroup&) const=default;};
 struct LanActionTrackable {bool hit=false;LanObjectId object;bool operator==(const LanActionTrackable&) const=default;};
-struct LanActionCacheSync {std::uint8_t opcode=0;std::string cache,mission,key,text;std::uint32_t value=0;std::vector<std::uint8_t> unit;bool operator==(const LanActionCacheSync&) const=default;};
+inline constexpr std::size_t experimentalCachePartBytes=512,experimentalCacheUnitBytes=1024u*1024u;
+struct LanActionCacheSync {std::uint8_t opcode=0;std::string cache,mission,key,text;std::uint32_t value=0;std::vector<std::uint8_t> unit;std::uint64_t transfer=0;std::uint32_t total=0,offset=0;bool operator==(const LanActionCacheSync&) const=default;};
 struct LanActionGroundItem {std::uint8_t flags=0;LanObjectId object;bool operator==(const LanActionGroundItem&) const=default;};
 struct LanActionGroupAssign {std::uint8_t group=0;std::vector<LanObjectId> objects;bool operator==(const LanActionGroupAssign&) const=default;};
 struct LanActionGroupSelect {std::uint8_t group=0,flags=0;bool operator==(const LanActionGroupSelect&) const=default;};

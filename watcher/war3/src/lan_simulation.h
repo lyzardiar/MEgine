@@ -6,6 +6,7 @@
 #include "lan_time_driver.h"
 #include "player_commands.h"
 #include <map>
+#include <memory>
 #include <set>
 
 namespace war3 {
@@ -39,6 +40,9 @@ private:
     std::vector<std::vector<Event>> decoded_;
     LanSelectionSyncProjection projectedSync_;
     LanCacheSyncProjection projectedCache_;
+    struct CacheUnitAssembly {std::uint64_t transfer=0,started=0;std::uint32_t total=0;std::string cache,mission,key;std::shared_ptr<std::vector<std::uint8_t>> bytes;};
+    std::map<std::uint8_t,CacheUnitAssembly> cacheUnitParts_,projectedCacheUnitParts_;
+    std::map<std::uint8_t,std::uint64_t> cacheUnitLast_,projectedCacheUnitLast_;
     std::map<unsigned,std::set<std::uint32_t>> projectedSelections_;
     std::set<std::uint8_t> projectedDepartures_;
     std::map<unsigned,std::array<std::vector<std::uint32_t>,10>> groups_,projectedGroups_;
@@ -58,6 +62,7 @@ public:
     LanSimulation& operator=(LanSimulation&&)=delete;
     LanStepResult consume(std::uint64_t sequence,const LanTimeSlot& slot);
     bool hasLocalDialogQuit() const{return localDialogQuit_.has_value();}
+    bool unfinishedCacheSync() const{return !cacheUnitParts_.empty();}
     std::optional<bool> takeLocalDialogQuit(){auto value=localDialogQuit_;localDialogQuit_.reset();return value;}
     std::uint32_t selectedGroundItem(unsigned player) const;
     void clearLocalGroundItem();

@@ -30,6 +30,7 @@ private:
 public:
     LanTimeDriver(ScriptSession& session,ValidateAction validate,ApplyAction apply);
     LanStepResult consume(std::uint64_t sequence,const LanTimeSlot& slot);
+    LanStepResult abort(const std::string& message) {return fail(message);}
     bool failed() const {return failed_;}
     const std::string& error() const {return error_;}
     std::uint64_t nextSequence() const {return next_;}
