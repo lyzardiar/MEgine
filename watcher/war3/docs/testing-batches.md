@@ -2818,3 +2818,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 隐藏单位脚本移动（待验证）
 
 路径：`src/entities.h`、`src/session.h`、`src/session_orders.cpp`。同版 Win32 Release 核心库编译通过；Human02Interlude 原图最小复现中吉安娜 25.25 秒进入目标区域，75.1875 秒脚本请求 Human03，日志 `tmp/docs-artifacts/war3/human02-interlude-1031/same-core.log`。集中验证隐藏／显示、四种点命令、运输／消化等状态、玩家命令隔离、回调与真实窗口和实际切关，见 [隐藏单位移动](campaign-hidden-orders.md)。
+
+### 生命条 Alt 临时切换（待验证）
+
+路径：`src/game_view.cpp`、`docs/game-options.md`。集中验证两种生命条设置下按住及释放 Alt、窗口焦点变化、隐藏单位和战争迷雾，并对照原版窗口行为。本次未编译或运行。
