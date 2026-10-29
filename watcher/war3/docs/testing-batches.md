@@ -2682,3 +2682,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### JASS 局部变量默认值（待验证）
 
 路径：`jass_runtime.cpp`、`tests/jass_runtime_tests.cpp`、`docs/jass.md`。局部数值／布尔／句柄提供默认值，局部字符串暂按空串；隔离构建的运行时检查 14 通过、0 失败。DotA 原图在本机玩家输入 -sd 后通过真实 PurchaseUnit 获得 U006 并推进至 120 秒，见 `tmp/docs-artifacts/war3/dota-flow-1030/purchase-heroes-final.log`。阶段验证局部／全局／数组字符串 null 与空串、参数／初始化顺序、回调／等待／嵌套帧、其他三图和原版 1.27 逐类型规则；窗口、多人及完整英雄玩法未验证。
+
+### 库存目标物品双击（待验证）
+
+路径：`game_inventory_drag.cpp`、`docs/teleport.md`。目标模式中双击同一库存格发出无目标物品命令，回城卷轴由原有实际传送消费者选择主城；阶段验证同格／跨格／慢双击、键盘目标模式、目标改变、物品转移／删除、无基地／冷却、Shift 排队、其他目标物品、实验联机和回放及原版输入时序。实际窗口和原版行为尚未验证。
