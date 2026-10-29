@@ -2622,3 +2622,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 单位局部绕行（待验证）
 
 路径：`session_orders.cpp`。近距离避让全部受阻时，限额搜索局部可通行路径并保留原目标。Win32 Release 产品编译通过；Human01 独立探针覆盖修复后的移动对象并链接同版核心库，英雄越过原停点并继续行进，见 `tmp/docs-artifacts/war3/human01-continuation-1030/human01-bfs-limited.log`。阶段验证密集单位、窄口／死路、短距离目标、动态障碍、重下命令、不同碰撞尺寸和移动类型、重寻路及原版行为；测量大量单位阻塞时 CPU 帧耗时与公平性，并在真实窗口及完整战役中验收。
+
+### 已摧毁桥梁重建（待验证）
+
+路径：`session_repair.cpp`、`game_view.cpp`、`tests/construction_tests.cpp`、`docs/base-development.md`。死桥可在修理模式下选中并接入工人修理；首个恢复生命步骤切换桥梁存活状态。Win32 Release 产品合并编译通过，新增消费者检查未运行。阶段验证命令输入、路径占用／通行表面、动画、费用、目标回调、同时修理、敌我和资源不足，并对照原版死桥恢复时机。
