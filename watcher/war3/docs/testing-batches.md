@@ -2834,3 +2834,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役寄生技能零英雄时长（待验证）
 
 路径：`src/session_spell_info.cpp`、`docs/campaign-parasite-duration.md`。nightelfX01 原图隔离探针已越过此技能参数检查，随后在句柄调用处停止；集中验证零时长实际施法、原版效果及地图派生。见 [战役寄生技能时长](campaign-parasite-duration.md)。
+
+### 无效单位所属玩家查询（待验证）
+
+路径：`src/session_entities.cpp`、`docs/campaign-null-owner.md`。nightelfX01 原图隔离探针越过此调用并推进至 37.0938 秒，随后在另一个句柄查询处停止；集中验证空／销毁句柄、玩家归属变化和实际战役事件，见 [所属玩家查询](campaign-null-owner.md)。
