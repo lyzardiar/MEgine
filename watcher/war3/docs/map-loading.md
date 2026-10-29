@@ -41,3 +41,11 @@ GlueScreen 支持把原版 FDF 根控件挂到既有容器、设置可见性、�
 原件绑定字符串为 RaceMenu `0x6f979d64`、HandicapMenu `0x6f979dd0`、TeamButton `0x6f979d70`、ColorButton `0x6f979d9c`、TeamSetupContainer `0x6f983218`。REA 原始记录为 `tmp/docs-artifacts/war3/map-menu/player-slot-bindings-rea.json`；具体控件和选项取自只读原安装中的 PlayerSlot.fdf／TeamSetup.fdf，不把这些字符串引用视为默认对局行为证据。
 
 原版内联文字颜色由 `0x6f0d8780` 解析，`0x6f0d8948` 将 alpha 固定为 255，再由 `0x6f029c80` 打包 RGB。`inlineTextColor` 使用同一规则，支持 `|c`／`|C` 和八位十六进制颜色；不把 `|c00` 误作透明文字。FDF 的 FontColor 透明度独立处理。`tools/verify_text_color_cpu.py` 在 Unicorn 中执行原版解析与打包指令，与 C++ 输出比较 32 组合法颜色；ASCII 解码与两位十六进制 strtol 由探针提供，不表示非法转义、字形或完整文本行为已一致。先运行地图专项生成 `text-color-native.json`，再从仓库根目录运行该脚本；证据写入 `tmp/docs-artifacts/war3/map-menu/text-color-cpu.json`。
+
+## 开局队伍与联盟
+
+单机与实验局域网在最终玩家配置应用后，为同队的已启用玩家及地图声明的中立／可救援玩家建立双向基础盟友关系。开放／关闭槽和 12–15 中立特殊槽不因队伍编号默认值而结盟；地图 `config` 中逐位调用的 `SetPlayerAlliance` 优先于初始化，重新应用玩家草稿会重新计算未显式设置的关系。自定义 force 的共享视野／共享单位／完全控制标志按 W3I `0x04`／`0x10`／`0x20` 接入对应联盟位；共同胜利初始化另待完成。
+
+Human01 原图 `config` 将玩家 1 与玩家 9 分配到队伍 0，原脚本过场包含阿尔萨斯与乌瑟尔对话。修复前两者联盟位均为 0，乌瑟尔在开场杀死阿尔萨斯；修复后静音战役上下文最小检查推进 60 秒，两者生命分别为 650／1250，未触发该失败。证据 `tmp/docs-artifacts/war3/human01-session-probe/baseline.log`、`after.log`。原 Game.dll 的 `IsPlayerAlly` 和 `GetPlayerAlliance` 均读取联盟位而非单纯比较队伍编号，静态指令见同目录 `original-alliance-static.txt`；它们不证明原版开局赋位过程。
+
+同队基础盟友默认值、force 未设置 allied 标志时的原版语义、地图／大厅及脚本覆盖时序、复选与共同胜利、12–15 号槽和完整双端同步均待原版及真实对局验证；此项不表示完整战役通过。

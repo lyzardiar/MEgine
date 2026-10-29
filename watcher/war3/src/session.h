@@ -81,6 +81,8 @@ class ScriptSession {
     static constexpr std::uint32_t handleBase=0x100000;
     MapStrings strings_;
     SessionConfig config_;
+    std::array<std::array<unsigned,16>,16> configuredAllianceWrites_{};
+    void initializeTeamAlliances(SessionConfig& config) const;
     std::vector<Object> objects_;
     std::vector<std::uint32_t> localNetworkObjects_;
     std::vector<std::uint32_t> localNetworkUiObjects_;

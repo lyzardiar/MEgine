@@ -2606,3 +2606,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 玩家小地图信号（待验证）
 
 路径：`game_loading.*`、`game_view.*`、`glue.h`、`main.cpp`、`player_commands.*`、`session_text.cpp`、`session.h`、`lan_actions.*`、`lan_action_encoder.cpp`、`lan_simulation.*`、`docs/minimap.md`。阶段验证 Alt+G、按钮和 Alt+左键在地面／小地图的落点、键鼠按下与松开、取消／失焦／聊天和其他弹窗隔离、资源缺失／地图皮肤、提示音及模型；验证己方／单向与双向盟友／敌方／观察者的可见范围、改变联盟顺序、无选择发送、时间片重放、畸形／非有限坐标和长时间发送资源释放。对照原版 1.27 的按钮坐标、样式、快捷键、颜色、声音、收件人及 0x68 原始字段；实验双端和回放尚未验收。
+
+### 开局队伍联盟（待验证）
+
+路径：`session.h`、`session.cpp`、`lan_setup.cpp`、`tests/setup_tests.cpp`、`docs/map-loading.md`。同队已启用或地图声明的中立玩家初始化基础联盟，记录 config 阶段逐位覆盖，并消费自定义 force 视野与控制标志。Win32 Release `war3` 和 `war3_setup_tests` 合并编译通过，包含 `ed488c6`、`66fd97e`；setup 检查 5/5 通过。Human01 原图静音战役上下文最小检查推进 60 秒，阿尔萨斯与乌瑟尔未相互攻击、生命 650／1250；仅证明开场，不表示完整关卡通过，见 `tmp/docs-artifacts/war3/human01-session-probe/`。阶段验证多队／同队／开放与关闭槽、12–15 特殊玩家、force 各标志与共同胜利、对称／非对称 config 覆盖、重复应用草稿、双端同步和原版敌我／共享视野／胜负行为；force 未标记 allied 的规则尚未得到原版运行证据。
