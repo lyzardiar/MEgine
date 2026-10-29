@@ -2776,3 +2776,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 玩家颜色选择菜单（待验证）
 
 路径：`src/glue.*`、`src/player_setup_ui.cpp`；集中验证原 FDF 背景与颜色项、占用交换、键鼠／焦点、16 色及原版布局和滚动条，见 [玩家颜色菜单](map-color-selector.md)。本次未编译或运行。
+
+### 被动防御速度字段（待验证）
+
+路径：`src/equipment.h`、`src/entities.h`、`src/session_equipment.cpp`、`src/session_passive_info.cpp`；集中验证能力与物品来源、禁用／科技、多个来源及主动防御叠加、移动和攻击消费者、幻象与多人确定性，并对照原版 DataC／DataD；DataI 仍未实现，见 [被动防御速度](passive-defense-speed.md)。本次未编译或运行。
