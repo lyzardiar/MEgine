@@ -84,6 +84,14 @@ class GameView {
     std::string allianceError_,allianceDisabledCheck_;
     std::map<std::string,bool> multiboardIcons_;
     std::set<std::string> multiboardQueued_;
+    struct BuffPanelInfo {std::string icon,title,description;};
+    std::map<std::uint32_t,BuffPanelInfo> buffPanelInfo_;
+    std::map<std::string,bool> buffPanelImages_;
+    std::unique_ptr<GlueScreen> buffTooltip_;
+    const BuffPanelInfo& buffPanelInfo(std::uint32_t id);
+    std::vector<std::uint32_t> buffPanelIds(std::uint32_t unit) const;
+    void streamBuffPanel(std::vector<std::string>& textures);
+    void drawBuffPanel(const GameInput& input,std::uint32_t unit);
     std::string multiboardDefaultIcon_;
     std::string cinematicSpeaker_,cinematicDialogue_;
     float leaderboardFont_=.007f;

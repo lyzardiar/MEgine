@@ -2090,3 +2090,11 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 路径：`entities.h`、`session.h`、`session_text.cpp`、`session_damage.cpp`、`tests/game_flow_tests.cpp`；实际攻击伤害连接本地提示、原皮肤音效和小地图颜色，脚本可禁用；规则及暂定间隔见 `attack-alert.md`。
 
 阶段合并 game-flow 夹具，验证脚本开关／无效单位、伤害／抵挡／事件回调、单位与建筑、提示去重、暂停、窗口／听感、地图皮肤覆盖、多客户端及原版差异。专项尚未执行。
+
+## 单位 Buff 面板待验证
+
+Win32 Release 客户端及相关 game-flow／research 消费者程序已合并编译通过；专项未执行。
+
+路径：`game_buff_panel.cpp`、`game_view.cpp/.h`、`session.h`、`CMakeLists.txt`；显示和资源边界见 `buff-panel.md`。
+
+阶段验证 Buff／光环增减与过期、单／多选、图标流式加载和缺失、原皮肤和地图覆盖、悬停文本、窗口／GPU 恢复和性能，核对原版布局／排序。专项尚未执行。

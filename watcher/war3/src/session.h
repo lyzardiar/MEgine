@@ -971,6 +971,7 @@ class ScriptSession {
     MusicScene& requireThematicMusic();
     World& requireWorld();
 public:
+    std::string buffProfile(std::uint32_t id,const char* key) {return mapString(definitions().field(id,"Profile",key),strings_);}
     bool corpseAvailable(std::uint32_t corpse,std::uint32_t claimant=0);
     bool corpseCarrier(std::uint32_t transport);
     unsigned cargoCapacity(std::uint32_t transport);
