@@ -48,6 +48,7 @@ class GameView {
     std::uint32_t buildMenuUnit_=0,skillMenuUnit_=0,bookMenuUnit_=0;
     bool buildMenuQueued_=false;
     std::uint32_t subgroupUnit_=0,subgroupType_=0,lastPickUnit_=0;
+    std::uint32_t groundItem_=0;
     std::vector<std::uint32_t> subgroupSelection_;
     std::array<std::vector<std::uint32_t>,10> controlGroups_;
     unsigned lastControlGroup_=10;
@@ -130,6 +131,8 @@ class GameView {
     void stream();
     void command(float x,float y,OrderMode mode,bool queued,bool subgroup);
     std::uint32_t widget(float x,float y,bool items) const;
+    std::uint32_t selectedGroundItem() const;
+    void clearGroundItem();
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     struct SpellLoop {std::uint64_t ticket=0;std::shared_ptr<ScriptSound> sound;};

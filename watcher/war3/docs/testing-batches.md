@@ -1888,3 +1888,11 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`script_state.h`、`session_cache.cpp`、`campaign-gamecache.md`、`unit-turning.md`、`unit-classifications.md`。独立缓存版本3保存 StoreUnit 的脚本转速、推进角和分类增删，RestoreUnit 恢复后交由移动及分类消费者使用；版本1／2条目保留目标单位默认属性。
 
 功能阶段核对 StoreUnit / SaveGameCache / ReloadGameCachesFromDisk / RestoreUnit 跨地图往返、九类分类和零／极限转向值、旧版本与混合条目重存、损坏／越界输入，以及目标单位创建事件与拾取事件重入；对照原版 StoreUnit 的具体行为。本次未执行运行验证。
+
+## 地面物品选择阶段待验证
+
+路径：lan_actions、lan_simulation、game_view。单机地面物品左键选择接入图标／名称／生命及场景选中圈；实验性局域网发送单位取消选择和经典 0x1c 选择，回放／网络动作消费检查身份及已知 flag；对象被拾取、删除、隐藏或不可见时取消展示。详情见 ground-item-selection.md。
+
+阶段验证真实窗口点击／视野／单位与物品切换、网络确认／竞争与对象生命周期、已损坏／不同 flags 的回放记录、原版 1.27 动作与对象身份、Shift／多选、原版视觉及声音；已有颜色、圈大小和 HUD 排布尚未声称一致。
+
+地面物品补充待测：`tests/order_queue_tests.cpp` 覆盖 0x1c 编解码、同一动作序列取消单位选择、地面物品移除后的实验性局域网时隙、未知身份和未知 flag 拒绝。Win32 Release 产品及 `war3_order_queue_tests` 增量编译通过，测试尚未执行；阶段运行 `war3_order_queue_tests.exe <data-root> <BootyBay.w3m>` 并与现有 order queue 验证合并。

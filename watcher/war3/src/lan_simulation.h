@@ -27,11 +27,12 @@ private:
     struct Transfer {unsigned player,recipient;int gold,lumber;};
     struct Alliance {unsigned player,recipient,flags;};
     struct Trackable {std::uint32_t handle;bool hit;};
+    struct GroundItem {unsigned player;std::uint32_t handle;};
     struct ExperimentalSpell {PlayerCommand command;};
     struct ExperimentalUnit {PlayerCommand command;std::uint64_t ticket=0;};
     struct ExperimentalDialog {unsigned player;std::uint32_t dialog,button;std::uint64_t generation;};
     struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0,expectedItem=0,itemSlot=0;bool constructionCancel=false,subgroup=false,itemOrder=false,itemById=false,queued=false;};
-    using Event=std::variant<LanActionPause,LanActionResume,Escape,Chat,SelectionSync,Purchase,Departure,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable,ExperimentalSpell,ExperimentalUnit,ExperimentalDialog>;
+    using Event=std::variant<LanActionPause,LanActionResume,Escape,Chat,SelectionSync,Purchase,Departure,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable,GroundItem,ExperimentalSpell,ExperimentalUnit,ExperimentalDialog>;
     ScriptSession& session_;
     ObjectResolver resolve_;
     std::vector<std::vector<Event>> decoded_;
@@ -40,6 +41,7 @@ private:
     std::set<std::uint8_t> projectedDepartures_;
     std::map<unsigned,std::array<std::vector<std::uint32_t>,10>> groups_,projectedGroups_;
     std::map<unsigned,std::pair<std::uint32_t,std::uint32_t>> subgroups_,projectedSubgroups_;
+    std::array<std::uint32_t,16> groundItems_{};
     std::size_t cursor_=0;
     bool consuming_=false,experimental_=false;
     std::optional<bool> localDialogQuit_;
@@ -55,6 +57,8 @@ public:
     LanStepResult consume(std::uint64_t sequence,const LanTimeSlot& slot);
     bool hasLocalDialogQuit() const{return localDialogQuit_.has_value();}
     std::optional<bool> takeLocalDialogQuit(){auto value=localDialogQuit_;localDialogQuit_.reset();return value;}
+    std::uint32_t selectedGroundItem(unsigned player) const;
+    void clearLocalGroundItem();
     bool failed() const{return driver_.failed();}
     const std::string& error() const{return driver_.error();}
     std::uint64_t nextSequence() const{return driver_.nextSequence();}
