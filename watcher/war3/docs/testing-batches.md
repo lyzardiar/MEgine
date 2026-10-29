@@ -1,12 +1,16 @@
 # 独立客户端测试队列
 
+## 女猎手哨兵待验证
+
+路径：`src/spells.h`、`src/session.h`、`src/session_spell_info.cpp`、`src/session_control_spells.cpp`、`src/session_area_spells.cpp`、`src/session_stealth_reveal.cpp`、`src/session_fog.cpp`、`src/session_visibility.cpp`、`src/game_view.cpp`、`src/lan_spell_orders.h`、`src/lan_action_encoder.cpp`、`src/lan_simulation.cpp`；说明见 `sentinel.md`。树木目标、飞行／盘旋视野与隐形侦测及树木销毁清理已接入；自研联机动作接入照明弹及哨兵树目标，包含模型镜头的 Win32 Release 客户端编译通过；阶段检查科技、冷却、施法事件、移动与模型、树木存活／摧毁／恢复、多哨兵、共享视野、地图覆盖、切图、联机、性能和原版一致性；数量限制及完整表现仍待实现。
+
 ## 地图脚本模型镜头待验证
 
-路径：`src/world.h`、`src/session_world.cpp`、`src/model.h/.cpp`、`src/model_pose.cpp`、`src/scene_streaming.h/.cpp`、`src/game_view.cpp`；说明见 `cinematic-camera-model.md`。脚本指定模型镜头使用后台可选加载和场景相机，重置后恢复；阶段检查纯镜头模型、缺失／损坏、视锥与锚点、声音监听、重置、镜头脚本查询、切图、联机及原版画面；原版时序和部分脚本查询仍待完善。
+路径：`src/world.h`、`src/session_world.cpp`、`src/model.h/.cpp`、`src/model_pose.cpp`、`src/scene_streaming.h/.cpp`、`src/game_view.cpp`；说明见 `cinematic-camera-model.md`。脚本指定模型镜头使用后台可选加载和场景相机，重置后恢复；包含哨兵改动的 Win32 Release 客户端编译通过。阶段检查纯镜头模型、缺失／损坏、视锥与锚点、声音监听、重置、镜头脚本查询、切图、联机及原版画面；原版时序和部分脚本查询仍待完善。
 
 ## 迫击炮照明弹待验证
 
-路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_stealth_reveal.cpp`、`src/session_fog.cpp`、`src/session_visibility.cpp`；说明见 `flare.md`。`Afla` 点目标及科技前置接入现有施法，按源延迟产生视野与侦测；阶段检查时间、冷却、地形边缘、重叠、共享视野、暂停、施法者死亡、地图覆盖、双端、实际画面及原版行为；闪烁与飞行画面尚未实现。
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_stealth_reveal.cpp`、`src/session_fog.cpp`、`src/session_visibility.cpp`；说明见 `flare.md`。`Afla` 点目标及科技前置接入现有施法，按源延迟产生视野与侦测；包含哨兵和模型镜头的 Win32 Release 客户端编译通过。阶段检查时间、冷却、地形边缘、重叠、共享视野、暂停、施法者死亡、地图覆盖、双端、实际画面及原版行为；闪烁与飞行画面尚未实现。
 
 ## 地图脚本界面按键待验证
 

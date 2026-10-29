@@ -280,8 +280,11 @@ class ScriptSession {
     void breakInvisibility(UnitState& unit);
     bool stealthAcquire(const UnitState& unit);
     std::map<std::uint64_t,RevealArea> revealAreas_;
+    std::map<std::uint64_t,SentinelState> sentinels_;
     std::uint64_t revealTicket_=0;
     void stealthTick(double delta);
+    void startSentinel(std::uint32_t source,const CastOrder& cast);
+    void sentinelTick(double delta);
     void startShadowMeld(std::uint32_t unit,const SpellInfo& spell);
     void cancelShadowMeld(UnitState& unit);
     void addReveal(unsigned owner,const SpellInfo& spell,WorldPoint point);

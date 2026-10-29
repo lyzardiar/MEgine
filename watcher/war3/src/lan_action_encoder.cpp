@@ -98,7 +98,7 @@ std::vector<std::uint8_t> encodeLanPlayerCommand(ScriptSession& session,std::uin
     case PlayerCommandKind::SpellUnit:
     case PlayerCommandKind::TargetOrder:
         if(!command.target || (spell && (command.xBits || command.yBits || (command.order && command.order!=spellInfo->order))) || (command.kind==PlayerCommandKind::TargetOrder && !supportedTargetOrder(command.order)) || !fields.targetPosition || !finitePoint((*fields.targetPosition)[0],(*fields.targetPosition)[1]))throw std::runtime_error("Invalid LAN target order");
-        if((spell && !session.units().contains(command.target)) || (!session.units().contains(command.target) && !session.items().contains(command.target) && !session.destructables().contains(command.target)))throw std::runtime_error("LAN target object is unavailable");
+        if((spell && !session.units().contains(command.target) && !(spellInfo->order==852182 && session.destructables().contains(command.target))) || (!session.units().contains(command.target) && !session.items().contains(command.target) && !session.destructables().contains(command.target)))throw std::runtime_error("LAN target object is unavailable");
         ability.opcode=0x12;ability.order=spell?spellInfo->order:command.order;ability.xBits=(*fields.targetPosition)[0];ability.yBits=(*fields.targetPosition)[1];ability.target=wireId(command.target,resolve);if(seenIds.contains({ability.target.first,ability.target.second}) && std::find(command.units.begin(),command.units.end(),command.target)==command.units.end())throw std::runtime_error("Duplicate LAN object identity");break;
     default:throw std::runtime_error("Unsupported LAN player command");
     }
