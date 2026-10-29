@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 自研联机脚本对话框待验证
+
+路径：session／session_script_dialogs／session_network_identity、game_state、game_flow_ui／game_view、lan_actions／lan_action_encoder／lan_simulation、game_flow_tests。普通 Dialog/Button 点击按玩家和显示轮次进入实验时间片，双方通过会话事件消费者执行；本地显示与重复点击去重独立，UI 句柄使用独立对象序号。QuitButton 暂禁用，F10 可打开对局菜单。Win32 Release 产品和专项程序增量编译通过；新增专项尚未执行，阶段命令：`war3_game_flow_tests.exe <data-root> <fixture.w3m> lan-dialog`。集中验证两端仅本地显示、快捷键／鼠标／退出入口、重复与延迟／重显／切换对话框、同步销毁／清除／触发器重入、回放、多端及原版时序。必须覆盖各端 UI 对象创建顺序或按钮热键不同的限制；不支持非同步创建的任意 UI，也不证明原版协议互通。
+
 ## 自研联机建筑取消与英雄复活待验证
 
 路径：lan_actions、lan_action_encoder／lan_simulation、session_network_identity、game_view、revival_tests。实验对局支持选中建筑的施工取消及按升级票号取消、祭坛复活和中立酒馆唤醒；复活请求携带死亡轮次并在消费时复核，状态摘要包含死亡／归属轮次、施工状态及升级票号。Win32 Release 产品及专项程序增量编译通过；新增专项尚未执行，阶段命令：`war3_revival_tests.exe <data-root> <fixture.w3m> lan-revival`。集中验证多选与 Esc、施工完成／升级替换、祭坛与酒馆权限／资源／附近买家、英雄复活后再次死亡／易主／移除、时间片事件重入、多端／回放及原版行为与协议。

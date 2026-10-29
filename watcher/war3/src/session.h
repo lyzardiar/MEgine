@@ -79,6 +79,7 @@ class ScriptSession {
     SessionConfig config_;
     std::vector<Object> objects_;
     std::vector<std::uint32_t> localNetworkObjects_;
+    std::vector<std::uint32_t> localNetworkUiObjects_;
     std::vector<std::uint32_t> eventHandles_,timerHandles_;
     jass::Runtime runtime_;
     bool failed_=false,configured_=false;
@@ -1095,7 +1096,8 @@ public:
     void leaveGame();
     bool endCinematic(unsigned owner);
     std::uint32_t indicatorColor(std::uint32_t id,std::uint32_t base) const {return indicators_.color(id,base,simulationTime_);}
-    bool clickDialog(unsigned owner,std::uint32_t button);
+    bool clickDialog(unsigned owner,std::uint32_t button,bool requireVisible=true,std::uint64_t clickedGeneration=0);
+    std::optional<std::uint32_t> dialogNetworkFingerprint(std::uint32_t button) const;
     void pause(bool value) {simulationPaused_=value;}
     unsigned gameSpeed() const {return gameSpeed_;}
     void gameSpeed(unsigned value) {if(value>4)throw std::runtime_error("Unknown game speed");gameSpeed_=value;}

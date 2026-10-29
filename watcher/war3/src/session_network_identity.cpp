@@ -4,7 +4,7 @@
 
 namespace war3 {
 namespace {
-std::uint32_t localType(NativeKind kind) {switch(kind){case NativeKind::Unit:return 0x4d330001;case NativeKind::Item:return 0x4d330002;case NativeKind::Destructable:return 0x4d330003;case NativeKind::Trackable:return 0x4d330004;default:return 0;}}
+std::uint32_t localType(NativeKind kind) {switch(kind){case NativeKind::Unit:return 0x4d330001;case NativeKind::Item:return 0x4d330002;case NativeKind::Destructable:return 0x4d330003;case NativeKind::Trackable:return 0x4d330004;case NativeKind::Dialog:return 0x4d330005;case NativeKind::Button:return 0x4d330006;default:return 0;}}
 struct Digest {
     std::uint32_t value=2166136261u;
     void word(std::uint32_t input){for(unsigned i=0;i<4;++i){value^=(input>>(8*i))&255u;value*=16777619u;}}
@@ -17,10 +17,10 @@ std::optional<std::pair<std::uint32_t,std::uint32_t>> ScriptSession::localNetwor
     if(handle<handleBase || handle-handleBase>=objects_.size())return {};auto& object=objects_[handle-handleBase];auto type=localType(object.kind);if(!object.alive || !object.localNetworkOrdinal || !type)return {};return std::pair{object.localNetworkOrdinal,type};
 }
 std::optional<std::uint32_t> ScriptSession::localNetworkObject(std::uint32_t ordinal,std::uint32_t type) const {
-    if(!ordinal || ordinal>localNetworkObjects_.size())return {};auto handle=localNetworkObjects_[ordinal-1];auto id=localNetworkObject(handle);if(!id || id->first!=ordinal || id->second!=type)return {};return handle;
+    const auto& objects=(type==0x4d330005 || type==0x4d330006)?localNetworkUiObjects_:localNetworkObjects_;if(!ordinal || ordinal>objects.size())return {};auto handle=objects[ordinal-1];auto id=localNetworkObject(handle);if(!id || id->first!=ordinal || id->second!=type)return {};return handle;
 }
 bool ScriptSession::localNetworkObjectRemoved(std::uint32_t ordinal,std::uint32_t type) const {
-    if(!ordinal || ordinal>localNetworkObjects_.size())return false;auto handle=localNetworkObjects_[ordinal-1];if(handle<handleBase || handle-handleBase>=objects_.size())return false;auto& object=objects_[handle-handleBase];return !object.alive && object.localNetworkOrdinal==ordinal && localType(object.kind)==type;
+    const auto& objects=(type==0x4d330005 || type==0x4d330006)?localNetworkUiObjects_:localNetworkObjects_;if(!ordinal || ordinal>objects.size())return false;auto handle=objects[ordinal-1];if(handle<handleBase || handle-handleBase>=objects_.size())return false;auto& object=objects_[handle-handleBase];return !object.alive && object.localNetworkOrdinal==ordinal && localType(object.kind)==type;
 }
 std::uint32_t ScriptSession::localNetworkChecksum() const {
     Digest hash;hash.word(1);hash.word(randomState_);hash.wide(productionTicket_);hash.real(simulationTime_);hash.word(std::uint32_t(localNetworkObjects_.size()));
