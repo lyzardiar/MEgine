@@ -34,6 +34,7 @@ struct Runtime::Impl {
     struct Execution {std::uint64_t remaining=0;size_t active=0,noYield=0;};
     std::map<ThreadId,Execution> executions{{0,{}}};
     ThreadHooks threadHooks;
+    std::function<void(Id,Value)> globalWriteHook;
     Id integer,real,boolean,string,codeType,nothing;
     [[noreturn]] void fail(Position p,const std::string& message) const {auto& sources=module.program().sources();auto name=p.source<sources.size()?sources[p.source].name:"<runtime>";throw std::runtime_error(name+":"+std::to_string(p.line)+":"+std::to_string(p.column)+": "+message);}
     Value empty(Id type) const {return {type,0,{}};}
@@ -126,7 +127,7 @@ struct Runtime::Impl {
                 case Op::Literal:values.push_back(literals.at(instruction.id));break;
                 case Op::Read:values.push_back(load(cell(module.binding(instruction.id),frame),{},p));break;
                 case Op::ReadArray:{auto index=pop(p).bits;values.push_back(load(cell(module.binding(instruction.id),frame),index,p));break;}
-                case Op::Write:case Op::WriteArray:{auto value=pop(p);std::optional<std::uint32_t> index;if(instruction.op==Op::WriteArray)index=pop(p).bits;store(cell(module.assignment(instruction.id),frame),std::move(value),index,p);break;}
+                case Op::Write:case Op::WriteArray:{auto value=pop(p);std::optional<std::uint32_t> index;if(instruction.op==Op::WriteArray)index=pop(p).bits;auto binding=module.assignment(instruction.id);auto& target=cell(binding,frame);store(target,std::move(value),index,p);if(binding.access==Access::Global && !index && globalWriteHook)globalWriteHook(binding.index,target.value);break;}
                 case Op::InitLocal:store(frame.locals.at(instruction.id),pop(p),{},p);break;
                 case Op::InitGlobal:store(globals.at(instruction.id),pop(p),{},p);break;
                 case Op::Call:{auto id=module.binding(instruction.id).index;auto count=module.functions()[id].parameters.size();if(values.size()<count)fail(p,"JASS call arguments missing");std::vector<Value> args(values.end()-count,values.end());values.resize(values.size()-count);if(module.program().functions()[id].native)values.push_back(callNative(id,args,p));else pushFrame(id,args,p);break;}
@@ -174,6 +175,7 @@ void Runtime::pauseThreads(bool paused){impl_->paused=paused;impl_->domain->thre
 bool Runtime::threadsPaused() const{return impl_->paused;}
 void Runtime::cancelThreads(){impl_->domain->threads.cancelAll();}
 void Runtime::threadHooks(ThreadHooks hooks){if(impl_->domain->threads.count())throw std::runtime_error("Cannot change active script contexts");impl_->threadHooks=std::move(hooks);}
+void Runtime::globalWriteHook(std::function<void(Id,Value)> hook){impl_->globalWriteHook=std::move(hook);}
 ThreadId Runtime::currentThread() const{return impl_->domain->threads.current();}
 size_t Runtime::threadCount() const{return impl_->domain->threads.count();}
 Value Runtime::global(const std::string& name,std::optional<std::uint32_t> index) const {if(!ready())throw std::runtime_error("JASS runtime is not initialized");auto& list=module().program().globals();for(size_t i=0;i<list.size();++i)if(list[i].name==name)return impl_->load(impl_->globals[i],index,list[i].position);throw std::runtime_error("Unknown JASS global: "+name);}

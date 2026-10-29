@@ -54,6 +54,45 @@ endfunction
 )jass";
     test("session_global_objects_have_persistent_state",[&]{ScriptSession session(compile(objectSource),{});require(session.liveObjects(NativeKind::Group)==0,"Constructor executed JASS globals");session.initialize();require(session.liveObjects(NativeKind::Group)==1 && session.liveObjects(NativeKind::Timer)==1 && session.liveObjects(NativeKind::Trigger)==1,"Creation did not retain native objects");auto& vm=session.runtime();require(vm.global("g").bits && vm.global("clock").bits!=vm.global("g").bits && vm.invoke("inspect").bits,"Initial object state differs");require(!vm.invoke("disable").bits,"Trigger flag update not retained");rejects([&]{session.initialize();},"fresh instance");require(session.initialized(),"Repeated initialize poisoned the ready session");});
     test("session_native_destruction_and_fresh_lifetime",[&]{ScriptSession session(compile(objectSource),{});session.initialize();session.runtime().invoke("release");require(session.liveObjects(NativeKind::Group)==0 && session.liveObjects(NativeKind::Timer)==0 && session.liveObjects(NativeKind::Trigger)==0,"Destroy did not release native state");rejects([&]{session.runtime().invoke("inspect");},"Destroyed or incompatible");ScriptSession next(compile(objectSource),{});next.initialize();require(next.runtime().invoke("inspect").bits && next.liveObjects(NativeKind::Trigger)==1,"Native state leaked into fresh session");});
+    test("session_variable_event_crossing_and_destruction",[]{auto module=compile(R"jass(type trigger extends handle
+type triggeraction extends handle
+type event extends handle
+type eventid extends handle
+type limitop extends handle
+native CreateTrigger takes nothing returns trigger
+native DestroyTrigger takes trigger t returns nothing
+native TriggerAddAction takes trigger t, code action returns triggeraction
+native TriggerRegisterVariableEvent takes trigger t, string name, limitop op, real limit returns event
+native ConvertLimitOp takes integer value returns limitop
+native GetTriggerEventId takes nothing returns eventid
+native GetHandleId takes handle value returns integer
+globals
+real watched=0.
+integer hits=0
+integer eventKind=0
+trigger t=null
+endglobals
+function onLimit takes nothing returns nothing
+set hits=hits+1
+set eventKind=GetHandleId(GetTriggerEventId())
+endfunction
+function setup takes nothing returns nothing
+set t=CreateTrigger()
+call TriggerAddAction(t,function onLimit)
+call TriggerRegisterVariableEvent(t,"watched",ConvertLimitOp(4),1.)
+endfunction
+function cross takes nothing returns nothing
+set watched=2.
+set watched=3.
+set watched=0.
+set watched=2.
+endfunction
+function release takes nothing returns nothing
+call DestroyTrigger(t)
+set watched=0.
+set watched=2.
+endfunction
+)jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();vm.invoke("setup");vm.invoke("cross");require(vm.global("hits").bits==2 && vm.global("eventKind").bits==2,"Variable threshold crossing or event context differs");vm.invoke("release");require(vm.global("hits").bits==2,"Destroyed trigger still receives variable events");});
     test("session_config_updates_metadata_slots_and_priorities",[]{auto module=compile(R"jass(type player extends handle
 type playercolor extends handle
 type mapcontrol extends handle

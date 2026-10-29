@@ -43,6 +43,7 @@ public:
     void pauseThreads(bool paused);
     bool threadsPaused() const;
     void threadHooks(ThreadHooks hooks);
+    void globalWriteHook(std::function<void(Id,Value)> hook);
     ThreadId currentThread() const;
     size_t threadCount() const;
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;

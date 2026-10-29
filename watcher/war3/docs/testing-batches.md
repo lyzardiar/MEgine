@@ -2026,3 +2026,11 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`game_view.cpp`，说明见 `minimap-colors.md`。小地图单位标记接入玩家颜色、单位颜色覆盖与机械伪装，选中和替代图标沿用对应绘制流程。
 
 功能阶段验证多玩家、SetPlayerColor／SetUnitColor、易主、伪装、视野与中立单位、选中及替代图标、资源未就绪和切图 GPU 生命周期，并对照原版小地图颜色与表现；当前尚无实际窗口或原版一致性验收。
+
+## 全局变量阈值事件待验证
+
+Win32 Release 客户端与关联会话／亡灵形态消费者程序已合并编译通过；专项未执行。
+
+路径：`jass_runtime.h/.cpp`、`script_state.h`、`session_callbacks.cpp`、`tests/session_tests.cpp`；标量 real 变量赋值通过实际 VM 存储入口派发阈值触发器，详细边界见 `script-events.md`。
+
+阶段运行 `war3_session_tests.exe <tmp/docs-artifacts/war3/jass/session-variable-events.json>`，并验证全部比较符、赋值重入／睡眠、多个监听、启停／销毁、原值已满足、无效变量与真实自定义地图及联机同步，对照原版事件时序与边界。当前专项尚未执行。

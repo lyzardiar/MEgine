@@ -32,7 +32,7 @@ struct ScriptTrigger {
 struct ScriptTrackable {std::string model;float x=0,y=0,facing=0;};
 struct ScriptForce {std::uint32_t players=0;};
 struct ScriptEvent {
-    enum class Kind {Timer,TimerExpire,Clock,Player,PlayerUnit,Unit,UnitState,Game,Alliance,PlayerState,RegionEnter,RegionLeave,UnitRange,Chat,WidgetDeath,Dialog,DialogButton,TrackableHit,TrackableTrack};
+    enum class Kind {Timer,TimerExpire,Clock,Variable,Player,PlayerUnit,Unit,UnitState,Game,Alliance,PlayerState,RegionEnter,RegionLeave,UnitRange,Chat,WidgetDeath,Dialog,DialogButton,TrackableHit,TrackableTrack};
     Kind kind=Kind::Game;
     std::uint32_t owner=0,target=0,event=0,comparison=0;
     std::uint32_t stateKey=0;
