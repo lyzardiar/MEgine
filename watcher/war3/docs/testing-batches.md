@@ -1718,3 +1718,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`commerce.h`、`session_research.cpp`、`session_corpse_spells.cpp`、`docs/research.md`。`rrai` 从召唤单位的实际科技状态进入亡者复生定时生命。
 
 功能阶段核对研究前后召唤、现存骷髅、技能／物品及自定义类型和科技覆盖、易主／死亡／驱散／定时生命事件；实际持续时间与原版时机尚未对照。
+
+## 科技最大数量与混乱变形待验证
+
+路径：`session.h`、`session_research.cpp`、`session_unit_forms.cpp`、`session_entities.cpp`、`session_ownership.cpp`、`session_game.cpp`、`docs/research.md`。`rtma` 消费研究等级变化；`Acha` 能力按科技前置与目标类型变形。
+
+功能阶段核对 `Robk`／`Rhrt`、当前与新建单位、能力增删／禁用、敌我转移、科技上限脚本、自定义升级／能力、生命人口与队列／事件重入，并对照原版初始训练上限、排队和变形时序；新型单位初始上限尚未实现。

@@ -3,9 +3,13 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <sstream>
 
 namespace war3 {
 namespace {float number(jass::Real v){return std::bit_cast<float>(v.bits());}jass::Real real(float v){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(v));}}
+void ScriptSession::applyChaosForm(std::uint32_t id){
+    std::set<std::uint32_t> seen;for(unsigned step=0;step<16 && alive(id,NativeKind::Unit);++step){auto u=units_.at(id);if(u->removing || number(u->life)<=0 || !seen.insert(u->type).second)return;auto owner=u->owner;std::uint32_t target=0;for(auto [ability,level]:u->abilities){if(level<=0 || definitions().field(ability,"AbilityData","code")!="Acha")continue;auto available=config_.players[owner].abilityAvailable.find(ability);if(available!=config_.players[owner].abilityAvailable.end() && !available->second)continue;if(definitions().number(ability,"AbilityData","checkDep",1)!=0){std::stringstream names(definitions().field(ability,"Profile","Requires")),counts(definitions().field(ability,"Profile","Requiresamount"));std::string name,count;bool ready=true;while(std::getline(names,name,',')){auto first=name.find_first_not_of(" \t\r\n");if(first==std::string::npos)continue;name=name.substr(first,name.find_last_not_of(" \t\r\n")-first+1);std::getline(counts,count,',');if(name=="_" || name=="-")continue;int minimum=count.empty() || count=="_" || count=="-"?1:std::stoi(count);if(name.size()!=4 || minimum<0 || techCount(owner,ObjectData::code(name),false)<unsigned(minimum)){ready=false;break;}}if(!ready)continue;}auto code=definitions().field(ability,"AbilityData","UnitID"+std::to_string(level));if(code.size()!=4 || !definitions().contains(ObjectData::code(code)))throw std::runtime_error("Chaos ability requires a defined unit type");target=ObjectData::code(code);break;}if(!target || target==u->type || seen.contains(target))return;if(!changeUnitForm(id,target,0,false) || !alive(id,NativeKind::Unit) || units_.at(id)->owner!=owner)return;}
+}
 bool ScriptSession::alternateForm(const UnitState& u,const SpellInfo& s){return u.type==s.alternateType || (u.unitForm && u.unitForm->active && u.unitForm->spell.ability==s.ability);}
 void ScriptSession::prepareUnitFormSpell(const UnitState& u,SpellInfo& s){if(!unitFormSpell(s.kind))return;if(alternateForm(u,s) && s.unorder){s.order=s.unorder;s.mana=0;if(s.kind!=SpellKind::StoneForm && s.kind!=SpellKind::SpiritForm)s.cooldown=0;s.prerequisites.clear();}s.animation=alternateForm(u,s)?"Morph Alternate":"Morph";}
 bool ScriptSession::unitFormReady(const UnitState& u,const SpellInfo& s,bool placement){

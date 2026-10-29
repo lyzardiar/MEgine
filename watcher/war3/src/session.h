@@ -551,6 +551,7 @@ class ScriptSession {
     void prepareUnitFormSpell(const UnitState& unit,SpellInfo& spell);
     std::optional<WorldPoint> formLanding(const UnitState& unit,std::uint32_t type);
     bool changeUnitForm(std::uint32_t unit,std::uint32_t type,float healthBonus,bool heroForm);
+    void applyChaosForm(std::uint32_t unit);
     bool commitUnitForm(std::uint32_t unit);
     void startUnitForm(std::uint32_t unit,const CastOrder& cast);
     void returnUnitForm(std::uint32_t unit);

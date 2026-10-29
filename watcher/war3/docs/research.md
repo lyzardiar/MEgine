@@ -16,6 +16,8 @@
 
 骷髅持续时间科技 `Rusl` 的 `rrai` 接入亡者复生新召唤单位的定时生命，按召唤单位自身的源科技列表及当前等级叠加源数值；已存在的定时生命不重新计时。原 `uske`、`uskm` 与 `unec` 均列有该科技，原始效果为增加 15 秒。物品召唤与自定义技能使用同一亡者复生流程；已有召唤物、其他生成方式及原版精确应用时机仍待对照。
 
+`rtma` 科技效果根据源字段的目标 ID 和新旧等级差调整玩家科技最大允许数量；现有有限上限保持独立。`Acha` 能力在单位创建、获得能力、科技和归属变化后检查原 `Requires`／`checkDep` 并消费 `UnitID`，使用现有变形流程保留单位句柄；原猎头者的 `Sbsk` 由 `Robk` 解锁并变为狂战士，蒸汽机车的 `Srtt` 由 `Rhrt` 解锁并变为火箭型。REA 对照了 `CUpgradeAddTechMaxAllowed` 的等级差及上限路径（`0x6f6985d0`）和 `CAbilityChaos` 的目标单位转换路径（`0x6f4ac3b0`）。原始新型兵种的初始训练上限、排队转换、条件变更时序与完整变形细节仍待实现或对照；目前不能视为两项科技完整验收。
+
 原版静态入口核对：SetPlayerTechResearched 0x6f1f6440 计算 max(目标-当前,0)，再转 AddPlayerTechResearched 0x6f1da190；后者只处理正增量。GetPlayerTechCount/GetPlayerTechResearched 入口为 0x6f1e4190/0x6f1e4200，GetResearched 为 0x6f1e46b0。REA 读取原件 SHA-256 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a，未修改原件。原始数据及入口证据位于 tmp/docs-artifacts/war3/research/。
 
 本项仍为部分实现：资源采集/光环/视野/荆棘/变形/特殊护甲及种族技能效果、科技等价/继承、转移所有权时的队列规则、生命魔法变化及攻击效果的原版逐项精度仍待实现或对照。完整客户端玩法范围保持不变。
