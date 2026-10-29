@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 地面物品鼠标预选待验证
+
+路径：`src/game_view.cpp`；说明见 `preselection.md`。地面物品参与已有悬停采样与选择圈绘制；阶段检查物品显隐／拾取／移除、迷雾、同时选中和悬停、鼠标／镜头移动、界面开关、大图性能及原版画面。
+
 ## 牺牲深渊与阴影待验证
 
 路径：`CMakeLists.txt`、`src/spells.h`、`src/session.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_sacrifice_pit.cpp`；说明见 `sacrificial-pit.md`。包含战役重开限制和加强型地洞视觉的 Win32 Release 客户端编译通过。阶段检查双方命令、接近与目标限制、生产及集结、多侍僧竞争、死亡／转让／禁用、人口不足、取消、脚本重入、联机和原版行为；取消后恢复侍僧、自定义目标规则及原版事件时序尚未完成。
