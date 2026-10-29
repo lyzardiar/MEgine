@@ -140,6 +140,7 @@ struct UnitState {
     std::uint64_t revivalTicket=0;
     bool experienceSuspended=false;
     std::array<float,3> heroAttributes{},heroGrowth{},heroBonuses{};
+    float permanentDamage=0;
     std::array<int,3> appliedHeroStats{};
     EquipmentBonuses equipment,inventoryBonuses;
     std::vector<std::uint32_t> learnable;

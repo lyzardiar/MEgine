@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 永久攻击伤害与达贡物品待验证
+
+路径：`entities.h`、`script_state.h`、`session_entities.cpp`、`session_equipment.cpp`、`session_item_use.cpp`、`session_research.cpp`、`session_cache.cpp`、`spells.h`、`session_spell_info.cpp`、`session_spells.cpp`、`session_area_spells.cpp`、`session_lightning.cpp`、`tests/game_flow_tests.cpp`；说明见 `attack-damage-powerups.md`、`finger-of-death.md` 和 `campaign-gamecache.md`。Win32 Release 客户端及 game-flow 消费者已编译。为检查持久化兼容，`war3_game_flow_tests.exe <data-root> tmp/docs-artifacts/war3/game-flow/fixture.w3m cache-damage` 的隔离缓存检查通过：v4 正负值保存／重载／恢复与越界拒绝，以及无物品单位的 v1–v3 默认值；临时缓存位于 `tmp/docs-artifacts/war3/cache-damage/`。阶段验证正负 AIaa 拾取／消耗、非英雄、伤害及面板、变形／幻象、其他缓存组合；验证 ANfd 单位目标、地图自定义 Dagon 能力 ID、地图伤害事件、魔免、施法打断／回调重入、资源／次数／冷却、闪电和原版表现。DotA 实际物品操作、多人和原版对照尚未执行。
+
 ## 玩家自有单位商店待验证
 
 路径：`session_commerce.cpp`、`tests/generate-commerce-fixture.py`、`tests/commerce_tests.cpp`，说明见 `commerce.md`。自有、具单位出售能力且不具中立交互能力的商店，按钮和实际购买在无附近买家时允许单位销售；仍检查库存、资源、科技和出生点并发出出售事件，买家为空。Win32 Release 客户端及 commerce 消费者已编译；阶段生成 commerce 夹具并检查按钮、扣费、库存、出售事件／空买家、非所有者、附带 Aneu、显式目标买家、物品与邻近买家；另实测 DotA `-sd` 选英雄、双端及原版语义。专项和实际玩家操作尚未执行。
