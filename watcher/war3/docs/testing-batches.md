@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 玩家科技快照待验证
+
+路径：`src/session.h`、`src/session_game.cpp`；说明见 `player-tech-persistence.md`。阶段检查所有玩家研究等级、科技上限和能力可用性往返，损坏／重复键／非法值事务拒绝、活跃会话及已有单位限制，以及与单位、资源和生产队列的完整恢复；尚未接入存档。
+
 ## 信号枪物品待验证
 
 路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_item_use.cpp`；说明见 `flare.md`。阶段检查地图与小地图选点、次数及耗尽、施法事件／取消、延迟／视野／侦测、暂停／施法者死亡、自定义覆盖、联机和原版表现。
