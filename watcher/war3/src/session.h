@@ -111,6 +111,7 @@ class ScriptSession {
     std::shared_ptr<const SelectionSnapshot> selectionSyncLatest_;
     std::deque<std::pair<std::uint64_t,LanActionExperimentalSelection>> selectionSyncOutgoing_;
     std::deque<std::pair<std::uint64_t,LanActionCacheSync>> cacheSyncOutgoing_;
+    std::deque<unsigned> forcedUIKeys_;
     std::uint64_t syncOutgoingSequence_=0;
     size_t cacheSyncOutgoingBytes_=0;
     void flushLocalCacheSync();
@@ -1081,6 +1082,7 @@ public:
     bool spellBookReady(const UnitState& unit,std::uint32_t book);
     bool openSpellBook(std::uint32_t unit,std::uint32_t book);
     std::optional<std::pair<std::uint32_t,std::uint32_t>> takeSpellBookRequest(){auto value=requestedBook_;requestedBook_.reset();return value;}
+    std::optional<unsigned> takeForcedUIKey(){if(forcedUIKeys_.empty())return {};auto key=forcedUIKeys_.front();forcedUIKeys_.pop_front();return key;}
     const auto& spellMissiles() const {return spellMissiles_;}
     const auto& spellWaves() const {return spellWaves_;}
     const auto& groundSpells() const {return groundSpells_;}

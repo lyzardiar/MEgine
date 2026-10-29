@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 地图脚本界面按键待验证
+
+路径：`src/session.h`、`src/session_match.cpp`、`src/game_view.cpp`；说明见 `script-forced-ui.md`。`ForceUIKey` 和 `ForceUICancel` 通过有界队列进入已有界面与命令消费者；包含自动施法映射的 Win32 Release 客户端编译通过。阶段检查所有键值、重入、队列、焦点／暂停／菜单／过场、建造与技能模式、取消、实际教程、自定义地图、双端与回放；当前后续帧处理与原版同步调用时序不同。
+
 ## 默认自动施法原型映射待验证
 
 路径：`src/session_entities.cpp`、`src/session_unit_forms.cpp`；说明见 `autocast-source.md`。单位默认自动施法匹配唯一同原型衍生能力，变形时继承唯一替换能力的开关；包含脚本界面按键改动的 Win32 Release 客户端编译通过。阶段检查 Reec 研究前后风暴之鸦、中立蛛网及亡者复生、开关／变形／撤销、脚本增删、自定义重复原型、技能可用性与联网，以及原版行为和性能；实际对局尚未执行。
