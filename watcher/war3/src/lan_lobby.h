@@ -18,6 +18,8 @@ struct LanLobbyHandoff {
     std::vector<LanPlayer> players;
     std::uint8_t localPeerId=0;
     std::uint32_t randomSeed=0;
+    bool downloaded=false;
+    std::string replayMapDigest;
     std::uint64_t requestPreparation(MapPreparation& preparation,std::vector<unsigned> slotPlayerIds) const;
 };
 class LanLobby {
@@ -36,6 +38,7 @@ class LanLobby {
     std::shared_ptr<const Bytes> verifiedMap_;
     std::optional<MapInfo> verifiedMapInfo_;
     std::optional<LanMapCheck> verifiedMapCheck_;
+    std::string verifiedMapDigest_;
     MapStatus mapStatus_=MapStatus::Waiting;
     std::uint64_t nextMapAttempt_=0;
     std::size_t scroll_=0;

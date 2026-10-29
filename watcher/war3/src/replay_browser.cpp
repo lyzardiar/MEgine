@@ -1,5 +1,6 @@
 // Author: MiYu. Replay file browsing and bounded asynchronous W3G metadata loading.
 #include "replay_browser.h"
+#include "replay_experimental.h"
 #include <algorithm>
 #include <cctype>
 #include <iterator>
@@ -12,6 +13,10 @@ bool click(GlueScreen::Rect r,const UiInput& input){return input.pressed && hit(
 bool within(const fs::path& root,const fs::path& path){auto parent=root.wstring(),child=path.wstring();if(parent.empty())return false;if(CompareStringOrdinal(parent.c_str(),-1,child.c_str(),-1,TRUE)==CSTR_EQUAL)return true;if(parent.back()!=L'\\')parent+=L'\\';return child.size()>=parent.size() && CompareStringOrdinal(parent.c_str(),int(parent.size()),child.c_str(),int(parent.size()),TRUE)==CSTR_EQUAL;}
 bool reparse(const fs::path& path){auto attributes=GetFileAttributesW(path.c_str());if(attributes==INVALID_FILE_ATTRIBUTES)throw std::runtime_error("Cannot inspect replay path: "+winError());return (attributes&FILE_ATTRIBUTE_REPARSE_POINT)!=0;}
 bool replayFile(const fs::path& path){return CompareStringOrdinal(path.extension().c_str(),-1,L".w3g",-1,TRUE)==CSTR_EQUAL;}
+bool removeReplayMap(const fs::path& path,const std::string& digest){
+    struct File {HANDLE handle=INVALID_HANDLE_VALUE;~File(){if(handle!=INVALID_HANDLE_VALUE)CloseHandle(handle);}} file{CreateFileW(path.c_str(),GENERIC_READ|DELETE,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_SEQUENTIAL_SCAN,nullptr)};
+    if(file.handle==INVALID_HANDLE_VALUE){auto error=GetLastError();return error==ERROR_FILE_NOT_FOUND || error==ERROR_PATH_NOT_FOUND;}BY_HANDLE_FILE_INFORMATION info{};LARGE_INTEGER size{};if(!GetFileInformationByHandle(file.handle,&info) || (info.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT)) || !GetFileSizeEx(file.handle,&size) || size.QuadPart<=0 || size.QuadPart>256ll*1024*1024)return false;Bytes bytes(static_cast<size_t>(size.QuadPart));size_t at=0;while(at<bytes.size()){DWORD read=0,part=DWORD(std::min<size_t>(bytes.size()-at,1024*1024));if(!ReadFile(file.handle,bytes.data()+at,part,&read,nullptr) || read!=part)return false;at+=read;}if(sha256(bytes)!=digest)return false;FILE_DISPOSITION_INFO disposition{TRUE};return SetFileInformationByHandle(file.handle,FileDispositionInfo,&disposition,sizeof(disposition))!=0;
+}
 std::string duration(std::uint32_t milliseconds){auto seconds=milliseconds/1000;return std::to_string(seconds/60)+":"+(seconds%60<10?"0":"")+std::to_string(seconds%60);}
 }
 ReplayBrowser::ReplayBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\ViewReplayScreen.fdf","ViewReplayScreen"),renderer_(renderer),log_(log) {
@@ -35,7 +40,7 @@ void ReplayBrowser::choose(size_t index){
 }
 void ReplayBrowser::prepared(){std::optional<Result> result;{std::lock_guard lock(mutex_);result=std::move(ready_);ready_.reset();}if(!result || result->request!=request_ || !loading_)return;loading_=false;if(!result->replay){error_="无法读取所选回放。";log_.write("replay_read_error="+utf8(result->path.wstring())+": "+result->error);return;}selectedReplay_=std::move(result->replay);error_.clear();}
 void ReplayBrowser::removeSelected(){
-    if(selected_>=entries_.size() || entries_[selected_].directory)return;auto path=entries_[selected_].path;try{auto real=fs::canonical(path),parent=fs::canonical(path.parent_path());if(!within(root_,real) || !within(root_,parent) || reparse(path) || reparse(path.parent_path()) || !fs::is_regular_file(real) || !replayFile(real))throw std::runtime_error("Invalid replay deletion target");clearSelection();if(!DeleteFileW(path.c_str()))throw std::runtime_error("Cannot delete replay: "+winError());enter(parent);}catch(const std::exception& e){confirmDelete_=false;error_="无法删除所选回放。";log_.write(std::string("replay_delete_error=")+e.what());}
+    if(selected_>=entries_.size() || entries_[selected_].directory)return;if(!selectedReplay_ || loading_){confirmDelete_=false;error_="回放尚未读取完成或无法读取，不能确定关联地图。";return;}auto path=entries_[selected_].path;bool deleted=false;try{auto real=fs::canonical(path),parent=fs::canonical(path.parent_path());if(!within(root_,real) || !within(root_,parent) || reparse(path) || reparse(path.parent_path()) || !fs::is_regular_file(real) || !replayFile(real))throw std::runtime_error("Invalid replay deletion target");auto digest=experimentalLanReplayMapDigest(selectedReplay_->game());auto sidecar=digest?experimentalLanReplayMapPath(real,*digest):fs::path{};clearSelection();if(!DeleteFileW(path.c_str()))throw std::runtime_error("Cannot delete replay: "+winError());deleted=true;bool cleaned=sidecar.empty() || removeReplayMap(sidecar,*digest);enter(parent);if(!cleaned){error_="回放已删除，但地图副本未能安全清理。";log_.write("replay_map_delete_failed="+utf8(sidecar.wstring()));}}catch(const std::exception& e){confirmDelete_=false;error_=deleted?"回放已删除，但地图副本清理或列表更新失败。":"无法删除所选回放。";log_.write(std::string("replay_delete_error=")+e.what());}
 }
 std::optional<ReplaySelection> ReplayBrowser::takeSelection(){if(!selectedReplay_ || selectedPath_.empty() || loading_)return {};ReplaySelection result{selectedPath_,std::move(selectedReplay_)};selectedPath_.clear();return result;}
 std::string ReplayBrowser::draw(const UiInput& input){

@@ -19,17 +19,21 @@ struct PreparedReplay {
 };
 class ReplayPreparation {
     std::shared_ptr<const Replay> replay_;
+    std::unique_ptr<Archives> archives_;
     std::unique_ptr<LanMapCheckTask> mapCheck_;
     MapPreparation preparation_;
     std::uint64_t request_=0;
     fs::path mapPath_;
+    fs::path replayPath_;
+    std::optional<std::string> mapDigest_;
+    bool sidecarAttempted_=false;
     std::uint8_t perspectivePeer_=0;
     std::string error_;
     enum class Phase {Checking,Preparing,Ready,Failed,Transferred} phase_=Phase::Checking;
     std::unique_ptr<ScriptSession> prepared_;
     bool fail(std::string message);
 public:
-    ReplayPreparation(Archives& archives,std::shared_ptr<const Replay> replay,bool muted=false,std::uint8_t perspectivePeer=0);
+    ReplayPreparation(Archives& archives,std::shared_ptr<const Replay> replay,bool muted=false,std::uint8_t perspectivePeer=0,fs::path replayPath={});
     ~ReplayPreparation();
     ReplayPreparation(const ReplayPreparation&)=delete;
     ReplayPreparation& operator=(const ReplayPreparation&)=delete;

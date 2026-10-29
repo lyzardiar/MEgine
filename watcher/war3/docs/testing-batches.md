@@ -2098,3 +2098,9 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 路径：`game_buff_panel.cpp`、`game_view.cpp/.h`、`session.h`、`CMakeLists.txt`；显示和资源边界见 `buff-panel.md`。
 
 阶段验证 Buff／光环增减与过期、单／多选、图标流式加载和缺失、原皮肤和地图覆盖、悬停文本、窗口／GPU 恢复和性能，核对原版布局／排序。专项尚未执行。
+
+## 实验回放接收地图关联待验证
+
+路径：`replay_experimental.*`、`replay_preparation.*`、`replay_browser.cpp`、`lan_mapcheck.*`、`lan_lobby.*`、`lan_match_loading.*`、`platform.*`、`main.cpp`；保存回放时按内容关联原始地图，播放优先读取安装地图，细节及清理边界见 `replay-experimental.md`。Win32 Release 客户端编译通过，实际回放未执行。
+
+阶段验证已安装原图／接收图、后台摘要、哈希不符和文件占用、共享硬链接／复制回退、删除前内容替换及并发访问、失败后回放保留、进程异常、双端和重启播放；核对删除时的界面响应及内存开销。原版回放互通仍待实现。

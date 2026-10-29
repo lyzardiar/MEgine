@@ -1,6 +1,7 @@
 // Author: MiYu. Same-build LAN replay recording and explicit experimental replay identity.
 #pragma once
 #include "replay.h"
+#include "platform.h"
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -15,6 +16,8 @@ class ScriptSession;
 // The title marker is a compatibility discriminator, not an authenticated signature.
 std::optional<std::string> experimentalLanReplayDigest(const ReplayGame& game);
 std::optional<std::uint8_t> experimentalLanReplayPerspective(const ReplayGame& game);
+std::optional<std::string> experimentalLanReplayMapDigest(const ReplayGame& game);
+std::filesystem::path experimentalLanReplayMapPath(const std::filesystem::path& replayPath,std::string_view digest);
 bool experimentalLanReplayMatchesExecutable(const ReplayGame& game);
 
 class ExperimentalLanRecorder {
@@ -22,10 +25,10 @@ class ExperimentalLanRecorder {
     std::shared_ptr<State> state_;
     std::filesystem::path dataRoot_;
     bool attached_=false;
-    ExperimentalLanRecorder(const std::filesystem::path& dataRoot,ReplayHeader header,ReplayGame game,std::vector<ReplayPlayer> players,ReplaySetup setup);
+    ExperimentalLanRecorder(const std::filesystem::path& dataRoot,ReplayHeader header,ReplayGame game,std::vector<ReplayPlayer> players,ReplaySetup setup,std::shared_ptr<const Bytes> replayMap={});
 public:
     static std::unique_ptr<ExperimentalLanRecorder> fromHost(const std::filesystem::path& dataRoot,const ScriptSession& session,const LanHost& host);
-    static std::unique_ptr<ExperimentalLanRecorder> fromJoin(const std::filesystem::path& dataRoot,const ScriptSession& session,const LanJoin& join);
+    static std::unique_ptr<ExperimentalLanRecorder> fromJoin(const std::filesystem::path& dataRoot,const ScriptSession& session,const LanJoin& join,std::shared_ptr<const Bytes> replayMap={},std::string mapDigest={});
     // Attach before the first runtime pump. The observer owns only a weak recorder reference.
     bool attach(LanRuntime& runtime);
     // Seal applied slots and publish once. Caller invokes this when it intentionally ends a match.

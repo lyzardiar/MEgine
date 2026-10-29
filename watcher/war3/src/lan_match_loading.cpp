@@ -13,10 +13,10 @@ LanMatchLoading::LanMatchLoading(const fs::path& root,bool muted,Log& log,LanHos
     if(!handoff.host || !handoff.host->enableTimeSlotProtocol())throw std::runtime_error("Cannot arm LAN host while loading");mapRequest_=handoff.requestPreparation(preparation_);host_=std::move(handoff.host);
 }
 LanMatchLoading::LanMatchLoading(const fs::path& root,bool muted,Log& log,LanLobbyHandoff handoff,std::vector<unsigned> slotPlayerIds) : preparation_(root,muted),loader_(log) {
-    if(!handoff.join || !handoff.join->enableTimeSlotProtocol())throw std::runtime_error("Cannot arm LAN peer while loading");mapRequest_=handoff.requestPreparation(preparation_,std::move(slotPlayerIds));join_=std::move(handoff.join);
+    if(!handoff.join || !handoff.join->enableTimeSlotProtocol())throw std::runtime_error("Cannot arm LAN peer while loading");if(handoff.downloaded){replayMap_=handoff.map;replayMapDigest_=std::move(handoff.replayMapDigest);}mapRequest_=handoff.requestPreparation(preparation_,std::move(slotPlayerIds));join_=std::move(handoff.join);
 }
 LanMatchLoading::~LanMatchLoading(){cancel();}
-bool LanMatchLoading::fail(std::string message){if(phase_==LanLoadingPhase::Failed || phase_==LanLoadingPhase::Transferred)return false;error_=std::move(message);preparation_.clear();loader_.cancel();prepared_.reset();data_.reset();if(host_)host_->cancel();if(join_)join_->cancel();phase_=LanLoadingPhase::Failed;return false;}
+bool LanMatchLoading::fail(std::string message){if(phase_==LanLoadingPhase::Failed || phase_==LanLoadingPhase::Transferred)return false;error_=std::move(message);preparation_.clear();loader_.cancel();prepared_.reset();data_.reset();replayMap_.reset();if(host_)host_->cancel();if(join_)join_->cancel();phase_=LanLoadingPhase::Failed;return false;}
 void LanMatchLoading::cancel(){if(phase_==LanLoadingPhase::Transferred || phase_==LanLoadingPhase::Failed)return;fail("LAN loading cancelled");}
 bool LanMatchLoading::pollConnection(){
     if(host_){host_->poll();if(!host_->running() || (host_->loadPhase()!=LanLoadPhase::Loading && host_->loadPhase()!=LanLoadPhase::Ready))return fail(host_->error().empty()?"LAN host disconnected while loading":host_->error());}
@@ -37,5 +37,5 @@ bool LanMatchLoading::pump(Renderer& renderer,const Prepared& onPrepared){
         return true;
     }catch(const std::exception& e){return fail(e.what());}
 }
-std::optional<LanMatchReady> LanMatchLoading::takeReady(){if(phase_!=LanLoadingPhase::Ready || !data_ || bool(host_)==bool(join_))return {};LanMatchReady result;result.expectedSession=data_->session.get();result.data=std::move(data_);result.host=std::move(host_);result.join=std::move(join_);phase_=LanLoadingPhase::Transferred;return result;}
+std::optional<LanMatchReady> LanMatchLoading::takeReady(){if(phase_!=LanLoadingPhase::Ready || !data_ || bool(host_)==bool(join_))return {};LanMatchReady result;result.expectedSession=data_->session.get();result.data=std::move(data_);result.host=std::move(host_);result.join=std::move(join_);result.replayMap=std::move(replayMap_);result.replayMapDigest=std::move(replayMapDigest_);phase_=LanLoadingPhase::Transferred;return result;}
 }

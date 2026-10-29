@@ -20,6 +20,7 @@ std::string winError(DWORD code = GetLastError());
 fs::path war3UserDirectory();
 void validateWar3UserDirectory(const fs::path& dataRoot);
 std::string sha256(const fs::path& path);
+std::string sha256(std::span<const std::uint8_t> bytes);
 void verifyPe32(const fs::path& path);
 struct Options {
     fs::path dataRoot;

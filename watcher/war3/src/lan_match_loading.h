@@ -15,6 +15,8 @@ struct LanMatchReady {
     std::unique_ptr<GameData> data;
     std::unique_ptr<LanHost> host;
     std::unique_ptr<LanJoin> join;
+    std::shared_ptr<const Bytes> replayMap;
+    std::string replayMapDigest;
     ScriptSession* expectedSession=nullptr;
     std::unique_ptr<LanRuntime> start(GameView& game,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wire,LanRuntime::AbilityFields fields,LanRuntime::Checksum checksum,std::uint16_t hostIntervalMs);
 };
@@ -23,6 +25,8 @@ class LanMatchLoading {
     GameLoading loader_;
     std::unique_ptr<LanHost> host_;
     std::unique_ptr<LanJoin> join_;
+    std::shared_ptr<const Bytes> replayMap_;
+    std::string replayMapDigest_;
     std::unique_ptr<GameData> data_;
     std::unique_ptr<ScriptSession> prepared_;
     std::uint64_t mapRequest_=0,loadRequest_=0;

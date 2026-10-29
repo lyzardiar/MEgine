@@ -2,6 +2,7 @@
 #include "platform.h"
 #include <shellapi.h>
 #include <bcrypt.h>
+#include <algorithm>
 #include <array>
 #include <iomanip>
 #include <sstream>
@@ -48,6 +49,9 @@ std::string sha256(const fs::path& path) {
     std::ostringstream result;
     for (auto byte : digest) result << std::hex << std::setw(2) << std::setfill('0') << unsigned(byte);
     return result.str();
+}
+std::string sha256(std::span<const std::uint8_t> bytes) {
+    BCRYPT_ALG_HANDLE algorithm=nullptr;BCRYPT_HASH_HANDLE hash=nullptr;if(BCryptOpenAlgorithmProvider(&algorithm,BCRYPT_SHA256_ALGORITHM,nullptr,0)<0)throw std::runtime_error("SHA-256 unavailable");auto status=BCryptCreateHash(algorithm,&hash,nullptr,0,nullptr,0,0);for(size_t at=0;status>=0 && at<bytes.size();){auto size=ULONG(std::min<size_t>(bytes.size()-at,65536));status=BCryptHashData(hash,const_cast<PUCHAR>(bytes.data()+at),size,0);at+=size;}std::array<unsigned char,32> digest{};if(status>=0)status=BCryptFinishHash(hash,digest.data(),ULONG(digest.size()),0);if(hash)BCryptDestroyHash(hash);BCryptCloseAlgorithmProvider(algorithm,0);if(status<0)throw std::runtime_error("SHA-256 failed");std::ostringstream result;for(auto byte:digest)result<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(byte);return result.str();
 }
 void verifyPe32(const fs::path& path) {
     std::ifstream file(path, std::ios::binary);
