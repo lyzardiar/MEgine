@@ -2768,3 +2768,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 游戏提示页滚动（待验证）
 
 路径：`src/game_flow_ui.cpp`；集中验证长文本、滚轮／键盘／滑块、条目切换、窗口尺寸、原版文字布局和焦点，见 [提示页滚动](game-tips-navigation.md)。本次未编译或运行。
+
+### JASS 角度转换（待验证）
+
+路径：`src/session_game.cpp`、`tests/session_tests.cpp`、`docs/jass.md`。集中验证零、正负角度、极值与特殊实数、脚本组合及多人确定性，并与固定版原函数逐位对照；新增断言尚未编译或运行。

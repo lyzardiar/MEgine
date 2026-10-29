@@ -98,3 +98,5 @@ REA 注册调用位于 `0x6f1e9b31–0x6f1e9b54`，把 I2R 绑定到 `0x6f1e7230
 DotA 地图的距离计算调用 `Pow(real, real)`；该 native 使用单精度结果并接入现有数学函数的非有限值错误处理。负底数的分数指数、溢出和特殊浮点值目前沿用本客户端边界，原版数值精度和异常语义尚待对照。
 
 `StringHash` 已接入脚本运行时：空字符串返回零，其余字符串按字节在首个 NUL 或 1023 字节截断，ASCII 小写转大写、正斜线转反斜线，再以固定 32 位混合求值。固定 1.27 `Game.dll` 的 `0x6f1f8470` 调用 `Storm.dll` ordinal 590；后者 SHA-256 为 `f8f519cfaa6275a5172a014f0abed2212284390a33f1194677155a7d408e63eb`。七组 ASCII 输入的原 DLL 返回值与独立算法计算一致，证据位于 `tmp/docs-artifacts/war3/storm-hash-{probe.ps1,original.txt}`；新增客户端消费者断言尚未执行。多字节文本在当前 UTF-8 字节表示与原版字符串编码间的兼容性留待集中对照。
+
+`Deg2Rad`／`Rad2Deg` 已绑定到 JASS 数值运行时，使用固定版 `Game.dll` 中的常量位型 `0x3c8efa35`／`0x42652ee1` 和已有的原版实数乘法。只读指令及常量记录在 `tmp/docs-artifacts/war3/angle-natives-1031.txt`；多种实数和特殊值的逐位行为留待集中对照，新增客户端断言尚未执行。
