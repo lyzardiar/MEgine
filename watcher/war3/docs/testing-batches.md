@@ -2788,3 +2788,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 实验对局命令菜单关闭（待验证）
 
 路径：`src/lan_actions.cpp`、`src/game_commands.cpp`、`src/game_view.cpp`、`tests/order_queue_tests.cpp`。集中验证取消／右键／Esc／切换界面及建造目标模式、打开后同帧变化、网络失败、时间片顺序、双端和回放；`0xfb` 仅为实验协议，原版关闭行为仍待对照，见 [菜单动作录制](lan-menu-recording.md)。新增断言未编译或运行。
+
+### 战役单位索敌距离缓存（待验证）
+
+路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`；集中验证运行值／默认值、实际索敌及修理、旧版与损坏数据、实验同步和原版 StoreUnit，见 [单位索敌距离](campaign-unit-acquire.md)。新增断言尚未编译或运行。
