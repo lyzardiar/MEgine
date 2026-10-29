@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 提示文本滚动边界待验证
+
+路径：`src/glue.h/.cpp`、`src/game_flow_ui.cpp`；说明见 `game-tips.md`。阶段检查短文本和多行文本的滚轮边界、切换提示、字体尺寸、中文与地图资源覆盖，并核对其他文本测量消费者。
+
 ## 主动攻击目标事件待验证
 
 路径：`src/combat.h`、`src/session_combat_orders.cpp`、`src/session_combat.cpp`、`src/session_network_identity.cpp`；说明见 `combat-target-events.md`。包含本轮帮助页和可破坏物预选的 Win32 Release 客户端编译通过。阶段检查主动和自动目标、重复与切换命令、目标失效、回调取消／改派／注册、射程事件、联机及原版事件次序。
