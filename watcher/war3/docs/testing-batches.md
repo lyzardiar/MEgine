@@ -3018,3 +3018,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 游戏端口选项（待验证）
 
 路径：`src/front_options.*`、`src/game_preferences.*`、`src/lan_host.*`、`src/lan_host_ui.cpp`、`src/main.cpp`。原版输入框与房主监听和公告已接入；集中验证输入、保存恢复、自定义端口、占用报错、真实客户端连接及原版互通，见[游戏端口](game-port.md)。
+
+### 回放玩家离开记录（待验证）
+
+路径：`src/replay.*`、`src/lan_simulation.*`、`src/game_view.*`、`src/main.cpp`。集中验证自研回放中离开事件和时间片顺序、重复及非法记录、重入、选择与缓存同步、后续动作及固定版对照；原版回放入口和对象编号映射仍待实现，见[回放玩家离开记录](replay-player-departure.md)。

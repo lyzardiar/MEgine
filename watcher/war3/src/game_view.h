@@ -258,6 +258,7 @@ public:
     bool enableReplay(std::uint8_t peer,LanSimulation::ObjectResolver resolve);
     void scoreReplaySaver(std::function<std::pair<bool,std::string>(const std::wstring&)> saver);
     std::optional<LanStepResult> consumeLanSlot(std::uint64_t sequence,const LanTimeSlot& slot);
+    bool consumeReplayDeparture(std::uint8_t peer);
     const LanSimulation* lanSimulation() const {return lanSimulation_.get();}
     ScriptSession& session() const {return *data_->session;}
     bool appExitRequested() const {return appExit_;}

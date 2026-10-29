@@ -19,6 +19,8 @@ enum class ReplayRecordKind {Player,PlayerLeft,Setup,CountdownStart,CountdownEnd
 struct ReplayRecord {ReplayRecordKind kind;ReplayPlayer player;ReplaySetup setup;LanTimeSlot slot;bool fragment=false;std::uint8_t playerId=0;std::vector<std::uint8_t> payload;};
 struct ReplayChat {std::uint8_t sender=0;std::uint32_t scope=0;bool startup=false;std::string text;};
 ReplayChat decodeReplayChat(const ReplayRecord& record);
+struct ReplayDeparture {std::uint8_t playerId=0;std::uint32_t reason=0,result=0,counter=0;};
+ReplayDeparture decodeReplayDeparture(const ReplayRecord& record);
 class Replay {
     ReplayHeader header_;
     ReplayGame game_;

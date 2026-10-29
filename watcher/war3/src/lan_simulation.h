@@ -52,7 +52,7 @@ private:
     std::array<std::uint32_t,16> groundItems_{};
     std::array<LanCommandMenu,16> menus_{};
     std::size_t cursor_=0;
-    bool consuming_=false,experimental_=false;
+    bool consuming_=false,replayDepartureRunning_=false,experimental_=false;
     std::optional<bool> localDialogQuit_;
     LanTimeDriver driver_;
     bool validate(const LanAction& action);
@@ -64,6 +64,7 @@ public:
     LanSimulation(LanSimulation&&)=delete;
     LanSimulation& operator=(LanSimulation&&)=delete;
     LanStepResult consume(std::uint64_t sequence,const LanTimeSlot& slot);
+    bool replayDeparture(std::uint8_t peer);
     bool hasLocalDialogQuit() const{return localDialogQuit_.has_value();}
     bool unfinishedCacheSync() const{return !cacheUnitParts_.empty();}
     LanCommandMenu commandMenu(unsigned player) const{return player<menus_.size()?menus_[player]:LanCommandMenu::None;}
