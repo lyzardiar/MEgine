@@ -4,6 +4,7 @@
 #include "image.h"
 #include "media.h"
 #include "model.h"
+#include "scene_assets.h"
 #include "glue.h"
 #include "map_browser.h"
 #include "lan_browser.h"
@@ -117,7 +118,7 @@ int run(HINSTANCE instance) {
     struct ClearRenderer {WindowState& state;~ClearRenderer(){state.renderer=nullptr;}} clearRenderer{state};
     Text text(renderer, font->bytes);
     auto logo = renderer.texture(logoImage.width, logoImage.height, logoImage.pixels);
-    Model menu(archives, images, &renderer, "UI\\Glues\\MainMenu\\MainMenu3d_exp\\MainMenu3d_exp.mdx", log);
+    SceneAssets menuAssets(archives);auto& menu=menuAssets.model("UI\\Glues\\MainMenu\\MainMenu3d_exp\\MainMenu3d_exp.mdx",log);while(menuAssets.uploadOne(renderer)){}menuAssets.ready(renderer);
     GlueScreen mainMenu(archives,images,renderer,text,"UI\\FrameDef\\Glue\\MainMenu.fdf","MainMenuFrame");
     enum class Screen {Main,Single,Maps,Campaign,Replays,ReplayPrepare,Lan,LanLoading,Cinematic,Loading,Game};Screen screen=Screen::Main;
     std::unique_ptr<GlueScreen> singleMenu;
@@ -125,7 +126,7 @@ int run(HINSTANCE instance) {
     std::unique_ptr<MapBrowser> browser;
     std::unique_ptr<ReplayBrowser> replayBrowser;std::unique_ptr<ReplayPreparation> replayPreparation;std::unique_ptr<ReplayRuntime> replayRuntime;std::shared_ptr<const Replay> replaySnapshot;std::shared_ptr<LanLocalIdentity> replayIdentity;std::uint8_t replayPeer=0;bool replayOrigin=false,replaySeenSlot=false,replayAutoPaused=false;
     std::unique_ptr<LanBrowser> lan;
-    std::unique_ptr<CampaignBrowser> campaign;std::unique_ptr<Model> campaignBackdrop;std::string campaignBackground;bool campaignOrigin=false,campaignMode=false;
+    std::unique_ptr<CampaignBrowser> campaign;std::unique_ptr<SceneAssets> campaignAssets;Model* campaignBackdrop=nullptr;std::string campaignBackground;bool campaignOrigin=false,campaignMode=false;
     GameLoading loader(log);std::uint64_t loadRequest=0;std::unique_ptr<GameData> uploading;std::unique_ptr<LoadingScreen> loadingScreen;std::unique_ptr<GameView> game;std::string loadError,frontError;bool autoStarted=false,restartPending=false;
     std::unique_ptr<LanMatchLoading> lanLoading;std::unique_ptr<LanRuntime> lanRuntime;std::unique_ptr<ExperimentalLanRecorder> lanRecorder;std::shared_ptr<LanLocalIdentity> lanIdentity;bool lanOrigin=false,lanLeaveExitApplication=false;std::string lanSavedReplayNotice;
     std::unique_ptr<Music> music;std::unique_ptr<Cinematic> cinematic;std::unique_ptr<ModelCinematic> modelCinematic;bool cinematicFromGame=false;
@@ -200,7 +201,7 @@ int run(HINSTANCE instance) {
         float scale = std::min(renderer.width() / 800.f, renderer.height() / 600.f);
         float left = (renderer.width() - 800 * scale) / 2, top = (renderer.height() - 600 * scale) / 2;
         auto draw = [&](float x, float y, float w, float h, DWORD color, IDirect3DTexture9* texture) { renderer.rect(left + x * scale, top + y * scale, w * scale, h * scale, color, texture); };
-        if(screen!=Screen::Loading && screen!=Screen::LanLoading && screen!=Screen::Game && screen!=Screen::Cinematic){if(screen==Screen::Campaign && campaign){auto background=campaign->backdrop();if(background!=campaignBackground){campaignBackdrop.reset();campaignBackground=background;if(!background.empty())try{campaignBackdrop=std::make_unique<Model>(archives,images,&renderer,background.c_str(),log);}catch(const std::exception& e){log.write(std::string("campaign_background_unavailable=")+e.what());}}if(campaignBackdrop)campaignBackdrop->draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);else menu.draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);}else menu.draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);}
+        if(screen!=Screen::Loading && screen!=Screen::LanLoading && screen!=Screen::Game && screen!=Screen::Cinematic){if(screen==Screen::Campaign && campaign){auto background=campaign->backdrop();if(background!=campaignBackground){campaignBackdrop=nullptr;campaignAssets.reset();campaignBackground=background;if(!background.empty())try{auto assets=std::make_unique<SceneAssets>(archives);auto& backdrop=assets->model(background,log);while(assets->uploadOne(renderer)){}assets->ready(renderer);campaignBackdrop=&backdrop;campaignAssets=std::move(assets);}catch(const std::exception& e){log.write(std::string("campaign_background_unavailable=")+e.what());}}if(campaignBackdrop)campaignBackdrop->draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);else menu.draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);}else menu.draw(options.timeMs.value_or(GetTickCount64()-started),float(renderer.width())/renderer.height(),true);}
         UiInput input{(state.mouseX-left)/(scale*1000),(state.mouseY-top)/(scale*1000),(state.pressX-left)/(scale*1000),(state.pressY-top)/(scale*1000),state.click,state.down,state.key,state.wheel/WHEEL_DELTA,state.doubleClick,state.click?state.clickShift:(GetKeyState(VK_SHIFT)&0x8000)!=0,state.keyControl,state.keyRepeat,state.keyShift,state.keyAlt,state.click?state.clickControl:(GetKeyState(VK_CONTROL)&0x8000)!=0};
         std::string action;
         if(screen==Screen::Main){draw(90,15,512,256,0xffffffff,logo.Get());action=mainMenu.draw("ControlLayer",input,{"SinglePlayerButton","LocalAreaNetworkButton","ExitButton"});if(input.key==VK_ESCAPE)action="ExitButton";if(action=="SinglePlayerButton"){prepareSingle();screen=Screen::Single;}if(action=="LocalAreaNetworkButton")try{openLan();frontError.clear();screen=Screen::Lan;}catch(const std::exception& e){lan.reset();frontError="无法打开局域网浏览界面。";log.write(std::string("lan_open_failed=")+e.what());}if(action=="ExitButton"){if(options.windowCheck && windowStage<6)throw std::runtime_error("Cancelled pointer input activated ExitButton");running=false;}}

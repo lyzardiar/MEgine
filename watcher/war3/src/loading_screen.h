@@ -2,13 +2,15 @@
 #pragma once
 #include "game_loading.h"
 #include "glue.h"
+#include "scene_assets.h"
 
 namespace war3 {
 class LoadingScreen {
     std::unique_ptr<Archives> archives_;
     Images images_;
     Renderer& renderer_;
-    std::unique_ptr<Model> background_,bar_;
+    SceneAssets assets_;
+    Model *background_=nullptr,*bar_=nullptr;
     GlueScreen screen_;
 public:
     LoadingScreen(ScriptSession& session,Renderer& renderer,Text& text,Log& log,IDirect3DTexture9* minimap);

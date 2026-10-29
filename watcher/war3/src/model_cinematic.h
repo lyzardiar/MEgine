@@ -1,12 +1,14 @@
 // Author: MiYu. Sequential source model cameras and scene-labelled cinematic audio.
 #pragma once
 #include "model.h"
+#include "scene_assets.h"
 #include "sound.h"
 #include "map_ui.h"
 #include "morph_mesh.h"
 namespace war3 {
 class ModelCinematic {
-    Model model_;
+    SceneAssets assets_;
+    Model& model_;
     SoundScene sound_;
     Renderer& renderer_;
     struct MorphCue {size_t scene;std::uint64_t begin,end;std::unique_ptr<MorphMesh> mesh;};

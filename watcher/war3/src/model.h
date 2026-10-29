@@ -25,7 +25,7 @@ public:
 struct ModelVertex {float x,y,z,u,v;};
 struct ModelGeometry {std::vector<ModelVertex> vertices;std::vector<std::uint16_t> indices;};
 struct ModelEvent {std::string name;int parent=-1,global=-1,node=-1;bool animated=false;std::vector<int> times;};
-struct ModelSoundEvent {std::string name;std::array<float,3> position{};};
+struct ModelSoundEvent {std::string name;std::array<float,3> position{};float angle=0;};
 struct ModelLookAt {std::string bone;std::array<float,3> target;};
 class Model {
     struct Data;
@@ -44,6 +44,7 @@ public:
     size_t sequenceCount() const;
     int sequenceStart() const;
     const std::vector<ModelEvent>& events() const;
+    bool hasSoundEvents() const;
     std::vector<ModelSoundEvent> soundEvents(ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& world,const D3DMATRIX& view,bool refreshPose=false) const;
     bool cameraIndex(unsigned index);
     size_t cameraCount() const;
