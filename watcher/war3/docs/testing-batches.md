@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 保护卷轴与资源宝箱待验证
+
+路径：`consumables.h`、`spells.h`、`session_consumables.cpp`、`session_item_use.cpp`、`tests/consumption_tests.cpp`、`tests/commerce_tests.cpp`；说明见 `protection-scroll.md`、`resource-powerups.md`。Win32 Release 客户端及两个相关消费者已编译。阶段检查 AIda／AIdb 范围、敌友／免疫、护甲叠加／驱散／到期、恢复上限、事件重入及地图覆盖；检查 AIgo／AIlu 拾取者归属、资源变化事件、物品消耗、上限／异常数值、召唤单位和多人同步；对照原版计分与资源维护费。专项、真实对局及原版对照尚未执行。
+
 ## 闪烁物品与单位头像皮肤待验证
 
 路径：`session_item_use.cpp`、`session_spells.cpp`、`tests/mobility_tests.cpp`、`game_loading.h/.cpp`、`game_selection_panel.cpp`、`game_hero_bar.cpp`；说明见 `blink-items.md`、`selection-panel.md` 和 `hero-revival.md`。Win32 Release 客户端及 mobility 消费者已编译。阶段用 stealth 夹具及 `war3_mobility_tests <data-root> <fixture> blink-item` 验证点目标、最小／最大距离、落点、魔法／冷却／取消与使用事件；另验证 DotA 自定义跳刀、受伤后的限制、地图覆盖、原版行为及多人同步。实际窗口核对四族及地图皮肤、头像边框／高亮／英雄光效、生命与魔法比例、纹理缺失／加载、大小窗口、选择和快捷键、GPU 恢复及原版布局。上述专项、实际操作与原版对照尚未执行。
