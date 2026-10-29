@@ -904,6 +904,7 @@ class ScriptSession {
     void destructableLife(std::uint32_t id,float value,ScriptContext context={});
     void widgetDeath(std::uint32_t id,ScriptContext context={});
     std::uint32_t nearestTree(WorldPoint point,float range,std::uint32_t exclude=0);
+    std::uint32_t reachableHarvestTree(const UnitState& unit,WorldPoint point,float range,bool direct,float workRange,unsigned& cursor,bool& any);
     std::pair<std::uint32_t,unsigned> sourceAbility(const UnitState& unit,const char* code);
     void initializeHarvest(UnitState& unit);
     void cancelGather(UnitState& unit);

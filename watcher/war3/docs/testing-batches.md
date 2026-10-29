@@ -2598,3 +2598,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 空单位即时命令（待验证）
 
 路径：`session_entities.cpp`、`session_orders.cpp`、`docs/player-commands.md`。Win32 Release 编译通过；Human01 原图 main 越过空单位命令并完成初始化，请求 120 秒静音推进的检查返回成功，实际模拟 36.96875 秒后处于对话框／暂停，未完成整关。集中验证字符串／编号、null／无效／已销毁单位、命令事件／队列、回调重入及原版返回值；真实窗口与战役继续留待验收。日志 `tmp/docs-artifacts/war3/campaign/human01-120s-nullorder-1030.log`。
+
+### 采木目标可达性（待验证）
+
+路径：`commerce.h`、`session.h`、`session_destructables.cpp`、`session_lumber.cpp`、`docs/destructables.md`。集中验证树木死亡／移除、隔墙树与可达替代、四个以上候选的轮转、无候选／暂时不可达、树木复活、路径动态变化、携木返还后接续、晕眩／定身／停止／重下命令、农民／苦工／食尸鬼／小精灵及脚本事件；对照原版选择规则并测量密集树林与大量工人的 CPU 开销。当前未编译或运行，保留批次验证。
