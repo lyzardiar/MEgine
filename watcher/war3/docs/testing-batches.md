@@ -2744,3 +2744,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 被动防御弹道偏转（待验证）
 
 路径：`src/passives.h`、`src/session.h`、`src/session_passive_info.cpp`、`src/session_defense_passives.cpp`、`src/session_damage.cpp`、`src/session_self_spells.cpp`。集中验证派生字段／概率、弹道与伤害、目标和能力失效、叠加、双端随机顺序及原版行为；速度字段和 DataI 模式仍未实现，见 [被动防御偏转](passive-defense-deflection.md)。本次未编译或运行。
+
+### 状态提示字段展开（待验证）
+
+路径：`src/game_buff_panel.cpp`、`src/session_ability_commands.cpp`、`src/session.h`、`tests/spell_tests.cpp`。集中验证原版及地图覆盖字段、百分比、未知引用、多等级、颜色与实际窗口，并对照原版；说明见 [状态提示字段](buff-tooltip-fields.md)。新增断言尚未编译或运行。

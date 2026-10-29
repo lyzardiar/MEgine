@@ -5,7 +5,7 @@
 
 namespace war3 {
 const GameView::BuffPanelInfo& GameView::buffPanelInfo(std::uint32_t id){
-    if(auto found=buffPanelInfo_.find(id);found!=buffPanelInfo_.end())return found->second;auto& session=*data_->session;BuffPanelInfo info{session.buffProfile(id,"Buffart"),session.buffProfile(id,"Bufftip"),session.buffProfile(id,"Buffubertip")};if(auto comma=info.icon.find(',');comma!=std::string::npos)info.icon.resize(comma);if(info.icon=="_")info.icon.clear();return buffPanelInfo_.emplace(id,std::move(info)).first->second;
+    if(auto found=buffPanelInfo_.find(id);found!=buffPanelInfo_.end())return found->second;auto& session=*data_->session;BuffPanelInfo info{session.buffProfile(id,"Buffart"),session.expandTooltip(session.buffProfile(id,"Bufftip")),session.expandTooltip(session.buffProfile(id,"Buffubertip"))};if(auto comma=info.icon.find(',');comma!=std::string::npos)info.icon.resize(comma);if(info.icon=="_")info.icon.clear();return buffPanelInfo_.emplace(id,std::move(info)).first->second;
 }
 std::vector<std::uint32_t> GameView::buffPanelIds(std::uint32_t handle) const {
     auto found=data_->session->units().find(handle);if(found==data_->session->units().end())return {};std::set<std::uint32_t> ids;for(auto& [id,buff]:found->second->buffs)if(id)ids.insert(id);for(auto& [id,aura]:found->second->auras)if(id && aura.remaining>0)ids.insert(id);return {ids.begin(),ids.end()};

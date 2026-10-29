@@ -1037,6 +1037,7 @@ class ScriptSession {
 public:
     std::string unitUiField(std::uint32_t type,const char* field) {return definitions().field(type,"UnitUI",field);}
     float unitUiNumber(std::uint32_t type,const char* field) {return definitions().number(type,"UnitUI",field);}
+    std::string expandTooltip(const std::string& source);
     std::string buffProfile(std::uint32_t id,const char* key) {return mapString(definitions().field(id,"Profile",key),strings_);}
     bool corpseAvailable(std::uint32_t corpse,std::uint32_t claimant=0);
     bool corpseCarrier(std::uint32_t transport);
