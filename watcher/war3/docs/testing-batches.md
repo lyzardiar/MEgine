@@ -2866,3 +2866,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 船坞缺失商品空槽（待验证）
 
 路径：`src/session_commerce.cpp`、`docs/campaign-shipyard-stock.md`。NightElfX02 隔离探针完成船坞库存和 main，后在未实现的 AI native 处停止；集中验证原版窗口、空槽、有效商品及动态库存，见 [商店默认单位库存](campaign-shipyard-stock.md)。
+
+### 两栖 AI 队长共享路线（待验证）
+
+路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`src/session_ai_armies.cpp`、`src/session_ai_control.cpp`。Win32 Release 核心增量编译和原图两栖／地面混组定向探针通过；集中验证真实战役、路线中断、补员、动态障碍、混编、同步及原版行为，见 [两栖 AI 路径](campaign-amphibious-ai.md)。

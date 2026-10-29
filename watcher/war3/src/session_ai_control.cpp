@@ -28,8 +28,8 @@ void ScriptSession::bindAiGuardNatives(ScriptAI& ai){
     bind("SuicideUnitEx","nothing",{"integer","integer","integer"},[this,&ai](auto& vm,auto args){aiSuicide(ai,std::bit_cast<int>(args[0].bits),args[1].bits,std::bit_cast<int>(args[2].bits));return vm.nothing();});
     bind("GroupTimedLife","nothing",{"boolean"},[this,&ai](auto& vm,auto args){ai.groupTimedLife=args[0].bits!=0;if(!ai.groupTimedLife)for(auto it=ai.captain.begin();it!=ai.captain.end();)if(!alive(*it,NativeKind::Unit) || units_.at(*it)->timedLife)it=ai.captain.erase(it);else ++it;return vm.nothing();});
     bind("IgnoredUnits","integer",{"integer"},[this,&ai](auto& vm,auto args){unsigned count=0;for(auto& [id,u]:units_)if(u->owner==ai.owner && u->type==args[0].bits && !u->removing && std::bit_cast<float>(u->life.bits())>0 && (ai.guardUnits.contains(id) || (!ai.groupTimedLife && u->timedLife)))++count;return vm.integer(int(count));});
-    bind("ResetCaptainLocs","nothing",{},[this,&ai](auto& vm,auto){ai.homeOverride=false;aiTowns(ai);ai.goal=ai.stage=ai.home;return vm.nothing();});
+    bind("ResetCaptainLocs","nothing",{},[this,&ai](auto& vm,auto){aiCancelCaptainRoute(ai);ai.homeOverride=false;aiTowns(ai);ai.goal=ai.stage=ai.home;return vm.nothing();});
     bind("ShiftTownSpot","nothing",{"real","real"},[this,&ai](auto& vm,auto args){ai.townSpot=requireWorld().clamp({jass::Real::fromBits(args[0].bits),jass::Real::fromBits(args[1].bits)});return vm.nothing();});
-    bind("ClearCaptainTargets","nothing",{},[this,&ai](auto& vm,auto){for(auto id:aiCaptain(ai))stopUnit(id);ai.goal=ai.stage;ai.retreating=false;return vm.nothing();});
+    bind("ClearCaptainTargets","nothing",{},[this,&ai](auto& vm,auto){aiCancelCaptainRoute(ai);for(auto id:aiCaptain(ai))stopUnit(id);ai.goal=ai.stage;ai.retreating=false;return vm.nothing();});
 }
 }

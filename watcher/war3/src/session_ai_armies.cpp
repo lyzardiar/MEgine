@@ -27,7 +27,7 @@ void ScriptSession::aiSuicideTick(ScriptAI& ai){
     }
 }
 void ScriptSession::aiTeleportCaptain(ScriptAI& ai,WorldPoint point){
-    point=requireWorld().clamp(point);auto members=aiCaptain(ai);if(members.empty())return;double x=0,y=0;for(auto id:members){x+=number(units_.at(id)->x);y+=number(units_.at(id)->y);}x/=members.size();y/=members.size();
+    aiCancelCaptainRoute(ai);point=requireWorld().clamp(point);auto members=aiCaptain(ai);if(members.empty())return;double x=0,y=0;for(auto id:members){x+=number(units_.at(id)->x);y+=number(units_.at(id)->y);}x/=members.size();y/=members.size();
     for(auto id:members){if(!alive(id,NativeKind::Unit))continue;auto u=units_.at(id);if(u->owner!=ai.owner || u->paused || u->stunned() || u->building || u->hidden() || number(u->life)<=0)continue;auto destination=requireWorld().clamp({real(float(number(point.x)+number(u->x)-x)),real(float(number(point.y)+number(u->y)-y))});if(!cancelCombat(*u))continue;u->route.clear();u->waypoint=0;u->currentOrder=0;u->holding=false;u->x=destination.x;u->y=destination.y;u->combat.home=destination;u->animation.clear();u->animationIndex.reset();u->animationQueue.clear();u->animationTime=0;unitFootprint(*u);++fogRevision_;}
     ai.goal=ai.stage=point;ai.retreating=false;
 }

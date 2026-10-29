@@ -222,6 +222,8 @@ class ScriptSession {
     void aiCancelZeppelinWave(ScriptAI& ai);
     void aiHarvest(ScriptAI& ai);
     void aiFormCaptains(ScriptAI& ai,bool force=false);
+    void aiCancelCaptainRoute(ScriptAI& ai);
+    void aiCaptainRouteTick(ScriptAI& ai);
     void aiSuicide(ScriptAI& ai,int quantity,std::uint32_t type,int targetPlayer);
     void aiSuicideTick(ScriptAI& ai);
     void aiCombatSpells(ScriptAI& ai,std::uint32_t unit);
