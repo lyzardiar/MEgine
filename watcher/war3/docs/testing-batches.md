@@ -2642,3 +2642,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### Human02 空位置接口（待验证）
 
 路径：`session_entities.cpp`、`session_world.cpp`、`tests/world_tests.cpp`、`docs/campaign-flow.md`。无效单位的 GetUnitLoc 返回空位置，坐标查询返回零，移除无效位置安全返回；Win32 Release 产品合并编译通过。隔离战役探针从原 Human02 main 推进至 400 秒，55.25 秒玩家控制为关闭、60.25 秒为开启，见 `tmp/docs-artifacts/war3/human02-1030/locfixed.log`；未载入 Human01 缓存、未操作战斗或验证窗口。阶段验证空／错误类型／销毁句柄、真实位置和事件、源地图开场与完整换关、缓存继承和原版边界。
+
+### 电脑英雄闪烁撤退（待验证）
+
+路径：`session_ai.cpp`、`docs/ai.md`。启用英雄逃跑的低生命英雄可使用已学闪烁远离可见威胁，复用实际技能／落点及事件；Win32 Release 产品合并编译通过。阶段验证低生命、敌人靠近／消失、禁法／魔法／冷却／科技、不可达及拥堵落点、多威胁方向、死亡／易主和事件重入、施法后命令、双端同步及 CPU 开销，并与原版 AI 对照。
