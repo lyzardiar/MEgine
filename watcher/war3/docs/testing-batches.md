@@ -2594,3 +2594,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 经典对象覆盖尾字段（待验证）
 
 路径：`object_data.cpp`、`tests/map_tests.cpp`、`docs/object-overrides.md`。Win32 Release 产品与地图测试目标编译通过；原 Human01 `oC16/umdl/owar`、合成非零尾字段及截断拒绝一项定向检查通过。Human01 越过对象覆盖后在 `IssueImmediateOrder` 无效句柄处停止，证据 `tmp/docs-artifacts/war3/campaign/human01-120s-objects-1030.log`。阶段覆盖五类覆盖文件、来源继承、不同末尾字段／损坏／截断和实际地图玩法，确认尾字段与原版语义。
+
+### 空单位即时命令（待验证）
+
+路径：`session_entities.cpp`、`session_orders.cpp`、`docs/player-commands.md`。Win32 Release 编译通过；Human01 原图 main 越过空单位命令并完成初始化，请求 120 秒静音推进的检查返回成功，实际模拟 36.96875 秒后处于对话框／暂停，未完成整关。集中验证字符串／编号、null／无效／已销毁单位、命令事件／队列、回调重入及原版返回值；真实窗口与战役继续留待验收。日志 `tmp/docs-artifacts/war3/campaign/human01-120s-nullorder-1030.log`。
