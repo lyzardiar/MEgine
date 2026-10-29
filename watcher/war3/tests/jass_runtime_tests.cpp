@@ -15,6 +15,32 @@ std::string hex(std::string_view bytes) {std::string result;constexpr char digit
 int wmain(int argc,wchar_t** argv) {
     if(argc!=2){std::cerr<<"Usage: war3_jass_runtime_tests <literal-fixture.json>\n";return 2;}
     unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};
+    test("runtime_primitive_global_snapshot_transaction",[]{
+        const std::string source=R"jass(type unit extends handle
+native Make takes nothing returns unit
+globals
+integer n=7
+real r=1.25
+boolean b=true
+string empty=""
+string absent=null
+integer array values
+unit actor=null
+endglobals
+function mutate takes nothing returns nothing
+set n=41
+set r=2.5
+set b=false
+set empty="changed"
+set absent="present"
+set values[3]=9
+set values[8191]=-12
+set actor=Make()
+endfunction
+)jass";
+        Runtime original(compile(source)),restored(compile(source));auto bind=[](Runtime& r){r.bind("Make",[](auto& vm,auto){return vm.handle("unit",17);});r.initialize();};bind(original);bind(restored);auto emptySnapshot=original.encodePrimitiveGlobals();Runtime emptyTarget(compile(source));bind(emptyTarget);emptyTarget.restorePrimitiveGlobals(emptySnapshot.bytes);require(emptyTarget.global("empty").text && emptyTarget.global("empty").text->empty() && !emptyTarget.global("absent").text,"Null and empty string lost");original.invoke("mutate");auto snapshot=original.encodePrimitiveGlobals();require(snapshot.excludedGlobals==1 && snapshot.excludedNonDefaultGlobals==1,"Snapshot must report nondefault handle");auto report=restored.restorePrimitiveGlobals(snapshot.bytes);require(report.excludedGlobals==1 && report.excludedNonDefaultGlobals==1,"Restore lost exclusion report");require(restored.global("n").bits==41 && restored.global("r").bits==Real::fromDecimal("2.5").bits() && !restored.global("b").bits,"Primitive values changed");require(restored.global("empty").text && *restored.global("empty").text=="changed" && restored.global("absent").text && *restored.global("absent").text=="present","Strings changed");require(restored.global("values",3).bits==9 && std::bit_cast<std::int32_t>(restored.global("values",8191).bits)==-12 && !restored.global("actor").bits,"Array or excluded handle changed");
+        auto initial=restored.encodePrimitiveGlobals();auto truncated=snapshot.bytes;truncated.pop_back();rejects([&]{restored.restorePrimitiveGlobals(truncated);},"Truncated");require(restored.encodePrimitiveGlobals().bytes==initial.bytes,"Failed decode changed globals");Runtime different(compile("globals\ninteger other=7\nendglobals\n"));different.initialize();rejects([&]{different.restorePrimitiveGlobals(snapshot.bytes);},"schema");require(different.global("other").bits==7,"Schema rejection changed globals");
+    });
     test("runtime_global_initialization_and_entry_guard",[]{Runtime r(compile("native Next takes nothing returns integer\nglobals\ninteger first=Next()\ninteger second=Next()\nendglobals\nfunction sum takes nothing returns integer\nreturn first*10+second\nendfunction\n"));unsigned calls=0;r.bind("Next",[&](auto& vm,auto){return vm.integer(++calls);});rejects([&]{r.invoke("sum");},"not initialized");require(calls==0,"Constructor ran global initializer");r.initialize();require(r.ready() && calls==2 && r.invoke("sum").bits==12 && r.global("second").bits==2,"Global initializer order differs");rejects([&]{r.initialize();},"fresh instance");});
     test("runtime_bound_storage_and_arrays",[]{Runtime r(compile("globals\ninteger x=5\ninteger array values\nendglobals\nfunction f takes integer x returns integer\nlocal integer array a\nset a[3]=x\nset values[7]=a[3]+values[0]\nreturn a[3]\nendfunction\nfunction read takes nothing returns integer\nlocal integer array a\nreturn a[3]+x\nendfunction\nfunction bad takes nothing returns integer\nreturn values[-1]\nendfunction\n"));r.initialize();Value args[]={r.integer(9)};require(r.invoke("f",args).bits==9 && r.global("values",7).bits==9 && r.global("x").bits==5 && r.invoke("read").bits==5,"Local/global/array slots differ");rejects([&]{r.invoke("bad");},"outside 0..8191");});
     test("runtime_branch_loop_exit_and_early_return",[]{Runtime r(compile("function f takes integer n returns integer\nlocal integer i=0\nlocal integer sum=0\nloop\nexitwhen i>=n\nif i==2 then\nset sum=sum+20\nelseif i==3 then\nreturn sum\nelse\nset sum=sum+i\nendif\nset i=i+1\nendloop\nreturn sum\nendfunction\n"));r.initialize();Value args[]={r.integer(8)};require(r.invoke("f",args).bits==21,"Loop/elseif/early return differs");args[0]=r.integer(2);require(r.invoke("f",args).bits==1,"Execution state leaked across calls");});

@@ -6,7 +6,7 @@
 
 ## JASS 基础全局快照待验证
 
-路径：`src/jass_runtime.h/.cpp`；说明见 `jass-global-persistence.md`。包含本轮武器伤害改动的 Win32 Release 客户端编译通过。阶段检查基础类型、稀疏数组及 null／空字符串往返，损坏／截断／声明不匹配的事务性拒绝，非默认句柄报告和活动线程限制；接口尚未接入存档或关卡切换。
+路径：`src/jass_runtime.h/.cpp`、`tests/jass_runtime_tests.cpp`；说明见 `jass-global-persistence.md`。客户端编译通过；新增全局快照检查待运行。阶段执行 `war3_jass_runtime_tests`，检查基础类型、稀疏数组及 null／空字符串往返，损坏／截断／声明不匹配的事务性拒绝，非默认句柄报告和活动线程限制；接口尚未接入存档或关卡切换。
 
 ## 科技增加零骰面武器的骰子待验证
 
