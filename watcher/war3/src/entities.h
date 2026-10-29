@@ -53,6 +53,7 @@ struct UnitState {
     std::vector<PlayerCommand> playerOrders;
     double stealthLastAction=0;
     bool shadowNight=false;
+    bool naturalSleep=false,naturalSleepWoken=false,naturalSleepDisabled=false;
     std::optional<ShadowMeldState> shadowMeld;
     std::optional<MirrorImageState> mirrorImage;
     std::shared_ptr<SpiritSplitState> spiritSplit;
@@ -187,7 +188,7 @@ struct UnitState {
     const std::string& displayModel() const {auto form=morphAppearance();return form?form->model:model;}
     const std::string& displayIcon() const {auto form=morphAppearance();return form?form->icon:icon;}
     jass::Real currentMoveSpeed() const {auto form=morphAppearance();return form?form->speed:moveSpeed;}
-    bool sleeping() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Sleep)return true;return false;}
+    bool sleeping() const {if(naturalSleep)return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Sleep)return true;return false;}
     bool sleepProtected() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Sleep && b.damageGuard>0)return true;return false;}
     bool grounded() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Net && b.groundsAir)return true;return false;}
     bool airborne() const {return movementType=="fly";}
@@ -201,7 +202,7 @@ struct UnitState {
     bool spinning() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Bladestorm && b.remaining>0)return true;return false;}
     std::uint64_t animationFrame(std::uint64_t duration) const {auto time=std::uint64_t(std::max(0.,animationTime)*1000);return cast && cast->phase==CastOrder::Phase::Channel && cast->spell.animationLooping && duration?time%duration:time;}
     std::string sequenceName(const std::string& sequence) const {auto result=sequence;if(spinning() && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")))result="Attack Walk Stand Spin";else if(!morphed()){if(warClub && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")) && result.find("Alternate")==std::string::npos)result+=" Alternate";auto alternate=scriptAnimationProperties.find("alternate");if(!animationProperties.empty() && !(animationProperties=="Alternate" && alternate!=scriptAnimationProperties.end() && !alternate->second) && !sequence.starts_with("Morph") && sequence.find("Alternate")==std::string::npos)result+=" "+animationProperties;for(auto& [id,b]:buffs){if(b.kind==BuffKind::Avatar && result.find("Alternate")==std::string::npos)result+=" Alternate";if(b.kind==BuffKind::Defend && result.find("Defend")==std::string::npos)result+=" Defend";}}for(auto& [property,enabled]:scriptAnimationProperties)if(enabled)result+=" "+property;return result;}
-    bool stunned() const {if(formLocked() || (possessionClaim && possessionClaim->locked))return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::FreezingBreath || b.kind==BuffKind::ShacklesTarget || b.kind==BuffKind::Stun || b.kind==BuffKind::Impale || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
+    bool stunned() const {if(naturalSleep || formLocked() || (possessionClaim && possessionClaim->locked))return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::FreezingBreath || b.kind==BuffKind::ShacklesTarget || b.kind==BuffKind::Stun || b.kind==BuffKind::Impale || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
     unsigned preventedAttacks() const {unsigned result=0;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Silence || b.kind==BuffKind::DrunkenHaze || b.kind==BuffKind::SoulBurn || b.kind==BuffKind::Cloud)result|=b.disableMask;return result;}
     bool doomed() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Doom)return true;return false;}
     bool silenced() const {return doomed() || (preventedAttacks()&8)!=0;}

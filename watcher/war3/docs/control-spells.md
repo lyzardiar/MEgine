@@ -8,7 +8,8 @@
 
 - 诱捕/蛛网读取原等级、英雄时长、前置Roen/Ruwb、源订单/图标/热键及1500速度弹道。Aens默认12秒/英雄3秒，Aweb为12秒/英雄7秒。真实Net状态限制移动，空中目标按0.6秒/200高度源字段下降，并在解除后恢复原飞行高度。被网住的飞行单位保留空中受击能力，并增加地面武器/法术/光环的目标入口；IsUnitType返回对应当前状态。源近战范围DataC已读取，完整近战距离与分类位精度仍待原件对照。
 - EnsnareIsMagic=0、WebIsMagic=0由源MiscGame及地图常量决定物理/魔法控制属性。物理网可作用于魔免目标，不被普通魔法驱散；魔法网沿用魔免/驱散流程。控制期间保留既有移动路径，暂停位移并显示站立，解除后继续原移动；仍可在合法范围攻击/施法。Aweb源webon/weboff、默认自动开关、目标选择/研究前置/冷却和原PRE2指示已接入；自动模式尚未执行专项。
-- AUsl使用源20秒/英雄5秒及2秒初始保护。真实Sleep状态打断当前动作、阻止操作，保护期内拒绝伤害；保护结束后正伤害唤醒，持续时间结束或驱散同样清理。原BUsl/BUsp视觉与保护寿命进入真实特效生命周期；UnitIsSleeping/UnitWakeUp及UNIT_TYPE_SLEEPING/STUNNED读取实际状态。UnitAddSleep／UnitCanSleep 操作源能力 ACsp，UnitAddSleepPerm／UnitCanSleepPerm 操作源能力 Asla；权限与当前睡眠状态分开，添加权限不直接让单位入睡。夜间中立睡眠和原版唤醒交互仍待实现或对照。
+- AUsl使用源20秒/英雄5秒及2秒初始保护。Sleep状态打断当前动作、阻止操作，保护期内拒绝伤害；保护结束后正伤害唤醒，持续时间结束或驱散同样清理。原BUsl/BUsp视觉与保护寿命进入特效生命周期；UnitIsSleeping、UnitWakeUp 和 UNIT_TYPE_SLEEPING 读取实际状态。UnitAddSleep／UnitCanSleep 操作源能力 ACsp，UnitAddSleepPerm／UnitCanSleepPerm 操作源能力 Asla；权限与当前睡眠状态分开。
+- 自然睡眠使用地图昼夜时钟：中立敌对守卫或具有睡眠能力的空闲单位夜间入睡，天亮、受到伤害、UnitWakeUp 或敌方单位靠近时醒来，并在当夜保持清醒。每0.25秒用空间网格检查附近单位，当前采用200范围；自然睡眠与技能睡眠分别维护，天亮不移除技能效果。默认中立单位资格、ACsp/Asla差异、接近唤醒距离、重新入睡时机和表现尚需对照1.27原版及真实地图修正。
 - Aprg及TFT Apg2使用源全部魔法效果驱散、召唤物400伤害、敌方移动/攻击恢复档位、15秒总时长、暂停3秒/英雄1秒及魔法损失字段。友军只驱散，不附加敌方减益；物理控制保留。当前速度按源档数逐档恢复，精确原件公式/事件/免疫边界仍待对照。Purge真实树木目标共用接近/取消/施法事件，破坏树木并释放占地，GetSpellTargetDestructable保留正确上下文。
 - AHbn按源移动/攻击速度减少施加真实Banish状态；目标不能发起新攻击，已发射的攻击继续处理，仍可施法。按源EtherealDamageBonus的七类映射拒绝普通物理攻击并增加魔法/法术伤害，读取EtherealDamageBonusAlly处理友军；Holy Light/Death Coil/Healing Wave、Heal、回春与宁静的法术恢复使用EtherealHealBonus=1.66，普通生命设置及基础恢复不套用该加成。UNIT_TYPE_ETHEREAL与原Banish特效已连接；原版透明材质、完整技能/物品/伤害类型组合继续实现及验收。
 

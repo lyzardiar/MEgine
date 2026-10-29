@@ -603,6 +603,7 @@ class ScriptSession {
     void controlBuffTick(UnitBuff& buff,double elapsed);
     void updateGrounding(UnitState& unit,double delta);
     void wakeUnit(std::uint32_t unit);
+    void naturalSleepTick();
     float spellHealAmount(const UnitState& unit,float amount);
     jass::Value createCorpse(unsigned owner,std::uint32_t type,WorldPoint point,jass::Real facing);
     void exhumeCorpses(std::uint32_t transport,double delta);
