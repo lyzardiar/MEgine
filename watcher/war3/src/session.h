@@ -1124,6 +1124,8 @@ public:
     bool returnResources(std::uint32_t unit,std::uint32_t depot=0);
     std::vector<CommandButton> commands(std::uint32_t unit,unsigned player,bool buildMenu=false);
     bool purchase(std::uint32_t shop,unsigned player,std::uint32_t type,bool item,std::uint32_t buyer=0);
+    bool neutralRevealAvailable(std::uint32_t shop,unsigned player,std::uint32_t ability,std::string* reason=nullptr);
+    bool neutralReveal(std::uint32_t shop,unsigned player,std::uint32_t ability,WorldPoint point);
     ProductInfo revivalInfo(std::uint32_t hero);
     bool queueRevival(std::uint32_t building,std::uint32_t hero);
     bool awakenHero(std::uint32_t building,unsigned player,std::uint32_t hero);

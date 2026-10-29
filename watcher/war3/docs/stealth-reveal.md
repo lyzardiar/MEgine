@@ -31,4 +31,4 @@ python tests/generate-stealth-fixture.py --data-root "E:/Program Files (x86)/dzc
 
 dust/meld/tower模式随实现编译，阶段合并执行：显形之尘移动/次数/到期、手动隐藏/自动索敌/明确行动、Ahid与技能移除、AHta研究/持续/冷却。继续合并多玩家/共享/暂停/死亡转让/回调重入、w3a/英雄/可用性/驱散、全图显形、真实窗口/鼠标/小地图/热键/特效/声音、三图长局/CPU/GPU/内存与切图释放。
 
-风步增量见[机动与镜像](mobility.md)。钻地及 Abdt 侦测见[钻地侦测](burrow-detection.md)；中立Andt付费显形、完整变形/建筑阻挡、状态栏和声音仍待实现。DataB/C转换调度、Ahid条件、侦测类型/计数/范围边缘、订单/淡入/破隐/半透明材质和原版数值/事件精度保持待验收。
+风步增量见[机动与镜像](mobility.md)。钻地及 Abdt 侦测见[钻地侦测](burrow-detection.md)；中立 Andt 付费显形已接入，详见[隐形、侦测与共享视野](visibility.md)；完整变形/建筑阻挡、状态栏和声音仍待实现。DataB/C转换调度、Ahid条件、侦测类型/计数/范围边缘、订单/淡入/破隐/半透明材质和原版数值/事件精度保持待验收。

@@ -1,5 +1,7 @@
 # 隐形、侦测与共享视野
 
+中立 `Andt` 付费显形接入建筑按钮、地面／小地图选点、资源扣除以及发起玩家的区域视野和侦测；按源 DataA／DataB 读取金币／木材价格，DataC 读取侦测类型，Area／Dur 决定范围和持续时间。建筑状态、玩家关系、附近可交互单位及资源在执行时重新检查，效果到期由现有区域生命周期回收；脚本 `IssueNeutralPointOrder[ById]` 使用 `neutraldetectaoe` 同一入口。自研实验联机按新增命令种类 21 传输建筑、能力和位置，需两端使用包含该协议的版本。当前派发目标点订单事件；原版施法事件、请求者资格、扣费时序与联机互通尚待核对。真实地图、UI、边界及回调重入留功能阶段验证。
+
 隐形状态、地形视野和侦测范围共同决定实际单位可见性。原IsUnitVisible已使用统一消费者，新增IsUnitInvisible、IsUnitDetected、IsUnitFogged、IsUnitMasked、UnitShareVision及AI专用UnitInvis；未知native继续明确失败。
 
 ## 已接入的玩法

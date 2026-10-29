@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 中立建筑付费显形待验证
+
+路径：`src/commerce.h`、`src/session_commerce.cpp`、`src/session_stealth_reveal.cpp`、`src/session.h`、`src/game_commands.cpp`、`src/game_view.cpp/.h`、`src/player_commands.cpp/.h`、`src/lan_actions.cpp`、`src/lan_action_encoder.cpp`、`src/lan_simulation.cpp`；说明见 `visibility.md`。Andt 已连接发起玩家、地图／小地图点选、源费用、临时视野及侦测、脚本中立点订单和实验联机命令。Win32 Release 客户端编译通过；阶段核对交互资格、资源／回调事件顺序、多个玩家、范围与持续时间、自定义能力、双端和原版玩法；新增实验协议需两端使用支持版本。
+
 ## AI 重复启动待验证
 
 路径：`src/session_ai.cpp`；说明见 `ai.md`。已有 AI 时保持原策略与脚本线程；Win32 Release 客户端编译通过。阶段检查相同／不同策略和模式、暂停状态、回调期间重复调用、资源失败及其他玩家线程，并对照原版边界。专项尚未运行。

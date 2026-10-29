@@ -80,6 +80,7 @@ class GameView {
     std::uint64_t nextIdleWorkerRefresh_=0;
     std::vector<std::uint32_t> spellBookStack_;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> spellTarget_;
+    std::optional<std::pair<std::uint32_t,std::uint32_t>> neutralRevealTarget_;
     bool spellTargetQueued_=false;
     std::vector<CommandButton> commandButtons(std::uint32_t unit);
     std::optional<std::pair<std::uint32_t,std::uint32_t>> buildTarget_;
