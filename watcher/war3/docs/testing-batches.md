@@ -2702,3 +2702,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 空单位动画（待验证）
 
 路径：`session_visual.cpp`、`docs/save-runtime-foundation.md`。SetUnitAnimation 对无效单位安全返回，原件入口和 OrcX01 开场实际调用已核对；Win32 Release 核心库编译通过。阶段验证空／销毁／错误类型、有效单位和动画切换／回调及原版窗口表现；OrcX01 区域存档恢复仍未实现。
+
+### 召唤物零持续时间（待验证）
+
+路径：`session_spell_info.cpp`、`docs/beastmaster.md`。允许源召唤技能持续时间为 0，并复用无定时生命的实际召唤流程。OrcX01 隔离探针推进至 400 秒并实际施放 Rexxar 的 Arsg，生成 900 生命且无定时生命的 ngzc；日志 `tmp/docs-artifacts/war3/orcx-saves-1031/zerolife-cast.log`。阶段验证零／正／负时长、召唤上限与替换、死亡／易主／技能取消、事件重入、战役和原版寿命语义；存档切区尚未实现。
