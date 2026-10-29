@@ -39,6 +39,7 @@ public:
     std::uint32_t unitId(const std::string& name) const;
     std::vector<std::uint32_t> unitTypes() const;
     std::vector<std::uint32_t> itemTypes() const;
+    std::vector<std::uint32_t> upgradeTypes() const;
     const std::vector<std::uint32_t>& randomItems(int itemClass,int level) const;
     const std::vector<std::uint32_t>& randomUnits(bool building,int level,char tileset) const;
     bool contains(std::uint32_t id,bool item=false) const;
