@@ -21,7 +21,8 @@ class GameFlowUi {
     unsigned scoreTab_=0,gameSpeedDraft_=50;
     std::array<int,4> scoreSort_{{-1,-1,-1,-1}};
     std::array<bool,4> scoreAscending_{};
-    bool scoreTeams_=false;
+    bool scoreTeams_=false,scoreAllyColors_=false;
+    std::array<unsigned,4> scoreFilterColors_{};
     bool scoreSavePanel_=false,scoreReplaySaved_=false;
     wchar_t scoreReplayHigh_=0;
     std::wstring scoreReplayName_;

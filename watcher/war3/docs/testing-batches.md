@@ -2654,3 +2654,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 模型 SPN 发射事件（待验证）
 
 路径：`model.h`、`model_particles.cpp`、`game_model_sound.cpp`、`game_view.*`、`game_effects.cpp`、`docs/model-event-sounds.md`、`third_party/warcraft-model-reference/source-info.json`。模型事件节点驱动源 SpawnData 模型的内存流送、变换和首段动画，Win32 Release 产品合并编译通过；已抽样读取四族基础模型中的 SPN 名称及原表，未执行实际绘制。阶段验证死亡／攻击事件、连续触发／递归、位置旋转缩放、粒子／附件／声音、同模型共享状态、首次加载迟到、迷雾／视口／暂停、窗口 GPU、切图释放及密集对局性能，对照原版画面；界面模型事件仍待实现。
+
+### 结算盟友颜色按钮（待验证）
+
+路径：`game_flow_ui.cpp/.h`、`docs/game-flow.md`。结算界面接入源按钮、C 键、图标／提示和本人／盟友／敌方玩家颜色；Win32 Release 产品合并编译通过。阶段验证鼠标／快捷键、初始状态、玩家及观察者／非对称联盟、地图颜色覆盖、不同统计页与排序、回放保存弹窗隔离及真实窗口画面，对照原版行为。
