@@ -1070,6 +1070,8 @@ public:
     bool stopUnit(std::uint32_t handle,bool hold=false);
     bool targetOrder(std::uint32_t source,std::uint32_t target,std::uint32_t order=851971);
     bool attackDestructable(std::uint32_t source,std::uint32_t target);
+    std::vector<std::uint32_t> nearbyWeaponDestructables(WorldPoint point,float radius);
+    bool destructableWeaponTarget(const DestructableState& target,const WeaponDefinition& weapon,bool splash=false);
     std::optional<unsigned> destructableWeapon(const UnitState& source,const DestructableState& target);
     void combatDestructable(std::uint32_t source,double delta);
     void launchDestructableAttack(std::uint32_t source,std::uint32_t target,unsigned slot);

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 范围及弹跳武器伤害可破坏物待验证
+
+路径：`src/combat.h`、`src/session.h`、`src/session_combat_destructable.cpp`、`src/session_projectiles.cpp`；说明见 `destructable-weapon-attacks.md`。阶段检查炮击各范围与系数、单位和障碍混合命中、月刃弹跳目标／数量／衰减、死亡复活、伤害回调、地图覆盖、联机、性能及原版规则；直线扩散、武器被动和目标关系仍待完善。
+
 ## JASS 基础全局快照待验证
 
 路径：`src/jass_runtime.h/.cpp`；说明见 `jass-global-persistence.md`。阶段检查基础类型、稀疏数组及 null／空字符串往返，损坏／截断／声明不匹配的事务性拒绝，非默认句柄报告和活动线程限制；接口尚未接入存档或关卡切换。
