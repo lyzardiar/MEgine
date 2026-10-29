@@ -2806,3 +2806,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 地图密度脚本接口（待验证）
 
 路径：`src/session.h`、`src/session.cpp`、`tests/session_tests.cpp`；集中验证资源／野怪密度配置、低八位、地图切换与局域网及原版初值，见 [地图密度](map-density.md)。自动生成消费者尚未实现；新增断言未编译或运行。
+
+### 实验局域网过期选区（待验证）
+
+路径：`src/lan_simulation.cpp`、`tests/order_queue_tests.cpp`。集中验证发送后单位移除／不可选、空组与混合成员、未知身份和经典协议拒绝、时序及双端回放，见 [过期选区与编组](lan-stale-selection.md)。新增消费者断言未编译或运行。
