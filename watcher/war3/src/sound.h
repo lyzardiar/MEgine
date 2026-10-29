@@ -6,6 +6,7 @@
 #include "volume_ramp.h"
 #include <array>
 #include <functional>
+#include <map>
 
 namespace war3 {
 struct MidiDefinition {
@@ -41,6 +42,7 @@ class SoundScene {
     std::vector<std::shared_ptr<ScriptSound>> detached_;
     std::optional<SourceTable::Row> environment_;
     std::optional<std::vector<SourceTable::Row>> labels_;
+    std::optional<std::map<std::string,std::string>> animationLabels_;
     std::array<VolumeRamp,8> groups_{};
     struct StackedArea {float x=0,y=0,width=0,height=0;std::uint32_t unit=0;};
     struct Stacked {std::weak_ptr<ScriptSound> sound;std::vector<StackedArea> areas;std::unique_ptr<AudioVoice> voice;};
@@ -66,6 +68,7 @@ public:
     std::shared_ptr<ScriptSound> digital(const std::string& file,bool loop,bool spatial,bool stopOutOfRange,int fadeIn,int fadeOut,const std::string& eax);
     void parameters(const std::shared_ptr<ScriptSound>& sound,const std::string& label);
     std::shared_ptr<ScriptSound> fromLabel(const std::string& name,bool loop,bool spatial,bool stopOutOfRange,int fadeIn,int fadeOut);
+    bool animation(const std::string& code,const std::array<float,3>& position);
     unsigned duration(const std::shared_ptr<ScriptSound>& sound);
     void pitch(const std::shared_ptr<ScriptSound>& sound,float ratio);
     void environment(const std::string& name);

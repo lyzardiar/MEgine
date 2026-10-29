@@ -5,6 +5,7 @@
 
 namespace war3 {
 SoundScene& ScriptSession::requireAudio() {if(!audio_){audio_=std::make_unique<SoundScene>(requireWorld().resources(),audioSimulationClock_?&simulationTime_:nullptr);audio_->localGain(localSoundGain_);audio_->muted(audioMuted_);}return *audio_;}
+bool ScriptSession::animationSound(const std::string& code,const std::array<float,3>& position) {return requireAudio().animation(code,position);}
 void ScriptSession::audioMuted(bool muted) {audioMuted_=muted;if(audio_)audio_->muted(muted);if(music_)music_->muted(muted);if(thematicMusic_)thematicMusic_->muted(muted);}
 void ScriptSession::localAudioGains(float sound,float music) {if(!std::isfinite(sound) || sound<0 || sound>1 || !std::isfinite(music) || music<0 || music>1)throw std::runtime_error("Invalid local audio gain");localSoundGain_=sound;localMusicGain_=music;if(audio_)audio_->localGain(sound);if(music_)music_->localGain(music);if(thematicMusic_)thematicMusic_->localGain(music);}
 void ScriptSession::updateAudio() {if(audio_)audio_->update();if(music_)music_->update();if(thematicMusic_)thematicMusic_->update();}

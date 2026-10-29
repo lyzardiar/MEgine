@@ -129,6 +129,8 @@ class GameView {
     std::uint32_t widget(float x,float y,bool items) const;
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
+    void modelSounds(Model& model,ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const std::array<float,3>& position);
+    std::set<std::string> failedModelSounds_;
     void drawTrackables(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void trackableInput(GameInput& input);
     std::uint32_t hoveredTrackable_=0;

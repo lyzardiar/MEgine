@@ -21,6 +21,7 @@ bool LanSimulation::validate(const LanAction& action){
         if(std::holds_alternative<LanActionPause>(event)){prepared.emplace_back(LanActionPause{});continue;}
         if(std::holds_alternative<LanActionResume>(event)){prepared.emplace_back(LanActionResume{});continue;}
         if(std::holds_alternative<LanActionPreSubselection>(event))continue;
+        if(auto trackable=std::get_if<LanActionTrackable>(&event)){if(!resolve_)return false;auto handle=resolve_(trackable->object);if(!handle || !session_.trackables().contains(*handle))return false;prepared.emplace_back(Trackable{*handle,trackable->hit});continue;}
         if(auto selection=std::get_if<LanActionSelection>(&event)){
             if(!resolve_)return false;Selection item{*player,selection->mode==1,{}};item.units.reserve(selection->objects.size());for(auto object:selection->objects){auto handle=resolve_(object);if(!handle || !session_.units().contains(*handle) || (item.add && !session_.unitSelectable(*handle)))return false;item.units.push_back(*handle);}for(auto id:item.units){if(item.add)selected().insert(id);else selected().erase(id);}if(auto group=projectedSubgroups_.find(*player);group!=projectedSubgroups_.end() && !selected().contains(group->second.first))projectedSubgroups_.erase(group);prepared.emplace_back(std::move(item));continue;
         }
@@ -46,6 +47,7 @@ bool LanSimulation::apply(ScriptSession& session,const LanAction&){
     for(const auto& event:decoded_[cursor_++]){
         if(std::holds_alternative<LanActionPause>(event))session.pause(true);
         else if(std::holds_alternative<LanActionResume>(event))session.pause(false);
+        else if(auto trackable=std::get_if<Trackable>(&event)){session.trackableEvent(trackable->handle,trackable->hit);if(driver_.failed())return false;}
         else if(auto selection=std::get_if<Selection>(&event)){for(auto id:selection->units){session.setPlayerUnitSelected(selection->player,id,selection->add);if(driver_.failed())return false;}auto group=subgroups_.find(selection->player);if(group!=subgroups_.end() && !session.playerSelection(selection->player).contains(group->second.first))subgroups_.erase(group);}
         else if(auto group=std::get_if<Subgroup>(&event)){auto selected=session.playerSelection(group->player);auto unit=session.units().find(group->unit);if(!selected.contains(group->unit) || unit==session.units().end() || unit->second->type!=group->type)return false;subgroups_[group->player]={group->unit,group->type};}
         else if(auto alliance=std::get_if<Alliance>(&event)){PlayerCommand command;command.player=alliance->player;command.kind=PlayerCommandKind::AllianceSnapshot;command.otherPlayer=alliance->recipient;command.allianceOption=alliance->flags&0x7fu;command.enabled=(alliance->flags&0x400u)!=0;dispatchPlayerCommand(session,command);if(driver_.failed())return false;}

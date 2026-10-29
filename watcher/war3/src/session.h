@@ -1087,6 +1087,7 @@ public:
     void audioSimulationClock() {if(audio_)throw std::runtime_error("Audio simulation clock must be set before audio initialization");audioSimulationClock_=true;}
     void updateAudio();
     void updateAudioListener(float x,float y,float z,std::array<float,3> right);
+    bool animationSound(const std::string& code,const std::array<float,3>& position);
     const SoundScene* audio() const {return audio_.get();}
     const MusicScene* music() const {return music_.get();}
     const ScriptLeaderboard* leaderboard(unsigned player) const;
