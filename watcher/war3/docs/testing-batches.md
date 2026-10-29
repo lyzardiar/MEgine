@@ -2982,3 +2982,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 避难权杖驱散（待验证）
 
 路径：`src/session_teleport.cpp`。避难状态已接入现有魔法驱散，集中验证友敌驱散、状态释放、持续治疗和原版 1.27 行为，见[避难权杖](sanctuary-staff.md)。
+
+### 亡灵第五关计时窗口句柄（待验证）
+
+路径：`src/session_dialogs.cpp`。独立探针通过有效、空和已销毁窗口的定向检查，并在人工完成任务条件后进入胜利对话；自然战斗、真实窗口和跨关流程待集中验证，见[计时窗口句柄](campaign-undead05-timer-dialog.md)。
