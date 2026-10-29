@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 玩家基础状态快照待验证
+
+路径：`src/session.h`、`src/session_game.cpp`；说明见 `player-state-persistence.md`。阶段检查 16 名玩家资源／人口／状态位及维护费覆盖往返、损坏／重复键／截断的事务性拒绝、执行及联网限制、与单位／生产等完整恢复的一致性；尚未接入存档。
+
 ## 地面物品武器攻击待验证
 
 路径：`src/combat.h`、`src/game_view.cpp`、`src/session.h`、`src/session_combat.cpp`、`src/session_combat_orders.cpp`、`src/session_combat_destructable.cpp`、`src/session_projectiles.cpp`；说明见 `weapon-item-attacks.md`。包含时钟快照的 Win32 Release 客户端编译通过。阶段检查四族武器、目标选择／排队、近战与弹道、范围／直线／弹跳、拾取／丢弃／销毁与回调、迷雾、联机、性能及原版表现。

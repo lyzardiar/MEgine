@@ -1234,6 +1234,8 @@ public:
     bool mainCompleted() const {return mainCompleted_ && !failed_;}
     bool mainStarted() const {return mainAttempted_ && !failed_;}
     void advance(double elapsed);
+    std::vector<std::uint8_t> encodePlayerStates() const;
+    void restorePlayerStates(std::span<const std::uint8_t> bytes);
     std::vector<std::uint8_t> encodeRandomState() const;
     void restoreRandomState(std::span<const std::uint8_t> bytes);
     double simulationTime() const {return simulationTime_;}
