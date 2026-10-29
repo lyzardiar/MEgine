@@ -19,6 +19,9 @@ std::optional<std::pair<std::uint32_t,std::uint32_t>> ScriptSession::localNetwor
 std::optional<std::uint32_t> ScriptSession::localNetworkObject(std::uint32_t ordinal,std::uint32_t type) const {
     if(!ordinal || ordinal>localNetworkObjects_.size())return {};auto handle=localNetworkObjects_[ordinal-1];auto id=localNetworkObject(handle);if(!id || id->first!=ordinal || id->second!=type)return {};return handle;
 }
+bool ScriptSession::localNetworkObjectRemoved(std::uint32_t ordinal,std::uint32_t type) const {
+    if(!ordinal || ordinal>localNetworkObjects_.size())return false;auto handle=localNetworkObjects_[ordinal-1];if(handle<handleBase || handle-handleBase>=objects_.size())return false;auto& object=objects_[handle-handleBase];return !object.alive && object.localNetworkOrdinal==ordinal && localType(object.kind)==type;
+}
 std::uint32_t ScriptSession::localNetworkChecksum() const {
     Digest hash;hash.word(1);hash.word(randomState_);hash.real(simulationTime_);hash.word(std::uint32_t(localNetworkObjects_.size()));
     auto ref=[&](std::uint32_t handle){auto id=localNetworkObject(handle);hash.word(id?id->first:0);hash.word(id?id->second:0);};

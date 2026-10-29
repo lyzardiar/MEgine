@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 自研联机商店交易待验证
+
+路径：lan_actions／lan_action_encoder／lan_runtime／lan_simulation、session_network_identity、revival_tests 与 fixture。自研对局按时间片传递商店对象、商品和类别，消费真实购买、库存、买家、资源、人口及事件；已移除商店和消费前失效的交易跳过，未知身份拒绝。Win32 Release 产品和专项编译通过；`war3_revival_tests.exe <data-root> <fixture.w3m> lan-purchase` 最小检查 1 通过／0 失败，覆盖物品／单位购买、在途改选、同片／跨片移除、未知身份与经典解析拒绝。阶段合并双端与回放、同片多玩家竞购和补货、目标／买家删除与易主、资源／人口不足、选区／触发器回调变化、无效／伪造报文与断线；原版商店协议和对象编号尚未实现或对照。
+
 ## 酒馆唤醒待验证
 
 路径：session_revival／session_commerce、player_commands／game_commands、lan_action_encoder／lan_local_identity／lan_simulation、revival_tests。`Aawa` 四槽即时唤醒接入资源／人口／附近买家检查、原英雄恢复和中立订单；自研联机按目标身份发送。Win32 Release 产品及专项目标编译通过；复活夹具 `awaken` 模式最小检查 1 通过／0 失败，覆盖原句柄、费用／人口／恢复、回调递归阻断及价格变化退款，无 Game.dll。命令：`war3_revival_tests.exe <data-root> <fixture.w3m> awaken`。待合并验证四槽顺序与按钮布局、原版单人／多人命令、源费用舍入／自定义覆盖、队列冲突、库存、资源变化与目标订单／复活事件重入、失效退款、空间阻挡、英雄死亡／转让／物品、音效与实际窗口；真实双端／回放及原版协议互通尚未验证。

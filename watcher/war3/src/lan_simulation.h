@@ -18,6 +18,7 @@ private:
     struct Escape {unsigned player;};
     struct Chat {unsigned player;std::string text;ChatChannel channel;};
     struct SelectionSync {std::uint8_t peer;LanActionExperimentalSelection part;};
+    struct Purchase {unsigned player;std::uint32_t shop,type;bool item;};
     struct Subgroup {unsigned player;std::uint32_t unit,type;};
     struct GroupAssign {unsigned player,group;std::vector<std::uint32_t> units;};
     struct GroupSelect {unsigned player;std::vector<std::uint32_t> units;};
@@ -26,7 +27,7 @@ private:
     struct Alliance {unsigned player,recipient,flags;};
     struct Trackable {std::uint32_t handle;bool hit;};
     struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0,expectedItem=0,itemSlot=0;bool constructionCancel=false,subgroup=false,itemOrder=false,itemById=false,queued=false;};
-    using Event=std::variant<LanActionPause,LanActionResume,Escape,Chat,SelectionSync,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable>;
+    using Event=std::variant<LanActionPause,LanActionResume,Escape,Chat,SelectionSync,Purchase,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable>;
     ScriptSession& session_;
     ObjectResolver resolve_;
     std::vector<std::vector<Event>> decoded_;

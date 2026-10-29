@@ -1143,6 +1143,7 @@ public:
     const SessionConfig& config() const {return config_;}
     std::optional<std::pair<std::uint32_t,std::uint32_t>> localNetworkObject(std::uint32_t handle) const;
     std::optional<std::uint32_t> localNetworkObject(std::uint32_t ordinal,std::uint32_t type) const;
+    bool localNetworkObjectRemoved(std::uint32_t ordinal,std::uint32_t type) const;
     std::uint32_t localNetworkChecksum() const;
     jass::Runtime& runtime() {return runtime_;}
     const jass::Runtime& runtime() const {return runtime_;}

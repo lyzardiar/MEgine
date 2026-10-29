@@ -23,6 +23,7 @@ bool LanSimulation::validate(const LanAction& action){
         if(std::holds_alternative<LanActionEscape>(event)){prepared.emplace_back(Escape{*player});continue;}
         if(auto chat=std::get_if<LanActionExperimentalChat>(&event)){prepared.emplace_back(Chat{*player,chat->text,chat->channel});continue;}
         if(auto part=std::get_if<LanActionExperimentalSelection>(&event)){if(!session_.validateSelectionSync(action.playerId,*part,projectedSync_))return false;prepared.emplace_back(SelectionSync{action.playerId,*part});continue;}
+        if(auto purchase=std::get_if<LanActionExperimentalPurchase>(&event)){if(!resolve_)return false;auto shop=resolve_(purchase->shop);if(!shop){if(session_.localNetworkObjectRemoved(purchase->shop.first,purchase->shop.second))continue;return false;}auto unit=session_.units().find(*shop);if(unit==session_.units().end())return false;if(unit->second->removing || std::bit_cast<float>(unit->second->life.bits())<=0)continue;if(selected().size()!=1 || !selected().contains(*shop))continue;prepared.emplace_back(Purchase{*player,*shop,purchase->type,purchase->item});continue;}
         if(std::holds_alternative<LanActionPreSubselection>(event))continue;
         if(auto trackable=std::get_if<LanActionTrackable>(&event)){if(!resolve_)return false;auto handle=resolve_(trackable->object);if(!handle || !session_.trackables().contains(*handle))return false;prepared.emplace_back(Trackable{*handle,trackable->hit});continue;}
         if(auto selection=std::get_if<LanActionSelection>(&event)){
@@ -55,6 +56,7 @@ bool LanSimulation::apply(ScriptSession& session,const LanAction&){
         else if(auto escape=std::get_if<Escape>(&event))session.endCinematic(escape->player);
         else if(auto chat=std::get_if<Chat>(&event)){session.chat(chat->player,chat->text,chat->channel);if(driver_.failed())return false;}
         else if(auto sync=std::get_if<SelectionSync>(&event)){session.receiveSelectionSync(sync->peer,sync->part);if(driver_.failed())return false;}
+        else if(auto purchase=std::get_if<Purchase>(&event)){auto selected=session.playerSelection(purchase->player);if(selected.size()!=1 || !selected.contains(purchase->shop) || !session.units().contains(purchase->shop))continue;PlayerCommand command;command.player=purchase->player;command.kind=purchase->item?PlayerCommandKind::PurchaseItem:PlayerCommandKind::PurchaseUnit;command.units={purchase->shop};command.objectType=purchase->type;dispatchPlayerCommand(session,command);if(driver_.failed())return false;}
         else if(auto trackable=std::get_if<Trackable>(&event)){session.trackableEvent(trackable->handle,trackable->hit);if(driver_.failed())return false;}
         else if(auto selection=std::get_if<Selection>(&event)){for(auto id:selection->units){session.setPlayerUnitSelected(selection->player,id,selection->add);if(driver_.failed())return false;}auto group=subgroups_.find(selection->player);if(group!=subgroups_.end() && !session.playerSelection(selection->player).contains(group->second.first))subgroups_.erase(group);}
         else if(auto assigned=std::get_if<GroupAssign>(&event)){groups_[assigned->player][assigned->group]=assigned->units;}

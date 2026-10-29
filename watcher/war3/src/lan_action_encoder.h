@@ -26,5 +26,5 @@ std::vector<std::uint8_t> encodeLanSelectionChange(ScriptSession& session,std::u
 struct LanSelectionChange {bool add=false;std::vector<std::uint32_t> handles;};
 // Preserves changes in order in a single payload. An empty list produces an empty payload.
 std::vector<std::uint8_t> encodeLanSelectionUpdate(ScriptSession& session,std::uint8_t peerId,std::span<const LanSelectionChange> changes,const LanWireObjectResolver& resolve);
-std::vector<std::uint8_t> encodeLanPlayerCommand(ScriptSession& session,std::uint8_t peerId,const PlayerCommand& command,const LanAbilityWireFields& fields,const LanWireObjectResolver& resolve);
+std::vector<std::uint8_t> encodeLanPlayerCommand(ScriptSession& session,std::uint8_t peerId,const PlayerCommand& command,const LanAbilityWireFields& fields,const LanWireObjectResolver& resolve,bool experimental=false);
 }

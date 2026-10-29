@@ -20,7 +20,17 @@ unit awakenShop=null
 integer awakenMode=0
 integer awakenCalls=0
 boolean awakenNested=false
+unit purchaseShop=null
 endglobals
+function RemoveShopOnSale takes nothing returns nothing
+    call RemoveUnit(purchaseShop)
+endfunction
+function InstallShopRemovalTest takes unit shop returns nothing
+    local trigger t=CreateTrigger()
+    set purchaseShop=shop
+    call TriggerRegisterUnitEvent(t,shop,EVENT_UNIT_SELL_ITEM)
+    call TriggerAddAction(t,function RemoveShopOnSale)
+endfunction
 function AwakenOrder takes nothing returns nothing
     set awakenCalls=awakenCalls+1
     if awakenMode==1 then
