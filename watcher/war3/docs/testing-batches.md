@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+## 传送门拥堵与落点搜索待验证
+
+路径：entities、session_waygate、session_summons、session_network_identity、waygate_tests、waygates。每步限制传送搜索数量，阻塞后按单位延迟重试；召唤／传送落点直接检查候选格通行，不对同一坐标执行寻路。Win32 Release 客户端与专项程序增量编译通过，专项尚未执行；阶段运行 `war3_waygate_tests.exe <data-root> <BootyBay.w3m>`，合并验证多门与高并发公平性、遮挡释放／区域离开、目标变更、回调重入、非地面移动类型、召唤能力、双端摘要和实际帧耗时。
+
 ## 地图传送门待验证
 
-路径：session_waygate、entities、session、session_entities、session_combat_orders、session_tick、session_network_identity、waygate_tests、waygates。脚本设置目标和启用状态，单位可经真实移动或目标命令进入门并传送到合法位置；空间候选、回调重入与实验联机状态摘要已接入。Win32 Release 客户端和专项程序增量编译通过；阶段运行 `war3_waygate_tests.exe <data-root> <BootyBay.w3m>`，并验证原版 WarChasers 脚本初始化、真实右键、双向门、目标阻挡／拥挤、脚本事件重入、单位生命周期、双端与回放、实际性能及原版时序。地图 war3mapUnits.doo 中的门目标与激活字段尚未接入。
+路径：session_waygate、entities、session、session_entities、session_combat_orders、session_tick、session_network_identity、waygate_tests、waygates。脚本设置目标和启用状态，单位可经真实移动或目标命令进入门并传送到合法位置；空间候选、回调重入与实验联机状态摘要已接入。Win32 Release 客户端和专项程序增量编译通过；阶段运行 `war3_waygate_tests.exe <data-root> <BootyBay.w3m>`，并验证原版 WarChasers 脚本初始化、真实右键、双向门、目标阻挡／拥挤、脚本事件重入、单位生命周期、双端与回放、实际性能及原版时序。地图 units.doo 的门目标区域编号尚未直接消费，原版运行时是否依赖该字段仍待确认。
 
 ## 脚本单位动画属性待验证
 
