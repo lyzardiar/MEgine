@@ -29,3 +29,5 @@ Human02 开场使用从未赋值的 `udg_Knight01`，将空单位传入 `GetUnit
 Human01 原胜利脚本保存阿尔萨斯并请求 Human02 后，隔离探针销毁前一会话并启动 Human02；原载入脚本恢复其 4 级、用户数据和指定库存物品，证据见[战役 gamecache](campaign-gamecache.md)。此探针通过直接击杀首领组加速，未经过实际窗口和自动换关界面。
 
 Human02 原图胜利流程的隔离探针在开场控制恢复后，通过辅助脚本标记基地任务已完成，再对原图剑圣调用 KillUnit；原地图触发器进入胜利对话框，选择继续后发出 `Maps\Campaign\Human02Interlude.w3m` 换关请求，日志位于 `tmp/docs-artifacts/war3/human02-victory-1030/victory.log`。该复现跳过真实基地建造、战斗和窗口操作，未验证间章加载或完整关卡。
+
+Human02 至 Human03 的隔离链路中，将阿尔萨斯设为 5 级后直接执行 Human02 原图的关卡准备函数；间章发出 Human03 换关请求，手动载入 Human03 后恢复了 5 级阿尔萨斯，开场结束后玩家控制权恢复。日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/cache-chain.log`。该检查未自然完成 Human02，也未经过产品窗口自动切关、真实战斗和完整战役。
