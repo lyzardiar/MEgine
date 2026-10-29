@@ -17,7 +17,7 @@ class GameFlowUi {
     Panel panel_=Panel::Closed;
     std::uint32_t dialogId_=0;
     std::uint64_t dialogRevision_=0;
-    size_t dialogCapacity_=0,dialogScroll_=0,helpScroll_=0,tipIndex_=0;
+    size_t dialogCapacity_=0,dialogScroll_=0,helpScroll_=0,tipIndex_=0,helpLines_=0,helpVisible_=0;
     unsigned scoreTab_=0,gameSpeedDraft_=50;
     std::array<int,4> scoreSort_{{-1,-1,-1,-1}};
     std::array<bool,4> scoreAscending_{};
@@ -36,7 +36,7 @@ class GameFlowUi {
     std::string sliderDrag_;
     std::vector<std::string> scoreModels_;
     std::array<std::array<std::string,25>,16> scoreCache_{};
-    std::string helpText_;
+    std::string helpText_,helpMeasured_;
     std::vector<std::string> tips_;
     void menuPanel(Panel panel);
     void optionsPanel(Panel panel);
