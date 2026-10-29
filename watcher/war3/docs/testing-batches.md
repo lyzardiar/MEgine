@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 战役跳过教程提示待验证
+
+路径：`src/campaign_profile.h`、`src/campaign_browser.h/.cpp`；说明见 `campaign-flow.md`。ROC 战役选择接入教程状态、原本地化文案与确认操作；Win32 Release 客户端编译通过。阶段核对首项／其他战役、已完成／未完成、TFT、确认／取消及键鼠交互，检查脚本 `SetTutorialCleared`、跨会话持久化、保存失败和窗口布局，并与原版验证版本门控和触发条件；尚未执行窗口与原版对照。
+
 ## 纠缠金矿矿工面板与释放待验证
 
 路径：`src/session.h`、`src/session_harvest.cpp`、`src/session_combat_orders.cpp`、`src/player_commands.cpp`、`src/lan_action_encoder.cpp`、`src/game_transport.cpp`；说明见 `transport.md`。矿工清单与容量读取现有采集状态和源能力，肖像点击连接单个释放及实验联机命令；Win32 Release 客户端编译通过。阶段核对多人采矿、容量与对象覆盖、落点受阻、矿井／矿工死亡和易主、命令回调重入、肖像操作、双客户端同步及原版界面；`IsUnitLoaded` 与装载事件的原版语义尚未核实。

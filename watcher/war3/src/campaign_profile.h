@@ -20,6 +20,7 @@ public:
     void setMission(bool expansion,unsigned campaign,unsigned index,bool enabled);
     void setCinematic(bool expansion,unsigned campaign,bool ending,bool enabled);
     void setTutorial(bool cleared);
+    bool tutorialCleared() const {return tutorial_==2;}
     void select(bool expansion,unsigned index);
     void difficulty(unsigned value);
     unsigned difficulty() const {return difficulty_;}

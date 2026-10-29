@@ -24,7 +24,7 @@ class CampaignBrowser {
     size_t selectedCampaign_=0,selectedEntry_=0,scroll_=0;
     unsigned rows_=1,currentDifficulty_=1;
     std::uint64_t request_=0;
-    bool missions_=false,loading_=false,autoStart_=false,currentExpansion_=false,currentCampaignSession_=true;
+    bool missions_=false,loading_=false,autoStart_=false,currentExpansion_=false,currentCampaignSession_=true,skipTutorial_=false;
     std::string error_,backdrop_,cinematicRequest_;
     void loadCatalog();
     void updateBackdrop();
@@ -35,6 +35,7 @@ class CampaignBrowser {
     void prepared();
     void selectCampaign(size_t index);
     void enterCampaign();
+    void finishEnterCampaign();
     void selectEntry(size_t index);
     bool entryAvailable(const Campaign& campaign,const Entry& entry) const;
     fs::path resolvePath(const std::string& path,const fs::path& externalRoot={}) const;
