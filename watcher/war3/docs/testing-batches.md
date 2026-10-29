@@ -2176,3 +2176,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ## 科技百分比待验证
 
 路径：`object_data.h/.cpp`、`session_match.cpp`、`tests/research_tests.cpp`，说明见 `player-scores.md`。阶段执行 research 消费者，核对四族与无科技种族、0／多级研究、地图自定义覆盖、`used`／`maxlevel`、错误输入和玩家隔离，并与原版比较有效科技、种族映射、随机种族时序、百分比精度及多人同步。Win32 Release 客户端与 research 消费者已编译；专项与原版对照尚未执行。
+
+## 单位类型 ID 运行态与召唤分类待验证
+
+路径：`session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`，说明见 `unit-id-classification.md`。阶段运行 research 夹具与消费者，核对 1、10、11–13、21–26、越界类别、未知大写 ID、自定义 summoned 与精确 token；对照原版实例召唤标记及自定义地图行为。专项与原版对照尚未执行。
