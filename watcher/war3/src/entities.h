@@ -25,11 +25,13 @@ struct BookGrant {int base=0,granted=0,borrowed=1;};
 struct ActiveSpellBook {std::uint32_t ability=0,item=0,order=0;bool shared=false;std::vector<std::uint32_t> spells;};
 struct UnitLookAt {std::uint32_t target=0;std::array<float,3> offset{};};
 struct TimedFacing {float start=0,delta=0;double elapsed=0,duration=0;};
+struct WaygateState {WorldPoint destination;bool active=true,configured=false;std::set<std::uint32_t> inside;};
 struct MilitiaState {enum class Phase {None,ToMilitia,ToWorker};Phase phase=Phase::None;std::uint32_t hall=0,ability=0,workerType=0,militiaType=0;double remaining=0,repath=0;};
 struct UnitState {
     std::uint32_t handle=0,type=0,owner=0;
     std::uint64_t deathRevision=0;
     std::optional<MilitiaState> militia;
+    std::optional<WaygateState> waygate;
     bool militiaBell=false;
     std::string name,model,icon;
     jass::Real x,y,facing,life,maxLife,mana,maxMana,moveSpeed,defaultMoveSpeed,acquireRange;

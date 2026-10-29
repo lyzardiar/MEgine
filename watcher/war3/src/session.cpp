@@ -53,7 +53,7 @@ void ScriptSession::attachWorld(std::unique_ptr<World> world) {if(!world || worl
 void ScriptSession::startMain() {if(!configured() || !world_ || !setupApplied_ || mainAttempted_)throw std::runtime_error("Map main requires a configured world and player setup");mainAttempted_=true;try{runtime_.start([this]{runtime_.invoke("main");mainCompleted_=true;});}catch(...){failed_=true;throw;}}
 void ScriptSession::bindNatives() {
     bindWorldNatives();bindCameraSetupNatives();bindSpatialEvents();bindFogNatives();bindTextNatives();bindTextTagNatives();bindIndicatorNatives();bindCacheNatives();bindCampaignNatives();bindHashtableNatives();
-    bindSoundNatives();bindRescueNatives();
+    bindSoundNatives();bindRescueNatives();bindWaygateNatives();
     bindMusicNatives();
     bindEntityNatives();bindCorpseNatives();bindControlNatives();bindTransportNatives();bindFoodNatives();bindCommerceNatives();bindProductionNatives();bindHeroNatives();bindSpellNatives();bindEffectNatives();bindTrackableNatives();bindLightningNatives();bindIllusionNatives();bindDamageNatives();bindQuestNatives();bindBlightNatives();bindCombatNatives();bindResearchNatives();bindHarvestNatives();bindDestructableNatives();bindConstructionNatives();bindScriptDialogNatives();bindMatchNatives();
     bindWeatherNatives();

@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+## 地图传送门待验证
+
+路径：session_waygate、entities、session、session_entities、session_combat_orders、session_tick、session_network_identity、waygate_tests、waygates。脚本设置目标和启用状态，单位可经真实移动或目标命令进入门并传送到合法位置；空间候选、回调重入与实验联机状态摘要已接入。Win32 Release 客户端和专项程序增量编译通过；阶段运行 `war3_waygate_tests.exe <data-root> <BootyBay.w3m>`，并验证原版 WarChasers 脚本初始化、真实右键、双向门、目标阻挡／拥挤、脚本事件重入、单位生命周期、双端与回放、实际性能及原版时序。地图 war3mapUnits.doo 中的门目标与激活字段尚未接入。
+
 ## 脚本单位动画属性待验证
 
-路径：entities、session_visual、game_flow_tests、campaign-cinematics。`AddUnitAnimationProperties` 修改单位的动画属性，并由场景模型、附件和动画队列选择消费；支持大小写、属性组合与源 Alternate 属性移除。阶段按 `tests/generate-game-flow-fixture.py --data-root <data-root>` 和 `war3_game_flow_tests.exe <data-root> <fixture.w3m>` 执行，并核对 DotA upgrade／alternate 调用、单位变形、重复添加移除、显式动画序号与原版模型画面。
+路径：entities、session_visual、game_flow_tests、campaign-cinematics。`AddUnitAnimationProperties` 修改单位的动画属性，并由场景模型、附件和动画队列选择消费；支持大小写、属性组合与源 Alternate 属性移除。Win32 Release 客户端和专项程序增量编译通过；阶段按 `tests/generate-game-flow-fixture.py --data-root <data-root>` 和 `war3_game_flow_tests.exe <data-root> <fixture.w3m>` 执行，并核对 DotA upgrade／alternate 调用、单位变形、重复添加移除、显式动画序号与原版模型画面。
 
 ## 过滤单位事件待验证
 

@@ -909,6 +909,9 @@ class ScriptSession {
     bool issueItemMove(unsigned player,std::uint32_t unit,std::uint32_t item,ItemMoveOrder::Kind kind,WorldPoint point,std::uint32_t target,unsigned slot);
     void spatialEvents();
     void moveUnits(double delta);
+    void waygateTick();
+    bool enterWaygate(std::uint32_t source,std::uint32_t gate,std::uint32_t order);
+    void bindWaygateNatives();
     void playerOrderQueueTick();
     void bindWeatherNatives();
     void bindCallbackNatives();
