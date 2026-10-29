@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 过场强制字幕待验证
+
+路径：`src/session.h`、`src/session_match.cpp`、`src/game_cinematic_panel.cpp`；说明见 `game-options.md`。地图脚本可强制显示过场对话字幕并恢复用户设置，Win32 Release 客户端编译通过。阶段检查字幕选项开／关、强制开／关切换、过场进行中切换、切图复位、静音和真实战役，比较原版；实际运行尚未执行。
+
 ## 地图脚本框选控制待验证
 
 路径：`src/session.h`、`src/session_match.cpp`、`src/game_view.cpp`；说明见 `drag-selection.md`。脚本框选输入及选择框显示开关已接入单机和实验联机，Win32 Release 客户端编译通过。阶段检查四种参数组合、拖动阈值、单击／技能目标、选区切换、禁用期间拖动和恢复、菜单、切图及双端同步，并对照原版；实际窗口和原版行为尚未验证。

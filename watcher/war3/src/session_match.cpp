@@ -50,6 +50,7 @@ void ScriptSession::bindMatchNatives() {
     for(auto name:{"IsNoVictoryCheat","IsNoDefeatCheat"})bind(name,"boolean",{},[](auto& vm,auto){return vm.boolean(false);});
     bind("EnableUserControl","nothing",{"boolean"},[this](auto& vm,auto a){userControl_=a[0].bits!=0;return vm.nothing();});
     bind("EnableUserUI","nothing",{"boolean"},[this](auto& vm,auto a){userUI_=a[0].bits!=0;return vm.nothing();});
+    bind("ForceCinematicSubtitles","nothing",{"boolean"},[this](auto& vm,auto a){forceCinematicSubtitles_=a[0].bits!=0;return vm.nothing();});
     bind("SetCineFilterTexture","nothing",{"string"},[this](auto& vm,auto a){auto value=a[0].text?*a[0].text:std::string{};if(value.size()>1024 || value.find('\0')!=std::string::npos)throw std::runtime_error("Invalid cinematic filter texture");cineFilter_.texture=std::move(value);return vm.nothing();});
     bind("SetCineFilterBlendMode","nothing",{"blendmode"},[this](auto& vm,auto a){if(a[0].bits>5)throw std::runtime_error("Invalid cinematic filter blend mode");cineFilter_.blend=a[0].bits;return vm.nothing();});
     bind("SetCineFilterTexMapFlags","nothing",{"texmapflags"},[this](auto& vm,auto a){if(a[0].bits>3)throw std::runtime_error("Invalid cinematic filter texture flags");cineFilter_.flags=a[0].bits;return vm.nothing();});

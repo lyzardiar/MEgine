@@ -243,6 +243,7 @@ class ScriptSession {
     bool showScores_=false,userControl_=true,userUI_=true,selectionEnabled_=true,selectionUI_=true,dragSelectionEnabled_=true,dragSelectionUI_=true;
     bool occlusionEnabled_=true;
     ScriptCineFilter cineFilter_;
+    bool forceCinematicSubtitles_=false;
     bool interfaceVisible_=true;
     float interfaceFrom_=1;
     double interfaceChanged_=0,interfaceDuration_=0;
@@ -1192,6 +1193,7 @@ public:
     bool userUI() const {return userUI_;}
     bool occlusionEnabled() const {return occlusionEnabled_;}
     const ScriptCineFilter& cineFilter() const {return cineFilter_;}
+    bool forceCinematicSubtitles() const {return forceCinematicSubtitles_;}
     float interfaceAmount() const {auto progress=interfaceDuration_>0?float(std::clamp((simulationTime_-interfaceChanged_)/interfaceDuration_,0.,1.)):1.f;return std::lerp(interfaceFrom_,interfaceVisible_?1.f:0.f,progress);}
     bool interfaceVisible() const {return interfaceAmount()>.5f;}
     const std::optional<ScriptCinematicScene>& cinematicScene() const {return cinematicScene_;}
