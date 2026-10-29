@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 闪烁物品与单位头像皮肤待验证
+
+路径：`session_item_use.cpp`、`session_spells.cpp`、`tests/mobility_tests.cpp`、`game_loading.h/.cpp`、`game_selection_panel.cpp`、`game_hero_bar.cpp`；说明见 `blink-items.md`、`selection-panel.md` 和 `hero-revival.md`。Win32 Release 客户端及 mobility 消费者已编译。阶段用 stealth 夹具及 `war3_mobility_tests <data-root> <fixture> blink-item` 验证点目标、最小／最大距离、落点、魔法／冷却／取消与使用事件；另验证 DotA 自定义跳刀、受伤后的限制、地图覆盖、原版行为及多人同步。实际窗口核对四族及地图皮肤、头像边框／高亮／英雄光效、生命与魔法比例、纹理缺失／加载、大小窗口、选择和快捷键、GPU 恢复及原版布局。上述专项、实际操作与原版对照尚未执行。
+
 ## 永久攻击伤害与达贡物品待验证
 
 路径：`entities.h`、`script_state.h`、`session_entities.cpp`、`session_equipment.cpp`、`session_item_use.cpp`、`session_research.cpp`、`session_cache.cpp`、`spells.h`、`session_spell_info.cpp`、`session_spells.cpp`、`session_area_spells.cpp`、`session_lightning.cpp`、`tests/game_flow_tests.cpp`；说明见 `attack-damage-powerups.md`、`finger-of-death.md` 和 `campaign-gamecache.md`。Win32 Release 客户端及 game-flow 消费者已编译。为检查持久化兼容，`war3_game_flow_tests.exe <data-root> tmp/docs-artifacts/war3/game-flow/fixture.w3m cache-damage` 的隔离缓存检查通过：v4 正负值保存／重载／恢复与越界拒绝，以及无物品单位的 v1–v3 默认值；临时缓存位于 `tmp/docs-artifacts/war3/cache-damage/`。阶段验证正负 AIaa 拾取／消耗、非英雄、伤害及面板、变形／幻象、其他缓存组合；验证 ANfd 单位目标、地图自定义 Dagon 能力 ID、地图伤害事件、魔免、施法打断／回调重入、资源／次数／冷却、闪电和原版表现。DotA 实际物品操作、多人和原版对照尚未执行。

@@ -10,6 +10,8 @@ DotA 地图覆盖闪电表的稀疏数值及计分板标题色码绘制已接入
 
 `AIaa` 永久攻击伤害物品和 `ANfd` 单位目标施法已接入实际单位、战斗与脚本事件；DotA 物品交互及原版时序待阶段验证，见[永久攻击伤害](attack-damage-powerups.md)和[死亡之指](finger-of-death.md)。
 
+闪烁物品已接入点目标、落点和物品施法生命周期；多选面板与英雄栏已接入原皮肤边框和状态条。真实操作、画面及原版一致性待阶段验证，见[闪烁物品](blink-items.md)、[多选面板](selection-panel.md)和[英雄快捷栏](hero-revival.md)。
+
 单位类型 ID 的运行态分类、召唤分类及英雄 rawcode 判定已按原版静态分支接入；实例召唤标记和原版实际行为待验证，见[单位类型 ID 分类](unit-id-classification.md)。
 
 玩家科技百分比接入种族升级及研究等级，筛选边界和原版精度待验证，见[对局分数](player-scores.md)。
