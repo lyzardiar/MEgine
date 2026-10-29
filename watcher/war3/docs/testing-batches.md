@@ -1,16 +1,24 @@
 # 独立客户端测试队列
 
+## 抗魔、蛛网、荒芜物品及脚本执行状态待验证
+
+路径：`session_item_use.cpp`、`session_spell_info.cpp`、`session_spells.cpp`、`session_area_spells.cpp`、`session_channels.cpp`、`spells.h`、`session_blight_items.cpp`、`session.h`、`session_tick.cpp`、`session_network_identity.cpp`、`CMakeLists.txt`、`jass_runtime.h/.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`、`tests/jass_thread_tests.cpp`；说明见 `arcane-blight-items.md` 和 `save-runtime-foundation.md`。阶段执行 control 夹具的 item-control／item-blight，核对费用、次数、目标、抗魔、蛛网、扩张／去除／覆盖／离开与联机；扩张结束后的地表状态尚未纳入实验联机摘要；执行 JASS 线程专项，检查嵌套 native 回调、等待、取消、异常和诊断副本。Win32 Release 客户端与三个相关消费者已编译；JASS 核心改造的嵌套等待及 native 取消两项最小检查通过，0 失败。JASS 状态尚不能用于恢复存档；献祭头骨走近／中断、容量与回调重入、原版时序及真实对局尚未验证。
+
+## 死亡与复活动画重启待验证
+
+路径：`session_callbacks.cpp`、`session_corpses.cpp`、`session_effects.cpp`、`session_rebirth.cpp`、`session_revival.cpp`、`tests/corpse_tests.cpp`；说明见 `animation-blending.md`。Win32 Release 客户端与 corpse 消费者已编译；阶段运行尸体夹具 animation-lifecycle，验证死亡／衰变／复活、凤凰和黑暗转换、回调重入、模型切换与实际过渡；其他停止／清理及离屏历史仍待实现或验证。
+
 ## 战斗、施法和工作动画重启待验证
 
 路径：`session_combat.cpp`、`session_combat_orders.cpp`、`session_spells.cpp`、`session_channels.cpp`、`session_war_club.cpp`、`session_control_spells.cpp`、`session_eat_tree.cpp`、`session_faerie_dragon.cpp`、`session_locust.cpp`、`session_morph_spells.cpp`、`session_roots.cpp`、`session_spell_effects.cpp`、`session_spirit_split.cpp`、`session_teleport.cpp`、`session_tinker.cpp`、`session_unit_forms.cpp`、`session_unsummon.cpp`、`session_harvest.cpp`、`session_lumber.cpp`、`session_construction.cpp`、`session_building_upgrades.cpp`、`tests/channel_tests.cpp`；说明见 `animation-blending.md`。Win32 Release 客户端及 channel 消费者已编译。阶段合并验证近远程连续攻击／追击中断、施法开始／结束／回调重入、技能形态及控制、采矿／连续砍树、建造／升级、普通循环、暂停与多个单位，并对照原版时序和 GPU 画面；死亡／复活、部分停止或状态清理及离屏历史仍待完成。专项与实际对局尚未执行。
 
 ## 默认混合与显式动画重启待验证
 
-路径：`entities.h`、`session_orders.cpp`、`session_visual.cpp`、`session_animation.cpp`、`model.h/.cpp`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`game_view.cpp`、`game_effects.cpp`、`tests/game_flow_tests.cpp`；说明见 `animation-blending.md`。阶段验证 MODL 默认值、脚本覆盖／零值、显式同序列重启与普通循环、队列、暂停与倍率、多单位及挂点、全局动画轨、LookAt、混合中断和缓存一致性；验证大地图帧耗时／内存并对照原版。死亡／复活、部分停止或状态清理及离屏历史仍待实现；Win32 Release 客户端和 game-flow 消费者已编译，专项和 GPU／原版对照尚未执行。
+路径：`entities.h`、`session_orders.cpp`、`session_visual.cpp`、`session_animation.cpp`、`model.h/.cpp`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`game_view.cpp`、`game_effects.cpp`、`tests/game_flow_tests.cpp`；说明见 `animation-blending.md`。阶段验证 MODL 默认值、脚本覆盖／零值、显式同序列重启与普通循环、队列、暂停与倍率、多单位及挂点、全局动画轨、LookAt、混合中断和缓存一致性；验证大地图帧耗时／内存并对照原版。部分停止或状态清理及离屏历史仍待实现；Win32 Release 客户端和 game-flow 消费者已编译，专项和 GPU／原版对照尚未执行。
 
 ## 单位动画混合待验证
 
-路径：`entities.h`、`session_visual.cpp`、`model.h`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`game_view.h/.cpp`、`game_morph.cpp`、`game_effects.cpp`；说明见 `animation-blending.md`。Win32 Release 客户端和 game-flow 消费者已编译；阶段验证 NightElfX01／OrcX01 实际脚本、零值与不同正值、多单位共享模型、骨骼位置／旋转／缩放、LookAt 与附件、变形／销毁、序列重入与频繁切换、暂停／倍率和性能，并与原版画面对照。死亡／复活、部分停止或状态清理及离屏历史尚未实现；GPU、原版时序与完整战役尚未验证。
+路径：`entities.h`、`session_visual.cpp`、`model.h`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`game_view.h/.cpp`、`game_morph.cpp`、`game_effects.cpp`；说明见 `animation-blending.md`。Win32 Release 客户端和 game-flow 消费者已编译；阶段验证 NightElfX01／OrcX01 实际脚本、零值与不同正值、多单位共享模型、骨骼位置／旋转／缩放、LookAt 与附件、变形／销毁、序列重入与频繁切换、暂停／倍率和性能，并与原版画面对照。部分停止或状态清理及离屏历史尚未实现；GPU、原版时序与完整战役尚未验证。
 
 ## 模型场景声音和可破坏物动画时钟待验证
 

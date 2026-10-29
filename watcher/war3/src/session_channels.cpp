@@ -20,7 +20,7 @@ void ScriptSession::cancelFailedCast(UnitState& u){
 }
 void ScriptSession::finishCast(std::uint32_t id,std::uint64_t ticket) {
     if(!alive(id,NativeKind::Unit))return;auto u=units_.at(id);if(!u->cast || u->cast->ticket!=ticket)return;auto cast=*u->cast;spellEvent(id,cast,3);
-    if(!alive(id,NativeKind::Unit) || !u->cast || u->cast->ticket!=ticket)return;u->cast.reset();++u->castRevision;u->currentOrder=0;u->animation.clear();u->animationTime=0;++u->animationGeneration;releaseCastVisuals(cast);auto revision=u->castRevision,combatRevision=u->combat.revision;spellEvent(id,cast,4);
+    if(!alive(id,NativeKind::Unit) || !u->cast || u->cast->ticket!=ticket)return;if(cast.blightReserved)releaseItemBlightReservation();u->cast.reset();++u->castRevision;u->currentOrder=0;u->animation.clear();u->animationTime=0;++u->animationGeneration;releaseCastVisuals(cast);auto revision=u->castRevision,combatRevision=u->combat.revision;spellEvent(id,cast,4);
     restoreCastCombat(*u,cast,revision,combatRevision);
 }
 void ScriptSession::startChannel(std::uint32_t id) {

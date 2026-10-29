@@ -12,6 +12,7 @@ struct Instruction {Op op;Id id=none;size_t target=0;Position position;};
 using Code=std::vector<Instruction>;
 struct Cell {Value value;bool initialized=false,array=false;std::unordered_map<std::uint32_t,Value> elements;};
 struct Frame {Id function;size_t pc=0,base=0;std::vector<Cell> locals;};
+struct RunState {Position caller;std::vector<Value> values;std::vector<Frame> frames;size_t localCount=0;Id pendingNative=none;std::vector<Value> pendingArguments;};
 enum class State {Created,Initializing,Ready,Failed};
 std::int32_t signedBits(std::uint32_t bits) {return std::bit_cast<std::int32_t>(bits);}
 bool zero(Real real) {return (real.bits()&0x7fffffff)==0;}
@@ -33,6 +34,7 @@ struct Runtime::Impl {
     std::shared_ptr<Domain> domain;
     struct Execution {std::uint64_t remaining=0;size_t active=0,noYield=0;};
     std::map<ThreadId,Execution> executions{{0,{}}};
+    std::map<ThreadId,std::vector<std::unique_ptr<RunState>>> runs;
     ThreadHooks threadHooks;
     std::function<void(Id,Value)> globalWriteHook;
     Id integer,real,boolean,string,codeType,nothing;
@@ -114,10 +116,10 @@ struct Runtime::Impl {
     }
     Value run(Id function,std::span<const Value> arguments,Position caller) {
         if(active>=64)fail(caller,"JASS native reentry budget exceeded");if(!active)remaining=limits.steps;++active;struct Active {size_t& value;~Active(){--value;}}guard{active};
-        std::vector<Value> values;std::vector<Frame> frames;size_t localCount=0;
+        auto thread=domain->threads.current();auto newRun=std::make_unique<RunState>();newRun->caller=caller;auto& nested=runs[thread];nested.push_back(std::move(newRun));struct Retire {std::map<ThreadId,std::vector<std::unique_ptr<RunState>>>& runs;ThreadId thread;~Retire(){auto found=runs.find(thread);if(found==runs.end())return;found->second.pop_back();if(found->second.empty())runs.erase(found);}}retire{runs,thread};auto& run=*nested.back();auto& values=run.values;auto& frames=run.frames;auto& localCount=run.localCount;
         auto pop=[&](Position p){if(values.empty())fail(p,"JASS operand stack underflow");auto value=std::move(values.back());values.pop_back();return value;};
         auto pushFrame=[&](Id id,std::span<const Value> args,Position p){Frame frame{id,0,values.size(),{}};if(frames.size()>=limits.frames)fail(p,"JASS call frame budget exceeded");if(id<module.functions().size()){auto& signature=module.functions()[id];if(args.size()!=signature.parameters.size())fail(p,"JASS argument count differs");if(signature.slots.size()>limits.values-localCount)fail(p,"JASS local slot budget exceeded");for(auto& slot:signature.slots)frame.locals.push_back({empty(slot.type),slot.array,slot.array,{}});for(size_t i=0;i<args.size();++i){frame.locals[i].value=coerce(args[i],signature.parameters[i],p);frame.locals[i].initialized=true;}localCount+=frame.locals.size();}frames.push_back(std::move(frame));};
-        auto callNative=[&](Id id,std::span<const Value> args,Position p){if(!natives.at(id))fail(p,"Unbound JASS native: "+module.program().functions()[id].name);std::vector<Value> converted;auto& signature=module.functions()[id];if(args.size()!=signature.parameters.size())fail(p,"JASS argument count differs");for(size_t i=0;i<args.size();++i)converted.push_back(coerce(args[i],signature.parameters[i],p));Value result;try{result=natives[id](owner,converted);}catch(const std::exception& e){fail(p,"Native "+module.program().functions()[id].name+": "+e.what());}return coerce(std::move(result),signature.result,p);};
+        auto callNative=[&](Id id,std::span<const Value> args,Position p){if(!natives.at(id))fail(p,"Unbound JASS native: "+module.program().functions()[id].name);std::vector<Value> converted;auto& signature=module.functions()[id];if(args.size()!=signature.parameters.size())fail(p,"JASS argument count differs");for(size_t i=0;i<args.size();++i)converted.push_back(coerce(args[i],signature.parameters[i],p));run.pendingNative=id;run.pendingArguments=std::move(converted);struct NativeExit {RunState& run;~NativeExit(){run.pendingNative=none;run.pendingArguments.clear();}}exit{run};Value result;try{result=natives[id](owner,run.pendingArguments);}catch(const std::exception& e){fail(p,"Native "+module.program().functions()[id].name+": "+e.what());}return coerce(std::move(result),signature.result,p);};
         if(function<module.functions().size() && module.program().functions()[function].native)return callNative(function,arguments,caller);
         pushFrame(function,arguments,caller);
         while(!frames.empty()){
@@ -178,6 +180,9 @@ void Runtime::threadHooks(ThreadHooks hooks){if(impl_->domain->threads.count())t
 void Runtime::globalWriteHook(std::function<void(Id,Value)> hook){impl_->globalWriteHook=std::move(hook);}
 ThreadId Runtime::currentThread() const{return impl_->domain->threads.current();}
 size_t Runtime::threadCount() const{return impl_->domain->threads.count();}
+std::vector<RuntimeExecutionInspection> Runtime::inspectExecutions() const {
+    std::vector<RuntimeExecutionInspection> result;for(auto& [thread,nested]:impl_->runs)for(size_t depth=0;depth<nested.size();++depth){auto& state=*nested[depth];RuntimeExecutionInspection entry;entry.thread=thread;entry.depth=depth;entry.localCount=state.localCount;entry.caller=state.caller;entry.values=state.values;entry.pendingNative=state.pendingNative;entry.pendingArguments=state.pendingArguments;for(auto& frame:state.frames){RuntimeFrameInspection target;target.function=frame.function;target.pc=frame.pc;target.base=frame.base;for(auto& cell:frame.locals){RuntimeSlotInspection slot;slot.value=cell.value;slot.initialized=cell.initialized;slot.array=cell.array;slot.elements.insert(cell.elements.begin(),cell.elements.end());target.locals.push_back(std::move(slot));}entry.frames.push_back(std::move(target));}result.push_back(std::move(entry));}return result;
+}
 Value Runtime::global(const std::string& name,std::optional<std::uint32_t> index) const {if(!ready())throw std::runtime_error("JASS runtime is not initialized");auto& list=module().program().globals();for(size_t i=0;i<list.size();++i)if(list[i].name==name)return impl_->load(impl_->globals[i],index,list[i].position);throw std::runtime_error("Unknown JASS global: "+name);}
 Value Runtime::integer(std::int32_t value) const {return {impl_->integer,std::bit_cast<std::uint32_t>(value),{}};}
 Value Runtime::real(Real value) const {return {impl_->real,value.bits(),{}};}

@@ -4,11 +4,15 @@
 #include "jass_numeric.h"
 #include "jass_threads.h"
 #include <functional>
+#include <map>
 
 namespace war3::jass {
 class Runtime;
 struct Value {Id type=none;std::uint32_t bits=0;std::shared_ptr<const std::string> text;Runtime* codeOwner=nullptr;};
 struct RuntimeLimits {std::uint64_t steps=5000000;size_t frames=1024,values=262144,stringBytes=16*1024*1024;bool debug=false;size_t threads=1024;};
+struct RuntimeSlotInspection {Value value;bool initialized=false,array=false;std::map<std::uint32_t,Value> elements;};
+struct RuntimeFrameInspection {Id function=none;size_t pc=0,base=0;std::vector<RuntimeSlotInspection> locals;};
+struct RuntimeExecutionInspection {ThreadId thread=0;size_t depth=0,localCount=0;Position caller;std::vector<Value> values;std::vector<RuntimeFrameInspection> frames;Id pendingNative=none;std::vector<Value> pendingArguments;};
 class Runtime {
     struct Impl;
     std::unique_ptr<Impl> impl_;
@@ -46,6 +50,8 @@ public:
     void globalWriteHook(std::function<void(Id,Value)> hook);
     ThreadId currentThread() const;
     size_t threadCount() const;
+    // Inspect on the runtime owner thread; native/fiber continuations and codeOwner pointers are not serializable.
+    std::vector<RuntimeExecutionInspection> inspectExecutions() const;
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;
     Value integer(std::int32_t value) const;
     Value real(Real value) const;

@@ -20,6 +20,7 @@ unit foe=null
 unit friendly=null
 destructable tree=null
 destructable spellTree=null
+integer blightEffects=0
 endglobals
 function quiet takes unit u returns nothing
     call SetUnitPathing(u,false)
@@ -28,6 +29,9 @@ function quiet takes unit u returns nothing
     call SetUnitState(u,UNIT_STATE_MANA,1000)
 endfunction
 function spell_effect takes nothing returns nothing
+    if GetSpellAbilityId()=='Ablp' then
+        set blightEffects=blightEffects+1
+    endif
     if GetSpellTargetDestructable()!=null then
         set spellTree=GetSpellTargetDestructable()
     endif

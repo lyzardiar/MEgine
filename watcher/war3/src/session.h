@@ -845,6 +845,13 @@ class ScriptSession {
     double humanConstruction(std::uint32_t building,double delta);
     bool payWork(std::uint32_t worker,double gold,double lumber);
     bool repairTarget(const UnitState& worker,const UnitState& target,std::uint32_t ability,unsigned level);
+    struct ItemBlightGrowth {WorldPoint point;float radius=0,maximum=0,step=0;double due=0,interval=0;bool add=false;};
+    std::vector<ItemBlightGrowth> itemBlightGrowth_;
+    size_t itemBlightReservations_=0;
+    bool reserveItemBlight();
+    void releaseItemBlightReservation();
+    bool startItemBlight(std::uint32_t ability,WorldPoint point);
+    void itemBlightTick();
     void blightGrowth(double delta);
     const Image* footprintImage(const std::string& path);
     std::vector<PathCell> pathFootprint(const std::string& path,WorldPoint point,float angle);
