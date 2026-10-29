@@ -59,6 +59,8 @@ std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> byt
         if(opcode==0x01)result.emplace_back(LanActionPause{});
         else if(opcode==0x02)result.emplace_back(LanActionResume{});
         else if(opcode>=0x10 && opcode<=0x14)result.emplace_back(readAbility(reader,opcode));
+        else if(opcode==0x17){LanActionGroupAssign group;group.group=reader.u8();auto count=reader.u16();if(group.group>=10)throw std::runtime_error("Invalid LAN control group at byte "+std::to_string(offset));reader.need(std::size_t(count)*8);group.objects.reserve(count);for(unsigned i=0;i<count;++i)group.objects.push_back(reader.object());result.emplace_back(std::move(group));}
+        else if(opcode==0x18){LanActionGroupSelect group{reader.u8(),reader.u8()};if(group.group>=10)throw std::runtime_error("Invalid LAN control group at byte "+std::to_string(offset));result.emplace_back(group);}
         else if(opcode==0x1a)result.emplace_back(LanActionPreSubselection{});
         else if(opcode==0x19){LanActionSubgroup subgroup;subgroup.type=reader.u32();subgroup.first=reader.object();if(!subgroup.type || (subgroup.first.first==0xffffffffu && subgroup.first.second==0xffffffffu))throw std::runtime_error("Invalid LAN subgroup at byte "+std::to_string(offset));result.emplace_back(subgroup);}
         else if(opcode==0x1d){auto hero=reader.object();if(hero.first==0xffffffffu && hero.second==0xffffffffu)throw std::runtime_error("Invalid LAN revival cancellation at byte "+std::to_string(offset));result.emplace_back(LanActionCancelRevival{hero});}
@@ -81,6 +83,8 @@ std::vector<std::uint8_t> encodeLanActions(std::span<const LanDecodedAction> act
         else if constexpr(std::is_same_v<T,LanActionCancelRevival>){if(value.hero.first==0xffffffffu && value.hero.second==0xffffffffu)throw std::runtime_error("Invalid LAN revival cancellation");writer.u8(0x1d);writer.object(value.hero);}
         else if constexpr(std::is_same_v<T,LanActionTransfer>){if(value.slot>=12 || value.gold>0x7fffffffu || value.lumber>0x7fffffffu)throw std::runtime_error("Invalid LAN resource transfer");writer.u8(0x51);writer.u8(value.slot);writer.u32(value.gold);writer.u32(value.lumber);}
         else if constexpr(std::is_same_v<T,LanActionAlliance>){if(value.slot>=12 || (value.flags&~0x47fu))throw std::runtime_error("Invalid LAN alliance snapshot");writer.u8(0x50);writer.u8(value.slot);writer.u32(value.flags);}
+        else if constexpr(std::is_same_v<T,LanActionGroupAssign>){if(value.group>=10 || value.objects.size()>std::numeric_limits<std::uint16_t>::max())throw std::runtime_error("Invalid LAN control group");writer.u8(0x17);writer.u8(value.group);writer.u16(std::uint16_t(value.objects.size()));for(auto object:value.objects)writer.object(object);}
+        else if constexpr(std::is_same_v<T,LanActionGroupSelect>){if(value.group>=10)throw std::runtime_error("Invalid LAN control group");writer.u8(0x18);writer.u8(value.group);writer.u8(value.flags);}
         else if constexpr(std::is_same_v<T,LanActionPreSubselection>)writer.u8(0x1a);
         else if constexpr(std::is_same_v<T,LanActionSubgroup>){if(!value.type || (value.first.first==0xffffffffu && value.first.second==0xffffffffu))throw std::runtime_error("Invalid LAN subgroup");writer.u8(0x19);writer.u32(value.type);writer.object(value.first);}
         else if constexpr(std::is_same_v<T,LanActionTrackable>){if(value.object.first==0xffffffffu && value.object.second==0xffffffffu)throw std::runtime_error("Invalid LAN trackable");writer.u8(value.hit?0x64:0x65);writer.object(value.object);}

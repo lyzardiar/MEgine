@@ -17,6 +17,8 @@ struct LanActionAlliance {std::uint8_t slot=0;std::uint32_t flags=0;bool operato
 struct LanActionPreSubselection {bool operator==(const LanActionPreSubselection&) const=default;};
 struct LanActionSubgroup {std::uint32_t type=0;LanObjectId first;bool operator==(const LanActionSubgroup&) const=default;};
 struct LanActionTrackable {bool hit=false;LanObjectId object;bool operator==(const LanActionTrackable&) const=default;};
+struct LanActionGroupAssign {std::uint8_t group=0;std::vector<LanObjectId> objects;bool operator==(const LanActionGroupAssign&) const=default;};
+struct LanActionGroupSelect {std::uint8_t group=0,flags=0;bool operator==(const LanActionGroupSelect&) const=default;};
 struct LanActionSelection {
     std::uint8_t mode=0;
     std::vector<LanObjectId> objects;
@@ -33,7 +35,7 @@ struct LanActionAbility {
     std::uint32_t secondaryXBits=0,secondaryYBits=0;
     bool operator==(const LanActionAbility&) const=default;
 };
-using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable>;
+using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionGroupAssign,LanActionGroupSelect>;
 
 // Classic 1.13+ action layout, bounded to 256 KiB and 4096 actions per block.
 // A malformed or unsupported opcode fails the entire block; IDs are original wire pairs.
