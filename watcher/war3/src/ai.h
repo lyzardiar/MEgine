@@ -16,7 +16,7 @@ struct AICaptainRoute {std::uint64_t ticket=0;std::vector<WorldPoint> points;std
 struct ScriptAI {
     enum Policy {DefendPlayer,GroupsFlee,HeroesBuy,HeroesFlee,HeroesTake,IgnoreInjured,PeonsRepair,SmartArtillery,TargetHeroes,UnitsFlee,WatchMega,PolicyCount};
     unsigned owner=0;
-    bool campaign=false,gathering=true,retreating=false,homeOverride=false;
+    bool campaign=false,gathering=true,retreating=false,homeOverride=false,defenseHomeOverride=false;
     std::string file,origin;
     std::unique_ptr<jass::Runtime> runtime;
     std::array<bool,PolicyCount> policies{};
@@ -40,7 +40,7 @@ struct ScriptAI {
     bool reservesUnit(std::uint32_t unit) const {return (zeppelinPurchase && zeppelinPurchase->buyer==unit) || (itemPurchase && itemPurchase->buyer==unit);}
     bool waveUnit(std::uint32_t unit) const {return zeppelinWave && (zeppelinWave->passengers.contains(unit) || zeppelinWave->carriers.contains(unit));}
     std::deque<std::pair<int,int>> commands;
-    WorldPoint home,goal,stage;
+    WorldPoint home,defenseHome,townHome,goal,stage;
     std::uint32_t allianceTarget=0,enemyBase=0,expansion=0,hero=0;
     jass::Value heroLevels;
     double nextTick=0,nextItems=0;

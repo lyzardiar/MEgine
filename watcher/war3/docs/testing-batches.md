@@ -2874,3 +2874,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### Human06 脚本无值返回兼容（待验证）
 
 路径：`src/jass_module.cpp`、`src/jass_runtime.cpp`、`tests/jass_runtime_tests.cpp`。独立探针验证受限返回与原图开场推进；集中执行新增断言，核对原版行为及产品关卡，见 [无值返回兼容](campaign-human06-return.md)。
+
+### AI 攻击与防御队长驻地（待验证）
+
+路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_control.cpp`、`src/session_ai_economy.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`。核心及测试目标编译通过，定向检查 2 项通过、0 失败；集中验证真实战役、队伍状态、同步及原版路线，见 [队长驻地](campaign-captain-home.md)。

@@ -21,8 +21,8 @@ void ScriptSession::bindAiNatives(){
     bind("CommandAI","nothing",{"player","integer","integer"},[this](auto& vm,auto args){auto& ai=ais_[playerId(args[0])];if(!ai)return vm.nothing();if(ai->commands.size()>=1024)throw std::runtime_error("AI command queue exceeds budget");ai->commands.emplace_back(std::bit_cast<int>(args[1].bits),std::bit_cast<int>(args[2].bits));return vm.nothing();});
 }
 std::vector<std::uint32_t> ScriptSession::aiCaptain(ScriptAI& ai){std::vector<std::uint32_t> result;for(auto id:ai.captain)if(alive(id,NativeKind::Unit)){auto& u=*units_.at(id);if(u.owner==ai.owner && !u.removing && !u.hidden() && number(u.life)>0 && !ai.guardUnits.contains(id) && !ai.suicideUnits.contains(id) && (ai.groupTimedLife || !u.timedLife))result.push_back(id);}return result;}
-std::uint32_t ScriptSession::aiEnemy(ScriptAI& ai,unsigned owner,bool buildings){
-    std::uint32_t result=0;float best=FLT_MAX;for(auto& [id,u]:units_)if(u->owner!=ai.owner && (owner==UINT_MAX?u->owner<12:u->owner==owner) && !(config_.players[ai.owner].alliances[u->owner]&1) && !u->hidden() && !u->removing && number(u->life)>0 && !u->invulnerable && !unitInvisibleTo(id,ai.owner) && (!buildings || u->building)){float score=std::hypot(number(u->x)-number(ai.home.x),number(u->y)-number(ai.home.y));if(ai.policies[ScriptAI::TargetHeroes] && u->hero)score*=.75f;if(ai.policies[ScriptAI::WatchMega] && u->level>=10)score*=.75f;if(score<best){best=score;result=id;}}return result;
+std::uint32_t ScriptSession::aiEnemy(ScriptAI& ai,unsigned owner,bool buildings,std::optional<WorldPoint> center){
+    auto origin=center.value_or(ai.home);std::uint32_t result=0;float best=FLT_MAX;for(auto& [id,u]:units_)if(u->owner!=ai.owner && (owner==UINT_MAX?u->owner<12:u->owner==owner) && !(config_.players[ai.owner].alliances[u->owner]&1) && !u->hidden() && !u->removing && number(u->life)>0 && !u->invulnerable && !unitInvisibleTo(id,ai.owner) && (!buildings || u->building)){float score=std::hypot(number(u->x)-number(origin.x),number(u->y)-number(origin.y));if(ai.policies[ScriptAI::TargetHeroes] && u->hero)score*=.75f;if(ai.policies[ScriptAI::WatchMega] && u->level>=10)score*=.75f;if(score<best){best=score;result=id;}}return result;
 }
 void ScriptSession::aiCancelCaptainRoute(ScriptAI& ai){if(ai.captainRouteTicket==UINT64_MAX)throw std::runtime_error("AI captain route ticket exhausted");++ai.captainRouteTicket;ai.captainRoute.reset();}
 void ScriptSession::aiCaptainRouteTick(ScriptAI& ai){
@@ -72,7 +72,7 @@ void ScriptSession::aiTick(){
                 if(used)continue;
             }
             if(!alive(id,NativeKind::Unit) || u->owner!=ai.owner || u->removing || number(u->life)<=0 || ai.reservesUnit(id))continue;auto revision=u->combat.revision,owner=u->ownerRevision,death=u->deathRevision;repairAI(id);if(!alive(id,NativeKind::Unit) || u->owner!=ai.owner || u->removing || number(u->life)<=0 || u->combat.revision!=revision || u->ownerRevision!=owner || u->deathRevision!=death || u->repair)continue;
-            if(!ai.guardUnits.contains(id) && (ai.policies[ScriptAI::DefendPlayer] || defenders.contains(id)) && !u->currentOrder && hasWeapon(id) && u->buildables.empty()){auto enemy=aiEnemy(ai);if(enemy && distance(*units_.at(enemy),ai.home)<(ai.campaign?800:1200))attackUnit(id,enemy);else if(defenders.contains(id) && distance(*u,ai.home)>600)moveUnit(id,ai.home);}
+            if(!ai.guardUnits.contains(id) && (ai.policies[ScriptAI::DefendPlayer] || defenders.contains(id)) && !u->currentOrder && hasWeapon(id) && u->buildables.empty()){auto center=defenders.contains(id)?ai.defenseHome:ai.townHome;auto enemy=aiEnemy(ai,UINT_MAX,false,center);if(enemy && distance(*units_.at(enemy),center)<(ai.campaign?800:1200))attackUnit(id,enemy);else if(defenders.contains(id) && distance(*u,center)>600)moveUnit(id,center);}
             aiCombatSpells(ai,id);
         }if(simulationTime_>=ai.nextItems)ai.nextItems=simulationTime_+5;
     }
