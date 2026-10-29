@@ -28,7 +28,7 @@ struct PassiveInfo {
     std::vector<std::string> visualModels;
     std::vector<std::pair<std::string,std::string>> targetModels;
 };
-struct UnitAura {const PassiveInfo* definition=nullptr;std::uint32_t source=0;double remaining=0;bool positive=true;};
+struct UnitAura {const PassiveInfo* definition=nullptr;std::uint32_t source=0;double remaining=0;float amountBonus=0;bool positive=true;};
 struct AuraBonuses {
     float movement=0,attackSpeed=0,armor=0,armorPercent=0,health=0,healthPercent=0,mana=0,manaPercent=0;
     float meleeDamage=0,rangedDamage=0,meleeFlat=0,rangedFlat=0,vampiric=0,thorns=0,thornsFlat=0;

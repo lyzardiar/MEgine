@@ -46,6 +46,7 @@ struct TechnologyStats {
     std::map<std::pair<std::uint32_t,unsigned>,float> defenseEffects;
     unsigned weapons=0;
     std::map<std::uint32_t,int> abilityLevels;
+    std::map<std::uint32_t,float> auraDamage;
 };
 enum class CommandAction {Revive,CancelProduction,Train,BuyUnit,BuyItem,Research,Harvest,ReturnResources,Build,OpenBuild,CancelTarget,CancelBuild,Entangle,Upgrade,CancelUpgrade,Repair,LearnSkill,CastSpell,OpenSkills,PassiveSkill};
 struct CommandButton {CommandAction action;std::uint32_t type=0;std::string icon,name,tip,hotkey,reason;int x=0,y=0,stock=-1,gold=0,lumber=0;bool enabled=false,active=false,reversed=false;float mana=0;};
