@@ -1920,3 +1920,7 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 阶段验证真实窗口点击／视野／单位与物品切换、网络确认／竞争与对象生命周期、已损坏／不同 flags 的回放记录、原版 1.27 动作与对象身份、Shift／多选、原版视觉及声音；已有颜色、圈大小和 HUD 排布尚未声称一致。
 
 地面物品补充待测：`tests/order_queue_tests.cpp` 覆盖 0x1c 编解码、同一动作序列取消单位选择、地面物品移除后的实验性局域网时隙、未知身份和未知 flag 拒绝。Win32 Release 产品及 `war3_order_queue_tests` 增量编译通过，测试尚未执行；阶段运行 `war3_order_queue_tests.exe <data-root> <BootyBay.w3m>` 并与现有 order queue 验证合并。
+
+## 脚本建造订单待验证
+
+路径：session_orders、construction_tests、construction。`IssueBuildOrder`／`IssueBuildOrderById` 将名称或 ID 转入真实工人建造流程和已有事件，专项构建用例分别使用两种入口。Win32 Release 客户端及专项程序增量编译通过；阶段按 construction.md 中夹具及 `war3_construction_tests` 命令执行，核对名称／自定义 ID、资源／位置失败、队列替换、重入以及完整四族和原版事件时序；专项尚未执行。
