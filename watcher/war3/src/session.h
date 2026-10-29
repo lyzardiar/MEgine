@@ -650,6 +650,8 @@ class ScriptSession {
     bool useCombinedRecoveryItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point,const std::vector<std::uint32_t>& abilities);
     std::map<std::string,std::uint32_t> caches_;
     std::vector<ScriptText> texts_;
+    std::vector<ScriptText> textHistory_;
+    size_t textHistoryBytes_=0;
     std::map<std::uint32_t,std::shared_ptr<ScriptTextTag>> textTags_;
     std::vector<ScriptMinimapPing> minimapPings_;
     std::uint64_t nextMinimapPing_=0;
@@ -1186,6 +1188,7 @@ public:
     bool unitInvisibleTo(std::uint32_t unit,unsigned player);
     bool unitVisibleTo(std::uint32_t unit,unsigned player);
     const std::vector<ScriptText>& texts() const {return texts_;}
+    const std::vector<ScriptText>& textHistory() const {return textHistory_;}
     const auto& textTags() const {return textTags_;}
     const std::vector<ScriptMinimapPing>& minimapPings() const {return minimapPings_;}
     bool playerMinimapSignal(unsigned sender,WorldPoint point);
@@ -1193,7 +1196,7 @@ public:
     std::uint64_t questRevision() const {return questRevision_;}
     bool questFlash() const {return questFlash_;}
     void acknowledgeQuests() {questFlash_=false;}
-    void displayText(unsigned owner,float x,float y,double duration,std::string text);
+    void displayText(unsigned owner,float x,float y,double duration,std::string text,std::uint16_t audience=0xffff);
     void startAI(unsigned player,const std::string& script,bool campaign=false);
     const auto& ais() const {return ais_;}
     void startMain();

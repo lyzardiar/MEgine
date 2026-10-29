@@ -2694,3 +2694,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 技能提示字段与等级（待验证）
 
 路径：`session_ability_commands.cpp`、`tests/spell_tests.cpp`、`docs/spells.md`。技能等级文本按源引用和引号分隔，已知 `<对象ID,字段>` 与百分比由地图覆盖后的对象表展开；Win32 Release 核心库编译通过，直接调用实际解析函数的原版暴风雪一／二级最小检查通过（6／30、8／40），探针位于 `tmp/docs-artifacts/war3/spawn-table-probe/`。阶段验证所有等级／引用类别／百分比／未知字段、地图对象覆盖与 WTS、技能学习和按钮布局、长文／颜色／窗口及原版显示精度；新增完整消费者断言尚未运行。
+
+### F12 对局消息纪录（待验证）
+
+路径：`message_log.*`、`CMakeLists.txt`、`glue.cpp`、`game_loading.*`、`game_view.*`、`session.h`、`session_text.cpp`、`session_spatial_events.cpp`、`docs/message-log.md`。原 LogDialog 的 F12／顶部入口、滚动与本地受众消息历史已接入；Win32 Release 核心库编译通过。阶段验证键鼠滚动／焦点／对局输入隔离、长消息／128 行／清屏、单机／聊天私聊与盟友受众、回放／双端及原版布局；实际窗口和完整用户交互尚未运行。

@@ -59,7 +59,7 @@ add_executable(war3 WIN32 src/main.cpp src/renderer.cpp src/media.cpp src/model.
 target_sources(war3 PRIVATE src/scene_assets.cpp src/terrain_scene.cpp src/terrain_layout.cpp)
 target_sources(war3 PRIVATE src/scene_objects.cpp src/game_loading.cpp src/loading_screen.cpp src/game_view.cpp src/game_trackable.cpp src/game_weather.cpp src/game_model_sound.cpp)
 target_sources(war3 PRIVATE src/scene_streaming.cpp src/lan_discovery.cpp src/lan_browser.cpp src/lan_join.cpp src/lan_lobby.cpp src/lan_mapcheck.cpp src/lan_host.cpp src/lan_host_ui.cpp src/lan_runtime.cpp src/lan_match_loading.cpp src/replay_browser.cpp src/replay_preparation.cpp)
-target_sources(war3 PRIVATE src/fog_render.cpp src/front_options.cpp)
+target_sources(war3 PRIVATE src/fog_render.cpp src/front_options.cpp src/message_log.cpp)
 target_sources(war3 PRIVATE src/terrain_fog_render.cpp src/game_alliance_dialog.cpp src/game_text_tag.cpp src/game_timer_dialog.cpp src/game_multiboard.cpp src/game_leaderboard.cpp src/game_commands.cpp src/game_autocast.cpp src/game_spells.cpp src/game_transport.cpp src/game_corpses.cpp src/game_morph.cpp src/game_effects.cpp src/game_lightning.cpp src/game_building.cpp src/game_flow_ui.cpp)
 target_sources(war3 PRIVATE src/quest_dialog.cpp src/game_hero_bar.cpp src/game_selection_panel.cpp src/game_buff_panel.cpp src/game_inventory_drag.cpp src/game_waypoints.cpp)
 target_sources(war3 PRIVATE src/terrain_blight.cpp)

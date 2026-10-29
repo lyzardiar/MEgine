@@ -1,0 +1,19 @@
+// Author: MiYu. Source LogDialog frames, bounded local messages and interactive scrolling.
+#include "message_log.h"
+#include <algorithm>
+#include <cmath>
+
+namespace war3 {
+namespace {
+constexpr const char* member="UI\\FrameDef\\UI\\LogDialog.fdf";
+bool hit(GlueScreen::Rect r,float x,float y){return x>=r.x && y>=r.y && x<r.x+r.w && y<r.y+r.h;}
+std::string safeChat(const std::string& text){if(text.empty())return {};auto size=MultiByteToWideChar(CP_UTF8,0,text.data(),int(text.size()),nullptr,0);if(size<=0)return "?";std::wstring decoded(size,L'\0');if(!MultiByteToWideChar(CP_UTF8,0,text.data(),int(text.size()),decoded.data(),size))return "?";auto utf=war3::utf8(decoded);std::string result;result.reserve(utf.size());for(auto c:utf){if(c=='|')result+='|';result+=c;}return result;}
+std::string transcript(const std::vector<ScriptText>& history){constexpr size_t limit=48000;std::vector<std::string> selected;size_t length=0;for(auto it=history.rbegin();it!=history.rend();++it){auto line=it->owner==16?safeChat(it->text):it->text;line+="|r";if(line.size()>limit){auto start=line.size()-limit+4;while(start<line.size() && (static_cast<unsigned char>(line[start])&0xc0)==0x80)++start;line="..."+line.substr(start);}if(length+line.size()+1>limit)break;length+=line.size()+1;selected.push_back(std::move(line));}std::string result;result.reserve(length);for(auto it=selected.rbegin();it!=selected.rend();++it){if(!result.empty())result+='\n';result+=*it;}return result;}
+}
+MessageLog::MessageLog(ScriptSession& session,Images& images,Renderer& renderer,Text& text):session_(session),renderer_(renderer),screen_(session.world()->resources(),images,renderer,text,member,"LogDialog") {auto bounds=screen_.bounds("LogDialog");screen_.place("LogDialog",{(.8f-bounds.w)/2,(.6f-bounds.h)/2,bounds.w,bounds.h});screen_.visible("LogAreaScrollBar",false);screen_.focus("LogOkButton");}
+bool MessageLog::draw(const UiInput& input){
+    if(input.key==VK_ESCAPE || input.key==VK_F12)return false;auto area=screen_.bounds("LogArea"),backdrop=screen_.bounds("LogAreaBackdrop");GlueScreen::Rect track{backdrop.x+backdrop.w-.0125f,area.y,.012f,area.h};auto content=transcript(session_.textHistory());auto [lines,visible]=screen_.textLines("LogArea",content,area,.011f);auto first=lines>128?lines-128:0,maximum=lines>visible?lines-visible:0;maximum=std::max(first,maximum);if(content!=content_){content_=std::move(content);offset_=follow_?maximum:std::clamp(offset_,first,maximum);}else offset_=std::clamp(offset_,first,maximum);auto move=[&](std::int64_t delta){offset_=size_t(std::clamp(std::int64_t(offset_)+delta,std::int64_t(first),std::int64_t(maximum)));follow_=offset_==maximum;};if(input.wheel && (hit(area,input.x,input.y) || hit(track,input.x,input.y)))move(-std::int64_t(input.wheel)*3);if(input.key==VK_PRIOR)move(-std::int64_t(visible));else if(input.key==VK_NEXT)move(std::int64_t(visible));else if(input.key==VK_HOME){offset_=first;follow_=offset_==maximum;}else if(input.key==VK_END){offset_=maximum;follow_=true;}
+    bool drag=maximum>first && (input.down || input.pressed) && hit(track,input.startX,input.startY);if(drag){float thumb=std::min(.016f,track.h),travel=std::max(0.f,track.h-thumb);auto t=travel>0?std::clamp((input.y-track.y-thumb/2)/travel,0.f,1.f):0.f;offset_=first+size_t(std::lround(t*double(maximum-first)));follow_=offset_==maximum;}
+    renderer_.rect(0,0,float(renderer_.width()),float(renderer_.height()),0x88000000);auto filtered=input;if(drag)filtered.pressed=false;if(screen_.draw("LogDialog",filtered,{"LogOkButton"})=="LogOkButton")return false;screen_.textAt("LogArea",content_,area,true,false,true,.011f,offset_);if(maximum>first){screen_.backdropAt("EscMenuScrollBarBackdrop",track);float thumb=std::min(.016f,track.h),travel=std::max(0.f,track.h-thumb);screen_.backdropAt("EscMenuScrollThumbButtonBackdrop",{track.x+(track.w-thumb)/2,track.y+travel*float(offset_-first)/float(maximum-first),thumb,thumb});}return true;
+}
+}

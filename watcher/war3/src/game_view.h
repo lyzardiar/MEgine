@@ -13,6 +13,7 @@
 
 namespace war3 {
 class QuestDialog;
+class MessageLog;
 class GameFlowUi;
 struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;bool rightShift=false,rightControl=false;};
 class GameView {
@@ -94,6 +95,7 @@ class GameView {
     std::optional<InventoryDrag> inventoryDrag_;
     bool inventoryDragBlocked_=false;
     std::unique_ptr<QuestDialog> questDialog_;
+    std::unique_ptr<MessageLog> messageLog_;
     std::unique_ptr<GlueScreen> cinematicPanel_,leaderboardPanel_,multiboardPanel_,timerDialogPanel_,alliancePanel_;
     std::unique_ptr<GlueScreen> commandTooltip_;
     std::array<std::string,3> tooltipCostIcons_{};
@@ -117,7 +119,7 @@ class GameView {
     std::string multiboardDefaultIcon_;
     std::string cinematicSpeaker_,cinematicDialogue_;
     float leaderboardFont_=.007f;
-    bool questsOpen_=false;
+    bool questsOpen_=false,logOpen_=false;
     std::unique_ptr<GameFlowUi> flow_;
     GameCameraPreferences cameraCommitted_{};
     bool cameraPersistable_=true;
