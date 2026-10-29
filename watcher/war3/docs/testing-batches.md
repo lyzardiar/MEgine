@@ -2994,3 +2994,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 昼夜模型光照（待验证）
 
 路径：`src/game_view.*`、`src/model*`、`src/renderer.h`、`src/terrain_scene.cpp`。已接入原 DNC 模型动画、世界模型与地形光照；集中验证原图昼夜、动态模型切换、迷雾、设备恢复、稠密场景 CPU 与帧耗时，并对照原版，见[昼夜模型光照](day-night-lighting.md)。
+
+### 实验联机已移除目标（待验证）
+
+路径：`src/lan_simulation.cpp`、`tests/order_queue_tests.cpp`。时间片中的已移除目标命令按类别跳过；集中执行新增断言，验证同片状态变化、物品／可破坏物、多人和自研回放，见[已移除目标的联机命令](lan-removed-target.md)。
