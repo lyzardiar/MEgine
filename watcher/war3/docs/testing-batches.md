@@ -2990,3 +2990,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 局域网研究与训练取消（待验证）
 
 路径：`src/lan_action_encoder.cpp`、`src/lan_simulation.*`、`tests/order_queue_tests.cpp`。经典动作接入当前研究与训练取消及唯一子组选区；集中执行新增断言，核对任务变化、退款与事件、双客户端和原版报文，见[研究与训练取消](lan-research-cancellation.md)。
+
+### 昼夜模型光照（待验证）
+
+路径：`src/game_view.*`、`src/model*`、`src/renderer.h`、`src/terrain_scene.cpp`。已接入原 DNC 模型动画、世界模型与地形光照；集中验证原图昼夜、动态模型切换、迷雾、设备恢复、稠密场景 CPU 与帧耗时，并对照原版，见[昼夜模型光照](day-night-lighting.md)。

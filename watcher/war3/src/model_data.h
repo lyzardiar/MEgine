@@ -40,6 +40,7 @@ struct Geoset {
     std::vector<std::vector<int>> matrices;
     std::vector<Vertex> sampled;
     unsigned material;
+    bool receivesLight=false;
     float alpha = 1;
     XMFLOAT4 color{1,1,1,1};
     Track opacity, colorTrack;
@@ -79,12 +80,12 @@ struct Model::Data {
     unsigned poseSequence=0;
     std::optional<std::uint64_t> poseGlobalTime;
     float radius=0,blendTime=0;
-    bool billboard=false,globalPose=false,poseLookAt=false;
+    bool billboard=false,globalPose=false,poseLookAt=false,skinNormals=false,shadedGeometry=false;
     std::uint64_t poseRevision=0,skinRevision=UINT64_MAX;
     std::map<std::string,int> sequenceNames;
     explicit Data(Renderer* renderer) : renderer(renderer) {}
     DirectX::XMVECTOR sample(const mdx::Track& track, std::uint64_t elapsed, DirectX::FXMVECTOR rest, bool rotation = false) const;
     void parse(std::span<const std::uint8_t> bytes, Log& log);
-    void pose(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& worldMatrix,bool skin=true,std::span<const ModelLookAt> lookAt={},ModelInstance* instance=nullptr,float blendSeconds=0,std::uint64_t blendClock=0,std::uint64_t animationGeneration=0);
+    void pose(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& worldMatrix,bool skin=true,std::span<const ModelLookAt> lookAt={},ModelInstance* instance=nullptr,float blendSeconds=0,std::uint64_t blendClock=0,std::uint64_t animationGeneration=0,bool normals=false);
 };
 }

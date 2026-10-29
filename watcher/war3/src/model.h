@@ -45,6 +45,7 @@ public:
     Model(const Model&) = delete;
     Model& operator=(const Model&) = delete;
     ModelCamera camera(std::uint64_t elapsed,std::uint64_t clock=UINT64_MAX);
+    std::optional<WorldLight> dayNightLight(float fraction);
     void draw(std::uint64_t elapsed, float aspect, bool twoSided = false,std::uint64_t clock=UINT64_MAX);
     void draw(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& projection,const D3DMATRIX& world,bool twoSided=false,DWORD tint=0xffffffff,ModelInstance* instance=nullptr,std::uint64_t clock=UINT64_MAX,bool emit=true,bool geometry=true,std::span<const ModelLookAt> lookAt={},float blendSeconds=0,std::uint64_t blendClock=UINT64_MAX,std::uint64_t animationGeneration=0);
     void upload(Renderer& renderer,SceneAssets& assets);

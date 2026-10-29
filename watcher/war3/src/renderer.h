@@ -4,9 +4,11 @@
 #include <d3d9.h>
 #include <wrl/client.h>
 #include <array>
+#include <optional>
 
 namespace war3 {
 template<class T> using Com = Microsoft::WRL::ComPtr<T>;
+struct WorldLight {std::array<float,3> direction{},diffuse{},ambient{};};
 class Renderer {
     Com<IDirect3D9> api_;
     Com<IDirect3DDevice9> device_;
@@ -18,6 +20,7 @@ class Renderer {
     bool reference_ = false;
     unsigned particleDetail_=2;
     unsigned lightDetail_=2;
+    std::optional<WorldLight> worldLight_,terrainLight_;
 public:
     explicit Renderer(HWND window, bool reference = false);
     void resize(unsigned width, unsigned height);
@@ -35,6 +38,10 @@ public:
     void particleDetail(unsigned detail) {particleDetail_=detail<=2?detail:2;}
     unsigned lightDetail() const {return lightDetail_;}
     void lightDetail(unsigned detail) {lightDetail_=detail<=2?detail:2;}
+    const std::optional<WorldLight>& worldLight() const {return worldLight_;}
+    const std::optional<WorldLight>& terrainLight() const {return terrainLight_;}
+    void worldLight(std::optional<WorldLight> value) {worldLight_=std::move(value);}
+    void terrainLight(std::optional<WorldLight> value) {terrainLight_=std::move(value);}
     const char* driver() const { return reference_ ? (extended_ ? "d3d9ex-reference" : "d3d9-reference") : translated_ ? (extended_ ? "d3d9on12ex" : "d3d9on12") : extended_ ? "d3d9ex" : "d3d9"; }
 };
 }
