@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 地面物品武器攻击待验证
+
+路径：`src/combat.h`、`src/game_view.cpp`、`src/session.h`、`src/session_combat.cpp`、`src/session_combat_orders.cpp`、`src/session_combat_destructable.cpp`、`src/session_projectiles.cpp`；说明见 `weapon-item-attacks.md`。阶段检查四族武器、目标选择／排队、近战与弹道、范围／直线／弹跳、拾取／丢弃／销毁与回调、迷雾、联机、性能及原版表现。
+
 ## 世界昼夜时钟快照待验证
 
 路径：`src/game_clock.h/.cpp`、`tests/clock_tests.cpp`；说明见 `world-clock-persistence.md`。阶段编译并执行 `war3_clock_tests`，检查暂停／倍速与临时时间效果往返和持续推进、损坏／规则不匹配的事务性拒绝，以及与完整存档及时间事件的组合；未接入实际存档。
