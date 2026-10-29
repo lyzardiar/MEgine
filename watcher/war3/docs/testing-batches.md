@@ -2838,3 +2838,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 无效单位所属玩家查询（待验证）
 
 路径：`src/session_entities.cpp`、`docs/campaign-null-owner.md`。nightelfX01 原图隔离探针越过此调用并推进至 37.0938 秒，随后在另一个句柄查询处停止；集中验证空／销毁句柄、玩家归属变化和实际战役事件，见 [所属玩家查询](campaign-null-owner.md)。
+
+### 无效可破坏物最大生命查询（待验证）
+
+路径：`src/session_destructables.cpp`、`docs/campaign-null-destructable.md`。nightelfX01 原图隔离探针越过此调用并推进至 400 秒，40.25 秒恢复玩家控制；集中验证句柄生命周期、开场物件及真实窗口，见 [最大生命查询](campaign-null-destructable.md)。
