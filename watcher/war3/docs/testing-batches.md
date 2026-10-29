@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 单机选择与地图交互输入入口待验证
+
+路径：`src/player_commands.h/.cpp`、`src/game_view.h/.cpp`、`src/game_hero_bar.cpp`、`src/game_selection_panel.cpp`、`src/game_trackable.cpp`；说明见 `player-commands.md`。单机用户选择和交互模型事件接入玩家命令分发，脚本内部事件及联机时间片路径保持独立；Win32 Release 客户端编译通过。阶段验证普通／Shift／框选／编组／英雄及空闲工人、选择回调中移除或变更单位、交互模型进入／点击和对话／暂停、单机与联机顺序和实际窗口；原版操作及性能待对照。单机回放仍未实现。
+
 ## 地面物品与交互模型离屏附件待验证
 
 路径：`src/game_view.cpp`、`src/game_trackable.cpp`；说明见 `effects.md`。地面物品与可交互模型在视口外推进已加载附件的可见性和子动画时钟，释放粒子并在重入视口时复用时钟；Win32 Release 客户端编译通过。阶段验证多层附件、出生／循环、视口边界、拾取／丢弃、删除、异步加载、暂停、切图释放和大量实例性能，比较原版画面。专项及实际窗口尚未执行。

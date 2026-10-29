@@ -60,6 +60,7 @@ class GameView {
     std::string lanMessage_;
     std::uint64_t lanMessageUntil_=0;
     unsigned submitPlayerCommand(const PlayerCommand& command);
+    void selectLocalUnit(std::uint32_t id,bool selected);
     void localMessage(unsigned owner,float x,float y,double duration,std::string message);
     D3DVIEWPORT9 viewport_{};
     D3DMATRIX view_{},projection_{};

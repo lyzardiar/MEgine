@@ -22,4 +22,6 @@
 
 单机录制需要单独覆盖其真实会话入口：单机 `applySetup` 不保留网络玩家映射，用户输入直接修改选区并派发命令，游戏主循环先按实际帧间隔和速度推进模拟，再处理输入；现有回放则通过 `LanSimulation` 先执行时间片动作，再以整毫秒推进。单机的编组、暂停、游戏速度、对话及 `SyncSelections` 等也有直接消费路径。实现单机保存前需在脚本配置开始前确定随机初值，持久化地图、玩家配置、战役模式及影响脚本的初始 gamecache，按实际顺序记录完整外部输入与精确模拟步进，并提供使用单机语义的回放消费者；对无法记录或重现的动作必须明确阻止交付，不能将现有 LAN 录制器直接挂到单机并宣称可重放。
 
+单机交互模型事件及界面发起的单位选择已接入玩家输入分发；脚本内触发的选择仍由脚本直接执行。此入口只完成输入汇聚，模拟步进、选择／命令顺序记录、交互输入、暂停、游戏速度和回放消费者仍待实现。部分用户输入发生在本帧步进前，对话动作可发生在绘制末尾，录制需遵循实际调用顺序。
+
 结算面板的原 FDF 根帧挂接可通过 `cmake --build --preset release --target war3_browser_tests --parallel 8` 编译后执行 `./build/windows-x86/bin/Release/war3_browser_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/score-replay" score_replay_fdf_attach`。该检查在本机原资源和 D3D9 下通过（1 通过、0 失败；产物位于 tmp/docs-artifacts/war3/score-replay-fdf/），仅覆盖控件构造和绘制，不证明回放数据、窗口输入或原版兼容。
