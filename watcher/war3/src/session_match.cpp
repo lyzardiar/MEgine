@@ -40,7 +40,7 @@ unsigned ScriptSession::playerUnitCount(unsigned owner,bool structures,bool inco
 }
 void ScriptSession::bindMatchNatives() {
     bind("RemovePlayer","nothing",{"player","playergameresult"},[this](auto& vm,auto a){removePlayer(playerId(a[0]),a[1].bits);return vm.nothing();});
-    bind("EndGame","nothing",{"boolean"},[this](auto& vm,auto a){finishGame(a[0].bits!=0);return vm.nothing();});
+    bind("EndGame","nothing",{"boolean"},[this](auto& vm,auto a){if(experimentalSelectionSync_){bool dialog=!contexts_.empty() && contexts_.back().clickedDialog && contexts_.back().clickedButton;if((!dialog || (localPlayer_ && contexts_.back().triggerPlayer==handleBase+*localPlayer_)) && !networkLocalEndRequest_)networkLocalEndRequest_=a[0].bits!=0;}else finishGame(a[0].bits!=0);return vm.nothing();});
     bind("RestartGame","nothing",{"boolean"},[this](auto& vm,auto a){finishGame(a[0].bits!=0,SessionExit::Restart);return vm.nothing();});
     bind("CachePlayerHeroData","nothing",{"player"},[this](auto& vm,auto a){cacheHeroes(playerId(a[0]));return vm.nothing();});
     bind("GetIntegerGameState","integer",{"igamestate"},[](auto& vm,auto a){if(a[0].bits!=1)throw std::runtime_error("Integer game state is not implemented");return vm.integer(0);});

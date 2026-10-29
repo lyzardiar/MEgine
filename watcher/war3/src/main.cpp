@@ -134,7 +134,7 @@ int run(HINSTANCE instance) {
     if(options.play){prepareSingle();browser=std::make_unique<MapBrowser>(archives,images,renderer,text,log,options.dataRoot,options.map,options.mute);screen=Screen::Maps;}
     unsigned frames = 0;
     bool running = true;
-    auto finishLanLeave=[&]{bool appExit=lanLeaveExitApplication,partial=lanRuntime->isHost(),scores=game && game->lanDialogQuitScores().value_or(false);cinematic.reset();modelCinematic.reset();if(scores && !appExit){lanSavedReplayNotice=saveLanReplay(partial);lanRuntime.reset();lanIdentity.reset();lanLoading.reset();loadingScreen.reset();game->finishLanDialogScores();screen=Screen::Game;}else{leaveLan({},partial);if(appExit)running=false;}};
+    auto finishLanLeave=[&]{bool appExit=lanLeaveExitApplication,partial=lanRuntime->isHost(),scores=game && game->lanLocalExitScores().value_or(false);cinematic.reset();modelCinematic.reset();if(scores && !appExit){lanSavedReplayNotice=saveLanReplay(partial);lanRuntime.reset();lanIdentity.reset();lanLoading.reset();loadingScreen.reset();game->finishLanLocalScores();screen=Screen::Game;}else{leaveLan({},partial);if(appExit)running=false;}};
     auto startLanLeave=[&]{if(!lanRuntime || !game)return;if(auto requested=game->takeLanLeaveRequest()){if(!lanRuntime->requestLeave()){leaveLan("无法退出局域网对局。");return;}lanLeaveExitApplication=*requested;game->beginLanLeave();if(screen==Screen::Cinematic){cinematic.reset();modelCinematic.reset();screen=Screen::Game;}}};
     auto started = GetTickCount64();
     unsigned windowStage=0,menuStage=0,menuTabs=0,menuReadyFrame=0;

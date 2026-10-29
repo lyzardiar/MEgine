@@ -88,6 +88,7 @@ class ScriptSession {
     std::map<std::uint8_t,unsigned> networkPlayers_;
     std::set<std::uint8_t> networkActivePeers_;
     bool experimentalSelectionSync_=false;
+    std::optional<bool> networkLocalEndRequest_;
     std::vector<unsigned> networkSlotPlayers_;
     std::array<std::uint32_t,16> playerLeaderboards_{};
     std::map<std::uint32_t,std::shared_ptr<ScriptMultiboard>> multiboards_;
@@ -1081,6 +1082,8 @@ public:
     const auto& ais() const {return ais_;}
     void startMain();
     void finishGame(bool scores,SessionExit action=SessionExit::Return);
+    bool networkLocalEndPending() const{return networkLocalEndRequest_.has_value();}
+    std::optional<bool> takeNetworkLocalEnd(){auto request=networkLocalEndRequest_;networkLocalEndRequest_.reset();return request;}
     void campaignContext(bool expansion,unsigned difficulty) {if(mainAttempted_ || difficulty>2)throw std::runtime_error("Invalid campaign session context");campaignExpansion_=expansion;gameDifficulty_=defaultDifficulty_=difficulty;}
     const std::string& nextLevel() const {return nextLevel_;}
     std::optional<std::pair<std::string,bool>> takeCinematic(){if(!modelCinematic_.empty()){auto value=std::move(modelCinematic_);modelCinematic_.clear();return std::pair{std::move(value),true};}if(!movieCinematic_.empty()){auto value=std::move(movieCinematic_);movieCinematic_.clear();return std::pair{std::move(value),false};}return {};}

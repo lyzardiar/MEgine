@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 自研联机 EndGame 待验证
+
+路径：session_match／session、lan_simulation／lan_runtime、game_view、main、game_flow_tests 与 generate-game-flow-fixture.py。实验会话的 EndGame 记录本机离开及结算意图，不暂停共享模拟；对话框回调按触发玩家定位，GetLocalPlayer 分支按各端执行；回放丢弃本机离开意图。Win32 Release 产品和专项程序增量编译通过，夹具生成脚本语法检查通过；新增专项尚未执行。阶段先执行 `python tests/generate-game-flow-fixture.py --data-root <data-root>` 更新临时夹具，再执行 `war3_game_flow_tests.exe <data-root> <fixture.w3m> lan-dialog`。合并验证原胜利／失败对话框、Skip 分支、普通／Quit 按钮回调、等待纤程、main 初始化、同时退出／先前退出／事件重入、对话框回调内非点击者本地分支、真实双端与回放、结算及原版时序。多人 RestartGame／ChangeLevel 仍待实现。
+
 ## 自研联机脚本退出按钮待验证
 
 路径：session_script_dialogs、lan_action_encoder／lan_simulation／lan_runtime、game_flow_ui／game_view、main、game_flow_tests。QuitButton 的脚本事件在各端消费，只有点击者请求离开；等待有序离开和回放记录后按 doScoreScreen 决定显示本机结算或返回 LAN。房主离开结束房间并保存部分回放，回放播放只执行事件。Win32 Release 产品及专项程序增量编译通过；新增专项尚未执行，阶段命令：`war3_game_flow_tests.exe <data-root> <fixture.w3m> lan-dialog`。集中验证房主／非主机、有／无结算、鼠标／快捷键、回放、双端与第三方玩家继续运行、离开回显顺序、最小化／过场／断线、重复点击及与菜单退出交错、事件重入和脚本自行 EndGame，以及原版时序与界面。

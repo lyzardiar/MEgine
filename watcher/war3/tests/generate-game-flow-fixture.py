@@ -15,6 +15,8 @@ integer probe_dialog_events=0
 integer probe_button_events=0
 integer probe_victory_events=0
 integer probe_leave_events=0
+dialog probe_end_dialog=null
+button probe_end_button=null
 endglobals
 function ProbeDialogEvent takes nothing returns nothing
     if GetClickedDialog()!=probe_dialog or GetClickedButton()!=probe_button or GetTriggerPlayer()!=Player(0) then
@@ -50,6 +52,22 @@ function ProbeDialog takes nothing returns nothing
     call TriggerRegisterDialogButtonEvent(t,probe_button)
     call TriggerAddAction(t,function ProbeButtonEvent)
     call DialogDisplay(Player(0),probe_dialog,true)
+endfunction
+function ProbeEndDialogEvent takes nothing returns nothing
+    call EndGame(true)
+endfunction
+function ProbeEndDialog takes nothing returns nothing
+    local trigger t=CreateTrigger()
+    set probe_end_dialog=DialogCreate()
+    set probe_end_button=DialogAddQuitButton(probe_end_dialog,false,"End",69)
+    call TriggerRegisterDialogButtonEvent(t,probe_end_button)
+    call TriggerAddAction(t,function ProbeEndDialogEvent)
+    call DialogDisplay(Player(0),probe_end_dialog,true)
+endfunction
+function ProbeLocalEnd takes nothing returns nothing
+    if GetLocalPlayer()==Player(1) then
+        call EndGame(false)
+    endif
 endfunction
 function config takes nothing returns nothing
 endfunction

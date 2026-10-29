@@ -4,7 +4,7 @@
 
 ## 已接入
 
-- RemovePlayer记录胜/负/平/中立结果与离开槽位，派发玩家胜负事件并防止递归重复结算；CachePlayerHeroData保留真实英雄类型、等级、经验与属性供结算使用。EndGame/RestartGame把是否显示结算及返回/重开请求交给前端，不直接操作用户原安装。
+- RemovePlayer记录胜/负/平/中立结果与离开槽位，派发玩家胜负事件并防止递归重复结算；CachePlayerHeroData保留真实英雄类型、等级、经验与属性供结算使用。EndGame/RestartGame把是否显示结算及返回/重开请求交给前端，不直接操作用户原安装；实验联机的 EndGame 先产生本机离开意图，对话框回调按触发玩家定位，离开确认后再处理结算。多人 RestartGame／ChangeLevel 仍待完善。
 - 近战关键建筑查询解析UnitUI/name的townhall、greathall、treeoflife、necropolis等原内部名称，统计实际单位、未完成状态/队列及升级等价。GetPlayerTechCount也使用真实单位/科技消费，允许高级主基地满足低级前置。当前离线会话提供未断开的GAME_STATE_DISCONNECTED状态；其他整数游戏状态仍明确失败。
 - Dialog/button/defeatcondition使用真实句柄与生命周期，消息/按钮/快捷键/玩家显示进入ScriptDialog.fdf。按钮和对话框事件携带GetClickedButton/GetClickedDialog/GetTriggerPlayer；点击、清理、销毁、重新显示和退出按钮连接脚本及前端。hashtable可保存这些句柄，失败条件说明进入菜单帮助内容。
 - F10、Esc及游戏菜单按钮打开EscMenuMainPanel.fdf，原控件连接暂停/继续、返回、结束游戏、退出确认和重开。重开复用当前选图与玩家配置重新创建会话；退出程序由自己的客户端事件循环处理。菜单与脚本对话框隔离世界输入，EnableUserControl/UI/Select连接实际消费，暂停期间继续维护声音时钟。
