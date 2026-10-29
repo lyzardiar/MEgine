@@ -26,7 +26,7 @@ class GameFlowUi {
     std::string helpText_,tipsText_;
     void menuPanel(Panel panel);
     void optionsPanel(Panel panel);
-    void drawOptions(const UiInput& input,bool network);
+    void drawOptions(const UiInput& input,bool network,bool allowNetworkSubgroup);
     void prepareScores();
 public:
     GameFlowUi(GameData& data,Renderer& renderer,Text& text) : data_(data),renderer_(renderer),text_(text) {}
