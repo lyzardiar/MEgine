@@ -4,10 +4,11 @@
 #include <cmath>
 
 namespace war3 {
-SoundScene& ScriptSession::requireAudio() {if(!audio_){audio_=std::make_unique<SoundScene>(requireWorld().resources(),audioSimulationClock_?&simulationTime_:nullptr);audio_->localGain(localSoundGain_);audio_->muted(audioMuted_);}return *audio_;}
+SoundScene& ScriptSession::requireAudio() {if(!audio_){audio_=std::make_unique<SoundScene>(requireWorld().resources(),audioSimulationClock_?&simulationTime_:nullptr);audio_->localGain(localSoundGain_);audio_->localCategories(localSoundCategories_[0],localSoundCategories_[1],localSoundCategories_[2]);audio_->muted(audioMuted_);}return *audio_;}
 bool ScriptSession::animationSound(const std::string& code,const std::array<float,3>& position) {return requireAudio().animation(code,position);}
 void ScriptSession::audioMuted(bool muted) {audioMuted_=muted;if(audio_)audio_->muted(muted);if(music_)music_->muted(muted);if(thematicMusic_)thematicMusic_->muted(muted);}
 void ScriptSession::localAudioGains(float sound,float music) {if(!std::isfinite(sound) || sound<0 || sound>1 || !std::isfinite(music) || music<0 || music>1)throw std::runtime_error("Invalid local audio gain");localSoundGain_=sound;localMusicGain_=music;if(audio_)audio_->localGain(sound);if(music_)music_->localGain(music);if(thematicMusic_)thematicMusic_->localGain(music);}
+void ScriptSession::localAudioCategories(bool ambient,bool movement,bool units) {localSoundCategories_={ambient,movement,units};if(audio_)audio_->localCategories(ambient,movement,units);}
 void ScriptSession::updateAudio() {if(audio_)audio_->update();if(music_)music_->update();if(thematicMusic_)thematicMusic_->update();}
 void ScriptSession::updateAudioListener(float x,float y,float z,std::array<float,3> right) {if(audio_){audio_->updateAttachments([this](std::uint32_t id)->std::optional<std::array<float,3>>{auto found=units_.find(id);if(found==units_.end() || found->second->removing || !world_)return {};auto& unit=*found->second;return std::array{std::bit_cast<float>(unit.x.bits()),std::bit_cast<float>(unit.y.bits()),world_->height({unit.x,unit.y})+unit.displayFlyHeight()};});audio_->listener(x,y,z,right);}}
 void ScriptSession::bindSoundNatives() {

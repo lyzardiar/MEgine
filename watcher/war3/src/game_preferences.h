@@ -16,6 +16,7 @@ struct GameAudioPreferences {
     bool sound=true,music=true;
     unsigned soundVolume=100,musicVolume=100;
     bool subtitles=true;
+    bool ambient=true,movement=true,unitSounds=true;
     float soundGain() const {return sound?float(soundVolume)/100.f:0.f;}
     float musicGain() const {return music?float(musicVolume)/100.f:0.f;}
     bool operator==(const GameAudioPreferences&) const = default;

@@ -50,6 +50,7 @@ class SoundScene {
     std::array<float,3> listener_{},listenerRight_{1,0,0};
     bool listenerSet_=false;
     bool muted_=false;
+    std::array<bool,3> localCategories_{true,true,true};
     float localGain_=1;
     const double* simulationTime_=nullptr;
     bool groupsAnimating_=false;
@@ -75,6 +76,7 @@ public:
     const std::optional<SourceTable::Row>& environment() const {return environment_;}
     void muted(bool value);
     void localGain(float value);
+    void localCategories(bool ambient,bool movement,bool units);
     void start(const std::shared_ptr<ScriptSound>& sound,bool fade=false);
     void stop(const std::shared_ptr<ScriptSound>& sound,bool kill,bool fade);
     void releaseWhenDone(const std::shared_ptr<ScriptSound>& sound);

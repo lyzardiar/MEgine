@@ -96,6 +96,7 @@ class ScriptSession {
     bool resumeMapAfterThematic_=false;
     bool audioMuted_=false,audioSimulationClock_=false;
     float localSoundGain_=1,localMusicGain_=1;
+    std::array<bool,3> localSoundCategories_{true,true,true};
     std::unique_ptr<ObjectData> definitions_;
     std::map<std::uint32_t,std::shared_ptr<UnitState>> units_;
     std::set<std::uint32_t> queuedPlayerUnits_;
@@ -1085,6 +1086,7 @@ public:
     double simulationTime() const {return simulationTime_;}
     void audioMuted(bool muted);
     void localAudioGains(float sound,float music);
+    void localAudioCategories(bool ambient,bool movement,bool units);
     void audioSimulationClock() {if(audio_)throw std::runtime_error("Audio simulation clock must be set before audio initialization");audioSimulationClock_=true;}
     void updateAudio();
     void updateAudioListener(float x,float y,float z,std::array<float,3> right);

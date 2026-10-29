@@ -1664,3 +1664,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`replay_browser.*`、`replay_preparation.*`、`CMakeLists.txt`、`docs/replay-browser.md`、`docs/replay-preparation.md`。浏览器与地图／录制槽位准备接口已实现；主菜单入口、原版对象映射和实际回放消费尚未接通。
 
 阶段核对真实 W3G 读取、用户目录边界／删除确认／重解析点、异步切换与退出、地图校验／缺图／数据覆盖、稀疏玩家槽／随机种子、跨线程取消及原版输入画面；Win32 Release 产品增量编译通过，完整播放尚未实现。
+
+## 声音分类设置待验证
+
+路径：`game_preferences.*`、`game_flow_ui.cpp`、`game_loading.cpp`、`map_preparation.cpp`、`game_view.cpp`、`session.h`、`session_sound.cpp`、`sound.*`、`docs/game-options.md`。环境、移动和单位声音选项通过本地声音通道增益生效并持久化，脚本音量组保持独立。
+
+功能阶段核对各复选框键鼠输入、确认／取消、旧版和损坏设置迁移、重启与切图保存、播放中的普通／堆叠声音、脚本音量组和静音组合，使用真实设备对照原版通道分类及默认值；实际运行和听感尚未验收。
