@@ -2830,3 +2830,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役 WTS 非声明文本（待验证）
 
 路径：`src/map.cpp`、`tests/map_tests.cpp`、`docs/campaign-wts-text.md`。资料片 nightelfX01 原图隔离探针已越过地图读取并创建 136 单位，随后因技能参数停止；集中验证任务文本、格式边界、自定义和联网地图，见 [战役地图字符串表](campaign-wts-text.md)。新增解析断言未运行。
+
+### 战役寄生技能零英雄时长（待验证）
+
+路径：`src/session_spell_info.cpp`、`docs/campaign-parasite-duration.md`。nightelfX01 原图隔离探针已越过此技能参数检查，随后在句柄调用处停止；集中验证零时长实际施法、原版效果及地图派生。见 [战役寄生技能时长](campaign-parasite-duration.md)。
