@@ -61,7 +61,7 @@ struct DoodadState {
     double animationStart=0,randomStart=-1;
     bool active=true;
 };
-struct PresentationSpellSound {std::uint32_t ability=0;WorldPoint position{};};
+struct PresentationSpellSound {std::uint32_t ability=0;WorldPoint position{};std::string label;};
 enum class NativeKind {Trackable,TextTag,Multiboard,MultiboardItem,Leaderboard,Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning,CameraSetup,UnitPool,ItemPool,Image,Ubersplat};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
@@ -99,6 +99,7 @@ class ScriptSession {
     std::optional<std::array<float,3>> audioListener_,audioListenerRight_;
     std::vector<PresentationSpellSound> pendingSpellSounds_;
     void queueSpellSound(std::uint32_t ability,WorldPoint position);
+    void queueLabelSound(const std::string& label,WorldPoint position);
     float localSoundGain_=1,localMusicGain_=1;
     std::array<bool,3> localSoundCategories_{true,true,true};
     std::unique_ptr<ObjectData> definitions_;
