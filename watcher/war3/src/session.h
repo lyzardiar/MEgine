@@ -1087,6 +1087,7 @@ public:
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986,std::optional<WorldPoint> destination={});
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order,std::optional<WorldPoint> destination,bool scriptHidden);
     bool stopUnit(std::uint32_t handle,bool hold=false);
+    bool stopUnit(std::uint32_t handle,bool hold,bool scriptHidden);
     bool targetOrder(std::uint32_t source,std::uint32_t target,std::uint32_t order=851971);
     std::optional<unsigned> groundAttackWeapon(const UnitState& source);
     bool attackGround(std::uint32_t source,WorldPoint point);

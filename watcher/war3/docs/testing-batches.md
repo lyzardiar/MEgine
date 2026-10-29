@@ -2910,3 +2910,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 亡灵首关空单位暂停（待验证）
 
 路径：`src/session_entities.cpp`、`docs/campaign-undead01-pause.md`。隔离原图越过空单位暂停并推进至 400 秒；集中验证暂停恢复、动作时序和真实开场，见 [空单位暂停](campaign-undead01-pause.md)。
+
+### 亡灵首关隐藏单位即时命令（待验证）
+
+路径：`src/session.h`、`src/session_orders.cpp`、`src/session_entities.cpp`。隔离原图救援计数从 0 增至 4，并检查脚本、玩家和运输隐藏边界；集中验证原版命令及完整任务，见 [隐藏单位脚本命令](campaign-undead01-hidden-orders.md)。
