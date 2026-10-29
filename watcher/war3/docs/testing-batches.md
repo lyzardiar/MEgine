@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 地图脚本模型镜头待验证
+
+路径：`src/world.h`、`src/session_world.cpp`、`src/model.h/.cpp`、`src/model_pose.cpp`、`src/scene_streaming.h/.cpp`、`src/game_view.cpp`；说明见 `cinematic-camera-model.md`。脚本指定模型镜头使用后台可选加载和场景相机，重置后恢复；阶段检查纯镜头模型、缺失／损坏、视锥与锚点、声音监听、重置、镜头脚本查询、切图、联机及原版画面；原版时序和部分脚本查询仍待完善。
+
 ## 迫击炮照明弹待验证
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_stealth_reveal.cpp`、`src/session_fog.cpp`、`src/session_visibility.cpp`；说明见 `flare.md`。`Afla` 点目标及科技前置接入现有施法，按源延迟产生视野与侦测；阶段检查时间、冷却、地形边缘、重叠、共享视野、暂停、施法者死亡、地图覆盖、双端、实际画面及原版行为；闪烁与飞行画面尚未实现。

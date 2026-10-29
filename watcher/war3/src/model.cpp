@@ -85,7 +85,7 @@ void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
                 else if (outer) source.take(source.left()); }
         }
     }
-    if (version != 800 || (geosets.empty() && emitters.empty() && ribbons.empty())) throw std::runtime_error("Expected classic MDX800 geometry or emitted effects");
+    if (version != 800 || (geosets.empty() && emitters.empty() && ribbons.empty() && cameras.empty())) throw std::runtime_error("Expected classic MDX800 geometry, emitted effects or camera");
     if (!(fov > 0 && fov < XM_PI && nearPlane > 0 && farPlane > nearPlane)) throw std::runtime_error("Invalid camera");
     std::map<int,unsigned> ids;
     for (unsigned i = 0; i < nodes.size(); ++i) { if (!ids.emplace(nodes[i].id,i).second) throw std::runtime_error("Duplicate node id"); if (unsigned(nodes[i].id) < pivots.size()) nodes[i].pivot = pivots[nodes[i].id]; }

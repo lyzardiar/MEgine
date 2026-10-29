@@ -23,7 +23,7 @@ class SceneStreaming {
 public:
     SceneStreaming(Archives& resources,Log& log);
     ~SceneStreaming();
-    void request(const std::vector<std::string>& models,const std::vector<std::string>& textures,std::set<std::string> knownTextures,const std::vector<std::string>& optionalTextures={});
+    void request(const std::vector<std::string>& models,const std::vector<std::string>& textures,std::set<std::string> knownTextures,const std::vector<std::string>& optionalTextures={},const std::vector<std::string>& optionalModels={});
     std::optional<StreamedScene> poll();
 };
 }

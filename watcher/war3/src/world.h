@@ -38,6 +38,10 @@ struct WorldEnvironment {
     std::array<jass::Real,8> cameraBounds{};
     std::string terrainDayNight,unitDayNight;
     std::string skyModel;
+    std::string cinematicCameraModel;
+    std::array<float,3> cinematicCameraOrigin{};
+    float cinematicCameraRotation=0;
+    double cinematicCameraStarted=0;
     std::string altMinimapIcon;
     bool creepCampFilter=true,preSelectionEnabled=true,preSelectionUI=true;
     bool allyFilterButtonEnabled=true,creepFilterButtonEnabled=true;
