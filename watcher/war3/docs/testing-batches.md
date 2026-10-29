@@ -2,7 +2,7 @@
 
 ## 双恢复物品待验证
 
-路径：`src/session.h`、`src/session_item_use.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`；说明见 `combined-recovery-items.md`。Win32 Release 客户端和 control 目标编译通过；`item-combined` 最小检查 1 通过／0 失败，覆盖地图字段覆盖、一次费用／次数／事件、共享冷却、满生命／魔法、回调删物品、未知组合拒绝，未加载 Game.dll。阶段继续核对符文、不同顺序／费用／范围／数量、地图自定义覆盖、事件重入／易主／死亡、双端同步与真实地图，并与原版比较费用、冷却和多能力派发；其他多主动组合尚未实现。
+路径：`src/session.h`、`src/session_item_use.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`；说明见 `combined-recovery-items.md`。Win32 Release 客户端和 control 目标编译通过；`item-combined` 最小检查 1 通过／0 失败，覆盖地图字段覆盖、一次费用／次数／事件、共享冷却、满生命／魔法、使用回调删物品、生命变化回调删物品并易主、未知组合拒绝，未加载 Game.dll。阶段继续核对符文、不同顺序／费用／范围／数量、地图自定义覆盖、事件重入／易主／死亡、双端同步与真实地图，并与原版比较费用、冷却和多能力派发；其他多主动组合尚未实现。
 
 ```powershell
 python tests/generate-combined-item-fixture.py --data-root 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne' --output '../../tmp/docs-artifacts/war3/combined-item/fixture.w3m'

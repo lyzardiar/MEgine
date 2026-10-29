@@ -4,4 +4,4 @@
 
 当前费用按两项求和、共享冷却取较大值，受益者仅限使用者；这属于实现选择，必须与原版对照。其他多主动组合仍明确报错，不忽略未知能力。物品动画、音效、耗尽／转交与事件时序及多人同步尚待阶段验证。
 
-原版 `dtsb` 的 `AItp,AImv,AIsr` 分别是一个主动传送、75 魔法上限和法术减伤两个被动，现有单主动加被动流程可识别；该事实不代表原版地图和原件行为已验收。自定义组合夹具 `tests/generate-combined-item-fixture.py` 写入 `tmp/docs-artifacts/war3/combined-item/`，包含继承原能力的地图数值覆盖及使用事件回调，`war3_control_tests ... item-combined` 覆盖单次费用／冷却／事件、满生命或满魔法、回调删除和未知组合拒绝；最小检查 1 通过、0 失败，未加载 Game.dll。Win32 Release 客户端与 control 目标编译通过。
+原版 `dtsb` 的 `AItp,AImv,AIsr` 分别是一个主动传送、75 魔法上限和法术减伤两个被动，现有单主动加被动流程可识别；该事实不代表原版地图和原件行为已验收。自定义组合夹具 `tests/generate-combined-item-fixture.py` 写入 `tmp/docs-artifacts/war3/combined-item/`，包含继承原能力的地图数值覆盖及使用事件回调，`war3_control_tests ... item-combined` 覆盖单次费用／冷却／事件、满生命或满魔法、使用回调删除、生命变化回调删除物品并易主，以及未知组合拒绝；最小检查 1 通过、0 失败，未加载 Game.dll。Win32 Release 客户端与 control 目标编译通过。

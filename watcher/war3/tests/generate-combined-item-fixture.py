@@ -23,8 +23,9 @@ def main():
     archive = control.fixture.mpyq.MPQArchive(io.BytesIO(original[offset:]), listfile=False)
     names = control.fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: control.fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
-    script = control.SCRIPT.replace('integer soulPickups=0', 'integer soulPickups=0\ninteger combinedUses=0\nboolean removeCombined=false\nitem reentryItem=null')
+    script = control.SCRIPT.replace('integer soulPickups=0', 'integer soulPickups=0\ninteger combinedUses=0\ninteger combinedEvents=0\nboolean removeCombined=false\nitem reentryItem=null')
     script = script.replace('function config takes nothing returns nothing', '''function combined_used takes nothing returns nothing
+    set combinedEvents=combinedEvents+1
     if GetItemTypeId(GetManipulatedItem())=='I0CM' then
         set combinedUses=combinedUses+1
         if removeCombined then
