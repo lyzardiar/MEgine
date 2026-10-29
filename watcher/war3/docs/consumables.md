@@ -16,7 +16,7 @@
 
 加速DataA作为移动百分比，Bspe同ID重新使用刷新，使用共享buff最强值聚合与减速消费者；有加速状态时读取MaxUnitSpeed/MaxBldgSpeed限制最终移动。源MiscGame当前为400，地图Misc覆盖沿用会话读取。该限制仅作用于本次加速状态；全局速度最小值、形态、不同增益叠加公式和GetUnitMoveSpeed查询精度仍待统一对照。
 
-范围过滤复用spellTarget/spellTargets；消耗品允许魔免目标，按原air/ground/organic/friend/self/invu等掩码筛选。自用、没有单位类别掩码的药水使用自身路径。驱散复用dispelSpell，不因目标掩码含tree而销毁普通树木；可驱散树木/特殊装饰物语义仍待实现。零恢复量的AIpz企鹅音效物品、完整使用音效/AI自动使用、所有物品及复杂复合效果尚未完成。
+范围过滤复用spellTarget/spellTargets；消耗品允许魔免目标，按原air/ground/organic/friend/self/invu等掩码筛选。自用、没有单位类别掩码的药水使用自身路径。驱散复用dispelSpell，不因目标掩码含tree而销毁普通树木；可驱散树木/特殊装饰物语义仍待实现。零恢复量的恢复类物品允许正常使用并走声音与使用事件；`stpg` 企鹅玩具的 `AIpz` 从源配置读取 `PenguinSqueek`，不消耗物品。完整使用音效/AI自动使用、所有物品及复杂复合效果尚未完成。
 
 ## 来源与验证
 
@@ -32,3 +32,7 @@
 AbilityMetaData说明恢复总量、fullFlags、无需目标和Dispel on Attack；UnitEditorData说明fullFlags的0/1/2/3取值。药膏400HP/45秒、小净化100MP/30秒、恢复卷轴225HP/45秒，普通无敌15秒/较小无敌7秒，速度药水+0.6/45秒、加速卷轴+2/10秒，驱散召唤伤害200来自源表，未用这些值替代地图覆盖。
 
 本次仅做开发必需 `cmake --build --preset release --target war3 --parallel 8` 和 `git diff --check`，日志为 `tmp/docs-artifacts/war3/consumables/implementation-build.log`。没有执行专项玩法、三图、原件指令、GPU或性能回归。阶段入口及完整待测场景见[测试队列](testing-batches.md)。REA深层分析服务仍缺少Ghidra/IDA配置，此次依据源表，不将其当作二进制行为核对。
+
+## 企鹅玩具
+
+`stpg` 的源 `ItemData.slk` 配置为可使用、不可消耗，`AIpz` 继承 `AIha`，生命恢复量为 0，`ItemAbilityFunc.txt` 指定 `Effectsound=PenguinSqueek`。使用仍走现有背包权限、冷却、音效队列及物品事件，实际听感、事件次序、自定义零量恢复和原版规则待阶段验证。源 `War3Patch.mpq` 中 `Units/ItemAbilityFunc.txt` SHA-256 为 `22752f520ac000f64c60da602d8abee3ffd4c7119418454acb40ac2c9712e55b`；源数据查询记录在 `tmp/docs-artifacts/war3/consumables/penguin-source.json`。

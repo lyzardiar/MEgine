@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 企鹅玩具待验证
+
+路径：`src/session_consumables.cpp`；说明见 `consumables.md`。阶段检查 `stpg` 满血与受伤使用、重复使用与背包保留、音效与音量、物品事件、冷却组、自定义零恢复物品、双端和原版规则；暂未执行玩法或听感验证。
+
 ## 吸血药水待验证
 
 路径：`src/spells.h`、`src/session.h`、`src/session_spell_effects.cpp`、`src/session_attack_passives.cpp`、`src/session_item_use.cpp`、`src/session_projectiles.cpp`、`src/session_network_identity.cpp`；说明见 `vampirism-potion.md`。包含本轮信号枪和科技快照的 Win32 Release 客户端编译通过。阶段检查购买／使用／冷却、攻击加成、近远程回血、目标限制、击杀／复活／易主、驱散、光环叠加、脚本重入、联机及原版规则。
