@@ -98,7 +98,7 @@ void ScriptSession::bindEntityNatives() {
     bind("SetUnitPathing","nothing",{"unit","boolean"},[this](auto& vm,auto a){if(alive(a[0].bits,NativeKind::Unit)){auto& u=unit(a[0]);u.pathing=a[1].bits!=0;unitFootprint(u);}return vm.nothing();});
     bind("SelectUnit","nothing",{"unit","boolean"},[this](auto& vm,auto a){selectUnit(a[0].bits,a[1].bits!=0);return vm.nothing();});
     bind("IsUnitPaused","boolean",{"unit"},[this](auto& vm,auto a){return vm.boolean(unit(a[0]).paused);});
-    bind("IsUnitHidden","boolean",{"unit"},[this](auto& vm,auto a){auto& u=unit(a[0]);return vm.boolean(u.hidden());});
+    bind("IsUnitHidden","boolean",{"unit"},[this](auto& vm,auto a){return vm.boolean(alive(a[0].bits,NativeKind::Unit) && unit(a[0]).hidden());});
     bind("IsUnitOwnedByPlayer","boolean",{"unit","player"},[this](auto& vm,auto a){return vm.boolean(unit(a[0]).owner==playerId(a[1]));});
     bind("ClearSelection","nothing",{},[this](auto& vm,auto){std::vector<std::uint32_t> selected;for(auto& [id,u]:units_)if(u->selected)selected.push_back(id);for(auto id:selected)if(alive(id,NativeKind::Unit) && units_.at(id)->selected)selectUnit(id,false);return vm.nothing();});
     bind("GroupAddUnit","nothing",{"group","unit"},[this](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Group) || !alive(a[1].bits,NativeKind::Unit))return vm.nothing();auto& list=std::get<Group>(object(a[0],NativeKind::Group).state).units;if(std::find(list.begin(),list.end(),a[1].bits)==list.end())list.push_back(a[1].bits);return vm.nothing();});

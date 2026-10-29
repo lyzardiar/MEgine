@@ -2926,3 +2926,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 资料片第五章缺失预载脚本（待验证）
 
 路径：`src/session_game.cpp`、`docs/campaign-preloader.md`。独立原图探针越过缺失成员并推进至 400 秒；集中验证预载脚本的空值、存在／缺失、错误和切图，见 [预载脚本](campaign-preloader.md)。
+
+### 亡灵第二关死亡对白句柄（待验证）
+
+路径：`src/session.cpp`、`src/session_entities.cpp`。独立原图探针越过死亡对白异常；集中验证有效／失效句柄、颜色映射及真实战役表现，见 [乌瑟尔死亡对白](campaign-undead02-uther-transmission.md)。

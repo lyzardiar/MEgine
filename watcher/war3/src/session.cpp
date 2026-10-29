@@ -115,7 +115,7 @@ void ScriptSession::bindNatives() {
     bind("ForcePlayerStartLocation","nothing",{"player","integer"},[this](auto& vm,auto args){auto& p=player(args[0]);p.start=int(checked(args[1].bits,16,"Forced player start"));p.forcedStart=true;return vm.nothing();});
     bind("GetPlayerStartLocation","integer",{"player"},[this](auto& vm,auto args){return vm.integer(player(args[0]).start);});
     bind("SetPlayerColor","nothing",{"player","playercolor"},[this](auto& vm,auto args){player(args[0]).color=checked(args[1].bits,16,"Player color");return vm.nothing();});
-    bind("GetPlayerColor","playercolor",{"player"},[this](auto& vm,auto args){return vm.handle("playercolor",player(args[0]).color);});
+    bind("GetPlayerColor","playercolor",{"player"},[this](auto& vm,auto args){return vm.handle("playercolor",alive(args[0].bits,NativeKind::Player)?player(args[0]).color:0);});
     bind("SetPlayerRacePreference","nothing",{"player","racepreference"},[this](auto& vm,auto args){auto& p=player(args[0]);p.racePreference=args[1].bits;p.race=0;return vm.nothing();});
     bind("IsPlayerRacePrefSet","boolean",{"player","racepreference"},[this](auto& vm,auto args){return vm.boolean((player(args[0]).racePreference&args[1].bits)!=0);});
     bind("SetPlayerRaceSelectable","nothing",{"player","boolean"},[this](auto& vm,auto args){player(args[0]).raceSelectable=args[1].bits!=0;return vm.nothing();});
