@@ -33,7 +33,7 @@ class GameView {
     IDirect3DTexture9* minimapFog(unsigned player);
     std::array<unsigned,4> teamFilterIndices_{};
     std::array<DWORD,4> minimapFilterColors_{};
-    bool allyFilterButtonDown_=false,creepFilterButtonDown_=false,terrainFilterButtonDown_=false,minimapTerrainVisible_=true;
+    bool allyFilterButtonDown_=false,creepFilterButtonDown_=false,terrainFilterButtonDown_=false,signalButtonDown_=false,signalMode_=false,minimapTerrainVisible_=true;
     std::unique_ptr<GlueScreen> allyFilterTooltip_;
     struct CreepCamp {float x=0,y=0;std::vector<std::uint32_t> units;};
     std::vector<CreepCamp> creepCamps_;
@@ -143,6 +143,7 @@ class GameView {
     void drawMultiboards(const GameInput& input);
     bool multiboardHit(float x,float y) const;
     void drawMinimapPings();
+    void startMinimapSignal();
     std::optional<std::array<float,3>> ground(float x,float y) const;
     std::optional<std::pair<float,float>> project(float x,float y,float z) const;
     void input(const GameInput& input);

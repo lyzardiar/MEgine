@@ -9,3 +9,5 @@
 固定版原件 REA 证据 `ev_9313a271865c02eaf3f9913b9a90e01a4c594213adc6b098966abcd45432f858`、`ev_8c0c908dd5574f585740051119b70b150a39676497a4978acd33e5be69aeeab5` 对应地形按钮布局与资源；原 `GlobalStrings.fdf` 指明 Alt+T 和提示。
 
 Win32 Release 客户端编译通过。对 BootyBay 临时副本仅移除 `war3mapMap.blp`，确认该成员无法打开后，以 `--play --hidden --mute --frames 1` 启动成功、进入对局并完成首帧，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/weather-source-probe/no-minimap-play-final.log`。此检查仅覆盖缺失底图的加载与首帧，不代表界面视觉、按键或完整对局验收。
+
+玩家可通过小地图信号按钮、Alt+G 后点击位置，或按住 Alt 左键点击小地图／游戏地面发送信号；右键、Esc、失焦和界面遮挡取消选点。按钮贴图和提示读取原皮肤与 GlobalStrings，沿用地图皮肤覆盖。提示只在发送者及其盟友的本地界面显示，使用既有小地图模型与提示音；单机直接派发，实验局域网与其回放通过 0x68 时间片动作传递玩家和坐标。该动作的末字段采用经典格式参考的 0x40a00000，原版网络字节与时序尚未核对。按钮当前使用已有小地图按钮列的近似坐标，需与原版窗口布局对照。

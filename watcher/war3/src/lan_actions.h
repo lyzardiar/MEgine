@@ -27,6 +27,7 @@ struct LanActionAlliance {std::uint8_t slot=0;std::uint32_t flags=0;bool operato
 struct LanActionPreSubselection {bool operator==(const LanActionPreSubselection&) const=default;};
 struct LanActionSubgroup {std::uint32_t type=0;LanObjectId first;bool operator==(const LanActionSubgroup&) const=default;};
 struct LanActionTrackable {bool hit=false;LanObjectId object;bool operator==(const LanActionTrackable&) const=default;};
+struct LanActionMinimapSignal {std::uint32_t xBits=0,yBits=0,unknown=0;bool operator==(const LanActionMinimapSignal&) const=default;};
 inline constexpr std::size_t experimentalCachePartBytes=512,experimentalCacheUnitBytes=1024u*1024u;
 struct LanActionCacheSync {std::uint8_t opcode=0;std::string cache,mission,key,text;std::uint32_t value=0;std::vector<std::uint8_t> unit;std::uint64_t transfer=0;std::uint32_t total=0,offset=0;bool operator==(const LanActionCacheSync&) const=default;};
 struct LanActionGroundItem {std::uint8_t flags=0;LanObjectId object;bool operator==(const LanActionGroundItem&) const=default;};
@@ -48,7 +49,7 @@ struct LanActionAbility {
     std::uint32_t secondaryXBits=0,secondaryYBits=0;
     bool operator==(const LanActionAbility&) const=default;
 };
-using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionEscape,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionCacheSync,LanActionGroundItem,LanActionGroupAssign,LanActionGroupSelect,LanActionExperimentalChat,LanActionExperimentalSelection,LanActionExperimentalPurchase,LanActionExperimentalLeave,LanActionExperimentalSpell,LanActionExperimentalUnit,LanActionExperimentalDialog>;
+using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionEscape,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionMinimapSignal,LanActionCacheSync,LanActionGroundItem,LanActionGroupAssign,LanActionGroupSelect,LanActionExperimentalChat,LanActionExperimentalSelection,LanActionExperimentalPurchase,LanActionExperimentalLeave,LanActionExperimentalSpell,LanActionExperimentalUnit,LanActionExperimentalDialog>;
 
 // Classic 1.13+ action layout, bounded to 256 KiB and 4096 actions per block.
 // Experimental actions require explicit opt-in; malformed or unsupported opcodes fail the block.

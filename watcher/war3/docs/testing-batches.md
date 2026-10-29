@@ -2602,3 +2602,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 采木目标可达性（待验证）
 
 路径：`commerce.h`、`session.h`、`session_destructables.cpp`、`session_lumber.cpp`、`docs/destructables.md`。集中验证树木死亡／移除、隔墙树与可达替代、四个以上候选的轮转、无候选／暂时不可达、树木复活、路径动态变化、携木返还后接续、晕眩／定身／停止／重下命令、农民／苦工／食尸鬼／小精灵及脚本事件；对照原版选择规则并测量密集树林与大量工人的 CPU 开销。当前未编译或运行，保留批次验证。
+
+### 玩家小地图信号（待验证）
+
+路径：`game_loading.*`、`game_view.*`、`glue.h`、`main.cpp`、`player_commands.*`、`session_text.cpp`、`session.h`、`lan_actions.*`、`lan_action_encoder.cpp`、`lan_simulation.*`、`docs/minimap.md`。阶段验证 Alt+G、按钮和 Alt+左键在地面／小地图的落点、键鼠按下与松开、取消／失焦／聊天和其他弹窗隔离、资源缺失／地图皮肤、提示音及模型；验证己方／单向与双向盟友／敌方／观察者的可见范围、改变联盟顺序、无选择发送、时间片重放、畸形／非有限坐标和长时间发送资源释放。对照原版 1.27 的按钮坐标、样式、快捷键、颜色、声音、收件人及 0x68 原始字段；实验双端和回放尚未验收。

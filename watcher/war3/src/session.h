@@ -1184,6 +1184,7 @@ public:
     const std::vector<ScriptText>& texts() const {return texts_;}
     const auto& textTags() const {return textTags_;}
     const std::vector<ScriptMinimapPing>& minimapPings() const {return minimapPings_;}
+    bool playerMinimapSignal(unsigned sender,WorldPoint point);
     const auto& quests() const {return quests_;}
     std::uint64_t questRevision() const {return questRevision_;}
     bool questFlash() const {return questFlash_;}
