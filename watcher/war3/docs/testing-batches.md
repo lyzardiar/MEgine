@@ -2760,3 +2760,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 电脑吞噬、寄生与死亡之指（待验证）
 
 路径：`src/session_ai_armies.cpp`；说明见 [电脑施法](ai-devour-parasite.md)。集中验证目标选择、技能条件、货舱与伤害、事件重入、长局和双端确定性，并对照原版 AI；本次未编译或运行。
+
+### 回放技能与建造菜单（待验证）
+
+路径：`src/lan_actions.*`、`src/lan_simulation.*`、`src/game_commands.cpp`、`src/game_view.*`、`tests/order_queue_tests.cpp`。集中验证动作编解码、每玩家菜单、选区／子组／取消、回放视角与原版界面；实验对局主动发送尚未实现，见 [回放命令菜单](replay-command-menus.md)。新增断言未编译或运行。

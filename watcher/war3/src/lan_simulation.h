@@ -18,6 +18,7 @@ public:
 private:
     struct Selection {unsigned player;bool add;std::vector<std::uint32_t> units;};
     struct Escape {unsigned player;};
+    struct Menu {unsigned player;LanCommandMenu menu;};
     struct Chat {unsigned player;std::string text;ChatChannel channel;};
     struct SelectionSync {std::uint8_t peer;LanActionExperimentalSelection part;};
     struct Purchase {unsigned player;std::uint32_t shop,type;bool item;};
@@ -35,7 +36,7 @@ private:
     struct ExperimentalUnit {PlayerCommand command;std::uint64_t ticket=0;};
     struct ExperimentalDialog {unsigned player;std::uint32_t dialog,button;std::uint64_t generation;};
     struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0,expectedItem=0,itemSlot=0;bool constructionCancel=false,subgroup=false,itemOrder=false,itemById=false,queued=false;};
-    using Event=std::variant<LanActionPause,LanActionResume,LanActionCacheSync,Escape,Chat,SelectionSync,Purchase,Departure,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable,MinimapSignal,GroundItem,ExperimentalSpell,ExperimentalUnit,ExperimentalDialog>;
+    using Event=std::variant<LanActionPause,LanActionResume,LanActionCacheSync,Escape,Menu,Chat,SelectionSync,Purchase,Departure,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable,MinimapSignal,GroundItem,ExperimentalSpell,ExperimentalUnit,ExperimentalDialog>;
     ScriptSession& session_;
     ObjectResolver resolve_;
     std::vector<std::vector<Event>> decoded_;
@@ -49,6 +50,7 @@ private:
     std::map<unsigned,std::array<std::vector<std::uint32_t>,10>> groups_,projectedGroups_;
     std::map<unsigned,std::pair<std::uint32_t,std::uint32_t>> subgroups_,projectedSubgroups_;
     std::array<std::uint32_t,16> groundItems_{};
+    std::array<LanCommandMenu,16> menus_{};
     std::size_t cursor_=0;
     bool consuming_=false,experimental_=false;
     std::optional<bool> localDialogQuit_;
@@ -64,6 +66,7 @@ public:
     LanStepResult consume(std::uint64_t sequence,const LanTimeSlot& slot);
     bool hasLocalDialogQuit() const{return localDialogQuit_.has_value();}
     bool unfinishedCacheSync() const{return !cacheUnitParts_.empty();}
+    LanCommandMenu commandMenu(unsigned player) const{return player<menus_.size()?menus_[player]:LanCommandMenu::None;}
     std::optional<bool> takeLocalDialogQuit(){auto value=localDialogQuit_;localDialogQuit_.reset();return value;}
     std::uint32_t selectedGroundItem(unsigned player) const;
     void clearLocalGroundItem();
