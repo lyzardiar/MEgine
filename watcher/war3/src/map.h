@@ -69,6 +69,7 @@ struct MapData {
     MapInfo info;
     MapTerrain terrain;
     std::optional<MapPathing> pathing;
+    std::shared_ptr<const Member> shadows;
     static MapData read(Archives& archives);
 };
 struct MapEntry { fs::path path; bool directory=false; };

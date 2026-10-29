@@ -184,6 +184,8 @@ class GameView {
     struct BuildingShadowChunk {unsigned x=0,y=0;float low=0,high=0;std::array<std::uint8_t,256> cells{};};
     std::vector<BuildingShadowStamp> buildingShadowStamps_;
     std::map<std::uint64_t,BuildingShadowChunk> buildingShadowChunks_;
+    std::map<std::uint64_t,BuildingShadowChunk> staticShadowChunks_;
+    bool staticShadowsReady_=false,buildingShadowsReady_=false;
     const UnitShadow& unitShadow(std::uint32_t type);
     void streamUnitShadows(std::vector<std::string>& textures);
     void drawUnitShadows(bool water,const DirectX::XMMATRIX& vp);
