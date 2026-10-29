@@ -44,6 +44,30 @@ std::optional<Bytes> Archive::read(const std::string& name) const {
     if (low && (!SFileReadFile(handle, bytes.data(), low, &read, nullptr) || read != low)) throw std::runtime_error("Cannot read archive member " + name + ": " + winError());
     return bytes;
 }
+namespace {
+std::optional<Bytes> completePcmWavPrefix(Bytes bytes,DWORD originalSize) {
+    auto u16=[&](size_t p){return unsigned(bytes[p])|(unsigned(bytes[p+1])<<8);};
+    auto u32=[&](size_t p){return std::uint32_t(bytes[p])|(std::uint32_t(bytes[p+1])<<8)|(std::uint32_t(bytes[p+2])<<16)|(std::uint32_t(bytes[p+3])<<24);};
+    if(bytes.size()<44 || std::memcmp(bytes.data(),"RIFF",4) || std::memcmp(bytes.data()+8,"WAVE",4) || std::uint64_t(u32(4))+8!=originalSize)return {};
+    bool format=false;unsigned alignment=0;size_t pos=12;
+    while(pos+8<=bytes.size()) {
+        auto length=u32(pos+4);auto end=std::uint64_t(pos)+8+length;auto padded=end+(length&1u);if(padded>bytes.size())return {};
+        if(!std::memcmp(bytes.data()+pos,"fmt ",4)){if(format || length<16 || u16(pos+8)!=1)return {};auto channels=u16(pos+10),rate=u32(pos+12),byteRate=u32(pos+16),bits=u16(pos+22);alignment=u16(pos+20);if(!channels || channels>2 || !rate || rate>192000 || (bits!=8 && bits!=16) || alignment!=channels*bits/8 || std::uint64_t(rate)*alignment!=byteRate)return {};format=true;}
+        if(!std::memcmp(bytes.data()+pos,"data",4)){if(!format || !length || !alignment || length%alignment || originalSize-padded>128)return {};bytes.resize(size_t(padded));auto size=std::uint32_t(bytes.size()-8);for(unsigned i=0;i<4;++i)bytes[4+i]=std::uint8_t(size>>(i*8));return bytes;}
+        pos=size_t(padded);
+    }
+    return {};
+}
+}
+std::optional<Bytes> Archive::readWavForAudio(const std::string& name,std::string& diagnostic) const {
+    diagnostic.clear();HANDLE file=nullptr;if(!SFileOpenFileEx(handle_,name.c_str(),SFILE_OPEN_FROM_MPQ,&file)){auto error=GetLastError();if(error==ERROR_FILE_NOT_FOUND)return {};throw std::runtime_error("Cannot open "+name+" in "+utf8(path_.wstring())+": "+winError(error));}
+    struct Close {HANDLE handle;~Close(){SFileCloseFile(handle);}} close{file};DWORD high=0;SetLastError(ERROR_SUCCESS);DWORD size=SFileGetFileSize(file,&high);if((size==SFILE_INVALID_SIZE && GetLastError()!=ERROR_SUCCESS) || high || size>128*1024*1024)throw std::runtime_error("Archive member size exceeds limit: "+name);Bytes bytes(size);DWORD read=0;
+    if(!size || (SFileReadFile(file,bytes.data(),size,&read,nullptr) && read==size))return bytes;
+    auto original=GetLastError();auto error="Cannot read archive member "+name+": "+winError(original);DWORD sector=0,returned=0;
+    if(original!=ERROR_FILE_CORRUPT || !SFileGetFileInfo(handle_,SFileMpqSectorSize,&sector,sizeof(sector),&returned) || !sector || sector>1024*1024)throw std::runtime_error(error);
+    DWORD tail=size%sector;if(!tail || tail>16 || size<=tail)throw std::runtime_error(error);DWORD prefix=size-tail;SetLastError(ERROR_SUCCESS);if(SFileSetFilePointer(file,0,nullptr,FILE_BEGIN)==SFILE_INVALID_POS && GetLastError()!=ERROR_SUCCESS)throw std::runtime_error(error);read=0;if(!SFileReadFile(file,bytes.data(),prefix,&read,nullptr) || read!=prefix)throw std::runtime_error(error);
+    read=0;SetLastError(ERROR_SUCCESS);if(SFileReadFile(file,bytes.data()+prefix,tail,&read,nullptr) || GetLastError()!=original)throw std::runtime_error(error);bytes.resize(prefix);auto recovered=completePcmWavPrefix(std::move(bytes),size);if(!recovered)throw std::runtime_error(error);diagnostic=error+"; complete PCM data recovered in memory, trailing "+std::to_string(size-recovered->size())+" bytes omitted";return recovered;
+}
 struct Archives::Store {
     fs::path root;
     std::vector<std::unique_ptr<Archive>> archives;
@@ -80,12 +104,12 @@ void Archives::mountMap(std::shared_ptr<const Bytes> bytes,std::string_view labe
     auto next=std::make_shared<Store>();next->budget=16*1024*1024;next->archives.push_back(std::make_unique<Archive>(std::move(bytes),label));map_=std::move(next);
 }
 void Archives::unmountMap() {map_.reset();}
-std::shared_ptr<const Member> Archives::readStore(Store& store,const std::vector<std::string>& names) {
+std::shared_ptr<const Member> Archives::readStore(Store& store,const std::vector<std::string>& names,bool wavAudio) {
     std::lock_guard lock(store.mutex);
     for(size_t i=0;i<store.archives.size();++i)for(auto& name:names){
-        auto key=std::to_string(i)+":"+name;if(auto found=store.cache.find(key);found!=store.cache.end()){found->second.stamp=++store.stamp;return found->second.member;}
-        auto& archive=*store.archives[i];if(auto bytes=archive.read(name)){
-            auto member=std::make_shared<Member>(Member{std::move(*bytes),utf8(archive.path().wstring())});if(member->bytes.size()>store.budget)return member;
+        auto base=std::to_string(i)+":"+name;auto key=wavAudio?"wav:"+base:base;if(auto found=store.cache.find(key);found!=store.cache.end()){found->second.stamp=++store.stamp;return found->second.member;}if(wavAudio)if(auto found=store.cache.find(base);found!=store.cache.end()){found->second.stamp=++store.stamp;return found->second.member;}
+        auto& archive=*store.archives[i];std::string diagnostic;auto bytes=wavAudio?archive.readWavForAudio(name,diagnostic):archive.read(name);if(bytes){
+            auto source=utf8(archive.path().wstring());if(!diagnostic.empty()){auto warning="WAV recovery in "+source+": "+diagnostic;OutputDebugStringA((warning+"\n").c_str());source+=" ["+diagnostic+"]";}else key=base;auto member=std::make_shared<Member>(Member{std::move(*bytes),std::move(source)});if(member->bytes.size()>store.budget)return member;
             while(store.bytes>store.budget-member->bytes.size()){auto oldest=store.cache.end();std::uint64_t stamp=UINT64_MAX;for(auto it=store.cache.begin();it!=store.cache.end();++it)if(it->second.stamp<stamp){oldest=it;stamp=it->second.stamp;}if(oldest==store.cache.end())break;store.bytes-=oldest->second.member->bytes.size();store.cache.erase(oldest);}
             store.bytes+=member->bytes.size();store.cache.emplace(std::move(key),Cached{member,++store.stamp});return member;
         }
@@ -94,6 +118,9 @@ std::shared_ptr<const Member> Archives::readStore(Store& store,const std::vector
 }
 std::shared_ptr<const Member> Archives::read(std::string name) {
     return readCandidates({std::move(name)});
+}
+std::shared_ptr<const Member> Archives::readWavForAudio(std::string name) {
+    if(name.empty() || name.front()=='/' || name.front()=='\\' || name.find(':')!=std::string::npos || name.find("..")!=std::string::npos)throw std::runtime_error("Invalid archive path");for(auto& c:name){if(c=='/')c='\\';c=char(std::tolower(static_cast<unsigned char>(c)));}if(!name.ends_with(".wav"))throw std::runtime_error("WAV audio read requires a WAV path");std::vector<std::string> names{std::move(name)};if(map_)if(auto member=readStore(*map_,names,true))return member;return readStore(*common_,names,true);
 }
 std::shared_ptr<const Member> Archives::readTexture(std::string name) {
     auto other = name; auto dot = other.find_last_of('.');

@@ -2962,3 +2962,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 资料片第六章空单位位置（待验证）
 
 路径：`src/session_entities.cpp`、`docs/campaign-null-unit-position.md`。独立原图探针越过空单位位置异常并推进至 400 秒；集中验证有效／失效单位与位置、商队剧情和真实窗口，见 [空单位位置](campaign-null-unit-position.md)。
+
+### 声音归档 PCM 尾部恢复（待验证）
+
+路径：`src/archive.cpp`、`src/archive.h`、`src/sound.cpp`、`src/session_sound.cpp`、`tests/archive_tests.cpp`。定向夹具 1 项通过，亡灵第三关静音隔离探针推进至 400 秒；集中验证产品窗口实际播放、尾部语义、原版听感、战役流程和切图资源释放，见 [PCM WAV 尾部读取恢复](audio-wav-tail-recovery.md)。

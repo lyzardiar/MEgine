@@ -16,6 +16,7 @@ public:
     Archive(const Archive&) = delete;
     Archive& operator=(const Archive&) = delete;
     std::optional<Bytes> read(const std::string& name) const;
+    std::optional<Bytes> readWavForAudio(const std::string& name,std::string& diagnostic) const;
     std::vector<std::string> members(const std::string& pattern) const;
     const fs::path& path() const { return path_; }
 };
@@ -29,7 +30,7 @@ class Archives {
     struct Store;
     std::shared_ptr<Store> common_,map_;
     Archives(std::shared_ptr<Store> common,std::shared_ptr<Store> map) : common_(std::move(common)),map_(std::move(map)) {}
-    static std::shared_ptr<const Member> readStore(Store& store,const std::vector<std::string>& names);
+    static std::shared_ptr<const Member> readStore(Store& store,const std::vector<std::string>& names,bool wavAudio=false);
 public:
     explicit Archives(const fs::path& root);
     Archives(const Archives&)=delete;
@@ -41,6 +42,7 @@ public:
     void mountMap(std::shared_ptr<const Bytes> bytes, std::string_view label);
     void unmountMap();
     std::shared_ptr<const Member> read(std::string name);
+    std::shared_ptr<const Member> readWavForAudio(std::string name);
     std::shared_ptr<const Member> readTexture(std::string name);
     std::shared_ptr<const Member> readCandidates(std::vector<std::string> names,ArchiveScope scope=ArchiveScope::Overlay);
     std::vector<std::string> members(const std::string& pattern,ArchiveScope scope=ArchiveScope::Overlay) const;
