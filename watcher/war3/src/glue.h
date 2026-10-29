@@ -7,7 +7,7 @@
 #include <set>
 
 namespace war3 {
-struct UiInput { float x=0,y=0,startX=0,startY=0; bool pressed=false,down=false; unsigned key=0; int wheel=0; bool doubleClick=false,shift=false,control=false,keyRepeat=false,keyShift=false,keyAlt=false; };
+struct UiInput { float x=0,y=0,startX=0,startY=0; bool pressed=false,down=false; unsigned key=0; int wheel=0; bool doubleClick=false,shift=false,control=false,keyRepeat=false,keyShift=false,keyAlt=false,pointerControl=false; };
 class GlueScreen {
 public:
     struct Rect { float x=0,y=0,w=.8f,h=.6f; };

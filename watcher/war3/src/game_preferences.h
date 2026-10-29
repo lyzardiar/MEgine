@@ -9,6 +9,7 @@ struct GameCameraPreferences {
     bool healthBars=false;
     bool enhancedTooltips=true;
     bool formationMovement=true;
+    bool subgroupModifier=false;
     bool operator==(const GameCameraPreferences&) const = default;
 };
 struct GameAudioPreferences {

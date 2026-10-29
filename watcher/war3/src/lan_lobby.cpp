@@ -46,7 +46,7 @@ void LanLobby::updateMapCheck() {
     if(downloaded){join_->discardDownloadedMap();mapStatus_=MapStatus::Failed;mapError_=result->error.empty()?"Downloaded map does not match host declaration":result->error;return;}
     if(join_->requestMapDownload()){mapStatus_=MapStatus::Downloading;mapError_.clear();}else{mapStatus_=MapStatus::Failed;mapError_=result->error.empty()?"Unable to request map download":result->error;}
 }
-bool LanLobby::enableMatchHandoff() {if(!join_ || join_->loadPhase()!=LanLoadPhase::Lobby)return false;handoffEnabled_=true;return true;}
+bool LanLobby::enableMatchHandoff() {if(!join_ || join_->loadPhase()!=LanLoadPhase::Lobby)return false;try{if(!join_->enableExperimentalHandshake()){error_="无法启用局域网实验握手。";join_->cancel();return false;}}catch(const std::exception& e){error_=e.what();join_->cancel();return false;}handoffEnabled_=true;return true;}
 std::optional<LanLobbyHandoff> LanLobby::takeHandoff() {
     if(!handoffEnabled_ || !join_ || join_->state()!=LanJoinState::Lobby || join_->loadPhase()!=LanLoadPhase::Loading || !verifiedMap_ || !verifiedMapInfo_ || !verifiedMapCheck_ || !expectedMap_ || !join_->randomSeed() || !join_->localPlayerId())return {};
     const auto& announced=join_->mapCheck();if(!announced.received || announced.path!=expectedMap_->path || announced.size!=verifiedMapCheck_->size || announced.info!=verifiedMapCheck_->info || announced.crc!=verifiedMapCheck_->crc || announced.sha1!=verifiedMapCheck_->sha1 || !join_->enableTimeSlotProtocol())return {};

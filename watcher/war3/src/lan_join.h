@@ -36,6 +36,9 @@ class LanJoin {
     std::vector<LanChatMessage> chat_;
     LanMapAnnouncement map_;
     bool mapReadyReported_=false;
+    bool experimentalHandshake_=false,handshakeVerified_=false;
+    std::vector<std::uint8_t> handshakePacket_,deferredJoin_;
+    std::chrono::steady_clock::time_point handshakeStarted_{};
     bool loadingEnabled_=false,localLoaded_=false;
     LanLoadPhase loadPhase_=LanLoadPhase::Lobby;
     std::chrono::steady_clock::time_point loadStarted_{};
@@ -66,6 +69,8 @@ public:
     LanJoin& operator=(const LanJoin&)=delete;
     void poll();
     void cancel();
+    // Must be enabled before the first transport poll; waits for an identical executable response before joining.
+    bool enableExperimentalHandshake();
     bool sendChat(std::string_view message);
     bool requestSlotChange(std::uint8_t field,std::uint8_t value);
     // Queue readiness only after every announced map field has been checked.

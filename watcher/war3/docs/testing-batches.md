@@ -1622,3 +1622,27 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`lan_browser.*`、`lan_host_ui.*`、`lan_lobby.*`、`lan_match_loading.*`、`lan_local_identity.*`、`session_network_identity.cpp`、`session.*`、`main.cpp`、`platform.*`、`docs/lan-experimental-flow.md`、`docs/lan-local-identity.md`。显式实验模式连接大厅、地图加载和时间片对局；内部编号与部分状态摘要只供相同版本自研客户端使用。
 
 阶段核对双端建房／查找／加入、地图传输与加载屏障、选区／移动／技能／Trackable、退出／断线／失败／取消、最小化和过场、对象创建销毁／本地分支、状态分歧、长期同步与大图性能。房间前缀无法验证对端身份，原版对象编号、状态校验及互通均未实现；Win32 Release 产品增量编译通过，未执行双端运行。
+
+## 回放读取基础待验证
+
+路径：`replay.*`、`CMakeLists.txt`、`docs/replay.md`。经典 W3G 容器、元数据和记录保留，时间片可由调用方交现有模拟器；原版对象映射、录制、选择界面和实际播放仍未实现。
+
+阶段核对公开样本及本机 1.27 回放、头／块 CRC／截断／压缩上限、记录类型／片段次序、玩家和地图初始化、模拟动作／离开／聊天及长回放内存；当前 C++ 实现尚未运行。
+
+## 维护费损失统计待验证
+
+路径：`game_state.h`、`session_harvest.cpp`、`session_match.cpp`、`docs/economy.md`。采集时累计实际维护费扣除，供两类 GetPlayerScore 查询。
+
+阶段核对两资源不同费率、整数舍入、直接和返还采集、玩家状态回调重入、统计上限、地图覆盖及原版累计范围；当前未运行或对照。
+
+## 实验局域网握手待验证
+
+路径：`lan_handshake.h`、`lan_host.*`、`lan_host_ui.*`、`lan_join.*`、`lan_lobby.cpp`、`docs/lan-experimental-flow.md`。实验双方先交换协议、能力版本和 EXE 摘要，通过后才能加入和占用槽位。
+
+阶段核对两端握手及分包／合包、超时、旧版／原版拒绝、不同 EXE、断线／重连和正常大厅兼容；摘要不能验证公共资源或认证对端，原版互通仍未实现，当前未运行。
+
+## 子组命令与选择待验证
+
+路径：`game_preferences.*`、`game_flow_ui.cpp`、`game_view.*`、`game_commands.cpp`、`glue.h`、`main.cpp`、`docs/subgroup-order.md`。选项、指针修饰键和单机命令范围接入当前子组；同类型选取及联机行为按说明的实际范围验证。
+
+阶段核对 Ctrl／双击、Shift 组合、选择上限、命令热键与小地图、设置迁移／取消、死亡／易主及联机选择；实际窗口和原版精度未验收。
