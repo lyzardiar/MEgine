@@ -2862,3 +2862,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### Human05 未启动 AI 命令（待验证）
 
 路径：`src/session_ai.cpp`、`docs/campaign-human05-command-ai.md`。原图定向触发器不再因未启动 AI 中断；集中验证正常商队、攻击波、命令顺序及胜负流程，见 [AI 命令](campaign-human05-command-ai.md)。
+
+### 船坞缺失商品空槽（待验证）
+
+路径：`src/session_commerce.cpp`、`docs/campaign-shipyard-stock.md`。NightElfX02 隔离探针完成船坞库存和 main，后在未实现的 AI native 处停止；集中验证原版窗口、空槽、有效商品及动态库存，见 [商店默认单位库存](campaign-shipyard-stock.md)。
