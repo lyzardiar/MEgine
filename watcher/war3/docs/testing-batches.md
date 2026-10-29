@@ -2111,7 +2111,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 ## 任务列表滚动条待验证
 
-路径：`quest_dialog.h/.cpp`，说明见 `quests.md`。Win32 Release 客户端已合并编译。阶段在真实窗口验证主线／支线／目标列表的显示条件、点击、拖动和滚轮，任务增删与选择变化后的偏移、界面焦点和原版布局；说明文字滚动条仍待实现。实际窗口及原版一致性尚未验证。
+路径：`quest_dialog.h/.cpp`、`glue.h/.cpp`，说明见 `quests.md`。Win32 Release 客户端已合并编译。阶段在真实窗口验证主线／支线／目标列表及说明的显示条件、点击、拖动和滚轮，色码／长中文／空行／极长文本、任务增删与选择变化后的偏移、界面焦点、性能和原版布局。实际窗口及原版一致性尚未验证。
 
 ## 回放删除后台化待验证
 
@@ -2120,3 +2120,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ## W3G 聊天记录待验证
 
 路径：`replay.h/.cpp`、`main.cpp`、`session.h`、`session_spatial_events.cpp`、`tests/session_tests.cpp`，说明见 `replay-chat.md`。Win32 Release 客户端及会话消费者已合并编译。阶段合并会话专项与真实回放，核对各频道、私聊槽位、触发器、文本编码、记录顺序与异常输入；原版回放入口仍未开放，尚无实际播放及原版一致性验收。
+
+## 地形变形物件高度待验证
+
+路径：`entities.h`、`session.h`、`session_destructables.cpp`、`scene_objects.h/.cpp`、`game_view.cpp`、`game_effects.cpp`、`tests/game_flow_tests.cpp`，说明见 `terrain-deformation.md`。Win32 Release 客户端和 game-flow 消费者已合并编译。阶段合并 game-flow 夹具并验证原有和变形中创建的可破坏物、普通装饰物、波纹／永久凹坑／停止、附着特效、点选／遮挡、地形边界及远区裁剪，并对照显式 Z 的原版行为与大地图性能。专项、实际画面和原版一致性尚未验证。
