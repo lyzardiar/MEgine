@@ -62,7 +62,7 @@ DotA 地图覆盖闪电表的稀疏数值及计分板标题色码绘制已接入
 
 地图 Buff 自定义对象覆盖及继承已连接状态面板与特效；任务主线、支线、目标列表和说明文字接入原资源滚动条交互。实际地图、窗口和原版行为待功能阶段验证，见[Buff 覆盖](buff-overrides.md)与[任务窗口](quests.md)。
 
-DotA 的 `SetAllyColorFilterState` 已接入本地小地图、场景队伍颜色及原版按钮；实际画面待验证，见[盟友颜色过滤](ally-color-filter.md)。`SyncStoredInteger` 所需标量和删除动作已接入脚本发送及时间片回显；单位快照、原版时序和互通仍待完成或验证，见[缓存同步](cache-sync.md)。
+DotA 的 `SetAllyColorFilterState` 已接入本地小地图、场景队伍颜色及原版按钮；实际画面待验证，见[盟友颜色过滤](ally-color-filter.md)。`SyncStoredInteger` 所需标量和删除动作及自研单位快照已接入脚本发送和时间片回显；原版单位格式、时序和互通仍待完成或验证，见[缓存同步](cache-sync.md)。
 
 地图默认天气和脚本天气区域已接入粒子绘制与环境音；源视觉、区域音效行为及性能仍待完成或验证，见[地图天气](weather.md)。
 

@@ -31,6 +31,7 @@ public:
     std::uint16_t u16(){need(2);auto value=std::uint16_t(unsigned(bytes_[position_])|(unsigned(bytes_[position_+1])<<8));position_+=2;return value;}
     std::uint32_t u32(){need(4);std::uint32_t value=0;for(unsigned i=0;i<4;++i)value|=std::uint32_t(bytes_[position_++])<<(i*8);return value;}
     std::string text(std::size_t limit){std::string value;while(true){auto byte=u8();if(!byte)return value;if(value.size()>=limit)throw std::runtime_error("LAN cache text exceeds limit");value.push_back(char(byte));}}
+    std::vector<std::uint8_t> bytes(std::size_t n){need(n);auto first=bytes_.begin()+position_;position_+=n;return {first,first+n};}
     LanObjectId object(){return {u32(),u32()};}
 };
 class Writer {
@@ -41,6 +42,7 @@ public:
     void u16(std::uint16_t value){ensure(2);for(unsigned i=0;i<2;++i)bytes_.push_back(std::uint8_t(value>>(i*8)));}
     void u32(std::uint32_t value){ensure(4);for(unsigned i=0;i<4;++i)bytes_.push_back(std::uint8_t(value>>(i*8)));}
     void text(const std::string& value,std::size_t limit){if(value.size()>limit || value.find('\0')!=std::string::npos)throw std::runtime_error("Invalid LAN cache text");ensure(value.size()+1);for(unsigned char byte:value)bytes_.push_back(byte);bytes_.push_back(0);}
+    void raw(std::span<const std::uint8_t> value){ensure(value.size());bytes_.insert(bytes_.end(),value.begin(),value.end());}
     void object(LanObjectId value){u32(value.first);u32(value.second);}
     std::vector<std::uint8_t> finish(){return std::move(bytes_);}
 };
@@ -85,7 +87,7 @@ std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> byt
         else if(opcode==0x50){LanActionAlliance alliance;alliance.slot=reader.u8();alliance.flags=reader.u32();if(alliance.slot>=12 || (alliance.flags&~0x47fu))throw std::runtime_error("Invalid LAN alliance snapshot at byte "+std::to_string(offset));result.emplace_back(alliance);}
         else if(opcode==0x51){LanActionTransfer transfer;transfer.slot=reader.u8();transfer.gold=reader.u32();transfer.lumber=reader.u32();if(transfer.slot>=12 || transfer.gold>0x7fffffffu || transfer.lumber>0x7fffffffu)throw std::runtime_error("Invalid LAN resource transfer at byte "+std::to_string(offset));result.emplace_back(transfer);}
         else if(opcode==0x64 || opcode==0x65){auto object=reader.object();if(object.first==0xffffffffu && object.second==0xffffffffu)throw std::runtime_error("Invalid LAN trackable at byte "+std::to_string(offset));result.emplace_back(LanActionTrackable{opcode==0x64,object});}
-        else if((opcode>=0x6b && opcode<=0x6d) || opcode==0x6f || (opcode>=0x70 && opcode<=0x74)){LanActionCacheSync cache;cache.opcode=opcode;cache.cache=reader.text(255);cache.mission=reader.text(255);cache.key=reader.text(255);if(opcode>=0x6b && opcode<=0x6d)cache.value=reader.u32();else if(opcode==0x6f)cache.text=reader.text(maxBytes);result.emplace_back(std::move(cache));}
+        else if((opcode>=0x6b && opcode<=0x6d) || opcode==0x6f || (opcode>=0x70 && opcode<=0x74) || (opcode==0xf9 && experimental)){LanActionCacheSync cache;cache.opcode=opcode;cache.cache=reader.text(255);cache.mission=reader.text(255);cache.key=reader.text(255);if(opcode>=0x6b && opcode<=0x6d)cache.value=reader.u32();else if(opcode==0x6f)cache.text=reader.text(maxBytes);else if(opcode==0xf9){auto length=reader.u32();if(!length || length>maxBytes)throw std::runtime_error("Invalid experimental cache unit length");cache.unit=reader.bytes(length);}result.emplace_back(std::move(cache));}
         else if(opcode==0x16){LanActionSelection selection;selection.mode=reader.u8();if(selection.mode!=1 && selection.mode!=2)throw std::runtime_error("Invalid LAN selection mode at byte "+std::to_string(offset));auto count=reader.u16();reader.need(std::size_t(count)*8);selection.objects.reserve(count);for(unsigned i=0;i<count;++i)selection.objects.push_back(reader.object());result.emplace_back(std::move(selection));}
         else throw std::runtime_error("Unsupported LAN action opcode "+std::to_string(opcode)+" at byte "+std::to_string(offset));
     }
@@ -115,7 +117,7 @@ std::vector<std::uint8_t> encodeLanActions(std::span<const LanDecodedAction> act
         else if constexpr(std::is_same_v<T,LanActionPreSubselection>)writer.u8(0x1a);
         else if constexpr(std::is_same_v<T,LanActionSubgroup>){if(!value.type || (value.first.first==0xffffffffu && value.first.second==0xffffffffu))throw std::runtime_error("Invalid LAN subgroup");writer.u8(0x19);writer.u32(value.type);writer.object(value.first);}
         else if constexpr(std::is_same_v<T,LanActionTrackable>){if(value.object.first==0xffffffffu && value.object.second==0xffffffffu)throw std::runtime_error("Invalid LAN trackable");writer.u8(value.hit?0x64:0x65);writer.object(value.object);}
-        else if constexpr(std::is_same_v<T,LanActionCacheSync>){auto opcode=value.opcode;if(!((opcode>=0x6b && opcode<=0x6d) || opcode==0x6f || (opcode>=0x70 && opcode<=0x74)))throw std::runtime_error("Unsupported LAN cache opcode");if((opcode!=0x6f && !value.text.empty()) || (opcode>=0x6f && value.value))throw std::runtime_error("Invalid LAN cache payload");writer.u8(opcode);writer.text(value.cache,255);writer.text(value.mission,255);writer.text(value.key,255);if(opcode>=0x6b && opcode<=0x6d)writer.u32(value.value);else if(opcode==0x6f)writer.text(value.text,maxBytes);}
+        else if constexpr(std::is_same_v<T,LanActionCacheSync>){auto opcode=value.opcode;if(!((opcode>=0x6b && opcode<=0x6d) || opcode==0x6f || (opcode>=0x70 && opcode<=0x74) || (opcode==0xf9 && experimental)))throw std::runtime_error("Unsupported LAN cache opcode");if((opcode!=0x6f && !value.text.empty()) || (opcode>=0x6f && value.value) || (opcode==0xf9?value.unit.empty() || value.unit.size()>maxBytes:!value.unit.empty()))throw std::runtime_error("Invalid LAN cache payload");writer.u8(opcode);writer.text(value.cache,255);writer.text(value.mission,255);writer.text(value.key,255);if(opcode>=0x6b && opcode<=0x6d)writer.u32(value.value);else if(opcode==0x6f)writer.text(value.text,maxBytes);else if(opcode==0xf9){writer.u32(std::uint32_t(value.unit.size()));writer.raw(value.unit);}}
         else {if(value.mode!=1 && value.mode!=2)throw std::runtime_error("Invalid LAN selection mode");if(value.objects.size()>std::numeric_limits<std::uint16_t>::max())throw std::runtime_error("LAN selection exceeds object limit");writer.u8(0x16);writer.u8(value.mode);writer.u16(std::uint16_t(value.objects.size()));for(auto object:value.objects)writer.object(object);}
     },action);
     return writer.finish();
