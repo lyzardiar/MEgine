@@ -400,7 +400,7 @@ class ScriptSession {
     bool absorbTarget(const UnitState& unit,const UnitState& target,const SpellInfo& spell);
     const SpellInfo* attackOrb(const UnitState& unit,const UnitState& target,std::uint32_t forced=0);
     void orbWeapon(WeaponDefinition& weapon,const SpellInfo& spell);
-    float defensePassiveDamage(const UnitState& unit,float amount,unsigned attackType,bool attack,bool ranged,bool spellDamage,unsigned owner);
+    float defensePassiveDamage(const UnitState& unit,float amount,unsigned attackType,bool attack,bool ranged,bool spellDamage,unsigned owner,bool deflected);
     void warClubInfo(SpellInfo& spell);
     void siegePassiveInfo(PassiveInfo& passive);
     void prepareSiegeAttack(const UnitState& unit,CombatProjectile& projectile);

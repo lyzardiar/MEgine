@@ -2740,3 +2740,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役哨兵次数缓存（待验证）
 
 路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-gamecache.md`。集中验证有限／无限／耗尽与未初始化能力、保存后源单位变化、移除重加、多等级与地图覆盖、恢复按钮／实际施法、v1–v7 兼容、损坏数据、实验同步和原版 StoreUnit 跨关语义；新增消费者断言尚未编译或运行。
+
+### 被动防御弹道偏转（待验证）
+
+路径：`src/passives.h`、`src/session.h`、`src/session_passive_info.cpp`、`src/session_defense_passives.cpp`、`src/session_damage.cpp`、`src/session_self_spells.cpp`。集中验证派生字段／概率、弹道与伤害、目标和能力失效、叠加、双端随机顺序及原版行为；速度字段和 DataI 模式仍未实现，见 [被动防御偏转](passive-defense-deflection.md)。本次未编译或运行。

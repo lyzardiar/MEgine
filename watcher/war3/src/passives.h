@@ -14,7 +14,7 @@ struct PassiveInfo {
     float area=0,amount=0,secondary=0,bonus=0,evasion=0,duration=0,heroDuration=0;
     std::string attackMissile,lightningType;
     float missileSpeed=0,missileArc=0;
-    float heroAmount=0,heroFactor=1,summonDamage=0,magicFactor=1;
+    float heroAmount=0,heroFactor=1,summonDamage=0,magicFactor=1,deflectChance=0,deflectPierce=1,deflectMagic=1;
     float period=0,innerArea=0,innerDamage=0,nearArea=0,nearDamage=0;
     std::uint32_t effectBuff=0;
     std::array<float,3> splashRadii{},splashDamage{};
