@@ -14,7 +14,8 @@ enum class PathMovement {Ground,Air,Water,Amphibious};
 inline PathMovement pathMovement(std::string_view type){return type=="fly"?PathMovement::Air:type=="float"?PathMovement::Water:(type=="amph" || type=="hover")?PathMovement::Amphibious:PathMovement::Ground;}
 struct WorldPoint {jass::Real x,y;};
 struct WorldRect {jass::Real minX,minY,maxX,maxY;};
-struct TerrainRipple {std::uint32_t handle=0;float x=0,y=0,radius=0,depth=0,spaceWaves=0,timeWaves=0,startRadius=0;double started=0,duration=0,stopStarted=0,stopDuration=0;int count=1;bool limitNegative=false,stopping=false,persistent=false;};
+enum class TerrainDeformationKind {Ripple,Crater,Wave};
+struct TerrainDeformation {std::uint32_t handle=0;TerrainDeformationKind kind=TerrainDeformationKind::Ripple;float x=0,y=0,radius=0,depth=0,spaceWaves=0,timeWaves=0,startRadius=0,dirX=0,dirY=0,distance=0;double started=0,duration=0,stopStarted=0,stopDuration=0,travelTime=0,trailTime=0;int count=1;bool limitNegative=false,stopping=false,persistent=false,permanent=false;};
 struct PathCell {size_t index=0;std::uint8_t mask=0;};
 struct DoodadAnimation {std::uint32_t type=0;std::string animation;WorldRect rectangle{};float x=0,y=0,radius=0;double started=0;bool circular=false,nearest=false,random=false;};
 struct CameraScalar {
@@ -56,10 +57,14 @@ class World {
     std::unique_ptr<Archives> resources_;
     Bytes obstacles_;
     std::vector<float> surface_;
-    std::vector<TerrainRipple> ripples_;
+    std::vector<TerrainDeformation> deformations_;
+    std::vector<float> permanentHeights_;
+    std::vector<std::uint8_t> permanentChunks_;
+    double permanentBound_=0;
     double deformationTime_=0;
     std::uint64_t deformationRevision_=1;
     void buildSurface();
+    void bakeCrater(const TerrainDeformation& crater,float factor);
     struct ObstacleOwners {std::array<std::uint32_t,3> counts{};std::uint8_t fixed=0;};
     std::unordered_map<size_t,ObstacleOwners> obstacleOwners_;
     std::uint64_t pathingRevision_=1;
@@ -93,7 +98,7 @@ public:
     float deformationBound() const;
     bool deformationIntersects(float minX,float minY,float maxX,float maxY) const;
     std::uint64_t deformationRevision() const {return deformationRevision_;}
-    void addRipple(TerrainRipple ripple);
+    void addDeformation(TerrainDeformation ripple);
     void stopDeformation(std::uint32_t handle,double duration);
     void stopDeformations();
     void updateDeformations(double now);

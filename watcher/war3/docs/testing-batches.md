@@ -1972,3 +1972,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`world.h`、`world_height.cpp`、`session.h/.cpp`、`session_world.cpp`、`session_tick.cpp`、`terrain_scene.*`、`terrain_blight.cpp`、`tests/game_flow_tests.cpp`、`docs/terrain-deformation.md`。Ripple 和停止接口连接会话时钟、共享地形高度及地面／悬崖／荒芜顶点；不重建地形纹理。
 
 按 `terrain-deformation.md` 运行专项并合并 DotA、波形及停止、网格边界、单位贴地、GPU 和性能验证；原版时间与坐标精度及其他变形类型仍未完成。专项尚未执行。
+
+## 陨坑与行进波纹待验证
+
+路径：`world.h`、`world_height.cpp`、`session_world.cpp`、`terrain_scene.cpp`、`tests/game_flow_tests.cpp`、`docs/terrain-deformation.md`。Crater 和 Wave 连接原生句柄、时钟、共享地形高度与绘制；永久凹坑自然到期固化，StopAll 保留已固化高度。未变化顶点跳过 GPU 上传。
+
+阶段执行现有 game-flow 夹具和消费者，核对普通／永久陨坑、自然结束／停止／交错、重叠与固化量化、Wave 方向／拖尾／循环、异常参数、脚本高度及单位贴地、GPU 设备恢复、实际画面、原版结果和性能。专项尚未执行。
