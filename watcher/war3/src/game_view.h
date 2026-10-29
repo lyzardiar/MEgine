@@ -135,10 +135,12 @@ class GameView {
     std::map<std::uint32_t,bool> footprintTerrain_;
     std::vector<Footprint> footprints_;
     bool footprintDataLoaded_=false;
-    void modelSounds(Model& model,ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& world);
-    void modelFootprint(const std::string& code,const std::array<float,3>& position,float angle,std::uint64_t clock);
+    void modelSounds(Model& model,ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& world,bool refreshPose=false);
+    bool modelHasSounds(const Model& model);
+    void modelFootprint(const std::string& code,const std::array<float,3>& position,float angle,std::uint64_t clock,bool visible);
     void drawFootprints(bool water,const DirectX::XMMATRIX& vp,std::uint64_t clock);
     std::set<std::string> failedModelSounds_;
+    std::map<const Model*,bool> modelSoundPresence_;
     void drawTrackables(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void trackableInput(GameInput& input);
     std::uint32_t hoveredTrackable_=0;
@@ -146,6 +148,8 @@ class GameView {
     void drawImages(bool aboveWater,const DirectX::XMMATRIX& vp);
     void drawLightning(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     std::map<std::uint64_t,ModelInstance> modelInstances_,pingInstances_;
+    std::map<std::uint32_t,ModelInstance> unitSoundInstances_;
+    std::set<std::uint32_t> unitSoundsSeen_;
     using WaypointKey=std::tuple<std::uint32_t,std::size_t,std::uint32_t,std::uint32_t,std::uint32_t,std::uint32_t>;
     std::map<WaypointKey,ModelInstance> waypointInstances_;
     bool showQueueWaypoints_=false;

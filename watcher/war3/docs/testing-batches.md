@@ -1646,3 +1646,21 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`game_preferences.*`、`game_flow_ui.cpp`、`game_view.*`、`game_commands.cpp`、`glue.h`、`main.cpp`、`docs/subgroup-order.md`。选项、指针修饰键和单机命令范围接入当前子组；同类型选取及联机行为按说明的实际范围验证。
 
 阶段核对 Ctrl／双击、Shift 组合、选择上限、命令热键与小地图、设置迁移／取消、死亡／易主及联机选择；实际窗口和原版精度未验收。
+
+## 游戏内字幕设置待验证
+
+路径：`game_preferences.*`、`game_flow_ui.cpp`、`game_cinematic_panel.cpp`、`docs/game-options.md`。声音页面的字幕设置控制游戏内过场对话文字并保存在独立用户目录，兼容旧版音频设置。
+
+阶段核对控件键鼠／确认取消、旧版与损坏文件、重启保存、静音及有声／无声场景、动态切换、影片字幕和原版默认值；实际窗口及原版行为尚未验收。
+
+## 离屏单位模型音效待验证
+
+路径：`game_view.*`、`game_model_sound.cpp`、`model.h`、`model_particles.cpp`、`sound.cpp`、`docs/model-event-sounds.md`。视野内单位离屏时仍推进模型声音事件，并按声音距离限制音频实例。
+
+阶段核对入离视口、动画切换／重播／暂停、视野／隐身、死亡／易主、模型共享、距离／静音／水面及大地图性能；视野外单位、离屏特效和原版表现仍待完成或对照。
+
+## 回放浏览与会话准备待验证
+
+路径：`replay_browser.*`、`replay_preparation.*`、`CMakeLists.txt`、`docs/replay-browser.md`、`docs/replay-preparation.md`。浏览器与地图／录制槽位准备接口已实现；主菜单入口、原版对象映射和实际回放消费尚未接通。
+
+阶段核对真实 W3G 读取、用户目录边界／删除确认／重解析点、异步切换与退出、地图校验／缺图／数据覆盖、稀疏玩家槽／随机种子、跨线程取消及原版输入画面；Win32 Release 产品增量编译通过，完整播放尚未实现。

@@ -40,7 +40,7 @@ public:
     size_t sequenceCount() const;
     int sequenceStart() const;
     const std::vector<ModelEvent>& events() const;
-    std::vector<ModelSoundEvent> soundEvents(ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& world) const;
+    std::vector<ModelSoundEvent> soundEvents(ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& world,const D3DMATRIX& view,bool refreshPose=false) const;
     bool cameraIndex(unsigned index);
     size_t cameraCount() const;
     std::string sequenceName() const;

@@ -56,7 +56,7 @@ target_sources(war3_core PRIVATE src/session_weapons.cpp src/session_combat.cpp 
 add_executable(war3 WIN32 src/main.cpp src/renderer.cpp src/media.cpp src/model.cpp src/model_pose.cpp src/model_particles.cpp src/glue.cpp src/map_browser.cpp src/campaign_browser.cpp src/cinematic.cpp src/model_cinematic.cpp src/morph_mesh.cpp src/game_cine_filter.cpp src/game_cinematic_panel.cpp src/player_setup_ui.cpp)
 target_sources(war3 PRIVATE src/scene_assets.cpp src/terrain_scene.cpp src/terrain_layout.cpp)
 target_sources(war3 PRIVATE src/scene_objects.cpp src/game_loading.cpp src/loading_screen.cpp src/game_view.cpp src/game_trackable.cpp src/game_model_sound.cpp)
-target_sources(war3 PRIVATE src/scene_streaming.cpp src/lan_discovery.cpp src/lan_browser.cpp src/lan_join.cpp src/lan_lobby.cpp src/lan_mapcheck.cpp src/lan_host.cpp src/lan_host_ui.cpp src/lan_runtime.cpp src/lan_match_loading.cpp)
+target_sources(war3 PRIVATE src/scene_streaming.cpp src/lan_discovery.cpp src/lan_browser.cpp src/lan_join.cpp src/lan_lobby.cpp src/lan_mapcheck.cpp src/lan_host.cpp src/lan_host_ui.cpp src/lan_runtime.cpp src/lan_match_loading.cpp src/replay_browser.cpp src/replay_preparation.cpp)
 target_sources(war3 PRIVATE src/fog_render.cpp)
 target_sources(war3 PRIVATE src/terrain_fog_render.cpp src/game_alliance_dialog.cpp src/game_text_tag.cpp src/game_timer_dialog.cpp src/game_multiboard.cpp src/game_leaderboard.cpp src/game_commands.cpp src/game_autocast.cpp src/game_spells.cpp src/game_transport.cpp src/game_corpses.cpp src/game_morph.cpp src/game_effects.cpp src/game_lightning.cpp src/game_building.cpp src/game_flow_ui.cpp)
 target_sources(war3 PRIVATE src/quest_dialog.cpp src/game_hero_bar.cpp src/game_inventory_drag.cpp src/game_waypoints.cpp)
