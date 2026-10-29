@@ -2970,3 +2970,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 原版阴影选项（待验证）
 
 路径：`src/front_options.cpp`、`src/game_flow_ui.cpp`、`src/game_flow_ui.h`、`src/game_preferences.cpp`。两处选项使用原版 OFF／ON；集中验证窗口输入、确认与取消、旧设置迁移、重启、阴影画面及性能，见[阴影选项](shadow-options.md)。
+
+### 亡灵第四关无效单位无敌设置（待验证）
+
+路径：`src/session_entities.cpp`。独立原图探针在无前关缓存时越过异常并推进至 400 秒；集中验证有效／失效句柄、有跨关缓存、真实窗口及完整战役流程，见[无效单位无敌设置](campaign-undead04-invulnerable.md)。
