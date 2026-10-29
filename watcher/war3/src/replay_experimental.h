@@ -14,6 +14,7 @@ class ScriptSession;
 
 // The title marker is a compatibility discriminator, not an authenticated signature.
 std::optional<std::string> experimentalLanReplayDigest(const ReplayGame& game);
+std::optional<std::uint8_t> experimentalLanReplayPerspective(const ReplayGame& game);
 bool experimentalLanReplayMatchesExecutable(const ReplayGame& game);
 
 class ExperimentalLanRecorder {
@@ -28,7 +29,7 @@ public:
     // Attach before the first runtime pump. The observer owns only a weak recorder reference.
     bool attach(LanRuntime& runtime);
     // Seal applied slots and publish once. Caller invokes this when it intentionally ends a match.
-    std::filesystem::path save();
+    std::filesystem::path save(bool partial=false);
     const std::string& error() const;
     std::uint32_t durationMs() const;
 };

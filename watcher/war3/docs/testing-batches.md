@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 自研回放生命周期与视角待验证
+
+路径：replay_experimental、main、game_view。记录录制端 peer 并在加载时恢复；过场期间继续处理时间片，回放中禁用联盟输入；退出收尾尝试保存已记录时间片，断线／窗口关闭及录制异常的前缀使用 partial 文件名。Win32 Release 增量编译通过。操作：以主机及加入端分别录制包含 GetLocalPlayer 分支和过场的对局，比较重放状态和画面；覆盖录像资源超限、异常、窗口关闭、硬终止、无完整片、保存失败、最小化与暂停、回放后返回。原版回放编号与真实对局一致性仍待实现或验证。
+
 ## 自研局域网回放闭环待验证
 
 路径：replay_experimental／replay_browser／replay_preparation／replay_runtime、lan_host／lan_join、game_view、main 与 CMake。自研同构建 LAN 对局记录已应用时间片，离场保存用户目录，并经单人回放界面进入地图准备和只读播放。Win32 Release 增量编译通过；未运行双端、录制或播放验收。
