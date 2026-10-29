@@ -265,6 +265,7 @@ class ScriptSession {
     std::optional<FrameDefinitions> localized_;
     std::map<std::uint32_t,std::shared_ptr<ScriptTimerDialog>> timerDialogs_;
     std::array<std::unique_ptr<FogGrid>,16> fogGrids_;
+    std::array<std::uint32_t,16> exposedPlayers_{};
     std::map<std::uint32_t,std::shared_ptr<FogModifier>> fogModifiers_;
     std::uint64_t fogRevision_=1,fogTicks_=0;
     struct Detector {unsigned owner=0,mask=0;float x=0,y=0,range=0;std::uint32_t vision=0;};

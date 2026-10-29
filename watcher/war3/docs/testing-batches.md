@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 对战玩家暴露视野待验证
+
+路径：`src/session.h`、`src/session_match.cpp`、`src/session_fog.cpp`；说明见 `player-exposure.md`。地图脚本记录玩家组快照并通过迷雾更新暴露玩家单位的视野，包含预选改动的 Win32 Release 客户端编译通过。阶段检查基地失守／重建、玩家组修改及销毁、重复开启与清除、单位创建／移动／死亡／转移、隐形、联盟、切图和联机，对照原版时序及范围；实际运行尚未执行。
+
 ## 脚本水面形变待验证
 
 路径：`src/world.h`、`src/session_world.cpp`、`src/terrain_layout.cpp`、`src/terrain_scene.h/.cpp`；说明见 `water-deformation.md`。`SetWaterDeforms` 控制水面顶点随地形形变及关闭后恢复，水面高度查询与网格共用角点，Win32 Release 客户端编译通过。阶段检查默认值、形变和恢复、开关切换、可见性、边缘、切图、GPU、性能及原版公式；水面交互及原版规则未完成。
