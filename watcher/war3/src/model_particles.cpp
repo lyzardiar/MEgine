@@ -15,7 +15,7 @@ struct EmitterState {double emission=0;std::uint64_t squirtKey=UINT64_MAX;};
 XMMATRIX matrix(const D3DMATRIX& m){XMFLOAT4X4 f;std::memcpy(&f,&m,sizeof(f));return XMLoadFloat4x4(&f);}
 DWORD color(XMFLOAT4 c,DWORD tint){auto byte=[](float v){return unsigned(std::clamp(v,0.f,1.f)*255+.5f);};return (byte(c.w*float(tint>>24)/255)<<24)|(byte(c.x*float((tint>>16)&255)/255)<<16)|(byte(c.y*float((tint>>8)&255)/255)<<8)|byte(c.z*float(tint&255)/255);}
 std::string attachmentName(std::string name){for(auto& c:name)c=c==','?' ':char(std::tolower(static_cast<unsigned char>(c)));if(auto ref=name.rfind(" ref");ref!=std::string::npos && ref+4==name.size())name.resize(ref);return name;}
-bool modelEventSupported(const std::string& name){if(name.size()<8)return false;auto c=[&](size_t i){return char(std::toupper(static_cast<unsigned char>(name[i])));};return (c(0)=='S' && ((c(1)=='N' && c(2)=='D') || (c(1)=='P' && (c(2)=='L' || c(2)=='N')))) || (c(0)=='F' && c(1)=='P' && c(2)=='T');}
+bool modelEventSupported(const std::string& name){if(name.size()<8)return false;auto c=[&](size_t i){return char(std::toupper(static_cast<unsigned char>(name[i])));};return (c(0)=='S' && ((c(1)=='N' && c(2)=='D') || (c(1)=='P' && (c(2)=='L' || c(2)=='N')))) || (c(0)=='F' && c(1)=='P' && c(2)=='T') || (c(0)=='U' && c(1)=='B' && c(2)=='R');}
 }
 struct ModelInstance::Data {const void* owner=nullptr;std::uint64_t clock=0,animationTime=0,animationCycle=0;unsigned sequence=UINT_MAX;std::uint32_t random=0x12705224;bool started=false;const void* soundOwner=nullptr;unsigned soundSequence=UINT_MAX;std::uint64_t soundTime=0,soundClock=0;std::vector<Particle> particles;std::vector<EmitterState> emitters;std::vector<RibbonState> ribbons;};
 ModelInstance::ModelInstance()=default;

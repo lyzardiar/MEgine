@@ -2662,3 +2662,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 电脑工人修理目标（待验证）
 
 路径：`session_ai.cpp`、`docs/ai.md`。SetPeonsRepair 的空闲工人按共享空间索引寻找可见受损建筑、机械单位和桥梁，复用实际修理流程；Win32 Release 产品合并编译通过。阶段验证采集／返还与携带资源、多个候选／工人、友敌与视野、死桥／无资源／不可达、单位死亡／易主及事件重入、AI 长局和双端同步，并测量密集地图开销及对照原版策略。
+
+### 模型 UBR 地表事件（待验证）
+
+路径：`model_particles.cpp`、`game_model_sound.cpp`、`game_effects.cpp`、`game_view.h`、`docs/model-event-sounds.md`。模型 UBR 事件接入原 UberSplatData 和出生／停留／消退贴花，Win32 Release 产品合并编译通过；原资源抽样确认多族建筑及烈焰风暴模型包含 UBR。阶段验证事件时序与重复、颜色和透明度、旋转／缩放、地形／水面／迷雾、纹理加载和释放、视口与暂停、源声音、密集场景性能及原版 GPU 画面；回归原有 FPT／SPL 的时间和图集。

@@ -27,3 +27,5 @@ MDX `FPTx` 事件按对应节点的动画变换放置地表贴花，读取 `Spla
 游戏场景的 `SPNx` 事件读取 `Splats/SpawnData.slk`，将源 MDL 路径映射为 MDX，经后台资源流送生成独立模型实例，以事件节点的完整位置、旋转与缩放播放首段动画。事件可由单位、装饰物、技能特效及其附件触发，生成模型也参与现有动画事件；实例按首段时长释放，并限制同时存在的数量。原资源表中 `UDIS`、`EDIS`、`ODIS` 分别指向亡灵、暗夜精灵和兽族消散模型。参考 mdx-m3-viewer 固定提交中的 `handler.ts` 和 `eventobjectspn.ts`，来源与摘要见 `third_party/warcraft-model-reference/source-info.json`。首次资源加载延迟、原版模型事件、视野与原版画面／声音待集中验证；界面模型暂未接入 SPN。
 
 原资源抽样读取确认 Footman、Grunt、Ghoul、Archer 分别包含 `SPNxHBF0`、`SPNxOBG0`、`SPNxUBGH`、`SPNxNBAR`；这是事件与源表格式检查，尚不证明实际渲染一致。
+
+游戏场景的 `UBRx` 事件使用 `Splats/UberSplatData.slk`，在事件节点绘制源贴花，并按 BirthTime／PauseTime／Decay 插值颜色与透明度，复用现有纹理流送和切图释放。原资源抽样中 Farm、HumanBarracks、GreatHall、Necropolis、TreeofLife 与 FlameStrikeTarget 包含 UBR 事件；参考 mdx-m3-viewer 固定提交 `2ff0bc00c6363f425016e23d88c0fb2929d3b3cc` 的 `eventobjectemitterobject.ts`／`handler.ts`，来源摘要见 `third_party/warcraft-model-reference/source-info.json`。目前只处理游戏可见场景，节点缩放、地面／水面、事件声音和原版 GPU 画面待集中验证。
