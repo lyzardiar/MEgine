@@ -32,7 +32,7 @@ struct ScriptTrigger {
 struct ScriptTrackable {std::string model;float x=0,y=0,facing=0;};
 struct ScriptForce {std::uint32_t players=0;};
 struct ScriptEvent {
-    enum class Kind {Timer,TimerExpire,Clock,Variable,Player,PlayerUnit,Unit,UnitState,Game,Alliance,PlayerState,RegionEnter,RegionLeave,UnitRange,Chat,WidgetDeath,Dialog,DialogButton,TrackableHit,TrackableTrack};
+    enum class Kind {Timer,TimerExpire,Clock,Variable,Player,PlayerUnit,Unit,UnitState,Game,Alliance,PlayerState,RegionEnter,RegionLeave,UnitRange,Chat,WidgetDeath,Dialog,DialogButton,TrackableHit,TrackableTrack,IntegerGameState};
     Kind kind=Kind::Game;
     std::uint32_t owner=0,target=0,event=0,comparison=0;
     std::uint32_t stateKey=0;
@@ -49,7 +49,7 @@ struct ScriptContext {
     std::uint32_t filterUnit=0,enumUnit=0,filterPlayer=0,enumPlayer=0;
     std::uint32_t previousOwner=0,killingUnit=0,rescuer=0;
     std::uint32_t transportUnit=0,loadedUnit=0;
-    std::uint32_t playerState=0,unitState=0;
+    std::uint32_t playerState=0,unitState=0,gameState=0;
     std::uint32_t issuedOrder=0;
     WorldPoint orderPoint;
     std::uint32_t triggeringRegion=0,enteringUnit=0,leavingUnit=0,manipulatedItem=0;

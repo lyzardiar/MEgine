@@ -45,7 +45,8 @@ void ScriptSession::bindMatchNatives() {
     bind("EndGame","nothing",{"boolean"},[this](auto& vm,auto a){if(experimentalSelectionSync_){bool dialog=!contexts_.empty() && contexts_.back().clickedDialog && contexts_.back().clickedButton;if((!dialog || (localPlayer_ && contexts_.back().triggerPlayer==handleBase+*localPlayer_)) && !networkLocalEndRequest_)networkLocalEndRequest_=a[0].bits!=0;}else finishGame(a[0].bits!=0);return vm.nothing();});
     bind("RestartGame","nothing",{"boolean"},[this](auto& vm,auto a){if(experimentalSelectionSync_)throw std::runtime_error("RestartGame is not yet supported in experimental LAN or replay sessions");finishGame(a[0].bits!=0,SessionExit::Restart);return vm.nothing();});
     bind("CachePlayerHeroData","nothing",{"player"},[this](auto& vm,auto a){cacheHeroes(playerId(a[0]));return vm.nothing();});
-    bind("GetIntegerGameState","integer",{"igamestate"},[](auto& vm,auto a){if(a[0].bits!=1)throw std::runtime_error("Integer game state is not implemented");return vm.integer(0);});
+    bind("GetIntegerGameState","integer",{"igamestate"},[this](auto& vm,auto a){return vm.integer(a[0].bits<integerGameStates_.size()?integerGameStates_[a[0].bits]:0);});
+    bind("SetIntegerGameState","nothing",{"igamestate","integer"},[this](auto& vm,auto a){if(a[0].bits<integerGameStates_.size())setIntegerGameState(a[0].bits,std::bit_cast<std::int32_t>(a[1].bits));return vm.nothing();});
     for(auto name:{"IsNoVictoryCheat","IsNoDefeatCheat"})bind(name,"boolean",{},[](auto& vm,auto){return vm.boolean(false);});
     bind("EnableUserControl","nothing",{"boolean"},[this](auto& vm,auto a){userControl_=a[0].bits!=0;return vm.nothing();});
     bind("EnableUserUI","nothing",{"boolean"},[this](auto& vm,auto a){userUI_=a[0].bits!=0;return vm.nothing();});

@@ -97,6 +97,64 @@ set watched=0.
 set watched=2.
 endfunction
 )jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();vm.invoke("setup");vm.invoke("cross");require(vm.global("hits").bits==2 && vm.global("eventKind").bits==2,"Variable threshold crossing or event context differs");vm.invoke("release");require(vm.global("hits").bits==2,"Destroyed trigger still receives variable events");});
+    test("session_integer_game_states_and_events",[]{auto module=compile(R"jass(type gamestate extends handle
+type igamestate extends gamestate
+type trigger extends handle
+type triggeraction extends handle
+type event extends handle
+type eventid extends handle
+type limitop extends handle
+native ConvertIGameState takes integer value returns igamestate
+native ConvertLimitOp takes integer value returns limitop
+native CreateTrigger takes nothing returns trigger
+native DestroyTrigger takes trigger t returns nothing
+native TriggerAddAction takes trigger t, code action returns triggeraction
+native TriggerRegisterGameStateEvent takes trigger t, gamestate state, limitop op, real limit returns event
+native GetEventGameState takes nothing returns gamestate
+native GetTriggerEventId takes nothing returns eventid
+native GetHandleId takes handle value returns integer
+native GetIntegerGameState takes igamestate state returns integer
+native SetIntegerGameState takes igamestate state, integer value returns nothing
+globals
+integer firstHits=0
+integer secondHits=0
+integer disconnectedHits=0
+integer stateSeen=-1
+integer eventSeen=0
+boolean nested=true
+trigger second=null
+endglobals
+function firstAction takes nothing returns nothing
+set firstHits=firstHits+1
+set stateSeen=GetHandleId(GetEventGameState())
+set eventSeen=GetHandleId(GetTriggerEventId())
+if nested then
+set nested=false
+call SetIntegerGameState(ConvertIGameState(0),0)
+endif
+endfunction
+function secondAction takes nothing returns nothing
+set secondHits=secondHits+1
+endfunction
+function disconnectedAction takes nothing returns nothing
+set disconnectedHits=disconnectedHits+1
+set stateSeen=GetHandleId(GetEventGameState())
+endfunction
+function setup takes nothing returns nothing
+local trigger first=CreateTrigger()
+local trigger disconnected=CreateTrigger()
+set second=CreateTrigger()
+call TriggerAddAction(first,function firstAction)
+call TriggerAddAction(second,function secondAction)
+call TriggerAddAction(disconnected,function disconnectedAction)
+call TriggerRegisterGameStateEvent(first,ConvertIGameState(0),ConvertLimitOp(4),1.)
+call TriggerRegisterGameStateEvent(second,ConvertIGameState(0),ConvertLimitOp(4),1.)
+call TriggerRegisterGameStateEvent(disconnected,ConvertIGameState(1),ConvertLimitOp(4),1.)
+endfunction
+function destroySecond takes nothing returns nothing
+call DestroyTrigger(second)
+endfunction
+)jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();auto zero=vm.handle("igamestate",0),one=vm.handle("igamestate",1);auto set=[&](jass::Value state,int value){vm.invoke("SetIntegerGameState",std::array{state,vm.integer(value)});};auto get=[&](jass::Value state){return std::bit_cast<std::int32_t>(vm.invoke("GetIntegerGameState",std::array{state}).bits);};require(get(zero)==0 && get(one)==0,"Initial integer game states differ");for(auto id:{2u,0xffffffffu}){auto invalid=vm.handle("igamestate",id);set(invalid,42);require(get(invalid)==0,"Out-of-range state was accepted");}auto nullTrigger=vm.handle("trigger",0);require(!vm.invoke("TriggerRegisterGameStateEvent",std::array{nullTrigger,zero,vm.handle("limitop",4),vm.real(jass::Real::fromBits(std::bit_cast<std::uint32_t>(1.f)))}).bits,"Null trigger registered an event");vm.invoke("setup");set(zero,2);require(get(zero)==0 && vm.global("firstHits").bits==1 && vm.global("secondHits").bits==0 && vm.global("eventSeen").bits==3 && vm.global("stateSeen").bits==0,"Reentrant state callback or event context differs");set(zero,2);set(zero,2);require(vm.global("firstHits").bits==2 && vm.global("secondHits").bits==1,"Threshold crossing or equal assignment differs");set(one,2);require(vm.global("disconnectedHits").bits==1 && vm.global("stateSeen").bits==1 && get(zero)==2,"Integer game states are not independent");vm.invoke("destroySecond");set(zero,0);set(zero,2);require(vm.global("firstHits").bits==3 && vm.global("secondHits").bits==1,"Destroyed game-state trigger fired");set(zero,INT32_MIN);set(one,INT32_MAX);require(get(zero)==INT32_MIN && get(one)==INT32_MAX,"Integer game-state bits changed");});
     test("session_config_updates_metadata_slots_and_priorities",[]{auto module=compile(R"jass(type player extends handle
 type playercolor extends handle
 type mapcontrol extends handle

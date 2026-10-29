@@ -83,6 +83,8 @@ class ScriptSession {
     std::vector<std::uint32_t> localNetworkObjects_;
     std::vector<std::uint32_t> localNetworkUiObjects_;
     std::vector<std::uint32_t> eventHandles_,timerHandles_;
+    std::array<std::int32_t,2> integerGameStates_{};
+    std::array<std::uint64_t,2> integerGameStateRevision_{};
     std::map<std::uint32_t,std::vector<std::uint32_t>> unitStateObservers_;
     jass::Runtime runtime_;
     bool failed_=false,configured_=false;
@@ -973,6 +975,7 @@ class ScriptSession {
     void playerChange(unsigned player,std::uint32_t field,int before,int after,bool alliance);
     void tick(double delta);
     void clockChange(jass::Real before,jass::Real after,bool cyclic);
+    void setIntegerGameState(unsigned state,std::int32_t value);
     std::uint32_t random();
     void seedAuxiliaryRandom(std::uint32_t seed);
     ObjectData& definitions();

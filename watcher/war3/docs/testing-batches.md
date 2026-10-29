@@ -2168,3 +2168,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ## 对局分数待验证
 
 路径：`game_state.h`、`session_match.cpp`、`session_production.cpp`、`session_construction.cpp`、`session_callbacks.cpp`、`tests/commerce_tests.cpp`，说明见 `player-scores.md`。Win32 Release 客户端及 commerce 消费者已编译。阶段执行 commerce 和 harvest 消费者，核对不同类型生产／建筑／击杀、英雄经验／归属、资源与总分；另对照原版初始单位、脚本创建、召唤／幻象、免费建造、复活、移除、变形、溢出及联机／结算。专项和原版对照尚未执行。
+
+## 整数游戏状态待验证
+
+路径：`script_state.h`、`session.h`、`session_callbacks.cpp`、`session_match.cpp`、`tests/session_tests.cpp`，说明见 `integer-game-state.md`。阶段执行 session 消费者，核对读写／越界、完整位型、比较符、事件上下文、注册／销毁、回调重入和时间状态隔离；另与原版对照初值、阈值换算与事件时序，并验证本地断线与联机同步。Win32 Release 客户端及 session 消费者已编译；专项和原版对照尚未执行。
