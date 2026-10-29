@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 寄生及蜘蛛召唤待验证
+
+路径：`src/spells.h`、`src/session.h`、`src/session_spell_info.cpp`、`src/session_caster_spells.cpp`、`src/session_spell_effects.cpp`、`src/session_callbacks.cpp`、`src/session_neutral_spells.cpp`；说明见 `parasite.md`。尚未编译或执行玩法检查。阶段检查原版 `ANpa` 和 DotA_v6.83d `A0BH` 的字段覆盖、学习与订单、`B0E7` 查询、毒伤／减速／叠加／驱散、攻击及毒伤致死、召唤类型／数量／归属／时限和 JASS 召唤事件；对照英雄／幻象／尸体及脚本重入边界，重点检查到期 tick 致死顺序。合并验证时构建 `cmake --build --preset release --target war3 --parallel 8`，并运行地图实测及原版对照。
+
 ## 企鹅玩具待验证
 
 路径：`src/session_consumables.cpp`；说明见 `consumables.md`。阶段检查 `stpg` 满血与受伤使用、重复使用与背包保留、音效与音量、物品事件、冷却组、自定义零恢复物品、双端和原版规则；暂未执行玩法或听感验证。
