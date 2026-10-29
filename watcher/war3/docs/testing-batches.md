@@ -3002,3 +3002,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### AI 关闭共享路径（待验证）
 
 路径：`src/ai.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`。从 common.ai 调用 `DisablePathing` 后，分别检查已有路线、后续两栖队长攻击、不同 AI、重复调用和普通单位寻路；原版共享路径、混编和同步待集中对照，见[AI 关闭共享路径](ai-disable-pathing.md)。
+
+### 昼夜光照计算复用（待验证）
+
+路径：`src/model.cpp`、`src/model_data.h`、`src/model_pose.cpp`。静态姿态与纯方向光照计算按实际输入复用；集中对照姿态／光照切换、骨骼动画、Billboard、点光源及 Amazonia 的画面、CPU 与帧耗时，见[昼夜光照计算复用](dnc-lighting-performance.md)。

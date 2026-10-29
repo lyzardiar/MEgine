@@ -1,5 +1,7 @@
 # 原生客户端交接入口
 
+2026-10-30：AI 关闭路径已接入两栖队长共享路线；实验联机跳过已移除目标的命令；昼夜光照对静态姿态和方向光计算增加受限复用。完整 AI 路径、原版联机、画面与密集地图性能待继续实现或集中验证，见[AI 路径](ai-disable-pathing.md)、[联机目标](lan-removed-target.md)和[光照复用](dnc-lighting-performance.md)。
+
 2026-10-30：昼夜 DNC 模型已接入世界模型与地形光照，经典 LAN 研究取消和亡灵第五关计时窗口句柄已接入；原版一致性、性能及完整流程待阶段验证，见[昼夜光照](day-night-lighting.md)、[局域网取消](lan-research-cancellation.md)和[亡灵第五关](campaign-undead05-timer-dialog.md)。
 
 2026-10-30：避难权杖已接入目标、基地传送和持续治疗；阴影菜单还原为关闭／开启，亡灵第四关无缓存初始化已越过无效单位设置。原版精度、窗口及完整战役待阶段验证，见[避难权杖](sanctuary-staff.md)、[阴影选项](shadow-options.md)及[亡灵第四关](campaign-undead04-invulnerable.md)。

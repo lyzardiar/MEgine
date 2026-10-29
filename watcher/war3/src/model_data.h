@@ -80,8 +80,10 @@ struct Model::Data {
     unsigned poseSequence=0;
     std::optional<std::uint64_t> poseGlobalTime;
     float radius=0,blendTime=0;
-    bool billboard=false,globalPose=false,poseLookAt=false,skinNormals=false,shadedGeometry=false;
+    bool billboard=false,globalPose=false,animatedNodes=false,poseLookAt=false,skinNormals=false,shadedGeometry=false;
     std::uint64_t poseRevision=0,skinRevision=UINT64_MAX;
+    struct LightingCache {std::uint64_t pose=0;std::array<float,9> normal{};WorldLight light;};
+    std::optional<LightingCache> lightingCache;
     std::map<std::string,int> sequenceNames;
     explicit Data(Renderer* renderer) : renderer(renderer) {}
     DirectX::XMVECTOR sample(const mdx::Track& track, std::uint64_t elapsed, DirectX::FXMVECTOR rest, bool rotation = false) const;
