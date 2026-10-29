@@ -2686,3 +2686,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 库存目标物品双击（待验证）
 
 路径：`game_inventory_drag.cpp`、`docs/teleport.md`。目标模式中双击同一库存格发出无目标物品命令，回城卷轴由原有实际传送消费者选择主城；阶段验证同格／跨格／慢双击、键盘目标模式、目标改变、物品转移／删除、无基地／冷却、Shift 排队、其他目标物品、实验联机和回放及原版输入时序。实际窗口和原版行为尚未验证。
+
+### 女猎手哨兵次数（待验证）
+
+路径：`entities.h`、`session_spell_info.cpp`、`session_spells.cpp`、`session_stealth_reveal.cpp`、`session_ability_commands.cpp`、`tests/stealth_tests.cpp`、`docs/sentinel.md`。源 DataD 正数限制各单位各能力的发射次数，0 为无限，取消或无效目标不消耗，耗尽禁用按钮；固定版原件指令记录在 `tmp/docs-artifacts/war3/sentinel-count-1030/original.txt`；Win32 Release 产品合并编译通过，新增消费者尚未运行。阶段验证原型 Aesn／Aesr、地图覆盖／多等级、订单／取消／目标死亡、移除与重加、死亡／复活／易主、施法事件重入、窗口及原版次数时序与联机同步；存档恢复仍待实现。
