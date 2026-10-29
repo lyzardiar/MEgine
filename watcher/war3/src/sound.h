@@ -69,6 +69,7 @@ public:
     std::shared_ptr<ScriptSound> digital(const std::string& file,bool loop,bool spatial,bool stopOutOfRange,int fadeIn,int fadeOut,const std::string& eax);
     void parameters(const std::shared_ptr<ScriptSound>& sound,const std::string& label);
     std::shared_ptr<ScriptSound> fromLabel(const std::string& name,bool loop,bool spatial,bool stopOutOfRange,int fadeIn,int fadeOut);
+    bool oneShot(const std::string& name,const std::array<float,3>& position);
     bool animation(const std::string& code,const std::array<float,3>& position);
     unsigned duration(const std::shared_ptr<ScriptSound>& sound);
     void pitch(const std::shared_ptr<ScriptSound>& sound,float ratio);
