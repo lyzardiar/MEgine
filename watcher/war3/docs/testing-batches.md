@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 迫击炮照明弹待验证
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_stealth_reveal.cpp`、`src/session_fog.cpp`、`src/session_visibility.cpp`；说明见 `flare.md`。`Afla` 点目标及科技前置接入现有施法，按源延迟产生视野与侦测；阶段检查时间、冷却、地形边缘、重叠、共享视野、暂停、施法者死亡、地图覆盖、双端、实际画面及原版行为；闪烁与飞行画面尚未实现。
+
 ## 地图脚本界面按键待验证
 
 路径：`src/session.h`、`src/session_match.cpp`、`src/game_view.cpp`；说明见 `script-forced-ui.md`。`ForceUIKey` 和 `ForceUICancel` 通过有界队列进入已有界面与命令消费者；包含自动施法映射的 Win32 Release 客户端编译通过。阶段检查所有键值、重入、队列、焦点／暂停／菜单／过场、建造与技能模式、取消、实际教程、自定义地图、双端与回放；当前后续帧处理与原版同步调用时序不同。

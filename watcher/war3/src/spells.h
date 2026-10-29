@@ -179,5 +179,5 @@ struct StasisWard {SpellInfo spell;double armRemaining=0,scanRemaining=0;std::ui
 struct GroundingState {float height=0,rate=0;};
 struct ShadowMeldState {std::uint32_t ability=0;unsigned level=0,owner=0;double remaining=0;bool nightOnly=true,manual=false;};
 struct MirrorImageState {SpellInfo spell;unsigned owner=0;std::uint64_t ticket=0;double remaining=0;};
-struct RevealArea {unsigned owner=0,mask=0;WorldPoint point;float radius=0;double expires=0;bool whole=false;std::vector<std::uint32_t> visuals;};
+struct RevealArea {unsigned owner=0,mask=0;WorldPoint point;float radius=0;double expires=0;bool whole=false;std::vector<std::uint32_t> visuals;double starts=0;std::uint32_t effectAlias=0;bool active=true;};
 }
