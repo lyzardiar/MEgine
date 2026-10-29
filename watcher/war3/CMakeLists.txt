@@ -27,7 +27,7 @@ target_sources(war3_core PRIVATE src/world_path.cpp src/session_orders.cpp src/p
 target_sources(war3_core PRIVATE src/lan_actions.cpp src/lan_action_encoder.cpp src/lan_time_driver.cpp src/lan_simulation.cpp src/lan_setup.cpp src/lan_local_identity.cpp src/session_network_identity.cpp src/replay.cpp src/replay_runtime.cpp src/replay_writer.cpp src/replay_experimental.cpp)
 target_sources(war3_core PRIVATE src/session_visual.cpp src/session_trackable.cpp)
 target_sources(war3_core PRIVATE src/spatial_region.cpp src/session_spatial_events.cpp)
-target_sources(war3_core PRIVATE src/session_inventory.cpp)
+target_sources(war3_core PRIVATE src/session_inventory.cpp src/session_soul.cpp)
 target_sources(war3_core PRIVATE src/fog_grid.cpp src/session_fog.cpp)
 target_sources(war3_core PRIVATE src/session_text.cpp src/session_text_tag.cpp src/session_cache.cpp)
 target_sources(war3_core PRIVATE src/audio_duration.cpp)

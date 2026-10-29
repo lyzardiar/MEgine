@@ -21,6 +21,8 @@ unit friendly=null
 destructable tree=null
 destructable spellTree=null
 integer blightEffects=0
+integer removeSoulOnPickup=0
+integer soulPickups=0
 endglobals
 function quiet takes unit u returns nothing
     call SetUnitPathing(u,false)
@@ -36,10 +38,24 @@ function spell_effect takes nothing returns nothing
         set spellTree=GetSpellTargetDestructable()
     endif
 endfunction
+function item_picked takes nothing returns nothing
+    if GetItemTypeId(GetManipulatedItem())=='soul' then
+        set soulPickups=soulPickups+1
+        if removeSoulOnPickup!=0 then
+            call RemoveItem(GetManipulatedItem())
+        endif
+    endif
+endfunction
+function set_soul_callback takes integer value returns nothing
+    set removeSoulOnPickup=value
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing
     local trigger t=CreateTrigger()
+    local trigger itemTrigger=CreateTrigger()
+    call TriggerRegisterPlayerUnitEvent(itemTrigger,Player(0),EVENT_PLAYER_UNIT_PICKUP_ITEM,null)
+    call TriggerAddAction(itemTrigger,function item_picked)
     call FogEnable(false)
     call FogMaskEnable(false)
     call SetPlayerAlliance(Player(0),Player(1),ALLIANCE_PASSIVE,false)

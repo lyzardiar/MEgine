@@ -29,6 +29,8 @@ struct WaygateState {WorldPoint destination;bool active=true,configured=false;st
 struct MilitiaState {enum class Phase {None,ToMilitia,ToWorker};Phase phase=Phase::None;std::uint32_t hall=0,ability=0,workerType=0,militiaType=0;double remaining=0,repath=0;};
 struct UnitState {
     std::uint32_t handle=0,type=0,owner=0;
+    std::uint32_t soulCaptor=0,soulVictim=0,soulItem=0,soulVisionPlayer=UINT32_MAX;
+    bool soulWasPaused=false;
     std::uint64_t deathRevision=0;
     std::optional<MilitiaState> militia;
     std::optional<WaygateState> waygate;
@@ -218,7 +220,7 @@ struct UnitState {
     float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus)+(engineering && !morphed()?engineering->movement:0));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
     bool phaseShifted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::PhaseShift && b.remaining>0)return true;return false;}
-    bool hidden() const {return concoction || phaseShifted() || !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
+    bool hidden() const {return soulCaptor || concoction || phaseShifted() || !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
 };
 struct DestructableState {
     std::uint32_t type=0;

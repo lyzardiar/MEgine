@@ -936,6 +936,8 @@ class ScriptSession {
     std::vector<std::uint32_t> itemActiveAbilities(std::uint32_t type);
     const EquipmentBonuses* equipmentInfo(std::uint32_t ability,unsigned level);
     void refreshEquipment(UnitState& unit);
+    void captureSoul(std::uint32_t caster,const CastOrder& cast);
+    void releaseSoul(std::uint32_t caster);
     void permanentItem(std::uint32_t unit,std::uint32_t ability);
     std::map<std::pair<std::uint32_t,unsigned>,std::optional<EquipmentBonuses>> equipmentInfo_;
     const ConsumableInfo* consumableInfo(std::uint32_t ability);

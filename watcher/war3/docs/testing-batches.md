@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 灵魂宝石待验证
+
+路径：`src/entities.h`、`src/session.h`、`src/spells.h`、`src/session_soul.cpp`、`src/session_item_use.cpp`、`src/session_inventory.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_fog.cpp`、`src/session_callbacks.cpp`、`src/session_food.cpp`、`src/session_entities.cpp`、`src/session_network_identity.cpp`、`CMakeLists.txt`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`；说明见 `soul-gem.md`。Win32 Release 客户端与 control 目标编译通过，`item-soul` 最小检查 1 通过／0 失败，覆盖满库存替换、能力移除、拾取事件删除物品重入和持有者死亡；未加载 Game.dll。阶段核对施法与失效、物品转交／销毁、释放位置与路径、暂停修改、目标易主／死亡、回调重入、战争迷雾、敌方视野与原版时序；合并真实地图、双端和资源释放验证。
+
+```powershell
+python tests/generate-control-fixture.py --data-root 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne' --output '../../tmp/docs-artifacts/war3/soul-gem/fixture.w3m'
+./build/windows-x86/bin/Release/war3_control_tests.exe 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne' '../../tmp/docs-artifacts/war3/soul-gem/fixture.w3m' item-soul
+```
+
 ## 结算页签与离屏附件动画待验证
 
 路径：`src/game_flow_ui.h/.cpp`、`src/model.h`、`src/model_particles.cpp`、`src/game_view.cpp`、`src/game_effects.cpp`；说明见 `game-flow.md` 和 `effects.md`。Win32 Release 客户端增量编译通过。阶段操作胜负结算，核对概况、单位／英雄／资源四页及原字符串、分数／科技计算、空英雄与多玩家、页签切换、不同窗口尺寸和原版画面；验证列头显示、鼠标和键盘排序、切换方向／页签／同值顺序及原版视觉指示；队伍和回放保存仍待完成，资源交换列当前仅展示黄金收支。核对视野内的离屏单位、特效、技能与武器弹道附件切回、模型切换、显隐、暂停、播放与声音同步、粒子重建、性能及原版画面；迷雾外与资源就绪前的历史尚未重建。窗口、GPU、声音、性能和原版对照待执行。
