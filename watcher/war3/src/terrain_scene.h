@@ -10,11 +10,14 @@ struct SceneVertex {float x,y,z;DWORD color;float u,v;};
 struct TerrainChunk {
     std::vector<SceneVertex> vertices;
     std::vector<std::uint32_t> indices;
+    std::vector<float> baseHeights;
     std::string texture;
     SceneBounds bounds;
     bool water=false;
     unsigned groundIndex=UINT_MAX;
     size_t dynamicTextureBytes=0;
+    std::uint64_t deformationSeen=0;
+    bool deformationAffected=false;
     Com<IDirect3DTexture9> dynamicTexture;
     Com<IDirect3DVertexBuffer9> vertexBuffer;
     Com<IDirect3DIndexBuffer9> indexBuffer;
@@ -47,6 +50,8 @@ class TerrainScene {
     void rebuildBlight(unsigned index);
     bool rebuildGround(unsigned index,TerrainChunk& target,Renderer& renderer);
     void uploadChunk(Renderer& renderer,TerrainChunk& chunk);
+    void refreshDeformation(TerrainChunk& chunk);
+    bool deformationVisible(const TerrainChunk& chunk,const DirectX::XMMATRIX& viewProjection) const;
     size_t drawBlight(Renderer& renderer,const DirectX::XMMATRIX& viewProjection);
     void compile(Log& log);
     std::vector<TerrainCell> layout(const std::vector<TerrainCliff>& definitions,Log& log);
@@ -60,7 +65,7 @@ public:
     size_t uploadCount() const {return chunks_.size()+initialBlightUploads_.size();}
     size_t uploaded() const {return uploaded_;}
     size_t draw(Renderer& renderer,const D3DMATRIX& view,const D3DMATRIX& projection,std::uint64_t elapsed,bool water,const WorldEnvironment& environment);
-    float height(float x,float y) const {return relief(surface_,(x-source_.origin[0])/128,(y-source_.origin[1])/128);}
+    float height(float x,float y) const {return relief(surface_,(x-source_.origin[0])/128,(y-source_.origin[1])/128)+world_.deformation(x,y);}
     std::optional<float> waterHeight(float x,float y) const;
     float waterAlpha(float x,float y,const WorldEnvironment& environment) const;
     float visibleHeight(float x,float y) const {auto ground=height(x,y);auto water=waterHeight(x,y);return water?std::max(ground,*water):ground;}

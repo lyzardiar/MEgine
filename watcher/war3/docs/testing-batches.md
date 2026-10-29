@@ -1966,3 +1966,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`camera_control.h`、`session_world.cpp`、`game_view.cpp`、`tests/game_flow_tests.cpp`、`docs/camera-eye.md`。四个眼睛坐标 native 与绘制共享视角几何；DotA `DD5` 使用眼睛 XY 决定镜头平移。Win32 Release 产品和会话专项增量编译通过，专项未执行。
 
 阶段按 `camera-eye.md` 的夹具和消费者命令核对字段／句柄、真实窗口的平移／旋转／缩放／跟随、噪声和原版坐标；会话水面高度、局域网本地镜头及跟随时序仍有未完成边界。
+
+## 地形波纹阶段待验证
+
+路径：`world.h`、`world_height.cpp`、`session.h/.cpp`、`session_world.cpp`、`session_tick.cpp`、`terrain_scene.*`、`terrain_blight.cpp`、`tests/game_flow_tests.cpp`、`docs/terrain-deformation.md`。Ripple 和停止接口连接会话时钟、共享地形高度及地面／悬崖／荒芜顶点；不重建地形纹理。
+
+按 `terrain-deformation.md` 运行专项并合并 DotA、波形及停止、网格边界、单位贴地、GPU 和性能验证；原版时间与坐标精度及其他变形类型仍未完成。专项尚未执行。
