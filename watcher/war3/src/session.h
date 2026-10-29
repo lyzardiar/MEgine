@@ -137,6 +137,10 @@ class ScriptSession {
     void updateUnitAnimation(UnitState& unit);
     void updateDestructableAnimations();
     std::map<std::uint32_t,std::shared_ptr<ItemState>> items_;
+    struct InventoryAbilityInfo {bool inventory=false;unsigned slots=0;std::vector<std::pair<std::uint32_t,unsigned>> prerequisites;};
+    std::map<std::pair<std::uint32_t,unsigned>,InventoryAbilityInfo> inventoryAbilityInfo_;
+    const InventoryAbilityInfo& inventoryAbilityInfo(std::uint32_t ability,unsigned level);
+    bool inventoryAbilityReady(unsigned owner,const InventoryAbilityInfo& info);
     std::optional<std::pair<std::uint32_t,std::uint32_t>> requestedBook_;
     std::map<std::uint32_t,std::shared_ptr<DestructableState>> destructables_;
     std::optional<PlacedDefinitions> destructableDefinitions_;

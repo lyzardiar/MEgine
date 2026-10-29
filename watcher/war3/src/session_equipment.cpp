@@ -4,10 +4,11 @@
 #include <bit>
 #include <cmath>
 #include <sstream>
+#include <string_view>
 
 namespace war3 {
 namespace {float number(jass::Real value){return std::bit_cast<float>(value.bits());}jass::Real real(float value){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}}
-bool ScriptSession::inventoryFlag(const UnitState& u,const char* field){for(auto [ability,level]:u.abilities)if(level>0 && definitions().field(ability,"AbilityData","code",ObjectData::name(ability))=="AInv"){auto value=definitions().number(ability,"AbilityData",std::string(field)+std::to_string(level));if(value!=0 && value!=1)throw std::runtime_error("Invalid source inventory permission");if(value!=0)return true;}return false;}
+bool ScriptSession::inventoryFlag(const UnitState& u,const char* field){bool deathDrop=std::string_view(field)=="DataB";for(auto [ability,level]:u.abilities)if(level>0){auto& info=inventoryAbilityInfo(ability,unsigned(level));if(!info.inventory || (!deathDrop && !inventoryAbilityReady(u.owner,info)))continue;auto value=definitions().number(ability,"AbilityData",std::string(field)+std::to_string(level));if(value!=0 && value!=1)throw std::runtime_error("Invalid source inventory permission");if(value!=0)return true;}return false;}
 const std::vector<std::uint32_t>& ScriptSession::itemAbilities(std::uint32_t type){
     if(auto found=itemPassives_.find(type);found!=itemPassives_.end())return found->second;std::vector<std::uint32_t> result;std::stringstream input(definitions().field(type,"ItemData","abilList"));std::string entry;while(std::getline(input,entry,',')){auto first=entry.find_first_not_of(" \t\"");if(first==std::string::npos)continue;entry=entry.substr(first,entry.find_last_not_of(" \t\"")-first+1);if(entry=="_" || entry=="-")continue;if(entry.size()!=4 || !definitions().ability(ObjectData::code(entry)) || result.size()>=256)throw std::runtime_error("Invalid source item ability list: "+ObjectData::name(type));result.push_back(ObjectData::code(entry));}return itemPassives_.emplace(type,std::move(result)).first->second;
 }

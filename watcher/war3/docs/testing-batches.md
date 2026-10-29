@@ -2160,3 +2160,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ## 小地图底图、地形开关与迷雾待验证
 
 路径：`game_loading.h/.cpp`、`game_view.h/.cpp`、`main.cpp`，说明见 `minimap.md`。Win32 Release 客户端编译通过；BootyBay 临时副本删除底图后的单帧对局启动通过，日志 `tmp/docs-artifacts/war3/weather-source-probe/no-minimap-play-final.log`。阶段验证 Alt+T/A/R/F、回放速度与 Alt+F4、按钮交叠及皮肤覆盖、三图和无底图地图的画面／地图方向、迷雾／战争迷雾切换、营地／单位／提示遮罩、运行时地形改变、设备恢复和帧耗时，逐项与原版对照；单帧启动不代表视觉或实际交互通过。
+
+## 背包科技待验证
+
+背包路径：`session.h`、`session_inventory.cpp`、`session_equipment.cpp`、`tests/research_tests.cpp`，说明见 `backpack-research.md`。阶段执行 research 夹具和消费者，核对四族科技前后、能力覆盖／前置数量、拾取、装备、易主／死亡／删除、英雄六槽和自定义建筑前置性能。 Win32 Release 客户端与 research 消费者已编译，专项和原版对照尚未执行。
