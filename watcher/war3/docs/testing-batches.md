@@ -2626,3 +2626,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 已摧毁桥梁重建（待验证）
 
 路径：`session_repair.cpp`、`game_view.cpp`、`tests/construction_tests.cpp`、`docs/base-development.md`。死桥可在修理模式下选中并接入工人修理；首个恢复生命步骤切换桥梁存活状态。Win32 Release 产品合并编译通过，新增消费者检查未运行。阶段验证命令输入、路径占用／通行表面、动画、费用、目标回调、同时修理、敌我和资源不足，并对照原版死桥恢复时机。
+
+### 主菜单选项（待验证）
+
+路径：`front_options.cpp/.h`、`main.cpp`、`CMakeLists.txt`、`docs/game-options.md`。主菜单使用原 OptionsMenu FDF 接入已实现的游戏性、声音和视频设置；Win32 Release 产品合并编译通过。阶段验证页面切换、键鼠／滑块／下拉、确认与取消、损坏文件和部分保存失败、重新进入及跨对局读取、菜单音效／音乐调整，与原版布局和行为对照；其余设置仍待实现。
