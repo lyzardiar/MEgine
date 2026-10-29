@@ -9,6 +9,8 @@
 namespace war3::jass {
 class Runtime;
 struct Value {Id type=none;std::uint32_t bits=0;std::shared_ptr<const std::string> text;Runtime* codeOwner=nullptr;};
+struct PrimitiveGlobalSnapshot {std::vector<std::uint8_t> bytes;size_t excludedGlobals=0,excludedNonDefaultGlobals=0;};
+struct PrimitiveGlobalRestore {size_t excludedGlobals=0,excludedNonDefaultGlobals=0;};
 struct RuntimeLimits {std::uint64_t steps=5000000;size_t frames=1024,values=262144,stringBytes=16*1024*1024;bool debug=false;size_t threads=1024;};
 struct RuntimeSlotInspection {Value value;bool initialized=false,array=false;std::map<std::uint32_t,Value> elements;};
 struct RuntimeFrameInspection {Id function=none;size_t pc=0,base=0;std::vector<RuntimeSlotInspection> locals;};
@@ -57,6 +59,8 @@ public:
     // Identities and codeOwner pointers are process-local diagnostics, not saved continuations.
     std::vector<RuntimeThreadInspection> inspectThreads() const;
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;
+    PrimitiveGlobalSnapshot encodePrimitiveGlobals() const;
+    PrimitiveGlobalRestore restorePrimitiveGlobals(std::span<const std::uint8_t> bytes);
     Value integer(std::int32_t value) const;
     Value real(Real value) const;
     Value boolean(bool value) const;
