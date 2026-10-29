@@ -36,6 +36,7 @@ class GameView {
     std::deque<LanActionAlliance> lanPendingAlliance_;
     std::uint8_t lanPeer_=0;
     bool drawStarted_=false,replayMode_=false,lanExperimental_=false,lanLeavePending_=false;
+    std::optional<bool> lanDialogQuitScores_;
     std::string lanMessage_;
     std::uint64_t lanMessageUntil_=0;
     unsigned submitPlayerCommand(const PlayerCommand& command);
@@ -195,6 +196,10 @@ public:
     bool appExitRequested() const {return appExit_;}
     std::optional<bool> takeLanLeaveRequest();
     void beginLanLeave();
+    bool lanLeavePending() const{return lanLeavePending_;}
+    bool lanDialogQuitPending() const {return !replayMode_ && lanSimulation_ && lanSimulation_->hasLocalDialogQuit();}
+    std::optional<bool> lanDialogQuitScores() const {return lanDialogQuitScores_;}
+    void finishLanDialogScores(){lanLeavePending_=false;if(data_->session->exitRequest()==SessionExit::None)data_->session->finishGame(true);}
     GameAudioPreferences audioPreferences() const {return audioCommitted_;}
     bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}
     const std::string& nextLevel() const {return data_->session->nextLevel();}

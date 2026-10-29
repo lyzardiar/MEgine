@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+## 自研联机脚本退出按钮待验证
+
+路径：session_script_dialogs、lan_action_encoder／lan_simulation／lan_runtime、game_flow_ui／game_view、main、game_flow_tests。QuitButton 的脚本事件在各端消费，只有点击者请求离开；等待有序离开和回放记录后按 doScoreScreen 决定显示本机结算或返回 LAN。房主离开结束房间并保存部分回放，回放播放只执行事件。Win32 Release 产品及专项程序增量编译通过；新增专项尚未执行，阶段命令：`war3_game_flow_tests.exe <data-root> <fixture.w3m> lan-dialog`。集中验证房主／非主机、有／无结算、鼠标／快捷键、回放、双端与第三方玩家继续运行、离开回显顺序、最小化／过场／断线、重复点击及与菜单退出交错、事件重入和脚本自行 EndGame，以及原版时序与界面。
+
 ## 自研联机脚本对话框待验证
 
-路径：session／session_script_dialogs／session_network_identity、game_state、game_flow_ui／game_view、lan_actions／lan_action_encoder／lan_simulation、game_flow_tests。普通 Dialog/Button 点击按玩家和显示轮次进入实验时间片，双方通过会话事件消费者执行；本地显示与重复点击去重独立，UI 句柄使用独立对象序号。QuitButton 暂禁用，F10 可打开对局菜单。Win32 Release 产品和专项程序增量编译通过；新增专项尚未执行，阶段命令：`war3_game_flow_tests.exe <data-root> <fixture.w3m> lan-dialog`。集中验证两端仅本地显示、快捷键／鼠标／退出入口、重复与延迟／重显／切换对话框、同步销毁／清除／触发器重入、回放、多端及原版时序。必须覆盖各端 UI 对象创建顺序或按钮热键不同的限制；不支持非同步创建的任意 UI，也不证明原版协议互通。
+路径：session／session_script_dialogs／session_network_identity、game_state、game_flow_ui／game_view、lan_actions／lan_action_encoder／lan_simulation、game_flow_tests。普通 Dialog/Button 点击按玩家和显示轮次进入实验时间片，双方通过会话事件消费者执行；本地显示与重复点击去重独立，UI 句柄使用独立对象序号。QuitButton 支持点击者离开及可选本机结算，F10 可打开对局菜单。Win32 Release 产品和专项程序增量编译通过；新增专项尚未执行，阶段命令：`war3_game_flow_tests.exe <data-root> <fixture.w3m> lan-dialog`。集中验证两端仅本地显示、快捷键／鼠标／退出入口、重复与延迟／重显／切换对话框、同步销毁／清除／触发器重入、回放、多端及原版时序。必须覆盖各端 UI 对象创建顺序或按钮热键不同的限制；不支持非同步创建的任意 UI，也不证明原版协议互通。
 
 ## 自研联机建筑取消与英雄复活待验证
 

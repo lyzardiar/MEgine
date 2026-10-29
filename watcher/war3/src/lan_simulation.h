@@ -42,6 +42,7 @@ private:
     std::map<unsigned,std::pair<std::uint32_t,std::uint32_t>> subgroups_,projectedSubgroups_;
     std::size_t cursor_=0;
     bool consuming_=false,experimental_=false;
+    std::optional<bool> localDialogQuit_;
     LanTimeDriver driver_;
     bool validate(const LanAction& action);
     bool apply(ScriptSession& session,const LanAction& action);
@@ -52,6 +53,8 @@ public:
     LanSimulation(LanSimulation&&)=delete;
     LanSimulation& operator=(LanSimulation&&)=delete;
     LanStepResult consume(std::uint64_t sequence,const LanTimeSlot& slot);
+    bool hasLocalDialogQuit() const{return localDialogQuit_.has_value();}
+    std::optional<bool> takeLocalDialogQuit(){auto value=localDialogQuit_;localDialogQuit_.reset();return value;}
     bool failed() const{return driver_.failed();}
     const std::string& error() const{return driver_.error();}
     std::uint64_t nextSequence() const{return driver_.nextSequence();}
