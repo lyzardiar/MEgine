@@ -17,6 +17,7 @@ integer timer_done=0
 integer serial_trace=0
 integer parallel_trace=0
 integer execute_returned=0
+integer execute_value_trace=0
 integer join_returned=0
 integer after_cancel=0
 unit first=null
@@ -74,6 +75,16 @@ function RunJoin takes nothing returns nothing
     set serial_trace=0
     call TriggerExecuteWait(serial_trigger)
     set join_returned=1
+endfunction
+function ExecuteValue takes nothing returns boolean
+    set execute_value_trace=1
+    call TriggerSleepAction(0.125)
+    set execute_value_trace=2
+    return false
+endfunction
+function RunExecuteValue takes nothing returns nothing
+    call ExecuteFunc("ExecuteValue")
+    set execute_returned=2
 endfunction
 function LeaseDelay takes nothing returns nothing
     call TriggerSleepAction(10.0)

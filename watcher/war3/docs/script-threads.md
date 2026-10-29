@@ -4,6 +4,8 @@ Runtime使用Win32 fiber保留JASS帧、局部槽/数组、返回栈及Native→
 
 实际入口为TriggerSleepAction、ExecuteFunc、TriggerExecute/TriggerExecuteWait及timer callback。TriggerWaitOnSleeps控制同一触发器动作串行或分别启动；条件/过滤使用invokeNoYield，非法等待明确报错。AI模块声明Sleep/StartThread时复用调度器，尚未实现完整AI加载和native。
 
+`ExecuteFunc` 可启动无参数且有返回值的脚本函数，在独立线程中执行并舍弃返回值；线程可等待和恢复，未知函数及有参数入口仍报错。DotA 的 `UXO` 返回布尔值并由计时逻辑调用。原版调度和异常边界待阶段对照。
+
 地图main允许等待。mainStarted表示已启动且未失败，mainCompleted仅在main真实返回后成立；游戏视图可推进已启动的main。产品--main-check记录waiting/completed和活动线程数，模拟后main仍未完成时退出2。
 
 线程每次恢复重新获得指令预算，无等待死循环仍触发上限。sleep使用实际32位Real参数，至少等待下一1/32秒量子；当前到期时间不做原版最小等待/量化的精度承诺。默认最多1,024个线程、32个完成栈复用，单栈64KiB提交/256KiB保留，保留浮点状态，支持加载线程向游戏线程顺序迁移。

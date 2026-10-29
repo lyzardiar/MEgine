@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## DotA 计分板空英雄查询待验证
+
+路径：`session_hero.cpp`、`session_inventory.cpp`、`tests/commerce_tests.cpp`。英雄等级／经验／技能点与物品栏空单位查询分别返回零或空物品，非零无效句柄仍报错。DotA 的计分板在玩家未选英雄时使用这些查询；Win32 Release 客户端与 commerce 消费者已编译，专项尚未执行。阶段验证空／非英雄／英雄／已销毁单位、库存变化、多人计分板和原版空句柄语义。
+
+## ExecuteFunc 有返回值函数待验证
+
+路径：`session_callbacks.cpp`、`tests/generate-thread-fixture.py`、`tests/session_thread_tests.cpp`，说明见 `script-threads.md`。Win32 Release 客户端与线程消费者已编译；DotA_v6.83d 的原 main 和静音 60 秒模拟通过，无 Game.dll，日志 `tmp/docs-artifacts/war3/dota-executefunc-60s.log`。阶段运行线程夹具并核对返回值丢弃、等待／唤醒、调用 VM、非法入口、回调上下文和原版时序；实际游戏、画面、玩家操作及原版对照尚未执行。
+
 ## 单位状态事件待验证
 
 路径：script_state、session_callbacks、session_entities、session_tick、game_flow_tests、generate-game-flow-fixture、unit-state-events。单位状态阈值事件连接脚本写入、非致死生命变化与固定步补查。Win32 Release 客户端及专项程序增量编译通过；阶段先执行 `tests/generate-game-flow-fixture.py --data-root <data-root>`，再执行 `war3_game_flow_tests.exe <data-root> <fixture.w3m>`，核对同一模拟步内跨越／恢复、死亡和触发器重入及原版时序；内部直接写入可能合并跨越，尚未实现全部即时语义。
