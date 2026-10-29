@@ -2630,3 +2630,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 主菜单选项（待验证）
 
 路径：`front_options.cpp/.h`、`main.cpp`、`CMakeLists.txt`、`docs/game-options.md`。主菜单使用原 OptionsMenu FDF 接入已实现的游戏性、声音和视频设置；Win32 Release 产品合并编译通过。阶段验证页面切换、键鼠／滑块／下拉、确认与取消、损坏文件和部分保存失败、重新进入及跨对局读取、菜单音效／音乐调整，与原版布局和行为对照；其余设置仍待实现。
+
+### 战役任务空句柄（待验证）
+
+路径：`session_quest.cpp`、`docs/campaign-flow.md`。任务／目标句柄失效时返回空结果或忽略修改；Win32 Release 产品合并编译通过。隔离探针通过 KillUnit 加速触发 Human01 首领组死亡，进入胜利对话框，“继续”产生 Human02 换关请求，见 `tmp/docs-artifacts/war3/human01-victory-1030/victory-continue.log`；未进行完整手动通关或加载第二关。阶段验证空／错误类型／销毁句柄、任务目标创建与修订、事件顺序、真实战役操作及换关加载，并对照原版接口。

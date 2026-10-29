@@ -21,3 +21,5 @@
 返回战役章节页时重新读取脚本保存的战役进度；若战役选择已变化，则选择目标战役第一张可玩的章节，否则保留当前章节。章节页恢复后按当前进度重新启动后台地图准备，已锁定或影片条目沿用既有检查。窗口交互、实际章节胜负／跨战役返回与原版选择行为待集中验证。
 
 `SetDefaultDifficulty` 更新本次会话的默认难度，`GetDefaultDifficulty` 返回该值；原 Blizzard.j 胜利回调可通过现有 `SetGameDifficulty` 恢复默认难度。当前实现允许 0–3，不直接修改当前难度或持久化战役界面选择；原版默认值、持久化与异常参数行为仍待对照。
+
+Human01 胜利流程中的 `udg_QuestOrcs` 在地图脚本中未赋值，任务完成接口需接受空句柄；任务／目标句柄解析失败时的操作与查询使用安全返回。原版 `QuestSetCompleted` 入口 `0x6f1f2550` 与 `QuestItemSetCompleted` 入口 `0x6f1f24d0` 在句柄解析失败时直接返回，原始指令记录于 `tmp/docs-artifacts/war3/human01-victory-1030/original-quest-natives.txt`。隔离探针在玩家获得控制后以 `KillUnit` 触发首领组死亡事件，推进至胜利对话框；选择继续后得到 `Maps\Campaign\Human02.w3m` 换关请求，见 `tmp/docs-artifacts/war3/human01-victory-1030/victory-continue.log`。该探针不覆盖手动战斗、真实窗口、第二关载入及完整战役。
