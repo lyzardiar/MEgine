@@ -2894,3 +2894,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### Human09 空位置特效（待验证）
 
 路径：`src/session_effects.cpp`、`tests/spell_tests.cpp`。隔离原图越过异常并推进至 400 秒；集中执行新增断言并验证真实开场及画面，见 [空位置特效](campaign-human09-null-effect.md)。
+
+### Human09 空物品槽创建（待验证）
+
+路径：`src/session_entities.cpp`、`tests/spell_tests.cpp`。隔离探针越过剧情的空槽异常；集中执行新增断言并验证真实战斗、物品和剧情，见 [空物品槽创建](campaign-human09-empty-item.md)。
