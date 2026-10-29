@@ -2698,3 +2698,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### F12 对局消息纪录（待验证）
 
 路径：`message_log.*`、`CMakeLists.txt`、`glue.cpp`、`game_loading.*`、`game_view.*`、`session.h`、`session_text.cpp`、`session_spatial_events.cpp`、`docs/message-log.md`。原 LogDialog 的 F12／顶部入口、滚动与本地受众消息历史已接入；Win32 Release 核心库编译通过。阶段验证键鼠滚动／焦点／对局输入隔离、长消息／128 行／清屏、单机／聊天私聊与盟友受众、回放／双端及原版布局；实际窗口和完整用户交互尚未运行。
+
+### 空单位动画（待验证）
+
+路径：`session_visual.cpp`、`docs/save-runtime-foundation.md`。SetUnitAnimation 对无效单位安全返回，原件入口和 OrcX01 开场实际调用已核对；Win32 Release 核心库编译通过。阶段验证空／销毁／错误类型、有效单位和动画切换／回调及原版窗口表现；OrcX01 区域存档恢复仍未实现。
