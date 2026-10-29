@@ -34,7 +34,7 @@ struct ScriptAI {
     std::optional<AIItemPurchase> itemPurchase;
     std::optional<AIZeppelinWave> zeppelinWave;
     std::uint64_t zeppelinWaveTicket=0;
-    bool amphibious=false;
+    bool amphibious=false,pathingDisabled=false;
     std::optional<AICaptainRoute> captainRoute;
     std::uint64_t captainRouteTicket=0;
     bool reservesUnit(std::uint32_t unit) const {return (zeppelinPurchase && zeppelinPurchase->buyer==unit) || (itemPurchase && itemPurchase->buyer==unit);}

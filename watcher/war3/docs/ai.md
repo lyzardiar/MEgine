@@ -42,7 +42,7 @@ Unsummon已连接已有工人的Auns目标施法和建筑持续消退/返还；G
 
 UnitInvis已使用AI所属玩家的实际隐形/侦测判定，敌情查询排除无法侦测的隐形目标；实际隐形术/真实视域、native和AI之间的最小流程通过，见[隐形与侦测](visibility.md)。完整原件语义继续阶段对照。
 
-common.ai 的 `SetAmphibious` 已接入两栖队长共享路线，范围见[战役两栖 AI 路径](campaign-amphibious-ai.md)。`SetRandomPaths(false)` 使用当前非随机路线，`true` 明确报未实现；原版随机候选仍待实现，见[AI 随机路径](ai-random-paths.md)。`DisablePathing` 尚未绑定。完整原版守卫自动登记／补员细节与策略行为仍需实现和对照。固定版对应入口为 `0x6f8949b0`、`0x6f88e730`、`0x6f894200`；证据 `ev_7ca3d90c4c7aee5212ab4e97142936e4f199f06407b30fc358d8837f7fd8f4ec`、`ev_71e4745fcae7a9cc230ac590a496a200f89973fc9c06c01b585471bcd758b99e`、`ev_0c2abd68b423678a6bfd52a3057540bf068e7c9cb4c95c2d118e8fbbd4632983`。
+common.ai 的 `SetAmphibious` 已接入两栖队长共享路线，范围见[战役两栖 AI 路径](campaign-amphibious-ai.md)。`SetRandomPaths(false)` 使用当前非随机路线，`true` 明确报未实现；原版随机候选仍待实现，见[AI 随机路径](ai-random-paths.md)。`DisablePathing` 已接入当前两栖队长共享路径的开关，原版其他路径分支仍待完成，见[AI 关闭共享路径](ai-disable-pathing.md)。完整原版守卫自动登记／补员细节与策略行为仍需实现和对照。固定版对应入口为 `0x6f8949b0`、`0x6f88e730`、`0x6f894200`；证据 `ev_7ca3d90c4c7aee5212ab4e97142936e4f199f06407b30fc358d8837f7fd8f4ec`、`ev_71e4745fcae7a9cc230ac590a496a200f89973fc9c06c01b585471bcd758b99e`、`ev_0c2abd68b423678a6bfd52a3057540bf068e7c9cb4c95c2d118e8fbbd4632983`。
 
 ## AI 单位合并与转换
 

@@ -2998,3 +2998,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 实验联机已移除目标（待验证）
 
 路径：`src/lan_simulation.cpp`、`tests/order_queue_tests.cpp`。时间片中的已移除目标命令按类别跳过；集中执行新增断言，验证同片状态变化、物品／可破坏物、多人和自研回放，见[已移除目标的联机命令](lan-removed-target.md)。
+
+### AI 关闭共享路径（待验证）
+
+路径：`src/ai.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`。从 common.ai 调用 `DisablePathing` 后，分别检查已有路线、后续两栖队长攻击、不同 AI、重复调用和普通单位寻路；原版共享路径、混编和同步待集中对照，见[AI 关闭共享路径](ai-disable-pathing.md)。
