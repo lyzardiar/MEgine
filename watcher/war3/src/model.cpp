@@ -33,7 +33,7 @@ void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
         if (chunks.size() >= 64 || !chunks.insert(kind).second) throw std::runtime_error("Duplicate MDX chunk");
         if (kind == tag("VERS")) { version = r.u32(); r.finish(); }
         else if (kind == tag("SEQS")) {
-            while (r.left()) { Sequence s; s.name = r.string(80); s.start = r.i32(); s.end = r.i32(); r.take(4); s.flags = r.u32(); r.take(36); if (s.end < s.start || sequences.size() >= 4096) throw std::runtime_error("Invalid sequence"); sequences.push_back(s); }
+            while (r.left()) { Sequence s; s.name = r.string(80); s.start = r.i32(); s.end = r.i32(); r.take(4); s.flags = r.u32(); s.rarity = r.f32(); r.take(32); if (s.end < s.start || sequences.size() >= 4096) throw std::runtime_error("Invalid sequence"); sequences.push_back(s); }
         } else if (kind == tag("GLBS")) { while (r.left()) globals.push_back(r.u32()); }
         else if (kind == tag("TEXS")) {
             while (r.left()) { auto replacement = r.u32(); Texture t; t.replacement=replacement;t.path = r.string(260); t.flags = r.u32(); if (t.path.empty() && replacement == 1) t.path = "ReplaceableTextures\\TeamColor\\TeamColor00.blp"; if (t.path.empty() && replacement == 2) t.path = "ReplaceableTextures\\TeamGlow\\TeamGlow00.blp"; if (textures.size() >= 4096) throw std::runtime_error("Texture count exceeded"); textures.push_back(std::move(t)); }

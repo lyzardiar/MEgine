@@ -4,4 +4,6 @@
 
 固定版 `Game.dll` 中 `0x6f1e86e0` 的跳表将死亡、眩晕、疾病、诱捕、中毒、变形、睡眠、抗性、虚无和魔免等运行态类别及超出 26 的类别直接返回 false；英雄分支 `0x6f1e8703–0x6f1e871c` 仅检查 rawcode 的最高字节，即使对象不存在亦如此。召唤类型查询 `0x6f1e8851–0x6f1e8872` 读取源 `UnitBalance/type` 中的 `summoned` 分类位，字段和掩码来自 `0x6f6933ca`、`0x6f64f2b2` 及 `0x6f666c4a`。以上是固定 Rizin 对原件的只读静态证据，Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。单位实例 `IsUnitType` 的可变召唤分类初始化规则仍待对照；武器等其他类型分类也未证明完全一致。
 
+创建单位时根据源类型的精确 `summoned` 分类初始化实例状态；脚本查询、驱散、控制魔法、攻击效果、AI 与经验消费该状态，并保留原有召唤者、限时生命及显式添加／移除分类的路径。原版静态路径 `0x6f65af52–59` 将类型分类写入创建参数 `+0x5c`，`0x6f66ca45–48` 将其写入实例 `+0x248`；实际动态分派、与召唤者及限时生命的组合、变形和幻象行为仍待原版对照。上述组合是当前实现，不代表已验收。
+
 阶段验证：运行 `python watcher/war3/tests/generate-research-fixture.py --data-root <data-root>` 后执行 `watcher/war3/build/windows-x86/bin/Release/war3_research_tests.exe <data-root> tmp/docs-artifacts/war3/research/fixture.w3m`。夹具对照原单位实例和 ID 的静态分类，并覆盖自定义单位移动／类别继承、未知 ID、查询不创建实体与运行态分类返回 false、未知大写英雄 ID 和 `summoned` 精确分类。额外覆盖其他地图覆盖、两种武器、类型变形、魔免／抗性等原版行为和真实自定义地图。Win32 Release 客户端与 research 消费者已编译；尚未执行专项或原版对照。

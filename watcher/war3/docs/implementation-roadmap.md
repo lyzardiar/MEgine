@@ -44,6 +44,8 @@ DotA 的 `SetAllyColorFilterState` 已接入本地小地图、场景队伍颜色
 
 序章教程镜头目标查询与单机选择同步已接入；掉落来源已接入独立 gamecache；跨客户端选择同步仍待完成，见[战役流程](campaign-flow.md)。
 
+战役脚本的 `SetUnitAnimationWithRarity` 已连接模型序列和动画生命周期，稀有度权重及真实战役行为待阶段验证，见[动画稀有度](animation-rarity.md)。
+
 战役单位定时转向已接入；序章原 main 与 20 秒静音模拟通过，完整战役和原版一致性待阶段验证，见[战役镜头与对话](campaign-cinematics.md)。
 
 战役小地图提示、对象指示、单位骨骼朝向与 Esc 结束过场事件已接入；TriggerWaitForSound 已连接声音播放及脚本等待，完整序章仍待实现，原版表现待阶段验证，见[战役镜头与对话](campaign-cinematics.md)。
@@ -82,7 +84,7 @@ DotA 的 `SetAllyColorFilterState` 已接入本地小地图、场景队伍颜色
 
 ## 阶段B：完整对战与自定义地图
 
-- [x] 单位静态类型查询接入原对象与地图覆盖；运行态类别仍待实现，见[单位类型查询](unit-id-classification.md)。
+- [x] 单位类型 ID 的静态分类和运行态类别返回值已接入；实例召唤分类及原版精度待验证，见[单位类型查询](unit-id-classification.md)。
 - [x] 本地单位遭受敌方攻击时接入原皮肤语音与小地图提示，地图可控制单位警报；盟友与原版时序待完成或验证，见[受攻击提醒](attack-alert.md)。
 - [x] 单选 Buff 与光环图标、原资源描述和悬停提示接入；完整状态、地图覆盖与原版界面待完成或验证，见[状态面板](buff-panel.md)。
 
@@ -200,7 +202,7 @@ DotA 的 `SetAllyColorFilterState` 已接入本地小地图、场景队伍颜色
 - [x] 地图地表变更接入查询、扩展材质、脏区混合贴图与场景绘制；悬崖和原版区域规则待完成或验证，见[动态地表](terrain-type-mutation.md)。
 - [x] 单位替代小地图图标与高级工具提示接入脚本状态和实际界面；原版显示及操作待阶段验证，见[测试队列](testing-batches.md)。
 - [x] 原皮肤命令提示及单机地图 Trackable 点击／跟踪进入实际界面与事件；原版画面和联机事件仍待完成或验证，见[测试队列](testing-batches.md)。
-- [x] Trackable 联机动作接入编码及时间片事件桥；产品入口、原版对象编号和实际互通仍待完成，见[地图 Trackable](trackable.md)。
+- [x] Trackable 自研联机输入已接入编码、对象映射及时间片事件；原版对象编号和实际互通仍待完成，见[地图 Trackable](trackable.md)。
 - [x] 电脑单位的尸体技能、友军治疗／恢复、战斗增益、范围驱散、守卫、控制与英雄终极技能接入现有施法流程；策略、完整战术和实际对局待实现或验证，见[AI](ai.md)。
 - [x] 单位、特效和弹道的部分模型声音事件以及动态可破坏物遮挡高度接入实际消费者；完整事件、视线遮挡和原版表现待完成或验证，见[模型声音](model-event-sounds.md)及[可破坏物](destructables.md)。
 - [x] 原视频选项接入粒子密度及用户设置；原版画面与交互待阶段验证，见[游戏内选项](game-options.md)。

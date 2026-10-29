@@ -2181,6 +2181,12 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 路径：`session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`，说明见 `unit-id-classification.md`。阶段运行 research 夹具与消费者，核对 1、10、11–13、21–26、越界类别、未知大写 ID、自定义 summoned 与精确 token；对照原版实例召唤标记及自定义地图行为。Win32 Release 客户端与 research 消费者已编译；专项与原版对照尚未执行。
 
+实例源召唤分类新增 `entities.h`、`session_entities.cpp`、`session_ai_armies.cpp`、`session_caster_spells.cpp`、`session_control_spells.cpp`、`session_feedback.cpp`、`session_magic_consumption.cpp`、`session_ownership.cpp`、`session_rewards.cpp`、`session_weapon_effects.cpp` 及 research 夹具检查。Win32 Release 客户端及 research 消费者已编译；阶段合并验证普通创建的源召唤类型、显式增删、驱散／控制／经验／AI／攻击效果、限时生命、变形及幻象，并对照原版动态分类和事件；新增检查尚未运行。
+
+## 战役动画稀有度待验证
+
+路径：`model_sequence.h/.cpp`、`model.cpp`、`session_visual.cpp`，说明见 `animation-rarity.md`。Win32 Release 客户端已编译；阶段验证 NightElfX01 实际脚本、普通／稀有序列、缺失类别回退、模型变化、动画队列、附件及多人确定性，核对原版权重与时序；专项和原版对照尚未执行。
+
 ## 安装版本与回放产品待验证
 
 路径：`session.h/.cpp`、`session_game.cpp`、`map_preparation.h/.cpp`、`replay.h/.cpp`、`replay_preparation.h/.cpp`、`tests/session_tests.cpp`，说明见 `game-version.md`。阶段运行 session 与回放准备消费者，核对安装基础版／资料片支持位、WAR3／W3XP／未知产品、全局初始化与 config 顺序、兼容矩阵、战役和版本状态隔离；对照原版许可、资源缺失、ROC／TFT 回放、资源优先级及科技百分比；当前 ROC 回放仍使用含 TFT 的归档视图。Win32 Release 客户端及 session 消费者已编译；专项与原版对照尚未执行。
