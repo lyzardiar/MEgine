@@ -32,7 +32,7 @@ struct UnitState {
     std::uint64_t deathRevision=0;
     std::optional<MilitiaState> militia;
     std::optional<WaygateState> waygate;
-    bool militiaBell=false;
+    bool militiaBell=false,ignoreAlarm=false;
     std::string name,model,icon;
     jass::Real x,y,facing,life,maxLife,mana,maxMana,moveSpeed,defaultMoveSpeed,acquireRange;
     float turnSpeed=0.6f,defaultTurnSpeed=0.6f,propWindow=1.04719755f,defaultPropWindow=60;
