@@ -2792,3 +2792,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役单位索敌距离缓存（待验证）
 
 路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`；集中验证运行值／默认值、实际索敌及修理、旧版与损坏数据、实验同步和原版 StoreUnit，见 [单位索敌距离](campaign-unit-acquire.md)。新增断言尚未编译或运行。
+
+### 任务窗口键盘导航（待验证）
+
+路径：`src/quest_dialog.cpp`、`src/quest_dialog.h`。集中验证任务行焦点、方向／翻页／首尾、任务动态变化、详情和列表滚动及原版按键行为，见 [任务键盘导航](quest-keyboard-navigation.md)。本次未编译或运行。

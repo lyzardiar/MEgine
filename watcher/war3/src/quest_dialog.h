@@ -17,6 +17,7 @@ class QuestDialog {
     std::map<std::string,std::uint32_t> buttons_;
     GlueScreen::Rect descriptionBounds() const;
     void sync();
+    bool navigate(unsigned key);
     bool scrollBar(const UiInput& input,GlueScreen::Rect container,size_t count,size_t visible,size_t& offset,float rightOffset=-.007f);
 public:
     QuestDialog(ScriptSession& session,Images& images,Renderer& renderer,Text& text);
