@@ -12,5 +12,6 @@ public:
     std::uint32_t next();
     std::uint32_t index(std::uint32_t count);
     std::array<std::uint32_t,2> state() const {return {value_,offsets_};}
+    static AudioRandom fromState(std::array<std::uint32_t,2> state);
 };
 }

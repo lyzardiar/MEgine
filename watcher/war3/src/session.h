@@ -1231,6 +1231,8 @@ public:
     bool mainCompleted() const {return mainCompleted_ && !failed_;}
     bool mainStarted() const {return mainAttempted_ && !failed_;}
     void advance(double elapsed);
+    std::vector<std::uint8_t> encodeRandomState() const;
+    void restoreRandomState(std::span<const std::uint8_t> bytes);
     double simulationTime() const {return simulationTime_;}
     double presentationTime() const {return simulationTime_+accumulator_;}
     void audioMuted(bool muted);

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 会话随机流快照待验证
+
+路径：`src/audio_random.h/.cpp`、`src/session.h`、`src/session_game.cpp`；说明见 `session-random-persistence.md`。阶段检查主流和 45 条辅助流往返、后续序列、损坏／截断／非法状态的事务性拒绝、活动脚本与联机限制，以及和未来完整会话恢复的组合；尚未接入存档。
+
 ## 范围及弹跳武器伤害可破坏物待验证
 
 路径：`src/combat.h`、`src/session.h`、`src/session_combat_destructable.cpp`、`src/session_projectiles.cpp`；说明见 `destructable-weapon-attacks.md`。包含本轮 JASS 快照及骰面处理的 Win32 Release 客户端编译通过。阶段检查炮击各范围与系数、单位和障碍混合命中、月刃弹跳目标／数量／衰减、死亡复活、伤害回调、地图覆盖、联机、性能及原版规则；直线扩散、武器被动和目标关系仍待完善。

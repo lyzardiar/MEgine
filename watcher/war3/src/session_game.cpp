@@ -1,5 +1,6 @@
 // Author: MiYu. Game configuration, deterministic random calls and per-player technology state.
 #include "session.h"
+#include "binary.h"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -7,6 +8,12 @@
 
 namespace war3 {
 unsigned ScriptSession::playerRace(unsigned id){auto& p=config_.players[id];if(!p.race){unsigned preference=p.racePreference;if(preference==1)p.race=1;else if(preference==2)p.race=2;else if(preference==8)p.race=3;else if(preference==4)p.race=4;else if(id>=12)p.race=7;else{if(!setupApplied_)throw std::runtime_error("Random player race is unavailable before setup");std::vector<unsigned> choices;for(auto [mask,race]:std::initializer_list<std::pair<unsigned,unsigned>>{{1,1},{2,2},{8,3},{4,4}})if((preference&mask) || (preference&32))choices.push_back(race);if(choices.empty())throw std::runtime_error("Player has no available race");p.race=choices[unsigned((std::uint64_t(random())*choices.size())>>32)];}}return p.race;}
+std::vector<std::uint8_t> ScriptSession::encodeRandomState() const {
+    if(!runtime_.ready() || runtime_.currentThread() || experimentalSelectionSync_ || !networkPlayers_.empty())throw std::runtime_error("Random snapshot requires an initialized local session outside script execution");std::vector<std::uint8_t> bytes;bytes.reserve(12+(1+auxiliaryRandom_.size())*8);auto u32=[&](std::uint32_t v){bytes.push_back(std::uint8_t(v));bytes.push_back(std::uint8_t(v>>8));bytes.push_back(std::uint8_t(v>>16));bytes.push_back(std::uint8_t(v>>24));};u32(tag("SRNG"));u32(1);u32(std::uint32_t(1+auxiliaryRandom_.size()));for(auto word:gameRandom_.state())u32(word);for(auto& stream:auxiliaryRandom_)for(auto word:stream.state())u32(word);return bytes;
+}
+void ScriptSession::restoreRandomState(std::span<const std::uint8_t> bytes) {
+    if(!runtime_.ready() || runtime_.currentThread() || experimentalSelectionSync_ || !networkPlayers_.empty())throw std::runtime_error("Random restore requires an initialized local session outside script execution");Binary in(bytes);in.expect(tag("SRNG"));if(in.u32()!=1 || in.u32()!=1+auxiliaryRandom_.size())throw std::runtime_error("Unsupported session random state");auto read=[&](){std::array<std::uint32_t,2> state{in.u32(),in.u32()};return AudioRandom::fromState(state);};auto primary=read();std::array<AudioRandom,45> auxiliary;for(auto& stream:auxiliary)stream=read();in.finish();gameRandom_=primary;auxiliaryRandom_=auxiliary;
+}
 std::uint32_t ScriptSession::random() {return gameRandom_.next();}
 void ScriptSession::seedAuxiliaryRandom(std::uint32_t seed) {AudioRandom derivation(seed);for(auto& stream:auxiliaryRandom_)stream=AudioRandom(derivation.next());}
 void ScriptSession::preload(const std::string& name) {auto last=name.find_last_not_of(" \t\r\n");if(last==std::string::npos)return;auto path=name.substr(0,last+1);auto& resources=requireWorld().resources();auto member=resources.read(path);if(!member && path.size()>4 && path.substr(path.size()-4)==".mdl")member=resources.read(path.substr(0,path.size()-4)+".mdx");if(!member){if(preloadMissing_.size()<4096 && std::find(preloadMissing_.begin(),preloadMissing_.end(),path)==preloadMissing_.end())preloadMissing_.push_back(path);return;}if(std::find(preloaded_.begin(),preloaded_.end(),member)!=preloaded_.end())return;constexpr size_t budget=64*1024*1024;if(member->bytes.size()>budget)return;while(preloadBytes_>budget-member->bytes.size()){preloadBytes_-=preloaded_.front()->bytes.size();preloaded_.erase(preloaded_.begin());}preloadBytes_+=member->bytes.size();preloaded_.push_back(std::move(member));}
