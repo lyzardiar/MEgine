@@ -20,7 +20,7 @@
 
 Game.dll SHA256为e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a。先前分析使用仓库固定Rizin 0.8.1 CLI，工具来源/版本/许可证沿用third_party/rea/rizin-source.json；后续使用REA的Rizin接口继续分析。RTTI定位CAbilityCargoHold、CAbilityCargoLoad、CAbilityCargoDrop及CAbilityCargoHoldDeath，保存13项局部指令记录；这只能证明原件类与局部调用，不能证明完整装载/死亡语义。分析摘要为同目录analysis-summary.json，原始字符串、RTTI和局部指令记录分别为rizin-strings.json、cargo-rtti.json及cargo-functions.jsonl。任务自己的分析进程已结束。
 
-REA观察到 `CAbilityCargoHoldDeath` 的 `0x6f524220` 路径创建并附加 `Bchd` 状态，状态初始化和分发路径包含定时事件，证据 `ev_c4f3b854e1e7f8c0d1524a4843bd4d1a4ccac45f7c0e157afa4a53d94c077411`、`ev_e69afb46858de783bf466fbd2e49af3f6fb6bf09f80a1f3072f56b359e29664e`。静态观察尚不能证明载具死亡如何触发、乘员落点、伤害、生存或计时次序；继续以原版行为或调用链核对，现有基础释放规则不等于原版坠毁。
+REA观察到 `CAbilityCargoHoldDeath` 的 `0x6f524220` 路径创建并附加 `Bchd` 状态，状态初始化和分发路径包含定时事件，证据 `ev_c4f3b854e1e7f8c0d1524a4843bd4d1a4ccac45f7c0e157afa4a53d94c077411`、`ev_e69afb46858de783bf466fbd2e49af3f6fb6bf09f80a1f3072f56b359e29664e`。静态观察尚不能证明载具死亡如何触发、乘员落点、伤害、生存或计时次序；继续以原版行为或调用链核对，现有基础释放规则不等于原版坠毁。 固定版只读指令进一步显示 `0x6f53a2a0` 构造 `CBuffCargoHoldDeath`，`0x6f524220` 调用其初始化 `0x6f5400e0` 并向单位附加状态；初始化中的数值变换及两组计时事件尚未完成语义识别。源表 `Achd` 的 DataA／DataB／DataC 分别标记移动升级频率、攻击升级频率和召唤单位伤害，不能直接据此推断坠毁规则。原始源表和调用链记录位于 `tmp/docs-artifacts/war3/transport/`。
 
 原安装只读、MPQ直接读取，运行不链接或加载Game.dll；源资源、原始证据和复制夹具只保存在根tmp，不提交解包工程或派生资源。
 
