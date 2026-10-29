@@ -58,6 +58,7 @@ std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> byt
         if(result.size()>=maxActions)throw std::runtime_error("LAN action count exceeds limit");auto offset=reader.position();auto opcode=reader.u8();
         if(opcode==0x01)result.emplace_back(LanActionPause{});
         else if(opcode==0x02)result.emplace_back(LanActionResume{});
+        else if(opcode==0x61)result.emplace_back(LanActionEscape{});
         else if(opcode>=0x10 && opcode<=0x14)result.emplace_back(readAbility(reader,opcode));
         else if(opcode==0x17){LanActionGroupAssign group;group.group=reader.u8();auto count=reader.u16();if(group.group>=10)throw std::runtime_error("Invalid LAN control group at byte "+std::to_string(offset));reader.need(std::size_t(count)*8);group.objects.reserve(count);for(unsigned i=0;i<count;++i)group.objects.push_back(reader.object());result.emplace_back(std::move(group));}
         else if(opcode==0x18){LanActionGroupSelect group{reader.u8(),reader.u8()};if(group.group>=10)throw std::runtime_error("Invalid LAN control group at byte "+std::to_string(offset));result.emplace_back(group);}
@@ -78,6 +79,7 @@ std::vector<std::uint8_t> encodeLanActions(std::span<const LanDecodedAction> act
     for(const auto& action:actions)std::visit([&](const auto& value){using T=std::decay_t<decltype(value)>;
         if constexpr(std::is_same_v<T,LanActionPause>)writer.u8(0x01);
         else if constexpr(std::is_same_v<T,LanActionResume>)writer.u8(0x02);
+        else if constexpr(std::is_same_v<T,LanActionEscape>)writer.u8(0x61);
         else if constexpr(std::is_same_v<T,LanActionAbility>)writeAbility(writer,value);
         else if constexpr(std::is_same_v<T,LanActionCancelQueue>){if(value.slot>6 || !value.type)throw std::runtime_error("Invalid LAN queue cancellation");writer.u8(0x1e);writer.u8(value.slot);writer.u32(value.type);}
         else if constexpr(std::is_same_v<T,LanActionCancelRevival>){if(value.hero.first==0xffffffffu && value.hero.second==0xffffffffu)throw std::runtime_error("Invalid LAN revival cancellation");writer.u8(0x1d);writer.object(value.hero);}
