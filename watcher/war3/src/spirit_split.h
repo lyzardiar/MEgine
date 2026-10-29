@@ -11,7 +11,8 @@ struct SpiritSplitState {
     WorldPoint origin,lastPoint;
     std::uint32_t lastKiller=0;
     float launchHeight=0;
-    bool selected=false,emerged=false,closing=false;
+    std::uint16_t selectedPlayers=0;
+    bool emerged=false,closing=false;
     std::vector<SpiritMember> members;
 };
 struct AmbientClock {
