@@ -38,6 +38,7 @@ class TerrainScene {
     size_t uploaded_=0;
     size_t meshBytes_=0;
     size_t dynamicTextureBytes_=0;
+    std::function<std::optional<float>(float,float)> walkableSurface_;
     std::vector<std::string> groundNames_;
     std::vector<std::uint64_t> groundSeen_;
     std::vector<TerrainChunk> blightChunks_;
@@ -69,6 +70,7 @@ public:
     std::optional<float> waterHeight(float x,float y) const;
     float waterAlpha(float x,float y,const WorldEnvironment& environment) const;
     float visibleHeight(float x,float y) const {auto ground=height(x,y);auto water=waterHeight(x,y);return water?std::max(ground,*water):ground;}
-    float unitHeight(float x,float y,PathMovement movement) const {return movement==PathMovement::Water || movement==PathMovement::Amphibious?visibleHeight(x,y):height(x,y);}
+    void walkableSurface(std::function<std::optional<float>(float,float)> query) {walkableSurface_=std::move(query);}
+    float unitHeight(float x,float y,PathMovement movement) const {float base=movement==PathMovement::Water || movement==PathMovement::Amphibious?visibleHeight(x,y):height(x,y);if(walkableSurface_ && (movement==PathMovement::Ground || movement==PathMovement::Amphibious))if(auto surface=walkableSurface_(x,y))base=std::max(base,*surface);return base;}
 };
 }

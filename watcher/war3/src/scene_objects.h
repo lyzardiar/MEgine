@@ -43,10 +43,14 @@ class SceneObjects {
     DWORD tint(SceneObject& object,double now);
     std::vector<SceneObject> placed_;
     std::map<std::pair<int,int>,std::pair<SceneBounds,std::vector<size_t>>> blocks_;
+    std::map<std::pair<int,int>,std::vector<size_t>> surfaceBlocks_;
+    std::vector<size_t> largeSurfaces_;
 public:
     SceneObjects(ScriptSession& session,SceneAssets& assets,Log& log);
     size_t size() const {return placed_.size();}
     void occlusionEnabled(bool enabled) {occlusionEnabled_=enabled;}
+    void syncWalkableSurfaces() {sync();}
+    std::optional<float> walkableSurface(float x,float y,const D3DMATRIX& view,std::uint64_t elapsed);
     using SoundPredicate=std::function<bool(const Model&)>;
     using SoundConsumer=std::function<void(Model&,ModelInstance&,std::uint64_t,std::uint64_t,const D3DMATRIX&,bool)>;
     size_t draw(Renderer& renderer,const D3DMATRIX& view,const D3DMATRIX& projection,std::uint64_t elapsed,const std::array<float,3>& eye,const TerrainScene* terrain=nullptr,const SoundPredicate& hasSound={},const SoundConsumer& playSound={});
