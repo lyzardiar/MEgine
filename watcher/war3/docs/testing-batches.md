@@ -2939,6 +2939,10 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 路径：`src/model_particles.cpp`、`docs/effects.md`。Win32 Release 产品编译通过；集中验证子模型事件的动画时序、世界位置、多个粒子实例、父对象销毁、离屏与音画同步。
 
+### 亡灵第二关重复销毁计时器（待验证）
+
+路径：`src/session.cpp`、`docs/campaign-undead02-destroy-timer.md`。隔离原图越过结束剧情异常并进入胜利对话；集中验证有效／失效计时器、事件与回调，以及自然建造和剧情，见 [淡入淡出计时器](campaign-undead02-destroy-timer.md)。
+
 ### 资料片第六章空单位位置（待验证）
 
 路径：`src/session_entities.cpp`、`docs/campaign-null-unit-position.md`。独立原图探针越过空单位位置异常并推进至 400 秒；集中验证有效／失效单位与位置、商队剧情和真实窗口，见 [空单位位置](campaign-null-unit-position.md)。

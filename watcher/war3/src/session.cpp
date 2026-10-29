@@ -73,7 +73,7 @@ void ScriptSession::bindNatives() {
     bind("GroupClear","nothing",{"group"},[this](auto& vm,auto args){std::get<Group>(object(args[0],NativeKind::Group).state).units.clear();return vm.nothing();});
     bind("FirstOfGroup","unit",{"group"},[this](auto& vm,auto args){auto& units=std::get<Group>(object(args[0],NativeKind::Group).state).units;return vm.handle("unit",units.empty()?0:units.front());});
     bind("CreateTimer","timer",{},[this](auto&,auto){return create(NativeKind::Timer);});
-    bind("DestroyTimer","nothing",{"timer"},[this](auto& vm,auto args){destroy(args[0],NativeKind::Timer);return vm.nothing();});
+    bind("DestroyTimer","nothing",{"timer"},[this](auto& vm,auto args){if(alive(args[0].bits,NativeKind::Timer))destroy(args[0],NativeKind::Timer);return vm.nothing();});
     bind("TimerGetTimeout","real",{"timer"},[this](auto& vm,auto args){return vm.real(args[0].bits?std::get<Timer>(object(args[0],NativeKind::Timer).state).timeout:jass::Real{});});
     bind("TimerGetElapsed","real",{"timer"},[this](auto& vm,auto args){return vm.real(args[0].bits?std::get<Timer>(object(args[0],NativeKind::Timer).state).elapsed:jass::Real{});});
     bind("TimerGetRemaining","real",{"timer"},[this](auto& vm,auto args){if(!args[0].bits)return vm.real(jass::Real{});auto& timer=std::get<Timer>(object(args[0],NativeKind::Timer).state);return vm.real(timer.timeout.subtract(timer.elapsed));});
