@@ -49,6 +49,7 @@ public:
     void occlusionEnabled(bool enabled) {occlusionEnabled_=enabled;}
     using SoundPredicate=std::function<bool(const Model&)>;
     using SoundConsumer=std::function<void(Model&,ModelInstance&,std::uint64_t,std::uint64_t,const D3DMATRIX&,bool)>;
-    size_t draw(Renderer& renderer,const D3DMATRIX& view,const D3DMATRIX& projection,std::uint64_t elapsed,const std::array<float,3>& eye,const TerrainScene* terrain=nullptr,const SoundPredicate& hasSound={},const SoundConsumer& playSound={});
+    using VisibleConsumer=std::function<void(const DestructableState&,float)>;
+    size_t draw(Renderer& renderer,const D3DMATRIX& view,const D3DMATRIX& projection,std::uint64_t elapsed,const std::array<float,3>& eye,const TerrainScene* terrain=nullptr,const SoundPredicate& hasSound={},const SoundConsumer& playSound={},const VisibleConsumer& visible={});
 };
 }
