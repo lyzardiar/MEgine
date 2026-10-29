@@ -221,7 +221,7 @@ struct DestructableState {
     size_t doodadIndex=SIZE_MAX;
     std::uint64_t lifeRevision=0;
     WorldPoint position;
-    float z=0,angle=0,life=0,maxLife=0,occluder=0,radius=0;
+    float z=0,deformationBase=0,angle=0,life=0,maxLife=0,occluder=0,radius=0;
     std::array<float,3> scale{1,1,1};
     int variation=0,editorId=-1;
     bool tree=false,visible=true,invulnerable=false,removed=false,solid=true,initialDead=false;

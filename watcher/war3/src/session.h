@@ -1043,6 +1043,7 @@ public:
     void effectExpires(std::uint32_t id,double time);
     const auto& projectiles() const {return projectiles_;}
     const auto& destructables() const {return destructables_;}
+    float destructableHeight(const DestructableState& state) const;
     std::uint64_t destructableRevision() const {return destructableRevision_;}
     std::uint32_t placedDestructable(size_t index) const {return index<placedDestructables_.size()?placedDestructables_[index]:0;}
     const DoodadState* doodad(size_t index) const {return index<doodads_.size() && doodads_[index].active?&doodads_[index]:nullptr;}

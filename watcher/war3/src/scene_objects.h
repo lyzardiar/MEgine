@@ -32,6 +32,8 @@ class SceneObjects {
     double occlusionFade_=0.3;
     bool occlusionEnabled_=true;
     void append(SceneObject object);
+    float objectHeight(const SceneObject& object,bool affected) const;
+    bool deformationAffected(const SceneBounds& bounds) const;
     void sync();
     void occlude(const std::array<float,3>& eye,const DirectX::XMMATRIX& viewProjection,const TerrainScene* terrain);
     DWORD tint(SceneObject& object,double now);
