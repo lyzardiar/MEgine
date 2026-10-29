@@ -2164,3 +2164,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ## 背包科技待验证
 
 背包路径：`session.h`、`session_inventory.cpp`、`session_equipment.cpp`、`tests/research_tests.cpp`，说明见 `backpack-research.md`。阶段执行 research 夹具和消费者，核对四族科技前后、能力覆盖／前置数量、拾取、装备、易主／死亡／删除、英雄六槽和自定义建筑前置性能。 Win32 Release 客户端与 research 消费者已编译，专项和原版对照尚未执行。
+
+## 对局分数待验证
+
+路径：`game_state.h`、`session_match.cpp`、`session_production.cpp`、`session_construction.cpp`、`session_callbacks.cpp`、`tests/commerce_tests.cpp`，说明见 `player-scores.md`。Win32 Release 客户端及 commerce 消费者已编译。阶段执行 commerce 和 harvest 消费者，核对不同类型生产／建筑／击杀、英雄经验／归属、资源与总分；另对照原版初始单位、脚本创建、召唤／幻象、免费建造、复活、移除、变形、溢出及联机／结算。专项和原版对照尚未执行。
