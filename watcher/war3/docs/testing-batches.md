@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 维护费后采金统计待验证
+
+路径：game_state、session_harvest、session_match。采金时累计维护费后的入账值，`GetPlayerScore(PLAYER_SCORE_GOLD_MINED_UPKEEP)` 读取该统计。原版 Game.dll 1.27 的 `GetPlayerScore` 入口 `0x6f1e3d90`：类别 10 相加类别 11 和 12 对应的两个查询，类别 11 单独读取前者；两个原版查询均对内部计数除以 10；当前沿用整数采集结算后累计，分数累计精度仍待对照。原始指令保存在 `tmp/docs-artifacts/war3/player-score/get-player-score.txt`。Win32 Release 产品增量编译通过。待合并验证无维护费／低高维护费、等级变化、资源上限、多人及脚本查询，并与原版统计和结算对照；科技百分比与总分等其他类别仍待实现。
+
 ## 自研选择同步屏障待验证
 
 路径：jass_threads／jass_runtime、session_collections／session_threads／session_tick、lan_actions／lan_simulation／lan_runtime／lan_setup／map_preparation、game_view／main／replay_preparation。实验联机分块同步全部人类玩家的选择快照，挂起当前 JASS 纤程直至同轮分片齐全；回放消费记录，单机保持原有路径。同步屏障未完成或分片待发时阻断后续本地输入，连续发送受阻 15 秒中断连接；Win32 Release 增量编译通过。操作：合并验证地图 main／触发器调用、并发／嵌套调用、子线程继承、空选区和跨多个分片、已删除单位、普通选择与脚本本地选择交错、取消／暂停、断线／缺片／超时、畸形／重叠／重复报文、队列背压、后续命令排序和预算，以及双端／回放结果一致性。原版同步协议、不同本地分支调用顺序及脚本本地选择的实时命令同步仍待完成或对照。
