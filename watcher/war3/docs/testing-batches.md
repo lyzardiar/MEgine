@@ -1981,6 +1981,12 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 
 ## 随机地形变形待验证
 
-路径：`world.h`、`world_height.cpp`、`session_world.cpp`、`session_tick.cpp`、`tests/game_flow_tests.cpp`、`docs/terrain-deformation.md`。Random 连接会话随机源、按间隔缓存角点、共享地形查询／绘制和停止时钟；现有 LCG 尚未与原版 RNG 序列对齐。
+路径：`world.h`、`world_height.cpp`、`session_world.cpp`、`session_tick.cpp`、`tests/game_flow_tests.cpp`、`docs/terrain-deformation.md`。Random 连接会话随机源、按间隔缓存角点、共享地形查询／绘制和停止时钟；会话主 RNG 已接入原版双状态算法，完整采样顺序与同步仍待验证。
 
 阶段执行 game-flow 夹具及消费者，核对固定种子／区间／边界、查询不消耗随机数、首次与重复采样、停止／超时／暂停、效果叠加、原版网格与 RNG 顺序、多客户端同步、GPU 和大范围采样性能。专项尚未执行。
+
+## 游戏随机状态与 JASS 范围待验证
+
+路径：`session.h/.cpp`、`session_game.cpp`、`session_network_identity.cpp`、`tests/game_flow_tests.cpp`、`docs/terrain-deformation.md`。游戏独立实例复用原版双状态 RNG；会话构造直接初始化传入种子，脚本 SetRandomSeed 预热一次，JASS 整数／实数范围按原件边界消费随机数，实验局域网校验包含两个状态字。
+
+阶段按 terrain-deformation.md 的 game-flow 命令执行原件 seed=17 向量、相等／逆序／全整数范围／实数 epsilon、脚本和随机地形共享状态；合并多种子、技能／随机池、随机采样顺序、真实双方同步及回放验证。原版默认和大厅初始种子流程、辅助随机组件以及完整调用顺序尚未确认；本次专项尚未执行。

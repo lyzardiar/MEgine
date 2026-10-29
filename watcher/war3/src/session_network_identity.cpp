@@ -24,7 +24,7 @@ bool ScriptSession::localNetworkObjectRemoved(std::uint32_t ordinal,std::uint32_
     const auto& objects=(type==0x4d330005 || type==0x4d330006)?localNetworkUiObjects_:localNetworkObjects_;if(!ordinal || ordinal>objects.size())return false;auto handle=objects[ordinal-1];if(handle<handleBase || handle-handleBase>=objects_.size())return false;auto& object=objects_[handle-handleBase];return !object.alive && object.localNetworkOrdinal==ordinal && localType(object.kind)==type;
 }
 std::uint32_t ScriptSession::localNetworkChecksum() const {
-    Digest hash;hash.word(1);hash.word(randomState_);hash.wide(productionTicket_);hash.real(simulationTime_);hash.word(std::uint32_t(localNetworkObjects_.size()));
+    Digest hash;hash.word(2);for(auto state:gameRandom_.state())hash.word(state);hash.wide(productionTicket_);hash.real(simulationTime_);hash.word(std::uint32_t(localNetworkObjects_.size()));
     auto ref=[&](std::uint32_t handle){auto id=localNetworkObject(handle);hash.word(id?id->first:0);hash.word(id?id->second:0);};
     for(auto& player:config_.players){hash.word(player.team);hash.word(player.controller);hash.word(player.race);hash.word(player.slotState);hash.word(player.handicap.bits());for(auto value:player.alliances)hash.word(value);hash.word(std::uint32_t(player.states.size()));for(auto [key,value]:player.states){hash.word(key);hash.word(std::uint32_t(value));}hash.word(std::uint32_t(player.research.size()));for(auto [key,value]:player.research){hash.word(key);hash.word(std::uint32_t(value));}}
     for(auto handle:localNetworkObjects_){auto& object=objects_[handle-handleBase];hash.word(localType(object.kind));hash.word(object.alive);if(!object.alive)continue;

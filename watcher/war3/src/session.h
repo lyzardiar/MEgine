@@ -5,6 +5,7 @@
 #include "world.h"
 #include "sound.h"
 #include "music.h"
+#include "audio_random.h"
 #include "entities.h"
 #include "game_state.h"
 #include "script_state.h"
@@ -228,7 +229,7 @@ class ScriptSession {
     bool simulationPaused_=false,fogEnabled_=true,fogMaskEnabled_=true;
     unsigned gameSpeed_=2;
     unsigned version_=1;
-    std::uint32_t randomState_=0x12705224u;
+    AudioRandom gameRandom_{0x69707365u};
     int stockItemSlots_=12,stockUnitSlots_=12;
     std::vector<std::shared_ptr<const Member>> preloaded_;
     size_t preloadBytes_=0;
