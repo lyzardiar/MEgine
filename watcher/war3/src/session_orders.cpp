@@ -18,6 +18,7 @@ class MovementAvoidance {
     static std::pair<int,int> key(float x,float y){return {cell(x),cell(y)};}
     static bool active(const UnitState& u){return u.pathing && !u.removing && !u.hidden() && !u.swarmAgent && !u.cycloned() && !u.impaledAir() && (!u.stationaryBuilding() || u.footprint.empty()) && std::isfinite(u.collision) && u.collision>0 && u.collision<=512 && number(u.life)>0 && std::isfinite(number(u.x)) && std::isfinite(number(u.y));}
     static bool air(const UnitState& u){return u.airborne() && !u.grounded();}
+    static bool windWalk(const UnitState& u){return std::any_of(u.buffs.begin(),u.buffs.end(),[](const auto& entry){return entry.second.kind==BuffKind::WindWalk && entry.second.remaining>0;});}
 public:
     MovementAvoidance(World& world,const std::map<std::uint32_t,std::shared_ptr<UnitState>>& units):world_(world),units_(units){for(auto& [id,u]:units_)if(active(*u)){cells_[key(number(u->x),number(u->y))].push_back(id);maximum_=std::max(maximum_,u->collision);}}
     void moved(const UnitState& u,float x,float y){if(!active(u))return;auto from=key(x,y),to=key(number(u.x),number(u.y));if(from==to)return;auto found=cells_.find(from);if(found!=cells_.end()){std::erase(found->second,u.handle);if(found->second.empty())cells_.erase(found);}auto& next=cells_[to];next.insert(std::lower_bound(next.begin(),next.end(),u.handle),u.handle);}
@@ -26,7 +27,7 @@ public:
     }
     bool clearUnits(const UnitState& u,float x,float y,float nx,float ny,const std::vector<std::uint32_t>& nearby) const {
         if(!active(u))return true;if(!std::isfinite(nx-x) || !std::isfinite(ny-y))return false;float vx=nx-x,vy=ny-y,length=vx*vx+vy*vy;
-        for(auto id:nearby){if(id==u.handle)continue;auto found=units_.find(id);if(found==units_.end() || !active(*found->second) || air(u)!=air(*found->second))continue;auto& other=*found->second;float ox=x-number(other.x),oy=y-number(other.y),r=u.collision+other.collision,start=ox*ox+oy*oy;if(start<r*r){if(ox*vx+oy*vy<0 || (ox+vx)*(ox+vx)+(oy+vy)*(oy+vy)<=start) return false;continue;}float t=length>0?std::clamp(-(ox*vx+oy*vy)/length,0.f,1.f):0.f,dx=ox+vx*t,dy=oy+vy*t;if(dx*dx+dy*dy<r*r)return false;}return true;
+        bool phase=windWalk(u);for(auto id:nearby){if(id==u.handle)continue;auto found=units_.find(id);if(found==units_.end() || !active(*found->second) || air(u)!=air(*found->second))continue;auto& other=*found->second;float ox=x-number(other.x),oy=y-number(other.y),r=u.collision+other.collision,start=ox*ox+oy*oy;bool blocked;if(start<r*r)blocked=ox*vx+oy*vy<0 || (ox+vx)*(ox+vx)+(oy+vy)*(oy+vy)<=start;else{float t=length>0?std::clamp(-(ox*vx+oy*vy)/length,0.f,1.f):0.f,dx=ox+vx*t,dy=oy+vy*t;blocked=dx*dx+dy*dy<r*r;}if(blocked && (u.stationaryBuilding() || other.stationaryBuilding() || (!phase && !windWalk(other))))return false;}return true;
     }
     bool clearTerrain(const UnitState& u,float x,float y,float nx,float ny) const {
         return !u.pathing || world_.pathSegmentFree({real(x),real(y)},{real(nx),real(ny)},u.collision,pathMovement(u.movementType));

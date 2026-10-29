@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 风步动态碰撞待验证
+
+路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`；说明见 `mobility.md`。风步与其他非建筑单位双向穿行，建筑和静态地形仍阻挡，状态终止恢复普通碰撞；Win32 Release 客户端及定向目标编译通过，windwalk 检查通过。阶段检查实际施法、淡入／到期、重叠脱离、多人同步、建筑与地形边界及原版行为和性能。
+
 ## 实验单位缓存同步待验证
 
 路径：`src/lan_actions.h/.cpp`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`；说明见 `cache-sync.md`。自研 `0xf9` 动作接入单位快照的发送、校验和接收，缺失项保留 `0x73` 删除；Win32 Release 客户端与检查目标编译通过，定向会话检查通过，覆盖快照隔离、编解码、接收／删除、畸形／截断数据及 1449 字节边界。阶段核对单机自动回显、真实双端时间片和回放、配置期发送、字段与顺序及大快照；原版 `0x6e` 格式、分片及原版互通仍待实现。
