@@ -143,6 +143,7 @@ LanLoadPhase LanHost::loadPhase() const{return impl_->loadPhase;}
 const std::vector<std::uint8_t>& LanHost::loadPlayers() const{return impl_->loadPlayers;}
 const std::vector<std::uint8_t>& LanHost::loadedPlayers() const{return impl_->loadedPlayers;}
 std::uint32_t LanHost::randomSeed() const{return impl_->randomSeed;}
+const LanHostSettings& LanHost::settings() const{return impl_->settings;}
 std::shared_ptr<const Bytes> LanHost::mapBytes() const{return impl_->settings.mapBytes;}
 LanSessionSetup lanHostSessionSetup(const MapInfo& info,const LanHost& host) {
     if(!host.running() || !host.mapBytes())throw std::runtime_error("LAN host or map snapshot unavailable");LanSessionSetup setup;setup.slots=host.slots();setup.slotPlayerIds=lanHostSlotPlayerIds(info,setup.slots.size());setup.players=host.players();setup.localPeerId=1;setup.randomSeed=host.randomSeed();return setup;

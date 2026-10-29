@@ -71,6 +71,7 @@ public:
     void cancel();
     // Must be enabled before the first transport poll; waits for an identical executable response before joining.
     bool enableExperimentalHandshake();
+    bool experimentalHandshakeVerified() const {return experimentalHandshake_ && handshakeVerified_;}
     bool sendChat(std::string_view message);
     bool requestSlotChange(std::uint8_t field,std::uint8_t value);
     // Queue readiness only after every announced map field has been checked.

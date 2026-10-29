@@ -39,6 +39,7 @@ public:
     const std::vector<std::uint8_t>& loadPlayers() const;
     const std::vector<std::uint8_t>& loadedPlayers() const;
     std::uint32_t randomSeed() const;
+    const LanHostSettings& settings() const;
     std::shared_ptr<const Bytes> mapBytes() const;
     // Arm during loading before the final player reports ready; actions still require Ready.
     // Opaque W3GS action data requires separate simulation and original action semantics.
