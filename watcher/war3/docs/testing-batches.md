@@ -2748,3 +2748,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 状态提示字段展开（待验证）
 
 路径：`src/game_buff_panel.cpp`、`src/session_ability_commands.cpp`、`src/session.h`、`tests/spell_tests.cpp`。集中验证原版及地图覆盖字段、百分比、未知引用、多等级、颜色与实际窗口，并对照原版；说明见 [状态提示字段](buff-tooltip-fields.md)。新增断言尚未编译或运行。
+
+### 局域网与回放地面智能命令（待验证）
+
+路径：`src/lan_action_encoder.cpp`、`src/lan_simulation.cpp`、`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。集中验证 0x11／0x12、命令队列／编队／集结、事件及原版报文和双端行为；说明见 [地面智能命令](lan-smart-ground.md)。新增断言尚未编译或运行。

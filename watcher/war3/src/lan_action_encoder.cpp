@@ -86,7 +86,7 @@ std::vector<std::uint8_t> encodeLanPlayerCommand(ScriptSession& session,std::uin
     switch(command.kind){
     case PlayerCommandKind::Stop:ability.opcode=0x10;ability.order=851972;break;
     case PlayerCommandKind::Hold:ability.opcode=0x10;ability.order=851993;break;
-    case PlayerCommandKind::GroundMove:ability.opcode=0x11;ability.order=851986;break;
+    case PlayerCommandKind::GroundMove:ability.opcode=0x11;ability.order=command.order==851971?851971u:851986u;break;
     case PlayerCommandKind::GroundAttack:ability.opcode=0x11;ability.order=851983;break;
     case PlayerCommandKind::GroundPatrol:ability.opcode=0x11;ability.order=851990;break;
     case PlayerCommandKind::AttackGround:ability.opcode=0x11;ability.order=851984;break;

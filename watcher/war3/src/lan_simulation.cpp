@@ -11,7 +11,7 @@
 namespace war3 {
 namespace {
 bool finitePoint(std::uint32_t x,std::uint32_t y){return std::isfinite(std::bit_cast<float>(x)) && std::isfinite(std::bit_cast<float>(y));}
-std::optional<PlayerCommandKind> groundKind(std::uint32_t order){switch(order){case 851986:return PlayerCommandKind::GroundMove;case 851983:return PlayerCommandKind::GroundAttack;case 851984:return PlayerCommandKind::AttackGround;case 851990:return PlayerCommandKind::GroundPatrol;default:return {};}}
+std::optional<PlayerCommandKind> groundKind(std::uint32_t order){switch(order){case 851971:case 851986:return PlayerCommandKind::GroundMove;case 851983:return PlayerCommandKind::GroundAttack;case 851984:return PlayerCommandKind::AttackGround;case 851990:return PlayerCommandKind::GroundPatrol;default:return {};}}
 bool targetOrder(std::uint32_t order){return order==851971 || order==851981 || order==851983 || order==851986 || order==852018 || order==852024 || order==852147 || order==852148;}
 }
 LanSimulation::LanSimulation(ScriptSession& session,ObjectResolver resolve,bool experimental):session_(session),resolve_(std::move(resolve)),experimental_(experimental),driver_(session,[this](const LanAction& action){return validate(action);},[this](ScriptSession& target,const LanAction& action){return apply(target,action);}){}
