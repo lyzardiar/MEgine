@@ -27,3 +27,5 @@ SetUnitFacingTimed 在固定模拟步进中沿最短角度更新单位朝向；�
 Win32 Release 产品编译通过；Prologue01 原 main 与前 20 秒静音模拟通过，bj_gameStarted=true，仍有 1 个脚本线程，未加载 Game.dll。日志：tmp/docs-artifacts/war3/campaign/prologue-facing.log。此结果不代表完整战役通过。
 
 GetCameraTargetPositionLoc 创建独立 location 并读取当前相机目标位置，供原版 SmartCameraPanBJ 教程救援路径使用；该位置与现有相机目标 X／Y 查询共享同一状态。镜头跟随和玩家操作与脚本查询的时序仍需阶段验证。
+
+Human01 使用原 `UI/SoundInfo/DialogSounds.slk` 配置对白音频。该表部分记录使用 `F` 格式行切换 X／Y，后续 `C` 行继承坐标；解析器现保留有界格式游标，显式 `C` 坐标继续覆盖。原 `War3Patch.mpq` 中该表 SHA-256 为 `96d3dbcea10b7bb3bc9dcc49df82022aebb71570072c049919bde82288aafb05`。Win32 Release 产品和声音测试目标编译通过；两项定向检查分别验证格式游标、覆盖和边界，以及既有普通表坐标，均 1/1 通过。Human01 静音 main 越过 `H01BanditB14` 并创建 60 个声音，随后在原图 w3u 的尾字段校验失败；日志 `tmp/docs-artifacts/war3/campaign/human01-120s-sylk-1030.log`。实际听感、完整战役与其他源表兼容仍待阶段验证。

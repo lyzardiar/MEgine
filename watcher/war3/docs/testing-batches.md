@@ -2586,3 +2586,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 采集返还可达基地（待验证）
 
 路径：`session_harvest.cpp`、`commerce.h`、`session.h`、`docs/economy.md`。验证隔墙最近基地／可达次近基地、超过四个不可达候选的轮转、候选增删／易主／建造／暂停、动态路径阻塞及恢复、金木双资源与事件回调、显式目标语义；检查无候选时携带资源保留、每秒重试及高密度地图性能，并与原版选点／事件时序对照。本次仅差异检查，玩法和产品编译待合并验证。
+
+### 战役对白表格式坐标（待验证）
+
+路径：`slk.cpp`、`sound.cpp`、`tests/sound_tests.cpp`、`docs/campaign-cinematics.md`。Win32 Release 产品及声音测试目标编译通过；格式游标及普通表各一项定向通过。Human01 原图已越过对白标签阻塞，后续在 w3u 尾字段中止；原始日志见 `tmp/docs-artifacts/war3/campaign/human01-120s-sylk-1030.log`。集中验证源表和地图覆盖的全部相关声音、实际听感、异常及截断、格式／公式与各类对象表兼容，并完成原版战役实际流程。
