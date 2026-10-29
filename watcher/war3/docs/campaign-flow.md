@@ -31,3 +31,5 @@ Human01 原胜利脚本保存阿尔萨斯并请求 Human02 后，隔离探针销
 Human02 原图胜利流程的隔离探针在开场控制恢复后，通过辅助脚本标记基地任务已完成，再对原图剑圣调用 KillUnit；原地图触发器进入胜利对话框，选择继续后发出 `Maps\Campaign\Human02Interlude.w3m` 换关请求，日志位于 `tmp/docs-artifacts/war3/human02-victory-1030/victory.log`。该复现跳过真实基地建造、战斗和窗口操作，未验证间章加载或完整关卡。
 
 Human02 至 Human03 的隔离链路中，将阿尔萨斯设为 5 级后直接执行 Human02 原图的关卡准备函数；间章发出 Human03 换关请求，手动载入 Human03 后恢复了 5 级阿尔萨斯，开场结束后玩家控制权恢复。日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/cache-chain.log`。该检查未自然完成 Human02，也未经过产品窗口自动切关、真实战斗和完整战役。
+
+资料片暗夜精灵第一章的隔离开场已恢复玩家控制；真实任务、窗口及地图中战争践踏的参数处理仍待完成或验证，见[关卡状态](campaign-nightelfx01-status.md)。
