@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 脚本联盟查询待验证
+
+路径：session_match、game_flow_tests、script-alliance。`IsPlayerAlly`／`IsPlayerEnemy` 和 `IsUnitAlly`／`IsUnitEnemy` 查询当前单向联盟状态；查询方向和无效对象分支已核对固定版原件的静态指令。Win32 Release 客户端与专项程序增量编译通过；阶段按 `tests/generate-game-flow-fixture.py --data-root <data-root>` 和 `war3_game_flow_tests.exe <data-root> <fixture.w3m>` 执行，核对非对称联盟、空对象、移除单位、事件重入及 DotA／WarChasers 实际脚本。
+
 ## 传送门拥堵与落点搜索待验证
 
 路径：entities、session_waygate、session_summons、session_network_identity、waygate_tests、waygates。每步限制传送搜索数量，阻塞后按单位延迟重试；召唤／传送落点直接检查候选格通行，不对同一坐标执行寻路。Win32 Release 客户端与专项程序增量编译通过，专项尚未执行；阶段运行 `war3_waygate_tests.exe <data-root> <BootyBay.w3m>`，合并验证多门与高并发公平性、遮挡释放／区域离开、目标变更、回调重入、非地面移动类型、召唤能力、双端摘要和实际帧耗时。
