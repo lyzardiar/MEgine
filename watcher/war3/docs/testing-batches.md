@@ -10,7 +10,7 @@
 
 ## 地形悬崖层级查询待验证
 
-路径：`src/world.h`、`src/world_blight.cpp`、`src/session_blight.cpp`；说明见 `cliff-level.md`。`GetTerrainCliffLevel` 已接入 W3E 地形层查询，Win32 Release 客户端编译通过；原版的动态覆盖网格尚未实现。阶段检查不同层级、网格边界、越界、坡道、异常坐标、实际地图脚本及原版动态覆盖；专项和原版运行对照尚未执行。
+路径：`src/world.h`、`src/world_blight.cpp`、`src/session_blight.cpp`、`src/entities.h`、`src/session_destructables.cpp`；说明见 `cliff-level.md`。`GetTerrainCliffLevel` 已接入 W3E 地形及可行走可破坏物的稀疏覆盖层，Win32 Release 客户端编译通过；叠放表面高度、桥面寻路和原版细节仍待实现。阶段检查不同层级、网格边界、越界、坡道、异常坐标、纹理零格、桥梁生死／重叠／旋转、实际地图脚本、切图释放和原版动态覆盖；专项和原版运行对照尚未执行。
 
 ## 单机选择与地图交互输入入口待验证
 

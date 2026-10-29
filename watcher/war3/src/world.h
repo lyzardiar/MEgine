@@ -17,6 +17,7 @@ struct WorldRect {jass::Real minX,minY,maxX,maxY;};
 enum class TerrainDeformationKind {Ripple,Crater,Wave,Random};
 struct TerrainDeformation {std::uint32_t handle=0;TerrainDeformationKind kind=TerrainDeformationKind::Ripple;float x=0,y=0,radius=0,depth=0,spaceWaves=0,timeWaves=0,startRadius=0,dirX=0,dirY=0,distance=0,randomMin=0,randomMax=0;double started=0,duration=0,stopStarted=0,stopDuration=0,travelTime=0,trailTime=0,updateInterval=0,nextUpdate=0;int count=1,sampleLeft=0,sampleBottom=0,sampleWidth=0,sampleHeight=0;bool limitNegative=false,stopping=false,persistent=false,permanent=false;std::vector<float> samples;};
 struct PathCell {size_t index=0;std::uint8_t mask=0;};
+struct CliffCell {size_t index=0;int level=0;};
 struct DoodadAnimation {std::uint32_t type=0;std::string animation;WorldRect rectangle{};float x=0,y=0,radius=0;double started=0;bool circular=false,nearest=false,random=false;};
 struct CameraScalar {
     float from=0,to=0;double started=0,duration=0;bool overridden=false;
@@ -71,6 +72,8 @@ class World {
     std::unordered_map<size_t,ObstacleOwners> obstacleOwners_;
     std::uint64_t pathingRevision_=1;
     std::uint64_t blockingRevision_=1;
+    std::unordered_map<size_t,std::vector<int>> cliffOverlays_;
+    size_t cliffOverlayCells_=0;
     Bytes blightPathing_;
     std::array<std::uint64_t,2> blightFingerprint_{};
     void initializeBlightFingerprint();
@@ -112,7 +115,10 @@ public:
     bool blighted(WorldPoint point) const;
     std::uint32_t terrainType(WorldPoint point) const;
     unsigned terrainVariation(WorldPoint point) const;
+    std::optional<size_t> terrainCliffCell(WorldPoint point) const;
+    int terrainBaseCliffLevel(WorldPoint point) const;
     int terrainCliffLevel(WorldPoint point) const;
+    void replaceCliffOverlay(std::vector<CliffCell>& current,std::vector<CliffCell> next);
     unsigned terrainSlot(size_t corner) const {return terrainSlots_.at(corner);}
     const auto& terrainTypes() const {return terrainTypes_;}
     const std::string& terrainTexture(unsigned slot) const;
