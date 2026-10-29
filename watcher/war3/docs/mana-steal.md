@@ -5,3 +5,5 @@
 原版 1.27 `Game.dll` 的 `CAbilitySteal` 虚表槽 `+0x424` 指向 `0x6f5ba750`：DataC 非零时 DataA 为固定值，否则乘以目标当前魔法；DataD 对 DataB 的选择同理；DataE 非零进入保留目标分支。`0x6f67c940` 将扣减量限制在目标现有魔法内。原始静态证据为 `ev_fac6a8f0b644503d5dff63b37eb210f8b48d578a14cf9e3e133fa3ce1623822a`、`ev_797da09b4d607b2d994df30a409d2701c318510c5beb460838b954093c52126b`；GetUnitState 对应关系见 `ev_eeface0a90f439a989678fe81c35d28e3aa1b679b4715a13bd4fd604d21516ec`、`ev_c48721d51bfe66823ea80c187b933c3114c6806d64b2afaebf75091ff9cc9a4f`。数据来自原安装 `War3Patch.mpq` 的 ItemData、AbilityData 与 ItemStrings。
 
 当前支持 DataB 为零且 DataE 为 1 的魔法吸取；其他配置明确报告未支持。目标过滤使用现有技能过滤，包括非自身、可见、存活与免疫判断；完整原版目标限制、资源变化的事件顺序、魔法抗性、精确浮点运算及自定义字段仍待原版对照。Win32 Release 客户端编译通过，功能验证待批次执行。
+
+对生命分支的静态追踪：DataE 为零时，原版设置目标死亡相关标志并调用 CUnit 虚表 `+0x124` 置零生命；DataE 非零时，调用 `+0x128` 修改生命并返回前后变化值，之后再处理魔法与施法者资源。CUnit 虚表与相关函数证据为 `ev_48dbeba9ae21f5858b29c11df23958d469fc4af5eb8ea35329d7f14396842a69`、`ev_06100ba61e01f94da3a08ee796a562ccb662eb3dd28db965f170bdc9f1f1acbc`、`ev_8c1e1a17e5d635e66dd7049e7965d2195760dea38007e9f4c8e57e3c0662fa94`。返回值的符号与施法者生命更新、死亡标志及事件时序尚未完成核对，非零 DataB 和 DataE 为零的配置继续保持未支持。
