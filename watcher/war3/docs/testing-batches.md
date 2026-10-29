@@ -2736,3 +2736,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 路径：`src/game_multiboard.cpp`、`src/game_view.*`、`src/session_multiboard.cpp`、`src/script_state.h`。集中验证多人各自点击、脚本覆盖、销毁与重建、回放输入和弹窗隔离，以及原版按钮与 getter 语义；具体范围见 [多列计分板本地折叠](multiboard-local-minimize.md)。本次未编译或运行。
 
 2026-10-30 合并编译：Win32 Release 产品目标 `cmake --build --preset release --target war3 --parallel 8` 在 `9c02f3c` 的源码上通过，包含寄生、单位外观／冷却缓存、模型灯光、运输目标和计分板改动。该结果仅证明产品编译，不代表新增消费者、实际玩法、画面或原版对照通过。
+
+### 战役哨兵次数缓存（待验证）
+
+路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-gamecache.md`。集中验证有限／无限／耗尽与未初始化能力、保存后源单位变化、移除重加、多等级与地图覆盖、恢复按钮／实际施法、v1–v7 兼容、损坏数据、实验同步和原版 StoreUnit 跨关语义；新增消费者断言尚未编译或运行。
