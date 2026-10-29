@@ -2947,6 +2947,10 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 路径：`src/session_entities.cpp`、`docs/campaign-null-unit-speed.md`。隔离原图商队暂停触发器越过空单位异常；集中验证有效／失效单位、移动速度及真实商队流程，见 [商队暂停](campaign-null-unit-speed.md)。
 
+### 资料片第六章失效英雄经验开关（待验证）
+
+路径：`src/session_hero.cpp`、`docs/campaign-null-hero-xp.md`。隔离原图胜利过场越过失效英雄异常；集中验证英雄经验状态、正常护送与原版过场，见 [英雄经验开关](campaign-null-hero-xp.md)。
+
 ### 资料片第六章空单位位置（待验证）
 
 路径：`src/session_entities.cpp`、`docs/campaign-null-unit-position.md`。独立原图探针越过空单位位置异常并推进至 400 秒；集中验证有效／失效单位与位置、商队剧情和真实窗口，见 [空单位位置](campaign-null-unit-position.md)。
