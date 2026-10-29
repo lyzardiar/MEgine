@@ -4,6 +4,6 @@
 
 中立敌对玩家 12 中正在战斗的守卫每模拟秒尝试现有 AI 的战斗施法选择，单位快照与候选按句柄排序，使用同一局部状态和会话随机流；该流程不启动或修改玩家 AI 脚本。英雄技能、其他已支持能力也可沿现有策略参与；暂停、单位删除或易主会在调用前重新确认。其他中立玩家及非守卫单位尚不纳入此路径。
 
-来源为固定 Warcraft III 1.27 公共 `Units/AbilityData.slk`、`Units/UnitAbilities.slk` 与 `Units/NeutralAbilityFunc.txt`：`ACtb` 使用 `creepthunderbolt`，`ACtc` 使用 `creepthunderclap`，`Anhe` 使用 `heal`／`healon`／`healoff`。`ANfb` 火焰箭的状态 ID 缺省规则仍未核实，未在此项臆测。中立守卫施法调度频率、目标排序和随机消耗是当前实现，不代表原版精度。
+来源为固定 Warcraft III 1.27 公共 `Units/AbilityData.slk`、`Units/UnitAbilities.slk` 与 `Units/NeutralAbilityFunc.txt`：`ACtb` 使用 `creepthunderbolt`，`ACtc` 使用 `creepthunderclap`，`Anhe` 使用 `heal`／`healon`／`healoff`。火焰箭的实现范围及待验证项见 [火焰箭](fire-bolt.md)。中立守卫施法调度频率、目标排序和随机消耗是当前实现，不代表原版精度。
 
 待集中验证：野怪实战雷击、雷霆一击与治疗及派生字段，敌我／迷雾／魔免、冷却／魔法／自动施放、多个目标与技能优先、暂停／死亡／易主／守卫开关、回调重入、同时大量野怪性能和多人随机确定性；对照原版 1.27 的野怪触发时机、范围、订单和伤害。尚未编译或运行。
