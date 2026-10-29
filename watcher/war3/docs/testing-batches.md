@@ -2058,3 +2058,11 @@ Win32 Release 客户端及关联消费者程序已合并编译通过；专项未
 路径：`session.cpp`、`session_entities.cpp`、`tests/session_tests.cpp`、`tests/live_world_tests.cpp`，见 `entities.md`。单位身份、种族和 force 查询使用实际状态；地点起点写入真实地图配置。
 
 阶段运行 session 与 live-world 消费者，验证地点复用／销毁、边界索引、单位易主／变形、force 增删／销毁、空及失效句柄和实际自定义地图；对照原版返回值。专项尚未执行。
+
+## 单位战斗信息面板待验证
+
+Win32 Release 客户端及关联消费者程序已合并编译通过；专项未执行。
+
+路径：`combat.h`、`session.h`、`session_attack_passives.cpp`、`session_damage.cpp`、`session_research.cpp`、`game_commands.cpp`、`tests/passive_tests.cpp`；面板消费共享武器伤害和护甲计算，范围与显示边界见 `unit-combat-panel.md`。
+
+阶段合并 passive 专项及真实窗口，验证单／多选切换、生产及货舱、四族和双武器、科技／装备／状态／光环、极值、回调移除、设备恢复和原版显示。专项尚未执行。

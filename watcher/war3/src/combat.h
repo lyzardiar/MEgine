@@ -14,6 +14,8 @@ struct WeaponDefinition {
     std::string kind,model;
     std::set<std::string> targets,splashTargets;
 };
+struct UnitWeaponDisplay {bool enabled=false;float minimum=0,maximum=0;};
+struct UnitCombatDisplay {std::array<UnitWeaponDisplay,2> weapons{};float armor=0;};
 struct SiegeFire {PassiveInfo definition;std::uint32_t source=0;unsigned owner=0;WorldPoint point;double elapsed=0,nextPulse=0;bool burn=false;std::vector<std::uint32_t> visuals;};
 struct AttackWindup {std::uint32_t target=0;unsigned weapon=0;double due=0;std::uint64_t revision=0;float stealthDamage=0;bool backstab=false;std::uint32_t ability=0;};
 struct ItemMoveOrder {enum class Kind {Point,Unit,Slot};Kind kind=Kind::Point;std::uint32_t item=0,target=0;unsigned player=0,slot=0;WorldPoint point;};

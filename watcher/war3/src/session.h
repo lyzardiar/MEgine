@@ -661,6 +661,9 @@ class ScriptSession {
     void prepareAttack(const UnitState& source,const UnitState& target,CombatProjectile& projectile);
     bool evadeAttack(const UnitState& target,const CombatProjectile& projectile);
     const PassiveInfo* spikedCarapace(const UnitState& unit);
+    float armorBasePoints(const UnitState& unit);
+    float armorPoints(const UnitState& unit,const PassiveInfo* carapace,float base);
+    float attackDamageBeforeProc(const UnitState& unit,const WeaponDefinition& weapon,float damage);
     void carapaceReflect(const CombatProjectile& projectile,float damage,const PassiveInfo& passive,std::uint64_t attackerRevision,std::uint64_t defenderRevision);
     void attackPassives(const CombatProjectile& projectile,float damage,const AuraBonuses& defense);
     std::map<std::pair<std::uint32_t,std::uint32_t>,std::uint32_t> abilityHandles_;
@@ -992,6 +995,7 @@ public:
     const World* world() const {return world_.get();}
     World* world() {return world_.get();}
     bool unitSelectable(std::uint32_t handle);
+    std::optional<UnitCombatDisplay> unitCombatDisplay(std::uint32_t handle);
     void clearPlayerOrders(std::uint32_t handle);
     bool queuePlayerOrder(std::uint32_t handle,const PlayerCommand& command);
     bool idleWorker(std::uint32_t handle,unsigned player);
