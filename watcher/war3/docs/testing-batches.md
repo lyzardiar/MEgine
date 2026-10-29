@@ -2842,3 +2842,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 无效可破坏物最大生命查询（待验证）
 
 路径：`src/session_destructables.cpp`、`docs/campaign-null-destructable.md`。nightelfX01 原图隔离探针越过此调用并推进至 400 秒，40.25 秒恢复玩家控制；集中验证句柄生命周期、开场物件及真实窗口，见 [最大生命查询](campaign-null-destructable.md)。
+
+### Human04 失效迷雾修改器（待验证）
+
+路径：`src/session_fog.cpp`、`docs/campaign-human04-fog.md`。独立 Win32 x86 探针越过失效句柄异常，原图约 40 秒恢复控制并推进至 400 秒；集中验证有效／空／失效句柄、真实切关与视野表现，见 [Human04 迷雾句柄](campaign-human04-fog.md)。
