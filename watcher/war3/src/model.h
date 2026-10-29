@@ -64,6 +64,7 @@ public:
     float blendTime() const;
     std::uint64_t sequenceDuration() const;
     size_t particleEmitters() const;
+    size_t modelParticleEmitters() const;
     size_t ribbonEmitters() const;
     bool hasAttachment(const std::string& name) const;
     bool hasAttachmentModels() const;
@@ -75,5 +76,6 @@ public:
 private:
     void ribbons(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& world,DWORD tint,ModelInstance& instance,bool emit,float delta);
     void particles(std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& view,const D3DMATRIX& world,DWORD tint,ModelInstance& instance,bool emit);
+    void modelParticles(std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& view,const D3DMATRIX& projection,const D3DMATRIX& world,DWORD tint,ModelInstance& instance,bool emit);
 };
 }

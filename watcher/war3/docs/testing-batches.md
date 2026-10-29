@@ -2930,3 +2930,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 亡灵第二关死亡对白句柄（待验证）
 
 路径：`src/session.cpp`、`src/session_entities.cpp`。独立原图探针越过死亡对白异常；集中验证有效／失效句柄、颜色映射及真实战役表现，见 [乌瑟尔死亡对白](campaign-undead02-uther-transmission.md)。
+
+### PREM 模型粒子（待验证）
+
+路径：`src/model.*`、`src/model_data.h`、`src/model_particles.cpp`、`src/model_pose.cpp`、`tests/effects_tests.cpp`、`third_party/warcraft-model-reference/`。Win32 Release 产品编译通过，原版闪电箭 Death 序列隐藏窗口检查发射和退休通过；集中验证原版视觉、动画、嵌套、离屏、资源释放和性能，见 [模型粒子与特效](effects.md)。

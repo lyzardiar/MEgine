@@ -71,6 +71,30 @@
     {
       "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
       "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/parsers/mdlx/particleemitter.ts",
+      "sha256": "6b7d1b4d7d0a24c05b28b994a2a8db654856694151ac97bb521c10818e7a1434"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/particleemitter.ts",
+      "sha256": "e378d42471a335f498c084caeb24380fb3fd668388cfc36822767d361772ad09"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/particleemitterobject.ts",
+      "sha256": "8779670b2a759ce64d504a76ffdb93ed6cbc80521a714d9dffa0128fdf183d2d"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/particle.ts",
+      "sha256": "a3544c2c2052c6d7005224a9743d474b5b1041358df2340910e192476872cfa4"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
       "path": "src/parsers/mdlx/particleemitter2.ts",
       "sha256": "46244dced233086fc710e614b9c8af6d82b1980790507ea50794b79a72b9184a"
     },
