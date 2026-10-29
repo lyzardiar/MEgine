@@ -6,6 +6,7 @@
 
 namespace war3 {
 namespace {
+constexpr float fallbackOrbMissileSpeed=1500.f;
 float number(jass::Real value){return std::bit_cast<float>(value.bits());}
 bool itemOrb(PassiveKind kind){return kind>=PassiveKind::OrbFire && kind<=PassiveKind::OrbSpell;}
 bool poison(PassiveKind kind){return kind==PassiveKind::PoisonAttack || kind==PassiveKind::SlowPoison;}
@@ -30,7 +31,7 @@ const PassiveInfo* ScriptSession::inventoryOrb(const UnitState& unit){
 }
 void ScriptSession::prepareWeaponEffects(const UnitState& unit,const UnitState& target,CombatProjectile& projectile){
     if(unit.illusion)return;auto missile=[&](const PassiveInfo& p){auto& w=projectile.definition;if(w.kind=="normal" || w.kind=="instant")return;if(!p.attackMissile.empty())w.model=p.attackMissile;if(p.missileSpeed>0)w.speed=p.missileSpeed;w.arc=p.missileArc;w.homing=p.missileHoming;};for(auto [ability,level]:passiveAbilities(unit)){auto& p=passiveInfo(ability,level);if(poison(p.kind) && passiveTarget(unit,target,p)){projectile.procs.push_back(p);if(!projectile.ability)missile(p);}else if(p.kind==PassiveKind::CorrosiveBreath && projectile.weapon==0 && passiveTarget(unit,target,p)){projectile.procs.push_back(p);if(!projectile.ability)missile(p);}}
-    if(projectile.ability)return;auto orb=inventoryOrb(unit);if(!orb || !passiveTarget(unit,target,*orb))return;projectile.procs.push_back(*orb);missile(*orb);if(orb->kind==PassiveKind::OrbSpell){auto chance=orb->procChance[target.hero?1:target.typeFlag(10,target.summoner!=0)?2:0];if(passiveChance(chance))projectile.orbProc=orb->procAbility;}
+    if(projectile.ability)return;auto orb=inventoryOrb(unit);if(!orb || !passiveTarget(unit,target,*orb))return;projectile.procs.push_back(*orb);missile(*orb);auto& w=projectile.definition;if(w.kind!="normal" && w.kind!="instant" && w.speed==0)w.speed=fallbackOrbMissileSpeed;if(orb->kind==PassiveKind::OrbSpell){auto chance=orb->procChance[target.hero?1:target.typeFlag(10,target.summoner!=0)?2:0];if(passiveChance(chance))projectile.orbProc=orb->procAbility;}
 }
 void ScriptSession::weaponEffectsBeforeHit(const CombatProjectile& projectile,std::uint32_t target){
     if(!alive(projectile.source,NativeKind::Unit) || !alive(target,NativeKind::Unit))return;auto source=units_.at(projectile.source),u=units_.at(target);if(source->removing || source->owner!=projectile.owner)return;for(auto& p:projectile.procs)if(p.kind==PassiveKind::OrbCorruption && passiveTarget(*source,*u,p)){SpellInfo spell;spell.ability=p.ability;spell.level=p.level;spell.buff=p.buff;spell.duration=p.duration;spell.heroDuration=p.heroDuration;spell.armor=-p.secondary;applyBuff(target,projectile.source,spell,BuffKind::OrbCorruption,true);if(auto found=u->buffs.find(p.buff);found!=u->buffs.end() && found->second.kind==BuffKind::OrbCorruption)found->second.dispellable=false;}
