@@ -2858,3 +2858,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### Human05 背包物品位置（待验证）
 
 路径：`src/session_entities.cpp`、`docs/campaign-human05-items.md`。隔离原图验证空槽和持有物品的落地；集中对照原版掉落事件、不可丢弃物品和真实跨关操作，见 [物品位置](campaign-human05-items.md)。
+
+### Human05 未启动 AI 命令（待验证）
+
+路径：`src/session_ai.cpp`、`docs/campaign-human05-command-ai.md`。原图定向触发器不再因未启动 AI 中断；集中验证正常商队、攻击波、命令顺序及胜负流程，见 [AI 命令](campaign-human05-command-ai.md)。
