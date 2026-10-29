@@ -2922,3 +2922,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 单机暂停与速度命令入口（待验证）
 
 路径：`src/game_flow_ui.*`、`src/game_view.cpp`、`src/player_commands.*`、`tests/game_flow_tests.cpp`。Win32 Release 产品编译通过；集中验证菜单操作、本地及网络权限、脚本交错和新增会话断言，见 [单机游戏控制命令](single-replay-controls.md)。单机回放录制和播放尚未完成。
+
+### 资料片第五章缺失预载脚本（待验证）
+
+路径：`src/session_game.cpp`、`docs/campaign-preloader.md`。独立原图探针越过缺失成员并推进至 400 秒；集中验证预载脚本的空值、存在／缺失、错误和切图，见 [预载脚本](campaign-preloader.md)。
