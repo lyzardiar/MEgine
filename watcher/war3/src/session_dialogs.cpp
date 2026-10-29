@@ -12,7 +12,7 @@ double ScriptSession::timerDialogRemaining(const ScriptTimerDialog& dialog) cons
 void ScriptSession::bindDialogNatives() {
     auto dialog=[this](jass::Value handle){return std::get<std::shared_ptr<ScriptTimerDialog>>(object(handle,NativeKind::TimerDialog).state);};
     bind("CreateTimerDialog","timerdialog",{"timer"},[this](auto&,auto args){if(args[0].bits)object(args[0],NativeKind::Timer);auto state=std::make_shared<ScriptTimerDialog>();state->titleColor=state->timeColor={252,211,18,255};state->timer=args[0].bits;auto handle=create(NativeKind::TimerDialog);std::get<std::shared_ptr<ScriptTimerDialog>>(object(handle,NativeKind::TimerDialog).state)=state;timerDialogs_[handle.bits]=std::move(state);return handle;});
-    bind("DestroyTimerDialog","nothing",{"timerdialog"},[this](auto& vm,auto args){if(args[0].bits){object(args[0],NativeKind::TimerDialog);timerDialogs_.erase(args[0].bits);destroy(args[0],NativeKind::TimerDialog);}return vm.nothing();});
+    bind("DestroyTimerDialog","nothing",{"timerdialog"},[this](auto& vm,auto args){if(alive(args[0].bits,NativeKind::TimerDialog)){timerDialogs_.erase(args[0].bits);destroy(args[0],NativeKind::TimerDialog);}return vm.nothing();});
     bind("TimerDialogSetTitle","nothing",{"timerdialog","string"},[this,dialog](auto& vm,auto args){dialog(args[0])->title=args[1].text?mapString(*args[1].text,strings_):std::string{};return vm.nothing();});
     bind("TimerDialogDisplay","nothing",{"timerdialog","boolean"},[dialog](auto& vm,auto args){dialog(args[0])->displayed=args[1].bits!=0;return vm.nothing();});
     bind("IsTimerDialogDisplayed","boolean",{"timerdialog"},[dialog](auto& vm,auto args){return vm.boolean(dialog(args[0])->displayed);});

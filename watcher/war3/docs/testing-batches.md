@@ -2886,3 +2886,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### Human08 堆叠环境声音（待验证）
 
 路径：`src/sound.cpp`、`docs/campaign-human08-stacked-sound.md`。静音隔离原图越过声音注册异常并推进至 400 秒；集中听验播放、重复、空间区域与资源释放，见 [堆叠环境声音](campaign-human08-stacked-sound.md)。
+
+### Human08 胜利界面失效句柄（待验证）
+
+路径：`src/session_leaderboard.cpp`、`src/session_dialogs.cpp`。隔离原图直接摧毁目标船后进入胜利对话；集中验证排行榜与计时窗口生命周期及实际操作，见 [胜利界面句柄](campaign-human08-ui-handles.md)。
