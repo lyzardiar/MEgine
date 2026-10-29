@@ -83,6 +83,7 @@ class ScriptSession {
     std::vector<std::uint32_t> localNetworkObjects_;
     std::vector<std::uint32_t> localNetworkUiObjects_;
     std::vector<std::uint32_t> eventHandles_,timerHandles_;
+    unsigned combatTargetEventMask_=0;
     std::array<std::int32_t,2> integerGameStates_{};
     std::array<std::uint64_t,2> integerGameStateRevision_{};
     std::map<std::uint32_t,std::vector<std::uint32_t>> unitStateObservers_;

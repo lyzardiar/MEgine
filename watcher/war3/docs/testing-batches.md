@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 战斗目标事件待验证
+
+路径：`src/combat.h`、`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_combat.cpp`、`src/session_combat_orders.cpp`；说明见 `combat-target-events.md`。自动索敌和进入武器射程时分发单位目标事件及 `GetEventTargetUnit`，Win32 Release 客户端编译通过。阶段检查自动／主动攻击、目标进入／离开／重入、不同射程和目标、条件／过滤器、事件禁用／销毁、回调移除／变更命令、战斗与联机顺序、原版行为及大图性能；专项和实际地图尚未执行。
+
 ## 地形悬崖层级查询待验证
 
 路径：`src/world.h`、`src/world_blight.cpp`、`src/session_blight.cpp`；说明见 `cliff-level.md`。`GetTerrainCliffLevel` 已接入 W3E 地形层查询，Win32 Release 客户端编译通过；原版的动态覆盖网格尚未实现。阶段检查不同层级、网格边界、越界、坡道、异常坐标、实际地图脚本及原版动态覆盖；专项和原版运行对照尚未执行。

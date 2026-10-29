@@ -25,6 +25,7 @@ void ScriptSession::bindCombatNatives() {
     bind("IssueTargetOrder","boolean",{"unit","string","widget"},[this,order](auto& vm,auto a){clearPlayerOrders(a[0].bits);return vm.boolean(targetOrder(a[0].bits,a[2].bits,order(a[1])));});
     bind("IssueTargetOrderById","boolean",{"unit","integer","widget"},[this](auto& vm,auto a){clearPlayerOrders(a[0].bits);return vm.boolean(targetOrder(a[0].bits,a[2].bits,a[1].bits));});
     bind("GetAttacker","unit",{},[this](auto& vm,auto){return vm.handle("unit",contexts_.empty()?0:contexts_.back().attacker);});
+    bind("GetEventTargetUnit","unit",{},[this](auto& vm,auto){return vm.handle("unit",contexts_.empty()?0:contexts_.back().eventTargetUnit);});
     bind("GetOrderTarget","widget",{},[this](auto& vm,auto){auto id=contexts_.empty()?0:contexts_.back().orderTarget;return vm.handle("widget",alive(id,NativeKind::Unit) || alive(id,NativeKind::Item) || alive(id,NativeKind::Destructable)?id:0);});
     bind("GetOrderTargetUnit","unit",{},[this](auto& vm,auto){auto id=contexts_.empty()?0:contexts_.back().orderTarget;return vm.handle("unit",alive(id,NativeKind::Unit)?id:0);});
     bind("GetOrderTargetDestructable","destructable",{},[this](auto& vm,auto){auto id=contexts_.empty()?0:contexts_.back().orderTarget;return vm.handle("destructable",alive(id,NativeKind::Destructable)?id:0);});
