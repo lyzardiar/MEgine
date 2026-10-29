@@ -2825,4 +2825,4 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 ### 火焰箭伤害与施法（待验证）
 
-路径：`src/session_spell_info.cpp`、`docs/fire-bolt.md`、`docs/creep-combat-spells.md`。集中验证原版与地图覆盖的订单、伤害、弹道、目标、冷却及 AI 施法；原版缺省眩晕来源尚未确认，具体边界见 [火焰箭](fire-bolt.md)。本次未编译或运行。
+路径：`src/session_spell_info.cpp`、`docs/fire-bolt.md`、`docs/creep-combat-spells.md`。集中验证原版与地图覆盖的订单、伤害、弹道、眩晕、目标、冷却及 AI 施法；原版自定义状态覆盖优先级待验证，具体边界见 [火焰箭](fire-bolt.md)。本次未编译或运行。
