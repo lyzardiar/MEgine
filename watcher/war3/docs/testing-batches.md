@@ -2,15 +2,15 @@
 
 ## 魔法吸取权杖待验证
 
-路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_resource_spells.cpp`、`src/session_item_use.cpp`；说明见 `mana-steal.md`。阶段检查目标选择／接近、魔法不足／上限、目标类型和魔免、次数／冷却、事件与回调、固定／比例数据、地图覆盖、联机及原版行为；部分自定义字段尚不支持。
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_resource_spells.cpp`、`src/session_item_use.cpp`；说明见 `mana-steal.md`。包含本轮直线穿透及随机流快照的 Win32 Release 客户端编译通过。阶段检查目标选择／接近、魔法不足／上限、目标类型和魔免、次数／冷却、事件与回调、固定／比例数据、地图覆盖、联机及原版行为；部分自定义字段尚不支持。
 
 ## 直线穿透伤害待验证
 
-路径：`src/session.h`、`src/session_destructables.cpp`、`src/session_projectiles.cpp`；说明见 `destructable-weapon-attacks.md`。阶段检查刃车及自定义直线武器的零／非零扩散距离、宽度、单位与障碍、对象半径、死亡复活、回调和联机性能，对照原版命中顺序与伤害衰减。
+路径：`src/session.h`、`src/session_destructables.cpp`、`src/session_projectiles.cpp`；说明见 `destructable-weapon-attacks.md`。包含本轮魔法吸取权杖与随机流快照的 Win32 Release 客户端编译通过。阶段检查刃车及自定义直线武器的零／非零扩散距离、宽度、单位与障碍、对象半径、死亡复活、回调和联机性能，对照原版命中顺序与伤害衰减。
 
 ## 会话随机流快照待验证
 
-路径：`src/audio_random.h/.cpp`、`src/session.h`、`src/session_game.cpp`；说明见 `session-random-persistence.md`。阶段检查主流和 45 条辅助流往返、后续序列、损坏／截断／非法状态的事务性拒绝、活动脚本与联机限制，以及和未来完整会话恢复的组合；尚未接入存档。
+路径：`src/audio_random.h/.cpp`、`src/session.h`、`src/session_game.cpp`；说明见 `session-random-persistence.md`。包含本轮玩法改动的 Win32 Release 客户端编译通过。阶段检查主流和 45 条辅助流往返、后续序列、损坏／截断／非法状态的事务性拒绝、活动脚本与联机限制，以及和未来完整会话恢复的组合；尚未接入存档。
 
 ## 范围及弹跳武器伤害可破坏物待验证
 
@@ -18,7 +18,7 @@
 
 ## JASS 基础全局快照待验证
 
-路径：`src/jass_runtime.h/.cpp`、`tests/jass_runtime_tests.cpp`；说明见 `jass-global-persistence.md`。客户端编译通过；新增全局快照检查待运行。阶段执行 `war3_jass_runtime_tests`，检查基础类型、稀疏数组及 null／空字符串往返，损坏／截断／声明不匹配的事务性拒绝，非默认句柄报告和活动线程限制；接口尚未接入存档或关卡切换。
+路径：`src/jass_runtime.h/.cpp`、`tests/jass_runtime_tests.cpp`；说明见 `jass-global-persistence.md`。客户端及新增测试目标编译通过；全局快照检查待运行。阶段执行 `war3_jass_runtime_tests`，检查基础类型、稀疏数组及 null／空字符串往返，损坏／截断／声明不匹配的事务性拒绝，非默认句柄报告和活动线程限制；接口尚未接入存档或关卡切换。
 
 ## 科技增加零骰面武器的骰子待验证
 
