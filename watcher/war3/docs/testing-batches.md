@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 科技增加零骰面武器的骰子待验证
+
+路径：`src/session_research.cpp`；说明见 `research.md`。阶段检查零骰面武器研究前后、取消和新建单位，对单位及可破坏物的攻击、面板数值、联机及原版边界；当前一面骰处理是暂定规则。
+
 ## 战役英雄快捷栏预留待验证
 
 路径：`src/session.h`、`src/session_match.cpp`、`src/game_hero_bar.cpp`；说明见 `hero-shortcut-reservation.md`。包含本轮可破坏物攻击和提示滚动的 Win32 Release 客户端编译通过。阶段检查不死族资料片首关、共享控制英雄、空槽、鼠标和 F1–F7、创建／死亡／易主、预留值变化、联机及原版排序和默认值。
