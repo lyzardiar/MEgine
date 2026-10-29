@@ -2614,3 +2614,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 存活桥梁修理（待验证）
 
 路径：`commerce.h`、`entities.h`、`session.h`、`session_combat_orders.cpp`、`session_repair.cpp`、`docs/base-development.md`。受损存活桥梁接入目标修理和原资源参数消费；Win32 Release 产品合并编译通过。阶段验证三类工人、右键／显式命令、范围与寻路、资源不足／零费用、多个工人、满血停止、目标死亡／移除、资源回调中改变归属或重新下令、自定义目标字段、桥梁自动修理、死亡桥及原版费用和时序；实际窗口、联机和原版对照尚未执行。
+
+### 视频阴影档位（待验证）
+
+路径：`game_effects.cpp`、`game_flow_ui.cpp/.h`、`game_preferences.cpp/.h`、`docs/game-options.md`。关闭／低／高档已接入阴影绘制、纹理请求及 video.bin V3 保存，Win32 Release 产品合并编译通过。阶段验证游戏内鼠标／键盘选择、确认／取消／Esc、即时切换、重进对局及 V1／V2 迁移和损坏输入；分别检查静态、建筑、单位和水面阴影的 GPU 画面、缓存及性能，并与原版档位含义和布局对照。主菜单尚无视频设置入口。

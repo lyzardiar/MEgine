@@ -59,7 +59,7 @@ public:
     GameAudioPreferences audioPreferences() const {return audioPreferences_;}
     void audioPreferences(GameAudioPreferences preferences) {if(preferences.soundVolume>100)preferences.soundVolume=100;if(preferences.musicVolume>100)preferences.musicVolume=100;audioPreferences_=audioDraft_=preferences;}
     GameVideoPreferences videoPreferences() const {return videoPreferences_;}
-    void videoPreferences(GameVideoPreferences preferences) {if(preferences.particleDetail>2)preferences.particleDetail=2;videoPreferences_=videoDraft_=preferences;}
+    void videoPreferences(GameVideoPreferences preferences) {if(preferences.particleDetail>2)preferences.particleDetail=2;if(preferences.shadowDetail>2)preferences.shadowDetail=2;videoPreferences_=videoDraft_=preferences;}
     const std::vector<std::string>& scoreModels();
 };
 }
