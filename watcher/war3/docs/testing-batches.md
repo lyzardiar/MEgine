@@ -2568,3 +2568,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 路径：`campaign_browser.cpp`、`docs/campaign-flow.md`。返回章节页后按最新战役进度恢复选择并重新准备可用地图；不同战役切换时选择目标首章。集中验证胜利／失败／菜单退出、相同及不同战役、章节解锁／禁用、影片条目、准备失败／取消／重复返回、后台旧请求失效与资源释放，并与原版对照实际选择及窗口行为。实际战役未执行。
 
 2026-10-30 合并实现编译：`4ac3dd7`、`f3fe84c` 和 `4e33599` 所在 Win32 Release 集成版本执行 `cmake --build --preset release --target war3 --parallel 8` 通过；上述三项玩法、窗口与原版对照仍待验证。
+
+### 战役脚本默认难度（待验证）
+
+路径：`session_match.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-flow.md`。集中执行 game-flow 夹具，核对四种难度读写、默认值与当前值隔离，以及 Blizzard.j 胜利回调恢复当前难度；覆盖跨关、重开、战役资料、原版默认值／持久化、无效值和多人行为。该夹具新增断言尚未编译或执行；原版行为与实际战役待对照。

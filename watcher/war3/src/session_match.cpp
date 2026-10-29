@@ -67,6 +67,7 @@ void ScriptSession::bindMatchNatives() {
     bind("EnableDragSelect","nothing",{"boolean","boolean"},[this](auto& vm,auto a){dragSelectionEnabled_=a[0].bits!=0;dragSelectionUI_=a[1].bits!=0;return vm.nothing();});
     bind("SetGameDifficulty","nothing",{"gamedifficulty"},[this](auto& vm,auto a){if(a[0].bits>3)throw std::runtime_error("Invalid game difficulty");gameDifficulty_=a[0].bits;return vm.nothing();});
     bind("GetGameDifficulty","gamedifficulty",{},[this](auto& vm,auto){return vm.handle("gamedifficulty",gameDifficulty_);});
+    bind("SetDefaultDifficulty","nothing",{"gamedifficulty"},[this](auto& vm,auto a){if(a[0].bits>3)throw std::runtime_error("Invalid default difficulty");defaultDifficulty_=a[0].bits;return vm.nothing();});
     bind("GetDefaultDifficulty","gamedifficulty",{},[this](auto& vm,auto){return vm.handle("gamedifficulty",defaultDifficulty_);});
     bind("UnitId","integer",{"string"},[this](auto& vm,auto a){return vm.integer(std::bit_cast<std::int32_t>(a[0].text?definitions().unitId(*a[0].text):0));});
     bind("UnitId2String","string",{"integer"},[this](auto& vm,auto a){return vm.string(definitions().contains(a[0].bits)?definitions().field(a[0].bits,"UnitUI","name"):std::string{});});
