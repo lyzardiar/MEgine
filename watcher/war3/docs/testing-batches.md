@@ -2,7 +2,7 @@
 
 ## 自研联机菜单主动离开待验证
 
-路径：game_flow_ui／game_view、main、lan_runtime／lan_host／lan_join、lan_departure_tests／revival_tests。非主机菜单退出按序发送待发动作和离开请求，等待本地消费离开事件并记录回放后关闭；房主退出结束房间并保存部分回放。Win32 Release 增量编译通过；`war3_lan_departure_tests.exe` 和 `war3_revival_tests.exe <data-root> <fixture.w3m> lan-leave` 各 1 通过／0 失败。待阶段合并验证实际游戏菜单、房主／非主机退出、最小化／过场、回放与跨机器双端、多片选区同步、超时及资源释放；原版协议和主机迁移尚未完成。
+路径：game_flow_ui／game_view、main、lan_runtime／lan_host／lan_join、lan_departure_tests／revival_tests。非主机菜单退出按序发送待发动作和离开请求，等待本地消费离开事件并记录回放后关闭；房主退出结束房间并保存部分回放。Win32 Release 增量编译通过；`war3_lan_departure_tests.exe` 和 `war3_revival_tests.exe <data-root> <fixture.w3m> lan-leave` 各 1 通过／0 失败。待阶段合并验证实际游戏菜单、房主／非主机退出、最小化／过场、离开等待期间脚本结束对局、回放与跨机器双端、多片选区同步、超时及资源释放；原版协议和主机迁移尚未完成。
 
 ## 自研联机非主机离开待验证
 
