@@ -2726,3 +2726,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 运输目标的地面与飞行分类（待验证）
 
 路径：`src/session_transport.cpp`、`docs/transport.md`。集中验证自定义货舱和装载能力分别允许 ground／air／两者／均不允许时的按钮、目标命令、飞行乘员装载和卸载落点、容量、目标重入、死亡、多人同步及原版行为；原版额外限制尚需对照。本次未编译或运行。
+
+### 战役单位冷却缓存（待验证）
+
+路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`。集中验证技能／物品共享冷却的保存与恢复、相对时钟、v1–v6 兼容、损坏数据及实验同步，并对照原版跨关行为；完整存档及原版格式尚未完成，详见 [战役单位冷却](campaign-unit-cooldowns.md)。本次未编译或运行。

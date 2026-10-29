@@ -107,6 +107,8 @@ struct CachedUnit {
     std::array<float,3> visualScale{1,1,1};
     std::array<std::uint8_t,4> tint{255,255,255,255};
     std::optional<unsigned> color;
+    std::map<std::uint32_t,double> spellCooldowns;
+    std::map<std::string,double> itemCooldowns;
     std::array<float,3> attributes{},growth{},bonuses{};
     std::string properName;
     std::map<std::uint32_t,int> abilities;
