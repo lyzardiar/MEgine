@@ -2690,3 +2690,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 女猎手哨兵次数（待验证）
 
 路径：`entities.h`、`session_spell_info.cpp`、`session_spells.cpp`、`session_stealth_reveal.cpp`、`session_ability_commands.cpp`、`tests/stealth_tests.cpp`、`docs/sentinel.md`。源 DataD 正数限制各单位各能力的发射次数，0 为无限，取消或无效目标不消耗，耗尽禁用按钮；固定版原件指令记录在 `tmp/docs-artifacts/war3/sentinel-count-1030/original.txt`；Win32 Release 产品合并编译通过，新增消费者尚未运行。阶段验证原型 Aesn／Aesr、地图覆盖／多等级、订单／取消／目标死亡、移除与重加、死亡／复活／易主、施法事件重入、窗口及原版次数时序与联机同步；存档恢复仍待实现。
+
+### 技能提示字段与等级（待验证）
+
+路径：`session_ability_commands.cpp`、`tests/spell_tests.cpp`、`docs/spells.md`。技能等级文本按源引用和引号分隔，已知 `<对象ID,字段>` 与百分比由地图覆盖后的对象表展开；Win32 Release 核心库编译通过，直接调用实际解析函数的原版暴风雪一／二级最小检查通过（6／30、8／40），探针位于 `tmp/docs-artifacts/war3/spawn-table-probe/`。阶段验证所有等级／引用类别／百分比／未知字段、地图对象覆盖与 WTS、技能学习和按钮布局、长文／颜色／窗口及原版显示精度；新增完整消费者断言尚未运行。
