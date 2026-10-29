@@ -2796,3 +2796,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 任务窗口键盘导航（待验证）
 
 路径：`src/quest_dialog.cpp`、`src/quest_dialog.h`。集中验证任务行焦点、方向／翻页／首尾、任务动态变化、详情和列表滚动及原版按键行为，见 [任务键盘导航](quest-keyboard-navigation.md)。本次未编译或运行。
+
+### 法术弹道目标高度与追踪（待验证）
+
+路径：`src/session_spell_effects.cpp`、`tests/spell_tests.cpp`。集中验证目标高度／源对象覆盖、飞行目标移动和变形、链式弹道、多端及原版轨迹，见 [法术弹道](spell-missile-targeting.md)。新增实际消费者断言尚未编译或运行。
