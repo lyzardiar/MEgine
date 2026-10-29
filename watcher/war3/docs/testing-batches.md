@@ -1688,3 +1688,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`commerce.h`、`passives.h`、`session_research.cpp`、`session_auras.cpp`、`docs/research.md`。`raud` 科技增量接入发出者光环、最强来源和实际攻击加成。
 
 功能阶段核对兽族科多兽研究前后及新建单位、多个来源和同 buff、升级／归属变化／死亡、光环残留、远近程攻击及自定义地图科技／能力覆盖；原版数值、叠加和刷新时序尚未对照。
+
+## 夜视科技待验证
+
+路径：`commerce.h`、`session_research.cpp`、`session_fog.cpp`、`docs/research.md`。科技 `rauv` 在符合单位源科技列表时接入实际昼夜迷雾视野并失效缓存。
+
+功能阶段核对昼夜切换、科技增减、已有和新建单位、所有权／共享视野、自定义地图覆盖及已有夜视能力叠加，并对照原版视野和时序；夜视符文 `AIgl` 使用流程尚待实现。

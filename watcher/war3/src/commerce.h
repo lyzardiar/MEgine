@@ -45,6 +45,7 @@ struct TechnologyStats {
     unsigned defenseOwner=~0u;
     std::map<std::pair<std::uint32_t,unsigned>,float> defenseEffects;
     unsigned weapons=0;
+    bool ultravision=false;
     std::map<std::uint32_t,int> abilityLevels;
     std::map<std::uint32_t,float> auraDamage;
 };
