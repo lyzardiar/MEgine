@@ -8,6 +8,7 @@
 namespace war3::jass {
 using ThreadId=std::uint64_t;
 using ThreadOwner=std::uintptr_t;
+using ExternalWaitToken=std::uint64_t;
 struct ThreadHooks {std::function<void(ThreadId,ThreadId)> created,switched;std::function<void(ThreadId)> finished;};
 class ThreadScheduler {
     struct Impl;
@@ -23,6 +24,13 @@ public:
     void checkpoint();
     void sleep(double seconds);
     void wait(ThreadId thread);
+    // Reserve within the current fiber before publishing work. A signal may arrive before wait.
+    // A signaled fiber resumes on advance() after its owner is unpaused.
+    ExternalWaitToken prepareExternalWait();
+    void waitExternal(ExternalWaitToken token);
+    bool wakeExternal(ExternalWaitToken token);
+    // Use on the reserving fiber if publishing fails before wait; stale tokens return false.
+    bool cancelExternalWait(ExternalWaitToken token);
     void clock(double time);
     void advance(double time);
     void cancelAll();

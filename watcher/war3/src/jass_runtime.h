@@ -33,6 +33,10 @@ public:
     ThreadId start(const Value& code,std::span<const Value> arguments={});
     void sleep(double seconds);
     void waitThread(ThreadId thread);
+    ExternalWaitToken prepareExternalWait();
+    void waitExternal(ExternalWaitToken token);
+    bool wakeExternal(ExternalWaitToken token);
+    bool cancelExternalWait(ExternalWaitToken token);
     void threadClock(double time);
     void advanceThreads(double time);
     void cancelThreads();

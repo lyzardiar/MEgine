@@ -16,6 +16,7 @@ struct LanSessionSetup {
     std::vector<LanPlayer> players;
     std::uint8_t localPeerId=0;
     std::uint32_t randomSeed=0;
+    bool experimentalSelectionSync=false;
 };
 // Applies only to this client's host slot construction, not arbitrary original hosts.
 LanSessionSetup lanHostSessionSetup(const MapInfo& info,const LanHost& host);

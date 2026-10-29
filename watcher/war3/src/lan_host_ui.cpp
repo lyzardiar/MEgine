@@ -18,7 +18,7 @@ std::string raceName(GlueScreen& s,unsigned race){if(race&32)return s.localized(
 }
 std::uint64_t LanHostHandoff::requestPreparation(MapPreparation& preparation) const {
     if(!host || !host->running() || host->loadPhase()!=LanLoadPhase::Loading || !map)throw std::runtime_error("Invalid LAN host map preparation handoff");
-    return preparation.requestLanMemory(map,mapPath,setup);
+    return preparation.requestLanMemory(map,mapPath,setup,true);
 }
 LanHostUi::LanHostUi(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string playerName) : create_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\LocalMultiplayerCreate.fdf","LocalMultiplayerCreate"),lobby_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\GameChatroom.fdf","GameChatroom"),archives_(archives),renderer_(renderer),log_(log),root_(fs::canonical(archives.root()/L"Maps")),playerName_(std::move(playerName)) {
     create_.focusEnabled(false);create_.visible("AdvancedOptionsPanel",false);lobby_.focusEnabled(false);lobby_.attach("UI\\FrameDef\\Glue\\TeamSetup.fdf","TeamSetup","TeamSetupContainer");for(unsigned i=0;i<16;++i){auto name=slotName(i);lobby_.attach("UI\\FrameDef\\Glue\\PlayerSlot.fdf","PlayerSlot","TeamSetup",name);lobby_.visible(name+"/PlayerSlot",false);}enter(root_);

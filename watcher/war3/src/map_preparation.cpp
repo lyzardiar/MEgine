@@ -13,9 +13,9 @@ std::uint64_t MapPreparation::requestMemory(std::shared_ptr<const Bytes> bytes,s
     if(!bytes || bytes->empty() || bytes->size()>256u*1024u*1024u || label.empty() || label.size()>1024 || label.find('\0')!=std::string::npos)throw std::runtime_error("Invalid in-memory map preparation request");
     std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,{},std::move(bytes),std::move(label),{},false,initialRandomSeed,{}};ready_.reset();wake_.notify_one();return id;
 }
-std::uint64_t MapPreparation::requestLanMemory(std::shared_ptr<const Bytes> bytes,std::string label,LanSessionSetup setup) {
+std::uint64_t MapPreparation::requestLanMemory(std::shared_ptr<const Bytes> bytes,std::string label,LanSessionSetup setup,bool experimentalSelectionSync) {
     if(!bytes || bytes->empty() || bytes->size()>256u*1024u*1024u || label.empty() || label.size()>1024 || label.find('\0')!=std::string::npos)throw std::runtime_error("Invalid in-memory LAN map preparation request");
-    auto seed=setup.randomSeed;std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,{},std::move(bytes),std::move(label),{},false,seed,std::move(setup)};ready_.reset();wake_.notify_one();return id;
+    auto seed=setup.randomSeed;setup.experimentalSelectionSync=experimentalSelectionSync;std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,{},std::move(bytes),std::move(label),{},false,seed,std::move(setup)};ready_.reset();wake_.notify_one();return id;
 }
 void MapPreparation::clear() {std::lock_guard lock(mutex_);++generation_;pending_.reset();ready_.reset();}
 std::optional<PreparedMap> MapPreparation::poll() {std::lock_guard lock(mutex_);auto result=std::move(ready_);ready_.reset();return result;}

@@ -28,6 +28,7 @@ private:
     bool started_=false,failed_=false;
     std::string error_;
     bool fail(std::string message);
+    void flushSelectionSync();
     void attach(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wire,AbilityFields fields,bool experimental);
 public:
     // The GameView and its ScriptSession must outlive this runtime; call before the first draw.

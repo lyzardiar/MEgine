@@ -35,7 +35,7 @@ public:
     std::uint64_t request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign={},bool inferCampaign=true,std::optional<std::uint32_t> initialRandomSeed={});
     // The caller must retain only immutable aliases to these validated map bytes.
     std::uint64_t requestMemory(std::shared_ptr<const Bytes> bytes,std::string label,std::optional<std::uint32_t> initialRandomSeed={});
-    std::uint64_t requestLanMemory(std::shared_ptr<const Bytes> bytes,std::string label,LanSessionSetup setup);
+    std::uint64_t requestLanMemory(std::shared_ptr<const Bytes> bytes,std::string label,LanSessionSetup setup,bool experimentalSelectionSync=false);
     void clear();
     std::optional<PreparedMap> poll();
 };

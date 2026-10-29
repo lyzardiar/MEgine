@@ -14,7 +14,7 @@ std::string raceName(GlueScreen& screen,unsigned race){if(race&32)return screen.
 }
 std::uint64_t LanLobbyHandoff::requestPreparation(MapPreparation& preparation,std::vector<unsigned> slotPlayerIds) const {
     if(!join || join->state()!=LanJoinState::Lobby || join->loadPhase()!=LanLoadPhase::Loading || !map || slotPlayerIds.size()!=slots.size())throw std::runtime_error("Invalid LAN map preparation handoff");
-    LanSessionSetup setup;setup.slotPlayerIds=std::move(slotPlayerIds);setup.slots=slots;setup.players=players;setup.localPeerId=localPeerId;setup.randomSeed=randomSeed;return preparation.requestLanMemory(map,announcement.path,std::move(setup));
+    LanSessionSetup setup;setup.slotPlayerIds=std::move(slotPlayerIds);setup.slots=slots;setup.players=players;setup.localPeerId=localPeerId;setup.randomSeed=randomSeed;return preparation.requestLanMemory(map,announcement.path,std::move(setup),true);
 }
 LanLobby::LanLobby(Archives& archives,Images& images,Renderer& renderer,Text& text,const LanGame& game,std::string playerName) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\GameChatroom.fdf","GameChatroom"),archives_(archives),game_(game),playerName_(std::move(playerName)),join_(std::make_unique<LanJoin>(game,playerName_)) {
     screen_.focusEnabled(false);screen_.attach("UI\\FrameDef\\Glue\\TeamSetup.fdf","TeamSetup","TeamSetupContainer");for(unsigned i=0;i<16;++i){auto ctx=prefix(i);screen_.attach("UI\\FrameDef\\Glue\\PlayerSlot.fdf","PlayerSlot","TeamSetup",ctx);screen_.visible(ctx+"/PlayerSlot",false);}screen_.setText("GameNameValue",display(game_.name));

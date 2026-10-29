@@ -22,9 +22,12 @@
 #include "alchemist.h"
 #include "camera_control.h"
 #include "chat_channel.h"
+#include "lan_actions.h"
+#include "lan_selection_sync.h"
 #include "indicator.h"
 #include "model_sequence.h"
 #include <variant>
+#include <deque>
 
 namespace war3 {
 class PlayerSetup;
@@ -82,12 +85,23 @@ class ScriptSession {
     std::optional<unsigned> localPlayer_;
     std::optional<std::uint32_t> initialRandomSeed_;
     std::map<std::uint8_t,unsigned> networkPlayers_;
+    bool experimentalSelectionSync_=false;
     std::vector<unsigned> networkSlotPlayers_;
     std::array<std::uint32_t,16> playerLeaderboards_{};
     std::map<std::uint32_t,std::shared_ptr<ScriptMultiboard>> multiboards_;
     bool multiboardsSuppressed_=false;
     std::array<std::set<std::uint32_t>,16> synchronizedSelections_;
     std::array<std::map<std::uint32_t,std::uint64_t>,16> selectionRevisions_;
+    using SelectionSnapshot=std::array<std::set<std::uint32_t>,16>;
+    struct SelectionSyncRound {bool requested=false; jass::ExternalWaitToken token=0;std::optional<double> started;std::map<std::uint8_t,LanSelectionSyncPart> parts;std::shared_ptr<SelectionSnapshot> result;};
+    std::uint32_t selectionSyncIssued_=0;
+    std::map<std::uint32_t,SelectionSyncRound> selectionSyncRounds_;
+    std::map<jass::ThreadId,std::shared_ptr<const SelectionSnapshot>> selectionSyncViews_;
+    std::shared_ptr<const SelectionSnapshot> selectionSyncLatest_;
+    std::deque<LanActionExperimentalSelection> selectionSyncOutgoing_;
+    void syncSelections(jass::Runtime& vm);
+    void finishSelectionSync(std::uint32_t round);
+    void checkSelectionSyncTimeout() const;
     void syncLocalSelection();
     void transferAutomaticSelection(std::uint32_t source,std::uint32_t target,bool keepSource,bool ownerOnly=false);
     void selectionEvent(std::uint32_t unit,unsigned player,bool selected,std::uint64_t revision);
@@ -949,6 +963,12 @@ public:
     std::optional<unsigned> networkPlayer(std::uint8_t peerId) const;
     std::optional<unsigned> networkSlotPlayer(unsigned slot) const;
     std::optional<unsigned> networkPlayerSlot(unsigned player) const;
+    const LanActionExperimentalSelection* pendingSelectionSync() const;
+    void popSelectionSync();
+    void discardSelectionSyncOutgoing();
+    bool unfinishedSelectionSync() const;
+    void receiveSelectionSync(std::uint8_t peer,const LanActionExperimentalSelection& part);
+    bool validateSelectionSync(std::uint8_t peer,const LanActionExperimentalSelection& part,LanSelectionSyncProjection& projection) const;
     void attachWorld(std::unique_ptr<World> world);
     const World* world() const {return world_.get();}
     World* world() {return world_.get();}

@@ -22,6 +22,7 @@ bool LanSimulation::validate(const LanAction& action){
         if(std::holds_alternative<LanActionResume>(event)){prepared.emplace_back(LanActionResume{});continue;}
         if(std::holds_alternative<LanActionEscape>(event)){prepared.emplace_back(Escape{*player});continue;}
         if(auto chat=std::get_if<LanActionExperimentalChat>(&event)){prepared.emplace_back(Chat{*player,chat->text,chat->channel});continue;}
+        if(auto part=std::get_if<LanActionExperimentalSelection>(&event)){if(!session_.validateSelectionSync(action.playerId,*part,projectedSync_))return false;prepared.emplace_back(SelectionSync{action.playerId,*part});continue;}
         if(std::holds_alternative<LanActionPreSubselection>(event))continue;
         if(auto trackable=std::get_if<LanActionTrackable>(&event)){if(!resolve_)return false;auto handle=resolve_(trackable->object);if(!handle || !session_.trackables().contains(*handle))return false;prepared.emplace_back(Trackable{*handle,trackable->hit});continue;}
         if(auto selection=std::get_if<LanActionSelection>(&event)){
@@ -53,6 +54,7 @@ bool LanSimulation::apply(ScriptSession& session,const LanAction&){
         else if(std::holds_alternative<LanActionResume>(event))session.pause(false);
         else if(auto escape=std::get_if<Escape>(&event))session.endCinematic(escape->player);
         else if(auto chat=std::get_if<Chat>(&event)){session.chat(chat->player,chat->text,chat->channel);if(driver_.failed())return false;}
+        else if(auto sync=std::get_if<SelectionSync>(&event)){session.receiveSelectionSync(sync->peer,sync->part);if(driver_.failed())return false;}
         else if(auto trackable=std::get_if<Trackable>(&event)){session.trackableEvent(trackable->handle,trackable->hit);if(driver_.failed())return false;}
         else if(auto selection=std::get_if<Selection>(&event)){for(auto id:selection->units){session.setPlayerUnitSelected(selection->player,id,selection->add);if(driver_.failed())return false;}auto group=subgroups_.find(selection->player);if(group!=subgroups_.end() && !session.playerSelection(selection->player).contains(group->second.first))subgroups_.erase(group);}
         else if(auto assigned=std::get_if<GroupAssign>(&event)){groups_[assigned->player][assigned->group]=assigned->units;}
@@ -67,6 +69,6 @@ bool LanSimulation::apply(ScriptSession& session,const LanAction&){
     return true;
 }
 LanStepResult LanSimulation::consume(std::uint64_t sequence,const LanTimeSlot& slot){
-    if(consuming_)return driver_.consume(sequence,slot);consuming_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{consuming_};decoded_.clear();projectedSelections_.clear();projectedSubgroups_=subgroups_;projectedGroups_=groups_;cursor_=0;auto result=driver_.consume(sequence,slot);decoded_.clear();projectedSelections_.clear();projectedSubgroups_.clear();projectedGroups_.clear();cursor_=0;return result;
+    if(consuming_)return driver_.consume(sequence,slot);consuming_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{consuming_};decoded_.clear();projectedSync_.clear();projectedSelections_.clear();projectedSubgroups_=subgroups_;projectedGroups_=groups_;cursor_=0;auto result=driver_.consume(sequence,slot);decoded_.clear();projectedSync_.clear();projectedSelections_.clear();projectedSubgroups_.clear();projectedGroups_.clear();cursor_=0;return result;
 }
 }

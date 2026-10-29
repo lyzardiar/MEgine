@@ -164,6 +164,10 @@ ThreadId Runtime::start(const std::string& name,std::span<const Value> arguments
 ThreadId Runtime::start(const Value& code,std::span<const Value> arguments){if(code.codeOwner && code.codeOwner!=this)return code.codeOwner->start(code,arguments);if(code.type!=impl_->codeType || !code.bits || code.bits-1>=module().functions().size())throw std::runtime_error("Invalid script thread code");return start(module().program().functions()[code.bits-1].name,arguments);}
 void Runtime::sleep(double seconds){if(impl_->noYield)throw std::runtime_error("Script wait is not allowed in a synchronous condition");impl_->domain->threads.sleep(seconds);}
 void Runtime::waitThread(ThreadId thread){if(impl_->noYield)throw std::runtime_error("Trigger wait is not allowed in a synchronous condition");impl_->domain->threads.wait(thread);}
+ExternalWaitToken Runtime::prepareExternalWait(){if(impl_->noYield)throw std::runtime_error("External wait is not allowed in a synchronous condition");return impl_->domain->threads.prepareExternalWait();}
+void Runtime::waitExternal(ExternalWaitToken token){if(impl_->noYield)throw std::runtime_error("External wait is not allowed in a synchronous condition");impl_->domain->threads.waitExternal(token);}
+bool Runtime::wakeExternal(ExternalWaitToken token){return impl_->domain->threads.wakeExternal(token);}
+bool Runtime::cancelExternalWait(ExternalWaitToken token){return impl_->domain->threads.cancelExternalWait(token);}
 void Runtime::threadClock(double time){impl_->domain->threads.clock(time);}
 void Runtime::advanceThreads(double time){impl_->domain->threads.advance(time);}
 void Runtime::pauseThreads(bool paused){impl_->paused=paused;impl_->domain->threads.pause(reinterpret_cast<ThreadOwner>(impl_.get()),paused);}
