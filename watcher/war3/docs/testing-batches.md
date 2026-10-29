@@ -2752,3 +2752,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 局域网与回放地面智能命令（待验证）
 
 路径：`src/lan_action_encoder.cpp`、`src/lan_simulation.cpp`、`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。集中验证 0x11／0x12、命令队列／编队／集结、事件及原版报文和双端行为；说明见 [地面智能命令](lan-smart-ground.md)。新增断言尚未编译或运行。
+
+### JASS 字符串哈希（待验证）
+
+路径：`src/session_text.cpp`、`tests/session_tests.cpp`、`docs/jass.md`。集中验证空值、大小写／斜杠、内嵌 NUL、1023 字节边界、不同长度和多字节编码，并覆盖地图哈希表及双端；原版 Storm 七个 ASCII 返回值与独立算法一致，客户端新增断言尚未编译或运行。
