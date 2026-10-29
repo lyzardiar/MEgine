@@ -2882,3 +2882,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### Human07 基础停止命令（待验证）
 
 路径：`src/session_entities.cpp`、`src/session_orders.cpp`、`docs/campaign-human07-stop.md`。隔离原图相遇剧情已越过停止指令异常；集中验证两种命令入口、取消与事件及真实交互，见 [停止指令](campaign-human07-stop.md)。
+
+### Human08 堆叠环境声音（待验证）
+
+路径：`src/sound.cpp`、`docs/campaign-human08-stacked-sound.md`。静音隔离原图越过声音注册异常并推进至 400 秒；集中听验播放、重复、空间区域与资源释放，见 [堆叠环境声音](campaign-human08-stacked-sound.md)。
