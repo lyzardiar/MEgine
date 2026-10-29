@@ -2650,3 +2650,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 自动修理桥梁（待验证）
 
 路径：`session_repair.cpp`、`tests/construction_tests.cpp`、`docs/base-development.md`。已开启自动修理的空闲工人通过共享空间格搜索视野内受损或死亡桥，复用原修理目标及资源流程；Win32 Release 产品合并编译通过，新增消费者断言未运行。阶段验证多工人、多个候选及等距顺序、视野／不可达／资源／目标死亡与恢复、自动开关和原版选择规则，并测量密集地图扫描和重建开销。
+
+### 模型 SPN 发射事件（待验证）
+
+路径：`model.h`、`model_particles.cpp`、`game_model_sound.cpp`、`game_view.*`、`game_effects.cpp`、`docs/model-event-sounds.md`、`third_party/warcraft-model-reference/source-info.json`。模型事件节点驱动源 SpawnData 模型的内存流送、变换和首段动画，Win32 Release 产品合并编译通过；已抽样读取四族基础模型中的 SPN 名称及原表，未执行实际绘制。阶段验证死亡／攻击事件、连续触发／递归、位置旋转缩放、粒子／附件／声音、同模型共享状态、首次加载迟到、迷雾／视口／暂停、窗口 GPU、切图释放及密集对局性能，对照原版画面；界面模型事件仍待实现。

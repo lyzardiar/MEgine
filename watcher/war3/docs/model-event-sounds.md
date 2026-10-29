@@ -23,3 +23,7 @@ MDX `FPTx` 事件按对应节点的动画变换放置地表贴花，读取 `Spla
 放置装饰物及可破坏物按共享模型筛选声音候选，在玩家视野内推进模型及附件 SND／FPT；离开视野、隐藏或移除时释放声音实例，已移除对象从候选索引清除。菜单、战役背景、载入界面和模型过场按对应模型相机消费 SND／附件 SND，过场支持 CINEMATICSONLY；界面 FPT 地表效果、事件顺序、实际听感、迷雾边界及密集地图性能待阶段验证。
 
 模型 `SPLx` 事件复用动画时间线与节点位置，按 `Splats/SplatData.slk` 的标识生成地表特效，使用现有贴花图集、颜色、消退、纹理流送和实例释放；脚印专有的地形允许与水面替换规则仅用于 `FPTx`。参考 mdx-m3-viewer 固定提交 `2ff0bc00c6363f425016e23d88c0fb2929d3b3cc` 的 `eventobjectemitterobject.ts`，来源及摘要登记于 `third_party/warcraft-model-reference/source-info.json`。当前仅游戏场景消费；事件帧顺序、可见性、实际水面表现及原版画面留待阶段验证。
+
+游戏场景的 `SPNx` 事件读取 `Splats/SpawnData.slk`，将源 MDL 路径映射为 MDX，经后台资源流送生成独立模型实例，以事件节点的完整位置、旋转与缩放播放首段动画。事件可由单位、装饰物、技能特效及其附件触发，生成模型也参与现有动画事件；实例按首段时长释放，并限制同时存在的数量。原资源表中 `UDIS`、`EDIS`、`ODIS` 分别指向亡灵、暗夜精灵和兽族消散模型。参考 mdx-m3-viewer 固定提交中的 `handler.ts` 和 `eventobjectspn.ts`，来源与摘要见 `third_party/warcraft-model-reference/source-info.json`。首次资源加载延迟、原版模型事件、视野与原版画面／声音待集中验证；界面模型暂未接入 SPN。
+
+原资源抽样读取确认 Footman、Grunt、Ghoul、Archer 分别包含 `SPNxHBF0`、`SPNxOBG0`、`SPNxUBGH`、`SPNxNBAR`；这是事件与源表格式检查，尚不证明实际渲染一致。

@@ -33,7 +33,7 @@ public:
 struct ModelVertex {float x,y,z,u,v;};
 struct ModelGeometry {std::vector<ModelVertex> vertices;std::vector<std::uint16_t> indices;};
 struct ModelEvent {std::string name;int parent=-1,global=-1,node=-1;bool animated=false;std::vector<int> times;};
-struct ModelSoundEvent {std::string name;std::array<float,3> position{};float angle=0;};
+struct ModelSoundEvent {std::string name;std::array<float,3> position{};float angle=0;D3DMATRIX transform{};};
 struct ModelCamera {D3DMATRIX view{};std::array<float,3> position{},right{};float fov=0,nearPlane=0,farPlane=0;};
 struct ModelLookAt {std::string bone;std::array<float,3> target;};
 class Model {

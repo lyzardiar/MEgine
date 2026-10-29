@@ -145,6 +145,18 @@
       "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
       "path": "src/viewer/handlers/mdx/eventobjectemitterobject.ts",
       "sha256": "c73b043430534bdebdc0b7d0ff538c74bd6afed50b35a8e8ce86fa0e3ede0ede"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/handler.ts",
+      "sha256": "28857196bb9eeebd64d09a09c9129e2310ed514f35e8bf9f3a29a2b6a0f4a457"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/eventobjectspn.ts",
+      "sha256": "75845cd4abcdbd69516f54328c834fc970880dfdc09bdc32be2da9984d86648c"
     }
   ],
   "licenses": [

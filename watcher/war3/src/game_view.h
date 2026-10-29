@@ -182,6 +182,12 @@ class GameView {
     bool modelHasSounds(const Model& model);
     void modelFootprint(const std::string& code,const std::array<float,3>& position,float angle,std::uint64_t clock,bool visible,bool footprint);
     void drawFootprints(bool water,const DirectX::XMMATRIX& vp,std::uint64_t clock);
+    struct ModelSpawn {std::string path;D3DMATRIX transform{};std::uint64_t born=0;ModelInstance visual,sound;};
+    std::map<std::string,std::string> spawnModels_;
+    std::vector<std::unique_ptr<ModelSpawn>> modelSpawns_;
+    bool spawnDataLoaded_=false;
+    void modelSpawn(const std::string& code,const D3DMATRIX& transform,std::uint64_t clock);
+    void drawModelSpawns(std::uint64_t clock,const DirectX::XMMATRIX& vp);
     struct UnitShadow {std::string texture,buildingTexture;float width=0,height=0,x=0,y=0;bool onWater=false;};
     std::map<std::uint32_t,UnitShadow> unitShadows_;
     struct BuildingShadowStamp {std::uint32_t id=0,type=0;int x=0,y=0;std::uint8_t alpha=0;bool operator==(const BuildingShadowStamp&) const = default;};
