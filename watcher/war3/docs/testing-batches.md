@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 双恢复物品待验证
+
+路径：`src/session.h`、`src/session_item_use.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`；说明见 `combined-recovery-items.md`。Win32 Release 客户端和 control 目标编译通过；`item-combined` 最小检查 1 通过／0 失败，覆盖地图字段覆盖、一次费用／次数／事件、共享冷却、满生命／魔法、回调删物品、未知组合拒绝，未加载 Game.dll。阶段继续核对符文、不同顺序／费用／范围／数量、地图自定义覆盖、事件重入／易主／死亡、双端同步与真实地图，并与原版比较费用、冷却和多能力派发；其他多主动组合尚未实现。
+
+```powershell
+python tests/generate-combined-item-fixture.py --data-root 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne' --output '../../tmp/docs-artifacts/war3/combined-item/fixture.w3m'
+./build/windows-x86/bin/Release/war3_control_tests.exe 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne' '../../tmp/docs-artifacts/war3/combined-item/fixture.w3m' item-combined
+```
+
 ## AI 防御与疾风步待验证
 
 路径：`src/session.h`、`src/session_ai.cpp`、`src/session_ai_armies.cpp`；说明见 `ai.md`。Win32 Release 客户端增量编译通过，专项尚未运行。阶段在对战夹具及实际对局检查近／远程交战、单位防御开启／关闭、狂暴费用与冷却、英雄低生命疾风步及撤退、技能禁用／暂停、目标切换、回调重入、双端同步和大地图性能；同原版比较决策和时序。当前距离与生命阈值属于实现策略。阶段需扩展 `tests/generate-ai-control-fixture.py` 和 `war3_ai_control_tests` 覆盖上述行为；原图 AI 初始化可使用 `war3_ai_tests <data-root> <map> [race] [seconds]`。
