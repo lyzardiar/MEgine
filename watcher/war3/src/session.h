@@ -162,6 +162,7 @@ class ScriptSession {
     std::vector<DoodadState> doodads_;
     std::vector<size_t> freeDoodads_;
     std::map<std::pair<int,int>,std::vector<size_t>> doodadGrid_;
+    float maxDestructableRadius_=0;
     bool loadingDoodads_=false;
     size_t addDoodad(std::uint32_t type,float x,float y,std::uint32_t handle);
     void removeDoodad(size_t index);
