@@ -166,6 +166,8 @@ struct UnitState {
     std::map<std::uint32_t,std::vector<std::uint32_t>> weaponVisuals;
     std::map<std::uint32_t,UnitAura> auras;
     std::map<std::pair<std::string,std::string>,std::uint32_t> auraVisuals;
+    std::vector<std::uint32_t> spikeVisuals;
+    std::uint32_t spikeVisualType=0;
     AuraBonuses aura;
     std::optional<GroundingState> grounding;
     const MorphAppearance* morphAppearance() const {const UnitBuff* newest=nullptr;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Morph && b.form && (!newest || b.applied>newest->applied))newest=&b;return newest?newest->form.get():nullptr;}

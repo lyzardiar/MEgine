@@ -4,7 +4,7 @@
 namespace war3 {
 struct ScriptEffect {
     std::uint32_t id=0,target=0;
-    std::string model,attachment,texture;
+    std::string model,attachment,texture,sequenceSuffix;
     unsigned replacement=0;
     std::optional<unsigned> teamColor;
     std::uint32_t tint=0xffffffff;
