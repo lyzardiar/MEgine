@@ -5,6 +5,8 @@
 
 namespace war3 {
 void ScriptSession::bindSpellNatives() {
+    bind("AbilityId","integer",{"string"},[](auto& vm,auto){return vm.integer(0);});
+    bind("AbilityId2String","string",{"integer"},[](auto& vm,auto){return jass::Value{vm.module().typeId("string"),0,{}};});
     bind("OrderId","integer",{"string"},[](auto& vm,auto a){return vm.integer(std::bit_cast<std::int32_t>(a[0].text?orderId(*a[0].text):0));});
     bind("OrderId2String","string",{"integer"},[](auto& vm,auto a){return vm.string(std::string(orderName(a[0].bits)));});
     bind("UnitResetCooldown","nothing",{"unit"},[this](auto& vm,auto a){auto& u=unit(a[0]);u.spellCooldowns.clear();u.itemCooldowns.clear();return vm.nothing();});

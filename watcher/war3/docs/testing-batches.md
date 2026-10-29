@@ -3022,3 +3022,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 回放玩家离开记录（待验证）
 
 路径：`src/replay.*`、`src/lan_simulation.*`、`src/game_view.*`、`src/main.cpp`。集中验证自研回放中离开事件和时间片顺序、重复及非法记录、重入、选择与缓存同步、后续动作及固定版对照；原版回放入口和对象编号映射仍待实现，见[回放玩家离开记录](replay-player-departure.md)。
+
+### 能力名称转换 native（待验证）
+
+路径：`src/session_spell_natives.cpp`。集中对照 1.27 的 null、空字符串、普通名称、rawcode、自定义能力和未知整数输入，以及脚本 null 比较；静态分析尚不能证明映射表恒为空，见[能力名称转换 native](ability-id-natives.md)。
