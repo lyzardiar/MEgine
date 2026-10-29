@@ -1,8 +1,8 @@
 # 独立客户端测试队列
 
-## 可行走模型表面显示高度待验证
+## 可行走模型共享表面高度待验证
 
-路径：`src/model.h`、`src/model_pose.cpp`、`src/scene_objects.h/.cpp`、`src/terrain_scene.h`、`src/game_view.cpp`；说明见 `cliff-level.md`。可行走对象使用动画模型三角面垂直求高，地面／两栖单位及部分跟随显示共享该高度；Win32 Release 客户端编译通过。阶段检查 BridgeTooNear、可见／隐藏／死亡／复活、动画和旋转／缩放、桥面与地形／水面过渡、选择圈／特效／弹道、临时对象、模型缺失／切图释放、透明面及大图性能，并与原版对照。脚本世界高度、叠放表面和动态桥寻路未接入；专项及实际窗口尚未执行。
+路径：`src/walkable_geometry.h/.cpp`、`src/session_walkable_surface.cpp`、`src/session_destructables.cpp`、`src/session_world.cpp`、`src/terrain_scene.h`、`src/game_view.cpp`；说明见 `cliff-level.md`。会话按需读取模型并以动画三角面求高，`GetLocationZ` 与地面／两栖单位及部分跟随显示共享模型表面；覆盖构建消费已有模型表面。Win32 Release 客户端编译通过。阶段检查 BridgeTooNear、脚本与画面一致性、可见／隐藏／死亡／复活、动画和随机相位、旋转／缩放、桥面与地形／水面过渡、选择圈／特效／弹道、叠放对象变更、临时对象、模型缺失／切图释放、透明面及大图性能，并与原版对照。依赖对象后续变化的覆盖刷新和动态桥寻路尚未实现；专项及实际窗口尚未执行。
 
 ## 即时订单的物品目标待验证
 

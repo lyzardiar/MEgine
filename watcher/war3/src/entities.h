@@ -224,7 +224,7 @@ struct UnitState {
     bool hidden() const {return soulCaptor || concoction || phaseShifted() || !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
 };
 struct DestructableState {
-    std::uint32_t type=0;
+    std::uint32_t type=0,handle=0;
     size_t doodadIndex=SIZE_MAX;
     std::uint64_t lifeRevision=0;
     WorldPoint position;

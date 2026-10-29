@@ -5,7 +5,6 @@
 #include "renderer.h"
 #include <array>
 #include <DirectXMath.h>
-#include <optional>
 #include <span>
 namespace war3 {
 class SceneAssets;
@@ -61,7 +60,6 @@ public:
     size_t cameraCount() const;
     std::string sequenceName() const;
     ModelGeometry geometry() const;
-    std::optional<float> verticalSurface(float x,float y,const D3DMATRIX& world,const D3DMATRIX& view,std::uint64_t elapsed,std::uint64_t clock) const;
     float radius() const;
     float blendTime() const;
     std::uint64_t sequenceDuration() const;

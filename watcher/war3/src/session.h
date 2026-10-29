@@ -30,9 +30,11 @@
 #include "model_sequence.h"
 #include <variant>
 #include <deque>
+#include <unordered_map>
 
 namespace war3 {
 class PlayerSetup;
+class WalkableGeometry;
 struct LanSessionSetup;
 struct StartPriority {unsigned other=0,priority=0;};
 struct SessionStart {bool defined=false;std::array<jass::Real,2> position{};std::vector<StartPriority> priorities;};
@@ -146,6 +148,9 @@ class ScriptSession {
     bool inventoryAbilityReady(unsigned owner,const InventoryAbilityInfo& info);
     std::optional<std::pair<std::uint32_t,std::uint32_t>> requestedBook_;
     std::map<std::uint32_t,std::shared_ptr<DestructableState>> destructables_;
+    std::unordered_map<size_t,std::vector<std::uint32_t>> walkableSurfaces_;
+    std::map<std::string,std::shared_ptr<WalkableGeometry>> walkableModels_;
+    size_t walkableModelBytes_=0;
     std::optional<PlacedDefinitions> destructableDefinitions_;
     std::optional<SourceSettings> destructableStrings_;
     std::map<std::string,Image> pathImages_;
@@ -878,6 +883,7 @@ class ScriptSession {
     void loadDestructables();
     jass::Value createDestructable(std::uint32_t type,WorldPoint point,float z,float angle,std::array<float,3> scale,int variation,float lifePercent=100,bool visible=true,bool solid=true,int editorId=-1);
     void destructableFootprint(DestructableState& destructable);
+    void walkableSurfaceIndex(const DestructableState& destructable,bool add);
     void destructableLife(std::uint32_t id,float value,ScriptContext context={});
     void widgetDeath(std::uint32_t id,ScriptContext context={});
     std::uint32_t nearestTree(WorldPoint point,float range,std::uint32_t exclude=0);
@@ -1090,6 +1096,8 @@ public:
     void popCacheSync();
     void discardCacheSyncOutgoing();
     float destructableHeight(const DestructableState& state) const;
+    std::optional<float> walkableSurface(WorldPoint point,std::uint32_t exclude=0);
+    float surfaceHeight(WorldPoint point,std::uint32_t exclude=0);
     std::uint64_t destructableRevision() const {return destructableRevision_;}
     std::uint32_t placedDestructable(size_t index) const {return index<placedDestructables_.size()?placedDestructables_[index]:0;}
     const DoodadState* doodad(size_t index) const {return index<doodads_.size() && doodads_[index].active?&doodads_[index]:nullptr;}
