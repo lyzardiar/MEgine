@@ -2074,3 +2074,11 @@ Win32 Release 客户端及关联消费者程序已合并编译通过；其后 AI
 路径：`combat.h`、`session.h`、`session_attack_passives.cpp`、`session_damage.cpp`、`session_research.cpp`、`game_commands.cpp`、`tests/passive_tests.cpp`；面板消费共享武器伤害和护甲计算，范围与显示边界见 `unit-combat-panel.md`。
 
 阶段合并 passive 专项及真实窗口，验证单／多选切换、生产及货舱、四族和双武器、科技／装备／状态／光环、极值、回调移除、设备恢复和原版显示。专项尚未执行。
+
+## 静态单位类型查询待验证
+
+Win32 Release 客户端及相关 game-flow／research 消费者程序已合并编译通过；专项未执行。
+
+路径：`session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`；类型分类与未支持的运行态范围见 `unit-id-classification.md`。
+
+阶段生成 research 夹具并运行 `war3_research_tests`，验证源／自定义单位、继承、飞行、武器及类别，未知 ID、运行态类别与无创建副作用，并对照原版；专项尚未执行。

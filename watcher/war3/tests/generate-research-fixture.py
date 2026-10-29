@@ -85,7 +85,9 @@ def main():
     changes = [('gtib', 2, 0), ('gtim', 0, 0), ('gglb', 10, 0), ('gglm', 5, 0), ('glmb', 7, 0), ('glmm', 3, 0), ('gef2', 'rhpx', 0), ('gba2', 20, 0), ('gmo2', 20, 0), ('gef3', 'ratx', 0), ('gba3', 4, 0), ('gmo3', 4, 0), ('gnam', 'First', 1), ('gnam', 'Second', 2), ('gnam', 'Third', 3), ('greq', '', 2), ('greq', '', 3)]
     files['war3map.w3q'] = struct.pack('<III', 2, 0, 1) + b'RhmeR0T1' + struct.pack('<I', len(changes)) + b''.join(modification(field, value, b'R0T1', level) for field, value, level in changes)
     units = [(b'hbla', 'ures', 'R0T1,Rhar'), (b'hfoo', 'upgr', 'R0T1,Rhar')]
-    files['war3map.w3u'] = struct.pack('<II', 2, len(units)) + b''.join(unit + bytes(4) + struct.pack('<I', 1) + modification(field, value, unit) for unit, field, value in units) + struct.pack('<I', 0)
+    custom = b'z0u1'
+    custom_changes = [('utyp', 'Mechanical,Peon'), ('umvt', 'fly')]
+    files['war3map.w3u'] = struct.pack('<II', 2, len(units)) + b''.join(unit + bytes(4) + struct.pack('<I', 1) + modification(field, value, unit) for unit, field, value in units) + struct.pack('<I', 1) + b'hfoo' + custom + struct.pack('<I', len(custom_changes)) + b''.join(modification(field, value, custom) for field, value in custom_changes)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
