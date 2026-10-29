@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 脚本水面形变待验证
+
+路径：`src/world.h`、`src/session_world.cpp`、`src/terrain_layout.cpp`、`src/terrain_scene.h/.cpp`；说明见 `water-deformation.md`。`SetWaterDeforms` 控制水面顶点随地形形变及关闭后恢复，水面高度查询与网格共用角点，Win32 Release 客户端编译通过。阶段检查默认值、形变和恢复、开关切换、可见性、边缘、切图、GPU、性能及原版公式；水面交互及原版规则未完成。
+
 ## 过场强制字幕待验证
 
 路径：`src/session.h`、`src/session_match.cpp`、`src/game_cinematic_panel.cpp`；说明见 `game-options.md`。地图脚本可强制显示过场对话字幕并恢复用户设置，Win32 Release 客户端编译通过。阶段检查字幕选项开／关、强制开／关切换、过场进行中切换、切图复位、静音和真实战役，比较原版；实际运行尚未执行。

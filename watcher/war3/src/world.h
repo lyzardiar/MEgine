@@ -45,7 +45,7 @@ struct WorldEnvironment {
     bool fogBoundary=true;
     TerrainFog terrainFog,terrainFogDefaults;
     std::array<std::uint8_t,4> waterColor{};
-    bool cameraChanged=false,dayNightChanged=false,waterChanged=false;
+    bool cameraChanged=false,dayNightChanged=false,waterChanged=false,waterDeforms=false;
     std::optional<WorldPoint> cameraTarget,quickPosition;
     CameraMotion cameraMotion;
     std::array<CameraScalar,7> cameraFields{{{1650,1650},{5000,5000},{304,304},{70,70},{0,0},{90,90},{0,0}}};

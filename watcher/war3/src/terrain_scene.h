@@ -17,7 +17,7 @@ struct TerrainChunk {
     unsigned groundIndex=UINT_MAX;
     size_t dynamicTextureBytes=0;
     std::uint64_t deformationSeen=0;
-    bool deformationAffected=false;
+    bool deformationAffected=false,deformationEnabledSeen=false;
     Com<IDirect3DTexture9> dynamicTexture;
     Com<IDirect3DVertexBuffer9> vertexBuffer;
     Com<IDirect3DIndexBuffer9> indexBuffer;
