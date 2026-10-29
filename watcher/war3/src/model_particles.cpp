@@ -1,6 +1,7 @@
 // Author: MiYu. Per-instance classic PRE2 emission, ballistic particles, lifetime color/atlas and D3D9 head/tail batches.
 // Format and emission reference: flowtsohg/mdx-m3-viewer 2ff0bc00c6363f425016e23d88c0fb2929d3b3cc (MIT).
 #include "model_data.h"
+#include "scene_assets.h"
 #include <numeric>
 #include <cctype>
 
@@ -20,7 +21,7 @@ ModelInstance::ModelInstance()=default;
 ModelInstance::~ModelInstance()=default;
 ModelInstance::ModelInstance(ModelInstance&&) noexcept=default;
 ModelInstance& ModelInstance::operator=(ModelInstance&&) noexcept=default;
-size_t ModelInstance::particleCount() const {return data_?data_->particles.size():0;}
+size_t ModelInstance::particleCount() const {size_t count=data_?data_->particles.size():0;for(auto& child:children_)if(child)count+=child->particleCount();return count;}
 std::vector<ModelSoundEvent> Model::soundEvents(ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& world,const D3DMATRIX& view,bool refreshPose) const {
     auto& d=*data_;std::vector<ModelSoundEvent> result;if(d.events.empty() || d.sequences.empty())return result;if(!instance.data_)instance.data_=std::make_unique<ModelInstance::Data>();auto& state=*instance.data_;auto& sequence=d.sequences[d.sequence];auto duration=std::uint64_t(std::int64_t(sequence.end)-sequence.start);bool globalReset=state.soundOwner!=&d || clock<state.soundClock;bool reset=globalReset || state.soundSequence!=d.sequence;auto previous=reset?0:state.soundTime;bool initial=reset && elapsed<=200;bool loops=!(sequence.flags&1) && duration;bool eventPoseReady=!refreshPose;
     auto emit=[&](const ModelEvent& event){if(result.size()>=32 || event.node<0 || size_t(event.node)>=d.nodes.size() || size_t(event.node)>=d.world.size())return;if(!eventPoseReady){d.globalTime=clock;d.pose(elapsed,view,world,false);eventPoseReady=true;}auto position=XMVector3TransformCoord(XMLoadFloat4(&d.nodes[event.node].pivot),XMLoadFloat4x4(&d.world[event.node])*matrix(world));result.push_back({event.name,{XMVectorGetX(position),XMVectorGetY(position),XMVectorGetZ(position)}});};
@@ -31,7 +32,7 @@ std::vector<ModelSoundEvent> Model::soundEvents(ModelInstance& instance,std::uin
 }
 size_t Model::particleEmitters() const {return data_->emitters.size();}
 size_t Model::ribbonEmitters() const {return data_->ribbons.size();}
-float Model::particleLifetime() const {float life=0;for(auto& p:data_->emitters)life=std::max(life,p.life);for(auto& r:data_->ribbons)life=std::max(life,r.life);return life;}
+float Model::particleLifetime() const {thread_local std::vector<const Model*> visiting;if(visiting.size()>=32 || std::find(visiting.begin(),visiting.end(),this)!=visiting.end())return 0;struct Guard {std::vector<const Model*>& stack;~Guard(){stack.pop_back();}};visiting.push_back(this);Guard guard{visiting};float life=0;for(auto& p:data_->emitters)life=std::max(life,p.life);for(auto& r:data_->ribbons)life=std::max(life,r.life);if(data_->assets)for(auto& a:data_->attachments)if(!a.path.empty() && a.path!="_")if(auto child=data_->assets->cachedModel(a.path))life=std::max(life,child->particleLifetime());return life;}
 bool Model::hasAttachment(const std::string& name) const {auto wanted=attachmentName(name);for(auto& a:data_->attachments)if(attachmentName(data_->nodes[a.node].name)==wanted)return true;return false;}
 std::optional<D3DMATRIX> Model::attachment(const std::string& name,const D3DMATRIX& worldMatrix,std::uint64_t elapsed,const D3DMATRIX& viewMatrix) const {
     auto& d=*data_;d.pose(elapsed,viewMatrix,worldMatrix,false);auto wanted=attachmentName(name);for(auto& a:d.attachments)if(attachmentName(d.nodes[a.node].name)==wanted){if(XMVectorGetX(d.sample(a.visibility,elapsed,XMVectorReplicate(1)))<=0)return {};auto transform=XMLoadFloat4x4(&d.world[a.node]);auto p=XMLoadFloat4(&d.nodes[a.node].pivot);auto position=XMVector3TransformCoord(p,transform);transform.r[3]=XMVectorSetW(position,1);XMFLOAT4X4 out;XMStoreFloat4x4(&out,transform*matrix(worldMatrix));D3DMATRIX result;std::memcpy(&result,&out,sizeof(result));return result;}return {};

@@ -46,6 +46,7 @@ struct Geoset {
 }
 struct Model::Data {
     Renderer* renderer;
+    SceneAssets* assets=nullptr;
     std::vector<mdx::Sequence> sequences;
     std::vector<ModelEvent> events;
     std::vector<unsigned> globals;
@@ -54,6 +55,7 @@ struct Model::Data {
     std::vector<DirectX::XMFLOAT4X4> world;
     std::vector<mdx::Material> materials;
     std::vector<mdx::Texture> textures;
+    std::map<unsigned,Com<IDirect3DTexture9>> replacements;
     std::vector<mdx::Transform> textureAnimations;
     std::vector<mdx::Geoset> geosets;
     std::vector<mdx::ParticleEmitter2> emitters;

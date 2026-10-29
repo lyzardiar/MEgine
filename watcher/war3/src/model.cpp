@@ -80,7 +80,7 @@ void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
                     p.texture=unsigned(std::max(0,texture));while(source.left()){auto k=source.u32();Track* t=k==tag("KP2S")?&p.speedTrack:k==tag("KP2R")?&p.variationTrack:k==tag("KP2L")?&p.latitudeTrack:k==tag("KP2G")?&p.gravityTrack:k==tag("KP2E")?&p.rateTrack:k==tag("KP2N")?&p.widthTrack:k==tag("KP2W")?&p.lengthTrack:k==tag("KP2V")?&p.visibility:nullptr;if(!t)throw std::runtime_error("Unknown PRE2 animation");*t=track(source,1);}emitters.push_back(std::move(p));
                 }else if(kind==tag("RIBB")){
                     RibbonEmitter e;e.node=unsigned(nodes.size()-1);e.above=source.f32();e.below=source.f32();e.alpha=source.f32();e.color=vector(source,3);e.life=source.f32();e.slot=source.u32();e.rate=source.u32();e.rows=source.u32();e.columns=source.u32();auto material=source.i32();e.gravity=source.f32();if(material<0 || e.life<0 || e.life>3600 || e.rate>100000 || e.rows>1024 || e.columns>1024)throw std::runtime_error("MDX ribbon definition exceeds bounds");e.material=unsigned(material);while(source.left()){auto k=source.u32();Track* t=k==tag("KRHA")?&e.aboveTrack:k==tag("KRHB")?&e.belowTrack:k==tag("KRAL")?&e.alphaTrack:k==tag("KRCO")?&e.colorTrack:k==tag("KRTX")?&e.slotTrack:k==tag("KRVS")?&e.visibility:nullptr;if(!t)throw std::runtime_error("Unknown ribbon animation");*t=track(source,k==tag("KRCO")?3:1,k==tag("KRTX"));}ribbons.push_back(std::move(e));
-                }else if(kind==tag("ATCH")){Attachment a;a.node=unsigned(nodes.size()-1);a.path=source.string(260);a.id=source.u32();while(source.left()){source.expect(tag("KATV"));a.visibility=track(source,1);}if(!a.path.empty())log.write("mdx_attachment_child_pending="+a.path);attachments.push_back(std::move(a));}
+                }else if(kind==tag("ATCH")){Attachment a;a.node=unsigned(nodes.size()-1);a.path=source.string(260);a.id=source.u32();while(source.left()){source.expect(tag("KATV"));a.visibility=track(source,1);}attachments.push_back(std::move(a));}
                 else if (outer) source.take(source.left()); }
         }
     }
@@ -120,8 +120,9 @@ Model::~Model() = default;
 std::uint64_t Model::sequenceDuration() const {return data_->sequences.empty()?0:std::uint64_t(data_->sequences[data_->sequence].end-data_->sequences[data_->sequence].start);}
 float Model::radius() const {return data_->radius;}
 bool Model::sequenceLoops() const {return !data_->sequences.empty() && !(data_->sequences[data_->sequence].flags&1);}
-void Model::upload(Renderer& renderer,SceneAssets& assets) {data_->renderer=&renderer;for(auto& texture:data_->textures)texture.gpu=assets.texture(texture.path.empty()?"@white":texture.path);}
-void Model::replace(unsigned id,IDirect3DTexture9* value) {for(auto& texture:data_->textures)if(texture.replacement==id)texture.gpu=value;}
+void Model::upload(Renderer& renderer,SceneAssets& assets) {data_->renderer=&renderer;data_->assets=&assets;for(auto& texture:data_->textures)texture.gpu=assets.texture(texture.path.empty()?"@white":texture.path);}
+std::vector<std::string> Model::attachmentModels() const {std::vector<std::string> result;for(auto& a:data_->attachments)if(!a.path.empty() && a.path!="_")result.push_back(a.path);return result;}
+void Model::replace(unsigned id,IDirect3DTexture9* value) {data_->replacements[id]=value;for(auto& texture:data_->textures)if(texture.replacement==id)texture.gpu=value;}
 bool Model::sequence(const std::string& prefix) {
     auto key=prefix;for(auto& c:key)c=char(std::tolower(static_cast<unsigned char>(c)));auto found=data_->sequenceNames.find(key);if(found==data_->sequenceNames.end())found=data_->sequenceNames.emplace(std::move(key),findSequence(data_->sequences,prefix)).first;if(found->second<0)return false;data_->sequence=unsigned(found->second);return true;
 }

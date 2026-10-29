@@ -10,6 +10,10 @@ class SceneAssets;
 class ModelInstance {
     struct Data;
     std::unique_ptr<Data> data_;
+    const void* childOwner_=nullptr;
+    std::vector<std::unique_ptr<ModelInstance>> children_;
+    std::vector<std::uint64_t> childStarts_;
+    std::vector<bool> childVisible_;
     friend class Model;
 public:
     ModelInstance();
@@ -50,6 +54,7 @@ public:
     size_t particleEmitters() const;
     size_t ribbonEmitters() const;
     bool hasAttachment(const std::string& name) const;
+    std::vector<std::string> attachmentModels() const;
     float particleLifetime() const;
     bool sequenceLoops() const;
     std::optional<D3DMATRIX> attachment(const std::string& name,const D3DMATRIX& world,std::uint64_t elapsed,const D3DMATRIX& view) const;

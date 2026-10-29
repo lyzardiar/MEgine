@@ -1,5 +1,6 @@
 // Author: MiYu. Source-space skeletal animation and classic D3D9 material submission.
 #include "model_data.h"
+#include "scene_assets.h"
 #include <cmath>
 #include <string_view>
 
@@ -57,7 +58,7 @@ void Model::draw(std::uint64_t elapsed, float aspect, bool twoSided,std::uint64_
     float roll=XMVectorGetX(d.sample(d.cameraRoll,elapsed,XMVectorZero()));auto direction=XMVector3Normalize(target-eye);auto up=XMVector3Rotate(XMVectorSet(0,0,1,0),XMQuaternionRotationAxis(direction,roll));auto view=XMMatrixLookAtRH(eye,target,up);XMFLOAT4X4 v,p,w;XMStoreFloat4x4(&v,view);XMStoreFloat4x4(&p,XMMatrixPerspectiveFovRH(d.fov,aspect,d.nearPlane,d.farPlane));XMStoreFloat4x4(&w,XMMatrixIdentity());D3DMATRIX dv,dp,dw;std::memcpy(&dv,&v,sizeof(dv));std::memcpy(&dp,&p,sizeof(dp));std::memcpy(&dw,&w,sizeof(dw));draw(elapsed,dv,dp,dw,twoSided,0xffffffff,nullptr,clock);
 }
 void Model::draw(std::uint64_t elapsed,const D3DMATRIX& sourceView,const D3DMATRIX& projection,const D3DMATRIX& worldMatrix,bool twoSided,DWORD instanceColor,ModelInstance* instance,std::uint64_t clock,bool emit,bool geometry,std::span<const ModelLookAt> lookAt) {
-    if(!(instanceColor>>24))return;auto& d=*data_;d.globalTime=clock==UINT64_MAX?elapsed:clock;if(!d.renderer)throw std::runtime_error("Model has no rendering device");auto device=d.renderer->device();device->SetTransform(D3DTS_VIEW,&sourceView);device->SetTransform(D3DTS_PROJECTION,&projection);device->SetTransform(D3DTS_WORLD,&worldMatrix);
+    if(!(instanceColor>>24))return;thread_local std::vector<const Model*> drawing;if(drawing.size()>=32 || std::find(drawing.begin(),drawing.end(),this)!=drawing.end())return;struct Guard {std::vector<const Model*>& stack;~Guard(){stack.pop_back();}};drawing.push_back(this);Guard guard{drawing};auto& d=*data_;d.globalTime=clock==UINT64_MAX?elapsed:clock;if(!d.renderer)throw std::runtime_error("Model has no rendering device");auto device=d.renderer->device();device->SetTransform(D3DTS_VIEW,&sourceView);device->SetTransform(D3DTS_PROJECTION,&projection);device->SetTransform(D3DTS_WORLD,&worldMatrix);
     d.pose(elapsed,sourceView,worldMatrix,true,lookAt);
     device->SetFVF(D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1);
     device->SetTextureStageState(0,D3DTSS_COLOROP,D3DTOP_MODULATE); device->SetTextureStageState(0,D3DTSS_COLORARG1,D3DTA_TEXTURE); device->SetTextureStageState(0,D3DTSS_COLORARG2,D3DTA_DIFFUSE);
@@ -84,6 +85,11 @@ void Model::draw(std::uint64_t elapsed,const D3DMATRIX& sourceView,const D3DMATR
         auto result = device->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST,0,static_cast<UINT>(g.sampled.size()),static_cast<UINT>(g.indices.size()/3),g.indices.data(),D3DFMT_INDEX16,g.sampled.data(),sizeof(Vertex)); if (FAILED(result)) throw std::runtime_error("MDX draw failed");
     }
     particles(elapsed,clock==UINT64_MAX?elapsed:clock,sourceView,worldMatrix,instanceColor,instance?*instance:d.defaultInstance,emit);
+    if(d.assets && !d.attachments.empty()){
+        auto& state=instance?*instance:d.defaultInstance;auto now=clock==UINT64_MAX?elapsed:clock;if(state.childOwner_!=&d){state.children_.clear();state.childStarts_.clear();state.childVisible_.clear();state.childOwner_=&d;}state.children_.resize(d.attachments.size());state.childStarts_.resize(d.attachments.size());state.childVisible_.resize(d.attachments.size());XMFLOAT4X4 sourceWorld;std::memcpy(&sourceWorld,&worldMatrix,sizeof(sourceWorld));auto world=XMLoadFloat4x4(&sourceWorld);
+        for(size_t i=0;i<d.attachments.size();++i){auto& a=d.attachments[i];if(a.path.empty() || a.path=="_")continue;auto child=d.assets->cachedModel(a.path);if(!child || std::find(drawing.begin(),drawing.end(),child)!=drawing.end())continue;for(unsigned replacement:{1u,2u}){auto found=d.replacements.find(replacement);child->replace(replacement,found==d.replacements.end()?d.assets->cachedTexture("@white"):found->second.Get());}float visibility=XMVectorGetX(d.sample(a.visibility,elapsed,XMVectorReplicate(1)));bool visible=std::isfinite(visibility) && visibility>0 && geometry;if(visible && (!state.childVisible_[i] || now<state.childStarts_[i])){state.children_[i]=std::make_unique<ModelInstance>();state.childStarts_[i]=now;}state.childVisible_[i]=visible;if(!state.children_[i])continue;auto age=now>=state.childStarts_[i]?now-state.childStarts_[i]:0;bool birth=child->sequence("Birth");auto birthDuration=birth?child->sequenceDuration():0;if(birth && age<birthDuration){}else if(child->sequence("Stand"))age-=std::min(age,birthDuration);else if(!birth)child->sequenceIndex(0);auto transform=XMLoadFloat4x4(&d.world[a.node]);auto pivot=XMLoadFloat4(&d.nodes[a.node].pivot);auto position=XMVector3TransformCoord(pivot,transform);transform.r[3]=XMVectorSetW(position,1);XMFLOAT4X4 result;XMStoreFloat4x4(&result,transform*world);D3DMATRIX childWorld;std::memcpy(&childWorld,&result,sizeof(childWorld));auto alpha=visible?unsigned(std::clamp(visibility,0.f,1.f)*float(instanceColor>>24)):(instanceColor>>24);DWORD tint=(instanceColor&0x00ffffff)|(alpha<<24);child->draw(age,sourceView,projection,childWorld,twoSided,tint,state.children_[i].get(),now,emit && visible,visible);
+        }
+    }
     device->SetRenderState(D3DRS_ALPHATESTENABLE,FALSE); device->SetRenderState(D3DRS_CULLMODE,D3DCULL_NONE);
 }
 }

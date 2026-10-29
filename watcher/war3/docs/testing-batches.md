@@ -1,8 +1,16 @@
 # 独立客户端测试队列
 
+## MDX 附件子模型待验证
+
+路径：`model.h/.cpp`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`scene_assets.h/.cpp`；说明见 `effects.md`。阶段以 NEBirth 等原模型验证节点动画／KATV、Birth 与 Stand、多个父实例、嵌套与循环、队伍色、子粒子排空、缺失模型及纹理、异步移交／GPU 恢复／切图释放和性能，并对照原版画面。独立菜单模型的附件、离屏时钟和子模型声音仍待实现；Win32 Release 客户端已编译；专项及实际 GPU 画面尚未执行。
+
+## 净化物品树木目标待验证
+
+路径：`session.h`、`session_item_use.cpp`、`game_view.cpp`、`lan_action_encoder.cpp`、`lan_simulation.cpp`、`tests/generate-control-fixture.py`、`tests/control_tests.cpp`、`tests/order_queue_tests.cpp`；说明见 `targeted-spell-items.md`。阶段生成 control 夹具并运行 `war3_control_tests <data-root> <fixture> item-tree`，验证地图覆盖、目标筛选、技能事件和破坏物状态；合并 order-queue 验证两种报文及排队，实窗验证树与单位拾取、不可见／死亡／无效目标及双端同步。Win32 Release 客户端、control 与 order-queue 消费者已编译；专项、实际窗口和原版对照尚未执行。
+
 ## 黑暗转换及单位目标法术物品待验证
 
-路径：`spells.h`、`entities.h`、`session_spell_info.cpp`、`session_control_spells.cpp`、`session_spell_effects.cpp`、`session_effects.cpp`、`session_unit_forms.cpp`、`session_spells.cpp`、`session_item_use.cpp`、`tests/control_tests.cpp`；说明见 `dark-conversion.md` 和 `targeted-spell-items.md`。阶段验证 ANdc／SNdc 的施法中断、种族筛选、转换时间、驱散／死亡／回调和僵尸归属；验证 thdm／schl／shtm 的目标、冷却／消耗、连续弹跳、光环、效果及联机。净化物品的地图覆盖树目标尚未支持。Win32 Release 客户端及 control 消费者已编译；专项、实际对局和原版对照尚未执行。
+路径：`spells.h`、`entities.h`、`session_spell_info.cpp`、`session_control_spells.cpp`、`session_spell_effects.cpp`、`session_effects.cpp`、`session_unit_forms.cpp`、`session_spells.cpp`、`session_item_use.cpp`、`tests/control_tests.cpp`；说明见 `dark-conversion.md` 和 `targeted-spell-items.md`。阶段验证 ANdc／SNdc 的施法中断、种族筛选、转换时间、驱散／死亡／回调和僵尸归属；验证 thdm／schl／shtm 的目标、冷却／消耗、连续弹跳、光环、效果及联机。Win32 Release 客户端及 control 消费者已编译；专项、实际对局和原版对照尚未执行。
 
 ## 复活／操纵死尸卷轴与旋风魔杖待验证
 

@@ -17,7 +17,7 @@ class SceneAssets {
     std::map<std::string,std::unique_ptr<Model>> models_;
     size_t imageBytes_=0;
     std::function<void()> check_;
-    std::set<std::string> externalTextures_,readyModels_;
+    std::set<std::string> externalTextures_,readyModels_,missingModels_;
 public:
     explicit SceneAssets(Archives& resources,std::function<void()> check={},std::set<std::string> externalTextures={});
     ~SceneAssets();
