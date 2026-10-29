@@ -1068,6 +1068,10 @@ public:
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986,std::optional<WorldPoint> destination={});
     bool stopUnit(std::uint32_t handle,bool hold=false);
     bool targetOrder(std::uint32_t source,std::uint32_t target,std::uint32_t order=851971);
+    bool attackDestructable(std::uint32_t source,std::uint32_t target);
+    std::optional<unsigned> destructableWeapon(const UnitState& source,const DestructableState& target);
+    void combatDestructable(std::uint32_t source,double delta);
+    void launchDestructableAttack(std::uint32_t source,std::uint32_t target,unsigned slot);
     bool attackUnit(std::uint32_t source,std::uint32_t target,bool forced=true,std::uint32_t ability=0);
     bool attackMove(std::uint32_t source,WorldPoint target,bool patrol=false,std::optional<WorldPoint> destination={});
     bool hasWeapon(std::uint32_t unit);

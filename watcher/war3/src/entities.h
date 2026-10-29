@@ -232,7 +232,7 @@ struct DestructableState {
     std::array<float,3> scale{1,1,1};
     int variation=0,editorId=-1,cliffHeight=0;
     bool tree=false,visible=true,invulnerable=false,removed=false,solid=true,initialDead=false,walkable=false;
-    std::string model,name,texture,alivePath,deadPath,animation;
+    std::string model,name,texture,alivePath,deadPath,animation,targetTypes;
     unsigned replacement=0;
     std::vector<PathCell> footprint;
     std::vector<CliffCell> cliffOverlay;

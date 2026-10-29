@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 可破坏物武器攻击待验证
+
+路径：`CMakeLists.txt`、`src/combat.h`、`src/entities.h`、`src/session.h`、`src/session_combat.cpp`、`src/session_combat_orders.cpp`、`src/session_combat_destructable.cpp`、`src/session_destructables.cpp`、`src/session_projectiles.cpp`、`src/session_network_identity.cpp`；说明见 `destructable-weapon-attacks.md`。阶段检查四族武器、门／障碍／树、前摇与弹道、目标失效及复活、命令取消和排队、联机、地图覆盖、原版伤害及性能；范围、弹跳、护甲及部分武器被动尚待完善。
+
 ## 提示文本滚动边界待验证
 
 路径：`src/glue.h/.cpp`、`src/game_flow_ui.cpp`；说明见 `game-tips.md`。阶段检查短文本和多行文本的滚轮边界、切换提示、字体尺寸、中文与地图资源覆盖，并核对其他文本测量消费者。

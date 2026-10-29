@@ -20,19 +20,19 @@ struct SiegeFire {PassiveInfo definition;std::uint32_t source=0;unsigned owner=0
 struct AttackWindup {std::uint32_t target=0;unsigned weapon=0;double due=0;std::uint64_t revision=0;float stealthDamage=0;bool backstab=false;std::uint32_t ability=0;};
 struct ItemMoveOrder {enum class Kind {Point,Unit,Slot};Kind kind=Kind::Point;std::uint32_t item=0,target=0;unsigned player=0,slot=0;WorldPoint point;};
 struct CombatOrder {
-    std::uint32_t target=0,follow=0,pickup=0,board=0,attackAbility=0,rechargeAbility=0,lureTarget=0;
+    std::uint32_t target=0,widgetTarget=0,follow=0,pickup=0,board=0,attackAbility=0,rechargeAbility=0,lureTarget=0;
     std::optional<WorldPoint> attackMove,patrolStart,patrolEnd;
     std::optional<ItemMoveOrder> itemMove;
     WorldPoint home;
     bool forced=false,automatic=false,returning=false,targetInRange=false,targetAcquiredPending=false;
     double nextAttack=0,repath=0,animationEnd=0,leash=0;
     float animationSpeed=1;
-    std::uint64_t revision=0;
+    std::uint64_t revision=0,widgetTargetRevision=0;
     std::optional<AttackWindup> windup;
 };
 struct CombatProjectile {
     WeaponDefinition definition;
-    std::uint64_t id=0,lavaTicket=0;
+    std::uint64_t id=0,lavaTicket=0,targetLifeRevision=0;
     std::uint32_t source=0,target=0,sourceType=0,owner=0,ability=0,visualAbility=0,visualLevel=0;
     unsigned weapon=0,abilityLevel=0;
     std::uint32_t orbProc=0;
@@ -41,7 +41,7 @@ struct CombatProjectile {
     WorldPoint start,position,endpoint;
     double born=0;
     std::vector<std::uint32_t> visited;
-    bool neverMiss=false,forcedMiss=false,reflected=false;
+    bool neverMiss=false,forcedMiss=false,reflected=false,destructableTarget=false;
     std::vector<PassiveInfo> procs;
 };
 }
