@@ -35,7 +35,7 @@ private:
     struct ExperimentalSpell {PlayerCommand command;};
     struct ExperimentalUnit {PlayerCommand command;std::uint64_t ticket=0;};
     struct ExperimentalDialog {unsigned player;std::uint32_t dialog,button;std::uint64_t generation;};
-    struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0,expectedItem=0,itemSlot=0;bool constructionCancel=false,subgroup=false,itemOrder=false,itemById=false,queued=false;};
+    struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0,expectedItem=0,itemSlot=0;bool cancelOrder=false,subgroup=false,itemOrder=false,itemById=false,queued=false;};
     using Event=std::variant<LanActionPause,LanActionResume,LanActionCacheSync,Escape,Menu,Chat,SelectionSync,Purchase,Departure,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable,MinimapSignal,GroundItem,ExperimentalSpell,ExperimentalUnit,ExperimentalDialog>;
     ScriptSession& session_;
     ObjectResolver resolve_;

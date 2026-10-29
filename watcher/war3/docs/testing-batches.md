@@ -2986,3 +2986,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 亡灵第五关计时窗口句柄（待验证）
 
 路径：`src/session_dialogs.cpp`。独立探针通过有效、空和已销毁窗口的定向检查，并在人工完成任务条件后进入胜利对话；自然战斗、真实窗口和跨关流程待集中验证，见[计时窗口句柄](campaign-undead05-timer-dialog.md)。
+
+### 局域网研究与训练取消（待验证）
+
+路径：`src/lan_action_encoder.cpp`、`src/lan_simulation.*`、`tests/order_queue_tests.cpp`。经典动作接入当前研究与训练取消及唯一子组选区；集中执行新增断言，核对任务变化、退款与事件、双客户端和原版报文，见[研究与训练取消](lan-research-cancellation.md)。
