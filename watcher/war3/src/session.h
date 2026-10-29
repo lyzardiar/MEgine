@@ -1009,6 +1009,9 @@ public:
     unsigned cargoCapacity(std::uint32_t transport);
     unsigned cargoUsed(std::uint32_t transport);
     unsigned cargoCost(std::uint32_t passenger);
+    unsigned mineCargoCapacity(std::uint32_t mine);
+    std::vector<std::uint32_t> mineCargoPassengers(std::uint32_t mine);
+    bool unloadMineWorker(std::uint32_t mine,std::uint32_t worker);
     bool boardUnit(std::uint32_t passenger,std::uint32_t transport,std::uint32_t order=851971);
     bool unloadUnit(std::uint32_t transport,std::uint32_t passenger);
     bool unloadAll(std::uint32_t transport,WorldPoint point);

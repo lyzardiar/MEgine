@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 纠缠金矿矿工面板与释放待验证
+
+路径：`src/session.h`、`src/session_harvest.cpp`、`src/session_combat_orders.cpp`、`src/player_commands.cpp`、`src/lan_action_encoder.cpp`、`src/game_transport.cpp`；说明见 `transport.md`。矿工清单与容量读取现有采集状态和源能力，肖像点击连接单个释放及实验联机命令；Win32 Release 客户端编译通过。阶段核对多人采矿、容量与对象覆盖、落点受阻、矿井／矿工死亡和易主、命令回调重入、肖像操作、双客户端同步及原版界面；`IsUnitLoaded` 与装载事件的原版语义尚未核实。
+
 ## 月亮井水位待验证
 
 路径：`src/entities.h`、`src/effects.h`、`src/session_restoration.cpp`、`src/session_food.cpp`、`src/game_effects.cpp`；说明见 `restoration.md`。水面模型及高度连接能力配置和实时魔法量，单位移除时回收效果；Win32 Release 客户端编译通过。阶段核对空／满魔法、种族和自定义模型、建造／升级／死亡／隐藏、能力更改、回调时序、句柄与联机同步、切图释放以及原版画面；真实运行与原版对照尚未执行。
