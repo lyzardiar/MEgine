@@ -15,7 +15,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
         {"AEev",PassiveKind::Evasion,false},{"ANca",PassiveKind::Cleave,false},{"AUts",PassiveKind::SpikedCarapace,false},
         {"Amin",PassiveKind::Mine,false},{"Adda",PassiveKind::DeathDamage,false},
         {"Apiv",PassiveKind::PermanentInvisibility,false},{"Adet",PassiveKind::Detection,false},
-        {"Atru",PassiveKind::Detection,false},{"Agyv",PassiveKind::Detection,false},{"Adts",PassiveKind::Detection,false},
+        {"Atru",PassiveKind::Detection,false},{"Agyv",PassiveKind::Detection,false},{"Adts",PassiveKind::Detection,false},{"Abdt",PassiveKind::Detection,false},
         {"Agho",PassiveKind::Ghost,false},{"Aexh",PassiveKind::Exhume,false},
         {"AOre",PassiveKind::Reincarnation,false},{"ACrn",PassiveKind::Reincarnation,false},
         {"AIrc",PassiveKind::Reincarnation,false},{"Aphx",PassiveKind::PhoenixMorph,false},{"Apxf",PassiveKind::PhoenixFire,false},{"ANbs",PassiveKind::AttackModifier,false},{"ANic",PassiveKind::AttackModifier,false},{"Alit",PassiveKind::LightningAttack,false},{"Aasl",PassiveKind::SlowAura,true},

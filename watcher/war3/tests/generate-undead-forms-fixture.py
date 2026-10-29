@@ -2,6 +2,7 @@
 import argparse
 import importlib.util
 import io
+import struct
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location('fixture', Path(__file__).with_name('generate-live-world-fixture.py'))
@@ -57,6 +58,7 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
+    files['war3map.w3a'] = struct.pack('<III', 2, 0, 1) + b'AbdtA0BD' + struct.pack('<I', 1) + b'Det1' + struct.pack('<IIII', 0, 1, 1, 2) + b'A0BD'
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))

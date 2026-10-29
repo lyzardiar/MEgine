@@ -2034,3 +2034,11 @@ Win32 Release 客户端与关联会话／亡灵形态消费者程序已合并编
 路径：`jass_runtime.h/.cpp`、`script_state.h`、`session_callbacks.cpp`、`tests/session_tests.cpp`；标量 real 变量赋值通过实际 VM 存储入口派发阈值触发器，详细边界见 `script-events.md`。
 
 阶段运行 `war3_session_tests.exe <tmp/docs-artifacts/war3/jass/session-variable-events.json>`，并验证全部比较符、赋值重入／睡眠、多个监听、启停／销毁、原值已满足、无效变量与真实自定义地图及联机同步，对照原版事件时序与边界。当前专项尚未执行。
+
+## 钻地侦测能力待验证
+
+Win32 Release 客户端与关联会话／亡灵形态消费者程序已合并编译通过；专项未执行。
+
+路径：`session_passive_info.cpp`、`tests/generate-undead-forms-fixture.py`、`tests/undead_forms_tests.cpp`；Abdt 家族接入既有侦测网格及自定义覆盖，源数据与当前规则见 `burrow-detection.md`。
+
+阶段按 undead-forms 夹具及消费者验证源零掩码和自定义位、增删能力、移动、共享视野、潜地目标及地图覆盖，并核对原版能力来源、掩码语义、界面与性能。专项及原版一致性尚未验证。
