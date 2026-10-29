@@ -81,6 +81,7 @@ class ScriptSession {
     std::vector<std::uint32_t> localNetworkObjects_;
     std::vector<std::uint32_t> localNetworkUiObjects_;
     std::vector<std::uint32_t> eventHandles_,timerHandles_;
+    std::map<std::uint32_t,std::vector<std::uint32_t>> unitStateObservers_;
     jass::Runtime runtime_;
     bool failed_=false,configured_=false;
     std::optional<unsigned> localPlayer_;
@@ -941,6 +942,8 @@ class ScriptSession {
     void rescueTick();
     float turnUnit(UnitState& unit,float target,double delta);
     void unitLife(jass::Value handle,jass::Real value,std::uint32_t killer=0,bool bounty=true);
+    void observeUnitStates(std::uint32_t handle);
+    void observeUnitStatesTick();
     void playerChange(unsigned player,std::uint32_t field,int before,int after,bool alliance);
     void tick(double delta);
     void clockChange(jass::Real before,jass::Real after,bool cyclic);

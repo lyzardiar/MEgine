@@ -21,7 +21,38 @@ unit probe_filter_unit=null
 integer probe_filter_calls=0
 integer probe_filter_events=0
 integer probe_filter_denied_events=0
+unit probe_state_unit=null
+integer probe_state_life=0
+integer probe_state_mana=0
+integer probe_state_max_life=0
+integer probe_state_max_mana=0
 endglobals
+function ProbeStateEvent takes nothing returns nothing
+    if GetTriggerUnit()!=probe_state_unit or GetTriggerEventId()!=EVENT_UNIT_STATE_LIMIT then
+        call ExecuteFunc("MatchFailure_unit_state_context")
+    endif
+    if GetEventUnitState()==UNIT_STATE_LIFE then
+        set probe_state_life=probe_state_life+1
+        if probe_state_life==1 then
+            call SetUnitState(probe_state_unit,UNIT_STATE_LIFE,80)
+        endif
+    elseif GetEventUnitState()==UNIT_STATE_MANA then
+        set probe_state_mana=probe_state_mana+1
+    elseif GetEventUnitState()==UNIT_STATE_MAX_LIFE then
+        set probe_state_max_life=probe_state_max_life+1
+    elseif GetEventUnitState()==UNIT_STATE_MAX_MANA then
+        set probe_state_max_mana=probe_state_max_mana+1
+    endif
+endfunction
+function ProbeStateSetup takes unit whichUnit returns nothing
+    local trigger t=CreateTrigger()
+    set probe_state_unit=whichUnit
+    call TriggerRegisterUnitStateEvent(t,whichUnit,UNIT_STATE_LIFE,LESS_THAN,50)
+    call TriggerRegisterUnitStateEvent(t,whichUnit,UNIT_STATE_MANA,LESS_THAN,40)
+    call TriggerRegisterUnitStateEvent(t,whichUnit,UNIT_STATE_MAX_LIFE,LESS_THAN,200)
+    call TriggerRegisterUnitStateEvent(t,whichUnit,UNIT_STATE_MAX_MANA,LESS_THAN,70)
+    call TriggerAddAction(t,function ProbeStateEvent)
+endfunction
 function ProbeUnitFilter takes nothing returns boolean
     set probe_filter_calls=probe_filter_calls+1
     return GetFilterUnit()==probe_filter_unit and GetTriggerUnit()==probe_filter_unit

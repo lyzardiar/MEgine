@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 单位状态事件待验证
+
+路径：script_state、session_callbacks、session_entities、session_tick、game_flow_tests、generate-game-flow-fixture、unit-state-events。单位状态阈值事件连接脚本写入、非致死生命变化与固定步补查。Win32 Release 客户端及专项程序增量编译通过；阶段先执行 `tests/generate-game-flow-fixture.py --data-root <data-root>`，再执行 `war3_game_flow_tests.exe <data-root> <fixture.w3m>`，核对同一模拟步内跨越／恢复、死亡和触发器重入及原版时序；内部直接写入可能合并跨越，尚未实现全部即时语义。
+
 ## 脚本联盟查询待验证
 
 路径：session_match、game_flow_tests、script-alliance。`IsPlayerAlly`／`IsPlayerEnemy` 和 `IsUnitAlly`／`IsUnitEnemy` 查询当前单向联盟状态；查询方向和无效对象分支已核对固定版原件的静态指令。Win32 Release 客户端与专项程序增量编译通过；阶段按 `tests/generate-game-flow-fixture.py --data-root <data-root>` 和 `war3_game_flow_tests.exe <data-root> <fixture.w3m>` 执行，核对非对称联盟、空对象、移除单位、事件重入及 DotA／WarChasers 实际脚本。
