@@ -9,6 +9,7 @@
 - D3D9消费头/尾四边形、模型空间、线发射、XYQuad、远近排序、分段颜色/尺寸/透明度、图集区间/重复和五种源过滤模式。视觉随机不进入游戏模拟随机数。
 - ATCH保存名字/ID/可见性及源节点变换，挂点按目标当前动画/世界变换求值；origin使用模型原点，未找到的其他挂点记录明确诊断。附件Path指定的子模型仍待实现。
 - AddSpecialEffect、AddSpecialEffectLoc、AddSpecialEffectTarget、DestroyEffect提供实际effect句柄、模型/位置或widget挂接、销毁状态及typed hashtable。句柄销毁后，场景保留Death动画或现有粒子排空所需的状态，再清理实例。
+- GetAbilityEffect／GetAbilitySound 按技能 ID 查询源配置及地图覆盖；AddSpellEffect 的坐标、地点和目标形式按技能配置创建实际场景特效，沿用 effect 句柄及销毁生命周期。闪电类型需通过独立闪电接口创建；索引、空值、原版行为和地图实际运行待阶段验证。
 - 法术CasterArt、TargetArt、EffectArt和状态buff的TargetArt进入同一源模型消费者；状态刷新保留实例，驱散/到期/死亡释放状态视觉。已实现技能的MissileArt/弧度与波形模型连接实时位置、方向、源出生高度/命中高度及独立时间。
 - 选中英雄的技能特效模型、实际生效模型和纹理通过现有后台读取/分帧上传队列准备。原资源只读，内存直接读取；没有新增解包或转换目录。
 
