@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## AI 防御与疾风步待验证
+
+路径：`src/session.h`、`src/session_ai.cpp`、`src/session_ai_armies.cpp`；说明见 `ai.md`。Win32 Release 客户端增量编译通过，专项尚未运行。阶段在对战夹具及实际对局检查近／远程交战、单位防御开启／关闭、狂暴费用与冷却、英雄低生命疾风步及撤退、技能禁用／暂停、目标切换、回调重入、双端同步和大地图性能；同原版比较决策和时序。当前距离与生命阈值属于实现策略。阶段需扩展 `tests/generate-ai-control-fixture.py` 和 `war3_ai_control_tests` 覆盖上述行为；原图 AI 初始化可使用 `war3_ai_tests <data-root> <map> [race] [seconds]`。
+
 ## 灵魂宝石待验证
 
 路径：`src/entities.h`、`src/session.h`、`src/spells.h`、`src/session_soul.cpp`、`src/session_item_use.cpp`、`src/session_inventory.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_fog.cpp`、`src/session_callbacks.cpp`、`src/session_food.cpp`、`src/session_entities.cpp`、`src/session_network_identity.cpp`、`CMakeLists.txt`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`；说明见 `soul-gem.md`。Win32 Release 客户端与 control 目标编译通过，`item-soul` 最小检查 1 通过／0 失败，覆盖满库存替换、能力移除、拾取事件删除物品重入和持有者死亡；未加载 Game.dll。阶段核对施法与失效、物品转交／销毁、释放位置与路径、暂停修改、目标易主／死亡、回调重入、战争迷雾、敌方视野与原版时序；合并真实地图、双端和资源释放验证。

@@ -212,6 +212,7 @@ class ScriptSession {
     void aiSuicide(ScriptAI& ai,int quantity,std::uint32_t type,int targetPlayer);
     void aiSuicideTick(ScriptAI& ai);
     void aiCombatSpells(ScriptAI& ai,std::uint32_t unit);
+    bool aiUnitDefense(ScriptAI& ai,std::uint32_t unit,const std::map<std::uint32_t,std::vector<std::uint32_t>>& attackers);
     void aiTeleportCaptain(ScriptAI& ai,WorldPoint point);
     void aiUnsummon(ScriptAI& ai,std::uint32_t target);
     bool unsummonTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell);
