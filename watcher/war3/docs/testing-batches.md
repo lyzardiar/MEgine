@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 单位与编组脚本入口待验证
+
+路径：session_collections、session_entities、session_game、game_flow_tests、campaign-flow。类型及地点范围的计数枚举复用现有编组筛选；按名称创建单位、技能等级增减、默认索敌范围及物品无敌查询连接实际状态。Win32 Release 客户端与专项程序增量编译通过；新增专项未执行，阶段按 `tests/generate-game-flow-fixture.py --data-root <data-root>` 和 `war3_game_flow_tests.exe <data-root> <fixture.w3m>` 验证，并核对 DotA marketplace 枚举、过滤器重入、数量边界、名称／自定义 ID、能力上限和原版语义。
+
 ## 脚本技能特效与声音查询待验证
 
 路径：session_effects、spell_tests、effects。技能 ID 和字符串查询源特效／声音配置，坐标、地点及目标形式的 AddSpellEffect 创建实际特效并由现有效果生命周期处理；闪电需使用独立接口。Win32 Release 产品增量编译通过；阶段按 spells.md 的夹具及 war3_spell_tests 命令验证，并核对多项资源、地图覆盖、未知 ID／类型／索引、目标挂点、销毁及原版返回语义、实际画面和声音路径。
