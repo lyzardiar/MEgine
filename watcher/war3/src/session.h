@@ -104,7 +104,11 @@ class ScriptSession {
     std::map<std::uint32_t,SelectionSyncRound> selectionSyncRounds_;
     std::map<jass::ThreadId,std::shared_ptr<const SelectionSnapshot>> selectionSyncViews_;
     std::shared_ptr<const SelectionSnapshot> selectionSyncLatest_;
-    std::deque<LanActionExperimentalSelection> selectionSyncOutgoing_;
+    std::deque<std::pair<std::uint64_t,LanActionExperimentalSelection>> selectionSyncOutgoing_;
+    std::deque<std::pair<std::uint64_t,LanActionCacheSync>> cacheSyncOutgoing_;
+    std::uint64_t syncOutgoingSequence_=0;
+    size_t cacheSyncOutgoingBytes_=0;
+    void flushLocalCacheSync();
     void syncSelections(jass::Runtime& vm);
     void finishSelectionSync(std::uint32_t round);
     void checkSelectionSyncTimeout() const;
@@ -153,6 +157,9 @@ class ScriptSession {
     size_t footprintCells_=0,pathImageBytes_=0;
     std::uint64_t destructableRevision_=1;
     std::optional<SourceTable> weather_;
+    std::map<std::uint32_t,std::shared_ptr<WeatherState>> weatherEffects_;
+    std::shared_ptr<WeatherState> makeWeather(std::uint32_t type,WorldRect region);
+    void initializeMapWeather();
     std::vector<ScriptContext> contexts_;
     std::map<jass::ThreadId,std::vector<ScriptContext>> threadContexts_{{0,{}}};
     void bindThreadNatives();
@@ -992,6 +999,7 @@ public:
     bool networkPeerDeparted(std::uint8_t peerId);
     std::optional<unsigned> networkSlotPlayer(unsigned slot) const;
     std::optional<unsigned> networkPlayerSlot(unsigned player) const;
+    bool selectionSyncFirst() const {return !selectionSyncOutgoing_.empty() && (cacheSyncOutgoing_.empty() || selectionSyncOutgoing_.front().first<cacheSyncOutgoing_.front().first);}
     const LanActionExperimentalSelection* pendingSelectionSync() const;
     void popSelectionSync();
     void discardSelectionSyncOutgoing();
@@ -1044,8 +1052,12 @@ public:
     void effectExpires(std::uint32_t id,double time);
     const auto& projectiles() const {return projectiles_;}
     const auto& destructables() const {return destructables_;}
+    const auto& weatherEffects() const {return weatherEffects_;}
     bool validateCacheSync(const LanActionCacheSync& action,LanCacheSyncProjection& projection);
     bool applyCacheSync(const LanActionCacheSync& action);
+    const LanActionCacheSync* pendingCacheSync() const {return cacheSyncOutgoing_.empty()?nullptr:&cacheSyncOutgoing_.front().second;}
+    void popCacheSync();
+    void discardCacheSyncOutgoing();
     float destructableHeight(const DestructableState& state) const;
     std::uint64_t destructableRevision() const {return destructableRevision_;}
     std::uint32_t placedDestructable(size_t index) const {return index<placedDestructables_.size()?placedDestructables_[index]:0;}
@@ -1153,6 +1165,7 @@ public:
     bool mainStarted() const {return mainAttempted_ && !failed_;}
     void advance(double elapsed);
     double simulationTime() const {return simulationTime_;}
+    double presentationTime() const {return simulationTime_+accumulator_;}
     void audioMuted(bool muted);
     void localAudioGains(float sound,float music);
     void localAudioCategories(bool ambient,bool movement,bool units);

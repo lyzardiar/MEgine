@@ -10,7 +10,7 @@
 namespace war3 {
 struct StreamedScene {std::unique_ptr<SceneAssets> assets;std::string error;};
 class SceneStreaming {
-    struct Request {std::string path;bool model;};
+    struct Request {std::string path;bool model,optional;};
     std::unique_ptr<Archives> archives_;
     Log& log_;
     std::mutex mutex_;
@@ -23,7 +23,7 @@ class SceneStreaming {
 public:
     SceneStreaming(Archives& resources,Log& log);
     ~SceneStreaming();
-    void request(const std::vector<std::string>& models,const std::vector<std::string>& textures,std::set<std::string> knownTextures);
+    void request(const std::vector<std::string>& models,const std::vector<std::string>& textures,std::set<std::string> knownTextures,const std::vector<std::string>& optionalTextures={});
     std::optional<StreamedScene> poll();
 };
 }

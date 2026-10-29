@@ -8,7 +8,7 @@ class SourceSettings {
     bool exactSections_=false,stripQuotes_=true;
 public:
     explicit SourceSettings(bool exactSections=false,bool stripQuotes=true) : exactSections_(exactSections),stripQuotes_(stripQuotes) {}
-    void parse(std::span<const std::uint8_t> bytes);
+    void parse(std::span<const std::uint8_t> bytes,std::map<std::string,std::string>* rawNames=nullptr);
     void load(Archives& archives,const std::string& member);
     std::string value(std::string section,std::string key,const std::string& fallback={}) const;
     std::optional<std::string> entry(std::string section,std::string key) const;

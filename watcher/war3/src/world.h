@@ -39,6 +39,7 @@ struct WorldEnvironment {
     std::string skyModel;
     std::string altMinimapIcon;
     bool creepCampFilter=true;
+    bool allyFilterButtonEnabled=true,creepFilterButtonEnabled=true;
     std::int32_t allyColorFilter=0;
     bool fogBoundary=true;
     TerrainFog terrainFog,terrainFogDefaults;

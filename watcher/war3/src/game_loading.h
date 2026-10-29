@@ -15,6 +15,7 @@ struct GameData {
     std::vector<ConsolePiece> console;
     std::string minimap,autocastModel,minimapPingModel,idleWorkerIcon,waypointModel;
     std::array<std::string,3> resourceIcons;
+    std::array<std::array<std::string,3>,3> allyFilterIcons;
     std::array<GameCommand,5> commands;
     std::array<GameCommand,4> buildCommands;
     GameCommand cancelCommand,cancelBuildCommand,cancelReviveCommand,selectSkillCommand;

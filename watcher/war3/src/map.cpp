@@ -39,7 +39,7 @@ MapInfo MapInfo::parse(std::span<const std::uint8_t> bytes,const MapStrings& str
     for(auto& n:m.camera)n=b.f32();for(auto& n:m.complements)n=b.i32();for(auto& n:m.playable){n=b.u32();if(!n || n>8192)throw std::runtime_error("Invalid W3I playable dimensions");}
     m.flags=b.u32();m.tileset=char(b.u8());m.background=b.i32();if(m.version==25)m.loadingModel=text(b);m.loadingText=string();m.loadingTitle=string();m.loadingSubtitle=string();m.loadingScreen=b.i32();
     if(m.version==25)m.prologueModel=text(b);m.prologueText=string();m.prologueTitle=string();m.prologueSubtitle=string();
-    if(m.version==25){m.useFog=b.i32();m.fogHeight=point(b);m.fogDensity=b.f32();m.fogColor=color(b);m.weather=b.u32();m.soundEnvironment=text(b);m.lightEnvironment=char(b.u8());m.waterColor=color(b);}
+    if(m.version==25){m.useFog=b.i32();m.fogHeight=point(b);m.fogDensity=b.f32();m.fogColor=color(b);auto weather=b.take(4);m.weather=(unsigned(weather[0])<<24)|(unsigned(weather[1])<<16)|(unsigned(weather[2])<<8)|unsigned(weather[3]);m.soundEnvironment=text(b);m.lightEnvironment=char(b.u8());m.waterColor=color(b);}
     auto players=b.count(33,16);unsigned ids=0;for(unsigned i=0;i<players;++i) {MapPlayer p;p.id=b.i32();p.type=b.i32();p.race=b.i32();p.fixedStart=b.i32();p.name=string();p.start=point(b);p.allyLow=b.u32();p.allyHigh=b.u32();if(p.id<0 || p.id>=16 || (ids&(1u<<p.id)))throw std::runtime_error("Invalid or duplicate W3I player id");ids|=1u<<p.id;m.players.push_back(std::move(p));}
     auto forces=b.count(9,16);for(unsigned i=0;i<forces;++i){MapForce f;f.flags=b.u32();f.players=b.u32();f.name=string();m.forces.push_back(std::move(f));}
     if(!b.left() || (b.left()==1 && b.u8()==0xff)){m.omittedEditorTables=true;return m;}

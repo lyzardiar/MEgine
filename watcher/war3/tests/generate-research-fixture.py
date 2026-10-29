@@ -82,9 +82,14 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
-    files['Units\\UnitGlobalStrings.txt'] = b'[Q0N1]\nName=Profile only\n[Q0N2]\nName=\n'
+    files['Units\\UnitGlobalStrings.txt'] = b'[Q0N1]\nName=Profile only\n[Q0N2]\nName=\n[Q0N3]\nName="Alpha, Beta",Second\n[Q0N4]\nName="Solo, Title"\n'
     changes = [('gtib', 2, 0), ('gtim', 0, 0), ('gglb', 10, 0), ('gglm', 5, 0), ('glmb', 7, 0), ('glmm', 3, 0), ('gef2', 'rhpx', 0), ('gba2', 20, 0), ('gmo2', 20, 0), ('gef3', 'ratx', 0), ('gba3', 4, 0), ('gmo3', 4, 0), ('gnam', 'First', 1), ('gnam', 'Second', 2), ('gnam', 'Third', 3), ('greq', '', 2), ('greq', '', 3)]
-    files['war3map.w3q'] = struct.pack('<III', 2, 0, 1) + b'RhmeR0T1' + struct.pack('<I', len(changes)) + b''.join(modification(field, value, b'R0T1', level) for field, value, level in changes)
+    def upgrade(base, result, entries):
+        return base + result + struct.pack('<I', len(entries)) + b''.join(modification(field, value, result if result != bytes(4) else base, level) for field, value, level in entries)
+    original_names = [('gnam', 'Base, first', 1)]
+    variant_names = [('gnam', 'Variant, first', 1), ('gnam', 'Variant second', 2)]
+    inherited_names = [('gnam', 'Inherited second', 2)]
+    files['war3map.w3q'] = struct.pack('<II', 2, 1) + upgrade(b'Rhme', bytes(4), original_names) + struct.pack('<I', 3) + upgrade(b'Rhme', b'R0T1', changes) + upgrade(b'Rhme', b'R0T2', variant_names) + upgrade(b'Rhme', b'R0T3', inherited_names)
     units = [(b'hbla', 'ures', 'R0T1,Rhar'), (b'hfoo', 'upgr', 'R0T1,Rhar')]
     custom = b'z0u1'
     custom_changes = [('utyp', 'Mechanical,Peon'), ('umvt', 'fly')]

@@ -21,6 +21,8 @@ class ObjectData {
     std::map<std::uint32_t,SourceTable::Row> buffMetadata_;
     std::map<std::uint32_t,std::uint32_t> parents_;
     std::map<std::uint32_t,std::map<std::string,std::string>> overrides_;
+    std::map<std::string,std::string> sourceNames_;
+    std::map<std::uint32_t,std::string> nameOverrides_;
     SourceSettings profiles_{true};
     std::vector<ObjectOverride> objects_;
     mutable std::optional<std::map<std::string,std::uint32_t>> unitNames_;
@@ -33,6 +35,7 @@ public:
     explicit ObjectData(Archives& archives);
     static std::uint32_t code(std::string_view text);
     static std::string name(std::uint32_t code);
+    std::optional<std::string> displayName(std::uint32_t id) const;
     std::uint32_t unitId(const std::string& name) const;
     std::vector<std::uint32_t> unitTypes() const;
     std::vector<std::uint32_t> itemTypes() const;

@@ -19,6 +19,7 @@ void ScriptSession::minimapPing(float x,float y,float duration,std::optional<std
 void ScriptSession::bindTextNatives() {
     bind("SetCreepCampFilterState","nothing",{"boolean"},[this](auto& vm,auto a){requireWorld().environment().creepCampFilter=a[0].bits!=0;return vm.nothing();});
     bind("GetCreepCampFilterState","boolean",{},[this](auto& vm,auto){return vm.boolean(requireWorld().environment().creepCampFilter);});
+    bind("EnableMinimapFilterButtons","nothing",{"boolean","boolean"},[this](auto& vm,auto a){auto& env=requireWorld().environment();env.allyFilterButtonEnabled=a[0].bits!=0;env.creepFilterButtonEnabled=a[1].bits!=0;return vm.nothing();});
     bind("SetAllyColorFilterState","nothing",{"integer"},[this](auto& vm,auto a){requireWorld().environment().allyColorFilter=std::bit_cast<std::int32_t>(a[0].bits);return vm.nothing();});
     bind("GetAllyColorFilterState","integer",{},[this](auto& vm,auto){return vm.integer(requireWorld().environment().allyColorFilter);});
     auto text=[](jass::Value v){return v.text?*v.text:std::string{};};

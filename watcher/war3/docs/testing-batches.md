@@ -2139,4 +2139,12 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 ## 对象名称查询待验证
 
-路径：`object_data.cpp`、`session_game.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`，说明见 `object-names.md`。Win32 Release 客户端与 research 消费者已编译；阶段验证仅有 Profile 的 ID、空与缺失名称、覆盖优先级、继承及 DotA 调用，并与原版对照。专项尚未运行。
+路径：`map_ui.h/.cpp`、`object_data.h/.cpp`、`session_game.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`，说明见 `object-names.md`。阶段验证 Profile ID、单项／多项／带引号逗号、空与缺失名称、覆盖优先级、继承及 DotA 调用，并与原版对照。专项尚未运行。
+
+## 天气区域与渲染待验证
+
+路径：`map.cpp`、`session.cpp`、`session.h`、`session_weather.cpp`、`game_weather.cpp`、`game_view.h/.cpp`、`scene_streaming.h/.cpp`、`tests/map_tests.cpp`，说明见 `weather.md`。Amazonia 最小 main 检查通过且未加载 Game.dll；阶段验证 W3I 默认值、脚本区域启停／移除、不同源类型和图集、缺失／损坏纹理、摄像机移动、小区域、时间片、设备恢复、声音、长局和原版画面／性能。GPU 实际画面和原版一致性尚未验证。
+
+## 缓存同步发送与小地图按钮待验证
+
+路径：`session_cache.cpp`、`session_tick.cpp`、`session_collections.cpp`、`session.h`、`lan_runtime.h/.cpp`、`game_view.cpp`、`game_loading.h/.cpp`、`session_text.cpp`、`world.h`、`tests/session_tests.cpp`、`tests/revival_tests.cpp`、`tests/game_flow_tests.cpp`；详情见 `cache-sync.md`、`ally-color-filter.md`。Win32 Release 客户端及相关消费者已编译；`war3_revival_tests <data-root> <fixture.w3m> lan-leave` 的最小队列顺序及离开检查 1 项通过、0 失败。阶段验证单机回显、实际发送／双端和回放、堵塞／超长／离开、按钮状态／快捷键／悬停及多人本地状态。单位缓存快照、野怪按钮和原版联机互通仍未完成。
