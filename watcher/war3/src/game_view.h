@@ -178,11 +178,16 @@ class GameView {
     bool modelHasSounds(const Model& model);
     void modelFootprint(const std::string& code,const std::array<float,3>& position,float angle,std::uint64_t clock,bool visible);
     void drawFootprints(bool water,const DirectX::XMMATRIX& vp,std::uint64_t clock);
-    struct UnitShadow {std::string texture;float width=0,height=0,x=0,y=0;bool onWater=false;};
+    struct UnitShadow {std::string texture,buildingTexture;float width=0,height=0,x=0,y=0;bool onWater=false;};
     std::map<std::uint32_t,UnitShadow> unitShadows_;
+    struct BuildingShadowStamp {std::uint32_t id=0,type=0;int x=0,y=0;std::uint8_t alpha=0;bool operator==(const BuildingShadowStamp&) const = default;};
+    struct BuildingShadowChunk {unsigned x=0,y=0;float low=0,high=0;std::array<std::uint8_t,256> cells{};};
+    std::vector<BuildingShadowStamp> buildingShadowStamps_;
+    std::map<std::uint64_t,BuildingShadowChunk> buildingShadowChunks_;
     const UnitShadow& unitShadow(std::uint32_t type);
     void streamUnitShadows(std::vector<std::string>& textures);
     void drawUnitShadows(bool water,const DirectX::XMMATRIX& vp);
+    void drawBuildingShadows(const DirectX::XMMATRIX& vp);
     std::set<std::string> failedModelSounds_;
     std::map<const Model*,bool> modelSoundPresence_;
     void drawTrackables(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
