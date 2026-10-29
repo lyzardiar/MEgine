@@ -64,7 +64,7 @@ class GameView {
     void localMessage(unsigned owner,float x,float y,double duration,std::string message);
     D3DVIEWPORT9 viewport_{};
     D3DMATRIX view_{},projection_{};
-    enum class OrderMode {None,Move,Attack,Patrol,Harvest,Entangle,Repair};
+    enum class OrderMode {None,Move,Attack,AttackGround,Patrol,Harvest,Entangle,Repair};
     OrderMode orderMode_=OrderMode::None;
     std::uint32_t buildMenuUnit_=0,skillMenuUnit_=0,bookMenuUnit_=0;
     bool buildMenuQueued_=false;

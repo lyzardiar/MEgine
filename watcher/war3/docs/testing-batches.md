@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 攻城单位攻击地面待验证
+
+路径：`src/session_attack_ground.cpp`、`src/combat.h`、`src/session.h`、`src/session_combat.cpp`、`src/session_orders.cpp`、`src/player_commands.h/.cpp`、`src/game_loading.h/.cpp`、`src/game_view.h/.cpp`、`src/game_commands.cpp`、`src/game_waypoints.cpp`、`src/game_hero_bar.cpp`、`src/game_selection_panel.cpp`、`src/lan_action_encoder.cpp`、`src/lan_simulation.cpp`、`src/session_network_identity.cpp`；说明见 `attack-ground.md`。阶段检查 G 按钮、目标与视野、靠近／持续攻击／取消、伤害和燃烧油、排队、双端及原版资格和时序。
+
 ## 玩家基础状态快照待验证
 
 路径：`src/session.h`、`src/session_game.cpp`、`tests/clock_tests.cpp`；说明见 `player-state-persistence.md`。阶段编译并执行 `war3_clock_tests`，检查 16 名玩家资源／人口／状态位及维护费覆盖往返、损坏／重复键／截断的事务性拒绝、执行及联网限制、与单位／生产等完整恢复的一致性；尚未接入存档。

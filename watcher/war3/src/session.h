@@ -1070,6 +1070,10 @@ public:
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986,std::optional<WorldPoint> destination={});
     bool stopUnit(std::uint32_t handle,bool hold=false);
     bool targetOrder(std::uint32_t source,std::uint32_t target,std::uint32_t order=851971);
+    std::optional<unsigned> groundAttackWeapon(const UnitState& source);
+    bool attackGround(std::uint32_t source,WorldPoint point);
+    void combatAttackGround(std::uint32_t source,double delta);
+    void launchGroundAttack(std::uint32_t source,WorldPoint point,unsigned slot);
     bool attackWidget(std::uint32_t source,std::uint32_t target);
     std::vector<std::uint32_t> nearbyWeaponDestructables(WorldPoint point,float radius);
     bool destructableWeaponTarget(const DestructableState& target,const WeaponDefinition& weapon,bool splash=false);

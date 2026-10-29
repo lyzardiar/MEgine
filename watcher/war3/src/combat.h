@@ -22,7 +22,7 @@ struct AttackWindup {std::uint32_t target=0;unsigned weapon=0;double due=0;std::
 struct ItemMoveOrder {enum class Kind {Point,Unit,Slot};Kind kind=Kind::Point;std::uint32_t item=0,target=0;unsigned player=0,slot=0;WorldPoint point;};
 struct CombatOrder {
     std::uint32_t target=0,widgetTarget=0,follow=0,pickup=0,board=0,attackAbility=0,rechargeAbility=0,lureTarget=0;
-    std::optional<WorldPoint> attackMove,patrolStart,patrolEnd;
+    std::optional<WorldPoint> attackMove,attackGround,patrolStart,patrolEnd;
     std::optional<ItemMoveOrder> itemMove;
     WorldPoint home;
     bool forced=false,automatic=false,returning=false,targetInRange=false,targetAcquiredPending=false;

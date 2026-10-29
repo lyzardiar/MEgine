@@ -8,7 +8,7 @@
 namespace war3 {
 namespace {
 float number(jass::Real value){return std::bit_cast<float>(value.bits());}
-bool pointOrder(PlayerCommandKind kind){return kind==PlayerCommandKind::GroundMove || kind==PlayerCommandKind::GroundAttack || kind==PlayerCommandKind::GroundPatrol || kind==PlayerCommandKind::SpellPoint || kind==PlayerCommandKind::SpellPointOrder || kind==PlayerCommandKind::ItemPoint || kind==PlayerCommandKind::BuildAt || kind==PlayerCommandKind::DropItemAt;}
+bool pointOrder(PlayerCommandKind kind){return kind==PlayerCommandKind::GroundMove || kind==PlayerCommandKind::GroundAttack || kind==PlayerCommandKind::GroundPatrol || kind==PlayerCommandKind::AttackGround || kind==PlayerCommandKind::SpellPoint || kind==PlayerCommandKind::SpellPointOrder || kind==PlayerCommandKind::ItemPoint || kind==PlayerCommandKind::BuildAt || kind==PlayerCommandKind::DropItemAt;}
 bool targetOrder(PlayerCommandKind kind){return kind==PlayerCommandKind::TargetOrder || kind==PlayerCommandKind::SpellUnit || kind==PlayerCommandKind::SpellUnitOrder || kind==PlayerCommandKind::ItemUnit || kind==PlayerCommandKind::GiveItem;}
 }
 void GameView::drawQueuedWaypoints(std::uint64_t elapsed,const DirectX::XMMATRIX& vp) {

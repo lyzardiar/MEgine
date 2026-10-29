@@ -20,7 +20,7 @@ struct GameData {
     std::array<std::array<std::string,3>,2> creepFilterIcons;
     std::array<std::array<std::string,3>,2> terrainFilterIcons;
     std::array<std::string,2> creepCampIcons;
-    std::array<GameCommand,5> commands;
+    std::array<GameCommand,6> commands;
     std::array<GameCommand,4> buildCommands;
     GameCommand cancelCommand,cancelBuildCommand,cancelReviveCommand,selectSkillCommand;
     void prepareConsole();
