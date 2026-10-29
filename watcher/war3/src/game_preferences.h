@@ -28,6 +28,12 @@ struct GameVideoPreferences {
     unsigned lightDetail=2;
     bool operator==(const GameVideoPreferences&) const = default;
 };
+struct GameNetworkPreferences {
+    std::uint16_t gamePort=6112;
+    bool operator==(const GameNetworkPreferences&) const = default;
+};
+GameNetworkPreferences loadNetworkPreferences(const fs::path& dataRoot);
+void saveNetworkPreferences(const fs::path& dataRoot,const GameNetworkPreferences& preferences);
 GameCameraPreferences loadCameraPreferences(const fs::path& dataRoot);
 void saveCameraPreferences(const fs::path& dataRoot,const GameCameraPreferences& preferences);
 GameAudioPreferences loadAudioPreferences(const fs::path& dataRoot);

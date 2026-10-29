@@ -10,7 +10,7 @@ struct LanChecksumMismatch {std::uint64_t round=0;std::uint8_t playerId=0;std::u
 struct LanHostSettings {
     std::string gameName,playerName,mapPath;
     LanMapCheck map;
-    std::uint16_t width=0,height=0;
+    std::uint16_t width=0,height=0,gamePort=0;
     std::uint32_t mapFlags=0,gameType=1;
     std::vector<LanSlot> slots;
     std::uint32_t mapOptions=0;
