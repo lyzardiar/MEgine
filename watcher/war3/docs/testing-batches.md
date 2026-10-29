@@ -2554,3 +2554,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 不可达目标的移动落点（待验证）
 
 路径：`world_path.cpp`、`world.h`、`session_orders.cpp`、`session_combat_orders.cpp`、`session.h`、`tests/world_tests.cpp`，说明见 `water-pathing.md`。普通移动与攻击移动在目标格可通但不可达时按已访问的可达区域选择接近落点，限定原 A* 搜索预算；事件仍使用点击坐标。Win32 Release `war3_world_tests` 编译通过；隔墙回退及既有阻挡目标两项定向检查各 1 通过、0 失败，未加载 Game.dll。待集中验证不同地形／半径、墙体／封闭区、达到预算、目标阻挡或中途变化、多选／巡逻／队列、AI 与真实窗口；原版落点规则尚未对照。
+
+### 盟友受攻击提醒（待验证）
+
+路径：`session_text.cpp`、`session.h`、`docs/attack-alert.md`。盟友单位／建筑受到实际敌方攻击伤害时读取对应原皮肤声音及小地图提示，己方和盟友分别限频。本次未编译或运行；集中验证双方联盟方向／共享视野、敌方与自伤、单位／建筑、无效或完全吸收的伤害、死亡／易主回调、忽略警报、己方和盟友连续攻击／独立冷却、皮肤覆盖、静音／听感及双客户端模拟一致性，并对照原版触发和时序。
