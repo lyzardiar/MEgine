@@ -11,7 +11,9 @@ namespace war3 {
 struct ReplaySelection {fs::path path;std::shared_ptr<const Replay> replay;};
 class ReplayBrowser {
     struct Entry {fs::path path;bool directory=false;};
-    struct Result {std::uint64_t request=0;fs::path path;std::shared_ptr<const Replay> replay;std::string error;};
+    enum class Operation {Read,Remove};
+    struct Request {Operation operation=Operation::Read;std::uint64_t request=0;fs::path path;std::string replayDigest,mapDigest;};
+    struct Result {Operation operation=Operation::Read;std::uint64_t request=0;fs::path path;std::shared_ptr<const Replay> replay;std::string replayDigest,error;bool deleted=false,mapCleaned=true;};
     GlueScreen screen_;
     Renderer& renderer_;
     Log& log_;
@@ -22,12 +24,13 @@ class ReplayBrowser {
     std::string error_;
     std::shared_ptr<const Replay> selectedReplay_;
     fs::path selectedPath_;
-    bool loading_=false,confirmDelete_=false;
+    bool loading_=false,confirmDelete_=false,deleting_=false;
+    std::string selectedDigest_;
     std::uint64_t request_=0;
     std::atomic<std::uint64_t> generation_=0;
     std::mutex mutex_;
     std::condition_variable wake_;
-    std::optional<std::pair<std::uint64_t,fs::path>> pending_;
+    std::optional<Request> pending_;
     std::optional<Result> ready_;
     std::jthread worker_;
     void run(std::stop_token stop);
