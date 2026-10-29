@@ -729,6 +729,8 @@ class ScriptSession {
     void startManaBurn(std::uint32_t unit,const CastOrder& cast,unsigned owner);
     void manaBurn(std::uint32_t unit,std::uint32_t target,const SpellInfo& spell,unsigned owner);
     void sacrifice(std::uint32_t unit,std::uint32_t target,const SpellInfo& spell,unsigned owner);
+    bool sacrificePitTarget(const UnitState& worker,const UnitState& pit);
+    void sacrificePit(std::uint32_t worker,std::uint32_t pit);
     void startChannel(std::uint32_t unit);
     void channelTick(std::uint32_t unit,double delta);
     void channelPulse(std::uint32_t unit,const CastOrder& cast);

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 牺牲深渊与阴影待验证
+
+路径：`CMakeLists.txt`、`src/spells.h`、`src/session.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_sacrifice_pit.cpp`；说明见 `sacrificial-pit.md`。包含战役重开限制和加强型地洞视觉的 Win32 Release 客户端编译通过。阶段检查双方命令、接近与目标限制、生产及集结、多侍僧竞争、死亡／转让／禁用、人口不足、取消、脚本重入、联机和原版行为；取消后恢复侍僧、自定义目标规则及原版事件时序尚未完成。
+
 ## 战役重开限制待验证
 
 路径：`src/world.h`、`src/session_world.cpp`、`src/game_flow_ui.cpp`；说明见 `restart-mission.md`。地图脚本开关控制 Esc 菜单重开动作；阶段检查开关、动态切换、鼠标／快捷键／焦点、脚本重开、切图、实际战役及原版行为。
