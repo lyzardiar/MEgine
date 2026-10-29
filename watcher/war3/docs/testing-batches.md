@@ -2783,4 +2783,8 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 ### 局域网命令菜单录制（待验证）
 
-路径：`src/game_commands.cpp`、`src/game_view.h`；集中验证鼠标／热键打开、同步等待、失败提示、时间片与回放、主客双端及原版时序。取消按钮／右键／菜单内 Esc 关闭尚未单独记录，见 [菜单动作录制](lan-menu-recording.md)。本次未编译或运行。
+路径：`src/game_commands.cpp`、`src/game_view.h`；集中验证鼠标／热键打开、同步等待、失败提示、时间片与回放、主客双端及原版时序。关闭动作已接入实验记录，原版时序待对照，见 [菜单动作录制](lan-menu-recording.md)。本次未编译或运行。
+
+### 实验对局命令菜单关闭（待验证）
+
+路径：`src/lan_actions.cpp`、`src/game_commands.cpp`、`src/game_view.cpp`、`tests/order_queue_tests.cpp`。集中验证取消／右键／Esc／切换界面及建造目标模式、打开后同帧变化、网络失败、时间片顺序、双端和回放；`0xfb` 仅为实验协议，原版关闭行为仍待对照，见 [菜单动作录制](lan-menu-recording.md)。新增断言未编译或运行。
