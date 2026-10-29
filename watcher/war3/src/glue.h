@@ -38,6 +38,7 @@ private:
     unsigned add(FrameDefinition frame, int parent);
     Rect layout(unsigned index);
     Texture& texture(const std::string& member);
+    std::string decoratedTexture(const FrameDefinition& frame,const std::string& name);
     void quad(Rect rect, DWORD color, const std::string& member, float u0=0,float v0=0,float u1=1,float v1=1,bool tile=false,bool additive=false,bool transpose=false);
     void backdrop(const FrameDefinition& frame, Rect rect, DWORD color=0xffffffff);
     std::string drawNode(unsigned index,const UiInput& input,const std::set<std::string>& enabled);

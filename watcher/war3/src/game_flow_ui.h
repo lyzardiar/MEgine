@@ -3,6 +3,9 @@
 #include "game_loading.h"
 #include "game_preferences.h"
 #include "glue.h"
+#include <functional>
+#include <string_view>
+#include <utility>
 
 namespace war3 {
 class GameFlowUi {
@@ -19,6 +22,12 @@ class GameFlowUi {
     std::array<int,4> scoreSort_{{-1,-1,-1,-1}};
     std::array<bool,4> scoreAscending_{};
     bool scoreTeams_=false;
+    bool scoreSavePanel_=false,scoreReplaySaved_=false;
+    wchar_t scoreReplayHigh_=0;
+    std::wstring scoreReplayName_;
+    std::string scoreModalFocus_="SaveReplayFileEditBox";
+    std::string scoreReplayMessage_;
+    std::function<std::pair<bool,std::string>(const std::wstring&)> scoreReplaySaver_;
     bool appExit_=false;
     std::optional<bool> networkLeave_;
     GameCameraPreferences cameraPreferences_{},cameraDraft_{};
@@ -41,7 +50,8 @@ public:
     bool drawMenu(const UiInput& input,bool network=false,bool allowNetworkLeave=false);
     std::optional<bool> takeNetworkLeave(){auto result=networkLeave_;networkLeave_.reset();return result;}
     std::uint32_t drawDialog(const UiInput& input,bool interactive=true);
-    bool drawScores(const UiInput& input);
+    bool drawScores(const UiInput& input,std::wstring_view characters={});
+    void scoreReplaySaver(std::function<std::pair<bool,std::string>(const std::wstring&)> saver);
     bool appExit() const {return appExit_;}
     GameCameraPreferences cameraPreferences() const {return cameraPreferences_;}
     void cameraPreferences(GameCameraPreferences preferences) {if(preferences.mouseSpeed>100)preferences.mouseSpeed=100;if(preferences.keySpeed>100)preferences.keySpeed=100;cameraPreferences_=cameraDraft_=preferences;}

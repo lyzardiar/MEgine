@@ -32,8 +32,9 @@ public:
     // Attach before the first runtime pump. The observer owns only a weak recorder reference.
     bool attach(LanRuntime& runtime);
     // Seal applied slots and publish once. Caller invokes this when it intentionally ends a match.
-    std::filesystem::path save(bool partial=false);
+    std::filesystem::path save(bool partial=false,const std::wstring& name={});
     const std::string& error() const;
     std::uint32_t durationMs() const;
+    bool hasRecordedSlots() const;
 };
 }

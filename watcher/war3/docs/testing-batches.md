@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 结算保存回放与原 FDF 待验证
+
+路径：`src/game_flow_ui.cpp/.h`、`src/game_view.cpp/.h`、`src/main.cpp`、`src/replay_experimental.cpp/.h`、`src/fdf.cpp`、`src/glue.cpp/.h`、`tests/browser_tests.cpp`、`tests/native_tests.cpp`；说明见 `replay-experimental.md`。实验局域网录制可通过结算面板命名保存；单机录制与原版回放互通尚未实现。Win32 Release 客户端及浏览器检查目标编译通过，原 ScoreScreen FDF 挂接与绘制定向检查 1 通过、0 失败；`fdf_adjacent_quoted_frame_type` 尚未执行。阶段核对录制、输入／重名／失败重试、取消／自动保存、部分回放、关联地图、界面、播放及原版对照，并回归共享 FDF 与皮肤高亮解析。
+
 ## 中立建筑付费显形待验证
 
 路径：`src/commerce.h`、`src/session_commerce.cpp`、`src/session_stealth_reveal.cpp`、`src/session.h`、`src/game_commands.cpp`、`src/game_view.cpp/.h`、`src/player_commands.cpp/.h`、`src/lan_actions.cpp`、`src/lan_action_encoder.cpp`、`src/lan_simulation.cpp`；说明见 `visibility.md`。Andt 已连接发起玩家、地图／小地图点选、源费用、临时视野及侦测、脚本中立点订单和实验联机命令。Win32 Release 客户端编译通过；阶段核对交互资格、资源／回调事件顺序、多个玩家、范围与持续时间、自定义能力、双端和原版玩法；新增实验协议需两端使用支持版本。
@@ -64,7 +68,7 @@ python tests/generate-control-fixture.py --data-root 'E:/Program Files (x86)/dzc
 
 ## 结算页签与离屏附件动画待验证
 
-路径：`src/game_flow_ui.h/.cpp`、`src/glue.cpp`、`src/model.h`、`src/model_particles.cpp`、`src/game_view.cpp`、`src/game_effects.cpp`；说明见 `game-flow.md` 和 `effects.md`。Win32 Release 客户端增量编译通过。阶段操作胜负结算，核对概况、单位／英雄／资源四页及原字符串、分数／科技计算、空英雄与多玩家、页签切换、不同窗口尺寸和原版画面；验证主菜单／选图／选项／对话框等 Glue 界面静态重复绘制与文字／位置变化后的布局，以及结算选中页签与性能；验证列头显示、鼠标和键盘排序、切换方向／页签及选中字体／同值顺序、队伍分组开关、玩家色及原版视觉指示；队伍汇总已接入并待对照，颜色筛选和回放保存仍待完成，资源交换列现展示黄金与木材转出／到账。核对视野内的离屏单位、特效、技能与武器弹道附件切回、模型切换、显隐、暂停、播放与声音同步、粒子重建、性能及原版画面；迷雾外与资源就绪前的历史尚未重建。窗口、GPU、声音、性能和原版对照待执行。
+路径：`src/game_flow_ui.h/.cpp`、`src/glue.cpp`、`src/model.h`、`src/model_particles.cpp`、`src/game_view.cpp`、`src/game_effects.cpp`；说明见 `game-flow.md` 和 `effects.md`。Win32 Release 客户端增量编译通过。阶段操作胜负结算，核对概况、单位／英雄／资源四页及原字符串、分数／科技计算、空英雄与多玩家、页签切换、不同窗口尺寸和原版画面；验证主菜单／选图／选项／对话框等 Glue 界面静态重复绘制与文字／位置变化后的布局，以及结算选中页签与性能；验证列头显示、鼠标和键盘排序、切换方向／页签及选中字体／同值顺序、队伍分组开关、玩家色及原版视觉指示；队伍汇总已接入并待对照，颜色筛选及单机回放录制仍待完成，资源交换列现展示黄金与木材转出／到账。核对视野内的离屏单位、特效、技能与武器弹道附件切回、模型切换、显隐、暂停、播放与声音同步、粒子重建、性能及原版画面；迷雾外与资源就绪前的历史尚未重建。窗口、GPU、声音、性能和原版对照待执行。
 
 ## 月亮石、荒芜指纹与结构化线程入口待验证
 

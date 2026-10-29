@@ -36,7 +36,7 @@ std::vector<Token> lex(std::string_view source) {
             while (at<source.size()) { char next=source[at++]; if (next=='"') {closed=true;break;} if(next=='\\' && at<source.size() && source[at]=='"') next=source[at++]; if(next=='\n') ++line; token.value+=next; }
             if (!closed) throw std::runtime_error("Unclosed FDF string");
         } else if (c=='{' || c=='}' || c==',' || c==';') { token.value=c; ++at; }
-        else { auto start=at; while(at<source.size() && !std::isspace(static_cast<unsigned char>(source[at])) && source[at]!='{' && source[at]!='}' && source[at]!=',' && source[at]!=';') ++at; token.value=std::string(source.substr(start,at-start)); }
+        else { auto start=at; while(at<source.size() && !std::isspace(static_cast<unsigned char>(source[at])) && source[at]!='"' && source[at]!='{' && source[at]!='}' && source[at]!=',' && source[at]!=';') ++at; token.value=std::string(source.substr(start,at-start)); }
         if (out.size()>=250000 || token.value.size()>65536) throw std::runtime_error("FDF token budget exceeded"); out.push_back(std::move(token));
     }
     return out;

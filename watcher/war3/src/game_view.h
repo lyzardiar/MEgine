@@ -8,6 +8,7 @@
 #include "lan_simulation.h"
 #include "lan_action_encoder.h"
 #include <deque>
+#include <functional>
 #include <tuple>
 
 namespace war3 {
@@ -237,6 +238,7 @@ public:
     // the owner consumes complete slots on this thread and must not submit selection separately.
     bool enableLan(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wireObject,std::function<bool(std::span<const std::uint8_t>)> sendSelection,std::function<unsigned(const PlayerCommand&)> submit,bool experimental=false);
     bool enableReplay(std::uint8_t peer,LanSimulation::ObjectResolver resolve);
+    void scoreReplaySaver(std::function<std::pair<bool,std::string>(const std::wstring&)> saver);
     std::optional<LanStepResult> consumeLanSlot(std::uint64_t sequence,const LanTimeSlot& slot);
     const LanSimulation* lanSimulation() const {return lanSimulation_.get();}
     ScriptSession& session() const {return *data_->session;}
