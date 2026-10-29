@@ -45,6 +45,7 @@ struct WorldEnvironment {
     std::string altMinimapIcon;
     bool creepCampFilter=true,preSelectionEnabled=true,preSelectionUI=true;
     bool allyFilterButtonEnabled=true,creepFilterButtonEnabled=true;
+    bool restartMissionDisabled=false;
     std::int32_t allyColorFilter=0;
     bool fogBoundary=true;
     TerrainFog terrainFog,terrainFogDefaults;

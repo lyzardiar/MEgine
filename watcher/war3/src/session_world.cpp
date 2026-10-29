@@ -76,6 +76,7 @@ void ScriptSession::bindWorldNatives() {
     bind("SetDayNightModels","nothing",{"string","string"},[this](auto& vm,auto args){auto& environment=requireWorld().environment();environment.terrainDayNight=args[0].text?*args[0].text:std::string{};environment.unitDayNight=args[1].text?*args[1].text:std::string{};environment.dayNightChanged=true;return vm.nothing();});
     bind("EnablePreSelect","nothing",{"boolean","boolean"},[this](auto& vm,auto a){auto& environment=requireWorld().environment();environment.preSelectionEnabled=a[0].bits!=0;environment.preSelectionUI=a[1].bits!=0;return vm.nothing();});
     bind("SetWaterDeforms","nothing",{"boolean"},[this](auto& vm,auto a){requireWorld().environment().waterDeforms=a[0].bits!=0;return vm.nothing();});
+    bind("DisableRestartMission","nothing",{"boolean"},[this](auto& vm,auto a){requireWorld().environment().restartMissionDisabled=a[0].bits!=0;return vm.nothing();});
     bind("SetWaterBaseColor","nothing",{"integer","integer","integer","integer"},[this](auto& vm,auto args){auto& environment=requireWorld().environment();for(unsigned i=0;i<4;++i)environment.waterColor[i]=std::uint8_t(args[i].bits);environment.waterChanged=true;return vm.nothing();});
 }
 }
