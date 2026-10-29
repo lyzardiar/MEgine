@@ -2878,3 +2878,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### AI 攻击与防御队长驻地（待验证）
 
 路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_control.cpp`、`src/session_ai_economy.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`。核心及测试目标编译通过，定向检查 2 项通过、0 失败；集中验证真实战役、队伍状态、同步及原版路线，见 [队长驻地](campaign-captain-home.md)。
+
+### Human07 基础停止命令（待验证）
+
+路径：`src/session_entities.cpp`、`src/session_orders.cpp`、`docs/campaign-human07-stop.md`。隔离原图相遇剧情已越过停止指令异常；集中验证两种命令入口、取消与事件及真实交互，见 [停止指令](campaign-human07-stop.md)。
