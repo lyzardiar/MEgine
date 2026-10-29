@@ -2104,3 +2104,19 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 路径：`replay_experimental.*`、`replay_preparation.*`、`replay_browser.cpp`、`lan_mapcheck.*`、`lan_lobby.*`、`lan_match_loading.*`、`platform.*`、`main.cpp`；保存回放时按内容关联原始地图，播放优先读取安装地图，细节及清理边界见 `replay-experimental.md`。Win32 Release 客户端编译通过，实际回放未执行。
 
 阶段验证已安装原图／接收图、后台摘要、哈希不符和文件占用、共享硬链接／复制回退、删除前内容替换及并发访问、失败后回放保留、进程异常、双端和重启播放；核对删除时的界面响应及内存开销。原版回放互通仍待实现。
+
+## 地图 Buff 覆盖待验证
+
+路径：`object_data.h/.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`，说明见 `buff-overrides.md`。Win32 Release 客户端及 research 消费者已合并编译。阶段生成 research 夹具并运行对应消费者，检查原 Buff 修改、自定义 Buff 继承、大小写及图标／描述／特效字段；在真实自定义地图验证画面、切图释放和原版行为。专项及实际运行尚未验证。
+
+## 任务列表滚动条待验证
+
+路径：`quest_dialog.h/.cpp`，说明见 `quests.md`。Win32 Release 客户端已合并编译。阶段在真实窗口验证主线／支线／目标列表的显示条件、点击、拖动和滚轮，任务增删与选择变化后的偏移、界面焦点和原版布局；说明文字滚动条仍待实现。实际窗口及原版一致性尚未验证。
+
+## 回放删除后台化待验证
+
+路径：`replay_browser.h/.cpp`，说明见 `replay-experimental.md`。Win32 Release 客户端已合并编译。阶段在真实窗口检查大地图校验时的帧率、读取／删除错误提示、文件锁和替换、硬链接、并发、目录重解析以及关闭／取消边界；实际运行尚未验证。
+
+## W3G 聊天记录待验证
+
+路径：`replay.h/.cpp`、`main.cpp`、`session.h`、`session_spatial_events.cpp`、`tests/session_tests.cpp`，说明见 `replay-chat.md`。Win32 Release 客户端及会话消费者已合并编译。阶段合并会话专项与真实回放，核对各频道、私聊槽位、触发器、文本编码、记录顺序与异常输入；原版回放入口仍未开放，尚无实际播放及原版一致性验收。
