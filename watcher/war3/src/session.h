@@ -708,7 +708,7 @@ class ScriptSession {
     float armorPoints(const UnitState& unit,const PassiveInfo* carapace,float base);
     float attackDamageBeforeProc(const UnitState& unit,const WeaponDefinition& weapon,float damage);
     void carapaceReflect(const CombatProjectile& projectile,float damage,const PassiveInfo& passive,std::uint64_t attackerRevision,std::uint64_t defenderRevision);
-    void attackPassives(const CombatProjectile& projectile,float damage,const AuraBonuses& defense);
+    void attackPassives(const CombatProjectile& projectile,float damage,const AuraBonuses& defense,std::uint64_t sourceRevision,std::uint64_t targetRevision);
     std::map<std::pair<std::uint32_t,std::uint32_t>,std::uint32_t> abilityHandles_;
     std::map<std::uint64_t,SpellMissile> spellMissiles_;
     std::uint64_t spellTicket_=0;
@@ -732,6 +732,8 @@ class ScriptSession {
     void drainBonusTick(UnitState& unit,UnitBuff& buff,double delta);
     void startManaBurn(std::uint32_t unit,const CastOrder& cast,unsigned owner);
     void manaBurn(std::uint32_t unit,std::uint32_t target,const SpellInfo& spell,unsigned owner);
+    void validateVampirismPotion(std::uint32_t ability,bool hero);
+    void applyVampirismPotion(std::uint32_t unit,std::uint32_t ability);
     void sacrifice(std::uint32_t unit,std::uint32_t target,const SpellInfo& spell,unsigned owner);
     bool sacrificePitTarget(const UnitState& worker,const UnitState& pit);
     void sacrificePit(std::uint32_t worker,std::uint32_t pit);

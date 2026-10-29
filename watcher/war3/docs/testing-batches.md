@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 吸血药水待验证
+
+路径：`src/spells.h`、`src/session.h`、`src/session_spell_effects.cpp`、`src/session_attack_passives.cpp`、`src/session_item_use.cpp`、`src/session_projectiles.cpp`、`src/session_network_identity.cpp`；说明见 `vampirism-potion.md`。阶段检查购买／使用／冷却、攻击加成、近远程回血、目标限制、击杀／复活／易主、驱散、光环叠加、脚本重入、联机及原版规则。
+
 ## 保存权杖基地优先级待验证
 
 路径：`src/session_teleport.cpp`；说明见 `preservation.md`。阶段检查四族不同级别、混合种族、同级及自定义 `prio`、基地死亡／施工／转让、目标所有者及原版选择行为。
