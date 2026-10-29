@@ -240,7 +240,7 @@ class ScriptSession {
     bool campaignExpansion_=true,forceCampaignSelect_=false;
     std::string nextLevel_;
     std::string modelCinematic_,movieCinematic_;
-    bool showScores_=false,userControl_=true,userUI_=true,selectionEnabled_=true,selectionUI_=true;
+    bool showScores_=false,userControl_=true,userUI_=true,selectionEnabled_=true,selectionUI_=true,dragSelectionEnabled_=true,dragSelectionUI_=true;
     bool occlusionEnabled_=true;
     ScriptCineFilter cineFilter_;
     bool interfaceVisible_=true;
@@ -1198,6 +1198,8 @@ public:
     CameraControl& cameraControl() {return cameraControl_;}
     bool selectionEnabled() const {return selectionEnabled_;}
     bool selectionUI() const {return selectionUI_;}
+    bool dragSelectionEnabled() const {return dragSelectionEnabled_;}
+    bool dragSelectionUI() const {return dragSelectionUI_;}
     SessionExit exitRequest() const {return exit_;}
     bool showScores() const {return showScores_;}
     const auto& results() const {return results_;}

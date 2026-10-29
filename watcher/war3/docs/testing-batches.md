@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 地图脚本框选控制待验证
+
+路径：`src/session.h`、`src/session_match.cpp`、`src/game_view.cpp`；说明见 `drag-selection.md`。脚本框选输入及选择框显示开关已接入单机和实验联机，Win32 Release 客户端编译通过。阶段检查四种参数组合、拖动阈值、单击／技能目标、选区切换、禁用期间拖动和恢复、菜单、切图及双端同步，并对照原版；实际窗口和原版行为尚未验证。
+
 ## 可行走模型后台预解析待验证
 
 路径：`src/session.h`、`src/session_walkable_surface.cpp`、`src/game_loading.cpp`；说明见 `cliff-level.md`。后台载入阶段预解析最多 64 个不同的已放置可行走模型，运行查询复用会话缓存；失败记录日志并保留原按需路径。Win32 Release 客户端编译通过。阶段检查 BridgeTooNear 和无桥地图、重复／缺失／异常模型、超过 64 种、载入取消／重试、动态对象、切图释放及加载时间、首帧和内存；专项及性能测量尚未执行。

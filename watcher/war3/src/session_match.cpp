@@ -59,6 +59,7 @@ void ScriptSession::bindMatchNatives() {
     bind("DisplayCineFilter","nothing",{"boolean"},[this](auto& vm,auto a){cineFilter_.displayed=a[0].bits!=0;if(cineFilter_.displayed)cineFilter_.started=simulationTime_;return vm.nothing();});
     bind("IsCineFilterDisplayed","boolean",{},[this](auto& vm,auto){return vm.boolean(cineFilter_.displayed);});
     bind("EnableSelect","nothing",{"boolean","boolean"},[this](auto& vm,auto a){selectionEnabled_=a[0].bits!=0;selectionUI_=a[1].bits!=0;return vm.nothing();});
+    bind("EnableDragSelect","nothing",{"boolean","boolean"},[this](auto& vm,auto a){dragSelectionEnabled_=a[0].bits!=0;dragSelectionUI_=a[1].bits!=0;return vm.nothing();});
     bind("SetGameDifficulty","nothing",{"gamedifficulty"},[this](auto& vm,auto a){if(a[0].bits>3)throw std::runtime_error("Invalid game difficulty");gameDifficulty_=a[0].bits;return vm.nothing();});
     bind("GetGameDifficulty","gamedifficulty",{},[this](auto& vm,auto){return vm.handle("gamedifficulty",gameDifficulty_);});
     bind("GetDefaultDifficulty","gamedifficulty",{},[this](auto& vm,auto){return vm.handle("gamedifficulty",defaultDifficulty_);});
