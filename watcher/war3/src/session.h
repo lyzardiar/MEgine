@@ -786,7 +786,10 @@ class ScriptSession {
     void cancelHeroRevival(std::uint32_t hero);
     void cancelBuildingRevivals(std::uint32_t building);
     void revivalLink(const ProductionOrder& job);
-    bool reviveHero(std::uint32_t hero,WorldPoint point,bool visual,int reserved=0);
+    bool reviveHero(std::uint32_t hero,WorldPoint point,bool visual,int reserved=0,bool awaken=false);
+    ProductInfo awakenInfo(std::uint32_t hero);
+    bool awakenAllowed(std::uint32_t building,unsigned player,std::uint32_t hero,std::string& reason,bool paid=false);
+    void awakenButtons(std::uint32_t building,unsigned player,std::array<bool,12>& occupied,std::vector<CommandButton>& buttons);
     void revivalButtons(std::uint32_t building,std::array<bool,12>& occupied,std::vector<CommandButton>& buttons);
     void bindIllusionNatives();
     void bindDamageNatives();
@@ -1052,6 +1055,7 @@ public:
     bool purchase(std::uint32_t shop,unsigned player,std::uint32_t type,bool item,std::uint32_t buyer=0);
     ProductInfo revivalInfo(std::uint32_t hero);
     bool queueRevival(std::uint32_t building,std::uint32_t hero);
+    bool awakenHero(std::uint32_t building,unsigned player,std::uint32_t hero);
     bool train(std::uint32_t unit,std::uint32_t type);
     bool cancelProduction(std::uint32_t unit,size_t index=0,bool refund=true);
     bool setRally(std::uint32_t unit,WorldPoint point,std::uint32_t target=0);

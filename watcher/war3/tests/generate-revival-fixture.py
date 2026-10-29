@@ -16,7 +16,28 @@ integer revivable=0
 integer started=0
 integer cancelled=0
 integer finished=0
+unit awakenShop=null
+integer awakenMode=0
+integer awakenCalls=0
+boolean awakenNested=false
 endglobals
+function AwakenOrder takes nothing returns nothing
+    set awakenCalls=awakenCalls+1
+    if awakenMode==1 then
+        set awakenNested=IssueNeutralTargetOrderById(Player(0),awakenShop,852466,hero)
+    elseif awakenMode==2 then
+        call SetHeroLevel(hero,4,false)
+    endif
+endfunction
+function InstallAwakenTest takes unit shop returns nothing
+    local trigger t=CreateTrigger()
+    set awakenShop=shop
+    call TriggerRegisterUnitEvent(t,shop,EVENT_UNIT_ISSUED_TARGET_ORDER)
+    call TriggerAddAction(t,function AwakenOrder)
+endfunction
+function SetAwakenTestMode takes integer mode returns nothing
+    set awakenMode=mode
+endfunction
 function Record takes nothing returns nothing
     if GetTriggerEventId()==EVENT_UNIT_HERO_REVIVABLE then
         if GetRevivableUnit()!=hero then

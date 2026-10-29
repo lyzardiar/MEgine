@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 酒馆唤醒待验证
+
+路径：session_revival／session_commerce、player_commands／game_commands、lan_action_encoder／lan_local_identity／lan_simulation、revival_tests。`Aawa` 四槽即时唤醒接入资源／人口／附近买家检查、原英雄恢复和中立订单；自研联机按目标身份发送。Win32 Release 产品及专项目标编译通过；复活夹具 `awaken` 模式最小检查 1 通过／0 失败，覆盖原句柄、费用／人口／恢复、回调递归阻断及价格变化退款，无 Game.dll。命令：`war3_revival_tests.exe <data-root> <fixture.w3m> awaken`。待合并验证四槽顺序与按钮布局、原版单人／多人命令、源费用舍入／自定义覆盖、队列冲突、库存、资源变化与目标订单／复活事件重入、失效退款、空间阻挡、英雄死亡／转让／物品、音效与实际窗口；真实双端／回放及原版协议互通尚未验证。
+
 ## 维护费后采金统计待验证
 
 路径：game_state、session_harvest、session_match。采金时累计维护费后的入账值，`GetPlayerScore(PLAYER_SCORE_GOLD_MINED_UPKEEP)` 读取该统计。原版 Game.dll 1.27 的 `GetPlayerScore` 入口 `0x6f1e3d90`：类别 10 相加类别 11 和 12 对应的两个查询，类别 11 单独读取前者；两个原版查询均对内部计数除以 10；当前沿用整数采集结算后累计，分数累计精度仍待对照。原始指令保存在 `tmp/docs-artifacts/war3/player-score/get-player-score.txt`。Win32 Release 产品增量编译通过。待合并验证无维护费／低高维护费、等级变化、资源上限、多人及脚本查询，并与原版统计和结算对照；科技百分比与总分等其他类别仍待实现。
