@@ -55,6 +55,7 @@ class SoundScene {
     const double* simulationTime_=nullptr;
     bool groupsAnimating_=false;
     std::uint64_t nextPulse_=0;
+    std::uint32_t localRandom_=0;
     void collect();
     void detach(const std::shared_ptr<ScriptSound>& sound);
     void applyVolume(ScriptSound& sound);
