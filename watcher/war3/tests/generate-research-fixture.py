@@ -82,6 +82,7 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
+    files['Units\\UnitGlobalStrings.txt'] = b'[Q0N1]\nName=Profile only\n[Q0N2]\nName=\n'
     changes = [('gtib', 2, 0), ('gtim', 0, 0), ('gglb', 10, 0), ('gglm', 5, 0), ('glmb', 7, 0), ('glmm', 3, 0), ('gef2', 'rhpx', 0), ('gba2', 20, 0), ('gmo2', 20, 0), ('gef3', 'ratx', 0), ('gba3', 4, 0), ('gmo3', 4, 0), ('gnam', 'First', 1), ('gnam', 'Second', 2), ('gnam', 'Third', 3), ('greq', '', 2), ('greq', '', 3)]
     files['war3map.w3q'] = struct.pack('<III', 2, 0, 1) + b'RhmeR0T1' + struct.pack('<I', len(changes)) + b''.join(modification(field, value, b'R0T1', level) for field, value, level in changes)
     units = [(b'hbla', 'ures', 'R0T1,Rhar'), (b'hfoo', 'upgr', 'R0T1,Rhar')]
