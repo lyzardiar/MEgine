@@ -2714,3 +2714,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 英雄属性附加（待验证）
 
 路径：`session_equipment.cpp`、`tests/passive_tests.cpp`、`docs/equipment.md`。Aamk 消费源 DataC／DataA／DataB 对应力量／敏捷／智力并沿用技能等级刷新；Win32 Release 核心库编译通过。DotA U006 以真实 LearnSkill 学习后属性从 17／18／18 变为 19／20／20 并推进至 180 秒，日志 `tmp/docs-artifacts/war3/dota-hero-1031/hero-stats.log`。阶段验证多等级／地图覆盖、移除／重加、死亡／复活、状态及事件重入、UI 和原版数值；新增专项断言尚未运行。
+
+### 战役单位外观缓存（待验证）
+
+路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`。集中验证飞行高度及变化、缩放、染色、玩家颜色覆盖的 StoreUnit／RestoreUnit、磁盘 v1–v5 兼容、损坏输入和实验同步；原版字段语义及完整战役存档尚待实现或对照。详见 [战役单位外观缓存](campaign-unit-appearance.md)。

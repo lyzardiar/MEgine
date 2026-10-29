@@ -101,9 +101,12 @@ struct CachedUnit {
     std::uint32_t type=0,life=0,maxLife=0,mana=0,maxMana=0,moveSpeed=0,defaultMoveSpeed=0;
     int resources=0,userData=0,level=1,experience=0,skillPoints=0;
     bool hero=false,visible=true,invulnerable=false,pathing=true,useFood=true,experienceSuspended=false;
-    bool hasRuntimeTraits=false;
+    bool hasRuntimeTraits=false,hasVisualTraits=false;
     std::uint32_t turnSpeed=0,propWindow=0,addedTypes=0,removedTypes=0;
-    float permanentDamage=0;
+    float permanentDamage=0,flyHeight=0,targetFlyHeight=0,flyRate=0;
+    std::array<float,3> visualScale{1,1,1};
+    std::array<std::uint8_t,4> tint{255,255,255,255};
+    std::optional<unsigned> color;
     std::array<float,3> attributes{},growth{},bonuses{};
     std::string properName;
     std::map<std::uint32_t,int> abilities;
