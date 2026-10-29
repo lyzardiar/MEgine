@@ -78,6 +78,7 @@ public:
     void backdropAt(const std::string& frame,Rect rect);
     void tooltipBackdrop(Rect rect);
     void imageAt(const std::string& member,Rect rect);
+    std::pair<size_t,size_t> textLines(const std::string& frame,const std::string& text,Rect rect);
     void textAt(const std::string& frame,const std::string& text,Rect rect,bool enabled=true,bool highlight=false,bool left=false,float fontHeight=0,size_t lineOffset=0);
     void checkAt(const std::string& frame,Rect rect,bool checked);
     void highlightAt(const std::string& frame,Rect rect);
