@@ -145,6 +145,7 @@ class GameView {
     bool drawAlliance(const GameInput& input);
     void drawMultiboards(const GameInput& input);
     void applyReplayCommandMenu();
+    bool sendCommandMenu(LanCommandMenu menu);
     bool multiboardMinimized(std::uint32_t id,const ScriptMultiboard& board) const;
     bool multiboardHit(float x,float y) const;
     void drawMinimapPings();

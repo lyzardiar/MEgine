@@ -2780,3 +2780,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 被动防御速度字段（待验证）
 
 路径：`src/equipment.h`、`src/entities.h`、`src/session_equipment.cpp`、`src/session_passive_info.cpp`；集中验证能力与物品来源、禁用／科技、多个来源及主动防御叠加、移动和攻击消费者、幻象与多人确定性，并对照原版 DataC／DataD；DataI 仍未实现，见 [被动防御速度](passive-defense-speed.md)。本次未编译或运行。
+
+### 局域网命令菜单录制（待验证）
+
+路径：`src/game_commands.cpp`、`src/game_view.h`；集中验证鼠标／热键打开、同步等待、失败提示、时间片与回放、主客双端及原版时序。取消按钮／右键／菜单内 Esc 关闭尚未单独记录，见 [菜单动作录制](lan-menu-recording.md)。本次未编译或运行。
