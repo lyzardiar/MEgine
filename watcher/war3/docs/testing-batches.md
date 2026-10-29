@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+## 自研联机单位操作待验证
+
+路径：lan_actions、lan_action_encoder／lan_local_identity／lan_simulation、order_queue_tests。实验对局中的技能与修理自动施法开关、英雄学习、资源返还和指定乘员卸载已连接明确单位身份及会话命令；训练／研究／英雄复活的队列取消按建筑身份及 64 位任务票号消费，票号与全局计数进入状态摘要，训练／研究／复活／建筑升级及反召唤在票号耗尽时不再创建新任务；Win32 Release 产品和专项程序增量编译通过。新增专项尚未执行；阶段命令：`war3_order_queue_tests.exe <data-root> <BootyBay.w3m>`。合并验证同类型多选、热键与鼠标、启停连续输入、技能／等级／资源条件、普通与尸体货舱、消失／易主／死亡／失选／转移、脚本事件重入、队列项前移／同类型替换／重复取消、研究／复活和票号耗尽、状态摘要及多端／回放／原版协议和界面行为。
+
 ## 自研联机生产与物品身份待验证
 
-路径：lan_actions、lan_action_encoder／lan_simulation、game_view、order_queue_tests。实验对局为生产与物品动作传递明确单位和物品身份，消费时检查选区／权限／归属；同类型多选可指定高亮单位。失效子组及已转移或移除的物品跳过，未知对象拒绝；被拒绝的本地网络命令保留对局并记录原因。Win32 Release 产品与专项程序增量编译通过；新增专项尚未执行，阶段命令：`war3_order_queue_tests.exe <data-root> <BootyBay.w3m>`。集中验证多选训练／研究／升级／建筑放置、物品即时／点／单位使用与换格／转交／丢弃、Shift、槽位替换、失选／易主／移除及回调重入、畸形报文、双端／回放与原版行为。多选队列取消、自动施法及载具卸载另待实现。
+路径：lan_actions、lan_action_encoder／lan_simulation、game_view、order_queue_tests。实验对局为生产与物品动作传递明确单位和物品身份，消费时检查选区／权限／归属；同类型多选可指定高亮单位。失效子组及已转移或移除的物品跳过，未知对象拒绝；被拒绝的本地网络命令保留对局并记录原因。Win32 Release 产品与专项程序增量编译通过；新增专项尚未执行，阶段命令：`war3_order_queue_tests.exe <data-root> <BootyBay.w3m>`。集中验证多选训练／研究／升级／建筑放置、物品即时／点／单位使用与换格／转交／丢弃、Shift、槽位替换、失选／易主／移除及回调重入、畸形报文、双端／回放与原版行为。原版队列协议仍待实现。
 
 ## 自研联机多单位技能待验证
 
@@ -10,7 +14,7 @@
 
 ## 自研联机普通子组命令待验证
 
-路径：game_flow_ui／game_view、lan_action_encoder／lan_simulation、order_queue_tests。实验联机启用子组选项，Ctrl 筛选高亮类型，将子组和普通移动／攻击／巡逻／目标／停止／保持命令写入有序时间片并由各端筛选执行；多选队列取消及原版协议仍待实现。Win32 Release 产品和专项程序增量编译通过，新增专项尚未执行；阶段命令：`war3_order_queue_tests.exe <data-root> <BootyBay.w3m>`。阶段合并验证同／异类型多选、Ctrl 鼠标／热键／小地图、Shift 排队、选区变化与共享控制、双端／回放、UI 设置持久化及原版动作和行为。
+路径：game_flow_ui／game_view、lan_action_encoder／lan_simulation、order_queue_tests。实验联机启用子组选项，Ctrl 筛选高亮类型，将子组和普通移动／攻击／巡逻／目标／停止／保持命令写入有序时间片并由各端筛选执行；原版队列协议仍待实现。Win32 Release 产品和专项程序增量编译通过，新增专项尚未执行；阶段命令：`war3_order_queue_tests.exe <data-root> <BootyBay.w3m>`。阶段合并验证同／异类型多选、Ctrl 鼠标／热键／小地图、Shift 排队、选区变化与共享控制、双端／回放、UI 设置持久化及原版动作和行为。
 
 ## 自研联机菜单主动离开待验证
 
