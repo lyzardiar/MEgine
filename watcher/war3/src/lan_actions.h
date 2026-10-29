@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <span>
+#include <string>
 #include <variant>
 #include <vector>
 
@@ -11,6 +12,7 @@ struct LanObjectId {std::uint32_t first=0,second=0;bool operator==(const LanObje
 struct LanActionPause {bool operator==(const LanActionPause&) const=default;};
 struct LanActionResume {bool operator==(const LanActionResume&) const=default;};
 struct LanActionEscape {bool operator==(const LanActionEscape&) const=default;};
+struct LanActionExperimentalChat {std::string text;bool operator==(const LanActionExperimentalChat&) const=default;};
 struct LanActionCancelQueue {std::uint8_t slot=0;std::uint32_t type=0;bool operator==(const LanActionCancelQueue&) const=default;};
 struct LanActionCancelRevival {LanObjectId hero;bool operator==(const LanActionCancelRevival&) const=default;};
 struct LanActionTransfer {std::uint8_t slot=0;std::uint32_t gold=0,lumber=0;bool operator==(const LanActionTransfer&) const=default;};
@@ -36,10 +38,10 @@ struct LanActionAbility {
     std::uint32_t secondaryXBits=0,secondaryYBits=0;
     bool operator==(const LanActionAbility&) const=default;
 };
-using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionEscape,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionGroupAssign,LanActionGroupSelect>;
+using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionEscape,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionGroupAssign,LanActionGroupSelect,LanActionExperimentalChat>;
 
 // Classic 1.13+ action layout, bounded to 256 KiB and 4096 actions per block.
-// A malformed or unsupported opcode fails the entire block; IDs are original wire pairs.
-std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> bytes);
-std::vector<std::uint8_t> encodeLanActions(std::span<const LanDecodedAction> actions);
+// Experimental chat requires explicit opt-in; malformed or unsupported opcodes fail the block.
+std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> bytes,bool experimental=false);
+std::vector<std::uint8_t> encodeLanActions(std::span<const LanDecodedAction> actions,bool experimental=false);
 }

@@ -6,8 +6,8 @@
 namespace war3 {
 std::unique_ptr<LanRuntime> LanMatchReady::start(GameView& game,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wire,LanRuntime::AbilityFields fields,LanRuntime::Checksum checksum,std::uint16_t hostIntervalMs) {
     if(data || bool(host)==bool(join) || !expectedSession || &game.session()!=expectedSession)throw std::runtime_error("LAN game data must be moved to its matching view before starting");
-    if(host)return std::make_unique<LanRuntime>(game,game.session(),std::move(host),std::move(resolve),std::move(wire),std::move(fields),std::move(checksum),hostIntervalMs);
-    return std::make_unique<LanRuntime>(game,game.session(),std::move(join),std::move(resolve),std::move(wire),std::move(fields),std::move(checksum));
+    if(host)return std::make_unique<LanRuntime>(game,game.session(),std::move(host),std::move(resolve),std::move(wire),std::move(fields),std::move(checksum),hostIntervalMs,true);
+    return std::make_unique<LanRuntime>(game,game.session(),std::move(join),std::move(resolve),std::move(wire),std::move(fields),std::move(checksum),true);
 }
 LanMatchLoading::LanMatchLoading(const fs::path& root,bool muted,Log& log,LanHostHandoff handoff) : preparation_(root,muted),loader_(log) {
     if(!handoff.host || !handoff.host->enableTimeSlotProtocol())throw std::runtime_error("Cannot arm LAN host while loading");mapRequest_=handoff.requestPreparation(preparation_);host_=std::move(handoff.host);

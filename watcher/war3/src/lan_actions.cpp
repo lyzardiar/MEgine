@@ -7,12 +7,16 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
 namespace war3 {
 namespace {
 constexpr std::size_t maxBytes=256u*1024u,maxActions=4096;
+bool validChat(std::string_view text){
+    if(text.empty() || text.size()>1024)return false;for(size_t i=0;i<text.size();){auto a=std::uint8_t(text[i++]);if(a<32 || a==127)return false;if(a<128)continue;unsigned extra=a>=0xc2 && a<=0xdf?1:a>=0xe0 && a<=0xef?2:a>=0xf0 && a<=0xf4?3:0;if(!extra || extra>text.size()-i)return false;auto b=std::uint8_t(text[i]);if((b&0xc0)!=0x80 || (a==0xe0 && b<0xa0) || (a==0xed && b>=0xa0) || (a==0xf0 && b<0x90) || (a==0xf4 && b>=0x90))return false;for(unsigned j=0;j<extra;++j)if((std::uint8_t(text[i++])&0xc0)!=0x80)return false;}return true;
+}
 class Reader {
     std::span<const std::uint8_t> bytes_;
     std::size_t position_=0;
@@ -52,13 +56,14 @@ void writeAbility(Writer& writer,const LanActionAbility& value){
     if(value.opcode==0x14){writer.u32(value.secondaryOrder);for(auto byte:value.unknown)writer.u8(byte);writer.u32(value.secondaryXBits);writer.u32(value.secondaryYBits);}
 }
 }
-std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> bytes){
+std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> bytes,bool experimental){
     if(bytes.size()>maxBytes)throw std::runtime_error("LAN action block exceeds byte limit");Reader reader(bytes);std::vector<LanDecodedAction> result;
     while(!reader.done()){
         if(result.size()>=maxActions)throw std::runtime_error("LAN action count exceeds limit");auto offset=reader.position();auto opcode=reader.u8();
         if(opcode==0x01)result.emplace_back(LanActionPause{});
         else if(opcode==0x02)result.emplace_back(LanActionResume{});
         else if(opcode==0x61)result.emplace_back(LanActionEscape{});
+        else if(opcode==0xf0 && experimental){auto size=reader.u16();if(!size || size>1024)throw std::runtime_error("Invalid experimental LAN chat length");reader.need(size);std::string text;text.reserve(size);for(unsigned i=0;i<size;++i)text.push_back(char(reader.u8()));if(!validChat(text))throw std::runtime_error("Invalid experimental LAN chat text");result.emplace_back(LanActionExperimentalChat{std::move(text)});}
         else if(opcode>=0x10 && opcode<=0x14)result.emplace_back(readAbility(reader,opcode));
         else if(opcode==0x17){LanActionGroupAssign group;group.group=reader.u8();auto count=reader.u16();if(group.group>=10)throw std::runtime_error("Invalid LAN control group at byte "+std::to_string(offset));reader.need(std::size_t(count)*8);group.objects.reserve(count);for(unsigned i=0;i<count;++i)group.objects.push_back(reader.object());result.emplace_back(std::move(group));}
         else if(opcode==0x18){LanActionGroupSelect group{reader.u8(),reader.u8()};if(group.group>=10)throw std::runtime_error("Invalid LAN control group at byte "+std::to_string(offset));result.emplace_back(group);}
@@ -74,12 +79,13 @@ std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> byt
     }
     return result;
 }
-std::vector<std::uint8_t> encodeLanActions(std::span<const LanDecodedAction> actions){
+std::vector<std::uint8_t> encodeLanActions(std::span<const LanDecodedAction> actions,bool experimental){
     if(actions.size()>maxActions)throw std::runtime_error("LAN action count exceeds limit");Writer writer;
     for(const auto& action:actions)std::visit([&](const auto& value){using T=std::decay_t<decltype(value)>;
         if constexpr(std::is_same_v<T,LanActionPause>)writer.u8(0x01);
         else if constexpr(std::is_same_v<T,LanActionResume>)writer.u8(0x02);
         else if constexpr(std::is_same_v<T,LanActionEscape>)writer.u8(0x61);
+        else if constexpr(std::is_same_v<T,LanActionExperimentalChat>){if(!experimental || !validChat(value.text))throw std::runtime_error("Invalid experimental LAN chat");writer.u8(0xf0);writer.u16(std::uint16_t(value.text.size()));for(unsigned char byte:value.text)writer.u8(byte);}
         else if constexpr(std::is_same_v<T,LanActionAbility>)writeAbility(writer,value);
         else if constexpr(std::is_same_v<T,LanActionCancelQueue>){if(value.slot>6 || !value.type)throw std::runtime_error("Invalid LAN queue cancellation");writer.u8(0x1e);writer.u8(value.slot);writer.u32(value.type);}
         else if constexpr(std::is_same_v<T,LanActionCancelRevival>){if(value.hero.first==0xffffffffu && value.hero.second==0xffffffffu)throw std::runtime_error("Invalid LAN revival cancellation");writer.u8(0x1d);writer.object(value.hero);}

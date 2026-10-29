@@ -14,13 +14,14 @@ bool finitePoint(std::uint32_t x,std::uint32_t y){return std::isfinite(std::bit_
 std::optional<PlayerCommandKind> groundKind(std::uint32_t order){switch(order){case 851986:return PlayerCommandKind::GroundMove;case 851983:return PlayerCommandKind::GroundAttack;case 851990:return PlayerCommandKind::GroundPatrol;default:return {};}}
 bool targetOrder(std::uint32_t order){return order==851971 || order==851981 || order==851983 || order==851986 || order==852018 || order==852024 || order==852147 || order==852148;}
 }
-LanSimulation::LanSimulation(ScriptSession& session,ObjectResolver resolve):session_(session),resolve_(std::move(resolve)),driver_(session,[this](const LanAction& action){return validate(action);},[this](ScriptSession& target,const LanAction& action){return apply(target,action);}){}
+LanSimulation::LanSimulation(ScriptSession& session,ObjectResolver resolve,bool experimental):session_(session),resolve_(std::move(resolve)),experimental_(experimental),driver_(session,[this](const LanAction& action){return validate(action);},[this](ScriptSession& target,const LanAction& action){return apply(target,action);}){}
 bool LanSimulation::validate(const LanAction& action){
-    auto player=session_.networkPlayer(action.playerId);if(!player)return false;auto events=decodeLanActions(action.bytes);std::vector<Event> prepared;prepared.reserve(events.size());auto selected=[&]() -> std::set<std::uint32_t>& {auto found=projectedSelections_.find(*player);if(found==projectedSelections_.end())found=projectedSelections_.emplace(*player,session_.playerSelection(*player)).first;return found->second;};
+    auto player=session_.networkPlayer(action.playerId);if(!player)return false;auto events=decodeLanActions(action.bytes,experimental_);std::vector<Event> prepared;prepared.reserve(events.size());auto selected=[&]() -> std::set<std::uint32_t>& {auto found=projectedSelections_.find(*player);if(found==projectedSelections_.end())found=projectedSelections_.emplace(*player,session_.playerSelection(*player)).first;return found->second;};
     for(const auto& event:events){
         if(std::holds_alternative<LanActionPause>(event)){prepared.emplace_back(LanActionPause{});continue;}
         if(std::holds_alternative<LanActionResume>(event)){prepared.emplace_back(LanActionResume{});continue;}
         if(std::holds_alternative<LanActionEscape>(event)){prepared.emplace_back(Escape{*player});continue;}
+        if(auto chat=std::get_if<LanActionExperimentalChat>(&event)){prepared.emplace_back(Chat{*player,chat->text});continue;}
         if(std::holds_alternative<LanActionPreSubselection>(event))continue;
         if(auto trackable=std::get_if<LanActionTrackable>(&event)){if(!resolve_)return false;auto handle=resolve_(trackable->object);if(!handle || !session_.trackables().contains(*handle))return false;prepared.emplace_back(Trackable{*handle,trackable->hit});continue;}
         if(auto selection=std::get_if<LanActionSelection>(&event)){
@@ -51,6 +52,7 @@ bool LanSimulation::apply(ScriptSession& session,const LanAction&){
         if(std::holds_alternative<LanActionPause>(event))session.pause(true);
         else if(std::holds_alternative<LanActionResume>(event))session.pause(false);
         else if(auto escape=std::get_if<Escape>(&event))session.endCinematic(escape->player);
+        else if(auto chat=std::get_if<Chat>(&event)){session.chat(chat->player,chat->text);if(driver_.failed())return false;}
         else if(auto trackable=std::get_if<Trackable>(&event)){session.trackableEvent(trackable->handle,trackable->hit);if(driver_.failed())return false;}
         else if(auto selection=std::get_if<Selection>(&event)){for(auto id:selection->units){session.setPlayerUnitSelected(selection->player,id,selection->add);if(driver_.failed())return false;}auto group=subgroups_.find(selection->player);if(group!=subgroups_.end() && !session.playerSelection(selection->player).contains(group->second.first))subgroups_.erase(group);}
         else if(auto assigned=std::get_if<GroupAssign>(&event)){groups_[assigned->player][assigned->group]=assigned->units;}

@@ -1,4 +1,4 @@
-// Author: MiYu. Consume only supported original actions through network time slots.
+// Author: MiYu. Consume supported classic and explicitly enabled experimental actions through network time slots.
 #pragma once
 #include "lan_actions.h"
 #include "lan_time_driver.h"
@@ -15,6 +15,7 @@ public:
 private:
     struct Selection {unsigned player;bool add;std::vector<std::uint32_t> units;};
     struct Escape {unsigned player;};
+    struct Chat {unsigned player;std::string text;};
     struct Subgroup {unsigned player;std::uint32_t unit,type;};
     struct GroupAssign {unsigned player,group;std::vector<std::uint32_t> units;};
     struct GroupSelect {unsigned player;std::vector<std::uint32_t> units;};
@@ -23,7 +24,7 @@ private:
     struct Alliance {unsigned player,recipient,flags;};
     struct Trackable {std::uint32_t handle;bool hit;};
     struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0,expectedItem=0,itemSlot=0;bool constructionCancel=false,subgroup=false,itemOrder=false,itemById=false,queued=false;};
-    using Event=std::variant<LanActionPause,LanActionResume,Escape,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable>;
+    using Event=std::variant<LanActionPause,LanActionResume,Escape,Chat,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable>;
     ScriptSession& session_;
     ObjectResolver resolve_;
     std::vector<std::vector<Event>> decoded_;
@@ -31,12 +32,12 @@ private:
     std::map<unsigned,std::array<std::vector<std::uint32_t>,10>> groups_,projectedGroups_;
     std::map<unsigned,std::pair<std::uint32_t,std::uint32_t>> subgroups_,projectedSubgroups_;
     std::size_t cursor_=0;
-    bool consuming_=false;
+    bool consuming_=false,experimental_=false;
     LanTimeDriver driver_;
     bool validate(const LanAction& action);
     bool apply(ScriptSession& session,const LanAction& action);
 public:
-    explicit LanSimulation(ScriptSession& session,ObjectResolver resolve={});
+    explicit LanSimulation(ScriptSession& session,ObjectResolver resolve={},bool experimental=false);
     LanSimulation(const LanSimulation&)=delete;
     LanSimulation& operator=(const LanSimulation&)=delete;
     LanSimulation(LanSimulation&&)=delete;

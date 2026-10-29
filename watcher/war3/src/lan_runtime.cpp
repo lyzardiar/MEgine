@@ -15,18 +15,18 @@ struct LanRuntime::Bridge {
     AbilityFields fields;
     bool send(std::span<const std::uint8_t> bytes) const {return active && (host?host->submitHostAction(bytes):join && join->sendAction(bytes));}
 };
-void LanRuntime::attach(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wire,AbilityFields fields) {
+void LanRuntime::attach(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wire,AbilityFields fields,bool experimental) {
     if(&game_.session()!=&session_ || !peer || !resolve || !wire || !fields || !checksum_ || !session_.mainStarted() || session_.networkPlayer(peer)!=session_.localPlayer() || !session_.localPlayer())throw std::runtime_error("LAN runtime requires configured providers and local session");
     auto bridge=std::make_shared<Bridge>();bridge->session=&session_;bridge->host=host_.get();bridge->join=join_.get();bridge->peer=peer;bridge->wire=wire;bridge->fields=std::move(fields);
     auto selection=[bridge](std::span<const std::uint8_t> bytes){return bridge->send(bytes);};
-    auto submit=[bridge](const PlayerCommand& command)->unsigned{if(!bridge->active)return 0;auto fields=bridge->fields(command);if(!fields)return 0;auto bytes=encodeLanPlayerCommand(*bridge->session,bridge->peer,command,*fields,bridge->wire);return bridge->send(bytes)?1u:0u;};
-    if(!game_.enableLan(peer,std::move(resolve),std::move(wire),std::move(selection),std::move(submit)))throw std::runtime_error("Cannot attach LAN runtime to game view");bridge_=std::move(bridge);
+    auto submit=[bridge,experimental](const PlayerCommand& command)->unsigned{if(!bridge->active)return 0;if(command.kind==PlayerCommandKind::Chat){if(!experimental || bridge->session->networkPlayer(bridge->peer)!=std::optional<unsigned>{command.player})return 0;std::array<LanDecodedAction,1> actions{LanActionExperimentalChat{command.text}};auto bytes=encodeLanActions(actions,true);return bridge->send(bytes)?1u:0u;}auto fields=bridge->fields(command);if(!fields)return 0;auto bytes=encodeLanPlayerCommand(*bridge->session,bridge->peer,command,*fields,bridge->wire);return bridge->send(bytes)?1u:0u;};
+    if(!game_.enableLan(peer,std::move(resolve),std::move(wire),std::move(selection),std::move(submit),experimental))throw std::runtime_error("Cannot attach LAN runtime to game view");bridge_=std::move(bridge);
 }
-LanRuntime::LanRuntime(GameView& game,ScriptSession& session,std::unique_ptr<LanHost> host,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wire,AbilityFields fields,Checksum checksum,std::uint16_t intervalMs) : game_(game),session_(session),host_(std::move(host)),checksum_(std::move(checksum)),interval_(intervalMs) {
-    if(!host_ || !interval_ || interval_>1000 || !host_->running() || host_->loadPhase()!=LanLoadPhase::Ready || !host_->enableTimeSlotProtocol())throw std::runtime_error("LAN host is not ready for simulation");attach(1,std::move(resolve),std::move(wire),std::move(fields));
+LanRuntime::LanRuntime(GameView& game,ScriptSession& session,std::unique_ptr<LanHost> host,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wire,AbilityFields fields,Checksum checksum,std::uint16_t intervalMs,bool experimental) : game_(game),session_(session),host_(std::move(host)),checksum_(std::move(checksum)),interval_(intervalMs) {
+    if(!host_ || !interval_ || interval_>1000 || !host_->running() || host_->loadPhase()!=LanLoadPhase::Ready || !host_->enableTimeSlotProtocol())throw std::runtime_error("LAN host is not ready for simulation");attach(1,std::move(resolve),std::move(wire),std::move(fields),experimental);
 }
-LanRuntime::LanRuntime(GameView& game,ScriptSession& session,std::unique_ptr<LanJoin> join,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wire,AbilityFields fields,Checksum checksum) : game_(game),session_(session),join_(std::move(join)),checksum_(std::move(checksum)),interval_(0) {
-    if(!join_ || join_->state()!=LanJoinState::Lobby || join_->loadPhase()!=LanLoadPhase::Ready || !join_->enableTimeSlotProtocol())throw std::runtime_error("LAN peer is not ready for simulation");attach(join_->localPlayerId(),std::move(resolve),std::move(wire),std::move(fields));
+LanRuntime::LanRuntime(GameView& game,ScriptSession& session,std::unique_ptr<LanJoin> join,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wire,AbilityFields fields,Checksum checksum,bool experimental) : game_(game),session_(session),join_(std::move(join)),checksum_(std::move(checksum)),interval_(0) {
+    if(!join_ || join_->state()!=LanJoinState::Lobby || join_->loadPhase()!=LanLoadPhase::Ready || !join_->enableTimeSlotProtocol())throw std::runtime_error("LAN peer is not ready for simulation");attach(join_->localPlayerId(),std::move(resolve),std::move(wire),std::move(fields),experimental);
 }
 LanRuntime::~LanRuntime(){if(bridge_)bridge_->active=false;}
 bool LanRuntime::fail(std::string message){failed_=true;if(bridge_)bridge_->active=false;error_=std::move(message);return false;}

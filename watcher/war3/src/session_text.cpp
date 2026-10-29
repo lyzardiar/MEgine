@@ -10,7 +10,7 @@
 #include "map_ui.h"
 
 namespace war3 {
-void ScriptSession::displayText(unsigned owner,float x,float y,double duration,std::string message) {if(owner>=16 || !std::isfinite(x) || !std::isfinite(y) || !std::isfinite(duration) || duration<0 || message.size()>65536)throw std::runtime_error("Invalid script text message");std::erase_if(texts_,[&](auto& t){return t.expires<=simulationTime_;});if(texts_.size()>=128)texts_.erase(texts_.begin());texts_.push_back({owner,x,y,simulationTime_+duration,std::move(message)});}
+void ScriptSession::displayText(unsigned owner,float x,float y,double duration,std::string message) {if(owner>16 || !std::isfinite(x) || !std::isfinite(y) || !std::isfinite(duration) || duration<0 || message.size()>65536)throw std::runtime_error("Invalid script text message");std::erase_if(texts_,[&](auto& t){return t.expires<=simulationTime_;});if(texts_.size()>=128)texts_.erase(texts_.begin());texts_.push_back({owner,x,y,simulationTime_+duration,std::move(message)});}
 void ScriptSession::bindTextNatives() {
     bind("SetCreepCampFilterState","nothing",{"boolean"},[this](auto& vm,auto a){requireWorld().environment().creepCampFilter=a[0].bits!=0;return vm.nothing();});
     bind("GetCreepCampFilterState","boolean",{},[this](auto& vm,auto){return vm.boolean(requireWorld().environment().creepCampFilter);});

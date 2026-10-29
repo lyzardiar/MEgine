@@ -35,7 +35,7 @@ class GameView {
     std::vector<std::uint8_t> lanPendingSelection_;
     std::deque<LanActionAlliance> lanPendingAlliance_;
     std::uint8_t lanPeer_=0;
-    bool drawStarted_=false,replayMode_=false;
+    bool drawStarted_=false,replayMode_=false,lanExperimental_=false;
     std::string lanMessage_;
     std::uint64_t lanMessageUntil_=0;
     unsigned submitPlayerCommand(const PlayerCommand& command);
@@ -95,6 +95,7 @@ class GameView {
     bool videoPersistable_=true;
     bool appExit_=false;
     std::wstring chatText_;
+    wchar_t chatHighSurrogate_=0;
     std::array<float,3> eye_{};
     size_t drawnChunks_=0,drawnObjects_=0,drawnUnits_=0;
     void camera(const GameInput& input,double delta);
@@ -185,7 +186,7 @@ public:
     bool draw(const GameInput& input);
     // Configure before first draw. sendSelection and submit enqueue in order without reentry;
     // the owner consumes complete slots on this thread and must not submit selection separately.
-    bool enableLan(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wireObject,std::function<bool(std::span<const std::uint8_t>)> sendSelection,std::function<unsigned(const PlayerCommand&)> submit);
+    bool enableLan(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wireObject,std::function<bool(std::span<const std::uint8_t>)> sendSelection,std::function<unsigned(const PlayerCommand&)> submit,bool experimental=false);
     bool enableReplay(std::uint8_t peer,LanSimulation::ObjectResolver resolve);
     std::optional<LanStepResult> consumeLanSlot(std::uint64_t sequence,const LanTimeSlot& slot);
     const LanSimulation* lanSimulation() const {return lanSimulation_.get();}
