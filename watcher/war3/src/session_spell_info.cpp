@@ -48,7 +48,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"Abtl",SpellKind::BattleStations,SpellTargeting::None},{"Astd",SpellKind::StandDown,SpellTargeting::None},
         {"Adev",SpellKind::Devour,SpellTargeting::Unit},{"ACdv",SpellKind::Devour,SpellTargeting::Unit},
         {"Acan",SpellKind::Cannibalize,SpellTargeting::None},{"Arai",SpellKind::RaiseDead,SpellTargeting::None},
-        {"AHre",SpellKind::Resurrection,SpellTargeting::None},{"AUan",SpellKind::AnimateDead,SpellTargeting::None},
+        {"AHre",SpellKind::Resurrection,SpellTargeting::None},{"AIrs",SpellKind::Resurrection,SpellTargeting::None},{"AUan",SpellKind::AnimateDead,SpellTargeting::None},{"AIan",SpellKind::AnimateDead,SpellTargeting::None},
         {"Aast",SpellKind::AncestralSpirit,SpellTargeting::Unit},
         {"Amel",SpellKind::LoadCorpse,SpellTargeting::None},{"Amed",SpellKind::UnloadCorpse,SpellTargeting::None},
         {"Aens",SpellKind::Ensnare,SpellTargeting::Unit},{"Aweb",SpellKind::Web,SpellTargeting::Unit},

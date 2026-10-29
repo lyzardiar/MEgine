@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 复活／操纵死尸卷轴与旋风魔杖待验证
+
+路径：`session_spell_info.cpp`、`session_item_use.cpp`、`session_spells.cpp`、`tests/corpse_tests.cpp`、`tests/morph_tests.cpp`；说明见 `corpse-items.md`、`cyclone-wand.md`。阶段使用对应夹具验证复活保留句柄／人口、操纵死尸归属／无敌／时限／科技、范围及敌友／英雄、无尸体与物品消耗；验证旋风魔杖目标、3 次消耗、事件、持续／驱散、丢弃／死亡／中断、原版表现和多端同步。Win32 Release 客户端及 corpse／morph 消费者已编译；专项、实际对局及原版对照尚未执行。
+
 ## 保护卷轴与资源宝箱待验证
 
 路径：`consumables.h`、`spells.h`、`session_consumables.cpp`、`session_item_use.cpp`、`tests/consumption_tests.cpp`、`tests/commerce_tests.cpp`；说明见 `protection-scroll.md`、`resource-powerups.md`。Win32 Release 客户端及两个相关消费者已编译。阶段检查 AIda／AIdb 范围、敌友／免疫、护甲叠加／驱散／到期、恢复上限、事件重入及地图覆盖；检查 AIgo／AIlu 拾取者归属、资源变化事件、物品消耗、上限／异常数值、召唤单位和多人同步；对照原版计分与资源维护费。专项、真实对局及原版对照尚未执行。
