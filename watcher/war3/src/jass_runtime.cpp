@@ -86,14 +86,14 @@ struct Runtime::Impl {
             auto index=Id(literals.size());literals.push_back(literal(item.id));emit(out,Op::Literal,index,e.position);
         }
     }
-    void statements(Code& out,const std::vector<Id>& body,std::vector<std::vector<size_t>>& loops) {
+    void statements(Code& out,const std::vector<Id>& body,std::vector<std::vector<size_t>>& loops,bool voidReturn) {
         for(auto id:body){auto& s=module.program().statement(id);if(s.debug && !limits.debug)continue;switch(s.kind){
             case StatementKind::Set:if(s.index!=none)expression(out,s.index);expression(out,s.value);emit(out,s.index==none?Op::Write:Op::WriteArray,id,s.position);break;
             case StatementKind::Call:expression(out,s.value);emit(out,Op::Discard,id,s.position);break;
-            case StatementKind::If:{std::vector<size_t> ends;for(size_t i=0;i<s.branches.size();++i){auto& branch=s.branches[i];size_t skip=SIZE_MAX;if(branch.condition!=none){expression(out,branch.condition);skip=emit(out,Op::JumpFalse,id,s.position);}statements(out,branch.statements,loops);if(i+1<s.branches.size())ends.push_back(emit(out,Op::Jump,id,s.position));if(skip!=SIZE_MAX)out[skip].target=out.size();}for(auto at:ends)out[at].target=out.size();break;}
-            case StatementKind::Loop:{auto start=out.size();loops.emplace_back();statements(out,s.body,loops);emit(out,Op::Jump,id,s.position,start);for(auto at:loops.back())out[at].target=out.size();loops.pop_back();break;}
+            case StatementKind::If:{std::vector<size_t> ends;for(size_t i=0;i<s.branches.size();++i){auto& branch=s.branches[i];size_t skip=SIZE_MAX;if(branch.condition!=none){expression(out,branch.condition);skip=emit(out,Op::JumpFalse,id,s.position);}statements(out,branch.statements,loops,voidReturn);if(i+1<s.branches.size())ends.push_back(emit(out,Op::Jump,id,s.position));if(skip!=SIZE_MAX)out[skip].target=out.size();}for(auto at:ends)out[at].target=out.size();break;}
+            case StatementKind::Loop:{auto start=out.size();loops.emplace_back();statements(out,s.body,loops,voidReturn);emit(out,Op::Jump,id,s.position,start);for(auto at:loops.back())out[at].target=out.size();loops.pop_back();break;}
             case StatementKind::ExitWhen:expression(out,s.value);loops.back().push_back(emit(out,Op::JumpTrue,id,s.position));break;
-            case StatementKind::Return:if(s.value!=none)expression(out,s.value);emit(out,Op::Return,s.value,s.position);break;
+            case StatementKind::Return:{auto value=voidReturn?none:s.value;if(value!=none)expression(out,value);emit(out,Op::Return,value,s.position);break;}
         }}
     }
     Impl(Runtime& runtime,Module source,RuntimeLimits budget) : owner(runtime),module(std::move(source)),limits(budget),domain(std::make_shared<Domain>(budget.threads)) {
@@ -105,7 +105,7 @@ struct Runtime::Impl {
         for(auto& slot:module.globals())globals.push_back({empty(slot.type),true,slot.array,{}});
         for(size_t i=0;i<program.globals().size();++i){auto& global=program.globals()[i];if(global.initializer!=none){expression(code.back(),global.initializer);emit(code.back(),Op::InitGlobal,Id(i),global.position);}}
         emit(code.back(),Op::Return,none,{});
-        for(size_t i=0;i<program.functions().size();++i){auto& function=program.functions()[i];if(function.native)continue;auto& out=code[i];for(size_t l=0;l<function.locals.size();++l){auto& local=function.locals[l];if(local.initializer!=none){expression(out,local.initializer);emit(out,Op::InitLocal,Id(function.parameters.size()+l),local.position);}}std::vector<std::vector<size_t>> loops;statements(out,function.body,loops);emit(out,function.result=="nothing"?Op::Return:Op::MissingReturn,none,function.position);}
+        for(size_t i=0;i<program.functions().size();++i){auto& function=program.functions()[i];if(function.native)continue;auto& out=code[i];for(size_t l=0;l<function.locals.size();++l){auto& local=function.locals[l];if(local.initializer!=none){expression(out,local.initializer);emit(out,Op::InitLocal,Id(function.parameters.size()+l),local.position);}}std::vector<std::vector<size_t>> loops;statements(out,function.body,loops,function.result=="nothing");emit(out,function.result=="nothing"?Op::Return:Op::MissingReturn,none,function.position);}
     }
     Cell& cell(Binding binding,Frame& frame) {return binding.access==Access::Global?globals.at(binding.index):frame.locals.at(binding.index);}
     Value load(const Cell& cell,std::optional<std::uint32_t> index,Position p) const {

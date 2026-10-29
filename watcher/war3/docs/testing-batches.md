@@ -2870,3 +2870,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 两栖 AI 队长共享路线（待验证）
 
 路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`src/session_ai_armies.cpp`、`src/session_ai_control.cpp`。Win32 Release 核心增量编译和原图两栖／地面混组定向探针通过；集中验证真实战役、路线中断、补员、动态障碍、混编、同步及原版行为，见 [两栖 AI 路径](campaign-amphibious-ai.md)。
+
+### Human06 脚本无值返回兼容（待验证）
+
+路径：`src/jass_module.cpp`、`src/jass_runtime.cpp`、`tests/jass_runtime_tests.cpp`。独立探针验证受限返回与原图开场推进；集中执行新增断言，核对原版行为及产品关卡，见 [无值返回兼容](campaign-human06-return.md)。

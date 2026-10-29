@@ -50,7 +50,7 @@ class Linker {
             case StatementKind::If:for(auto& branch:s.branches){if(branch.condition!=none)requireType(boolean,expression(branch.condition),s.position,"if");statements(branch.statements);}break;
             case StatementKind::Loop:statements(s.body);break;
             case StatementKind::ExitWhen:requireType(boolean,expression(s.value),s.position,"exitwhen");break;
-            case StatementKind::Return:{auto expected=module_.functions_.at(currentFunction_).result;if(s.value==none){if(module_.type(expected).category!=Category::Nothing)fail(s.position,"JASS return value missing");}else {auto actual=expression(s.value);if(module_.type(expected).category==Category::Nothing)fail(s.position,"Void JASS function returns a value");requireType(expected,actual,s.position,"Return");}break;}
+            case StatementKind::Return:{auto expected=module_.functions_.at(currentFunction_).result;if(s.value==none){if(module_.type(expected).category!=Category::Nothing)fail(s.position,"JASS return value missing");}else {auto actual=expression(s.value);if(module_.type(expected).category==Category::Nothing){auto& value=program_.expression(s.value);if(value.kind!=ExpressionKind::Boolean || value.text!="false")fail(s.position,"Void JASS function returns a value");}else requireType(expected,actual,s.position,"Return");}break;}
         }}
     }
     void types() {
