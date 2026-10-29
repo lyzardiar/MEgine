@@ -9,7 +9,7 @@
 namespace war3 {
 class CampaignBrowser {
     struct Entry {std::string header,name,path,extra;unsigned mission=0;bool missionEntry=false,cinematic=false,ending=false,intro=false;};
-    struct Campaign {std::string section,header,name,background,model;bool expansion=false,defaultOpen=false;unsigned offset=0,sourceIndex=0;std::vector<Entry> entries;};
+    struct Campaign {std::string section,header,name,background,model,ambient;bool expansion=false,defaultOpen=false;unsigned offset=0,sourceIndex=0;std::vector<Entry> entries;};
     Archives& archives_;
     GlueScreen screen_;
     CampaignProfile profile_;
@@ -52,5 +52,6 @@ public:
     bool loading() const {return loading_;}
     const std::string& error() const {return error_;}
     std::string backdrop() const {return backdrop_;}
+    std::string ambient() const {return selectedCampaign_<campaigns_.size()?campaigns_[selectedCampaign_].ambient:std::string{};}
 };
 }
