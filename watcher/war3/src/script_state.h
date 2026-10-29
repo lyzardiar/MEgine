@@ -123,7 +123,7 @@ struct ScriptCache {
 };
 struct ScriptHashtable {std::map<std::tuple<std::uint32_t,std::uint32_t,std::string>,jass::Value> values;};
 struct ScriptMultiboardCell {std::string value,icon;std::uint32_t color=0xffffffff;float width=.04f;bool showValue=true,showIcon=false,active=true;};
-struct ScriptMultiboard {std::string title;std::uint32_t titleColor=0xffffffff;bool visible=false,minimized=false;unsigned rows=0,columns=0;ScriptMultiboardCell defaults;std::vector<std::shared_ptr<ScriptMultiboardCell>> cells;std::set<std::uint32_t> handles;};
+struct ScriptMultiboard {std::string title;std::uint32_t titleColor=0xffffffff;bool visible=false,minimized=false;std::uint64_t minimizeRevision=0;unsigned rows=0,columns=0;ScriptMultiboardCell defaults;std::vector<std::shared_ptr<ScriptMultiboardCell>> cells;std::set<std::uint32_t> handles;};
 struct ScriptMultiboardItem {std::weak_ptr<ScriptMultiboard> board;std::weak_ptr<ScriptMultiboardCell> cell;};
 struct ScriptLeaderboardItem {std::string label;int value=0;unsigned player=0;bool showLabel=true,showValue=true,showIcon=true;std::uint32_t labelColor=0xffffffff,valueColor=0xffffffff;};
 struct ScriptLeaderboard {std::string label;std::vector<ScriptLeaderboardItem> items;bool visible=false,showLabel=true,showNames=true,showValues=true,showIcons=true;std::uint32_t labelColor=0xffffffff,valueColor=0xffffffff;unsigned sizeCount=0;};

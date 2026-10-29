@@ -108,6 +108,7 @@ class GameView {
     std::string allianceError_,allianceDisabledCheck_;
     std::map<std::string,bool> multiboardIcons_;
     std::set<std::string> multiboardQueued_;
+    std::map<std::uint32_t,std::pair<std::uint64_t,bool>> multiboardLocalMinimized_;
     struct BuffPanelInfo {std::string icon,title,description;};
     std::map<std::uint32_t,BuffPanelInfo> buffPanelInfo_;
     std::map<std::string,bool> buffPanelImages_;
@@ -143,6 +144,7 @@ class GameView {
     void openAlliance();
     bool drawAlliance(const GameInput& input);
     void drawMultiboards(const GameInput& input);
+    bool multiboardMinimized(std::uint32_t id,const ScriptMultiboard& board) const;
     bool multiboardHit(float x,float y) const;
     void drawMinimapPings();
     void startMinimapSignal();

@@ -2730,3 +2730,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役单位冷却缓存（待验证）
 
 路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`。集中验证技能／物品共享冷却的保存与恢复、相对时钟、v1–v6 兼容、损坏数据及实验同步，并对照原版跨关行为；完整存档及原版格式尚未完成，详见 [战役单位冷却](campaign-unit-cooldowns.md)。本次未编译或运行。
+
+### 多列计分板本地折叠（待验证）
+
+路径：`src/game_multiboard.cpp`、`src/game_view.*`、`src/session_multiboard.cpp`、`src/script_state.h`。集中验证多人各自点击、脚本覆盖、销毁与重建、回放输入和弹窗隔离，以及原版按钮与 getter 语义；具体范围见 [多列计分板本地折叠](multiboard-local-minimize.md)。本次未编译或运行。

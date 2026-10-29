@@ -5,7 +5,7 @@
 #include <cmath>
 
 namespace war3 {
-void ScriptSession::toggleMultiboard(std::uint32_t id) {auto found=multiboards_.find(id);if(found!=multiboards_.end())found->second->minimized=!found->second->minimized;}
+void ScriptSession::toggleMultiboard(std::uint32_t id) {auto found=multiboards_.find(id);if(found!=multiboards_.end()){found->second->minimized=!found->second->minimized;++found->second->minimizeRevision;}}
 void ScriptSession::bindMultiboardNatives() {
     auto board=[this](jass::Value handle)->std::shared_ptr<ScriptMultiboard>{if(!handle.bits)return {};return std::get<std::shared_ptr<ScriptMultiboard>>(object(handle,NativeKind::Multiboard).state);};
     auto cell=[this](jass::Value handle)->std::shared_ptr<ScriptMultiboardCell>{if(!alive(handle.bits,NativeKind::MultiboardItem))return {};auto& item=std::get<ScriptMultiboardItem>(objects_[handle.bits-handleBase].state);auto owner=item.board.lock();auto result=item.cell.lock();return owner && result && result->active?result:nullptr;};
@@ -19,7 +19,7 @@ void ScriptSession::bindMultiboardNatives() {
     bind("DestroyMultiboard","nothing",{"multiboard"},[this,board](auto& vm,auto a){if(auto b=board(a[0])){for(auto& c:b->cells)c->active=false;auto handles=b->handles;for(auto id:handles)if(alive(id,NativeKind::MultiboardItem))destroy(vm.handle("multiboarditem",id),NativeKind::MultiboardItem);multiboards_.erase(a[0].bits);destroy(a[0],NativeKind::Multiboard);}return vm.nothing();});
     bind("MultiboardDisplay","nothing",{"multiboard","boolean"},[board](auto& vm,auto a){if(auto b=board(a[0]))b->visible=a[1].bits!=0;return vm.nothing();});
     bind("IsMultiboardDisplayed","boolean",{"multiboard"},[board](auto& vm,auto a){auto b=board(a[0]);return vm.boolean(b && b->visible);});
-    bind("MultiboardMinimize","nothing",{"multiboard","boolean"},[board](auto& vm,auto a){if(auto b=board(a[0]))b->minimized=a[1].bits!=0;return vm.nothing();});
+    bind("MultiboardMinimize","nothing",{"multiboard","boolean"},[board](auto& vm,auto a){if(auto b=board(a[0])){b->minimized=a[1].bits!=0;++b->minimizeRevision;}return vm.nothing();});
     bind("IsMultiboardMinimized","boolean",{"multiboard"},[board](auto& vm,auto a){auto b=board(a[0]);return vm.boolean(b && b->minimized);});
     bind("MultiboardSuppressDisplay","nothing",{"boolean"},[this](auto& vm,auto a){multiboardsSuppressed_=a[0].bits!=0;return vm.nothing();});
     bind("MultiboardClear","nothing",{"multiboard"},[board,resize](auto& vm,auto a){if(auto b=board(a[0]))resize(b,0,0);return vm.nothing();});
