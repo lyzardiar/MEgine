@@ -1978,3 +1978,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`world.h`、`world_height.cpp`、`session_world.cpp`、`terrain_scene.cpp`、`tests/game_flow_tests.cpp`、`docs/terrain-deformation.md`。Crater 和 Wave 连接原生句柄、时钟、共享地形高度与绘制；永久凹坑自然到期固化，StopAll 保留已固化高度。未变化顶点跳过 GPU 上传。
 
 阶段执行现有 game-flow 夹具和消费者，核对普通／永久陨坑、自然结束／停止／交错、重叠与固化量化、Wave 方向／拖尾／循环、异常参数、脚本高度及单位贴地、GPU 设备恢复、实际画面、原版结果和性能。专项尚未执行。
+
+## 随机地形变形待验证
+
+路径：`world.h`、`world_height.cpp`、`session_world.cpp`、`session_tick.cpp`、`tests/game_flow_tests.cpp`、`docs/terrain-deformation.md`。Random 连接会话随机源、按间隔缓存角点、共享地形查询／绘制和停止时钟；现有 LCG 尚未与原版 RNG 序列对齐。
+
+阶段执行 game-flow 夹具及消费者，核对固定种子／区间／边界、查询不消耗随机数、首次与重复采样、停止／超时／暂停、效果叠加、原版网格与 RNG 顺序、多客户端同步、GPU 和大范围采样性能。专项尚未执行。
