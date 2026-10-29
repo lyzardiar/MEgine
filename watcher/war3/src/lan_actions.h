@@ -1,5 +1,6 @@
 // Author: MiYu. Documented classic action records and their wire fields.
 #pragma once
+#include "chat_channel.h"
 #include <array>
 #include <cstdint>
 #include <span>
@@ -12,7 +13,7 @@ struct LanObjectId {std::uint32_t first=0,second=0;bool operator==(const LanObje
 struct LanActionPause {bool operator==(const LanActionPause&) const=default;};
 struct LanActionResume {bool operator==(const LanActionResume&) const=default;};
 struct LanActionEscape {bool operator==(const LanActionEscape&) const=default;};
-struct LanActionExperimentalChat {std::string text;bool operator==(const LanActionExperimentalChat&) const=default;};
+struct LanActionExperimentalChat {std::string text;ChatChannel channel=ChatChannel::All;bool operator==(const LanActionExperimentalChat&) const=default;};
 struct LanActionCancelQueue {std::uint8_t slot=0;std::uint32_t type=0;bool operator==(const LanActionCancelQueue&) const=default;};
 struct LanActionCancelRevival {LanObjectId hero;bool operator==(const LanActionCancelRevival&) const=default;};
 struct LanActionTransfer {std::uint8_t slot=0;std::uint32_t gold=0,lumber=0;bool operator==(const LanActionTransfer&) const=default;};

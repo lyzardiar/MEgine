@@ -96,6 +96,7 @@ class GameView {
     bool appExit_=false;
     std::wstring chatText_;
     wchar_t chatHighSurrogate_=0;
+    ChatChannel chatChannel_=ChatChannel::All;
     std::array<float,3> eye_{};
     size_t drawnChunks_=0,drawnObjects_=0,drawnUnits_=0;
     void camera(const GameInput& input,double delta);

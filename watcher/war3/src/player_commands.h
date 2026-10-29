@@ -1,5 +1,6 @@
 // Author: MiYu. Explicit player-issued ground and stop commands shared by game input and simulation.
 #pragma once
+#include "chat_channel.h"
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -24,6 +25,7 @@ struct PlayerCommand {
     bool hasFormationDestination=false;
     std::uint32_t formationXBits=0,formationYBits=0;
     bool formationMovement=true;
+    ChatChannel chatChannel=ChatChannel::All;
 };
 bool playerCommandQueueable(PlayerCommandKind kind);
 unsigned dispatchPlayerCommand(ScriptSession& session,const PlayerCommand& command,const std::function<bool()>& keepGoing={},bool fromQueue=false);

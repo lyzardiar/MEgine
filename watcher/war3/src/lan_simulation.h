@@ -15,7 +15,7 @@ public:
 private:
     struct Selection {unsigned player;bool add;std::vector<std::uint32_t> units;};
     struct Escape {unsigned player;};
-    struct Chat {unsigned player;std::string text;};
+    struct Chat {unsigned player;std::string text;ChatChannel channel;};
     struct Subgroup {unsigned player;std::uint32_t unit,type;};
     struct GroupAssign {unsigned player,group;std::vector<std::uint32_t> units;};
     struct GroupSelect {unsigned player;std::vector<std::uint32_t> units;};
