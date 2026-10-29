@@ -2918,3 +2918,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 资料片第四章无效单位名称（待验证）
 
 路径：`src/session_entities.cpp`、`docs/campaign-null-unit-name.md`。同版核心编译及最小会话检查通过，第四章隔离开场越过异常；集中验证字幕、单位选择分支和真实窗口，见 [无效单位名称](campaign-null-unit-name.md)。
+
+### 单机暂停与速度命令入口（待验证）
+
+路径：`src/game_flow_ui.*`、`src/game_view.cpp`、`src/player_commands.*`、`tests/game_flow_tests.cpp`。Win32 Release 产品编译通过；集中验证菜单操作、本地及网络权限、脚本交错和新增会话断言，见 [单机游戏控制命令](single-replay-controls.md)。单机回放录制和播放尚未完成。

@@ -8,6 +8,7 @@
 #include <utility>
 
 namespace war3 {
+struct PlayerCommand;
 class GameFlowUi {
     GameData& data_;
     Renderer& renderer_;
@@ -29,6 +30,7 @@ class GameFlowUi {
     std::string scoreModalFocus_="SaveReplayFileEditBox";
     std::string scoreReplayMessage_;
     std::function<std::pair<bool,std::string>(const std::wstring&)> scoreReplaySaver_;
+    std::function<unsigned(const PlayerCommand&)> submit_;
     bool appExit_=false;
     std::optional<bool> networkLeave_;
     GameCameraPreferences cameraPreferences_{},cameraDraft_{};
@@ -43,8 +45,9 @@ class GameFlowUi {
     void optionsPanel(Panel panel);
     void drawOptions(const UiInput& input,bool network,bool allowNetworkSubgroup);
     void prepareScores();
+    unsigned submit(const PlayerCommand& command);
 public:
-    GameFlowUi(GameData& data,Renderer& renderer,Text& text) : data_(data),renderer_(renderer),text_(text) {}
+    GameFlowUi(GameData& data,Renderer& renderer,Text& text,std::function<unsigned(const PlayerCommand&)> submit={}) : data_(data),renderer_(renderer),text_(text),submit_(std::move(submit)) {}
     ~GameFlowUi();
     bool menuOpen() const {return panel_!=Panel::Closed;}
     void toggleMenu();
