@@ -4,6 +4,8 @@
 
 DotA 计分板的空英雄和物品栏查询已接入；`ExecuteFunc` 支持无参数的有返回值函数。原图静音 60 秒模拟通过，实际操作、画面和原版语义待阶段验证，见[脚本线程](script-threads.md)和[测试队列](testing-batches.md)。
 
+DotA 地图覆盖闪电表的稀疏数值及计分板标题色码绘制已接入；原图静音 180 秒模拟通过，实际画面、交互及原版对照待验证，见[闪电](ribbons-lightning.md)和[多列计分板](multiboard.md)。
+
 单位类型 ID 的运行态分类、召唤分类及英雄 rawcode 判定已按原版静态分支接入；实例召唤标记和原版实际行为待验证，见[单位类型 ID 分类](unit-id-classification.md)。
 
 玩家科技百分比接入种族升级及研究等级，筛选边界和原版精度待验证，见[对局分数](player-scores.md)。

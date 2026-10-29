@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## DotA 稀疏闪电表与计分板标题待验证
+
+路径：`session_lightning.cpp`、`game_multiboard.cpp`、`main.cpp`、`platform.cpp`，说明见 `ribbons-lightning.md`、`multiboard.md`。原图自定义闪电表的省略数值按零解析并在整表成功后发布；多列计分板标题按可见文字测量、截断、居中并绘制色码；开发模拟入口可分段推进至 600 秒。Win32 Release 客户端编译通过，DotA 原 main 及静音 180 秒模拟通过、无 Game.dll，日志 `tmp/docs-artifacts/war3/dota-sparse-lightning-180s.log`。阶段验证稀疏颜色／比例／噪声、空和损坏字段、缓存失败重试、源纹理和动画；实窗核对多段色码、颜色重置、中文／代理对、长标题截断、多个计分板及原版画面。上述专项、实际操作和原版对照尚未执行。
+
 ## DotA 计分板空英雄查询待验证
 
 路径：`session_hero.cpp`、`session_inventory.cpp`、`tests/commerce_tests.cpp`。英雄等级／经验／技能点与物品栏空单位查询分别返回零或空物品，非零无效句柄仍报错。DotA 的计分板在玩家未选英雄时使用这些查询；Win32 Release 客户端与 commerce 消费者已编译，专项尚未执行。阶段验证空／非英雄／英雄／已销毁单位、库存变化、多人计分板和原版空句柄语义。

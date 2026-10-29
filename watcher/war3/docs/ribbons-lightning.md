@@ -8,6 +8,8 @@ RIBB保留源节点、上下高度、透明度/颜色、寿命、纹理槽、发
 
 LightningData从挂载资源的Splats/LightningData.slk读取，保留15种原版配置及地图覆盖：纹理目录/文件、AvgSegLen、Width、RGBA、NoiseScale、TexCoordScale和Duration。闪电使用实际端点、源纹理/宽度/分段/颜色与视野标志绘制，纹理进入后台读取/上传；脚本对象保持到DestroyLightning，技能创建的对象有独立寿命并跟随实际单位端点。删除、移动及颜色变化直接消费同一记录，typed hashtable保存真实lightning句柄。
 
+地图覆盖表支持稀疏数值单元格：省略或空值按零读取，名称和纹理字段仍需存在，分段长度等仍按实际绘制约束校验；整表解析成功后才发布缓存。DotA 表中 LEAS 省略纹理坐标比例、FING 省略红／蓝、FADE 省略噪声值，公共 LEAS 的对应比例为零。稀疏字段与原版画面的准确语义仍待对照。
+
 已绑定AddLightning/Ex、MoveLightning/Ex、DestroyLightning、SetLightningColor和四个GetLightningColor接口。原能力LightningEffect的主/次配置连接闪电链、治疗波；链式零速后续命中保持进入下一模拟步，避免递归堆叠。其游戏规则和原件时序继续按既有待测项对照。
 
 World集中保存源地形/坡道表面；渲染通过span复用该数据，GetLocationZ与闪电端点查询消费同一插值。坡道识别和低角抬高规则沿用已有渲染实现，减少重复数据及计算。这使当前查询和画面同源，原版高度量化/悬崖/坡道精度仍需对照，不代表完整动态地形已完成。

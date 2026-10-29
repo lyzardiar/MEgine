@@ -32,7 +32,7 @@ BootyBay已获得原地图画面及20帧开发运行证据，无Game.dll。完�
 - `--probe --map <路径>`：原生资源/地图记录读取。
 - `--script-check --map <路径>`：读取、解析、链接和编译公共及地图JASS。
 - `--config-check --map <路径>`：原图globals/config和配置状态。
-- `--main-check --map <路径> --simulate-ms 250`：main及指定早期模拟区间；未知native记录源位置并非零退出。
+- `--main-check --map <路径> --simulate-ms 250`：main及指定模拟区间（最多600,000毫秒，按60秒分段推进）；未知native记录源位置并非零退出。
 - `--hidden --frames 120 --capture <PNG路径>`：限定帧输出；配合 `--play` 时帧数统计游戏画面，等待开局上限120秒。
 - `--menu-check --map <路径> --hidden --frames 10000`：已有菜单导航检查；`--window-check --frames 120`：已有窗口/输入恢复检查。
 
