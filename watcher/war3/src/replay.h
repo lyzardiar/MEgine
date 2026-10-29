@@ -11,6 +11,7 @@
 
 namespace war3 {
 struct ReplayHeader {std::uint32_t version=0,product=0,durationMs=0;std::uint16_t build=0;bool singlePlayer=false;};
+std::optional<unsigned> replayProductVersion(std::uint32_t product);
 struct ReplayPlayer {std::uint8_t id=0;std::string name;std::uint32_t runtime=0,race=0;};
 struct ReplayGame {std::string name,mapPath,hostName;std::uint32_t flags=0,mapChecksum=0,playerCount=0,gameType=0,language=0;std::uint16_t width=0,height=0;std::optional<std::array<std::uint8_t,20>> mapSha1;ReplayPlayer host;};
 struct ReplaySetup {std::vector<LanSlot> slots;std::uint32_t randomSeed=0;std::uint8_t layout=0,players=0;};

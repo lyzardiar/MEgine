@@ -12,6 +12,7 @@
 #include <stdexcept>
 
 namespace war3 {
+std::optional<unsigned> replayProductVersion(std::uint32_t product) {if(product==0x57415233u)return 0;if(product==0x57335850u)return 1;return {};}
 namespace {
 constexpr std::size_t maxFile=128u*1024*1024,maxOutput=256u*1024*1024,maxRecords=2000000;
 std::uint32_t sum(std::span<const std::uint8_t> bytes){return std::uint32_t(crc32(0,bytes.data(),uInt(bytes.size())));}

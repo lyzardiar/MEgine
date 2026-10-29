@@ -245,6 +245,8 @@ class ScriptSession {
     bool simulationPaused_=false,fogEnabled_=true,fogMaskEnabled_=true;
     unsigned gameSpeed_=2;
     unsigned version_=1;
+    bool versionSelected_=false;
+    std::array<bool,2> versionsSupported_{true,true};
     AudioRandom gameRandom_{0x69707365u};
     std::array<AudioRandom,45> auxiliaryRandom_{};
     int stockItemSlots_=12,stockUnitSlots_=12;
@@ -1131,6 +1133,7 @@ public:
     bool networkLocalEndPending() const{return networkLocalEndRequest_.has_value();}
     std::optional<bool> takeNetworkLocalEnd(){auto request=networkLocalEndRequest_;networkLocalEndRequest_.reset();return request;}
     void campaignContext(bool expansion,unsigned difficulty) {if(mainAttempted_ || difficulty>2)throw std::runtime_error("Invalid campaign session context");campaignExpansion_=expansion;gameDifficulty_=defaultDifficulty_=difficulty;}
+    void versionContext(unsigned version) {if(version>1 || runtime_.ready() || failed_ || world_)throw std::runtime_error("Game version requires a fresh session");version_=version;versionSelected_=true;}
     const std::string& nextLevel() const {return nextLevel_;}
     std::optional<std::pair<std::string,bool>> takeCinematic(){if(!modelCinematic_.empty()){auto value=std::move(modelCinematic_);modelCinematic_.clear();return std::pair{std::move(value),true};}if(!movieCinematic_.empty()){auto value=std::move(movieCinematic_);movieCinematic_.clear();return std::pair{std::move(value),false};}return {};}
     bool forceCampaignSelection() const {return forceCampaignSelect_;}

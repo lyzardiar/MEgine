@@ -28,6 +28,7 @@ class ReplayPreparation {
     std::optional<std::string> mapDigest_;
     bool sidecarAttempted_=false;
     std::uint8_t perspectivePeer_=0;
+    std::optional<unsigned> gameVersion_;
     std::string error_;
     enum class Phase {Checking,Preparing,Ready,Failed,Transferred} phase_=Phase::Checking;
     std::unique_ptr<ScriptSession> prepared_;

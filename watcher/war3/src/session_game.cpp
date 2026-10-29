@@ -39,8 +39,8 @@ void ScriptSession::bindGameNatives() {
     bind("VersionGet","version",{},[this](auto& vm,auto){return vm.handle("version",version_);});
     bind("IsPlayerObserver","boolean",{"player"},[this](auto& vm,auto args){return vm.boolean(player(args[0]).observer);});
     bind("GetLocalizedString","string",{"string"},[this](auto& vm,auto args){return vm.string(args[0].text?localized(*args[0].text):std::string{});});
-    bind("VersionCompatible","boolean",{"version"},[](auto& vm,auto args){return vm.boolean(args[0].bits<=1);});
-    bind("VersionSupported","boolean",{"version"},[](auto& vm,auto args){return vm.boolean(args[0].bits<=1);});
+    bind("VersionCompatible","boolean",{"version"},[this](auto& vm,auto args){return vm.boolean(version_<=1 && args[0].bits<=version_);});
+    bind("VersionSupported","boolean",{"version"},[this](auto& vm,auto args){return vm.boolean(args[0].bits<versionsSupported_.size() && versionsSupported_[args[0].bits]);});
     bind("GetGameSpeed","gamespeed",{},[this](auto& vm,auto){return vm.handle("gamespeed",gameSpeed_);});
     bind("SetGameSpeed","nothing",{"gamespeed"},[this](auto& vm,auto args){gameSpeed(args[0].bits);return vm.nothing();});
     bind("PauseGame","nothing",{"boolean"},[this](auto& vm,auto args){simulationPaused_=args[0].bits!=0;return vm.nothing();});

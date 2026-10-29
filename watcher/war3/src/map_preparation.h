@@ -19,7 +19,7 @@ struct PreparedMap {
     std::string error,previewError;
 };
 class MapPreparation {
-    struct Request {std::uint64_t id;fs::path path;std::shared_ptr<const Bytes> memory;std::string label;std::optional<std::pair<bool,unsigned>> campaign;bool inferCampaign;std::optional<std::uint32_t> initialRandomSeed;std::optional<LanSessionSetup> lanSetup;};
+    struct Request {std::uint64_t id;fs::path path;std::shared_ptr<const Bytes> memory;std::string label;std::optional<std::pair<bool,unsigned>> campaign;bool inferCampaign;std::optional<std::uint32_t> initialRandomSeed;std::optional<LanSessionSetup> lanSetup;std::optional<unsigned> version;};
     fs::path dataRoot_;
     bool muted_=false;
     std::atomic<std::uint64_t> generation_=0;
@@ -35,7 +35,7 @@ public:
     std::uint64_t request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign={},bool inferCampaign=true,std::optional<std::uint32_t> initialRandomSeed={});
     // The caller must retain only immutable aliases to these validated map bytes.
     std::uint64_t requestMemory(std::shared_ptr<const Bytes> bytes,std::string label,std::optional<std::uint32_t> initialRandomSeed={});
-    std::uint64_t requestLanMemory(std::shared_ptr<const Bytes> bytes,std::string label,LanSessionSetup setup,bool experimentalSelectionSync=false);
+    std::uint64_t requestLanMemory(std::shared_ptr<const Bytes> bytes,std::string label,LanSessionSetup setup,bool experimentalSelectionSync=false,std::optional<unsigned> version={});
     void clear();
     std::optional<PreparedMap> poll();
 };
