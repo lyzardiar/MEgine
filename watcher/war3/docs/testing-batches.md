@@ -1990,3 +1990,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`session.h/.cpp`、`session_game.cpp`、`session_network_identity.cpp`、`tests/game_flow_tests.cpp`、`docs/terrain-deformation.md`。游戏独立实例复用原版双状态 RNG；会话构造直接初始化传入种子，脚本 SetRandomSeed 预热一次，JASS 整数／实数范围按原件边界消费随机数，实验局域网校验包含两个状态字。
 
 阶段按 terrain-deformation.md 的 game-flow 命令执行原件 seed=17 向量、相等／逆序／全整数范围／实数 epsilon、脚本和随机地形共享状态；合并多种子、技能／随机池、随机采样顺序、真实双方同步及回放验证。原版默认和大厅初始种子流程、辅助随机组件以及完整调用顺序尚未确认；本次专项尚未执行。
+
+## 单位睡眠权限待验证
+
+路径：`session_control_spells.cpp`、`tests/control_tests.cpp`、`docs/control-spells.md`。四个睡眠权限 native 使用 ACsp／Asla 真实能力及现有能力生命周期；权限与当前睡眠状态分开。Win32 Release 产品和专项程序增量编译通过，专项未执行。
+
+阶段按 control-spells.md 运行 flow 夹具，核对两种权限的新增／删除／重复／空单位、能力句柄与自定义单位、变形／死亡／易主、与魔法睡眠及唤醒交互，并对照原版；自然昼夜睡眠尚未实现。原版入口及能力证据为 `ev_070b138d97f97b6aee4ce2a89730ccadfe0d7169f94c1957e4b2568ecbdbe950`、`ev_b4815f23492ab1abeda8ce8d47808fb3f4ab36a02d322cbf01ba33ea5272769e` 和 `ev_280a65f12454e74fb1a209f0d04ce862ba47c70a56316a01448f32de873b60a2`。

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <tuple>
 
 namespace war3 {
 namespace {float number(jass::Real value){return std::bit_cast<float>(value.bits());}jass::Real real(float value){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}}
@@ -28,6 +29,10 @@ void ScriptSession::controlEffect(const SpellMissile& missile){
     if(!alive(missile.source,NativeKind::Unit))return;auto s=missile.spell;if(s.kind==SpellKind::Purge){if(spellWidgetTarget(*units_.at(missile.source),missile.target,s,false))purgeSpell(missile.source,missile.target,s);return;}if(!alive(missile.target,NativeKind::Unit))return;auto u=units_.at(missile.target);if(s.kind==SpellKind::Ensnare || s.kind==SpellKind::Web){if(u->movementType!="fly")s.buff=s.groundBuff;applyBuff(missile.target,missile.source,s,BuffKind::Net,!s.magicControl);return;}if(s.kind==SpellKind::Hex || s.kind==SpellKind::Polymorph){morphEffect(missile.source,missile.target,s);return;}if(s.kind==SpellKind::Cyclone){cycloneEffect(missile.source,missile.target,s);return;}if(s.kind==SpellKind::Sleep){applyBuff(missile.target,missile.source,s,BuffKind::Sleep);return;}if(s.kind==SpellKind::Banish){applyBuff(missile.target,missile.source,s,BuffKind::Banish);return;}throw std::runtime_error("Missing source control consumer");
 }
 void ScriptSession::bindControlNatives(){
+    for(auto [addName,queryName,code]:std::initializer_list<std::tuple<const char*,const char*,const char*>>{{"UnitAddSleep","UnitCanSleep","ACsp"},{"UnitAddSleepPerm","UnitCanSleepPerm","Asla"}}){
+        bind(addName,"nothing",{"unit","boolean"},[this,code](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Unit))return vm.nothing();auto ability=sourceAbility(*units_.at(a[0].bits),code).first;if(a[1].bits && !ability)vm.invoke("UnitAddAbility",std::array{a[0],vm.integer(std::bit_cast<std::int32_t>(ObjectData::code(code)))});else if(!a[1].bits && ability)vm.invoke("UnitRemoveAbility",std::array{a[0],vm.integer(std::bit_cast<std::int32_t>(ability))});return vm.nothing();});
+        bind(queryName,"boolean",{"unit"},[this,code](auto& vm,auto a){return vm.boolean(alive(a[0].bits,NativeKind::Unit) && sourceAbility(*units_.at(a[0].bits),code).first!=0);});
+    }
     bind("UnitIsSleeping","boolean",{"unit"},[this](auto& vm,auto a){return vm.boolean(alive(a[0].bits,NativeKind::Unit) && units_.at(a[0].bits)->sleeping());});
     bind("UnitWakeUp","nothing",{"unit"},[this](auto& vm,auto a){wakeUnit(a[0].bits);return vm.nothing();});
 }
