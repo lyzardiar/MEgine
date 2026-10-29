@@ -94,6 +94,10 @@ void ScriptSession::bindNatives() {
     bind("GetTeams","integer",{},[this](auto& vm,auto){return vm.integer(config_.teamCount);});
     bind("SetGamePlacement","nothing",{"placement"},[this](auto& vm,auto args){config_.placement=args[0].bits;return vm.nothing();});
     bind("GetGamePlacement","placement",{},[this](auto& vm,auto){return vm.handle("placement",config_.placement);});
+    bind("SetResourceDensity","nothing",{"mapdensity"},[this](auto& vm,auto args){config_.resourceDensity=std::uint8_t(args[0].bits);return vm.nothing();});
+    bind("SetCreatureDensity","nothing",{"mapdensity"},[this](auto& vm,auto args){config_.creatureDensity=std::uint8_t(args[0].bits);return vm.nothing();});
+    bind("GetResourceDensity","mapdensity",{},[this](auto& vm,auto){return vm.handle("mapdensity",config_.resourceDensity);});
+    bind("GetCreatureDensity","mapdensity",{},[this](auto& vm,auto){return vm.handle("mapdensity",config_.creatureDensity);});
     bind("SetGameTypeSupported","nothing",{"gametype","boolean"},[this](auto& vm,auto args){if(args[1].bits)config_.supportedGameTypes|=args[0].bits;else config_.supportedGameTypes&=~args[0].bits;return vm.nothing();});
     bind("IsGameTypeSupported","boolean",{"gametype"},[this](auto& vm,auto args){return vm.boolean((config_.supportedGameTypes&args[0].bits)!=0);});
     bind("GetGameTypeSelected","gametype",{},[this](auto& vm,auto){return vm.handle("gametype",config_.gameType&~8u);});

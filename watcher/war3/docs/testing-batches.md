@@ -2802,3 +2802,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 路径：`src/session_spell_effects.cpp`、`tests/spell_tests.cpp`。集中验证目标高度／源对象覆盖、飞行目标移动和变形、链式弹道、多端及原版轨迹，见 [法术弹道](spell-missile-targeting.md)。新增实际消费者断言尚未编译或运行。
 
 2026-10-30 合并编译：`c4f92c5` 的 Win32 Release 产品目标 `cmake --build --preset release --target war3 --parallel 8` 通过，覆盖自上次产品编译后的脚本、战役缓存、技能、UI 和局域网改动；此结果只证明产品编译，新增断言、实际玩法、画面和原版对照仍待验证。
+
+### 地图密度脚本接口（待验证）
+
+路径：`src/session.h`、`src/session.cpp`、`tests/session_tests.cpp`；集中验证资源／野怪密度配置、低八位、地图切换与局域网及原版初值，见 [地图密度](map-density.md)。自动生成消费者尚未实现；新增断言未编译或运行。

@@ -59,6 +59,7 @@ struct SessionConfig {
     std::string name,description;
     unsigned playerCount=0,teamCount=0,placement=0,gameType=4,supportedGameTypes=0;
     std::uint32_t mapFlags=0;
+    std::uint8_t resourceDensity=0,creatureDensity=0;
     std::array<SessionPlayer,16> players;
     std::array<SessionStart,16> starts;
 };
