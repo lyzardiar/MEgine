@@ -2,7 +2,7 @@
 
 ## 玩家基础状态快照待验证
 
-路径：`src/session.h`、`src/session_game.cpp`；说明见 `player-state-persistence.md`。阶段检查 16 名玩家资源／人口／状态位及维护费覆盖往返、损坏／重复键／截断的事务性拒绝、执行及联网限制、与单位／生产等完整恢复的一致性；尚未接入存档。
+路径：`src/session.h`、`src/session_game.cpp`、`tests/clock_tests.cpp`；说明见 `player-state-persistence.md`。阶段编译并执行 `war3_clock_tests`，检查 16 名玩家资源／人口／状态位及维护费覆盖往返、损坏／重复键／截断的事务性拒绝、执行及联网限制、与单位／生产等完整恢复的一致性；尚未接入存档。
 
 ## 地面物品武器攻击待验证
 
