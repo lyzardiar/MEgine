@@ -73,7 +73,7 @@ void ScriptSession::bindEntityNatives() {
     bind("GetUnitTypeId","integer",{"unit"},[this](auto& vm,auto a){return vm.integer(alive(a[0].bits,NativeKind::Unit)?std::bit_cast<std::int32_t>(unit(a[0]).type):0);});
     bind("GetUnitPointValue","integer",{"unit"},[this](auto& vm,auto a){return vm.integer(alive(a[0].bits,NativeKind::Unit)?integer(definitions().number(unit(a[0]).type,"UnitData","points")):0);});
     bind("GetUnitPointValueByType","integer",{"integer"},[this](auto& vm,auto a){auto& data=definitions();return vm.integer(data.contains(a[0].bits)?integer(data.number(a[0].bits,"UnitData","points")):0);});
-    bind("GetUnitName","string",{"unit"},[this](auto& vm,auto a){return vm.string(unit(a[0]).name);});
+    bind("GetUnitName","string",{"unit"},[this](auto& vm,auto a){return alive(a[0].bits,NativeKind::Unit)?vm.string(unit(a[0]).name):jass::Value{vm.module().typeId("string"),0,{}};});
     bind("GetOwningPlayer","player",{"unit"},[this](auto& vm,auto a){return vm.handle("player",alive(a[0].bits,NativeKind::Unit)?handleBase+unit(a[0]).owner:0);});
     bind("SetUnitOwner","nothing",{"unit","player","boolean"},[this](auto& vm,auto a){unit(a[0]);changeUnitOwner(a[0].bits,playerId(a[1]),a[2].bits!=0);return vm.nothing();});
     bind("UnitSetUsesAltIcon","nothing",{"unit","boolean"},[this](auto& vm,auto a){if(alive(a[0].bits,NativeKind::Unit))unit(a[0]).usesAltMinimapIcon=a[1].bits!=0;return vm.nothing();});

@@ -2914,3 +2914,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 亡灵首关隐藏单位即时命令（待验证）
 
 路径：`src/session.h`、`src/session_orders.cpp`、`src/session_entities.cpp`。隔离原图救援计数从 0 增至 4，并检查脚本、玩家和运输隐藏边界；集中验证原版命令及完整任务，见 [隐藏单位脚本命令](campaign-undead01-hidden-orders.md)。
+
+### 资料片第四章无效单位名称（待验证）
+
+路径：`src/session_entities.cpp`、`docs/campaign-null-unit-name.md`。同版核心编译及最小会话检查通过，第四章隔离开场越过异常；集中验证字幕、单位选择分支和真实窗口，见 [无效单位名称](campaign-null-unit-name.md)。
