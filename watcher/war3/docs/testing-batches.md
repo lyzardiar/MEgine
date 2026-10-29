@@ -2706,3 +2706,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 召唤物零持续时间（待验证）
 
 路径：`session_spell_info.cpp`、`docs/beastmaster.md`。允许源召唤技能持续时间为 0，并复用无定时生命的实际召唤流程。OrcX01 隔离探针推进至 400 秒并实际施放 Rexxar 的 Arsg，生成 900 生命且无定时生命的 ngzc；日志 `tmp/docs-artifacts/war3/orcx-saves-1031/zerolife-cast.log`。阶段验证零／正／负时长、召唤上限与替换、死亡／易主／技能取消、事件重入、战役和原版寿命语义；存档切区尚未实现。
+
+### 英雄属性附加（待验证）
+
+路径：`session_equipment.cpp`、`tests/passive_tests.cpp`、`docs/equipment.md`。Aamk 消费源 DataC／DataA／DataB 对应力量／敏捷／智力并沿用技能等级刷新；Win32 Release 核心库编译通过。DotA U006 以真实 LearnSkill 学习后属性从 17／18／18 变为 19／20／20 并推进至 180 秒，日志 `tmp/docs-artifacts/war3/dota-hero-1031/hero-stats.log`。阶段验证多等级／地图覆盖、移除／重加、死亡／复活、状态及事件重入、UI 和原版数值；新增专项断言尚未运行。
