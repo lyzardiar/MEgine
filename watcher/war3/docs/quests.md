@@ -32,7 +32,7 @@ IsUnitType补齐源武器启用位、攻击目标和武器类型对应的对空/
 
 原版 1.27 的 `Game.dll` SHA-256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。REA 对该文件的静态查询显示，`UNDISCOVERED_QUEST` 位于 `0x6f9938a0`，引用位于 `0x6f3a8143`、`0x6f3a81ca` 和 `0x6f3b9cf6`；`0x6f3b9bfc` 附近还使用 `UndiscoveredQuestIcon`，并根据任务对象偏移 `+0x24` 的位 `0x04` 选择图标和标题。另一条路径引用 `QUESTNOTDISCOVERED`。原版 `GlobalStrings.fdf` 中 `UNDISCOVERED_QUEST` 在 `War3Patch.mpq` 和 `War3xLocal.mpq` 为“隐藏任务”，在 `war3.mpq` 为“未发现的任务”。
 
-详情刷新路径 `0x6f3a80e0` 至 `0x6f3a8132` 仅在 `+0x24` 的 `0x04` 和 `0x10` 均置位时显示真实描述和目标，否则使用 `QUESTNOTDISCOVERED`；`0x6f3a814d` 至 `0x6f3a8161` 按 `0x04` 选择真实标题。`0x10` 的含义及这两个位的完整生命周期尚待确认。
+详情刷新路径 `0x6f3a80e0` 至 `0x6f3a8132` 仅在 `+0x24` 的 `0x04` 和 `0x10` 均置位时显示真实描述和目标，否则使用 `QUESTNOTDISCOVERED`；`0x6f3a814d` 至 `0x6f3a8161` 按 `0x04` 选择真实标题。`QuestSetDiscovered` 注册入口 `0x6f1f25b0` 对 `+0x24` 的 `0x04` 位读写，`QuestSetEnabled` 注册入口 `0x6f1f25e0` 对 `0x10` 位读写；对应指令保存在 `tmp/docs-artifacts/war3/quest-undiscovered/flags-and-display.txt`。任务列表何时纳入这些状态及两个位的完整生命周期仍待确认。
 
 这些静态片段尚不足以确定未发现任务何时纳入列表、是否可选择以及完整详情显示规则；当前客户端仍只列出已启用且已发现的任务。需结合对应状态位的写入、列表构建路径和原版实际交互继续验证。
 
