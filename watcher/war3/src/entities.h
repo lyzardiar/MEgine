@@ -15,6 +15,7 @@
 #include "unit_forms.h"
 #include "player_commands.h"
 #include <algorithm>
+#include <map>
 
 namespace war3 {
 struct TimedLife {std::uint32_t buff=0;double duration=0,remaining=0;bool paused=false;};
@@ -73,6 +74,7 @@ struct UnitState {
     std::optional<UnitFormState> unitForm;
     std::optional<UnitFormTransition> formTransition;
     std::string animationProperties;
+    std::map<std::string,bool> scriptAnimationProperties;
     bool decaySuspended=false,noCorpse=false,exploded=false,plagueWard=false,concoction=false;
     std::set<unsigned> visionPlayers;
     bool holding=false,creepGuard=false,guardRemoved=false;
@@ -195,7 +197,7 @@ struct UnitState {
     bool formLocked() const {return rootTransition || (formTransition && (formTransition->spell.formFlags&1));}
     bool spinning() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Bladestorm && b.remaining>0)return true;return false;}
     std::uint64_t animationFrame(std::uint64_t duration) const {auto time=std::uint64_t(std::max(0.,animationTime)*1000);return cast && cast->phase==CastOrder::Phase::Channel && cast->spell.animationLooping && duration?time%duration:time;}
-    std::string sequenceName(const std::string& sequence) const {if(spinning() && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")))return "Attack Walk Stand Spin";if(morphed())return sequence;auto result=sequence;if(warClub && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")) && result.find("Alternate")==std::string::npos)result+=" Alternate";if(!animationProperties.empty() && !sequence.starts_with("Morph") && sequence.find("Alternate")==std::string::npos)result+=" "+animationProperties;for(auto& [id,b]:buffs){if(b.kind==BuffKind::Avatar && result.find("Alternate")==std::string::npos)result+=" Alternate";if(b.kind==BuffKind::Defend && result.find("Defend")==std::string::npos)result+=" Defend";}return result;}
+    std::string sequenceName(const std::string& sequence) const {auto result=sequence;if(spinning() && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")))result="Attack Walk Stand Spin";else if(!morphed()){if(warClub && (sequence.starts_with("Stand") || sequence.starts_with("Walk") || sequence.starts_with("Attack")) && result.find("Alternate")==std::string::npos)result+=" Alternate";auto alternate=scriptAnimationProperties.find("alternate");if(!animationProperties.empty() && !(animationProperties=="Alternate" && alternate!=scriptAnimationProperties.end() && !alternate->second) && !sequence.starts_with("Morph") && sequence.find("Alternate")==std::string::npos)result+=" "+animationProperties;for(auto& [id,b]:buffs){if(b.kind==BuffKind::Avatar && result.find("Alternate")==std::string::npos)result+=" Alternate";if(b.kind==BuffKind::Defend && result.find("Defend")==std::string::npos)result+=" Defend";}}for(auto& [property,enabled]:scriptAnimationProperties)if(enabled)result+=" "+property;return result;}
     bool stunned() const {if(formLocked() || (possessionClaim && possessionClaim->locked))return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::FreezingBreath || b.kind==BuffKind::ShacklesTarget || b.kind==BuffKind::Stun || b.kind==BuffKind::Impale || b.kind==BuffKind::Sleep || b.kind==BuffKind::Cyclone)return true;return false;}
     unsigned preventedAttacks() const {unsigned result=0;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Silence || b.kind==BuffKind::DrunkenHaze || b.kind==BuffKind::SoulBurn || b.kind==BuffKind::Cloud)result|=b.disableMask;return result;}
     bool doomed() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Doom)return true;return false;}

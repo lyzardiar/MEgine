@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 脚本单位动画属性待验证
+
+路径：entities、session_visual、game_flow_tests、campaign-cinematics。`AddUnitAnimationProperties` 修改单位的动画属性，并由场景模型、附件和动画队列选择消费；支持大小写、属性组合与源 Alternate 属性移除。阶段按 `tests/generate-game-flow-fixture.py --data-root <data-root>` 和 `war3_game_flow_tests.exe <data-root> <fixture.w3m>` 执行，并核对 DotA upgrade／alternate 调用、单位变形、重复添加移除、显式动画序号与原版模型画面。
+
 ## 过滤单位事件待验证
 
 路径：session_callbacks、generate-game-flow-fixture、game_flow_tests、filtered-unit-events。TriggerRegisterFilterUnitEvent 复用单位事件派发、过滤表达式和触发上下文，专项包含允许／拒绝、事件上下文和无关单位。Win32 Release 客户端及专项程序增量编译通过；阶段先执行 `python tests/generate-game-flow-fixture.py --data-root <data-root>`，再执行 `war3_game_flow_tests.exe <data-root> <fixture.w3m>`；合并核对事件类型、过滤器与触发器销毁／重入及原版行为。
