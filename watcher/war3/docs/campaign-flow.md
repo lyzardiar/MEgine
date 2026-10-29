@@ -27,3 +27,5 @@ Human01 胜利流程中的 `udg_QuestOrcs` 在地图脚本中未赋值，任务�
 Human02 开场使用从未赋值的 `udg_Knight01`，将空单位传入 `GetUnitLoc`；无效单位现在返回空 location，读取无效位置的 X/Y 返回零，移除无效位置不产生动作。Warcraft III 1.27 Game.dll 的 `GetUnitLoc`（`0x6f1e6280`）、`GetLocationX/Y`（`0x6f1e3240/0x6f1e3260`）和 `RemoveLocation`（`0x6f1f2d80`）的句柄解析失败分支见 `tmp/docs-artifacts/war3/human02-1030/original-location-natives.txt`。隔离探针载入 Human02 并推进 400 秒，在 60.25 秒采样时玩家控制已恢复，日志见 `tmp/docs-artifacts/war3/human02-1030/locfixed.log`；这是未携带 Human01 gamecache、未操作战斗的空闲开局，不代表真实换关或完整关卡通过。
 
 Human01 原胜利脚本保存阿尔萨斯并请求 Human02 后，隔离探针销毁前一会话并启动 Human02；原载入脚本恢复其 4 级、用户数据和指定库存物品，证据见[战役 gamecache](campaign-gamecache.md)。此探针通过直接击杀首领组加速，未经过实际窗口和自动换关界面。
+
+Human02 原图胜利流程的隔离探针在开场控制恢复后，通过辅助脚本标记基地任务已完成，再对原图剑圣调用 KillUnit；原地图触发器进入胜利对话框，选择继续后发出 `Maps\Campaign\Human02Interlude.w3m` 换关请求，日志位于 `tmp/docs-artifacts/war3/human02-victory-1030/victory.log`。该复现跳过真实基地建造、战斗和窗口操作，未验证间章加载或完整关卡。
