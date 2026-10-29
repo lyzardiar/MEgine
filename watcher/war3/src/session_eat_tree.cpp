@@ -9,7 +9,7 @@ bool ScriptSession::eatTreeTarget(const UnitState& u,std::uint32_t id,bool visib
     if(!alive(id,NativeKind::Destructable))return false;auto tree=destructables_.at(id);if(!tree->tree || !tree->visible || tree->removed || tree->life<=0 || tree->invulnerable)return false;auto claim=eatenTrees_.find(id);return (claim==eatenTrees_.end() || claim->second.first==u.handle) && (!visibility || fog(u.owner).state(tree->position)==4);
 }
 void ScriptSession::startEatTree(std::uint32_t id,const CastOrder& cast){
-    if(!alive(id,NativeKind::Unit))return;auto u=units_.at(id);if(!eatTreeTarget(*u,cast.target,false)){cancelCast(*u);return;}eatenTrees_[cast.target]={id,cast.ticket};u->eatTree=EatTreeState{cast.spell,cast.target,cast.ticket};u->cast->phase=CastOrder::Phase::Channel;u->animation="Spell Eat Tree";u->animationTime=0;u->animationIndex.reset();u->animationQueue.clear();u->route.clear();u->waypoint=0;eatTreeActors_.insert(id);
+    if(!alive(id,NativeKind::Unit))return;auto u=units_.at(id);if(!eatTreeTarget(*u,cast.target,false)){cancelCast(*u);return;}eatenTrees_[cast.target]={id,cast.ticket};u->eatTree=EatTreeState{cast.spell,cast.target,cast.ticket};u->cast->phase=CastOrder::Phase::Channel;u->animation="Spell Eat Tree";u->animationTime=0;++u->animationGeneration;u->animationIndex.reset();u->animationQueue.clear();u->route.clear();u->waypoint=0;eatTreeActors_.insert(id);
 }
 void ScriptSession::cancelEatTree(UnitState& u,std::uint64_t ticket){if(!u.eatTree || u.eatTree->ticket!=ticket)return;auto state=*u.eatTree;u.eatTree.reset();eatTreeActors_.erase(u.handle);auto found=eatenTrees_.find(state.tree);if(found!=eatenTrees_.end() && found->second==std::pair{u.handle,ticket})eatenTrees_.erase(found);}
 void ScriptSession::eatTreesTick(double delta){
