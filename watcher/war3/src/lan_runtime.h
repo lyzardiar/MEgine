@@ -12,6 +12,7 @@ class LanRuntime {
 public:
     using AbilityFields=std::function<std::optional<LanAbilityWireFields>(const PlayerCommand&)>;
     using Checksum=std::function<std::optional<std::uint32_t>(const ScriptSession&)>;
+    using SlotObserver=std::function<void(const LanTimeSlot&)>;
 private:
     struct Bridge;
     GameView& game_;
@@ -20,6 +21,8 @@ private:
     std::unique_ptr<LanJoin> join_;
     std::shared_ptr<Bridge> bridge_;
     Checksum checksum_;
+    SlotObserver slotObserver_;
+    std::string observerError_;
     std::uint16_t interval_;
     std::uint64_t nextFrame_=0,lastClock_=0;
     bool started_=false,failed_=false;
@@ -35,6 +38,9 @@ public:
     LanRuntime& operator=(const LanRuntime&)=delete;
     // Called on the same thread as GameView with a monotonic millisecond clock.
     bool pump(std::uint64_t now);
+    // Optional recorder must be attached before the first pump; errors stop recording only.
+    bool observeSlots(SlotObserver observer);
+    const std::string& observerError() const {return observerError_;}
     bool failed() const {return failed_;}
     const std::string& error() const {return error_;}
 };
