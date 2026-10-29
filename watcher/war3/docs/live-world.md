@@ -20,7 +20,7 @@ Enter打开聊天输入，支持Unicode字符、退格、提交和Esc取消。�
 
 每玩家FogGrid保存探索和可见状态，读取单位昼夜视野、共享视野及矩形/圆形fogmodifier；启停、销毁、先/后单位覆盖与查询使用同一状态。SetFogStateRect、SetFogStateRadius和SetFogStateRadiusLoc对调用时选定的玩家网格直接写入遮蔽、已探索或可见状态，并同步查询与绘制纹理；当前可见写入在后续视野重算时由单位和modifier重新决定，已探索状态保留。共享参数沿用当前来源玩家的共享视野联盟方向；区域边界、共享方向与持续性仍需原版对照。CPU网格目前64世界单位、8Hz更新，原版分辨率/刷新/遮挡规则仍需对照。FogRender将该纹理投射到地形、水面、选中圈和模型；敌方单位及小地图读取可见状态。标准D3D9使用managed纹理，D3D9Ex使用动态default纹理；错误退出清除纹理阶段。SetSkyModel也连接原MDX背景资源。以上新增GPU路径已编译，尚未取得本次画面证据。
 
-Hashtable支持基本类型、句柄家族、父/子键、存在查询和清理；按源模块实际native签名绑定。会话gamecache支持命名缓存、任务/键、基本类型读写及清理。当前gamecache只在进程会话内持有数据，原w3v文件格式、SaveGameCache、单位快照与网络同步仍未实现。字符串转换/格式/大小写/子串已接入，编码、边界与原版数值格式等待集中对照。
+Hashtable支持基本类型、句柄家族、父/子键、存在查询和清理；按源模块实际native签名绑定。gamecache已接入独立用户目录的持久化及基础单位快照，标量同步接入实验联机；原版w3v格式、完整单位同步与原版行为仍待实现或验证，见[战役 gamecache](campaign-gamecache.md)及[缓存同步](cache-sync.md)。字符串转换/格式/大小写/子串已接入，编码、边界与原版数值格式等待集中对照。
 
 原图初始化在创建主计时器之前读取null计时器；TimerGetElapsed/Timeout/Remaining对null返回零，对无效非零句柄仍报错。
 
