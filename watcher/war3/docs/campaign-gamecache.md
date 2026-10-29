@@ -15,3 +15,5 @@ StoreUnit保存单位类型、基础属性、生命与魔法、移动、资源�
 版本4永久攻击加值需验证正负值、保存后原单位变化、跨进程重载、损坏与超界拒绝、版本1／2／3缺省值及恢复后的实际攻击和界面；尚未执行。该状态是否与原版 StoreUnit 一致仍待对照。
 
 SetItemDropID 保存物品的来源类型，单位物品快照写入独立 gamecache v2 并在恢复时保留；v1 文件仍可读取，缺省来源为 0。原版普通存档会持久化此字段；原版 StoreUnit 是否同样保存仍待对照。定向检查验证 v2 保存／重新加载／单位物品恢复与 v1 读取，未加载 Game.dll；本地产物位于 tmp/docs-artifacts/war3/drop-cache-probe/。
+
+Human01 到 Human02 的隔离会话复现覆盖原地图脚本的 `StoreUnitBJ`、`SaveGameCacheBJ` 和 `RestoreUnitLocFacingAngleBJ`：Human01 胜利前将阿尔萨斯设为 4 级、用户数据 123456 并给予 `ratf`，触发首领组死亡后由原脚本保存；销毁前一会话，Human02 原脚本恢复相同等级、用户数据和物品。探针采用独立用户目录、直接击杀首领组并直接构造下一会话，日志见 `tmp/docs-artifacts/war3/campaign-transfer-1030/transfer-first.log`。此结果只覆盖列出的字段和脚本路径；真实窗口、CampaignBrowser 自动换关、其他状态及原版格式一致性仍待验证。
