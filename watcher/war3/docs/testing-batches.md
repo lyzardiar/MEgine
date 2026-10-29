@@ -2826,3 +2826,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 火焰箭伤害与施法（待验证）
 
 路径：`src/session_spell_info.cpp`、`docs/fire-bolt.md`、`docs/creep-combat-spells.md`。集中验证原版与地图覆盖的订单、伤害、弹道、眩晕、目标、冷却及 AI 施法；原版自定义状态覆盖优先级待验证，具体边界见 [火焰箭](fire-bolt.md)。本次未编译或运行。
+
+### 战役 WTS 非声明文本（待验证）
+
+路径：`src/map.cpp`、`tests/map_tests.cpp`、`docs/campaign-wts-text.md`。资料片 nightelfX01 原图隔离探针已越过地图读取并创建 136 单位，随后因技能参数停止；集中验证任务文本、格式边界、自定义和联网地图，见 [战役地图字符串表](campaign-wts-text.md)。新增解析断言未运行。

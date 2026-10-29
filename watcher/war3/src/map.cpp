@@ -26,7 +26,7 @@ MapStrings mapStrings(std::span<const std::uint8_t> bytes) {
         if(state==2) {if(clean=="}") {if(!value.empty())value.pop_back();if(!result.emplace(id,std::move(value)).second)throw std::runtime_error("Duplicate WTS string id");value.clear();state=0;}else {value+=line;value+='\n';}continue;}
         auto comment=clean.find("//");if(comment!=std::string::npos)clean=trim(clean.substr(0,comment));if(clean.empty())continue;
         if(state==1) {if(clean!="{")throw std::runtime_error("Expected WTS opening brace");state=2;continue;}
-        if(!clean.starts_with("STRING") || clean.size()<8 || !std::isspace(static_cast<unsigned char>(clean[6])))throw std::runtime_error("Invalid WTS declaration");id=integer(trim(clean.substr(7)));if(result.size()>=100000)throw std::runtime_error("WTS string count exceeds budget");state=1;
+        if(!clean.starts_with("STRING")){if(result.empty())throw std::runtime_error("Invalid WTS declaration");continue;}if(clean.size()<8 || !std::isspace(static_cast<unsigned char>(clean[6])))throw std::runtime_error("Invalid WTS declaration");id=integer(trim(clean.substr(7)));if(result.size()>=100000)throw std::runtime_error("WTS string count exceeds budget");state=1;
     }
     if(state)throw std::runtime_error("Truncated WTS string table");return result;
 }
