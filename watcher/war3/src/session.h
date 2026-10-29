@@ -61,6 +61,7 @@ struct DoodadState {
     double animationStart=0,randomStart=-1;
     bool active=true;
 };
+struct PresentationSpellSound {std::uint32_t ability=0;WorldPoint position{};};
 enum class NativeKind {Trackable,TextTag,Multiboard,MultiboardItem,Leaderboard,Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning,CameraSetup,UnitPool,ItemPool,Image,Ubersplat};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
@@ -95,6 +96,9 @@ class ScriptSession {
     std::unique_ptr<MusicScene> thematicMusic_;
     bool resumeMapAfterThematic_=false;
     bool audioMuted_=false,audioSimulationClock_=false;
+    std::optional<std::array<float,3>> audioListener_,audioListenerRight_;
+    std::vector<PresentationSpellSound> pendingSpellSounds_;
+    void queueSpellSound(std::uint32_t ability,WorldPoint position);
     float localSoundGain_=1,localMusicGain_=1;
     std::array<bool,3> localSoundCategories_{true,true,true};
     std::unique_ptr<ObjectData> definitions_;
@@ -1096,6 +1100,8 @@ public:
     void updateAudio();
     void updateAudioListener(float x,float y,float z,std::array<float,3> right);
     bool animationSound(const std::string& code,const std::array<float,3>& position);
+    std::vector<PresentationSpellSound> takeSpellSounds();
+    void playSpellSound(const PresentationSpellSound& sound);
     const SoundScene* audio() const {return audio_.get();}
     const MusicScene* music() const {return music_.get();}
     const ScriptLeaderboard* leaderboard(unsigned player) const;

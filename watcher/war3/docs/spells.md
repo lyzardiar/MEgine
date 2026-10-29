@@ -45,3 +45,7 @@ build/windows-x86/bin/Release/war3_spell_tests.exe 'E:/Program Files (x86)/dzcli
 ```
 
 专项消费者覆盖学习/订单、七种主效果、事件上下文、前摇/扣蓝/冷却、限制/驱散及 CAST 中停止/删除。阶段继续加入自定义覆盖、多目标/英雄持续时间、BUFF叠加、暂停/切图/内存与真实键鼠输入，合并 BootyBay、Amazonia 和 DotA_v6.83d 的游戏回归。生成的地图和日志仅保存在 tmp/docs-artifacts/war3/spells。
+
+常规技能进入实际释放、即时自身技能实际生效及开启征召警钟时，将能力类型与施法位置放入最多 256 项的本地呈现队列。GameView 消费时读取能力 Profile 的 `Effectsound`，按源声音标签的空间、音量及距离设置播放；音频资源或设备错误仅记录日志，不进入同步模拟。监听位置在音频系统建立前也被保存，切图销毁队列；无 GameView 消费时队列有界，满时丢弃新事件。技能关闭命令不播放开启音效。
+
+本机原始 HumanAbilityFunc 的 `Amic` 使用 `TownHallCallToArms`，OrcAbilityFunc 的 `AOwk` 使用 `WindWalk`；原始 `Effectsoundlooped` 未消费。当前声音定位为释放时施法者地面位置，技能与模型事件可能同时产生声音；精确位置、释放阶段、重复来源、开关反向及联机听感均待原版对照。走普通施法队列的物品共用该路径，直接生效的旧式物品及攻击增强技能的专用发射路径仍待接入；原版完整技能音频尚未验收。

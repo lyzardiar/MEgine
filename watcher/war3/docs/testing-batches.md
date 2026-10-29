@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 施法一次性音效待验证
+
+路径：session_sound／session_area_spells／session_self_spells／session_militia、game_view。常规释放、即时自身技能及警钟发出有界本地声音事件，由 GameView 播放源 Effectsound，设备或资源异常记录日志而不改变模拟。Win32 Release 增量编译通过。操作：比较可见和离屏单位、静音／无设备、坏标签、暂停、切图、同时施法及双客户端同步；核对位置、释放时序和模型音效重叠。旧式直接物品、攻击增强技能和循环音效尚待实现。
+
 ## 联机与回放 Esc 动作待验证
 
 路径：lan_actions、lan_action_encoder、lan_simulation。经典 0x61 经时间片触发对应玩家的过场结束事件，联机输入通过编码发送。Win32 Release 增量编译通过。操作：双端或回放中注册不同玩家的 Esc 事件，分别在过场、有控制权、无监听及回调嵌套时按 Esc；检查仅目标玩家触发、事件顺序和取消／退出。原版动作发送条件、联机互通及回放入口待验证。
