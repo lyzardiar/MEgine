@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 世界昼夜时钟快照待验证
+
+路径：`src/game_clock.h/.cpp`、`tests/clock_tests.cpp`；说明见 `world-clock-persistence.md`。阶段编译并执行 `war3_clock_tests`，检查暂停／倍速与临时时间效果往返和持续推进、损坏／规则不匹配的事务性拒绝，以及与完整存档及时间事件的组合；未接入实际存档。
+
 ## 魔法吸取权杖待验证
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_resource_spells.cpp`、`src/session_item_use.cpp`；说明见 `mana-steal.md`。包含本轮直线穿透及随机流快照的 Win32 Release 客户端编译通过。阶段检查目标选择／接近、魔法不足／上限、目标类型和魔免、次数／冷却、事件与回调、固定／比例数据、地图覆盖、联机及原版行为；部分自定义字段尚不支持。

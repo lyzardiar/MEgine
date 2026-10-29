@@ -29,5 +29,7 @@ public:
     jass::Real temporaryRemaining() const {return temporaryRemaining_;}
     void temporary(jass::Real value,jass::Real seconds);
     ClockAdvance advance(jass::Real seconds);
+    std::vector<std::uint8_t> encodeState() const;
+    void restoreState(std::span<const std::uint8_t> bytes);
 };
 }
