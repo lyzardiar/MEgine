@@ -1932,3 +1932,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 ## 脚本相机旋转待验证
 
 路径：session_world、world、game_flow_tests、campaign-cinematics。镜头围绕指定中心和 +Z 旋转，StopCamera 暂停支持的平移和字段插值；目标与朝向控制器互斥。Win32 Release 客户端及专项程序增量编译通过；阶段按 `tests/generate-game-flow-fixture.py --data-root <data-root>` 和 `war3_game_flow_tests.exe <data-root> <fixture.w3m>` 执行，核对目标／方向跟随、手动操作、停止控制器、倾斜地形及原版视觉时序。
+
+## 单位魔法阈值即时通知待验证
+
+路径：`session_spells.cpp`、`session_self_spells.cpp`、`session_damage.cpp`、`session_regeneration.cpp`、`docs/unit-state-events.md`。普通施法、即时自身施法、魔法盾吸收和自然恢复的魔法变化接入阈值事件及回调重入检查；其他状态写入仍按原有步末补查。
+
+阶段按 `unit-state-events.md` 执行夹具及会话专项，并覆盖施法取消／移除／易主、魔法盾回调移除 buff 或击杀、自然恢复及同一步跨越与复位；原版事件顺序和完整消费者尚未对照。本次 Win32 Release 产品增量编译通过，专项尚未执行。
