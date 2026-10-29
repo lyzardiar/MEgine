@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 黑暗转换及单位目标法术物品待验证
+
+路径：`spells.h`、`entities.h`、`session_spell_info.cpp`、`session_control_spells.cpp`、`session_spell_effects.cpp`、`session_effects.cpp`、`session_unit_forms.cpp`、`session_spells.cpp`、`session_item_use.cpp`、`tests/control_tests.cpp`；说明见 `dark-conversion.md` 和 `targeted-spell-items.md`。阶段验证 ANdc／SNdc 的施法中断、种族筛选、转换时间、驱散／死亡／回调和僵尸归属；验证 thdm／schl／shtm 的目标、冷却／消耗、连续弹跳、光环、效果及联机。净化物品的地图覆盖树目标尚未支持。Win32 Release 客户端及 control 消费者已编译；专项、实际对局和原版对照尚未执行。
+
 ## 复活／操纵死尸卷轴与旋风魔杖待验证
 
 路径：`session_spell_info.cpp`、`session_item_use.cpp`、`session_spells.cpp`、`tests/corpse_tests.cpp`、`tests/morph_tests.cpp`；说明见 `corpse-items.md`、`cyclone-wand.md`。阶段使用对应夹具验证复活保留句柄／人口、操纵死尸归属／无敌／时限／科技、范围及敌友／英雄、无尸体与物品消耗；验证旋风魔杖目标、3 次消耗、事件、持续／驱散、丢弃／死亡／中断、原版表现和多端同步。Win32 Release 客户端及 corpse／morph 消费者已编译；专项、实际对局及原版对照尚未执行。
