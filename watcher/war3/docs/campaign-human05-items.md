@@ -2,6 +2,8 @@
 
 Human05 原图在任务开始时逐槽执行 `SetItemPositionLoc(UnitItemInSlotBJ(...))`。`SetItemPosition` 对空物品句柄无操作；对已持有物品复用库存掉落路径，清理槽位、刷新装备并放置到指定位置，对地面物品更新位置。
 
+固定版 Game.dll 的 `SetItemPosition` 入口 `0x6f1f5cb0` 在空物品解析失败时直接返回；持有物品先调用 `0x6f6775b0`，再执行位置更新，指令记录 `tmp/docs-artifacts/war3/human03-continuation-1031/item-pathing-rizin.txt`。物品事件的具体语义仍待验证。
+
 定向检查：隔离 Win32 x86 探针在 Human05 开场给吉安娜添加一件物品，其余槽位为空。原图执行放置后，检查该物品持有者为零、原槽清空、位置为第一槽目标区域中心，开场继续至 120 秒；记录 `tmp/docs-artifacts/war3/human03-continuation-1031/human05-item-position.log`。
 
 待阶段验证：在原版 1.27 对照物品事件触发次数、时序、不可丢弃物品、回调重入及地面边界；在产品客户端检查跨关物品、空槽和拾取。当前复用引擎既有掉落事件路径，不将事件时序称为原版已验证。
