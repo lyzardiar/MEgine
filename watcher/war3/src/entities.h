@@ -123,6 +123,7 @@ struct UnitState {
     std::optional<UnsummonOrder> unsummon;
     std::optional<RepairOrder> repair;
     double repairGold=0,repairLumber=0;
+    std::uint64_t repairSerial=0;
     std::uint32_t blightAbility=0;
     unsigned blightLevel=0;
     float blightRadius=0;

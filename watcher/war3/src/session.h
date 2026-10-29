@@ -873,6 +873,7 @@ class ScriptSession {
     double humanConstruction(std::uint32_t building,double delta);
     bool payWork(std::uint32_t worker,double gold,double lumber);
     bool repairTarget(const UnitState& worker,const UnitState& target,std::uint32_t ability,unsigned level);
+    bool repairTarget(const UnitState& worker,const DestructableState& target,std::uint32_t ability,unsigned level);
     struct ItemBlightGrowth {WorldPoint point;float radius=0,maximum=0,step=0;double due=0,interval=0;bool add=false;};
     std::vector<ItemBlightGrowth> itemBlightGrowth_;
     size_t itemBlightReservations_=0;

@@ -29,7 +29,7 @@ struct Construction {
     bool consumeBuilder=false;
 };
 struct BuildingUpgrade {std::uint32_t type=0;int gold=0,lumber=0,food=0;double duration=0,elapsed=0;std::uint64_t ticket=0;};
-struct RepairOrder {std::uint32_t target=0;double repath=0;};
+struct RepairOrder {std::uint32_t target=0;double repath=0;std::uint64_t serial=0;};
 struct GatherOrder {
     enum class Phase {None,Approach,Mine,Return,Chop};
     Phase phase=Phase::None;

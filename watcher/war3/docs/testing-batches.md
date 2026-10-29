@@ -2610,3 +2610,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 开局队伍联盟（待验证）
 
 路径：`session.h`、`session.cpp`、`lan_setup.cpp`、`tests/setup_tests.cpp`、`docs/map-loading.md`。同队已启用或地图声明的中立玩家初始化基础联盟，记录 config 阶段逐位覆盖，并消费自定义 force 视野与控制标志。Win32 Release `war3` 和 `war3_setup_tests` 合并编译通过，包含 `ed488c6`、`66fd97e`；setup 检查 5/5 通过。Human01 原图静音战役上下文最小检查推进 60 秒，阿尔萨斯与乌瑟尔未相互攻击、生命 650／1250；仅证明开场，不表示完整关卡通过，见 `tmp/docs-artifacts/war3/human01-session-probe/`。阶段验证多队／同队／开放与关闭槽、12–15 特殊玩家、force 各标志与共同胜利、对称／非对称 config 覆盖、重复应用草稿、双端同步和原版敌我／共享视野／胜负行为；force 未标记 allied 的规则尚未得到原版运行证据。
+
+### 存活桥梁修理（待验证）
+
+路径：`commerce.h`、`entities.h`、`session.h`、`session_combat_orders.cpp`、`session_repair.cpp`、`docs/base-development.md`。受损存活桥梁接入目标修理和原资源参数消费；Win32 Release 产品合并编译通过。阶段验证三类工人、右键／显式命令、范围与寻路、资源不足／零费用、多个工人、满血停止、目标死亡／移除、资源回调中改变归属或重新下令、自定义目标字段、桥梁自动修理、死亡桥及原版费用和时序；实际窗口、联机和原版对照尚未执行。
