@@ -17,6 +17,7 @@ class GameFlowUi {
     size_t dialogCapacity_=0,dialogScroll_=0,helpScroll_=0;
     unsigned scoreTab_=1,gameSpeedDraft_=50;
     bool appExit_=false;
+    std::optional<bool> networkLeave_;
     GameCameraPreferences cameraPreferences_{},cameraDraft_{};
     GameAudioPreferences audioPreferences_{},audioDraft_{};
     GameVideoPreferences videoPreferences_{},videoDraft_{};
@@ -33,7 +34,8 @@ public:
     bool menuOpen() const {return panel_!=Panel::Closed;}
     void toggleMenu();
     bool scriptDialog() const;
-    bool drawMenu(const UiInput& input,bool network=false);
+    bool drawMenu(const UiInput& input,bool network=false,bool allowNetworkLeave=false);
+    std::optional<bool> takeNetworkLeave(){auto result=networkLeave_;networkLeave_.reset();return result;}
     void drawDialog(const UiInput& input,bool network=false);
     bool drawScores(const UiInput& input);
     bool appExit() const {return appExit_;}

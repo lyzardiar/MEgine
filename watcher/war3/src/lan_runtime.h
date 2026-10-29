@@ -25,8 +25,8 @@ private:
     std::string observerError_;
     std::uint16_t interval_;
     std::uint64_t nextFrame_=0,lastClock_=0;
-    std::optional<std::uint64_t> selectionSendBlockedAt_;
-    bool started_=false,failed_=false;
+    std::optional<std::uint64_t> selectionSendBlockedAt_,leaveStartedAt_;
+    bool started_=false,failed_=false,leaveRequested_=false,leaveSent_=false,leaveComplete_=false;
     std::string error_;
     bool fail(std::string message);
     bool flushSelectionSync(std::uint64_t now);
@@ -40,6 +40,9 @@ public:
     LanRuntime& operator=(const LanRuntime&)=delete;
     // Called on the same thread as GameView with a monotonic millisecond clock.
     bool pump(std::uint64_t now);
+    bool requestLeave();
+    bool leaveComplete() const {return leaveComplete_;}
+    bool isHost() const {return bool(host_);}
     // Optional recorder must be attached before the first pump; errors stop recording only.
     bool observeSlots(SlotObserver observer);
     const std::string& observerError() const {return observerError_;}

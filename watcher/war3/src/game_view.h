@@ -35,7 +35,7 @@ class GameView {
     std::vector<std::uint8_t> lanPendingSelection_;
     std::deque<LanActionAlliance> lanPendingAlliance_;
     std::uint8_t lanPeer_=0;
-    bool drawStarted_=false,replayMode_=false,lanExperimental_=false;
+    bool drawStarted_=false,replayMode_=false,lanExperimental_=false,lanLeavePending_=false;
     std::string lanMessage_;
     std::uint64_t lanMessageUntil_=0;
     unsigned submitPlayerCommand(const PlayerCommand& command);
@@ -193,11 +193,13 @@ public:
     const LanSimulation* lanSimulation() const {return lanSimulation_.get();}
     ScriptSession& session() const {return *data_->session;}
     bool appExitRequested() const {return appExit_;}
+    std::optional<bool> takeLanLeaveRequest();
+    void beginLanLeave();
     GameAudioPreferences audioPreferences() const {return audioCommitted_;}
     bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}
     const std::string& nextLevel() const {return data_->session->nextLevel();}
     std::optional<std::pair<std::string,bool>> takeCinematic(){return data_->session->takeCinematic();}
-    bool cinematicTransition() const {auto exit=data_->session->exitRequest();return exit==SessionExit::Return || exit==SessionExit::ChangeLevel;}
+    bool cinematicTransition() const {auto exit=data_->session->exitRequest();return !lanLeavePending_ && (exit==SessionExit::Return || exit==SessionExit::ChangeLevel);}
     void resumeAfterCinematic(){last_=GetTickCount64();}
     Archives& resources() const {return data_->session->world()->resources();}
     fs::path mapPath() const {auto world=data_->session->world();return world?world->resources().mapPath():fs::path{};}

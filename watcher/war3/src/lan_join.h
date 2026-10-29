@@ -43,7 +43,7 @@ class LanJoin {
     LanLoadPhase loadPhase_=LanLoadPhase::Lobby;
     std::chrono::steady_clock::time_point loadStarted_{};
     std::vector<std::uint8_t> loadPlayers_,loadedPlayers_;
-    bool timeSlotsEnabled_=false;
+    bool timeSlotsEnabled_=false,leaveRequested_=false;
     std::vector<LanAction> timeSlotFragments_;
     std::deque<LanTimeSlot> timeSlots_;
     std::size_t fragmentBytes_=0,queuedTimeSlotBytes_=0,fragmentCount_=0;
@@ -83,6 +83,7 @@ public:
     // Action bytes are not decoded by this layer.
     bool enableTimeSlotProtocol();
     bool sendAction(std::span<const std::uint8_t> action);
+    bool requestLeave();
     bool sendChecksum(std::uint32_t checksum);
     std::optional<LanTimeSlot> takeTimeSlot();
     LanLoadPhase loadPhase() const {return loadPhase_;}
