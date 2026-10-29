@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 地形悬崖层级查询待验证
+
+路径：`src/world.h`、`src/world_blight.cpp`、`src/session_blight.cpp`；说明见 `cliff-level.md`。`GetTerrainCliffLevel` 已接入 W3E 地形层查询，Win32 Release 客户端编译通过；原版的动态覆盖网格尚未实现。阶段检查不同层级、网格边界、越界、坡道、异常坐标、实际地图脚本及原版动态覆盖；专项和原版运行对照尚未执行。
+
 ## 单机选择与地图交互输入入口待验证
 
 路径：`src/player_commands.h/.cpp`、`src/game_view.h/.cpp`、`src/game_hero_bar.cpp`、`src/game_selection_panel.cpp`、`src/game_trackable.cpp`；说明见 `player-commands.md`。单机用户选择和交互模型事件接入玩家命令分发，脚本内部事件及联机时间片路径保持独立；Win32 Release 客户端编译通过。阶段验证普通／Shift／框选／编组／英雄及空闲工人、选择回调中移除或变更单位、交互模型进入／点击和对话／暂停、单机与联机顺序和实际窗口；原版操作及性能待对照。单机回放仍未实现。

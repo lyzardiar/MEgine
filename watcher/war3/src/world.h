@@ -112,6 +112,7 @@ public:
     bool blighted(WorldPoint point) const;
     std::uint32_t terrainType(WorldPoint point) const;
     unsigned terrainVariation(WorldPoint point) const;
+    int terrainCliffLevel(WorldPoint point) const;
     unsigned terrainSlot(size_t corner) const {return terrainSlots_.at(corner);}
     const auto& terrainTypes() const {return terrainTypes_;}
     const std::string& terrainTexture(unsigned slot) const;
