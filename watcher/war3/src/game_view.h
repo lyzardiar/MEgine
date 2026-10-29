@@ -23,6 +23,8 @@ class GameView {
     bool streamUpload_=false;
     std::uint64_t destructableStreamRevision_=0;
     FogRender fogRender_;
+    std::array<unsigned,4> teamFilterIndices_{};
+    std::array<DWORD,4> minimapFilterColors_{};
     std::vector<float> distances_,angles_,fovs_;
     float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,roll_=0,zOffset_=0,near_=100,far_=5000,forwardSpeed_=3000,strafeSpeed_=3000;
     unsigned zoom_=0,frames_=0;
