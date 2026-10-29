@@ -1928,3 +1928,7 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 ## 脚本建造订单待验证
 
 路径：session_orders、construction_tests、construction。`IssueBuildOrder`／`IssueBuildOrderById` 将名称或 ID 转入真实工人建造流程和已有事件，专项构建用例分别使用两种入口。Win32 Release 客户端及专项程序增量编译通过；阶段按 construction.md 中夹具及 `war3_construction_tests` 命令执行，核对名称／自定义 ID、资源／位置失败、队列替换、重入以及完整四族和原版事件时序；专项尚未执行。
+
+## 脚本相机旋转待验证
+
+路径：session_world、world、game_flow_tests、campaign-cinematics。镜头围绕指定中心和 +Z 旋转，StopCamera 暂停支持的平移和字段插值；目标与朝向控制器互斥。Win32 Release 客户端及专项程序增量编译通过；阶段按 `tests/generate-game-flow-fixture.py --data-root <data-root>` 和 `war3_game_flow_tests.exe <data-root> <fixture.w3m>` 执行，核对目标／方向跟随、手动操作、停止控制器、倾斜地形及原版视觉时序。

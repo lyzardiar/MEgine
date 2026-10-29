@@ -24,9 +24,11 @@ struct CameraScalar {
 };
 struct CameraMotion {
     float fromX=0,fromY=0,toX=0,toY=0;double started=0,duration=0;std::uint64_t revision=0;
-    std::pair<float,float> value(double now) const {float t=duration>0?float(std::clamp((now-started)/duration,0.,1.)):1.f;return {std::lerp(fromX,toX,t),std::lerp(fromY,toY,t)};}
-    void set(float x,float y,double now,double seconds){auto current=value(now);fromX=current.first;fromY=current.second;toX=x;toY=y;started=now;duration=seconds;++revision;}
-    void sync(float x,float y){fromX=toX=x;fromY=toY=y;duration=0;}
+    bool orbit=false;float pivotX=0,pivotY=0,sweep=0;
+    std::pair<float,float> value(double now) const {float t=duration>0?float(std::clamp((now-started)/duration,0.,1.)):1.f;if(orbit){float angle=sweep*t,c=std::cos(angle),s=std::sin(angle),x=fromX-pivotX,y=fromY-pivotY;return {pivotX+x*c-y*s,pivotY+x*s+y*c};}return {std::lerp(fromX,toX,t),std::lerp(fromY,toY,t)};}
+    void set(float x,float y,double now,double seconds){auto current=value(now);fromX=current.first;fromY=current.second;toX=x;toY=y;started=now;duration=seconds;orbit=false;++revision;}
+    void rotate(float x,float y,float radians,double now,double seconds){auto current=value(now);fromX=toX=current.first;fromY=toY=current.second;pivotX=x;pivotY=y;sweep=radians;started=now;duration=seconds;orbit=true;++revision;}
+    void sync(float x,float y){fromX=toX=x;fromY=toY=y;duration=0;orbit=false;}
 };
 struct TerrainFog {int style=0;float start=3000,end=5000,density=.5f;std::uint32_t color=0xff000000;};
 struct WorldEnvironment {
