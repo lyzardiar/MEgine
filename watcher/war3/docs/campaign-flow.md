@@ -34,4 +34,6 @@ Human02 至 Human03 的隔离链路中，将阿尔萨斯设为 5 级后直接执
 
 Human03 隔离探针将阿尔萨斯移入原图粮仓区域并对目标仓库下达攻击命令；原图受击和死亡触发后出现胜利对话框，下一关目标为 `Maps\Campaign\Human04.w3m`，日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/attack-ending.log`。探针直接调整单位位置，未覆盖自然寻路、鼠标输入、实际窗口或完整关卡。
 
+Human04 隔离探针将阿尔萨斯移入原图剧情区域，再移至克尔苏加德附近下达攻击命令；原图死亡事件及结尾进入胜利对话框，下一关目标为 `Maps\Campaign\Human05.w3m`，日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/human04-objective.log`。探针直接调整单位位置，未覆盖自然寻路、界面、基地建设或完整关卡。
+
 资料片暗夜精灵第一章的隔离开场已恢复玩家控制；真实任务、窗口及地图中战争践踏的参数处理仍待完成或验证，见[关卡状态](campaign-nightelfx01-status.md)。
