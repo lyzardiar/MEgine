@@ -2053,15 +2053,23 @@ Win32 Release 客户端与关联会话／亡灵形态消费者程序已合并编
 
 ## 单位关系查询和地点起点待验证
 
-Win32 Release 客户端及关联消费者程序已合并编译通过；专项未执行。
+Win32 Release 客户端及关联消费者程序已合并编译通过；其后 AI 购买筛选有改动，执行阶段需重新链接相关消费者。专项未执行。
 
 路径：`session.cpp`、`session_entities.cpp`、`tests/session_tests.cpp`、`tests/live_world_tests.cpp`，见 `entities.md`。单位身份、种族和 force 查询使用实际状态；地点起点写入真实地图配置。
 
 阶段运行 session 与 live-world 消费者，验证地点复用／销毁、边界索引、单位易主／变形、force 增删／销毁、空及失效句柄和实际自定义地图；对照原版返回值。专项尚未执行。
 
+## AI 英雄物品待验证
+
+Win32 Release 客户端增量编译通过；专项未执行。
+
+路径：`ai.h`、`session_ai.cpp`、`session_ai_transport.cpp`；物品使用、购买、前往商店和订单预约接入实际消费者，规则与暂定阈值见 `ai-hero-items.md`。
+
+阶段验证目标／使用次数／冷却、回调重入、敌人接近、商店失效／库存／资金、订单覆盖、寻路及暂停、四族长局、实验联机同步及原版策略；现有联机摘要不包含 AI 预约状态。专项未执行。
+
 ## 单位战斗信息面板待验证
 
-Win32 Release 客户端及关联消费者程序已合并编译通过；专项未执行。
+Win32 Release 客户端及关联消费者程序已合并编译通过；其后 AI 购买筛选有改动，执行阶段需重新链接相关消费者。专项未执行。
 
 路径：`combat.h`、`session.h`、`session_attack_passives.cpp`、`session_damage.cpp`、`session_research.cpp`、`game_commands.cpp`、`tests/passive_tests.cpp`；面板消费共享武器伤害和护甲计算，范围与显示边界见 `unit-combat-panel.md`。
 
