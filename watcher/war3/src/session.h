@@ -158,8 +158,10 @@ class ScriptSession {
     std::uint64_t destructableRevision_=1;
     std::optional<SourceTable> weather_;
     std::map<std::uint32_t,std::shared_ptr<WeatherState>> weatherEffects_;
+    std::map<std::string,std::shared_ptr<ScriptSound>> weatherSounds_;
     std::shared_ptr<WeatherState> makeWeather(std::uint32_t type,WorldRect region);
     void initializeMapWeather();
+    void updateWeatherAudio(float x,float y,float z);
     std::vector<ScriptContext> contexts_;
     std::map<jass::ThreadId,std::vector<ScriptContext>> threadContexts_{{0,{}}};
     void bindThreadNatives();

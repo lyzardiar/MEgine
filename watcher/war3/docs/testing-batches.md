@@ -2148,3 +2148,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ## 缓存同步发送与小地图按钮待验证
 
 路径：`session_cache.cpp`、`session_tick.cpp`、`session_collections.cpp`、`session.h`、`lan_runtime.h/.cpp`、`game_view.cpp`、`game_loading.h/.cpp`、`session_text.cpp`、`world.h`、`tests/session_tests.cpp`、`tests/revival_tests.cpp`、`tests/game_flow_tests.cpp`；详情见 `cache-sync.md`、`ally-color-filter.md`。Win32 Release 客户端及相关消费者已编译；`war3_revival_tests <data-root> <fixture.w3m> lan-leave` 的最小队列顺序及离开检查 1 项通过、0 失败。阶段验证单机回显、实际发送／双端和回放、堵塞／超长／离开、按钮状态／快捷键／悬停及多人本地状态。单位缓存快照、野怪按钮和原版联机互通仍未完成。
+
+## 天气环境音待验证
+
+路径：`session_weather.cpp`、`session_sound.cpp`、`session.h`，说明见 `weather.md`。阶段验证原版雨／风标签、音量与环境音选项、静音切换、进入／离开区域、重叠同名和不同名区域、启停／移除、切图释放、自定义空间声与异常资源，并对照原版听感和过渡；Win32 Release 客户端编译通过，实际音频尚未验收。
