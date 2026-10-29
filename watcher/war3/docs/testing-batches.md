@@ -2718,3 +2718,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役单位外观缓存（待验证）
 
 路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`。集中验证飞行高度及变化、缩放、染色、玩家颜色覆盖的 StoreUnit／RestoreUnit、磁盘 v1–v5 兼容、损坏输入和实验同步；原版字段语义及完整战役存档尚待实现或对照。详见 [战役单位外观缓存](campaign-unit-appearance.md)。
+
+### 模型灯光档位（待验证）
+
+路径：`src/front_options.cpp`、`src/game_flow_ui.*`、`src/game_preferences.*`、`src/game_view.cpp`、`src/model_pose.cpp`、`src/renderer.h`。集中验证两个选项入口、设置保存与旧版迁移、动态灯光与画面性能及原版对照；低／中／高档的原版规则尚未确认，见 [模型灯光档位](video-light-detail.md)。

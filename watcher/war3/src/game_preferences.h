@@ -25,6 +25,7 @@ struct GameVideoPreferences {
     unsigned particleDetail=2;
     bool occlusion=true;
     unsigned shadowDetail=2;
+    unsigned lightDetail=2;
     bool operator==(const GameVideoPreferences&) const = default;
 };
 GameCameraPreferences loadCameraPreferences(const fs::path& dataRoot);
