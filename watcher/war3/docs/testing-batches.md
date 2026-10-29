@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 受阻目标寻路待验证
+
+路径：`src/world_path.cpp`、`tests/world_tests.cpp`；说明见 `water-pathing.md`。目标格受阻且首候选直线不可达时，在既有预算内搜索附近可达落点；Win32 Release 客户端与 world 检查目标编译通过，隔墙复现 1 通过、0 失败。阶段检查各移动类型、单位半径、边界和复杂障碍、动态目标、预算耗尽及大地图性能，并与原版目标选点对照。
+
 ## 结算保存回放与原 FDF 待验证
 
 路径：`src/game_flow_ui.cpp/.h`、`src/game_view.cpp/.h`、`src/main.cpp`、`src/replay_experimental.cpp/.h`、`src/fdf.cpp`、`src/glue.cpp/.h`、`tests/browser_tests.cpp`、`tests/native_tests.cpp`；说明见 `replay-experimental.md`。实验局域网录制可通过结算面板命名保存；单机录制与原版回放互通尚未实现。Win32 Release 客户端及浏览器检查目标编译通过，原 ScoreScreen FDF 挂接与绘制定向检查 1 通过、0 失败；`fdf_adjacent_quoted_frame_type` 尚未执行。阶段核对录制、输入／重名／失败重试、取消／自动保存、部分回放、关联地图、界面、播放及原版对照，并回归共享 FDF 与皮肤高亮解析。
