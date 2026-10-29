@@ -34,3 +34,9 @@ BootyBay原图globals/config/main退出0，无Game.dll：65单位、5位置、2�
 `TriggerRegisterVariableEvent` 注册地图脚本的标量 real 全局变量与六种比较条件。脚本赋值后更新阈值状态，从不满足变为满足时派发 `EVENT_GAME_VARIABLE_LIMIT`，复用触发器条件、动作与销毁生命周期；注册时记录当前状态，不立即执行动作。事件从地图脚本 VM 的实际赋值入口派发，数组、非 real 变量及 AI 独立 VM 的注册明确报错。
 
 上述阈值变化、回调重入、多个监听及触发器启停采用当前客户端规则，尚未对照原版；脚本全局初始化尚未完成时的注册也未支持。实际地图、变量名及事件时序列入功能阶段验证。
+
+## 单位侦测事件的原版证据
+
+`common.j` 将玩家单位侦测事件和单位侦测事件定义为 22 和 55。1.27 `Game.dll`（SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`）中，`GetDetectedUnit` 入口 `0x6f1e20d0` 仅对事件 22 查询通用事件单位；`GetEventDetectingPlayer` 入口 `0x6f1e2260` 检查事件 55 并读取相关上下文。静态路径对后者返回值的对象检查仍有疑点，需运行对照。
+
+二进制包含 `CPlayerUnitDetectedEventData` 和 `CUnitDetectedEventData`；检测状态变化进入派发的时机以及玩家事件注册方的归属尚未确定。当前客户端未派发这两类事件，后续需要结合真实地图和原版运行检查初次注册、重复侦测、共享视野及回调生命周期。
