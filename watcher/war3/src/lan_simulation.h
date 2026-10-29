@@ -19,6 +19,7 @@ private:
     struct Chat {unsigned player;std::string text;ChatChannel channel;};
     struct SelectionSync {std::uint8_t peer;LanActionExperimentalSelection part;};
     struct Purchase {unsigned player;std::uint32_t shop,type;bool item;};
+    struct Departure {std::uint8_t peer;};
     struct Subgroup {unsigned player;std::uint32_t unit,type;};
     struct GroupAssign {unsigned player,group;std::vector<std::uint32_t> units;};
     struct GroupSelect {unsigned player;std::vector<std::uint32_t> units;};
@@ -27,12 +28,13 @@ private:
     struct Alliance {unsigned player,recipient,flags;};
     struct Trackable {std::uint32_t handle;bool hit;};
     struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0,expectedItem=0,itemSlot=0;bool constructionCancel=false,subgroup=false,itemOrder=false,itemById=false,queued=false;};
-    using Event=std::variant<LanActionPause,LanActionResume,Escape,Chat,SelectionSync,Purchase,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable>;
+    using Event=std::variant<LanActionPause,LanActionResume,Escape,Chat,SelectionSync,Purchase,Departure,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable>;
     ScriptSession& session_;
     ObjectResolver resolve_;
     std::vector<std::vector<Event>> decoded_;
     LanSelectionSyncProjection projectedSync_;
     std::map<unsigned,std::set<std::uint32_t>> projectedSelections_;
+    std::set<std::uint8_t> projectedDepartures_;
     std::map<unsigned,std::array<std::vector<std::uint32_t>,10>> groups_,projectedGroups_;
     std::map<unsigned,std::pair<std::uint32_t,std::uint32_t>> subgroups_,projectedSubgroups_;
     std::size_t cursor_=0;

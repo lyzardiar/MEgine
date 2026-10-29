@@ -85,6 +85,7 @@ class ScriptSession {
     std::optional<unsigned> localPlayer_;
     std::optional<std::uint32_t> initialRandomSeed_;
     std::map<std::uint8_t,unsigned> networkPlayers_;
+    std::set<std::uint8_t> networkActivePeers_;
     bool experimentalSelectionSync_=false;
     std::vector<unsigned> networkSlotPlayers_;
     std::array<std::uint32_t,16> playerLeaderboards_{};
@@ -964,6 +965,8 @@ public:
     void applySetup(const PlayerSetup& setup);
     void applyLanSetup(const LanSessionSetup& setup);
     std::optional<unsigned> networkPlayer(std::uint8_t peerId) const;
+    bool networkPeerActive(std::uint8_t peerId) const;
+    bool networkPeerDeparted(std::uint8_t peerId);
     std::optional<unsigned> networkSlotPlayer(unsigned slot) const;
     std::optional<unsigned> networkPlayerSlot(unsigned player) const;
     const LanActionExperimentalSelection* pendingSelectionSync() const;

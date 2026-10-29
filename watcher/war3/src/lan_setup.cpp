@@ -24,9 +24,13 @@ void ScriptSession::applyLanSetup(const LanSessionSetup& setup) {
         else player.controller=slot.status==0?0:5;
     }
     if(mapped!=sourceMask || !local || peers.size()!=names.size())throw std::runtime_error("Incomplete LAN player mapping");
-    auto slotPlayers=setup.slotPlayerIds;config_=std::move(next);localPlayer_=local;networkPlayers_=std::move(peers);experimentalSelectionSync_=setup.experimentalSelectionSync;networkSlotPlayers_=std::move(slotPlayers);setupApplied_=true;if(!world_->environment().cameraMotion.revision){auto index=config_.players[*local].start;if(index>=0 && unsigned(index)<config_.starts.size()){auto& p=config_.starts[index].position;world_->environment().cameraMotion.sync(std::bit_cast<float>(p[0].bits()),std::bit_cast<float>(p[1].bits()));}}
+    auto slotPlayers=setup.slotPlayerIds;config_=std::move(next);localPlayer_=local;networkPlayers_=std::move(peers);networkActivePeers_.clear();for(auto [peer,player]:networkPlayers_)networkActivePeers_.insert(peer);experimentalSelectionSync_=setup.experimentalSelectionSync;networkSlotPlayers_=std::move(slotPlayers);setupApplied_=true;if(!world_->environment().cameraMotion.revision){auto index=config_.players[*local].start;if(index>=0 && unsigned(index)<config_.starts.size()){auto& p=config_.starts[index].position;world_->environment().cameraMotion.sync(std::bit_cast<float>(p[0].bits()),std::bit_cast<float>(p[1].bits()));}}
 }
 std::optional<unsigned> ScriptSession::networkPlayer(std::uint8_t peerId) const {auto found=networkPlayers_.find(peerId);return found==networkPlayers_.end()?std::nullopt:std::optional<unsigned>{found->second};}
+bool ScriptSession::networkPeerActive(std::uint8_t peerId) const {return networkActivePeers_.contains(peerId);}
+bool ScriptSession::networkPeerDeparted(std::uint8_t peerId) {
+    auto found=networkPlayers_.find(peerId);if(peerId<=1 || found==networkPlayers_.end() || !networkActivePeers_.erase(peerId))return false;auto owner=found->second;config_.players[owner].slotState=2;synchronizedSelections_[owner].clear();std::vector<std::uint32_t> pending;for(auto it=selectionSyncRounds_.begin();it!=selectionSyncRounds_.end();){it->second.parts.erase(peerId);if(!it->second.requested && it->second.parts.empty()){it=selectionSyncRounds_.erase(it);continue;}if(it->second.requested && !it->second.result)pending.push_back(it->first);++it;}for(auto round:pending)finishSelectionSync(round);playerEvent(owner,15);return true;
+}
 std::optional<unsigned> ScriptSession::networkSlotPlayer(unsigned slot) const {return slot<networkSlotPlayers_.size()?std::optional<unsigned>{networkSlotPlayers_[slot]}:std::nullopt;}
 std::optional<unsigned> ScriptSession::networkPlayerSlot(unsigned player) const {auto found=std::find(networkSlotPlayers_.begin(),networkSlotPlayers_.end(),player);return found==networkSlotPlayers_.end()?std::nullopt:std::optional<unsigned>{unsigned(found-networkSlotPlayers_.begin())};}
 }

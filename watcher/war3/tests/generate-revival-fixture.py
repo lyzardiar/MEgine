@@ -21,7 +21,18 @@ integer awakenMode=0
 integer awakenCalls=0
 boolean awakenNested=false
 unit purchaseShop=null
+integer leaveCount=0
+integer leavePlayer=-1
+integer leaveSyncDone=0
 endglobals
+function RecordLeave takes nothing returns nothing
+    set leaveCount=leaveCount+1
+    set leavePlayer=GetPlayerId(GetTriggerPlayer())
+endfunction
+function BeginLeaveSync takes nothing returns nothing
+    call SyncSelections()
+    set leaveSyncDone=1
+endfunction
 function RemoveShopOnSale takes nothing returns nothing
     call RemoveUnit(purchaseShop)
 endfunction
@@ -71,6 +82,9 @@ function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing
     local trigger t=CreateTrigger()
+    local trigger l=CreateTrigger()
+    call TriggerRegisterPlayerEvent(l,Player(1),EVENT_PLAYER_LEAVE)
+    call TriggerAddAction(l,function RecordLeave)
     set hero=CreateUnit(Player(0),'Hamg',0,0,0)
     set altar=CreateUnit(Player(0),'halt',512,0,0)
     set backup=CreateUnit(Player(0),'halt',-512,0,0)

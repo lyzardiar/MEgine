@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 自研联机非主机离开待验证
+
+路径：lan_host／lan_join、lan_actions／lan_simulation、lan_setup／session_collections、revival_tests 和 lan_departure_tests。实验对局的非主机断线在主机时间片中触发一次地图玩家离开事件，剩余客户端继续；活动选区同步参与者和校验等待随离开更新。Win32 Release 产品及专项编译通过；`war3_revival_tests.exe <data-root> <fixture.w3m> lan-leave` 和 `war3_lan_departure_tests.exe` 各 1 通过／0 失败，分别覆盖地图离开事件／等待中的选区同步／伪造与重复动作，以及本机两条客户端连接、256 个未比较时间片、溢出动作 FIFO 和先前动作／离开次序。原版离开协议、主动离开菜单及主机迁移仍待实现。待合并验证真实游戏双端／多端与回放、胜负脚本、离开时多片选区同步／暂停／最小化、异常数据／连接超时、完整输入顺序、连续离开及内存资源释放；断线后被接纳动作以主机解析顺序为准，缓冲超限可能丢弃未接纳输入。
+
 ## 自研联机商店交易待验证
 
 路径：lan_actions／lan_action_encoder／lan_runtime／lan_simulation、session_network_identity、revival_tests 与 fixture。自研对局按时间片传递商店对象、商品和类别，消费真实购买、库存、买家、资源、人口及事件；已移除商店和消费前失效的交易跳过，未知身份拒绝。Win32 Release 产品和专项编译通过；`war3_revival_tests.exe <data-root> <fixture.w3m> lan-purchase` 最小检查 1 通过／0 失败，覆盖物品／单位购买、在途改选、同片／跨片移除、未知身份与经典解析拒绝。阶段合并双端与回放、同片多玩家竞购和补货、目标／买家删除与易主、资源／人口不足、选区／触发器回调变化、无效／伪造报文与断线；原版商店协议和对象编号尚未实现或对照。
