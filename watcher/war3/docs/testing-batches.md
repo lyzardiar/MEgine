@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 纠缠金矿即时全部卸载待验证
+
+路径：`src/session.h`、`src/session_harvest.cpp`、`src/session_transport.cpp`；说明见 `transport.md`。`Adri` 即时全部卸载接入采矿工人清单与合法落点；Win32 Release 客户端编译通过。阶段检查满矿、部分落点受阻、技能禁用、容量与范围覆盖、订单回调重入、单个／全部卸载、实验联机及原版时序；尚未执行真实对局或原版对照。
+
 ## 战役跳过教程提示待验证
 
 路径：`src/campaign_profile.h`、`src/campaign_browser.h/.cpp`；说明见 `campaign-flow.md`。ROC 战役选择接入教程状态、原本地化文案与确认操作；Win32 Release 客户端编译通过。阶段核对首项／其他战役、已完成／未完成、TFT、确认／取消及键鼠交互，检查脚本 `SetTutorialCleared`、跨会话持久化、保存失败和窗口布局，并与原版验证版本门控和触发条件；尚未执行窗口与原版对照。

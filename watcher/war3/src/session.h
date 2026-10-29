@@ -881,6 +881,7 @@ class ScriptSession {
     std::pair<std::uint32_t,unsigned> sourceAbility(const UnitState& unit,const char* code);
     void initializeHarvest(UnitState& unit);
     void cancelGather(UnitState& unit);
+    bool unloadMinePassenger(std::uint32_t mine,std::uint32_t worker,WorldPoint point);
     void harvestTick(double delta);
     bool harvestTree(std::uint32_t unit,std::uint32_t tree);
     void lumberTick(std::uint32_t unit);
