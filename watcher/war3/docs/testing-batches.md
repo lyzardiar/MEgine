@@ -2580,3 +2580,5 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 地图脚本回放保存控制（待验证）
 
 路径：`session.h`、`session_game.cpp`、`main.cpp`、`docs/replay-experimental.md`。阶段验证 main 和对局中调用、多个玩家本地分支、结算保存按钮与异常退出自动保存、提前保存后的已有文件、录制器释放及下局状态重置；对照 1.27 的自动／手动保存边界。实验局域网双端、原版行为及单机录制仍待验证或实现。
+
+2026-10-30 合并实现编译：`fbed693`、`58defa2` 和 `ae4e697` 所在 Win32 Release 集成版本执行 `cmake --build --preset release --target war3 --parallel 8` 通过；玩法、保存和原版对照仍待验证，新增测试断言尚未运行。
