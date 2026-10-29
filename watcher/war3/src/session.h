@@ -230,6 +230,7 @@ class ScriptSession {
     unsigned gameSpeed_=2;
     unsigned version_=1;
     AudioRandom gameRandom_{0x69707365u};
+    std::array<AudioRandom,45> auxiliaryRandom_{};
     int stockItemSlots_=12,stockUnitSlots_=12;
     std::vector<std::shared_ptr<const Member>> preloaded_;
     size_t preloadBytes_=0;
@@ -655,6 +656,7 @@ class ScriptSession {
     void clearAuras(UnitState& unit);
     void releaseAuraSource(std::uint32_t unit);
     bool passiveChance(float chance);
+    bool criticalChance(const UnitState& unit,const PassiveInfo& passive);
     void prepareAttack(const UnitState& source,const UnitState& target,CombatProjectile& projectile);
     bool evadeAttack(const UnitState& target,const CombatProjectile& projectile);
     const PassiveInfo* spikedCarapace(const UnitState& unit);
@@ -949,6 +951,7 @@ class ScriptSession {
     void tick(double delta);
     void clockChange(jass::Real before,jass::Real after,bool cyclic);
     std::uint32_t random();
+    void seedAuxiliaryRandom(std::uint32_t seed);
     ObjectData& definitions();
     UnitState& unit(jass::Value value);
     ItemState& item(jass::Value value);

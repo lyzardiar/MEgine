@@ -1996,3 +1996,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`session_control_spells.cpp`、`tests/control_tests.cpp`、`docs/control-spells.md`。四个睡眠权限 native 使用 ACsp／Asla 真实能力及现有能力生命周期；权限与当前睡眠状态分开。Win32 Release 产品和专项程序增量编译通过，专项未执行。
 
 阶段按 control-spells.md 运行 flow 夹具，核对两种权限的新增／删除／重复／空单位、能力句柄与自定义单位、变形／死亡／易主、与魔法睡眠及唤醒交互，并对照原版；自然昼夜睡眠尚未实现。原版入口及能力证据为 `ev_070b138d97f97b6aee4ce2a89730ccadfe0d7169f94c1957e4b2568ecbdbe950`、`ev_b4815f23492ab1abeda8ce8d47808fb3f4ab36a02d322cbf01ba33ea5272769e` 和 `ev_280a65f12454e74fb1a209f0d04ce862ba47c70a56316a01448f32de873b60a2`。
+
+## 暴击、重击辅助随机与伪随机计数待验证
+
+路径：`audio_random.h`、`session.h/.cpp`、`session_game.cpp`、`entities.h`、`session_attack_passives.cpp`、`session_spells.cpp`、`session_equipment.cpp`、`session_network_identity.cpp`、`tests/passive_tests.cpp`、`docs/auras-passives.md`。SetRandomSeed 派生 45 条辅助流；暴击、重击和醉拳按源 PRD 表及能力计数使用第 3 条流，实验局域网校验包括流状态与计数。初始会话以主随机对象副本派生辅助流，原版开局种子／时序尚未确认。
+
+阶段执行 passive 夹具及 `war3_passive_tests.exe`，覆盖 seed 17 的 15% 连续 8 次计数、0／100%、重击／醉拳、技能等级／移除重加／库存／变形／死亡／易主、目标门控、重入、与脚本主随机流隔离和多端同步；向量由原件核对的随机表及倒数表静态推算，尚非原件运行态结果。相同技能多物品实例目前合并计数；原版其他辅助流消费者和实例／调用顺序待实现或对照。原件证据 `ev_386c6c37e21063ff442761139eede26c7c2607ac004f74fd966205a142cc6b8f`、`ev_209c7884597b4c7bc81e563be04e4f4aae019519e59ae369f10f6d5ab884a42f`、`ev_4a630a7a9c648a176ae172259d14881961fa370d0b444ffd42fd7b671ddc4865`。专项尚未运行。

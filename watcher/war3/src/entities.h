@@ -159,6 +159,7 @@ struct UnitState {
     std::uint64_t castRevision=0;
     std::map<std::uint32_t,double> spellCooldowns;
     std::map<std::uint32_t,UnitBuff> buffs;
+    std::map<std::uint32_t,std::uint32_t> criticalFailures;
     std::map<std::pair<std::uint32_t,std::uint32_t>,CorrosiveDose> corrosiveDoses;
     bool selfCasting=false;
     std::optional<PossessionClaim> possessionClaim;
