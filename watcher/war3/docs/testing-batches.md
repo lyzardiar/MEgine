@@ -2854,3 +2854,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### Human05 失效单位路径设置（待验证）
 
 路径：`src/session_entities.cpp`、`docs/campaign-human05-pathing.md`。隔离原图越过村民撤退异常并推进至 380 秒；集中验证失效句柄原版语义与实际撤退和路径占地，见 [村民撤退路径](campaign-human05-pathing.md)。
+
+### Human05 背包物品位置（待验证）
+
+路径：`src/session_entities.cpp`、`docs/campaign-human05-items.md`。隔离原图验证空槽和持有物品的落地；集中对照原版掉落事件、不可丢弃物品和真实跨关操作，见 [物品位置](campaign-human05-items.md)。
