@@ -912,7 +912,7 @@ class ScriptSession {
     bool harvestTree(std::uint32_t unit,std::uint32_t tree);
     void lumberTick(std::uint32_t unit);
     bool acceptsResource(const UnitState& depot,unsigned resource);
-    std::uint32_t resourceDepot(const UnitState& unit,unsigned resource);
+    std::uint32_t resourceDepot(const UnitState& unit,unsigned resource,unsigned& cursor);
     void creditResource(unsigned owner,unsigned resource,int amount);
     unsigned researchLevel(unsigned owner,std::uint32_t type) const;
     void setResearch(unsigned owner,std::uint32_t type,int level);

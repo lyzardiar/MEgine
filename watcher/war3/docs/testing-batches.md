@@ -2582,3 +2582,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 路径：`session.h`、`session_game.cpp`、`main.cpp`、`docs/replay-experimental.md`。阶段验证 main 和对局中调用、多个玩家本地分支、结算保存按钮与异常退出自动保存、提前保存后的已有文件、录制器释放及下局状态重置；对照 1.27 的自动／手动保存边界。实验局域网双端、原版行为及单机录制仍待验证或实现。
 
 2026-10-30 合并实现编译：`fbed693`、`58defa2` 和 `ae4e697` 所在 Win32 Release 集成版本执行 `cmake --build --preset release --target war3 --parallel 8` 通过；玩法、保存和原版对照仍待验证，新增测试断言尚未运行。
+
+### 采集返还可达基地（待验证）
+
+路径：`session_harvest.cpp`、`commerce.h`、`session.h`、`docs/economy.md`。验证隔墙最近基地／可达次近基地、超过四个不可达候选的轮转、候选增删／易主／建造／暂停、动态路径阻塞及恢复、金木双资源与事件回调、显式目标语义；检查无候选时携带资源保留、每秒重试及高密度地图性能，并与原版选点／事件时序对照。本次仅差异检查，玩法和产品编译待合并验证。

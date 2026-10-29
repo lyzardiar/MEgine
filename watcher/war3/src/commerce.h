@@ -34,6 +34,7 @@ struct GatherOrder {
     enum class Phase {None,Approach,Mine,Return,Chop};
     Phase phase=Phase::None;
     std::uint32_t mine=0,depot=0;
+    unsigned depotProbe=0;
     std::uint32_t tree=0;
     WorldPoint treePoint;
     double due=0,repath=0,yieldRemainder=0;
