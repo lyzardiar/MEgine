@@ -14,6 +14,8 @@ SetUnitOwner与控制技能复用changeUnitOwner：取消旧战斗/施法/工作
 
 占据声明和保护状态属于原施法票据。并发施法只允许一个占据者，释放时只清理相符的声明/保护；停止、失效目标、能力移除、眩晕、归属改变、超出范围及显式移除保护都通过同一取消流程释放。目标锁定同时供移动、攻击、命令区和IsUnitType查询消费，保护和女妖承伤进入实际伤害链。
 
+占据成功前读取施法者所有者的已确认选区；施法者死亡移除、目标完成归属转换后，各会话为该玩家接续目标选择并执行既有选择事件。脚本本地选区尚未完成实时跨端同步，原版选择时序与双端行为待阶段验证。
+
 ## 来源与必要检查
 
 基准为本机Warcraft III 1.27.0.52240，只读使用War3Patch.mpq。AbilityData与AbilityMetaData/WorldEditStrings提供原型、字段和等级/费用；UnitAbilities确认uban使用Aps2、hspt使用Acmg；各族及ItemAbilityFunc提供原按钮、订单、模型和挂点，ItemData确认ccmd的AIco与三次消耗。

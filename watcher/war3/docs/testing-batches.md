@@ -2,11 +2,11 @@
 
 ## 自研选择同步屏障待验证
 
-路径：jass_threads／jass_runtime、session_collections／session_threads／session_tick、lan_actions／lan_simulation／lan_runtime／lan_setup／map_preparation、game_view／main／replay_preparation。实验联机分块同步全部人类玩家的选择快照，挂起当前 JASS 纤程直至同轮分片齐全；回放消费记录，单机保持原有路径。Win32 Release 增量编译通过。操作：合并验证地图 main／触发器调用、并发／嵌套调用、子线程继承、空选区和跨多个分片、已删除单位、普通选择与脚本本地选择交错、取消／暂停、断线／缺片／超时、畸形／重叠／重复报文、队列背压和预算，以及双端／回放结果一致性。原版同步协议、不同本地分支调用顺序及脚本本地选择的实时命令同步仍待完成或对照。
+路径：jass_threads／jass_runtime、session_collections／session_threads／session_tick、lan_actions／lan_simulation／lan_runtime／lan_setup／map_preparation、game_view／main／replay_preparation。实验联机分块同步全部人类玩家的选择快照，挂起当前 JASS 纤程直至同轮分片齐全；回放消费记录，单机保持原有路径。同步屏障未完成或分片待发时阻断后续本地输入，连续发送受阻 15 秒中断连接；Win32 Release 增量编译通过。操作：合并验证地图 main／触发器调用、并发／嵌套调用、子线程继承、空选区和跨多个分片、已删除单位、普通选择与脚本本地选择交错、取消／暂停、断线／缺片／超时、畸形／重叠／重复报文、队列背压、后续命令排序和预算，以及双端／回放结果一致性。原版同步协议、不同本地分支调用顺序及脚本本地选择的实时命令同步仍待完成或对照。
 
 ## 自动选区与自研联机待验证
 
-路径：session_collections／session_transport／session_lava_spawn／session_spirit_split、session。登船、炎魔分裂及龙卷风接管／返还选区时，同步更新已确认的各玩家选区和本地选中标志，避免后续网络命令使用不同选区；自动变化不额外触发选择事件。Win32 Release 增量编译通过。操作：同构建双端选择本方／共享单位，登船与吞噬、炎魔分裂、龙卷风创建／结束后立即下达命令，比较选区、事件与状态；覆盖选择回调重入、死亡／移除／易主、断线、回放及多玩家选择同一单位。骑乘合体和下骑由所有者已确认选区接续，并在各会话执行选择事件；需合并验证多输入／输出、共享玩家、回调重入和后续命令。元素分身出生、成员生成、回收及全部创建失败已接续各玩家已确认选区，本次 Win32 Release 增量编译通过；合并验证出生期间改选、多个玩家分别选择成员、死亡／易主及选择事件。脚本 SelectUnit／ClearSelection 的实时命令选区跨端同步仍待完成；同步快照见上方屏障待测项，自动选择规则与原版一致性待对照。
+路径：session_collections／session_transport／session_lava_spawn／session_spirit_split／session_ownership、session。登船、炎魔分裂及龙卷风接管／返还选区时，同步更新已确认的各玩家选区和本地选中标志，避免后续网络命令使用不同选区；自动变化不额外触发选择事件。Win32 Release 增量编译通过。操作：同构建双端选择本方／共享单位，登船与吞噬、炎魔分裂、龙卷风创建／结束后立即下达命令，比较选区、事件与状态；覆盖选择回调重入、死亡／移除／易主、断线、回放及多玩家选择同一单位。骑乘合体、下骑和占据成功由所有者已确认选区接续，并在各会话执行选择事件；需合并验证多输入／输出、共享玩家、回调重入和后续命令。元素分身出生、成员生成、回收及全部创建失败已接续各玩家已确认选区；合并验证出生期间改选、多个玩家分别选择成员、死亡／易主及选择事件。脚本 SelectUnit／ClearSelection 的实时命令选区跨端同步仍待完成；同步快照见上方屏障待测项，自动选择规则与原版一致性待对照。
 
 ## 自研对局聊天与回放待验证
 

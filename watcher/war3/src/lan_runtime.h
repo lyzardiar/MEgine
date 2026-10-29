@@ -25,10 +25,11 @@ private:
     std::string observerError_;
     std::uint16_t interval_;
     std::uint64_t nextFrame_=0,lastClock_=0;
+    std::optional<std::uint64_t> selectionSendBlockedAt_;
     bool started_=false,failed_=false;
     std::string error_;
     bool fail(std::string message);
-    void flushSelectionSync();
+    bool flushSelectionSync(std::uint64_t now);
     void attach(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wire,AbilityFields fields,bool experimental);
 public:
     // The GameView and its ScriptSession must outlive this runtime; call before the first draw.
