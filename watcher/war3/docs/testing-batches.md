@@ -2678,3 +2678,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 建筑占地内的施工接近（待验证）
 
 路径：`session_construction.cpp`、`docs/construction.md`。工人位于待建建筑占地时按距离尝试四侧，路径终点必须处于占地外且在施工范围；旧核心库加修复源码的隔离探针中，Human02 实际建造兵营、两座农场并训练六名步兵后，原脚本在 281 秒完成基地目标，金币和木材已调高，见 `tmp/docs-artifacts/war3/human02-build-1031/fixed.log`。阶段验证不同建筑尺寸、地形／窄路／动态单位、四侧不可达、施工协作／修理、回调与更令、真实窗口、性能及原版路径。
+
+### JASS 局部变量默认值（待验证）
+
+路径：`jass_runtime.cpp`、`tests/jass_runtime_tests.cpp`、`docs/jass.md`。局部数值／布尔／句柄提供默认值，局部字符串暂按空串；隔离构建的运行时检查 14 通过、0 失败。DotA 原图在本机玩家输入 -sd 后通过真实 PurchaseUnit 获得 U006 并推进至 120 秒，见 `tmp/docs-artifacts/war3/dota-flow-1030/purchase-heroes-final.log`。阶段验证局部／全局／数组字符串 null 与空串、参数／初始化顺序、回调／等待／嵌套帧、其他三图和原版 1.27 逐类型规则；窗口、多人及完整英雄玩法未验证。

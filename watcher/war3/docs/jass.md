@@ -24,13 +24,17 @@ REA 在固定 Game.dll 找到 `common.j`／`scripts\common.j` 引用，原始记
 
 `src/jass_module.*` 的 Module 拥有 Program、源文本与类型/函数/槽位表。它解析 handle 继承并拒绝未知父类型、非 handle 父类型与继承环；检查赋值、数组形状与整数下标、调用实参、条件和返回值。兼容规则包括 integer 到 real、null 到可空类型以及派生 handle 到祖先。函数签名先注册，表达式的变量、数组、调用与 code 引用保存直接索引；set 目标另存赋值绑定。参数槽在局部变量之前，局部名称覆盖同名全局。表达式使用显式后序栈，20,000 次左结合运算不会递归消耗 Win32 调用栈。
 
-产品 `--script-check` 依次构建语法树、Module 和 Runtime 执行指令，成功时写入 `jass_link=passed`、`jass_bytecode=compiled`；失败保留源名、行、列和类型诊断。此入口不执行全局初始化、config/main 或任何 native。当前静态检查未覆盖全部路径的返回值、确定赋值和 constant 函数纯度；运行层对读未初始化局部或缺少返回值显式报错，不能把源脚本可链接作为原版 VM 一致性证明。
+产品 `--script-check` 依次构建语法树、Module 和 Runtime 执行指令，成功时写入 `jass_link=passed`、`jass_bytecode=compiled`；失败保留源名、行、列和类型诊断。此入口不执行全局初始化、config/main 或任何 native。当前静态检查未覆盖全部路径的返回值、确定赋值和 constant 函数纯度；运行层对缺少返回值显式报错，不能把源脚本可链接作为原版 VM 一致性证明。
 
 Win32 Release 下 `war3_jass_module_tests` **9 通过、0 失败**，覆盖继承/null、非法类型图、全局/参数/局部及赋值槽位、前向调用/code、数组、初始化与常量、条件/返回/运算符、长表达式、移动后源所有权与绑定完整性。继续开发所需的 DotA 产品集成退出 0，解析 281,324 个表达式、65,968 个语句，无 Game.dll。证据在 `tmp/docs-artifacts/war3/jass/module-{build.log,tests.log,dota.log}`。三图合并与诊断集成列入 W010，累计三个功能任务后执行；已通过且未变化的数值差分不重复运行。
 
 ```powershell
 ./build/windows-x86/bin/Release/war3_jass_module_tests.exe
 ```
+
+## 局部变量默认值
+
+每次创建函数帧时，未显式赋值的数值和布尔局部值为零，句柄和 code 为 null，字符串局部值暂按空字符串初始化；数组仍沿用现有稀疏元素默认值。显式字符串 null 与空字符串保持区分，而未初始化的全局／数组字符串目前仍为空句柄。DotA_v6.83d 的选中事件函数 `UVO` 将未赋值的局部字符串与空串比较，旧运行层在选择 `-sd` 商店时抛错；局部默认值修复后，隔离探针已通过 `-sd` 选英雄商店的真实购买命令，见 `tmp/docs-artifacts/war3/dota-flow-1030/purchase-heroes-final.log`。参考 [WurstScript 的 JASS 默认值说明](https://wurstlang.org/features/backends.html)；隔离构建的 JASS 运行时检查 14 通过、0 失败，覆盖新增局部值及现有运行时用例。1.27 对局部／全局／数组字符串的 null 与空串比较及内存表示尚无原件逐类型对照，需集中验证。
 
 ## 原生执行层
 
@@ -42,7 +46,7 @@ REA 的 AND／OR 发射器 `0x6f7e91d0`／`0x6f7e9bf0` 先发射左表达式，�
 
 字符串支持原版八种转义（反斜杠、两种引号、r/n/b/f/t）。Rawcode 保存单字节及四字节的有符号字节累积，支持转义和 `u`／`U` 四位十六进制。`tools/verify_jass_literals_cpu.py` 对照原版字符串构造器解码循环 `0x6f7f4bb1–0x6f7f4c0c` 与完整 Rawcode 回调 `0x6f7fb5c0`：**5 组字符串、268 组 Rawcode** 一致，无替代函数代码。循环输入均为合法转义；完整分配、驻留、拼接、比较和词法接受范围未由这个对照证明。未知字符串转义在客户端显式拒绝。
 
-当前开发预算默认为每次外部调用 5,000,000 条指令、1,024 个脚本帧、64 层同步 native 重入、各 262,144 个局部槽/操作数值、单字符串 16 MiB；数组只接受 0..8191。越界、零除、INT_MIN/-1、缺少返回及未初始化局部读取均带位置报错。这些诊断/预算是当前实现边界，不声称原版对所有异常输入的线程状态相同。句柄生命周期、挂起/计时器调度、随机数、全部原生函数和完整原版 VM 行为仍待实现/差分。
+当前开发预算默认为每次外部调用 5,000,000 条指令、1,024 个脚本帧、64 层同步 native 重入、各 262,144 个局部槽/操作数值、单字符串 16 MiB；数组只接受 0..8191。越界、零除、INT_MIN/-1 及缺少返回均带位置报错。这些诊断/预算是当前实现边界，不声称原版对所有异常输入的线程状态相同。句柄生命周期、挂起/计时器调度、随机数、全部原生函数和完整原版 VM 行为仍待实现/差分。
 
 `war3_jass_runtime_tests` 执行自编脚本，13项检查通过，覆盖初始化、存储、流程、短路、实参次序、递归/code 同步重入、Real 消费、字符串/Rawcode、native 类型错误、句柄祖先转换、初始化失败、嵌套 loop、预算共享/释放及长表达式。W010–W012 的36项合并检查与三图产品指令编译已通过；Amazonia／BootyBay／DotA 分别为21,086／19,785／370,552条指令，原图全局初始化和config/main均未执行，开始游戏保持禁用。证据为 `tmp/docs-artifacts/war3/jass/batch-runtime-*.log`、`batch-w010-w012.json` 及 `runtime-{native.json,literals-cpu.json,literals-cpu.log}`。
 

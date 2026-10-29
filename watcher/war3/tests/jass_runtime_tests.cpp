@@ -62,7 +62,34 @@ endfunction
 )jass"));r.initialize();require(*r.invoke("text").text=="a\nb\\c\"d" && !r.invoke("empty").bits && r.invoke("same").bits && r.invoke("raw").bits==0x68666f6f+0x1234,"String/rawcode/null semantics differ");});
     test("runtime_native_failures_preserve_call_site_and_types",[]{Runtime r(compile("native Missing takes nothing returns integer\nfunction f takes nothing returns integer\nreturn Missing()\nendfunction\n"));r.initialize();rejects([&]{r.invoke("f");},"runtime.j:3:8: Unbound JASS native: Missing");r.bind("Missing",[](auto& vm,auto){return vm.boolean(true);});rejects([&]{r.invoke("f");},"value type differs from integer");r.bind("Missing",[](auto& vm,auto){return vm.integer(7);});require(r.invoke("f").bits==7,"Native repair or call state failed");});
     test("runtime_handle_parameter_covariance",[]{Runtime r(compile("type agent extends handle\ntype unit extends agent\nnative Make takes nothing returns unit\nnative Read takes handle h returns integer\nfunction f takes nothing returns integer\nreturn Read(Make())\nendfunction\n"));r.bind("Make",[](auto& vm,auto){return vm.handle("unit",17);});r.bind("Read",[](auto& vm,auto args){require(args[0].type==vm.module().typeId("handle"),"Handle parameter not converted to declared ancestor");return vm.integer(std::int32_t(args[0].bits));});r.initialize();require(r.invoke("f").bits==17,"Handle bits changed during covariance");});
-    test("runtime_faulted_initialization_and_uninitialized_local",[]{Runtime failedRuntime(compile("native Missing takes nothing returns integer\nglobals\ninteger x=Missing()\nendglobals\nfunction f takes nothing returns nothing\nendfunction\n"));rejects([&]{failedRuntime.initialize();},"Unbound JASS native");require(!failedRuntime.ready(),"Partial global initialization marked ready");rejects([&]{failedRuntime.invoke("f");},"not initialized");Runtime r(compile("function f takes nothing returns integer\nlocal integer x\nreturn x\nendfunction\nfunction missing takes nothing returns integer\nendfunction\n"));r.initialize();rejects([&]{r.invoke("f");},"uninitialized JASS local");rejects([&]{r.invoke("missing");},"without return value");});
+    test("runtime_faulted_initialization_and_local_defaults",[]{Runtime failedRuntime(compile("native Missing takes nothing returns integer\nglobals\ninteger x=Missing()\nendglobals\nfunction f takes nothing returns nothing\nendfunction\n"));rejects([&]{failedRuntime.initialize();},"Unbound JASS native");require(!failedRuntime.ready(),"Partial global initialization marked ready");rejects([&]{failedRuntime.invoke("f");},"not initialized");Runtime r(compile(R"jass(type unit extends handle
+function integerDefault takes nothing returns integer
+local integer value
+return value
+endfunction
+function realDefault takes nothing returns real
+local real value
+return value
+endfunction
+function boolDefault takes nothing returns boolean
+local boolean value
+return value
+endfunction
+function textDefault takes nothing returns string
+local string value
+return value
+endfunction
+function unitDefault takes nothing returns unit
+local unit value
+return value
+endfunction
+function compare takes nothing returns boolean
+local string value
+return value=="" and value!=null
+endfunction
+function missing takes nothing returns integer
+endfunction
+)jass"));r.initialize();require(!r.invoke("integerDefault").bits && !r.invoke("realDefault").bits && !r.invoke("boolDefault").bits && !r.invoke("unitDefault").bits,"Local numeric, boolean or handle default differs");auto text=r.invoke("textDefault");require(text.text && text.text->empty() && r.invoke("compare").bits,"Local string default differs");rejects([&]{r.invoke("missing");},"without return value");});
     test("runtime_limits_reset_and_debug_policy",[]{RuntimeLimits limits;limits.steps=64;limits.frames=8;Runtime r(compile("function forever takes nothing returns nothing\nloop\nendloop\nendfunction\nfunction recurse takes nothing returns nothing\ncall recurse()\nendfunction\nfunction fine takes nothing returns integer\nreturn 7\nendfunction\n"),limits);r.initialize();rejects([&]{r.invoke("forever");},"instruction budget");rejects([&]{r.invoke("recurse");},"call frame budget");require(r.invoke("fine").bits==7,"Failed execution did not release frames");for(bool debug:{false,true}){limits.debug=debug;Runtime d(compile("native Trace takes nothing returns nothing\nfunction f takes nothing returns nothing\ndebug call Trace()\nendfunction\n"),limits);unsigned trace=0;d.bind("Trace",[&](auto& vm,auto){++trace;return vm.nothing();});d.initialize();d.invoke("f");require(trace==unsigned(debug),"Debug statement execution differs");}});
     test("runtime_nested_loop_targets_and_shared_native_budget",[]{Runtime r(compile("function nested takes nothing returns integer\nlocal integer i=0\nlocal integer j\nlocal integer sum=0\nloop\nexitwhen i>=2\nset j=0\nloop\nexitwhen j>=3\nif j==1 then\nexitwhen true\nendif\nset sum=sum+10+i\nset j=j+1\nendloop\nset i=i+1\nendloop\nreturn sum\nendfunction\n"));r.initialize();require(r.invoke("nested").bits==21,"exitwhen patched the outer loop target");RuntimeLimits limits;limits.steps=64;Runtime b(compile("native Retry takes nothing returns integer\nfunction forever takes nothing returns nothing\nloop\nendloop\nendfunction\nfunction f takes nothing returns integer\nreturn Retry()\nendfunction\nfunction fine takes nothing returns integer\nreturn 7\nendfunction\n"),limits);b.bind("Retry",[](auto& vm,auto){rejects([&]{vm.invoke("forever");},"instruction budget");return vm.integer(1);});b.initialize();rejects([&]{b.invoke("f");},"instruction budget");require(b.invoke("fine").bits==7,"Nested fault left native execution active");});
     test("runtime_long_expression_avoids_host_recursion",[]{std::string text="function f takes nothing returns integer\nreturn 1";for(unsigned i=0;i<20000;++i)text+="+1";text+="\nendfunction\n";Runtime r(compile(text));r.initialize();require(r.invoke("f").bits==20001 && r.instructionCount()>40000,"Long expression execution differs");});
