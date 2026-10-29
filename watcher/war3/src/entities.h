@@ -223,7 +223,8 @@ struct UnitState {
     float spellMoveFactor() const {float reduction=morphed()?0:equipment.defendMoveReduction,defendBonus=0;for(auto& [id,b]:buffs){reduction=std::max(reduction,b.moveReduction);if(b.kind==BuffKind::Defend)defendBonus=std::max(defendBonus,b.moveBonus);}float bonus=spellBonus(&UnitBuff::moveBonus);if(!morphed())bonus+=std::max(defendBonus,equipment.defendMoveBonus)-defendBonus;return std::max(0.f,1-reduction+bonus+(engineering && !morphed()?engineering->movement:0));}
     float spellAttackReduction() const {float reduction=morphed()?0:equipment.defendAttackReduction;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
     bool phaseShifted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::PhaseShift && b.remaining>0)return true;return false;}
-    bool hidden() const {return sacrificePit || soulCaptor || concoction || phaseShifted() || !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
+    bool hiddenByState() const {return sacrificePit || soulCaptor || concoction || phaseShifted() || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
+    bool hidden() const {return !visible || hiddenByState();}
 };
 struct DestructableState {
     std::uint32_t type=0,handle=0;

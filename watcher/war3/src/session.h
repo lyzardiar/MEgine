@@ -1083,6 +1083,7 @@ public:
     bool setPlayerUnitSelected(unsigned player,std::uint32_t handle,bool selected);
     std::set<std::uint32_t> playerSelection(unsigned player);
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order=851986,std::optional<WorldPoint> destination={});
+    bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order,std::optional<WorldPoint> destination,bool scriptHidden);
     bool stopUnit(std::uint32_t handle,bool hold=false);
     bool targetOrder(std::uint32_t source,std::uint32_t target,std::uint32_t order=851971);
     std::optional<unsigned> groundAttackWeapon(const UnitState& source);

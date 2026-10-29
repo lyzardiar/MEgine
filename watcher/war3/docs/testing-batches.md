@@ -2814,3 +2814,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 中立守卫战斗法术（待验证）
 
 路径：`src/session.h`、`src/session_ai.cpp`、`src/session_ai_armies.cpp`、`src/session_spell_info.cpp`。集中验证源能力与派生、敌我目标、施法时序、真实野怪战斗、双端随机与性能，并对照原版 AI，见 [中立守卫战斗法术](creep-combat-spells.md)。实际玩法尚未运行。
+
+### 隐藏单位脚本移动（待验证）
+
+路径：`src/entities.h`、`src/session.h`、`src/session_orders.cpp`。同版 Win32 Release 核心库编译通过；Human02Interlude 原图最小复现中吉安娜 25.25 秒进入目标区域，75.1875 秒脚本请求 Human03，日志 `tmp/docs-artifacts/war3/human02-interlude-1031/same-core.log`。集中验证隐藏／显示、四种点命令、运输／消化等状态、玩家命令隔离、回调与真实窗口和实际切关，见 [隐藏单位移动](campaign-hidden-orders.md)。
