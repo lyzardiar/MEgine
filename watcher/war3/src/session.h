@@ -1102,6 +1102,8 @@ public:
     bool animationSound(const std::string& code,const std::array<float,3>& position);
     std::vector<PresentationSpellSound> takeSpellSounds();
     void playSpellSound(const PresentationSpellSound& sound);
+    std::shared_ptr<ScriptSound> startSpellLoop(std::uint32_t unit,const SpellInfo& spell);
+    void stopSpellLoop(const std::shared_ptr<ScriptSound>& sound);
     const SoundScene* audio() const {return audio_.get();}
     const MusicScene* music() const {return music_.get();}
     const ScriptLeaderboard* leaderboard(unsigned player) const;

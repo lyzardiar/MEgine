@@ -129,6 +129,9 @@ class GameView {
     std::uint32_t widget(float x,float y,bool items) const;
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
+    struct SpellLoop {std::uint64_t ticket=0;std::shared_ptr<ScriptSound> sound;};
+    std::map<std::uint32_t,SpellLoop> spellLoops_;
+    void syncSpellLoops(bool stop=false);
     struct FootprintInfo {std::string texture,water,sound;float scale=0,life=0,decay=0;unsigned rows=0,columns=0,blend=0,lifeStart=0,lifeEnd=0,lifeRepeat=1,decayStart=0,decayEnd=0,decayRepeat=1;std::array<std::array<unsigned,4>,3> colors{};};
     struct Footprint {const FootprintInfo* source=nullptr;float x=0,y=0,angle=0;std::uint64_t born=0;bool water=false;};
     std::map<std::string,FootprintInfo> footprintInfo_;
