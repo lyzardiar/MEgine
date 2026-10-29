@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 玩家自有单位商店待验证
+
+路径：`session_commerce.cpp`、`tests/generate-commerce-fixture.py`、`tests/commerce_tests.cpp`，说明见 `commerce.md`。自有、具单位出售能力且不具中立交互能力的商店，按钮和实际购买在无附近买家时允许单位销售；仍检查库存、资源、科技和出生点并发出出售事件，买家为空。Win32 Release 客户端及 commerce 消费者已编译；阶段生成 commerce 夹具并检查按钮、扣费、库存、出售事件／空买家、非所有者、附带 Aneu、显式目标买家、物品与邻近买家；另实测 DotA `-sd` 选英雄、双端及原版语义。专项和实际玩家操作尚未执行。
+
+上一提交 `e2c246c` 的 DotA 原图 main 与 600 秒静音模拟开发定位通过，无 Game.dll；日志 `tmp/docs-artifacts/war3/dota-develop-600s.log`。该检查不包含选英雄及游戏画面。
+
 ## DotA 稀疏闪电表与计分板标题待验证
 
 路径：`session_lightning.cpp`、`game_multiboard.cpp`、`main.cpp`、`platform.cpp`，说明见 `ribbons-lightning.md`、`multiboard.md`。原图自定义闪电表的省略数值按零解析并在整表成功后发布；多列计分板标题按可见文字测量、截断、居中并绘制色码；开发模拟入口可分段推进至 600 秒。Win32 Release 客户端编译通过，DotA 原 main 及静音 180 秒模拟通过、无 Game.dll，日志 `tmp/docs-artifacts/war3/dota-sparse-lightning-180s.log`。阶段验证稀疏颜色／比例／噪声、空和损坏字段、缓存失败重试、源纹理和动画；实窗核对多段色码、颜色重置、中文／代理对、长标题截断、多个计分板及原版画面。上述专项、实际操作和原版对照尚未执行。

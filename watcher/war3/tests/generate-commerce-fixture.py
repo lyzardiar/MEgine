@@ -15,6 +15,10 @@ SCRIPT = '''globals
 unit probe_barracks=null
 unit probe_buyer=null
 unit probe_shop=null
+unit probe_ownshop=null
+unit probe_own_sold=null
+unit probe_own_buyer=null
+integer probe_own_sales=0
 integer probe_sold=0
 integer probe_items=0
 integer probe_started=0
@@ -42,6 +46,19 @@ function ProbeSale takes nothing returns nothing
     if GetSoldItem()!=null then
         set probe_items=probe_items+1
     endif
+endfunction
+function ProbeOwnSale takes nothing returns nothing
+    set probe_own_sales=probe_own_sales+1
+    set probe_own_sold=GetSoldUnit()
+    set probe_own_buyer=GetBuyingUnit()
+endfunction
+function ProbeOwnShopSetup takes nothing returns nothing
+    local trigger t=CreateTrigger()
+    set probe_ownshop=CreateUnit(Player(0),'hbar',GetStartLocationX(1),GetStartLocationY(1),270)
+    call UnitAddAbility(probe_ownshop,'Asud')
+    call AddUnitToStock(probe_ownshop,'hfoo',1,1)
+    call TriggerRegisterUnitEvent(t,probe_ownshop,EVENT_UNIT_SELL)
+    call TriggerAddAction(t,function ProbeOwnSale)
 endfunction
 function ProbeTrain takes nothing returns nothing
     call ProbeAssert(GetTrainedUnitType()=='hfoo',"trained_type")
