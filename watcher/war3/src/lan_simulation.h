@@ -1,6 +1,7 @@
 // Author: MiYu. Consume supported classic and explicitly enabled experimental actions through network time slots.
 #pragma once
 #include "lan_actions.h"
+#include "lan_cache_sync.h"
 #include "lan_selection_sync.h"
 #include "lan_time_driver.h"
 #include "player_commands.h"
@@ -32,11 +33,12 @@ private:
     struct ExperimentalUnit {PlayerCommand command;std::uint64_t ticket=0;};
     struct ExperimentalDialog {unsigned player;std::uint32_t dialog,button;std::uint64_t generation;};
     struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0,expectedItem=0,itemSlot=0;bool constructionCancel=false,subgroup=false,itemOrder=false,itemById=false,queued=false;};
-    using Event=std::variant<LanActionPause,LanActionResume,Escape,Chat,SelectionSync,Purchase,Departure,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable,GroundItem,ExperimentalSpell,ExperimentalUnit,ExperimentalDialog>;
+    using Event=std::variant<LanActionPause,LanActionResume,LanActionCacheSync,Escape,Chat,SelectionSync,Purchase,Departure,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable,GroundItem,ExperimentalSpell,ExperimentalUnit,ExperimentalDialog>;
     ScriptSession& session_;
     ObjectResolver resolve_;
     std::vector<std::vector<Event>> decoded_;
     LanSelectionSyncProjection projectedSync_;
+    LanCacheSyncProjection projectedCache_;
     std::map<unsigned,std::set<std::uint32_t>> projectedSelections_;
     std::set<std::uint8_t> projectedDepartures_;
     std::map<unsigned,std::array<std::vector<std::uint32_t>,10>> groups_,projectedGroups_;

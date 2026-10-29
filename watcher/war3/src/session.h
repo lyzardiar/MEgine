@@ -25,6 +25,7 @@
 #include "chat_channel.h"
 #include "lan_actions.h"
 #include "lan_selection_sync.h"
+#include "lan_cache_sync.h"
 #include "indicator.h"
 #include "model_sequence.h"
 #include <variant>
@@ -1043,6 +1044,8 @@ public:
     void effectExpires(std::uint32_t id,double time);
     const auto& projectiles() const {return projectiles_;}
     const auto& destructables() const {return destructables_;}
+    bool validateCacheSync(const LanActionCacheSync& action,LanCacheSyncProjection& projection);
+    bool applyCacheSync(const LanActionCacheSync& action);
     float destructableHeight(const DestructableState& state) const;
     std::uint64_t destructableRevision() const {return destructableRevision_;}
     std::uint32_t placedDestructable(size_t index) const {return index<placedDestructables_.size()?placedDestructables_[index]:0;}

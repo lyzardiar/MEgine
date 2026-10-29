@@ -23,6 +23,7 @@ bool LanSimulation::validate(const LanAction& action){
         if(std::holds_alternative<LanActionPause>(event)){prepared.emplace_back(LanActionPause{});continue;}
         if(std::holds_alternative<LanActionResume>(event)){prepared.emplace_back(LanActionResume{});continue;}
         if(std::holds_alternative<LanActionEscape>(event)){prepared.emplace_back(Escape{*player});continue;}
+        if(auto cache=std::get_if<LanActionCacheSync>(&event)){if(!session_.validateCacheSync(*cache,projectedCache_))return false;prepared.emplace_back(*cache);continue;}
         if(auto chat=std::get_if<LanActionExperimentalChat>(&event)){prepared.emplace_back(Chat{*player,chat->text,chat->channel});continue;}
         if(auto part=std::get_if<LanActionExperimentalSelection>(&event)){if(!session_.validateSelectionSync(action.playerId,*part,projectedSync_))return false;prepared.emplace_back(SelectionSync{action.playerId,*part});continue;}
         if(auto departure=std::get_if<LanActionExperimentalLeave>(&event)){if(action.playerId!=1 || !session_.networkPlayer(departure->peer) || !session_.networkPeerActive(departure->peer) || !projectedDepartures_.insert(departure->peer).second)return false;prepared.emplace_back(Departure{departure->peer});continue;}
@@ -59,6 +60,7 @@ bool LanSimulation::apply(ScriptSession& session,const LanAction&){
     if(cursor_>=decoded_.size())return false;
     for(const auto& event:decoded_[cursor_++]){
         if(std::holds_alternative<LanActionPause>(event))session.pause(true);
+        else if(auto cache=std::get_if<LanActionCacheSync>(&event)){if(!session.applyCacheSync(*cache))return false;}
         else if(std::holds_alternative<LanActionResume>(event))session.pause(false);
         else if(auto escape=std::get_if<Escape>(&event))session.endCinematic(escape->player);
         else if(auto chat=std::get_if<Chat>(&event)){session.chat(chat->player,chat->text,chat->channel);if(driver_.failed())return false;}
@@ -83,6 +85,6 @@ bool LanSimulation::apply(ScriptSession& session,const LanAction&){
     return true;
 }
 LanStepResult LanSimulation::consume(std::uint64_t sequence,const LanTimeSlot& slot){
-    if(consuming_)return driver_.consume(sequence,slot);consuming_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{consuming_};decoded_.clear();projectedSync_.clear();projectedSelections_.clear();projectedDepartures_.clear();projectedSubgroups_=subgroups_;projectedGroups_=groups_;cursor_=0;auto result=driver_.consume(sequence,slot);decoded_.clear();projectedSync_.clear();projectedSelections_.clear();projectedDepartures_.clear();projectedSubgroups_.clear();projectedGroups_.clear();cursor_=0;return result;
+    if(consuming_)return driver_.consume(sequence,slot);consuming_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{consuming_};decoded_.clear();projectedSync_.clear();projectedCache_={};projectedSelections_.clear();projectedDepartures_.clear();projectedSubgroups_=subgroups_;projectedGroups_=groups_;cursor_=0;auto result=driver_.consume(sequence,slot);decoded_.clear();projectedSync_.clear();projectedCache_={};projectedSelections_.clear();projectedDepartures_.clear();projectedSubgroups_.clear();projectedGroups_.clear();cursor_=0;return result;
 }
 }
