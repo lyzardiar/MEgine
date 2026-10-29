@@ -199,6 +199,7 @@ class GameView {
     struct EffectPresentation {bool birth=false,stand=false,death=false,loops=false,missingAttachment=false;std::uint64_t birthTime=0,standTime=0,deathTime=0;};
     std::map<std::uint32_t,EffectPresentation> effectPresentations_;
     std::optional<D3DMATRIX> unitWorld(const UnitState& unit) const;
+    std::vector<ModelLookAt> unitLookAt(const UnitState& unit) const;
     void activateItem(std::uint32_t unit,std::uint32_t item,bool queued=false);
     void inventoryDragInput(GameInput& input);
     void drawInventoryDrag(const GameInput& input);

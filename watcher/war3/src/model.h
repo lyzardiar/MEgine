@@ -4,12 +4,19 @@
 #include "image.h"
 #include "renderer.h"
 #include <array>
+#include <DirectXMath.h>
 #include <span>
 namespace war3 {
 class SceneAssets;
 class ModelInstance {
     struct Data;
+    struct BlendNode {DirectX::XMFLOAT4 translation{},rotation{0,0,0,1},scale{1,1,1,0};};
     std::unique_ptr<Data> data_;
+    const void* blendOwner_=nullptr;
+    std::vector<BlendNode> blendFrom_,blendCurrent_;
+    std::uint64_t blendStart_=0,blendClock_=0,blendFrame_=0;
+    unsigned blendSequence_=0;
+    bool blendActive_=false;
     const void* childOwner_=nullptr;
     std::vector<std::unique_ptr<ModelInstance>> children_;
     std::vector<std::uint64_t> childStarts_;
@@ -38,7 +45,7 @@ public:
     Model& operator=(const Model&) = delete;
     ModelCamera camera(std::uint64_t elapsed,std::uint64_t clock=UINT64_MAX);
     void draw(std::uint64_t elapsed, float aspect, bool twoSided = false,std::uint64_t clock=UINT64_MAX);
-    void draw(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& projection,const D3DMATRIX& world,bool twoSided=false,DWORD tint=0xffffffff,ModelInstance* instance=nullptr,std::uint64_t clock=UINT64_MAX,bool emit=true,bool geometry=true,std::span<const ModelLookAt> lookAt={});
+    void draw(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& projection,const D3DMATRIX& world,bool twoSided=false,DWORD tint=0xffffffff,ModelInstance* instance=nullptr,std::uint64_t clock=UINT64_MAX,bool emit=true,bool geometry=true,std::span<const ModelLookAt> lookAt={},float blendSeconds=0);
     void upload(Renderer& renderer,SceneAssets& assets);
     void replace(unsigned id,IDirect3DTexture9* texture);
     bool sequence(const std::string& prefix);
@@ -60,7 +67,7 @@ public:
     std::vector<std::string> attachmentModels() const;
     float particleLifetime() const;
     bool sequenceLoops() const;
-    std::optional<D3DMATRIX> attachment(const std::string& name,const D3DMATRIX& world,std::uint64_t elapsed,const D3DMATRIX& view) const;
+    std::optional<D3DMATRIX> attachment(const std::string& name,const D3DMATRIX& world,std::uint64_t elapsed,const D3DMATRIX& view,ModelInstance* instance=nullptr,float blendSeconds=0,std::uint64_t clock=UINT64_MAX,std::span<const ModelLookAt> lookAt={}) const;
 private:
     void ribbons(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& world,DWORD tint,ModelInstance& instance,bool emit,float delta);
     void particles(std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& view,const D3DMATRIX& world,DWORD tint,ModelInstance& instance,bool emit);

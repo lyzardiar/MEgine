@@ -97,7 +97,7 @@ struct UnitState {
     double routeRetryAt=0;
     double animationStart=0;
     double animationTime=0;
-    float animationRate=1,targetFlyHeight=0,flyRate=0;
+    float animationRate=1,targetFlyHeight=0,flyRate=0,animationBlendTime=0;
     std::array<float,3> visualScale{1,1,1};
     std::array<std::uint8_t,4> tint{255,255,255,255};
     std::optional<unsigned> color;

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 单位动画混合待验证
+
+路径：`entities.h`、`session_visual.cpp`、`model.h`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`game_view.h/.cpp`、`game_morph.cpp`、`game_effects.cpp`；说明见 `animation-blending.md`。Win32 Release 客户端和 game-flow 消费者已编译；阶段验证 NightElfX01／OrcX01 实际脚本、零值与不同正值、多单位共享模型、骨骼位置／旋转／缩放、LookAt 与附件、变形／销毁、序列重入与频繁切换、暂停／倍率和性能，并与原版画面对照。MDX 默认混合时间、同序列重启和离屏历史尚未实现；GPU、原版时序与完整战役尚未验证。
+
 ## 模型场景声音和可破坏物动画时钟待验证
 
 路径：`scene_objects.h/.cpp`、`game_view.h/.cpp`、`game_model_sound.cpp`、`model_ui_audio.h`、`model.h`、`model_pose.cpp`、`sound.h/.cpp`、`main.cpp`、`loading_screen.h/.cpp`、`model_cinematic.h/.cpp`、`entities.h`、`session_animation.cpp`、`session_destructables.cpp`、`session_doodads.cpp`、`session_volcano.cpp`、`tests/game_flow_tests.cpp`。阶段合并验证菜单／载入／过场模型 SND、相机移动与音量／静音／场景切换、专用声音与 Scene 音轨；验证装饰物视野／离屏／隐藏／动态销毁与附件声、足迹、持续切图及大地图性能；执行 game-flow 夹具检查可破坏物动态创建、改速、冻结、恢复、动画重置与队列，并对照原版。界面 FPT 地表效果和离屏附件子动画时钟尚未实现；Win32 Release 客户端与 game-flow 消费者已编译，专项、真实音频及原版对照尚未执行。

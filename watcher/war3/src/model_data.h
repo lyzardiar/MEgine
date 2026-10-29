@@ -80,6 +80,6 @@ struct Model::Data {
     explicit Data(Renderer* renderer) : renderer(renderer) {}
     DirectX::XMVECTOR sample(const mdx::Track& track, std::uint64_t elapsed, DirectX::FXMVECTOR rest, bool rotation = false) const;
     void parse(std::span<const std::uint8_t> bytes, Log& log);
-    void pose(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& worldMatrix,bool skin=true,std::span<const ModelLookAt> lookAt={});
+    void pose(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& worldMatrix,bool skin=true,std::span<const ModelLookAt> lookAt={},ModelInstance* instance=nullptr,float blendSeconds=0,std::uint64_t clock=0);
 };
 }
