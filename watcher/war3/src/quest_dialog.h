@@ -16,6 +16,7 @@ class QuestDialog {
     std::uint64_t revision_=UINT64_MAX;
     std::map<std::string,std::uint32_t> buttons_;
     void sync();
+    bool scrollBar(const UiInput& input,GlueScreen::Rect container,size_t count,size_t visible,size_t& offset);
 public:
     QuestDialog(ScriptSession& session,Images& images,Renderer& renderer,Text& text);
     bool draw(const UiInput& input);
