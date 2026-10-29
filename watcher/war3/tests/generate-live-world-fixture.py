@@ -39,6 +39,8 @@ function NativeProbeSpawn takes nothing returns nothing
     local real x=GetStartLocationX(0)+128
     local real y=GetStartLocationY(0)+128
     local fogmodifier f
+    local rect fogRect=Rect(x-256,y-256,x+256,y+256)
+    local location fogLoc=Location(x,y)
     local hashtable h=InitHashtable()
     local gamecache c=InitGameCache("native-probe.w3v")
     set native_probe_unit=CreateUnit(Player(0),'ogru',x,y,90)
@@ -73,6 +75,14 @@ function NativeProbeSpawn takes nothing returns nothing
     call FogModifierStop(f)
     call NativeProbeAssert(IsVisibleToPlayer(x,y,Player(0)),"unit_vision")
     call DestroyFogModifier(f)
+    call SetFogStateRect(Player(0),FOG_OF_WAR_MASKED,fogRect,false)
+    call NativeProbeAssert(IsMaskedToPlayer(x,y,Player(0)),"set_fog_rect_masked")
+    call SetFogStateRadius(Player(0),FOG_OF_WAR_VISIBLE,x,y,192,false)
+    call NativeProbeAssert(IsVisibleToPlayer(x,y,Player(0)),"set_fog_radius_visible")
+    call SetFogStateRadiusLoc(Player(0),FOG_OF_WAR_FOGGED,fogLoc,192,false)
+    call NativeProbeAssert(IsFoggedToPlayer(x,y,Player(0)),"set_fog_location_fogged")
+    call RemoveLocation(fogLoc)
+    call RemoveRect(fogRect)
     call SetCameraPosition(x,y)
     call DisplayTimedTextToPlayer(Player(0),0,0,10,"Native world probe: inventory and fog ready")
     set native_probe_stage=1

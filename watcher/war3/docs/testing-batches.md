@@ -1944,3 +1944,11 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`main.cpp`、`docs/replay-experimental.md`。游戏画面的加减键切换 0.25 至 8 倍，界面显示当前速度；空格暂停／继续与 Esc 返回仍可用。
 
 阶段使用同构建实验局域网回放验证各档时间推进、键盘主区及数字小键盘、边界、暂停调速、最小化恢复、结束及过场切换，并核对时间片顺序和旁观输入隔离；原版回放播放与原版快捷键仍未实现或对照。本次 Win32 Release 产品增量编译通过，实际播放尚未执行。
+
+## 脚本直接设置迷雾待验证
+
+路径：`session_fog.cpp`、`fog_grid.cpp`、`tests/generate-live-world-fixture.py`、`docs/live-world.md`。矩形、圆形和地点三个 SetFogState 接入玩家网格、查询及绘制；共享接收者使用当前共享视野联盟，视野重算重新计算可见状态。
+
+阶段执行 `python tests/generate-live-world-fixture.py --data-root <data-root>`，再执行 `war3_live_world_tests.exe <data-root> <fixture.w3m> <log>`，并核对三种状态、重叠先后、移动与视野重算、共享联盟方向及变化、多玩家、启停迷雾、半径／矩形网格边界、越界／极值、GPU 纹理、切图释放和原版时序。Win32 Release 产品增量编译及夹具 Python 语法检查通过，实际运行和原版一致性尚未验收。
+
+原版 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`；REA 证据 `ev_cbbbda324c9a7891de147bec6ae7b849cf013107273b043d058071cd97ad0b3d`、`ev_56b27f56bec8efd912e38387ac2617dffeeb90ea21e3d1bb2a93412d7f04e9b1`、`ev_f385bebfa3568eabbb0cbe19f3b0b7a134597367073c280f816822565db2f8f0`、`ev_eed52956f1519d8865d342a15d3de269a9e392e3849d97b53e225080f309d697` 和 `ev_f88f18ba19415b8ef6df5c8a06b80de7aa1185a3641049128afa7f9d479bde60` 表明三个入口直接写入玩家位图并分别处理 1／2／4 状态；共享掩码来源及刷新后的持续性尚未确认。
