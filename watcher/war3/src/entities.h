@@ -65,7 +65,7 @@ struct UnitState {
     std::optional<EngineeringState> engineering;
     std::uint32_t spiritParent=0;
     std::uint64_t spiritTicket=0;
-    std::uint32_t transport=0;
+    std::uint32_t transport=0,sacrificePit=0;
     std::vector<std::uint32_t> cargo;
     double cargoDue=0;
     std::optional<CargoDropOrder> cargoDrop;
@@ -221,7 +221,7 @@ struct UnitState {
     float spellMoveFactor() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.moveReduction);return std::max(0.f,1-reduction+spellBonus(&UnitBuff::moveBonus)+(engineering && !morphed()?engineering->movement:0));}
     float spellAttackReduction() const {float reduction=0;for(auto& [id,b]:buffs)reduction=std::max(reduction,b.attackReduction);return reduction;}
     bool phaseShifted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::PhaseShift && b.remaining>0)return true;return false;}
-    bool hidden() const {return soulCaptor || concoction || phaseShifted() || !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
+    bool hidden() const {return sacrificePit || soulCaptor || concoction || phaseShifted() || !visible || gather.inside || workingInside || mineCover!=0 || mirrorImage.has_value() || spiritSplit || (lavaSpawn && lavaSpawn->emerging) || transport!=0 || (corpse && corpse->gone);}
 };
 struct DestructableState {
     std::uint32_t type=0,handle=0;

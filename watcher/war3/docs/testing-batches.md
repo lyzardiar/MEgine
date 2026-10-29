@@ -2,15 +2,15 @@
 
 ## 游戏内提示页待验证
 
-路径：`src/game_flow_ui.h/.cpp`；说明见 `game-tips.md`。阶段检查原版提示文本与编码、鼠标和 B／N 快捷键、首尾状态、切换与重新打开、地图资源覆盖、实际窗口及原版画面和行为。
+路径：`src/game_flow_ui.h/.cpp`；说明见 `game-tips.md`。包含本轮牺牲深渊和地面物品预选的 Win32 Release 客户端编译通过。阶段检查原版提示文本与编码、鼠标和 B／N 快捷键、首尾状态、切换与重新打开、地图资源覆盖、实际窗口及原版画面和行为。
 
 ## 地面物品鼠标预选待验证
 
-路径：`src/game_view.cpp`；说明见 `preselection.md`。地面物品参与已有悬停采样与选择圈绘制；阶段检查物品显隐／拾取／移除、迷雾、同时选中和悬停、鼠标／镜头移动、界面开关、大图性能及原版画面。
+路径：`src/game_view.cpp`；说明见 `preselection.md`。地面物品参与已有悬停采样与选择圈绘制；包含本轮牺牲深渊与提示页的 Win32 Release 客户端编译通过。阶段检查物品显隐／拾取／移除、迷雾、同时选中和悬停、鼠标／镜头移动、界面开关、大图性能及原版画面。
 
 ## 牺牲深渊与阴影待验证
 
-路径：`CMakeLists.txt`、`src/spells.h`、`src/session.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_sacrifice_pit.cpp`；说明见 `sacrificial-pit.md`。包含战役重开限制和加强型地洞视觉的 Win32 Release 客户端编译通过。阶段检查双方命令、接近与目标限制、生产及集结、多侍僧竞争、死亡／转让／禁用、人口不足、取消、脚本重入、联机和原版行为；取消后恢复侍僧、自定义目标规则及原版事件时序尚未完成。
+路径：`CMakeLists.txt`、`src/spells.h`、`src/session.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_sacrifice_pit.cpp`、`src/commerce.h`、`src/entities.h`、`src/session_production.cpp`、`src/session_food.cpp`、`src/session_callbacks.cpp`、`src/session_ownership.cpp`、`src/session_network_identity.cpp`；说明见 `sacrificial-pit.md`。包含本轮提示页和地面物品预选的 Win32 Release 客户端编译通过。阶段检查双方命令、接近与目标限制、生产及集结、多侍僧竞争、死亡／转让／禁用、人口不足、取消、无可用落点、脚本重入、联机和原版行为；自定义目标规则及原版事件时序尚未完成。
 
 ## 战役重开限制待验证
 

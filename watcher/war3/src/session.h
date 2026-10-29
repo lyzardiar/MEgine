@@ -731,6 +731,8 @@ class ScriptSession {
     void sacrifice(std::uint32_t unit,std::uint32_t target,const SpellInfo& spell,unsigned owner);
     bool sacrificePitTarget(const UnitState& worker,const UnitState& pit);
     void sacrificePit(std::uint32_t worker,std::uint32_t pit);
+    void releaseSacrifice(const ProductionOrder& job,UnitState& pit);
+    void cancelSacrificeForUnit(std::uint32_t unit);
     void startChannel(std::uint32_t unit);
     void channelTick(std::uint32_t unit,double delta);
     void channelPulse(std::uint32_t unit,const CastOrder& cast);
