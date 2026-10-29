@@ -1878,3 +1878,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`session_entities.cpp`、`docs/unit-classifications.md`。`IsUnitType` 查询疾病云雾、攻击毒素和暗影突袭的实际状态。
 
 功能阶段核对施加／重叠／过期／移除、死亡／复活、暂停及事件回调，并对照原版各类毒素和疾病的分类范围；当前没有实际运行或原版时序验收。
+
+## Gamecache 单位运行时属性待验证
+
+路径：`script_state.h`、`session_cache.cpp`、`campaign-gamecache.md`、`unit-turning.md`、`unit-classifications.md`。独立缓存版本3保存 StoreUnit 的脚本转速、推进角和分类增删，RestoreUnit 恢复后交由移动及分类消费者使用；版本1／2条目保留目标单位默认属性。
+
+功能阶段核对 StoreUnit / SaveGameCache / ReloadGameCachesFromDisk / RestoreUnit 跨地图往返、九类分类和零／极限转向值、旧版本与混合条目重存、损坏／越界输入，以及目标单位创建事件与拾取事件重入；对照原版 StoreUnit 的具体行为。本次未执行运行验证。
