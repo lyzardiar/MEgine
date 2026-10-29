@@ -9,7 +9,7 @@ cmake --build --preset release --target war3 --parallel 8
 ./build/windows-x86/bin/Release/war3.exe --data-root "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne"
 ```
 
-主菜单通过“单人模式 → 自定义游戏”进入地图目录。选择地图、调整玩家配置后，点击原版“开始游戏”按钮，后台运行原图main并准备场景，在窗口线程分帧上传GPU，进入游戏画面。载入阶段按Esc取消；游戏阶段Esc、F10或顶部菜单入口返回选图。完整游戏内暂停菜单仍待实现。
+主菜单通过“单人模式 → 自定义游戏”进入地图目录。选择地图、调整玩家配置后，点击原版“开始游戏”按钮，后台运行原图main并准备场景，在窗口线程分帧上传GPU，进入游戏画面。载入阶段按Esc取消；游戏阶段 Esc、F10 或顶部菜单入口打开暂停菜单。游戏内暂停菜单、继续、退出和重开已接入，完整界面与行为仍待阶段验证。
 
 `--map <w3m/w3x路径>` 定位选图；增加 `--play` 自动进入所选地图，支持原安装内相对路径或外部绝对路径。例如：
 
@@ -17,9 +17,9 @@ cmake --build --preset release --target war3 --parallel 8
 ./build/windows-x86/bin/Release/war3.exe --data-root "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" --map 'Maps/(2)BootyBay.w3m' --play
 ```
 
-地图画面已接入原W3E纹理混合、悬崖、坡道、动画水面，原DOO树木/装饰物，脚本创建的单位/物品模型，以及原版ConsoleUI九片控制台。地形使用静态GPU区块，装饰物使用空间区块与视锥裁剪。相机读取原MiscData六档角度/距离，滚轮有界缩放；方向键和边缘滚屏平移，左键/框选/Shift选择单位，右键或M后点地面移动，S停止，H保持位置。移动查询WPM并按模拟步进推进；完整碰撞、编队、战斗和规则继续实现。
+地图画面已接入原W3E纹理混合、悬崖、坡道、动画水面，原DOO树木/装饰物，脚本创建的单位/物品模型，以及原版ConsoleUI九片控制台。地形使用静态GPU区块，装饰物使用空间区块与视锥裁剪。相机读取原MiscData六档角度/距离，滚轮有界缩放；方向键和边缘滚屏平移，左键/框选/Shift选择单位，右键或M后点地面移动，S停止，H保持位置。移动查询 WPM 并按模拟步进推进；基础编队、局部避让和战斗已接入，完整路径、碰撞和规则继续实现。
 
-运行中单位外观、模型/图标后台读取、区域/接近/聊天事件、基础物品栏、视野、哈希表和会话缓存已接入；显式 `--mute` 的声音状态不依赖输出设备。Amazonia原main及250ms推进已通过，DotA当前停在商店库存。新增GPU画面与完整客户端能力仍待阶段验证，见[运行中世界状态](docs/live-world.md)。
+运行中单位外观、模型/图标后台读取、区域/接近/聊天事件、基础物品栏、视野、哈希表和会话缓存已接入；显式 `--mute` 的声音状态不依赖输出设备。Amazonia原main及250ms推进已通过，DotA 原 main 与前 2 秒模拟已通过；完整玩法和新改动仍待阶段验证。新增GPU画面与完整客户端能力仍待阶段验证，见[运行中世界状态](docs/live-world.md)。
 
 BootyBay已获得原地图画面及20帧开发运行证据，无Game.dll。完整操作、三图、像素还原、性能与切图释放仍在阶段A待测队列。项目尚未完成完整可玩对局、完整JASS/AI、战役、存档/回放、局域网或OpenGL。当前能力与边界见[场景流程](docs/world-rendering.md)、[功能矩阵](docs/acceptance.md)和[集中实现清单](docs/implementation-roadmap.md)。
 
