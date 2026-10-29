@@ -3010,3 +3010,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役章节默认开放（待验证）
 
 路径：`src/campaign_browser.cpp`、`src/campaign_browser.h`。章节列表按源第四字段更新进度，Win32 x86 隔离编译通过；集中验证源标记、脚本关闭后重进、战役切换、跨进程与失败恢复，见[章节默认解锁](campaign-default-missions.md)。
+
+### 常驻献祭与火焰风衣（待验证）
+
+路径：`src/session_passive_info.cpp`、`tests/control_tests.cpp`。源能力已接入现有持续伤害及库存生命周期；集中执行新增模式并对照叠加、免疫、物品交换、伤害事件、窗口与多人，见[常驻献祭与火焰风衣](permanent-immolation-items.md)。

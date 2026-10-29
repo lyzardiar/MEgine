@@ -19,7 +19,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
         {"Agho",PassiveKind::Ghost,false},{"Aexh",PassiveKind::Exhume,false},
         {"AOre",PassiveKind::Reincarnation,false},{"ACrn",PassiveKind::Reincarnation,false},
         {"AIrc",PassiveKind::Reincarnation,false},{"Aphx",PassiveKind::PhoenixMorph,false},{"Apxf",PassiveKind::PhoenixFire,false},{"ANbs",PassiveKind::AttackModifier,false},{"ANic",PassiveKind::AttackModifier,false},{"Alit",PassiveKind::LightningAttack,false},{"Aasl",PassiveKind::SlowAura,true},
-        {"Apig",PassiveKind::PermanentImmolation,false},{"Awar",PassiveKind::Pulverize,false},
+        {"Apig",PassiveKind::PermanentImmolation,false},{"ANpi",PassiveKind::PermanentImmolation,false},{"AIcf",PassiveKind::PermanentImmolation,false},{"Awar",PassiveKind::Pulverize,false},
         {"Atdg",PassiveKind::TornadoDamage,false},{"Atsp",PassiveKind::TornadoSpin,false},{"Atwa",PassiveKind::TornadoWander,false},{"ANeg",PassiveKind::Engineering,false},{"ANde",PassiveKind::Demolish,false},{"Afbk",PassiveKind::Feedback,false},
         {"Ault",PassiveKind::Ultravision,false},{"AIdd",PassiveKind::MissileDefense,false},
         {"Assk",PassiveKind::HardenedSkin,false},{"Arsk",PassiveKind::ResistantSkin,false},
