@@ -145,7 +145,7 @@ public:
     void footprint(std::span<const PathCell> cells,bool add);
     std::uint64_t pathingRevision() const {return pathingRevision_;}
     std::uint64_t blockingRevision() const {return blockingRevision_;}
-    std::vector<WorldPoint> route(WorldPoint from,WorldPoint to,float radius,PathMovement movement) const;
+    std::vector<WorldPoint> route(WorldPoint from,WorldPoint to,float radius,PathMovement movement,bool allowPartial=false) const;
     std::vector<WorldPoint> route(WorldPoint from,WorldPoint to,float radius=0,bool flying=false) const {return route(from,to,radius,flying?PathMovement::Air:PathMovement::Ground);}
     WorldEnvironment& environment() {return environment_;}
     const WorldEnvironment& environment() const {return environment_;}

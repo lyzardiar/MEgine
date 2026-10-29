@@ -927,7 +927,7 @@ class ScriptSession {
     bool weaponTarget(const UnitState& source,const UnitState& target,const WeaponDefinition& weapon,bool automatic=false,bool splash=false,bool committed=false);
     std::optional<unsigned> weaponFor(const UnitState& source,const UnitState& target,bool automatic=false);
     bool cancelCombat(UnitState& unit);
-    bool chase(UnitState& unit,WorldPoint target,float standoff);
+    bool chase(UnitState& unit,WorldPoint target,float standoff,bool allowPartial=false);
     void combat(double delta);
     void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon,float stealthDamage=0,bool backstab=false,std::uint32_t ability=0);
     void projectiles(double delta);

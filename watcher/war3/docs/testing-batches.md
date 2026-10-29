@@ -2550,3 +2550,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役菜单环境音（待验证）
 
 路径：`campaign_browser.h/.cpp`、`main.cpp`、`docs/campaign-flow.md`。各战役读取源 `AmbientSound` 标签，使用原声音表与内存资源循环播放；切换或离开时释放，尊重音效音量、环境音开关和静音参数。集中验证全部 ROC／TFT 战役切换、相同标签连续选择、反复进出／游戏／影片切换、缺失资源和设备错误、音量及静音设置、长时资源释放与原版听感；背景雾语义尚待研究。Win32 Release 客户端增量编译通过，实际播放尚未执行。
+
+### 不可达目标的移动落点（待验证）
+
+路径：`world_path.cpp`、`world.h`、`session_orders.cpp`、`session_combat_orders.cpp`、`session.h`、`tests/world_tests.cpp`，说明见 `water-pathing.md`。普通移动与攻击移动在目标格可通但不可达时按已访问的可达区域选择接近落点，限定原 A* 搜索预算；事件仍使用点击坐标。Win32 Release `war3_world_tests` 编译通过；隔墙回退及既有阻挡目标两项定向检查各 1 通过、0 失败，未加载 Game.dll。待集中验证不同地形／半径、墙体／封闭区、达到预算、目标阻挡或中途变化、多选／巡逻／队列、AI 与真实窗口；原版落点规则尚未对照。
