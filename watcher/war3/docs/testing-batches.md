@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 特效与弹道的模型声音事件待验证
+
+路径：game_effects、game_view／game_model_sound。视野内特效、武器／技能弹道及波形按实例推进源模型声音事件，视口内外共用独立声音时间线；离开场景时释放实例。Win32 Release 产品增量编译通过。集中验证原版声源／音量／事件时序、镜头切换、动画序列变化、弹道消失、迷雾与暂停、切图清理和大量弹道性能。原版一致性与实际运行尚未验证。
+
 ## 人族农民／民兵征召阶段待验证
 
 路径：session_militia、session_spell_info／spells／ability_commands、entities、session_orders／combat_orders／tick 和 CMake。接入源能力数据、主城警钟、前往城镇大厅转换、民兵持续时间／自动返程及普通命令中断；矿内采集单位允许参与征召。Win32 Release 产品增量编译通过；实际运行和原版一致性未验收。
