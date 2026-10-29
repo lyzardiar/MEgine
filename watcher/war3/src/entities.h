@@ -29,6 +29,7 @@ struct WaygateState {WorldPoint destination;bool active=true,configured=false;st
 struct MilitiaState {enum class Phase {None,ToMilitia,ToWorker};Phase phase=Phase::None;std::uint32_t hall=0,ability=0,workerType=0,militiaType=0;double remaining=0,repath=0;};
 struct UnitState {
     std::uint32_t handle=0,type=0,owner=0;
+    std::uint32_t moonWellWaterEffect=0;
     std::uint32_t soulCaptor=0,soulVictim=0,soulItem=0,soulVisionPlayer=UINT32_MAX;
     bool soulWasPaused=false;
     std::uint64_t deathRevision=0;

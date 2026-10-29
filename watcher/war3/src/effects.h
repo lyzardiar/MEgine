@@ -10,6 +10,7 @@ struct ScriptEffect {
     std::uint32_t tint=0xffffffff;
     WorldPoint point;
     float z=0,facing=0,scale=1;
+    std::optional<float> moonWellWaterHeight;
     double born=0;
     std::optional<double> destroyed,expires,fallbackExpires;
     bool automatic=false,groundAnchor=false;
