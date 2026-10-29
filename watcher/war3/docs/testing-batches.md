@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 幽灵变形免疫与建筑选址待验证
+
+路径：`src/session.h`、`src/session_visibility.cpp`、`src/session_control_spells.cpp`、`src/session_morph_spells.cpp`、`src/session_construction.cpp`；说明见 `stealth-reveal.md`。Agho 的 DataB 接入变形目标及效果检查，DataC 接入建筑选址；Win32 Release 客户端编译通过。阶段验证字段覆盖、能力启停、弹道途中状态变化、建筑与地形阻挡、真实操作及原版行为；专项和运行对照尚未执行。
+
 ## 实验单位缓存同步分片待验证
 
 路径：`src/lan_actions.h/.cpp`、`src/session_cache.cpp`、`src/lan_simulation.h/.cpp`、`src/lan_time_driver.h`、`src/lan_runtime.cpp`、`src/game_view.cpp`、`src/main.cpp`、`tests/game_flow_tests.cpp`；说明见 `cache-sync.md`。自研大快照分片接入发送、时间片预校验、有界重组和完整提交；Win32 Release 客户端及检查目标编译通过，两个定向模式通过，覆盖跨槽、多发送方、重复／乱序／缺片、超时和退出。阶段核对真实双端、回放、带宽、断线及缓存摘要；原版 `0x6e` 格式和互通仍待实现。

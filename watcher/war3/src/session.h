@@ -674,6 +674,8 @@ class ScriptSession {
     void impaleHit(std::uint32_t caster,std::uint32_t target,const SpellInfo& spell,unsigned owner);
     float impaleLanding(UnitBuff& buff,double elapsed);
     unsigned auraTicks_=0;
+    enum class GhostFlag { MorphImmune, NoBuildingCollision };
+    bool ghostFlag(const UnitState& unit,GhostFlag flag);
     std::vector<std::pair<std::uint32_t,unsigned>> passiveAbilities(const UnitState& unit);
     bool passiveTarget(const UnitState& source,const UnitState& target,const PassiveInfo& definition);
     bool passiveTarget(const UnitState& source,const UnitState& target,const std::set<std::string>& allowed);
