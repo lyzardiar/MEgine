@@ -2,19 +2,19 @@
 
 ## 吸血药水待验证
 
-路径：`src/spells.h`、`src/session.h`、`src/session_spell_effects.cpp`、`src/session_attack_passives.cpp`、`src/session_item_use.cpp`、`src/session_projectiles.cpp`、`src/session_network_identity.cpp`；说明见 `vampirism-potion.md`。阶段检查购买／使用／冷却、攻击加成、近远程回血、目标限制、击杀／复活／易主、驱散、光环叠加、脚本重入、联机及原版规则。
+路径：`src/spells.h`、`src/session.h`、`src/session_spell_effects.cpp`、`src/session_attack_passives.cpp`、`src/session_item_use.cpp`、`src/session_projectiles.cpp`、`src/session_network_identity.cpp`；说明见 `vampirism-potion.md`。包含本轮信号枪和科技快照的 Win32 Release 客户端编译通过。阶段检查购买／使用／冷却、攻击加成、近远程回血、目标限制、击杀／复活／易主、驱散、光环叠加、脚本重入、联机及原版规则。
 
 ## 保存权杖基地优先级待验证
 
-路径：`src/session_teleport.cpp`；说明见 `preservation.md`。阶段检查四族不同级别、混合种族、同级及自定义 `prio`、基地死亡／施工／转让、目标所有者及原版选择行为。
+路径：`src/session_teleport.cpp`；说明见 `preservation.md`。包含本轮物品和科技快照改动的 Win32 Release 客户端编译通过。阶段检查四族不同级别、混合种族、同级及自定义 `prio`、基地死亡／施工／转让、目标所有者及原版选择行为。
 
 ## 玩家科技快照待验证
 
-路径：`src/session.h`、`src/session_game.cpp`；说明见 `player-tech-persistence.md`。阶段检查所有玩家研究等级、科技上限和能力可用性往返，损坏／重复键／非法值事务拒绝、活跃会话及已有单位限制，以及与单位、资源和生产队列的完整恢复；尚未接入存档。
+路径：`src/session.h`、`src/session_game.cpp`；说明见 `player-tech-persistence.md`。包含本轮物品改动的 Win32 Release 客户端编译通过。阶段检查所有玩家研究等级、科技上限和能力可用性往返，损坏／重复键／非法值事务拒绝、活跃会话及已有单位限制，以及与单位、资源和生产队列的完整恢复；尚未接入存档。
 
 ## 信号枪物品待验证
 
-路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_item_use.cpp`；说明见 `flare.md`。阶段检查地图与小地图选点、次数及耗尽、施法事件／取消、延迟／视野／侦测、暂停／施法者死亡、自定义覆盖、联机和原版表现。
+路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_item_use.cpp`；说明见 `flare.md`。包含本轮吸血药水和科技快照的 Win32 Release 客户端编译通过。阶段检查地图与小地图选点、次数及耗尽、施法事件／取消、延迟／视野／侦测、暂停／施法者死亡、自定义覆盖、联机和原版表现。
 
 ## 保存权杖待验证
 
