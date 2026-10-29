@@ -6,7 +6,7 @@
 
 namespace war3 {
 void GameView::drawTrackables(std::uint64_t elapsed,const DirectX::XMMATRIX& vp) {
-    for(auto& [id,t]:data_->session->trackables()){auto model=data_->assets->cachedModel(t->model);if(!model)continue;float z=data_->terrain->visibleHeight(t->x,t->y),radius=std::max(1.f,model->radius());SceneBounds bounds;for(int sign:{-1,1})bounds.add(t->x+sign*radius,t->y+sign*radius,z+sign*radius);if(!bounds.visible(vp))continue;auto world=DirectX::XMMatrixRotationZ(t->facing*DirectX::XM_PI/180.f)*DirectX::XMMatrixTranslation(t->x,t->y,z);model->sequence("Stand");model->draw(elapsed,view_,projection_,sceneMatrix(world),true,0xffffffff,&modelInstance((1ull<<60)|id),elapsed);}
+    for(auto& [id,t]:data_->session->trackables()){auto model=data_->assets->cachedModel(t->model);if(!model)continue;float z=data_->terrain->visibleHeight(t->x,t->y),radius=std::max(1.f,model->radius());SceneBounds bounds;for(int sign:{-1,1})bounds.add(t->x+sign*radius,t->y+sign*radius,z+sign*radius);bool rendered=bounds.visible(vp);if(!rendered && !model->hasAttachmentModels())continue;model->sequence("Stand");auto key=(1ull<<60)|id;if(!rendered){model->advanceAttachmentClocks(modelInstance(key),elapsed,elapsed);continue;}auto world=DirectX::XMMatrixRotationZ(t->facing*DirectX::XM_PI/180.f)*DirectX::XMMatrixTranslation(t->x,t->y,z);model->draw(elapsed,view_,projection_,sceneMatrix(world),true,0xffffffff,&modelInstance(key),elapsed);}
 }
 void GameView::trackableInput(GameInput& input) {
     auto& ui=input.ui;if(!input.active || !data_->session->userControl() || chatOpen_ || flow_->menuOpen() || flow_->scriptDialog() || allianceOpen_ || questsOpen_ || ui.x<0 || ui.x>=.8f || ui.y<.02f || ui.y>=.424f){hoveredTrackable_=0;trackableMouseX_=trackableMouseY_=-1;return;}

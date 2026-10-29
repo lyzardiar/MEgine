@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 地面物品与交互模型离屏附件待验证
+
+路径：`src/game_view.cpp`、`src/game_trackable.cpp`；说明见 `effects.md`。地面物品与可交互模型在视口外推进已加载附件的可见性和子动画时钟，释放粒子并在重入视口时复用时钟；Win32 Release 客户端编译通过。阶段验证多层附件、出生／循环、视口边界、拾取／丢弃、删除、异步加载、暂停、切图释放和大量实例性能，比较原版画面。专项及实际窗口尚未执行。
+
 ## 幽灵变形免疫与建筑选址待验证
 
 路径：`src/session.h`、`src/session_visibility.cpp`、`src/session_control_spells.cpp`、`src/session_morph_spells.cpp`、`src/session_construction.cpp`；说明见 `stealth-reveal.md`。Agho 的 DataB 接入变形目标及效果检查，DataC 接入建筑选址；Win32 Release 客户端编译通过。阶段验证字段覆盖、能力启停、弹道途中状态变化、建筑与地形阻挡、真实操作及原版行为；专项和运行对照尚未执行。
