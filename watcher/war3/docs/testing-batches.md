@@ -2978,3 +2978,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 避难权杖（待验证）
 
 路径：`src/entities.h`、`src/session*.cpp`、`src/session.h`、`src/spells.h`。已接入目标、施法、主基地传送、禁用状态及延迟治疗；集中验证目标筛选、伤害减免单位、治疗与驱散时序、物品消费、UI、多人同步及原版一致性，见[避难权杖](sanctuary-staff.md)。
+
+### 避难权杖驱散（待验证）
+
+路径：`src/session_teleport.cpp`。避难状态已接入现有魔法驱散，集中验证友敌驱散、状态释放、持续治疗和原版 1.27 行为，见[避难权杖](sanctuary-staff.md)。
