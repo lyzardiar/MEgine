@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 自研联机建筑取消与英雄复活待验证
+
+路径：lan_actions、lan_action_encoder／lan_simulation、session_network_identity、game_view、revival_tests。实验对局支持选中建筑的施工取消及按升级票号取消、祭坛复活和中立酒馆唤醒；复活请求携带死亡轮次并在消费时复核，状态摘要包含死亡／归属轮次、施工状态及升级票号。Win32 Release 产品及专项程序增量编译通过；新增专项尚未执行，阶段命令：`war3_revival_tests.exe <data-root> <fixture.w3m> lan-revival`。集中验证多选与 Esc、施工完成／升级替换、祭坛与酒馆权限／资源／附近买家、英雄复活后再次死亡／易主／移除、时间片事件重入、多端／回放及原版行为与协议。
+
 ## 自研联机单位操作待验证
 
 路径：lan_actions、lan_action_encoder／lan_local_identity／lan_simulation、order_queue_tests。实验对局中的技能与修理自动施法开关、英雄学习、资源返还和指定乘员卸载已连接明确单位身份及会话命令；训练／研究／英雄复活的队列取消按建筑身份及 64 位任务票号消费，票号与全局计数进入状态摘要，训练／研究／复活／建筑升级及反召唤在票号耗尽时不再创建新任务；Win32 Release 产品和专项程序增量编译通过。新增专项尚未执行；阶段命令：`war3_order_queue_tests.exe <data-root> <BootyBay.w3m>`。合并验证同类型多选、热键与鼠标、启停连续输入、技能／等级／资源条件、普通与尸体货舱、消失／易主／死亡／失选／转移、脚本事件重入、队列项前移／同类型替换／重复取消、研究／复活和票号耗尽、状态摘要及多端／回放／原版协议和界面行为。
