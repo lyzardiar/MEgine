@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 加强型地洞科技视觉待验证
+
+路径：`src/session_auras.cpp`；说明见 `research.md`。研究 Rorb 后显示源 Arbr 建筑模型，建筑失效及科技／能力变化时释放；阶段检查研究前后、地洞与箭塔、建筑完成／死亡／重生、转移、技能启停、自定义覆盖、实际窗口和原版模型表现。
+
 ## 女猎手哨兵待验证
 
 路径：`src/spells.h`、`src/session.h`、`src/session_spell_info.cpp`、`src/session_control_spells.cpp`、`src/session_area_spells.cpp`、`src/session_stealth_reveal.cpp`、`src/session_fog.cpp`、`src/session_visibility.cpp`、`src/game_view.cpp`、`src/lan_spell_orders.h`、`src/lan_action_encoder.cpp`、`src/lan_simulation.cpp`；说明见 `sentinel.md`。树木目标、飞行／盘旋视野与隐形侦测及树木销毁清理已接入；自研联机动作接入照明弹及哨兵树目标，包含模型镜头的 Win32 Release 客户端编译通过；阶段检查科技、冷却、施法事件、移动与模型、树木存活／摧毁／恢复、多哨兵、共享视野、地图覆盖、切图、联机、性能和原版一致性；数量限制及完整表现仍待实现。
