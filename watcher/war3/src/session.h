@@ -884,6 +884,7 @@ class ScriptSession {
     jass::Value createDestructable(std::uint32_t type,WorldPoint point,float z,float angle,std::array<float,3> scale,int variation,float lifePercent=100,bool visible=true,bool solid=true,int editorId=-1);
     void destructableFootprint(DestructableState& destructable);
     void walkableSurfaceIndex(const DestructableState& destructable,bool add);
+    const std::shared_ptr<WalkableGeometry>& walkableModel(const std::string& path);
     void destructableLife(std::uint32_t id,float value,ScriptContext context={});
     void widgetDeath(std::uint32_t id,ScriptContext context={});
     std::uint32_t nearestTree(WorldPoint point,float range,std::uint32_t exclude=0);
@@ -1096,6 +1097,7 @@ public:
     void popCacheSync();
     void discardCacheSyncOutgoing();
     float destructableHeight(const DestructableState& state) const;
+    size_t prepareWalkableSurfaces(const std::function<void()>& checkpoint={},const std::function<void(const std::string&)>& onError={});
     std::optional<float> walkableSurface(WorldPoint point,std::uint32_t exclude=0);
     float surfaceHeight(WorldPoint point,std::uint32_t exclude=0);
     std::uint64_t destructableRevision() const {return destructableRevision_;}
