@@ -36,6 +36,7 @@ class CampaignBrowser {
     void selectCampaign(size_t index);
     void enterCampaign();
     void finishEnterCampaign();
+    void unlockDefaultMissions(const Campaign& campaign);
     void selectEntry(size_t index);
     bool entryAvailable(const Campaign& campaign,const Entry& entry) const;
     fs::path resolvePath(const std::string& path,const fs::path& externalRoot={}) const;

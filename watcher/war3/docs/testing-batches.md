@@ -3006,3 +3006,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 昼夜光照计算复用（待验证）
 
 路径：`src/model.cpp`、`src/model_data.h`、`src/model_pose.cpp`。静态姿态与纯方向光照计算按实际输入复用；集中对照姿态／光照切换、骨骼动画、Billboard、点光源及 Amazonia 的画面、CPU 与帧耗时，见[昼夜光照计算复用](dnc-lighting-performance.md)。
+
+### 战役章节默认开放（待验证）
+
+路径：`src/campaign_browser.cpp`、`src/campaign_browser.h`。章节列表按源第四字段更新进度，Win32 x86 隔离编译通过；集中验证源标记、脚本关闭后重进、战役切换、跨进程与失败恢复，见[章节默认解锁](campaign-default-missions.md)。
