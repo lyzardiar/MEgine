@@ -2890,3 +2890,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### Human08 胜利界面失效句柄（待验证）
 
 路径：`src/session_leaderboard.cpp`、`src/session_dialogs.cpp`。隔离原图直接摧毁目标船后进入胜利对话；集中验证排行榜与计时窗口生命周期及实际操作，见 [胜利界面句柄](campaign-human08-ui-handles.md)。
+
+### Human09 空位置特效（待验证）
+
+路径：`src/session_effects.cpp`、`tests/spell_tests.cpp`。隔离原图越过异常并推进至 400 秒；集中执行新增断言并验证真实开场及画面，见 [空位置特效](campaign-human09-null-effect.md)。

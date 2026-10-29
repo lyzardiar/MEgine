@@ -56,7 +56,7 @@ void ScriptSession::bindEffectNatives() {
     bind("SetUbersplatRender","nothing",{"ubersplat","boolean"},[splat](auto& vm,auto a){if(a[0].bits)splat(a[0])->image->render=a[1].bits!=0;return vm.nothing();});
     bind("SetUbersplatRenderAlways","nothing",{"ubersplat","boolean"},[splat](auto& vm,auto a){if(a[0].bits)splat(a[0])->image->renderAlways=a[1].bits!=0;return vm.nothing();});
     bind("AddSpecialEffect","effect",{"string","real","real"},[this,text](auto&,auto a){return createEffect(text(a[0]),{jass::Real::fromBits(a[1].bits),jass::Real::fromBits(a[2].bits)});});
-    bind("AddSpecialEffectLoc","effect",{"string","location"},[this,text](auto&,auto a){return createEffect(text(a[0]),std::get<WorldPoint>(object(a[1],NativeKind::Location).state));});
+    bind("AddSpecialEffectLoc","effect",{"string","location"},[this,text](auto& vm,auto a){if(!alive(a[1].bits,NativeKind::Location))return vm.handle("effect",0);return createEffect(text(a[0]),std::get<WorldPoint>(object(a[1],NativeKind::Location).state));});
     bind("AddSpecialEffectTarget","effect",{"string","widget","string"},[this,text](auto&,auto a){return createEffect(text(a[0]),{},a[1].bits,text(a[2]));});
     bind("DestroyEffect","nothing",{"effect"},[this](auto& vm,auto a){destroyEffect(a[0].bits);return vm.nothing();});
 }
