@@ -119,6 +119,7 @@ class GameView {
     void hud(const GameInput& input);
     void commandPanel(const GameInput& input,std::uint32_t unit);
     void cargoPanel(const GameInput& input,std::uint32_t unit);
+    void selectionPanel(const GameInput& input);
     std::uint32_t corpseWidget(float x,float y) const;
     std::uint32_t cargoPanelUnit_=0;
     unsigned cargoPage_=0;

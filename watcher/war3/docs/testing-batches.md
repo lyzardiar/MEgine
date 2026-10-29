@@ -2042,3 +2042,11 @@ Win32 Release 客户端与关联会话／亡灵形态消费者程序已合并编
 路径：`session_passive_info.cpp`、`tests/generate-undead-forms-fixture.py`、`tests/undead_forms_tests.cpp`；Abdt 家族接入既有侦测网格及自定义覆盖，源数据与当前规则见 `burrow-detection.md`。
 
 阶段按 undead-forms 夹具及消费者验证源零掩码和自定义位、增删能力、移动、共享视野、潜地目标及地图覆盖，并核对原版能力来源、掩码语义、界面与性能。专项及原版一致性尚未验证。
+
+## 多选单位面板待验证
+
+Win32 Release 客户端与关联会话／亡灵形态消费者程序已合并编译通过；专项未执行。
+
+路径：`game_selection_panel.cpp`、`game_view.cpp/.h`、`CMakeLists.txt`，见 `selection-panel.md`。多选头像、生命、子组、选择操作及单位目标命令连接现有选区、命令和实验联机时间片。
+
+阶段验证真实窗口的多选、Shift／Ctrl、目标与取消、选中单位被回调移除或死亡、图标加载、货舱／物品／命令区，双端确认与回放及原版排布和交互；本次专项未运行。

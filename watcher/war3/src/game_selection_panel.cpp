@@ -1,0 +1,25 @@
+// Author: MiYu. Multi-unit portraits display the live selection and route interaction through the existing command and selection paths.
+#include "game_view.h"
+#include "player_commands.h"
+#include <algorithm>
+#include <bit>
+#include <set>
+
+namespace war3 {
+namespace {
+float number(jass::Real value){return std::bit_cast<float>(value.bits());}
+bool hit(float x,float y,float left,float top,float width,float height){return x>=left && y>=top && x<left+width && y<top+height;}
+}
+void GameView::selectionPanel(const GameInput& input){
+    auto& session=*data_->session;auto ids=selected();if(ids.size()<2)return;auto local=session.localPlayer().value_or(0);float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;auto quad=[&](float x,float y,float w,float h,DWORD color,IDirect3DTexture9* image=nullptr){renderer_.rect(left+x*scale,top+y*scale,w*scale,h*scale,color,image);};std::uint32_t clicked=0;
+    for(unsigned i=0;i<ids.size() && i<12;++i){auto found=session.units().find(ids[i]);if(found==session.units().end())continue;auto u=found->second;float x=.27f+(i%6)*.032f,y=.463f+(i/6)*.038f;bool primary=u->type==subgroupType_;quad(x,y,.030f,.034f,primary?0xffb7a35b:0xff353535);if(auto icon=data_->assets->cachedTexture(u->displayIcon()))quad(x+.001f,y+.001f,.028f,.028f,0xffffffff,icon);else quad(x+.001f,y+.001f,.028f,.028f,0xff171717);float life=std::clamp(number(u->life)/std::max(1.f,number(u->maxLife)),0.f,1.f);quad(x+.001f,y+.030f,.028f,.0025f,0xff111111);quad(x+.001f,y+.030f,.028f*life,.0025f,life>.5f?0xff25c52b:life>.25f?0xffffc91c:0xffed2424);if(input.ui.pressed && hit(input.ui.startX,input.ui.startY,x,y,.030f,.034f) && hit(input.ui.x,input.ui.y,x,y,.030f,.034f))clicked=ids[i];}
+    if(!clicked || !session.units().contains(clicked) || !session.userControl())return;if(!lanPendingSelection_.empty()){localMessage(local,0,0,2,"等待网络确认选择");return;}
+    if(buildTarget_){localMessage(local,0,0,2,"请选择建造位置");return;}
+    if(spellTarget_){auto [caster,ability]=*spellTarget_;auto source=session.units().find(caster);if(source==session.units().end() || !source->second->abilities.contains(ability))return;auto& spell=session.spellInfo(ability,unsigned(source->second->abilities.at(ability)));if(spell.targeting==SpellTargeting::Point){localMessage(local,0,0,2,"请选择技能目标位置");return;}if(castSelection(caster,ability,clicked,{},spellTargetQueued_ || input.ui.shift))spellTarget_.reset();else localMessage(local,0,0,2,"无法对该单位施放技能");return;}
+    if(itemTarget_){auto [holder,item]=*itemTarget_;if(!session.items().contains(item))return;if(session.itemNeedsPoint(item)){localMessage(local,0,0,2,"请选择物品目标位置");return;}PlayerCommand request;request.player=local;request.units={holder};request.item=item;request.kind=PlayerCommandKind::ItemUnit;request.target=clicked;request.queued=itemTargetQueued_ || input.ui.shift;if(submitPlayerCommand(request))itemTarget_.reset();else localMessage(local,0,0,2,"无法对该单位使用物品");return;}
+    if(orderMode_!=OrderMode::None){auto mode=orderMode_;if(mode==OrderMode::Patrol){localMessage(local,0,0,2,"请选择巡逻位置");return;}auto order=mode==OrderMode::Attack?851983u:mode==OrderMode::Harvest?852018u:mode==OrderMode::Entangle?852147u:mode==OrderMode::Repair?852024u:851986u;PlayerCommand request{local,PlayerCommandKind::TargetOrder,orderSelection(input.ui.pointerControl),0,0,clicked,order};request.queued=input.ui.shift;if(!submitPlayerCommand(request))localMessage(local,0,0,2,"无法对该单位执行命令");orderMode_=OrderMode::None;return;}
+    if(!session.selectionEnabled())return;std::vector<std::uint32_t> picked;if(input.ui.shift){for(auto id:ids)if(id!=clicked)picked.push_back(id);}else if(input.ui.pointerControl){auto type=session.units().at(clicked)->type;for(auto id:ids)if(session.units().contains(id) && session.units().at(id)->type==type)picked.push_back(id);}else picked.push_back(clicked);
+    if(lanSimulation_){auto current=session.playerSelection(local);std::set<std::uint32_t> target(picked.begin(),picked.end());if(current==target)return;std::vector<LanSelectionChange> changes;if(!current.empty())changes.push_back({false,{current.begin(),current.end()}});if(!picked.empty())changes.push_back({true,picked});try{auto bytes=encodeLanSelectionUpdate(session,lanPeer_,changes,lanWireObject_);if(!bytes.empty()){lanPendingSelection_=std::move(bytes);if(!lanSendSelection_(lanPendingSelection_)){lanPendingSelection_.clear();localMessage(local,0,0,3,"无法发送网络选择");}}}catch(const std::exception& e){log_.write(std::string("lan_panel_selection_error=")+e.what());localMessage(local,0,0,3,"无法同步单位选择");}return;}
+    for(auto id:ids)if(session.units().contains(id) && std::find(picked.begin(),picked.end(),id)==picked.end())session.selectUnit(id,false);
+}
+}
