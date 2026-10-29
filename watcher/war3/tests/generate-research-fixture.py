@@ -88,6 +88,10 @@ def main():
     custom = b'z0u1'
     custom_changes = [('utyp', 'Mechanical,Peon'), ('umvt', 'fly')]
     files['war3map.w3u'] = struct.pack('<II', 2, len(units)) + b''.join(unit + bytes(4) + struct.pack('<I', 1) + modification(field, value, unit) for unit, field, value in units) + struct.pack('<I', 1) + b'hfoo' + custom + struct.pack('<I', len(custom_changes)) + b''.join(modification(field, value, custom) for field, value in custom_changes)
+    base_buff, custom_buff = b'Bblo', b'B0T1'
+    original_buff_changes = [('ftip', 'Base buff title'), ('fube', 'Base buff description'), ('fart', 'BaseBuffIcon.blp'), ('ftat', 'BaseBuffEffect.mdx')]
+    custom_buff_changes = [('ftip', 'Custom buff title'), ('fart', 'CustomBuffIcon.blp')]
+    files['war3map.w3h'] = struct.pack('<II', 2, 1) + base_buff + bytes(4) + struct.pack('<I', len(original_buff_changes)) + b''.join(modification(field, value, base_buff) for field, value in original_buff_changes) + struct.pack('<I', 1) + base_buff + custom_buff + struct.pack('<I', len(custom_buff_changes)) + b''.join(modification(field, value, custom_buff) for field, value in custom_buff_changes)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
