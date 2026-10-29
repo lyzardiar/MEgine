@@ -40,7 +40,7 @@ struct GatherOrder {
     bool inside=false;
 };
 struct TechnologyStats {
-    float dice=0,damage=0,range=0,armor=0,attackSpeed=0,health=0,mana=0,movement=0,healthRegen=0,manaRegen=0,bounces=0,spillDistance=0,spillRadius=0,damageLoss=0,lumberCapacity=0,spikedDamage=0;
+    float dice=0,damage=0,range=0,armor=0,attackSpeed=0,health=0,mana=0,movement=0,healthRegen=0,manaRegen=0,bounces=0,spillDistance=0,spillRadius=0,damageLoss=0,lumberCapacity=0,spikedDamage=0,skeletonLifetime=0;
     int defenseType=-1;
     unsigned defenseOwner=~0u;
     std::map<std::pair<std::uint32_t,unsigned>,float> defenseEffects;
