@@ -1938,3 +1938,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`session_spells.cpp`、`session_self_spells.cpp`、`session_damage.cpp`、`session_regeneration.cpp`、`docs/unit-state-events.md`。普通施法、即时自身施法、魔法盾吸收和自然恢复的魔法变化接入阈值事件及回调重入检查；其他状态写入仍按原有步末补查。
 
 阶段按 `unit-state-events.md` 执行夹具及会话专项，并覆盖施法取消／移除／易主、魔法盾回调移除 buff 或击杀、自然恢复及同一步跨越与复位；原版事件顺序和完整消费者尚未对照。本次 Win32 Release 产品增量编译通过，专项尚未执行。
+
+## 实验回放倍速待验证
+
+路径：`main.cpp`、`docs/replay-experimental.md`。游戏画面的加减键切换 0.25 至 8 倍，界面显示当前速度；空格暂停／继续与 Esc 返回仍可用。
+
+阶段使用同构建实验局域网回放验证各档时间推进、键盘主区及数字小键盘、边界、暂停调速、最小化恢复、结束及过场切换，并核对时间片顺序和旁观输入隔离；原版回放播放与原版快捷键仍未实现或对照。本次 Win32 Release 产品增量编译通过，实际播放尚未执行。
