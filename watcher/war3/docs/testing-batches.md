@@ -2124,3 +2124,19 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ## 地形变形物件高度待验证
 
 路径：`entities.h`、`session.h`、`session_destructables.cpp`、`scene_objects.h/.cpp`、`game_view.cpp`、`game_effects.cpp`、`tests/game_flow_tests.cpp`，说明见 `terrain-deformation.md`。Win32 Release 客户端和 game-flow 消费者已合并编译。阶段合并 game-flow 夹具并验证原有和变形中创建的可破坏物、普通装饰物、波纹／永久凹坑／停止、附着特效、点选／遮挡、地形边界及远区裁剪，并对照显式 Z 的原版行为与大地图性能。专项、实际画面和原版一致性尚未验证。
+
+## 盟友颜色过滤待验证
+
+路径：`world.h`、`session_text.cpp`、`game_view.h/.cpp`、`tests/game_flow_tests.cpp`，说明见 `ally-color-filter.md`。Win32 Release 客户端和 game-flow 消费者已编译；阶段验证三档、小地图／单位颜色、Alt+A、观战／联盟／伪装、地图覆盖、GetLocalPlayer 和原版按钮及画面。实际窗口和原版一致性尚未验证。
+
+## 缓存同步动作接收待验证
+
+路径：`lan_cache_sync.h`、`lan_actions.h/.cpp`、`lan_simulation.h/.cpp`、`session.h`、`session_cache.cpp`、`tests/session_tests.cpp`，说明见 `cache-sync.md`。Win32 Release 客户端和会话消费者已编译；阶段验证编解码、实际时间片顺序／容量、两端缓存、坏数据、并发及回放。JASS 发送与唤醒、单位快照及原版互通尚未完成。
+
+## 资源总分待验证
+
+路径：`session_match.cpp`、`tests/harvest_tests.cpp`，说明见 `player-scores.md`。Win32 Release 客户端和采集消费者已编译；阶段验证资源返回、维护费、玩家隔离、溢出与原版结算统计。专项尚未运行。
+
+## 对象名称查询待验证
+
+路径：`object_data.cpp`、`session_game.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`，说明见 `object-names.md`。Win32 Release 客户端与 research 消费者已编译；阶段验证仅有 Profile 的 ID、空与缺失名称、覆盖优先级、继承及 DotA 调用，并与原版对照。专项尚未运行。

@@ -2,7 +2,7 @@
 
 地图 Buff 自定义对象覆盖及继承已连接状态面板与特效；任务主线、支线、目标列表和说明文字接入原资源滚动条交互。实际地图、窗口和原版行为待功能阶段验证，见[Buff 覆盖](buff-overrides.md)与[任务窗口](quests.md)。
 
-DotA 脚本包含 `SyncStoredInteger` 和 `SetAllyColorFilterState` 调用；缓存的跨客户端同步以及观战颜色过滤仍待接入，不能以单机空操作代替多人同步。
+DotA 的 `SetAllyColorFilterState` 已接入本地小地图和场景队伍颜色，原版按钮与实际画面待完成或验证，见[盟友颜色过滤](ally-color-filter.md)。`SyncStoredInteger` 所需标量和删除动作已接入时间片消费者；脚本发送／唤醒、单位快照和原版互通仍待完成，见[缓存同步](cache-sync.md)。
 
 局域网原版浏览／加入大厅、UDP 发现、聊天、本地地图字段比较以及创建主机大厅、基础槽位设置及内存地图传输已接入；原版互通与完整同步对局仍待实现，见[局域网房间发现](lan.md)。
 
