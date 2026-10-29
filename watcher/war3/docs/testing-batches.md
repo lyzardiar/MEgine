@@ -1,12 +1,16 @@
 # 独立客户端测试队列
 
+## 模型场景声音和可破坏物动画时钟待验证
+
+路径：`scene_objects.h/.cpp`、`game_view.h/.cpp`、`game_model_sound.cpp`、`model_ui_audio.h`、`model.h`、`model_pose.cpp`、`sound.h/.cpp`、`main.cpp`、`loading_screen.h/.cpp`、`model_cinematic.h/.cpp`、`entities.h`、`session_animation.cpp`、`session_destructables.cpp`、`session_doodads.cpp`、`session_volcano.cpp`、`tests/game_flow_tests.cpp`。阶段合并验证菜单／载入／过场模型 SND、相机移动与音量／静音／场景切换、专用声音与 Scene 音轨；验证装饰物视野／离屏／隐藏／动态销毁与附件声、足迹、持续切图及大地图性能；执行 game-flow 夹具检查可破坏物动态创建、改速、冻结、恢复、动画重置与队列，并对照原版。界面 FPT 地表效果和离屏附件子动画时钟尚未实现；Win32 Release 客户端与 game-flow 消费者已编译，专项、真实音频及原版对照尚未执行。
+
 ## 菜单附件与场景附件声音待验证
 
-路径：`main.cpp`、`loading_screen.h/.cpp`、`model_cinematic.h/.cpp`、`model.h`、`model_particles.cpp`、`game_model_sound.cpp`、`game_effects.cpp`、`game_view.cpp`；说明见 `effects.md`、`model-event-sounds.md`。Win32 Release 客户端已编译。阶段核对菜单／战役／载入／过场原模型附件、缺资源／设备恢复／生命周期和加载时间；核对单位／特效多层附件声音与脚印位置方向、多个实例、KATV、流式上传、离屏／迷雾、事件上限和切图，比较原版画面、听感与时序。装饰物、菜单和过场附件事件声音以及离屏子动画时钟仍待实现。专项与实际窗口、声音、GPU 运行尚未执行。
+路径：`main.cpp`、`loading_screen.h/.cpp`、`model_cinematic.h/.cpp`、`model.h`、`model_particles.cpp`、`game_model_sound.cpp`、`game_effects.cpp`、`game_view.cpp`；说明见 `effects.md`、`model-event-sounds.md`。Win32 Release 客户端已编译。阶段核对菜单／战役／载入／过场原模型附件、缺资源／设备恢复／生命周期和加载时间；核对单位／特效多层附件声音与脚印位置方向、多个实例、KATV、流式上传、离屏／迷雾、事件上限和切图，比较原版画面、听感与时序。界面 FPT 地表效果和离屏子动画时钟仍待实现。专项与实际窗口、声音、GPU 运行尚未执行。
 
 ## MDX 附件子模型待验证
 
-路径：`model.h/.cpp`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`scene_assets.h/.cpp`；说明见 `effects.md`。阶段以 NEBirth 等原模型验证节点动画／KATV、Birth 与 Stand、多个父实例、嵌套与循环、队伍色、子粒子排空、缺失模型及纹理、异步移交／GPU 恢复／切图释放和性能，并对照原版画面。离屏时钟及装饰物／菜单／过场附件声音仍待实现；Win32 Release 客户端已编译；专项及实际 GPU 画面尚未执行。
+路径：`model.h/.cpp`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`scene_assets.h/.cpp`；说明见 `effects.md`。阶段以 NEBirth 等原模型验证节点动画／KATV、Birth 与 Stand、多个父实例、嵌套与循环、队伍色、子粒子排空、缺失模型及纹理、异步移交／GPU 恢复／切图释放和性能，并对照原版画面。离屏子动画时钟仍待实现；Win32 Release 客户端已编译；专项及实际 GPU 画面尚未执行。
 
 ## 净化物品树木目标待验证
 

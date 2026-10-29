@@ -230,9 +230,12 @@ struct DestructableState {
     std::string model,name,texture,alivePath,deadPath,animation;
     unsigned replacement=0;
     std::vector<PathCell> footprint;
-    double animationStart=0;
+    double animationStart=0,animationPhase=0,animationRateStart=0;
     float animationRate=1;
     std::vector<std::string> animationQueue;
+    double animationElapsed(double now) const {return animationPhase+std::max(0.,now-animationRateStart)*animationRate;}
+    void resetAnimationClock(double now) {animationStart=animationRateStart=now;animationPhase=0;}
+    void setAnimationRate(double now,float rate) {animationPhase=animationElapsed(now);animationRateStart=now;animationRate=rate;}
 };
 struct ItemState {
     std::map<std::uint32_t,BookSelection> bookSelections;

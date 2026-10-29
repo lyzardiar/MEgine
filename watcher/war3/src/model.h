@@ -26,6 +26,7 @@ struct ModelVertex {float x,y,z,u,v;};
 struct ModelGeometry {std::vector<ModelVertex> vertices;std::vector<std::uint16_t> indices;};
 struct ModelEvent {std::string name;int parent=-1,global=-1,node=-1;bool animated=false;std::vector<int> times;};
 struct ModelSoundEvent {std::string name;std::array<float,3> position{};float angle=0;};
+struct ModelCamera {D3DMATRIX view{};std::array<float,3> position{},right{};};
 struct ModelLookAt {std::string bone;std::array<float,3> target;};
 class Model {
     struct Data;
@@ -35,6 +36,7 @@ public:
     ~Model();
     Model(const Model&) = delete;
     Model& operator=(const Model&) = delete;
+    ModelCamera camera(std::uint64_t elapsed,std::uint64_t clock=UINT64_MAX);
     void draw(std::uint64_t elapsed, float aspect, bool twoSided = false,std::uint64_t clock=UINT64_MAX);
     void draw(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& projection,const D3DMATRIX& world,bool twoSided=false,DWORD tint=0xffffffff,ModelInstance* instance=nullptr,std::uint64_t clock=UINT64_MAX,bool emit=true,bool geometry=true,std::span<const ModelLookAt> lookAt={});
     void upload(Renderer& renderer,SceneAssets& assets);

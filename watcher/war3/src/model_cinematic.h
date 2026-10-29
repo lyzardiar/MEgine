@@ -2,6 +2,7 @@
 #pragma once
 #include "model.h"
 #include "scene_assets.h"
+#include "model_ui_audio.h"
 #include "sound.h"
 #include "map_ui.h"
 #include "morph_mesh.h"
@@ -10,6 +11,7 @@ class ModelCinematic {
     SceneAssets assets_;
     Model& model_;
     SoundScene sound_;
+    ModelUiAudio modelAudio_;
     Renderer& renderer_;
     struct MorphCue {size_t scene;std::uint64_t begin,end;std::unique_ptr<MorphMesh> mesh;};
     std::vector<MorphCue> morphs_;

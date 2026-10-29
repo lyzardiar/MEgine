@@ -174,7 +174,7 @@ class GameView {
     std::map<std::uint32_t,bool> footprintTerrain_;
     std::vector<Footprint> footprints_;
     bool footprintDataLoaded_=false;
-    void modelSounds(Model& model,ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& world,bool refreshPose=false);
+    void modelSounds(Model& model,ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& world,bool refreshPose=false,std::optional<bool> footprintVisible={});
     bool modelHasSounds(const Model& model);
     void modelFootprint(const std::string& code,const std::array<float,3>& position,float angle,std::uint64_t clock,bool visible);
     void drawFootprints(bool water,const DirectX::XMMATRIX& vp,std::uint64_t clock);
