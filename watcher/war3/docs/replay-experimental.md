@@ -25,3 +25,5 @@
 单机交互模型事件及界面发起的单位选择已接入玩家输入分发；脚本内触发的选择仍由脚本直接执行。此入口只完成输入汇聚，模拟步进、选择／命令顺序记录、交互输入、暂停、游戏速度和回放消费者仍待实现。部分用户输入发生在本帧步进前，对话动作可发生在绘制末尾，录制需遵循实际调用顺序。
 
 结算面板的原 FDF 根帧挂接可通过 `cmake --build --preset release --target war3_browser_tests --parallel 8` 编译后执行 `./build/windows-x86/bin/Release/war3_browser_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/score-replay" score_replay_fdf_attach`。该检查在本机原资源和 D3D9 下通过（1 通过、0 失败；产物位于 tmp/docs-artifacts/war3/score-replay-fdf/），仅覆盖控件构造和绘制，不证明回放数据、窗口输入或原版兼容。
+
+播放画面显示已播放与记录总时长。总时长累加完整时间片，已播放时长仅计成功执行的时间片；暂停、倍速和分片不会凭墙钟提前改变计数。原版回放和单机录制仍不支持，实际窗口及长回放待阶段验证。

@@ -2538,3 +2538,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ## 安装版本与回放产品待验证
 
 路径：`session.h/.cpp`、`session_game.cpp`、`map_preparation.h/.cpp`、`replay.h/.cpp`、`replay_preparation.h/.cpp`、`tests/session_tests.cpp`，说明见 `game-version.md`。阶段运行 session 与回放准备消费者，核对安装基础版／资料片支持位、WAR3／W3XP／未知产品、全局初始化与 config 顺序、兼容矩阵、战役和版本状态隔离；对照原版许可、资源缺失、ROC／TFT 回放、资源优先级及科技百分比；当前 ROC 回放仍使用含 TFT 的归档视图。Win32 Release 客户端及 session 消费者已编译；专项与原版对照尚未执行。
+
+## 实验回放时间显示待验证
+
+路径：`replay_runtime.h/.cpp`、`main.cpp`，说明见 `replay-experimental.md`。阶段验证正常及零时长记录、分片、时间片应用失败、暂停／恢复、各档倍速、最小化与过场、长时长及窗口缩放，核对实际时间片与显示；Win32 Release 客户端增量编译通过，实际播放和原版显示待验证。

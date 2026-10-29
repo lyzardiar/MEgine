@@ -6,7 +6,7 @@
 
 namespace war3 {
 ReplayRuntime::ReplayRuntime(Replay replay,SlotConsumer consume,RecordHandler handle):replay_(std::move(replay)),consume_(std::move(consume)),handle_(std::move(handle)) {
-    if(!consume_ || !handle_)throw std::invalid_argument("Replay requires slot and record consumers");
+    if(!consume_ || !handle_)throw std::invalid_argument("Replay requires slot and record consumers");for(const auto& record:replay_.records())if(record.kind==ReplayRecordKind::TimeSlot && !record.fragment)totalMs_+=record.slot.elapsedMs;
 }
 void ReplayRuntime::fail(std::string message) {state_=ReplayRuntimeState::Failed;error_=std::move(message);}
 void ReplayRuntime::tick(Clock::time_point now) {
@@ -28,7 +28,7 @@ void ReplayRuntime::tick(Clock::time_point now) {
             fragments_.insert(fragments_.end(),record.slot.actions.begin(),record.slot.actions.end());fragmentBytes_+=size;++index_;
             if(record.fragment){fragmentPending_=true;continue;}
             LanTimeSlot slot{record.slot.elapsedMs,std::move(fragments_)};fragments_.clear();fragmentBytes_=0;fragmentPending_=false;
-            if(auto error=consume_(slot)){fail("Replay time slot: "+*error);break;}if(state_!=ReplayRuntimeState::Playing)break;budgetMs_-=slot.elapsedMs;
+            if(auto error=consume_(slot)){fail("Replay time slot: "+*error);break;}if(state_!=ReplayRuntimeState::Playing)break;elapsedMs_+=slot.elapsedMs;budgetMs_-=slot.elapsedMs;
         }
     }catch(const std::exception& error){fail(std::string("Replay playback: ")+error.what());}catch(...){fail("Replay playback: unknown callback failure");}
     running_=false;

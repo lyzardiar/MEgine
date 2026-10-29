@@ -23,6 +23,7 @@ private:
     ReplayRuntimeState state_=ReplayRuntimeState::Playing;
     std::optional<Clock::time_point> last_;
     double budgetMs_=0,speed_=1;
+    std::uint64_t elapsedMs_=0,totalMs_=0;
     std::string error_;
     void fail(std::string message);
 public:
@@ -37,6 +38,8 @@ public:
     ReplayRuntimeState state() const {return state_;}
     const std::string& error() const {return error_;}
     double speed() const {return speed_;}
+    std::uint64_t elapsedMs() const {return elapsedMs_;}
+    std::uint64_t totalMs() const {return totalMs_;}
     const Replay& replay() const {return replay_;}
 };
 }
