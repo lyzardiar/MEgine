@@ -337,6 +337,8 @@ class ScriptSession {
     std::uint32_t teleportAnchor(const UnitState& caster,const SpellInfo& spell,WorldPoint point,bool automatic=false);
     bool teleportReady(const UnitState& caster,const SpellInfo& spell,WorldPoint point);
     void startTeleport(std::uint32_t unit,const CastOrder& cast);
+    std::uint32_t preservationAnchor(const UnitState& target,const SpellInfo& spell);
+    void preserveUnit(std::uint32_t unit,const CastOrder& cast);
     void teleportTick(std::uint32_t unit,double delta);
     bool useTeleportItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     bool itemSpellReady(const UnitState& unit,const SpellInfo& spell,std::uint32_t item);
