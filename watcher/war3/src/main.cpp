@@ -40,6 +40,7 @@ std::wstring replaySpeedLabel(double speed) {
     if(speed==.25)return L"0.25x";if(speed==.5)return L"0.5x";return std::to_wstring(unsigned(speed))+L"x";
 }
 struct WindowState { Renderer* renderer = nullptr; bool minimized = false,hidden = false; int mouseX = 0, mouseY = 0, pressX = 0, pressY = 0, wheel=0,lastClickX=0,lastClickY=0; bool click = false, down = false,doubleClick=false,rightClick=false,rightDown=false; bool pressShift=false,clickShift=false,rightPressShift=false,rightClickShift=false; bool pressControl=false,clickControl=false,rightPressControl=false,rightClickControl=false; unsigned key = 0; bool keyControl=false,keyRepeat=false,keyShift=false,keyAlt=false; DWORD lastClickTime=0;std::wstring characters; };
+bool handledAltKey(WPARAM key) {return key=='A' || key=='F' || key=='R' || key=='T' || key==VK_OEM_PLUS || key==VK_ADD || key==VK_OEM_MINUS || key==VK_SUBTRACT;}
 LRESULT CALLBACK windowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     auto state = reinterpret_cast<WindowState*>(GetWindowLongPtrW(window, GWLP_USERDATA));
     if (message == WM_NCCREATE) { auto create = reinterpret_cast<CREATESTRUCTW*>(lParam); state = static_cast<WindowState*>(create->lpCreateParams); SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(state)); }
@@ -54,8 +55,8 @@ LRESULT CALLBACK windowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
     if (message == WM_CAPTURECHANGED && state) {if(state->down || state->rightDown){state->click=false;state->rightClick=false;state->clickShift=state->rightClickShift=state->clickControl=state->rightClickControl=false;}state->down=false;state->rightDown=false;state->pressShift=state->rightPressShift=state->pressControl=state->rightPressControl=false;return 0; }
     if (message == WM_KILLFOCUS && state) {state->down=state->rightDown=state->click=state->rightClick=state->doubleClick=false;state->pressShift=state->rightPressShift=state->clickShift=state->rightClickShift=state->pressControl=state->rightPressControl=state->clickControl=state->rightClickControl=false;state->key=0;state->keyControl=state->keyShift=state->keyRepeat=state->keyAlt=false;state->characters.clear();return 0;}
     if (message == WM_TIMER && wParam==1 && state) {KillTimer(window,1);ShowWindow(window,SW_RESTORE);if(state->hidden)ShowWindow(window,SW_HIDE);state->minimized=false;return 0;}
-    if ((message == WM_KEYDOWN || (message==WM_SYSKEYDOWN && wParam=='F' && (lParam&(1ll<<29)))) && state) {state->key=unsigned(wParam);state->keyControl=(GetKeyState(VK_CONTROL)&0x8000)!=0;state->keyShift=(GetKeyState(VK_SHIFT)&0x8000)!=0;state->keyRepeat=(lParam&(1ll<<30))!=0;state->keyAlt=message==WM_SYSKEYDOWN;if(state->keyAlt)return 0;}
-    if(message==WM_SYSCHAR && (wParam=='f' || wParam=='F'))return 0;
+    if ((message == WM_KEYDOWN || (message==WM_SYSKEYDOWN && handledAltKey(wParam) && (lParam&(1ll<<29)))) && state) {state->key=unsigned(wParam);state->keyControl=(GetKeyState(VK_CONTROL)&0x8000)!=0;state->keyShift=(GetKeyState(VK_SHIFT)&0x8000)!=0;state->keyRepeat=(lParam&(1ll<<30))!=0;state->keyAlt=message==WM_SYSKEYDOWN;if(state->keyAlt)return 0;}
+    if(message==WM_SYSCHAR && (wParam=='a' || wParam=='A' || wParam=='f' || wParam=='F' || wParam=='r' || wParam=='R' || wParam=='t' || wParam=='T' || wParam=='+' || wParam=='=' || wParam=='-'))return 0;
     if (message == WM_DESTROY) { PostQuitMessage(0); return 0; }
     return DefWindowProcW(window, message, wParam, lParam);
 }

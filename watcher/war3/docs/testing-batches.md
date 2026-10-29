@@ -2156,3 +2156,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ## 小地图野怪营地待验证
 
 路径：`game_loading.h/.cpp`、`game_view.h/.cpp`，说明见 `creep-camps.md`。Win32 Release 客户端已编译；阶段验证原始贴图／位置／提示、点击／Alt+R／禁用、过滤状态脚本、营地分组及等级阈值、野怪死亡／易主、迷雾、动态生成、皮肤覆盖、大小地图性能及原版对照。原模型动画尚未实现；动态重建的结果与性能尚未验证。
+
+## 小地图底图、地形开关与迷雾待验证
+
+路径：`game_loading.h/.cpp`、`game_view.h/.cpp`、`main.cpp`，说明见 `minimap.md`。Win32 Release 客户端编译通过；BootyBay 临时副本删除底图后的单帧对局启动通过，日志 `tmp/docs-artifacts/war3/weather-source-probe/no-minimap-play-final.log`。阶段验证 Alt+T/A/R/F、回放速度与 Alt+F4、按钮交叠及皮肤覆盖、三图和无底图地图的画面／地图方向、迷雾／战争迷雾切换、营地／单位／提示遮罩、运行时地形改变、设备恢复和帧耗时，逐项与原版对照；单帧启动不代表视觉或实际交互通过。

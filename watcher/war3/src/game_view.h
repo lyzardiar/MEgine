@@ -23,9 +23,16 @@ class GameView {
     bool streamUpload_=false;
     std::uint64_t destructableStreamRevision_=0;
     FogRender fogRender_;
+    Com<IDirect3DTexture9> minimapFogTexture_;
+    Com<IDirect3DTexture9> minimapFogStaging_;
+    std::vector<std::uint32_t> minimapFogPixels_;
+    std::uint64_t minimapFogStamp_=0;
+    unsigned minimapFogPlayer_=~0u;
+    bool minimapFogDynamic_=false,minimapFogDiscard_=false;
+    IDirect3DTexture9* minimapFog(unsigned player);
     std::array<unsigned,4> teamFilterIndices_{};
     std::array<DWORD,4> minimapFilterColors_{};
-    bool allyFilterButtonDown_=false,creepFilterButtonDown_=false;
+    bool allyFilterButtonDown_=false,creepFilterButtonDown_=false,terrainFilterButtonDown_=false,minimapTerrainVisible_=true;
     std::unique_ptr<GlueScreen> allyFilterTooltip_;
     struct CreepCamp {float x=0,y=0;std::vector<std::uint32_t> units;};
     std::vector<CreepCamp> creepCamps_;
