@@ -7,6 +7,9 @@
 namespace war3 {
 namespace {struct ContextPop {std::vector<ScriptContext>& stack;~ContextPop(){stack.pop_back();}};float coordinate(jass::Value value) {auto result=std::bit_cast<float>(value.bits);if(!std::isfinite(result))throw std::runtime_error("Non-finite enumeration coordinate");return result;}}
 void ScriptSession::syncLocalSelection() {if(!localPlayer_)return;auto& selected=synchronizedSelections_[*localPlayer_];selected.clear();for(auto& [id,unit]:units_)if(unit->selected && alive(id,NativeKind::Unit))selected.insert(id);}
+void ScriptSession::transferAutomaticSelection(std::uint32_t source,std::uint32_t target,bool keepSource,bool ownerOnly) {
+    if(!alive(source,NativeKind::Unit) || !alive(target,NativeKind::Unit) || source==target)return;auto from=units_.at(source),to=units_.at(target);bool localSelected=from->selected,canTransfer=from->owner==to->owner;syncLocalSelection();for(unsigned player=0;player<16;++player){auto& selection=synchronizedSelections_[player];if((ownerOnly && player!=from->owner) || !selection.contains(source))continue;if(!keepSource){selection.erase(source);++selectionRevisions_[player][source];}if(canTransfer && player==from->owner && selection.insert(target).second)++selectionRevisions_[player][target];}if(!keepSource && (!ownerOnly || from->owner==localPlayer_.value_or(0)))from->selected=false;if(localSelected && canTransfer && from->owner==localPlayer_.value_or(0))to->selected=true;
+}
 std::set<std::uint32_t> ScriptSession::playerSelection(unsigned player) {if(player>=16)throw std::runtime_error("Selection player outside supported range");if(localPlayer_ && *localPlayer_==player)syncLocalSelection();return synchronizedSelections_[player];}
 void ScriptSession::bindCollectionNatives() {
     bind("CreateForce","force",{},[this](auto&,auto){return create(NativeKind::Force);});

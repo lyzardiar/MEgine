@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 自动选区与自研联机待验证
+
+路径：session_collections／session_transport／session_lava_spawn／session_spirit_split、session。登船、炎魔分裂及龙卷风接管／返还选区时，同步更新已确认的各玩家选区和本地选中标志，避免后续网络命令使用不同选区；自动变化不额外触发选择事件。Win32 Release 增量编译通过。操作：同构建双端选择本方／共享单位，登船与吞噬、炎魔分裂、龙卷风创建／结束后立即下达命令，比较选区、事件与状态；覆盖选择回调重入、死亡／移除／易主、断线、回放及多玩家选择同一单位。元素分身、骑乘合体及脚本 SelectUnit／ClearSelection 的跨端同步，以及 SyncSelections 屏障仍待完成；自动选择规则与原版一致性待对照。
+
 ## 自研对局聊天与回放待验证
 
 路径：lan_actions／lan_runtime／lan_simulation／lan_match_loading、game_view、session_text／session_spatial_events。实验对局将全体聊天作为有序私有动作发送与回放，按玩家触发 JASS 聊天事件并显示给所有本地视角；经典动作解析默认拒绝私有动作。Win32 Release 增量编译通过。操作：同构建双端互发中英文、长消息、并发输入与选择确认，验证精确／子串触发、玩家身份和脚本状态；录制回放并对照时间片、触发及显示；覆盖空串／非法长度／控制字节、损坏包、失败保留输入、排队和断线。原版协议及真实双端行为尚待完成或验证。

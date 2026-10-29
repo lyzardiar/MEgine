@@ -89,6 +89,7 @@ class ScriptSession {
     std::array<std::set<std::uint32_t>,16> synchronizedSelections_;
     std::array<std::map<std::uint32_t,std::uint64_t>,16> selectionRevisions_;
     void syncLocalSelection();
+    void transferAutomaticSelection(std::uint32_t source,std::uint32_t target,bool keepSource,bool ownerOnly=false);
     void selectionEvent(std::uint32_t unit,unsigned player,bool selected,std::uint64_t revision);
     std::unique_ptr<World> world_;
     bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false;
