@@ -1952,3 +1952,5 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 阶段执行 `python tests/generate-live-world-fixture.py --data-root <data-root>`，再执行 `war3_live_world_tests.exe <data-root> <fixture.w3m> <log>`，并核对三种状态、重叠先后、移动与视野重算、共享联盟方向及变化、多玩家、启停迷雾、半径／矩形网格边界、越界／极值、GPU 纹理、切图释放和原版时序。Win32 Release 产品增量编译及夹具 Python 语法检查通过，实际运行和原版一致性尚未验收。
 
 原版 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`；REA 证据 `ev_cbbbda324c9a7891de147bec6ae7b849cf013107273b043d058071cd97ad0b3d`、`ev_56b27f56bec8efd912e38387ac2617dffeeb90ea21e3d1bb2a93412d7f04e9b1`、`ev_f385bebfa3568eabbb0cbe19f3b0b7a134597367073c280f816822565db2f8f0`、`ev_eed52956f1519d8865d342a15d3de269a9e392e3849d97b53e225080f309d697` 和 `ev_f88f18ba19415b8ef6df5c8a06b80de7aa1185a3641049128afa7f9d479bde60` 表明三个入口直接写入玩家位图并分别处理 1／2／4 状态；共享掩码来源及刷新后的持续性尚未确认。
+
+脚本迷雾补充：连续设置不同玩家的状态时，保留未受影响玩家当前有效的网格版本；此前因真实视野变化而失效的网格仍重新计算。夹具增加玩家 0 可见、玩家 1 遮蔽后再次查询玩家 0 的场景。Win32 Release 产品增量编译与夹具语法检查通过；专项行为、共享接收者和多玩家纹理仍待合并验证。
