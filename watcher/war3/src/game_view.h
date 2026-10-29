@@ -178,6 +178,11 @@ class GameView {
     bool modelHasSounds(const Model& model);
     void modelFootprint(const std::string& code,const std::array<float,3>& position,float angle,std::uint64_t clock,bool visible);
     void drawFootprints(bool water,const DirectX::XMMATRIX& vp,std::uint64_t clock);
+    struct UnitShadow {std::string texture;float width=0,height=0,x=0,y=0;bool onWater=false;};
+    std::map<std::uint32_t,UnitShadow> unitShadows_;
+    const UnitShadow& unitShadow(std::uint32_t type);
+    void streamUnitShadows(std::vector<std::string>& textures);
+    void drawUnitShadows(bool water,const DirectX::XMMATRIX& vp);
     std::set<std::string> failedModelSounds_;
     std::map<const Model*,bool> modelSoundPresence_;
     void drawTrackables(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
