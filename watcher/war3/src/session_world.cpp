@@ -73,6 +73,7 @@ void ScriptSession::bindWorldNatives() {
     bind("GetCameraMargin","real",{"integer"},[this](auto& vm,auto args){return vm.real(requireWorld().cameraMargin(args[0].bits));});
     bind("SetCameraBounds","nothing",{"real","real","real","real","real","real","real","real"},[this](auto& vm,auto args){auto& environment=requireWorld().environment();for(unsigned i=0;i<8;++i)environment.cameraBounds[i]=jass::Real::fromBits(args[i].bits);environment.cameraChanged=true;return vm.nothing();});
     bind("SetDayNightModels","nothing",{"string","string"},[this](auto& vm,auto args){auto& environment=requireWorld().environment();environment.terrainDayNight=args[0].text?*args[0].text:std::string{};environment.unitDayNight=args[1].text?*args[1].text:std::string{};environment.dayNightChanged=true;return vm.nothing();});
+    bind("EnablePreSelect","nothing",{"boolean","boolean"},[this](auto& vm,auto a){auto& environment=requireWorld().environment();environment.preSelectionEnabled=a[0].bits!=0;environment.preSelectionUI=a[1].bits!=0;return vm.nothing();});
     bind("SetWaterDeforms","nothing",{"boolean"},[this](auto& vm,auto a){requireWorld().environment().waterDeforms=a[0].bits!=0;return vm.nothing();});
     bind("SetWaterBaseColor","nothing",{"integer","integer","integer","integer"},[this](auto& vm,auto args){auto& environment=requireWorld().environment();for(unsigned i=0;i<4;++i)environment.waterColor[i]=std::uint8_t(args[i].bits);environment.waterChanged=true;return vm.nothing();});
 }

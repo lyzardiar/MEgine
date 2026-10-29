@@ -197,7 +197,9 @@ class GameView {
     std::map<const Model*,bool> modelSoundPresence_;
     void drawTrackables(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void trackableInput(GameInput& input);
-    std::uint32_t hoveredTrackable_=0;
+    std::uint32_t hoveredTrackable_=0,hoveredPreselection_=0;
+    float preselectionX_=-1,preselectionY_=-1;
+    std::uint64_t preselectionSample_=0;
     float trackableMouseX_=-1,trackableMouseY_=-1;
     void drawImages(bool aboveWater,const DirectX::XMMATRIX& vp);
     void drawLightning(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
