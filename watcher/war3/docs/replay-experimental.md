@@ -27,3 +27,5 @@
 结算面板的原 FDF 根帧挂接可通过 `cmake --build --preset release --target war3_browser_tests --parallel 8` 编译后执行 `./build/windows-x86/bin/Release/war3_browser_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/score-replay" score_replay_fdf_attach`。该检查在本机原资源和 D3D9 下通过（1 通过、0 失败；产物位于 tmp/docs-artifacts/war3/score-replay-fdf/），仅覆盖控件构造和绘制，不证明回放数据、窗口输入或原版兼容。
 
 播放画面显示已播放与记录总时长。总时长累加完整时间片，已播放时长仅计成功执行的时间片；暂停、倍速和分片不会凭墙钟提前改变计数。原版回放和单机录制仍不支持，实际窗口及长回放待阶段验证。
+
+地图脚本 `DoNotSaveReplay` 在当前会话禁止保存回放：main 期间调用会跳过实验局域网录制器创建，之后调用则在保存前丢弃录制数据，结算界面不启用保存入口；此状态仅作用于本地保存，不改变同步命令或已有文件。单机录制和原版回放尚未实现；原版该 native 的自动／手动保存边界和实际地图行为待对照。

@@ -253,7 +253,7 @@ class ScriptSession {
     std::optional<ScriptCinematicScene> cinematicScene_;
     CameraControl cameraControl_;
     unsigned gameDifficulty_=1,defaultDifficulty_=1;
-    bool simulationPaused_=false,fogEnabled_=true,fogMaskEnabled_=true;
+    bool simulationPaused_=false,fogEnabled_=true,fogMaskEnabled_=true,replaySavingDisabled_=false;
     unsigned gameSpeed_=2;
     unsigned version_=1;
     bool versionSelected_=false;
@@ -1233,6 +1233,7 @@ public:
     bool dragSelectionUI() const {return dragSelectionUI_;}
     SessionExit exitRequest() const {return exit_;}
     bool showScores() const {return showScores_;}
+    bool replaySavingDisabled() const {return replaySavingDisabled_;}
     const auto& results() const {return results_;}
     const auto& statistics() const {return statistics_;}
     const auto& heroSummaries() const {return heroSummaries_;}

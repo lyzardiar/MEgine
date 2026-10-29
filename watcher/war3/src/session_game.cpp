@@ -35,6 +35,7 @@ void ScriptSession::preloader(const std::string& name) {
     runtime.bind("Preload",[this](auto& vm,auto args){if(!args[0].text)throw std::runtime_error("Null preload member");preload(*args[0].text);return vm.nothing();});runtime.bind("PreloadStart",[this](auto& vm,auto){preloaded_.clear();preloadBytes_=0;return vm.nothing();});runtime.bind("PreloadEnd",[](auto& vm,auto args){if(!std::isfinite(std::bit_cast<float>(args[0].bits)) || std::bit_cast<float>(args[0].bits)<0)throw std::runtime_error("Invalid preload timeout");return vm.nothing();});runtime.bind("PreloadEndEx",[](auto& vm,auto){return vm.nothing();});runtime.initialize();runtime.invoke("PreloadFiles");
 }
 void ScriptSession::bindGameNatives() {
+    bind("DoNotSaveReplay","nothing",{},[this](auto& vm,auto){replaySavingDisabled_=true;return vm.nothing();});
     bind("Preload","nothing",{"string"},[this](auto& vm,auto args){if(!args[0].text)throw std::runtime_error("Null preload member");preload(*args[0].text);return vm.nothing();});
     bind("Preloader","nothing",{"string"},[this](auto& vm,auto args){if(!args[0].text)throw std::runtime_error("Null preload script");preloader(*args[0].text);return vm.nothing();});
     bind("PreloadStart","nothing",{},[this](auto& vm,auto){preloaded_.clear();preloadBytes_=0;return vm.nothing();});
