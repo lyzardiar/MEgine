@@ -1,0 +1,36 @@
+// Author: MiYu. Town bell orders and worker-to-militia conversion use source ability data.
+#include "session.h"
+#include <algorithm>
+#include <bit>
+#include <cmath>
+#include <limits>
+
+namespace war3 {
+namespace {float number(jass::Real value){return std::bit_cast<float>(value.bits());}}
+
+void ScriptSession::cancelMilitiaOrder(UnitState& u){
+    if(!u.militia || u.militia->phase==MilitiaState::Phase::None)return;
+    if(u.militia->phase==MilitiaState::Phase::ToWorker && u.type==u.militia->militiaType)u.militia->phase=MilitiaState::Phase::None;
+    else u.militia.reset();
+}
+
+bool ScriptSession::militiaCommand(std::uint32_t id,bool returning,std::uint32_t order){
+    if(!alive(id,NativeKind::Unit))return false;auto u=units_.at(id);auto ability=sourceAbility(*u,"Amil");if(!ability.first || u->owner>=config_.players.size())return false;auto available=config_.players[u->owner].abilityAvailable.find(ability.first);if(available!=config_.players[u->owner].abilityAvailable.end() && !available->second)return false;auto spell=spellInfo(ability.first,ability.second);
+    if(u->removing || u->paused || u->stunned() || u->construction || u->unsummon || u->illusion || u->abilitiesDisabled() || number(u->life)<=0 || (u->hidden() && !u->gather.inside) || u->type!=(returning?spell.alternateType:spell.normalType))return false;
+    std::uint32_t hall=0;float nearest=std::numeric_limits<float>::infinity();for(auto& [candidate,building]:units_){if(building->owner!=u->owner || building->removing || building->hidden() || building->construction || number(building->life)<=0 || building->classifications(definitions().unitClasses(building->type)).find("townhall")==std::string::npos)continue;float distance=std::hypot(number(building->x)-number(u->x),number(building->y)-number(u->y));if(distance<nearest){nearest=distance;hall=candidate;}}
+    if(!hall)return false;auto owner=u->owner;auto ownerRevision=u->ownerRevision,deathRevision=u->deathRevision;double remaining=u->militia?u->militia->remaining:spell.duration;if(!cancelCombat(*u) || !alive(id,NativeKind::Unit) || units_.at(id)!=u || u->owner!=owner || u->ownerRevision!=ownerRevision || u->deathRevision!=deathRevision || number(u->life)<=0 || !alive(hall,NativeKind::Unit) || units_.at(hall)->owner!=owner)return false;
+    MilitiaState state;state.phase=returning?MilitiaState::Phase::ToWorker:MilitiaState::Phase::ToMilitia;state.hall=hall;state.ability=ability.first;state.workerType=spell.normalType;state.militiaType=spell.alternateType;state.remaining=remaining;u->militia=state;u->route.clear();u->waypoint=0;u->holding=false;u->currentOrder=order?order:(returning?spell.unorder:spell.order);auto revision=u->combat.revision;ScriptContext context;context.issuedOrder=u->currentOrder;unitEvent(id,38,75,context);return alive(id,NativeKind::Unit) && units_.at(id)==u && u->owner==owner && u->ownerRevision==ownerRevision && u->deathRevision==deathRevision && u->combat.revision==revision && u->militia.has_value();
+}
+
+bool ScriptSession::militiaTownBell(std::uint32_t id,bool returning){
+    if(!alive(id,NativeKind::Unit))return false;auto town=units_.at(id);auto ability=sourceAbility(*town,"Amic");if(!ability.first || town->owner>=config_.players.size() || town->removing || town->paused || town->stunned() || town->construction || town->hidden() || town->abilitiesDisabled() || number(town->life)<=0)return false;auto available=config_.players[town->owner].abilityAvailable.find(ability.first);if(available!=config_.players[town->owner].abilityAvailable.end() && !available->second)return false;auto spell=spellInfo(ability.first,ability.second);auto owner=town->owner;auto ownerRevision=town->ownerRevision,deathRevision=town->deathRevision;if(!cancelCombat(*town) || !alive(id,NativeKind::Unit) || units_.at(id)!=town || town->owner!=owner || town->ownerRevision!=ownerRevision || town->deathRevision!=deathRevision || number(town->life)<=0)return false;town->militiaBell=!returning;town->currentOrder=returning?spell.unorder:spell.order;auto revision=town->combat.revision;ScriptContext context;context.issuedOrder=town->currentOrder;unitEvent(id,38,75,context);if(!alive(id,NativeKind::Unit) || units_.at(id)!=town || town->owner!=owner || town->ownerRevision!=ownerRevision || town->deathRevision!=deathRevision || town->combat.revision!=revision || number(town->life)<=0)return false;town->currentOrder=0;
+    std::vector<std::uint32_t> candidates;for(auto& [candidate,u]:units_)if(candidate!=id && u->owner==owner && std::hypot(number(u->x)-number(town->x),number(u->y)-number(town->y))<=spell.area)candidates.push_back(candidate);for(auto candidate:candidates){if(!alive(id,NativeKind::Unit) || units_.at(id)!=town || town->owner!=owner || town->ownerRevision!=ownerRevision || town->deathRevision!=deathRevision || number(town->life)<=0)break;militiaCommand(candidate,returning);}return true;
+}
+
+void ScriptSession::militiaTick(double delta){
+    std::vector<std::uint32_t> actors;for(auto& [id,u]:units_)if(u->militia)actors.push_back(id);for(auto id:actors){if(!alive(id,NativeKind::Unit))continue;auto u=units_.at(id);if(!u->militia)continue;if(u->removing || number(u->life)<=0){u->militia.reset();continue;}if(u->paused)continue;auto state=*u->militia;if(state.phase==MilitiaState::Phase::None){if(u->type!=state.militiaType){u->militia.reset();continue;}u->militia->remaining-=delta;if(u->militia->remaining<=0)militiaCommand(id,true);continue;}
+        if(u->type!=(state.phase==MilitiaState::Phase::ToMilitia?state.workerType:state.militiaType)){u->militia.reset();continue;}if(!alive(state.hall,NativeKind::Unit)){cancelMilitiaOrder(*u);continue;}auto hall=units_.at(state.hall);if(hall->owner!=u->owner || hall->removing || hall->hidden() || hall->construction || number(hall->life)<=0 || hall->classifications(definitions().unitClasses(hall->type)).find("townhall")==std::string::npos){cancelMilitiaOrder(*u);continue;}float range=std::max(64.f,u->collision+hall->collision+32.f);float distance=std::hypot(number(u->x)-number(hall->x),number(u->y)-number(hall->y));if(distance>range){if(simulationTime_>=state.repath){chase(*u,{hall->x,hall->y},std::max(0.f,range-8));if(u->militia)u->militia->repath=simulationTime_+.25;}continue;}
+        auto owner=u->owner;auto ownerRevision=u->ownerRevision,deathRevision=u->deathRevision,revision=u->combat.revision;auto target=state.phase==MilitiaState::Phase::ToMilitia?state.militiaType:state.workerType;if(!changeUnitForm(id,target,0,false) || !alive(id,NativeKind::Unit) || units_.at(id)!=u || u->owner!=owner || u->ownerRevision!=ownerRevision || u->deathRevision!=deathRevision || u->combat.revision!=revision || !u->militia || u->militia->phase!=state.phase || u->militia->hall!=state.hall)continue;u->currentOrder=0;if(state.phase==MilitiaState::Phase::ToWorker)u->militia.reset();else {u->militia->phase=MilitiaState::Phase::None;u->militia->remaining=state.remaining;}
+    }
+}
+}
