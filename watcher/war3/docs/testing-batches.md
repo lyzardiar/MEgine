@@ -1610,3 +1610,15 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`lan_actions.*`、`lan_simulation.*`、`game_trackable.cpp`、`docs/trackable.md`。指针跟踪及命中经 0x65／0x64 双字段动作编码、时间片校验与会话触发，调用方提供的对象双向映射需覆盖 Trackable。默认主程序尚未接入 LAN 对局或原版对象编号；该连接不能作为完整联机可运行结论。
 
 阶段核对动作截断和无效 ID、稳定映射／创建顺序、同帧多个事件、触发回调／删除、发送队列与断线、双端同步、鼠标/UI 优先级和原版抓包；Win32 Release 产品增量编译通过，未执行运行或互通验证。
+
+## 模型脚印与水花待验证
+
+路径：`model.h/.cpp`、`model_particles.cpp`、`game_model_sound.cpp`、`game_view.h/.cpp`、`game_effects.cpp`、`docs/model-event-sounds.md`。FPT 动画节点驱动源 SplatData 图集、地面脚印和水面水花／音效；地表 footprints 控制陆地脚印。
+
+阶段核对左右脚／骨骼动画／多模型实例、地表标志与地图覆盖、深浅水／岸边、纹理异步读取与切图释放、透明图集／旋转／坡面／迷雾／暂停／动画跳帧、声音设备与大量单位性能；离屏／全局事件、原版视觉和精确行为仍待实现或验证。Win32 Release 产品增量编译通过，未运行或验收。
+
+## 自研客户端局域网实验流程待验证
+
+路径：`lan_browser.*`、`lan_host_ui.*`、`lan_lobby.*`、`lan_match_loading.*`、`lan_local_identity.*`、`session_network_identity.cpp`、`session.*`、`main.cpp`、`platform.*`、`docs/lan-experimental-flow.md`、`docs/lan-local-identity.md`。显式实验模式连接大厅、地图加载和时间片对局；内部编号与部分状态摘要只供相同版本自研客户端使用。
+
+阶段核对双端建房／查找／加入、地图传输与加载屏障、选区／移动／技能／Trackable、退出／断线／失败／取消、最小化和过场、对象创建销毁／本地分支、状态分歧、长期同步与大图性能。房间前缀无法验证对端身份，原版对象编号、状态校验及互通均未实现；Win32 Release 产品增量编译通过，未执行双端运行。

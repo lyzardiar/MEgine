@@ -129,7 +129,15 @@ class GameView {
     std::uint32_t widget(float x,float y,bool items) const;
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void drawEffects(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
-    void modelSounds(Model& model,ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const std::array<float,3>& position);
+    struct FootprintInfo {std::string texture,water,sound;float scale=0,life=0,decay=0;unsigned rows=0,columns=0,blend=0,lifeStart=0,lifeEnd=0,lifeRepeat=1,decayStart=0,decayEnd=0,decayRepeat=1;std::array<std::array<unsigned,4>,3> colors{};};
+    struct Footprint {const FootprintInfo* source=nullptr;float x=0,y=0,angle=0;std::uint64_t born=0;bool water=false;};
+    std::map<std::string,FootprintInfo> footprintInfo_;
+    std::map<std::uint32_t,bool> footprintTerrain_;
+    std::vector<Footprint> footprints_;
+    bool footprintDataLoaded_=false;
+    void modelSounds(Model& model,ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& world);
+    void modelFootprint(const std::string& code,const std::array<float,3>& position,float angle,std::uint64_t clock);
+    void drawFootprints(bool water,const DirectX::XMMATRIX& vp,std::uint64_t clock);
     std::set<std::string> failedModelSounds_;
     void drawTrackables(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
     void trackableInput(GameInput& input);

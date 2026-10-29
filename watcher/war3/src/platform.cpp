@@ -85,6 +85,7 @@ Options Options::parse() {
         else if (argument == L"--config-check") options.configCheck = true;
         else if (argument == L"--main-check") options.mainCheck = true;
         else if (argument == L"--play") options.play = true;
+        else if (argument == L"--experimental-local-lan") options.experimentalLocalLan = true;
         else if(argument==L"--simulate-ms"){auto text=value(i);size_t end=0;auto n=std::stoul(text,&end);if(end!=text.size() || n>60000)throw std::runtime_error("Invalid simulation interval");options.simulateMs=unsigned(n);}
         else if (argument == L"--time-ms") {auto text=value(i);size_t end=0;auto n=std::stoull(text,&end);if(end!=text.size() || n>86400000)throw std::runtime_error("Invalid animation time");options.timeMs=n;}
         else throw std::runtime_error("Unknown option: " + utf8(argument));

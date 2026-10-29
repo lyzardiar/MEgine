@@ -49,6 +49,7 @@ class LanHostUi {
 public:
     LanHostUi(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string playerName);
     std::string draw(const UiInput& input,std::wstring_view characters);
+    std::string pollMinimized();
     void enableMatchHandoff() {handoffEnabled_=true;}
     std::optional<LanHostHandoff> takeHandoff();
     const std::optional<MapInfo>& mapInfo() const {return mapInfo_;}

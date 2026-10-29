@@ -37,6 +37,7 @@ struct Options {
     bool configCheck = false;
     bool mainCheck = false;
     bool play = false;
+    bool experimentalLocalLan = false;
     std::optional<std::uint64_t> timeMs;
     std::optional<unsigned> simulateMs;
     static Options parse();

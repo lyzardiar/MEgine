@@ -8,6 +8,7 @@
 #include <vector>
 
 namespace war3 {
+inline constexpr const char* experimentalLanPrefix="[M3-LAB] ";
 struct LanGame {
     std::string address,name,mapPath,hostName;
     std::uint16_t port=0,width=0,height=0;

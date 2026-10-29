@@ -24,6 +24,7 @@ class LanMatchLoading {
     std::unique_ptr<LanHost> host_;
     std::unique_ptr<LanJoin> join_;
     std::unique_ptr<GameData> data_;
+    std::unique_ptr<ScriptSession> prepared_;
     std::uint64_t mapRequest_=0,loadRequest_=0;
     LanLoadingPhase phase_=LanLoadingPhase::Preparing;
     std::string error_;
@@ -38,6 +39,7 @@ public:
     LanMatchLoading(const LanMatchLoading&)=delete;
     LanMatchLoading& operator=(const LanMatchLoading&)=delete;
     bool pump(Renderer& renderer,const Prepared& onPrepared);
+    bool maintainConnection();
     void cancel();
     std::optional<LanMatchReady> takeReady();
     LanLoadingPhase phase() const {return phase_;}
