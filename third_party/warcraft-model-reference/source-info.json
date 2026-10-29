@@ -139,6 +139,12 @@
       "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
       "path": "src/viewer/handlers/mdx/ribbonemitterobject.ts",
       "sha256": "0adbd167157047ff36c13eaabfbc77329221b86321d0c4faaa5d049dc16848db"
+    },
+    {
+      "repository": "https://github.com/flowtsohg/mdx-m3-viewer",
+      "commit": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+      "path": "src/viewer/handlers/mdx/eventobjectemitterobject.ts",
+      "sha256": "c73b043430534bdebdc0b7d0ff538c74bd6afed50b35a8e8ce86fa0e3ede0ede"
     }
   ],
   "licenses": [

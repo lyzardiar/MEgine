@@ -2634,3 +2634,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役任务空句柄（待验证）
 
 路径：`session_quest.cpp`、`docs/campaign-flow.md`。任务／目标句柄失效时返回空结果或忽略修改；Win32 Release 产品合并编译通过。隔离探针通过 KillUnit 加速触发 Human01 首领组死亡，进入胜利对话框，“继续”产生 Human02 换关请求，见 `tmp/docs-artifacts/war3/human01-victory-1030/victory-continue.log`；未进行完整手动通关或加载第二关。阶段验证空／错误类型／销毁句柄、任务目标创建与修订、事件顺序、真实战役操作及换关加载，并对照原版接口。
+
+### 模型 SPL 地表事件（待验证）
+
+路径：`model_particles.cpp`、`game_model_sound.cpp`、`game_view.h`、`docs/model-event-sounds.md`、`third_party/warcraft-model-reference/source-info.json`。游戏模型与附件的 SPL 动画事件接入源 SplatData 贴花及纹理消费；Win32 Release 产品合并编译通过。阶段验证实际原版模型的事件及来源、全局序列／循环／跳帧、附件变换、音效、视野和离屏、水陆高度、纹理加载／释放、GPU 画面与性能；主菜单等界面场景及原版精度尚未验收。
