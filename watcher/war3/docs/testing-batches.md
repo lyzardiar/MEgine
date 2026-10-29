@@ -2902,3 +2902,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 亡灵首关空单位编组（待验证）
 
 路径：`src/session_entities.cpp`、`docs/campaign-undead01-group.md`。隔离探针越过原图的空单位编组异常；集中验证句柄边界、难度和真实开局，见 [空单位编组](campaign-undead01-group.md)。
+
+### 亡灵首关空单位动画（待验证）
+
+路径：`src/session_visual.cpp`、`docs/campaign-undead01-animation.md`。隔离探针越过空单位动画队列异常；集中验证有效／失效单位队列、动画顺序和真实开场，见 [空单位动画](campaign-undead01-animation.md)。
