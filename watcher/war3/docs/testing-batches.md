@@ -2846,3 +2846,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### Human04 失效迷雾修改器（待验证）
 
 路径：`src/session_fog.cpp`、`docs/campaign-human04-fog.md`。独立 Win32 x86 探针越过失效句柄异常，原图约 40 秒恢复控制并推进至 400 秒；集中验证有效／空／失效句柄、真实切关与视野表现，见 [Human04 迷雾句柄](campaign-human04-fog.md)。
+
+### 战争践踏地形波纹（待验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_area_spells.cpp`、`src/world.h`。集中验证原图及派生技能的伤害、眩晕和波纹、原版字段覆盖、并发上限与同步，见 [战争践踏地形波纹](war-stomp-terrain.md)。本次未编译或运行。

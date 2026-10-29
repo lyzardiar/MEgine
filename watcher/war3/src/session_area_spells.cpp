@@ -28,6 +28,7 @@ void ScriptSession::areaSpell(std::uint32_t source,const SpellInfo& s,WorldPoint
     if(s.kind==SpellKind::HowlTerror || s.kind==SpellKind::Roar){roarEffect(source,s,owner);return;}
     if(wardSpell(s.kind)){summonSpell(source,s,point,owner);return;}
     if(s.kind==SpellKind::Silence){silenceEffect(source,s,point,owner);return;}
+    if(s.kind==SpellKind::WarStomp && s.area>0 && requireWorld().canAddDeformation()){TerrainDeformation ripple;ripple.x=number(point.x);ripple.y=number(point.y);ripple.radius=s.area;ripple.depth=-50;ripple.duration=.3;ripple.count=1;ripple.spaceWaves=1;ripple.timeWaves=2;ripple.startRadius=1;ripple.limitNegative=true;ripple.started=simulationTime_;requireWorld().addDeformation(ripple);}
     if(s.kind==SpellKind::Dispel){auto targets=spellTargets(source,s,point,owner);for(auto target:targets){if(!alive(source,NativeKind::Unit))break;if(alive(target,NativeKind::Unit))dispelSpell(source,target,s);}spellVisual(s,"EffectArt",0,point);return;}
     if(s.kind==SpellKind::WaterElemental || s.kind==SpellKind::SpiritWolf || s.kind==SpellKind::SerpentWard || s.kind==SpellKind::Treants || s.kind==SpellKind::Scout || s.kind==SpellKind::VengeanceAvatar || s.kind==SpellKind::Grizzly || s.kind==SpellKind::Quilbeast || s.kind==SpellKind::Hawk || s.kind==SpellKind::LavaSpawn){summonSpell(source,s,point,owner);return;}
     auto victims=spellTargets(source,s,point,owner);float allocated=0;unsigned count=0;

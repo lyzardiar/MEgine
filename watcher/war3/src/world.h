@@ -111,6 +111,7 @@ public:
     float deformationBound() const;
     bool deformationIntersects(float minX,float minY,float maxX,float maxY) const;
     std::uint64_t deformationRevision() const {return deformationRevision_;}
+    bool canAddDeformation() const {return deformations_.size()<256;}
     void addDeformation(TerrainDeformation ripple);
     void stopDeformation(std::uint32_t handle,double duration);
     void stopDeformations();
