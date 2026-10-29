@@ -2674,3 +2674,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 地洞工人返工（待验证）
 
 路径：`transport.h`、`session_orc_cargo.cpp`、`tests/orc_cargo_tests.cpp`、`docs/orc-cargo.md`。地洞征召可保存并在离舱后恢复修桥、已开工施工和途中建造；Win32 Release 产品合并编译通过，新增 work-bridge／work-build 消费者检查未运行。阶段验证命令被替换、工作对象死亡／易主／移除、资源及空间不足、工人死亡／暂停／易主、事件重入、多人同步与原版返工时序；Achd 坠毁规则仍未实现。
+
+### 建筑占地内的施工接近（待验证）
+
+路径：`session_construction.cpp`、`docs/construction.md`。工人位于待建建筑占地时按距离尝试四侧，路径终点必须处于占地外且在施工范围；旧核心库加修复源码的隔离探针中，Human02 实际建造兵营、两座农场并训练六名步兵后，原脚本在 281 秒完成基地目标，金币和木材已调高，见 `tmp/docs-artifacts/war3/human02-build-1031/fixed.log`。阶段验证不同建筑尺寸、地形／窄路／动态单位、四侧不可达、施工协作／修理、回调与更令、真实窗口、性能及原版路径。
