@@ -2666,3 +2666,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 模型 UBR 地表事件（待验证）
 
 路径：`model_particles.cpp`、`game_model_sound.cpp`、`game_effects.cpp`、`game_view.h`、`docs/model-event-sounds.md`。模型 UBR 事件接入原 UberSplatData 和出生／停留／消退贴花，Win32 Release 产品合并编译通过；原资源抽样确认多族建筑及烈焰风暴模型包含 UBR。阶段验证事件时序与重复、颜色和透明度、旋转／缩放、地形／水面／迷雾、纹理加载和释放、视口与暂停、源声音、密集场景性能及原版 GPU 画面；回归原有 FPT／SPL 的时间和图集。
+
+### 英雄经验条（待验证）
+
+路径：`session.h`、`session_hero.cpp`、`game_loading.cpp/.h`、`game_commands.cpp`、`docs/heroes.md`。单选英雄经验条读取源升级阈值和皮肤纹理，显示当前等级进度及悬停说明；Win32 Release 产品合并编译通过。阶段验证经验增加／降级／满级、自定义阈值与英雄、失效句柄、皮肤覆盖和缺失、单选切换／提示遮挡、真实窗口与原版坐标和显示。

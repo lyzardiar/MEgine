@@ -19,3 +19,5 @@ SetAltMinimapIcon写入WorldEnvironment，地图归档资源经现有后台队�
 待测还包括全部数值/舍入、绝对设值/负值、增减等级/重入、技能需求与永久/附加属性语义、源规则集选择，以及真实HUD显示。原始构建和开局日志在 `tmp/docs-artifacts/war3/hero-{build.log,dota.log}`。
 
 祭坛队列、脚本ReviveHero/Loc、原对象成长/库存、源价格/退款/恢复、事件和AI新增策略的当前实现与边界见[英雄复活](hero-revival.md)；4组新机制最小检查不替代本页既有英雄成长专项及完整原版验收。
+
+单选英雄时，头像下方的经验进度条读取实际英雄经验及 `NeedHeroXP` 源阈值，等级上限显示满条；悬停显示当前经验与下一等级阈值。使用当前种族／地图覆盖皮肤中的 `SimpleXpBarConsole` 和 `SimpleXpBarBorder`，缺失纹理时保留纯色进度。经验与经验暂停仍由真实英雄状态驱动；界面位置、原版满级／溢出和源模型表现待集中对照。

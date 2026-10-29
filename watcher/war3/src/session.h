@@ -1069,6 +1069,7 @@ public:
     World* world() {return world_.get();}
     bool unitSelectable(std::uint32_t handle);
     std::optional<UnitCombatDisplay> unitCombatDisplay(std::uint32_t handle);
+    std::optional<std::array<int,3>> heroExperienceDisplay(std::uint32_t handle);
     void clearPlayerOrders(std::uint32_t handle);
     bool queuePlayerOrder(std::uint32_t handle,const PlayerCommand& command);
     bool idleWorker(std::uint32_t handle,unsigned player);
