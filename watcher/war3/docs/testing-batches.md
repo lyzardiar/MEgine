@@ -2934,3 +2934,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### PREM 模型粒子（待验证）
 
 路径：`src/model.*`、`src/model_data.h`、`src/model_particles.cpp`、`src/model_pose.cpp`、`tests/effects_tests.cpp`、`third_party/warcraft-model-reference/`。Win32 Release 产品编译通过，原版闪电箭 Death 序列隐藏窗口检查发射和退休通过；集中验证原版视觉、动画、嵌套、离屏、资源释放和性能，见 [模型粒子与特效](effects.md)。
+
+### 资料片第六章空单位位置（待验证）
+
+路径：`src/session_entities.cpp`、`docs/campaign-null-unit-position.md`。独立原图探针越过空单位位置异常并推进至 400 秒；集中验证有效／失效单位与位置、商队剧情和真实窗口，见 [空单位位置](campaign-null-unit-position.md)。
