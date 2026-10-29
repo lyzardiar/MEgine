@@ -2966,3 +2966,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 声音归档 PCM 尾部恢复（待验证）
 
 路径：`src/archive.cpp`、`src/archive.h`、`src/sound.cpp`、`src/session_sound.cpp`、`tests/archive_tests.cpp`。定向夹具 1 项通过，亡灵第三关静音隔离探针推进至 400 秒；集中验证产品窗口实际播放、尾部语义、原版听感、战役流程和切图资源释放，见 [PCM WAV 尾部读取恢复](audio-wav-tail-recovery.md)。
+
+### 原版阴影选项（待验证）
+
+路径：`src/front_options.cpp`、`src/game_flow_ui.cpp`、`src/game_flow_ui.h`、`src/game_preferences.cpp`。两处选项使用原版 OFF／ON；集中验证窗口输入、确认与取消、旧设置迁移、重启、阴影画面及性能，见[阴影选项](shadow-options.md)。
