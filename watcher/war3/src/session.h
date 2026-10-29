@@ -1085,7 +1085,7 @@ public:
     bool train(std::uint32_t unit,std::uint32_t type);
     bool cancelProduction(std::uint32_t unit,size_t index=0,bool refund=true);
     bool setRally(std::uint32_t unit,WorldPoint point,std::uint32_t target=0);
-    void chat(unsigned player,const std::string& message,ChatChannel channel=ChatChannel::All);
+    void chat(unsigned player,const std::string& message,ChatChannel channel=ChatChannel::All,std::optional<unsigned> recipient={});
     const FogGrid& fog(unsigned player);
     bool unitInvisible(std::uint32_t unit);
     bool unitDetected(std::uint32_t unit,unsigned player);
