@@ -23,3 +23,5 @@
 `SetDefaultDifficulty` 更新本次会话的默认难度，`GetDefaultDifficulty` 返回该值；原 Blizzard.j 胜利回调可通过现有 `SetGameDifficulty` 恢复默认难度。当前实现允许 0–3，不直接修改当前难度或持久化战役界面选择；原版默认值、持久化与异常参数行为仍待对照。
 
 Human01 胜利流程中的 `udg_QuestOrcs` 在地图脚本中未赋值，任务完成接口需接受空句柄；任务／目标句柄解析失败时的操作与查询使用安全返回。原版 `QuestSetCompleted` 入口 `0x6f1f2550` 与 `QuestItemSetCompleted` 入口 `0x6f1f24d0` 在句柄解析失败时直接返回，原始指令记录于 `tmp/docs-artifacts/war3/human01-victory-1030/original-quest-natives.txt`。隔离探针在玩家获得控制后以 `KillUnit` 触发首领组死亡事件，推进至胜利对话框；选择继续后得到 `Maps\Campaign\Human02.w3m` 换关请求，见 `tmp/docs-artifacts/war3/human01-victory-1030/victory-continue.log`。该探针不覆盖手动战斗、真实窗口、第二关载入及完整战役。
+
+Human02 开场使用从未赋值的 `udg_Knight01`，将空单位传入 `GetUnitLoc`；无效单位现在返回空 location，读取无效位置的 X/Y 返回零，移除无效位置不产生动作。Warcraft III 1.27 Game.dll 的 `GetUnitLoc`（`0x6f1e6280`）、`GetLocationX/Y`（`0x6f1e3240/0x6f1e3260`）和 `RemoveLocation`（`0x6f1f2d80`）的句柄解析失败分支见 `tmp/docs-artifacts/war3/human02-1030/original-location-natives.txt`。隔离探针载入 Human02 并推进 400 秒，在 60.25 秒采样时玩家控制已恢复，日志见 `tmp/docs-artifacts/war3/human02-1030/locfixed.log`；这是未携带 Human01 gamecache、未操作战斗的空闲开局，不代表真实换关或完整关卡通过。

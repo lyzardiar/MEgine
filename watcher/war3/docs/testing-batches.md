@@ -2638,3 +2638,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 模型 SPL 地表事件（待验证）
 
 路径：`model_particles.cpp`、`game_model_sound.cpp`、`game_view.h`、`docs/model-event-sounds.md`、`third_party/warcraft-model-reference/source-info.json`。游戏模型与附件的 SPL 动画事件接入源 SplatData 贴花及纹理消费；Win32 Release 产品合并编译通过。阶段验证实际原版模型的事件及来源、全局序列／循环／跳帧、附件变换、音效、视野和离屏、水陆高度、纹理加载／释放、GPU 画面与性能；主菜单等界面场景及原版精度尚未验收。
+
+### Human02 空位置接口（待验证）
+
+路径：`session_entities.cpp`、`session_world.cpp`、`tests/world_tests.cpp`、`docs/campaign-flow.md`。无效单位的 GetUnitLoc 返回空位置，坐标查询返回零，移除无效位置安全返回；Win32 Release 产品合并编译通过。隔离战役探针从原 Human02 main 推进至 400 秒，55.25 秒玩家控制为关闭、60.25 秒为开启，见 `tmp/docs-artifacts/war3/human02-1030/locfixed.log`；未载入 Human01 缓存、未操作战斗或验证窗口。阶段验证空／错误类型／销毁句柄、真实位置和事件、源地图开场与完整换关、缓存继承和原版边界。
