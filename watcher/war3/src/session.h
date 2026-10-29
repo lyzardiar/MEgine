@@ -197,6 +197,7 @@ class ScriptSession {
     IndicatorState indicators_;
     std::array<std::unique_ptr<ScriptAI>,16> ais_;
     std::array<std::uint32_t,16> aiPauseDepth_{};
+    double nextNeutralCombatSpells_=0;
     void pauseAI(unsigned player,bool paused);
     void bindAiControlNatives();
     void bindAiGuardNatives(ScriptAI& ai);

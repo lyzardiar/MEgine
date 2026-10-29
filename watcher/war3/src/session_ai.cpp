@@ -69,5 +69,6 @@ void ScriptSession::aiTick(){
             aiCombatSpells(ai,id);
         }if(simulationTime_>=ai.nextItems)ai.nextItems=simulationTime_+5;
     }
+    if(simulationTime_>=nextNeutralCombatSpells_ && !aiPauseDepth_[12]){nextNeutralCombatSpells_=simulationTime_+1;ScriptAI neutral;neutral.owner=12;std::vector<std::uint32_t> guards;for(auto& [id,u]:units_)if(u->owner==12 && u->creepGuard && u->combat.target && !u->removing && number(u->life)>0)guards.push_back(id);for(auto id:guards)if(alive(id,NativeKind::Unit) && units_.at(id)->owner==12 && units_.at(id)->creepGuard)aiCombatSpells(neutral,id);}
 }
 }
