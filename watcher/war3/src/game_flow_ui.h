@@ -16,6 +16,8 @@ class GameFlowUi {
     std::uint64_t dialogRevision_=0;
     size_t dialogCapacity_=0,dialogScroll_=0,helpScroll_=0;
     unsigned scoreTab_=0,gameSpeedDraft_=50;
+    std::array<int,4> scoreSort_{{-1,-1,-1,-1}};
+    std::array<bool,4> scoreAscending_{};
     bool appExit_=false;
     std::optional<bool> networkLeave_;
     GameCameraPreferences cameraPreferences_{},cameraDraft_{};
