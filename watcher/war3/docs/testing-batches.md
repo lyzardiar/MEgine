@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 结算页签与离屏附件动画待验证
+
+路径：`src/game_flow_ui.h/.cpp`、`src/model.h`、`src/model_particles.cpp`、`src/game_view.cpp`、`src/game_effects.cpp`；说明见 `game-flow.md` 和 `effects.md`。Win32 Release 客户端增量编译通过。阶段操作胜负结算，核对概况、单位／英雄／资源四页及原字符串、分数／科技计算、空英雄与多玩家、页签切换、不同窗口尺寸和原版画面；排序、队伍和回放保存仍待完成，资源交换列当前仅展示黄金收支。核对视野内的离屏单位、特效、技能与武器弹道附件切回、模型切换、显隐、暂停、播放与声音同步、粒子重建、性能及原版画面；迷雾外与资源就绪前的历史尚未重建。窗口、GPU、声音、性能和原版对照待执行。
+
 ## 月亮石、荒芜指纹与结构化线程入口待验证
 
 路径：`src/game_clock.h/.cpp`、`src/session_item_use.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_tick.cpp`、`src/session_network_identity.cpp`、`src/world.h/.cpp`、`src/world_blight.cpp`、`src/world_path.cpp`、`src/jass_runtime.h/.cpp`、`src/jass_threads.h/.cpp`、`src/session_callbacks.cpp`；测试目标 `war3_clock_tests`、`war3_consumption_tests`、`war3_blight_fingerprint_tests`、`war3_jass_thread_tests`。阶段核对月亮石实际消费、到期时间事件、重用、暂停、脚本设时及原版行为；核对 WPM／无 WPM 的写入、增删、地图切换和联机摘要；执行 JASS 入口、跨运行时、等待、取消及触发器回归。时间行为为实现假设，指纹有碰撞概率且不涵盖其他寻路位；Fiber、等待关系和宿主调用栈仍不可恢复存档。Win32 Release 客户端及四个相关测试目标编译通过；JASS 结构化入口、跨运行时归属、嵌套等待与取消的最小检查 4 通过、0 失败。阶段执行 `war3_blight_fingerprint_tests.exe`、`war3_jass_thread_tests.exe`；时钟命令见 `game-clock.md`，月亮石物品夹具使用 `consumption.md` 的夹具命令并将模式改为 `moon`。月亮石与荒芜专项、联机、真实对局及原版对照待执行。说明见 `moonstone.md`、`arcane-blight-items.md` 和 `save-runtime-foundation.md`。

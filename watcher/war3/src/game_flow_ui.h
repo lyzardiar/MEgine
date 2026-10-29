@@ -15,7 +15,7 @@ class GameFlowUi {
     std::uint32_t dialogId_=0;
     std::uint64_t dialogRevision_=0;
     size_t dialogCapacity_=0,dialogScroll_=0,helpScroll_=0;
-    unsigned scoreTab_=1,gameSpeedDraft_=50;
+    unsigned scoreTab_=0,gameSpeedDraft_=50;
     bool appExit_=false;
     std::optional<bool> networkLeave_;
     GameCameraPreferences cameraPreferences_{},cameraDraft_{};
@@ -23,6 +23,7 @@ class GameFlowUi {
     GameVideoPreferences videoPreferences_{},videoDraft_{};
     std::string sliderDrag_;
     std::vector<std::string> scoreModels_;
+    std::array<std::array<std::string,25>,16> scoreCache_{};
     std::string helpText_,tipsText_;
     void menuPanel(Panel panel);
     void optionsPanel(Panel panel);

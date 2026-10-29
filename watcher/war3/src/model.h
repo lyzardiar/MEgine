@@ -21,6 +21,7 @@ class ModelInstance {
     std::vector<std::unique_ptr<ModelInstance>> children_;
     std::vector<std::uint64_t> childStarts_;
     std::vector<bool> childVisible_;
+    void discardParticles();
     friend class Model;
 public:
     ModelInstance();
@@ -65,6 +66,8 @@ public:
     size_t particleEmitters() const;
     size_t ribbonEmitters() const;
     bool hasAttachment(const std::string& name) const;
+    bool hasAttachmentModels() const;
+    void advanceAttachmentClocks(ModelInstance& instance,std::uint64_t elapsed,std::uint64_t clock,bool geometry=true) const;
     std::vector<std::string> attachmentModels() const;
     float particleLifetime() const;
     bool sequenceLoops() const;
