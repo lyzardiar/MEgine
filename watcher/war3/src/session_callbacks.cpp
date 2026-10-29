@@ -75,6 +75,7 @@ void ScriptSession::bindCallbackNatives() {
     bind("GetEventPlayerState","playerstate",{},[this](auto& vm,auto){return vm.handle("playerstate",contexts_.empty()?0:contexts_.back().playerState);});
     bind("TriggerRegisterPlayerUnitEvent","event",{"trigger","player","playerunitevent","boolexpr"},[this,registration](auto&,auto args){ScriptEvent value;value.kind=ScriptEvent::Kind::PlayerUnit;value.target=playerId(args[1]);value.event=args[2].bits;value.filter=expression(args[3]);return registration(args[0],std::move(value));});
     bind("TriggerRegisterUnitEvent","event",{"trigger","unit","unitevent"},[this,registration](auto&,auto args){unit(args[1]);ScriptEvent value;value.kind=ScriptEvent::Kind::Unit;value.target=args[1].bits;value.event=args[2].bits;return registration(args[0],std::move(value));});
+    bind("TriggerRegisterFilterUnitEvent","event",{"trigger","unit","unitevent","boolexpr"},[this,registration](auto&,auto args){unit(args[1]);ScriptEvent value;value.kind=ScriptEvent::Kind::Unit;value.target=args[1].bits;value.event=args[2].bits;value.filter=expression(args[3]);return registration(args[0],std::move(value));});
     bind("TriggerRegisterGameEvent","event",{"trigger","gameevent"},[registration](auto&,auto args){ScriptEvent value;value.kind=ScriptEvent::Kind::Game;value.event=args[1].bits;return registration(args[0],std::move(value));});
 }
 }

@@ -17,7 +17,36 @@ integer probe_victory_events=0
 integer probe_leave_events=0
 dialog probe_end_dialog=null
 button probe_end_button=null
+unit probe_filter_unit=null
+integer probe_filter_calls=0
+integer probe_filter_events=0
+integer probe_filter_denied_events=0
 endglobals
+function ProbeUnitFilter takes nothing returns boolean
+    set probe_filter_calls=probe_filter_calls+1
+    return GetFilterUnit()==probe_filter_unit and GetTriggerUnit()==probe_filter_unit
+endfunction
+function ProbeUnitDeny takes nothing returns boolean
+    return false
+endfunction
+function ProbeFilteredEvent takes nothing returns nothing
+    if GetTriggerUnit()!=probe_filter_unit or GetTriggerEventId()!=EVENT_UNIT_DEATH then
+        call ExecuteFunc("MatchFailure_unit_filter_context")
+    endif
+    set probe_filter_events=probe_filter_events+1
+endfunction
+function ProbeDeniedEvent takes nothing returns nothing
+    set probe_filter_denied_events=probe_filter_denied_events+1
+endfunction
+function ProbeFilterUnitSetup takes unit whichUnit returns nothing
+    local trigger t=CreateTrigger()
+    set probe_filter_unit=whichUnit
+    call TriggerRegisterFilterUnitEvent(t,whichUnit,EVENT_UNIT_DEATH,Filter(function ProbeUnitFilter))
+    call TriggerAddAction(t,function ProbeFilteredEvent)
+    set t=CreateTrigger()
+    call TriggerRegisterFilterUnitEvent(t,whichUnit,EVENT_UNIT_DEATH,Filter(function ProbeUnitDeny))
+    call TriggerAddAction(t,function ProbeDeniedEvent)
+endfunction
 function ProbeDialogEvent takes nothing returns nothing
     if GetClickedDialog()!=probe_dialog or GetClickedButton()!=probe_button or GetTriggerPlayer()!=Player(0) then
         call ExecuteFunc("MatchFailure_dialog_context")

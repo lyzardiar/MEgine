@@ -9,7 +9,7 @@
 - D3D9消费头/尾四边形、模型空间、线发射、XYQuad、远近排序、分段颜色/尺寸/透明度、图集区间/重复和五种源过滤模式。视觉随机不进入游戏模拟随机数。
 - ATCH保存名字/ID/可见性及源节点变换，挂点按目标当前动画/世界变换求值；origin使用模型原点，未找到的其他挂点记录明确诊断。附件Path指定的子模型仍待实现。
 - AddSpecialEffect、AddSpecialEffectLoc、AddSpecialEffectTarget、DestroyEffect提供实际effect句柄、模型/位置或widget挂接、销毁状态及typed hashtable。句柄销毁后，场景保留Death动画或现有粒子排空所需的状态，再清理实例。
-- GetAbilityEffect／GetAbilitySound 按技能 ID 查询源配置及地图覆盖；AddSpellEffect 的坐标、地点和目标形式按技能配置创建实际场景特效，沿用 effect 句柄及销毁生命周期。闪电类型需通过独立闪电接口创建；索引、空值、原版行为和地图实际运行待阶段验证。
+- GetAbilityEffect／GetAbilitySound 按技能 ID 查询源配置及地图覆盖；AddSpellEffect 的坐标、地点和目标形式按技能配置创建场景特效，沿用 effect 句柄及销毁生命周期。特效索引越界取最后一项，未知类型使用默认字段；地点或目标无效时返回空句柄。配置、空字符串和地图实际运行待阶段验证。
 - 法术CasterArt、TargetArt、EffectArt和状态buff的TargetArt进入同一源模型消费者；状态刷新保留实例，驱散/到期/死亡释放状态视觉。已实现技能的MissileArt/弧度与波形模型连接实时位置、方向、源出生高度/命中高度及独立时间。
 - 选中英雄的技能特效模型、实际生效模型和纹理通过现有后台读取/分帧上传队列准备。原资源只读，内存直接读取；没有新增解包或转换目录。
 
@@ -20,6 +20,8 @@
 格式、发射、粒子和图集参考[flowtsohg/mdx-m3-viewer](https://github.com/flowtsohg/mdx-m3-viewer)，固定提交`2ff0bc00c6363f425016e23d88c0fb2929d3b3cc`。具体文件和SHA256登记在仓库根目录third_party/warcraft-model-reference/source-info.json，MIT版权许可保留在同目录LICENSE-mdx-m3-viewer.txt。新C++代码不调用上游JavaScript运行时。更新时固定新提交、核对对应记录/发射/图集语义、保留许可、更新摘要并执行受影响的阶段验证。
 
 当前使用本机1.27.0.52240原MPQ/地图中的模型和纹理。原始参考文件、22个相关效果模型的结构盘点、构建及最小导入记录均保存在tmp/docs-artifacts/war3/effects/，不纳入版本。
+
+技能特效查询依据固定版 Game.dll（SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`）入口 `0x6f1e15d0`、类型分派 `0x6f1e1520` 及创建入口 `0x6f1da2f0`。原件空数组返回 null；源配置中的显式空文本是否生成非 null 空字符串仍待对照。字符串入口当前只识别四字节 ID；原件通过会话字符串表查找，表的来源、有效键和映射仍待确认及实现。
 
 ## 验证与剩余范围
 
