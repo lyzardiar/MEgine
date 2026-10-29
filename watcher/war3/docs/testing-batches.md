@@ -2756,3 +2756,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### JASS 字符串哈希（待验证）
 
 路径：`src/session_text.cpp`、`tests/session_tests.cpp`、`docs/jass.md`。集中验证空值、大小写／斜杠、内嵌 NUL、1023 字节边界、不同长度和多字节编码，并覆盖地图哈希表及双端；原版 Storm 七个 ASCII 返回值与独立算法一致，客户端新增断言尚未编译或运行。
+
+### 电脑吞噬、寄生与死亡之指（待验证）
+
+路径：`src/session_ai_armies.cpp`；说明见 [电脑施法](ai-devour-parasite.md)。集中验证目标选择、技能条件、货舱与伤害、事件重入、长局和双端确定性，并对照原版 AI；本次未编译或运行。
