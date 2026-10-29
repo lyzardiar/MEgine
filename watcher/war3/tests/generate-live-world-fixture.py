@@ -43,6 +43,7 @@ function NativeProbeSpawn takes nothing returns nothing
     local location fogLoc=Location(x,y)
     local hashtable h=InitHashtable()
     local gamecache c=InitGameCache("native-probe.w3v")
+    call NativeProbeAssert(Pow(3.0,2.0)==9.0 and Pow(-2.0,3.0)==-8.0 and Pow(9.0,0.5)==3.0,"pow_values")
     set native_probe_unit=CreateUnit(Player(0),'ogru',x,y,90)
     call SetUnitColor(native_probe_unit,ConvertPlayerColor(1))
     call SetUnitVertexColor(native_probe_unit,180,255,200,128)

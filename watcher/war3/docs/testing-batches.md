@@ -1954,3 +1954,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 原版 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`；REA 证据 `ev_cbbbda324c9a7891de147bec6ae7b849cf013107273b043d058071cd97ad0b3d`、`ev_56b27f56bec8efd912e38387ac2617dffeeb90ea21e3d1bb2a93412d7f04e9b1`、`ev_f385bebfa3568eabbb0cbe19f3b0b7a134597367073c280f816822565db2f8f0`、`ev_eed52956f1519d8865d342a15d3de269a9e392e3849d97b53e225080f309d697` 和 `ev_f88f18ba19415b8ef6df5c8a06b80de7aa1185a3641049128afa7f9d479bde60` 表明三个入口直接写入玩家位图并分别处理 1／2／4 状态；共享掩码来源及刷新后的持续性尚未确认。
 
 脚本迷雾补充：连续设置不同玩家的状态时，保留未受影响玩家当前有效的网格版本；此前因真实视野变化而失效的网格仍重新计算。夹具增加玩家 0 可见、玩家 1 遮蔽后再次查询玩家 0 的场景。Win32 Release 产品增量编译与夹具语法检查通过；专项行为、共享接收者和多玩家纹理仍待合并验证。
+
+## JASS Pow 待验证
+
+路径：`session_game.cpp`、`tests/generate-live-world-fixture.py`、`docs/jass.md`。`Pow(real, real)` 返回计算所得单精度实数；DotA `Scripts/war3map.j` 使用该函数计算技能距离。
+
+阶段执行 live-world 夹具及消费者，核对正数、负底数整数指数、小数指数、零、溢出和非法输入，并对照原版结果与 DotA 技能范围；夹具新增正整数、负整数和平方根三种情况。当前尚未运行专项或取得原版浮点精度证据。
