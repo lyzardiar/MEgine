@@ -92,6 +92,7 @@ class ScriptSession {
     jass::Runtime runtime_;
     bool failed_=false,configured_=false;
     std::optional<unsigned> localPlayer_;
+    int reservedLocalHeroButtons_=0;
     std::optional<std::uint32_t> initialRandomSeed_;
     std::map<std::uint8_t,unsigned> networkPlayers_;
     std::set<std::uint8_t> networkActivePeers_;
@@ -1186,6 +1187,7 @@ public:
     std::optional<std::pair<std::string,bool>> takeCinematic(){if(!modelCinematic_.empty()){auto value=std::move(modelCinematic_);modelCinematic_.clear();return std::pair{std::move(value),true};}if(!movieCinematic_.empty()){auto value=std::move(movieCinematic_);movieCinematic_.clear();return std::pair{std::move(value),false};}return {};}
     bool forceCampaignSelection() const {return forceCampaignSelect_;}
     void removePlayer(unsigned owner,unsigned result);
+    int reservedLocalHeroButtons() const {return reservedLocalHeroButtons_;}
     bool canControlUnit(unsigned viewer,const UnitState& unit) const;
     bool canManageUnitInventory(unsigned viewer,const UnitState& unit) const;
     unsigned inventorySize(const UnitState& unit);

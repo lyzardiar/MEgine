@@ -1,12 +1,16 @@
 # 独立客户端测试队列
 
+## 战役英雄快捷栏预留待验证
+
+路径：`src/session.h`、`src/session_match.cpp`、`src/game_hero_bar.cpp`；说明见 `hero-shortcut-reservation.md`。包含本轮可破坏物攻击和提示滚动的 Win32 Release 客户端编译通过。阶段检查不死族资料片首关、共享控制英雄、空槽、鼠标和 F1–F7、创建／死亡／易主、预留值变化、联机及原版排序和默认值。
+
 ## 可破坏物武器攻击待验证
 
-路径：`CMakeLists.txt`、`src/combat.h`、`src/entities.h`、`src/session.h`、`src/session_combat.cpp`、`src/session_combat_orders.cpp`、`src/session_combat_destructable.cpp`、`src/session_destructables.cpp`、`src/session_projectiles.cpp`、`src/session_network_identity.cpp`；说明见 `destructable-weapon-attacks.md`。阶段检查四族武器、门／障碍／树、前摇与弹道、目标失效及复活、命令取消和排队、联机、地图覆盖、原版伤害及性能；范围、弹跳、护甲及部分武器被动尚待完善。
+路径：`CMakeLists.txt`、`src/combat.h`、`src/entities.h`、`src/session.h`、`src/session_combat.cpp`、`src/session_combat_orders.cpp`、`src/session_combat_destructable.cpp`、`src/session_destructables.cpp`、`src/session_projectiles.cpp`、`src/session_network_identity.cpp`；说明见 `destructable-weapon-attacks.md`。包含本轮英雄栏预留和提示滚动的 Win32 Release 客户端编译通过。阶段检查四族武器、门／障碍／树、前摇与弹道、目标失效及复活、命令取消和排队、联机、地图覆盖、原版伤害及性能；范围、弹跳、护甲及部分武器被动尚待完善。
 
 ## 提示文本滚动边界待验证
 
-路径：`src/glue.h/.cpp`、`src/game_flow_ui.cpp`；说明见 `game-tips.md`。阶段检查短文本和多行文本的滚轮边界、切换提示、字体尺寸、中文与地图资源覆盖，并核对其他文本测量消费者。
+路径：`src/glue.h/.cpp`、`src/game_flow_ui.cpp`；说明见 `game-tips.md`。包含本轮英雄栏预留和可破坏物攻击的 Win32 Release 客户端编译通过。阶段检查短文本和多行文本的滚轮边界、切换提示、字体尺寸、中文与地图资源覆盖，并核对其他文本测量消费者。
 
 ## 主动攻击目标事件待验证
 
