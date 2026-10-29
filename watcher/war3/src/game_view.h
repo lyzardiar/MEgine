@@ -25,8 +25,16 @@ class GameView {
     FogRender fogRender_;
     std::array<unsigned,4> teamFilterIndices_{};
     std::array<DWORD,4> minimapFilterColors_{};
-    bool allyFilterButtonDown_=false;
+    bool allyFilterButtonDown_=false,creepFilterButtonDown_=false;
     std::unique_ptr<GlueScreen> allyFilterTooltip_;
+    struct CreepCamp {float x=0,y=0;std::vector<std::uint32_t> units;};
+    std::vector<CreepCamp> creepCamps_;
+    std::vector<std::uint32_t> creepCampCandidates_;
+    std::uint64_t nextCreepCampRefresh_=0;
+    std::array<DWORD,3> creepCampColors_{};
+    float creepMiddleThreshold_=10,creepToughThreshold_=20,creepMiddleScale_=1.3f,creepPulseScale_=.5f;
+    std::vector<std::uint32_t> creepCandidates() const;
+    void buildCreepCamps();
     std::vector<float> distances_,angles_,fovs_;
     float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,roll_=0,zOffset_=0,near_=100,far_=5000,forwardSpeed_=3000,strafeSpeed_=3000;
     unsigned zoom_=0,frames_=0;

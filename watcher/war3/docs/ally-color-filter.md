@@ -6,7 +6,7 @@
 
 原版 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。REA 观察注册及入口 `0x6f1f3e80`／`0x6f1e1680` 将整数保存及读取设置 0x38，见 `ev_266aaf99f436ee0f950886ad119da13c68a49c8619a455fdfd7983f424d5286c`、`ev_291d7794acc483aea9887727ab7d92a6a28cd65cb67e0eb35a2cc9ffda6e2a9b`；`0x6f34d480` 对 0、1、2 分别设置小地图和场景颜色过滤，见 `ev_68e7ac6217507f246f69834f970a6101ef32e35fb2244d37de86bdbfbf41bee2`；`0x6f31f0d0` 显示自身、盟友、敌人、中立及观战者分支，源值来自 `TeamColorFilter`，见 `ev_7591aae6cb301d3ca08f620a67f140c716f2f8a4caa6376f7b8d0062aaecf757`、`ev_db7fa562c0817ad06428b39b7693d3e6a3ce6663a013e8a5e0b25e0222a468b0`、`ev_dae7e352b76e9d2c8298ee1e5d1b2aaaac2cab8648b699b1ad97dcdb68a36494`。小地图颜色来源及状态分支见 `ev_6d1f3c8b0c30c57230ae2aa09708cdd901ea3ea8fd520fced56e649aa2038c35`、`ev_e8720fcf57ac359bd98422f140290664bac9f688b3e9b5560db4d61e06bb5f18`；原 `GlobalStrings.fdf` 说明 Alt+A 与三种模式。
 
-小地图旁的盟友颜色按钮支持点击、按下纹理、三档切换和原 GlobalStrings 提示；普通／扩展提示沿用游戏性设置。资源按地图 CustomSkin、当前种族、Default 顺序读取，并在加载期间直接从归档准备。`EnableMinimapFilterButtons` 分别保存盟友与野怪过滤按钮启用状态；禁用盟友按钮时显示对应禁用纹理，忽略点击与 Alt+A。野怪按钮的绘制和交互尚待接入。按钮固定使用原件锚点、宽度与高度，屏幕适配沿用现有 0.8×0.6 界面空间。
+小地图旁的盟友颜色按钮支持点击、按下纹理、三档切换和原 GlobalStrings 提示；普通／扩展提示沿用游戏性设置。资源按地图 CustomSkin、当前种族、Default 顺序读取，并在加载期间直接从归档准备。`EnableMinimapFilterButtons` 分别保存盟友与野怪过滤按钮启用状态；禁用盟友按钮时显示对应禁用纹理，忽略点击与 Alt+A。野怪按钮和营地标记已接入，分组及原版精度见[小地图野怪营地](creep-camps.md)。按钮固定使用原件锚点、宽度与高度，屏幕适配沿用现有 0.8×0.6 界面空间。
 
 REA 证据 `ev_fb88577aecbd53d2cf906fff667a5a9f7bf6e8dcf71c41696f439f6fe931f40e` 显示 `EnableMinimapFilterButtons` 的两个参数分别控制 `+0x410` 与 `+0x414` 控件；`ev_94cba071ee20e803a9374a7a215c8d65657394e7c61139632e320df2ece7a94d` 显示 0／1／2 模式采用 Off／Inactive／Active 对应纹理；`ev_f58d16f6c89e0d3be942b13ceb3228bb8e1b869f90db0300785a0a6d5a7f1778` 显示控件尺寸与锚点值。本机原始 MPQ 的九张按钮贴图均可读取。
 
