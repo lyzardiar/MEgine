@@ -2722,3 +2722,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 模型灯光档位（待验证）
 
 路径：`src/front_options.cpp`、`src/game_flow_ui.*`、`src/game_preferences.*`、`src/game_view.cpp`、`src/model_pose.cpp`、`src/renderer.h`。集中验证两个选项入口、设置保存与旧版迁移、动态灯光与画面性能及原版对照；低／中／高档的原版规则尚未确认，见 [模型灯光档位](video-light-detail.md)。
+
+### 运输目标的地面与飞行分类（待验证）
+
+路径：`src/session_transport.cpp`、`docs/transport.md`。集中验证自定义货舱和装载能力分别允许 ground／air／两者／均不允许时的按钮、目标命令、飞行乘员装载和卸载落点、容量、目标重入、死亡、多人同步及原版行为；原版额外限制尚需对照。本次未编译或运行。
