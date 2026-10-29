@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 信号枪物品待验证
+
+路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_item_use.cpp`；说明见 `flare.md`。阶段检查地图与小地图选点、次数及耗尽、施法事件／取消、延迟／视野／侦测、暂停／施法者死亡、自定义覆盖、联机和原版表现。
+
 ## 保存权杖待验证
 
 路径：`src/spells.h`、`src/session.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_item_use.cpp`、`src/session_area_spells.cpp`、`src/session_teleport.cpp`；说明见 `preservation.md`。包含攻击地面的 Win32 Release 客户端编译通过。阶段检查目标、基地筛选、传送落点、施法事件／冷却、目标或基地易主／死亡／删除、回调重入、自定义掩码、联机、性能及原版对照。

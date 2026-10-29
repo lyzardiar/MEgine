@@ -74,7 +74,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"AOww",SpellKind::Bladestorm,SpellTargeting::None},{"AOeq",SpellKind::Earthquake,SpellTargeting::Point},
         {"AOvd",SpellKind::Voodoo,SpellTargeting::None},{"AHpx",SpellKind::Phoenix,SpellTargeting::None},
         {"AUfa",SpellKind::FrostArmor,SpellTargeting::Unit},{"AUfu",SpellKind::FrostArmor,SpellTargeting::Unit},
-        {"AEsh",SpellKind::ShadowStrike,SpellTargeting::Unit},{"Aesn",SpellKind::Sentinel,SpellTargeting::Unit},{"AOfs",SpellKind::Reveal,SpellTargeting::Point},{"Afla",SpellKind::Reveal,SpellTargeting::Point},
+        {"AEsh",SpellKind::ShadowStrike,SpellTargeting::Unit},{"Aesn",SpellKind::Sentinel,SpellTargeting::Unit},{"AOfs",SpellKind::Reveal,SpellTargeting::Point},{"Afla",SpellKind::Reveal,SpellTargeting::Point},{"AIfa",SpellKind::Reveal,SpellTargeting::Point},
         {"AUcb",SpellKind::CarrionBeetles,SpellTargeting::None},
         {"AUim",SpellKind::Impale,SpellTargeting::Either},{"AUls",SpellKind::LocustSwarm,SpellTargeting::None},
         {"AHfa",SpellKind::SearingArrows,SpellTargeting::Unit},{"AEst",SpellKind::Scout,SpellTargeting::None},
@@ -172,7 +172,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(s.kind==SpellKind::Unsummon){s.unlimitedRange=true;if(s.amount>10 || s.secondary>99999 || s.secondary!=std::floor(s.secondary))throw std::runtime_error("Unsummon refund or accumulation outside supported range");}
     if(s.kind==SpellKind::Sentinel){if(!std::isfinite(s.amount) || !std::isfinite(s.secondary) || !std::isfinite(s.loss) || !std::isfinite(s.speed) || s.amount<0 || s.amount>100000 || s.secondary<=0 || s.secondary>100000 || s.loss<0 || s.loss>100000 || s.speed<=0 || s.speed>1000000 || s.missile.empty())throw std::runtime_error("Invalid source Sentinel vision, height or flight");}
     if(s.kind==SpellKind::ShadowMeld){s.nightOnly=code!="Ahid";if(s.amount<=0 || s.amount>300 || s.secondary<=0 || s.secondary>300 || s.loss<=0 || s.loss>300)throw std::runtime_error("Shadow Meld transition duration outside source limits");}
-    if(s.kind==SpellKind::Reveal || s.kind==SpellKind::Dust){s.detectionMask=count(s.amount,3);s.wholeReveal=code=="AIrv";if(code=="Afla")s.impactDelay=s.secondary;if(s.duration<=0 || s.duration>86400 || !s.detectionMask || (!s.wholeReveal && s.area<=0) || !std::isfinite(s.impactDelay) || s.impactDelay<0 || s.impactDelay>86400)throw std::runtime_error("Reveal area, mask, duration or delay outside supported range");}
+    if(s.kind==SpellKind::Reveal || s.kind==SpellKind::Dust){s.detectionMask=count(s.amount,3);s.wholeReveal=code=="AIrv";if(code=="Afla" || code=="AIfa")s.impactDelay=s.secondary;if(s.duration<=0 || s.duration>86400 || !s.detectionMask || (!s.wholeReveal && s.area<=0) || !std::isfinite(s.impactDelay) || s.impactDelay<0 || s.impactDelay>86400)throw std::runtime_error("Reveal area, mask, duration or delay outside supported range");}
     if(s.kind==SpellKind::InnerFire){s.damageBonus=s.amount;s.armor=s.secondary;s.autoRange=field("DataC");s.healthRegen=field("DataD");}
     if(s.kind==SpellKind::Bloodlust){s.attackBonus=s.amount;s.moveBonus=s.secondary;s.scaleBonus=field("DataC");}
     if(s.kind==SpellKind::Frenzy)s.attackBonus=s.amount;
