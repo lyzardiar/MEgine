@@ -95,7 +95,7 @@ void ScriptSession::bindEntityNatives() {
     for(auto [name,member]:std::initializer_list<std::pair<const char*,int UnitState::*>>{{"GetUnitUserData",&UnitState::userData},{"GetUnitFoodUsed",&UnitState::foodUsed},{"GetUnitFoodMade",&UnitState::foodMade},{"GetUnitLevel",&UnitState::level}})bind(name,"integer",{"unit"},[this,member](auto& vm,auto a){return vm.integer(unit(a[0]).*member);});
     for(auto [name,member]:std::initializer_list<std::pair<const char*,int UnitState::*>>{{"SetUnitUserData",&UnitState::userData}})bind(name,"nothing",{"unit","integer"},[this,member](auto& vm,auto a){unit(a[0]).*member=std::bit_cast<std::int32_t>(a[1].bits);return vm.nothing();});
     for(auto [name,member]:std::initializer_list<std::pair<const char*,bool UnitState::*>>{{"ShowUnit",&UnitState::visible},{"PauseUnit",&UnitState::paused},{"SetUnitInvulnerable",&UnitState::invulnerable}})bind(name,"nothing",{"unit","boolean"},[this,member](auto& vm,auto a){unit(a[0]).*member=a[1].bits!=0;++fogRevision_;return vm.nothing();});
-    bind("SetUnitPathing","nothing",{"unit","boolean"},[this](auto& vm,auto a){auto& u=unit(a[0]);u.pathing=a[1].bits!=0;unitFootprint(u);return vm.nothing();});
+    bind("SetUnitPathing","nothing",{"unit","boolean"},[this](auto& vm,auto a){if(alive(a[0].bits,NativeKind::Unit)){auto& u=unit(a[0]);u.pathing=a[1].bits!=0;unitFootprint(u);}return vm.nothing();});
     bind("SelectUnit","nothing",{"unit","boolean"},[this](auto& vm,auto a){selectUnit(a[0].bits,a[1].bits!=0);return vm.nothing();});
     bind("IsUnitPaused","boolean",{"unit"},[this](auto& vm,auto a){return vm.boolean(unit(a[0]).paused);});
     bind("IsUnitHidden","boolean",{"unit"},[this](auto& vm,auto a){auto& u=unit(a[0]);return vm.boolean(u.hidden());});

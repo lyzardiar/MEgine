@@ -2850,3 +2850,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战争践踏地形波纹（待验证）
 
 路径：`src/session_spell_info.cpp`、`src/session_area_spells.cpp`、`src/world.h`。集中验证原图及派生技能的伤害、眩晕和波纹、原版字段覆盖、并发上限与同步，见 [战争践踏地形波纹](war-stomp-terrain.md)。本次未编译或运行。
+
+### Human05 失效单位路径设置（待验证）
+
+路径：`src/session_entities.cpp`、`docs/campaign-human05-pathing.md`。隔离原图越过村民撤退异常并推进至 380 秒；集中验证失效句柄原版语义与实际撤退和路径占地，见 [村民撤退路径](campaign-human05-pathing.md)。
