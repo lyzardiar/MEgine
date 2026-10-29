@@ -36,7 +36,7 @@ GlueScreen 支持把原版 FDF 根控件挂到既有容器、设置可见性、�
 
 本地槽可移到其他类型 1 的槽，始终保持一个本地控制者；类型 2 只允许计算机难度。开放/关闭的槽不可编辑种族、队伍、颜色和障碍。flags 的 0x20 固定种族和颜色，0x40 保留源 force 掩码与分组并固定队伍。颜色 0–15 选择占用项时交换；障碍范围为 50%–100%，间隔 10%。未归入任何源 force 的槽不并入已有势力。草稿不改写源地图，不执行 JASS，也不证明对局规则已实现。
 
-`src/player_setup_ui.cpp` 将源 TeamSetup 挂到 TeamSetupContainer，预建 16 个带上下文的 PlayerSlot，切图复用这些节点。解析器保留重复 MenuItem，实例只重写局部锚点和控件引用；普通 Text 和外部锚点保持原值。名称、种族和障碍使用原版 popup 背景、箭头、菜单行高与标签，颜色直接读取 `ReplaceableTextures\TeamColor\TeamColor00.blp` 至 `15.blp`。行高沿用 FDF 的 0.025，超出可视区以滚轮查看，不压缩行。颜色选项目前显示为色块列表；源 TeamColorMenu 网格、组标题间距和最终像素仍待还原。
+`src/player_setup_ui.cpp` 将源 TeamSetup 挂到 TeamSetupContainer，预建 16 个带上下文的 PlayerSlot，切图复用这些节点。解析器保留重复 MenuItem，实例只重写局部锚点和控件引用；普通 Text 和外部锚点保持原值。名称、种族和障碍使用原版 popup 背景、箭头、菜单行高与标签，颜色直接读取 `ReplaceableTextures\TeamColor\TeamColor00.blp` 至 `15.blp`。行高沿用 FDF 的 0.025，超出可视区以滚轮查看，不压缩行。颜色选项使用原 TeamColorMenu 背景和原版行高／边距，16 色范围、滚动条和色块像素仍待原版对照，见[颜色选择菜单](map-color-selector.md)；组标题间距和最终像素仍待还原。
 
 原件绑定字符串为 RaceMenu `0x6f979d64`、HandicapMenu `0x6f979dd0`、TeamButton `0x6f979d70`、ColorButton `0x6f979d9c`、TeamSetupContainer `0x6f983218`。REA 原始记录为 `tmp/docs-artifacts/war3/map-menu/player-slot-bindings-rea.json`；具体控件和选项取自只读原安装中的 PlayerSlot.fdf／TeamSetup.fdf，不把这些字符串引用视为默认对局行为证据。
 

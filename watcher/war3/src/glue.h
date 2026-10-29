@@ -14,7 +14,7 @@ public:
     struct Choice {std::string text,image;};
     struct ChoiceChange {std::string frame;size_t index;};
 private:
-    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true; };
+    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; };
     struct Texture { Com<IDirect3DTexture9> gpu; unsigned width,height; };
     Archives& archives_;
     Images& images_;
@@ -34,7 +34,7 @@ private:
     float popupX_=0,popupY_=0;
     std::optional<ChoiceChange> change_;
     bool consumed_=false;
-    std::optional<FrameDefinition> menuTemplate_;
+    std::optional<FrameDefinition> menuTemplate_,colorMenuTemplate_;
     unsigned add(FrameDefinition frame, int parent);
     Rect layout(unsigned index);
     Texture& texture(const std::string& member);
@@ -65,6 +65,7 @@ public:
     bool inputConsumed() const {return consumed_;}
     std::optional<ChoiceChange> takeChoice();
     void choices(const std::string& name,std::vector<Choice> values,size_t selected,float width=0,bool label=true);
+    void colorChoices(const std::string& name,std::vector<Choice> values,size_t selected);
     void overlay();
     std::string localized(const std::string& key) const {return definitions_.string(key);}
     void visible(const std::string& name,bool visible);

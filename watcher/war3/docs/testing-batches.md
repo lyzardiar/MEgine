@@ -2772,3 +2772,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### JASS 角度转换（待验证）
 
 路径：`src/session_game.cpp`、`tests/session_tests.cpp`、`docs/jass.md`。集中验证零、正负角度、极值与特殊实数、脚本组合及多人确定性，并与固定版原函数逐位对照；新增断言尚未编译或运行。
+
+### 玩家颜色选择菜单（待验证）
+
+路径：`src/glue.*`、`src/player_setup_ui.cpp`；集中验证原 FDF 背景与颜色项、占用交换、键鼠／焦点、16 色及原版布局和滚动条，见 [玩家颜色菜单](map-color-selector.md)。本次未编译或运行。
