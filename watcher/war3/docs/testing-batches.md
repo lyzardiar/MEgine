@@ -1724,3 +1724,9 @@ Win32 Release 客户端增量编译通过。阶段核对资源加载/大小/鼠�
 路径：`session.h`、`session_research.cpp`、`session_unit_forms.cpp`、`session_entities.cpp`、`session_ownership.cpp`、`session_game.cpp`、`docs/research.md`。`rtma` 消费研究等级变化；`Acha` 能力按科技前置与目标类型变形。
 
 功能阶段核对 `Robk`／`Rhrt`、当前与新建单位、能力增删／禁用、敌我转移、科技上限脚本、自定义升级／能力、生命人口与队列／事件重入，并对照原版初始训练上限、排队和变形时序；新型单位初始上限尚未实现。
+
+## 升级兵种训练按钮待验证
+
+路径：`session_commerce.cpp`、`docs/research.md`。同按钮位置且由 `Acha` 关联的训练单位依据旧型科技上限选择显示。
+
+功能阶段核对兽族兵营／人族工厂的研究前后、科技上限脚本、自定义训练表／按钮与能力、共享控制、资源不足和训练队列；原版隐藏或禁用行为、初始新型上限及脚本／AI 命令仍待实现或对照。

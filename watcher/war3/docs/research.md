@@ -18,6 +18,8 @@
 
 `rtma` 科技效果根据源字段的目标 ID 和新旧等级差调整玩家科技最大允许数量；现有有限上限保持独立。`Acha` 能力在单位创建、获得能力、科技和归属变化后检查原 `Requires`／`checkDep` 并消费 `UnitID`，使用现有变形流程保留单位句柄；原猎头者的 `Sbsk` 由 `Robk` 解锁并变为狂战士，蒸汽机车的 `Srtt` 由 `Rhrt` 解锁并变为火箭型。REA 对照了 `CUpgradeAddTechMaxAllowed` 的等级差及上限路径（`0x6f6985d0`）和 `CAbilityChaos` 的目标单位转换路径（`0x6f4ac3b0`）。原始新型兵种的初始训练上限、排队转换、条件变更时序与完整变形细节仍待实现或对照；目前不能视为两项科技完整验收。
 
+训练菜单对源表同时列出、共用按钮位置且由 `Acha` 关联的单位，在旧型上限为零时展示新型，否则展示旧型。猎头者／狂战士与蒸汽机车／火箭型均使用这一规则；按钮仍由真实科技限制和资源检查控制。该选择依据源训练列表、按钮位置和现有上限推导，原版按钮隐藏／禁用及新型初始上限尚未证实；直接脚本／AI 训练和队列行为仍待完成或对照。
+
 原版静态入口核对：SetPlayerTechResearched 0x6f1f6440 计算 max(目标-当前,0)，再转 AddPlayerTechResearched 0x6f1da190；后者只处理正增量。GetPlayerTechCount/GetPlayerTechResearched 入口为 0x6f1e4190/0x6f1e4200，GetResearched 为 0x6f1e46b0。REA 读取原件 SHA-256 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a，未修改原件。原始数据及入口证据位于 tmp/docs-artifacts/war3/research/。
 
 本项仍为部分实现：资源采集/光环/视野/荆棘/变形/特殊护甲及种族技能效果、科技等价/继承、转移所有权时的队列规则、生命魔法变化及攻击效果的原版逐项精度仍待实现或对照。完整客户端玩法范围保持不变。
