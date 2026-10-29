@@ -1,12 +1,16 @@
 # 独立客户端测试队列
 
+## 主动攻击目标事件待验证
+
+路径：`src/combat.h`、`src/session_combat_orders.cpp`、`src/session_combat.cpp`、`src/session_network_identity.cpp`；说明见 `combat-target-events.md`。包含本轮帮助页和可破坏物预选的 Win32 Release 客户端编译通过。阶段检查主动和自动目标、重复与切换命令、目标失效、回调取消／改派／注册、射程事件、联机及原版事件次序。
+
 ## 游戏内帮助页待验证
 
-路径：`src/game_flow_ui.h/.cpp`；说明见 `game-help.md`。阶段检查原版文本和中文编码、滚轮／滚动条／键盘、边界和变更、地图覆盖、窗口布局及原版对照。
+路径：`src/game_flow_ui.h/.cpp`；说明见 `game-help.md`。包含本轮主动攻击事件和可破坏物预选的 Win32 Release 客户端编译通过。阶段检查原版文本和中文编码、滚轮／滚动条／键盘、边界和变更、地图覆盖、窗口布局及原版对照。
 
 ## 可破坏物鼠标预选待验证
 
-路径：`src/game_view.cpp`、`src/scene_objects.h/.cpp`；说明见 `preselection.md`。阶段检查树木及其他对象的显隐／破坏／移除、迷雾、镜头与鼠标移动、预选开关、大图帧耗时及原版外观。
+路径：`src/game_view.cpp`、`src/scene_objects.h/.cpp`；说明见 `preselection.md`。包含本轮帮助页和主动攻击事件的 Win32 Release 客户端编译通过。阶段检查树木及其他对象的显隐／破坏／移除、迷雾、镜头与鼠标移动、预选开关、大图帧耗时及原版外观。
 
 ## 游戏内提示页待验证
 

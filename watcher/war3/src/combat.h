@@ -24,7 +24,7 @@ struct CombatOrder {
     std::optional<WorldPoint> attackMove,patrolStart,patrolEnd;
     std::optional<ItemMoveOrder> itemMove;
     WorldPoint home;
-    bool forced=false,automatic=false,returning=false,targetInRange=false;
+    bool forced=false,automatic=false,returning=false,targetInRange=false,targetAcquiredPending=false;
     double nextAttack=0,repath=0,animationEnd=0,leash=0;
     float animationSpeed=1;
     std::uint64_t revision=0;
