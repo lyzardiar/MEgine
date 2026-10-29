@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+## 默认混合与显式动画重启待验证
+
+路径：`entities.h`、`session_orders.cpp`、`session_visual.cpp`、`session_animation.cpp`、`model.h/.cpp`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`game_view.cpp`、`game_effects.cpp`、`tests/game_flow_tests.cpp`；说明见 `animation-blending.md`。阶段验证 MODL 默认值、脚本覆盖／零值、显式同序列重启与普通循环、队列、暂停与倍率、多单位及挂点、全局动画轨、LookAt、混合中断和缓存一致性；验证大地图帧耗时／内存并对照原版。攻击／施法等业务重启及离屏历史仍待实现；Win32 Release 客户端和 game-flow 消费者已编译，专项和 GPU／原版对照尚未执行。
+
 ## 单位动画混合待验证
 
-路径：`entities.h`、`session_visual.cpp`、`model.h`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`game_view.h/.cpp`、`game_morph.cpp`、`game_effects.cpp`；说明见 `animation-blending.md`。Win32 Release 客户端和 game-flow 消费者已编译；阶段验证 NightElfX01／OrcX01 实际脚本、零值与不同正值、多单位共享模型、骨骼位置／旋转／缩放、LookAt 与附件、变形／销毁、序列重入与频繁切换、暂停／倍率和性能，并与原版画面对照。MDX 默认混合时间、同序列重启和离屏历史尚未实现；GPU、原版时序与完整战役尚未验证。
+路径：`entities.h`、`session_visual.cpp`、`model.h`、`model_data.h`、`model_pose.cpp`、`model_particles.cpp`、`game_view.h/.cpp`、`game_morph.cpp`、`game_effects.cpp`；说明见 `animation-blending.md`。Win32 Release 客户端和 game-flow 消费者已编译；阶段验证 NightElfX01／OrcX01 实际脚本、零值与不同正值、多单位共享模型、骨骼位置／旋转／缩放、LookAt 与附件、变形／销毁、序列重入与频繁切换、暂停／倍率和性能，并与原版画面对照。攻击／施法等业务重启和离屏历史尚未实现；GPU、原版时序与完整战役尚未验证。
 
 ## 模型场景声音和可破坏物动画时钟待验证
 

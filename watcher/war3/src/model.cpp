@@ -32,6 +32,7 @@ void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
         auto kind = b.u32(), length = b.u32(); Binary r(b.take(length));
         if (chunks.size() >= 64 || !chunks.insert(kind).second) throw std::runtime_error("Duplicate MDX chunk");
         if (kind == tag("VERS")) { version = r.u32(); r.finish(); }
+        else if (kind == tag("MODL")) { r.take(80+260+28); if(r.left() && r.left()<4)throw std::runtime_error("Truncated MDX blend time");if(r.left()>=4)blendTime=float(r.u32())/1000.f; }
         else if (kind == tag("SEQS")) {
             while (r.left()) { Sequence s; s.name = r.string(80); s.start = r.i32(); s.end = r.i32(); r.take(4); s.flags = r.u32(); s.rarity = r.f32(); r.take(32); if (s.end < s.start || sequences.size() >= 4096) throw std::runtime_error("Invalid sequence"); sequences.push_back(s); }
         } else if (kind == tag("GLBS")) { while (r.left()) globals.push_back(r.u32()); }
@@ -119,6 +120,7 @@ Model::Model(Archives& archives, Images& images, Renderer* renderer, const char*
 Model::~Model() = default;
 std::uint64_t Model::sequenceDuration() const {return data_->sequences.empty()?0:std::uint64_t(data_->sequences[data_->sequence].end-data_->sequences[data_->sequence].start);}
 float Model::radius() const {return data_->radius;}
+float Model::blendTime() const {return data_->blendTime;}
 bool Model::sequenceLoops() const {return !data_->sequences.empty() && !(data_->sequences[data_->sequence].flags&1);}
 void Model::upload(Renderer& renderer,SceneAssets& assets) {data_->renderer=&renderer;data_->assets=&assets;for(auto& texture:data_->textures)texture.gpu=assets.texture(texture.path.empty()?"@white":texture.path);}
 std::vector<std::string> Model::attachmentModels() const {std::vector<std::string> result;for(auto& a:data_->attachments)if(!a.path.empty() && a.path!="_")result.push_back(a.path);return result;}
