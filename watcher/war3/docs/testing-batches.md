@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 即时订单的物品目标待验证
+
+路径：`src/session_inventory.cpp`；说明见 `instant-orders.md`。四个即时订单 native 已接入 `dropitem` 的点目标与单位目标，复用物品移动和转交，Win32 Release 客户端编译通过；其他即时订单仍待实现。阶段检查字符串／整数订单、点／单位／空及无效目标、物品权限和持有状态、路径、事件／回调、排队取消、自定义地图和原版时序；专项及实际地图尚未执行。
+
 ## 战斗目标事件待验证
 
 路径：`src/combat.h`、`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_combat.cpp`、`src/session_combat_orders.cpp`；说明见 `combat-target-events.md`。自动索敌和进入武器射程时分发单位目标事件及 `GetEventTargetUnit`，Win32 Release 客户端编译通过。阶段检查自动／主动攻击、目标进入／离开／重入、不同射程和目标、条件／过滤器、事件禁用／销毁、回调移除／变更命令、战斗与联机顺序、原版行为及大图性能；专项和实际地图尚未执行。
