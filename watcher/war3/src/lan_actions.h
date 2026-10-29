@@ -14,6 +14,7 @@ struct LanActionPause {bool operator==(const LanActionPause&) const=default;};
 struct LanActionResume {bool operator==(const LanActionResume&) const=default;};
 struct LanActionEscape {bool operator==(const LanActionEscape&) const=default;};
 struct LanActionExperimentalChat {std::string text;ChatChannel channel=ChatChannel::All;bool operator==(const LanActionExperimentalChat&) const=default;};
+struct LanActionExperimentalSpell {std::uint8_t mode=0,flags=0;std::uint32_t ability=0,xBits=0,yBits=0;LanObjectId target;std::vector<LanObjectId> actors;bool operator==(const LanActionExperimentalSpell&) const=default;};
 struct LanActionExperimentalLeave {std::uint8_t peer=0;bool operator==(const LanActionExperimentalLeave&) const=default;};
 struct LanActionExperimentalPurchase {LanObjectId shop;std::uint32_t type=0;bool item=false;bool operator==(const LanActionExperimentalPurchase&) const=default;};
 struct LanActionExperimentalSelection {std::uint32_t round=0;std::uint16_t total=0,offset=0;std::vector<LanObjectId> objects;bool operator==(const LanActionExperimentalSelection&) const=default;};
@@ -42,7 +43,7 @@ struct LanActionAbility {
     std::uint32_t secondaryXBits=0,secondaryYBits=0;
     bool operator==(const LanActionAbility&) const=default;
 };
-using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionEscape,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionGroupAssign,LanActionGroupSelect,LanActionExperimentalChat,LanActionExperimentalSelection,LanActionExperimentalPurchase,LanActionExperimentalLeave>;
+using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionEscape,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionGroupAssign,LanActionGroupSelect,LanActionExperimentalChat,LanActionExperimentalSelection,LanActionExperimentalPurchase,LanActionExperimentalLeave,LanActionExperimentalSpell>;
 
 // Classic 1.13+ action layout, bounded to 256 KiB and 4096 actions per block.
 // Experimental actions require explicit opt-in; malformed or unsupported opcodes fail the block.

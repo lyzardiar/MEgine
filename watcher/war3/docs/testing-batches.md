@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+## 自研联机多单位技能待验证
+
+路径：lan_actions、lan_action_encoder／lan_simulation、game_spells、order_queue_tests。实验对局将明确能力、目标、队列与首成功配置及有序候选放入单个私有时间片动作，交由实际会话施法；新增专项检查仅编译，尚未执行；阶段命令：`war3_order_queue_tests.exe <data-root> <BootyBay.w3m>`。阶段合并验证即时／点／单位和可破坏物目标、Channel 全部／首成功、候选优先顺序、队列满与前置失败、触发器删除／易主／选区变化、畸形报文、双端及回放、断线和原版动作／语义。原版网络互通与完整技能行为仍未完成。
+
 ## 自研联机普通子组命令待验证
 
-路径：game_flow_ui／game_view、lan_action_encoder／lan_simulation、order_queue_tests。实验联机启用子组选项，Ctrl 筛选高亮类型，将子组和普通移动／攻击／巡逻／目标／停止／保持命令写入有序时间片并由各端筛选执行；同类型多单位技能／生产及原版协议仍待实现。Win32 Release 产品和专项程序增量编译通过，新增专项尚未执行。阶段合并验证同／异类型多选、Ctrl 鼠标／热键／小地图、Shift 排队、选区变化与共享控制、双端／回放、UI 设置持久化及原版动作和行为。
+路径：game_flow_ui／game_view、lan_action_encoder／lan_simulation、order_queue_tests。实验联机启用子组选项，Ctrl 筛选高亮类型，将子组和普通移动／攻击／巡逻／目标／停止／保持命令写入有序时间片并由各端筛选执行；同类型多单位生产及原版协议仍待实现。Win32 Release 产品和专项程序增量编译通过，新增专项尚未执行；阶段命令：`war3_order_queue_tests.exe <data-root> <BootyBay.w3m>`。阶段合并验证同／异类型多选、Ctrl 鼠标／热键／小地图、Shift 排队、选区变化与共享控制、双端／回放、UI 设置持久化及原版动作和行为。
 
 ## 自研联机菜单主动离开待验证
 
