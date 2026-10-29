@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 魔法吸取权杖待验证
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_resource_spells.cpp`、`src/session_item_use.cpp`；说明见 `mana-steal.md`。阶段检查目标选择／接近、魔法不足／上限、目标类型和魔免、次数／冷却、事件与回调、固定／比例数据、地图覆盖、联机及原版行为；部分自定义字段尚不支持。
+
 ## 直线穿透伤害待验证
 
 路径：`src/session.h`、`src/session_destructables.cpp`、`src/session_projectiles.cpp`；说明见 `destructable-weapon-attacks.md`。阶段检查刃车及自定义直线武器的零／非零扩散距离、宽度、单位与障碍、对象半径、死亡复活、回调和联机性能，对照原版命中顺序与伤害衰减。
