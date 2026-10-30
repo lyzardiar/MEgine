@@ -3194,3 +3194,9 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 路径：`src/game_inventory_layout.h`、`src/game_inventory_drag.cpp`、`src/game_view.*`、`src/game_commands.cpp`、`src/game_buff_panel.cpp`、`src/agent_capture.h`、`src/main.cpp`、`tools/agent-select-unit.ps1`、`tools/agent-capture.ps1`。经验条收于信息框，攻击／护甲和属性行与经验条分开；物品显示、遮罩及命中共用槽位坐标。Agent 可选择可见单位，并在截图响应中返回同帧选择及物品状态。
 
 Win32 Release 增量编译通过；在隔离地图中通过 Agent 选择六物品、100 经验的圣骑士，截图显示六格和部分填充经验条，选取不存在单位失败且保留选择；记录位于 `tmp/docs-artifacts/war3/agent-info/layout-six-items-xp/`。阶段验证物品点击／右键／拖拽／冷却、不同英雄与双武器、四族皮肤、窗口比例／DPI、长文本、Agent 请求失败和客户端生命周期，并对照原版；交互与四族画面尚未实测。
+
+### 内置 Agent 游戏指针输入（待验证）
+
+路径：`src/agent_capture.h`、`src/game_view.*`、`src/main.cpp`、`tools/agent-pointer.ps1`、`README.md`。后台单人对局可按 800×600 逻辑坐标送达左键、右键及跨帧拖拽，沿用 `GameInput` 和真实命令路径；前台、联机、回放及不可操作界面拒绝，响应仅表示输入送达。
+
+Win32 Release 增量编译通过；隔离圣骑士六物品夹具使用 Agent 拖拽，截图状态显示第 0／1 格物品句柄交换，记录位于 `tmp/docs-artifacts/war3/agent-info/pointer-drag/`。阶段核对左／右键、地图／命令／物品目标、前台与菜单切换中断、拖拽失效、非游戏界面拒绝、DPI／窗口尺寸、连续请求与会话退出；尚未完成真实鼠标或原版输入一致性验证。

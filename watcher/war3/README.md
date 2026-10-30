@@ -38,6 +38,8 @@ BootyBay已获得原地图画面及20帧开发运行证据，无Game.dll。完�
 
 游戏内置 Agent 入口：启动时用 `--agent-dir <已存在目录>` 启用，在运行期间执行 `powershell -File tools/agent-select-unit.ps1 -AgentDir <同一目录> -UnitType Hpal` 选择可见单位，再执行 `powershell -File tools/agent-capture.ps1 -AgentDir <同一目录>` 获取 PNG、帧号、画面尺寸、游戏／菜单范围以及同帧选择和物品状态。选择遵循当前游戏界面的操作及可见性限制，局域网和回放不支持选择。每个客户端使用独立目录，调用方须串行发送请求，每次等待响应后再发送下一个；目录保存显式请求的临时截图和响应。已运行但未启用入口的进程需要重启并带该参数；该入口尚非完整 MCP 服务。
 
+可使用 `powershell -File tools/agent-pointer.ps1 -AgentDir <同一目录> -Action drag -X 531 -Y 502 -ToX 570 -ToY 502` 在后台单人对局发送鼠标拖拽；`click` 和 `right` 分别为左键和右键。坐标以界面 800×600 逻辑区域表示，范围为 X 0–799、Y 0–599，与窗口像素及 DPI 无关。输入按游戏实际处理路径执行，响应的 `ok` 表示输入已送达，不代表游戏命令必然成功；需通过截图状态确认结果。前台窗口、局域网、回放及不可操作界面拒绝输入，拖拽期间条件变化会取消。调用方应串行等待响应，切勿与用户鼠标操作并行。
+
 自动复现可在 `--play --map <地图>` 下增加 `--agent-select-unit hpea`，由游戏选择当前可见的第一个对应类型单位；可与 `--hidden --frames 300 --capture <PNG路径>` 组合。未找到可选单位时，帧限制结束会报错。该入口目前提供截图与启动时单单位选择，尚未提供 MEngine MCP 的完整状态和交互能力。
 
 开发截图、日志、JSON与采样统一放仓库根目录 `tmp/docs-artifacts/war3/`，不提交。实现期间只执行必要编译、静态检查与开发阻塞的最小复现；按[测试队列](docs/testing-batches.md)在功能阶段集中验证和修正。旧MEngine待测批次继续延期；旧转换缓存清理等待完整直接加载验收。
