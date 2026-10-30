@@ -22,4 +22,4 @@ session_item_summons.cpp共用beginSpell、itemSpellReady和commitItemSpell，�
 
 AIpm地雷和AImo诱饵的实际触发／爆炸／引诱流程见[地雷与诱饵](mines-lure.md)。Amec机械小动物的动物类型选择、召唤与敌方伪装见[机械小动物](mechanical-critters.md)，原版精度待阶段对照。当前库存订单、道具召唤布局／随机／原事件精确次序、施工与角色位移的原版细节仍待对照；不据编译通过宣称完整道具或客户端验收。
 
-零召唤数量的物品能力允许执行并发布施法事件，不要求配置召唤单位；有正数量的组仍校验单位类型及可用落点。DotA 刷新球使用的 `A02W` 是零数量 `AIfs`，原图隔离会话使用后消耗魔法并通过脚本清除技能及物品冷却。当前脚本调用 `UnitResetCooldown` 同时清除了刷新球自身冷却，因此该物品尚不可按原版使用；需核对原版冷却对象及事件时序。记录 `tmp/docs-artifacts/war3/dota-refresher/after1.log`、`script-matches.txt` 和 `original-reset.txt`。
+零召唤数量的物品能力允许执行并发布施法事件，不要求配置召唤单位；有正数量的组仍校验单位类型及可用落点。DotA 刷新球使用的 `A02W` 是零数量 `AIfs`；`UnitResetCooldown` 清除单位技能冷却并保留物品冷却。原版 1.27 入口 `0x6f1fb270` 调用 `0x6f471690` 遍历单位能力并对匹配类型重置，反汇编见 `tmp/docs-artifacts/war3/dota-refresher/original-reset.txt` 和 `original-reset-ability.txt`；此静态证据未单独证明所有物品冷却边界。DotA 原图隔离会话使用刷新球后，预置技能冷却清零、其他物品冷却保留，刷新球自身进入约 195 秒冷却；记录 `tmp/docs-artifacts/war3/dota-refresher/after-reset.log`。真实购买／使用及不同物品的原版冷却行为仍需运行对照。

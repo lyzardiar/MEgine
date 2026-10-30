@@ -20,7 +20,7 @@
 
 CHANNEL/CAST/EFFECT/FINISH/ENDCAST 连接真实单位及玩家单位事件，提供能力、单位、目标和坐标上下文。GetSpellAbility 返回具有单位/能力归属的实际句柄，移除能力/单位时释放，并接入 typed hashtable。中断先撤销旧施法，再调用 ENDCAST，后续通过票据、单位存活、所有权与订单修订检查回调重入。
 
-眩晕中止移动/攻击/施法/采集工作；缠绕限制移动；霜冻进入移动速度与攻击速度计算。状态按实际剩余时间更新，暂停单位冻结状态时间，死亡清理状态。UnitRemoveAbility、UnitRemoveBuffs/Ex、UnitHasBuffsEx、UnitCountBuffsEx 消费实际状态；UnitResetCooldown 清理真实单位/物品冷却。扩展查询/移除包含已有定时生命，当前状态均为非光环魔法效果。
+眩晕中止移动/攻击/施法/采集工作；缠绕限制移动；霜冻进入移动速度与攻击速度计算。状态按实际剩余时间更新，暂停单位冻结状态时间，死亡清理状态。UnitRemoveAbility、UnitRemoveBuffs/Ex、UnitHasBuffsEx、UnitCountBuffsEx 消费实际状态；UnitResetCooldown 清理单位技能冷却，保留物品共享冷却。扩展查询/移除包含已有定时生命，当前状态均为非光环魔法效果。
 
 ## 原件依据
 

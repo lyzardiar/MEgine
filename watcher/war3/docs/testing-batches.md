@@ -2,7 +2,7 @@
 
 ### 零数量召唤物品能力（待验证）
 
-路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`；说明见[物品召唤](item-summons-buildings.md)。零数量召唤物品能力可完成施法和发布事件，正数量组继续验证配置与落点。Win32 Release 客户端增量编译通过；DotA 原图隔离会话可使用刷新球，技能及其他物品冷却归零，但刷新球自身冷却也被清除，问题尚未关闭；复现：`tmp/docs-artifacts/war3/dota-refresher/build/Release/dota_refresher.exe <data-root> <DotA_v6.83d.w3x>`。阶段核对零／单／双组召唤、施法事件与费用、原版 `UnitResetCooldown` 的物品冷却范围及时序、刷新球真实购买与使用、窗口和联机。
+路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_spell_natives.cpp`、`tests/mobility_tests.cpp`；说明见[物品召唤](item-summons-buildings.md)。零数量召唤物品能力可完成施法和发布事件，技能冷却重置保留物品冷却。Win32 Release 客户端和 mobility 测试程序编译通过；`war3_mobility_tests.exe <data-root> <stealth-fixture> reset-cooldown` 1 通过、0 失败，使用真实闪烁技能和物品验证冷却分离。DotA 原图隔离会话使用刷新球后技能冷却清零、物品及刷新球自身冷却保留，日志 `tmp/docs-artifacts/war3/dota-refresher/after-reset.log`；探针复现：`tmp/docs-artifacts/war3/dota-refresher/build/Release/dota_refresher.exe <data-root> <DotA_v6.83d.w3x>`。阶段核对零／单／双组召唤、施法事件与费用、原版 `UnitResetCooldown` 的物品冷却范围及时序、刷新球真实购买与使用、窗口和联机。
 
 
 ### 镜像物品与幻影斧（待验证）
