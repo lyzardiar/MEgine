@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 地图脚本回城与地表特效（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_spirit_split.cpp`、`src/session_effects.cpp`，说明见 [龙卷风](spirit-split-tornado.md) 和 [地表特效](ubersplats.md)。Release 客户端编译通过；原版 ANto 隔离探针创建旋风并以停止命令结束。DotA_v6.83d 隔离会话购买并使用回城卷轴，原图脚本创建 SCTP 并将英雄传送至目标附近，随后移动命令可中断持续施法；记录 `tmp/docs-artifacts/war3/dota-item-flow/portal-move-after.log`。传送完成后持续施法仍保持，阶段需对照原版结束时机、暂停／恢复、取消、目标建筑／小地图／双击、费用与多次回城、特效画面、地图覆盖和联机同步。
+
 ### 消耗品施法事件（待验证）
 
 路径：`src/session_consumables.cpp`，说明见 [消耗品](consumables.md)。Release 客户端及相关测试程序编译通过；`war3_consumption_tests <data-root> <fixture> protection` 1 通过、0 失败。DotA_v6.83d 隔离会话使用附加观察脚本检查魔瓶、净化药水的施法阶段、目标和回调移除物品；魔瓶三次使用及泉水补充记录在 `tmp/docs-artifacts/war3/dota-item-flow/bottle-observed-events.log`。阶段核对八类消耗品和符文的事件时序／目标、物品事件先后、费用／冷却、驱散、目标变更、施法者死亡／易主／新订单、脚本重入、原版及联机同步。
