@@ -3635,3 +3635,9 @@ Win32 Release 客户端编译通过；原图隔离会话直接创建英雄、敌
 路径：`src/session_entities.cpp`、`src/session_inventory.cpp`、`tests/passive_tests.cpp`；说明见[失效物品句柄](dota-bkb-item-handles.md)。物品所有者、数量、用户数据、等级和类别查询按原版处理无效句柄。
 
 Win32 Release 客户端及测试目标编译通过；`python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/pawn-analysis/fixture.w3m`，再执行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/pawn-analysis/fixture.w3m invalid-item` 1/1，覆盖有效、空、销毁及不兼容句柄。DotA 原图隔离会话使用 `I0FZ` 后得到 `I0G0`、免疫与冷却，推进 13 秒无脚本异常；记录 `tmp/docs-artifacts/war3/dota-bkb/bkb-after.log`。阶段验证实际购买／合成、多次使用、其他来源免疫、事件重入、联机和原版及游戏窗口。
+
+### 紫怨与被动法术书（待验证）
+
+路径：`src/session_equipment.cpp`、`src/session_item_use.cpp`、`src/session_spells.cpp`；说明见[紫怨](dota-orchid.md)。复合物品的被动法术书保留借用能力，由另一主动能力接收物品输入；`ANso` 支持物品目标施法。
+
+Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨与目标，观察目标沉默／恢复、装备加成及移除后清理；单独的原版法术书可打开。日志 `tmp/docs-artifacts/war3/dota-orchid/after-stats.log`、`book.log`。阶段验证实际购买／输入、随机及嵌套书籍、主动子能力与多来源、技能数值／事件、联机、原版和 GPU。
