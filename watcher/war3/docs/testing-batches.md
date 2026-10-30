@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 风步物品与洛萨之锋（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`；说明见[风步物品](dota-lothar.md)。`AOwk` 物品连接已有风步施法、隐身状态和物品冷却。Win32 Release 客户端增量编译通过；DotA 原图隔离会话直接创建英雄和洛萨之锋，观察隐身、移速加成、冷却及冷却内拒绝再次使用，记录 `tmp/docs-artifacts/war3/dota-lothar/after-checked.log`；探针复现：`tmp/docs-artifacts/war3/dota-lothar/build/Release/dota_lothar.exe <data-root> <DotA_v6.83d.w3x>`。阶段核对真实购买／使用、破隐攻击、事件与时序、多物品和地图覆盖、窗口及原版和联机。
+
+
 ### 跨岛进攻的目标小范围移动（待验证）
 
 路径：`src/session_ai.cpp`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。同一单位目标距原卸载点不超过 128 时，保留现有波次及购买后待续计划；超出范围沿用取消与重选。Win32 Release 客户端及 CampaignAI 目标编译通过。BootyBay 地形隔离检查 `island-target-small-move`、`island-target-change`、`island-flight-target-move`、`island-purchase-pending`、`island-auto-multiwave-script` 各 1 通过、0 失败，无 Game.dll。小范围场景覆盖上船前和舱内两次目标移动、重复下令、登陆和目标攻击；目标暂停／运输期间无敌，阈值不是原版证据。复现：在 `watcher/war3` 下运行 `build/windows-x86/bin/Release/war3_campaign_ai_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/campaign-ai/fixture.w3m" <模式>`。阶段检查持续移动及阈值边界、飞行与登艇阶段、目的地受阻、水陆切换、多单位多载具、目标死亡／易主、脚本／玩家换令、完整对局、联机和原版策略。
