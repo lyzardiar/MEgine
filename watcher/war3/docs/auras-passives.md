@@ -48,3 +48,5 @@ build/windows-x86/bin/Release/war3_passive_tests.exe 'E:/Program Files (x86)/dzc
 ```
 
 源数据来自固定1.27.0.52240公共MPQ中的AbilityData/AbilityMetaData、能力/效果Profile、WorldEditStrings、MiscGame及地图覆盖。原始字段/标签、buff资料及编译/静态记录在根目录tmp/docs-artifacts/war3/auras-passives/，不提交原资源或诊断产物。运行不读取或加载Game.dll；本次只执行必要编译、生成器AST和差异检查。
+
+光环及武器被动的目标关系识别 `player`：该标记允许能力拥有者控制的单位；若还声明其他关系，其他目标按各自标记筛选。DotA 蜘蛛网的 `A0BF` 使用玩家目标，原图隔离会话中己方英雄获得 `B01C`，附近敌方单位不再获得该状态；英雄移出范围后状态与脚本授予的隐身、穿行能力清理。关系组合和原版细节仍待对照。

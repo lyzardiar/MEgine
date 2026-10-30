@@ -29,7 +29,8 @@ def main():
         (b'AOcr', b'A0CR', [('Ocr1', 2, 100., 1), ('Ocr2', 2, 2., 2)]),
         (b'AOcr', b'A0NM', [('Ocr1', 2, 100., 1), ('Ocr2', 2, 2., 2), ('Ocr5', 0, 1, 5)]),
         (b'AEev', b'A0EV', [('Eev1', 2, 1., 1)]),
-        (b'AHbh', b'A0BH', [('Hbh1', 2, 100., 1)])
+        (b'AHbh', b'A0BH', [('Hbh1', 2, 100., 1)]),
+        (b'AUau', b'A0PL', [('atar', 3, 'air,ground,invulnerable,player,vulnerable', 0)])
     ]:
         records.append(base+marker+struct.pack('<I', len(changes))+b''.join(fixture.modification(field, kind, value, slot, marker) for field, kind, value, slot in changes))
     files['war3map.w3a'] = struct.pack('<III', 2, 0, len(records))+b''.join(records)

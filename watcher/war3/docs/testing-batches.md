@@ -3222,3 +3222,9 @@ Win32 Release 客户端及 `war3_caster_tests` 增量编译通过；自定义目
 路径：`src/session_spell_info.cpp`、`src/session_channels.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/area-spells.md`。零间隔的暴风雪派生能力按波次执行实际范围效果，零波数无波次，施法及脚本事件沿用原流程。
 
 Win32 Release 客户端及 `war3_spell_tests` 编译通过；`zero-blizzard` 隔离夹具 2/2 通过，检查三次即时伤害和零波数无伤害，未加载 Game.dll。DotA_v6.83d 隔离会话在 `-sd` 后学习蜘蛛网并以 A2ZX 发出点目标命令，观察到一个蜘蛛网单位；探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段检查零间隔伤害事件与回调中断、其他波数及范围、地图脚本移除能力、蜘蛛网增益与消失、真实窗口／多人和原版时序；即时波次顺序是当前实现，尚非原版验收结论。
+
+### 光环玩家目标与 DotA 蜘蛛网（待验证）
+
+路径：`src/session_passive_info.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`、`docs/auras-passives.md`。光环及武器被动的 `player` 目标限定为与能力来源相同的玩家，并与其他关系标志组合。
+
+Win32 Release 客户端和 `war3_passive_tests` 编译通过；`player-aura` 隔离检查 3/3，覆盖己方、盟友与敌方及光环源易主，未加载 Game.dll。DotA 原图隔离会话放网后，英雄获得 `B01C`／隐身／穿行，附近创建的敌方单位未获光环；直接移动英雄出网后相关状态清理。探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对 `player` 与其他关系的组合、光环失效延迟／重叠／易主、网内数值、受伤切换、真实窗口与多人及原版行为。
