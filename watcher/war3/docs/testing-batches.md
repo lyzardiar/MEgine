@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+### 隐形单位侦测事件（待验证）
+
+路径：`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_tick.cpp`、`src/session_visibility.cpp`、`tests/generate-invisibility-fixture.py`、`tests/visibility_tests.cpp`；说明见 [脚本事件](script-events.md)。Win32 Release 客户端和专项程序编译通过；生成 BootyBay 夹具后运行 `war3_visibility_tests.exe <data-root> <fixture> detected-event`，1/1 通过，覆盖首次发现、持续侦测、离开后再次发现和上下文。侦测事件目前覆盖处于视野中、由真视发现的隐形单位及其事件上下文。阶段集中对照玩家事件注册方、初次注册、普通可见单位、共享视野、检测进出、回调重入、多人及固定版时序；仅有监听时扫描，需检查大地图开销。
+
+### 球体能力附件（待验证）
+
+路径：`src/effects.h`、`src/game_effects.cpp`、`src/passives.h`、`src/session_game.cpp`、`src/session_passive_info.cpp`、`src/session_weapon_effects.cpp`。Win32 Release 客户端编译通过。球体能力的目标特效通过现有模型附件系统显示，能力禁用、移除及单位形态变化时刷新；单位死亡或隐藏时不绘制。原版 1.27 `War3Patch.mpq` 的 `Units\\HumanAbilityFunc.txt` 中 `Asph` 使用 BloodElfBall 模型及 sprite first／second／third 三个挂点。阶段检查实际血法师与幻象、挂点动画、死亡／复活、技能切换及地图覆盖，核对原版攻击时球体行为；当前仅接入持续附件，未实现球体发射和恢复行为。
+
 ## 寄生及蜘蛛召唤待验证
 
 路径：`src/spells.h`、`src/session.h`、`src/session_spell_info.cpp`、`src/session_caster_spells.cpp`、`src/session_spell_effects.cpp`、`src/session_callbacks.cpp`、`src/session_neutral_spells.cpp`；说明见 `parasite.md`。尚未编译或执行玩法检查。阶段检查原版 `ANpa` 和 DotA_v6.83d `A0BH` 的字段覆盖、学习与订单、`B0E7` 查询、毒伤／减速／叠加／驱散、攻击及毒伤致死、召唤类型／数量／归属／时限和 JASS 召唤事件；对照英雄／幻象／尸体及脚本重入边界，重点检查到期 tick 致死顺序。合并验证时构建 `cmake --build --preset release --target war3 --parallel 8`，并运行地图实测及原版对照。

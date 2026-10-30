@@ -285,6 +285,8 @@ class ScriptSession {
     size_t detectorUnits_=0;
     void updateDetectors();
     bool detection(std::uint32_t unit,unsigned player,unsigned mask);
+    std::map<std::uint32_t,std::pair<unsigned,std::uint16_t>> detectedEvents_;
+    void detectionEventsTick();
     void breakInvisibility(UnitState& unit);
     bool stealthAcquire(const UnitState& unit);
     std::map<std::uint64_t,RevealArea> revealAreas_;

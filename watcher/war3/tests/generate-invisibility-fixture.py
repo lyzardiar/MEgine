@@ -13,7 +13,30 @@ unit caster=null
 unit target=null
 unit enemy_unit=null
 unit detector=null
+integer detectionPlayerEvents=0
+integer detectionUnitEvents=0
+integer detectionContextErrors=0
 endglobals
+function player_detected takes nothing returns nothing
+    set detectionPlayerEvents=detectionPlayerEvents+1
+    if GetDetectedUnit()!=target or GetTriggerUnit()!=target then
+        set detectionContextErrors=detectionContextErrors+1
+    endif
+endfunction
+function unit_detected takes nothing returns nothing
+    set detectionUnitEvents=detectionUnitEvents+1
+    if GetTriggerUnit()!=target or GetEventDetectingPlayer()!=Player(1) then
+        set detectionContextErrors=detectionContextErrors+1
+    endif
+endfunction
+function watch_detection takes nothing returns nothing
+    local trigger a=CreateTrigger()
+    local trigger b=CreateTrigger()
+    call TriggerRegisterPlayerUnitEvent(a,Player(0),EVENT_PLAYER_UNIT_DETECTED,null)
+    call TriggerAddAction(a,function player_detected)
+    call TriggerRegisterUnitEvent(b,target,EVENT_UNIT_DETECTED)
+    call TriggerAddAction(b,function unit_detected)
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing

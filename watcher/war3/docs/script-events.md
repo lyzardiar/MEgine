@@ -39,4 +39,4 @@ BootyBay原图globals/config/main退出0，无Game.dll：65单位、5位置、2�
 
 `common.j` 将玩家单位侦测事件和单位侦测事件定义为 22 和 55。1.27 `Game.dll`（SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`）中，`GetDetectedUnit` 入口 `0x6f1e20d0` 仅对事件 22 查询通用事件单位；`GetEventDetectingPlayer` 入口 `0x6f1e2260` 检查事件 55 并读取相关上下文。静态路径对后者返回值的对象检查仍有疑点，需运行对照。
 
-二进制包含 `CPlayerUnitDetectedEventData` 和 `CUnitDetectedEventData`；检测状态变化进入派发的时机以及玩家事件注册方的归属尚未确定。当前客户端未派发这两类事件，后续需要结合真实地图和原版运行检查初次注册、重复侦测、共享视野及回调生命周期。
+二进制包含 `CPlayerUnitDetectedEventData` 和 `CUnitDetectedEventData`；检测状态变化进入派发的时机以及玩家事件注册方的归属尚未确定。当前客户端仅对被真视侦测且处于视野中的隐形单位建立每玩家状态，在未侦测变为已侦测时派发 22 和 55，并提供对应事件上下文；仅存在相关监听时扫描，支持共享视野与重复离开／进入。玩家事件归属、初次注册、普通可见单位、共享视野、重入以及固定版实际时序仍待集中对照，此路径不代表原版全部侦测事件语义。

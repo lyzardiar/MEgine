@@ -16,7 +16,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
         {"Amin",PassiveKind::Mine,false},{"Adda",PassiveKind::DeathDamage,false},
         {"Apiv",PassiveKind::PermanentInvisibility,false},{"Adet",PassiveKind::Detection,false},
         {"Atru",PassiveKind::Detection,false},{"Agyv",PassiveKind::Detection,false},{"Adts",PassiveKind::Detection,false},{"Abdt",PassiveKind::Detection,false},
-        {"Agho",PassiveKind::Ghost,false},{"Aeth",PassiveKind::VisibleGhost,false},{"Aexh",PassiveKind::Exhume,false},
+        {"Agho",PassiveKind::Ghost,false},{"Aeth",PassiveKind::VisibleGhost,false},{"Asph",PassiveKind::Sphere,false},{"Aexh",PassiveKind::Exhume,false},
         {"AOre",PassiveKind::Reincarnation,false},{"ACrn",PassiveKind::Reincarnation,false},
         {"AIrc",PassiveKind::Reincarnation,false},{"Aphx",PassiveKind::PhoenixMorph,false},{"Apxf",PassiveKind::PhoenixFire,false},{"ANbs",PassiveKind::AttackModifier,false},{"ANic",PassiveKind::AttackModifier,false},{"Alit",PassiveKind::LightningAttack,false},{"Aasl",PassiveKind::SlowAura,true},
         {"Apig",PassiveKind::PermanentImmolation,false},{"ANpi",PassiveKind::PermanentImmolation,false},{"AIcf",PassiveKind::PermanentImmolation,false},{"Awar",PassiveKind::Pulverize,false},
