@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 消耗品施法事件（待验证）
+
+路径：`src/session_consumables.cpp`，说明见 [消耗品](consumables.md)。Release 客户端及相关测试程序编译通过；`war3_consumption_tests <data-root> <fixture> protection` 1 通过、0 失败。DotA_v6.83d 隔离会话使用附加观察脚本检查魔瓶、净化药水的施法阶段、目标和回调移除物品；魔瓶三次使用及泉水补充记录在 `tmp/docs-artifacts/war3/dota-item-flow/bottle-observed-events.log`。阶段核对八类消耗品和符文的事件时序／目标、物品事件先后、费用／冷却、驱散、目标变更、施法者死亡／易主／新订单、脚本重入、原版及联机同步。
+
 ### 失效位置的点订单（待验证）
 
 路径：`src/session_orders.cpp`、`tests/order_queue_tests.cpp`，原件入口与行为见 [点目标、范围伤害与召唤物](area-spells.md)。Release 客户端及订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-location` 1 通过、0 失败，覆盖空、已移除、类型不兼容和未知位置及已有队列，并检查有效位置的两种订单。DotA_v6.83d 隔离场景在原先位置句柄异常处继续推进，记录 `tmp/docs-artifacts/war3/dota-item-flow/dust-invalid-location-apiv-after.log`。阶段检查群组位置订单、脚本重入、其他订单、完整地图及联机同步。

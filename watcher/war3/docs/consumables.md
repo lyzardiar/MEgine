@@ -12,6 +12,8 @@
 
 `session_consumables.cpp`缓存每种能力定义并连接源费用、冷却组、次数、最后一次删除和真实使用事件。`session_item_use.cpp`共用原库存按钮与单位/地点目标入口；目标不可用或恢复资源全满时先拒绝，再决定消耗，拾取符文允许在满资源时触发。多个主动效果仍明确拒绝，单主动加已支持被动沿用装备阶段流程。
 
+恢复、保护、加速和驱散物品使用时提供 CHANNEL、CAST、EFFECT、FINISH、ENDCAST 事件及能力与目标上下文；支付前的回调若移除物品或使施法者失效，后续支付和效果停止。当前事件在使用调用内同步发布，与原版时序仍需对照。DotA_v6.83d 隔离会话附加事件观察脚本：净化药水的 EFFECT 带有实际英雄目标，魔瓶三次使用各产生五个阶段事件并完成空瓶／泉水补充；CAST 回调移除药水时未发布 EFFECT。记录位于 `tmp/docs-artifacts/war3/dota-item-flow/clarity-observed-events.log`、`bottle-observed-events.log` 和 `clarity-cancel-events.log`。探针直接调整单位状态和位置，不代表完整对局验收。
+
 持续状态进入现有buff时钟：暂停停止推进，死亡/移除/驱散/同源替换销毁附件。恢复按DataA/B总量除源时限推进，DataC的生命/魔法位分别控制允许满资源使用。DataE当前实现为受到敌方正数最终伤害时移除，位于免疫/外壳/减伤/魔法护盾之后、伤害事件之前；零伤害和完全吸收不移除。**“Dispel on Attack”的攻击分类、免疫/友伤及事件顺序尚需原版对照**，不能据本实现声称已还原。
 
 加速DataA作为移动百分比，Bspe同ID重新使用刷新，使用共享buff最强值聚合与减速消费者；有加速状态时读取MaxUnitSpeed/MaxBldgSpeed限制最终移动。源MiscGame当前为400，地图Misc覆盖沿用会话读取。该限制仅作用于本次加速状态；全局速度最小值、形态、不同增益叠加公式和GetUnitMoveSpeed查询精度仍待统一对照。
