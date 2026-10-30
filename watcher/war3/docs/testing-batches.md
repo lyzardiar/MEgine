@@ -3062,3 +3062,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 顶部按钮状态与消息转义（待验证）
 
 路径：`src/game_view.cpp`、`src/game_loading.*`。集中验证四族及地图皮肤、悬停／按下／禁用、用户控制和回放状态、鼠标点击、缩放／DPI，以及脚本文本的颜色与竖线转义，见[游戏顶部栏](top-hud.md)。
+
+### 战役缺失声音句柄（待验证）
+
+路径：`src/sound.cpp`。兽族 Orc01 静音探针完成 main 并推进 120 秒；集中验证缺失／损坏／正常音频、句柄、通道与时长、播放状态、堆叠、设备恢复及原版行为，见[兽族第一章缺失对白](campaign-orc01-missing-dialogue.md)。
