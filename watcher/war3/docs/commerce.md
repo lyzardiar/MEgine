@@ -33,3 +33,7 @@ build/windows-x86/bin/Release/war3_commerce_tests.exe "E:\Program Files (x86)\dz
 源数据价格/字段已读取，但完整原件库存/退款/事件次序、人口天花板默认值、所有前置条件和商店选择规则尚未验收。英雄雇佣额度、物品使用/出售、建筑施工、科技研发、完整动态碰撞与英雄经验另行接续。队列数值及命令区排版需要集中对照原版；新增GPU界面未实测，旧画面证据不覆盖本次变更。
 
 证据：`tmp/docs-artifacts/war3/commerce-{build.log,dota.log}`。阶段队列保持开放，未运行全套回归、三图完整玩法、性能基准或原件逐位对照。
+
+四族商店买家范围读取 `Aall` 激活范围，中立商店读取 `Aneu` 及其派生能力，地图覆盖使用同一能力等级字段；没有交互能力的脚本自定义商店保留 450 距离回退。命令按钮、物品交易、单位交易及酒馆／显形建筑的买家检查复用该范围。当前以商店与买家中心距离判断，能力禁用、多个交互能力、碰撞半径与选择买家规则需与原版对照。
+
+固定版 `War3Patch.mpq` 的 `Units/AbilityData.slk` SHA-256 为 `ddc360800784f808219bbc2518b16b0f12413082aada2755cc00944adcc31cec`：`Aall/DataA1=600`、`Aneu/DataA1=450`；`Units/AbilityMetaData.slk` 的 `Neu1` 对应 DataA，`UI/WorldEditStrings.txt` 将其标记为激活范围。Win32 Release 客户端与测试目标编译通过；`war3_passive_tests <data-root> <fixture> shop-range` 7/7，覆盖四族、中立商店和酒馆的边界、实际交易及自定义范围。原版实际窗口与完整交互仍待验证。

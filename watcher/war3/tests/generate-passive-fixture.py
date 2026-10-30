@@ -26,6 +26,7 @@ def main():
     files['war3map.j'] = b'function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n'
     records = []
     for base, marker, changes in [
+        (b'Aall', b'A0AL', [('Neu1', 2, 720., 1)]),
         (b'AOcr', b'A0CR', [('Ocr1', 2, 100., 1), ('Ocr2', 2, 2., 2)]),
         (b'AOcr', b'A0NM', [('Ocr1', 2, 100., 1), ('Ocr2', 2, 2., 2), ('Ocr5', 0, 1, 5)]),
         (b'AEev', b'A0EV', [('Eev1', 2, 1., 1)]),

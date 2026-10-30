@@ -3599,3 +3599,9 @@ Win32 Release 客户端和测试目标编译通过；`build/windows-x86/bin/Rele
 路径：`src/map_preparation.cpp`、`src/session.h`、`src/game_view.cpp`、`tests/map_seed_tests.cpp`、`tests/generate-map-seed-fixture.py`、`CMakeLists.txt`；说明见[会话随机流快照](session-random-persistence.md)。单机地图准备在脚本初始化前生成并保留初始种子，显式种子和联机同步种子保持不变。
 
 Win32 Release 客户端与 `war3_map_seed_tests` 编译通过；`python tests/generate-map-seed-fixture.py --data-root <data-root>` 后执行 `build/windows-x86/bin/Release/war3_map_seed_tests.exe <data-root> ../../tmp/docs-artifacts/war3/map-seed/fixture.w3m`，4/4 通过，覆盖 config 内随机取值、文件与内存地图重建随机状态、显式零种子，无 Game.dll。阶段验证实际选图、取消、重开、战役、自定义地图与脚本重设种子、联机及原版随机初始化；单机回放仍未接入。
+
+### 商店交互范围（待验证）
+
+路径：`src/session_commerce.cpp`、`tests/passive_tests.cpp`、`tests/generate-passive-fixture.py`、`docs/commerce.md`。四族与中立商店按 `Aall`／`Aneu` 能力等级的源范围筛选买家，命令按钮和实际交易沿用相同规则。
+
+Win32 Release 客户端及测试目标编译通过；在 `watcher/war3` 执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/shop-range/fixture.w3m`，再执行 `build/windows-x86/bin/Release/war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/shop-range/fixture.w3m shop-range`，7/7 通过，覆盖四族商店、中立商店、酒馆及自定义 720 范围，检查边界、按钮和实际物品购买，不加载 Game.dll。阶段核对原版距离测量、单位碰撞、多买家与手动选择、空背包、技能禁用、多人／共享控制、酒馆唤醒、显形建筑及真实窗口。
