@@ -42,3 +42,5 @@ session_locust为每个施法者/能力建立有界会话，按源间隔创建Un
 | Abilities/Spells/Undead/Impale/ImpaleHitTarget.mdx | War3x.mpq | 871e51f85c3877f8560011cd88041022b99a317184f238244338a333f64a3b57 |
 
 原件读取脚本、所选源行/模型附件记录与必要Win32 Release产品编译通过，无警告；日志保存于tmp/docs-artifacts/war3/impale-locust/；产品receipt标注构建结果和全部运行待测状态。构建命令为cmake --build watcher/war3/build/windows-x86 --config Release --target war3 -- /m:1 /nologo /v:minimal。新增玩法、三图、原版指令、窗口/GPU和性能没有在实现阶段执行，见[阶段测试队列](testing-batches.md)。
+
+自定义蝗虫群的每目标配额允许为零；蜂群仍按源数量与间隔创建、绕施法者飞行并在结束或施法者移除时清理，不分配攻击目标。DotA_v6.83d 魅惑魔女一级“自然之助”在隔离原图会话产生三个 `u00I`，地图脚本对受伤英雄施加治疗，附近敌人生命未变化，约 13 秒后飞行单位清理；探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/enchantress-nature-probe.cpp`。定向零配额夹具检查创建、不攻击和施法者移除清理通过；原版零配额行为、目标变化与地图脚本治疗、画面和多人仍待阶段对照。

@@ -3264,3 +3264,9 @@ Win32 Release 客户端及 `war3_caster_tests` 编译通过；`battle-roar` 4/4�
 路径：`src/jass_runtime.cpp`、`tests/jass_runtime_tests.cpp`、`docs/jass.md`。实数相等使用原版减法和容差，不等按实数位型比较，混合整数按原版转换后参与比较。
 
 Win32 Release 客户端及 JASS 测试编译通过；运行时检查 16/16，原版相等辅助函数在 Unicorn 中 5/5。DotA_v6.83d 隔离会话学习 `A1TB` 后，施法约 3 秒传送至目标，约 12 秒后返回；同图幽魂对普通单位和英雄伤害、英雄接触后幽魂死亡已观察。探针与反汇编位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段验证实数不等及混合类型的完整原版 VM 路径、特殊值、其他比较操作、降临中断／死亡／联结目标、真实窗口与多人。
+
+### 零目标配额蝗虫群与 DotA 自然之助（待验证）
+
+路径：`src/session_spell_info.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/impale-locust.md`。允许每目标配额为零的自定义蝗虫群按源配置生成飞行单位并保持零目标分配。
+
+Win32 Release 客户端及测试目标编译通过；`war3_spell_tests.exe <data-root> <fixture> zero-locust` 1/1，覆盖飞行单位生成、不攻击敌方及施法者移除清理。DotA_v6.83d 隔离原图施放 A01B 后观察到三个飞行单位、地图脚本治疗及结束后清理；探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对原版零配额行为、技能等级／持续时间／中断／死亡、治疗目标及多目标脚本、视觉和多人。

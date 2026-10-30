@@ -109,7 +109,8 @@ def main():
     def mana_shield(custom, fraction):
         changes = b''.join(field+struct.pack('<IIIf',2,1,slot,value)+custom for field,slot,value in [(b'Nms1',1,0.),(b'Nms2',2,fraction)])
         return b'ANms'+custom+struct.pack('<I',2)+changes
-    files['war3map.w3a']=struct.pack('<III',2,0,4)+instant_blizzard(b'A0ZB',3)+instant_blizzard(b'A0Z0',0)+mana_shield(b'A0MZ',0.)+mana_shield(b'A0MP',1.)
+    zero_locust = b'AUls'+b'A0L0'+struct.pack('<I',1)+b'Uls3'+struct.pack('<IIIi',0,1,3,0)+b'A0L0'
+    files['war3map.w3a']=struct.pack('<III',2,0,5)+instant_blizzard(b'A0ZB',3)+instant_blizzard(b'A0Z0',0)+mana_shield(b'A0MZ',0.)+mana_shield(b'A0MP',1.)+zero_locust
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
