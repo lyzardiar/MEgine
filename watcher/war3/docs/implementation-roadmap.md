@@ -1,5 +1,9 @@
 # 客户端集中实现清单
 
+镜像主动能力物品已连接转换与幻象生命周期；DotA 幻影斧在原图隔离会话产生两个幻象，实际操作及原版精度待验证，见[镜像物品](dota-manta.md)。
+
+DotA 刷新球 `I0AJ` 的原图隔离使用报 `Invalid item summon count or lifetime`；需核对能力定义、脚本事件和冷却重置流程，复现记录 `tmp/docs-artifacts/war3/dota-item-probe/I0AJ-before.log`。
+
 刀阵主动能力物品已连接施法与地图事件；DotA 灵魂之戒在原图隔离会话可触发生命与临时魔法变化，实际窗口和原版精度待验证，见[刀阵物品](dota-soul-ring.md)。
 
 风步主动能力物品已连接实际隐身与冷却；DotA 洛萨之锋在原图隔离会话可使用，实际窗口、破隐攻击及原版精度待验证，见[风步物品](dota-lothar.md)。

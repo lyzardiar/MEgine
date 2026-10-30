@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 镜像物品与幻影斧（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_mobility.cpp`；说明见[镜像物品](dota-manta.md)。`AOmi` 物品连接既有镜像转换及施法票据。Win32 Release 客户端和 mobility 测试程序编译通过；DotA 原图隔离会话创建英雄和 `I09F` 后产生两个幻象，记录 `tmp/docs-artifacts/war3/dota-item-probe/I09F-clones.log`；普通单位技能 `war3_mobility_tests.exe <data-root> <stealth-fixture> mirror` 1 通过、0 失败，不加载 Game.dll。阶段核对真实购买／使用、远程英雄、转换失效和事件重入、多个物品／地图覆盖、窗口、原版和联机。
+
+
 ### 刀阵物品与灵魂之戒（待验证）
 
 路径：`src/session_item_use.cpp`、`src/session_spells.cpp`；说明见[刀阵物品](dota-soul-ring.md)。`AEfk` 物品连接技能事件与刀阵消费者。Win32 Release 增量编译通过；DotA 原图隔离会话直接创建 `I0LL`，观察生命减少、临时魔法增加和消退、冷却内重复使用被拒绝，记录 `tmp/docs-artifacts/war3/dota-soul-ring/after-checked.log`；复现：`tmp/docs-artifacts/war3/dota-soul-ring/build/Release/dota_soul_ring.exe <data-root> <DotA_v6.83d.w3x>`。阶段核对真实购买／使用、生命不足、魔法使用与到期、目标／伤害、多物品和地图覆盖、事件、窗口及原版和联机。
