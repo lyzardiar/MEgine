@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 失效扩张点重新选择（待验证）
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。坐标、工人、敌人及建造入口使用同一扩张点有效性检查；目标矿井耗尽、隐藏／死亡／移除、归属变化、失去采金能力或被本方城镇占用后，重新选择可达候选。Win32 Release 客户端和 CampaignAI 测试程序编译通过；BootyBay 地形 `reachable` 在修复前保留耗尽矿井，修复后 2/2 通过，检查替代矿井、工人和敌人查询以及城镇占用后的无目标／不建造；`expansion-empty` 2/2 通过。夹具预置矿井、位置和城镇，未覆盖自然开采和建造。阶段验证矿井易主／销毁／隐藏、能力和路径变化、多个工人和城镇、事件回调、原版缓存与选择规则、实际对局、性能和联机。
+
 ### 空扩张目标坐标（待验证）
 
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。没有可用扩张点时 X／Y 返回 -1，原公共 AI 的 `ExpansionAttack` 不再向坐标 (0,0) 发出进军；有效扩张点返回其坐标。Win32 Release 客户端及 CampaignAI 目标编译通过；`reachable` 在修复前的空目标断言失败，修复后 2/2 通过；`expansion-empty` 在修复前复现原 `ExpansionAttack` 向不存在目标进军，修复后 2/2 通过，检查原脚本线程结束及目标不变。固定版 Game.dll 注册入口 `0x6f88fc90`／`0x6f88fd10`、无结果分支和 -1 常量初始化见 `tmp/docs-artifacts/war3/ai-expansion-sentinel/original-rizin.txt`。夹具直接设空矿藏和部队；扩张点失效／改变、完整电脑对局、原版动态行为及联机仍待阶段验证。
