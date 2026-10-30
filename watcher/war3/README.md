@@ -36,6 +36,10 @@ BootyBay已获得原地图画面及20帧开发运行证据，无Game.dll。完�
 - `--hidden --frames 120 --capture <PNG路径>`：限定帧输出；配合 `--play` 时帧数统计游戏画面，等待开局上限120秒。
 - `--menu-check --map <路径> --hidden --frames 10000`：已有菜单导航检查；`--window-check --frames 120`：已有窗口/输入恢复检查。
 
+游戏内置 Agent 截图入口：启动时用 `--agent-dir <已存在目录>` 启用当前进程的按需渲染帧读取；在客户端运行期间执行 `powershell -File tools/agent-capture.ps1 -AgentDir <同一目录>`，返回 PNG 路径、帧号、画面尺寸和游戏／菜单范围。每个客户端使用独立目录，每次只处理一个请求；目录内只保存显式请求的临时截图和响应。已运行但未启用入口的进程需要重启并带该参数。
+
+自动复现可在 `--play --map <地图>` 下增加 `--agent-select-unit hpea`，由游戏选择当前可见的第一个对应类型单位；可与 `--hidden --frames 300 --capture <PNG路径>` 组合。未找到可选单位时，帧限制结束会报错。该入口目前提供截图与启动时单单位选择，尚未提供 MEngine MCP 的完整状态和交互能力。
+
 开发截图、日志、JSON与采样统一放仓库根目录 `tmp/docs-artifacts/war3/`，不提交。实现期间只执行必要编译、静态检查与开发阻塞的最小复现；按[测试队列](docs/testing-batches.md)在功能阶段集中验证和修正。旧MEngine待测批次继续延期；旧转换缓存清理等待完整直接加载验收。
 
 已有实现依据见[脚本调度](docs/script-events.md)、[JASS](docs/jass.md)、[对象定义](docs/entities.md)、[共享归档](docs/archives.md)、[音频](docs/audio.md)及[REA边界](docs/rea-boundaries.md)。StormLib源站、版本和摘要见[source-info.json](third_party/stormlib/source-info.json)，许可证在[LICENSE](third_party/stormlib/source/LICENSE)。原安装资源和DLL不随项目分发。REA仅用于开发分析。

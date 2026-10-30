@@ -285,6 +285,7 @@ public:
     Archives& resources() const {return data_->session->world()->resources();}
     fs::path mapPath() const {auto world=data_->session->world();return world?world->resources().mapPath():fs::path{};}
     bool forceCampaignSelection() const {return data_->session->forceCampaignSelection();}
+    bool agentSelectUnit(std::string_view type);
     unsigned frames() const {return frames_;}
 };
 }

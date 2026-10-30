@@ -79,6 +79,8 @@ Options Options::parse() {
         else if (argument == L"--renderer") options.renderer = utf8(value(i));
         else if (argument == L"--log") options.log = value(i);
         else if (argument == L"--capture") options.capture = value(i);
+        else if (argument == L"--agent-dir") options.agentDirectory=value(i);
+        else if (argument == L"--agent-select-unit") {options.agentSelectUnit=utf8(value(i));if(options.agentSelectUnit.size()!=4 || !std::all_of(options.agentSelectUnit.begin(),options.agentSelectUnit.end(),[](unsigned char c){return c>=33 && c<=126;}))throw std::runtime_error("Agent unit type must be four printable ASCII bytes");}
         else if (argument == L"--frames") { auto text = value(i); size_t end = 0; auto n = std::stoul(text, &end); if (end != text.size() || n == 0 || n > 1000000) throw std::runtime_error("Invalid frame limit"); options.frames = n; }
         else if (argument == L"--probe") options.probe = true;
         else if (argument == L"--hidden") options.hidden = true;
@@ -97,9 +99,12 @@ Options Options::parse() {
     if (options.dataRoot.empty()) throw std::runtime_error("Usage: war3.exe --data-root <Warcraft III directory> [--map <w3x/w3m>] [--renderer d3d9]");
     options.dataRoot = fs::canonical(options.dataRoot);
     if (options.renderer != "d3d9" && options.renderer != "d3d9-reference") throw std::runtime_error("Renderer not implemented: " + options.renderer);
+    if(!options.agentSelectUnit.empty() && !options.play)throw std::runtime_error("Agent unit selection requires --play");
+    if(!options.agentDirectory.empty() && (options.probe || options.scriptCheck || options.configCheck || options.mainCheck))throw std::runtime_error("Agent capture requires a render run");
     if(options.play && (options.map.empty() || options.probe || options.mainCheck || options.configCheck || options.scriptCheck || options.menuCheck || options.windowCheck))throw std::runtime_error("Play requires --map and no check mode");
     if (!options.map.empty()) { if (options.map.is_relative()) options.map = options.dataRoot / options.map; options.map = fs::canonical(options.map); }
-    if (options.hidden && !options.probe && !options.scriptCheck && !options.configCheck && !options.mainCheck && !options.frames) throw std::runtime_error("Hidden run requires --frames or a native check");
+    if (options.hidden && !options.probe && !options.scriptCheck && !options.configCheck && !options.mainCheck && !options.frames && options.agentDirectory.empty()) throw std::runtime_error("Hidden run requires --frames, --agent-dir or a native check");
+    if(!options.agentDirectory.empty()){if(!fs::is_directory(options.agentDirectory))throw std::runtime_error("Agent directory must exist");options.agentDirectory=fs::canonical(options.agentDirectory);}
     if (!options.capture.empty() && !options.frames) throw std::runtime_error("Capture requires --frames");
     if (options.windowCheck && (options.probe || options.frames<120)) throw std::runtime_error("Window check requires a render run with at least 120 frames");
     if (options.menuCheck && (options.probe || options.windowCheck || options.map.empty() || options.frames<240)) throw std::runtime_error("Menu check requires --map, at least 240 frames, and no other check mode");

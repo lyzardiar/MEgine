@@ -27,7 +27,9 @@ struct Options {
     fs::path map;
     fs::path log;
     fs::path capture;
+    fs::path agentDirectory;
     std::string renderer = "d3d9";
+    std::string agentSelectUnit;
     unsigned frames = 0;
     bool probe = false;
     bool hidden = false;

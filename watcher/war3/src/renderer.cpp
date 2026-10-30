@@ -64,9 +64,9 @@ bool Renderer::begin() {
     device_->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
     return true;
 }
-bool Renderer::end(const fs::path& path) {
+bool Renderer::end(const fs::path& path,std::string* captureError) {
     check(device_->EndScene(), "End scene");
-    if (!path.empty()) capture(path);
+    if (!path.empty()){if(captureError){try{capture(path);}catch(const std::exception& e){*captureError=e.what();}}else capture(path);}
     auto result = device_->Present(nullptr, nullptr, nullptr, nullptr);
     if (result == D3DERR_DEVICELOST) return false;
     check(result, "Present");

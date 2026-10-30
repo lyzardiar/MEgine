@@ -25,7 +25,7 @@ public:
     explicit Renderer(HWND window, bool reference = false);
     void resize(unsigned width, unsigned height);
     bool begin();
-    bool end(const fs::path& capture = {});
+    bool end(const fs::path& capture = {},std::string* captureError=nullptr);
     void capture(const fs::path& path);
     void rect(float x, float y, float w, float h, DWORD color, IDirect3DTexture9* texture = nullptr, float u0 = 0, float v0 = 0, float u1 = 1, float v1 = 1, bool tile = false, bool additive = false, bool transpose = false);
     void cineFilter(float x,float y,float w,float h,DWORD color,IDirect3DTexture9* texture,const std::array<float,4>& uv,unsigned blend,unsigned flags);
