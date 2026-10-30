@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+### 暂停打断持续施法（待验证）
+
+路径：`src/session_entities.cpp`、`tests/channel_tests.cpp`、`docs/teleport.md`、`docs/spirit-split-tornado.md`。首次暂停单位时中断其当前施法、释放关联资源并发出 ENDCAST；重复暂停和恢复不重复派发。Win32 Release 客户端及测试目标编译通过；`war3_channel_tests <data-root> <channel-fixture>` 1/1 通过，覆盖持续施法暂停、重复暂停、恢复及施法完成事件内暂停。DotA_v6.83d 隔离会话中回城后英雄到达目的地、施法结束且可接收移动，记录 `tmp/docs-artifacts/war3/dota-item-flow/portal-pause-after.log`。原版 1.27 `PauseUnit` 在首次暂停时进入单位暂停动作路径，反汇编见 `tmp/docs-artifacts/war3/dota-item-flow/pause-original-rizin.txt`；是否对所有施法阶段发出相同事件仍需运行原版核对。阶段检查暂停期间及恢复的其他订单、移动／采集／生产、重复调用、施法回调重入、原版事件时序、实际窗口和联机同步。
+
 ### 地图脚本回城与地表特效（待验证）
 
-路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_spirit_split.cpp`、`src/session_effects.cpp`，说明见 [龙卷风](spirit-split-tornado.md) 和 [地表特效](ubersplats.md)。Release 客户端编译通过；原版 ANto 隔离探针创建旋风并以停止命令结束。DotA_v6.83d 隔离会话购买并使用回城卷轴，原图脚本创建 SCTP 并将英雄传送至目标附近，随后移动命令可中断持续施法；记录 `tmp/docs-artifacts/war3/dota-item-flow/portal-move-after.log`。传送完成后持续施法仍保持，阶段需对照原版结束时机、暂停／恢复、取消、目标建筑／小地图／双击、费用与多次回城、特效画面、地图覆盖和联机同步。
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_spirit_split.cpp`、`src/session_effects.cpp`，说明见 [龙卷风](spirit-split-tornado.md) 和 [地表特效](ubersplats.md)。Release 客户端编译通过；原版 ANto 隔离探针创建旋风并以停止命令结束。DotA_v6.83d 隔离会话购买并使用回城卷轴，原图脚本创建 SCTP 并将英雄传送至目标附近，随后移动命令可中断持续施法；记录 `tmp/docs-artifacts/war3/dota-item-flow/portal-move-after.log`。阶段需对照原版结束时机、暂停／恢复、取消、目标建筑／小地图／双击、费用与多次回城、特效画面、地图覆盖和联机同步。
 
 ### 消耗品施法事件（待验证）
 
