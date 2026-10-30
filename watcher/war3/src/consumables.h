@@ -2,7 +2,7 @@
 #pragma once
 #include "spells.h"
 namespace war3 {
-enum class ConsumableKind {Regeneration,Invulnerability,Speed,Restoration,Dispel,Protection};
+enum class ConsumableKind {Regeneration,Invulnerability,Speed,Restoration,Dispel,Protection,SpellShield};
 struct ConsumableInfo {
     SpellInfo spell;
     ConsumableKind kind=ConsumableKind::Restoration;

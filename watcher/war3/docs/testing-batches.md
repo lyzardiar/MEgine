@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+### 群体护盾神符（待验证）
+
+路径：`src/consumables.h`、`src/spells.h`、`src/session_consumables.cpp`、`src/session_spells.cpp`、`tests/spell_tests.cpp`、`docs/spell-shield.md`。`rsps` 拾取消费 `ANse` 的范围、目标和 `BNss`，对各友军创建可消耗的独立护盾状态；与护身符分别生效。Win32 Release 客户端及测试目标编译通过；`war3_spell_tests <data-root> tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m shield-rune`、`spell-shield`、`acid-speed` 各 1/1。夹具覆盖神符消耗、友军／无敌友军／敌军／范围外、长时保留、单次拦截、护身符及移除；目标关闭自然生命恢复。阶段检查地图覆盖、持续时间、能力禁用与目标变化、重新拾取、驱散／法术偷取、死亡／复活、事件重入、双护盾优先级、音画、实际地图、联机与原版行为。
+
 ### 魔法护盾护身符（待验证）
 
-路径：`src/passives.h`、`src/session.h`、`src/session_passive_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`tests/spell_tests.cpp`、`docs/spell-shield.md`。`ANss` 的原物品及单位来源消费源冷却，拦截指定敌方单体技能，施法事件、魔法和施法者冷却保留。Win32 Release 客户端及测试目标编译通过；`war3_spell_tests <data-root> tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m spell-shield` 1/1，覆盖友方治疗、范围雷霆一击、敌方风暴之锤及冷却／移除；目标关闭自然生命恢复。同夹具 `rain-chaos`、`monsoon` 各 1/1。阶段核对其他技能、技能与物品来源／地图覆盖、事件重入、弹道和范围、死亡／转移／变形、多护盾、冷却显示、AI、真实窗口和联机；原版拦截范围与时序及 `ANse` 神符仍待完成或对照。
+路径：`src/passives.h`、`src/session.h`、`src/session_passive_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`tests/spell_tests.cpp`、`docs/spell-shield.md`。`ANss` 的原物品及单位来源消费源冷却，拦截指定敌方单体技能，施法事件、魔法和施法者冷却保留。Win32 Release 客户端及测试目标编译通过；`war3_spell_tests <data-root> tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m spell-shield` 1/1，覆盖友方治疗、范围雷霆一击、敌方风暴之锤及冷却／移除；目标关闭自然生命恢复。同夹具 `rain-chaos`、`monsoon` 各 1/1。阶段核对其他技能、技能与物品来源／地图覆盖、事件重入、弹道和范围、死亡／转移／变形、多护盾、冷却显示、AI、真实窗口和联机；原版拦截范围与时序仍待对照。
 
 ### 视野范围加成（待验证）
 
