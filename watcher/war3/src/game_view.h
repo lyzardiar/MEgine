@@ -243,6 +243,10 @@ class GameView {
     void activateItem(std::uint32_t unit,std::uint32_t item,bool queued=false);
     void inventoryDragInput(GameInput& input);
     void drawInventoryDrag(const GameInput& input);
+    std::unique_ptr<GlueScreen> inventoryTooltip_;
+    std::string inventoryTooltipKey_,inventoryTooltipTitle_,inventoryTooltipBody_;
+    size_t inventoryTooltipScroll_=0,inventoryTooltipTitleLines_=0,inventoryTooltipBodyLines_=0;
+    void drawInventoryTooltip(const GameInput& input);
     std::vector<std::uint32_t> selected(bool owned=false) const;
     std::vector<std::uint32_t> primarySelection(std::vector<std::uint32_t> units) const;
     std::vector<std::uint32_t> orderSelection(bool control) const;

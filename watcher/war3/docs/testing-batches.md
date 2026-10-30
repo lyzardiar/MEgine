@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+### 物品栏说明提示（待验证）
+
+路径：`src/game_view.*`、`src/game_inventory_drag.cpp`、`src/session.h`、`docs/inventory-interactions.md`。悬停实际物品格显示名称及原资源／地图覆盖说明，增强提示关闭时显示名称；长内容分页，拖动或界面遮挡时隐藏。Win32 Release 客户端编译通过；DotA_v6.83d 隔离会话读取到动物信使的地图覆盖中文说明和颜色标记，记录 `tmp/docs-artifacts/war3/courier-journey/tooltip.log`，尚未验证渲染。阶段检查空槽／切换选区／六槽／多选、地图覆盖与颜色和数据引用、长文本分页、增强设置、拖放和目标模式、四族皮肤、窗口比例与原版画面。当前显示环境无法创建 D3D9 设备，尚无实际画面证据。
+
+DotA_v6.83d 隔离配送探针按 2 秒采样，信使先接近英雄、交付物品并返回基地；记录 `tmp/docs-artifacts/war3/courier-journey/before.log`。该探针预置物品并调整单位位置，不代表实际窗口和完整配送验收。
+
 ### 暂停打断持续施法（待验证）
 
 路径：`src/session_entities.cpp`、`tests/channel_tests.cpp`、`docs/teleport.md`、`docs/spirit-split-tornado.md`。首次暂停单位时中断其当前施法、释放关联资源并发出 ENDCAST；重复暂停和恢复不重复派发。Win32 Release 客户端及测试目标编译通过；`war3_channel_tests <data-root> <channel-fixture>` 1/1 通过，覆盖持续施法暂停、重复暂停、恢复及施法完成事件内暂停。DotA_v6.83d 隔离会话中回城后英雄到达目的地、施法结束且可接收移动，记录 `tmp/docs-artifacts/war3/dota-item-flow/portal-pause-after.log`。原版 1.27 `PauseUnit` 在首次暂停时进入单位暂停动作路径，反汇编见 `tmp/docs-artifacts/war3/dota-item-flow/pause-original-rizin.txt`；是否对所有施法阶段发出相同事件仍需运行原版核对。阶段检查暂停期间及恢复的其他订单、移动／采集／生产、重复调用、施法回调重入、原版事件时序、实际窗口和联机同步。
