@@ -137,6 +137,9 @@ def main():
         return b'ANab'+custom+struct.pack('<I',len(values))+changes
     files['war3map.w3a']=struct.pack('<III',2,0,8)+instant_blizzard(b'A0ZB',3)+instant_blizzard(b'A0Z0',0)+mana_shield(b'A0MZ',0.)+mana_shield(b'A0MP',1.)+zero_locust+poison_arrow+acid_speeds(b'A0AN',-.2,-.3)+acid_speeds(b'A0AP',.25,.4)
 
+    mind_rot_item = b'woms' + b'I0MR' + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + b'ANmr\0' + b'I0MR'
+    files['war3map.w3t'] = struct.pack('<III', 2, 0, 1) + mind_rot_item
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))

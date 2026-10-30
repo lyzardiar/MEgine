@@ -39,6 +39,6 @@ void ScriptSession::unitCastersTick(double delta){
     }
 }
 bool ScriptSession::useUnitCasterItem(std::uint32_t id,std::uint32_t itemId,std::uint32_t target){
-    if(!alive(id,NativeKind::Unit) || !alive(itemId,NativeKind::Item) || !alive(target,NativeKind::Unit))return false;auto u=units_.at(id);auto abilities=itemActiveAbilities(items_.at(itemId)->type);if(abilities.size()!=1)return false;auto& s=spellInfo(abilities.front(),1);if(!unitCasterSpell(s.kind) || !itemSpellReady(*u,s,itemId))return false;auto slot=std::find(u->inventory.begin(),u->inventory.end(),itemId);if(slot==u->inventory.end())return false;return beginSpell(id,s.ability,target,{},SpellTargeting::Unit,false,852008u+unsigned(slot-u->inventory.begin()),itemId);
+    if(!alive(id,NativeKind::Unit) || !alive(itemId,NativeKind::Item) || !alive(target,NativeKind::Unit))return false;auto u=units_.at(id);auto abilities=itemActiveAbilities(items_.at(itemId)->type);if(abilities.size()!=1)return false;auto& s=spellInfo(abilities.front(),1);if((!unitCasterSpell(s.kind) && s.kind!=SpellKind::MindRot) || !itemSpellReady(*u,s,itemId))return false;auto slot=std::find(u->inventory.begin(),u->inventory.end(),itemId);if(slot==u->inventory.end())return false;return beginSpell(id,s.ability,target,{},SpellTargeting::Unit,false,852008u+unsigned(slot-u->inventory.begin()),itemId);
 }
 }

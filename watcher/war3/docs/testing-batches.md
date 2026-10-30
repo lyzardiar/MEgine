@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 心灵腐烂（待验证）
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_caster_spells.cpp`、`src/session_spell_effects.cpp`、`src/session_spells.cpp`、`src/session_unit_casters.cpp`、`src/session_item_use.cpp`、`src/session_ai_armies.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`；说明见 [心灵腐烂](mind-rot.md)。Win32 Release 客户端及测试目标编译通过；`war3_spell_tests <data-root> tmp/docs-artifacts/war3/mind-rot/fixture.w3m mind-rot`、`spell-shield`、`shield-rune` 各 1/1。前者覆盖目标、源时长／耗魔、状态移除、零魔法、派生物品及护盾，夹具关闭目标自动索敌。阶段检查 AI、完整施法事件、地图覆盖、空目标分类、重复施法、魔法恢复／耗尽顺序、暂停／死亡／易主、驱散与法术偷取、实际画面、联机及原版时序。
+
 ### 群体护盾神符（待验证）
 
 路径：`src/consumables.h`、`src/spells.h`、`src/session_consumables.cpp`、`src/session_spells.cpp`、`tests/spell_tests.cpp`、`docs/spell-shield.md`。`rsps` 拾取消费 `ANse` 的范围、目标和 `BNss`，对各友军创建可消耗的独立护盾状态；与护身符分别生效。Win32 Release 客户端及测试目标编译通过；`war3_spell_tests <data-root> tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m shield-rune`、`spell-shield`、`acid-speed` 各 1/1。夹具覆盖神符消耗、友军／无敌友军／敌军／范围外、长时保留、单次拦截、护身符及移除；目标关闭自然生命恢复。阶段检查地图覆盖、持续时间、能力禁用与目标变化、重新拾取、驱散／法术偷取、死亡／复活、事件重入、双护盾优先级、音画、实际地图、联机与原版行为。
