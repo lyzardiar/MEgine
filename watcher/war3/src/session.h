@@ -585,6 +585,7 @@ class ScriptSession {
     float neutralBurnTick(UnitBuff& buff,double elapsed);
     void doomDeath(const UnitState& victim);
     void parasiteDeath(const UnitState& victim);
+    void spawnOnDeath(const UnitState& victim);
     void arrowStatusInfo(SpellInfo& spell);
     std::map<std::uint64_t,StampedeBeast> stampedeBeasts_;
     StampedeIndex stampedeUnitIndex_,stampedePropIndex_;

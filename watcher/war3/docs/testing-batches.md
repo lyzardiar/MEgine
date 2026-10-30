@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 中立生物死亡生成（待验证）
+
+路径：`src/passives.h`、`src/session_passive_info.cpp`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_neutral_spells.cpp`、`tests/corpse_tests.cpp`，说明见 [尸体与复活](corpses.md)。Win32 Release 客户端和尸体测试编译通过；`war3_corpse_tests.exe <data-root> <fixture> spawn-on-death` 1/1 通过，覆盖三种原始类型、数量与归属和直接移除。首次在另一落点只生成 1 只，改用开放位置后通过；受阻位置和原版处理仍待验证。阶段检查地图覆盖、能力禁用／移除、幻象／爆炸／复活／死亡回调重入、无位置、无期限和事件，以及实际地图与原版对照。
+
 ### 中立操纵死尸和地狱火（待验证）
 
 路径：`src/session_spell_info.cpp`、`src/session_ai_armies.cpp`、`tests/corpse_tests.cpp`。`ACad` 和 `ANin` 接入既有技能、实际订单及电脑决策，数值取各自原始或地图覆盖字段；说明见 [尸体与复活](corpses.md)和[范围与召唤](area-spells.md)。Win32 Release 客户端和尸体测试编译通过；原地形夹具 `creep-spells` 1/1 通过，覆盖尸体消费、非无敌及 120 秒时限、地狱火实体与 360 秒时限。阶段检查中立单位自身与电脑决策、目标／距离／费用／事件／中断、地图覆盖、完整效果、实际地图和原版对照。
