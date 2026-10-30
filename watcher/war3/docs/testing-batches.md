@@ -3228,3 +3228,9 @@ Win32 Release 客户端及 `war3_spell_tests` 编译通过；`zero-blizzard` 隔
 路径：`src/session_passive_info.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`、`docs/auras-passives.md`。光环及武器被动的 `player` 目标限定为与能力来源相同的玩家，并与其他关系标志组合。
 
 Win32 Release 客户端和 `war3_passive_tests` 编译通过；`player-aura` 隔离检查 3/3，覆盖己方、盟友与敌方及光环源易主，未加载 Game.dll。DotA 原图隔离会话放网后，英雄获得 `B01C`／隐身／穿行，附近创建的敌方单位未获光环；直接移动英雄出网后相关状态清理。探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对 `player` 与其他关系的组合、光环失效延迟／重叠／易主、网内数值、受伤切换、真实窗口与多人及原版行为。
+
+### 隐藏法术书与自目标光环（待验证）
+
+路径：`src/session_spellbooks.cpp`、`src/session_ability_commands.cpp`、`src/session_passive_info.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`、`docs/spellbooks-retraining.md`。禁用的法术书保留其子能力并隐藏命令入口；未声明空中／地面类别的自目标被动可作用于自身。
+
+Win32 Release 客户端及测试目标编译通过；`hidden-book` 夹具 4/4 和受关联影响的 `player-aura` 3/3 通过，未加载 Game.dll。DotA 原图隔离会话入网后显示 `A304`／`A300`／`B0HI`，移速光环系数由 0.2 增至 0.4；直接移动英雄出网后相关书籍／能力／状态清理。探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对书籍禁用的时机、直接下令、嵌套／库存／相同技能来源、无类别自目标、地图覆盖、多人和原版行为；真实操作和原版画面未验收。
