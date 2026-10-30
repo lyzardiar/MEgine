@@ -3394,3 +3394,5 @@ Win32 Release 客户端和测试目标编译通过；`war3_movement_avoidance_te
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。城镇采金配额只保留目标为该城镇当前矿井的工人；全局配额继续保留有效矿井任务。重分配复用采集命令和携带资源返还。
 
 Win32 Release 客户端与测试目标编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> harvest-town` 由失败变为 2/2 通过，覆盖跨城镇任务、携带金币、保持正确订单与全局配额；夹具关闭工人路径碰撞并暂停 AI 脚本线程。`harvest` 与 `melee-mines` 各 2/2 通过。BootyBay 兽族对不死族隔离会话于 2,340 秒产生双方结果 0／1，不死族单位及建筑为零，日志 `tmp/docs-artifacts/war3/orc-undead-long/town-mine-final.log`；该会话由测试直接启动双方 AI，未覆盖实际窗口。阶段检查采集途中的城镇归属变化、多个矿井／工人、矿井移除或耗尽、金币入账事件与原版分配、实际对局和联机。
+
+采金订单的城镇归属按当前目标矿井保留，工人经过其他城镇时不取消原任务。`harvest-town` 补充两个城镇均有配额时的边界场景，修复前该断言失败，修复后 2/2 通过；夹具直接调整工人位置、关闭其路径碰撞并暂停 AI 脚本线程。`harvest` 与 `melee-mines` 各 2/2 通过。自然跨城行走、多个工人和木材分配仍待阶段验证；本补充未重跑原图长局。
