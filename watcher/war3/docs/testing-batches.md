@@ -3330,3 +3330,9 @@ Win32 Release 客户端及测试目标编译通过；`war3_movement_avoidance_te
 路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。AI 对已知但位于战争迷雾中的目标发起攻击移动，重复同目标保留进行中的攻击和路线；新目的地仍会覆盖旧命令。
 
 Win32 Release 客户端及测试目标编译通过；`war3_campaign_ai_tests <data-root> <fixture> fog-attack` 与 `enemy-base` 分别为 2/2，覆盖原 CampaignAI 启动、迷雾和可见目标、重复命令、不同目的地覆盖及原 `AnyPlayerAttack`；迷雾定向夹具中的进攻单位关闭了路径碰撞。BootyBay 原图双电脑隔离会话在 2,580 秒取得双方结果 0／1，后者单位和建筑为零，记录 `tmp/docs-artifacts/war3/march-coordination/duel-fog-final.log`。阶段检查原版行为、移动目标、目标隐藏／死亡／易主、脚本事件、不可达位置、完整战斗、其他地图、真实窗口和双端同步。
+
+### 电脑采集覆盖金矿（待验证）
+
+路径：`src/session_ai_economy.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。电脑城镇查询与金币总量使用被诅咒／被缠绕金矿关联的实际矿藏。
+
+Win32 Release 客户端及测试编译通过；`war3_campaign_ai_tests <data-root> <BootyBay地图> melee-mines` 2/2，覆盖两种原图起始矿、AI 查询、真实采金及余额耗尽／恢复。不死族 60 秒原图隔离会话采金配额 5，底层矿余额 12,500→12,178；日志 `tmp/docs-artifacts/war3/orc-undead-duel/economy-after.log`。建造祭坛的侍僧受拥堵阻碍，完整不死族发展尚未通过；记录 `tmp/docs-artifacts/war3/orc-undead-duel/build-stall.log`。阶段检查矿井销毁／占领、多个城镇、原版语义、其他地图、实际客户端及局域网。

@@ -141,3 +141,9 @@ Win32 Release 客户端及测试目标编译通过；原 CampaignAI 启动和敌
 Win32 Release 客户端与 CampaignAI 测试编译通过；`fog-attack` 检查原 CampaignAI 启动、迷雾目标进军、重复命令保留、不同目的地覆盖和可见目标攻击；定向夹具中的进攻单位关闭了路径碰撞，`enemy-base` 检查原 `AnyPlayerAttack` 流程。针对该进攻逻辑与原版行为、目标移动／失效、战斗重入、单位脚本事件、跨岛运输、双端同步和完整对局仍待阶段验证。
 
 BootyBay 原图双电脑隔离会话使用最终实现运行至 2,580 秒，双方结果分别为 0 和 1，后者单位与建筑均为零；日志 `tmp/docs-artifacts/war3/march-coordination/duel-fog-final.log`。这是单图隔离模拟，不代表真实窗口、其他地图或原版互通已经验收。
+
+## 覆盖金矿的电脑采集
+
+电脑城镇矿井查询和 `GetGoldOwned` 读取矿井的实际共享资源；被诅咒和被缠绕金矿沿用下层原始矿的余额。矿藏耗尽后不再计入可用矿井，余额恢复后可重新识别；原版 AI 脚本据此分配对应工人。
+
+Win32 Release 客户端及 CampaignAI 测试目标编译通过；BootyBay 原图的 `melee-mines` 检查不死族与暗夜精灵的起始覆盖矿、原 AI 余额查询、实际采金、耗尽和恢复，2/2 通过。兽族对不死族隔离对局修复前不死族采金配额为零；修复后 60 秒采金配额为 5，侍僧在岗，余额从 12,500 减到 12,178，日志 `tmp/docs-artifacts/war3/orc-undead-duel/economy-after.log`。另观察到一名负责建造祭坛的侍僧在矿井附近受阻、建筑长期未完成，见 `tmp/docs-artifacts/war3/orc-undead-duel/build-stall.log`；不死族完整发展和对局尚未打通。矿井夺取／销毁、多个城镇共享、极值、原版语义、实际窗口及联机仍待阶段验证。
