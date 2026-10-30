@@ -3240,3 +3240,9 @@ Win32 Release 客户端及测试目标编译通过；`hidden-book` 夹具 4/4 �
 路径：`src/session_entities.cpp`、`tests/passive_tests.cpp`、`docs/ability-unit-handles.md`、`docs/spellbooks-retraining.md`。七个技能增删、等级与永久标记接口对无效单位返回零或失败。
 
 Win32 Release 客户端及 `war3_passive_tests` 编译通过；`invalid-unit` 检查 4/4，覆盖空、已移除、类型不匹配和有效单位，未加载 Game.dll。DotA 隔离会话设定蜘蛛英雄等级、施放终极技能并攻击创建的目标，观察到攻击加成、吸血及约 14 秒后的脚本清理；探针和原版反汇编在 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对句柄重用／回调删除、等级边界、自然升级／战斗、多人、实际窗口和原版精度。
+
+### 零效率魔法盾与 DotA 过载（待验证）
+
+路径：`src/session_self_spells.cpp`、`src/session_damage.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/zero-mana-shield.md`。允许零效率魔法盾开关及脚本事件，并跳过无效吸收运算。
+
+Win32 Release 客户端及 `war3_spell_tests` 编译通过；`zero-mana-shield` 3/3，覆盖零效率、零魔法、开关及原正效率盾，未加载 Game.dll。DotA 隔离原图中选取守护精灵，学习并开关 `A28Q`，观察到脚本加成添加／移除及启用期间生命和魔法下降；探针在 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对正比例零效率的原版语义、零魔法／伤害事件／切换重入、联结单位、多人和实际窗口。

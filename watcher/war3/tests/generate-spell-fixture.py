@@ -106,7 +106,10 @@ def main():
             payload=value+b'\0' if kind==3 else struct.pack('<f' if kind==2 else '<i',value)
             changes.append(field+struct.pack('<III',kind,1,slot)+payload+custom)
         return b'AHbz'+custom+struct.pack('<I',len(changes))+b''.join(changes)
-    files['war3map.w3a']=struct.pack('<III',2,0,2)+instant_blizzard(b'A0ZB',3)+instant_blizzard(b'A0Z0',0)
+    def mana_shield(custom, fraction):
+        changes = b''.join(field+struct.pack('<IIIf',2,1,slot,value)+custom for field,slot,value in [(b'Nms1',1,0.),(b'Nms2',2,fraction)])
+        return b'ANms'+custom+struct.pack('<I',2)+changes
+    files['war3map.w3a']=struct.pack('<III',2,0,4)+instant_blizzard(b'A0ZB',3)+instant_blizzard(b'A0Z0',0)+mana_shield(b'A0MZ',0.)+mana_shield(b'A0MP',1.)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))

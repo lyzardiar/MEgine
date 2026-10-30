@@ -24,7 +24,7 @@ void ScriptSession::selfSpellInfo(SpellInfo& s){
     if((s.kind==SpellKind::Berserk || s.kind==SpellKind::DivineShield || s.kind==SpellKind::Immolation || s.kind==SpellKind::ManaShield) && !s.buff)throw std::runtime_error("Self ability requires its source buff");
     if((s.kind==SpellKind::Avatar || s.kind==SpellKind::Berserk || s.kind==SpellKind::DivineShield) && (s.duration<=0 || s.heroDuration<=0))throw std::runtime_error("Timed self ability requires source durations");
     if(s.kind==SpellKind::Immolation && (s.period<1.f/1024 || s.period>86400 || s.area<=0 || s.secondary<0 || s.loss<0))throw std::runtime_error("Invalid source Immolation period, area or mana buffer");
-    if(s.kind==SpellKind::ManaShield && (s.amount<=0 || s.secondary<0 || s.secondary>1))throw std::runtime_error("Invalid source Mana Shield efficiency or absorption");
+    if(s.kind==SpellKind::ManaShield && (s.amount<0 || s.secondary<0 || s.secondary>1))throw std::runtime_error("Invalid source Mana Shield efficiency or absorption");
     if(s.healthBonus<0 || s.healthBonus>1000000 || s.flatDamage<0 || s.flatDamage>1000000 || s.damageTakenBonus<0 || s.damageTakenBonus>100 || s.magicFactor<0 || s.magicFactor>100 || s.pierceFactor<0 || s.pierceFactor>100 || s.attackFactor<0 || s.attackFactor>100 || s.deflectChance<0 || s.deflectChance>1 || s.deflectPierce<0 || s.deflectPierce>100 || s.deflectMagic<0 || s.deflectMagic>100)throw std::runtime_error("Self ability modifier outside supported range");
 }
 bool ScriptSession::selfSpellActive(const UnitState& u,const SpellInfo& s) const {auto b=u.buffs.find(effectKey(s));return b!=u.buffs.end() && b->second.kind==selfKind(s.kind) && b->second.ability==s.ability;}
