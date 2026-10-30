@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <climits>
 #include <sstream>
 
 namespace war3 {
@@ -21,6 +22,12 @@ const ProductInfo& ScriptSession::product(std::uint32_t type,bool item) {
     auto required=parts(data.field(type,"Profile","Requires")),counts=parts(data.field(type,"Profile","Requiresamount"));for(size_t i=0;i<required.size();++i)if(required[i].size()==4)value.prerequisites.emplace_back(ObjectData::code(required[i]),i<counts.size()?unsigned(std::max(1,std::stoi(counts[i]))):1u);return products_.emplace(key,std::move(value)).first->second;
 }
 bool ScriptSession::sells(const UnitState& u,bool item) const {auto ability=ObjectData::code(item?"Asid":"Asud");return u.abilities.contains(ability) || std::any_of(u.stock.begin(),u.stock.end(),[&](auto& entry){return entry.item==item;});}
+bool ScriptSession::pawnTarget(unsigned player,const UnitState& seller,std::uint32_t itemId,const UnitState& shop) {
+    if(!alive(itemId,NativeKind::Item))return false;auto& item=*items_.at(itemId);return player<16 && canManageUnitInventory(player,seller) && !seller.removing && !seller.hidden() && !seller.illusion && number(seller.life)>0 && item.holder==seller.handle && item.pawnable && !pawningItems_.contains(itemId) && !shop.removing && !shop.construction && !shop.unsummon && !shop.hidden() && !shop.paused && number(shop.life)>0 && (shop.owner>=12 || shop.owner==player || (config_.players[player].alliances[shop.owner]&1)) && sourceAbility(shop,"Apit").first && unitVisibleTo(shop.handle,player);
+}
+bool ScriptSession::pawnItem(unsigned player,std::uint32_t sellerId,std::uint32_t itemId,std::uint32_t shopId) {
+    if(!alive(sellerId,NativeKind::Unit) || !alive(shopId,NativeKind::Unit) || !alive(itemId,NativeKind::Item))return false;auto seller=units_.at(sellerId),shop=units_.at(shopId);auto held=items_.at(itemId);if(!pawnTarget(player,*seller,itemId,*shop))return false;float range=gameplayNumber("PawnItemRange",300),rate=gameplayNumber("PawnItemRate",.5f);if(range<0 || range>100000000 || rate<0 || rate>1000)throw std::runtime_error("Invalid item pawn configuration");if(std::hypot(number(seller->x)-number(shop->x),number(seller->y)-number(shop->y))>range)return false;auto& info=product(held->type,true);auto owner=seller->owner;auto& states=config_.players[owner].states;auto amount=[&](int cost){return std::int64_t(std::min(double(INT_MAX),std::floor(double(cost)*rate)));};int oldGold=states[1],oldLumber=states[2];states[1]=int(std::min(std::int64_t(INT_MAX),std::int64_t(oldGold)+amount(info.gold)));states[2]=int(std::min(std::int64_t(INT_MAX),std::int64_t(oldLumber)+amount(info.lumber)));pawningItems_.insert(itemId);struct Clear {std::set<std::uint32_t>& active;std::uint32_t id;~Clear(){active.erase(id);}}clear{pawningItems_,itemId};ScriptContext context;context.sellingUnit=sellerId;context.buyingUnit=shopId;context.soldItem=itemId;context.manipulatedItem=itemId;unitEvent(sellerId,277,294,context);if(alive(itemId,NativeKind::Item) && items_.at(itemId)==held)removeItem(itemId);playerChange(owner,1,oldGold,states[1],false);playerChange(owner,2,oldLumber,states[2],false);return true;
+}
 void ScriptSession::setStock(UnitState& u,std::uint32_t type,bool item,int current,int maximum) {
     if(current<0 || maximum<0 || maximum>10000)throw std::runtime_error("Shop stock outside supported range");auto& definition=product(type,item);auto found=std::find_if(u.stock.begin(),u.stock.end(),[&](auto& entry){return entry.type==type && entry.item==item;});StockEntry value{type,item,std::min(current,maximum),maximum,definition.stockInterval,0};if(value.current<maximum && value.interval>0)value.due=simulationTime_+(current==0 && definition.stockDelay>0?definition.stockDelay:value.interval);if(found==u.stock.end()){if(u.stock.size()>=256)throw std::runtime_error("Unit shop stock exceeds budget");u.stock.push_back(value);}else *found=value;
 }

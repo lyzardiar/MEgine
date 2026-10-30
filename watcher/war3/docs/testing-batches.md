@@ -3617,3 +3617,9 @@ Win32 Release 客户端和两个测试目标编译通过；`war3_passive_tests <
 路径：`src/game_commands.cpp`、`src/game_inventory_drag.cpp`、`src/game_view.*`、`src/player_commands.*`、`src/lan_action_encoder.cpp`、`src/lan_actions.*`、`src/lan_simulation.cpp`、`tests/revival_tests.cpp`；说明见[商店](commerce.md)。商店物品栏的使用、目标选择、快捷键、拖拽与实验联机消费连接当前买家，并重新检查商店与买家关系。
 
 Win32 Release 客户端与测试目标编译通过；执行 `build/windows-x86/bin/Release/war3_revival_tests.exe <data-root> ../../tmp/docs-artifacts/war3/hero-revival/fixture.w3m lan-shop-inventory`，1/1 通过，覆盖动作编解码、换格、买家越界／商店取消选择的旧动作及普通单位物品动作。阶段验证实际窗口的点击／目标／拖拽／快捷键、队列和买家切换、目标／物品失效、共享控制、双端同步／回放和原版操作一致性。
+
+### 商店收购物品（待验证）
+
+路径：`src/session.h`、`src/session_commerce.cpp`、`src/session_inventory.cpp`、`tests/passive_tests.cpp`、`tests/generate-passive-fixture.py`；说明见[商店](commerce.md)。物品交付订单可向有 `Apit` 的商店出售持有物品，使用源配置范围／比例、真实资源和出售事件。
+
+Win32 Release 客户端与测试程序编译通过；生成 `tmp/docs-artifacts/war3/pawn-analysis/fixture.w3m` 后运行 `war3_passive_tests.exe <data-root> <fixture> pawn-item`，1/1 通过，覆盖可出售标志、商店能力、金币／木材、事件字段及途中状态失效，不加载 Game.dll。阶段验证远距离到达、鼠标拖拽、玩家共享控制、排队及双端、商店／单位／物品失效与事件重入、自定义范围／倍率、四舍五入、原版事件次序与画面。

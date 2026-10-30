@@ -23,7 +23,28 @@ def main():
     archive = helper.mpyq.MPQArchive(io.BytesIO(original[offset:]), listfile=False)
     names = helper.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: helper.read_archive(archive, name) for name in names if name and name != '(listfile)'}
-    files['war3map.j'] = b'function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n'
+    files['war3map.j'] = b"""globals
+integer pawnCount=0
+unit pawnSeller=null
+unit pawnBuyer=null
+item pawnSold=null
+endglobals
+function OnPawn takes nothing returns nothing
+    set pawnCount=pawnCount+1
+    set pawnSeller=GetSellingUnit()
+    set pawnBuyer=GetBuyingUnit()
+    set pawnSold=GetSoldItem()
+endfunction
+function InstallPawnTest takes unit seller returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,seller,EVENT_UNIT_PAWN_ITEM)
+    call TriggerAddAction(t,function OnPawn)
+endfunction
+function config takes nothing returns nothing
+endfunction
+function main takes nothing returns nothing
+endfunction
+"""
     records = []
     for base, marker, changes in [
         (b'Aall', b'A0AL', [('Neu1', 2, 720., 1)]),
