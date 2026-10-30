@@ -21,6 +21,8 @@
 
 原 IssuePointOrder/ById/Loc、IssueImmediateOrder/ById 和界面共用相同后端；字符串订单使用此前的原版注册表。命令区无目标技能直接施放，点目标技能接受地面选择，保留右键/Esc取消及模态界面控制。脚本点目标和单位目标上下文分别提供真实坐标或句柄，无目标事件坐标为空。中断回调移除施法者时，外层订单入口先复核句柄，再继续访问状态。
 
+`IssuePointOrderLoc` 与 `IssuePointOrderByIdLoc` 对无法解析的位置返回 false，保留单位现有命令队列。原版 1.27 Game.dll 的注册入口分别为 `0x6f1e9650` 和 `0x6f1e9610`，两者在位置解析失败时直接返回零；原件 SHA-256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。DotA_v6.83d 隔离会话中的位置订单异常修复后可继续推进，记录见 `tmp/docs-artifacts/war3/dota-item-flow/dust-invalid-location-apiv-after.log`；探针直接创建并暂停敌方单位，不代表完整对局验收。
+
 蛇棒原型 AOwd 的 Profile 订单无法解析时使用原版 `ward` / 852504。原资料片 `OrcX02.w3x` 中 Arsw 原型为 AOwd、Profile 订单为 `Serpentward`；修复前脚本发出点目标订单时因此中止。无前章 gamecache 的独立静音探针修复后完成 main 并推进 120 秒，未加载 Game.dll；日志见 `tmp/docs-artifacts/war3/orc-late-probe/OrcX02-ward-after.log`。此结果不代表蛇棒施放效果、跨关存档或完整关卡已验收。
 
 ## 原件与边界

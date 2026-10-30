@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 失效位置的点订单（待验证）
+
+路径：`src/session_orders.cpp`、`tests/order_queue_tests.cpp`，原件入口与行为见 [点目标、范围伤害与召唤物](area-spells.md)。Release 客户端及订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-location` 1 通过、0 失败，覆盖空、已移除、类型不兼容和未知位置及已有队列，并检查有效位置的两种订单。DotA_v6.83d 隔离场景在原先位置句柄异常处继续推进，记录 `tmp/docs-artifacts/war3/dota-item-flow/dust-invalid-location-apiv-after.log`。阶段检查群组位置订单、脚本重入、其他订单、完整地图及联机同步。
+
 ### 显影之尘施法事件（待验证）
 
 路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`tests/stealth_tests.cpp`，说明见 [主动显形](stealth-reveal.md)。Release 客户端及专项目标编译通过；`war3_stealth_tests <data-root> <fixture> dust` 1 通过、0 失败，覆盖侦测跟随、冷却、到期和次数消耗。DotA_v6.83d 隔离会话中显影之尘对敌方隐身英雄应用 `Bdet`，并触发地图脚本添加 `A2SJ`，记录 `tmp/docs-artifacts/war3/dota-item-flow/dust-effects-after.log`。阶段检查原版事件和费用时序、目标／魔免／侦测共享、技能中断、脚本重入、最后一次消耗、实际窗口及联机同步。
