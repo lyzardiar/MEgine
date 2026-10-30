@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 野生动物游荡（待验证）
+
+路径：`src/passives.h`、`src/session_passive_info.cpp`、`src/session_ambient_passives.cpp`、`tests/passive_tests.cpp`、`docs/mechanical-critters.md`。源 `Awan` 接入空闲游荡与实际移动；初始区域、间隔与随机流使用当前近似实现。Win32 Release 客户端和 passive 目标编译通过；`build/windows-x86/bin/Release/war3_passive_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/auras-passives/fixture.w3m" wander`（在 `watcher/war3` 下执行）隔离检查 1 通过、0 失败，覆盖原鼠单位移动、范围、保持位置和移除能力，无 Game.dll。阶段检查原地图动物／机械小动物、导航／路径障碍、订单事件、玩家命令与保持、暂停／眩晕／禁用／变形／转移／死亡／移除、原版时序与范围、随机调用顺序、多人同步和大地图性能。
+
 ### 中立魔法之泉（待验证）
 
 路径：`src/session_passive_info.cpp`、`tests/passive_tests.cpp`、`docs/auras-passives.md`。`Aarm` 原型接入魔法光环及实际恢复，源 `nmoo/ANre` 使用百分比和范围。Win32 Release 客户端及 passive 检查目标增量编译通过；隔离会话 `build/windows-x86/bin/Release/war3_passive_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/auras-passives/fixture.w3m" fountain`（在 `watcher/war3` 下执行，夹具由 `tests/generate-passive-fixture.py` 生成） 1 通过、0 失败，检查原生命／魔法之泉对两个玩家的恢复、范围外单位及来源移除，不加载 Game.dll。阶段检查泉水地图、源数据覆盖、离开／返回、不同玩家及有机／机械／空地目标、多个来源／辉煌光环叠加、buff／视觉／声音、原版恢复速率与时序、实际窗口及联机。
