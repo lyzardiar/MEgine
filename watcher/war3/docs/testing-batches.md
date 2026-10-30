@@ -3514,3 +3514,8 @@ Win32 Release 客户端及测试目标编译通过；`war3_revival_tests <data-r
 路径：`src/session.h`、`src/session_unit_forms.cpp`、`src/session_ability_commands.cpp`、`tests/unit_forms_tests.cpp`、`docs/unit-forms.md`。潜入命令和按钮使用同一位置路径条件，浮出不受该条件限制。
 
 Win32 Release 客户端及专项程序增量编译通过；`war3_unit_forms_tests <data-root> <naga-submerge-fixture> submerge` 1/1，覆盖三种娜迦陆地拒绝、水域按钮启用和潜入／浮出，以及形态、隐身、移动、武器和句柄。夹具关闭单位路径碰撞。阶段检查实际窗口、浅水及动态障碍、地图脚本修改通行位、技能覆盖、原版地形判断与反馈、侦测和联机同步。
+
+
+### 亡灵第二章至第三章转场（待验证）
+
+路径：`docs/campaign-flow.md`；复现入口及日志为 `tmp/docs-artifacts/war3/undead02-probe-1031/`。独立 Win32 探针依次运行第二章、间章和第三章：第二章直接完成两个任务并设置英雄属性，胜利对话框选择继续；间章请求第三章；第三章恢复英雄等级 5 和用户数据 24168。此检查跳过建造、寻路和战斗，手动启动各会话，不证明实际产品自动切关及原版 w3v 兼容。阶段验证自然完成任务、窗口与音画、间章播放、完整英雄／物品继承和实际自动切关。
