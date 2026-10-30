@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 坐标进攻的后续运输波次（待验证）
+
+路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。进攻目标有效时在波次结束后继续接运隔离队员，暂停队员恢复后可续运；目标失效、目的地改变、撤退与编队重置清除续运状态。Win32 Release 客户端及 CampaignAI 编译通过；BootyBay 地形 `island-auto-point` 修复前九人只到八人，修复后 1/1 全部登岛；`island-auto-multiwave`、`island-auto-multiwave-script`、`island-auto-resume`、`island-auto-target-death`、`island-auto-retreat`、`island-target-change`、`island-pickup-cancel` 各 1/1。夹具预置九名无敌步兵与八格飞艇，目标在出发前死亡检查；不代表完整对局或原版行为。阶段检查航行中目标消失／换令、无落点、多船、不同载具、性能、原版时序和联机。
+
 ### 隔水营地自动选择与空中运输（待验证）
 
 路径：`src/session.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`、`docs/implementation-roadmap.md`。陆路营地优先；无陆路选择时按空闲载具、容量、乘员及空中通路回退至隔水营地；进攻时仅将隔离的地面队员加入实际运输波次。Win32 Release 客户端和 CampaignAI 编译通过；BootyBay 地形 `island-auto` 与原公共 `MinorCreepAttack` 的 `island-auto-script` 各 1/1，覆盖无／暂停／无法移动的载具、营地选择、同岛队员、组队、登艇和卸载；`reachable` 2/2，`island-wave`、`island-target-change`、`island-pickup-group`、`island-pickup-cancel` 各 1/1。夹具预置飞艇与部队，选营后将目标设为无敌。阶段核对目标变化／死亡、满载多波、多载具、陆空混编、无飞区及动态障碍、真实对局自动购买和原版策略、性能及联机。
