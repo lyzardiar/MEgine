@@ -3058,3 +3058,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 游戏内聊天窗口与消息分类（待验证）
 
 路径：`src/chat_dialog.*`、`src/game_view.*`、`src/player_commands.*`、`src/session_text.cpp`、`src/session_spatial_events.cpp`、`src/script_state.h`、`src/session.h`、`src/message_log.cpp`、`src/lan_actions.*`、`src/lan_runtime.cpp`、`src/lan_simulation.*`。集中验证 F12／Shift+F12、频道／私聊选择与历史、消息格式、目标离开、窗口输入隔离、发送失败、实验双端与回放、原版窗口和协议差异，见[对局聊天窗口](chat-dialog.md)。
+
+### 顶部按钮状态与消息转义（待验证）
+
+路径：`src/game_view.cpp`、`src/game_loading.*`。集中验证四族及地图皮肤、悬停／按下／禁用、用户控制和回放状态、鼠标点击、缩放／DPI，以及脚本文本的颜色与竖线转义，见[游戏顶部栏](top-hud.md)。
