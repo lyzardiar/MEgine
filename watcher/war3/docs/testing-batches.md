@@ -3348,3 +3348,9 @@ Win32 Release 客户端和测试目标编译通过；`war3_campaign_ai_tests <da
 路径：`src/session_combat.cpp`、`tests/movement_avoidance_tests.cpp`、`docs/combat.md`。追击目标时保留通向有效攻击射程的路线和中间避障点；目标移动或地形阻挡变化使路线失效时重算。
 
 Win32 Release 客户端及测试编译通过；`war3_movement_avoidance_tests <data-root> <BootyBay地图> chase` 1/1，覆盖人工绕行点保留、目标移动重算、实际攻击伤害，以及实际绕过占位单位和碰撞间距；人工绕行点部分暂时关闭了攻击者单位碰撞。兽族对不死族原图隔离对局模拟至 4,200 秒仍无胜负，日志 `tmp/docs-artifacts/war3/orc-undead-long/pursuit-final.log`。阶段检查动态单位／地形阻挡、目标死去／易主／隐藏、武器射程变化、编队及大量单位、原版事件时序、实际窗口和联机同步。
+
+### 较弱野怪营地回退（待验证）
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。无区间内可达营地时可回退到较弱可达营地，保留等级上限、空中筛选和现有可达性检查。
+
+Win32 Release 客户端与测试目标编译通过；`war3_campaign_ai_tests <data-root> <fixture> reachable` 2/2，检查较弱回退、区间内优先、超上限及隔水拒绝。固定版 Game.dll 对照指令记录 `tmp/docs-artifacts/war3/orc-undead-long/original-creep-camp-rizin.txt`；原版距离与过强营地筛选尚未完整实现。BootyBay 兽族对不死族隔离对局至 4,200 秒未产生胜负，剩余营地在隔离区域，见 `tmp/docs-artifacts/war3/orc-undead-long/weaker-camps.log`。阶段检查跨岛运输、混编、等级分组与移动、死亡／隐藏、距离与不可达、不同地图、实际窗口及联机。

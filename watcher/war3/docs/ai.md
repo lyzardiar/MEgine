@@ -149,3 +149,11 @@ BootyBay 原图双电脑隔离会话使用最终实现运行至 2,580 秒，双�
 Win32 Release 客户端及 CampaignAI 测试目标编译通过；BootyBay 原图的 `melee-mines` 检查不死族与暗夜精灵的起始覆盖矿、原 AI 余额查询、实际采金、耗尽和恢复，2/2 通过。兽族对不死族隔离对局修复前不死族采金配额为零；修复后 60 秒采金配额为 5，侍僧在岗，余额从 12,500 减到 12,178，日志 `tmp/docs-artifacts/war3/orc-undead-duel/economy-after.log`。不死族完整发展和对局仍待阶段验证。矿井夺取／销毁、多个城镇共享、极值、原版语义、实际窗口及联机仍待阶段验证。
 
 不死族祭坛受阻时，施工流程现保留有效的绕行路径；BootyBay 原图隔离会话在修复后观察到祭坛、墓地及死亡骑士，见[基础采集循环](economy.md)。
+
+## 较弱野怪营地回退
+
+`GetCreepCamp` 优先选择等级落在指定区间的可达营地；没有可达的区间内营地时，继续选择不超过上限的较弱可达营地。超过上限和不允许的空中营地仍被排除；已有单位移动类型、路径和战斗射程筛选继续生效。
+
+固定版 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。REA/Rizin 观察注册入口 `0x6f88fad0` 调用 `0x6f88f940`；该函数将低于最小等级和区间内的候选分别保存，返回时优先使用区间内候选，否则使用较弱候选。指令与摘要见 `tmp/docs-artifacts/war3/orc-undead-long/original-creep-camp-rizin.txt`，证据 `ev_747b34eb8a60316e4eca145058ec97f58bfe08baceb46c0f002cbd1ec505f5ab`。原版还有基于候选距离和过强营地的筛选，当前排序及完整判定尚未对齐。
+
+Win32 Release 客户端和 CampaignAI 测试编译通过；`reachable` 2/2，覆盖区间内优先、较弱营地回退、超上限拒绝和隔水营地拒绝。BootyBay 原图兽族对不死族隔离会话至 4,200 秒仍未决出胜负；剩余两处营地位于隔离区域，双方当前可达性查询返回空，日志 `tmp/docs-artifacts/war3/orc-undead-long/weaker-camps.log`。跨岛进攻、空地混编、原版距离规则、实际窗口和联机仍待实现或验证。
