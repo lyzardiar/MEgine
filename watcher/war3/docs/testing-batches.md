@@ -3288,3 +3288,9 @@ Win32 Release 客户端及测试目标编译通过；`war3_spell_tests.exe <data
 路径：`src/session.h`、`src/session_harvest.cpp`、`tests/harvest_tests.cpp`、`docs/economy.md`。回收建筑的默认入口不可达时搜索其他可达入口；采矿和返还不重复覆盖尚未完成的路径。
 
 Win32 Release 客户端及测试目标编译通过；原有 `war3_harvest_tests` 检查通过，`depot-route` 定向检查 1/1，覆盖入口阻挡、替代路径及实际金币入账。BootyBay 人族电脑隔离会话中，840 至 960 秒采金工人继续移动与入账，电脑升级要塞并开始城堡升级；个别伐木工人仍观察到拥堵停滞。探针见 `tmp/docs-artifacts/war3/dota-hero-1031/bootybay-ai-economy-probe.cpp`。阶段检查入口与碰撞、动态障碍、多人拥堵、矿井／回收建筑失效、玩家操作及原版精度和寻路性能。
+
+### 被占用中间路径点绕行（待验证）
+
+路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`、`docs/economy.md`。中间路径点被单位占据时，仅在碰撞检查允许的情况下连接后续点；保留最终目标及有界搜索预算。
+
+Win32 Release 客户端与测试目标编译通过；BootyBay 移动定向检查 9/9 通过，覆盖单位阻挡、最终目标和地形阻挡。BootyBay 电脑隔离会话模拟至 960 秒，建筑间密集拥堵的伐木工人仍未脱困；证据 `tmp/docs-artifacts/war3/dota-hero-1031/occupied-waypoint-ai-960.log`。阶段检查移动障碍、多单位协调、地形变化、联机确定性、性能及原版路径行为。
