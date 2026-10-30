@@ -3180,3 +3180,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 严格寻路连通区域（待验证）
 
 路径：`src/world.h`、`src/world_path.cpp`、`tests/world_tests.cpp`、`docs/water-pathing.md`。严格寻路按地形版本、净空与移动类型重用有界连通区域，不可用时保留原搜索；部分路径继续原搜索。Win32 Release 编译及区域／动态障碍／隔墙／部分路径定向检查 4/4 通过；隔墙夹具与 OrcX03b 前 40 秒隔离记录位于 `tmp/docs-artifacts/war3/orcx03b-current/`。集中验证四种移动类型、对角障碍、不可通起点、目标候选、地图变化、多净空缓存切换、实际战役帧时间及内存。
+
+### 部分路径重复搜索（待验证）
+
+路径：`src/world.h`、`src/world_path.cpp`、`tests/world_tests.cpp`、`docs/water-pathing.md`。缓存有界的不可达部分路径，路径版本或查询条件改变后重新搜索。Win32 Release 编译和部分路径缓存／失败缓存／连通区域／不可达路径检查 4/4 通过；夹具与 OrcX03b 前 40 秒静音模拟证据位于 `tmp/docs-artifacts/war3/orcx03b-current/`。集中验证可达／不可达目标变化、跨格移动、动态阻挡、不同半径／移动类型、缓存碰撞及实际对局性能。
