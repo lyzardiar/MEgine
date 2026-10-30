@@ -3200,3 +3200,7 @@ Win32 Release 增量编译通过；在隔离地图中通过 Agent 选择六物�
 路径：`src/agent_capture.h`、`src/game_view.*`、`src/main.cpp`、`tools/agent-pointer.ps1`、`README.md`。后台单人对局可按 800×600 逻辑坐标送达左键、右键及跨帧拖拽，沿用 `GameInput` 和真实命令路径；前台、联机、回放及不可操作界面拒绝，响应仅表示输入送达。
 
 Win32 Release 增量编译通过；隔离圣骑士六物品夹具使用 Agent 拖拽，截图状态显示第 0／1 格物品句柄交换，记录位于 `tmp/docs-artifacts/war3/agent-info/pointer-drag/`。阶段核对左／右键、地图／命令／物品目标、前台与菜单切换中断、拖拽失效、非游戏界面拒绝、DPI／窗口尺寸、连续请求与会话退出；尚未完成真实鼠标或原版输入一致性验证。
+
+### 英雄经验条颜色（待验证）
+
+路径：`src/game_commands.cpp`、`docs/unit-combat-panel.md`。经验进度按紫色调制源纹理；Win32 Release 编译通过，游戏内 Agent 的 100 经验截图显示紫色填充，见 `tmp/docs-artifacts/war3/agent-info/xp-purple/`。阶段对照四族、自定义皮肤、零／满经验与原版色值；颜色取自参考画面，非像素级验收。

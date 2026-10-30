@@ -13,3 +13,5 @@ Win32 Release 编译通过；`war3_passive_tests.exe <data-root> <fixture> weapo
 英雄经验条收在信息框内并与攻击行留出间距；物品图标、冷却遮罩、点击和拖拽命中使用同一组物品格坐标。使用游戏内置 Agent 选中带六件物品和 100 点经验的圣骑士，取得 1258×904 的实际渲染帧，六个图标在格内，经验条有填充且未与攻击行重叠；证据位于 `tmp/docs-artifacts/war3/agent-info/layout-six-items-xp/`。物品点击、拖拽、冷却以及四族和不同 DPI 尚待阶段验证；当前坐标基于人族界面，未完成原版精度验收。
 
 游戏内 Agent 使用实际输入路径将圣骑士第一个物品拖至第二格，截图状态确认两件物品的句柄交换；验证记录位于 `tmp/docs-artifacts/war3/agent-info/pointer-drag/`。左／右键、冷却及其他种族仍待阶段验证。
+
+经验条填充使用紫色调制源皮肤纹理，与提供的原版画面颜色一致；圣骑士 100 点经验的游戏内截图见 `tmp/docs-artifacts/war3/agent-info/xp-purple/`。颜色值参考画面，具体色值及自定义皮肤仍待原版对照。
