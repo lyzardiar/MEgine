@@ -3403,3 +3403,10 @@ Win32 Release 客户端与测试目标编译通过；`war3_campaign_ai_tests <da
 路径：`src/ai.h`、`src/session_ai_economy.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。保留采集订单对应的城镇及订单轮次，工人跨越城镇边界或树木耗尽自动换树时不丢失归属；配额缩减、城镇失效、订单更改、单位失效和停止采集清理归属。
 
 Win32 Release 客户端与测试目标编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> harvest-town` 2/2，包含跨城、两个城镇配额、缩减、销毁城镇、树木耗尽换树和停止采集；跨城通过直接调整位置，夹具关闭工人路径碰撞并暂停 AI 脚本线程。`harvest` 与 `melee-mines` 各 2/2 通过。阶段验证自然跨城移动、订单回调与易主／死亡、全局配额变化、原版语义、实际窗口、性能及联机同步。
+
+
+### DotA 英雄经验目标（待验证）
+
+路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`、`docs/dota-hero-experience.md`。`AddHeroXP` 对空、已失效和非英雄目标无操作；有效英雄的经验倍率和暂停开关沿用现有路径。
+
+Win32 Release 客户端及测试目标编译通过；`war3_revival_tests <data-root> <hero-revival-fixture> hero-xp` 1/1，覆盖空、已移除单位及英雄、不兼容句柄、非英雄、有效英雄和暂停经验。DotA 原图隔离会话 `-sd` 购买英雄并发出攻击移动，修复前脚本报错，修复后推进 360 秒且观察到死亡和复活，记录 `tmp/docs-artifacts/war3/dota-combat-flow/after-xp-movement.log`。阶段检查真实窗口、所有玩家／英雄、脚本重入、经验倍率与数值边界、暂停／幻象、技能表现、其他地图及联机同步。
