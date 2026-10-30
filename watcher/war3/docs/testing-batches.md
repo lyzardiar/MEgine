@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 亡灵第三章至第五章隔离链路（待验证）
+
+路径：`docs/campaign-flow.md`。同版核心隔离探针使用第二章缓存，第三章击杀基地后请求第四章；第四章恢复英雄、击杀祭坛、拾取钥匙、移入出口后请求第五章；第五章恢复 5 级和用户数据 24168。日志及本地探针位于 `tmp/docs-artifacts/war3/undead03-end/`。阶段验证正常战斗、寻路、完整目标及过场、产品窗口自动换关、声音、原版存档格式与实际画面。
+
+
 ### 零数量召唤物品能力（待验证）
 
 路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_spell_natives.cpp`、`tests/mobility_tests.cpp`；说明见[物品召唤](item-summons-buildings.md)。零数量召唤物品能力可完成施法和发布事件，技能冷却重置保留物品冷却。Win32 Release 客户端和 mobility 测试程序编译通过；`war3_mobility_tests.exe <data-root> <stealth-fixture> reset-cooldown` 1 通过、0 失败，使用真实闪烁技能和物品验证冷却分离。DotA 原图隔离会话使用刷新球后技能冷却清零、物品及刷新球自身冷却保留，日志 `tmp/docs-artifacts/war3/dota-refresher/after-reset.log`；探针复现：`tmp/docs-artifacts/war3/dota-refresher/build/Release/dota_refresher.exe <data-root> <DotA_v6.83d.w3x>`。阶段核对零／单／双组召唤、施法事件与费用、原版 `UnitResetCooldown` 的物品冷却范围及时序、刷新球真实购买与使用、窗口和联机。
