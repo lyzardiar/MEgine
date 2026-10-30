@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 单位目标物品双击（待验证）
+
+路径：`src/game_inventory_drag.cpp`。物品目标选择期间双击原槽位，将持有者作为单位目标提交，沿用物品命令的目标校验与队列处理。Win32 Release 客户端增量编译通过；DotA_v6.83d 隔离会话购买 `I05D` 净化药水，目标为持有者时命令接受、魔法在 10 秒内从 0 恢复至约 45.2，记录见 `tmp/docs-artifacts/war3/dota-item-flow/clarity-self.log`。阶段通过游戏内 Agent 验证双击、选目标、Shift 排队、不可对自身使用的物品及联机同步；点目标物品双击规则与原版对照。当前环境创建 D3D9 设备失败，尚无本次交互画面证据。
+
 ### 中立霜冻吐息（待验证）
 
 路径：`src/session_spell_info.cpp`、`src/session_neutral_spells.cpp`、`src/session_ai_armies.cpp`、`tests/spell_tests.cpp`，说明见 [中立能力](neutral-heroes.md)。Release 客户端和专项程序编译通过；`war3_spell_tests.exe <data-root> <fixture> frost-breath` 1/1 通过，覆盖原蓝龙施法、直接伤害、`BCbf` 持续伤害以及火焰吐息对未醉酒目标不添加燃烧。阶段检查多目标锥形、总伤害上限、施法与死亡回调、地图覆盖、状态叠加／驱散、电脑决策、原版伤害分类、声音与画面。
