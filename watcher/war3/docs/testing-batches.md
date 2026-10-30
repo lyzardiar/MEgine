@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 路径缓存与区域通行复用（待验证）
+
+路径：`src/world.h`、`src/world_path.cpp`、`tests/world_tests.cpp`、`docs/water-pathing.md`。按有效净空及路径版本复用短成功／部分路径，成功路径保留当前精确终点；区域图为 A* 提供通行结果。Win32 Release 客户端及 world 测试程序编译通过；精确终点、缓存失效、区域变化、部分路径及替代目标等 6 项各 1/1，预建区域与逐格搜索对照 1/1。OrcX03b 无前章 gamecache 静音模拟前 40 秒从 29.219 秒到 25.219 秒，日志在 `tmp/docs-artifacts/war3/orcx03b-path-current/`；结果不是帧率。阶段核对动态阻挡、不同净空与移动类型、搜索预算、长期对局、内存和原版路径语义。
+
 ### 英雄经验与物品栏对齐（待验证）
 
 路径：`src/game_inventory_layout.h`、`src/game_commands.cpp`、`docs/unit-combat-panel.md`。缩小经验条并在攻击行上方留出间距；物品图标、冷却和命中使用调整后的六格坐标；攻击数值与彩色增减值按完整文字纹理宽度分隔。Win32 Release 客户端增量编译与差异检查通过。尝试使用游戏内 Agent 的单物品圣骑士场景取得画面，当前会话 D3D9 设备创建失败，未取得修复后截图；日志 `tmp/docs-artifacts/war3/agent-info/layout-user-report-check/client.log`。阶段核对六槽／点击／拖拽／冷却、不同经验与攻击数值、双武器、四族及不同窗口比例，并与原版画面对照。
