@@ -3611,3 +3611,9 @@ Win32 Release 客户端及测试目标编译通过；在 `watcher/war3` 执行 `
 路径：`src/session_commerce.cpp`、`src/commerce.h`、`src/session.h`、`src/game_commands.cpp`、`src/game_view.*`、`src/game_inventory_drag.cpp`、`src/player_commands.cpp`、`src/lan_actions.*`、`src/lan_action_encoder.cpp`、`src/lan_simulation.*`、`tests/passive_tests.cpp`、`tests/revival_tests.cpp`；说明见[商店](commerce.md)。商店提供源选择按钮及右键目标选择，购买命令携带买家并在消费时校验；商店物品栏当前支持显示及提示。实验联机为指定买家使用 `0xfd`，既有无买家 `0xf4` 保持读取。
 
 Win32 Release 客户端和两个测试目标编译通过；`war3_passive_tests <data-root> ../../tmp/docs-artifacts/war3/shop-range/fixture.w3m shop-buyer` 1/1、`shop-range` 7/7；`war3_revival_tests <data-root> ../../tmp/docs-artifacts/war3/hero-revival/fixture.w3m lan-purchase-buyer`、`lan-purchase`、`awaken` 各 1/1。覆盖买家满栏／越界／移除、实际购买、动作编解码和原有交易／唤醒；未执行双进程或游戏内画面检查。阶段验证实际鼠标／热键／取消、原版按钮与库存布局、买家切换及指示、原版选择规则／共享控制、商店物品交互、同步延迟与双端／回放。
+
+### 商店买家物品操作（待验证）
+
+路径：`src/game_commands.cpp`、`src/game_inventory_drag.cpp`、`src/game_view.*`、`src/player_commands.*`、`src/lan_action_encoder.cpp`、`src/lan_actions.*`、`src/lan_simulation.cpp`、`tests/revival_tests.cpp`；说明见[商店](commerce.md)。商店物品栏的使用、目标选择、快捷键、拖拽与实验联机消费连接当前买家，并重新检查商店与买家关系。
+
+Win32 Release 客户端与测试目标编译通过；执行 `build/windows-x86/bin/Release/war3_revival_tests.exe <data-root> ../../tmp/docs-artifacts/war3/hero-revival/fixture.w3m lan-shop-inventory`，1/1 通过，覆盖动作编解码、换格、买家越界／商店取消选择的旧动作及普通单位物品动作。阶段验证实际窗口的点击／目标／拖拽／快捷键、队列和买家切换、目标／物品失效、共享控制、双端同步／回放和原版操作一致性。

@@ -18,7 +18,7 @@ enum class LanCommandMenu : std::uint8_t {None,Skills,Build};
 struct LanActionMenu {LanCommandMenu menu=LanCommandMenu::None;bool operator==(const LanActionMenu&) const=default;};
 struct LanActionExperimentalChat {std::string text;ChatChannel channel=ChatChannel::All;std::optional<std::uint8_t> recipientSlot;bool operator==(const LanActionExperimentalChat&) const=default;};
 struct LanActionExperimentalDialog {LanObjectId dialog,button;std::uint32_t signature=0;std::uint64_t generation=0;bool operator==(const LanActionExperimentalDialog&) const=default;};
-struct LanActionExperimentalUnit {std::uint8_t kind=0,flags=0;LanObjectId actor,item,target;std::uint32_t type=0,slot=0,xBits=0,yBits=0;bool operator==(const LanActionExperimentalUnit&) const=default;};
+struct LanActionExperimentalUnit {std::uint8_t kind=0,flags=0;LanObjectId actor,item,target;std::uint32_t type=0,slot=0,xBits=0,yBits=0;std::optional<LanObjectId> shop;bool operator==(const LanActionExperimentalUnit&) const=default;};
 struct LanActionExperimentalSpell {std::uint8_t mode=0,flags=0;std::uint32_t ability=0,xBits=0,yBits=0;LanObjectId target;std::vector<LanObjectId> actors;bool operator==(const LanActionExperimentalSpell&) const=default;};
 struct LanActionExperimentalLeave {std::uint8_t peer=0;bool operator==(const LanActionExperimentalLeave&) const=default;};
 struct LanActionExperimentalPurchase {LanObjectId shop;std::uint32_t type=0;bool item=false;std::optional<LanObjectId> buyer;bool operator==(const LanActionExperimentalPurchase&) const=default;};

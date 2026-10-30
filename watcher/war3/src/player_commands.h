@@ -28,6 +28,7 @@ struct PlayerCommand {
     bool formationMovement=true;
     ChatChannel chatChannel=ChatChannel::All;
     std::optional<unsigned> chatRecipient;
+    std::uint32_t shop=0;
 };
 bool playerCommandQueueable(PlayerCommandKind kind);
 unsigned dispatchPlayerCommand(ScriptSession& session,const PlayerCommand& command,const std::function<bool()>& keepGoing={},bool fromQueue=false);
