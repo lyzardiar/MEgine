@@ -3629,3 +3629,9 @@ Win32 Release 客户端与测试程序编译通过；生成 `tmp/docs-artifacts/
 路径：`src/session_item_use.cpp`、`src/session_spells.cpp`；说明见[迈达斯之手](dota-midas.md)。`ANab` 物品通过目标输入进入现有施法、冷却和地图脚本。
 
 Win32 Release 客户端编译通过；原图隔离会话直接创建英雄、敌方步兵与 `I06D`，目标生命变为零、英雄经验增加、物品保留且进入冷却，日志 `tmp/docs-artifacts/war3/dota-midas/current.log`。阶段验证购买／合成、不同目标／距离／取消、奖励和事件时序、回调失效、联机、原版及真实窗口。
+
+### 黑皇杖与失效物品查询（待验证）
+
+路径：`src/session_entities.cpp`、`src/session_inventory.cpp`、`tests/passive_tests.cpp`；说明见[失效物品句柄](dota-bkb-item-handles.md)。物品所有者、数量、用户数据、等级和类别查询按原版处理无效句柄。
+
+Win32 Release 客户端及测试目标编译通过；`python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/pawn-analysis/fixture.w3m`，再执行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/pawn-analysis/fixture.w3m invalid-item` 1/1，覆盖有效、空、销毁及不兼容句柄。DotA 原图隔离会话使用 `I0FZ` 后得到 `I0G0`、免疫与冷却，推进 13 秒无脚本异常；记录 `tmp/docs-artifacts/war3/dota-bkb/bkb-after.log`。阶段验证实际购买／合成、多次使用、其他来源免疫、事件重入、联机和原版及游戏窗口。

@@ -16,7 +16,7 @@
 
 DotA原main已完成，123单位/1物品/205触发器/1,303事件，无Game.dll。推进250ms的延迟逻辑已创建6个任务，随后在 `Scripts/war3map.j:32750` 的IsPointBlighted失败；完整开局和玩法未通过。
 
-已处理同一路径的空物品槽查询：GetItemPlayer(null)返回null，整数型物品getter对null返回0，非零无效句柄继续报错。REA核对GetItemPlayer注册至0x6f1e2c50，空解析结果直接返回0；GetItemUserData的0x6f1e2ce0同样返回0，非空读取+0x80。原始证据为 `tmp/docs-artifacts/war3/quest-item-*-rea.json`。
+物品查询对空、失效或不兼容句柄返回原版默认值：GetItemPlayer 返回 null，GetItemCharges／GetItemUserData／GetItemLevel 返回 0，GetItemType 返回 ITEM_TYPE_UNKNOWN。REA核对GetItemPlayer注册至0x6f1e2c50，空解析结果直接返回0；GetItemUserData的0x6f1e2ce0同样返回0，非空读取+0x80。原始证据为 `tmp/docs-artifacts/war3/quest-item-*-rea.json`。
 
 IsUnitType补齐源武器启用位、攻击目标和武器类型对应的对空/对地、近战/远程分类，以及实际summoner对应的召唤分类；未知状态分类继续明确失败，未用默认false替代状态实现。
 
