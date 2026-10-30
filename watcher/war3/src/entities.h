@@ -258,7 +258,7 @@ struct ItemState {
     jass::Real x,y,life,maxLife;
     int charges=0,userData=0,level=0;
     std::uint32_t holder=0;
-    bool visible=true,invulnerable=false,droppable=true,pawnable=true,dropOnDeath=false;
+    bool visible=true,invulnerable=false,droppable=true,pawnable=true,dropOnDeath=false,removing=false;
 };
 struct WeatherState {std::uint32_t type=0;WorldRect region;SourceTable::Row definition;bool enabled=false;};
 }

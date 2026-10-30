@@ -12,7 +12,35 @@ SCRIPT = '''globals
 unit archer=null
 unit hero=null
 unit shade=null
+item removalItem=null
+integer removalUnitEvents=0
+integer removalPlayerEvents=0
+integer removalErrors=0
 endglobals
+function removal_unit_event takes nothing returns nothing
+    set removalUnitEvents=removalUnitEvents+1
+    if GetManipulatedItem()!=removalItem or GetTriggerUnit()!=hero or GetItemTypeId(removalItem)!='desc' or UnitItemInSlot(hero,0)!=null then
+        set removalErrors=removalErrors+1
+    endif
+    call RemoveItem(removalItem)
+endfunction
+function removal_player_event takes nothing returns nothing
+    set removalPlayerEvents=removalPlayerEvents+1
+    if GetManipulatedItem()!=removalItem or GetTriggerUnit()!=hero or GetItemTypeId(removalItem)!='desc' then
+        set removalErrors=removalErrors+1
+    endif
+endfunction
+function set_removal_item takes item i returns nothing
+    set removalItem=i
+endfunction
+function watch_item_removal takes nothing returns nothing
+    local trigger u=CreateTrigger()
+    local trigger p=CreateTrigger()
+    call TriggerRegisterUnitEvent(u,hero,EVENT_UNIT_DROP_ITEM)
+    call TriggerAddAction(u,function removal_unit_event)
+    call TriggerRegisterPlayerUnitEvent(p,Player(0),EVENT_PLAYER_UNIT_DROP_ITEM,null)
+    call TriggerAddAction(p,function removal_player_event)
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing

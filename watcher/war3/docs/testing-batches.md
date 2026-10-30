@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 携带物品移除事件与臂章（待验证）
+
+路径：`src/entities.h`、`src/session_inventory.cpp`、`src/session_item_use.cpp`、`tests/generate-stealth-fixture.py`、`tests/mobility_tests.cpp`；说明见[臂章](dota-armlet.md)。移除携带物品时沿用丢弃事件及物品上下文，阻止移除回调重入；地面物品移除不产生丢弃事件。Win32 Release 客户端与 mobility 测试程序编译通过；`war3_mobility_tests.exe <data-root> <fixture> remove-item` 和 `powerup` 各 1 通过、0 失败。DotA 原图隔离探针在关闭／开启／关闭过程中观察力量 22／47／22、最大生命 518／993／518，日志 `tmp/docs-artifacts/war3/dota-armlet/final.log`。阶段核对原版移除／丢弃／消耗／出售事件时序与递归、不同持有者与拾取物品、实际购买输入、图形界面和联机。
+
 ### 主动物品施法事件与隐藏单位目标施法（待验证）
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_item_use.cpp`、`tests/mobility_tests.cpp`；说明见[希瓦的守护](dota-shiva.md)。非拾取型永久属性物品接入技能事件和实际效果；脚本可令显示隐藏的单位施放目标技能。Win32 Release 客户端与 mobility 测试程序编译通过；`war3_mobility_tests.exe <data-root> <stealth-fixture> hidden-caster` 和 `powerup` 各 1 通过、0 失败。DotA 原图隔离会话 `tmp/docs-artifacts/war3/dota-shiva/after-hidden.log` 显示冰环伤害、减速与恢复；复现：`tmp/docs-artifacts/war3/dota-shiva/build/Release/dota_shiva.exe <data-root> <DotA_v6.83d.w3x>`。阶段核对事件顺序／费用／中断、属性物品与拾取物品、隐藏与运输／死亡、实际购买／输入、范围／多个目标、窗口、原版和联机。
