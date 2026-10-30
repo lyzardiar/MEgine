@@ -1205,7 +1205,7 @@ public:
     std::uint64_t questRevision() const {return questRevision_;}
     bool questFlash() const {return questFlash_;}
     void acknowledgeQuests() {questFlash_=false;}
-    void displayText(unsigned owner,float x,float y,double duration,std::string text,std::uint16_t audience=0xffff);
+    void displayText(unsigned owner,float x,float y,double duration,std::string text,std::uint16_t audience=0xffff,bool chat=false);
     void startAI(unsigned player,const std::string& script,bool campaign=false);
     const auto& ais() const {return ais_;}
     void startMain();

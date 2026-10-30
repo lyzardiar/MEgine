@@ -3054,3 +3054,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 选中单位动画头像（待验证）
 
 路径：`src/game_portrait.cpp`、`src/game_view.*`、`CMakeLists.txt`。集中检查真实单选／多选、模型和相机缺失、四族边框、DPI／窗口缩放、设备恢复、模型动画／队伍颜色、切图释放及状态块开销，见[选中单位头像](unit-portrait.md)。
+
+### 游戏内聊天窗口与消息分类（待验证）
+
+路径：`src/chat_dialog.*`、`src/game_view.*`、`src/player_commands.*`、`src/session_text.cpp`、`src/session_spatial_events.cpp`、`src/script_state.h`、`src/session.h`、`src/message_log.cpp`、`src/lan_actions.*`、`src/lan_runtime.cpp`、`src/lan_simulation.*`。集中验证 F12／Shift+F12、频道／私聊选择与历史、消息格式、目标离开、窗口输入隔离、发送失败、实验双端与回放、原版窗口和协议差异，见[对局聊天窗口](chat-dialog.md)。

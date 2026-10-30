@@ -3,6 +3,7 @@
 #include "chat_channel.h"
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,7 @@ struct PlayerCommand {
     std::uint32_t formationXBits=0,formationYBits=0;
     bool formationMovement=true;
     ChatChannel chatChannel=ChatChannel::All;
+    std::optional<unsigned> chatRecipient;
 };
 bool playerCommandQueueable(PlayerCommandKind kind);
 unsigned dispatchPlayerCommand(ScriptSession& session,const PlayerCommand& command,const std::function<bool()>& keepGoing={},bool fromQueue=false);

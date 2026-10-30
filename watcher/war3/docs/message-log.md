@@ -1,6 +1,6 @@
 # 对局消息纪录
 
-对局界面使用原版 `UI\\FrameDef\\UI\\LogDialog.fdf` 和 `KEY_LOG` 资源，通过 F12 或顶部“纪录”打开；Esc、F12 或确定按钮关闭。滚轮、Page Up／Page Down、Home／End 和滚动条用于浏览，默认跟随最新消息。
+对局界面使用原版 `UI\\FrameDef\\UI\\LogDialog.fdf` 和 `KEY_LOG` 资源，通过 Shift+F12 打开；Esc、F12 或确定按钮关闭。F12 和顶部“聊天”打开[对局聊天窗口](chat-dialog.md)。滚轮、Page Up／Page Down、Home／End 和滚动条用于浏览，默认跟随最新消息。
 
 消息历史在会话内保存本地玩家可见的脚本文本、对局提示和聊天，私聊与盟友消息按受众过滤；上限为 128 条、256 KiB。窗口取最近最多 48 KB 文本，并限制显示最近 128 行；极端长文本可能受文本布局上限影响。`ClearTextMessages` 当前清除屏幕消息，不清除历史；实验性联机独立显示的本地错误提示暂未计入历史。
 

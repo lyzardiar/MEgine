@@ -19,7 +19,7 @@ private:
     struct Selection {unsigned player;bool add;std::vector<std::uint32_t> units;};
     struct Escape {unsigned player;};
     struct Menu {unsigned player;LanCommandMenu menu;};
-    struct Chat {unsigned player;std::string text;ChatChannel channel;};
+    struct Chat {unsigned player;std::string text;ChatChannel channel;std::optional<unsigned> recipient;};
     struct SelectionSync {std::uint8_t peer;LanActionExperimentalSelection part;};
     struct Purchase {unsigned player;std::uint32_t shop,type;bool item;};
     struct Departure {std::uint8_t peer;};
