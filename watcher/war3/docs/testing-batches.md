@@ -3534,3 +3534,8 @@ Win32 Release 客户端及专项程序增量编译通过；`war3_unit_forms_test
 ### 战役黑暗之门（待验证）
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_summons.cpp`、`src/session_ai_armies.cpp`、`tests/spell_tests.cpp`；说明见 [黑暗之门](dark-portal.md)。Win32 Release 客户端和专项程序编译通过；`war3_spell_tests <data-root> <BootyBay地图> dark-portal` 1/1，覆盖源单位列表、数量范围、点目标施放、生成真实单位、所有权与冷却；测试暂停地图既有单位。阶段检查地图覆盖、数量极值、不同运动类型与无空间、召唤事件重入、取消／易主／死亡、AI、机械小动物共享落点、联机、战役和原版召唤时序及视觉。
+
+
+### 战役混乱之雨（待验证）
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_area_spells.cpp`、`src/session_ai_armies.cpp`、`tests/spell_tests.cpp`；说明见 [混乱之雨](rain-of-chaos.md)。Win32 Release 客户端与专项程序编译通过；`war3_spell_tests <data-root> <BootyBay地图> rain-chaos` 1/1，覆盖原版一级能力解析、点目标命令、分时创建两只地狱火、归属、限时生命和冷却。测试暂停了既有单位；落击伤害、眩晕、AI 与实际窗口未在此次运行中验证。阶段核对各等级、地图覆盖、位置合法性、被引用能力失效／替换、队列预算、死亡易主、事件重入、原版时序／随机顺序、联机及音画。
