@@ -37,3 +37,7 @@ build/windows-x86/bin/Release/war3_commerce_tests.exe "E:\Program Files (x86)\dz
 四族商店买家范围读取 `Aall` 激活范围，中立商店读取 `Aneu` 及其派生能力，地图覆盖使用同一能力等级字段；没有交互能力的脚本自定义商店保留 450 距离回退。命令按钮、物品交易、单位交易及酒馆／显形建筑的买家检查复用该范围。当前以商店与买家中心距离判断，能力禁用、多个交互能力、碰撞半径与选择买家规则需与原版对照。
 
 固定版 `War3Patch.mpq` 的 `Units/AbilityData.slk` SHA-256 为 `ddc360800784f808219bbc2518b16b0f12413082aada2755cc00944adcc31cec`：`Aall/DataA1=600`、`Aneu/DataA1=450`；`Units/AbilityMetaData.slk` 的 `Neu1` 对应 DataA，`UI/WorldEditStrings.txt` 将其标记为激活范围。Win32 Release 客户端与测试目标编译通过；`war3_passive_tests <data-root> <fixture> shop-range` 7/7，覆盖四族、中立商店和酒馆的边界、实际交易及自定义范围。原版实际窗口与完整交互仍待验证。
+
+商店读取 `Aall`／`Aneu` 的选择按钮显示开关、位置、图标和热键：点击按钮后选择附近己方单位，或选中商店后右键附近己方单位；商品按钮按当前买家判断，购买命令携带该单位，满物品栏或交易前买家失效时不会把该次购买转交其他单位。未手动选定时使用现有自动买家；买家离开可用范围后重新自动选择。商店物品栏显示当前买家的物品、冷却及提示，使用和拖拽需继续接入。实验联机和同构建回放使用带买家对象的 `0xfd` 购买动作；无指定买家继续使用原 `0xf4`。
+
+Win32 Release 客户端、`war3_passive_tests` 和 `war3_revival_tests` 编译通过；`shop-buyer`、`lan-purchase-buyer`、既有 `lan-purchase` 和 `awaken` 各 1/1，`shop-range` 7/7。隔离会话覆盖两名英雄、指定买家、满物品栏、越界／移除、动作编码和交易消费；没有启动真实双端或验证原版协议。实际窗口、按钮位置／热键、买家指示与物品栏、选取／取消、目标类型、共享控制、买家自动切换、事件和时序需阶段对照；完整原版联机与商店物品操作未完成。

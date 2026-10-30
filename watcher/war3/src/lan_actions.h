@@ -21,7 +21,7 @@ struct LanActionExperimentalDialog {LanObjectId dialog,button;std::uint32_t sign
 struct LanActionExperimentalUnit {std::uint8_t kind=0,flags=0;LanObjectId actor,item,target;std::uint32_t type=0,slot=0,xBits=0,yBits=0;bool operator==(const LanActionExperimentalUnit&) const=default;};
 struct LanActionExperimentalSpell {std::uint8_t mode=0,flags=0;std::uint32_t ability=0,xBits=0,yBits=0;LanObjectId target;std::vector<LanObjectId> actors;bool operator==(const LanActionExperimentalSpell&) const=default;};
 struct LanActionExperimentalLeave {std::uint8_t peer=0;bool operator==(const LanActionExperimentalLeave&) const=default;};
-struct LanActionExperimentalPurchase {LanObjectId shop;std::uint32_t type=0;bool item=false;bool operator==(const LanActionExperimentalPurchase&) const=default;};
+struct LanActionExperimentalPurchase {LanObjectId shop;std::uint32_t type=0;bool item=false;std::optional<LanObjectId> buyer;bool operator==(const LanActionExperimentalPurchase&) const=default;};
 struct LanActionExperimentalSelection {std::uint32_t round=0;std::uint16_t total=0,offset=0;std::vector<LanObjectId> objects;bool operator==(const LanActionExperimentalSelection&) const=default;};
 struct LanActionCancelQueue {std::uint8_t slot=0;std::uint32_t type=0;bool operator==(const LanActionCancelQueue&) const=default;};
 struct LanActionCancelRevival {LanObjectId hero;bool operator==(const LanActionCancelRevival&) const=default;};

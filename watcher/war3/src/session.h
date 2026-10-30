@@ -1197,7 +1197,9 @@ public:
     void entangleTick(double delta);
     bool harvest(std::uint32_t unit,std::uint32_t mine);
     bool returnResources(std::uint32_t unit,std::uint32_t depot=0);
-    std::vector<CommandButton> commands(std::uint32_t unit,unsigned player,bool buildMenu=false);
+    std::vector<CommandButton> commands(std::uint32_t unit,unsigned player,bool buildMenu=false,std::uint32_t buyer=0);
+    bool shopHasInteraction(std::uint32_t shop);
+    std::uint32_t shopBuyer(std::uint32_t shop,unsigned player,std::uint32_t requested=0,bool inventory=false);
     bool purchase(std::uint32_t shop,unsigned player,std::uint32_t type,bool item,std::uint32_t buyer=0);
     bool neutralRevealAvailable(std::uint32_t shop,unsigned player,std::uint32_t ability,std::string* reason=nullptr);
     bool neutralReveal(std::uint32_t shop,unsigned player,std::uint32_t ability,WorldPoint point);

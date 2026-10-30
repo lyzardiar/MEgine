@@ -3605,3 +3605,9 @@ Win32 Release 客户端与 `war3_map_seed_tests` 编译通过；`python tests/ge
 路径：`src/session_commerce.cpp`、`tests/passive_tests.cpp`、`tests/generate-passive-fixture.py`、`docs/commerce.md`。四族与中立商店按 `Aall`／`Aneu` 能力等级的源范围筛选买家，命令按钮和实际交易沿用相同规则。
 
 Win32 Release 客户端及测试目标编译通过；在 `watcher/war3` 执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/shop-range/fixture.w3m`，再执行 `build/windows-x86/bin/Release/war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/shop-range/fixture.w3m shop-range`，7/7 通过，覆盖四族商店、中立商店、酒馆及自定义 720 范围，检查边界、按钮和实际物品购买，不加载 Game.dll。阶段核对原版距离测量、单位碰撞、多买家与手动选择、空背包、技能禁用、多人／共享控制、酒馆唤醒、显形建筑及真实窗口。
+
+### 商店指定买家（待验证）
+
+路径：`src/session_commerce.cpp`、`src/commerce.h`、`src/session.h`、`src/game_commands.cpp`、`src/game_view.*`、`src/game_inventory_drag.cpp`、`src/player_commands.cpp`、`src/lan_actions.*`、`src/lan_action_encoder.cpp`、`src/lan_simulation.*`、`tests/passive_tests.cpp`、`tests/revival_tests.cpp`；说明见[商店](commerce.md)。商店提供源选择按钮及右键目标选择，购买命令携带买家并在消费时校验；商店物品栏当前支持显示及提示。实验联机为指定买家使用 `0xfd`，既有无买家 `0xf4` 保持读取。
+
+Win32 Release 客户端和两个测试目标编译通过；`war3_passive_tests <data-root> ../../tmp/docs-artifacts/war3/shop-range/fixture.w3m shop-buyer` 1/1、`shop-range` 7/7；`war3_revival_tests <data-root> ../../tmp/docs-artifacts/war3/hero-revival/fixture.w3m lan-purchase-buyer`、`lan-purchase`、`awaken` 各 1/1。覆盖买家满栏／越界／移除、实际购买、动作编解码和原有交易／唤醒；未执行双进程或游戏内画面检查。阶段验证实际鼠标／热键／取消、原版按钮与库存布局、买家切换及指示、原版选择规则／共享控制、商店物品交互、同步延迟与双端／回放。

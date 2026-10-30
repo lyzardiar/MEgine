@@ -21,7 +21,7 @@ private:
     struct Menu {unsigned player;LanCommandMenu menu;};
     struct Chat {unsigned player;std::string text;ChatChannel channel;std::optional<unsigned> recipient;};
     struct SelectionSync {std::uint8_t peer;LanActionExperimentalSelection part;};
-    struct Purchase {unsigned player;std::uint32_t shop,type;bool item;};
+    struct Purchase {unsigned player;std::uint32_t shop,type,buyer;bool item;};
     struct Departure {std::uint8_t peer;};
     struct Subgroup {unsigned player;std::uint32_t unit,type;};
     struct GroupAssign {unsigned player,group;std::vector<std::uint32_t> units;};

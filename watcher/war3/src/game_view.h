@@ -69,6 +69,8 @@ class GameView {
     enum class OrderMode {None,Move,Attack,AttackGround,Patrol,Harvest,Entangle,Repair};
     OrderMode orderMode_=OrderMode::None;
     std::uint32_t buildMenuUnit_=0,skillMenuUnit_=0,bookMenuUnit_=0;
+    std::uint32_t buyerShop_=0,shopBuyer_=0,shopSelect_=0;
+    std::uint32_t currentShopBuyer(std::uint32_t shop);
     bool buildMenuQueued_=false;
     std::uint32_t subgroupUnit_=0,subgroupType_=0,lastPickUnit_=0;
     std::uint32_t groundItem_=0;
