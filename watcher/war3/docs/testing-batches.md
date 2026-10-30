@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 飞艇击毁乘员状态（待验证）
+
+路径：`src/spells.h`、`src/session_control_spells.cpp`、`src/session_transport.cpp`、`tests/transport_tests.cpp`；说明见 [运输流程](transport.md)。有 `Achd` 的载具死亡且乘员成功落地后附加 `Bchd`，按普通／英雄源时长和移动／攻击恢复字段影响真实速度；共享恢复曲线为当前近似。Win32 Release 客户端与 transport 目标增量编译通过；在 `watcher/war3` 下运行 `build/windows-x86/bin/Release/war3_transport_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/transport/fixture.w3m" crash`，隔离检查 1 通过、0 失败，覆盖陆地释放、普通／英雄持续时间、减速恢复及不可驱散，无 Game.dll。阶段核对无能力／禁用／移除／正常卸载、陆地／水面／阻挡与无落点、英雄／普通／召唤／魔免／无敌、自定义持续及恢复字段、召唤伤害、重入／转让／复活／状态叠加、原版计时及视听、地图和联机。
+
 ### 链式驱散（待验证）
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_spell_effects.cpp`、`src/session_item_use.cpp`、`src/session_ai_armies.cpp`、`tests/spell_tests.cpp`；说明见 [链式驱散](chain-dispel.md)。单位技能和中和权杖进入目标施法、弹道、逐次驱散和物品次数；电脑可选取有可驱散状态的目标。Win32 Release 客户端及 spell 目标编译通过；在 `watcher/war3` 下运行 `build/windows-x86/bin/Release/war3_spell_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/mind-rot/fixture.w3m" chain-dispel`，隔离检查 1 通过、0 失败，覆盖两条入口、友方双目标和次数，不加载 Game.dll。阶段对照原版选点／跳转／上限、敌友／魔免／无敌／幻象／召唤、源覆盖与零值、回调重入／死亡／易主、费用／冷却／护盾、电脑、真实窗口／声音、地图和联机。
