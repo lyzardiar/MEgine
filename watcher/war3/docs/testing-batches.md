@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 单位信息与多选位置修正（待验证）
+
+路径：`src/game_view.cpp`、`src/game_selection_panel.cpp`、`src/game_commands.cpp`。单位／物品名称与生命、魔法及单位信息移入底部信息区；多选图标和鼠标命中共用调整后的位置；英雄经验条及其悬停区域移到头像下方。Win32 Release 编译通过；在 1258×904 隐藏窗口，用程序消息分别选中单个农民、单个圣骑士和两个农民，三次截图均显示在面板内，日志确认选中数量及正常退出，证据位于 `tmp/docs-artifacts/war3/selection-diagnostic/ui-{current,hero,multi}-selected.*`。阶段继续检查真实鼠标与命令按钮、货舱／建造／生产、地面物品、长文字、不同窗口／DPI、四族皮肤及原版画面对照；本次截图不代表完整 UI 还原。
+
 ### 单人近战默认对手（待验证）
 
 路径：`src/setup.h/.cpp`、`src/map_browser.cpp`、`tests/setup_tests.cpp`，说明见 [地图与选图流程](map-loading.md)。Win32 Release 产品及配置测试编译通过，配置测试 6/6 通过；BootyBay 隐藏窗口 300 帧未出现无对手即时胜利对话框。阶段验证其他近战地图、队伍和电脑槽、用户修改及同图草稿、真实交互和完整对局，并对照原版默认值；自定义、固定设置和自定义势力地图不自动添加对手。
