@@ -784,6 +784,7 @@ class ScriptSession {
     bool useSummonItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     void placeItemBuilding(std::uint32_t unit,const CastOrder& cast);
     bool lureCreep(std::uint32_t unit,std::uint32_t ward);
+    bool spellShield(std::uint32_t source,std::uint32_t target,const SpellInfo& spell,unsigned owner);
     void releaseSpell(std::uint32_t unit,const CastOrder& cast,unsigned owner);
     void areaSpell(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner);
     void areaSpellsTick(double delta);

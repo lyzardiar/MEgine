@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 魔法护盾护身符（待验证）
+
+路径：`src/passives.h`、`src/session.h`、`src/session_passive_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`tests/spell_tests.cpp`、`docs/spell-shield.md`。`ANss` 的原物品及单位来源消费源冷却，拦截指定敌方单体技能，施法事件、魔法和施法者冷却保留。Win32 Release 客户端及测试目标编译通过；`war3_spell_tests <data-root> tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m spell-shield` 1/1，覆盖友方治疗、范围雷霆一击、敌方风暴之锤及冷却／移除；目标关闭自然生命恢复。同夹具 `rain-chaos`、`monsoon` 各 1/1。阶段核对其他技能、技能与物品来源／地图覆盖、事件重入、弹道和范围、死亡／转移／变形、多护盾、冷却显示、AI、真实窗口和联机；原版拦截范围与时序及 `ANse` 神符仍待完成或对照。
+
 ### 视野范围加成（待验证）
 
 路径：`src/equipment.h`、`src/passives.h`、`src/session_equipment.cpp`、`src/session_passive_info.cpp`、`src/session_fog.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`、`docs/visibility.md`。`AIsi` 的源数值及地图覆盖经单位／库存状态汇总到昼夜迷雾视野，能力可用性和科技前置参与刷新。Win32 Release 客户端及测试目标编译通过；`war3_passive_tests <data-root> <fixture> sight` 与 `weapon-ui` 各 1/1，前者覆盖两个物品的加成、能力禁用与恢复、物品和单位能力移除，以及迷雾状态变化。夹具在 `tmp/docs-artifacts/war3/sight-bonus/fixture.w3m`。阶段核对昼夜、单位移动与死亡／易主、地图覆盖与科技、幻象、共享视野、极值、多来源叠加、原版规则及实际界面；原件多来源规则尚未确认。
