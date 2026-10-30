@@ -377,6 +377,7 @@ class ScriptSession {
     void beginCorpse(UnitState& unit,bool immediate=false);
     void clearCorpse(UnitState& unit);
     void corpsesTick(double delta);
+    void graveyardTick(std::uint32_t id,double delta);
     bool corpseTarget(const UnitState& caster,const UnitState& target,const SpellInfo& spell,bool visibility=true);
     std::vector<std::uint32_t> corpseTargets(const UnitState& caster,const SpellInfo& spell,WorldPoint point,float radius=-1);
     void releaseCorpseClaim(std::uint32_t corpse,std::uint32_t caster,std::uint64_t ticket);

@@ -1,9 +1,11 @@
 // Author: MiYu. Source death/decay phases and exclusive corpse claims remain attached to the original unit handle.
 #pragma once
 #include <cstdint>
+#include <vector>
 
 namespace war3 {
 struct ExhumeState {std::uint32_t ability=0;unsigned level=0;double elapsed=0;};
+struct GraveyardState {std::uint32_t ability=0;unsigned level=0,emitted=0;double elapsed=0;std::vector<std::uint32_t> bodies;};
 struct CorpseState {
     enum class Phase {Death,Body,Flesh,Bone,Dissipate,Gone};
     Phase phase=Phase::Death;

@@ -73,6 +73,7 @@ struct UnitState {
     std::optional<DigestionState> digestion;
     std::optional<CorpseState> corpse;
     std::optional<ExhumeState> exhume;
+    std::optional<GraveyardState> graveyard;
     std::optional<EatTreeState> eatTree;
     std::optional<GrabTreeState> grabTree;
     std::optional<WarClubState> warClub;

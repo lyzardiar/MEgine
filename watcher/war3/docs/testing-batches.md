@@ -3102,3 +3102,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役空单位状态操作（待验证）
 
 路径：`src/session_entities.cpp`、`src/session_spell_natives.cpp`、`docs/campaign-null-unit-reset.md`。OrcX02_02 隔离探针完成 main 并静音推进 120 秒；集中验证空／失效／有效单位及玩家、效果和冷却、事件、跨关存档及真实窗口。
+
+### 墓地尸体生成（待验证）
+
+路径：`src/corpses.h`、`src/entities.h`、`src/session.h`、`src/session_entities.cpp`、`src/session_corpses.cpp`、`src/session_transport.cpp`、`tests/corpse_cargo_tests.cpp`、`docs/graveyard.md`。Win32 Release 产品与专项程序编译通过；`war3_corpse_cargo_tests.exe <data-root> <corpse-cargo-fixture.w3m> graveyard` 1/1 通过，覆盖间隔、可用尸体、上限及补充。集中验证初始／满额与空位计时、消耗／衰败／搬运、能力增加／删除／升级、暂停／建造／死亡／转让、地图覆盖、多墓地、落点、同步、画面音效和原版对照。
