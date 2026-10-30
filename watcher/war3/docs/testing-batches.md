@@ -3270,3 +3270,9 @@ Win32 Release 客户端及 JASS 测试编译通过；运行时检查 16/16，原
 路径：`src/session_spell_info.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/impale-locust.md`。允许每目标配额为零的自定义蝗虫群按源配置生成飞行单位并保持零目标分配。
 
 Win32 Release 客户端及测试目标编译通过；`war3_spell_tests.exe <data-root> <fixture> zero-locust` 1/1，覆盖飞行单位生成、不攻击敌方及施法者移除清理。DotA_v6.83d 隔离原图施放 A01B 后观察到三个飞行单位、地图脚本治疗及结束后清理；探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对原版零配额行为、技能等级／持续时间／中断／死亡、治疗目标及多目标脚本、视觉和多人。
+
+### 毒箭与 DotA 推进（待验证）
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_arrow_status.cpp`、`src/session_orb_attacks.cpp`、`src/session_projectiles.cpp`、`src/session_weapons.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/poison-arrows.md`。毒箭连接手动／自动攻击、源弹道与毒伤状态；技能效果事件和攻击命中时状态接入脚本。武器及箭目标筛选支持敌友关系别名。
+
+Win32 Release 客户端及测试目标编译通过；`war3_spell_tests.exe <data-root> <fixture> poison-arrow` 1/1，覆盖魔法消耗、技能效果与命中状态、持续伤害和自动攻击。DotA_v6.83d 隔离原图手动／自动推进均消耗魔法并造成距离加成，探针见 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段检查源毒状态与叠加、目标类型／免疫、实际窗口、完整事件／回调时序及多人和原版行为。

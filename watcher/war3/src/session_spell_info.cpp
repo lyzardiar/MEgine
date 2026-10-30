@@ -77,7 +77,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"AEsh",SpellKind::ShadowStrike,SpellTargeting::Unit},{"Aesn",SpellKind::Sentinel,SpellTargeting::Unit},{"AOfs",SpellKind::Reveal,SpellTargeting::Point},{"Afla",SpellKind::Reveal,SpellTargeting::Point},{"AIfa",SpellKind::Reveal,SpellTargeting::Point},
         {"AUcb",SpellKind::CarrionBeetles,SpellTargeting::None},
         {"AUim",SpellKind::Impale,SpellTargeting::Either},{"AUls",SpellKind::LocustSwarm,SpellTargeting::None},
-        {"AHfa",SpellKind::SearingArrows,SpellTargeting::Unit},{"AEst",SpellKind::Scout,SpellTargeting::None},
+        {"AEpa",SpellKind::PoisonArrows,SpellTargeting::Unit},{"AHfa",SpellKind::SearingArrows,SpellTargeting::Unit},{"AEst",SpellKind::Scout,SpellTargeting::None},
         {"AEsv",SpellKind::VengeanceAvatar,SpellTargeting::None},{"Avng",SpellKind::VengeanceSpirits,SpellTargeting::None},
         {"AHca",SpellKind::ColdArrows,SpellTargeting::Unit},{"ANba",SpellKind::BlackArrow,SpellTargeting::Unit},
         {"ANbs",SpellKind::BlackArrow,SpellTargeting::Unit},{"ANsi",SpellKind::Silence,SpellTargeting::Point},
@@ -157,7 +157,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
     if(s.kind>=SpellKind::SoulBurn && s.kind<=SpellKind::Volcano)firelordSpellInfo(s);
     if(s.kind==SpellKind::SpiritSplit || s.kind==SpellKind::Tornado || s.kind==SpellKind::Taunt)spiritSpellInfo(s);
     if(s.kind>=SpellKind::BreathFire && s.kind<=SpellKind::ForkedLightning)neutralSpellInfo(s);
-    if(s.kind==SpellKind::ColdArrows || s.kind==SpellKind::BlackArrow || s.kind==SpellKind::Silence)arrowStatusInfo(s);
+    if(s.kind==SpellKind::ColdArrows || s.kind==SpellKind::BlackArrow || s.kind==SpellKind::PoisonArrows || s.kind==SpellKind::Silence)arrowStatusInfo(s);
     if(s.kind==SpellKind::SearingArrows){s.missileHoming=count(data.number(ability,"Profile","MissileHoming",1),1)!=0;if(s.amount>1000000 || s.speed<=0)throw std::runtime_error("Invalid source Searing Arrows damage or missile speed");}
     if(s.kind==SpellKind::Impale){s.distance=s.amount;s.amount=s.loss;s.endRadius=s.area;s.heightTime=field("DataD");if(!s.buff || s.distance<=0 || s.distance>100000 || s.secondary<1.f/1024 || s.secondary>300 || s.amount<0 || s.amount>1000000 || s.heightTime<0 || s.heightTime>300 || s.duration<0 || s.heroDuration<0)throw std::runtime_error("Invalid source Impale wave, damage or airborne time");s.speed=s.distance/s.secondary;}
     if(s.kind==SpellKind::LocustSwarm){s.summonCount=count(s.amount,256);s.targets=count(s.loss,256);s.period=s.secondary;s.buffHealth=field("DataD");s.maxDamage=field("DataE");auto type=data.field(ability,"AbilityData","UnitID"+std::to_string(level));if(type.size()!=4 || !data.contains(ObjectData::code(type)) || !s.summonCount || s.period<1.f/1024 || s.period>300 || s.duration<=0 || s.duration>86400 || s.buffHealth<0 || s.buffHealth>1000 || s.maxDamage<=0 || s.maxDamage>1000000 || s.area<=0)throw std::runtime_error("Invalid source Locust Swarm count, schedule, return or unit type");s.summonType=ObjectData::code(type);if(!weapons(s.summonType)[0].enabled && !weapons(s.summonType)[1].enabled)throw std::runtime_error("Locust Swarm unit requires a real weapon");}

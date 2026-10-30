@@ -21,6 +21,8 @@ integer probe_end=0
 integer probe_summons=0
 boolean probe_interrupt=false
 boolean probe_remove=false
+integer poison_effect=0
+integer poison_marked_damage=0
 endglobals
 function ProbeCaster takes unit u returns nothing
     set probe_caster=u
@@ -79,6 +81,24 @@ function ProbeRegister takes nothing returns nothing
     call TriggerRegisterUnitEvent(t,probe_caster,EVENT_UNIT_SUMMON)
     call TriggerAddAction(t,function ProbeSummon)
 endfunction
+function PoisonEffect takes nothing returns nothing
+    if GetSpellAbilityId()=='A0PA' then
+        set poison_effect=poison_effect+1
+    endif
+endfunction
+function PoisonDamaged takes nothing returns nothing
+    if GetUnitAbilityLevel(GetTriggerUnit(),'Bpoi')>0 then
+        set poison_marked_damage=poison_marked_damage+1
+    endif
+endfunction
+function PoisonRegister takes unit caster, unit target returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_EFFECT)
+    call TriggerAddAction(t,function PoisonEffect)
+    set t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_DAMAGED)
+    call TriggerAddAction(t,function PoisonDamaged)
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing
@@ -110,7 +130,8 @@ def main():
         changes = b''.join(field+struct.pack('<IIIf',2,1,slot,value)+custom for field,slot,value in [(b'Nms1',1,0.),(b'Nms2',2,fraction)])
         return b'ANms'+custom+struct.pack('<I',2)+changes
     zero_locust = b'AUls'+b'A0L0'+struct.pack('<I',1)+b'Uls3'+struct.pack('<IIIi',0,1,3,0)+b'A0L0'
-    files['war3map.w3a']=struct.pack('<III',2,0,5)+instant_blizzard(b'A0ZB',3)+instant_blizzard(b'A0Z0',0)+mana_shield(b'A0MZ',0.)+mana_shield(b'A0MP',1.)+zero_locust
+    poison_arrow = b'AEpa'+b'A0PA'+struct.pack('<I',2)+b'atar'+struct.pack('<III',3,1,0)+b'ground,enemies,organic\0'+b'A0PA'+b'amcs'+struct.pack('<IIIi',0,1,0,20)+b'A0PA'
+    files['war3map.w3a']=struct.pack('<III',2,0,6)+instant_blizzard(b'A0ZB',3)+instant_blizzard(b'A0Z0',0)+mana_shield(b'A0MZ',0.)+mana_shield(b'A0MP',1.)+zero_locust+poison_arrow
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
