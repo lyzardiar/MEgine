@@ -3089,7 +3089,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 ### 状态栏与单位详情布局（待验证）
 
-路径：`src/game_buff_panel.cpp`、`src/game_commands.cpp`、`docs/buff-panel.md`。单行八格依据固定版本状态栏构造；集中验证实际单选、多个状态、单位／建筑／货舱／生产切换、定时生命条、悬停、尺寸和原版屏幕位置。隐藏窗口点击探针未选中单位，尚未验证选中画面；日志 `tmp/docs-artifacts/war3/selected-hud-probe.log`。
+路径：`src/game_buff_panel.cpp`、`src/game_commands.cpp`、`docs/buff-panel.md`。单行八格依据固定版本状态栏构造；集中验证实际单选、多个状态、单位／建筑／货舱／生产切换、定时生命条、悬停、尺寸和原版屏幕位置。隐藏窗口点击探针未选中单位，尚未验证选中画面；默认地图和不触发胜利的单单位夹具均出现未选中，分别见 `tmp/docs-artifacts/war3/selected-hud-grid.log` 和 `tmp/docs-artifacts/war3/selection-diagnostic/selected.log`。需核对鼠标坐标、投影和真实窗口输入，不能据此判定原因。
 
 ### 战役毒蛇守卫订单（待验证）
 
