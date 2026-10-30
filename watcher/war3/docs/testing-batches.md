@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 隔离区域的部分路径搜索（待验证）
+
+路径：`src/world.h`、`src/world_path.cpp`、`tests/world_tests.cpp`、`docs/water-pathing.md`。缓存区域可达到目标的最小网格距离，搜索确认落点及排序无法改善后结束；无区域或条件不满足时继续原搜索。Win32 Release 客户端与 world 测试程序编译通过；预建区域与未预建区域逐点对照 4/4，覆盖动态开闭、不同起点／目标／净空、共享缓存和大区域。OrcX03b 隔离静音模拟前 120 秒分别耗时 203.671 和 140.265 秒，对照后段有编译并行，日志在 `tmp/docs-artifacts/war3/orcx03b-path-current/`。阶段检查搜索预算与相同距离的代价／格号排序、动态障碍、多移动类型、密集单位、实际战役帧时间及内存。
+
 ### 路径缓存与区域通行复用（待验证）
 
 路径：`src/world.h`、`src/world_path.cpp`、`tests/world_tests.cpp`、`docs/water-pathing.md`。按有效净空及路径版本复用短成功／部分路径，成功路径保留当前精确终点；区域图为 A* 提供通行结果。Win32 Release 客户端及 world 测试程序编译通过；精确终点、缓存失效、区域变化、部分路径及替代目标等 6 项各 1/1，预建区域与逐格搜索对照 1/1。OrcX03b 无前章 gamecache 静音模拟前 40 秒从 29.219 秒到 25.219 秒，日志在 `tmp/docs-artifacts/war3/orcx03b-path-current/`；结果不是帧率。阶段核对动态阻挡、不同净空与移动类型、搜索预算、长期对局、内存和原版路径语义。

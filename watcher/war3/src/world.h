@@ -79,7 +79,7 @@ class World {
     mutable std::array<FailedRoute,512> failedRoutes_{};
     struct CachedRoute {FailedRoute key;std::uint8_t count=0;bool reachedGoal=false;std::array<WorldPoint,16> points{};};
     mutable std::unique_ptr<std::array<CachedRoute,512>> cachedRoutes_;
-    struct PathRegions {std::uint64_t revision=0;unsigned clearance=0,searches=0;PathMovement movement=PathMovement::Ground;std::vector<std::uint32_t> labels;};
+    struct PathRegions {struct Nearest {std::uint32_t label=0,gx=0,gy=0,distance=0;};std::uint64_t revision=0;unsigned clearance=0,searches=0;PathMovement movement=PathMovement::Ground;std::vector<std::uint32_t> labels;std::array<Nearest,64> nearest{};};
     mutable std::array<PathRegions,4> pathRegions_{};
     void buildPathRegions(PathRegions& regions,float radius,PathMovement movement) const;
     std::uint64_t pathingRevision_=1;
