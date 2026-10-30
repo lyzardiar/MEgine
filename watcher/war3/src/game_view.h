@@ -206,9 +206,11 @@ class GameView {
     std::map<std::uint32_t,UnitShadow> unitShadows_;
     struct BuildingShadowStamp {std::uint32_t id=0,type=0;int x=0,y=0;std::uint8_t alpha=0;bool operator==(const BuildingShadowStamp&) const = default;};
     struct BuildingShadowChunk {unsigned x=0,y=0;float low=0,high=0;std::array<std::uint8_t,256> cells{};};
+    struct BuildingShadowDrawChunk {unsigned x=0,y=0;float low=0,high=0;std::array<std::uint8_t,289> alpha{},staticAlpha{};};
     std::vector<BuildingShadowStamp> buildingShadowStamps_;
     std::map<std::uint64_t,BuildingShadowChunk> buildingShadowChunks_;
     std::map<std::uint64_t,BuildingShadowChunk> staticShadowChunks_;
+    std::map<std::uint64_t,BuildingShadowDrawChunk> buildingShadowDrawChunks_;
     bool staticShadowsReady_=false,buildingShadowsReady_=false;
     const UnitShadow& unitShadow(std::uint32_t type);
     void streamUnitShadows(std::vector<std::string>& textures);
