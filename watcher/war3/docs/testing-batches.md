@@ -3164,3 +3164,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 单位攻击与护甲图标（待验证）
 
 路径：`src/combat.h`、`src/session_research.cpp`、`src/game_loading.*`、`src/game_commands.cpp`、`docs/unit-combat-panel.md`。攻击和护甲类型使用真实战斗状态，原版及地图皮肤图标在加载阶段读取；两把武器和护甲分别显示。Win32 Release 编译通过，人族农民及圣骑士隐藏窗口选中截图可见各栏；证据位于 `tmp/docs-artifacts/war3/selection-diagnostic/ui-combat-selected.*` 与 `ui-combat-hero-selected.*`。集中验证四族、地图皮肤覆盖及缺图、类型变化、双武器、英雄属性、长数值、窗口比例、DPI、性能和原版画面对照。
+
+### 英雄主属性显示（待验证）
+
+路径：`src/session.h`、`src/session_research.cpp`、`src/game_loading.*`、`src/game_commands.cpp`、`docs/unit-combat-panel.md`。主属性图标与伤害显示共用源单位主属性，三项当前属性使用源标题；Win32 Release 编译通过，圣骑士隐藏窗口选中画面可见图标和属性，证据位于 `tmp/docs-artifacts/war3/selection-diagnostic/ui-hero-attributes-selected.*`。集中验证力量／敏捷／智力英雄、地图自定义字段与皮肤、装备／升级变化、长数值、不同尺寸及与原版布局的差异。

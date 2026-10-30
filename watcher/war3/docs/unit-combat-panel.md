@@ -11,3 +11,7 @@ Win32 Release 客户端和 `war3_passive_tests` 编译通过；`weapon-ui` 最�
 图标栏尺寸、数值格式、原版增益显示和极值截断尚待对照；阶段核对四族、英雄／非英雄、武器启停／形态、科技／装备／光环／状态、双武器、单位销毁或易主、生产进度、多选切换、不同窗口比例与设备恢复。`tests/passive_tests.cpp` 增加光环变化后面板伤害和护甲的检查，尚未运行。
 
 本次 Win32 Release 编译通过；隐藏窗口使用人族农民双武器与圣骑士夹具分别选中单位并截取 900 帧画面，确认标题、图标及属性区可见，日志与画面在 `tmp/docs-artifacts/war3/selection-diagnostic/ui-combat-selected.*` 和 `ui-combat-hero-selected.*`。该检查不代表与原版像素一致。
+
+英雄属性区读取 `UnitBalance/Primary` 选择原版力量、敏捷或智力主属性皮肤图标，使用本地化标题及会话当前属性；图标随地图皮肤覆盖并在加载阶段预读，缺少标题时使用中文回退。主属性选择与面板攻击数值使用同一会话接口。
+
+Win32 Release 编译通过；圣骑士夹具的隐藏窗口选中画面显示力量主属性图标及三项属性，证据位于 `tmp/docs-artifacts/war3/selection-diagnostic/ui-hero-attributes-selected.*`。其他英雄类型、长数值与原版精确布局仍待验证。
