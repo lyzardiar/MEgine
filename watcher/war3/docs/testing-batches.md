@@ -3336,3 +3336,9 @@ Win32 Release 客户端及测试目标编译通过；`war3_campaign_ai_tests <da
 路径：`src/session_ai_economy.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。电脑城镇查询与金币总量使用被诅咒／被缠绕金矿关联的实际矿藏。
 
 Win32 Release 客户端及测试编译通过；`war3_campaign_ai_tests <data-root> <BootyBay地图> melee-mines` 2/2，覆盖两种原图起始矿、AI 查询、真实采金及余额耗尽／恢复。不死族 60 秒原图隔离会话采金配额 5，底层矿余额 12,500→12,178；日志 `tmp/docs-artifacts/war3/orc-undead-duel/economy-after.log`。建造祭坛的侍僧受拥堵阻碍，完整不死族发展尚未通过；记录 `tmp/docs-artifacts/war3/orc-undead-duel/build-stall.log`。阶段检查矿井销毁／占领、多个城镇、原版语义、其他地图、实际客户端及局域网。
+
+### 建造路径与不死族发展（待验证）
+
+路径：`src/session_construction.cpp`、`tests/campaign_ai_tests.cpp`、`docs/economy.md`、`docs/ai.md`。保留终点仍在有效建造范围且地形阻挡版本未变的路线与避障点；终点无效或地形阻挡变化时重新寻路。
+
+Win32 Release 客户端和测试目标编译通过；`war3_campaign_ai_tests <data-root> <BootyBay地图> melee-build` 1/1，覆盖实际建造命令、保留人工插入的绕行点、无效终点重算和祭坛完成；人工路径部分暂时关闭了工人单位碰撞。原图隔离会话不死族在 60 秒前开始祭坛建造，并继续建造墓地、训练死亡骑士；证据 `tmp/docs-artifacts/war3/orc-undead-duel/preserve-route.log`。兽族对不死族模拟至 2,100 秒，尚未产生胜负，日志 `tmp/docs-artifacts/war3/orc-undead-duel/duel-after.log`。阶段检查地形及建造位置变化、单位／建筑死亡与归属变化、取消／新命令、多人拥堵、其他种族施工、原版规则、真实客户端和局域网。
