@@ -1,0 +1,15 @@
+// Author: MiYu. Verify that map preparation retains reproducible per-session initial random seeds.
+#include "map_preparation.h"
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <thread>
+
+using namespace war3;
+int wmain(int argc,wchar_t** argv) {
+    try {
+        if(argc!=3)throw std::runtime_error("Usage: war3_map_seed_tests <data-root> <map>");MapPreparation preparation(argv[1],true);auto wait=[&](std::uint64_t id){auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(45);while(std::chrono::steady_clock::now()<deadline){if(auto result=preparation.poll()){if(result->request!=id)throw std::runtime_error("Unexpected map request");if(!result->session)throw std::runtime_error("Map preparation failed: "+result->error);return std::move(result->session);}std::this_thread::sleep_for(std::chrono::milliseconds(10));}throw std::runtime_error("Map preparation timed out");};
+        auto generated=wait(preparation.request(argv[2]));auto seed=generated->initialRandomSeed();if(!seed)throw std::runtime_error("Generated seed was not retained");auto original=generated->encodeRandomState();auto configValue=generated->runtime().global("seed_probe").bits;auto repeated=wait(preparation.request(argv[2],{},true,*seed));if(repeated->initialRandomSeed()!=seed || repeated->encodeRandomState()!=original || repeated->runtime().global("seed_probe").bits!=configValue)throw std::runtime_error("Recorded seed did not reproduce configured random state");auto zero=wait(preparation.request(argv[2],{},true,0));if(zero->initialRandomSeed()!=std::optional<std::uint32_t>{0})throw std::runtime_error("Explicit zero seed was replaced");
+        std::ifstream input(fs::path(argv[2]),std::ios::binary);if(!input)throw std::runtime_error("Cannot read map fixture");auto bytes=std::make_shared<const Bytes>(std::istreambuf_iterator<char>(input),std::istreambuf_iterator<char>());auto memoryZero=wait(preparation.requestMemory(bytes,"seed-test",0));if(memoryZero->initialRandomSeed()!=std::optional<std::uint32_t>{0} || memoryZero->encodeRandomState()!=zero->encodeRandomState() || memoryZero->runtime().global("seed_probe").bits!=zero->runtime().global("seed_probe").bits)throw std::runtime_error("Explicit zero seed did not reproduce across map sources");auto memory=wait(preparation.requestMemory(bytes,"seed-test"));auto memorySeed=memory->initialRandomSeed();if(!memorySeed)throw std::runtime_error("Memory map seed was not retained");auto again=wait(preparation.requestMemory(bytes,"seed-test",*memorySeed));if(again->initialRandomSeed()!=memorySeed || again->encodeRandomState()!=memory->encodeRandomState() || again->runtime().global("seed_probe").bits!=memory->runtime().global("seed_probe").bits)throw std::runtime_error("Memory map seed did not reproduce configured random state");if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll loaded");std::cout<<"PASS generated and explicit map seeds, zero seed, file and memory reproduction\nRESULT passed=4 failed=0 game_dll_loaded=false\n";return 0;
+    }catch(const std::exception& error){std::cerr<<"FAIL "<<error.what()<<"\n";return 1;}
+}

@@ -1304,6 +1304,7 @@ public:
     bool multiboardsSuppressed() const {return multiboardsSuppressed_;}
     void toggleMultiboard(std::uint32_t id);
     std::optional<unsigned> localPlayer() const {return localPlayer_;}
+    std::optional<std::uint32_t> initialRandomSeed() const {return initialRandomSeed_;}
     bool configured() const {return configured_ && !failed_;}
     bool initialized() const {return runtime_.ready() && !failed_;}
     const SessionConfig& config() const {return config_;}

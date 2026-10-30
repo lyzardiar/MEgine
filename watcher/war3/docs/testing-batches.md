@@ -3593,3 +3593,9 @@ Win32 Release 客户端及专项程序增量编译通过；`war3_unit_forms_test
 路径：`src/session_projectiles.cpp`、`tests/passive_tests.cpp`、`docs/destructable-weapon-attacks.md`、`docs/attack-ground.md`。mline 零扩散距离只命中主目标；aline 零扩散及攻击地面使用范围伤害；穿透从冲击点向后按距离排序并应用逐次伤害损失。
 
 Win32 Release 客户端和测试目标编译通过；`build/windows-x86/bin/Release/war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/auras-passives/fixture.w3m line-weapon` 4/4，覆盖狮鹫、风暴之锤、刃车穿透升级和地面攻击，不加载 Game.dll。阶段对照原版损失公式、碰撞边界和目标顺序、穿透升级与地面攻击，验证物品／可破坏物、目标消失／回调重入、闪避／弹射、实际窗口及双端同步。
+
+### 单机地图初始随机种子（待验证）
+
+路径：`src/map_preparation.cpp`、`src/session.h`、`src/game_view.cpp`、`tests/map_seed_tests.cpp`、`tests/generate-map-seed-fixture.py`、`CMakeLists.txt`；说明见[会话随机流快照](session-random-persistence.md)。单机地图准备在脚本初始化前生成并保留初始种子，显式种子和联机同步种子保持不变。
+
+Win32 Release 客户端与 `war3_map_seed_tests` 编译通过；`python tests/generate-map-seed-fixture.py --data-root <data-root>` 后执行 `build/windows-x86/bin/Release/war3_map_seed_tests.exe <data-root> ../../tmp/docs-artifacts/war3/map-seed/fixture.w3m`，4/4 通过，覆盖 config 内随机取值、文件与内存地图重建随机状态、显式零种子，无 Game.dll。阶段验证实际选图、取消、重开、战役、自定义地图与脚本重设种子、联机及原版随机初始化；单机回放仍未接入。
