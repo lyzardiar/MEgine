@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 水元素原型物品及信使（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`，说明见 [点目标、范围伤害与召唤物](area-spells.md)。Release 客户端和控制技能测试目标编译通过；`war3_control_tests <data-root> <fixture> purge` 1 通过、0 失败，包含普通水元素召唤。DotA_v6.83d 隔离会话购买、使用动物信使物品后生成玩家信使并消耗物品，回家命令使信使从设定位置移动；记录 `tmp/docs-artifacts/war3/dota-item-flow/courier-return.log`。阶段验证物品费用、召唤事件／零数量、窗口操作、基地地面物品收集、配送／共享控制、信使死亡／升级、脚本重入和联机同步，并与原版对照。
+
 ### 吞树物品与地图脚本（待验证）
 
 路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_control_spells.cpp`、`src/session_spell_info.cpp`、`src/session_area_spells.cpp`，说明见 [吞树与魔法消耗](consumption.md)。Release 客户端及吞食测试目标编译通过，`war3_consumption_tests <data-root> <fixture> eat` 1 通过、0 失败。DotA_v6.83d 隔离会话购买 I05C，树木目标后消耗一次、杀死树木并获得地图恢复能力；友方英雄目标后消耗一次并收到 I0Q6。阶段验证实际鼠标选树与分享、被遮挡和不可见目标、距离与寻路、取消／占用、最后次数和冷却、脚本重入及联机；对照零吞食时间和目标规则的原版行为。

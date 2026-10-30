@@ -17,6 +17,8 @@
 
 召唤单位复用普通单位的源模型、能力、武器、人口、所有权和生命生命周期，保留 summoner/能力归属，SUMMON 事件和 GetSummoningUnit/GetSummonedUnit 提供实际上下文。召唤分类由同一单位状态消费，定时生命进入普通死亡路径。切图随会话释放全部波形、延迟效果和召唤状态，资源依旧从原归档直接读取。
 
+物品携带的 AHwe 使用相同的物品支付、施法事件和召唤流程，允许地图覆盖将召唤数量设为零。DotA_v6.83d 的动物信使物品通过施法事件由地图脚本创建信使；隔离会话确认物品消耗、信使生成及其回家命令使单位移动，记录见 `tmp/docs-artifacts/war3/dota-item-flow/courier-return.log`。探针直接调整单位位置，真实操作及完整配送待验证。
+
 原 IssuePointOrder/ById/Loc、IssueImmediateOrder/ById 和界面共用相同后端；字符串订单使用此前的原版注册表。命令区无目标技能直接施放，点目标技能接受地面选择，保留右键/Esc取消及模态界面控制。脚本点目标和单位目标上下文分别提供真实坐标或句柄，无目标事件坐标为空。中断回调移除施法者时，外层订单入口先复核句柄，再继续访问状态。
 
 蛇棒原型 AOwd 的 Profile 订单无法解析时使用原版 `ward` / 852504。原资料片 `OrcX02.w3x` 中 Arsw 原型为 AOwd、Profile 订单为 `Serpentward`；修复前脚本发出点目标订单时因此中止。无前章 gamecache 的独立静音探针修复后完成 main 并推进 120 秒，未加载 Game.dll；日志见 `tmp/docs-artifacts/war3/orc-late-probe/OrcX02-ward-after.log`。此结果不代表蛇棒施放效果、跨关存档或完整关卡已验收。
