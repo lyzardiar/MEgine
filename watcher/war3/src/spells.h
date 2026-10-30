@@ -138,7 +138,7 @@ struct UnitBuff {
     float damage=0,moveReduction=0,attackReduction=0;
     bool positive=false,physical=false,persistent=false;
     float armor=0,damageBonus=0,damageReduction=0,attackBonus=0,moveBonus=0,scaleBonus=0,healthRegen=0,healRate=0,manaRate=0,missChance=0,shield=0,spellReduction=0;
-    bool magicImmune=false,backstab=false,invulnerable=false,breakOnDamage=false;
+    bool magicImmune=false,backstab=false,invulnerable=false,breakOnDamage=false,stealthDisabled=false;
     float moveLimit=0;
     std::uint32_t ability=0,originAbility=0;
     float flatDamage=0,healthBonus=0,damageTakenBonus=0,pierceFactor=1,attackFactor=1,magicFactor=1,deflectChance=0,deflectPierce=0,deflectMagic=1;

@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 风步负淡入时间与相位鞋（待验证）
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spell_effects.cpp`、`src/session_mobility.cpp`、`src/session_visibility.cpp`；说明见[相位鞋](dota-phase-boots.md)。负淡入风步保留移动及穿行状态，不进入隐形。Win32 Release 客户端及 mobility 测试程序编译通过；DotA 原图隔离会话使用 `I0GJ` 后可见且移速倍率为 1.16，效果到期恢复，记录 `tmp/docs-artifacts/war3/dota-phase/after.log`；普通风步 `war3_mobility_tests.exe <data-root> <stealth-fixture> windwalk` 1 通过、0 失败。阶段核对负值与零值原版语义、隐身叠加、穿行／索敌、使用及到期、窗口和联机。
+
+
 ### 亡灵第三章至第五章隔离链路（待验证）
 
 路径：`docs/campaign-flow.md`。同版核心隔离探针使用第二章缓存，第三章击杀基地后请求第四章；第四章恢复英雄、击杀祭坛、拾取钥匙、移入出口后请求第五章；第五章恢复 5 级和用户数据 24168。日志及本地探针位于 `tmp/docs-artifacts/war3/undead03-end/`。阶段验证正常战斗、寻路、完整目标及过场、产品窗口自动换关、声音、原版存档格式与实际画面。

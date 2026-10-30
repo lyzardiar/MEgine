@@ -7,7 +7,7 @@
 namespace war3 {
 namespace {float number(jass::Real value){return std::bit_cast<float>(value.bits());}jass::Real real(float value){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}}
 std::pair<float,bool> ScriptSession::windWalkStrike(const UnitState& u){
-    std::pair<float,bool> result{};for(auto& [id,b]:u.buffs)if(b.kind==BuffKind::WindWalk && b.fadeRemaining<=0 && b.remaining>0 && b.stealthDamage>result.first)result={b.stealthDamage,b.backstab};return result;
+    std::pair<float,bool> result{};for(auto& [id,b]:u.buffs)if(b.kind==BuffKind::WindWalk && !b.stealthDisabled && b.fadeRemaining<=0 && b.remaining>0 && b.stealthDamage>result.first)result={b.stealthDamage,b.backstab};return result;
 }
 std::optional<WorldPoint> ScriptSession::blinkPoint(const UnitState& u,const SpellInfo& s,WorldPoint point){
     float x=number(u.x),y=number(u.y),dx=number(point.x)-x,dy=number(point.y)-y,distance=std::hypot(dx,dy);if(!std::isfinite(distance) || distance<.001f)return {};dx/=distance;dy/=distance;distance=std::clamp(distance,s.secondary,s.amount);float desiredX=x+dx*distance,desiredY=y+dy*distance;bool flying=u.movementType=="fly";
