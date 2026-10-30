@@ -9,6 +9,7 @@
 #include <set>
 
 namespace war3 {
+struct AILumberAssignment {int town=-1;std::uint64_t revision=0;};
 struct AIGuardPost {std::uint32_t type=0,unit=0;WorldPoint point;unsigned losses=0;bool filled=false,requested=false;};
 struct AIZeppelinPurchase {std::uint32_t shop=0,buyer=0;double deadline=0;std::uint64_t revision=0;};
 struct AIItemPurchase {std::uint32_t shop=0,buyer=0,item=0;double deadline=0;std::uint64_t revision=0;};
@@ -24,6 +25,7 @@ struct ScriptAI {
     std::array<bool,PolicyCount> policies{};
     std::vector<std::uint32_t> towns;
     std::map<int,std::pair<int,int>> harvesting;
+    std::map<std::uint32_t,AILumberAssignment> lumberAssignments;
     std::map<std::uint32_t,unsigned> assault,defenders;
     std::set<std::uint32_t> captain,defenderUnits,guardUnits;
     std::map<std::uint32_t,int> suicideUnits;
