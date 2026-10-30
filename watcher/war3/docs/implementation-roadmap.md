@@ -2,7 +2,7 @@
 
 镜像主动能力物品已连接转换与幻象生命周期；DotA 幻影斧在原图隔离会话产生两个幻象，实际操作及原版精度待验证，见[镜像物品](dota-manta.md)。
 
-DotA 刷新球 `I0AJ` 的原图隔离使用报 `Invalid item summon count or lifetime`；需核对能力定义、脚本事件和冷却重置流程，复现记录 `tmp/docs-artifacts/war3/dota-item-probe/I0AJ-before.log`。
+DotA 刷新球 `I0AJ` 的零数量召唤能力已能施法并触发冷却重置；当前脚本重置同时清除刷新球自身冷却，需核对原版冷却对象和施法时序，见[物品召唤](item-summons-buildings.md)。
 
 刀阵主动能力物品已连接施法与地图事件；DotA 灵魂之戒在原图隔离会话可触发生命与临时魔法变化，实际窗口和原版精度待验证，见[刀阵物品](dota-soul-ring.md)。
 
