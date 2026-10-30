@@ -58,7 +58,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"Aply",SpellKind::Polymorph,SpellTargeting::Unit},{"Acyc",SpellKind::Cyclone,SpellTargeting::Unit},
         {"Abrf",SpellKind::BearForm,SpellTargeting::None},{"Arav",SpellKind::CrowForm,SpellTargeting::None},
         {"AEme",SpellKind::Metamorphosis,SpellTargeting::None},{"Aave",SpellKind::AvengerForm,SpellTargeting::None},
-        {"Astn",SpellKind::StoneForm,SpellTargeting::None},{"Abur",SpellKind::Burrow,SpellTargeting::None},{"Aroo",SpellKind::Root,SpellTargeting::Point},
+        {"Astn",SpellKind::StoneForm,SpellTargeting::None},{"Abur",SpellKind::Burrow,SpellTargeting::None},{"ANsu",SpellKind::Burrow,SpellTargeting::None},{"Aroo",SpellKind::Root,SpellTargeting::Point},
         {"Aeat",SpellKind::EatTree,SpellTargeting::Unit},{"Advm",SpellKind::DevourMagic,SpellTargeting::Point},
         {"Aabs",SpellKind::AbsorbMana,SpellTargeting::Unit},{"Afak",SpellKind::OrbAnnihilation,SpellTargeting::Unit},
         {"AHav",SpellKind::Avatar,SpellTargeting::None},{"Absk",SpellKind::Berserk,SpellTargeting::None},

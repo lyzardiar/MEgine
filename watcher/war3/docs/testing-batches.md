@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 娜迦潜水形态（待验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_entities.cpp`、`tests/unit_forms_tests.cpp`，说明见 [单位形态](unit-forms.md)。Win32 Release 客户端和专项程序编译通过；`war3_unit_forms_tests.exe <data-root> <fixture> submerge` 1/1 通过，覆盖三对原始类型的订单、显隐、速度、武器和句柄往返及直接创建潜水形态后浮出。地面／水域限制尚未实现；阶段检查真实水陆地形、科技前置、侦测、打断／死亡／复活、地图覆盖、AI、动画及原版行为。
+
 ### 中立生物死亡生成（待验证）
 
 路径：`src/passives.h`、`src/session_passive_info.cpp`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_neutral_spells.cpp`、`tests/corpse_tests.cpp`，说明见 [尸体与复活](corpses.md)。Win32 Release 客户端和尸体测试编译通过；`war3_corpse_tests.exe <data-root> <fixture> spawn-on-death` 1/1 通过，覆盖三种原始类型、数量与归属和直接移除。首次在另一落点只生成 1 只，改用开放位置后通过；受阻位置和原版处理仍待验证。阶段检查地图覆盖、能力禁用／移除、幻象／爆炸／复活／死亡回调重入、无位置、无期限和事件，以及实际地图与原版对照。
