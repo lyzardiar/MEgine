@@ -175,3 +175,5 @@ BootyBay 地形定向会话中，原 `LoadZepWave`／`AttackMoveXY` 路径让步
 多城镇采金配额保留目标为本城当前矿井的工人，跨城镇矿井任务按当前城镇配额重新分配；全局配额可保留任一有效矿井任务。携带资源沿现有采集返还路径处理，原版分配规则与城镇归属变化仍待对照，见[测试队列](testing-batches.md)。
 
 已有采金任务按目标矿井计入对应城镇配额；伐木任务按分配时的城镇和订单轮次保留，换树后继续使用该归属。工人跨越城镇边界时不会因此取消有效任务；配额取消、城镇或单位失效、订单更换及停止采集时清理归属。新任务按工人当前位置分配，自然行走、多人同步与原版规则见[测试队列](testing-batches.md)。
+
+没有可用扩张点时，`GetExpansionX`／`GetExpansionY` 返回原版的 -1；原公共 AI 脚本 `ExpansionAttack` 据此跳过不存在的扩张目标。可达目标继续返回实际坐标。固定版 Game.dll 的注册、坐标分支及 -1 初始化记录在 `tmp/docs-artifacts/war3/ai-expansion-sentinel/original-rizin.txt`；扩张点刷新和目标选择的完整原版语义仍待对照。

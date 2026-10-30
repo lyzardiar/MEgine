@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 空扩张目标坐标（待验证）
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。没有可用扩张点时 X／Y 返回 -1，原公共 AI 的 `ExpansionAttack` 不再向坐标 (0,0) 发出进军；有效扩张点返回其坐标。Win32 Release 客户端及 CampaignAI 目标编译通过；`reachable` 在修复前的空目标断言失败，修复后 2/2 通过；`expansion-empty` 在修复前复现原 `ExpansionAttack` 向不存在目标进军，修复后 2/2 通过，检查原脚本线程结束及目标不变。固定版 Game.dll 注册入口 `0x6f88fc90`／`0x6f88fd10`、无结果分支和 -1 常量初始化见 `tmp/docs-artifacts/war3/ai-expansion-sentinel/original-rizin.txt`。夹具直接设空矿藏和部队；扩张点失效／改变、完整电脑对局、原版动态行为及联机仍待阶段验证。
+
 ### 飞艇多乘员隔水接应（待验证）
 
 路径：`src/ai.h`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。按货舱容量预约隔水乘员，使用原装载订单依次接应；排队期间的新命令按单位订单轮次保留，失效目标释放接应票据并继续队列。Win32 Release 客户端和测试程序编译通过；BootyBay 地形的 `island-pickup-group` 修复前分配失败，修复后 1/1 通过，两个乘员于约 44.25 秒模拟时完成接应及交付；`island-pickup-reorder`、`island-pickup-death`、`island-pickup-capacity` 各 1/1，覆盖排队命令、首名死亡和九人对八格预约上限。既有单人接应／取消／超时及正常、慢速登艇共 5 项通过。夹具预置单位、飞艇和目标并设置无敌；容量检查只覆盖预约，未验证满舱运输。阶段验证多岛、多飞艇、满舱运输、队列移动／易主／暂停、乘员载具死亡、回调重入、原版队列与时序、自动选目标、窗口、性能及联机。
