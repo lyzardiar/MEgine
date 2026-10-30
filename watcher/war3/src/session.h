@@ -219,7 +219,10 @@ class ScriptSession {
     bool aiConvertUnits(ScriptAI& ai,int quantity,std::uint32_t type);
     void aiPurchaseZeppelin(ScriptAI& ai);
     void aiPurchaseZeppelinTick(ScriptAI& ai);
-    void aiLoadZeppelinWave(ScriptAI& ai,WorldPoint destination);
+    bool aiTransportReady(ScriptAI& ai,const UnitState& carrier);
+    bool aiHasTransport(ScriptAI& ai);
+    bool aiCanTransportTo(ScriptAI& ai,const UnitState& passenger,WorldPoint destination);
+    void aiLoadZeppelinWave(ScriptAI& ai,WorldPoint destination,bool disconnectedOnly=false);
     void aiZeppelinWaveTick(ScriptAI& ai);
     void aiCancelZeppelinWave(ScriptAI& ai);
     void aiHarvest(ScriptAI& ai);
