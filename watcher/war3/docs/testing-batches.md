@@ -3587,3 +3587,9 @@ Win32 Release 客户端及专项程序增量编译通过；`war3_unit_forms_test
 ### 战役混乱之雨（待验证）
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_area_spells.cpp`、`src/session_ai_armies.cpp`、`tests/spell_tests.cpp`；说明见 [混乱之雨](rain-of-chaos.md)。Win32 Release 客户端与专项程序编译通过；`war3_spell_tests <data-root> <BootyBay地图> rain-chaos` 1/1，覆盖原版一级能力解析、点目标命令、分时创建两只地狱火、归属、限时生命和冷却。测试暂停了既有单位；落击伤害、眩晕、AI 与实际窗口未在此次运行中验证。阶段核对各等级、地图覆盖、位置合法性、被引用能力失效／替换、队列预算、死亡易主、事件重入、原版时序／随机顺序、联机及音画。
+
+### 直线武器穿透与攻城溅射（待验证）
+
+路径：`src/session_projectiles.cpp`、`tests/passive_tests.cpp`、`docs/destructable-weapon-attacks.md`、`docs/attack-ground.md`。mline 零扩散距离只命中主目标；aline 零扩散及攻击地面使用范围伤害；穿透从冲击点向后按距离排序并应用逐次伤害损失。
+
+Win32 Release 客户端和测试目标编译通过；`build/windows-x86/bin/Release/war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/auras-passives/fixture.w3m line-weapon` 4/4，覆盖狮鹫、风暴之锤、刃车穿透升级和地面攻击，不加载 Game.dll。阶段对照原版损失公式、碰撞边界和目标顺序、穿透升级与地面攻击，验证物品／可破坏物、目标消失／回调重入、闪避／弹射、实际窗口及双端同步。
