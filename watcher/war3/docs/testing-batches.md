@@ -3086,3 +3086,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 缺失 AI 策略启动（待验证）
 
 路径：`src/session_ai.cpp`、`docs/ai.md`。原 OrcX03a 无前章 gamecache 的静音隔离探针完成 main 并推进 600 秒；集中验证地图／公共策略覆盖、缺失／损坏文件、重复启动、脚本与 AI 调度、原版诊断和跨关流程。缺失策略不运行 AI。
+
+### 状态栏与单位详情布局（待验证）
+
+路径：`src/game_buff_panel.cpp`、`src/game_commands.cpp`、`docs/buff-panel.md`。单行八格依据固定版本状态栏构造；集中验证实际单选、多个状态、单位／建筑／货舱／生产切换、定时生命条、悬停、尺寸和原版屏幕位置。隐藏窗口点击探针未选中单位，尚未验证选中画面；日志 `tmp/docs-artifacts/war3/selected-hud-probe.log`。
