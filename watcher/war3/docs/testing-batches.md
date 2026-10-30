@@ -3373,3 +3373,10 @@ Win32 Release 客户端与测试编译通过；`war3_campaign_ai_tests <data-roo
 路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。根据移动路线长度和当前速度估算购买预留时限，并限制在 60 至 600 秒；失效及更改命令仍释放预留。
 
 Win32 Release 客户端和测试目标增量编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> zeppelin-long`、`zeppelin-stuck`、`zeppelin-route`、`zeppelin-purchase` 各 1/1，远程购买耗时 139 秒，停滞工人在期限内释放。长途和停滞夹具关闭工人路径碰撞，资源和库存由测试预置。阶段检查拥堵及动态路径、减速和暂停、买家死亡／易主、库存和资源变化、600 秒上限、原版时序、实际客户端与联机。
+
+
+### 密集单位短距离让位（待验证）
+
+路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`。同属单位让位时优先尝试原有距离，受阻后尝试更短距离；各候选仍检查地形、单位碰撞和命令保护。
+
+Win32 Release 客户端与测试目标编译通过；`war3_movement_avoidance_tests <data-root> <BootyBay地图> compact` 在仅允许原距离的对照构建失败、修复后通过，覆盖密集障碍中的短距离让位及持续碰撞检查；`yield`、`workers`、`march` 各通过。BootyBay 兽族对不死族隔离对局模拟至 1,800 秒未决出胜负，兽族在 1,200–1,800 秒金币和木材均未变化；更密集工人队列仍需处理，记录 `tmp/docs-artifacts/war3/ai-duel-investigation/short-yield-final.log`。阶段检查多单位互锁、连续让位、动态地形、重入与命令、性能、实际窗口及局域网一致性。
