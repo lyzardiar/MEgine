@@ -3110,3 +3110,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 可见幽灵能力（待验证）
 
 路径：`src/passives.h`、`src/session_passive_info.cpp`、`src/session_visibility.cpp`、`tests/stealth_tests.cpp`、`docs/stealth-reveal.md`。Win32 Release 产品与专项程序编译通过，`war3_stealth_tests.exe <data-root> <stealth-fixture.w3m> visible-ghost` 的可见性、变形及建筑占位检查 1/1 通过。集中验证源技能及地图覆盖、两项标志开关、变形目标筛选和施法重入、建筑／其他单位占位、可见性及共享视野、能力移除和原版对照。
+
+### 建筑阴影透明度（待验证）
+
+路径：`src/game_effects.cpp`、`docs/unit-shadows.md`。建筑阴影按贴图 alpha 和单位强度合成；本机三个原资源为二值 alpha。集中验证自定义渐变贴图、静态／动态叠加、显隐、不同尺寸与原版滤波、地图画面和性能。
