@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 购买中的跨岛进攻（待验证）
+
+路径：`src/ai.h`、`src/session_ai.cpp`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。购买尚未完成时保留进攻目的地，成功获取可用载具后继续既有运输，购买失败且没有本方运输工具，或目标失效时清理状态。Win32 Release 客户端及 CampaignAI 目标编译通过；BootyBay 地形隔离检查 `island-purchase-pending`、`island-purchase-busy`、`island-purchase-cancel`、`island-purchase-target-death`、`island-purchase-attack`、`island-auto-multiwave-script` 各 1 通过、0 失败，无 Game.dll。夹具预置资源、商店库存和部队，忙碌模式额外预置载具，买家／士兵无敌，敌方目标暂停；非完整对局。复现：在 `watcher/war3` 下运行 `build/windows-x86/bin/Release/war3_campaign_ai_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/campaign-ai/fixture.w3m" <模式>`。阶段核对目标移动／替换／退却、资金或库存变化、买家换令／死亡／阻塞、船舶忙碌／不可用、多个波次与载具、四族实际策略、联机和原版行为。
+
 ### 飞艇击毁乘员状态（待验证）
 
 路径：`src/spells.h`、`src/session_control_spells.cpp`、`src/session_transport.cpp`、`tests/transport_tests.cpp`；说明见 [运输流程](transport.md)。有 `Achd` 的载具死亡且乘员成功落地后附加 `Bchd`，按普通／英雄源时长和移动／攻击恢复字段影响真实速度；共享恢复曲线为当前近似。Win32 Release 客户端与 transport 目标增量编译通过；在 `watcher/war3` 下运行 `build/windows-x86/bin/Release/war3_transport_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/transport/fixture.w3m" crash`，隔离检查 1 通过、0 失败，覆盖陆地释放、普通／英雄持续时间、减速恢复及不可驱散，无 Game.dll。阶段核对无能力／禁用／移除／正常卸载、陆地／水面／阻挡与无落点、英雄／普通／召唤／魔免／无敌、自定义持续及恢复字段、召唤伤害、重入／转让／复活／状态叠加、原版计时及视听、地图和联机。
