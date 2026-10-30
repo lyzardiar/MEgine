@@ -3089,7 +3089,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 ### 状态栏与单位详情布局（待验证）
 
-路径：`src/game_buff_panel.cpp`、`src/game_commands.cpp`、`docs/buff-panel.md`。单行八格依据固定版本状态栏构造；集中验证实际单选、多个状态、单位／建筑／货舱／生产切换、定时生命条、悬停、尺寸和原版屏幕位置。隐藏窗口点击探针未选中单位，尚未验证选中画面；默认地图和不触发胜利的单单位夹具均出现未选中，分别见 `tmp/docs-artifacts/war3/selected-hud-grid.log` 和 `tmp/docs-artifacts/war3/selection-diagnostic/selected.log`。需核对鼠标坐标、投影和真实窗口输入，不能据此判定原因。
+路径：`src/game_buff_panel.cpp`、`src/game_commands.cpp`、`docs/buff-panel.md`。单行八格依据固定版本状态栏构造；集中验证实际单选、多个状态、单位／建筑／货舱／生产切换、定时生命条、悬停、尺寸和原版屏幕位置。隐藏窗口探针中，跨进程鼠标消息的坐标被 DPI 缩放约 1.5 倍；针对单单位夹具换算坐标后，诊断版记录点击与单位投影接近，正式 Release 选中 1 个单位并生成画面。证据 `tmp/docs-artifacts/war3/selection-diagnostic/`；该检查不覆盖真实鼠标、其余地图或 DPI 配置。
 
 ### 战役毒蛇守卫订单（待验证）
 
@@ -3097,7 +3097,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 
 ### 对局命令栏布局（待验证）
 
-路径：`src/game_commands.cpp`、`docs/command-card-layout.md`。按原版网格调整图标、状态和鼠标命中；集中验证普通命令、技能／建造菜单、自动施法、冷却、快捷键、点击边界、四族、窗口尺寸及 DPI，并对照原版实际画面。
+路径：`src/game_commands.cpp`、`docs/command-card-layout.md`。按原版网格调整图标、状态和鼠标命中；单单位夹具的 Release 隐藏窗口截图显示人族命令图标位于网格内，见 `tmp/docs-artifacts/war3/selection-diagnostic/release-selected.png`。集中验证普通命令、技能／建造菜单、自动施法、冷却、快捷键、点击边界、四族、窗口尺寸及 DPI，并对照原版实际画面。
 
 ### 战役空单位状态操作（待验证）
 
