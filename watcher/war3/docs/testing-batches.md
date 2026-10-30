@@ -3066,3 +3066,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役缺失声音句柄（待验证）
 
 路径：`src/sound.cpp`。兽族 Orc01 静音探针完成 main 并推进 120 秒；集中验证缺失／损坏／正常音频、句柄、通道与时长、播放状态、堆叠、设备恢复及原版行为，见[兽族第一章缺失对白](campaign-orc01-missing-dialogue.md)。
+
+### 战役未知科技引用（待验证）
+
+路径：`src/session_research.cpp`。Orc04 原图隔离探针完成 main 并静音推进 60 秒；集中核对未知／已有／自定义科技的等级、单位刷新、界面与原版行为，以及真实战役流程，见[战役未知科技引用](campaign-unknown-upgrade.md)。
