@@ -3172,3 +3172,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 寻路搜索缓存（待验证）
 
 路径：`src/world_path.cpp`、`docs/water-pathing.md`。Release 编译与隔墙替代／部分路径定向检查 2/2 通过；512×512 和 1028×1028 隔墙夹具优化前后路径摘要一致，实验记录位于 `tmp/docs-artifacts/war3/orcx03b-current/`。集中验证大地图／复杂单位碰撞、各移动类型、动态阻挡、不同尺寸内存、连续实际对局与帧时间及原版路径行为。
+
+### 不可达路径重复搜索（待验证）
+
+路径：`src/world.h`、`src/world_path.cpp`、`tests/world_tests.cpp`、`docs/water-pathing.md`。失败路径按起止格、半径、移动类型、部分路径标志和路径版本有界缓存，地图阻挡改变后重新搜索。Win32 Release 编译通过；缓存失效、隔墙替代和部分路径定向检查 3/3 通过，重复严格失败夹具及 OrcX03b 前 10 秒隔离模拟见 `tmp/docs-artifacts/war3/orcx03b-current/`。集中验证追击和移动、目标跨格、地图开闭、障碍动态变化、多移动类型、地图切换及完整对局性能。
