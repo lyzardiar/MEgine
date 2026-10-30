@@ -133,3 +133,11 @@ Win32 Release 客户端及定向目标编译通过；BootyBay 地形夹具检查
 原 Game.dll 1.27 SHA-256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`；REA 观察 `StartGetEnemyBase` 注册入口 `0x6f895080` 转到 `0x6f8a14d0` 并将 AI 对象 `+0x2ec` 设为 1，`WaitGetEnemyBase` 入口 `0x6f895be0` 读取同一字段，`GetEnemyBase` 入口 `0x6f88fb10` 读取保存的搜索结果。证据 `ev_7b99a1d79060d0a9c781d651bcd734d5c4fa4f9b036489d62eeeb43917c68f84`、`ev_4f964c384a9810cabfbdd1979175c10e2985609bf8e1a8394e5f4b83ce0ac7ac`、`ev_5e986929ce967e4ba1aac465870fcfe885521318c56ca16b61794065267b7124`、`ev_a17b5e81d514be946b3da5d1b1ba78390992a7000e93bd64aedef6ec7798ff8e`。原 `common.ai` 的 `AnyPlayerAttack` 等待该字段变为假后取得目标并组织进攻。
 
 Win32 Release 客户端及测试目标编译通过；原 CampaignAI 启动和敌方基地搜索定向检查 2/2，覆盖分步预算、暂停恢复、候选移除和原 `AnyPlayerAttack` 发出部队进攻。BootyBay 双电脑策略隔离会话推进到 1,800 秒，双方仍未决出胜负，记录 `tmp/docs-artifacts/war3/dota-hero-1031/enemy-base-duel.log`。原版异步搜索时序、目标筛选与并发重启、敌军不可达、真实对局、双端同步及完整胜负仍待验证或实现。
+
+## 迷雾中的进攻目标
+
+原 `common.ai` 的 `CommonSleepUntilTargetDead` 周期性发出 `AttackMoveKill`。目标未被己方视野覆盖且没有隐身时，部队向目标当前位置攻击移动；目标可见时直接攻击。相同目标的有效攻击命令和相同目的地的攻击移动保持执行，新的不同目的地仍会替换旧命令。目标被隐藏、移除、死亡或隐身的处理沿用单位攻击与脚本规则。
+
+Win32 Release 客户端与 CampaignAI 测试编译通过；`fog-attack` 检查原 CampaignAI 启动、迷雾目标进军、重复命令保留、不同目的地覆盖和可见目标攻击；定向夹具中的进攻单位关闭了路径碰撞，`enemy-base` 检查原 `AnyPlayerAttack` 流程。针对该进攻逻辑与原版行为、目标移动／失效、战斗重入、单位脚本事件、跨岛运输、双端同步和完整对局仍待阶段验证。
+
+BootyBay 原图双电脑隔离会话使用最终实现运行至 2,580 秒，双方结果分别为 0 和 1，后者单位与建筑均为零；日志 `tmp/docs-artifacts/war3/march-coordination/duel-fog-final.log`。这是单图隔离模拟，不代表真实窗口、其他地图或原版互通已经验收。

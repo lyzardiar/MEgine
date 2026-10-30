@@ -3324,3 +3324,9 @@ Win32 Release 客户端及测试目标编译通过；`war3_campaign_ai_tests <da
 路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`、`docs/economy.md`。持续受阻的同属普通移动和攻击移动单位可有限让行，保留原路线和命令。
 
 Win32 Release 客户端及测试目标编译通过；`war3_movement_avoidance_tests <data-root> <BootyBay地图> march` 通过，覆盖攻击移动及混合行军命令、避让后恢复与碰撞间距。BootyBay 双电脑隔离会话模拟至 1,200 秒，观察到部队跨地图移动，未触发胜负；证据 `tmp/docs-artifacts/war3/march-coordination/duel-mixed.log`。阶段检查密集拥堵、目标变化及战斗、命令取消、地形变化、性能、局域网一致性、原版行为和完整对局。
+
+### 迷雾中的 AI 进攻（待验证）
+
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。AI 对已知但位于战争迷雾中的目标发起攻击移动，重复同目标保留进行中的攻击和路线；新目的地仍会覆盖旧命令。
+
+Win32 Release 客户端及测试目标编译通过；`war3_campaign_ai_tests <data-root> <fixture> fog-attack` 与 `enemy-base` 分别为 2/2，覆盖原 CampaignAI 启动、迷雾和可见目标、重复命令、不同目的地覆盖及原 `AnyPlayerAttack`；迷雾定向夹具中的进攻单位关闭了路径碰撞。BootyBay 原图双电脑隔离会话在 2,580 秒取得双方结果 0／1，后者单位和建筑为零，记录 `tmp/docs-artifacts/war3/march-coordination/duel-fog-final.log`。阶段检查原版行为、移动目标、目标隐藏／死亡／易主、脚本事件、不可达位置、完整战斗、其他地图、真实窗口和双端同步。
