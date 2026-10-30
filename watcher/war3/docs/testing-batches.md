@@ -3623,3 +3623,9 @@ Win32 Release 客户端与测试目标编译通过；执行 `build/windows-x86/b
 路径：`src/session.h`、`src/session_commerce.cpp`、`src/session_inventory.cpp`、`tests/passive_tests.cpp`、`tests/generate-passive-fixture.py`；说明见[商店](commerce.md)。物品交付订单可向有 `Apit` 的商店出售持有物品，使用源配置范围／比例、真实资源和出售事件。
 
 Win32 Release 客户端与测试程序编译通过；生成 `tmp/docs-artifacts/war3/pawn-analysis/fixture.w3m` 后运行 `war3_passive_tests.exe <data-root> <fixture> pawn-item`，1/1 通过，覆盖可出售标志、商店能力、金币／木材、事件字段及途中状态失效，不加载 Game.dll。阶段验证远距离到达、鼠标拖拽、玩家共享控制、排队及双端、商店／单位／物品失效与事件重入、自定义范围／倍率、四舍五入、原版事件次序与画面。
+
+### DotA 迈达斯之手目标施法（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`；说明见[迈达斯之手](dota-midas.md)。`ANab` 物品通过目标输入进入现有施法、冷却和地图脚本。
+
+Win32 Release 客户端编译通过；原图隔离会话直接创建英雄、敌方步兵与 `I06D`，目标生命变为零、英雄经验增加、物品保留且进入冷却，日志 `tmp/docs-artifacts/war3/dota-midas/current.log`。阶段验证购买／合成、不同目标／距离／取消、奖励和事件时序、回调失效、联机、原版及真实窗口。
