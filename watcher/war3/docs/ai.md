@@ -157,3 +157,5 @@ Win32 Release 客户端及 CampaignAI 测试目标编译通过；BootyBay 原图
 固定版 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。REA/Rizin 观察注册入口 `0x6f88fad0` 调用 `0x6f88f940`；该函数将低于最小等级和区间内的候选分别保存，返回时优先使用区间内候选，否则使用较弱候选。指令与摘要见 `tmp/docs-artifacts/war3/orc-undead-long/original-creep-camp-rizin.txt`，证据 `ev_747b34eb8a60316e4eca145058ec97f58bfe08baceb46c0f002cbd1ec505f5ab`。原版还有基于候选距离和过强营地的筛选，当前排序及完整判定尚未对齐。
 
 Win32 Release 客户端和 CampaignAI 测试编译通过；`reachable` 2/2，覆盖区间内优先、较弱营地回退、超上限拒绝和隔水营地拒绝。BootyBay 原图兽族对不死族隔离会话至 4,200 秒仍未决出胜负；剩余两处营地位于隔离区域，双方当前可达性查询返回空，日志 `tmp/docs-artifacts/war3/orc-undead-long/weaker-camps.log`。跨岛进攻、空地混编、原版距离规则、实际窗口和联机仍待实现或验证。
+
+BootyBay 地形定向会话中，原 `LoadZepWave`／`AttackMoveXY` 路径让步兵沿陆路接近飞艇、登艇、跨水并在目标岛屿卸载。该检查预先提供载具、队员和目标，未覆盖电脑自动选择隔水目标或购买飞艇，见[运输流程](transport.md)。

@@ -3354,3 +3354,9 @@ Win32 Release 客户端及测试编译通过；`war3_movement_avoidance_tests <d
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。无区间内可达营地时可回退到较弱可达营地，保留等级上限、空中筛选和现有可达性检查。
 
 Win32 Release 客户端与测试目标编译通过；`war3_campaign_ai_tests <data-root> <fixture> reachable` 2/2，检查较弱回退、区间内优先、超上限及隔水拒绝。固定版 Game.dll 对照指令记录 `tmp/docs-artifacts/war3/orc-undead-long/original-creep-camp-rizin.txt`；原版距离与过强营地筛选尚未完整实现。BootyBay 兽族对不死族隔离对局至 4,200 秒未产生胜负，剩余营地在隔离区域，见 `tmp/docs-artifacts/war3/orc-undead-long/weaker-camps.log`。阶段检查跨岛运输、混编、等级分组与移动、死亡／隐藏、距离与不可达、不同地图、实际窗口及联机。
+
+### 登艇路径与 AI 跨水波次（待验证）
+
+路径：`src/session_transport.cpp`、`tests/transport_tests.cpp`、`tests/campaign_ai_tests.cpp`、`docs/transport.md`、`docs/ai.md`。保留可进入载具登艇范围的有效路线和避障点；载具移动或地形变化时重算，载具失效清理命令。
+
+Win32 Release 客户端及测试目标编译通过；`war3_transport_tests <data-root> <transport-fixture> boarding-route` 和 `flow` 各 1/1，覆盖路线保留、载具移动、装载事件、载具移除和既有装卸；路线夹具步兵关闭了路径碰撞。`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> island-wave` 1/1，在 BootyBay 地形上使用真实陆路接近、登艇、飞行和岛屿卸载；飞艇、编队和目标由测试预置，步兵设无敌。阶段检查拥堵、载具／乘员死亡易主、同时装载、多载具、目的地变化、自动购买与选目标、原版时序、实际窗口和联机。
