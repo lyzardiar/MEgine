@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+### 中立操纵死尸和地狱火（待验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_ai_armies.cpp`、`tests/corpse_tests.cpp`。`ACad` 和 `ANin` 接入既有技能、实际订单及电脑决策，数值取各自原始或地图覆盖字段；说明见 [尸体与复活](corpses.md)和[范围与召唤](area-spells.md)。Win32 Release 客户端和尸体测试编译通过；原地形夹具 `creep-spells` 1/1 通过，覆盖尸体消费、非无敌及 120 秒时限、地狱火实体与 360 秒时限。阶段检查中立单位自身与电脑决策、目标／距离／费用／事件／中断、地图覆盖、完整效果、实际地图和原版对照。
+
+DotA_v6.83d 静音无操作隔离会话当前完成 main 并推进 600 秒；BootyBay 人族电脑隔离会话推进 60 秒时有 1 个城镇、5 名采集工人、1 项生产队列、3 项建造／施工。日志及结果仅覆盖这些路径，不代表真实窗口操作或完整对局；DotA 日志为 `tmp/docs-artifacts/war3/dota-600s-current.log`。
+
 ### 武器显示字段（待验证）
 
 路径：`src/session_research.cpp`、`src/game_commands.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`，说明见 [单位战斗信息面板](unit-combat-panel.md)。Win32 Release 客户端和专项程序编译通过；生成夹具后运行 `war3_passive_tests.exe <data-root> <fixture> weapon-ui`，1/1 通过。阶段核对原版显示筛选、树木专用武器、两把可见武器、对象覆盖／变形、增益与真实面板；完整攻击和原版视觉未由该检查证明。
