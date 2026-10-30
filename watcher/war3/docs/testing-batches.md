@@ -3090,3 +3090,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 状态栏与单位详情布局（待验证）
 
 路径：`src/game_buff_panel.cpp`、`src/game_commands.cpp`、`docs/buff-panel.md`。单行八格依据固定版本状态栏构造；集中验证实际单选、多个状态、单位／建筑／货舱／生产切换、定时生命条、悬停、尺寸和原版屏幕位置。隐藏窗口点击探针未选中单位，尚未验证选中画面；日志 `tmp/docs-artifacts/war3/selected-hud-probe.log`。
+
+### 战役毒蛇守卫订单（待验证）
+
+路径：`src/session_spell_info.cpp`、`docs/area-spells.md`。OrcX02 隔离探针完成 main 并静音推进 120 秒；集中验证原版 ward 订单、技能施放、地图覆盖、跨关存档和实际画面。

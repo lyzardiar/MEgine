@@ -19,6 +19,8 @@
 
 原 IssuePointOrder/ById/Loc、IssueImmediateOrder/ById 和界面共用相同后端；字符串订单使用此前的原版注册表。命令区无目标技能直接施放，点目标技能接受地面选择，保留右键/Esc取消及模态界面控制。脚本点目标和单位目标上下文分别提供真实坐标或句柄，无目标事件坐标为空。中断回调移除施法者时，外层订单入口先复核句柄，再继续访问状态。
 
+蛇棒原型 AOwd 的 Profile 订单无法解析时使用原版 `ward` / 852504。原资料片 `OrcX02.w3x` 中 Arsw 原型为 AOwd、Profile 订单为 `Serpentward`；修复前脚本发出点目标订单时因此中止。无前章 gamecache 的独立静音探针修复后完成 main 并推进 120 秒，未加载 Game.dll；日志见 `tmp/docs-artifacts/war3/orc-late-probe/OrcX02-ward-after.log`。此结果不代表蛇棒施放效果、跨关存档或完整关卡已验收。
+
 ## 原件与边界
 
 数据来自本机1.27.0.52240公共MPQ中的AbilityData、AbilityMetaData、Profile、WorldEditStrings、单位与武器表，并继承地图w3a覆盖。字段包括Ucs/Osh距离/最终区域/最大伤害、Efk单目标/整体/数量、Htc减速、Hwe/Osf/Efn召唤类型/数量，以及Uin独立寿命/碰撞延迟。REA复核了shockwave、ward、forceofnature、inferno在Game.dll中的实际注册指令，原件摘要与调用入口同[英雄主动技能](spells.md)。原始记录在tmp/docs-artifacts/war3/area-spells/{source.json,orders-rea.json}，运行不加载Game.dll。
