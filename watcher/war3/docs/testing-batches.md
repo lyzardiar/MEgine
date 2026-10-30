@@ -104,7 +104,7 @@ DotA_v6.83d 隔离配送探针按 2 秒采样，信使先接近英雄、交付�
 
 ### 娜迦潜水形态（待验证）
 
-路径：`src/session_spell_info.cpp`、`src/session_entities.cpp`、`tests/unit_forms_tests.cpp`，说明见 [单位形态](unit-forms.md)。Win32 Release 客户端和专项程序编译通过；`war3_unit_forms_tests.exe <data-root> <fixture> submerge` 1/1 通过，覆盖三对原始类型的订单、显隐、速度、武器和句柄往返及直接创建潜水形态后浮出。地面／水域限制尚未实现；阶段检查真实水陆地形、科技前置、侦测、打断／死亡／复活、地图覆盖、AI、动画及原版行为。
+路径：`src/session_spell_info.cpp`、`src/session_entities.cpp`、`tests/unit_forms_tests.cpp`，说明见 [单位形态](unit-forms.md)。Win32 Release 客户端和专项程序编译通过；`war3_unit_forms_tests.exe <data-root> <fixture> submerge` 1/1 通过，覆盖三对原始类型的订单、显隐、速度、武器和句柄往返及直接创建潜水形态后浮出。该次未验证地面／水域限制；阶段检查真实水陆地形、科技前置、侦测、打断／死亡／复活、地图覆盖、AI、动画及原版行为。
 
 ### 中立生物死亡生成（待验证）
 
@@ -3507,3 +3507,10 @@ Win32 Release 客户端及测试目标编译通过；`war3_revival_tests <data-r
 路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`、`docs/dota-hero-experience.md`。英雄经验、等级、技能点和经验暂停接口处理空、已移除、不兼容及非英雄目标；有效英雄沿用实际状态更新。
 
 Win32 Release 客户端及测试目标编译通过；`war3_revival_tests <data-root> <hero-revival-fixture> hero-xp`、`awaken` 各 1/1，覆盖无效目标返回值和有效英雄经验／暂停／等级／技能点及既有酒馆复活。DotA 原图隔离会话购买育母蜘蛛、学习麻痹之咬并攻击测试敌人，观察到敌人获得 `B01D`；日志 `tmp/docs-artifacts/war3/dota-brood-attack/hero-xp-family-final.log`，该探针直接设置位置和创建目标。阶段检查英雄状态类型、幻象、生命周期／事件重入、等级及经验边界、窗口、原版经验数值和联机同步。
+
+
+### 娜迦潜水地形条件（待验证）
+
+路径：`src/session.h`、`src/session_unit_forms.cpp`、`src/session_ability_commands.cpp`、`tests/unit_forms_tests.cpp`、`docs/unit-forms.md`。潜入命令和按钮使用同一位置路径条件，浮出不受该条件限制。
+
+Win32 Release 客户端及专项程序增量编译通过；`war3_unit_forms_tests <data-root> <naga-submerge-fixture> submerge` 1/1，覆盖三种娜迦陆地拒绝、水域按钮启用和潜入／浮出，以及形态、隐身、移动、武器和句柄。夹具关闭单位路径碰撞。阶段检查实际窗口、浅水及动态障碍、地图脚本修改通行位、技能覆盖、原版地形判断与反馈、侦测和联机同步。

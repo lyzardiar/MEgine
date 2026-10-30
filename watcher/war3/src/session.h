@@ -627,6 +627,7 @@ class ScriptSession {
     void cancelRoot(UnitState& unit,std::uint64_t ticket);
     std::set<std::uint32_t> unitFormActors_;
     bool alternateForm(const UnitState& unit,const SpellInfo& spell);
+    bool submergeTerrainReady(const UnitState& unit,const SpellInfo& spell);
     bool unitFormReady(const UnitState& unit,const SpellInfo& spell,bool placement=true);
     void prepareUnitFormSpell(const UnitState& unit,SpellInfo& spell);
     std::optional<WorldPoint> formLanding(const UnitState& unit,std::uint32_t type);
