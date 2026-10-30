@@ -7,3 +7,5 @@ DotA 6.83d 中 `n00C` 和 `n0DC` 使用 `Doodads\Terrain\LOSBlocker\Intentionall
 修复前当前客户端加载用户的 `Maps/Download/DotA_v6.83d.w3x` 在空模型处失败；空模型修复后的最小复现越过该处并发现上述变体问题。日志在 `tmp/docs-artifacts/war3/dota-play-before.log` 和 `dota-play-after.log`。集中验证同名地图覆盖、大小写、不同变体、其他真正缺失的模型、对象脚本与路径、真实窗口及 DotA 完整玩法。
 
 修复版 Win32 x86 构建后，使用同一 DotA 地图、静音与隐藏窗口进行 20 帧最小复现：退出码 0，进入首帧且未加载 Game.dll；日志为 `tmp/docs-artifacts/war3/dota-play-clean.log`。这不证明完整操作或对局通过。
+
+对同一 DotA 地图追加 600 游戏帧的静音隐藏窗口检查，进程退出码 0，见 `tmp/docs-artifacts/war3/dota-play-600.log`；该检查未操作英雄或验证对局。
