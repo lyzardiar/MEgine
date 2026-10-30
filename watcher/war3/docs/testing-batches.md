@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 刀阵物品与灵魂之戒（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`；说明见[刀阵物品](dota-soul-ring.md)。`AEfk` 物品连接技能事件与刀阵消费者。Win32 Release 增量编译通过；DotA 原图隔离会话直接创建 `I0LL`，观察生命减少、临时魔法增加和消退、冷却内重复使用被拒绝，记录 `tmp/docs-artifacts/war3/dota-soul-ring/after-checked.log`；复现：`tmp/docs-artifacts/war3/dota-soul-ring/build/Release/dota_soul_ring.exe <data-root> <DotA_v6.83d.w3x>`。阶段核对真实购买／使用、生命不足、魔法使用与到期、目标／伤害、多物品和地图覆盖、事件、窗口及原版和联机。
+
+
 ### 风步物品与洛萨之锋（待验证）
 
 路径：`src/session_item_use.cpp`、`src/session_spells.cpp`；说明见[风步物品](dota-lothar.md)。`AOwk` 物品连接已有风步施法、隐身状态和物品冷却。Win32 Release 客户端增量编译通过；DotA 原图隔离会话直接创建英雄和洛萨之锋，观察隐身、移速加成、冷却及冷却内拒绝再次使用，记录 `tmp/docs-artifacts/war3/dota-lothar/after-checked.log`；探针复现：`tmp/docs-artifacts/war3/dota-lothar/build/Release/dota_lothar.exe <data-root> <DotA_v6.83d.w3x>`。阶段核对真实购买／使用、破隐攻击、事件与时序、多物品和地图覆盖、窗口及原版和联机。
