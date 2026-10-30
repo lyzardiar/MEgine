@@ -3410,3 +3410,10 @@ Win32 Release 客户端与测试目标编译通过；`war3_campaign_ai_tests <da
 路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`、`docs/dota-hero-experience.md`。`AddHeroXP` 对空、已失效和非英雄目标无操作；有效英雄的经验倍率和暂停开关沿用现有路径。
 
 Win32 Release 客户端及测试目标编译通过；`war3_revival_tests <data-root> <hero-revival-fixture> hero-xp` 1/1，覆盖空、已移除单位及英雄、不兼容句柄、非英雄、有效英雄和暂停经验。DotA 原图隔离会话 `-sd` 购买英雄并发出攻击移动，修复前脚本报错，修复后推进 360 秒且观察到死亡和复活，记录 `tmp/docs-artifacts/war3/dota-combat-flow/after-xp-movement.log`。阶段检查真实窗口、所有玩家／英雄、脚本重入、经验倍率与数值边界、暂停／幻象、技能表现、其他地图及联机同步。
+
+
+### 英雄经验与等级接口失效目标（待验证）
+
+路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`、`docs/dota-hero-experience.md`。英雄经验、等级、技能点和经验暂停接口处理空、已移除、不兼容及非英雄目标；有效英雄沿用实际状态更新。
+
+Win32 Release 客户端及测试目标编译通过；`war3_revival_tests <data-root> <hero-revival-fixture> hero-xp`、`awaken` 各 1/1，覆盖无效目标返回值和有效英雄经验／暂停／等级／技能点及既有酒馆复活。DotA 原图隔离会话购买育母蜘蛛、学习麻痹之咬并攻击测试敌人，观察到敌人获得 `B01D`；日志 `tmp/docs-artifacts/war3/dota-brood-attack/hero-xp-family-final.log`，该探针直接设置位置和创建目标。阶段检查英雄状态类型、幻象、生命周期／事件重入、等级及经验边界、窗口、原版经验数值和联机同步。
