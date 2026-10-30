@@ -13,6 +13,8 @@
 | AUdd 死亡凋零 | 35秒、最大生命4%每秒 | 敌我范围百分比伤害、Universal分类、源地面/目标效果和真实树木生命 |
 | ANcl Channel | 跟随时间、目标类型、选项、Art Duration、禁用其他技能、基本订单ID | 无目标/单位/位置/双模式、真实CHANNEL/CAST/EFFECT/FINISH/ENDCAST；本体不产生伤害 |
 
+物品携带的 Channel 复用源目标类型、物品次数与费用、施法生命周期及地图事件。双目标模式可选择世界单位、英雄快捷头像或地面位置。DotA_v6.83d 的侦察守卫在隔离会话中对地点放置生成 `o004`，对友方英雄使用由地图脚本给予单份守卫；两次均消耗一项次数。探针与记录位于 `tmp/docs-artifacts/war3/dota-item-flow/ward-point.log`、`ward-ally.log`；实际窗口和原版一致性待验证。
+
 数值来自AbilityData/AbilityMetaData、能力和效果Profile、WorldEditStrings及地图覆盖。暴风雪源targs为空时采用地面、建筑、敌我、自身、neutral、树木和debris集合；死亡凋零按源说明补充树木。每次脉冲重新查询范围、生命、关系、免疫和可破坏物；单位按距离/句柄排序，伤害上限按该顺序分配，建筑系数直接相乘。此处为当前实现，目标默认、边缘、上限分配及原版公式仍需集中对照。
 
 ## 生命周期与命令

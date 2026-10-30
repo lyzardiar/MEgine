@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### Channel 物品目标与地图事件（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session.h`、`src/session_spells.cpp`、`src/game_view.cpp`、`src/game_hero_bar.cpp`、`src/game_inventory_drag.cpp`，说明见 [持续施法与地面效果](channels.md)。Release 客户端编译通过；DotA_v6.83d 隔离会话购买侦察守卫，对地点使用生成 `o004`，对友方英雄使用产生单份 `I05G`，两条路径均消耗一次，记录位于 `tmp/docs-artifacts/war3/dota-item-flow/ward-point.log` 和 `ward-ally.log`。阶段验证真实窗口的地点／单位／英雄头像／双击、无目标与单位目标 Channel、无效目标、费用与冷却、脚本重入及联机编码；与原版对照。
+
 ### 水元素原型物品及信使（待验证）
 
 路径：`src/session_item_use.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`，说明见 [点目标、范围伤害与召唤物](area-spells.md)。Release 客户端和控制技能测试目标编译通过；`war3_control_tests <data-root> <fixture> purge` 1 通过、0 失败，包含普通水元素召唤。DotA_v6.83d 隔离会话购买、使用动物信使物品后生成玩家信使并消耗物品，回家命令使信使从设定位置移动；记录 `tmp/docs-artifacts/war3/dota-item-flow/courier-return.log`。阶段验证物品费用、召唤事件／零数量、窗口操作、基地地面物品收集、配送／共享控制、信使死亡／升级、脚本重入和联机同步，并与原版对照。
