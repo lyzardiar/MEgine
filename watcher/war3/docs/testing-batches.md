@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 链式驱散（待验证）
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_spell_effects.cpp`、`src/session_item_use.cpp`、`src/session_ai_armies.cpp`、`tests/spell_tests.cpp`；说明见 [链式驱散](chain-dispel.md)。单位技能和中和权杖进入目标施法、弹道、逐次驱散和物品次数；电脑可选取有可驱散状态的目标。Win32 Release 客户端及 spell 目标编译通过；在 `watcher/war3` 下运行 `build/windows-x86/bin/Release/war3_spell_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/mind-rot/fixture.w3m" chain-dispel`，隔离检查 1 通过、0 失败，覆盖两条入口、友方双目标和次数，不加载 Game.dll。阶段对照原版选点／跳转／上限、敌友／魔免／无敌／幻象／召唤、源覆盖与零值、回调重入／死亡／易主、费用／冷却／护盾、电脑、真实窗口／声音、地图和联机。
+
 ### 野生动物游荡（待验证）
 
 路径：`src/passives.h`、`src/session_passive_info.cpp`、`src/session_ambient_passives.cpp`、`tests/passive_tests.cpp`、`docs/mechanical-critters.md`。源 `Awan` 接入空闲游荡与实际移动；初始区域、间隔与随机流使用当前近似实现。Win32 Release 客户端和 passive 目标编译通过；`build/windows-x86/bin/Release/war3_passive_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/auras-passives/fixture.w3m" wander`（在 `watcher/war3` 下执行）隔离检查 1 通过、0 失败，覆盖原鼠单位移动、范围、保持位置和移除能力，无 Game.dll。阶段检查原地图动物／机械小动物、导航／路径障碍、订单事件、玩家命令与保持、暂停／眩晕／禁用／变形／转移／死亡／移除、原版时序与范围、随机调用顺序、多人同步和大地图性能。
