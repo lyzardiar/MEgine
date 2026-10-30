@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 主动物品施法事件与隐藏单位目标施法（待验证）
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_item_use.cpp`、`tests/mobility_tests.cpp`；说明见[希瓦的守护](dota-shiva.md)。非拾取型永久属性物品接入技能事件和实际效果；脚本可令显示隐藏的单位施放目标技能。Win32 Release 客户端与 mobility 测试程序编译通过；`war3_mobility_tests.exe <data-root> <stealth-fixture> hidden-caster` 和 `powerup` 各 1 通过、0 失败。DotA 原图隔离会话 `tmp/docs-artifacts/war3/dota-shiva/after-hidden.log` 显示冰环伤害、减速与恢复；复现：`tmp/docs-artifacts/war3/dota-shiva/build/Release/dota_shiva.exe <data-root> <DotA_v6.83d.w3x>`。阶段核对事件顺序／费用／中断、属性物品与拾取物品、隐藏与运输／死亡、实际购买／输入、范围／多个目标、窗口、原版和联机。
+
+
 ### 风步负淡入时间与相位鞋（待验证）
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spell_effects.cpp`、`src/session_mobility.cpp`、`src/session_visibility.cpp`；说明见[相位鞋](dota-phase-boots.md)。负淡入风步保留移动及穿行状态，不进入隐形。Win32 Release 客户端及 mobility 测试程序编译通过；DotA 原图隔离会话使用 `I0GJ` 后可见且移速倍率为 1.16，效果到期恢复，记录 `tmp/docs-artifacts/war3/dota-phase/after.log`；普通风步 `war3_mobility_tests.exe <data-root> <stealth-fixture> windwalk` 1 通过、0 失败。阶段核对负值与零值原版语义、隐身叠加、穿行／索敌、使用及到期、窗口和联机。
