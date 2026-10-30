@@ -3306,3 +3306,9 @@ Win32 Release 客户端及测试目标编译通过；`war3_movement_avoidance_te
 路径：`src/session_orders.cpp`、`src/session_lumber.cpp`、`tests/movement_avoidance_tests.cpp`、`docs/economy.md`。持续受阻的同属采集工人按单位句柄顺序暂时错位并保留原路线；有效伐木路线不被周期性重寻路覆盖。
 
 Win32 Release 客户端及测试目标编译通过；`war3_movement_avoidance_tests <data-root> <map> workers` 1/1 验证真实采集命令、让行保留原路线和目标以及恢复砍树；既有移动检查 9/9 和空闲友军让行 1/1 通过。BootyBay 原图电脑隔离会话中跟踪的工人在 840～960 秒继续移动及采集，证据 `tmp/docs-artifacts/war3/dota-hero-1031/cooperative-final-ai.log`。阶段检查多工人环形阻塞、取消／新命令、树木移除／目标变化、受阻路径重算、其他单位任务、性能、双端同步与原版行为。
+
+### 可达扩张与野怪营地（待验证）
+
+路径：`src/session_ai_natives.cpp`、`src/world.h`、`src/world_path.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。AI 按相关单位路径筛选扩张矿井、工人和野怪营地；连通区域缓存仅作否定预筛，候选仍经过实际寻路。
+
+Win32 Release 客户端及测试目标编译通过；`war3_campaign_ai_tests <data-root> <fixture> reachable` 2/2 覆盖原 CampaignAI 启动、隔水／陆路矿井和营地、工人选择及动态障碍缓存失效。BootyBay 原图电脑隔离会话在 840 秒与可达营地交战，模拟至 960 秒；日志 `tmp/docs-artifacts/war3/dota-hero-1031/reachable-final-ai.log`。同一 840 秒状态连续三次扩张查询局部单次采样 454 ms 降至 47 ms；冷缓存、大地图和实际帧率未测。阶段检查地形／建筑动态变化、多个移动层、无部队／无工人、空中混编、事件与资源变化、跨岛运输、多人、原版行为及完整战斗。
