@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 亡灵第三章开场后会话（待验证）
+
+路径：`docs/campaign-flow.md`。使用隔离复制的第二章转场缓存、原图和无窗口静音会话推进 600 秒；150 秒检查到英雄等级 5 与用户数据 24168，120–600 秒可操作且未请求退出，日志 `tmp/docs-artifacts/war3/undead02-probe-1031/continue.log`。探针没有玩家命令、未完成任务；自然战斗和胜负、界面、自动切关与原版一致性仍待验证。
+
 ### 运输中取消与载具命令归属（待验证）
 
 路径：`src/ai.h`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。波次记录载具订单轮次与上船区域；取消后当前位置不可卸载时，仍受波次控制的载具使用实际卸载技能返回上船区域。载具命令轮次变化时释放波次控制并保留新命令。Win32 Release 客户端及 CampaignAI 编译通过；BootyBay 地形 `island-flight-death`、`island-flight-retreat` 修复前复现乘员留在深水上、`island-flight-reorder` 修复前复现载具新命令被覆盖；修复后以上及 `island-flight-target-move`、`island-flight-reorder-live` 各 1/1。原公共 AI 多波、单次坐标多波、双乘员及乘员换令各 1/1。夹具预置单位与飞艇；目标消失后上船区失效、飞行中再次换令／死亡／易主、满舱多船、原版时序、实际窗口和联机待验证。
