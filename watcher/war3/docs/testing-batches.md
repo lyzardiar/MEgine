@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 飞艇隔水接应（待验证）
+
+路径：`src/ai.h`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。地面乘员无法步行登艇时，空闲空载飞艇使用原装载能力接近并装载乘员，再沿既有波次卸载；接应订单按施法票据处理取消和超时，避免取消已替换的命令。Win32 Release 客户端及 CampaignAI 目标编译通过；BootyBay 地形隔离夹具 `island-pickup` 在修复前无法分配，修复后 1/1 通过，模拟至 43.25 秒完成接应与交付；`island-pickup-cancel`、`island-pickup-timeout`、`island-wave`、`island-long` 各 1/1。超时夹具直接暂停载具状态；场景预置目标、部队和飞艇并设置无敌，不代表完整电脑对局。阶段验证多岛多乘员、多飞艇、移动／死亡／易主／暂停、路径和装载容量、回调重入、原版选择／时序、实际窗口、性能及联机。
+
 ### 飞艇波次等待远距离登艇（待验证）
 
 路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。为每个成功分配的乘员根据登艇路线长度、移动速度和现有速度修正估算等待时间，取最慢值，限制为 45–600 秒；期限到达、失效和更改目标沿用现有清理。Win32 Release 客户端和 CampaignAI 测试目标编译通过；BootyBay 地形 `island-long` 在修复前无法完成登艇，修复后 1/1 通过，两名快慢乘员分别登艇并在约 76 秒模拟时卸载；`island-wave` 1/1 通过。夹具预置部队、载具和目标，将一名步兵速度设为 5 并设为无敌；并非完整 AI 对局。阶段验证多人拥堵、运输单位移动／死亡／易主、途中减速／暂停、等待上限与命令变化、混编、多载具、自动选目标、实际窗口和联机，并对照原版等待与排序。
