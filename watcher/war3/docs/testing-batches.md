@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 吞树物品与地图脚本（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_control_spells.cpp`、`src/session_spell_info.cpp`、`src/session_area_spells.cpp`，说明见 [吞树与魔法消耗](consumption.md)。Release 客户端及吞食测试目标编译通过，`war3_consumption_tests <data-root> <fixture> eat` 1 通过、0 失败。DotA_v6.83d 隔离会话购买 I05C，树木目标后消耗一次、杀死树木并获得地图恢复能力；友方英雄目标后消耗一次并收到 I0Q6。阶段验证实际鼠标选树与分享、被遮挡和不可见目标、距离与寻路、取消／占用、最后次数和冷却、脚本重入及联机；对照零吞食时间和目标规则的原版行为。
+
 ### 单位目标物品双击（待验证）
 
 路径：`src/game_inventory_drag.cpp`。物品目标选择期间双击原槽位，将持有者作为单位目标提交，沿用物品命令的目标校验与队列处理。Win32 Release 客户端增量编译通过；DotA_v6.83d 隔离会话购买 `I05D` 净化药水，目标为持有者时命令接受、魔法在 10 秒内从 0 恢复至约 45.2，记录见 `tmp/docs-artifacts/war3/dota-item-flow/clarity-self.log`。阶段通过游戏内 Agent 验证双击、选目标、Shift 排队、不可对自身使用的物品及联机同步；点目标物品双击规则与原版对照。当前环境创建 D3D9 设备失败，尚无本次交互画面证据。
