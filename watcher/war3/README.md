@@ -36,7 +36,7 @@ BootyBay已获得原地图画面及20帧开发运行证据，无Game.dll。完�
 - `--hidden --frames 120 --capture <PNG路径>`：限定帧输出；配合 `--play` 时帧数统计游戏画面，等待开局上限120秒。
 - `--menu-check --map <路径> --hidden --frames 10000`：已有菜单导航检查；`--window-check --frames 120`：已有窗口/输入恢复检查。
 
-游戏内置 Agent 截图入口：启动时用 `--agent-dir <已存在目录>` 启用当前进程的按需渲染帧读取；在客户端运行期间执行 `powershell -File tools/agent-capture.ps1 -AgentDir <同一目录>`，返回 PNG 路径、帧号、画面尺寸和游戏／菜单范围。每个客户端使用独立目录，每次只处理一个请求；目录内只保存显式请求的临时截图和响应。已运行但未启用入口的进程需要重启并带该参数。
+游戏内置 Agent 入口：启动时用 `--agent-dir <已存在目录>` 启用，在运行期间执行 `powershell -File tools/agent-select-unit.ps1 -AgentDir <同一目录> -UnitType Hpal` 选择可见单位，再执行 `powershell -File tools/agent-capture.ps1 -AgentDir <同一目录>` 获取 PNG、帧号、画面尺寸、游戏／菜单范围以及同帧选择和物品状态。选择遵循当前游戏界面的操作及可见性限制，局域网和回放不支持选择。每个客户端使用独立目录，调用方须串行发送请求，每次等待响应后再发送下一个；目录保存显式请求的临时截图和响应。已运行但未启用入口的进程需要重启并带该参数；该入口尚非完整 MCP 服务。
 
 自动复现可在 `--play --map <地图>` 下增加 `--agent-select-unit hpea`，由游戏选择当前可见的第一个对应类型单位；可与 `--hidden --frames 300 --capture <PNG路径>` 组合。未找到可选单位时，帧限制结束会报错。该入口目前提供截图与启动时单单位选择，尚未提供 MEngine MCP 的完整状态和交互能力。
 

@@ -3188,3 +3188,9 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 原版单位信息布局与 Agent 截图（待验证）
 
 路径：`src/game_view.*`、`src/game_commands.cpp`、`src/game_buff_panel.cpp`、`src/game_loading.cpp`、`src/combat.h`、`src/session_research.cpp`、`src/agent_capture.h`、`src/platform.*`、`src/main.cpp`、`src/renderer.*`、`tools/agent-capture.ps1`、`tests/passive_tests.cpp`、`docs/unit-combat-panel.md`。Win32 Release 编译通过；攻击与护甲增减值专项 1/1 通过。游戏内部选择农民及带攻击加成的圣骑士并输出画面；对运行中的圣骑士客户端连续两次按需截图，返回游戏范围、尺寸和递增帧号。记录在 `tmp/docs-artifacts/war3/agent-info/`。阶段核对四族／英雄双武器、状态和携带资源、长文本、升级／倍率／减益及原版拆分与舍入、技能／生产／货舱、宽屏／DPI、截图错误、同目录并发、设备恢复和持续运行。Agent 当前仅支持截图与启动时单单位选择，完整 MCP 接口待实现。
+
+### 英雄信息与物品格布局及 Agent 选择（待验证）
+
+路径：`src/game_inventory_layout.h`、`src/game_inventory_drag.cpp`、`src/game_view.*`、`src/game_commands.cpp`、`src/game_buff_panel.cpp`、`src/agent_capture.h`、`src/main.cpp`、`tools/agent-select-unit.ps1`、`tools/agent-capture.ps1`。经验条收于信息框，攻击／护甲和属性行与经验条分开；物品显示、遮罩及命中共用槽位坐标。Agent 可选择可见单位，并在截图响应中返回同帧选择及物品状态。
+
+Win32 Release 增量编译通过；在隔离地图中通过 Agent 选择六物品、100 经验的圣骑士，截图显示六格和部分填充经验条，选取不存在单位失败且保留选择；记录位于 `tmp/docs-artifacts/war3/agent-info/layout-six-items-xp/`。阶段验证物品点击／右键／拖拽／冷却、不同英雄与双武器、四族皮肤、窗口比例／DPI、长文本、Agent 请求失败和客户端生命周期，并对照原版；交互与四族画面尚未实测。

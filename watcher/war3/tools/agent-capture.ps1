@@ -12,7 +12,7 @@ $image=Join-Path $directory ('frame-'+$id+'.png')
 Move-Item -LiteralPath $temp -Destination $request -Force
 $deadline=[DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
 while([DateTime]::UtcNow -lt $deadline){
-    if(Test-Path -LiteralPath $ready){$response=Get-Content -LiteralPath $ready -Raw | ConvertFrom-Json;if(!$response.ok){throw 'Client failed to capture the frame; inspect the client log'};if(!(Test-Path -LiteralPath $image)){throw 'Client reported a missing frame'};[pscustomobject]@{id=$response.id;path=$image;width=$response.width;height=$response.height;frame=$response.frame;scope=$response.scope;presented=$response.presented} | ConvertTo-Json -Compress;exit 0}
+    if(Test-Path -LiteralPath $ready){$response=[IO.File]::ReadAllText($ready,[Text.Encoding]::UTF8) | ConvertFrom-Json;if(!$response.ok){throw 'Client failed to capture the frame; inspect the client log'};if(!(Test-Path -LiteralPath $image)){throw 'Client reported a missing frame'};[pscustomobject]@{id=$response.id;path=$image;width=$response.width;height=$response.height;frame=$response.frame;scope=$response.scope;presented=$response.presented;state=$response.state} | ConvertTo-Json -Compress -Depth 8;exit 0}
     Start-Sleep -Milliseconds 50
 }
 throw 'Timed out waiting for the game capture response'

@@ -1,12 +1,13 @@
 // Author: MiYu. Route inventory drags to the same item commands as the active game session.
 #include "game_view.h"
+#include "game_inventory_layout.h"
 #include <algorithm>
 #include <bit>
 #include <cmath>
 
 namespace war3 {
 namespace {
-int inventorySlot(float x,float y){for(unsigned i=0;i<6;++i){float left=.522f+float(i%2)*.038f,top=.485f+float(i/2)*.038f;if(x>=left && x<left+.034f && y>=top && y<top+.034f)return int(i);}return -1;}
+int inventorySlot(float x,float y){for(unsigned i=0;i<6;++i){auto r=inventorySlotRect(i);if(x>=r.x && x<r.x+r.size && y>=r.y && y<r.y+r.size)return int(i);}return -1;}
 bool heroPortrait(float x,float y,unsigned index){return x>=.008f && x<.048f && y>=.04f+index*.047f && y<.08f+index*.047f;}
 bool gameArea(float x,float y){return x>=0 && x<.8f && y>=.02f && y<.424f;}
 }
@@ -26,6 +27,6 @@ void GameView::inventoryDragInput(GameInput& input) {
     try{if(!submitPlayerCommand(command))localMessage(local,0,0,2,"无法移动该物品");}catch(const std::exception& e){localMessage(local,0,0,3,e.what());}
 }
 void GameView::drawInventoryDrag(const GameInput& input) {
-    if(!inventoryDrag_ || !inventoryDrag_->moving)return;auto item=data_->session->items().find(inventoryDrag_->item);if(item==data_->session->items().end())return;auto icon=data_->assets->cachedTexture(item->second->icon);if(!icon)return;float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;renderer_.rect(left+(input.ui.x-.017f)*scale,top+(input.ui.y-.017f)*scale,.034f*scale,.034f*scale,0xbbffffff,icon);
+    if(!inventoryDrag_ || !inventoryDrag_->moving)return;auto item=data_->session->items().find(inventoryDrag_->item);if(item==data_->session->items().end())return;auto icon=data_->assets->cachedTexture(item->second->icon);if(!icon)return;float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;auto size=inventorySlotRect(0).size;renderer_.rect(left+(input.ui.x-size/2)*scale,top+(input.ui.y-size/2)*scale,size*scale,size*scale,0xbbffffff,icon);
 }
 }
