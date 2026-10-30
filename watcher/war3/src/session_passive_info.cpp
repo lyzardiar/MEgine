@@ -8,7 +8,7 @@ namespace war3 {
 const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned level) {
     auto key=std::pair{ability,level};if(auto found=passiveInfo_.find(key);found!=passiveInfo_.end())return found->second;PassiveInfo p;p.ability=ability;p.level=level;auto& data=definitions();if(!level || !data.ability(ability))return passiveInfo_.emplace(key,std::move(p)).first->second;
     struct Prototype {const char* code;PassiveKind kind;bool aura;};constexpr Prototype prototypes[]={
-        {"AHab",PassiveKind::Brilliance,true},{"AHad",PassiveKind::Devotion,true},{"AOae",PassiveKind::Endurance,true},
+        {"AHab",PassiveKind::Brilliance,true},{"Aarm",PassiveKind::Brilliance,true},{"AHad",PassiveKind::Devotion,true},{"AOae",PassiveKind::Endurance,true},
         {"AUau",PassiveKind::Unholy,true},{"AUav",PassiveKind::Vampiric,true},{"AEar",PassiveKind::Trueshot,true},
         {"AEah",PassiveKind::Thorns,true},{"AOac",PassiveKind::Command,true},{"Aakb",PassiveKind::WarDrums,true},
         {"Aoar",PassiveKind::Regeneration,true},{"AHbh",PassiveKind::Bash,false},{"AOcr",PassiveKind::Critical,false},{"ANdb",PassiveKind::Critical,false},

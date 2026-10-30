@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 中立魔法之泉（待验证）
+
+路径：`src/session_passive_info.cpp`、`tests/passive_tests.cpp`、`docs/auras-passives.md`。`Aarm` 原型接入魔法光环及实际恢复，源 `nmoo/ANre` 使用百分比和范围。Win32 Release 客户端及 passive 检查目标增量编译通过；隔离会话 `build/windows-x86/bin/Release/war3_passive_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/auras-passives/fixture.w3m" fountain`（在 `watcher/war3` 下执行，夹具由 `tests/generate-passive-fixture.py` 生成） 1 通过、0 失败，检查原生命／魔法之泉对两个玩家的恢复、范围外单位及来源移除，不加载 Game.dll。阶段检查泉水地图、源数据覆盖、离开／返回、不同玩家及有机／机械／空地目标、多个来源／辉煌光环叠加、buff／视觉／声音、原版恢复速率与时序、实际窗口及联机。
+
 ### 重生神符（待验证）
 
 路径：`src/consumables.h`、`src/session_consumables.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/rebirth-rune.md`。拾取 `rreb` 时消费物品记录的来源类型，创建拾取者所属单位；空／无效类型或无可用落点不创建单位。Win32 Release 客户端及测试目标编译通过；`war3_spell_tests <data-root> tmp/docs-artifacts/war3/mind-rot/fixture.w3m rebirth-rune`、`shield-rune`、`mind-rot` 各 1/1。补充 `war3_spell_tests <data-root> tmp/docs-artifacts/war3/rebirth-rune/drop-fixture.w3m rebirth-drop` 1/1：死亡回调运行原 `UnitDropItem`，玩家目标命令拾取并创建单位；夹具直接击杀单位。阶段检查原地图自然战斗掉落、来源覆盖、不同玩家／单位类型、无空间、事件重入、资源释放、实际窗口、联机和原版落点／时序／归属。
