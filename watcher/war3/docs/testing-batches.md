@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 显影之尘施法事件（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`tests/stealth_tests.cpp`，说明见 [主动显形](stealth-reveal.md)。Release 客户端及专项目标编译通过；`war3_stealth_tests <data-root> <fixture> dust` 1 通过、0 失败，覆盖侦测跟随、冷却、到期和次数消耗。DotA_v6.83d 隔离会话中显影之尘对敌方隐身英雄应用 `Bdet`，并触发地图脚本添加 `A2SJ`，记录 `tmp/docs-artifacts/war3/dota-item-flow/dust-effects-after.log`。阶段检查原版事件和费用时序、目标／魔免／侦测共享、技能中断、脚本重入、最后一次消耗、实际窗口及联机同步。
+
 ### Channel 物品目标与地图事件（待验证）
 
 路径：`src/session_item_use.cpp`、`src/session.h`、`src/session_spells.cpp`、`src/game_view.cpp`、`src/game_hero_bar.cpp`、`src/game_inventory_drag.cpp`，说明见 [持续施法与地面效果](channels.md)。Release 客户端编译通过；DotA_v6.83d 隔离会话购买侦察守卫，对地点使用生成 `o004`，对友方英雄使用产生单份 `I05G`，两条路径均消耗一次，记录位于 `tmp/docs-artifacts/war3/dota-item-flow/ward-point.log` 和 `ward-ally.log`。阶段验证真实窗口的地点／单位／英雄头像／双击、无目标与单位目标 Channel、无效目标、费用与冷却、脚本重入及联机编码；与原版对照。
