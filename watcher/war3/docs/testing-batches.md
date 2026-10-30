@@ -3168,3 +3168,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 英雄主属性显示（待验证）
 
 路径：`src/session.h`、`src/session_research.cpp`、`src/game_loading.*`、`src/game_commands.cpp`、`docs/unit-combat-panel.md`。主属性图标与伤害显示共用源单位主属性，三项当前属性使用源标题；Win32 Release 编译通过，圣骑士隐藏窗口选中画面可见图标和属性，证据位于 `tmp/docs-artifacts/war3/selection-diagnostic/ui-hero-attributes-selected.*`。集中验证力量／敏捷／智力英雄、地图自定义字段与皮肤、装备／升级变化、长数值、不同尺寸及与原版布局的差异。
+
+### 寻路搜索缓存（待验证）
+
+路径：`src/world_path.cpp`、`docs/water-pathing.md`。Release 编译与隔墙替代／部分路径定向检查 2/2 通过；512×512 和 1028×1028 隔墙夹具优化前后路径摘要一致，实验记录位于 `tmp/docs-artifacts/war3/orcx03b-current/`。集中验证大地图／复杂单位碰撞、各移动类型、动态阻挡、不同尺寸内存、连续实际对局与帧时间及原版路径行为。
