@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 运输波次与单位攻击目标（待验证）
+
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。单位攻击目标与已有运输波次的目的地相同时保留波次；目标位置改变时取消旧波次。Win32 Release 客户端与 CampaignAI 测试程序编译通过；BootyBay 地形 `island-target` 修复前复现运输取消，修复后 1/1，检查重复攻击、登艇、卸载和落地后的攻击指令；`island-target-change`、`island-wave`、`island-pickup-cancel` 各 1/1。夹具预置单位、飞艇与静止无敌目标。阶段检查目标移动／死亡、途中撤退和换令、多飞艇／乘员、事件重入、原版行为、真实对局和联机；电脑自动选择跨岛目标仍待实现。
+
 ### 隔离区域的部分路径搜索（待验证）
 
 路径：`src/world.h`、`src/world_path.cpp`、`tests/world_tests.cpp`、`docs/water-pathing.md`。缓存区域可达到目标的最小网格距离，搜索确认落点及排序无法改善后结束；无区域或条件不满足时继续原搜索。Win32 Release 客户端与 world 测试程序编译通过；预建区域与未预建区域逐点对照 4/4，覆盖动态开闭、不同起点／目标／净空、共享缓存和大区域。OrcX03b 隔离静音模拟前 120 秒分别耗时 203.671 和 140.265 秒，对照后段有编译并行，日志在 `tmp/docs-artifacts/war3/orcx03b-path-current/`。阶段检查搜索预算与相同距离的代价／格号排序、动态障碍、多移动类型、密集单位、实际战役帧时间及内存。
