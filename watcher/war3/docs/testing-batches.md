@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 中立霜冻吐息（待验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_neutral_spells.cpp`、`src/session_ai_armies.cpp`、`tests/spell_tests.cpp`，说明见 [中立能力](neutral-heroes.md)。Release 客户端和专项程序编译通过；`war3_spell_tests.exe <data-root> <fixture> frost-breath` 1/1 通过，覆盖原蓝龙施法、直接伤害、`BCbf` 持续伤害以及火焰吐息对未醉酒目标不添加燃烧。阶段检查多目标锥形、总伤害上限、施法与死亡回调、地图覆盖、状态叠加／驱散、电脑决策、原版伤害分类、声音与画面。
+
 ### 静态与建筑阴影插值（待验证）
 
 路径：`src/game_effects.cpp`、`src/game_view.h`，说明见 [单位地面阴影](unit-shadows.md)。Release 编译通过；原地形、无 SHD 和建筑定时移除的隐藏窗口截图已检查，确认阴影边缘平滑及移除后消失。阶段核对跨分块接缝、灰度／透明贴图、地图边界、静态／建筑叠加、视野及动态变化、坡面／水面、设备恢复和 Amazonia 帧耗时，并与原版像素对照。

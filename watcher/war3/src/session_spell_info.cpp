@@ -84,7 +84,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"ANsg",SpellKind::Grizzly,SpellTargeting::None},{"ANsq",SpellKind::Quilbeast,SpellTargeting::None},
         {"ANsw",SpellKind::Hawk,SpellTargeting::None},{"ANst",SpellKind::Stampede,SpellTargeting::Point},
         {"Afzy",SpellKind::Bloodlust,SpellTargeting::None},
-        {"ANbf",SpellKind::BreathFire,SpellTargeting::Point},{"ANdh",SpellKind::DrunkenHaze,SpellTargeting::Unit},
+        {"ANbf",SpellKind::BreathFire,SpellTargeting::Point},{"ACbf",SpellKind::BreathFire,SpellTargeting::Point},{"ANdh",SpellKind::DrunkenHaze,SpellTargeting::Unit},
         {"ANht",SpellKind::HowlTerror,SpellTargeting::None},{"ANrf",SpellKind::RainFire,SpellTargeting::Point},
         {"ANpa",SpellKind::Parasite,SpellTargeting::Unit},{"ANdo",SpellKind::Doom,SpellTargeting::Unit},{"ANfl",SpellKind::ForkedLightning,SpellTargeting::Unit},
         {"ANef",SpellKind::SpiritSplit,SpellTargeting::None},{"ANto",SpellKind::Tornado,SpellTargeting::Point},
