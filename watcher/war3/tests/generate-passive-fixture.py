@@ -59,7 +59,8 @@ endfunction
         records.append(base+marker+struct.pack('<I', len(changes))+b''.join(fixture.modification(field, kind, value, slot, marker) for field, kind, value, slot in changes))
     files['war3map.w3a'] = struct.pack('<III', 2, 0, len(records))+b''.join(records)
     sight_item = b'rat6' + b'I0SI' + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + b'AIsi\0' + b'I0SI'
-    files['war3map.w3t'] = struct.pack('<III', 2, 0, 1) + sight_item
+    ethereal_item = b'rat6' + b'I0ET' + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + b'Aetl\0' + b'I0ET'
+    files['war3map.w3t'] = struct.pack('<III', 2, 0, 2) + sight_item + ethereal_item
     units = [(b'hpea', b'z0u1', b'uwu2'), (b'hfoo', b'z0u2', b'uwu1')]
     files['war3map.w3u'] = struct.pack('<III', 2, 0, len(units))+b''.join(base+custom+struct.pack('<I', 1)+field+struct.pack('<II', 0, 0)+custom for base, custom, field in units)
     args.output.parent.mkdir(parents=True, exist_ok=True)

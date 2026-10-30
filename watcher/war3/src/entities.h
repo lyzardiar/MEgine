@@ -89,7 +89,7 @@ struct UnitState {
     std::optional<WorldPoint> guardHome;
     unsigned guardOwner=UINT_MAX;
     std::uint64_t guardPost=0;
-    bool building=false,hero=false,spiritEthereal=false,structureTarget=false;
+    bool building=false,hero=false,spiritEthereal=false,abilityEthereal=false,structureTarget=false;
     std::uint32_t race=7;
     float scale=1,collision=16,flyHeight=0;
     float selectionSize=128;
@@ -206,7 +206,7 @@ struct UnitState {
     bool grounded() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Net && b.groundsAir)return true;return false;}
     bool airborne() const {return movementType=="fly";}
     bool groundTarget() const {return movementType!="fly" || grounded();}
-    bool ethereal() const {if(spiritEthereal)return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Banish)return true;return false;}
+    bool ethereal() const {if(spiritEthereal || abilityEthereal)return true;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Banish)return true;return false;}
     float displayFlyHeight() const {return grounding?grounding->height:flyHeight;}
     bool mobileBuilding() const {return building && roots && roots->uprooted;}
     bool stationaryBuilding() const {return building && !mobileBuilding();}

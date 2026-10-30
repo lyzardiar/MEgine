@@ -3641,3 +3641,9 @@ Win32 Release 客户端及测试目标编译通过；`python tests/generate-pass
 路径：`src/session_equipment.cpp`、`src/session_item_use.cpp`、`src/session_spells.cpp`；说明见[紫怨](dota-orchid.md)。复合物品的被动法术书保留借用能力，由另一主动能力接收物品输入；`ANso` 支持物品目标施法。
 
 Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨与目标，观察目标沉默／恢复、装备加成及移除后清理；单独的原版法术书可打开。日志 `tmp/docs-artifacts/war3/dota-orchid/after-stats.log`、`book.log`。阶段验证实际购买／输入、随机及嵌套书籍、主动子能力与多来源、技能数值／事件、联机、原版和 GPU。
+
+### 虚无能力与虚灵之刃（待验证）
+
+路径：`src/entities.h`、`src/session_equipment.cpp`、`tests/passive_tests.cpp`、`tests/generate-passive-fixture.py`；说明见[虚无能力](ethereal-ability.md)。能力、书籍与物品刷新虚无状态，既有类别／攻击／伤害／治疗消费者读取该状态。
+
+Win32 Release 客户端及测试目标编译通过；执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m`，再运行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m ethereal-ability`，1/1 通过。DotA 原图隔离会话使用 `I0LT`，目标在 1 秒时虚无、5 秒时恢复；记录 `tmp/docs-artifacts/war3/dota-ethereal/after.log`。阶段验证物品／派生、多个来源及生命周期、伤害／治疗倍率、地图覆盖、真实窗口／原版及联机。
