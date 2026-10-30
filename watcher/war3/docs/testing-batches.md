@@ -3258,3 +3258,9 @@ Win32 Release 客户端和 `war3_caster_tests` 编译通过；`chain-targets` �
 路径：`src/session_spell_info.cpp`、`src/session_wards_roar.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`、`docs/wards-roar.md`。ANbr 的固定攻击加成进入武器伤害与信息面板；零效果无状态的咆哮允许正常施法并触发地图脚本。
 
 Win32 Release 客户端及 `war3_caster_tests` 编译通过；`battle-roar` 4/4，涵盖零效果施法、Aroa 百分比、ANbr 固定加成与敌方筛选，未加载 Game.dll。DotA 隔离原图选择守护精灵并学习幽魂，观察到五个幽魂依次显示；收缩与扩张命令分别使轨道半径约 150→100→580。探针在 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段检查战吼等级、重叠／驱散／状态移除及原版计算，幽魂接触伤害／完整周期／状态变化、多人和真实窗口。
+
+### JASS 实数比较与 DotA 降临（待验证）
+
+路径：`src/jass_runtime.cpp`、`tests/jass_runtime_tests.cpp`、`docs/jass.md`。实数相等使用原版减法和容差，不等按实数位型比较，混合整数按原版转换后参与比较。
+
+Win32 Release 客户端及 JASS 测试编译通过；运行时检查 16/16，原版相等辅助函数在 Unicorn 中 5/5。DotA_v6.83d 隔离会话学习 `A1TB` 后，施法约 3 秒传送至目标，约 12 秒后返回；同图幽魂对普通单位和英雄伤害、英雄接触后幽魂死亡已观察。探针与反汇编位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段验证实数不等及混合类型的完整原版 VM 路径、特殊值、其他比较操作、降临中断／死亡／联结目标、真实窗口与多人。
