@@ -3234,3 +3234,9 @@ Win32 Release 客户端和 `war3_passive_tests` 编译通过；`player-aura` 隔
 路径：`src/session_spellbooks.cpp`、`src/session_ability_commands.cpp`、`src/session_passive_info.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`、`docs/spellbooks-retraining.md`。禁用的法术书保留其子能力并隐藏命令入口；未声明空中／地面类别的自目标被动可作用于自身。
 
 Win32 Release 客户端及测试目标编译通过；`hidden-book` 夹具 4/4 和受关联影响的 `player-aura` 3/3 通过，未加载 Game.dll。DotA 原图隔离会话入网后显示 `A304`／`A300`／`B0HI`，移速光环系数由 0.2 增至 0.4；直接移动英雄出网后相关书籍／能力／状态清理。探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对书籍禁用的时机、直接下令、嵌套／库存／相同技能来源、无类别自目标、地图覆盖、多人和原版行为；真实操作和原版画面未验收。
+
+### 技能接口无效单位与 DotA 终极技能（待验证）
+
+路径：`src/session_entities.cpp`、`tests/passive_tests.cpp`、`docs/ability-unit-handles.md`、`docs/spellbooks-retraining.md`。七个技能增删、等级与永久标记接口对无效单位返回零或失败。
+
+Win32 Release 客户端及 `war3_passive_tests` 编译通过；`invalid-unit` 检查 4/4，覆盖空、已移除、类型不匹配和有效单位，未加载 Game.dll。DotA 隔离会话设定蜘蛛英雄等级、施放终极技能并攻击创建的目标，观察到攻击加成、吸血及约 14 秒后的脚本清理；探针和原版反汇编在 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对句柄重用／回调删除、等级边界、自然升级／战斗、多人、实际窗口和原版精度。
