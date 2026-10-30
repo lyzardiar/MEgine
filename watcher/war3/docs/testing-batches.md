@@ -3366,3 +3366,10 @@ Win32 Release 客户端及测试目标编译通过；`war3_transport_tests <data
 路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。电脑购买飞艇前筛选地形可达且路线终点在交互范围内的商店和工人；不可达的部分路线不改变工人命令。
 
 Win32 Release 客户端与测试编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> zeppelin-route` 和 `zeppelin-purchase` 各 1/1，覆盖隔水商店、可达候选、商店移除清理及通过原公共 AI 脚本购买、扣金和消耗库存。测试预置库存和资源，未验证完整对局中的人口条件或自行跨岛决策。阶段检查多商店／动态阻挡、工人原有任务、不可达与超时、库存／资源变化、原版排序、实际窗口及联机；路径查询的规模和耗时仍待性能验证。
+
+
+### 远程飞艇购买等待（待验证）
+
+路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。根据移动路线长度和当前速度估算购买预留时限，并限制在 60 至 600 秒；失效及更改命令仍释放预留。
+
+Win32 Release 客户端和测试目标增量编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> zeppelin-long`、`zeppelin-stuck`、`zeppelin-route`、`zeppelin-purchase` 各 1/1，远程购买耗时 139 秒，停滞工人在期限内释放。长途和停滞夹具关闭工人路径碰撞，资源和库存由测试预置。阶段检查拥堵及动态路径、减速和暂停、买家死亡／易主、库存和资源变化、600 秒上限、原版时序、实际客户端与联机。
