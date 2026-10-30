@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+### JASS 数组边界与无效物品操作（待验证）
+
+路径：`src/jass_runtime.cpp`、`src/session_entities.cpp`、`src/session_inventory.cpp`、`tests/jass_runtime_tests.cpp`、`tests/passive_tests.cpp`；原版入口证据及局限见 [JASS](jass.md) 和 [物品句柄](dota-bkb-item-handles.md)。越界数组读返回零值、写不生效；无效物品创建返回空值，设置函数安全返回。Win32 Release 客户端、两项测试程序编译通过；JASS 运行时 16 通过、0 失败，`invalid-item` 1 通过、0 失败。DotA 原图隔离会话完成符文装瓶与释放并恢复魔瓶；急速和赏金效果可观察，其他符文效果仍待修复或验证。阶段核对原版数组各类型／边界和物品回调、自然拾取及实际窗口。
+
 ### Channel 物品目标与魔瓶装符（部分实现，待验证）
 
-路径：`src/session.h`、`src/session_control_spells.cpp`、`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_teleport.cpp`、`src/game_view.cpp`；说明见[魔瓶与物品目标](dota-bottle.md)。Channel 可选择源配置允许的地面物品，技能效果事件先于物品使用事件；DotA 原图隔离探针将急速符 `I006` 装入空瓶 `I0AM` 并生成 `I0H1`，单位及背包物品目标被拒绝。释放装瓶符文时仍因 JASS 数组负索引报错，未完成释放闭环。客户端及 mobility 程序编译通过；`remove-item`、`reset-cooldown` 各 1 通过、0 失败，臂章和希瓦隔离探针仍观测到预期状态。记录位于 `tmp/docs-artifacts/war3/dota-bottle/`。阶段核对原版事件顺序、物品耗尽与施法回调重入、各类物品／单位目标、六种符文完整周期、图形选择和联机；优先修复负索引异常。
+路径：`src/session.h`、`src/session_control_spells.cpp`、`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_teleport.cpp`、`src/game_view.cpp`；说明见[魔瓶与物品目标](dota-bottle.md)。Channel 可选择源配置允许的地面物品，技能效果事件先于物品使用事件；DotA 原图隔离探针将急速符 `I006` 装入空瓶 `I0AM` 并生成 `I0H1`，单位及背包物品目标被拒绝。后续已修复数组越界读取及物品空句柄异常；六种符文在隔离场景均能恢复魔瓶，急速及赏金效果已观察，回复、幻象和双倍伤害效果仍待修复。客户端及 mobility 程序编译通过；`remove-item`、`reset-cooldown` 各 1 通过、0 失败，臂章和希瓦隔离探针仍观测到预期状态。记录位于 `tmp/docs-artifacts/war3/dota-bottle/`。阶段核对原版事件顺序、物品耗尽与施法回调重入、各类物品／单位目标、六种符文完整周期、图形选择和联机；继续修复尚未生效的符文。
 
 ### 携带物品移除事件与臂章（待验证）
 

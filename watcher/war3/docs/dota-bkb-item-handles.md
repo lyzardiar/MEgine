@@ -7,3 +7,5 @@ DotA_v6.83d 的黑皇杖 `I0FZ` 使用水元素原型触发地图脚本；脚本
 Win32 Release 客户端及测试程序编译通过；`invalid-item` 1/1 覆盖有效、空、销毁和不兼容句柄。原图静音隔离会话直接创建英雄及 `I0FZ` 并使用：物品替换为 `I0G0`，免疫在第 1 至第 10 秒采样为真、第 11 秒为假，替换物品保留冷却；日志为 `tmp/docs-artifacts/war3/dota-bkb/bkb-after.log`。探针未经过自然购买和游戏窗口，不证明完整对局或原版精度。
 
 阶段验证多次使用和最低持续时间、物品转移／删除、其他来源免疫与驱散、事件和冷却、跨玩家／联机、原版表现及真实窗口。其他物品 native 的无效句柄行为尚需按各自原版入口核对。
+
+`UnitAddItemById` 和 `UnitAddItemToSlotById` 对无效单位或物品类型返回空句柄／false；`SetItemPlayer`、`SetItemCharges`、`SetItemUserData` 对无效句柄直接返回，`SetItemPlayer` 也忽略无效玩家。固定版原入口和失败分支见 REA 证据 `ev_269b68347deb2288b958c3a20a119f85d1ad82a0b1fed12c51de15babe9255bc`、`ev_aa8303be2a8cc5232977f36bfcee2c3ced08b96e7922a2e1f9d0ac11fa5277b1`、`ev_d5d155b076fa94db39ace0ea4b21393de5dba0ccfe8de9326b2e42dd947f9327`；`invalid-item` 检查 1 通过、0 失败。物品创建位置、失败边界及完整事件仍待原版对照。

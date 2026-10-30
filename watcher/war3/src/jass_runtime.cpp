@@ -109,10 +109,10 @@ struct Runtime::Impl {
     }
     Cell& cell(Binding binding,Frame& frame) {return binding.access==Access::Global?globals.at(binding.index):frame.locals.at(binding.index);}
     Value load(const Cell& cell,std::optional<std::uint32_t> index,Position p) const {
-        if(!cell.initialized)fail(p,"Read of uninitialized JASS local");if(cell.array!=index.has_value())fail(p,"JASS array/scalar storage differs");if(!index)return cell.value;if(*index>=8192)fail(p,"JASS array index outside 0..8191");auto found=cell.elements.find(*index);return found==cell.elements.end()?empty(cell.value.type):found->second;
+        if(!cell.initialized)fail(p,"Read of uninitialized JASS local");if(cell.array!=index.has_value())fail(p,"JASS array/scalar storage differs");if(!index)return cell.value;if(*index>=8192)return empty(cell.value.type);auto found=cell.elements.find(*index);return found==cell.elements.end()?empty(cell.value.type):found->second;
     }
     void store(Cell& cell,Value value,std::optional<std::uint32_t> index,Position p) {
-        if(cell.array!=index.has_value())fail(p,"JASS array/scalar storage differs");value=coerce(std::move(value),cell.value.type,p);if(index){if(*index>=8192)fail(p,"JASS array index outside 0..8191");cell.elements.insert_or_assign(*index,std::move(value));}else cell.value=std::move(value);cell.initialized=true;
+        if(cell.array!=index.has_value())fail(p,"JASS array/scalar storage differs");value=coerce(std::move(value),cell.value.type,p);if(index){if(*index>=8192)return;cell.elements.insert_or_assign(*index,std::move(value));}else cell.value=std::move(value);cell.initialized=true;
     }
     Value binary(Op op,Value left,Value right,Position p) {
         bool numeric=left.type==integer || left.type==real;
