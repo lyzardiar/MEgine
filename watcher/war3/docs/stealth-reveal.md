@@ -32,3 +32,11 @@ python tests/generate-stealth-fixture.py --data-root "E:/Program Files (x86)/dzc
 dust/meld/tower模式随实现编译，阶段合并执行：显形之尘移动/次数/到期、手动隐藏/自动索敌/明确行动、Ahid与技能移除、AHta研究/持续/冷却。继续合并多玩家/共享/暂停/死亡转让/回调重入、w3a/英雄/可用性/驱散、全图显形、真实窗口/鼠标/小地图/热键/特效/声音、三图长局/CPU/GPU/内存与切图释放。
 
 风步增量见[机动与镜像](mobility.md)。钻地及 Abdt 侦测见[钻地侦测](burrow-detection.md)；中立 Andt 付费显形已接入，详见[隐形、侦测与共享视野](visibility.md)；状态栏和声音仍待实现。DataB/C原版行为及弹道时序、Ahid条件、侦测类型/计数/范围边缘、订单/淡入/破隐/半透明材质和原版数值/事件精度保持待验收。
+
+## 可见幽灵
+
+`Aeth` 可见幽灵读取源 `DataA` 的变形免疫和 `DataB` 的不阻塞建筑标志，分别连接妖术／变形术筛选和建筑选址；它不会因该能力隐形。能力增加、删除和地图原型覆盖复用既有被动能力读取。目标类别、地图覆盖、伤害与事件、各视角及原版表现仍待阶段对照。
+
+本机 1.27 `War3Patch.mpq` 的 AbilityData 中 `Aeth` 两个标志均为 1；原 AbilityMetaData 的 `Eth1`／`Eth2` 标签对应变形免疫和不阻塞建筑。固定版 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 含独立 `CAbilityGhostVisible` 与 `CAbilityGhost` 类型，原标识指令保存在 `tmp/docs-artifacts/war3/visible-ghost-original-asm.txt`。
+
+Win32 Release 产品和 `war3_stealth_tests` 编译通过；`war3_stealth_tests.exe <data-root> <stealth-fixture.w3m> visible-ghost` 检查源标志、可见性、变形拒绝与能力移除，以及同一建造点的占位变化，1/1 通过且未加载 Game.dll。窗口、地图覆盖和原版精确语义不在此检查内。

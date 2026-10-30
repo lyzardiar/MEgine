@@ -3106,3 +3106,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 墓地尸体生成（待验证）
 
 路径：`src/corpses.h`、`src/entities.h`、`src/session.h`、`src/session_entities.cpp`、`src/session_corpses.cpp`、`src/session_transport.cpp`、`tests/corpse_cargo_tests.cpp`、`docs/graveyard.md`。Win32 Release 产品与专项程序编译通过；`war3_corpse_cargo_tests.exe <data-root> <corpse-cargo-fixture.w3m> graveyard` 1/1 通过，覆盖间隔、可用尸体、上限及补充。集中验证初始／满额与空位计时、消耗／衰败／搬运、能力增加／删除／升级、暂停／建造／死亡／转让、地图覆盖、多墓地、落点、同步、画面音效和原版对照。
+
+### 可见幽灵能力（待验证）
+
+路径：`src/passives.h`、`src/session_passive_info.cpp`、`src/session_visibility.cpp`、`tests/stealth_tests.cpp`、`docs/stealth-reveal.md`。Win32 Release 产品与专项程序编译通过，`war3_stealth_tests.exe <data-root> <stealth-fixture.w3m> visible-ghost` 的可见性、变形及建筑占位检查 1/1 通过。集中验证源技能及地图覆盖、两项标志开关、变形目标筛选和施法重入、建筑／其他单位占位、可见性及共享视野、能力移除和原版对照。

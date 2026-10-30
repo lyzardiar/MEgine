@@ -16,7 +16,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
         {"Amin",PassiveKind::Mine,false},{"Adda",PassiveKind::DeathDamage,false},
         {"Apiv",PassiveKind::PermanentInvisibility,false},{"Adet",PassiveKind::Detection,false},
         {"Atru",PassiveKind::Detection,false},{"Agyv",PassiveKind::Detection,false},{"Adts",PassiveKind::Detection,false},{"Abdt",PassiveKind::Detection,false},
-        {"Agho",PassiveKind::Ghost,false},{"Aexh",PassiveKind::Exhume,false},
+        {"Agho",PassiveKind::Ghost,false},{"Aeth",PassiveKind::VisibleGhost,false},{"Aexh",PassiveKind::Exhume,false},
         {"AOre",PassiveKind::Reincarnation,false},{"ACrn",PassiveKind::Reincarnation,false},
         {"AIrc",PassiveKind::Reincarnation,false},{"Aphx",PassiveKind::PhoenixMorph,false},{"Apxf",PassiveKind::PhoenixFire,false},{"ANbs",PassiveKind::AttackModifier,false},{"ANic",PassiveKind::AttackModifier,false},{"Alit",PassiveKind::LightningAttack,false},{"Aasl",PassiveKind::SlowAura,true},
         {"Apig",PassiveKind::PermanentImmolation,false},{"ANpi",PassiveKind::PermanentImmolation,false},{"AIcf",PassiveKind::PermanentImmolation,false},{"Awar",PassiveKind::Pulverize,false},
@@ -57,7 +57,7 @@ const PassiveInfo& ScriptSession::passiveInfo(std::uint32_t ability,unsigned lev
     if(p.kind==PassiveKind::Evasion && (p.amount<0 || p.amount>1))throw std::runtime_error("Evasion probability outside supported range");
     if(p.kind==PassiveKind::Detection){p.area=field("Rng");if(p.amount<0 || p.amount>3 || p.amount!=std::floor(p.amount))throw std::runtime_error("Detection type outside source mask");}
     if(p.kind==PassiveKind::PermanentInvisibility && p.amount!=0 && p.amount!=1)throw std::runtime_error("Permanent invisibility acquire flag is not boolean");
-    if(p.kind==PassiveKind::Ghost)for(auto value:{p.amount,p.secondary,p.bonus})if(value!=0 && value!=1)throw std::runtime_error("Ghost source flag is not boolean");
+    if(p.kind==PassiveKind::Ghost || p.kind==PassiveKind::VisibleGhost)for(auto value:{p.amount,p.secondary,p.bonus})if(value!=0 && value!=1)throw std::runtime_error("Ghost source flag is not boolean");
     if(p.area<0 || p.area>100000 || std::abs(p.amount)>1000000 || std::abs(p.secondary)>1000000 || p.duration<0 || p.duration>86400 || p.heroDuration<0 || p.heroDuration>86400)throw std::runtime_error("Passive source field outside supported range");
     for(auto id:{ability,p.buff})if(id)for(auto artField:{"CasterArt","TargetArt","SpecialArt"})for(auto& path:split(data.field(id,"Profile",artField)))p.visualModels.push_back(path);
     if(p.buff)for(auto& path:split(data.field(p.buff,"Profile","TargetArt")))p.targetModels.emplace_back(path,data.field(p.buff,"Profile","Targetattach","origin"));
