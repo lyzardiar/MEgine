@@ -208,6 +208,8 @@ class ScriptSession {
     void bindAiNatives();
     void bindAiRuntime(ScriptAI& ai);
     void aiTick();
+    bool aiEnemyBaseCandidate(const ScriptAI& ai,const UnitState& unit);
+    void aiEnemyBaseSearchTick(ScriptAI& ai);
     void aiTowns(ScriptAI& ai);
     int aiTown(ScriptAI& ai,const UnitState& unit);
     unsigned aiCount(ScriptAI& ai,std::uint32_t type,bool done,int town=-1);

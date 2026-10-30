@@ -124,4 +124,12 @@ REA 对 Game.dll 1.27 入口 `0x6f8917c0` 和目标选择函数 `0x6f5ea240` 的
 
 Win32 Release 客户端及定向目标编译通过；BootyBay 地形夹具检查可达矿井、工人、可达营地、隔水目标和地形缓存失效，2/2 通过。BootyBay 原图电脑隔离模拟至 960 秒，部队在 840 秒已到另一处可达营地并交战；日志 `tmp/docs-artifacts/war3/dota-hero-1031/reachable-final-ai.log`。840 秒状态下连续三次扩张查询单次采样从 454 ms 降至 47 ms，总计仅为该场景的局部测量，非帧率或完整性能验收。
 
-当前选点只确认至少一个相关单位的陆路或自身移动类型可达，不保证全部部队可达、可用建造位置或运输跨岛；没有现役作战单位时不选择营地。大地图区域缓存构建／失效成本、原版目标选择、飞艇／海军、多人同步和完整对局仍待实现或验证。公共 AI 的 `AnyPlayerAttack` 对 `WaitGetEnemyBase` 的等待条件需要继续核对。
+当前选点只确认至少一个相关单位的陆路或自身移动类型可达，不保证全部部队可达、可用建造位置或运输跨岛；没有现役作战单位时不选择营地。大地图区域缓存构建／失效成本、原版目标选择、飞艇／海军、多人同步和完整对局仍待实现或验证。
+
+## 敌方基地搜索与进攻
+
+`StartGetEnemyBase` 清除旧结果并启动搜索；每个模拟步最多检查 64 个单位，`WaitGetEnemyBase` 在搜索期间返回真，完成后返回假，`GetEnemyBase` 返回完成后仍有效的敌方建筑。搜索期间候选被移除或不再符合条件时重新搜索；AI 暂停时搜索不推进。目标选择沿用现有敌对关系、建筑、可见与生命条件，排序和分步预算属于当前实现。
+
+原 Game.dll 1.27 SHA-256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`；REA 观察 `StartGetEnemyBase` 注册入口 `0x6f895080` 转到 `0x6f8a14d0` 并将 AI 对象 `+0x2ec` 设为 1，`WaitGetEnemyBase` 入口 `0x6f895be0` 读取同一字段，`GetEnemyBase` 入口 `0x6f88fb10` 读取保存的搜索结果。证据 `ev_7b99a1d79060d0a9c781d651bcd734d5c4fa4f9b036489d62eeeb43917c68f84`、`ev_4f964c384a9810cabfbdd1979175c10e2985609bf8e1a8394e5f4b83ce0ac7ac`、`ev_5e986929ce967e4ba1aac465870fcfe885521318c56ca16b61794065267b7124`、`ev_a17b5e81d514be946b3da5d1b1ba78390992a7000e93bd64aedef6ec7798ff8e`。原 `common.ai` 的 `AnyPlayerAttack` 等待该字段变为假后取得目标并组织进攻。
+
+Win32 Release 客户端及测试目标编译通过；原 CampaignAI 启动和敌方基地搜索定向检查 2/2，覆盖分步预算、暂停恢复、候选移除和原 `AnyPlayerAttack` 发出部队进攻。BootyBay 双电脑策略隔离会话推进到 1,800 秒，双方仍未决出胜负，记录 `tmp/docs-artifacts/war3/dota-hero-1031/enemy-base-duel.log`。原版异步搜索时序、目标筛选与并发重启、敌军不可达、真实对局、双端同步及完整胜负仍待验证或实现。

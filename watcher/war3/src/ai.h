@@ -5,6 +5,7 @@
 #include <array>
 #include <deque>
 #include <map>
+#include <limits>
 #include <set>
 
 namespace war3 {
@@ -13,6 +14,7 @@ struct AIZeppelinPurchase {std::uint32_t shop=0,buyer=0;double deadline=0;std::u
 struct AIItemPurchase {std::uint32_t shop=0,buyer=0,item=0;double deadline=0;std::uint64_t revision=0;};
 struct AIZeppelinWave {std::uint64_t ticket=0;WorldPoint destination;double deadline=0;bool departing=false;std::map<std::uint32_t,std::uint32_t> passengers;std::set<std::uint32_t> carriers;};
 struct AICaptainRoute {std::uint64_t ticket=0;std::vector<WorldPoint> points;std::map<std::uint32_t,size_t> members;};
+struct AIEnemyBaseSearch {std::uint32_t cursor=0,best=0;float distance=std::numeric_limits<float>::max();};
 struct ScriptAI {
     enum Policy {DefendPlayer,GroupsFlee,HeroesBuy,HeroesFlee,HeroesTake,IgnoreInjured,PeonsRepair,SmartArtillery,TargetHeroes,UnitsFlee,WatchMega,PolicyCount};
     unsigned owner=0;
@@ -42,6 +44,7 @@ struct ScriptAI {
     std::deque<std::pair<int,int>> commands;
     WorldPoint home,defenseHome,townHome,goal,stage;
     std::uint32_t allianceTarget=0,enemyBase=0,expansion=0,hero=0;
+    std::optional<AIEnemyBaseSearch> enemyBaseSearch;
     jass::Value heroLevels;
     double nextTick=0,nextItems=0;
     std::vector<std::string> diagnostics;

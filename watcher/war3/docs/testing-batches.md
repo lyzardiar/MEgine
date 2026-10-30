@@ -3312,3 +3312,9 @@ Win32 Release 客户端及测试目标编译通过；`war3_movement_avoidance_te
 路径：`src/session_ai_natives.cpp`、`src/world.h`、`src/world_path.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。AI 按相关单位路径筛选扩张矿井、工人和野怪营地；连通区域缓存仅作否定预筛，候选仍经过实际寻路。
 
 Win32 Release 客户端及测试目标编译通过；`war3_campaign_ai_tests <data-root> <fixture> reachable` 2/2 覆盖原 CampaignAI 启动、隔水／陆路矿井和营地、工人选择及动态障碍缓存失效。BootyBay 原图电脑隔离会话在 840 秒与可达营地交战，模拟至 960 秒；日志 `tmp/docs-artifacts/war3/dota-hero-1031/reachable-final-ai.log`。同一 840 秒状态连续三次扩张查询局部单次采样 454 ms 降至 47 ms；冷缓存、大地图和实际帧率未测。阶段检查地形／建筑动态变化、多个移动层、无部队／无工人、空中混编、事件与资源变化、跨岛运输、多人、原版行为及完整战斗。
+
+### 敌方基地搜索与电脑进攻（待验证）
+
+路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。敌方基地搜索按模拟步有界推进，等待标志对应搜索状态；目标失效重查，原公共 AI 进攻脚本使用搜索结果。
+
+Win32 Release 客户端及测试目标编译通过；`war3_campaign_ai_tests <data-root> <fixture> enemy-base` 2/2 覆盖原 CampaignAI 启动、130 个附加单位下分批搜索、暂停恢复、目标移除和原 `AnyPlayerAttack` 部队进攻。BootyBay 双电脑策略隔离模拟至 1,800 秒未触发胜负，日志 `tmp/docs-artifacts/war3/dota-hero-1031/enemy-base-duel.log`。阶段验证搜索目标及原版时序、盟友／隐形／死亡／无敌、重入与生命周期、脚本中断、局域网及完整对局。
