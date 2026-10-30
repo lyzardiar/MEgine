@@ -3026,3 +3026,19 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 能力名称转换 native（待验证）
 
 路径：`src/session_spell_natives.cpp`。集中对照 1.27 的 null、空字符串、普通名称、rawcode、自定义能力和未知整数输入，以及脚本 null 比较；静态分析尚不能证明映射表恒为空，见[能力名称转换 native](ability-id-natives.md)。
+
+### 地图空模型与变体回退（待验证）
+
+路径：`src/model.cpp`、`src/placed_definition.*`、`src/scene_objects.cpp`、`src/session_destructables.cpp`。集中检查地图覆盖优先级、真实缺失和损坏、单位及可破坏物生命周期、模型变体与原版行为，见[地图模型缺失处理](map-optional-models.md)。
+
+### 脚本对话框子控件（待验证）
+
+路径：`src/glue.cpp`。IceCrown 隐藏窗口已显示胜利对话框，程序消息发送 C 后对话框消失；集中检查真实鼠标、键盘、其他脚本对话框、多玩家及原版布局。
+
+### 游戏顶部栏（待验证）
+
+路径：`src/game_loading.*`、`src/game_view.cpp`。集中检查四族和地图皮肤、窗口尺寸及 DPI、鼠标和 F9–F12、长文本与原版布局，见[游戏顶部栏](top-hud.md)。
+
+### 玩家消息中的名称（待验证）
+
+路径：`src/session_text.cpp`。集中检查 `DisplayTimedTextFromPlayer` 的名称替换、百分号、不同玩家与受众及原版语义。

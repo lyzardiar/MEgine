@@ -110,7 +110,7 @@ void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
     log.write("mdx_geosets="+std::to_string(geosets.size())+" nodes="+std::to_string(nodes.size())+" ribbons="+std::to_string(ribbons.size())+" particles="+std::to_string(emitters.size())+" model_particles="+std::to_string(modelEmitters.size())+" attachments="+std::to_string(attachments.size())+" lights="+std::to_string(lights.size())+" textures="+std::to_string(textures.size())+" layers="+std::to_string(draws.size()));
 }
 Model::Model(Archives& archives, Images& images, Renderer* renderer, const char* name, Log& log,SceneAssets* shared) : data_(std::make_unique<Data>(renderer)) {
-    auto member = archives.read(name); if (!member) throw std::runtime_error(std::string("Missing MDX: ")+name); data_->parse(member->bytes,log);
+    auto member = archives.read(name); if (!member) {if(SceneAssets::modelKey(name)=="doodads\\terrain\\losblocker\\intentionallyleftblank.mdx"){log.write("mdx_intentionally_blank="+std::string(name));return;}throw std::runtime_error(std::string("Missing MDX: ")+name);} data_->parse(member->bytes,log);
     size_t decoded = 0; std::map<std::string,Com<IDirect3DTexture9>> local;
     for (auto& texture : data_->textures) {
         if(shared){if(!texture.path.empty())shared->prepareTexture(texture.path);else shared->image("@white",{1,1,{0xffffffff}});continue;}

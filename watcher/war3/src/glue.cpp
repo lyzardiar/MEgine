@@ -81,7 +81,7 @@ std::string GlueScreen::drawNode(unsigned index,const UiInput& input,const std::
         auto shortcut=first(f,"ControlShortcutKey");if(active && ((hover&&origin&&input.pressed) || (shortcut.size()==1 && input.key==unsigned(std::towupper(shortcut[0])))))return f.name;
         return {};
     }
-    std::string action;if(f.type=="FRAME" || f.type=="BACKDROP")for(auto child:n.children){auto next=drawNode(child,input,enabled);if(action.empty())action=std::move(next);}return action;
+    std::string action;if(f.type=="FRAME" || f.type=="BACKDROP" || f.type=="DIALOG")for(auto child:n.children){auto next=drawNode(child,input,enabled);if(action.empty())action=std::move(next);}return action;
 }
 std::string GlueScreen::draw(const std::string& subtree,const UiInput& input,const std::set<std::string>& enabled,bool deferOverlay) {
     auto node=names_.find(subtree);if(node==names_.end())throw std::runtime_error("Missing glue subtree: "+subtree);
