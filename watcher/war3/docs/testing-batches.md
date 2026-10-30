@@ -3387,3 +3387,10 @@ Win32 Release 客户端与测试目标编译通过；`war3_movement_avoidance_te
 路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`。单位受其他单位阻挡、局部绕行失败且持续停滞时，选择地形与碰撞均可通行的短距离后撤点；保留当前命令和原路径，后续继续行进。
 
 Win32 Release 客户端和测试目标编译通过；`war3_movement_avoidance_tests <data-root> <BootyBay地图> retreat` 通过，覆盖受阻后保留目标、保持位置单位碰撞、障碍解除后到达原目标；`compact`、`yield`、`workers`、`march`、`chase` 各通过。隔离 BootyBay 兽族对不死族会话推进至 1,800 秒，兽族已有矿藏在 1,200–1,800 秒从 17,990 减至 17,040，未决出胜负；日志 `tmp/docs-artifacts/war3/ai-duel-investigation/retreat-final.log`。阶段检查实际采集和战斗大规模互锁、反复后撤与死路、目标或障碍变化、回调重入、CPU 开销、真实窗口、原版行为和双端同步。
+
+
+### 多城镇采金配额（待验证）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。城镇采金配额只保留目标为该城镇当前矿井的工人；全局配额继续保留有效矿井任务。重分配复用采集命令和携带资源返还。
+
+Win32 Release 客户端与测试目标编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> harvest-town` 由失败变为 2/2 通过，覆盖跨城镇任务、携带金币、保持正确订单与全局配额；夹具关闭工人路径碰撞并暂停 AI 脚本线程。`harvest` 与 `melee-mines` 各 2/2 通过。BootyBay 兽族对不死族隔离会话于 2,340 秒产生双方结果 0／1，不死族单位及建筑为零，日志 `tmp/docs-artifacts/war3/orc-undead-long/town-mine-final.log`；该会话由测试直接启动双方 AI，未覆盖实际窗口。阶段检查采集途中的城镇归属变化、多个矿井／工人、矿井移除或耗尽、金币入账事件与原版分配、实际对局和联机。
