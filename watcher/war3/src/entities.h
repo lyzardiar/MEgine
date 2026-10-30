@@ -99,6 +99,9 @@ struct UnitState {
     std::uint64_t pathingRevision=0;
     std::uint64_t routeRetryWorldRevision=0;
     double routeRetryAt=0;
+    bool routeWatch=false;
+    double routeWatchSince=0;
+    WorldPoint routeWatchPosition,routeWatchGoal;
     double animationStart=0;
     double animationTime=0,animationBlendClock=0;
     std::uint64_t animationGeneration=0;

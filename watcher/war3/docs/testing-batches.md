@@ -3294,3 +3294,9 @@ Win32 Release 客户端及测试目标编译通过；原有 `war3_harvest_tests`
 路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`、`docs/economy.md`。中间路径点被单位占据时，仅在碰撞检查允许的情况下连接后续点；保留最终目标及有界搜索预算。
 
 Win32 Release 客户端与测试目标编译通过；BootyBay 移动定向检查 9/9 通过，覆盖单位阻挡、最终目标和地形阻挡。BootyBay 电脑隔离会话模拟至 960 秒，建筑间密集拥堵的伐木工人仍未脱困；证据 `tmp/docs-artifacts/war3/dota-hero-1031/occupied-waypoint-ai-960.log`。阶段检查移动障碍、多单位协调、地形变化、联机确定性、性能及原版路径行为。
+
+### 空闲友军让行（待验证）
+
+路径：`src/entities.h`、`src/session_orders.cpp`、`src/session_network_identity.cpp`、`tests/movement_avoidance_tests.cpp`、`docs/economy.md`。长时间未能接近路径点时，对阻挡前方路段的空闲同属单位寻找经过碰撞检查的让行位置；拥堵状态纳入实验联机校验。
+
+Win32 Release 客户端及测试目标编译通过；`war3_movement_avoidance_tests <data-root> <map> yield` 1/1 覆盖空闲同属单位让行、敌方／保持位置／暂停保护，既有移动检查 9/9 通过。BootyBay 原图电脑隔离会话中被跟踪工人在 600～720 秒移动并携带木材，720～960 秒在另一处活动单位拥堵停滞；证据 `tmp/docs-artifacts/war3/dota-hero-1031/yield-final-ai.log`。阶段检查脚本动画／命令、单位被移除／易主、狭路、连续让行、动态障碍、大规模性能、双端同步和原版行为；活动单位协调仍待实现。
