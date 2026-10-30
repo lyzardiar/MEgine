@@ -3204,3 +3204,9 @@ Win32 Release 增量编译通过；隔离圣骑士六物品夹具使用 Agent �
 ### 英雄经验条颜色（待验证）
 
 路径：`src/game_commands.cpp`、`docs/unit-combat-panel.md`。经验进度按紫色调制源纹理；Win32 Release 编译通过，游戏内 Agent 的 100 经验截图显示紫色填充，见 `tmp/docs-artifacts/war3/agent-info/xp-purple/`。阶段对照四族、自定义皮肤、零／满经验与原版色值；颜色取自参考画面，非像素级验收。
+
+### 吸取技能生命与目标消耗（待验证）
+
+路径：`src/session.h`、`src/session_area_spells.cpp`、`src/session_resource_spells.cpp`、`tests/spell_tests.cpp`、`tests/generate-steal-fixture.py`、`docs/mana-steal.md`。自定义 Aste 的固定／比例生命和魔法转移与消耗目标连接现有物品施法及单位生命周期。
+
+Win32 Release 客户端及测试目标编译通过；隔离夹具运行 `war3_spell_tests.exe <data-root> <fixture> steal` 4/4，覆盖固定／比例、资源上限及目标消耗，未加载 Game.dll。集中验证目标死亡／重生和资源事件重入、伤害免疫、极端数值、目标与魔免规则、物品冷却／次数及多人，并与原版动态行为对照。

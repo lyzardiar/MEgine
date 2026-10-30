@@ -745,6 +745,7 @@ class ScriptSession {
     void drainRestore(std::uint32_t unit,const SpellInfo& spell,float life,float mana);
     void drainBonusTick(UnitState& unit,UnitBuff& buff,double delta);
     void startManaBurn(std::uint32_t unit,const CastOrder& cast,unsigned owner);
+    void manaSteal(std::uint32_t unit,const CastOrder& cast,unsigned owner);
     void manaBurn(std::uint32_t unit,std::uint32_t target,const SpellInfo& spell,unsigned owner);
     void validateVampirismPotion(std::uint32_t ability,bool hero);
     void applyVampirismPotion(std::uint32_t unit,std::uint32_t ability);
