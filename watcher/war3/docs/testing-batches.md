@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄经验与物品栏对齐（待验证）
+
+路径：`src/game_inventory_layout.h`、`src/game_commands.cpp`、`docs/unit-combat-panel.md`。缩小经验条并在攻击行上方留出间距；物品图标、冷却和命中使用调整后的六格坐标；攻击数值与彩色增减值按完整文字纹理宽度分隔。Win32 Release 客户端增量编译与差异检查通过。尝试使用游戏内 Agent 的单物品圣骑士场景取得画面，当前会话 D3D9 设备创建失败，未取得修复后截图；日志 `tmp/docs-artifacts/war3/agent-info/layout-user-report-check/client.log`。阶段核对六槽／点击／拖拽／冷却、不同经验与攻击数值、双武器、四族及不同窗口比例，并与原版画面对照。
+
 ### 失效扩张点重新选择（待验证）
 
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。坐标、工人、敌人及建造入口使用同一扩张点有效性检查；目标矿井耗尽、隐藏／死亡／移除、归属变化、失去采金能力或被本方城镇占用后，重新选择可达候选。Win32 Release 客户端和 CampaignAI 测试程序编译通过；BootyBay 地形 `reachable` 在修复前保留耗尽矿井，修复后 2/2 通过，检查替代矿井、工人和敌人查询以及城镇占用后的无目标／不建造；`expansion-empty` 2/2 通过。夹具预置矿井、位置和城镇，未覆盖自然开采和建造。阶段验证矿井易主／销毁／隐藏、能力和路径变化、多个工人和城镇、事件回调、原版缓存与选择规则、实际对局、性能和联机。
