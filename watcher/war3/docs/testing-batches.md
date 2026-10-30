@@ -3529,3 +3529,8 @@ Win32 Release 客户端及专项程序增量编译通过；`war3_unit_forms_test
 ### 娜迦季风（待验证）
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_ai_armies.cpp`、`tests/spell_tests.cpp`；说明见 [季风](monsoon.md)。英雄和野怪原型接入点目标持续施法、周期伤害与已有电脑施法路径。Win32 Release 客户端及专项程序编译通过；`war3_spell_tests <data-root> <BootyBay地图> monsoon` 1/1，覆盖两种原型、命令、目标范围／友军过滤、魔法消耗、持续状态与停止施法。测试暂停了已有单位和测试目标以隔离自动攻击，未覆盖实际窗口或 AI。阶段检查建筑、空中、魔免、等级、对象覆盖、波次及事件重入、施法者死亡／易主、视觉／音效、双端同步和原版雷击时序。
+
+
+### 战役黑暗之门（待验证）
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_summons.cpp`、`src/session_ai_armies.cpp`、`tests/spell_tests.cpp`；说明见 [黑暗之门](dark-portal.md)。Win32 Release 客户端和专项程序编译通过；`war3_spell_tests <data-root> <BootyBay地图> dark-portal` 1/1，覆盖源单位列表、数量范围、点目标施放、生成真实单位、所有权与冷却；测试暂停地图既有单位。阶段检查地图覆盖、数量极值、不同运动类型与无空间、召唤事件重入、取消／易主／死亡、AI、机械小动物共享落点、联机、战役和原版召唤时序及视觉。
