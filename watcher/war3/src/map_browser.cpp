@@ -37,7 +37,7 @@ void MapBrowser::select(size_t index) {
 void MapBrowser::prepared() {
     auto result=preparation_.poll();if(!result || result->request!=request_ || !loading_)return;loading_=false;
     try {
-        if(!result->error.empty())throw std::runtime_error(result->error);if(!result->session || !result->session->configured())throw std::runtime_error("Map configuration did not complete");auto& info=result->info;auto setup=std::make_unique<PlayerSetup>(info,result->session->config());result->session->applySetup(*setup);
+        if(!result->error.empty())throw std::runtime_error(result->error);if(!result->session || !result->session->configured())throw std::runtime_error("Map configuration did not complete");auto& info=result->info;auto setup=std::make_unique<PlayerSetup>(info,result->session->config());setup->defaultMeleeOpponent();result->session->applySetup(*setup);
         screen_.image("MinimapImage","UI\\Widgets\\Glues\\Minimap-Unknown.blp");
         if(!result->previewError.empty())log_.write("map_preview_unavailable="+result->previewError);
         try {if(result->preview){auto& image=*result->preview;auto gpu=renderer_.texture(image.width,image.height,image.pixels);screen_.image("MinimapImage",gpu.Get());}}catch(const std::exception& e){log_.write(std::string("map_preview_unavailable=")+e.what());}

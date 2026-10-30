@@ -19,6 +19,9 @@ PlayerSetup::PlayerSetup(const MapInfo& info,const SessionConfig& config) : forc
     auto local=std::find_if(slots_.begin(),slots_.end(),[](auto& s){return !s.computerOnly;});if(local!=slots_.end())local->control=SlotControl::Local;
 }
 std::optional<unsigned> PlayerSetup::localPlayer() const {for(auto& s:slots_)if(s.control==SlotControl::Local)return unsigned(s.source.id);return std::nullopt;}
+void PlayerSetup::defaultMeleeOpponent() {
+    if(!(flags_&4) || fixedSettings() || customForces())return;auto local=std::find_if(slots_.begin(),slots_.end(),[](auto& s){return s.control==SlotControl::Local;});if(local==slots_.end())return;for(auto& s:slots_)if(s.active() && s.team!=local->team)return;auto opponent=std::find_if(slots_.begin(),slots_.end(),[&](auto& s){return s.control==SlotControl::Open && s.team!=local->team;});if(opponent!=slots_.end())opponent->control=SlotControl::ComputerNormal;
+}
 unsigned PlayerSetup::teamCount() const {unsigned count=unsigned(slots_.size());for(auto& s:slots_)if(s.team>=count)count=s.team+1;return count;}
 std::vector<SlotControl> PlayerSetup::controls(unsigned id) const {auto found=std::find_if(slots_.begin(),slots_.end(),[&](auto& s){return s.source.id==int(id);});if(found==slots_.end())return {};if(found->control==SlotControl::Local)return {SlotControl::Local};if(found->computerOnly)return {SlotControl::ComputerEasy,SlotControl::ComputerNormal,SlotControl::ComputerInsane};return {SlotControl::Local,SlotControl::Open,SlotControl::Closed,SlotControl::ComputerEasy,SlotControl::ComputerNormal,SlotControl::ComputerInsane};}
 bool PlayerSetup::control(unsigned id,SlotControl control) {auto s=slot(id);auto choices=controls(id);if(!s || std::find(choices.begin(),choices.end(),control)==choices.end())return false;if(control==SlotControl::Local)for(auto& other:slots_)if(other.control==SlotControl::Local)other.control=SlotControl::Open;s->control=control;return true;}

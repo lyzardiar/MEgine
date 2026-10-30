@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 单人近战默认对手（待验证）
+
+路径：`src/setup.h/.cpp`、`src/map_browser.cpp`、`tests/setup_tests.cpp`，说明见 [地图与选图流程](map-loading.md)。Win32 Release 产品及配置测试编译通过，配置测试 6/6 通过；BootyBay 隐藏窗口 300 帧未出现无对手即时胜利对话框。阶段验证其他近战地图、队伍和电脑槽、用户修改及同图草稿、真实交互和完整对局，并对照原版默认值；自定义、固定设置和自定义势力地图不自动添加对手。
+
 ### 隐形单位侦测事件（待验证）
 
 路径：`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_tick.cpp`、`src/session_visibility.cpp`、`tests/generate-invisibility-fixture.py`、`tests/visibility_tests.cpp`；说明见 [脚本事件](script-events.md)。Win32 Release 客户端和专项程序编译通过；生成 BootyBay 夹具后运行 `war3_visibility_tests.exe <data-root> <fixture> detected-event`，1/1 通过，覆盖首次发现、持续侦测、离开后再次发现和上下文。侦测事件目前覆盖处于视野中、由真视发现的隐形单位及其事件上下文。阶段集中对照玩家事件注册方、初次注册、普通可见单位、共享视野、检测进出、回调重入、多人及固定版时序；仅有监听时扫描，需检查大地图开销。

@@ -33,6 +33,7 @@ public:
     bool team(unsigned id,unsigned team);
     bool color(unsigned id,unsigned color);
     bool handicap(unsigned id,unsigned percent);
+    void defaultMeleeOpponent();
     std::optional<unsigned> localPlayer() const;
 };
 }
