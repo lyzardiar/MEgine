@@ -77,6 +77,9 @@ class World {
     std::unordered_map<size_t,ObstacleOwners> obstacleOwners_;
     struct FailedRoute {std::uint64_t revision=0;int sx=0,sy=0,gx=0,gy=0;std::uint32_t radius=0;PathMovement movement=PathMovement::Ground;bool partial=false;};
     mutable std::array<FailedRoute,512> failedRoutes_{};
+    struct PathRegions {std::uint64_t revision=0;unsigned clearance=0,searches=0;PathMovement movement=PathMovement::Ground;std::vector<std::uint32_t> labels;};
+    mutable std::array<PathRegions,4> pathRegions_{};
+    void buildPathRegions(PathRegions& regions,float radius,PathMovement movement) const;
     std::uint64_t pathingRevision_=1;
     std::uint64_t blockingRevision_=1;
     std::unordered_map<size_t,std::vector<int>> cliffOverlays_;
