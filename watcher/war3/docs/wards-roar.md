@@ -20,3 +20,7 @@
 来源为固定1.27安装中的AbilityData／AbilityMetaData、UnitData／UnitAbilities／UnitBalance／UnitWeapons／UnitUI、原Profile、WorldEditStrings和ItemData，归档来源与SHA256分别保存在仓库根目录tmp/docs-artifacts/war3/{wards-roar,dispel-casters}/source.json，原行、提取脚本和构建日志同目录；不提交原资源。
 
 实现阶段只执行必要Win32 Release产品编译和差异审查。以下仍待阶段验证：原版陷阱侦测／时序／暂停／共享视野、连续切图及空间查询性能，全部等级／w3a／免疫／抗性／驱散／原法术盗取叠加语义，完整AI／UI／GPU／音效、点与即时自爆命令的原版操作一致性，以及事件重入、所有权、定时生命／永久符文、恢复公式和三图长局。以上代码接入不等于完整客户端验收。
+
+`ANbr` 战吼使用源 DataA 固定攻击加成，进入实际武器计算和信息面板；普通 `Aroa` 继续使用百分比。无状态且所有效果数值均为零的咆哮派生技能仍可完成施法并派发脚本事件。DotA_v6.83d 守护精灵的幽魂收缩／扩张分别使用此类 `Aroa`／`ANbr` 派生能力；隔离原图会话观察到五个幽魂逐步显示，命令使轨道由约 150 缩至 100，再扩大至约 580。轨道和速度由地图脚本驱动，目标碰撞、完整周期、多人及原版精度待阶段验证。
+
+Win32 Release 客户端及 `war3_caster_tests` 编译通过；`battle-roar` 隔离检查 4/4，覆盖零效果施法、普通咆哮百分比、战吼固定加成与敌方筛选，未加载 Game.dll。

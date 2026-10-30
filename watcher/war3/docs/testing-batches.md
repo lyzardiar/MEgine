@@ -3252,3 +3252,9 @@ Win32 Release 客户端及 `war3_spell_tests` 编译通过；`zero-mana-shield` 
 路径：`src/session_spells.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`、`docs/dota-tether.md`。连锁闪电目标关系按源能力配置判断，使友方派生技能与原敌方技能分别使用各自目标。
 
 Win32 Release 客户端和 `war3_caster_tests` 编译通过；`chain-targets` 隔离检查 4/4，覆盖友方／敌方接受和拒绝，未加载 Game.dll。DotA 原图隔离会话选取守护精灵，学习 `A1TA` 后联结创建的友军，观察到双方能力、闪电和资源共享；直接将目标移出范围后连接清理。探针在 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对原技能／地图覆盖的关系、弹跳、免疫和伤害事件，联结移动／死亡／切换／重入、多人及真实窗口；当前未作原版精度验收。
+
+### 战吼与 DotA 幽魂轨道（待验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_wards_roar.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`、`docs/wards-roar.md`。ANbr 的固定攻击加成进入武器伤害与信息面板；零效果无状态的咆哮允许正常施法并触发地图脚本。
+
+Win32 Release 客户端及 `war3_caster_tests` 编译通过；`battle-roar` 4/4，涵盖零效果施法、Aroa 百分比、ANbr 固定加成与敌方筛选，未加载 Game.dll。DotA 隔离原图选择守护精灵并学习幽魂，观察到五个幽魂依次显示；收缩与扩张命令分别使轨道半径约 150→100→580。探针在 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段检查战吼等级、重叠／驱散／状态移除及原版计算，幽魂接触伤害／完整周期／状态变化、多人和真实窗口。

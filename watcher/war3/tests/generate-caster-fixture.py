@@ -28,7 +28,8 @@ def main():
     def targets(base, custom, value):
         return base+custom+struct.pack('<I', 1)+b'atar'+struct.pack('<III', 3, 1, 0)+value+b'\0'+custom
     chain = b'AOclA0CL'+struct.pack('<I',2)+b'atar'+struct.pack('<III',3,1,0)+b'air,ground,friend,neutral\0A0CL'+b'Ocl1'+struct.pack('<IIIf',2,1,1,0.)+b'A0CL'
-    files['war3map.w3a'] = struct.pack('<III', 2, 0, 4)+curse+targets(b'Acrs',b'A0CE',b'air,ground,enemies,neutral')+targets(b'Ainf',b'A0CF',b'air,ground,allies,neutral')+chain
+    roar = b'AroaA0R0'+struct.pack('<I',4)+b'Roa1'+struct.pack('<IIIf',2,1,1,0.)+b'A0R0'+b'atar'+struct.pack('<III',3,1,0)+b'none\0A0R0'+b'abuf'+struct.pack('<III',3,1,0)+b'_\0A0R0'+b'acdn'+struct.pack('<IIIf',2,1,0,5.)+b'A0R0'
+    files['war3map.w3a'] = struct.pack('<III', 2, 0, 5)+curse+targets(b'Acrs',b'A0CE',b'air,ground,enemies,neutral')+targets(b'Ainf',b'A0CF',b'air,ground,allies,neutral')+chain+roar
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
