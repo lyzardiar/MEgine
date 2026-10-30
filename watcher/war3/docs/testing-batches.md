@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 跨岛进攻的目标小范围移动（待验证）
+
+路径：`src/session_ai.cpp`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。同一单位目标距原卸载点不超过 128 时，保留现有波次及购买后待续计划；超出范围沿用取消与重选。Win32 Release 客户端及 CampaignAI 目标编译通过。BootyBay 地形隔离检查 `island-target-small-move`、`island-target-change`、`island-flight-target-move`、`island-purchase-pending`、`island-auto-multiwave-script` 各 1 通过、0 失败，无 Game.dll。小范围场景覆盖上船前和舱内两次目标移动、重复下令、登陆和目标攻击；目标暂停／运输期间无敌，阈值不是原版证据。复现：在 `watcher/war3` 下运行 `build/windows-x86/bin/Release/war3_campaign_ai_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/campaign-ai/fixture.w3m" <模式>`。阶段检查持续移动及阈值边界、飞行与登艇阶段、目的地受阻、水陆切换、多单位多载具、目标死亡／易主、脚本／玩家换令、完整对局、联机和原版策略。
+
 ### 购买中的跨岛进攻（待验证）
 
 路径：`src/ai.h`、`src/session_ai.cpp`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。购买尚未完成时保留进攻目的地，成功获取可用载具后继续既有运输，购买失败且没有本方运输工具，或目标失效时清理状态。Win32 Release 客户端及 CampaignAI 目标编译通过；BootyBay 地形隔离检查 `island-purchase-pending`、`island-purchase-busy`、`island-purchase-cancel`、`island-purchase-target-death`、`island-purchase-attack`、`island-auto-multiwave-script` 各 1 通过、0 失败，无 Game.dll。夹具预置资源、商店库存和部队，忙碌模式额外预置载具，买家／士兵无敌，敌方目标暂停；非完整对局。复现：在 `watcher/war3` 下运行 `build/windows-x86/bin/Release/war3_campaign_ai_tests.exe "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne" "../../tmp/docs-artifacts/war3/campaign-ai/fixture.w3m" <模式>`。阶段核对目标移动／替换／退却、资金或库存变化、买家换令／死亡／阻塞、船舶忙碌／不可用、多个波次与载具、四族实际策略、联机和原版行为。
