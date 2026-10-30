@@ -1174,6 +1174,7 @@ public:
     bool orderItemSlot(unsigned player,std::uint32_t unit,std::uint32_t item,unsigned slot);
     bool itemNeedsTarget(std::uint32_t item);
     bool itemTargetsTrees(std::uint32_t item);
+    bool itemTargetsItems(std::uint32_t item);
     double itemCooldown(std::uint32_t unit,std::uint32_t item);
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
     bool useItemAt(std::uint32_t unit,std::uint32_t item,WorldPoint point);

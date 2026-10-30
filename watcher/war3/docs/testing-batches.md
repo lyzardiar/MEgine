@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### Channel 物品目标与魔瓶装符（部分实现，待验证）
+
+路径：`src/session.h`、`src/session_control_spells.cpp`、`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_teleport.cpp`、`src/game_view.cpp`；说明见[魔瓶与物品目标](dota-bottle.md)。Channel 可选择源配置允许的地面物品，技能效果事件先于物品使用事件；DotA 原图隔离探针将急速符 `I006` 装入空瓶 `I0AM` 并生成 `I0H1`，单位及背包物品目标被拒绝。释放装瓶符文时仍因 JASS 数组负索引报错，未完成释放闭环。客户端及 mobility 程序编译通过；`remove-item`、`reset-cooldown` 各 1 通过、0 失败，臂章和希瓦隔离探针仍观测到预期状态。记录位于 `tmp/docs-artifacts/war3/dota-bottle/`。阶段核对原版事件顺序、物品耗尽与施法回调重入、各类物品／单位目标、六种符文完整周期、图形选择和联机；优先修复负索引异常。
+
 ### 携带物品移除事件与臂章（待验证）
 
 路径：`src/entities.h`、`src/session_inventory.cpp`、`src/session_item_use.cpp`、`tests/generate-stealth-fixture.py`、`tests/mobility_tests.cpp`；说明见[臂章](dota-armlet.md)。移除携带物品时沿用丢弃事件及物品上下文，阻止移除回调重入；地面物品移除不产生丢弃事件。Win32 Release 客户端与 mobility 测试程序编译通过；`war3_mobility_tests.exe <data-root> <fixture> remove-item` 和 `powerup` 各 1 通过、0 失败。DotA 原图隔离探针在关闭／开启／关闭过程中观察力量 22／47／22、最大生命 518／993／518，日志 `tmp/docs-artifacts/war3/dota-armlet/final.log`。阶段核对原版移除／丢弃／消耗／出售事件时序与递归、不同持有者与拾取物品、实际购买输入、图形界面和联机。
