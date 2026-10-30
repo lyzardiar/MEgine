@@ -23,7 +23,16 @@ boolean probe_interrupt=false
 boolean probe_remove=false
 integer poison_effect=0
 integer poison_marked_damage=0
+item rebirth_dropped=null
 endglobals
+function RebirthDropAction takes nothing returns nothing
+    set rebirth_dropped=UnitDropItem(GetTriggerUnit(),'rreb')
+endfunction
+function RebirthDropRegister takes unit u returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,u,EVENT_UNIT_DEATH)
+    call TriggerAddAction(t,function RebirthDropAction)
+endfunction
 function ProbeCaster takes unit u returns nothing
     set probe_caster=u
 endfunction
