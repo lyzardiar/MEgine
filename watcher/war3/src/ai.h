@@ -13,7 +13,7 @@ struct AILumberAssignment {int town=-1;std::uint64_t revision=0;};
 struct AIGuardPost {std::uint32_t type=0,unit=0;WorldPoint point;unsigned losses=0;bool filled=false,requested=false;};
 struct AIZeppelinPurchase {std::uint32_t shop=0,buyer=0;double deadline=0;std::uint64_t revision=0;};
 struct AIItemPurchase {std::uint32_t shop=0,buyer=0,item=0;double deadline=0;std::uint64_t revision=0;};
-struct AIZeppelinWave {std::uint64_t ticket=0;WorldPoint destination;double deadline=0;bool departing=false;std::map<std::uint32_t,std::uint32_t> passengers;std::set<std::uint32_t> carriers;std::map<std::uint32_t,std::uint64_t> pickupTickets,pickupQueued;};
+struct AIZeppelinWave {std::uint64_t ticket=0;WorldPoint destination;double deadline=0;bool departing=false;std::map<std::uint32_t,std::uint32_t> passengers;std::set<std::uint32_t> carriers;std::map<std::uint32_t,std::uint64_t> pickupTickets,pickupQueued,carrierRevisions;std::map<std::uint32_t,WorldPoint> returnPoints;};
 struct AITransportContinuation {WorldPoint destination;std::uint32_t target=0;};
 struct AICaptainRoute {std::uint64_t ticket=0;std::vector<WorldPoint> points;std::map<std::uint32_t,size_t> members;};
 struct AIEnemyBaseSearch {std::uint32_t cursor=0,best=0;float distance=std::numeric_limits<float>::max();};

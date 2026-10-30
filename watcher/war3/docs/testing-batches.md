@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 运输中取消与载具命令归属（待验证）
+
+路径：`src/ai.h`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。波次记录载具订单轮次与上船区域；取消后当前位置不可卸载时，仍受波次控制的载具使用实际卸载技能返回上船区域。载具命令轮次变化时释放波次控制并保留新命令。Win32 Release 客户端及 CampaignAI 编译通过；BootyBay 地形 `island-flight-death`、`island-flight-retreat` 修复前复现乘员留在深水上、`island-flight-reorder` 修复前复现载具新命令被覆盖；修复后以上及 `island-flight-target-move`、`island-flight-reorder-live` 各 1/1。原公共 AI 多波、单次坐标多波、双乘员及乘员换令各 1/1。夹具预置单位与飞艇；目标消失后上船区失效、飞行中再次换令／死亡／易主、满舱多船、原版时序、实际窗口和联机待验证。
+
 ### 坐标进攻的后续运输波次（待验证）
 
 路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。进攻目标有效时在波次结束后继续接运隔离队员，暂停队员恢复后可续运；目标失效、目的地改变、撤退与编队重置清除续运状态。Win32 Release 客户端及 CampaignAI 编译通过；BootyBay 地形 `island-auto-point` 修复前九人只到八人，修复后 1/1 全部登岛；`island-auto-multiwave`、`island-auto-multiwave-script`、`island-auto-resume`、`island-auto-target-death`、`island-auto-retreat`、`island-target-change`、`island-pickup-cancel` 各 1/1。夹具预置九名无敌步兵与八格飞艇，目标在出发前死亡检查；不代表完整对局或原版行为。阶段检查航行中目标消失／换令、无落点、多船、不同载具、性能、原版时序和联机。
