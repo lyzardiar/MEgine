@@ -159,3 +159,9 @@ Win32 Release 客户端及 CampaignAI 测试目标编译通过；BootyBay 原图
 Win32 Release 客户端和 CampaignAI 测试编译通过；`reachable` 2/2，覆盖区间内优先、较弱营地回退、超上限拒绝和隔水营地拒绝。BootyBay 原图兽族对不死族隔离会话至 4,200 秒仍未决出胜负；剩余两处营地位于隔离区域，双方当前可达性查询返回空，日志 `tmp/docs-artifacts/war3/orc-undead-long/weaker-camps.log`。跨岛进攻、空地混编、原版距离规则、实际窗口和联机仍待实现或验证。
 
 BootyBay 地形定向会话中，原 `LoadZepWave`／`AttackMoveXY` 路径让步兵沿陆路接近飞艇、登艇、跨水并在目标岛屿卸载。该检查预先提供载具、队员和目标，未覆盖电脑自动选择隔水目标或购买飞艇，见[运输流程](transport.md)。
+
+## 飞艇购买的可达商店
+
+为购买飞艇选择实验室和购买者时，先按地形连通性排除确定无法抵达的实验室，再核对实际路线终点是否进入商店交互范围；部分路线不能预留工人。路径数据不足时仍尝试实际寻路；没有可达商店时保留工人的原命令。目标消失后解除购买预留。
+
+原 `orc.ai` 和 `undead.ai` 在人口使用达到 60 且飞艇数量不足 3 时调用 `GetZeppelin`；公共 `SingleMeleeAttack` 在满足资源条件时调用 `PurchaseZeppelin`。Win32 Release 客户端和 CampaignAI 测试编译通过；`zeppelin-route` 和 `zeppelin-purchase` 各 1/1：前者使用 BootyBay 地形验证隔水商店拒绝、可达商店选择及商店移除，后者通过公共 AI 脚本请求飞艇并实际消耗库存和金币。测试预置商店库存和资源，并非完整对局自动触发。原版候选排序、资源变化、动态路径、购买失败／重入、真实窗口和联机仍待验证。

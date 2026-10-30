@@ -3360,3 +3360,9 @@ Win32 Release 客户端与测试目标编译通过；`war3_campaign_ai_tests <da
 路径：`src/session_transport.cpp`、`tests/transport_tests.cpp`、`tests/campaign_ai_tests.cpp`、`docs/transport.md`、`docs/ai.md`。保留可进入载具登艇范围的有效路线和避障点；载具移动或地形变化时重算，载具失效清理命令。
 
 Win32 Release 客户端及测试目标编译通过；`war3_transport_tests <data-root> <transport-fixture> boarding-route` 和 `flow` 各 1/1，覆盖路线保留、载具移动、装载事件、载具移除和既有装卸；路线夹具步兵关闭了路径碰撞。`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> island-wave` 1/1，在 BootyBay 地形上使用真实陆路接近、登艇、飞行和岛屿卸载；飞艇、编队和目标由测试预置，步兵设无敌。阶段检查拥堵、载具／乘员死亡易主、同时装载、多载具、目的地变化、自动购买与选目标、原版时序、实际窗口和联机。
+
+### 飞艇购买的可达实验室（待验证）
+
+路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。电脑购买飞艇前筛选地形可达且路线终点在交互范围内的商店和工人；不可达的部分路线不改变工人命令。
+
+Win32 Release 客户端与测试编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> zeppelin-route` 和 `zeppelin-purchase` 各 1/1，覆盖隔水商店、可达候选、商店移除清理及通过原公共 AI 脚本购买、扣金和消耗库存。测试预置库存和资源，未验证完整对局中的人口条件或自行跨岛决策。阶段检查多商店／动态阻挡、工人原有任务、不可达与超时、库存／资源变化、原版排序、实际窗口及联机；路径查询的规模和耗时仍待性能验证。
