@@ -3098,3 +3098,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 对局命令栏布局（待验证）
 
 路径：`src/game_commands.cpp`、`docs/command-card-layout.md`。按原版网格调整图标、状态和鼠标命中；集中验证普通命令、技能／建造菜单、自动施法、冷却、快捷键、点击边界、四族、窗口尺寸及 DPI，并对照原版实际画面。
+
+### 战役空单位状态操作（待验证）
+
+路径：`src/session_entities.cpp`、`src/session_spell_natives.cpp`、`docs/campaign-null-unit-reset.md`。OrcX02_02 隔离探针完成 main 并静音推进 120 秒；集中验证空／失效／有效单位及玩家、效果和冷却、事件、跨关存档及真实窗口。
