@@ -16,6 +16,9 @@ struct GameData {
     std::string minimap,autocastModel,minimapPingModel,idleWorkerIcon,waypointModel,upperMenuTexture;
     std::string groupButtonBorder,subgroupHighlight,groupHeroGlow,heroBarBorder,smallHealthBar,smallManaBar,heroExperienceBar,heroExperienceBorder;
     std::array<std::string,3> resourceIcons;
+    std::array<std::string,7> damageIcons;
+    std::array<std::string,9> armorIcons;
+    std::string damageLabel,armorLabel;
     std::array<std::string,4> hudLabels,hudDisabledLabels;
     std::array<std::array<std::string,3>,3> allyFilterIcons;
     std::array<std::array<std::string,3>,2> creepFilterIcons;

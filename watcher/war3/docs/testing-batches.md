@@ -3160,3 +3160,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 建筑阴影透明度（待验证）
 
 路径：`src/game_effects.cpp`、`docs/unit-shadows.md`。建筑阴影按贴图 alpha 和单位强度合成；本机三个原资源为二值 alpha。集中验证自定义渐变贴图、静态／动态叠加、显隐、不同尺寸与原版滤波、地图画面和性能。
+
+### 单位攻击与护甲图标（待验证）
+
+路径：`src/combat.h`、`src/session_research.cpp`、`src/game_loading.*`、`src/game_commands.cpp`、`docs/unit-combat-panel.md`。攻击和护甲类型使用真实战斗状态，原版及地图皮肤图标在加载阶段读取；两把武器和护甲分别显示。Win32 Release 编译通过，人族农民及圣骑士隐藏窗口选中截图可见各栏；证据位于 `tmp/docs-artifacts/war3/selection-diagnostic/ui-combat-selected.*` 与 `ui-combat-hero-selected.*`。集中验证四族、地图皮肤覆盖及缺图、类型变化、双武器、英雄属性、长数值、窗口比例、DPI、性能和原版画面对照。
