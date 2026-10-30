@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 重生神符（待验证）
+
+路径：`src/consumables.h`、`src/session_consumables.cpp`、`tests/spell_tests.cpp`、`docs/rebirth-rune.md`。拾取 `rreb` 时消费物品记录的来源类型，创建拾取者所属单位；空／无效类型或无可用落点不创建单位。Win32 Release 客户端及测试目标编译通过；`war3_spell_tests <data-root> tmp/docs-artifacts/war3/mind-rot/fixture.w3m rebirth-rune`、`shield-rune`、`mind-rot` 各 1/1。神符夹具直接设置掉落类型；阶段检查原地图死亡掉落、来源覆盖、不同玩家／单位类型、无空间、事件重入、资源释放、实际窗口、联机和原版落点／时序／归属。
+
 ### 心灵腐烂（待验证）
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_caster_spells.cpp`、`src/session_spell_effects.cpp`、`src/session_spells.cpp`、`src/session_unit_casters.cpp`、`src/session_item_use.cpp`、`src/session_ai_armies.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`；说明见 [心灵腐烂](mind-rot.md)。Win32 Release 客户端及测试目标编译通过；`war3_spell_tests <data-root> tmp/docs-artifacts/war3/mind-rot/fixture.w3m mind-rot`、`spell-shield`、`shield-rune` 各 1/1。前者覆盖目标、源时长／耗魔、状态移除、零魔法、派生物品及护盾，夹具关闭目标自动索敌。阶段检查 AI、完整施法事件、地图覆盖、空目标分类、重复施法、魔法恢复／耗尽顺序、暂停／死亡／易主、驱散与法术偷取、实际画面、联机及原版时序。
