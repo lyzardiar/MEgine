@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 小地图镜头范围（待验证）
+
+路径：`src/game_view.cpp`；说明见 [小地图](minimap.md)。Release 编译通过；关闭迷雾的原地形夹具在隐藏窗口显示底图及视口轮廓，程序滚轮消息后轮廓尺寸变化。阶段检查实际鼠标、镜头平移／旋转／缩放、地图边缘、悬崖和水面、水平线／远平面、战役镜头、窗口比例／DPI、设备恢复、性能及原版轮廓。
+
 ### 娜迦潜水形态（待验证）
 
 路径：`src/session_spell_info.cpp`、`src/session_entities.cpp`、`tests/unit_forms_tests.cpp`，说明见 [单位形态](unit-forms.md)。Win32 Release 客户端和专项程序编译通过；`war3_unit_forms_tests.exe <data-root> <fixture> submerge` 1/1 通过，覆盖三对原始类型的订单、显隐、速度、武器和句柄往返及直接创建潜水形态后浮出。地面／水域限制尚未实现；阶段检查真实水陆地形、科技前置、侦测、打断／死亡／复活、地图覆盖、AI、动画及原版行为。
