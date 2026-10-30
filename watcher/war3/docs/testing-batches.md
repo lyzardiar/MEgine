@@ -3380,3 +3380,10 @@ Win32 Release 客户端和测试目标增量编译通过；`war3_campaign_ai_tes
 路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`。同属单位让位时优先尝试原有距离，受阻后尝试更短距离；各候选仍检查地形、单位碰撞和命令保护。
 
 Win32 Release 客户端与测试目标编译通过；`war3_movement_avoidance_tests <data-root> <BootyBay地图> compact` 在仅允许原距离的对照构建失败、修复后通过，覆盖密集障碍中的短距离让位及持续碰撞检查；`yield`、`workers`、`march` 各通过。BootyBay 兽族对不死族隔离对局模拟至 1,800 秒未决出胜负，兽族在 1,200–1,800 秒金币和木材均未变化；更密集工人队列仍需处理，记录 `tmp/docs-artifacts/war3/ai-duel-investigation/short-yield-final.log`。阶段检查多单位互锁、连续让位、动态地形、重入与命令、性能、实际窗口及局域网一致性。
+
+
+### 密集拥堵后撤恢复（待验证）
+
+路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`。单位受其他单位阻挡、局部绕行失败且持续停滞时，选择地形与碰撞均可通行的短距离后撤点；保留当前命令和原路径，后续继续行进。
+
+Win32 Release 客户端和测试目标编译通过；`war3_movement_avoidance_tests <data-root> <BootyBay地图> retreat` 通过，覆盖受阻后保留目标、保持位置单位碰撞、障碍解除后到达原目标；`compact`、`yield`、`workers`、`march`、`chase` 各通过。隔离 BootyBay 兽族对不死族会话推进至 1,800 秒，兽族已有矿藏在 1,200–1,800 秒从 17,990 减至 17,040，未决出胜负；日志 `tmp/docs-artifacts/war3/ai-duel-investigation/retreat-final.log`。阶段检查实际采集和战斗大规模互锁、反复后撤与死路、目标或障碍变化、回调重入、CPU 开销、真实窗口、原版行为和双端同步。
