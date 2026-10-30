@@ -3070,3 +3070,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 战役未知科技引用（待验证）
 
 路径：`src/session_research.cpp`。Orc04 原图隔离探针完成 main 并静音推进 60 秒；集中核对未知／已有／自定义科技的等级、单位刷新、界面与原版行为，以及真实战役流程，见[战役未知科技引用](campaign-unknown-upgrade.md)。
+
+### 单位信息和多选面板位置（待验证）
+
+路径：`src/game_view.cpp`、`src/game_portrait.cpp`、`src/game_commands.cpp`、`src/game_selection_panel.cpp`。地面物品图标在控制台纹理之前绘制并由头像框遮罩；单位名称与数值、单位状态／生产信息和多选图标移至头像区域右侧；进度条和生产图标使用收窄的区域，多选及生产图标的点击区域随图标移动。集中验证单选／多选、生产队列与点击、窗口尺寸、DPI、四族以及与原版画面的差异；货舱、状态图标及其他底部面板仍需对照。
