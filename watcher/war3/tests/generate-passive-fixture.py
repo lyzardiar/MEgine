@@ -33,6 +33,8 @@ def main():
     ]:
         records.append(base+marker+struct.pack('<I', len(changes))+b''.join(fixture.modification(field, kind, value, slot, marker) for field, kind, value, slot in changes))
     files['war3map.w3a'] = struct.pack('<III', 2, 0, len(records))+b''.join(records)
+    units = [(b'hpea', b'z0u1', b'uwu2'), (b'hfoo', b'z0u2', b'uwu1')]
+    files['war3map.w3u'] = struct.pack('<III', 2, 0, len(units))+b''.join(base+custom+struct.pack('<I', 1)+field+struct.pack('<II', 0, 0)+custom for base, custom, field in units)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+helper.build_archive(files))
     print('fixture='+str(args.output.resolve()))
