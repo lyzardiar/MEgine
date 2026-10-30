@@ -24,7 +24,10 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = b'function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n'
-    files['war3map.w3a'] = struct.pack('<III', 2, 0, 1)+b'AcrsA0CS'+struct.pack('<I', 1)+b'Crs '+struct.pack('<III f', 2, 1, 1, 1.)+b'A0CS'
+    curse = b'AcrsA0CS'+struct.pack('<I', 1)+b'Crs '+struct.pack('<III f', 2, 1, 1, 1.)+b'A0CS'
+    def targets(base, custom, value):
+        return base+custom+struct.pack('<I', 1)+b'atar'+struct.pack('<III', 3, 1, 0)+value+b'\0'+custom
+    files['war3map.w3a'] = struct.pack('<III', 2, 0, 3)+curse+targets(b'Acrs',b'A0CE',b'air,ground,enemies,neutral')+targets(b'Ainf',b'A0CF',b'air,ground,allies,neutral')
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))

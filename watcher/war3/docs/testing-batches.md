@@ -3210,3 +3210,9 @@ Win32 Release 增量编译通过；隔离圣骑士六物品夹具使用 Agent �
 路径：`src/session.h`、`src/session_area_spells.cpp`、`src/session_resource_spells.cpp`、`tests/spell_tests.cpp`、`tests/generate-steal-fixture.py`、`docs/mana-steal.md`。自定义 Aste 的固定／比例生命和魔法转移与消耗目标连接现有物品施法及单位生命周期。
 
 Win32 Release 客户端及测试目标编译通过；隔离夹具运行 `war3_spell_tests.exe <data-root> <fixture> steal` 4/4，覆盖固定／比例、资源上限及目标消耗，未加载 Game.dll。集中验证目标死亡／重生和资源事件重入、伤害免疫、极端数值、目标与魔免规则、物品冷却／次数及多人，并与原版动态行为对照。
+
+### 施法目标关系别名与 DotA 寄生（待验证）
+
+路径：`src/session_spells.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`、`docs/parasite.md`。施法单位目标筛选同时识别源对象表的 `friend`／`allies` 和 `enemy`／`enemies`，保留 `self` 与 `neutral` 规则。
+
+Win32 Release 客户端及 `war3_caster_tests` 增量编译通过；自定义目标夹具的 `targets` 模式 6/6 通过，覆盖敌友别名、敌友拒绝及中立目标。DotA_v6.83d 隔离会话选择蜘蛛英雄、学习 `A0BH`，向创建的可见敌人施法后取得 `B0E7`，直接击杀目标后观察到一个 `n019`；探针在 `tmp/docs-artifacts/war3/dota-hero-1031/`。集中验证其他施法类型、共享视野／联盟变化、免疫／建筑／中立分类、寄生叠加／召唤／重入、多人与真实窗口，原版语义和 UI 尚未验收。
