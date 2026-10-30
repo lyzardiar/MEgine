@@ -3524,3 +3524,8 @@ Win32 Release 客户端及专项程序增量编译通过；`war3_unit_forms_test
 ### 战斗数值显示宽度（待验证）
 
 路径：`src/game_commands.cpp`、`docs/unit-combat-panel.md`。攻击和护甲的基础值与加成共用信息列宽度，过长时等比缩小，保留独立颜色。Win32 Release 客户端增量编译通过；阶段核对普通／极值与正负加成、英雄双武器、各族及不同分辨率，使用游戏内 Agent 复查物品格、经验条和攻击区域并与原版画面对照。当前未获得修复后的游戏画面。
+
+
+### 娜迦季风（待验证）
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_ai_armies.cpp`、`tests/spell_tests.cpp`；说明见 [季风](monsoon.md)。英雄和野怪原型接入点目标持续施法、周期伤害与已有电脑施法路径。Win32 Release 客户端及专项程序编译通过；`war3_spell_tests <data-root> <BootyBay地图> monsoon` 1/1，覆盖两种原型、命令、目标范围／友军过滤、魔法消耗、持续状态与停止施法。测试暂停了已有单位和测试目标以隔离自动攻击，未覆盖实际窗口或 AI。阶段检查建筑、空中、魔免、等级、对象覆盖、波次及事件重入、施法者死亡／易主、视觉／音效、双端同步和原版雷击时序。
