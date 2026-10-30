@@ -3282,3 +3282,9 @@ Win32 Release 客户端及测试目标编译通过；`war3_spell_tests.exe <data
 路径：`src/session_alchemist.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_combat_orders.cpp`、`src/session.h`、`src/spells.h`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/alchemist.md`。酸性炸弹支持带符号移动／攻击速度值；脚本单位目标施法在受理后由 ShowUnit 隐藏时继续推进。
 
 Win32 Release 客户端及测试目标编译通过；`war3_spell_tests.exe <data-root> <fixture> acid-speed` 1/1，覆盖正负速度、零伤害及脚本隐藏施法。DotA_v6.83d 隔离原图中魅惑魔女受攻击后，攻击者获得 B043 和 0.3 攻速削弱，继续攻击会刷新时限；探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段对照原版数值符号／叠加、隐藏和显示时序、施法取消／死亡／运输、其他技能类型、真实窗口与多人。
+
+### 资源返还可达入口与采矿路线（待验证）
+
+路径：`src/session.h`、`src/session_harvest.cpp`、`tests/harvest_tests.cpp`、`docs/economy.md`。回收建筑的默认入口不可达时搜索其他可达入口；采矿和返还不重复覆盖尚未完成的路径。
+
+Win32 Release 客户端及测试目标编译通过；原有 `war3_harvest_tests` 检查通过，`depot-route` 定向检查 1/1，覆盖入口阻挡、替代路径及实际金币入账。BootyBay 人族电脑隔离会话中，840 至 960 秒采金工人继续移动与入账，电脑升级要塞并开始城堡升级；个别伐木工人仍观察到拥堵停滞。探针见 `tmp/docs-artifacts/war3/dota-hero-1031/bootybay-ai-economy-probe.cpp`。阶段检查入口与碰撞、动态障碍、多人拥堵、矿井／回收建筑失效、玩家操作及原版精度和寻路性能。
