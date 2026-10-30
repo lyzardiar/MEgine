@@ -27,7 +27,8 @@ def main():
     curse = b'AcrsA0CS'+struct.pack('<I', 1)+b'Crs '+struct.pack('<III f', 2, 1, 1, 1.)+b'A0CS'
     def targets(base, custom, value):
         return base+custom+struct.pack('<I', 1)+b'atar'+struct.pack('<III', 3, 1, 0)+value+b'\0'+custom
-    files['war3map.w3a'] = struct.pack('<III', 2, 0, 3)+curse+targets(b'Acrs',b'A0CE',b'air,ground,enemies,neutral')+targets(b'Ainf',b'A0CF',b'air,ground,allies,neutral')
+    chain = b'AOclA0CL'+struct.pack('<I',2)+b'atar'+struct.pack('<III',3,1,0)+b'air,ground,friend,neutral\0A0CL'+b'Ocl1'+struct.pack('<IIIf',2,1,1,0.)+b'A0CL'
+    files['war3map.w3a'] = struct.pack('<III', 2, 0, 4)+curse+targets(b'Acrs',b'A0CE',b'air,ground,enemies,neutral')+targets(b'Ainf',b'A0CF',b'air,ground,allies,neutral')+chain
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))

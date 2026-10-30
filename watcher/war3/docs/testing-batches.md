@@ -3246,3 +3246,9 @@ Win32 Release 客户端及 `war3_passive_tests` 编译通过；`invalid-unit` �
 路径：`src/session_self_spells.cpp`、`src/session_damage.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/zero-mana-shield.md`。允许零效率魔法盾开关及脚本事件，并跳过无效吸收运算。
 
 Win32 Release 客户端及 `war3_spell_tests` 编译通过；`zero-mana-shield` 3/3，覆盖零效率、零魔法、开关及原正效率盾，未加载 Game.dll。DotA 隔离原图中选取守护精灵，学习并开关 `A28Q`，观察到脚本加成添加／移除及启用期间生命和魔法下降；探针在 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对正比例零效率的原版语义、零魔法／伤害事件／切换重入、联结单位、多人和实际窗口。
+
+### 连锁闪电目标与 DotA 联结（待验证）
+
+路径：`src/session_spells.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`、`docs/dota-tether.md`。连锁闪电目标关系按源能力配置判断，使友方派生技能与原敌方技能分别使用各自目标。
+
+Win32 Release 客户端和 `war3_caster_tests` 编译通过；`chain-targets` 隔离检查 4/4，覆盖友方／敌方接受和拒绝，未加载 Game.dll。DotA 原图隔离会话选取守护精灵，学习 `A1TA` 后联结创建的友军，观察到双方能力、闪电和资源共享；直接将目标移出范围后连接清理。探针在 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段核对原技能／地图覆盖的关系、弹跳、免疫和伤害事件，联结移动／死亡／切换／重入、多人及真实窗口；当前未作原版精度验收。
