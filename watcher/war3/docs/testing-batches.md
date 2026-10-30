@@ -3300,3 +3300,9 @@ Win32 Release 客户端与测试目标编译通过；BootyBay 移动定向检查
 路径：`src/entities.h`、`src/session_orders.cpp`、`src/session_network_identity.cpp`、`tests/movement_avoidance_tests.cpp`、`docs/economy.md`。长时间未能接近路径点时，对阻挡前方路段的空闲同属单位寻找经过碰撞检查的让行位置；拥堵状态纳入实验联机校验。
 
 Win32 Release 客户端及测试目标编译通过；`war3_movement_avoidance_tests <data-root> <map> yield` 1/1 覆盖空闲同属单位让行、敌方／保持位置／暂停保护，既有移动检查 9/9 通过。BootyBay 原图电脑隔离会话中被跟踪工人在 600～720 秒移动并携带木材，720～960 秒在另一处活动单位拥堵停滞；证据 `tmp/docs-artifacts/war3/dota-hero-1031/yield-final-ai.log`。阶段检查脚本动画／命令、单位被移除／易主、狭路、连续让行、动态障碍、大规模性能、双端同步和原版行为；活动单位协调仍待实现。
+
+### 采集工人协作避让与伐木路线（待验证）
+
+路径：`src/session_orders.cpp`、`src/session_lumber.cpp`、`tests/movement_avoidance_tests.cpp`、`docs/economy.md`。持续受阻的同属采集工人按单位句柄顺序暂时错位并保留原路线；有效伐木路线不被周期性重寻路覆盖。
+
+Win32 Release 客户端及测试目标编译通过；`war3_movement_avoidance_tests <data-root> <map> workers` 1/1 验证真实采集命令、让行保留原路线和目标以及恢复砍树；既有移动检查 9/9 和空闲友军让行 1/1 通过。BootyBay 原图电脑隔离会话中跟踪的工人在 840～960 秒继续移动及采集，证据 `tmp/docs-artifacts/war3/dota-hero-1031/cooperative-final-ai.log`。阶段检查多工人环形阻塞、取消／新命令、树木移除／目标变化、受阻路径重算、其他单位任务、性能、双端同步与原版行为。
