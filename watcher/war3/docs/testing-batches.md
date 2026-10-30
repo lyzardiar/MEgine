@@ -3318,3 +3318,9 @@ Win32 Release 客户端及测试目标编译通过；`war3_campaign_ai_tests <da
 路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。敌方基地搜索按模拟步有界推进，等待标志对应搜索状态；目标失效重查，原公共 AI 进攻脚本使用搜索结果。
 
 Win32 Release 客户端及测试目标编译通过；`war3_campaign_ai_tests <data-root> <fixture> enemy-base` 2/2 覆盖原 CampaignAI 启动、130 个附加单位下分批搜索、暂停恢复、目标移除和原 `AnyPlayerAttack` 部队进攻。BootyBay 双电脑策略隔离模拟至 1,800 秒未触发胜负，日志 `tmp/docs-artifacts/war3/dota-hero-1031/enemy-base-duel.log`。阶段验证搜索目标及原版时序、盟友／隐形／死亡／无敌、重入与生命周期、脚本中断、局域网及完整对局。
+
+### 行军单位协作避让（待验证）
+
+路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`、`docs/economy.md`。持续受阻的同属普通移动和攻击移动单位可有限让行，保留原路线和命令。
+
+Win32 Release 客户端及测试目标编译通过；`war3_movement_avoidance_tests <data-root> <BootyBay地图> march` 通过，覆盖攻击移动及混合行军命令、避让后恢复与碰撞间距。BootyBay 双电脑隔离会话模拟至 1,200 秒，观察到部队跨地图移动，未触发胜负；证据 `tmp/docs-artifacts/war3/march-coordination/duel-mixed.log`。阶段检查密集拥堵、目标变化及战斗、命令取消、地形变化、性能、局域网一致性、原版行为和完整对局。
