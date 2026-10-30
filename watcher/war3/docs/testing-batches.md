@@ -3276,3 +3276,9 @@ Win32 Release 客户端及测试目标编译通过；`war3_spell_tests.exe <data
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_arrow_status.cpp`、`src/session_orb_attacks.cpp`、`src/session_projectiles.cpp`、`src/session_weapons.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/poison-arrows.md`。毒箭连接手动／自动攻击、源弹道与毒伤状态；技能效果事件和攻击命中时状态接入脚本。武器及箭目标筛选支持敌友关系别名。
 
 Win32 Release 客户端及测试目标编译通过；`war3_spell_tests.exe <data-root> <fixture> poison-arrow` 1/1，覆盖魔法消耗、技能效果与命中状态、持续伤害和自动攻击。DotA_v6.83d 隔离原图手动／自动推进均消耗魔法并造成距离加成，探针见 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段检查源毒状态与叠加、目标类型／免疫、实际窗口、完整事件／回调时序及多人和原版行为。
+
+### 酸性炸弹速度与脚本隐藏施法（待验证）
+
+路径：`src/session_alchemist.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_combat_orders.cpp`、`src/session.h`、`src/spells.h`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/alchemist.md`。酸性炸弹支持带符号移动／攻击速度值；脚本单位目标施法在受理后由 ShowUnit 隐藏时继续推进。
+
+Win32 Release 客户端及测试目标编译通过；`war3_spell_tests.exe <data-root> <fixture> acid-speed` 1/1，覆盖正负速度、零伤害及脚本隐藏施法。DotA_v6.83d 隔离原图中魅惑魔女受攻击后，攻击者获得 B043 和 0.3 攻速削弱，继续攻击会刷新时限；探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段对照原版数值符号／叠加、隐藏和显示时序、施法取消／死亡／运输、其他技能类型、真实窗口与多人。

@@ -763,7 +763,7 @@ class ScriptSession {
     void releaseCastVisuals(CastOrder& cast);
     void groundSpellsTick(double delta);
     void persistentSpellPulse(std::uint32_t unit,const SpellInfo& spell,WorldPoint point,unsigned owner,float amount,bool percent,std::optional<std::uint64_t> cast={});
-    bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting,bool automatic=false,std::uint32_t issuedOrder=0,std::uint32_t item=0);
+    bool beginSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target,WorldPoint point,SpellTargeting targeting,bool automatic=false,std::uint32_t issuedOrder=0,std::uint32_t item=0,bool scriptOrder=false);
     void casterEffect(const SpellMissile& missile);
     bool usefulDispel(const UnitState& caster,const UnitState& target,const SpellInfo& spell);
     void dispelSpell(std::uint32_t source,std::uint32_t target,const SpellInfo& spell,unsigned owner=UINT_MAX);
@@ -1095,7 +1095,7 @@ public:
     bool moveUnit(std::uint32_t handle,WorldPoint target,std::uint32_t order,std::optional<WorldPoint> destination,bool scriptHidden);
     bool stopUnit(std::uint32_t handle,bool hold=false);
     bool stopUnit(std::uint32_t handle,bool hold,bool scriptHidden);
-    bool targetOrder(std::uint32_t source,std::uint32_t target,std::uint32_t order=851971);
+    bool targetOrder(std::uint32_t source,std::uint32_t target,std::uint32_t order=851971,bool scriptOrder=false);
     std::optional<unsigned> groundAttackWeapon(const UnitState& source);
     bool attackGround(std::uint32_t source,WorldPoint point);
     void combatAttackGround(std::uint32_t source,double delta);
@@ -1115,12 +1115,12 @@ public:
     SpellTargeting spellTargeting(const UnitState& unit,const SpellInfo& spell) const {return spell.kind==SpellKind::Root && (!unit.roots || !unit.roots->uprooted)?SpellTargeting::None:spell.targeting;}
     std::optional<WorldPoint> rootSite(std::uint32_t unit,WorldPoint point,std::string& reason,WorldPoint* preview=nullptr);
     const PassiveInfo& passiveInfo(std::uint32_t ability,unsigned level);
-    bool castSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target=0);
+    bool castSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target=0,bool scriptOrder=false);
     bool castSpellAt(std::uint32_t unit,std::uint32_t ability,WorldPoint point);
     bool castPointOrder(std::uint32_t unit,std::uint32_t order,WorldPoint point);
     bool castImmediateOrder(std::uint32_t unit,std::uint32_t order);
     bool abilityAutocast(std::uint32_t unit,std::uint32_t ability,bool active);
-    bool castOrder(std::uint32_t unit,std::uint32_t order,std::uint32_t target);
+    bool castOrder(std::uint32_t unit,std::uint32_t order,std::uint32_t target,bool scriptOrder=false);
     bool learnHeroSkill(std::uint32_t unit,std::uint32_t ability) {return learnSkill(unit,ability);}
     bool canLearnSkill(std::uint32_t unit,std::uint32_t ability);
     double spellCooldown(std::uint32_t unit,std::uint32_t ability) const;

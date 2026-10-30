@@ -131,7 +131,11 @@ def main():
         return b'ANms'+custom+struct.pack('<I',2)+changes
     zero_locust = b'AUls'+b'A0L0'+struct.pack('<I',1)+b'Uls3'+struct.pack('<IIIi',0,1,3,0)+b'A0L0'
     poison_arrow = b'AEpa'+b'A0PA'+struct.pack('<I',2)+b'atar'+struct.pack('<III',3,1,0)+b'ground,enemies,organic\0'+b'A0PA'+b'amcs'+struct.pack('<IIIi',0,1,0,20)+b'A0PA'
-    files['war3map.w3a']=struct.pack('<III',2,0,6)+instant_blizzard(b'A0ZB',3)+instant_blizzard(b'A0Z0',0)+mana_shield(b'A0MZ',0.)+mana_shield(b'A0MP',1.)+zero_locust+poison_arrow
+    def acid_speeds(custom, move, attack):
+        values = [(b'Nab1',1,move),(b'Nab2',2,attack),(b'Nab3',3,0.),(b'Nab4',4,0.),(b'Nab5',5,0.),(b'aare',0,0.)]
+        changes = b''.join(field+struct.pack('<IIIf',2,1,slot,value)+custom for field,slot,value in values)
+        return b'ANab'+custom+struct.pack('<I',len(values))+changes
+    files['war3map.w3a']=struct.pack('<III',2,0,8)+instant_blizzard(b'A0ZB',3)+instant_blizzard(b'A0Z0',0)+mana_shield(b'A0MZ',0.)+mana_shield(b'A0MP',1.)+zero_locust+poison_arrow+acid_speeds(b'A0AN',-.2,-.3)+acid_speeds(b'A0AP',.25,.4)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))

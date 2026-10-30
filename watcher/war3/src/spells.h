@@ -100,7 +100,7 @@ struct CastOrder {
     SpellInfo spell;
     std::uint32_t target=0,abilityHandle=0,caster=0,companion=0,destructable=0;
     std::uint32_t item=0;
-    bool itemPaid=false,blightReserved=false;
+    bool itemPaid=false,blightReserved=false,scriptOrder=false;
     WorldPoint point;
     std::uint64_t ticket=0,ownerRevision=0,deathRevision=0;
     double remaining=0,repath=0;
