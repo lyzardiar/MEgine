@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 视野范围加成（待验证）
+
+路径：`src/equipment.h`、`src/passives.h`、`src/session_equipment.cpp`、`src/session_passive_info.cpp`、`src/session_fog.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`、`docs/visibility.md`。`AIsi` 的源数值及地图覆盖经单位／库存状态汇总到昼夜迷雾视野，能力可用性和科技前置参与刷新。Win32 Release 客户端及测试目标编译通过；`war3_passive_tests <data-root> <fixture> sight` 与 `weapon-ui` 各 1/1，前者覆盖两个物品的加成、能力禁用与恢复、物品和单位能力移除，以及迷雾状态变化。夹具在 `tmp/docs-artifacts/war3/sight-bonus/fixture.w3m`。阶段核对昼夜、单位移动与死亡／易主、地图覆盖与科技、幻象、共享视野、极值、多来源叠加、原版规则及实际界面；原件多来源规则尚未确认。
+
 ### 亡灵第三章开场后会话（待验证）
 
 路径：`docs/campaign-flow.md`。使用隔离复制的第二章转场缓存、原图和无窗口静音会话推进 600 秒；150 秒检查到英雄等级 5 与用户数据 24168，120–600 秒可操作且未请求退出，日志 `tmp/docs-artifacts/war3/undead02-probe-1031/continue.log`。探针没有玩家命令、未完成任务；自然战斗和胜负、界面、自动切关与原版一致性仍待验证。
