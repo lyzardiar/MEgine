@@ -3050,3 +3050,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 玩家广播文本（待验证）
 
 路径：`src/session_text.cpp`。集中检查各玩家视角的胜负与离开消息、历史、玩家名、百分号、空名称及格式边界，与原版显示对照，见[玩家广播文本](player-broadcast-text.md)。
+
+### 选中单位动画头像（待验证）
+
+路径：`src/game_portrait.cpp`、`src/game_view.*`、`CMakeLists.txt`。集中检查真实单选／多选、模型和相机缺失、四族边框、DPI／窗口缩放、设备恢复、模型动画／队伍颜色、切图释放及状态块开销，见[选中单位头像](unit-portrait.md)。

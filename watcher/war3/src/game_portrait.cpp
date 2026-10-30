@@ -1,0 +1,13 @@
+// Author: MiYu. Render the selected unit portrait with the source model camera and an isolated depth rectangle.
+#include "game_view.h"
+#include "model.h"
+#include <algorithm>
+
+namespace war3 {
+std::string GameView::portraitModelPath(const std::string& model) {auto path=SceneAssets::modelKey(model);path.resize(path.size()-4);return path+"_portrait.mdx";}
+void GameView::drawUnitPortrait() {
+    auto selection=primarySelection(selected());if(selection.empty())return;auto found=data_->session->units().find(selection.front());if(found==data_->session->units().end())return;auto& unit=*found->second;float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;constexpr float x=.216f,y=.482f,w=.078f,h=.084f;auto fallback=[&]{if(auto icon=data_->assets->cachedTexture(unit.displayIcon()))renderer_.rect(left+x*scale,top+y*scale,w*scale,h*scale,0xffffffff,icon);};
+    if(unit.displayModel().empty()){fallback();return;}auto model=data_->assets->cachedModel(portraitModelPath(unit.displayModel()));if(!model || !model->cameraCount() || !model->cameraIndex(0)){fallback();return;}auto color=unitTeamColor(unit);auto suffix=(color<10?"0":"")+std::to_string(color);if(auto texture=data_->assets->cachedTexture("ReplaceableTextures\\TeamColor\\TeamColor"+suffix+".blp"))model->replace(1,texture);if(auto texture=data_->assets->cachedTexture("ReplaceableTextures\\TeamGlow\\TeamGlow"+suffix+".blp"))model->replace(2,texture);if(!model->sequence("Portrait"))model->sequence("Stand");
+    auto device=renderer_.device();D3DVIEWPORT9 previous;if(FAILED(device->GetViewport(&previous)))throw std::runtime_error("Cannot read portrait viewport");Com<IDirect3DStateBlock9> state;if(FAILED(device->CreateStateBlock(D3DSBT_ALL,&state)) || FAILED(state->Capture()))throw std::runtime_error("Cannot capture portrait render state");struct Restore {IDirect3DDevice9* device;IDirect3DStateBlock9* state;D3DVIEWPORT9 viewport;~Restore(){state->Apply();device->SetViewport(&viewport);}} restore{device,state.Get(),previous};D3DVIEWPORT9 view{DWORD(left+x*scale),DWORD(top+y*scale),std::max<DWORD>(1,DWORD(w*scale)),std::max<DWORD>(1,DWORD(h*scale)),0,1};D3DRECT bounds{LONG(view.X),LONG(view.Y),LONG(view.X+view.Width),LONG(view.Y+view.Height)};if(FAILED(device->SetViewport(&view)) || FAILED(device->Clear(1,&bounds,D3DCLEAR_ZBUFFER,0,1,0)))throw std::runtime_error("Cannot prepare portrait viewport");auto elapsed=std::uint64_t(std::max(0.,data_->session->simulationTime())*1000);model->draw(elapsed,float(view.Width)/view.Height,true);
+}
+}

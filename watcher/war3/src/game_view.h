@@ -153,6 +153,9 @@ class GameView {
     std::optional<std::array<float,3>> ground(float x,float y) const;
     std::optional<std::pair<float,float>> project(float x,float y,float z) const;
     void input(const GameInput& input);
+    static std::string portraitModelPath(const std::string& model);
+    unsigned unitTeamColor(const UnitState& unit) const;
+    void drawUnitPortrait();
     void hud(const GameInput& input);
     void commandPanel(const GameInput& input,std::uint32_t unit);
     void cargoPanel(const GameInput& input,std::uint32_t unit);
