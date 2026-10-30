@@ -3042,3 +3042,7 @@ Win32 Release 客户端及相关 game-flow／research 消费者程序已合并�
 ### 玩家消息中的名称（待验证）
 
 路径：`src/session_text.cpp`。集中检查 `DisplayTimedTextFromPlayer` 的名称替换、百分号、不同玩家与受众及原版语义。
+
+### 回放列表异步双击（待验证）
+
+路径：`src/replay_browser.*`、`docs/replay-browser.md`。集中验证冷读取与已读取回放、切换选中、删除／取消、返回、损坏文件及连续双击；原版回放播放仍待实现。

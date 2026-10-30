@@ -24,7 +24,7 @@ class ReplayBrowser {
     std::string error_;
     std::shared_ptr<const Replay> selectedReplay_;
     fs::path selectedPath_;
-    bool loading_=false,confirmDelete_=false,deleting_=false;
+    bool loading_=false,confirmDelete_=false,deleting_=false,pendingPlay_=false;
     std::string selectedDigest_;
     std::uint64_t request_=0;
     std::atomic<std::uint64_t> generation_=0;
