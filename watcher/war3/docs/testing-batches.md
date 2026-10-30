@@ -3216,3 +3216,9 @@ Win32 Release 客户端及测试目标编译通过；隔离夹具运行 `war3_sp
 路径：`src/session_spells.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`、`docs/parasite.md`。施法单位目标筛选同时识别源对象表的 `friend`／`allies` 和 `enemy`／`enemies`，保留 `self` 与 `neutral` 规则。
 
 Win32 Release 客户端及 `war3_caster_tests` 增量编译通过；自定义目标夹具的 `targets` 模式 6/6 通过，覆盖敌友别名、敌友拒绝及中立目标。DotA_v6.83d 隔离会话选择蜘蛛英雄、学习 `A0BH`，向创建的可见敌人施法后取得 `B0E7`，直接击杀目标后观察到一个 `n019`；探针在 `tmp/docs-artifacts/war3/dota-hero-1031/`。集中验证其他施法类型、共享视野／联盟变化、免疫／建筑／中立分类、寄生叠加／召唤／重入、多人与真实窗口，原版语义和 UI 尚未验收。
+
+### 零间隔暴风雪与 DotA 蜘蛛网（待验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_channels.cpp`、`tests/generate-spell-fixture.py`、`tests/spell_tests.cpp`、`docs/area-spells.md`。零间隔的暴风雪派生能力按波次执行实际范围效果，零波数无波次，施法及脚本事件沿用原流程。
+
+Win32 Release 客户端及 `war3_spell_tests` 编译通过；`zero-blizzard` 隔离夹具 2/2 通过，检查三次即时伤害和零波数无伤害，未加载 Game.dll。DotA_v6.83d 隔离会话在 `-sd` 后学习蜘蛛网并以 A2ZX 发出点目标命令，观察到一个蜘蛛网单位；探针位于 `tmp/docs-artifacts/war3/dota-hero-1031/`。阶段检查零间隔伤害事件与回调中断、其他波数及范围、地图脚本移除能力、蜘蛛网增益与消失、真实窗口／多人和原版时序；即时波次顺序是当前实现，尚非原版验收结论。

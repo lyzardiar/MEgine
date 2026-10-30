@@ -2,6 +2,7 @@
 import argparse
 import importlib.util
 import io
+import struct
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -98,6 +99,15 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
+    def instant_blizzard(custom, waves):
+        values = [(b'Hbz1',0,1,waves),(b'Hbz2',2,2,50.),(b'Hbz3',0,3,0),(b'acas',2,0,0.),(b'aare',2,0,250.),(b'atar',3,0,b'ground,enemy')]
+        changes=[]
+        for field,kind,slot,value in values:
+            payload=value+b'\0' if kind==3 else struct.pack('<f' if kind==2 else '<i',value)
+            changes.append(field+struct.pack('<III',kind,1,slot)+payload+custom)
+        return b'AHbz'+custom+struct.pack('<I',len(changes))+b''.join(changes)
+    files['war3map.w3a']=struct.pack('<III',2,0,2)+instant_blizzard(b'A0ZB',3)+instant_blizzard(b'A0Z0',0)
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
