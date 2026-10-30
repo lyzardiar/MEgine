@@ -3342,3 +3342,9 @@ Win32 Release 客户端及测试编译通过；`war3_campaign_ai_tests <data-roo
 路径：`src/session_construction.cpp`、`tests/campaign_ai_tests.cpp`、`docs/economy.md`、`docs/ai.md`。保留终点仍在有效建造范围且地形阻挡版本未变的路线与避障点；终点无效或地形阻挡变化时重新寻路。
 
 Win32 Release 客户端和测试目标编译通过；`war3_campaign_ai_tests <data-root> <BootyBay地图> melee-build` 1/1，覆盖实际建造命令、保留人工插入的绕行点、无效终点重算和祭坛完成；人工路径部分暂时关闭了工人单位碰撞。原图隔离会话不死族在 60 秒前开始祭坛建造，并继续建造墓地、训练死亡骑士；证据 `tmp/docs-artifacts/war3/orc-undead-duel/preserve-route.log`。兽族对不死族模拟至 2,100 秒，尚未产生胜负，日志 `tmp/docs-artifacts/war3/orc-undead-duel/duel-after.log`。阶段检查地形及建造位置变化、单位／建筑死亡与归属变化、取消／新命令、多人拥堵、其他种族施工、原版规则、真实客户端和局域网。
+
+### 攻击追击路径保留（待验证）
+
+路径：`src/session_combat.cpp`、`tests/movement_avoidance_tests.cpp`、`docs/combat.md`。追击目标时保留通向有效攻击射程的路线和中间避障点；目标移动或地形阻挡变化使路线失效时重算。
+
+Win32 Release 客户端及测试编译通过；`war3_movement_avoidance_tests <data-root> <BootyBay地图> chase` 1/1，覆盖人工绕行点保留、目标移动重算、实际攻击伤害，以及实际绕过占位单位和碰撞间距；人工绕行点部分暂时关闭了攻击者单位碰撞。兽族对不死族原图隔离对局模拟至 4,200 秒仍无胜负，日志 `tmp/docs-artifacts/war3/orc-undead-long/pursuit-final.log`。阶段检查动态单位／地形阻挡、目标死去／易主／隐藏、武器射程变化、编队及大量单位、原版事件时序、实际窗口和联机同步。
