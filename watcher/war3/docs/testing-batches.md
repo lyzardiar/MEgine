@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 单位状态与命令的无效句柄（待阶段验证）
+
+路径：`src/session_entities.cpp`、`src/session_illusion.cpp`、`tests/control_tests.cpp`。当前命令、用户数据、人口、等级和幻象查询对空、已移除或错误类型句柄返回零／false；用户数据设置对这些句柄无操作，有效单位继续读写实时状态。固定版 Game.dll 的入口与无效分支证据为 `ev_1535bfc14e39709ed72c58329afa4c251793450312e104c08a7ba3419d3246f4`、`ev_e14dad146645c7161997e1163c72f28cd8c0023c1b2359141d60c46de0dcc9ae`、`ev_282673e194901cc002b3e3a9ade6fc241f49bf9cb9e4510a33ef320340b7c772`。Win32 Release 客户端及控制／商店测试程序编译通过；`war3_control_tests <data-root> <control-fixture> unit-state-handles` 1 通过、0 失败，覆盖空、已移除、错误类型与正常状态及实际保持命令；`war3_commerce_tests <data-root> <commerce-fixture-stationary.w3m>` 通过，覆盖正常商店、英雄及幻象脚本事件。未加载 Game.dll；实际自定义地图、死亡与复活、负人口和原版细节仍待阶段验证。
+
+
 ### 英雄属性与名称的无效单位（待阶段验证）
 
 路径：`src/session_hero.cpp`、`tests/control_tests.cpp`。英雄力量／敏捷／智力查询对空、已移除、错误类型和非英雄返回零，设置对这些对象无操作；英雄专有名称查询返回 null。有效英雄继续使用当前属性刷新和名称状态。固定版 Game.dll 的三个查询入口分别为 `0x6f1e29d0`、`0x6f1e27b0`、`0x6f1e2810`，三个设置入口分别为 `0x6f1f5890`、`0x6f1f5720`、`0x6f1f5780`，名称入口为 `0x6f1e28d0`；只读指令证据 `ev_8bc0926bdbd705c918df9ae95fcd33978e5743c37cb4f97c665496f1ce2196b1`、`ev_cb44d2c6d407f4c327939e4a46c3c914a972e84f8a6a32f4f0ba31173c61eb7d`、`ev_04c3fbb6f93a2cde5a714f45e784981671aad8c46d5193da5159c6a2541dc7d9`、`ev_0107466becf55a80744d1045ab9f249e239faedef0a55c3bd16994fc802f041d`。Win32 Release 客户端和控制测试编译通过；`war3_control_tests <data-root> <control-fixture> hero-attribute-handles` 1 通过、0 失败，未加载 Game.dll。阶段验证实际地图、不同属性／临时加成及极值、英雄死亡／复活／变形、事件重入与原版语义；名称 null 与空字符串的地图脚本消费也需对照。

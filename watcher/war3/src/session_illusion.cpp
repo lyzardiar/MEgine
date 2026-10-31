@@ -16,7 +16,7 @@ void ScriptSession::timedLives(double delta) {
     for(auto id:expired){if(!alive(id,NativeKind::Unit))continue;auto u=units_.at(id);if(u->illusion && number(u->life)<=0){removeUnit(id);continue;}if(!u->timedLife || u->timedLife->paused || u->timedLife->remaining>0)continue;auto buff=u->timedLife->buff;u->timedLife.reset();if(buff)u->abilities.erase(buff);unitLife(runtime_.handle("unit",id),{});if(u->illusion && alive(id,NativeKind::Unit))removeUnit(id);}
 }
 void ScriptSession::bindIllusionNatives() {
-    bind("IsUnitIllusion","boolean",{"unit"},[this](auto& vm,auto a){return vm.boolean(a[0].bits && unit(a[0]).illusion);});
+    bind("IsUnitIllusion","boolean",{"unit"},[this](auto& vm,auto a){return vm.boolean(alive(a[0].bits,NativeKind::Unit) && unit(a[0]).illusion);});
     bind("UnitApplyTimedLife","nothing",{"unit","integer","real"},[this](auto& vm,auto a){auto duration=number(jass::Real::fromBits(a[2].bits));if(!std::isfinite(duration) || duration<0 || duration>86400)throw std::runtime_error("Timed life duration outside supported range");auto& u=unit(a[0]);if(u.timedLife && u.timedLife->buff)u.abilities.erase(u.timedLife->buff);u.timedLife=TimedLife{a[1].bits,duration,duration,false};if(a[1].bits)u.abilities[a[1].bits]=1;return vm.nothing();});
     bind("UnitPauseTimedLife","nothing",{"unit","boolean"},[this](auto& vm,auto a){auto& u=unit(a[0]);if(u.timedLife)u.timedLife->paused=a[1].bits!=0;return vm.nothing();});
     bind("GetSummoningUnit","unit",{},[this](auto& vm,auto){return vm.handle("unit",contexts_.empty()?0:contexts_.back().summoningUnit);});
