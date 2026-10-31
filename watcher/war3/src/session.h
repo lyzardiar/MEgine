@@ -1271,6 +1271,7 @@ public:
     bool transferResources(unsigned from,unsigned to,int gold,int lumber);
     void leaveGame();
     bool endCinematic(unsigned owner);
+    void commandMenuOpened(bool skills);
     std::uint32_t indicatorColor(std::uint32_t id,std::uint32_t base) const {return indicators_.color(id,base,simulationTime_);}
     bool clickDialog(unsigned owner,std::uint32_t button,bool requireVisible=true,std::uint64_t clickedGeneration=0,bool finishOnQuit=true);
     std::optional<std::uint32_t> dialogNetworkFingerprint(std::uint32_t button) const;

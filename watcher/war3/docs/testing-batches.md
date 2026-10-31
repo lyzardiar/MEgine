@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 命令子菜单游戏事件（待阶段验证）
+
+路径：`src/session.h`、`src/session_match.cpp`、`src/game_commands.cpp`、`src/lan_simulation.cpp`、`tests/session_tests.cpp`、`tests/live_world_tests.cpp`、`tests/generate-live-world-fixture.py`；说明见 [回放命令菜单](replay-command-menus.md)。单机打开技能和建造菜单时派发各自的游戏事件；联网与实验回放在消费相应菜单动作时派发，关闭菜单不产生事件。回调执行使用注册快照并遵守触发器禁用及销毁；事件不设置玩家上下文。固定版 Game.dll 中两个游戏事件包装分别使用 `0x80209`／`0x8020a` 和空对象参数，REA 证据 `ev_56a7dc987929b385b1e1aaab0b836d5983c1c3868770008d21b22bf6b92acebb`；包装与实际按键／网络动作的完整调用时序仍待对照。Win32 Release 客户端、session、live-world 和 order-queue 测试目标编译通过，order-queue 编译有既有变量遮蔽警告；`war3_session_tests <tmp-enum-fixture>` 19/19，覆盖事件类型、顺序、禁用、销毁及上下文；在原 BootyBay 的临时脚本夹具执行 `war3_live_world_tests <data-root> <fixture> <log> menu-events` 1/1，覆盖技能、建造、Esc、关闭及重新打开的时间片，未加载 Game.dll。夹具位于 `tmp/docs-artifacts/war3/menu-events/`。实际窗口输入、双客户端同步、强制 UI 按键、地图回调重入、原版时间顺序和回放播放仍待阶段验证。
+
 ### 单位及命令编号转字符串空值（待阶段验证）
 
 路径：`src/session_match.cpp`、`src/session_spell_natives.cpp`、`tests/session_tests.cpp`、`tests/live_world_tests.cpp`。`UnitId2String` 和 `OrderId2String` 对没有名称的编号返回 JASS null；有效名称沿用现有源表与命令表。固定版 `Game.dll` 的两个入口在结果指针为空或首字节为零时返回零，REA 证据 `ev_88674c6a02c00ab21d687ccbe555a007e17f5398332fdbaf87a140a02129ac7d`、`ev_45efccb9b7453510848ca8e78ff91847702aeed25acb4fba0b4d7c459284e196`。Win32 Release 客户端及 session／live-world 检查程序编译通过；`war3_session_tests <tmp-enum-fixture>` 18/18 通过，JASS 中核对零编号与 null 比较及 move 命令；`war3_live_world_tests <data-root> <live-world-fixture> <log>` 通过，核对未知单位编号和源步兵名称，未加载 Game.dll。枚举夹具与地图日志在 `tmp/docs-artifacts/war3/id-string-null/`。自定义单位名称、其他命令和原版实际地图边界待阶段验证；现有名称映射完整性未由本次检查证明。

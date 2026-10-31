@@ -66,7 +66,7 @@ bool LanSimulation::apply(ScriptSession& session,const LanAction&){
         else if(auto cache=std::get_if<LanActionCacheSync>(&event)){if(!session.applyCacheSync(*cache))return false;}
         else if(std::holds_alternative<LanActionResume>(event))session.pause(false);
         else if(auto escape=std::get_if<Escape>(&event)){menus_[escape->player]=LanCommandMenu::None;session.endCinematic(escape->player);}
-        else if(auto menu=std::get_if<Menu>(&event))menus_[menu->player]=menu->menu;
+        else if(auto menu=std::get_if<Menu>(&event)){menus_[menu->player]=menu->menu;if(menu->menu!=LanCommandMenu::None)session.commandMenuOpened(menu->menu==LanCommandMenu::Skills);if(driver_.failed())return false;}
         else if(auto chat=std::get_if<Chat>(&event)){session.chat(chat->player,chat->text,chat->channel,chat->recipient);if(driver_.failed())return false;}
         else if(auto sync=std::get_if<SelectionSync>(&event)){session.receiveSelectionSync(sync->peer,sync->part);if(driver_.failed())return false;}
         else if(auto departure=std::get_if<Departure>(&event)){if(auto player=session.networkPlayer(departure->peer);player && *player<menus_.size())menus_[*player]=LanCommandMenu::None;if(!session.networkPeerDeparted(departure->peer))return false;if(driver_.failed())return false;}

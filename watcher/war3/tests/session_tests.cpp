@@ -18,6 +18,58 @@ template<class F> void rejects(F run,std::string_view message) {try{run();}catch
 int wmain(int argc,wchar_t** argv) {
     if(argc!=2){std::cerr<<"Usage: war3_session_tests <enum-fixture.json>\n";return 2;}
     unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};
+    test("game_command_menu_events",[]{auto module=compile(R"jass(type trigger extends handle
+type triggeraction extends handle
+type event extends handle
+type eventid extends handle
+type gameevent extends eventid
+type player extends handle
+native CreateTrigger takes nothing returns trigger
+native DestroyTrigger takes trigger t returns nothing
+native DisableTrigger takes trigger t returns nothing
+native TriggerAddAction takes trigger t, code callback returns triggeraction
+native TriggerRegisterGameEvent takes trigger t, gameevent value returns event
+native ConvertGameEvent takes integer value returns gameevent
+native GetTriggerEventId takes nothing returns eventid
+native GetTriggerPlayer takes nothing returns player
+native GetHandleId takes handle value returns integer
+globals
+integer trace=0
+integer wrong=0
+trigger first=null
+trigger build=null
+endglobals
+function firstAction takes nothing returns nothing
+if GetHandleId(GetTriggerEventId())!=9 or GetTriggerPlayer()!=null then
+set wrong=1
+endif
+set trace=trace*10+1
+call DestroyTrigger(first)
+endfunction
+function secondAction takes nothing returns nothing
+set trace=trace*10+2
+endfunction
+function buildAction takes nothing returns nothing
+if GetHandleId(GetTriggerEventId())!=10 or GetTriggerPlayer()!=null then
+set wrong=1
+endif
+set trace=trace*10+3
+endfunction
+function setup takes nothing returns nothing
+local trigger second=CreateTrigger()
+set first=CreateTrigger()
+set build=CreateTrigger()
+call TriggerRegisterGameEvent(first,ConvertGameEvent(9))
+call TriggerAddAction(first,function firstAction)
+call TriggerRegisterGameEvent(second,ConvertGameEvent(9))
+call TriggerAddAction(second,function secondAction)
+call TriggerRegisterGameEvent(build,ConvertGameEvent(10))
+call TriggerAddAction(build,function buildAction)
+endfunction
+function disableBuild takes nothing returns nothing
+call DisableTrigger(build)
+endfunction
+)jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();vm.invoke("setup");session.commandMenuOpened(true);require(vm.global("trace").bits==12 && !vm.global("wrong").bits,"Skill menu event context or registration order differs");session.commandMenuOpened(true);session.commandMenuOpened(false);require(vm.global("trace").bits==1223 && !vm.global("wrong").bits,"Command menu event routing or destruction differs");vm.invoke("disableBuild");session.commandMenuOpened(false);require(vm.global("trace").bits==1223,"Disabled build menu trigger fired");});
     test("id_to_string_null_and_known_order",[]{ScriptSession session(compile(R"jass(native OrderId takes string name returns integer
 native OrderId2String takes integer id returns string
 native UnitId2String takes integer id returns string

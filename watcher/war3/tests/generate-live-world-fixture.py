@@ -15,6 +15,8 @@ GLOBALS = '''
 unit native_probe_unit=null
 item native_probe_item=null
 integer native_probe_stage=0
+integer native_menu_trace=0
+integer native_menu_wrong=0
 integer native_probe_enter=0
 integer native_probe_items=0
 unit range_probe_center=null
@@ -25,6 +27,26 @@ integer range_probe_first=0
 integer range_probe_second=0
 '''
 FUNCTIONS = '''
+function NativeMenuSkill takes nothing returns nothing
+    if GetHandleId(GetTriggerEventId())!=9 or GetTriggerPlayer()!=null then
+        set native_menu_wrong=1
+    endif
+    set native_menu_trace=native_menu_trace*10+1
+endfunction
+function NativeMenuBuild takes nothing returns nothing
+    if GetHandleId(GetTriggerEventId())!=10 or GetTriggerPlayer()!=null then
+        set native_menu_wrong=1
+    endif
+    set native_menu_trace=native_menu_trace*10+2
+endfunction
+function NativeMenuSetup takes nothing returns nothing
+    local trigger skill=CreateTrigger()
+    local trigger build=CreateTrigger()
+    call TriggerRegisterGameEvent(skill,EVENT_GAME_SHOW_SKILL)
+    call TriggerAddAction(skill,function NativeMenuSkill)
+    call TriggerRegisterGameEvent(build,EVENT_GAME_BUILD_SUBMENU)
+    call TriggerAddAction(build,function NativeMenuBuild)
+endfunction
 function NativeRangeFirst takes nothing returns nothing
     if GetTriggerUnit()==range_probe_actor then
         set range_probe_first=range_probe_first+1
