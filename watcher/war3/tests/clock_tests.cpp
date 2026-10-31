@@ -44,6 +44,59 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("triggers_restore_actions_conditions_and_state",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type timer extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type triggercondition extends handle
+ type boolexpr extends handle
+ type conditionfunc extends boolexpr
+ native CreateTimer takes nothing returns timer
+ native CreateTrigger takes nothing returns trigger
+ native Condition takes code c returns conditionfunc
+ native And takes boolexpr a, boolexpr b returns boolexpr
+ native Not takes boolexpr a returns boolexpr
+ native TriggerAddAction takes trigger t, code c returns triggeraction
+ native TriggerAddCondition takes trigger t, boolexpr c returns triggercondition
+ native TriggerEvaluate takes trigger t returns boolean
+ native TriggerExecute takes trigger t returns nothing
+ native DisableTrigger takes trigger t returns nothing
+ native IsTriggerEnabled takes trigger t returns boolean
+ native TriggerWaitOnSleeps takes trigger t, boolean flag returns nothing
+ native IsTriggerWaitOnSleeps takes trigger t returns boolean
+ native GetTriggerEvalCount takes trigger t returns integer
+ native GetTriggerExecCount takes trigger t returns integer
+ globals
+ trigger t=null
+ triggeraction action=null
+ triggercondition predicate=null
+ integer runs=0
+ endglobals
+ function yes takes nothing returns boolean
+ return true
+ endfunction
+ function no takes nothing returns boolean
+ return false
+ endfunction
+ function work takes nothing returns nothing
+ set runs=runs+1
+ endfunction
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function setup takes nothing returns nothing
+ set t=CreateTrigger()
+ set predicate=TriggerAddCondition(t,And(Condition(function yes),Not(Condition(function no))))
+ set action=TriggerAddAction(t,function work)
+ call TriggerEvaluate(t)
+ call TriggerExecute(t)
+ call DisableTrigger(t)
+ call TriggerWaitOnSleeps(t,false)
+ endfunction
+ )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"triggers.j",source,"authored trigger persistence test"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);return result;};auto original=create(),restored=create();original->startMain();auto& a=original->runtime();auto& b=restored->runtime();a.invoke("setup");auto trigger=a.global("t").bits,action=a.global("action").bits,condition=a.global("predicate").bits;auto encode=[&](std::string_view type,std::uint32_t id){if(type=="trigger" && id==trigger)return 1u;if(type=="triggeraction" && id==action)return 2u;if(type=="triggercondition" && id==condition)return 3u;return 0u;};auto triggers=original->encodeTriggers(encode),globals=a.encodeGlobals(encode);b.invoke("CreateTimer");auto damaged=triggers;damaged.back()^=1;rejects([&]{restored->restoreTriggers(damaged);},"digest");require(restored->liveObjects(NativeKind::Trigger)==0,"Rejected trigger snapshot created objects");auto mapping=restored->restoreTriggers(triggers);auto decode=[&](std::string_view type,std::uint32_t id){auto it=mapping.find({std::string(type),id});return it==mapping.end()?0u:it->second;};auto reencode=[&](std::string_view type,std::uint32_t id){for(auto& [key,value]:mapping)if(key.first==type && value==id)return key.second;return 0u;};require(restored->encodeTriggers(reencode)==triggers,"Restored trigger snapshot differs");b.restoreGlobals(globals,decode);auto target=b.global("t");require(target.bits!=trigger && !b.invoke("IsTriggerEnabled",std::array{target}).bits && !b.invoke("IsTriggerWaitOnSleeps",std::array{target}).bits && b.invoke("GetTriggerEvalCount",std::array{target}).bits==1 && b.invoke("GetTriggerExecCount",std::array{target}).bits==1 && b.global("runs").bits==1,"Trigger state or handles were not restored");require(b.invoke("TriggerEvaluate",std::array{target}).bits,"Restored compound predicate differs");b.invoke("TriggerExecute",std::array{target});require(b.global("runs").bits==2 && b.invoke("GetTriggerEvalCount",std::array{target}).bits==2 && b.invoke("GetTriggerExecCount",std::array{target}).bits==2,"Restored trigger callbacks did not execute");rejects([&]{restored->restoreTriggers(triggers);},"without triggers");
+    });
     test("timer_events_restore_schedule_and_registration_order",[&]{
         std::string source=R"jass(type destructable extends handle
  type timer extends handle
@@ -94,6 +147,11 @@ int wmain(int argc,wchar_t** argv) {
  call TriggerAddAction(y,function ay)
  call TriggerAddAction(z,function az)
  endfunction
+ function assignTriggers takes trigger a, trigger b, trigger c returns nothing
+ set x=a
+ set y=b
+ set z=c
+ endfunction
  function forward takes nothing returns nothing
  set e1=TriggerRegisterTimerEvent(x,0.125,false)
  set e2=TriggerRegisterTimerEvent(y,0.25,true)
@@ -106,7 +164,7 @@ int wmain(int argc,wchar_t** argv) {
  set e2=TriggerRegisterTimerEvent(y,0.25,true)
  set e1=TriggerRegisterTimerEvent(x,0.125,false)
  endfunction
- )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"timer-events.j",source,"authored event persistence test"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);return result;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("createClock");a.invoke("startClock");a.invoke("createTriggers");a.invoke("forward");original->advance(.125);require(a.global("sequence").bits==1,"One-shot timer event did not fire");auto ids=[](Runtime& vm){std::array<std::uint32_t,8> result{};unsigned i=0;for(auto name:{"clock","x","y","z","e1","e2","e3","e4"})result[i++]=vm.global(name).bits;return result;};auto first=ids(a);auto encode=[&](std::string_view type,std::uint32_t id){for(unsigned i=0;i<first.size();++i)if(first[i]==id && type==(i==0?"timer":i<4?"trigger":"event"))return i+1;return 0u;};auto clock=original->encodeSimulationClock(),timers=original->encodeTimers(encode),events=original->encodeTimerEvents(encode),globals=a.encodeGlobals(encode);restored->restoreSimulationClock(clock);b.invoke("createClock");auto targetClock=b.global("clock").bits;restored->restoreTimers(timers,[&](std::string_view type,std::uint32_t id){return type=="timer" && id==1?targetClock:0u;});b.invoke("createTriggers");b.invoke("reverse");auto second=ids(b);auto decode=[&](std::string_view type,std::uint32_t id){if(id<1 || id>second.size() || type!=(id==1?"timer":id<5?"trigger":"event"))return 0u;return second[id-1];};auto broken=events;broken.back()^=1;rejects([&]{restored->restoreTimerEvents(broken,decode);},"digest");rejects([&]{restored->restoreTimerEvents(events,[&](std::string_view type,std::uint32_t id){return type=="event"?second[4]:decode(type,id);});},"mapping");rejects([&]{restored->restoreTimerEvents(events,[&](std::string_view type,std::uint32_t id){return type=="event" && id==5?second[5]:type=="event" && id==6?second[4]:decode(type,id);});},"registration differs");restored->restoreTimerEvents(events,decode);b.restoreGlobals(globals,decode);auto reencode=[&](std::string_view type,std::uint32_t id){for(unsigned i=0;i<second.size();++i)if(second[i]==id && type==(i==0?"timer":i<4?"trigger":"event"))return i+1;return 0u;};require(restored->encodeTimerEvents(reencode)==events,"Restored timer event ordering was not retained");restored->startMain();original->advance(.375);restored->advance(.375);require(a.global("sequence").bits==13122 && b.global("sequence").bits==13122,"Restored timer events fired at a different time or order");require(original->encodeTimerEvents(encode)==restored->encodeTimerEvents(reencode),"Continued timer event state differs");
+ )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"timer-events.j",source,"authored event persistence test"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);return result;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("createClock");a.invoke("startClock");a.invoke("createTriggers");a.invoke("forward");original->advance(.125);require(a.global("sequence").bits==1,"One-shot timer event did not fire");auto ids=[](Runtime& vm){std::array<std::uint32_t,8> result{};unsigned i=0;for(auto name:{"clock","x","y","z","e1","e2","e3","e4"})result[i++]=vm.global(name).bits;return result;};auto first=ids(a);auto encode=[&](std::string_view type,std::uint32_t id){for(unsigned i=0;i<first.size();++i)if(first[i]==id && type==(i==0?"timer":i<4?"trigger":"event"))return i+1;if(type=="triggeraction")return id;return 0u;};auto clock=original->encodeSimulationClock(),timers=original->encodeTimers(encode),triggers=original->encodeTriggers(encode),events=original->encodeTimerEvents(encode),globals=a.encodeGlobals(encode);restored->restoreSimulationClock(clock);b.invoke("createClock");auto targetClock=b.global("clock").bits;restored->restoreTimers(timers,[&](std::string_view type,std::uint32_t id){return type=="timer" && id==1?targetClock:0u;});auto triggerHandles=restored->restoreTriggers(triggers);b.invoke("assignTriggers",std::array{b.handle("trigger",triggerHandles.at({"trigger",2})),b.handle("trigger",triggerHandles.at({"trigger",3})),b.handle("trigger",triggerHandles.at({"trigger",4}))});b.invoke("reverse");auto second=ids(b);auto decode=[&](std::string_view type,std::uint32_t id){if(id<1 || id>second.size() || type!=(id==1?"timer":id<5?"trigger":"event"))return 0u;return second[id-1];};auto broken=events;broken.back()^=1;rejects([&]{restored->restoreTimerEvents(broken,decode);},"digest");rejects([&]{restored->restoreTimerEvents(events,[&](std::string_view type,std::uint32_t id){return type=="event"?second[4]:decode(type,id);});},"mapping");rejects([&]{restored->restoreTimerEvents(events,[&](std::string_view type,std::uint32_t id){return type=="event" && id==5?second[5]:type=="event" && id==6?second[4]:decode(type,id);});},"registration differs");restored->restoreTimerEvents(events,decode);b.restoreGlobals(globals,decode);auto reencode=[&](std::string_view type,std::uint32_t id){for(unsigned i=0;i<second.size();++i)if(second[i]==id && type==(i==0?"timer":i<4?"trigger":"event"))return i+1;return 0u;};require(restored->encodeTimerEvents(reencode)==events,"Restored timer event ordering was not retained");restored->startMain();original->advance(.375);restored->advance(.375);require(a.global("sequence").bits==13122 && b.global("sequence").bits==13122,"Restored timer events fired at a different time or order");require(original->encodeTimerEvents(encode)==restored->encodeTimerEvents(reencode),"Continued timer event state differs");
     });
     test("timers_restore_callbacks_order_and_globals",[&]{
         std::string source=R"jass(type destructable extends handle

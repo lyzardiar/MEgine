@@ -1333,6 +1333,8 @@ public:
     void restoreTimers(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeTimerEvents(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeTriggers(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::pair<std::string,std::uint32_t>,std::uint32_t> restoreTriggers(std::span<const std::uint8_t> bytes);
     double simulationTime() const {return simulationTime_;}
     double presentationTime() const {return simulationTime_+accumulator_;}
     void audioMuted(bool muted);
