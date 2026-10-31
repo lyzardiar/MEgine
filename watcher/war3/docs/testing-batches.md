@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 触发器所属对象销毁（待阶段验证）
+
+路径：`src/script_state.h`、`src/session.h`、`src/session.cpp`、`src/session_callbacks.cpp`、`src/session_destructables.cpp`、`src/session_script_dialogs.cpp`、`src/session_spatial_events.cpp`、`src/session_trackable.cpp`、`tests/session_tests.cpp`。事件注册时记录所属触发器；销毁触发器时直接清理其事件、动作及条件，避免遍历会话创建过的全部对象。Win32 Release 客户端、session、live-world 和 DotA 英雄测试目标编译通过；`war3_session_tests <tmp-enum-fixture>` 17/17 通过，覆盖移除／清空回调、事件派发中销毁自身和另一触发器继续执行；`war3_live_world_tests <data-root> <live-world-fixture> <log>` 及 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> storm-spells` 通过，未加载 Game.dll。live-world 日志及枚举夹具在 `tmp/docs-artifacts/war3/trigger-owned-cleanup/`，空间夹具在 `tmp/docs-artifacts/war3/spatial-index-registration/`。对话框、可破坏物和 trackable 事件销毁、复杂重入、大量短命触发器的长期内存／帧耗时及原版语义待阶段验证；未执行性能基准，不能据此量化帧率提升。事件索引和会话句柄记录的长期增长仍需单独处理。
+
 ### 空间事件登记索引（待阶段验证）
 
 路径：`src/session.h`、`src/session_spatial_events.cpp`、`tests/generate-live-world-fixture.py`、`tests/live_world_tests.cpp`。区域进入／离开和单位距离事件在注册时加入独立索引；空间更新只读取这一索引并清理已销毁事件，保持注册顺序与当前轮事件快照。Win32 Release 客户端、live-world 和 DotA 英雄测试编译通过；原 BootyBay 夹具在 80 个额外单位场景覆盖事件中心被前一回调移动、离开再进入、销毁并重新注册，未发生重复；DotA 原图 `lich-spells` 与 `storm-spells` 通过，均未加载 Game.dll。夹具及日志在 `tmp/docs-artifacts/war3/spatial-index-registration/`。复杂回调重入、大量触发器长期创建／销毁、真实地图帧时间及内存仍待验证；未执行性能基准。

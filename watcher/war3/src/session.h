@@ -847,6 +847,7 @@ class ScriptSession {
     void releaseAbility(std::uint32_t unit,std::uint32_t ability);
     std::uint32_t abilityHandle(std::uint32_t unit,std::uint32_t ability);
     jass::Value create(NativeKind kind);
+    jass::Value createTriggerEvent(jass::Value owner);
     Object& object(jass::Value handle,NativeKind kind);
     SessionPlayer& player(jass::Value handle);
     unsigned playerId(jass::Value handle);

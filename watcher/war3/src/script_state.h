@@ -27,7 +27,7 @@ struct ScriptTimer {
 struct ScriptTrigger {
     bool enabled=true,waitOnSleeps=true;
     unsigned evaluations=0,executions=0;
-    std::vector<std::uint32_t> actions,conditions;
+    std::vector<std::uint32_t> actions,conditions,events;
 };
 struct ScriptTrackable {std::string model;float x=0,y=0,facing=0;};
 struct ScriptForce {std::uint32_t players=0;};

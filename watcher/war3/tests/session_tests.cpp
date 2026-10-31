@@ -113,6 +113,67 @@ set watched=0.
 set watched=2.
 endfunction
 )jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();vm.invoke("setup");vm.invoke("cross");require(vm.global("hits").bits==2 && vm.global("eventKind").bits==2,"Variable threshold crossing or event context differs");vm.invoke("release");require(vm.global("hits").bits==2,"Destroyed trigger still receives variable events");});
+    test("trigger_owned_children_destroy_during_dispatch",[]{auto module=compile(R"jass(type trigger extends handle
+type triggeraction extends handle
+type triggercondition extends handle
+type boolexpr extends handle
+type conditionfunc extends boolexpr
+type event extends handle
+type limitop extends handle
+native CreateTrigger takes nothing returns trigger
+native DestroyTrigger takes trigger t returns nothing
+native TriggerAddAction takes trigger t, code action returns triggeraction
+native TriggerRemoveAction takes trigger t, triggeraction action returns nothing
+native TriggerAddCondition takes trigger t, boolexpr condition returns triggercondition
+native TriggerClearConditions takes trigger t returns nothing
+native Condition takes code callback returns conditionfunc
+native TriggerRegisterVariableEvent takes trigger t, string name, limitop op, real limit returns event
+native TriggerRegisterTimerEvent takes trigger t, real timeout, boolean periodic returns event
+native ConvertLimitOp takes integer value returns limitop
+globals
+real watched=0.
+integer firstHits=0
+integer secondHits=0
+trigger first=null
+trigger second=null
+endglobals
+function accept takes nothing returns boolean
+return true
+endfunction
+function firstAction takes nothing returns nothing
+set firstHits=firstHits+1
+call DestroyTrigger(first)
+endfunction
+function laterAction takes nothing returns nothing
+set firstHits=firstHits+100
+endfunction
+function secondAction takes nothing returns nothing
+set secondHits=secondHits+1
+endfunction
+function setup takes nothing returns nothing
+local triggeraction removed
+set first=CreateTrigger()
+set second=CreateTrigger()
+set removed=TriggerAddAction(first,function laterAction)
+call TriggerRemoveAction(first,removed)
+call TriggerAddCondition(first,Condition(function accept))
+call TriggerClearConditions(first)
+call TriggerAddCondition(first,Condition(function accept))
+call TriggerAddAction(first,function firstAction)
+call TriggerAddAction(first,function laterAction)
+call TriggerAddAction(second,function secondAction)
+call TriggerRegisterVariableEvent(first,"watched",ConvertLimitOp(4),1.)
+call TriggerRegisterTimerEvent(first,10.,false)
+call TriggerRegisterVariableEvent(second,"watched",ConvertLimitOp(4),1.)
+endfunction
+function cross takes nothing returns nothing
+set watched=0.
+set watched=2.
+endfunction
+function release takes nothing returns nothing
+call DestroyTrigger(second)
+endfunction
+)jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();vm.invoke("setup");require(session.liveObjects(NativeKind::Event)==3 && session.liveObjects(NativeKind::Action)==3 && session.liveObjects(NativeKind::Condition)==1,"Unexpected trigger child setup");vm.invoke("cross");require(vm.global("firstHits").bits==1 && vm.global("secondHits").bits==1,"Destroy during dispatch changed action or independent trigger ordering");require(session.liveObjects(NativeKind::Event)==1 && session.liveObjects(NativeKind::Action)==1 && session.liveObjects(NativeKind::Condition)==0,"Destroyed trigger retained children or removed another trigger's children");vm.invoke("cross");require(vm.global("firstHits").bits==1 && vm.global("secondHits").bits==2,"Destroyed or surviving trigger dispatch differs");vm.invoke("release");require(session.liveObjects(NativeKind::Event)==0 && session.liveObjects(NativeKind::Action)==0 && session.liveObjects(NativeKind::Trigger)==0,"Final trigger children remained live");});
     test("session_integer_game_states_and_events",[]{auto module=compile(R"jass(type gamestate extends handle
 type igamestate extends gamestate
 type trigger extends handle
