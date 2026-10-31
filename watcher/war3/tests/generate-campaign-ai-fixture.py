@@ -12,7 +12,19 @@ SCRIPT = '''globals
 unit hall=null
 unit worker=null
 destructable tree=null
+integer boardOverrideCount=0
 endglobals
+function OverrideBoardOrder takes nothing returns nothing
+    if GetIssuedOrderId()==852043 then
+        set boardOverrideCount=boardOverrideCount+1
+        call IssuePointOrder(GetTriggerUnit(),"move",3200,2050)
+    endif
+endfunction
+function InstallBoardOrderOverride takes unit target returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_ISSUED_TARGET_ORDER)
+    call TriggerAddAction(t,function OverrideBoardOrder)
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing

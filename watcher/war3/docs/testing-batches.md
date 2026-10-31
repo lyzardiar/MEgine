@@ -4119,6 +4119,10 @@ Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨�
 
 Win32 Release 客户端及测试目标编译通过；执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m`，再运行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m ethereal-ability`，1/1 通过。DotA 原图隔离会话使用 `I0LT`，目标在 1 秒时虚无、5 秒时恢复；记录 `tmp/docs-artifacts/war3/dota-ethereal/after.log`。阶段验证物品／派生、多个来源及生命周期、伤害／治疗倍率、地图覆盖、真实窗口／原版及联机。
 
+### AI 登艇订单回调重入（待阶段验证）
+
+路径：`src/session_ai_transport.cpp`、`tests/generate-campaign-ai-fixture.py`、`tests/campaign_ai_tests.cpp`；说明见 [AI](ai.md)。成员登艇订单回调替换命令后，AI 释放该成员预约，不再派载具接应或改用其他载具。Win32 Release 客户端与 CampaignAI 测试目标编译通过；生成 `tmp/docs-artifacts/war3/ai-board-reentrant/fixture.w3m` 后，`war3_campaign_ai_tests <data-root> <fixture> island-pickup-reentrant` 1/1，覆盖回调改为移动及后续保留；`island-pickup`、`island-pickup-group`、`island-pickup-reorder`、`island-auto-multiwave` 各 1/1。均不加载 Game.dll。阶段验证多载具、回调移除／易主／死亡、嵌套命令、实际地图、联机及原版时序。
+
 ### 脚本声音失效句柄（待阶段验证）
 
 路径：`src/session_sound.cpp`、`tests/sound_tests.cpp`；原版入口见[脚本声音](script-sound.md)。声音解析对空、越界及不兼容对象返回空声音，有效句柄仍连接现有播放状态。Win32 Release 客户端及 sound 目标编译通过；在 `watcher/war3` 运行 `war3_sound_tests <data-root> ../../tmp/docs-artifacts/war3/sound-invalid sound_invalid_handle_preserves_playback` 和 `sound_jass_globals_queries_and_playback`，各 1/1 通过。检查使用静音会话；实际音频设备、退役和回调重入、其他声音参数、地图脚本与原版行为待阶段验证。
