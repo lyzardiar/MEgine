@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 路径平滑复用通行缓存（待验证）
+
+路径：`src/world_path.cpp`、`docs/water-pathing.md`。路径平滑和普通直线检查共用同一网格穿越与对角规则，平滑阶段复用本次搜索的通行缓存。Win32 Release 客户端及 world 测试目标编译通过；区域／部分路径、动态障碍、目标缓存和阻挡目标相关检查共 8 通过、0 失败。512×512 隔墙绕路夹具按碰撞半径 0／32／64 各执行 40 条不同路径，路径点数量和摘要一致，单次耗时由 637／695／769 毫秒变为 604／605／617 毫秒；探针位于 `tmp/docs-artifacts/war3/path-smoothing-1031/`。阶段核对多地图及移动类型、动态阻挡、路径端点与原版语义、完整战役 CPU 和实际帧时间。
+
 ### 黑暗转换最小会话检查（待阶段验证）
 
 路径：`src/session_control_spells.cpp`、`src/session_spell_effects.cpp`、`tests/control_tests.cpp`。生成原地形夹具并编译 Win32 Release 的 `war3_control_tests` 后，执行 `war3_control_tests.exe <data-root> <fixture> conversion`，1 通过、0 失败，未加载 Game.dll；覆盖非村民拒绝、村民进入睡眠／禁令状态及到期后创建施法方僵尸。原版状态结束时序、死亡事件与尸体、驱散／伤害／重入和真实战役仍待阶段对照。
