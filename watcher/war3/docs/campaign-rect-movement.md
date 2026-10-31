@@ -6,4 +6,4 @@
 
 Win32 Release 客户端与定向测试编译通过；`war3_spatial_handle_tests` 的空、已销毁及有效句柄检查 1 通过、0 失败。`Orc05.w3m` 静音原图模拟在修复前于 `war3map.j:4175` 中断，修复后推进至 400 秒。该检查没有操作实际战役界面，不代表通关或完整原版行为一致。
 
-已有 `war3_world_tests` 的 `world_rect_query_mutation_and_full_extent` 使用无归档的内存世界，当前在 `attachWorld` 阶段报 `World resources require archive-backed terrain`；该夹具尚需更新，本次使用独立的真实地图夹具进行定向检查。
+`war3_world_tests` 的 `world_rect_query_mutation_and_full_extent` 使用 BootyBay 资源归档和该图实际边界核对矩形操作；修复夹具后定向复测 1 通过、0 失败，日志 `tmp/docs-artifacts/war3/terrain-world-batch/world_rect_query-final.log`。

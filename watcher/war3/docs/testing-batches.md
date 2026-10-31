@@ -4446,3 +4446,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 地表／荒芜批次回归（部分失败，保留待测）
 
 范围 `472bdad`、`58a1ac7` 及本次覆盖层变更。Win32 Release 客户端和 world 测试目标编译通过；执行 `war3_world_tests <data-root> <output>` 得到 21 通过、4 失败。地表／荒芜快照四项均通过，原图及路径相关检查通过。四项 `world_location_global_and_destroyed_handles`、`world_rect_query_mutation_and_full_extent`、`world_main_preserves_session_and_environment`、`world_main_failure_is_terminal` 使用无资源归档的内存世界，均在 `attachWorld` 报 `World resources require archive-backed terrain`；该夹具问题已在 `campaign-rect-movement.md` 记录，尚未修复。日志 `tmp/docs-artifacts/war3/terrain-world-batch/world-tests.log`。渲染变体、动态纹理流送、实际窗口、地图身份和完整存档／跨区事务未验证，保留待测。
+
+### 世界测试夹具恢复（批次失败项已复测）
+
+路径：`tests/world_tests.cpp`。四项会话测试使用 BootyBay 资源归档并在测试脚本中声明可破坏物类型；矩形检查根据该图实际边界独立计算预期值。Win32 Release world 测试目标编译通过，上一批四个失败项定向复测 4 通过、0 失败；其余 21 项复用上一批结果，日志 `tmp/docs-artifacts/war3/terrain-world-batch/world_{location_global,rect_query,main_}-final.log`。渲染变体与动态纹理流送的实际窗口、地图身份及完整存档／跨区事务仍待验证或实现。
