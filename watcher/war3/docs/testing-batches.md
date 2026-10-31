@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 单位及命令编号转字符串空值（待阶段验证）
+
+路径：`src/session_match.cpp`、`src/session_spell_natives.cpp`、`tests/session_tests.cpp`、`tests/live_world_tests.cpp`。`UnitId2String` 和 `OrderId2String` 对没有名称的编号返回 JASS null；有效名称沿用现有源表与命令表。固定版 `Game.dll` 的两个入口在结果指针为空或首字节为零时返回零，REA 证据 `ev_88674c6a02c00ab21d687ccbe555a007e17f5398332fdbaf87a140a02129ac7d`、`ev_45efccb9b7453510848ca8e78ff91847702aeed25acb4fba0b4d7c459284e196`。Win32 Release 客户端及 session／live-world 检查程序编译通过；`war3_session_tests <tmp-enum-fixture>` 18/18 通过，JASS 中核对零编号与 null 比较及 move 命令；`war3_live_world_tests <data-root> <live-world-fixture> <log>` 通过，核对未知单位编号和源步兵名称，未加载 Game.dll。枚举夹具与地图日志在 `tmp/docs-artifacts/war3/id-string-null/`。自定义单位名称、其他命令和原版实际地图边界待阶段验证；现有名称映射完整性未由本次检查证明。
+
 ### 失效脚本事件索引清理（待阶段验证）
 
 路径：`src/session.h`、`src/session.cpp`、`src/session_tick.cpp`、`src/session_callbacks.cpp`、`tests/session_tests.cpp`、`tests/live_world_tests.cpp`。触发器事件销毁后计数，模拟步开始时按数量和占比压缩全局事件句柄索引；变量写入时移除其观察列表中的失效事件，存活事件保持登记顺序，回调使用既有派发快照。Win32 Release 客户端、session 和 live-world 测试目标编译通过；`war3_session_tests <tmp-enum-fixture>` 17/17 通过，其中变量事件场景额外创建并销毁 300 个临时触发器；`war3_live_world_tests <data-root> <live-world-fixture> <log>` 通过，在 4,096 个计时事件销毁和一次模拟步后检查空间事件注册、销毁与重新进入。测试未加载 Game.dll；枚举夹具及地图日志在 `tmp/docs-artifacts/war3/event-index-compaction/`。其他事件索引、长局对象句柄上限、运行内存与帧耗时、不同地图及重入组合仍待验证；未做性能基准。

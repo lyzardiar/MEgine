@@ -8,7 +8,7 @@ void ScriptSession::bindSpellNatives() {
     bind("AbilityId","integer",{"string"},[](auto& vm,auto){return vm.integer(0);});
     bind("AbilityId2String","string",{"integer"},[](auto& vm,auto){return jass::Value{vm.module().typeId("string"),0,{}};});
     bind("OrderId","integer",{"string"},[](auto& vm,auto a){return vm.integer(std::bit_cast<std::int32_t>(a[0].text?orderId(*a[0].text):0));});
-    bind("OrderId2String","string",{"integer"},[](auto& vm,auto a){return vm.string(std::string(orderName(a[0].bits)));});
+    bind("OrderId2String","string",{"integer"},[](auto& vm,auto a){auto name=orderName(a[0].bits);return name.empty()?jass::Value{vm.module().typeId("string"),0,{}}:vm.string(std::string(name));});
     bind("UnitResetCooldown","nothing",{"unit"},[this](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Unit))return vm.nothing();auto& u=unit(a[0]);u.spellCooldowns.clear();return vm.nothing();});
     bind("GetSpellAbilityUnit","unit",{},[this](auto& vm,auto){return vm.handle("unit",contexts_.empty()?0:contexts_.back().spellUnit);});
     bind("GetSpellAbilityId","integer",{},[this](auto& vm,auto){return vm.integer(contexts_.empty()?0:std::bit_cast<std::int32_t>(contexts_.back().spellId));});
