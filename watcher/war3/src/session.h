@@ -519,7 +519,7 @@ class ScriptSession {
     void retireUnitCasterBuff(const UnitBuff& buff);
     void unitCastersTick(double delta);
     float spiritLinkDamage(std::uint32_t source,std::uint32_t target,float damage,unsigned owner);
-    bool faerieFireVision(const UnitState& unit,unsigned viewer) const;
+    bool buffSharedVision(const UnitState& unit,unsigned viewer) const;
     bool useUnitCasterItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target);
     std::map<std::pair<unsigned,std::uint32_t>,std::set<std::uint32_t>> spiritLinks_;
     std::set<std::pair<std::uint32_t,std::uint32_t>> lightningShieldActors_;
