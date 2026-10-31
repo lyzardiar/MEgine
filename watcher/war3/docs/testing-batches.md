@@ -4236,3 +4236,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### AI 登艇回调的备用载具
 
 路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`、`docs/ai.md`。首选飞艇被登艇回调改派后，未被脚本接管的乘员可改由其他飞艇运输；暂停或停止事件产生的新订单保持有效。Win32 Release 客户端与 CampaignAI 目标编译通过；`war3_campaign_ai_tests.exe <data-root> <fixture> <mode>` 的 `island-carrier-alternate`、`island-carrier-alternate-replacement`、`island-carrier-reentrant`、`island-carrier-paused`、`island-pickup-reentrant`、`island-multicarrier-owner`、`island-multicarrier-death`、`island-multicarrier-removed`、`island-multicarrier-reordered`、`island-auto-multiwave` 共 10/10 通过。备用飞艇完成登艇及跨岛卸载；多飞艇单艘易主、死亡或移除后完成九人续运。夹具 `tmp/docs-artifacts/war3/ai-carrier-alternate/fixture.w3m`；复杂回调、真实地图、联机与原版调度待阶段验证。
+
+### AI 登艇回调改派多个载具
+
+路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`、`docs/ai.md`。载具候选在发令时复核订单轮次、归属和装载条件；回调改派的候选不再被本波次重新选取。Win32 Release 客户端及 CampaignAI 目标编译通过；`war3_campaign_ai_tests.exe <data-root> <fixture> <mode>` 的 `island-carrier-callback-multiple`、`island-carrier-alternate`、`island-carrier-alternate-replacement`、`island-carrier-reentrant`、`island-carrier-paused`、`island-pickup-reentrant`、`island-pickup-group`、`island-pickup-capacity`、`island-multicarrier-reordered`、`island-auto-multiwave` 共 10/10 通过。三飞艇场景中同步回调改派前两艘，第三艘完成登艇和跨岛卸载；夹具 `tmp/docs-artifacts/war3/ai-carrier-multiple/fixture.w3m`。多乘员复杂回调、真实地图、联机与原版调度待阶段验证。
