@@ -1148,7 +1148,7 @@ public:
     bool castSpell(std::uint32_t unit,std::uint32_t ability,std::uint32_t target=0,bool scriptOrder=false);
     bool castSpellAt(std::uint32_t unit,std::uint32_t ability,WorldPoint point);
     bool castPointOrder(std::uint32_t unit,std::uint32_t order,WorldPoint point,bool scriptOrder=false);
-    bool castImmediateOrder(std::uint32_t unit,std::uint32_t order);
+    bool castImmediateOrder(std::uint32_t unit,std::uint32_t order,bool scriptOrder=false);
     bool abilityAutocast(std::uint32_t unit,std::uint32_t ability,bool active);
     bool castOrder(std::uint32_t unit,std::uint32_t order,std::uint32_t target,bool scriptOrder=false);
     bool learnHeroSkill(std::uint32_t unit,std::uint32_t ability) {return learnSkill(unit,ability);}
