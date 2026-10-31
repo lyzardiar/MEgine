@@ -4119,6 +4119,10 @@ Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨�
 
 Win32 Release 客户端及测试目标编译通过；执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m`，再运行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m ethereal-ability`，1/1 通过。DotA 原图隔离会话使用 `I0LT`，目标在 1 秒时虚无、5 秒时恢复；记录 `tmp/docs-artifacts/war3/dota-ethereal/after.log`。阶段验证物品／派生、多个来源及生命周期、伤害／治疗倍率、地图覆盖、真实窗口／原版及联机。
 
+### 状态栏标题本地化（待阶段验证）
+
+路径：`src/game_loading.h/.cpp`、`src/game_buff_panel.cpp`；说明见[状态面板](buff-panel.md)。状态标题读取源 `InfoPanelStrings.fdf` 中的 `COLON_STATUS`，缺键时使用中文回退，标题绘制限制在图标左侧宽度内。Win32 Release 客户端增量编译通过；原资源文本已核对，尚未执行实际窗口或原版画面对照。阶段核对中文／英文、地图覆盖及长文本、不同窗口比例、八个状态和定时生命条布局。
+
 ### 持有物品的即时位置（待阶段验证）
 
 路径：`src/session_entities.cpp`、`tests/passive_tests.cpp`；说明见[失效物品句柄](dota-bkb-item-handles.md)。脚本查询持有物品位置时读取持有者当前坐标，丢弃后读取地面坐标。Win32 Release 客户端及 passive 测试目标编译通过，`war3_passive_tests <data-root> ../../tmp/docs-artifacts/war3/pawn-analysis/fixture.w3m invalid-item` 1/1，覆盖脚本移动后不推进模拟直接查询及丢弃。阶段对照原版持有坐标规则，验证移动／传送／运输、掉落／转移、死亡／移除、回调重入、地图脚本和联机。
