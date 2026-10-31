@@ -211,3 +211,7 @@ BootyBay 地形隔离检查通过原公共 `GetZeppelin`／`SingleMeleeAttack` �
 资料片 `NightElfX08.w3x` 的原 AI 在 `common.ai` 中将单位 ID `ubsp` 传给 `GetUpgradeGoldCost`。AI 科技费用查询现对不存在的科技返回零，有效科技继续按所属玩家等级计算。固定版 `Game.dll` 的金币／木材查询入口分别为 `0x6f8908c0`／`0x6f890940`，下游费用基数和增量读取在科技记录未找到时均返回零；注册与指令通过本地 PE 字节及 Capstone 核对。REA 已确认原件摘要，但当前会话的深度分析提供程序不可用。
 
 Win32 Release 客户端与 AI 控制测试编译通过，`war3_ai_control_tests` 4 通过、0 失败，包含单位 ID、零 ID 和有效科技两种费用。静音隔离会话中，第八章越过原先 89.78 秒的费用查询异常，推进到 400 秒，采样时玩家控制已恢复；日志 `tmp/docs-artifacts/war3/tft-ne4-next/ne8-cost-fixed.log`。实际战斗、关卡目标、产品窗口、合法科技等级／队列和原版动态行为仍待验证。
+
+自杀进攻请求只在本次实际纳入新成员时立即处理进攻队列；没有可加入成员时不重复计算已有队伍，已有成员的目标失效、移除及重试仍由每秒 AI 更新处理。该改动让空请求不再提前触发已有队伍的重选，行为时序仍需与原版对照。
+
+资料片 `HumanX04.w3x` 的隔离 60 秒模拟采样中，304 次正数量请求有 289 次未加入成员；相同插桩下，调用内队伍处理累计墙钟时间由 19,880 ms 降至 639 ms，JASS 线程推进累计墙钟时间由 19,905 ms 降至 657 ms。统计彼此包含，属于单次插桩开发采样而非完整帧率或原版基准；记录 `tmp/docs-artifacts/war3/tft-ne4-next/humanx04-suicide-profile.log` 和 `humanx04-suicide-after.log`。Win32 Release 客户端和 CampaignAI 测试编译通过，`armies` 2 通过、0 失败，覆盖新成员立即进攻、空请求保留既有订单及定期更新恢复队伍。实际对局、不同地图、队伍动态变化和原版时序仍待阶段验证。
