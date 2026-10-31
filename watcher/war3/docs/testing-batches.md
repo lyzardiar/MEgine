@@ -4294,3 +4294,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 队长主动回家与延迟卸载
 
 路径：`src/session.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`CaptainGoHome` 与低生命自动撤退共用运输收尾，重复回家时保留仍有效的返航和乘员追踪，等待卸载期间到家及到目标查询返回 false。Win32 Release 客户端与 CampaignAI 检查程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-flight-captain-home`、`island-flight-captain-home-paused`、`island-flight-retreat-paused-group`、`island-flight-retreat-paused`、`island-flight-retreat-paused-reassign`、`island-flight-retreat-home`、`island-flight-retreat-reassign`、`island-boarded-retreat-home`、`island-naval-retreat`、`island-naval-paused-retreat`、`island-auto-retreat`、`island-wave` 各 1/1，`armies`、`captain-home` 各 2/2，共 16/16。预置飞艇远海场景验证主动及重复回家、暂停恢复、两名低生命队员同船卸载后各自回家；夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`，日志 `tmp/docs-artifacts/war3/ai-captain-delayed/`。海上船只、眩晕、载具／乘员失效、复杂回调、真实战役及原版时序待批次验证。
+
+### AI 延迟卸载与队长撤退合并批次（2026-11-01）
+
+范围：`b9c5c64`、`b8a7d45`、`4327160`。同一工作区版本的 Win32 Release 客户端与 CampaignAI 检查程序编译通过；22 种模式共 24/24 通过，未加载 Game.dll。覆盖远海延迟卸载、主动与自动撤退、重复命令、载具暂停恢复与改派、双乘员、普通水运、续运和队长编组。各模式日志位于 `tmp/docs-artifacts/war3/ai-retreat-batch/`，夹具为 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`；使用预置单位与载具。海上船只的远海撤退、眩晕、载具／乘员失效、复杂回调、真实战役、联机和原版时序仍待阶段验证。
