@@ -4541,4 +4541,4 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 
 ### 兽族第五章至第八章格罗姆缓存（部分验证，引用待查）
 
-路径：`tests/orc_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release `war3_orc_campaign_chain_tests <data-root> chapter5 <new-absolute-user-dir>` 缓存检查 1 通过、0 失败；第五章胜利后，第八章独立会话从持久缓存恢复等级 7、用户数据 2468 的格罗姆，未加载 Game.dll。人工提前执行跳过过场触发器后，`bj_lastLoadedUnit` 指向该英雄，而原图通过 `GetLastCreatedUnit` 写入的 `udg_Grom` 指向另一单位，测试输出 PENDING；完整剧情时序、引用正确性、自然切关与窗口仍待核查。日志 `tmp/docs-artifacts/war3/orc05-long/grom-transfer-final.log`；不作为完整继承通过，本项为验证补充、不计功能批次。
+路径：`tests/orc_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release `war3_orc_campaign_chain_tests <data-root> chapter5 <new-absolute-user-dir>` 的缓存及胜利检查 1 通过、0 失败；第五章胜利后，第八章独立会话恢复等级 7、用户数据 2468 的格罗姆，使用灵魂宝石并进入净化过场后跳过，胜利和返回请求完成。`bj_lastLoadedUnit` 指向恢复的英雄，而原图脚本通过 `GetLastCreatedUnit` 将 `udg_Grom` 指向萨满（`oshm`），测试输出 PENDING；原版客户端、引用后续影响、自然战斗和窗口仍待核查。未加载 Game.dll；日志 `tmp/docs-artifacts/war3/orc05-long/grom-skip-final.log`。本项为验证补充，不计功能批次。
