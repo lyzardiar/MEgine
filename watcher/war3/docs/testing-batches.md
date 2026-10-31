@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 无效单位外观接口（待阶段验证）
+
+路径：`src/session_visual.cpp`、`tests/game_flow_tests.cpp`、`docs/live-world.md`。颜色、缩放、飞行高度及动画设置在单位无效时返回；飞行高度查询返回零。固定版 Game.dll 的十个接口入口及空对象分支已静态核对，原始脚本位于 `tmp/docs-artifacts/war3/ui-report-current/visual-disasm.py`。Win32 Release 客户端及 game-flow 测试程序编译通过，测试目标出现既有 signed/unsigned 警告。阶段执行 `tests/generate-game-flow-fixture.py --data-root <data-root>` 和 `war3_game_flow_tests.exe <data-root> <fixture.w3m>`；检查空、已移除、错误类型与有效单位、实际地图脚本和原版行为。本次未运行专项及客户端画面。
+
 ### 人族第六章结局与后续战役（待阶段验证）
 
 路径：`CMakeLists.txt`、`tests/human_campaign_chain_tests.cpp`；说明见 [战役流程](campaign-flow.md)。Win32 Release 定向目标编译通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> victory` 与 `defeat` 各 1 通过、0 失败，未加载 Game.dll。胜利场景由测试创建并击杀 100 个僵尸，检查原图计数、胜利对话、过场跳过、Human07 启动及阿尔萨斯等级／用户数据继承；测试将英雄移入相遇区域并消灭第七章目标建筑，检查 Human08 两位英雄的等级和用户数据继承；再消灭第八章五艘目标船只，检查原图胜利及 Human09 双英雄继承；失败场景调用地图动作预置 99 次，再实际完成最后一次转换并检查失败对话及重开。使用新建隔离用户目录；阶段核对自然完整对局、第七章基地攻防、第八章船只战斗、双方进度竞争、正常播放过场、输入与 UI、存档物品及原版一致性。
