@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 幻象复制与魔法免疫目标（待阶段验证）
+
+路径：`src/session_spells.cpp`、`docs/illusions-items.md`。幻象复制类型允许选择魔法免疫单位，仍执行英雄类别、敌友、自身及其他目标规则；其他魔法技能保留免疫检查。DotA_v6.83d 原图 A0G8 的技能说明注明无视魔法免疫。Win32 Release 客户端编译通过；原图隔离会话从酒馆购买变体精灵并学习 A0G8，分别对设置为敌方和友方的魔免英雄生成幻象，回归后英雄到达幻象位置、回归能力移除且复制能力恢复；同一会话中非英雄、自身和普通风暴之锤对魔免目标均被拒绝。未加载 Game.dll，探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-morphling-magic-immunity.cpp`、`dota-morphling-magic-immunity-*.log`。英雄等级、魔法、目标、免疫和友方关系由探针设置；原版幻象魔棒的免疫规则、其他免疫类型、技能事件、伤害倍率与实际窗口待阶段对照。
+
+
 ### 英雄类别目标与变体精灵复制（待阶段验证）
 
 路径：`src/session_spells.cpp`、`docs/spells.md`。技能目标指定英雄／非英雄类别而未指定空中或地面时，不再强加空地限制，仍执行类别、敌友、自身等筛选。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话通过酒馆购买变体精灵，学习 A0G8 后分别对敌方和设置为友方的英雄施法，均创建一个幻象并由地图脚本提供回归技能；施放回归后英雄到达幻象位置，非英雄与自身目标被拒绝。两项检查均未加载 Game.dll，探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-morphling-replicate.cpp` 和 `dota-morphling-replicate-return*.log`。英雄等级、魔法、目标和友方关系由探针调整；阶段核对空中／地面显式限制、其他目标掩码、魔免、幻象数值／持续、事件时序、实际窗口和原版行为。
