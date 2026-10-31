@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### DotA 钢背兽和月之女祭司技能（待阶段验证）
+
+路径：`src/session_spells.cpp`、`tests/dota_heroes_tests.cpp`、`tests/spell_tests.cpp`，实现说明见 [炼金术士](alchemist.md)。酸性炸弹派生技能按目标关系筛选；只列关系而未列空中／地面的目标集合可进入移动类别筛选。Win32 Release 客户端和两个测试目标增量编译通过。`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> bristle-spells` 与 `luna-spells` 各通过；隔离会话手动设置等级、状态及重置冷却，钢背兽鼻液叠至 4 层并到期恢复，月光和月蚀分别造成 75、300 伤害，未加载 Game.dll。`war3_spell_tests <data-root> <acid-speed-fixture.w3m> acid-speed` 通过，覆盖敌方酸性炸弹拒绝友军、隐藏施法者及正负速度效果。自然对局、其他目标类别及关系、免疫与面积影响、原版时序和画面待阶段验证。
+
 ### 英雄信息与物品栏布局（待阶段验证）
 
 路径：`src/game_commands.cpp`、`src/game_inventory_layout.h`。经验条缩进并收窄；物品图标、冷却及交互共用调整后的槽位坐标；攻击范围和攻防加成的正负号独立绘制，数值按可用宽度缩放。Win32 Release 客户端增量编译和差异检查通过。游戏内 Agent 复现尝试在创建 D3D9 设备时失败，普通和参考渲染器均未进入游戏，日志位于 `tmp/docs-artifacts/war3/agent-info/layout-user-fix-1031/client.log`。待设备可用时通过 Agent 核对单件／六件物品、经验条、攻击和护甲正负加成及拖拽，补充不同窗口尺寸、四族皮肤和原版布局对照。
