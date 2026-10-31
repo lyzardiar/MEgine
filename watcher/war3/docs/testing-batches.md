@@ -4362,3 +4362,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 已恢复睡眠线程的连续快照（待阶段验证）
 
 路径：`src/jass_runtime.cpp`、`tests/jass_thread_tests.cpp`、`docs/save-runtime-foundation.md`。已恢复且尚未唤醒的线程可再次采集；混合已恢复线程和现有运行线程时保留调用帧、待完成 native 与剩余时间。Win32 Release 客户端及 JASS 线程／session／clock 目标编译通过，检查分别 26/26、22/22、15/15；隔离检查验证二次恢复、继续执行和混合线程。OrcX01 原图开局四条睡眠线程在重建时钟、计时器和触发器后恢复，再编码内容一致；未唤醒原图线程或恢复世界。30 秒线程中的 `TriggerWaitForSound` 仍不支持采集，150 秒无活动线程。日志 `tmp/docs-artifacts/war3/orcx-state-audit/sleep-audit-final.log`、`jass-thread-tests-final.log`、`session-tests.log`、`clock-tests.log`。声音等待、native 调用栈及完整保存／载入仍待实现。
+
+### 声音等待线程的恢复（待阶段验证）
+
+路径：`src/jass_runtime.h/.cpp`、`src/session_sound.cpp`、`tests/jass_thread_tests.cpp`、`tests/sound_tests.cpp`、`docs/save-runtime-foundation.md`。`JSTH` 版本 2 记录 native 等待恢复模式并可读版本 1；声音等待在恢复后重新检查目标声音的播放位置，要求声音状态和句柄已恢复。Win32 Release 客户端及 JASS 线程／session／clock／sound 目标编译通过；JASS 线程 27/27、session 22/22、clock 15/15、声音定向检查 1/1。隔离测试手动创建目标声音并设置同一播放位置，核对同一模拟步结束、等待期间再次采集、重入模式不匹配拒绝及版本 1 续执行。OrcX01 30 秒三条睡眠线程已能采集，目标未重建声音对象而拒绝映射；日志 `tmp/docs-artifacts/war3/sound-wait-resume/`。真实声音对象／播放状态持久化、完整原图线程续执行、其他 native 栈和存档入口待实现或阶段验证。

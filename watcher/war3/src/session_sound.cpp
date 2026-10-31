@@ -34,6 +34,7 @@ void ScriptSession::bindSoundNatives() {
     bind("StopSound","nothing",{"sound","boolean","boolean"},[this,sound](auto& vm,auto args){auto value=sound(args[0]);if(value)requireAudio().stop(value,args[1].bits!=0,args[2].bits!=0);return vm.nothing();});
     bind("KillSoundWhenDone","nothing",{"sound"},[this,sound](auto& vm,auto args){auto value=sound(args[0]);if(value)requireAudio().releaseWhenDone(value);return vm.nothing();});
     bind("TriggerWaitForSound","nothing",{"sound","real"},[this,sound](auto& vm,auto args){auto value=sound(args[0]);float offset=std::bit_cast<float>(args[1].bits);if(!std::isfinite(offset))throw std::runtime_error("Invalid sound wait offset");for(;;){updateAudio();auto playback=value && value->retired?value->detachedPlayback.lock():value;if(!playback || !playback->voice || !playback->voice->playing())break;auto [position,length]=playback->voice->milliseconds();if(double(position)+double(offset)*1000>=double(length))break;vm.sleep(1./32);}return vm.nothing();});
+    if(runtime_.module().functionId("TriggerWaitForSound")!=jass::none)runtime_.markNativeRestartable("TriggerWaitForSound");
     bind("GetSoundIsPlaying","boolean",{"sound"},[sound](auto& vm,auto args){auto value=sound(args[0]);return vm.boolean(value && value->voice && value->voice->playing());});
     bind("GetSoundIsLoading","boolean",{"sound"},[sound](auto& vm,auto args){sound(args[0]);return vm.boolean(false);});
     bind("GetSoundDuration","integer",{"sound"},[this,sound](auto& vm,auto args){return vm.integer(int(requireAudio().duration(sound(args[0]))));});
