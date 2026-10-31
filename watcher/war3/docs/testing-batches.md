@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### 按类型创建物品并加入背包（待阶段验证）
+
+路径：`src/session_inventory.cpp`、`tests/control_tests.cpp`。`UnitAddItemById` 对无法加入背包的物品返回空句柄；`UnitAddItemToSlotById` 在指定槽位无法接收时返回失败。两者先在单位位置创建物品，未加入的物品保留在地面。固定版 `Game.dll` 的对应入口及创建／失败分支证据为 `ev_efad0295cc2918cdf7c64236f452c8392b89876e285d382d7c4f42f631aedab1`、`ev_fdeed7a158306a774b8b53cf756dd479bebd62fb9092ec06eefe25fdf6d1cc82`；物品落点、拾取回调重入和立即消耗的完整原版语义仍需对照。Win32 Release 客户端及控制测试编译通过；`war3_control_tests <data-root> <control-fixture> item-add-native` 1 通过、0 失败，覆盖没有背包、满背包、占用槽位、无效类型、普通拾取和金币立即消耗，不加载 Game.dll。阶段检查剩余槽位、地图自定义物品、地面枚举／拾取事件、单位及物品在事件中移除、原版和真实窗口。
+
+补查 `war3_commerce_tests <data-root> tmp/docs-artifacts/war3/item-add-fix/commerce-fixture.w3m` 在 `Blight regeneration not consumed` 断言失败，发生在该程序金币物品检查之前；改动前的 `session_inventory.cpp` 使用同一夹具复跑也出现相同失败，基线记录为 `tmp/docs-artifacts/war3/item-add-fix/baseline-check.log`。该失败保留待诊断，不记为通过。
+
+
 ### 人族战役第九章结局与解锁（待阶段验证）
 
 路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原版战役上下文下，隔离会话从第六章连续推进到第九章：通过守护者事件触发霜之哀伤剧情，核对替换后英雄等级与物品句柄，再击杀玛尔加尼斯和目标建筑，核对胜利、结尾影片请求、返回战役选择及亡灵战役／首章和人族结尾解锁。Win32 Release 测试目标编译通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> victory` 和 `defeat` 各 1 通过、0 失败，未加载 Game.dll。测试通过移动、无敌和直接击杀加速，未覆盖自然战斗、原版缓存格式、真实画面、影片播放或窗口自动切关，留待阶段验证。
