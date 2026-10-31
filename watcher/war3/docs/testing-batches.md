@@ -3812,3 +3812,7 @@ Win32 Release 客户端及测试目标编译通过；执行 `python tests/genera
 ### 多选头像的双目标物品（待阶段验证）
 
 路径：`src/game_selection_panel.cpp`；说明见 [多选面板](selection-panel.md)。Win32 Release 客户端增量编译通过；游戏内 Agent 对照隔离地图，双目标物品通过头像选中单位并生效，纯地点物品不接受单位头像且未消耗。阶段核对真实地图、原版鼠标交互、Shift 排队、单位失效、纯单位物品和联机同步。
+
+### 多选英雄头像光效（待阶段验证）
+
+路径：`src/game_selection_panel.cpp`；说明见 [多选面板](selection-panel.md)。Win32 Release 增量编译通过；游戏内 Agent 截图确认两个英雄及英雄／步兵混选的头像与生命条可见，点击目标物品仍生效。阶段核对四族及自定义皮肤、12 个单位、纹理缺失／设备恢复、窗口比例、交互与原版光效。
