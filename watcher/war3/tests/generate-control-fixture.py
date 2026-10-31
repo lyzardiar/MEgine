@@ -23,6 +23,10 @@ destructable spellTree=null
 integer blightEffects=0
 integer removeSoulOnPickup=0
 integer soulPickups=0
+integer conversionSummons=0
+integer conversionRemoveSource=0
+unit conversionSource=null
+unit conversionSummoned=null
 endglobals
 function quiet takes unit u returns nothing
     call SetUnitPathing(u,false)
@@ -46,6 +50,20 @@ function item_picked takes nothing returns nothing
         endif
     endif
 endfunction
+function conversion_summoned takes nothing returns nothing
+    if GetUnitTypeId(GetSummonedUnit())=='nzom' then
+        set conversionSummons=conversionSummons+1
+        set conversionSource=GetSummoningUnit()
+        set conversionSummoned=GetSummonedUnit()
+        if conversionRemoveSource!=0 then
+            call RemoveUnit(conversionSource)
+            call SetUnitOwner(conversionSummoned,Player(1),true)
+        endif
+    endif
+endfunction
+function set_conversion_callback takes integer value returns nothing
+    set conversionRemoveSource=value
+endfunction
 function set_soul_callback takes integer value returns nothing
     set removeSoulOnPickup=value
 endfunction
@@ -54,6 +72,9 @@ endfunction
 function main takes nothing returns nothing
     local trigger t=CreateTrigger()
     local trigger itemTrigger=CreateTrigger()
+    local trigger summonTrigger=CreateTrigger()
+    call TriggerRegisterPlayerUnitEvent(summonTrigger,Player(0),EVENT_PLAYER_UNIT_SUMMON,null)
+    call TriggerAddAction(summonTrigger,function conversion_summoned)
     call TriggerRegisterPlayerUnitEvent(itemTrigger,Player(0),EVENT_PLAYER_UNIT_PICKUP_ITEM,null)
     call TriggerAddAction(itemTrigger,function item_picked)
     call FogEnable(false)

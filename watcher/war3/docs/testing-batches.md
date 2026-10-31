@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 黑暗转换召唤事件（待阶段验证）
+
+路径：`src/session_spell_effects.cpp`、`tests/generate-control-fixture.py`、`tests/control_tests.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [黑暗转换](dark-conversion.md)。黑暗转换产物记录施法来源及能力，并通过召唤事件进入地图脚本。Win32 Release 客户端与两个测试目标编译通过；`war3_control_tests <data-root> <fixture.w3m> conversion` 和 `war3_campaign_ai_tests <data-root> human06-conversion` 各 1 通过、0 失败，未加载 Game.dll。原图 314.75 秒检查隐藏施法者被地图脚本移除、僵尸转归玩家 2；夹具覆盖召唤上下文、回调移除／转移和施法者提前移除。阶段核对原版事件与死亡时序、来源死亡／易主、回调重入、自定义对象、联机及完整战役；玛尔加尼斯主动转换及任务计数仍待实现验证。
+
 ### 目标追击接近点（待阶段验证）
 
 路径：`src/session_combat_orders.cpp`、`tests/movement_avoidance_tests.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [战斗](combat.md)。直线接近点不可用时检查目标周围可站立位置，并以实际路线终点验证接近距离；找不到合适位置沿用现有路线结果。Win32 Release 客户端及测试目标编译通过；`war3_campaign_ai_tests <data-root> human06-approach` 1 通过、0 失败，原图受阻建筑约在 452.75 秒被锁定并摧毁；`war3_movement_avoidance_tests <data-root> <fixture.w3m> approach|sealed|chase` 各 1 通过、0 失败，覆盖绕障、封闭与开放以及移动目标和单位避让；`war3_campaign_ai_tests <data-root> <fixture.w3m> island-wave` 1 通过、0 失败，覆盖地面接近与载具登乘，未加载 Game.dll。阶段核对大型地图密集单位的不可达目标搜索成本、不同碰撞／移动类型、动态障碍、施法／物品／运输等共享追击消费者、完整战役及原版寻路。
