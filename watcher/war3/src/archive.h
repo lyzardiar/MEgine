@@ -8,7 +8,9 @@
 namespace war3 {
 class Archive {
     HANDLE handle_ = nullptr;
-    fs::path path_;
+    fs::path path_,identityPath_;
+    std::optional<BY_HANDLE_FILE_INFORMATION> identity_;
+    std::string memoryDigest_;
 public:
     explicit Archive(const fs::path& path);
     Archive(std::shared_ptr<const Bytes> bytes, std::string_view label);
@@ -19,6 +21,7 @@ public:
     std::optional<Bytes> readWavForAudio(const std::string& name,std::string& diagnostic) const;
     std::vector<std::string> members(const std::string& pattern) const;
     const fs::path& path() const { return path_; }
+    std::string digest() const;
 };
 struct Member {
     Bytes bytes;
@@ -38,6 +41,7 @@ public:
     std::unique_ptr<Archives> fork() const;
     const fs::path& root() const;
     fs::path mapPath() const;
+    std::string mapDigest() const;
     void mountMap(const fs::path& path);
     void mountMap(std::shared_ptr<const Bytes> bytes, std::string_view label);
     void unmountMap();

@@ -10,14 +10,18 @@
 #include <mutex>
 
 namespace war3 {
-Archive::Archive(const fs::path& path) : path_(path) {
-    if (!SFileOpenArchive(path.c_str(), 0, MPQ_OPEN_READ_ONLY, &handle_)) throw std::runtime_error("Cannot mount " + utf8(path.wstring()) + ": " + winError());
+namespace {
+std::optional<BY_HANDLE_FILE_INFORMATION> archiveFileInfo(const fs::path& path) {auto handle=CreateFileW(path.c_str(),FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);if(handle==INVALID_HANDLE_VALUE)return {};BY_HANDLE_FILE_INFORMATION info{};bool ok=GetFileInformationByHandle(handle,&info)!=0;CloseHandle(handle);return ok?std::optional{info}:std::nullopt;}
+bool sameArchiveFile(const BY_HANDLE_FILE_INFORMATION& a,const BY_HANDLE_FILE_INFORMATION& b) {return a.dwVolumeSerialNumber==b.dwVolumeSerialNumber && a.nFileIndexHigh==b.nFileIndexHigh && a.nFileIndexLow==b.nFileIndexLow && a.nFileSizeHigh==b.nFileSizeHigh && a.nFileSizeLow==b.nFileSizeLow && a.ftLastWriteTime.dwHighDateTime==b.ftLastWriteTime.dwHighDateTime && a.ftLastWriteTime.dwLowDateTime==b.ftLastWriteTime.dwLowDateTime;}
+}
+Archive::Archive(const fs::path& path) : path_(path),identityPath_(fs::absolute(path)) {
+    auto before=archiveFileInfo(identityPath_);if (!SFileOpenArchive(path.c_str(), 0, MPQ_OPEN_READ_ONLY, &handle_)) throw std::runtime_error("Cannot mount " + utf8(path.wstring()) + ": " + winError());auto after=archiveFileInfo(identityPath_);if(before && after && sameArchiveFile(*before,*after))identity_=*after;
 }
 // StormLib's map provider opens a named pagefile section and retains its own view.
 // The section is page-rounded; validate transferred length and hashes before mounting.
 Archive::Archive(std::shared_ptr<const Bytes> bytes,std::string_view label) {
     if(!bytes || bytes->empty() || bytes->size()>256u*1024u*1024u || label.empty() || label.size()>1024 || label.find('\0')!=std::string_view::npos)throw std::runtime_error("Invalid in-memory map archive");
-    path_=fs::path(wide(label));
+    path_=fs::path(wide(label));memoryDigest_=sha256(*bytes);
     std::array<unsigned char,16> random{};if(BCryptGenRandom(nullptr,random.data(),ULONG(random.size()),BCRYPT_USE_SYSTEM_PREFERRED_RNG)<0)throw std::runtime_error("Cannot create in-memory archive identifier");
     constexpr wchar_t hex[]=L"0123456789abcdef";std::wstring name=L"Local\\War3Map-";for(auto byte:random){name+=hex[byte>>4];name+=hex[byte&15];}name+=L".w3x";
     struct Handle {HANDLE value;~Handle(){if(value)CloseHandle(value);}} mapping{CreateFileMappingW(INVALID_HANDLE_VALUE,nullptr,PAGE_READWRITE,0,DWORD(bytes->size()),name.c_str())};
@@ -27,6 +31,9 @@ Archive::Archive(std::shared_ptr<const Bytes> bytes,std::string_view label) {
     auto source=L"map://"+name;if(!SFileOpenArchive(source.c_str(),0,MPQ_OPEN_READ_ONLY,&handle_))throw std::runtime_error("Cannot mount in-memory map "+std::string(label)+": "+winError());
 }
 Archive::~Archive() { if (handle_) SFileCloseArchive(handle_); }
+std::string Archive::digest() const {
+    if(!memoryDigest_.empty())return memoryDigest_;if(!identity_)throw std::runtime_error("Mounted map identity unavailable");auto handle=CreateFileW(identityPath_.c_str(),FILE_READ_ATTRIBUTES,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);if(handle==INVALID_HANDLE_VALUE)throw std::runtime_error("Cannot lock mounted map for identity");struct Close {HANDLE value;~Close(){CloseHandle(value);}}close{handle};BY_HANDLE_FILE_INFORMATION before{},after{};if(!GetFileInformationByHandle(handle,&before) || !sameArchiveFile(*identity_,before))throw std::runtime_error("Mounted map changed since opening");auto result=sha256(identityPath_);if(!GetFileInformationByHandle(handle,&after) || !sameArchiveFile(before,after))throw std::runtime_error("Mounted map changed during identity check");return result;
+}
 std::optional<Bytes> Archive::read(const std::string& name) const {
     HANDLE handle = nullptr;
     if (!SFileOpenFileEx(handle_, name.c_str(), SFILE_OPEN_FROM_MPQ, &handle)) {
@@ -94,6 +101,7 @@ Archives::Archives(const fs::path& root) {
 std::unique_ptr<Archives> Archives::fork() const {return std::unique_ptr<Archives>(new Archives(common_,map_));}
 const fs::path& Archives::root() const {return common_->root;}
 fs::path Archives::mapPath() const {return map_?map_->archives.front()->path():fs::path{};}
+std::string Archives::mapDigest() const {if(!map_)throw std::runtime_error("Mounted map identity unavailable");std::lock_guard lock(map_->mutex);return map_->archives.front()->digest();}
 size_t Archives::commonCount() const {return common_->archives.size();}
 size_t Archives::cachedBytes() const {if(map_){std::scoped_lock lock(common_->mutex,map_->mutex);return common_->bytes+map_->bytes;}std::lock_guard lock(common_->mutex);return common_->bytes;}
 void Archives::mountMap(const fs::path& path) {

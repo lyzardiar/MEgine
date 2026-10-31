@@ -4458,3 +4458,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 地形网格组合恢复（待批次验证）
 
 路径：`src/world.h`、`src/world_blight.cpp`、`tests/world_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SGRD` 将地表、荒芜、寻路状态与调用方地图摘要组合，在临时世界验证后原子提交；临时副本的内存峰值未测。Win32 Release 客户端及 world 测试目标编译通过，`war3_world_tests <data-root> <output> world_terrain_grid_transaction` 1/1，覆盖 BootyBay 原图、模拟摘要不匹配、子组件损坏回滚和动态占地保留；日志 `tmp/docs-artifacts/war3/terrain-grid-transaction/world-tests-final.log`。待批次验证真实地图摘要来源、资源峰值、实际画面、单位对象与完整保存／加载。
+
+### 挂载地图身份与地形网格恢复（批次部分验证）
+
+路径：`src/archive.h/.cpp`、`src/world.h`、`src/world_blight.cpp`、`tests/archive_tests.cpp`、`tests/world_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。组合恢复可使用挂载地图 SHA-256；磁盘来源核对文件身份与修改元数据，内存来源对挂载字节计算摘要。Win32 Release 客户端及测试目标编译通过；BootyBay 磁盘／内存摘要一致，OrcX01 内存地图拒绝跨图恢复，修改文件时间后拒绝身份校验。合并 `9ff47d8`、`9e3e876` 和本项回归，world 29/29、archive 9/9；日志 `tmp/docs-artifacts/war3/mounted-map-identity/`。测试覆盖地形／荒芜／寻路组合与事务、现有寻路及归档操作；大地图资源峰值／加载性能、实际存档和窗口、完整对象及跨区恢复仍待实现或验证。

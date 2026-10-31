@@ -97,3 +97,7 @@ Win32 Release 客户端及 world 测试目标编译通过；`war3_world_tests <d
 `SGRD` 将 `STER`、`SBLT` 和 `SPTH` 组合并绑定调用方提供的 64 位小写 SHA-256 地图摘要。恢复先在临时世界校验并应用全部组件，再提交地表、荒芜及寻路状态；摘要不一致或任一子组件失败时不改变目标世界。目标现有动态占地与所有者保留，纹理槽约束和各组件限制继续生效。调用方负责计算实际地图摘要、保证恢复时机安全并与单位及其余对象恢复协调；该接口尚未接入保存／载入入口。临时世界会复制地图数据，实际大地图的 32 位内存峰值及耗时尚未验证。
 
 Win32 Release 客户端和 world 测试目标编译通过；`war3_world_tests <data-root> <output> world_terrain_grid_transaction` 1 通过、0 失败。BootyBay 隔离世界覆盖动态纹理、荒芜、路径、地图摘要不匹配、重封装后子组件摘要损坏的事务拒绝及动态占地所有权保留；测试使用固定模拟摘要，未计算或验证真实地图文件身份，未加载 Game.dll。日志 `tmp/docs-artifacts/war3/terrain-grid-transaction/world-tests-final.log`。实际存档、地图身份来源、资源峰值、画面和完整对象恢复待实现或阶段验证。
+
+`encodeMountedTerrainGridState`／`restoreMountedTerrainGridState` 从已挂载地图获取 SHA-256。内存地图在挂载时对原始字节计算摘要；磁盘地图在需要摘要时检查挂载前后的文件标识、大小和最后修改时间，持有只读共享句柄期间计算摘要并再次核验。原图文件与相同字节的内存挂载可互通；挂载后检测到文件更改时拒绝。磁盘校验依赖文件标识和修改元数据，不能证明被修改后刻意恢复了相同元数据的内容与挂载时一致；摘要计算期间的锁不延续到后续恢复。内存地图挂载增加一次完整字节哈希，大地图加载性能及存档时的内存峰值待测。
+
+Win32 Release 客户端及 world／archive 测试目标编译通过；原图磁盘／内存挂载摘要一致，资料片 OrcX01 归档成员摘要不同且交叉恢复被拒绝；文件时间变更后校验拒绝。合并回归 `war3_world_tests <data-root> <output>` 29/29、`war3_archive_tests <scratch> <data-root>` 9/9，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/mounted-map-identity/`。实际保存入口、地图文件变更的全部竞争情况、性能及完整世界恢复待实现或验证。
