@@ -4354,3 +4354,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 原图初始化计时器与存档组件验证（待阶段验证）
 
 路径：`src/session_game.cpp`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`、`docs/simulation-clock-persistence.md`。允许 main 前未操作的初始化计时器存在，重建计时器后须恢复全局及其他引用；已操作计时器、计时器窗口和事件仍拒绝。Win32 Release 客户端和 clock 测试编译通过，`war3_clock_tests <data-root> <output-root>` 15/15；隔离测试检查初始化句柄替换、损坏及活动计时器及到期事件拒绝。OrcX01 原图 0／30／150 秒的时钟、计时器、触发器和计时事件组件均可重建且重编码一致，分别有 21／20／18 个计时器、1747／1749／1749 个触发器及回调句柄、各 145 个计时事件；未加载 Game.dll。日志 `tmp/docs-artifacts/war3/orcx-state-audit/audit-final.log`、`clock-tests-final.log`。0／30 秒睡眠线程未恢复；世界对象、其他事件、全部全局引用、实际存档入口和原版格式待实现或阶段验证。
+
+### 游戏事件对象与原图用户存档触发器（待阶段验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`tests/save_exists_tests.cpp`、`docs/save-runtime-foundation.md`。`SGEV` 重建游戏事件编号、登记顺序和触发器归属，返回事件句柄映射；支持与已重建计时事件共存。Win32 Release 客户端及 clock／save-exists 测试程序编译通过；clock 15/15、OrcX01 原图存档事件 1/1，未加载 Game.dll。隔离会话检查游戏事件顺序、与计时事件共存、销毁清理及损坏拒绝；原图测试重建触发器和游戏事件，测试函数设置区域名、目录及区域计数，手动分发保存事件后由原 `User Save` 动作复制隔离区域文件。目录链接创建跳过；日志 `tmp/docs-artifacts/war3/game-event-rebuild/clock-tests.log`、`orcx-tests-final.log`。真实保存／载入、世界对象、其他事件与跨区恢复待实现或阶段验证。

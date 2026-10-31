@@ -1335,6 +1335,8 @@ public:
     Bytes encodeTimerEvents(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeGameEvents(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildGameEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeTriggers(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::pair<std::string,std::uint32_t>,std::uint32_t> restoreTriggers(std::span<const std::uint8_t> bytes);
     double simulationTime() const {return simulationTime_;}
