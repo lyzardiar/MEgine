@@ -56,6 +56,17 @@ function InstallBoardCarrierOverride takes unit target returns nothing
     call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_ISSUED_TARGET_ORDER)
     call TriggerAddAction(t,function OverrideBoardCarrier)
 endfunction
+function OverrideShipStop takes nothing returns nothing
+    if GetIssuedOrderId()==851972 then
+        set stopOverrideCount=stopOverrideCount+1
+        call IssuePointOrder(GetTriggerUnit(),"move",6000,1800)
+    endif
+endfunction
+function InstallShipStopOverride takes unit target returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_ISSUED_ORDER)
+    call TriggerAddAction(t,function OverrideShipStop)
+endfunction
 function OverrideBoardStop takes nothing returns nothing
     if GetIssuedOrderId()==851972 then
         set stopOverrideCount=stopOverrideCount+1
