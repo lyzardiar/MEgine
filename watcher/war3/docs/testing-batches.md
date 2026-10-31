@@ -4398,3 +4398,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 失效单位位置与运动接口（待阶段验证）
 
 路径：`src/session_entities.cpp`、`tests/clock_tests.cpp`、`docs/jass.md`、`docs/implementation-roadmap.md`。`SetUnitX/Y`、`SetUnitAcquireRange`、`SetUnitTurnSpeed`、`SetUnitPropWindow` 和 `KillUnit` 对无效单位安全返回；转向与窗口的查询对无效单位返回零。固定版 Game.dll 对应入口均先解析单位，失败直接返回，反汇编记录 `tmp/docs-artifacts/war3/unit-position-handles/`。Win32 Release 客户端与 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 20/20；隔离检查覆盖空、已移除和其他类型句柄，以及有效单位的位置与运动设置，未加载 Game.dll。真实地图相关脚本、其他版本和实际玩法待阶段验证。
+
+### 失效单位即时命令（待阶段验证）
+
+路径：`src/session_entities.cpp`、`src/session_orders.cpp`、`tests/clock_tests.cpp`、`docs/jass.md`、`docs/implementation-roadmap.md`。字符串与数字即时命令对空、已移除及类型不匹配单位返回 false，保留有效单位命令处理；固定版 Game.dll 的 `0x6f1e9080`／`0x6f1e90a0` 对应入口及解析失败分支见 `tmp/docs-artifacts/war3/ability-scan-current/order-full.txt`。Win32 Release 客户端和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 21/21；隔离测试验证失败后定时触发器继续、有效单位仍可接受 stop。OrcX01 会话调用原 `Blizzard.j` `IssueImmediateOrderBJ`，有效／已移除／空单位返回值为 1／0／0，会话继续推进 0.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/immediate-order-handles/`。自然对局、其他订单及原版时序待阶段验证。

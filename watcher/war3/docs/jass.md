@@ -1,5 +1,7 @@
 # 原生 JASS 脚本链路
 
+`IssueImmediateOrder` 与 `IssueImmediateOrderById` 在单位句柄无效时返回 false，后续脚本继续执行；有效单位沿用原命令流程。固定版 Game.dll 的字符串入口 `0x6f1e9080` 转入数字入口 `0x6f1e90a0`，后者在单位解析失败时返回，指令记录 `tmp/docs-artifacts/war3/ability-scan-current/order-full.txt`。Win32 Release 客户端编译通过，clock 21/21；OrcX01 隔离会话调用原 `Blizzard.j` 的 `IssueImmediateOrderBJ`，有效单位返回成功、已移除和空单位返回失败，随后会话推进 0.25 秒；未加载 Game.dll。自然对局和原版完整命令时序待验证。
+
 单位位置、索敌范围、转向速度和转弯窗口接口及 `KillUnit` 对空、已移除或类型不匹配的单位句柄安全返回；对应实数查询返回零，有效单位继续更新实际状态。固定版 Game.dll 的 `SetUnitX/Y`（`0x6f1f7c70`／`0x6f1f7cd0`）、`KillUnit`（`0x6f1efcd0`）和相关运动接口在单位解析失败后直接返回；相关反汇编记录于 `tmp/docs-artifacts/war3/unit-position-handles/`。Win32 Release 客户端及 clock 目标编译通过，隔离检查 20/20；真实地图及其他版本行为待阶段验证。
 
 无过滤器的单位编组枚举直接遍历当前单位，按原有句柄顺序、范围及数量限制生成结果并替换目标编组；有过滤器时继续保留枚举开始时的单位快照和过滤回调上下文。Win32 Release 客户端及游戏流程测试通过，包含空过滤器、数量为零与一、编组替换和单位创建／移除。隔离采样中，2,001 个单位下重复 2,000 次范围枚举，修改前后分别为 219 ms 和 30 ms，结果均为 2,000 个单位且首句柄相同；记录位于 `tmp/docs-artifacts/war3/group-enum-fast/`。这是单次本机采样，实际地图帧率、嵌套过滤器、原版顺序与联网仍待阶段验证。

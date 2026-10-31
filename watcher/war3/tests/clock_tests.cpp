@@ -44,6 +44,50 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("immediate_order_rejects_invalid_units_without_stopping_trigger",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type timer extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ native Player takes integer id returns player
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native RemoveUnit takes unit u returns nothing
+ native CreateTimer takes nothing returns timer
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code action returns triggeraction
+ native TriggerRegisterTimerEvent takes trigger t, real timeout, boolean periodic returns event
+ native IssueImmediateOrder takes unit u, string order returns boolean
+ native IssueImmediateOrderById takes unit u, integer order returns boolean
+ globals
+ unit removed=null
+ unit active=null
+ integer continued=0
+ boolean activeOrder=false
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function act takes nothing returns nothing
+ call IssueImmediateOrder(removed,"stop")
+ call IssueImmediateOrderById(removed,851972)
+ set activeOrder=IssueImmediateOrder(active,"stop")
+ set continued=continued+1
+ endfunction
+ function setup takes nothing returns nothing
+ local trigger t=CreateTrigger()
+ set removed=CreateUnit(Player(0),'hfoo',0.0,0.0,0.0)
+ set active=CreateUnit(Player(0),'hfoo',20.0,0.0,0.0)
+ call RemoveUnit(removed)
+ call TriggerAddAction(t,function act)
+ call TriggerRegisterTimerEvent(t,0.03125,false)
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"invalid-order.j",source,"authored invalid immediate order test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("setup");auto timer=vm.invoke("CreateTimer");for(auto id:{0u,vm.global("removed").bits,timer.bits}){auto invalid=vm.handle("unit",id);require(!vm.invoke("IssueImmediateOrder",std::array{invalid,vm.string("stop")}).bits && !vm.invoke("IssueImmediateOrderById",std::array{invalid,vm.integer(851972)}).bits,"Invalid immediate order was accepted");}session.advance(.25);require(vm.global("continued").bits==1,"Immediate order stopped trigger");require(vm.global("activeOrder").bits,"Immediate order rejected live unit");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during order fixture");
+    });
     test("unit_motion_natives_ignore_invalid_handles",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle
