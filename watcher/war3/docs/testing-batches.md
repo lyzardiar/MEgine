@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 地图技能的原型命令（待阶段验证）
+
+路径：`src/session_spell_info.cpp`、`docs/spells.md`。非 Channel 技能的命令字段为空时从源能力原型读取命令；非空地图命令继续按原值解析，Channel 使用自身数据字段。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话分别创建英雄并学习 A1SW、A06V、A0G2、A01F、A02A，对合法单位或地点施法，五项均进入冷却，未加载 Game.dll。探针和日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-inherited-orders.cpp`、`dota-inherited-orders.log`；探针直接创建单位并调整等级／魔法，不证明完整技能脚本效果。A0G6 已越过命令解析，仍因酸性炸弹参数校验失败，保持待实现。阶段核对源表缺值、显式命令覆盖、自定义原型、伤害／事件、实际窗口、联机及原版行为。
+
+
 ### 地图 Channel 技能的基础命令读取（待阶段验证）
 
 路径：`src/session_spell_info.cpp`、`docs/channels.md`。Channel 能力先读取当前等级的源 `DataF` 命令，再校验和构建技能；未知命令仍明确报错。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话分别创建英雄 E002、H00V、O015、U00K，学习 A1AO、A1AT、A1AA、A06R 并发起无目标施法，四项均进入冷却，未加载 Game.dll。探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/`；它直接创建英雄并调整等级／魔法，不证明完整技能效果。阶段核对地图脚本的持续效果、不同目标类型、事件／中断、等级覆盖、界面与联机，并与原版对照。
