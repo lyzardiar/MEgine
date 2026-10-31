@@ -4488,3 +4488,5 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 单位技能与物品冷却状态（待批次验证）
 
 路径：`src/session.h`、`src/session_item_snapshot.cpp`、`tests/clock_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SUCD` 在相同地图和模拟时钟下恢复已重建单位的技能及物品冷却；错误映射或损坏数据在应用前拒绝。Win32 Release 客户端与 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 29/29；物品恢复测试覆盖技能／物品冷却重编码、无效映射与摘要损坏后的状态保留。待批次验证单位完整恢复、冷却实际使用、原版地图、保存／加载入口及多人行为。
+
+冷却恢复补充检查：Win32 Release clock 29/29，隔离会话验证圣光术在冷却中被阻止、到期后治疗并重新冷却；HumanX01、HumanX03、UndeadX06 原图 150 秒冷却状态与剩余时间通过占位单位映射核对。复现探针 `tmp/docs-artifacts/war3/unit-state-audit/probe/`，运行参数为游戏数据目录及地图名。实际单位对象重建、物品冷却使用、完整保存／加载和窗口仍待验证。
