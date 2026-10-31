@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### AI 无效科技费用与资料片第八章（待验证）
+
+路径：`src/session_ai_natives.cpp`、`tests/ai_control_tests.cpp`、`docs/ai.md`。不存在的科技 ID 在金币和木材费用查询中返回零；有效科技使用当前等级及源费用。Win32 Release 客户端与 AI 控制测试编译通过；`war3_ai_control_tests <data-root> <ai-control-fixture>` 4 通过、0 失败。`NightElfX08.w3x` 静音隔离会话越过此前 89.78 秒的费用异常，空闲推进到 400 秒，日志 `tmp/docs-artifacts/war3/tft-ne4-next/ne8-cost-fixed.log`。阶段核对原版不同 ID／等级／排队状态的返回值、真实对局、实际窗口和战役完整任务。
+
 ### 空间声音播放转移（待验证）
 
 路径：`src/sound.cpp`、`tests/sound_tests.cpp`、`docs/script-sound.md`。空间声音在 `KillSoundWhenDone` 或带淡出的释放后，保留方向、音锥和锥外音量。Win32 Release 客户端和声音测试目标编译通过；`war3_sound_tests.exe <data-root> <scratch-root> sound_detached_spatial_cone` 1 通过、0 失败，以原 WAV 和静默时钟检查两种释放方式及监听者前后移动；初次测试因测试夹具意外打开本机音频设备失败，改为纯内存播放后通过。阶段核对真实音频输出、锥角和距离衰减、附着单位移动／删除、循环与淡出、脚本句柄生命周期和原版行为。
