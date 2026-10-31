@@ -46,12 +46,15 @@ endfunction
     test("runtime_reference_global_snapshot_transaction",[]{
         const std::string source=R"jass(type widget extends handle
 type unit extends widget
+type playercolor extends handle
 native Make takes integer id returns unit
+native Color takes integer id returns playercolor
 native Run takes code action returns nothing
 globals
 integer result=3
 unit actor=null
 widget alias=null
+playercolor color=null
 unit array group
 code callback=null
 string text=null
@@ -62,6 +65,7 @@ endfunction
 function mutate takes nothing returns nothing
 set actor=Make(17)
 set alias=actor
+set color=Color(17)
 set group[2]=actor
 set group[8191]=Make(18)
 set callback=function action
@@ -72,11 +76,12 @@ function execute takes nothing returns nothing
 call Run(callback)
 endfunction
 )jass";
-        auto bind=[](Runtime& r){r.bind("Make",[](auto& vm,auto args){return vm.handle("unit",args[0].bits);});r.bind("Run",[](auto& vm,auto args){vm.invoke(args[0]);return vm.nothing();});r.initialize();};
+        auto bind=[](Runtime& r){r.bind("Make",[](auto& vm,auto args){return vm.handle("unit",args[0].bits);});r.bind("Color",[](auto& vm,auto args){return vm.handle("playercolor",args[0].bits);});r.bind("Run",[](auto& vm,auto args){vm.invoke(args[0]);return vm.nothing();});r.initialize();};
         Runtime original(compile(source)),target(compile(source));bind(original);bind(target);original.invoke("mutate");rejects([&]{original.encodeGlobals();},"handle mapping");auto snapshot=original.encodeGlobals([](std::string_view,std::uint32_t id){return id+1000;});auto before=target.encodeGlobals();
         rejects([&]{target.restoreGlobals(snapshot);},"handle mapping");require(target.encodeGlobals()==before,"Missing mapper changed globals");rejects([&]{target.restoreGlobals(snapshot,[](std::string_view,std::uint32_t){return 42;});},"handle mapping");require(target.encodeGlobals()==before,"Colliding mapper changed globals");
         auto corrupted=snapshot;corrupted.back()^=1;rejects([&]{target.restoreGlobals(corrupted);},"digest");require(target.encodeGlobals()==before,"Corrupt snapshot changed globals");
         target.restoreGlobals(snapshot,[](std::string_view,std::uint32_t id){return id+2000;});require(target.global("actor").bits==3017 && target.global("alias").bits==3017 && target.global("group",2).bits==3017 && target.global("group",8191).bits==3018,"Global handle aliases or array changed");require(target.global("text").text && target.global("text").text->empty(),"Empty string changed");target.invoke("execute");require(target.global("result").bits==17,"Restored code callback did not execute in target runtime");
+        rejects([&]{original.encodeGlobals([](std::string_view type,std::uint32_t id){return id+(type=="widget"?2000:1000);});},"handle mapping");auto separated=original.encodeGlobals([](std::string_view type,std::uint32_t id){return id+(type=="playercolor"?2000:1000);});Runtime separateTarget(compile(source));bind(separateTarget);separateTarget.restoreGlobals(separated,[](std::string_view type,std::uint32_t id){return id-(type=="playercolor"?2000:900);});require(separateTarget.global("actor").bits==117 && separateTarget.global("alias").bits==117 && separateTarget.global("color").bits==17,"Unrelated handle types were conflated");Runtime overlapping(compile(source));bind(overlapping);overlapping.restoreGlobals(separated,[](std::string_view type,std::uint32_t id){return id-(type=="playercolor"?2000:1000);});require(overlapping.global("actor").bits==17 && overlapping.global("color").bits==17,"Unrelated handle values could not overlap");
         Runtime different(compile(source+"\n"));bind(different);rejects([&]{different.restoreGlobals(snapshot,[](auto,std::uint32_t id){return id;});},"source differs");require(different.global("result").bits==3,"Source rejection changed globals");
     });
     test("runtime_global_initialization_and_entry_guard",[]{Runtime r(compile("native Next takes nothing returns integer\nglobals\ninteger first=Next()\ninteger second=Next()\nendglobals\nfunction sum takes nothing returns integer\nreturn first*10+second\nendfunction\n"));unsigned calls=0;r.bind("Next",[&](auto& vm,auto){return vm.integer(++calls);});rejects([&]{r.invoke("sum");},"not initialized");require(calls==0,"Constructor ran global initializer");r.initialize();require(r.ready() && calls==2 && r.invoke("sum").bits==12 && r.global("second").bits==2,"Global initializer order differs");rejects([&]{r.initialize();},"fresh instance");});

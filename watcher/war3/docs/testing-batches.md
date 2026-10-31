@@ -4125,6 +4125,8 @@ Win32 Release 客户端及测试目标编译通过；执行 `python tests/genera
 
 Win32 Release 客户端和两个测试目标编译通过；`war3_jass_runtime_tests ../../tmp/docs-artifacts/war3/jass/runtime-native.json` 17/17 通过，`war3_jass_thread_tests restore_reference_globals_and_sleeping_thread` 1/1 通过。阶段验证实际地图及对象生命周期、不同静态类型的句柄别名、全局与线程／事件／世界的统一事务、损坏和版本变更、完整保存载入与战役切区。组件未接入保存菜单或原版格式。
 
+句柄类型补充：`src/jass_runtime.cpp`、`tests/jass_runtime_tests.cpp`。兼容类型的别名和冲突按继承关系校验，不兼容类型的数值可独立映射。Win32 Release 客户端及运行时测试目标编译通过，运行时检查 17/17 通过，覆盖单位／父类型别名及与玩家颜色的数值重叠；实际地图与对象恢复待阶段验证。
+
 # 人族物品栏槽位对齐
 
 路径：`src/game_inventory_layout.h`、`docs/unit-combat-panel.md`。物品图标及其冷却和交互区域向右对齐控制台槽位。Win32 Release 客户端编译通过；游戏内 Agent 选中六物品、100 经验的圣骑士，画面显示物品、经验条和攻击加成，拖拽后第 0／1 格的物品句柄交换。证据位于 `tmp/docs-artifacts/war3/agent-info/layout-slot-aligned/`。阶段核对四族皮肤、不同窗口比例、物品点击／冷却和原版画面。
