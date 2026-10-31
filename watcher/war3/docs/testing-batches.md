@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 地图脚本创建的群蛇守卫（待阶段验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`docs/area-spells.md`。蛇棒技能允许原生数量为零，保留施法与脚本事件，且零原生召唤不要求找到召唤落点。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话从酒馆购买暗影萨满，显示五个技能学习按钮，设置等级、魔法和施法位置后，地图 A00H 脚本创建十个 osp4 蛇棒并赋予定时生命；探针暂停了其他单位。隔离地图原版 AOsw 经过实际施法流程，生成一个具有 40 秒定时生命的 osp1。会话未加载 Game.dll；探针和日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-shadow-shaman-wards.*`、`dota-shadow-shaman-wards-after.log` 和 `source-serpent-ward.*`。阶段核对不同技能等级、原版零数量语义、蛇棒攻击与死亡、技能事件时序、地图地形、实际窗口及完整对局。
+
 ### 隐藏单位的脚本无目标施法（待阶段验证）
 
 路径：`src/session.h`、`src/session_entities.cpp`、`src/session_orders.cpp`、`src/session_spells.cpp`、`tests/spell_tests.cpp`。脚本的字符串与整数无目标订单将脚本状态传入技能施法，显式隐藏的施法者可执行原版战争践踏；战争践踏的玩家订单及运输状态下的脚本订单仍受限制。Win32 Release 客户端和专项程序编译通过；`war3_spell_tests.exe <data-root> <fixture> hidden-immediate` 1/1 通过，确认两种脚本订单均造成伤害与眩晕，玩家订单及运输状态被拒绝，未加载 Game.dll。探针和日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/hidden-immediate-stomp*`。其他无目标能力、自动施法与特殊订单、隐藏变化、事件重入、实际地图和原版行为待阶段验证。
