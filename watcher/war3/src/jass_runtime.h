@@ -16,6 +16,7 @@ struct RuntimeSlotInspection {Value value;bool initialized=false,array=false;std
 struct RuntimeFrameInspection {Id function=none;size_t pc=0,base=0;std::vector<RuntimeSlotInspection> locals;};
 struct RuntimeExecutionInspection {ThreadId thread=0;size_t depth=0,localCount=0;Position caller;std::vector<Value> values;std::vector<RuntimeFrameInspection> frames;Id pendingNative=none;std::vector<Value> pendingArguments;};
 struct RuntimeThreadInspection {ThreadId thread=0;std::uint64_t runtime=0;ThreadState state=ThreadState::Ready;bool structured=false;Id function=none;std::vector<Value> arguments;};
+struct RuntimeSleepSnapshot {std::vector<Source> sources;bool debug=false;Id function=none;std::vector<Value> arguments;double remaining=0;RuntimeExecutionInspection execution;};
 class Runtime {
     struct Impl;
     std::unique_ptr<Impl> impl_;
@@ -28,6 +29,7 @@ public:
     const Module& module() const;
     size_t instructionCount() const;
     void bind(const std::string& name,Native function);
+    void bindSleep(const std::string& name);
     void shareThreads(Runtime& owner);
     void inheritNatives(const Runtime& owner);
     void initialize();
@@ -58,6 +60,8 @@ public:
     std::vector<RuntimeExecutionInspection> inspectExecutions() const;
     // Identities and codeOwner pointers are process-local diagnostics, not saved continuations.
     std::vector<RuntimeThreadInspection> inspectThreads() const;
+    RuntimeSleepSnapshot snapshotSleepingThread() const;
+    ThreadId restoreSleepingThread(const RuntimeSleepSnapshot& snapshot);
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;
     PrimitiveGlobalSnapshot encodePrimitiveGlobals() const;
     PrimitiveGlobalRestore restorePrimitiveGlobals(std::span<const std::uint8_t> bytes);
