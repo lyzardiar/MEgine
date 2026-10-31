@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### DotA 钢背兽被动与受伤事件（继续跟进）
+
+路径：`tests/dota_heroes_tests.cpp`、`src/session_damage.cpp`、`src/session_callbacks.cpp`。Win32 Release 测试目标增量编译通过；`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> bristle-spells` 通过，隔离会话在学习战意后核对施法加攻与到期恢复，学习刚背兽后以 1500／2000 生命模拟 100 点伤害，正面／侧面／背面实际损失 100／92／84，未加载 Game.dll。相同背面伤害在满血时损失 100：当前伤害事件在扣血前执行，地图脚本的补血被 `unitLife` 上限截断。该现象已复现，但原版生命值截断、受伤事件次序及满血实际效果尚未经对照；不能据此更改通用伤害时序或判定原图缺陷。继续核对原版、致死／递归伤害与多个触发器，并完成自然对局和窗口验证。
+
 ### DotA 钢背兽和月之女祭司技能（待阶段验证）
 
 路径：`src/session_spells.cpp`、`tests/dota_heroes_tests.cpp`、`tests/spell_tests.cpp`，实现说明见 [炼金术士](alchemist.md)。酸性炸弹派生技能按目标关系筛选；只列关系而未列空中／地面的目标集合可进入移动类别筛选。Win32 Release 客户端和两个测试目标增量编译通过。`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> bristle-spells` 与 `luna-spells` 各通过；隔离会话手动设置等级、状态及重置冷却，钢背兽鼻液叠至 4 层并到期恢复，月光和月蚀分别造成 75、300 伤害，未加载 Game.dll。`war3_spell_tests <data-root> <acid-speed-fixture.w3m> acid-speed` 通过，覆盖敌方酸性炸弹拒绝友军、隐藏施法者及正负速度效果。自然对局、其他目标类别及关系、免疫与面积影响、原版时序和画面待阶段验证。
