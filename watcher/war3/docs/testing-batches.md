@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 灵魂保存能力（待阶段验证）
+
+路径：`src/spells.h`、`src/entities.h`、`src/session_spell_info.cpp`、`src/session_control_spells.cpp`、`src/session_spell_effects.cpp`、`src/session_spells.cpp`、`tests/control_tests.cpp`、`docs/soul-preservation.md`。ANsl 接入源单位类型／施法和 Buff 时限、目标控制及到期移除。Win32 Release 客户端及控制测试目标编译通过；`war3_control_tests.exe <data-root> <control-fixture> soul-preservation` 1 通过、0 失败，未加载 Game.dll，覆盖错误类型拒绝、施法状态、施法者移除和目标到期移除。原版目标与精确时序、死亡和驱散事件、动画／音效、AI、真实窗口与战役仍待对照。
+
 ### 单位脚本等比缩放（待阶段验证）
 
 路径：`src/session_visual.cpp`、`tests/game_flow_tests.cpp`、`docs/live-world.md`。`SetUnitScale` 按原版首参数对三个轴统一缩放；脚本其余参数不参与模型或范围检查。1.27 `Game.dll` 注册入口 `0x6f1f7a40` 的静态指令只读取首个实数并向模型传递一个缩放值，取证脚本 `tmp/docs-artifacts/war3/ui-report-current/scale-source.py`。Win32 Release 客户端和测试程序增量编译通过，测试程序有既有 signed/unsigned 警告。阶段执行 `war3_game_flow_tests.exe <data-root> <fixture.w3m>`，核对三个参数不同、零及极值、阴影、选中圈、变形、存取与真实窗口和原版画面；负数及超限数值的原版行为尚未核对。
