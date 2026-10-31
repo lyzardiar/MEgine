@@ -4578,3 +4578,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 英雄脚本经验和满级边界（待批次验证）
 
 路径：`src/session_hero.cpp`、`tests/clock_tests.cpp`、`docs/heroes.md`；说明见[英雄经验](dota-hero-experience.md)。脚本设置经验不降低当前经验，暂停经验阻止经验／等级设置，满级经验按源最高等级阈值限制；降级仍使用 `UnitStripHeroLevel`。Win32 Release 客户端和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33；检查降低目标、暂停设置、满级上限与野怪经验跨级，日志 `tmp/docs-artifacts/war3/hero-xp-cap/clock-tests.log`。原版静态入口与调用链见功能说明；真实地图、原版动态、事件顺序和自定义上限待批次验证。
+
+### 英雄等级标题本地化（本批验证）
+
+路径：`src/game_loading.h`、`src/game_loading.cpp`、`src/game_commands.cpp`，说明见[英雄经验与成长](heroes.md)。英雄经验条标题读取原版 `GlobalStrings.fdf` 的 `INFOPANEL_LEVEL_CLASS`，填入实时等级和单位类型名；缺失资源时使用英文默认格式。Win32 Release 客户端和 clock 测试目标编译通过。本批合并 `3df2feb`、`63fcdac` 和本项：隔离数据目录执行 `war3_clock_tests <data-root> <output-root>`，33 通过、0 失败，日志 `tmp/docs-artifacts/war3/hero-level-localization/clock.log`。游戏窗口检查尝试创建 D3D9 设备失败，未获得画面；日志 `tmp/docs-artifacts/war3/hero-level-localization/capture/client.log`。实际等级标题画面、悬浮提示、原版动态行为、事件顺序、自然对局及联机仍待验证。

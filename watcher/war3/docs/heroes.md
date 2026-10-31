@@ -21,3 +21,5 @@ SetAltMinimapIcon写入WorldEnvironment，地图归档资源经现有后台队�
 祭坛队列、脚本ReviveHero/Loc、原对象成长/库存、源价格/退款/恢复、事件和AI新增策略的当前实现与边界见[英雄复活](hero-revival.md)；4组新机制最小检查不替代本页既有英雄成长专项及完整原版验收。
 
 单选英雄时，头像下方的经验进度条读取实际英雄经验及 `NeedHeroXP` 源阈值，等级上限显示满条；悬停显示当前经验与下一等级阈值。使用当前种族／地图覆盖皮肤中的 `SimpleXpBarConsole` 和 `SimpleXpBarBorder`，缺失纹理时保留纯色进度。经验与经验暂停仍由真实英雄状态驱动；界面位置、原版满级／溢出和源模型表现待集中对照。
+
+英雄经验条标题使用 `GlobalStrings.fdf` 的 `INFOPANEL_LEVEL_CLASS`，按源格式填入等级和单位类型名称；资源缺失时使用英文默认格式。经验悬浮提示和实际画面仍待原版对照。

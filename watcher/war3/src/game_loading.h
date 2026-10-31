@@ -14,7 +14,7 @@ struct GameData {
     std::unique_ptr<SceneObjects> objects;
     std::vector<ConsolePiece> console;
     std::string minimap,autocastModel,minimapPingModel,idleWorkerIcon,waypointModel,upperMenuTexture;
-    std::string groupButtonBorder,subgroupHighlight,groupHeroGlow,heroBarBorder,smallHealthBar,smallManaBar,heroExperienceBar,heroExperienceBorder;
+    std::string groupButtonBorder,subgroupHighlight,groupHeroGlow,heroBarBorder,smallHealthBar,smallManaBar,heroExperienceBar,heroExperienceBorder,heroLevelFormat;
     std::array<std::string,3> resourceIcons;
     std::array<std::string,7> damageIcons,neutralDamageIcons;
     std::array<std::string,9> armorIcons,neutralArmorIcons;
