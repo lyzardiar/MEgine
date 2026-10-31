@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 状态提示框高度（待阶段验证）
+
+路径：`src/game_buff_panel.cpp`、`docs/buff-panel.md`。标题和说明按实际换行计算高度，说明上限 30 行；Win32 Release 客户端编译通过。本次启动未能创建 Direct3D 9 设备，日志 `tmp/docs-artifacts/war3/buff-tooltip-auto-current.log`，没有实际画面。阶段通过游戏内 Agent 检查短／多行／超长描述、空标题、不同分辨率及四族与地图覆盖，对照原版布局和裁剪；超过行数上限的滚动尚未实现。
+
 ### 存档目录重命名（待阶段验证）
 
 路径：`src/session_campaign.cpp`、`tests/save_exists_tests.cpp`、`docs/save-runtime-foundation.md`。`RenameSaveDirectoryBJ` 操作独立用户目录中的真实目录，拒绝已有目标、无效源、目录移入自身和越界路径；Win32 Release 客户端与 `war3_save_exists_tests <data-root> <OrcX01.w3x> <scratch-root>` 编译并执行，1 通过、0 失败，符号链接创建失败而跳过对应场景。阶段核对接合点／符号链接、占用与跨进程竞争、失败后的空父目录、原版目标覆盖及名称规则，并在完整世界保存恢复实现后验证实际存档。
