@@ -4266,3 +4266,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 范围：`5ee235f`、`3d1bc9b`、`2612dc6`、`cc39828`、`686227c`。同一工作区版本的 Win32 Release 客户端及 CampaignAI、transport、world 检查程序构建通过；CampaignAI 26 种模式共 29/29、运输 8/8、世界选岸 2/2，共 39/39 通过，未加载 Game.dll。覆盖水运跨岛与分波、目标陆地区域卸载、路径格选岸与缓存失效、远岸多人接应及失效预约、原公共 AI 重编组和隔水目标、普通运输生命周期及登艇路径。AI 与运输使用各自 BootyBay 临时夹具，原公共脚本场景为预置部队与目标，不代表自然对局。
 
 命令：`cmake --build --preset release --target war3 war3_campaign_ai_tests war3_transport_tests war3_world_tests --parallel 8`；各模式和结果见 `tmp/docs-artifacts/war3/naval-batch-20261101/`，夹具分别为 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m` 和 `tmp/docs-artifacts/war3/transport/fixture.w3m`。真实战役、多地图岸线与动态拥堵、不同兵种／伤亡、联机、性能、原版策略及窗口操作仍待阶段验证；完整原版玩法与 UI 尚未验收。
+
+### AI 等待载具时重编组
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。跨岛进攻等待购买或可用载具时，重新初始化突击需求保留待续运目标及队长编组。Win32 Release 客户端和 CampaignAI 测试程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-purchase-reform`、`island-purchase-pending`、`island-purchase-cancel`、`island-purchase-target-death`、`island-purchase-busy`、`island-purchase-attack`、`island-naval-reform`、`island-naval-reform-mixed` 各 1/1，`armies` 2/2，共 10/10。新增场景在等待购买时调用重编组，之后完成购买和跨岛送达，模拟时间 27.25 秒；预置单位、商店和目标，不能代表自然对局。日志在 `tmp/docs-artifacts/war3/ai-purchase-reform/`，夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`。混合兵种待购、目标／载具变化的复杂回调、真实地图、原版调度与联机待批次验证。
