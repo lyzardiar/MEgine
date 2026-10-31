@@ -4350,3 +4350,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 计时器对象直接重建（待阶段验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。`STMR` 可在无活动计时器及事件的目标会话直接重建计时器并返回稳定编号映射，校验模拟时钟、脚本、回调和状态后再添加对象。Win32 Release 客户端与 clock 检查程序编译通过；`war3_clock_tests <data-root> <output-root>` 15/15。隔离测试验证三个一次性／周期／暂停计时器、同刻回调顺序、快照往返、损坏及不同脚本拒绝，并联合触发器、事件及全局引用恢复后续执行；日志 `tmp/docs-artifacts/war3/timer-object-rebuild/clock-tests.log`。真实地图、睡眠线程联动、其他事件与世界对象及完整存档入口待阶段验证或实现。
+
+### 原图初始化计时器与存档组件验证（待阶段验证）
+
+路径：`src/session_game.cpp`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`、`docs/simulation-clock-persistence.md`。允许 main 前未操作的初始化计时器存在，重建计时器后须恢复全局及其他引用；已操作计时器、计时器窗口和事件仍拒绝。Win32 Release 客户端和 clock 测试编译通过，`war3_clock_tests <data-root> <output-root>` 15/15；隔离测试检查初始化句柄替换、损坏及活动计时器及到期事件拒绝。OrcX01 原图 0／30／150 秒的时钟、计时器、触发器和计时事件组件均可重建且重编码一致，分别有 21／20／18 个计时器、1747／1749／1749 个触发器及回调句柄、各 145 个计时事件；未加载 Game.dll。日志 `tmp/docs-artifacts/war3/orcx-state-audit/audit-final.log`、`clock-tests-final.log`。0／30 秒睡眠线程未恢复；世界对象、其他事件、全部全局引用、实际存档入口和原版格式待实现或阶段验证。
