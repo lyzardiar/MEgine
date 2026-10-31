@@ -4438,3 +4438,11 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 地表纹理状态重建（待批次验证）
 
 路径：`src/world.h`、`src/world_blight.cpp`、`tests/world_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`STER` 保存与恢复地表纹理槽、变体和标志，并为新增类型检查资源、拒绝目标纹理槽冲突及刷新受影响区域；地图身份由调用方校验。Win32 Release 客户端与 world 测试目标编译通过，`war3_world_tests <data-root> <output> world_terrain_snapshot` 2/2、相关 `world_blight_snapshot` 2/2；BootyBay 原图检查扩展纹理、拒绝损坏及保留荒芜。日志 `tmp/docs-artifacts/war3/terrain-snapshot/`。实际画面、完整地形、跨组件事务和存档入口待批次验证或实现。
+
+### 荒芜覆盖层使用当前地表变体（待批次验证）
+
+路径：`src/terrain_blight.cpp`。荒芜网格重建直接读取当前地表角点的变体，使新增地表纹理仍在异步加载时覆盖层也能使用已更新的变体。Win32 Release 客户端编译通过；实际窗口与纹理流送时序待验证。
+
+### 地表／荒芜批次回归（部分失败，保留待测）
+
+范围 `472bdad`、`58a1ac7` 及本次覆盖层变更。Win32 Release 客户端和 world 测试目标编译通过；执行 `war3_world_tests <data-root> <output>` 得到 21 通过、4 失败。地表／荒芜快照四项均通过，原图及路径相关检查通过。四项 `world_location_global_and_destroyed_handles`、`world_rect_query_mutation_and_full_extent`、`world_main_preserves_session_and_environment`、`world_main_failure_is_terminal` 使用无资源归档的内存世界，均在 `attachWorld` 报 `World resources require archive-backed terrain`；该夹具问题已在 `campaign-rect-movement.md` 记录，尚未修复。日志 `tmp/docs-artifacts/war3/terrain-world-batch/world-tests.log`。渲染变体、动态纹理流送、实际窗口、地图身份和完整存档／跨区事务未验证，保留待测。
