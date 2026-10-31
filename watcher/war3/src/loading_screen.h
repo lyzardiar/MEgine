@@ -14,8 +14,9 @@ class LoadingScreen {
     Model *background_=nullptr,*bar_=nullptr;
     GlueScreen screen_;
     ModelUiAudio backgroundAudio_,barAudio_;
+    std::optional<std::uint64_t> started_;
 public:
     LoadingScreen(ScriptSession& session,Renderer& renderer,Text& text,Log& log,IDirect3DTexture9* minimap,bool muted=false,float gain=1);
-    void draw(std::uint64_t elapsed,unsigned phase,std::optional<std::pair<size_t,size_t>> uploaded,const std::string& error={});
+    void draw(unsigned phase,std::optional<std::pair<size_t,size_t>> uploaded,const std::string& error={});
 };
 }

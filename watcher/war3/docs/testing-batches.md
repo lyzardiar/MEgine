@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 载入画面动画计时（待阶段验证）
+
+路径：`src/loading_screen.h/.cpp`、`src/main.cpp`。每个载入画面从首次绘制建立独立时钟，背景动画和其声音事件使用该画面的经过时间；进度条动画继续由上传进度控制。Win32 Release 客户端增量编译通过。待游戏内 Agent 核对人族战役及普通对战从菜单停留不同时间后进入的动画、音效和切图重置，并验证实验局域网和回放载入；当前 Direct3D 9 设备创建失败，尚无本次画面或声音验收。
+
 ### 原战役载入背景（待阶段验证）
 
 路径：`src/map_ui.h/.cpp`、`src/loading_screen.cpp`、`tests/world_tests.cpp`、`tests/live_world_tests.cpp`；来源与行为见 [原生地图与选图流程](map-loading.md)。地图 W3I 背景编号读取公共 `WorldEditData.txt` 对应模型和序列，地图显式指定的载入模型优先；普通对战沿用玩家种族模型。Win32 Release 客户端、world 和 live-world 检查程序编译通过；`war3_world_tests <data-root> <unused-output> world_loading_backdrops` 1/1，检查人族前两章、BootyBay 和自定义模型优先级；`war3_live_world_tests <data-root> <Human01.w3m> <log> loading-background` 1/1，在 CPU 路径读取原 Lordaeron 模型并选中 Human01 序列，未加载 Game.dll。游戏启动检查在创建 D3D9 设备时失败，日志位于 `tmp/docs-artifacts/war3/loading-backgrounds/client.log`；尚无本版窗口截图。其他战役序列、地图覆盖、原版时间／音效／面板和窗口比例、W3I 序章画面待阶段验证或实现。

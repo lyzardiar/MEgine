@@ -14,6 +14,8 @@ EnableOcclusion 使用镜头到可见单位的空间块查询，将挡路物件�
 
 最小运行证据：Prologue01 原图 main 初始化及前 2 秒静音模拟通过，58 单位、183 触发器，未加载 Game.dll；过场 FDF 四族皮肤在隐藏窗口完成绘制。完整对白、实际画面和声音仍待阶段验收。日志在 tmp/docs-artifacts/war3/campaign/prologue-occlusion-check.log。
 
+原版 Prologue01、Prologue02 和 OrcX02 在 `--main-check --mute --simulate-ms 120000` 模式下均完成初始化及 120 秒静音模拟，未加载 Game.dll；日志在 `tmp/docs-artifacts/war3/prologue-continuation/`。该检查未发出玩家命令，也未验证胜负、切区、实际窗口或对白与音效。
+
 小地图 PingMinimap／PingMinimapEx 连接提示状态、皮肤模型与声音，多个提示使用独立模型实例；UnitAddIndicator／AddIndicator 将临时颜色连接单位、物品和可破坏物，保留现有透明度。SetUnitLookAt／ResetUnitLookAt 将目标和偏移连接单位骨骼姿态；过场禁用操作时，Esc 将玩家结束过场事件发送给已启用的注册触发器。模型朝向、闪烁叠色／时间、小地图尺寸／粒子／声音、Esc 条件和原版精度均待阶段验证。
 
 Win32 Release 产品编译通过；Prologue01 的 20 秒静音模拟通过初始化及此前 PingMinimap 阻塞，随后在 TriggerWaitForSound 未绑定处停止，尚不能认为 20 秒模拟完成。日志：tmp/docs-artifacts/war3/campaign/prologue-next-integrated.log。
