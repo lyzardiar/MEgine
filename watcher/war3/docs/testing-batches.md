@@ -4282,3 +4282,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### AI 续运、混编与撤退合并批次（2026-11-01）
 
 范围：`106f97e`、`bb338e8`、`c7d6f51`。同一工作区版本的 Win32 Release 客户端和 CampaignAI 检查程序编译通过；21 种模式共 23/23 通过，未加载 Game.dll。覆盖待购时重编组、混合兵种与零需求、购买和目标取消、忙碌载具、已登艇后的低生命撤退、多波续运、载具回调改派和普通队长行为。各模式及原始日志在 `tmp/docs-artifacts/war3/ai-continuation-batch/`，BootyBay 夹具为 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`。检查使用预置单位、商店和目标；飞行／海上无落点的延迟卸载、复杂回调、实际战役、联机及原版行为仍待阶段验证。
+
+### AI 远海延迟卸载撤退
+
+路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。低生命自动撤退保留延迟卸载的波次队员及撤退状态，卸载后向未被改派的队员发出回家命令；追踪建立后载具或队员订单、归属及生命周期变化会清理追踪。Win32 Release 客户端及 CampaignAI 测试程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-flight-retreat-home`、`island-flight-retreat-reassign`、`island-boarded-retreat-home`、`island-wave`、`island-naval-retreat`、`island-naval-paused-retreat`、`island-auto-retreat`、`island-purchase-reform-mixed`、`island-naval-reform` 各 1/1，`armies`、`captain-home` 各 2/2，共 13/13。新增飞艇场景在周围采样无可通行地面时降低队员生命，验证撤退状态持续到返航卸载、卸载点距离家超过 350 且随后步行回家；另验证载具新移动命令未被替换。测试预置载具与无敌队员，夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`，日志 `tmp/docs-artifacts/war3/ai-flight-retreat/`。暂停载具、海上船只、多个乘员、死亡／易主和复杂回调、真实战役、联机与原版时序待批次验证。
