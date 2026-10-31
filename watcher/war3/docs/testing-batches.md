@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 随机进攻路径的成员回退（待阶段验证）
+
+路径：`src/session_ai.cpp`、`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [AI](ai.md)。各成员确认实际绕行终点，不完整路线改为直接进攻，回退前校验命令修订与队长归属。Win32 Release 客户端和测试程序编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> ai-random-pathing`、`ai-random-partial` 各 1/1，`amphibious-reinforce` 2/2，未加载 Game.dll。前者开启两名成员的地形碰撞并覆盖补员；后者为混合碰撞的隔岛成员，覆盖部分路径回退。动态地形、可移动障碍、订单回调、单位目标变化、真实对局性能、双端同步和原版行为仍待核对。
+
 ### AI 随机进攻路线（待阶段验证）
 
 路径：`src/ai.h`、`src/session_ai_natives.cpp`、`src/session_ai.cpp`、`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [AI](ai.md)。`SetRandomPaths` 连接开关及队长进攻的侧向路径、原目标衔接和回退。Win32 Release 客户端和 CampaignAI 程序编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> ai-random-paths` 1/1，`amphibious-reinforce`、`fog-attack` 各 2/2，未加载 Game.dll；随机路径检查关闭了单位路径碰撞。阶段检查真实障碍和岛屿、不同移动类型／补员、路径失败／目标变化／回调重入、跨岛运输、双端确定性与原版随机策略。

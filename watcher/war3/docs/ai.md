@@ -225,3 +225,5 @@ Win32 Release 客户端与 AI 控制测试编译通过，`war3_ai_control_tests`
 `SetRandomPaths(true)` 开启队长进攻的随机侧向绕行：首个合格单位使用会话随机流选取路线侧，检查两段静态可达性后，队长经侧向点继续原地点／单位目标；侧向不可达时尝试另一侧，均不可用时使用既有进攻路径。重复目标保持当前路线，变化的地点或明显移动的目标重新规划；跨岛运输优先，后加入队长可跟随路径。`false` 使后续进攻使用原有路线。该选点方式为当前可运行策略，非原版随机算法或原版路径顺序的证明；参考的接口语义见 [common.ai 文档](https://github.com/lep/jassdoc/blob/master/common.ai) 和 [AI 路线讨论](https://www.hiveworkshop.com/threads/turning-melee-ai-into-campaign-ai.360247/)。
 
 Win32 Release 客户端与 CampaignAI 测试程序编译通过；`ai-random-paths` 1/1 覆盖开关、不同点、重复命令、单位目标与直接路径，`amphibious-reinforce` 和 `fog-attack` 各 2/2。上述随机路线夹具关闭了单位路径碰撞；真实碰撞、复杂地形、后续补员、回调重入、目标移动／死亡、跨岛运输、确定性联机和原版算法仍待阶段验证。
+
+随机路线为每个队长成员核对实际攻击移动终点；路线只到达中途时，成员退出共享绕行并尝试直接进攻。发出订单前后的单位、队长成员和战斗修订号用于识别回调改写，避免回退覆盖新的命令。Win32 Release 客户端与 CampaignAI 测试程序编译通过；`ai-random-pathing` 1/1 使用开启地形碰撞的队长和后续补员到达绕行点，`ai-random-partial` 1/1 覆盖路径不连通时的直接进攻回退；隔岛场景中队长关闭碰撞、岛上成员开启碰撞。两栖补员检查 2/2 通过；动态障碍、多人和原版选点仍待阶段验证。
