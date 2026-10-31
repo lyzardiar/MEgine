@@ -4310,3 +4310,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### AI 返航期间队长编组查询
 
 路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。有效撤退返航中的舱内队员参与队长人数、空／满和生命／魔法准备度查询；载具或队员的订单轮次不再匹配时即时排除。Win32 Release 客户端与 CampaignAI 测试程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-flight-captain-home`、`island-flight-captain-home-paused`、`island-flight-retreat-reassign`、`island-flight-retreat-paused-reassign`、`island-flight-retreat-paused-group`、`island-flight-retreat-home`、`island-naval-offshore-retreat`、`island-naval-offshore-paused`、`island-naval-enemyshore-retreat`、`island-naval-homeshore-retreat`、`island-naval-reform`、`island-naval-reform-mixed`、`island-naval-retreat`、`island-auto-retreat` 各 1/1，`armies`、`captain-home` 各 2/2，共 18/18。测试在预置飞艇／双乘员水运场景核对人数、满员及生命准备度，载具改派后在下一模拟步前核对查询；夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`，日志 `tmp/docs-artifacts/war3/ai-retreat-queries/`。魔法有值混编、隐藏／死亡／易主、复杂回调、原版时序和实际对局待批次验证。
+
+### AI 水运返航与队长查询合并批次（2026-11-01）
+
+范围：`0e4a64b`、`ce0008d`、`bf57ef8`。同一工作区版本的 Win32 Release 客户端、CampaignAI 与 transport 检查程序编译通过；AI 22 种模式 24/24、运输 8 种模式 8/8，共 32/32 通过，未加载 Game.dll。覆盖远海与两侧岸线撤退、即时／延迟卸载、暂停恢复、队长编组查询、载具改派、航空回归及普通运输生命周期。各模式日志 `tmp/docs-artifacts/war3/ai-return-shore-batch/`，夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m` 与 `tmp/docs-artifacts/war3/transport/fixture.w3m`；水运测试预置单位并在岸线场景手动定位船只。动态阻挡、复杂岸线、眩晕／死亡／易主、复杂回调、真实战役、联机和原版策略仍待阶段验证。
