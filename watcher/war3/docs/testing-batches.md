@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 锁镣派生能力的可选光束（待阶段验证）
+
+路径：`src/session_human_channels.cpp`、`tests/dota_heroes_tests.cpp`、`docs/human-casters.md`。无光束配置的锁镣派生能力保留真实持续施法和控制；有源光束时创建并按施法生命周期释放。Win32 Release 客户端和定向程序编译通过，`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x>` 4 通过、0 失败，覆盖屠夫肢解的控制／伤害／回血／取消及源 `Amls` 光束与控制的创建／释放。阶段核对多来源、目标死亡／移除／魔免、打断与回调、空值／地图覆盖、目标和施法动画、原版时序、实际 GPU 与完整对局。
+
 ### 弹射武器目标关系（待阶段验证）
 
 路径：`src/session_projectiles.cpp`、`tests/dota_heroes_tests.cpp`、`docs/weapon-effects.md`。目标配置未指定阵营时，后续弹射单位默认限敌方；显式阵营配置继续进入原有目标筛选。Win32 Release 客户端及定向检查编译通过，`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x>` 3 通过、0 失败；月刃场景覆盖主目标、近处友军和另一敌人。阶段核对显式友军／中立／自身、自定义目标、地面物品／可破坏物、弹射衰减和次数、联盟变化、死亡／反弹事件、联机及原版行为。
