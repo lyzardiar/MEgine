@@ -81,6 +81,8 @@ class World {
     mutable std::unique_ptr<std::array<CachedRoute,512>> cachedRoutes_;
     struct PathRegions {struct Nearest {std::uint32_t label=0,gx=0,gy=0,distance=0;};std::uint64_t revision=0;unsigned clearance=0,searches=0;PathMovement movement=PathMovement::Ground;std::vector<std::uint32_t> labels;std::array<Nearest,64> nearest{};};
     mutable std::array<PathRegions,4> pathRegions_{};
+    struct CoastalCache {std::uint64_t revision=0;std::array<std::uint32_t,7> key{};std::optional<WorldPoint> result;};
+    mutable std::array<CoastalCache,64> coastalCache_{};
     void buildPathRegions(PathRegions& regions,float radius,PathMovement movement) const;
     std::uint64_t pathingRevision_=1;
     std::uint64_t blockingRevision_=1;
@@ -148,6 +150,7 @@ public:
     bool pathPointFree(WorldPoint point,float radius,PathMovement movement) const;
     bool pathSegmentFree(WorldPoint from,WorldPoint to,float radius,PathMovement movement) const;
     std::optional<bool> pathRegionsNear(WorldPoint from,WorldPoint to,float radius,PathMovement movement,float range) const;
+    std::optional<WorldPoint> coastalLanding(WorldPoint water,WorldPoint ground,float waterRadius,float groundRadius,float range) const;
     unsigned pathMask(WorldPoint point,std::span<const PathCell> ignored={}) const;
     bool terrainUnpathable(WorldPoint point,unsigned type) const;
     void terrainPathable(WorldPoint point,unsigned type,bool pathable);

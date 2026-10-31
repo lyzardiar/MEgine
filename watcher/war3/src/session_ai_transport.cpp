@@ -7,11 +7,7 @@
 
 namespace war3 {
 namespace {float number(jass::Real value){return std::bit_cast<float>(value.bits());}jass::Real real(float value){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}}
-namespace {
-std::optional<WorldPoint> waterLanding(World& world,const UnitState& ship,const UnitState& passenger,WorldPoint destination,float area){
-    auto origin=WorldPoint{ship.x,ship.y};area=std::clamp(area,0.f,512.f);auto ground=world.clamp(destination);if(!world.pathPointFree(ground,passenger.collision,PathMovement::Ground)){bool found=false;for(int radius=32;radius<=512 && !found;radius+=32)for(int side=0;side<16 && !found;++side){float angle=side*6.28318530718f/16;auto point=world.clamp({real(number(destination.x)+radius*std::cos(angle)),real(number(destination.y)+radius*std::sin(angle))});if(world.pathPointFree(point,passenger.collision,PathMovement::Ground)){ground=point;found=true;}}if(!found)return {};}for(int radius=0;radius<=4096;radius+=64)for(int side=0;side<(radius?32:1);++side){float angle=side*6.28318530718f/32;auto candidate=world.clamp({real(number(destination.x)+radius*std::cos(angle)),real(number(destination.y)+radius*std::sin(angle))});if(world.pathPointFree(candidate,ship.collision,PathMovement::Water) && world.pathRegionsNear(origin,candidate,ship.collision,PathMovement::Water,64)==true && world.pathRegionsNear(ground,candidate,passenger.collision,PathMovement::Ground,area)==true)return candidate;}return {};
-}
-}
+namespace {std::optional<WorldPoint> waterLanding(World& world,const UnitState& ship,const UnitState& passenger,WorldPoint destination,float area){return world.coastalLanding({ship.x,ship.y},destination,ship.collision,passenger.collision,std::clamp(area,0.f,512.f));}}
 void ScriptSession::aiPurchaseZeppelin(ScriptAI& ai){
     if(ai.zeppelinPurchase)return;auto zeppelin=ObjectData::code("nzep"),laboratory=ObjectData::code("ngad");if(!definitions().contains(zeppelin))return;std::string reason;if(!productAllowed(ai.owner,product(zeppelin),reason))return;
     std::vector<std::uint32_t> shops;for(auto& [id,u]:units_)if(u->type==laboratory && !u->removing && !u->hidden() && !u->construction && !u->unsummon && !u->paused && number(u->life)>0 && (u->owner>=12 || u->owner==ai.owner || (config_.players[ai.owner].alliances[u->owner]&1)) && std::any_of(u->stock.begin(),u->stock.end(),[zeppelin](const auto& entry){return !entry.item && entry.type==zeppelin && entry.current>0;}))shops.push_back(id);

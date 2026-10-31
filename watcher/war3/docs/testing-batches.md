@@ -4244,3 +4244,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### AI 水上运输船跨岛
 
 路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`、`docs/transport.md`。水上载具使用水路连通及地面接岸检查，接应并卸载被隔离的队员；空船在对岸时可驶回接应下一波。自有接应航线在撤退或超时停止，暂停时也清理，其他命令保留。Win32 Release 客户端与 CampaignAI 目标编译通过；`war3_campaign_ai_tests.exe <data-root> <fixture> <mode>` 的 `island-naval`、`island-naval-multiwave`、`island-naval-retreat`、`island-naval-paused-retreat`、`island-naval-timeout`、`island-naval-paused-timeout`、`island-naval-reorder`、`island-carrier-callback-multiple`、`island-pickup-group`、`island-auto-multiwave`、`island-flight-reorder-live` 共 11/11 通过。BootyBay 地形预置步兵及人族十格运输船，11 人分波送达的模拟时间为 69.25 秒；超时检查人工缩短期限并清除自动续运状态，暂停与换令由测试施加。夹具 `tmp/docs-artifacts/war3/ai-carrier-multiple/fixture.w3m`。岸线固定采样可能漏解；不同地图／载具、动态障碍、复杂回调、性能、真实对局、联机与原版时序待阶段验证。
+
+### AI 水上运输的网格选岸
+
+路径：`src/world.h`、`src/world_path.cpp`、`src/session_ai_transport.cpp`、`tests/world_tests.cpp`、`docs/ai.md`、`docs/transport.md`。选岸使用水陆连通区域与路径格搜索，按路径修订缓存结果；受阻目标选择附近可通行地面区域。Win32 Release 客户端、CampaignAI 和 world 目标编译通过；`war3_world_tests <data-root> <clamp-fixture.json> world_coastal_landing_grid_and_invalidation` 1/1，通过超过 4096 距离的单格航道、受阻目标、缓存复用、水道阻断和重新开放；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-naval`、`island-naval-multiwave`、`island-naval-retreat`、`island-naval-paused-timeout`、`island-naval-reorder`、`island-auto-multiwave`、`island-pickup-group` 共 7/7 通过。目标附近多个不连通区域、卸载落点占位、较大地图、不同载具、动态障碍、性能、真实对局、联机和原版策略待阶段验证；路径网格超过 1,048,576 格时不进行该连通搜索。
