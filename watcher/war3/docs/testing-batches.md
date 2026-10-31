@@ -4522,3 +4522,11 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 路径：`CMakeLists.txt`、`src/session.h`、`src/session_unit_identity.cpp`、`src/session_unit_core.cpp`、`tests/clock_tests.cpp`，说明见[战役存档状态](save-runtime-foundation.md)。`SUCO` 分阶段恢复生命、魔法、英雄属性、技能、法术书和装备输入；物品重建后核对派生状态及稳定句柄，再恢复核心字段和占地。身份不匹配、数据损坏及背包映射错误会拒绝；应用阶段失败的会话须丢弃。
 
 Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33。OrcX01 静音模拟 150 秒后重建 455 个单位（含 13 个死亡单位、4 名英雄、4 名物品持有者）、488 个单位句柄与 31 个物品句柄，核心及背包重编码一致，并联动任务和 7 个 widget 事件；未加载 Game.dll。日志及探针 `tmp/docs-artifacts/war3/unit-core-snapshot/`。单位订单、状态效果及其他对象引用、完整存档入口、续玩和实际窗口仍待实现或批次验证。
+
+### 单位运动参数与外观恢复（本批验证）
+
+路径：`CMakeLists.txt`、`src/session.h`、`src/session_unit_visual.cpp`、`tests/clock_tests.cpp`，说明见[战役存档状态](save-runtime-foundation.md)。`SUVS` 在核心状态恢复后恢复单位转向速度与推进角、飞行高度及其变化速度、模型缩放、顶点颜色和玩家颜色；先完整校验同图、时钟与稳定身份再应用。动画队列、朝向目标及实际读档入口尚待实现。
+
+Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33；隔离检查覆盖非默认字段、相同类型单位错误映射、损坏快照拒绝及拒绝时不改变已检查单位。OrcX01 静音模拟 150 秒的 455 个单位经单位核心、物品与外观恢复后重编码一致，含 13 个死亡单位；未加载 Game.dll。原始日志及探针 `tmp/docs-artifacts/war3/unit-visual-snapshot/`，实际窗口和恢复后持续运动尚待验证。
+
+本批范围 `c68375f`、`86f75bc` 与本项：当前版本 clock 33/33，OrcX01 150 秒的 488 个单位句柄、455 个活动单位、31 个物品句柄、任务和 7 个 widget 事件完成组件映射及相应快照往返。完整单位订单、状态效果、动画、其他对象引用、真实存档入口及续玩仍待实现；上述组件验证不代表完整读档或画面验收。
