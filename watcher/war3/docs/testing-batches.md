@@ -4586,3 +4586,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 兽族第八章跳过过场引用（验证补充）
 
 路径：`tests/orc_campaign_chain_tests.cpp`，说明见[战役流程](campaign-flow.md)。原版 `Blizzard.j` 中恢复单位设置 `bj_lastLoadedUnit`，`GetLastCreatedUnit` 读取独立的 `bj_lastCreatedUnit`；Orc08 原图跳过脚本读取后者。Win32 Release 测试构建通过，在新建隔离用户目录运行 `war3_orc_campaign_chain_tests <data-root> chapter5 <new-absolute-user-dir>`，1 通过、0 失败，覆盖最近创建的萨满、恢复的格罗姆、脚本引用及胜利返回；日志 `tmp/docs-artifacts/war3/orc08-bj-reference/chapter5.log`。未加载 Game.dll；原版客户端动态表现、自然战斗和窗口仍待验证。本项是既有战役任务的验证补充，不计功能批次。
+
+### 商店与英雄联动夹具（验证补充）
+
+路径：`tests/generate-commerce-fixture.py`，说明见[商店](commerce.md)及[对局分数](player-scores.md)。夹具按已核实的经验规则检查倍率不影响脚本加经验、暂停期间不能设置等级及恢复后的升级。Win32 Release `war3_commerce_tests <data-root> <fixture.w3m>` 通过，覆盖商店交易／库存、训练／退款、人口、集结、英雄经验／技能／分数、物品幻象及荒芜恢复；未加载 Game.dll。首次使用旧夹具因经验预期过时失败，更新生成器并重新生成夹具后通过；日志 `tmp/docs-artifacts/war3/commerce-current/commerce-updated.log`。原版动态对照、自然对局和窗口仍待验证。本项为既有功能的验证补充，不计功能批次。

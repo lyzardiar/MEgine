@@ -20,7 +20,7 @@ DotA `-sd` 模式创建玩家拥有的 `ncop` 商店，源能力包含 `Asud` �
 
 必要Win32 Release产品及新增消费者程序编译通过，无编译警告。DotA开局阻塞已越过AddUnitToStock、GetObjectName，当前到 `Scripts/war3map.j:8416` 的SetPlayerHandicapXP；main仍未完成。这是最小阻塞定位，不代表DotA可玩。
 
-`war3_commerce_tests` 和 `tests/generate-commerce-fixture.py` 已编译/准备，按集中实现节奏排入阶段验证，尚未执行。夹具复制BootyBay地形，使用独立脚本检查售卖上下文/库存/携带栏、训练/取消/退款/完成、人口生命周期、转让和集结点。生成物只写仓库tmp目录。
+`war3_commerce_tests` 和 `tests/generate-commerce-fixture.py` 已编译并执行，验证结果见下文。夹具复制BootyBay地形，使用独立脚本检查售卖上下文/库存/携带栏、训练/取消/退款/完成、人口生命周期、转让和集结点。生成物只写仓库tmp目录。
 
 集中验证入口：
 
@@ -45,3 +45,5 @@ Win32 Release 客户端、`war3_passive_tests` 和 `war3_revival_tests` 编译�
 商店物品操作的实验联机和同构建回放使用带商店身份的 `0xfe` 动作，普通单位物品动作继续使用 `0xf7`。命令消费前重新检查商店选择、买家范围、物品持有和控制权限；已接受的排队物品命令由买家继续执行。Win32 Release 客户端和复活测试程序编译通过；`lan-shop-inventory` 1/1 在隔离会话中验证换格、离开范围及取消商店选择后的旧命令、普通动作编码与执行，不加载 Game.dll。实际窗口的使用、目标选择、拖拽、快捷键，以及双客户端、回放和原版行为仍待阶段验证。
 
 英雄将物品拖到有 `Apit` 能力的商店时，复用物品交付订单行进并在范围内出售。检查物品可出售标志、持有关系、控制权限和商店可见／存活状态；交易使用物品源金币／木材价格及 `PawnItemRate`，支付后发送单位／玩家出售物品事件并清理真实物品与装备效果。出售过程中检查目标与物品失效，并限制同一物品事件重入。`Units/MiscGame.txt` 的固定版源值为 `PawnItemRange=300`、`PawnItemRate=0.50`，提取文件 SHA-256 `2228cf869991d6ec5133e6115c3457903c2f0da9f0d70acc3d2518fe91e5f5bf`；四族商店及地精商人原单位能力表包含 `Apit`。Win32 Release 编译与隔离会话 `pawn-item` 1/1 通过，覆盖权限、价格、事件字段和途中物品失效。移动到达、共享控制、队列、回调重入、边界和舍入、原版事件／出售显示及实际窗口／双端仍待阶段验证。
+
+2026-11-01：重新生成夹具并运行 Win32 Release `war3_commerce_tests <data-root> <fixture.w3m>` 通过，覆盖商店库存与交易、训练和退款、人口、集结、英雄经验与技能、幻象和荒芜恢复。玩家经验倍率不改变脚本 `AddHeroXP`，暂停期间的 `SetHeroLevel` 不升级；日志 `tmp/docs-artifacts/war3/commerce-current/commerce-updated.log`。原版动态行为、真实对局和窗口仍待验证。
