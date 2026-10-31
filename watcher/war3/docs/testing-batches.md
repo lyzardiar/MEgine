@@ -2,7 +2,7 @@
 
 ### 脚本计数物品与 DotA 魔杖（待验证）
 
-路径：`src/session_teleport.cpp`、`tests/dota_rune_tests.cpp`、`docs/dota-bottle.md`。技能物品的源使用次数为零且不可消耗时，脚本计数不再在技能生效事件前扣减；源定义有限次数或可消耗物品继续扣减。Win32 Release 客户端及测试目标编译通过；`war3_dota_rune_tests <data-root> <DotA_v6.83d.w3x> wand` 1 通过、0 失败，以原图验证 5 点和 1 点能量恢复、清零与冷却；`regen` 和 `war3_spell_tests <data-root> <fixture> chain-dispel` 各 1 通过、0 失败，覆盖魔瓶回复符和有次数的中和权杖。阶段核对原版动态设置次数、消耗／非消耗物品与事件次序、自然充能、完整购买及真实窗口、联机与重入。
+路径：`src/session_teleport.cpp`、`tests/dota_rune_tests.cpp`、`docs/dota-bottle.md`。技能物品的源使用次数为零且不可消耗时，脚本计数不再在技能生效事件前扣减；源定义有限次数或可消耗物品继续扣减。Win32 Release 客户端及测试目标编译通过；`war3_dota_rune_tests <data-root> <DotA_v6.83d.w3x> wand` 1 通过、0 失败，以原图验证 5 点和 1 点能量恢复、清零与冷却；`wand-charge` 1 通过、0 失败，以原图检查附近敌方施法充能、远处敌方和友方施法不充能及随后使用；`regen` 和 `war3_spell_tests <data-root> <fixture> chain-dispel` 各 1 通过、0 失败，覆盖魔瓶回复符和有次数的中和权杖。阶段核对原版动态设置次数、消耗／非消耗物品与事件次序、战争迷雾／能量上限、完整购买及真实窗口、联机与重入。
 
 ### 战役区域存档目录清理（待验证）
 
