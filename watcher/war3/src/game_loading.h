@@ -20,8 +20,8 @@ struct GameData {
     std::array<std::string,9> armorIcons,neutralArmorIcons;
     std::array<std::string,7> damageTypeLabels,damageTypeTips;
     std::array<std::string,9> armorTypeLabels,armorTypeTips;
-    std::array<std::string,3> heroAttributeIcons,heroAttributeLabels;
-    std::string damageLabel,armorLabel,inventoryLabel;
+    std::array<std::string,3> heroAttributeIcons,heroAttributeLabels,heroAttributeTitles,heroAttributeTips;
+    std::string damageLabel,armorLabel,inventoryLabel,heroPrimaryTip;
     std::array<std::string,4> hudLabels,hudDisabledLabels;
     std::array<std::array<std::string,3>,3> allyFilterIcons;
     std::array<std::array<std::string,3>,2> creepFilterIcons;

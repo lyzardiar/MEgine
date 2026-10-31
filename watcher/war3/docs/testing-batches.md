@@ -3838,3 +3838,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 攻击与护甲悬停说明
 
 路径：`src/game_loading.*`、`src/game_commands.cpp`、`src/agent_capture.h`、`src/main.cpp`、`tools/agent-pointer.ps1`、`README.md`、`docs/unit-combat-panel.md`。信息图标悬停展示实时类型和原版本地化说明，遵循扩展提示开关；Agent 新增后台悬停用于游戏内核对。Win32 Release 客户端编译通过；Agent 选中六物品圣骑士，分别悬停攻击与护甲并抓取英雄类型及相应说明，证据 `tmp/docs-artifacts/war3/agent-info/layout-combat-tooltips-final-1031/`；悬停后拖拽前两格物品并核对句柄交换，证据 `tmp/docs-artifacts/war3/agent-info/pointer-hover-drag-final-1031/`。阶段核对全部攻击／护甲类型、双武器、地图覆盖、扩展提示开关、前台鼠标、Agent 前后台切换及原版位置；地图自定义伤害表可能不同于源说明。
+
+### 英雄属性信息栏
+
+路径：`src/session.h`、`src/session_hero.cpp`、`src/game_loading.*`、`src/game_commands.cpp`、`docs/unit-combat-panel.md`。基础属性和实时加减值分别显示，悬停使用原版说明和当前地图的属性收益系数。Win32 Release 客户端和 passive 测试目标编译通过；`war3_passive_tests.exe <data-root> <fixture> weapon-ui` 1/1 通过。游戏内 Agent 以 `tmp/docs-artifacts/war3/agent-info/hero-attributes-custom.w3m` 验证贵族圆环、负敏捷及自定义生命／护甲／魔法系数，三张提示画面位于 `tmp/docs-artifacts/war3/agent-info/layout-hero-attributes-final2-1031/`。其余主属性、多个来源、极值／双武器、幻象、地图本地化、真实鼠标和原版布局待阶段验证。
