@@ -4224,3 +4224,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 攻击速度和护甲减伤提示
 
 路径：`src/combat.h`、`src/session.h`、`src/session_combat.cpp`、`src/session_combat_destructable.cpp`、`src/session_damage.cpp`、`src/session_research.cpp`、`src/game_loading.*`、`src/game_commands.cpp`、`tests/passive_tests.cpp`、`docs/unit-combat-panel.md`。攻击提示显示实时伤害／射程／速度，护甲提示显示物理减伤；攻击计时和伤害结算复用同一计算。Win32 Release 客户端与 passive 目标编译通过；`war3_passive_tests.exe <data-root> <fixture> weapon-ui` 1/1，覆盖加速后显示间隔与真实攻击计时，以及负护甲提示与实际伤害一致。Agent 核对圣骑士正常与关闭扩展说明的提示，证据 `tmp/docs-artifacts/war3/agent-info/layout-combat-values-final-1031/` 和 `layout-combat-values-release-1031/`。原版分档边界、远程／双武器、技能及护甲组合、自定义配置和实际鼠标待阶段验证。
+
+### AI 登艇回调中的载具改派
+
+路径：`src/session.h`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。登艇同步回调改派或移除载具后立即释放该载具的预约，保留停止事件生成的乘员订单并清理暂停乘员。Win32 Release 客户端与 CampaignAI 测试目标编译通过；`war3_campaign_ai_tests.exe <data-root> <fixture> <mode>` 的 `island-carrier-reentrant`、`island-carrier-paused`、`island-pickup-reentrant`、`island-paused-retreat`、`island-paused-timeout`、`island-timeout-reentrant`、`island-flight-reorder-live`、`island-flight-reorder`、`island-pickup-group`、`island-auto-multiwave` 共 10/10 通过，夹具 `tmp/docs-artifacts/war3/ai-carrier-reentrant/fixture.w3m`。载具移除／易主、多载具同步回调、真实地图、联机和原版时序待阶段验证。
