@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 夺旗附件与死亡掉落（待验证）
+
+路径：`src/session_entities.cpp`、`src/passives.h`、`src/session_passive_info.cpp`、`src/session_weapon_effects.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`；来源和行为见[旗帜物品](flag-items.md)。Win32 Release 产品和 passive 测试目标编译通过；`flag-item` 与受影响的 `orb-purge` 各 1 通过、0 失败，未加载 Game.dll。夹具生成命令为 `python tests/generate-passive-fixture.py --data-root <data-root> --output <tmp-fixture>`；阶段核对真实夺旗地图、死亡／复活／移除／转移及事件重入、禁用与幻象、模型附件、GPU、地图覆盖和联机。
+
 ### 旧版闪电之球净化（待验证）
 
 路径：`src/passives.h`、`src/combat.h`、`src/session.h`、`src/session_passive_info.cpp`、`src/session_spell_info.cpp`、`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`；来源和行为见[毒素攻击与物品法球](weapon-effects.md)。Win32 Release 客户端及 passive 测试程序编译通过；`orb-purge` 定向检查 1 通过、0 失败，无 Game.dll。阶段核对原版触发概率、召唤物伤害、能力独立来源和禁用、发射后丢弃／易主、多个法球／攻击技能、魔免／护盾／事件时序、自定义等级和实际窗口／联机。
