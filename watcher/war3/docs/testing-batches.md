@@ -4274,3 +4274,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### AI 待运混编需求
 
 路径：`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。待续运期间，逐项添加突击需求不会移除尚未指定需求的既有兵种；已指定的零或正数量继续约束该兵种，已预约波次的成员沿用运输生命周期。Win32 Release 客户端与 CampaignAI 检查程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-purchase-reform-mixed`、`island-purchase-reform-zero`、`island-purchase-reform`、`island-purchase-pending`、`island-purchase-cancel`、`island-purchase-target-death`、`island-purchase-busy`、`island-naval-reform`、`island-naval-reform-mixed` 各 1/1，`armies` 2/2，共 11/11。新场景在载具待购时暂停火枪手、逐项重建步兵与火枪手需求，再恢复并验证两者均跨岛到达；另一模式验证显式零需求移除后可重新入组。夹具预置单位、商店及目标；日志 `tmp/docs-artifacts/war3/ai-purchase-mixed/`，夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`。复杂需求变动、死亡／易主、真实战役、联机及原版策略待批次验证。
+
+### AI 舱内队员自动撤退
+
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。队伍低生命自动撤退时，在取消运输后重新获取可行动队员，向即时卸载的队员发出回家命令。Win32 Release 客户端和 CampaignAI 测试程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-boarded-retreat-home`、`island-wave`、`island-naval-retreat`、`island-naval-paused-retreat`、`island-auto-retreat`、`island-purchase-reform-mixed`、`island-naval-reform` 各 1/1，`armies`、`captain-home` 各 2/2，共 11/11。新增 BootyBay 场景预置飞艇和无敌步兵，登艇后测试直接降低生命触发自动撤退，验证卸载和远于 350 的回家目标；日志 `tmp/docs-artifacts/war3/ai-boarded-retreat/`，夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`。飞行／海上无落点导致的延迟卸载、脚本回调改派、真实战役、联机与原版时序待批次验证。
