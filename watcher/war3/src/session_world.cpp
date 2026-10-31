@@ -7,7 +7,7 @@
 namespace war3 {
 void ScriptSession::bindWorldNatives() {
     // Warcraft III 1.27 Game.dll 0x6f1f6ba0 returns without modifying terrain fog.
-    bind("SetTerrainFog","nothing",{"real","real","real","real","real"},[](auto& vm,auto){return vm.nothing();});
+    for(auto name:{"SetTerrainFog","SetUnitFog"})bind(name,"nothing",{"real","real","real","real","real"},[](auto& vm,auto){return vm.nothing();});
     bind("ResetTerrainFog","nothing",{},[this](auto& vm,auto){auto& env=requireWorld().environment();env.terrainFog=env.terrainFogDefaults;return vm.nothing();});
     bind("SetTerrainFogEx","nothing",{"integer","real","real","real","real","real","real"},[this](auto& vm,auto a){auto real=[](jass::Value value){auto v=std::bit_cast<float>(value.bits);if(!std::isfinite(v))throw std::runtime_error("Non-finite terrain fog parameter");return v;};auto channel=[&](unsigned i){double value=double(real(a[i]))*255;int result=value>=double(INT_MIN) && value<=double(INT_MAX)?int(value):INT_MIN;return std::uint32_t(result)&255u;};TerrainFog fog;fog.style=std::bit_cast<std::int32_t>(a[0].bits);fog.start=real(a[1]);fog.end=real(a[2]);fog.density=real(a[3]);fog.color=0xff000000u|(channel(4)<<16)|(channel(5)<<8)|channel(6);requireWorld().environment().terrainFog=fog;return vm.nothing();});
     bind("EnableOcclusion","nothing",{"boolean"},[this](auto& vm,auto a){occlusionEnabled_=a[0].bits!=0;return vm.nothing();});

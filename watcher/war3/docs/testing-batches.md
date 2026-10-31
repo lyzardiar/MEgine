@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 经典单位雾脚本接口（待阶段验证）
+
+路径：`src/session_world.cpp`、`tests/world_tests.cpp`；说明见 [世界雾与计时器](world-fog-timers.md)。固定版 1.27 的 `SetUnitFog` 和旧 `SetTerrainFog` 入口均为直接返回，REA 证据 `ev_9e2ec214902ef5d8c1cb280003322eb37b40e43b98f579e41de9604a804f43b3`。客户端现允许地图调用两者并保留已有雾状态；`SetTerrainFogEx`／`ResetTerrainFog` 继续管理实际雾效。Win32 Release 客户端和 world 测试目标编译通过；`war3_world_tests <data-root> <unused-clamp-output> world_legacy_fog_natives` 在 BootyBay 原地图上下文 1/1 通过、未加载 Game.dll。开发时简化夹具因没有归档资源和完整脚本句柄类型失败，改用原地图上下文后通过。其他版本、自定义地图及真实画面仍待阶段核对。
+
 ### DotA 魅惑魔女目标与限时生命（待阶段验证）
 
 路径：`tests/dota_heroes_tests.cpp`。DotA_v6.83d 原图隔离会话中购买魅惑魔女并学习 `A0DX`：普通敌方单位转归施法玩家，获得约 80 秒限时生命并在到期后死亡；敌方英雄不转归，受到减速并在恢复运行后到期解除。Win32 Release 测试目标编译通过；`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> enchantress-enchant` 通过，未加载 Game.dll。测试手动设置等级、位置、魔法和敌对关系，英雄目标在观察减速后解除暂停；不代表自然对局、原版数值与时序、地图自定义目标或窗口操作已验收。
