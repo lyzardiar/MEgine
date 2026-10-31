@@ -4434,3 +4434,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 世界荒芜状态重建（待批次验证）
 
 路径：`src/world.h`、`src/world_blight.cpp`、`tests/world_tests.cpp`，范围见 [战役存档状态](save-runtime-foundation.md)。`SBLT` 保存荒芜路径位与地形角点并重建查询指纹和受影响渲染区域，调用方须独立校验地图身份。Win32 Release 客户端与 world 测试目标编译通过，`war3_world_tests <data-root> <output> world_blight_snapshot` 2/2，含 BootyBay 原图、损坏拒绝及无路径网格；日志 `tmp/docs-artifacts/war3/blight-snapshot/world-tests-final.log`。待批次结合世界其他状态检查跨组件恢复、地图身份、真实渲染与存档流程；组件尚未接入保存／加载入口。
+
+### 地表纹理状态重建（待批次验证）
+
+路径：`src/world.h`、`src/world_blight.cpp`、`tests/world_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`STER` 保存与恢复地表纹理槽、变体和标志，并为新增类型检查资源、拒绝目标纹理槽冲突及刷新受影响区域；地图身份由调用方校验。Win32 Release 客户端与 world 测试目标编译通过，`war3_world_tests <data-root> <output> world_terrain_snapshot` 2/2、相关 `world_blight_snapshot` 2/2；BootyBay 原图检查扩展纹理、拒绝损坏及保留荒芜。日志 `tmp/docs-artifacts/war3/terrain-snapshot/`。实际画面、完整地形、跨组件事务和存档入口待批次验证或实现。
