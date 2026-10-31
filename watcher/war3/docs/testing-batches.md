@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄类别目标与变体精灵复制（待阶段验证）
+
+路径：`src/session_spells.cpp`、`docs/spells.md`。技能目标指定英雄／非英雄类别而未指定空中或地面时，不再强加空地限制，仍执行类别、敌友、自身等筛选。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话通过酒馆购买变体精灵，学习 A0G8 后分别对敌方和设置为友方的英雄施法，均创建一个幻象并由地图脚本提供回归技能；施放回归后英雄到达幻象位置，非英雄与自身目标被拒绝。两项检查均未加载 Game.dll，探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-morphling-replicate.cpp` 和 `dota-morphling-replicate-return*.log`。英雄等级、魔法、目标和友方关系由探针调整；阶段核对空中／地面显式限制、其他目标掩码、魔免、幻象数值／持续、事件时序、实际窗口和原版行为。
+
+
 ### 地图脚本使用的零恢复能力（待阶段验证）
 
 路径：`src/session_restoration.cpp`、`docs/restoration.md`。恢复量均为零的恢复能力允许不配置 Buff，沿用实际手动施法、自动施法开关和订单事件；有恢复量时仍要求有效 Buff。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话使用 `-ap` 和酒馆购买变体精灵，取得五个技能学习按钮；升至 10 级学习 A0KX 后，自动转换令力量／敏捷由 40／54 变为 34／60，反向转换恢复为 40／54，两次关闭后数值保持，手动转换后变为 38／56。相同会话以原版 Arpl 恢复友军生命 100 至 110；记录见 `tmp/docs-artifacts/war3/hero-ability-probe/dota-morphling-restoration.cpp` 和 `dota-morphling-restoration.log`，未加载 Game.dll。测试调整英雄等级与魔法，调用会话命令而非实际鼠标；阶段核对原版零值语义、低魔法／属性边界、技能等级、事件重入、双开关、实际窗口和联机。
