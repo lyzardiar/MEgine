@@ -1,5 +1,7 @@
 # 建造、放置与矿井转换
 
+`CreateBlightedGoldmine` 先校验所属玩家；无效句柄返回空单位且不创建底矿，有效玩家创建关联的底矿和覆盖层。固定版 Game.dll `0x6f1dd900` 在创建底矿前解析玩家，失败直接返回；记录 `tmp/docs-artifacts/war3/blighted-mine-owner/original.txt`。Win32 Release 客户端与 clock 目标编译通过，clock 23/23；隔离检查覆盖无效玩家无残留、有效矿井共享资源及移除覆盖层。OrcX01 会话调用原 `CreateUnitAtLocSaveLast` 的 `ugol` 分支，空玩家无残留，有效玩家的底矿与覆盖层共享资源；日志 `tmp/docs-artifacts/war3/blighted-mine-owner/`。自然采矿和原版完整时序待阶段验证。
+
 2026-10-27。建筑与工人使用同一个 ScriptSession。建造订单、源命令区、放置预览、施工状态、占地、人口与矿井采集已连接实际消费者；完整四族经济和原版一致性尚未验收。
 
 ## 已接入的流程

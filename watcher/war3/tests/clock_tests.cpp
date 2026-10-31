@@ -44,6 +44,24 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("blighted_mine_rejects_invalid_owner_without_orphan",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type timer extends handle
+ native Player takes integer id returns player
+ native CreateTimer takes nothing returns timer
+ native CreateBlightedGoldmine takes player p, real x, real y, real facing returns unit
+ native RemoveUnit takes unit u returns nothing
+ native GetResourceAmount takes unit u returns integer
+ native SetResourceAmount takes unit u, integer amount returns nothing
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"invalid-blighted-mine.j",source,"authored mine ownership test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto zero=vm.real(real(0)),timer=vm.invoke("CreateTimer");auto before=session.units().size();for(auto id:{0u,timer.bits}){auto invalid=vm.handle("player",id);require(!vm.invoke("CreateBlightedGoldmine",std::array{invalid,zero,zero,zero}).bits && session.units().size()==before,"Invalid owner left an orphan gold mine");}auto player=vm.invoke("Player",std::array{vm.integer(0)});auto mine=vm.invoke("CreateBlightedGoldmine",std::array{player,zero,zero,zero});require(mine.bits && session.units().size()==before+2,"Valid haunted mine did not create its pair");auto sourceId=session.units().at(mine.bits)->mineSource;require(sourceId && session.units().contains(sourceId) && session.units().at(sourceId)->mineCover==mine.bits,"Haunted mine did not link to its source");vm.invoke("SetResourceAmount",std::array{mine,vm.integer(1234)});require(vm.invoke("GetResourceAmount",std::array{mine}).bits==1234 && vm.invoke("GetResourceAmount",std::array{vm.handle("unit",sourceId)}).bits==1234,"Mine pair did not share resources");vm.invoke("RemoveUnit",std::array{mine});require(session.units().contains(sourceId) && !session.units().at(sourceId)->mineCover && !session.units().at(sourceId)->hidden(),"Removing cover did not release gold mine");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during mine fixture");
+    });
     test("unit_creation_rejects_invalid_players_and_locations",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle

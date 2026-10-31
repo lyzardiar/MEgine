@@ -4406,3 +4406,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 失效单位创建和种族查询句柄（待阶段验证）
 
 路径：`src/session_entities.cpp`、`tests/clock_tests.cpp`、`docs/jass.md`、`docs/implementation-roadmap.md`。四种单位创建入口在玩家或位置句柄无效时返回空单位，`GetUnitRace` 在单位失效时返回空种族；固定版 Game.dll 解析失败分支记录 `tmp/docs-artifacts/war3/ability-scan-current/create-full.txt`。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 22/22，隔离检查覆盖空、已移除、类型不匹配句柄、无额外单位及四种有效创建。OrcX01 会话调用原 `CreateUnitAtLocSaveLast`，空位置返回空且不创建，有效位置创建并更新 `bj_lastCreatedUnit`，会话继续推进 0.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/unit-create-handles/`。真实对局、其他版本、未知单位类型和原版完整行为待阶段验证。
+
+### 被腐蚀金矿创建的玩家校验（待阶段验证）
+
+路径：`src/session_construction.cpp`、`tests/clock_tests.cpp`、`docs/construction.md`、`docs/implementation-roadmap.md`。`CreateBlightedGoldmine` 在创建底矿前检查玩家句柄，失败返回空且不留下中立底矿；固定版 Game.dll `0x6f1dd900` 的玩家解析分支见 `tmp/docs-artifacts/war3/blighted-mine-owner/original.txt`。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 23/23；检查覆盖空／类型不符玩家、有效矿井的共享资源和移除覆盖层。OrcX01 会话调用原 `CreateUnitAtLocSaveLast` 的 `ugol` 分支，空玩家无残留，有效玩家创建两层且共享资源，会话推进 0.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/blighted-mine-owner/`。自然采矿、重入及原版完整时序待阶段验证。
