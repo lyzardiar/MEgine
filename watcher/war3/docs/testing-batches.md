@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 人族战役第九章结局与解锁（待阶段验证）
+
+路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原版战役上下文下，隔离会话从第六章连续推进到第九章：通过守护者事件触发霜之哀伤剧情，核对替换后英雄等级与物品句柄，再击杀玛尔加尼斯和目标建筑，核对胜利、结尾影片请求、返回战役选择及亡灵战役／首章和人族结尾解锁。Win32 Release 测试目标编译通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> victory` 和 `defeat` 各 1 通过、0 失败，未加载 Game.dll。测试通过移动、无敌和直接击杀加速，未覆盖自然战斗、原版缓存格式、真实画面、影片播放或窗口自动切关，留待阶段验证。
+
+
 ### 随机进攻路径的成员回退（待阶段验证）
 
 路径：`src/session_ai.cpp`、`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [AI](ai.md)。各成员确认实际绕行终点，不完整路线改为直接进攻，回退前校验命令修订与队长归属。Win32 Release 客户端和测试程序编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> ai-random-pathing`、`ai-random-partial` 各 1/1，`amphibious-reinforce` 2/2，未加载 Game.dll。前者开启两名成员的地形碰撞并覆盖补员；后者为混合碰撞的隔岛成员，覆盖部分路径回退。动态地形、可移动障碍、订单回调、单位目标变化、真实对局性能、双端同步和原版行为仍待核对。
