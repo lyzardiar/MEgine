@@ -15,7 +15,7 @@ struct AIZeppelinPurchase {std::uint32_t shop=0,buyer=0;double deadline=0;std::u
 struct AIItemPurchase {std::uint32_t shop=0,buyer=0,item=0;double deadline=0;std::uint64_t revision=0;};
 struct AIZeppelinWave {std::uint64_t ticket=0;WorldPoint destination;double deadline=0;bool departing=false;std::map<std::uint32_t,std::uint32_t> passengers;std::set<std::uint32_t> carriers;std::map<std::uint32_t,std::uint64_t> pickupTickets,pickupQueued,carrierRevisions;std::map<std::uint32_t,WorldPoint> returnPoints;};
 struct AITransportContinuation {WorldPoint destination;std::uint32_t target=0;bool awaitingPurchase=false;};
-struct AICaptainRoute {std::uint64_t ticket=0;std::vector<WorldPoint> points;std::map<std::uint32_t,size_t> members;};
+struct AICaptainRoute {std::uint64_t ticket=0;std::vector<WorldPoint> points;std::map<std::uint32_t,size_t> members;bool randomPath=false;std::uint32_t target=0;};
 struct AIEnemyBaseSearch {std::uint32_t cursor=0,best=0;float distance=std::numeric_limits<float>::max();};
 struct ScriptAI {
     enum Policy {DefendPlayer,GroupsFlee,HeroesBuy,HeroesFlee,HeroesTake,IgnoreInjured,PeonsRepair,SmartArtillery,TargetHeroes,UnitsFlee,WatchMega,PolicyCount};
@@ -40,7 +40,7 @@ struct ScriptAI {
     std::optional<AIZeppelinWave> zeppelinWave;
     std::optional<AITransportContinuation> transportContinuation;
     std::uint64_t zeppelinWaveTicket=0;
-    bool amphibious=false,pathingDisabled=false,pointAttack=false;
+    bool amphibious=false,pathingDisabled=false,pointAttack=false,randomPaths=false;
     std::optional<AICaptainRoute> captainRoute;
     std::uint64_t captainRouteTicket=0;
     bool reservesUnit(std::uint32_t unit) const {return (zeppelinPurchase && zeppelinPurchase->buyer==unit) || (itemPurchase && itemPurchase->buyer==unit);}

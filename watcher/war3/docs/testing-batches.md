@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### AI 随机进攻路线（待阶段验证）
+
+路径：`src/ai.h`、`src/session_ai_natives.cpp`、`src/session_ai.cpp`、`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [AI](ai.md)。`SetRandomPaths` 连接开关及队长进攻的侧向路径、原目标衔接和回退。Win32 Release 客户端和 CampaignAI 程序编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> ai-random-paths` 1/1，`amphibious-reinforce`、`fog-attack` 各 2/2，未加载 Game.dll；随机路径检查关闭了单位路径碰撞。阶段检查真实障碍和岛屿、不同移动类型／补员、路径失败／目标变化／回调重入、跨岛运输、双端确定性与原版随机策略。
+
 ### 灵魂保存 AI 施法（待阶段验证）
 
 路径：`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`、`docs/soul-preservation.md`。AI 对可见、非敌对、符合技能目标规则且在射程内的单位选择最近目标，发起实际技能订单。Win32 Release 客户端和 CampaignAI 程序编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> ai-soul-preservation` 1 通过、0 失败，覆盖友方目标、敌方、错误类型和已有状态；原图 `human06-ai-soul-preservation` 和 `human06-ai-conversion` 各 1 通过、0 失败，分别在 333.5 秒观察到自然施法与移除、356.5 秒观察到转换与计数，不加载 Game.dll。阶段检查原图 AI 自然决策、技能优先级、单位生命／威胁、移动／攻击冲突、目标失效、双端同步及原版表现。
