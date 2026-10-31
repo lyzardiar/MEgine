@@ -127,6 +127,8 @@ public:
     void updateDeformations(double now,const std::function<std::uint32_t()>& random);
     std::span<const float> surface() const {return surface_;}
     WorldRect rectangle(WorldPoint first,WorldPoint second) const;
+    Bytes encodeBlightState() const;
+    void restoreBlightState(std::span<const std::uint8_t> bytes);
     bool blighted(WorldPoint point) const;
     std::uint32_t terrainType(WorldPoint point) const;
     unsigned terrainVariation(WorldPoint point) const;

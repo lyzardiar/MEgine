@@ -4430,3 +4430,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 采矿、资源与人口关联回归（部分通过，待阶段验证）
 
 在 `ba38712` 的同一核心版本上重新编译 Win32 Release 采矿与建造测试，使用当前生成器生成独立地图。`war3_harvest_tests` 主检查和 `depot-route` 各通过；`war3_construction_tests` 在修正测试后通过，覆盖四族工人建造、人口与占地、矿井关联、升级、修理和荒芜。首次建造检查使用错误的兽族地洞 ID `obur`，按原 `opeo` 建造列表改为 `otrb`；字符串移动命令检查临时关闭该工人的寻路，避免被夹具中的阻挡位置影响，随后恢复。失败诊断包含建筑 ID 和拒绝原因。日志及生成地图位于 `tmp/docs-artifacts/war3/economy-batch-20261101/`。此前同一版本的 clock 27/27 和 OrcX01 资源包装检查复用。自然对局、实际窗口、原版事件时序和寻路拥堵仍待验证，不将这些隔离检查作为完整经济系统验收。
+
+### 世界荒芜状态重建（待批次验证）
+
+路径：`src/world.h`、`src/world_blight.cpp`、`tests/world_tests.cpp`，范围见 [战役存档状态](save-runtime-foundation.md)。`SBLT` 保存荒芜路径位与地形角点并重建查询指纹和受影响渲染区域，调用方须独立校验地图身份。Win32 Release 客户端与 world 测试目标编译通过，`war3_world_tests <data-root> <output> world_blight_snapshot` 2/2，含 BootyBay 原图、损坏拒绝及无路径网格；日志 `tmp/docs-artifacts/war3/blight-snapshot/world-tests-final.log`。待批次结合世界其他状态检查跨组件恢复、地图身份、真实渲染与存档流程；组件尚未接入保存／加载入口。
