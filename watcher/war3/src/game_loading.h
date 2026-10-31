@@ -16,8 +16,8 @@ struct GameData {
     std::string minimap,autocastModel,minimapPingModel,idleWorkerIcon,waypointModel,upperMenuTexture;
     std::string groupButtonBorder,subgroupHighlight,groupHeroGlow,heroBarBorder,smallHealthBar,smallManaBar,heroExperienceBar,heroExperienceBorder;
     std::array<std::string,3> resourceIcons;
-    std::array<std::string,7> damageIcons;
-    std::array<std::string,9> armorIcons;
+    std::array<std::string,7> damageIcons,neutralDamageIcons;
+    std::array<std::string,9> armorIcons,neutralArmorIcons;
     std::array<std::string,3> heroAttributeIcons,heroAttributeLabels;
     std::string damageLabel,armorLabel,inventoryLabel;
     std::array<std::string,4> hudLabels,hudDisabledLabels;

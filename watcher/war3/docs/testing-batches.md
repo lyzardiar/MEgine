@@ -3800,3 +3800,7 @@ Win32 Release 客户端及测试目标编译通过；执行 `python tests/genera
 路径：`src/combat.h`、`src/session.h`、`src/session_projectiles.cpp`、`src/session_tick.cpp`、`src/game_view.cpp`、`tests/passive_tests.cpp`；实现与证据见 [蜘蛛攻击](spider-attack.md)。Win32 Release 客户端及 passive 测试目标编译通过；`spider-attack` 1/1、受影响的 `line-weapon` 4/4 通过；隔离地图游戏内 Agent 获取实际攻击帧。原版时序、附件点和轨迹、其他目标及边界、多人、长局资源释放与真实性能待阶段验证。
 
 蜘蛛回程追踪补充：`src/session.h`、`src/session_projectiles.cpp`、`tests/passive_tests.cpp`。Win32 Release 客户端与 passive 目标编译通过；`spider-attack` 1/1 通过，覆盖回程中攻击者移动、朝向及发射高度，原版挂点和移动画面待阶段验证。
+
+### 战斗信息科技角标（待阶段验证）
+
+路径：`src/combat.h`、`src/session_research.cpp`、`src/game_loading.*`、`src/game_commands.cpp`、`tests/passive_tests.cpp`；行为及局限见 [单位战斗信息面板](unit-combat-panel.md)。Win32 Release 客户端与 passive 目标编译通过；`weapon-ui` 定向检查 1/1 通过，游戏内 Agent 画面确认圣骑士无升级攻击图标，以及步兵攻击二级、护甲一级角标。阶段核对各级科技、同单位多个科技、双武器、地图覆盖、四族皮肤和原版显示。
