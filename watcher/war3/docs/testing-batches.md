@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 无效单位颜色与资料片战役交接（待验证）
+
+路径：`src/session_visual.cpp`、`tests/passive_tests.cpp`、`docs/campaign-flow.md`。`SetUnitColor` 对空、已移除及不兼容单位句柄直接返回；有效单位照常设置颜色。Win32 Release 客户端和 passive 测试目标编译通过；`war3_passive_tests <data-root> <passive-fixture> invalid-unit` 4 通过、0 失败。暗夜精灵第八章直接完成建筑目标后请求终章，终章静音隔离会话运行至返回；人族第一章越过此前空单位颜色异常并推进至 400 秒。阶段核对真实战斗、自动切关、画面、无效颜色与原版边界、玩家队伍颜色和不同单位生命周期。日志位于 `tmp/docs-artifacts/war3/tft-ne4-next/`。
+
 ### AI 无效科技费用与资料片第八章（待验证）
 
 路径：`src/session_ai_natives.cpp`、`tests/ai_control_tests.cpp`、`docs/ai.md`。不存在的科技 ID 在金币和木材费用查询中返回零；有效科技使用当前等级及源费用。Win32 Release 客户端与 AI 控制测试编译通过；`war3_ai_control_tests <data-root> <ai-control-fixture>` 4 通过、0 失败。`NightElfX08.w3x` 静音隔离会话越过此前 89.78 秒的费用异常，空闲推进到 400 秒，日志 `tmp/docs-artifacts/war3/tft-ne4-next/ne8-cost-fixed.log`。阶段核对原版不同 ID／等级／排队状态的返回值、真实对局、实际窗口和战役完整任务。
