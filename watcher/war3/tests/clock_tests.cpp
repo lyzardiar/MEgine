@@ -196,6 +196,128 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"spatial-snapshot.j",source,"authored spatial persistence test"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("makeUnits");a.invoke("setup");original->advance(.03125);require(a.global("ranges").bits==1 && !a.global("enters").bits,"Spatial fixture did not initialize");auto identity=[](std::string_view,std::uint32_t id){return id;};auto collections=original->encodeCollections(identity),triggers=original->encodeTriggers(identity),events=original->encodeSpatialEvents(identity),globals=a.encodeGlobals(identity);b.invoke("CreateTimer");b.invoke("makeUnits");auto observer=a.global("observer"),member=a.global("member"),targetObserver=b.global("observer"),targetMember=b.global("member");auto units=[&](std::string_view type,std::uint32_t id){return type!="unit"?0u:id==observer.bits?targetObserver.bits:id==member.bits?targetMember.bits:0u;};auto cm=restored->rebuildCollections(collections,units);auto tm=restored->restoreTriggers(triggers);auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return units(type,id);if(type=="region" || type=="rect"){auto it=cm.find({std::string(type),id});return it==cm.end()?0u:it->second;}auto it=tm.find({std::string(type),id});return it==tm.end()?0u:it->second;};auto swapped=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==observer.bits?targetMember.bits:id==member.bits?targetObserver.bits:0u;return decode(type,id);};rejects([&]{restored->rebuildSpatialEvents(events,swapped);},"unit order differs");auto bad=events;bad.back()^=1;rejects([&]{restored->rebuildSpatialEvents(bad,decode);},"digest");require(restored->liveObjects(NativeKind::Event)==0,"Rejected spatial restore created events");auto em=restored->rebuildSpatialEvents(events,decode);auto inverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==targetObserver.bits?observer.bits:id==targetMember.bits?member.bits:0u;if(type=="event"){for(auto [stable,local]:em)if(local==id)return stable;}for(auto& [key,local]:cm)if(key.first==type && local==id)return key.second;for(auto& [key,local]:tm)if(key.first==type && local==id)return key.second;return 0u;};require(restored->encodeSpatialEvents(inverse)==events,"Spatial event snapshot did not round-trip");b.restoreGlobals(globals,decode);restored->startMain();original->advance(.03125);restored->advance(.03125);require(b.global("enters").bits==0 && b.global("leaves").bits==0 && b.global("ranges").bits==1,"Restored initial membership fired again");for(auto* session:{original.get(),restored.get()}){auto& vm=session->runtime();vm.invoke("SetUnitX",std::array{vm.global("member"),vm.real(real(200))});session->advance(.03125);vm.invoke("SetUnitX",std::array{vm.global("member"),vm.real(real(20))});session->advance(.03125);}require(a.global("enters").bits==1 && a.global("leaves").bits==1 && a.global("ranges").bits==2 && b.global("enters").bits==a.global("enters").bits && b.global("leaves").bits==a.global("leaves").bits && b.global("ranges").bits==a.global("ranges").bits,"Restored spatial transitions diverged");for(auto* session:{original.get(),restored.get()}){auto& vm=session->runtime();vm.invoke("SetUnitX",std::array{vm.global("observer"),vm.real(real(200))});session->advance(.03125);vm.invoke("SetUnitX",std::array{vm.global("observer"),vm.real(real(0))});session->advance(.03125);}require(b.global("enters").bits==1 && b.global("leaves").bits==1 && b.global("ranges").bits==3 && a.global("ranges").bits==3,"Restored filter or range transitions differ");b.invoke("DestroyTrigger",std::array{b.global("enterTrigger")});require(restored->liveObjects(NativeKind::Event)==2,"Destroyed trigger retained spatial event");
     });
+    test("actor_events_rebuild_filters_state_and_dispatch_order",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type timer extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ type boolexpr extends handle
+ type filterfunc extends boolexpr
+ type playerunitevent extends handle
+ type unitevent extends handle
+ type unitstate extends handle
+ type playerstate extends handle
+ type alliancetype extends handle
+ type limitop extends handle
+ native ConvertPlayerUnitEvent takes integer n returns playerunitevent
+ native ConvertUnitEvent takes integer n returns unitevent
+ native ConvertUnitState takes integer n returns unitstate
+ native ConvertPlayerState takes integer n returns playerstate
+ native ConvertAllianceType takes integer n returns alliancetype
+ native ConvertLimitOp takes integer n returns limitop
+ native Player takes integer id returns player
+ native CreateUnit takes player owner, integer id, real x, real y, real facing returns unit
+ native CreateTimer takes nothing returns timer
+ native KillUnit takes unit u returns nothing
+ native RemoveUnit takes unit u returns nothing
+ native SetUnitState takes unit u, unitstate state, real value returns nothing
+ native SetPlayerState takes player p, playerstate state, integer value returns nothing
+ native SetPlayerAlliance takes player p, player other, alliancetype a, boolean value returns nothing
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code c returns triggeraction
+ native Filter takes code c returns filterfunc
+ native TriggerRegisterPlayerUnitEvent takes trigger t, player p, playerunitevent e, boolexpr f returns event
+ native TriggerRegisterUnitEvent takes trigger t, unit u, unitevent e returns event
+ native TriggerRegisterUnitStateEvent takes trigger t, unit u, unitstate s, limitop op, real value returns event
+ native TriggerRegisterPlayerStateEvent takes trigger t, player p, playerstate s, limitop op, real value returns event
+ native TriggerRegisterPlayerAllianceChange takes trigger t, player p, alliancetype a returns event
+ native GetFilterUnit takes nothing returns unit
+ globals
+ unit subject=null
+ unit doomed=null
+ trigger first=null
+ trigger second=null
+ trigger third=null
+ trigger stateTrigger=null
+ trigger playerTrigger=null
+ trigger allianceTrigger=null
+ integer playerCrossings=0
+ integer alliances=0
+ integer order=0
+ integer crossings=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function makeUnit takes nothing returns nothing
+ set subject=CreateUnit(Player(0),'hfoo',0.0,0.0,0.0)
+ set doomed=CreateUnit(Player(0),'hfoo',100.0,0.0,0.0)
+ endfunction
+ function accepts takes nothing returns boolean
+ return GetFilterUnit()==subject
+ endfunction
+ function firstAction takes nothing returns nothing
+ set order=order*10+1
+ endfunction
+ function secondAction takes nothing returns nothing
+ set order=order*10+2
+ endfunction
+ function thirdAction takes nothing returns nothing
+ set order=order*10+3
+ endfunction
+ function crossing takes nothing returns nothing
+ set crossings=crossings+1
+ endfunction
+ function playerCrossing takes nothing returns nothing
+ set playerCrossings=playerCrossings+1
+ endfunction
+ function allianceChanged takes nothing returns nothing
+ set alliances=alliances+1
+ endfunction
+ function setup takes nothing returns nothing
+ set first=CreateTrigger()
+ set second=CreateTrigger()
+ set third=CreateTrigger()
+ set stateTrigger=CreateTrigger()
+ set playerTrigger=CreateTrigger()
+ set allianceTrigger=CreateTrigger()
+ call SetPlayerState(Player(0),ConvertPlayerState(1),200)
+ call TriggerAddAction(first,function firstAction)
+ call TriggerAddAction(second,function secondAction)
+ call TriggerAddAction(third,function thirdAction)
+ call TriggerAddAction(stateTrigger,function crossing)
+ call TriggerAddAction(playerTrigger,function playerCrossing)
+ call TriggerAddAction(allianceTrigger,function allianceChanged)
+ call TriggerRegisterPlayerUnitEvent(first,Player(0),ConvertPlayerUnitEvent(20),Filter(function accepts))
+ call TriggerRegisterUnitEvent(second,subject,ConvertUnitEvent(53))
+ call TriggerRegisterUnitEvent(second,doomed,ConvertUnitEvent(53))
+ call RemoveUnit(doomed)
+ call TriggerRegisterPlayerUnitEvent(third,Player(0),ConvertPlayerUnitEvent(20),null)
+ call TriggerRegisterUnitStateEvent(stateTrigger,subject,ConvertUnitState(0),ConvertLimitOp(0),100.0)
+ call TriggerRegisterPlayerStateEvent(playerTrigger,Player(0),ConvertPlayerState(1),ConvertLimitOp(0),100.0)
+ call TriggerRegisterPlayerAllianceChange(allianceTrigger,Player(0),ConvertAllianceType(0))
+ endfunction
+ function low takes nothing returns nothing
+ call SetUnitState(subject,ConvertUnitState(0),50.0)
+ call SetPlayerState(Player(0),ConvertPlayerState(1),50)
+ endfunction
+ function high takes nothing returns nothing
+ call SetUnitState(subject,ConvertUnitState(0),120.0)
+ call SetPlayerState(Player(0),ConvertPlayerState(1),200)
+ endfunction
+ function ally takes nothing returns nothing
+ call SetPlayerAlliance(Player(0),Player(1),ConvertAllianceType(0),true)
+ endfunction
+ function die takes nothing returns nothing
+ call KillUnit(subject)
+ endfunction
+ )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"actor-snapshot.j",source,"authored actor event persistence test"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("makeUnit");a.invoke("setup");a.invoke("low");require(a.global("crossings").bits==1,"Actor event fixture did not cross state");auto identity=[](std::string_view,std::uint32_t id){return id;};auto triggers=original->encodeTriggers(identity),events=original->encodeActorEvents(identity),globals=a.encodeGlobals(identity);b.invoke("CreateTimer");b.invoke("makeUnit");b.invoke("low");auto sourceUnit=a.global("subject"),targetUnit=b.global("subject"),sourceDoomed=a.global("doomed"),targetDoomed=b.global("doomed");auto tm=restored->restoreTriggers(triggers);auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==sourceUnit.bits?targetUnit.bits:id==sourceDoomed.bits?targetDoomed.bits:0u;auto it=tm.find({std::string(type),id});return it==tm.end()?0u:it->second;};rejects([&]{restored->rebuildActorEvents(events,decode);},"handle mapping");b.invoke("RemoveUnit",std::array{targetDoomed});auto bad=events;bad.back()^=1;rejects([&]{restored->rebuildActorEvents(bad,decode);},"digest");rejects([&]{restored->rebuildActorEvents(events,[&](std::string_view type,std::uint32_t id){return type=="unit"?0u:decode(type,id);});},"handle mapping");require(restored->liveObjects(NativeKind::Event)==0,"Rejected actor restore created events");auto em=restored->rebuildActorEvents(events,decode);auto inverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==targetUnit.bits?sourceUnit.bits:id==targetDoomed.bits?sourceDoomed.bits:0u;if(type=="event"){for(auto [stable,local]:em)if(local==id)return stable;}for(auto& [key,local]:tm)if(key.first==type && local==id)return key.second;return 0u;};require(restored->encodeActorEvents(inverse)==events,"Actor event snapshot did not round-trip");b.restoreGlobals(globals,decode);restored->startMain();b.invoke("low");require(b.global("crossings").bits==1,"Restored unit state fired again");for(auto* session:{original.get(),restored.get()}){session->runtime().invoke("high");session->runtime().invoke("low");session->runtime().invoke("ally");session->runtime().invoke("die");}require(a.global("crossings").bits==2 && b.global("crossings").bits==2 && a.global("playerCrossings").bits==2 && b.global("playerCrossings").bits==2 && a.global("alliances").bits==1 && b.global("alliances").bits==1 && a.global("order").bits==123 && b.global("order").bits==123,"Restored actor events diverged");
+    });
     test("triggers_restore_actions_conditions_and_state",[&]{
         std::string source=R"jass(type destructable extends handle
  type timer extends handle
