@@ -13,7 +13,9 @@ StartMeleeAI/StartCampaignAI从挂载归档读取策略成员，地图覆盖优�
 - 城镇以源分类及稳定大厅句柄识别；矿井/剩余金量、扩张候选、位置与工人来自实际地图，指令经过现有路径/建造接口。
 - HarvestGold/Wood累计同镇配额，ClearHarvestAI清除配额，StopGathering停止当前采集；下一AI心跳统一保留、补足或释放配额，携带资源经过返还。支持-1全镇参数，详见[战役AI](campaign-ai.md)。
 - 队长需求/组建、准备度/生命/魔法、目标/归家/撤退、敌基地/扩张/野怪营地、盟友目标和攻击指令消费实际部队。策略选项连接基础防守、受伤撤退、英雄拾物/治疗药品购买使用、工人修理和目标优先；英雄技能回调连接实际学习。
-- CommandAI及查询/弹出使用有界FIFO；调试记录有界，脚本文本连接会话显示。
+- CommandAI 使用每个 AI 独立的 12 项后进先出命令栈；栈满时忽略新命令，空栈读取命令和数据均返回 -1，空栈弹出不产生动作。调试记录有界，脚本文本连接会话显示。
+
+原版人族第六章以命令、Y、X 的顺序发送队长传送及攻击数据，AI 脚本从栈顶依次读取 X、Y 和命令。原版 1.27 的 `GetLastCommand`、`GetLastData`、`PopLastCommand` 入口分别位于 `0x6f88fec0`、`0x6f88ff00`、`0x6f8928a0`；入栈函数 `0x6f89c990` 在 12 项时直接返回，空栈读取返回 -1。静态反汇编见 `tmp/docs-artifacts/war3/tft-ne4-next/ai-command-asm.txt`、`ai-command-empty.py` 和 `ai-command-push.py`。Win32 Release 客户端及 CampaignAI 检查编译通过，`war3_campaign_ai_tests <data-root> <fixture.w3m> command-stack` 1 通过、0 失败。原图隔离会话中，玛尔加尼斯到达脚本指定的传送区，而非地图原点；随后其追击目标建筑仍未继续，不能视为完整战役对局。记录见 `tmp/docs-artifacts/war3/tft-ne4-next/roc-human06-stack-after.log`。
 
 UnitMetaData中utyp的caseSens=0，原TownHall/Mechanical/Peon等字段含大写。ObjectData.unitClasses提供统一小写分类，property保留原字符串；AI城镇及现有IsUnitType、武器/技能/光环/吸血、修理和古树施工使用该分类。
 

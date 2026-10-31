@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 战役 AI 命令栈（待阶段验证）
+
+路径：`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [AI 命令](ai.md)。`CommandAI` 及 AI 读取／弹出按原版 12 项栈、满栈忽略和空栈返回 -1 执行。Win32 Release 客户端及 CampaignAI 测试编译通过，`war3_campaign_ai_tests <data-root> <fixture.w3m> command-stack` 1 通过、0 失败；人族第六章原图隔离会话的玛尔加尼斯传送到指定区域，但后续攻击建筑仍未继续。阶段核对其他战役脚本、命令同帧／跨帧次序、AI 重启／失效、联机同步及完整任务推进。
+
 ### 锁镣派生能力的可选光束（待阶段验证）
 
 路径：`src/session_human_channels.cpp`、`tests/dota_heroes_tests.cpp`、`docs/human-casters.md`。无光束配置的锁镣派生能力保留真实持续施法和控制；有源光束时创建并按施法生命周期释放。Win32 Release 客户端和定向程序编译通过，`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x>` 4 通过、0 失败，覆盖屠夫肢解的控制／伤害／回血／取消及源 `Amls` 光束与控制的创建／释放。阶段核对多来源、目标死亡／移除／魔免、打断与回调、空值／地图覆盖、目标和施法动画、原版时序、实际 GPU 与完整对局。

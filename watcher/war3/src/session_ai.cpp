@@ -18,7 +18,7 @@ void ScriptSession::startAI(unsigned owner,const std::string& script,bool campai
 void ScriptSession::bindAiNatives(){
     bindAiControlNatives();
     for(auto [name,campaign]:std::initializer_list<std::pair<const char*,bool>>{{"StartMeleeAI",false},{"StartCampaignAI",true}})bind(name,"nothing",{"player","string"},[this,campaign](auto& vm,auto args){if(!args[1].text)throw std::runtime_error("Null AI script");startAI(playerId(args[0]),*args[1].text,campaign);return vm.nothing();});
-    bind("CommandAI","nothing",{"player","integer","integer"},[this](auto& vm,auto args){auto& ai=ais_[playerId(args[0])];if(!ai)return vm.nothing();if(ai->commands.size()>=1024)throw std::runtime_error("AI command queue exceeds budget");ai->commands.emplace_back(std::bit_cast<int>(args[1].bits),std::bit_cast<int>(args[2].bits));return vm.nothing();});
+    bind("CommandAI","nothing",{"player","integer","integer"},[this](auto& vm,auto args){auto& ai=ais_[playerId(args[0])];if(ai && ai->commands.size()<12)ai->commands.emplace_back(std::bit_cast<int>(args[1].bits),std::bit_cast<int>(args[2].bits));return vm.nothing();});
 }
 std::vector<std::uint32_t> ScriptSession::aiCaptain(ScriptAI& ai){std::vector<std::uint32_t> result;for(auto id:ai.captain)if(alive(id,NativeKind::Unit)){auto& u=*units_.at(id);if(u.owner==ai.owner && !u.removing && !u.hidden() && number(u.life)>0 && !ai.guardUnits.contains(id) && !ai.suicideUnits.contains(id) && (ai.groupTimedLife || !u.timedLife))result.push_back(id);}return result;}
 std::uint32_t ScriptSession::aiEnemy(ScriptAI& ai,unsigned owner,bool buildings,std::optional<WorldPoint> center){
