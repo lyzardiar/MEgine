@@ -683,6 +683,9 @@ class ScriptSession {
     std::map<std::pair<std::uint32_t,bool>,std::optional<std::pair<int,int>>> globalStock_;
     std::uint64_t productionTicket_=0;
     std::optional<SourceSettings> gameplay_;
+    std::unordered_map<std::string,float> gameplayNumbers_;
+    std::array<std::optional<std::array<float,8>>,7> damageFactors_;
+    std::optional<std::array<float,7>> etherealDamageFactors_;
     struct UpkeepRules {std::array<int,10> usage{};std::array<std::array<int,10>,2> rates{};};
     std::optional<UpkeepRules> upkeepRules_;
     std::vector<int> heroThresholds_;

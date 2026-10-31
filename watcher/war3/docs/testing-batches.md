@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 战斗伤害表及地图常量缓存（待验证）
+
+路径：`src/session.h`、`src/session_damage.cpp`、`src/session_hero.cpp`、`docs/combat.md`。攻击／防御、虚无伤害表和非空数字常量按地图会话惰性缓存，空字段继续使用调用方回退值。Win32 Release 客户端编译通过；`war3_fortified_tests` 原版模式 2 通过、重新生成夹具的自定义模式 2 通过，带 `war3mapMisc.txt` 伤害倍率覆盖的夹具自定义模式 2 通过；`war3_passive_tests <data-root> <fixture> ethereal-ability` 1 通过、0 失败。3 万次伤害调用单次隔离采样由 93 ms 降至 45 ms、最终生命一致，记录在 `tmp/docs-artifacts/war3/damage-factor-cache/`。阶段核对错误／空表、不同地图切换与回退值、完整伤害组合、真实对局性能及联机。
+
 ### 无过滤器的单位编组枚举（待验证）
 
 路径：`src/session_collections.cpp`、`tests/game_flow_tests.cpp`、`docs/jass.md`。空过滤器直接遍历单位，非空过滤器保留快照与回调语义；Win32 Release 客户端和游戏流程测试通过，检查类型／玩家／范围、零与一数量限制、编组替换和单位创建／移除。2,001 单位、2,000 次范围枚举的单次隔离采样由 219 ms 降至 30 ms，结果数量与首句柄一致，见 `tmp/docs-artifacts/war3/group-enum-fast/`。阶段核对所有编组入口、过滤器嵌套与修改、原版排序、真实地图帧耗时和联网同步。
