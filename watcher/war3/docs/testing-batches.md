@@ -4454,3 +4454,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 世界寻路状态重建（待批次验证）
 
 路径：`src/world.h`、`src/world_path.cpp`、`tests/world_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SPTH` 重建地图寻路位，保留荒芜和动态占地，更新路线缓存修订号；地图身份由调用方校验。Win32 Release 客户端与 world 测试目标编译通过，`war3_world_tests <data-root> <output> world_pathing_snapshot` 2/2，覆盖原图、阻挡／重开、占地、荒芜和损坏拒绝；日志 `tmp/docs-artifacts/war3/pathing-snapshot/world-tests.log`。活动单位路线、真实加载及与完整对象恢复的集成待批次验证或实现。
+
+### 地形网格组合恢复（待批次验证）
+
+路径：`src/world.h`、`src/world_blight.cpp`、`tests/world_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SGRD` 将地表、荒芜、寻路状态与调用方地图摘要组合，在临时世界验证后原子提交；临时副本的内存峰值未测。Win32 Release 客户端及 world 测试目标编译通过，`war3_world_tests <data-root> <output> world_terrain_grid_transaction` 1/1，覆盖 BootyBay 原图、模拟摘要不匹配、子组件损坏回滚和动态占地保留；日志 `tmp/docs-artifacts/war3/terrain-grid-transaction/world-tests-final.log`。待批次验证真实地图摘要来源、资源峰值、实际画面、单位对象与完整保存／加载。

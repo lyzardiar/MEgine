@@ -93,3 +93,7 @@ Win32 Release 客户端及 world 测试目标编译通过；`war3_world_tests <d
 `SPTH` 独立组件保存地图路径网格中除荒芜位以外的状态；恢复时保留 `SBLT` 管理的荒芜位及建筑／可破坏物的独立动态阻挡，更新路径和新增阻挡的修订号，使已有寻路缓存失效。组件校验摘要、尺寸、原点、网格类型和保留位；调用方仍需校验地图身份。动态阻挡及其所有者、单位活动路线和完整世界由其他恢复层负责，组件尚未接入存档入口。
 
 Win32 Release 客户端及 world 测试目标编译通过；`war3_world_tests <data-root> <output> world_pathing_snapshot` 2 通过、0 失败。隔离检查覆盖路径封闭／重开及缓存失效、建造标志、动态占地保留／移除、荒芜指纹、无网格和损坏／保留位拒绝；BootyBay 原图路径状态往返一致，未加载 Game.dll。日志 `tmp/docs-artifacts/war3/pathing-snapshot/world-tests.log`。完整对象重建、活动单位路径、实际存档加载和地图身份验证仍待实现或阶段验证。
+
+`SGRD` 将 `STER`、`SBLT` 和 `SPTH` 组合并绑定调用方提供的 64 位小写 SHA-256 地图摘要。恢复先在临时世界校验并应用全部组件，再提交地表、荒芜及寻路状态；摘要不一致或任一子组件失败时不改变目标世界。目标现有动态占地与所有者保留，纹理槽约束和各组件限制继续生效。调用方负责计算实际地图摘要、保证恢复时机安全并与单位及其余对象恢复协调；该接口尚未接入保存／载入入口。临时世界会复制地图数据，实际大地图的 32 位内存峰值及耗时尚未验证。
+
+Win32 Release 客户端和 world 测试目标编译通过；`war3_world_tests <data-root> <output> world_terrain_grid_transaction` 1 通过、0 失败。BootyBay 隔离世界覆盖动态纹理、荒芜、路径、地图摘要不匹配、重封装后子组件摘要损坏的事务拒绝及动态占地所有权保留；测试使用固定模拟摘要，未计算或验证真实地图文件身份，未加载 Game.dll。日志 `tmp/docs-artifacts/war3/terrain-grid-transaction/world-tests-final.log`。实际存档、地图身份来源、资源峰值、画面和完整对象恢复待实现或阶段验证。
