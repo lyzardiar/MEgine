@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 灵魂保存 AI 施法（待阶段验证）
+
+路径：`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`、`docs/soul-preservation.md`。AI 对可见、非敌对、符合技能目标规则且在射程内的单位选择最近目标，发起实际技能订单。Win32 Release 客户端和 CampaignAI 程序编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> ai-soul-preservation` 1 通过、0 失败，覆盖友方目标、敌方、错误类型和已有状态；原图 `human06-ai-soul-preservation` 和 `human06-ai-conversion` 各 1 通过、0 失败，分别在 333.5 秒观察到自然施法与移除、356.5 秒观察到转换与计数，不加载 Game.dll。阶段检查原图 AI 自然决策、技能优先级、单位生命／威胁、移动／攻击冲突、目标失效、双端同步及原版表现。
+
 ### 灵魂保存能力（待阶段验证）
 
 路径：`src/spells.h`、`src/entities.h`、`src/session_spell_info.cpp`、`src/session_control_spells.cpp`、`src/session_spell_effects.cpp`、`src/session_spells.cpp`、`tests/control_tests.cpp`、`docs/soul-preservation.md`。ANsl 接入源单位类型／施法和 Buff 时限、目标控制及到期移除。Win32 Release 客户端及控制测试目标编译通过；`war3_control_tests.exe <data-root> <control-fixture> soul-preservation` 1 通过、0 失败，未加载 Game.dll，覆盖错误类型拒绝、施法状态、施法者移除和目标到期移除。原版目标与精确时序、死亡和驱散事件、动画／音效、AI、真实窗口与战役仍待对照。
