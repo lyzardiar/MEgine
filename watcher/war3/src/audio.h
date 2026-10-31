@@ -3,6 +3,10 @@
 #include "archive.h"
 
 namespace war3 {
+struct AudioPlaybackState {
+    enum class Phase {Stopped,Playing,Paused};
+    double position=0;float pitch=1;unsigned duration=0;bool looping=false,midi=false;Phase phase=Phase::Stopped;
+};
 class AudioVoice;
 class MilesDevice : public std::enable_shared_from_this<MilesDevice> {
     friend class AudioVoice;
@@ -38,6 +42,8 @@ public:
     unsigned status() const;
     bool playing() const {auto value=status();return value==4 || value==16;}
     std::pair<unsigned,unsigned> milliseconds() const;
+    AudioPlaybackState snapshotPlayback() const;
+    void restorePlayback(const AudioPlaybackState& state);
 };
 class Music {
     std::unique_ptr<AudioVoice> voice_;

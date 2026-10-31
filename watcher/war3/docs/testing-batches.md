@@ -4366,3 +4366,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 声音等待线程的恢复（待阶段验证）
 
 路径：`src/jass_runtime.h/.cpp`、`src/session_sound.cpp`、`tests/jass_thread_tests.cpp`、`tests/sound_tests.cpp`、`docs/save-runtime-foundation.md`。`JSTH` 版本 2 记录 native 等待恢复模式并可读版本 1；声音等待在恢复后重新检查目标声音的播放位置，要求声音状态和句柄已恢复。Win32 Release 客户端及 JASS 线程／session／clock／sound 目标编译通过；JASS 线程 27/27、session 22/22、clock 15/15、声音定向检查 1/1。隔离测试手动创建目标声音并设置同一播放位置，核对同一模拟步结束、等待期间再次采集、重入模式不匹配拒绝及版本 1 续执行。OrcX01 30 秒三条睡眠线程已能采集，目标未重建声音对象而拒绝映射；日志 `tmp/docs-artifacts/war3/sound-wait-resume/`。真实声音对象／播放状态持久化、完整原图线程续执行、其他 native 栈和存档入口待实现或阶段验证。
+
+### 声音通道播放状态基础（待阶段验证）
+
+路径：`src/audio.h/.cpp`、`tests/sound_tests.cpp`、`docs/save-runtime-foundation.md`。声音通道采集播放位置、播放／暂停／停止、循环、速度、媒体类型和时长；静音模拟保留小数毫秒，实际后端使用其整数毫秒。Win32 Release 客户端及 sound 测试目标编译通过；`war3_sound_tests <data-root> <scratch> sound_playback_state_preserves_fractional_time_and_phase` 与 `sound_wait_snapshot_restarts_against_restored_playback` 各 1/1。静音 WAV／MIDI 检查覆盖变速、循环、暂停／继续和不兼容数据拒绝；等待检查沿用手动设置播放位置。`sound_playback_state_miles_roundtrip` 0/1：本机 `waveOutOpen()` 失败，未创建 Miles 输出设备；日志 `tmp/docs-artifacts/war3/audio-playback-snapshot/`。资源摘要、声音句柄、淡入淡出、场景状态、实际设备播放及完整存档待实现或阶段验证。
