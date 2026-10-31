@@ -44,6 +44,58 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("quests_restore_objectives_globals_and_tombstones",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type quest extends handle
+ type questitem extends handle
+ native CreateQuest takes nothing returns quest
+ native DestroyQuest takes quest q returns nothing
+ native QuestSetTitle takes quest q, string title returns nothing
+ native QuestSetDescription takes quest q, string description returns nothing
+ native QuestSetIconPath takes quest q, string icon returns nothing
+ native QuestSetRequired takes quest q, boolean value returns nothing
+ native QuestSetDiscovered takes quest q, boolean value returns nothing
+ native QuestSetFailed takes quest q, boolean value returns nothing
+ native QuestSetEnabled takes quest q, boolean value returns nothing
+ native QuestSetCompleted takes quest q, boolean value returns nothing
+ native IsQuestCompleted takes quest q returns boolean
+ native QuestCreateItem takes quest q returns questitem
+ native QuestItemSetDescription takes questitem item, string description returns nothing
+ native QuestItemSetCompleted takes questitem item, boolean value returns nothing
+ native IsQuestItemCompleted takes questitem item returns boolean
+ native FlashQuestDialogButton takes nothing returns nothing
+ globals
+ quest primary=null
+ quest optional=null
+ quest removed=null
+ questitem first=null
+ questitem second=null
+ questitem oldItem=null
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ set primary=CreateQuest()
+ call QuestSetTitle(primary,"主线任务")
+ call QuestSetDescription(primary,"保卫营地")
+ call QuestSetIconPath(primary,"ReplaceableTextures\\CommandButtons\\BTNHero.blp")
+ call QuestSetDiscovered(primary,true)
+ set first=QuestCreateItem(primary)
+ call QuestItemSetDescription(first,"找到船只")
+ call QuestItemSetCompleted(first,true)
+ set second=QuestCreateItem(primary)
+ call QuestItemSetDescription(second,"到达港口")
+ set optional=CreateQuest()
+ call QuestSetRequired(optional,false)
+ call QuestSetFailed(optional,true)
+ call QuestSetEnabled(optional,false)
+ set removed=CreateQuest()
+ set oldItem=QuestCreateItem(removed)
+ call DestroyQuest(removed)
+ call FlashQuestDialogButton()
+ endfunction
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"quest-snapshot.j",source,"quest recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),restored=make();original->startMain();original->advance(.25);auto& a=original->runtime();auto& b=restored->runtime();auto identity=[](std::string_view,std::uint32_t id){return id;};auto saved=original->encodeQuests(identity),globals=a.encodeGlobals(identity);rejects([&]{original->encodeQuests([](std::string_view,std::uint32_t){return 1u;});},"handle mapping");auto sourceQuest=original->quests().at(a.global("primary").bits);std::swap(sourceQuest->items[0],sourceQuest->items[1]);rejects([&]{original->encodeQuests(identity);},"objective membership");std::swap(sourceQuest->items[0],sourceQuest->items[1]);auto damaged=saved;damaged.back()^=1;rejects([&]{restored->rebuildQuests(damaged);},"digest");require(restored->quests().empty() && !restored->questFlash(),"Rejected quest snapshot modified target");rejects([&]{restored->rebuildQuests(saved);},"clock mismatch");restored->restoreSimulationClock(original->encodeSimulationClock());SnapshotWriter invalid(1024);invalid.u32(tag("SQST"));invalid.u32(1);invalid.text(original->world()->resources().mapDigest(),64);invalid.u64(std::bit_cast<std::uint64_t>(original->simulationTime()));invalid.u32(1);invalid.u32(1);invalid.u32(1);invalid.u32(77);invalid.u32(1);invalid.u32(999);invalid.text("orphan",1024);invalid.u32(0);auto orphan=sealSnapshot(invalid.finish(),1024);rejects([&]{restored->rebuildQuests(orphan);},"objective owner");require(restored->quests().empty() && !restored->questFlash(),"Invalid quest owner modified target");auto mapped=restored->rebuildQuests(saved);auto decode=[&](std::string_view type,std::uint32_t id){auto at=mapped.find({std::string(type),id});return at==mapped.end()?0u:at->second;};b.restoreGlobals(globals,decode);auto primary=b.global("primary"),optional=b.global("optional"),first=b.global("first"),second=b.global("second"),removed=b.global("removed"),oldItem=b.global("oldItem");auto q=restored->quests().at(primary.bits),o=restored->quests().at(optional.bits);require(q->title=="主线任务" && q->description=="保卫营地" && q->discovered && q->required && q->items.size()==2 && q->items[0].first==first.bits && q->items[1].first==second.bits && q->items[0].second->description=="找到船只" && q->items[0].second->completed && q->items[1].second->description=="到达港口" && !q->items[1].second->completed,"Quest state or objective order differs");require(!o->required && o->failed && !o->enabled && restored->questFlash() && !b.invoke("IsQuestCompleted",std::array{removed}).bits && !b.invoke("IsQuestItemCompleted",std::array{oldItem}).bits,"Quest flags, flash or tombstones differ");auto reverse=[&](std::string_view type,std::uint32_t id){for(auto& [key,value]:mapped)if(key.first==type && value==id)return key.second;return 0u;};require(restored->encodeQuests(reverse)==saved,"Quest snapshot did not round trip");auto revision=restored->questRevision();b.invoke("QuestItemSetCompleted",std::array{second,b.boolean(true)});require(b.invoke("IsQuestItemCompleted",std::array{second}).bits && restored->questRevision()>revision,"Restored objective did not update UI state");restored->acknowledgeQuests();require(!restored->questFlash(),"Restored quest flash did not clear");rejects([&]{restored->rebuildQuests(saved);},"idle local");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during quest recovery");
+    });
     test("item_objects_restore_inventory_and_tombstones",[&]{
         std::string source=R"jass(type widget extends handle
  type ability extends handle

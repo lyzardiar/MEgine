@@ -1346,6 +1346,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitCooldowns(const jass::StableHandleMap& encodeHandle) const;
     void restoreUnitCooldowns(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeQuests(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::pair<std::string,std::uint32_t>,std::uint32_t> rebuildQuests(std::span<const std::uint8_t> bytes);
     Bytes encodeItems(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildItems(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeDestructables(const jass::StableHandleMap& encodeHandle) const;
