@@ -4,9 +4,9 @@ JASS 运行时的操作数、调用帧、局部变量与当前 native 参数由�
 
 此状态尚不能恢复：Fiber 和 native 调用栈、调度器等待关系、触发器回调、句柄引用及 codeOwner 指针都需要稳定的可恢复表示。完整存档还需保存世界和玩家状态、随机数、事件、计时器、活动命令及地图身份，接入保存／载入事件和用户界面，并实现原版格式兼容。兽族战役切区涉及多区域存档，单独保存英雄或 gamecache 无法代替完整世界保存。
 
-原版 OrcX01 的 `war3map.j` 在区域切换流程中调用 `GetSaveBasicFilename`、`SaveGameExists`，并通过 Blizzard.j 包装调用 `CopySaveGame`、`RemoveSaveDirectory`、`SaveGame` 和 `LoadGame`。`SaveGameExists` 和 `CopySaveGame` 操作独立用户目录 `Saves` 下的实际文件，拒绝绝对路径、上级目录及重解析点；复制通过同目录临时文件发布，允许覆盖目标。它们不验证存档内容或实现加载。当前缺少普通存档及其余 native 的实际会话恢复，因而该战役的连续切区尚未打通；不能用 gamecache 或空返回代替。静态源图脚本 SHA-256 为 `02f8d230e68dcda29fdfbe0d59aea6d842fb8340d9706ee006f32fbd2d661ae0`。
+原版 OrcX01 的 `war3map.j` 在区域切换流程中调用 `GetSaveBasicFilename`、`SaveGameExists`，并通过 Blizzard.j 包装调用 `CopySaveGame`、`RemoveSaveDirectory`、`SaveGame` 和 `LoadGame`。`SaveGameExists`、`CopySaveGame` 和 `RemoveSaveDirectory` 操作独立用户目录 `Saves` 下的实际文件，拒绝绝对路径、上级目录及重解析点；复制通过同目录临时文件发布，允许覆盖目标。目录清理先检查整个目录树，持有各目录句柄后逐项移除；清理遇到文件占用或其他错误可能只完成一部分。它们不验证存档内容或实现加载。当前缺少普通存档及其余 native 的实际会话恢复，因而该战役的连续切区尚未打通；不能用 gamecache 或空返回代替。静态源图脚本 SHA-256 为 `02f8d230e68dcda29fdfbe0d59aea6d842fb8340d9706ee006f32fbd2d661ae0`。
 
-Win32 Release 客户端及 `war3_save_exists_tests` 编译通过；以生成夹具和原版 `OrcX01.w3x` 分别运行 `war3_save_exists_tests <data-root> <map> <scratch-root>`，各 1 通过、0 失败。检查通过 `CopySaveGameBJ` 实际复制和覆盖文件，缺失源不改变目标，并检查目录与越界路径。原版扩展名、文件格式、保存事件和跨区恢复仍待完成或对照。
+Win32 Release 客户端及 `war3_save_exists_tests` 编译通过；以原版 `OrcX01.w3x` 运行 `war3_save_exists_tests <data-root> <map> <scratch-root>`，1 通过、0 失败。检查通过 `CopySaveGameBJ` 实际复制和覆盖文件，通过 `RemoveSaveDirectoryBJ` 移除嵌套区域目录并保留旁侧备份；缺失源不改变目标，目录与越界路径被拒绝。当前环境未能创建测试目录链接，该分支未执行；原版扩展名、文件格式、并发、保存事件和跨区恢复仍待完成或对照。
 
 OrcX01 首次切换到未访问区域时，原脚本通过 `SaveAndChangeLevelBJ` 先保存当前区域再切地图；重访已保存区域时通过 `SaveAndLoadGameBJ` 保存当前区域并载入目标。用户保存／载入事件还将最多五个区域快照在对应存档目录和 `Blizzard\Zones` 之间复制。该流程需要同一世界和脚本线程的实际恢复，必须完整实现存档和两种切换入口；原始地图脚本及分析保存在 `tmp/docs-artifacts/war3/orcx-saves-1031/`。
 
