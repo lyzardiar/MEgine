@@ -4119,6 +4119,10 @@ Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨�
 
 Win32 Release 客户端及测试目标编译通过；执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m`，再运行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m ethereal-ability`，1/1 通过。DotA 原图隔离会话使用 `I0LT`，目标在 1 秒时虚无、5 秒时恢复；记录 `tmp/docs-artifacts/war3/dota-ethereal/after.log`。阶段验证物品／派生、多个来源及生命周期、伤害／治疗倍率、地图覆盖、真实窗口／原版及联机。
 
+### 物品加入无效句柄（待阶段验证）
+
+路径：`src/session_inventory.cpp`、`tests/passive_tests.cpp`；依据见[失效物品句柄](dota-bkb-item-handles.md)。`UnitAddItem` 校验单位及物品句柄，失败返回 false，有效目标继续进入实际背包流程。Win32 Release 客户端及 passive 目标编译通过；`war3_passive_tests <data-root> ../../tmp/docs-artifacts/war3/pawn-analysis/fixture.w3m invalid-item` 1/1，覆盖空、移除、不兼容句柄及后续有效拾取。阶段核对真实地图回调重入、物品／单位失效、满栏／立即消耗、事件顺序及原版运行行为。
+
 ### 玩家状态与睡眠线程采集（待阶段验证）
 
 路径：`src/jass_runtime.h/.cpp`、`src/session_game.cpp`、`tests/clock_tests.cpp`；说明见[玩家基础状态](player-state-persistence.md)和[玩家科技状态](player-tech-persistence.md)。玩家状态和科技允许在脚本已让出执行时采集；脚本运行中及已有线程的状态恢复仍拒绝。Win32 Release 客户端及 `war3_clock_tests` 编译通过；以原 BootyBay 归档为世界、隔离脚本执行的新增联合采集／恢复用例通过，覆盖运行中拒绝、睡眠时采集及在另一会话恢复后继续线程。
