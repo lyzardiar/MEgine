@@ -4516,3 +4516,9 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 单位句柄与类型重建（待批次验证）
 
 路径：`CMakeLists.txt`、`src/session.h`、`src/session.cpp`、`src/session_game.cpp`、`src/session_entities.cpp`、`src/session_unit_identity.cpp`、`tests/clock_tests.cpp`，说明见[战役存档状态](save-runtime-foundation.md)。`SUID` 重建单位类型／归属／位置及已移除句柄，不恢复完整单位状态，并阻止不完整会话启动。Win32 Release 客户端和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 32/32；隔离检查覆盖全局引用、人口、随机数、错误类型／摘要、地图外位置及变形。OrcX01 150 秒的 488 个单位句柄联动物品、任务、可破坏物和 7 个 widget 事件完成组件映射；探针 `tmp/docs-artifacts/war3/unit-identity-snapshot/probe/`。生命／能力／命令及关联状态、完整存档、自然对局与实际画面待实现或批次验证。
+
+### 单位核心状态恢复（待批次验证）
+
+路径：`CMakeLists.txt`、`src/session.h`、`src/session_unit_identity.cpp`、`src/session_unit_core.cpp`、`tests/clock_tests.cpp`，说明见[战役存档状态](save-runtime-foundation.md)。`SUCO` 分阶段恢复生命、魔法、英雄属性、技能、法术书和装备输入；物品重建后核对派生状态及稳定句柄，再恢复核心字段和占地。身份不匹配、数据损坏及背包映射错误会拒绝；应用阶段失败的会话须丢弃。
+
+Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33。OrcX01 静音模拟 150 秒后重建 455 个单位（含 13 个死亡单位、4 名英雄、4 名物品持有者）、488 个单位句柄与 31 个物品句柄，核心及背包重编码一致，并联动任务和 7 个 widget 事件；未加载 Game.dll。日志及探针 `tmp/docs-artifacts/war3/unit-core-snapshot/`。单位订单、状态效果及其他对象引用、完整存档入口、续玩和实际窗口仍待实现或批次验证。

@@ -44,6 +44,45 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("unit_core_restores_hero_abilities_equipment_and_vitals",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type item extends widget
+ type player extends handle
+ type ability extends handle
+ type effect extends handle
+ type sound extends handle
+ type unitstate extends handle
+ native Player takes integer id returns player
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native CreateItem takes integer id, real x, real y returns item
+ native UnitAddItem takes unit u, item i returns boolean
+ native UnitAddAbility takes unit u, integer ability returns boolean
+ native SetHeroLevel takes unit u, integer level, boolean showEyeCandy returns nothing
+ native SetHeroStr takes unit u, integer value, boolean permanent returns nothing
+ native SetUnitState takes unit u, unitstate state, real value returns nothing
+ globals
+ unit hero=null
+ unit other=null
+ item book=null
+ item claw=null
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ set hero=CreateUnit(Player(0),'Hpal',0.,0.,270.)
+ set other=CreateUnit(Player(0),'Hpal',128.,0.,270.)
+ call SetHeroLevel(hero,4,false)
+ call SetHeroStr(hero,37,true)
+ call UnitAddAbility(hero,'AHhb')
+ set book=CreateItem('sbok',0.,0.)
+ set claw=CreateItem('ratf',0.,0.)
+ call UnitAddItem(hero,book)
+ call UnitAddItem(hero,claw)
+ endfunction
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"unit-core.j",source,"unit core recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),restored=make();original->startMain();auto& a=original->runtime();auto& b=restored->runtime();auto hero=a.global("hero");a.invoke("SetUnitState",std::array{hero,a.handle("unitstate",0),a.real(real(140))});a.invoke("SetUnitState",std::array{hero,a.handle("unitstate",2),a.real(real(31))});a.invoke("SetUnitState",std::array{a.global("other"),a.handle("unitstate",0),a.real(real(0))});auto u=original->units().at(hero.bits);require(u->hero && u->level==4 && u->heroAttributes[0]==37 && u->inventory[0] && u->inventory[1] && !u->bookGrants.empty(),"Hero equipment fixture differs");u->userData=77;u->spellCooldowns[ObjectData::code("AHhb")]=8.5;original->advance(.25);auto identity=[](std::string_view,std::uint32_t id){return id;};auto identities=original->encodeUnitIdentities(identity),core=original->encodeUnitCore(identity),items=original->encodeItems(identity),cooldowns=original->encodeUnitCooldowns(identity),random=original->encodeRandomState(),globals=a.encodeGlobals(identity);restored->restoreSimulationClock(original->encodeSimulationClock());restored->restorePlayerTechnology(original->encodePlayerTechnology());auto units=restored->rebuildUnitIdentities(identities);auto decodeUnit=[&](std::string_view type,std::uint32_t id){auto it=units.find(id);return type=="unit" && it!=units.end()?it->second:0u;};auto damaged=core;damaged.back()^=1;rejects([&]{restored->prepareUnitCore(damaged,decodeUnit);},"digest");rejects([&]{restored->prepareUnitCore(core,[](auto,auto){return 0u;});},"core mapping");auto other=a.global("other");auto swapped=[&](std::string_view type,std::uint32_t id){if(type!="unit")return 0u;if(id==hero.bits)return units.at(other.bits);if(id==other.bits)return units.at(hero.bits);return 0u;};rejects([&]{restored->prepareUnitCore(core,swapped);},"core mapping");restored->prepareUnitCore(core,decodeUnit);rejects([&]{restored->finishUnitCore(core,{});},"inventory mapping");auto itemMap=restored->rebuildItems(items,decodeUnit);auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return decodeUnit(type,id);auto it=itemMap.find(id);return type=="item" && it!=itemMap.end()?it->second:0u;};auto staged=restored->units().at(units.at(hero.bits));staged->heroAttributes[0]+=1;rejects([&]{restored->finishUnitCore(core,decode);},"prepared state");staged->heroAttributes[0]-=1;restored->finishUnitCore(core,decode);restored->restoreUnitCooldowns(cooldowns,decodeUnit);restored->restoreRandomState(random);b.restoreGlobals(globals,decode);auto target=restored->units().at(b.global("hero").bits),dead=restored->units().at(b.global("other").bits);require(dead->life.bits()==0 && dead->deathRevision==original->units().at(other.bits)->deathRevision,"Dead unit core state differs");require(target->life.bits()==u->life.bits() && target->maxLife.bits()==u->maxLife.bits() && target->mana.bits()==u->mana.bits() && target->maxMana.bits()==u->maxMana.bits() && target->level==u->level && target->experience==u->experience && target->heroAttributes==u->heroAttributes && target->appliedHeroStats==u->appliedHeroStats && target->equipment==u->equipment && target->abilities==u->abilities && target->userData==77,"Restored hero core differs");auto reverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")for(auto [old,current]:units)if(current==id)return old;if(type=="item")for(auto [old,current]:itemMap)if(current==id)return old;return 0u;};require(restored->encodeUnitCore(reverse)==core && restored->encodeItems(reverse)==items && restored->encodeUnitCooldowns(reverse)==cooldowns,"Unit core or inventory did not round trip");rejects([&]{restored->startMain();},"Unit state recovery is incomplete");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during unit core recovery");
+    });
     test("unit_identities_rebuild_handles_without_population_events",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle
