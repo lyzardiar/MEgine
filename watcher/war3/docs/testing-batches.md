@@ -4414,3 +4414,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 金矿资源回调与耗尽（待阶段验证）
 
 路径：`src/session_harvest.cpp`、`tests/clock_tests.cpp`、`docs/construction.md`、`docs/implementation-roadmap.md`。金矿产出回调后重新检查原底矿的存活与资源，覆盖层被移除时仍可处理耗尽，回调补充的资源不会被耗尽。Win32 Release 客户端与 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 24/24；隔离测试覆盖创建、脚本采集命令、资源入账、底矿／覆盖层共享、耗尽和回调移除／补充。OrcX01 原图会话通过原 `CreateUnitAtLocSaveLast` 创建闹鬼金矿，人工发出采集命令后 10 秒产出 18 金，矿藏从 321 降至 303；再设为 3 后耗尽两层矿井并停止侍僧采集，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/blighted-mine-harvest/`。自然建造、窗口交互、其他矿井及原版回调时序待阶段验证。
+
+### 资源入账事件重入（待阶段验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_harvest.cpp`、`tests/clock_tests.cpp`、`docs/construction.md`、`docs/implementation-roadmap.md`。资源入账后当前资源事件可能修改累计采集状态；分发累计事件前检查该玩家对应状态是否已发生变化，避免分发过期事件并保留同步脚本结果。Win32 Release 客户端和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 25/25；隔离测试覆盖清零、清零后恢复、原值不变及修改其他资源，验证触发次数与最终状态。OrcX01 隔离会话的人工采矿、入账及矿井耗尽仍通过，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/resource-state-reentry/`。木材、其他资源操作、原版回调时序和自然对局待阶段验证。

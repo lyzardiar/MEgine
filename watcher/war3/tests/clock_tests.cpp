@@ -44,6 +44,61 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("resource_callbacks_do_not_dispatch_stale_mined_total",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type playerstate extends handle
+ type limitop extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ native Player takes integer id returns player
+ native ConvertPlayerState takes integer id returns playerstate
+ native ConvertLimitOp takes integer id returns limitop
+ native SetPlayerState takes player p, playerstate state, integer value returns nothing
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native CreateBlightedGoldmine takes player p, real x, real y, real facing returns unit
+ native SetResourceAmount takes unit u, integer amount returns nothing
+ native IssueTargetOrder takes unit u, string order, widget target returns boolean
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code action returns triggeraction
+ native TriggerRegisterPlayerStateEvent takes trigger t, player p, playerstate state, limitop op, real threshold returns event
+ globals
+ integer mode=0
+ integer observedGold=0
+ integer observedTotal=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function goldChanged takes nothing returns nothing
+ set observedGold=observedGold+1
+ if mode < 2 then
+ call SetPlayerState(Player(0),ConvertPlayerState(15),0)
+ if mode == 1 then
+ call SetPlayerState(Player(0),ConvertPlayerState(15),2)
+ endif
+ elseif mode == 3 then
+ call SetPlayerState(Player(0),ConvertPlayerState(2),7)
+ endif
+ endfunction
+ function totalChanged takes nothing returns nothing
+ set observedTotal=observedTotal+1
+ endfunction
+ function registerWatch takes integer selected returns nothing
+ local trigger gold=CreateTrigger()
+ local trigger total=CreateTrigger()
+ set mode=selected
+ call TriggerAddAction(gold,function goldChanged)
+ call TriggerAddAction(total,function totalChanged)
+ call TriggerRegisterPlayerStateEvent(gold,Player(0),ConvertPlayerState(1),ConvertLimitOp(4),0.0)
+ call TriggerRegisterPlayerStateEvent(total,Player(0),ConvertPlayerState(15),ConvertLimitOp(4),0.0)
+ endfunction
+ )jass";for(int mode:{0,1,2,3}){auto module=Module::compile(Program::parse({{"mined-state-reentry.j",source,"authored resource event reentry test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto zero=vm.real(real(0)),player=vm.invoke("Player",std::array{vm.integer(0)});for(unsigned state:{1u,15u})vm.invoke("SetPlayerState",std::array{player,vm.handle("playerstate",state),vm.integer(0)});auto mine=vm.invoke("CreateBlightedGoldmine",std::array{player,zero,zero,zero}),worker=vm.invoke("CreateUnit",std::array{player,vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("uaco"))),vm.real(real(64)),zero,zero});vm.invoke("SetResourceAmount",std::array{mine,vm.integer(30)});vm.invoke("registerWatch",std::array{vm.integer(mode)});require(vm.invoke("IssueTargetOrder",std::array{worker,vm.string("harvest"),vm.handle("widget",mine.bits)}).bits,"Acolyte harvest order rejected");session.advance(1.125);require(vm.global("observedGold").bits==1 && vm.global("observedTotal").bits==unsigned(mode?1:0),"Resource callback dispatched stale mined-total event");require(session.config().players[0].states.at(15)==(mode?2:0),"Resource callback total was not retained");if(mode==3)require(session.config().players[0].states.at(2)==7,"Unrelated resource change was not retained");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during resource callback fixture");
+    });
     test("created_blighted_mine_supports_harvesting_and_depletion",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle

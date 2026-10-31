@@ -98,6 +98,7 @@ class ScriptSession {
     std::array<std::int32_t,2> integerGameStates_{};
     std::array<std::uint64_t,2> integerGameStateRevision_{};
     std::map<std::uint32_t,std::vector<std::uint32_t>> unitStateObservers_;
+    std::array<std::map<std::uint32_t,std::uint64_t>,16> playerStateRevisions_;
     jass::Runtime runtime_;
     bool failed_=false,configured_=false;
     std::optional<unsigned> localPlayer_;
