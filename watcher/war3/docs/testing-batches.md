@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 派生治疗波订单与资料片人族第五章（待验证）
+
+路径：`src/session_spell_info.cpp`、`tests/spell_tests.cpp`、`docs/spells.md`、`docs/campaign-flow.md`。治疗波派生记录未填写源订单时使用 `healingwave`；有源订单时继续解析源内容。Win32 Release 客户端和测试目标编译通过；`war3_spell_tests <data-root> ../../tmp/docs-artifacts/war3/mind-rot/fixture.w3m healing-wave-alias` 1 通过、0 失败，实际目标命令治疗友军并消耗魔法。原版第五章隔离会话人工移动英雄并缩短四座传送门计时后，胜利对话请求第六章；第六章手动启动后约 120 秒恢复控制，运行至 400 秒。日志位于 `tmp/docs-artifacts/war3/tft-ne4-next/`。阶段核对地图显式订单覆盖、跳跃／治疗边界、原版时序、实际战斗、英雄继承、窗口自动切关和音画。
+
 ### AI 空自杀进攻请求的重复计算（待验证）
 
 路径：`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。没有新成员的自杀进攻请求不再重复处理已有队伍；定期 AI 更新仍负责目标失效和重试。Win32 Release 客户端及 CampaignAI 测试编译通过，`war3_campaign_ai_tests <data-root> <fixture> armies` 2 通过、0 失败。人族资料片第四章隔离 60 秒单次插桩采样中，304 次请求有 289 次为空，调用内处理累计墙钟时间由 19,880 ms 降至 639 ms；详情见 [AI 说明](ai.md)。阶段核对原版请求／重试时序、连续加入／空请求、停顿／目标失效／死亡／易主／回调重入、AI 暂停和多人同步，以及不同地图完整对局、实际帧耗时和内存；当前不代表原版一致性或完整性能验收。
