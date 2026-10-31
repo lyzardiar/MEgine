@@ -27,3 +27,5 @@ Arpl枯萎精髓、Arpm灵魂触摸、Arpb生命／魔法恢复、Ambt月亮井�
 源 MoonWell.mdx 的骨骼和附件中没有可直接识别的水面节点或水纹理；Ambt 的效果模型是独立的 MoonWellTarget.mdl 或 CorruptedMoonWellTarget.mdl，原模型来自 war3.mpq，SHA-256 为 `32c9cc736ae4ebf3d23cc37f46cb6f6ff6f0bb1dbed03d72a8a063dc95921686`。阶段验证空／满魔法、水位变化、多个种族与自定义能力、建造／升级／复活／隐藏、能力禁用和原版画面；自动默认状态、Amb2的全部原移动分类，以及窗口／GPU／声音／性能仍待阶段实现或验证。
 
 检查记录：Win32 Release产品增量编译通过，无编译警告；差异检查通过。原始日志为该证据目录build.log和final-build.log。未运行新增玩法夹具、三图、UI／GPU、AI、音频或性能回归。对应队列见testing-batches.md；旧MEngine队列保持延期。
+
+零恢复量的恢复能力可不配置 Buff，手动订单和自动施法开关继续触发地图脚本。DotA 原图通过酒馆购买变体精灵后可打开五项技能的学习数据；A0KX／A0KW 的双向自动转换、关闭和手动转换在隔离会话改变英雄实际力量与敏捷，原版 Arpl 恢复友军生命 100 至 110。真实窗口、原版零值和资源／事件边界待阶段验证。

@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 地图脚本使用的零恢复能力（待阶段验证）
+
+路径：`src/session_restoration.cpp`、`docs/restoration.md`。恢复量均为零的恢复能力允许不配置 Buff，沿用实际手动施法、自动施法开关和订单事件；有恢复量时仍要求有效 Buff。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话使用 `-ap` 和酒馆购买变体精灵，取得五个技能学习按钮；升至 10 级学习 A0KX 后，自动转换令力量／敏捷由 40／54 变为 34／60，反向转换恢复为 40／54，两次关闭后数值保持，手动转换后变为 38／56。相同会话以原版 Arpl 恢复友军生命 100 至 110；记录见 `tmp/docs-artifacts/war3/hero-ability-probe/dota-morphling-restoration.cpp` 和 `dota-morphling-restoration.log`，未加载 Game.dll。测试调整英雄等级与魔法，调用会话命令而非实际鼠标；阶段核对原版零值语义、低魔法／属性边界、技能等级、事件重入、双开关、实际窗口和联机。
+
+
 ### 永久生命上限物品的负值（待阶段验证）
 
 路径：`src/session_item_use.cpp`、`src/session_equipment.cpp`、`docs/equipment.md`。永久生命上限能力接受有界负值，并将同一增量应用于最大生命和当前生命；最大生命下限为 1，当前生命沿用既有死亡和事件流程。Win32 Release 客户端编译通过；DotA_v6.83d 原图输入 `-ap` 并通过实际酒馆购买变体精灵 O00P，地图一次性物品 I00E 生效后英雄生命与上限均为 511；隔离会话将英雄升至 10 级、学习 A0G6，对脚本创建的敌人施法，目标位移约 145、技能进入冷却，未加载 Game.dll。探针与日志见 `tmp/docs-artifacts/war3/hero-ability-probe/dota-morphling-purchase.cpp`、`dota-morphling-purchase.log`。英雄升级、魔法和目标由探针设置；真实窗口、伤害归因、低生命／上限边界、复活、事件顺序及原版数值仍待阶段对照。
