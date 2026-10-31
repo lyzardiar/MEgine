@@ -2,7 +2,7 @@
 
 ### 人族第六章结局与后续战役（待阶段验证）
 
-路径：`CMakeLists.txt`、`tests/human_campaign_chain_tests.cpp`；说明见 [战役流程](campaign-flow.md)。Win32 Release 定向目标编译通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> victory` 与 `defeat` 各 1 通过、0 失败，未加载 Game.dll。胜利场景由测试创建并击杀 100 个僵尸，检查原图计数、胜利对话、过场跳过、Human07 启动及阿尔萨斯等级／用户数据继承；测试将英雄移入相遇区域并消灭第七章目标建筑，检查 Human08 两位英雄的等级和用户数据继承；失败场景调用地图动作预置 99 次，再实际完成最后一次转换并检查失败对话及重开。使用新建隔离用户目录；阶段核对自然完整对局、第七章基地攻防、双方进度竞争、正常播放过场、输入与 UI、存档物品及原版一致性。
+路径：`CMakeLists.txt`、`tests/human_campaign_chain_tests.cpp`；说明见 [战役流程](campaign-flow.md)。Win32 Release 定向目标编译通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> victory` 与 `defeat` 各 1 通过、0 失败，未加载 Game.dll。胜利场景由测试创建并击杀 100 个僵尸，检查原图计数、胜利对话、过场跳过、Human07 启动及阿尔萨斯等级／用户数据继承；测试将英雄移入相遇区域并消灭第七章目标建筑，检查 Human08 两位英雄的等级和用户数据继承；再消灭第八章五艘目标船只，检查原图胜利及 Human09 双英雄继承；失败场景调用地图动作预置 99 次，再实际完成最后一次转换并检查失败对话及重开。使用新建隔离用户目录；阶段核对自然完整对局、第七章基地攻防、第八章船只战斗、双方进度竞争、正常播放过场、输入与 UI、存档物品及原版一致性。
 
 ### AI 黑暗转换（待阶段验证）
 
