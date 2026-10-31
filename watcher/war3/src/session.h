@@ -1099,7 +1099,7 @@ public:
     bool unloadMineWorker(std::uint32_t mine,std::uint32_t worker);
     bool boardUnit(std::uint32_t passenger,std::uint32_t transport,std::uint32_t order=851971);
     bool unloadUnit(std::uint32_t transport,std::uint32_t passenger);
-    bool unloadAll(std::uint32_t transport,WorldPoint point);
+    bool unloadAll(std::uint32_t transport,WorldPoint point,std::optional<WorldPoint> groundGoal={});
     ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings={},std::optional<unsigned> gameType={},std::optional<std::uint32_t> initialRandomSeed={});
     ~ScriptSession();
     SessionSleepSnapshot snapshotSleepingScript(const jass::StableHandleMap& encodeHandle) const;
