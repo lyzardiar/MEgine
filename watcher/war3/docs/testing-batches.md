@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+### 隐藏单位的脚本点目标引导（待阶段验证）
+
+路径：`src/session.h`、`src/session_orders.cpp`、`src/session_spells.cpp`、`src/session_channels.cpp`、`docs/area-spells.md`。脚本点目标订单在下单和持续波次中保留显式隐藏单位的施法资格；运输等内部隐藏状态及玩家对隐藏单位的订单仍受限制。只配置 organic 且未指定空地的技能按有机目标筛选。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话中从酒馆购买深渊领主、学习 A01I，设置位置、等级、魔法和目标并暂停其他单位后，火焰风暴令目标生命从 5000 降至 4900。隔离地图验证 IssuePointOrder 和 IssuePointOrderByIdLoc 驱动隐藏施法者产生持续伤害，玩家命令及运输状态被拒绝，友军和设为机械类别的敌人未受伤；探针修改了目标标记用于边界检查。上述会话未加载 Game.dll，证据位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-underlord-firestorm-fixed.log` 和 `hidden-rainfire-boundary.*`。原版空地／有机组合、不同隐藏状态、所有持续施法类型、事件时序、完整波次、画面及实际对局待阶段验证。
+
 ### 零效果火焰范围变体（待阶段验证）
 
-路径：`src/session_spell_info.cpp`、`src/session_neutral_spells.cpp`、`src/session_area_spells.cpp`、`docs/area-spells.md`。无伤害和地面效果的零时长烈焰风暴保留施法事件；零波次火焰雨允许零间隔并正常结束施法，有波次时仍校验间隔。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话从酒馆购买深渊领主，生成五个技能学习按钮；设置位置、等级、魔法和目标后，A0RA 由地图脚本使敌人生命从 5000 降至 4900。隔离地图原版 AHfs 和 ANrf 分别使目标生命从 5000 降至 4880 和 4900；均未加载 Game.dll。探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-underlord-pit-target.*`、`source-fire-spells.cpp`、`source-flamestrike.log` 和 `source-rainfire.log`。A01I 的地图脚本已创建辅助施法单位，但其隐藏单位点目标命令未生效，实际火焰风暴伤害仍阻塞；其他零值组合、事件时序、原版视觉及实际窗口待阶段验证。
+路径：`src/session_spell_info.cpp`、`src/session_neutral_spells.cpp`、`src/session_area_spells.cpp`、`docs/area-spells.md`。无伤害和地面效果的零时长烈焰风暴保留施法事件；零波次火焰雨允许零间隔并正常结束施法，有波次时仍校验间隔。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话从酒馆购买深渊领主，生成五个技能学习按钮；设置位置、等级、魔法和目标后，A0RA 由地图脚本使敌人生命从 5000 降至 4900。隔离地图原版 AHfs 和 ANrf 分别使目标生命从 5000 降至 4880 和 4900；均未加载 Game.dll。探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-underlord-pit-target.*`、`source-fire-spells.cpp`、`source-flamestrike.log` 和 `source-rainfire.log`。其他零值组合、事件时序、原版视觉及实际窗口待阶段验证。
 
 
 ### 零闪电时长的叉状闪电变体（待阶段验证）
