@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 兽族战役第六至第八章跨关（定向检查通过）
+
+路径：`tests/orc_campaign_chain_tests.cpp`、`CMakeLists.txt`、`docs/campaign-flow.md`。执行 `war3_orc_campaign_chain_tests.exe <data-root> <Orc06.w3m> <Orc07.w3m> <Orc08.w3m> <new-absolute-user-dir>`：直接完成第六章目标，第七章执行揭示剧情、交还地图宝石并进入先知区域，检查两个胜利跳转和两个英雄的等级及自定义数据在第七、八章恢复。Win32 Release 1 通过、0 失败，无 Game.dll；实际移动、战斗、完整剧情／窗口、跨进程启动及原版缓存互通待阶段验证。隔离用户目录位于 `tmp/docs-artifacts/war3/orc-campaign-chain-current/`。
+
 ### 兽族第五章矩形移动（待阶段验证）
 
 路径：`src/session_world.cpp`、`tests/spatial_handle_tests.cpp`、`CMakeLists.txt`、`docs/campaign-rect-movement.md`。`MoveRectToLoc` 忽略无效矩形或地点；Win32 Release 构建通过，`war3_spatial_handle_tests.exe <data-root> <Orc05.w3m>` 1 通过、0 失败，原图静音 `--main-check --simulate-ms 400000` 推进至 400 秒。阶段核对有效／无效及跨类型句柄、战役目标组清空与重新建造、真实窗口和原版行为；本次未验证完整关卡。证据位于 `tmp/docs-artifacts/war3/orc05-runtime-400*.log`。
