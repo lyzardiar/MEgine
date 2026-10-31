@@ -20,7 +20,7 @@ using StableHandleMap=std::function<std::uint32_t(std::string_view,std::uint32_t
 // Context transfer runs synchronously on the runtime owner thread and must not reenter its scheduler.
 using ThreadContextTransfer=std::function<void(ThreadId)>;
 using ThreadBatchContextTransfer=std::function<void(size_t,ThreadId)>;
-struct RuntimeSleepSnapshot {std::vector<Source> sources;bool debug=false;Id function=none;std::vector<Value> arguments;double remaining=0;RuntimeExecutionInspection execution;bool handlesMapped=false,hasContext=false;std::uint32_t nativeResumeMode=1;};
+struct RuntimeSleepSnapshot {std::vector<Source> sources;bool debug=false;Id function=none;std::vector<Value> arguments;double remaining=0;RuntimeExecutionInspection execution;bool handlesMapped=false,hasContext=false;std::uint32_t nativeResumeMode=1,waitIndex=0;};
 struct RuntimeSleepBatch {std::vector<Source> sources;std::vector<RuntimeSleepSnapshot> threads;};
 class Runtime {
     struct Impl;
@@ -37,6 +37,7 @@ public:
     size_t instructionCount() const;
     void bind(const std::string& name,Native function);
     void bindSleep(const std::string& name);
+    void markThreadWaitNative(const std::string& name);
     // The native must safely re-enter with its saved arguments after external state is restored.
     void markNativeRestartable(const std::string& name);
     void shareThreads(Runtime& owner);

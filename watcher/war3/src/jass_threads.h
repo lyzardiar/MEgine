@@ -13,7 +13,7 @@ using ExternalWaitToken=std::uint64_t;
 struct ThreadHooks {std::function<void(ThreadId,ThreadId)> created,switched;std::function<void(ThreadId)> finished;};
 struct ThreadEntry {virtual ~ThreadEntry()=default;virtual void execute()=0;};
 enum class ThreadState {Ready,Running,Sleeping,Waiting,External,Done};
-struct ThreadInspection {ThreadId id=0;ThreadOwner owner=0;ThreadState state=ThreadState::Ready;std::shared_ptr<const ThreadEntry> entry;double remaining=0;};
+struct ThreadInspection {ThreadId id=0;ThreadOwner owner=0;ThreadState state=ThreadState::Ready;std::shared_ptr<const ThreadEntry> entry;double remaining=0;ThreadId waiting=0;};
 class ThreadScheduler {
     struct Impl;
     std::unique_ptr<Impl> impl_;
@@ -27,6 +27,7 @@ public:
     ThreadId start(std::function<void()> entry,ThreadOwner owner=0);
     ThreadId start(std::shared_ptr<ThreadEntry> entry,ThreadOwner owner=0);
     ThreadId startSleeping(std::shared_ptr<ThreadEntry> entry,ThreadOwner owner,double remaining);
+    void setWaiting(ThreadId id,ThreadId target);
     void pause(ThreadOwner owner,bool paused);
     void checkpoint();
     void sleep(double seconds);

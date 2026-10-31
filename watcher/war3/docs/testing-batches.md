@@ -4498,3 +4498,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 本批合并验证范围为 `f7c20ff`、`fecb666` 和本次串行动作恢复，`d8c160b` 为同一冷却任务的补充验证。当前核心版本的 session 23/23、clock 29/29；OrcX01 30 秒的 30 个物品通过 3 名占位持有者恢复，HumanX03 和 UndeadX06 150 秒的活动技能冷却映射通过，OrcX01 追加测试触发器顺序恢复通过。探针分别位于 `tmp/docs-artifacts/war3/item-object-snapshot/probe/`、`tmp/docs-artifacts/war3/unit-state-audit/probe/` 和 `tmp/docs-artifacts/war3/serial-trigger-snapshot/probe/`。真实单位对象、原图多动作与线程间等待、物品冷却使用、完整存档和窗口仍留待后续实现或验证。
 
 线程影响回归：`war3_jass_thread_tests` 27/27、`war3_jass_runtime_tests <literal-fixture>` 17/17；`war3_session_thread_tests <data-root> <thread-fixture>` 使用旧临时夹具时缺少 `RunExecuteValue`，按 `tests/generate-thread-fixture.py` 重建夹具后 6/6。覆盖协作调度、线程等待、脚本帧、上下文及会话生命周期。原版复杂重入、线程间等待恢复和实际战役流程仍待验证。
+
+### 触发器等待线程恢复（待批次验证）
+
+路径：`src/jass_threads.h/.cpp`、`src/jass_runtime.h/.cpp`、`src/session_threads.cpp`、`tests/session_tests.cpp`、`tests/jass_thread_tests.cpp`；说明见 [战役存档状态](save-runtime-foundation.md)。`JSTH` 版本 3 保存 `TriggerExecuteWait` 父子关系并校验等待图和触发器身份，读取旧版 1、2。Win32 Release 客户端与测试目标编译通过；session 23/23、clock 29/29；JASS 线程最终 27/27。隔离检查覆盖嵌套等待、连续动作、再次采集、循环／错误目标拒绝与已结束子线程；OrcX01 资源和脚本附加等待触发器检查通过，探针 `tmp/docs-artifacts/war3/thread-wait-snapshot/probe/`。真实原图等待链、其他 native、完整对象与存档入口待批次验证或实现。
