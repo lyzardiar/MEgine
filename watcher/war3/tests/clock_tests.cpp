@@ -290,6 +290,84 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";for(int mode:{0,1,2,3,4,5}){auto module=Module::compile(Program::parse({{"food-state-reentry.j",source,"authored food event reentry test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto zero=vm.real(real(0)),player=vm.invoke("Player",std::array{vm.integer(0)}),worker=vm.invoke("CreateUnit",std::array{player,vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("hfoo"))),zero,zero,zero});auto unit=session.units().at(worker.bits);unit->foodMade=3;vm.invoke("SetPlayerState",std::array{player,vm.handle("playerstate",5),vm.integer(unit->foodUsed)});vm.invoke("SetPlayerState",std::array{player,vm.handle("playerstate",4),vm.integer(3)});auto nextPlayer=vm.invoke("Player",std::array{vm.integer(1)});for(unsigned state:{4u,5u})vm.invoke("SetPlayerState",std::array{nextPlayer,vm.handle("playerstate",state),vm.integer(0)});vm.invoke("registerWatch",std::array{vm.integer(mode)});if(mode>=3)vm.invoke("SetUnitOwner",std::array{worker,nextPlayer,vm.boolean(false)});else vm.invoke("SetUnitUseFood",std::array{worker,vm.boolean(false)});require(vm.global("observedUsed").bits==1 && vm.global("observedCapacity").bits==unsigned(mode==1 || mode==2 || mode==4 || mode==5?1:0),"Food callback dispatched stale capacity event");require(session.config().players[0].states.at(4)==(mode==0 || mode==3?2:0),"Food callback capacity was not retained");if(mode>=3){auto expected=mode==3?0u:1u;require(vm.global("observedNewUsed").bits==expected && vm.global("observedNewCapacity").bits==expected && session.config().players[1].states.at(5)==(mode==3?0:2) && session.config().players[1].states.at(4)==(mode==3?0:3),"Transfer callback dispatched stale recipient food events");}}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during food callback fixture");
     });
+    test("transfer_resource_callbacks_ignore_stale_events",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type player extends handle
+ type playerstate extends handle
+ type limitop extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ native Player takes integer id returns player
+ native ConvertPlayerState takes integer id returns playerstate
+ native ConvertLimitOp takes integer id returns limitop
+ native SetPlayerState takes player p, playerstate state, integer value returns nothing
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code action returns triggeraction
+ native TriggerRegisterPlayerStateEvent takes trigger t, player p, playerstate state, limitop op, real threshold returns event
+ globals
+ integer mode=0
+ integer senderGold=0
+ integer senderLumber=0
+ integer targetGold=0
+ integer targetLumber=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function goldChanged takes nothing returns nothing
+ set senderGold=senderGold+1
+ if mode == 1 then
+ call SetPlayerState(Player(0),ConvertPlayerState(2),80)
+ call SetPlayerState(Player(0),ConvertPlayerState(2),90)
+ elseif mode == 2 then
+ call SetPlayerState(Player(1),ConvertPlayerState(1),20)
+ call SetPlayerState(Player(1),ConvertPlayerState(1),10)
+ elseif mode == 3 then
+ call SetPlayerState(Player(1),ConvertPlayerState(2),20)
+ call SetPlayerState(Player(1),ConvertPlayerState(2),10)
+ elseif mode == 4 then
+ call SetPlayerState(Player(2),ConvertPlayerState(2),7)
+ elseif mode == 5 then
+ call SetPlayerState(Player(0),ConvertPlayerState(2),90)
+ elseif mode == 6 then
+ call SetPlayerState(Player(0),ConvertPlayerState(2),99)
+ endif
+ endfunction
+ function lumberChanged takes nothing returns nothing
+ set senderLumber=senderLumber+1
+ endfunction
+ function targetGoldChanged takes nothing returns nothing
+ set targetGold=targetGold+1
+ if mode == 7 then
+ call SetPlayerState(Player(0),ConvertPlayerState(2),80)
+ call SetPlayerState(Player(0),ConvertPlayerState(2),90)
+ elseif mode == 8 then
+ call SetPlayerState(Player(1),ConvertPlayerState(2),20)
+ call SetPlayerState(Player(1),ConvertPlayerState(2),10)
+ endif
+ endfunction
+ function targetLumberChanged takes nothing returns nothing
+ set targetLumber=targetLumber+1
+ endfunction
+ function registerWatch takes integer selected returns nothing
+ local trigger a=CreateTrigger()
+ local trigger b=CreateTrigger()
+ local trigger c=CreateTrigger()
+ local trigger d=CreateTrigger()
+ set mode=selected
+ call TriggerAddAction(a,function goldChanged)
+ call TriggerAddAction(b,function lumberChanged)
+ call TriggerAddAction(c,function targetGoldChanged)
+ call TriggerAddAction(d,function targetLumberChanged)
+ call TriggerRegisterPlayerStateEvent(a,Player(0),ConvertPlayerState(1),ConvertLimitOp(0),95.0)
+ call TriggerRegisterPlayerStateEvent(b,Player(0),ConvertPlayerState(2),ConvertLimitOp(0),95.0)
+ call TriggerRegisterPlayerStateEvent(c,Player(1),ConvertPlayerState(1),ConvertLimitOp(4),0.0)
+ call TriggerRegisterPlayerStateEvent(d,Player(1),ConvertPlayerState(2),ConvertLimitOp(4),0.0)
+ endfunction
+ )jass";for(int mode:{0,1,2,3,4,5,6,7,8}){auto info=map().info;info.players.push_back({1,1,0,0,"Other",{},0,0});auto module=Module::compile(Program::parse({{"transfer-state-reentry.j",source,"resource transfer reentry"}}));ScriptSession session(std::move(module),info);session.attachWorld(world());session.configure();PlayerSetup setup(info,session.config());require(setup.control(1,SlotControl::ComputerNormal),"Cannot activate transfer recipient");session.applySetup(setup);session.startMain();require(session.setAllianceOption(0,1,0,true),"Cannot ally transfer recipient");auto& vm=session.runtime();for(int player=0;player<2;++player)for(int state=1;state<=2;++state)vm.invoke("SetPlayerState",std::array{vm.invoke("Player",std::array{vm.integer(player)}),vm.handle("playerstate",state),vm.integer(player?0:100)});vm.invoke("registerWatch",std::array{vm.integer(mode)});require(session.transferResources(0,1,10,10),"Resource transfer rejected");require(vm.global("senderGold").bits==1 && vm.global("senderLumber").bits==unsigned(mode!=1 && mode!=6 && mode!=7) && vm.global("targetGold").bits==unsigned(mode!=2) && vm.global("targetLumber").bits==unsigned(mode!=3 && mode!=8),"Transfer dispatched stale resource event");require(session.config().players[0].states.at(1)==90 && session.config().players[0].states.at(2)==(mode==6?99:90) && session.config().players[1].states.at(1)==10 && session.config().players[1].states.at(2)==10,"Transfer balances differ");if(mode==4)require(session.config().players[2].states.at(2)==7,"Unrelated state was lost");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during transfer fixture");
+    });
     test("resource_callbacks_do_not_dispatch_stale_mined_total",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle

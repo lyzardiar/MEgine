@@ -4502,3 +4502,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 触发器等待线程恢复（待批次验证）
 
 路径：`src/jass_threads.h/.cpp`、`src/jass_runtime.h/.cpp`、`src/session_threads.cpp`、`tests/session_tests.cpp`、`tests/jass_thread_tests.cpp`；说明见 [战役存档状态](save-runtime-foundation.md)。`JSTH` 版本 3 保存 `TriggerExecuteWait` 父子关系并校验等待图和触发器身份，读取旧版 1、2。Win32 Release 客户端与测试目标编译通过；session 23/23、clock 29/29；JASS 线程最终 27/27。隔离检查覆盖嵌套等待、连续动作、再次采集、循环／错误目标拒绝与已结束子线程；OrcX01 资源和脚本附加等待触发器检查通过，探针 `tmp/docs-artifacts/war3/thread-wait-snapshot/probe/`。真实原图等待链、其他 native、完整对象与存档入口待批次验证或实现。
+
+### 盟友资源交易状态事件重入（待批次验证）
+
+路径：`src/session_match.cpp`、`tests/clock_tests.cpp`，说明见[经济](economy.md)。交易黄金和木材同时变化时，回调可修改后续状态；按玩家和资源的变更版本跳过过期事件。Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 30/30；隔离测试覆盖发送／接收方回调、改变后恢复、保留改变、相同值设置及其他玩家状态。原版事件时序、税率组合、联机时间片与实际界面待批次验证。
