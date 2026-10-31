@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 存档目录重命名（待阶段验证）
+
+路径：`src/session_campaign.cpp`、`tests/save_exists_tests.cpp`、`docs/save-runtime-foundation.md`。`RenameSaveDirectoryBJ` 操作独立用户目录中的真实目录，拒绝已有目标、无效源、目录移入自身和越界路径；Win32 Release 客户端与 `war3_save_exists_tests <data-root> <OrcX01.w3x> <scratch-root>` 编译并执行，1 通过、0 失败，符号链接创建失败而跳过对应场景。阶段核对接合点／符号链接、占用与跨进程竞争、失败后的空父目录、原版目标覆盖及名称规则，并在完整世界保存恢复实现后验证实际存档。
+
 ### 亡灵最终章物品槽与计时胜利（待阶段验证）
 
 路径：`src/session_inventory.cpp`、`tests/undead_finale_tests.cpp`、`CMakeLists.txt`；说明见 [战役物品槽](campaign-undead08-inventory.md)。Win32 Release 客户端和 `war3_undead_finale_tests <data-root> <Undead08.w3m> <new-absolute-user-dir>` 编译并执行，1 通过、0 失败；使用新用户目录，检查空／失效单位、有效／空／越界槽，并将原图召唤计时器缩短至五秒验证胜利事件。阶段核对前关缓存及六格物品转移、物品掉落事件与回调重入、30 分钟防守、实际窗口和原版行为。

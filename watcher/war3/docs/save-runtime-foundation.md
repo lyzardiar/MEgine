@@ -6,6 +6,8 @@ JASS 运行时的操作数、调用帧、局部变量与当前 native 参数由�
 
 原版 OrcX01 的 `war3map.j` 在区域切换流程中调用 `GetSaveBasicFilename`、`SaveGameExists`，并通过 Blizzard.j 包装调用 `CopySaveGame`、`RemoveSaveDirectory`、`SaveGame` 和 `LoadGame`。`SaveGameExists`、`CopySaveGame` 和 `RemoveSaveDirectory` 操作独立用户目录 `Saves` 下的实际文件，拒绝绝对路径、上级目录及重解析点；复制通过同目录临时文件发布，允许覆盖目标。目录清理先检查整个目录树，持有各目录句柄后逐项移除；清理遇到文件占用或其他错误可能只完成一部分。它们不验证存档内容或实现加载。当前缺少普通存档及其余 native 的实际会话恢复，因而该战役的连续切区尚未打通；不能用 gamecache 或空返回代替。静态源图脚本 SHA-256 为 `02f8d230e68dcda29fdfbe0d59aea6d842fb8340d9706ee006f32fbd2d661ae0`。
 
+`RenameSaveDirectory` 和 Blizzard.j 包装接入独立用户目录的实际目录重命名：源必须是已有普通目录，目标不能存在，可创建目标父目录；固定源／目标父目录句柄、拒绝路径穿越与重解析点，并通过文件句柄提交重命名。此操作不解析或生成存档，也不实现世界恢复。固定版 `Game.dll` 的 native 注册入口为 `0x6f1f3010`，其内部目录覆盖规则未完成语义核对；当前不覆盖已有目标。Win32 Release 客户端和 `war3_save_exists_tests` 编译通过，隔离目录检查 1 通过、0 失败，覆盖嵌套内容、已有目标、目录自身子路径和越界路径；测试环境无法创建符号链接，链接场景跳过。跨进程竞争、接合点、异常中断、原版目录规则与完整保存加载仍待验证。
+
 Win32 Release 客户端及 `war3_save_exists_tests` 编译通过；以原版 `OrcX01.w3x` 运行 `war3_save_exists_tests <data-root> <map> <scratch-root>`，1 通过、0 失败。检查通过 `CopySaveGameBJ` 实际复制和覆盖文件，通过 `RemoveSaveDirectoryBJ` 移除嵌套区域目录并保留旁侧备份；缺失源不改变目标，目录与越界路径被拒绝。当前环境未能创建测试目录链接，该分支未执行；原版扩展名、文件格式、并发、保存事件和跨区恢复仍待完成或对照。
 
 OrcX01 首次切换到未访问区域时，原脚本通过 `SaveAndChangeLevelBJ` 先保存当前区域再切地图；重访已保存区域时通过 `SaveAndLoadGameBJ` 保存当前区域并载入目标。用户保存／载入事件还将最多五个区域快照在对应存档目录和 `Blizzard\Zones` 之间复制。该流程需要同一世界和脚本线程的实际恢复，必须完整实现存档和两种切换入口；原始地图脚本及分析保存在 `tmp/docs-artifacts/war3/orcx-saves-1031/`。
