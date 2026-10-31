@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 单位距离事件与风暴之灵残影（待阶段验证）
+
+路径：`src/session_spatial_events.cpp`、`tests/dota_heroes_tests.cpp`。新注册的单位距离事件在下一次空间更新时处理当时已在范围内的单位，此后按进入／离开状态追踪；事件过滤与触发器执行沿用现有链路。DotA_v6.83d 原图的残影脚本在生成残影后注册距离事件，修复前已在范围内的静止目标没有受伤；修复后隔离会话中，已有目标与随后进入的目标各受到 140 点伤害。风暴之灵从酒馆购买后通过脚本设置等级／位置／魔法并重置冷却；电子涡流把目标从 x=200 拉至 x=100，球形闪电产生位移并恢复寻路及可受伤状态。Win32 Release 客户端及 DotA 测试目标编译通过；`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> storm-spells`、`bristle-spells`、`luna-spells` 均通过，未加载 Game.dll。初始单位处理属于为地图实际消费补齐的行为，原版回调时机、注册／销毁重入、离开再进入、多个目标和自然对局、联机及窗口仍待核对。
+
 ### 地图被动目标 none 与钢背兽战意（待阶段验证）
 
 路径：`src/session_passive_info.cpp`、`tests/dota_heroes_tests.cpp`。被动目标集合只有 `none` 时不匹配任何单位；其他目标集合继续使用已有单位类别和关系筛选。DotA_v6.83d 的战意辅助光环 `A0EF` 在无叠层时使用 `none`，此前与辅助单位重合的英雄仍获得该光环状态；隔离会话修复后不再获得，施法叠层后英雄移动光环由 0 增至 0.03、敌方未获得，到期后移速加成和光环状态清除。测试手动移动、设置等级并重置冷却，未加载 Game.dll；满血背部减伤问题仍见后续记录。Win32 Release 客户端、DotA 英雄及 passive 测试目标编译通过；`bristle-spells` 通过，原生命／魔法之泉 `fountain` 1/1 通过，新生成夹具 `tmp/docs-artifacts/war3/warpath-aura/fixture.w3m` 的 `player-aura` 3/3 通过。旧夹具缺少 `A0PL`，该检查报能力添加失败；使用当前生成器产生的夹具后通过。`none` 与其他目标标志组合、其他地图、原版时序和实际窗口待阶段核对。
