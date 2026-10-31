@@ -103,3 +103,7 @@ Win32 Release 客户端和 world 测试目标编译通过；`war3_world_tests <d
 Win32 Release 客户端及 world／archive 测试目标编译通过；原图磁盘／内存挂载摘要一致，资料片 OrcX01 归档成员摘要不同且交叉恢复被拒绝；文件时间变更后校验拒绝。合并回归 `war3_world_tests <data-root> <output>` 29/29、`war3_archive_tests <scratch> <data-root>` 9/9，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/mounted-map-identity/`。实际保存入口、地图文件变更的全部竞争情况、性能及完整世界恢复待实现或验证。
 
 地形网格恢复已在活动单位会话中做定向检查：单位收到真实移动命令并开始移动后，恢复带新障碍的地图网格，单位重新寻路至原目标，每个模拟步的移动线段均通过地面寻路校验。Win32 Release `war3_movement_avoidance_tests <data-root> <map> restored-path` 在 BootyBay、Harrow 原图各通过，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/restored-unit-path/before.log`、`harrow.log`。测试在当前会话恢复网格，未保存或重建单位、其他对象及活动命令，也未验证窗口、原版寻路一致性或完整存档。
+
+`SDES` 保存地图预置及脚本创建的可破坏物，包括已移除句柄、生命／最大生命、无敌／可见／占地、位置与外观、动画队列及相关 doodad 动画状态，并返回稳定编号到目标句柄的映射。重建要求同一挂载地图摘要和模拟时钟、已完成玩家设置且主入口及事件尚未执行、没有额外脚本可破坏物的本地会话；预置对象按原放置索引校验，动态对象重新创建，死亡和移除不分发旧事件，占地及可行走表面按恢复状态重建。校验失败发生在修改前；应用阶段若发生错误则目标会话标记为失败，调用方必须丢弃该会话。其他纯装饰物状态、已登记事件、脚本全局与单位等引用须由相应组件恢复；该组件未连接实际存档入口。
+
+Win32 Release 客户端及 destructable 测试目标编译通过；`war3_destructable_tests <data-root> <map> snapshot` 在生成夹具、BootyBay 原图和 OrcX01 原图各通过。三个会话先静音模拟 30 秒，再人工击杀／移除预置对象、创建并移除动态树木；重建后比较快照、生命、无敌、动画队列与占地，夹具另验证新登记的死亡事件。检查拒绝损坏摘要、错误地图摘要和越界放置索引后仍能正常恢复，均未加载 Game.dll。日志 `tmp/docs-artifacts/war3/destructable-snapshot/*-final-30.log`；OrcX01 来源为 `War3Patch.mpq` 成员，提取副本 SHA-256 `01651a15e80ad251d1d7e034e55b0e2cee1f7237e92a9e5ff6efe83c6f8c6cf6`。这些检查未重建全部事件／全局／单位或唤醒原图线程，不代表实际保存／载入或完整跨区可用。

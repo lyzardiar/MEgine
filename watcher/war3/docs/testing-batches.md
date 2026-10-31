@@ -4470,3 +4470,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 失效可破坏物操作（待批次验证）
 
 路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`，说明见 [可破坏物与伐木](destructables.md)。击杀、移除和无敌设置对无效可破坏物安全返回。Win32 Release 客户端及测试目标编译通过，`war3_destructable_tests <data-root> <fixture> invalid-handles` 通过；检查空／已移除／错误类型句柄、原公共脚本包装与有效对象生命周期，日志及固定版指令 `tmp/docs-artifacts/war3/destructable-invalid-actions/`。待批次覆盖实际地图回调、占地重叠、树木采集和原版事件时序。
+
+### 可破坏物对象重建（待批次验证）
+
+路径：`CMakeLists.txt`、`src/session.h`、`src/session_destructable_snapshot.cpp`、`tests/destructable_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SDES` 重建预置及动态可破坏物和已移除句柄，恢复生命、外观／动画与占地并提供句柄映射；应用阶段失败的目标会话须丢弃。Win32 Release 客户端及测试目标编译通过，`war3_destructable_tests <data-root> <map> snapshot` 在夹具、BootyBay、OrcX01 的 30 秒静音会话各通过，覆盖错误身份／摘要／放置索引拒绝、重编码、占地及夹具死亡事件；日志 `tmp/docs-artifacts/war3/destructable-snapshot/`。待批次合并真实地图对象图、其他 doodad 与事件、单位／全局引用、存档入口、原版表现和性能；尚未完成跨区恢复。
