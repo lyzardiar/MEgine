@@ -4564,3 +4564,9 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 击杀经验最终取整（待批次验证）
 
 路径：`src/session_rewards.cpp`、`tests/clock_tests.cpp`、`docs/heroes.md`；说明见[英雄经验](dota-hero-experience.md)。击杀经验最终转整数时正数四舍五入；脚本经验维持独立规则。Win32 Release 客户端与 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 最终 33/33，实际伤害击杀覆盖倍率产生的半点。首次测试夹具基础经验是偶数，未能构造半点而失败；改用精确倍率后通过。只读原版取整调用链见功能说明，日志 `tmp/docs-artifacts/war3/kill-xp-rounding/clock-final.log`。原版动态、多英雄共享／中间精度及自然对局待批次验证。
+
+### 共享击杀经验实数精度（本批验证）
+
+路径：`src/session_rewards.cpp`、`tests/clock_tests.cpp`；说明见[英雄经验](dota-hero-experience.md)。击杀经验分享、玩家倍率和最终取整消费原版 32 位实数层；数值超出支持范围按既有预算保护。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33；实际伤害击杀场景中，40 点基础经验由三名英雄分享、倍率 0.1875 时各得 2 点。原版静态调用路径见功能说明，经验表公式／野怪倍率中间精度及原版动态行为仍待验证。
+
+本批合并 `eca58e3`、`7e35eae` 与本项：同一核心版本 clock 33/33，覆盖脚本经验、击杀倍率、半点取整和三英雄共享；隔离兽族第五章胜利、第八章灵魂宝石／缓存／跳过胜利回归通过，过场中 `udg_Grom` 指向萨满的问题仍为 PENDING。日志 `tmp/docs-artifacts/war3/shared-xp-real/{clock-final,orc-campaign}.log`。自然战斗、完整分享规则、原版动态、联机及实际窗口仍待验证。
