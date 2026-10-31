@@ -64,7 +64,7 @@ struct ScriptContext {
     std::uint32_t triggerWidget=0,triggerDestructable=0,filterDestructable=0,enumDestructable=0,filterItem=0,enumItem=0;
     bool damageAttack=false,damageRanged=false;
     jass::Real damage;
-    std::string chat,chatMatch;
+    std::string chat,chatMatch,saveName;
 };
 struct ScriptTimerDialog {
     std::uint32_t timer=0;

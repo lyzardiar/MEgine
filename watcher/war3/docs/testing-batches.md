@@ -4322,3 +4322,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 模拟时钟与睡眠线程恢复基础
 
 路径：`src/session.h`、`src/session_game.cpp`、`tests/clock_tests.cpp`、`docs/simulation-clock-persistence.md`、`docs/save-runtime-foundation.md`、`docs/implementation-roadmap.md`。`SCLK` 记录模拟时间、固定步进余量、暂停和速度；恢复先校验后同步脚本调度时钟，仅允许尚未运行 main、创建单位、启动 AI 或登记计时器／计时事件的静止本地会话。Win32 Release 客户端及 `war3_clock_tests` 编译通过；`war3_clock_tests <data-root> <output-root>` **12/12**，未加载 Game.dll。隔离会话检查半步余量、暂停后同步继续、睡眠线程到期、损坏摘要、非法值及已有计时器拒绝；首次夹具缺少 destructable 类型导致 1 项失败，补齐后通过。日志 `tmp/docs-artifacts/war3/simulation-clock-snapshot/clock-tests-final.log`。真实地图、多个计时器与对象、脚本／世界统一事务、存档入口和原版格式待批次验证或实现。当前 D3D9 设备创建失败，未执行实际画面验收。
+
+### 存档事件名称与脚本上下文
+
+路径：`src/script_state.h`、`src/session.h`、`src/session_campaign.cpp`、`src/session_threads.cpp`、`tests/session_tests.cpp`、`tests/save_exists_tests.cpp`、`docs/save-runtime-foundation.md`。存档事件分发保存文件名，`GetSaveBasicFilename` 在对应事件中返回无目录及末尾扩展名的名称；线程休眠上下文 `JSSC` 写版本 2 并读取版本 1。Win32 Release 客户端、session、save-exists 和 clock 检查程序编译通过；`war3_session_tests <enum-fixture>` 22/22、`war3_save_exists_tests <data-root> <OrcX01.w3x> <scratch-root>` 1/1、`war3_clock_tests <data-root> <output-root>` 12/12，均未加载 Game.dll；目录链接创建跳过。隔离测试覆盖中英文名称、三个并行睡眠事件、上下文编码恢复、非空旧版上下文和事件外 null；原图会话添加测试函数设置区域条目，手动分发事件后由原 `User Save` 脚本在隔离用户目录复制区域文件。日志及产物在 `tmp/docs-artifacts/war3/save-event-context/`。实际保存入口、事件时机、长文件名／其他编码、复杂重入、完整存档／载入及原版格式待批次验证或实现。
