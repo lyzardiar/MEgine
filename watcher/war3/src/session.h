@@ -1331,6 +1331,7 @@ public:
     void restoreSimulationClock(std::span<const std::uint8_t> bytes);
     Bytes encodeTimers(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimers(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    std::map<std::uint32_t,std::uint32_t> rebuildTimers(std::span<const std::uint8_t> bytes);
     Bytes encodeTimerEvents(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
