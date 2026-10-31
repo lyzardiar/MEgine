@@ -44,6 +44,58 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("item_objects_restore_inventory_and_tombstones",[&]{
+        std::string source=R"jass(type widget extends handle
+ type destructable extends widget
+ type unit extends widget
+ type item extends widget
+ type player extends handle
+ type timer extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code action returns triggeraction
+ native TriggerRegisterDeathEvent takes trigger t, widget w returns event
+ native GetTriggerWidget takes nothing returns widget
+ native Player takes integer id returns player
+ native CreateTimer takes nothing returns timer
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native CreateItem takes integer id, real x, real y returns item
+ native RemoveUnit takes unit u returns nothing
+ native RemoveItem takes item i returns nothing
+ native UnitAddItem takes unit u, item i returns boolean
+ native UnitAddItemToSlotById takes unit u, integer id, integer slot returns boolean
+ native UnitItemInSlot takes unit u, integer slot returns item
+ native UnitRemoveItem takes unit u, item i returns nothing
+ native SetItemCharges takes item i, integer value returns nothing
+ native SetItemUserData takes item i, integer value returns nothing
+ native SetItemPlayer takes item i, player p, boolean change returns nothing
+ native SetItemInvulnerable takes item i, boolean value returns nothing
+ native SetItemDroppable takes item i, boolean value returns nothing
+ native SetItemDropID takes item i, integer value returns nothing
+ native SetWidgetLife takes widget w, real life returns nothing
+ globals
+ item watched=null
+ integer deaths=0
+ endglobals
+ function onDeath takes nothing returns nothing
+ if GetTriggerWidget()==watched then
+ set deaths=deaths+1
+ endif
+ endfunction
+ function watch takes item i returns nothing
+ local trigger t=CreateTrigger()
+ set watched=i
+ call TriggerAddAction(t,function onDeath)
+ call TriggerRegisterDeathEvent(t,i)
+ endfunction
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ )jass";auto build=[&]{auto module=Module::compile(Program::parse({{"item-snapshot.j",source,"item object recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=build(),restored=build();original->startMain();auto& vm=original->runtime();auto raw=[](const char* name){return std::bit_cast<std::int32_t>(ObjectData::code(name));};auto hero=[&](auto& runtime){return runtime.invoke("CreateUnit",std::array{runtime.invoke("Player",std::array{runtime.integer(0)}),runtime.integer(raw("Hpal")),runtime.real(Real::fromInteger(0)),runtime.real(Real::fromInteger(0)),runtime.real(Real::fromInteger(0))});};auto item=[&](auto& runtime,const char* name){return runtime.invoke("CreateItem",std::array{runtime.integer(raw(name)),runtime.real(Real::fromInteger(100)),runtime.real(Real::fromInteger(100))});};vm.invoke("CreateTimer");auto actor=hero(vm),book=item(vm,"sbok"),ground=item(vm,"phea"),removed=item(vm,"pman");require(vm.invoke("UnitAddItem",std::array{actor,book}).bits && vm.invoke("UnitAddItemToSlotById",std::array{actor,vm.integer(raw("ratf")),vm.integer(3)}).bits,"Fixture inventory setup failed");auto claw=vm.invoke("UnitItemInSlot",std::array{actor,vm.integer(3)});require(!original->items().at(book.bits)->bookSelections.empty(),"Spell book selection was not created");vm.invoke("SetItemCharges",std::array{book,vm.integer(-3)});vm.invoke("SetItemUserData",std::array{book,vm.integer(-77)});vm.invoke("SetItemPlayer",std::array{book,vm.invoke("Player",std::array{vm.integer(1)}),vm.boolean(false)});vm.invoke("SetItemInvulnerable",std::array{book,vm.boolean(true)});vm.invoke("SetItemDroppable",std::array{book,vm.boolean(false)});vm.invoke("SetItemDropID",std::array{book,vm.integer(raw("pman"))});vm.invoke("SetWidgetLife",std::array{ground,vm.real(Real::fromInteger(0))});vm.invoke("RemoveItem",std::array{removed});vm.invoke("watch",std::array{claw});original->advance(.25);auto encode=[](std::string_view,std::uint32_t id){return id;};auto saved=original->encodeItems(encode),triggerSaved=original->encodeTriggers(encode),eventSaved=original->encodeWidgetDeathEvents(encode),globals=vm.encodeGlobals(encode);restored->restoreSimulationClock(original->encodeSimulationClock());auto& rvm=restored->runtime();auto newActor=hero(rvm);auto invalid=[](std::string_view,std::uint32_t){return 0u;};rejects([&]{restored->rebuildItems(saved,invalid);},"holder mapping");auto wrongActor=rvm.invoke("CreateUnit",std::array{rvm.invoke("Player",std::array{rvm.integer(0)}),rvm.integer(raw("hfoo")),rvm.real(Real::fromInteger(256)),rvm.real(Real::fromInteger(0)),rvm.real(Real::fromInteger(0))});auto wrong=[&](std::string_view,std::uint32_t){return wrongActor.bits;};rejects([&]{restored->rebuildItems(saved,wrong);},"holder mapping");require(restored->liveObjects(NativeKind::Item)==0,"Invalid item mapping modified target");rvm.invoke("RemoveUnit",std::array{wrongActor});auto decode=[&](std::string_view type,std::uint32_t id){return type=="unit" && id==actor.bits?newActor.bits:0u;};auto damaged=saved;damaged.back()^=1;rejects([&]{restored->rebuildItems(damaged,decode);},"digest");auto mapped=restored->rebuildItems(saved,decode);require(mapped.size()==4 && restored->liveObjects(NativeKind::Item)==3 && !restored->items().contains(mapped.at(removed.bits)),"Item lifecycle or tombstone differs");auto restoredBook=restored->items().at(mapped.at(book.bits));require(restoredBook->holder==newActor.bits && restoredBook->charges==-3 && restoredBook->userData==-77 && restoredBook->owner==1 && restoredBook->invulnerable && !restoredBook->droppable && restoredBook->dropId==std::uint32_t(raw("pman")),"Restored item state differs");require(rvm.invoke("UnitItemInSlot",std::array{newActor,rvm.integer(0)}).bits==mapped.at(book.bits) && rvm.invoke("UnitItemInSlot",std::array{newActor,rvm.integer(3)}).bits==mapped.at(claw.bits),"Restored inventory slots differ");require(restored->items().at(mapped.at(ground.bits))->life.bits()==0 && std::abs(restored->units().at(newActor.bits)->equipment.damage-original->units().at(actor.bits)->equipment.damage)<.001f,"Ground item or equipment bonus differs");auto reverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==newActor.bits?actor.bits:0u;for(auto [old,current]:mapped)if(current==id)return old;return 0u;};require(restored->encodeItems(reverse)==saved,"Item snapshot did not round trip");auto triggerMap=restored->restoreTriggers(triggerSaved);auto decodeEvent=[&](std::string_view type,std::uint32_t id){if(type=="item"){auto found=mapped.find(id);return found==mapped.end()?0u:found->second;}if(type=="unit")return id==actor.bits?newActor.bits:0u;auto found=triggerMap.find({std::string(type),id});return found==triggerMap.end()?0u:found->second;};auto eventMap=restored->rebuildWidgetDeathEvents(eventSaved,decodeEvent);require(eventMap.size()==1,"Item death event was not restored");rvm.restoreGlobals(globals,decodeEvent);auto restoredClaw=rvm.handle("item",mapped.at(claw.bits));rvm.invoke("SetWidgetLife",std::array{restoredClaw,rvm.real(Real::fromInteger(0))});require(rvm.global("deaths").bits==1,"Restored item death callback failed");rvm.invoke("UnitRemoveItem",std::array{newActor,restoredClaw});require(!restored->items().at(restoredClaw.bits)->holder && !rvm.invoke("UnitItemInSlot",std::array{newActor,rvm.integer(3)}).bits,"Restored item could not be dropped");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("widget_death_events_restore_destructables_and_globals",[&]{
         std::string source=R"jass(type widget extends handle
  type destructable extends widget

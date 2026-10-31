@@ -4478,3 +4478,9 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### Widget 死亡事件与可破坏物引用重建（待批次验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SWEV` 恢复单位、物品和可破坏物死亡事件及目标生命周期、触发器归属与登记顺序。Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 28/28；隔离检查联动可破坏物、触发器、事件和全局恢复，单位／物品由测试重建。OrcX01 30 秒的 7 个可破坏物死亡事件重建并重编码一致，未执行原图事件；日志 `tmp/docs-artifacts/war3/widget-event-snapshot/`。完整单位／物品、其他事件、原图全局与实际存档加载仍待批次验证或实现。
+
+### 物品与背包对象重建（待批次验证）
+
+路径：`CMakeLists.txt`、`src/session.h`、`src/session_item_snapshot.cpp`、`tests/clock_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SITM` 重建活动／移除物品及持有者槽位，恢复书籍选择并刷新装备；应用阶段失败的会话须丢弃，单位状态和冷却由其他组件处理。Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 29/29；隔离检查联动物品、触发器、死亡事件和全局，OrcX01 30 秒的 30 个物品使用 3 个持有者占位单位重编码一致。日志 `tmp/docs-artifacts/war3/item-object-snapshot/`。实际单位恢复、随机书籍、完整冷却／多人及保存加载待批次验证或实现。
+
+前一批 `5408ff6`、`6d255b5`、`bcbfb30` 的相关回归在本版本执行：clock 29/29，可破坏物／伐木消费者两项通过；原图可破坏物和事件检查沿用各自记录。日志 `tmp/docs-artifacts/war3/item-object-snapshot/clock-tests-linked.log`、`destructable-batch.log`。实际窗口、原版事件时序及完整存档仍待验证。

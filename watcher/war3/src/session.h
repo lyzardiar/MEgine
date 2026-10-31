@@ -1340,6 +1340,8 @@ public:
     Bytes encodeTimerEvents(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeItems(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildItems(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeDestructables(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildDestructables(std::span<const std::uint8_t> bytes);
     Bytes encodeCameraState(const jass::StableHandleMap& encodeHandle) const;
