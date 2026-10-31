@@ -38,3 +38,5 @@ build/windows-x86/bin/Release/war3_channel_tests.exe 'E:/Program Files (x86)/dzc
 ```
 
 原始源字段/模型盘点与编译记录在根目录tmp/docs-artifacts/war3/channels/{source.json,source-models.json,build-final.log}，不提交原件或诊断输出。此次仅执行必要编译、Python AST和差异审查，没有执行专项程序或重复旧测试。全部技能/被动/光环、完整免疫/反弹/驱散/自动施放、技能声音、PREM/事件型效果/子附件与AI继续实现；完整客户端保持未完成。
+
+Channel 读取当前等级 DataF 的基础命令后再进行订单校验，地图不提供 Profile 订单时仍可按实际基础命令学习和施法。DotA_v6.83d 的 A1AO、A1AT、A1AA、A06R 已在隔离会话学习并发起施法，进入冷却；脚本完整效果、不同目标类型、事件和实际窗口待阶段验证。

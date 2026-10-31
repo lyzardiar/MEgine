@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 地图 Channel 技能的基础命令读取（待阶段验证）
+
+路径：`src/session_spell_info.cpp`、`docs/channels.md`。Channel 能力先读取当前等级的源 `DataF` 命令，再校验和构建技能；未知命令仍明确报错。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话分别创建英雄 E002、H00V、O015、U00K，学习 A1AO、A1AT、A1AA、A06R 并发起无目标施法，四项均进入冷却，未加载 Game.dll。探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/`；它直接创建英雄并调整等级／魔法，不证明完整技能效果。阶段核对地图脚本的持续效果、不同目标类型、事件／中断、等级覆盖、界面与联机，并与原版对照。
+
+
 ### 修补匠的电脑战斗施法（待阶段验证）
 
 路径：`src/session_ai_armies.cpp`、`docs/tinker.md`、`docs/ai.md`。电脑战斗决策在有可见敌人时可施放口袋工厂和进入机器人形态，复用真实技能、目标、资源及冷却流程；已有工厂时不重复召唤，机器人形态不自动反向切换。Win32 Release 客户端编译通过；隔离会话分别检查基础技能和一级工程升级后的技能变体，实际产生工厂并保持机器人形态，各 2 通过、0 失败，未加载 Game.dll。临时探针与夹具位于 `tmp/docs-artifacts/war3/hero-ability-probe/`、`tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。阶段核对真实电脑对局、原版决策和目标选择、工厂失效／技能升级、资源与冷却、不同地图及联机。
