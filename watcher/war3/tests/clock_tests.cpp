@@ -44,6 +44,35 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("unit_motion_natives_ignore_invalid_handles",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type timer extends handle
+ native Player takes integer id returns player
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native RemoveUnit takes unit u returns nothing
+ native KillUnit takes unit u returns nothing
+ native SetUnitAcquireRange takes unit u, real r returns nothing
+ native GetUnitAcquireRange takes unit u returns real
+ native SetUnitTurnSpeed takes unit u, real r returns nothing
+ native SetUnitPropWindow takes unit u, real r returns nothing
+ native GetUnitTurnSpeed takes unit u returns real
+ native GetUnitDefaultTurnSpeed takes unit u returns real
+ native GetUnitPropWindow takes unit u returns real
+ native GetUnitDefaultPropWindow takes unit u returns real
+ native CreateTimer takes nothing returns timer
+ native SetUnitX takes unit u, real x returns nothing
+ native SetUnitY takes unit u, real y returns nothing
+ native GetUnitX takes unit u returns real
+ native GetUnitY takes unit u returns real
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"unit-position.j",source,"authored invalid position handle test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto player=vm.invoke("Player",std::array{vm.integer(0)}),zero=vm.real(real(0)),valid=vm.invoke("CreateUnit",std::array{player,vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("hfoo"))),zero,zero,zero}),removed=vm.invoke("CreateUnit",std::array{player,vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("hfoo"))),zero,zero,zero}),timer=vm.invoke("CreateTimer");vm.invoke("RemoveUnit",std::array{removed});auto invalidReal=vm.real(Real::fromBits(0x7fc00000));for(auto id:{0u,removed.bits,timer.bits}){auto invalid=vm.handle("unit",id);vm.invoke("SetUnitX",std::array{invalid,invalidReal});vm.invoke("SetUnitY",std::array{invalid,invalidReal});vm.invoke("SetUnitAcquireRange",std::array{invalid,invalidReal});vm.invoke("SetUnitTurnSpeed",std::array{invalid,invalidReal});vm.invoke("SetUnitPropWindow",std::array{invalid,invalidReal});vm.invoke("KillUnit",std::array{invalid});for(auto name:{"GetUnitAcquireRange","GetUnitTurnSpeed","GetUnitDefaultTurnSpeed","GetUnitPropWindow","GetUnitDefaultPropWindow"})require(vm.invoke(name,std::array{invalid}).bits==0,"Invalid unit motion query did not return zero");require(vm.invoke("GetUnitX",std::array{invalid}).bits==0 && vm.invoke("GetUnitY",std::array{invalid}).bits==0,"Invalid unit coordinate did not return zero");}vm.invoke("SetUnitX",std::array{valid,vm.real(real(42))});vm.invoke("SetUnitY",std::array{valid,vm.real(real(-17))});require(vm.invoke("GetUnitX",std::array{valid}).bits==real(42).bits() && vm.invoke("GetUnitY",std::array{valid}).bits==real(-17).bits(),"Valid unit position did not change");vm.invoke("SetUnitAcquireRange",std::array{valid,vm.real(real(333))});vm.invoke("SetUnitTurnSpeed",std::array{valid,vm.real(real(1))});vm.invoke("SetUnitPropWindow",std::array{valid,vm.real(real(2))});require(vm.invoke("GetUnitAcquireRange",std::array{valid}).bits==real(333).bits() && vm.invoke("GetUnitTurnSpeed",std::array{valid}).bits==real(1).bits() && vm.invoke("GetUnitPropWindow",std::array{valid}).bits==real(2).bits(),"Valid motion settings did not change");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during position fixture");
+    });
     test("collections_rebuild_geometry_forces_and_ordered_groups",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle

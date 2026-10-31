@@ -4394,3 +4394,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 相机设置与运动状态重建（待阶段验证）
 
 路径：`src/session.h`、`src/session_camera_setup.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`、`docs/implementation-roadmap.md`。`SCAM` 重建相机设置句柄、镜头边界、目标、过场模型参数、运动与字段过渡和跟随配置；时钟须一致，单位引用须映射，调用方须恢复脚本引用。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 19/19；隔离检查覆盖移动及环绕插值、字段、跟随、映射和损坏拒绝。OrcX01 原图 0／30／150 秒各重建并重编码 95 个相机设置，使用 239／252／460 个步兵占位句柄；未恢复原单位状态或续执行原图线程。日志 `tmp/docs-artifacts/war3/camera-snapshot/`。实际存档加载、窗口画面及原版视觉一致性待实现或阶段验证。
+
+### 失效单位位置与运动接口（待阶段验证）
+
+路径：`src/session_entities.cpp`、`tests/clock_tests.cpp`、`docs/jass.md`、`docs/implementation-roadmap.md`。`SetUnitX/Y`、`SetUnitAcquireRange`、`SetUnitTurnSpeed`、`SetUnitPropWindow` 和 `KillUnit` 对无效单位安全返回；转向与窗口的查询对无效单位返回零。固定版 Game.dll 对应入口均先解析单位，失败直接返回，反汇编记录 `tmp/docs-artifacts/war3/unit-position-handles/`。Win32 Release 客户端与 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 20/20；隔离检查覆盖空、已移除和其他类型句柄，以及有效单位的位置与运动设置，未加载 Game.dll。真实地图相关脚本、其他版本和实际玩法待阶段验证。
