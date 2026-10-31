@@ -695,7 +695,7 @@ class ScriptSession {
     std::map<std::uint32_t,std::array<WeaponDefinition,2>> weapons_;
     std::map<std::uint64_t,CombatProjectile> projectiles_;
     std::map<std::uint64_t,CombatProjectile> visualProjectiles_;
-    struct SpiderAttackVisual {std::uint32_t source=0,target=0,effect=0;std::uint64_t targetRevision=0;double due=0;};
+    struct SpiderAttackVisual {std::uint32_t source=0,target=0,effect=0;std::uint64_t targetRevision=0;double due=0;float launchX=0,launchY=0,launchZ=0;};
     std::map<std::uint32_t,SpiderAttackVisual> spiderAttackVisuals_;
     std::uint32_t spiderVisualId_=0;
     std::uint64_t visualProjectileId_=0;
