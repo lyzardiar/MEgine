@@ -39,11 +39,13 @@ globals
 trigger active=null
 integer observedTrigger=0
 integer observedEvent=0
+integer completed=0
 endglobals
 function action takes nothing returns nothing
 call TriggerSleepAction(0.125)
 set observedTrigger=GetHandleId(GetTriggeringTrigger())
 set observedEvent=GetHandleId(GetTriggerEventId())
+set completed=completed+1
 endfunction
 function setup takes nothing returns nothing
 set active=CreateTrigger()
@@ -53,6 +55,7 @@ call TriggerRegisterGameEvent(active,ConvertGameEvent(9))
 endfunction
 )jass";
         ScriptSession original(compile(source),{}),restored(compile(source),{});original.initialize();restored.initialize();auto& a=original.runtime();auto& b=restored.runtime();a.invoke("setup");b.invoke("CreateTrigger");b.invoke("setup");auto first=a.global("active").bits,second=b.global("active").bits;require(first!=second,"Fixture trigger handles did not differ");original.commandMenuOpened(true);require(a.threadCount()==1,"Trigger action did not suspend");rejects([&]{original.snapshotSleepingScript({});},"handle mapping");unsigned encoded=0;auto snapshot=original.snapshotSleepingScript([&](std::string_view type,std::uint32_t id){require(type=="trigger" && id==first,"Unexpected source context handle");++encoded;return 77u;});require(encoded==1 && snapshot.script.hasContext && !snapshot.contexts.empty(),"Trigger context was not captured");rejects([&]{restored.restoreSleepingScript(snapshot,[](auto,auto){return 0u;});},"handle mapping");auto inconsistent=snapshot;inconsistent.contexts.back().triggerUnit=33;inconsistent.contexts.back().triggerWidget=33;rejects([&]{restored.restoreSleepingScript(inconsistent,[&](std::string_view type,std::uint32_t){return type=="unit"?101u:type=="widget"?102u:second;});},"mapping across types");require(!b.threadCount(),"Invalid context mapping created a thread");b.threadClock(10);unsigned decoded=0;restored.restoreSleepingScript(snapshot,[&](std::string_view type,std::uint32_t id){require(type=="trigger" && id==77,"Unexpected stable context handle");++decoded;return second;});require(decoded==1,"Trigger context did not reuse its stable identity");b.advanceThreads(10.09375);require(!b.global("observedTrigger").bits,"Restored trigger woke early");b.advanceThreads(10.125);require(b.global("observedTrigger").bits==second && b.global("observedEvent").bits==9 && !b.threadCount(),"Restored trigger lost event or remapped context");a.advanceThreads(.125);require(a.global("observedTrigger").bits==first && a.global("observedEvent").bits==9,"Source trigger context changed");
+        original.commandMenuOpened(true);original.commandMenuOpened(true);require(a.threadCount()==2,"Parallel trigger actions did not suspend");encoded=0;auto batch=original.snapshotSleepingScripts([&](std::string_view type,std::uint32_t id){require(type=="trigger" && id==first,"Unexpected batch context handle");++encoded;return 77u;});require(batch.threads.size()==2 && batch.scripts.threads.size()==2 && encoded==1,"Parallel contexts or shared identity were not captured");auto broken=batch;broken.scripts.threads[1].execution.frames.back().pc=0;auto decode=[&](std::string_view type,std::uint32_t id){require(type=="trigger" && id==77,"Unexpected batch stable handle");return second;};rejects([&]{restored.restoreSleepingScripts(broken,decode);},"call frame");require(!b.threadCount(),"Failed context batch left a thread");auto ids=restored.restoreSleepingScripts(batch,decode);require(ids.size()==2 && b.threadCount()==2,"Parallel trigger context restore failed");b.advanceThreads(10.25);a.advanceThreads(.25);require(b.global("completed").bits==3 && a.global("completed").bits==3 && b.global("observedTrigger").bits==second && b.global("observedEvent").bits==9 && !b.threadCount(),"Restored parallel trigger contexts differ");
     });
     test("game_command_menu_events",[]{auto module=compile(R"jass(type trigger extends handle
 type triggeraction extends handle

@@ -19,10 +19,14 @@ struct RuntimeThreadInspection {ThreadId thread=0;std::uint64_t runtime=0;Thread
 using StableHandleMap=std::function<std::uint32_t(std::string_view,std::uint32_t)>;
 // Context transfer runs synchronously on the runtime owner thread and must not reenter its scheduler.
 using ThreadContextTransfer=std::function<void(ThreadId)>;
+using ThreadBatchContextTransfer=std::function<void(size_t,ThreadId)>;
 struct RuntimeSleepSnapshot {std::vector<Source> sources;bool debug=false;Id function=none;std::vector<Value> arguments;double remaining=0;RuntimeExecutionInspection execution;bool handlesMapped=false,hasContext=false;};
+struct RuntimeSleepBatch {std::vector<Source> sources;std::vector<RuntimeSleepSnapshot> threads;};
 class Runtime {
     struct Impl;
     std::unique_ptr<Impl> impl_;
+    RuntimeSleepSnapshot snapshotSleepingThreadImpl(const ThreadInspection& task,const StableHandleMap& encodeHandle,const ThreadContextTransfer& captureContext,bool includeSources) const;
+    ThreadId restoreSleepingThreadImpl(const RuntimeSleepSnapshot& snapshot,const StableHandleMap& decodeHandle,const ThreadContextTransfer& restoreContext,const std::vector<Source>* sources,bool allowExisting);
 public:
     using Native=std::function<Value(Runtime&,std::span<const Value>)>;
     explicit Runtime(Module module,RuntimeLimits limits={});
@@ -65,6 +69,8 @@ public:
     std::vector<RuntimeThreadInspection> inspectThreads() const;
     RuntimeSleepSnapshot snapshotSleepingThread(const StableHandleMap& encodeHandle={},const ThreadContextTransfer& captureContext={}) const;
     ThreadId restoreSleepingThread(const RuntimeSleepSnapshot& snapshot,const StableHandleMap& decodeHandle={},const ThreadContextTransfer& restoreContext={});
+    RuntimeSleepBatch snapshotSleepingThreads(const StableHandleMap& encodeHandle={},const ThreadBatchContextTransfer& captureContext={}) const;
+    std::vector<ThreadId> restoreSleepingThreads(const RuntimeSleepBatch& snapshot,const StableHandleMap& decodeHandle={},const ThreadBatchContextTransfer& restoreContext={});
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;
     PrimitiveGlobalSnapshot encodePrimitiveGlobals() const;
     PrimitiveGlobalRestore restorePrimitiveGlobals(std::span<const std::uint8_t> bytes);

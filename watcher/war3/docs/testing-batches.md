@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### JASS 并行睡眠线程恢复（待阶段验证）
+
+路径：`src/jass_runtime.h/.cpp`、`src/session.h`、`src/session_threads.cpp`、`tests/jass_thread_tests.cpp`、`tests/session_tests.cpp`；范围见 [战役存档的脚本执行状态](save-runtime-foundation.md)。Win32 Release 客户端和两个测试目标编译通过；线程检查 24/24、会话检查 20/20 通过，未加载 Game.dll。隔离运行时检查不同及相同到期时间的线程顺序，损坏批次在部分调度后完全清理；含父子等待的批次被拒绝且原线程继续执行。隔离会话的两个游戏事件动作恢复到另一会话并使用重新映射的触发器；其中一个损坏时不保留部分线程。大量线程、选择视图、更多上下文、资源预算边界与实际地图待阶段验证；线程间等待、对象图和存档文件仍未实现。
+
 ### 会话睡眠线程事件上下文（待阶段验证）
 
 路径：`src/jass_runtime.h/.cpp`、`src/session.h`、`src/session_threads.cpp`、`tests/session_tests.cpp`、`tests/jass_thread_tests.cpp`；边界见 [战役存档的脚本执行状态](save-runtime-foundation.md)。Win32 Release 客户端及两个测试目标编译通过；会话检查 20/20、线程定向检查 4/4，未加载 Game.dll。隔离会话通过真实游戏事件启动触发器动作，睡眠后映射触发器句柄并恢复到另一会话；恢复后事件类型与目标会话触发器正确，兼容静态类型的映射冲突被拒绝，上下文恢复回调失败后线程清理及重试通过。选择视图、所有上下文字段及对象生命周期、实际地图与原版行为待阶段验证；对象图、多线程、存档文件和完整战役切区仍未实现。
