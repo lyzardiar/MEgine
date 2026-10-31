@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 单位范围治疗与魂之挽歌（待阶段验证）
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`tests/spell_tests.cpp`、`docs/area-spells.md`。单位可按源 AIha 的订单、治疗量、范围和施法时间使用范围治疗；治疗量为零时仍触发实际施法事件。Win32 Release 客户端及专项程序编译通过；`war3_spell_tests.exe <data-root> <fixture> unit-area-heal` 1/1 通过，检查 AIha 对自身和友军治疗、敌军不受益，以及治疗卷轴仍可正常使用。DotA_v6.83d 原图隔离会话从酒馆购买影魔、学习 A29J；探针设置十个灵魂、等级、魔法、位置和敌方目标，暂停其他单位。技能按钮可用，施法半秒内无伤害，之后地图脚本使目标生命由 5000 降至 4920 并进入冷却。会话未加载 Game.dll；证据位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-sf-requiem-effect.*`。固定版 Game.dll 摘要 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a：REA 记录 `ev_f274fa477ad92e558babd7ac6af14557d9f3b70a93a3c46e3153fc79feed84da` 中能力方法表将 AIha 原型与返回 852273 的方法关联；完整按钮和下单路径仍待原版对照。阶段核对治疗目标／范围／满血、施法中断及重入、技能等级、魂数与死亡释放、网络、实际窗口和完整对局。
+
 ### 零召唤末日与英雄目标（待阶段验证）
 
 路径：`src/session_neutral_spells.cpp`、`src/session_spells.cpp`、`docs/neutral-heroes.md`。零召唤末日保留状态、事件和配置的正持续时间，不创建召唤物或消耗尸体；其他末日保留原有持续与召唤流程。目标类别由技能标记决定，原版 nonhero 仍排除英雄。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话从酒馆购买末日使者并学习 A0MU，调整英雄等级、魔法、位置及目标，暂停其他单位；对敌方英雄施法后五秒生命由 5000 降至 4920，状态存在，到期后状态移除且额外三秒不再受到地图脚本伤害。隔离地图中原版 ANdo 拒绝英雄并使普通敌人死亡后生成一个 120 秒召唤物；探针将召唤数改为零后确认普通敌人死亡不新增召唤物、不消费尸体。未加载 Game.dll；探针与日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-doom-duration.*`、`source-doom-zero-summon.*`。零召唤正时长的原版语义、等级、魔免／驱散、状态重入、召唤生命周期、实际窗口及对局待阶段对照。
@@ -41,7 +45,7 @@
 
 ### 零距离脚本波形技能（待阶段验证）
 
-路径：`src/session_spell_info.cpp`、`src/session_area_spells.cpp`、`docs/area-spells.md`。冲击波／腐臭蜂群原型的距离为零时，仅在伤害为零且没有原生弹道时允许施法，正常触发技能事件且不创建需要距离计算的波形。Win32 Release 客户端编译通过；DotA_v6.83d 原图酒馆购买虚空假面后可生成五个学习按钮，升至 10 级学习 A0LK，发出点目标命令后由地图脚本移动约 566 距离并进入冷却。隔离地图中原版 AOsh 对目标造成 75 点伤害；上述会话未加载 Game.dll。探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-void-timewalk.cpp`、`dota-void-timewalk-after.log`、`source-wave-damage.cpp` 和 `source-wave-damage.log`。DotA 野性之斧 A0O1 隔离施法已进入冷却，完整伤害和视觉尚未确认；英雄等级、魔法与施法目标由探针设置。阶段核对其他零值组合、伤害与弹道边界、回调时序、实际窗口及原版行为。
+路径：`src/session_spell_info.cpp`、`src/session_area_spells.cpp`、`docs/area-spells.md`。冲击波／腐臭蜂群原型的距离为零时，仅在伤害为零且没有原生弹道时允许施法，正常触发技能事件且不创建需要距离计算的波形。Win32 Release 客户端编译通过；DotA_v6.83d 原图酒馆购买虚空假面后可生成五个学习按钮，升至 10 级学习 A0LK，发出点目标命令后由地图脚本移动约 566 距离并进入冷却。隔离地图中原版 AOsh 对目标造成 75 点伤害；上述会话未加载 Game.dll。探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-void-timewalk.cpp`、`dota-void-timewalk-after.log`、`source-wave-damage.cpp` 和 `source-wave-damage.log`。DotA 野性之斧 A0O1 在调整位置并暂停其他单位的隔离会话中使敌人生命由 5000 降至 4875，完整伤害和视觉尚未确认；英雄等级、魔法与施法目标由探针设置。阶段核对其他零值组合、伤害与弹道边界、回调时序、实际窗口及原版行为。
 
 
 ### 幻象复制与魔法免疫目标（待阶段验证）
