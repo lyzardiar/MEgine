@@ -17,8 +17,50 @@ item native_probe_item=null
 integer native_probe_stage=0
 integer native_probe_enter=0
 integer native_probe_items=0
+unit range_probe_center=null
+unit range_probe_actor=null
+unit range_probe_target=null
+integer range_probe_first=0
+integer range_probe_second=0
 '''
 FUNCTIONS = '''
+function NativeRangeFirst takes nothing returns nothing
+    if GetTriggerUnit()==range_probe_actor then
+        set range_probe_first=range_probe_first+1
+        call SetUnitX(range_probe_center,GetUnitX(range_probe_target)+40)
+        call SetUnitY(range_probe_center,GetUnitY(range_probe_target))
+    endif
+endfunction
+function NativeRangeSecond takes nothing returns nothing
+    if GetTriggerUnit()==range_probe_target then
+        set range_probe_second=range_probe_second+1
+    endif
+endfunction
+function NativeRangeBegin takes nothing returns nothing
+    local unit origin
+    local trigger first=CreateTrigger()
+    local trigger second=CreateTrigger()
+    local real x=GetStartLocationX(0)
+    local real y=GetStartLocationY(0)
+    local integer i=0
+    set origin=CreateUnit(Player(0),'hfoo',x,y,0)
+    set range_probe_actor=CreateUnit(Player(0),'hfoo',x+40,y,0)
+    set range_probe_target=CreateUnit(Player(0),'hfoo',x+1800,y,0)
+    set range_probe_center=CreateUnit(Player(0),'hfoo',x+900,y,0)
+    call PauseUnit(origin,true)
+    call PauseUnit(range_probe_actor,true)
+    call PauseUnit(range_probe_target,true)
+    call PauseUnit(range_probe_center,true)
+    loop
+        exitwhen i>=80
+        call PauseUnit(CreateUnit(Player(0),'hfoo',x-2500+50*i,y+1200,0),true)
+        set i=i+1
+    endloop
+    call TriggerRegisterUnitInRange(first,origin,100,null)
+    call TriggerAddAction(first,function NativeRangeFirst)
+    call TriggerRegisterUnitInRange(second,range_probe_center,100,null)
+    call TriggerAddAction(second,function NativeRangeSecond)
+endfunction
 function NativeProbeAssert takes boolean ok, string label returns nothing
     if not ok then
         call ExecuteFunc("NativeProbeFailure_"+label)

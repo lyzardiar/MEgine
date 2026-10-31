@@ -1,15 +1,24 @@
 // Author: MiYu. Region membership, enter/leave/range transitions and player chat use live session producers.
 #include "session.h"
+#include <algorithm>
 #include <bit>
+#include <climits>
 #include <cmath>
+#include <unordered_map>
 
 namespace war3 {
+namespace {
+int spatialCell(double value){return int(std::clamp(std::floor(value/512),double(INT_MIN),double(INT_MAX)));}
+std::uint64_t spatialKey(int x,int y){return (std::uint64_t(std::uint32_t(x))<<32)|std::uint32_t(y);}
+}
 void ScriptSession::spatialEvents() {
-    std::vector<std::uint32_t> ids;for(auto eventHandle:eventHandles_)if(alive(eventHandle,NativeKind::Event)){auto kind=std::get<ScriptEvent>(objects_[eventHandle-handleBase].state).kind;if(kind==ScriptEvent::Kind::RegionEnter || kind==ScriptEvent::Kind::RegionLeave || kind==ScriptEvent::Kind::UnitRange)ids.push_back(eventHandle);}
+    std::vector<std::uint32_t> ids;size_t rangeEvents=0;for(auto eventHandle:eventHandles_)if(alive(eventHandle,NativeKind::Event)){auto kind=std::get<ScriptEvent>(objects_[eventHandle-handleBase].state).kind;if(kind==ScriptEvent::Kind::RegionEnter || kind==ScriptEvent::Kind::RegionLeave || kind==ScriptEvent::Kind::UnitRange){ids.push_back(eventHandle);if(kind==ScriptEvent::Kind::UnitRange)++rangeEvents;}}
+    std::unordered_map<std::uint64_t,std::vector<std::uint32_t>> grid;bool gridValid=false;auto buildGrid=[&]{grid.clear();for(auto& [unitId,u]:units_){float x=std::bit_cast<float>(u->x.bits()),y=std::bit_cast<float>(u->y.bits());if(std::isfinite(x) && std::isfinite(y))grid[spatialKey(spatialCell(x),spatialCell(y))].push_back(unitId);}gridValid=true;};
     for(auto id:ids){if(!alive(id,NativeKind::Event))continue;auto event=std::get<ScriptEvent>(objects_[id-handleBase].state);std::set<std::uint32_t> inside;std::shared_ptr<SpatialRegion> region;std::shared_ptr<UnitState> target;
         if(event.kind==ScriptEvent::Kind::UnitRange){if(!alive(event.target,NativeKind::Unit))continue;target=units_.at(event.target);}else{if(!alive(event.target,NativeKind::Region))continue;region=std::get<std::shared_ptr<SpatialRegion>>(objects_[event.target-handleBase].state);}
-        for(auto& [unitId,u]:units_){bool contains=region?region->contains({u->x,u->y}):unitId!=event.target && std::hypot(std::bit_cast<float>(u->x.bits())-std::bit_cast<float>(target->x.bits()),std::bit_cast<float>(u->y.bits())-std::bit_cast<float>(target->y.bits()))<=std::bit_cast<float>(event.limit.bits());if(contains)inside.insert(unitId);}std::get<ScriptEvent>(objects_[id-handleBase].state).inside=inside;
-        auto& candidates=event.kind==ScriptEvent::Kind::RegionLeave?event.inside:inside;for(auto unitId:candidates){bool changed=event.kind==ScriptEvent::Kind::RegionLeave?!inside.contains(unitId):!event.inside.contains(unitId);if(!changed || !alive(unitId,NativeKind::Unit))continue;ScriptContext context;context.triggerUnit=unitId;context.triggerPlayer=handleBase+units_.at(unitId)->owner;if(region)context.triggeringRegion=event.target;if(event.kind==ScriptEvent::Kind::RegionLeave)context.leavingUnit=unitId;else context.enteringUnit=unitId;fire(id,context);}
+        auto consider=[&](std::uint32_t unitId,const std::shared_ptr<UnitState>& u){bool contains=region?region->contains({u->x,u->y}):unitId!=event.target && std::hypot(std::bit_cast<float>(u->x.bits())-std::bit_cast<float>(target->x.bits()),std::bit_cast<float>(u->y.bits())-std::bit_cast<float>(target->y.bits()))<=std::bit_cast<float>(event.limit.bits());if(contains)inside.insert(unitId);};
+        if(region || !std::isfinite(std::bit_cast<float>(target->x.bits())) || !std::isfinite(std::bit_cast<float>(target->y.bits()))){for(auto& [unitId,u]:units_)consider(unitId,u);}else{double x=std::bit_cast<float>(target->x.bits()),y=std::bit_cast<float>(target->y.bits()),radius=std::bit_cast<float>(event.limit.bits());auto left=std::max(std::int64_t(INT_MIN),std::int64_t(spatialCell(x-radius))-1),right=std::min(std::int64_t(INT_MAX),std::int64_t(spatialCell(x+radius))+1),bottom=std::max(std::int64_t(INT_MIN),std::int64_t(spatialCell(y-radius))-1),top=std::min(std::int64_t(INT_MAX),std::int64_t(spatialCell(y+radius))+1);double buckets=double(right-left+1)*double(top-bottom+1);if(rangeEvents<2 || buckets>double(units_.size())*2)for(auto& [unitId,u]:units_)consider(unitId,u);else{if(!gridValid)buildGrid();for(auto row=bottom;row<=top;++row)for(auto column=left;column<=right;++column)if(auto bucket=grid.find(spatialKey(int(column),int(row)));bucket!=grid.end())for(auto unitId:bucket->second)consider(unitId,units_.at(unitId));}}std::get<ScriptEvent>(objects_[id-handleBase].state).inside=inside;
+        auto& candidates=event.kind==ScriptEvent::Kind::RegionLeave?event.inside:inside;for(auto unitId:candidates){bool changed=event.kind==ScriptEvent::Kind::RegionLeave?!inside.contains(unitId):!event.inside.contains(unitId);if(!changed || !alive(unitId,NativeKind::Unit))continue;ScriptContext context;context.triggerUnit=unitId;context.triggerPlayer=handleBase+units_.at(unitId)->owner;if(region)context.triggeringRegion=event.target;if(event.kind==ScriptEvent::Kind::RegionLeave)context.leavingUnit=unitId;else context.enteringUnit=unitId;fire(id,context);gridValid=false;}
     }
 }
 void ScriptSession::chat(unsigned owner,const std::string& message,ChatChannel channel,std::optional<unsigned> recipient) {
