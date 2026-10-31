@@ -108,8 +108,8 @@ void ScriptSession::bindEntityNatives() {
     bind("CreateItem","item",{"integer","real","real"},[this,r](auto& vm,auto a){if(!definitions().contains(a[0].bits,true))return vm.handle("item",0);return createItem(a[0].bits,r(a[1]),r(a[2]));});
     bind("RemoveItem","nothing",{"item"},[this](auto& vm,auto a){if(a[0].bits)removeItem(a[0].bits);return vm.nothing();});
     bind("GetItemTypeId","integer",{"item"},[this](auto& vm,auto a){return vm.integer(alive(a[0].bits,NativeKind::Item)?std::bit_cast<std::int32_t>(item(a[0]).type):0);});
-    bind("GetItemX","real",{"item"},[this](auto& vm,auto a){return vm.real(alive(a[0].bits,NativeKind::Item)?item(a[0]).x:jass::Real{});});
-    bind("GetItemY","real",{"item"},[this](auto& vm,auto a){return vm.real(alive(a[0].bits,NativeKind::Item)?item(a[0]).y:jass::Real{});});
+    bind("GetItemX","real",{"item"},[this](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Item))return vm.real({});auto& value=item(a[0]);return vm.real(alive(value.holder,NativeKind::Unit)?units_.at(value.holder)->x:value.x);});
+    bind("GetItemY","real",{"item"},[this](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Item))return vm.real({});auto& value=item(a[0]);return vm.real(alive(value.holder,NativeKind::Unit)?units_.at(value.holder)->y:value.y);});
     bind("GetItemName","string",{"item"},[this](auto& vm,auto a){return alive(a[0].bits,NativeKind::Item)?vm.string(item(a[0]).name):jass::Value{vm.module().typeId("string"),0,{}};});
     bind("GetItemPlayer","player",{"item"},[this](auto& vm,auto a){return vm.handle("player",alive(a[0].bits,NativeKind::Item)?handleBase+item(a[0]).owner:0);});
     bind("SetItemPlayer","nothing",{"item","player","boolean"},[this](auto& vm,auto a){if(alive(a[0].bits,NativeKind::Item) && alive(a[1].bits,NativeKind::Player))item(a[0]).owner=playerId(a[1]);return vm.nothing();});

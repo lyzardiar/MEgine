@@ -4119,6 +4119,10 @@ Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨�
 
 Win32 Release 客户端及测试目标编译通过；执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m`，再运行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m ethereal-ability`，1/1 通过。DotA 原图隔离会话使用 `I0LT`，目标在 1 秒时虚无、5 秒时恢复；记录 `tmp/docs-artifacts/war3/dota-ethereal/after.log`。阶段验证物品／派生、多个来源及生命周期、伤害／治疗倍率、地图覆盖、真实窗口／原版及联机。
 
+### 持有物品的即时位置（待阶段验证）
+
+路径：`src/session_entities.cpp`、`tests/passive_tests.cpp`；说明见[失效物品句柄](dota-bkb-item-handles.md)。脚本查询持有物品位置时读取持有者当前坐标，丢弃后读取地面坐标。Win32 Release 客户端及 passive 测试目标编译通过，`war3_passive_tests <data-root> ../../tmp/docs-artifacts/war3/pawn-analysis/fixture.w3m invalid-item` 1/1，覆盖脚本移动后不推进模拟直接查询及丢弃。阶段对照原版持有坐标规则，验证移动／传送／运输、掉落／转移、死亡／移除、回调重入、地图脚本和联机。
+
 ### 物品位置、名称和标记无效句柄（待阶段验证）
 
 路径：`src/session_entities.cpp`、`tests/passive_tests.cpp`；原版入口见[失效物品句柄](dota-bkb-item-handles.md)。失效物品的坐标查询返回零、名称查询返回 null，位置和五项标记设置直接返回；有效物品继续使用实际状态。Win32 Release 客户端及 passive 目标编译通过；`war3_passive_tests <data-root> ../../tmp/docs-artifacts/war3/pawn-analysis/fixture.w3m invalid-item` 1/1 通过，覆盖空、销毁、类型不匹配及有效位置／标记操作。阶段核对真实地图回调、背包持有物品位置、地图边界、显示／掉落／收购和原版运行行为。
