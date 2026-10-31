@@ -373,8 +373,8 @@ class ScriptSession {
     bool cargoCanUnload(const UnitState& unit);
     bool canLoad(const UnitState& transport,const UnitState& passenger);
     bool loadUnit(std::uint32_t transport,std::uint32_t passenger,const SpellInfo* devour=nullptr);
-    std::optional<WorldPoint> cargoPoint(const UnitState& transport,const UnitState& passenger,WorldPoint point);
-    bool unloadPassenger(std::uint32_t transport,std::uint32_t passenger,WorldPoint point);
+    std::optional<WorldPoint> cargoPoint(const UnitState& transport,const UnitState& passenger,WorldPoint point,std::optional<WorldPoint> groundGoal={});
+    bool unloadPassenger(std::uint32_t transport,std::uint32_t passenger,WorldPoint point,std::optional<WorldPoint> groundGoal={});
     void startCargoDrop(std::uint32_t transport,const CastOrder& cast);
     void detachCargo(UnitState& passenger);
     void releaseCargo(UnitState& transport,std::uint32_t killer=0);
