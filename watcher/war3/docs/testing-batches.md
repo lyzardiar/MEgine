@@ -4582,3 +4582,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 英雄等级标题本地化（本批验证）
 
 路径：`src/game_loading.h`、`src/game_loading.cpp`、`src/game_commands.cpp`，说明见[英雄经验与成长](heroes.md)。英雄经验条标题读取原版 `GlobalStrings.fdf` 的 `INFOPANEL_LEVEL_CLASS`，填入实时等级和单位类型名；缺失资源时使用英文默认格式。Win32 Release 客户端和 clock 测试目标编译通过。本批合并 `3df2feb`、`63fcdac` 和本项：隔离数据目录执行 `war3_clock_tests <data-root> <output-root>`，33 通过、0 失败，日志 `tmp/docs-artifacts/war3/hero-level-localization/clock.log`。游戏窗口检查尝试创建 D3D9 设备失败，未获得画面；日志 `tmp/docs-artifacts/war3/hero-level-localization/capture/client.log`。实际等级标题画面、悬浮提示、原版动态行为、事件顺序、自然对局及联机仍待验证。
+
+### 兽族第八章跳过过场引用（验证补充）
+
+路径：`tests/orc_campaign_chain_tests.cpp`，说明见[战役流程](campaign-flow.md)。原版 `Blizzard.j` 中恢复单位设置 `bj_lastLoadedUnit`，`GetLastCreatedUnit` 读取独立的 `bj_lastCreatedUnit`；Orc08 原图跳过脚本读取后者。Win32 Release 测试构建通过，在新建隔离用户目录运行 `war3_orc_campaign_chain_tests <data-root> chapter5 <new-absolute-user-dir>`，1 通过、0 失败，覆盖最近创建的萨满、恢复的格罗姆、脚本引用及胜利返回；日志 `tmp/docs-artifacts/war3/orc08-bj-reference/chapter5.log`。未加载 Game.dll；原版客户端动态表现、自然战斗和窗口仍待验证。本项是既有战役任务的验证补充，不计功能批次。
