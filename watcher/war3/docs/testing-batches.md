@@ -4378,3 +4378,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 脚本集合与几何句柄重建（待阶段验证）
 
 路径：`src/session.h`、`src/session_collections.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。`SCOL` 重建单位组、玩家组、位置和矩形，保留组成员顺序及坐标位值；单位成员依赖已恢复句柄，替换初始化对象后须恢复脚本和其他引用。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 16/16；隔离检查验证单位组成员顺序、移除清理、玩家掩码、几何值、句柄映射和损坏／映射错误拒绝。OrcX01 原图 0／30／150 秒的集合分别重建 854／869／910 个，使用 76／76／278 个普通步兵占位句柄核对引用，未恢复原单位状态；相关声音、计时器、触发器、计时事件及睡眠线程组件同时往返，日志 `tmp/docs-artifacts/war3/collection-snapshot/`。真实单位、其他对象／事件、全部全局引用与完整保存／载入待实现或阶段验证。
+
+### 脚本区域几何重建（待阶段验证）
+
+路径：`src/session_collections.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`、`docs/implementation-roadmap.md`。`SCOL` 版本 2 保存区域矩形并读取版本 1，重建后需恢复引用，目标须无活动事件。Win32 Release 客户端和 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 16/16，隔离检查覆盖区域内、挖空及外部判断、字节往返和旧版兼容。OrcX01 原图静音模拟 0／30／150 秒分别重建 911／926／967 个集合，各含 57 个区域；76／76／278 个普通步兵为组引用占位，声音、计时器、触发器、计时事件及睡眠线程组件重编码一致，未恢复原单位状态或唤醒线程。日志 `tmp/docs-artifacts/war3/region-snapshot/orcx.log`。区域事件与其 inside 状态、真实世界对象、完整存档和原版表现待实现或阶段验证。
