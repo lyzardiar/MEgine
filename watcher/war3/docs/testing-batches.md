@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 隐藏关结束与兽族区域切换（待验证）
+
+路径：`docs/campaign-flow.md`、`docs/save-runtime-foundation.md`。人族隐藏关隔离会话直接降低传送门生命后，原触发器请求间章；兽族资料片第一章将雷克萨直接移至地精洞穴入口后，原触发器在未绑定的 `SaveGame` 处停止。日志位于 `tmp/docs-artifacts/war3/tft-ne4-next/humanx03secret-goal.log` 和 `orcx01-zone.log`。阶段核对自然防守与跨区操作、世界及脚本存档恢复、后续区域重访和实际窗口。
+
 ### 资料片人族第六章至终章交接（待验证）
 
 路径：`docs/campaign-flow.md`。第六章隔离会话人工击杀玛瑟里顿后原脚本请求终章，手动启动终章后运行至返回；日志位于 `tmp/docs-artifacts/war3/tft-ne4-next/humanx06-goal.log` 和 `humanx06-finale.log`。阶段核对自然战斗、英雄状态及物品继承、真实窗口自动切关、终章音画和原版缓存格式。

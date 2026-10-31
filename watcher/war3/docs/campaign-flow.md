@@ -57,3 +57,5 @@ Human04 隔离探针将阿尔萨斯移入原图剧情区域，再移至克尔苏
 资料片人族第四至第六章隔离链路：第四章直接移动卡尔、玛维及囚车完成目标，胜利后经手动启动的间章请求 `HumanX05.w3x`；第五章恢复 5 级、用户数据 24169 的卡尔，瓦丝琪存在且为 3 级。第五章依次将伊利丹移至传送门并缩短倒计时，原触发器进入胜利对话并请求 `HumanX06.w3x`；第六章独立会话约 120 秒恢复控制并运行至 400 秒。第五章中的原版派生治疗波 `AChv` 使用空订单的原型回退后不再中断。日志位于 `tmp/docs-artifacts/war3/tft-ne4-next/` 的 `humanx04-goal.log`、`humanx04-interlude.log`、`humanx05-restore.log`、`humanx05-healing-fixed.log` 和 `humanx06-opening.log`。上述会话手动启动、改变单位位置并缩短任务计时，不证明自然战斗、自动切关、英雄完整继承或实际画面。
 
 第六章使用复制的独立缓存启动，开场后卡尔为 5 级、用户数据 24169，伊利丹为 10 级、瓦丝琪为 3 级；直接击杀玛瑟里顿后，原触发器请求 `HumanX06Finale.w3x`。手动启动终章后原脚本运行至返回，日志为 `tmp/docs-artifacts/war3/tft-ne4-next/humanx06-goal.log` 和 `humanx06-finale.log`。该检查不覆盖自然战斗、完整英雄继承、窗口自动切关、终章音画或原版缓存格式。
+
+人族资料片隐藏关 `HumanX03Secret.w3x` 的隔离会话约 80 秒恢复控制并推进至 400 秒；另一个会话在 130 秒直接将传送门生命设为 400，原生命事件触发胜利对话并请求 `HumanX03Interlude.w3x`。日志为 `tmp/docs-artifacts/war3/tft-ne4-next/humanx03secret-open.log` 和 `humanx03secret-goal.log`。自然防守、所有波次、高分及真实窗口自动切关未验证。

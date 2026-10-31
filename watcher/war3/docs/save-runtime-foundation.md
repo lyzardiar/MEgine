@@ -8,4 +8,6 @@ JASS 运行时的操作数、调用帧、局部变量与当前 native 参数由�
 
 OrcX01 首次切换到未访问区域时，原脚本通过 `SaveAndChangeLevelBJ` 先保存当前区域再切地图；重访已保存区域时通过 `SaveAndLoadGameBJ` 保存当前区域并载入目标。用户保存／载入事件还将最多五个区域快照在对应存档目录和 `Blizzard\Zones` 之间复制。该流程需要同一世界和脚本线程的实际恢复，必须完整实现存档和两种切换入口；原始地图脚本及分析保存在 `tmp/docs-artifacts/war3/orcx-saves-1031/`。
 
+原图隔离会话推进至 150 秒后，将雷克萨直接移入 `gg_rct_Zone_Goblin_Tripwire`；地图原定时触发器进入跨区过程，并在 `Blizzard.j:7546` 调用未绑定的 `SaveGame` 时停止。运行记录和临时探针位于 `tmp/docs-artifacts/war3/tft-ne4-next/orcx01-zone.log` 与 `orcx01-zone.cpp`。该检查直接移动英雄，未覆盖自然寻路、窗口交互或后续区域恢复。
+
 原图初始化会对尚未设置的复活石单位执行 `SetUnitAnimation(null, "stand")`。固定版 Game.dll 入口 `0x6f1f7230` 调用 `0x6f1f7280`，单位解析失败直接返回；客户端已按此忽略无效单位。隔离探针越过 main、创建 252 个单位并推进约 30 秒后，在另一单位命令的召唤技能参数解析处停止，见 `tmp/docs-artifacts/war3/orcx-saves-1031/animfixed.log`；零时长召唤处理补齐后，原图空闲推进至 400 秒、约 125 秒恢复玩家控制，见 `tmp/docs-artifacts/war3/orcx-saves-1031/zerolife.log`。没有验证区域切换、完整战役或原版存档兼容。
