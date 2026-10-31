@@ -4549,4 +4549,10 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 
 ### 失效玩家的英雄经验倍率（待批次验证）
 
-路径：`src/session_hero.cpp`、`tests/clock_tests.cpp`；说明见[英雄经验](dota-hero-experience.md)。玩家经验倍率查询对无效玩家返回零，设置直接返回；有效玩家倍率继续作用于实际英雄经验。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33，覆盖空／错误类型句柄、倍率 1.25 和英雄获得 125 点经验；日志 `tmp/docs-artifacts/war3/xp-handicap-invalid/clock-tests.log`。原版静态入口及摘要见功能说明；有效倍率边界、原图、联机与窗口待批次验证。
+路径：`src/session_hero.cpp`、`tests/clock_tests.cpp`；说明见[英雄经验](dota-hero-experience.md)。玩家经验倍率查询对无效玩家返回 1.0，设置直接返回；有效玩家倍率继续作用于实际英雄经验。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33，覆盖空／错误类型句柄、倍率 1.25 和英雄获得 125 点经验；日志 `tmp/docs-artifacts/war3/xp-handicap-invalid/clock-tests.log`。原版静态入口及摘要见功能说明；原图、联机与窗口待批次验证。
+
+### 英雄经验倍率边界（本批验证）
+
+路径：`src/session_hero.cpp`、`tests/clock_tests.cpp`；说明见[英雄经验](dota-hero-experience.md)。有限倍率按原版静态入口限制为 0.01 至 100，失效玩家查询返回原版初始化默认值 1.0。Win32 Release 客户端与 clock 测试目标编译通过，clock 33/33；覆盖负值、零、下限、常用值、上限、超上限、失效玩家和实际英雄经验。原版非常规浮点值与动态行为仍待验证。
+
+本批合并 `cfcf65e`、`e085e52` 和本次边界修复：同一核心版本 clock 33/33，覆盖定时生命的失效句柄、暂停／恢复／到期及经验倍率的失效玩家、边界和英雄经验；隔离原图兽族第五章目标与第八章灵魂宝石、缓存及跳过胜利检查通过，但第八章 `udg_Grom` 指向萨满的差异仍为 PENDING。日志 `tmp/docs-artifacts/war3/xp-handicap-bounds/{clock-final,orc-final}.log`。原版动态时序、自然战斗、联机和实际窗口仍待验证。
