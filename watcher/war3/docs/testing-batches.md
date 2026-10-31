@@ -4240,3 +4240,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### AI 登艇回调改派多个载具
 
 路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`、`docs/ai.md`。载具候选在发令时复核订单轮次、归属和装载条件；回调改派的候选不再被本波次重新选取。Win32 Release 客户端及 CampaignAI 目标编译通过；`war3_campaign_ai_tests.exe <data-root> <fixture> <mode>` 的 `island-carrier-callback-multiple`、`island-carrier-alternate`、`island-carrier-alternate-replacement`、`island-carrier-reentrant`、`island-carrier-paused`、`island-pickup-reentrant`、`island-pickup-group`、`island-pickup-capacity`、`island-multicarrier-reordered`、`island-auto-multiwave` 共 10/10 通过。三飞艇场景中同步回调改派前两艘，第三艘完成登艇和跨岛卸载；夹具 `tmp/docs-artifacts/war3/ai-carrier-multiple/fixture.w3m`。多乘员复杂回调、真实地图、联机与原版调度待阶段验证。
+
+### AI 水上运输船跨岛
+
+路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`、`docs/transport.md`。水上载具使用水路连通及地面接岸检查，接应并卸载被隔离的队员；空船在对岸时可驶回接应下一波。自有接应航线在撤退或超时停止，暂停时也清理，其他命令保留。Win32 Release 客户端与 CampaignAI 目标编译通过；`war3_campaign_ai_tests.exe <data-root> <fixture> <mode>` 的 `island-naval`、`island-naval-multiwave`、`island-naval-retreat`、`island-naval-paused-retreat`、`island-naval-timeout`、`island-naval-paused-timeout`、`island-naval-reorder`、`island-carrier-callback-multiple`、`island-pickup-group`、`island-auto-multiwave`、`island-flight-reorder-live` 共 11/11 通过。BootyBay 地形预置步兵及人族十格运输船，11 人分波送达的模拟时间为 69.25 秒；超时检查人工缩短期限并清除自动续运状态，暂停与换令由测试施加。夹具 `tmp/docs-artifacts/war3/ai-carrier-multiple/fixture.w3m`。岸线固定采样可能漏解；不同地图／载具、动态障碍、复杂回调、性能、真实对局、联机与原版时序待阶段验证。
