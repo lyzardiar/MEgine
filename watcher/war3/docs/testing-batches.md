@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 目标控制类物品与控制技能目标标记（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_control_spells.cpp`、`docs/dota-control-items.md`。物品的风暴之锤、妖术和变形能力进入单位目标施法；控制技能识别 `enemies`／`allies` 目标标记。Win32 Release 客户端编译通过；DotA 原图隔离会话中深渊之刃眩晕目标、邪恶镰刀变形目标，效果结束后恢复；两件物品均拒绝友军目标。记录位于 `tmp/docs-artifacts/war3/dota-i0gj/hex-stun-final.log`。阶段核对真实窗口输入、英雄与中立单位、不同目标标记、魔免／法术抵挡、消耗／冷却／施法打断、地图覆盖和原版时序。
+
 ### 暴风雪类点目标物品与纷争面纱（待验证）
 
 路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`docs/dota-veil.md`。地图物品的暴风雪能力通过点目标施法流程触发原脚本，保留法力、冷却与引导过程。Win32 Release 产品编译通过；DotA 原图隔离会话中纷争面纱使目标魔法伤害由 100 提升至 125，到期后恢复为 100，证据位于 `tmp/docs-artifacts/war3/dota-i0gj/veil-runtime.log`。阶段检查点目标操作、不同目标及范围、可中断的引导、物品次数／冷却、效果叠加与驱散、原版对照及实际窗口。
