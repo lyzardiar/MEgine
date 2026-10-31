@@ -21,7 +21,10 @@ struct GameData {
     std::array<std::string,7> damageTypeLabels,damageTypeTips;
     std::array<std::string,9> armorTypeLabels,armorTypeTips;
     std::array<std::string,3> heroAttributeIcons,heroAttributeLabels,heroAttributeTitles,heroAttributeTips;
-    std::string damageLabel,armorLabel,inventoryLabel,heroPrimaryTip;
+    std::string damageLabel,armorLabel,inventoryLabel,heroPrimaryTip,combatRangeLabel,combatSpeedLabel,armorReductionLabel,meleeRangeLabel;
+    std::array<std::string,5> combatSpeedLabels;
+    std::array<float,4> combatSpeedThresholds{1,1.5f,2,3};
+    float meleeRangeMax=128;
     std::array<std::string,4> hudLabels,hudDisabledLabels;
     std::array<std::array<std::string,3>,3> allyFilterIcons;
     std::array<std::array<std::string,3>,2> creepFilterIcons;

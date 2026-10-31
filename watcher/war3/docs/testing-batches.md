@@ -3842,3 +3842,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 英雄属性信息栏
 
 路径：`src/session.h`、`src/session_hero.cpp`、`src/game_loading.*`、`src/game_commands.cpp`、`docs/unit-combat-panel.md`。基础属性和实时加减值分别显示，悬停使用原版说明和当前地图的属性收益系数。Win32 Release 客户端和 passive 测试目标编译通过；`war3_passive_tests.exe <data-root> <fixture> weapon-ui` 1/1 通过。游戏内 Agent 以 `tmp/docs-artifacts/war3/agent-info/hero-attributes-custom.w3m` 验证贵族圆环、负敏捷及自定义生命／护甲／魔法系数，三张提示画面位于 `tmp/docs-artifacts/war3/agent-info/layout-hero-attributes-final2-1031/`。其余主属性、多个来源、极值／双武器、幻象、地图本地化、真实鼠标和原版布局待阶段验证。
+
+### 攻击速度和护甲减伤提示
+
+路径：`src/combat.h`、`src/session.h`、`src/session_combat.cpp`、`src/session_combat_destructable.cpp`、`src/session_damage.cpp`、`src/session_research.cpp`、`src/game_loading.*`、`src/game_commands.cpp`、`tests/passive_tests.cpp`、`docs/unit-combat-panel.md`。攻击提示显示实时伤害／射程／速度，护甲提示显示物理减伤；攻击计时和伤害结算复用同一计算。Win32 Release 客户端与 passive 目标编译通过；`war3_passive_tests.exe <data-root> <fixture> weapon-ui` 1/1，覆盖加速后显示间隔与真实攻击计时，以及负护甲提示与实际伤害一致。Agent 核对圣骑士正常与关闭扩展说明的提示，证据 `tmp/docs-artifacts/war3/agent-info/layout-combat-values-final-1031/` 和 `layout-combat-values-release-1031/`。原版分档边界、远程／双武器、技能及护甲组合、自定义配置和实际鼠标待阶段验证。

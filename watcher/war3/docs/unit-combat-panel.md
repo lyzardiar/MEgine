@@ -28,6 +28,8 @@ Win32 Release 编译通过；`war3_passive_tests.exe <data-root> <fixture> weapo
 
 攻击和护甲数值使用更易辨认的字号，基础范围与正负加成保留颜色区分，超出信息列时仍按可用宽度缩放。1264×921 游戏内 Agent 的六件攻击加成物品画面可辨认 `24-34 +36`，截图位于 `tmp/docs-artifacts/war3/agent-info/layout-value-font-1031/`。负值、长数值、四族、不同分辨率及原版字体精度待阶段核对。
 
-鼠标悬停攻击或护甲图标时显示当前类型和 `UI\FrameDef\InfoPanelStrings.fdf` 的原版说明；扩展提示关闭时只显示类型。武器和护甲类型来自当前战斗状态，双武器分别命中；地图替换的字符串跟随资源覆盖。说明文字为源配置，自定义伤害系数的地图可能与文字不同。游戏内 Agent 以移动虚拟指针分别取得圣骑士英雄攻击和英雄护甲提示，记录 `tmp/docs-artifacts/war3/agent-info/layout-combat-tooltips-final-1031/`；其余类型、地图覆盖、实际鼠标及原版布局待阶段对照。
+鼠标悬停攻击或护甲图标时显示当前类型和 `UI\FrameDef\InfoPanelStrings.fdf` 的原版说明；扩展提示关闭时保留类型及战斗数值，隐藏额外说明。武器和护甲类型来自当前战斗状态，双武器分别命中；地图替换的字符串跟随资源覆盖。说明文字为源配置，自定义伤害系数的地图可能与文字不同。游戏内 Agent 以移动虚拟指针分别取得圣骑士英雄攻击和英雄护甲提示，记录 `tmp/docs-artifacts/war3/agent-info/layout-combat-tooltips-final-1031/`；其余类型、地图覆盖、实际鼠标及原版布局待阶段对照。
 
 英雄力量、敏捷和智力分别显示基础值及实时加成／减值，正值为绿色、负值为红色；符号采用独立图形确保小字号下可辨认。悬停属性或主属性图标显示原版本地化收益说明，生命、护甲、魔法收益读取与模拟相同的地图配置，主属性额外显示攻击收益。游戏内 Agent 在装备贵族圆环并调整敏捷的自定义地图中检查三项提示及 `22 +2`、`13 -3`、`17 +2`，地图覆盖每点 40 生命、0.5 护甲、20 魔法；画面位于 `tmp/docs-artifacts/war3/agent-info/layout-hero-attributes-final2-1031/`。不同英雄主属性、双武器、极值、幻象及原版排版仍待阶段核对。
+
+攻击提示显示实时伤害范围、近战／射程和攻击速度分档；分档阈值读取 `UI\MiscData.txt` 的 InfoPanel 设置。护甲提示显示当前护甲对应的物理伤害减免，使用与实际伤害结算相同的护甲公式；额外伤害类型倍率、免伤技能等独立效果不包含在该百分比中。攻击间隔与单位及可破坏物攻击使用同一攻速计算。游戏内 Agent 检查了扩展说明开启与关闭时的提示，画面位于 `tmp/docs-artifacts/war3/agent-info/layout-combat-values-final-1031/` 和 `layout-combat-values-release-1031/`。原版分档边界、自定义皮肤／阈值、其他武器和前台交互待阶段对照。

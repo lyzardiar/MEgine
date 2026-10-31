@@ -737,6 +737,8 @@ class ScriptSession {
     const PassiveInfo* spikedCarapace(const UnitState& unit);
     float armorBasePoints(const UnitState& unit);
     float armorPoints(const UnitState& unit,const PassiveInfo* carapace,float base);
+    double armorDamageFactor(float points);
+    float attackSpeed(const UnitState& unit);
     float attackDamageBeforeProc(const UnitState& unit,const WeaponDefinition& weapon,float damage);
     void carapaceReflect(const CombatProjectile& projectile,float damage,const PassiveInfo& passive,std::uint64_t attackerRevision,std::uint64_t defenderRevision);
     void attackPassives(const CombatProjectile& projectile,float damage,const AuraBonuses& defense,std::uint64_t sourceRevision,std::uint64_t targetRevision);
