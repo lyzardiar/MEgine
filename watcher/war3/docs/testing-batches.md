@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 失效脚本事件索引清理（待阶段验证）
+
+路径：`src/session.h`、`src/session.cpp`、`src/session_tick.cpp`、`src/session_callbacks.cpp`、`tests/session_tests.cpp`、`tests/live_world_tests.cpp`。触发器事件销毁后计数，模拟步开始时按数量和占比压缩全局事件句柄索引；变量写入时移除其观察列表中的失效事件，存活事件保持登记顺序，回调使用既有派发快照。Win32 Release 客户端、session 和 live-world 测试目标编译通过；`war3_session_tests <tmp-enum-fixture>` 17/17 通过，其中变量事件场景额外创建并销毁 300 个临时触发器；`war3_live_world_tests <data-root> <live-world-fixture> <log>` 通过，在 4,096 个计时事件销毁和一次模拟步后检查空间事件注册、销毁与重新进入。测试未加载 Game.dll；枚举夹具及地图日志在 `tmp/docs-artifacts/war3/event-index-compaction/`。其他事件索引、长局对象句柄上限、运行内存与帧耗时、不同地图及重入组合仍待验证；未做性能基准。
+
 ### 触发器所属对象销毁（待阶段验证）
 
 路径：`src/script_state.h`、`src/session.h`、`src/session.cpp`、`src/session_callbacks.cpp`、`src/session_destructables.cpp`、`src/session_script_dialogs.cpp`、`src/session_spatial_events.cpp`、`src/session_trackable.cpp`、`tests/session_tests.cpp`。事件注册时记录所属触发器；销毁触发器时直接清理其事件、动作及条件，避免遍历会话创建过的全部对象。Win32 Release 客户端、session、live-world 和 DotA 英雄测试目标编译通过；`war3_session_tests <tmp-enum-fixture>` 17/17 通过，覆盖移除／清空回调、事件派发中销毁自身和另一触发器继续执行；`war3_live_world_tests <data-root> <live-world-fixture> <log>` 及 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> storm-spells` 通过，未加载 Game.dll。live-world 日志及枚举夹具在 `tmp/docs-artifacts/war3/trigger-owned-cleanup/`，空间夹具在 `tmp/docs-artifacts/war3/spatial-index-registration/`。对话框、可破坏物和 trackable 事件销毁、复杂重入、大量短命触发器的长期内存／帧耗时及原版语义待阶段验证；未执行性能基准，不能据此量化帧率提升。事件索引和会话句柄记录的长期增长仍需单独处理。
