@@ -3808,3 +3808,7 @@ Win32 Release 客户端及测试目标编译通过；执行 `python tests/genera
 ### 两栖 AI 路线补员（待阶段验证）
 
 路径：`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`；规则见 [战役两栖 AI 路径](campaign-amphibious-ai.md)。Win32 Release 客户端与 campaign AI 目标编译通过；`amphibious-reinforce` 2/2 通过，覆盖补员、路径点前进和取消。阶段核对实际战役、多人同步、补员死亡／易主／目标变化、寻路失败、动态障碍、回调重入、混编与原版选点。
+
+### 多选头像的双目标物品（待阶段验证）
+
+路径：`src/game_selection_panel.cpp`；说明见 [多选面板](selection-panel.md)。Win32 Release 客户端增量编译通过；游戏内 Agent 对照隔离地图，双目标物品通过头像选中单位并生效，纯地点物品不接受单位头像且未消耗。阶段核对真实地图、原版鼠标交互、Shift 排队、单位失效、纯单位物品和联机同步。
