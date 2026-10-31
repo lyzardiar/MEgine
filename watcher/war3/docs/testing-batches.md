@@ -4594,3 +4594,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### DotA 原图英雄行动与复活（验证补充）
 
 路径：`tests/dota_heroes_tests.cpp`，说明见[英雄经验](dota-hero-experience.md)。Win32 Release 测试目标编译通过；隔离用户目录运行 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> natural-flow`，1 通过、0 失败：原图 `-sd` 购买英雄后直接下达一次攻击移动，断言英雄到达战场、死亡及复活，模拟至 360 秒；未加载 Game.dll。日志 `tmp/docs-artifacts/war3/dota-current/natural-flow.log`。真实玩家输入、技能／物品、完整对局、联机及原版动态行为仍待验证；本项为既有功能的验证补充，不计功能批次。
+
+### 人族隐藏关无操作流程（验证补充）
+
+路径：`tests/human_campaign_chain_tests.cpp`，说明见[战役流程](campaign-flow.md)。Win32 Release 测试目标构建通过；新建隔离用户目录运行 `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> natural-secret`，1 通过、0 失败。原图开场恢复控制后无玩家命令，在传送门生命降至 400 时出现胜利对话并请求间章，模拟时间 469.469 秒；未加载 Game.dll，日志 `tmp/docs-artifacts/war3/human-secret-natural/test.log`。原版相同条件、实际防守和窗口仍待对照；本项为既有战役功能的验证补充，不计功能批次。
