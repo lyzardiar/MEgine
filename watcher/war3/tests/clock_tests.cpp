@@ -44,6 +44,75 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("collections_rebuild_geometry_forces_and_ordered_groups",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type timer extends handle
+ type group extends handle
+ type force extends handle
+ type location extends handle
+ type rect extends handle
+ native Player takes integer id returns player
+ native CreateTimer takes nothing returns timer
+ native CreateUnit takes player owner, integer id, real x, real y, real facing returns unit
+ native RemoveUnit takes unit which returns nothing
+ native CreateGroup takes nothing returns group
+ native GroupAddUnit takes group which, unit member returns nothing
+ native FirstOfGroup takes group which returns unit
+ native IsUnitInGroup takes unit member, group which returns boolean
+ native ForGroup takes group which, code action returns nothing
+ native GetEnumUnit takes nothing returns unit
+ native CreateForce takes nothing returns force
+ native ForceAddPlayer takes force which, player member returns nothing
+ native IsPlayerInForce takes player member, force which returns boolean
+ native Location takes real x, real y returns location
+ native MoveLocation takes location which, real x, real y returns nothing
+ native GetLocationX takes location which returns real
+ native GetLocationY takes location which returns real
+ native Rect takes real x1, real y1, real x2, real y2 returns rect
+ native GetRectMinX takes rect which returns real
+ native GetRectMaxY takes rect which returns real
+ globals
+ group baseline=CreateGroup()
+ group members=null
+ force team=null
+ location point=null
+ rect bounds=null
+ unit living=null
+ unit firstUnit=null
+ integer enumerated=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function createUnits takes nothing returns nothing
+ set living=CreateUnit(Player(0),'hfoo',0.0,0.0,0.0)
+ set firstUnit=CreateUnit(Player(0),'hfoo',100.0,0.0,0.0)
+ endfunction
+ function setup takes nothing returns nothing
+ set members=CreateGroup()
+ call GroupAddUnit(members,firstUnit)
+ call GroupAddUnit(members,living)
+ set team=CreateForce()
+ call ForceAddPlayer(team,Player(0))
+ call ForceAddPlayer(team,Player(2))
+ set point=Location(3.5,4.5)
+ call MoveLocation(point,-12.25,9.5)
+ set bounds=Rect(-100.0,-50.0,100.0,50.0)
+ endfunction
+ function countMember takes nothing returns nothing
+ if GetEnumUnit()==living then
+ set enumerated=enumerated+1
+ endif
+ endfunction
+ function enumerate takes nothing returns nothing
+ call ForGroup(members,function countMember)
+ endfunction
+ )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"collections.j",source,"authored collection persistence test"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("createUnits");a.invoke("setup");auto live=a.global("living"),first=a.global("firstUnit"),group=a.global("members");require(a.invoke("FirstOfGroup",std::array{group}).bits==first.bits && a.invoke("IsUnitInGroup",std::array{first,group}).bits,"First group member was not retained by fixture");auto identity=[](std::string_view,std::uint32_t id){return id;};auto collections=original->encodeCollections(identity),globals=a.encodeGlobals(identity);b.invoke("CreateTimer");b.invoke("createUnits");auto targetLive=b.global("living"),targetDead=b.global("firstUnit"),oldBaseline=b.global("baseline");auto decodeUnit=[&](std::string_view type,std::uint32_t id){if(type!="unit")return 0u;return id==live.bits?targetLive.bits:id==first.bits?targetDead.bits:0u;};auto bad=collections;bad.back()^=1;rejects([&]{restored->rebuildCollections(bad,decodeUnit);},"digest");rejects([&]{restored->rebuildCollections(collections,[&](std::string_view,std::uint32_t){return targetLive.bits;});},"unit mapping");require(b.global("baseline").bits==oldBaseline.bits && restored->liveObjects(NativeKind::Group)==1,"Rejected collection restore changed initial group");auto mapping=restored->rebuildCollections(collections,decodeUnit);auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return decodeUnit(type,id);auto found=mapping.find({std::string(type),id});return found==mapping.end()?0u:found->second;};b.restoreGlobals(globals,decode);auto g=b.global("members"),f=b.global("team"),loc=b.global("point"),rect=b.global("bounds");require(b.global("baseline").bits!=oldBaseline.bits && b.invoke("FirstOfGroup",std::array{g}).bits==targetDead.bits && b.invoke("IsUnitInGroup",std::array{targetDead,g}).bits && b.invoke("IsUnitInGroup",std::array{targetLive,g}).bits,"Group order, membership or global mapping changed");require(b.invoke("GetLocationX",std::array{loc}).bits==a.invoke("GetLocationX",std::array{a.global("point")}).bits && b.invoke("GetLocationY",std::array{loc}).bits==a.invoke("GetLocationY",std::array{a.global("point")}).bits && b.invoke("GetRectMinX",std::array{rect}).bits==a.invoke("GetRectMinX",std::array{a.global("bounds")}).bits && b.invoke("GetRectMaxY",std::array{rect}).bits==a.invoke("GetRectMaxY",std::array{a.global("bounds")}).bits,"Geometry values changed");auto player0=b.invoke("Player",std::array{b.integer(0)}),player1=b.invoke("Player",std::array{b.integer(1)}),player2=b.invoke("Player",std::array{b.integer(2)});require(b.invoke("IsPlayerInForce",std::array{player0,f}).bits && !b.invoke("IsPlayerInForce",std::array{player1,f}).bits && b.invoke("IsPlayerInForce",std::array{player2,f}).bits,"Force membership changed");b.invoke("enumerate");require(b.global("enumerated").bits==1,"Group iteration did not visit the expected member");auto inverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==targetLive.bits?live.bits:id==targetDead.bits?first.bits:0u;for(auto& [key,value]:mapping)if(key.first==type && value==id)return key.second;return 0u;};require(restored->encodeCollections(inverse)==collections,"Collection snapshot did not round-trip");b.invoke("RemoveUnit",std::array{targetDead});require(b.invoke("FirstOfGroup",std::array{g}).bits==targetLive.bits && !b.invoke("IsUnitInGroup",std::array{targetDead,g}).bits,"Removed unit remained in restored group");
+    });
     test("triggers_restore_actions_conditions_and_state",[&]{
         std::string source=R"jass(type destructable extends handle
  type timer extends handle

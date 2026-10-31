@@ -4374,3 +4374,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 脚本声音对象与原图睡眠线程重建（待阶段验证）
 
 路径：`src/audio.h/.cpp`、`src/sound.h/.cpp`、`src/sound_fade.h/.cpp`、`src/session.h`、`src/session_sound.cpp`、`tests/sound_tests.cpp`、`docs/save-runtime-foundation.md`。`SSND` 保存脚本声音资源摘要、句柄、播放／淡入淡出状态、参数及单位附件，校验后重建；目标初始化声音不得处于播放或暂停，后续须恢复脚本引用。脱离句柄仍播放的声音拒绝采集，环境、音量组、空间叠加、场景时钟与非脚本声音尚未纳入。Win32 Release 客户端及 sound／session／clock 目标编译通过；声音定向 3/3、session 22/22、clock 15/15。隔离测试覆盖 WAV／MIDI、已退役声音、附件映射、声音等待续执行、资源摘要变化、活动目标和脱离播放拒绝。OrcX01 静音模拟 0／30／150 秒分别重建 181 个声音及 4／3／0 条睡眠线程并重编码一致，30 秒含对白等待；未唤醒原图线程或恢复世界。日志 `tmp/docs-artifacts/war3/sound-object-snapshot/`。Miles 音频设备仍因本机 `waveOutOpen()` 失败未验收；场景音频、真实输出和完整存档待实现或阶段验证。
+
+### 脚本集合与几何句柄重建（待阶段验证）
+
+路径：`src/session.h`、`src/session_collections.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。`SCOL` 重建单位组、玩家组、位置和矩形，保留组成员顺序及坐标位值；单位成员依赖已恢复句柄，替换初始化对象后须恢复脚本和其他引用。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 16/16；隔离检查验证单位组成员顺序、移除清理、玩家掩码、几何值、句柄映射和损坏／映射错误拒绝。OrcX01 原图 0／30／150 秒的集合分别重建 854／869／910 个，使用 76／76／278 个普通步兵占位句柄核对引用，未恢复原单位状态；相关声音、计时器、触发器、计时事件及睡眠线程组件同时往返，日志 `tmp/docs-artifacts/war3/collection-snapshot/`。真实单位、其他对象／事件、全部全局引用与完整保存／载入待实现或阶段验证。

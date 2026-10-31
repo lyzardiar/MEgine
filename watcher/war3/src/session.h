@@ -1329,6 +1329,8 @@ public:
     void restoreRandomState(std::span<const std::uint8_t> bytes);
     Bytes encodeSimulationClock() const;
     void restoreSimulationClock(std::span<const std::uint8_t> bytes);
+    Bytes encodeCollections(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::pair<std::string,std::uint32_t>,std::uint32_t> rebuildCollections(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeSounds(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildSounds(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeTimers(const jass::StableHandleMap& encodeHandle) const;
