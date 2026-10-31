@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 武器研究的被动说明（待验证）
+
+路径：`src/passives.h`、`src/session_passive_info.cpp`、`src/session_ability_commands.cpp`、`tests/research_tests.cpp`、`docs/research.md`。飞行机器炸弹、穿刺剑刃、月刃和风暴战锤按对应科技前置显示源被动图标；实际武器状态继续由科技生效。Win32 Release 产品及研究测试通过，四种单位的研究前后图标和武器状态均已检查；游戏内 Agent 的飞行机器画面在 `tmp/docs-artifacts/war3/unit-ability-inventory/agent/`。执行 `python tests/generate-research-fixture.py --data-root <data-root> --output <tmp-fixture>` 和 `war3_research_tests.exe <data-root> <tmp-fixture>`。阶段核对原版显示时序、实际攻击、其余图标、自定义前置／禁用与不同窗口布局。
+
 ### 影之灵龛自然充能检查（待验证）
 
 路径：`tests/dota_rune_tests.cpp`、`docs/dota-bottle.md`。DotA 原图 `urn-charge` 检查附近敌方英雄死亡的首次与后续充能、远处敌方及友军排除，以及自然充能后的使用；Win32 Release 1 通过、0 失败。执行 `war3_dota_rune_tests.exe <data-root> <DotA_v6.83d.w3x> urn-charge`。阶段核对多名携带者、英雄幻象、死亡与归属边界、原版及实际对局。
