@@ -42,3 +42,5 @@ python tests/generate-control-fixture.py --data-root "E:/Program Files (x86)/dzc
 autocast模式仅编译、未执行。阶段合并原等级/w3a/英雄与普通/机械/守卫/魔免/无敌/联盟/物理网开关、重叠控制/驱散/死亡移除/转让/暂停/重入/高度改写、已发射/反弹/溅射攻击与放逐/伤害分类/治疗组合、完整树木可见性/取消/失败资源、原窗口/按钮/目标/动画/透明材质/声音及三图长局/CPU/GPU/内存/切图释放。原版分类位、近战范围、净化恢复公式和精确事件/模拟时序保持待验收。
 
 本地产物为根tmp/docs-artifacts/war3/control-spells/中的source.json、rea-identity.json、fixture.w3m、build.log、check-build.log、diagnostic-build.log、fixture-build.log、final-build.log、delivery-build.log、movement-fixture-build.log、clean-build.log、flow.log、purge-first.log、purge-diagnostic.log、purge.log、lifecycle.log、lifecycle-final.log及review-notes.json；不提交原资源、地图、原始JSON或日志。旧MEngine延期队列与完整客户端范围保持开放。
+
+无 Buff 的睡眠技能以无图标内部状态执行持续和保护时间，并按现有状态生命周期清理；DotA 巫妖的 A05T 可触发地图连环霜冻，在隔离会话中对两个目标造成伤害。无 Buff 和亚帧持续时间的原版语义、弹射及实际窗口待阶段对照。

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 无图标睡眠与地图连环霜冻（待阶段验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_spell_effects.cpp`、`docs/control-spells.md`。睡眠技能没有配置 Buff 时，使用无图标的内部睡眠状态承载持续时间、保护与清理，保留施法事件；已配置 Buff 的睡眠继续要求保护 Buff。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话从酒馆购买巫妖、学习 A05T，调整等级、魔法、位置及目标并暂停其他单位后，地图脚本使两个目标生命从 10000 分别降至 8320 和 8600；目标未暂停，短暂睡眠正常结束。隔离地图定向检查原版 AUsl 的 Buff 睡眠及移除，随后将技能配置调整为无 Buff、0.5 秒睡眠，确认状态生效并到期清理；会话未加载 Game.dll。探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-lich-chain-frost-effect.*` 和 `source-sleep-unmarked.*`。原版无 Buff 状态语义、0.01 秒与固定步进、弹射次数与伤害、友军／魔免、实际窗口和对局待阶段对照。
+
 ### 焚灰死亡爆炸半径与腐尸毒（待阶段验证）
 
 路径：`src/session_firelord.cpp`、`docs/firelord.md`。焚灰允许全伤和半伤半径分别配置，死亡爆炸按两者的最大半径查找目标并保留全伤／半伤判断；敌友筛选识别 enemy/enemies 和 friend/allies。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话从酒馆购买尸王，生成五个学习按钮并学习 A0FA；调整等级、位置、生命和目标并暂停其他单位后，攻击击杀敌人触发死亡爆炸，使附近中立敌人生命从 5000 降至 4910，范围外敌人与友军保持 5000。隔离地图探针调整技能的两个半径与伤害数值，分别验证全伤半径 400／半伤半径 0 与全伤半径 100／半伤半径 400 时近处敌人受到 90 和 45 点伤害，远处敌人和友军无伤。未加载 Game.dll；探针和日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-undying-incinerate-effect.*` 与 `incinerate-radius-boundary.*`。阶段核对原版半径边缘、类别和免疫、技能叠层与尸体处理、不同等级、事件重入、实际窗口及对局。
