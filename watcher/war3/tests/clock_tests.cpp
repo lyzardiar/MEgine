@@ -44,6 +44,30 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("unit_creation_rejects_invalid_players_and_locations",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type timer extends handle
+ type location extends handle
+ type race extends handle
+ native Player takes integer id returns player
+ native CreateTimer takes nothing returns timer
+ native Location takes real x, real y returns location
+ native RemoveLocation takes location p returns nothing
+ native RemoveUnit takes unit u returns nothing
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native CreateUnitAtLoc takes player p, integer id, location loc, real facing returns unit
+ native CreateUnitByName takes player p, string name, real x, real y, real facing returns unit
+ native CreateUnitAtLocByName takes player p, string name, location loc, real facing returns unit
+ native GetUnitRace takes unit u returns race
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"unit-create-invalid.j",source,"authored unit creation handle test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto player=vm.invoke("Player",std::array{vm.integer(0)}),zero=vm.real(real(0)),code=vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("hfoo"))),name=vm.string("hfoo"),timer=vm.invoke("CreateTimer"),loc=vm.invoke("Location",std::array{zero,zero}),removed=vm.invoke("Location",std::array{zero,zero});vm.invoke("RemoveLocation",std::array{removed});auto count=session.units().size();for(auto id:{0u,timer.bits}){auto invalid=vm.handle("player",id);require(!vm.invoke("CreateUnit",std::array{invalid,code,zero,zero,zero}).bits && !vm.invoke("CreateUnitByName",std::array{invalid,name,zero,zero,zero}).bits && !vm.invoke("CreateUnitAtLoc",std::array{invalid,code,loc,zero}).bits && !vm.invoke("CreateUnitAtLocByName",std::array{invalid,name,loc,zero}).bits,"Invalid player created a unit");}for(auto id:{0u,removed.bits,timer.bits}){auto invalid=vm.handle("location",id);require(!vm.invoke("CreateUnitAtLoc",std::array{player,code,invalid,zero}).bits && !vm.invoke("CreateUnitAtLocByName",std::array{player,name,invalid,zero}).bits,"Invalid location created a unit");}require(session.units().size()==count,"Rejected creation changed unit population");for(auto value:{vm.invoke("CreateUnit",std::array{player,code,zero,zero,zero}),vm.invoke("CreateUnitByName",std::array{player,name,zero,zero,zero}),vm.invoke("CreateUnitAtLoc",std::array{player,code,loc,zero}),vm.invoke("CreateUnitAtLocByName",std::array{player,name,loc,zero})}){require(value.bits && vm.invoke("GetUnitRace",std::array{value}).bits==1,"Valid unit creation or race failed");vm.invoke("RemoveUnit",std::array{value});require(!vm.invoke("GetUnitRace",std::array{value}).bits,"Removed unit race was not null");}require(!vm.invoke("GetUnitRace",std::array{vm.handle("unit",0)}).bits && !vm.invoke("GetUnitRace",std::array{vm.handle("unit",timer.bits)}).bits,"Invalid unit race was not null");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during unit creation fixture");
+    });
     test("immediate_order_rejects_invalid_units_without_stopping_trigger",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle

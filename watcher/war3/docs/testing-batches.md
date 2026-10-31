@@ -4402,3 +4402,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 失效单位即时命令（待阶段验证）
 
 路径：`src/session_entities.cpp`、`src/session_orders.cpp`、`tests/clock_tests.cpp`、`docs/jass.md`、`docs/implementation-roadmap.md`。字符串与数字即时命令对空、已移除及类型不匹配单位返回 false，保留有效单位命令处理；固定版 Game.dll 的 `0x6f1e9080`／`0x6f1e90a0` 对应入口及解析失败分支见 `tmp/docs-artifacts/war3/ability-scan-current/order-full.txt`。Win32 Release 客户端和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 21/21；隔离测试验证失败后定时触发器继续、有效单位仍可接受 stop。OrcX01 会话调用原 `Blizzard.j` `IssueImmediateOrderBJ`，有效／已移除／空单位返回值为 1／0／0，会话继续推进 0.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/immediate-order-handles/`。自然对局、其他订单及原版时序待阶段验证。
+
+### 失效单位创建和种族查询句柄（待阶段验证）
+
+路径：`src/session_entities.cpp`、`tests/clock_tests.cpp`、`docs/jass.md`、`docs/implementation-roadmap.md`。四种单位创建入口在玩家或位置句柄无效时返回空单位，`GetUnitRace` 在单位失效时返回空种族；固定版 Game.dll 解析失败分支记录 `tmp/docs-artifacts/war3/ability-scan-current/create-full.txt`。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 22/22，隔离检查覆盖空、已移除、类型不匹配句柄、无额外单位及四种有效创建。OrcX01 会话调用原 `CreateUnitAtLocSaveLast`，空位置返回空且不创建，有效位置创建并更新 `bj_lastCreatedUnit`，会话继续推进 0.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/unit-create-handles/`。真实对局、其他版本、未知单位类型和原版完整行为待阶段验证。

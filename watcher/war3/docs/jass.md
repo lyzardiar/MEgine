@@ -1,5 +1,7 @@
 # 原生 JASS 脚本链路
 
+四种 `CreateUnit`／`CreateUnitAtLoc` 按编号或名称创建单位的入口在玩家或位置句柄无效时返回空单位；`GetUnitRace` 对无效单位返回空种族。固定版 Game.dll 的创建入口 `0x6f1deef0`、位置入口 `0x6f1def50` 及种族查询 `0x6f1e63d0` 在句柄解析失败时直接返回；指令记录 `tmp/docs-artifacts/war3/ability-scan-current/create-full.txt`。Win32 Release 客户端及 clock 目标编译通过，隔离检查 22/22；OrcX01 会话调用原 `CreateUnitAtLocSaveLast`，空位置未创建单位，有效位置正常创建并更新 `bj_lastCreatedUnit`，日志 `tmp/docs-artifacts/war3/unit-create-handles/`。真实对局、其他版本和未知单位类型行为待验证。
+
 `IssueImmediateOrder` 与 `IssueImmediateOrderById` 在单位句柄无效时返回 false，后续脚本继续执行；有效单位沿用原命令流程。固定版 Game.dll 的字符串入口 `0x6f1e9080` 转入数字入口 `0x6f1e90a0`，后者在单位解析失败时返回，指令记录 `tmp/docs-artifacts/war3/ability-scan-current/order-full.txt`。Win32 Release 客户端编译通过，clock 21/21；OrcX01 隔离会话调用原 `Blizzard.j` 的 `IssueImmediateOrderBJ`，有效单位返回成功、已移除和空单位返回失败，随后会话推进 0.25 秒；未加载 Game.dll。自然对局和原版完整命令时序待验证。
 
 单位位置、索敌范围、转向速度和转弯窗口接口及 `KillUnit` 对空、已移除或类型不匹配的单位句柄安全返回；对应实数查询返回零，有效单位继续更新实际状态。固定版 Game.dll 的 `SetUnitX/Y`（`0x6f1f7c70`／`0x6f1f7cd0`）、`KillUnit`（`0x6f1efcd0`）和相关运动接口在单位解析失败后直接返回；相关反汇编记录于 `tmp/docs-artifacts/war3/unit-position-handles/`。Win32 Release 客户端及 clock 目标编译通过，隔离检查 20/20；真实地图及其他版本行为待阶段验证。
