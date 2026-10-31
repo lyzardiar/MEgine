@@ -88,6 +88,7 @@ class ScriptSession {
     std::vector<std::uint32_t> localNetworkObjects_;
     std::vector<std::uint32_t> localNetworkUiObjects_;
     std::vector<std::uint32_t> eventHandles_,timerHandles_;
+    std::unordered_map<std::uint64_t,std::vector<std::uint32_t>> playerUnitEventIndex_,unitEventIndex_;
     unsigned combatTargetEventMask_=0;
     std::array<std::int32_t,2> integerGameStates_{};
     std::array<std::uint64_t,2> integerGameStateRevision_{};
@@ -1044,6 +1045,8 @@ class ScriptSession {
     bool triggerEvaluate(std::uint32_t handle);
     jass::ThreadId triggerExecute(std::uint32_t handle,bool wait=false);
     void fire(std::uint32_t event,ScriptContext context={});
+    std::vector<std::uint32_t> unitEventSnapshot(unsigned owner,unsigned playerEvent,std::uint32_t unit,unsigned unitEvent);
+    bool unitEventRegistered(std::uint32_t unit,unsigned event);
     void unitEvent(std::uint32_t unit,unsigned playerEvent,unsigned unitEvent,ScriptContext context={});
     void bindRescueNatives();
     void rescueTick();

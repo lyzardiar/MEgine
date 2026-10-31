@@ -3816,3 +3816,7 @@ Win32 Release 客户端及测试目标编译通过；执行 `python tests/genera
 ### 多选英雄头像光效（待阶段验证）
 
 路径：`src/game_selection_panel.cpp`；说明见 [多选面板](selection-panel.md)。Win32 Release 增量编译通过；游戏内 Agent 截图确认两个英雄及英雄／步兵混选的头像与生命条可见，点击目标物品仍生效。阶段核对四族及自定义皮肤、12 个单位、纹理缺失／设备恢复、窗口比例、交互与原版光效。
+
+### 单位事件索引（待阶段验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_arrow_status.cpp`、`src/session_combat.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`；说明及命令见 [基础战斗](combat.md)。Win32 Release 客户端与 passive 目标编译通过；`event-index` 和 `spider-attack` 各 1/1 通过。阶段核对真实地图触发器、重复注册、禁用／销毁／重入、目标失效／易主、长局索引内存和帧耗时，以及原版事件次序与联机同步。

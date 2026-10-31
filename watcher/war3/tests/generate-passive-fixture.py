@@ -24,11 +24,108 @@ def main():
     names = helper.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: helper.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = b"""globals
+integer eventIndexTrace=0
+boolean eventIndexAdded=false
+trigger eventIndexA=null
+trigger eventIndexB=null
+trigger eventIndexC=null
+trigger eventIndexD=null
+trigger eventIndexE=null
+unit eventIndexUnit=null
 integer pawnCount=0
 unit pawnSeller=null
 unit pawnBuyer=null
 item pawnSold=null
 endglobals
+function EventIndexE takes nothing returns nothing
+    set eventIndexTrace=eventIndexTrace*10+5
+endfunction
+function EventIndexA takes nothing returns nothing
+    set eventIndexTrace=eventIndexTrace*10+1
+    if not eventIndexAdded then
+        set eventIndexAdded=true
+        call DestroyTrigger(eventIndexD)
+        call TriggerRegisterUnitEvent(eventIndexE,eventIndexUnit,EVENT_UNIT_ISSUED_POINT_ORDER)
+    endif
+endfunction
+function EventIndexB takes nothing returns nothing
+    set eventIndexTrace=eventIndexTrace*10+2
+endfunction
+function EventIndexC takes nothing returns nothing
+    set eventIndexTrace=eventIndexTrace*10+3
+endfunction
+function EventIndexD takes nothing returns nothing
+    set eventIndexTrace=eventIndexTrace*10+4
+endfunction
+function EventIndexFilter takes nothing returns boolean
+    return GetFilterUnit()==eventIndexUnit
+endfunction
+function ProbeEventIndex takes unit u returns nothing
+    set eventIndexUnit=u
+    set eventIndexA=CreateTrigger()
+    set eventIndexB=CreateTrigger()
+    set eventIndexC=CreateTrigger()
+    set eventIndexD=CreateTrigger()
+    set eventIndexE=CreateTrigger()
+    call TriggerAddAction(eventIndexA,function EventIndexA)
+    call TriggerAddAction(eventIndexB,function EventIndexB)
+    call TriggerAddAction(eventIndexC,function EventIndexC)
+    call TriggerAddAction(eventIndexD,function EventIndexD)
+    call TriggerAddAction(eventIndexE,function EventIndexE)
+    call TriggerRegisterPlayerUnitEvent(eventIndexA,Player(0),EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER,null)
+    call TriggerRegisterFilterUnitEvent(eventIndexB,u,EVENT_UNIT_ISSUED_POINT_ORDER,Filter(function EventIndexFilter))
+    call TriggerRegisterPlayerUnitEvent(eventIndexC,Player(0),EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER,null)
+    call TriggerRegisterUnitEvent(eventIndexD,u,EVENT_UNIT_ISSUED_POINT_ORDER)
+endfunction
+function EventIndexSix takes nothing returns nothing
+    set eventIndexTrace=eventIndexTrace*10+6
+endfunction
+function EventIndexSeven takes nothing returns nothing
+    set eventIndexTrace=eventIndexTrace*10+7
+endfunction
+function ProbeSelectionIndex takes unit u returns nothing
+    local trigger p=CreateTrigger()
+    local trigger t=CreateTrigger()
+    call TriggerAddAction(p,function EventIndexSix)
+    call TriggerAddAction(t,function EventIndexSeven)
+    call TriggerRegisterPlayerUnitEvent(p,Player(0),EVENT_PLAYER_UNIT_SELECTED,null)
+    call TriggerRegisterUnitEvent(t,u,EVENT_UNIT_SELECTED)
+endfunction
+function ProbeSummonIndex takes unit u returns nothing
+    local trigger p=CreateTrigger()
+    local trigger t=CreateTrigger()
+    call TriggerAddAction(p,function EventIndexSix)
+    call TriggerAddAction(t,function EventIndexSeven)
+    call TriggerRegisterPlayerUnitEvent(p,Player(0),EVENT_PLAYER_UNIT_SUMMON,null)
+    call TriggerRegisterUnitEvent(t,u,EVENT_UNIT_SUMMON)
+endfunction
+function EventIndexDamage takes nothing returns nothing
+    if GetEventDamage()>0. then
+        set eventIndexTrace=eventIndexTrace*10+8
+    endif
+endfunction
+function EventIndexTarget takes nothing returns nothing
+    if GetEventTargetUnit()!=null then
+        set eventIndexTrace=eventIndexTrace*10+9
+    endif
+endfunction
+function ProbeCombatIndex takes unit attacker,unit target returns nothing
+    local trigger d=CreateTrigger()
+    local trigger t=CreateTrigger()
+    call TriggerAddAction(d,function EventIndexDamage)
+    call TriggerAddAction(t,function EventIndexTarget)
+    call TriggerRegisterUnitEvent(d,target,EVENT_UNIT_DAMAGED)
+    call TriggerRegisterUnitEvent(t,attacker,EVENT_UNIT_ACQUIRED_TARGET)
+endfunction
+function ResetEventIndex takes nothing returns nothing
+    set eventIndexTrace=0
+endfunction
+function DestroyEventIndex takes nothing returns nothing
+    call DestroyTrigger(eventIndexA)
+    call DestroyTrigger(eventIndexB)
+    call DestroyTrigger(eventIndexC)
+    call DestroyTrigger(eventIndexE)
+endfunction
 function OnPawn takes nothing returns nothing
     set pawnCount=pawnCount+1
     set pawnSeller=GetSellingUnit()
