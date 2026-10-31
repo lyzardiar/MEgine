@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 暴风雪类点目标物品与纷争面纱（待验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`docs/dota-veil.md`。地图物品的暴风雪能力通过点目标施法流程触发原脚本，保留法力、冷却与引导过程。Win32 Release 产品编译通过；DotA 原图隔离会话中纷争面纱使目标魔法伤害由 100 提升至 125，到期后恢复为 100，证据位于 `tmp/docs-artifacts/war3/dota-i0gj/veil-runtime.log`。阶段检查点目标操作、不同目标及范围、可中断的引导、物品次数／冷却、效果叠加与驱散、原版对照及实际窗口。
+
 ### 物品栏标题与单次物品计数（待验证）
 
 路径：`src/game_loading.*`、`src/game_view.cpp`、`docs/unit-combat-panel.md`。选中具有物品栏的单位时显示源 `INVENTORY` 标题，正次数物品显示数字并限制在格内。Win32 Release 客户端编译通过；游戏内 Agent 选择携带 1 次药水和 4 次权杖的圣骑士，1264×921 画面可见标题及计数，证据位于 `tmp/docs-artifacts/war3/agent-info/layout-inventory-title/`。阶段核对无物品栏／多个选中单位、商店买家、四族皮肤、地图覆盖、长数字、不同窗口比例及原版画面。
