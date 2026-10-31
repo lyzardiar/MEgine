@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 睡眠脚本状态字节组件（待阶段验证）
+
+路径：`src/snapshot_codec.h`、`src/jass_runtime.h/.cpp`、`src/session.h`、`src/session_threads.cpp`、`tests/jass_thread_tests.cpp`、`tests/session_tests.cpp`；范围见 [战役存档的脚本执行状态](save-runtime-foundation.md)。Win32 Release 客户端及两个测试目标编译通过；会话检查 20/20、线程定向检查 2/2 通过，未加载 Game.dll。隔离会话将两条睡眠动作编码、写入并读取 `tmp/docs-artifacts/war3/session-sleep-codec/sleeping-threads.bin` 后恢复执行；另检查事件字段、选择视图的编码往返、空字符串／null、函数和句柄映射、数据截断／篡改、源码不匹配及带有效摘要的超限长度。恢复选择视图的实际脚本、其他上下文字段、跨进程对象恢复、资源预算边界、实际地图和原版格式待阶段验证；该组件未连接游戏保存或读取入口。
+
 ### JASS 并行睡眠线程恢复（待阶段验证）
 
 路径：`src/jass_runtime.h/.cpp`、`src/session.h`、`src/session_threads.cpp`、`tests/jass_thread_tests.cpp`、`tests/session_tests.cpp`；范围见 [战役存档的脚本执行状态](save-runtime-foundation.md)。Win32 Release 客户端和两个测试目标编译通过；线程检查 24/24、会话检查 20/20 通过，未加载 Game.dll。隔离运行时检查不同及相同到期时间的线程顺序，损坏批次在部分调度后完全清理；含父子等待的批次被拒绝且原线程继续执行。隔离会话的两个游戏事件动作恢复到另一会话并使用重新映射的触发器；其中一个损坏时不保留部分线程。大量线程、选择视图、更多上下文、资源预算边界与实际地图待阶段验证；线程间等待、对象图和存档文件仍未实现。

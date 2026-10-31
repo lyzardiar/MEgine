@@ -71,6 +71,8 @@ public:
     ThreadId restoreSleepingThread(const RuntimeSleepSnapshot& snapshot,const StableHandleMap& decodeHandle={},const ThreadContextTransfer& restoreContext={});
     RuntimeSleepBatch snapshotSleepingThreads(const StableHandleMap& encodeHandle={},const ThreadBatchContextTransfer& captureContext={}) const;
     std::vector<ThreadId> restoreSleepingThreads(const RuntimeSleepBatch& snapshot,const StableHandleMap& decodeHandle={},const ThreadBatchContextTransfer& restoreContext={});
+    Bytes encodeSleepingThreads(const RuntimeSleepBatch& snapshot) const;
+    RuntimeSleepBatch decodeSleepingThreads(std::span<const std::uint8_t> bytes) const;
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;
     PrimitiveGlobalSnapshot encodePrimitiveGlobals() const;
     PrimitiveGlobalRestore restorePrimitiveGlobals(std::span<const std::uint8_t> bytes);

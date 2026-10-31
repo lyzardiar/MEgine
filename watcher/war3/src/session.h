@@ -1100,6 +1100,8 @@ public:
     jass::ThreadId restoreSleepingScript(const SessionSleepSnapshot& snapshot,const jass::StableHandleMap& decodeHandle);
     SessionSleepBatch snapshotSleepingScripts(const jass::StableHandleMap& encodeHandle) const;
     std::vector<jass::ThreadId> restoreSleepingScripts(const SessionSleepBatch& snapshot,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeSleepingScripts(const SessionSleepBatch& snapshot) const;
+    SessionSleepBatch decodeSleepingScripts(std::span<const std::uint8_t> bytes) const;
     void initialize();
     void configure();
     void applySetup(const PlayerSetup& setup);
