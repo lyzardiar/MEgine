@@ -76,3 +76,5 @@ Win32 Release `war3_orc_campaign_chain_tests` 实际 1 通过、0 失败，未�
 人族第六章增加原图自然失败回归：独立本地用户目录中从开场静音运行，玩家不下达战斗命令；玛尔加尼斯完成 65 次转换，玩家基地建筑由非零降至零，原图脚本显示失败对话，点击首个按钮发出重开请求。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> natural-defeat` 1 通过、0 失败，模拟时间 1947.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/human06-long/natural-defeat-final.log`。该场景验证无操作失败路径，不代表玩家自然获胜、完整战役、原版时序或实际窗口一致性。
 
 兽族第五章原图在独立用户目录的静音隔离会话中运行 400 秒后，由测试解除塞纳留斯无敌并直接击杀；原死亡事件和过场进入胜利对话，继续后请求 `Maps\Campaign\Orc06.w3m`。Win32 Release `war3_orc_campaign_chain_tests <data-root> chapter5 <new-absolute-user-dir>` 1 通过、0 失败，模拟时间 471.844 秒，未加载 Game.dll。原图无操作静音探针另运行至 2000 秒，玩家控制保持、无退出或脚本异常。日志 `tmp/docs-artifacts/war3/orc05-long/`；两者均不代表自然战斗、自动载入下一章、英雄继承或实际窗口验收。
+
+兽族第五章结束时的格罗姆缓存已在新建隔离用户目录跨会话核对：测试设置等级 7、用户数据 2468，完成第五章胜利后启动第八章并执行其跳过过场触发器；`bj_lastLoadedUnit` 指向恢复成功的对应英雄。但在该人工触发场景中，原图脚本随后通过 `GetLastCreatedUnit` 将 `udg_Grom` 指向另一单位，完整剧情条件下的引用及实际继承仍待验证。Win32 Release `war3_orc_campaign_chain_tests <data-root> chapter5 <new-absolute-user-dir>` 缓存检查 1 通过，日志 `tmp/docs-artifacts/war3/orc05-long/grom-transfer-final.log`；测试打印此待处理差异，未加载 Game.dll。没有修改原图脚本或将缓存检查视作完整战役通关。
