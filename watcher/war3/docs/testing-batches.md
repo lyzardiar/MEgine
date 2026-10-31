@@ -4490,3 +4490,11 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 路径：`src/session.h`、`src/session_item_snapshot.cpp`、`tests/clock_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SUCD` 在相同地图和模拟时钟下恢复已重建单位的技能及物品冷却；错误映射或损坏数据在应用前拒绝。Win32 Release 客户端与 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 29/29；物品恢复测试覆盖技能／物品冷却重编码、无效映射与摘要损坏后的状态保留。待批次验证单位完整恢复、冷却实际使用、原版地图、保存／加载入口及多人行为。
 
 冷却恢复补充检查：Win32 Release clock 29/29，隔离会话验证圣光术在冷却中被阻止、到期后治疗并重新冷却；HumanX01、HumanX03、UndeadX06 原图 150 秒冷却状态与剩余时间通过占位单位映射核对。复现探针 `tmp/docs-artifacts/war3/unit-state-audit/probe/`，运行参数为游戏数据目录及地图名。实际单位对象重建、物品冷却使用、完整保存／加载和窗口仍待验证。
+
+### 串行动作睡眠线程恢复（待批次验证）
+
+路径：`src/jass_runtime.h/.cpp`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_threads.cpp`、`tests/session_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`JSSC` 版本 3 保存等待模式触发器的剩余动作及函数身份，兼容版本 1、2；恢复需先重建触发器和动作。Win32 Release 客户端、session、clock 编译通过，session 23/23、clock 29/29。测试覆盖连续睡眠与再次恢复、错误动作映射、移除／销毁及 `TriggerExecuteWait`；OrcX01 资源和脚本附加测试触发器执行通过，探针 `tmp/docs-artifacts/war3/serial-trigger-snapshot/probe/`。待批次验证原图真实多动作线程、线程间等待、完整对象图和保存／加载。
+
+本批合并验证范围为 `f7c20ff`、`fecb666` 和本次串行动作恢复，`d8c160b` 为同一冷却任务的补充验证。当前核心版本的 session 23/23、clock 29/29；OrcX01 30 秒的 30 个物品通过 3 名占位持有者恢复，HumanX03 和 UndeadX06 150 秒的活动技能冷却映射通过，OrcX01 追加测试触发器顺序恢复通过。探针分别位于 `tmp/docs-artifacts/war3/item-object-snapshot/probe/`、`tmp/docs-artifacts/war3/unit-state-audit/probe/` 和 `tmp/docs-artifacts/war3/serial-trigger-snapshot/probe/`。真实单位对象、原图多动作与线程间等待、物品冷却使用、完整存档和窗口仍留待后续实现或验证。
+
+线程影响回归：`war3_jass_thread_tests` 27/27、`war3_jass_runtime_tests <literal-fixture>` 17/17；`war3_session_thread_tests <data-root> <thread-fixture>` 使用旧临时夹具时缺少 `RunExecuteValue`，按 `tests/generate-thread-fixture.py` 重建夹具后 6/6。覆盖协作调度、线程等待、脚本帧、上下文及会话生命周期。原版复杂重入、线程间等待恢复和实际战役流程仍待验证。

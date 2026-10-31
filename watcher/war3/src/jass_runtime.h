@@ -64,6 +64,8 @@ public:
     void pauseThreads(bool paused);
     bool threadsPaused() const;
     void threadHooks(ThreadHooks hooks);
+    void threadEntryCompleted(std::function<void(ThreadId)> callback);
+    void notifyThreadEntryCompleted();
     void globalWriteHook(std::function<void(Id,Value)> hook);
     ThreadId currentThread() const;
     size_t threadCount() const;

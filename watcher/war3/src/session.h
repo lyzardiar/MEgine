@@ -72,8 +72,9 @@ struct DoodadState {
 };
 struct PresentationSpellSound {std::uint32_t ability=0;WorldPoint position{};std::string label;};
 enum class NativeKind {Trackable,TextTag,Multiboard,MultiboardItem,Leaderboard,Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning,CameraSetup,UnitPool,ItemPool,Image,Ubersplat,TerrainDeformation};
-struct SessionSleepSnapshot {jass::RuntimeSleepSnapshot script;std::vector<ScriptContext> contexts;std::optional<std::array<std::set<std::uint32_t>,16>> selections;};
-struct SessionSleepContext {std::vector<ScriptContext> contexts;std::optional<std::array<std::set<std::uint32_t>,16>> selections;};
+struct TriggerSequence {std::uint32_t trigger=0;std::vector<std::uint32_t> actions;size_t next=0;std::vector<std::uint32_t> codes;};
+struct SessionSleepSnapshot {jass::RuntimeSleepSnapshot script;std::vector<ScriptContext> contexts;std::optional<std::array<std::set<std::uint32_t>,16>> selections;std::optional<TriggerSequence> sequence;};
+struct SessionSleepContext {std::vector<ScriptContext> contexts;std::optional<std::array<std::set<std::uint32_t>,16>> selections;std::optional<TriggerSequence> sequence;};
 struct SessionSleepBatch {jass::RuntimeSleepBatch scripts;std::vector<SessionSleepContext> threads;};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
@@ -189,6 +190,9 @@ class ScriptSession {
     void updateWeatherAudio(float x,float y,float z);
     std::vector<ScriptContext> contexts_;
     std::map<jass::ThreadId,std::vector<ScriptContext>> threadContexts_{{0,{}}};
+    std::map<jass::ThreadId,TriggerSequence> triggerSequences_;
+    std::optional<TriggerSequence> pendingTriggerSequence_;
+    void continueTriggerSequence(jass::ThreadId id);
     void bindThreadNatives();
     double simulationTime_=0,accumulator_=0;
     std::uint32_t routeRetryCursor_=0;
