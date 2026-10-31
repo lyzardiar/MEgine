@@ -251,7 +251,7 @@ class ScriptSession {
     void unsummonTick(double delta);
     std::uint32_t aiMine(ScriptAI& ai,int town);
     std::uint32_t aiEnemy(ScriptAI& ai,unsigned owner=UINT_MAX,bool buildings=false,std::optional<WorldPoint> center={});
-    std::vector<std::uint32_t> aiCaptain(ScriptAI& ai);
+    std::vector<std::uint32_t> aiCaptain(ScriptAI& ai,bool includeTransport=false);
     void aiAttack(ScriptAI& ai,WorldPoint point,std::uint32_t target=0);
     std::array<std::optional<unsigned>,16> results_;
     std::array<PlayerStatistics,16> statistics_{};
