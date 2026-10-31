@@ -127,6 +127,8 @@ public:
     void updateDeformations(double now,const std::function<std::uint32_t()>& random);
     std::span<const float> surface() const {return surface_;}
     WorldRect rectangle(WorldPoint first,WorldPoint second) const;
+    Bytes encodePathingState() const;
+    void restorePathingState(std::span<const std::uint8_t> bytes);
     Bytes encodeTerrainState() const;
     void restoreTerrainState(std::span<const std::uint8_t> bytes);
     Bytes encodeBlightState() const;

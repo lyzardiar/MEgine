@@ -4450,3 +4450,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 世界测试夹具恢复（批次失败项已复测）
 
 路径：`tests/world_tests.cpp`。四项会话测试使用 BootyBay 资源归档并在测试脚本中声明可破坏物类型；矩形检查根据该图实际边界独立计算预期值。Win32 Release world 测试目标编译通过，上一批四个失败项定向复测 4 通过、0 失败；其余 21 项复用上一批结果，日志 `tmp/docs-artifacts/war3/terrain-world-batch/world_{location_global,rect_query,main_}-final.log`。渲染变体与动态纹理流送的实际窗口、地图身份及完整存档／跨区事务仍待验证或实现。
+
+### 世界寻路状态重建（待批次验证）
+
+路径：`src/world.h`、`src/world_path.cpp`、`tests/world_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SPTH` 重建地图寻路位，保留荒芜和动态占地，更新路线缓存修订号；地图身份由调用方校验。Win32 Release 客户端与 world 测试目标编译通过，`war3_world_tests <data-root> <output> world_pathing_snapshot` 2/2，覆盖原图、阻挡／重开、占地、荒芜和损坏拒绝；日志 `tmp/docs-artifacts/war3/pathing-snapshot/world-tests.log`。活动单位路线、真实加载及与完整对象恢复的集成待批次验证或实现。
