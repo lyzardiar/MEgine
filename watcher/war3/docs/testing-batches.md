@@ -4119,6 +4119,10 @@ Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨�
 
 Win32 Release 客户端及测试目标编译通过；执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m`，再运行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m ethereal-ability`，1/1 通过。DotA 原图隔离会话使用 `I0LT`，目标在 1 秒时虚无、5 秒时恢复；记录 `tmp/docs-artifacts/war3/dota-ethereal/after.log`。阶段验证物品／派生、多个来源及生命周期、伤害／治疗倍率、地图覆盖、真实窗口／原版及联机。
 
+### 脚本声音失效句柄（待阶段验证）
+
+路径：`src/session_sound.cpp`、`tests/sound_tests.cpp`；原版入口见[脚本声音](script-sound.md)。声音解析对空、越界及不兼容对象返回空声音，有效句柄仍连接现有播放状态。Win32 Release 客户端及 sound 目标编译通过；在 `watcher/war3` 运行 `war3_sound_tests <data-root> ../../tmp/docs-artifacts/war3/sound-invalid sound_invalid_handle_preserves_playback` 和 `sound_jass_globals_queries_and_playback`，各 1/1 通过。检查使用静音会话；实际音频设备、退役和回调重入、其他声音参数、地图脚本与原版行为待阶段验证。
+
 ### 目标选择提示本地化（待阶段验证）
 
 路径：`src/game_loading.h/.cpp`、`src/game_view.cpp`；说明见[玩家命令](player-commands.md)。普通命令、技能和物品的目标选择显示源 `SELECTTARGET`，缺少该键时使用中文回退；目标命令、取消及其他模式继续使用既有输入流程。Win32 Release 客户端增量编译通过；尚未执行实际窗口或原版画面对照。阶段核对攻击／移动／巡逻／采集／修理、技能及物品目标的文本、位置、颜色与出现时机，以及不同语言、地图覆盖、取消和联机。

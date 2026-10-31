@@ -1,5 +1,7 @@
 # 原图 MIDI 声音与源表
 
+脚本声音 native 的共享句柄解析对空、越界、失效或类型不匹配的对象返回空声音；播放、停止、音量、位置、音调及查询继续使用既有消费者。固定版 `StartSound`、`StopSound`、`GetSoundIsPlaying`、`GetSoundDuration` 和 `SetSoundPitch` 在声音解析失败时直接返回或返回零，静态证据为 `ev_8ac3cc4627cdde21744251ef815f311e0bc54e4517491b4c0e163dbcc2c84282`、`ev_7b241d0eeb34b97a14157b3c6c52804d4d71726c8bee3a1470d4d3100918063e`。Win32 Release 客户端及 sound 目标编译通过；静音会话中的无效句柄与有效播放检查分别 1/1 通过。其他声音 native 的参数边界、实际音频设备和原版动态行为待阶段验证；MIDI 音调修改仍未实现。
+
 固定对照为Warcraft III 1.27.0.52240。`SourceTable`读取原SYLK的继承坐标、稀疏行列、引用字符串/转义引号和分号，保留源列名/值；只消费常量，不执行表格公式。每表16MiB，最多512列、262144行、1048576个实际单元格，值限制65536字节，损坏或不支持的源数据显式报错。
 
 `SoundScene`从当前世界的共享归档视图读取 `UI\SoundInfo\MIDISounds.slk` 和 `EnvironmentSounds.slk`，地图成员覆盖公共资源。目录中的重复分隔符归一化后，MIDI与DLS继续经归档直接读入内存。声音定义保留标签、文件、音色库、Volume、Priority、Channel、Pitch、Radius和Flags。原版LordaeronSummer/Village昼夜声音为Volume80、Priority1000、Channel15、Radius5000，共用LordaeronSummer.dls。
