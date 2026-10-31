@@ -24,6 +24,13 @@ def main():
     names = helper.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: helper.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = b"""globals
+integer timerIndexTrace=0
+boolean timerIndexAdded=false
+timer timerIndexMain=null
+timer timerIndexOther=null
+trigger timerIndexB=null
+trigger timerIndexD=null
+trigger timerIndexE=null
 integer eventIndexTrace=0
 boolean eventIndexAdded=false
 trigger eventIndexA=null
@@ -37,6 +44,63 @@ unit pawnSeller=null
 unit pawnBuyer=null
 item pawnSold=null
 endglobals
+function TimerIndexA takes nothing returns nothing
+    if GetExpiredTimer()==timerIndexMain then
+        set timerIndexTrace=timerIndexTrace*10+1
+    endif
+endfunction
+function TimerIndexB takes nothing returns nothing
+    set timerIndexTrace=timerIndexTrace*10+2
+endfunction
+function TimerIndexC takes nothing returns nothing
+    set timerIndexTrace=timerIndexTrace*10+3
+endfunction
+function TimerIndexD takes nothing returns nothing
+    if GetExpiredTimer()==timerIndexMain then
+        set timerIndexTrace=timerIndexTrace*10+4
+    endif
+endfunction
+function TimerIndexE takes nothing returns nothing
+    set timerIndexTrace=timerIndexTrace*10+5
+endfunction
+function TimerIndexOther takes nothing returns nothing
+    set timerIndexTrace=timerIndexTrace*10+9
+endfunction
+function TimerIndexCallback takes nothing returns nothing
+    if GetExpiredTimer()==timerIndexMain then
+        set timerIndexTrace=timerIndexTrace*10+8
+    endif
+    if not timerIndexAdded then
+        set timerIndexAdded=true
+        call DestroyTrigger(timerIndexB)
+        call TriggerRegisterTimerExpireEvent(timerIndexD,timerIndexMain)
+        call TriggerRegisterTimerEvent(timerIndexE,0.,false)
+        call PauseTimer(timerIndexOther)
+    endif
+endfunction
+function ProbeTimerIndex takes nothing returns nothing
+    local trigger a=CreateTrigger()
+    local trigger c=CreateTrigger()
+    set timerIndexB=CreateTrigger()
+    set timerIndexD=CreateTrigger()
+    set timerIndexE=CreateTrigger()
+    set timerIndexMain=CreateTimer()
+    set timerIndexOther=CreateTimer()
+    call TriggerAddAction(a,function TimerIndexA)
+    call TriggerAddAction(timerIndexB,function TimerIndexB)
+    call TriggerAddAction(c,function TimerIndexC)
+    call TriggerAddAction(timerIndexD,function TimerIndexD)
+    call TriggerAddAction(timerIndexE,function TimerIndexE)
+    call TriggerRegisterTimerExpireEvent(a,timerIndexMain)
+    call TriggerRegisterTimerExpireEvent(timerIndexB,timerIndexMain)
+    call TriggerRegisterTimerEvent(c,0.,false)
+    call TimerStart(timerIndexMain,0.,false,function TimerIndexCallback)
+    call TimerStart(timerIndexOther,0.,false,function TimerIndexOther)
+endfunction
+function RestartTimerIndex takes nothing returns nothing
+    set timerIndexTrace=0
+    call TimerStart(timerIndexMain,0.,false,function TimerIndexCallback)
+endfunction
 function EventIndexE takes nothing returns nothing
     set eventIndexTrace=eventIndexTrace*10+5
 endfunction

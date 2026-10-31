@@ -3820,3 +3820,9 @@ Win32 Release 客户端及测试目标编译通过；执行 `python tests/genera
 ### 单位事件索引（待阶段验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_arrow_status.cpp`、`src/session_combat.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`；说明及命令见 [基础战斗](combat.md)。Win32 Release 客户端与 passive 目标编译通过；`event-index` 和 `spider-attack` 各 1/1 通过。阶段核对真实地图触发器、重复注册、禁用／销毁／重入、目标失效／易主、长局索引内存和帧耗时，以及原版事件次序与联机同步。
+
+### 计时事件分发索引
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_tick.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`。计时触发事件及计时器到期事件分别索引，模拟步在执行回调前快照需要派发的事件；清理已销毁的计时器和失效事件索引。
+
+Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `timer-index`、`event-index` 各 1/1 通过，覆盖到期顺序、回调上下文、回调中销毁和注册触发器、暂停同帧计时器及既有单位事件。夹具 `tmp/docs-artifacts/war3/timer-index/fixture.w3m`；命令为 `war3_passive_tests.exe <data-root> <fixture> timer-index` 与 `event-index`。阶段核对周期计时器、重入／销毁生命周期、真实地图和联机顺序，并测量长局索引内存及帧耗时；尚无性能基准结论。
