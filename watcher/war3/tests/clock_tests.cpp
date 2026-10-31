@@ -122,6 +122,80 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"collections.j",source,"authored collection persistence test"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();auto identity=[](std::string_view,std::uint32_t id){return id;};auto legacyCurrent=original->encodeCollections(identity);auto legacyContent=openSnapshot(legacyCurrent,32u*1024u*1024u);Bytes legacy(legacyContent.begin(),legacyContent.end());legacy[4]=1;auto legacySnapshot=sealSnapshot(std::move(legacy),32u*1024u*1024u);auto legacyTarget=create();require(legacyTarget->rebuildCollections(legacySnapshot,{}).size()==1,"Legacy collection snapshot failed");original->startMain();a.invoke("createUnits");a.invoke("setup");auto live=a.global("living"),first=a.global("firstUnit"),group=a.global("members");require(a.invoke("FirstOfGroup",std::array{group}).bits==first.bits && a.invoke("IsUnitInGroup",std::array{first,group}).bits,"First group member was not retained by fixture");auto collections=original->encodeCollections(identity),globals=a.encodeGlobals(identity);auto invalidContent=openSnapshot(collections,32u*1024u*1024u);Bytes invalidVersion(invalidContent.begin(),invalidContent.end());invalidVersion[4]=1;auto invalidLegacy=sealSnapshot(std::move(invalidVersion),32u*1024u*1024u);b.invoke("CreateTimer");b.invoke("createUnits");auto targetLive=b.global("living"),targetDead=b.global("firstUnit"),oldBaseline=b.global("baseline");auto decodeUnit=[&](std::string_view type,std::uint32_t id){if(type!="unit")return 0u;return id==live.bits?targetLive.bits:id==first.bits?targetDead.bits:0u;};rejects([&]{restored->rebuildCollections(invalidLegacy,decodeUnit);},"Invalid collection snapshot entry");auto bad=collections;bad.back()^=1;rejects([&]{restored->rebuildCollections(bad,decodeUnit);},"digest");rejects([&]{restored->rebuildCollections(collections,[&](std::string_view,std::uint32_t){return targetLive.bits;});},"unit mapping");require(b.global("baseline").bits==oldBaseline.bits && restored->liveObjects(NativeKind::Group)==1,"Rejected collection restore changed initial group");auto mapping=restored->rebuildCollections(collections,decodeUnit);auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return decodeUnit(type,id);auto found=mapping.find({std::string(type),id});return found==mapping.end()?0u:found->second;};b.restoreGlobals(globals,decode);auto g=b.global("members"),f=b.global("team"),loc=b.global("point"),rect=b.global("bounds");require(b.global("baseline").bits!=oldBaseline.bits && b.invoke("FirstOfGroup",std::array{g}).bits==targetDead.bits && b.invoke("IsUnitInGroup",std::array{targetDead,g}).bits && b.invoke("IsUnitInGroup",std::array{targetLive,g}).bits,"Group order, membership or global mapping changed");require(b.invoke("GetLocationX",std::array{loc}).bits==a.invoke("GetLocationX",std::array{a.global("point")}).bits && b.invoke("GetLocationY",std::array{loc}).bits==a.invoke("GetLocationY",std::array{a.global("point")}).bits && b.invoke("GetRectMinX",std::array{rect}).bits==a.invoke("GetRectMinX",std::array{a.global("bounds")}).bits && b.invoke("GetRectMaxY",std::array{rect}).bits==a.invoke("GetRectMaxY",std::array{a.global("bounds")}).bits,"Geometry values changed");auto area=b.global("area");auto inRegion=[&](float x,float y){return b.invoke("IsPointInRegion",std::array{area,b.real(real(x)),b.real(real(y))}).bits!=0;};require(inRegion(50,0) && !inRegion(0,0) && !inRegion(200,0),"Region membership changed");auto player0=b.invoke("Player",std::array{b.integer(0)}),player1=b.invoke("Player",std::array{b.integer(1)}),player2=b.invoke("Player",std::array{b.integer(2)});require(b.invoke("IsPlayerInForce",std::array{player0,f}).bits && !b.invoke("IsPlayerInForce",std::array{player1,f}).bits && b.invoke("IsPlayerInForce",std::array{player2,f}).bits,"Force membership changed");b.invoke("enumerate");require(b.global("enumerated").bits==1,"Group iteration did not visit the expected member");auto inverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==targetLive.bits?live.bits:id==targetDead.bits?first.bits:0u;for(auto& [key,value]:mapping)if(key.first==type && value==id)return key.second;return 0u;};require(restored->encodeCollections(inverse)==collections,"Collection snapshot did not round-trip");b.invoke("RemoveUnit",std::array{targetDead});require(b.invoke("FirstOfGroup",std::array{g}).bits==targetLive.bits && !b.invoke("IsUnitInGroup",std::array{targetDead,g}).bits,"Removed unit remained in restored group");
     });
+    test("spatial_events_rebuild_members_filters_and_order",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type timer extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ type region extends handle
+ type rect extends handle
+ type boolexpr extends handle
+ type filterfunc extends boolexpr
+ native Player takes integer id returns player
+ native CreateUnit takes player owner, integer id, real x, real y, real facing returns unit
+ native SetUnitX takes unit u, real x returns nothing
+ native CreateTimer takes nothing returns timer
+ native CreateTrigger takes nothing returns trigger
+ native DestroyTrigger takes trigger t returns nothing
+ native TriggerAddAction takes trigger t, code c returns triggeraction
+ native CreateRegion takes nothing returns region
+ native Rect takes real x1, real y1, real x2, real y2 returns rect
+ native RegionAddRect takes region r, rect b returns nothing
+ native Filter takes code c returns filterfunc
+ native TriggerRegisterEnterRegion takes trigger t, region r, boolexpr f returns event
+ native TriggerRegisterLeaveRegion takes trigger t, region r, boolexpr f returns event
+ native TriggerRegisterUnitInRange takes trigger t, unit u, real radius, boolexpr f returns event
+ native GetFilterUnit takes nothing returns unit
+ globals
+ unit observer=null
+ unit member=null
+ region area=null
+ trigger enterTrigger=null
+ trigger leaveTrigger=null
+ trigger rangeTrigger=null
+ integer enters=0
+ integer leaves=0
+ integer ranges=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function makeUnits takes nothing returns nothing
+ set observer=CreateUnit(Player(0),'hfoo',0.0,0.0,0.0)
+ set member=CreateUnit(Player(0),'hfoo',20.0,0.0,0.0)
+ endfunction
+ function accepts takes nothing returns boolean
+ return GetFilterUnit()==member
+ endfunction
+ function onEnter takes nothing returns nothing
+ set enters=enters+1
+ endfunction
+ function onLeave takes nothing returns nothing
+ set leaves=leaves+1
+ endfunction
+ function onRange takes nothing returns nothing
+ set ranges=ranges+1
+ endfunction
+ function setup takes nothing returns nothing
+ set area=CreateRegion()
+ call RegionAddRect(area,Rect(-50.0,-50.0,50.0,50.0))
+ set enterTrigger=CreateTrigger()
+ set leaveTrigger=CreateTrigger()
+ set rangeTrigger=CreateTrigger()
+ call TriggerAddAction(enterTrigger,function onEnter)
+ call TriggerAddAction(leaveTrigger,function onLeave)
+ call TriggerAddAction(rangeTrigger,function onRange)
+ call TriggerRegisterEnterRegion(enterTrigger,area,Filter(function accepts))
+ call TriggerRegisterLeaveRegion(leaveTrigger,area,Filter(function accepts))
+ call TriggerRegisterUnitInRange(rangeTrigger,observer,40.0,Filter(function accepts))
+ endfunction
+ )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"spatial-snapshot.j",source,"authored spatial persistence test"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("makeUnits");a.invoke("setup");original->advance(.03125);require(a.global("ranges").bits==1 && !a.global("enters").bits,"Spatial fixture did not initialize");auto identity=[](std::string_view,std::uint32_t id){return id;};auto collections=original->encodeCollections(identity),triggers=original->encodeTriggers(identity),events=original->encodeSpatialEvents(identity),globals=a.encodeGlobals(identity);b.invoke("CreateTimer");b.invoke("makeUnits");auto observer=a.global("observer"),member=a.global("member"),targetObserver=b.global("observer"),targetMember=b.global("member");auto units=[&](std::string_view type,std::uint32_t id){return type!="unit"?0u:id==observer.bits?targetObserver.bits:id==member.bits?targetMember.bits:0u;};auto cm=restored->rebuildCollections(collections,units);auto tm=restored->restoreTriggers(triggers);auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return units(type,id);if(type=="region" || type=="rect"){auto it=cm.find({std::string(type),id});return it==cm.end()?0u:it->second;}auto it=tm.find({std::string(type),id});return it==tm.end()?0u:it->second;};auto swapped=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==observer.bits?targetMember.bits:id==member.bits?targetObserver.bits:0u;return decode(type,id);};rejects([&]{restored->rebuildSpatialEvents(events,swapped);},"unit order differs");auto bad=events;bad.back()^=1;rejects([&]{restored->rebuildSpatialEvents(bad,decode);},"digest");require(restored->liveObjects(NativeKind::Event)==0,"Rejected spatial restore created events");auto em=restored->rebuildSpatialEvents(events,decode);auto inverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==targetObserver.bits?observer.bits:id==targetMember.bits?member.bits:0u;if(type=="event"){for(auto [stable,local]:em)if(local==id)return stable;}for(auto& [key,local]:cm)if(key.first==type && local==id)return key.second;for(auto& [key,local]:tm)if(key.first==type && local==id)return key.second;return 0u;};require(restored->encodeSpatialEvents(inverse)==events,"Spatial event snapshot did not round-trip");b.restoreGlobals(globals,decode);restored->startMain();original->advance(.03125);restored->advance(.03125);require(b.global("enters").bits==0 && b.global("leaves").bits==0 && b.global("ranges").bits==1,"Restored initial membership fired again");for(auto* session:{original.get(),restored.get()}){auto& vm=session->runtime();vm.invoke("SetUnitX",std::array{vm.global("member"),vm.real(real(200))});session->advance(.03125);vm.invoke("SetUnitX",std::array{vm.global("member"),vm.real(real(20))});session->advance(.03125);}require(a.global("enters").bits==1 && a.global("leaves").bits==1 && a.global("ranges").bits==2 && b.global("enters").bits==a.global("enters").bits && b.global("leaves").bits==a.global("leaves").bits && b.global("ranges").bits==a.global("ranges").bits,"Restored spatial transitions diverged");for(auto* session:{original.get(),restored.get()}){auto& vm=session->runtime();vm.invoke("SetUnitX",std::array{vm.global("observer"),vm.real(real(200))});session->advance(.03125);vm.invoke("SetUnitX",std::array{vm.global("observer"),vm.real(real(0))});session->advance(.03125);}require(b.global("enters").bits==1 && b.global("leaves").bits==1 && b.global("ranges").bits==3 && a.global("ranges").bits==3,"Restored filter or range transitions differ");b.invoke("DestroyTrigger",std::array{b.global("enterTrigger")});require(restored->liveObjects(NativeKind::Event)==2,"Destroyed trigger retained spatial event");
+    });
     test("triggers_restore_actions_conditions_and_state",[&]{
         std::string source=R"jass(type destructable extends handle
  type timer extends handle

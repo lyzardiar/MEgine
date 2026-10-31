@@ -4382,3 +4382,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 脚本区域几何重建（待阶段验证）
 
 路径：`src/session_collections.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`、`docs/implementation-roadmap.md`。`SCOL` 版本 2 保存区域矩形并读取版本 1，重建后需恢复引用，目标须无活动事件。Win32 Release 客户端和 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 16/16，隔离检查覆盖区域内、挖空及外部判断、字节往返和旧版兼容。OrcX01 原图静音模拟 0／30／150 秒分别重建 911／926／967 个集合，各含 57 个区域；76／76／278 个普通步兵为组引用占位，声音、计时器、触发器、计时事件及睡眠线程组件重编码一致，未恢复原单位状态或唤醒线程。日志 `tmp/docs-artifacts/war3/region-snapshot/orcx.log`。区域事件与其 inside 状态、真实世界对象、完整存档和原版表现待实现或阶段验证。
+
+### 区域及单位距离事件重建（待阶段验证）
+
+路径：`src/session.h`、`src/session_spatial_events.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`、`docs/implementation-roadmap.md`。`SPEV` 保存区域进出和单位距离事件、过滤表达式、登记顺序与已有成员；目标需先重建触发器、区域和全部存活单位，并保持单位句柄相对顺序。失效目标或成员拒绝采集，独立布尔句柄共享身份尚未恢复。Win32 Release 客户端及 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 17/17，隔离检查覆盖首帧、进出及距离事件、过滤、销毁清理、字节往返、顺序冲突和损坏拒绝。OrcX01 原图 0／30／150 秒各重建并重编码 57 个区域事件，分别使用 239／252／455 个普通步兵占位，未恢复原单位状态或续执行原图事件及线程。日志 `tmp/docs-artifacts/war3/spatial-event-snapshot/`。完整世界、其他事件、真实加载与原版一致性待实现或阶段验证。
