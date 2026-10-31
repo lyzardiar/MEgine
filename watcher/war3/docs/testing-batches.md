@@ -4228,3 +4228,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### AI 登艇回调中的载具改派
 
 路径：`src/session.h`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。登艇同步回调改派或移除载具后立即释放该载具的预约，保留停止事件生成的乘员订单并清理暂停乘员。Win32 Release 客户端与 CampaignAI 测试目标编译通过；`war3_campaign_ai_tests.exe <data-root> <fixture> <mode>` 的 `island-carrier-reentrant`、`island-carrier-paused`、`island-pickup-reentrant`、`island-paused-retreat`、`island-paused-timeout`、`island-timeout-reentrant`、`island-flight-reorder-live`、`island-flight-reorder`、`island-pickup-group`、`island-auto-multiwave` 共 10/10 通过，夹具 `tmp/docs-artifacts/war3/ai-carrier-reentrant/fixture.w3m`。载具移除／易主、多载具同步回调、真实地图、联机和原版时序待阶段验证。
+
+### AI 多载具续运
+
+路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。多载具波次中单艘飞艇改派时保留其他载具的运输计划，剩余成员可分波跨岛。Win32 Release 客户端及 CampaignAI 测试目标编译通过；`war3_campaign_ai_tests.exe <data-root> <fixture> <mode>` 的 `island-multicarrier-reassigned`、`island-multicarrier-reordered`、`island-flight-reorder-live`、`island-flight-reorder`、`island-carrier-reentrant`、`island-carrier-paused`、`island-auto-multiwave`、`island-auto-retreat`、`island-auto-target-death` 共 9/9 通过。前两项用两飞艇及九步兵验证剩余飞艇完成全员运输，分别覆盖改派后易主和保持新移动订单；夹具为 `tmp/docs-artifacts/war3/ai-carrier-reentrant/fixture.w3m`。舱内改派、多载具同时失效、真实地图、联机及原版调度待阶段验证。
