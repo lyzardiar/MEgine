@@ -3804,3 +3804,7 @@ Win32 Release 客户端及测试目标编译通过；执行 `python tests/genera
 ### 战斗信息科技角标（待阶段验证）
 
 路径：`src/combat.h`、`src/session_research.cpp`、`src/game_loading.*`、`src/game_commands.cpp`、`tests/passive_tests.cpp`；行为及局限见 [单位战斗信息面板](unit-combat-panel.md)。Win32 Release 客户端与 passive 目标编译通过；`weapon-ui` 定向检查 1/1 通过，游戏内 Agent 画面确认圣骑士无升级攻击图标，以及步兵攻击二级、护甲一级角标。阶段核对各级科技、同单位多个科技、双武器、地图覆盖、四族皮肤和原版显示。
+
+### 两栖 AI 路线补员（待阶段验证）
+
+路径：`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`；规则见 [战役两栖 AI 路径](campaign-amphibious-ai.md)。Win32 Release 客户端与 campaign AI 目标编译通过；`amphibious-reinforce` 2/2 通过，覆盖补员、路径点前进和取消。阶段核对实际战役、多人同步、补员死亡／易主／目标变化、寻路失败、动态障碍、回调重入、混编与原版选点。
