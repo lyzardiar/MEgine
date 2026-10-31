@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 兽族第八章灵魂宝石（待阶段验证）
+
+路径：`src/entities.h`、`src/session_soul.cpp`、`src/session_entities.cpp`、`src/session_spells.cpp`、`src/session_item_use.cpp`、`src/session_inventory.cpp`、`src/session_network_identity.cpp`、`tests/control_tests.cpp`、`tests/orc_soul_campaign_tests.cpp`、`CMakeLists.txt`；说明见 [灵魂宝石](soul-gem.md)。Win32 Release 客户端与两个定向目标编译通过；`war3_control_tests <data-root> <fixture> item-soul` 及 `war3_orc_soul_campaign_tests <data-root> <Orc08.w3m> <new-absolute-user-dir>` 各 1 通过、0 失败。原图检查调整单位与位置并暂停其他单位；阶段检查实际交战、自然目标选择、死亡／复活、事件重入、无脚本地图、联机和原版视觉及能力语义。
+
 ### 兽族战役第六至第八章跨关（定向检查通过）
 
 路径：`tests/orc_campaign_chain_tests.cpp`、`CMakeLists.txt`、`docs/campaign-flow.md`。执行 `war3_orc_campaign_chain_tests.exe <data-root> <Orc06.w3m> <Orc07.w3m> <Orc08.w3m> <new-absolute-user-dir>`：直接完成第六章目标，第七章执行揭示剧情、交还地图宝石并进入先知区域，检查两个胜利跳转和两个英雄的等级及自定义数据在第七、八章恢复。Win32 Release 1 通过、0 失败，无 Game.dll；实际移动、战斗、完整剧情／窗口、跨进程启动及原版缓存互通待阶段验证。隔离用户目录位于 `tmp/docs-artifacts/war3/orc-campaign-chain-current/`。
@@ -718,7 +722,7 @@ python tests/generate-combined-item-fixture.py --data-root 'E:/Program Files (x8
 
 ## 灵魂宝石待验证
 
-路径：`src/entities.h`、`src/session.h`、`src/spells.h`、`src/session_soul.cpp`、`src/session_item_use.cpp`、`src/session_inventory.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_fog.cpp`、`src/session_callbacks.cpp`、`src/session_food.cpp`、`src/session_entities.cpp`、`src/session_network_identity.cpp`、`CMakeLists.txt`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`；说明见 `soul-gem.md`。Win32 Release 客户端与 control 目标编译通过，`item-soul` 最小检查 1 通过／0 失败，覆盖满库存替换、能力移除、拾取事件删除物品重入和持有者死亡；未加载 Game.dll。阶段核对施法与失效、物品转交／销毁、释放位置与路径、暂停修改、目标易主／死亡、回调重入、战争迷雾、敌方视野与原版时序；合并真实地图、双端和资源释放验证。
+路径：`src/entities.h`、`src/session.h`、`src/spells.h`、`src/session_soul.cpp`、`src/session_item_use.cpp`、`src/session_inventory.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_fog.cpp`、`src/session_callbacks.cpp`、`src/session_food.cpp`、`src/session_entities.cpp`、`src/session_network_identity.cpp`、`CMakeLists.txt`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`；说明见 `soul-gem.md`。Win32 Release 客户端与 control 目标编译通过，`item-soul` 最小检查 1 通过／0 失败，覆盖目标能力移除、脚本物品独立生命周期和携带者死亡；未加载 Game.dll。阶段核对施法与失效、物品转交／销毁、释放位置与路径、暂停修改、目标易主／死亡、回调重入、战争迷雾、敌方视野与原版时序；合并真实地图、双端和资源释放验证。
 
 ```powershell
 python tests/generate-control-fixture.py --data-root 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne' --output '../../tmp/docs-artifacts/war3/soul-gem/fixture.w3m'
