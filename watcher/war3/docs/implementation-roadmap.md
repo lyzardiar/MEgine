@@ -1,5 +1,7 @@
 # 客户端集中实现清单
 
+无源使用次数的不可消耗技能物品保留地图脚本设置的计数，DotA 魔杖按全部能量恢复生命与魔法；原版次数规则与自然充能待核对，见[魔瓶与物品目标](dota-bottle.md)。
+
 `SaveGameExists`、`CopySaveGame` 和 `RemoveSaveDirectory` 已查询、复制及清理独立用户目录中的实际存档文件；世界／脚本保存与恢复、其余存档操作及战役跨区仍待完成，见[战役存档的脚本执行状态](save-runtime-foundation.md)。
 
 JASS 越界数组与无效物品句柄已按原版入口修复；DotA 魔瓶隔离流程可收取并释放符文，回复、幻象和双倍伤害效果已接入，见[魔瓶](dota-bottle.md)。
