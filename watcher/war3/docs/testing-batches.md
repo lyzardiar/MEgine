@@ -4342,3 +4342,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 触发器对象与回调重建（待阶段验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。`STRG` 重建触发器、动作与条件句柄及表达式，恢复启用／等待设置和执行计数，并返回稳定编号映射；校验脚本来源、函数和预算。Win32 Release 客户端及 clock 检查程序编译通过；`war3_clock_tests <data-root> <output-root>` 15/15。隔离测试覆盖组合条件、回调、计数、不同句柄、字节往返、损坏拒绝，以及重建触发器后恢复计时器事件并续执行；日志 `tmp/docs-artifacts/war3/trigger-object-snapshot/clock-tests-final.log`。独立布尔表达式句柄与共享身份、跨运行时函数、真实地图、其他事件、睡眠线程和完整存档入口待阶段验证或实现。
+
+### 计时事件对象直接重建（待阶段验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。`STEV` 可在无活动事件的目标会话直接重建事件对象、触发器归属和计时器到期索引，返回事件稳定编号映射；要求目标计时器存活。Win32 Release 客户端及 clock 检查程序编译通过；`war3_clock_tests <data-root> <output-root>` 15/15。隔离测试依次恢复时钟、计时器、触发器、事件及全局引用，核对一次性／周期事件时序、回调顺序、句柄映射、归属清理及损坏／冲突拒绝；日志 `tmp/docs-artifacts/war3/timer-event-rebuild/clock-tests.log`。被销毁计时器的引用、其他事件、真实地图、复杂回调和完整存档入口待阶段验证或实现。
