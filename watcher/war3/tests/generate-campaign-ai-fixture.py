@@ -16,6 +16,7 @@ integer boardOverrideCount=0
 integer carrierOverrideCount=0
 integer stopOverrideCount=0
 boolean carrierOverridePause=false
+boolean carrierOverrideOnce=false
 endglobals
 function OverrideBoardOrder takes nothing returns nothing
     if GetIssuedOrderId()==852043 then
@@ -29,13 +30,16 @@ function InstallBoardOrderOverride takes unit target returns nothing
     call TriggerAddAction(t,function OverrideBoardOrder)
 endfunction
 function OverrideBoardCarrier takes nothing returns nothing
-    if GetIssuedOrderId()==852043 then
+    if GetIssuedOrderId()==852043 and (not carrierOverrideOnce or carrierOverrideCount==0) then
         set carrierOverrideCount=carrierOverrideCount+1
         call IssuePointOrder(GetOrderTargetUnit(),"move",6000,1500)
         if carrierOverridePause then
             call PauseUnit(GetTriggerUnit(),true)
         endif
     endif
+endfunction
+function SetBoardCarrierOnce takes boolean value returns nothing
+    set carrierOverrideOnce=value
 endfunction
 function SetBoardCarrierPause takes boolean value returns nothing
     set carrierOverridePause=value
