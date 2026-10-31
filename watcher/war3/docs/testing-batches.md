@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 空间声音播放转移（待验证）
+
+路径：`src/sound.cpp`、`tests/sound_tests.cpp`、`docs/script-sound.md`。空间声音在 `KillSoundWhenDone` 或带淡出的释放后，保留方向、音锥和锥外音量。Win32 Release 客户端和声音测试目标编译通过；`war3_sound_tests.exe <data-root> <scratch-root> sound_detached_spatial_cone` 1 通过、0 失败，以原 WAV 和静默时钟检查两种释放方式及监听者前后移动；初次测试因测试夹具意外打开本机音频设备失败，改为纯内存播放后通过。阶段核对真实音频输出、锥角和距离衰减、附着单位移动／删除、循环与淡出、脚本句柄生命周期和原版行为。
+
 ### 亡灵第五章至第八章跨关（待验证）
 
 路径：`docs/campaign-flow.md`。原图隔离会话沿用同一缓存，观察第五章、间章、第六章及第七章的换关请求，第六至八章恢复阿尔萨斯的等级及用户数据，第八章人工缩短召唤计时后记录胜利；日志位于 `tmp/docs-artifacts/war3/undead05-chain/`。阶段验证完整窗口自动切关、自然战斗／寻路、30 分钟防守、两名英雄与物品继承、原版缓存格式及战役音画。

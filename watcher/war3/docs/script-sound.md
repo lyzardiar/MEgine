@@ -37,3 +37,5 @@ python tools/verify_sound_fade_cpu.py --fixture "<FADE_FIXTURE>"
 本项证据为 `tmp/docs-artifacts/war3/audio/fade-{build.log,tests.log,tests/,cpu.json,main-bootybay.log,main-process.json,receipt.json,*-rea.json}`。W016–W018历史结果见 `batch-w016-w018.json`；W019–W021合并52项（执行44项、复用music8项）通过，本批sound10项重新执行，新夹具/源码摘要与原件CPU结果一致。原件摘要/库边界见 `audio.md` 与固定profile。
 
 `GetSoundFileDuration` 按路径从当前地图覆盖及公共归档直接读取 WAV／MP3／MIDI，使用已有音频容器解析器返回毫秒，最多缓存 1024 条结果；不启动声音或创建输出设备。空路径与缺失文件当前返回 0，损坏或不支持的格式明确报错；编码边界、缺失文件和原版时长精度待对照。
+
+空间声音释放脚本句柄时，独立播放者保留方向、音锥、锥外音量与运动参数；监听者移动后继续按原声音设置计算空间音量。`war3_sound_tests` 的 `sound_detached_spatial_cone` 使用原 WAV 和静默播放时钟检查正常释放及淡出释放后的前／后方音量，1 通过、0 失败；真实音频输出、原版锥角／距离规则和附着单位生命周期待阶段对照。
