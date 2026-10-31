@@ -3,6 +3,11 @@
 #include "campaign_profile.h"
 #include <bit>
 namespace war3 {
+namespace {
+bool savedGameExists(const std::string& name){
+    if(name.empty() || name.size()>1024 || name.find('\0')!=std::string::npos)return false;auto relative=fs::path(wide(name));if(relative.is_absolute() || relative.has_root_name() || relative.has_root_directory())return false;auto path=war3UserDirectory()/L"Saves";auto safe=[](const fs::path& part){auto text=part.wstring();if(text.empty() || text==L"." || text==L"..")return false;for(auto c:text)if(c<32 || c==L':' || c==L'*' || c==L'?' || c==L'"' || c==L'<' || c==L'>' || c==L'|')return false;return true;};auto root=GetFileAttributesW(path.c_str());if(root==INVALID_FILE_ATTRIBUTES || (root&FILE_ATTRIBUTE_REPARSE_POINT) || !(root&FILE_ATTRIBUTE_DIRECTORY))return false;for(auto& part:relative){if(!safe(part))return false;path/=part;auto attributes=GetFileAttributesW(path.c_str());if(attributes==INVALID_FILE_ATTRIBUTES || (attributes&FILE_ATTRIBUTE_REPARSE_POINT))return false;}auto attributes=GetFileAttributesW(path.c_str());return attributes!=INVALID_FILE_ATTRIBUTES && !(attributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT));
+}
+}
 void ScriptSession::bindCampaignNatives(){
     auto integer=[](jass::Value value){return std::bit_cast<std::int32_t>(value.bits);};auto protect=[this]{if(world_)validateWar3UserDirectory(world_->resources().root());};
     bind("SetCampaignAvailable","nothing",{"integer","boolean"},[this,integer,protect](auto& vm,auto a){protect();auto index=integer(a[0]);if(index<0)throw std::runtime_error("Negative campaign index");CampaignProfile profile;profile.setCampaign(campaignExpansion_,unsigned(index),a[1].bits!=0);return vm.nothing();});
@@ -12,6 +17,7 @@ void ScriptSession::bindCampaignNatives(){
     bind("SetCampaignMenuRace","nothing",{"race"},[protect](auto& vm,auto a){protect();unsigned index=a[0].bits==7?0:a[0].bits==1?1:a[0].bits==3?2:a[0].bits==2?3:a[0].bits==4?4:UINT_MAX;if(index!=UINT_MAX){CampaignProfile profile;profile.select(false,index);}return vm.nothing();});
     bind("SetCampaignMenuRaceEx","nothing",{"integer"},[integer,protect](auto& vm,auto a){protect();auto index=integer(a[0]);if(index>=0 && index<4){CampaignProfile profile;profile.select(true,unsigned(index));}return vm.nothing();});
     bind("ForceCampaignSelectScreen","nothing",{},[this](auto& vm,auto){forceCampaignSelect_=true;return vm.nothing();});
+    bind("SaveGameExists","boolean",{"string"},[protect](auto& vm,auto a){protect();try{return vm.boolean(a[0].text && savedGameExists(*a[0].text));}catch(const std::exception&){return vm.boolean(false);}});
     for(auto [name,model]:std::initializer_list<std::pair<const char*,bool>>{{"PlayCinematic",false},{"PlayModelCinematic",true}})bind(name,"nothing",{"string"},[this,model](auto& vm,auto a){auto value=a[0].text?*a[0].text:std::string{};if(value.size()>1024 || value.find('\0')!=std::string::npos)throw std::runtime_error("Invalid cinematic request");(model?modelCinematic_:movieCinematic_)=std::move(value);return vm.nothing();});
     bind("ChangeLevel","nothing",{"string","boolean"},[this](auto& vm,auto a){if(!a[0].text || a[0].text->empty() || a[0].text->size()>1024)throw std::runtime_error("Invalid next-level path");if(experimentalSelectionSync_)throw std::runtime_error("ChangeLevel is not yet supported in experimental LAN or replay sessions");nextLevel_=*a[0].text;finishGame(a[1].bits!=0,SessionExit::ChangeLevel);return vm.nothing();});
 }

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### JASS 存档存在性查询（待验证）
+
+路径：`src/session_campaign.cpp`、`src/platform.cpp`、`tests/save_exists_tests.cpp`、`docs/save-runtime-foundation.md`。`SaveGameExists` 查询独立用户目录 `Saves` 下实际文件，限制路径且拒绝重解析点；不解析文件内容。Win32 Release 客户端和测试目标编译通过，`war3_save_exists_tests <data-root> <map> <scratch-root>` 1 通过、0 失败，检查实际文件、缺失文件、大小写和分隔符、目录及越界路径。阶段核对原版名称／扩展名规则、异常文件及重解析点、多人／不同用户目录和真实存档互通；保存、加载及兽族跨区尚未实现。
+
 ### 隐藏关结束与兽族区域切换（待验证）
 
 路径：`docs/campaign-flow.md`、`docs/save-runtime-foundation.md`。人族隐藏关隔离会话直接降低传送门生命后，原触发器请求间章；兽族资料片第一章将雷克萨直接移至地精洞穴入口后，原触发器在未绑定的 `SaveGame` 处停止。日志位于 `tmp/docs-artifacts/war3/tft-ne4-next/humanx03secret-goal.log` 和 `orcx01-zone.log`。阶段核对自然防守与跨区操作、世界及脚本存档恢复、后续区域重访和实际窗口。
