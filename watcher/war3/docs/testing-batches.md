@@ -92,7 +92,7 @@
 
 ### 英雄信息与物品栏布局（待阶段验证）
 
-路径：`src/game_commands.cpp`、`src/game_inventory_layout.h`。经验条缩进并收窄；物品图标、冷却及交互共用调整后的槽位坐标；攻击范围和攻防加成的正负号独立绘制，数值按可用宽度缩放。Win32 Release 客户端增量编译和差异检查通过。游戏内 Agent 复现尝试在创建 D3D9 设备时失败，普通和参考渲染器均未进入游戏，日志位于 `tmp/docs-artifacts/war3/agent-info/layout-user-fix-1031/client.log`。待设备可用时通过 Agent 核对单件／六件物品、经验条、攻击和护甲正负加成及拖拽，补充不同窗口尺寸、四族皮肤和原版布局对照。
+路径：`src/game_commands.cpp`、`src/game_inventory_layout.h`。经验条缩进并收窄；物品图标、冷却及交互共用槽位坐标；攻击范围和攻防加成的正负号独立绘制，数值按可用宽度缩放。Win32 Release 客户端增量编译和差异检查通过。游戏内置 Agent 在 1264×921 的人族圣骑士画面核对六件物品、经验条及 `24-34 +36` 攻击数值；拖拽后前两格物品句柄交换。证据位于 `tmp/docs-artifacts/war3/agent-info/layout-recheck-1031/` 和 `layout-recheck-drag-1031/`。单件物品、护甲正负加成、冷却、不同窗口尺寸、四族皮肤和原版布局对照待阶段验证。
 
 ### 单位状态与命令的无效句柄（待阶段验证）
 
