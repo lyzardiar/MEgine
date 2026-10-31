@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 修补匠的电脑战斗施法（待阶段验证）
+
+路径：`src/session_ai_armies.cpp`、`docs/tinker.md`、`docs/ai.md`。电脑战斗决策在有可见敌人时可施放口袋工厂和进入机器人形态，复用真实技能、目标、资源及冷却流程；已有工厂时不重复召唤，机器人形态不自动反向切换。Win32 Release 客户端编译通过；隔离会话分别检查基础技能和一级工程升级后的技能变体，实际产生工厂并保持机器人形态，各 2 通过、0 失败，未加载 Game.dll。临时探针与夹具位于 `tmp/docs-artifacts/war3/hero-ability-probe/`、`tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。阶段核对真实电脑对局、原版决策和目标选择、工厂失效／技能升级、资源与冷却、不同地图及联机。
+
+
 ### 夺旗附件与死亡掉落（待验证）
 
 路径：`src/session_entities.cpp`、`src/passives.h`、`src/session_passive_info.cpp`、`src/session_weapon_effects.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`；来源和行为见[旗帜物品](flag-items.md)。Win32 Release 产品和 passive 测试目标编译通过；`flag-item` 与受影响的 `orb-purge` 各 1 通过、0 失败，未加载 Game.dll。夹具生成命令为 `python tests/generate-passive-fixture.py --data-root <data-root> --output <tmp-fixture>`；阶段核对真实夺旗地图、死亡／复活／移除／转移及事件重入、禁用与幻象、模型附件、GPU、地图覆盖和联机。
