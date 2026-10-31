@@ -1,5 +1,7 @@
 # 客户端集中实现清单
 
+普通命令、技能和物品的目标提示读取原 `SELECTTARGET` 文本；界面出现时机、视觉位置及完整原版表现待验证，见[玩家命令](player-commands.md)。
+
 单位状态标题读取原 `InfoPanelStrings.fdf` 的本地化文本与地图覆盖，实际窗口和各语言布局待验证，见[状态面板](buff-panel.md)。
 
 `UnitAddItem` 对空、移除及不兼容句柄返回失败，合法拾取保留库存与事件流程；实际地图和原版动态行为待验证，见[失效物品句柄](dota-bkb-item-handles.md)。
