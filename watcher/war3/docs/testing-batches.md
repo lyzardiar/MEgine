@@ -4410,3 +4410,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 被腐蚀金矿创建的玩家校验（待阶段验证）
 
 路径：`src/session_construction.cpp`、`tests/clock_tests.cpp`、`docs/construction.md`、`docs/implementation-roadmap.md`。`CreateBlightedGoldmine` 在创建底矿前检查玩家句柄，失败返回空且不留下中立底矿；固定版 Game.dll `0x6f1dd900` 的玩家解析分支见 `tmp/docs-artifacts/war3/blighted-mine-owner/original.txt`。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 23/23；检查覆盖空／类型不符玩家、有效矿井的共享资源和移除覆盖层。OrcX01 会话调用原 `CreateUnitAtLocSaveLast` 的 `ugol` 分支，空玩家无残留，有效玩家创建两层且共享资源，会话推进 0.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/blighted-mine-owner/`。自然采矿、重入及原版完整时序待阶段验证。
+
+### 金矿资源回调与耗尽（待阶段验证）
+
+路径：`src/session_harvest.cpp`、`tests/clock_tests.cpp`、`docs/construction.md`、`docs/implementation-roadmap.md`。金矿产出回调后重新检查原底矿的存活与资源，覆盖层被移除时仍可处理耗尽，回调补充的资源不会被耗尽。Win32 Release 客户端与 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 24/24；隔离测试覆盖创建、脚本采集命令、资源入账、底矿／覆盖层共享、耗尽和回调移除／补充。OrcX01 原图会话通过原 `CreateUnitAtLocSaveLast` 创建闹鬼金矿，人工发出采集命令后 10 秒产出 18 金，矿藏从 321 降至 303；再设为 3 后耗尽两层矿井并停止侍僧采集，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/blighted-mine-harvest/`。自然建造、窗口交互、其他矿井及原版回调时序待阶段验证。

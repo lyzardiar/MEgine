@@ -44,6 +44,56 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("created_blighted_mine_supports_harvesting_and_depletion",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type playerstate extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ type limitop extends handle
+ native ConvertLimitOp takes integer n returns limitop
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code c returns triggeraction
+ native TriggerRegisterPlayerStateEvent takes trigger t, player p, playerstate state, limitop op, real value returns event
+ native RemoveUnit takes unit u returns nothing
+ native Player takes integer id returns player
+ native SetPlayerState takes player p, playerstate state, integer value returns nothing
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native CreateBlightedGoldmine takes player p, real x, real y, real facing returns unit
+ native IssueTargetOrder takes unit u, string order, widget target returns boolean
+ native GetResourceAmount takes unit u returns integer
+ native SetResourceAmount takes unit u, integer amount returns nothing
+ globals
+ unit watchMine=null
+ boolean refill=false
+ integer observed=0
+ endglobals
+ function onGold takes nothing returns nothing
+ if refill then
+ call SetResourceAmount(watchMine,50)
+ endif
+ call RemoveUnit(watchMine)
+ set observed=observed+1
+ endfunction
+ function watch takes unit mine, boolean shouldRefill returns nothing
+ set watchMine=mine
+ set refill=shouldRefill
+ endfunction
+ function registerWatch takes nothing returns nothing
+ local trigger t=CreateTrigger()
+ call TriggerAddAction(t,function onGold)
+ call TriggerRegisterPlayerStateEvent(t,Player(0),ConvertPlayerState(1),ConvertLimitOp(4),0.0)
+ endfunction
+ native ConvertPlayerState takes integer n returns playerstate
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"created-mine-harvest.j",source,"authored created mine harvest test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto zero=vm.real(real(0)),player=vm.invoke("Player",std::array{vm.integer(0)});vm.invoke("SetPlayerState",std::array{player,vm.handle("playerstate",1),vm.integer(0)});auto mine=vm.invoke("CreateBlightedGoldmine",std::array{player,zero,zero,zero}),worker=vm.invoke("CreateUnit",std::array{player,vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("uaco"))),vm.real(real(64)),zero,zero});auto sourceId=session.units().at(mine.bits)->mineSource;vm.invoke("SetResourceAmount",std::array{mine,vm.integer(30)});require(vm.invoke("IssueTargetOrder",std::array{worker,vm.string("harvest"),vm.handle("widget",mine.bits)}).bits,"Created haunted mine rejected harvest order");session.advance(5);auto remaining=vm.invoke("GetResourceAmount",std::array{mine}).bits;require(remaining<30 && session.config().players[0].states.at(1)>0 && remaining==vm.invoke("GetResourceAmount",std::array{vm.handle("unit",sourceId)}).bits,"Harvest did not credit gold or consume shared mine resources");vm.invoke("SetResourceAmount",std::array{mine,vm.integer(3)});session.advance(5);auto cover=session.units().at(mine.bits),base=session.units().at(sourceId),acolyte=session.units().at(worker.bits);require(vm.invoke("GetResourceAmount",std::array{mine}).bits==0 && std::bit_cast<float>(cover->life.bits())<=0 && std::bit_cast<float>(base->life.bits())<=0 && acolyte->gather.phase==GatherOrder::Phase::None,"Mine depletion did not end both mine layers and worker harvest");vm.invoke("registerWatch");for(bool refill:{false,true}){vm.invoke("SetPlayerState",std::array{player,vm.handle("playerstate",1),vm.integer(0)});auto next=vm.invoke("CreateBlightedGoldmine",std::array{player,zero,zero,zero});auto nextSource=session.units().at(next.bits)->mineSource;vm.invoke("SetResourceAmount",std::array{next,vm.integer(1)});vm.invoke("watch",std::array{next,vm.boolean(refill)});require(vm.invoke("IssueTargetOrder",std::array{worker,vm.string("harvest"),vm.handle("widget",next.bits)}).bits,"Callback mine rejected harvest");session.advance(2);require(vm.global("observed").bits==unsigned(refill?2:1) && !session.units().contains(next.bits),"Gold callback did not remove cover");auto baseState=session.units().at(nextSource);require(refill?(std::bit_cast<float>(baseState->life.bits())>0 && baseState->resources==50):(std::bit_cast<float>(baseState->life.bits())<=0 && baseState->resources==0),"Gold callback changed depleted source lifecycle");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during harvest fixture");
+    });
     test("blighted_mine_rejects_invalid_owner_without_orphan",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle
