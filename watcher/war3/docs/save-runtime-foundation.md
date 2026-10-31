@@ -24,7 +24,7 @@ OrcX01 首次切换到未访问区域时，原脚本通过 `SaveAndChangeLevelBJ
 
 原图初始化会对尚未设置的复活石单位执行 `SetUnitAnimation(null, "stand")`。固定版 Game.dll 入口 `0x6f1f7230` 调用 `0x6f1f7280`，单位解析失败直接返回；客户端已按此忽略无效单位。隔离探针越过 main、创建 252 个单位并推进约 30 秒后，在另一单位命令的召唤技能参数解析处停止，见 `tmp/docs-artifacts/war3/orcx-saves-1031/animfixed.log`；零时长召唤处理补齐后，原图空闲推进至 400 秒、约 125 秒恢复玩家控制，见 `tmp/docs-artifacts/war3/orcx-saves-1031/zerolife.log`。没有验证区域切换、完整战役或原版存档兼容。
 
-模拟时间、未消费固定步进余量、暂停与游戏速度已提供独立 `SCLK` 组件，并在恢复睡眠线程前同步调度时钟；其适用条件和隔离检查见 [模拟时钟快照](simulation-clock-persistence.md)。完整存档仍需世界、对象及各组件的统一事务。
+模拟时间、未消费固定步进余量、暂停、游戏速度与昼夜时钟已提供独立 `SCLK` 组件，并在恢复睡眠线程前同步调度时钟；其适用条件和隔离检查见 [模拟时钟快照](simulation-clock-persistence.md)。完整存档仍需世界、对象及各组件的统一事务。
 
 存档事件上下文可携带文件名，`GetSaveBasicFilename` 在事件中返回去除目录和最后扩展名后的名称，事件外返回 JASS null。`notifyGameSaved` 按登记快照分发 `EVENT_GAME_SAVE`；`JSSC` 版本 2 保留睡眠动作中的存档名，版本 1 的该字段为空。固定版 Game.dll `0x6f1e4920` 检查事件 259 并取路径，`0x6f154050` 提取最后路径分隔符后的名称；原 Storm.dll 序号 570 的末次字符搜索证据为 `ev_def9431682e59233bda689fb31c9f8a2947f645205f91ae53f5facf2c939b069`。调用方传入的名称最长 1024 字节，提取部分限 259 字节；原版极长／非 ASCII 文件名及存档事件时机待对照。
 

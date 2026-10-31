@@ -4326,3 +4326,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 存档事件名称与脚本上下文
 
 路径：`src/script_state.h`、`src/session.h`、`src/session_campaign.cpp`、`src/session_threads.cpp`、`tests/session_tests.cpp`、`tests/save_exists_tests.cpp`、`docs/save-runtime-foundation.md`。存档事件分发保存文件名，`GetSaveBasicFilename` 在对应事件中返回无目录及末尾扩展名的名称；线程休眠上下文 `JSSC` 写版本 2 并读取版本 1。Win32 Release 客户端、session、save-exists 和 clock 检查程序编译通过；`war3_session_tests <enum-fixture>` 22/22、`war3_save_exists_tests <data-root> <OrcX01.w3x> <scratch-root>` 1/1、`war3_clock_tests <data-root> <output-root>` 12/12，均未加载 Game.dll；目录链接创建跳过。隔离测试覆盖中英文名称、三个并行睡眠事件、上下文编码恢复、非空旧版上下文和事件外 null；原图会话添加测试函数设置区域条目，手动分发事件后由原 `User Save` 脚本在隔离用户目录复制区域文件。日志及产物在 `tmp/docs-artifacts/war3/save-event-context/`。实际保存入口、事件时机、长文件名／其他编码、复杂重入、完整存档／载入及原版格式待批次验证或实现。
+
+### 模拟与昼夜时钟统一恢复（待阶段验证）
+
+路径：`src/session_game.cpp`、`tests/clock_tests.cpp`、`docs/simulation-clock-persistence.md`。`SCLK` 版本 2 纳入昼夜时钟及临时昼夜效果，校验地图昼夜规则后与模拟时钟一起恢复；版本 1 保持可读。Win32 Release 客户端及 clock 测试程序编译通过，`war3_clock_tests <data-root> <output-root>` 12/12，日志 `tmp/docs-artifacts/war3/combined-clock-snapshot/clock-tests.log`。隔离检查覆盖临时效果与睡眠线程续执行、旧版读取及昼夜规则损坏时拒绝且不修改目标。真实地图动态昼夜事件、完整世界对象、存档事务、保存／载入入口与原版格式待阶段验证或实现。
