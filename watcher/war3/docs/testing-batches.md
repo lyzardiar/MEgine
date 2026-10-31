@@ -4426,3 +4426,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 玩家资源状态边界与失效句柄（待阶段验证）
 
 路径：`src/session.cpp`、`tests/clock_tests.cpp`。`SetPlayerState` 与 `GetPlayerState` 对无效玩家及超过 25 的状态安全返回；黄金与木材设置按固定版的整数缩放及边界处理，资源变化事件使用处理后的值。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 27/27；隔离测试覆盖无效句柄、状态范围、资源边界和阈值事件。OrcX01 会话通过原 `Blizzard.j` 的 `AdjustPlayerStateSimpleBJ` 验证黄金和木材上下边界，并继续推进 0.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/player-resource-bounds/`。其他版本、极端整数输入的完整覆盖、自然对局及 UI 显示待阶段验证。
+
+### 采矿、资源与人口关联回归（部分通过，待阶段验证）
+
+在 `ba38712` 的同一核心版本上重新编译 Win32 Release 采矿与建造测试，使用当前生成器生成独立地图。`war3_harvest_tests` 主检查和 `depot-route` 各通过；`war3_construction_tests` 在修正测试后通过，覆盖四族工人建造、人口与占地、矿井关联、升级、修理和荒芜。首次建造检查使用错误的兽族地洞 ID `obur`，按原 `opeo` 建造列表改为 `otrb`；字符串移动命令检查临时关闭该工人的寻路，避免被夹具中的阻挡位置影响，随后恢复。失败诊断包含建筑 ID 和拒绝原因。日志及生成地图位于 `tmp/docs-artifacts/war3/economy-batch-20261101/`。此前同一版本的 clock 27/27 和 OrcX01 资源包装检查复用。自然对局、实际窗口、原版事件时序和寻路拥堵仍待验证，不将这些隔离检查作为完整经济系统验收。
