@@ -4422,3 +4422,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 人口变化与所有权转让回调重入（待阶段验证）
 
 路径：`src/session_food.cpp`、`tests/clock_tests.cpp`、`docs/construction.md`、`docs/implementation-roadmap.md`。人口占用与上限一起变化时，回调可修改后续状态；人口开关和所有权转让按各玩家、各状态的变更情况跳过过期事件。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 26/26；隔离测试通过设置单位的人口消耗和产出，覆盖 `SetUnitUseFood`、`SetUnitOwner`、回调修改及改回、未修改时事件分发，未加载 Game.dll。日志 `tmp/docs-artifacts/war3/food-state-reentry/`。原版回调时序、其他人口操作、自然对局和界面待阶段验证。
+
+### 玩家资源状态边界与失效句柄（待阶段验证）
+
+路径：`src/session.cpp`、`tests/clock_tests.cpp`。`SetPlayerState` 与 `GetPlayerState` 对无效玩家及超过 25 的状态安全返回；黄金与木材设置按固定版的整数缩放及边界处理，资源变化事件使用处理后的值。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 27/27；隔离测试覆盖无效句柄、状态范围、资源边界和阈值事件。OrcX01 会话通过原 `Blizzard.j` 的 `AdjustPlayerStateSimpleBJ` 验证黄金和木材上下边界，并继续推进 0.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/player-resource-bounds/`。其他版本、极端整数输入的完整覆盖、自然对局及 UI 显示待阶段验证。

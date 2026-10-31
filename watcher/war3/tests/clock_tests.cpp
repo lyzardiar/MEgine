@@ -44,6 +44,41 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("player_resource_natives_follow_original_bounds",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type player extends handle
+ type playerstate extends handle
+ type timer extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ type limitop extends handle
+ native Player takes integer id returns player
+ native ConvertPlayerState takes integer id returns playerstate
+ native ConvertLimitOp takes integer id returns limitop
+ native CreateTimer takes nothing returns timer
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code action returns triggeraction
+ native TriggerRegisterPlayerStateEvent takes trigger t, player p, playerstate state, limitop op, real threshold returns event
+ native SetPlayerState takes player p, playerstate state, integer value returns nothing
+ native GetPlayerState takes player p, playerstate state returns integer
+ globals
+ integer crossed=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function onLimit takes nothing returns nothing
+ set crossed=crossed+1
+ endfunction
+ function watch takes nothing returns nothing
+ local trigger t=CreateTrigger()
+ call TriggerAddAction(t,function onLimit)
+ call TriggerRegisterPlayerStateEvent(t,Player(0),ConvertPlayerState(1),ConvertLimitOp(4),999999.0)
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"player-resource-bounds.j",source,"authored player state boundary test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto player=vm.invoke("Player",std::array{vm.integer(0)}),timer=vm.invoke("CreateTimer");auto set=[&](jass::Value p,unsigned state,int value){vm.invoke("SetPlayerState",std::array{p,vm.handle("playerstate",state),vm.integer(value)});};auto get=[&](jass::Value p,unsigned state){return std::bit_cast<std::int32_t>(vm.invoke("GetPlayerState",std::array{p,vm.handle("playerstate",state)}).bits);};for(auto id:{0u,timer.bits}){auto invalid=vm.handle("player",id);set(invalid,1,500);require(get(invalid,1)==0,"Invalid player state was accepted");}for(unsigned state:{1u,2u}){for(auto [value,expected]:std::initializer_list<std::pair<int,int>>{{-1,0},{0,0},{999999,999999},{1000000,1000000},{1000001,1000000},{INT_MAX,0}}){set(player,state,value);require(get(player,state)==expected,"Original resource boundary differs");}}set(player,1,0);vm.invoke("watch");set(player,1,1000001);set(player,1,2000000);require(vm.global("crossed").bits==1 && get(player,1)==1000000,"Resource limit event or clamping differs");set(player,26,42);require(get(player,26)==0 && !session.config().players[0].states.contains(26),"Unsupported player state was retained");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during player state fixture");
+    });
     test("food_callbacks_do_not_dispatch_stale_capacity",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle
