@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 影魔灵魂与魂之挽歌连续流程（定向检查通过）
+
+路径：`CMakeLists.txt`、`tests/dota_soul_tests.cpp`。使用用户提供的 DotA_v6.83d 原图，通过酒馆购买影魔并学习支配死灵与魂之挽歌；测试调整等级、魔法、位置和目标并暂停其他单位。五次实际攻击击杀后，灵魂等级由 1 增至 6、攻击加成由 0 增至 10；按自身积累的灵魂施法后，目标生命由 5000 降至 4920。通过伤害 native 令英雄死亡后灵魂等级变为 4，死亡释放使目标生命由 4920 降至 4840；调用 ReviveHero 后等级为 4、攻击加成为 6。`war3_dota_soul_tests.exe <data-root> <dota-map>` 实际 1/1 通过，未加载 Game.dll。检查使用会话命令及 native，未覆盖实际窗口、自然等级成长、不同灵魂数量、目标密集情况、事件重入与完整对局；这些继续留待阶段验证。
+
 ### 单位范围治疗与魂之挽歌（待阶段验证）
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`tests/spell_tests.cpp`、`docs/area-spells.md`。单位可按源 AIha 的订单、治疗量、范围和施法时间使用范围治疗；治疗量为零时仍触发实际施法事件。Win32 Release 客户端及专项程序编译通过；`war3_spell_tests.exe <data-root> <fixture> unit-area-heal` 1/1 通过，检查 AIha 对自身和友军治疗、敌军不受益，以及治疗卷轴仍可正常使用。DotA_v6.83d 原图隔离会话从酒馆购买影魔、学习 A29J；探针设置十个灵魂、等级、魔法、位置和敌方目标，暂停其他单位。技能按钮可用，施法半秒内无伤害，之后地图脚本使目标生命由 5000 降至 4920 并进入冷却。会话未加载 Game.dll；证据位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-sf-requiem-effect.*`。固定版 Game.dll 摘要 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a：REA 记录 `ev_f274fa477ad92e558babd7ac6af14557d9f3b70a93a3c46e3153fc79feed84da` 中能力方法表将 AIha 原型与返回 852273 的方法关联；完整按钮和下单路径仍待原版对照。阶段核对治疗目标／范围／满血、施法中断及重入、技能等级、魂数与死亡释放、网络、实际窗口和完整对局。
