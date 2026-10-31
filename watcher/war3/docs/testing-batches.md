@@ -1,12 +1,16 @@
 # 独立客户端测试队列
 
+### 资料片人族第三章至第四章交接（待验证）
+
+路径：`docs/campaign-flow.md`。第三章隔离会话直接击杀狱卒守卫及死亡回调新增的守卫，胜利后经手动启动的间章请求第四章；第四章在独立缓存副本下恢复卡尔的等级和用户数据，瓦丝琪存在且玩家控制恢复。日志在 `tmp/docs-artifacts/war3/tft-ne4-next/`。阶段核对自然战斗与任务、瓦丝琪和库存继承、窗口自动切关、两英雄状态、音画以及第四章实际性能；160 秒空闲会话已人为结束，不作为完整对局或性能基准。
+
 ### 可行走楼梯占地方向与战役过场（待验证）
 
 路径：`src/session_destructables.cpp`、`tests/map_tests.cpp`、`docs/cliff-level.md`、`docs/campaign-flow.md`。可行走对象的路径占地和悬崖覆盖与模型方向对齐。Win32 Release 客户端和地图测试目标编译通过；`war3_map_tests <data-root> <scratch> campaign_walkable_stairs` 1 通过、0 失败，使用人族资料片第三章原图检查楼梯区域、阻挡边界及无人工移动的原过场恢复控制。相同隔离用户缓存中的原图会话推进至 400 秒，日志 `tmp/docs-artifacts/war3/tft-ne4-next/humanx03-walkable-fixed.log`。阶段对照原版桥／楼梯的旋转及行走规则，覆盖非零角度、碰撞半径、悬崖层与高度、创建／死亡／复活／移除、叠加、其他地图、窗口画面和性能。
 
 ### 缺失自定义单位基础与资料片跨关（待验证）
 
-路径：`src/object_data.*`、`src/session_commerce.cpp`、`tests/map_tests.cpp`、`docs/campaign-flow.md`。缺失基础的自定义单位／物品记录保留 ID 诊断并延迟到读取或创建该对象时报错；其他对象继续加载，技能／科技／状态对象保留原有严格处理。`HumanX03.w3x` 的自定义单位 `n003` 引用源表中不存在的 `nbsh`，地图脚本和预放置单位未引用这两个 ID；Win32 Release 客户端及地图测试编译通过，`war3_map_tests <data-root> <scratch> object_missing_base_in_campaign` 1 通过、0 失败，核对有效对象与缺失对象读取诊断。资料片人族第一、二章隔离会话经人工完成目标后请求后续关卡，第三章恢复 5 级及用户数据；第三章过场的瓦丝琪未进入移动区域，350 秒仍未恢复控制，记录 `tmp/docs-artifacts/war3/tft-ne4-next/humanx03-path-debug.log`。阶段核对原版缺失对象处理、多级继承／重复 ID／实际引用、自定义地图、真实窗口与战役过场移动。
+路径：`src/object_data.*`、`src/session_commerce.cpp`、`tests/map_tests.cpp`、`docs/campaign-flow.md`。缺失基础的自定义单位／物品记录保留 ID 诊断并延迟到读取或创建该对象时报错；其他对象继续加载，技能／科技／状态对象保留原有严格处理。`HumanX03.w3x` 的自定义单位 `n003` 引用源表中不存在的 `nbsh`，地图脚本和预放置单位未引用这两个 ID；Win32 Release 客户端及地图测试编译通过，`war3_map_tests <data-root> <scratch> object_missing_base_in_campaign` 1 通过、0 失败，核对有效对象与缺失对象读取诊断。资料片人族第一、二章隔离会话经人工完成目标后请求后续关卡，第三章恢复 5 级及用户数据；第三章楼梯占地方向已修正，原过场在约 120 秒恢复玩家控制，记录 `tmp/docs-artifacts/war3/tft-ne4-next/humanx03-walkable-fixed.log`。阶段核对原版缺失对象处理、多级继承／重复 ID／实际引用、自定义地图、真实窗口与战役过场移动。
 
 ### 无效单位颜色与资料片战役交接（待验证）
 
