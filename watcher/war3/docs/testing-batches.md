@@ -4358,3 +4358,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 游戏事件对象与原图用户存档触发器（待阶段验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`tests/save_exists_tests.cpp`、`docs/save-runtime-foundation.md`。`SGEV` 重建游戏事件编号、登记顺序和触发器归属，返回事件句柄映射；支持与已重建计时事件共存。Win32 Release 客户端及 clock／save-exists 测试程序编译通过；clock 15/15、OrcX01 原图存档事件 1/1，未加载 Game.dll。隔离会话检查游戏事件顺序、与计时事件共存、销毁清理及损坏拒绝；原图测试重建触发器和游戏事件，测试函数设置区域名、目录及区域计数，手动分发保存事件后由原 `User Save` 动作复制隔离区域文件。目录链接创建跳过；日志 `tmp/docs-artifacts/war3/game-event-rebuild/clock-tests.log`、`orcx-tests-final.log`。真实保存／载入、世界对象、其他事件与跨区恢复待实现或阶段验证。
+
+### 已恢复睡眠线程的连续快照（待阶段验证）
+
+路径：`src/jass_runtime.cpp`、`tests/jass_thread_tests.cpp`、`docs/save-runtime-foundation.md`。已恢复且尚未唤醒的线程可再次采集；混合已恢复线程和现有运行线程时保留调用帧、待完成 native 与剩余时间。Win32 Release 客户端及 JASS 线程／session／clock 目标编译通过，检查分别 26/26、22/22、15/15；隔离检查验证二次恢复、继续执行和混合线程。OrcX01 原图开局四条睡眠线程在重建时钟、计时器和触发器后恢复，再编码内容一致；未唤醒原图线程或恢复世界。30 秒线程中的 `TriggerWaitForSound` 仍不支持采集，150 秒无活动线程。日志 `tmp/docs-artifacts/war3/orcx-state-audit/sleep-audit-final.log`、`jass-thread-tests-final.log`、`session-tests.log`、`clock-tests.log`。声音等待、native 调用栈及完整保存／载入仍待实现。
