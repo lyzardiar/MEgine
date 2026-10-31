@@ -4418,3 +4418,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 资源入账事件重入（待阶段验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_harvest.cpp`、`tests/clock_tests.cpp`、`docs/construction.md`、`docs/implementation-roadmap.md`。资源入账后当前资源事件可能修改累计采集状态；分发累计事件前检查该玩家对应状态是否已发生变化，避免分发过期事件并保留同步脚本结果。Win32 Release 客户端和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 25/25；隔离测试覆盖清零、清零后恢复、原值不变及修改其他资源，验证触发次数与最终状态。OrcX01 隔离会话的人工采矿、入账及矿井耗尽仍通过，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/resource-state-reentry/`。木材、其他资源操作、原版回调时序和自然对局待阶段验证。
+
+### 人口变化与所有权转让回调重入（待阶段验证）
+
+路径：`src/session_food.cpp`、`tests/clock_tests.cpp`、`docs/construction.md`、`docs/implementation-roadmap.md`。人口占用与上限一起变化时，回调可修改后续状态；人口开关和所有权转让按各玩家、各状态的变更情况跳过过期事件。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 26/26；隔离测试通过设置单位的人口消耗和产出，覆盖 `SetUnitUseFood`、`SetUnitOwner`、回调修改及改回、未修改时事件分发，未加载 Game.dll。日志 `tmp/docs-artifacts/war3/food-state-reentry/`。原版回调时序、其他人口操作、自然对局和界面待阶段验证。

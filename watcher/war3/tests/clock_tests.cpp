@@ -44,6 +44,81 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("food_callbacks_do_not_dispatch_stale_capacity",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type playerstate extends handle
+ type limitop extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ native Player takes integer id returns player
+ native ConvertPlayerState takes integer id returns playerstate
+ native ConvertLimitOp takes integer id returns limitop
+ native SetPlayerState takes player p, playerstate state, integer value returns nothing
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native SetUnitUseFood takes unit u, boolean value returns nothing
+ native SetUnitOwner takes unit u, player p, boolean changeColor returns nothing
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code action returns triggeraction
+ native TriggerRegisterPlayerStateEvent takes trigger t, player p, playerstate state, limitop op, real threshold returns event
+ globals
+ integer mode=0
+ integer observedUsed=0
+ integer observedCapacity=0
+ integer observedNewUsed=0
+ integer observedNewCapacity=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function usedChanged takes nothing returns nothing
+ set observedUsed=observedUsed+1
+ if mode == 3 or mode == 5 then
+ call SetPlayerState(Player(0),ConvertPlayerState(4),2)
+ call SetPlayerState(Player(1),ConvertPlayerState(5),0)
+ call SetPlayerState(Player(1),ConvertPlayerState(4),0)
+ if mode == 5 then
+ call SetPlayerState(Player(0),ConvertPlayerState(4),0)
+ call SetPlayerState(Player(1),ConvertPlayerState(5),2)
+ call SetPlayerState(Player(1),ConvertPlayerState(4),3)
+ endif
+ elseif mode < 2 then
+ call SetPlayerState(Player(0),ConvertPlayerState(4),2)
+ if mode == 1 then
+ call SetPlayerState(Player(0),ConvertPlayerState(4),0)
+ endif
+ endif
+ endfunction
+ function capacityChanged takes nothing returns nothing
+ set observedCapacity=observedCapacity+1
+ endfunction
+ function newUsedChanged takes nothing returns nothing
+ set observedNewUsed=observedNewUsed+1
+ endfunction
+ function newCapacityChanged takes nothing returns nothing
+ set observedNewCapacity=observedNewCapacity+1
+ endfunction
+ function registerWatch takes integer selected returns nothing
+ local trigger used=CreateTrigger()
+ local trigger capacity=CreateTrigger()
+ local trigger newUsed=CreateTrigger()
+ local trigger newCapacity=CreateTrigger()
+ set mode=selected
+ call TriggerAddAction(used,function usedChanged)
+ call TriggerAddAction(capacity,function capacityChanged)
+ call TriggerAddAction(newUsed,function newUsedChanged)
+ call TriggerAddAction(newCapacity,function newCapacityChanged)
+ call TriggerRegisterPlayerStateEvent(used,Player(0),ConvertPlayerState(5),ConvertLimitOp(0),1.0)
+ call TriggerRegisterPlayerStateEvent(capacity,Player(0),ConvertPlayerState(4),ConvertLimitOp(0),1.0)
+ call TriggerRegisterPlayerStateEvent(newUsed,Player(1),ConvertPlayerState(5),ConvertLimitOp(4),1.0)
+ call TriggerRegisterPlayerStateEvent(newCapacity,Player(1),ConvertPlayerState(4),ConvertLimitOp(4),1.0)
+ endfunction
+ )jass";for(int mode:{0,1,2,3,4,5}){auto module=Module::compile(Program::parse({{"food-state-reentry.j",source,"authored food event reentry test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto zero=vm.real(real(0)),player=vm.invoke("Player",std::array{vm.integer(0)}),worker=vm.invoke("CreateUnit",std::array{player,vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("hfoo"))),zero,zero,zero});auto unit=session.units().at(worker.bits);unit->foodMade=3;vm.invoke("SetPlayerState",std::array{player,vm.handle("playerstate",5),vm.integer(unit->foodUsed)});vm.invoke("SetPlayerState",std::array{player,vm.handle("playerstate",4),vm.integer(3)});auto nextPlayer=vm.invoke("Player",std::array{vm.integer(1)});for(unsigned state:{4u,5u})vm.invoke("SetPlayerState",std::array{nextPlayer,vm.handle("playerstate",state),vm.integer(0)});vm.invoke("registerWatch",std::array{vm.integer(mode)});if(mode>=3)vm.invoke("SetUnitOwner",std::array{worker,nextPlayer,vm.boolean(false)});else vm.invoke("SetUnitUseFood",std::array{worker,vm.boolean(false)});require(vm.global("observedUsed").bits==1 && vm.global("observedCapacity").bits==unsigned(mode==1 || mode==2 || mode==4 || mode==5?1:0),"Food callback dispatched stale capacity event");require(session.config().players[0].states.at(4)==(mode==0 || mode==3?2:0),"Food callback capacity was not retained");if(mode>=3){auto expected=mode==3?0u:1u;require(vm.global("observedNewUsed").bits==expected && vm.global("observedNewCapacity").bits==expected && session.config().players[1].states.at(5)==(mode==3?0:2) && session.config().players[1].states.at(4)==(mode==3?0:3),"Transfer callback dispatched stale recipient food events");}}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during food callback fixture");
+    });
     test("resource_callbacks_do_not_dispatch_stale_mined_total",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle
