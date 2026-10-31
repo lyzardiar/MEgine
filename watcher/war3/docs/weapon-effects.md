@@ -22,3 +22,7 @@
 源依据为本机Warcraft III 1.27.0.52240的AbilityData／AbilityMetaData、UnitWeapons／UnitMetaData、各族与物品能力配置、ItemData及UI/UnitEditorData叠加位。Game.dll SHA-256为e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a。REA只做定向静态读取，GetMissileSpeed入口为0x6f3f8980；这不证明原客户端完整弹道或玩法语义。源成员归档／摘要、提取脚本、原生入口与REA证据位于tmp/docs-artifacts/war3/weapon-effects/。运行产品不加载原版Game.dll，也不解包地图。
 
 Win32 Release 产品增量编译和差异检查通过；此前功能的原始构建记录为该目录 build.log 及 final-build.log。未执行玩法夹具、三图、窗口／GPU、声音／AI或性能回归；待测内容登记于 testing-batches.md，旧 MEngine 队列保持延期。
+
+旧版闪电之球 `olig` 同时持有 `AIlb` 伤害加成及 `AIlp` 净化子能力。选中该物品作为本次攻击法球时，命中携带并消费对应子能力，沿用净化的状态移除、减速及召唤物伤害流程；禁用子能力、物品移除或其他法球优先时不触发。子能力按攻击发射时快照，等级随弹道保留。原版源表 `AIlp` 的普通／英雄持续时间为 3／0.3 秒，召唤物伤害为 35；数据来源和成员摘要见上方源清单。当前每次合格命中触发的概率、子能力独立装备、多个法球的优先级、魔免和事件时序仍需原版对照。
+
+Win32 Release 客户端与 passive 测试程序编译通过；执行 `war3_passive_tests.exe <data-root> <fixture> orb-purge`，1 通过、0 失败，无 Game.dll，检查装备加成、命中净化、能力禁用、丢弃和另一法球优先。召唤物伤害、源概率、长距离弹道、实际画面及联机仍待阶段验证。

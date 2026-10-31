@@ -36,7 +36,7 @@ struct CombatProjectile {
     std::uint64_t id=0,lavaTicket=0,targetLifeRevision=0;
     std::uint32_t source=0,target=0,sourceType=0,owner=0,ability=0,visualAbility=0,visualLevel=0;
     unsigned weapon=0,abilityLevel=0;
-    std::uint32_t orbProc=0;
+    std::uint32_t orbProc=0,orbProcLevel=1;
     float damage=0,travelled=0,distance=0,startHeight=0,endHeight=0,stealthDamage=0,spiderDuration=-1,spiderHeroDuration=-1;
     PathMovement startMovement=PathMovement::Ground,endMovement=PathMovement::Ground;
     WorldPoint start,position,endpoint;

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 旧版闪电之球净化（待验证）
+
+路径：`src/passives.h`、`src/combat.h`、`src/session.h`、`src/session_passive_info.cpp`、`src/session_spell_info.cpp`、`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`；来源和行为见[毒素攻击与物品法球](weapon-effects.md)。Win32 Release 客户端及 passive 测试程序编译通过；`orb-purge` 定向检查 1 通过、0 失败，无 Game.dll。阶段核对原版触发概率、召唤物伤害、能力独立来源和禁用、发射后丢弃／易主、多个法球／攻击技能、魔免／护盾／事件时序、自定义等级和实际窗口／联机。
+
 ### 召唤钻石与黑暗召唤（待验证）
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_teleport.cpp`、`tests/control_tests.cpp`；源字段和行为见[群体传送](teleport.md)。Win32 Release 客户端及控制测试目标编译通过；`dark-summoning` 定向检查 1 通过、0 失败，无 Game.dll，覆盖原物品的地点、延迟、人数上限、阵营／距离、冷却及召回护符。阶段核对目标及落点顺序、DataC／自定义覆盖、单位类别、支付／打断／事件、实际窗口、小地图、源视觉与音效及联机同步。

@@ -427,7 +427,7 @@ class ScriptSession {
     void weaponEffectInfo(PassiveInfo& passive);
     void refreshWeaponEffects(UnitState& unit);
     void clearWeaponEffects(UnitState& unit);
-    const PassiveInfo* inventoryOrb(const UnitState& unit);
+    const PassiveInfo* inventoryOrb(const UnitState& unit,std::uint32_t* sourceItem=nullptr);
     void prepareWeaponEffects(const UnitState& unit,const UnitState& target,CombatProjectile& projectile);
     void weaponEffectsBeforeHit(const CombatProjectile& projectile,std::uint32_t target);
     void weaponEffectsAfterHit(const CombatProjectile& projectile,std::uint32_t target,float damage,std::uint64_t targetRevision);
