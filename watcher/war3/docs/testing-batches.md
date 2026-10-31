@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 战役区域存档复制（待验证）
+
+路径：`src/session_campaign.cpp`、`tests/save_exists_tests.cpp`、`docs/save-runtime-foundation.md`。`CopySaveGame` 在独立用户目录中复制实际文件，创建目标目录并通过临时文件覆盖发布；名称与重解析点检查共用于存档存在性查询。Win32 Release 客户端和测试目标编译通过；`war3_save_exists_tests <data-root> <map> <scratch-root>` 对生成夹具及原版 `OrcX01.w3x` 各 1 通过、0 失败，检查 JASS 包装的实际复制、覆盖、缺失源和越界路径。阶段核对原版扩展名／覆盖规则、重解析点、并发及失败恢复、保存事件与原版文件互通；`SaveGame`、`LoadGame`、目录操作和跨区恢复仍未实现。
+
 ### JASS 存档存在性查询（待验证）
 
 路径：`src/session_campaign.cpp`、`src/platform.cpp`、`tests/save_exists_tests.cpp`、`docs/save-runtime-foundation.md`。`SaveGameExists` 查询独立用户目录 `Saves` 下实际文件，限制路径且拒绝重解析点；不解析文件内容。Win32 Release 客户端和测试目标编译通过，`war3_save_exists_tests <data-root> <map> <scratch-root>` 1 通过、0 失败，检查实际文件、缺失文件、大小写和分隔符、目录及越界路径。阶段核对原版名称／扩展名规则、异常文件及重解析点、多人／不同用户目录和真实存档互通；保存、加载及兽族跨区尚未实现。

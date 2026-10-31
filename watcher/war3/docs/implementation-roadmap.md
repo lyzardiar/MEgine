@@ -1,6 +1,6 @@
 # 客户端集中实现清单
 
-`SaveGameExists` 已查询独立用户目录中的实际存档文件；世界／脚本保存与恢复、其余存档操作及战役跨区仍待完成，见[战役存档的脚本执行状态](save-runtime-foundation.md)。
+`SaveGameExists` 和 `CopySaveGame` 已查询及复制独立用户目录中的实际存档文件；世界／脚本保存与恢复、其余存档操作及战役跨区仍待完成，见[战役存档的脚本执行状态](save-runtime-foundation.md)。
 
 JASS 越界数组与无效物品句柄已按原版入口修复；DotA 魔瓶隔离流程可收取并释放符文，回复、幻象和双倍伤害效果已接入，见[魔瓶](dota-bottle.md)。
 
