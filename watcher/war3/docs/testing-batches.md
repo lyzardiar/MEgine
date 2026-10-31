@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### JASS 睡眠续执行的引用映射（待阶段验证）
+
+路径：`src/jass_runtime.h/.cpp`、`tests/jass_thread_tests.cpp`；边界见 [战役存档的脚本执行状态](save-runtime-foundation.md)。Win32 Release 客户端与线程测试目标编译通过；线程测试 21/21，引用映射相关定向检查 4/4 通过。隔离 JASS 线程将重复的本地单位句柄映射到稳定编号，再映射为另一运行时的不同句柄；恢复后读取该对象并调用目标运行时的脚本函数。缺少映射、零值和相同静态类型编号冲突会拒绝恢复。游戏会话对象恢复、跨静态类型身份一致性、事件上下文、多个线程及持久化仍待实现；该检查不代表可保存战役或兼容原版存档。
+
 ### JASS 睡眠续执行基础（待阶段验证）
 
 路径：`src/jass_runtime.*`、`src/jass_threads.*`、`src/session_threads.cpp`、`src/session_ai_natives.cpp`、`tests/jass_thread_tests.cpp`；限制见 [战役存档的脚本执行状态](save-runtime-foundation.md)。Win32 Release 客户端和线程测试目标编译通过；线程回归 18/18，随后针对扩充后的睡眠恢复／活动句柄／线程上下文检查 3/3 通过。原版 Prologue01 在更新睡眠 native 后完成 20 秒静音模拟，未加载 Game.dll，日志 `tmp/docs-artifacts/war3/prologue-continuation/sleep-continuation.log`。阶段核对持续等待、取消、不同源码与损坏数据、会话回调、多个线程和 AI；真实会话上下文与句柄、文件持久化及完整存档恢复仍未实现。
