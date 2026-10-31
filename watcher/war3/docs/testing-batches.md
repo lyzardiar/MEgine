@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 人族第六章结局与后续战役（待阶段验证）
+
+路径：`CMakeLists.txt`、`tests/human_campaign_chain_tests.cpp`；说明见 [战役流程](campaign-flow.md)。Win32 Release 定向目标编译通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> victory` 与 `defeat` 各 1 通过、0 失败，未加载 Game.dll。胜利场景由测试创建并击杀 100 个僵尸，检查原图计数、胜利对话、过场跳过、Human07 启动及阿尔萨斯等级／用户数据继承；失败场景调用地图动作预置 99 次，再实际完成最后一次转换并检查失败对话及重开。使用新建隔离用户目录；阶段核对自然完整对局、双方进度竞争、正常播放过场、输入与 UI、存档物品及原版一致性。
+
 ### AI 黑暗转换（待阶段验证）
 
 路径：`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [黑暗转换](dark-conversion.md)。AI 使用源能力的目标规则寻找附近可见且未受转换的村民，并沿既有施法流程执行。Win32 Release 客户端及 CampaignAI 测试编译通过；`war3_campaign_ai_tests <data-root> <fixture.w3m> ai-conversion` 和 `war3_campaign_ai_tests <data-root> human06-ai-conversion` 各 1 通过、0 失败，未加载 Game.dll。夹具覆盖非村民、已有转换状态及友方村民，原图在 384.5 秒观察到玛尔加尼斯来源僵尸及任务计数增长。阶段核对原版决策优先级、施法被打断、敌我及自定义目标、目标易主／死亡、多人同步与完整胜负流程。
