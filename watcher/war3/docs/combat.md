@@ -16,3 +16,5 @@ Win32 Release 客户端及移动测试目标编译通过。BootyBay `chase` 定�
 战斗、选择、召唤与目标获取事件按玩家／单位和事件类型索引候选；玩家事件和单位事件按句柄注册顺序合并为本次派发快照。触发器销毁后对应索引按需清理，回调中新注册的事件从下一次派发开始生效，已销毁事件通过既有生命周期检查跳过。事件数据和实际回调仍由原会话持有，索引随切图释放。
 
 Win32 Release 客户端与 passive 测试目标编译通过。运行 `python watcher/war3/tests/generate-passive-fixture.py --data-root <data-root> --output tmp/docs-artifacts/war3/event-index/fixture.w3m`，再运行 `watcher/war3/build/windows-x86/bin/Release/war3_passive_tests.exe <data-root> tmp/docs-artifacts/war3/event-index/fixture.w3m event-index`，1/1 通过，覆盖命令事件交错顺序、过滤、重入注册／销毁、选择、召唤、目标获取和伤害；`spider-attack` 1/1 通过。真实地图帧耗时、长期触发器创建／销毁、回调改变所有权及原版事件次序仍待阶段验证；本次未执行性能基准。
+
+带接近距离的目标追击在直线接近点不可用或路径终点仍处于距离外时，按固定顺序检查目标周围最多 15 个可站立点；只接受实际终点处于要求距离内的路径，无合适候选时沿用原有路线结果。该路径用于攻击及现有其他追击消费者；地点移动和攻击移动的零距离路径不变。Win32 Release 原图 `human06-approach` 在约 452.75 秒摧毁受阻建筑；`war3_movement_avoidance_tests <data-root> <fixture> approach|sealed|chase` 分别检查绕开障碍、封闭后打开障碍、目标移动与单位避让，各 1 通过、0 失败。密集战斗、长时间不可达、动态路径变化、其他移动类型及原版精度待阶段验证。
