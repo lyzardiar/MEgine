@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 地图被动目标 none 与钢背兽战意（待阶段验证）
+
+路径：`src/session_passive_info.cpp`、`tests/dota_heroes_tests.cpp`。被动目标集合只有 `none` 时不匹配任何单位；其他目标集合继续使用已有单位类别和关系筛选。DotA_v6.83d 的战意辅助光环 `A0EF` 在无叠层时使用 `none`，此前与辅助单位重合的英雄仍获得该光环状态；隔离会话修复后不再获得，施法叠层后英雄移动光环由 0 增至 0.03、敌方未获得，到期后移速加成和光环状态清除。测试手动移动、设置等级并重置冷却，未加载 Game.dll；满血背部减伤问题仍见后续记录。Win32 Release 客户端、DotA 英雄及 passive 测试目标编译通过；`bristle-spells` 通过，原生命／魔法之泉 `fountain` 1/1 通过，新生成夹具 `tmp/docs-artifacts/war3/warpath-aura/fixture.w3m` 的 `player-aura` 3/3 通过。旧夹具缺少 `A0PL`，该检查报能力添加失败；使用当前生成器产生的夹具后通过。`none` 与其他目标标志组合、其他地图、原版时序和实际窗口待阶段核对。
+
 ### DotA 钢背兽被动与受伤事件（继续跟进）
 
 路径：`tests/dota_heroes_tests.cpp`、`src/session_damage.cpp`、`src/session_callbacks.cpp`。Win32 Release 测试目标增量编译通过；`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> bristle-spells` 通过，隔离会话在学习战意后核对施法加攻与到期恢复，学习刚背兽后以 1500／2000 生命模拟 100 点伤害，正面／侧面／背面实际损失 100／92／84，未加载 Game.dll。相同背面伤害在满血时损失 100：当前伤害事件在扣血前执行，地图脚本的补血被 `unitLife` 上限截断。该现象已复现，但原版生命值截断、受伤事件次序及满血实际效果尚未经对照；不能据此更改通用伤害时序或判定原图缺陷。继续核对原版、致死／递归伤害与多个触发器，并完成自然对局和窗口验证。补充同一隔离流程：三次背面命中达到地图脚本的累计伤害条件后，额外刺针扫射使攻击者生命下降；重新编译并执行 `bristle-spells` 通过。固定版 `Game.dll` 的 `SetUnitState` 入口 `0x6f1f7a80` 调用 `0x6f67c2b0`，状态 0 通过对象虚表 `+0x124` 写入；已识别的 CUnit 虚表对应 `0x6f67b310`，再进入包含上下界比较的 `0x6f03afb0`。REA 证据 `ev_1a33715d1917cde71f5ff4e9807d70286cc254581713cb0c56470ae456b5962b`、`ev_78b7ee91b5f2876fc3c30352e332e4af81a9e422e413d542d63bcaed2c311cbe`、`ev_16ca0c66a43641672533720033c0a464f33cdeac3fa575c5ba9df85050a69bcb`；静态证据尚不能确定动态对象、这些界限的语义及受伤事件扣血顺序。
