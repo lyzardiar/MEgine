@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄信息与物品栏布局（待阶段验证）
+
+路径：`src/game_commands.cpp`、`src/game_inventory_layout.h`。经验条缩进并收窄；物品图标、冷却及交互共用调整后的槽位坐标；攻击范围和攻防加成的正负号独立绘制，数值按可用宽度缩放。Win32 Release 客户端增量编译和差异检查通过。游戏内 Agent 复现尝试在创建 D3D9 设备时失败，普通和参考渲染器均未进入游戏，日志位于 `tmp/docs-artifacts/war3/agent-info/layout-user-fix-1031/client.log`。待设备可用时通过 Agent 核对单件／六件物品、经验条、攻击和护甲正负加成及拖拽，补充不同窗口尺寸、四族皮肤和原版布局对照。
+
 ### 单位状态与命令的无效句柄（待阶段验证）
 
 路径：`src/session_entities.cpp`、`src/session_illusion.cpp`、`tests/control_tests.cpp`。当前命令、用户数据、人口、等级和幻象查询对空、已移除或错误类型句柄返回零／false；用户数据设置对这些句柄无操作，有效单位继续读写实时状态。固定版 Game.dll 的入口与无效分支证据为 `ev_1535bfc14e39709ed72c58329afa4c251793450312e104c08a7ba3419d3246f4`、`ev_e14dad146645c7161997e1163c72f28cd8c0023c1b2359141d60c46de0dcc9ae`、`ev_282673e194901cc002b3e3a9ade6fc241f49bf9cb9e4510a33ef320340b7c772`。Win32 Release 客户端及控制／商店测试程序编译通过；`war3_control_tests <data-root> <control-fixture> unit-state-handles` 1 通过、0 失败，覆盖空、已移除、错误类型与正常状态及实际保持命令；`war3_commerce_tests <data-root> <commerce-fixture-stationary.w3m>` 通过，覆盖正常商店、英雄及幻象脚本事件。未加载 Game.dll；实际自定义地图、死亡与复活、负人口和原版细节仍待阶段验证。
