@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### DotA 巫妖技能连续流程（待阶段验证）
+
+路径：`tests/dota_heroes_tests.cpp`。原图隔离会话酒馆购买巫妖后设置等级、坐标、生命／魔法与目标；冰霜新星造成 125 点伤害并减速，冰霜护甲提高友军护甲、令近战攻击者减速且分别到期恢复，黑暗仪式牺牲友军并恢复魔法，连环霜冻伤及两个敌人。Win32 Release 测试目标编译通过；`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> lich-spells` 通过，未加载 Game.dll。测试手动重置冷却并暂停其他单位；多等级、目标类别、完整弹射与技能时序、真实对局、窗口、音效和原版数值待阶段核对。
+
 ### 单位距离事件空间索引（待阶段验证）
 
 路径：`src/session_spatial_events.cpp`、`tests/generate-live-world-fixture.py`、`tests/live_world_tests.cpp`。多个单位距离事件共享本次空间更新的单位网格，候选通过原距离判定和句柄排序；单个事件、网格范围大于直接扫描成本的事件及非有限中心坐标使用直接扫描。每次事件派发后使网格失效，后续事件重新读取回调后的单位位置与生命周期；区域事件继续扫描现有区域成员。Win32 Release 客户端及两个测试目标编译通过；原 BootyBay 脚本夹具生成 80 个额外单位，检查前一个距离事件移动后一个事件的中心、静止不重复和离开后重新进入，通过；`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> storm-spells` 通过，均未加载 Game.dll。夹具由 `python tests/generate-live-world-fixture.py --data-root <data-root> --output <tmp-fixture>` 生成，记录在 `tmp/docs-artifacts/war3/spatial-index/`。真实地图大量事件、边界坐标、复杂回调及帧时间／内存仍待阶段验证；未做性能基准，不能据此给出帧率提升。
