@@ -4542,3 +4542,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 兽族第五章至第八章格罗姆缓存（部分验证，引用待查）
 
 路径：`tests/orc_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release `war3_orc_campaign_chain_tests <data-root> chapter5 <new-absolute-user-dir>` 的缓存及胜利检查 1 通过、0 失败；第五章胜利后，第八章独立会话恢复等级 7、用户数据 2468 的格罗姆，使用灵魂宝石并进入净化过场后跳过，胜利和返回请求完成。`bj_lastLoadedUnit` 指向恢复的英雄，而原图脚本通过 `GetLastCreatedUnit` 将 `udg_Grom` 指向萨满（`oshm`），测试输出 PENDING；原版客户端、引用后续影响、自然战斗和窗口仍待核查。未加载 Game.dll；日志 `tmp/docs-artifacts/war3/orc05-long/grom-skip-final.log`。本项为验证补充，不计功能批次。
+
+### 失效单位的定时生命操作（待批次验证）
+
+路径：`src/session_illusion.cpp`、`tests/clock_tests.cpp`，说明见[幻象与物品](illusions-items.md)。`UnitApplyTimedLife`、`UnitPauseTimedLife` 对空、已移除及错误类型的单位直接返回；有效单位继续使用既有定时生命流程。Win32 Release 客户端与 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33，覆盖无效单位及有效单位暂停、恢复与到期死亡；日志 `tmp/docs-artifacts/war3/timed-life-invalid/clock-tests.log`。原版 1.27 两个 native 句柄解析失败直接返回的只读反汇编证据见功能说明；原图触发器、事件顺序与实际窗口待批次验证。
