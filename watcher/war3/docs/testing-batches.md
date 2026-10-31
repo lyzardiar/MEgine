@@ -4270,3 +4270,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### AI 等待载具时重编组
 
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。跨岛进攻等待购买或可用载具时，重新初始化突击需求保留待续运目标及队长编组。Win32 Release 客户端和 CampaignAI 测试程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-purchase-reform`、`island-purchase-pending`、`island-purchase-cancel`、`island-purchase-target-death`、`island-purchase-busy`、`island-purchase-attack`、`island-naval-reform`、`island-naval-reform-mixed` 各 1/1，`armies` 2/2，共 10/10。新增场景在等待购买时调用重编组，之后完成购买和跨岛送达，模拟时间 27.25 秒；预置单位、商店和目标，不能代表自然对局。日志在 `tmp/docs-artifacts/war3/ai-purchase-reform/`，夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`。混合兵种待购、目标／载具变化的复杂回调、真实地图、原版调度与联机待批次验证。
+
+### AI 待运混编需求
+
+路径：`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。待续运期间，逐项添加突击需求不会移除尚未指定需求的既有兵种；已指定的零或正数量继续约束该兵种，已预约波次的成员沿用运输生命周期。Win32 Release 客户端与 CampaignAI 检查程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-purchase-reform-mixed`、`island-purchase-reform-zero`、`island-purchase-reform`、`island-purchase-pending`、`island-purchase-cancel`、`island-purchase-target-death`、`island-purchase-busy`、`island-naval-reform`、`island-naval-reform-mixed` 各 1/1，`armies` 2/2，共 11/11。新场景在载具待购时暂停火枪手、逐项重建步兵与火枪手需求，再恢复并验证两者均跨岛到达；另一模式验证显式零需求移除后可重新入组。夹具预置单位、商店及目标；日志 `tmp/docs-artifacts/war3/ai-purchase-mixed/`，夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`。复杂需求变动、死亡／易主、真实战役、联机及原版策略待批次验证。
