@@ -48,6 +48,7 @@ public:
     ThreadId start(const std::string& function,std::span<const Value> arguments={});
     ThreadId start(const Value& code,std::span<const Value> arguments={});
     ThreadId startDiscard(const std::string& function,std::span<const Value> arguments={});
+    ThreadId startDiscard(const Value& code,std::span<const Value> arguments={});
     void sleep(double seconds);
     void waitThread(ThreadId thread);
     ExternalWaitToken prepareExternalWait();

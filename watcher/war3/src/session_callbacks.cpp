@@ -23,6 +23,7 @@ bool ScriptSession::triggerEvaluate(std::uint32_t handle) {
 }
 jass::ThreadId ScriptSession::triggerExecute(std::uint32_t handle,bool wait) {
     auto& trigger=std::get<Trigger>(object(runtime_.handle("trigger",handle),NativeKind::Trigger).state);++trigger.executions;auto actions=trigger.actions;bool serial=wait || trigger.waitOnSleeps;
+    if(serial && actions.size()==1 && alive(actions.front(),NativeKind::Action) && !runtime_.threadsPaused()){auto code=std::get<ScriptCallback>(objects_[actions.front()-handleBase].state).code;if(!code.codeOwner || code.codeOwner==&runtime_){auto context=contexts_.empty()?ScriptContext{}:contexts_.back();context.trigger=handle;contexts_.push_back(context);ContextPop guard{contexts_};return runtime_.startDiscard(code);}}
     return runtime_.start([this,handle,actions=std::move(actions),serial]{auto context=contexts_.empty()?ScriptContext{}:contexts_.back();context.trigger=handle;contexts_.push_back(context);ContextPop guard{contexts_};for(auto id:actions){if(!alive(handle,NativeKind::Trigger))break;if(!alive(id,NativeKind::Action))continue;auto code=std::get<ScriptCallback>(objects_[id-handleBase].state).code;if(serial)runtime_.invoke(code);else runtime_.start(code);}});
 }
 void ScriptSession::fire(std::uint32_t id,ScriptContext context) {

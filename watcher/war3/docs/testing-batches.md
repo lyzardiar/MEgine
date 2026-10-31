@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 默认单动作触发器续执行（待阶段验证）
+
+路径：`src/jass_runtime.h/.cpp`、`src/session_callbacks.cpp`、`tests/session_tests.cpp`、`tests/session_thread_tests.cpp`、`tests/live_world_tests.cpp`；范围见 [脚本等待与协作线程](script-threads.md)及[战役存档状态](save-runtime-foundation.md)。Win32 Release 客户端和四个相关检查目标编译通过；会话检查 21/21、会话线程检查 6/6、JASS 线程定向检查 2/2、序章原图队列触发器检查 1/1 通过，均未加载 Game.dll。序章检查在同一会话的 120 秒静音模拟后重置队列、启动原触发器，睡眠中编码／恢复并观察队列从 1 变为 0；DotA 原图完成初始化及 2 秒静音模拟，日志在 `tmp/docs-artifacts/war3/single-serial-trigger/`。恢复期间触发器销毁、更多事件／回调与原版时序、跨运行时动作、多动作队列及完整存档仍待阶段核对。
+
 ### 睡眠脚本状态字节组件（待阶段验证）
 
 路径：`src/snapshot_codec.h`、`src/jass_runtime.h/.cpp`、`src/session.h`、`src/session_threads.cpp`、`tests/jass_thread_tests.cpp`、`tests/session_tests.cpp`；范围见 [战役存档的脚本执行状态](save-runtime-foundation.md)。Win32 Release 客户端及两个测试目标编译通过；会话检查 20/20、线程定向检查 2/2 通过，未加载 Game.dll。隔离会话将两条睡眠动作编码、写入并读取 `tmp/docs-artifacts/war3/session-sleep-codec/sleeping-threads.bin` 后恢复执行；另检查事件字段、选择视图的编码往返、空字符串／null、函数和句柄映射、数据截断／篡改、源码不匹配及带有效摘要的超限长度。恢复选择视图的实际脚本、其他上下文字段、跨进程对象恢复、资源预算边界、实际地图和原版格式待阶段验证；该组件未连接游戏保存或读取入口。
