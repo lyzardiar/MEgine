@@ -1,13 +1,18 @@
 # 独立客户端测试队列
 
+### 永久生命上限物品的负值（待阶段验证）
+
+路径：`src/session_item_use.cpp`、`src/session_equipment.cpp`、`docs/equipment.md`。永久生命上限能力接受有界负值，并将同一增量应用于最大生命和当前生命；最大生命下限为 1，当前生命沿用既有死亡和事件流程。Win32 Release 客户端编译通过；DotA_v6.83d 原图输入 `-ap` 并通过实际酒馆购买变体精灵 O00P，地图一次性物品 I00E 生效后英雄生命与上限均为 511；隔离会话将英雄升至 10 级、学习 A0G6，对脚本创建的敌人施法，目标位移约 145、技能进入冷却，未加载 Game.dll。探针与日志见 `tmp/docs-artifacts/war3/hero-ability-probe/dota-morphling-purchase.cpp`、`dota-morphling-purchase.log`。英雄升级、魔法和目标由探针设置；真实窗口、伤害归因、低生命／上限边界、复活、事件顺序及原版数值仍待阶段对照。
+
+
 ### 无状态的酸性炸弹地图变体（待阶段验证）
 
-路径：`src/session_alchemist.cpp`、`docs/alchemist.md`。当移动、攻击、护甲和周期伤害均为零时，允许酸性炸弹没有 Buff；命中不产生原生状态，费用、冷却、事件和地图脚本仍沿用施法链路。Win32 Release 客户端编译通过；DotA_v6.83d 原图会话中将 A0G6 授予圣骑士，对敌方单位发出目标施法并进入冷却，未加载 Game.dll；探针及日志见 `tmp/docs-artifacts/war3/hero-ability-probe/dota-acid-script.cpp`、`dota-acid-script.log`。该检查未证明地图脚本的完整伤害及位移。使用原英雄 O00P 时，地图给予的 I00E 含 -2000 生命上限能力，当前物品参数校验报错，真实英雄流程仍阻塞；负生命上限效果与原版行为待实现并核对。阶段验证原版酸性炸弹、非零效果缺失 Buff 的拒绝、命中事件、零伤害／短时长及窗口、联机和原版行为。
+路径：`src/session_alchemist.cpp`、`docs/alchemist.md`。当移动、攻击、护甲和周期伤害均为零时，允许酸性炸弹没有 Buff；命中不产生原生状态，费用、冷却、事件和地图脚本仍沿用施法链路。Win32 Release 客户端编译通过；DotA_v6.83d 原图会话中将 A0G6 授予圣骑士，对敌方单位发出目标施法并进入冷却，未加载 Game.dll；探针及日志见 `tmp/docs-artifacts/war3/hero-ability-probe/dota-acid-script.cpp`、`dota-acid-script.log`。该检查未证明地图脚本的完整伤害及位移。原英雄 O00P 的一次性生命上限物品已接入，原图酒馆购买与技能施放已在隔离会话检查；负值边界和原版行为仍待核对。阶段验证原版酸性炸弹、非零效果缺失 Buff 的拒绝、命中事件、零伤害／短时长及窗口、联机和原版行为。
 
 
 ### 地图技能的原型命令（待阶段验证）
 
-路径：`src/session_spell_info.cpp`、`docs/spells.md`。非 Channel 技能的命令字段为空时从源能力原型读取命令；非空地图命令继续按原值解析，Channel 使用自身数据字段。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话分别创建英雄并学习 A1SW、A06V、A0G2、A01F、A02A，对合法单位或地点施法，五项均进入冷却，未加载 Game.dll。探针和日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-inherited-orders.cpp`、`dota-inherited-orders.log`；探针直接创建单位并调整等级／魔法，不证明完整技能脚本效果。A0G6 的无状态变体已进入施法流程；原英雄初始化仍被负生命上限物品阻塞。阶段核对源表缺值、显式命令覆盖、自定义原型、伤害／事件、实际窗口、联机及原版行为。
+路径：`src/session_spell_info.cpp`、`docs/spells.md`。非 Channel 技能的命令字段为空时从源能力原型读取命令；非空地图命令继续按原值解析，Channel 使用自身数据字段。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话分别创建英雄并学习 A1SW、A06V、A0G2、A01F、A02A，对合法单位或地点施法，五项均进入冷却，未加载 Game.dll。探针和日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-inherited-orders.cpp`、`dota-inherited-orders.log`；探针直接创建单位并调整等级／魔法，不证明完整技能脚本效果。A0G6 的无状态变体及原英雄初始化已进入实际施法流程；原版精度待核对。阶段核对源表缺值、显式命令覆盖、自定义原型、伤害／事件、实际窗口、联机及原版行为。
 
 
 ### 地图 Channel 技能的基础命令读取（待阶段验证）
