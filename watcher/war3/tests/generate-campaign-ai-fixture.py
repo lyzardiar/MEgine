@@ -13,6 +13,9 @@ unit hall=null
 unit worker=null
 destructable tree=null
 integer boardOverrideCount=0
+integer carrierOverrideCount=0
+integer stopOverrideCount=0
+boolean carrierOverridePause=false
 endglobals
 function OverrideBoardOrder takes nothing returns nothing
     if GetIssuedOrderId()==852043 then
@@ -24,6 +27,34 @@ function InstallBoardOrderOverride takes unit target returns nothing
     local trigger t=CreateTrigger()
     call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_ISSUED_TARGET_ORDER)
     call TriggerAddAction(t,function OverrideBoardOrder)
+endfunction
+function OverrideBoardCarrier takes nothing returns nothing
+    if GetIssuedOrderId()==852043 then
+        set carrierOverrideCount=carrierOverrideCount+1
+        call IssuePointOrder(GetOrderTargetUnit(),"move",6000,1500)
+        if carrierOverridePause then
+            call PauseUnit(GetTriggerUnit(),true)
+        endif
+    endif
+endfunction
+function SetBoardCarrierPause takes boolean value returns nothing
+    set carrierOverridePause=value
+endfunction
+function InstallBoardCarrierOverride takes unit target returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_ISSUED_TARGET_ORDER)
+    call TriggerAddAction(t,function OverrideBoardCarrier)
+endfunction
+function OverrideBoardStop takes nothing returns nothing
+    if GetIssuedOrderId()==851972 then
+        set stopOverrideCount=stopOverrideCount+1
+        call IssuePointOrder(GetTriggerUnit(),"move",3200,2050)
+    endif
+endfunction
+function InstallBoardStopOverride takes unit target returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_ISSUED_ORDER)
+    call TriggerAddAction(t,function OverrideBoardStop)
 endfunction
 function config takes nothing returns nothing
 endfunction
