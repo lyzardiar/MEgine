@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 物品栏标题与单次物品计数（待验证）
+
+路径：`src/game_loading.*`、`src/game_view.cpp`、`docs/unit-combat-panel.md`。选中具有物品栏的单位时显示源 `INVENTORY` 标题，正次数物品显示数字并限制在格内。Win32 Release 客户端编译通过；游戏内 Agent 选择携带 1 次药水和 4 次权杖的圣骑士，1264×921 画面可见标题及计数，证据位于 `tmp/docs-artifacts/war3/agent-info/layout-inventory-title/`。阶段核对无物品栏／多个选中单位、商店买家、四族皮肤、地图覆盖、长数字、不同窗口比例及原版画面。
+
 ### 脚本计数物品与 DotA 魔杖（待验证）
 
 路径：`src/session_teleport.cpp`、`tests/dota_rune_tests.cpp`、`docs/dota-bottle.md`。技能物品的源使用次数为零且不可消耗时，脚本计数不再在技能生效事件前扣减；源定义有限次数或可消耗物品继续扣减。Win32 Release 客户端及测试目标编译通过；`war3_dota_rune_tests <data-root> <DotA_v6.83d.w3x> wand` 1 通过、0 失败，以原图验证 5 点和 1 点能量恢复、清零与冷却；`wand-charge` 1 通过、0 失败，以原图检查附近敌方施法充能、远处敌方和友方施法不充能及随后使用；`regen` 和 `war3_spell_tests <data-root> <fixture> chain-dispel` 各 1 通过、0 失败，覆盖魔瓶回复符和有次数的中和权杖。阶段核对原版动态设置次数、消耗／非消耗物品与事件次序、战争迷雾／能量上限、完整购买及真实窗口、联机与重入。
