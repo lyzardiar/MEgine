@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 零距离脚本波形技能（待阶段验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_area_spells.cpp`、`docs/area-spells.md`。冲击波／腐臭蜂群原型的距离为零时，仅在伤害为零且没有原生弹道时允许施法，正常触发技能事件且不创建需要距离计算的波形。Win32 Release 客户端编译通过；DotA_v6.83d 原图酒馆购买虚空假面后可生成五个学习按钮，升至 10 级学习 A0LK，发出点目标命令后由地图脚本移动约 566 距离并进入冷却。隔离地图中原版 AOsh 对目标造成 75 点伤害；上述会话未加载 Game.dll。探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-void-timewalk.cpp`、`dota-void-timewalk-after.log`、`source-wave-damage.cpp` 和 `source-wave-damage.log`。DotA 野性之斧 A0O1 隔离施法已进入冷却，完整伤害和视觉尚未确认；英雄等级、魔法与施法目标由探针设置。阶段核对其他零值组合、伤害与弹道边界、回调时序、实际窗口及原版行为。
+
+
 ### 幻象复制与魔法免疫目标（待阶段验证）
 
 路径：`src/session_spells.cpp`、`docs/illusions-items.md`。幻象复制类型允许选择魔法免疫单位，仍执行英雄类别、敌友、自身及其他目标规则；其他魔法技能保留免疫检查。DotA_v6.83d 原图 A0G8 的技能说明注明无视魔法免疫。Win32 Release 客户端编译通过；原图隔离会话从酒馆购买变体精灵并学习 A0G8，分别对设置为敌方和友方的魔免英雄生成幻象，回归后英雄到达幻象位置、回归能力移除且复制能力恢复；同一会话中非英雄、自身和普通风暴之锤对魔免目标均被拒绝。未加载 Game.dll，探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-morphling-magic-immunity.cpp`、`dota-morphling-magic-immunity-*.log`。英雄等级、魔法、目标、免疫和友方关系由探针设置；原版幻象魔棒的免疫规则、其他免疫类型、技能事件、伤害倍率与实际窗口待阶段对照。
