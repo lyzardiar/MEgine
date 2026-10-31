@@ -4530,3 +4530,7 @@ Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-ro
 Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33；隔离检查覆盖非默认字段、相同类型单位错误映射、损坏快照拒绝及拒绝时不改变已检查单位。OrcX01 静音模拟 150 秒的 455 个单位经单位核心、物品与外观恢复后重编码一致，含 13 个死亡单位；未加载 Game.dll。原始日志及探针 `tmp/docs-artifacts/war3/unit-visual-snapshot/`，实际窗口和恢复后持续运动尚待验证。
 
 本批范围 `c68375f`、`86f75bc` 与本项：当前版本 clock 33/33，OrcX01 150 秒的 488 个单位句柄、455 个活动单位、31 个物品句柄、任务和 7 个 widget 事件完成组件映射及相应快照往返。完整单位订单、状态效果、动画、其他对象引用、真实存档入口及续玩仍待实现；上述组件验证不代表完整读档或画面验收。
+
+### 人族第六章自然失败回归（验证补充）
+
+路径：`tests/human_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release 测试目标编译通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> natural-defeat` 1 通过、0 失败。原图空闲模拟至 1947.25 秒，AI 转换 65 名村民，玩家建筑从非零降至零，失败对话与重开请求完成；未加载 Game.dll。探针及日志 `tmp/docs-artifacts/war3/human06-long/`。没有注入任务计数、击杀或移动；实际窗口、玩家操作、获胜及原版时序仍待验证。此项为既有战役任务的验证补充，不计入功能批次。
