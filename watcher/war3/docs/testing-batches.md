@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 缺失自定义单位基础与资料片跨关（待验证）
+
+路径：`src/object_data.*`、`src/session_commerce.cpp`、`tests/map_tests.cpp`、`docs/campaign-flow.md`。缺失基础的自定义单位／物品记录保留 ID 诊断并延迟到读取或创建该对象时报错；其他对象继续加载，技能／科技／状态对象保留原有严格处理。`HumanX03.w3x` 的自定义单位 `n003` 引用源表中不存在的 `nbsh`，地图脚本和预放置单位未引用这两个 ID；Win32 Release 客户端及地图测试编译通过，`war3_map_tests <data-root> <scratch> object_missing_base_in_campaign` 1 通过、0 失败，核对有效对象与缺失对象读取诊断。资料片人族第一、二章隔离会话经人工完成目标后请求后续关卡，第三章恢复 5 级及用户数据；第三章过场的瓦丝琪未进入移动区域，350 秒仍未恢复控制，记录 `tmp/docs-artifacts/war3/tft-ne4-next/humanx03-path-debug.log`。阶段核对原版缺失对象处理、多级继承／重复 ID／实际引用、自定义地图、真实窗口与战役过场移动。
+
 ### 无效单位颜色与资料片战役交接（待验证）
 
 路径：`src/session_visual.cpp`、`tests/passive_tests.cpp`、`docs/campaign-flow.md`。`SetUnitColor` 对空、已移除及不兼容单位句柄直接返回；有效单位照常设置颜色。Win32 Release 客户端和 passive 测试目标编译通过；`war3_passive_tests <data-root> <passive-fixture> invalid-unit` 4 通过、0 失败。暗夜精灵第八章直接完成建筑目标后请求终章，终章静音隔离会话运行至返回；人族第一章越过此前空单位颜色异常并推进至 400 秒。阶段核对真实战斗、自动切关、画面、无效颜色与原版边界、玩家队伍颜色和不同单位生命周期。日志位于 `tmp/docs-artifacts/war3/tft-ne4-next/`。

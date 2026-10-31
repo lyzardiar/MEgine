@@ -29,6 +29,7 @@ class ObjectData {
     mutable std::map<std::pair<int,int>,std::vector<std::uint32_t>> randomItems_;
     mutable std::map<std::tuple<int,int,char>,std::vector<std::uint32_t>> randomUnits_;
     size_t unknown_=0;
+    std::map<std::uint32_t,std::uint32_t> missingBases_;
     void load(Archives& archives,const char* member,const char* table);
     void overlay(Archives& archives,const char* member,bool ability=false,bool upgrade=false,bool buff=false);
 public:
@@ -53,5 +54,6 @@ public:
     float number(std::uint32_t id,const std::string& table,const std::string& key,float fallback=0) const;
     const std::vector<ObjectOverride>& objects() const {return objects_;}
     size_t unmappedChanges() const {return unknown_;}
+    const auto& missingBases() const {return missingBases_;}
 };
 }
