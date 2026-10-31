@@ -4298,3 +4298,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### AI 延迟卸载与队长撤退合并批次（2026-11-01）
 
 范围：`b9c5c64`、`b8a7d45`、`4327160`。同一工作区版本的 Win32 Release 客户端与 CampaignAI 检查程序编译通过；22 种模式共 24/24 通过，未加载 Game.dll。覆盖远海延迟卸载、主动与自动撤退、重复命令、载具暂停恢复与改派、双乘员、普通水运、续运和队长编组。各模式日志位于 `tmp/docs-artifacts/war3/ai-retreat-batch/`，夹具为 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`；使用预置单位与载具。海上船只的远海撤退、眩晕、载具／乘员失效、复杂回调、真实战役、联机和原版时序仍待阶段验证。
+
+### AI 水上载具远海撤退
+
+路径：`src/session.h`、`src/session_ai.cpp`、`src/session_ai_transport.cpp`、`src/session_transport.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`、`docs/transport.md`。水上载具取消波次返航时按水路连通和出发地选岸；退回卸载携带出发陆地区域约束，暂停恢复时复用选岸。Win32 Release 客户端、CampaignAI 与 transport 检查程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-naval-offshore-retreat`、`island-naval-offshore-paused`、`island-naval`、`island-naval-multiwave`、`island-naval-retreat`、`island-naval-paused-retreat`、`island-naval-reorder`、`island-naval-reform-mixed`、`island-flight-captain-home`、`island-flight-retreat-paused`、`island-flight-retreat-paused-reassign`、`island-carrier-callback-multiple` 各 1/1，`armies`、`captain-home` 各 2/2；`war3_transport_tests <data-root> <fixture> <mode>` 的 `goal-drop`、`grid-drop`、`flow`、`boarding-route` 各 1/1，共 20/20。BootyBay 预置船与两名无敌队员，远海调用回家及暂停三秒后恢复，分别在模拟时间 38／41 秒左右卸至与出发地连通的陆地区域并回家；逐名在卸载后的首个观察步核对连通。`goal-drop` 在隔离场景验证卸载目标区域约束。日志 `tmp/docs-artifacts/war3/ai-naval-offshore-retreat/`，夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m` 与 `tmp/docs-artifacts/war3/transport/fixture.w3m`。多个不连通候选岸、动态阻挡、多船、取消回调改派、失败重试、真实战役、原版策略与联机待批次验证。
