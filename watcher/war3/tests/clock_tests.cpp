@@ -44,6 +44,37 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("unit_identities_rebuild_handles_without_population_events",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ native Player takes integer id returns player
+ native SetPlayerTechResearched takes player p, integer id, integer level returns nothing
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native SetUnitX takes unit u, real x returns nothing
+ native KillUnit takes unit u returns nothing
+ native RemoveUnit takes unit u returns nothing
+ native GetUnitTypeId takes unit u returns integer
+ globals
+ unit hero=null
+ unit soldier=null
+ unit dead=null
+ unit removed=null
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ set hero=CreateUnit(Player(0),'Hpal',0.,0.,270.)
+ set soldier=CreateUnit(Player(1),'hfoo',128.,0.,90.)
+ set dead=CreateUnit(Player(0),'hfoo',256.,0.,0.)
+ set removed=CreateUnit(Player(0),'hfoo',384.,0.,0.)
+ call SetUnitX(soldier,999999.)
+ call KillUnit(dead)
+ call RemoveUnit(removed)
+ endfunction
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"unit-identity.j",source,"unit identity recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),restored=make();original->startMain();original->advance(.25);auto& a=original->runtime();auto& b=restored->runtime();auto identity=[](std::string_view,std::uint32_t id){return id;};auto identities=original->encodeUnitIdentities(identity),globals=a.encodeGlobals(identity),random=original->encodeRandomState();rejects([&]{original->encodeUnitIdentities([](std::string_view,std::uint32_t){return 1u;});},"identity mapping");auto damaged=identities;damaged.back()^=1;rejects([&]{restored->rebuildUnitIdentities(damaged);},"digest");require(restored->units().empty(),"Invalid identity digest changed target");rejects([&]{restored->rebuildUnitIdentities(identities);},"clock mismatch");restored->restoreSimulationClock(original->encodeSimulationClock());SnapshotWriter invalid(1024);invalid.u32(tag("SUID"));invalid.u32(1);invalid.text(original->world()->resources().mapDigest(),64);invalid.u64(std::bit_cast<std::uint64_t>(original->simulationTime()));invalid.u32(1);invalid.u32(77);invalid.u32(1);invalid.u32(0);invalid.u32(0);invalid.u32(0);invalid.u32(0);invalid.u32(0);auto invalidType=sealSnapshot(invalid.finish(),1024);rejects([&]{restored->rebuildUnitIdentities(invalidType);},"identity values");require(restored->units().empty(),"Invalid unit type changed target");auto players=restored->encodePlayerStates();auto mapped=restored->rebuildUnitIdentities(identities);require(mapped.size()==4 && restored->units().size()==3 && restored->encodePlayerStates()==players,"Unit identity creation changed population or lifetime");auto decode=[&](std::string_view type,std::uint32_t id){return type=="unit" && mapped.contains(id)?mapped.at(id):0u;};b.restoreGlobals(globals,decode);auto hero=b.global("hero"),soldier=b.global("soldier"),dead=b.global("dead"),removed=b.global("removed");require(restored->units().at(hero.bits)->type==ObjectData::code("Hpal") && restored->units().at(soldier.bits)->owner==1 && restored->units().at(soldier.bits)->x.bits()==real(999999).bits() && restored->units().contains(dead.bits) && !restored->units().contains(removed.bits) && !b.invoke("GetUnitTypeId",std::array{removed}).bits,"Unit identities or tombstone differ");auto reverse=[&](std::string_view,std::uint32_t id){for(auto [old,current]:mapped)if(current==id)return old;return 0u;};require(restored->encodeUnitIdentities(reverse)==identities,"Unit identity snapshot did not round trip");restored->restoreRandomState(random);require(restored->encodeRandomState()==random,"Unit creation random state was not restored");rejects([&]{restored->startMain();},"Unit state recovery is incomplete");require(!restored->mainStarted(),"Incomplete unit recovery started simulation");auto empty=make(),emptyTarget=make();auto emptyIds=empty->encodeUnitIdentities({}),emptyClock=empty->encodeSimulationClock();emptyTarget->rebuildUnitIdentities(emptyIds);rejects([&]{emptyTarget->startMain();},"Unit state recovery is incomplete");rejects([&]{emptyTarget->restoreSimulationClock(emptyClock);},"fresh quiescent");auto normal=make(),seeded=make();auto grant=[&](ScriptSession& session){auto& vm=session.runtime();vm.invoke("SetPlayerTechResearched",std::array{vm.invoke("Player",std::array{vm.integer(0)}),vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("Robk"))),vm.integer(1)});};grant(*normal);grant(*seeded);auto& n=normal->runtime();auto transformed=n.invoke("CreateUnit",std::array{n.invoke("Player",std::array{n.integer(0)}),n.integer(std::bit_cast<std::int32_t>(ObjectData::code("ohun"))),n.real(real(0)),n.real(real(0)),n.real(real(0))});require(normal->units().at(transformed.bits)->type==ObjectData::code("otbk"),"Chaos fixture did not transform normal creation");SnapshotWriter seed(1024);seed.u32(tag("SUID"));seed.u32(1);seed.text(seeded->world()->resources().mapDigest(),64);seed.u64(std::bit_cast<std::uint64_t>(seeded->simulationTime()));seed.u32(1);seed.u32(55);seed.u32(1);seed.u32(ObjectData::code("ohun"));seed.u32(0);seed.u32(0);seed.u32(0);seed.u32(0);auto seedMap=seeded->rebuildUnitIdentities(sealSnapshot(seed.finish(),1024));require(seeded->units().at(seedMap.at(55))->type==ObjectData::code("ohun"),"Recovery repeated chaos transformation");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded during unit identity recovery");
+    });
     test("quests_restore_objectives_globals_and_tombstones",[&]{
         std::string source=R"jass(type destructable extends handle
  type quest extends handle

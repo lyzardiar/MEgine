@@ -4512,3 +4512,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 路径：`src/session.h`、`src/session_quest.cpp`、`tests/clock_tests.cpp`，说明见[战役存档状态](save-runtime-foundation.md)。`SQST` 重建任务／目标及销毁句柄，恢复内容、状态、顺序和 HUD 提示，提供脚本句柄映射并刷新窗口版本。Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 31/31；隔离检查覆盖全局引用、错误归属／摘要拒绝与恢复后修改，OrcX01 150 秒的 1 个任务及 1 个目标重编码一致，探针 `tmp/docs-artifacts/war3/quest-object-snapshot/probe/`。真实窗口、原图任务事件、完整世界和存档入口待批次验证或实现。
 
 本批合并验证范围为 `8432af7`、`187ce75` 和本次任务状态恢复。相同核心版本的 clock 31/31、session 23/23、JASS 线程 27/27、会话线程 6/6；OrcX01 150 秒任务状态往返及附加触发器等待恢复分别通过，探针位于 `tmp/docs-artifacts/war3/quest-object-snapshot/probe/` 和 `tmp/docs-artifacts/war3/thread-wait-snapshot/probe/`。原图完整等待链、资源交易税率与联机、任务窗口画面、完整对象和实际存档加载仍待后续验证或实现。
+
+### 单位句柄与类型重建（待批次验证）
+
+路径：`CMakeLists.txt`、`src/session.h`、`src/session.cpp`、`src/session_game.cpp`、`src/session_entities.cpp`、`src/session_unit_identity.cpp`、`tests/clock_tests.cpp`，说明见[战役存档状态](save-runtime-foundation.md)。`SUID` 重建单位类型／归属／位置及已移除句柄，不恢复完整单位状态，并阻止不完整会话启动。Win32 Release 客户端和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 32/32；隔离检查覆盖全局引用、人口、随机数、错误类型／摘要、地图外位置及变形。OrcX01 150 秒的 488 个单位句柄联动物品、任务、可破坏物和 7 个 widget 事件完成组件映射；探针 `tmp/docs-artifacts/war3/unit-identity-snapshot/probe/`。生命／能力／命令及关联状态、完整存档、自然对局与实际画面待实现或批次验证。

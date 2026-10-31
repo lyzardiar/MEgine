@@ -134,7 +134,7 @@ class ScriptSession {
     void transferAutomaticSelection(std::uint32_t source,std::uint32_t target,bool keepSource,bool ownerOnly=false);
     void selectionEvent(std::uint32_t unit,unsigned player,bool selected,std::uint64_t revision);
     std::unique_ptr<World> world_;
-    bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false;
+    bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false,unitRecoveryIncomplete_=false;
     std::unique_ptr<SoundScene> audio_;
     std::unique_ptr<MusicScene> music_;
     std::unique_ptr<MusicScene> thematicMusic_;
@@ -1082,7 +1082,7 @@ class ScriptSession {
     ObjectData& definitions();
     UnitState& unit(jass::Value value);
     ItemState& item(jass::Value value);
-    jass::Value createUnit(std::uint32_t owner,std::uint32_t type,jass::Real x,jass::Real y,jass::Real facing,int reservedFood=0,const UnitState* illusionSource=nullptr,bool completed=true);
+    jass::Value createUnit(std::uint32_t owner,std::uint32_t type,jass::Real x,jass::Real y,jass::Real facing,int reservedFood=0,const UnitState* illusionSource=nullptr,bool completed=true,bool restoring=false);
     jass::Value createItem(std::uint32_t type,jass::Real x,jass::Real y);
     SoundScene& requireAudio();
     MusicScene& requireMusic();
@@ -1344,6 +1344,8 @@ public:
     Bytes encodeTimerEvents(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeUnitIdentities(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildUnitIdentities(std::span<const std::uint8_t> bytes);
     Bytes encodeUnitCooldowns(const jass::StableHandleMap& encodeHandle) const;
     void restoreUnitCooldowns(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeQuests(const jass::StableHandleMap& encodeHandle) const;
