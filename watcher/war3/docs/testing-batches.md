@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+### AI 黑暗转换（待阶段验证）
+
+路径：`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [黑暗转换](dark-conversion.md)。AI 使用源能力的目标规则寻找附近可见且未受转换的村民，并沿既有施法流程执行。Win32 Release 客户端及 CampaignAI 测试编译通过；`war3_campaign_ai_tests <data-root> <fixture.w3m> ai-conversion` 和 `war3_campaign_ai_tests <data-root> human06-ai-conversion` 各 1 通过、0 失败，未加载 Game.dll。夹具覆盖非村民、已有转换状态及友方村民，原图在 384.5 秒观察到玛尔加尼斯来源僵尸及任务计数增长。阶段核对原版决策优先级、施法被打断、敌我及自定义目标、目标易主／死亡、多人同步与完整胜负流程。
+
 ### 黑暗转换召唤事件（待阶段验证）
 
-路径：`src/session_spell_effects.cpp`、`tests/generate-control-fixture.py`、`tests/control_tests.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [黑暗转换](dark-conversion.md)。黑暗转换产物记录施法来源及能力，并通过召唤事件进入地图脚本。Win32 Release 客户端与两个测试目标编译通过；`war3_control_tests <data-root> <fixture.w3m> conversion` 和 `war3_campaign_ai_tests <data-root> human06-conversion` 各 1 通过、0 失败，未加载 Game.dll。原图 314.75 秒检查隐藏施法者被地图脚本移除、僵尸转归玩家 2；夹具覆盖召唤上下文、回调移除／转移和施法者提前移除。阶段核对原版事件与死亡时序、来源死亡／易主、回调重入、自定义对象、联机及完整战役；玛尔加尼斯主动转换及任务计数仍待实现验证。
+路径：`src/session_spell_effects.cpp`、`tests/generate-control-fixture.py`、`tests/control_tests.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [黑暗转换](dark-conversion.md)。黑暗转换产物记录施法来源及能力，并通过召唤事件进入地图脚本。Win32 Release 客户端与两个测试目标编译通过；`war3_control_tests <data-root> <fixture.w3m> conversion` 和 `war3_campaign_ai_tests <data-root> human06-conversion` 各 1 通过、0 失败，未加载 Game.dll。原图 314.75 秒检查隐藏施法者被地图脚本移除、僵尸转归玩家 2；夹具覆盖召唤上下文、回调移除／转移和施法者提前移除。阶段核对原版事件与死亡时序、来源死亡／易主、回调重入、自定义对象、联机及完整战役；玛尔加尼斯主动转换及任务计数的定向检查见“AI 黑暗转换”。
 
 ### 目标追击接近点（待阶段验证）
 
