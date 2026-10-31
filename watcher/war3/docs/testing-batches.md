@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 单位脚本等比缩放（待阶段验证）
+
+路径：`src/session_visual.cpp`、`tests/game_flow_tests.cpp`、`docs/live-world.md`。`SetUnitScale` 按原版首参数对三个轴统一缩放；脚本其余参数不参与模型或范围检查。1.27 `Game.dll` 注册入口 `0x6f1f7a40` 的静态指令只读取首个实数并向模型传递一个缩放值，取证脚本 `tmp/docs-artifacts/war3/ui-report-current/scale-source.py`。Win32 Release 客户端和测试程序增量编译通过，测试程序有既有 signed/unsigned 警告。阶段执行 `war3_game_flow_tests.exe <data-root> <fixture.w3m>`，核对三个参数不同、零及极值、阴影、选中圈、变形、存取与真实窗口和原版画面；负数及超限数值的原版行为尚未核对。
+
 ### 无效单位外观接口（待阶段验证）
 
 路径：`src/session_visual.cpp`、`tests/game_flow_tests.cpp`、`docs/live-world.md`。颜色、缩放、飞行高度及动画设置在单位无效时返回；飞行高度查询返回零。固定版 Game.dll 的十个接口入口及空对象分支已静态核对，原始脚本位于 `tmp/docs-artifacts/war3/ui-report-current/visual-disasm.py`。Win32 Release 客户端及 game-flow 测试程序编译通过，测试目标出现既有 signed/unsigned 警告。阶段执行 `tests/generate-game-flow-fixture.py --data-root <data-root>` 和 `war3_game_flow_tests.exe <data-root> <fixture.w3m>`；检查空、已移除、错误类型与有效单位、实际地图脚本和原版行为。本次未运行专项及客户端画面。
