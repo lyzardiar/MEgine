@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 库存失效句柄（待阶段验证）
+
+路径：`src/session_inventory.cpp`、`tests/undead_finale_tests.cpp`、`docs/campaign-undead08-inventory.md`。库存查询和 `UnitRemoveItem` 对空、已移除与不兼容句柄按接口返回默认值或跳过；有效物品继续执行掉落。Win32 Release 客户端与 `war3_undead_finale_tests <data-root> <Undead08.w3m> <new-absolute-user-dir>` 编译并执行，1 通过、0 失败；覆盖失效句柄、有效查询与掉落，并以缩短计时器推进原图胜利。阶段核对物品转移／移除回调、单位死亡／变形、库存能力变化、联机和原版事件时序。
+
 ### 状态提示框高度（待阶段验证）
 
 路径：`src/game_buff_panel.cpp`、`docs/buff-panel.md`。标题和说明按实际换行计算高度，说明上限 30 行；Win32 Release 客户端编译通过。本次启动未能创建 Direct3D 9 设备，日志 `tmp/docs-artifacts/war3/buff-tooltip-auto-current.log`，没有实际画面。阶段通过游戏内 Agent 检查短／多行／超长描述、空标题、不同分辨率及四族与地图覆盖，对照原版布局和裁剪；超过行数上限的滚动尚未实现。

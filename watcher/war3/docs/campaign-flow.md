@@ -1,5 +1,7 @@
 # 战役入口与关卡切换
 
+暗夜精灵第六章的隔离会话直接击毁恶魔之门、将伊利丹移入古尔丹之颅区域，再击杀提克迪奥斯；原图两段过场后进入胜利对话并指向 `NightElf06Interlude.w3m`。第七章另以五秒计时触发原图终局，结果为胜利并指向 `BonusCredits.w3m`。日志和临时探针位于 `tmp/docs-artifacts/war3/tft-ne4-next/nightelf06-quest.log`、`nightelf07-goal.log`；两次均直接调整目标或计时，未覆盖自然战斗、完整防守或实际窗口。
+
 亡灵第七章胜利后的隔离会话将克尔苏加德的六件测试物品保存至独立 gamecache；第八章原脚本将物品移至六个指定矩形，次数和用户数据保持一致。探针直接设置英雄、物品并击杀三名目标，未覆盖自然战斗或窗口；日志与探针位于 `tmp/docs-artifacts/war3/tft-ne4-next/undead07-items.*` 和 `undead08-items.cpp`。
 
 亡灵第三章使用第二章转场保存的独立缓存启动后，在无窗口、静音的隔离会话中持续推进 600 秒；150 秒检查到阿尔萨斯等级 5、用户数据 24168，120–600 秒处于可操作状态且未请求退出。探针没有发出玩家命令或完成任务，不能证明正常对局、转场和原版表现；记录位于 `tmp/docs-artifacts/war3/undead02-probe-1031/continue.log`。
