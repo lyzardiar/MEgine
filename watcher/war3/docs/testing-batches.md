@@ -4590,3 +4590,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 商店与英雄联动夹具（验证补充）
 
 路径：`tests/generate-commerce-fixture.py`，说明见[商店](commerce.md)及[对局分数](player-scores.md)。夹具按已核实的经验规则检查倍率不影响脚本加经验、暂停期间不能设置等级及恢复后的升级。Win32 Release `war3_commerce_tests <data-root> <fixture.w3m>` 通过，覆盖商店交易／库存、训练／退款、人口、集结、英雄经验／技能／分数、物品幻象及荒芜恢复；未加载 Game.dll。首次使用旧夹具因经验预期过时失败，更新生成器并重新生成夹具后通过；日志 `tmp/docs-artifacts/war3/commerce-current/commerce-updated.log`。原版动态对照、自然对局和窗口仍待验证。本项为既有功能的验证补充，不计功能批次。
+
+### DotA 原图英雄行动与复活（验证补充）
+
+路径：`tests/dota_heroes_tests.cpp`，说明见[英雄经验](dota-hero-experience.md)。Win32 Release 测试目标编译通过；隔离用户目录运行 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> natural-flow`，1 通过、0 失败：原图 `-sd` 购买英雄后直接下达一次攻击移动，断言英雄到达战场、死亡及复活，模拟至 360 秒；未加载 Game.dll。日志 `tmp/docs-artifacts/war3/dota-current/natural-flow.log`。真实玩家输入、技能／物品、完整对局、联机及原版动态行为仍待验证；本项为既有功能的验证补充，不计功能批次。

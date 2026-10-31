@@ -23,3 +23,5 @@ DotA_v6.83d 隔离会话以 `-sd` 购买英雄 U006 并下达攻击移动；修�
 Win32 Release 客户端及 clock 目标编译通过，clock 33/33。隔离实际伤害击杀验证同级 0→32、跨级 190→219、连续跨级后在零系数处停于 1400，以及中立玩家 12–15；日志 `tmp/docs-artifacts/war3/creep-xp-levels/clock-saturation.log`。原版动态数值、经验奖励加成、极大值、自然地图与联机仍待验证。
 
 `SetHeroXP` 仅在目标高于当前经验且未暂停时生效；`SetHeroLevel` 同样尊重经验暂停，满级经验不超过最高等级阈值。原版 `SetHeroXP` 入口 `0x6f1f58f0` 计算目标与现有经验的差值，差值非正时返回；`SetHeroLevel`、经验结算和暂停状态分别见只读证据 `ev_28b35ff190339a5439f66840d0b0f25bfce427a94aebf28641471f170e34903a`、`ev_38e623e6c99f92f8be239bcdc886a77020335fd439f444fefcb9522404557f37`、`ev_8c51f2075925b291d35c98907ecb77dfb93f58fa0f812934c4bf73879d61db7e`；经验阈值索引见 `ev_0d9682a827d1f677c3224bf2a16c19cff61c256ef6cfb89015d20c8d963779a6`。Win32 Release 客户端和 clock 目标编译通过，clock 33/33；隔离检查降低目标、暂停设置、满级 5400 经验及野怪跨级。真实地图、原版动态、等级事件与自定义上限待验证。
+
+2026-11-01：当前版本将原图 `-sd` 英雄购买、攻击移动、到达战场、死亡和复活固化为 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> natural-flow`；隔离会话模拟 360 秒通过，未加载 Game.dll。日志 `tmp/docs-artifacts/war3/dota-current/natural-flow.log`。该测试只直接下达一次攻击移动，不覆盖实际窗口、技能、完整胜负或多人。
