@@ -1,8 +1,10 @@
 // Author: MiYu. Source clock rules, native session state and original assignment fixtures.
 #include "session.h"
 #include "setup.h"
+#include "snapshot_codec.h"
 #include <StormLib.h>
 #include <bit>
+#include <cmath>
 #include <functional>
 #include <iostream>
 
@@ -42,6 +44,28 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("simulation_clock_with_sleeping_script",[&]{
+        std::string source=R"jass(type destructable extends handle
+type timer extends handle
+native CreateTimer takes nothing returns timer
+native TriggerSleepAction takes real seconds returns nothing
+native Probe takes nothing returns nothing
+globals
+integer completed=0
+endglobals
+function config takes nothing returns nothing
+endfunction
+function wait takes nothing returns nothing
+call TriggerSleepAction(0.125)
+set completed=1
+endfunction
+function check takes nothing returns nothing
+call Probe()
+endfunction
+function main takes nothing returns nothing
+endfunction
+)jass";auto create=[&]{auto module=Module::compile(Program::parse({{"simulation-clock.j",source,"authored persistence test"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);return result;};auto original=create(),restored=create();original->startMain();original->advance(2.015625);original->gameSpeed(3);original->runtime().bind("Probe",[&](auto& vm,auto){rejects([&]{original->encodeSimulationClock();},"quiescent");return vm.nothing();});original->runtime().invoke("check");original->runtime().start("wait");require(original->runtime().threadCount()==1,"Script did not sleep");original->pause(true);auto clock=original->encodeSimulationClock(),scripts=original->encodeSleepingScripts(original->snapshotSleepingScripts({}));auto damaged=clock;damaged.back()^=1;rejects([&]{restored->restoreSimulationClock(damaged);},"digest");auto invalid=[&](double time,double remainder,unsigned paused,unsigned speed){SnapshotWriter out(96);out.u32(tag("SCLK"));out.u32(1);out.u64(std::bit_cast<std::uint64_t>(time));out.u64(std::bit_cast<std::uint64_t>(remainder));out.u32(paused);out.u32(speed);auto bytes=sealSnapshot(out.finish(),96);rejects([&]{restored->restoreSimulationClock(bytes);},"Invalid simulation clock");};invalid(2.1,0,0,2);invalid(2.,1./32,0,2);invalid(2.,0,2,2);invalid(2.,0,0,5);invalid(INFINITY,0,0,2);require(restored->simulationTime()==0 && restored->presentationTime()==0 && !restored->paused(),"Rejected clock changed target");auto dirty=create();dirty->runtime().invoke("CreateTimer");rejects([&]{dirty->restoreSimulationClock(clock);},"fresh quiescent");require(dirty->simulationTime()==0 && !dirty->paused(),"Timer guard changed target");restored->restoreSimulationClock(clock);require(restored->simulationTime()==2 && restored->presentationTime()==2.015625 && restored->paused() && restored->gameSpeed()==3,"Simulation clock did not restore");restored->startMain();restored->restoreSleepingScripts(restored->decodeSleepingScripts(scripts),{});original->advance(1);restored->advance(1);require(original->simulationTime()==2 && restored->simulationTime()==2 && original->runtime().global("completed").bits==0 && restored->runtime().global("completed").bits==0,"Paused restored clock advanced");original->pause(false);restored->pause(false);original->advance(.015625);restored->advance(.015625);require(original->simulationTime()==restored->simulationTime() && original->runtime().global("completed").bits==0 && restored->runtime().global("completed").bits==0,"Clock remainder or early sleep wake differs");original->advance(.09375);restored->advance(.09375);require(original->simulationTime()==restored->simulationTime() && original->runtime().global("completed").bits==1 && restored->runtime().global("completed").bits==1,"Restored simulation and sleeping script diverged");rejects([&]{restored->restoreSimulationClock(clock);},"fresh quiescent");
+    });
     test("player_snapshots_with_sleeping_script",[&]{
         std::string source=R"jass(type destructable extends handle
 type player extends handle

@@ -1326,6 +1326,8 @@ public:
     void restorePlayerStates(std::span<const std::uint8_t> bytes);
     std::vector<std::uint8_t> encodeRandomState() const;
     void restoreRandomState(std::span<const std::uint8_t> bytes);
+    Bytes encodeSimulationClock() const;
+    void restoreSimulationClock(std::span<const std::uint8_t> bytes);
     double simulationTime() const {return simulationTime_;}
     double presentationTime() const {return simulationTime_+accumulator_;}
     void audioMuted(bool muted);

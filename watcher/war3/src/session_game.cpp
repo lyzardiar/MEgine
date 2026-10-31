@@ -1,6 +1,7 @@
 // Author: MiYu. Game configuration, deterministic random calls and per-player technology state.
 #include "session.h"
 #include "binary.h"
+#include "snapshot_codec.h"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -25,6 +26,12 @@ std::vector<std::uint8_t> ScriptSession::encodeRandomState() const {
 }
 void ScriptSession::restoreRandomState(std::span<const std::uint8_t> bytes) {
     if(!runtime_.ready() || runtime_.currentThread() || experimentalSelectionSync_ || !networkPlayers_.empty())throw std::runtime_error("Random restore requires an initialized local session outside script execution");Binary in(bytes);in.expect(tag("SRNG"));if(in.u32()!=1 || in.u32()!=1+auxiliaryRandom_.size())throw std::runtime_error("Unsupported session random state");auto read=[&](){std::array<std::uint32_t,2> state{in.u32(),in.u32()};return AudioRandom::fromState(state);};auto primary=read();std::array<AudioRandom,45> auxiliary;for(auto& stream:auxiliary)stream=read();in.finish();gameRandom_=primary;auxiliaryRandom_=auxiliary;
+}
+Bytes ScriptSession::encodeSimulationClock() const {
+    if(!runtime_.snapshotSafe() || failed_ || !world_ || !setupApplied_ || !contexts_.empty() || experimentalSelectionSync_ || !networkPlayers_.empty())throw std::runtime_error("Simulation clock snapshot requires a quiescent initialized local session");if(!std::isfinite(simulationTime_) || simulationTime_<0 || simulationTime_>1099511627776. || std::floor(simulationTime_*32)!=simulationTime_*32 || !std::isfinite(accumulator_) || accumulator_<0 || accumulator_>=1./32 || gameSpeed_>4)throw std::runtime_error("Invalid simulation clock state");SnapshotWriter out(96);out.u32(tag("SCLK"));out.u32(1);out.u64(std::bit_cast<std::uint64_t>(simulationTime_));out.u64(std::bit_cast<std::uint64_t>(accumulator_));out.u32(simulationPaused_?1:0);out.u32(gameSpeed_);return sealSnapshot(out.finish(),96);
+}
+void ScriptSession::restoreSimulationClock(std::span<const std::uint8_t> bytes){
+    if(!runtime_.ready() || failed_ || !world_ || !setupApplied_ || mainAttempted_ || simulationTime_!=0 || accumulator_!=0 || !units_.empty() || !timerHandles_.empty() || !timerTriggerEvents_.empty() || std::any_of(ais_.begin(),ais_.end(),[](const auto& ai){return bool(ai);}) || runtime_.threadCount() || !runtime_.inspectExecutions().empty() || !contexts_.empty() || experimentalSelectionSync_ || !networkPlayers_.empty())throw std::runtime_error("Simulation clock restore requires a fresh quiescent local session before map main");Binary in(openSnapshot(bytes,96));in.expect(tag("SCLK"));if(in.u32()!=1)throw std::runtime_error("Unsupported simulation clock state");auto time=std::bit_cast<double>(snapshotU64(in)),accumulator=std::bit_cast<double>(snapshotU64(in));auto paused=in.u32(),speed=in.u32();in.finish();if(!std::isfinite(time) || time<0 || time>1099511627776. || std::floor(time*32)!=time*32 || !std::isfinite(accumulator) || accumulator<0 || accumulator>=1./32 || paused>1 || speed>4)throw std::runtime_error("Invalid simulation clock state");runtime_.threadClock(time);simulationTime_=time;accumulator_=accumulator;simulationPaused_=paused!=0;gameSpeed_=speed;
 }
 std::uint32_t ScriptSession::random() {return gameRandom_.next();}
 void ScriptSession::seedAuxiliaryRandom(std::uint32_t seed) {AudioRandom derivation(seed);for(auto& stream:auxiliaryRandom_)stream=AudioRandom(derivation.next());}
