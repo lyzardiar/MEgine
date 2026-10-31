@@ -694,6 +694,11 @@ class ScriptSession {
     bool questFlash_=false;
     std::map<std::uint32_t,std::array<WeaponDefinition,2>> weapons_;
     std::map<std::uint64_t,CombatProjectile> projectiles_;
+    std::map<std::uint64_t,CombatProjectile> visualProjectiles_;
+    struct SpiderAttackVisual {std::uint32_t source=0,target=0,effect=0;std::uint64_t targetRevision=0;double due=0;};
+    std::map<std::uint32_t,SpiderAttackVisual> spiderAttackVisuals_;
+    std::uint32_t spiderVisualId_=0;
+    std::uint64_t visualProjectileId_=0;
     std::uint64_t projectileId_=0,combatTicks_=0;
     std::map<std::pair<std::uint32_t,unsigned>,SpellInfo> spellInfo_;
     std::map<std::pair<std::uint32_t,unsigned>,PassiveInfo> passiveInfo_;
@@ -961,6 +966,8 @@ class ScriptSession {
     void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon,float stealthDamage=0,bool backstab=false,std::uint32_t ability=0);
     void projectiles(double delta);
     void impact(const CombatProjectile& projectile);
+    void spiderAttackVisual(const CombatProjectile& projectile,std::uint32_t target,std::uint64_t revision);
+    void spiderAttackVisualsTick();
     void awardExperience(std::uint32_t killer,const UnitState& victim);
     void timedLives(double delta);
     void regenerate(double delta);
@@ -1156,6 +1163,7 @@ public:
     const auto& lightnings() const {return lightnings_;}
     void effectExpires(std::uint32_t id,double time);
     const auto& projectiles() const {return projectiles_;}
+    const auto& visualProjectiles() const {return visualProjectiles_;}
     const auto& destructables() const {return destructables_;}
     const auto& weatherEffects() const {return weatherEffects_;}
     bool validateCacheSync(const LanActionCacheSync& action,LanCacheSyncProjection& projection);
