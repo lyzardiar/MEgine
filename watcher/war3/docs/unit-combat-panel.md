@@ -27,3 +27,5 @@ Win32 Release 编译通过；`war3_passive_tests.exe <data-root> <fixture> weapo
 无攻击或护甲研究等级时，信息区使用原皮肤中无科技角标的图标；相关单位已有攻击或护甲研究时，使用带角标的图标并显示等级。当前从单位升级列表中的攻击伤害／骰子和护甲效果读取所属玩家的最高等级；多科技与自定义升级对应规则仍待原版对照。Win32 Release 编译及 `weapon-ui` 定向检查通过，覆盖未研究英雄、未研究步兵及步兵攻击二级／护甲一级；游戏内 Agent 画面确认圣骑士攻击图标不再显示空黑框，证据位于 `tmp/docs-artifacts/war3/agent-info/layout-neutral-icon-1031/`。另以游戏内 Agent 选中攻击二级、护甲一级的步兵，画面显示对应角标，证据位于 `tmp/docs-artifacts/war3/agent-info/layout-upgrade-icon-1031/`。其他防御类型、四族皮肤及复杂科技组合待阶段核对。
 
 攻击和护甲数值使用更易辨认的字号，基础范围与正负加成保留颜色区分，超出信息列时仍按可用宽度缩放。1264×921 游戏内 Agent 的六件攻击加成物品画面可辨认 `24-34 +36`，截图位于 `tmp/docs-artifacts/war3/agent-info/layout-value-font-1031/`。负值、长数值、四族、不同分辨率及原版字体精度待阶段核对。
+
+鼠标悬停攻击或护甲图标时显示当前类型和 `UI\FrameDef\InfoPanelStrings.fdf` 的原版说明；扩展提示关闭时只显示类型。武器和护甲类型来自当前战斗状态，双武器分别命中；地图替换的字符串跟随资源覆盖。说明文字为源配置，自定义伤害系数的地图可能与文字不同。游戏内 Agent 以移动虚拟指针分别取得圣骑士英雄攻击和英雄护甲提示，记录 `tmp/docs-artifacts/war3/agent-info/layout-combat-tooltips-final-1031/`；其余类型、地图覆盖、实际鼠标及原版布局待阶段对照。

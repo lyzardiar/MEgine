@@ -3834,3 +3834,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 战斗数值符号可读性
 
 路径：`src/game_commands.cpp`、`docs/unit-combat-panel.md`。攻击／护甲数值字号调整并保留列宽自适应，使加成正号和基础伤害范围分隔符可辨认。Win32 Release 客户端增量编译通过；游戏内 Agent 在六件攻击物品的圣骑士上取得 `24-34 +36` 画面，证据 `tmp/docs-artifacts/war3/agent-info/layout-value-font-1031/`。负值、极值、双武器、四族皮肤、不同窗口和原版画面对照待阶段验证。
+
+### 攻击与护甲悬停说明
+
+路径：`src/game_loading.*`、`src/game_commands.cpp`、`src/agent_capture.h`、`src/main.cpp`、`tools/agent-pointer.ps1`、`README.md`、`docs/unit-combat-panel.md`。信息图标悬停展示实时类型和原版本地化说明，遵循扩展提示开关；Agent 新增后台悬停用于游戏内核对。Win32 Release 客户端编译通过；Agent 选中六物品圣骑士，分别悬停攻击与护甲并抓取英雄类型及相应说明，证据 `tmp/docs-artifacts/war3/agent-info/layout-combat-tooltips-final-1031/`；悬停后拖拽前两格物品并核对句柄交换，证据 `tmp/docs-artifacts/war3/agent-info/pointer-hover-drag-final-1031/`。阶段核对全部攻击／护甲类型、双武器、地图覆盖、扩展提示开关、前台鼠标、Agent 前后台切换及原版位置；地图自定义伤害表可能不同于源说明。

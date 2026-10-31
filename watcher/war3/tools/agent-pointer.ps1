@@ -1,5 +1,5 @@
 # Author: MiYu. Send pointer input to an opted-in background game client.
-param([Parameter(Mandatory=$true)][string]$AgentDir,[Parameter(Mandatory=$true)][ValidateSet('click','right','drag')][string]$Action,[Parameter(Mandatory=$true)][int]$X,[Parameter(Mandatory=$true)][int]$Y,[int]$ToX=-1,[int]$ToY=-1,[int]$TimeoutSeconds=30)
+param([Parameter(Mandatory=$true)][string]$AgentDir,[Parameter(Mandatory=$true)][ValidateSet('click','right','drag','move')][string]$Action,[Parameter(Mandatory=$true)][int]$X,[Parameter(Mandatory=$true)][int]$Y,[int]$ToX=-1,[int]$ToY=-1,[int]$TimeoutSeconds=30)
 $ErrorActionPreference='Stop'
 if($TimeoutSeconds -lt 1 -or $TimeoutSeconds -gt 120){throw 'TimeoutSeconds must be 1 through 120'}
 if($Action -ne 'drag'){$ToX=$X;$ToY=$Y}
