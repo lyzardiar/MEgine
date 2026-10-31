@@ -253,6 +253,7 @@ class ScriptSession {
     std::uint32_t aiEnemy(ScriptAI& ai,unsigned owner=UINT_MAX,bool buildings=false,std::optional<WorldPoint> center={});
     std::vector<std::uint32_t> aiCaptain(ScriptAI& ai,bool includeTransport=false);
     void aiRetreatPassengersTick(ScriptAI& ai);
+    void aiRetreat(ScriptAI& ai);
     void aiAttack(ScriptAI& ai,WorldPoint point,std::uint32_t target=0);
     std::array<std::optional<unsigned>,16> results_;
     std::array<PlayerStatistics,16> statistics_{};
