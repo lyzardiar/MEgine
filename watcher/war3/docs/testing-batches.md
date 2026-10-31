@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+### 黑暗转换最小会话检查（待阶段验证）
+
+路径：`src/session_control_spells.cpp`、`src/session_spell_effects.cpp`、`tests/control_tests.cpp`。生成原地形夹具并编译 Win32 Release 的 `war3_control_tests` 后，执行 `war3_control_tests.exe <data-root> <fixture> conversion`，1 通过、0 失败，未加载 Game.dll；覆盖非村民拒绝、村民进入睡眠／禁令状态及到期后创建施法方僵尸。原版状态结束时序、死亡事件与尸体、驱散／伤害／重入和真实战役仍待阶段对照。
+
+### 英雄经验条纹理裁剪（待验证）
+
+路径：`src/game_commands.cpp`。经验填充按进度裁剪源纹理，零进度不提交填充矩形；保留经验条边框和文字。阶段使用游戏内 Agent 核对零、部分与满经验、不同窗口比例和各族皮肤，并与原版画面对照；本次环境的 D3D9 设备不可用，画面尚未验证。
+
 ### 战斗伤害表及地图常量缓存（待验证）
 
 路径：`src/session.h`、`src/session_damage.cpp`、`src/session_hero.cpp`、`docs/combat.md`。攻击／防御、虚无伤害表和非空数字常量按地图会话惰性缓存，空字段继续使用调用方回退值。Win32 Release 客户端编译通过；`war3_fortified_tests` 原版模式 2 通过、重新生成夹具的自定义模式 2 通过，带 `war3mapMisc.txt` 伤害倍率覆盖的夹具自定义模式 2 通过；`war3_passive_tests <data-root> <fixture> ethereal-ability` 1 通过、0 失败。3 万次伤害调用单次隔离采样由 93 ms 降至 45 ms、最终生命一致，记录在 `tmp/docs-artifacts/war3/damage-factor-cache/`。阶段核对错误／空表、不同地图切换与回退值、完整伤害组合、真实对局性能及联机。
