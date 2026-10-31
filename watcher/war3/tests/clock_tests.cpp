@@ -44,6 +44,57 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("timers_restore_callbacks_order_and_globals",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type timer extends handle
+ native CreateTimer takes nothing returns timer
+ native TimerStart takes timer t, real timeout, boolean periodic, code callback returns nothing
+ native PauseTimer takes timer t returns nothing
+ native ResumeTimer takes timer t returns nothing
+ native GetExpiredTimer takes nothing returns timer
+ globals
+ timer a=null
+ timer b=null
+ timer c=null
+ integer sequence=0
+ integer periodicCount=0
+ endglobals
+ function tickA takes nothing returns nothing
+ if GetExpiredTimer()==a then
+ set sequence=sequence*10+1
+ endif
+ endfunction
+ function tickB takes nothing returns nothing
+ if GetExpiredTimer()==b then
+ set sequence=sequence*10+2
+ set periodicCount=periodicCount+1
+ endif
+ endfunction
+ function tickC takes nothing returns nothing
+ if GetExpiredTimer()==c then
+ set sequence=sequence*10+3
+ endif
+ endfunction
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function setup takes nothing returns nothing
+ set a=CreateTimer()
+ set b=CreateTimer()
+ set c=CreateTimer()
+ call TimerStart(a,0.25,false,function tickA)
+ call TimerStart(b,0.25,true,function tickB)
+ call TimerStart(c,0.5,false,function tickC)
+ endfunction
+ function pauseC takes nothing returns nothing
+ call PauseTimer(c)
+ endfunction
+ function resumeC takes nothing returns nothing
+ call ResumeTimer(c)
+ endfunction
+ )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"timers.j",source,"authored timer persistence test"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);return result;};auto original=create(),restored=create();original->startMain();original->runtime().invoke("setup");original->advance(.125);original->runtime().invoke("pauseC");auto& a=original->runtime();auto& b=restored->runtime();auto a1=a.global("a").bits,a2=a.global("b").bits,a3=a.global("c").bits;auto encode=[&](std::string_view type,std::uint32_t id){require(type=="timer","Unexpected handle type");return id==a1?1u:id==a2?2u:id==a3?3u:0u;};auto clock=original->encodeSimulationClock(),globals=a.encodeGlobals(encode),timers=original->encodeTimers(encode);restored->restoreSimulationClock(clock);auto b3=b.invoke("CreateTimer").bits,b2=b.invoke("CreateTimer").bits,b1=b.invoke("CreateTimer").bits;auto decode=[&](std::string_view type,std::uint32_t id){require(type=="timer","Unexpected mapped type");return id==1?b1:id==2?b2:id==3?b3:0u;};auto damaged=timers;damaged.back()^=1;rejects([&]{restored->restoreTimers(damaged,decode);},"digest");rejects([&]{restored->restoreTimers(timers,[&](auto,std::uint32_t){return b1;});},"mapping");source+="\n";auto different=create();different->restoreSimulationClock(clock);rejects([&]{different->restoreTimers(timers,{});},"source differs");b.restoreGlobals(globals,decode);restored->restoreTimers(timers,decode);restored->startMain();original->advance(.125);restored->advance(.125);require(a.global("sequence").bits==12 && b.global("sequence").bits==12,"Same-time timer order or expired handle differed");a.invoke("resumeC");b.invoke("resumeC");original->advance(.375);restored->advance(.375);require(a.global("sequence").bits==b.global("sequence").bits && a.global("periodicCount").bits==b.global("periodicCount").bits && a.global("sequence").bits==1223,"Periodic or paused timer continuation differed");require(original->encodeTimers(encode)==restored->encodeTimers([&](std::string_view,std::uint32_t id){return id==b1?1u:id==b2?2u:id==b3?3u:0u;}),"Restored timer state differed");
+    });
     test("simulation_clock_with_sleeping_script",[&]{
         std::string source=R"jass(type destructable extends handle
 type timer extends handle

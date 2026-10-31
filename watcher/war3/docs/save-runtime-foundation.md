@@ -29,3 +29,7 @@ OrcX01 首次切换到未访问区域时，原脚本通过 `SaveAndChangeLevelBJ
 存档事件上下文可携带文件名，`GetSaveBasicFilename` 在事件中返回去除目录和最后扩展名后的名称，事件外返回 JASS null。`notifyGameSaved` 按登记快照分发 `EVENT_GAME_SAVE`；`JSSC` 版本 2 保留睡眠动作中的存档名，版本 1 的该字段为空。固定版 Game.dll `0x6f1e4920` 检查事件 259 并取路径，`0x6f154050` 提取最后路径分隔符后的名称；原 Storm.dll 序号 570 的末次字符搜索证据为 `ev_def9431682e59233bda689fb31c9f8a2947f645205f91ae53f5facf2c939b069`。调用方传入的名称最长 1024 字节，提取部分限 259 字节；原版极长／非 ASCII 文件名及存档事件时机待对照。
 
 Win32 Release 客户端、session、save-exists 和 clock 检查程序编译通过；session 22/22、兽族资料片原图存档事件 1/1、clock 12/12。隔离脚本验证三个并行睡眠动作各自的中英文文件名、旧版非空上下文读取及事件外 null；原图会话追加测试辅助函数设置区域条目，手动分发事件后，原 `User Save` 脚本将隔离区域文件复制到 `Blizzard/Slot.one/`。目录链接创建跳过；日志 `tmp/docs-artifacts/war3/save-event-context/`。分发接口尚无产品保存流程调用，未实现 `SaveGame`／`LoadGame`、完整对象恢复、真实跨区或原版格式；保存时机与复杂重入待后续验证。
+
+计时器可作为 `STMR` 独立组件采集：保存存活计时器的注册顺序、运行／暂停、周期、超时与已过时间、绝对期限及同一脚本运行时的回调；以脚本来源摘要校验函数身份，并要求调用方提供双向稳定句柄映射。恢复要求先恢复同一模拟时钟，再在地图 main 及计时事件登记前创建全部空计时器并映射，校验通过后一次替换状态与调度顺序。跨运行时回调、计时器对话框、计时事件与完整对象图尚未恢复；此接口尚未接入保存／载入流程。
+
+Win32 Release 客户端与 `war3_clock_tests` 编译通过，13/13；隔离会话以不同顺序创建目标句柄，恢复全局引用及计时器，验证同刻触发顺序、`GetExpiredTimer`、周期计时器和暂停续执行；拒绝损坏摘要、不同脚本和重复映射。日志 `tmp/docs-artifacts/war3/timer-snapshot/clock-tests-final.log`。真实地图、复杂回调及触发器事件待阶段验证。

@@ -4330,3 +4330,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 模拟与昼夜时钟统一恢复（待阶段验证）
 
 路径：`src/session_game.cpp`、`tests/clock_tests.cpp`、`docs/simulation-clock-persistence.md`。`SCLK` 版本 2 纳入昼夜时钟及临时昼夜效果，校验地图昼夜规则后与模拟时钟一起恢复；版本 1 保持可读。Win32 Release 客户端及 clock 测试程序编译通过，`war3_clock_tests <data-root> <output-root>` 12/12，日志 `tmp/docs-artifacts/war3/combined-clock-snapshot/clock-tests.log`。隔离检查覆盖临时效果与睡眠线程续执行、旧版读取及昼夜规则损坏时拒绝且不修改目标。真实地图动态昼夜事件、完整世界对象、存档事务、保存／载入入口与原版格式待阶段验证或实现。
+
+### 脚本计时器恢复组件（待阶段验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。`STMR` 保留计时器回调、期限、状态及顺序，并通过脚本来源与稳定句柄校验；要求已恢复模拟时钟及预先创建空计时器。Win32 Release 客户端与 clock 检查程序编译通过；`war3_clock_tests <data-root> <output-root>` 13/13。隔离会话验证反序创建句柄后的全局引用、同刻执行顺序、周期及暂停恢复，并拒绝损坏、不同脚本和重复映射；日志 `tmp/docs-artifacts/war3/timer-snapshot/clock-tests-final.log`。真实地图、复杂回调、计时事件／对话框、统一对象图与实际保存／载入待阶段验证或实现。
