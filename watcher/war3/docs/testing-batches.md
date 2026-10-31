@@ -2,7 +2,7 @@
 
 ### DotA 钢背兽被动与受伤事件（继续跟进）
 
-路径：`tests/dota_heroes_tests.cpp`、`src/session_damage.cpp`、`src/session_callbacks.cpp`。Win32 Release 测试目标增量编译通过；`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> bristle-spells` 通过，隔离会话在学习战意后核对施法加攻与到期恢复，学习刚背兽后以 1500／2000 生命模拟 100 点伤害，正面／侧面／背面实际损失 100／92／84，未加载 Game.dll。相同背面伤害在满血时损失 100：当前伤害事件在扣血前执行，地图脚本的补血被 `unitLife` 上限截断。该现象已复现，但原版生命值截断、受伤事件次序及满血实际效果尚未经对照；不能据此更改通用伤害时序或判定原图缺陷。继续核对原版、致死／递归伤害与多个触发器，并完成自然对局和窗口验证。
+路径：`tests/dota_heroes_tests.cpp`、`src/session_damage.cpp`、`src/session_callbacks.cpp`。Win32 Release 测试目标增量编译通过；`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> bristle-spells` 通过，隔离会话在学习战意后核对施法加攻与到期恢复，学习刚背兽后以 1500／2000 生命模拟 100 点伤害，正面／侧面／背面实际损失 100／92／84，未加载 Game.dll。相同背面伤害在满血时损失 100：当前伤害事件在扣血前执行，地图脚本的补血被 `unitLife` 上限截断。该现象已复现，但原版生命值截断、受伤事件次序及满血实际效果尚未经对照；不能据此更改通用伤害时序或判定原图缺陷。继续核对原版、致死／递归伤害与多个触发器，并完成自然对局和窗口验证。补充同一隔离流程：三次背面命中达到地图脚本的累计伤害条件后，额外刺针扫射使攻击者生命下降；重新编译并执行 `bristle-spells` 通过。固定版 `Game.dll` 的 `SetUnitState` 入口 `0x6f1f7a80` 调用 `0x6f67c2b0`，状态 0 通过对象虚表 `+0x124` 写入；已识别的 CUnit 虚表对应 `0x6f67b310`，再进入包含上下界比较的 `0x6f03afb0`。REA 证据 `ev_1a33715d1917cde71f5ff4e9807d70286cc254581713cb0c56470ae456b5962b`、`ev_78b7ee91b5f2876fc3c30352e332e4af81a9e422e413d542d63bcaed2c311cbe`、`ev_16ca0c66a43641672533720033c0a464f33cdeac3fa575c5ba9df85050a69bcb`；静态证据尚不能确定动态对象、这些界限的语义及受伤事件扣血顺序。
 
 ### DotA 钢背兽和月之女祭司技能（待阶段验证）
 
