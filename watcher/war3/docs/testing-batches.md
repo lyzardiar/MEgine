@@ -4574,3 +4574,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 野怪经验跨级分段（待批次验证）
 
 路径：`src/session_rewards.cpp`、`tests/clock_tests.cpp`；说明见[英雄经验](dota-hero-experience.md)。野怪经验按等级阈值逐段应用 `HeroFactorXP`，中立玩家 12–15 使用同一规则；零系数停止后续经验。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33；实际伤害击杀覆盖同级、跨级、连续跨级及零系数、中立玩家 12–15。日志 `tmp/docs-artifacts/war3/creep-xp-levels/clock-saturation.log`。固定版静态指令见功能说明；原版动态、经验奖励加成、极大值、自然对局及联机待批次验证。
+
+### 英雄脚本经验和满级边界（待批次验证）
+
+路径：`src/session_hero.cpp`、`tests/clock_tests.cpp`、`docs/heroes.md`；说明见[英雄经验](dota-hero-experience.md)。脚本设置经验不降低当前经验，暂停经验阻止经验／等级设置，满级经验按源最高等级阈值限制；降级仍使用 `UnitStripHeroLevel`。Win32 Release 客户端和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33；检查降低目标、暂停设置、满级上限与野怪经验跨级，日志 `tmp/docs-artifacts/war3/hero-xp-cap/clock-tests.log`。原版静态入口与调用链见功能说明；真实地图、原版动态、事件顺序和自定义上限待批次验证。

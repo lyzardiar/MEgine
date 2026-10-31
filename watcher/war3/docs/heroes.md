@@ -4,7 +4,7 @@
 
 规则从原版 `Units/MiscData.txt`、`Units/MiscGame.txt` 及地图 `war3mapMisc.txt` 读取；单位初始属性/成长来自UnitBalance，学习列表来自UnitAbilities，能力等级要求来自AbilityData。经验阈值使用源表，超出表项后使用源公式系数；实现有等级/数值预算。
 
-- SetHeroXP/SetHeroLevel/UnitStripHeroLevel改变经验和等级，增长/减少对应属性和技能点，升级发送玩家/单位事件。升级回调可以修改英雄或删除单位，旧升级过程通过版本号结束。
+- SetHeroXP 和 SetHeroLevel 只提升经验或等级；UnitStripHeroLevel 降低等级。经验暂停阻止脚本加经验及设置经验／等级，满级经验限制在最高等级阈值。等级变化更新属性和技能点，升级发送玩家／单位事件；回调修改或删除英雄时旧升级过程通过版本号结束。
 - Get/SetHeroStr/Agi/Int、GetHeroXP/Level/SkillPoints、UnitModifySkillPoints、经验暂停和专有名称提供真实状态；力量/智力变化更新当前生命/魔法及上限。
 - SetPlayerHandicapXP 保存每个玩家的击杀经验倍率，AddHeroXP 使用脚本指定值，经验暂停会阻止该增加入口。绝对设置经验和等级使用指定值。击杀经验分享及原版动态规则仍待验证。
 - SelectHeroSkill验证源学习列表、等级要求、已学等级和技能点，再改变实际能力等级，并发送学习事件及上下文。自定义w3a定义已由ObjectData读取；完整施法/效果仍按能力代码接续，缺失定义明确失败。
