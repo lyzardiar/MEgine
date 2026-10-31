@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 弹射武器目标关系（待阶段验证）
+
+路径：`src/session_projectiles.cpp`、`tests/dota_heroes_tests.cpp`、`docs/weapon-effects.md`。目标配置未指定阵营时，后续弹射单位默认限敌方；显式阵营配置继续进入原有目标筛选。Win32 Release 客户端及定向检查编译通过，`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x>` 3 通过、0 失败；月刃场景覆盖主目标、近处友军和另一敌人。阶段核对显式友军／中立／自身、自定义目标、地面物品／可破坏物、弹射衰减和次数、联盟变化、死亡／反弹事件、联机及原版行为。
+
 ### 视野科技与月之祝福（待阶段验证）
 
 路径：`src/commerce.h`、`src/session_research.cpp`、`src/session_fog.cpp`、`tests/dota_heroes_tests.cpp`；说明见 [科技研究](research.md)。`rsig` 按科技等级累加到单位视野，变更时刷新迷雾；原图月之女祭司的学习事件设置 `R00I`。Win32 Release 客户端与 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x>` 编译通过，隔离检查 3 通过、0 失败；月之女祭司覆盖学习后夜间视野扩大及所有权转移后的失效／恢复。阶段核对多级／负值／多个科技和装备组合、昼夜与夜视、科技转移／撤销、原版视野上限、迷雾边界、多人同步及实际窗口。
