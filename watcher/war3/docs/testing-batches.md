@@ -4334,3 +4334,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 脚本计时器恢复组件（待阶段验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。`STMR` 保留计时器回调、期限、状态及顺序，并通过脚本来源与稳定句柄校验；要求已恢复模拟时钟及预先创建空计时器。Win32 Release 客户端与 clock 检查程序编译通过；`war3_clock_tests <data-root> <output-root>` 13/13。隔离会话验证反序创建句柄后的全局引用、同刻执行顺序、周期及暂停恢复，并拒绝损坏、不同脚本和重复映射；日志 `tmp/docs-artifacts/war3/timer-snapshot/clock-tests-final.log`。真实地图、复杂回调、计时事件／对话框、统一对象图与实际保存／载入待阶段验证或实现。
+
+### 触发器计时事件恢复组件（待阶段验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。`STEV` 保存计时触发事件和计时器到期监听的期限、周期与登记顺序，恢复前需重建对应触发器、动作及事件并恢复计时器；脚本、模拟时间和句柄归属校验通过后恢复调度。Win32 Release 客户端和 clock 检查程序编译通过；`war3_clock_tests <data-root> <output-root>` 14/14。隔离会话反序登记事件，检查已触发的一次性事件、周期、同一计时器多个监听顺序及重新编码；拒绝损坏、重复映射与错误归属。首次测试的诊断文本预期有误，修正后通过；日志 `tmp/docs-artifacts/war3/timer-event-snapshot/clock-tests-final.log`。真实地图、完整触发器对象及动作、复杂重入、原版时序和保存／载入仍待阶段验证或实现。

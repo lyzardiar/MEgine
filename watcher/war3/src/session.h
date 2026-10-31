@@ -1331,6 +1331,8 @@ public:
     void restoreSimulationClock(std::span<const std::uint8_t> bytes);
     Bytes encodeTimers(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimers(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeTimerEvents(const jass::StableHandleMap& encodeHandle) const;
+    void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     double simulationTime() const {return simulationTime_;}
     double presentationTime() const {return simulationTime_+accumulator_;}
     void audioMuted(bool muted);

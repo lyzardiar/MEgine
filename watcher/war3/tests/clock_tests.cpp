@@ -44,6 +44,70 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("timer_events_restore_schedule_and_registration_order",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type timer extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ native CreateTimer takes nothing returns timer
+ native TimerStart takes timer t, real timeout, boolean periodic, code callback returns nothing
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code callback returns triggeraction
+ native TriggerRegisterTimerEvent takes trigger t, real timeout, boolean periodic returns event
+ native TriggerRegisterTimerExpireEvent takes trigger t, timer clock returns event
+ globals
+ timer clock=null
+ trigger x=null
+ trigger y=null
+ trigger z=null
+ event e1=null
+ event e2=null
+ event e3=null
+ event e4=null
+ integer sequence=0
+ endglobals
+ function ax takes nothing returns nothing
+ set sequence=sequence*10+1
+ endfunction
+ function ay takes nothing returns nothing
+ set sequence=sequence*10+2
+ endfunction
+ function az takes nothing returns nothing
+ set sequence=sequence*10+3
+ endfunction
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function createClock takes nothing returns nothing
+ set clock=CreateTimer()
+ endfunction
+ function startClock takes nothing returns nothing
+ call TimerStart(clock,0.25,false,null)
+ endfunction
+ function createTriggers takes nothing returns nothing
+ set x=CreateTrigger()
+ set y=CreateTrigger()
+ set z=CreateTrigger()
+ call TriggerAddAction(x,function ax)
+ call TriggerAddAction(y,function ay)
+ call TriggerAddAction(z,function az)
+ endfunction
+ function forward takes nothing returns nothing
+ set e1=TriggerRegisterTimerEvent(x,0.125,false)
+ set e2=TriggerRegisterTimerEvent(y,0.25,true)
+ set e3=TriggerRegisterTimerExpireEvent(z,clock)
+ set e4=TriggerRegisterTimerExpireEvent(x,clock)
+ endfunction
+ function reverse takes nothing returns nothing
+ set e4=TriggerRegisterTimerExpireEvent(x,clock)
+ set e3=TriggerRegisterTimerExpireEvent(z,clock)
+ set e2=TriggerRegisterTimerEvent(y,0.25,true)
+ set e1=TriggerRegisterTimerEvent(x,0.125,false)
+ endfunction
+ )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"timer-events.j",source,"authored event persistence test"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);return result;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("createClock");a.invoke("startClock");a.invoke("createTriggers");a.invoke("forward");original->advance(.125);require(a.global("sequence").bits==1,"One-shot timer event did not fire");auto ids=[](Runtime& vm){std::array<std::uint32_t,8> result{};unsigned i=0;for(auto name:{"clock","x","y","z","e1","e2","e3","e4"})result[i++]=vm.global(name).bits;return result;};auto first=ids(a);auto encode=[&](std::string_view type,std::uint32_t id){for(unsigned i=0;i<first.size();++i)if(first[i]==id && type==(i==0?"timer":i<4?"trigger":"event"))return i+1;return 0u;};auto clock=original->encodeSimulationClock(),timers=original->encodeTimers(encode),events=original->encodeTimerEvents(encode),globals=a.encodeGlobals(encode);restored->restoreSimulationClock(clock);b.invoke("createClock");auto targetClock=b.global("clock").bits;restored->restoreTimers(timers,[&](std::string_view type,std::uint32_t id){return type=="timer" && id==1?targetClock:0u;});b.invoke("createTriggers");b.invoke("reverse");auto second=ids(b);auto decode=[&](std::string_view type,std::uint32_t id){if(id<1 || id>second.size() || type!=(id==1?"timer":id<5?"trigger":"event"))return 0u;return second[id-1];};auto broken=events;broken.back()^=1;rejects([&]{restored->restoreTimerEvents(broken,decode);},"digest");rejects([&]{restored->restoreTimerEvents(events,[&](std::string_view type,std::uint32_t id){return type=="event"?second[4]:decode(type,id);});},"mapping");rejects([&]{restored->restoreTimerEvents(events,[&](std::string_view type,std::uint32_t id){return type=="event" && id==5?second[5]:type=="event" && id==6?second[4]:decode(type,id);});},"registration differs");restored->restoreTimerEvents(events,decode);b.restoreGlobals(globals,decode);auto reencode=[&](std::string_view type,std::uint32_t id){for(unsigned i=0;i<second.size();++i)if(second[i]==id && type==(i==0?"timer":i<4?"trigger":"event"))return i+1;return 0u;};require(restored->encodeTimerEvents(reencode)==events,"Restored timer event ordering was not retained");restored->startMain();original->advance(.375);restored->advance(.375);require(a.global("sequence").bits==13122 && b.global("sequence").bits==13122,"Restored timer events fired at a different time or order");require(original->encodeTimerEvents(encode)==restored->encodeTimerEvents(reencode),"Continued timer event state differs");
+    });
     test("timers_restore_callbacks_order_and_globals",[&]{
         std::string source=R"jass(type destructable extends handle
  type timer extends handle
