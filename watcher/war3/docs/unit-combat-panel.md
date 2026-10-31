@@ -25,3 +25,5 @@ Win32 Release 编译通过；`war3_passive_tests.exe <data-root> <fixture> weapo
 物品显示、冷却遮罩和交互区域向右对齐人族控制台槽位。游戏内 Agent 在 1264×921 画面选择携带六件物品的圣骑士，检查经验条、攻击加成与物品位置，并拖拽交换前两格；证据位于 `tmp/docs-artifacts/war3/agent-info/layout-slot-aligned/`。其他种族、不同窗口比例、物品点击与冷却遮罩仍待阶段核对。
 
 无攻击或护甲研究等级时，信息区使用原皮肤中无科技角标的图标；相关单位已有攻击或护甲研究时，使用带角标的图标并显示等级。当前从单位升级列表中的攻击伤害／骰子和护甲效果读取所属玩家的最高等级；多科技与自定义升级对应规则仍待原版对照。Win32 Release 编译及 `weapon-ui` 定向检查通过，覆盖未研究英雄、未研究步兵及步兵攻击二级／护甲一级；游戏内 Agent 画面确认圣骑士攻击图标不再显示空黑框，证据位于 `tmp/docs-artifacts/war3/agent-info/layout-neutral-icon-1031/`。另以游戏内 Agent 选中攻击二级、护甲一级的步兵，画面显示对应角标，证据位于 `tmp/docs-artifacts/war3/agent-info/layout-upgrade-icon-1031/`。其他防御类型、四族皮肤及复杂科技组合待阶段核对。
+
+攻击和护甲数值使用更易辨认的字号，基础范围与正负加成保留颜色区分，超出信息列时仍按可用宽度缩放。1264×921 游戏内 Agent 的六件攻击加成物品画面可辨认 `24-34 +36`，截图位于 `tmp/docs-artifacts/war3/agent-info/layout-value-font-1031/`。负值、长数值、四族、不同分辨率及原版字体精度待阶段核对。

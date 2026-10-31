@@ -3830,3 +3830,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 单位分类无效句柄
 
 路径：`src/session_entities.cpp`、`tests/passive_tests.cpp`、`docs/unit-classifications.md`。`IsUnitType` 对空、移除、非单位和越界分类按原版入口返回 false，已死亡但尚未移除的单位保留死亡分类。Win32 Release 客户端及 passive 测试目标编译通过；`war3_passive_tests.exe <data-root> <fixture> invalid-unit` 4/4 通过，夹具 `tmp/docs-artifacts/war3/timer-index/fixture.w3m`。真实地图及原版运行时句柄生命周期、各分类与回调重入待阶段验证。
+
+### 战斗数值符号可读性
+
+路径：`src/game_commands.cpp`、`docs/unit-combat-panel.md`。攻击／护甲数值字号调整并保留列宽自适应，使加成正号和基础伤害范围分隔符可辨认。Win32 Release 客户端增量编译通过；游戏内 Agent 在六件攻击物品的圣骑士上取得 `24-34 +36` 画面，证据 `tmp/docs-artifacts/war3/agent-info/layout-value-font-1031/`。负值、极值、双武器、四族皮肤、不同窗口和原版画面对照待阶段验证。
