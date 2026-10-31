@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### DotA 魅惑魔女目标与限时生命（待阶段验证）
+
+路径：`tests/dota_heroes_tests.cpp`。DotA_v6.83d 原图隔离会话中购买魅惑魔女并学习 `A0DX`：普通敌方单位转归施法玩家，获得约 80 秒限时生命并在到期后死亡；敌方英雄不转归，受到减速并在恢复运行后到期解除。Win32 Release 测试目标编译通过；`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> enchantress-enchant` 通过，未加载 Game.dll。测试手动设置等级、位置、魔法和敌对关系，英雄目标在观察减速后解除暂停；不代表自然对局、原版数值与时序、地图自定义目标或窗口操作已验收。
+
 ### 命令子菜单游戏事件（待阶段验证）
 
 路径：`src/session.h`、`src/session_match.cpp`、`src/game_commands.cpp`、`src/lan_simulation.cpp`、`tests/session_tests.cpp`、`tests/live_world_tests.cpp`、`tests/generate-live-world-fixture.py`；说明见 [回放命令菜单](replay-command-menus.md)。单机打开技能和建造菜单时派发各自的游戏事件；联网与实验回放在消费相应菜单动作时派发，关闭菜单不产生事件。回调执行使用注册快照并遵守触发器禁用及销毁；事件不设置玩家上下文。固定版 Game.dll 中两个游戏事件包装分别使用 `0x80209`／`0x8020a` 和空对象参数，REA 证据 `ev_56a7dc987929b385b1e1aaab0b836d5983c1c3868770008d21b22bf6b92acebb`；包装与实际按键／网络动作的完整调用时序仍待对照。Win32 Release 客户端、session、live-world 和 order-queue 测试目标编译通过，order-queue 编译有既有变量遮蔽警告；`war3_session_tests <tmp-enum-fixture>` 19/19，覆盖事件类型、顺序、禁用、销毁及上下文；在原 BootyBay 的临时脚本夹具执行 `war3_live_world_tests <data-root> <fixture> <log> menu-events` 1/1，覆盖技能、建造、Esc、关闭及重新打开的时间片，未加载 Game.dll。夹具位于 `tmp/docs-artifacts/war3/menu-events/`。实际窗口输入、双客户端同步、强制 UI 按键、地图回调重入、原版时间顺序和回放播放仍待阶段验证。
