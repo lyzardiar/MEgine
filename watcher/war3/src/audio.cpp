@@ -111,6 +111,8 @@ AudioVoice::AudioVoice(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 AudioVoice::~AudioVoice()=default;
 std::unique_ptr<AudioVoice> AudioVoice::silent(std::shared_ptr<const Member> bytes,const std::string& extension,const double* simulationTime) {if(!bytes)throw std::runtime_error("Silent audio requires source bytes");auto state=std::make_unique<Impl>();state->length=audioDuration(bytes->bytes,extension);state->silent=true;state->simulationTime=simulationTime;state->midi=extension==".mid" || extension==".midi";state->bytes=std::move(bytes);return std::unique_ptr<AudioVoice>(new AudioVoice(std::move(state)));}
 bool AudioVoice::silent() const {return impl_->silent;}
+std::shared_ptr<const Member> AudioVoice::sourceData() const {return impl_->bytes;}
+std::shared_ptr<const Member> AudioVoice::bankData() const {return impl_->bank?impl_->bank->bytes:nullptr;}
 
 void AudioVoice::start(bool loop) {auto& v=*impl_;v.loop=loop;if(v.silent){v.cursor=0;v.started=v.now();v.running=true;v.paused=false;return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.loopSequence:api.loopSample)(v.handle,loop?0:1);(v.midi?api.startSequence:api.startSample)(v.handle);}
 void AudioVoice::pause() {auto& v=*impl_;if(v.silent){v.cursor=v.silentPosition();v.running=false;v.paused=true;return;}auto& api=*v.owner->impl_;std::lock_guard lock(api.mutex);(v.midi?api.stopSequence:api.stopSample)(v.handle);}

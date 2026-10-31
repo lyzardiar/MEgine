@@ -4370,3 +4370,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 声音通道播放状态基础（待阶段验证）
 
 路径：`src/audio.h/.cpp`、`tests/sound_tests.cpp`、`docs/save-runtime-foundation.md`。声音通道采集播放位置、播放／暂停／停止、循环、速度、媒体类型和时长；静音模拟保留小数毫秒，实际后端使用其整数毫秒。Win32 Release 客户端及 sound 测试目标编译通过；`war3_sound_tests <data-root> <scratch> sound_playback_state_preserves_fractional_time_and_phase` 与 `sound_wait_snapshot_restarts_against_restored_playback` 各 1/1。静音 WAV／MIDI 检查覆盖变速、循环、暂停／继续和不兼容数据拒绝；等待检查沿用手动设置播放位置。`sound_playback_state_miles_roundtrip` 0/1：本机 `waveOutOpen()` 失败，未创建 Miles 输出设备；日志 `tmp/docs-artifacts/war3/audio-playback-snapshot/`。资源摘要、声音句柄、淡入淡出、场景状态、实际设备播放及完整存档待实现或阶段验证。
+
+### 脚本声音对象与原图睡眠线程重建（待阶段验证）
+
+路径：`src/audio.h/.cpp`、`src/sound.h/.cpp`、`src/sound_fade.h/.cpp`、`src/session.h`、`src/session_sound.cpp`、`tests/sound_tests.cpp`、`docs/save-runtime-foundation.md`。`SSND` 保存脚本声音资源摘要、句柄、播放／淡入淡出状态、参数及单位附件，校验后重建；目标初始化声音不得处于播放或暂停，后续须恢复脚本引用。脱离句柄仍播放的声音拒绝采集，环境、音量组、空间叠加、场景时钟与非脚本声音尚未纳入。Win32 Release 客户端及 sound／session／clock 目标编译通过；声音定向 3/3、session 22/22、clock 15/15。隔离测试覆盖 WAV／MIDI、已退役声音、附件映射、声音等待续执行、资源摘要变化、活动目标和脱离播放拒绝。OrcX01 静音模拟 0／30／150 秒分别重建 181 个声音及 4／3／0 条睡眠线程并重编码一致，30 秒含对白等待；未唤醒原图线程或恢复世界。日志 `tmp/docs-artifacts/war3/sound-object-snapshot/`。Miles 音频设备仍因本机 `waveOutOpen()` 失败未验收；场景音频、真实输出和完整存档待实现或阶段验证。

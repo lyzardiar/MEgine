@@ -30,6 +30,8 @@ public:
     ~AudioVoice();
     static std::unique_ptr<AudioVoice> silent(std::shared_ptr<const Member> bytes,const std::string& extension,const double* simulationTime=nullptr);
     bool silent() const;
+    std::shared_ptr<const Member> sourceData() const;
+    std::shared_ptr<const Member> bankData() const;
     void start(bool loop);
     void pause();
     void resume();

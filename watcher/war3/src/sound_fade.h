@@ -13,6 +13,7 @@ private:
 public:
     SoundFade()=default;
     SoundFade(int fadeIn,int fadeOut,int target);
+    static SoundFade restore(std::uint32_t level,std::uint32_t target,std::uint32_t in,std::uint32_t out,std::uint32_t active,Phase phase);
     std::uint32_t level() const {return level_;}
     std::uint32_t target() const {return target_;}
     std::uint32_t inRate() const {return in_;}

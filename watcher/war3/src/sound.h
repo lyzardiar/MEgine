@@ -77,6 +77,8 @@ public:
     void pitch(const std::shared_ptr<ScriptSound>& sound,float ratio);
     void environment(const std::string& name);
     const std::optional<SourceTable::Row>& environment() const {return environment_;}
+    std::shared_ptr<ScriptSound> restoreObject(ScriptSound sound,bool hasDigital,const std::string& sourceDigest,const std::string& bankDigest,const std::optional<AudioPlaybackState>& playback);
+    void adoptRestored(SoundScene& source,const std::vector<std::shared_ptr<ScriptSound>>& sounds);
     void muted(bool value);
     void localGain(float value);
     void localCategories(bool ambient,bool movement,bool units);
