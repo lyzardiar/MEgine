@@ -161,6 +161,7 @@ function ProbeBlight takes nothing returns nothing
     call SetBlightPoint(Player(0),x,y,true)
     call ProbeAssert(IsPointBlighted(x+32,y+32),"point_blight")
     set probe_acolyte=CreateUnit(Player(0),'uaco',x+32,y+32,270)
+    call SetUnitAcquireRange(probe_acolyte,0)
     call SetUnitState(probe_acolyte,UNIT_STATE_LIFE,100)
     call RemoveRect(r)
 endfunction

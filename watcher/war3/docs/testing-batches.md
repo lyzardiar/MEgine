@@ -4,7 +4,7 @@
 
 路径：`src/session_inventory.cpp`、`tests/control_tests.cpp`。`UnitAddItemById` 对无法加入背包的物品返回空句柄；`UnitAddItemToSlotById` 在指定槽位无法接收时返回失败。两者先在单位位置创建物品，未加入的物品保留在地面。固定版 `Game.dll` 的对应入口及创建／失败分支证据为 `ev_efad0295cc2918cdf7c64236f452c8392b89876e285d382d7c4f42f631aedab1`、`ev_fdeed7a158306a774b8b53cf756dd479bebd62fb9092ec06eefe25fdf6d1cc82`；物品落点、拾取回调重入和立即消耗的完整原版语义仍需对照。Win32 Release 客户端及控制测试编译通过；`war3_control_tests <data-root> <control-fixture> item-add-native` 1 通过、0 失败，覆盖没有背包、满背包、占用槽位、无效类型、普通拾取和金币立即消耗，不加载 Game.dll。阶段检查剩余槽位、地图自定义物品、地面枚举／拾取事件、单位及物品在事件中移除、原版和真实窗口。
 
-补查 `war3_commerce_tests <data-root> tmp/docs-artifacts/war3/item-add-fix/commerce-fixture.w3m` 在 `Blight regeneration not consumed` 断言失败，发生在该程序金币物品检查之前；改动前的 `session_inventory.cpp` 使用同一夹具复跑也出现相同失败，基线记录为 `tmp/docs-artifacts/war3/item-add-fix/baseline-check.log`。该失败保留待诊断，不记为通过。
+`war3_commerce_tests` 的原夹具在荒芜恢复检查中失败：侍僧自动追击并离开荒芜地，一秒内生命从 100 增至 100.625；改动前后均可复现。夹具关闭该侍僧的自动寻敌并重新生成后，`war3_commerce_tests <data-root> tmp/docs-artifacts/war3/item-add-fix/commerce-fixture-stationary.w3m` 通过，覆盖荒芜地恢复、清除荒芜后停止恢复，以及商店和金币／木材拾取。原始失败记录为 `tmp/docs-artifacts/war3/item-add-fix/baseline-check.log`；真实对局、原版恢复精度和移动中的边界仍待阶段验证。
 
 
 ### 人族战役第九章结局与解锁（待阶段验证）
