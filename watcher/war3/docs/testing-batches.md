@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 原战役载入背景（待阶段验证）
+
+路径：`src/map_ui.h/.cpp`、`src/loading_screen.cpp`、`tests/world_tests.cpp`、`tests/live_world_tests.cpp`；来源与行为见 [原生地图与选图流程](map-loading.md)。地图 W3I 背景编号读取公共 `WorldEditData.txt` 对应模型和序列，地图显式指定的载入模型优先；普通对战沿用玩家种族模型。Win32 Release 客户端、world 和 live-world 检查程序编译通过；`war3_world_tests <data-root> <unused-output> world_loading_backdrops` 1/1，检查人族前两章、BootyBay 和自定义模型优先级；`war3_live_world_tests <data-root> <Human01.w3m> <log> loading-background` 1/1，在 CPU 路径读取原 Lordaeron 模型并选中 Human01 序列，未加载 Game.dll。游戏启动检查在创建 D3D9 设备时失败，日志位于 `tmp/docs-artifacts/war3/loading-backgrounds/client.log`；尚无本版窗口截图。其他战役序列、地图覆盖、原版时间／音效／面板和窗口比例、W3I 序章画面待阶段验证或实现。
+
 ### 经典单位雾脚本接口（待阶段验证）
 
 路径：`src/session_world.cpp`、`tests/world_tests.cpp`；说明见 [世界雾与计时器](world-fog-timers.md)。固定版 1.27 的 `SetUnitFog` 和旧 `SetTerrainFog` 入口均为直接返回，REA 证据 `ev_9e2ec214902ef5d8c1cb280003322eb37b40e43b98f579e41de9604a804f43b3`。客户端现允许地图调用两者并保留已有雾状态；`SetTerrainFogEx`／`ResetTerrainFog` 继续管理实际雾效。Win32 Release 客户端和 world 测试目标编译通过；`war3_world_tests <data-root> <unused-clamp-output> world_legacy_fog_natives` 在 BootyBay 原地图上下文 1/1 通过、未加载 Game.dll。开发时简化夹具因没有归档资源和完整脚本句柄类型失败，改用原地图上下文后通过。其他版本、自定义地图及真实画面仍待阶段核对。

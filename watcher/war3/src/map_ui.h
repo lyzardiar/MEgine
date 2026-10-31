@@ -13,6 +13,8 @@ public:
     std::string value(std::string section,std::string key,const std::string& fallback={}) const;
     std::optional<std::string> entry(std::string section,std::string key) const;
 };
+struct LoadingBackdrop {std::string model;std::optional<unsigned> sequence;bool custom=false;};
+LoadingBackdrop mapLoadingBackdrop(Archives& archives,const MapInfo& info,unsigned race);
 struct FrameAnchor {const char* frame;const char* point;const char* relative;const char* target;float x,y;};
 std::array<FrameAnchor,5> mapInfoAnchors();
 float mapInfoTitleOffset(float nameWidth,float iconWidth,float authWidth,bool authenticated);
