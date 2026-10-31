@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄属性与名称的无效单位（待阶段验证）
+
+路径：`src/session_hero.cpp`、`tests/control_tests.cpp`。英雄力量／敏捷／智力查询对空、已移除、错误类型和非英雄返回零，设置对这些对象无操作；英雄专有名称查询返回 null。有效英雄继续使用当前属性刷新和名称状态。固定版 Game.dll 的三个查询入口分别为 `0x6f1e29d0`、`0x6f1e27b0`、`0x6f1e2810`，三个设置入口分别为 `0x6f1f5890`、`0x6f1f5720`、`0x6f1f5780`，名称入口为 `0x6f1e28d0`；只读指令证据 `ev_8bc0926bdbd705c918df9ae95fcd33978e5743c37cb4f97c665496f1ce2196b1`、`ev_cb44d2c6d407f4c327939e4a46c3c914a972e84f8a6a32f4f0ba31173c61eb7d`、`ev_04c3fbb6f93a2cde5a714f45e784981671aad8c46d5193da5159c6a2541dc7d9`、`ev_0107466becf55a80744d1045ab9f249e239faedef0a55c3bd16994fc802f041d`。Win32 Release 客户端和控制测试编译通过；`war3_control_tests <data-root> <control-fixture> hero-attribute-handles` 1 通过、0 失败，未加载 Game.dll。阶段验证实际地图、不同属性／临时加成及极值、英雄死亡／复活／变形、事件重入与原版语义；名称 null 与空字符串的地图脚本消费也需对照。
+
+
 ### 按类型创建物品并加入背包（待阶段验证）
 
 路径：`src/session_inventory.cpp`、`tests/control_tests.cpp`。`UnitAddItemById` 对无法加入背包的物品返回空句柄；`UnitAddItemToSlotById` 在指定槽位无法接收时返回失败。两者先在单位位置创建物品，未加入的物品保留在地面。固定版 `Game.dll` 的对应入口及创建／失败分支证据为 `ev_efad0295cc2918cdf7c64236f452c8392b89876e285d382d7c4f42f631aedab1`、`ev_fdeed7a158306a774b8b53cf756dd479bebd62fb9092ec06eefe25fdf6d1cc82`；物品落点、拾取回调重入和立即消耗的完整原版语义仍需对照。Win32 Release 客户端及控制测试编译通过；`war3_control_tests <data-root> <control-fixture> item-add-native` 1 通过、0 失败，覆盖没有背包、满背包、占用槽位、无效类型、普通拾取和金币立即消耗，不加载 Game.dll。阶段检查剩余槽位、地图自定义物品、地面枚举／拾取事件、单位及物品在事件中移除、原版和真实窗口。
