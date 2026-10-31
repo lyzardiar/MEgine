@@ -4534,3 +4534,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 人族第六章自然失败回归（验证补充）
 
 路径：`tests/human_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release 测试目标编译通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> natural-defeat` 1 通过、0 失败。原图空闲模拟至 1947.25 秒，AI 转换 65 名村民，玩家建筑从非零降至零，失败对话与重开请求完成；未加载 Game.dll。探针及日志 `tmp/docs-artifacts/war3/human06-long/`。没有注入任务计数、击杀或移动；实际窗口、玩家操作、获胜及原版时序仍待验证。此项为既有战役任务的验证补充，不计入功能批次。
+
+### 兽族第五章原图目标与胜利（验证补充）
+
+路径：`tests/orc_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release 测试目标编译通过；`war3_orc_campaign_chain_tests <data-root> chapter5 <new-absolute-user-dir>` 1 通过、0 失败。原图模拟 400 秒后直接击杀塞纳留斯，原事件推进到胜利对话并请求第六章，模拟时间 471.844 秒；未加载 Game.dll。空闲原图探针运行至 2000 秒无脚本异常。证据 `tmp/docs-artifacts/war3/orc05-long/`；自然战斗、英雄继承、自动切关及窗口仍待验证。本项为验证补充，不计入功能批次。

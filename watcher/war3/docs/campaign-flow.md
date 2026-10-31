@@ -74,3 +74,5 @@ Win32 Release `war3_orc_campaign_chain_tests` 实际 1 通过、0 失败，未�
 人族第六至第九章原图连续隔离检查已延伸至最终胜利：第九章将英雄移入守护者区域并击杀守护者，剧情替换阿尔萨斯后检查等级和同一物品句柄，再击杀玛尔加尼斯及目标建筑，检查胜利、`HumanEd` 影片请求、返回战役选择和亡灵战役／首章及人族结尾解锁。`ReplaceUnitBJ` 从原英雄转移经验和物品，用户数据不转移。检查使用原版战役上下文、新建用户目录及直接移动和击杀；Win32 Release 测试目标的 `victory`、`defeat` 各 1 通过、0 失败，未加载 Game.dll。自然战斗、画面、影片播放和客户端自动切关仍待阶段验证。
 
 人族第六章增加原图自然失败回归：独立本地用户目录中从开场静音运行，玩家不下达战斗命令；玛尔加尼斯完成 65 次转换，玩家基地建筑由非零降至零，原图脚本显示失败对话，点击首个按钮发出重开请求。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> natural-defeat` 1 通过、0 失败，模拟时间 1947.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/human06-long/natural-defeat-final.log`。该场景验证无操作失败路径，不代表玩家自然获胜、完整战役、原版时序或实际窗口一致性。
+
+兽族第五章原图在独立用户目录的静音隔离会话中运行 400 秒后，由测试解除塞纳留斯无敌并直接击杀；原死亡事件和过场进入胜利对话，继续后请求 `Maps\Campaign\Orc06.w3m`。Win32 Release `war3_orc_campaign_chain_tests <data-root> chapter5 <new-absolute-user-dir>` 1 通过、0 失败，模拟时间 471.844 秒，未加载 Game.dll。原图无操作静音探针另运行至 2000 秒，玩家控制保持、无退出或脚本异常。日志 `tmp/docs-artifacts/war3/orc05-long/`；两者均不代表自然战斗、自动载入下一章、英雄继承或实际窗口验收。
