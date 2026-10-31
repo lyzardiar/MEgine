@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 视野科技与月之祝福（待阶段验证）
+
+路径：`src/commerce.h`、`src/session_research.cpp`、`src/session_fog.cpp`、`tests/dota_heroes_tests.cpp`；说明见 [科技研究](research.md)。`rsig` 按科技等级累加到单位视野，变更时刷新迷雾；原图月之女祭司的学习事件设置 `R00I`。Win32 Release 客户端与 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x>` 编译通过，隔离检查 3 通过、0 失败；月之女祭司覆盖学习后夜间视野扩大及所有权转移后的失效／恢复。阶段核对多级／负值／多个科技和装备组合、昼夜与夜视、科技转移／撤销、原版视野上限、迷雾边界、多人同步及实际窗口。
+
 ### DotA 莉娜与狙击手技能（待阶段验证）
 
 路径：`tests/dota_heroes_tests.cpp`、`CMakeLists.txt`。原图隔离会话通过酒馆购买莉娜和狙击手，验证三个一级主动技能的目标伤害、炽魂三层攻速与移速增益及消退、四级瞄准射程和一级暗杀伤害。Win32 Release 定向程序 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x>` 2 通过、0 失败；测试设定等级、位置和魔法，暂停其他单位，并为连续施法重置冷却。阶段验证自然升级与对战、目标类型、反魔法及伤害类型、技能中断、真实移动／攻击、视觉音频和原版时序；该检查不代表完整 DotA 对局。
