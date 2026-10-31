@@ -4260,3 +4260,9 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 原公共 AI 水运进攻与途中重新编组
 
 路径：`src/session.h`、`src/session_ai.cpp`、`src/session_ai_armies.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。活跃运输波次遇到 `InitAssault` 时保留在途编组，载具中的波次成员参与编组及准备度查询，逐项恢复不同兵种需求时保留其他在途成员。Win32 Release 客户端和 CampaignAI 测试程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `island-naval-reform`、`island-naval-reform-mixed`、`island-naval-original-ai`、`island-naval-enemy-base`、`island-naval-enemy-base-multi`、`island-auto-multiwave-script`、`island-naval-remote-capacity`、`island-naval-remote-empty`、`island-naval-paused-retreat`、`island-naval-reorder`、`island-pickup-group`、`island-carrier-callback-multiple` 各 1/1，`enemy-base`、`armies`、`captain-home` 各 2/2，共 18/18。原 `AnyPlayerAttack` 场景中十格运输船分波运送 11 人，原脚本途中重新编组并最终击毁敌方建筑，模拟时间 109 秒；测试预置部队、船与目标，队员无敌、目标暂停且登陆前无敌，不代表完整对局。`MinorCreepAttack` 使用原公共脚本选择隔水营地并在登陆后击败目标。夹具 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`；原版动态时序、其他兵种／伤亡、自然经济、真实战役、联机和完整对局待阶段验证。
+
+### AI 水运与选岸合并批次（2026-11-01）
+
+范围：`5ee235f`、`3d1bc9b`、`2612dc6`、`cc39828`、`686227c`。同一工作区版本的 Win32 Release 客户端及 CampaignAI、transport、world 检查程序构建通过；CampaignAI 26 种模式共 29/29、运输 8/8、世界选岸 2/2，共 39/39 通过，未加载 Game.dll。覆盖水运跨岛与分波、目标陆地区域卸载、路径格选岸与缓存失效、远岸多人接应及失效预约、原公共 AI 重编组和隔水目标、普通运输生命周期及登艇路径。AI 与运输使用各自 BootyBay 临时夹具，原公共脚本场景为预置部队与目标，不代表自然对局。
+
+命令：`cmake --build --preset release --target war3 war3_campaign_ai_tests war3_transport_tests war3_world_tests --parallel 8`；各模式和结果见 `tmp/docs-artifacts/war3/naval-batch-20261101/`，夹具分别为 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m` 和 `tmp/docs-artifacts/war3/transport/fixture.w3m`。真实战役、多地图岸线与动态拥堵、不同兵种／伤亡、联机、性能、原版策略及窗口操作仍待阶段验证；完整原版玩法与 UI 尚未验收。
