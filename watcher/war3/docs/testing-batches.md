@@ -4119,6 +4119,12 @@ Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨�
 
 Win32 Release 客户端及测试目标编译通过；执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m`，再运行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m ethereal-ability`，1/1 通过。DotA 原图隔离会话使用 `I0LT`，目标在 1 秒时虚无、5 秒时恢复；记录 `tmp/docs-artifacts/war3/dota-ethereal/after.log`。阶段验证物品／派生、多个来源及生命周期、伤害／治疗倍率、地图覆盖、真实窗口／原版及联机。
 
+### JASS 引用型全局状态（待阶段验证）
+
+路径：`src/jass_runtime.cpp`、`src/jass_runtime.h`、`tests/jass_runtime_tests.cpp`、`tests/jass_thread_tests.cpp`；说明见 [JASS 全局快照](jass-global-persistence.md)。全局值组件包含函数与映射句柄，校验源码和内容并在完整解析后恢复；隔离线程恢复使用同一稳定句柄映射。
+
+Win32 Release 客户端和两个测试目标编译通过；`war3_jass_runtime_tests ../../tmp/docs-artifacts/war3/jass/runtime-native.json` 17/17 通过，`war3_jass_thread_tests restore_reference_globals_and_sleeping_thread` 1/1 通过。阶段验证实际地图及对象生命周期、不同静态类型的句柄别名、全局与线程／事件／世界的统一事务、损坏和版本变更、完整保存载入与战役切区。组件未接入保存菜单或原版格式。
+
 # 人族物品栏槽位对齐
 
 路径：`src/game_inventory_layout.h`、`docs/unit-combat-panel.md`。物品图标及其冷却和交互区域向右对齐控制台槽位。Win32 Release 客户端编译通过；游戏内 Agent 选中六物品、100 经验的圣骑士，画面显示物品、经验条和攻击加成，拖拽后第 0／1 格的物品句柄交换。证据位于 `tmp/docs-artifacts/war3/agent-info/layout-slot-aligned/`。阶段核对四族皮肤、不同窗口比例、物品点击／冷却和原版画面。

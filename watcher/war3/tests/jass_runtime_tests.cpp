@@ -43,6 +43,42 @@ endfunction
         Runtime original(compile(source)),restored(compile(source));auto bind=[](Runtime& r){r.bind("Make",[](auto& vm,auto){return vm.handle("unit",17);});r.initialize();};bind(original);bind(restored);auto emptySnapshot=original.encodePrimitiveGlobals();Runtime emptyTarget(compile(source));bind(emptyTarget);emptyTarget.restorePrimitiveGlobals(emptySnapshot.bytes);require(emptyTarget.global("empty").text && emptyTarget.global("empty").text->empty() && !emptyTarget.global("absent").text,"Null and empty string lost");original.invoke("mutate");auto snapshot=original.encodePrimitiveGlobals();require(snapshot.excludedGlobals==1 && snapshot.excludedNonDefaultGlobals==1,"Snapshot must report nondefault handle");auto report=restored.restorePrimitiveGlobals(snapshot.bytes);require(report.excludedGlobals==1 && report.excludedNonDefaultGlobals==1,"Restore lost exclusion report");require(restored.global("n").bits==41 && restored.global("r").bits==Real::fromDecimal("2.5").bits() && !restored.global("b").bits,"Primitive values changed");require(restored.global("empty").text && *restored.global("empty").text=="changed" && restored.global("absent").text && *restored.global("absent").text=="present","Strings changed");require(restored.global("values",3).bits==9 && std::bit_cast<std::int32_t>(restored.global("values",8191).bits)==-12 && !restored.global("actor").bits,"Array or excluded handle changed");
         auto initial=restored.encodePrimitiveGlobals();auto truncated=snapshot.bytes;truncated.pop_back();rejects([&]{restored.restorePrimitiveGlobals(truncated);},"Truncated");require(restored.encodePrimitiveGlobals().bytes==initial.bytes,"Failed decode changed globals");Runtime different(compile("globals\ninteger other=7\nendglobals\n"));different.initialize();rejects([&]{different.restorePrimitiveGlobals(snapshot.bytes);},"schema");require(different.global("other").bits==7,"Schema rejection changed globals");
     });
+    test("runtime_reference_global_snapshot_transaction",[]{
+        const std::string source=R"jass(type widget extends handle
+type unit extends widget
+native Make takes integer id returns unit
+native Run takes code action returns nothing
+globals
+integer result=3
+unit actor=null
+widget alias=null
+unit array group
+code callback=null
+string text=null
+endglobals
+function action takes nothing returns nothing
+set result=result+7
+endfunction
+function mutate takes nothing returns nothing
+set actor=Make(17)
+set alias=actor
+set group[2]=actor
+set group[8191]=Make(18)
+set callback=function action
+set text=""
+set result=10
+endfunction
+function execute takes nothing returns nothing
+call Run(callback)
+endfunction
+)jass";
+        auto bind=[](Runtime& r){r.bind("Make",[](auto& vm,auto args){return vm.handle("unit",args[0].bits);});r.bind("Run",[](auto& vm,auto args){vm.invoke(args[0]);return vm.nothing();});r.initialize();};
+        Runtime original(compile(source)),target(compile(source));bind(original);bind(target);original.invoke("mutate");rejects([&]{original.encodeGlobals();},"handle mapping");auto snapshot=original.encodeGlobals([](std::string_view,std::uint32_t id){return id+1000;});auto before=target.encodeGlobals();
+        rejects([&]{target.restoreGlobals(snapshot);},"handle mapping");require(target.encodeGlobals()==before,"Missing mapper changed globals");rejects([&]{target.restoreGlobals(snapshot,[](std::string_view,std::uint32_t){return 42;});},"handle mapping");require(target.encodeGlobals()==before,"Colliding mapper changed globals");
+        auto corrupted=snapshot;corrupted.back()^=1;rejects([&]{target.restoreGlobals(corrupted);},"digest");require(target.encodeGlobals()==before,"Corrupt snapshot changed globals");
+        target.restoreGlobals(snapshot,[](std::string_view,std::uint32_t id){return id+2000;});require(target.global("actor").bits==3017 && target.global("alias").bits==3017 && target.global("group",2).bits==3017 && target.global("group",8191).bits==3018,"Global handle aliases or array changed");require(target.global("text").text && target.global("text").text->empty(),"Empty string changed");target.invoke("execute");require(target.global("result").bits==17,"Restored code callback did not execute in target runtime");
+        Runtime different(compile(source+"\n"));bind(different);rejects([&]{different.restoreGlobals(snapshot,[](auto,std::uint32_t id){return id;});},"source differs");require(different.global("result").bits==3,"Source rejection changed globals");
+    });
     test("runtime_global_initialization_and_entry_guard",[]{Runtime r(compile("native Next takes nothing returns integer\nglobals\ninteger first=Next()\ninteger second=Next()\nendglobals\nfunction sum takes nothing returns integer\nreturn first*10+second\nendfunction\n"));unsigned calls=0;r.bind("Next",[&](auto& vm,auto){return vm.integer(++calls);});rejects([&]{r.invoke("sum");},"not initialized");require(calls==0,"Constructor ran global initializer");r.initialize();require(r.ready() && calls==2 && r.invoke("sum").bits==12 && r.global("second").bits==2,"Global initializer order differs");rejects([&]{r.initialize();},"fresh instance");});
     test("runtime_bound_storage_and_arrays",[]{Runtime r(compile("globals\ninteger x=5\ninteger array values\nendglobals\nfunction f takes integer x returns integer\nlocal integer array a\nset a[3]=x\nset values[7]=a[3]+values[0]\nreturn a[3]\nendfunction\nfunction read takes nothing returns integer\nlocal integer array a\nreturn a[3]+x\nendfunction\nfunction bad takes nothing returns integer\nset values[-1]=41\nset values[8192]=42\nset values[8191]=17\nreturn values[-1]+values[8192]+values[8191]\nendfunction\n"));r.initialize();Value args[]={r.integer(9)};require(r.invoke("f",args).bits==9 && r.global("values",7).bits==9 && r.global("x").bits==5 && r.invoke("read").bits==5,"Local/global/array slots differ");require(r.invoke("bad").bits==17 && r.global("values",8191).bits==17,"Array out-of-range reads or writes differ");});
     test("runtime_branch_loop_exit_and_early_return",[]{Runtime r(compile("function f takes integer n returns integer\nlocal integer i=0\nlocal integer sum=0\nloop\nexitwhen i>=n\nif i==2 then\nset sum=sum+20\nelseif i==3 then\nreturn sum\nelse\nset sum=sum+i\nendif\nset i=i+1\nendloop\nreturn sum\nendfunction\n"));r.initialize();Value args[]={r.integer(8)};require(r.invoke("f",args).bits==21,"Loop/elseif/early return differs");args[0]=r.integer(2);require(r.invoke("f",args).bits==1,"Execution state leaked across calls");});

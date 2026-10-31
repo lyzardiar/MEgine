@@ -77,6 +77,8 @@ public:
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;
     PrimitiveGlobalSnapshot encodePrimitiveGlobals() const;
     PrimitiveGlobalRestore restorePrimitiveGlobals(std::span<const std::uint8_t> bytes);
+    Bytes encodeGlobals(const StableHandleMap& encodeHandle={}) const;
+    void restoreGlobals(std::span<const std::uint8_t> bytes,const StableHandleMap& decodeHandle={});
     Value integer(std::int32_t value) const;
     Value real(Real value) const;
     Value boolean(bool value) const;
