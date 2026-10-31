@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 零召唤末日与英雄目标（待阶段验证）
+
+路径：`src/session_neutral_spells.cpp`、`src/session_spells.cpp`、`docs/neutral-heroes.md`。零召唤末日保留状态、事件和配置的正持续时间，不创建召唤物或消耗尸体；其他末日保留原有持续与召唤流程。目标类别由技能标记决定，原版 nonhero 仍排除英雄。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话从酒馆购买末日使者并学习 A0MU，调整英雄等级、魔法、位置及目标，暂停其他单位；对敌方英雄施法后五秒生命由 5000 降至 4920，状态存在，到期后状态移除且额外三秒不再受到地图脚本伤害。隔离地图中原版 ANdo 拒绝英雄并使普通敌人死亡后生成一个 120 秒召唤物；探针将召唤数改为零后确认普通敌人死亡不新增召唤物、不消费尸体。未加载 Game.dll；探针与日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-doom-duration.*`、`source-doom-zero-summon.*`。零召唤正时长的原版语义、等级、魔免／驱散、状态重入、召唤生命周期、实际窗口及对局待阶段对照。
+
 ### 无图标睡眠与地图连环霜冻（待阶段验证）
 
 路径：`src/session_spell_info.cpp`、`src/session_spell_effects.cpp`、`docs/control-spells.md`。睡眠技能没有配置 Buff 时，使用无图标的内部睡眠状态承载持续时间、保护与清理，保留施法事件；已配置 Buff 的睡眠继续要求保护 Buff。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话从酒馆购买巫妖、学习 A05T，调整等级、魔法、位置及目标并暂停其他单位后，地图脚本使两个目标生命从 10000 分别降至 8320 和 8600；目标未暂停，短暂睡眠正常结束。隔离地图定向检查原版 AUsl 的 Buff 睡眠及移除，随后将技能配置调整为无 Buff、0.5 秒睡眠，确认状态生效并到期清理；会话未加载 Game.dll。探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-lich-chain-frost-effect.*` 和 `source-sleep-unmarked.*`。原版无 Buff 状态语义、0.01 秒与固定步进、弹射次数与伤害、友军／魔免、实际窗口和对局待阶段对照。
