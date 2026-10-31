@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 焚灰死亡爆炸半径与腐尸毒（待阶段验证）
+
+路径：`src/session_firelord.cpp`、`docs/firelord.md`。焚灰允许全伤和半伤半径分别配置，死亡爆炸按两者的最大半径查找目标并保留全伤／半伤判断；敌友筛选识别 enemy/enemies 和 friend/allies。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话从酒馆购买尸王，生成五个学习按钮并学习 A0FA；调整等级、位置、生命和目标并暂停其他单位后，攻击击杀敌人触发死亡爆炸，使附近中立敌人生命从 5000 降至 4910，范围外敌人与友军保持 5000。隔离地图探针调整技能的两个半径与伤害数值，分别验证全伤半径 400／半伤半径 0 与全伤半径 100／半伤半径 400 时近处敌人受到 90 和 45 点伤害，远处敌人和友军无伤。未加载 Game.dll；探针和日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-undying-incinerate-effect.*` 与 `incinerate-radius-boundary.*`。阶段核对原版半径边缘、类别和免疫、技能叠层与尸体处理、不同等级、事件重入、实际窗口及对局。
+
 ### 地图脚本创建的群蛇守卫（待阶段验证）
 
 路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`docs/area-spells.md`。蛇棒技能允许原生数量为零，保留施法与脚本事件，且零原生召唤不要求找到召唤落点。Win32 Release 客户端编译通过；DotA_v6.83d 原图隔离会话从酒馆购买暗影萨满，显示五个技能学习按钮，设置等级、魔法和施法位置后，地图 A00H 脚本创建十个 osp4 蛇棒并赋予定时生命；探针暂停了其他单位。隔离地图原版 AOsw 经过实际施法流程，生成一个具有 40 秒定时生命的 osp1。会话未加载 Game.dll；探针和日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-shadow-shaman-wards.*`、`dota-shadow-shaman-wards-after.log` 和 `source-serpent-ward.*`。阶段核对不同技能等级、原版零数量语义、蛇棒攻击与死亡、技能事件时序、地图地形、实际窗口及完整对局。
