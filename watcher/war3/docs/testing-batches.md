@@ -4560,3 +4560,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 脚本经验与击杀经验倍率（待批次验证）
 
 路径：`src/session_hero.cpp`、`tests/clock_tests.cpp`；说明见[英雄经验](dota-hero-experience.md)。`AddHeroXP` 使用脚本指定经验，保留暂停和范围处理；玩家倍率用于击杀经验分配。Win32 Release 客户端与 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33；隔离检查倍率 1.25 时脚本增加 100 点及倍率 1／2 的同类型目标击杀经验。原版静态调用标志、指令证据见功能说明；原版动态、经验分享／舍入、事件顺序、原图与联机待批次验证。日志 `tmp/docs-artifacts/war3/hero-script-xp/clock-tests.log`。
+
+### 击杀经验最终取整（待批次验证）
+
+路径：`src/session_rewards.cpp`、`tests/clock_tests.cpp`、`docs/heroes.md`；说明见[英雄经验](dota-hero-experience.md)。击杀经验最终转整数时正数四舍五入；脚本经验维持独立规则。Win32 Release 客户端与 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 最终 33/33，实际伤害击杀覆盖倍率产生的半点。首次测试夹具基础经验是偶数，未能构造半点而失败；改用精确倍率后通过。只读原版取整调用链见功能说明，日志 `tmp/docs-artifacts/war3/kill-xp-rounding/clock-final.log`。原版动态、多英雄共享／中间精度及自然对局待批次验证。

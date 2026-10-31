@@ -6,7 +6,7 @@
 
 - SetHeroXP/SetHeroLevel/UnitStripHeroLevel改变经验和等级，增长/减少对应属性和技能点，升级发送玩家/单位事件。升级回调可以修改英雄或删除单位，旧升级过程通过版本号结束。
 - Get/SetHeroStr/Agi/Int、GetHeroXP/Level/SkillPoints、UnitModifySkillPoints、经验暂停和专有名称提供真实状态；力量/智力变化更新当前生命/魔法及上限。
-- SetPlayerHandicapXP保存每个玩家的经验倍率，AddHeroXP当前按所属玩家倍率计入经验，经验暂停会阻止该增加入口。绝对设置经验和等级使用指定值。倍率适用范围及原件舍入仍待REA/运行精确对照，不代表击杀分配已实现。
+- SetPlayerHandicapXP 保存每个玩家的击杀经验倍率，AddHeroXP 使用脚本指定值，经验暂停会阻止该增加入口。绝对设置经验和等级使用指定值。击杀经验分享及原版动态规则仍待验证。
 - SelectHeroSkill验证源学习列表、等级要求、已学等级和技能点，再改变实际能力等级，并发送学习事件及上下文。自定义w3a定义已由ObjectData读取；完整施法/效果仍按能力代码接续，缺失定义明确失败。
 - SetHeroLevel的下降由独立UnitStripHeroLevel入口处理，与原版Blizzard.j的SetHeroLevelBJ调用结构一致。升级视觉效果、复活完整规则、技能降级重分配、物品属性叠加、名称池随机选择及不同历史规则集仍待实现/验收。
 
