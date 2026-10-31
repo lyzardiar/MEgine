@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### DotA 莉娜与狙击手技能（待阶段验证）
+
+路径：`tests/dota_heroes_tests.cpp`、`CMakeLists.txt`。原图隔离会话通过酒馆购买莉娜和狙击手，验证三个一级主动技能的目标伤害、炽魂三层攻速与移速增益及消退、四级瞄准射程和一级暗杀伤害。Win32 Release 定向程序 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x>` 2 通过、0 失败；测试设定等级、位置和魔法，暂停其他单位，并为连续施法重置冷却。阶段验证自然升级与对战、目标类型、反魔法及伤害类型、技能中断、真实移动／攻击、视觉音频和原版时序；该检查不代表完整 DotA 对局。
+
 ### 库存失效句柄（待阶段验证）
 
 路径：`src/session_inventory.cpp`、`tests/undead_finale_tests.cpp`、`docs/campaign-undead08-inventory.md`。库存查询和 `UnitRemoveItem` 对空、已移除与不兼容句柄按接口返回默认值或跳过；有效物品继续执行掉落。Win32 Release 客户端与 `war3_undead_finale_tests <data-root> <Undead08.w3m> <new-absolute-user-dir>` 编译并执行，1 通过、0 失败；覆盖失效句柄、有效查询与掉落，并以缩短计时器推进原图胜利。阶段核对物品转移／移除回调、单位死亡／变形、库存能力变化、联机和原版事件时序。
