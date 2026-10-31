@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 无过滤器的单位编组枚举（待验证）
+
+路径：`src/session_collections.cpp`、`tests/game_flow_tests.cpp`、`docs/jass.md`。空过滤器直接遍历单位，非空过滤器保留快照与回调语义；Win32 Release 客户端和游戏流程测试通过，检查类型／玩家／范围、零与一数量限制、编组替换和单位创建／移除。2,001 单位、2,000 次范围枚举的单次隔离采样由 219 ms 降至 30 ms，结果数量与首句柄一致，见 `tmp/docs-artifacts/war3/group-enum-fast/`。阶段核对所有编组入口、过滤器嵌套与修改、原版排序、真实地图帧耗时和联网同步。
+
 ### 武器研究的被动说明（待验证）
 
 路径：`src/passives.h`、`src/session_passive_info.cpp`、`src/session_ability_commands.cpp`、`tests/research_tests.cpp`、`docs/research.md`。飞行机器炸弹、穿刺剑刃、月刃和风暴战锤按对应科技前置显示源被动图标；实际武器状态继续由科技生效。Win32 Release 产品及研究测试通过，四种单位的研究前后图标和武器状态均已检查；游戏内 Agent 的飞行机器画面在 `tmp/docs-artifacts/war3/unit-ability-inventory/agent/`。执行 `python tests/generate-research-fixture.py --data-root <data-root> --output <tmp-fixture>` 和 `war3_research_tests.exe <data-root> <tmp-fixture>`。阶段核对原版显示时序、实际攻击、其余图标、自定义前置／禁用与不同窗口布局。
