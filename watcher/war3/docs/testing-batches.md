@@ -157,7 +157,7 @@
 
 ### 英雄经验与物品栏对齐（待验证）
 
-路径：`src/game_inventory_layout.h`、`src/game_commands.cpp`、`docs/unit-combat-panel.md`。缩小经验条并在攻击行上方留出间距；物品图标、冷却和命中使用调整后的六格坐标；攻击数值与彩色增减值按完整文字纹理宽度分隔。Win32 Release 客户端增量编译与差异检查通过。尝试使用游戏内 Agent 的单物品圣骑士场景取得画面，当前会话 D3D9 设备创建失败，未取得修复后截图；日志 `tmp/docs-artifacts/war3/agent-info/layout-user-report-check/client.log`。阶段核对六槽／点击／拖拽／冷却、不同经验与攻击数值、双武器、四族及不同窗口比例，并与原版画面对照。
+路径：`src/game_inventory_layout.h`、`src/game_commands.cpp`、`docs/unit-combat-panel.md`。缩小经验条并在攻击行上方留出间距；物品图标、冷却和命中使用调整后的六格坐标；攻击数值与彩色增减值按完整文字纹理宽度分隔。Win32 Release 客户端增量编译与差异检查通过。游戏内 Agent 选中六物品、100 经验的圣骑士，1264×921 画面显示六个物品位于各自槽位，经验条处于信息框内，攻击基础值与绿色加成分开；证据位于 `tmp/docs-artifacts/war3/agent-info/layout-latest-agent/`。阶段核对点击／拖拽／冷却、不同经验与攻击数值、双武器、四族及不同窗口比例，并与原版画面对照。
 
 ### 失效扩张点重新选择（待验证）
 
@@ -3654,7 +3654,7 @@ Win32 Release 客户端及专项程序增量编译通过；`war3_unit_forms_test
 
 ### 战斗数值显示宽度（待验证）
 
-路径：`src/game_commands.cpp`、`docs/unit-combat-panel.md`。攻击和护甲的基础值与加成共用信息列宽度，过长时等比缩小，保留独立颜色。Win32 Release 客户端增量编译通过；阶段核对普通／极值与正负加成、英雄双武器、各族及不同分辨率，使用游戏内 Agent 复查物品格、经验条和攻击区域并与原版画面对照。当前未获得修复后的游戏画面。
+路径：`src/game_commands.cpp`、`docs/unit-combat-panel.md`。攻击和护甲的基础值与加成共用信息列宽度，过长时等比缩小，保留独立颜色。Win32 Release 客户端增量编译通过；游戏内 Agent 的六物品圣骑士画面显示普通攻击基础值与正加成分开，证据位于 `tmp/docs-artifacts/war3/agent-info/layout-latest-agent/`。阶段核对极值与负加成、英雄双武器、各族及不同分辨率，并与原版画面对照。
 
 
 ### 娜迦季风（待验证）
