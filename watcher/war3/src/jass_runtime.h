@@ -41,6 +41,7 @@ public:
     void inheritNatives(const Runtime& owner);
     void initialize();
     bool ready() const;
+    bool snapshotSafe() const;
     Value invoke(const std::string& function,std::span<const Value> arguments={});
     Value invoke(const Value& code,std::span<const Value> arguments={});
     Value invokeNoYield(const Value& code,std::span<const Value> arguments={});

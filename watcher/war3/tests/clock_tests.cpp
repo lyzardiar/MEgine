@@ -16,8 +16,10 @@ void mpq(const fs::path& path,const std::string& name,const std::string& value) 
     HANDLE archive=nullptr;require(SFileCreateArchive(path.c_str(),MPQ_CREATE_ARCHIVE_V1,16,&archive),"Cannot create clock archive");struct Close {HANDLE value;~Close(){SFileCloseArchive(value);}}close{archive};HANDLE member=nullptr;require(SFileCreateFile(archive,name.c_str(),0,DWORD(value.size()),0,MPQ_FILE_COMPRESS,&member),"Cannot create clock member");bool written=SFileWriteFile(member,value.data(),DWORD(value.size()),MPQ_COMPRESSION_ZLIB),finished=SFileFinishFile(member);require(written && finished,"Cannot write clock member");
 }
 MapData map() {MapData data;data.info.players={{0,1,0,0,"Local",{},0,0}};data.terrain.width=data.terrain.height=2;data.terrain.corners.resize(4);return data;}
-std::unique_ptr<World> world() {return std::make_unique<World>(map(),std::array<Real,4>{});}
-const std::string api=R"jass(type fgamestate extends handle
+Archives* testArchives=nullptr;
+std::unique_ptr<World> world() {return World::read(*testArchives);}
+const std::string api=R"jass(type destructable extends handle
+type fgamestate extends handle
 native ConvertFGameState takes integer value returns fgamestate
 constant native GetFloatGameState takes fgamestate state returns real
 native SetFloatGameState takes fgamestate state, real value returns nothing
@@ -39,9 +41,32 @@ Module compile() {return Module::compile(Program::parse({{"clock.j",api,"authore
 Value call(ScriptSession& session,const char* name,std::initializer_list<Value> args={}) {return session.runtime().invoke(name,std::span<const Value>(args.begin(),args.size()));}
 }
 int wmain(int argc,wchar_t** argv) {
-    if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("player_snapshots_with_sleeping_script",[&]{
+        std::string source=R"jass(type destructable extends handle
+type player extends handle
+type playerstate extends handle
+native TriggerSleepAction takes real seconds returns nothing
+native Probe takes nothing returns nothing
+native SetPlayerState takes player p, playerstate state, integer value returns nothing
+native SetPlayerTechMaxAllowed takes player p, integer tech, integer maximum returns nothing
+globals
+integer completed=0
+endglobals
+function config takes nothing returns nothing
+endfunction
+function wait takes nothing returns nothing
+call TriggerSleepAction(0.125)
+set completed=1
+endfunction
+function check takes nothing returns nothing
+call Probe()
+endfunction
+)jass";Archives archives(argv[1]);archives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");auto create=[&]{auto module=Module::compile(Program::parse({{"player-sleep.j",source,"authored persistence test"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(World::read(archives));result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);return result;};auto original=create(),restored=create();auto& vm=original->runtime();auto player=vm.handle("player",0x100000);auto tech=ObjectData::code("hfoo");vm.invoke("SetPlayerState",std::array{player,vm.handle("playerstate",1),vm.integer(765)});vm.invoke("SetPlayerTechMaxAllowed",std::array{player,vm.integer(int(tech)),vm.integer(4)});vm.bind("Probe",[&](auto& runtime,auto){rejects([&]{original->encodePlayerStates();},"quiescent");rejects([&]{original->encodePlayerTechnology();},"quiescent");return runtime.nothing();});vm.invoke("check");vm.start("wait");require(vm.threadCount()==1,"Script did not sleep");auto players=original->encodePlayerStates(),technology=original->encodePlayerTechnology();auto scripts=original->encodeSleepingScripts(original->snapshotSleepingScripts({}));rejects([&]{original->restorePlayerStates(players);},"quiescent");restored->restorePlayerStates(players);restored->restorePlayerTechnology(technology);require(restored->config().players[0].states.at(1)==765 && restored->config().players[0].techMaximum.at(tech)==4,"Restored player values differ");restored->restoreSleepingScripts(restored->decodeSleepingScripts(scripts),{});restored->runtime().advanceThreads(.125);vm.advanceThreads(.125);require(restored->runtime().global("completed").bits==1 && vm.global("completed").bits==1 && restored->encodePlayerStates()==players && restored->encodePlayerTechnology()==technology,"Player snapshots and restored sleeping script diverged");
+    });
     test("clock_snapshot_restores_temporary_and_rejects_corruption",[]{GameClock original;original.time(real(8));original.scale(real(2));original.temporary(real(0),real(30));original.advance(real(5));original.suspend(true);auto snapshot=original.encodeState();GameClock restored;restored.restoreState(snapshot);require(restored.encodeState()==snapshot,"Clock snapshot did not round-trip");original.advance(real(7));restored.advance(real(7));require(original.encodeState()==restored.encodeState(),"Restored suspended temporary clock diverged");original.suspend(false);restored.suspend(false);original.advance(real(40));restored.advance(real(40));require(original.encodeState()==restored.encodeState(),"Restored temporary expiry diverged");auto before=restored.encodeState();auto truncated=snapshot;truncated.pop_back();rejects([&]{restored.restoreState(truncated);},"Truncated");require(restored.encodeState()==before,"Truncated restore changed clock");auto bad=GameClock{}.rules();bad.dayLength=real(240);GameClock different(bad);rejects([&]{different.restoreState(snapshot);},"rules differ");require(different.time().bits()==0,"Rule rejection changed clock");});
-    test("player_state_snapshot_preserves_all_players_transactionally",[]{auto source=R"jass(type player extends handle
+    test("player_state_snapshot_preserves_all_players_transactionally",[]{auto source=R"jass(type destructable extends handle
+type player extends handle
 type playerstate extends handle
 native SetPlayerState takes player p, playerstate state, integer value returns nothing
 function config takes nothing returns nothing

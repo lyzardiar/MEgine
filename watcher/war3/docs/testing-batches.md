@@ -4119,6 +4119,12 @@ Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨�
 
 Win32 Release 客户端及测试目标编译通过；执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m`，再运行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m ethereal-ability`，1/1 通过。DotA 原图隔离会话使用 `I0LT`，目标在 1 秒时虚无、5 秒时恢复；记录 `tmp/docs-artifacts/war3/dota-ethereal/after.log`。阶段验证物品／派生、多个来源及生命周期、伤害／治疗倍率、地图覆盖、真实窗口／原版及联机。
 
+### 玩家状态与睡眠线程采集（待阶段验证）
+
+路径：`src/jass_runtime.h/.cpp`、`src/session_game.cpp`、`tests/clock_tests.cpp`；说明见[玩家基础状态](player-state-persistence.md)和[玩家科技状态](player-tech-persistence.md)。玩家状态和科技允许在脚本已让出执行时采集；脚本运行中及已有线程的状态恢复仍拒绝。Win32 Release 客户端及 `war3_clock_tests` 编译通过；以原 BootyBay 归档为世界、隔离脚本执行的新增联合采集／恢复用例通过，覆盖运行中拒绝、睡眠时采集及在另一会话恢复后继续线程。
+
+执行 `war3_clock_tests <data-root> ../../tmp/docs-artifacts/war3/player-sleep-snapshot` 结果 11 通过、0 失败。测试世界使用原 BootyBay 归档，满足会话附加世界的资源要求。真实地图触发器、多个线程、世界对象、科技与人口一致性、统一事务、联机和原版存档仍待验证或实现。
+
 ### JASS 引用型全局状态（待阶段验证）
 
 路径：`src/jass_runtime.cpp`、`src/jass_runtime.h`、`tests/jass_runtime_tests.cpp`、`tests/jass_thread_tests.cpp`；说明见 [JASS 全局快照](jass-global-persistence.md)。全局值组件包含函数与映射句柄，校验源码和内容并在完整解析后恢复；隔离线程恢复使用同一稳定句柄映射。
