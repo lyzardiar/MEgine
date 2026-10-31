@@ -20,6 +20,7 @@ integer native_probe_items=0
 unit range_probe_center=null
 unit range_probe_actor=null
 unit range_probe_target=null
+trigger range_probe_second_trigger=null
 integer range_probe_first=0
 integer range_probe_second=0
 '''
@@ -39,7 +40,6 @@ endfunction
 function NativeRangeBegin takes nothing returns nothing
     local unit origin
     local trigger first=CreateTrigger()
-    local trigger second=CreateTrigger()
     local real x=GetStartLocationX(0)
     local real y=GetStartLocationY(0)
     local integer i=0
@@ -58,8 +58,15 @@ function NativeRangeBegin takes nothing returns nothing
     endloop
     call TriggerRegisterUnitInRange(first,origin,100,null)
     call TriggerAddAction(first,function NativeRangeFirst)
-    call TriggerRegisterUnitInRange(second,range_probe_center,100,null)
-    call TriggerAddAction(second,function NativeRangeSecond)
+    set range_probe_second_trigger=CreateTrigger()
+    call TriggerRegisterUnitInRange(range_probe_second_trigger,range_probe_center,100,null)
+    call TriggerAddAction(range_probe_second_trigger,function NativeRangeSecond)
+endfunction
+function NativeRangeReplace takes nothing returns nothing
+    call DestroyTrigger(range_probe_second_trigger)
+    set range_probe_second_trigger=CreateTrigger()
+    call TriggerRegisterUnitInRange(range_probe_second_trigger,range_probe_center,100,null)
+    call TriggerAddAction(range_probe_second_trigger,function NativeRangeSecond)
 endfunction
 function NativeProbeAssert takes boolean ok, string label returns nothing
     if not ok then

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 空间事件登记索引（待阶段验证）
+
+路径：`src/session.h`、`src/session_spatial_events.cpp`、`tests/generate-live-world-fixture.py`、`tests/live_world_tests.cpp`。区域进入／离开和单位距离事件在注册时加入独立索引；空间更新只读取这一索引并清理已销毁事件，保持注册顺序与当前轮事件快照。Win32 Release 客户端、live-world 和 DotA 英雄测试编译通过；原 BootyBay 夹具在 80 个额外单位场景覆盖事件中心被前一回调移动、离开再进入、销毁并重新注册，未发生重复；DotA 原图 `lich-spells` 与 `storm-spells` 通过，均未加载 Game.dll。夹具及日志在 `tmp/docs-artifacts/war3/spatial-index-registration/`。复杂回调重入、大量触发器长期创建／销毁、真实地图帧时间及内存仍待验证；未执行性能基准。
+
 ### DotA 巫妖技能连续流程（待阶段验证）
 
 路径：`tests/dota_heroes_tests.cpp`。原图隔离会话酒馆购买巫妖后设置等级、坐标、生命／魔法与目标；冰霜新星造成 125 点伤害并减速，冰霜护甲提高友军护甲、令近战攻击者减速且分别到期恢复，黑暗仪式牺牲友军并恢复魔法，连环霜冻伤及两个敌人。Win32 Release 测试目标编译通过；`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> lich-spells` 通过，未加载 Game.dll。测试手动重置冷却并暂停其他单位；多等级、目标类别、完整弹射与技能时序、真实对局、窗口、音效和原版数值待阶段核对。
