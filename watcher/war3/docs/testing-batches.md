@@ -3762,3 +3762,7 @@ Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨�
 路径：`src/entities.h`、`src/session_equipment.cpp`、`tests/passive_tests.cpp`、`tests/generate-passive-fixture.py`；说明见[虚无能力](ethereal-ability.md)。能力、书籍与物品刷新虚无状态，既有类别／攻击／伤害／治疗消费者读取该状态。
 
 Win32 Release 客户端及测试目标编译通过；执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m`，再运行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m ethereal-ability`，1/1 通过。DotA 原图隔离会话使用 `I0LT`，目标在 1 秒时虚无、5 秒时恢复；记录 `tmp/docs-artifacts/war3/dota-ethereal/after.log`。阶段验证物品／派生、多个来源及生命周期、伤害／治疗倍率、地图覆盖、真实窗口／原版及联机。
+
+# 人族物品栏槽位对齐
+
+路径：`src/game_inventory_layout.h`、`docs/unit-combat-panel.md`。物品图标及其冷却和交互区域向右对齐控制台槽位。Win32 Release 客户端编译通过；游戏内 Agent 选中六物品、100 经验的圣骑士，画面显示物品、经验条和攻击加成，拖拽后第 0／1 格的物品句柄交换。证据位于 `tmp/docs-artifacts/war3/agent-info/layout-slot-aligned/`。阶段核对四族皮肤、不同窗口比例、物品点击／冷却和原版画面。

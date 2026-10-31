@@ -21,3 +21,5 @@ Win32 Release 编译通过；`war3_passive_tests.exe <data-root> <fixture> weapo
 攻击与护甲数值的基础值及加成使用同一宽度预算；超出信息列时两段文字按相同比例缩小，并保留加成颜色。英雄与双武器的左列为右侧属性或第二武器保留空间。六物品圣骑士的普通攻击数值已通过上述游戏内画面检查；长数值、不同分辨率及原版字体显示仍待验证。
 
 具有物品栏的选中单位在槽位上方显示 `UI\\FrameDef\\InfoPanelStrings.fdf` 的 `INVENTORY` 字符串；物品次数为正时显示数量，包括 1，数量在槽位右侧按宽度收缩。Win32 Release 客户端及游戏内 Agent 检查中，人族圣骑士携带 1 次生命药水和 4 次中和权杖，1264×921 画面显示标题及两个数量；证据位于 `tmp/docs-artifacts/war3/agent-info/layout-inventory-title/`。其他种族、商店买家、自定义物品栏容量、长数字、窗口比例和原版精度待验证。
+
+物品显示、冷却遮罩和交互区域向右对齐人族控制台槽位。游戏内 Agent 在 1264×921 画面选择携带六件物品的圣骑士，检查经验条、攻击加成与物品位置，并拖拽交换前两格；证据位于 `tmp/docs-artifacts/war3/agent-info/layout-slot-aligned/`。其他种族、不同窗口比例、物品点击与冷却遮罩仍待阶段核对。
