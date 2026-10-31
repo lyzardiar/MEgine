@@ -71,7 +71,7 @@ const SpellInfo& ScriptSession::spellInfo(std::uint32_t ability,unsigned level) 
         {"ANch",SpellKind::Charm,SpellTargeting::Unit},{"AIco",SpellKind::Charm,SpellTargeting::Unit},
         {"Acmg",SpellKind::ControlMagic,SpellTargeting::Unit},
         {"AHmt",SpellKind::MassTeleport,SpellTargeting::Unit},{"AItp",SpellKind::TownPortal,SpellTargeting::Unit},
-        {"AIrt",SpellKind::Recall,SpellTargeting::Either},
+        {"AIrt",SpellKind::Recall,SpellTargeting::Either},{"AUds",SpellKind::DarkSummoning,SpellTargeting::Point},
         {"AOww",SpellKind::Bladestorm,SpellTargeting::None},{"AOeq",SpellKind::Earthquake,SpellTargeting::Point},
         {"AOvd",SpellKind::Voodoo,SpellTargeting::None},{"AHpx",SpellKind::Phoenix,SpellTargeting::None},
         {"AUfa",SpellKind::FrostArmor,SpellTargeting::Unit},{"AUfu",SpellKind::FrostArmor,SpellTargeting::Unit},

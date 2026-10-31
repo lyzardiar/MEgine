@@ -34,3 +34,7 @@
 AbilityMetaData的Hmt1/Hmt2/Hmt3、Irec、Itpm/Itp2说明单位数量、施放延迟和使用传送群。HumanAbilityFunc/ItemAbilityFunc保留目的地Areaeffectart、施法者Casterart与搬移Specialart的原用途。来源提取脚本/JSON、编译日志及产品摘要在 `tmp/docs-artifacts/war3/teleport/`；本次依据源表，没有新的REA指令级行为对照。
 
 完整保存/避难权杖、复杂复合物品dtsb、运输/附身/矿内/古树与所有特殊单位、AI策略自动使用及原版时序、UI/GPU/音效、三图长局和性能仍待完成或集中验证。此次只执行开发必需编译与差异检查，没有运行专项玩法、三图、GPU或性能回归；场景与风险见[测试队列](testing-batches.md)。
+
+`AUds` 黑暗召唤及 `dsum` 召唤钻石已连接地点目标、库存冷却和现有单位传送流程。原版 `AbilityData.slk` 的 `DataA1=12`、`DataB1=1` 分别为最大单位数及施法延迟秒数，范围为 700，冷却 90 秒；目标为自己的地面或空中单位。施法者保持原位，目标区域内单位在延迟后移动至施法者附近，使用源 `Effectart`／`Targetart`。聚集当前读取 `DataC`，原版落点、选取顺序和自定义字段仍待对照。
+
+Win32 Release 客户端及控制测试目标编译通过；`war3_control_tests.exe <data-root> <fixture> dark-summoning` 1 通过、0 失败，无 Game.dll。检查地点选择、延迟、12 个名额、敌方／范围外排除、施法者位置、冷却与现有召回护符。真实窗口、小地图、脚本订单、取消／回调、障碍／碰撞、源特效与原版语义留阶段验证。

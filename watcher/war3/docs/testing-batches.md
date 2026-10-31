@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 召唤钻石与黑暗召唤（待验证）
+
+路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_item_use.cpp`、`src/session_spells.cpp`、`src/session_teleport.cpp`、`tests/control_tests.cpp`；源字段和行为见[群体传送](teleport.md)。Win32 Release 客户端及控制测试目标编译通过；`dark-summoning` 定向检查 1 通过、0 失败，无 Game.dll，覆盖原物品的地点、延迟、人数上限、阵营／距离、冷却及召回护符。阶段核对目标及落点顺序、DataC／自定义覆盖、单位类别、支付／打断／事件、实际窗口、小地图、源视觉与音效及联机同步。
+
 ### 影子权杖与目标视野（待验证）
 
 路径：`src/session_item_use.cpp`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_spell_effects.cpp`、`src/session_unit_casters.cpp`、`src/session_fog.cpp`、`src/session_visibility.cpp`、`src/session.h`、`src/spells.h`、`tests/control_tests.cpp`；行为及源字段见[影子权杖](shadow-sight.md)。Win32 Release 产品和控制测试程序编译通过；`shadow-sight` 定向检查 1 通过、0 失败，无 Game.dll。阶段对照真实目标、隐身／魔免／无敌、目标及施法者归属变化、多玩家重复施法、时长覆盖、驱散／事件次序、窗口、声音和联机。
