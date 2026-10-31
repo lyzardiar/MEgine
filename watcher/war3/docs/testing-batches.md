@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 兽族第五章矩形移动（待阶段验证）
+
+路径：`src/session_world.cpp`、`tests/spatial_handle_tests.cpp`、`CMakeLists.txt`、`docs/campaign-rect-movement.md`。`MoveRectToLoc` 忽略无效矩形或地点；Win32 Release 构建通过，`war3_spatial_handle_tests.exe <data-root> <Orc05.w3m>` 1 通过、0 失败，原图静音 `--main-check --simulate-ms 400000` 推进至 400 秒。阶段核对有效／无效及跨类型句柄、战役目标组清空与重新建造、真实窗口和原版行为；本次未验证完整关卡。证据位于 `tmp/docs-artifacts/war3/orc05-runtime-400*.log`。
+
 ### 影魔灵魂与魂之挽歌连续流程（定向检查通过）
 
 路径：`CMakeLists.txt`、`tests/dota_soul_tests.cpp`。使用用户提供的 DotA_v6.83d 原图，通过酒馆购买影魔并学习支配死灵与魂之挽歌；测试调整等级、魔法、位置和目标并暂停其他单位。五次实际攻击击杀后，灵魂等级由 1 增至 6、攻击加成由 0 增至 10；按自身积累的灵魂施法后，目标生命由 5000 降至 4920。通过伤害 native 令英雄死亡后灵魂等级变为 4，死亡释放使目标生命由 4920 降至 4840；调用 ReviveHero 后等级为 4、攻击加成为 6。`war3_dota_soul_tests.exe <data-root> <dota-map>` 实际 1/1 通过，未加载 Game.dll。检查使用会话命令及 native，未覆盖实际窗口、自然等级成长、不同灵魂数量、目标密集情况、事件重入与完整对局；这些继续留待阶段验证。
