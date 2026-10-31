@@ -4390,3 +4390,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 玩家与单位事件重建（待阶段验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`、`docs/implementation-roadmap.md`。`SAEV` 重建玩家、玩家单位、单位、单位状态、玩家状态和联盟变化事件，保留过滤、阈值及混合登记顺序；目标需先重建触发器和相关单位，包括被引用的已移除句柄，布尔表达式按值重建。Win32 Release 客户端及 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 18/18，覆盖死亡回调顺序、过滤、单位与玩家状态阈值、联盟变化、已移除句柄和生命周期／损坏拒绝。OrcX01 原图 0／30／150 秒分别重建并重编码 129／141／141 个此类事件，使用 239／252／460 个步兵占位句柄，最后包含 5 个已移除句柄；未恢复原单位状态或续执行原图事件和线程。日志 `tmp/docs-artifacts/war3/actor-event-snapshot/`。完整世界、剩余事件、实际加载及原版一致性待实现或阶段验证。
+
+### 相机设置与运动状态重建（待阶段验证）
+
+路径：`src/session.h`、`src/session_camera_setup.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`、`docs/implementation-roadmap.md`。`SCAM` 重建相机设置句柄、镜头边界、目标、过场模型参数、运动与字段过渡和跟随配置；时钟须一致，单位引用须映射，调用方须恢复脚本引用。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 19/19；隔离检查覆盖移动及环绕插值、字段、跟随、映射和损坏拒绝。OrcX01 原图 0／30／150 秒各重建并重编码 95 个相机设置，使用 239／252／460 个步兵占位句柄；未恢复原单位状态或续执行原图线程。日志 `tmp/docs-artifacts/war3/camera-snapshot/`。实际存档加载、窗口画面及原版视觉一致性待实现或阶段验证。

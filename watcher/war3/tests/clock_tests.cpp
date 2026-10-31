@@ -318,6 +318,44 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"actor-snapshot.j",source,"authored actor event persistence test"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("makeUnit");a.invoke("setup");a.invoke("low");require(a.global("crossings").bits==1,"Actor event fixture did not cross state");auto identity=[](std::string_view,std::uint32_t id){return id;};auto triggers=original->encodeTriggers(identity),events=original->encodeActorEvents(identity),globals=a.encodeGlobals(identity);b.invoke("CreateTimer");b.invoke("makeUnit");b.invoke("low");auto sourceUnit=a.global("subject"),targetUnit=b.global("subject"),sourceDoomed=a.global("doomed"),targetDoomed=b.global("doomed");auto tm=restored->restoreTriggers(triggers);auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==sourceUnit.bits?targetUnit.bits:id==sourceDoomed.bits?targetDoomed.bits:0u;auto it=tm.find({std::string(type),id});return it==tm.end()?0u:it->second;};rejects([&]{restored->rebuildActorEvents(events,decode);},"handle mapping");b.invoke("RemoveUnit",std::array{targetDoomed});auto bad=events;bad.back()^=1;rejects([&]{restored->rebuildActorEvents(bad,decode);},"digest");rejects([&]{restored->rebuildActorEvents(events,[&](std::string_view type,std::uint32_t id){return type=="unit"?0u:decode(type,id);});},"handle mapping");require(restored->liveObjects(NativeKind::Event)==0,"Rejected actor restore created events");auto em=restored->rebuildActorEvents(events,decode);auto inverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==targetUnit.bits?sourceUnit.bits:id==targetDoomed.bits?sourceDoomed.bits:0u;if(type=="event"){for(auto [stable,local]:em)if(local==id)return stable;}for(auto& [key,local]:tm)if(key.first==type && local==id)return key.second;return 0u;};require(restored->encodeActorEvents(inverse)==events,"Actor event snapshot did not round-trip");b.restoreGlobals(globals,decode);restored->startMain();b.invoke("low");require(b.global("crossings").bits==1,"Restored unit state fired again");for(auto* session:{original.get(),restored.get()}){session->runtime().invoke("high");session->runtime().invoke("low");session->runtime().invoke("ally");session->runtime().invoke("die");}require(a.global("crossings").bits==2 && b.global("crossings").bits==2 && a.global("playerCrossings").bits==2 && b.global("playerCrossings").bits==2 && a.global("alliances").bits==1 && b.global("alliances").bits==1 && a.global("order").bits==123 && b.global("order").bits==123,"Restored actor events diverged");
     });
+    test("camera_snapshot_restores_setups_and_active_motion",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type timer extends handle
+ type camerasetup extends handle
+ type camerafield extends handle
+ native ConvertCameraField takes integer n returns camerafield
+ native Player takes integer id returns player
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native CreateTimer takes nothing returns timer
+ native CreateCameraSetup takes nothing returns camerasetup
+ native CameraSetupSetField takes camerasetup c, camerafield f, real value, real duration returns nothing
+ native CameraSetupGetField takes camerasetup c, camerafield f returns real
+ native CameraSetupSetDestPosition takes camerasetup c, real x, real y, real duration returns nothing
+ native CameraSetupGetDestPositionX takes camerasetup c returns real
+ native CameraSetupApply takes camerasetup c, boolean pan, boolean timed returns nothing
+ native SetCameraTargetController takes unit u, real x, real y, boolean inherit returns nothing
+ globals
+ camerasetup shot=CreateCameraSetup()
+ unit subject=null
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function makeUnit takes nothing returns nothing
+ set subject=CreateUnit(Player(0),'hfoo',0.0,0.0,0.0)
+ endfunction
+ function setup takes nothing returns nothing
+ call CameraSetupSetField(shot,ConvertCameraField(0),1800.0,4.0)
+ call CameraSetupSetDestPosition(shot,20.0,10.0,4.0)
+ call CameraSetupApply(shot,true,true)
+ call SetCameraTargetController(subject,7.0,8.0,true)
+ endfunction
+ )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"camera-snapshot.j",source,"authored camera persistence test"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("makeUnit");a.invoke("setup");original->advance(1);auto identity=[](std::string_view,std::uint32_t id){return id;};auto clock=original->encodeSimulationClock(),camera=original->encodeCameraState(identity),globals=a.encodeGlobals(identity);restored->restoreSimulationClock(clock);b.invoke("CreateTimer");b.invoke("makeUnit");auto sourceUnit=a.global("subject"),targetUnit=b.global("subject"),old=b.global("shot");auto decodeUnit=[&](std::string_view type,std::uint32_t id){return type=="unit" && id==sourceUnit.bits?targetUnit.bits:0u;};auto bad=camera;bad.back()^=1;rejects([&]{restored->rebuildCameraState(bad,decodeUnit);},"digest");rejects([&]{restored->rebuildCameraState(camera,{});},"requires mapping");require(b.global("shot").bits==old.bits && restored->cameraControl().targetUnit==0,"Rejected camera restore changed target");auto mapping=restored->rebuildCameraState(camera,decodeUnit);auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return decodeUnit(type,id);if(type=="camerasetup"){auto found=mapping.find(id);return found==mapping.end()?0u:found->second;}return 0u;};auto inverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==targetUnit.bits?sourceUnit.bits:0u;if(type=="camerasetup")for(auto [stable,local]:mapping)if(local==id)return stable;return 0u;};require(restored->encodeCameraState(inverse)==camera,"Camera snapshot did not round-trip");b.restoreGlobals(globals,decode);require(b.global("shot").bits!=old.bits && restored->cameraControl().targetUnit==targetUnit.bits && restored->cameraControl().inheritOrientation,"Camera setup or unit reference did not restore");auto field=b.invoke("ConvertCameraField",std::array{b.integer(0)});require(b.invoke("CameraSetupGetField",std::array{b.global("shot"),field}).bits==real(1800).bits() && b.invoke("CameraSetupGetDestPositionX",std::array{b.global("shot")}).bits==real(20).bits(),"Restored camera setup differs");restored->startMain();original->advance(1);restored->advance(1);auto& x=original->world()->environment();auto& y=restored->world()->environment();require(x.cameraMotion.value(original->simulationTime())==y.cameraMotion.value(restored->simulationTime()) && x.cameraFields[0].value(original->simulationTime())==y.cameraFields[0].value(restored->simulationTime()),"Restored camera transition diverged");x.cameraMotion.rotate(10,20,1.5f,original->simulationTime(),4);auto orbitClock=original->encodeSimulationClock(),orbitCamera=original->encodeCameraState(identity);auto orbit=create();orbit->restoreSimulationClock(orbitClock);auto& vm=orbit->runtime();vm.invoke("makeUnit");auto orbitUnit=vm.global("subject");orbit->rebuildCameraState(orbitCamera,[&](std::string_view type,std::uint32_t id){return type=="unit" && id==sourceUnit.bits?orbitUnit.bits:0u;});auto future=original->simulationTime()+1;require(x.cameraMotion.value(future)==orbit->world()->environment().cameraMotion.value(future),"Restored camera orbit diverged");
+    });
     test("triggers_restore_actions_conditions_and_state",[&]{
         std::string source=R"jass(type destructable extends handle
  type timer extends handle
