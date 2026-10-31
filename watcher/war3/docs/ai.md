@@ -15,7 +15,7 @@ StartMeleeAI/StartCampaignAI从挂载归档读取策略成员，地图覆盖优�
 - 队长需求/组建、准备度/生命/魔法、目标/归家/撤退、敌基地/扩张/野怪营地、盟友目标和攻击指令消费实际部队。策略选项连接基础防守、受伤撤退、英雄拾物/治疗药品购买使用、工人修理和目标优先；英雄技能回调连接实际学习。
 - CommandAI 使用每个 AI 独立的 12 项后进先出命令栈；栈满时忽略新命令，空栈读取命令和数据均返回 -1，空栈弹出不产生动作。调试记录有界，脚本文本连接会话显示。
 
-原版人族第六章以命令、Y、X 的顺序发送队长传送及攻击数据，AI 脚本从栈顶依次读取 X、Y 和命令。原版 1.27 的 `GetLastCommand`、`GetLastData`、`PopLastCommand` 入口分别位于 `0x6f88fec0`、`0x6f88ff00`、`0x6f8928a0`；入栈函数 `0x6f89c990` 在 12 项时直接返回，空栈读取返回 -1。静态反汇编见 `tmp/docs-artifacts/war3/tft-ne4-next/ai-command-asm.txt`、`ai-command-empty.py` 和 `ai-command-push.py`。Win32 Release 客户端及 CampaignAI 检查编译通过，`war3_campaign_ai_tests <data-root> <fixture.w3m> command-stack` 1 通过、0 失败。原图隔离会话中，玛尔加尼斯到达脚本指定的传送区，而非地图原点；随后其追击目标建筑仍未继续，不能视为完整战役对局。记录见 `tmp/docs-artifacts/war3/tft-ne4-next/roc-human06-stack-after.log`。
+原版人族第六章以命令、Y、X 的顺序发送队长传送及攻击数据，AI 脚本从栈顶依次读取 X、Y 和命令。原版 1.27 的 `GetLastCommand`、`GetLastData`、`PopLastCommand` 入口分别位于 `0x6f88fec0`、`0x6f88ff00`、`0x6f8928a0`；入栈函数 `0x6f89c990` 在 12 项时直接返回，空栈读取返回 -1。静态反汇编见 `tmp/docs-artifacts/war3/tft-ne4-next/ai-command-asm.txt`、`ai-command-empty.py` 和 `ai-command-push.py`。Win32 Release 客户端及 CampaignAI 检查编译通过，`war3_campaign_ai_tests <data-root> <fixture.w3m> command-stack` 1 通过、0 失败。原图隔离会话中，玛尔加尼斯到达脚本指定的传送区，而非地图原点；该检查覆盖传送目标，完整战役对局仍待验证。记录见 `tmp/docs-artifacts/war3/tft-ne4-next/roc-human06-stack-after.log`。
 
 UnitMetaData中utyp的caseSens=0，原TownHall/Mechanical/Peon等字段含大写。ObjectData.unitClasses提供统一小写分类，property保留原字符串；AI城镇及现有IsUnitType、武器/技能/光环/吸血、修理和古树施工使用该分类。
 
@@ -219,3 +219,5 @@ Win32 Release 客户端与 AI 控制测试编译通过，`war3_ai_control_tests`
 资料片 `HumanX04.w3x` 的隔离 60 秒模拟采样中，304 次正数量请求有 289 次未加入成员；相同插桩下，调用内队伍处理累计墙钟时间由 19,880 ms 降至 639 ms，JASS 线程推进累计墙钟时间由 19,905 ms 降至 657 ms。统计彼此包含，属于单次插桩开发采样而非完整帧率或原版基准；记录 `tmp/docs-artifacts/war3/tft-ne4-next/humanx04-suicide-profile.log` 和 `humanx04-suicide-after.log`。Win32 Release 客户端和 CampaignAI 测试编译通过，`armies` 2 通过、0 失败，覆盖新成员立即进攻、空请求保留既有订单及定期更新恢复队伍。实际对局、不同地图、队伍动态变化和原版时序仍待阶段验证。
 
 电脑修补匠在发现可见战斗目标后可施放口袋工厂并进入机器人形态，复用技能目标、消耗、冷却与真实召唤／变身流程；已有同技能工厂时不重复召唤，也不会自动反向切换机器人形态。隔离会话分别验证基础及一级工程升级后的技能，实际创建工厂并保持机器人形态，原版决策、真实对局和联机待阶段对照。
+
+队长地点进攻在传送后重新寻路至原目标，清理队长的单位目标时保留地点进攻；重设阶段、队长与撤退会清除该进攻状态。人族第六章原图以同一命令栈先设置目标、再传送，静音隔离会话中玛尔加尼斯在约 345.5 秒锁定并摧毁首栋目标建筑，随后继续选择其他建筑。运行至 600 秒时第四栋建筑仍未受伤，完整任务尚未跑通；过程见 `tmp/docs-artifacts/war3/tft-ne4-next/roc-human06-captain-after.log`。原版 1.27 静态入口见 `tmp/docs-artifacts/war3/tft-ne4-next/captain-target-asm.txt` 和 `captain-target-deeper.txt`，地点命令和目标清理的完整原版动态行为仍待对照。

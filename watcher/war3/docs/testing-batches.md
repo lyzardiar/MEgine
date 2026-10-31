@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+### 战役队长地点进攻（待阶段验证）
+
+路径：`src/ai.h`、`src/session_ai.cpp`、`src/session_ai_armies.cpp`、`src/session_ai_control.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [AI](ai.md)。地点进攻在队长传送及单位目标清理后保留，单位目标清理和重设阶段分别处理。Win32 Release 客户端与 CampaignAI 测试编译通过；`war3_campaign_ai_tests <data-root> human06` 原图 1 通过、0 失败，`war3_campaign_ai_tests <data-root> <fixture.w3m> armies` 和 `amphibious-reinforce` 各 2 通过、0 失败，未加载 Game.dll。原图静音隔离会话中首栋建筑在约 345.5 秒被玛尔加尼斯锁定并摧毁，连续切换目标后第四栋建筑在 600 秒时仍未受伤，任务未完成；日志位于 `tmp/docs-artifacts/war3/tft-ne4-next/roc-human06-captain-after.log`。阶段核对第四栋建筑的攻击与寻路、转换计数、其他战役、混编／目标失效／传送阻塞、命令回调、联机和原版动态语义。
+
 ### 战役 AI 命令栈（待阶段验证）
 
-路径：`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [AI 命令](ai.md)。`CommandAI` 及 AI 读取／弹出按原版 12 项栈、满栈忽略和空栈返回 -1 执行。Win32 Release 客户端及 CampaignAI 测试编译通过，`war3_campaign_ai_tests <data-root> <fixture.w3m> command-stack` 1 通过、0 失败；人族第六章原图隔离会话的玛尔加尼斯传送到指定区域，但后续攻击建筑仍未继续。阶段核对其他战役脚本、命令同帧／跨帧次序、AI 重启／失效、联机同步及完整任务推进。
+路径：`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [AI 命令](ai.md)。`CommandAI` 及 AI 读取／弹出按原版 12 项栈、满栈忽略和空栈返回 -1 执行。Win32 Release 客户端及 CampaignAI 测试编译通过，`war3_campaign_ai_tests <data-root> <fixture.w3m> command-stack` 1 通过、0 失败；人族第六章原图隔离会话的玛尔加尼斯传送到指定区域，后续攻击建筑的验证见“战役队长地点进攻”。阶段核对其他战役脚本、命令同帧／跨帧次序、AI 重启／失效、联机同步及完整任务推进。
 
 ### 锁镣派生能力的可选光束（待阶段验证）
 
