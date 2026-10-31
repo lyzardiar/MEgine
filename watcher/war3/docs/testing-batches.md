@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 影之灵龛自然充能检查（待验证）
+
+路径：`tests/dota_rune_tests.cpp`、`docs/dota-bottle.md`。DotA 原图 `urn-charge` 检查附近敌方英雄死亡的首次与后续充能、远处敌方及友军排除，以及自然充能后的使用；Win32 Release 1 通过、0 失败。执行 `war3_dota_rune_tests.exe <data-root> <DotA_v6.83d.w3x> urn-charge`。阶段核对多名携带者、英雄幻象、死亡与归属边界、原版及实际对局。
+
 ### 动态计数物品的技能事件与扣减（待验证）
 
 路径：`src/session_spells.cpp`、`tests/dota_rune_tests.cpp`、`docs/dota-bottle.md`。无源使用次数且不可消耗的技能物品，先发布技能生效事件，再扣减使用前已有的正次数；已清零或移除的物品不重复扣减。Win32 Release 产品和测试目标编译通过；DotA 原图 `urn`、`wand`、`wand-charge`、`regen` 各 1 通过、0 失败。执行 `war3_dota_rune_tests.exe <data-root> <DotA_v6.83d.w3x> <模式>`。阶段核对脚本重设正次数、移除／转移及物品事件次序、普通有次数物品、原版动态次数、实际窗口和联机。
