@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 资料片人族第六章至终章交接（待验证）
+
+路径：`docs/campaign-flow.md`。第六章隔离会话人工击杀玛瑟里顿后原脚本请求终章，手动启动终章后运行至返回；日志位于 `tmp/docs-artifacts/war3/tft-ne4-next/humanx06-goal.log` 和 `humanx06-finale.log`。阶段核对自然战斗、英雄状态及物品继承、真实窗口自动切关、终章音画和原版缓存格式。
+
 ### 派生治疗波订单与资料片人族第五章（待验证）
 
 路径：`src/session_spell_info.cpp`、`tests/spell_tests.cpp`、`docs/spells.md`、`docs/campaign-flow.md`。治疗波派生记录未填写源订单时使用 `healingwave`；有源订单时继续解析源内容。Win32 Release 客户端和测试目标编译通过；`war3_spell_tests <data-root> ../../tmp/docs-artifacts/war3/mind-rot/fixture.w3m healing-wave-alias` 1 通过、0 失败，实际目标命令治疗友军并消耗魔法。原版第五章隔离会话人工移动英雄并缩短四座传送门计时后，胜利对话请求第六章；第六章手动启动后约 120 秒恢复控制，运行至 400 秒。日志位于 `tmp/docs-artifacts/war3/tft-ne4-next/`。阶段核对地图显式订单覆盖、跳跃／治疗边界、原版时序、实际战斗、英雄继承、窗口自动切关和音画。
