@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 亡灵最终章物品槽与计时胜利（待阶段验证）
+
+路径：`src/session_inventory.cpp`、`tests/undead_finale_tests.cpp`、`CMakeLists.txt`；说明见 [战役物品槽](campaign-undead08-inventory.md)。Win32 Release 客户端和 `war3_undead_finale_tests <data-root> <Undead08.w3m> <new-absolute-user-dir>` 编译并执行，1 通过、0 失败；使用新用户目录，检查空／失效单位、有效／空／越界槽，并将原图召唤计时器缩短至五秒验证胜利事件。阶段核对前关缓存及六格物品转移、物品掉落事件与回调重入、30 分钟防守、实际窗口和原版行为。
+
 ### 兽族第八章灵魂宝石（待阶段验证）
 
 路径：`src/entities.h`、`src/session_soul.cpp`、`src/session_entities.cpp`、`src/session_spells.cpp`、`src/session_item_use.cpp`、`src/session_inventory.cpp`、`src/session_network_identity.cpp`、`tests/control_tests.cpp`、`tests/orc_soul_campaign_tests.cpp`、`CMakeLists.txt`；说明见 [灵魂宝石](soul-gem.md)。Win32 Release 客户端与两个定向目标编译通过；`war3_control_tests <data-root> <fixture> item-soul` 及 `war3_orc_soul_campaign_tests <data-root> <Orc08.w3m> <new-absolute-user-dir>` 各 1 通过、0 失败。原图检查调整单位与位置并暂停其他单位；阶段检查实际交战、自然目标选择、死亡／复活、事件重入、无脚本地图、联机和原版视觉及能力语义。
