@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 亡灵第五章至第八章跨关（待验证）
+
+路径：`docs/campaign-flow.md`。原图隔离会话沿用同一缓存，观察第五章、间章、第六章及第七章的换关请求，第六至八章恢复阿尔萨斯的等级及用户数据，第八章人工缩短召唤计时后记录胜利；日志位于 `tmp/docs-artifacts/war3/undead05-chain/`。阶段验证完整窗口自动切关、自然战斗／寻路、30 分钟防守、两名英雄与物品继承、原版缓存格式及战役音画。
+
 ### 回复、双倍伤害及幻象符文（待验证）
 
 路径：`src/spells.h`、`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_wards_roar.cpp`、`src/session_inventory.cpp`、`tests/dota_rune_tests.cpp`、`CMakeLists.txt`；说明见[魔瓶](dota-bottle.md)。自目标恢复与怒吼类一次性物品生效，单位可施放 `AIil`，零施法点且目标在射程内同步处理，脚本型一次性物品在拾取后消耗。Win32 Release 客户端和测试程序编译通过；DotA 原图 `regen`、`damage`、`illusion` 各 1 通过、0 失败，检查真实装瓶／释放、恢复、武器伤害、两个幻象及魔瓶恢复。`battle-roar` 4 通过、0 失败；`mirror`、`powerup` 各 1 通过、0 失败，均不加载 Game.dll。阶段核对自然拾取、施法点／重入／移动目标与事件顺序、原版属性和持续时间、不同英雄与技能、真实窗口和联机。
