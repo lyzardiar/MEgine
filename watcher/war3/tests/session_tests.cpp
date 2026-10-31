@@ -18,6 +18,42 @@ template<class F> void rejects(F run,std::string_view message) {try{run();}catch
 int wmain(int argc,wchar_t** argv) {
     if(argc!=2){std::cerr<<"Usage: war3_session_tests <enum-fixture.json>\n";return 2;}
     unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};
+    test("restore_sleeping_trigger_context",[]{
+        const std::string source=R"jass(type widget extends handle
+type unit extends widget
+type trigger extends handle
+type triggeraction extends handle
+type event extends handle
+type eventid extends handle
+type gameevent extends eventid
+native CreateTrigger takes nothing returns trigger
+native TriggerAddAction takes trigger t, code callback returns triggeraction
+native TriggerRegisterGameEvent takes trigger t, gameevent value returns event
+native TriggerWaitOnSleeps takes trigger t, boolean flag returns nothing
+native ConvertGameEvent takes integer value returns gameevent
+native GetTriggeringTrigger takes nothing returns trigger
+native GetTriggerEventId takes nothing returns eventid
+native GetHandleId takes handle value returns integer
+native TriggerSleepAction takes real seconds returns nothing
+globals
+trigger active=null
+integer observedTrigger=0
+integer observedEvent=0
+endglobals
+function action takes nothing returns nothing
+call TriggerSleepAction(0.125)
+set observedTrigger=GetHandleId(GetTriggeringTrigger())
+set observedEvent=GetHandleId(GetTriggerEventId())
+endfunction
+function setup takes nothing returns nothing
+set active=CreateTrigger()
+call TriggerWaitOnSleeps(active,false)
+call TriggerAddAction(active,function action)
+call TriggerRegisterGameEvent(active,ConvertGameEvent(9))
+endfunction
+)jass";
+        ScriptSession original(compile(source),{}),restored(compile(source),{});original.initialize();restored.initialize();auto& a=original.runtime();auto& b=restored.runtime();a.invoke("setup");b.invoke("CreateTrigger");b.invoke("setup");auto first=a.global("active").bits,second=b.global("active").bits;require(first!=second,"Fixture trigger handles did not differ");original.commandMenuOpened(true);require(a.threadCount()==1,"Trigger action did not suspend");rejects([&]{original.snapshotSleepingScript({});},"handle mapping");unsigned encoded=0;auto snapshot=original.snapshotSleepingScript([&](std::string_view type,std::uint32_t id){require(type=="trigger" && id==first,"Unexpected source context handle");++encoded;return 77u;});require(encoded==1 && snapshot.script.hasContext && !snapshot.contexts.empty(),"Trigger context was not captured");rejects([&]{restored.restoreSleepingScript(snapshot,[](auto,auto){return 0u;});},"handle mapping");auto inconsistent=snapshot;inconsistent.contexts.back().triggerUnit=33;inconsistent.contexts.back().triggerWidget=33;rejects([&]{restored.restoreSleepingScript(inconsistent,[&](std::string_view type,std::uint32_t){return type=="unit"?101u:type=="widget"?102u:second;});},"mapping across types");require(!b.threadCount(),"Invalid context mapping created a thread");b.threadClock(10);unsigned decoded=0;restored.restoreSleepingScript(snapshot,[&](std::string_view type,std::uint32_t id){require(type=="trigger" && id==77,"Unexpected stable context handle");++decoded;return second;});require(decoded==1,"Trigger context did not reuse its stable identity");b.advanceThreads(10.09375);require(!b.global("observedTrigger").bits,"Restored trigger woke early");b.advanceThreads(10.125);require(b.global("observedTrigger").bits==second && b.global("observedEvent").bits==9 && !b.threadCount(),"Restored trigger lost event or remapped context");a.advanceThreads(.125);require(a.global("observedTrigger").bits==first && a.global("observedEvent").bits==9,"Source trigger context changed");
+    });
     test("game_command_menu_events",[]{auto module=compile(R"jass(type trigger extends handle
 type triggeraction extends handle
 type event extends handle

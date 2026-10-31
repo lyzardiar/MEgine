@@ -72,6 +72,7 @@ struct DoodadState {
 };
 struct PresentationSpellSound {std::uint32_t ability=0;WorldPoint position{};std::string label;};
 enum class NativeKind {Trackable,TextTag,Multiboard,MultiboardItem,Leaderboard,Player,Group,Timer,Trigger,Location,Rect,Sound,Unit,Item,Weather,Force,Boolean,Action,Condition,Event,TimerDialog,Region,Fog,Cache,Hashtable,Quest,QuestItem,Destructable,Dialog,Button,DefeatCondition,Ability,Effect,Lightning,CameraSetup,UnitPool,ItemPool,Image,Ubersplat,TerrainDeformation};
+struct SessionSleepSnapshot {jass::RuntimeSleepSnapshot script;std::vector<ScriptContext> contexts;std::optional<std::array<std::set<std::uint32_t>,16>> selections;};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
@@ -1093,6 +1094,8 @@ public:
     bool unloadAll(std::uint32_t transport,WorldPoint point);
     ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings={},std::optional<unsigned> gameType={},std::optional<std::uint32_t> initialRandomSeed={});
     ~ScriptSession();
+    SessionSleepSnapshot snapshotSleepingScript(const jass::StableHandleMap& encodeHandle) const;
+    jass::ThreadId restoreSleepingScript(const SessionSleepSnapshot& snapshot,const jass::StableHandleMap& decodeHandle);
     void initialize();
     void configure();
     void applySetup(const PlayerSetup& setup);

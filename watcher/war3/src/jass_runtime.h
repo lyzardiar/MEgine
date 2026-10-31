@@ -17,7 +17,9 @@ struct RuntimeFrameInspection {Id function=none;size_t pc=0,base=0;std::vector<R
 struct RuntimeExecutionInspection {ThreadId thread=0;size_t depth=0,localCount=0;Position caller;std::vector<Value> values;std::vector<RuntimeFrameInspection> frames;Id pendingNative=none;std::vector<Value> pendingArguments;};
 struct RuntimeThreadInspection {ThreadId thread=0;std::uint64_t runtime=0;ThreadState state=ThreadState::Ready;bool structured=false;Id function=none;std::vector<Value> arguments;};
 using StableHandleMap=std::function<std::uint32_t(std::string_view,std::uint32_t)>;
-struct RuntimeSleepSnapshot {std::vector<Source> sources;bool debug=false;Id function=none;std::vector<Value> arguments;double remaining=0;RuntimeExecutionInspection execution;bool handlesMapped=false;};
+// Context transfer runs synchronously on the runtime owner thread and must not reenter its scheduler.
+using ThreadContextTransfer=std::function<void(ThreadId)>;
+struct RuntimeSleepSnapshot {std::vector<Source> sources;bool debug=false;Id function=none;std::vector<Value> arguments;double remaining=0;RuntimeExecutionInspection execution;bool handlesMapped=false,hasContext=false;};
 class Runtime {
     struct Impl;
     std::unique_ptr<Impl> impl_;
@@ -61,8 +63,8 @@ public:
     std::vector<RuntimeExecutionInspection> inspectExecutions() const;
     // Identities and codeOwner pointers are process-local diagnostics, not saved continuations.
     std::vector<RuntimeThreadInspection> inspectThreads() const;
-    RuntimeSleepSnapshot snapshotSleepingThread(const StableHandleMap& encodeHandle={}) const;
-    ThreadId restoreSleepingThread(const RuntimeSleepSnapshot& snapshot,const StableHandleMap& decodeHandle={});
+    RuntimeSleepSnapshot snapshotSleepingThread(const StableHandleMap& encodeHandle={},const ThreadContextTransfer& captureContext={}) const;
+    ThreadId restoreSleepingThread(const RuntimeSleepSnapshot& snapshot,const StableHandleMap& decodeHandle={},const ThreadContextTransfer& restoreContext={});
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;
     PrimitiveGlobalSnapshot encodePrimitiveGlobals() const;
     PrimitiveGlobalRestore restorePrimitiveGlobals(std::span<const std::uint8_t> bytes);
