@@ -101,3 +101,5 @@ Win32 Release 客户端和 world 测试目标编译通过；`war3_world_tests <d
 `encodeMountedTerrainGridState`／`restoreMountedTerrainGridState` 从已挂载地图获取 SHA-256。内存地图在挂载时对原始字节计算摘要；磁盘地图在需要摘要时检查挂载前后的文件标识、大小和最后修改时间，持有只读共享句柄期间计算摘要并再次核验。原图文件与相同字节的内存挂载可互通；挂载后检测到文件更改时拒绝。磁盘校验依赖文件标识和修改元数据，不能证明被修改后刻意恢复了相同元数据的内容与挂载时一致；摘要计算期间的锁不延续到后续恢复。内存地图挂载增加一次完整字节哈希，大地图加载性能及存档时的内存峰值待测。
 
 Win32 Release 客户端及 world／archive 测试目标编译通过；原图磁盘／内存挂载摘要一致，资料片 OrcX01 归档成员摘要不同且交叉恢复被拒绝；文件时间变更后校验拒绝。合并回归 `war3_world_tests <data-root> <output>` 29/29、`war3_archive_tests <scratch> <data-root>` 9/9，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/mounted-map-identity/`。实际保存入口、地图文件变更的全部竞争情况、性能及完整世界恢复待实现或验证。
+
+地形网格恢复已在活动单位会话中做定向检查：单位收到真实移动命令并开始移动后，恢复带新障碍的地图网格，单位重新寻路至原目标，每个模拟步的移动线段均通过地面寻路校验。Win32 Release `war3_movement_avoidance_tests <data-root> <map> restored-path` 在 BootyBay、Harrow 原图各通过，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/restored-unit-path/before.log`、`harrow.log`。测试在当前会话恢复网格，未保存或重建单位、其他对象及活动命令，也未验证窗口、原版寻路一致性或完整存档。

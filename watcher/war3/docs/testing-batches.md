@@ -4462,3 +4462,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 挂载地图身份与地形网格恢复（批次部分验证）
 
 路径：`src/archive.h/.cpp`、`src/world.h`、`src/world_blight.cpp`、`tests/archive_tests.cpp`、`tests/world_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。组合恢复可使用挂载地图 SHA-256；磁盘来源核对文件身份与修改元数据，内存来源对挂载字节计算摘要。Win32 Release 客户端及测试目标编译通过；BootyBay 磁盘／内存摘要一致，OrcX01 内存地图拒绝跨图恢复，修改文件时间后拒绝身份校验。合并 `9ff47d8`、`9e3e876` 和本项回归，world 29/29、archive 9/9；日志 `tmp/docs-artifacts/war3/mounted-map-identity/`。测试覆盖地形／荒芜／寻路组合与事务、现有寻路及归档操作；大地图资源峰值／加载性能、实际存档和窗口、完整对象及跨区恢复仍待实现或验证。
+
+### 地形恢复后的活动单位路径（待批次验证）
+
+路径：`tests/movement_avoidance_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 测试目标编译通过；`war3_movement_avoidance_tests <data-root> <map> restored-path` 在 BootyBay、Harrow 原图各通过，验证真实移动命令、恢复新障碍后的重新寻路、目标保留及每步不穿越阻挡，日志 `tmp/docs-artifacts/war3/restored-unit-path/`。测试复用当前会话单位，完整存档中的单位、队列、多人及实际窗口仍待验证或实现。
