@@ -231,6 +231,7 @@ class ScriptSession {
     void aiLoadZeppelinWave(ScriptAI& ai,WorldPoint destination,bool disconnectedOnly=false);
     void aiZeppelinWaveTick(ScriptAI& ai);
     void aiContinueZeppelinWave(ScriptAI& ai);
+    void aiCancelBoarding(unsigned owner,std::uint32_t passenger,std::uint32_t carrier);
     void aiCancelZeppelinWave(ScriptAI& ai);
     void aiHarvest(ScriptAI& ai);
     void aiFormCaptains(ScriptAI& ai,bool force=false);

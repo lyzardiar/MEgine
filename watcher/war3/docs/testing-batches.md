@@ -4119,6 +4119,10 @@ Win32 Release 客户端编译通过；DotA 原图隔离会话直接创建紫怨�
 
 Win32 Release 客户端及测试目标编译通过；执行 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m`，再运行 `war3_passive_tests.exe <data-root> ../../tmp/docs-artifacts/war3/ethereal-ability/fixture.w3m ethereal-ability`，1/1 通过。DotA 原图隔离会话使用 `I0LT`，目标在 1 秒时虚无、5 秒时恢复；记录 `tmp/docs-artifacts/war3/dota-ethereal/after.log`。阶段验证物品／派生、多个来源及生命周期、伤害／治疗倍率、地图覆盖、真实窗口／原版及联机。
 
+### AI 波次撤退与超时登艇清理（待阶段验证）
+
+路径：`src/session.h`、`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`；说明见 [AI](ai.md)。撤退、目标失效、超时和载具改派共用登艇清理；暂停或受控乘员不保留旧订单，停止回调的新订单不被超时回退覆盖。Win32 Release 客户端及 CampaignAI 目标编译通过；使用 `tmp/docs-artifacts/war3/ai-carrier-reentrant/fixture.w3m`，`war3_campaign_ai_tests <data-root> <fixture> island-paused-retreat`、`island-paused-timeout`、`island-timeout-reentrant` 各 1/1，超时检查人为缩短期限；载具换令、乘员换令、多乘员、多波及航行中撤退相关六种模式各 1/1，未加载 Game.dll。阶段验证死亡／易主、其他控制状态、多载具、动态地图与联机及原版时序。
+
 ### AI 载具改派时的登艇清理（待阶段验证）
 
 路径：`src/session_ai_transport.cpp`、`tests/generate-campaign-ai-fixture.py`、`tests/campaign_ai_tests.cpp`；说明见 [AI](ai.md)。载具订单变更后解除本波次乘员预约和仍在执行的登艇订单，保护脚本回调的新命令；暂停乘员的旧订单也会清除。Win32 Release 客户端及 CampaignAI 目标编译通过；生成 `tmp/docs-artifacts/war3/ai-carrier-reentrant/fixture.w3m` 后，`war3_campaign_ai_tests <data-root> <fixture> island-carrier-reentrant`、`island-carrier-paused` 各 1/1，覆盖下一模拟步清理、停止事件换令和暂停恢复；`island-pickup-reentrant`、`island-flight-reorder-live`、`island-flight-reorder`、`island-pickup-group`、`island-auto-multiwave` 各 1/1，未加载 Game.dll。阶段验证多载具、乘员易主／死亡、嵌套事件、暂停／控制状态、真实地图、联机及原版时序。
