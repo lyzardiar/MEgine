@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 零效果火焰范围变体（待阶段验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_neutral_spells.cpp`、`src/session_area_spells.cpp`、`docs/area-spells.md`。无伤害和地面效果的零时长烈焰风暴保留施法事件；零波次火焰雨允许零间隔并正常结束施法，有波次时仍校验间隔。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话从酒馆购买深渊领主，生成五个技能学习按钮；设置位置、等级、魔法和目标后，A0RA 由地图脚本使敌人生命从 5000 降至 4900。隔离地图原版 AHfs 和 ANrf 分别使目标生命从 5000 降至 4880 和 4900；均未加载 Game.dll。探针及日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-underlord-pit-target.*`、`source-fire-spells.cpp`、`source-flamestrike.log` 和 `source-rainfire.log`。A01I 的地图脚本已创建辅助施法单位，但其隐藏单位点目标命令未生效，实际火焰风暴伤害仍阻塞；其他零值组合、事件时序、原版视觉及实际窗口待阶段验证。
+
+
 ### 零闪电时长的叉状闪电变体（待阶段验证）
 
 路径：`src/session_neutral_spells.cpp`、`docs/spells.md`。叉状闪电无原生伤害和闪电效果时允许零时长，保留目标施法及地图脚本事件；零伤害不产生原生伤害事件，有伤害或闪电效果仍要求正时长。Win32 Release 客户端编译通过。DotA_v6.83d 原图隔离会话从酒馆购买复仇之魂、生成五个技能学习按钮，升至 10 级学习 A0IN；对英雄施法后原图脚本将双方位置从 `(0,0)` 和 `(200,0)` 交换，技能进入冷却。隔离地图原版 ANfl 对敌人造成 85 点伤害；均未加载 Game.dll。探针和日志位于 `tmp/docs-artifacts/war3/hero-ability-probe/dota-vengeful-swap.cpp`、`dota-vengeful-swap-after.log`、`source-forked-lightning.cpp` 和 `source-forked-lightning.log`。英雄等级、位置、生命、魔法和目标由探针设置，其他单位被暂停；原版零伤害事件、视觉、自定义数据、魔免、实际窗口及联机待阶段对照。
