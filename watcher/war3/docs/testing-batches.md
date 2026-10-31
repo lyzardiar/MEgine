@@ -4546,3 +4546,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 失效单位的定时生命操作（待批次验证）
 
 路径：`src/session_illusion.cpp`、`tests/clock_tests.cpp`，说明见[幻象与物品](illusions-items.md)。`UnitApplyTimedLife`、`UnitPauseTimedLife` 对空、已移除及错误类型的单位直接返回；有效单位继续使用既有定时生命流程。Win32 Release 客户端与 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33，覆盖无效单位及有效单位暂停、恢复与到期死亡；日志 `tmp/docs-artifacts/war3/timed-life-invalid/clock-tests.log`。原版 1.27 两个 native 句柄解析失败直接返回的只读反汇编证据见功能说明；原图触发器、事件顺序与实际窗口待批次验证。
+
+### 失效玩家的英雄经验倍率（待批次验证）
+
+路径：`src/session_hero.cpp`、`tests/clock_tests.cpp`；说明见[英雄经验](dota-hero-experience.md)。玩家经验倍率查询对无效玩家返回零，设置直接返回；有效玩家倍率继续作用于实际英雄经验。Win32 Release 客户端及 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 33/33，覆盖空／错误类型句柄、倍率 1.25 和英雄获得 125 点经验；日志 `tmp/docs-artifacts/war3/xp-handicap-invalid/clock-tests.log`。原版静态入口及摘要见功能说明；有效倍率边界、原图、联机与窗口待批次验证。
