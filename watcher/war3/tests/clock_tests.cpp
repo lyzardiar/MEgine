@@ -44,6 +44,85 @@ Value call(ScriptSession& session,const char* name,std::initializer_list<Value> 
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3){std::cerr<<"Usage: war3_clock_tests <data-root> <output-root>\n";return 2;}Archives fixtureArchives(argv[1]);fixtureArchives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");testArchives=&fixtureArchives;unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};auto output=fs::absolute(argv[2]);fs::create_directories(output);
+    test("widget_death_events_restore_destructables_and_globals",[&]{
+        std::string source=R"jass(type widget extends handle
+ type destructable extends widget
+ type unit extends widget
+ type item extends widget
+ type player extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ native Player takes integer id returns player
+ native CreateUnit takes player p, integer id, real x, real y, real facing returns unit
+ native CreateItem takes integer id, real x, real y returns item
+ native KillUnit takes unit u returns nothing
+ native SetWidgetLife takes widget w, real life returns nothing
+ native CreateDestructable takes integer id, real x, real y, real facing, real scale, integer variation returns destructable
+ native KillDestructable takes destructable d returns nothing
+ native RemoveDestructable takes destructable d returns nothing
+ native DestructableRestoreLife takes destructable d, real life, boolean birth returns nothing
+ native CreateTrigger takes nothing returns trigger
+ native DestroyTrigger takes trigger t returns nothing
+ native TriggerAddAction takes trigger t, code action returns triggeraction
+ native TriggerRegisterDeathEvent takes trigger t, widget w returns event
+ native GetTriggerDestructable takes nothing returns destructable
+ native GetTriggerWidget takes nothing returns widget
+ globals
+ destructable tracked=null
+ destructable gone=null
+ unit actor=null
+ item treasure=null
+ trigger second=null
+ integer trace=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function firstAction takes nothing returns nothing
+ if GetTriggerDestructable()==tracked and GetTriggerWidget()==tracked then
+ set trace=trace*10+1
+ endif
+ endfunction
+ function secondAction takes nothing returns nothing
+ if GetTriggerDestructable()==tracked and GetTriggerWidget()==tracked then
+ set trace=trace*10+2
+ endif
+ endfunction
+ function unitAction takes nothing returns nothing
+ if GetTriggerWidget()==actor then
+ set trace=trace*10+3
+ endif
+ endfunction
+ function itemAction takes nothing returns nothing
+ if GetTriggerWidget()==treasure then
+ set trace=trace*10+4
+ endif
+ endfunction
+ function setup takes destructable a, destructable b, unit c, item d returns nothing
+ local trigger first=CreateTrigger()
+ local trigger unused=CreateTrigger()
+ local trigger units=CreateTrigger()
+ local trigger items=CreateTrigger()
+ set tracked=a
+ set gone=b
+ set actor=c
+ set treasure=d
+ set second=CreateTrigger()
+ call TriggerAddAction(first,function firstAction)
+ call TriggerAddAction(second,function secondAction)
+ call TriggerAddAction(units,function unitAction)
+ call TriggerAddAction(items,function itemAction)
+ call TriggerRegisterDeathEvent(units,c)
+ call TriggerRegisterDeathEvent(items,d)
+ call TriggerRegisterDeathEvent(first,a)
+ call TriggerRegisterDeathEvent(second,a)
+ call TriggerRegisterDeathEvent(unused,b)
+ call RemoveDestructable(b)
+ endfunction
+ )jass";auto build=[&]{auto module=Module::compile(Program::parse({{"widget-events.j",source,"widget event recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=build(),restored=build();original->startMain();auto& vm=original->runtime();auto make=[&](int x){return vm.invoke("CreateDestructable",std::array{vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("LTlt"))),vm.real(Real::fromInteger(x)),vm.real(Real::fromInteger(0)),vm.real(Real::fromInteger(270)),vm.real(Real::fromInteger(1)),vm.integer(0)});};auto first=make(0),removed=make(128);auto actor=vm.invoke("CreateUnit",std::array{vm.invoke("Player",std::array{vm.integer(0)}),vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("hfoo"))),vm.real(Real::fromInteger(256)),vm.real(Real::fromInteger(0)),vm.real(Real::fromInteger(0))});auto treasure=vm.invoke("CreateItem",std::array{vm.integer(std::bit_cast<std::int32_t>(ObjectData::code("ratf"))),vm.real(Real::fromInteger(384)),vm.real(Real::fromInteger(0))});vm.invoke("setup",std::array{first,removed,actor,treasure});auto encode=[](std::string_view,std::uint32_t id){return id;};auto objects=original->encodeDestructables(encode),triggers=original->encodeTriggers(encode),events=original->encodeWidgetDeathEvents(encode),globals=vm.encodeGlobals(encode);auto mapped=restored->rebuildDestructables(objects);auto& rvm=restored->runtime();auto newActor=rvm.invoke("CreateUnit",std::array{rvm.invoke("Player",std::array{rvm.integer(0)}),rvm.integer(std::bit_cast<std::int32_t>(ObjectData::code("hfoo"))),rvm.real(Real::fromInteger(256)),rvm.real(Real::fromInteger(0)),rvm.real(Real::fromInteger(0))});auto newTreasure=rvm.invoke("CreateItem",std::array{rvm.integer(std::bit_cast<std::int32_t>(ObjectData::code("ratf"))),rvm.real(Real::fromInteger(384)),rvm.real(Real::fromInteger(0))});auto triggerMap=restored->restoreTriggers(triggers);auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==actor.bits?newActor.bits:0u;if(type=="item")return id==treasure.bits?newTreasure.bits:0u;if(type=="destructable"){auto found=mapped.find(id);return found==mapped.end()?0u:found->second;}auto found=triggerMap.find({std::string(type),id});return found==triggerMap.end()?0u:found->second;};auto damaged=events;damaged.back()^=1;rejects([&]{restored->rebuildWidgetDeathEvents(damaged,decode);},"digest");require(restored->liveObjects(NativeKind::Event)==0,"Corrupt widget events modified target");auto invalidMap=[&](std::string_view type,std::uint32_t id){return type=="destructable" && id==removed.bits?mapped.at(first.bits):decode(type,id);};rejects([&]{restored->rebuildWidgetDeathEvents(events,invalidMap);},"mapping");require(restored->liveObjects(NativeKind::Event)==0,"Invalid widget mapping modified target");auto eventMap=restored->rebuildWidgetDeathEvents(events,decode);require(eventMap.size()==5,"Widget event count differs");auto reverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==newActor.bits?actor.bits:0u;if(type=="item")return id==newTreasure.bits?treasure.bits:0u;if(type=="destructable"){for(auto [old,current]:mapped)if(current==id)return old;return 0u;}if(type=="event"){for(auto [old,current]:eventMap)if(current==id)return old;return 0u;}for(auto& [key,current]:triggerMap)if(key.first==type && current==id)return key.second;return 0u;};require(restored->encodeWidgetDeathEvents(reverse)==events,"Widget events did not round trip");rvm.restoreGlobals(globals,decode);auto restoredFirst=rvm.global("tracked"),restoredGone=rvm.global("gone");require(restoredFirst.bits==mapped.at(first.bits) && restoredGone.bits==mapped.at(removed.bits),"Restored widget globals differ");for(auto* runtime:{&vm,&rvm}){auto tracked=runtime->global("tracked");runtime->invoke("KillDestructable",std::array{tracked});require(runtime->global("trace").bits==12,"Restored widget death order or context differs");runtime->invoke("DestructableRestoreLife",std::array{tracked,runtime->real(Real::fromInteger(10)),runtime->boolean(false)});runtime->invoke("DestroyTrigger",std::array{runtime->global("second")});runtime->invoke("KillDestructable",std::array{tracked});require(runtime->global("trace").bits==121,"Widget event trigger cleanup differs");runtime->invoke("KillUnit",std::array{runtime->global("actor")});runtime->invoke("SetWidgetLife",std::array{runtime->global("treasure"),runtime->real(Real::fromInteger(0))});require(runtime->global("trace").bits==12134,"Unit or item widget event differs");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("player_resource_natives_follow_original_bounds",[&]{
         std::string source=R"jass(type destructable extends handle
  type player extends handle

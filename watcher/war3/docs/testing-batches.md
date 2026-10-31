@@ -4474,3 +4474,7 @@ Win32 Release 客户端及 passive 测试目标编译通过；隔离地图 `time
 ### 可破坏物对象重建（待批次验证）
 
 路径：`CMakeLists.txt`、`src/session.h`、`src/session_destructable_snapshot.cpp`、`tests/destructable_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SDES` 重建预置及动态可破坏物和已移除句柄，恢复生命、外观／动画与占地并提供句柄映射；应用阶段失败的目标会话须丢弃。Win32 Release 客户端及测试目标编译通过，`war3_destructable_tests <data-root> <map> snapshot` 在夹具、BootyBay、OrcX01 的 30 秒静音会话各通过，覆盖错误身份／摘要／放置索引拒绝、重编码、占地及夹具死亡事件；日志 `tmp/docs-artifacts/war3/destructable-snapshot/`。待批次合并真实地图对象图、其他 doodad 与事件、单位／全局引用、存档入口、原版表现和性能；尚未完成跨区恢复。
+
+### Widget 死亡事件与可破坏物引用重建（待批次验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`，说明见 [战役存档状态](save-runtime-foundation.md)。`SWEV` 恢复单位、物品和可破坏物死亡事件及目标生命周期、触发器归属与登记顺序。Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <data-root> <output-root>` 28/28；隔离检查联动可破坏物、触发器、事件和全局恢复，单位／物品由测试重建。OrcX01 30 秒的 7 个可破坏物死亡事件重建并重编码一致，未执行原图事件；日志 `tmp/docs-artifacts/war3/widget-event-snapshot/`。完整单位／物品、其他事件、原图全局与实际存档加载仍待批次验证或实现。
