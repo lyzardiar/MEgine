@@ -35,3 +35,5 @@
 | Units/HumanAbilityStrings.txt | d16a33c8bfbf2941a210a762ccd605adf2f919342fb9b82c4ea57a3c1df792c0 |
 
 提取脚本/源行、编译日志、产品摘要和独立只读生命周期审核记录在 `tmp/docs-artifacts/war3/phoenix-fire/`。本次只执行必要产品编译、差异检查和生命周期审查，没有运行新专项、三图、原件指令、GPU或性能回归。读表及源码审查不代表原版行为已完成核对；详细场景见[测试队列](testing-batches.md)。
+
+发射计时与持续燃烧现可在隔离会话中恢复；检查范围和限制见 [战役存档状态](save-runtime-foundation.md)。

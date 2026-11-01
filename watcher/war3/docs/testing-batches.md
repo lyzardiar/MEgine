@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 凤凰火焰恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_phoenix_fire.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 89/89 通过；原版 Orc01 会话人工创建凤凰和敌人，确认目标燃烧后隔离恢复，临时绕过启动保护续行 3 秒，71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/phoenix-fire-recovery/`。实际读档、自然战斗、伤害时序与窗口画面待阶段验证。
+
 ### 重生与凤凰蛋恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_rebirth.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 88/88 通过；原版 Orc01 会话人工触发重生和变蛋后隔离恢复，临时绕过启动保护续行 12 秒，71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/death-restart-recovery/`。实际读档、凤凰火焰、事件时序与窗口画面待阶段验证。
