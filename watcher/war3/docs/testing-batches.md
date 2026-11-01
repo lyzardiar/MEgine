@@ -5216,3 +5216,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`c5b7c28`、`e94d96b`、`2f5df92`、`af99754`、`e299455`、`1e2e9e9` 及本次夹具生成修正；在 `af99754` 的同一核心版本上编译相关目标并使用隔离用户目录。重新生成 BootyBay 派生夹具后，`war3_control_tests <data-root> <fixture> item-combined` 报告 1 通过、0 失败、未加载 Game.dll，覆盖既有双恢复、回调删物品／易主、扣费与共享冷却、三项恢复、AIre 混合、金币／木材、永久属性与非英雄拒绝、双科技与金币。首轮因生成脚本将 JASS 调用插入局部变量声明之间而解析失败，调整声明与调用位置后仅重跑该项；日志在 `tmp/docs-artifacts/war3/combined-item-batch/`。
 
 `war3_destructable_tests <data-root> <fixture> invalid-handles` 输出 PASS、进程退出 0，覆盖空／已移除／错误类型句柄的本批查询和操作，以及有效对象的读取、设置和事件注册；日志 `tmp/docs-artifacts/war3/destructable-null-queries/invalid-handles.log`。该程序在此模式未打印数值汇总。真实窗口、原版多能力费用及事件顺序、符文拾取、科技重入、伤害／永久成长边界和实际地图长局仍待验证；本批结果不覆盖存档恢复队列或完整玩法。
+
+
+### 复合物品的幻象效果（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合支持 `AIil`，使用前检查目标、可见性、联盟、范围与落点，执行时再次检查并复用幻象与限时生命；其余即时效果仍作用于使用者／所属玩家。Win32 Release `cmake --build --preset release --target war3_control_tests --parallel 4` 和夹具脚本语法通过，未运行功能测试。下一功能批次重新生成夹具并运行 `war3_control_tests <data-root> <fixture> item-combined`，核对幻象／金币、敌方目标拒绝与消费；目标移动／死亡／易主、回调重入、落点变化、符文及原版目标和事件规则待验证。
