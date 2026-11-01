@@ -5362,3 +5362,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 恢复会话显式启动（待功能批次验证）
 
 路径：`src/session.h`、`src/session.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。恢复包和加载事件完成后可显式启动原 main 已完成的本地会话，拒绝过早或重复启动，不重放 main。合批编译运行 `war3_clock_tests <data-root> <output-root>`，检查加载事件顺序、拒绝条件和正常模拟步续行；原版两区域长时运行、原 main 未完成、其他地图状态、`LoadGame` 和窗口交互仍待验证或实现。本次未编译或测试。
+
+必要定向检查：Win32 Release `war3_clock_tests` 编译通过，保存／加载事件和恢复会话启动用例 **1 通过、0 失败**。原版 OrcX01 使用产品恢复、事件与显式启动入口，雷克萨存在且玩家控制可用，隔离模拟 60 秒未重复切区；日志位于 `tmp/docs-artifacts/war3/recovery-activation/`。完整功能批次、窗口输入、其他地图、原版行为及 `LoadGame` 入口仍待验证或实现。
