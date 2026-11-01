@@ -5750,3 +5750,6 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 地图枚举与回调合批结果
 
 范围：`35bc5ce`、`b738f01`、`7939e8e`。Win32 Release 客户端及 `war3_destructable_tests` 编译通过，生成独立地图后主场景、`invalid-handles` 和 `snapshot` 三个进程均退出 0，日志共 **4 条 PASS**。主场景覆盖物品／可破坏物过滤和回调上下文、过滤时移除单位、枚举时拾取后续物品及既有采木／研究；日志及夹具位于 `tmp/docs-artifacts/war3/enumeration-batch/`。嵌套枚举、对象重定位、原版回调时序及实际地图窗口仍待验证。
+
+
+地图枚举上下文补充：原版静态入口确认过滤与枚举使用不同上下文槽；夹具新增物品嵌套枚举及外层上下文恢复检查，合并原枚举任务计数，待后续批次执行。

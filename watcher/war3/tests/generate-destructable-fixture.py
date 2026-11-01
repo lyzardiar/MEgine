@@ -14,7 +14,10 @@ destructable probe_tree=null
 integer probe_deaths=0
 integer probe_enumerated=0
 item probe_item=null
+item probe_nested_item=null
+rect probe_nested_rect=null
 integer probe_items=0
+integer probe_nested_items=0
 item probe_transfer_first=null
 item probe_transfer_second=null
 unit probe_carrier=null
@@ -59,17 +62,37 @@ function ProbeItemFilter takes nothing returns boolean
     endif
     return GetFilterItem()==probe_item
 endfunction
+function ProbeNestedItemFilter takes nothing returns boolean
+    if GetEnumItem()!=probe_item then
+        call ExecuteFunc("ItemFailure_nested_filter_context")
+    endif
+    return GetFilterItem()==probe_nested_item
+endfunction
+function ProbeNestedItemAction takes nothing returns nothing
+    if GetEnumItem()!=probe_nested_item or GetFilterItem()!=null then
+        call ExecuteFunc("ItemFailure_nested_enum_context")
+    endif
+    set probe_nested_items=probe_nested_items+1
+endfunction
 function ProbeItemAction takes nothing returns nothing
     if GetEnumItem()!=probe_item or GetFilterItem()!=null then
         call ExecuteFunc("ItemFailure_enum_context")
+    endif
+    call EnumItemsInRect(probe_nested_rect,Filter(function ProbeNestedItemFilter),function ProbeNestedItemAction)
+    if GetEnumItem()!=probe_item or GetFilterItem()!=null then
+        call ExecuteFunc("ItemFailure_outer_context_restoration")
     endif
     set probe_items=probe_items+1
 endfunction
 function ProbeItemEnumerate takes real x, real y returns nothing
     local rect r=Rect(x-128,y-128,x+128,y+128)
     set probe_item=CreateItem('rat6',x,y)
+    set probe_nested_item=CreateItem('rat6',x+32,y)
+    set probe_nested_rect=r
     call EnumItemsInRect(r,Filter(function ProbeItemFilter),function ProbeItemAction)
+    set probe_nested_rect=null
     call RemoveItem(probe_item)
+    call RemoveItem(probe_nested_item)
     call RemoveRect(r)
 endfunction
 function ProbeTransferFilter takes nothing returns boolean
