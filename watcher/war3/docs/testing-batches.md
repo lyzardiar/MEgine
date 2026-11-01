@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 属性物品与经验边界合批结果
+
+范围：`e1b236c`、`5e130c6`、`76bcab6` 及本批修复 `754c64a`。Win32 Release 客户端、revival、passive、control、commerce 目标构建通过，日志无编译警告。生成 passive 和复合物品夹具后，`attribute-item-signed`、`attribute-item-resource`、`hero-xp-delta-overflow`、`hero-xp`、`hero-level-negative-xp`、`hero-level-tome`、`hero-attribute-growth`、`hero-attribute-resource`、`item-combined` 各 1 通过、0 失败；passive 和 commerce 回归程序均退出 0 并输出 PASS。负属性书首次运行被使用入口拦截，修复普通及复合物品校验后通过；复合物品测试首次使用旧夹具失败，按当前脚本重建后通过。夹具和日志位于 `tmp/docs-artifacts/war3/signed-item-xp-batch/`。原版动态数值、生命魔法下降边界、更多地图与实际窗口仍待验证。
+
+
 ### 有符号属性物品使用校验（本批修复）
 
 路径：`src/session_item_use.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`。普通及复合永久属性物品允许有符号属性字段，其他物品数值、魔法消耗和冷却沿用原校验。合批首次运行 `attribute-item-signed` 时普通负属性书在使用入口被拒绝；修复后重测该场景，并覆盖带资源效果的复合属性书与普通物品回归。
