@@ -1347,6 +1347,8 @@ public:
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitVisuals(const jass::StableHandleMap& encodeHandle) const;
+    Bytes encodeUnitAnimations(const jass::StableHandleMap& encodeHandle) const;
+    void restoreUnitAnimations(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     void restoreUnitVisuals(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitCore(const jass::StableHandleMap& encodeHandle) const;
     void prepareUnitCore(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);

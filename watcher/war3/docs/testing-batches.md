@@ -4660,3 +4660,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 无效单位状态编号（待批次验证）
 
 路径：`src/session_entities.cpp`、`tests/control_tests.cpp`；说明见[对象定义](entities.md)。`GetUnitState` 对 0–3 以外的编号返回零，`SetUnitState` 忽略该设置，避免中断地图脚本；固定版 Game.dll 入口 `0x6f1e6600`、`0x6f1f7a80` 的只读指令位于 `tmp/docs-artifacts/war3/unit-state-range/original.txt`。Win32 Release 客户端和测试目标编译通过；使用独立用户目录运行 `war3_control_tests <data-root> <control-fixture.w3m> unit-state-handles`，1 通过、0 失败，覆盖有效生命／魔法值及无效编号与失效单位组合，未加载 Game.dll。实际地图、原版动态行为及联机仍待批次验证。
+
+### 单位动画快照（待批次验证）
+
+路径：`src/session.h`、`src/session_unit_visual.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUAN` 保存并重建单位动画、播放时钟、队列与脚本属性，校验地图、时钟、句柄和数据后再应用。Win32 Release 客户端及 clock 测试编译通过，`war3_clock_tests <data-root> <output-root>` 33 通过、0 失败；OrcX01 150 秒隔离会话的 457 个活动单位动画快照往返一致，探针 `tmp/docs-artifacts/war3/unit-animation-snapshot/probe/`，未加载 Game.dll。朝向目标、模型混合历史、真实续播、完整世界恢复、存档菜单与原版格式仍待批次验证或实现。
