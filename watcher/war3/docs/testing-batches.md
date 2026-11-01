@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 零魔法上限的英雄属性变化（待功能批次验证）
+
+路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。最大魔法为零时，非永久提高智力会产生新的魔法上限，当前魔法保持为零。原版 1.27 的 `0x6f6530ca` 通过 `0x6f399060` 获取魔法比例，该函数对零上限返回零。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-attribute-zero-mana` 并回归属性资源比例；原版动态与实际窗口待验证。本次未执行功能测试。
+
+
 ### 英雄属性变化的生命与魔法（待功能批次验证）
 
 路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。`SetHeroStr`／`SetHeroInt` 的非永久设置在上限变化时保留当前生命／魔法比例；永久设置沿用增加或扣除上限差值的处理。原版 1.27 `0x6f50d08e` 将布尔参数映射为资源更新模式，`0x6f6331a2` 按原比例计算新资源，`0x6f6330c2` 处理差值模式。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-attribute-resource`，回归装备和属性设置；资源下降、死亡、零魔法及原版动态行为待验证。本次未执行功能测试。
