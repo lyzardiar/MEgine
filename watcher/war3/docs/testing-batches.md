@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 电脑隐身野怪目标（待批次验证）
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。营地选择排除对电脑未被侦测的隐身单位，避免选择无法下达进攻的目标；显形或侦测后可选择。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次执行 `war3_campaign_ai_tests <data-root> <fixture> reachable`，检查隐身、显形和同营地等级筛选；侦测器变化、原版时序、自然对局与联机待验证。
+
+
 ### 电脑野怪营地筛选（待批次验证）
 
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。营地等级及飞行判断排除隐藏与无敌中立单位，避免它们遮蔽可攻击的成员。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次执行 `war3_campaign_ai_tests <data-root> <fixture> reachable`，回归可达、等级、混编和孤岛场景；原版分组、自然对局及联机行为待对照。
