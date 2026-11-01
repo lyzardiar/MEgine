@@ -5231,3 +5231,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 复合物品的吸血效果（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合支持 `AIpv`，扣费前检查源配置，按能力顺序复用攻击增益和吸血状态。合批重新生成夹具并运行 `war3_control_tests <data-root> <fixture> item-combined`，检查吸血与金币、消耗及事件；攻击命中回血、持续与到期、无效配置、重入及原版行为待验证。本次未运行功能测试，待功能包集中编译验证。
+
+
+### 物品持续效果与抗性皮肤（待功能批次验证）
+
+路径：`src/session_item_use.cpp`。单一及复合 `AIvi`、`AIpv` 物品对带 `Arsk` 抗性皮肤的非英雄按状态系统的英雄持续时间校验和施加，避免校验时长与实际增益不同。功能批次覆盖英雄、普通单位、抗性皮肤单位，以及普通／英雄时长不同和零时长的自定义能力；核对扣费、增益和到期及原版行为。本次未执行功能测试，待功能包集中编译验证。
