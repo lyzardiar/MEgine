@@ -1384,6 +1384,8 @@ public:
     Bytes encodeFogState(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildFogState(std::span<const std::uint8_t> bytes);
     Bytes encodeRecoveryBundle() const;
+    void saveRecoveryCheckpoint(const std::string& name) const;
+    std::map<std::uint32_t,std::uint32_t> restoreRecoveryCheckpoint(const std::string& name);
     std::map<std::uint32_t,std::uint32_t> restoreRecoveryBundle(std::span<const std::uint8_t> bytes);
     Bytes encodeSelection(const jass::StableHandleMap& encodeHandle) const;
     void restoreSelection(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
