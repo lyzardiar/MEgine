@@ -4899,3 +4899,10 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 失效定时器稳定编码（待批次验证）
 
 路径：`src/session_callbacks.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。活动定时器保留调度顺序，失效句柄按稳定编号编码。Win32 Release 核心及 clock 目标编译通过，clock 62 通过、0 失败；OrcX01 0／30／150 秒组件包恢复后，在临时副本绕过启动保护各推进 60 秒，55 个现有组件重编码一致，前两个时点的睡眠线程分别从 4／3 条推进至各 1 条。日志 `tmp/docs-artifacts/war3/timer-order-recovery-clock-01.log`、`tmp/docs-artifacts/war3/orcx-bundle-continuation/`。批次验证组件包、选择与定时器消费者；完整状态、实际存档、自然跨区和窗口仍待实现或验收。
+
+
+### 选择、恢复组件包与定时器批次（2026-11-01）
+
+本批范围 `9b8190c`、`7163139`、`cf449bc`。同一集成源码的 Win32 Release 客户端及 clock、session、session-thread、JASS-thread、兽族战役测试目标编译通过；复用 clock 62/62。合批执行 JASS 线程 27/27、会话线程 6/6、session 23/23、OrcX01 原图定时器身份 1/1；日志与隔离目录 `tmp/docs-artifacts/war3/selection-bundle-timer-batch/`。
+
+原图 0／30／150 秒组件包恢复后，临时副本绕过保护各推进 60 秒，按新对象创建顺序映射后各时点 55 个现有组件重编码一致；日志 `tmp/docs-artifacts/war3/orcx-bundle-continuation/audit-00b.log`、`audit-30b.log`、`audit-150b.log`。该实验未覆盖完整对象状态、自然操作或实际存档入口；产品启动保护保留，跨区、原版格式及窗口仍待实现或验收。
