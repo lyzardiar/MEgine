@@ -59,6 +59,19 @@ function watch_combined_targets takes unit u, unit changed, unit revived returns
     call TriggerRegisterUnitStateEvent(t,u,UNIT_STATE_LIFE,GREATER_THAN,150.)
     call TriggerAddAction(t,function targets_life_changed)
 endfunction
+function protection_life_changed takes nothing returns nothing
+    local unit u=GetTriggerUnit()
+    call DisableTrigger(GetTriggeringTrigger())
+    call KillUnit(u)
+    call ReviveHero(u,256.,-768.,false)
+    call SetWidgetLife(u,100.)
+    call SetUnitState(u,UNIT_STATE_MANA,0.)
+endfunction
+function watch_protection_revival takes unit u returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitStateEvent(t,u,UNIT_STATE_LIFE,GREATER_THAN,150.)
+    call TriggerAddAction(t,function protection_life_changed)
+endfunction
 function config takes nothing returns nothing''')
     if 'local trigger summonTrigger=CreateTrigger()' not in script or 'call TriggerRegisterPlayerUnitEvent(summonTrigger,Player(0),EVENT_PLAYER_UNIT_SUMMON,null)' not in script:
         raise ValueError('Control fixture trigger layout changed')
@@ -80,7 +93,7 @@ function config takes nothing returns nothing''')
     files['war3map.w3a'] = struct.pack('<III', 2, 0, 5) + ability(b'AIh2',b'A0CH',b'Ihpg',137,5,10.) + ability(b'AIm2',b'A0CM',b'Impg',67,7,20.) + ability(b'AIh2',b'A0CX',b'Ihpg',31,2,12.) + timed_ability(b'AIv1',b'A0VI') + timed_ability(b'AIpv',b'A0VP')
     def item(custom, abilities):
         return b'phea' + custom + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + abilities + b'\0' + custom
-    files['war3map.w3t'] = struct.pack('<III', 2, 0, 34) + item(b'I0RT',b'A0CH,AIha') + item(b'I0RB',b'AIrb,AIgo') + item(b'I0DI',b'AIdi,AIgo') + item(b'I0MO',b'AIct,AIgo') + item(b'I0SA',b'AIsa,AIgo') + item(b'I0RM',b'AImr,AIgo') + item(b'I0RA',b'AIra,AIgo') + item(b'I0RG',b'AIrl,AIgo') + item(b'I0PR',b'AIda,AIgo') + item(b'I0SH',b'ANse,AIgo') + item(b'I0V3',b'AIvu,AIgo') + item(b'I0S3',b'AIsp,AIgo') + item(b'I0RH',b'AIha,AIgo') + item(b'I0RO',b'Aroa,AIgo') + item(b'I0DU',b'AItb,AIgo') + item(b'I0CM',b'A0CH,A0CM') + item(b'I0UN',b'A0CH,A0CM,Ache') + item(b'I0MX',b'A0CH,A0CM,A0CX') + item(b'I0MR',b'A0CM,AIre') + item(b'I0GR',b'A0CH,AIgo,AIlu') + item(b'I0PA',b'AIxm,AIgo') + item(b'I0GL',b'AIgu,AIgo') + item(b'I0IL',b'AIil,AIgo') + item(b'I0IV',b'AIv1,AIgo') + item(b'I0VP',b'AIpv,AIgo') + item(b'I0V1',b'A0VI') + item(b'I0V2',b'A0VI,AIgo') + item(b'I0P1',b'A0VP') + item(b'I0P2',b'A0VP,AIgo') + item(b'I0RS',b'AIrs,AIgo') + item(b'I0AN',b'AIan,AIgo') + item(b'I0RV',b'AIrv,AIgo') + item(b'I0DS',b'AHds,AIgo') + item(b'I0BZ',b'Absk,AIgo')
+    files['war3map.w3t'] = struct.pack('<III', 2, 0, 35) + item(b'I0RP',b'AIdb,AIgo') + item(b'I0RT',b'A0CH,AIha') + item(b'I0RB',b'AIrb,AIgo') + item(b'I0DI',b'AIdi,AIgo') + item(b'I0MO',b'AIct,AIgo') + item(b'I0SA',b'AIsa,AIgo') + item(b'I0RM',b'AImr,AIgo') + item(b'I0RA',b'AIra,AIgo') + item(b'I0RG',b'AIrl,AIgo') + item(b'I0PR',b'AIda,AIgo') + item(b'I0SH',b'ANse,AIgo') + item(b'I0V3',b'AIvu,AIgo') + item(b'I0S3',b'AIsp,AIgo') + item(b'I0RH',b'AIha,AIgo') + item(b'I0RO',b'Aroa,AIgo') + item(b'I0DU',b'AItb,AIgo') + item(b'I0CM',b'A0CH,A0CM') + item(b'I0UN',b'A0CH,A0CM,Ache') + item(b'I0MX',b'A0CH,A0CM,A0CX') + item(b'I0MR',b'A0CM,AIre') + item(b'I0GR',b'A0CH,AIgo,AIlu') + item(b'I0PA',b'AIxm,AIgo') + item(b'I0GL',b'AIgu,AIgo') + item(b'I0IL',b'AIil,AIgo') + item(b'I0IV',b'AIv1,AIgo') + item(b'I0VP',b'AIpv,AIgo') + item(b'I0V1',b'A0VI') + item(b'I0V2',b'A0VI,AIgo') + item(b'I0P1',b'A0VP') + item(b'I0P2',b'A0VP,AIgo') + item(b'I0RS',b'AIrs,AIgo') + item(b'I0AN',b'AIan,AIgo') + item(b'I0RV',b'AIrv,AIgo') + item(b'I0DS',b'AHds,AIgo') + item(b'I0BZ',b'Absk,AIgo')
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset] + control.fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))

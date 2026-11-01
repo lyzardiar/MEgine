@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 消耗品治疗回调的目标生命周期（待功能批次验证）
+
+路径：`src/session_consumables.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。普通及复合消耗品的恢复／护甲效果在治疗回调后重新检查使用者和目标的死亡、归属与移除状态，避免把剩余魔法恢复或护甲状态施加到已复活或易主的目标。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；`item-protection-reentry` 最小复现 1 通过、0 失败，覆盖普通／复合护甲卷轴和复合恢复卷轴的复活回调。合批回归 `item-combined-target-reentry`、`item-combined`、`item-combined-area`、普通 `protection` 和治疗卷轴；原版时序、多人及窗口待对照。日志与夹具：`tmp/docs-artifacts/war3/consumable-reentry/`。
+
+
 ### 复合物品目标的死亡与归属重入（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。复合消耗品预选目标时记录死亡和归属轮次；较早效果触发回调后，已死亡复活或易主的目标不再接收旧批次范围效果，使用者易主后停止消费该批目标。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-target-reentry` 和 `item-combined`、`item-combined-area`、`item-combined-dispel`；原版回调时序、能力内部重入、多人及窗口待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；已执行 `item-combined-target-reentry` 最小复现，1 通过、0 失败，日志与夹具在 `tmp/docs-artifacts/war3/combined-target-reentry/`。
