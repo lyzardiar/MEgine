@@ -5846,3 +5846,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 未知单位类型的组枚举（待功能批次验证）
 
 路径：`src/session_collections.cpp`、`tests/game_flow_tests.cpp`。类型名称无法解析时，普通及计数组枚举不清空已有成员，也不执行过滤回调。原版 1.27 的 `GroupEnumUnitsOfType` 与计数版本入口 `0x6f1e6b50`、`0x6f1e6ba0` 在类型解析结果为 `-1` 时直接返回。合批运行 game flow 测试，覆盖未知类型及随后正常枚举；本次未执行功能测试。
+
+
+### 玩家组遍历中的成员变更（待功能批次验证）
+
+路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。`ForForce` 在遍历每个玩家前读取当前成员状态；回调移除尚未访问的玩家或加入后续玩家时，后续遍历反映变更。原版 1.27 在 `0x6f212220` 每轮读取组位集，遍历范围为 0–15。合批运行 destructable 夹具，覆盖回调移除和添加；嵌套遍历、组销毁和原版动态时序仍待对照。本次未执行功能测试。

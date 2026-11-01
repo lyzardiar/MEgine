@@ -41,6 +41,8 @@ boolean probe_live_force_valid=true
 integer probe_enemy_filter_calls=0
 force probe_count_force=null
 boolean probe_count_force_valid=false
+force probe_walk_force=null
+integer probe_walk_mask=0
 boolean probe_force_scope_valid=false
 endglobals
 function ProbeDeath takes nothing returns nothing
@@ -273,6 +275,24 @@ function ProbeCountForce takes nothing returns nothing
     call ForceEnumPlayersCounted(probe_count_force,Filter(function ProbeCountForceFilter),1)
     set probe_count_force_valid=IsPlayerInForce(Player(15),probe_count_force) and IsPlayerInForce(Player(1),probe_count_force)
     call DestroyForce(probe_count_force)
+endfunction
+function ProbeForceWalkAction takes nothing returns nothing
+    if GetEnumPlayer()==Player(0) then
+        set probe_walk_mask=probe_walk_mask+1
+        call ForceRemovePlayer(probe_walk_force,Player(1))
+        call ForceAddPlayer(probe_walk_force,Player(2))
+    elseif GetEnumPlayer()==Player(1) then
+        set probe_walk_mask=probe_walk_mask+2
+    elseif GetEnumPlayer()==Player(2) then
+        set probe_walk_mask=probe_walk_mask+4
+    endif
+endfunction
+function ProbeForceWalk takes nothing returns nothing
+    set probe_walk_force=CreateForce()
+    call ForceAddPlayer(probe_walk_force,Player(0))
+    call ForceAddPlayer(probe_walk_force,Player(1))
+    call ForForce(probe_walk_force,function ProbeForceWalkAction)
+    call DestroyForce(probe_walk_force)
 endfunction
 function config takes nothing returns nothing
 endfunction
