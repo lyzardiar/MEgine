@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 存档确认提示（待批次验证）
+
+路径：`src/game_flow_ui.cpp`。覆盖和删除确认框使用原版 `OVERWRITE_MESSAGE`、`DELETE_MESSAGE` 本地化模板插入文件名；原版 `EscMenuSaveGamePanel.fdf` 指定对应模板。Win32 Release 客户端编译通过。批次在可用图形会话核对不同语言、长文件名及取消／确认行为，实际窗口与原版排版仍待验证。
+
+
 ### 刀阵、范围控制和兽王战吼物品批次（基础验证完成）
 
 范围：`6a0a3ba`、`8128596`、`987e667`。Win32 Release 客户端及 control、spell、caster 测试目标编译通过。复合夹具执行 control 的 `item-combined-fan`、`item-area-control`、`item-battle-roar`、`item-combined-roar`、`item-howl`、`item-combined-silence`、`item-combined-windwalk`、`item-combined`，各 1 项通过；caster 的 `battle-roar` 4 项通过，共 **12 通过、0 失败**。spell 默认技能流程通过，包含普通刀阵、雷霆一击及战争践踏；该程序未输出分项计数。复现为各测试程序 `<data-root> <fixture> <mode>`，spell 默认流程省略 mode；夹具和日志位于 `tmp/docs-artifacts/war3/combined-area-batch/`，spell 使用 `tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m`，caster 使用 `tmp/docs-artifacts/war3/caster-spells/fixture.w3m`。`ACtc` 变体、拾取型使用、刀阵伤害上限及延迟、事件回调、原版时序、联机与实际画面仍待验证。
