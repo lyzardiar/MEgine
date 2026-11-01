@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄分类与命令说明合批结果
+
+范围：`2dedda4`、`219efa9`、`eccfbf9`。Win32 Release 客户端、revival、research、commerce、AI 目标构建通过，日志未发现编译警告。重新生成夹具后，revival 的 `repair-command-tooltip`、`harvest-command-tooltip`、`shop-item-tooltip`、`hero-names` 各 1/1；research、commerce 和原版 BootyBay 人族 AI 30 秒初始化各输出 1 条 PASS。覆盖跨大小写自定义单位、未知英雄 ID、真实英雄幻象、工人说明和基础 AI 发展。修理说明首次运行因夹具覆盖原型 `Arep` 而非农民实际使用的派生能力 `Ahrp` 失败；调整夹具并重建后通过。日志和夹具位于 `tmp/docs-artifacts/war3/hero-class-batch/`，构建日志为 `tmp/docs-artifacts/war3/hero-class-batch-build.log`。跨大小写自定义英雄训练与 AI 完整流程、其他地图、原版动态及实际窗口仍待验证。
+
 ### 自定义单位英雄类型（待批次验证）
 
 路径：`src/session_entities.cpp`、`src/session_game.cpp`、`src/session_ai_economy.cpp`、`src/session_commerce.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。英雄创建、训练和 AI 类型判定使用实际单位 ID 首字节，`IsHeroUnitId` 同样对未知 ID 按字节判断。1.27 `Game.dll` 的 `IsHeroUnitId` `0x6f1e7b50`、`IsUnitIdType` `0x6f1e8703` 和创建入口 `0x6f66d2fb` 均检查实际 ID。待生成研究夹具并运行 `war3_research_tests <data-root> <fixture>`，检查跨大小写继承、未知 ID、实例及类型查询，并回归训练、AI 和原版动态；本次未执行测试。
