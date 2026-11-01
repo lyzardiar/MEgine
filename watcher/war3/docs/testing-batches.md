@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 限时生命的原版 Buff 类型（待功能批次验证）
+
+路径：`src/session_illusion.cpp`、`tests/passive_tests.cpp`。`UnitApplyTimedLife` 为七种原版特殊 Buff 选择对应编号，其他编号使用通用 `BTLF`；替换时清理旧的限时能力。原版 1.27 `0x6f46e1f0` 比较七个内置编号，其他输入使用 `0x6f511fa0` 返回的 `BTLF`。合批运行 `war3_passive_tests <data-root> <fixture> timed-life-buff-id` 和 `mechanical-critter-real`，核对编号、替换、实际物品召唤及状态清除；各特殊 Buff 的专属行为、原版动态和窗口仍待验证。本次未执行功能测试。
+
+
 ### 无倒计时机械小动物状态（待功能批次验证）
 
 路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。没有倒计时的机械小动物标记仍按限时状态筛选，普通 Buff 清除不会误移除伪装；显式包含限时状态的清除可移除标记。原版 1.27 `CBuffMechanicalCritter` 的限时状态虚函数返回真；原 `Amec` 的持续时间为零。合批运行 `war3_passive_tests <data-root> <fixture> buff-permanent-critter`，回归带计时器的机械标记、普通限时生命和真实召唤；原版动态与界面待验证。本次未执行功能测试。
