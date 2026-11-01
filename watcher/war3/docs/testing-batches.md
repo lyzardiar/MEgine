@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 荒芜生长状态恢复（待阶段验证）
+
+路径：`src/session_ambient_passives.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 81/81 通过；原版 Undead07 的隔离恢复诊断临时绕过启动保护后续行 60 秒，74/74 项状态一致，日志位于 `tmp/docs-artifacts/war3/blight-growth-recovery/`。实际读档、窗口视觉与完整战役待阶段验证。
+
 ### 蛛网攻击视觉恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_effect_snapshot.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 80/80 通过；原版 Undead05 的两个采样点在隔离诊断中各续行 60 秒，74/74 项状态一致，日志位于 `tmp/docs-artifacts/war3/spider-visual-recovery/`。诊断临时绕过启动保护；实际游戏读档、视觉表现及完整战役待阶段验证。
