@@ -95,6 +95,7 @@ struct UnitState {
     float selectionSize=128;
     std::string movementType;
     std::vector<WorldPoint> route;
+    std::optional<WorldPoint> moveDestination;
     size_t waypoint=0;
     std::uint64_t pathingRevision=0;
     std::uint64_t routeRetryWorldRevision=0;

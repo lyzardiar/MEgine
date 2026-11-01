@@ -4598,3 +4598,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 人族隐藏关无操作流程（验证补充）
 
 路径：`tests/human_campaign_chain_tests.cpp`，说明见[战役流程](campaign-flow.md)。Win32 Release 测试目标构建通过；新建隔离用户目录运行 `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> natural-secret`，1 通过、0 失败。原图开场恢复控制后无玩家命令，在传送门生命降至 400 时出现胜利对话并请求间章，模拟时间 469.469 秒；未加载 Game.dll，日志 `tmp/docs-artifacts/war3/human-secret-natural/test.log`。原版相同条件、实际防守和窗口仍待对照；本项为既有战役功能的验证补充，不计功能批次。
+
+### 移动期间关闭路径碰撞（待批次验证）
+
+路径：`src/entities.h`、`src/session_combat_orders.cpp`、`src/session_entities.cpp`、`src/session_orders.cpp`、`src/session_network_identity.cpp`、`tests/human_campaign_chain_tests.cpp`、`tests/order_queue_tests.cpp`；说明见[对象定义](entities.md)。普通移动保存实际目标；单位移动时从启用切换至禁用路径碰撞，当前路线改为该目标并保留排队命令，目标参与联机会话状态摘要。命令结束或替换后不重启旧移动。Win32 Release 客户端及相关测试目标编译通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> secret-pathing` 1 通过、0 失败，原图单位穿过路径碰撞关闭区域并到达等待区；`war3_order_queue_tests <data-root> <BootyBay.w3m> pathing-toggle` 1 通过、0 失败，覆盖路线目标、排队移动及完成后切换。日志 `tmp/docs-artifacts/war3/human-secret-natural/{pathing-fix,toggle}.log`。完整命令队列测试前 24 项通过，随后报 `Unsupported LAN spell order`，见 `order-fix.log`，原因待查；人工维持传送门生命的原图长时模拟至 4000 秒未进入胜利对话，2500 秒检查最后一波尚有 1 个单位位于等待区，领袖从祭坛前往等待区的另一个定向探针也停在区域外，见 `tmp/docs-artifacts/war3/human-secret-finalwave/fixed.log` 和 `tmp/docs-artifacts/war3/human-secret-order/leader.log`；剩余路径问题待排查。原版动态时序、其他订单／恢复路径碰撞、联机及真实窗口留待验证。
