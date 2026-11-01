@@ -5258,3 +5258,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 复合物品的自身无敌与狂暴（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合支持 `AHds`／`Absk`，复用物品自身增益及状态生命周期。合批重新生成夹具并运行 `war3_control_tests <data-root> <fixture> item-combined`，检查无敌／狂暴与金币组合；伤害免疫、攻速和伤害变化、到期、目标及原版事件时序待验证。本次未执行功能编译或测试。
+
+
+### 复合物品尸体、显形与自身增益合批结果
+
+范围：`1d9c315`、`b16622c`、`d6c9f41`。Win32 Release `war3_control_tests` 构建通过，重新生成 BootyBay 派生夹具后执行 `war3_control_tests <data-root> <fixture> item-combined`，报告 **1 通过、0 失败**，未加载 Game.dll。新增场景覆盖复活原单位、操纵尸体并建立限时单位、全图侦测隐身单位、无敌及狂暴增益和金币混合，并复核此前组合。夹具与日志在 `tmp/docs-artifacts/war3/compound-corpse-reveal-batch/`。无尸体、增益和显形到期、实际伤害效果、复杂回调、符文、真实窗口与原版时序仍待验证。
