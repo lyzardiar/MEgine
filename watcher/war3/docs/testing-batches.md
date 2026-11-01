@@ -4764,3 +4764,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家结算统计快照（待批次验证）
 
 路径：`src/session.h`、`src/session_game.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`PSTS` 编码各玩家统计和单位类型计数，校验摘要、版本、范围及重复键后事务性恢复。Win32 Release 核心和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 42 通过、0 失败，覆盖真实拾取／击杀、往返、损坏／截断及伪造计数拒绝，未加载 Game.dll。批次验证多玩家资源和生产、恢复后继续模拟与结算、跨组件恢复顺序；英雄摘要、胜负状态、完整保存／载入和原版格式仍未实现。产物 `tmp/docs-artifacts/war3/statistics-snapshot/output-02/`。
+
+### 玩家配置与外交快照（待批次验证）
+
+路径：`src/session.h`、`src/session_game.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`PCFG` 保存玩家配置、双向联盟和税率，创建单位前校验并事务性恢复。Win32 Release 核心和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 43 通过、0 失败；隔离脚本覆盖联盟、税率、名称、让分及恢复后的单位生命，损坏摘要、不同本地玩家和无效队伍被拒绝，未加载 Game.dll。批次验证原图联盟、共享控制／视野和地图身份、跨组件恢复顺序与继续对局；完整保存／载入和原版格式仍未实现。产物 `tmp/docs-artifacts/war3/player-config-snapshot/output-02/`。
