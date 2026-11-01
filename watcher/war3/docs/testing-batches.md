@@ -5318,15 +5318,6 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`832cd7e`、`5f38439`；路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release `war3_clock_tests` 编译通过，执行 `war3_clock_tests <data-root> <output-root>` 为 **118 通过、0 失败**。`SUMM` 版本 3 保存瘟疫守卫标记和实际碰撞半径，`SRBF` 为版本 58；夹具覆盖 `Aap3` 死亡云雾产生的守卫以及标记、零碰撞、召唤者和限时生命恢复。日志及临时产物在 `tmp/docs-artifacts/war3/recovery-summon-ward-batch/`。蝗虫、目标筛选、感染、伤害归属、死亡清理、旧版拒绝、实际读档和原版行为仍待验证，恢复启动保护保留。
 
 
-### 召唤分类恢复（待功能批次验证）
+### 召唤分类与单位形态属性恢复合批结果
 
-路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUMM` 版本 4 保存创建时的召唤分类，含单位的旧版本明确拒绝；`SRBF` 更新至版本 59。合批编译并运行 `war3_clock_tests <data-root> <output-root>`，检查人工设置分类的恢复、`IsUnitType` 及旧版拒绝。真实变形、驱散、经验计算、实际存读档和原版行为仍待验证；本次未编译或执行测试，恢复启动保护保留。
-
-召唤分类夹具补充非法分类值拒绝，并声明类型查询所需的 JASS native；待同批执行。
-
-完整恢复包夹具补充熊形态实际变形：人工设置创建时召唤分类，再检查变形前后及恢复包往返保留该分类；待同批执行，原版分类规则仍需对照。
-
-
-### 单位形态属性恢复（待功能批次验证）
-
-路径：`src/session_unit_forms.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUFM` 版本 2 保存潜地、灵体、建筑目标分类和形态生命回复；含单位的旧组件明确拒绝，`SRBF` 更新至版本 60。合批编译运行 `war3_clock_tests <data-root> <output-root>`，检查人工设置属性、隐身和虚体查询与完整恢复包往返。真实建筑升级、目标过滤、回血、旧版及损坏数据、实际存读档和原版规则仍待验证；本次未编译或执行测试，恢复启动保护保留。
+范围：`a0fbbea`、`fa110eb`、`f7df638`、`f061125`；路径：`src/session_illusion.cpp`、`src/session_unit_forms.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release `war3_clock_tests` 编译通过，执行 `war3_clock_tests <data-root> <output-root>` 为 **118 通过、0 失败**。夹具覆盖人工设置召唤分类的 `IsUnitType`、旧 `SUMM` 与非法值拒绝，熊形态实际变形及完整恢复包往返；另覆盖人工设置的潜地、灵体、建筑目标分类和形态回血属性，以及隐身和虚体查询。日志及临时产物在 `tmp/docs-artifacts/war3/recovery-unit-form-batch/`。实际驱散和经验、真实建筑升级、目标过滤、回血续行、`SUFM` 旧版及损坏数据、实际存读档和原版规则仍待验证；恢复启动保护保留。
