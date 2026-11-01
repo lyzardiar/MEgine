@@ -4612,3 +4612,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 路径：`src/lan_spell_orders.h`、`tests/order_queue_tests.cpp`，说明见[联机实验入口](lan-experimental-flow.md)。单位目标治疗术订单 852063 接入现有联机编码和接收路径，排队后通过实际施法恢复目标生命；测试夹具使用连续时间片及农民的源派生修理能力 `Ahrp`。Win32 Release 客户端和相关测试目标编译通过；BootyBay `war3_order_queue_tests <data-root> <map>` 输出 32 条 PASS（含最终汇总），覆盖治疗排队、实际恢复、修理自动施法和既有命令；未加载 Game.dll。日志 `tmp/docs-artifacts/war3/lan-heal-batch/order-final.log`。真实双端、原版联机协议和时序待验证。
 
 本批合并 `023460a`、`b415b22` 和本项：同一核心版本世界路径 `world_` 30 通过、0 失败，路径切换和隐藏关等待区各 1 通过、0 失败，隐藏关最后一波检查得分 31 后进入间章；后者每 0.25 秒人为恢复传送门生命。日志 `tmp/docs-artifacts/war3/lan-heal-batch/{world,path,toggle,wave}.log`。原版寻路对照、正常玩家防守、预算耗尽／大地图性能、真实双端及窗口仍待验证。
+
+### 阻塞目标候选的连通区域（待批次验证）
+
+路径：`src/world_path.cpp`、`tests/world_tests.cpp`；说明见[对象定义](entities.md)。阻塞目标的最近候选位于不可达区域时，搜索扩大后建立或复用通行区域，仅把与起点连通的候选作为最小距离边界；保留原路径节点预算及地形版本失效。Win32 Release 客户端及相关目标构建通过；`war3_world_tests <data-root> <clamp-fixture.json> world_` 31 通过、0 失败，覆盖 512×512 地图隔墙、区域复用和开墙失效；隐藏关 `secret-pathing` 1 通过、0 失败。日志 `tmp/docs-artifacts/war3/blocked-route-bounds/{world-final,campaign}.log`。独立进程的单场景三次耗时此前约 0.107–0.109 秒，修改后约 0.090–0.111 秒，样本不足以量化性能收益；高密度单位、大于区域预算的地图、动态阻挡及原版寻路仍待批次验证。
