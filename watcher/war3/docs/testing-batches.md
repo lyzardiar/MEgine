@@ -5788,3 +5788,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家枚举的范围和联盟过滤顺序（待功能批次验证）
 
 路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。玩家枚举限制在 0–11 号槽位；联盟枚举先运行筛选器，再按当前联盟关系决定是否加入玩家组。原版 1.27 `0x6f211320` 至 `0x6f2113f7` 先调用过滤表达式，随后检查联盟并在玩家编号达到 12 时结束循环。合批执行 destructable 夹具，覆盖中立玩家排除和敌方过滤回调；空槽、联盟变更重入及原版运行时仍待对照。本次未执行功能测试。
+
+
+### 玩家组和筛选时序合批结果
+
+范围：`78e209d`、`3f21418`、`ff48bcd`。Win32 Release 客户端、destructable 和 clock 测试目标编译通过；destructable 主场景及 `invalid-handles` 两个进程退出 0，输出 **3 条 PASS**，覆盖玩家组失效句柄、筛选销毁、回调可见成员、0–11 号枚举范围和联盟过滤顺序；`war3_clock_tests` **120 通过、0 失败**。日志和夹具位于 `tmp/docs-artifacts/war3/force-enumeration-batch/`。同组嵌套枚举、空槽和原版运行时、实际地图窗口仍待对照。
