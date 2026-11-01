@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的点目标闪烁（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/blink-items.md`。复合物品支持 `AEbl` 闪烁与其他已支持即时效果共同结算，点选位置或单位后使用现有合法落点、最大／最小距离和特效；界面单位面板可将单位作为闪烁目标。Win32 Release 客户端与 control 测试目标构建、生成器语法检查通过；合批生成复合夹具并运行 `war3_control_tests <data-root> <fixture> item-combined-blink`、`item-combined-flare` 及普通闪烁和复合物品回归。新增用例尚未执行；单位目标、混合点目标、回调后落点变化、原版复合施法时序、多人及窗口仍待对照。
+
+
 ### 复合物品的点目标照明弹（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/flare.md`。复合物品支持点目标 `AIfa` 与其他已支持即时效果组合，选点后复用显形区域的源范围、延迟、持续时间与侦测类型，并共同结算物品费用、次数、冷却和使用事件。Win32 Release 客户端和 control 测试目标构建、生成器语法检查通过；合批生成复合夹具并运行 `war3_control_tests <data-root> <fixture> item-combined-flare` 与普通照明弹、复合物品及显形回归。新增用例尚未执行；复合施法前摇／弹道、混合点目标、回调重入、原版时序、多人和窗口待对照。
