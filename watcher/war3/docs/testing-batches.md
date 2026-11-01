@@ -5371,3 +5371,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session.h`、`src/session_campaign.cpp`、`src/session_match.cpp`、`src/game_view.h`、`src/game_loading.*`、`src/map_preparation.*`、`src/campaign_browser.*`、`src/main.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release 客户端及测试目标编译通过，`war3_clock_tests <data-root> <output-root>` **120 通过、0 失败**；覆盖脚本 `LoadGame` 的有效／缺失文件和调用线程等待。原版双区域隔离探针直接移动英雄触发切区和回访，读档请求定位到原地图；产品异步地图准备后恢复检查点、分发加载事件并显式启动，雷克萨和玩家控制存在，继续模拟 60 秒。日志在 `tmp/docs-artifacts/war3/loadgame-batch/`、`tmp/docs-artifacts/war3/loadgame-handoff/`。
 
 窗口中的真实加载器与输入、自然走位、并发及错误交互、其他战役／地图、原版存档格式和完整玩法仍待阶段验收；隔离探针没有覆盖这些场景。
+
+
+### 经典战役装饰物覆盖版本 1（待功能批次验证）
+
+路径：`src/placed_definition.cpp`、`tests/map_tests.cpp`。经典版本 1 的 W3D 按无等级／数据指针的记录读取，重复字段使用元数据的 index 定位变体；版本 2 保持扩展布局。原版 OrcX01 的独立解析探针完整读取 19 条原始对象和 15 条自定义对象。为解除已知加载阻塞，Win32 Release 编译及真实地图定向夹具 **1 通过、0 失败**；后台地图准备和加载探针恢复英雄并模拟 60 秒，结束时玩家控制可用且未再次切区。日志在 `tmp/docs-artifacts/war3/loadgame-handoff/loader-final.log`。合批执行 `war3_map_tests <data-root> <output-root>`，并覆盖版本 2、变体字段、窗口交互、其他战役及原版表现。
