@@ -32,3 +32,5 @@
 | Units/UnitAbilities.slk | 156052e0f5c7d8b69c2e299a8d975d94bffd64731b65fbac194a712a706e9410 |
 
 原件提取脚本/行、完整成员摘要、编译日志、产品摘要与独立只读生命周期审核在 `tmp/docs-artifacts/war3/rebirth-phoenix/`。审核限定于死亡拦截、句柄、人口/尸体、变蛋/孵化、移除/脚本恢复和回调重入，未发现可证实问题；不替代运行证据。本次仅必要编译/差异检查，没有运行新专项、三图、原件指令、GPU或性能回归；详细场景见[测试队列](testing-batches.md)。
+
+重生和凤凰蛋的剩余时间、源参数与重生特效现可在隔离会话中恢复；检查范围和限制见 [战役存档状态](save-runtime-foundation.md)。

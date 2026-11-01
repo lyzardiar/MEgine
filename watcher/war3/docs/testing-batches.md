@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 重生与凤凰蛋恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_rebirth.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 88/88 通过；原版 Orc01 会话人工触发重生和变蛋后隔离恢复，临时绕过启动保护续行 12 秒，71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/death-restart-recovery/`。实际读档、凤凰火焰、事件时序与窗口画面待阶段验证。
+
 ### 元素分身恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_spirit_split.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 87/87 通过；原版 Orc01 会话人工施法后隔离恢复，临时绕过启动保护续行 2 秒和 65 秒，均为 71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/spirit-split-recovery/`。实际读档、自然战斗、成员全灭与窗口画面待阶段验证。
