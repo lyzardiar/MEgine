@@ -5430,3 +5430,10 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 读档预览协作取消（待功能批次验证）
 
 路径：`src/platform.{h,cpp}`、`src/snapshot_codec.h`、`src/session.h`、`src/session_campaign.cpp`、`src/saved_game_browser.{h,cpp}`、`tests/clock_tests.cpp`。检查点读取和 SHA-256 按块响应取消，选择变化或关闭列表时取消旧请求；预览一次读取检查点后复用元数据定位地图。单次系统文件读取、地图归档读取和解析无法中断，可能延迟退出。合批构建客户端与会话套件，检查取消、摘要损坏、切换及正常恢复；窗口交互仍待验。本次未执行功能测试。
+
+
+### 存档列表与后台预览合批结果（窗口待验）
+
+范围：`d34868a`、`1464144`、`b4a21b3`。Win32 Release 客户端、`war3_clock_tests`、`war3_map_tests` 编译通过；会话套件 **120 通过、0 失败**，地图套件 **24 通过、0 失败**。会话夹具覆盖正常检查点读取、地图摘要定位、损坏摘要拒绝，以及预先取消的文件／内存哈希、快照与检查点读取；未验证读取中途取消。日志为 `tmp/docs-artifacts/war3/loadgame-handoff/preview-batch-{build,clock,map}.log`。
+
+窗口测试复用此前 D3D9 创建设备失败的诊断，未执行；列表导航、滑块、地图预览、快速切换与实际窗口恢复仍待验证。取消为协作式，单次系统文件读取、地图归档读取和解析仍可能延迟退出；原版预览图与外部地图支持仍待实现。
