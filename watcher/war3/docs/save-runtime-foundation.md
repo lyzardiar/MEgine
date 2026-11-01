@@ -482,3 +482,9 @@ Win32 Release 构建及 clock 79/79 通过，覆盖 Undead01 实际装备附着�
 静音模拟时钟模式下，声音管理器的淡入淡出脉冲和已停止声音清理按模拟时间推进；恢复声音时以当前模拟时刻对齐脉冲。实际实时音频仍沿用原有时钟，音量组及设备播放不由该检查证明。
 
 Win32 Release 构建通过，声音模拟脉冲与声音等待恢复定向测试各 1/1，clock 79/79；日志 tmp/docs-artifacts/war3/simulation-audio-pulse/clock.log。原版 Human03 在 30 秒采集后，四次并行隔离诊断均在临时绕过启动保护后续行 60 秒，67 项比较一致，日志 tmp/docs-artifacts/war3/simulation-audio-pulse/human03-1.log 至 human03-4.log。真实设备、原版声音时序及实际存档仍待验证。
+
+### 蛛网攻击视觉恢复
+
+SSPV 保存蛛网攻击的独立视觉编号、特效状态、来源与目标单位身份、到期时间和返程弹道位置；已经销毁但尚未清理的视觉也保留。SEFX 仅管理脚本特效身份，SRBF 版本 21 纳入 SSPV，旧组件包不受理，恢复后启动保护保留。
+
+Win32 Release 构建和 clock 80/80 通过；原版 Undead05 在 210 秒存在蛛网视觉时完成恢复包与组件往返。隔离诊断在 150 秒及 210 秒采集后临时绕过启动保护，各续行 60 秒，分别 74/74 项状态一致；日志位于 tmp/docs-artifacts/war3/spider-visual-recovery/。实际游戏读档、窗口视觉和完整战役仍待验证。

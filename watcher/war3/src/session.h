@@ -1462,6 +1462,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildLightnings(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeEffects(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildEffects(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeSpiderVisuals(const jass::StableHandleMap& encodeHandle) const;
+    void restoreSpiderVisuals(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeAbilityIdentities(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildAbilityIdentities(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitIdentities(const jass::StableHandleMap& encodeHandle) const;

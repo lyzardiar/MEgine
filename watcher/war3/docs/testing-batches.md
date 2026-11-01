@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 蛛网攻击视觉恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_effect_snapshot.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 80/80 通过；原版 Undead05 的两个采样点在隔离诊断中各续行 60 秒，74/74 项状态一致，日志位于 `tmp/docs-artifacts/war3/spider-visual-recovery/`。诊断临时绕过启动保护；实际游戏读档、视觉表现及完整战役待阶段验证。
+
 ### 默认单动作触发器续执行（待阶段验证）
 
 路径：`src/jass_runtime.h/.cpp`、`src/session_callbacks.cpp`、`tests/session_tests.cpp`、`tests/session_thread_tests.cpp`、`tests/live_world_tests.cpp`；范围见 [脚本等待与协作线程](script-threads.md)及[战役存档状态](save-runtime-foundation.md)。Win32 Release 客户端和四个相关检查目标编译通过；会话检查 21/21、会话线程检查 6/6、JASS 线程定向检查 2/2、序章原图队列触发器检查 1/1 通过，均未加载 Game.dll。序章检查在同一会话的 120 秒静音模拟后重置队列、启动原触发器，睡眠中编码／恢复并观察队列从 1 变为 0；DotA 原图完成初始化及 2 秒静音模拟，日志在 `tmp/docs-artifacts/war3/single-serial-trigger/`。恢复期间触发器销毁、更多事件／回调与原版时序、跨运行时动作、多动作队列及完整存档仍待阶段核对。
