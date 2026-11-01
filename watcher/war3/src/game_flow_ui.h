@@ -13,8 +13,8 @@ class GameFlowUi {
     GameData& data_;
     Renderer& renderer_;
     Text& text_;
-    std::unique_ptr<GlueScreen> menu_,options_,dialog_,scores_;
-    enum class Panel {Closed,Main,End,Quit,Help,Tips,Options,Gameplay,Sound,Video};
+    std::unique_ptr<GlueScreen> menu_,options_,dialog_,scores_,saveMenu_;
+    enum class Panel {Closed,Main,End,Quit,Help,Tips,Options,Gameplay,Sound,Video,Save,Overwrite};
     Panel panel_=Panel::Closed;
     std::uint32_t dialogId_=0;
     std::uint64_t dialogRevision_=0;
@@ -37,6 +37,11 @@ class GameFlowUi {
     GameAudioPreferences audioPreferences_{},audioDraft_{};
     GameVideoPreferences videoPreferences_{},videoDraft_{};
     std::string sliderDrag_;
+    std::wstring saveName_;
+    wchar_t saveHigh_=0;
+    std::vector<std::wstring> saveFiles_;
+    size_t saveScroll_=0;
+    std::string saveError_;
     std::vector<std::string> scoreModels_;
     std::array<std::array<std::string,25>,16> scoreCache_{};
     std::string helpText_,helpMeasured_;
@@ -45,6 +50,9 @@ class GameFlowUi {
     void optionsPanel(Panel panel);
     void drawOptions(const UiInput& input,bool network,bool allowNetworkSubgroup);
     void prepareScores();
+    void openSave();
+    void drawSave(const UiInput& input,std::wstring_view characters);
+    void publishSave(bool overwrite=false);
     unsigned submit(const PlayerCommand& command);
 public:
     GameFlowUi(GameData& data,Renderer& renderer,Text& text,std::function<unsigned(const PlayerCommand&)> submit={}) : data_(data),renderer_(renderer),text_(text),submit_(std::move(submit)) {}
@@ -52,7 +60,7 @@ public:
     bool menuOpen() const {return panel_!=Panel::Closed;}
     void toggleMenu();
     bool scriptDialog() const;
-    bool drawMenu(const UiInput& input,bool network=false,bool allowNetworkLeave=false);
+    bool drawMenu(const UiInput& input,bool network=false,bool allowNetworkLeave=false,std::wstring_view characters={});
     std::optional<bool> takeNetworkLeave(){auto result=networkLeave_;networkLeave_.reset();return result;}
     std::uint32_t drawDialog(const UiInput& input,bool interactive=true);
     bool drawScores(const UiInput& input,std::wstring_view characters={});

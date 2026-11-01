@@ -5381,3 +5381,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家主动存档接口（待功能批次验证）
 
 路径：`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`。本地已启动会话可在安全边界发布检查点并分发保存事件，写入失败不分发；限制重入、待处理保存、退出及联机会话。合批编译执行 `war3_clock_tests <data-root> <output-root>`，检查手动保存、事件、恢复和非法路径；菜单、存档选择与原版行为尚待接入或验证。本次未执行功能测试。
+
+
+### 游戏内本地存档面板（待功能批次验证）
+
+路径：`src/game_flow_ui.{h,cpp}`、`src/game_view.cpp`、`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`。单人 ESC 菜单使用源 `EscMenuSaveGamePanel.fdf` 的存档、编辑和覆盖确认控件；从独立用户目录 `Saves/Manual` 列出存档，支持输入、选择和滚轮。新文件采用不覆盖发布，已有文件需确认；联机会话不开放。合批构建客户端及 `war3_clock_tests`，验证保存、中文输入、列表、覆盖／取消、暂停和恢复；窗口布局、删除、读档入口与原版时序继续待验或实现。本次未执行功能测试。
