@@ -5861,3 +5861,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 枚举动作中的过滤上下文和空回调（待功能批次验证）
 
 路径：`src/session_inventory.cpp`、`src/session_destructables.cpp`、`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。物品和可破坏物的动作执行时保留对应过滤对象；空动作仍执行过滤但不调用脚本，`ForGroup` 空动作无操作。原版 1.27 的物品和可破坏物回调分别在 `0x6f1e98ed`、`0x6f1df8ed` 设置过滤上下文，动作结束后在 `0x6f1e9952`、`0x6f1df952` 清理；空动作在调用前跳过。合批运行 destructable 夹具，覆盖嵌套恢复、空动作及过滤器；原版动态时序仍待对照。本次未执行功能测试。
+
+枚举上下文最小复现：Win32 Release `war3_destructable_tests` 编译通过，重新生成夹具后主场景退出 0、输出 **2 条 PASS**，覆盖动作中的过滤对象、嵌套恢复和空动作过滤；日志及夹具位于 `tmp/docs-artifacts/war3/enum-context-correction/`。此前枚举批次的动作上下文断言已由本次原版指令证据和新夹具替代；原版实际运行时仍待对照。该最小复现不构成后续整批验证。
