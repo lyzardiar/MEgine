@@ -4760,3 +4760,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 Strange Brew 原图补充验证：Win32 Release `war3_orc_campaign_chain_tests <data-root> quest-shop <new-user-dir>` 1 通过、0 失败，未加载 Game.dll。测试等待开场结束，人工触发任务发现、创建买家和两种材料、补充金币及库存、解除商店暂停并移动雷克萨；验证酒桶出售／拾取、三项排队更新、任务完成、陈加入及三件初始物品、过场结束后恢复控制。隔离目录 `tmp/docs-artifacts/war3/quest-powerups/shop-quest-1101g/`；自然探索、材料生成、战斗和真实窗口未覆盖。为既有功能补充验证，不计新功能批次。
 
 Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <data-root> quest-shop <new-user-dir>` 1 通过、0 失败，未加载 Game.dll。雷克萨进入陈的触发区域后由原版过场发现任务并生成商店库存、雷霆花和雷霆凤凰；玩家攻击击败凤凰后死亡事件生成蛋，购买酒桶和拾取材料通过玩家命令，随后原脚本完成任务并招募陈。测试直接移动英雄、增加金币、将凤凰设为低生命并使雷克萨无敌，未覆盖自然寻路、完整战斗、窗口画面及原版动态对照。隔离目录 `tmp/docs-artifacts/war3/quest-powerups/shop-natural-1101c/`。此项为既有功能验证补充，不计新功能批次。
+
+### 玩家结算统计快照（待批次验证）
+
+路径：`src/session.h`、`src/session_game.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`PSTS` 编码各玩家统计和单位类型计数，校验摘要、版本、范围及重复键后事务性恢复。Win32 Release 核心和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 42 通过、0 失败，覆盖真实拾取／击杀、往返、损坏／截断及伪造计数拒绝，未加载 Game.dll。批次验证多玩家资源和生产、恢复后继续模拟与结算、跨组件恢复顺序；英雄摘要、胜负状态、完整保存／载入和原版格式仍未实现。产物 `tmp/docs-artifacts/war3/statistics-snapshot/output-02/`。

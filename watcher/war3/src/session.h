@@ -1331,6 +1331,8 @@ public:
     void advance(double elapsed);
     std::vector<std::uint8_t> encodePlayerTechnology() const;
     void restorePlayerTechnology(std::span<const std::uint8_t> bytes);
+    std::vector<std::uint8_t> encodePlayerStatistics() const;
+    void restorePlayerStatistics(std::span<const std::uint8_t> bytes);
     std::vector<std::uint8_t> encodePlayerStates() const;
     void restorePlayerStates(std::span<const std::uint8_t> bytes);
     std::vector<std::uint8_t> encodeRandomState() const;
