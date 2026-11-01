@@ -5148,3 +5148,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 地图装饰物动画与槽位恢复（待阶段验证）
 
 路径：src/session.h、src/session_doodads.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SDOD 保存装饰动画、对象槽位及空间查询顺序，SRBF 更新至版本 46。Win32 Release 构建及 clock 112/112 通过，覆盖恢复后槽位复用；原版 Orc01 人工设置动画并重用动态槽位，隔离续行临时绕过启动保护，3 秒后 71/71 项状态一致。待阶段验证自然地图脚本、实际游戏读档、原版时序及窗口；日志 tmp/docs-artifacts/war3/doodad-recovery/。
+
+### 界面请求恢复（待批次验证）
+
+路径：src/session.h、src/session_text.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SUIQ 保存脚本按键队列和技能书请求，SRBF 更新至版本 47。批次执行 Win32 Release `war3_clock_tests <data-root> <output-root>`，核对队列顺序、技能书单位映射和单位移除后的引用；检查实际窗口请求消费与读档。状态：已实现，未编译，未测试。
