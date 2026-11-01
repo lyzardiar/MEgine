@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 负数量生产（待功能批次验证，1/3）
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`。`SetProduce` 的负数量按 32 位计数逐项尝试，失败时保留已排队项目；零数量仍立即成功。原版 1.27 `0x6f894959` 对非零计数进入生产循环，每次成功后递减，失败返回零。合批运行 CampaignAI `produce-many`、`produce-zero` 和生产回归，核对负数量的部分队列、资源与容量；生产回调重入、原版动态极值及完整对局仍待验证。本次未执行功能测试。
+
+
 ### AI 生产和空合并批次（基础验证完成）
 
 范围：`b8cfb00`、`a5ba3d2`（补充 `253eecb`）和 `70cd3fc`。Win32 Release 客户端、CampaignAI 和 revival 测试程序编译通过。`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `produce-zero`、`produce-many`、`merge-empty`、`armies`、`harvest`、`reachable` 各 2 项通过，`startup` 1 项通过；`melee-build` 以原版 Booty Bay 运行 1 项通过；`war3_revival_tests <data-root> <fixture>` 4 项通过，共 **18 通过、0 失败**。覆盖零数量无副作用、33 项排队、容量不足时保留部分队列、非正数量合并及英雄复活。`melee-build` 首次误用战役夹具失败，改用原图后通过。日志位于 `tmp/docs-artifacts/war3/ai-production-count-batch/`；战役 AI 夹具为 `tmp/docs-artifacts/war3/campaign-ai/fixture.w3m`，复活夹具为 `tmp/docs-artifacts/war3/hero-revival/fixture.w3m`。正数量合并、生产回调重入、原版极值及完整对局仍待验证。Booty Bay 自然对局在 4,200 秒未结束，受限 `otbk` 项目阻塞后续建造的原版生产者筛选语义尚未确定，诊断见 `docs/ai.md`。
