@@ -4652,3 +4652,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 人族隐藏关其他防御塔（验证补充）
 
 路径：`tests/human_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release 编译通过；新建独立用户目录分别运行 `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> secret-build-net1` 和 `secret-build-nft1`，各 1 通过、0 失败，未加载 Game.dll。原图恢复控制并自然开放科技后，玩家命令建造新塔，验证实际扣费、完工、发射弹道以及来源为新塔的正数伤害。未直接生成敌人或修改传送门生命。其他塔种、完整防守、原版动态和窗口仍待验证。本项为既有战役功能的验证补充，不计功能批次。
+
+### 人族隐藏关高级防御塔（验证补充）
+
+路径：`tests/human_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release 编译通过；新建独立用户目录分别运行 `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> secret-build-ndt1` 与 `secret-build-ntt1`，各 1 通过、0 失败，未加载 Game.dll。原图定时解锁后，验证玩家建造的塔扣费、完工、发射弹道及新塔造成正数伤害，模拟时间分别为 671.031 秒和 1036.19 秒；测试持续恢复传送门生命并将建造者设为无敌，未直接创建敌人。三种较早开放的塔回归各 1 通过。正常防守、完整波次、原版动态与窗口仍待验证。本项为既有战役功能的验证补充，不计功能批次。
