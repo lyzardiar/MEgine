@@ -44,6 +44,8 @@ public:
     void muted(bool value);
     void localGain(float value);
     void update(std::uint32_t now=GetTickCount());
+    Bytes encodeState(std::uint32_t now) const;
+    static std::unique_ptr<MusicScene> decodeState(Archives& resources,std::span<const std::uint8_t> bytes,bool muted,float localGain,std::uint32_t now);
     static unsigned fadeLevel(unsigned volume,unsigned elapsed,unsigned duration,bool out);
     const std::string& mapName() const {return mapName_;}
     int mapIndex() const {return mapIndex_;}

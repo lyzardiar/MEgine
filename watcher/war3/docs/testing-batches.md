@@ -5152,3 +5152,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 界面请求恢复（待批次验证）
 
 路径：src/session.h、src/session_text.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SUIQ 保存脚本按键队列和技能书请求，SRBF 更新至版本 47。批次执行 Win32 Release `war3_clock_tests <data-root> <output-root>`，核对队列顺序、技能书单位映射和单位移除后的引用；检查实际窗口请求消费与读档。状态：已实现，未编译，未测试。
+
+### 地图与主题音乐恢复（待批次验证）
+
+路径：src/music.h、src/music.cpp、src/session.h、src/session_music.cpp、src/session_recovery_bundle.cpp、tests/music_tests.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SMUS 保存音乐播放和调度状态，SRBF 更新至版本 48。批次构建 `war3_clock_tests` 和 `war3_music_tests`，执行 `war3_clock_tests <data-root> <output-root>` 及 `war3_music_tests <data-root> <output-root>`，核对暂停位置、曲目随机序列、损坏拒绝和主题音乐结束后的地图音乐恢复；真实设备、墙钟定时及游戏读档另行验收。状态：已实现，未编译，未测试。
