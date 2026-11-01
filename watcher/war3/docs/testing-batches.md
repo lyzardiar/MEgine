@@ -5494,3 +5494,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 武器攻击目标的完整条目匹配（待功能批次验证）
 
 路径：`src/entities.h`、`src/session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。单位类型与单位实例的对空、对地分类按武器目标列表的完整条目判定。合批生成研究夹具并运行 `war3_research_tests <root> <fixture>`，覆盖相似目标名称和原始地面目标；自定义武器与实际对局待验证。本次未执行功能测试。
+
+
+### 单位建筑目标的完整条目匹配（待功能批次验证）
+
+路径：`src/session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。单位目标类型按完整 `structure` 条目标记，建筑自身仍保留建筑目标属性。合批生成研究夹具并运行 `war3_research_tests <root> <fixture>`，覆盖相似名称、明确目标和建筑；实际技能与对局待验证。本次未执行功能测试。
