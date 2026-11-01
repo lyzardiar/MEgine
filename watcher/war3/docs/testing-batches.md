@@ -5841,3 +5841,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 
 
 玩家组计数补充：原版在 `0x6f2112ef` 初始化独立计数，筛选并通过联盟规则后由 `0x6f2113de` 增量更新；回调自行增删玩家不改变枚举计数。实现及夹具已同步，作为计数枚举任务补充，待同批验证。
+
+
+### 未知单位类型的组枚举（待功能批次验证）
+
+路径：`src/session_collections.cpp`、`tests/game_flow_tests.cpp`。类型名称无法解析时，普通及计数组枚举不清空已有成员，也不执行过滤回调。原版 1.27 的 `GroupEnumUnitsOfType` 与计数版本入口 `0x6f1e6b50`、`0x6f1e6ba0` 在类型解析结果为 `-1` 时直接返回。合批运行 game flow 测试，覆盖未知类型及随后正常枚举；本次未执行功能测试。
