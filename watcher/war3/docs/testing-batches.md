@@ -5499,3 +5499,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 单位建筑目标的完整条目匹配（待功能批次验证）
 
 路径：`src/session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。单位目标类型按完整 `structure` 条目标记，建筑自身仍保留建筑目标属性。合批生成研究夹具并运行 `war3_research_tests <root> <fixture>`，覆盖相似名称、明确目标和建筑；实际技能与对局待验证。本次未执行功能测试。
+
+
+### 分类与目标条目匹配合批结果
+
+范围：`ab33462`、`1ead1d7`、`b035471`。Win32 Release 客户端、研究和运输测试目标编译通过；研究测试进程通过，覆盖相似单位分类、动态分类、武器目标与建筑目标；运输 `flow` **1 通过、0 失败**。日志位于 `tmp/docs-artifacts/war3/research/token-batch-{build,research,transport}.log`，夹具位于 `tmp/docs-artifacts/war3/research/token-batch.w3m`。其他技能组合、自定义目标边界、原版对照和实际对局仍待验证。
