@@ -32,7 +32,7 @@ struct GameData {
     std::array<std::string,2> creepCampIcons;
     std::array<std::string,3> signalIcons;
     std::array<GameCommand,6> commands;
-    std::array<GameCommand,5> buildCommands;
+    std::array<GameCommand,6> buildCommands;
     GameCommand cancelCommand,cancelBuildCommand,cancelReviveCommand,selectSkillCommand;
     void prepareConsole();
     bool uploadOne(Renderer& renderer);

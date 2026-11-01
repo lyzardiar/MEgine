@@ -5928,3 +5928,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 原版中立与娜迦单位种族（待功能批次验证）
 
 路径：`src/session_entities.cpp`、`src/session_construction.cpp`、`tests/construction_tests.cpp`、`docs/jass.md`。娜迦、野怪、平民和小动物分别使用源种族编号 11、8、9、10；其他保持 7。建造按钮按同一娜迦编号选择。原版 1.27 种族表 `0x6fb69fb8`、单位类型写入 `0x6f64f95d` 及两个种族查询入口证明静态映射。合批运行 construction 夹具，检查原版五类单位的 `GetUnitRace`／`IsUnitRace` 和娜迦施工；地图覆盖、类型转换与原版动态行为待验证。本次未执行功能测试。
+
+
+### 中立工人建造（待功能批次验证）
+
+路径：`src/session_construction.cpp`、`src/game_loading.{h,cpp}`、`tests/construction_tests.cpp`、`docs/construction.md`。中立单位使用源 `CmdBuild` 入口和建造列表，工人进入建筑施工；原版 `ndrl` 为 `creeps` 且有四种建造类型，`CAbilityNeutralBuild` 与 `CAbilityOrcBuild` 的第 17、18、19 虚表项一致。合批运行 construction 夹具核对达拉内尔工人菜单、施工和释放；其他中立种族、取消与恢复、实际窗口及原版动态行为待验证。本次未执行功能测试。
