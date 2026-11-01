@@ -5705,3 +5705,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 电脑随机路线的无效目标（待功能批次验证）
 
 路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`。建立路线或运输计划前检查目标存活、可见状态及敌我关系，隐身、隐藏、移除或友军目标不替换既有命令；可攻击目标继续进入随机路线。合批运行 CampaignAI `ai-random-paths`、`fog-attack`、`reachable` 和运输场景，覆盖随机路线、目标恢复及既有进攻；原版随机路径策略和真实对局待验证。本次未执行功能测试。
+
+
+### 电脑目标状态与路线合批结果
+
+范围：`894cebf`、`bab2a3f`、`dfc4c5a`。Win32 Release 客户端和 CampaignAI 测试目标编译通过；`fog-attack`、`ai-random-paths`、`reachable`、`island-auto`、`island-auto-target-death` 分别 **2/0、1/0、2/0、1/0、1/0**（通过／失败）。覆盖隐身及联盟变化时保留订单、恢复敌对后进攻、随机路线、混合部队与自动运输；日志和夹具位于 `tmp/docs-artifacts/war3/ai-visibility-batch/`，编译日志为 `tmp/docs-artifacts/war3/ai-visibility-batch-build.log`。目标在途中变化、探测、原版策略、真实窗口及完整对局仍待验证。
