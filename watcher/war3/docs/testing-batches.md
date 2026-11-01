@@ -5651,3 +5651,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 眩晕期间暂停采集与交付（待功能批次验证）
 
 路径：`src/session_harvest.cpp`、`tests/harvest_tests.cpp`。工人眩晕或其他共享眩晕状态期间不继续采矿、伐木和交付，采矿／伐木周期保留剩余时间；恢复后继续原订单。合批使用普通采集夹具执行 `war3_harvest_tests <root> <fixture> stunned`，覆盖伐木暂停／恢复及金币交付；矿内、光环／变形及原版时序待验证。本次未执行功能测试。
+
+
+### 眩晕期间暂停修理和开工（待功能批次验证）
+
+路径：`src/session_repair.cpp`、`src/session_construction.cpp`、`tests/construction_tests.cpp`。工人眩晕时保留已有修理订单并暂停修复，不能启动待建建筑；状态解除后继续工作。合批运行普通施工夹具的 `stunned-work` 模式并复验原施工场景；协助建造、其他控制状态与原版时序待验证。本次未执行功能测试。
