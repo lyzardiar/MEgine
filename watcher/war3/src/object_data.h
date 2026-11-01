@@ -24,6 +24,7 @@ class ObjectData {
     std::map<std::string,std::string> sourceNames_;
     std::map<std::uint32_t,std::string> nameOverrides_;
     SourceSettings profiles_{true};
+    SourceSettings rawProfiles_{true,false};
     std::vector<ObjectOverride> objects_;
     mutable std::optional<std::map<std::string,std::uint32_t>> unitNames_;
     mutable std::map<std::pair<int,int>,std::vector<std::uint32_t>> randomItems_;
@@ -37,6 +38,7 @@ public:
     static std::uint32_t code(std::string_view text);
     static std::string name(std::uint32_t code);
     std::optional<std::string> displayName(std::uint32_t id) const;
+    bool singleQuotedProfile(std::uint32_t id,const std::string& key) const;
     std::uint32_t unitId(const std::string& name) const;
     std::vector<std::uint32_t> unitTypes() const;
     std::vector<std::uint32_t> itemTypes() const;

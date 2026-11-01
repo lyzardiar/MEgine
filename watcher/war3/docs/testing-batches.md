@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 施法说明中的逗号（待批次验证）
+
+路径：`src/object_data.h/.cpp`、`src/session_ability_commands.cpp`、`tests/revival_tests.cpp`。读取原始 Profile 字段的引号结构，单条带引号的施法说明完整保留逗号；多条等级说明继续按等级选择。固定版 `War3Patch.mpq` 中 `Apg2/Ubertip` 包含普通逗号和后续说明。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> ability-tooltip`，并回归多级暴风雪说明、地图覆盖、WTS、完整面板和原版窗口。本次未执行测试。
+
 ### 英雄学习说明中的逗号（待批次验证）
 
 路径：`src/session_ability_commands.cpp`、`tests/revival_tests.cpp`。单条英雄学习说明完整保留普通逗号，继续展开对象字段；带引号的多等级列表及 WTS 引用沿用等级选择。固定版 `War3Patch.mpq` 的暗影猎手妖术 `AOhx/Researchubertip` 为一条含普通逗号和多个等级说明的文本。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-learn-tooltip`，并核对自定义多等级文本、WTS、完整面板及原版窗口。本次未执行测试。
