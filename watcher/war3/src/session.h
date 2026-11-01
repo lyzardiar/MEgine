@@ -298,7 +298,7 @@ class ScriptSession {
     AudioRandom gameRandom_{0x69707365u};
     std::array<AudioRandom,45> auxiliaryRandom_{};
     int stockItemSlots_=12,stockUnitSlots_=12;
-    bool shopStockRestored_=false,unitSummonsRestored_=false,productionRestored_=false,cargoRestored_=false,harvestRestored_=false,constructionRestored_=false,corpsesRestored_=false,ambientRestored_=false,unitStealthRestored_=false,selectionRestored_=false,waygatesRestored_=false;
+    bool shopStockRestored_=false,unitSummonsRestored_=false,productionRestored_=false,cargoRestored_=false,harvestRestored_=false,constructionRestored_=false,corpsesRestored_=false,ambientRestored_=false,unitStealthRestored_=false,selectionRestored_=false,waygatesRestored_=false,revealStateRestored_=false;
     unsigned futureMovementPhaseBias_=0;
     bool futureMovementPhaseRestored_=false;
     bool recoveryBundleRestored_=false,recoverySourceMainCompleted_=false;
@@ -1364,6 +1364,8 @@ public:
     void restoreSelection(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeWaygates(const jass::StableHandleMap& encodeHandle) const;
     void restoreWaygates(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeRevealState(const jass::StableHandleMap& encodeHandle) const;
+    void restoreRevealState(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitStealth(const jass::StableHandleMap& encodeHandle) const;
     void restoreUnitStealth(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeAmbientPassives(const jass::StableHandleMap& encodeHandle) const;

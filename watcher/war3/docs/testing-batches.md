@@ -4911,3 +4911,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 传送门恢复状态（待阶段验证）
 
 路径：`src/session.h`、`src/session_waygate.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SWGT` 保存传送门配置、占据单位和重试时间，在单位核心重建后恢复并映射句柄；`SRBF` 版本 2 纳入该组件。Win32 Release 核心与 clock 目标编译通过，clock 62/62，覆盖组件包内禁用状态、目的地、占据和重试引用往返；日志 `tmp/docs-artifacts/war3/waygate-recovery/clock-final.log`。阶段验证需覆盖恢复后的传送、双向传送门和重试、原图与实际存档入口；组件包仍禁止启动，完整状态、跨区和窗口尚未完成。
+
+
+### 岗哨与临时显形恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_stealth_reveal.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SRVL` 保存岗哨、显形区域、时序及树木／特效引用；`SRBF` 版本 3 纳入该组件。Win32 Release 核心及 clock 目标编译通过，clock 62/62；实际技能创建显形和岗哨，检查恢复后侦测及组件重编码，日志 `tmp/docs-artifacts/war3/reveal-recovery/clock-final.log`。待阶段验证恢复后的岗哨飞行、树木移除、显形到期、原图视野及实际存档；组件包启动保护保留。
