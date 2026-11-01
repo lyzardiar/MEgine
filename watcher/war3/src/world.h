@@ -16,6 +16,7 @@ struct WorldPoint {jass::Real x,y;};
 struct WorldRect {jass::Real minX,minY,maxX,maxY;};
 enum class TerrainDeformationKind {Ripple,Crater,Wave,Random};
 struct TerrainDeformation {std::uint32_t handle=0;TerrainDeformationKind kind=TerrainDeformationKind::Ripple;float x=0,y=0,radius=0,depth=0,spaceWaves=0,timeWaves=0,startRadius=0,dirX=0,dirY=0,distance=0,randomMin=0,randomMax=0;double started=0,duration=0,stopStarted=0,stopDuration=0,travelTime=0,trailTime=0,updateInterval=0,nextUpdate=0;int count=1,sampleLeft=0,sampleBottom=0,sampleWidth=0,sampleHeight=0;bool limitNegative=false,stopping=false,persistent=false,permanent=false;std::vector<float> samples;};
+struct DeformationSnapshot {std::vector<TerrainDeformation> active;std::vector<float> permanent;std::vector<std::uint8_t> chunks;double bound=0,time=0;};
 struct PathCell {size_t index=0;std::uint8_t mask=0;};
 struct CliffCell {size_t index=0;int level=0;};
 struct DoodadAnimation {std::uint32_t type=0;std::string animation;WorldRect rectangle{};float x=0,y=0,radius=0;double started=0;bool circular=false,nearest=false,random=false;};
@@ -120,6 +121,8 @@ public:
     float deformationBound() const;
     bool deformationIntersects(float minX,float minY,float maxX,float maxY) const;
     std::uint64_t deformationRevision() const {return deformationRevision_;}
+    DeformationSnapshot snapshotDeformations() const {return {deformations_,permanentHeights_,permanentChunks_,permanentBound_,deformationTime_};}
+    void restoreDeformations(DeformationSnapshot state);
     bool canAddDeformation() const {return deformations_.size()<256;}
     void addDeformation(TerrainDeformation ripple);
     void stopDeformation(std::uint32_t handle,double duration);

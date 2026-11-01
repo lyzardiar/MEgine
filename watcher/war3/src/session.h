@@ -293,7 +293,7 @@ class ScriptSession {
     bool showScores_=false,userControl_=true,userUI_=true,selectionEnabled_=true,selectionUI_=true,dragSelectionEnabled_=true,dragSelectionUI_=true;
     bool occlusionEnabled_=true;
     ScriptCineFilter cineFilter_;
-    bool presentationRestored_=false,soulCapturesRestored_=false,mirrorImagesRestored_=false,spiritSplitsRestored_=false,deathRestartsRestored_=false,phoenixFireRestored_=false,lavaSpawnsRestored_=false,rescueStateRestored_=false,concoctionsRestored_=false,tinkerStateRestored_=false,wardStateRestored_=false,locustStateRestored_=false,healingSpraysRestored_=false,firelordFlightsRestored_=false,stampedeStateRestored_=false,areaSpellStateRestored_=false,itemBlightGrowthRestored_=false,combatEffectsRestored_=false,imagesRebuilt_=false;
+    bool presentationRestored_=false,soulCapturesRestored_=false,mirrorImagesRestored_=false,spiritSplitsRestored_=false,deathRestartsRestored_=false,phoenixFireRestored_=false,lavaSpawnsRestored_=false,rescueStateRestored_=false,concoctionsRestored_=false,tinkerStateRestored_=false,wardStateRestored_=false,locustStateRestored_=false,healingSpraysRestored_=false,firelordFlightsRestored_=false,stampedeStateRestored_=false,areaSpellStateRestored_=false,itemBlightGrowthRestored_=false,combatEffectsRestored_=false,imagesRebuilt_=false,deformationsRebuilt_=false;
     bool forceCinematicSubtitles_=false;
     bool interfaceVisible_=true;
     float interfaceFrom_=1;
@@ -859,6 +859,7 @@ class ScriptSession {
     void spellLightning(const SpellMissile& missile);
     std::map<std::uint32_t,std::shared_ptr<ScriptEffect>> effects_;
     std::set<std::uint32_t> ignoredEffectIdentities_;
+    std::set<std::uint32_t> ignoredDeformationIdentities_;
     std::set<std::uint32_t> ignoredImageIdentities_;
     std::map<std::uint32_t,std::shared_ptr<ScriptImage>> images_;
     std::map<std::uint32_t,std::shared_ptr<ScriptUbersplat>> ubersplats_;
@@ -1428,6 +1429,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildLeaderboards(std::span<const std::uint8_t> bytes);
     Bytes encodeMultiboards(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildMultiboards(std::span<const std::uint8_t> bytes);
+    Bytes encodeDeformations(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildDeformations(std::span<const std::uint8_t> bytes);
     Bytes encodeImages(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildImages(std::span<const std::uint8_t> bytes);
     Bytes encodeCombatEffects(const jass::StableHandleMap& encodeHandle) const;
