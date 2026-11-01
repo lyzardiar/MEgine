@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的单位施法合批结果
+
+范围：`4a55308`、`e848604`、`f34f53f`，以及本次分摊与护盾断言。Win32 Release 客户端、control、spell、clock 测试目标构建通过，control 目标有既有变量遮蔽警告。control 的 `item-combined-spirit-rune`、`item-combined-spirit-target`、`item-combined-caster`、`item-combined`、`item-combined-support`、`item-combined-dispel` 各 1 项通过；spell 的 `spirit-rune`、`spell-shield` 各 1 项通过；clock 的 `unit_buffs_restore_spirit_link_and_shield` 1 项通过，合计 9 通过、0 失败。额外断言确认复合锁链伤害分摊和目标法术护盾拦截。日志与复合夹具在 `tmp/docs-artifacts/war3/combined-caster-batch/`，spell 使用 `tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m`。复合技能前摇／弹道与原版时序、多人与实际窗口仍待验证。
+
+
 ### 复合物品的单位施法状态（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。目标型复合物品支持 Alsh 闪电护盾、Afae 精灵之火和 Acri 衰减，复用目标筛选、法术护盾与现有状态效果，共同结算物品费用、次数、冷却和使用事件。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-caster`、目标／拾取型灵魂锁链和已有复合回归，验证普通施法及锁链分摊；复合施法前摇／弹道、原版时序、多人与窗口待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
