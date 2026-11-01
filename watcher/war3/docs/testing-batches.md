@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### Buff 扩展接口的失效单位（待功能批次验证）
+
+路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。`UnitRemoveBuffsEx`、`UnitHasBuffsEx` 和 `UnitCountBuffsEx` 对空、已移除或类型不匹配的单位安全返回，查询结果为零；有效单位继续按所选条件查询与移除。原版 1.27 入口 `0x6f1fb130`、`0x6f1fad50`、`0x6f1faa40` 对解析失败的单位直接返回。合批生成 passive 夹具并运行 `war3_passive_tests <data-root> <fixture> buff-invalid-unit`，回归已有 Buff 与光环场景；原版动态行为和全部筛选条件待验证。本次未执行功能测试。
+
+
 ### 属性物品与经验边界合批结果
 
 范围：`e1b236c`、`5e130c6`、`76bcab6` 及本批修复 `754c64a`。Win32 Release 客户端、revival、passive、control、commerce 目标构建通过，日志无编译警告。生成 passive 和复合物品夹具后，`attribute-item-signed`、`attribute-item-resource`、`hero-xp-delta-overflow`、`hero-xp`、`hero-level-negative-xp`、`hero-level-tome`、`hero-attribute-growth`、`hero-attribute-resource`、`item-combined` 各 1 通过、0 失败；passive 和 commerce 回归程序均退出 0 并输出 PASS。负属性书首次运行被使用入口拦截，修复普通及复合物品校验后通过；复合物品测试首次使用旧夹具失败，按当前脚本重建后通过。夹具和日志位于 `tmp/docs-artifacts/war3/signed-item-xp-batch/`。原版动态数值、生命魔法下降边界、更多地图与实际窗口仍待验证。
