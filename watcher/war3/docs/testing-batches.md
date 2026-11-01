@@ -5798,3 +5798,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 地面对象枚举的失效矩形（待功能批次验证）
 
 路径：`src/session_destructables.cpp`、`src/session_inventory.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。物品及可破坏物枚举收到空或已移除矩形时直接返回，不触发过滤或动作回调。原版 1.27 的两个入口 `0x6f1e0140`、`0x6f1e0230` 均在矩形解析失败时跳过枚举。合批运行 destructable 夹具，覆盖空及已移除矩形；原版嵌套回调时序仍待对照。本次未执行功能测试。
+
+
+### 物品和普通命令目标的 Esc 优先级（待功能批次验证）
+
+路径：`src/game_view.cpp`。物品或普通命令处于目标选择时，Esc 优先退出目标模式并消费菜单输入，保留同一单位的法术书页面及生产／复活队列。合批编译客户端；窗口可用时检查打开法术书后选择物品目标、复活队列期间命令目标、Esc 与后续菜单输入，原版交互待对照。本次未执行功能测试。
