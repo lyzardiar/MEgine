@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 读档错误提示（待批次验证）
+
+路径：`src/session.h`、`src/session_campaign.cpp`、`src/game_flow_ui.cpp`、`tests/clock_tests.cpp`。地图身份无法匹配时保留存档中的地图路径，并使用原版 `SAVE_ERROR_MISSING_MAP` 显示；其他读档失败使用 `SAVE_ERROR_BAD_SAVE`。Win32 Release 客户端及 clock 测试程序编译通过。批次执行 checkpoint 地图解析及存档损坏测试，并在可用图形会话核对不同语言、缺失地图及损坏存档的显示与恢复。
+
+
 ### 存档确认提示（待批次验证）
 
 路径：`src/game_flow_ui.cpp`。覆盖和删除确认框使用原版 `OVERWRITE_MESSAGE`、`DELETE_MESSAGE` 本地化模板插入文件名；原版 `EscMenuSaveGamePanel.fdf` 指定对应模板。Win32 Release 客户端编译通过。批次在可用图形会话核对不同语言、长文件名及取消／确认行为，实际窗口与原版排版仍待验证。

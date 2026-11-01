@@ -32,9 +32,11 @@
 #include <variant>
 #include <deque>
 #include <unordered_map>
+#include <stdexcept>
 
 namespace war3 {
 struct RecoveryCheckpointInfo {std::string mapPath,mapDigest,fileDigest;bool expansion=false;unsigned version=0,defaultDifficulty=0;};
+struct RecoveryMapNotFound : std::runtime_error {std::string mapPath;explicit RecoveryMapNotFound(std::string path):std::runtime_error("Cannot locate checkpoint map with matching identity"),mapPath(std::move(path)) {}};
 class PlayerSetup;
 class WalkableGeometry;
 struct LanSessionSetup;
