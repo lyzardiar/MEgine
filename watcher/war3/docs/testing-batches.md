@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 施法者死亡后的已发出范围效果（待功能批次验证）
+
+路径：`src/session_area_spells.cpp`、`src/session_spell_effects.cpp`、`tests/control_tests.cpp`。范围效果开始结算时允许已死亡但句柄仍有效的施法者；处理过程中仍以死亡和归属轮次检测后续变化。地狱火的隔离最小复现中，施法支付后、落地前击杀施法者，伤害与眩晕正常落地，1 通过、0 失败；Win32 Release 客户端和 control 测试目标构建通过，夹具为 `tmp/docs-artifacts/war3/wave-target-lifecycle/fixture.w3m`，构建日志在 `tmp/docs-artifacts/war3/area-dead-caster/`。合批运行 `war3_control_tests <data-root> <fixture> area-impact-dead-caster`、`area-damage-reentry`、`spell-damage-reentry` 和普通范围技能回归；霜冻新星的带弹道地图覆盖、施法者被移除／复活／易主、召唤结果、原版时序和实际窗口仍待对照。
+
+
 ### 事件注册句柄合批结果
 
 范围：`ccb3ec3`、`07308f5`、`99bf819`。Win32 Release 客户端及 control、session、clock 测试目标构建通过；control 的 `event-registration-handles`、`player-region-registration-handles`、`flow` 各 1 项通过，session 26 项通过，clock 按 `events` 筛选 9 项通过，合计 **38 通过、0 失败**。覆盖单位／玩家／区域／计时器／游戏／变量事件的失效和有效注册，以及已有事件、过滤、回调和恢复流程。日志在 `tmp/docs-artifacts/war3/event-registration-batch/`，control 使用 `tmp/docs-artifacts/war3/wave-target-lifecycle/fixture.w3m`，session 使用 `tmp/docs-artifacts/war3/jass/session-enums-native.json`。过滤器失效、枚举和参数边界、真实地图、多人及原版动态事件顺序仍待验证。
