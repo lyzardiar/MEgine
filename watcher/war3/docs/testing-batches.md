@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 触发器与界面文字合批结果
+
+范围：`12bcd57`、`b411985`、`4508711`，以及本次 FDF 源字段和地图覆盖检查。Win32 Release 客户端、session、JASS thread 和 native 测试目标构建通过；session 25 通过、thread 35 通过、native 15 通过，合计 **75 通过、0 失败**。覆盖触发器失效句柄、既有线程调度及原版生产／资源字段与地图 FDF 覆盖读取；日志位于 `tmp/docs-artifacts/war3/trigger-ui-batch/`。FDF 检查不验证面板实际绘制；本机先前无法创建 D3D9 设备，本批未取得窗口画面。不同语言窗口布局、真实地图生产／采集及原版时序仍待验证。
+
+
 ### 资源与生产取消文字（待功能批次验证）
 
 路径：`src/game_loading.h`、`src/game_loading.cpp`、`src/game_commands.cpp`。单位携带的黄金／木材、金矿剩余量及生产队列取消提示使用源界面字段 `COLON_GOLD`、`COLON_LUMBER` 和 `CANCEL`，字段缺失时使用可读默认文字。Win32 Release 客户端构建和差异检查通过；黄金字段来自 `InfoPanelStrings.fdf`，其余字段来自 `GlobalStrings.fdf`，均已核对本机原资源。本次未运行界面测试；合批检查多语言／地图覆盖、采集和金矿／生产队列状态及窗口布局，原版数字、图标与排版仍待对照。
