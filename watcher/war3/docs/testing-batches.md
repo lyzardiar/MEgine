@@ -4616,3 +4616,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 阻塞目标候选的连通区域（待批次验证）
 
 路径：`src/world_path.cpp`、`tests/world_tests.cpp`；说明见[对象定义](entities.md)。阻塞目标的最近候选位于不可达区域时，搜索扩大后建立或复用通行区域，仅把与起点连通的候选作为最小距离边界；保留原路径节点预算及地形版本失效。Win32 Release 客户端及相关目标构建通过；`war3_world_tests <data-root> <clamp-fixture.json> world_` 31 通过、0 失败，覆盖 512×512 地图隔墙、区域复用和开墙失效；隐藏关 `secret-pathing` 1 通过、0 失败。日志 `tmp/docs-artifacts/war3/blocked-route-bounds/{world-final,campaign}.log`。独立进程的单场景三次耗时此前约 0.107–0.109 秒，修改后约 0.090–0.111 秒，样本不足以量化性能收益；高密度单位、大于区域预算的地图、动态阻挡及原版寻路仍待批次验证。
+
+### 英雄经验提示格式（待批次验证）
+
+路径：`src/game_commands.cpp`；说明见[英雄经验与成长](heroes.md)。经验条悬停使用原版 `%u / %u` 的数值格式，普通等级显示当前经验与下一等级阈值，满级显示当前经验与最高等级阈值。固定版 `Game.dll` 的界面格式调用及阈值上限只读指令记录在 `tmp/docs-artifacts/war3/hero-reference-render/original-xp-disassembly.txt`，未加载 Game.dll。Win32 Release 客户端构建通过；当前显示会话断开，D3D9 硬件及参考设备均未创建，未获得画面，日志 `tmp/docs-artifacts/war3/hero-reference-render/capture/client.log`。实际悬停、满级、自定义上限、排版与原版动态对照待批次验证。

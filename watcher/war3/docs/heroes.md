@@ -23,3 +23,5 @@ SetAltMinimapIcon写入WorldEnvironment，地图归档资源经现有后台队�
 单选英雄时，头像下方的经验进度条读取实际英雄经验及 `NeedHeroXP` 源阈值，等级上限显示满条；悬停显示当前经验与下一等级阈值。使用当前种族／地图覆盖皮肤中的 `SimpleXpBarConsole` 和 `SimpleXpBarBorder`，缺失纹理时保留纯色进度。经验与经验暂停仍由真实英雄状态驱动；界面位置、原版满级／溢出和源模型表现待集中对照。
 
 英雄经验条标题使用 `GlobalStrings.fdf` 的 `INFOPANEL_LEVEL_CLASS`，按源格式填入等级和单位类型名称；资源缺失时使用英文默认格式。经验悬浮提示和实际画面仍待原版对照。
+
+经验条悬停以 `当前经验 / 等级阈值` 显示数值；非满级使用下一等级阈值，满级使用最高等级阈值。固定版界面调用使用 `%u / %u`，并以当前经验及下一等级阈值填充，阈值查询限制在 `MaxHeroLevel`；只读指令记录 `tmp/docs-artifacts/war3/hero-reference-render/original-xp-disassembly.txt`。满级和实际画面仍需动态对照。
