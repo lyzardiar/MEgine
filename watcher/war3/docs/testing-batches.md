@@ -5189,3 +5189,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 可破坏物失效句柄操作补充（待功能批次验证）
 
 路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`。生命恢复、最大生命／遮挡高度／动画速度及动画设置在无效可破坏物句柄时直接返回；死亡事件注册在触发器或 widget 无效时返回空事件。有效对象仍进入实际状态与事件流程。固定版 Game.dll 入口及失败分支静态指令为 `tmp/docs-artifacts/war3/destructable-null-queries/game-dll-action-disassembly.txt`。Win32 Release `cmake --build --preset release --target war3_destructable_tests --parallel 4` 编译通过，未运行测试；与上项合并执行 `war3_destructable_tests <data-root> <generated-map> invalid-handles`，覆盖空／移除／错误类型、有效操作及事件，后续检查脚本重入和原版运行行为。
+
+
+### 多项即时恢复物品（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合恢复物品](combined-recovery-items.md)。自定义物品可按能力列表顺序应用多个 `AIhe`、`AIma`、`AIre` 即时恢复，使用一次收费／消耗和一次物品事件；未知主动能力仍显式拒绝。Win32 Release `cmake --build --preset release --target war3_control_tests --parallel 4` 与生成器 Python 语法检查通过，未运行功能测试。功能批次重新生成夹具并执行 `war3_control_tests <data-root> <fixture> item-combined`，覆盖三项能力、混合 `AIre`、能力顺序、事件重入和旧组合；原版收费／冷却／多事件语义、符文与真实窗口仍待对照。
