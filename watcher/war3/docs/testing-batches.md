@@ -4862,3 +4862,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 本批范围 `acdcd33`、`77667e9`、`d33bc54`。同一集成源码的 Win32 Release 客户端及 clock、harvest、construction、corpse、destructable 目标编译通过；复用 clock 57/57。合批执行采矿、备用投递路线、施工和伐木消费者，均输出 PASS；尸体 `decay`、`flow` 各 1/1。日志与隔离目录 `tmp/docs-artifacts/war3/harvest-construction-corpse-batch/`。这些消费者运行普通会话，不能证明完整读档续行。
 
 原版 OrcX01 150 秒隔离恢复诊断在临时副本绕过启动保护后，推进一帧的 51 个现有组件重编码一致；推进一秒时，两侧新建 59 个同序同类型对象，按创建次序映射后移动调度及特效状态仍有差异，保留为失败项，日志 `tmp/docs-artifacts/war3/orcx-continuation-audit/audit-06.log`。诊断未证明全部状态完整；实际存档、长时间续行、跨区和窗口仍待实现或验收。
+
+
+### 常驻被动技能计时快照（待批次验证）
+
+路径：`src/session.h`、`src/session_ambient_passives.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SAMB` 保存被动技能计时、活动中心与特效引用。Win32 Release 核心及 clock 目标编译通过，clock 58 通过、0 失败；隔离恢复后的原版一秒诊断中，特效时间差消失，新建单位移动调度相位仍不同。日志 `tmp/docs-artifacts/war3/ambient-snapshot-clock-03.log`、`tmp/docs-artifacts/war3/orcx-continuation-audit/audit-08.log`。批次验证常驻伤害与徘徊消费者；完整读档续行、长时间对局和跨区仍待实现或验收。
