@@ -1886,6 +1886,60 @@ endfunction
  endfunction
  )jass";auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");auto compileSource=[&]{return Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"shared-session.j",source,"shared context"}}));};auto make=[&](bool offset){auto result=std::make_unique<ScriptSession>(compileSource(),map().info);result->attachWorld(world());result->audioMuted(true);result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(offset)result->runtime().invoke("CreateTimer");result->startMain();return result;};auto original=make(false),target=make(true);Runtime peer(compileSource()),restoredPeer(compileSource());peer.inheritNatives(original->runtime());peer.shareThreads(original->runtime());peer.initialize();restoredPeer.inheritNatives(target->runtime());restoredPeer.shareThreads(target->runtime());restoredPeer.initialize();original->runtime().start("work");peer.start("work");auto actor=original->runtime().global("actor").bits;original->selectUnit(actor,true);auto identity=[](std::string_view,std::uint32_t id){return id;};std::array<Runtime*,2> src{&original->runtime(),&peer},dst{&target->runtime(),&restoredPeer};auto snapshot=original->snapshotSharedSleepingScripts(src,identity);require(snapshot.threads.size()==3,"Shared session contexts missing");auto wire=original->encodeSharedSleepingScripts(src,snapshot);auto damaged=wire;damaged.back()^=1;rejects([&]{target->decodeSharedSleepingScripts(dst,damaged);},"digest");auto decoded=target->decodeSharedSleepingScripts(dst,wire);auto targetActor=target->runtime().global("actor").bits,watcher=original->runtime().global("watcher").bits,targetWatcher=target->runtime().global("watcher").bits;require(actor!=targetActor && watcher!=targetWatcher,"Shared handle remapping fixture did not shift identities");auto decode=[&](std::string_view,std::uint32_t id){if(id==actor)return targetActor;if(id==watcher)return targetWatcher;return id;};auto reverse=[&](std::string_view,std::uint32_t id){if(id==targetActor)return actor;if(id==targetWatcher)return watcher;return id;};auto wrong=[&](std::string_view type,std::uint32_t id){return id==watcher?0u:decode(type,id);};rejects([&]{target->restoreSharedSleepingScripts(dst,decoded,wrong);},"mapping");require(!target->runtime().threadCount(),"Rejected shared context retained threads");auto ids=target->restoreSharedSleepingScripts(dst,decoded,decode);require(ids.size()==3 && target->encodeSharedSleepingScripts(dst,target->snapshotSharedSleepingScripts(dst,reverse))==wire,"Shared session context did not round trip");original->advance(.125);target->advance(.125);require(original->runtime().global("completed").bits==1 && peer.global("completed").bits==1 && target->runtime().global("completed").bits==1 && restoredPeer.global("completed").bits==1 && original->runtime().global("observed").bits==actor && target->runtime().global("observed").bits==target->runtime().global("actor").bits,"Shared session continuations diverged");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("recovery_bundle_restores_script_dialogs",[&]{
+        auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
+ dialog window = null
+ dialog retired = null
+ button choice = null
+ button quitButton = null
+ button oldButton = null
+ defeatcondition defeat = null
+ trigger dialogTrigger = null
+ trigger buttonTrigger = null
+ event dialogEvent = null
+ event buttonEvent = null
+ event retiredEvent = null
+ hashtable table = null
+ integer hits = 0
+ dialog clickedDialog = null
+ button clickedButton = null
+ player clickedPlayer = null
+ endglobals
+ function dialogAction takes nothing returns nothing
+ set hits = hits + 1
+ set clickedDialog = GetClickedDialog()
+ set clickedButton = GetClickedButton()
+ set clickedPlayer = GetTriggerPlayer()
+ endfunction
+ function buttonAction takes nothing returns nothing
+ set hits = hits + 10
+ endfunction
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ set window = DialogCreate()
+ call DialogSetMessage(window, "Choose")
+ set choice = DialogAddButton(window, "Continue", 67)
+ set quitButton = DialogAddQuitButton(window, true, "Quit", 81)
+ call DialogDisplay(Player(0), window, true)
+ set dialogTrigger = CreateTrigger()
+ set buttonTrigger = CreateTrigger()
+ set retired = DialogCreate()
+ set oldButton = DialogAddButton(retired, "Old", 0)
+ set retiredEvent = TriggerRegisterDialogButtonEvent(buttonTrigger, oldButton)
+ call DialogDestroy(retired)
+ set defeat = CreateDefeatCondition()
+ call DefeatConditionSetDescription(defeat, "Protect the base")
+ set dialogEvent = TriggerRegisterDialogEvent(dialogTrigger, window)
+ set buttonEvent = TriggerRegisterDialogButtonEvent(buttonTrigger, choice)
+ call TriggerAddAction(dialogTrigger, function dialogAction)
+ call TriggerAddAction(buttonTrigger, function buttonAction)
+ set table = InitHashtable()
+ call SaveDialogHandle(table, 0, 1, window)
+ call SaveButtonHandle(table, 0, 2, choice)
+ endfunction
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"script-dialog.j",source,"dialog recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();auto& a=original->runtime();auto identity=[](std::string_view,std::uint32_t id){return id;};auto snapshot=original->encodeScriptDialogs(identity),damaged=snapshot;damaged.back()^=1;rejects([&]{target->rebuildScriptDialogs(damaged);},"digest");require(target->dialogs().empty() && target->buttons().empty(),"Rejected dialog snapshot changed target");target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());auto& b=target->runtime();auto window=b.global("window").bits,choice=b.global("choice").bits;require(window!=a.global("window").bits && window==ids.at(a.global("window").bits) && b.global("oldButton").bits==ids.at(a.global("oldButton").bits) && b.global("retiredEvent").bits==ids.at(a.global("retiredEvent").bits),"Dialog identities differ");auto dialog=target->dialogs().at(window);require(dialog->message=="Choose" && dialog->owners==1 && dialog->buttons.size()==2 && dialog->buttons[0]==choice && target->buttons().at(choice)->text=="Continue" && target->buttons().at(dialog->buttons[1])->quit && target->buttons().at(dialog->buttons[1])->scores && target->defeatConditions().at(b.global("defeat").bits)->description=="Protect the base","Dialog state differs");auto reverse=[&](std::string_view,std::uint32_t id){for(auto [from,to]:ids)if(to==id)return from;return 0u;};require(target->encodeScriptDialogs(reverse)==snapshot,"Dialog snapshot differs");require(b.invoke("LoadDialogHandle",std::array{b.global("table"),b.integer(0),b.integer(1)}).bits==window && b.invoke("LoadButtonHandle",std::array{b.global("table"),b.integer(0),b.integer(2)}).bits==choice,"Dialog table references differ");for(auto* session:{original.get(),target.get()}){auto& vm=session->runtime();require(session->clickDialog(0,vm.global("choice").bits),"Dialog click rejected");require(vm.global("hits").bits==11 && vm.global("clickedDialog").bits==vm.global("window").bits && vm.global("clickedButton").bits==vm.global("choice").bits && vm.global("clickedPlayer").bits==vm.invoke("Player",std::array{vm.integer(0)}).bits,"Dialog event context differs");require(!session->clickDialog(0,vm.global("choice").bits),"Hidden dialog accepted click");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("recovery_bundle_restores_chat_events",[&]{
         auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
  trigger exactTrigger = null

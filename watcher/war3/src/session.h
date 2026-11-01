@@ -701,7 +701,7 @@ class ScriptSession {
     bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     bool useCombinedRecoveryItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point,const std::vector<std::uint32_t>& abilities);
     std::map<std::string,std::uint32_t> caches_;
-    bool gameCachesRebuilt_=false,hashtablesRebuilt_=false,randomPoolsRebuilt_=false;
+    bool gameCachesRebuilt_=false,hashtablesRebuilt_=false,randomPoolsRebuilt_=false,scriptDialogsRebuilt_=false;
     std::vector<ScriptText> texts_;
     std::vector<ScriptText> textHistory_;
     size_t textHistoryBytes_=0;
@@ -1414,6 +1414,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildTimers(std::span<const std::uint8_t> bytes);
     Bytes encodeTimerDialogs(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildTimerDialogs(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeScriptDialogs(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildScriptDialogs(std::span<const std::uint8_t> bytes);
     Bytes encodeTimerEvents(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
