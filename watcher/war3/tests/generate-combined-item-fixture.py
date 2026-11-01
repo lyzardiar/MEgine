@@ -72,6 +72,18 @@ function watch_protection_revival takes unit u returns nothing
     call TriggerRegisterUnitStateEvent(t,u,UNIT_STATE_LIFE,GREATER_THAN,150.)
     call TriggerAddAction(t,function protection_life_changed)
 endfunction
+function wave_life_changed takes nothing returns nothing
+    call DisableTrigger(GetTriggeringTrigger())
+    call KillUnit(revivedTarget)
+    call ReviveHero(revivedTarget,136.,-768.,false)
+    call SetWidgetLife(revivedTarget,100.)
+endfunction
+function watch_wave_target takes unit u, unit revived returns nothing
+    local trigger t=CreateTrigger()
+    set revivedTarget=revived
+    call TriggerRegisterUnitStateEvent(t,u,UNIT_STATE_LIFE,LESS_THAN,150.)
+    call TriggerAddAction(t,function wave_life_changed)
+endfunction
 function spell_death_revive takes nothing returns nothing
     local unit u=GetTriggerUnit()
     call DisableTrigger(GetTriggeringTrigger())
