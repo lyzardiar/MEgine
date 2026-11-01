@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 浮动文字恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_text_tag.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 83/83 通过；原版 HumanX03 的隔离恢复诊断临时绕过启动保护后续行 60 秒，69/69 项状态一致，并覆盖人工加入的移动文字，日志位于 `tmp/docs-artifacts/war3/text-tag-recovery/`。实际读档、文字画面与完整战役待阶段验证。
+
 ### 单位共享视野恢复（待阶段验证）
 
 路径：`src/session_stealth_reveal.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 82/82 通过；原版 NightElf06 的隔离恢复诊断临时绕过启动保护后续行 60 秒，76/76 项状态一致，日志位于 `tmp/docs-artifacts/war3/shared-vision-recovery/`。实际读档、窗口视觉与完整战役待阶段验证。
