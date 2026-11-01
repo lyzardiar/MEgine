@@ -4926,3 +4926,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 树人扎根与单位变形恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_unit_forms.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUFM` 保存扎根和变形状态、转换及调度成员，先于路径恢复重建占地；`SRBF` 版本 5 纳入该组件。Win32 Release 核心及 clock 目标编译通过，clock 62/62；实际技能夹具覆盖已拔起与拔起中的古树、已变身与变身中的熊，检查占地、路径与组件往返，日志 `tmp/docs-artifacts/war3/forms-recovery/clock-04.log`。待阶段验证转换续行、取消退款、自动变回、原图和实际存档；组件包启动保护保留。
+
+
+### 吞树、拔树与战棍恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_eat_tree.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`STRS` 保存树木动作、占用票据、战棍次数／特效及调度成员；`SRBF` 版本 6 纳入该组件。Win32 Release 核心及 clock 目标编译通过，clock 63/63；实际技能夹具覆盖吞树中、拔树中和持战棍状态，检查引用及占用表往返，日志 `tmp/docs-artifacts/war3/tree-actions-recovery/clock-03.log`。待阶段验证技能完成、取消、战棍耗尽、原图和实际存档；组件包启动保护保留。
