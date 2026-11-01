@@ -293,7 +293,7 @@ class ScriptSession {
     bool showScores_=false,userControl_=true,userUI_=true,selectionEnabled_=true,selectionUI_=true,dragSelectionEnabled_=true,dragSelectionUI_=true;
     bool occlusionEnabled_=true;
     ScriptCineFilter cineFilter_;
-    bool presentationRestored_=false,soulCapturesRestored_=false,mirrorImagesRestored_=false,spiritSplitsRestored_=false,deathRestartsRestored_=false,phoenixFireRestored_=false,lavaSpawnsRestored_=false,rescueStateRestored_=false,concoctionsRestored_=false,tinkerStateRestored_=false;
+    bool presentationRestored_=false,soulCapturesRestored_=false,mirrorImagesRestored_=false,spiritSplitsRestored_=false,deathRestartsRestored_=false,phoenixFireRestored_=false,lavaSpawnsRestored_=false,rescueStateRestored_=false,concoctionsRestored_=false,tinkerStateRestored_=false,wardStateRestored_=false;
     bool forceCinematicSubtitles_=false;
     bool interfaceVisible_=true;
     float interfaceFrom_=1;
@@ -1427,6 +1427,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildLeaderboards(std::span<const std::uint8_t> bytes);
     Bytes encodeMultiboards(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildMultiboards(std::span<const std::uint8_t> bytes);
+    Bytes encodeWardState(const jass::StableHandleMap& encodeHandle) const;
+    void restoreWardState(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeTinkerState(const jass::StableHandleMap& encodeHandle) const;
     void restoreTinkerState(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeConcoctions(const jass::StableHandleMap& encodeHandle) const;

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 陷阱守卫状态恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_wards_roar.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 97/97 通过；原版 Orc01 会话人工设置科技并施放静止陷阱，激活前隔离恢复，临时绕过启动保护续行 11 秒后目标眩晕，71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/ward-recovery/`。怪物诱饵、实际读档、自然对局、原版时序与窗口画面待阶段验证。
+
 ### 修补匠技能恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_tinker.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 96/96 通过；原版 Orc01 会话人工施法后的工厂、火箭与自爆隔离恢复，临时绕过启动保护续行，三种情况各为 71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/tinker-recovery/`。实际读档、自然对局、原版时序与窗口画面待阶段验证。

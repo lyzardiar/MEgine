@@ -1,14 +1,22 @@
 // Author: MiYu. Source wards, armed traps and roar modifiers share real units, visibility, buffs and inventory payment.
 #include "session.h"
+#include "spell_snapshot_codec.h"
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <set>
 
 namespace war3 {
 namespace {
 float number(jass::Real value){return std::bit_cast<float>(value.bits());}
 jass::Real real(float value){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));}
 int cell(float value){return int(std::floor(double(value)/512));}
+}
+Bytes ScriptSession::encodeWardState(const jass::StableHandleMap& encodeHandle) const {
+    constexpr size_t budget=16u*1024u*1024u;if(!runtime_.snapshotSafe() || failed_ || !world_ || !setupApplied_ || !contexts_.empty() || experimentalSelectionSync_ || !networkPlayers_.empty())throw std::runtime_error("Ward snapshot requires a quiescent local session");if(stasisWards_.size()>4096)throw std::runtime_error("Ward snapshot exceeds budget");std::vector<std::pair<std::uint32_t,std::uint32_t>> entries;std::set<std::uint32_t> stable;for(auto& [id,state]:stasisWards_){if(!encodeHandle || id<handleBase || id-handleBase>=objects_.size() || objects_[id-handleBase].kind!=NativeKind::Unit)throw std::runtime_error("Invalid ward identity");auto saved=encodeHandle("unit",id);if(!saved || !stable.insert(saved).second)throw std::runtime_error("Invalid ward mapping");entries.emplace_back(saved,id);}std::sort(entries.begin(),entries.end());SnapshotWriter out(budget-64);out.u32(tag("SWRD"));out.u32(1);out.text(world_->resources().mapDigest(),64);out.u64(std::bit_cast<std::uint64_t>(simulationTime_));out.size(entries.size());for(auto [saved,id]:entries){auto& state=stasisWards_.at(id);if((state.spell.kind!=SpellKind::StasisTrap && state.spell.kind!=SpellKind::MonsterLure) || !std::isfinite(state.armRemaining) || state.armRemaining<0 || !std::isfinite(state.scanRemaining))throw std::runtime_error("Invalid ward state");out.u32(saved);out.u32(objects_[id-handleBase].alive?1:0);writeSpellSnapshot(out,state.spell);out.u64(std::bit_cast<std::uint64_t>(state.armRemaining));out.u64(std::bit_cast<std::uint64_t>(state.scanRemaining));out.u64(state.deathRevision);}return sealSnapshot(out.finish(),budget);
+}
+void ScriptSession::restoreWardState(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle) {
+    constexpr size_t budget=16u*1024u*1024u;if(!runtime_.ready() || failed_ || !world_ || !setupApplied_ || mainAttempted_ || !unitRecoveryIncomplete_ || !unitCoreFinished_ || wardStateRestored_ || !stasisWards_.empty() || runtime_.threadCount() || !runtime_.inspectExecutions().empty() || !contexts_.empty() || experimentalSelectionSync_ || !networkPlayers_.empty() || liveObjects(NativeKind::Event))throw std::runtime_error("Ward restore requires rebuilt units before events");Binary in(openSnapshot(bytes,budget));in.expect(tag("SWRD"));if(in.u32()!=1 || snapshotText(in,64)!=world_->resources().mapDigest() || snapshotU64(in)!=std::bit_cast<std::uint64_t>(simulationTime_))throw std::runtime_error("Ward snapshot map or clock differs");auto count=in.count(32,4096);std::map<std::uint32_t,StasisWard> pending;std::set<std::uint32_t> stableIds;for(unsigned i=0;i<count;++i){auto saved=in.u32(),live=in.u32();auto id=decodeHandle?decodeHandle("unit",saved):0;StasisWard state;state.spell=readSpellSnapshot(in);state.armRemaining=std::bit_cast<double>(snapshotU64(in));state.scanRemaining=std::bit_cast<double>(snapshotU64(in));state.deathRevision=snapshotU64(in);if(!saved || !stableIds.insert(saved).second || live>1 || !id || !unitIdentityHandles_.contains(saved) || unitIdentityHandles_.at(saved)!=id || id<handleBase || id-handleBase>=objects_.size() || objects_[id-handleBase].kind!=NativeKind::Unit || objects_[id-handleBase].alive!=(live!=0) || (state.spell.kind!=SpellKind::StasisTrap && state.spell.kind!=SpellKind::MonsterLure) || !std::isfinite(state.armRemaining) || state.armRemaining<0 || !std::isfinite(state.scanRemaining) || !pending.emplace(id,std::move(state)).second)throw std::runtime_error("Invalid ward state");}in.finish();stasisWards_.swap(pending);wardStateRestored_=true;
 }
 void ScriptSession::wardSpellInfo(SpellInfo& s){
     auto& data=definitions();auto field=[&](const char* key){return data.number(s.ability,"AbilityData",std::string(key)+std::to_string(s.level));};auto type=data.field(s.ability,"AbilityData","UnitID"+std::to_string(s.level));
