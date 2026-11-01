@@ -96,6 +96,14 @@ function InstallTrainingReplacement takes unit target returns nothing
     call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_TRAIN_START)
     call TriggerAddAction(t,function ReplaceTrainingBuilding)
 endfunction
+function TransferInterruptedBuilder takes nothing returns nothing
+    call SetUnitOwner(GetTriggerUnit(),Player(1),true)
+endfunction
+function InstallBuilderTransfer takes unit target returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_SPELL_ENDCAST)
+    call TriggerAddAction(t,function TransferInterruptedBuilder)
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing

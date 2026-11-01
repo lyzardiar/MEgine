@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 建造位置搜索的回调中断（待合批验证，3/3）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`。建造尝试被施法结束回调改派或转移工人时，停止使用该工人尝试其他位置；位置无效且工人状态未改变时继续搜索。合批重新生成夹具并运行 CampaignAI `produce-builder`、`produce-owner`、`produce-replacement`、生产回归及 revival；原版取消时序、工人销毁／其他回调与实际对局待验证。本次提交前未执行功能测试。
+
+
 ### AI 多项生产刷新候选（待功能批次验证，2/3）
 
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`。多项生产每次请求重新收集现有生产者，使事件中新建或转入的生产者能够接收后续请求；保留逐次归属检查和既有单次调用工作量上限。原版 `SetProduce` 在 `0x6f894963` 循环调用单项生产。合批重新生成夹具，运行 `produce-replacement`、`produce-owner`、`produce-many` 与复活回归；批量创建超过工作量上限、回调销毁／转移和原版时序仍待验证。本次未执行功能测试。
