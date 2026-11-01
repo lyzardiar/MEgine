@@ -4786,3 +4786,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 脚本哈希表快照（待批次验证）
 
 路径：`src/session.h`、`src/session_hashtable.cpp`、`tests/clock_tests.cpp`、`tests/dota_heroes_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SHTB` 保存哈希表基本值和句柄，并通过两阶段恢复循环引用；检查地图、时钟、脚本摘要、映射及数量。Win32 Release 核心和测试目标编译通过；clock 46/46；DotA 原图开局两张表的隔离重建 1/1，手动重建一个被引用单位，未加载 Game.dll。批次验证其他句柄类型、映射和对象生命周期、完整全局恢复及继续对局；真实存档／载入、跨区、原版格式和窗口仍待实现或验收。产物 `tmp/docs-artifacts/war3/hashtable-snapshot/`。
+
+### 已销毁定时器身份（待批次验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`tests/orc_campaign_chain_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`STMR` 版本 2 保留已销毁定时器句柄，活动定时器按原次序恢复，继续读取版本 1。Win32 Release 核心及测试目标编译通过；clock 47/47，原版 OrcX01 的定时器身份往返 1/1，未加载 Game.dll。原图组合探针越过失效定时器后仍因布尔表达式引用无法完成；批次验证脚本对象组合、定时器事件和缓存／哈希表回归，完整世界续行、跨区、原版格式和窗口仍待实现或验收。产物 `tmp/docs-artifacts/war3/timer-retired-snapshot/`、`tmp/docs-artifacts/war3/orcx-restore-audit/`。
