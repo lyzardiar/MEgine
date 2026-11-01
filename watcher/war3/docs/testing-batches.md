@@ -5589,3 +5589,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 返回资源的排队与替换命令（待功能批次验证）
 
 路径：`src/player_commands.cpp`、`src/game_commands.cpp`、`src/lan_actions.cpp`、`tests/order_queue_tests.cpp`。Shift 返回资源进入工人命令队列；立即返回清除旧队列；实验联机保留排队标志。合批执行 BootyBay 的 `war3_order_queue_tests <root> <map> return-queue` 及完整订单套件，覆盖单机与多工人联机动作；窗口、原版时序及实际对局待验证。本次未执行功能测试。
+
+
+### 分组命令的联机身份校验（待功能批次验证）
+
+路径：`src/lan_action_encoder.cpp`、`tests/order_queue_tests.cpp`。分组自动施放和资源返回编码要求各单位具有不同网络对象身份，并检查单次发送的载荷上限；身份冲突直接拒绝整组。合批运行 BootyBay 的 `war3_order_queue_tests <root> <map>`，覆盖冲突拒绝和有效分组；真实双端与原版协议仍待验证。本次未执行功能测试。
