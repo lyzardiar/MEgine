@@ -5534,3 +5534,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 武器无敌目标许可（待功能批次验证）
 
 路径：`src/session_weapons.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。武器目标列表包含 `invu` 时允许下达攻击无敌单位的命令；伤害仍由原有无敌判定处理。合批生成研究夹具并执行 `war3_research_tests <root> <fixture>`，覆盖允许和拒绝命令；实际伤害、原版边界及窗口对局待验证。本次未执行功能测试。
+
+
+### 哨兵无敌树木目标许可（待功能批次验证）
+
+路径：`src/session_control_spells.cpp`、`tests/generate-stealth-fixture.py`、`tests/stealth_tests.cpp`。哨兵能力目标列表同时识别 `invu` 和 `invulnerable`，按完整条目处理无敌树木。合批分别生成 `--sentinel-targets partial`、`invu`、`invulnerable` 夹具，执行对应的 `sentinel-partial`、`sentinel-invu`、`sentinel-invulnerable` 模式并复验原始哨兵；原版边界和窗口效果仍待验证。本次未执行功能测试。
