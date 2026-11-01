@@ -5104,3 +5104,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 蝗虫群状态恢复（待阶段验证）
 
 路径：src/swarm.h、src/session.h、src/session_locust.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SLOC 保存群体、成员、目标、计时、攻击和返航状态，SRBF 更新至版本 36。Win32 Release 编译及 clock 98/98 通过；原版 Orc01 人工布置场景验证活动蝗虫恢复和攻击，隔离续行临时绕过启动保护，盘旋 1 秒及攻击 8 秒各 71/71 项状态一致。待阶段验证多个群体、自然战斗、实际游戏读档、原版时序和窗口；日志 tmp/docs-artifacts/war3/locust-recovery/。
+
+### 治疗喷雾波次恢复（待阶段验证）
+
+路径：src/session.h、src/session_alchemist.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SHSP 保存治疗波次、药瓶、来源及结算计时，SRBF 更新至版本 37。Win32 Release 构建及 clock 99/99 通过；原版 Orc01 人工布置场景中检查飞行波次恢复。隔离续行临时绕过启动保护，3 秒内产生治疗且 71/71 项状态一致。待阶段验证实际游戏读档、自然战斗、多目标、来源移除、原版时序及窗口；日志 tmp/docs-artifacts/war3/healing-spray-recovery/。
