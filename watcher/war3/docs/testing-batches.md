@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 工人与中立命令说明（待批次验证）
+
+路径：`src/session_commerce.cpp`、`tests/generate-revival-fixture.py`、`tests/revival_tests.cpp`。修理、缠绕金矿、侦察及商店选购者按钮按能力等级读取完整说明，并解析地图字符串和对象字段；采集与返还使用同一读取流程。待生成复活夹具并运行 `war3_revival_tests <data-root> <hero-revival-fixture> repair-command-tooltip`，回归采集、商店和原版窗口；本次未执行测试。
+
 ### 命令提示文本合批结果
 
 范围：`ebdebff`、`15bd525`、`fde1c3c`。Win32 Release 客户端、revival、research、commerce、harvest 目标构建通过，日志未发现编译警告。重新生成夹具后，revival 的 `harvest-command-tooltip`、`shop-item-tooltip`、`custom-ability-tooltip`、`hero-learn-tooltip` 各 1/1；research、commerce、harvest 各输出 1 条 PASS。覆盖对象字段中的 WTS 文本及百分比、商店与库存提示、亡灵采集／返还按钮源说明和对应玩法回归。夹具和日志位于 `tmp/docs-artifacts/war3/command-tooltip-batch/`，构建日志为 `tmp/docs-artifacts/war3/command-tooltip-batch-build.log`。其他种族、复杂地图覆盖、原版动态及实际窗口仍待验证。
