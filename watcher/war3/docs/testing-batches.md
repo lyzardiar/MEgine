@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品范围沉默（待批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。复合物品支持范围沉默 `ANsi` 与即时效果组合，按点或可见单位选择范围中心。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-combined-silence` 并回归普通沉默和复合目标物品；检查目标筛选、沉默状态、消耗及回调。原版复合施法时序与实际画面待对照。
+
+
 ### 复合物品疾风步（待批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。复合物品支持疾风步 `AOwk` 与即时效果组合，复用隐身、移速、破隐伤害与持续时间状态。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-combined-windwalk`，并回归普通疾风步和复合物品；验证状态、费用、消耗、破隐行为及回调。原版复合施法时序和实际画面待对照。
