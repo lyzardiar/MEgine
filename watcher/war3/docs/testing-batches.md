@@ -5529,3 +5529,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 自动切换允许采集的无敌树木（待功能批次验证）
 
 路径：`src/session.h`、`src/session_destructables.cpp`、`src/session_lumber.cpp`、`tests/harvest_tests.cpp`。当前树木失效后，寻找替代目标时复用采集能力的无敌目标许可。合批编译 `war3_harvest_tests`，使用前批 `--tree-targets invu` 和 `invulnerable` 夹具运行对应模式，覆盖自动切换；其他寻路、原版行为和实际对局待验证。本次未执行功能测试。
+
+
+### 武器无敌目标许可（待功能批次验证）
+
+路径：`src/session_weapons.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。武器目标列表包含 `invu` 时允许下达攻击无敌单位的命令；伤害仍由原有无敌判定处理。合批生成研究夹具并执行 `war3_research_tests <root> <fixture>`，覆盖允许和拒绝命令；实际伤害、原版边界及窗口对局待验证。本次未执行功能测试。
