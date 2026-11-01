@@ -136,7 +136,7 @@ class ScriptSession {
     std::unique_ptr<World> world_;
     bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false,unitRecoveryIncomplete_=false,unitCorePrepared_=false,unitCoreFinished_=false;
     std::string unitCoreDigest_;
-    std::map<std::uint32_t,std::uint32_t> unitIdentityHandles_,unitCoreHandles_;
+    std::map<std::uint32_t,std::uint32_t> unitIdentityHandles_,unitCoreHandles_,itemIdentityHandles_,destructableIdentityHandles_;
     std::unique_ptr<SoundScene> audio_;
     std::unique_ptr<MusicScene> music_;
     std::unique_ptr<MusicScene> thematicMusic_;
@@ -1349,6 +1349,8 @@ public:
     Bytes encodeUnitVisuals(const jass::StableHandleMap& encodeHandle) const;
     Bytes encodeUnitMovement(const jass::StableHandleMap& encodeHandle) const;
     void restoreUnitMovement(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeQueuedPlayerOrders(const jass::StableHandleMap& encodeHandle) const;
+    void restoreQueuedPlayerOrders(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitAnimations(const jass::StableHandleMap& encodeHandle) const;
     void restoreUnitAnimations(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     void restoreUnitVisuals(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
