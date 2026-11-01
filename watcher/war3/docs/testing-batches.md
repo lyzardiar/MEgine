@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 单位共享视野恢复（待阶段验证）
+
+路径：`src/session_stealth_reveal.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 82/82 通过；原版 NightElf06 的隔离恢复诊断临时绕过启动保护后续行 60 秒，76/76 项状态一致，日志位于 `tmp/docs-artifacts/war3/shared-vision-recovery/`。实际读档、窗口视觉与完整战役待阶段验证。
+
 ### 荒芜生长状态恢复（待阶段验证）
 
 路径：`src/session_ambient_passives.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 81/81 通过；原版 Undead07 的隔离恢复诊断临时绕过启动保护后续行 60 秒，74/74 项状态一致，日志位于 `tmp/docs-artifacts/war3/blight-growth-recovery/`。实际读档、窗口视觉与完整战役待阶段验证。
