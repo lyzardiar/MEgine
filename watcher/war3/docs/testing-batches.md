@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄幻象的成长接口（待批次验证）
+
+路径：`src/session_hero.cpp`、`tests/commerce_tests.cpp`。英雄幻象不接受英雄经验、等级、属性、技能点、技能学习及暂停经验接口的修改；对应查询返回零、空名称或暂停状态。1.27 `Game.dll` 的 `IsUnitIllusion` 使用单位标志 `0x40000000`，上述英雄接口入口均检查该标志。待生成 commerce 夹具并运行 `war3_commerce_tests <data-root> <fixture>`，通过幻象法杖生成的真实单位核对查询和修改，并回归普通英雄；技能表现、地图脚本、原版动态和窗口仍待验证。本次未执行测试。
+
 ### 英雄技能点与降级合批结果
 
 范围：`2fb320d`、`4ae8be8`、`8d5f3a2`。Win32 Release 客户端、revival、clock 目标构建通过，构建日志未发现编译警告。生成复活夹具后，revival 的 `hero-skill-cap`、`hero-skill-modify`、`hero-strip-skills`、`hero-level-event`、`hero-level-visual`、`hero-xp`、`awaken` 及 clock 的 `player_resource_natives_follow_original_bounds` 各 1 通过、0 失败，未加载 Game.dll。前两项首次运行因夹具错误假定新英雄初始技能点为零而失败，显式设置测试初始条件后重建并通过；其他场景未改变，复用原结果。日志和夹具位于 `tmp/docs-artifacts/war3/hero-skills-batch/`，构建日志为 `tmp/docs-artifacts/war3/hero-skills-batch-build.log`。多技能降级并列、技能书借用、被动状态、极值与原版动态对照、实际窗口及完整地图仍待验证。
