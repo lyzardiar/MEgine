@@ -3,6 +3,7 @@
 #include "spells.h"
 #include "passives.h"
 #include <unordered_map>
+#include <memory>
 
 namespace war3 {
 struct StampedeTarget {std::uint32_t id=0;float x=0,y=0,radius=0;};
@@ -13,6 +14,7 @@ struct StampedeIndex {
 };
 struct StampedeBeast {
     const SpellInfo* definition=nullptr;
+    std::shared_ptr<const SpellInfo> restoredDefinition;
     std::uint32_t source=0,effect=0;
     unsigned owner=0;
     std::uint64_t cast=0,deathRevision=0,ownerRevision=0;

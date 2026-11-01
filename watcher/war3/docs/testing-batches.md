@@ -5112,3 +5112,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 火焰领主飞石与延迟爆炸恢复（待阶段验证）
 
 路径：src/session.h、src/session_volcano.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SFLD 保存火山飞石和焚灰延迟爆炸，SRBF 更新至版本 38；未支持的活动范围效果在采集时拒绝。Win32 Release 构建及 clock 101/101 通过，包含活动践踏拒绝采集；原版 Orc01 人工布置场景检查飞石恢复。隔离续行临时绕过启动保护，3 秒内造成伤害且 71/71 项状态一致。待阶段验证焚灰爆炸、可破坏物目标、来源失效、实际游戏读档、自然战斗、原版时序和窗口；日志 tmp/docs-artifacts/war3/firelord-recovery/。
+
+### 践踏野兽恢复（待阶段验证）
+
+路径：src/stampede.h、src/session.h、src/session_stampede.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SSTP 恢复践踏野兽、特效和碰撞延迟，SRBF 更新至版本 39。Win32 Release 构建及 clock 101/101 通过；原版 Orc01 人工布置场景的飞行续行和人工设置碰撞后续行各 71/71 项状态一致，均临时绕过启动保护。待阶段验证自然碰撞、多目标同距、施法者失效、实际游戏读档、原版时序和窗口；日志 tmp/docs-artifacts/war3/stampede-recovery/。
