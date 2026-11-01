@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 技能与研究分级文本合批结果
+
+范围：`5e6e94a`、`0d7ba4f`、`401a036`。Win32 Release 客户端、revival、research、spell 目标构建通过，日志未发现编译警告。重新生成夹具后，revival 的 `custom-ability-tooltip`、`custom-ability-title`、`ability-tooltip`、`hero-learn-tooltip`、`hero-names`、`hero-level-tome` 各 1/1；research 和 spell 各输出 1 条 PASS。覆盖分级自定义名称／说明中的逗号、字段展开、科技图标／热键、父级覆盖继承、原版技能说明及研究队列。夹具和日志位于 `tmp/docs-artifacts/war3/profile-level-batch/`，构建日志为 `tmp/docs-artifacts/war3/profile-level-batch-build.log`。WTS 多级组合、实际窗口和原版动态对照仍待验证。
+
 ### 研究按钮的分级文本（待批次验证）
 
 路径：`src/object_data.h/.cpp`、`src/session_research.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。科技按钮按等级读取自定义名称、说明、图标和热键，保留文本逗号并展开说明中的对象字段；未覆盖等级继承源数据。待生成研究夹具并运行 `war3_research_tests <data-root> <fixture>`，回归研究队列、分级数据、WTS、地图继承和实际窗口；本次未执行测试。
