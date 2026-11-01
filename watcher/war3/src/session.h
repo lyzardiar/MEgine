@@ -105,6 +105,8 @@ class ScriptSession {
     unsigned combatTargetEventMask_=0;
     std::array<std::int32_t,2> integerGameStates_{};
     std::array<std::uint64_t,2> integerGameStateRevision_{};
+    std::map<jass::Id,std::vector<std::uint32_t>> variableObservers_;
+    void observeVariableEvent(jass::Id variable,std::uint32_t event);
     std::map<std::uint32_t,std::vector<std::uint32_t>> unitStateObservers_;
     std::array<std::map<std::uint32_t,std::uint64_t>,16> playerStateRevisions_;
     jass::Runtime runtime_;
