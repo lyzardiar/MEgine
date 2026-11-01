@@ -4867,3 +4867,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 常驻被动技能计时快照（待批次验证）
 
 路径：`src/session.h`、`src/session_ambient_passives.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SAMB` 保存被动技能计时、活动中心与特效引用。Win32 Release 核心及 clock 目标编译通过，clock 58 通过、0 失败；隔离恢复后的原版一秒诊断中，特效时间差消失，新建单位移动调度相位仍不同。日志 `tmp/docs-artifacts/war3/ambient-snapshot-clock-03.log`、`tmp/docs-artifacts/war3/orcx-continuation-audit/audit-08.log`。批次验证常驻伤害与徘徊消费者；完整读档续行、长时间对局和跨区仍待实现或验收。
+
+
+### 新单位移动调度相位恢复（待批次验证）
+
+路径：`src/session.h`、`src/session_entities.cpp`、`src/session_unit_movement.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SMPS` 在其他对象重建完成后校准未来单位的路线重试相位。Win32 Release 核心与 clock 目标编译通过，clock 59 通过、0 失败。OrcX01 150 秒隔离恢复诊断临时绕过启动保护后，按创建次序映射新对象，推进一秒及五秒的 53 个现有组件均重编码一致；日志 `tmp/docs-artifacts/war3/future-movement-phase-clock-02.log`、`tmp/docs-artifacts/war3/orcx-continuation-audit/audit-09.log`、`audit-10.log`。批次验证路径与常驻技能消费者；完整句柄语义、长时间恢复、实际存档与跨区仍待实现或验收。

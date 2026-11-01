@@ -299,6 +299,8 @@ class ScriptSession {
     std::array<AudioRandom,45> auxiliaryRandom_{};
     int stockItemSlots_=12,stockUnitSlots_=12;
     bool shopStockRestored_=false,unitSummonsRestored_=false,productionRestored_=false,cargoRestored_=false,harvestRestored_=false,constructionRestored_=false,corpsesRestored_=false,ambientRestored_=false;
+    unsigned futureMovementPhaseBias_=0;
+    bool futureMovementPhaseRestored_=false;
     std::vector<std::shared_ptr<const Member>> preloaded_;
     size_t preloadBytes_=0;
     unsigned preloadDepth_=0;
@@ -1382,6 +1384,8 @@ public:
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitVisuals(const jass::StableHandleMap& encodeHandle) const;
+    Bytes encodeFutureMovementPhase() const;
+    void restoreFutureMovementPhase(std::span<const std::uint8_t> bytes);
     Bytes encodeUnitMovement(const jass::StableHandleMap& encodeHandle) const;
     void restoreUnitMovement(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeQueuedPlayerOrders(const jass::StableHandleMap& encodeHandle) const;
