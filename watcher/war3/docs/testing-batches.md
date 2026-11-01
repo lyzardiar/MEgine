@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 有符号属性物品使用校验（本批修复）
+
+路径：`src/session_item_use.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`。普通及复合永久属性物品允许有符号属性字段，其他物品数值、魔法消耗和冷却沿用原校验。合批首次运行 `attribute-item-signed` 时普通负属性书在使用入口被拒绝；修复后重测该场景，并覆盖带资源效果的复合属性书与普通物品回归。
+
+
 ### 英雄经验差值的整数边界（待功能批次验证）
 
 路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。`SetHeroXP` 和 `SetHeroLevel` 使用 32 位有符号差值判断经验增加，极端负经验与目标经验相减回绕为非正数时不更新，正常正差值继续生效。原版 1.27 分别在 `0x6f1f5947` 和 `0x6f1f5859` 执行 32 位减法并检查有符号结果。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-xp-delta-overflow`，回归普通英雄经验和等级设置；原版动态与极值转换精度待验证。本次未执行功能测试。

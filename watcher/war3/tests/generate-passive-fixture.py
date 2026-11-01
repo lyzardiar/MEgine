@@ -271,7 +271,8 @@ endfunction
     drop_item = b'phea' + b'I0DR' + struct.pack('<I', 1) + b'idrp' + struct.pack('<II', 0, 1) + b'I0DR'
     keep_flag = b'flag' + b'I0ND' + struct.pack('<I', 1) + b'idrp' + struct.pack('<II', 0, 0) + b'I0ND'
     attribute_tome = b'tstr' + b'I0PX' + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + b'A0PX\0' + b'I0PX'
-    files['war3map.w3t'] = struct.pack('<III', 2, 0, 5) + sight_item + ethereal_item + drop_item + keep_flag + attribute_tome
+    combined_tome = b'tstr' + b'I0PC' + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + b'A0PX,AIgo\0' + b'I0PC'
+    files['war3map.w3t'] = struct.pack('<III', 2, 0, 6) + sight_item + ethereal_item + drop_item + keep_flag + attribute_tome + combined_tome
     units = [(b'hpea', b'z0u1', b'uwu2'), (b'hfoo', b'z0u2', b'uwu1')]
     files['war3map.w3u'] = struct.pack('<III', 2, 0, len(units))+b''.join(base+custom+struct.pack('<I', 1)+field+struct.pack('<II', 0, 0)+custom for base, custom, field in units)
     args.output.parent.mkdir(parents=True, exist_ok=True)
