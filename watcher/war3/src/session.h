@@ -1353,6 +1353,8 @@ public:
     void restoreQueuedPlayerOrders(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitCombatOrders(const jass::StableHandleMap& encodeHandle) const;
     void restoreUnitCombatOrders(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeSpellMissiles(const jass::StableHandleMap& encodeHandle) const;
+    void restoreSpellMissiles(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeAttackProjectiles(const jass::StableHandleMap& encodeHandle) const;
     void restoreAttackProjectiles(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitAnimations(const jass::StableHandleMap& encodeHandle) const;
