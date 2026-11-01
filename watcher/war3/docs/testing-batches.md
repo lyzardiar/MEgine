@@ -5923,3 +5923,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 娜迦工人建造（待功能批次验证）
 
 路径：`src/session.h`、`src/session_construction.cpp`、`src/game_loading.{h,cpp}`、`src/game_commands.cpp`、`tests/construction_tests.cpp`、`docs/construction.md`。娜迦工人读取源建造列表和 `CmdBuildNaga` 文本／快捷键，支持工人进入建筑并完成施工；原始命令未提供图标／位置时使用 `CmdBuild` 配置。原版 `nmpe` 含六种建造类型；Naga／Orc 建造类三个关键虚表项一致。合批用 `generate-construction-fixture.py` 生成地图并运行 `war3_construction_tests <data-root> <fixture>`，覆盖列表、施工进度和释放；取消／恢复、采集、原版时序和窗口图标仍待验证。本次未执行功能测试。
+
+
+### 原版中立与娜迦单位种族（待功能批次验证）
+
+路径：`src/session_entities.cpp`、`src/session_construction.cpp`、`tests/construction_tests.cpp`、`docs/jass.md`。娜迦、野怪、平民和小动物分别使用源种族编号 11、8、9、10；其他保持 7。建造按钮按同一娜迦编号选择。原版 1.27 种族表 `0x6fb69fb8`、单位类型写入 `0x6f64f95d` 及两个种族查询入口证明静态映射。合批运行 construction 夹具，检查原版五类单位的 `GetUnitRace`／`IsUnitRace` 和娜迦施工；地图覆盖、类型转换与原版动态行为待验证。本次未执行功能测试。
