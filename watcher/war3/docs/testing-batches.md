@@ -4971,3 +4971,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 计时器对话框恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_dialogs.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`STDL` 重建计时器对话框及计时器映射，`SRBF` 更新至版本 9。Win32 Release 构建通过，clock 67/67，日志 `tmp/docs-artifacts/war3/timer-dialog-recovery/clock-03.log`；Booty Bay 人族电脑隔离续行 60 秒时，临时绕过启动保护并按新对象顺序映射后 26 项状态一致，日志 `tmp/docs-artifacts/war3/ai-continuation-audit/audit-06.log`。待阶段验证真实存档、实时倒计时、UI 显示、玩家操作和其他地图；组件包启动保护保留。
+
+
+### 恢复包哈希表引用顺序（待阶段验证）
+
+路径：`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。哈希表在计时器、计时器对话框、集合、触发器和事件身份重建后恢复，支持这些已有对象的表项映射。Win32 Release 构建及 clock 68/68 通过，覆盖非恒等映射及表间循环，日志 `tmp/docs-artifacts/war3/hashtable-bundle/clock-final-02.log`。待阶段验证其他对象类型、真实地图和实际存档；启动保护保留。

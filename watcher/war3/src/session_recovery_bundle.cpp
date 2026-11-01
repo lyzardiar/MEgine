@@ -124,7 +124,6 @@ std::map<std::uint32_t,std::uint32_t> ScriptSession::restoreRecoveryBundle(std::
     this->restoreAttackProjectiles(data.at("AttackProjectiles"),decode);
     single(this->rebuildGameCaches(data.at("GameCaches")));
     single(this->rebuildFogState(data.at("FogState")));
-    single(this->rebuildHashtables(data.at("Hashtables"),decode));
     typed(this->rebuildQuests(data.at("Quests")));
     typed(this->rebuildCollections(data.at("Collections"),decode));
     single(this->rebuildCameraState(data.at("CameraState"),decode));
@@ -138,6 +137,7 @@ std::map<std::uint32_t,std::uint32_t> ScriptSession::restoreRecoveryBundle(std::
     single(this->rebuildActorEvents(data.at("ActorEvents"),decode));
     single(this->rebuildGameEvents(data.at("GameEvents"),decode));
     single(this->rebuildSpatialEvents(data.at("SpatialEvents"),decode));
+    single(this->rebuildHashtables(data.at("Hashtables"),decode));
     this->restoreRandomState(data.at("RandomState"));
     this->runtime().restoreGlobals(data.at("Globals"),decode);
     std::vector<jass::Runtime*> runtimes{&runtime_};for(auto& saved:savedAI){prepareAIRecovery(saved.owner,saved.file,saved.campaign,saved.globals,decode);restoreAIState(saved.owner,saved.state,decode);runtimes.push_back(ais_[saved.owner]->runtime.get());}auto sleeping=decodeSharedSleepingScripts(runtimes,data.at("SleepingScripts"));if(sleeping.scripts.paused.size()!=runtimes.size())throw std::runtime_error("AI recovery pause count differs");for(size_t i=0;i<savedAI.size();++i)if(sleeping.scripts.paused[i+1]!=(aiPauseDepth_[savedAI[i].owner]!=0))throw std::runtime_error("AI recovery pause state differs");restoreSharedSleepingScripts(runtimes,sleeping,decode);

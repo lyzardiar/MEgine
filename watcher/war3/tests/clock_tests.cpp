@@ -1886,6 +1886,36 @@ endfunction
  endfunction
  )jass";auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");auto compileSource=[&]{return Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"shared-session.j",source,"shared context"}}));};auto make=[&](bool offset){auto result=std::make_unique<ScriptSession>(compileSource(),map().info);result->attachWorld(world());result->audioMuted(true);result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(offset)result->runtime().invoke("CreateTimer");result->startMain();return result;};auto original=make(false),target=make(true);Runtime peer(compileSource()),restoredPeer(compileSource());peer.inheritNatives(original->runtime());peer.shareThreads(original->runtime());peer.initialize();restoredPeer.inheritNatives(target->runtime());restoredPeer.shareThreads(target->runtime());restoredPeer.initialize();original->runtime().start("work");peer.start("work");auto actor=original->runtime().global("actor").bits;original->selectUnit(actor,true);auto identity=[](std::string_view,std::uint32_t id){return id;};std::array<Runtime*,2> src{&original->runtime(),&peer},dst{&target->runtime(),&restoredPeer};auto snapshot=original->snapshotSharedSleepingScripts(src,identity);require(snapshot.threads.size()==3,"Shared session contexts missing");auto wire=original->encodeSharedSleepingScripts(src,snapshot);auto damaged=wire;damaged.back()^=1;rejects([&]{target->decodeSharedSleepingScripts(dst,damaged);},"digest");auto decoded=target->decodeSharedSleepingScripts(dst,wire);auto targetActor=target->runtime().global("actor").bits,watcher=original->runtime().global("watcher").bits,targetWatcher=target->runtime().global("watcher").bits;require(actor!=targetActor && watcher!=targetWatcher,"Shared handle remapping fixture did not shift identities");auto decode=[&](std::string_view,std::uint32_t id){if(id==actor)return targetActor;if(id==watcher)return targetWatcher;return id;};auto reverse=[&](std::string_view,std::uint32_t id){if(id==targetActor)return actor;if(id==targetWatcher)return watcher;return id;};auto wrong=[&](std::string_view type,std::uint32_t id){return id==watcher?0u:decode(type,id);};rejects([&]{target->restoreSharedSleepingScripts(dst,decoded,wrong);},"mapping");require(!target->runtime().threadCount(),"Rejected shared context retained threads");auto ids=target->restoreSharedSleepingScripts(dst,decoded,decode);require(ids.size()==3 && target->encodeSharedSleepingScripts(dst,target->snapshotSharedSleepingScripts(dst,reverse))==wire,"Shared session context did not round trip");original->advance(.125);target->advance(.125);require(original->runtime().global("completed").bits==1 && peer.global("completed").bits==1 && target->runtime().global("completed").bits==1 && restoredPeer.global("completed").bits==1 && original->runtime().global("observed").bits==actor && target->runtime().global("observed").bits==target->runtime().global("actor").bits,"Shared session continuations diverged");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("recovery_bundle_restores_hashtable_object_references",[&]{
+        auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
+ timer clock = null
+ timerdialog dialog = null
+ trigger triggerRef = null
+ event eventRef = null
+ group groupRef = null
+ hashtable table = null
+ hashtable nested = null
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ set clock = CreateTimer()
+ set dialog = CreateTimerDialog(clock)
+ set triggerRef = CreateTrigger()
+ set eventRef = TriggerRegisterTimerExpireEvent(triggerRef, clock)
+ set groupRef = CreateGroup()
+ set table = InitHashtable()
+ set nested = InitHashtable()
+ call SaveTimerHandle(table, 1, 1, clock)
+ call SaveTimerDialogHandle(table, 1, 2, dialog)
+ call SaveTriggerHandle(table, 1, 3, triggerRef)
+ call SaveTriggerEventHandle(table, 1, 4, eventRef)
+ call SaveGroupHandle(table, 1, 5, groupRef)
+ call SaveHashtableHandle(table, 1, 6, nested)
+ call SaveHashtableHandle(nested, 1, 1, table)
+ endfunction
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"bundle-hashtable.j",source,"bundle hashtable references"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());require(ids.at(original->runtime().global("clock").bits)!=original->runtime().global("clock").bits,"Hashtable fixture did not shift timer identity");auto& vm=target->runtime();auto table=vm.global("table");const char* load[]={"LoadTimerHandle","LoadTimerDialogHandle","LoadTriggerHandle","LoadTriggerEventHandle","LoadGroupHandle","LoadHashtableHandle"};const char* globals[]={"clock","dialog","triggerRef","eventRef","groupRef","nested"};for(unsigned i=0;i<6;++i){auto old=original->runtime().global(globals[i]).bits;require(ids.contains(old) && vm.invoke(load[i],std::array{table,vm.integer(1),vm.integer(int(i+1))}).bits==ids.at(old),"Restored hashtable object reference differs");}require(vm.invoke("LoadHashtableHandle",std::array{vm.global("nested"),vm.integer(1),vm.integer(1)}).bits==table.bits,"Restored hashtable cycle differs");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("recovery_bundle_restores_timer_dialogs",[&]{
         auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
  timer clock = null
