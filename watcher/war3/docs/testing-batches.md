@@ -1,18 +1,8 @@
 # 独立客户端测试队列
 
-### 远程射程与电脑运输（待批次验证）
+### 电脑营地与跨区域攻击批次（基础验证完成）
 
-路径：`src/world_path.cpp`、`src/session_ai_transport.cpp`、`src/session_ai_natives.cpp`、`tests/world_tests.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。已在射程内的单位可直接攻击，路径区域搜索上限扩至 4096，避免远程单位因 512 截断而被错误送上飞艇。Win32 Release 客户端、CampaignAI 和 world 测试程序编译通过；隔离地形 `island-ranged` 修复前失败、修复后 1 通过、0 失败。批次运行 world 地区查询和跨岛／混编回归。超 4096 的非当前射程与原版精度仍待验证。
-
-
-### 近距离隔水目标运输（待批次验证）
-
-路径：`src/session.h`、`src/session_ai.cpp`、`src/session_ai_transport.cpp`、`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。选营、自动装载和后续运输波次按攻击距离判断地面可达，修复目标与己方相距小于 512 但隔水时不启用飞艇的问题。Win32 Release 客户端及 CampaignAI 测试程序编译通过；原地形最小复现 `island-nearby` 修复前失败，修复后 1 通过、0 失败，覆盖近战上船、射程内远程单位不登船及实际送达。批次回归原跨岛、远程及混编场景。超过 512 的攻击射程、路径区域不确定、自然对局、原版时序及联机仍待验证。
-
-
-### 电脑野怪候选收集（待批次验证）
-
-路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。搜索每次只收集一次有效中立单位和隐身侦测结果，后续按原句柄顺序计算营地，避免反复扫描所有单位。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次运行 `war3_campaign_ai_tests <data-root> <fixture> reachable` 及相关跨岛进攻场景，覆盖重叠营地顺序；大量单位与性能仍待验证。
+范围：`9a73ee8`（补充 `ff9e7a8`）、`ea439a8`（说明 `e5825a5`）和 `cece24c`。Win32 Release 客户端、CampaignAI 与 world 测试程序编译通过。`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `reachable`、`fog-attack`、`enemy-base` 各 2 项通过，`island-nearby`、`island-ranged`、`island-auto`、`island-auto-multiwave-script`、`island-auto-point`、`island-naval` 各 1 项通过；`war3_world_tests <data-root> <clamp-fixture.json> world_region` 5 项通过，共 **17 通过、0 失败**。覆盖重叠营地、近距离隔水上船与送达、射程内远程单位不登船、隔水炮兵直接攻击、区域查询 512／900／上限、已有飞行与船舶多波运输。两个隔离最小复现均在修复前失败、修复后通过；日志位于 `tmp/docs-artifacts/war3/ai-attack-reach-batch/`，AI 夹具为 `tmp/docs-artifacts/war3/campaign-ai/fixture.w3m`，world 夹具为 `tmp/docs-artifacts/war3/world/world-clamp-rea.json`。超过 4096 的非当前射程返回未知；大地图性能、动态障碍、原版运输与攻击时序、自然对局和联机仍待验证。
 
 
 ### 野怪营地筛选与存档提示批次（逻辑验证完成）
