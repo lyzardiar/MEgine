@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄幻象与经验物品合批结果
+
+范围：`568bb39`、`6b6b724`（含补充 `c2a0dc6`）、`0761720`。Win32 Release 客户端、revival、commerce、game-flow 目标构建通过；game-flow 目标有两条既有 C4389 有符号／无符号比较警告。重新生成夹具后，revival 的 `hero-level-tome`、`hero-negative-xp`、`hero-level-event`、`hero-xp`、`hero-strip-skills` 各 1/1，commerce 1 条 PASS，game-flow 的 `cache-sync-unit` 1 条 PASS。覆盖真实幻象接口、经验书暂停、升级之书保留进度、负经验与后续加经验，以及负经验英雄的游戏缓存写盘／新会话读取和实验同步；缓存写入使用隔离用户目录。日志和夹具位于 `tmp/docs-artifacts/war3/hero-native-batch/`，构建日志为 `tmp/docs-artifacts/war3/hero-native-batch-build.log`。自定义多等级书、经验数值极限、原版动态对照、窗口和完整地图仍待验证。
+
 ### 升级之书经验进度（待批次验证）
 
 路径：`src/session_equipment.cpp`、`tests/revival_tests.cpp`。升级之书按原版经验阈值和实数运算转移当前等级内的经验进度；英雄暂停经验时升级之书和经验之书不增加经验。1.27 `Game.dll` 的 `CAbilityLevelMod` 虚函数 `0x6f5309c0` 使用当前经验和相邻阈值计算目标经验，再进入 `0x6f50a9d0`；经验之书使用相同结算入口，其暂停检查位于 `0x6f50aa13`。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-level-tome`，并核对多等级、自定义阈值、满级、负经验、物品消耗、原版动态及窗口。本次未执行测试。
