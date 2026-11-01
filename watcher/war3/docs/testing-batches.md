@@ -5933,3 +5933,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 中立工人建造（待功能批次验证）
 
 路径：`src/session_construction.cpp`、`src/game_loading.{h,cpp}`、`tests/construction_tests.cpp`、`docs/construction.md`。中立单位使用源 `CmdBuild` 入口和建造列表，工人进入建筑施工；原版 `ndrl` 为 `creeps` 且有四种建造类型，`CAbilityNeutralBuild` 与 `CAbilityOrcBuild` 的第 17、18、19 虚表项一致。合批运行 construction 夹具核对达拉内尔工人菜单、施工和释放；其他中立种族、取消与恢复、实际窗口及原版动态行为待验证。本次未执行功能测试。
+
+
+### 娜迦与中立工人合批结果
+
+范围：`6134260`、`e62deea`、`0fab530` 及本次取消施工检查。Win32 Release 客户端和 construction 目标构建通过；`generate-construction-fixture.py` 生成地图后运行 `war3_construction_tests <data-root> <fixture>`，退出 0、输出 1 条 PASS。该进程检查娜迦和达拉内尔工人源建造列表、进入施工、进度、完成与取消后的释放，及五类原版单位种族查询，同时覆盖既有四族施工和资源流程；夹具通过脚本设置资源与进度。新增测试局部变量更名后测试目标重新编译通过，无编译警告。日志位于 `tmp/docs-artifacts/war3/neutral-build-batch/`。实际窗口按钮及图标、自然对局、施工恢复、地图覆盖和原版动态时序仍待验证；此前 D3D9 设备不可用，本批未启动窗口。
