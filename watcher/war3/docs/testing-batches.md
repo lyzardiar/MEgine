@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄属性设置与额外加成（待功能批次验证）
+
+路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。`SetHeroStr`／`Agi`／`Int` 的两种布尔参数均调整基础属性并保留额外加成，基础属性的小数成长余量继续保留。原版 1.27 的力量设置 `0x6f67c090` 用目标值减当前基础值，`0x6f50a080` 将差值加入基础属性；另外两项及参数对资源更新的细节仍需动态对照。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-attribute-base`，并回归英雄属性及装备；属性负值、生命魔法效果和实际界面待验证。本次未执行功能测试。
+
+
 ### 当前等级的英雄经验门槛（待功能批次验证）
 
 路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。`SetHeroLevel` 对当前等级恢复低于等级门槛的经验，不重复升级或发放技能点；低于当前等级的目标仍不改变英雄。原版 1.27 `0x6f1f5835` 至 `0x6f1f585d` 检查目标等级不低于当前等级并按经验差执行。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-level-negative-xp`，回归 `hero-xp` 和负经验场景；暂停经验、等级事件和原版动态行为待验证。本次未执行功能测试。
