@@ -5338,3 +5338,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session.h`、`src/session_campaign.cpp`、`src/session_tick.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SaveGame` 在本地脚本线程中请求检查点，会话边界发布 `WSAV` 文件、分发保存事件并唤醒调用线程。合批编译运行 `war3_clock_tests <data-root> <output-root>`，覆盖隔离文件、调用线程等待及恢复后的续行；并发、暂停、失败、事件时序、原版战役、`LoadGame` 和可玩恢复仍待验证或实现。本次未编译或执行测试，恢复启动保护保留。
 
 脚本保存夹具补充实际保存事件及 `GetSaveBasicFilename`，检查发布后通知一次并保存调用前的事件状态；该时序的原版一致性仍待对照，夹具待同批执行。
+
+必要最小检查：Win32 Release `war3_clock_tests` 构建通过，保存夹具首轮因缺少 `destructable` 等句柄类型失败，修正后定向 **1 通过、0 失败**。原版 OrcX01 隔离模拟 150 秒后直接移动雷克萨至区域，生成区域检查点和保存事件备份，两者 SHA-256 一致并发出下一地图切换请求；日志及文件在 `tmp/docs-artifacts/war3/save-game-native/`。自然走位、下一地图加载、回访读档、原版格式、事件时序及完整回归仍待功能批次验证。
