@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 资源与生产取消文字（待功能批次验证）
+
+路径：`src/game_loading.h`、`src/game_loading.cpp`、`src/game_commands.cpp`。单位携带的黄金／木材、金矿剩余量及生产队列取消提示使用源界面字段 `COLON_GOLD`、`COLON_LUMBER` 和 `CANCEL`，字段缺失时使用可读默认文字。Win32 Release 客户端构建和差异检查通过；黄金字段来自 `InfoPanelStrings.fdf`，其余字段来自 `GlobalStrings.fdf`，均已核对本机原资源。本次未运行界面测试；合批检查多语言／地图覆盖、采集和金矿／生产队列状态及窗口布局，原版数字、图标与排版仍待对照。
+
+
 ### 建筑与生产状态文字（待功能批次验证）
 
 路径：`src/game_loading.h`、`src/game_loading.cpp`、`src/game_commands.cpp`。建造、训练、研发和英雄复活状态文字读取 `UI/FrameDef/GlobalStrings.fdf` 的 `CONSTRUCTING`、`TRAINING`、`RESEARCHING`、`REVIVING`；缺少对应字段时沿用可读默认值。状态百分比和生产队列沿用当前绘制与输入流程。Win32 Release 客户端构建及差异检查通过；源安装的四个字段已核对。本次未运行界面测试；合批验证不同语言和地图资源覆盖下的建筑、训练、研发和复活文字及窗口布局，原版字号／位置、升级／反召唤及人口不足文字仍待对照。
