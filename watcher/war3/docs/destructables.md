@@ -41,3 +41,6 @@ cd watcher/war3
 
 
 生命恢复、最大生命与遮挡高度设置、动画速度及动画请求对无效可破坏物句柄直接返回；死亡事件注册的触发器或 widget 无效时返回空事件。固定版对应入口及共享动画调用的静态指令见 `tmp/docs-artifacts/war3/destructable-null-queries/game-dll-action-disassembly.txt`；运行、事件回调及错误类型句柄待功能批次验证。
+
+
+失效句柄隔离会话批次输出 PASS，覆盖空、已移除、错误类型及有效对象的本批查询／设置与事件注册；实际窗口与原版运行语义仍待核对。详见[测试队列](testing-batches.md)。

@@ -47,11 +47,14 @@ function watch_combined_life takes unit u, item i returns nothing
     call TriggerAddAction(t,function combined_life_changed)
 endfunction
 function config takes nothing returns nothing''')
-    script = script.replace('local trigger itemTrigger=CreateTrigger()', '''local trigger itemTrigger=CreateTrigger()
-    local trigger combinedTrigger=CreateTrigger()
-    call TriggerRegisterPlayerUnitEvent(combinedTrigger,Player(0),EVENT_PLAYER_UNIT_USE_ITEM,null)
+    if 'local trigger summonTrigger=CreateTrigger()' not in script or 'call TriggerRegisterPlayerUnitEvent(summonTrigger,Player(0),EVENT_PLAYER_UNIT_SUMMON,null)' not in script:
+        raise ValueError('Control fixture trigger layout changed')
+    script = script.replace('local trigger summonTrigger=CreateTrigger()', '''local trigger summonTrigger=CreateTrigger()
+    local trigger combinedTrigger=CreateTrigger()''')
+    script = script.replace('call TriggerRegisterPlayerUnitEvent(summonTrigger,Player(0),EVENT_PLAYER_UNIT_SUMMON,null)', '''call TriggerRegisterPlayerUnitEvent(combinedTrigger,Player(0),EVENT_PLAYER_UNIT_USE_ITEM,null)
     call TriggerRegisterPlayerUnitEvent(combinedTrigger,Player(1),EVENT_PLAYER_UNIT_USE_ITEM,null)
-    call TriggerAddAction(combinedTrigger,function combined_used)''')
+    call TriggerAddAction(combinedTrigger,function combined_used)
+    call TriggerRegisterPlayerUnitEvent(summonTrigger,Player(0),EVENT_PLAYER_UNIT_SUMMON,null)''')
     files['war3map.j'] = script.encode('utf-8')
     def ability(base, custom, field, amount, price, cooldown):
         change = field + struct.pack('<IIII', 0, 1, 1, amount) + custom
