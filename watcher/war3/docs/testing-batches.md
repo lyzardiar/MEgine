@@ -5194,3 +5194,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 多项即时恢复物品（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合恢复物品](combined-recovery-items.md)。自定义物品可按能力列表顺序应用多个 `AIhe`、`AIma`、`AIre` 即时恢复，使用一次收费／消耗和一次物品事件；未知主动能力仍显式拒绝。Win32 Release `cmake --build --preset release --target war3_control_tests --parallel 4` 与生成器 Python 语法检查通过，未运行功能测试。功能批次重新生成夹具并执行 `war3_control_tests <data-root> <fixture> item-combined`，覆盖三项能力、混合 `AIre`、能力顺序、事件重入和旧组合；原版收费／冷却／多事件语义、符文与真实窗口仍待对照。
+
+
+### 复合物品的金币与木材效果（待功能批次验证）
+
+路径：`src/session.h`、`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合增加 `AIgo`／`AIlu` 即时金币和木材，可与即时恢复混用，按能力次序更新实际玩家资源并发送状态事件，每项回调后检查使用者生命周期，单次支付、冷却、消耗和物品事件。Win32 Release `cmake --build --preset release --target war3_control_tests --parallel 4` 及夹具生成脚本语法检查通过，未运行功能测试。功能批次重新生成夹具并执行 `war3_control_tests <data-root> <fixture> item-combined`，同时验证资源上限、零值、归属变化／移除／重入、费用和原版事件顺序；未知主动能力保持显式拒绝。

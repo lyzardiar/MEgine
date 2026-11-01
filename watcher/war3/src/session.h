@@ -705,7 +705,7 @@ class ScriptSession {
     std::map<std::uint32_t,bool> corpseHoldAbilities_;
     bool corpseCargoCandidate(const UnitState& unit);
     bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
-    bool useCombinedRecoveryItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point,const std::vector<std::uint32_t>& abilities);
+    bool useCombinedImmediateItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point,const std::vector<std::uint32_t>& abilities);
     std::map<std::string,std::uint32_t> caches_;
     bool gameCachesRebuilt_=false,hashtablesRebuilt_=false,randomPoolsRebuilt_=false,scriptDialogsRebuilt_=false;
     std::vector<ScriptText> texts_;
