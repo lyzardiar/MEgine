@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 多个限时生命状态（待功能批次验证）
+
+路径：`src/entities.h`、`src/session_illusion.cpp`、`src/session_entities.cpp`、`src/session_spell_natives.cpp`、`src/game_buff_panel.cpp`、`tests/passive_tests.cpp`、`tests/clock_tests.cpp`。重复施加产生独立计时器，暂停作用于全部，按编号移除单个状态，扩展 Buff 清除移除所有匹配状态，任一计时器到期触发单位死亡；状态栏合并同编号图标。`SUMM` 第 5 版保存额外计时器，并读取旧版。原版 1.27 `0x6f46e1f0` 创建新状态并经 `0x6f46e090` 加入单位，`UnitPauseTimedLife` 遍历状态。Win32 Release 客户端及两个测试目标构建通过；本次针对性运行 `war3_passive_tests <data-root> <fixture> timed-life-multiple` 和 `WAR3_CLOCK_FILTER=summon_snapshot_restores_timed_life_and_retired_sources`，各 1 通过、0 失败，覆盖多个计时器的暂停、移除、到期、清除和新版快照恢复。合批回归 `timed-life-buff-id`、限时／机械状态及旧版快照；原版动态、特殊 Buff 效果、熔岩分裂交互和窗口显示待验证。构建日志位于 `tmp/docs-artifacts/war3/multiple-timed-life/`。
+
+
 ### 限时生命与机械小动物合批结果
 
 范围：`909a816`、`eb15cfd`、`891e770`。Win32 Release 客户端、passive 和 control 目标构建通过，无编译警告。生成 passive 夹具后，`buff-permanent-critter`、`timed-life-buff-id`、`timed-life-summoned`、`mechanical-critter-real`、`buff-timed-life`、`buff-timed-critter`、`buff-filter-semantics` 及 control 的 `purge` 各 1 通过、0 失败；passive 主程序退出 0 并输出 PASS。真实原版 `mcri` 物品完成机械小动物召唤，检查伪装与状态清除。日志与夹具位于 `tmp/docs-artifacts/war3/timed-critters-batch/`。原版重复施加限时生命的入口会创建并加入新状态，当前仅保存一个计时器；多个状态的叠加、暂停、移除、存档及动态原版对照仍需实现和验证。特殊 Buff 的专属效果、人口统计与窗口也待验证。

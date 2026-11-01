@@ -16,6 +16,7 @@
 #include "player_commands.h"
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <map>
 #include <string_view>
 
@@ -168,6 +169,10 @@ struct UnitState {
     bool diesWithSummoner=false,swarmAgent=false;
     float damageDealt=1,damageTaken=1;
     std::optional<TimedLife> timedLife;
+    std::vector<TimedLife> earlierTimedLives;
+    void addTimedLife(TimedLife state) {if(timedLife)earlierTimedLives.push_back(*timedLife);timedLife=state;}
+    bool hasTimedLife(std::uint32_t buff) const {return (timedLife && timedLife->buff==buff) || std::any_of(earlierTimedLives.begin(),earlierTimedLives.end(),[&](const auto& state){return state.buff==buff;});}
+    bool removeTimedLife(std::uint32_t buff) {if(timedLife && timedLife->buff==buff){timedLife.reset();if(!earlierTimedLives.empty()){timedLife=earlierTimedLives.back();earlierTimedLives.pop_back();}return true;}for(auto it=earlierTimedLives.rbegin();it!=earlierTimedLives.rend();++it)if(it->buff==buff){earlierTimedLives.erase(std::next(it).base());return true;}return false;}
     std::optional<RebirthState> rebirth;
     std::optional<PhoenixCycle> phoenixCycle;
     std::map<std::string,double> itemCooldowns;
