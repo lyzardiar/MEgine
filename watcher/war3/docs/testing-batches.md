@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 当前等级的英雄经验门槛（待功能批次验证）
+
+路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。`SetHeroLevel` 对当前等级恢复低于等级门槛的经验，不重复升级或发放技能点；低于当前等级的目标仍不改变英雄。原版 1.27 `0x6f1f5835` 至 `0x6f1f585d` 检查目标等级不低于当前等级并按经验差执行。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-level-negative-xp`，回归 `hero-xp` 和负经验场景；暂停经验、等级事件和原版动态行为待验证。本次未执行功能测试。
+
+
 ### 英雄技能学习合批结果
 
 范围：`3afa446`、`06b7fb5`、`e430852`。Win32 Release 客户端与 revival 测试目标构建通过。复用英雄复活夹具运行 `hero-skill-availability`、`hero-skill-command-state`、`hero-illusion-learning`、`hero-skill-cap`、`hero-skill-modify`、`hero-learn-tooltip`、`hero-xp`，各 1 通过、0 失败；复活主流程 4 通过、0 失败。覆盖玩家技能禁用与恢复、暂停与恢复、幻象标记下的学习按钮、技能点、说明和复活回归。构建及测试日志位于 `tmp/docs-artifacts/war3/hero-learning-batch/`，夹具位于 `tmp/docs-artifacts/war3/hero-class-batch/hero.w3m`。AI 学习、实际幻象创建、其他单位状态、原版动态行为与窗口显示仍待验证。
