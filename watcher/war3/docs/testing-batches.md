@@ -4620,3 +4620,9 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 英雄经验提示格式（待批次验证）
 
 路径：`src/game_commands.cpp`；说明见[英雄经验与成长](heroes.md)。经验条悬停使用原版 `%u / %u` 的数值格式，普通等级显示当前经验与下一等级阈值，满级显示当前经验与最高等级阈值。固定版 `Game.dll` 的界面格式调用及阈值上限只读指令记录在 `tmp/docs-artifacts/war3/hero-reference-render/original-xp-disassembly.txt`，未加载 Game.dll。Win32 Release 客户端构建通过；当前显示会话断开，D3D9 硬件及参考设备均未创建，未获得画面，日志 `tmp/docs-artifacts/war3/hero-reference-render/capture/client.log`。实际悬停、满级、自定义上限、排版与原版动态对照待批次验证。
+
+### 攻击移动与巡逻的路径切换（本批验证）
+
+路径：`src/session_combat.cpp`、`src/session_combat_orders.cpp`、`src/session_entities.cpp`、`src/session_orders.cpp`、`tests/order_queue_tests.cpp`；说明见[对象定义](entities.md)。攻击移动与巡逻保留原行程目标；关闭路径碰撞时恢复当前方向，追击敌人时保留追击并在目标失效后恢复行程，命令结束后清理目标。Win32 Release 客户端及测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> combat-pathing-toggle` 1 通过、0 失败，覆盖攻击移动、巡逻往返方向及目标消失后恢复；日志 `tmp/docs-artifacts/war3/combat-pathing-toggle/test.log`。原版动态语义、复杂重入、多个目标和真实玩家操作仍待验证。
+
+本批合并 `5149f71`、`e017533` 和本项：世界路径 `world_` 31 通过、0 失败；完整命令队列输出 32 条 PASS（含汇总）；隐藏关最后一波在人为持续恢复传送门生命后进入间章，1 通过、0 失败。日志 `tmp/docs-artifacts/war3/combat-pathing-batch/{world,order,wave}.log`。经验栏实际画面因当前会话 D3D9 设备创建失败而未取得，日志 `tmp/docs-artifacts/war3/combat-pathing-batch/capture/client.log`；原版画面对照、正常防守、双端、大地图性能和不同碰撞状态待验证。
