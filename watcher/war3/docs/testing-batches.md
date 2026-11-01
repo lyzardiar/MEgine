@@ -5873,3 +5873,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家资源税率的失效参数（待功能批次验证）
 
 路径：`src/session.cpp`、`tests/game_flow_tests.cpp`。税率设置在玩家句柄失效时无操作，查询在玩家或资源类型无效时返回零；有效税率及原有上限规则保持。原版 1.27 的 `SetPlayerTaxRate` 入口 `0x6f1f6380` 和 `GetPlayerTaxRate` 入口 `0x6f1e4110` 检查双方玩家，查询仅处理黄金和木材。合批运行 game flow 夹具，覆盖空／错误类型玩家、无效资源及有效税率；实际资源转账与原版游戏模式仍待对照。本次未执行功能测试。
+
+
+### 枚举上下文与玩家接口合批结果
+
+范围：`8fec43c`、`51e8713`、`0e78b50`。Win32 Release 客户端、destructable 和 game flow 目标编译通过；两个测试进程退出 0，共输出 **3 条 PASS**，覆盖枚举动作上下文／空动作、失效玩家联盟和税率及有效关系。game flow 测试文件第 20 行的既有 `optional<unsigned>` 与整数比较产生两条 C4389 警告。日志及夹具位于 `tmp/docs-artifacts/war3/script-context-player-batch/`；原版动态回调、资源转账及实际地图窗口仍待对照。
