@@ -2,7 +2,7 @@
 
 ### 采集工人与进军单位的拥堵让行（待功能批次验证，1/3）
 
-路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`。采集途中受阻时，符合既有限制且持续停滞的同属进军单位可让出短距离，保留双方原订单和路线；敌方、暂停、保持位置及其他受保护状态继续按既有规则处理。Booty Bay 4,200 秒隔离诊断发现多名携金工人与停滞进军单位相互拥堵，金矿仍剩 2,640；日志 `tmp/docs-artifacts/war3/ai-production-next-batch/congestion.log`。合批运行 movement `worker-march`、`workers`、`march`、`yield` 等相关回归，并重跑原图经济探针检查金币入账和后续对局；原版让行、复杂拥堵和联机仍待验证。本次未执行功能测试。
+路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`。采集途中受阻时，符合既有限制且持续停滞的同属进军单位可让出短距离，保留双方原订单和路线；敌方、暂停、保持位置及其他受保护状态继续按既有规则处理。Booty Bay 4,200 秒隔离诊断发现多名携金工人与停滞进军单位相互拥堵，金矿仍剩 2,640；日志 `tmp/docs-artifacts/war3/ai-production-next-batch/congestion.log`。合批运行 movement `worker-march`（两种创建顺序）、`workers`、`march`、`yield` 等相关回归，并重跑原图经济探针检查金币入账和后续对局；原版让行、复杂拥堵和联机仍待验证。本次未执行功能测试。
 
 
 ### AI 生产回调批次结果
