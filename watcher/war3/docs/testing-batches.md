@@ -4884,3 +4884,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 本批范围 `7b65132`、`07942f5`、`cdec3e4`。同一集成源码的 Win32 Release 客户端及 clock、visibility、stealth、passive、control、movement-avoidance 目标编译通过；复用 clock 60/60。合批执行永久隐身、侦测事件、影遁、游荡和永久献祭各 1/1，均报告未加载 Game.dll；BootyBay 原图 `restored-path` 输出 PASS。日志与隔离目录 `tmp/docs-artifacts/war3/ambient-phase-stealth-batch/`。首次构建命令使用了不存在的 `war3_movement_tests` 目标，已改用 `war3_movement_avoidance_tests` 并成功编译和执行。
 
 上述消费者运行普通会话；OrcX01 隔离诊断在临时副本绕过保护后推进 60 秒，按新建对象顺序映射，54 个现有组件一致，但直接比较仍发现 1 个单位选中状态不同，日志 `tmp/docs-artifacts/war3/orcx-continuation-audit/audit-14.log`。完整对象状态、实际存档、长时间恢复、窗口与跨区仍待实现或验收。
+
+
+### 单位选中与选择控制快照（待批次验证）
+
+路径：`src/session.h`、`src/session_collections.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SSEL` 保存本地选中标记、玩家选择集合／修订号及选择控制开关，不重放事件。Win32 Release 核心及 clock 目标编译通过，clock 61 通过、0 失败；OrcX01 隔离恢复并临时绕过启动保护推进 60 秒后，55 个现有组件重编码一致，已观察的选中标记差异消失。日志 `tmp/docs-artifacts/war3/selection-snapshot-clock-01.log`、`tmp/docs-artifacts/war3/orcx-continuation-audit/audit-15.log`。批次验证选择事件与消费者；联机选择同步、界面控制组、完整读档和跨区仍待实现或验收。
