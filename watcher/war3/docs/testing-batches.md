@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄属性变化的生命与魔法（待功能批次验证）
+
+路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。`SetHeroStr`／`SetHeroInt` 的非永久设置在上限变化时保留当前生命／魔法比例；永久设置沿用增加或扣除上限差值的处理。原版 1.27 `0x6f50d08e` 将布尔参数映射为资源更新模式，`0x6f6331a2` 按原比例计算新资源，`0x6f6330c2` 处理差值模式。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-attribute-resource`，回归装备和属性设置；资源下降、死亡、零魔法及原版动态行为待验证。本次未执行功能测试。
+
+
 ### 英雄属性的小数成长（待功能批次验证）
 
 路径：`src/entities.h`、`src/session_hero.cpp`、`src/session_research.cpp`、`src/game_commands.cpp`、`tests/revival_tests.cpp`。基础属性按整数基础值加累计成长的整数部分计算，设置负值及后续升级时保留成长余量；脚本查询、战斗属性和面板共享计算结果。原版 1.27 `0x6f668ff0` 将基础整数与累计成长转换后的整数相加。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-attribute-growth`，回归英雄属性、升级和装备；自定义小数基础值、极值、原版动态和实际面板仍待验证。Win32 Release 客户端与 revival 测试目标编译通过，日志 `tmp/docs-artifacts/war3/hero-growth/build.log`；本次未执行功能测试。
