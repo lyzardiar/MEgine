@@ -17,3 +17,5 @@
 源表、Profile、元数据／原说明、单位和归档摘要在tmp/docs-artifacts/war3/concoction-frost/source.json；复用原件plague/rea-concoction.json。REA只读定位CAbility／CMissileUnstableConcoction、CAbilitySalvage、CAbilityFrostBreath、CAbility／CBuff／CMissileFreezingBreath。0x6f4ef690和0x6f4fb690提供飞行载体初始化，0x6f4eb670包含有效命中、范围伤害及成功／失效后的施法者处理；0x6f525a30提供伤害／最大生命／费用、分币积累和阈值入账结构，0x6f5800a0提供冻结状态入口。原件SHA256 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a，分析未修改原件，静态分析不代替玩法验收。
 
 集中核对飞行速度／碰撞／高度／暂停／目标失效时点、精确伤害分类与抗性／魔免／虚无、源载体动画／死亡模型／选择与施法事件、回调中移除／复活／易主／再命令；霜冻命中／范围边缘／多武器／派生／状态覆盖与驱散、冻结全部建筑功能及计时恢复；掠夺原费用／过量伤害／召唤建筑／来源叠加／原逐步舍入／资源统计和税收／上限／回调重入；完整UI／GPU／音效／AI、三图长局和持续切图／帧耗时／内存。当前自爆伤害通过已有spells／demolition分类消费，原件精确分类仍需阶段对照。完整客户端目标未完成。
+
+不稳定化合物飞行状态现可在隔离会话中恢复；检查范围和限制见 [战役存档状态](save-runtime-foundation.md)。
