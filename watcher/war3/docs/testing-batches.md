@@ -5243,3 +5243,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 复合物品持续效果合批结果
 
 范围：`06aa194`、`27ef78d`、`c43e8db`、`68a6017`、`fdb77b2` 及本次夹具修正。Win32 Release `war3_control_tests` 构建通过，重新生成 BootyBay 派生夹具并执行 `war3_control_tests <data-root> <fixture> item-combined`，结果 **1 通过、0 失败**，未加载 Game.dll。覆盖幻象与目标拒绝、隐身、吸血、金币混合及单一／复合物品在普通单位和 `ACrk` 抗性皮肤单位上的 3／9 秒持续时间，同时覆盖既有组合场景。首轮添加 `Arsk` 的单位未体现抗性效果；调整为中立版本 `ACrk` 后通过，前置条件及原版表现仍待核对；日志及夹具在 `tmp/docs-artifacts/war3/compound-timed-batch/`。实际攻击回血、隐身淡入／到期、英雄和零时长、真实窗口及原版目标与事件时序仍待验证。
+
+
+### 复合物品的复活和操纵死尸（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合支持 `AIrs`／`AIan`／`AHre`，消费前检查实际尸体并依次调用已有复活及操纵死尸流程。合批重新生成夹具并运行 `war3_control_tests <data-root> <fixture> item-combined`，检查原单位复活、尸体消费、限时召唤及金币混合；无尸体、符文、多个复活效果、回调重入、实际对局和原版事件时序待验证。本次未执行功能编译或测试。
