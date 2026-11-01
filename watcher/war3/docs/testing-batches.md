@@ -4758,3 +4758,5 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 商店批次补充验证：Win32 Release `war3_passive_tests <data-root> tmp/docs-artifacts/war3/shop-consumed/fixture.w3m shop-consumed` 1 通过、0 失败，覆盖购买符文和普通物品及拾取／出售回调销毁、重复拾取；同一生成夹具的 `shop-buyer` 1/1、`shop-range` 7/7，未加载 Game.dll。原版动态时序、其他消耗品及实际窗口仍待对照。此项是已有功能验证补充，不计新功能批次。
 
 Strange Brew 原图补充验证：Win32 Release `war3_orc_campaign_chain_tests <data-root> quest-shop <new-user-dir>` 1 通过、0 失败，未加载 Game.dll。测试等待开场结束，人工触发任务发现、创建买家和两种材料、补充金币及库存、解除商店暂停并移动雷克萨；验证酒桶出售／拾取、三项排队更新、任务完成、陈加入及三件初始物品、过场结束后恢复控制。隔离目录 `tmp/docs-artifacts/war3/quest-powerups/shop-quest-1101g/`；自然探索、材料生成、战斗和真实窗口未覆盖。为既有功能补充验证，不计新功能批次。
+
+Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <data-root> quest-shop <new-user-dir>` 1 通过、0 失败，未加载 Game.dll。雷克萨进入陈的触发区域后由原版过场发现任务并生成商店库存、雷霆花和雷霆凤凰；玩家攻击击败凤凰后死亡事件生成蛋，购买酒桶和拾取材料通过玩家命令，随后原脚本完成任务并招募陈。测试直接移动英雄、增加金币、将凤凰设为低生命并使雷克萨无敌，未覆盖自然寻路、完整战斗、窗口画面及原版动态对照。隔离目录 `tmp/docs-artifacts/war3/quest-powerups/shop-natural-1101c/`。此项为既有功能验证补充，不计新功能批次。
