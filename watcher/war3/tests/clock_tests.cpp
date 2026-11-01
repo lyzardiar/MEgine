@@ -1101,6 +1101,37 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";auto make=[&](bool start){auto module=Module::compile(Program::parse({{"retired-collections.j",source,"collection lifecycle"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(start)result->startMain();return result;};auto original=make(true),target=make(false);auto& a=original->runtime();auto& b=target->runtime();auto identity=[](std::string_view,std::uint32_t id){return id;};auto saved=original->encodeCollections(identity),globals=a.encodeGlobals(identity);auto bad=saved;bad.back()^=1;rejects([&]{target->rebuildCollections(bad,{});},"digest");auto mapping=target->rebuildCollections(saved,{});require(mapping.size()==5,"Retired collection identities missing");auto decode=[&](std::string_view type,std::uint32_t id){auto it=mapping.find({std::string(type),id});return it==mapping.end()?0u:it->second;};b.restoreGlobals(globals,decode);for(auto [type,name]:std::initializer_list<std::pair<const char*,const char*>>{{"group","g"},{"force","f"},{"location","p"},{"rect","r"},{"region","area"}})require(b.global(name).bits==mapping.at({type,a.global(name).bits}),"Retired global identity differs");auto inverse=[&](std::string_view type,std::uint32_t id){for(auto& [key,value]:mapping)if(key.first==type && value==id)return key.second;return 0u;};require(target->encodeCollections(inverse)==saved,"Retired collections did not round trip");rejects([&]{target->rebuildCollections(saved,{});},"");
     });
+    test("recovery_bundle_rebuilds_component_graph_but_blocks_main",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type timer extends handle
+ native Player takes integer i returns player
+ native CreateUnit takes player p, integer t, real x, real y, real f returns unit
+ native CreateTimer takes nothing returns timer
+ native TimerStart takes timer t, real timeout, boolean periodic, code handler returns nothing
+ native SelectUnit takes unit u, boolean flag returns nothing
+ native UnitSetUsesAltIcon takes unit u, boolean flag returns nothing
+ globals
+ unit actor=null
+ timer clock=null
+ integer pulses=0
+ endglobals
+ function pulse takes nothing returns nothing
+ set pulses=pulses+1
+ endfunction
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ set actor=CreateUnit(Player(0),'hfoo',0.,0.,0.)
+ set clock=CreateTimer()
+ call TimerStart(clock,1.,true,function pulse)
+ call SelectUnit(actor,true)
+ call UnitSetUsesAltIcon(actor,true)
+ endfunction
+ )jass";auto make=[&](bool start,bool changed=false){auto script=source;if(changed)script+="\n// changed\n";auto module=Module::compile(Program::parse({{"bundle-snapshot.j",script,"recovery bundle"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->audioMuted(true);result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(start)result->startMain();return result;};auto original=make(true),target=make(false);original->advance(.375);auto bundle=original->encodeRecoveryBundle();auto bad=bundle;bad.back()^=1;rejects([&]{target->restoreRecoveryBundle(bad);},"digest");auto content=openSnapshot(bundle,256u*1024u*1024u);Bytes altered(content.begin(),content.end());auto found=std::search(altered.begin(),altered.end(),std::begin("UnitCore"),std::end("UnitCore")-1);require(found!=altered.end(),"Recovery section fixture missing");*found='X';auto missing=sealSnapshot(std::move(altered),256u*1024u*1024u);rejects([&]{target->restoreRecoveryBundle(missing);},"component");require(target->simulationTime()==0 && target->units().empty(),"Rejected recovery bundle modified target");auto different=make(false,true);rejects([&]{different->restoreRecoveryBundle(bundle);},"source");require(!different->configured(),"Partially restored session remained usable");auto mapping=target->restoreRecoveryBundle(bundle);auto& a=original->runtime();auto& b=target->runtime();auto unit=a.global("actor").bits,timer=a.global("clock").bits;require(b.global("actor").bits==mapping.at(unit) && b.global("clock").bits==mapping.at(timer) && target->simulationTime()==original->simulationTime() && target->units().at(mapping.at(unit))->selected && target->units().at(mapping.at(unit))->usesAltMinimapIcon,"Bundle did not restore handles or unit state");auto reverse=[&](std::string_view,std::uint32_t id){for(auto [old,current]:mapping)if(current==id)return old;return 0u;};auto identity=[](std::string_view,std::uint32_t id){return id;};require(original->encodeTimers(identity)==target->encodeTimers(reverse) && original->encodeUnitCore(identity)==target->encodeUnitCore(reverse) && original->encodeSelection(identity)==target->encodeSelection(reverse),"Bundle components differ after restore");rejects([&]{target->startMain();},"recovery is incomplete");rejects([&]{target->restoreRecoveryBundle(bundle);},"");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("selection_snapshot_restores_local_remote_and_controls",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle

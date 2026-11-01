@@ -4889,3 +4889,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 单位选中与选择控制快照（待批次验证）
 
 路径：`src/session.h`、`src/session_collections.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SSEL` 保存本地选中标记、玩家选择集合／修订号及选择控制开关，不重放事件。Win32 Release 核心及 clock 目标编译通过，clock 61 通过、0 失败；OrcX01 隔离恢复并临时绕过启动保护推进 60 秒后，55 个现有组件重编码一致，已观察的选中标记差异消失。日志 `tmp/docs-artifacts/war3/selection-snapshot-clock-01.log`、`tmp/docs-artifacts/war3/orcx-continuation-audit/audit-15.log`。批次验证选择事件与消费者；联机选择同步、界面控制组、完整读档和跨区仍待实现或验收。
+
+
+### 受保护的恢复组件包（待批次验证）
+
+路径：`CMakeLists.txt`、`src/session.h`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SRBF` 封装 55 个现有组件并按依赖顺序重建；结构错误在应用前拒绝，应用阶段失败的目标会话标记为失败。Win32 Release 核心及 clock 目标编译通过，clock 62 通过、0 失败；原版 OrcX01 0／30／150 秒组件包恢复后 55 项重编码一致，前两个时点睡眠线程分别 4／4、3／3。日志 `tmp/docs-artifacts/war3/recovery-bundle-clock-02.log`、`tmp/docs-artifacts/war3/orcx-bundle-audit/`。批次验证多组件错误、引用和睡眠线程；当前不开放恢复后启动，实际存档、跨区和窗口仍待实现或验收。
