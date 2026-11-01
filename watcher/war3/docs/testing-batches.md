@@ -5504,3 +5504,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 分类与目标条目匹配合批结果
 
 范围：`ab33462`、`1ead1d7`、`b035471`。Win32 Release 客户端、研究和运输测试目标编译通过；研究测试进程通过，覆盖相似单位分类、动态分类、武器目标与建筑目标；运输 `flow` **1 通过、0 失败**。日志位于 `tmp/docs-artifacts/war3/research/token-batch-{build,research,transport}.log`，夹具位于 `tmp/docs-artifacts/war3/research/token-batch.w3m`。其他技能组合、自定义目标边界、原版对照和实际对局仍待验证。
+
+
+### 修理目标的完整条目匹配（待功能批次验证）
+
+路径：`src/session_repair.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。修理单位时按完整条目检查空中、地面、建筑及非远古限制，人工与自动修理共用判定。合批使用 `--repair-targets partial` 和 `--repair-targets positive` 分别生成施工夹具，以 `war3_construction_tests <root> <fixture> repair-partial` 和 `repair-positive` 执行，再运行原始施工场景；原版边界及实际对局待验证。本次未执行功能测试。

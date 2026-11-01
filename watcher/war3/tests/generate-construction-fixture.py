@@ -3,6 +3,7 @@ import argparse
 import importlib.util
 import io
 import pathlib
+import struct
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 spec = importlib.util.spec_from_file_location('live_fixture', pathlib.Path(__file__).with_name('generate-live-world-fixture.py'))
@@ -80,6 +81,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data-root', type=pathlib.Path, required=True)
     parser.add_argument('--output', type=pathlib.Path, default=ROOT/'tmp/docs-artifacts/war3/construction/fixture.w3m')
+    parser.add_argument('--repair-targets', choices=['partial', 'positive'])
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only game installation')
@@ -89,6 +91,9 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
+    if args.repair_targets:
+        targets = 'notground,notstructure,notair' if args.repair_targets == 'partial' else 'ground,notair,notnonancient'
+        files['war3map.w3a'] = struct.pack('<II', 2, 1) + b'Arep' + bytes(4) + struct.pack('<I', 1) + b'atar' + struct.pack('<III', 3, 1, 0) + targets.encode('ascii') + b'\0Arep' + struct.pack('<I', 0)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
