@@ -5688,3 +5688,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 电脑营地选择与混合部队合批结果
 
 范围：`32a1065`、`1b75eab`、`5f2347b`、`7f87f8d`、`e0fa4a8` 及路径查询缓存补充。Win32 Release 客户端与 CampaignAI 测试目标编译通过；`reachable` **2 通过、0 失败**，覆盖近战不能对空、可攻击的混合营地、狮鹫对空及步兵跟进；`island-auto`、`island-target` 各 **1 通过、0 失败**，`fog-attack` **2 通过、0 失败**。路径查询缓存调整后重编译并重测 `reachable` 2/0。日志和夹具在 `tmp/docs-artifacts/war3/ai-target-batch/`；原版选点、复杂混编、实际窗口及完整对局仍待验证。
+
+电脑目标补充：攻击回退前复核目标仍存活、未隐藏且敌对，避免向回调中失效或转为友军的目标发出旧订单。重新编译客户端及 CampaignAI 后，`reachable`、`fog-attack`、`island-auto-target-death` 分别 **2/0、2/0、1/0**；日志位于 `tmp/docs-artifacts/war3/ai-target-batch/*-callback.log`。该补充与混合部队任务合并计数。
