@@ -5268,3 +5268,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 禁止保存录像状态恢复（待功能批次验证）
 
 路径：`src/session_match.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SMAT` 版本 2 保存 `DoNotSaveReplay`，旧版默认允许保存；`SRBF` 更新至版本 53。功能批次构建并执行 `war3_clock_tests <data-root> <output-root>`，验证恢复包与对局状态往返；另需覆盖旧版、损坏标志、实际读档和未来单机录像消费。本次未执行功能编译或测试，恢复启动保护保留。
+
+
+### 合体施法预约恢复（待功能批次验证）
+
+路径：`src/session_cast_snapshot.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCST` 版本 2 保存并核对 `Acoa`／`Acoh`／`Acoi` 合体目标预约，`SRBF` 更新至版本 54。合批构建并执行 `war3_clock_tests <data-root> <output-root>`，核对竞争、恢复和停止后释放；另需覆盖目标移除、重复／损坏预约、旧版及实际存读档。当前未执行功能编译或测试，恢复启动保护保留。
