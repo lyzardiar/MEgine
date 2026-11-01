@@ -5549,3 +5549,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 修理无敌单位的目标许可（待功能批次验证）
 
 路径：`src/session_repair.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。建筑或机械单位无敌时，修理能力需包含 `invu` 或 `invulnerable` 目标条目；该检查覆盖直接命令、自动修理和持续阶段。合批分别生成 `--repair-targets vulnerable`、`invu`、`invulnerable` 夹具并执行对应 `repair-*` 模式，覆盖无敌状态变化及两种许可；原版边界和实际对局待验证。本次未执行功能测试。
+
+
+### 修理扣费回调的订单一致性（待功能批次验证）
+
+路径：`src/session_repair.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。单位修理扣费回调后重新核对订单序号、所有权、技能及目标生命／身份，避免失效订单继续结算。合批生成普通施工夹具并运行 `war3_construction_tests <root> <fixture> repair-callback`，覆盖脚本在扣费事件中对同一目标重新发令；其他回调、原版事件时序与实际对局待验证。本次未执行功能测试。

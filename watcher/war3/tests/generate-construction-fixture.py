@@ -19,6 +19,9 @@ unit probe_upgrade=null
 integer probe_upgrade_started=0
 integer probe_upgrade_cancelled=0
 integer probe_upgrade_finished=0
+unit probe_repair_worker=null
+unit probe_repair_target=null
+integer probe_repair_reissued=0
 endglobals
 function ProbeStart takes nothing returns nothing
     set probe_started=probe_started+1
@@ -51,6 +54,20 @@ function ProbeUpgradeFinish takes nothing returns nothing
         call ExecuteFunc("ConstructionFailure_upgrade_finish_context")
     endif
     set probe_upgrade_finished=probe_upgrade_finished+1
+endfunction
+function ProbeRepairPayment takes nothing returns nothing
+    if probe_repair_reissued==0 then
+        set probe_repair_reissued=1
+        call IssueTargetOrderById(probe_repair_worker,852024,probe_repair_target)
+    endif
+endfunction
+function ProbeRepairSetup takes unit worker, unit target returns nothing
+    local trigger t=CreateTrigger()
+    set probe_repair_worker=worker
+    set probe_repair_target=target
+    set probe_repair_reissued=0
+    call TriggerRegisterPlayerStateEvent(t,Player(0),PLAYER_STATE_RESOURCE_GOLD,LESS_THAN,100.0)
+    call TriggerAddAction(t,function ProbeRepairPayment)
 endfunction
 function config takes nothing returns nothing
 endfunction
