@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合目标法术合批结果
+
+范围：`be2b8dd`、`0bd5924`、`ea64497`。Win32 Release 客户端、control、spell、caster 测试目标构建通过，control 目标有既有变量遮蔽警告。复合夹具的 `item-combined-control-family`、`item-combined-caster-family`、`item-combined-mind-rot`、`item-combined-caster`、`item-combined-spirit-target`、`item-combined`、`item-combined-target-reentry` 各 1 项通过；spell 的 `mind-rot`、`spell-shield`、`unit-area-heal` 各 1 项通过，caster 的 `targets` 6 项通过，control 的 `flow` 1 项通过，合计 17 通过、0 失败。`mind-rot` 首次使用不含所需物品的夹具失败，改用专用夹具后通过。日志及复合夹具在 `tmp/docs-artifacts/war3/combined-spell-batch/`；spell 分别使用 `tmp/docs-artifacts/war3/mind-rot/fixture.w3m` 和 `tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m`，caster 使用 `tmp/docs-artifacts/war3/caster-spells/targets-fixture.w3m`。其他目标技能与混合目标、复合施法前摇／弹道、原版时序、多人和实际窗口仍待验证。
+
+
 ### 复合物品的单位目标控制（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。目标型复合物品接入诱捕、蛛网、睡眠、净化、虚无、妖术、变羊和龙卷风，复用现有目标条件、法术护盾与控制状态；命令界面识别对应复合物品的单位目标。合批生成复合夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-control-family`、`item-combined-caster-family`、`item-combined-mind-rot` 及普通控制回归；树木净化、复合技能前摇／弹道、原版时序、多人和窗口待验证。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
