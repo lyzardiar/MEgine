@@ -5336,3 +5336,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 脚本保存请求（待功能批次验证）
 
 路径：`src/session.h`、`src/session_campaign.cpp`、`src/session_tick.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SaveGame` 在本地脚本线程中请求检查点，会话边界发布 `WSAV` 文件、分发保存事件并唤醒调用线程。合批编译运行 `war3_clock_tests <data-root> <output-root>`，覆盖隔离文件、调用线程等待及恢复后的续行；并发、暂停、失败、事件时序、原版战役、`LoadGame` 和可玩恢复仍待验证或实现。本次未编译或执行测试，恢复启动保护保留。
+
+脚本保存夹具补充实际保存事件及 `GetSaveBasicFilename`，检查发布后通知一次并保存调用前的事件状态；该时序的原版一致性仍待对照，夹具待同批执行。
