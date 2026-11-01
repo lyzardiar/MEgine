@@ -5302,3 +5302,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 攻击被动累计状态恢复（待功能批次验证）
 
 路径：`src/session.h`、`src/session_buff_snapshot.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SAPV` 保存暴击概率累计、掠夺资源余量及腐蚀持续伤害，`SRBF` 更新至版本 57。合批构建并执行 `war3_clock_tests <data-root> <output-root>`，检查三类状态的映射往返；后续覆盖失效来源、损坏数据、连续攻击／支付／跳伤、真实存读档和原版行为。本次未执行功能编译或测试，恢复启动保护保留。
+
+攻击被动恢复夹具补充已移除的腐蚀来源，以及摘要损坏／错误句柄映射拒绝后的状态不变检查；这些场景待功能批次执行。
