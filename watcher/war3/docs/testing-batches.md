@@ -5641,3 +5641,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 中立商店显形目标的 Esc 取消（待功能批次验证）
 
 路径：`src/game_view.cpp`。选择显形位置时按 Esc 会先退出目标模式，保留游戏菜单关闭状态；其他技能与商店目标的 Esc 一并屏蔽后续菜单输入。合批编译客户端；窗口可用时检查显形、商店选择、技能目标、Esc 和菜单切换，原版交互待对照。本次未执行功能测试。
+
+
+### 英雄栏与目标取消合批编译（窗口待验）
+
+范围：`cc6a24f`、`5ea842a`、`abd46c1`。Win32 Release 客户端编译通过，日志位于 `tmp/docs-artifacts/war3/target-ui-batch/build.log`。本批没有可替代实际窗口输入的功能测试；英雄栏目标、右键与 Esc 取消、显形和商店模式仍列为待测。本机先前的 D3D9 创建设备失败证据为 `tmp/docs-artifacts/war3/manual-save-batch/ui/game.log`，本次环境未变化，未重复启动窗口。
