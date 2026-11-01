@@ -5484,3 +5484,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`b951d93`、`a9dc893`、`1c4b924`、`3310cac`。Win32 Release 客户端、会话与运输测试目标编译通过；会话套件 **120 通过、0 失败**，覆盖旧安装 `Maps` 路径迁移、地图摘要不匹配、存档替换后恢复拒绝及当前摘要恢复。运输 `crash-revive`、`crash-remove`、`crash-damage`、`crash` 各 **1 通过、0 失败**，覆盖脚本伤害回调复活／移除载具与既有坠毁场景。日志位于 `tmp/docs-artifacts/war3/loadgame-handoff/identity-cargo-batch-{build,clock}.log` 及 `tmp/docs-artifacts/war3/transport/crash*-identity-batch.log`。
 
 窗口交互、实际目录迁移后的客户端加载、地图准备与加载之间替换文件、乘员转移及原版事件时序仍待验证；本机 D3D9 创建设备失败的窗口诊断沿用前批结果，未重复执行。
+
+
+### 单位分类的完整条目匹配（待功能批次验证）
+
+路径：`src/entities.h`、单位／技能／运输等分类消费者、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。单位分类按逗号分隔的完整条目匹配，动态添加的分类不被相似文本掩盖；技能目标、运输、修理和状态判定共用该规则。合批生成研究夹具并运行 `war3_research_tests <root> <fixture>`，覆盖相似分类、添加／移除、运输拒绝和允许；其他技能组合、原版边界及实际对局待验证。本次未执行功能测试。
