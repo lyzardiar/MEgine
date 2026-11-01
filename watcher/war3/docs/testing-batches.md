@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 消耗品目标生命周期合批结果
+
+范围：`638141b`、`ab33f46`、`d7f2c90`。Win32 Release 客户端及 control、spell、consumption 测试目标构建通过，control 目标有既有变量遮蔽警告。control 的 `item-normal-target-reentry`、`item-protection-reentry`、`item-combined-target-reentry`、`item-combined`、`item-combined-area`、`item-combined-dispel`、`item-combined-support`、`item-combined-status` 各 1 项通过；spell 的 `unit-area-heal`、`shield-rune`、`rebirth-rune`、`chain-dispel` 各 1 项通过；consumption 的 `protection`、`moon` 各 1 项通过，合计 14 通过、0 失败。新夹具和日志在 `tmp/docs-artifacts/war3/consumable-reentry-batch/`，spell 使用 `tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m`。Spirit Link 的独立目标处理、原版动态回调时序、多人同步和实际窗口仍待验证。
+
+
 ### 普通范围消耗品的目标重入（待功能批次验证）
 
 路径：`src/session_consumables.cpp`、`tests/control_tests.cpp`。普通消耗品在施法前记录预选目标的死亡与归属轮次；逐个执行时检查使用者状态及目标轮次，避免回调后对已易主或复活的目标继续执行旧效果。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；`item-normal-target-reentry` 最小复现 1 通过、0 失败，覆盖范围护甲卷轴的目标易主与复活。合批回归普通恢复／防护／驱散及复合目标重入；Spirit Link 的独立目标处理、原版时序、多人和窗口待对照。日志与夹具：`tmp/docs-artifacts/war3/consumable-reentry/`。
