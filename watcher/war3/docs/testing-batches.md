@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 存档错误提示换行（待批次验证）
+
+路径：`src/game_flow_ui.cpp`。游戏内保存和加载错误按原字体度量换行并显示带背景的提示区域，长错误文本不再受单行高度限制。Win32 Release 客户端编译通过。批次检查缺失地图路径、存档错误与列表操作；实际窗口、长路径及不同语言布局待验证。
+
+
 ### 存档确认与错误提示批次（逻辑验证完成，窗口待验收）
 
 范围：`de00802`、`39f970a`、`3e01534` 及测试补充 `58ae831`。Win32 Release 客户端、clock 和 save-exists 测试程序编译通过；`WAR3_CLOCK_FILTER=recovery_bundle_rebuilds_component_graph_but_blocks_main war3_clock_tests <data-root> <output-root>` 与 `war3_save_exists_tests <data-root> <OrcX01.w3x> <scratch-root>` 各 1 通过，共 **2 通过、0 失败**，目录链接创建因环境条件跳过。检查点用例首次将内部摘要错误当作地图缺失，修正夹具后重测通过；覆盖缺失／错误身份、损坏摘要及记录的地图路径。只读原安装的 `UI/FrameDef/GlobalStrings.fdf` 确认五个使用的文本键存在，三个文件名／地图模板各含一个 `%s`。日志及源字符串摘录位于 `tmp/docs-artifacts/war3/save-localization-batch/`。图形设备不可用，确认框布局、多语言显示、长名称、异步预览切换及实际窗口的保存／加载操作仍待验证。
