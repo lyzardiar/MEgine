@@ -4782,3 +4782,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 会话内 gamecache 快照（待批次验证）
 
 路径：`src/session.h`、`src/session_cache.cpp`、`tests/clock_tests.cpp`、`tests/orc_campaign_chain_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCAC` 保存未写盘的缓存对象、内容和脚本句柄；复用现有版本 8 编码，不写入用户缓存文件，存在待同步动作时拒绝采集。Win32 Release 核心和测试目标编译通过；clock 45/45，原版 OrcX01 玩家配置／统计／迷雾／gamecache 隔离往返 1/1，磁盘 gamecache v1–v8 保存／加载回归输出 PASS。原图检查人工加入一项缓存值，未重建完整脚本全局或续行。批次验证跨组件句柄映射、同步队列时序、缓存读写与多区域切换；完整存档、原版格式及窗口仍未实现或验收。产物 `tmp/docs-artifacts/war3/gamecache-snapshot/`。
+
+### 脚本哈希表快照（待批次验证）
+
+路径：`src/session.h`、`src/session_hashtable.cpp`、`tests/clock_tests.cpp`、`tests/dota_heroes_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SHTB` 保存哈希表基本值和句柄，并通过两阶段恢复循环引用；检查地图、时钟、脚本摘要、映射及数量。Win32 Release 核心和测试目标编译通过；clock 46/46；DotA 原图开局两张表的隔离重建 1/1，手动重建一个被引用单位，未加载 Game.dll。批次验证其他句柄类型、映射和对象生命周期、完整全局恢复及继续对局；真实存档／载入、跨区、原版格式和窗口仍待实现或验收。产物 `tmp/docs-artifacts/war3/hashtable-snapshot/`。

@@ -267,3 +267,9 @@ Win32 Release 核心、clock 和兽族战役测试目标编译通过；`war3_clo
 `SCAC` 复用独立 gamecache 的现有版本 8 编码，保存会话中缓存的稳定句柄、规范化名称以及内存中的整数、实数、布尔、字符串和单位记录，不要求这些修改已写盘。重建检查地图摘要、模拟时钟、数量、身份和每份缓存内容，完成校验后创建句柄；脚本全局由调用方使用返回的映射另行恢复。存在待发送的缓存同步动作时拒绝快照，恢复前需先完成本地同步；该组件不读取或写入用户缓存文件，也未接入整体保存／载入。
 
 Win32 Release 核心、clock、兽族战役和 game-flow 测试目标编译通过；`war3_clock_tests <data-root> <output-root>` 45 通过、0 失败，覆盖未写盘的四种基本值和英雄记录、脚本全局／名称身份、待同步拒绝、损坏和嵌套缓存损坏拒绝及空快照重复恢复拒绝。`war3_orc_campaign_chain_tests <data-root> fog-snapshot <new-user-dir>` 对原版 OrcX01 模拟 150 秒，将人为加入的一项未写盘缓存值与玩家配置、统计及迷雾一起重建并检查往返，1/1；`war3_game_flow_tests <data-root> <fixture> cache-damage` 输出 PASS，覆盖既有磁盘缓存版本 1–8 读取及保存。独立测试未创建用户 gamecache 文件；前两项未加载 Game.dll。完整脚本全局、其他世界对象、跨区续行、原版缓存格式及实际窗口仍待完成或验证；临时目录 `tmp/docs-artifacts/war3/gamecache-snapshot/`。
+
+### 脚本哈希表
+
+`SHTB` 保存哈希表句柄与整数、实数、布尔、字符串和带类型句柄的键值。表之间可互相引用或引用自身；重建先校验全部条目和外部映射，再建立表身份并连接内部引用。单位、物品、可破坏物及 widget 引用检查目标对象类型，已移除但仍有身份的对象可继续被引用；其他外部句柄由调用方先恢复并提供正确映射。组件核对地图、模拟时钟和全部 JASS 源文件摘要，限制数量及大小，并拒绝冲突映射和重复恢复；尚未接入完整保存／载入。
+
+Win32 Release 核心、clock 和 DotA 测试目标编译通过；`war3_clock_tests <data-root> <output-root>` 46 通过、0 失败，覆盖同键多类型、空句柄、表的循环／自引用、活动及已移除单位、widget 别名、脚本全局、冲突／错误类型映射和脚本变化拒绝。`war3_dota_heroes_tests <data-root> <DotA map> hashtable-snapshot` 在原图初始化并模拟 0.25 秒后采集两张哈希表，在新会话手动创建一个对应单位，再重建并重编码一致，1/1；均未加载 Game.dll。原图其余世界对象、全部句柄类型、恢复后的模拟及完整存档仍待验证，产物 `tmp/docs-artifacts/war3/hashtable-snapshot/`。
