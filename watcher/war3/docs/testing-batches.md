@@ -4691,4 +4691,6 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 
 ### 攻击弹道快照（待批次验证）
 
-路径：`src/session_projectile_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SPRJ` 保存普通与视觉回程攻击弹道、发射时武器和被动定义、飞行状态及目标历史，并核对重建后的活动与失效句柄。Win32 Release 客户端及 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 34 通过、0 失败，覆盖毒性被动、移除单位、错误映射及损坏拒绝。OrcX01 原图 35.5625 秒的一枚攻击弹道快照重建后往返一致；探针 `tmp/docs-artifacts/war3/attack-projectile-snapshot/probe/`，未加载 Game.dll。法术弹道、蜘蛛附件效果和事件、完整世界及读档尚未完成；恢复后续飞行与命中、视觉回程、弹跳、反射、物品／可破坏物目标和窗口待批次验证或实现。
+路径：`src/session_projectile_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SPRJ` 保存普通与视觉回程攻击弹道、发射时武器和被动定义、飞行状态及目标历史，并核对重建后的活动与失效句柄。Win32 Release 客户端及 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 34 通过、0 失败，覆盖毒性被动、移除单位、错误映射及损坏拒绝。OrcX01 原图 35.5625 秒的一枚攻击弹道快照重建后往返一致；探针 `tmp/docs-artifacts/war3/attack-projectile-snapshot/probe/`，未加载 Game.dll。法术弹道、蜘蛛附件效果和事件、完整世界及读档尚未完成；恢复后续飞行与命中、视觉回程续播、弹跳、反射、物品／可破坏物目标和窗口待批次验证或实现。
+
+蜘蛛回程验证补充：`tests/clock_tests.cpp` 在隔离会话中让穴居恶魔实际发射并等待蜘蛛视觉回程，再重建单位身份和核心状态、恢复弹道并核对完整快照往返；Win32 Release clock 34 通过、0 失败，未加载 Game.dll。该验证不包含恢复后的实际续播或蜘蛛附件及事件恢复，不单独计入功能批次。
