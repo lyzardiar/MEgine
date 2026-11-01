@@ -4966,3 +4966,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### AI 组件包恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_ai.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SRBF` 版本 8 按共享调度顺序恢复 AI 实例、私有全局、策略状态及共享线程，校验暂停状态。Win32 Release 构建通过，clock 66/66，日志 `tmp/docs-artifacts/war3/ai-bundle-recovery/clock-final.log`。隔离夹具临时绕过恢复保护后续行 60 秒，25 项状态按对象映射一致；原版 Booty Bay 在全局句柄映射时失败，日志见 `tmp/docs-artifacts/war3/ai-continuation-audit/`。待修复原图引用并验证 AI 实战续行、完整状态及实际存档；恢复启动保护保留。
+
+
+### 计时器对话框恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_dialogs.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`STDL` 重建计时器对话框及计时器映射，`SRBF` 更新至版本 9。Win32 Release 构建通过，clock 67/67，日志 `tmp/docs-artifacts/war3/timer-dialog-recovery/clock-03.log`；Booty Bay 人族电脑隔离续行 60 秒时，临时绕过启动保护并按新对象顺序映射后 26 项状态一致，日志 `tmp/docs-artifacts/war3/ai-continuation-audit/audit-06.log`。待阶段验证真实存档、实时倒计时、UI 显示、玩家操作和其他地图；组件包启动保护保留。

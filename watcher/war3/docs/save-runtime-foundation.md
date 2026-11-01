@@ -414,3 +414,8 @@ Win32 Release 核心及 clock 目标编译通过，clock 65/65。原版 `human.a
 `SRBF` 版本 8 增加 `SAIL` AI 实例组件，按原共享调度器链接顺序保存玩家、策略来源、私有全局及 `SAIS` 策略状态，并用 `JSSH` 恢复地图和 AI 的共享睡眠线程；恢复时校验暂停状态。组件结构错误在应用前拒绝，应用阶段失败的会话须丢弃。旧版组件包不受理，恢复后启动保护保留，尚未接入实际保存／载入。
 
 Win32 Release 核心及 clock 目标编译通过，clock 66/66；夹具覆盖 AI 状态和全局、单位非恒等映射、暂停、损坏拒绝以及两个原版 AI 的链接顺序。隔离诊断临时绕过启动保护，在战役 AI 夹具中恢复后各推进 60 秒，按新增对象创建顺序映射后 25 项状态一致，日志 `tmp/docs-artifacts/war3/ai-continuation-audit/audit-02.log`。原版 Booty Bay 人族电脑在恢复全局句柄映射时失败，日志 `tmp/docs-artifacts/war3/ai-continuation-audit/audit-03.log`；真实地图引用、完整世界状态、实战续行及实际存档仍待完成和验证。
+
+
+`STDL` 保存计时器对话框身份及销毁状态、计时器引用、标题、颜色、显示状态和速度；实时倒计时保存采集时剩余秒数，恢复后从该剩余值继续。先重建计时器，再重建对话框并映射引用。`SRBF` 版本 9 纳入该组件，旧版本组件包不受理，恢复后启动保护保留。
+
+Win32 Release 构建通过，clock 67/67，覆盖非恒等句柄、销毁对话框、显示属性、计时器和实时倒计时；日志 `tmp/docs-artifacts/war3/timer-dialog-recovery/clock-03.log`。原版 Booty Bay 人族电脑在 10 秒时采集，隔离诊断临时绕过启动保护后各推进 60 秒，新增对象数量及类型顺序一致，按创建顺序映射后 26 项状态重编码一致，日志 `tmp/docs-artifacts/war3/ai-continuation-audit/audit-06.log`。该结果未覆盖全部状态、玩家操作、真实读档及 UI 实际显示，恢复保护和阶段验证仍需保留。
