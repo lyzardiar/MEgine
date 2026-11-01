@@ -5156,3 +5156,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 地图与主题音乐恢复（待批次验证）
 
 路径：src/music.h、src/music.cpp、src/session.h、src/session_music.cpp、src/session_recovery_bundle.cpp、tests/music_tests.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SMUS 保存音乐播放和调度状态，SRBF 更新至版本 48。批次构建 `war3_clock_tests` 和 `war3_music_tests`，执行 `war3_clock_tests <data-root> <output-root>` 及 `war3_music_tests <data-root> <output-root>`，核对暂停位置、曲目随机序列、损坏拒绝和主题音乐结束后的地图音乐恢复；真实设备、墙钟定时及游戏读档另行验收。状态：已实现，未编译，未测试。
+
+### 待播放音效请求恢复（待批次验证）
+
+路径：src/session.h、src/session_sound.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SSRQ 保存音效请求队列，SRBF 更新至版本 49。与界面请求及音乐状态合批构建 `war3_clock_tests`、`war3_music_tests`，执行各目标 `<data-root> <output-root>`，核对技能音效顺序和单次消费；真实设备与游戏读档另行验收。状态：已实现，未编译，未测试。
