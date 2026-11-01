@@ -5398,3 +5398,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 游戏内本地读档（待功能批次验证）
 
 路径：`src/session.h`、`src/session_campaign.cpp`、`src/game_flow_ui.{h,cpp}`、`tests/clock_tests.cpp`。单人 ESC 菜单复用原 `EscMenuSaveGamePanel.fdf` 的读档控件，从 `Saves/Manual` 选择存档；地图及检查点校验成功后进入既有异步地图准备与恢复流程，校验失败保留当前对局并提示。联机会话不开放。合批构建客户端和会话套件，覆盖有效／缺失检查点、恢复和地图交接；窗口选择、错误提示、不同地图与原版交互仍待验证。本次未执行功能测试。
+
+
+### 单人菜单读档列表（待功能批次验证）
+
+路径：`src/saved_game_browser.{h,cpp}`、`src/main.cpp`、`CMakeLists.txt`。单人菜单接入原 `LoadSavedGameScreen.fdf`，列出独立用户目录中的手动存档，支持选择、键盘导航、滚轮和双击，并通过地图摘要定位后进入异步恢复。地图须位于游戏 `Maps` 目录；外部地图迁移、地图预览及原版存档格式仍待实现。合批构建客户端并检查空列表、键鼠导航、错误存档、战役／普通地图恢复和返回；本次未执行功能测试。
