@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 非正数量转换（待功能批次验证，2/3）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。电脑拥有存活单位时，`ConvertUnits` 的非正数量直接成功，不检查类型或下达命令；正数量不再由固定 1024 限制截断。原版 1.27 `0x6f899adb` 在遍历到单位后，`0x6f899ae3` 对非正剩余数量返回成功。合批运行 CampaignAI `convert-empty` 与转换相关回归，检查空请求和无效类型；原版空单位链、候选顺序、末个候选及回调时序仍待对照。本次未执行功能测试。
+
+
 ### AI 负数量生产（待功能批次验证，1/3）
 
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`。`SetProduce` 的负数量按 32 位计数逐项尝试，失败时保留已排队项目；零数量仍立即成功。原版 1.27 `0x6f894959` 对非零计数进入生产循环，每次成功后递减，失败返回零。合批运行 CampaignAI `produce-many`、`produce-zero` 和生产回归，核对负数量的部分队列、资源与容量；生产回调重入、原版动态极值及完整对局仍待验证。本次未执行功能测试。
