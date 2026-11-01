@@ -259,8 +259,9 @@ class ScriptSession {
     void aiPurchaseZeppelinTick(ScriptAI& ai);
     bool aiTransportReady(ScriptAI& ai,const UnitState& carrier);
     bool aiHasTransport(ScriptAI& ai);
-    bool aiCanTransportTo(ScriptAI& ai,const UnitState& passenger,WorldPoint destination);
-    void aiLoadZeppelinWave(ScriptAI& ai,WorldPoint destination,bool disconnectedOnly=false);
+    std::optional<bool> aiGroundReachable(const UnitState& passenger,WorldPoint destination,std::uint32_t target=0);
+    bool aiCanTransportTo(ScriptAI& ai,const UnitState& passenger,WorldPoint destination,std::uint32_t target=0);
+    void aiLoadZeppelinWave(ScriptAI& ai,WorldPoint destination,bool disconnectedOnly=false,std::uint32_t target=0);
     void aiZeppelinWaveTick(ScriptAI& ai);
     void aiContinueZeppelinWave(ScriptAI& ai);
     void aiCancelBoarding(unsigned owner,std::uint32_t passenger,std::uint32_t carrier);
