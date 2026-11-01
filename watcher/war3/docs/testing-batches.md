@@ -5514,3 +5514,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 无敌树木采集目标的完整条目匹配（待功能批次验证）
 
 路径：`src/session_lumber.cpp`、`tests/generate-harvest-fixture.py`、`tests/harvest_tests.cpp`。采集命令及持续采集按完整 `invu` 或 `invulnerable` 条目判定无敌树木。合批分别使用 `--tree-targets partial`、`invu`、`invulnerable` 生成夹具，并以对应 `tree-partial`、`tree-invu`、`tree-invulnerable` 模式运行 `war3_harvest_tests`，覆盖命令与目标状态变化；自动寻找树木及原版边界仍待验证。本次未执行功能测试。
+
+
+### 战斗与建筑等路径的单位分类匹配（待功能批次验证）
+
+路径：`src/session_{ai_economy,ai_natives,arrow_status,construction,militia,orders,sacrifice_pit,teleport,weapons}.cpp`、`tests/research_tests.cpp`。攻击、传送、黑暗之箭、祭献、建造、民兵、命令及 AI 读取单位分类时按完整条目判断。合批运行研究夹具与 `war3_research_tests <root> <fixture>`，检查攻击相似守卫分类；其他具体技能、AI 与原版对局仍待专项验证。本次未执行功能测试。
