@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 限时生命、死亡与恢复合批结果
+
+范围：`e14a290`、`433e206`、`dafdc55`，以及本次英雄等级恢复顺序修复。Win32 Release 客户端、passive 和 clock 测试目标构建通过。`war3_passive_tests` 的 `timed-life-death`、`timed-life-rebirth`、`timed-life-multiple`、`timed-life-buff-id`、`timed-life-summoned`、`buff-timed-life`、`buff-timed-critter`、`buff-permanent-critter`、`mechanical-critter-real`、`buff-filter-semantics` 共 10 项通过；`WAR3_CLOCK_FILTER` 指定召唤快照及死亡重生恢复各 1 项通过。死亡重生快照初次因英雄等级恢复顺序失败，修复后两项相关快照复测通过；额外断言高等级英雄属性恢复通过。日志及夹具位于 `tmp/docs-artifacts/war3/multiple-timed-life/` 和 `tmp/docs-artifacts/war3/timed-critters-batch/`。旧版 SUMM v4 的实际恢复、原版动态时序与特殊 Buff、熔岩分裂交互及实际窗口显示仍待验证；完整原版玩法仍未完成。
+
+
 ### 单位死亡时的限时状态清理（待功能批次验证）
 
 路径：`src/session_callbacks.cpp`、`tests/passive_tests.cpp`。普通死亡进入尸体流程时清除未到期的全部限时状态及其能力，英雄复活后不再沿用死亡前计时；重生技能的死亡处理沿用现有分支。合批运行 `war3_passive_tests <data-root> <fixture> timed-life-death`，覆盖不同编号的计时器、死亡和英雄复活；原版死亡时特殊 Buff、重生与事件重入仍需动态对照。Win32 Release 客户端及测试目标构建通过；本次未执行功能测试。
