@@ -4768,3 +4768,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家配置与外交快照（待批次验证）
 
 路径：`src/session.h`、`src/session_game.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`PCFG` 保存玩家配置、双向联盟和税率，创建单位前校验并事务性恢复。Win32 Release 核心和 clock 目标编译通过，`war3_clock_tests <data-root> <output-root>` 43 通过、0 失败；隔离脚本覆盖联盟、税率、名称、让分及恢复后的单位生命，损坏摘要、不同本地玩家和无效队伍被拒绝，未加载 Game.dll。批次验证原图联盟、共享控制／视野和地图身份、跨组件恢复顺序与继续对局；完整保存／载入和原版格式仍未实现。产物 `tmp/docs-artifacts/war3/player-config-snapshot/output-02/`。
+
+### 迷雾与修改器快照（待批次验证）
+
+路径：`src/fog_grid.h`、`src/session.h`、`src/session_fog.cpp`、`tests/clock_tests.cpp`、`tests/orc_campaign_chain_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SFOG` 保存探索／可见格、开关、节拍与迷雾修改器身份；检查地图、时钟和数据后重建。Win32 Release 核心、clock 和兽族战役测试目标编译通过；clock 44 通过、0 失败；隔离原版 `OrcX01` 150 秒玩家配置／统计／迷雾组合快照往返 1/1，均未加载 Game.dll。批次验证相关玩家和单位状态组合、自然对局续行、共享视野、不同地图与缓存失效；临时显形和哨兵状态、完整跨区、原版存档和窗口仍未验证或实现。产物 `tmp/docs-artifacts/war3/fog-state-snapshot/`。

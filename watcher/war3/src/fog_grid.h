@@ -5,6 +5,7 @@
 namespace war3 {
 struct FogModifier {unsigned owner=0,state=4;WorldRect rect;WorldPoint center;jass::Real radius;bool radial=false,shared=false,afterUnits=false,enabled=false;};
 class FogGrid {
+    friend class ScriptSession;
     Bytes explored_,visible_,boundary_,states_;
 public:
     unsigned width,height;
