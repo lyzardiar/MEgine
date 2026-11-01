@@ -20,6 +20,7 @@
 
 namespace war3 {
 inline bool unitClassContains(std::string_view classes,std::string_view name) {while(!classes.empty()){auto end=classes.find(',');auto part=classes.substr(0,end);auto first=part.find_first_not_of(" \t\r\n");if(first!=std::string_view::npos && part.substr(first,part.find_last_not_of(" \t\r\n")-first+1)==name)return true;if(end==std::string_view::npos)break;classes.remove_prefix(end+1);}return false;}
+inline bool targetListContains(std::string_view targets,std::string_view name) {return unitClassContains(targets,name);}
 struct TimedLife {std::uint32_t buff=0;double duration=0,remaining=0;bool paused=false;};
 struct UnsummonOrder {unsigned owner=0;std::uint32_t caster=0,ability=0;std::uint64_t ticket=0;float initialLife=0,maximumLife=0,rate=0,factor=0;double drained=0;int gold=0,lumber=0,returnedGold=0,returnedLumber=0;};
 struct BookSelection {unsigned level=0;std::vector<std::uint32_t> spells;};

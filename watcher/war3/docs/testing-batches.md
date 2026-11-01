@@ -5489,3 +5489,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 单位分类的完整条目匹配（待功能批次验证）
 
 路径：`src/entities.h`、单位／技能／运输等分类消费者、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。单位分类按逗号分隔的完整条目匹配，动态添加的分类不被相似文本掩盖；技能目标、运输、修理和状态判定共用该规则。合批生成研究夹具并运行 `war3_research_tests <root> <fixture>`，覆盖相似分类、添加／移除、运输拒绝和允许；其他技能组合、原版边界及实际对局待验证。本次未执行功能测试。
+
+
+### 武器攻击目标的完整条目匹配（待功能批次验证）
+
+路径：`src/entities.h`、`src/session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。单位类型与单位实例的对空、对地分类按武器目标列表的完整条目判定。合批生成研究夹具并运行 `war3_research_tests <root> <fixture>`，覆盖相似目标名称和原始地面目标；自定义武器与实际对局待验证。本次未执行功能测试。

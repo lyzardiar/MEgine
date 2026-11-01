@@ -93,7 +93,7 @@ def main():
     units = [(b'hbla', 'ures', 'R0T1,Rhar'), (b'hfoo', 'upgr', 'R0T1,Rhar')]
     custom = b'z0u1'
     custom_changes = [('utyp', 'Mechanical,Peon,Summoned'), ('umvt', 'fly')]
-    files['war3map.w3u'] = struct.pack('<II', 2, len(units)) + b''.join(unit + bytes(4) + struct.pack('<I', 1) + modification(field, value, unit) for unit, field, value in units) + struct.pack('<I', 2) + b'hfoo' + custom + struct.pack('<I', len(custom_changes)) + b''.join(modification(field, value, custom) for field, value in custom_changes) + b'hfoo' + b'z0u2' + struct.pack('<I', 1) + modification('utyp', 'notsummoned,notmechanical,notward,notancient,notsapper', b'z0u2')
+    files['war3map.w3u'] = struct.pack('<II', 2, len(units)) + b''.join(unit + bytes(4) + struct.pack('<I', 1) + modification(field, value, unit) for unit, field, value in units) + struct.pack('<I', 3) + b'hfoo' + custom + struct.pack('<I', len(custom_changes)) + b''.join(modification(field, value, custom) for field, value in custom_changes) + b'hfoo' + b'z0u2' + struct.pack('<I', 1) + modification('utyp', 'notsummoned,notmechanical,notward,notancient,notsapper', b'z0u2') + b'hfoo' + b'z0u3' + struct.pack('<I', 1) + modification('ua1g', 'notair,notground,notstructure', b'z0u3')
     base_buff, custom_buff = b'Bblo', b'B0T1'
     original_buff_changes = [('ftip', 'Base buff title'), ('fube', 'Base buff description'), ('fart', 'BaseBuffIcon.blp'), ('ftat', 'BaseBuffEffect.mdx')]
     custom_buff_changes = [('ftip', 'Custom buff title'), ('fart', 'CustomBuffIcon.blp')]
