@@ -4872,3 +4872,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 新单位移动调度相位恢复（待批次验证）
 
 路径：`src/session.h`、`src/session_entities.cpp`、`src/session_unit_movement.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SMPS` 在其他对象重建完成后校准未来单位的路线重试相位。Win32 Release 核心与 clock 目标编译通过，clock 59 通过、0 失败。OrcX01 150 秒隔离恢复诊断临时绕过启动保护后，按创建次序映射新对象，推进一秒及五秒的 53 个现有组件均重编码一致；日志 `tmp/docs-artifacts/war3/future-movement-phase-clock-02.log`、`tmp/docs-artifacts/war3/orcx-continuation-audit/audit-09.log`、`audit-10.log`。批次验证路径与常驻技能消费者；完整句柄语义、长时间恢复、实际存档与跨区仍待实现或验收。
+
+
+### 单位隐身、睡眠与小地图标记快照（待批次验证）
+
+路径：`src/session.h`、`src/session_stealth_reveal.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SHID` 保存永久隐身计时、影遁／自然睡眠和小地图替代图标标记。Win32 Release 核心及 clock 目标编译通过，clock 60 通过、0 失败；原版隔离恢复后临时绕过启动保护推进 60 秒，54 个现有组件重编码一致，隐身计时及替代图标直接比较差异消失，1 个单位选中状态仍不同。日志 `tmp/docs-artifacts/war3/unit-stealth-snapshot-clock-01.log`、`tmp/docs-artifacts/war3/orcx-continuation-audit/audit-14.log`。批次验证隐身、路径调度和常驻技能消费者；选中状态、完整读档、视野来源、窗口与跨区仍待实现或验收。

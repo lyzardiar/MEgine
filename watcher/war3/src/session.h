@@ -298,7 +298,7 @@ class ScriptSession {
     AudioRandom gameRandom_{0x69707365u};
     std::array<AudioRandom,45> auxiliaryRandom_{};
     int stockItemSlots_=12,stockUnitSlots_=12;
-    bool shopStockRestored_=false,unitSummonsRestored_=false,productionRestored_=false,cargoRestored_=false,harvestRestored_=false,constructionRestored_=false,corpsesRestored_=false,ambientRestored_=false;
+    bool shopStockRestored_=false,unitSummonsRestored_=false,productionRestored_=false,cargoRestored_=false,harvestRestored_=false,constructionRestored_=false,corpsesRestored_=false,ambientRestored_=false,unitStealthRestored_=false;
     unsigned futureMovementPhaseBias_=0;
     bool futureMovementPhaseRestored_=false;
     std::vector<std::shared_ptr<const Member>> preloaded_;
@@ -1357,6 +1357,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildGameCaches(std::span<const std::uint8_t> bytes);
     Bytes encodeFogState(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildFogState(std::span<const std::uint8_t> bytes);
+    Bytes encodeUnitStealth(const jass::StableHandleMap& encodeHandle) const;
+    void restoreUnitStealth(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeAmbientPassives(const jass::StableHandleMap& encodeHandle) const;
     void restoreAmbientPassives(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeCorpses(const jass::StableHandleMap& encodeHandle) const;
