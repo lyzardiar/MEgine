@@ -5128,3 +5128,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 燃烧油与攻击闪电恢复（待阶段验证）
 
 路径：src/passive_snapshot_codec.h、src/stampede.h、src/session.h、src/session_projectile_snapshot.cpp、src/session_siege_attacks.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SCFX 保存燃烧油和攻击闪电活动状态，SRBF 更新至版本 42。Win32 Release 构建及 clock 107/107 通过；原版 Orc01 人工场景真实攻击后采集，隔离续行临时绕过启动保护，燃烧油及延迟闪电各 71/71 项状态一致；燃烧油来源移除后同样一致。待阶段验证自然对局、来源／目标失效组合、实际游戏读档、原版时序和窗口；日志 tmp/docs-artifacts/war3/combat-effects-recovery/。
+
+### 脚本图片与地面贴花恢复（待阶段验证）
+
+路径：src/session.h、src/session_effects.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SIMG 重建图片及贴花的活动／已销毁句柄与显示状态，SRBF 更新至版本 43。Win32 Release 构建及 clock 108/108 通过；原版 Orc01 人工创建图片和贴花的隔离续行临时绕过启动保护，3 秒后 71/71 项状态一致。待阶段验证初始化阶段已有对象的地图、实际游戏读档、纹理资源变化及窗口；日志 tmp/docs-artifacts/war3/image-recovery/。
