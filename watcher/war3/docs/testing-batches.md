@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的恢复和防护状态（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。复合效果支持 AIrg 持续恢复、AIda 护甲保护和 ANse 法术护盾；单目标恢复校验目标与距离，范围效果使用现有筛选和状态生命周期。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-support`、`item-combined-status`、`item-combined-area`、`item-combined` 及普通消耗品回归；原版复合时序、目标重入、多人和窗口待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
+
+
 ### 复合物品的无敌与加速（待功能批次验证）
 
 路径：`src/session.h`、`src/session_consumables.cpp`、`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。复合主动效果支持 AIvu、AIsp 和 AIsa，复用普通消耗品的目标筛选及状态创建，按物品统一处理费用、次数、冷却和使用事件。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-status`、`item-combined-area`、`item-combined` 及普通消耗品恢复／无敌／加速用例；范围与目标变化、原版复合时序及窗口待验证。Win32 Release 客户端和 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
