@@ -5263,3 +5263,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 复合物品尸体、显形与自身增益合批结果
 
 范围：`1d9c315`、`b16622c`、`d6c9f41`。Win32 Release `war3_control_tests` 构建通过，重新生成 BootyBay 派生夹具后执行 `war3_control_tests <data-root> <fixture> item-combined`，报告 **1 通过、0 失败**，未加载 Game.dll。新增场景覆盖复活原单位、操纵尸体并建立限时单位、全图侦测隐身单位、无敌及狂暴增益和金币混合，并复核此前组合。夹具与日志在 `tmp/docs-artifacts/war3/compound-corpse-reveal-batch/`。无尸体、增益和显形到期、实际伤害效果、复杂回调、符文、真实窗口与原版时序仍待验证。
+
+
+### 禁止保存录像状态恢复（待功能批次验证）
+
+路径：`src/session_match.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SMAT` 版本 2 保存 `DoNotSaveReplay`，旧版默认允许保存；`SRBF` 更新至版本 53。功能批次构建并执行 `war3_clock_tests <data-root> <output-root>`，验证恢复包与对局状态往返；另需覆盖旧版、损坏标志、实际读档和未来单机录像消费。本次未执行功能编译或测试，恢复启动保护保留。
