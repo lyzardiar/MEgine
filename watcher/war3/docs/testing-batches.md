@@ -5883,3 +5883,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### MIDI 声音音调请求（待功能批次验证）
 
 路径：`src/sound.cpp`、`tests/sound_tests.cpp`、`docs/script-sound.md`。MIDI 源表非单位 Pitch 不阻断创建，脚本设置音调时维持序列播放速率；普通数字声音沿用现有速率处理。原版 1.27 底层 `0x6f173940` 仅对流、普通采样及 3D 采样调用播放速率接口。合批构建 `war3_sound_tests`，执行 `sound_map_table_overlay`、`sound_midi_pitch_preserves_playback` 与相关声音回归；原版 MIDI 动态行为、实际音频设备和异常值仍待验证。本次未执行功能测试。
+
+
+### 静音声音切换到实际设备（待功能批次验证）
+
+路径：`src/sound.cpp`、`tests/sound_tests.cpp`、`docs/script-sound.md`。静音播放者转为实际设备时恢复播放阶段、循环、音调与位置，设备时长不一致时限制位置；创建或恢复失败前保留旧播放者。合批构建 `war3_sound_tests` 并运行 `sound_unmute_preserves_paused_playback`、`sound_playback_state_miles_roundtrip` 及声音回归；实际设备、播放／暂停／停止、读档、时长差异和原版表现仍待验证。本次未执行功能测试。
