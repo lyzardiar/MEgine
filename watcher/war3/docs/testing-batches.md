@@ -4630,3 +4630,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 移动中重新开启路径碰撞（待批次验证）
 
 路径：`src/session_entities.cpp`、`tests/movement_avoidance_tests.cpp`；说明见[对象定义](entities.md)。单位移动中从关闭切换至开启路径碰撞时，活动路线进入现有分批重寻路和有界重试，不替换当前命令或排队命令。Win32 Release 客户端与测试目标编译通过；`war3_movement_avoidance_tests <data-root> <BootyBay.w3m> reenable-pathing` 1 通过、0 失败，覆盖启用前直行、启用后绕墙、路径不穿越障碍及后续排队移动；原地形恢复检查与普通／攻击移动切换的定向检查通过。日志 `tmp/docs-artifacts/war3/reenable-pathing/{final,restored,queue,combat}.log`。大量同时切换、起点不可通行、暂时无路、追击动态目标、原版动态及真实窗口待批次验证。
+
+### 失效单位暂停状态查询（待批次验证）
+
+路径：`src/session_entities.cpp`、`tests/control_tests.cpp`；说明见[对象定义](entities.md)。`IsUnitPaused` 对空、已移除、错误类型及无效单位返回 false，有效单位读取实际暂停状态。固定版 Game.dll 注册入口 `0x6f1e8bc0` 的只读指令显示解析失败返回零，记录 `tmp/docs-artifacts/war3/unit-paused-handle/original.txt`；未加载 Game.dll。Win32 Release 客户端及测试目标编译通过；`war3_control_tests <data-root> <control-fixture.w3m> unit-state-handles` 1 通过、0 失败，覆盖失效句柄和有效单位暂停／恢复；日志 `tmp/docs-artifacts/war3/unit-paused-handle/final.log`。真实地图、原版动态行为与联机待批次验证。
