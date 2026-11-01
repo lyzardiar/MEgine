@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄幻象的类型判定（待批次验证）
+
+路径：`src/session_entities.cpp`、`tests/commerce_tests.cpp`。`IsUnitType` 对英雄幻象的 `UNIT_TYPE_HERO` 返回 false；真实英雄和 `IsUnitIdType` 的原类型判定保持各自行为。1.27 `Game.dll` 的 `IsUnitType` 跳表将类型 0 交给 `0x6f1e7af0`，该函数检查英雄类型并排除幻象标志 `0x40000000`。待生成 commerce 夹具并运行 `war3_commerce_tests <data-root> <fixture>`，检查法杖生成的真实幻象、原英雄及类型 ID，并回归地图过滤、战斗与原版窗口；本次未执行测试。
+
 ### 工人与中立命令说明（待批次验证）
 
 路径：`src/session_commerce.cpp`、`tests/generate-revival-fixture.py`、`tests/revival_tests.cpp`。修理、缠绕金矿、侦察及商店选购者按钮按能力等级读取完整说明，并解析地图字符串和对象字段；采集与返还使用同一读取流程。待生成复活夹具并运行 `war3_revival_tests <data-root> <hero-revival-fixture> repair-command-tooltip`，回归采集、商店和原版窗口；本次未执行测试。
