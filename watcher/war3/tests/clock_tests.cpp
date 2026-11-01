@@ -1886,6 +1886,35 @@ endfunction
  endfunction
  )jass";auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");auto compileSource=[&]{return Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"shared-session.j",source,"shared context"}}));};auto make=[&](bool offset){auto result=std::make_unique<ScriptSession>(compileSource(),map().info);result->attachWorld(world());result->audioMuted(true);result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(offset)result->runtime().invoke("CreateTimer");result->startMain();return result;};auto original=make(false),target=make(true);Runtime peer(compileSource()),restoredPeer(compileSource());peer.inheritNatives(original->runtime());peer.shareThreads(original->runtime());peer.initialize();restoredPeer.inheritNatives(target->runtime());restoredPeer.shareThreads(target->runtime());restoredPeer.initialize();original->runtime().start("work");peer.start("work");auto actor=original->runtime().global("actor").bits;original->selectUnit(actor,true);auto identity=[](std::string_view,std::uint32_t id){return id;};std::array<Runtime*,2> src{&original->runtime(),&peer},dst{&target->runtime(),&restoredPeer};auto snapshot=original->snapshotSharedSleepingScripts(src,identity);require(snapshot.threads.size()==3,"Shared session contexts missing");auto wire=original->encodeSharedSleepingScripts(src,snapshot);auto damaged=wire;damaged.back()^=1;rejects([&]{target->decodeSharedSleepingScripts(dst,damaged);},"digest");auto decoded=target->decodeSharedSleepingScripts(dst,wire);auto targetActor=target->runtime().global("actor").bits,watcher=original->runtime().global("watcher").bits,targetWatcher=target->runtime().global("watcher").bits;require(actor!=targetActor && watcher!=targetWatcher,"Shared handle remapping fixture did not shift identities");auto decode=[&](std::string_view,std::uint32_t id){if(id==actor)return targetActor;if(id==watcher)return targetWatcher;return id;};auto reverse=[&](std::string_view,std::uint32_t id){if(id==targetActor)return actor;if(id==targetWatcher)return watcher;return id;};auto wrong=[&](std::string_view type,std::uint32_t id){return id==watcher?0u:decode(type,id);};rejects([&]{target->restoreSharedSleepingScripts(dst,decoded,wrong);},"mapping");require(!target->runtime().threadCount(),"Rejected shared context retained threads");auto ids=target->restoreSharedSleepingScripts(dst,decoded,decode);require(ids.size()==3 && target->encodeSharedSleepingScripts(dst,target->snapshotSharedSleepingScripts(dst,reverse))==wire,"Shared session context did not round trip");original->advance(.125);target->advance(.125);require(original->runtime().global("completed").bits==1 && peer.global("completed").bits==1 && target->runtime().global("completed").bits==1 && restoredPeer.global("completed").bits==1 && original->runtime().global("observed").bits==actor && target->runtime().global("observed").bits==target->runtime().global("actor").bits,"Shared session continuations diverged");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("recovery_bundle_preserves_retired_spatial_and_sound_references",[&]{
+        auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
+ unit actor = null
+ unit rangeTarget = null
+ region area = null
+ rect bounds = null
+ trigger regionTrigger = null
+ trigger rangeTrigger = null
+ event regionEvent = null
+ event rangeEvent = null
+ sound clip = null
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ set actor = CreateUnit(Player(0), 'hfoo', 0., 0., 0.)
+ set rangeTarget = CreateUnit(Player(0), 'hfoo', 300., 0., 0.)
+ set area = CreateRegion()
+ set bounds = Rect(-200., -200., 200., 200.)
+ call RegionAddRect(area, bounds)
+ set regionTrigger = CreateTrigger()
+ set rangeTrigger = CreateTrigger()
+ set regionEvent = TriggerRegisterLeaveRegion(regionTrigger, area, null)
+ set rangeEvent = TriggerRegisterUnitInRange(rangeTrigger, rangeTarget, 200., null)
+ set clip = CreateSound("Sound\\Interface\\QuestCompleted.wav", false, false, false, 0, 0, "")
+ call AttachSoundToUnit(clip, actor)
+ endfunction
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"retired-references.j",source,"retired references recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->audioSimulationClock();session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();original->advance(1./32);auto& a=original->runtime();a.invoke("RemoveRegion",std::array{a.global("area")});a.invoke("RemoveUnit",std::array{a.global("actor")});a.invoke("RemoveUnit",std::array{a.global("rangeTarget")});auto identity=[](std::string_view,std::uint32_t id){return id;};auto spatial=original->encodeSpatialEvents(identity),sounds=original->encodeSounds(identity);target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());auto& b=target->runtime();require(b.global("area").bits==ids.at(a.global("area").bits) && b.global("actor").bits==ids.at(a.global("actor").bits) && b.global("regionEvent").bits==ids.at(a.global("regionEvent").bits) && b.global("rangeEvent").bits==ids.at(a.global("rangeEvent").bits),"Retired reference identities differ");auto reverse=[&](std::string_view,std::uint32_t value){for(auto [from,to]:ids)if(to==value)return from;return 0u;};require(target->encodeSpatialEvents(reverse)==spatial && target->encodeSounds(reverse)==sounds,"Retired spatial or sound references differ");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("recovery_bundle_restores_trackables",[&]{
         auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
  trackable marker = null

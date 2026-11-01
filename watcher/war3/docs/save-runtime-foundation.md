@@ -462,3 +462,8 @@ Win32 Release 构建及 clock 75/75 通过，覆盖网格样式、别名、失�
 STKB 保存地图交互对象的模型路径、位置、朝向及身份；SGEV 版本 6 保存点击与悬停事件及其目标。对象先于事件、哈希表和全局重建；SRBF 版本 17 纳入该组件，旧组件包不受理，恢复后启动保护保留。
 
 Win32 Release 构建及 clock 76/76 通过，覆盖不同交互对象、事件句柄与哈希表引用、点击／悬停上下文、销毁触发器及损坏快照拒绝；日志 tmp/docs-artifacts/war3/trackable-recovery/clock.log。真实画面拾取、实际存档、网络对象编号及联机交互仍待阶段验证。
+
+
+SPEV 版本 2 保存空间事件目标及成员句柄的存活状态，SSND 版本 2 保存声音附件单位的存活状态；已移除对象仍保留身份，并在重建时校验类型和生命周期。两个组件可读取各自版本 1，SRBF 更新至版本 18。
+
+Win32 Release 构建通过，clock 77/77；声音等待恢复定向测试 1/1，日志 tmp/docs-artifacts/war3/retired-reference-recovery/clock.log。原版 Human06 的已移除声音附件和 Undead01 的已移除区域事件通过此前失败阶段，但恢复分别继续遇到缺失天气句柄和目标会话预初始化特效；隔离日志 tmp/docs-artifacts/war3/campaign-bundle-current/human06-fixed.log 与 undead01-fixed.log。实际读档、后续缺口和完整战役仍待完成；启动保护保留。
