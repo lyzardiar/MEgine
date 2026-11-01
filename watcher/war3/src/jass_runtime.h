@@ -40,6 +40,8 @@ public:
     size_t instructionCount() const;
     void bind(const std::string& name,Native function);
     void bindSleep(const std::string& name);
+    // A suspended native marked here must have completed its side effects before yielding.
+    void markNativeCompletedOnResume(const std::string& name);
     void markThreadWaitNative(const std::string& name);
     // The native must safely re-enter with its saved arguments after external state is restored.
     void markNativeRestartable(const std::string& name);
