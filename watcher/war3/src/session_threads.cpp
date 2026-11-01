@@ -59,7 +59,7 @@ void ScriptSession::bindThreadNatives(){
     runtime_.threadHooks({[this](jass::ThreadId id,jass::ThreadId parent){threadContexts_.emplace(id,contexts_);if(pendingTriggerSequence_){triggerSequences_.emplace(id,std::move(*pendingTriggerSequence_));pendingTriggerSequence_.reset();}if(auto found=selectionSyncViews_.find(parent);found!=selectionSyncViews_.end())selectionSyncViews_[id]=found->second;else if(selectionSyncLatest_)selectionSyncViews_[id]=selectionSyncLatest_;},[this](jass::ThreadId from,jass::ThreadId to){threadContexts_.at(from)=std::move(contexts_);contexts_=std::move(threadContexts_.at(to));},[this](jass::ThreadId id){threadContexts_.erase(id);selectionSyncViews_.erase(id);triggerSequences_.erase(id);}});
     runtime_.threadEntryCompleted([this](jass::ThreadId id){continueTriggerSequence(id);});
     if(runtime_.module().functionId("TriggerSleepAction")!=jass::none)runtime_.bindSleep("TriggerSleepAction");
-    bind("TriggerExecuteWait","nothing",{"trigger"},[this](auto& vm,auto args){if(args[0].bits){auto thread=triggerExecute(args[0].bits,true);vm.waitThread(thread);}return vm.nothing();});
+    bind("TriggerExecuteWait","nothing",{"trigger"},[this](auto& vm,auto args){if(alive(args[0].bits,NativeKind::Trigger)){auto thread=triggerExecute(args[0].bits,true);vm.waitThread(thread);}return vm.nothing();});
     if(runtime_.module().functionId("TriggerExecuteWait")!=jass::none)runtime_.markThreadWaitNative("TriggerExecuteWait");
     auto native=[this](const char* name){auto id=runtime_.module().functionId(name);return id!=jass::none && runtime_.module().program().functions()[id].native;};
     if(native("Sleep"))runtime_.bindSleep("Sleep");

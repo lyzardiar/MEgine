@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 触发器执行与回调的失效句柄（待功能批次验证）
+
+路径：`src/session_callbacks.cpp`、`src/session_threads.cpp`、`tests/session_tests.cpp`。触发器执行／等待执行、条件求值、重置、动作和条件的添加／移除／清空先校验各自句柄；失效触发器的求值或添加返回零，其余操作不执行。有效触发器及回调仍走既有调度、清理和所有权检查。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`，注册入口 `0x6f1f90e0`、`0x6f1f9100`、`0x6f1f9120`、`0x6f1f3140`、`0x6f1f90a0`、`0x6f1f90c0`、`0x6f1f9010`、`0x6f1f9050`、`0x6f1fa420`、`0x6f1fa450` 对无效触发器先返回，移除入口也检查动作或条件句柄。Win32 Release 客户端及 session 测试目标构建通过；合批运行 `war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 和线程／回调回归，新增用例尚未执行。回调属于其他触发器、空代码／表达式和原版运行时细节仍待对照。
+
+
 ### 波形和脚本句柄合批结果
 
 范围：`834cec4`、`6796669`、`a7b196a`。Win32 Release 客户端及 session、clock、control、spell 测试目标构建通过。session 25 通过、0 失败，包含新增计时器与触发器空／失效／异类型句柄及有效状态检查；clock 按 `timer` 筛选 4 通过、0 失败；control 的 `wave-target-reentry`、`area-damage-reentry` 各 1 通过，spell 的 `frost-breath` 1 通过，合计 32 项通过、0 失败。spell 默认完整技能流程也通过，该流程未输出分项计数。日志在 `tmp/docs-artifacts/war3/script-wave-batch/`；control 使用 `tmp/docs-artifacts/war3/wave-target-lifecycle/fixture.w3m`，spell 使用 `tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m`，session 使用 `tmp/docs-artifacts/war3/jass/session-enums-native.json`。火焰呼吸伤害回调易主、多目标／不同模拟步、原版动态时序、多人及实际窗口仍待验证。
