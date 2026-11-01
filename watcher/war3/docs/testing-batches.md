@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄经验与属性合批结果
+
+范围：`c279409`、`434d9fb`、`8569ff4`。Win32 Release 客户端、revival、control、commerce、passive 目标构建通过；control 测试文件既有局部变量遮蔽产生一条 C4456 警告。复用夹具运行 `hero-level-negative-xp`、`hero-attribute-base`、`hero-attribute-negative`、`hero-xp`、`hero-skill-cap`、`hero-skill-modify`、`hero-level-tome`，各 1 通过、0 失败；`hero-attribute-handles` 1 通过、0 失败，commerce 和 passive 程序均退出 0 并输出 PASS。覆盖当前等级经验恢复、三属性及加成、负属性、英雄句柄、技能点、升级之书、商店与装备被动回归。日志位于 `tmp/docs-artifacts/war3/hero-attributes-batch/`，夹具分别来自 `hero-class-batch/`、`control-spells/` 和 `cast-buff-aura-batch/`。真实装备与负属性叠加、资源更新、极值、原版动态行为与窗口仍待验证。
+
+
 ### 英雄负属性查询与恢复（待功能批次验证）
 
 路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。英雄属性设置接受支持范围内的负值，基础及含加成查询返回有符号结果，再设置正值可恢复；战斗衍生属性沿用现有下限。原版 1.27 的 `SetHeroStr` 调用 `0x6f67c090` 将目标差值加入属性，`GetHeroStr` 的 `0x6f668ff0` 返回有符号计算结果。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-attribute-negative`，覆盖三属性负值、加成和恢复；极值、资源变化及原版动态行为待验证。本次未执行功能测试。
