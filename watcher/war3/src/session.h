@@ -76,6 +76,7 @@ struct TriggerSequence {std::uint32_t trigger=0;std::vector<std::uint32_t> actio
 struct SessionSleepSnapshot {jass::RuntimeSleepSnapshot script;std::vector<ScriptContext> contexts;std::optional<std::array<std::set<std::uint32_t>,16>> selections;std::optional<TriggerSequence> sequence;};
 struct SessionSleepContext {std::vector<ScriptContext> contexts;std::optional<std::array<std::set<std::uint32_t>,16>> selections;std::optional<TriggerSequence> sequence;};
 struct SessionSleepBatch {jass::RuntimeSleepBatch scripts;std::vector<SessionSleepContext> threads;};
+struct SessionSharedSleepBatch {jass::RuntimeSharedSleepBatch scripts;std::vector<SessionSleepContext> threads;};
 class ScriptSession {
     struct PlayerRef {unsigned id;};
     struct Group {std::vector<std::uint32_t> units;};
@@ -1123,6 +1124,10 @@ public:
     ~ScriptSession();
     SessionSleepSnapshot snapshotSleepingScript(const jass::StableHandleMap& encodeHandle) const;
     jass::ThreadId restoreSleepingScript(const SessionSleepSnapshot& snapshot,const jass::StableHandleMap& decodeHandle);
+    SessionSharedSleepBatch snapshotSharedSleepingScripts(std::span<jass::Runtime* const> runtimes,const jass::StableHandleMap& encodeHandle) const;
+    std::vector<jass::ThreadId> restoreSharedSleepingScripts(std::span<jass::Runtime* const> runtimes,const SessionSharedSleepBatch& snapshot,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeSharedSleepingScripts(std::span<jass::Runtime* const> runtimes,const SessionSharedSleepBatch& snapshot) const;
+    SessionSharedSleepBatch decodeSharedSleepingScripts(std::span<jass::Runtime* const> runtimes,std::span<const std::uint8_t> bytes) const;
     SessionSleepBatch snapshotSleepingScripts(const jass::StableHandleMap& encodeHandle) const;
     std::vector<jass::ThreadId> restoreSleepingScripts(const SessionSleepBatch& snapshot,const jass::StableHandleMap& decodeHandle);
     Bytes encodeSleepingScripts(const SessionSleepBatch& snapshot) const;

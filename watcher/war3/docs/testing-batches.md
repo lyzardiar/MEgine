@@ -4941,3 +4941,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 共享运行时睡眠线程基础（待阶段验证）
 
 路径：`src/jass_runtime.h`、`src/jass_runtime.cpp`、`src/jass_threads.cpp`、`tests/jass_thread_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`JSHR` 保存共享调度器的运行时归属、顺序、暂停状态及跨运行时等待；保存校验脚本、等待环、句柄和预算，恢复失败清理已重建线程。Win32 Release 核心与线程目标编译通过；预算补充前 JASS 30/30、会话线程 6/6，最终受影响共享线程定向 4/4；日志 `tmp/docs-artifacts/war3/shared-runtime-recovery/`。待整合 AI 虚拟机全局、调度上下文和实际存档，阶段验证暂停／等待交错、原图 AI 续行；组件包仍拒绝活动 AI。
+
+
+### 共享会话线程上下文（待阶段验证）
+
+路径：`src/session.h`、`src/session_threads.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`JSSH` 保存共享运行时线程对应的触发器上下文、选择视图和动作序列，先由调用方恢复引用对象。Win32 Release 核心及 clock 目标编译通过，clock 65/65；隔离会话检查不同句柄的选择事件续行、错误映射拒绝及往返，并采集原版 `human.ai` 线程、上下文与私有全局，日志 `tmp/docs-artifacts/war3/shared-session-ai/clock-final.log`。待整合 AI 策略状态、实例重建和完整存档，阶段验证真实 AI 续行及复杂事件；组件包仍拒绝活动 AI。
