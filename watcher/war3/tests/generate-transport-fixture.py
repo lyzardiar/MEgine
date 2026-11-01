@@ -2,6 +2,7 @@
 import argparse
 import importlib.util
 import io
+import struct
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location('live_fixture', Path(__file__).with_name('generate-live-world-fixture.py'))
@@ -55,6 +56,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=ROOT/'tmp/docs-artifacts/war3/transport/fixture.w3m')
+    parser.add_argument('--crash-damage', action='store_true')
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only installation')
@@ -64,6 +66,8 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
+    if args.crash_damage:
+        files['war3map.w3a'] = struct.pack('<II', 2, 1) + b'Achd' + bytes(4) + struct.pack('<I', 1) + b'Chd3' + struct.pack('<III f', 1, 1, 3, 75.0) + b'Achd' + struct.pack('<I', 0)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
