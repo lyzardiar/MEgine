@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 空合并请求（待批次验证）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`MergeUnits` 对非正目标数量直接成功，不检查类型或改变单位；固定版原入口先比较目标与当前数量。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次执行 `war3_campaign_ai_tests <data-root> <fixture> merge-empty` 和已有单位合并回归；原版负数、失效类型及事件行为待对照。
+
+
 ### AI 多生产者批量请求（待批次验证）
 
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`SetProduce` 超过 32 时按生产者实际容量逐项尝试，工作预算按调用时单位数量限制。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次运行 `war3_campaign_ai_tests <data-root> <fixture> produce-many` 和生产／资源／队列回归；大量数量、回调重入与原版精确时序待验证。

@@ -290,3 +290,5 @@ AI 已安排跨岛进攻并等待载具购买或空闲时，`InitAssault` 保留
 Booty Bay 兽族对不死族静音隔离对局在 4,200 秒仍未结束，两方剩余营地无法选中，日志 `tmp/docs-artifacts/war3/orc-undead-long/current-ai-reach.log`。1,500 秒分别使用 42／56 人口，原策略在达到 60 后才请求飞艇；兽族生产计划中的 `otbk` 上限为零，隔离探针直接请求该单位返回失败，而直接请求后续 `osld` 建筑可建立建造订单，日志 `tmp/docs-artifacts/war3/ai-production-probe/current.log`。固定版 `SetProduce` 内部委派生产后按结果返回，指令 `tmp/docs-artifacts/war3/ai-production-probe/set-produce-asm.txt`；生产者筛选和失败返回的原版语义尚未确认，不能据此断定原版会跳过受限项目或认定这是唯一停滞原因。
 
 `SetProduce` 按实际生产者容量逐项处理，不再因请求超过 32 直接拒绝；单次工作量按调用时拥有单位数限制，防止回调反复清空队列造成无界循环。原版极大数量、事件重入及资源不足时的精确时序仍待对照。
+
+`MergeUnits` 的目标数量为零或负数时视为已满足，不依赖三个单位类型的有效性，也不发出合并订单。固定版 `Game.dll` 的 `0x6f891f89` 使用有符号比较，数量不大于当前数量时直接返回 1；负数与失效类型的实际地图行为仍待对照。
