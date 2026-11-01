@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### Buff 自动驱散筛选（待功能批次验证）
+
+路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。自动驱散筛选同时作用于查询、计数和清除，已核实的眩晕、末日、相位、护盾及持续施法状态按原版魔法分类处理；放逐在脚本接口的空施法来源下不匹配自动驱散。原版 1.27 的状态虚函数 `0x6f3dcd20` 使用魔法分类，`CBuffBanish` 使用 `0x6f49f660` 单独判断来源。合批运行 `war3_passive_tests <data-root> <fixture> buff-auto-filter`，并回归扩展筛选、光环和普通驱散；未逐一核实的自定义和特殊状态分类、原版动态行为待验证。本次未执行功能测试。
+
+
 ### 特殊 Buff 状态合批结果
 
 范围：`0938b89`、`3d006bc`、`ce45bb6`。Win32 Release 客户端、passive、control 和 spell 目标构建通过，无编译警告；首次构建命令误用了不存在的 `war3_summon_tests` 目标，随后构建了实际的 spell 目标。生成 passive 夹具后，`buff-timed-life`、`buff-timed-critter`、`buff-filter-semantics`、`buff-invalid-unit`、`buff-script-remove`、`attribute-item-signed` 以及 control 的 `flow`、`purge`、`item-control` 各 1 通过、0 失败；passive 主程序退出 0 并输出 PASS，覆盖真实多光环筛选、清除和重新施加。机械小动物测试构造了与召唤相同的关联状态，实际召唤链路未在本批执行；spell 目标仅构建。日志和夹具位于 `tmp/docs-artifacts/war3/buff-special-batch/`。特殊限时 Buff、原版动态事件及实际窗口仍待验证。
