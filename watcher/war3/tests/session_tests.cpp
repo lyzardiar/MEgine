@@ -296,6 +296,21 @@ call DestroyTimer(clock)
 call DestroyTrigger(t)
 endfunction
 )jass";
+    test("timer_lifetime_handle_validation",[]{auto module=compile(R"jass(type timer extends handle
+type trigger extends handle
+native CreateTimer takes nothing returns timer
+native DestroyTimer takes timer t returns nothing
+native TimerStart takes timer t, real timeout, boolean periodic, code callback returns nothing
+native PauseTimer takes timer t returns nothing
+native ResumeTimer takes timer t returns nothing
+native TimerGetTimeout takes timer t returns real
+native TimerGetElapsed takes timer t returns real
+native TimerGetRemaining takes timer t returns real
+native CreateTrigger takes nothing returns trigger
+function start_timer takes timer t returns nothing
+    call TimerStart(t,1.,false,null)
+endfunction
+)jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();auto active=vm.invoke("CreateTimer"),removed=vm.invoke("CreateTimer"),trigger=vm.invoke("CreateTrigger");vm.invoke("DestroyTimer",std::array{removed});for(auto invalid:{vm.handle("timer",0),removed,vm.handle("timer",trigger.bits),vm.handle("timer",0x7fffffffu)}){for(auto name:{"start_timer","PauseTimer","ResumeTimer","DestroyTimer"})vm.invoke(name,std::array{invalid});for(auto name:{"TimerGetTimeout","TimerGetElapsed","TimerGetRemaining"})require(!vm.invoke(name,std::array{invalid}).bits,"Invalid timer query returned a value");}vm.invoke("start_timer",std::array{active});require(vm.invoke("TimerGetTimeout",std::array{active}).bits==jass::Real::fromInteger(1).bits(),"Live timer did not start");vm.invoke("PauseTimer",std::array{active});vm.invoke("ResumeTimer",std::array{active});require(vm.invoke("TimerGetTimeout",std::array{active}).bits==jass::Real::fromInteger(1).bits(),"Live timer changed after pause/resume");});
     test("trigger_lifetime_handle_validation",[]{auto module=compile(R"jass(type trigger extends handle
 type timer extends handle
 native CreateTrigger takes nothing returns trigger
@@ -310,7 +325,7 @@ native GetTriggerExecCount takes trigger t returns integer
 native CreateTimer takes nothing returns timer
 )jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();auto active=vm.invoke("CreateTrigger"),removed=vm.invoke("CreateTrigger"),timer=vm.invoke("CreateTimer");vm.invoke("DestroyTrigger",std::array{removed});for(auto invalid:{vm.handle("trigger",0),removed,vm.handle("trigger",timer.bits),vm.handle("trigger",0x7fffffffu)}){for(auto name:{"EnableTrigger","DisableTrigger","DestroyTrigger"})vm.invoke(name,std::array{invalid});vm.invoke("TriggerWaitOnSleeps",std::array{invalid,vm.boolean(true)});for(auto name:{"IsTriggerEnabled","IsTriggerWaitOnSleeps","GetTriggerEvalCount","GetTriggerExecCount"})require(!vm.invoke(name,std::array{invalid}).bits,"Invalid trigger query returned a value");}require(vm.invoke("IsTriggerEnabled",std::array{active}).bits,"Invalid trigger changed live trigger");vm.invoke("DisableTrigger",std::array{active});vm.invoke("TriggerWaitOnSleeps",std::array{active,vm.boolean(false)});require(!vm.invoke("IsTriggerEnabled",std::array{active}).bits && !vm.invoke("IsTriggerWaitOnSleeps",std::array{active}).bits,"Live trigger state did not change");vm.invoke("EnableTrigger",std::array{active});vm.invoke("TriggerWaitOnSleeps",std::array{active,vm.boolean(true)});require(vm.invoke("IsTriggerEnabled",std::array{active}).bits && vm.invoke("IsTriggerWaitOnSleeps",std::array{active}).bits,"Live trigger state did not restore");});
     test("session_global_objects_have_persistent_state",[&]{ScriptSession session(compile(objectSource),{});require(session.liveObjects(NativeKind::Group)==0,"Constructor executed JASS globals");session.initialize();require(session.liveObjects(NativeKind::Group)==1 && session.liveObjects(NativeKind::Timer)==1 && session.liveObjects(NativeKind::Trigger)==1,"Creation did not retain native objects");auto& vm=session.runtime();require(vm.global("g").bits && vm.global("clock").bits!=vm.global("g").bits && vm.invoke("inspect").bits,"Initial object state differs");require(!vm.invoke("disable").bits,"Trigger flag update not retained");rejects([&]{session.initialize();},"fresh instance");require(session.initialized(),"Repeated initialize poisoned the ready session");});
-    test("session_native_destruction_and_fresh_lifetime",[&]{ScriptSession session(compile(objectSource),{});session.initialize();session.runtime().invoke("release");require(session.liveObjects(NativeKind::Group)==0 && session.liveObjects(NativeKind::Timer)==0 && session.liveObjects(NativeKind::Trigger)==0,"Destroy did not release native state");rejects([&]{session.runtime().invoke("inspect");},"Destroyed or incompatible");ScriptSession next(compile(objectSource),{});next.initialize();require(next.runtime().invoke("inspect").bits && next.liveObjects(NativeKind::Trigger)==1,"Native state leaked into fresh session");});
+    test("session_native_destruction_and_fresh_lifetime",[&]{ScriptSession session(compile(objectSource),{});session.initialize();session.runtime().invoke("release");require(session.liveObjects(NativeKind::Group)==0 && session.liveObjects(NativeKind::Timer)==0 && session.liveObjects(NativeKind::Trigger)==0,"Destroy did not release native state");require(!session.runtime().invoke("inspect").bits,"Destroyed objects did not return empty state");ScriptSession next(compile(objectSource),{});next.initialize();require(next.runtime().invoke("inspect").bits && next.liveObjects(NativeKind::Trigger)==1,"Native state leaked into fresh session");});
     test("session_variable_event_crossing_and_destruction",[]{auto module=compile(R"jass(type trigger extends handle
 type triggeraction extends handle
 type event extends handle

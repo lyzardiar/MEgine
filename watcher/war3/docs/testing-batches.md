@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 计时器失效句柄（待功能批次验证）
+
+路径：`src/session.cpp`、`src/session_callbacks.cpp`、`tests/session_tests.cpp`。计时器启动、暂停、恢复及超时／已过／剩余时间查询校验句柄，失效计时器不产生操作或返回零；有效计时器沿用原有调度。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`，入口 `0x6f1f8fe0`、`0x6f1f1b00`、`0x6f1f32e0`、`0x6f1f8fb0`、`0x6f1f8f50`、`0x6f1f8f80` 均在计时器解析失败时直接返回。Win32 Release 客户端及 session 测试目标构建通过；合批运行 `war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 和计时器调度回归，新增用例尚未执行，真实地图和原版运行时行为待验证。
+
+
 ### 触发器失效句柄（待功能批次验证）
 
 路径：`src/session.cpp`、`tests/session_tests.cpp`。触发器销毁、启停、等待选项及启用状态／等待选项／执行与条件计数查询先校验句柄；空、销毁、其他类型及未知句柄分别不产生操作或返回零，有效触发器继续执行原有行为。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`；注册入口 `0x6f1df7d0`、`0x6f1e0010`、`0x6f1dfc50`、`0x6f1e84b0`、`0x6f1fa4f0`、`0x6f1e84d0`、`0x6f1e5d50`、`0x6f1e5dd0` 的指令均在句柄解析失败时直接返回。Win32 Release 客户端及 session 测试目标构建通过；合批运行 `war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json`，检查失效句柄、正常状态与既有触发器生命周期；新增用例尚未执行，原版运行时和实际地图待验证。
