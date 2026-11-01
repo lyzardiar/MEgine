@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的重生神符（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。复合主动效果支持 AIrb，读取物品掉落单位类型，使用现有落点和单位创建流程，并与其他效果共同结算次数、费用、冷却及使用事件。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-rebirth`、`item-combined-dispel`、`item-combined-moon` 及普通 `rebirth-rune`；原版复合时序、无落点／无效类型、回调重入和窗口待对照。Win32 Release 客户端与 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
+
+
 ### 复合物品的地点驱散（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。复合主动效果支持 AIdi 的地点／范围驱散，复用原消耗品的距离、目标筛选、状态移除、召唤伤害和视觉；与其他效果共用物品结算。合批生成复合物品夹具并运行 `war3_control_tests <data-root> <fixture> item-combined-dispel`、`item-combined-moon`、`item-combined` 及普通驱散场景；原版复合时序、地图目标覆盖、回调重入与窗口待对照。Win32 Release 客户端与 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
