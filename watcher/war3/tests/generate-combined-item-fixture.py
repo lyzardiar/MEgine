@@ -61,10 +61,13 @@ function config takes nothing returns nothing''')
         change += b'amcs' + struct.pack('<IIII', 0, 1, 0, price) + custom
         change += b'acdn' + struct.pack('<IIIf', 2, 1, 0, cooldown) + custom
         return base + custom + struct.pack('<I', 3) + change
-    files['war3map.w3a'] = struct.pack('<III', 2, 0, 3) + ability(b'AIh2',b'A0CH',b'Ihpg',137,5,10.) + ability(b'AIm2',b'A0CM',b'Impg',67,7,20.) + ability(b'AIh2',b'A0CX',b'Ihpg',31,2,12.)
+    def timed_ability(base, custom):
+        changes = b''.join(field + struct.pack('<IIIf', 2, 1, 0, value) + custom for field, value in [(b'adur', 3.), (b'ahdu', 9.)])
+        return base + custom + struct.pack('<I', 2) + changes
+    files['war3map.w3a'] = struct.pack('<III', 2, 0, 5) + ability(b'AIh2',b'A0CH',b'Ihpg',137,5,10.) + ability(b'AIm2',b'A0CM',b'Impg',67,7,20.) + ability(b'AIh2',b'A0CX',b'Ihpg',31,2,12.) + timed_ability(b'AIv1',b'A0VI') + timed_ability(b'AIpv',b'A0VP')
     def item(custom, abilities):
         return b'phea' + custom + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + abilities + b'\0' + custom
-    files['war3map.w3t'] = struct.pack('<III', 2, 0, 10) + item(b'I0CM',b'A0CH,A0CM') + item(b'I0UN',b'A0CH,A0CM,Ache') + item(b'I0MX',b'A0CH,A0CM,A0CX') + item(b'I0MR',b'A0CM,AIre') + item(b'I0GR',b'A0CH,AIgo,AIlu') + item(b'I0PA',b'AIxm,AIgo') + item(b'I0GL',b'AIgu,AIgo') + item(b'I0IL',b'AIil,AIgo') + item(b'I0IV',b'AIv1,AIgo') + item(b'I0VP',b'AIpv,AIgo')
+    files['war3map.w3t'] = struct.pack('<III', 2, 0, 14) + item(b'I0CM',b'A0CH,A0CM') + item(b'I0UN',b'A0CH,A0CM,Ache') + item(b'I0MX',b'A0CH,A0CM,A0CX') + item(b'I0MR',b'A0CM,AIre') + item(b'I0GR',b'A0CH,AIgo,AIlu') + item(b'I0PA',b'AIxm,AIgo') + item(b'I0GL',b'AIgu,AIgo') + item(b'I0IL',b'AIil,AIgo') + item(b'I0IV',b'AIv1,AIgo') + item(b'I0VP',b'AIpv,AIgo') + item(b'I0V1',b'A0VI') + item(b'I0V2',b'A0VI,AIgo') + item(b'I0P1',b'A0VP') + item(b'I0P2',b'A0VP,AIgo')
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset] + control.fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
