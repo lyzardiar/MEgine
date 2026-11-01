@@ -1,18 +1,8 @@
 # 独立客户端测试队列
 
-### 主菜单存档预览提示（待批次验证）
+### 存档确认与错误提示批次（逻辑验证完成，窗口待验收）
 
-路径：`src/saved_game_browser.h`、`src/saved_game_browser.cpp`。异步预览区分地图身份不匹配和其他存档错误，在主线程使用原版 `SAVE_ERROR_MISSING_MAP`、`SAVE_ERROR_BAD_SAVE` 与 `LOADING_LOADING` 资源显示；失败日志保留具体错误。Win32 Release 客户端编译通过。批次检查缺失地图、损坏存档、切换选择时的旧结果丢弃，以及多语言窗口显示；实际画面待验证。
-
-
-### 读档错误提示（待批次验证）
-
-路径：`src/session.h`、`src/session_campaign.cpp`、`src/game_flow_ui.cpp`、`tests/clock_tests.cpp`。地图身份无法匹配时保留存档中的地图路径，并使用原版 `SAVE_ERROR_MISSING_MAP` 显示；其他读档失败使用 `SAVE_ERROR_BAD_SAVE`。Win32 Release 客户端及 clock 测试程序编译通过。批次执行 checkpoint 地图解析及存档损坏测试，并在可用图形会话核对不同语言、缺失地图及损坏存档的显示与恢复。
-
-
-### 存档确认提示（待批次验证）
-
-路径：`src/game_flow_ui.cpp`。覆盖和删除确认框使用原版 `OVERWRITE_MESSAGE`、`DELETE_MESSAGE` 本地化模板插入文件名；原版 `EscMenuSaveGamePanel.fdf` 指定对应模板。Win32 Release 客户端编译通过。批次在可用图形会话核对不同语言、长文件名及取消／确认行为，实际窗口与原版排版仍待验证。
+范围：`de00802`、`39f970a`、`3e01534` 及测试补充 `58ae831`。Win32 Release 客户端、clock 和 save-exists 测试程序编译通过；`WAR3_CLOCK_FILTER=recovery_bundle_rebuilds_component_graph_but_blocks_main war3_clock_tests <data-root> <output-root>` 与 `war3_save_exists_tests <data-root> <OrcX01.w3x> <scratch-root>` 各 1 通过，共 **2 通过、0 失败**，目录链接创建因环境条件跳过。检查点用例首次将内部摘要错误当作地图缺失，修正夹具后重测通过；覆盖缺失／错误身份、损坏摘要及记录的地图路径。只读原安装的 `UI/FrameDef/GlobalStrings.fdf` 确认五个使用的文本键存在，三个文件名／地图模板各含一个 `%s`。日志及源字符串摘录位于 `tmp/docs-artifacts/war3/save-localization-batch/`。图形设备不可用，确认框布局、多语言显示、长名称、异步预览切换及实际窗口的保存／加载操作仍待验证。
 
 
 ### 刀阵、范围控制和兽王战吼物品批次（基础验证完成）
