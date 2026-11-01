@@ -4702,3 +4702,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 战斗与弹道快照批次（2026-11-01）
 
 本批合并 `c095d52`、`4baff9b`、`c397a9f` 及测试补充 `e9e44ea`：同一集成代码版本下，Win32 Release 客户端、clock、passive 和 caster 目标编译通过；`war3_clock_tests <data-root> <output-root>` 35 通过、0 失败；`war3_passive_tests <data-root> <passive-fixture> spider-attack` 1/1、`line-weapon` 4/4；`war3_caster_tests <data-root> <caster-fixture> chain-targets` 4/4，均未加载 Game.dll。首次连锁闪电测试误用了旧目标夹具，因缺少自定义能力失败；使用当前 `generate-caster-fixture.py` 在 `tmp/docs-artifacts/war3/combat-snapshot-batch/` 生成夹具后通过。上述技能专项验证现有战斗行为，不代表快照恢复后续执行通过。共享法术调度编号与其他法术状态整合、链式和多目标快照、完整世界恢复、真实读档、实际命中与窗口仍待验证或实现。
+
+### 技能句柄身份重建（待批次验证）
+
+路径：`src/session_ability_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SABI` 重建活动和失效技能句柄、所属单位及技能索引，供脚本和后续施法状态恢复映射。Win32 Release 客户端和 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 36 通过、0 失败，覆盖真实施法事件、施法者移除、脚本全局引用、错误单位映射、损坏拒绝和快照往返，未加载 Game.dll。技能移除／重新添加和工程升级、物品技能、原图、脚本事件续执行、活动施法及完整读档仍待批次验证或实现。
