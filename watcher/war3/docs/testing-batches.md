@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 扩展 Buff 接口筛选（待功能批次验证）
+
+路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。扩展接口的魔法和物理参数分别作为筛选条件；查询在正负参数相同时包含两类状态，清除仍按正负参数选择。普通 `UnitRemoveBuffs` 不施加魔法或物理筛选。原版 1.27 的 `0x6f46e6c0`、`0x6f46e708` 处理查询筛选，`0x6f471448`、`0x6f4714a4` 处理清除筛选。合批运行 `war3_passive_tests <data-root> <fixture> buff-filter-semantics` 及失效句柄、脚本清除、光环回归；同时具有魔法和物理属性的状态、自动驱散及原版动态行为待验证。本次未执行功能测试。
+
+
 ### 脚本清除不可驱散状态（待功能批次验证）
 
 路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。`UnitRemoveBuffs` 和未启用自动驱散筛选的 `UnitRemoveBuffsEx` 移除符合条件的状态，即使状态不可被普通驱散；正负选择继续生效。原版 1.27 的清除流程 `0x6f4714cc` 仅在启用自动驱散筛选时调用能力筛选虚函数，脚本入口在 `0x6f1fb10f` 和 `0x6f1fb13f` 允许清除匹配状态。合批运行 `war3_passive_tests <data-root> <fixture> buff-script-remove`，回归普通驱散与光环；自动驱散筛选细节、特殊状态生命周期和原版动态行为待验证。本次未执行功能测试。
