@@ -5851,3 +5851,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家组遍历中的成员变更（待功能批次验证）
 
 路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。`ForForce` 在遍历每个玩家前读取当前成员状态；回调移除尚未访问的玩家或加入后续玩家时，后续遍历反映变更。原版 1.27 在 `0x6f212220` 每轮读取组位集，遍历范围为 0–15。合批运行 destructable 夹具，覆盖回调移除和添加；嵌套遍历、组销毁和原版动态时序仍待对照。本次未执行功能测试。
+
+
+### 计数枚举与玩家组遍历合批结果
+
+范围：`7db5dfc`、`e5b8d3b`、`2abb0f2`、`0037e17`。Win32 Release 客户端、destructable、game flow 和 CampaignAI 目标编译通过；destructable 与 game flow 两个进程均退出 0，共输出 **3 条 PASS**；CampaignAI `reachable`、`armies` 各 **2 通过、0 失败**。覆盖零／负数上限、未知类型保留已有成员、过滤回调对玩家组计数的影响、遍历中增删成员及原公共 AI。日志和夹具位于 `tmp/docs-artifacts/war3/counted-groups-batch/`。原版动态回调、更多自定义地图及实际窗口仍待对照。
