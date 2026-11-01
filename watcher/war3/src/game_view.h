@@ -68,6 +68,7 @@ class GameView {
     D3DMATRIX view_{},projection_{};
     enum class OrderMode {None,Move,Attack,AttackGround,Patrol,Harvest,Entangle,Repair};
     OrderMode orderMode_=OrderMode::None;
+    bool orderModeQueued_=false;
     std::uint32_t buildMenuUnit_=0,skillMenuUnit_=0,bookMenuUnit_=0;
     std::uint32_t buyerShop_=0,shopBuyer_=0,shopSelect_=0;
     std::uint32_t currentShopBuyer(std::uint32_t shop);

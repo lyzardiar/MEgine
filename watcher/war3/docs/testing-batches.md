@@ -5594,3 +5594,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 分组命令的联机身份校验（待功能批次验证）
 
 路径：`src/lan_action_encoder.cpp`、`tests/order_queue_tests.cpp`。分组自动施放和资源返回编码要求各单位具有不同网络对象身份，并检查单次发送的载荷上限；身份冲突直接拒绝整组。合批运行 BootyBay 的 `war3_order_queue_tests <root> <map>`，覆盖冲突拒绝和有效分组；真实双端与原版协议仍待验证。本次未执行功能测试。
+
+
+### 目标命令保留 Shift 排队状态（待功能批次验证）
+
+路径：`src/game_view.{h,cpp}`、`src/game_commands.cpp`、`src/game_selection_panel.cpp`、`src/game_hero_bar.cpp`。使用 Shift 进入移动、攻击、巡逻、采集、缠绕或修理目标模式后，选目标时保留排队状态；直接右键沿用右键当时的 Shift 状态。合批编译客户端和订单测试，窗口可用时检查按钮／快捷键、单位面板／英雄栏／地图／小地图目标及 Esc／右键取消；原版行为和实际视觉仍待验证。本次未执行功能测试。
