@@ -5678,3 +5678,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 混合部队选择可攻击的空中营地（待功能批次验证）
 
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`。地面队员能接近目标或获得运输时，混合部队允许由可对空的飞行单位判定营地可攻击；地面无法加入且无运输时仍避免仅凭飞行单位选择隔离目标。合批运行 CampaignAI `reachable`，覆盖步兵和狮鹫对空营地；实际运输、部队组合、原版选点和完整对局待验证。本次未执行功能测试。
+
+
+### 电脑混合部队对不可直接攻击目标的跟进（待功能批次验证）
+
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`。队长攻击目标时，不能直接攻击的队员在命令未被回调改写的前提下攻击移动至目标附近，避免混合部队原地停滞。合批运行 CampaignAI `reachable`，覆盖步兵跟进、狮鹫攻击空中目标；动态目标、运输、原版策略及完整对局待验证。本次未执行功能测试。
