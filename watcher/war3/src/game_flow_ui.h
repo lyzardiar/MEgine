@@ -1,6 +1,7 @@
 // Author: MiYu. Source escape menus, script dialogs and observed match statistics consume one native session.
 #pragma once
 #include "game_loading.h"
+#include "manual_save_deletion.h"
 #include "game_preferences.h"
 #include "glue.h"
 #include <functional>
@@ -14,7 +15,7 @@ class GameFlowUi {
     Renderer& renderer_;
     Text& text_;
     std::unique_ptr<GlueScreen> menu_,options_,dialog_,scores_,saveMenu_;
-    enum class Panel {Closed,Main,End,Quit,Help,Tips,Options,Gameplay,Sound,Video,Save,Load,Overwrite};
+    enum class Panel {Closed,Main,End,Quit,Help,Tips,Options,Gameplay,Sound,Video,Save,Load,Overwrite,Delete};
     Panel panel_=Panel::Closed;
     std::uint32_t dialogId_=0;
     std::uint64_t dialogRevision_=0;
@@ -37,6 +38,7 @@ class GameFlowUi {
     GameAudioPreferences audioPreferences_{},audioDraft_{};
     GameVideoPreferences videoPreferences_{},videoDraft_{};
     std::string sliderDrag_;
+    std::unique_ptr<ManualSaveDeletion> saveDeletion_;
     std::wstring saveName_;
     wchar_t saveHigh_=0;
     std::vector<std::wstring> saveFiles_;

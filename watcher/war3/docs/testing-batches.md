@@ -5403,3 +5403,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 单人菜单读档列表（待功能批次验证）
 
 路径：`src/saved_game_browser.{h,cpp}`、`src/main.cpp`、`CMakeLists.txt`。单人菜单接入原 `LoadSavedGameScreen.fdf`，列出独立用户目录中的手动存档，支持选择、键盘导航、滚轮和双击，并通过地图摘要定位后进入异步恢复。地图须位于游戏 `Maps` 目录；外部地图迁移、地图预览及原版存档格式仍待实现。合批构建客户端并检查空列表、键鼠导航、错误存档、战役／普通地图恢复和返回；本次未执行功能测试。
+
+
+### 游戏内删除本地存档（待功能批次验证）
+
+路径：`src/manual_save_deletion.h`、`src/session_campaign.cpp`、`src/game_flow_ui.{h,cpp}`、`tests/clock_tests.cpp`。存档面板选择本地文件后显示原版删除确认面板；确认期间持有目录和目标文件句柄，取消释放句柄，确认删除所持文件并刷新列表。拒绝路径穿越、重解析点和非普通文件。合批编译客户端与会话套件，验证取消、锁定期间替换拒绝、确认删除、错误路径和重复操作；窗口交互、异常中断和原版视觉仍待验。本次未执行功能测试。
