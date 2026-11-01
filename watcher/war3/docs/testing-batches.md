@@ -5833,3 +5833,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 普通目标命令界面合批编译（窗口待验）
 
 范围：`1b5408a`、`615f192`、`19c48a8`。Win32 Release 客户端编译通过，日志 `tmp/docs-artifacts/war3/target-command-batch/build.log`。本批未执行窗口输入或功能测试；取消按钮、右键输入消费、目标期间快捷键及原版交互继续待验。此前 D3D9 设备创建失败的本机记录为 `tmp/docs-artifacts/war3/manual-save-batch/ui/game.log`，本次未重复启动窗口。
+
+
+### 计数组枚举的零与负数上限（待功能批次验证）
+
+路径：`src/session_collections.cpp`、`tests/game_flow_tests.cpp`、`tests/generate-destructable-fixture.py`。计数单位组的零上限不限数量，负数按无符号上限；计数玩家组的零上限为空，负数按无符号上限。原版 1.27 的组筛选路径 `0x6f216318` 将零视为无上限，玩家组路径 `0x6f211323` 使用无符号比较。合批运行 game flow 和 destructable 夹具；不同过滤器及原版动态行为待对照。本次未执行功能测试。
