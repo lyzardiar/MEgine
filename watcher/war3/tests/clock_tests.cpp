@@ -1348,6 +1348,43 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"triggers.j",source,"authored trigger persistence test"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);return result;};auto original=create(),restored=create();original->startMain();auto& a=original->runtime();auto& b=restored->runtime();a.invoke("setup");auto trigger=a.global("t").bits,action=a.global("action").bits,condition=a.global("predicate").bits;auto encode=[&](std::string_view type,std::uint32_t id){if(type=="trigger" && id==trigger)return 1u;if(type=="triggeraction" && id==action)return 2u;if(type=="triggercondition" && id==condition)return 3u;return 0u;};auto triggers=original->encodeTriggers(encode),globals=a.encodeGlobals(encode);b.invoke("CreateTimer");auto damaged=triggers;damaged.back()^=1;rejects([&]{restored->restoreTriggers(damaged);},"digest");require(restored->liveObjects(NativeKind::Trigger)==0,"Rejected trigger snapshot created objects");auto mapping=restored->restoreTriggers(triggers);auto decode=[&](std::string_view type,std::uint32_t id){auto it=mapping.find({std::string(type),id});return it==mapping.end()?0u:it->second;};auto reencode=[&](std::string_view type,std::uint32_t id){for(auto& [key,value]:mapping)if(key.first==type && value==id)return key.second;return 0u;};require(restored->encodeTriggers(reencode)==triggers,"Restored trigger snapshot differs");b.restoreGlobals(globals,decode);auto target=b.global("t");require(target.bits!=trigger && !b.invoke("IsTriggerEnabled",std::array{target}).bits && !b.invoke("IsTriggerWaitOnSleeps",std::array{target}).bits && b.invoke("GetTriggerEvalCount",std::array{target}).bits==1 && b.invoke("GetTriggerExecCount",std::array{target}).bits==1 && b.global("runs").bits==1,"Trigger state or handles were not restored");require(b.invoke("TriggerEvaluate",std::array{target}).bits,"Restored compound predicate differs");b.invoke("TriggerExecute",std::array{target});require(b.global("runs").bits==2 && b.invoke("GetTriggerEvalCount",std::array{target}).bits==2 && b.invoke("GetTriggerExecCount",std::array{target}).bits==2,"Restored trigger callbacks did not execute");rejects([&]{restored->restoreTriggers(triggers);},"without triggers");
     });
+    test("boolean_snapshot_restores_handles_and_expression_behavior",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type boolexpr extends handle
+ type conditionfunc extends boolexpr
+ type trigger extends handle
+ type triggercondition extends handle
+ native Condition takes code c returns conditionfunc
+ native And takes boolexpr a, boolexpr b returns boolexpr
+ native Or takes boolexpr a, boolexpr b returns boolexpr
+ native Not takes boolexpr a returns boolexpr
+ native DestroyBoolExpr takes boolexpr b returns nothing
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddCondition takes trigger t, boolexpr b returns triggercondition
+ native TriggerEvaluate takes trigger t returns boolean
+ globals
+ boolexpr initial=null
+ boolexpr shared=null
+ boolexpr composite=null
+ boolexpr retired=null
+ endglobals
+ function yes takes nothing returns boolean
+ return true
+ endfunction
+ function no takes nothing returns boolean
+ return false
+ endfunction
+ function config takes nothing returns nothing
+ set initial=Condition(function yes)
+ endfunction
+ function main takes nothing returns nothing
+ set shared=Condition(function no)
+ set composite=And(Or(initial,shared),Not(shared))
+ set retired=Condition(function no)
+ call DestroyBoolExpr(retired)
+ endfunction
+ )jass";auto make=[&](bool start,bool changed=false){auto script=source;if(changed)script+="\n// changed\n";auto module=Module::compile(Program::parse({{"boolean-snapshot.j",script,"boolean snapshot"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(start)result->startMain();return result;};auto original=make(true),target=make(false);auto& a=original->runtime();auto& b=target->runtime();auto identity=[](std::string_view,std::uint32_t id){return id;};auto bytes=original->encodeBooleanExpressions(identity),globals=a.encodeGlobals(identity);auto oldInitial=b.global("initial").bits;auto damaged=bytes;damaged.back()^=1;rejects([&]{target->rebuildBooleanExpressions(damaged);},"digest");auto different=make(false,true);rejects([&]{different->rebuildBooleanExpressions(bytes);},"source differs");Bytes forged(bytes.begin(),bytes.end()-64);size_t pos=8;auto read=[&](){auto value=std::uint32_t(forged.at(pos)) | (std::uint32_t(forged.at(pos+1))<<8) | (std::uint32_t(forged.at(pos+2))<<16) | (std::uint32_t(forged.at(pos+3))<<24);pos+=4;return value;};auto skipText=[&](){auto length=read();pos+=length;};skipText();pos+=8;auto sources=read();for(unsigned i=0;i<sources;++i){skipText();skipText();}auto handles=read();pos+=8*handles;auto nodes=read();bool changed=false;for(unsigned i=0;i<nodes;++i){auto node=pos;auto operation=read();pos+=12;if(operation!=0){auto self=i+1;for(unsigned j=0;j<4;++j)forged[node+8+j]=std::uint8_t(self>>(8*j));changed=true;break;}}require(changed,"Compound boolean fixture missing");auto cycle=sealSnapshot(std::move(forged),32u*1024u*1024u);rejects([&]{target->rebuildBooleanExpressions(cycle);},"cycle");require(target->liveObjects(NativeKind::Boolean)==1,"Rejected boolean snapshot changed target");auto mapping=target->rebuildBooleanExpressions(bytes);auto decode=[&](std::string_view type,std::uint32_t id){return type=="boolexpr" && mapping.contains(id)?mapping.at(id):0u;};b.restoreGlobals(globals,decode);require(b.global("initial").bits!=oldInitial && b.global("retired").bits==mapping.at(a.global("retired").bits),"Boolean identity or retired reference differs");auto reverse=[&](std::string_view,std::uint32_t id){for(auto [oldId,newId]:mapping)if(newId==id)return oldId;return 0u;};require(target->encodeBooleanExpressions(reverse)==bytes,"Boolean expression snapshot did not round trip");auto trigger=b.invoke("CreateTrigger");b.invoke("TriggerAddCondition",std::array{trigger,b.global("composite")});require(b.invoke("TriggerEvaluate",std::array{trigger}).bits,"Restored compound expression evaluated incorrectly");rejects([&]{target->rebuildBooleanExpressions(bytes);},"");
+    });
     test("timer_events_restore_schedule_and_registration_order",[&]{
         std::string source=R"jass(type destructable extends handle
  type timer extends handle

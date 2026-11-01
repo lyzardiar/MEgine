@@ -4796,3 +4796,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 本批范围 `c3e1a969e`、`6377ca9`、`790440d`。同一集成源码的 Win32 Release 客户端、clock、兽族战役、DotA 和 game-flow 目标编译通过；复用该源码上 clock 47/47 与 OrcX01 定时器身份 1/1，合批执行 OrcX01 玩家／缓存／迷雾快照 1/1、DotA 两张哈希表快照 1/1，以及 gamecache 磁盘版本兼容、同步与分片边界三个消费者，均通过并检查未加载 Game.dll。game-flow 编译出现既有测试代码的 C4389 有符号比较警告。日志 `tmp/docs-artifacts/war3/cache-table-timer-batch/`。
 
 失败项保留：OrcX01 模拟 150 秒的组合恢复探针重建现有世界、单位、缓存、迷雾、脚本对象和事件后，已越过已销毁定时器身份；恢复脚本全局时仍缺少 `boolexpr` 句柄并失败，日志 `tmp/docs-artifacts/war3/orcx-restore-audit/audit-03.log`。该探针未完成全局恢复或继续模拟，不能视为完整存档或跨区通过。完整对象状态、布尔表达式身份、实际保存／载入、原版格式、窗口及性能仍待实现或验证。
+
+
+### 独立布尔表达式身份（待批次验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SBOO` 保存活动／已销毁句柄和共享表达式图，校验地图、时钟、脚本、回调及图结构后重建；调用方需恢复全局等引用。Win32 Release 核心和 clock 目标编译通过；clock 48 通过、0 失败，覆盖组合求值、全局和失效句柄、损坏及循环拒绝。OrcX01 原图模拟 150 秒组合探针越过布尔表达式，在全局 `location` 句柄处失败；日志 `tmp/docs-artifacts/war3/boolean-snapshot-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-04.log`。批次验证其他表达式／事件组合、原图全局映射与续行；完整对象图、实际保存／载入、跨区、原版格式及窗口仍待实现或验收。

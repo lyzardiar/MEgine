@@ -95,6 +95,8 @@ class ScriptSession {
     size_t staleEventHandles_=0;
     std::set<std::uint32_t> ignoredTimerIdentities_;
     bool timerIdentitiesRebuilt_=false;
+    std::set<std::uint32_t> ignoredBooleanIdentities_;
+    bool booleanIdentitiesRebuilt_=false;
     std::unordered_map<std::uint32_t,std::vector<std::uint32_t>> timerExpireEventIndex_;
     std::unordered_map<std::uint64_t,std::vector<std::uint32_t>> playerUnitEventIndex_,unitEventIndex_;
     unsigned combatTargetEventMask_=0;
@@ -1409,6 +1411,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildActorEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeGameEvents(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildGameEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeBooleanExpressions(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildBooleanExpressions(std::span<const std::uint8_t> bytes);
     Bytes encodeTriggers(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::pair<std::string,std::uint32_t>,std::uint32_t> restoreTriggers(std::span<const std::uint8_t> bytes);
     double simulationTime() const {return simulationTime_;}
