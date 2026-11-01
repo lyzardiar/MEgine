@@ -5519,3 +5519,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 战斗与建筑等路径的单位分类匹配（待功能批次验证）
 
 路径：`src/session_{ai_economy,ai_natives,arrow_status,construction,militia,orders,sacrifice_pit,teleport,weapons}.cpp`、`tests/research_tests.cpp`。攻击、传送、黑暗之箭、祭献、建造、民兵、命令及 AI 读取单位分类时按完整条目判断。合批运行研究夹具与 `war3_research_tests <root> <fixture>`，检查攻击相似守卫分类；其他具体技能、AI 与原版对局仍待专项验证。本次未执行功能测试。
+
+
+### 修理、采集及单位分类合批结果
+
+范围：`cc3eb89`、`4c48630`、`33192ab` 及修理夹具补充。Win32 Release 客户端、施工、采集和研究测试目标编译通过。施工原始场景、修理 partial／positive、采集原始场景、树木 partial／invu／invulnerable、研究场景共 **8 个进程通过、0 失败**；修理夹具覆盖工人实际的 Ahrp 能力后，两个失败场景重测通过。日志和夹具位于 `tmp/docs-artifacts/war3/target-batch/`。自动寻找无敌树木、其他技能与 AI 分类组合、原版对照及窗口对局仍待验证。

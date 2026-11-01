@@ -93,7 +93,7 @@ def main():
     files['war3map.j'] = SCRIPT.encode('utf-8')
     if args.repair_targets:
         targets = 'notground,notstructure,notair' if args.repair_targets == 'partial' else 'ground,notair,notnonancient'
-        files['war3map.w3a'] = struct.pack('<II', 2, 1) + b'Arep' + bytes(4) + struct.pack('<I', 1) + b'atar' + struct.pack('<III', 3, 1, 0) + targets.encode('ascii') + b'\0Arep' + struct.pack('<I', 0)
+        files['war3map.w3a'] = struct.pack('<II', 2, 2) + b''.join(ability + bytes(4) + struct.pack('<I', 1) + b'atar' + struct.pack('<III', 3, 1, 0) + targets.encode('ascii') + b'\0' + ability for ability in (b'Arep', b'Ahrp')) + struct.pack('<I', 0)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
