@@ -38,6 +38,8 @@ unit probe_live_second=null
 force probe_live_force=null
 boolean probe_live_group_valid=true
 boolean probe_live_force_valid=true
+integer probe_enemy_filter_calls=0
+boolean probe_force_scope_valid=false
 endglobals
 function ProbeDeath takes nothing returns nothing
     if GetTriggerDestructable()!=probe_tree or GetTriggerWidget()!=probe_tree then
@@ -229,6 +231,21 @@ function ProbeLiveCollections takes real x, real y returns nothing
     call DestroyGroup(probe_live_group)
     call DestroyForce(probe_live_force)
     call RemoveRect(r)
+endfunction
+function ProbeAllianceFilter takes nothing returns boolean
+    if GetFilterPlayer()==Player(1) then
+        set probe_enemy_filter_calls=probe_enemy_filter_calls+1
+    endif
+    return true
+endfunction
+function ProbeForceScope takes nothing returns nothing
+    local force f=CreateForce()
+    call ForceEnumPlayers(f,null)
+    set probe_force_scope_valid=not IsPlayerInForce(Player(12),f) and not IsPlayerInForce(Player(15),f)
+    call SetPlayerAlliance(Player(0),Player(1),ALLIANCE_PASSIVE,false)
+    call ForceEnumAllies(f,Player(0),Filter(function ProbeAllianceFilter))
+    set probe_force_scope_valid=probe_force_scope_valid and not IsPlayerInForce(Player(1),f)
+    call DestroyForce(f)
 endfunction
 function config takes nothing returns nothing
 endfunction

@@ -5783,3 +5783,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 筛选回调中的单位组和玩家组状态（待功能批次验证）
 
 路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。有过滤器的单位组和玩家组枚举在筛选前清空旧成员，并逐个发布已接受成员，供后续筛选回调读取；失效组停止执行。原版 1.27 的单位组枚举初始化 `0x6f222c60` 调用清组路径 `0x6f20be70`，筛选回调 `0x6f216391` 通过后在 `0x6f2163a1` 加入单位；玩家组枚举 `0x6f211290` 清空并逐个筛选。合批运行 destructable 夹具，覆盖旧成员清除及后续过滤器读取前序结果；同组嵌套枚举、过滤器主动修改及原版动态时序待验证。本次未执行功能测试。
+
+
+### 玩家枚举的范围和联盟过滤顺序（待功能批次验证）
+
+路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。玩家枚举限制在 0–11 号槽位；联盟枚举先运行筛选器，再按当前联盟关系决定是否加入玩家组。原版 1.27 `0x6f211320` 至 `0x6f2113f7` 先调用过滤表达式，随后检查联盟并在玩家编号达到 12 时结束循环。合批执行 destructable 夹具，覆盖中立玩家排除和敌方过滤回调；空槽、联盟变更重入及原版运行时仍待对照。本次未执行功能测试。
