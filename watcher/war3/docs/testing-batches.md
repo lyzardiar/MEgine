@@ -5425,3 +5425,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 单人读档地图预览与后台校验（待功能批次验证）
 
 路径：`src/saved_game_browser.{h,cpp}`、`src/campaign_browser.{h,cpp}`、`src/main.cpp`。选择存档时后台检查检查点和地图摘要，读取原地图名称、作者与说明；快速切换只发布最新选择，双击等待当前结果。有效结果交给地图准备，恢复时再次校验存档与地图身份。退出列表时等待正在执行的文件读取完成。合批构建客户端，验证大存档、快速切换、损坏／替换、取消、双击和战役／普通地图恢复；原版预览图及窗口视觉仍待验证。本次未执行功能测试。
+
+
+### 读档预览协作取消（待功能批次验证）
+
+路径：`src/platform.{h,cpp}`、`src/snapshot_codec.h`、`src/session.h`、`src/session_campaign.cpp`、`src/saved_game_browser.{h,cpp}`、`tests/clock_tests.cpp`。检查点读取和 SHA-256 按块响应取消，选择变化或关闭列表时取消旧请求；预览一次读取检查点后复用元数据定位地图。单次系统文件读取、地图归档读取和解析无法中断，可能延迟退出。合批构建客户端与会话套件，检查取消、摘要损坏、切换及正常恢复；窗口交互仍待验。本次未执行功能测试。

@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <optional>
 #include <mutex>
+#include <stop_token>
 
 namespace war3 {
 using Bytes = std::vector<std::uint8_t>;
@@ -19,8 +20,8 @@ std::wstring wide(std::string_view text);
 std::string winError(DWORD code = GetLastError());
 fs::path war3UserDirectory();
 void validateWar3UserDirectory(const fs::path& dataRoot);
-std::string sha256(const fs::path& path);
-std::string sha256(std::span<const std::uint8_t> bytes);
+std::string sha256(const fs::path& path,std::stop_token stop={});
+std::string sha256(std::span<const std::uint8_t> bytes,std::stop_token stop={});
 void verifyPe32(const fs::path& path);
 struct Options {
     fs::path dataRoot;

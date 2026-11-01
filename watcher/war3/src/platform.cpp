@@ -28,7 +28,7 @@ std::wstring wide(std::string_view text) {
 std::string winError(DWORD code) { return std::to_string(code) + " (Win32)"; }
 fs::path war3UserDirectory() {wchar_t buffer[32768]{};DWORD length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",buffer,32768);if(length>=32768)throw std::runtime_error("War3 user directory is too long");if(length){fs::path path(buffer);if(!path.is_absolute())throw std::runtime_error("War3 user directory must be absolute");return path;}length=GetEnvironmentVariableW(L"LOCALAPPDATA",buffer,32768);if(!length || length>=32768)throw std::runtime_error("LOCALAPPDATA unavailable for War3 user directory");return fs::path(buffer)/L"MEgine"/L"War3";}
 void validateWar3UserDirectory(const fs::path& dataRoot) {auto root=fs::canonical(dataRoot).wstring();if(root.empty())throw std::runtime_error("Invalid War3 data root");if(root.back()!=L'\\')root+=L'\\';for(auto part:{L"Campaign",L"GameCache",L"Settings",L"Saves"}){auto target=fs::weakly_canonical(war3UserDirectory()/part).wstring();bool same=target.size()+1==root.size() && CompareStringOrdinal(target.c_str(),int(target.size()),root.c_str(),int(root.size()-1),TRUE)==CSTR_EQUAL;bool inside=target.size()>=root.size() && CompareStringOrdinal(target.c_str(),int(root.size()),root.c_str(),int(root.size()),TRUE)==CSTR_EQUAL;if(same || inside)throw std::runtime_error("War3 user data directory overlaps the read-only game installation");}}
-std::string sha256(const fs::path& path) {
+std::string sha256(const fs::path& path,std::stop_token stop) {
     std::ifstream file(path, std::ios::binary);
     if (!file) throw std::runtime_error("Cannot read " + utf8(path.wstring()));
     BCRYPT_ALG_HANDLE algorithm = nullptr;
@@ -36,22 +36,23 @@ std::string sha256(const fs::path& path) {
     BCRYPT_HASH_HANDLE hash = nullptr;
     auto status = BCryptCreateHash(algorithm, &hash, nullptr, 0, nullptr, 0, 0);
     std::array<unsigned char, 65536> buffer{};
-    while (status >= 0 && file) {
+    while (status >= 0 && file && !stop.stop_requested()) {
         file.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
         if (file.gcount()) status = BCryptHashData(hash, buffer.data(), static_cast<ULONG>(file.gcount()), 0);
     }
     std::array<unsigned char, 32> digest{};
-    if (status >= 0 && !file.bad()) status = BCryptFinishHash(hash, digest.data(), digest.size(), 0);
+    if (status >= 0 && !file.bad() && !stop.stop_requested()) status = BCryptFinishHash(hash, digest.data(), digest.size(), 0);
     else status = -1;
     if (hash) BCryptDestroyHash(hash);
     BCryptCloseAlgorithmProvider(algorithm, 0);
+    if (stop.stop_requested()) throw std::runtime_error("Operation canceled");
     if (status < 0) throw std::runtime_error("SHA-256 failed");
     std::ostringstream result;
     for (auto byte : digest) result << std::hex << std::setw(2) << std::setfill('0') << unsigned(byte);
     return result.str();
 }
-std::string sha256(std::span<const std::uint8_t> bytes) {
-    BCRYPT_ALG_HANDLE algorithm=nullptr;BCRYPT_HASH_HANDLE hash=nullptr;if(BCryptOpenAlgorithmProvider(&algorithm,BCRYPT_SHA256_ALGORITHM,nullptr,0)<0)throw std::runtime_error("SHA-256 unavailable");auto status=BCryptCreateHash(algorithm,&hash,nullptr,0,nullptr,0,0);for(size_t at=0;status>=0 && at<bytes.size();){auto size=ULONG(std::min<size_t>(bytes.size()-at,65536));status=BCryptHashData(hash,const_cast<PUCHAR>(bytes.data()+at),size,0);at+=size;}std::array<unsigned char,32> digest{};if(status>=0)status=BCryptFinishHash(hash,digest.data(),ULONG(digest.size()),0);if(hash)BCryptDestroyHash(hash);BCryptCloseAlgorithmProvider(algorithm,0);if(status<0)throw std::runtime_error("SHA-256 failed");std::ostringstream result;for(auto byte:digest)result<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(byte);return result.str();
+std::string sha256(std::span<const std::uint8_t> bytes,std::stop_token stop) {
+    BCRYPT_ALG_HANDLE algorithm=nullptr;BCRYPT_HASH_HANDLE hash=nullptr;if(BCryptOpenAlgorithmProvider(&algorithm,BCRYPT_SHA256_ALGORITHM,nullptr,0)<0)throw std::runtime_error("SHA-256 unavailable");auto status=BCryptCreateHash(algorithm,&hash,nullptr,0,nullptr,0,0);for(size_t at=0;status>=0 && !stop.stop_requested() && at<bytes.size();){auto size=ULONG(std::min<size_t>(bytes.size()-at,65536));status=BCryptHashData(hash,const_cast<PUCHAR>(bytes.data()+at),size,0);at+=size;}std::array<unsigned char,32> digest{};if(status>=0 && !stop.stop_requested())status=BCryptFinishHash(hash,digest.data(),ULONG(digest.size()),0);if(hash)BCryptDestroyHash(hash);BCryptCloseAlgorithmProvider(algorithm,0);if(stop.stop_requested())throw std::runtime_error("Operation canceled");if(status<0)throw std::runtime_error("SHA-256 failed");std::ostringstream result;for(auto byte:digest)result<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(byte);return result.str();
 }
 void verifyPe32(const fs::path& path) {
     std::ifstream file(path, std::ios::binary);

@@ -18,7 +18,9 @@ class SavedGameBrowser {
     std::mutex mutex_;
     std::condition_variable wake_;
     std::uint64_t generation_=0;
-    std::optional<std::pair<std::uint64_t,std::string>> pending_;
+    struct Request {std::uint64_t id=0;std::string name;std::stop_token stop;};
+    std::optional<Request> pending_;
+    std::stop_source cancel_;
     struct Result {std::uint64_t request=0;std::optional<SavedGameSelection> value;std::string error;};
     std::optional<Result> ready_;
     std::optional<SavedGameSelection> preview_;
