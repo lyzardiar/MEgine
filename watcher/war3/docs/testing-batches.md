@@ -5695,3 +5695,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 电脑攻击跟进的隐身目标（待功能批次验证）
 
 路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`。目标对电脑隐身时，直接攻击失败不会将其当前位置用于攻击移动；解除隐身后恢复正常攻击。合批运行 CampaignAI `fog-attack`，覆盖隐身期间保留已有命令及显形后攻击，并复验迷雾和混合部队；探测、回调变化、随机路线和原版对局待验证。本次未执行功能测试。
+
+
+### 电脑迷雾目标的敌我关系（待功能批次验证）
+
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`。迷雾中的目标成为友军后，电脑不会再向其当前位置发出攻击移动；恢复敌对后可继续进攻。合批运行 CampaignAI `fog-attack`，覆盖联盟变化前后与现有隐身、迷雾场景；原版联盟策略及实际对局待验证。本次未执行功能测试。
