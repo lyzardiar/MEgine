@@ -25,6 +25,7 @@ struct StampedeBeast {
 };
 struct AttackLightning {
     const PassiveInfo* definition=nullptr;
+    std::shared_ptr<const PassiveInfo> restoredDefinition;
     std::uint32_t source=0,target=0;
     std::uint64_t sourceDeath=0,targetDeath=0;
     WorldPoint start,end;

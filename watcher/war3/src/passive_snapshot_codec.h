@@ -4,4 +4,5 @@
 #include "passives.h"
 namespace war3 {
 void writePassiveSnapshot(SnapshotWriter& out,const PassiveInfo& passive);
+PassiveInfo readPassiveSnapshot(Binary& in);
 }
