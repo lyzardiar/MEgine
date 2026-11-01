@@ -5609,3 +5609,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 圣光与死亡缠绕的无敌目标（待功能批次验证）
 
 路径：`src/session_spells.cpp`、`tests/generate-control-fixture.py`、`tests/control_tests.cpp`。圣光及死亡缠绕的治疗与伤害目标均遵守源目标表对无敌单位的许可；实际伤害仍经过无敌判定。合批使用 `--light-targets partial`、`invu`、`invulnerable` 生成控制夹具并运行对应 `light-*` 模式，覆盖友军治疗和敌军伤害目标；施法效果、原版时序及对局窗口待验证。本次未执行功能测试。
+
+圣光／死亡缠绕补充：许可目标时推进实际施法，检查友军恢复生命和无敌敌军不受伤害；与无敌目标任务合并计数，待同批验证。
