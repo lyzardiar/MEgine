@@ -99,6 +99,7 @@ struct UnitState {
     size_t waypoint=0;
     std::uint64_t pathingRevision=0;
     std::uint64_t routeRetryWorldRevision=0;
+    unsigned routeRetryPhase=0;
     double routeRetryAt=0;
     bool routeWatch=false;
     double routeWatchSince=0;

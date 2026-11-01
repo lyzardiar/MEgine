@@ -132,6 +132,7 @@ public:
     Bytes encodeTerrainGridState(std::string_view mapDigest) const;
     void restoreTerrainGridState(std::span<const std::uint8_t> bytes,std::string_view mapDigest);
     Bytes encodePathingState() const;
+    std::pair<std::string,std::string> movementFingerprint() const;
     void restorePathingState(std::span<const std::uint8_t> bytes);
     Bytes encodeTerrainState() const;
     void restoreTerrainState(std::span<const std::uint8_t> bytes);

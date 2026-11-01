@@ -4674,3 +4674,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 单位定时转向快照（待批次验证）
 
 路径：`src/session_unit_visual.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUVS` 版本 2 保存进行中的转向起点、方向差、已用时间及总时长，继续读取版本 1；无效状态在应用前拒绝。Win32 Release 客户端及 clock 测试编译通过，`war3_clock_tests <data-root> <output-root>` 33 通过、0 失败；OrcX01 开场 12.9375 秒有一个实际定时转向，外观快照在 252 个活动单位重建后往返一致，探针 `tmp/docs-artifacts/war3/unit-facing-snapshot/probe/`，未加载 Game.dll。实际恢复后续转向、窗口画面和完整存档仍待验证或实现。
+
+### 单位移动路线快照（待批次验证）
+
+路径：`src/session_unit_movement.cpp`、`src/session.h`、`src/entities.h`、`src/session_entities.cpp`、`src/session_orders.cpp`、`src/world.h`、`src/world_path.cpp`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SMOV` 保存路线、目标、节点、订单编号、受阻观察与重寻路调度；恢复前核对地形及含重叠拥有者计数的占地指纹，并重映射单位和游标。Win32 Release 客户端及测试目标编译通过，clock 33 通过、0 失败，重新开启碰撞重寻路 1 通过、0 失败；OrcX01 原图 33.1875 秒的 5 个移动单位及 252 个活动单位的快照往返一致，探针 `tmp/docs-artifacts/war3/unit-movement-snapshot/probe/`，未加载 Game.dll。路线恢复后续行、动态障碍、其他命令与完整世界存档仍待批次验证或实现。
