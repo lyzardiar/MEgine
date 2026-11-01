@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 救援范围与成员恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_ownership.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 92/92 通过；基于原版地图资源的隔离脚本恢复后临时绕过启动保护，检查原地不重复触发、离开再进入再次触发，71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/rescue-recovery/`。实际读档、战役事件时序与窗口画面待阶段验证。
+
 ### 反召唤部分退款恢复检查（待阶段验证）
 
 路径：`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 91/91 通过；原版 Orc01 会话人工创建建筑并启动反召唤，在部分退款、工人死亡后隔离恢复；临时绕过启动保护续行 12 秒，建筑移除、累计返还 75 金和 25 木，70/70 项状态一致。日志位于 `tmp/docs-artifacts/war3/unsummon-recovery/`。实际读档、自然对局、原版时序和窗口画面待阶段验证。
