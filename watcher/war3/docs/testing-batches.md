@@ -5768,3 +5768,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 组命令的失效组和地点（待功能批次验证）
 
 路径：`src/session_collections.cpp`、`tests/destructable_tests.cpp`。即时、点和目标组命令对失效组返回 false；地点版本对失效地点返回 false，不发出单位命令。原版 1.27 的 `GroupImmediateOrderById`、`GroupTargetOrderById` 和 `GroupPointOrderByIdLoc` 在 `0x6f1e6d60`、`0x6f1e6e80`、`0x6f1e6dd0` 检查句柄并在解析失败时返回零。合批生成 destructable 夹具并运行测试；多单位事件重入及完整原版组命令返回规则仍待验证。本次未执行功能测试。
+
+
+### 单位组句柄与命令合批结果
+
+范围：`c75fc74`、`8cf817f`、`776f6a4`，含 `1a6dc96` 嵌套物品枚举补充。Win32 Release 客户端、destructable 和 CampaignAI 目标编译通过；destructable 主场景、`invalid-handles`、`snapshot` 三个进程均退出 0，共 **4 条 PASS**，覆盖失效组／单位／地点、过滤回调销毁组和嵌套物品枚举。CampaignAI 的 `reachable`、`armies`、`fog-attack` 各 **2 通过、0 失败**。日志和夹具在 `tmp/docs-artifacts/war3/group-handles-batch/`。原版回调销毁时序、多单位命令返回规则与实际地图窗口仍待对照。
