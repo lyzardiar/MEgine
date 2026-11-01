@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 普通范围消耗品的目标重入（待功能批次验证）
+
+路径：`src/session_consumables.cpp`、`tests/control_tests.cpp`。普通消耗品在施法前记录预选目标的死亡与归属轮次；逐个执行时检查使用者状态及目标轮次，避免回调后对已易主或复活的目标继续执行旧效果。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；`item-normal-target-reentry` 最小复现 1 通过、0 失败，覆盖范围护甲卷轴的目标易主与复活。合批回归普通恢复／防护／驱散及复合目标重入；Spirit Link 的独立目标处理、原版时序、多人和窗口待对照。日志与夹具：`tmp/docs-artifacts/war3/consumable-reentry/`。
+
+
 ### 消耗品治疗回调的目标生命周期（待功能批次验证）
 
 路径：`src/session_consumables.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。普通及复合消耗品的恢复／护甲效果在治疗回调后重新检查使用者和目标的死亡、归属与移除状态，避免把剩余魔法恢复或护甲状态施加到已复活或易主的目标。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；`item-protection-reentry` 最小复现 1 通过、0 失败，覆盖普通／复合护甲卷轴和复合恢复卷轴的复活回调。合批回归 `item-combined-target-reentry`、`item-combined`、`item-combined-area`、普通 `protection` 和治疗卷轴；原版时序、多人及窗口待对照。日志与夹具：`tmp/docs-artifacts/war3/consumable-reentry/`。
