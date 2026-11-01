@@ -4921,3 +4921,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 民兵征召与警铃恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_militia.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SMLT` 保存警铃、攻击警报设置、民兵转换及计时，并映射城镇引用；`SRBF` 版本 4 纳入该组件。Win32 Release 核心与 clock 目标编译通过，clock 62/62；实际警铃夹具覆盖前往城镇与已变身两种状态的重建和组件往返，日志 `tmp/docs-artifacts/war3/militia-recovery/clock-03.log`。待阶段验证恢复后转换完成、倒计时返工、原图与实际存档；组件包启动保护保留。
+
+
+### 树人扎根与单位变形恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_unit_forms.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUFM` 保存扎根和变形状态、转换及调度成员，先于路径恢复重建占地；`SRBF` 版本 5 纳入该组件。Win32 Release 核心及 clock 目标编译通过，clock 62/62；实际技能夹具覆盖已拔起与拔起中的古树、已变身与变身中的熊，检查占地、路径与组件往返，日志 `tmp/docs-artifacts/war3/forms-recovery/clock-04.log`。待阶段验证转换续行、取消退款、自动变回、原图和实际存档；组件包启动保护保留。
