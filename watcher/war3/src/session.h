@@ -1363,6 +1363,8 @@ public:
     Bytes encodeUnitCore(const jass::StableHandleMap& encodeHandle) const;
     void prepareUnitCore(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     void finishUnitCore(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeUnitAuras(const jass::StableHandleMap& encodeHandle) const;
+    void restoreUnitAuras(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitBuffs(const jass::StableHandleMap& encodeHandle) const;
     void restoreUnitBuffs(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitCasts(const jass::StableHandleMap& encodeHandle) const;
