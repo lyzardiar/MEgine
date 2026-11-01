@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 研究按钮的分级文本（待批次验证）
+
+路径：`src/object_data.h/.cpp`、`src/session_research.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。科技按钮按等级读取自定义名称、说明、图标和热键，保留文本逗号并展开说明中的对象字段；未覆盖等级继承源数据。待生成研究夹具并运行 `war3_research_tests <data-root> <fixture>`，回归研究队列、分级数据、WTS、地图继承和实际窗口；本次未执行测试。
+
 ### 自定义技能的分级标题（待批次验证）
 
 路径：`src/object_data.cpp`、`src/session_ability_commands.cpp`、`tests/generate-revival-fixture.py`、`tests/revival_tests.cpp`。技能按钮标题按等级读取自定义完整文本并保留逗号，未覆盖等级从源 Profile 获取；学习标题使用其共享字段。待生成复活夹具并运行 `war3_revival_tests <data-root> <hero-revival-fixture> custom-ability-title`，回归技能说明、其他等级标题、WTS 和实际窗口；本次未执行测试。

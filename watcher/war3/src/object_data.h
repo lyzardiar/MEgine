@@ -39,7 +39,7 @@ public:
     static std::uint32_t code(std::string_view text);
     static std::string name(std::uint32_t code);
     std::optional<std::string> displayName(std::uint32_t id) const;
-    std::string profileLevelText(std::uint32_t id,const std::string& key,unsigned level) const;
+    std::string profileLevelText(std::uint32_t id,const std::string& key,unsigned level,const std::string& fallback={}) const;
     std::uint32_t unitId(const std::string& name) const;
     std::vector<std::uint32_t> unitTypes() const;
     std::vector<std::uint32_t> itemTypes() const;
