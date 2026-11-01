@@ -5714,4 +5714,4 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 
 ### 电脑跨岛运输途中目标状态变化（待功能批次验证）
 
-路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`。续运检查目标隐身和敌我关系，目标不可侦测或成为友军时取消已有运输波次并使用现有乘员释放流程。合批运行 CampaignAI `island-auto-target-invisible`、`island-auto-target-ally` 及死亡和正常运输场景；已登船／多波次状态、原版策略与实际对局待验证。本次未执行功能测试。
+路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`。续运检查目标隐身和敌我关系，目标不可侦测或成为友军时取消已有运输波次并使用现有乘员释放流程。合批运行 CampaignAI `island-auto-target-invisible`、`island-auto-target-invisible-aboard`、`island-auto-target-ally` 及死亡和正常运输场景，覆盖已登船乘员释放；多波次状态、原版策略与实际对局待验证。本次未执行功能测试。
