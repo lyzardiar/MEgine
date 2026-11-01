@@ -5978,3 +5978,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 单位种族与生命周期接口合批结果
 
 范围：`bd7fdbf`、`bf5b99a`、`86520e7`。Win32 Release 客户端、construction 与 corpse 测试目标构建通过，无编译警告。分别生成普通施工、`--race-overrides` 和尸体夹具后，`war3_construction_tests <data-root> <fixture>`、同程序 `race-custom` 及 `war3_corpse_tests <data-root> <fixture> flow` 均退出 0，各输出 1 条 PASS；覆盖未知／占位／大小写及娜迦种族、失效单位的施工／升级和尸体控制、有效施工与尸体回归。日志和夹具位于 `tmp/docs-artifacts/war3/unit-lifecycle-batch/`。原版动态行为、单位转换、尸体其他状态条件及实际窗口仍待验证。
+
+
+### 尸体暂停与复活生命周期（待功能批次验证）
+
+路径：`src/session_corpses.cpp`、`tests/corpse_tests.cpp`、`docs/corpses.md`。存活单位不保存衰变暂停，复活清除尸体暂停状态，后续死亡正常计时；已死亡且有尸体的单位沿用暂停与恢复。原版 1.27 的 `UnitSuspendDecay` 检查死亡标志 `0x100` 及尸体状态。合批运行 corpse 夹具 `animation-lifecycle`、`decay` 与 `flow`；英雄、特殊尸体、原版动态时序和实际窗口待验证。本次未执行功能测试。

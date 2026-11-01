@@ -11,7 +11,7 @@ namespace {float number(jass::Real value){return std::bit_cast<float>(value.bits
 void ScriptSession::beginCorpse(UnitState& u,bool immediate){
     auto& data=definitions();float flags=data.number(u.type,"UnitData","deathType"),death=data.number(u.type,"UnitData","death");if(flags<0 || flags>3 || flags!=std::floor(flags) || death<0 || death>86400)throw std::runtime_error("Unit death definition outside supported range");CorpseState state;state.flags=(u.illusion || u.noCorpse || u.exploded)?0:unsigned(flags);state.death=death;state.flesh=u.hero?gameplayNumber("DissipateTime",3):u.building?gameplayNumber("StructureDecayTime",30):gameplayNumber("DecayTime",2);state.bone=u.hero || u.building?0:gameplayNumber("BoneDecayTime",88);if(state.flesh<0 || state.flesh>86400 || state.bone<0 || state.bone>86400)throw std::runtime_error("Corpse decay duration outside supported range");if(immediate){state.elapsed=state.death;state.phase=CorpseState::Phase::Flesh;u.animation="Decay Flesh";u.animationTime=0;++u.animationGeneration;}u.corpse=state;corpseHandles_.insert(u.handle);
 }
-void ScriptSession::clearCorpse(UnitState& u){if(!u.corpse)return;corpseHandles_.erase(u.handle);u.corpse.reset();u.animation="Stand";u.animationIndex.reset();u.animationQueue.clear();u.animationTime=0;++u.animationGeneration;++fogRevision_;}
+void ScriptSession::clearCorpse(UnitState& u){if(!u.corpse)return;corpseHandles_.erase(u.handle);u.corpse.reset();u.decaySuspended=false;u.animation="Stand";u.animationIndex.reset();u.animationQueue.clear();u.animationTime=0;++u.animationGeneration;++fogRevision_;}
 bool ScriptSession::corpseAvailable(std::uint32_t id,std::uint32_t claimant){
     if(!alive(id,NativeKind::Unit))return false;auto u=units_.at(id);return !u->rebirth && !u->removing && !u->hidden() && !u->hero && !u->building && !u->illusion && number(u->life)<=0 && u->corpse && u->corpse->flags && !u->corpse->consumed && !u->corpse->gone && u->corpse->elapsed>=u->corpse->death && (!u->corpse->claimedBy || u->corpse->claimedBy==claimant);
 }
@@ -38,7 +38,7 @@ void ScriptSession::corpsesTick(double delta){
 void ScriptSession::bindCorpseNatives(){
     bind("GetDecayingUnit","unit",{},[this](auto& vm,auto){return vm.handle("unit",!contexts_.empty() && (contexts_.back().event==21 || contexts_.back().event==54)?contexts_.back().triggerUnit:0);});
     bind("CreateCorpse","unit",{"player","integer","real","real","real"},[this](auto&,auto a){return createCorpse(playerId(a[0]),a[1].bits,{jass::Real::fromBits(a[2].bits),jass::Real::fromBits(a[3].bits)},jass::Real::fromBits(a[4].bits));});
-    bind("UnitSuspendDecay","nothing",{"unit","boolean"},[this](auto& vm,auto a){if(alive(a[0].bits,NativeKind::Unit))unit(a[0]).decaySuspended=a[1].bits!=0;return vm.nothing();});
+    bind("UnitSuspendDecay","nothing",{"unit","boolean"},[this](auto& vm,auto a){if(alive(a[0].bits,NativeKind::Unit)){auto& u=unit(a[0]);if(number(u.life)<=0 && u.corpse)u.decaySuspended=a[1].bits!=0;}return vm.nothing();});
     bind("SetUnitExploded","nothing",{"unit","boolean"},[this](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Unit))return vm.nothing();auto& u=unit(a[0]);u.exploded=a[1].bits!=0;if(u.exploded && u.corpse)u.corpse->flags=0;return vm.nothing();});
 }
 }
