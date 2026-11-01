@@ -5221,3 +5221,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 复合物品的幻象效果（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合支持 `AIil`，使用前检查目标、可见性、联盟、范围与落点，执行时再次检查并复用幻象与限时生命；其余即时效果仍作用于使用者／所属玩家。Win32 Release `cmake --build --preset release --target war3_control_tests --parallel 4` 和夹具脚本语法通过，未运行功能测试。下一功能批次重新生成夹具并运行 `war3_control_tests <data-root> <fixture> item-combined`，核对幻象／金币、敌方目标拒绝与消费；目标移动／死亡／易主、回调重入、落点变化、符文及原版目标和事件规则待验证。
+
+
+### 复合物品的隐身效果（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合支持 `AIvi`，使用前检查持续时间、单位类型与状态标识，复用隐身状态及淡入、到期流程。合批重新生成夹具并运行 `war3_control_tests <data-root> <fixture> item-combined`，检查隐身与金币、消费和事件；补充淡入推进、到期、攻击打破隐身、效果顺序、混合目标及原版行为验证。本次未运行功能测试，待功能包集中编译验证。
