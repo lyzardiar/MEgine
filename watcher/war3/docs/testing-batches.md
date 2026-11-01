@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### AI 生产回调批次结果
+
+范围：`80cb2be`、`fa7b24d`、`5d80461`。Win32 Release 客户端、CampaignAI 和 revival 程序构建通过。重新生成战役 AI 夹具后，`produce-owner`、`produce-replacement`、`produce-builder`、`produce-zero`、`produce-many`、`convert-empty`、`merge-empty`、`armies`、`harvest`、`reachable` 各 2 项通过，`startup` 1 项通过；原 Booty Bay 的 `melee-build` 1 项通过；复活夹具 4 项通过，共 **26 通过、0 失败**。覆盖生产开始时转移建筑、新建替代生产者、工人取消施法时转移，以及生产、采集、建造和复活回归。日志与夹具位于 `tmp/docs-artifacts/war3/ai-producer-callback-batch/`。
+
+原版事件时序、建造／复活其他重入场景、大量生产者时的性能、窗口和完整对局仍待验证。单次生产调用的工作量上限继续保留；下一功能批次 0/3。
+
+
 ### AI 建造位置搜索的回调中断（待合批验证，3/3）
 
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`。建造尝试被施法结束回调改派或转移工人时，停止使用该工人尝试其他位置；位置无效且工人状态未改变时继续搜索。合批重新生成夹具并运行 CampaignAI `produce-builder`、`produce-owner`、`produce-replacement`、生产回归及 revival；原版取消时序、工人销毁／其他回调与实际对局待验证。本次提交前未执行功能测试。
