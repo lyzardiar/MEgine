@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 施法者死亡后的地狱火召唤（同一任务补充，待功能批次验证）
+
+路径：`src/session_summons.cpp`、`tests/control_tests.cpp`。已发出地狱火落地时，允许施法者仍以死亡状态存在的情况下创建地狱火；结算期间施法者状态、死亡轮次、归属或命令轮次变化仍会终止后续召唤。扩展地狱火最小复现检查伤害、眩晕、召唤类型和归属：修复前因召唤缺失失败，修复后 1 通过、0 失败。Win32 Release 客户端及 control 测试目标构建通过，日志在 `tmp/docs-artifacts/war3/inferno-dead-caster/`；合批运行 `war3_control_tests <data-root> <fixture> area-impact-dead-caster`、普通地狱火和召唤回归。施法者被移除、复活或易主、召唤事件回调、原版时序及实际窗口仍待对照。
+
+
 ### 施法者死亡后的已发出范围效果（待功能批次验证）
 
 路径：`src/session_area_spells.cpp`、`src/session_spell_effects.cpp`、`tests/control_tests.cpp`。范围效果开始结算时允许已死亡但句柄仍有效的施法者；处理过程中仍以死亡和归属轮次检测后续变化。地狱火的隔离最小复现中，施法支付后、落地前击杀施法者，伤害与眩晕正常落地，1 通过、0 失败；Win32 Release 客户端和 control 测试目标构建通过，夹具为 `tmp/docs-artifacts/war3/wave-target-lifecycle/fixture.w3m`，构建日志在 `tmp/docs-artifacts/war3/area-dead-caster/`。合批运行 `war3_control_tests <data-root> <fixture> area-impact-dead-caster`、`area-damage-reentry`、`spell-damage-reentry` 和普通范围技能回归；霜冻新星的带弹道地图覆盖、施法者被移除／复活／易主、召唤结果、原版时序和实际窗口仍待对照。
