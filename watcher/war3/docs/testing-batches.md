@@ -5745,3 +5745,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 地面物品枚举期间的拾取（待功能批次验证）
 
 路径：`src/session_inventory.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。矩形枚举在筛选及回调前复核物品仍位于地面，筛选回调中被收入库存的后续物品不再作为地面对象枚举。合批生成 destructable 夹具并执行 `war3_destructable_tests <root> <fixture>`，覆盖回调拾取；对象移动、嵌套枚举及原版时序待对照。本次未执行功能测试。
+
+
+### 地图枚举与回调合批结果
+
+范围：`35bc5ce`、`b738f01`、`7939e8e`。Win32 Release 客户端及 `war3_destructable_tests` 编译通过，生成独立地图后主场景、`invalid-handles` 和 `snapshot` 三个进程均退出 0，日志共 **4 条 PASS**。主场景覆盖物品／可破坏物过滤和回调上下文、过滤时移除单位、枚举时拾取后续物品及既有采木／研究；日志及夹具位于 `tmp/docs-artifacts/war3/enumeration-batch/`。嵌套枚举、对象重定位、原版回调时序及实际地图窗口仍待验证。
