@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的点目标照明弹（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/flare.md`。复合物品支持点目标 `AIfa` 与其他已支持即时效果组合，选点后复用显形区域的源范围、延迟、持续时间与侦测类型，并共同结算物品费用、次数、冷却和使用事件。Win32 Release 客户端和 control 测试目标构建、生成器语法检查通过；合批生成复合夹具并运行 `war3_control_tests <data-root> <fixture> item-combined-flare` 与普通照明弹、复合物品及显形回归。新增用例尚未执行；复合施法前摇／弹道、混合点目标、回调重入、原版时序、多人和窗口待对照。
+
+
 ### 施法者死亡后的地狱火召唤（同一任务补充，待功能批次验证）
 
 路径：`src/session_summons.cpp`、`tests/control_tests.cpp`。已发出地狱火落地时，允许施法者仍以死亡状态存在的情况下创建地狱火；结算期间施法者状态、死亡轮次、归属或命令轮次变化仍会终止后续召唤。扩展地狱火最小复现检查伤害、眩晕、召唤类型和归属：修复前因召唤缺失失败，修复后 1 通过、0 失败。Win32 Release 客户端及 control 测试目标构建通过，日志在 `tmp/docs-artifacts/war3/inferno-dead-caster/`；合批运行 `war3_control_tests <data-root> <fixture> area-impact-dead-caster`、普通地狱火和召唤回归。施法者被移除、复活或易主、召唤事件回调、原版时序及实际窗口仍待对照。
