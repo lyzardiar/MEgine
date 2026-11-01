@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 物品恐惧嚎叫（待批次验证）
+
+路径：`src/session_item_use.cpp`、`src/session_wards_roar.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。单能力及复合物品支持恐惧嚎叫 `ANht`，复用敌方筛选和减益效果。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-howl`，并回归普通嚎叫、战吼及复合物品；验证减益、目标、资源和消耗。拾取型使用、施法事件及原版时序仍待验证。
+
+
 ### 复合物品范围沉默（待批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。复合物品支持范围沉默 `ANsi` 与即时效果组合，按点或可见单位选择范围中心。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-combined-silence` 并回归普通沉默和复合目标物品；检查目标筛选、沉默状态、消耗及回调。原版复合施法时序与实际画面待对照。
