@@ -84,3 +84,5 @@ Win32 Release `war3_orc_campaign_chain_tests` 实际 1 通过、0 失败，未�
 隐藏关后续波次隔离检查：单位进入等待区域前由原图脚本关闭路径碰撞，移动继续前往原目标；原目标不可通行时优先选择搜索到的最近可达替代格。普通单位和酒馆领袖从原图出生点进入等待区的定向检查通过。每 0.25 秒将传送门生命恢复至上限后，原图运行至最后一波完成、得分 31，胜利对话继续后请求 `HumanX03Interlude.w3x`，模拟时间 2302.78 秒。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> secret-final-wave` 1 通过、0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/human-secret-order/final-wave.log`。人工维持生命的结果不代表正常防守、原版动态时序或实际窗口验收。
 
 人族资料片隐藏关的原图隔离检查在恢复控制后，以玩家命令让原地图建造者建造 `nbt1` 防御塔；检查原价格 100 金币、实际扣费、施工完成、新塔向敌方单位发射弹道，以及伤害事件中来源为新塔且伤害大于零，完成于模拟时间 146.531 秒。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> secret-build` 1 通过、0 失败，未加载 Game.dll。未修改传送门生命或直接创建敌人；其他塔种、完整防守、实际窗口与原版对照仍待验证。
+
+隐藏关另以独立会话验证 `net1` 与 `nft1`：等待原图科技开放后，通过原地图建造者的玩家命令建造，核对扣费、完工、弹道及来源为新塔的正数伤害；Win32 Release 各 1 通过、0 失败，模拟时间分别为 140.406 秒和 377.531 秒，未加载 Game.dll。运行模式为 `secret-build-net1`、`secret-build-nft1`；每次需新建独立用户目录。其他塔种及完整自然防守仍待验证。
