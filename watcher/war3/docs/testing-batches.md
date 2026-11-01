@@ -4906,3 +4906,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 本批范围 `9b8190c`、`7163139`、`cf449bc`。同一集成源码的 Win32 Release 客户端及 clock、session、session-thread、JASS-thread、兽族战役测试目标编译通过；复用 clock 62/62。合批执行 JASS 线程 27/27、会话线程 6/6、session 23/23、OrcX01 原图定时器身份 1/1；日志与隔离目录 `tmp/docs-artifacts/war3/selection-bundle-timer-batch/`。
 
 原图 0／30／150 秒组件包恢复后，临时副本绕过保护各推进 60 秒，按新对象创建顺序映射后各时点 55 个现有组件重编码一致；日志 `tmp/docs-artifacts/war3/orcx-bundle-continuation/audit-00b.log`、`audit-30b.log`、`audit-150b.log`。该实验未覆盖完整对象状态、自然操作或实际存档入口；产品启动保护保留，跨区、原版格式及窗口仍待实现或验收。
+
+
+### 传送门恢复状态（待阶段验证）
+
+路径：`src/session.h`、`src/session_waygate.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SWGT` 保存传送门配置、占据单位和重试时间，在单位核心重建后恢复并映射句柄；`SRBF` 版本 2 纳入该组件。Win32 Release 核心与 clock 目标编译通过，clock 62/62，覆盖组件包内禁用状态、目的地、占据和重试引用往返；日志 `tmp/docs-artifacts/war3/waygate-recovery/clock-final.log`。阶段验证需覆盖恢复后的传送、双向传送门和重试、原图与实际存档入口；组件包仍禁止启动，完整状态、跨区和窗口尚未完成。
