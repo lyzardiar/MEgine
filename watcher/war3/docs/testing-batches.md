@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 事件注册句柄合批结果
+
+范围：`ccb3ec3`、`07308f5`、`99bf819`。Win32 Release 客户端及 control、session、clock 测试目标构建通过；control 的 `event-registration-handles`、`player-region-registration-handles`、`flow` 各 1 项通过，session 26 项通过，clock 按 `events` 筛选 9 项通过，合计 **38 通过、0 失败**。覆盖单位／玩家／区域／计时器／游戏／变量事件的失效和有效注册，以及已有事件、过滤、回调和恢复流程。日志在 `tmp/docs-artifacts/war3/event-registration-batch/`，control 使用 `tmp/docs-artifacts/war3/wave-target-lifecycle/fixture.w3m`，session 使用 `tmp/docs-artifacts/war3/jass/session-enums-native.json`。过滤器失效、枚举和参数边界、真实地图、多人及原版动态事件顺序仍待验证。
+
+
 ### 游戏、计时与变量事件注册句柄（待功能批次验证）
 
 路径：`src/session_callbacks.cpp`、`tests/session_tests.cpp`。游戏事件、定时事件和变量事件注册在解析参数与建立观察前检查触发器；失效句柄返回空事件，有效注册继续沿用原有调度及变量观察。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 的对应入口 `0x6f1f9570`、`0x6f1f9d60`、`0x6f1fa350` 均在触发器解析失败时返回。Win32 Release 客户端和 session 测试目标构建通过；合批运行 session、clock、control 事件回归及两个事件句柄专项。新增用例尚未执行；变量名称／类型、事件类别、回调顺序和原版动态行为仍待对照。
