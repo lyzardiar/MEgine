@@ -5290,3 +5290,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session_buff_snapshot.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SBUF` 版本 2 保存自身技能、剑刃风暴和魔法闪耀索引，`SRBF` 更新至版本 56。合批构建并执行 `war3_clock_tests <data-root> <output-root>`，核对献祭、剑刃风暴和魔法闪耀的索引往返；继续覆盖恢复后周期伤害、敌方施法反应、取消、失效句柄及真实存读档。本次未执行功能编译或测试，恢复启动保护保留。
 
 尸体召唤恢复检查补充：将真实腐尸甲虫召唤物设置为跟随召唤者死亡，恢复并移除召唤者后检查召唤物死亡；该夹具待功能批次执行，原技能的参数与完整续行仍需另行验证。
+
+持续技能恢复夹具补充实际魔法闪耀反应：恢复增益、技能句柄和施法后，由附近敌方单位施放有魔法消耗的献祭，检查双方会话均排出反击弹道。该场景待功能批次执行，弹道命中伤害与完整读档仍待验证。
