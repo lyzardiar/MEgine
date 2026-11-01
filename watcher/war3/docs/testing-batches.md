@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄学习命令的单位状态（待功能批次验证）
+
+路径：`src/player_commands.cpp`、`tests/revival_tests.cpp`。玩家学习命令执行时复用学习按钮的单位状态与等级检查，暂停、隐藏、死亡或变形等状态不能通过过期命令绕过界面；脚本学习入口保留独立逻辑。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-skill-command-state`，检查暂停、恢复和学习；其他单位状态及原版动态命令时序待验证。本次未执行功能测试。
+
+
 ### 英雄技能禁用与学习（待功能批次验证）
 
 路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。玩家禁用的英雄技能不能通过玩家命令、`SelectHeroSkill` 或 AI 学习，重新启用后可以学习。原版 1.27 的 `SetPlayerAbilityAvailable` 与学习检查分别在 `0x6f229900`、`0x6f2097e0` 写入和读取同一状态位。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-skill-availability`，核对按钮、玩家命令、脚本入口和重新启用；AI、原版动态行为及实际窗口仍待验证。本次未执行功能测试。
