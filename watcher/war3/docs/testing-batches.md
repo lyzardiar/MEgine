@@ -5730,3 +5730,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 运输目标、联盟和跟随合批结果
 
 范围：`0e3a681`、`9ffd815`、`0346cd0`、`620b8eb`、`e2440e5` 及电脑非强制攻击补充。Win32 Release 客户端、CampaignAI 和订单队列测试目标编译通过。首次 `fog-attack` 发现电脑直接攻击沿用强制参数，修正后重编译并重跑受影响场景：`fog-attack`、`reachable` 各 **2/0**；`ai-random-paths`、`island-auto`、`island-auto-target-death`、`island-auto-target-invisible`、`island-auto-target-invisible-aboard`、`island-auto-target-ally` 各 **1/0**（通过／失败）；BootyBay `war3_order_queue_tests` 退出 0，输出 **32 条 PASS**。日志与夹具位于 `tmp/docs-artifacts/war3/ai-follow-batch/`。多波次、已发射弹道、原版时序和实际窗口对局仍待验证。
+
+
+### 地图物品和可破坏物枚举上下文（待功能批次验证）
+
+路径：`src/session_inventory.cpp`、`src/session_destructables.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。矩形枚举分别设置过滤阶段与回调阶段的对象，阶段结束后恢复外层上下文；回调前仍复核对象存活。合批生成 destructable 夹具并运行 `war3_destructable_tests <root> <fixture>`，覆盖两类对象过滤／回调；嵌套枚举、过滤时移除和原版事件上下文待对照。本次未执行功能测试。
