@@ -4640,3 +4640,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 路径：`src/session_collections.cpp`、`tests/control_tests.cpp`；说明见[对象定义](entities.md)。`IsUnitSelected` 对失效单位或玩家返回 false，有效单位继续使用玩家当前选择；固定版 Game.dll 注册入口 `0x6f1e8c40` 的只读指令记录于 `tmp/docs-artifacts/war3/selection-handle-batch/original.txt`。Win32 Release 客户端和测试目标编译通过；`war3_control_tests <data-root> <control-fixture.w3m> unit-state-handles` 1 通过、0 失败，覆盖空／错误类型／已移除／无效句柄及选择／取消选择，未加载 Game.dll。真实地图、原版动态行为和多人选择待验证。
 
 本批合并 `934a859`、`f8f441e` 和本项：同一核心版本中，单位选择及暂停句柄检查、重新开启路径碰撞和攻击移动路径切换各 1 通过、0 失败；完整命令队列输出 32 条 PASS（含汇总），覆盖联机选择和排队命令。日志 `tmp/docs-artifacts/war3/selection-handle-batch/{control-final,movement,combat,order}.log`。原版寻路和选择动态语义、暂时无路、复杂重入、真实双端及窗口仍待验证。
+
+### 人族隐藏关防御塔建造与攻击（验证补充）
+
+路径：`tests/human_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release 测试目标编译通过；新建隔离用户目录运行 `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> secret-build`，1 通过、0 失败。原图恢复控制后，通过玩家建造命令建造 `nbt1`，检查 100 金币实际扣费、施工完成及新塔向敌方单位发射弹道，模拟时间 138.812 秒；未加载 Game.dll，日志 `tmp/docs-artifacts/war3/human-secret-build/test.log`。测试未修改传送门生命或直接创建敌人；弹道命中伤害归因、其他塔、完整防守、原版动态和窗口待验证。本项为既有战役功能的验证补充，不计功能批次。
