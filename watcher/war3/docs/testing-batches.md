@@ -4644,3 +4644,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 人族隐藏关防御塔建造与攻击（验证补充）
 
 路径：`tests/human_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release 测试目标编译通过；新建隔离用户目录运行 `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> secret-build`，1 通过、0 失败。原图恢复控制后，通过玩家建造命令建造 `nbt1`，检查 100 金币实际扣费、施工完成及新塔向敌方单位发射弹道，模拟时间 138.812 秒；未加载 Game.dll，日志 `tmp/docs-artifacts/war3/human-secret-build/test.log`。测试未修改传送门生命或直接创建敌人；弹道命中伤害归因、其他塔、完整防守、原版动态和窗口待验证。本项为既有战役功能的验证补充，不计功能批次。
+
+### 人族隐藏关防御塔伤害归因（验证补充）
+
+路径：`tests/human_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release 编译通过；在新建隔离用户目录运行 `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> secret-build`，1 通过、0 失败，未加载 Game.dll。原图玩家建造的 `nbt1` 完工后发射弹道，目标伤害事件的来源为该塔且伤害大于零，模拟时间 146.531 秒；未修改传送门生命或直接创建敌人。其他塔种、完整防守、原版动态和窗口待验证。本项为既有战役功能的验证补充，不计功能批次。
