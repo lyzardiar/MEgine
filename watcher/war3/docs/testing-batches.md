@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 采集工人与进军单位的拥堵让行（待功能批次验证，1/3）
+
+路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`。采集途中受阻时，符合既有限制且持续停滞的同属进军单位可让出短距离，保留双方原订单和路线；敌方、暂停、保持位置及其他受保护状态继续按既有规则处理。Booty Bay 4,200 秒隔离诊断发现多名携金工人与停滞进军单位相互拥堵，金矿仍剩 2,640；日志 `tmp/docs-artifacts/war3/ai-production-next-batch/congestion.log`。合批运行 movement `worker-march`、`workers`、`march`、`yield` 等相关回归，并重跑原图经济探针检查金币入账和后续对局；原版让行、复杂拥堵和联机仍待验证。本次未执行功能测试。
+
+
 ### AI 生产回调批次结果
 
 范围：`80cb2be`、`fa7b24d`、`5d80461`。Win32 Release 客户端、CampaignAI 和 revival 程序构建通过。重新生成战役 AI 夹具后，`produce-owner`、`produce-replacement`、`produce-builder`、`produce-zero`、`produce-many`、`convert-empty`、`merge-empty`、`armies`、`harvest`、`reachable` 各 2 项通过，`startup` 1 项通过；原 Booty Bay 的 `melee-build` 1 项通过；复活夹具 4 项通过，共 **26 通过、0 失败**。覆盖生产开始时转移建筑、新建替代生产者、工人取消施法时转移，以及生产、采集、建造和复活回归。日志与夹具位于 `tmp/docs-artifacts/war3/ai-producer-callback-batch/`。
