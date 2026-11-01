@@ -4679,6 +4679,8 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 
 路径：`src/session_unit_movement.cpp`、`src/session.h`、`src/entities.h`、`src/session_entities.cpp`、`src/session_orders.cpp`、`src/world.h`、`src/world_path.cpp`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SMOV` 保存路线、目标、节点、订单编号、受阻观察与重寻路调度；恢复前核对地形及含重叠拥有者计数的占地指纹，并重映射单位和游标。Win32 Release 客户端及测试目标编译通过，clock 33 通过、0 失败，重新开启碰撞重寻路 1 通过、0 失败；OrcX01 原图 33.1875 秒的 5 个移动单位及 252 个活动单位的快照往返一致，探针 `tmp/docs-artifacts/war3/unit-movement-snapshot/probe/`，未加载 Game.dll。路线恢复后续行、动态障碍、其他命令与完整世界存档仍待批次验证或实现。
 
-### 玩家排队命令快照（待批次验证）
+### 玩家排队命令快照（本批验证）
 
 路径：`src/session_order_snapshot.cpp`、`src/session.h`、`src/session_item_snapshot.cpp`、`src/session_destructable_snapshot.cpp`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SPQO` 保存排队顺序和命令参数，重建并核对单位、物品、可破坏物及其已移除句柄；错误映射拒绝且不改变队列。Win32 Release 客户端和 clock 测试目标编译通过，clock 33 通过、0 失败；OrcX01 原图玩家移动及排队移动的队列重建往返一致，探针 `tmp/docs-artifacts/war3/queued-orders-snapshot/probe/`，未加载 Game.dll。恢复后实际续执行、其他活动订单与完整存档仍待批次验证或实现。
+
+本批合并 `c96456a`、`1a11183`、`d847fbf`：同一集成代码版本下，Win32 Release 客户端及相关测试目标编译通过；`war3_clock_tests <data-root> <output-root>` 33 通过、0 失败，覆盖定时转向、移动路线、重寻路调度和排队命令快照；完整 `war3_order_queue_tests <data-root> <BootyBay.w3m>` 输出 32 条 PASS，进程退出码 0；`war3_movement_avoidance_tests <data-root> <BootyBay.w3m> reenable-pathing` 1 通过、0 失败。OrcX01 原图隔离会话中，脚本定时转向、5 个移动单位以及玩家排队移动分别完成快照往返；原图探针位于 `tmp/docs-artifacts/war3/{unit-facing-snapshot,unit-movement-snapshot,queued-orders-snapshot}/probe/`，批次输出位于 `tmp/docs-artifacts/war3/movement-queue-batch/`。未加载 Game.dll。完整世界恢复、加载后续执行、动态障碍、原版行为及实际窗口仍待验证或实现。
