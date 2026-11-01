@@ -5311,3 +5311,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 攻击被动状态恢复合批结果
 
 范围：`2907b6b`、`eb57ac8`、`6f77d42` 及本次完整恢复包夹具补充。Win32 Release `war3_clock_tests` 构建通过，完整测试 **118 通过、0 失败**；追加非空攻击被动状态的完整恢复包往返后，定向测试 **1 通过、0 失败**。覆盖暴击累计、掠夺余量、活动及已移除的腐蚀来源、损坏摘要、异常周期和错误映射拒绝；状态数值由夹具设置。日志及临时产物在 `tmp/docs-artifacts/war3/recovery-attack-passives-batch/`。实际攻击概率、资源入账和腐蚀跳伤的恢复续行、真实存读档及原版行为仍待验证，恢复启动保护保留。
+
+
+### 召唤单位的瘟疫守卫与碰撞恢复（待功能批次验证）
+
+路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUMM` 版本 3 保存瘟疫守卫标记和实际碰撞半径，`SRBF` 更新至版本 58。合批构建并运行 `war3_clock_tests <data-root> <output-root>`，检查标记和零碰撞往返；另需覆盖自然创建的瘟疫守卫和蝗虫、目标筛选、死亡清理、旧版拒绝和实际读档。本次未执行功能编译或测试，恢复启动保护保留。
