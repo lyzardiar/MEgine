@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 无倒计时机械小动物状态（待功能批次验证）
+
+路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。没有倒计时的机械小动物标记仍按限时状态筛选，普通 Buff 清除不会误移除伪装；显式包含限时状态的清除可移除标记。原版 1.27 `CBuffMechanicalCritter` 的限时状态虚函数返回真；原 `Amec` 的持续时间为零。合批运行 `war3_passive_tests <data-root> <fixture> buff-permanent-critter`，回归带计时器的机械标记、普通限时生命和真实召唤；原版动态与界面待验证。本次未执行功能测试。
+
+
 ### 状态面板与召唤状态合批结果
 
 范围：`242498c`、`41f0a6b`、`3a480e6`。Win32 Release 客户端、passive、control 目标构建通过，日志无编译警告。复用夹具运行 `buff-timed-life`、`buff-timed-critter`、`buff-filter-semantics`、`buff-auto-filter`、`buff-control-types`、`wander` 和 control 的 `purge`，各 1 通过、0 失败；passive 主程序退出 0 并输出 PASS。检查覆盖限时状态、关联标记、筛选、动物游荡及驱散回归；这些检查不执行状态面板绘制，也不证明敌我视角的实际 UI。日志位于 `tmp/docs-artifacts/war3/status-panel-batch/`。此前本机 Direct3D 9 设备创建失败，本批未重新启动窗口；有／无图标、敌我伪装、状态条布局、实际原版显示和窗口视觉仍待验证。
