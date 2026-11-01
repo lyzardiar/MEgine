@@ -5719,7 +5719,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 
 ### 已有攻击目标的联盟变化（待功能批次验证）
 
-路径：`src/session_combat.cpp`、`tests/campaign_ai_tests.cpp`。非强制攻击在目标转为友军后停止追击与攻击；玩家显式强制攻击继续使用武器目标规则。合批运行 CampaignAI `fog-attack` 及战斗相关场景，覆盖联盟变化和强制攻击；弹道已发射、事件重入、原版时序与实际对局待验证。本次未执行功能测试。
+路径：`src/session_combat.cpp`、`src/session_ai.cpp`、`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`。电脑进攻和防守使用非强制攻击；非强制攻击在目标转为友军后停止追击与攻击；玩家显式强制攻击继续使用武器目标规则。合批运行 CampaignAI `fog-attack` 及战斗相关场景，覆盖联盟变化和强制攻击；弹道已发射、事件重入、原版时序与实际对局待验证。本次未执行功能测试。
 
 
 ### 跟随目标消失后的订单（待功能批次验证）

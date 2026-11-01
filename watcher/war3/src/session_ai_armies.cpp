@@ -23,7 +23,7 @@ void ScriptSession::aiSuicide(ScriptAI& ai,int quantity,std::uint32_t type,int t
 void ScriptSession::aiSuicideTick(ScriptAI& ai){
     auto wave=ai.suicideUnits;for(auto [id,owner]:wave){auto entry=ai.suicideUnits.find(id);if(entry==ai.suicideUnits.end() || entry->second!=owner)continue;if(!alive(id,NativeKind::Unit) || units_.at(id)->owner!=ai.owner || units_.at(id)->removing || number(units_.at(id)->life)<=0){ai.suicideUnits.erase(id);continue;}auto u=units_.at(id);if(u->paused || u->stunned() || u->hidden() || u->cast)continue;
         auto target=u->combat.target;if(target && alive(target,NativeKind::Unit)){auto victim=units_.at(target);if(!victim->removing && !victim->hidden() && number(victim->life)>0 && enemy(ai.owner,victim->owner) && (owner<0 || victim->owner==unsigned(owner)))continue;}
-        target=aiEnemy(ai,owner<0?UINT_MAX:unsigned(owner));if(target){auto victim=units_.at(target);if(!attackUnit(id,target) && alive(id,NativeKind::Unit) && u->owner==ai.owner && ai.suicideUnits.contains(id))attackMove(id,{victim->x,victim->y});}else if(u->currentOrder)stopUnit(id);
+        target=aiEnemy(ai,owner<0?UINT_MAX:unsigned(owner));if(target){auto victim=units_.at(target);if(!attackUnit(id,target,false) && alive(id,NativeKind::Unit) && u->owner==ai.owner && ai.suicideUnits.contains(id))attackMove(id,{victim->x,victim->y});}else if(u->currentOrder)stopUnit(id);
     }
 }
 void ScriptSession::aiTeleportCaptain(ScriptAI& ai,WorldPoint point){
