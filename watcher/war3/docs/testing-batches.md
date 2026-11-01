@@ -4991,3 +4991,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 变量事件恢复（待阶段验证）
 
 路径：src/session.h、src/session_callbacks.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SGEV 版本 3 保存变量事件和匹配状态，重建全局写入监听；SRBF 更新至版本 12。Win32 Release 编译通过，clock 71/71、会话测试 23/23；clock 日志 tmp/docs-artifacts/war3/variable-event-recovery/clock.log。待验证复杂重入、真实地图与实际存档；其他事件和启动保护仍待处理。
+
+
+### 聊天事件恢复（待阶段验证）
+
+路径：src/session_callbacks.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SGEV 版本 4 保存并重建玩家聊天事件，SRBF 更新至版本 13。Win32 Release 构建及 clock 72/72 通过，覆盖玩家过滤、精确／包含匹配、上下文、事件引用和触发器销毁；日志 tmp/docs-artifacts/war3/chat-event-recovery/clock.log。待验证真实地图、实际存档及联机聊天同步；启动保护保留。
