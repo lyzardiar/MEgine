@@ -5343,3 +5343,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 检查点会话上下文与回访诊断（待功能批次验证）
 
 路径：`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。检查点身份查询解析战役模式、游戏版本和默认难度，并核对嵌套组件摘要及地图身份。合批编译运行 `war3_clock_tests <data-root> <output-root>`；不同版本、难度、损坏组件和实际加载仍待验证。本次尚未编译或测试。原版 OrcX01 隔离检查点可重建，但临时绕过保护后一帧会重复触发原切区，见 `tmp/docs-artifacts/war3/save-game-native/orcx-checkpoint-stack.log`；恢复启动保护保留。
+
+
+### 恢复会话加载事件（待功能批次验证）
+
+路径：`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。恢复会话可设置 `MAP_RELOADED` 并分发一次 `EVENT_GAME_LOADED`。合批编译运行 `war3_clock_tests <data-root> <output-root>`，覆盖加载触发器、地图标志和重复通知拒绝；事件回调重入、原版时序、实际 `LoadGame`、区域回访及可玩续行仍待验证或实现。本次未编译或测试，恢复启动保护保留。

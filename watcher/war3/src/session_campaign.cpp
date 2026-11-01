@@ -44,6 +44,9 @@ std::map<std::uint32_t,std::uint32_t> ScriptSession::restoreRecoveryCheckpoint(c
 void ScriptSession::processPendingSave() {
     if(!pendingSave_)return;auto request=*pendingSave_;saveRecoveryCheckpoint(request.name);notifyGameSaved(request.name);if(!runtime_.wakeExternal(request.token))throw std::runtime_error("Saved game caller is no longer waiting");pendingSave_.reset();
 }
+void ScriptSession::notifyGameLoaded(){
+    if(!recoveryBundleRestored_ || !unitRecoveryIncomplete_ || mainAttempted_ || gameLoadNotified_ || failed_ || !runtime_.snapshotSafe() || !contexts_.empty() || experimentalSelectionSync_ || !networkPlayers_.empty())throw std::runtime_error("Game load notification requires a recovered local session");struct Guard{bool& failed;bool done=false;~Guard(){if(!done)failed=true;}}guard{failed_};gameLoadNotified_=true;config_.mapFlags|=8192u*64u;std::vector<std::uint32_t> pending;for(auto id:eventHandles_)if(alive(id,NativeKind::Event)){auto& event=std::get<ScriptEvent>(objects_[id-handleBase].state);if(event.kind==ScriptEvent::Kind::Game && event.event==256)pending.push_back(id);}for(auto id:pending)fire(id);guard.done=true;
+}
 void ScriptSession::notifyGameSaved(const std::string& filename){
     if(filename.empty() || filename.size()>1024 || filename.find('\0')!=std::string::npos)throw std::runtime_error("Invalid saved game event filename");std::vector<std::uint32_t> pending;for(auto id:eventHandles_)if(alive(id,NativeKind::Event)){auto& event=std::get<ScriptEvent>(objects_[id-handleBase].state);if(event.kind==ScriptEvent::Kind::Game && event.event==259)pending.push_back(id);}ScriptContext context;context.saveName=filename;for(auto id:pending)fire(id,context);
 }

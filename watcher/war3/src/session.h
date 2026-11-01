@@ -317,7 +317,7 @@ class ScriptSession {
     bool shopStockRestored_=false,unitSummonsRestored_=false,productionRestored_=false,cargoRestored_=false,harvestRestored_=false,constructionRestored_=false,corpsesRestored_=false,ambientRestored_=false,unitStealthRestored_=false,selectionRestored_=false,waygatesRestored_=false,revealStateRestored_=false,militiaRestored_=false,unitFormsRestored_=false,treeActionsRestored_=false;
     unsigned futureMovementPhaseBias_=0;
     bool futureMovementPhaseRestored_=false;
-    bool recoveryBundleRestored_=false,recoverySourceMainCompleted_=false,attackPassiveStateRestored_=false;
+    bool recoveryBundleRestored_=false,recoverySourceMainCompleted_=false,gameLoadNotified_=false,attackPassiveStateRestored_=false;
     std::vector<std::shared_ptr<const Member>> preloaded_;
     size_t preloadBytes_=0;
     unsigned preloadDepth_=0;
@@ -1334,6 +1334,7 @@ public:
     bool endCinematic(unsigned owner);
     void commandMenuOpened(bool skills);
     void notifyGameSaved(const std::string& filename);
+    void notifyGameLoaded();
     std::uint32_t indicatorColor(std::uint32_t id,std::uint32_t base) const {return indicators_.color(id,base,simulationTime_);}
     bool clickDialog(unsigned owner,std::uint32_t button,bool requireVisible=true,std::uint64_t clickedGeneration=0,bool finishOnQuit=true);
     std::optional<std::uint32_t> dialogNetworkFingerprint(std::uint32_t button) const;

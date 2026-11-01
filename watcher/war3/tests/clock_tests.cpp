@@ -1189,15 +1189,20 @@ int wmain(int argc,wchar_t** argv) {
  type triggeraction extends handle
  type event extends handle
  type gameevent extends handle
+ type mapflag extends handle
  native CreateTrigger takes nothing returns trigger
  native TriggerAddAction takes trigger t, code action returns triggeraction
  native TriggerRegisterGameEvent takes trigger t, gameevent e returns event
  native ConvertGameEvent takes integer id returns gameevent
+ native ConvertMapFlag takes integer id returns mapflag
+ native IsMapFlagSet takes mapflag flag returns boolean
  native GetSaveBasicFilename takes nothing returns string
  native SaveGame takes string name returns nothing
  globals
  integer completed=0
  integer saveEvents=0
+ integer loadEvents=0
+ boolean reloaded=false
  string savedName=null
  endglobals
  function config takes nothing returns nothing
@@ -1206,8 +1211,15 @@ int wmain(int argc,wchar_t** argv) {
  set saveEvents=saveEvents+1
  set savedName=GetSaveBasicFilename()
  endfunction
+ function loadedEvent takes nothing returns nothing
+ set loadEvents=loadEvents+1
+ set reloaded=IsMapFlagSet(ConvertMapFlag(524288))
+ endfunction
  function main takes nothing returns nothing
  local trigger t=CreateTrigger()
+ local trigger loaded=CreateTrigger()
+ call TriggerAddAction(loaded,function loadedEvent)
+ call TriggerRegisterGameEvent(loaded,ConvertGameEvent(256))
  call TriggerAddAction(t,function savedEvent)
  call TriggerRegisterGameEvent(t,ConvertGameEvent(259))
  endfunction
@@ -1216,7 +1228,7 @@ int wmain(int argc,wchar_t** argv) {
  call SaveGame("slot.w3z")
  set completed=value+1
  endfunction
- )jass";auto make=[&](bool start){auto module=Module::compile(Program::parse({{"save-game.j",source,"save game checkpoint"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);if(start)session->startMain();return session;};auto original=make(true),restored=make(false);auto& vm=original->runtime();vm.start("work");require(vm.threadCount()==1 && !vm.global("completed").bits && !fs::exists(scratch/L"Saves"/L"slot.w3z"),"SaveGame did not wait for checkpoint publication");original->advance(1./32);require(fs::is_regular_file(scratch/L"Saves"/L"slot.w3z") && vm.global("completed").bits==42 && vm.global("saveEvents").bits==1 && vm.global("savedName").text && *vm.global("savedName").text=="slot" && !vm.threadCount(),"SaveGame did not publish, notify and resume");restored->restoreRecoveryCheckpoint("slot.w3z");require(!restored->runtime().global("completed").bits && !restored->runtime().global("saveEvents").bits && restored->runtime().threadCount()==1,"Saved caller did not restore");restored->runtime().advanceThreads(restored->simulationTime());require(restored->runtime().global("completed").bits==42 && !restored->runtime().threadCount(),"Saved caller did not continue");rejects([&]{restored->startMain();},"recovery is incomplete");auto paused=make(true);paused->pause(true);paused->runtime().start("work");paused->advance(0);require(paused->paused() && paused->runtime().threadCount()==1 && !paused->runtime().global("completed").bits && paused->runtime().global("saveEvents").bits==1,"Paused SaveGame did not publish while keeping the caller suspended");paused->pause(false);paused->advance(1./32);require(paused->runtime().global("completed").bits==42 && !paused->runtime().threadCount(),"Paused SaveGame caller did not resume");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+ )jass";auto make=[&](bool start){auto module=Module::compile(Program::parse({{"save-game.j",source,"save game checkpoint"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);if(start)session->startMain();return session;};auto original=make(true),restored=make(false);auto& vm=original->runtime();vm.start("work");require(vm.threadCount()==1 && !vm.global("completed").bits && !fs::exists(scratch/L"Saves"/L"slot.w3z"),"SaveGame did not wait for checkpoint publication");original->advance(1./32);require(fs::is_regular_file(scratch/L"Saves"/L"slot.w3z") && vm.global("completed").bits==42 && vm.global("saveEvents").bits==1 && vm.global("savedName").text && *vm.global("savedName").text=="slot" && !vm.threadCount(),"SaveGame did not publish, notify and resume");restored->restoreRecoveryCheckpoint("slot.w3z");require(!restored->runtime().global("completed").bits && !restored->runtime().global("saveEvents").bits && restored->runtime().threadCount()==1,"Saved caller did not restore");restored->notifyGameLoaded();require(restored->runtime().global("loadEvents").bits==1 && restored->runtime().global("reloaded").bits,"Game load notification or map flag missing");rejects([&]{restored->notifyGameLoaded();},"recovered local session");restored->runtime().advanceThreads(restored->simulationTime());require(restored->runtime().global("completed").bits==42 && !restored->runtime().threadCount(),"Saved caller did not continue");rejects([&]{restored->startMain();},"recovery is incomplete");auto paused=make(true);paused->pause(true);paused->runtime().start("work");paused->advance(0);require(paused->paused() && paused->runtime().threadCount()==1 && !paused->runtime().global("completed").bits && paused->runtime().global("saveEvents").bits==1,"Paused SaveGame did not publish while keeping the caller suspended");paused->pause(false);paused->advance(1./32);require(paused->runtime().global("completed").bits==42 && !paused->runtime().threadCount(),"Paused SaveGame caller did not resume");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
     test("tree_actions_bundle_preserves_claims_and_club",[&]{
         std::string source=R"jass(type widget extends handle
