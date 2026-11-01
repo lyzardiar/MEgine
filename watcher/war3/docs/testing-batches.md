@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 修补匠技能恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_tinker.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 96/96 通过；原版 Orc01 会话人工施法后的工厂、火箭与自爆隔离恢复，临时绕过启动保护续行，三种情况各为 71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/tinker-recovery/`。实际读档、自然对局、原版时序与窗口画面待阶段验证。
+
 ### 不稳定化合物飞行恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_concoction.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 93/93 通过；原版 Orc01 会话人工施法后隔离恢复，临时绕过启动保护续行 2 秒，命中和目标失效两种情况均为 71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/concoction-recovery/`。实际读档、自然对局、原版时序与窗口画面待阶段验证。
