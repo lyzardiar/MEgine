@@ -5893,3 +5893,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 声音播放位置标记（待功能批次验证）
 
 路径：`src/session_sound.cpp`、`tests/sound_tests.cpp`、`docs/script-sound.md`。`SetSoundPlayPosition(sound, -1)` 保持当前播放位置；原版数字与 MIDI 路径分别在 `0x6f33d1fe`、`0x6f33d184` 跳过该标记。合批运行 `sound_position_minus_one_keeps_playing` 和声音回归；其他负数、实际设备和原版动态效果待验证。本次未执行功能测试。
+
+
+### 声音播放状态合批结果
+
+范围：`b91cb30`、`a1c05ed`、`84b8d32` 及本次声音测试夹具修正。Win32 Release 客户端与 sound 目标构建通过。`war3_sound_tests <data-root> <scratch-root>` 首轮 **15 通过、7 失败**；其中 4 项因 `waveOutOpen() failed` 无法打开实际音频设备：`sound_playback_state_miles_roundtrip`、`sound_unmute_preserves_paused_playback`、`sound_channel_preemption_and_owned_detach`、`sound_fade_pulses_drive_muted_miles_and_release`，保留待设备可用后重测。另 3 项为独立脚本缺少句柄声明及两处沿用物理设备计数的旧夹具；修正后分别 **1 通过、0 失败**。新 MIDI 音调、源表覆盖和位置标记用例均在首轮通过。日志位于 `tmp/docs-artifacts/war3/sound-position-batch/`，构建日志为 `tmp/docs-artifacts/war3/sound-position-batch-build.log`。实际设备状态切换及原版动态行为仍待验证。
