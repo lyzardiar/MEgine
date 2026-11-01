@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄负经验（待批次验证）
+
+路径：`src/session_hero.cpp`、`src/session_cache.cpp`、`tests/revival_tests.cpp`。`AddHeroXP` 的负值按原版实数运算和取整调整经验，不降低英雄等级；后续经验不足当前等级阈值时也不派发升级事件。满级经验仍限制在最高等级阈值，缓存允许保存负经验。1.27 `Game.dll` 的 `0x6f1d9da0` 将有符号数传入经验结算，`0x6f50ac2a` 加入经验，随后仅处理升级；`0x6f054060` 加 0.5 后由 `0x6f052f30` 截断。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-negative-xp`，并验证缓存往返、数值极限、原版动态及窗口；本次未运行测试。
+
 ### 英雄幻象的成长接口（待批次验证）
 
 路径：`src/session_hero.cpp`、`tests/commerce_tests.cpp`。英雄幻象不接受英雄经验、等级、属性、技能点、技能学习及暂停经验接口的修改；对应查询返回零、空名称或暂停状态。1.27 `Game.dll` 的 `IsUnitIllusion` 使用单位标志 `0x40000000`，上述英雄接口入口均检查该标志。待生成 commerce 夹具并运行 `war3_commerce_tests <data-root> <fixture>`，通过幻象法杖生成的真实单位核对查询和修改，并回归普通英雄；技能表现、地图脚本、原版动态和窗口仍待验证。本次未执行测试。
