@@ -260,7 +260,9 @@ endfunction
         (b'AHbh', b'A0BH', [('Hbh1', 2, 100., 1)]),
         (b'AUau', b'A0PL', [('atar', 3, 'air,ground,invulnerable,player,vulnerable', 0)]),
         (b'Aasl', b'A0SL', [('Slo1', 2, .2, 1), ('atar', 3, 'self', 0), ('aare', 2, 0., 0)]),
-        (b'Aspb', b'A0PB', [('spb1', 3, 'A0SL', 1), ('spb3', 0, 1, 3), ('spb4', 0, 1, 4)])
+        (b'Aspb', b'A0PB', [('spb1', 3, 'A0SL', 1), ('spb3', 0, 1, 3), ('spb4', 0, 1, 4)]),
+        (b'Aamk', b'A0AT', [('Istr', 2, -1.75, 3), ('Iagi', 2, 2.75, 1), ('Iint', 2, -3.75, 2)]),
+        (b'AIxm', b'A0PX', [('Istr', 2, -2.75, 3), ('Iagi', 2, 3.75, 1), ('Iint', 2, -4.75, 2)])
     ]:
         records.append(base+marker+struct.pack('<I', len(changes))+b''.join(fixture.modification(field, kind, value, slot, marker) for field, kind, value, slot in changes))
     files['war3map.w3a'] = struct.pack('<III', 2, 0, len(records))+b''.join(records)
@@ -268,7 +270,8 @@ endfunction
     ethereal_item = b'rat6' + b'I0ET' + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + b'Aetl\0' + b'I0ET'
     drop_item = b'phea' + b'I0DR' + struct.pack('<I', 1) + b'idrp' + struct.pack('<II', 0, 1) + b'I0DR'
     keep_flag = b'flag' + b'I0ND' + struct.pack('<I', 1) + b'idrp' + struct.pack('<II', 0, 0) + b'I0ND'
-    files['war3map.w3t'] = struct.pack('<III', 2, 0, 4) + sight_item + ethereal_item + drop_item + keep_flag
+    attribute_tome = b'tstr' + b'I0PX' + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + b'A0PX\0' + b'I0PX'
+    files['war3map.w3t'] = struct.pack('<III', 2, 0, 5) + sight_item + ethereal_item + drop_item + keep_flag + attribute_tome
     units = [(b'hpea', b'z0u1', b'uwu2'), (b'hfoo', b'z0u2', b'uwu1')]
     files['war3map.w3u'] = struct.pack('<III', 2, 0, len(units))+b''.join(base+custom+struct.pack('<I', 1)+field+struct.pack('<II', 0, 0)+custom for base, custom, field in units)
     args.output.parent.mkdir(parents=True, exist_ok=True)

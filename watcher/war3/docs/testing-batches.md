@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 物品与技能的有符号属性加成（待功能批次验证）
+
+路径：`src/session_equipment.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`。装备和属性技能的三项加成按单个能力向零截取整数后叠加；永久属性物品接受负值，按有符号整数更新基础属性。原版 1.27 `CAbilityAttributeMod` 与 `CAbilityAttributeBonus` 的 `0x6f53f710`、`0x6f53f5f0` 分别把各字段经 `0x6f052f30` 转为整数。合批生成 passive 夹具并运行 `war3_passive_tests <data-root> <fixture> attribute-item-signed`，回归普通属性书、装备、技能等级及实际地图；原版动态和界面待验证。本次未执行功能测试。
+
+
 ### 英雄成长与资源合批结果
 
 范围：`9e41ebb`、`91466d1`、`2476f2e`。Win32 Release 客户端、revival、control、passive 和 research 目标构建通过；control 测试文件既有变量遮蔽产生一条 C4456 警告。复用夹具运行 `hero-attribute-growth`、`hero-attribute-resource`、`hero-attribute-zero-mana`、`hero-attribute-base`、`hero-attribute-negative`、`hero-level-negative-xp`、`hero-level-tome`、`hero-skill-availability`，各 1 通过、0 失败；`hero-attribute-handles` 1 通过、0 失败，passive 与 research 程序均退出 0 并输出 PASS。覆盖正负基础属性与小数成长、资源比例、零魔法上限以及装备被动与科技回归。日志位于 `tmp/docs-artifacts/war3/hero-growth-resource-batch/`；真实装备与负属性叠加、资源下降和死亡、自定义小数基础值、原版动态和实际面板仍待验证。
