@@ -837,6 +837,7 @@ class ScriptSession {
     void detonateSpell(std::uint32_t source,const SpellInfo& spell,unsigned owner);
     void autocastTick();
     bool spellRequirements(unsigned owner,const SpellInfo& spell);
+    bool buffPositive(const UnitState& target,const UnitBuff& buff) const;
     unsigned autocastTicks_=0;
     bool spellPoint(const UnitState& unit,const SpellInfo& spell,WorldPoint point);
     float spellRange(const UnitState& unit,const SpellInfo& spell,WorldPoint point,std::uint32_t target);

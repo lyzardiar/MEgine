@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 放逐状态的动态正负分类（待功能批次验证）
+
+路径：`src/session.h`、`src/session_spell_natives.cpp`、`src/session_caster_spells.cpp`、`tests/control_tests.cpp`。放逐状态根据目标玩家对施法玩家的当前联盟关系确定正负分类，脚本 Buff 查询／清除与净化目标判断使用同一结果。原版 1.27 `CBuffBanish` 的 `0x6f5ccbd0` 查询玩家联盟，`0x6f4bf180` 返回相反分类。合批运行 `war3_control_tests <data-root> <fixture> banish-polarity`，回归净化与 Buff 筛选；联盟变动时序、复杂驱散、原版动态与窗口待验证。本次未执行功能测试。
+
+
 ### Buff 自动驱散筛选（待功能批次验证）
 
 路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。自动驱散筛选同时作用于查询、计数和清除，已核实的眩晕、末日、相位、护盾及持续施法状态按原版魔法分类处理；放逐在脚本接口的空施法来源下不匹配自动驱散。原版 1.27 的状态虚函数 `0x6f3dcd20` 使用魔法分类，`CBuffBanish` 使用 `0x6f49f660` 单独判断来源。合批运行 `war3_passive_tests <data-root> <fixture> buff-auto-filter`，并回归扩展筛选、光环和普通驱散；未逐一核实的自定义和特殊状态分类、原版动态行为待验证。本次未执行功能测试。
