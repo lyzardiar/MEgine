@@ -4710,3 +4710,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 特效对象快照（待批次验证）
 
 路径：`src/session_effect_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SEFX` 重建特效及活动／失效句柄，保存附着目标、外观和退场时钟。Win32 Release 客户端与 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 37 通过、0 失败，覆盖活动特效、退场中与退场结束句柄、移除的附着单位、脚本全局引用、外观字段、错误映射和损坏拒绝，未加载 Game.dll。物品／可破坏物挂点、自动特效、其他状态引用与生命周期续执行、原图模型实例、粒子和窗口，以及完整读档仍待批次验证或实现。
+
+### 闪电对象快照（待批次验证）
+
+路径：`src/session_lightning_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SLGT` 重建闪电的活动／失效句柄、源参数、跟随单位和生命周期。Win32 Release 客户端及 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 38 通过、0 失败，覆盖真实连锁闪电跟随、移除目标、脚本颜色与销毁、全局引用、错误映射、损坏拒绝和快照往返；表面及高度字段使用测试设置，未加载 Game.dll。恢复后跟随／到期、其他状态引用、原图、模型与窗口及完整读档仍待批次验证或实现。
