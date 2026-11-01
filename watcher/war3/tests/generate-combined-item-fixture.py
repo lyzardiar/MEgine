@@ -72,6 +72,17 @@ function watch_protection_revival takes unit u returns nothing
     call TriggerRegisterUnitStateEvent(t,u,UNIT_STATE_LIFE,GREATER_THAN,150.)
     call TriggerAddAction(t,function protection_life_changed)
 endfunction
+function spell_death_revive takes nothing returns nothing
+    local unit u=GetTriggerUnit()
+    call DisableTrigger(GetTriggeringTrigger())
+    call ReviveHero(u,128.,-768.,false)
+    call SetWidgetLife(u,100.)
+endfunction
+function watch_spell_death takes unit u returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,u,EVENT_UNIT_DEATH)
+    call TriggerAddAction(t,function spell_death_revive)
+endfunction
 function config takes nothing returns nothing''')
     if 'local trigger summonTrigger=CreateTrigger()' not in script or 'call TriggerRegisterPlayerUnitEvent(summonTrigger,Player(0),EVENT_PLAYER_UNIT_SUMMON,null)' not in script:
         raise ValueError('Control fixture trigger layout changed')
