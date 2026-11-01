@@ -38,3 +38,5 @@ AbilityMetaData说明恢复总量、fullFlags、无需目标和Dispel on Attack�
 ## 企鹅玩具
 
 `stpg` 的源 `ItemData.slk` 配置为可使用、不可消耗，`AIpz` 继承 `AIha`，生命恢复量为 0，`ItemAbilityFunc.txt` 指定 `Effectsound=PenguinSqueek`。使用仍走现有背包权限、冷却、音效队列及物品事件，实际听感、事件次序、自定义零量恢复和原版规则待阶段验证。源 `War3Patch.mpq` 中 `Units/ItemAbilityFunc.txt` SHA-256 为 `22752f520ac000f64c60da602d8abee3ffd4c7119418454acb40ac2c9712e55b`；源数据查询记录在 `tmp/docs-artifacts/war3/consumables/penguin-source.json`。
+
+复合主动效果支持显影之尘：与其他已支持的即时效果共同消耗物品次数、结算冷却并发送一次使用事件；显影沿用实际目标状态及持续时间。完整复合能力、原版施法时序与界面表现仍待实现和对照。
