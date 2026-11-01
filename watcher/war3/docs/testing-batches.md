@@ -4840,3 +4840,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 本批范围 `7b7ee24`、`8fd6555`、`5405113`。同一集成源码的 Win32 Release 客户端及 clock、transport、revival、commerce 目标编译通过；复用该版本 clock 53/53 和 OrcX01 150 秒组合探针的 48 个组件重编码一致。合批执行运输 `flow`、`orders`、`lifecycle` 各 1/1，英雄复活 4/4，commerce 训练、库存及幻象消费者输出 PASS；均检查未加载 Game.dll。日志与隔离目录 `tmp/docs-artifacts/war3/summon-production-cargo-batch/`，组合探针 `tmp/docs-artifacts/war3/orcx-restore-audit/audit-12.log`。
 
 运输及复活消费者测试运行普通会话；clock 测试单独覆盖恢复后卸载和队列取消，尚未验证完整世界恢复后的连续模拟、生产完成、限时生命过期及吞噬／尸体运输。原图探针时点没有活动限时生命、生产队列或载员；完整状态、实际存档、跨区和窗口仍待实现或验收。
+
+
+### 采集与矿体关联快照（待批次验证）
+
+路径：`src/session.h`、`src/session_harvest.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SHAR` 保存采集阶段、携带资源、目标、计时和矿体关联，相关身份与单位核心恢复后应用。Win32 Release 核心及 clock 目标编译通过，clock 55 通过、0 失败，覆盖实际矿内工人、缠绕矿共享资源、错误映射和恢复后移除工人。OrcX01 模拟 150 秒组合探针的 49 个现有组件重编码一致，该时点无携带资源的工人；日志 `tmp/docs-artifacts/war3/harvest-snapshot-clock-03.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-13.log`。批次验证采矿、伐木和缠绕矿消费者；恢复后采集续行、建筑施工、完整存档与跨区仍待实现或验收。
