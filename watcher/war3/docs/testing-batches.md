@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### Buff 脚本接口合批结果
+
+范围：`825098b`、`769c15b`、`c5d90d0`。Win32 Release 客户端、passive、control 目标构建通过，日志无编译警告。生成 passive 夹具后，`buff-invalid-unit`、`buff-script-remove`、`buff-filter-semantics`、`attribute-item-signed` 及 control 的 `flow`、`purge` 各 1 通过、0 失败；passive 主程序退出 0 并输出 PASS。覆盖失效句柄、脚本清除、正负与魔法／物理筛选、属性物品、光环及控制驱散回归。日志与夹具位于 `tmp/docs-artifacts/war3/buff-native-batch/`。同时具有魔法和物理属性的状态、自动驱散筛选、特殊状态生命周期、原版动态行为及实际窗口仍待验证。
+
+
 ### 扩展 Buff 接口筛选（待功能批次验证）
 
 路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。扩展接口的魔法和物理参数分别作为筛选条件；查询在正负参数相同时包含两类状态，清除仍按正负参数选择。普通 `UnitRemoveBuffs` 不施加魔法或物理筛选。原版 1.27 的 `0x6f46e6c0`、`0x6f46e708` 处理查询筛选，`0x6f471448`、`0x6f4714a4` 处理清除筛选。合批运行 `war3_passive_tests <data-root> <fixture> buff-filter-semantics` 及失效句柄、脚本清除、光环回归；同时具有魔法和物理属性的状态、自动驱散及原版动态行为待验证。本次未执行功能测试。
