@@ -5968,3 +5968,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 施工及升级进度的失效单位（待功能批次验证）
 
 路径：`src/session_construction.cpp`、`tests/construction_tests.cpp`、`docs/construction.md`。`UnitSetConstructionProgress` 和 `UnitSetUpgradeProgress` 对空、已移除和类型不匹配句柄无操作，有效建筑沿用原有进度及事件流程。原版 1.27 入口 `0x6f1fb290`／`0x6f1fb2d0` 在单位解析失败时返回。合批运行 construction 夹具，核对失效句柄以及有效施工／升级；真实地图与原版动态时序待验证。本次未执行功能测试。
+
+
+### 尸体控制的失效单位（待功能批次验证）
+
+路径：`src/session_corpses.cpp`、`tests/corpse_tests.cpp`、`docs/corpses.md`。尸体衰变开关和爆炸标记对失效单位无操作；有效单位沿用现有状态。原版 1.27 入口 `0x6f1fb3d0`、`0x6f1f7480` 在解析失败时返回。合批运行 corpse 夹具 `flow`，覆盖空／移除／类型不匹配单位及有效尸体衰变状态；其他状态条件、事件与原版动态行为待验证。本次未执行功能测试。

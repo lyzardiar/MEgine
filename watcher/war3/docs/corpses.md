@@ -42,3 +42,5 @@ spirit/items/decay/autocast模式已编译、未执行，阶段合并验证先�
 本地原始记录为根tmp/docs-artifacts/war3/corpses/中的build.log、items-build.log、delivery-build.log、final-build.log、freeze-build.log、fixture-build.log、clean-build.log、flow.log和freeze.log。旧MEngine延期队列及完整客户端验收保持开放。
 
 原版鼓舞权杖 `stre` 的 `AInd` 派生自 `ACad` 操纵死尸，使用源范围、数量和 60 秒时限进入既有尸体与物品冷却流程；权杖可重复使用。复合物品中的同类效果使用同一尸体消费者。原版事件顺序、无尸体／施法时序和实际窗口待批次验证。
+
+`UnitSuspendDecay` 和 `SetUnitExploded` 对空、移除或类型不匹配的单位无操作；有效单位继续使用已有尸体状态。1.27 对应入口 `0x6f1fb3d0` 和 `0x6f1f7480` 在解析失败时返回，其他状态条件及原版动态行为待对照。

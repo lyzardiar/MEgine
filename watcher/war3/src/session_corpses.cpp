@@ -38,7 +38,7 @@ void ScriptSession::corpsesTick(double delta){
 void ScriptSession::bindCorpseNatives(){
     bind("GetDecayingUnit","unit",{},[this](auto& vm,auto){return vm.handle("unit",!contexts_.empty() && (contexts_.back().event==21 || contexts_.back().event==54)?contexts_.back().triggerUnit:0);});
     bind("CreateCorpse","unit",{"player","integer","real","real","real"},[this](auto&,auto a){return createCorpse(playerId(a[0]),a[1].bits,{jass::Real::fromBits(a[2].bits),jass::Real::fromBits(a[3].bits)},jass::Real::fromBits(a[4].bits));});
-    bind("UnitSuspendDecay","nothing",{"unit","boolean"},[this](auto& vm,auto a){unit(a[0]).decaySuspended=a[1].bits!=0;return vm.nothing();});
-    bind("SetUnitExploded","nothing",{"unit","boolean"},[this](auto& vm,auto a){auto& u=unit(a[0]);u.exploded=a[1].bits!=0;if(u.exploded && u.corpse)u.corpse->flags=0;return vm.nothing();});
+    bind("UnitSuspendDecay","nothing",{"unit","boolean"},[this](auto& vm,auto a){if(alive(a[0].bits,NativeKind::Unit))unit(a[0]).decaySuspended=a[1].bits!=0;return vm.nothing();});
+    bind("SetUnitExploded","nothing",{"unit","boolean"},[this](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Unit))return vm.nothing();auto& u=unit(a[0]);u.exploded=a[1].bits!=0;if(u.exploded && u.corpse)u.corpse->flags=0;return vm.nothing();});
 }
 }
