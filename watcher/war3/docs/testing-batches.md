@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 自定义技能的分级标题（待批次验证）
+
+路径：`src/object_data.cpp`、`src/session_ability_commands.cpp`、`tests/generate-revival-fixture.py`、`tests/revival_tests.cpp`。技能按钮标题按等级读取自定义完整文本并保留逗号，未覆盖等级从源 Profile 获取；学习标题使用其共享字段。待生成复活夹具并运行 `war3_revival_tests <data-root> <hero-revival-fixture> custom-ability-title`，回归技能说明、其他等级标题、WTS 和实际窗口；本次未执行测试。
+
 ### 自定义技能的分级说明（待批次验证）
 
 路径：`src/object_data.h/.cpp`、`src/session_ability_commands.cpp`、`tests/generate-revival-fixture.py`、`tests/revival_tests.cpp`。技能按钮按等级读取自定义说明的完整文本，并从原始 Profile 解析未覆盖等级；说明内普通逗号和对象字段引用不参与等级切分。待生成复活夹具并运行 `war3_revival_tests <data-root> <hero-revival-fixture> custom-ability-tooltip`，回归源数据、继承、WTS、多级文本和实际窗口；本次未执行测试。
