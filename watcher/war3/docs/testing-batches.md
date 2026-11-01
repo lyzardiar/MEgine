@@ -4828,3 +4828,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 生产队列与集结状态快照（待批次验证）
 
 路径：`src/session.h`、`src/session_production.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SPRD` 保存生产队列、费用和人口预留、进度、编号、集结及复活／献祭引用；调用方先恢复玩家、单位和可破坏物身份。Win32 Release 核心及 clock 目标编译通过，clock 52 通过、0 失败，覆盖真实训练队列、集结、恢复后取消退款与非法映射。OrcX01 模拟 150 秒组合探针的 47 个现有组件重编码一致，该时点没有活动队列；日志 `tmp/docs-artifacts/war3/production-snapshot-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-11.log`。批次验证训练、研究、复活及献祭消费者；恢复后生产完成、建筑施工、完整存档和续行仍待实现或验收。
+
+
+### 运输载员状态快照（待批次验证）
+
+路径：`src/session.h`、`src/session_transport.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCGO` 保存载员关联、卸载订单、工作恢复信息和吞噬计时，在相关对象重建后校验恢复。Win32 Release 核心及 clock 目标编译通过；clock 53 通过、0 失败，覆盖实际登船、恢复后卸载及人工设置的卸载／工作／吞噬字段往返。OrcX01 模拟 150 秒组合探针的 48 个现有组件重编码一致，该时点无载员；日志 `tmp/docs-artifacts/war3/cargo-snapshot-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-12.log`。批次验证运输、召唤与生产消费者；吞噬、尸体运输、工作恢复、实际存档与续行仍待实现或验收。
