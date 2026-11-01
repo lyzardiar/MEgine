@@ -5828,3 +5828,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 普通目标模式的命令快捷键（待功能批次验证）
 
 路径：`src/game_view.cpp`。普通命令等待目标时不再执行隐藏的移动、停止、保持等命令快捷键，目标取消后恢复常规快捷键。合批编译客户端；窗口可用时检查攻击／移动等目标模式下按 S、M、H、Esc，确认当前目标和单位订单，再对照原版键盘行为。本次未执行功能测试。
+
+
+### 普通目标命令界面合批编译（窗口待验）
+
+范围：`1b5408a`、`615f192`、`19c48a8`。Win32 Release 客户端编译通过，日志 `tmp/docs-artifacts/war3/target-command-batch/build.log`。本批未执行窗口输入或功能测试；取消按钮、右键输入消费、目标期间快捷键及原版交互继续待验。此前 D3D9 设备创建失败的本机记录为 `tmp/docs-artifacts/war3/manual-save-batch/ui/game.log`，本次未重复启动窗口。
