@@ -1238,6 +1238,7 @@ int wmain(int argc,wchar_t** argv) {
  native TriggerSleepAction takes real duration returns nothing
  native SaveGame takes string name returns nothing
  native ChangeLevel takes string name, boolean scores returns nothing
+ native LoadGame takes string name, boolean scores returns nothing
  globals
  integer delayed=0
  endglobals
@@ -1253,10 +1254,17 @@ int wmain(int argc,wchar_t** argv) {
  call SaveGame(saveName)
  call ChangeLevel(mapName,scores)
  endfunction
+ function SaveAndLoadGameBJ takes string saveName, string loadName, boolean scores returns nothing
+ call SaveGame(saveName)
+ call LoadGame(loadName,scores)
+ endfunction
+ function reloadTransition takes nothing returns nothing
+ call SaveAndLoadGameBJ("zone-return.w3z","zone.w3z",false)
+ endfunction
  function transition takes nothing returns nothing
  call SaveAndChangeLevelBJ("zone.w3z","Maps\\next.w3x",false)
  endfunction
- )jass";auto make=[&](bool start){auto module=Module::compile(Program::parse({{"transition-save.j",source,"transition save"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);if(start)session->startMain();return session;};auto original=make(true),restored=make(false);original->runtime().start("sleeper");original->runtime().start("transition");require(original->runtime().threadCount()==2,"Transition save fixture did not suspend");original->advance(0);require(fs::is_regular_file(scratch/L"Saves"/L"zone.w3z"),"Transition checkpoint missing");restored->restoreRecoveryCheckpoint("zone.w3z");require(restored->runtime().threadCount()==1,"Transition caller or unrelated sleeper restored incorrectly");restored->runtime().advanceThreads(.5);require(restored->runtime().global("delayed").bits==1 && restored->exitRequest()==SessionExit::None && !restored->runtime().threadCount(),"Restored transition repeated or sleeper was lost");original->runtime().advanceThreads(0);require(original->exitRequest()==SessionExit::ChangeLevel,"Live transition did not continue");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+ )jass";unsigned loadCalls=0;auto make=[&](bool start){auto module=Module::compile(Program::parse({{"transition-save.j",source,"transition save"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->runtime().bind("LoadGame",[&](auto& vm,auto){++loadCalls;return vm.nothing();});session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);if(start)session->startMain();return session;};auto original=make(true),restored=make(false);original->runtime().start("sleeper");original->runtime().start("transition");require(original->runtime().threadCount()==2,"Transition save fixture did not suspend");original->advance(0);require(fs::is_regular_file(scratch/L"Saves"/L"zone.w3z"),"Transition checkpoint missing");restored->restoreRecoveryCheckpoint("zone.w3z");require(restored->runtime().threadCount()==1,"Transition caller or unrelated sleeper restored incorrectly");restored->runtime().advanceThreads(.5);require(restored->runtime().global("delayed").bits==1 && restored->exitRequest()==SessionExit::None && !restored->runtime().threadCount(),"Restored transition repeated or sleeper was lost");original->runtime().advanceThreads(0);require(original->exitRequest()==SessionExit::ChangeLevel,"Live transition did not continue");auto returnSource=make(true),returnTarget=make(false);returnSource->runtime().start("sleeper");returnSource->runtime().start("reloadTransition");returnSource->advance(0);returnTarget->restoreRecoveryCheckpoint("zone-return.w3z");require(returnTarget->runtime().threadCount()==1,"Load transition caller or unrelated sleeper restored incorrectly");returnSource->runtime().advanceThreads(0);returnTarget->runtime().advanceThreads(.5);require(loadCalls==1 && returnTarget->runtime().global("delayed").bits==1 && !returnTarget->runtime().threadCount(),"Load transition repeated or sleeper was lost");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
     test("tree_actions_bundle_preserves_claims_and_club",[&]{
         std::string source=R"jass(type widget extends handle
