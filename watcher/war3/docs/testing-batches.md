@@ -4833,3 +4833,10 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 运输载员状态快照（待批次验证）
 
 路径：`src/session.h`、`src/session_transport.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCGO` 保存载员关联、卸载订单、工作恢复信息和吞噬计时，在相关对象重建后校验恢复。Win32 Release 核心及 clock 目标编译通过；clock 53 通过、0 失败，覆盖实际登船、恢复后卸载及人工设置的卸载／工作／吞噬字段往返。OrcX01 模拟 150 秒组合探针的 48 个现有组件重编码一致，该时点无载员；日志 `tmp/docs-artifacts/war3/cargo-snapshot-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-12.log`。批次验证运输、召唤与生产消费者；吞噬、尸体运输、工作恢复、实际存档与续行仍待实现或验收。
+
+
+### 召唤、生产与运输状态批次（2026-11-01）
+
+本批范围 `7b7ee24`、`8fd6555`、`5405113`。同一集成源码的 Win32 Release 客户端及 clock、transport、revival、commerce 目标编译通过；复用该版本 clock 53/53 和 OrcX01 150 秒组合探针的 48 个组件重编码一致。合批执行运输 `flow`、`orders`、`lifecycle` 各 1/1，英雄复活 4/4，commerce 训练、库存及幻象消费者输出 PASS；均检查未加载 Game.dll。日志与隔离目录 `tmp/docs-artifacts/war3/summon-production-cargo-batch/`，组合探针 `tmp/docs-artifacts/war3/orcx-restore-audit/audit-12.log`。
+
+运输及复活消费者测试运行普通会话；clock 测试单独覆盖恢复后卸载和队列取消，尚未验证完整世界恢复后的连续模拟、生产完成、限时生命过期及吞噬／尸体运输。原图探针时点没有活动限时生命、生产队列或载员；完整状态、实际存档、跨区和窗口仍待实现或验收。
