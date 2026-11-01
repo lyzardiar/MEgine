@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄姓名与技能说明合批结果
+
+范围：`63e6c51`、`de68272`、`5954b8b`。Win32 Release 客户端、revival、spell、clock 目标构建通过，日志未发现编译警告。revival 的 `hero-names`、`hero-learn-tooltip`、`ability-tooltip`、`hero-level-event`、`hero-negative-xp`、`hero-level-tome` 各 1/1，spell 消费者 1 条 PASS；clock 的玩家状态快照、单位身份重建、恢复包随机池各 1/1。姓名池首次测试误将圣骑士 15 个分配槽视为 15 个不同文本；实际安装的源列表为 14 项，原版按列表长度取模。校正夹具后通过，并补查旧版玩家状态、损坏数据拒绝和恢复后的姓名选择。夹具及日志位于 `tmp/docs-artifacts/war3/hero-name-tooltip-batch/`，构建日志为 `tmp/docs-artifacts/war3/hero-name-tooltip-batch-build.log`。自定义技能文本、战役及联机随机流、原版动态和实际窗口仍待验证。
+
 ### 施法说明中的逗号（待批次验证）
 
 路径：`src/object_data.h/.cpp`、`src/session_ability_commands.cpp`、`tests/revival_tests.cpp`。读取原始 Profile 字段的引号结构，单条带引号的施法说明完整保留逗号；多条等级说明继续按等级选择。固定版 `War3Patch.mpq` 中 `Apg2/Ubertip` 包含普通逗号和后续说明。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> ability-tooltip`，并回归多级暴风雪说明、地图覆盖、WTS、完整面板和原版窗口。本次未执行测试。
