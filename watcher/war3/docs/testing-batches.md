@@ -5808,3 +5808,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 商店目标选择的右键取消（待功能批次验证）
 
 路径：`src/game_view.cpp`。商店选中且物品、技能、建造或显形目标模式激活时，右键优先交给目标取消处理，不会先把点击的单位切换为购买者。合批编译客户端；窗口可用时在商店显形及自定义商店技能／物品目标中右键可购买单位和地面，检查取消、购买者及随后普通右键行为，原版交互待对照。本次未执行功能测试。
+
+
+### 界面目标取消与枚举边界合批结果
+
+范围：`5019ed8`、`38456a2`、`da51c75`。Win32 Release 客户端与 destructable 测试目标编译通过；主场景及 `invalid-handles` 两个进程退出 0，共 **3 条 PASS**，覆盖空／已移除矩形枚举及既有对象与脚本集合场景。日志和夹具位于 `tmp/docs-artifacts/war3/ui-cancel-enumeration-batch/`。Esc、右键、法术书和商店购买者属于实际窗口输入，当前未进行窗口验收；本机先前 D3D9 设备失败记录为 `tmp/docs-artifacts/war3/manual-save-batch/ui/game.log`。原版交互和实际地图仍待对照。
