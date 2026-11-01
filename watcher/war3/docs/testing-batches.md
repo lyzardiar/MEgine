@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的目标型灵魂锁链（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。非拾取型复合物品支持指定单位施放 Aspl，校验实际目标和射程，应用前复查目标死亡与归属轮次，并复用原锁链状态；物品与其他效果统一结算。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-spirit-target`、`item-combined-spirit-rune` 及锁链回归；复合技能施法前摇／弹道、原版时序、多人和窗口待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
+
+
 ### 复合拾取物品的灵魂锁链（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。拾取型复合物品支持 Aspl 灵魂锁链，复用已有目标选择、锁链状态和伤害分摊，并与其他效果共用次数、费用、冷却及使用事件。合批生成复合物品夹具并运行 `war3_control_tests <data-root> <fixture> item-combined-spirit-rune`、`item-combined`，回归普通 `spirit-rune` 及锁链伤害；非拾取型目标技能组合、原版复合时序、多人和窗口待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
