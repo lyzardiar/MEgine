@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄经验差值的整数边界（待功能批次验证）
+
+路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。`SetHeroXP` 和 `SetHeroLevel` 使用 32 位有符号差值判断经验增加，极端负经验与目标经验相减回绕为非正数时不更新，正常正差值继续生效。原版 1.27 分别在 `0x6f1f5947` 和 `0x6f1f5859` 执行 32 位减法并检查有符号结果。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-xp-delta-overflow`，回归普通英雄经验和等级设置；原版动态与极值转换精度待验证。本次未执行功能测试。
+
+
 ### 属性书的生命与魔法比例（待功能批次验证）
 
 路径：`src/session_equipment.cpp`、`tests/passive_tests.cpp`。消耗永久属性物品调整力量或智力后保留已有生命和魔法比例，零魔法上限按零比例处理。原版 1.27 `CAbilityAttributeBonus` 的 `0x6f53f6d1` 至 `0x6f53f6f9` 以比例模式应用三项属性，分别进入属性更新流程。合批生成 passive 夹具并运行 `war3_passive_tests <data-root> <fixture> attribute-item-resource`，核对力量书和智力书；负属性书、零上限、复合物品、原版动态和窗口待验证。本次未执行功能测试。
