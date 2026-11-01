@@ -4931,3 +4931,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 吞树、拔树与战棍恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_eat_tree.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`STRS` 保存树木动作、占用票据、战棍次数／特效及调度成员；`SRBF` 版本 6 纳入该组件。Win32 Release 核心及 clock 目标编译通过，clock 63/63；实际技能夹具覆盖吞树中、拔树中和持战棍状态，检查引用及占用表往返，日志 `tmp/docs-artifacts/war3/tree-actions-recovery/clock-03.log`。待阶段验证技能完成、取消、战棍耗尽、原图和实际存档；组件包启动保护保留。
+
+
+### 中立技能调度与 AI 恢复边界（待阶段验证）
+
+路径：`src/session_game.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCLK` 版本 3 保存中立野怪下一次技能决策时刻并兼容读取版本 1／2；`SRBF` 版本 7 拒绝包含活动 AI 运行时的会话。Win32 Release 核心及 clock 目标编译通过，clock 64/64，覆盖非零时刻往返、旧版读取和真实 `human.ai` 拒绝，日志 `tmp/docs-artifacts/war3/neutral-ai-recovery/clock-final.log`。待实现 AI 私有状态及共享线程恢复，并阶段验证中立战斗续行、实际存档和原图对局；组件包启动保护保留。
