@@ -57,6 +57,7 @@ def main():
     parser.add_argument('--data-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=ROOT/'tmp/docs-artifacts/war3/transport/fixture.w3m')
     parser.add_argument('--crash-damage', action='store_true')
+    parser.add_argument('--crash-revive', action='store_true')
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only installation')
@@ -65,8 +66,14 @@ def main():
     archive = fixture.mpyq.MPQArchive(io.BytesIO(original[offset:]), listfile=False)
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
-    files['war3map.j'] = SCRIPT.encode('utf-8')
-    if args.crash_damage:
+    script = SCRIPT
+    if args.crash_revive:
+        script = script.replace('endglobals', 'integer crash_damage_events=0\nendglobals', 1)
+        script = script.replace('function config takes nothing returns nothing', "function on_crash_damage takes nothing returns nothing\n    if GetTriggerUnit()==passenger and GetWidgetLife(carrier)<=0 then\n        set crash_damage_events=crash_damage_events+1\n        call SetWidgetLife(carrier,100.0)\n    endif\nendfunction\nfunction config takes nothing returns nothing", 1)
+        script = script.replace('    local trigger t=CreateTrigger()', '    local trigger t=CreateTrigger()\n    local trigger damage=CreateTrigger()', 1)
+        script = script.replace('    call TriggerAddAction(t,function on_loaded)', '    call TriggerAddAction(t,function on_loaded)\n    call TriggerRegisterUnitEvent(damage,passenger,EVENT_UNIT_DAMAGED)\n    call TriggerAddAction(damage,function on_crash_damage)', 1)
+    files['war3map.j'] = script.encode('utf-8')
+    if args.crash_damage or args.crash_revive:
         files['war3map.w3a'] = struct.pack('<II', 2, 1) + b'Achd' + bytes(4) + struct.pack('<I', 1) + b'Chd3' + struct.pack('<III f', 1, 1, 3, 75.0) + b'Achd' + struct.pack('<I', 0)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))

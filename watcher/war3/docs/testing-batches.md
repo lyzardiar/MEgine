@@ -5464,3 +5464,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 迁移安装目录后的地图定位（待功能批次验证）
 
 路径：`src/session_campaign.cpp`、`tests/clock_tests.cpp`。绝对地图提示失效时，从其 `Maps` 后的相对路径在当前安装的 `Maps` 内寻找候选，仍要求地图完整摘要一致；路径包含上级目录时不形成迁移候选，外部绝对路径仅在玩家读档入口显式允许。合批执行会话套件，覆盖迁移、大小写、摘要不匹配、目录范围及外部地图；实际跨安装移动、冲突和窗口加载待验证。本次未执行功能测试。
+
+
+### 坠毁回调复活载具时保留剩余乘员（待功能批次验证）
+
+路径：`src/session_transport.cpp`、`tests/generate-transport-fixture.py`、`tests/transport_tests.cpp`、`docs/transport.md`。乘员坠毁伤害回调复活载具时，尚未处理且仍属于载具的乘员回到清单；已处理或转移的乘员不重复加入。合批使用 `--crash-revive` 生成隔离夹具并运行 `war3_transport_tests <root> <fixture> crash-revive`，同时复验 `crash-damage`；载具移除、乘员转移及原版事件时序待验证。本次未执行功能测试。
