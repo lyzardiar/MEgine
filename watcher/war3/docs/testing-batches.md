@@ -1,18 +1,8 @@
 # 独立客户端测试队列
 
-### AI 空合并请求（待批次验证）
+### AI 生产和空合并批次（基础验证完成）
 
-路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`MergeUnits` 对非正目标数量直接成功，不检查类型或改变单位；固定版原入口先比较目标与当前数量。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次执行 `war3_campaign_ai_tests <data-root> <fixture> merge-empty` 和已有单位合并回归；原版负数、失效类型及事件行为待对照。
-
-
-### AI 多生产者批量请求（待批次验证）
-
-路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`SetProduce` 超过 32 时按生产者实际容量逐项尝试，工作预算按调用时单位数量限制。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次运行 `war3_campaign_ai_tests <data-root> <fixture> produce-many` 和生产／资源／队列回归；大量数量、回调重入与原版精确时序待验证。
-
-
-### AI 零数量生产（待批次验证）
-
-路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`SetProduce(0, …)` 直接返回成功且不改资源或队列，与固定版原入口的零数量分支一致；负数量继续拒绝。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次运行 `war3_campaign_ai_tests <data-root> <fixture> produce-zero` 及生产／战役 AI 回归。原版负数边界、真实对局和完整生产语义待验证。
+范围：`b8cfb00`、`a5ba3d2`（补充 `253eecb`）和 `70cd3fc`。Win32 Release 客户端、CampaignAI 和 revival 测试程序编译通过。`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `produce-zero`、`produce-many`、`merge-empty`、`armies`、`harvest`、`reachable` 各 2 项通过，`startup` 1 项通过；`melee-build` 以原版 Booty Bay 运行 1 项通过；`war3_revival_tests <data-root> <fixture>` 4 项通过，共 **18 通过、0 失败**。覆盖零数量无副作用、33 项排队、容量不足时保留部分队列、非正数量合并及英雄复活。`melee-build` 首次误用战役夹具失败，改用原图后通过。日志位于 `tmp/docs-artifacts/war3/ai-production-count-batch/`；战役 AI 夹具为 `tmp/docs-artifacts/war3/campaign-ai/fixture.w3m`，复活夹具为 `tmp/docs-artifacts/war3/hero-revival/fixture.w3m`。正数量合并、生产回调重入、原版极值及完整对局仍待验证。Booty Bay 自然对局在 4,200 秒未结束，受限 `otbk` 项目阻塞后续建造的原版生产者筛选语义尚未确定，诊断见 `docs/ai.md`。
 
 
 ### 电脑营地与跨区域攻击批次（基础验证完成）
