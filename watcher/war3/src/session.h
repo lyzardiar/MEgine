@@ -314,6 +314,7 @@ class ScriptSession {
     bool versionSelected_=false;
     std::array<bool,2> versionsSupported_{true,true};
     AudioRandom gameRandom_{0x69707365u};
+    std::map<std::uint32_t,std::vector<std::uint16_t>> heroNameCounts_;
     std::array<AudioRandom,45> auxiliaryRandom_{};
     int stockItemSlots_=12,stockUnitSlots_=12;
     bool shopStockRestored_=false,unitSummonsRestored_=false,productionRestored_=false,cargoRestored_=false,harvestRestored_=false,constructionRestored_=false,corpsesRestored_=false,ambientRestored_=false,unitStealthRestored_=false,selectionRestored_=false,waygatesRestored_=false,revealStateRestored_=false,militiaRestored_=false,unitFormsRestored_=false,treeActionsRestored_=false;
@@ -1034,7 +1035,7 @@ class ScriptSession {
     void refreshUpkeep(unsigned owner);
     const SourceSettings& gameplay();
     float gameplayNumber(const char* key,float fallback);
-    void initializeHero(UnitState& unit);
+    void initializeHero(UnitState& unit,bool assignName=false);
     void refreshHero(UnitState& unit);
     const std::vector<int>& heroThresholds();
     int heroSkillCapacity(const UnitState& unit);

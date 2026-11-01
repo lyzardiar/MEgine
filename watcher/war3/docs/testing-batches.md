@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄姓名池（待批次验证）
+
+路径：`src/session.h`、`src/session_entities.cpp`、`src/session_hero.cpp`、`src/session_game.cpp`、`src/session_network_identity.cpp`、`tests/revival_tests.cpp`。按英雄类型的源 `nameCount` 选择姓名：在使用次数最少的名字中从随机起点顺序选择，复用时追加次数；移除英雄不清除历史。玩家状态快照版本 2 保存姓名历史并读取版本 1，重建单位时不再次分配姓名；会话摘要包含该历史。1.27 `Game.dll` 的 `0x6f26c800` 至 `0x6f26c8e3` 维护按类型的计数和随机选择，`0x6f50b550` 读取姓名并在重复时追加序号。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-names` 及相关 clock 恢复检查；核对战役、自定义姓名和数量、旧快照、存档、联机随机流及原版动态／窗口。本次未执行测试。
+
 ### 英雄幻象与经验物品合批结果
 
 范围：`568bb39`、`6b6b724`（含补充 `c2a0dc6`）、`0761720`。Win32 Release 客户端、revival、commerce、game-flow 目标构建通过；game-flow 目标有两条既有 C4389 有符号／无符号比较警告。重新生成夹具后，revival 的 `hero-level-tome`、`hero-negative-xp`、`hero-level-event`、`hero-xp`、`hero-strip-skills` 各 1/1，commerce 1 条 PASS，game-flow 的 `cache-sync-unit` 1 条 PASS。覆盖真实幻象接口、经验书暂停、升级之书保留进度、负经验与后续加经验，以及负经验英雄的游戏缓存写盘／新会话读取和实验同步；缓存写入使用隔离用户目录。日志和夹具位于 `tmp/docs-artifacts/war3/hero-native-batch/`，构建日志为 `tmp/docs-artifacts/war3/hero-native-batch-build.log`。自定义多等级书、经验数值极限、原版动态对照、窗口和完整地图仍待验证。
