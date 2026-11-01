@@ -4714,3 +4714,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 闪电对象快照（待批次验证）
 
 路径：`src/session_lightning_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SLGT` 重建闪电的活动／失效句柄、源参数、跟随单位和生命周期。Win32 Release 客户端及 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 38 通过、0 失败，覆盖真实连锁闪电跟随、移除目标、脚本颜色与销毁、全局引用、错误映射、损坏拒绝和快照往返；表面及高度字段使用测试设置，未加载 Game.dll。恢复后跟随／到期、其他状态引用、原图、模型与窗口及完整读档仍待批次验证或实现。
+
+### 施法句柄与视觉对象快照批次（2026-11-01）
+
+本批合并 `2caa394`、`7cd145e`、`31e24b8`：同一集成代码版本下，Win32 Release 客户端、clock、spell 和 effects 目标编译通过；`war3_clock_tests <data-root> <output-root>` 38 通过、0 失败；使用当前脚本生成的隔离夹具运行 `war3_spell_tests <data-root> <fixture>` 输出 PASS；`war3_effects_tests <data-root> <log> --ribbons` 输出 PASS，读取 3 个模型、4 种闪电数据／纹理及 2 组地形高度夹具。均未加载 Game.dll，批次夹具及日志位于 `tmp/docs-artifacts/war3/visual-identity-batch/`。技能和资源检查仅验证既有消费者；活动施法及其他系统引用的重建、恢复后的实际运行和窗口／GPU、模型粒子历史、完整读档仍待验证或实现。
