@@ -4670,3 +4670,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 路径：`src/session_unit_visual.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUAN` 版本 2 保存注视骨骼、偏移及目标单位身份，包括已移除句柄；读取版本 1 并保留已有注视关系。Win32 Release 客户端和 clock 测试编译通过；隔离测试覆盖自身、活动及已移除目标、映射错误和旧版本读取，OrcX01 原图开场 29.75 秒的一条实际注视关系重建并往返一致，探针 `tmp/docs-artifacts/war3/unit-lookat-snapshot/probe/`。实际续播、窗口画面与完整存档仍待验证或实现。
 
 本批合并 `96cfaf4`、`825eca3`、`fa0254a`：同一集成代码版本下，Win32 Release 客户端编译通过；`war3_clock_tests <data-root> <output-root>` 33 通过、0 失败，覆盖动画快照、旧版读取、注视目标映射及异常数据；`war3_control_tests <data-root> <control-fixture.w3m> unit-state-handles` 1 通过、0 失败。OrcX01 原图开场在 29.75 秒实际设置的注视关系完成恢复及快照往返，1 通过、0 失败；探针 `tmp/docs-artifacts/war3/unit-lookat-snapshot/probe/`。三项均未加载 Game.dll。原版动态行为、完整世界保存／加载、恢复后的动画续播和窗口表现仍未验证或实现。
+
+### 单位定时转向快照（待批次验证）
+
+路径：`src/session_unit_visual.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUVS` 版本 2 保存进行中的转向起点、方向差、已用时间及总时长，继续读取版本 1；无效状态在应用前拒绝。Win32 Release 客户端及 clock 测试编译通过，`war3_clock_tests <data-root> <output-root>` 33 通过、0 失败；OrcX01 开场 12.9375 秒有一个实际定时转向，外观快照在 252 个活动单位重建后往返一致，探针 `tmp/docs-artifacts/war3/unit-facing-snapshot/probe/`，未加载 Game.dll。实际恢复后续转向、窗口画面和完整存档仍待验证或实现。
