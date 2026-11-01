@@ -5140,3 +5140,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 地形变形与永久凹坑恢复（待阶段验证）
 
 路径：src/world.h、src/world_height.cpp、src/session.h、src/session_world.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SDFM 保存脚本句柄、活动变形与永久凹坑，SRBF 更新至版本 44。Win32 Release 构建及 clock 110/110 通过，覆盖初始化变形替换、损坏拒绝及停止命令；原版 Orc01 人工创建多种变形，隔离续行临时绕过启动保护，3 秒后高度与 71/71 项状态一致。待阶段验证更多变形组合、实际游戏读档、原版时序及窗口；日志 tmp/docs-artifacts/war3/deformation-recovery/。
+
+### 对局结果与战役切关状态恢复（待阶段验证）
+
+路径：src/session.h、src/session_match.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SMAT 保存玩家结果、英雄摘要、难度、切关及过场请求，SRBF 更新至版本 45。Win32 Release 构建及 clock 111/111 通过，覆盖结果、摘要、难度、过场、切关及上下文拒绝；原版 Orc01 人工设置玩家离场，隔离续行临时绕过启动保护，3 秒后 71/71 项状态一致。待阶段验证实际读档、完整战役结算和跨关切换、原版时序及窗口；日志 tmp/docs-artifacts/war3/match-state-recovery/。
