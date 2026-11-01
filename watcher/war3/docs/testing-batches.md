@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 提示字段中的 WTS 引用（待批次验证）
+
+路径：`src/session_ability_commands.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。技能、研究、物品和状态提示展开对象字段时，继续解析字段值中的地图 WTS 引用，再执行百分比转换。待生成研究夹具并运行 `war3_research_tests <data-root> <fixture>`，核对字段引用中的 WTS、逗号、数值与未找到的引用，并回归技能和状态提示及实际窗口；本次未执行测试。
+
 ### 技能与研究分级文本合批结果
 
 范围：`5e6e94a`、`0d7ba4f`、`401a036`。Win32 Release 客户端、revival、research、spell 目标构建通过，日志未发现编译警告。重新生成夹具后，revival 的 `custom-ability-tooltip`、`custom-ability-title`、`ability-tooltip`、`hero-learn-tooltip`、`hero-names`、`hero-level-tome` 各 1/1；research 和 spell 各输出 1 条 PASS。覆盖分级自定义名称／说明中的逗号、字段展开、科技图标／热键、父级覆盖继承、原版技能说明及研究队列。夹具和日志位于 `tmp/docs-artifacts/war3/profile-level-batch/`，构建日志为 `tmp/docs-artifacts/war3/profile-level-batch-build.log`。WTS 多级组合、实际窗口和原版动态对照仍待验证。

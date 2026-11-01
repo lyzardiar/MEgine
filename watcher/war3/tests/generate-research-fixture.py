@@ -82,8 +82,8 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
-    files['Units\\UnitGlobalStrings.txt'] = b'[Q0N1]\nName=Profile only\n[Q0N2]\nName=\n[Q0N3]\nName="Alpha, Beta",Second\n[Q0N4]\nName="Solo, Title"\n'
-    changes = [('gtib', 2, 0), ('gtim', 0, 0), ('gglb', 10, 0), ('gglm', 5, 0), ('glmb', 7, 0), ('glmm', 3, 0), ('gef2', 'rhpx', 0), ('gba2', 20, 0), ('gmo2', 20, 0), ('gef3', 'ratx', 0), ('gba3', 4, 0), ('gmo3', 4, 0), ('gnam', 'First', 1), ('gnam', 'Second, forged', 2), ('gub1', 'First level, bonus <R0T1,base2>', 1), ('gub1', 'Second level, bonus <R0T1,base2>', 2), ('gar1', 'CustomResearchIcon.blp', 2), ('ghk1', 'Z', 2), ('gnam', 'Third', 3), ('greq', '', 2), ('greq', '', 3)]
+    files['Units\\UnitGlobalStrings.txt'] = b'[Q0N1]\nName=Profile only\n[Q0N2]\nName=\n[Q0N3]\nName="Alpha, Beta",Second\n[Q0N4]\nName="Solo, Title"\n[Q0N5]\nName=TRIGSTR_77\n[Q0N6]\nName=TRIGSTR_78\n'
+    changes = [('gtib', 2, 0), ('gtim', 0, 0), ('gglb', 10, 0), ('gglm', 5, 0), ('glmb', 7, 0), ('glmm', 3, 0), ('gef2', 'rhpx', 0), ('gba2', 20, 0), ('gmo2', 20, 0), ('gef3', 'ratx', 0), ('gba3', 4, 0), ('gmo3', 4, 0), ('gnam', 'First', 1), ('gnam', 'Second, forged', 2), ('gub1', 'First level, bonus <R0T1,base2>', 1), ('gub1', 'Second level, <Q0N5,Name> bonus <R0T1,base2>, chance <Q0N6,Name,%>', 2), ('gar1', 'CustomResearchIcon.blp', 2), ('ghk1', 'Z', 2), ('gnam', 'Third', 3), ('greq', '', 2), ('greq', '', 3)]
     def upgrade(base, result, entries):
         return base + result + struct.pack('<I', len(entries)) + b''.join(modification(field, value, result if result != bytes(4) else base, level) for field, value, level in entries)
     original_names = [('gnam', 'Base, first', 1)]
