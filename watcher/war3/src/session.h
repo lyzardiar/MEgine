@@ -225,6 +225,7 @@ class ScriptSession {
     void aiReturnGuards(ScriptAI& ai,bool force=false);
     void aiRemoveGuard(std::uint32_t unit);
     void aiRecycleGuard(std::uint32_t unit);
+    std::unique_ptr<ScriptAI> makeAI(unsigned owner,const std::string& script,bool campaign,bool requireSource);
     void bindAiNatives();
     void bindAiRuntime(ScriptAI& ai);
     void aiTick();
@@ -1289,6 +1290,7 @@ public:
     void acknowledgeQuests() {questFlash_=false;}
     void displayText(unsigned owner,float x,float y,double duration,std::string text,std::uint16_t audience=0xffff,bool chat=false);
     void startAI(unsigned player,const std::string& script,bool campaign=false);
+    void prepareAIRecovery(unsigned player,const std::string& script,bool campaign,std::span<const std::uint8_t> globals,const jass::StableHandleMap& decodeHandle);
     const auto& ais() const {return ais_;}
     void startMain();
     void finishGame(bool scores,SessionExit action=SessionExit::Return);

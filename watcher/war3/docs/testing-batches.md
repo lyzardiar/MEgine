@@ -4951,3 +4951,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### JASS 全局快照初始化（待阶段验证）
 
 路径：`src/jass_runtime.h`、`src/jass_runtime.cpp`、`tests/jass_thread_tests.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。新运行时可从完整全局快照初始化，避免重放原生初始化副作用；引用对象由调用方先恢复。Win32 Release 核心及测试目标编译通过；共享运行时、句柄／代码映射和损坏拒绝定向检查 1/1，clock 65/65，原版 `human.ai` 私有全局使用恒等句柄占位往返；日志 `tmp/docs-artifacts/war3/ai-global-init/`。待整合 AI 实例、对象映射与策略状态并验证真实 AI 续行；实际存档及原版兼容未完成。
+
+
+### AI 恢复实例准备（待阶段验证）
+
+路径：`src/session.h`、`src/session_ai.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。在单位核心重建后准备指定 AI 策略并从全局快照初始化，绑定共享调度器和 AI 原生函数，不执行全局初始化或策略 main。Win32 Release 核心、clock 和战役 AI 测试目标编译通过；clock 65/65，原版 `human.ai` 实例、全局及睡眠线程在受保护会话往返，非单位句柄使用恒等占位；原战役 AI 启动模式 1/1，日志 `tmp/docs-artifacts/war3/ai-instance-recovery/`。待恢复 AI 策略状态、全部对象映射并验证真实续行；活动 AI 的实际存档仍不可用。
