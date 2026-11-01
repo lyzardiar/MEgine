@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 控制状态的物理筛选（待功能批次验证）
+
+路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。眩晕、冰冻吐息和相位转移在 Buff 扩展接口中不因战斗控制标记而匹配物理筛选；魔法和自动驱散分类沿用已核实结果。原版 1.27 的 `CBuffStun`、`CBuffFreezingBreath` 和 `CBuffPhaseShift` 对物理类型虚函数返回零。合批运行 `war3_passive_tests <data-root> <fixture> buff-control-types`，并回归真实控制效果和 Buff 自动筛选；其他特殊状态与原版动态行为待验证。本次未执行功能测试。
+
+
 ### 放逐状态的动态正负分类（待功能批次验证）
 
 路径：`src/session.h`、`src/session_spell_natives.cpp`、`src/session_caster_spells.cpp`、`tests/control_tests.cpp`。放逐状态根据目标玩家对施法玩家的当前联盟关系确定正负分类，脚本 Buff 查询／清除与净化目标判断使用同一结果。原版 1.27 `CBuffBanish` 的 `0x6f5ccbd0` 查询玩家联盟，`0x6f4bf180` 返回相反分类。合批运行 `war3_control_tests <data-root> <fixture> banish-polarity`，回归净化与 Buff 筛选；联盟变动时序、复杂驱散、原版动态与窗口待验证。本次未执行功能测试。
