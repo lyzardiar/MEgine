@@ -26,6 +26,8 @@ boolean probe_transfer_ok=false
 unit probe_first=null
 unit probe_second=null
 boolean probe_group_valid=false
+group probe_destroyed_group=null
+integer probe_group_calls=0
 endglobals
 function ProbeDeath takes nothing returns nothing
     if GetTriggerDestructable()!=probe_tree or GetTriggerWidget()!=probe_tree then
@@ -129,6 +131,31 @@ function ProbeGroupEnumerate takes real x, real y returns nothing
     call GroupEnumUnitsInRect(g,r,Filter(function ProbeGroupFilter))
     set probe_group_valid=FirstOfGroup(g)==probe_second and not IsUnitInGroup(probe_first,g)
     call RemoveUnit(probe_second)
+    call DestroyGroup(g)
+    call RemoveRect(r)
+endfunction
+function ProbeDestroyedGroupFilter takes nothing returns boolean
+    set probe_group_calls=probe_group_calls+1
+    call DestroyGroup(probe_destroyed_group)
+    return true
+endfunction
+function ProbeGroupAction takes nothing returns nothing
+    call ExecuteFunc("GroupFailure_invalid_callback")
+endfunction
+function ProbeInvalidGroup takes real x, real y returns nothing
+    local group g=CreateGroup()
+    local rect r=Rect(x-128,y-128,x+128,y+128)
+    local unit u=CreateUnit(Player(0),'hfoo',x,y,0)
+    call GroupAddUnit(g,u)
+    call ForGroup(null,function ProbeGroupAction)
+    call GroupEnumUnitsInRect(null,null,null)
+    call GroupEnumUnitsInRect(g,null,null)
+    if FirstOfGroup(g)!=u then
+        call ExecuteFunc("GroupFailure_invalid_rect_changed_group")
+    endif
+    set probe_destroyed_group=CreateGroup()
+    call GroupEnumUnitsInRect(probe_destroyed_group,r,Filter(function ProbeDestroyedGroupFilter))
+    call RemoveUnit(u)
     call DestroyGroup(g)
     call RemoveRect(r)
 endfunction

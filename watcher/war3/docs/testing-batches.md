@@ -5758,3 +5758,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 单位组接口的失效句柄（待功能批次验证）
 
 路径：`src/session.cpp`、`src/session_entities.cpp`、`tests/destructable_tests.cpp`。单位组查询和修改对空、已销毁或错误类型的组／单位返回空值或无操作，正常成员操作保持可用。原版 1.27 `Game.dll` 的 `FirstOfGroup`、`IsUnitInGroup`、`GroupRemoveUnit`、`GroupClear`、`DestroyGroup` 入口分别为 `0x6f1e0850`、`0x6f1e8920`、`0x6f1e6e30`、`0x6f1e6940`、`0x6f1df640`，句柄解析失败均直接返回。合批生成 destructable 夹具并执行 `war3_destructable_tests <root> <fixture>`；嵌套组遍历及原版事件时序待对照。本次未执行功能测试。
+
+
+### 失效单位组的遍历与筛选（待功能批次验证）
+
+路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。失效组不会触发组遍历或枚举；矩形、地点和玩家参数失效时保留现有组，过滤回调销毁目标组后停止枚举。原版 1.27 `ForGroup` 与 `GroupEnumUnitsInRect` 入口 `0x6f1e0c50`、`0x6f1e6a50` 对组解析失败直接返回，矩形解析失败也直接返回。合批运行 `war3_destructable_tests <root> <fixture>`；销毁组的回调时序与其他枚举变体仍待原版对照。本次未执行功能测试。
