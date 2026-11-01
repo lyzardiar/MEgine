@@ -5323,8 +5323,6 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`a0fbbea`、`fa110eb`、`f7df638`、`f061125`；路径：`src/session_illusion.cpp`、`src/session_unit_forms.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release `war3_clock_tests` 编译通过，执行 `war3_clock_tests <data-root> <output-root>` 为 **118 通过、0 失败**。夹具覆盖人工设置召唤分类的 `IsUnitType`、旧 `SUMM` 与非法值拒绝，熊形态实际变形及完整恢复包往返；另覆盖人工设置的潜地、灵体、建筑目标分类和形态回血属性，以及隐身和虚体查询。日志及临时产物在 `tmp/docs-artifacts/war3/recovery-unit-form-batch/`。实际驱散和经验、真实建筑升级、目标过滤、回血续行、`SUFM` 旧版及损坏数据、实际存读档和原版规则仍待验证；恢复启动保护保留。
 
 
-### 保存调用的脚本续行基础（待功能批次验证）
+### 保存调用脚本续行合批结果
 
-路径：`src/jass_runtime.h`、`src/jass_runtime.cpp`、`tests/jass_thread_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。可将已绑定的 `nothing` native 标记为恢复时不重放，供具有保存类副作用的挂起调用使用。合批编译运行 `war3_jass_thread_tests`，检查参数、线程快照和续行一致性、禁止未标记恢复以及副作用不重放。保存请求、事件顺序、文件写入及实际读档仍待实现；本次未编译或运行测试。
-
-完整恢复包夹具补充带字符串参数的挂起 native，采集世界和线程后检查恢复脚本从调用点续行且不重放副作用；合批同时执行 `war3_clock_tests <data-root> <output-root>`。该夹具待执行，保存请求、磁盘文件和恢复启动仍未接入。
+范围：`1443274`、`0d8f9dd` 及本次共享调度器绑定修正；路径：`src/jass_runtime.h`、`src/jass_runtime.cpp`、`tests/jass_thread_tests.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release 两个目标编译通过；`war3_jass_thread_tests` **33 通过、0 失败**，`war3_clock_tests <data-root> <output-root>` 首轮 **112 通过、6 失败**。六项失败均因新 AI 运行时绑定睡眠 native 时共享调度器已有线程；修正后六项定向重测各 **1 通过、0 失败**，线程套件重测 **33 通过、0 失败**，新增共享调度器定向场景 **1 通过、0 失败**。覆盖挂起 native 恢复不重放及完整恢复包脚本续行；日志位于 `tmp/docs-artifacts/war3/save-checkpoint-batch/`。保存请求、事件顺序、文件写入及实际读档仍待实现，恢复启动保护保留。
