@@ -5584,3 +5584,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 多选命令与自动修理提示合批结果（窗口待验）
 
 范围：`80fb375`、`786cb03`、`68309ce` 及法术自动施放测试补充。Win32 Release 客户端及订单测试目标编译通过；BootyBay 原图订单套件退出码 0，输出 32 条 PASS（含汇总），覆盖实验联机多单位修理／法术自动施放和携带不同资源工人的返回命令；日志位于 `tmp/docs-artifacts/war3/group-ui-batch/`。实际窗口中的右键、特效、混合选区、路径与原版联机行为仍待验证。
+
+
+### 返回资源的排队与替换命令（待功能批次验证）
+
+路径：`src/player_commands.cpp`、`src/game_commands.cpp`、`src/lan_actions.cpp`、`tests/order_queue_tests.cpp`。Shift 返回资源进入工人命令队列；立即返回清除旧队列；实验联机保留排队标志。合批执行 BootyBay 的 `war3_order_queue_tests <root> <map> return-queue` 及完整订单套件，覆盖单机与多工人联机动作；窗口、原版时序及实际对局待验证。本次未执行功能测试。
