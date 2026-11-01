@@ -5393,3 +5393,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`d9e2fd3`、`881beda`、`2359471`。Win32 Release 客户端、`war3_map_tests` 和 `war3_clock_tests` 编译通过；地图套件 **24 通过、0 失败**，会话套件 **120 通过、0 失败**。覆盖 OrcX01 版本 1 装饰物读取、手动检查点发布、保存事件、恢复、非法路径和未确认覆盖拒绝。日志位于 `tmp/docs-artifacts/war3/loadgame-handoff/manual-save-{batch-build,map,clock}.log`。
 
 窗口尝试使用隔离用户目录和隐藏客户端，D3D9 创建设备失败，未进入游戏画面；日志 `tmp/docs-artifacts/war3/manual-save-batch/ui/game.log`。存档面板实际布局、中文输入、列表选择、覆盖确认与取消、保存后恢复，以及版本 2 装饰变体和原版时序仍待验证；删除与玩家读档入口尚未接入。上述窗口项保留在本批待测队列，不标记通过。
+
+
+### 游戏内本地读档（待功能批次验证）
+
+路径：`src/session.h`、`src/session_campaign.cpp`、`src/game_flow_ui.{h,cpp}`、`tests/clock_tests.cpp`。单人 ESC 菜单复用原 `EscMenuSaveGamePanel.fdf` 的读档控件，从 `Saves/Manual` 选择存档；地图及检查点校验成功后进入既有异步地图准备与恢复流程，校验失败保留当前对局并提示。联机会话不开放。合批构建客户端和会话套件，覆盖有效／缺失检查点、恢复和地图交接；窗口选择、错误提示、不同地图与原版交互仍待验证。本次未执行功能测试。

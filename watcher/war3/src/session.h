@@ -1394,6 +1394,7 @@ public:
     Bytes encodeRecoveryBundle() const;
     void saveRecoveryCheckpoint(const std::string& name,bool overwrite=true) const;
     void saveLocalGame(const std::string& name,bool overwrite=false);
+    void requestLocalLoad(const std::string& name);
     static RecoveryCheckpointInfo inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name);
     static fs::path resolveRecoveryCheckpointMap(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={});
     std::map<std::uint32_t,std::uint32_t> restoreRecoveryCheckpoint(const std::string& name);

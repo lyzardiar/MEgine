@@ -14,7 +14,7 @@ class GameFlowUi {
     Renderer& renderer_;
     Text& text_;
     std::unique_ptr<GlueScreen> menu_,options_,dialog_,scores_,saveMenu_;
-    enum class Panel {Closed,Main,End,Quit,Help,Tips,Options,Gameplay,Sound,Video,Save,Overwrite};
+    enum class Panel {Closed,Main,End,Quit,Help,Tips,Options,Gameplay,Sound,Video,Save,Load,Overwrite};
     Panel panel_=Panel::Closed;
     std::uint32_t dialogId_=0;
     std::uint64_t dialogRevision_=0;
@@ -50,7 +50,7 @@ class GameFlowUi {
     void optionsPanel(Panel panel);
     void drawOptions(const UiInput& input,bool network,bool allowNetworkSubgroup);
     void prepareScores();
-    void openSave();
+    void openSave(bool load=false);
     void drawSave(const UiInput& input,std::wstring_view characters);
     void publishSave(bool overwrite=false);
     unsigned submit(const PlayerCommand& command);
