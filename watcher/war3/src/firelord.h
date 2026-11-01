@@ -1,9 +1,11 @@
 // Author: MiYu. Firelord source snapshots drive real Lava Spawn generations, delayed death explosions and Volcano rocks.
 #pragma once
 #include "spells.h"
+#include <memory>
 namespace war3 {
 struct LavaSpawnState {
     const SpellInfo* definition=nullptr;
+    std::shared_ptr<const SpellInfo> restoredDefinition;
     unsigned generation=0,attacks=0;
     std::uint64_t ticket=0,deathRevision=0,ownerRevision=0;
     double born=0,nextTry=0,flightElapsed=0,flightDuration=0;

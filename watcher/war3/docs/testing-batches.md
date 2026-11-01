@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 熔岩之子恢复（待阶段验证）
+
+路径：`src/firelord.h`、`src/session.h`、`src/session_lava_spawn.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 90/90 通过；原版 Orc01 会话人工施法并设置分裂条件后隔离恢复，临时绕过启动保护续行 1 秒，生成第二个单位且 71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/lava-spawn-recovery/`。实际读档、自然命中累计、原版规则与窗口画面待阶段验证。
+
 ### 凤凰火焰恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_phoenix_fire.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 89/89 通过；原版 Orc01 会话人工创建凤凰和敌人，确认目标燃烧后隔离恢复，临时绕过启动保护续行 3 秒，71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/phoenix-fire-recovery/`。实际读档、自然战斗、伤害时序与窗口画面待阶段验证。
