@@ -15,6 +15,11 @@ integer probe_deaths=0
 integer probe_enumerated=0
 item probe_item=null
 integer probe_items=0
+item probe_transfer_first=null
+item probe_transfer_second=null
+unit probe_carrier=null
+integer probe_transfer_count=0
+boolean probe_transfer_ok=false
 unit probe_first=null
 unit probe_second=null
 boolean probe_group_valid=false
@@ -65,6 +70,26 @@ function ProbeItemEnumerate takes real x, real y returns nothing
     set probe_item=CreateItem('rat6',x,y)
     call EnumItemsInRect(r,Filter(function ProbeItemFilter),function ProbeItemAction)
     call RemoveItem(probe_item)
+    call RemoveRect(r)
+endfunction
+function ProbeTransferFilter takes nothing returns boolean
+    if GetFilterItem()==probe_transfer_first then
+        set probe_transfer_ok=UnitAddItem(probe_carrier,probe_transfer_second)
+    endif
+    return true
+endfunction
+function ProbeTransferAction takes nothing returns nothing
+    set probe_transfer_count=probe_transfer_count+1
+endfunction
+function ProbeTransferEnumerate takes real x, real y returns nothing
+    local rect r=Rect(x-128,y-128,x+128,y+128)
+    set probe_carrier=CreateUnit(Player(0),'Hpal',x,y,0)
+    set probe_transfer_first=CreateItem('rat6',x,y)
+    set probe_transfer_second=CreateItem('rat6',x+32,y)
+    call EnumItemsInRect(r,Filter(function ProbeTransferFilter),function ProbeTransferAction)
+    call RemoveItem(probe_transfer_first)
+    call RemoveItem(probe_transfer_second)
+    call RemoveUnit(probe_carrier)
     call RemoveRect(r)
 endfunction
 function ProbeGroupFilter takes nothing returns boolean
