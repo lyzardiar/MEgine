@@ -5725,3 +5725,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 跟随目标消失后的订单（待功能批次验证）
 
 路径：`src/session_combat.cpp`、`tests/campaign_ai_tests.cpp`。普通跟随目标进入隐身、迷雾或隐藏状态后停止追踪并清理路径，避免持续获取其位置；特殊补给跟随沿用自身处理。合批运行 CampaignAI `fog-attack` 及相关移动场景，覆盖目标显隐、路径清理和既有攻击；原版最后可见位置、事件及实际窗口操作待对照。本次未执行功能测试。
+
+
+### 运输目标、联盟和跟随合批结果
+
+范围：`0e3a681`、`9ffd815`、`0346cd0`、`620b8eb`、`e2440e5` 及电脑非强制攻击补充。Win32 Release 客户端、CampaignAI 和订单队列测试目标编译通过。首次 `fog-attack` 发现电脑直接攻击沿用强制参数，修正后重编译并重跑受影响场景：`fog-attack`、`reachable` 各 **2/0**；`ai-random-paths`、`island-auto`、`island-auto-target-death`、`island-auto-target-invisible`、`island-auto-target-invisible-aboard`、`island-auto-target-ally` 各 **1/0**（通过／失败）；BootyBay `war3_order_queue_tests` 退出 0，输出 **32 条 PASS**。日志与夹具位于 `tmp/docs-artifacts/war3/ai-follow-batch/`。多波次、已发射弹道、原版时序和实际窗口对局仍待验证。
