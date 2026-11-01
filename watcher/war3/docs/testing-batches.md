@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 建筑与生产状态文字（待功能批次验证）
+
+路径：`src/game_loading.h`、`src/game_loading.cpp`、`src/game_commands.cpp`。建造、训练、研发和英雄复活状态文字读取 `UI/FrameDef/GlobalStrings.fdf` 的 `CONSTRUCTING`、`TRAINING`、`RESEARCHING`、`REVIVING`；缺少对应字段时沿用可读默认值。状态百分比和生产队列沿用当前绘制与输入流程。Win32 Release 客户端构建及差异检查通过；源安装的四个字段已核对。本次未运行界面测试；合批验证不同语言和地图资源覆盖下的建筑、训练、研发和复活文字及窗口布局，原版字号／位置、升级／反召唤及人口不足文字仍待对照。
+
+
 ### 触发器执行与回调的失效句柄（待功能批次验证）
 
 路径：`src/session_callbacks.cpp`、`src/session_threads.cpp`、`tests/session_tests.cpp`。触发器执行／等待执行、条件求值、重置、动作和条件的添加／移除／清空先校验各自句柄；失效触发器的求值或添加返回零，其余操作不执行。有效触发器及回调仍走既有调度、清理和所有权检查。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`，注册入口 `0x6f1f90e0`、`0x6f1f9100`、`0x6f1f9120`、`0x6f1f3140`、`0x6f1f90a0`、`0x6f1f90c0`、`0x6f1f9010`、`0x6f1f9050`、`0x6f1fa420`、`0x6f1fa450` 对无效触发器先返回，移除入口也检查动作或条件句柄。Win32 Release 客户端及 session 测试目标构建通过；合批运行 `war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 和线程／回调回归，新增用例尚未执行。回调属于其他触发器、空代码／表达式和原版运行时细节仍待对照。
