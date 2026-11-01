@@ -5958,3 +5958,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 物品能力与目标合批结果
 
 范围：`904ab5c`、`b3239db`、`317f29b`。Win32 Release 客户端、corpse、stealth 和 control 目标构建通过；control 测试文件既有变量遮蔽产生一条 C4456 警告。分别生成三个夹具后，`war3_corpse_tests` 的 `items`、`scrolls`，`war3_stealth_tests` 的 `cloak`、`flow`、`meld`，以及 `war3_control_tests` 的 `dark-summoning` 各 **1 通过、0 失败**，未加载 Game.dll。覆盖原版权杖尸体／时限／冷却、影子风衣昼夜／移动／禁用／移除、传送物品目标分类与指定句柄，以及相关既有流程。日志和夹具位于 `tmp/docs-artifacts/war3/item-effects-batch/`。真实窗口中的目标命中、双击和隐身画面、原版动态时序及地图覆盖仍待验证；本机先前 D3D9 无法创建设备，本批未启动窗口。
+
+
+### 自定义单位未知种族（待功能批次验证）
+
+路径：`src/session_entities.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`、`docs/jass.md`。非空未知种族及 `_` 返回零，原版名称保持对应编号；缺失字段保留默认值。原版 1.27 `0x6f668de0` 匹配失败返回零，比较调用区分大小写。合批使用 `--race-overrides` 生成地图并运行 `war3_construction_tests <data-root> <fixture> race-custom`，核对自定义单位的查询与比较；空字段、类型转换和实际地图仍待对照。本次未执行功能测试。

@@ -99,6 +99,7 @@ def main():
     parser.add_argument('--data-root', type=pathlib.Path, required=True)
     parser.add_argument('--output', type=pathlib.Path, default=ROOT/'tmp/docs-artifacts/war3/construction/fixture.w3m')
     parser.add_argument('--repair-targets', choices=['partial', 'positive', 'vulnerable', 'invu', 'invulnerable'])
+    parser.add_argument('--race-overrides', action='store_true')
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only game installation')
@@ -111,6 +112,9 @@ def main():
     if args.repair_targets:
         targets = {'partial': 'notground,notstructure,notair', 'positive': 'ground,notair,notnonancient', 'vulnerable': 'ground', 'invu': 'ground,invu', 'invulnerable': 'ground,invulnerable'}[args.repair_targets]
         files['war3map.w3a'] = struct.pack('<II', 2, 2) + b''.join(ability + bytes(4) + struct.pack('<I', 1) + b'atar' + struct.pack('<III', 3, 1, 0) + targets.encode('ascii') + b'\0' + ability for ability in (b'Arep', b'Ahrp')) + struct.pack('<I', 0)
+    if args.race_overrides:
+        units = [(b'z0r1', b'_'), (b'z0r2', b'mystery'), (b'z0r3', b'NAGA'), (b'z0r4', b'naga')]
+        files['war3map.w3u'] = struct.pack('<III', 2, 0, len(units)) + b''.join(b'hpea' + unit + struct.pack('<I', 1) + b'urac' + struct.pack('<I', 3) + race + b'\0' + unit for unit, race in units)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
