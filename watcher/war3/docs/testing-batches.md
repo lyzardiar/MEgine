@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 自定义单位英雄类型（待批次验证）
+
+路径：`src/session_entities.cpp`、`src/session_game.cpp`、`src/session_ai_economy.cpp`、`src/session_commerce.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。英雄创建、训练和 AI 类型判定使用实际单位 ID 首字节，`IsHeroUnitId` 同样对未知 ID 按字节判断。1.27 `Game.dll` 的 `IsHeroUnitId` `0x6f1e7b50`、`IsUnitIdType` `0x6f1e8703` 和创建入口 `0x6f66d2fb` 均检查实际 ID。待生成研究夹具并运行 `war3_research_tests <data-root> <fixture>`，检查跨大小写继承、未知 ID、实例及类型查询，并回归训练、AI 和原版动态；本次未执行测试。
+
 ### 英雄幻象的类型判定（待批次验证）
 
 路径：`src/session_entities.cpp`、`tests/commerce_tests.cpp`。`IsUnitType` 对英雄幻象的 `UNIT_TYPE_HERO` 返回 false；真实英雄和 `IsUnitIdType` 的原类型判定保持各自行为。1.27 `Game.dll` 的 `IsUnitType` 跳表将类型 0 交给 `0x6f1e7af0`，该函数检查英雄类型并排除幻象标志 `0x40000000`。待生成 commerce 夹具并运行 `war3_commerce_tests <data-root> <fixture>`，检查法杖生成的真实幻象、原英雄及类型 ID，并回归地图过滤、战斗与原版窗口；本次未执行测试。
