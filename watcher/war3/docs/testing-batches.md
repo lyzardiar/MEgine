@@ -2,7 +2,7 @@
 
 ### 电脑野怪候选收集（待批次验证）
 
-路径：`src/session_ai_natives.cpp`、`docs/ai.md`。搜索每次只收集一次有效中立单位和隐身侦测结果，后续按原句柄顺序计算营地，避免反复扫描所有单位。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次运行 `war3_campaign_ai_tests <data-root> <fixture> reachable` 及相关跨岛进攻场景；大量单位、重叠营地与性能仍待验证。
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。搜索每次只收集一次有效中立单位和隐身侦测结果，后续按原句柄顺序计算营地，避免反复扫描所有单位。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次运行 `war3_campaign_ai_tests <data-root> <fixture> reachable` 及相关跨岛进攻场景，覆盖重叠营地顺序；大量单位与性能仍待验证。
 
 
 ### 野怪营地筛选与存档提示批次（逻辑验证完成）
