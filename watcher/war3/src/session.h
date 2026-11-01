@@ -532,7 +532,7 @@ class ScriptSession {
     void aggregateCloud(UnitBuff& buff);
     float feedbackAttack(const CombatProjectile& projectile);
     void unitCasterInfo(SpellInfo& spell);
-    void unitCasterEffect(const SpellMissile& missile);
+    void unitCasterEffect(const SpellMissile& missile,std::optional<WorldPoint> area={});
     void retireUnitCasterBuff(const UnitBuff& buff);
     void unitCastersTick(double delta);
     float spiritLinkDamage(std::uint32_t source,std::uint32_t target,float damage,unsigned owner);

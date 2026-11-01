@@ -1257,7 +1257,7 @@ Win32 Release 编译通过；真实原模型静音最小运行 6,219 ms／185 �
 
 状态：实现接入；只做开发必需Win32 Release产品编译、差异和源消费者检查。新增专项、三图、原版精度、UI/GPU/声音/AI及性能保持阶段待验证。源表/归档/字段/摘要、REA类证据及编译日志在tmp/docs-artifacts/war3/unit-casters/。
 
-阶段合并闪电护盾源目标/范围/友伤/双buff/叠加/周期/来源消失/载体/驱散与空间边界；链接集合/选取/护甲和护盾/真实分摊/归属/失效成员/死亡重入与事件；精灵之火负甲/自动开关/昼夜和共享视野/隐形与清理；残废三类实际削弱/叠加/分类；灵魂行者源类型/虚无/过渡/取消/研究/库存、法杖目标/费用/次数/冷却/六槽和使用事件，以及三图长局/UI/GPU/AI/音效/CPU/内存/切图无解包增长。双buff、原分摊/视野/形态语义和Aspp拾取符文仍开放，详见[施法单位补齐](unit-casters.md)。旧MEngine队列继续延期。
+阶段合并闪电护盾源目标/范围/友伤/双buff/叠加/周期/来源消失/载体/驱散与空间边界；链接集合/选取/护甲和护盾/真实分摊/归属/失效成员/死亡重入与事件；精灵之火负甲/自动开关/昼夜和共享视野/隐形与清理；残废三类实际削弱/叠加/分类；灵魂行者源类型/虚无/过渡/取消/研究/库存、法杖目标/费用/次数/冷却/六槽和使用事件，以及三图长局/UI/GPU/AI/音效/CPU/内存/切图无解包增长。双buff、原分摊/视野/形态语义及Aspp原版行为仍待对照，详见[施法单位补齐](unit-casters.md)。旧MEngine队列继续延期。
 
 ## 地精修补匠阶段待验证
 
@@ -4738,3 +4738,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 失败项保留：完整 `war3_caster_tests <data-root> <caster-fixture>` 报 `Full curse did not cancel real weapon hits`，退出码 1。诊断显示夹具 `A0CS` 预期概率为 1，读取的实际技能概率仍为 0.33；原版 `AbilityMetaData.slk` 对应 ID 文本为三字符 `Crs`，当前加载器只收录四字符元数据 ID。尚未确认原版地图对该字段使用的四字节编号或原版处理方式，不能将失败归因于概率计算或声称完整法师测试通过。后续核实字段后修复并重跑该失败项及受影响范围。持续施法、状态到期／光环刷新、真实读档及窗口仍待验证或实现。
 
 诅咒失败项修复补充：`src/object_data.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`；细节见[施法单位技能](caster-spells.md)。当元数据只有三字符 `Crs` 时兼容四字节 `Crs1`，显式 `Crs1` 优先。Win32 Release 客户端和 caster 目标编译通过；新夹具 `tmp/docs-artifacts/war3/curse-metadata/caster.w3m` 上完整 `war3_caster_tests <data-root> <fixture>` 输出 PASS、退出码 0，目标筛选 6/6；核对原诅咒 0.33、自定义概率 1.0 及实际攻击落空，未加载 Game.dll。上批对应失败项已重测通过；经典版编辑器的实际输出、多等级和原版运行行为仍待验证。本项为该批失败修复，不另计功能批次。
+
+### 灵魂链接符文拾取（待批次验证）
+
+路径：`src/consumables.h`、`src/session.h`、`src/session_consumables.cpp`、`src/session_item_use.cpp`、`src/session_unit_casters.cpp`、`tests/spell_tests.cpp`；说明见[施法单位技能](unit-casters.md)。`rspl` 拾取后按 `Aspp` 以拾取者为中心选取符合条件的单位，建立灵魂链接并沿用符文消耗和技能事件。Win32 Release 客户端及相关测试目标编译通过；`war3_spell_tests <data-root> <fixture> spirit-rune` 1 通过、0 失败，覆盖脚本和玩家拾取、机械拾取者、范围两侧友军、敌方／远处过滤、事件、伤害分摊与到期；受影响的 `shield-rune` 1/1 和 `war3_clock_tests <data-root> <output-root>` 41/41 通过，未加载 Game.dll。数量上限、范围边界、地图覆盖、回调重入、多人、原版时序和窗口待批次验证。
