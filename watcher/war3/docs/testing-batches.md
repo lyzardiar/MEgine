@@ -5333,22 +5333,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`20c7cad`、`0425d5d`、`ed22a14`；路径：`src/jass_runtime.cpp`、`src/session.h`、`src/session_campaign.cpp`、`tests/jass_thread_tests.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release 两个目标编译通过，`war3_jass_thread_tests` **35 通过、0 失败**，`war3_clock_tests <data-root> <output-root>` **118 通过、0 失败**。覆盖宿主外部等待期间采集、原线程唤醒、恢复后不重放，以及隔离目录真实文件写入和恢复、摘要损坏与越界路径拒绝。日志和临时文件在 `tmp/docs-artifacts/war3/save-file-batch/`。地图不匹配、并发、重写失败、游戏保存事件、地图自动定位、真实存读档与原版文件兼容仍待验证或实现；恢复启动保护保留。
 
 
-### 脚本保存请求（待功能批次验证）
+### 脚本保存与地图定位合批结果
 
-路径：`src/session.h`、`src/session_campaign.cpp`、`src/session_tick.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SaveGame` 在本地脚本线程中请求检查点，会话边界发布 `WSAV` 文件、分发保存事件并唤醒调用线程。合批编译运行 `war3_clock_tests <data-root> <output-root>`，覆盖隔离文件、调用线程等待及恢复后的续行；并发、暂停、失败、事件时序、原版战役、`LoadGame` 和可玩恢复仍待验证或实现。本次未编译或执行测试，恢复启动保护保留。
+范围：`0acc603`、`691fe4c`、`3872a6b`、`4a821d5`、`c4017b7`、`2814bd7` 及本次定位夹具补充；路径：`src/session.h`、`src/session_campaign.cpp`、`src/session_tick.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release `war3_clock_tests` 编译通过，整批 **119 通过、0 失败**；补充相对文件名与摘要不匹配后，受影响项定向重测 **1 通过、0 失败**。覆盖脚本保存、保存事件、暂停、文件及恢复线程，以及地图身份、绝对／相对名称、摘要不匹配和不同安装目录拒绝。日志和临时文件位于 `tmp/docs-artifacts/war3/save-map-resolution-batch/`。
 
-脚本保存夹具补充实际保存事件及 `GetSaveBasicFilename`，检查发布后通知一次并保存调用前的事件状态；该时序的原版一致性仍待对照，夹具待同批执行。
-
-必要最小检查：Win32 Release `war3_clock_tests` 构建通过，保存夹具首轮因缺少 `destructable` 等句柄类型失败，修正后定向 **1 通过、0 失败**。原版 OrcX01 隔离模拟 150 秒后直接移动雷克萨至区域，生成区域检查点和保存事件备份，两者 SHA-256 一致并发出下一地图切换请求；日志及文件在 `tmp/docs-artifacts/war3/save-game-native/`。自然走位、下一地图加载、回访读档、原版格式、事件时序及完整回归仍待功能批次验证。
-
-
-### 检查点地图身份查询（待功能批次验证）
-
-路径：`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。挂载地图前可读取并校验检查点中的路径提示和地图摘要，实际恢复复用读取器。合批编译并运行 `war3_clock_tests <data-root> <output-root>`，检查身份、损坏拒绝及恢复；目录边界、不同地图、地图自动定位和 `LoadGame` 仍待验证或实现。本次未编译或测试。
-
-脚本保存夹具补充暂停状态下的文件发布、事件通知与解除暂停后的调用线程续行，待同批验证；原版暂停时序仍需对照。
-
-
-### 检查点地图定位（待功能批次验证）
-
-路径：`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。检查点地图定位限制候选目录并校验扩展名及摘要。合批编译运行 `war3_clock_tests <data-root> <output-root>`，检查绝对路径匹配与不同安装目录拒绝；经典战役相对名称、外部地图、重解析点、地图移动及实际 `LoadGame` 仍待验证。本次未编译或测试。
+原版 OrcX01 另做隔离最小探针：模拟 150 秒后直接移动雷克萨至区域，生成区域检查点和保存事件备份，两者 SHA-256 一致并发出下一地图切换请求；日志及文件在 `tmp/docs-artifacts/war3/save-game-native/`。自然走位、下一地图加载、回访读档、经典战役目录和外部地图定位、重解析点、并发、失败处理、原版文件与事件时序仍待验证或实现；`LoadGame` 未接入，恢复启动保护保留。
