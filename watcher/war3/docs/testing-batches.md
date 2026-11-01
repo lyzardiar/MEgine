@@ -5144,3 +5144,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 对局结果与战役切关状态恢复（待阶段验证）
 
 路径：src/session.h、src/session_match.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SMAT 保存玩家结果、英雄摘要、难度、切关及过场请求，SRBF 更新至版本 45。Win32 Release 构建及 clock 111/111 通过，覆盖结果、摘要、难度、过场、切关及上下文拒绝；原版 Orc01 人工设置玩家离场，隔离续行临时绕过启动保护，3 秒后 71/71 项状态一致。待阶段验证实际读档、完整战役结算和跨关切换、原版时序及窗口；日志 tmp/docs-artifacts/war3/match-state-recovery/。
+
+### 地图装饰物动画与槽位恢复（待阶段验证）
+
+路径：src/session.h、src/session_doodads.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SDOD 保存装饰动画、对象槽位及空间查询顺序，SRBF 更新至版本 46。Win32 Release 构建及 clock 112/112 通过，覆盖恢复后槽位复用；原版 Orc01 人工设置动画并重用动态槽位，隔离续行临时绕过启动保护，3 秒后 71/71 项状态一致。待阶段验证自然地图脚本、实际游戏读档、原版时序及窗口；日志 tmp/docs-artifacts/war3/doodad-recovery/。
