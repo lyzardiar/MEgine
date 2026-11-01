@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 多生产者批量请求（待批次验证）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`SetProduce` 超过 32 时按生产者实际容量逐项尝试，工作预算按调用时单位数量限制。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次运行 `war3_campaign_ai_tests <data-root> <fixture> produce-many` 和生产／资源／队列回归；大量数量、回调重入与原版精确时序待验证。
+
+
 ### AI 零数量生产（待批次验证）
 
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`SetProduce(0, …)` 直接返回成功且不改资源或队列，与固定版原入口的零数量分支一致；负数量继续拒绝。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次运行 `war3_campaign_ai_tests <data-root> <fixture> produce-zero` 及生产／战役 AI 回归。原版负数边界、真实对局和完整生产语义待验证。
