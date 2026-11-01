@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 限时生命与机械小动物合批结果
+
+范围：`909a816`、`eb15cfd`、`891e770`。Win32 Release 客户端、passive 和 control 目标构建通过，无编译警告。生成 passive 夹具后，`buff-permanent-critter`、`timed-life-buff-id`、`timed-life-summoned`、`mechanical-critter-real`、`buff-timed-life`、`buff-timed-critter`、`buff-filter-semantics` 及 control 的 `purge` 各 1 通过、0 失败；passive 主程序退出 0 并输出 PASS。真实原版 `mcri` 物品完成机械小动物召唤，检查伪装与状态清除。日志与夹具位于 `tmp/docs-artifacts/war3/timed-critters-batch/`。原版重复施加限时生命的入口会创建并加入新状态，当前仅保存一个计时器；多个状态的叠加、暂停、移除、存档及动态原版对照仍需实现和验证。特殊 Buff 的专属效果、人口统计与窗口也待验证。
+
+
 ### 限时生命与召唤单位分类（待功能批次验证）
 
 路径：`src/session_illusion.cpp`、`tests/passive_tests.cpp`。对普通单位施加限时生命时设置召唤单位分类，并覆盖此前的类型移除；移除限时能力后分类保留，脚本仍可显式移除或再次施加。原版 1.27 `CBuffTimedLife` 的 `0x6f513003` 设置单位类型位 `4`，`IsUnitType` 的类型映射将该位用于 `UNIT_TYPE_SUMMONED`。合批运行 `war3_passive_tests <data-root> <fixture> timed-life-summoned`，回归限时生命、净化召唤伤害及类型开关；原版动态行为与人口统计待验证。本次未执行功能测试。
