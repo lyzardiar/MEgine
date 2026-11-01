@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 技能目标生命周期合批结果
+
+范围：`7a56119`、`20f6b7a`、`5db095f`。Win32 Release 客户端及 control、spell、corpse 测试目标构建通过。control 的 `spell-damage-reentry`、`unit-area-heal-reentry`、`area-damage-reentry`、`flow`、`item-normal-target-reentry`，spell 的 `unit-area-heal`、`hidden-immediate`、`spell-shield`、默认完整技能流程，以及 corpse 的 `creep-spells`，共 10 个测试流程通过、0 失败。默认技能流程首次因旧断言要求扩展魔法筛选移除不属于魔法分类的眩晕而失败；断言改为检查筛选保留眩晕及按 Buff ID 移除后通过。流程涵盖普通雷霆一击、战争践踏、刀阵、地狱火召唤与眩晕。日志在 `tmp/docs-artifacts/war3/spell-lifecycle-batch/`，control 使用 `tmp/docs-artifacts/war3/spell-impact-reentry/fixture.w3m`，spell 使用 `tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m`，corpse 使用 `tmp/docs-artifacts/war3/corpses/fixture.w3m`。多目标回调中目标易主和施法者死亡／易主、地狱火回调、原版动态时序、多人及实际窗口仍待验证。
+
+
 ### 范围伤害技能的目标生命周期（待功能批次验证）
 
 路径：`src/session_area_spells.cpp`、`tests/control_tests.cpp`。雷霆一击、战争践踏与地狱火落地的范围结算保留预选目标的死亡和归属轮次，在伤害前后复核目标；施法者死亡或易主后停止后续目标。刀阵投射物沿用同一预选目标检查。Win32 Release 客户端和 control 测试目标构建通过；复用 `tmp/docs-artifacts/war3/spell-impact-reentry/fixture.w3m` 的死亡回调复活最小复现 1 项通过、0 失败，覆盖雷霆一击和战争践踏；构建日志在 `tmp/docs-artifacts/war3/area-damage-reentry/`。合批运行 `war3_control_tests <data-root> <fixture> area-damage-reentry` 和相关范围技能回归，核对地狱火、刀阵、多目标及目标易主；原版回调时序、施法者生命周期变化后的范围结算、多人及窗口仍待对照。
