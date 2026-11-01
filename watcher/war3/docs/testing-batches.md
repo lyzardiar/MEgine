@@ -5326,3 +5326,10 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 保存调用脚本续行合批结果
 
 范围：`1443274`、`0d8f9dd` 及本次共享调度器绑定修正；路径：`src/jass_runtime.h`、`src/jass_runtime.cpp`、`tests/jass_thread_tests.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release 两个目标编译通过；`war3_jass_thread_tests` **33 通过、0 失败**，`war3_clock_tests <data-root> <output-root>` 首轮 **112 通过、6 失败**。六项失败均因新 AI 运行时绑定睡眠 native 时共享调度器已有线程；修正后六项定向重测各 **1 通过、0 失败**，线程套件重测 **33 通过、0 失败**，新增共享调度器定向场景 **1 通过、0 失败**。覆盖挂起 native 恢复不重放及完整恢复包脚本续行；日志位于 `tmp/docs-artifacts/war3/save-checkpoint-batch/`。保存请求、事件顺序、文件写入及实际读档仍待实现，恢复启动保护保留。
+
+
+### 保存检查点外部等待（待功能批次验证）
+
+路径：`src/jass_runtime.cpp`、`tests/jass_thread_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。已标记为恢复时完成的 native 在外部等待期间可采集为零剩余时间续行；原线程继续等待宿主唤醒。合批编译运行 `war3_jass_thread_tests` 和恢复包相关检查，覆盖采集、不提前唤醒、不重复副作用及未标记拒绝；带事件上下文、并发和实际存读档仍待验证。本次未编译或执行测试。
+
+完整恢复包夹具改用宿主外部等待，在采集后唤醒原线程，并检查恢复线程与原线程从调用点续行；待同批执行。
