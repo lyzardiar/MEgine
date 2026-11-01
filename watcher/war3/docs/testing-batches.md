@@ -4656,3 +4656,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 人族隐藏关高级防御塔（验证补充）
 
 路径：`tests/human_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。Win32 Release 编译通过；新建独立用户目录分别运行 `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> secret-build-ndt1` 与 `secret-build-ntt1`，各 1 通过、0 失败，未加载 Game.dll。原图定时解锁后，验证玩家建造的塔扣费、完工、发射弹道及新塔造成正数伤害，模拟时间分别为 671.031 秒和 1036.19 秒；测试持续恢复传送门生命并将建造者设为无敌，未直接创建敌人。三种较早开放的塔回归各 1 通过。正常防守、完整波次、原版动态与窗口仍待验证。本项为既有战役功能的验证补充，不计功能批次。
+
+### 无效单位状态编号（待批次验证）
+
+路径：`src/session_entities.cpp`、`tests/control_tests.cpp`；说明见[对象定义](entities.md)。`GetUnitState` 对 0–3 以外的编号返回零，`SetUnitState` 忽略该设置，避免中断地图脚本；固定版 Game.dll 入口 `0x6f1e6600`、`0x6f1f7a80` 的只读指令位于 `tmp/docs-artifacts/war3/unit-state-range/original.txt`。Win32 Release 客户端和测试目标编译通过；使用独立用户目录运行 `war3_control_tests <data-root> <control-fixture.w3m> unit-state-handles`，1 通过、0 失败，覆盖有效生命／魔法值及无效编号与失效单位组合，未加载 Game.dll。实际地图、原版动态行为及联机仍待批次验证。

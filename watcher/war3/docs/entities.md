@@ -31,3 +31,5 @@ CreateSound/CreateSoundFilenameWithLabel保存真实WAV/MP3成员和参数。数
 `IsUnitPaused` 对空、已移除、错误类型或无效单位句柄返回 false；有效单位返回当前暂停状态。固定版原生入口 `0x6f1e8bc0` 在解析失败时返回零，只读指令位于 `tmp/docs-artifacts/war3/unit-paused-handle/original.txt`。
 
 `IsUnitSelected` 对空、已移除、错误类型或无效的单位及玩家句柄返回 false；有效句柄继续查询当前玩家选择。固定版原生入口 `0x6f1e8c40` 在单位或玩家解析失败时返回零，只读指令位于 `tmp/docs-artifacts/war3/selection-handle-batch/original.txt`。
+
+`GetUnitState` 和 `SetUnitState` 对 0–3 以外的状态编号分别返回零和忽略设置；有效编号继续查询或设置单位生命与魔法。固定版原生入口 `0x6f1e6600`、`0x6f1f7a80` 的编号判断见 `tmp/docs-artifacts/war3/unit-state-range/original.txt`。
