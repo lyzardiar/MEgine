@@ -5357,3 +5357,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。标准区域切换包装发起的保存不在检查点重放切区调用线程，保留其他线程并调整等待索引；实时切区和普通保存保持续行。合批编译执行 `war3_clock_tests <data-root> <output-root>`，覆盖实际文件、独立睡眠线程和实时切图；`SaveAndLoadGameBJ`、等待链、原版线程语义、完整回访与 `LoadGame` 仍待验证或实现。本次未编译或执行测试，恢复启动保护保留。
 
 必要定向检查：Win32 Release 编译通过，切区包装和普通保存各 **1 通过、0 失败**；夹具覆盖两种标准包装和独立睡眠线程，其中 `LoadGame` 使用测试替身。原版两区域隔离诊断在回访处仍因未绑定 `LoadGame` 停止；另行恢复第一地区新检查点、分发加载事件后，雷克萨已导入，临时绕过保护推进 2 秒未再次切区。日志在 `tmp/docs-artifacts/war3/transition-save-native/`。等待链、原版线程行为、真实读档和完整回归仍待验证。
+
+
+### 恢复会话显式启动（待功能批次验证）
+
+路径：`src/session.h`、`src/session.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。恢复包和加载事件完成后可显式启动原 main 已完成的本地会话，拒绝过早或重复启动，不重放 main。合批编译运行 `war3_clock_tests <data-root> <output-root>`，检查加载事件顺序、拒绝条件和正常模拟步续行；原版两区域长时运行、原 main 未完成、其他地图状态、`LoadGame` 和窗口交互仍待验证或实现。本次未编译或测试。

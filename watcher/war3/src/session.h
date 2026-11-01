@@ -1335,6 +1335,7 @@ public:
     void commandMenuOpened(bool skills);
     void notifyGameSaved(const std::string& filename);
     void notifyGameLoaded();
+    void activateRecoveredSession();
     std::uint32_t indicatorColor(std::uint32_t id,std::uint32_t base) const {return indicators_.color(id,base,simulationTime_);}
     bool clickDialog(unsigned owner,std::uint32_t button,bool requireVisible=true,std::uint64_t clickedGeneration=0,bool finishOnQuit=true);
     std::optional<std::uint32_t> dialogNetworkFingerprint(std::uint32_t button) const;
