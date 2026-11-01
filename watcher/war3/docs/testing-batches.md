@@ -5646,3 +5646,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 英雄栏与目标取消合批编译（窗口待验）
 
 范围：`cc6a24f`、`5ea842a`、`abd46c1`。Win32 Release 客户端编译通过，日志位于 `tmp/docs-artifacts/war3/target-ui-batch/build.log`。本批没有可替代实际窗口输入的功能测试；英雄栏目标、右键与 Esc 取消、显形和商店模式仍列为待测。本机先前的 D3D9 创建设备失败证据为 `tmp/docs-artifacts/war3/manual-save-batch/ui/game.log`，本次环境未变化，未重复启动窗口。
+
+
+### 眩晕期间暂停采集与交付（待功能批次验证）
+
+路径：`src/session_harvest.cpp`、`tests/harvest_tests.cpp`。工人眩晕或其他共享眩晕状态期间不继续采矿、伐木和交付，采矿／伐木周期保留剩余时间；恢复后继续原订单。合批使用普通采集夹具执行 `war3_harvest_tests <root> <fixture> stunned`，覆盖伐木暂停／恢复及金币交付；矿内、光环／变形及原版时序待验证。本次未执行功能测试。
