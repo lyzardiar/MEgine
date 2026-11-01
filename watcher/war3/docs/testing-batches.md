@@ -4961,3 +4961,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### AI 策略状态快照（待阶段验证）
 
 路径：`CMakeLists.txt`、`src/session.h`、`src/session_ai_snapshot.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SAIS` 保存单个 AI 的采集、守卫、编队、购买、运输、路线、目标、暂停计数和英雄回调；单位身份及 AI 全局须先重建。Win32 Release 核心及 clock 目标编译通过，clock 65/65；原版 `human.ai` 与实际单位句柄结合人工策略数据，检查非恒等映射、暂停与恢复、回调和错误拒绝，日志 `tmp/docs-artifacts/war3/ai-strategy-recovery/clock-final.log`。待整合组件包、恢复所有对象引用并验证 AI 续行；实际存档及原图对局尚未完成。
+
+
+### AI 组件包恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_ai.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SRBF` 版本 8 按共享调度顺序恢复 AI 实例、私有全局、策略状态及共享线程，校验暂停状态。Win32 Release 构建通过，clock 66/66，日志 `tmp/docs-artifacts/war3/ai-bundle-recovery/clock-final.log`。隔离夹具临时绕过恢复保护后续行 60 秒，25 项状态按对象映射一致；原版 Booty Bay 在全局句柄映射时失败，日志见 `tmp/docs-artifacts/war3/ai-continuation-audit/`。待修复原图引用并验证 AI 实战续行、完整状态及实际存档；恢复启动保护保留。

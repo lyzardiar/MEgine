@@ -216,6 +216,7 @@ class ScriptSession {
     void pointDamageTick();
     IndicatorState indicators_;
     std::array<std::unique_ptr<ScriptAI>,16> ais_;
+    std::vector<unsigned> aiRuntimeOrder_;
     std::array<std::uint32_t,16> aiPauseDepth_{};
     std::array<bool,16> aiStateRestored_{};
     double nextNeutralCombatSpells_=0;
