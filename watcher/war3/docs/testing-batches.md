@@ -5316,3 +5316,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 召唤单位的瘟疫守卫与碰撞恢复
 
 范围：`832cd7e`、`5f38439`；路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release `war3_clock_tests` 编译通过，执行 `war3_clock_tests <data-root> <output-root>` 为 **118 通过、0 失败**。`SUMM` 版本 3 保存瘟疫守卫标记和实际碰撞半径，`SRBF` 为版本 58；夹具覆盖 `Aap3` 死亡云雾产生的守卫以及标记、零碰撞、召唤者和限时生命恢复。日志及临时产物在 `tmp/docs-artifacts/war3/recovery-summon-ward-batch/`。蝗虫、目标筛选、感染、伤害归属、死亡清理、旧版拒绝、实际读档和原版行为仍待验证，恢复启动保护保留。
+
+
+### 召唤分类恢复（待功能批次验证）
+
+路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUMM` 版本 4 保存创建时的召唤分类，含单位的旧版本明确拒绝；`SRBF` 更新至版本 59。合批编译并运行 `war3_clock_tests <data-root> <output-root>`，检查人工设置分类的恢复、`IsUnitType` 及旧版拒绝。真实变形、驱散、经验计算、实际存读档和原版行为仍待验证；本次未编译或执行测试，恢复启动保护保留。
