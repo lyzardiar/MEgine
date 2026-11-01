@@ -5793,3 +5793,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家组和筛选时序合批结果
 
 范围：`78e209d`、`3f21418`、`ff48bcd`。Win32 Release 客户端、destructable 和 clock 测试目标编译通过；destructable 主场景及 `invalid-handles` 两个进程退出 0，输出 **3 条 PASS**，覆盖玩家组失效句柄、筛选销毁、回调可见成员、0–11 号枚举范围和联盟过滤顺序；`war3_clock_tests` **120 通过、0 失败**。日志和夹具位于 `tmp/docs-artifacts/war3/force-enumeration-batch/`。同组嵌套枚举、空槽和原版运行时、实际地图窗口仍待对照。
+
+
+### 地面对象枚举的失效矩形（待功能批次验证）
+
+路径：`src/session_destructables.cpp`、`src/session_inventory.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。物品及可破坏物枚举收到空或已移除矩形时直接返回，不触发过滤或动作回调。原版 1.27 的两个入口 `0x6f1e0140`、`0x6f1e0230` 均在矩形解析失败时跳过枚举。合批运行 destructable 夹具，覆盖空及已移除矩形；原版嵌套回调时序仍待对照。本次未执行功能测试。

@@ -247,6 +247,14 @@ function ProbeForceScope takes nothing returns nothing
     set probe_force_scope_valid=probe_force_scope_valid and not IsPlayerInForce(Player(1),f)
     call DestroyForce(f)
 endfunction
+function ProbeInvalidRects takes nothing returns nothing
+    local rect dead=Rect(0,0,32,32)
+    call RemoveRect(dead)
+    call EnumItemsInRect(null,null,function ProbeForceAction)
+    call EnumItemsInRect(dead,null,function ProbeForceAction)
+    call EnumDestructablesInRect(null,null,function ProbeForceAction)
+    call EnumDestructablesInRect(dead,null,function ProbeForceAction)
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing
