@@ -1390,6 +1390,7 @@ public:
     Bytes encodeRecoveryBundle() const;
     void saveRecoveryCheckpoint(const std::string& name) const;
     static RecoveryCheckpointInfo inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name);
+    static fs::path resolveRecoveryCheckpointMap(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={});
     std::map<std::uint32_t,std::uint32_t> restoreRecoveryCheckpoint(const std::string& name);
     std::map<std::uint32_t,std::uint32_t> restoreRecoveryBundle(std::span<const std::uint8_t> bytes);
     Bytes encodeSelection(const jass::StableHandleMap& encodeHandle) const;
