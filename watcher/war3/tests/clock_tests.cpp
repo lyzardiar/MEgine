@@ -1230,6 +1230,34 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";auto make=[&](bool start){auto module=Module::compile(Program::parse({{"save-game.j",source,"save game checkpoint"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);if(start)session->startMain();return session;};auto original=make(true),restored=make(false);auto& vm=original->runtime();vm.start("work");require(vm.threadCount()==1 && !vm.global("completed").bits && !fs::exists(scratch/L"Saves"/L"slot.w3z"),"SaveGame did not wait for checkpoint publication");original->advance(1./32);require(fs::is_regular_file(scratch/L"Saves"/L"slot.w3z") && vm.global("completed").bits==42 && vm.global("saveEvents").bits==1 && vm.global("savedName").text && *vm.global("savedName").text=="slot" && !vm.threadCount(),"SaveGame did not publish, notify and resume");restored->restoreRecoveryCheckpoint("slot.w3z");require(!restored->runtime().global("completed").bits && !restored->runtime().global("saveEvents").bits && restored->runtime().threadCount()==1,"Saved caller did not restore");restored->notifyGameLoaded();require(restored->runtime().global("loadEvents").bits==1 && restored->runtime().global("reloaded").bits,"Game load notification or map flag missing");rejects([&]{restored->notifyGameLoaded();},"recovered local session");restored->runtime().advanceThreads(restored->simulationTime());require(restored->runtime().global("completed").bits==42 && !restored->runtime().threadCount(),"Saved caller did not continue");rejects([&]{restored->startMain();},"recovery is incomplete");auto paused=make(true);paused->pause(true);paused->runtime().start("work");paused->advance(0);require(paused->paused() && paused->runtime().threadCount()==1 && !paused->runtime().global("completed").bits && paused->runtime().global("saveEvents").bits==1,"Paused SaveGame did not publish while keeping the caller suspended");paused->pause(false);paused->advance(1./32);require(paused->runtime().global("completed").bits==42 && !paused->runtime().threadCount(),"Paused SaveGame caller did not resume");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("transition_save_discards_only_transition_caller",[&]{
+        wchar_t previous[32768]{};auto previousLength=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);if(previousLength>=32768)throw std::runtime_error("User directory environment too long");struct RestoreUserDir{std::wstring value;bool present;~RestoreUserDir(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",present?value.c_str():nullptr);}}restoreUserDir{previous,previousLength!=0};auto scratch=output/(L"transition-save-"+std::to_wstring(GetCurrentProcessId()));require(SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",scratch.c_str())!=0,"Transition scratch directory unavailable");std::string source=R"jass(type widget extends handle
+ type destructable extends widget
+ type unit extends widget
+ type player extends handle
+ native TriggerSleepAction takes real duration returns nothing
+ native SaveGame takes string name returns nothing
+ native ChangeLevel takes string name, boolean scores returns nothing
+ globals
+ integer delayed=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ endfunction
+ function sleeper takes nothing returns nothing
+ call TriggerSleepAction(0.50)
+ set delayed=1
+ endfunction
+ function SaveAndChangeLevelBJ takes string saveName, string mapName, boolean scores returns nothing
+ call SaveGame(saveName)
+ call ChangeLevel(mapName,scores)
+ endfunction
+ function transition takes nothing returns nothing
+ call SaveAndChangeLevelBJ("zone.w3z","Maps\\next.w3x",false)
+ endfunction
+ )jass";auto make=[&](bool start){auto module=Module::compile(Program::parse({{"transition-save.j",source,"transition save"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);if(start)session->startMain();return session;};auto original=make(true),restored=make(false);original->runtime().start("sleeper");original->runtime().start("transition");require(original->runtime().threadCount()==2,"Transition save fixture did not suspend");original->advance(0);require(fs::is_regular_file(scratch/L"Saves"/L"zone.w3z"),"Transition checkpoint missing");restored->restoreRecoveryCheckpoint("zone.w3z");require(restored->runtime().threadCount()==1,"Transition caller or unrelated sleeper restored incorrectly");restored->runtime().advanceThreads(.5);require(restored->runtime().global("delayed").bits==1 && restored->exitRequest()==SessionExit::None && !restored->runtime().threadCount(),"Restored transition repeated or sleeper was lost");original->runtime().advanceThreads(0);require(original->exitRequest()==SessionExit::ChangeLevel,"Live transition did not continue");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("tree_actions_bundle_preserves_claims_and_club",[&]{
         std::string source=R"jass(type widget extends handle
  type destructable extends widget
