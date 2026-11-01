@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 镜像分身变身恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_mobility.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 86/86 通过；原版 Orc01 会话人工施法后隔离恢复，临时绕过启动保护续行 1 秒，生成镜像且 71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/mirror-image-recovery/`。实际读档、自然战斗与窗口画面待阶段验证。
+
 ### 灵魂宝石捕获恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_soul.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 85/85 通过；原版 Orc08 捕获格罗姆后恢复并检查释放，隔离诊断临时绕过启动保护续行 60 秒，81/81 项状态一致，日志位于 `tmp/docs-artifacts/war3/soul-capture-recovery/`。实际读档、完整战斗与窗口画面待阶段验证。
