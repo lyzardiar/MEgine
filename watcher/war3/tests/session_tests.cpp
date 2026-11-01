@@ -311,6 +311,21 @@ function start_timer takes timer t returns nothing
     call TimerStart(t,1.,false,null)
 endfunction
 )jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();auto active=vm.invoke("CreateTimer"),removed=vm.invoke("CreateTimer"),trigger=vm.invoke("CreateTrigger");vm.invoke("DestroyTimer",std::array{removed});for(auto invalid:{vm.handle("timer",0),removed,vm.handle("timer",trigger.bits),vm.handle("timer",0x7fffffffu)}){for(auto name:{"start_timer","PauseTimer","ResumeTimer","DestroyTimer"})vm.invoke(name,std::array{invalid});for(auto name:{"TimerGetTimeout","TimerGetElapsed","TimerGetRemaining"})require(!vm.invoke(name,std::array{invalid}).bits,"Invalid timer query returned a value");}vm.invoke("start_timer",std::array{active});require(vm.invoke("TimerGetTimeout",std::array{active}).bits==jass::Real::fromInteger(1).bits(),"Live timer did not start");vm.invoke("PauseTimer",std::array{active});vm.invoke("ResumeTimer",std::array{active});require(vm.invoke("TimerGetTimeout",std::array{active}).bits==jass::Real::fromInteger(1).bits(),"Live timer changed after pause/resume");});
+    test("game_timer_variable_registration_handles",[]{auto module=compile(R"jass(type trigger extends handle
+type timer extends handle
+type event extends handle
+type gameevent extends handle
+type limitop extends handle
+native CreateTrigger takes nothing returns trigger
+native DestroyTrigger takes trigger t returns nothing
+native CreateTimer takes nothing returns timer
+native TriggerRegisterGameEvent takes trigger t, gameevent e returns event
+native TriggerRegisterTimerEvent takes trigger t, real timeout, boolean periodic returns event
+native TriggerRegisterVariableEvent takes trigger t, string name, limitop op, real limit returns event
+globals
+real watched=0.
+endglobals
+)jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();auto active=vm.invoke("CreateTrigger"),removed=vm.invoke("CreateTrigger"),timer=vm.invoke("CreateTimer");vm.invoke("DestroyTrigger",std::array{removed});auto registerEvents=[&](jass::Value t){return std::array{vm.invoke("TriggerRegisterGameEvent",std::array{t,vm.handle("gameevent",9)}),vm.invoke("TriggerRegisterTimerEvent",std::array{t,vm.real(jass::Real::fromInteger(1)),vm.boolean(false)}),vm.invoke("TriggerRegisterVariableEvent",std::array{t,vm.string("watched"),vm.handle("limitop",0),vm.real(jass::Real::fromInteger(1))})};};for(auto invalid:{vm.handle("trigger",0),removed,vm.handle("trigger",timer.bits),vm.handle("trigger",0x7fffffffu)})for(auto value:registerEvents(invalid))require(!value.bits,"Invalid trigger registered event");for(auto value:registerEvents(active))require(value.bits,"Valid trigger could not register event");});
     test("trigger_lifetime_handle_validation",[]{auto module=compile(R"jass(type trigger extends handle
 type timer extends handle
 type triggeraction extends handle

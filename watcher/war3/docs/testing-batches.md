@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 游戏、计时与变量事件注册句柄（待功能批次验证）
+
+路径：`src/session_callbacks.cpp`、`tests/session_tests.cpp`。游戏事件、定时事件和变量事件注册在解析参数与建立观察前检查触发器；失效句柄返回空事件，有效注册继续沿用原有调度及变量观察。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 的对应入口 `0x6f1f9570`、`0x6f1f9d60`、`0x6f1fa350` 均在触发器解析失败时返回。Win32 Release 客户端和 session 测试目标构建通过；合批运行 session、clock、control 事件回归及两个事件句柄专项。新增用例尚未执行；变量名称／类型、事件类别、回调顺序和原版动态行为仍待对照。
+
+
 ### 玩家与区域事件注册句柄（待功能批次验证）
 
 路径：`src/session_callbacks.cpp`、`src/session_spatial_events.cpp`、`tests/control_tests.cpp`。玩家事件、联盟、玩家状态、玩家单位、聊天及进入／离开区域事件注册先检查触发器及相应玩家／区域；失效句柄返回空事件，有效输入沿用现有事件索引、过滤和回调。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 中入口分别为 `0x6f1f9a20`、`0x6f1f9880`、`0x6f1f9b40`、`0x6f1f9c60`、`0x6f1f9950`、`0x6f1f9390`、`0x6f1f97a0`，均有触发器及玩家或区域解析失败返回分支。Win32 Release 客户端和 control 测试目标构建通过；合批运行 `war3_control_tests <data-root> <fixture> player-region-registration-handles`、`event-registration-handles` 及现有玩家／区域事件回归。新增用例尚未执行；过滤器失效、脚本重入和原版事件时序待验证。
