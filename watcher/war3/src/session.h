@@ -136,7 +136,7 @@ class ScriptSession {
     std::unique_ptr<World> world_;
     bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false,unitRecoveryIncomplete_=false,unitCorePrepared_=false,unitCoreFinished_=false;
     std::string unitCoreDigest_;
-    std::map<std::uint32_t,std::uint32_t> unitIdentityHandles_,unitCoreHandles_,itemIdentityHandles_,destructableIdentityHandles_,abilityIdentityHandles_;
+    std::map<std::uint32_t,std::uint32_t> unitIdentityHandles_,unitCoreHandles_,itemIdentityHandles_,destructableIdentityHandles_,abilityIdentityHandles_,effectIdentityHandles_;
     std::unique_ptr<SoundScene> audio_;
     std::unique_ptr<MusicScene> music_;
     std::unique_ptr<MusicScene> thematicMusic_;
@@ -1363,6 +1363,8 @@ public:
     Bytes encodeUnitCore(const jass::StableHandleMap& encodeHandle) const;
     void prepareUnitCore(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     void finishUnitCore(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeEffects(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildEffects(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeAbilityIdentities(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildAbilityIdentities(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitIdentities(const jass::StableHandleMap& encodeHandle) const;
