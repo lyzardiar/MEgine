@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 脚本清除不可驱散状态（待功能批次验证）
+
+路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。`UnitRemoveBuffs` 和未启用自动驱散筛选的 `UnitRemoveBuffsEx` 移除符合条件的状态，即使状态不可被普通驱散；正负选择继续生效。原版 1.27 的清除流程 `0x6f4714cc` 仅在启用自动驱散筛选时调用能力筛选虚函数，脚本入口在 `0x6f1fb10f` 和 `0x6f1fb13f` 允许清除匹配状态。合批运行 `war3_passive_tests <data-root> <fixture> buff-script-remove`，回归普通驱散与光环；自动驱散筛选细节、特殊状态生命周期和原版动态行为待验证。本次未执行功能测试。
+
+
 ### Buff 扩展接口的失效单位（待功能批次验证）
 
 路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。`UnitRemoveBuffsEx`、`UnitHasBuffsEx` 和 `UnitCountBuffsEx` 对空、已移除或类型不匹配的单位安全返回，查询结果为零；有效单位继续按所选条件查询与移除。原版 1.27 入口 `0x6f1fb130`、`0x6f1fad50`、`0x6f1faa40` 对解析失败的单位直接返回。合批生成 passive 夹具并运行 `war3_passive_tests <data-root> <fixture> buff-invalid-unit`，回归已有 Buff 与光环场景；原版动态行为和全部筛选条件待验证。本次未执行功能测试。
