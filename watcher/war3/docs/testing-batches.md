@@ -5316,3 +5316,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 召唤单位的瘟疫守卫与碰撞恢复（待功能批次验证）
 
 路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUMM` 版本 3 保存瘟疫守卫标记和实际碰撞半径，`SRBF` 更新至版本 58。合批构建并运行 `war3_clock_tests <data-root> <output-root>`，检查标记和零碰撞往返；另需覆盖自然创建的瘟疫守卫和蝗虫、目标筛选、死亡清理、旧版拒绝和实际读档。本次未执行功能编译或测试，恢复启动保护保留。
+
+召唤状态夹具补充真实 `Aap3` 死亡云雾：检查自然创建的瘟疫守卫经恢复后保留标记、零碰撞、召唤者和限时生命。该场景待功能批次执行；感染、伤害归属与实际读档仍待验证。
