@@ -4806,3 +4806,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 已销毁集合对象身份（待批次验证）
 
 路径：`src/session.h`、`src/session_collections.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCOL` 版本 3 保留五类集合对象的失效句柄，继续读取版本 1／2。Win32 Release 核心及 clock 目标编译通过，clock 49 通过、0 失败，覆盖全局重映射、活动状态往返、旧版本和异常数据拒绝。OrcX01 原图模拟 150 秒的组合探针完成现有组件、脚本全局及睡眠线程重建；未继续模拟或验证全部状态。日志 `tmp/docs-artifacts/war3/collection-retired-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-05.log`。批次验证不同集合生命周期、区域事件及恢复后续行；实际保存／载入、跨区、原版格式和窗口仍待实现或验收。
+
+
+### 商店库存快照（待批次验证）
+
+路径：`src/session.h`、`src/session_commerce.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SSHP` 保存单位库存、补货时间、槽位和全局规则，完成单位核心恢复后校验并恢复。Win32 Release 核心和 clock 目标编译通过，clock 50 通过、0 失败；OrcX01 模拟 150 秒组合探针的 45 个已有组件重编码一致，此前直接比较的一个商店库存差异已消除。日志 `tmp/docs-artifacts/war3/shop-stock-clock-01.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-09.log`。批次验证商店、集合及布尔表达式消费者与原图组合；补货续行、完整对象状态、实际保存／载入、跨区与窗口仍待实现或验证。

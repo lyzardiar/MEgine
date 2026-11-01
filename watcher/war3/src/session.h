@@ -298,6 +298,7 @@ class ScriptSession {
     AudioRandom gameRandom_{0x69707365u};
     std::array<AudioRandom,45> auxiliaryRandom_{};
     int stockItemSlots_=12,stockUnitSlots_=12;
+    bool shopStockRestored_=false;
     std::vector<std::shared_ptr<const Member>> preloaded_;
     size_t preloadBytes_=0;
     unsigned preloadDepth_=0;
@@ -1354,6 +1355,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildGameCaches(std::span<const std::uint8_t> bytes);
     Bytes encodeFogState(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildFogState(std::span<const std::uint8_t> bytes);
+    Bytes encodeShopStock(const jass::StableHandleMap& encodeHandle) const;
+    void restoreShopStock(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeCollections(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::pair<std::string,std::uint32_t>,std::uint32_t> rebuildCollections(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeSounds(const jass::StableHandleMap& encodeHandle) const;
