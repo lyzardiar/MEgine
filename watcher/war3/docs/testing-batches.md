@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 尸体与英雄成长合批结果
+
+范围：`806c444`、`77aaa4b`、`13c7cdd`。Win32 Release 客户端及 corpse、revival、clock 测试目标构建通过，构建日志未发现编译警告。重新生成夹具后，corpse 的 `animation-lifecycle`、`decay`、`flow`，revival 的 `hero-level-visual`、`hero-level-event`、`hero-xp`、`awaken`，以及 clock 的 `player_resource_natives_follow_original_bounds` 各 1 通过、0 失败。clock 首次运行因精简测试脚本缺少 `effect` 类型失败，补充类型后重建并通过。日志与夹具位于 `tmp/docs-artifacts/war3/hero-level-batch/`，构建日志为 `tmp/docs-artifacts/war3/hero-level-batch-build.log`。本批未加载 Game.dll；原版动态事件／经验书／自定义视觉、英雄特殊尸体、实际窗口和完整地图仍待验证。
+
 ### 英雄跨级事件（待批次验证）
 
 路径：`src/session_hero.cpp`、`tests/generate-revival-fixture.py`、`tests/revival_tests.cpp`。一次经验变更先完成跨级与属性更新，再派发一次升级事件；事件回调可继续升级或移除英雄。原版 1.27 `Game.dll` 在 `0x6f50ac3f` 升级循环后经 `0x6f50adca` 进入事件 `0x8024e`。待重新生成复活夹具并运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-level-event`，覆盖跨级、未跨级、回调重入和移除；另核对玩家事件、击杀、经验书和原版窗口事件时序。本次未执行测试。

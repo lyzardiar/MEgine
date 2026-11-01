@@ -565,6 +565,7 @@ int wmain(int argc,wchar_t** argv) {
         std::string source=R"jass(type destructable extends handle
  type widget extends handle
  type unit extends widget
+ type effect extends handle
  type attacktype extends handle
  type damagetype extends handle
  type weapontype extends handle
