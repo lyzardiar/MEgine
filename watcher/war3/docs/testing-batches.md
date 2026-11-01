@@ -5253,3 +5253,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 复合物品的全图显形（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合支持 `AIrv`，扣费前检查显形定义与区域配额，执行时复用实际视野与侦测。合批重新生成夹具并运行 `war3_control_tests <data-root> <fixture> item-combined`，检查远处隐身单位侦测及金币混合；到期、共享视野、多个显形区域、回调重入和原版行为待验证。本次未执行功能编译或测试。
+
+
+### 复合物品的自身无敌与狂暴（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合支持 `AHds`／`Absk`，复用物品自身增益及状态生命周期。合批重新生成夹具并运行 `war3_control_tests <data-root> <fixture> item-combined`，检查无敌／狂暴与金币组合；伤害免疫、攻速和伤害变化、到期、目标及原版事件时序待验证。本次未执行功能编译或测试。
