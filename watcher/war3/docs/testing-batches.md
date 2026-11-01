@@ -4811,3 +4811,10 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 商店库存快照（待批次验证）
 
 路径：`src/session.h`、`src/session_commerce.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SSHP` 保存单位库存、补货时间、槽位和全局规则，完成单位核心恢复后校验并恢复。Win32 Release 核心和 clock 目标编译通过，clock 50 通过、0 失败；OrcX01 模拟 150 秒组合探针的 45 个已有组件重编码一致，此前直接比较的一个商店库存差异已消除。日志 `tmp/docs-artifacts/war3/shop-stock-clock-01.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-09.log`。批次验证商店、集合及布尔表达式消费者与原图组合；补货续行、完整对象状态、实际保存／载入、跨区与窗口仍待实现或验证。
+
+
+### 布尔表达式、集合与商店库存批次（2026-11-01）
+
+本批范围 `6e31c21`、`bac6d6c`、`3c41b3c`。同一集成源码的 Win32 Release 客户端及 clock、passive、commerce、兽族战役测试目标编译通过。复用该源码的 clock 50/50 和 OrcX01 150 秒组合恢复 45 项组件重编码一致；合批执行 `shop-range` 7/7、`shop-consumed` 1/1、原图 `quest-shop` 1/1，均报告未加载 Game.dll；commerce 消费者输出 PASS。日志与隔离目录 `tmp/docs-artifacts/war3/boolean-collection-stock-batch/`，组合探针 `tmp/docs-artifacts/war3/orcx-restore-audit/audit-09.log`。原图任务检查包含直接移动英雄、补充金币、降低凤凰生命和使英雄无敌。
+
+组合探针未继续模拟或证明快照覆盖全部状态；恢复后补货、真实保存／载入、跨区、原版格式、自然战斗及窗口仍待实现或验收。
