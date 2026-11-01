@@ -73,9 +73,9 @@ void ScriptSession::bindNatives() {
     bind("GetPlayerHandicap","real",{"player"},[this](auto& vm,auto args){return vm.real(player(args[0]).handicap);});
     bind("SetPlayerHandicap","nothing",{"player","real"},[this](auto& vm,auto args){auto id=playerId(args[0]);float value=std::bit_cast<float>(args[1].bits);if(!std::isfinite(value))throw std::runtime_error("Non-finite player handicap");value=std::max(.01f,value);auto next=jass::Real::fromBits(std::bit_cast<std::uint32_t>(value));auto previous=config_.players[id].handicap;if(std::abs(value-std::bit_cast<float>(previous.bits()))<.001f)return vm.nothing();config_.players[id].handicap=next;for(auto& [handle,u]:units_)if(u->owner==id && !u->removing)adjustUnitHandicap(*u,previous,next);return vm.nothing();});
     bind("CreateGroup","group",{},[this](auto&,auto){return create(NativeKind::Group);});
-    bind("DestroyGroup","nothing",{"group"},[this](auto& vm,auto args){destroy(args[0],NativeKind::Group);return vm.nothing();});
-    bind("GroupClear","nothing",{"group"},[this](auto& vm,auto args){std::get<Group>(object(args[0],NativeKind::Group).state).units.clear();return vm.nothing();});
-    bind("FirstOfGroup","unit",{"group"},[this](auto& vm,auto args){auto& units=std::get<Group>(object(args[0],NativeKind::Group).state).units;return vm.handle("unit",units.empty()?0:units.front());});
+    bind("DestroyGroup","nothing",{"group"},[this](auto& vm,auto args){if(alive(args[0].bits,NativeKind::Group))destroy(args[0],NativeKind::Group);return vm.nothing();});
+    bind("GroupClear","nothing",{"group"},[this](auto& vm,auto args){if(alive(args[0].bits,NativeKind::Group))std::get<Group>(object(args[0],NativeKind::Group).state).units.clear();return vm.nothing();});
+    bind("FirstOfGroup","unit",{"group"},[this](auto& vm,auto args){if(!alive(args[0].bits,NativeKind::Group))return vm.handle("unit",0);auto& units=std::get<Group>(object(args[0],NativeKind::Group).state).units;return vm.handle("unit",units.empty()?0:units.front());});
     bind("CreateTimer","timer",{},[this](auto&,auto){return create(NativeKind::Timer);});
     bind("DestroyTimer","nothing",{"timer"},[this](auto& vm,auto args){if(alive(args[0].bits,NativeKind::Timer))destroy(args[0],NativeKind::Timer);return vm.nothing();});
     bind("TimerGetTimeout","real",{"timer"},[this](auto& vm,auto args){return vm.real(args[0].bits?std::get<Timer>(object(args[0],NativeKind::Timer).state).timeout:jass::Real{});});

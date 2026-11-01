@@ -5753,3 +5753,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 
 
 地图枚举上下文补充：原版静态入口确认过滤与枚举使用不同上下文槽；夹具新增物品嵌套枚举及外层上下文恢复检查，合并原枚举任务计数，待后续批次执行。
+
+
+### 单位组接口的失效句柄（待功能批次验证）
+
+路径：`src/session.cpp`、`src/session_entities.cpp`、`tests/destructable_tests.cpp`。单位组查询和修改对空、已销毁或错误类型的组／单位返回空值或无操作，正常成员操作保持可用。原版 1.27 `Game.dll` 的 `FirstOfGroup`、`IsUnitInGroup`、`GroupRemoveUnit`、`GroupClear`、`DestroyGroup` 入口分别为 `0x6f1e0850`、`0x6f1e8920`、`0x6f1e6e30`、`0x6f1e6940`、`0x6f1df640`，句柄解析失败均直接返回。合批生成 destructable 夹具并执行 `war3_destructable_tests <root> <fixture>`；嵌套组遍历及原版事件时序待对照。本次未执行功能测试。
