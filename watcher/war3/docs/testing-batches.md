@@ -4722,3 +4722,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 活动施法订单快照（待批次验证）
 
 路径：`src/session_cast_snapshot.cpp`、`src/spell_snapshot_codec.h`、`src/session_spell_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCST` 保存施法阶段、完整技能参数、句柄、持续标记、战斗恢复订单和荒芜地道具预留。Win32 Release 客户端与 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 39 通过、0 失败，覆盖真实风暴之锤前摇及构造的特效、闪电、标记、恢复订单、错误映射和损坏拒绝，未加载 Game.dll。持续施法／自动施法真实路径、预留与增长状态、增益和其他技能系统、原图、恢复后续执行、窗口及完整读档待批次验证或实现。
+
+### 单位持续效果快照（待批次验证）
+
+路径：`src/session_buff_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SBUF` 保存单位增益／减益、关联句柄、毒伤和持续施法来源、变形外观以及灵魂锁链／闪电护盾索引。Win32 Release 客户端和 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 40 通过、0 失败，覆盖真实闪电护盾和灵魂锁链、快照往返、错误映射／损坏拒绝及恢复后的直接伤害分摊，未加载 Game.dll。毒伤、变形、持续施法、失效来源、效果到期／移除、原图、窗口、其他单位状态和完整读档仍待批次验证或实现；共享法术调度编号由法术弹道组件恢复。
