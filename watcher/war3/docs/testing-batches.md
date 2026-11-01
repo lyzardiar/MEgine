@@ -4742,3 +4742,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 灵魂链接符文拾取（待批次验证）
 
 路径：`src/consumables.h`、`src/session.h`、`src/session_consumables.cpp`、`src/session_item_use.cpp`、`src/session_unit_casters.cpp`、`tests/spell_tests.cpp`；说明见[施法单位技能](unit-casters.md)。`rspl` 拾取后按 `Aspp` 以拾取者为中心选取符合条件的单位，建立灵魂链接并沿用符文消耗和技能事件。Win32 Release 客户端及相关测试目标编译通过；`war3_spell_tests <data-root> <fixture> spirit-rune` 1 通过、0 失败，覆盖脚本和玩家拾取、机械拾取者、范围两侧友军、敌方／远处过滤、事件、伤害分摊与到期；受影响的 `shield-rune` 1/1 和 `war3_clock_tests <data-root> <output-root>` 41/41 通过，未加载 Game.dll。数量上限、范围边界、地图覆盖、回调重入、多人、原版时序和窗口待批次验证。
+
+### 无能力任务 powerup 拾取（待批次验证）
+
+路径：`src/session_inventory.cpp`、`tests/orc_campaign_chain_tests.cpp`；说明见[战役流程](campaign-flow.md)。无能力 powerup 在拾取事件后移除，支持原版非易耗任务采集物。Win32 Release 客户端与相关测试目标编译通过；`war3_orc_campaign_chain_tests <data-root> quest-powerup <new-user-dir>` 在 `OrcX01_05` 原脚本下 1 通过、0 失败，手动创建单位和物品，检查闪光草脚本拾取、蛋的玩家命令、原任务计数及重复拾取；灵魂链接符文和力量之书回归各 1/1，未加载 Game.dll。完整任务、商店物品、重入、原版时序及窗口待批次验证。
