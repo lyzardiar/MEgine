@@ -5026,3 +5026,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 天气对象恢复（待阶段验证）
 
 路径：src/session.h、src/session_weather.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SWTH 保存地图及脚本天气、对象生命周期和资源定义摘要，SRBF 更新至版本 19。Win32 Release 构建及 clock 78/78 通过；原版 Human06 隔离恢复并临时绕过启动保护后续行 60 秒，69 项状态比较一致；日志 tmp/docs-artifacts/war3/weather-recovery/。待验证天气画面、环境音、实际存档及完整战役；启动保护保留。
+
+
+### 装备及水面特效归属恢复（待阶段验证）
+
+路径：src/session.h、src/session_effect_snapshot.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SEFX 版本 2 保存武器附着和水面特效归属，替换物品重建生成的临时特效；SRBF 更新至版本 20。Win32 Release 构建及 clock 79/79 通过；Undead01 和 Human06 隔离续行临时绕过启动保护后分别有 67／67 和 69／69 项比较一致。日志 tmp/docs-artifacts/war3/equipment-effect-recovery/ 及 tmp/docs-artifacts/war3/campaign-bundle-current/undead-weapon-fixed.log。待验证原版视觉、实际存档及完整战役；启动保护保留。

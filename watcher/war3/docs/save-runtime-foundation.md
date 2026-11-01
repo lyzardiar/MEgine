@@ -472,3 +472,8 @@ Win32 Release 构建通过，clock 77/77；声音等待恢复定向测试 1/1，
 SWTH 保存地图天气及脚本天气对象的类型、区域、启用状态和存活／销毁身份，按原天气表行摘要校验资源；恢复时替换目标会话全局初始化创建的天气对象。SRBF 版本 19 纳入该组件，旧组件包不受理，恢复后启动保护保留。
 
 Win32 Release 构建及 clock 78/78 通过，覆盖全局初始化对象、启用状态、区域、销毁身份、损坏拒绝及恢复后更新；日志 tmp/docs-artifacts/war3/weather-recovery/clock.log。原版 Human06 在 150 秒采集后恢复，隔离诊断临时绕过启动保护并各推进 60 秒，按新增对象创建顺序映射后 69 项状态比较一致，含天气与 AI；日志 tmp/docs-artifacts/war3/weather-recovery/human06-final.log。天气粒子画面、环境音、实际存档与完整战役仍待阶段验证。
+
+
+SEFX 版本 2 保存单位武器附着特效组、武器启用掩码和水面特效归属；物品重建时产生的临时附着特效仅在确认归属并完整校验快照后替换，目标会话继续使用保存的特效句柄。旧版 SEFX 未记录这些关联，不再读取；SRBF 更新至版本 20，旧组件包不受理。
+
+Win32 Release 构建及 clock 79/79 通过，覆盖 Undead01 实际装备附着、合成水面特效归属、非恒等映射、组件往返及单位移除时清理；日志 tmp/docs-artifacts/war3/equipment-effect-recovery/clock.log。Undead01 在 30 秒采集后，隔离诊断临时绕过启动保护并各推进 60 秒，按新增对象创建顺序映射后 67 项比较一致；Human06 同类诊断 69 项一致，日志分别为 tmp/docs-artifacts/war3/campaign-bundle-current/undead-weapon-fixed.log 和 tmp/docs-artifacts/war3/equipment-effect-recovery/human06.log。实际存档、视觉效果及完整战役仍待验证。

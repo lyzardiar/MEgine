@@ -857,6 +857,7 @@ class ScriptSession {
     void lightningTick();
     void spellLightning(const SpellMissile& missile);
     std::map<std::uint32_t,std::shared_ptr<ScriptEffect>> effects_;
+    std::set<std::uint32_t> ignoredEffectIdentities_;
     std::map<std::uint32_t,std::shared_ptr<ScriptImage>> images_;
     std::map<std::uint32_t,std::shared_ptr<ScriptUbersplat>> ubersplats_;
     std::map<std::string,UbersplatInfo> ubersplatInfo_;
