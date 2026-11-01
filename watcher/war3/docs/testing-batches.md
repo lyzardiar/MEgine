@@ -5943,3 +5943,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 鼓舞权杖的操纵死尸（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/corpse_tests.cpp`、`docs/corpses.md`。原版 `stre` 使用 `AInd`／`ACad` 复活尸体，按源参数创建限时单位并处理物品冷却；复合物品同样接受该原型。合批生成 corpse 夹具并运行 `war3_corpse_tests <data-root> <fixture> items`，核对原版权杖、来源、时限、尸体及冷却，并回归卷轴；原版时序、多个尸体、实际窗口与地图覆盖待验证。本次未执行功能测试。
+
+
+### 影子风衣夜间隐身（待功能批次验证）
+
+路径：`src/session.h`、`src/session_stealth_reveal.cpp`、`src/session_visibility.cpp`、`tests/stealth_tests.cpp`、`docs/visibility.md`。原版 `clsd` 携带 `Ashm`，装备后参与现有影遁的夜晚、移动和昼夜流程；失去物品或装备能力时隐身查询立即失效。合批生成 stealth 夹具，运行 `war3_stealth_tests <data-root> <fixture> cloak` 并回归 `flow`、`meld`；多来源叠加、禁用、地图覆盖、原版动态效果和实际窗口待验证。本次未执行功能测试。

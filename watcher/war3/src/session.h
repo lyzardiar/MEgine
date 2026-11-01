@@ -994,6 +994,7 @@ class ScriptSession {
     std::uint32_t nearestTree(WorldPoint point,float range,std::uint32_t exclude=0);
     std::uint32_t reachableHarvestTree(const UnitState& unit,WorldPoint point,float range,bool direct,float workRange,bool allowInvulnerable,unsigned& cursor,bool& any);
     std::pair<std::uint32_t,unsigned> sourceAbility(const UnitState& unit,const char* code);
+    std::pair<std::uint32_t,unsigned> shadowMeldAbility(const UnitState& unit);
     void initializeHarvest(UnitState& unit);
     void cancelGather(UnitState& unit);
     bool unloadMinePassenger(std::uint32_t mine,std::uint32_t worker,WorldPoint point);
