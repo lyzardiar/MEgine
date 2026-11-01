@@ -15,6 +15,9 @@ integer probe_deaths=0
 integer probe_enumerated=0
 item probe_item=null
 integer probe_items=0
+unit probe_first=null
+unit probe_second=null
+boolean probe_group_valid=false
 endglobals
 function ProbeDeath takes nothing returns nothing
     if GetTriggerDestructable()!=probe_tree or GetTriggerWidget()!=probe_tree then
@@ -62,6 +65,23 @@ function ProbeItemEnumerate takes real x, real y returns nothing
     set probe_item=CreateItem('rat6',x,y)
     call EnumItemsInRect(r,Filter(function ProbeItemFilter),function ProbeItemAction)
     call RemoveItem(probe_item)
+    call RemoveRect(r)
+endfunction
+function ProbeGroupFilter takes nothing returns boolean
+    if GetFilterUnit()==probe_second then
+        call RemoveUnit(probe_first)
+    endif
+    return true
+endfunction
+function ProbeGroupEnumerate takes real x, real y returns nothing
+    local group g=CreateGroup()
+    local rect r=Rect(x-128,y-128,x+128,y+128)
+    set probe_first=CreateUnit(Player(0),'hfoo',x,y,0)
+    set probe_second=CreateUnit(Player(0),'hfoo',x+32,y,0)
+    call GroupEnumUnitsInRect(g,r,Filter(function ProbeGroupFilter))
+    set probe_group_valid=FirstOfGroup(g)==probe_second and not IsUnitInGroup(probe_first,g)
+    call RemoveUnit(probe_second)
+    call DestroyGroup(g)
     call RemoveRect(r)
 endfunction
 function config takes nothing returns nothing

@@ -5735,3 +5735,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 地图物品和可破坏物枚举上下文（待功能批次验证）
 
 路径：`src/session_inventory.cpp`、`src/session_destructables.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。矩形枚举分别设置过滤阶段与回调阶段的对象，阶段结束后恢复外层上下文；回调前仍复核对象存活。合批生成 destructable 夹具并运行 `war3_destructable_tests <root> <fixture>`，覆盖两类对象过滤／回调；嵌套枚举、过滤时移除和原版事件上下文待对照。本次未执行功能测试。
+
+
+### 组枚举过滤回调移除单位（待功能批次验证）
+
+路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。组枚举过滤期间若后续回调移除已接受的单位，最终组不再保留失效句柄；仍保留其他有效成员。合批生成 destructable 夹具并执行 `war3_destructable_tests <root> <fixture>`，覆盖 `FirstOfGroup` 与成员查询；嵌套回调、已销毁组及原版时序待对照。本次未执行功能测试。
