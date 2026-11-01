@@ -4801,3 +4801,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 独立布尔表达式身份（待批次验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SBOO` 保存活动／已销毁句柄和共享表达式图，校验地图、时钟、脚本、回调及图结构后重建；调用方需恢复全局等引用。Win32 Release 核心和 clock 目标编译通过；clock 48 通过、0 失败，覆盖组合求值、全局和失效句柄、损坏及循环拒绝。OrcX01 原图模拟 150 秒组合探针越过布尔表达式，在全局 `location` 句柄处失败；日志 `tmp/docs-artifacts/war3/boolean-snapshot-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-04.log`。批次验证其他表达式／事件组合、原图全局映射与续行；完整对象图、实际保存／载入、跨区、原版格式及窗口仍待实现或验收。
+
+
+### 已销毁集合对象身份（待批次验证）
+
+路径：`src/session.h`、`src/session_collections.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCOL` 版本 3 保留五类集合对象的失效句柄，继续读取版本 1／2。Win32 Release 核心及 clock 目标编译通过，clock 49 通过、0 失败，覆盖全局重映射、活动状态往返、旧版本和异常数据拒绝。OrcX01 原图模拟 150 秒的组合探针完成现有组件、脚本全局及睡眠线程重建；未继续模拟或验证全部状态。日志 `tmp/docs-artifacts/war3/collection-retired-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-05.log`。批次验证不同集合生命周期、区域事件及恢复后续行；实际保存／载入、跨区、原版格式和窗口仍待实现或验收。

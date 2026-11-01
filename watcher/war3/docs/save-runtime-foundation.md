@@ -284,3 +284,8 @@ Win32 Release 核心、clock 和 DotA 测试目标编译通过；`war3_clock_tes
 `SBOO` 保存活动和已销毁的独立布尔表达式句柄以及共享表达式图。重建前校验地图、时钟、脚本摘要、回调、节点数量、深度及环；替换目标初始化的表达式后，由调用方使用返回映射恢复全局等引用。触发器和事件中的表达式仍按值保存；本组件未接入完整保存／载入。
 
 Win32 Release 核心和 clock 测试目标编译通过；clock 48 通过、0 失败，覆盖共享子表达式、逻辑求值、失效句柄、全局重映射、损坏摘要、脚本不一致和循环拒绝，日志 `tmp/docs-artifacts/war3/boolean-snapshot-clock-02.log`。OrcX01 原图静音模拟 150 秒的组合恢复已越过布尔表达式，在恢复全局的 `location` 句柄时失败，日志 `tmp/docs-artifacts/war3/orcx-restore-audit/audit-04.log`。完整对象图、恢复后续行、实际保存／载入、跨区和窗口仍未完成。
+
+
+`SCOL` 版本 3 保留已销毁的单位组、玩家组、位置、矩形及区域句柄身份；活动对象仍保留原有成员及几何状态。重建会替换目标初始化时的同类对象，调用方须恢复脚本全局和其他引用；版本 1、2 继续按活动对象读取。Win32 Release 核心和 clock 目标编译通过；clock 49 通过、0 失败，覆盖五类失效句柄、全局重映射、版本 1／2、无效生命周期和损坏快照拒绝，日志 `tmp/docs-artifacts/war3/collection-retired-clock-02.log`。
+
+原版 OrcX01 静音模拟 150 秒的组合探针使用已有组件重建世界、单位、脚本对象与事件，并完成脚本全局及睡眠线程重建，日志 `tmp/docs-artifacts/war3/orcx-restore-audit/audit-05.log`。该探针未检查所有运行状态的完整性，未解除单位恢复保护，也未继续模拟；实际保存／载入、跨区和窗口仍未完成。

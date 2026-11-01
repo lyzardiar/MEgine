@@ -97,6 +97,8 @@ class ScriptSession {
     bool timerIdentitiesRebuilt_=false;
     std::set<std::uint32_t> ignoredBooleanIdentities_;
     bool booleanIdentitiesRebuilt_=false;
+    std::set<std::uint32_t> ignoredCollectionIdentities_;
+    bool collectionIdentitiesRebuilt_=false;
     std::unordered_map<std::uint32_t,std::vector<std::uint32_t>> timerExpireEventIndex_;
     std::unordered_map<std::uint64_t,std::vector<std::uint32_t>> playerUnitEventIndex_,unitEventIndex_;
     unsigned combatTargetEventMask_=0;
