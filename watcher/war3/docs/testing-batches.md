@@ -5524,3 +5524,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 修理、采集及单位分类合批结果
 
 范围：`cc3eb89`、`4c48630`、`33192ab` 及修理夹具补充。Win32 Release 客户端、施工、采集和研究测试目标编译通过。施工原始场景、修理 partial／positive、采集原始场景、树木 partial／invu／invulnerable、研究场景共 **8 个进程通过、0 失败**；修理夹具覆盖工人实际的 Ahrp 能力后，两个失败场景重测通过。日志和夹具位于 `tmp/docs-artifacts/war3/target-batch/`。自动寻找无敌树木、其他技能与 AI 分类组合、原版对照及窗口对局仍待验证。
+
+
+### 自动切换允许采集的无敌树木（待功能批次验证）
+
+路径：`src/session.h`、`src/session_destructables.cpp`、`src/session_lumber.cpp`、`tests/harvest_tests.cpp`。当前树木失效后，寻找替代目标时复用采集能力的无敌目标许可。合批编译 `war3_harvest_tests`，使用前批 `--tree-targets invu` 和 `invulnerable` 夹具运行对应模式，覆盖自动切换；其他寻路、原版行为和实际对局待验证。本次未执行功能测试。
