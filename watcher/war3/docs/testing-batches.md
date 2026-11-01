@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄技能点增减边界（待批次验证）
+
+路径：`src/session.h`、`src/session_hero.cpp`、`tests/revival_tests.cpp`。`UnitModifySkillPoints` 将扣除量限制到已有点数，将单次增加量限制为前五个英雄技能剩余可学等级；零变更返回 false。1.27 `Game.dll` 的 `0x6f50c280` 至 `0x6f50c31f` 包含上述限制及返回分支。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-skill-modify`，并回归 `hero-skill-cap` 与 `hero-xp`；负数溢出、原版动态行为和自定义技能组合待验证。本次未执行测试。
+
 ### 英雄升级技能点上限（待批次验证）
 
 路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。英雄升级后，未分配技能点限制为前五个英雄技能尚可学习的等级总数；英雄没有可学技能时上限为零。原版 1.27 `Game.dll` 在 `0x6f50ad5b` 遍历五个技能槽，按最大等级减去已学等级累加，并在 `0x6f50ada2` 限制技能点。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-skill-cap`，并验证多技能、重训、额外技能点、地图覆盖和升级事件观察值；原版动态对照和窗口待验。本次未执行测试。
