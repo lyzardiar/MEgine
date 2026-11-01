@@ -5813,3 +5813,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 界面目标取消与枚举边界合批结果
 
 范围：`5019ed8`、`38456a2`、`da51c75`。Win32 Release 客户端与 destructable 测试目标编译通过；主场景及 `invalid-handles` 两个进程退出 0，共 **3 条 PASS**，覆盖空／已移除矩形枚举及既有对象与脚本集合场景。日志和夹具位于 `tmp/docs-artifacts/war3/ui-cancel-enumeration-batch/`。Esc、右键、法术书和商店购买者属于实际窗口输入，当前未进行窗口验收；本机先前 D3D9 设备失败记录为 `tmp/docs-artifacts/war3/manual-save-batch/ui/game.log`。原版交互和实际地图仍待对照。
+
+
+### 普通命令目标模式的取消按钮（待功能批次验证）
+
+路径：`src/game_commands.cpp`。攻击、移动、巡逻、采集和修理等普通命令等待目标时，命令面板显示取消按钮；点击后清理目标模式和排队标志。存在建造或升级状态时，目标取消优先于施工取消。合批编译客户端；窗口可用时检查各目标模式、按钮／右键／Esc、Shift 和菜单状态，并对照原版布局与行为。本次未执行功能测试。
