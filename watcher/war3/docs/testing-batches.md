@@ -4730,3 +4730,9 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 单位光环快照（待批次验证）
 
 路径：`src/session_aura_snapshot.cpp`、`src/passive_snapshot_codec.h`、`src/session_projectile_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SAUR` 保存光环成员、定义摘要、加成、发射／接收特效、尖刺外观和刷新节拍。Win32 Release 客户端与 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 41 通过、0 失败，覆盖真实专注及耐久光环、已移除来源、护甲与移动加成、定义／映射错误和损坏拒绝，未加载 Game.dll。到期／刷新、其他光环和地图覆盖、其余状态整合、原图、窗口及完整读档仍待批次验证或实现。
+
+### 施法、持续效果与光环快照批次（2026-11-01，存在失败项）
+
+本批范围 `bcee799`、`aa64f1b`、`c24fd55`：同一集成代码版本下 Win32 Release 客户端、clock、passive、caster 和 channel 目标编译通过；`war3_clock_tests <data-root> <output-root>` 41 通过、0 失败；`war3_passive_tests <data-root> <passive-fixture>` 和 `war3_channel_tests <data-root> <channel-fixture>` 各输出 PASS；`war3_caster_tests <data-root> <caster-fixture> targets` 6/6。夹具由当前生成脚本写入 `tmp/docs-artifacts/war3/cast-buff-aura-batch/`，测试未加载 Game.dll。
+
+失败项保留：完整 `war3_caster_tests <data-root> <caster-fixture>` 报 `Full curse did not cancel real weapon hits`，退出码 1。诊断显示夹具 `A0CS` 预期概率为 1，读取的实际技能概率仍为 0.33；原版 `AbilityMetaData.slk` 对应 ID 文本为三字符 `Crs`，当前加载器只收录四字符元数据 ID。尚未确认原版地图对该字段使用的四字节编号或原版处理方式，不能将失败归因于概率计算或声称完整法师测试通过。后续核实字段后修复并重跑该失败项及受影响范围。持续施法、状态到期／光环刷新、真实读档及窗口仍待验证或实现。
