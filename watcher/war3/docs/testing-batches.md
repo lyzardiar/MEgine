@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### AI 生产与转换批次结果
+
+范围：`9e35827`、`c2a643c`、`5f67e97`。Win32 Release 客户端、CampaignAI 和 revival 程序构建通过。原战役夹具执行 `produce-zero`、`produce-many`、`convert-empty`、`merge-empty`、`armies`、`harvest`、`reachable` 各 2 项通过，`startup` 1 项通过；原 Booty Bay 执行 `melee-build` 1 项通过；复活夹具 4 项通过，共 **20 通过、0 失败**。覆盖负数量部分排队、受限训练命令提交后无扣费与入队、限制解除后生产、非正转换及相关回归。首次执行使用了错误的测试程序路径，修正路径后上述命令通过。日志位于 `tmp/docs-artifacts/war3/ai-production-next-batch/`。
+
+原 Booty Bay 兽族对不死族静音隔离探针中，900 秒兽族已有 1 辆投石车在途或存活，受限狂战士请求返回成功并允许后续生产；对局在 4,200 秒仍未结束，双方无法选择剩余野怪营地，不能视作完整对局通过。探针不渲染窗口；原版生产者选择与命令拒绝、无资源、队列事件及联机时序仍待对照。下一功能批次 0/3。
+
+
 ### AI 训练命令提交结果（待合批验证，3/3）
 
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。AI 选到可用训练者后以命令提交为成功，训练限制导致的拒绝不扣费、不入队，后续建造计划可继续；没有可用生产者或队列空间仍返回失败。原版 1.27 `0x6f8a067d` 向选中的生产者提交命令，随后 `0x6f8a06a0` 返回成功。合批运行 CampaignAI `produce-many`、`produce-zero`、`convert-empty`、`merge-empty`、`melee-build` 与复活相关回归；检查受限训练及放开后生产、队列满和非正数量。原版候选筛选、限制／资源／事件时序、实际窗口及完整对局仍待对照。本次提交前未执行功能测试。
