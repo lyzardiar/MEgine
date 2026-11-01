@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品刀阵（待批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。复合物品支持刀阵 `AEfk` 与即时效果组合，复用范围筛选、飞刀弹道、伤害上限及技能延迟。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-combined-fan`，回归普通刀阵及复合物品；验证目标、弹道、伤害上限、费用和事件回调。原版施法时序与画面待对照。
+
+
 ### 疾风步、范围沉默与恐惧嚎叫物品批次（基础验证完成）
 
 范围：`ff02683`、`00b0337`、`155697d` 及补充修复 `a964a8e`。Win32 Release 客户端、control、mobility 和 caster 测试目标编译通过。复合夹具执行 control 的 `item-combined-windwalk`、`item-combined-silence`、`item-howl`、`item-combined-roar`、`item-combined`、`item-combined-blink`、`item-combined-summons`，各 1 项通过；mobility 的 `windwalk` 1 项通过，caster 的 `battle-roar` 4 项通过，最终共 **12 通过、0 失败**。`item-howl` 首次因单能力施法入口过滤失败，修复后该项及受影响的 `item-combined-roar` 重测通过；其余结果复用修复前的同批结果。命令为各测试程序 `<data-root> <fixture> <mode>`；夹具和日志位于 `tmp/docs-artifacts/war3/combined-status-batch/`，普通疾风步使用 `tmp/docs-artifacts/war3/stealth-reveal/fixture.w3m`，战吼使用 `tmp/docs-artifacts/war3/caster-spells/fixture.w3m`。普通沉默／恐惧嚎叫回归、拾取型恐惧嚎叫、效果回调、原版复合施法时序、联机及实际画面仍待验证。
