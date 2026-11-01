@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的单位目标施法族（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。目标型复合物品接入现有治疗、减速、内在之火、嗜血、回春、狂热、诅咒、驱魔、反魔法护盾、隐身、冰霜护甲和寄生施法效果，复用目标条件、法术护盾与状态生命周期；命令界面识别这些复合物品的单位目标。合批生成复合夹具并运行 `war3_control_tests <data-root> <fixture> item-combined-caster-family`、`item-combined-mind-rot` 和已有施法回归；覆盖以外的技能、混合目标、原版前摇／弹道、多人和窗口待验证。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
+
+
 ### 复合物品的心灵腐烂（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。目标型复合物品支持 ANmr 心灵腐烂，沿用已有目标、法术护盾和魔法持续消耗状态，并与其他效果共同结算物品。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-mind-rot`、`item-combined-caster` 及普通 `mind-rot`；复合施法前摇／弹道、原版时序、多人和窗口待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
