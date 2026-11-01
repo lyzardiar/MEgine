@@ -5031,3 +5031,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 装备及水面特效归属恢复（待阶段验证）
 
 路径：src/session.h、src/session_effect_snapshot.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SEFX 版本 2 保存武器附着和水面特效归属，替换物品重建生成的临时特效；SRBF 更新至版本 20。Win32 Release 构建及 clock 79/79 通过；Undead01 和 Human06 隔离续行临时绕过启动保护后分别有 67／67 和 69／69 项比较一致。日志 tmp/docs-artifacts/war3/equipment-effect-recovery/ 及 tmp/docs-artifacts/war3/campaign-bundle-current/undead-weapon-fixed.log。待验证原版视觉、实际存档及完整战役；启动保护保留。
+
+
+### 静音模拟声音时钟（待阶段验证）
+
+路径：src/sound.h、src/sound.cpp、src/session_tick.cpp、tests/sound_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。静音模拟模式按模拟时间推进声音脉冲，声音恢复时对齐当前脉冲。Win32 Release 构建通过，脉冲和声音等待恢复各 1/1，clock 79/79；Human03 四次隔离续行比较各 67/67，临时绕过启动保护，日志 tmp/docs-artifacts/war3/simulation-audio-pulse/。待验证真实设备、音量组、原版声音时序和实际存档。

@@ -477,3 +477,8 @@ Win32 Release 构建及 clock 78/78 通过，覆盖全局初始化对象、启�
 SEFX 版本 2 保存单位武器附着特效组、武器启用掩码和水面特效归属；物品重建时产生的临时附着特效仅在确认归属并完整校验快照后替换，目标会话继续使用保存的特效句柄。旧版 SEFX 未记录这些关联，不再读取；SRBF 更新至版本 20，旧组件包不受理。
 
 Win32 Release 构建及 clock 79/79 通过，覆盖 Undead01 实际装备附着、合成水面特效归属、非恒等映射、组件往返及单位移除时清理；日志 tmp/docs-artifacts/war3/equipment-effect-recovery/clock.log。Undead01 在 30 秒采集后，隔离诊断临时绕过启动保护并各推进 60 秒，按新增对象创建顺序映射后 67 项比较一致；Human06 同类诊断 69 项一致，日志分别为 tmp/docs-artifacts/war3/campaign-bundle-current/undead-weapon-fixed.log 和 tmp/docs-artifacts/war3/equipment-effect-recovery/human06.log。实际存档、视觉效果及完整战役仍待验证。
+
+
+静音模拟时钟模式下，声音管理器的淡入淡出脉冲和已停止声音清理按模拟时间推进；恢复声音时以当前模拟时刻对齐脉冲。实际实时音频仍沿用原有时钟，音量组及设备播放不由该检查证明。
+
+Win32 Release 构建通过，声音模拟脉冲与声音等待恢复定向测试各 1/1，clock 79/79；日志 tmp/docs-artifacts/war3/simulation-audio-pulse/clock.log。原版 Human03 在 30 秒采集后，四次并行隔离诊断均在临时绕过启动保护后续行 60 秒，67 项比较一致，日志 tmp/docs-artifacts/war3/simulation-audio-pulse/human03-1.log 至 human03-4.log。真实设备、原版声音时序及实际存档仍待验证。
