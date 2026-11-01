@@ -5338,3 +5338,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 恢复检查点文件（待功能批次验证）
 
 路径：`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。会话提供独立用户目录下的 `WSAV` 检查点文件保存和同地图恢复，带地图及文件摘要、临时文件发布和尺寸限制。合批编译执行 `war3_clock_tests <data-root> <output-root>`，检查隔离目录实际文件、外部等待线程与单位状态恢复；损坏、地图不匹配、路径边界、重写失败、保存事件、地图自动定位及真实存读档仍待验证。本次未编译或测试，恢复启动保护保留。
+
+检查点文件夹具补充摘要损坏和越界路径拒绝，并检查拒绝后会话不变；待同批执行。
