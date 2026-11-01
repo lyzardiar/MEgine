@@ -5908,3 +5908,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 战役对话框快捷键来源（待功能批次验证）
 
 路径：`src/session.h`、`src/session_match.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-flow.md`。脚本 `GetLocalizedHotkey` 读取 `UI/MiscUI.txt` 的 `[Hotkeys]`，按原版单引号字节／整数形式解析，未知键返回零；独立于 FDF 显示文字。合批运行 game flow 夹具，检查原版胜负对话框键、非显示文字键和缺失键；实际窗口输入、地图覆盖和原版动态行为待验证。本次未执行功能测试。
+
+
+### 脚本对话框失效句柄（待功能批次验证）
+
+路径：`src/session_script_dialogs.cpp`、`tests/game_flow_tests.cpp`。销毁、清空、设置消息及显示对失效对话框无操作，添加按钮返回空句柄；显示时玩家失效也无操作。原版 1.27 的对应入口 `0x6f1dfb50`、`0x6f1dfa40`、`0x6f1dfbe0`、`0x6f1df9a0`、`0x6f1df9f0`、`0x6f1dfb70` 检查对象解析结果。合批运行 game flow 夹具，核对空／已销毁／类型不匹配句柄及有效对话框点击和事件；原版动态时序、实际窗口待验证。本次未执行功能测试。
