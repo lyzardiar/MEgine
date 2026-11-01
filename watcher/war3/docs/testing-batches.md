@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 生产回调后的生产者归属（待功能批次验证，1/3）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`。AI 多项生产逐次检查生产者归属、移除、生命及指定城镇，生产开始事件转移建筑后不再向其派发后续请求；复活和建造候选同样检查。合批生成 CampaignAI 夹具并运行 `produce-owner`、`produce-many` 和 revival 回归，核对训练开始时转移、队列、资源及既有生产；建筑／复活回调、嵌套重入、原版时序和完整对局待验证。本次未执行功能测试。
+
+
 ### AI 生产与转换批次结果
 
 范围：`9e35827`、`c2a643c`、`5f67e97`。Win32 Release 客户端、CampaignAI 和 revival 程序构建通过。原战役夹具执行 `produce-zero`、`produce-many`、`convert-empty`、`merge-empty`、`armies`、`harvest`、`reachable` 各 2 项通过，`startup` 1 项通过；原 Booty Bay 执行 `melee-build` 1 项通过；复活夹具 4 项通过，共 **20 通过、0 失败**。覆盖负数量部分排队、受限训练命令提交后无扣费与入队、限制解除后生产、非正转换及相关回归。首次执行使用了错误的测试程序路径，修正路径后上述命令通过。日志位于 `tmp/docs-artifacts/war3/ai-production-next-batch/`。

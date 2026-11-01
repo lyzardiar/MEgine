@@ -78,6 +78,14 @@ function InstallBoardStopOverride takes unit target returns nothing
     call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_ISSUED_ORDER)
     call TriggerAddAction(t,function OverrideBoardStop)
 endfunction
+function TransferTrainingBuilding takes nothing returns nothing
+    call SetUnitOwner(GetTriggerUnit(),Player(1),true)
+endfunction
+function InstallTrainingTransfer takes unit target returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_TRAIN_START)
+    call TriggerAddAction(t,function TransferTrainingBuilding)
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing
