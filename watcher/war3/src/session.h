@@ -844,6 +844,7 @@ class ScriptSession {
     void bindEffectNatives();
     void bindTrackableNatives();
     std::map<std::uint32_t,std::shared_ptr<ScriptTrackable>> trackables_;
+    bool trackablesRebuilt_=false;
     void bindLightningNatives();
     std::map<std::string,LightningInfo> lightningInfo_;
     std::map<std::uint32_t,std::shared_ptr<ScriptLightning>> lightnings_;
@@ -1422,6 +1423,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildLeaderboards(std::span<const std::uint8_t> bytes);
     Bytes encodeMultiboards(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildMultiboards(std::span<const std::uint8_t> bytes);
+    Bytes encodeTrackables(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildTrackables(std::span<const std::uint8_t> bytes);
     Bytes encodeTimerEvents(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);

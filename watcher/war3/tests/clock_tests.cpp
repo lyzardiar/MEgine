@@ -1886,6 +1886,44 @@ endfunction
  endfunction
  )jass";auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");auto compileSource=[&]{return Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"shared-session.j",source,"shared context"}}));};auto make=[&](bool offset){auto result=std::make_unique<ScriptSession>(compileSource(),map().info);result->attachWorld(world());result->audioMuted(true);result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(offset)result->runtime().invoke("CreateTimer");result->startMain();return result;};auto original=make(false),target=make(true);Runtime peer(compileSource()),restoredPeer(compileSource());peer.inheritNatives(original->runtime());peer.shareThreads(original->runtime());peer.initialize();restoredPeer.inheritNatives(target->runtime());restoredPeer.shareThreads(target->runtime());restoredPeer.initialize();original->runtime().start("work");peer.start("work");auto actor=original->runtime().global("actor").bits;original->selectUnit(actor,true);auto identity=[](std::string_view,std::uint32_t id){return id;};std::array<Runtime*,2> src{&original->runtime(),&peer},dst{&target->runtime(),&restoredPeer};auto snapshot=original->snapshotSharedSleepingScripts(src,identity);require(snapshot.threads.size()==3,"Shared session contexts missing");auto wire=original->encodeSharedSleepingScripts(src,snapshot);auto damaged=wire;damaged.back()^=1;rejects([&]{target->decodeSharedSleepingScripts(dst,damaged);},"digest");auto decoded=target->decodeSharedSleepingScripts(dst,wire);auto targetActor=target->runtime().global("actor").bits,watcher=original->runtime().global("watcher").bits,targetWatcher=target->runtime().global("watcher").bits;require(actor!=targetActor && watcher!=targetWatcher,"Shared handle remapping fixture did not shift identities");auto decode=[&](std::string_view,std::uint32_t id){if(id==actor)return targetActor;if(id==watcher)return targetWatcher;return id;};auto reverse=[&](std::string_view,std::uint32_t id){if(id==targetActor)return actor;if(id==targetWatcher)return watcher;return id;};auto wrong=[&](std::string_view type,std::uint32_t id){return id==watcher?0u:decode(type,id);};rejects([&]{target->restoreSharedSleepingScripts(dst,decoded,wrong);},"mapping");require(!target->runtime().threadCount(),"Rejected shared context retained threads");auto ids=target->restoreSharedSleepingScripts(dst,decoded,decode);require(ids.size()==3 && target->encodeSharedSleepingScripts(dst,target->snapshotSharedSleepingScripts(dst,reverse))==wire,"Shared session context did not round trip");original->advance(.125);target->advance(.125);require(original->runtime().global("completed").bits==1 && peer.global("completed").bits==1 && target->runtime().global("completed").bits==1 && restoredPeer.global("completed").bits==1 && original->runtime().global("observed").bits==actor && target->runtime().global("observed").bits==target->runtime().global("actor").bits,"Shared session continuations diverged");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("recovery_bundle_restores_trackables",[&]{
+        auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
+ trackable marker = null
+ trackable other = null
+ trackable seen = null
+ trigger hitTrigger = null
+ trigger trackTrigger = null
+ event hitEvent = null
+ event trackEvent = null
+ hashtable table = null
+ integer hitCount = 0
+ integer trackCount = 0
+ endglobals
+ function onHit takes nothing returns nothing
+ set hitCount = hitCount + 1
+ set seen = GetTriggeringTrackable()
+ endfunction
+ function onTrack takes nothing returns nothing
+ set trackCount = trackCount + 1
+ set seen = GetTriggeringTrackable()
+ endfunction
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ set marker = CreateTrackable("marker.mdx", 123., -456., 90.)
+ set other = CreateTrackable("other.mdx", -30., 40., 180.)
+ set hitTrigger = CreateTrigger()
+ set trackTrigger = CreateTrigger()
+ set hitEvent = TriggerRegisterTrackableHitEvent(hitTrigger, marker)
+ set trackEvent = TriggerRegisterTrackableTrackEvent(trackTrigger, marker)
+ call TriggerAddAction(hitTrigger, function onHit)
+ call TriggerAddAction(trackTrigger, function onTrack)
+ set table = InitHashtable()
+ call SaveTrackableHandle(table, 0, 1, marker)
+ call SaveTriggerEventHandle(table, 0, 2, hitEvent)
+ endfunction
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"trackable.j",source,"trackable recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();auto& a=original->runtime();auto identity=[](std::string_view,std::uint32_t id){return id;};auto snapshot=original->encodeTrackables(identity),damaged=snapshot;damaged.back()^=1;rejects([&]{target->rebuildTrackables(damaged);},"digest");require(target->trackables().empty(),"Rejected trackable changed target");target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());auto& b=target->runtime();auto marker=b.global("marker").bits;require(marker==ids.at(a.global("marker").bits) && marker!=a.global("marker").bits && b.global("hitEvent").bits==ids.at(a.global("hitEvent").bits) && b.global("trackEvent").bits==ids.at(a.global("trackEvent").bits),"Trackable identities differ");auto state=target->trackables().at(marker);require(state->model=="marker.mdx" && state->x==123.f && state->y==-456.f && state->facing==90.f,"Trackable state differs");auto reverse=[&](std::string_view,std::uint32_t value){for(auto [from,to]:ids)if(to==value)return from;return 0u;};require(target->encodeTrackables(reverse)==snapshot,"Trackable snapshot differs");auto table=b.global("table");require(b.invoke("LoadTrackableHandle",std::array{table,b.integer(0),b.integer(1)}).bits==marker && b.invoke("LoadTriggerEventHandle",std::array{table,b.integer(0),b.integer(2)}).bits==b.global("hitEvent").bits,"Trackable table references differ");for(auto* session:{original.get(),target.get()}){auto& vm=session->runtime();session->trackableEvent(vm.global("other").bits,true);require(!vm.global("hitCount").bits,"Unregistered trackable fired");session->trackableEvent(vm.global("marker").bits,true);session->trackableEvent(vm.global("marker").bits,false);require(vm.global("hitCount").bits==1 && vm.global("trackCount").bits==1 && vm.global("seen").bits==vm.global("marker").bits,"Trackable event context differs");vm.invoke("DestroyTrigger",std::array{vm.global("hitTrigger")});session->trackableEvent(vm.global("marker").bits,true);require(vm.global("hitCount").bits==1,"Destroyed trackable trigger fired");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("recovery_bundle_restores_multiboards",[&]{
         auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
  multiboard board = null
