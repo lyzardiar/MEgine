@@ -4981,3 +4981,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 随机单位池与物品池恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_game.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SPOL` 保存池身份、销毁状态及有序权重条目，`SRBF` 版本 10 在哈希表和全局之前重建池。Win32 Release 构建和 clock 69/69 通过，检查损坏拒绝、句柄与表引用、随机单位和物品选择序列；日志 `tmp/docs-artifacts/war3/random-pool-recovery/clock-final.log`。实际存档、原图及随机序列原版一致性待阶段验证；启动保护保留。
+
+
+### 游戏状态事件恢复（待阶段验证）
+
+路径：`src/session_callbacks.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SGEV` 版本 2 恢复昼夜及整数状态事件、整数状态和修订号；`SRBF` 更新至版本 11。Win32 Release 构建及 clock 70/70 通过，检查事件身份、昼夜跨越、整数状态边沿与重复匹配；日志 `tmp/docs-artifacts/war3/game-state-recovery/clock-01.log`。Booty Bay 双 AI 隔离续行临时绕过启动保护，88 项比较一致（含重复项），日志 `tmp/docs-artifacts/war3/game-state-recovery/audit.log`。待补变量及其他事件并验证实际存档、昼夜声音和真实对局；启动保护保留。

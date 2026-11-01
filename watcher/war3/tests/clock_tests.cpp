@@ -1886,6 +1886,35 @@ endfunction
  endfunction
  )jass";auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");auto compileSource=[&]{return Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"shared-session.j",source,"shared context"}}));};auto make=[&](bool offset){auto result=std::make_unique<ScriptSession>(compileSource(),map().info);result->attachWorld(world());result->audioMuted(true);result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(offset)result->runtime().invoke("CreateTimer");result->startMain();return result;};auto original=make(false),target=make(true);Runtime peer(compileSource()),restoredPeer(compileSource());peer.inheritNatives(original->runtime());peer.shareThreads(original->runtime());peer.initialize();restoredPeer.inheritNatives(target->runtime());restoredPeer.shareThreads(target->runtime());restoredPeer.initialize();original->runtime().start("work");peer.start("work");auto actor=original->runtime().global("actor").bits;original->selectUnit(actor,true);auto identity=[](std::string_view,std::uint32_t id){return id;};std::array<Runtime*,2> src{&original->runtime(),&peer},dst{&target->runtime(),&restoredPeer};auto snapshot=original->snapshotSharedSleepingScripts(src,identity);require(snapshot.threads.size()==3,"Shared session contexts missing");auto wire=original->encodeSharedSleepingScripts(src,snapshot);auto damaged=wire;damaged.back()^=1;rejects([&]{target->decodeSharedSleepingScripts(dst,damaged);},"digest");auto decoded=target->decodeSharedSleepingScripts(dst,wire);auto targetActor=target->runtime().global("actor").bits,watcher=original->runtime().global("watcher").bits,targetWatcher=target->runtime().global("watcher").bits;require(actor!=targetActor && watcher!=targetWatcher,"Shared handle remapping fixture did not shift identities");auto decode=[&](std::string_view,std::uint32_t id){if(id==actor)return targetActor;if(id==watcher)return targetWatcher;return id;};auto reverse=[&](std::string_view,std::uint32_t id){if(id==targetActor)return actor;if(id==targetWatcher)return watcher;return id;};auto wrong=[&](std::string_view type,std::uint32_t id){return id==watcher?0u:decode(type,id);};rejects([&]{target->restoreSharedSleepingScripts(dst,decoded,wrong);},"mapping");require(!target->runtime().threadCount(),"Rejected shared context retained threads");auto ids=target->restoreSharedSleepingScripts(dst,decoded,decode);require(ids.size()==3 && target->encodeSharedSleepingScripts(dst,target->snapshotSharedSleepingScripts(dst,reverse))==wire,"Shared session context did not round trip");original->advance(.125);target->advance(.125);require(original->runtime().global("completed").bits==1 && peer.global("completed").bits==1 && target->runtime().global("completed").bits==1 && restoredPeer.global("completed").bits==1 && original->runtime().global("observed").bits==actor && target->runtime().global("observed").bits==target->runtime().global("actor").bits,"Shared session continuations diverged");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("recovery_bundle_restores_game_state_events",[&]{
+        auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
+ trigger clockTrigger = null
+ trigger integerTrigger = null
+ event clockEvent = null
+ event integerEvent = null
+ integer clockHits = 0
+ integer integerHits = 0
+ endglobals
+ function clockAction takes nothing returns nothing
+ set clockHits = clockHits + 1
+ endfunction
+ function integerAction takes nothing returns nothing
+ set integerHits = integerHits + 1
+ endfunction
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ call SetFloatGameState(GAME_STATE_TIME_OF_DAY, 5.)
+ call SetIntegerGameState(GAME_STATE_DIVINE_INTERVENTION, 3)
+ set clockTrigger = CreateTrigger()
+ set clockEvent = TriggerRegisterGameStateEvent(clockTrigger, GAME_STATE_TIME_OF_DAY, GREATER_THAN_OR_EQUAL, 6.)
+ call TriggerAddAction(clockTrigger, function clockAction)
+ set integerTrigger = CreateTrigger()
+ set integerEvent = TriggerRegisterGameStateEvent(integerTrigger, GAME_STATE_DIVINE_INTERVENTION, GREATER_THAN_OR_EQUAL, 5.)
+ call TriggerAddAction(integerTrigger, function integerAction)
+ endfunction
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"game-state-event.j",source,"game state recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());auto& a=original->runtime();auto& b=target->runtime();require(b.global("clockEvent").bits==ids.at(a.global("clockEvent").bits) && b.global("integerEvent").bits==ids.at(a.global("integerEvent").bits),"Game state event handles differ");require(b.invoke("GetIntegerGameState",std::array{b.global("GAME_STATE_DIVINE_INTERVENTION")}).bits==3,"Integer game state differs");for(auto* vm:{&a,&b}){vm->invoke("SetFloatGameState",std::array{vm->global("GAME_STATE_TIME_OF_DAY"),vm->real(real(7))});vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(6)});require(vm->global("clockHits").bits==1 && vm->global("integerHits").bits==1,"Recovered game state event did not fire");vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(7)});require(vm->global("integerHits").bits==1,"Integer state event fired twice while matched");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("recovery_bundle_restores_random_pools",[&]{
         auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
  unitpool units = null
