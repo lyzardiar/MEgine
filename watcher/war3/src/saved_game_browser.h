@@ -22,7 +22,7 @@ class SavedGameBrowser {
     struct Request {std::uint64_t id=0;std::string name;std::stop_token stop;};
     std::optional<Request> pending_;
     std::stop_source cancel_;
-    struct Result {std::uint64_t request=0;std::optional<SavedGameSelection> value;std::optional<Image> image;std::string imageError,error;};
+    struct Result {std::uint64_t request=0;std::optional<SavedGameSelection> value;std::optional<Image> image;std::string imageError,error;std::optional<std::string> missingMap;};
     std::optional<Result> ready_;
     std::optional<SavedGameSelection> preview_;
     bool requested_=false,loading_=false,openWhenReady_=false;
