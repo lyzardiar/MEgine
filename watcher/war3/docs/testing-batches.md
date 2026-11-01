@@ -5348,3 +5348,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 恢复会话加载事件（待功能批次验证）
 
 路径：`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。恢复会话可设置 `MAP_RELOADED` 并分发一次 `EVENT_GAME_LOADED`。合批编译运行 `war3_clock_tests <data-root> <output-root>`，覆盖加载触发器、地图标志和重复通知拒绝；事件回调重入、原版时序、实际 `LoadGame`、区域回访及可玩续行仍待验证或实现。本次未编译或测试，恢复启动保护保留。
+
+必要定向检查：Win32 Release `war3_clock_tests` 编译通过；保存／加载事件与检查点身份两个受影响用例各 **1 通过、0 失败**。原版 OrcX01 隔离检查点分发加载事件后，`MAP_RELOADED` 为真且雷克萨由缓存导入，日志位于 `tmp/docs-artifacts/war3/save-loaded-event/`。完整回归、原版事件时序、重复切区、游戏 `LoadGame` 及可玩续行仍待功能批次验证或实现。
