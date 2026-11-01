@@ -4718,3 +4718,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 施法句柄与视觉对象快照批次（2026-11-01）
 
 本批合并 `2caa394`、`7cd145e`、`31e24b8`：同一集成代码版本下，Win32 Release 客户端、clock、spell 和 effects 目标编译通过；`war3_clock_tests <data-root> <output-root>` 38 通过、0 失败；使用当前脚本生成的隔离夹具运行 `war3_spell_tests <data-root> <fixture>` 输出 PASS；`war3_effects_tests <data-root> <log> --ribbons` 输出 PASS，读取 3 个模型、4 种闪电数据／纹理及 2 组地形高度夹具。均未加载 Game.dll，批次夹具及日志位于 `tmp/docs-artifacts/war3/visual-identity-batch/`。技能和资源检查仅验证既有消费者；活动施法及其他系统引用的重建、恢复后的实际运行和窗口／GPU、模型粒子历史、完整读档仍待验证或实现。
+
+### 活动施法订单快照（待批次验证）
+
+路径：`src/session_cast_snapshot.cpp`、`src/spell_snapshot_codec.h`、`src/session_spell_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCST` 保存施法阶段、完整技能参数、句柄、持续标记、战斗恢复订单和荒芜地道具预留。Win32 Release 客户端与 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 39 通过、0 失败，覆盖真实风暴之锤前摇及构造的特效、闪电、标记、恢复订单、错误映射和损坏拒绝，未加载 Game.dll。持续施法／自动施法真实路径、预留与增长状态、增益和其他技能系统、原图、恢复后续执行、窗口及完整读档待批次验证或实现。

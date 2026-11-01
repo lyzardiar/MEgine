@@ -1363,6 +1363,8 @@ public:
     Bytes encodeUnitCore(const jass::StableHandleMap& encodeHandle) const;
     void prepareUnitCore(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     void finishUnitCore(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeUnitCasts(const jass::StableHandleMap& encodeHandle) const;
+    void restoreUnitCasts(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeLightnings(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildLightnings(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeEffects(const jass::StableHandleMap& encodeHandle) const;
