@@ -1,18 +1,8 @@
 # 独立客户端测试队列
 
-### 物品兽王战吼（待批次验证）
+### 刀阵、范围控制和兽王战吼物品批次（基础验证完成）
 
-路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。单能力和复合物品支持 `ANbr`，复用战吼目标筛选、加成与持续状态。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-battle-roar`，并回归普通战吼及复合物品；检查友军加成、资源和消耗。拾取使用、事件回调、原版施法时序与画面待验证。
-
-
-### 物品雷霆一击和战争践踏（待批次验证）
-
-路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。单能力及复合物品支持 `AHtc`、`ACtc`、`AOws`，复用范围伤害、减速、眩晕和技能延迟。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-area-control` 并回归普通技能及复合物品；检查目标、伤害、状态、资源和消耗。拾取使用、事件回调、原版施法时序与画面待验证。
-
-
-### 复合物品刀阵（待批次验证）
-
-路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。复合物品支持刀阵 `AEfk` 与即时效果组合，复用范围筛选、飞刀弹道、伤害上限及技能延迟。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-combined-fan`，回归普通刀阵及复合物品；验证目标、弹道、伤害上限、费用和事件回调。原版施法时序与画面待对照。
+范围：`6a0a3ba`、`8128596`、`987e667`。Win32 Release 客户端及 control、spell、caster 测试目标编译通过。复合夹具执行 control 的 `item-combined-fan`、`item-area-control`、`item-battle-roar`、`item-combined-roar`、`item-howl`、`item-combined-silence`、`item-combined-windwalk`、`item-combined`，各 1 项通过；caster 的 `battle-roar` 4 项通过，共 **12 通过、0 失败**。spell 默认技能流程通过，包含普通刀阵、雷霆一击及战争践踏；该程序未输出分项计数。复现为各测试程序 `<data-root> <fixture> <mode>`，spell 默认流程省略 mode；夹具和日志位于 `tmp/docs-artifacts/war3/combined-area-batch/`，spell 使用 `tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m`，caster 使用 `tmp/docs-artifacts/war3/caster-spells/fixture.w3m`。`ACtc` 变体、拾取型使用、刀阵伤害上限及延迟、事件回调、原版时序、联机与实际画面仍待验证。
 
 
 ### 疾风步、范围沉默与恐惧嚎叫物品批次（基础验证完成）
