@@ -5477,3 +5477,10 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家读档文件身份校验（待功能批次验证）
 
 路径：`src/session.h`、`src/session_campaign.cpp`、`src/campaign_browser.{h,cpp}`、`src/game_loading.{h,cpp}`、`src/game_view.h`、`src/main.cpp`、`tests/clock_tests.cpp`。玩家选定存档时保留已校验的完整文件摘要，地图准备和实际恢复均检查该摘要；被替换的存档在恢复前拒绝。脚本读档继续使用原有路径语义。合批编译客户端、会话及运输测试，覆盖原始／被替换存档、迁移地图与坠毁回调；窗口错误交互和原版时序仍待验证。本次未执行功能测试。
+
+
+### 存档身份、地图迁移与运输回调合批结果（窗口待验）
+
+范围：`b951d93`、`a9dc893`、`1c4b924`、`3310cac`。Win32 Release 客户端、会话与运输测试目标编译通过；会话套件 **120 通过、0 失败**，覆盖旧安装 `Maps` 路径迁移、地图摘要不匹配、存档替换后恢复拒绝及当前摘要恢复。运输 `crash-revive`、`crash-remove`、`crash-damage`、`crash` 各 **1 通过、0 失败**，覆盖脚本伤害回调复活／移除载具与既有坠毁场景。日志位于 `tmp/docs-artifacts/war3/loadgame-handoff/identity-cargo-batch-{build,clock}.log` 及 `tmp/docs-artifacts/war3/transport/crash*-identity-batch.log`。
+
+窗口交互、实际目录迁移后的客户端加载、地图准备与加载之间替换文件、乘员转移及原版事件时序仍待验证；本机 D3D9 创建设备失败的窗口诊断沿用前批结果，未重复执行。
