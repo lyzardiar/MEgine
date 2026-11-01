@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 单位死亡时的限时状态清理（待功能批次验证）
+
+路径：`src/session_callbacks.cpp`、`tests/passive_tests.cpp`。普通死亡进入尸体流程时清除未到期的全部限时状态及其能力，英雄复活后不再沿用死亡前计时；重生技能的死亡处理沿用现有分支。合批运行 `war3_passive_tests <data-root> <fixture> timed-life-death`，覆盖不同编号的计时器、死亡和英雄复活；原版死亡时特殊 Buff、重生与事件重入仍需动态对照。Win32 Release 客户端及测试目标构建通过；本次未执行功能测试。
+
+
 ### 限时死亡与重生状态（待功能批次验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_illusion.cpp`、`src/session_rebirth.cpp`、`tests/passive_tests.cpp`。限时状态到期触发死亡时将到期原因传入死亡处理，保留凤凰周期清理并跳过重生；普通死亡继续按已有规则处理。合批运行 `war3_passive_tests <data-root> <fixture> timed-life-rebirth` 和已有重生、限时状态用例，覆盖较早计时器先到期和普通死亡对照；原版动态行为与复杂死亡事件重入待对照。Win32 Release 客户端和 passive 测试目标构建通过；本次未执行功能测试。
