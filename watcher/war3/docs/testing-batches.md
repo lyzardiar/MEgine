@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 特殊 Buff 状态合批结果
+
+范围：`0938b89`、`3d006bc`、`ce45bb6`。Win32 Release 客户端、passive、control 和 spell 目标构建通过，无编译警告；首次构建命令误用了不存在的 `war3_summon_tests` 目标，随后构建了实际的 spell 目标。生成 passive 夹具后，`buff-timed-life`、`buff-timed-critter`、`buff-filter-semantics`、`buff-invalid-unit`、`buff-script-remove`、`attribute-item-signed` 以及 control 的 `flow`、`purge`、`item-control` 各 1 通过、0 失败；passive 主程序退出 0 并输出 PASS，覆盖真实多光环筛选、清除和重新施加。机械小动物测试构造了与召唤相同的关联状态，实际召唤链路未在本批执行；spell 目标仅构建。日志和夹具位于 `tmp/docs-artifacts/war3/buff-special-batch/`。特殊限时 Buff、原版动态事件及实际窗口仍待验证。
+
+
 ### 光环状态的扩展筛选（待功能批次验证）
 
 路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。光环按非魔法、非物理且不符合自动驱散筛选的状态处理；开启光环筛选并关闭不兼容条件时仍可查询和移除，存活光环来源继续重新施加。原版 1.27 `CBuffAuraDevotion` 的相应虚函数报告光环标记，以及魔法、物理和自动驱散筛选为假。合批运行 `war3_passive_tests <data-root> <fixture>`，覆盖多光环查询、筛选、移除及重新施加；其他特殊光环和原版动态行为待验证。本次未执行功能测试。
