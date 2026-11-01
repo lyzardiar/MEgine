@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 状态面板与召唤状态合批结果
+
+范围：`242498c`、`41f0a6b`、`3a480e6`。Win32 Release 客户端、passive、control 目标构建通过，日志无编译警告。复用夹具运行 `buff-timed-life`、`buff-timed-critter`、`buff-filter-semantics`、`buff-auto-filter`、`buff-control-types`、`wander` 和 control 的 `purge`，各 1 通过、0 失败；passive 主程序退出 0 并输出 PASS。检查覆盖限时状态、关联标记、筛选、动物游荡及驱散回归；这些检查不执行状态面板绘制，也不证明敌我视角的实际 UI。日志位于 `tmp/docs-artifacts/war3/status-panel-batch/`。此前本机 Direct3D 9 设备创建失败，本批未重新启动窗口；有／无图标、敌我伪装、状态条布局、实际原版显示和窗口视觉仍待验证。
+
+
 ### 机械小动物敌方状态面板（待功能批次验证）
 
 路径：`src/game_buff_panel.cpp`、`src/game_commands.cpp`、`docs/mechanical-critters.md`。敌方视角下机械小动物保持伪装，不显示自身机械标记或限时生命条；友方和其他 Buff 继续显示。合批检查自定义图标与限时生命、敌我及联盟变化、移除标记后的面板；实际原版窗口与视觉仍待验证。本次仅做差异检查，未执行功能测试。
