@@ -5386,3 +5386,10 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 游戏内本地存档面板（待功能批次验证）
 
 路径：`src/game_flow_ui.{h,cpp}`、`src/game_view.cpp`、`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`。单人 ESC 菜单使用源 `EscMenuSaveGamePanel.fdf` 的存档、编辑和覆盖确认控件；从独立用户目录 `Saves/Manual` 列出存档，支持输入、选择和滚轮。新文件采用不覆盖发布，已有文件需确认；联机会话不开放。合批构建客户端及 `war3_clock_tests`，验证保存、中文输入、列表、覆盖／取消、暂停和恢复；窗口布局、删除、读档入口与原版时序继续待验或实现。本次未执行功能测试。
+
+
+### 原版装饰物与本地存档合批结果（窗口待验）
+
+范围：`d9e2fd3`、`881beda`、`2359471`。Win32 Release 客户端、`war3_map_tests` 和 `war3_clock_tests` 编译通过；地图套件 **24 通过、0 失败**，会话套件 **120 通过、0 失败**。覆盖 OrcX01 版本 1 装饰物读取、手动检查点发布、保存事件、恢复、非法路径和未确认覆盖拒绝。日志位于 `tmp/docs-artifacts/war3/loadgame-handoff/manual-save-{batch-build,map,clock}.log`。
+
+窗口尝试使用隔离用户目录和隐藏客户端，D3D9 创建设备失败，未进入游戏画面；日志 `tmp/docs-artifacts/war3/manual-save-batch/ui/game.log`。存档面板实际布局、中文输入、列表选择、覆盖确认与取消、保存后恢复，以及版本 2 装饰变体和原版时序仍待验证；删除与玩家读档入口尚未接入。上述窗口项保留在本批待测队列，不标记通过。
