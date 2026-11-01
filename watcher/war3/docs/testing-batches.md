@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄幻象的学习按钮（待功能批次验证）
+
+路径：`src/session_ability_commands.cpp`、`tests/revival_tests.cpp`。英雄幻象的技能学习按钮与学习入口一致，显示为不可用；真实英雄仍按技能点与等级判断。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-illusion-learning`，检查幻象标记下按钮和学习入口以及恢复真实英雄状态；实际幻象创建、原版界面和窗口显示待验证。本次未执行功能测试。
+
+
 ### 英雄学习命令的单位状态（待功能批次验证）
 
 路径：`src/player_commands.cpp`、`tests/revival_tests.cpp`。玩家学习命令执行时复用学习按钮的单位状态与等级检查，暂停、隐藏、死亡或变形等状态不能通过过期命令绕过界面；脚本学习入口保留独立逻辑。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-skill-command-state`，检查暂停、恢复和学习；其他单位状态及原版动态命令时序待验证。本次未执行功能测试。
