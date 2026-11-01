@@ -685,6 +685,7 @@ class ScriptSession {
     bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     bool useCombinedRecoveryItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point,const std::vector<std::uint32_t>& abilities);
     std::map<std::string,std::uint32_t> caches_;
+    bool gameCachesRebuilt_=false;
     std::vector<ScriptText> texts_;
     std::vector<ScriptText> textHistory_;
     size_t textHistoryBytes_=0;
@@ -1341,6 +1342,8 @@ public:
     void restoreRandomState(std::span<const std::uint8_t> bytes);
     Bytes encodeSimulationClock() const;
     void restoreSimulationClock(std::span<const std::uint8_t> bytes);
+    Bytes encodeGameCaches(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildGameCaches(std::span<const std::uint8_t> bytes);
     Bytes encodeFogState(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildFogState(std::span<const std::uint8_t> bytes);
     Bytes encodeCollections(const jass::StableHandleMap& encodeHandle) const;

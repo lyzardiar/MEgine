@@ -261,3 +261,9 @@ Win32 Release 核心和 clock 测试目标编译通过；`war3_clock_tests <data
 `SFOG` 保存各玩家已探索／当前可见格、缓存是否有效、雾与黑色遮罩开关、地图边界、玩家暴露位和共享更新节拍，并重建活动及已销毁的迷雾修改器句柄。格子按位编码；恢复校验地图摘要、模拟时间及节拍、句柄身份、尺寸、数据与摘要，拒绝重复恢复。调用方须先恢复相同地图和模拟时钟，并在完整世界恢复完成后使用迷雾查询；后续单位或外交变更仍会按已有缓存失效机制重新计算。哨兵、临时显形区域及其他视觉来源的自身状态不由本组件保存。
 
 Win32 Release 核心、clock 和兽族战役测试目标编译通过；`war3_clock_tests <data-root> <output-root>` 44 通过、0 失败，检查探索、可见性、失效格、活动／已销毁句柄、停止修改器和损坏／伪造／重复恢复拒绝；`war3_orc_campaign_chain_tests <data-root> fog-snapshot <new-user-dir>` 在原版 OrcX01 静音模拟 150 秒后，将模拟时钟、玩家配置、结算统计与迷雾状态恢复至新会话并重编码一致，1 通过、0 失败。未加载 Game.dll。原图单位、脚本全局、计时器和其他世界状态未在此测试重建，尚未续行；完整跨区、原版格式、性能和窗口画面仍待验证或实现。产物 `tmp/docs-artifacts/war3/fog-state-snapshot/`。
+
+### 会话内 gamecache
+
+`SCAC` 复用独立 gamecache 的现有版本 8 编码，保存会话中缓存的稳定句柄、规范化名称以及内存中的整数、实数、布尔、字符串和单位记录，不要求这些修改已写盘。重建检查地图摘要、模拟时钟、数量、身份和每份缓存内容，完成校验后创建句柄；脚本全局由调用方使用返回的映射另行恢复。存在待发送的缓存同步动作时拒绝快照，恢复前需先完成本地同步；该组件不读取或写入用户缓存文件，也未接入整体保存／载入。
+
+Win32 Release 核心、clock、兽族战役和 game-flow 测试目标编译通过；`war3_clock_tests <data-root> <output-root>` 45 通过、0 失败，覆盖未写盘的四种基本值和英雄记录、脚本全局／名称身份、待同步拒绝、损坏和嵌套缓存损坏拒绝及空快照重复恢复拒绝。`war3_orc_campaign_chain_tests <data-root> fog-snapshot <new-user-dir>` 对原版 OrcX01 模拟 150 秒，将人为加入的一项未写盘缓存值与玩家配置、统计及迷雾一起重建并检查往返，1/1；`war3_game_flow_tests <data-root> <fixture> cache-damage` 输出 PASS，覆盖既有磁盘缓存版本 1–8 读取及保存。独立测试未创建用户 gamecache 文件；前两项未加载 Game.dll。完整脚本全局、其他世界对象、跨区续行、原版缓存格式及实际窗口仍待完成或验证；临时目录 `tmp/docs-artifacts/war3/gamecache-snapshot/`。
