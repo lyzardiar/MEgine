@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的目标型守卫（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/wards-roar.md`。复合物品支持治疗守卫 `Ahwd`、岗哨守卫 `Aeye`、静止陷阱 `Asta` 与其他已支持即时效果组合，复用点／单位目标、守卫落点、召唤与持续时间，并共同结算费用、次数、冷却和使用事件；拾取型组合使用持有者附近落点。Win32 Release 客户端及 control 测试目标构建、生成器语法检查通过；合批生成复合夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-wards` 以及普通守卫、复合物品和目标／拾取回归。新增用例尚未执行；单位目标、拾取型组合、目标重入、原版复合施法时序、多人和窗口仍待验证。
+
+
 ### 范围效果与复合点目标合批结果
 
 范围：`e6ff50b`（含补充 `76f8cdb`）、`88d7ee8`、`c1aa66d`，以及本次点选单位与混合点目标断言。Win32 Release 客户端及 control、mobility、stealth、spell、corpse 测试目标构建通过；control 的 `item-combined-blink`、`item-combined-flare`、`area-impact-dead-caster`、`area-damage-reentry`、`spell-damage-reentry`、`item-combined`、`item-combined-dispel`，mobility 的 `blink`、`blink-item`，stealth 的 `flow`、`dust`，corpse 的 `creep-spells` 各 1 项通过，合计 **12 通过、0 失败**。spell 默认完整技能流程另行通过，该流程未输出分项计数。扩展用例覆盖点选单位闪烁，以及闪烁、照明弹和资源效果使用同一目标点；日志及复合夹具在 `tmp/docs-artifacts/war3/combined-point-batch/`，普通机动与显形使用 `tmp/docs-artifacts/war3/stealth-reveal/fixture.w3m`，spell 使用 `tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m`，corpse 使用 `tmp/docs-artifacts/war3/corpses/fixture.w3m`。施法者被移除／复活／易主、霜冻新星自定义弹道、复合施法前摇及原版动态时序、多人和实际窗口仍待验证。
