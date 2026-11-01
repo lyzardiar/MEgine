@@ -4626,3 +4626,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 路径：`src/session_combat.cpp`、`src/session_combat_orders.cpp`、`src/session_entities.cpp`、`src/session_orders.cpp`、`tests/order_queue_tests.cpp`；说明见[对象定义](entities.md)。攻击移动与巡逻保留原行程目标；关闭路径碰撞时恢复当前方向，追击敌人时保留追击并在目标失效后恢复行程，命令结束后清理目标。Win32 Release 客户端及测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> combat-pathing-toggle` 1 通过、0 失败，覆盖攻击移动、巡逻往返方向及目标消失后恢复；日志 `tmp/docs-artifacts/war3/combat-pathing-toggle/test.log`。原版动态语义、复杂重入、多个目标和真实玩家操作仍待验证。
 
 本批合并 `5149f71`、`e017533` 和本项：世界路径 `world_` 31 通过、0 失败；完整命令队列输出 32 条 PASS（含汇总）；隐藏关最后一波在人为持续恢复传送门生命后进入间章，1 通过、0 失败。日志 `tmp/docs-artifacts/war3/combat-pathing-batch/{world,order,wave}.log`。经验栏实际画面因当前会话 D3D9 设备创建失败而未取得，日志 `tmp/docs-artifacts/war3/combat-pathing-batch/capture/client.log`；原版画面对照、正常防守、双端、大地图性能和不同碰撞状态待验证。
+
+### 移动中重新开启路径碰撞（待批次验证）
+
+路径：`src/session_entities.cpp`、`tests/movement_avoidance_tests.cpp`；说明见[对象定义](entities.md)。单位移动中从关闭切换至开启路径碰撞时，活动路线进入现有分批重寻路和有界重试，不替换当前命令或排队命令。Win32 Release 客户端与测试目标编译通过；`war3_movement_avoidance_tests <data-root> <BootyBay.w3m> reenable-pathing` 1 通过、0 失败，覆盖启用前直行、启用后绕墙、路径不穿越障碍及后续排队移动；原地形恢复检查与普通／攻击移动切换的定向检查通过。日志 `tmp/docs-artifacts/war3/reenable-pathing/{final,restored,queue,combat}.log`。大量同时切换、起点不可通行、暂时无路、追击动态目标、原版动态及真实窗口待批次验证。
