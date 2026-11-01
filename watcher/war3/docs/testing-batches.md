@@ -5604,3 +5604,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 返回资源队列与目标命令合批结果（窗口待验）
 
 范围：`289ca7f`、`2279c78`、`b86f1f1`。Win32 Release 客户端及订单测试目标编译通过；BootyBay `return-queue` **1 通过、0 失败**，完整订单套件退出码 0、输出 32 条 PASS（含汇总），覆盖即时返回替换队列、排队返回、多工人联机排队和重复网络身份拒绝。日志位于 `tmp/docs-artifacts/war3/return-queue-batch/`。目标模式 Shift、取消及窗口视觉、真实双端与原版时序仍待验证。
+
+
+### 圣光与死亡缠绕的无敌目标（待功能批次验证）
+
+路径：`src/session_spells.cpp`、`tests/generate-control-fixture.py`、`tests/control_tests.cpp`。圣光及死亡缠绕的治疗与伤害目标均遵守源目标表对无敌单位的许可；实际伤害仍经过无敌判定。合批使用 `--light-targets partial`、`invu`、`invulnerable` 生成控制夹具并运行对应 `light-*` 模式，覆盖友军治疗和敌军伤害目标；施法效果、原版时序及对局窗口待验证。本次未执行功能测试。

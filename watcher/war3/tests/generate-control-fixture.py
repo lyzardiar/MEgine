@@ -114,6 +114,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=ROOT/'tmp/docs-artifacts/war3/control-spells/fixture.w3m')
+    parser.add_argument('--light-targets', choices=['partial', 'invu', 'invulnerable'])
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only installation')
@@ -123,7 +124,11 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
-    files['war3map.w3a'] = struct.pack('<II', 2, 1) + b'AIps' + bytes(4) + struct.pack('<I', 1) + b'atar' + struct.pack('<III', 3, 1, 0) + b'air,ground,ward,tree\0' + b'AIps' + struct.pack('<I', 0)
+    entries = [(b'AIps', 'air,ground,ward,tree')]
+    if args.light_targets:
+        targets = {'partial': 'ground,organic,notself,vuln,notinvu', 'invu': 'ground,organic,notself,vuln,invu', 'invulnerable': 'ground,organic,notself,vuln,invulnerable'}[args.light_targets]
+        entries.extend((ability, targets) for ability in (b'AHhb', b'AUdc'))
+    files['war3map.w3a'] = struct.pack('<II', 2, len(entries)) + b''.join(ability + bytes(4) + struct.pack('<I', 1) + b'atar' + struct.pack('<III', 3, 1, 0) + targets.encode('ascii') + b'\0' + ability for ability, targets in entries) + struct.pack('<I', 0)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
