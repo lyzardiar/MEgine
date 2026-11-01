@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 电脑野怪营地筛选（待批次验证）
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。营地等级及飞行判断排除隐藏与无敌中立单位，避免它们遮蔽可攻击的成员。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次执行 `war3_campaign_ai_tests <data-root> <fixture> reachable`，回归可达、等级、混编和孤岛场景；原版分组、自然对局及联机行为待对照。
+
+
 ### 存档错误提示换行（待批次验证）
 
 路径：`src/game_flow_ui.cpp`。游戏内保存和加载错误按原字体度量换行并显示带背景的提示区域，长错误文本不再受单行高度限制。Win32 Release 客户端编译通过。批次检查缺失地图路径、存档错误与列表操作；实际窗口、长路径及不同语言布局待验证。
