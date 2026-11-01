@@ -5690,3 +5690,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`32a1065`、`1b75eab`、`5f2347b`、`7f87f8d`、`e0fa4a8` 及路径查询缓存补充。Win32 Release 客户端与 CampaignAI 测试目标编译通过；`reachable` **2 通过、0 失败**，覆盖近战不能对空、可攻击的混合营地、狮鹫对空及步兵跟进；`island-auto`、`island-target` 各 **1 通过、0 失败**，`fog-attack` **2 通过、0 失败**。路径查询缓存调整后重编译并重测 `reachable` 2/0。日志和夹具在 `tmp/docs-artifacts/war3/ai-target-batch/`；原版选点、复杂混编、实际窗口及完整对局仍待验证。
 
 电脑目标补充：攻击回退前复核目标仍存活、未隐藏且敌对，避免向回调中失效或转为友军的目标发出旧订单。重新编译客户端及 CampaignAI 后，`reachable`、`fog-attack`、`island-auto-target-death` 分别 **2/0、2/0、1/0**；日志位于 `tmp/docs-artifacts/war3/ai-target-batch/*-callback.log`。该补充与混合部队任务合并计数。
+
+
+### 电脑攻击跟进的隐身目标（待功能批次验证）
+
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`。目标对电脑隐身时，直接攻击失败不会将其当前位置用于攻击移动；解除隐身后恢复正常攻击。合批运行 CampaignAI `fog-attack`，覆盖隐身期间保留已有命令及显形后攻击，并复验迷雾和混合部队；探测、回调变化、随机路线和原版对局待验证。本次未执行功能测试。
