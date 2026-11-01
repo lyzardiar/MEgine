@@ -5683,3 +5683,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 电脑混合部队对不可直接攻击目标的跟进（待功能批次验证）
 
 路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`。队长攻击目标时，不能直接攻击的队员在命令未被回调改写的前提下攻击移动至目标附近，避免混合部队原地停滞。合批运行 CampaignAI `reachable`，覆盖步兵跟进、狮鹫攻击空中目标；动态目标、运输、原版策略及完整对局待验证。本次未执行功能测试。
+
+
+### 电脑营地选择与混合部队合批结果
+
+范围：`32a1065`、`1b75eab`、`5f2347b`、`7f87f8d`、`e0fa4a8` 及路径查询缓存补充。Win32 Release 客户端与 CampaignAI 测试目标编译通过；`reachable` **2 通过、0 失败**，覆盖近战不能对空、可攻击的混合营地、狮鹫对空及步兵跟进；`island-auto`、`island-target` 各 **1 通过、0 失败**，`fog-attack` **2 通过、0 失败**。路径查询缓存调整后重编译并重测 `reachable` 2/0。日志和夹具在 `tmp/docs-artifacts/war3/ai-target-batch/`；原版选点、复杂混编、实际窗口及完整对局仍待验证。
