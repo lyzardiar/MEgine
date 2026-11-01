@@ -5120,3 +5120,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 范围波次、延迟与地面技能恢复（待阶段验证）
 
 路径：src/session.h、src/session_area_spells.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SASP 保存波次命中记录、延迟效果及地面脉冲，SRBF 更新至版本 40。Win32 Release 构建及 clock 104/104 通过；原版 Orc01 人工布置场景检查冲击波、烈焰风暴及地狱火，隔离续行各 71/71 项状态一致，临时绕过启动保护。待阶段验证其他技能、来源失效、多目标同距、实际游戏读档、自然战斗、原版时序和窗口；日志 tmp/docs-artifacts/war3/area-spell-recovery/。
+
+### 物品荒芜扩张恢复（待阶段验证）
+
+路径：src/session.h、src/session_blight_items.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SIBG 保存物品荒芜扩张队列，SRBF 更新至版本 41。Win32 Release 构建及 clock 105/105 通过；原版 Orc01 人工使用献祭头骨，在扩张过程中恢复。隔离续行临时绕过启动保护，正常及事先移除施法者两种情况各 71/71 项状态一致。待阶段验证多重重叠扩张、实际游戏读档、原版时序和窗口；日志 tmp/docs-artifacts/war3/item-blight-recovery/。
