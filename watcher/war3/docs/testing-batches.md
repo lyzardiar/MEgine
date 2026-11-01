@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄技能点与降级合批结果
+
+范围：`2fb320d`、`4ae8be8`、`8d5f3a2`。Win32 Release 客户端、revival、clock 目标构建通过，构建日志未发现编译警告。生成复活夹具后，revival 的 `hero-skill-cap`、`hero-skill-modify`、`hero-strip-skills`、`hero-level-event`、`hero-level-visual`、`hero-xp`、`awaken` 及 clock 的 `player_resource_natives_follow_original_bounds` 各 1 通过、0 失败，未加载 Game.dll。前两项首次运行因夹具错误假定新英雄初始技能点为零而失败，显式设置测试初始条件后重建并通过；其他场景未改变，复用原结果。日志和夹具位于 `tmp/docs-artifacts/war3/hero-skills-batch/`，构建日志为 `tmp/docs-artifacts/war3/hero-skills-batch-build.log`。多技能降级并列、技能书借用、被动状态、极值与原版动态对照、实际窗口及完整地图仍待验证。
+
 ### 英雄降级技能调整（待批次验证）
 
 路径：`src/session.h`、`src/session_hero.cpp`、`tests/revival_tests.cpp`。`UnitStripHeroLevel` 按等级逐步降低英雄属性和经验，先移除不满足新等级的技能等级；没有强制移除时扣除未分配技能点，点数不足时降低已学等级最高的技能。原版 1.27 `Game.dll` 的 `0x6f50dd30` 至 `0x6f50df40` 包含技能要求、点数及最高等级技能处理；`0x6f50df50` 逐级调用。待执行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-strip-skills`，并检查多技能、并列、技能书借用、被动状态、超大次数、原版动态及窗口。本次未执行测试。
