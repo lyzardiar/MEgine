@@ -5345,3 +5345,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 检查点地图身份查询（待功能批次验证）
 
 路径：`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。挂载地图前可读取并校验检查点中的路径提示和地图摘要，实际恢复复用读取器。合批编译并运行 `war3_clock_tests <data-root> <output-root>`，检查身份、损坏拒绝及恢复；目录边界、不同地图、地图自动定位和 `LoadGame` 仍待验证或实现。本次未编译或测试。
+
+脚本保存夹具补充暂停状态下的文件发布、事件通知与解除暂停后的调用线程续行，待同批验证；原版暂停时序仍需对照。
