@@ -1886,6 +1886,36 @@ endfunction
  endfunction
  )jass";auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");auto compileSource=[&]{return Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"shared-session.j",source,"shared context"}}));};auto make=[&](bool offset){auto result=std::make_unique<ScriptSession>(compileSource(),map().info);result->attachWorld(world());result->audioMuted(true);result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(offset)result->runtime().invoke("CreateTimer");result->startMain();return result;};auto original=make(false),target=make(true);Runtime peer(compileSource()),restoredPeer(compileSource());peer.inheritNatives(original->runtime());peer.shareThreads(original->runtime());peer.initialize();restoredPeer.inheritNatives(target->runtime());restoredPeer.shareThreads(target->runtime());restoredPeer.initialize();original->runtime().start("work");peer.start("work");auto actor=original->runtime().global("actor").bits;original->selectUnit(actor,true);auto identity=[](std::string_view,std::uint32_t id){return id;};std::array<Runtime*,2> src{&original->runtime(),&peer},dst{&target->runtime(),&restoredPeer};auto snapshot=original->snapshotSharedSleepingScripts(src,identity);require(snapshot.threads.size()==3,"Shared session contexts missing");auto wire=original->encodeSharedSleepingScripts(src,snapshot);auto damaged=wire;damaged.back()^=1;rejects([&]{target->decodeSharedSleepingScripts(dst,damaged);},"digest");auto decoded=target->decodeSharedSleepingScripts(dst,wire);auto targetActor=target->runtime().global("actor").bits,watcher=original->runtime().global("watcher").bits,targetWatcher=target->runtime().global("watcher").bits;require(actor!=targetActor && watcher!=targetWatcher,"Shared handle remapping fixture did not shift identities");auto decode=[&](std::string_view,std::uint32_t id){if(id==actor)return targetActor;if(id==watcher)return targetWatcher;return id;};auto reverse=[&](std::string_view,std::uint32_t id){if(id==targetActor)return actor;if(id==targetWatcher)return watcher;return id;};auto wrong=[&](std::string_view type,std::uint32_t id){return id==watcher?0u:decode(type,id);};rejects([&]{target->restoreSharedSleepingScripts(dst,decoded,wrong);},"mapping");require(!target->runtime().threadCount(),"Rejected shared context retained threads");auto ids=target->restoreSharedSleepingScripts(dst,decoded,decode);require(ids.size()==3 && target->encodeSharedSleepingScripts(dst,target->snapshotSharedSleepingScripts(dst,reverse))==wire,"Shared session context did not round trip");original->advance(.125);target->advance(.125);require(original->runtime().global("completed").bits==1 && peer.global("completed").bits==1 && target->runtime().global("completed").bits==1 && restoredPeer.global("completed").bits==1 && original->runtime().global("observed").bits==actor && target->runtime().global("observed").bits==target->runtime().global("actor").bits,"Shared session continuations diverged");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("recovery_bundle_restores_leaderboards",[&]{
+        auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
+ leaderboard board = null
+ leaderboard retired = null
+ hashtable table = null
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ set board = CreateLeaderboard()
+ call LeaderboardSetLabel(board, "Status")
+ call LeaderboardSetLabelColor(board, 1, 2, 3, 4)
+ call LeaderboardSetValueColor(board, 5, 6, 7, 8)
+ call LeaderboardSetStyle(board, true, true, false, true)
+ call LeaderboardSetSizeByItemCount(board, 3)
+ call LeaderboardAddItem(board, "Alpha", -3, Player(0))
+ call LeaderboardAddItem(board, "Beta", 8, Player(1))
+ call LeaderboardSetItemStyle(board, 0, true, false, true)
+ call LeaderboardSetItemValueColor(board, 1, 9, 10, 11, 12)
+ call LeaderboardDisplay(board, true)
+ call PlayerSetLeaderboard(Player(0), board)
+ call PlayerSetLeaderboard(Player(1), board)
+ set retired = CreateLeaderboard()
+ call DestroyLeaderboard(retired)
+ set table = InitHashtable()
+ call SaveLeaderboardHandle(table, 0, 1, board)
+ call SaveLeaderboardHandle(table, 0, 2, retired)
+ endfunction
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"leaderboard.j",source,"leaderboard recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();auto& a=original->runtime();auto identity=[](std::string_view,std::uint32_t id){return id;};auto snapshot=original->encodeLeaderboards(identity),damaged=snapshot;damaged.back()^=1;rejects([&]{target->rebuildLeaderboards(damaged);},"digest");require(!target->leaderboard(0) && !target->liveObjects(NativeKind::Leaderboard),"Rejected leaderboard changed target");target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());auto& b=target->runtime();auto id=b.global("board").bits;require(id==ids.at(a.global("board").bits) && id!=a.global("board").bits && b.global("retired").bits==ids.at(a.global("retired").bits),"Leaderboard identities differ");auto board=target->leaderboard(0);require(board && board==target->leaderboard(1) && board->visible && board->label=="Status" && board->labelColor==0x04010203u && board->valueColor==0x08050607u && board->showLabel && board->showNames && !board->showValues && board->showIcons && board->sizeCount==3 && board->items.size()==2,"Leaderboard display state differs");require(board->items[0].label=="Alpha" && board->items[0].value==-3 && board->items[0].player==0 && !board->items[0].showValue && board->items[1].label=="Beta" && board->items[1].value==8 && board->items[1].valueColor==0x0c090a0bu,"Leaderboard rows differ");auto reverse=[&](std::string_view,std::uint32_t value){for(auto [from,to]:ids)if(to==value)return from;return 0u;};require(target->encodeLeaderboards(reverse)==snapshot,"Leaderboard snapshot differs");auto table=b.global("table");require(b.invoke("LoadLeaderboardHandle",std::array{table,b.integer(0),b.integer(1)}).bits==id && b.invoke("LoadLeaderboardHandle",std::array{table,b.integer(0),b.integer(2)}).bits==b.global("retired").bits,"Leaderboard table references differ");b.invoke("LeaderboardSetItemValue",std::array{b.global("board"),b.integer(0),b.integer(12)});require(target->leaderboard(0)->items[0].value==12,"Recovered leaderboard did not accept updates");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("recovery_bundle_restores_script_dialogs",[&]{
         auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
  dialog window = null

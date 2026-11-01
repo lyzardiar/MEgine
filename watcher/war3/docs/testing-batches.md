@@ -5001,3 +5001,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 脚本对话框恢复（待阶段验证）
 
 路径：src/session.h、src/session_script_dialogs.cpp、src/session_callbacks.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SDLG 重建对话框、按钮和失败条件，SGEV 版本 5 重建点击事件，SRBF 更新至版本 14。Win32 Release 构建及 clock 73/73 通过，检查显示状态、按钮顺序、事件上下文、销毁引用与损坏拒绝；日志 tmp/docs-artifacts/war3/script-dialog-recovery/clock-final.log。待验证实际存档、真实窗口画面、回调重入与联机；启动保护保留。
+
+
+### 排行榜恢复（待阶段验证）
+
+路径：src/session.h、src/session_leaderboard.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SLDB 重建排行榜、行样式、分数与玩家关联，SRBF 更新至版本 15。Win32 Release 构建及 clock 74/74 通过，日志 tmp/docs-artifacts/war3/leaderboard-recovery/clock.log。多列计分板、真实窗口、原图与实际存档待实现或阶段验证；启动保护保留。
