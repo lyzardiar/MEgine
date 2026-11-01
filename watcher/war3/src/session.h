@@ -293,6 +293,7 @@ class ScriptSession {
     bool showScores_=false,userControl_=true,userUI_=true,selectionEnabled_=true,selectionUI_=true,dragSelectionEnabled_=true,dragSelectionUI_=true;
     bool occlusionEnabled_=true;
     ScriptCineFilter cineFilter_;
+    bool presentationRestored_=false;
     bool forceCinematicSubtitles_=false;
     bool interfaceVisible_=true;
     float interfaceFrom_=1;
@@ -1426,6 +1427,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildLeaderboards(std::span<const std::uint8_t> bytes);
     Bytes encodeMultiboards(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildMultiboards(std::span<const std::uint8_t> bytes);
+    Bytes encodePresentation() const;
+    void restorePresentation(std::span<const std::uint8_t> bytes);
     Bytes encodeTextTags(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildTextTags(std::span<const std::uint8_t> bytes);
     Bytes encodeTrackables(const jass::StableHandleMap& encodeHandle) const;
