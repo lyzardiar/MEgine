@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 单位与计时器事件注册句柄（待功能批次验证）
+
+路径：`src/session_callbacks.cpp`、`src/session_spatial_events.cpp`、`tests/control_tests.cpp`。注册单位事件、筛选单位事件、单位状态事件、单位距离事件与计时器到期事件时，失效触发器或目标返回空事件；单位状态编号超出范围也返回空事件。有效事件保持既有索引、状态和回调流程。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 的注册入口分别为 `0x6f1fa060`、`0x6f1f9470`、`0x6f1fa260`、`0x6f1fa170`、`0x6f1f9e20`，均检查触发器及目标句柄；单位状态入口先检查状态范围。Win32 Release 客户端与 control 目标构建通过；合批运行 `war3_control_tests <data-root> <fixture> event-registration-handles`，并回归事件、距离、计时器及原图脚本。新增用例尚未执行；过滤器失效、回调重入、原版事件顺序与实际地图仍待验证。
+
+
 ### 触发器与界面文字合批结果
 
 范围：`12bcd57`、`b411985`、`4508711`，以及本次 FDF 源字段和地图覆盖检查。Win32 Release 客户端、session、JASS thread 和 native 测试目标构建通过；session 25 通过、thread 35 通过、native 15 通过，合计 **75 通过、0 失败**。覆盖触发器失效句柄、既有线程调度及原版生产／资源字段与地图 FDF 覆盖读取；日志位于 `tmp/docs-artifacts/war3/trigger-ui-batch/`。FDF 检查不验证面板实际绘制；本机先前无法创建 D3D9 设备，本批未取得窗口画面。不同语言窗口布局、真实地图生产／采集及原版时序仍待验证。
