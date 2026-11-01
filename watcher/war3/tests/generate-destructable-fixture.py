@@ -39,6 +39,8 @@ force probe_live_force=null
 boolean probe_live_group_valid=true
 boolean probe_live_force_valid=true
 integer probe_enemy_filter_calls=0
+force probe_count_force=null
+boolean probe_count_force_valid=false
 boolean probe_force_scope_valid=false
 endglobals
 function ProbeDeath takes nothing returns nothing
@@ -258,6 +260,19 @@ function ProbeInvalidRects takes nothing returns nothing
     call EnumItemsInRect(dead,null,function ProbeForceAction)
     call EnumDestructablesInRect(null,null,function ProbeForceAction)
     call EnumDestructablesInRect(dead,null,function ProbeForceAction)
+endfunction
+function ProbeCountForceFilter takes nothing returns boolean
+    if GetFilterPlayer()==Player(0) then
+        call ForceAddPlayer(probe_count_force,Player(15))
+        return false
+    endif
+    return GetFilterPlayer()==Player(1)
+endfunction
+function ProbeCountForce takes nothing returns nothing
+    set probe_count_force=CreateForce()
+    call ForceEnumPlayersCounted(probe_count_force,Filter(function ProbeCountForceFilter),1)
+    set probe_count_force_valid=IsPlayerInForce(Player(15),probe_count_force) and IsPlayerInForce(Player(1),probe_count_force)
+    call DestroyForce(probe_count_force)
 endfunction
 function config takes nothing returns nothing
 endfunction

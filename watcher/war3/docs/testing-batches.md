@@ -5838,3 +5838,6 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 计数组枚举的零与负数上限（待功能批次验证）
 
 路径：`src/session_collections.cpp`、`tests/game_flow_tests.cpp`、`tests/generate-destructable-fixture.py`。计数单位组的零上限不限数量，负数按无符号上限；计数玩家组的零上限为空，负数按无符号上限。原版 1.27 的组筛选路径 `0x6f216318` 将零视为无上限，玩家组路径 `0x6f211323` 使用无符号比较。合批运行 game flow 和 destructable 夹具；不同过滤器及原版动态行为待对照。本次未执行功能测试。
+
+
+玩家组计数补充：原版在 `0x6f2112ef` 初始化独立计数，筛选并通过联盟规则后由 `0x6f2113de` 增量更新；回调自行增删玩家不改变枚举计数。实现及夹具已同步，作为计数枚举任务补充，待同批验证。
