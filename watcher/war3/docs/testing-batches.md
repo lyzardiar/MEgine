@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 单位范围治疗的目标生命周期（待功能批次验证）
+
+路径：`src/session_area_spells.cpp`、`tests/control_tests.cpp`。单位施放 AIha 范围治疗时记录目标死亡及归属轮次，在每个目标结算前复核，避免前序治疗回调让目标复活或易主后继续沿用旧目标。Win32 Release 客户端及 control 测试目标构建通过；复用 `tmp/docs-artifacts/war3/spell-impact-reentry/fixture.w3m` 的回调最小复现 1 项通过、0 失败，构建日志位于 `tmp/docs-artifacts/war3/area-heal-reentry/`。合批运行 `war3_control_tests <data-root> <fixture> unit-area-heal-reentry` 和 `war3_spell_tests <data-root> <fixture> unit-area-heal`，覆盖目标复活／易主、施法者中断和普通治疗；原版动态回调时序、多人及实际窗口仍待对照。
+
+
 ### 技能伤害回调中的目标生命周期（待功能批次验证）
 
 路径：`src/session_spell_effects.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。风暴之锤与霜冻新星伤害后检查目标死亡和归属轮次，避免对回调中复活或易主的目标施加旧状态；霜冻新星逐个结算时还检查预选目标和施法者生命周期，施法者死亡或易主后停止后续目标。Win32 Release 客户端及 control 测试目标构建通过，生成器语法检查通过；死亡事件内复活的最小复现 1 项通过、0 失败，覆盖两种技能，夹具与构建日志位于 `tmp/docs-artifacts/war3/spell-impact-reentry/`。合批运行 `war3_control_tests <data-root> <fixture> spell-damage-reentry`、相关技能和控制回归，并检查易主及范围内多目标；回调中的原版动态时序、施法者生命周期变化后的范围结算、多人及实际窗口仍待对照。
