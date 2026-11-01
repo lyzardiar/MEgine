@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的临时昼夜（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。复合主动效果支持 AIct 临时昼夜，复用原时钟与变化事件、到期恢复和施法视觉，并与其他效果共同结算次数、费用、冷却和使用事件。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-moon`、`item-combined` 及原月亮石专项；原版复合效果时序、事件重入、真实窗口和多人待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
+
+
 ### 复合物品恢复与防护合批结果
 
 范围：`b4b40cd`、`63f0b3e`、`829015c`，以及本次夹具和断言修正。Win32 Release 客户端、control、spell、consumption 测试目标构建通过，control 目标有既有变量遮蔽警告。复合物品夹具的 `item-combined-support`、`item-combined-status`、`item-combined-area`、`item-combined-area-mana`、`item-combined-speed-area`、`item-combined`、`item-combined-dust`、`item-combined-roar` 各 1 项通过；普通消耗品的 `unit-area-heal`、`shield-rune`、`acid-speed` 和 `protection` 各 1 项通过，合计 12 通过、0 失败。初次两项失败分别因夹具选择了无需目标的能力及断言读取基础速度；改用目标型 AIrl、独立使用者和实际速度倍率后复测通过。日志及复合夹具在 `tmp/docs-artifacts/war3/combined-support-batch/`，spell 使用 `tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m`。原版复合时序、全部状态与目标重入、多人同步及实际窗口仍待验证。
