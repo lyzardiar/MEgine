@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品目标的死亡与归属重入（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。复合消耗品预选目标时记录死亡和归属轮次；较早效果触发回调后，已死亡复活或易主的目标不再接收旧批次范围效果，使用者易主后停止消费该批目标。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-target-reentry` 和 `item-combined`、`item-combined-area`、`item-combined-dispel`；原版回调时序、能力内部重入、多人及窗口待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；已执行 `item-combined-target-reentry` 最小复现，1 通过、0 失败，日志与夹具在 `tmp/docs-artifacts/war3/combined-target-reentry/`。
+
+
 ### 复合物品的昼夜、驱散与重生合批结果
 
 范围：`c149c66`、`d689f02`、`873db2c`，以及本次边界断言。Win32 Release 客户端、control、spell、clock 和 consumption 目标构建通过；control 目标有既有局部变量遮蔽警告。复合物品夹具的 `item-combined-rebirth`、`item-combined-dispel`、`item-combined-moon`、`item-combined`、`item-combined-area`、`item-combined-support` 各 1 项通过；普通 `moon`、`purge`、`rebirth-rune`、`chain-dispel` 各 1 项通过，合计 10 通过、0 失败。额外边界复测覆盖无效重生来源及超出施法距离；月亮石检查临时时间及恢复。日志和复合夹具在 `tmp/docs-artifacts/war3/combined-world-batch/`，法术回归使用 `tmp/docs-artifacts/war3/mind-rot/fixture.w3m`。原版复合效果时序、复杂回调、空落点、多人及实际窗口仍待验证。
