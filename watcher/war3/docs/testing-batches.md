@@ -5509,3 +5509,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 修理目标的完整条目匹配（待功能批次验证）
 
 路径：`src/session_repair.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。修理单位时按完整条目检查空中、地面、建筑及非远古限制，人工与自动修理共用判定。合批使用 `--repair-targets partial` 和 `--repair-targets positive` 分别生成施工夹具，以 `war3_construction_tests <root> <fixture> repair-partial` 和 `repair-positive` 执行，再运行原始施工场景；原版边界及实际对局待验证。本次未执行功能测试。
+
+
+### 无敌树木采集目标的完整条目匹配（待功能批次验证）
+
+路径：`src/session_lumber.cpp`、`tests/generate-harvest-fixture.py`、`tests/harvest_tests.cpp`。采集命令及持续采集按完整 `invu` 或 `invulnerable` 条目判定无敌树木。合批分别使用 `--tree-targets partial`、`invu`、`invulnerable` 生成夹具，并以对应 `tree-partial`、`tree-invu`、`tree-invulnerable` 模式运行 `war3_harvest_tests`，覆盖命令与目标状态变化；自动寻找树木及原版边界仍待验证。本次未执行功能测试。
