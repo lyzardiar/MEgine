@@ -5273,3 +5273,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 合体施法预约恢复（待功能批次验证）
 
 路径：`src/session_cast_snapshot.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCST` 版本 2 保存并核对 `Acoa`／`Acoh`／`Acoi` 合体目标预约，`SRBF` 更新至版本 54。合批构建并执行 `war3_clock_tests <data-root> <output-root>`，核对竞争、恢复和停止后释放；另需覆盖目标移除、重复／损坏预约、旧版及实际存读档。当前未执行功能编译或测试，恢复启动保护保留。
+
+
+### 尸体召唤索引恢复（待功能批次验证）
+
+路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUMM` 版本 2 保存尸体召唤索引并校验成员关系，`SRBF` 更新至版本 55。合批构建执行 `war3_clock_tests <data-root> <output-root>`，核对腐尸甲虫索引往返；继续覆盖召唤上限、召唤者死亡清理、死亡／移除句柄、旧版和损坏数据及实际存读档。本次未执行功能编译或测试，恢复启动保护保留。
