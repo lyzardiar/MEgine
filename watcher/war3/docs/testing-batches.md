@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 属性书的生命与魔法比例（待功能批次验证）
+
+路径：`src/session_equipment.cpp`、`tests/passive_tests.cpp`。消耗永久属性物品调整力量或智力后保留已有生命和魔法比例，零魔法上限按零比例处理。原版 1.27 `CAbilityAttributeBonus` 的 `0x6f53f6d1` 至 `0x6f53f6f9` 以比例模式应用三项属性，分别进入属性更新流程。合批生成 passive 夹具并运行 `war3_passive_tests <data-root> <fixture> attribute-item-resource`，核对力量书和智力书；负属性书、零上限、复合物品、原版动态和窗口待验证。本次未执行功能测试。
+
+
 ### 物品与技能的有符号属性加成（待功能批次验证）
 
 路径：`src/session_equipment.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`。装备和属性技能的三项加成按单个能力向零截取整数后叠加；永久属性物品接受负值，按有符号整数更新基础属性。原版 1.27 `CAbilityAttributeMod` 与 `CAbilityAttributeBonus` 的 `0x6f53f710`、`0x6f53f5f0` 分别把各字段经 `0x6f052f30` 转为整数。合批生成 passive 夹具并运行 `war3_passive_tests <data-root> <fixture> attribute-item-signed`，回归普通属性书、装备、技能等级及实际地图；原版动态和界面待验证。本次未执行功能测试。
