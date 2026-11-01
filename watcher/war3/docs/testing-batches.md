@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品目标区域侦察（待批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。复合物品支持目标区域侦察 `AIta` 与资源效果组合；Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-combined-reveal-point`，核对目标选择、隐身侦测及消耗，并回归相关复合目标效果。原版复合施法时序及联机表现待对照。
+
+
 ### 复合物品无目标召唤（待批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/item-summons-buildings.md`。覆盖 `AIfs`、`AIsh`、`ANwm` 与资源效果组合。Win32 Release 客户端及 control 测试程序编译通过，夹具脚本语法检查通过。批次生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-combined-summons`，并回归普通召唤和复合物品；检查单位类型、数量、归属、限时生命及消耗。多组事件回调、零数量、混合目标和原版复合施法时序仍需验证。
