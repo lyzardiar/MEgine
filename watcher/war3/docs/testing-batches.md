@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合拾取物品的灵魂锁链（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。拾取型复合物品支持 Aspl 灵魂锁链，复用已有目标选择、锁链状态和伤害分摊，并与其他效果共用次数、费用、冷却及使用事件。合批生成复合物品夹具并运行 `war3_control_tests <data-root> <fixture> item-combined-spirit-rune`、`item-combined`，回归普通 `spirit-rune` 及锁链伤害；非拾取型目标技能组合、原版复合时序、多人和窗口待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
+
+
 ### 消耗品目标生命周期合批结果
 
 范围：`638141b`、`ab33f46`、`d7f2c90`。Win32 Release 客户端及 control、spell、consumption 测试目标构建通过，control 目标有既有变量遮蔽警告。control 的 `item-normal-target-reentry`、`item-protection-reentry`、`item-combined-target-reentry`、`item-combined`、`item-combined-area`、`item-combined-dispel`、`item-combined-support`、`item-combined-status` 各 1 项通过；spell 的 `unit-area-heal`、`shield-rune`、`rebirth-rune`、`chain-dispel` 各 1 项通过；consumption 的 `protection`、`moon` 各 1 项通过，合计 14 通过、0 失败。新夹具和日志在 `tmp/docs-artifacts/war3/consumable-reentry-batch/`，spell 使用 `tmp/docs-artifacts/war3/spells/acid-speed-fixture.w3m`。Spirit Link 的独立目标处理、原版动态回调时序、多人同步和实际窗口仍待验证。
