@@ -5661,3 +5661,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 暂停矿井的采矿计时（待功能批次验证）
 
 路径：`src/session_harvest.cpp`、`tests/harvest_tests.cpp`。矿井被暂停时，已进入矿井的工人暂停采矿并保留剩余周期；矿井恢复后继续采集。合批使用普通采集夹具运行 `war3_harvest_tests <root> <fixture> mine-paused` 并复验原始采矿；其他矿井类型、离开／销毁与原版时序待验证。本次未执行功能测试。
+
+
+### 工人控制状态与矿井暂停合批结果
+
+范围：`19b91ec`、`21dbe9d`、`7379031`。Win32 Release 客户端、采集和施工测试目标编译通过；原始采集、工人眩晕、矿井暂停、原始施工、眩晕施工／修理及修理回调共 **6 个进程通过、0 失败**。专项使用会话中的持续眩晕状态，覆盖暂停期间不结算、剩余周期、订单保留和恢复；日志与夹具位于 `tmp/docs-artifacts/war3/worker-control-batch/`。真实技能施加／解除、其他矿井、原版时序及窗口对局仍待验证。
