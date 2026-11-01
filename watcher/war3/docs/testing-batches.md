@@ -1,8 +1,17 @@
 # 独立客户端测试队列
 
+### 机械小动物与同编号计时器（待功能批次验证）
+
+路径：`src/session_summons.cpp`、`src/session_entities.cpp`、`src/session_spell_natives.cpp`、`src/session_buff_snapshot.cpp`、`src/game_buff_panel.cpp`、`tests/passive_tests.cpp`。机械小动物状态保存来源技能的召唤时限，区分关联计时器与独立同编号状态；按编号移除时保留其余状态，扩展筛选分别计数和清理，状态栏保留独立状态的图标。旧 Buff 快照通过来源技能恢复时限。合批运行 `war3_passive_tests <data-root> <fixture> critter-timer-overlap`、`buff-timed-critter`、`buff-permanent-critter`、`mechanical-critter-real` 及 Buff 快照恢复；定制地图、旧存档、原版动态与窗口显示待验证。Win32 Release 客户端及测试目标构建通过；本次未执行功能测试。
+
+### 旧版召唤快照恢复检查
+
+`tests/clock_tests.cpp` 在召唤快照测试中构造 SUMM v4 字节流并恢复单位；`WAR3_CLOCK_FILTER=summon_snapshot_restores_timed_life_and_retired_sources` 构建并执行通过 1 项、失败 0 项。此检查覆盖单计时器及暂停状态，原版存档格式互通仍未实现。日志：`tmp/docs-artifacts/war3/multiple-timed-life/clock-v4.log`。
+
+
 ### 限时生命、死亡与恢复合批结果
 
-范围：`e14a290`、`433e206`、`dafdc55`，以及本次英雄等级恢复顺序修复。Win32 Release 客户端、passive 和 clock 测试目标构建通过。`war3_passive_tests` 的 `timed-life-death`、`timed-life-rebirth`、`timed-life-multiple`、`timed-life-buff-id`、`timed-life-summoned`、`buff-timed-life`、`buff-timed-critter`、`buff-permanent-critter`、`mechanical-critter-real`、`buff-filter-semantics` 共 10 项通过；`WAR3_CLOCK_FILTER` 指定召唤快照及死亡重生恢复各 1 项通过。死亡重生快照初次因英雄等级恢复顺序失败，修复后两项相关快照复测通过；额外断言高等级英雄属性恢复通过。日志及夹具位于 `tmp/docs-artifacts/war3/multiple-timed-life/` 和 `tmp/docs-artifacts/war3/timed-critters-batch/`。旧版 SUMM v4 的实际恢复、原版动态时序与特殊 Buff、熔岩分裂交互及实际窗口显示仍待验证；完整原版玩法仍未完成。
+范围：`e14a290`、`433e206`、`dafdc55`，以及本次英雄等级恢复顺序修复。Win32 Release 客户端、passive 和 clock 测试目标构建通过。`war3_passive_tests` 的 `timed-life-death`、`timed-life-rebirth`、`timed-life-multiple`、`timed-life-buff-id`、`timed-life-summoned`、`buff-timed-life`、`buff-timed-critter`、`buff-permanent-critter`、`mechanical-critter-real`、`buff-filter-semantics` 共 10 项通过；`WAR3_CLOCK_FILTER` 指定召唤快照及死亡重生恢复各 1 项通过。死亡重生快照初次因英雄等级恢复顺序失败，修复后两项相关快照复测通过；额外断言高等级英雄属性恢复通过。日志及夹具位于 `tmp/docs-artifacts/war3/multiple-timed-life/` 和 `tmp/docs-artifacts/war3/timed-critters-batch/`。原版动态时序与特殊 Buff、熔岩分裂交互及实际窗口显示仍待验证；完整原版玩法仍未完成。
 
 
 ### 单位死亡时的限时状态清理（待功能批次验证）
