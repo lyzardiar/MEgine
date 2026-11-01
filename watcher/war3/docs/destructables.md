@@ -38,3 +38,6 @@ cd watcher/war3
 
 
 可破坏物生命、坐标、类型、名称和无敌查询对空或已失效句柄返回空值；生命设置与显隐操作遇到无效句柄直接返回，`SetWidgetLife` 同样忽略无效对象。有效句柄沿用实际对象状态。依据为固定版 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 的对应入口及句柄解析失败分支，原始指令见 `tmp/docs-artifacts/war3/destructable-null-queries/game-dll-disassembly.txt`；仅静态核对，类型混用、地图回调及运行时行为待功能批次验证。
+
+
+生命恢复、最大生命与遮挡高度设置、动画速度及动画请求对无效可破坏物句柄直接返回；死亡事件注册的触发器或 widget 无效时返回空事件。固定版对应入口及共享动画调用的静态指令见 `tmp/docs-artifacts/war3/destructable-null-queries/game-dll-action-disassembly.txt`；运行、事件回调及错误类型句柄待功能批次验证。
