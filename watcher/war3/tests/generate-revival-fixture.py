@@ -24,7 +24,27 @@ unit purchaseShop=null
 integer leaveCount=0
 integer leavePlayer=-1
 integer leaveSyncDone=0
+integer levelCalls=0
+integer levelObserved=0
+integer levelMode=0
 endglobals
+function RecordLevel takes nothing returns nothing
+    set levelCalls=levelCalls+1
+    set levelObserved=GetHeroLevel(GetLevelingUnit())
+    if levelMode==1 and levelCalls==1 then
+        call SetHeroLevel(GetLevelingUnit(),5,false)
+    elseif levelMode==2 then
+        call RemoveUnit(GetLevelingUnit())
+    endif
+endfunction
+function InstallLevelTest takes unit u, integer mode returns nothing
+    local trigger t=CreateTrigger()
+    set levelCalls=0
+    set levelObserved=0
+    set levelMode=mode
+    call TriggerRegisterUnitEvent(t,u,EVENT_UNIT_HERO_LEVEL)
+    call TriggerAddAction(t,function RecordLevel)
+endfunction
 function RecordLeave takes nothing returns nothing
     set leaveCount=leaveCount+1
     set leavePlayer=GetPlayerId(GetTriggerPlayer())

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄跨级事件（待批次验证）
+
+路径：`src/session_hero.cpp`、`tests/generate-revival-fixture.py`、`tests/revival_tests.cpp`。一次经验变更先完成跨级与属性更新，再派发一次升级事件；事件回调可继续升级或移除英雄。原版 1.27 `Game.dll` 在 `0x6f50ac3f` 升级循环后经 `0x6f50adca` 进入事件 `0x8024e`。待重新生成复活夹具并运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-level-event`，覆盖跨级、未跨级、回调重入和移除；另核对玩家事件、击杀、经验书和原版窗口事件时序。本次未执行测试。
+
 ### 英雄升级效果（待批次验证）
 
 路径：`src/session.h`、`src/session_hero.cpp`、`tests/revival_tests.cpp`。英雄升级使用源 `AHer` 的施法者效果；脚本经验和等级接口按 `showEyeCandy` 控制，一次跨越多个等级创建一次效果。1.27 `Game.dll` 的 `0x6f50ac3f` 至 `0x6f50ad35` 显示升级循环结束后按参数触发一次表现，三个脚本入口传入该参数。待执行 Win32 Release 客户端及 `war3_revival_tests <data-root> <hero-revival-fixture> hero-level-visual`；核对真假参数、未升级、跨多级、暂停、击杀和经验书、回调重入、效果生命周期及原版窗口表现。本次未运行测试；事件时序和自定义效果列表仍待核对。
