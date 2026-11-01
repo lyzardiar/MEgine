@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### Buff 分类与放逐合批结果
+
+范围：`d89700e`、`b570286`、`504dbe8`。Win32 Release 客户端、passive 和 control 目标构建通过；control 测试文件既有变量遮蔽产生一条 C4456 警告。生成 passive 夹具后，`buff-auto-filter`、`buff-control-types`、`buff-filter-semantics`、`buff-timed-life`、`buff-timed-critter`、`buff-script-remove`、`buff-invalid-unit` 及 control 的 `banish-polarity`、`purge`、`flow` 各 1 通过、0 失败；passive 主程序退出 0 并输出 PASS。覆盖自动筛选、控制状态、真实放逐与联盟变化、净化及光环回归。日志和夹具位于 `tmp/docs-artifacts/war3/buff-classification-batch/`。其他特殊或自定义状态分类、复杂联盟关系、原版动态行为与实际窗口仍待验证。
+
+
 ### 控制状态的物理筛选（待功能批次验证）
 
 路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。眩晕、冰冻吐息和相位转移在 Buff 扩展接口中不因战斗控制标记而匹配物理筛选；魔法和自动驱散分类沿用已核实结果。原版 1.27 的 `CBuffStun`、`CBuffFreezingBreath` 和 `CBuffPhaseShift` 对物理类型虚函数返回零。合批运行 `war3_passive_tests <data-root> <fixture> buff-control-types`，并回归真实控制效果和 Buff 自动筛选；其他特殊状态与原版动态行为待验证。本次未执行功能测试。
