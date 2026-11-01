@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 反召唤部分退款恢复检查（待阶段验证）
+
+路径：`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 91/91 通过；原版 Orc01 会话人工创建建筑并启动反召唤，在部分退款、工人死亡后隔离恢复；临时绕过启动保护续行 12 秒，建筑移除、累计返还 75 金和 25 木，70/70 项状态一致。日志位于 `tmp/docs-artifacts/war3/unsummon-recovery/`。实际读档、自然对局、原版时序和窗口画面待阶段验证。
+
 ### 熔岩之子恢复（待阶段验证）
 
 路径：`src/firelord.h`、`src/session.h`、`src/session_lava_spawn.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 90/90 通过；原版 Orc01 会话人工施法并设置分裂条件后隔离恢复，临时绕过启动保护续行 1 秒，生成第二个单位且 71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/lava-spawn-recovery/`。实际读档、自然命中累计、原版规则与窗口画面待阶段验证。

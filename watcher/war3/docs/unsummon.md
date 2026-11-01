@@ -25,3 +25,5 @@ python tests/generate-unsummon-fixture.py --data-root "E:/Program Files (x86)/dz
 ~~~
 
 ai和boundaries模式已编译但尚未执行。阶段合并原UnsummonAll/无人可施法/多建筑，队列和升级返还/人口/事件顺序/回调重入，受损/受攻/治疗/零速率/自定义w3a/费用边界，暂停/转让/移除/死亡/复活、覆盖矿储量/工人清退、原Birth/UI/原件声音特效、长局/三图/GPU/资源释放。DataB的原件调度、返还舍入和损伤计算、完整目标分类/范围与不可取消规则、原死亡事件和消失方式尚未证明一致；完整客户端验收保持开放。
+
+部分退款后工人死亡的状态已做隔离恢复及续行检查，范围和限制见 [战役存档状态](save-runtime-foundation.md)。
