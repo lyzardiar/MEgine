@@ -5021,3 +5021,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 空间事件与声音的已移除对象引用（待阶段验证）
 
 路径：src/session_spatial_events.cpp、src/session_sound.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SPEV 和 SSND 版本 2 记录引用对象生命周期，SRBF 更新至版本 18。Win32 Release 构建通过，clock 77/77、声音等待恢复 1/1；日志 tmp/docs-artifacts/war3/retired-reference-recovery/clock.log。Human06 和 Undead01 的原版隔离诊断通过此前引用检查后，分别在天气句柄和目标预初始化特效处失败；待补齐并验证完整恢复、声音和实际存档。
+
+
+### 天气对象恢复（待阶段验证）
+
+路径：src/session.h、src/session_weather.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SWTH 保存地图及脚本天气、对象生命周期和资源定义摘要，SRBF 更新至版本 19。Win32 Release 构建及 clock 78/78 通过；原版 Human06 隔离恢复并临时绕过启动保护后续行 60 秒，69 项状态比较一致；日志 tmp/docs-artifacts/war3/weather-recovery/。待验证天气画面、环境音、实际存档及完整战役；启动保护保留。

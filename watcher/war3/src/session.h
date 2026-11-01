@@ -197,6 +197,8 @@ class ScriptSession {
     std::uint64_t destructableRevision_=1;
     std::optional<SourceTable> weather_;
     std::map<std::uint32_t,std::shared_ptr<WeatherState>> weatherEffects_;
+    std::set<std::uint32_t> ignoredWeatherIdentities_;
+    bool weatherRebuilt_=false;
     std::map<std::string,std::shared_ptr<ScriptSound>> weatherSounds_;
     std::shared_ptr<WeatherState> makeWeather(std::uint32_t type,WorldRect region);
     void initializeMapWeather();
@@ -1425,6 +1427,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildMultiboards(std::span<const std::uint8_t> bytes);
     Bytes encodeTrackables(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildTrackables(std::span<const std::uint8_t> bytes);
+    Bytes encodeWeather(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildWeather(std::span<const std::uint8_t> bytes);
     Bytes encodeTimerEvents(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
