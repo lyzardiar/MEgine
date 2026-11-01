@@ -5938,3 +5938,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 娜迦与中立工人合批结果
 
 范围：`6134260`、`e62deea`、`0fab530` 及本次取消施工检查。Win32 Release 客户端和 construction 目标构建通过；`generate-construction-fixture.py` 生成地图后运行 `war3_construction_tests <data-root> <fixture>`，退出 0、输出 1 条 PASS。该进程检查娜迦和达拉内尔工人源建造列表、进入施工、进度、完成与取消后的释放，及五类原版单位种族查询，同时覆盖既有四族施工和资源流程；夹具通过脚本设置资源与进度。新增测试局部变量更名后测试目标重新编译通过，无编译警告。日志位于 `tmp/docs-artifacts/war3/neutral-build-batch/`。实际窗口按钮及图标、自然对局、施工恢复、地图覆盖和原版动态时序仍待验证；此前 D3D9 设备不可用，本批未启动窗口。
+
+
+### 鼓舞权杖的操纵死尸（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/corpse_tests.cpp`、`docs/corpses.md`。原版 `stre` 使用 `AInd`／`ACad` 复活尸体，按源参数创建限时单位并处理物品冷却；复合物品同样接受该原型。合批生成 corpse 夹具并运行 `war3_corpse_tests <data-root> <fixture> items`，核对原版权杖、来源、时限、尸体及冷却，并回归卷轴；原版时序、多个尸体、实际窗口与地图覆盖待验证。本次未执行功能测试。

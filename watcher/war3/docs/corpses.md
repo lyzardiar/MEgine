@@ -40,3 +40,5 @@ python tests/generate-corpse-fixture.py --data-root "E:/Program Files (x86)/dzcl
 spirit/items/decay/autocast模式已编译、未执行，阶段合并验证先祖之魂/操纵死尸/定时消失、符文/库存/失败冷却/重入、自然衰败/事件/暂停/英雄复活、全等级/w3a/尸体类型/占用/剩余可回复生命量/目标选择、食尸打断/恢复/源序列及三图长局/声音/UI/GPU/CPU/内存/切图释放。绞肉车尸体货舱/挖掘已接入，见[尸体货舱](corpse-cargo.md)；完整阵营AI和其余能力继续实现；没有旧全套、三图、GPU、性能或原件逐函数通过结论。
 
 本地原始记录为根tmp/docs-artifacts/war3/corpses/中的build.log、items-build.log、delivery-build.log、final-build.log、freeze-build.log、fixture-build.log、clean-build.log、flow.log和freeze.log。旧MEngine延期队列及完整客户端验收保持开放。
+
+原版鼓舞权杖 `stre` 的 `AInd` 派生自 `ACad` 操纵死尸，使用源范围、数量和 60 秒时限进入既有尸体与物品冷却流程；权杖可重复使用。复合物品中的同类效果使用同一尸体消费者。原版事件顺序、无尸体／施法时序和实际窗口待批次验证。
