@@ -5278,3 +5278,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 尸体召唤索引恢复（待功能批次验证）
 
 路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUMM` 版本 2 保存尸体召唤索引并校验成员关系，`SRBF` 更新至版本 55。合批构建执行 `war3_clock_tests <data-root> <output-root>`，核对腐尸甲虫索引往返；继续覆盖召唤上限、召唤者死亡清理、死亡／移除句柄、旧版和损坏数据及实际存读档。本次未执行功能编译或测试，恢复启动保护保留。
+
+
+### 存档恢复索引合批结果
+
+范围：`e40001f`、`1d6cfe7`、`1c36149` 及本次夹具修正。Win32 Release `war3_clock_tests` 构建通过；整批首轮 **116 通过、2 失败**。失败项分别因合体夹具缺少原技能 `Reht` 科技前置、尸体召唤夹具缺少 JASS 句柄类型；修正后仅重跑两项，各 **1 通过、0 失败**。测试目标最终重新编译通过，变量遮蔽警告已消除。测试入口支持 `WAR3_CLOCK_FILTER` 按名称筛选，无匹配返回失败。原始整批日志及合体重测日志位于 `tmp/docs-artifacts/war3/recovery-index-batch/`。本批覆盖录像禁止标记、合体预约的恢复与释放、腐尸甲虫索引往返；原版时序、召唤上限与死亡续行、实际保存／读档及完整战役仍待验证，恢复启动保护保留。
