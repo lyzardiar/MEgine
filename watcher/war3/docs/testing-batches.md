@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品疾风步（待批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。复合物品支持疾风步 `AOwk` 与即时效果组合，复用隐身、移速、破隐伤害与持续时间状态。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-combined-windwalk`，并回归普通疾风步和复合物品；验证状态、费用、消耗、破隐行为及回调。原版复合施法时序和实际画面待对照。
+
+
 ### 复合守卫、召唤和目标区域侦察批次（基础验证完成）
 
 范围：`4b0047c`、`41371d0`、`d05a46a`，涉及 `src/session_item_use.cpp`、复合夹具、control 测试和物品召唤说明。Win32 Release 客户端及 control 测试程序编译通过；使用生成的复合夹具执行 `war3_control_tests <data-root> <fixture> <mode>`，其中 `item-combined-wards`、`item-combined-summons`、`item-combined-reveal-point`、`item-combined-blink`、`item-combined-flare`、`item-combined`、`item-combined-dispel` 各 1 通过、0 失败，共 **7 通过、0 失败**。夹具和日志位于 `tmp/docs-artifacts/war3/combined-summon-batch/`。三类守卫的点目标、三种召唤的数量／类型／归属／限时生命、区域侦测和物品消耗已覆盖。守卫单位目标／拾取、召唤零数量／多组事件回调／混合目标、普通守卫与召唤回归、原版复合施法时序、联机与实际画面尚未验证，继续保留待测。
