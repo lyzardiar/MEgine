@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄负属性查询与恢复（待功能批次验证）
+
+路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。英雄属性设置接受支持范围内的负值，基础及含加成查询返回有符号结果，再设置正值可恢复；战斗衍生属性沿用现有下限。原版 1.27 的 `SetHeroStr` 调用 `0x6f67c090` 将目标差值加入属性，`GetHeroStr` 的 `0x6f668ff0` 返回有符号计算结果。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-attribute-negative`，覆盖三属性负值、加成和恢复；极值、资源变化及原版动态行为待验证。本次未执行功能测试。
+
+
 ### 英雄属性设置与额外加成（待功能批次验证）
 
 路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。`SetHeroStr`／`Agi`／`Int` 的两种布尔参数均调整基础属性并保留额外加成，基础属性的小数成长余量继续保留。原版 1.27 的力量设置 `0x6f67c090` 用目标值减当前基础值，`0x6f50a080` 将差值加入基础属性；另外两项及参数对资源更新的细节仍需动态对照。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-attribute-base`，并回归英雄属性及装备；属性负值、生命魔法效果和实际界面待验证。本次未执行功能测试。
