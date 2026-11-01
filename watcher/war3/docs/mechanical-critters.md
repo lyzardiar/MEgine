@@ -4,7 +4,7 @@
 
 从UnitData／UnitBalance／UnitUI和地图对象覆盖枚举动物类型，按地图地形和源tilesets筛选；排除飞行／漂浮以及源表中的特殊／战役单位，匹配为空时使用其余可用动物。使用会话随机数选取类型，读取该动物原模型、名称、动画、碰撞与单位属性。相同碰撞参数的候选只做一次落点预检；释放时从仍有合法落点的候选中选择，避免不同碰撞尺寸造成无单位生成。DataA控制召唤数量，实际施法按库存槽位共用次数、魔法、冷却、事件和取消处理。
 
-召唤的动物由施法者所属玩家控制，使用普通移动、视野、单位模型与死亡生命周期；summoner、能力与Bmec标记接入召唤事件、IsUnitType、反馈和驱散对召唤物的伤害。Bmec保持持续状态，敌对观察者的普通自动攻击、凤凰火焰和通用自动施法不会主动选择该单位；敌方看到中立选择圈和原动物模型颜色，敌方界面不展示其库存。实际拥有者、JASS GetOwningPlayer、友方控制和手动目标命令继续使用真实玩家归属。
+召唤的动物由施法者所属玩家控制，使用普通移动、视野、单位模型与死亡生命周期；summoner、能力与Bmec标记接入召唤事件、IsUnitType、反馈和驱散对召唤物的伤害。Bmec保持持续状态，敌对观察者的普通自动攻击、凤凰火焰和通用自动施法不会主动选择该单位；敌方看到中立选择圈和原动物模型颜色，敌方界面不展示其库存、机械小动物标记和限时生命条；友方仍按实际状态显示。实际拥有者、JASS GetOwningPlayer、友方控制和手动目标命令继续使用真实玩家归属。
 
 来源：只读Warcraft III 1.27.0.52240安装资源的Amec／Bmec、单位数据及其地形和特殊标志。REA在原Game.dll中定位CAbilityMechanicalCritter、CBuffMechanicalCritter及单位选择器；原件只用于开发分析，运行不加载Game.dll。源表与摘要、提取脚本和REA记录位于tmp/docs-artifacts/war3/item-summons/mechanical-source.json、mechanical-vtables.json、mech-*.json。产品编译日志位于同目录mechanical-final-build.log。
 
