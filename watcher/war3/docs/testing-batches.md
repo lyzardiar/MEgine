@@ -4823,3 +4823,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 召唤与限时生命快照（待批次验证）
 
 路径：`src/session.h`、`src/session_illusion.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUMM` 保存限时生命、召唤者及幻象来源、伤害倍率和相关标记；单位核心恢复后校验并应用。Win32 Release 核心与 clock 目标编译通过；clock 51 通过、0 失败，覆盖已移除来源、计时／暂停、倍率、非法计时和错误映射。OrcX01 模拟 150 秒组合探针 46 个现有组件重编码一致，但没有活动限时生命；日志 `tmp/docs-artifacts/war3/summon-snapshot-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-10.log`。批次验证召唤／幻象消费者与原图其他时点；恢复后过期、专项技能状态、实际存档和续行仍待实现或验收。
+
+
+### 生产队列与集结状态快照（待批次验证）
+
+路径：`src/session.h`、`src/session_production.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SPRD` 保存生产队列、费用和人口预留、进度、编号、集结及复活／献祭引用；调用方先恢复玩家、单位和可破坏物身份。Win32 Release 核心及 clock 目标编译通过，clock 52 通过、0 失败，覆盖真实训练队列、集结、恢复后取消退款与非法映射。OrcX01 模拟 150 秒组合探针的 47 个现有组件重编码一致，该时点没有活动队列；日志 `tmp/docs-artifacts/war3/production-snapshot-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-11.log`。批次验证训练、研究、复活及献祭消费者；恢复后生产完成、建筑施工、完整存档和续行仍待实现或验收。
