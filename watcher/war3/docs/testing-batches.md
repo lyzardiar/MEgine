@@ -4855,3 +4855,10 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 尸体与衰变状态快照（待批次验证）
 
 路径：`src/session.h`、`src/session_corpses.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCOR` 保存尸体衰变、占用与索引，以及掘尸／墓地状态。Win32 Release 核心及 clock 目标编译通过，clock 57 通过、0 失败；原图 150 秒隔离重建后临时绕过启动保护，推进一帧的 51 个组件重编码一致。推进一秒按新建对象顺序映射后，移动调度和特效状态仍有两项差异；日志 `tmp/docs-artifacts/war3/corpse-snapshot-clock-01.log`、`tmp/docs-artifacts/war3/orcx-continuation-audit/audit-03.log`、`audit-06.log`。批次验证尸体、采集及施工消费者；完整恢复、续行、实际存档和跨区仍待实现或验收。
+
+
+### 采集、施工与尸体状态批次（2026-11-01，存在差异项）
+
+本批范围 `acdcd33`、`77667e9`、`d33bc54`。同一集成源码的 Win32 Release 客户端及 clock、harvest、construction、corpse、destructable 目标编译通过；复用 clock 57/57。合批执行采矿、备用投递路线、施工和伐木消费者，均输出 PASS；尸体 `decay`、`flow` 各 1/1。日志与隔离目录 `tmp/docs-artifacts/war3/harvest-construction-corpse-batch/`。这些消费者运行普通会话，不能证明完整读档续行。
+
+原版 OrcX01 150 秒隔离恢复诊断在临时副本绕过启动保护后，推进一帧的 51 个现有组件重编码一致；推进一秒时，两侧新建 59 个同序同类型对象，按创建次序映射后移动调度及特效状态仍有差异，保留为失败项，日志 `tmp/docs-artifacts/war3/orcx-continuation-audit/audit-06.log`。诊断未证明全部状态完整；实际存档、长时间续行、跨区和窗口仍待实现或验收。
