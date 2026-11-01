@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 触发器失效句柄（待功能批次验证）
+
+路径：`src/session.cpp`、`tests/session_tests.cpp`。触发器销毁、启停、等待选项及启用状态／等待选项／执行与条件计数查询先校验句柄；空、销毁、其他类型及未知句柄分别不产生操作或返回零，有效触发器继续执行原有行为。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`；注册入口 `0x6f1df7d0`、`0x6f1e0010`、`0x6f1dfc50`、`0x6f1e84b0`、`0x6f1fa4f0`、`0x6f1e84d0`、`0x6f1e5d50`、`0x6f1e5dd0` 的指令均在句柄解析失败时直接返回。Win32 Release 客户端及 session 测试目标构建通过；合批运行 `war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json`，检查失效句柄、正常状态与既有触发器生命周期；新增用例尚未执行，原版运行时和实际地图待验证。
+
+
 ### 波形技能的目标生命周期（待功能批次验证）
 
 路径：`src/session_area_spells.cpp`、`src/session_neutral_spells.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。波形同一模拟步内预选目标时记录死亡和归属轮次，逐个命中前复核；火焰呼吸伤害回调后复核目标归属轮次，再决定是否附加灼烧。Win32 Release 客户端及 control 测试目标构建、生成器语法检查通过；`wave-target-reentry` 最小复现 1 项通过、0 失败，检查冲击波前序伤害回调使同批预选英雄复活；夹具和构建日志位于 `tmp/docs-artifacts/war3/wave-target-lifecycle/`。合批运行该模式与 spell 默认流程、`frost-breath`，并覆盖火焰呼吸伤害回调易主、多目标、穿刺和不同模拟步；原版动态回调时序、多人及实际窗口仍待对照。
