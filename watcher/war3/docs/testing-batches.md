@@ -5323,3 +5323,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUMM` 版本 4 保存创建时的召唤分类，含单位的旧版本明确拒绝；`SRBF` 更新至版本 59。合批编译并运行 `war3_clock_tests <data-root> <output-root>`，检查人工设置分类的恢复、`IsUnitType` 及旧版拒绝。真实变形、驱散、经验计算、实际存读档和原版行为仍待验证；本次未编译或执行测试，恢复启动保护保留。
 
 召唤分类夹具补充非法分类值拒绝，并声明类型查询所需的 JASS native；待同批执行。
+
+完整恢复包夹具补充熊形态实际变形：人工设置创建时召唤分类，再检查变形前后及恢复包往返保留该分类；待同批执行，原版分类规则仍需对照。
