@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄降级技能调整（待批次验证）
+
+路径：`src/session.h`、`src/session_hero.cpp`、`tests/revival_tests.cpp`。`UnitStripHeroLevel` 按等级逐步降低英雄属性和经验，先移除不满足新等级的技能等级；没有强制移除时扣除未分配技能点，点数不足时降低已学等级最高的技能。原版 1.27 `Game.dll` 的 `0x6f50dd30` 至 `0x6f50df40` 包含技能要求、点数及最高等级技能处理；`0x6f50df50` 逐级调用。待执行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-strip-skills`，并检查多技能、并列、技能书借用、被动状态、超大次数、原版动态及窗口。本次未执行测试。
+
 ### 英雄技能点增减边界（待批次验证）
 
 路径：`src/session.h`、`src/session_hero.cpp`、`tests/revival_tests.cpp`。`UnitModifySkillPoints` 将扣除量限制到已有点数，将单次增加量限制为前五个英雄技能剩余可学等级；零变更返回 false。1.27 `Game.dll` 的 `0x6f50c280` 至 `0x6f50c31f` 包含上述限制及返回分支。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-skill-modify`，并回归 `hero-skill-cap` 与 `hero-xp`；负数溢出、原版动态行为和自定义技能组合待验证。本次未执行测试。

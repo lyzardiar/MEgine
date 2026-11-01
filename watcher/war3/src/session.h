@@ -1038,6 +1038,7 @@ class ScriptSession {
     void refreshHero(UnitState& unit);
     const std::vector<int>& heroThresholds();
     int heroSkillCapacity(const UnitState& unit);
+    bool stripHeroLevel(std::uint32_t unit,std::uint32_t count);
     void heroExperience(std::uint32_t unit,int value,bool visual=true);
     bool learnSkill(std::uint32_t unit,std::uint32_t ability);
     void removeUnit(std::uint32_t unit);
