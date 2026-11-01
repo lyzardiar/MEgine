@@ -1,18 +1,8 @@
 # 独立客户端测试队列
 
-### 电脑隐身野怪目标（待批次验证）
+### 野怪营地筛选与存档提示批次（逻辑验证完成）
 
-路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。营地选择排除对电脑未被侦测的隐身单位，避免选择无法下达进攻的目标；显形或侦测后可选择。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次执行 `war3_campaign_ai_tests <data-root> <fixture> reachable`，检查隐身、显形和同营地等级筛选；侦测器变化、原版时序、自然对局与联机待验证。
-
-
-### 电脑野怪营地筛选（待批次验证）
-
-路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。营地等级及飞行判断排除隐藏与无敌中立单位，避免它们遮蔽可攻击的成员。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次执行 `war3_campaign_ai_tests <data-root> <fixture> reachable`，回归可达、等级、混编和孤岛场景；原版分组、自然对局及联机行为待对照。
-
-
-### 存档错误提示换行（待批次验证）
-
-路径：`src/game_flow_ui.cpp`。游戏内保存和加载错误按原字体度量换行并显示带背景的提示区域，长错误文本不再受单行高度限制。Win32 Release 客户端编译通过。批次检查缺失地图路径、存档错误与列表操作；实际窗口、长路径及不同语言布局待验证。
+范围：`7578f77`、`3fa19bf`、`b45da0b` 及测试补充 `7887adf`。Win32 Release 客户端与 CampaignAI 测试程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> reachable`、`enemy-base`、`fog-attack` 各 2 项通过，`island-auto-multiwave-script` 1 项通过，共 **7 通过、0 失败**。`reachable` 补充检查了隐藏、无敌、未侦测隐身、侦测和显形的野怪选择及等级分组；测试补充后只重跑受影响的 `reachable`，其他结果复用。日志位于 `tmp/docs-artifacts/war3/ai-creep-visibility-batch/`，夹具为 `tmp/docs-artifacts/war3/campaign-ai/fixture.w3m`。原版营地分组及侦测时序、自然对局与联机仍待对照；图形设备不可用，存档错误换行的长路径、多语言布局和实际窗口交互仍待验收。
 
 
 ### 存档确认与错误提示批次（逻辑验证完成，窗口待验收）
