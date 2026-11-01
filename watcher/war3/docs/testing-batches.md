@@ -4790,3 +4790,9 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 已销毁定时器身份（待批次验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`tests/clock_tests.cpp`、`tests/orc_campaign_chain_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`STMR` 版本 2 保留已销毁定时器句柄，活动定时器按原次序恢复，继续读取版本 1。Win32 Release 核心及测试目标编译通过；clock 47/47，原版 OrcX01 的定时器身份往返 1/1，未加载 Game.dll。原图组合探针越过失效定时器后仍因布尔表达式引用无法完成；批次验证脚本对象组合、定时器事件和缓存／哈希表回归，完整世界续行、跨区、原版格式和窗口仍待实现或验收。产物 `tmp/docs-artifacts/war3/timer-retired-snapshot/`、`tmp/docs-artifacts/war3/orcx-restore-audit/`。
+
+### gamecache、哈希表与定时器身份批次（2026-11-01，存在失败项）
+
+本批范围 `c3e1a969e`、`6377ca9`、`790440d`。同一集成源码的 Win32 Release 客户端、clock、兽族战役、DotA 和 game-flow 目标编译通过；复用该源码上 clock 47/47 与 OrcX01 定时器身份 1/1，合批执行 OrcX01 玩家／缓存／迷雾快照 1/1、DotA 两张哈希表快照 1/1，以及 gamecache 磁盘版本兼容、同步与分片边界三个消费者，均通过并检查未加载 Game.dll。game-flow 编译出现既有测试代码的 C4389 有符号比较警告。日志 `tmp/docs-artifacts/war3/cache-table-timer-batch/`。
+
+失败项保留：OrcX01 模拟 150 秒的组合恢复探针重建现有世界、单位、缓存、迷雾、脚本对象和事件后，已越过已销毁定时器身份；恢复脚本全局时仍缺少 `boolexpr` 句柄并失败，日志 `tmp/docs-artifacts/war3/orcx-restore-audit/audit-03.log`。该探针未完成全局恢复或继续模拟，不能视为完整存档或跨区通过。完整对象状态、布尔表达式身份、实际保存／载入、原版格式、窗口及性能仍待实现或验证。

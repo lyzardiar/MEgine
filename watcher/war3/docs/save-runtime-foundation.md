@@ -278,4 +278,4 @@ Win32 Release 核心、clock 和 DotA 测试目标编译通过；`war3_clock_tes
 
 `STMR` 版本 2 同时保存活动定时器及已销毁定时器的稳定身份；活动定时器沿用原调度顺序，失效句柄只用于恢复脚本引用。重建会排除目标会话初始化时被替换的临时定时器身份；调用方仍须恢复全局等引用。版本 1 按全部活动定时器读取，支持已有对象恢复与新建重建。
 
-原版 OrcX01 静音模拟 150 秒时，脚本全局仍引用一个已销毁定时器；此前组合恢复在该引用处失败。Win32 Release 核心、clock 及兽族战役测试目标编译通过；clock 47 通过、0 失败，覆盖失效句柄、活动定时器续行及版本 1 两种恢复路径；`war3_orc_campaign_chain_tests <data-root> timer-snapshot <new-user-dir>` 重建原图 45 个定时器身份并覆盖所有全局定时器引用，1/1，未加载 Game.dll。组合探针越过该句柄后停在另一布尔表达式引用，日志 `tmp/docs-artifacts/war3/orcx-restore-audit/audit-02.log`；完整脚本全局与世界恢复、继续模拟、跨区存档和窗口仍未完成。
+原版 OrcX01 静音模拟 150 秒时，脚本全局仍引用一个已销毁定时器；此前组合恢复在该引用处失败。Win32 Release 核心、clock 及兽族战役测试目标编译通过；clock 47 通过、0 失败，覆盖失效句柄、活动定时器续行及版本 1 两种恢复路径；`war3_orc_campaign_chain_tests <data-root> timer-snapshot <new-user-dir>` 重建原图 45 个定时器身份并覆盖所有全局定时器引用，1/1，未加载 Game.dll。组合探针越过该句柄后停在另一布尔表达式引用，日志 `tmp/docs-artifacts/war3/orcx-restore-audit/audit-03.log`；完整脚本全局与世界恢复、继续模拟、跨区存档和窗口仍未完成。
