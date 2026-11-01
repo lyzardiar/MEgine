@@ -1444,6 +1444,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildDeformations(std::span<const std::uint8_t> bytes);
     Bytes encodeImages(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildImages(std::span<const std::uint8_t> bytes);
+    Bytes encodeIndicators(const jass::StableHandleMap& encodeHandle) const;
+    void restoreIndicators(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodePointDamage(const jass::StableHandleMap& encodeHandle) const;
     void restorePointDamage(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeCombatEffects(const jass::StableHandleMap& encodeHandle) const;

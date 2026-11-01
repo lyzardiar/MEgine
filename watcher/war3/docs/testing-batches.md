@@ -5174,3 +5174,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 侦测事件状态恢复（待功能批次验证）
 
 路径：`src/session_callbacks.cpp`、`src/session_recovery_bundle.cpp`、`tests/visibility_tests.cpp`。SAEV 版本 2 保存已侦测单位、所属玩家及侦测玩家位集，保留已移除单位的待清理身份；SRBF 更新至版本 51。Win32 Release `cmake --build --preset release --target war3_visibility_tests --parallel 4` 编译通过，未运行测试。功能批次使用 `war3_visibility_tests <data-root> <invisibility-fixture> detected-recovery` 检查恢复包及事件状态往返，并补充恢复续行时持续侦测不重复触发、离开后再次触发、移除／归属变化、损坏数据和实际存读档；恢复启动保护保留。
+
+
+### 单位与物件提示闪烁恢复（待功能批次验证）
+
+路径：`src/indicator.h`、`src/session.h`、`src/session_indicators.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`。SIND 保存未结束的脚本提示闪烁、环形槽位顺序和单位／物品／可破坏物身份；SRBF 更新至版本 52。已新增提示颜色、已移除单位及环形槽位复用的恢复检查。功能批次构建并运行 `war3_clock_tests <data-root> <output-root>`，并补充闪烁时间推进、过期、重叠及真实窗口／存读档检查；启动保护保留。Win32 Release `cmake --build --preset release --target war3_clock_tests --parallel 4` 编译通过，未执行测试。状态：待批次验证。
