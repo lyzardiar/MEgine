@@ -5868,3 +5868,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家联盟接口的失效玩家（待功能批次验证）
 
 路径：`src/session.cpp`、`tests/game_flow_tests.cpp`。`SetPlayerAlliance` 在任一玩家无效时无操作，`GetPlayerAlliance` 对无效玩家返回 false；有效联盟关系和事件保持现有流程。原版 1.27 `SetPlayerAlliance` 入口 `0x6f1f6030` 在任一玩家解析失败时返回，`GetPlayerAlliance` 入口 `0x6f1e3c50` 对首个玩家解析失败返回零；第二个无效玩家的安全返回是客户端保护。合批运行 game flow 夹具，覆盖空／错误类型及有效非对称联盟；原版异常参数和事件时序仍待对照。本次未执行功能测试。
+
+
+### 玩家资源税率的失效参数（待功能批次验证）
+
+路径：`src/session.cpp`、`tests/game_flow_tests.cpp`。税率设置在玩家句柄失效时无操作，查询在玩家或资源类型无效时返回零；有效税率及原有上限规则保持。原版 1.27 的 `SetPlayerTaxRate` 入口 `0x6f1f6380` 和 `GetPlayerTaxRate` 入口 `0x6f1e4110` 检查双方玩家，查询仅处理黄金和木材。合批运行 game flow 夹具，覆盖空／错误类型玩家、无效资源及有效税率；实际资源转账与原版游戏模式仍待对照。本次未执行功能测试。
