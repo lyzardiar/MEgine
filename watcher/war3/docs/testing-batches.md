@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 物品雷霆一击和战争践踏（待批次验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。单能力及复合物品支持 `AHtc`、`ACtc`、`AOws`，复用范围伤害、减速、眩晕和技能延迟。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-area-control` 并回归普通技能及复合物品；检查目标、伤害、状态、资源和消耗。拾取使用、事件回调、原版施法时序与画面待验证。
+
+
 ### 复合物品刀阵（待批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。复合物品支持刀阵 `AEfk` 与即时效果组合，复用范围筛选、飞刀弹道、伤害上限及技能延迟。Win32 Release 客户端及 control 测试程序编译通过。生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-combined-fan`，回归普通刀阵及复合物品；验证目标、弹道、伤害上限、费用和事件回调。原版施法时序与画面待对照。
