@@ -5313,8 +5313,6 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`2907b6b`、`eb57ac8`、`6f77d42` 及本次完整恢复包夹具补充。Win32 Release `war3_clock_tests` 构建通过，完整测试 **118 通过、0 失败**；追加非空攻击被动状态的完整恢复包往返后，定向测试 **1 通过、0 失败**。覆盖暴击累计、掠夺余量、活动及已移除的腐蚀来源、损坏摘要、异常周期和错误映射拒绝；状态数值由夹具设置。日志及临时产物在 `tmp/docs-artifacts/war3/recovery-attack-passives-batch/`。实际攻击概率、资源入账和腐蚀跳伤的恢复续行、真实存读档及原版行为仍待验证，恢复启动保护保留。
 
 
-### 召唤单位的瘟疫守卫与碰撞恢复（待功能批次验证）
+### 召唤单位的瘟疫守卫与碰撞恢复
 
-路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SUMM` 版本 3 保存瘟疫守卫标记和实际碰撞半径，`SRBF` 更新至版本 58。合批构建并运行 `war3_clock_tests <data-root> <output-root>`，检查标记和零碰撞往返；另需覆盖自然创建的瘟疫守卫和蝗虫、目标筛选、死亡清理、旧版拒绝和实际读档。本次未执行功能编译或测试，恢复启动保护保留。
-
-召唤状态夹具补充真实 `Aap3` 死亡云雾：检查自然创建的瘟疫守卫经恢复后保留标记、零碰撞、召唤者和限时生命。该场景待功能批次执行；感染、伤害归属与实际读档仍待验证。
+范围：`832cd7e`、`5f38439`；路径：`src/session_illusion.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release `war3_clock_tests` 编译通过，执行 `war3_clock_tests <data-root> <output-root>` 为 **118 通过、0 失败**。`SUMM` 版本 3 保存瘟疫守卫标记和实际碰撞半径，`SRBF` 为版本 58；夹具覆盖 `Aap3` 死亡云雾产生的守卫以及标记、零碰撞、召唤者和限时生命恢复。日志及临时产物在 `tmp/docs-artifacts/war3/recovery-summon-ward-batch/`。蝗虫、目标筛选、感染、伤害归属、死亡清理、旧版拒绝、实际读档和原版行为仍待验证，恢复启动保护保留。
