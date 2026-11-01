@@ -4772,3 +4772,9 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 迷雾与修改器快照（待批次验证）
 
 路径：`src/fog_grid.h`、`src/session.h`、`src/session_fog.cpp`、`tests/clock_tests.cpp`、`tests/orc_campaign_chain_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SFOG` 保存探索／可见格、开关、节拍与迷雾修改器身份；检查地图、时钟和数据后重建。Win32 Release 核心、clock 和兽族战役测试目标编译通过；clock 44 通过、0 失败；隔离原版 `OrcX01` 150 秒玩家配置／统计／迷雾组合快照往返 1/1，均未加载 Game.dll。批次验证相关玩家和单位状态组合、自然对局续行、共享视野、不同地图与缓存失效；临时显形和哨兵状态、完整跨区、原版存档和窗口仍未验证或实现。产物 `tmp/docs-artifacts/war3/fog-state-snapshot/`。
+
+### 玩家统计、外交与迷雾快照批次（2026-11-01）
+
+本批范围 `4e826b0`、`513343e`、`988f9c1`。同一集成源码的 Win32 Release 客户端、clock、兽族战役、passive、visibility 和 commerce 目标编译通过。复用该源码上已完成的 clock 44/44 与原版 OrcX01 150 秒玩家配置／统计／迷雾组合快照 1/1；合批执行视野加成、隐身和侦测事件各 1/1，原版 Strange Brew 任务 1/1，commerce 消费者输出 PASS。除 commerce 程序仅输出 PASS 外，其余检查报告未加载 Game.dll。新增批次日志位于 `tmp/docs-artifacts/war3/player-fog-batch/`；快照夹具与隔离目录见 `tmp/docs-artifacts/war3/fog-state-snapshot/`。
+
+原图快照检查只重建模拟时钟、玩家配置、统计与迷雾，未恢复单位、脚本全局、计时器或继续模拟；任务检查直接移动英雄、补充金币、降低凤凰生命并使英雄无敌。跨组件完整恢复、临时显形和哨兵、真实跨区／存档、原版格式、窗口和大地图性能仍待验证或实现。
