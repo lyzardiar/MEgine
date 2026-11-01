@@ -49,7 +49,7 @@ public:
     void reload(bool campaignList=false);
     void nextLevel(const std::string& path,const fs::path& externalRoot={});
     void nextCheckpoint(const std::string& name,bool campaign,const fs::path& externalRoot={});
-    void nextCheckpointPrepared(const std::string& name,const RecoveryCheckpointInfo& info,const fs::path& path,bool campaign);
+    void nextCheckpointPrepared(const std::string& name,const RecoveryCheckpointInfo& info,const fs::path& path,bool campaign,const fs::path& externalRoot={});
     std::string takeCheckpoint();
     bool campaignSession() const {return currentCampaignSession_;}
     void restart();

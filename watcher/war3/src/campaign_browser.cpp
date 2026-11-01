@@ -90,8 +90,8 @@ void CampaignBrowser::nextLevel(const std::string& path,const fs::path& external
 void CampaignBrowser::nextCheckpoint(const std::string& name,bool campaign,const fs::path& externalRoot){
     try{auto allowed=externalRoot.empty()?fs::path{}:fs::canonical(externalRoot);auto info=ScriptSession::inspectRecoveryCheckpoint(dataRoot_,name);auto path=ScriptSession::resolveRecoveryCheckpointMap(dataRoot_,name,allowed);beginPath(path,info.expansion,std::min(info.defaultDifficulty,2u),true,true,allowed,info.version);currentCampaignSession_=campaign;checkpoint_=name;}catch(const std::exception& e){clearPreparation();error_="无法载入存档地图。";log_.write(std::string("campaign_checkpoint_error=")+e.what());}
 }
-void CampaignBrowser::nextCheckpointPrepared(const std::string& name,const RecoveryCheckpointInfo& info,const fs::path& path,bool campaign){
-    try{beginPath(path,info.expansion,std::min(info.defaultDifficulty,2u),true,true,{},info.version);currentCampaignSession_=campaign;checkpoint_=name;}catch(const std::exception& e){clearPreparation();error_="无法载入存档地图。";log_.write(std::string("campaign_checkpoint_error=")+e.what());}
+void CampaignBrowser::nextCheckpointPrepared(const std::string& name,const RecoveryCheckpointInfo& info,const fs::path& path,bool campaign,const fs::path& externalRoot){
+    try{auto allowed=externalRoot.empty()?fs::path{}:fs::canonical(externalRoot);beginPath(path,info.expansion,std::min(info.defaultDifficulty,2u),true,true,allowed,info.version);currentCampaignSession_=campaign;checkpoint_=name;}catch(const std::exception& e){clearPreparation();error_="无法载入存档地图。";log_.write(std::string("campaign_checkpoint_error=")+e.what());}
 }
 std::string CampaignBrowser::takeCheckpoint(){auto name=std::move(checkpoint_);checkpoint_.clear();return name;}
 void CampaignBrowser::restart(){try{if(currentPath_.empty())throw std::runtime_error("No map to restart");beginPath(currentPath_,currentExpansion_,currentDifficulty_,true,currentCampaignSession_,currentExternalRoot_);}catch(const std::exception& e){clearPreparation();error_="无法重新载入当前地图。";log_.write(std::string("campaign_restart_error=")+e.what());}}

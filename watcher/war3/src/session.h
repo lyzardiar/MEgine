@@ -1397,7 +1397,7 @@ public:
     void requestLocalLoad(const std::string& name);
     static RecoveryCheckpointInfo inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,std::stop_token stop={});
     static fs::path resolveRecoveryCheckpointMap(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={},std::stop_token stop={});
-    static std::pair<RecoveryCheckpointInfo,fs::path> inspectAndResolveRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={},std::stop_token stop={});
+    static std::pair<RecoveryCheckpointInfo,fs::path> inspectAndResolveRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={},std::stop_token stop={},bool exactExternalHint=false);
     std::map<std::uint32_t,std::uint32_t> restoreRecoveryCheckpoint(const std::string& name);
     std::map<std::uint32_t,std::uint32_t> restoreRecoveryBundle(std::span<const std::uint8_t> bytes);
     Bytes encodeSelection(const jass::StableHandleMap& encodeHandle) const;

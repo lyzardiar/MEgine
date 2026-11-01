@@ -5447,3 +5447,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 载具坠毁的召唤单位伤害（待功能批次验证）
 
 路径：`src/session_transport.cpp`、`tests/generate-transport-fixture.py`、`tests/transport_tests.cpp`、`docs/transport.md`。载具死亡时读取 `Achd` 的 `DataC`，对符合目标条件的召唤乘员应用实际伤害并在回调后检查生命周期；原始数值为零，自定义夹具使用 75。合批生成 `python watcher/war3/tests/generate-transport-fixture.py --data-root <root> --crash-damage --output tmp/docs-artifacts/war3/transport/crash-damage.w3m`，编译并执行 `war3_transport_tests <root> <fixture> crash-damage`，同时复验原始 `crash`；死亡／免疫／重入、原版伤害分类及窗口仍待验证。本次未执行功能测试。
+
+
+### 外部地图的手动存档恢复（待功能批次验证）
+
+路径：`src/session.h`、`src/session_campaign.cpp`、`src/saved_game_browser.cpp`、`src/campaign_browser.{h,cpp}`、`src/main.cpp`、`tests/clock_tests.cpp`。玩家手动选择存档时，可使用存档记录的确切外部地图路径；仅在文件扩展名和完整摘要匹配后交给地图准备，恢复时再次核对。脚本读档沿用既有目录范围。合批检查相同／变更外部地图、默认范围、普通与战役切换及窗口错误提示；地图移动后的搜索和原版文件格式仍待实现。本次未执行功能测试。
