@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄升级技能点上限（待批次验证）
+
+路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。英雄升级后，未分配技能点限制为前五个英雄技能尚可学习的等级总数；英雄没有可学技能时上限为零。原版 1.27 `Game.dll` 在 `0x6f50ad5b` 遍历五个技能槽，按最大等级减去已学等级累加，并在 `0x6f50ada2` 限制技能点。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-skill-cap`，并验证多技能、重训、额外技能点、地图覆盖和升级事件观察值；原版动态对照和窗口待验。本次未执行测试。
+
 ### 尸体与英雄成长合批结果
 
 范围：`806c444`、`77aaa4b`、`13c7cdd`。Win32 Release 客户端及 corpse、revival、clock 测试目标构建通过，构建日志未发现编译警告。重新生成夹具后，corpse 的 `animation-lifecycle`、`decay`、`flow`，revival 的 `hero-level-visual`、`hero-level-event`、`hero-xp`、`awaken`，以及 clock 的 `player_resource_natives_follow_original_bounds` 各 1 通过、0 失败。clock 首次运行因精简测试脚本缺少 `effect` 类型失败，补充类型后重建并通过。日志与夹具位于 `tmp/docs-artifacts/war3/hero-level-batch/`，构建日志为 `tmp/docs-artifacts/war3/hero-level-batch-build.log`。本批未加载 Game.dll；原版动态事件／经验书／自定义视觉、英雄特殊尸体、实际窗口和完整地图仍待验证。
