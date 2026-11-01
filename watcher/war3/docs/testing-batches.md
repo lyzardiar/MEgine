@@ -4684,3 +4684,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 路径：`src/session_order_snapshot.cpp`、`src/session.h`、`src/session_item_snapshot.cpp`、`src/session_destructable_snapshot.cpp`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SPQO` 保存排队顺序和命令参数，重建并核对单位、物品、可破坏物及其已移除句柄；错误映射拒绝且不改变队列。Win32 Release 客户端和 clock 测试目标编译通过，clock 33 通过、0 失败；OrcX01 原图玩家移动及排队移动的队列重建往返一致，探针 `tmp/docs-artifacts/war3/queued-orders-snapshot/probe/`，未加载 Game.dll。恢复后实际续执行、其他活动订单与完整存档仍待批次验证或实现。
 
 本批合并 `c96456a`、`1a11183`、`d847fbf`：同一集成代码版本下，Win32 Release 客户端及相关测试目标编译通过；`war3_clock_tests <data-root> <output-root>` 33 通过、0 失败，覆盖定时转向、移动路线、重寻路调度和排队命令快照；完整 `war3_order_queue_tests <data-root> <BootyBay.w3m>` 输出 32 条 PASS，进程退出码 0；`war3_movement_avoidance_tests <data-root> <BootyBay.w3m> reenable-pathing` 1 通过、0 失败。OrcX01 原图隔离会话中，脚本定时转向、5 个移动单位以及玩家排队移动分别完成快照往返；原图探针位于 `tmp/docs-artifacts/war3/{unit-facing-snapshot,unit-movement-snapshot,queued-orders-snapshot}/probe/`，批次输出位于 `tmp/docs-artifacts/war3/movement-queue-batch/`。未加载 Game.dll。完整世界恢复、加载后续执行、动态障碍、原版行为及实际窗口仍待验证或实现。
+
+### 单位战斗订单快照（待批次验证）
+
+路径：`src/session_combat_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCBO` 保存战斗目标、巡逻、物品移动、守卫字段、攻击前摇及索敌节拍，并核对重建后的单位、物品与可破坏物身份。Win32 Release 客户端及 clock 目标编译通过，clock 33 通过、0 失败；OrcX01 原图 34.9375 秒的一个攻击前摇及 252 个活动单位的战斗订单快照重建后往返一致，探针 `tmp/docs-artifacts/war3/unit-combat-snapshot/probe/`，未加载 Game.dll。弹道、增益和 AI 守卫调度、恢复后实际攻击及完整存档仍待批次验证或实现。
