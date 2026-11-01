@@ -2,7 +2,7 @@
 
 ### 英雄负经验（待批次验证）
 
-路径：`src/session_hero.cpp`、`src/session_cache.cpp`、`tests/revival_tests.cpp`。`AddHeroXP` 的负值按原版实数运算和取整调整经验，不降低英雄等级；后续经验不足当前等级阈值时也不派发升级事件。满级经验仍限制在最高等级阈值，缓存允许保存负经验。1.27 `Game.dll` 的 `0x6f1d9da0` 将有符号数传入经验结算，`0x6f50ac2a` 加入经验，随后仅处理升级；`0x6f054060` 加 0.5 后由 `0x6f052f30` 截断。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-negative-xp`，并验证缓存往返、数值极限、原版动态及窗口；本次未运行测试。
+路径：`src/session_hero.cpp`、`src/session_cache.cpp`、`tests/revival_tests.cpp`。`AddHeroXP` 的负值按原版实数运算和取整调整经验，不降低英雄等级；后续正经验可逐步抵消负经验，不足当前等级阈值时也不派发升级事件。满级经验仍限制在最高等级阈值，缓存允许保存负经验。1.27 `Game.dll` 的 `0x6f1d9da0` 将有符号数传入经验结算，`0x6f50ac2a` 加入经验，随后仅处理升级；`0x6f054060` 加 0.5 后由 `0x6f052f30` 截断。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-negative-xp`，并验证缓存往返、数值极限、原版动态及窗口；本次未运行测试。
 
 ### 英雄幻象的成长接口（待批次验证）
 
