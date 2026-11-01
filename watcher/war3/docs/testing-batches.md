@@ -4936,3 +4936,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 中立技能调度与 AI 恢复边界（待阶段验证）
 
 路径：`src/session_game.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCLK` 版本 3 保存中立野怪下一次技能决策时刻并兼容读取版本 1／2；`SRBF` 版本 7 拒绝包含活动 AI 运行时的会话。Win32 Release 核心及 clock 目标编译通过，clock 64/64，覆盖非零时刻往返、旧版读取和真实 `human.ai` 拒绝，日志 `tmp/docs-artifacts/war3/neutral-ai-recovery/clock-final.log`。待实现 AI 私有状态及共享线程恢复，并阶段验证中立战斗续行、实际存档和原图对局；组件包启动保护保留。
+
+
+### 共享运行时睡眠线程基础（待阶段验证）
+
+路径：`src/jass_runtime.h`、`src/jass_runtime.cpp`、`src/jass_threads.cpp`、`tests/jass_thread_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`JSHR` 保存共享调度器的运行时归属、顺序、暂停状态及跨运行时等待；保存校验脚本、等待环、句柄和预算，恢复失败清理已重建线程。Win32 Release 核心与线程目标编译通过；预算补充前 JASS 30/30、会话线程 6/6，最终受影响共享线程定向 4/4；日志 `tmp/docs-artifacts/war3/shared-runtime-recovery/`。待整合 AI 虚拟机全局、调度上下文和实际存档，阶段验证暂停／等待交错、原图 AI 续行；组件包仍拒绝活动 AI。

@@ -22,11 +22,13 @@ using ThreadContextTransfer=std::function<void(ThreadId)>;
 using ThreadBatchContextTransfer=std::function<void(size_t,ThreadId)>;
 struct RuntimeSleepSnapshot {std::vector<Source> sources;bool debug=false;Id function=none;std::vector<Value> arguments;double remaining=0;RuntimeExecutionInspection execution;bool handlesMapped=false,hasContext=false;std::uint32_t nativeResumeMode=1,waitIndex=0;};
 struct RuntimeSleepBatch {std::vector<Source> sources;std::vector<RuntimeSleepSnapshot> threads;};
+struct RuntimeSharedSleepEntry {std::uint32_t owner=0;RuntimeSleepSnapshot thread;};
+struct RuntimeSharedSleepBatch {std::vector<std::vector<Source>> sources;std::vector<bool> paused;std::vector<RuntimeSharedSleepEntry> threads;};
 class Runtime {
     struct Impl;
     std::unique_ptr<Impl> impl_;
-    RuntimeSleepSnapshot snapshotSleepingThreadImpl(const ThreadInspection& task,const StableHandleMap& encodeHandle,const ThreadContextTransfer& captureContext,bool includeSources) const;
-    ThreadId restoreSleepingThreadImpl(const RuntimeSleepSnapshot& snapshot,const StableHandleMap& decodeHandle,const ThreadContextTransfer& restoreContext,const std::vector<Source>* sources,bool allowExisting);
+    RuntimeSleepSnapshot snapshotSleepingThreadImpl(const ThreadInspection& task,const StableHandleMap& encodeHandle,const ThreadContextTransfer& captureContext,bool includeSources,bool allowShared=false) const;
+    ThreadId restoreSleepingThreadImpl(const RuntimeSleepSnapshot& snapshot,const StableHandleMap& decodeHandle,const ThreadContextTransfer& restoreContext,const std::vector<Source>* sources,bool allowExisting,bool allowShared=false);
 public:
     using Native=std::function<Value(Runtime&,std::span<const Value>)>;
     explicit Runtime(Module module,RuntimeLimits limits={});
@@ -78,6 +80,10 @@ public:
     ThreadId restoreSleepingThread(const RuntimeSleepSnapshot& snapshot,const StableHandleMap& decodeHandle={},const ThreadContextTransfer& restoreContext={});
     RuntimeSleepBatch snapshotSleepingThreads(const StableHandleMap& encodeHandle={},const ThreadBatchContextTransfer& captureContext={}) const;
     std::vector<ThreadId> restoreSleepingThreads(const RuntimeSleepBatch& snapshot,const StableHandleMap& decodeHandle={},const ThreadBatchContextTransfer& restoreContext={});
+    RuntimeSharedSleepBatch snapshotSharedSleepingThreads(std::span<Runtime* const> runtimes,const StableHandleMap& encodeHandle={},const ThreadBatchContextTransfer& captureContext={}) const;
+    std::vector<ThreadId> restoreSharedSleepingThreads(std::span<Runtime* const> runtimes,const RuntimeSharedSleepBatch& snapshot,const StableHandleMap& decodeHandle={},const ThreadBatchContextTransfer& restoreContext={});
+    Bytes encodeSharedSleepingThreads(std::span<Runtime* const> runtimes,const RuntimeSharedSleepBatch& snapshot) const;
+    RuntimeSharedSleepBatch decodeSharedSleepingThreads(std::span<Runtime* const> runtimes,std::span<const std::uint8_t> bytes) const;
     Bytes encodeSleepingThreads(const RuntimeSleepBatch& snapshot) const;
     RuntimeSleepBatch decodeSleepingThreads(std::span<const std::uint8_t> bytes) const;
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;
