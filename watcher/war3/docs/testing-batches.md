@@ -4634,3 +4634,9 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 失效单位暂停状态查询（待批次验证）
 
 路径：`src/session_entities.cpp`、`tests/control_tests.cpp`；说明见[对象定义](entities.md)。`IsUnitPaused` 对空、已移除、错误类型及无效单位返回 false，有效单位读取实际暂停状态。固定版 Game.dll 注册入口 `0x6f1e8bc0` 的只读指令显示解析失败返回零，记录 `tmp/docs-artifacts/war3/unit-paused-handle/original.txt`；未加载 Game.dll。Win32 Release 客户端及测试目标编译通过；`war3_control_tests <data-root> <control-fixture.w3m> unit-state-handles` 1 通过、0 失败，覆盖失效句柄和有效单位暂停／恢复；日志 `tmp/docs-artifacts/war3/unit-paused-handle/final.log`。真实地图、原版动态行为与联机待批次验证。
+
+### 失效单位与玩家的选择查询（本批验证）
+
+路径：`src/session_collections.cpp`、`tests/control_tests.cpp`；说明见[对象定义](entities.md)。`IsUnitSelected` 对失效单位或玩家返回 false，有效单位继续使用玩家当前选择；固定版 Game.dll 注册入口 `0x6f1e8c40` 的只读指令记录于 `tmp/docs-artifacts/war3/selection-handle-batch/original.txt`。Win32 Release 客户端和测试目标编译通过；`war3_control_tests <data-root> <control-fixture.w3m> unit-state-handles` 1 通过、0 失败，覆盖空／错误类型／已移除／无效句柄及选择／取消选择，未加载 Game.dll。真实地图、原版动态行为和多人选择待验证。
+
+本批合并 `934a859`、`f8f441e` 和本项：同一核心版本中，单位选择及暂停句柄检查、重新开启路径碰撞和攻击移动路径切换各 1 通过、0 失败；完整命令队列输出 32 条 PASS（含汇总），覆盖联机选择和排队命令。日志 `tmp/docs-artifacts/war3/selection-handle-batch/{control-final,movement,combat,order}.log`。原版寻路和选择动态语义、暂时无路、复杂重入、真实双端及窗口仍待验证。

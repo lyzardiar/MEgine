@@ -29,3 +29,5 @@ CreateSound/CreateSoundFilenameWithLabel保存真实WAV/MP3成员和参数。数
 阻塞目标的替代落点搜索可复用已建立的通行区域；小于等于 1,048,576 格的地图在搜索扩大后建立区域，排除与起点不连通的候选。地形或占地变化后沿用路径版本失效机制；超出区域预算的地图沿用有界搜索。
 
 `IsUnitPaused` 对空、已移除、错误类型或无效单位句柄返回 false；有效单位返回当前暂停状态。固定版原生入口 `0x6f1e8bc0` 在解析失败时返回零，只读指令位于 `tmp/docs-artifacts/war3/unit-paused-handle/original.txt`。
+
+`IsUnitSelected` 对空、已移除、错误类型或无效的单位及玩家句柄返回 false；有效句柄继续查询当前玩家选择。固定版原生入口 `0x6f1e8c40` 在单位或玩家解析失败时返回零，只读指令位于 `tmp/docs-artifacts/war3/selection-handle-batch/original.txt`。
