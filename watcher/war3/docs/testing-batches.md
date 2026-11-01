@@ -5169,3 +5169,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 脚本延迟范围伤害恢复（待功能批次验证）
 
 路径：`src/session.h`、`src/session_damage.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`。SPDM 保存 `UnitDamagePoint` 的排队伤害、到期时间、同时间顺序与来源单位生命周期；恢复包版本 50 重建队列并核对地图、时钟和单位身份。批次构建并执行 `war3_clock_tests <data-root> <output-root>`，检查队列往返、移除来源、损坏拒绝，并补充真实续行的伤害顺序和触发事件、原版地图及实际存读档。实际存档入口及恢复启动保护仍待完成。本次 `cmake --build --preset release --target war3_clock_tests --parallel 4` 编译通过；未执行测试。状态：待批次验证。
+
+
+### 侦测事件状态恢复（待功能批次验证）
+
+路径：`src/session_callbacks.cpp`、`src/session_recovery_bundle.cpp`、`tests/visibility_tests.cpp`。SAEV 版本 2 保存已侦测单位、所属玩家及侦测玩家位集，保留已移除单位的待清理身份；SRBF 更新至版本 51。Win32 Release `cmake --build --preset release --target war3_visibility_tests --parallel 4` 编译通过，未运行测试。功能批次使用 `war3_visibility_tests <data-root> <invisibility-fixture> detected-recovery` 检查恢复包及事件状态往返，并补充恢复续行时持续侦测不重复触发、离开后再次触发、移除／归属变化、损坏数据和实际存读档；恢复启动保护保留。
