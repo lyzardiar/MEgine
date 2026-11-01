@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品无目标召唤（待批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/item-summons-buildings.md`。覆盖 `AIfs`、`AIsh`、`ANwm` 与资源效果组合。Win32 Release 客户端及 control 测试程序编译通过，夹具脚本语法检查通过。批次生成复合夹具后执行 `war3_control_tests <data-root> <fixture> item-combined-summons`，并回归普通召唤和复合物品；检查单位类型、数量、归属、限时生命及消耗。多组事件回调、零数量、混合目标和原版复合施法时序仍需验证。
+
+
 ### 复合物品的目标型守卫（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/wards-roar.md`。复合物品支持治疗守卫 `Ahwd`、岗哨守卫 `Aeye`、静止陷阱 `Asta` 与其他已支持即时效果组合，复用点／单位目标、守卫落点、召唤与持续时间，并共同结算费用、次数、冷却和使用事件；拾取型组合使用持有者附近落点。Win32 Release 客户端及 control 测试目标构建、生成器语法检查通过；合批生成复合夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-wards` 以及普通守卫、复合物品和目标／拾取回归。新增用例尚未执行；单位目标、拾取型组合、目标重入、原版复合施法时序、多人和窗口仍待验证。
