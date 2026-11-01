@@ -27,6 +27,7 @@ struct RuntimeSharedSleepBatch {std::vector<std::vector<Source>> sources;std::ve
 class Runtime {
     struct Impl;
     std::unique_ptr<Impl> impl_;
+    void restoreGlobalsImpl(std::span<const std::uint8_t> bytes,const StableHandleMap& decodeHandle,bool initializing);
     RuntimeSleepSnapshot snapshotSleepingThreadImpl(const ThreadInspection& task,const StableHandleMap& encodeHandle,const ThreadContextTransfer& captureContext,bool includeSources,bool allowShared=false) const;
     ThreadId restoreSleepingThreadImpl(const RuntimeSleepSnapshot& snapshot,const StableHandleMap& decodeHandle,const ThreadContextTransfer& restoreContext,const std::vector<Source>* sources,bool allowExisting,bool allowShared=false);
 public:
@@ -45,6 +46,7 @@ public:
     void shareThreads(Runtime& owner);
     void inheritNatives(const Runtime& owner);
     void initialize();
+    void initializeFromGlobals(std::span<const std::uint8_t> bytes,const StableHandleMap& decodeHandle={});
     bool ready() const;
     bool snapshotSafe() const;
     Value invoke(const std::string& function,std::span<const Value> arguments={});

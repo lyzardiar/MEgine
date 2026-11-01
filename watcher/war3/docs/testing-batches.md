@@ -4946,3 +4946,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 共享会话线程上下文（待阶段验证）
 
 路径：`src/session.h`、`src/session_threads.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`JSSH` 保存共享运行时线程对应的触发器上下文、选择视图和动作序列，先由调用方恢复引用对象。Win32 Release 核心及 clock 目标编译通过，clock 65/65；隔离会话检查不同句柄的选择事件续行、错误映射拒绝及往返，并采集原版 `human.ai` 线程、上下文与私有全局，日志 `tmp/docs-artifacts/war3/shared-session-ai/clock-final.log`。待整合 AI 策略状态、实例重建和完整存档，阶段验证真实 AI 续行及复杂事件；组件包仍拒绝活动 AI。
+
+
+### JASS 全局快照初始化（待阶段验证）
+
+路径：`src/jass_runtime.h`、`src/jass_runtime.cpp`、`tests/jass_thread_tests.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。新运行时可从完整全局快照初始化，避免重放原生初始化副作用；引用对象由调用方先恢复。Win32 Release 核心及测试目标编译通过；共享运行时、句柄／代码映射和损坏拒绝定向检查 1/1，clock 65/65，原版 `human.ai` 私有全局使用恒等句柄占位往返；日志 `tmp/docs-artifacts/war3/ai-global-init/`。待整合 AI 实例、对象映射与策略状态并验证真实 AI 续行；实际存档及原版兼容未完成。
