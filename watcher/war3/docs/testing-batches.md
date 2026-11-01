@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的咆哮（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。复合主动效果支持 Aroa 咆哮，复用现有范围目标、状态与属性效果，共同结算物品次数、冷却和使用事件。合批生成复合物品夹具并运行 `war3_control_tests <data-root> <fixture> item-combined-roar`、`item-combined` 与 caster 的 `battle-roar`；原版复合物品时序、目标筛选和实际窗口待对照。Win32 Release 客户端和 control 测试目标构建通过，测试目标有原有局部变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
+
+
 ### 复合物品的显影之尘（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。复合主动效果支持 AItb 显影，与资源等已支持效果共同结算次数、冷却和使用事件，并复用目标上的显影状态。合批生成 `generate-combined-item-fixture.py --data-root <data-root> --output <fixture>`，运行 `war3_control_tests <data-root> <fixture> item-combined-dust`、`item-combined` 和 stealth 的 `dust`；原版多能力支付／施法时序、界面及其他主动能力待对照。Win32 Release 客户端和 control 测试目标构建通过，测试目标存在原有局部变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
