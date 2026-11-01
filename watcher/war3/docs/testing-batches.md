@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 电脑野怪候选收集（待批次验证）
+
+路径：`src/session_ai_natives.cpp`、`docs/ai.md`。搜索每次只收集一次有效中立单位和隐身侦测结果，后续按原句柄顺序计算营地，避免反复扫描所有单位。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次运行 `war3_campaign_ai_tests <data-root> <fixture> reachable` 及相关跨岛进攻场景；大量单位、重叠营地与性能仍待验证。
+
+
 ### 野怪营地筛选与存档提示批次（逻辑验证完成）
 
 范围：`7578f77`、`3fa19bf`、`b45da0b` 及测试补充 `7887adf`。Win32 Release 客户端与 CampaignAI 测试程序编译通过；`war3_campaign_ai_tests <data-root> <fixture> reachable`、`enemy-base`、`fog-attack` 各 2 项通过，`island-auto-multiwave-script` 1 项通过，共 **7 通过、0 失败**。`reachable` 补充检查了隐藏、无敌、未侦测隐身、侦测和显形的野怪选择及等级分组；测试补充后只重跑受影响的 `reachable`，其他结果复用。日志位于 `tmp/docs-artifacts/war3/ai-creep-visibility-batch/`，夹具为 `tmp/docs-artifacts/war3/campaign-ai/fixture.w3m`。原版营地分组及侦测时序、自然对局与联机仍待对照；图形设备不可用，存档错误换行的长路径、多语言布局和实际窗口交互仍待验收。
