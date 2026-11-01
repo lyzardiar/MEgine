@@ -5599,3 +5599,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 目标命令保留 Shift 排队状态（待功能批次验证）
 
 路径：`src/game_view.{h,cpp}`、`src/game_commands.cpp`、`src/game_selection_panel.cpp`、`src/game_hero_bar.cpp`。使用 Shift 进入移动、攻击、巡逻、采集、缠绕或修理目标模式后，选目标时保留排队状态；直接右键沿用右键当时的 Shift 状态。合批编译客户端和订单测试，窗口可用时检查按钮／快捷键、单位面板／英雄栏／地图／小地图目标及 Esc／右键取消；原版行为和实际视觉仍待验证。本次未执行功能测试。
+
+
+### 返回资源队列与目标命令合批结果（窗口待验）
+
+范围：`289ca7f`、`2279c78`、`b86f1f1`。Win32 Release 客户端及订单测试目标编译通过；BootyBay `return-queue` **1 通过、0 失败**，完整订单套件退出码 0、输出 32 条 PASS（含汇总），覆盖即时返回替换队列、排队返回、多工人联机排队和重复网络身份拒绝。日志位于 `tmp/docs-artifacts/war3/return-queue-batch/`。目标模式 Shift、取消及窗口视觉、真实双端与原版时序仍待验证。
