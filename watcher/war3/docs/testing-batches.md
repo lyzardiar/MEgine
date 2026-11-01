@@ -5376,3 +5376,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 经典战役装饰物覆盖版本 1（待功能批次验证）
 
 路径：`src/placed_definition.cpp`、`tests/map_tests.cpp`。经典版本 1 的 W3D 按无等级／数据指针的记录读取，重复字段使用元数据的 index 定位变体；版本 2 保持扩展布局。原版 OrcX01 的独立解析探针完整读取 19 条原始对象和 15 条自定义对象。为解除已知加载阻塞，Win32 Release 编译及真实地图定向夹具 **1 通过、0 失败**；后台地图准备和加载探针恢复英雄并模拟 60 秒，结束时玩家控制可用且未再次切区。日志在 `tmp/docs-artifacts/war3/loadgame-handoff/loader-final.log`。合批执行 `war3_map_tests <data-root> <output-root>`，并覆盖版本 2、变体字段、窗口交互、其他战役及原版表现。
+
+
+### 玩家主动存档接口（待功能批次验证）
+
+路径：`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`。本地已启动会话可在安全边界发布检查点并分发保存事件，写入失败不分发；限制重入、待处理保存、退出及联机会话。合批编译执行 `war3_clock_tests <data-root> <output-root>`，检查手动保存、事件、恢复和非法路径；菜单、存档选择与原版行为尚待接入或验证。本次未执行功能测试。

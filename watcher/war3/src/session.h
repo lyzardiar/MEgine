@@ -147,6 +147,7 @@ class ScriptSession {
     void selectionEvent(std::uint32_t unit,unsigned player,bool selected,std::uint64_t revision);
     struct PendingSave {std::string name;jass::ExternalWaitToken token=0;};
     std::optional<PendingSave> pendingSave_;
+    bool localSaveInProgress_=false;
     void processPendingSave();
     std::unique_ptr<World> world_;
     bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false,unitRecoveryIncomplete_=false,unitCorePrepared_=false,unitCoreFinished_=false;
@@ -1392,6 +1393,7 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildFogState(std::span<const std::uint8_t> bytes);
     Bytes encodeRecoveryBundle() const;
     void saveRecoveryCheckpoint(const std::string& name) const;
+    void saveLocalGame(const std::string& name);
     static RecoveryCheckpointInfo inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name);
     static fs::path resolveRecoveryCheckpointMap(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={});
     std::map<std::uint32_t,std::uint32_t> restoreRecoveryCheckpoint(const std::string& name);
