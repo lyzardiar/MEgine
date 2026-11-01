@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 训练命令提交结果（待合批验证，3/3）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。AI 选到可用训练者后以命令提交为成功，训练限制导致的拒绝不扣费、不入队，后续建造计划可继续；没有可用生产者或队列空间仍返回失败。原版 1.27 `0x6f8a067d` 向选中的生产者提交命令，随后 `0x6f8a06a0` 返回成功。合批运行 CampaignAI `produce-many`、`produce-zero`、`convert-empty`、`merge-empty`、`melee-build` 与复活相关回归；检查受限训练及放开后生产、队列满和非正数量。原版候选筛选、限制／资源／事件时序、实际窗口及完整对局仍待对照。本次提交前未执行功能测试。
+
+
 ### AI 非正数量转换（待功能批次验证，2/3）
 
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。电脑拥有存活单位时，`ConvertUnits` 的非正数量直接成功，不检查类型或下达命令；正数量不再由固定 1024 限制截断。原版 1.27 `0x6f899adb` 在遍历到单位后，`0x6f899ae3` 对非正剩余数量返回成功。合批运行 CampaignAI `convert-empty` 与转换相关回归，检查空请求和无效类型；原版空单位链、候选顺序、末个候选及回调时序仍待对照。本次未执行功能测试。
