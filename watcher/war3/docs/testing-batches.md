@@ -5326,3 +5326,5 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 保存调用的脚本续行基础（待功能批次验证）
 
 路径：`src/jass_runtime.h`、`src/jass_runtime.cpp`、`tests/jass_thread_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。可将已绑定的 `nothing` native 标记为恢复时不重放，供具有保存类副作用的挂起调用使用。合批编译运行 `war3_jass_thread_tests`，检查参数、线程快照和续行一致性、禁止未标记恢复以及副作用不重放。保存请求、事件顺序、文件写入及实际读档仍待实现；本次未编译或运行测试。
+
+完整恢复包夹具补充带字符串参数的挂起 native，采集世界和线程后检查恢复脚本从调用点续行且不重放副作用；合批同时执行 `war3_clock_tests <data-root> <output-root>`。该夹具待执行，保存请求、磁盘文件和恢复启动仍未接入。
