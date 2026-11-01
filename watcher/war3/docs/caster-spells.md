@@ -44,3 +44,9 @@ build/windows-x86/bin/Release/war3_caster_tests.exe 'E:/Program Files (x86)/dzcl
 阶段合并状态叠加/较强覆盖/残留、普通与英雄时序/转身/取消、回春Allow When Full/No Target完整选项、魔免/无敌/虚无/结构/目标分类、外壳的完整减伤/负面效果/普通魔法攻击/驱散/溢出顺序、诅咒与暴击/Never Miss/弹跳/范围武器、狂热与魔免/死亡/源移除、自动施法优先/阈值/玩家订单/重入/科技变更、多单位选择组与源模型/图标/右键/GPU、三图/持续切图/CPU/GPU/内存。树木/非单位魔法状态、完整状态栏、声音、技能AI、其他主动/自动施法/变形/控制能力仍需实现或验收。现有算法与数据消费不等于原版逐项还原通过。
 
 源字段/标签、自动施法模型块/坐标、必要模型导入、编译和静态记录分别为本地source.json、autocast-model.json、autocast-import*.log、build-final.log、static-checks.json。运行直接读取公共/地图归档，不生成解包工程，不加载Game.dll；旧MEngine测试与缓存清理状态保持原约定。
+
+### 诅咒概率覆盖
+
+当能力元数据包含三字符 `Crs` 而没有四字符 `Crs1` 条目时，将该行用于 `Crs1` 对象覆盖；显式四字符元数据优先。`Crs1` 对应公开脚本中的诅咒未命中概率字段，见 [Warcraft III 官方论坛讨论](https://us.forums.blizzard.com/en/warcraft3/t/fix-abilityrlfchancetomisscrs/37193)。本机 1.27 公共元数据的 `Crs` 行指向 AbilityData 的第一个 Data 字段；经典版编辑器导出与原版运行时的实际编号仍待对照。
+
+Win32 Release 客户端及 caster 测试目标编译通过；使用 `generate-caster-fixture.py` 生成的隔离地图，完整 caster 检查通过，核对原技能 0.33、自定义 `Crs1` 覆盖为 1.0 和实际攻击落空；目标筛选 6/6。未加载 Game.dll。多等级、经典版地图与原版编辑器输出、真实窗口及其他版本待验证。
