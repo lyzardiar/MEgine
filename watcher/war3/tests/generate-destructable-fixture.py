@@ -31,6 +31,13 @@ integer probe_group_calls=0
 force probe_destroyed_force=null
 integer probe_force_calls=0
 boolean probe_force_valid=false
+group probe_live_group=null
+unit probe_old_member=null
+unit probe_live_first=null
+unit probe_live_second=null
+force probe_live_force=null
+boolean probe_live_group_valid=true
+boolean probe_live_force_valid=true
 endglobals
 function ProbeDeath takes nothing returns nothing
     if GetTriggerDestructable()!=probe_tree or GetTriggerWidget()!=probe_tree then
@@ -186,6 +193,42 @@ function ProbeInvalidForce takes nothing returns nothing
     set probe_destroyed_force=CreateForce()
     call ForceEnumPlayers(probe_destroyed_force,Filter(function ProbeForceFilter))
     call DestroyForce(f)
+endfunction
+function ProbeLiveGroupFilter takes nothing returns boolean
+    if IsUnitInGroup(probe_old_member,probe_live_group) then
+        set probe_live_group_valid=false
+    endif
+    if GetFilterUnit()==probe_live_second and not IsUnitInGroup(probe_live_first,probe_live_group) then
+        set probe_live_group_valid=false
+    endif
+    return true
+endfunction
+function ProbeLiveForceFilter takes nothing returns boolean
+    if IsPlayerInForce(Player(15),probe_live_force) then
+        set probe_live_force_valid=false
+    endif
+    if GetFilterPlayer()==Player(1) and not IsPlayerInForce(Player(0),probe_live_force) then
+        set probe_live_force_valid=false
+    endif
+    return true
+endfunction
+function ProbeLiveCollections takes real x, real y returns nothing
+    local rect r=Rect(x-128,y-128,x+128,y+128)
+    set probe_live_group=CreateGroup()
+    set probe_old_member=CreateUnit(Player(0),'hfoo',x+512,y,0)
+    set probe_live_first=CreateUnit(Player(0),'hfoo',x,y,0)
+    set probe_live_second=CreateUnit(Player(0),'hfoo',x+32,y,0)
+    call GroupAddUnit(probe_live_group,probe_old_member)
+    call GroupEnumUnitsInRect(probe_live_group,r,Filter(function ProbeLiveGroupFilter))
+    set probe_live_force=CreateForce()
+    call ForceAddPlayer(probe_live_force,Player(15))
+    call ForceEnumPlayersCounted(probe_live_force,Filter(function ProbeLiveForceFilter),2)
+    call RemoveUnit(probe_old_member)
+    call RemoveUnit(probe_live_first)
+    call RemoveUnit(probe_live_second)
+    call DestroyGroup(probe_live_group)
+    call DestroyForce(probe_live_force)
+    call RemoveRect(r)
 endfunction
 function config takes nothing returns nothing
 endfunction

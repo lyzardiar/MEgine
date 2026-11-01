@@ -5778,3 +5778,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家组接口的失效句柄（待功能批次验证）
 
 路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。玩家组增删、查询、清空、销毁、枚举及遍历在组或玩家句柄失效时返回空值或无操作；筛选回调销毁目标组后停止枚举。原版 1.27 的 `ForForce`、`DestroyForce`、`ForceClear`、`ForceEnumPlayers` 和 `ForceEnumAllies` 入口分别为 `0x6f1e0c30`、`0x6f1df620`、`0x6f1e0cf0`、`0x6f1e0d90`、`0x6f1e0d10`，句柄解析失败直接返回。合批运行 destructable 夹具；过滤器重入时序及实际原图待对照。本次未执行功能测试。
+
+
+### 筛选回调中的单位组和玩家组状态（待功能批次验证）
+
+路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。有过滤器的单位组和玩家组枚举在筛选前清空旧成员，并逐个发布已接受成员，供后续筛选回调读取；失效组停止执行。原版 1.27 的单位组枚举初始化 `0x6f222c60` 调用清组路径 `0x6f20be70`，筛选回调 `0x6f216391` 通过后在 `0x6f2163a1` 加入单位；玩家组枚举 `0x6f211290` 清空并逐个筛选。合批运行 destructable 夹具，覆盖旧成员清除及后续过滤器读取前序结果；同组嵌套枚举、过滤器主动修改及原版动态时序待验证。本次未执行功能测试。
