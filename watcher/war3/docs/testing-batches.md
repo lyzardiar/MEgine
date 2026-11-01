@@ -5888,3 +5888,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 静音声音切换到实际设备（待功能批次验证）
 
 路径：`src/sound.cpp`、`tests/sound_tests.cpp`、`docs/script-sound.md`。静音播放者转为实际设备时恢复播放阶段、循环、音调与位置，设备时长不一致时限制位置；创建或恢复失败前保留旧播放者。合批构建 `war3_sound_tests` 并运行 `sound_unmute_preserves_paused_playback`、`sound_playback_state_miles_roundtrip` 及声音回归；实际设备、播放／暂停／停止、读档、时长差异和原版表现仍待验证。本次未执行功能测试。
+
+
+### 声音播放位置标记（待功能批次验证）
+
+路径：`src/session_sound.cpp`、`tests/sound_tests.cpp`、`docs/script-sound.md`。`SetSoundPlayPosition(sound, -1)` 保持当前播放位置；原版数字与 MIDI 路径分别在 `0x6f33d1fe`、`0x6f33d184` 跳过该标记。合批运行 `sound_position_minus_one_keeps_playing` 和声音回归；其他负数、实际设备和原版动态效果待验证。本次未执行功能测试。
