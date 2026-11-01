@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 灵魂宝石捕获恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_soul.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 85/85 通过；原版 Orc08 捕获格罗姆后恢复并检查释放，隔离诊断临时绕过启动保护续行 60 秒，81/81 项状态一致，日志位于 `tmp/docs-artifacts/war3/soul-capture-recovery/`。实际读档、完整战斗与窗口画面待阶段验证。
+
 ### 过场与界面状态恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_text.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 84/84 通过；原版 HumanX01 的隔离恢复诊断临时绕过启动保护后续行 60 秒，72/72 项状态一致，日志位于 `tmp/docs-artifacts/war3/presentation-recovery/`。实际读档、过场画面与完整战役待阶段验证。
