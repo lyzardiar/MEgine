@@ -4754,3 +4754,5 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 符文、任务物品与商店批次（2026-11-01）
 
 本批为 `f53bbe4`、`b1fa68a`、`18eeceb`。同一集成源码的 Win32 Release 客户端及相关测试目标编译通过；隔离用户目录下，原图 `quest-shop`、`quest-powerup` 各 1/1，`shop-buyer` 1/1、`shop-range` 7/7、`spirit-rune` 1/1、`shield-rune` 1/1、`powerup` 1/1，均报告未加载 Game.dll；`war3_clock_tests` 41 通过、0 失败。商店夹具路径 `tmp/docs-artifacts/war3/shop-range/fixture.w3m`，符文夹具 `tmp/docs-artifacts/war3/visual-identity-batch/spell-fixture.w3m`，任务物品夹具与隔离目录在 `tmp/docs-artifacts/war3/quest-powerups/`。原图测试有人工创建单位、放置物品、补足金币、添加库存及解除商店暂停等干预。完整战役和窗口、原版时序、脚本回调中显式移除物品／买家／商店、其他自动消费物品及联机仍待验证。
+
+商店批次补充验证：Win32 Release `war3_passive_tests <data-root> tmp/docs-artifacts/war3/shop-consumed/fixture.w3m shop-consumed` 1 通过、0 失败，覆盖购买符文和普通物品及拾取／出售回调销毁、重复拾取；同一生成夹具的 `shop-buyer` 1/1、`shop-range` 7/7，未加载 Game.dll。原版动态时序、其他消耗品及实际窗口仍待对照。此项是已有功能验证补充，不计新功能批次。

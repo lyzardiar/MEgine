@@ -43,6 +43,13 @@ integer pawnCount=0
 unit pawnSeller=null
 unit pawnBuyer=null
 item pawnSold=null
+integer purchaseMode=0
+integer purchaseCount=0
+integer purchaseType=0
+item purchaseItem=null
+boolean purchaseRepeated=false
+integer purchaseAfterRemove=-1
+unit purchaseShop=null
 endglobals
 function TimerIndexA takes nothing returns nothing
     if GetExpiredTimer()==timerIndexMain then
@@ -200,6 +207,44 @@ function InstallPawnTest takes unit seller returns nothing
     local trigger t=CreateTrigger()
     call TriggerRegisterUnitEvent(t,seller,EVENT_UNIT_PAWN_ITEM)
     call TriggerAddAction(t,function OnPawn)
+endfunction
+function OnPurchase takes nothing returns nothing
+    set purchaseCount=purchaseCount+1
+    set purchaseItem=GetSoldItem()
+    set purchaseType=GetItemTypeId(purchaseItem)
+    set purchaseRepeated=UnitAddItem(GetBuyingUnit(),purchaseItem)
+    if purchaseMode==1 then
+        call RemoveItem(purchaseItem)
+        set purchaseAfterRemove=GetItemTypeId(purchaseItem)
+    elseif purchaseMode==2 then
+        call RemoveUnit(GetBuyingUnit())
+    elseif purchaseMode==3 then
+        call RemoveUnit(GetSellingUnit())
+    endif
+endfunction
+function OnPurchasePickup takes nothing returns nothing
+    if purchaseMode==4 then
+        call RemoveItem(GetManipulatedItem())
+    elseif purchaseMode==5 then
+        call RemoveUnit(GetTriggerUnit())
+    elseif purchaseMode==6 then
+        call RemoveUnit(purchaseShop)
+    endif
+endfunction
+function InstallPurchaseTest takes unit shop, unit buyer, integer mode returns nothing
+    local trigger t=CreateTrigger()
+    local trigger p=CreateTrigger()
+    set purchaseMode=mode
+    set purchaseShop=shop
+    set purchaseAfterRemove=-1
+    set purchaseCount=0
+    set purchaseType=0
+    set purchaseItem=null
+    set purchaseRepeated=false
+    call TriggerRegisterUnitEvent(t,shop,EVENT_UNIT_SELL_ITEM)
+    call TriggerAddAction(t,function OnPurchase)
+    call TriggerRegisterUnitEvent(p,buyer,EVENT_UNIT_PICKUP_ITEM)
+    call TriggerAddAction(p,function OnPurchasePickup)
 endfunction
 function config takes nothing returns nothing
 endfunction
