@@ -5763,3 +5763,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 失效单位组的遍历与筛选（待功能批次验证）
 
 路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。失效组不会触发组遍历或枚举；矩形、地点和玩家参数失效时保留现有组，过滤回调销毁目标组后停止枚举。原版 1.27 `ForGroup` 与 `GroupEnumUnitsInRect` 入口 `0x6f1e0c50`、`0x6f1e6a50` 对组解析失败直接返回，矩形解析失败也直接返回。合批运行 `war3_destructable_tests <root> <fixture>`；销毁组的回调时序与其他枚举变体仍待原版对照。本次未执行功能测试。
+
+
+### 组命令的失效组和地点（待功能批次验证）
+
+路径：`src/session_collections.cpp`、`tests/destructable_tests.cpp`。即时、点和目标组命令对失效组返回 false；地点版本对失效地点返回 false，不发出单位命令。原版 1.27 的 `GroupImmediateOrderById`、`GroupTargetOrderById` 和 `GroupPointOrderByIdLoc` 在 `0x6f1e6d60`、`0x6f1e6e80`、`0x6f1e6dd0` 检查句柄并在解析失败时返回零。合批生成 destructable 夹具并运行测试；多单位事件重入及完整原版组命令返回规则仍待验证。本次未执行功能测试。
