@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 玩家与区域事件注册句柄（待功能批次验证）
+
+路径：`src/session_callbacks.cpp`、`src/session_spatial_events.cpp`、`tests/control_tests.cpp`。玩家事件、联盟、玩家状态、玩家单位、聊天及进入／离开区域事件注册先检查触发器及相应玩家／区域；失效句柄返回空事件，有效输入沿用现有事件索引、过滤和回调。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 中入口分别为 `0x6f1f9a20`、`0x6f1f9880`、`0x6f1f9b40`、`0x6f1f9c60`、`0x6f1f9950`、`0x6f1f9390`、`0x6f1f97a0`，均有触发器及玩家或区域解析失败返回分支。Win32 Release 客户端和 control 测试目标构建通过；合批运行 `war3_control_tests <data-root> <fixture> player-region-registration-handles`、`event-registration-handles` 及现有玩家／区域事件回归。新增用例尚未执行；过滤器失效、脚本重入和原版事件时序待验证。
+
+
 ### 单位与计时器事件注册句柄（待功能批次验证）
 
 路径：`src/session_callbacks.cpp`、`src/session_spatial_events.cpp`、`tests/control_tests.cpp`。注册单位事件、筛选单位事件、单位状态事件、单位距离事件与计时器到期事件时，失效触发器或目标返回空事件；单位状态编号超出范围也返回空事件。有效事件保持既有索引、状态和回调流程。固定版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 的注册入口分别为 `0x6f1fa060`、`0x6f1f9470`、`0x6f1fa260`、`0x6f1fa170`、`0x6f1f9e20`，均检查触发器及目标句柄；单位状态入口先检查状态范围。Win32 Release 客户端与 control 目标构建通过；合批运行 `war3_control_tests <data-root> <fixture> event-registration-handles`，并回归事件、距离、计时器及原图脚本。新增用例尚未执行；过滤器失效、回调重入、原版事件顺序与实际地图仍待验证。
