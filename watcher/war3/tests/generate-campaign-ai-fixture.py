@@ -10,6 +10,7 @@ spec.loader.exec_module(fixture)
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = '''globals
 unit hall=null
+unit callbackProducer=null
 unit worker=null
 destructable tree=null
 integer boardOverrideCount=0
@@ -85,6 +86,15 @@ function InstallTrainingTransfer takes unit target returns nothing
     local trigger t=CreateTrigger()
     call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_TRAIN_START)
     call TriggerAddAction(t,function TransferTrainingBuilding)
+endfunction
+function ReplaceTrainingBuilding takes nothing returns nothing
+    set callbackProducer=CreateUnit(Player(0),'hbar',1200,-1500,0)
+    call SetUnitOwner(GetTriggerUnit(),Player(1),true)
+endfunction
+function InstallTrainingReplacement takes unit target returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_TRAIN_START)
+    call TriggerAddAction(t,function ReplaceTrainingBuilding)
 endfunction
 function config takes nothing returns nothing
 endfunction

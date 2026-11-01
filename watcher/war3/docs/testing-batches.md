@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 多项生产刷新候选（待功能批次验证，2/3）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`。多项生产每次请求重新收集现有生产者，使事件中新建或转入的生产者能够接收后续请求；保留逐次归属检查和既有单次调用工作量上限。原版 `SetProduce` 在 `0x6f894963` 循环调用单项生产。合批重新生成夹具，运行 `produce-replacement`、`produce-owner`、`produce-many` 与复活回归；批量创建超过工作量上限、回调销毁／转移和原版时序仍待验证。本次未执行功能测试。
+
+
 ### AI 生产回调后的生产者归属（待功能批次验证，1/3）
 
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`。AI 多项生产逐次检查生产者归属、移除、生命及指定城镇，生产开始事件转移建筑后不再向其派发后续请求；复活和建造候选同样检查。合批生成 CampaignAI 夹具并运行 `produce-owner`、`produce-many` 和 revival 回归，核对训练开始时转移、队列、资源及既有生产；建筑／复活回调、嵌套重入、原版时序和完整对局待验证。本次未执行功能测试。
