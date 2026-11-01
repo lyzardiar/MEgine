@@ -217,6 +217,7 @@ class ScriptSession {
     IndicatorState indicators_;
     std::array<std::unique_ptr<ScriptAI>,16> ais_;
     std::array<std::uint32_t,16> aiPauseDepth_{};
+    std::array<bool,16> aiStateRestored_{};
     double nextNeutralCombatSpells_=0;
     void pauseAI(unsigned player,bool paused);
     void bindAiControlNatives();
@@ -1291,6 +1292,8 @@ public:
     void displayText(unsigned owner,float x,float y,double duration,std::string text,std::uint16_t audience=0xffff,bool chat=false);
     void startAI(unsigned player,const std::string& script,bool campaign=false);
     void prepareAIRecovery(unsigned player,const std::string& script,bool campaign,std::span<const std::uint8_t> globals,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeAIState(unsigned player,const jass::StableHandleMap& encodeHandle) const;
+    void restoreAIState(unsigned player,std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     const auto& ais() const {return ais_;}
     void startMain();
     void finishGame(bool scores,SessionExit action=SessionExit::Return);

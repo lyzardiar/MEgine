@@ -4956,3 +4956,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### AI 恢复实例准备（待阶段验证）
 
 路径：`src/session.h`、`src/session_ai.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。在单位核心重建后准备指定 AI 策略并从全局快照初始化，绑定共享调度器和 AI 原生函数，不执行全局初始化或策略 main。Win32 Release 核心、clock 和战役 AI 测试目标编译通过；clock 65/65，原版 `human.ai` 实例、全局及睡眠线程在受保护会话往返，非单位句柄使用恒等占位；原战役 AI 启动模式 1/1，日志 `tmp/docs-artifacts/war3/ai-instance-recovery/`。待恢复 AI 策略状态、全部对象映射并验证真实续行；活动 AI 的实际存档仍不可用。
+
+
+### AI 策略状态快照（待阶段验证）
+
+路径：`CMakeLists.txt`、`src/session.h`、`src/session_ai_snapshot.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SAIS` 保存单个 AI 的采集、守卫、编队、购买、运输、路线、目标、暂停计数和英雄回调；单位身份及 AI 全局须先重建。Win32 Release 核心及 clock 目标编译通过，clock 65/65；原版 `human.ai` 与实际单位句柄结合人工策略数据，检查非恒等映射、暂停与恢复、回调和错误拒绝，日志 `tmp/docs-artifacts/war3/ai-strategy-recovery/clock-final.log`。待整合组件包、恢复所有对象引用并验证 AI 续行；实际存档及原图对局尚未完成。
