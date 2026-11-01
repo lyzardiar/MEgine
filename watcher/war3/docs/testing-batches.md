@@ -5544,3 +5544,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 无敌目标与替代树合批结果
 
 范围：`7dca81d`、`0b5717e`、`60ac541` 及本批补充。Win32 Release 客户端、采集、研究和隐身测试目标编译通过；原始采集、三种树木目标、研究、原始哨兵和三种哨兵目标共 **9 个进程通过、0 失败**。首轮编译定位并修正替代树筛选条件位置；原有哨兵测试的 121／61 秒时间步调整为不超过 60 秒后重测通过。日志和本批夹具在 `tmp/docs-artifacts/war3/invu-batch/`，采集夹具复用 `tmp/docs-artifacts/war3/target-batch/`。原版目标语义、实际伤害和窗口效果仍待对照验证。
+
+
+### 修理无敌单位的目标许可（待功能批次验证）
+
+路径：`src/session_repair.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。建筑或机械单位无敌时，修理能力需包含 `invu` 或 `invulnerable` 目标条目；该检查覆盖直接命令、自动修理和持续阶段。合批分别生成 `--repair-targets vulnerable`、`invu`、`invulnerable` 夹具并执行对应 `repair-*` 模式，覆盖无敌状态变化及两种许可；原版边界和实际对局待验证。本次未执行功能测试。
