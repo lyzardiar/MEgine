@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄技能禁用与学习（待功能批次验证）
+
+路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。玩家禁用的英雄技能不能通过玩家命令、`SelectHeroSkill` 或 AI 学习，重新启用后可以学习。原版 1.27 的 `SetPlayerAbilityAvailable` 与学习检查分别在 `0x6f229900`、`0x6f2097e0` 写入和读取同一状态位。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-skill-availability`，核对按钮、玩家命令、脚本入口和重新启用；AI、原版动态行为及实际窗口仍待验证。本次未执行功能测试。
+
+
 ### 英雄分类与命令说明合批结果
 
 范围：`2dedda4`、`219efa9`、`eccfbf9`。Win32 Release 客户端、revival、research、commerce、AI 目标构建通过，日志未发现编译警告。重新生成夹具后，revival 的 `repair-command-tooltip`、`harvest-command-tooltip`、`shop-item-tooltip`、`hero-names` 各 1/1；research、commerce 和原版 BootyBay 人族 AI 30 秒初始化各输出 1 条 PASS。覆盖跨大小写自定义单位、未知英雄 ID、真实英雄幻象、工人说明和基础 AI 发展。修理说明首次运行因夹具覆盖原型 `Arep` 而非农民实际使用的派生能力 `Ahrp` 失败；调整夹具并重建后通过。日志和夹具位于 `tmp/docs-artifacts/war3/hero-class-batch/`，构建日志为 `tmp/docs-artifacts/war3/hero-class-batch-build.log`。跨大小写自定义英雄训练与 AI 完整流程、其他地图、原版动态及实际窗口仍待验证。
