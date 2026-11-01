@@ -52,3 +52,5 @@ cd watcher/war3
 娜迦工人按源 `Builds` 列表提供建造入口并进入施工中的建筑，完成后释放；菜单文字与快捷键读取 `CmdBuildNaga`，缺省图标与位置使用源 `CmdBuild`。原版 `nmpe` 为 `naga`，可建造 `nnfm,nntg,nntt,nnsg,nnsa,nnad`；1.27 的 `CAbilityNagaBuild` 与 `CAbilityOrcBuild` 虚表第 17、18、19 项分别共用 `0x6f529890`、`0x6f54a500`、`0x6f5424b0`。隔离施工、取消与恢复、动画及实际界面和原版动态行为待批次验证。
 
 中立工人使用源 `CmdBuild` 入口及自身 `Builds` 列表，进入建筑施工并在完成后释放。原版达拉内尔工人 `ndrl` 的种族为 `creeps`，可建造 `ndh2,ndh3,ndh4,nbt2`；1.27 中立建造类与兽族建造类的三个关键虚表项一致。其他中立种族覆盖、取消／恢复及原版界面和动态行为待批次验证。
+
+`UnitSetConstructionProgress` 与 `UnitSetUpgradeProgress` 对空、已移除或类型不匹配的单位不执行操作；有效单位继续按原无符号进度规则处理。1.27 入口分别在 `0x6f1fb29e`、`0x6f1fb2de` 检查解析结果；真实地图和回调时序待批次验证。
