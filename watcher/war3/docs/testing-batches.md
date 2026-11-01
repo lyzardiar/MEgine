@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄升级效果（待批次验证）
+
+路径：`src/session.h`、`src/session_hero.cpp`、`tests/revival_tests.cpp`。英雄升级使用源 `AHer` 的施法者效果；脚本经验和等级接口按 `showEyeCandy` 控制，一次跨越多个等级创建一次效果。1.27 `Game.dll` 的 `0x6f50ac3f` 至 `0x6f50ad35` 显示升级循环结束后按参数触发一次表现，三个脚本入口传入该参数。待执行 Win32 Release 客户端及 `war3_revival_tests <data-root> <hero-revival-fixture> hero-level-visual`；核对真假参数、未升级、跨多级、暂停、击杀和经验书、回调重入、效果生命周期及原版窗口表现。本次未运行测试；事件时序和自定义效果列表仍待核对。
+
 ### 陷阱守卫状态恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_wards_roar.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；范围见 [战役存档状态](save-runtime-foundation.md)。Win32 Release 构建及 clock 97/97 通过；原版 Orc01 会话人工设置科技并施放静止陷阱，激活前隔离恢复，临时绕过启动保护续行 11 秒后目标眩晕，71/71 项状态一致，日志位于 `tmp/docs-artifacts/war3/ward-recovery/`。怪物诱饵、实际读档、自然对局、原版时序与窗口画面待阶段验证。

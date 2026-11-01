@@ -1037,7 +1037,7 @@ class ScriptSession {
     void initializeHero(UnitState& unit);
     void refreshHero(UnitState& unit);
     const std::vector<int>& heroThresholds();
-    void heroExperience(std::uint32_t unit,int value);
+    void heroExperience(std::uint32_t unit,int value,bool visual=true);
     bool learnSkill(std::uint32_t unit,std::uint32_t ability);
     void removeUnit(std::uint32_t unit);
     std::optional<WorldPoint> spawnPoint(const UnitState& producer,std::uint32_t type);
