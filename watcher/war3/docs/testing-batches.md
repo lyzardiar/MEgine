@@ -5100,3 +5100,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 静音模拟声音时钟（待阶段验证）
 
 路径：src/sound.h、src/sound.cpp、src/session_tick.cpp、tests/sound_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。静音模拟模式按模拟时间推进声音脉冲，声音恢复时对齐当前脉冲。Win32 Release 构建通过，脉冲和声音等待恢复各 1/1，clock 79/79；Human03 四次隔离续行比较各 67/67，临时绕过启动保护，日志 tmp/docs-artifacts/war3/simulation-audio-pulse/。待验证真实设备、音量组、原版声音时序和实际存档。
+
+### 蝗虫群状态恢复（待阶段验证）
+
+路径：src/swarm.h、src/session.h、src/session_locust.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SLOC 保存群体、成员、目标、计时、攻击和返航状态，SRBF 更新至版本 36。Win32 Release 编译及 clock 98/98 通过；原版 Orc01 人工布置场景验证活动蝗虫恢复和攻击，隔离续行临时绕过启动保护，盘旋 1 秒及攻击 8 秒各 71/71 项状态一致。待阶段验证多个群体、自然战斗、实际游戏读档、原版时序和窗口；日志 tmp/docs-artifacts/war3/locust-recovery/。

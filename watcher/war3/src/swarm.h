@@ -20,5 +20,6 @@ struct LocustAgent {
     float carried=0;
     double nextAttack=0,attackDue=0;
     bool returning=false;
+    std::uint8_t orbitPhase=0;
 };
 }
