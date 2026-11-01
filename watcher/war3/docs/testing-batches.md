@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 召唤状态的界面图标（待功能批次验证）
+
+路径：`src/game_buff_panel.cpp`、`docs/buff-panel.md`。单位限时生命中的非零 Buff ID 加入状态图标集合，复用源图标、说明和同编号去重；移除时随状态消失。原资源的水元素 `BHwe` 提供召唤状态图标。合批运行客户端并检查水元素、无图标 Buff、自定义 Buff、重复编号、移除和到期的状态栏及提示；实际原版显示条件、布局和窗口仍待验证。本次仅做差异检查，未执行功能测试。
+
+
 ### Buff 分类与放逐合批结果
 
 范围：`d89700e`、`b570286`、`504dbe8`。Win32 Release 客户端、passive 和 control 目标构建通过；control 测试文件既有变量遮蔽产生一条 C4456 警告。生成 passive 夹具后，`buff-auto-filter`、`buff-control-types`、`buff-filter-semantics`、`buff-timed-life`、`buff-timed-critter`、`buff-script-remove`、`buff-invalid-unit` 及 control 的 `banish-polarity`、`purge`、`flow` 各 1 通过、0 失败；passive 主程序退出 0 并输出 PASS。覆盖自动筛选、控制状态、真实放逐与联盟变化、净化及光环回归。日志和夹具位于 `tmp/docs-artifacts/war3/buff-classification-batch/`。其他特殊或自定义状态分类、复杂联盟关系、原版动态行为与实际窗口仍待验证。
