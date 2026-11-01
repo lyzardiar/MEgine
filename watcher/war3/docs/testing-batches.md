@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 自定义技能的分级说明（待批次验证）
+
+路径：`src/object_data.h/.cpp`、`src/session_ability_commands.cpp`、`tests/generate-revival-fixture.py`、`tests/revival_tests.cpp`。技能按钮按等级读取自定义说明的完整文本，并从原始 Profile 解析未覆盖等级；说明内普通逗号和对象字段引用不参与等级切分。待生成复活夹具并运行 `war3_revival_tests <data-root> <hero-revival-fixture> custom-ability-tooltip`，回归源数据、继承、WTS、多级文本和实际窗口；本次未执行测试。
+
 ### 英雄姓名与技能说明合批结果
 
 范围：`63e6c51`、`de68272`、`5954b8b`。Win32 Release 客户端、revival、spell、clock 目标构建通过，日志未发现编译警告。revival 的 `hero-names`、`hero-learn-tooltip`、`ability-tooltip`、`hero-level-event`、`hero-negative-xp`、`hero-level-tome` 各 1/1，spell 消费者 1 条 PASS；clock 的玩家状态快照、单位身份重建、恢复包随机池各 1/1。姓名池首次测试误将圣骑士 15 个分配槽视为 15 个不同文本；实际安装的源列表为 14 项，原版按列表长度取模。校正夹具后通过，并补查旧版玩家状态、损坏数据拒绝和恢复后的姓名选择。夹具及日志位于 `tmp/docs-artifacts/war3/hero-name-tooltip-batch/`，构建日志为 `tmp/docs-artifacts/war3/hero-name-tooltip-batch-build.log`。自定义技能文本、战役及联机随机流、原版动态和实际窗口仍待验证。

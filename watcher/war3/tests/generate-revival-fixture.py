@@ -2,6 +2,7 @@
 import argparse
 import importlib.util
 import io
+import struct
 from pathlib import Path
 
 spec=importlib.util.spec_from_file_location('live_fixture',Path(__file__).with_name('generate-live-world-fixture.py'))
@@ -141,6 +142,8 @@ def main():
     names=fixture.read_archive(archive,'(listfile)').decode('ascii').splitlines()
     files={name:fixture.read_archive(archive,name) for name in names if name and name!='(listfile)'}
     files['war3map.j']=SCRIPT.encode('utf-8')
+    changes=b''.join(b'aub1'+struct.pack('<III',3,level,0)+text.encode('utf-8')+b'\0AHbz' for level,text in [(2,'Level two, damage <AHbz,DataA2>'),(3,'Level three, damage <AHbz,DataA3>')])
+    files['war3map.w3a']=struct.pack('<II',2,1)+b'AHbz'+bytes(4)+struct.pack('<I',2)+changes+struct.pack('<I',0)
     files['revival.ai']=b'function main takes nothing returns nothing\ncall SetNewHeroes(false)\nendfunction\n'
     files['war3mapMisc.txt']=MISC.encode('utf-8')
     files.pop('war3map.doo',None)
