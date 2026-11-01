@@ -5006,3 +5006,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 排行榜恢复（待阶段验证）
 
 路径：src/session.h、src/session_leaderboard.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SLDB 重建排行榜、行样式、分数与玩家关联，SRBF 更新至版本 15。Win32 Release 构建及 clock 74/74 通过，日志 tmp/docs-artifacts/war3/leaderboard-recovery/clock.log。多列计分板、真实窗口、原图与实际存档待实现或阶段验证；启动保护保留。
+
+
+### 多列计分板恢复（待阶段验证）
+
+路径：src/session.h、src/session_multiboard.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SMBD 重建多列计分板、样式、网格和单元格引用，SRBF 更新至版本 16。Win32 Release 构建及 clock 75/75 通过；日志 tmp/docs-artifacts/war3/multiboard-recovery/clock.log。待验证真实窗口、原版地图、实际存档及联机；启动保护保留。

@@ -123,6 +123,7 @@ class ScriptSession {
     bool leaderboardsRebuilt_=false;
     std::map<std::uint32_t,std::shared_ptr<ScriptMultiboard>> multiboards_;
     bool multiboardsSuppressed_=false;
+    bool multiboardsRebuilt_=false;
     std::array<std::set<std::uint32_t>,16> synchronizedSelections_;
     std::array<std::map<std::uint32_t,std::uint64_t>,16> selectionRevisions_;
     using SelectionSnapshot=std::array<std::set<std::uint32_t>,16>;
@@ -1419,6 +1420,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildScriptDialogs(std::span<const std::uint8_t> bytes);
     Bytes encodeLeaderboards(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildLeaderboards(std::span<const std::uint8_t> bytes);
+    Bytes encodeMultiboards(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildMultiboards(std::span<const std::uint8_t> bytes);
     Bytes encodeTimerEvents(const jass::StableHandleMap& encodeHandle) const;
     void restoreTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     std::map<std::uint32_t,std::uint32_t> rebuildTimerEvents(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
