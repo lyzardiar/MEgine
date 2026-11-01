@@ -5734,7 +5734,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 
 ### 地图物品和可破坏物枚举上下文（待功能批次验证）
 
-路径：`src/session_inventory.cpp`、`src/session_destructables.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。矩形枚举分别设置过滤阶段与回调阶段的对象，阶段结束后恢复外层上下文；回调前仍复核对象存活。合批生成 destructable 夹具并运行 `war3_destructable_tests <root> <fixture>`，覆盖两类对象过滤／回调；嵌套枚举、过滤时移除和原版事件上下文待对照。本次未执行功能测试。
+路径：`src/session_inventory.cpp`、`src/session_destructables.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。矩形枚举的动作回调保留当前过滤对象并设置枚举对象，结束后恢复外层上下文；回调前仍复核对象存活。合批生成 destructable 夹具并运行 `war3_destructable_tests <root> <fixture>`，覆盖两类对象过滤／回调；嵌套枚举、过滤时移除和原版事件上下文待对照。本次未执行功能测试。
 
 
 ### 组枚举过滤回调移除单位（待功能批次验证）
@@ -5856,3 +5856,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 计数枚举与玩家组遍历合批结果
 
 范围：`7db5dfc`、`e5b8d3b`、`2abb0f2`、`0037e17`。Win32 Release 客户端、destructable、game flow 和 CampaignAI 目标编译通过；destructable 与 game flow 两个进程均退出 0，共输出 **3 条 PASS**；CampaignAI `reachable`、`armies` 各 **2 通过、0 失败**。覆盖零／负数上限、未知类型保留已有成员、过滤回调对玩家组计数的影响、遍历中增删成员及原公共 AI。日志和夹具位于 `tmp/docs-artifacts/war3/counted-groups-batch/`。原版动态回调、更多自定义地图及实际窗口仍待对照。
+
+
+### 枚举动作中的过滤上下文和空回调（待功能批次验证）
+
+路径：`src/session_inventory.cpp`、`src/session_destructables.cpp`、`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。物品和可破坏物的动作执行时保留对应过滤对象；空动作仍执行过滤但不调用脚本，`ForGroup` 空动作无操作。原版 1.27 的物品和可破坏物回调分别在 `0x6f1e98ed`、`0x6f1df8ed` 设置过滤上下文，动作结束后在 `0x6f1e9952`、`0x6f1df952` 清理；空动作在调用前跳过。合批运行 destructable 夹具，覆盖嵌套恢复、空动作及过滤器；原版动态时序仍待对照。本次未执行功能测试。

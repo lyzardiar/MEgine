@@ -18,6 +18,8 @@ item probe_nested_item=null
 rect probe_nested_rect=null
 integer probe_items=0
 integer probe_nested_items=0
+integer probe_null_item_filters=0
+integer probe_null_dest_filters=0
 item probe_transfer_first=null
 item probe_transfer_second=null
 unit probe_carrier=null
@@ -64,7 +66,7 @@ function ProbeFilter takes nothing returns boolean
     return GetFilterDestructable()==probe_tree
 endfunction
 function ProbeEnumerated takes nothing returns nothing
-    if GetEnumDestructable()!=probe_tree or GetFilterDestructable()!=null then
+    if GetEnumDestructable()!=probe_tree or GetFilterDestructable()!=probe_tree then
         call ExecuteFunc("DestructableFailure_enum_context")
     endif
     set probe_enumerated=probe_enumerated+1
@@ -87,17 +89,17 @@ function ProbeNestedItemFilter takes nothing returns boolean
     return GetFilterItem()==probe_nested_item
 endfunction
 function ProbeNestedItemAction takes nothing returns nothing
-    if GetEnumItem()!=probe_nested_item or GetFilterItem()!=null then
+    if GetEnumItem()!=probe_nested_item or GetFilterItem()!=probe_nested_item then
         call ExecuteFunc("ItemFailure_nested_enum_context")
     endif
     set probe_nested_items=probe_nested_items+1
 endfunction
 function ProbeItemAction takes nothing returns nothing
-    if GetEnumItem()!=probe_item or GetFilterItem()!=null then
+    if GetEnumItem()!=probe_item or GetFilterItem()!=probe_item then
         call ExecuteFunc("ItemFailure_enum_context")
     endif
     call EnumItemsInRect(probe_nested_rect,Filter(function ProbeNestedItemFilter),function ProbeNestedItemAction)
-    if GetEnumItem()!=probe_item or GetFilterItem()!=null then
+    if GetEnumItem()!=probe_item or GetFilterItem()!=probe_item then
         call ExecuteFunc("ItemFailure_outer_context_restoration")
     endif
     set probe_items=probe_items+1
@@ -164,6 +166,7 @@ function ProbeInvalidGroup takes real x, real y returns nothing
     local unit u=CreateUnit(Player(0),'hfoo',x,y,0)
     call GroupAddUnit(g,u)
     call ForGroup(null,function ProbeGroupAction)
+    call ForGroup(g,null)
     call GroupEnumUnitsInRect(null,null,null)
     call GroupEnumUnitsInRect(g,null,null)
     if FirstOfGroup(g)!=u then
@@ -293,6 +296,22 @@ function ProbeForceWalk takes nothing returns nothing
     call ForceAddPlayer(probe_walk_force,Player(1))
     call ForForce(probe_walk_force,function ProbeForceWalkAction)
     call DestroyForce(probe_walk_force)
+endfunction
+function ProbeNullItemFilter takes nothing returns boolean
+    set probe_null_item_filters=probe_null_item_filters+1
+    return true
+endfunction
+function ProbeNullDestFilter takes nothing returns boolean
+    set probe_null_dest_filters=probe_null_dest_filters+1
+    return true
+endfunction
+function ProbeNullCallbacks takes real x, real y returns nothing
+    local rect r=Rect(x-128,y-128,x+128,y+128)
+    local item i=CreateItem('rat6',x,y)
+    call EnumItemsInRect(r,Filter(function ProbeNullItemFilter),null)
+    call EnumDestructablesInRect(r,Filter(function ProbeNullDestFilter),null)
+    call RemoveItem(i)
+    call RemoveRect(r)
 endfunction
 function config takes nothing returns nothing
 endfunction
