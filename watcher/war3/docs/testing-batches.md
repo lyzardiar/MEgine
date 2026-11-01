@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 光环状态的扩展筛选（待功能批次验证）
+
+路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。光环按非魔法、非物理且不符合自动驱散筛选的状态处理；开启光环筛选并关闭不兼容条件时仍可查询和移除，存活光环来源继续重新施加。原版 1.27 `CBuffAuraDevotion` 的相应虚函数报告光环标记，以及魔法、物理和自动驱散筛选为假。合批运行 `war3_passive_tests <data-root> <fixture>`，覆盖多光环查询、筛选、移除及重新施加；其他特殊光环和原版动态行为待验证。本次未执行功能测试。
+
+
 ### 机械小动物的限时状态（待功能批次验证）
 
 路径：`src/session_spell_natives.cpp`、`src/session_entities.cpp`、`tests/passive_tests.cpp`。机械小动物共享同一 Buff 编号的标记与限时生命按一个限时状态查询和清除；通过扩展清除接口或 `UnitRemoveAbility` 移除时同步释放关联状态。原版 1.27 `CBuffMechanicalCritter` 虚函数将其识别为正面限时状态。合批运行 `war3_passive_tests <data-root> <fixture> buff-timed-critter`，回归限时生命、实际机械小动物召唤和驱散；原版动态事件与视觉待验证。本次未执行功能测试。
