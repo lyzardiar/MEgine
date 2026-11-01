@@ -5898,3 +5898,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 声音播放状态合批结果
 
 范围：`b91cb30`、`a1c05ed`、`84b8d32` 及本次声音测试夹具修正。Win32 Release 客户端与 sound 目标构建通过。`war3_sound_tests <data-root> <scratch-root>` 首轮 **15 通过、7 失败**；其中 4 项因 `waveOutOpen() failed` 无法打开实际音频设备：`sound_playback_state_miles_roundtrip`、`sound_unmute_preserves_paused_playback`、`sound_channel_preemption_and_owned_detach`、`sound_fade_pulses_drive_muted_miles_and_release`，保留待设备可用后重测。另 3 项为独立脚本缺少句柄声明及两处沿用物理设备计数的旧夹具；修正后分别 **1 通过、0 失败**。新 MIDI 音调、源表覆盖和位置标记用例均在首轮通过。日志位于 `tmp/docs-artifacts/war3/sound-position-batch/`，构建日志为 `tmp/docs-artifacts/war3/sound-position-batch-build.log`。实际设备状态切换及原版动态行为仍待验证。
+
+
+### 玩家单位与科技计数的失效句柄（待功能批次验证）
+
+路径：`src/session_game.cpp`、`src/session_match.cpp`、`tests/game_flow_tests.cpp`。单位数、建筑数、按名称单位数和科技数查询对空或类型不匹配玩家返回零；有效玩家沿用现有计数。原版 1.27 四个入口 `0x6f1e42a0`、`0x6f1e40e0`、`0x6f1e4230`、`0x6f1e4190` 在玩家解析失败时返回零。合批运行 `war3_game_flow_tests` 及相关地图场景，核对失效句柄、有效计数、升级和所有权变化；原版动态行为待验证。本次未执行功能测试。
