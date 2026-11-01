@@ -5574,3 +5574,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 多选自动施放切换（待功能批次验证）
 
 路径：`src/game_commands.cpp`、`src/lan_action_encoder.cpp`、`tests/order_queue_tests.cpp`。右键切换法术或修理自动施放时，对已选且拥有相同能力的可控单位共同下发；实验联机将各单位动作编码在同一同步流。合批编译客户端和订单测试，执行 `war3_order_queue_tests <root> <fixture>` 验证实验联机多单位切换；实际窗口、多选混合状态及原版联机仍待验证。本次未执行功能测试。
+
+
+### 多选工人的资源返回命令（待功能批次验证）
+
+路径：`src/game_commands.cpp`、`src/lan_action_encoder.cpp`、`tests/order_queue_tests.cpp`。命令面板的返回资源按钮向已选、携带资源的可控工人发令，实验联机在同一同步流编码各工人命令。合批编译客户端和订单测试并运行 `war3_order_queue_tests <root> <fixture>`，覆盖不同资源的两名工人；实际窗口、路径、混合选区和原版联机仍待验证。本次未执行功能测试。
