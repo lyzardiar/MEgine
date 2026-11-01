@@ -5918,3 +5918,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 玩家计数与脚本对话框合批结果
 
 范围：`33c8fa7`、`06748c6`、`03b7803`。Win32 Release 客户端和 game flow 测试目标构建通过；测试文件既有 unsigned／int 比较产生两条 C4389 警告。`generate-game-flow-fixture.py` 生成正确夹具后，`war3_game_flow_tests <data-root> <fixture>` 和 `war3_game_flow_tests <data-root> <fixture> lan-dialog` 各退出 0、各输出 1 条 PASS，覆盖失效玩家计数、源快捷键、失效对话框和有效事件，以及实验联机对话框状态。首次误用 destructable 夹具导致两次 `Unknown JASS entry: ProbeDialog`，更换为 game flow 夹具后上述两项通过；日志位于 `tmp/docs-artifacts/war3/dialog-count-batch/`。原版动态行为、地图覆盖、双客户端及实际窗口输入仍待验证；本机先前 D3D9 无法创建设备，本批未重复窗口启动。
+
+
+### 娜迦工人建造（待功能批次验证）
+
+路径：`src/session.h`、`src/session_construction.cpp`、`src/game_loading.{h,cpp}`、`src/game_commands.cpp`、`tests/construction_tests.cpp`、`docs/construction.md`。娜迦工人读取源建造列表和 `CmdBuildNaga` 文本／快捷键，支持工人进入建筑并完成施工；原始命令未提供图标／位置时使用 `CmdBuild` 配置。原版 `nmpe` 含六种建造类型；Naga／Orc 建造类三个关键虚表项一致。合批用 `generate-construction-fixture.py` 生成地图并运行 `war3_construction_tests <data-root> <fixture>`，覆盖列表、施工进度和释放；取消／恢复、采集、原版时序和窗口图标仍待验证。本次未执行功能测试。
