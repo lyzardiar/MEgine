@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 限时生命状态的扩展筛选（待功能批次验证）
+
+路径：`src/session_spell_natives.cpp`、`tests/passive_tests.cpp`。限时生命作为正面、非魔法、非物理状态参与扩展 Buff 接口；负面、魔法、物理或自动驱散筛选不会错误匹配，关闭限时生命筛选时也不匹配。原版 1.27 `CBuffTimedLife` 的虚函数分别报告正面状态、非魔法、非物理与限时生命；自动筛选函数返回其魔法分类。合批运行 `war3_passive_tests <data-root> <fixture> buff-timed-life`，回归召唤时限、Buff 筛选与移除；特殊限时 Buff、事件和原版动态行为待验证。本次未执行功能测试。
+
+
 ### Buff 脚本接口合批结果
 
 范围：`825098b`、`769c15b`、`c5d90d0`。Win32 Release 客户端、passive、control 目标构建通过，日志无编译警告。生成 passive 夹具后，`buff-invalid-unit`、`buff-script-remove`、`buff-filter-semantics`、`attribute-item-signed` 及 control 的 `flow`、`purge` 各 1 通过、0 失败；passive 主程序退出 0 并输出 PASS。覆盖失效句柄、脚本清除、正负与魔法／物理筛选、属性物品、光环及控制驱散回归。日志与夹具位于 `tmp/docs-artifacts/war3/buff-native-batch/`。同时具有魔法和物理属性的状态、自动驱散筛选、特殊状态生命周期、原版动态行为及实际窗口仍待验证。
