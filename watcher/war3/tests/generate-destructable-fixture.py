@@ -28,6 +28,9 @@ unit probe_second=null
 boolean probe_group_valid=false
 group probe_destroyed_group=null
 integer probe_group_calls=0
+force probe_destroyed_force=null
+integer probe_force_calls=0
+boolean probe_force_valid=false
 endglobals
 function ProbeDeath takes nothing returns nothing
     if GetTriggerDestructable()!=probe_tree or GetTriggerWidget()!=probe_tree then
@@ -158,6 +161,31 @@ function ProbeInvalidGroup takes real x, real y returns nothing
     call RemoveUnit(u)
     call DestroyGroup(g)
     call RemoveRect(r)
+endfunction
+function ProbeForceFilter takes nothing returns boolean
+    set probe_force_calls=probe_force_calls+1
+    call DestroyForce(probe_destroyed_force)
+    return true
+endfunction
+function ProbeForceAction takes nothing returns nothing
+    call ExecuteFunc("ForceFailure_invalid_callback")
+endfunction
+function ProbeInvalidForce takes nothing returns nothing
+    local force f=CreateForce()
+    local force dead=CreateForce()
+    call ForceAddPlayer(f,Player(0))
+    call DestroyForce(dead)
+    call ForceAddPlayer(null,Player(0))
+    call ForceRemovePlayer(dead,Player(0))
+    call ForceClear(dead)
+    call DestroyForce(dead)
+    call ForceEnumPlayers(null,null)
+    call ForceEnumAllies(f,null,null)
+    call ForForce(null,function ProbeForceAction)
+    set probe_force_valid=IsPlayerInForce(Player(0),f) and not IsPlayerInForce(null,f) and not IsPlayerInForce(Player(0),dead)
+    set probe_destroyed_force=CreateForce()
+    call ForceEnumPlayers(probe_destroyed_force,Filter(function ProbeForceFilter))
+    call DestroyForce(f)
 endfunction
 function config takes nothing returns nothing
 endfunction

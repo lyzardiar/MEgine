@@ -5773,3 +5773,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 单位组句柄与命令合批结果
 
 范围：`c75fc74`、`8cf817f`、`776f6a4`，含 `1a6dc96` 嵌套物品枚举补充。Win32 Release 客户端、destructable 和 CampaignAI 目标编译通过；destructable 主场景、`invalid-handles`、`snapshot` 三个进程均退出 0，共 **4 条 PASS**，覆盖失效组／单位／地点、过滤回调销毁组和嵌套物品枚举。CampaignAI 的 `reachable`、`armies`、`fog-attack` 各 **2 通过、0 失败**。日志和夹具在 `tmp/docs-artifacts/war3/group-handles-batch/`。原版回调销毁时序、多单位命令返回规则与实际地图窗口仍待对照。
+
+
+### 玩家组接口的失效句柄（待功能批次验证）
+
+路径：`src/session_collections.cpp`、`tests/generate-destructable-fixture.py`、`tests/destructable_tests.cpp`。玩家组增删、查询、清空、销毁、枚举及遍历在组或玩家句柄失效时返回空值或无操作；筛选回调销毁目标组后停止枚举。原版 1.27 的 `ForForce`、`DestroyForce`、`ForceClear`、`ForceEnumPlayers` 和 `ForceEnumAllies` 入口分别为 `0x6f1e0c30`、`0x6f1df620`、`0x6f1e0cf0`、`0x6f1e0d90`、`0x6f1e0d10`，句柄解析失败直接返回。合批运行 destructable 夹具；过滤器重入时序及实际原图待对照。本次未执行功能测试。
