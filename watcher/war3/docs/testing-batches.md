@@ -5459,3 +5459,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`69a9f3c`、`8f8313b`、`ef8b5a0`。Win32 Release 客户端、会话和运输测试目标编译通过；会话套件 **120 通过、0 失败**，覆盖外部地图精确路径／摘要匹配、默认范围拒绝和文件修改后拒绝。运输 `crash` 与 `crash-damage` 各 **1 通过、0 失败**，覆盖原始坠毁状态，以及自定义 75 伤害下普通与召唤乘员的生命和幸存状态。日志在 `tmp/docs-artifacts/war3/loadgame-handoff/external-cargo-batch-{build,clock}.log` 和 `tmp/docs-artifacts/war3/transport/crash-{baseline,damage}-batch.log`。
 
 地图预览只完成客户端编译；D3D9 窗口环境仍不可用，界面、鼠标键盘与实际恢复交接未执行。召唤单位伤害的死亡／免疫／回调重入、伤害来源与原版分类仍待验证；外部地图迁移搜索和原版存档格式仍待实现。
+
+
+### 迁移安装目录后的地图定位（待功能批次验证）
+
+路径：`src/session_campaign.cpp`、`tests/clock_tests.cpp`。绝对地图提示失效时，从其 `Maps` 后的相对路径在当前安装的 `Maps` 内寻找候选，仍要求地图完整摘要一致；路径包含上级目录时不形成迁移候选，外部绝对路径仅在玩家读档入口显式允许。合批执行会话套件，覆盖迁移、大小写、摘要不匹配、目录范围及外部地图；实际跨安装移动、冲突和窗口加载待验证。本次未执行功能测试。
