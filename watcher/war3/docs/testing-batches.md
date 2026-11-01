@@ -5179,3 +5179,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 单位与物件提示闪烁恢复（待功能批次验证）
 
 路径：`src/indicator.h`、`src/session.h`、`src/session_indicators.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`。SIND 保存未结束的脚本提示闪烁、环形槽位顺序和单位／物品／可破坏物身份；SRBF 更新至版本 52。已新增提示颜色、已移除单位及环形槽位复用的恢复检查。功能批次构建并运行 `war3_clock_tests <data-root> <output-root>`，并补充闪烁时间推进、过期、重叠及真实窗口／存读档检查；启动保护保留。Win32 Release `cmake --build --preset release --target war3_clock_tests --parallel 4` 编译通过，未执行测试。状态：待批次验证。
+
+
+### 可破坏物失效句柄查询与操作（待功能批次验证）
+
+路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`。空、已移除及类型不匹配的可破坏物句柄用于生命／坐标／类型／名称／无敌查询时返回相应空值，生命设置和显隐请求安全返回；无效 widget 的生命设置安全返回。有效对象继续读取和修改真实状态。固定版 Game.dll 对应入口静态指令位于 `tmp/docs-artifacts/war3/destructable-null-queries/game-dll-disassembly.txt`，仅覆盖已检查入口的句柄解析失败分支。Win32 Release `cmake --build --preset release --target war3_destructable_tests --parallel 4` 编译通过；未运行测试。功能批次执行 `war3_destructable_tests <data-root> <generated-map> invalid-handles`，并覆盖地图脚本回调、对象移除与重入及窗口表现。

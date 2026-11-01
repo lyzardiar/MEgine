@@ -35,3 +35,6 @@ cd watcher/war3
 树木耗尽或去往目标的路径失效时，工人在源采集搜索范围内按距离和句柄顺序轮询存活树木，并用现有陆地／飞行路径和采集距离选择可达目标；每次最多探测四棵，无可达候选时每秒继续轮转。携带资源时先按现有流程返还，之后继续查找；没有候选时延续原有结束／返还逻辑。眩晕、定身或无法移动期间不把树视为不可达。探测使用严格路径，不改变脚本接收的原始命令目标。原版树木选择、重试时机和密集地图的性能尚待对照。
 
 `KillDestructable`、`RemoveDestructable` 和 `SetDestructableInvulnerable` 对空、已移除或不兼容句柄直接返回；有效对象沿用死亡事件、占地清理与无敌状态。固定版 Game.dll 的三个入口分别为 `0x6f1efc90`、`0x6f1f2cc0`、`0x6f1f4b00`，均在对象解析失败时返回；本机 SHA-256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`，指令记录 `tmp/docs-artifacts/war3/destructable-invalid-actions/original.txt`。Win32 Release 客户端及测试目标编译通过；`war3_destructable_tests <data-root> <fixture> invalid-handles` 通过，覆盖三类无效句柄、原 `Blizzard.j` `SetDestructableInvulnerableBJ` 和有效对象，调用后继续推进 0.25 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/destructable-invalid-actions/test-final.log`。其他可破坏物 native、自然对局和原版动态事件时序待验证。
+
+
+可破坏物生命、坐标、类型、名称和无敌查询对空或已失效句柄返回空值；生命设置与显隐操作遇到无效句柄直接返回，`SetWidgetLife` 同样忽略无效对象。有效句柄沿用实际对象状态。依据为固定版 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 的对应入口及句柄解析失败分支，原始指令见 `tmp/docs-artifacts/war3/destructable-null-queries/game-dll-disassembly.txt`；仅静态核对，类型混用、地图回调及运行时行为待功能批次验证。
