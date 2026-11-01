@@ -5539,3 +5539,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 哨兵无敌树木目标许可（待功能批次验证）
 
 路径：`src/session_control_spells.cpp`、`tests/generate-stealth-fixture.py`、`tests/stealth_tests.cpp`。哨兵能力目标列表同时识别 `invu` 和 `invulnerable`，按完整条目处理无敌树木。合批分别生成 `--sentinel-targets partial`、`invu`、`invulnerable` 夹具，执行对应的 `sentinel-partial`、`sentinel-invu`、`sentinel-invulnerable` 模式并复验原始哨兵；原版边界和窗口效果仍待验证。本次未执行功能测试。
+
+
+### 无敌目标与替代树合批结果
+
+范围：`7dca81d`、`0b5717e`、`60ac541` 及本批补充。Win32 Release 客户端、采集、研究和隐身测试目标编译通过；原始采集、三种树木目标、研究、原始哨兵和三种哨兵目标共 **9 个进程通过、0 失败**。首轮编译定位并修正替代树筛选条件位置；原有哨兵测试的 121／61 秒时间步调整为不超过 60 秒后重测通过。日志和本批夹具在 `tmp/docs-artifacts/war3/invu-batch/`，采集夹具复用 `tmp/docs-artifacts/war3/target-batch/`。原版目标语义、实际伤害和窗口效果仍待对照验证。
