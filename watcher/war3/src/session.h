@@ -995,6 +995,7 @@ class ScriptSession {
     void regenerate(double delta);
     std::vector<std::uint32_t> illusions(std::uint32_t caster,std::uint32_t original,unsigned count,float dealt,float taken,double duration,std::uint32_t buff,std::uint32_t ability=0);
     void removeItem(std::uint32_t item);
+    void consumeItem(std::uint32_t item);
     void refreshUpkeep(unsigned owner);
     const SourceSettings& gameplay();
     float gameplayNumber(const char* key,float fallback);
@@ -1008,7 +1009,7 @@ class ScriptSession {
     void initializeCommerce(UnitState& unit);
     void setStock(UnitState& unit,std::uint32_t type,bool item,int current,int maximum);
     bool sells(const UnitState& unit,bool item) const;
-    std::set<std::uint32_t> pawningItems_;
+    std::set<std::uint32_t> pawningItems_,purchasedItems_,consumedPurchases_;
     bool pawnTarget(unsigned player,const UnitState& seller,std::uint32_t item,const UnitState& shop);
     bool pawnItem(unsigned player,std::uint32_t seller,std::uint32_t item,std::uint32_t shop);
     std::shared_ptr<UnitState> shopper(std::uint32_t shop,unsigned owner,std::uint32_t requested=0,bool inventory=false);
