@@ -4698,3 +4698,7 @@ Win32 Release 客户端及 clock 测试目标编译通过，`war3_clock_tests <d
 ### 法术弹道快照（待批次验证）
 
 路径：`src/session_spell_snapshot.cpp`、`src/session.h`、`CMakeLists.txt`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SSMS` 保存法术弹道完整发射参数、飞行状态、目标历史及共享法术调度编号，并校验重建的单位身份。Win32 Release 客户端及 clock 目标编译通过；`war3_clock_tests <data-root> <output-root>` 35 通过、0 失败，覆盖实际风暴之锤弹道、移除施法者及目标、错误映射、损坏拒绝与快照往返，未加载 Game.dll。其他法术状态及共享编号整合、闪电和视觉效果、完整世界和读档尚未完成；链式目标、原图、恢复后的飞行与命中、窗口及原版行为待批次验证或实现。
+
+### 战斗与弹道快照批次（2026-11-01）
+
+本批合并 `c095d52`、`4baff9b`、`c397a9f` 及测试补充 `e9e44ea`：同一集成代码版本下，Win32 Release 客户端、clock、passive 和 caster 目标编译通过；`war3_clock_tests <data-root> <output-root>` 35 通过、0 失败；`war3_passive_tests <data-root> <passive-fixture> spider-attack` 1/1、`line-weapon` 4/4；`war3_caster_tests <data-root> <caster-fixture> chain-targets` 4/4，均未加载 Game.dll。首次连锁闪电测试误用了旧目标夹具，因缺少自定义能力失败；使用当前 `generate-caster-fixture.py` 在 `tmp/docs-artifacts/war3/combat-snapshot-batch/` 生成夹具后通过。上述技能专项验证现有战斗行为，不代表快照恢复后续执行通过。共享法术调度编号与其他法术状态整合、链式和多目标快照、完整世界恢复、真实读档、实际命中与窗口仍待验证或实现。
