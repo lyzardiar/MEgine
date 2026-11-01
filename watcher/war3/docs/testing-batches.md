@@ -4916,3 +4916,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 岗哨与临时显形恢复（待阶段验证）
 
 路径：`src/session.h`、`src/session_stealth_reveal.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SRVL` 保存岗哨、显形区域、时序及树木／特效引用；`SRBF` 版本 3 纳入该组件。Win32 Release 核心及 clock 目标编译通过，clock 62/62；实际技能创建显形和岗哨，检查恢复后侦测及组件重编码，日志 `tmp/docs-artifacts/war3/reveal-recovery/clock-final.log`。待阶段验证恢复后的岗哨飞行、树木移除、显形到期、原图视野及实际存档；组件包启动保护保留。
+
+
+### 民兵征召与警铃恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_militia.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SMLT` 保存警铃、攻击警报设置、民兵转换及计时，并映射城镇引用；`SRBF` 版本 4 纳入该组件。Win32 Release 核心与 clock 目标编译通过，clock 62/62；实际警铃夹具覆盖前往城镇与已变身两种状态的重建和组件往返，日志 `tmp/docs-artifacts/war3/militia-recovery/clock-03.log`。待阶段验证恢复后转换完成、倒计时返工、原图与实际存档；组件包启动保护保留。
