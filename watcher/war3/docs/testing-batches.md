@@ -5164,3 +5164,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 界面与音频恢复批次结果
 
 范围：`d42dc02`、`4b1d355`、`bd1f6b7` 及本次测试夹具修正。Win32 Release `war3_clock_tests`、`war3_music_tests` 构建通过；clock 115 通过、0 失败，音乐 8 通过、1 失败。失败项 `music_real_seek_pause_resume_repeat_and_clear` 因本机 Miles `waveOutOpen()` 失败，保留待有可用音频设备时重测。静音音乐快照、主题音乐恢复、界面请求及音效队列用例通过；墙钟淡化／排队的跨快照边界、实际窗口、真实设备和游戏读档仍待验收。日志：`tmp/docs-artifacts/war3/ui-audio-recovery-batch/`。
+
+
+### 脚本延迟范围伤害恢复（待功能批次验证）
+
+路径：`src/session.h`、`src/session_damage.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`。SPDM 保存 `UnitDamagePoint` 的排队伤害、到期时间、同时间顺序与来源单位生命周期；恢复包版本 50 重建队列并核对地图、时钟和单位身份。批次构建并执行 `war3_clock_tests <data-root> <output-root>`，检查队列往返、移除来源、损坏拒绝，并补充真实续行的伤害顺序和触发事件、原版地图及实际存读档。实际存档入口及恢复启动保护仍待完成。本次 `cmake --build --preset release --target war3_clock_tests --parallel 4` 编译通过；未执行测试。状态：待批次验证。

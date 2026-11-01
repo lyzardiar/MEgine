@@ -217,6 +217,7 @@ class ScriptSession {
         bool attack=false,ranged=false;
     };
     std::multimap<double,PointDamage> pointDamageQueue_;
+    bool pointDamageRestored_=false;
     bool scriptDamageWidget(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack,bool ranged);
     void applyPointDamage(const PointDamage& damage);
     void pointDamageTick();
@@ -1443,6 +1444,8 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildDeformations(std::span<const std::uint8_t> bytes);
     Bytes encodeImages(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildImages(std::span<const std::uint8_t> bytes);
+    Bytes encodePointDamage(const jass::StableHandleMap& encodeHandle) const;
+    void restorePointDamage(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeCombatEffects(const jass::StableHandleMap& encodeHandle) const;
     void restoreCombatEffects(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeItemBlightGrowth() const;
