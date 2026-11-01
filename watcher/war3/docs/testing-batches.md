@@ -5913,3 +5913,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 脚本对话框失效句柄（待功能批次验证）
 
 路径：`src/session_script_dialogs.cpp`、`tests/game_flow_tests.cpp`。销毁、清空、设置消息及显示对失效对话框无操作，添加按钮返回空句柄；显示时玩家失效也无操作。原版 1.27 的对应入口 `0x6f1dfb50`、`0x6f1dfa40`、`0x6f1dfbe0`、`0x6f1df9a0`、`0x6f1df9f0`、`0x6f1dfb70` 检查对象解析结果。合批运行 game flow 夹具，核对空／已销毁／类型不匹配句柄及有效对话框点击和事件；原版动态时序、实际窗口待验证。本次未执行功能测试。
+
+
+### 玩家计数与脚本对话框合批结果
+
+范围：`33c8fa7`、`06748c6`、`03b7803`。Win32 Release 客户端和 game flow 测试目标构建通过；测试文件既有 unsigned／int 比较产生两条 C4389 警告。`generate-game-flow-fixture.py` 生成正确夹具后，`war3_game_flow_tests <data-root> <fixture>` 和 `war3_game_flow_tests <data-root> <fixture> lan-dialog` 各退出 0、各输出 1 条 PASS，覆盖失效玩家计数、源快捷键、失效对话框和有效事件，以及实验联机对话框状态。首次误用 destructable 夹具导致两次 `Unknown JASS entry: ProbeDialog`，更换为 game flow 夹具后上述两项通过；日志位于 `tmp/docs-artifacts/war3/dialog-count-batch/`。原版动态行为、地图覆盖、双客户端及实际窗口输入仍待验证；本机先前 D3D9 无法创建设备，本批未重复窗口启动。
