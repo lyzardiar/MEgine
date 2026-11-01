@@ -33,7 +33,7 @@
 #include <unordered_map>
 
 namespace war3 {
-struct RecoveryCheckpointInfo {std::string mapPath,mapDigest;};
+struct RecoveryCheckpointInfo {std::string mapPath,mapDigest;bool expansion=false;unsigned version=0,defaultDifficulty=0;};
 class PlayerSetup;
 class WalkableGeometry;
 struct LanSessionSetup;

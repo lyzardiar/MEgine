@@ -5338,3 +5338,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`0acc603`、`691fe4c`、`3872a6b`、`4a821d5`、`c4017b7`、`2814bd7` 及本次定位夹具补充；路径：`src/session.h`、`src/session_campaign.cpp`、`src/session_tick.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release `war3_clock_tests` 编译通过，整批 **119 通过、0 失败**；补充相对文件名与摘要不匹配后，受影响项定向重测 **1 通过、0 失败**。覆盖脚本保存、保存事件、暂停、文件及恢复线程，以及地图身份、绝对／相对名称、摘要不匹配和不同安装目录拒绝。日志和临时文件位于 `tmp/docs-artifacts/war3/save-map-resolution-batch/`。
 
 原版 OrcX01 另做隔离最小探针：模拟 150 秒后直接移动雷克萨至区域，生成区域检查点和保存事件备份，两者 SHA-256 一致并发出下一地图切换请求；日志及文件在 `tmp/docs-artifacts/war3/save-game-native/`。自然走位、下一地图加载、回访读档、经典战役目录和外部地图定位、重解析点、并发、失败处理、原版文件与事件时序仍待验证或实现；`LoadGame` 未接入，恢复启动保护保留。
+
+
+### 检查点会话上下文与回访诊断（待功能批次验证）
+
+路径：`src/session.h`、`src/session_campaign.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。检查点身份查询解析战役模式、游戏版本和默认难度，并核对嵌套组件摘要及地图身份。合批编译运行 `war3_clock_tests <data-root> <output-root>`；不同版本、难度、损坏组件和实际加载仍待验证。本次尚未编译或测试。原版 OrcX01 隔离检查点可重建，但临时绕过保护后一帧会重复触发原切区，见 `tmp/docs-artifacts/war3/save-game-native/orcx-checkpoint-stack.log`；恢复启动保护保留。
