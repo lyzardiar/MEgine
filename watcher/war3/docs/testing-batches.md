@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 复合物品的单位施法状态（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。目标型复合物品支持 Alsh 闪电护盾、Afae 精灵之火和 Acri 衰减，复用目标筛选、法术护盾与现有状态效果，共同结算物品费用、次数、冷却和使用事件。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-caster`、目标／拾取型灵魂锁链和已有复合回归，验证普通施法及锁链分摊；复合施法前摇／弹道、原版时序、多人与窗口待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
+
+
 ### 复合物品的目标型灵魂锁链（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/consumables.md`。非拾取型复合物品支持指定单位施放 Aspl，校验实际目标和射程，应用前复查目标死亡与归属轮次，并复用原锁链状态；物品与其他效果统一结算。合批生成复合物品夹具，运行 `war3_control_tests <data-root> <fixture> item-combined-spirit-target`、`item-combined-spirit-rune` 及锁链回归；复合技能施法前摇／弹道、原版时序、多人和窗口待对照。Win32 Release 客户端及 control 测试目标构建通过，测试目标有既有变量遮蔽警告；生成器语法检查通过。本次未执行功能测试。
