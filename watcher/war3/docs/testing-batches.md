@@ -5948,3 +5948,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 影子风衣夜间隐身（待功能批次验证）
 
 路径：`src/session.h`、`src/session_stealth_reveal.cpp`、`src/session_visibility.cpp`、`tests/stealth_tests.cpp`、`docs/visibility.md`。原版 `clsd` 携带 `Ashm`，装备后参与现有影遁的夜晚、移动和昼夜流程；失去物品或装备能力时隐身查询立即失效。合批生成 stealth 夹具，运行 `war3_stealth_tests <data-root> <fixture> cloak` 并回归 `flow`、`meld`；多来源叠加、禁用、地图覆盖、原版动态效果和实际窗口待验证。本次未执行功能测试。
+
+
+### 传送物品的单位目标（待功能批次验证）
+
+路径：`src/session.h`、`src/session_item_use.cpp`、`src/game_inventory_drag.cpp`、`tests/control_tests.cpp`、`docs/teleport.md`。传送权杖和回城卷轴的目标模式支持直接选中单位或建筑，保留地面／小地图位置查找和双击自动选择基地；召回护符与黑暗召唤仍为点目标。合批运行 control 夹具 `dark-summoning` 检查目标类型和指定句柄，回归点目标；实际窗口命中、双击及原版行为待验证。本次未执行功能测试。
