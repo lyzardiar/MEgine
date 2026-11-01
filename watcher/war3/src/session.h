@@ -313,7 +313,7 @@ class ScriptSession {
     bool shopStockRestored_=false,unitSummonsRestored_=false,productionRestored_=false,cargoRestored_=false,harvestRestored_=false,constructionRestored_=false,corpsesRestored_=false,ambientRestored_=false,unitStealthRestored_=false,selectionRestored_=false,waygatesRestored_=false,revealStateRestored_=false,militiaRestored_=false,unitFormsRestored_=false,treeActionsRestored_=false;
     unsigned futureMovementPhaseBias_=0;
     bool futureMovementPhaseRestored_=false;
-    bool recoveryBundleRestored_=false,recoverySourceMainCompleted_=false;
+    bool recoveryBundleRestored_=false,recoverySourceMainCompleted_=false,attackPassiveStateRestored_=false;
     std::vector<std::shared_ptr<const Member>> preloaded_;
     size_t preloadBytes_=0;
     unsigned preloadDepth_=0;
@@ -1514,6 +1514,8 @@ public:
     void finishUnitCore(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitAuras(const jass::StableHandleMap& encodeHandle) const;
     void restoreUnitAuras(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
+    Bytes encodeAttackPassiveState(const jass::StableHandleMap& encodeHandle) const;
+    void restoreAttackPassiveState(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitBuffs(const jass::StableHandleMap& encodeHandle) const;
     void restoreUnitBuffs(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeUnitCasts(const jass::StableHandleMap& encodeHandle) const;

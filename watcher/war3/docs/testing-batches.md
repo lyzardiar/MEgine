@@ -5297,3 +5297,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 持续技能与召唤清理恢复合批结果
 
 范围：`d6569fc`、`1e12190`、`cb17a08`。Win32 Release `war3_clock_tests` 编译通过，执行 `war3_clock_tests <data-root> <output-root>` 为 **118 通过、0 失败**，未加载 Game.dll。覆盖献祭、剑刃风暴和魔法闪耀的参与者索引往返，魔法闪耀恢复后对敌方施法产生弹道，以及指定连带死亡的尸体召唤物在恢复后随召唤者移除而死亡。日志与临时产物在 `tmp/docs-artifacts/war3/recovery-active-spells-batch/`。剑刃风暴及献祭的恢复后周期伤害、魔法闪耀弹道命中、原技能召唤参数、完整实际读档及原版行为仍待验证；恢复启动保护保留。
+
+
+### 攻击被动累计状态恢复（待功能批次验证）
+
+路径：`src/session.h`、`src/session_buff_snapshot.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SAPV` 保存暴击概率累计、掠夺资源余量及腐蚀持续伤害，`SRBF` 更新至版本 57。合批构建并执行 `war3_clock_tests <data-root> <output-root>`，检查三类状态的映射往返；后续覆盖失效来源、损坏数据、连续攻击／支付／跳伤、真实存读档和原版行为。本次未执行功能编译或测试，恢复启动保护保留。
