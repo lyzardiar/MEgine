@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 限时生命与召唤单位分类（待功能批次验证）
+
+路径：`src/session_illusion.cpp`、`tests/passive_tests.cpp`。对普通单位施加限时生命时设置召唤单位分类，并覆盖此前的类型移除；移除限时能力后分类保留，脚本仍可显式移除或再次施加。原版 1.27 `CBuffTimedLife` 的 `0x6f513003` 设置单位类型位 `4`，`IsUnitType` 的类型映射将该位用于 `UNIT_TYPE_SUMMONED`。合批运行 `war3_passive_tests <data-root> <fixture> timed-life-summoned`，回归限时生命、净化召唤伤害及类型开关；原版动态行为与人口统计待验证。本次未执行功能测试。
+
+
 ### 限时生命的原版 Buff 类型（待功能批次验证）
 
 路径：`src/session_illusion.cpp`、`tests/passive_tests.cpp`。`UnitApplyTimedLife` 为七种原版特殊 Buff 选择对应编号，其他编号使用通用 `BTLF`；替换时清理旧的限时能力。原版 1.27 `0x6f46e1f0` 比较七个内置编号，其他输入使用 `0x6f511fa0` 返回的 `BTLF`。合批运行 `war3_passive_tests <data-root> <fixture> timed-life-buff-id` 和 `mechanical-critter-real`，核对编号、替换、实际物品召唤及状态清除；各特殊 Buff 的专属行为、原版动态和窗口仍待验证。本次未执行功能测试。
