@@ -5116,3 +5116,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 践踏野兽恢复（待阶段验证）
 
 路径：src/stampede.h、src/session.h、src/session_stampede.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SSTP 恢复践踏野兽、特效和碰撞延迟，SRBF 更新至版本 39。Win32 Release 构建及 clock 101/101 通过；原版 Orc01 人工布置场景的飞行续行和人工设置碰撞后续行各 71/71 项状态一致，均临时绕过启动保护。待阶段验证自然碰撞、多目标同距、施法者失效、实际游戏读档、原版时序和窗口；日志 tmp/docs-artifacts/war3/stampede-recovery/。
+
+### 范围波次、延迟与地面技能恢复（待阶段验证）
+
+路径：src/session.h、src/session_area_spells.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SASP 保存波次命中记录、延迟效果及地面脉冲，SRBF 更新至版本 40。Win32 Release 构建及 clock 104/104 通过；原版 Orc01 人工布置场景检查冲击波、烈焰风暴及地狱火，隔离续行各 71/71 项状态一致，临时绕过启动保护。待阶段验证其他技能、来源失效、多目标同距、实际游戏读档、自然战斗、原版时序和窗口；日志 tmp/docs-artifacts/war3/area-spell-recovery/。
