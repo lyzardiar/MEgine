@@ -5554,3 +5554,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 修理扣费回调的订单一致性（待功能批次验证）
 
 路径：`src/session_repair.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。单位修理扣费回调后重新核对订单序号、所有权、技能及目标生命／身份，避免失效订单继续结算。合批生成普通施工夹具并运行 `war3_construction_tests <root> <fixture> repair-callback`，覆盖脚本在扣费事件中对同一目标重新发令；其他回调、原版事件时序与实际对局待验证。本次未执行功能测试。
+
+
+### 自动修理的目标视野（待功能批次验证）
+
+路径：`src/session_repair.cpp`、`tests/construction_tests.cpp`。自动修理只选择工人可见的受损单位，与桥梁目标的视野规则一致。合批运行普通施工夹具的 `repair-visibility` 模式，覆盖战争迷雾中的友军建筑与共享视野后的选择；隐身、原版自动修理时序和实际对局待验证。本次未执行功能测试。
