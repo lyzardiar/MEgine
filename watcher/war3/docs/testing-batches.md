@@ -4845,3 +4845,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 采集与矿体关联快照（待批次验证）
 
 路径：`src/session.h`、`src/session_harvest.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SHAR` 保存采集阶段、携带资源、目标、计时和矿体关联，相关身份与单位核心恢复后应用。Win32 Release 核心及 clock 目标编译通过，clock 55 通过、0 失败，覆盖实际矿内工人、缠绕矿共享资源、错误映射和恢复后移除工人。OrcX01 模拟 150 秒组合探针的 49 个现有组件重编码一致，该时点无携带资源的工人；日志 `tmp/docs-artifacts/war3/harvest-snapshot-clock-03.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-13.log`。批次验证采矿、伐木和缠绕矿消费者；恢复后采集续行、建筑施工、完整存档与跨区仍待实现或验收。
+
+
+### 施工、升级与修理快照（待批次验证）
+
+路径：`src/session.h`、`src/session_construction.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCON` 保存施工、升级、工人占用、修理及反召唤状态，要求先恢复 `SPRD` 编号。Win32 Release 核心及 clock 目标编译通过，clock 56 通过、0 失败，覆盖真实施工、升级、修理、恢复后取消退款及错误映射。OrcX01 模拟 150 秒组合探针 50 个现有组件重编码一致，该时点无活动施工；日志 `tmp/docs-artifacts/war3/construction-snapshot-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-14.log`。批次验证施工、采集和修理消费者；反召唤、恢复后持续施工、实际存档和跨区仍待实现或验收。
