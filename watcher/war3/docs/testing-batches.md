@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 限时死亡与重生状态（待功能批次验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_illusion.cpp`、`src/session_rebirth.cpp`、`tests/passive_tests.cpp`。限时状态到期触发死亡时将到期原因传入死亡处理，保留凤凰周期清理并跳过重生；普通死亡继续按已有规则处理。合批运行 `war3_passive_tests <data-root> <fixture> timed-life-rebirth` 和已有重生、限时状态用例，覆盖较早计时器先到期和普通死亡对照；原版动态行为与复杂死亡事件重入待对照。Win32 Release 客户端和 passive 测试目标构建通过；本次未执行功能测试。
+
+
 ### 多个限时生命状态（待功能批次验证）
 
 路径：`src/entities.h`、`src/session_illusion.cpp`、`src/session_entities.cpp`、`src/session_spell_natives.cpp`、`src/game_buff_panel.cpp`、`tests/passive_tests.cpp`、`tests/clock_tests.cpp`。重复施加产生独立计时器，暂停作用于全部，按编号移除单个状态，扩展 Buff 清除移除所有匹配状态，任一计时器到期触发单位死亡；状态栏合并同编号图标。`SUMM` 第 5 版保存额外计时器，并读取旧版。原版 1.27 `0x6f46e1f0` 创建新状态并经 `0x6f46e090` 加入单位，`UnitPauseTimedLife` 遍历状态。Win32 Release 客户端及两个测试目标构建通过；本次针对性运行 `war3_passive_tests <data-root> <fixture> timed-life-multiple` 和 `WAR3_CLOCK_FILTER=summon_snapshot_restores_timed_life_and_retired_sources`，各 1 通过、0 失败，覆盖多个计时器的暂停、移除、到期、清除和新版快照恢复。合批回归 `timed-life-buff-id`、限时／机械状态及旧版快照；原版动态、特殊 Buff 效果、熔岩分裂交互和窗口显示待验证。构建日志位于 `tmp/docs-artifacts/war3/multiple-timed-life/`。

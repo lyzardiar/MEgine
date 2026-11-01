@@ -363,7 +363,7 @@ class ScriptSession {
     void initializeDeathRestart(UnitState& unit);
     void clearDeathRestart(UnitState& unit);
     bool cancelDeathActivities(UnitState& unit);
-    bool tryDeathRestart(std::uint32_t unit);
+    bool tryDeathRestart(std::uint32_t unit,bool timedLifeExpiry=false);
     void deathRestartsTick(double delta);
     void summonPhoenix(std::uint32_t unit,const SpellInfo& spell,unsigned owner);
     std::map<std::pair<std::uint32_t,unsigned>,std::optional<DeathPassiveInfo>> deathPassives_;
@@ -1112,7 +1112,7 @@ class ScriptSession {
     void bindRescueNatives();
     void rescueTick();
     float turnUnit(UnitState& unit,float target,double delta);
-    void unitLife(jass::Value handle,jass::Real value,std::uint32_t killer=0,bool bounty=true);
+    void unitLife(jass::Value handle,jass::Real value,std::uint32_t killer=0,bool bounty=true,bool timedLifeExpiry=false);
     void observeUnitStates(std::uint32_t handle);
     void observeUnitStatesTick();
     void playerChange(unsigned player,std::uint32_t field,int before,int after,bool alliance);
