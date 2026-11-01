@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 英雄学习说明中的逗号（待批次验证）
+
+路径：`src/session_ability_commands.cpp`、`tests/revival_tests.cpp`。单条英雄学习说明完整保留普通逗号，继续展开对象字段；带引号的多等级列表及 WTS 引用沿用等级选择。固定版 `War3Patch.mpq` 的暗影猎手妖术 `AOhx/Researchubertip` 为一条含普通逗号和多个等级说明的文本。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-learn-tooltip`，并核对自定义多等级文本、WTS、完整面板及原版窗口。本次未执行测试。
+
 ### 英雄姓名池（待批次验证）
 
 路径：`src/session.h`、`src/session_entities.cpp`、`src/session_hero.cpp`、`src/session_game.cpp`、`src/session_network_identity.cpp`、`tests/revival_tests.cpp`。按英雄类型的源 `nameCount` 选择姓名：在使用次数最少的名字中从随机起点顺序选择，复用时追加次数；移除英雄不清除历史。玩家状态快照版本 2 保存姓名历史并读取版本 1，重建单位时不再次分配姓名；会话摘要包含该历史。1.27 `Game.dll` 的 `0x6f26c800` 至 `0x6f26c8e3` 维护按类型的计数和随机选择，`0x6f50b550` 读取姓名并在重复时追加序号。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-names` 及相关 clock 恢复检查；核对战役、自定义姓名和数量、旧快照、存档、联机随机流及原版动态／窗口。本次未执行测试。
