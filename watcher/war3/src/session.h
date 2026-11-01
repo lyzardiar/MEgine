@@ -1071,6 +1071,7 @@ class ScriptSession {
     void permanentItem(std::uint32_t unit,std::uint32_t ability);
     std::map<std::pair<std::uint32_t,unsigned>,std::optional<EquipmentBonuses>> equipmentInfo_;
     const ConsumableInfo* consumableInfo(std::uint32_t ability);
+    void applyConsumableEffect(std::uint32_t source,std::uint32_t target,const ConsumableInfo& info);
     bool useConsumable(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point,const ConsumableInfo& info);
     std::map<std::uint32_t,std::optional<ConsumableInfo>> consumableInfo_;
     bool giveItem(std::uint32_t unit,std::uint32_t item,std::optional<unsigned> slot={});
