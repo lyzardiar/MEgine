@@ -5204,3 +5204,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 复合物品的永久属性与成长（待功能批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合支持永久属性／生命／攻击／经验／等级能力，复用实际英雄及单位消费者；扣费前检查英雄要求和源数值范围，效果按能力顺序执行。Win32 Release `cmake --build --preset release --target war3_control_tests --parallel 4` 与夹具生成脚本语法检查通过，未运行功能测试。合批重新生成夹具并执行 `war3_control_tests <data-root> <fixture> item-combined`，覆盖永久属性与金币、非英雄拒绝及既有即时组合；永久生命／经验／等级、多个效果的极值、事件重入、原版派发及实际窗口待验证。
+
+
+### 复合物品的科技符文效果（待功能批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`；说明见[复合即时物品](combined-recovery-items.md)。多主动组合支持 `AIgl` 的逐级科技配置，使用前检查科技定义与已支持效果，按能力次序复用玩家研究和单位刷新。Win32 Release `cmake --build --preset release --target war3_control_tests --parallel 4` 最终编译通过，夹具生成脚本语法通过，未运行功能测试。与此前复合物品合批重新生成夹具并执行 `war3_control_tests <data-root> <fixture> item-combined`，检查夜视符文两项科技与金币混合；重复／上限、科技变化回调、符文拾取及原版费用／事件顺序待验证。
