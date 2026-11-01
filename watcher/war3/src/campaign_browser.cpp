@@ -38,9 +38,9 @@ fs::path CampaignBrowser::resolvePath(const std::string& path,const fs::path& ex
     auto candidate=dataRoot_/requested;std::error_code error;if(!fs::exists(candidate,error) && !error){auto text=wide(path);constexpr wchar_t prefix[]=L"Maps\\Campaign";constexpr size_t length=sizeof(prefix)/sizeof(wchar_t)-1;if(text.size()>length && CompareStringOrdinal(text.c_str(),int(length),prefix,int(length),TRUE)==CSTR_EQUAL){auto tail=text.substr(length);if(tail.find_first_of(L"\\/:")==std::wstring::npos)candidate=dataRoot_/L"Maps"/L"Campaign"/tail;}}
     return validatePath(candidate,externalRoot);
 }
-void CampaignBrowser::clearPreparation(){preparation_.clear();loading_=false;autoStart_=false;session_.reset();setup_.reset();error_.clear();}
-void CampaignBrowser::beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign,const fs::path& externalRoot){
-    auto resolved=validatePath(path,externalRoot);clearPreparation();request_=preparation_.request(resolved,campaign?std::optional<std::pair<bool,unsigned>>{std::pair{expansion,difficulty}}:std::nullopt,false);loading_=true;autoStart_=autoStart;currentPath_=resolved;currentExpansion_=expansion;currentDifficulty_=difficulty;currentCampaignSession_=campaign;currentExternalRoot_=externalRoot;log_.write("campaign_map_requested="+utf8(resolved.wstring()));
+void CampaignBrowser::clearPreparation(){preparation_.clear();loading_=false;autoStart_=false;session_.reset();setup_.reset();checkpoint_.clear();error_.clear();}
+void CampaignBrowser::beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign,const fs::path& externalRoot,std::optional<unsigned> version){
+    auto resolved=validatePath(path,externalRoot);clearPreparation();request_=preparation_.request(resolved,campaign?std::optional<std::pair<bool,unsigned>>{std::pair{expansion,difficulty}}:std::nullopt,false,{},version);loading_=true;autoStart_=autoStart;currentPath_=resolved;currentExpansion_=expansion;currentDifficulty_=difficulty;currentCampaignSession_=campaign;currentExternalRoot_=externalRoot;log_.write("campaign_map_requested="+utf8(resolved.wstring()));
 }
 bool CampaignBrowser::entryAvailable(const Campaign& campaign,const Entry& entry) const {return entry.missionEntry?profile_.mission(campaign.expansion,campaign.offset,entry.mission,entry.mission==0):(entry.intro || profile_.cinematic(campaign.expansion,campaign.offset,entry.ending,false));}
 void CampaignBrowser::prepareSelected(bool autoStart){
@@ -48,7 +48,7 @@ void CampaignBrowser::prepareSelected(bool autoStart){
     if(!entryAvailable(campaign,entry)){clearPreparation();error_="该章节尚未解锁。";return;}if(entry.cinematic){clearPreparation();return;}try{auto path=resolvePath(entry.path);beginPath(path,campaign.expansion,profile_.difficulty(),autoStart);}catch(const std::exception& e){clearPreparation();error_="无法读取所选战役章节。";log_.write(std::string("campaign_map_error=")+e.what());}
 }
 void CampaignBrowser::prepared(){
-    auto result=preparation_.poll();if(!result || result->request!=request_ || !loading_)return;loading_=false;try{if(!result->error.empty())throw std::runtime_error(result->error);if(!result->session || !result->session->configured())throw std::runtime_error("Campaign map configuration did not complete");auto setup=std::make_unique<PlayerSetup>(result->info,result->session->config());if(!setup->localPlayer())throw std::runtime_error("Campaign map has no local player slot");result->session->applySetup(*setup);setup_=std::move(setup);session_=std::move(result->session);log_.write("campaign_map_ready="+utf8(result->path.wstring()));}catch(const std::exception& e){session_.reset();setup_.reset();autoStart_=false;error_="无法读取或配置所选战役章节。";log_.write(std::string("campaign_prepare_error=")+e.what());}
+    auto result=preparation_.poll();if(!result || result->request!=request_ || !loading_)return;loading_=false;try{if(!result->error.empty())throw std::runtime_error(result->error);if(!result->session || !result->session->configured())throw std::runtime_error("Campaign map configuration did not complete");auto setup=std::make_unique<PlayerSetup>(result->info,result->session->config());if(!setup->localPlayer())throw std::runtime_error("Campaign map has no local player slot");result->session->applySetup(*setup);setup_=std::move(setup);session_=std::move(result->session);log_.write("campaign_map_ready="+utf8(result->path.wstring()));}catch(const std::exception& e){session_.reset();setup_.reset();checkpoint_.clear();autoStart_=false;error_="无法读取或配置所选战役章节。";log_.write(std::string("campaign_prepare_error=")+e.what());}
 }
 void CampaignBrowser::selectCampaign(size_t index){if(index>=campaigns_.size())return;if(index!=selectedCampaign_){selectedCampaign_=index;updateBackdrop();}error_.clear();}
 void CampaignBrowser::enterCampaign(){
@@ -87,5 +87,9 @@ void CampaignBrowser::nextLevel(const std::string& path,const fs::path& external
         beginPath(resolved,expansion,difficulty,true,campaign,allowed);
     }catch(const std::exception& e){clearPreparation();error_="无法载入下一张地图。";log_.write(std::string("campaign_next_level_error=")+e.what());}
 }
+void CampaignBrowser::nextCheckpoint(const std::string& name,bool campaign,const fs::path& externalRoot){
+    try{auto allowed=externalRoot.empty()?fs::path{}:fs::canonical(externalRoot);auto info=ScriptSession::inspectRecoveryCheckpoint(dataRoot_,name);auto path=ScriptSession::resolveRecoveryCheckpointMap(dataRoot_,name,allowed);beginPath(path,info.expansion,std::min(info.defaultDifficulty,2u),true,true,allowed,info.version);currentCampaignSession_=campaign;checkpoint_=name;}catch(const std::exception& e){clearPreparation();error_="无法载入存档地图。";log_.write(std::string("campaign_checkpoint_error=")+e.what());}
+}
+std::string CampaignBrowser::takeCheckpoint(){auto name=std::move(checkpoint_);checkpoint_.clear();return name;}
 void CampaignBrowser::restart(){try{if(currentPath_.empty())throw std::runtime_error("No map to restart");beginPath(currentPath_,currentExpansion_,currentDifficulty_,true,currentCampaignSession_,currentExternalRoot_);}catch(const std::exception& e){clearPreparation();error_="无法重新载入当前地图。";log_.write(std::string("campaign_restart_error=")+e.what());}}
 }

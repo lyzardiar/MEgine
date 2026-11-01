@@ -25,12 +25,12 @@ class CampaignBrowser {
     unsigned rows_=1,currentDifficulty_=1;
     std::uint64_t request_=0;
     bool missions_=false,loading_=false,autoStart_=false,currentExpansion_=false,currentCampaignSession_=true,skipTutorial_=false;
-    std::string error_,backdrop_,cinematicRequest_;
+    std::string error_,backdrop_,cinematicRequest_,checkpoint_;
     void loadCatalog();
     void updateBackdrop();
     void refreshDifficulty();
     void clearPreparation();
-    void beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign=true,const fs::path& externalRoot={});
+    void beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign=true,const fs::path& externalRoot={},std::optional<unsigned> version={});
     void prepareSelected(bool autoStart=false);
     void prepared();
     void selectCampaign(size_t index);
@@ -48,6 +48,8 @@ public:
     std::string takeCinematic();
     void reload(bool campaignList=false);
     void nextLevel(const std::string& path,const fs::path& externalRoot={});
+    void nextCheckpoint(const std::string& name,bool campaign,const fs::path& externalRoot={});
+    std::string takeCheckpoint();
     bool campaignSession() const {return currentCampaignSession_;}
     void restart();
     bool loading() const {return loading_;}

@@ -5364,3 +5364,10 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session.h`、`src/session.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。恢复包和加载事件完成后可显式启动原 main 已完成的本地会话，拒绝过早或重复启动，不重放 main。合批编译运行 `war3_clock_tests <data-root> <output-root>`，检查加载事件顺序、拒绝条件和正常模拟步续行；原版两区域长时运行、原 main 未完成、其他地图状态、`LoadGame` 和窗口交互仍待验证或实现。本次未编译或测试。
 
 必要定向检查：Win32 Release `war3_clock_tests` 编译通过，保存／加载事件和恢复会话启动用例 **1 通过、0 失败**。原版 OrcX01 使用产品恢复、事件与显式启动入口，雷克萨存在且玩家控制可用，隔离模拟 60 秒未重复切区；日志位于 `tmp/docs-artifacts/war3/recovery-activation/`。完整功能批次、窗口输入、其他地图、原版行为及 `LoadGame` 入口仍待验证或实现。
+
+
+### 脚本读档请求与加载流程合批结果
+
+路径：`src/session.h`、`src/session_campaign.cpp`、`src/session_match.cpp`、`src/game_view.h`、`src/game_loading.*`、`src/map_preparation.*`、`src/campaign_browser.*`、`src/main.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release 客户端及测试目标编译通过，`war3_clock_tests <data-root> <output-root>` **120 通过、0 失败**；覆盖脚本 `LoadGame` 的有效／缺失文件和调用线程等待。原版双区域隔离探针直接移动英雄触发切区和回访，读档请求定位到原地图；产品异步地图准备后恢复检查点、分发加载事件并显式启动，雷克萨和玩家控制存在，继续模拟 60 秒。日志在 `tmp/docs-artifacts/war3/loadgame-batch/`、`tmp/docs-artifacts/war3/loadgame-handoff/`。
+
+窗口中的真实加载器与输入、自然走位、并发及错误交互、其他战役／地图、原版存档格式和完整玩法仍待阶段验收；隔离探针没有覆盖这些场景。

@@ -32,7 +32,7 @@ class MapPreparation {
 public:
     explicit MapPreparation(fs::path dataRoot,bool muted=false);
     ~MapPreparation();
-    std::uint64_t request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign={},bool inferCampaign=true,std::optional<std::uint32_t> initialRandomSeed={});
+    std::uint64_t request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign={},bool inferCampaign=true,std::optional<std::uint32_t> initialRandomSeed={},std::optional<unsigned> version={});
     // The caller must retain only immutable aliases to these validated map bytes.
     std::uint64_t requestMemory(std::shared_ptr<const Bytes> bytes,std::string label,std::optional<std::uint32_t> initialRandomSeed={});
     std::uint64_t requestLanMemory(std::shared_ptr<const Bytes> bytes,std::string label,LanSessionSetup setup,bool experimentalSelectionSync=false,std::optional<unsigned> version={});
