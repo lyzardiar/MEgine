@@ -699,7 +699,7 @@ class ScriptSession {
     bool useItemImpl(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point);
     bool useCombinedRecoveryItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target,std::optional<WorldPoint> point,const std::vector<std::uint32_t>& abilities);
     std::map<std::string,std::uint32_t> caches_;
-    bool gameCachesRebuilt_=false,hashtablesRebuilt_=false;
+    bool gameCachesRebuilt_=false,hashtablesRebuilt_=false,randomPoolsRebuilt_=false;
     std::vector<ScriptText> texts_;
     std::vector<ScriptText> textHistory_;
     size_t textHistoryBytes_=0;
@@ -1359,6 +1359,8 @@ public:
     void restorePlayerStatistics(std::span<const std::uint8_t> bytes);
     std::vector<std::uint8_t> encodePlayerStates() const;
     void restorePlayerStates(std::span<const std::uint8_t> bytes);
+    Bytes encodeRandomPools(const jass::StableHandleMap& encodeHandle) const;
+    std::map<std::uint32_t,std::uint32_t> rebuildRandomPools(std::span<const std::uint8_t> bytes);
     std::vector<std::uint8_t> encodeRandomState() const;
     void restoreRandomState(std::span<const std::uint8_t> bytes);
     Bytes encodeSimulationClock() const;

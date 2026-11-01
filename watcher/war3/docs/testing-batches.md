@@ -4976,3 +4976,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 恢复包哈希表引用顺序（待阶段验证）
 
 路径：`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。哈希表在计时器、计时器对话框、集合、触发器和事件身份重建后恢复，支持这些已有对象的表项映射。Win32 Release 构建及 clock 68/68 通过，覆盖非恒等映射及表间循环，日志 `tmp/docs-artifacts/war3/hashtable-bundle/clock-final-02.log`。待阶段验证其他对象类型、真实地图和实际存档；启动保护保留。
+
+
+### 随机单位池与物品池恢复（待阶段验证）
+
+路径：`src/session.h`、`src/session_game.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SPOL` 保存池身份、销毁状态及有序权重条目，`SRBF` 版本 10 在哈希表和全局之前重建池。Win32 Release 构建和 clock 69/69 通过，检查损坏拒绝、句柄与表引用、随机单位和物品选择序列；日志 `tmp/docs-artifacts/war3/random-pool-recovery/clock-final.log`。实际存档、原图及随机序列原版一致性待阶段验证；启动保护保留。
