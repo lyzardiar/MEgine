@@ -5331,3 +5331,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 保存检查点等待与文件合批结果
 
 范围：`20c7cad`、`0425d5d`、`ed22a14`；路径：`src/jass_runtime.cpp`、`src/session.h`、`src/session_campaign.cpp`、`tests/jass_thread_tests.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。Win32 Release 两个目标编译通过，`war3_jass_thread_tests` **35 通过、0 失败**，`war3_clock_tests <data-root> <output-root>` **118 通过、0 失败**。覆盖宿主外部等待期间采集、原线程唤醒、恢复后不重放，以及隔离目录真实文件写入和恢复、摘要损坏与越界路径拒绝。日志和临时文件在 `tmp/docs-artifacts/war3/save-file-batch/`。地图不匹配、并发、重写失败、游戏保存事件、地图自动定位、真实存读档与原版文件兼容仍待验证或实现；恢复启动保护保留。
+
+
+### 脚本保存请求（待功能批次验证）
+
+路径：`src/session.h`、`src/session_campaign.cpp`、`src/session_tick.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SaveGame` 在本地脚本线程中请求检查点，会话边界发布 `WSAV` 文件、分发保存事件并唤醒调用线程。合批编译运行 `war3_clock_tests <data-root> <output-root>`，覆盖隔离文件、调用线程等待及恢复后的续行；并发、暂停、失败、事件时序、原版战役、`LoadGame` 和可玩恢复仍待验证或实现。本次未编译或执行测试，恢复启动保护保留。

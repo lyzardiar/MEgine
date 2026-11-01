@@ -144,6 +144,9 @@ class ScriptSession {
     void syncLocalSelection();
     void transferAutomaticSelection(std::uint32_t source,std::uint32_t target,bool keepSource,bool ownerOnly=false);
     void selectionEvent(std::uint32_t unit,unsigned player,bool selected,std::uint64_t revision);
+    struct PendingSave {std::string name;jass::ExternalWaitToken token=0;};
+    std::optional<PendingSave> pendingSave_;
+    void processPendingSave();
     std::unique_ptr<World> world_;
     bool setupApplied_=false,mainAttempted_=false,mainCompleted_=false,unitRecoveryIncomplete_=false,unitCorePrepared_=false,unitCoreFinished_=false;
     std::string unitCoreDigest_;
