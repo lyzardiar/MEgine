@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 零数量生产（待批次验证）
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`SetProduce(0, …)` 直接返回成功且不改资源或队列，与固定版原入口的零数量分支一致；负数量继续拒绝。Win32 Release 客户端及 CampaignAI 测试程序编译通过。批次运行 `war3_campaign_ai_tests <data-root> <fixture> produce-zero` 及生产／战役 AI 回归。原版负数边界、真实对局和完整生产语义待验证。
+
+
 ### 电脑营地与跨区域攻击批次（基础验证完成）
 
 范围：`9a73ee8`（补充 `ff9e7a8`）、`ea439a8`（说明 `e5825a5`）和 `cece24c`。Win32 Release 客户端、CampaignAI 与 world 测试程序编译通过。`war3_campaign_ai_tests <data-root> <fixture> <mode>` 的 `reachable`、`fog-attack`、`enemy-base` 各 2 项通过，`island-nearby`、`island-ranged`、`island-auto`、`island-auto-multiwave-script`、`island-auto-point`、`island-naval` 各 1 项通过；`war3_world_tests <data-root> <clamp-fixture.json> world_region` 5 项通过，共 **17 通过、0 失败**。覆盖重叠营地、近距离隔水上船与送达、射程内远程单位不登船、隔水炮兵直接攻击、区域查询 512／900／上限、已有飞行与船舶多波运输。两个隔离最小复现均在修复前失败、修复后通过；日志位于 `tmp/docs-artifacts/war3/ai-attack-reach-batch/`，AI 夹具为 `tmp/docs-artifacts/war3/campaign-ai/fixture.w3m`，world 夹具为 `tmp/docs-artifacts/war3/world/world-clamp-rea.json`。超过 4096 的非当前射程返回未知；大地图性能、动态障碍、原版运输与攻击时序、自然对局和联机仍待验证。
