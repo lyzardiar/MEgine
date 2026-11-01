@@ -4850,3 +4850,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 施工、升级与修理快照（待批次验证）
 
 路径：`src/session.h`、`src/session_construction.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCON` 保存施工、升级、工人占用、修理及反召唤状态，要求先恢复 `SPRD` 编号。Win32 Release 核心及 clock 目标编译通过，clock 56 通过、0 失败，覆盖真实施工、升级、修理、恢复后取消退款及错误映射。OrcX01 模拟 150 秒组合探针 50 个现有组件重编码一致，该时点无活动施工；日志 `tmp/docs-artifacts/war3/construction-snapshot-clock-02.log`、`tmp/docs-artifacts/war3/orcx-restore-audit/audit-14.log`。批次验证施工、采集和修理消费者；反召唤、恢复后持续施工、实际存档和跨区仍待实现或验收。
+
+
+### 尸体与衰变状态快照（待批次验证）
+
+路径：`src/session.h`、`src/session_corpses.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SCOR` 保存尸体衰变、占用与索引，以及掘尸／墓地状态。Win32 Release 核心及 clock 目标编译通过，clock 57 通过、0 失败；原图 150 秒隔离重建后临时绕过启动保护，推进一帧的 51 个组件重编码一致。推进一秒按新建对象顺序映射后，移动调度和特效状态仍有两项差异；日志 `tmp/docs-artifacts/war3/corpse-snapshot-clock-01.log`、`tmp/docs-artifacts/war3/orcx-continuation-audit/audit-03.log`、`audit-06.log`。批次验证尸体、采集及施工消费者；完整恢复、续行、实际存档和跨区仍待实现或验收。
