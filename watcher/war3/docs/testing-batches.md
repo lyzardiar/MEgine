@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 采集与返还资源说明（待批次验证）
+
+路径：`src/session_commerce.cpp`、`tests/revival_tests.cpp`。采集与返还资源按钮分别读取能力的 `Ubertip` 和 `Unubertip`，并解析地图字符串和对象字段；源说明为空时使用按钮标题。固定版 `War3Patch.mpq` 的亡灵采集能力 `Aaha` 提供两条独立说明。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> harvest-command-tooltip`，并回归各族采集、地图覆盖、资源返还和实际窗口；本次未执行测试。
+
 ### 商店物品说明字段（待批次验证）
 
 路径：`src/session_commerce.cpp`、`tests/revival_tests.cpp`。商店商品说明复用库存物品说明的对象字段和 WTS 展开；单位生产与建筑按钮同样使用该商品数据。固定版 `War3Patch.mpq` 的召回权杖 `amrc/Ubertip` 包含 `<AIrt,DataA1>`。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> shop-item-tooltip`，比较商店商品和库存提示，并回归商店、地图覆盖和实际窗口；本次未执行测试。
