@@ -10,6 +10,7 @@
 #include "game_state.h"
 #include "script_state.h"
 #include "fdf.h"
+#include "map_ui.h"
 #include "spatial_region.h"
 #include "fog_grid.h"
 #include "placed_definition.h"
@@ -324,6 +325,7 @@ class ScriptSession {
     unsigned preloadDepth_=0;
     std::vector<std::string> preloadMissing_;
     std::optional<FrameDefinitions> localized_;
+    std::optional<SourceSettings> localizedHotkeys_;
     std::map<std::uint32_t,std::shared_ptr<ScriptTimerDialog>> timerDialogs_;
     std::array<std::unique_ptr<FogGrid>,16> fogGrids_;
     std::array<std::uint32_t,16> exposedPlayers_{};
