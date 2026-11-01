@@ -5131,4 +5131,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 
 ### 脚本图片与地面贴花恢复（待阶段验证）
 
-路径：src/session.h、src/session_effects.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SIMG 重建图片及贴花的活动／已销毁句柄与显示状态，SRBF 更新至版本 43。Win32 Release 构建及 clock 108/108 通过；原版 Orc01 人工创建图片和贴花的隔离续行临时绕过启动保护，3 秒后 71/71 项状态一致。待阶段验证初始化阶段已有对象的地图、实际游戏读档、纹理资源变化及窗口；日志 tmp/docs-artifacts/war3/image-recovery/。
+路径：src/session.h、src/session_effects.cpp、src/session_recovery_bundle.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SIMG 重建图片及贴花的活动／已销毁句柄与显示状态，SRBF 更新至版本 43。Win32 Release 构建及 clock 108/108 通过；原版 Orc01 人工创建图片和贴花的隔离续行临时绕过启动保护，3 秒后 71/71 项状态一致。待阶段验证更多地图、实际游戏读档、纹理资源变化及窗口；日志 tmp/docs-artifacts/war3/image-recovery/。
+
+### 初始化图片与贴花替换（待阶段验证）
+
+路径：src/session.h、src/session_effects.cpp、tests/clock_tests.cpp；说明见[战役存档状态](save-runtime-foundation.md)。SIMG 校验后替换目标已有对象并排除临时身份，保留恢复句柄映射；Win32 Release 构建及 clock 109/109 通过，覆盖全局初始化句柄和损坏数据拒绝。隔离续行临时绕过启动保护，预先创建图片和贴花后 71/71 项状态一致。待阶段验证更多地图、实际游戏读档及窗口；日志 tmp/docs-artifacts/war3/image-init-recovery/。
