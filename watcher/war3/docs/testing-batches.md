@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄技能学习合批结果
+
+范围：`3afa446`、`06b7fb5`、`e430852`。Win32 Release 客户端与 revival 测试目标构建通过。复用英雄复活夹具运行 `hero-skill-availability`、`hero-skill-command-state`、`hero-illusion-learning`、`hero-skill-cap`、`hero-skill-modify`、`hero-learn-tooltip`、`hero-xp`，各 1 通过、0 失败；复活主流程 4 通过、0 失败。覆盖玩家技能禁用与恢复、暂停与恢复、幻象标记下的学习按钮、技能点、说明和复活回归。构建及测试日志位于 `tmp/docs-artifacts/war3/hero-learning-batch/`，夹具位于 `tmp/docs-artifacts/war3/hero-class-batch/hero.w3m`。AI 学习、实际幻象创建、其他单位状态、原版动态行为与窗口显示仍待验证。
+
+
 ### 英雄幻象的学习按钮（待功能批次验证）
 
 路径：`src/session_ability_commands.cpp`、`tests/revival_tests.cpp`。英雄幻象的技能学习按钮与学习入口一致，显示为不可用；真实英雄仍按技能点与等级判断。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-illusion-learning`，检查幻象标记下按钮和学习入口以及恢复真实英雄状态；实际幻象创建、原版界面和窗口显示待验证。本次未执行功能测试。
