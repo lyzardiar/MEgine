@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄成长与资源合批结果
+
+范围：`9e41ebb`、`91466d1`、`2476f2e`。Win32 Release 客户端、revival、control、passive 和 research 目标构建通过；control 测试文件既有变量遮蔽产生一条 C4456 警告。复用夹具运行 `hero-attribute-growth`、`hero-attribute-resource`、`hero-attribute-zero-mana`、`hero-attribute-base`、`hero-attribute-negative`、`hero-level-negative-xp`、`hero-level-tome`、`hero-skill-availability`，各 1 通过、0 失败；`hero-attribute-handles` 1 通过、0 失败，passive 与 research 程序均退出 0 并输出 PASS。覆盖正负基础属性与小数成长、资源比例、零魔法上限以及装备被动与科技回归。日志位于 `tmp/docs-artifacts/war3/hero-growth-resource-batch/`；真实装备与负属性叠加、资源下降和死亡、自定义小数基础值、原版动态和实际面板仍待验证。
+
+
 ### 零魔法上限的英雄属性变化（待功能批次验证）
 
 路径：`src/session_hero.cpp`、`tests/revival_tests.cpp`。最大魔法为零时，非永久提高智力会产生新的魔法上限，当前魔法保持为零。原版 1.27 的 `0x6f6530ca` 通过 `0x6f399060` 获取魔法比例，该函数对零上限返回零。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-attribute-zero-mana` 并回归属性资源比例；原版动态与实际窗口待验证。本次未执行功能测试。
