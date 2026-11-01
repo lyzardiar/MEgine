@@ -288,6 +288,7 @@ public:
     bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}
     const std::string& nextLevel() const {return data_->session->nextLevel();}
     const std::string& nextCheckpoint() const {return data_->session->nextCheckpoint();}
+    const std::string& nextCheckpointDigest() const {return data_->session->nextCheckpointDigest();}
     std::optional<std::pair<std::string,bool>> takeCinematic(){return data_->session->takeCinematic();}
     bool cinematicTransition() const {auto exit=data_->session->exitRequest();return !lanLeavePending_ && (exit==SessionExit::Return || exit==SessionExit::ChangeLevel);}
     void resumeAfterCinematic(){last_=GetTickCount64();}

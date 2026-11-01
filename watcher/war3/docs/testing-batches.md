@@ -5472,3 +5472,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 
 
 坠毁回调补充：伤害事件移除载具后，剩余乘员继续释放，当前及后续乘员不再附加失效来源的坠毁状态。使用 `--crash-remove` 生成隔离夹具并合批执行 `war3_transport_tests <root> <fixture> crash-remove`；本补充与载具复活回调计作同一任务，本次未执行功能测试。
+
+
+### 玩家读档文件身份校验（待功能批次验证）
+
+路径：`src/session.h`、`src/session_campaign.cpp`、`src/campaign_browser.{h,cpp}`、`src/game_loading.{h,cpp}`、`src/game_view.h`、`src/main.cpp`、`tests/clock_tests.cpp`。玩家选定存档时保留已校验的完整文件摘要，地图准备和实际恢复均检查该摘要；被替换的存档在恢复前拒绝。脚本读档继续使用原有路径语义。合批编译客户端、会话及运输测试，覆盖原始／被替换存档、迁移地图与坠毁回调；窗口错误交互和原版时序仍待验证。本次未执行功能测试。

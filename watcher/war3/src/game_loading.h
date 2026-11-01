@@ -41,7 +41,7 @@ struct GameData {
 };
 struct GameLoadResult {std::uint64_t request=0;std::unique_ptr<GameData> data;std::string error;};
 class GameLoading {
-    struct Request {std::uint64_t id;std::unique_ptr<ScriptSession> session;std::string checkpoint;};
+    struct Request {std::uint64_t id;std::unique_ptr<ScriptSession> session;std::string checkpoint,checkpointDigest;};
     Log& log_;
     std::atomic<std::uint64_t> generation_=0;
     std::atomic<unsigned> phase_=0;
@@ -54,7 +54,7 @@ class GameLoading {
 public:
     explicit GameLoading(Log& log);
     ~GameLoading();
-    std::uint64_t request(std::unique_ptr<ScriptSession> session,std::string checkpoint={});
+    std::uint64_t request(std::unique_ptr<ScriptSession> session,std::string checkpoint={},std::string checkpointDigest={});
     void cancel();
     std::optional<GameLoadResult> poll();
     unsigned phase() const {return phase_.load();}
