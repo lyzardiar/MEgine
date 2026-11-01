@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄属性的小数成长（待功能批次验证）
+
+路径：`src/entities.h`、`src/session_hero.cpp`、`src/session_research.cpp`、`src/game_commands.cpp`、`tests/revival_tests.cpp`。基础属性按整数基础值加累计成长的整数部分计算，设置负值及后续升级时保留成长余量；脚本查询、战斗属性和面板共享计算结果。原版 1.27 `0x6f668ff0` 将基础整数与累计成长转换后的整数相加。合批运行 `war3_revival_tests <data-root> <hero-revival-fixture> hero-attribute-growth`，回归英雄属性、升级和装备；自定义小数基础值、极值、原版动态和实际面板仍待验证。Win32 Release 客户端与 revival 测试目标编译通过，日志 `tmp/docs-artifacts/war3/hero-growth/build.log`；本次未执行功能测试。
+
+
 ### 英雄经验与属性合批结果
 
 范围：`c279409`、`434d9fb`、`8569ff4`。Win32 Release 客户端、revival、control、commerce、passive 目标构建通过；control 测试文件既有局部变量遮蔽产生一条 C4456 警告。复用夹具运行 `hero-level-negative-xp`、`hero-attribute-base`、`hero-attribute-negative`、`hero-xp`、`hero-skill-cap`、`hero-skill-modify`、`hero-level-tome`，各 1 通过、0 失败；`hero-attribute-handles` 1 通过、0 失败，commerce 和 passive 程序均退出 0 并输出 PASS。覆盖当前等级经验恢复、三属性及加成、负属性、英雄句柄、技能点、升级之书、商店与装备被动回归。日志位于 `tmp/docs-artifacts/war3/hero-attributes-batch/`，夹具分别来自 `hero-class-batch/`、`control-spells/` 和 `cast-buff-aura-batch/`。真实装备与负属性叠加、资源更新、极值、原版动态行为与窗口仍待验证。

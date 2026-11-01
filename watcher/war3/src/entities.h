@@ -15,6 +15,7 @@
 #include "unit_forms.h"
 #include "player_commands.h"
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <string_view>
 
@@ -155,6 +156,7 @@ struct UnitState {
     std::uint64_t revivalTicket=0;
     bool experienceSuspended=false;
     std::array<float,3> heroAttributes{},heroGrowth{},heroBonuses{};
+    int heroBaseAttribute(unsigned attribute) const {float growth=heroGrowth[attribute]*float(level-1);return int(std::round(heroAttributes[attribute]-growth))+int(growth);}
     float permanentDamage=0;
     std::array<int,3> appliedHeroStats{};
     EquipmentBonuses equipment,inventoryBonuses;
