@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 商店物品说明字段（待批次验证）
+
+路径：`src/session_commerce.cpp`、`tests/revival_tests.cpp`。商店商品说明复用库存物品说明的对象字段和 WTS 展开；单位生产与建筑按钮同样使用该商品数据。固定版 `War3Patch.mpq` 的召回权杖 `amrc/Ubertip` 包含 `<AIrt,DataA1>`。待运行 `war3_revival_tests <data-root> <hero-revival-fixture> shop-item-tooltip`，比较商店商品和库存提示，并回归商店、地图覆盖和实际窗口；本次未执行测试。
+
 ### 提示字段中的 WTS 引用（待批次验证）
 
 路径：`src/session_ability_commands.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`。技能、研究、物品和状态提示展开对象字段时，继续解析字段值中的地图 WTS 引用，再执行百分比转换。待生成研究夹具并运行 `war3_research_tests <data-root> <fixture>`，核对字段引用中的 WTS、逗号、数值与未找到的引用，并回归技能和状态提示及实际窗口；本次未执行测试。
