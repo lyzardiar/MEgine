@@ -5700,3 +5700,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 电脑迷雾目标的敌我关系（待功能批次验证）
 
 路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`。迷雾中的目标成为友军后，电脑不会再向其当前位置发出攻击移动；恢复敌对后可继续进攻。合批运行 CampaignAI `fog-attack`，覆盖联盟变化前后与现有隐身、迷雾场景；原版联盟策略及实际对局待验证。本次未执行功能测试。
+
+
+### 电脑随机路线的无效目标（待功能批次验证）
+
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`。建立路线或运输计划前检查目标存活、可见状态及敌我关系，隐身、隐藏、移除或友军目标不替换既有命令；可攻击目标继续进入随机路线。合批运行 CampaignAI `ai-random-paths`、`fog-attack`、`reachable` 和运输场景，覆盖随机路线、目标恢复及既有进攻；原版随机路径策略和真实对局待验证。本次未执行功能测试。
