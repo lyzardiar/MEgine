@@ -1,6 +1,6 @@
 # 原图 MIDI 声音与源表
 
-脚本声音 native 的共享句柄解析对空、越界、失效或类型不匹配的对象返回空声音；播放、停止、音量、位置、音调及查询继续使用既有消费者。固定版 `StartSound`、`StopSound`、`GetSoundIsPlaying`、`GetSoundDuration` 和 `SetSoundPitch` 在声音解析失败时直接返回或返回零，静态证据为 `ev_8ac3cc4627cdde21744251ef815f311e0bc54e4517491b4c0e163dbcc2c84282`、`ev_7b241d0eeb34b97a14157b3c6c52804d4d71726c8bee3a1470d4d3100918063e`。Win32 Release 客户端及 sound 目标编译通过；静音会话中的无效句柄与有效播放检查分别 1/1 通过。其他声音 native 的参数边界、实际音频设备和原版动态行为待阶段验证；MIDI 音调修改仍未实现。
+脚本声音 native 的共享句柄解析对空、越界、失效或类型不匹配的对象返回空声音；播放、停止、音量、位置、音调及查询继续使用既有消费者。固定版 `StartSound`、`StopSound`、`GetSoundIsPlaying`、`GetSoundDuration` 和 `SetSoundPitch` 在声音解析失败时直接返回或返回零，静态证据为 `ev_8ac3cc4627cdde21744251ef815f311e0bc54e4517491b4c0e163dbcc2c84282`、`ev_7b241d0eeb34b97a14157b3c6c52804d4d71726c8bee3a1470d4d3100918063e`。Win32 Release 客户端及 sound 目标编译通过；静音会话中的无效句柄与有效播放检查分别 1/1 通过。其他声音 native 的参数边界、实际音频设备和原版动态行为待阶段验证；MIDI 音调请求不改变序列播放速率；实际设备及原版动态行为待验证。
 
 固定对照为Warcraft III 1.27.0.52240。`SourceTable`读取原SYLK的继承坐标、稀疏行列、引用字符串/转义引号和分号，保留源列名/值；只消费常量，不执行表格公式。每表16MiB，最多512列、262144行、1048576个实际单元格，值限制65536字节，损坏或不支持的源数据显式报错。
 
@@ -8,7 +8,7 @@
 
 已绑定10个native：NewSoundEnvironment、CreateMIDISound、StartSound、StopSound、KillSoundWhenDone、GetSoundIsPlaying、GetSoundIsLoading、GetSoundDuration、SetSoundVolume、SetSoundPlayPosition。CreateMIDISound可在globals中创建真实Miles sequence和DLS资源；支持循环播放、逻辑通道全抢占、停止/保留、退役、音量及位置，查询读取同一声音和实际Miles状态。当前同步读取完成后才返回，因此GetSoundIsLoading对有效已创建对象返回false。空sound按已实现查询/操作返回0、false或跳过操作。
 
-StopSound的kill标志退役脚本声音，后续查询为未播放/长度0；带淡出时将播放者交给会话独立列表，直到淡出完成才释放声音/DLS。KillSoundWhenDone也转移播放所有权，保留未完成的渐变；循环声音不会自然结束，会话清理负责释放剩余播放者。独立播放者继续参与静音、通道抢占和周期更新。原版完整引用计数/句柄重用、异常对象、范围外音量和所有抢占规则仍待差分，源Pitch非1明确报不支持。
+StopSound的kill标志退役脚本声音，后续查询为未播放/长度0；带淡出时将播放者交给会话独立列表，直到淡出完成才释放声音/DLS。KillSoundWhenDone也转移播放所有权，保留未完成的渐变；循环声音不会自然结束，会话清理负责释放剩余播放者。独立播放者继续参与静音、通道抢占和周期更新。原版完整引用计数/句柄重用、异常对象、范围外音量和所有抢占规则仍待差分，源 Pitch 可读取并保留；MIDI 序列播放维持原速。
 
 NewSoundEnvironment登记完整源环境请求，例如Default的MOUNTAINS和衰减/反射参数；3D提供器、EAX属性和原5000ms节流尚未应用。[游戏时间控制](game-clock.md)已接入同步初始化，[脚本音乐](script-music.md)已接入列表/随机选择与播放控制；模拟推进/事件、普通CreateSound及3D声音继续待实现。该阶段不表示地图声音或完整客户端音频已经还原。原SetAmbientDaySound/SetAmbientNightSound沿用Blizzard.j。
 
@@ -41,3 +41,5 @@ python tools/verify_sound_fade_cpu.py --fixture "<FADE_FIXTURE>"
 `GetSoundFileDuration` 按路径从当前地图覆盖及公共归档直接读取 WAV／MP3／MIDI，使用已有音频容器解析器返回毫秒，最多缓存 1024 条结果；不启动声音或创建输出设备。空路径与缺失文件当前返回 0，损坏或不支持的格式明确报错；编码边界、缺失文件和原版时长精度待对照。
 
 空间声音释放脚本句柄时，独立播放者保留方向、音锥、锥外音量与运动参数；监听者移动后继续按原声音设置计算空间音量。`war3_sound_tests` 的 `sound_detached_spatial_cone` 使用原 WAV 和静默播放时钟检查正常释放及淡出释放后的前／后方音量，1 通过、0 失败；真实音频输出、原版锥角／距离规则和附着单位生命周期待阶段对照。
+
+原版 1.27 `SetSoundPitch` 经 `0x6f22ba80`、`0x6f33d1a0` 到 `0x6f173940`；底层分支分别调用 Miles 流、普通采样和 3D 采样播放速率接口，未调用 sequence 速率接口。MIDI 声音接受源表 Pitch 和脚本音调请求，序列播放速率不变；原版 MIDI 动态效果、异常数值与实际设备仍待对照。

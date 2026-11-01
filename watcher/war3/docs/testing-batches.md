@@ -5878,3 +5878,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 枚举上下文与玩家接口合批结果
 
 范围：`8fec43c`、`51e8713`、`0e78b50`。Win32 Release 客户端、destructable 和 game flow 目标编译通过；两个测试进程退出 0，共输出 **3 条 PASS**，覆盖枚举动作上下文／空动作、失效玩家联盟和税率及有效关系。game flow 测试文件第 20 行的既有 `optional<unsigned>` 与整数比较产生两条 C4389 警告。日志及夹具位于 `tmp/docs-artifacts/war3/script-context-player-batch/`；原版动态回调、资源转账及实际地图窗口仍待对照。
+
+
+### MIDI 声音音调请求（待功能批次验证）
+
+路径：`src/sound.cpp`、`tests/sound_tests.cpp`、`docs/script-sound.md`。MIDI 源表非单位 Pitch 不阻断创建，脚本设置音调时维持序列播放速率；普通数字声音沿用现有速率处理。原版 1.27 底层 `0x6f173940` 仅对流、普通采样及 3D 采样调用播放速率接口。合批构建 `war3_sound_tests`，执行 `sound_map_table_overlay`、`sound_midi_pitch_preserves_playback` 与相关声音回归；原版 MIDI 动态行为、实际音频设备和异常值仍待验证。本次未执行功能测试。
