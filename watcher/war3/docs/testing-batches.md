@@ -4894,3 +4894,8 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 受保护的恢复组件包（待批次验证）
 
 路径：`CMakeLists.txt`、`src/session.h`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。`SRBF` 封装 55 个现有组件并按依赖顺序重建；结构错误在应用前拒绝，应用阶段失败的目标会话标记为失败。Win32 Release 核心及 clock 目标编译通过，clock 62 通过、0 失败；原版 OrcX01 0／30／150 秒组件包恢复后 55 项重编码一致，前两个时点睡眠线程分别 4／4、3／3。日志 `tmp/docs-artifacts/war3/recovery-bundle-clock-02.log`、`tmp/docs-artifacts/war3/orcx-bundle-audit/`。批次验证多组件错误、引用和睡眠线程；当前不开放恢复后启动，实际存档、跨区和窗口仍待实现或验收。
+
+
+### 失效定时器稳定编码（待批次验证）
+
+路径：`src/session_callbacks.cpp`、`tests/clock_tests.cpp`；说明见[战役存档状态](save-runtime-foundation.md)。活动定时器保留调度顺序，失效句柄按稳定编号编码。Win32 Release 核心及 clock 目标编译通过，clock 62 通过、0 失败；OrcX01 0／30／150 秒组件包恢复后，在临时副本绕过启动保护各推进 60 秒，55 个现有组件重编码一致，前两个时点的睡眠线程分别从 4／3 条推进至各 1 条。日志 `tmp/docs-artifacts/war3/timer-order-recovery-clock-01.log`、`tmp/docs-artifacts/war3/orcx-bundle-continuation/`。批次验证组件包、选择与定时器消费者；完整状态、实际存档、自然跨区和窗口仍待实现或验收。
