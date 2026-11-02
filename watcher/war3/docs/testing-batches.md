@@ -7876,3 +7876,9 @@ Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_t
 路径：`src/map_frames.{h,cpp}`、`src/glue.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入 `FrameSetAbsolutePoint`、`FrameSetSize`、`FrameSetWidth` 和 `FrameSetHeight`；绝对坐标以 UI 左下角为原点，尺寸修改进入帧树并触发 FDF 重布局，保留另一轴尺寸，非法尺寸在修改前拒绝。多锚点确定的轴使用约束推导尺寸，原版优先级与边界行为尚需对照。地图插件注册签名分别为 `(IIRR)V`、`(IRR)V` 和 `(IR)V`。
 
 Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖绝对锚点状态、单轴／双轴尺寸、非法参数和状态不变。浏览器绘制夹具新增绝对坐标及尺寸断言；此前 D3D9 设备创建失败，本次未重复执行，实际画面、尺寸与锚点优先级、标准 HUD 回归及原版一致性待批次验证。正式地图仍停在 `EXGetPlayerRealName`，玩家显示名并非已验证的平台身份；动态文本、纹理、事件、平台服务和整图玩法仍待实现。
+
+### Lua 地图文本帧读写（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入地图插件的 `FrameSetText`／`FrameGetText`，仅支持已接入绘制的 TEXT 帧；动态字符串走现有 FDF 的文本排版和颜色标记路径，修改触发帧树重绘。单条限制 65536 字节、所有动态文本限制 16 MiB，更新或销毁帧释放相应计数；非法类型、NUL 和超长文本明确失败。插件注册签名为 `(IS)V`、`(I)S`。
+
+Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖中文和颜色标记往返、非法参数及失败时版本不变。浏览器绘制夹具新增文本帧；因前次 D3D9 设备创建失败，本次未重复执行，字体、颜色、自然宽度、UI 像素和原版行为待批次验证。TEXT 以外的文本控件、动态纹理与其平铺／归档覆盖、事件及实际地图入口仍待实现；正式地图依然缺少真实平台身份。
