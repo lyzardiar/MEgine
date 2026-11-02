@@ -6941,3 +6941,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 资料片片尾的预加载刷新（待功能批次验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。同步预加载立即读取资源，主脚本与预加载脚本可调用 `PreloadRefresh` 完成当前刷新步骤；原版 1.27 `0x6f1f2160` 调用资源队列处理。Win32 Release 核心编译通过；此前 `War3XBonusCredits` 在原图 `PreloadRefresh` 中断，修复后携带胜利缓存的隔离会话运行至约 566.7 秒并返回，日志 `tmp/docs-artifacts/war3/undead-08-transfer/credits-fixed.log`。合批运行 `war3_map_tests <data-root> <scratch> campaign_expansion_credits` 并回归英雄引导／复活；原版异步时序、完整模型预热、音频和窗口片尾待验证。
+
+### 亡灵原图引导、复活与资料片片尾合批结果
+
+范围：`7e776ec`、`17d5f29`、`dc1c93d`，含补充 `5f3407d`、`69e245d`。Win32 Release 客户端、map、game flow 和 revival 目标构建通过；game flow 测试文件原有两条 C4389 有符号／无符号比较警告，复活测试重新编译无警告。重新生成两个夹具：game flow 的 `cache-sync-unit` 输出 1 条 PASS，revival 的 `invalid-revive-location` 为 1 通过／0 失败；原图 map 检查 `campaign_restored_channel` 和 `campaign_expansion_credits` 各为 1 通过／0 失败。覆盖目标地图默认技能与磁盘恢复、空／失效复活位置、原图方尖碑引导和资料片片尾脚本返回。夹具及日志位于 `tmp/docs-artifacts/war3/campaign-credits-batch/`。单独预加载脚本、原版异步预热及能力覆盖语义、自然战斗、实际 UI 和过场画面仍待验证。
