@@ -7189,3 +7189,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 独立预加载脚本的单位死亡事件（待功能阶段验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`。独立脚本的 `KillUnit` 沿用真实单位生命、死亡和事件流程；`GetDyingUnit`、`GetKillingUnit` 读取会话当前事件。Win32 Release 客户端与 map 目标编译成功；`war3_map_tests <data-root> <scratch> preloader_nested_unit_death` 结果 1 通过／0 失败：主地图生命阈值事件调用子脚本击杀单位，死亡事件嵌套调用第二个子脚本并读取死亡单位和空击杀者；返回后外层上下文恢复且单位状态保留。非空击杀者、伤害事件、移除／复活和原版动态时序待功能阶段验证。
+
+### 独立预加载脚本的伤害与击杀上下文（待功能阶段验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`。独立脚本复用 `UnitDamageTarget` 和会话伤害事件的数值、来源接口；单位与物件目标继续由原有伤害消费者判定。Win32 Release 客户端和 map 目标编译成功；`war3_map_tests <data-root> <scratch> preloader_nested_damage` 结果 1 通过／0 失败：生命阈值事件调用子脚本造成致命单位伤害，嵌套伤害事件读取来源与伤害，死亡事件读取非空击杀者，返回后外层上下文恢复。实际地图、物品／可破坏物目标、非致命与免疫、伤害回调重入及原版时序待功能阶段验证。
