@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 物品拾取路径与 AI 候选（待功能阶段验证）
+
+路径：`src/session.h`、`src/session_combat_orders.cpp`、`src/session_combat.cpp`、`tests/order_queue_tests.cpp`、`tests/ai_tests.cpp`，见[物品栏移动与转交](inventory-interactions.md)及[AI 英雄物品](ai-hero-items.md)。拾取发令及途中重寻路要求到达交互范围；路径失效结束该拾取，零移速／定身期间保留。Win32 Release 客户端、订单及 AI 目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> pickup-path` 与 `war3_ai_tests <data-root> <BootyBay.w3m> hero-powerup` 各 1 通过、0 失败，覆盖拒绝不可达、保留原路线、动态封路、零移速等待、重开路径与 AI 选取可达候选，未加载 Game.dll。AI 场景暂停脚本并人工放置障碍；原版事件和寻路策略、目标移动、共享控制、脚本重入、实际窗口和自然对局待验证。
+
 ## 状态提示长文本翻页（待功能阶段验证）
 
 路径：`src/game_buff_panel.cpp`、`src/game_view.h`，见[单位状态图标](buff-panel.md)。超过 30 行的状态描述使用 PgUp／PgDn 翻页，切换状态、单位或移开鼠标时重置偏移；页码范围基于共享文字测量，说明与提示使用物品栏的同类操作。Win32 Release 客户端编译通过，未执行实际窗口检查。阶段验证短／长说明、连续翻页和边界、状态／单位切换、移开再悬停、模态界面、不同窗口尺寸及原版表现；共享文字行数预算和超长文本裁剪仍待核对。
