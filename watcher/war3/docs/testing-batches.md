@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 即时物品订单失效目标（待功能批次验证，2/3）
+
+路径：`src/session_inventory.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。`IssueInstantTargetOrder` 和 ById 的物品移动目标已移除或失效时按空目标使用发令单位当前位置，继续由现有物品丢弃流程处理。原版 1.27 入口 `0x6f1e91f0` 在目标句柄解析为空时读取发令单位位置；合批运行 order queue 物品及即时订单场景，核对字符串／ID、失效目标、队列与物品状态；有效非单位目标及原版动态时序待验证。本次未执行功能测试。
+
+
 ### 脚本加载请求固定检查点（待功能批次验证，1/3）
 
 路径：`src/session_campaign.cpp`、`src/campaign_browser.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。脚本 `LoadGame` 与战役地图加载入口使用同一次检查结果传递地图和检查点文件摘要，复用加载阶段的摘要校验，防止准备期间同名存档变化导致加载其他内容。新增脚本加载选定后替换同名文件的拒绝用例；合批运行 clock `save_game_writes_checkpoint_and_preserves_caller`、检查点地图解析与加载切换相关回归；窗口交接、原版格式和脚本加载时序待验证。本次未执行功能测试。
