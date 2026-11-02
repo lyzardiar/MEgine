@@ -7377,3 +7377,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 受攻击警报的玩家种族（待功能阶段验证）
 
 路径：`src/session.h`、`src/session_text.cpp`、`src/game_flow_ui.cpp`、`tests/game_flow_tests.cpp`、`docs/attack-alert.md`。警报按已确定种族或唯一种族偏好选择源皮肤声音，并在种族解析或偏好变化后刷新缓存；结算复用同一非随机种族查询。Win32 Release 客户端和 game-flow 测试目标编译通过；`war3_game_flow_tests <data-root> <fixture> alert-race` 为 1 通过／0 失败，覆盖兽族未解析偏好、亡灵偏好切换、随机种族解析后的声音更新及同步随机数不受提示影响。修复前兽族场景错误选用人族声音；修复后首次检查因夹具单位自动交战提前占用警报间隔而失败，暂停夹具单位后通过。测试目标保留既有 C4389 警告。实际音频设备、地图皮肤覆盖、盟友及原版时序待功能阶段验证。
+
+### AI 多商店路径候选（部分验证，待功能阶段）
+
+路径：`tests/ai_tests.cpp`。Win32 Release `war3_ai_tests <data-root> <BootyBay.w3m> hero-shop-fallback` 为 1 通过／0 失败：近处商店被地形封锁时，英雄选择较远可达商店并购买，近处库存未变化；未加载 Game.dll。夹具暂停原 AI 脚本并人工设置地形、库存和资源；自然对局、移动中阻挡变化、多种商品与原版策略仍待功能阶段验证。该检查补充既有商店路径任务，不单独计入功能批次。
