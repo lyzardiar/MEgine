@@ -7830,3 +7830,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 地图 Lua 控制台设备接入（部分验证，待批次验证）
 
 路径：`CMakeLists.txt`、`src/lua_native_console.{h,cpp}`、`src/map_script_runtime.{h,cpp}`、`tests/{lua_native_console_tests,lua_tests}.cpp`。地图脚本使用 Win32 控制台的启用、输出和按需非阻塞行输入；独占脚本控制台所有权，复用进程已有控制台时不接管窗口或在结束时释放它。Win32 Release 客户端与测试目标编译通过；`war3_lua_native_console_tests` 为 1 通过／0 失败，覆盖实际控制台输出、中文输入、退格、未完成行、重复启用及并发所有权；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败。正式客户端 `--main-check --mute` 越过 `jass.console`，停于尚无真实平台身份来源的 `EXGetPlayerRealName`，日志位于 `tmp/docs-artifacts/war3/qcloud-native-console-20261103.log`。原插件完整控制台行为、实际游戏 UI、平台身份和完整地图仍待验证。
+
+### 外部主入口、2SAJ 启动与控制台批次（部分通过，后续功能待测）
+
+集成版本 `13c998e`，功能提交 `f492ed3`、`593f151`、`13c998e`。Win32 Release 客户端、会话线程、Lua 和 Win32 控制台测试目标编译通过；`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败；`war3_lua_native_console_tests` 为 1 通过／0 失败。正式客户端 `--main-check --mute` 仍以 `EXGetPlayerRealName` 未实现失败，日志位于 `tmp/docs-artifacts/war3/qcloud-console-batch-20261103.log`。真实平台身份、原版控制台细节、动态 UI、存档、完整游戏启动和实际画面未通过验收，保留待测。
