@@ -7810,3 +7810,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua Storm 归档与会话写入宿主（部分验证，待批次验证）
 
 路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。提供显式归档宿主：读取优先使用会话内写入内容，再查询地图和公共归档；路径统一大小写与分隔符并限制路径、文件数和写入总量。归档引用独立于外部卸载，写入目前仅保留在会话内。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖真实归档读取、覆盖、二进制数据、路径校验、卸载后的引用以及原图入口生成 FDF。继续开发所需的正式客户端 `war3.exe --data-root <data-root> --map G:\qcloud_20144088.w3x --main-check --mute --log <scratch>` 检查仍在文本入口报告不支持原生插件和 2SAJ，日志位于 `tmp/docs-artifacts/war3/qcloud-client-20261103.log`；正式客户端接线、持久文件、存档和完整地图待实现／验证。
+
+### Lua JAPI 特效平面移动（部分验证，待批次验证）
+
+路径：`src/session.h`、`src/session_effects.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`、`tests/clock_tests.cpp`。`EXSetEffectXY` 更新未附着特效的世界平面位置并保持原世界高度；附着特效明确报告未实现，非法浮点参数被拒绝。Win32 Release 客户端、Lua 和 clock 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖坐标、显式及地形高度保持与签名；`WAR3_CLOCK_FILTER=effects_rebuild_active_retiring_and_removed_targets war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖移动后的特效快照恢复。scratch 位于 `tmp/docs-artifacts/war3/effect-xy-20261103/`。附着对象行为、实际画面、地图完整启动与原版细节待验证。

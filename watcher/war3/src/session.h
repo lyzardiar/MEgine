@@ -1242,6 +1242,7 @@ public:
     const auto& spellMissiles() const {return spellMissiles_;}
     const auto& spellWaves() const {return spellWaves_;}
     const auto& groundSpells() const {return groundSpells_;}
+    void setJapiEffectXY(std::uint32_t id,float x,float y);
     void setJapiEffectZ(std::uint32_t id,float value);
     float japiEffectZ(std::uint32_t id);
     void setJapiVisualFacing(std::uint32_t unit,float facing);
