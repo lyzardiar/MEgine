@@ -4,6 +4,7 @@
 #include "lua_verify.h"
 #include "lua_jass_callbacks.h"
 #include "archive.h"
+#include "object_data.h"
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -12,6 +13,7 @@ extern "C" {
 #include <lopcodes.h>
 }
 #include <stdexcept>
+#include <cmath>
 #include <utility>
 
 namespace war3 {
@@ -38,7 +40,18 @@ bool LuaRuntime::invokeLuaCallback(int reference,bool predicate){
 }
 void LuaRuntime::compile(std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format){StackReset reset{state_,lua_gettop(state_)};load(state_,chunk,name,format);}
 void LuaRuntime::preload(std::string_view moduleName,std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format){if(moduleName.empty() || moduleName.size()>4096 || moduleName.find('\0')!=std::string_view::npos)throw std::runtime_error("Invalid Lua module name");StackReset reset{state_,lua_gettop(state_)};load(state_,chunk,name,format);luaL_getsubtable(state_,LUA_REGISTRYINDEX,LUA_PRELOAD_TABLE);lua_pushlstring(state_,moduleName.data(),moduleName.size());lua_pushvalue(state_,-3);lua_rawset(state_,-3);}
-void LuaRuntime::attachArchive(const Archives& archives,LuaChunkFormat format){if(archives_)throw std::runtime_error("Lua map archive already attached");StackReset reset{state_,lua_gettop(state_)};lua_getglobal(state_,"package");if(!lua_istable(state_,-1))throw std::runtime_error("Lua package table unavailable");lua_getfield(state_,-1,"searchers");if(!lua_istable(state_,-1))throw std::runtime_error("Lua package searchers unavailable");auto copy=archives.fork();lua_pushlightuserdata(state_,this);lua_pushcclosure(state_,archiveSearcher,1);lua_rawseti(state_,-2,2);archives_=std::move(copy);archiveFormat_=format;}
+void LuaRuntime::attachArchive(const Archives& archives,LuaChunkFormat format){if(archives_)throw std::runtime_error("Lua map archive already attached");StackReset reset{state_,lua_gettop(state_)};lua_getglobal(state_,"package");if(!lua_istable(state_,-1))throw std::runtime_error("Lua package table unavailable");lua_getfield(state_,-1,"searchers");if(!lua_istable(state_,-1))throw std::runtime_error("Lua package searchers unavailable");auto copy=archives.fork();lua_pushlightuserdata(state_,this);lua_pushcclosure(state_,archiveSearcher,1);lua_rawseti(state_,-2,2);archives_=std::move(copy);archiveFormat_=format;luaL_getsubtable(state_,LUA_REGISTRYINDEX,LUA_LOADED_TABLE);lua_newtable(state_);lua_newtable(state_);lua_pushlightuserdata(state_,this);lua_pushcclosure(state_,slkCategory,1);lua_setfield(state_,-2,"__index");lua_pushcfunction(state_,slkWrite);lua_setfield(state_,-2,"__newindex");lua_pushcfunction(state_,slkPairs);lua_setfield(state_,-2,"__pairs");lua_setmetatable(state_,-2);lua_setfield(state_,-2,"jass.slk");}
+int LuaRuntime::slkWrite(lua_State* L){return luaL_error(L,"Lua SLK is read-only");}
+int LuaRuntime::slkPairs(lua_State* L){return luaL_error(L,"Lua SLK enumeration is not implemented");}
+int LuaRuntime::slkCategory(lua_State* L){
+    try{auto self=static_cast<LuaRuntime*>(lua_touserdata(L,lua_upvalueindex(1)));if(!self || !self->archives_)throw std::runtime_error("Lua SLK archive detached");size_t len=0;auto raw=lua_tolstring(L,2,&len);std::string_view kind(raw?raw:"",len);if(kind!="unit" && kind!="item")throw std::runtime_error("Unsupported Lua SLK category: "+std::string(kind));lua_newtable(L);lua_newtable(L);lua_pushlightuserdata(L,self);lua_pushboolean(L,kind=="item");lua_pushcclosure(L,slkObject,2);lua_setfield(L,-2,"__index");lua_pushcfunction(L,slkWrite);lua_setfield(L,-2,"__newindex");lua_pushcfunction(L,slkPairs);lua_setfield(L,-2,"__pairs");lua_setmetatable(L,-2);return 1;}catch(const std::exception& e){lua_pushstring(L,e.what());}return lua_error(L);
+}
+int LuaRuntime::slkObject(lua_State* L){
+    try{auto self=static_cast<LuaRuntime*>(lua_touserdata(L,lua_upvalueindex(1)));if(!self || !self->archives_)throw std::runtime_error("Lua SLK archive detached");std::uint32_t id=0;if(lua_type(L,2)==LUA_TNUMBER){int valid=0;auto value=lua_tointegerx(L,2,&valid);if(!valid || value<INT32_MIN || value>UINT32_MAX)throw std::runtime_error("Invalid Lua SLK object ID");id=std::uint32_t(value);}else{size_t len=0;auto raw=lua_tolstring(L,2,&len);if(!raw || len!=4)throw std::runtime_error("Invalid Lua SLK object ID");id=ObjectData::code(std::string_view(raw,len));}if(!self->slkObjects_)self->slkObjects_=std::make_unique<ObjectData>(*self->archives_);bool item=lua_toboolean(L,lua_upvalueindex(2))!=0;if(!self->slkObjects_->contains(id,item)){lua_pushnil(L);return 1;}lua_newtable(L);lua_newtable(L);lua_pushlightuserdata(L,self);lua_pushboolean(L,item);lua_pushinteger(L,id);lua_pushcclosure(L,slkField,3);lua_setfield(L,-2,"__index");lua_pushcfunction(L,slkWrite);lua_setfield(L,-2,"__newindex");lua_pushcfunction(L,slkPairs);lua_setfield(L,-2,"__pairs");lua_setmetatable(L,-2);return 1;}catch(const std::exception& e){lua_pushstring(L,e.what());}return lua_error(L);
+}
+int LuaRuntime::slkField(lua_State* L){
+    try{auto self=static_cast<LuaRuntime*>(lua_touserdata(L,lua_upvalueindex(1)));if(!self || !self->slkObjects_)throw std::runtime_error("Lua SLK objects detached");size_t len=0;auto raw=lua_tolstring(L,2,&len);if(!raw || !len || len>1024)throw std::runtime_error("Invalid Lua SLK field");auto value=self->slkObjects_->luaSlkField(std::uint32_t(lua_tointeger(L,lua_upvalueindex(3))),lua_toboolean(L,lua_upvalueindex(2))!=0,std::string_view(raw,len));if(!value){lua_pushnil(L);return 1;}std::visit([&](auto& v){using T=std::decay_t<decltype(v)>;if constexpr(std::is_same_v<T,std::string>)lua_pushlstring(L,v.data(),v.size());else if constexpr(std::is_same_v<T,float>)lua_pushnumber(L,std::floor(double(v)*10000.0+0.5)/10000.0);else lua_pushinteger(L,v);},*value);return 1;}catch(const std::exception& e){lua_pushstring(L,e.what());}return lua_error(L);
+}
 int LuaRuntime::archiveSearcher(lua_State* state){
     auto self=static_cast<LuaRuntime*>(lua_touserdata(state,lua_upvalueindex(1)));size_t length=0;auto raw=luaL_checklstring(state,1,&length);
     try {

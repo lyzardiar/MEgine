@@ -7594,3 +7594,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JASS 原生函数拦截（部分验证，待功能阶段）
 
 路径：`src/jass_runtime.{h,cpp}`、`src/lua_runtime.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`jass.hook` 在绑定的 JASS 会话中拦截受支持的原生函数，Lua 回调末尾接收原函数闭包；支持替换、移除、异常传播和会话销毁清理，已安装拦截时拒绝常规状态快照。含 code 参数或返回值及可休眠 native 暂不支持，原函数调用同步且不可休眠。Win32 Release 客户端和相关测试目标编译通过；原图 `war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，夹具覆盖文本 JASS、Lua、替换、异常、解绑和销毁；原图隔离会话覆盖 Lua 及 2SAJ 通过 `GetPlayerId` 拦截与调用原函数，`assetsmanager` 的下一缺失模块为 `jass.slk`。线程测试 36 通过、2SAJ 测试 1 通过，未加载 Game.dll。实际地图自然初始化、可休眠钩子、其他签名、存读档及完整玩法和 UI 待实现／验证。
+
+### Lua 地图对象表只读查询（部分验证，待功能阶段）
+
+路径：`src/object_data.{h,cpp}`、`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。地图归档绑定后提供 `jass.slk` 的单位和物品查询，依据原元数据解析部分非 Profile、非索引标量字段并使用现有对象继承与地图覆盖；数字 ID 和四字节字符串 ID 均可查询。其他类别、字段、遍历及写入明确报未支持；Profile、等级、元数据未映射项、字符串本地化和动态对象修改尚未覆盖。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，实际地图自定义单位 `m000` 的种族为 `undead`、金币为 5，物品 `I02D` 金币为 10，覆盖数字 ID、缺失对象、只读及不支持访问；`assetsmanager` 隔离依赖检查推进到缺少 `jass.japi`，未加载 Game.dll。完整对象表兼容、地图初始化、玩法和 UI 待验证。

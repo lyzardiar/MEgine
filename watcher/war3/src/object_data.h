@@ -38,6 +38,7 @@ public:
     explicit ObjectData(Archives& archives);
     static std::uint32_t code(std::string_view text);
     static std::string name(std::uint32_t code);
+    std::optional<std::variant<std::int32_t,float,std::string>> luaSlkField(std::uint32_t id,bool item,std::string_view key) const;
     std::optional<std::string> displayName(std::uint32_t id) const;
     std::string profileLevelText(std::uint32_t id,const std::string& key,unsigned level,const std::string& fallback={}) const;
     std::uint32_t unitId(const std::string& name) const;
