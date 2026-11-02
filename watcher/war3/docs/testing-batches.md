@@ -1,14 +1,18 @@
 # 独立客户端测试队列
 
-## 2SAJ 符号与指令记录（待功能批次验证，3/3）
+## 2SAJ 加载基础批次（部分验证）
+
+范围：`8c23576`、`42c1e79`、`8d46cbf`，集成版本 `8d46cbf`。Win32 Release 客户端、2SAJ 检查及 AI 目标构建通过；固定容器／结构／损坏输入检查和原图结构探针各 1 通过／0 失败；DotA 静音 main 通过、BootyBay 人族 AI 两秒输出 1 条 PASS，均未加载 Game.dll。用户地图按预期以缺少插件／2SAJ 运行环境退出 1，仍不可玩。命令与实际输出见 `tmp/docs-artifacts/war3/jass-binary-batch/results.txt`。其他样本、完整损坏输入、指令语义与执行、Lua 和真实窗口仍待验证；下一功能批次从 0/3 开始。
+
+## 2SAJ 符号与指令记录（批次部分验证）
 
 路径：`src/jass_binary.h`、`src/jass_binary.cpp`、`tests/jass_binary_tests.cpp`。解析解码后的有界零终止符号表及其后的 8 字节指令记录，保留四个原始字节和小端操作数，拒绝符号数量超限、未终止字符串与不完整记录；不执行字节码。固定夹具的符号、指令字段和损坏输入检查 1 通过／0 失败。只读检查 `G:/qcloud_20144088.w3x` 解出 5,686 个符号、45,054 条记录，首条操作数 5206 指向 `MainInitGlobalsFunction____3`，1 通过／0 失败。符号和记录结构与地图内模块 `0x10082b6b–0x10082f50` 的只读指令一致；不同样本、各操作码语义、符号重定位、JASS／Lua 执行与界面仍待验证，地图仍不能运行。
 
-## 2SAJ 容器解码基础（待功能批次验证，2/3）
+## 2SAJ 容器解码基础（批次部分验证）
 
 路径：`src/jass_binary.h`、`src/jass_binary.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。独立读取 `2SAJ` 的两字随机状态，使用经典随机流还原完整非末尾字，保留最后 0–4 字节；拒绝错误头、无效随机状态与超过 16 MiB 的输入，不修改会话随机流。`war3_jass_binary_tests` 固定向量、末尾字节及无效输入检查 1 通过／0 失败。对 `G:/qcloud_20144088.w3x` 的只读探针解出 493,650 字节，其中起始符号表包含 5,686 个以零结束的字符串；C++ 与独立 Python 探针输出 SHA-256 均为 `1eebcffb4479a6835862cdcec386d03130c7ad5a7b4b6a96e787fba8d00d2ced`，本地产物在 `tmp/docs-artifacts/war3/qcloud-decoded-cpp.bin`。解码循环依据地图内模块的只读反汇编 `0x10082911–0x10082a9d`：暂存并恢复两字随机状态，每次调用 `GetRandomInt(1,29)` 后以两字之和异或；原模块未执行。此提交仅建立解码基础，尚未解析后续字节码、连接 JASS／Lua、实现平台原生接口或运行地图；其他格式样本、资源上限与损坏输入仍待批次验证。
 
-## 内存插件地图的加载诊断（待功能批次验证，1/3）
+## 内存插件地图的加载诊断（批次部分验证）
 
 路径：`src/session_ai.cpp`。中立敌对玩家启动地图内 `callback` 时，仅在地图还含 `2SAJ` 头的 `war3map.bin`、且回调包含 `newUnlockMemory` 和 `ExportFileFromMpq` 标记时，报告缺少原生插件与脚本运行环境；保持失败，不跳过地图主逻辑。`G:/qcloud_20144088.w3x` 的 `--main-check` 如预期退出 1 并给出该诊断，原入口此前报 AI 玩家无效；`--mute` 的 DotA 主入口退出 0，BootyBay 原版人族 AI 两秒运行输出 1 条 PASS，均未加载 Game.dll。命令见 `tmp/docs-artifacts/war3/qcloud-diagnostic*.log` 和 `war3_ai_tests <data-root> <BootyBay.w3m> 0 2`。该地图仍不能运行：回调按原版内存布局加载地图中的两层 x86 模块，内层包含 Lua 与 JASS 运行组件，`war3map.bin` 及其依赖尚未实现。其他同类地图、标记误判、图形窗口的错误呈现和原版兼容执行仍待验证。
 
