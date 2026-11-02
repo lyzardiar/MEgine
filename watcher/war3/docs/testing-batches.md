@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 地面撤退与增援批次结果
+
+范围：`3833572`、`de4d9b5`、`59da213`，含快照补充 `67f54cf`、`07618e0`。同一版本的 Win32 Release 客户端、CampaignAI 和 clock 构建通过。CampaignAI `retreat-retry`、`retreat-reinforce`、`retreat-reentrant`、`captain-home`、`armies` 各 2 项通过；`island-auto-retreat`、`island-boarded-retreat-home`、`island-flight-captain-home`、`island-flight-retreat-paused`、`island-flight-retreat-paused-reassign`、`island-naval-offshore-retreat`、`island-naval-enemyshore-retreat` 各 1 项通过；clock `recovery_bundle_restores_active_ai` 1 项通过，共 **18 通过、0 失败**。覆盖暂停后撤退、增援归队、发令回调改派、生成的 v1 和 v2 AI 状态恢复及载具撤退。日志和新增夹具位于 `tmp/docs-artifacts/war3/ai-retreat-ground-batch/`，运输夹具为 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`，构建日志为 `tmp/docs-artifacts/war3/retreat-ground-build.log`。自然长局、跨区域撤退、原版分类与动态时序、真实历史 v1 快照和联机仍待验证。下一功能批次 0/3。
+
+
 ### AI 撤退发令回调改派（待功能批次验证，3/3）
 
 路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`、`docs/ai.md`。群体撤退发令前记录队员命令轮次，单个队员的发令回调若改派其他队员，不覆盖其新命令。重生成 CampaignAI 夹具，合批运行 `retreat-reentrant`、`retreat-reinforce`、`retreat-retry`、`captain-home`、`armies`、AI 快照及运输撤退回归；同时检查嵌套队长命令和成员生命周期。原版动态时序与实际长局待验证。本次提交前未执行功能测试。
