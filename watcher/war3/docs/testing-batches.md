@@ -7846,3 +7846,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 地图归档覆盖层快照（部分验证，待批次验证）
 
 路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。对内置 Storm 归档覆盖层提供带地图摘要及容量限制的快照和原子恢复，保留二进制文件内容与覆盖优先级；拒绝地图身份不匹配、损坏数据、非法路径和重复条目，外部自定义 Storm 宿主不被误认为支持快照。Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖原图归档上写入、跨 Lua 实例恢复、二进制内容、拒绝非法数据及失败后原状态不变。该接口尚未接入游戏存档；Lua 内存状态、脚本线程和跨组件引用仍需恢复，原图正式启动与实际画面仍未通过验收。
+
+### 二进制脚本与归档状态快照批次（部分通过，后续功能待测）
+
+集成版本 `506b2d5`，功能提交 `1a670ae`、`c590a53`、`506b2d5`。Win32 Release 客户端、2SAJ、快照、JASS／会话线程和 Lua 测试目标编译通过；`war3_jass_binary_snapshot_tests`、`war3_jass_binary_tests` 各为 1 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败，`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败。正式客户端 `--main-check --mute` 仍以 `EXGetPlayerRealName` 未实现失败，日志位于 `tmp/docs-artifacts/war3/qcloud-script-snapshot-batch-20261103.log`。以上覆盖独立脚本状态和归档覆盖层快照，未覆盖完整地图存读档、Lua 内存与休眠线程、真实平台身份、动态 UI 和游戏画面，保留待测。
