@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 英雄令牌价格只读查询（待功能批次验证，2/3）
+
+路径：`src/session_ai_natives.cpp`、`src/session_commerce.cpp`、`src/session_production.cpp`、`tests/campaign_ai_tests.cpp`。AI 费用及命令按钮读取未设置的英雄令牌时不创建玩家状态；普通训练、购买和队列取消不再因读取令牌写入默认值。合批运行 `hero-cost`、`hero-token`、生产与商店回归，核对状态缺省、显示和费用；真实窗口及多人同步待验证。本次未执行功能测试。
+
+
 ### 生产队列旧版快照回归（待功能批次验证）
 
 路径：`tests/clock_tests.cpp`。在同一生产队列夹具生成 v1 格式并恢复，检查普通队列与未记录的令牌标记默认值；合批执行 clock `production_snapshot_restores_paid_queue_rally_and_tickets`，并回归 v2 令牌退款。此测试补充不单独计入功能任务，本次未执行。
