@@ -7826,3 +7826,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 正式客户端 2SAJ 地图启动接线（部分验证，待批次验证）
 
 路径：`CMakeLists.txt`、`src/map_script_runtime.{h,cpp}`、`src/game_loading.{h,cpp}`、`src/main.cpp`、`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,session_thread_tests}.cpp`。识别包含对应加载器和 2SAJ 脚本的地图，在会话调度器中启动二进制主入口并连接 Lua 和归档宿主；普通地图继续使用原有入口。Win32 Release 客户端及相关测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。正式客户端 `--main-check --mute` 已进入原图二进制主脚本和 Lua 入口，因缺少 `jass.console` 失败，日志位于 `tmp/docs-artifacts/war3/qcloud-integrated-final-20261103.log`。控制台、平台和网络宿主、动态 UI、持久归档和二进制／Lua 状态存档及实际游戏画面仍待实现或验证；地图尚不能完整加载。
+
+### 地图 Lua 控制台设备接入（部分验证，待批次验证）
+
+路径：`CMakeLists.txt`、`src/lua_native_console.{h,cpp}`、`src/map_script_runtime.{h,cpp}`、`tests/{lua_native_console_tests,lua_tests}.cpp`。地图脚本使用 Win32 控制台的启用、输出和按需非阻塞行输入；独占脚本控制台所有权，复用进程已有控制台时不接管窗口或在结束时释放它。Win32 Release 客户端与测试目标编译通过；`war3_lua_native_console_tests` 为 1 通过／0 失败，覆盖实际控制台输出、中文输入、退格、未完成行、重复启用及并发所有权；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败。正式客户端 `--main-check --mute` 越过 `jass.console`，停于尚无真实平台身份来源的 `EXGetPlayerRealName`，日志位于 `tmp/docs-artifacts/war3/qcloud-native-console-20261103.log`。原插件完整控制台行为、实际游戏 UI、平台身份和完整地图仍待验证。
