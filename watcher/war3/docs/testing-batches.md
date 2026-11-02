@@ -7906,3 +7906,8 @@ Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_t
 路径：`CMakeLists.txt`、`src/lua_plugin_catalog.cpp`、`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/map_script_runtime.cpp`、`tests/lua_tests.cpp`。仅当地图 `wenhao_plugin.tga` 的 SHA-256 为 `4e479624787c77ce4ff44e4257e1c72e1fca9a247e49899ba7ae7f64622a54d6` 时接入其内嵌 DLL 静态注册调用提取的 268 条签名；其他插件不套用。签名只用于查询、校验与脚本钩子，尚未实现的函数实际调用时明确失败，不提供默认返回。静态清单可能包含按版本条件注册的入口，实际加载范围仍待对照。未注册的 `jass.japi`／`jass.common` 成员查询返回 nil，调用仍失败，参考 [YDWE japi](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/libs_japi.cpp) 和 [common](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/libs_common.cpp)。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖摘要隔离、签名冲突、未实现调用、缺失成员及原图隔离启动。测试使用模拟的平台名称、版本、控制台和内存宿主；隔离启动的首次实际未实现调用为 `SimpleTextureFindByName`，临时钩子观测参数为 `InfoPanelIconBackdrop, 0`，标准 HUD 纹理查找仍待实现。正式 `--main-check --mute` 退出码 1，仍因 `EXGetPlayerRealName` 缺少真实平台身份失败，日志 `tmp/docs-artifacts/war3/qcloud-plugin-catalog-20261103.log`。原地图插件的 `EXSetUnitCollisionType` 位运算与公开 YDWE 源不同，碰撞类型含义和消费仍未建立，不能将声明当作碰撞功能完成；平台服务、完整 UI／玩法与实际画面均待验证。
+### 原版信息面板 FDF 声明解析（部分验证，待批次验证）
+
+路径：`src/fdf.cpp`、`tests/native_tests.cpp`。支持顶层和子级命名 `String`／`Texture`、模板继承与 `Layer` 容器，同时保留匿名纹理语法；原版信息面板图标尺寸、字体属性和建筑队列层级现可读取。重复名称的运行时上下文和层绘制尚未接入，不能据此实现 `SimpleTextureFindByName` 或认为标准 HUD 已还原。
+
+Win32 Release `war3_native_tests` 编译通过；以原安装数据运行 17 通过／0 失败，覆盖原版 `SimpleInfoPanel.fdf`、继承、层级和匿名纹理。地图正式启动仍受真实平台身份接口阻塞，隔离启动仍缺少 HUD 纹理查找；完整地图启动、图形渲染、UI 一致性和原版上下文语义待验证。

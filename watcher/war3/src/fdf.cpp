@@ -52,15 +52,17 @@ public:
     Token take() { auto t=peek(); ++at_; return t; }
     bool consume(std::string_view value) { if(!empty() && peek().value==value) {++at_;return true;} return false; }
     void expect(std::string_view value) { if(!consume(value)) throw std::runtime_error("Expected FDF token: "+std::string(value)); }
-    FrameDefinition frame(unsigned depth=0,bool anonymous=false) {
+    FrameDefinition frame(unsigned depth=0,std::string type={}) {
         if (depth>32 || ++frames_>16384) throw std::runtime_error("FDF frame budget exceeded");
-        FrameDefinition f;if(anonymous)f.type="TEXTURE";else {f.type=take().value;f.name=take().value;}
+        FrameDefinition f;if(type.empty()){f.type=take().value;f.name=take().value;}else {f.type=std::move(type);if(f.type=="LAYER")f.properties["Layer"]={take().value};else if(peek().value!="{")f.name=take().value;}
         if (consume("INHERITS")) { f.inheritChildren=consume("WITHCHILDREN"); f.inherits=take().value; }
         expect("{");
         while (!consume("}")) {
             if (consume(",") || consume(";")) continue;
             if (consume("Frame")) { f.children.push_back(frame(depth+1)); continue; }
-            if (consume("Texture")) {f.children.push_back(frame(depth+1,true));continue;}
+            if (consume("Texture")) {f.children.push_back(frame(depth+1,"TEXTURE"));continue;}
+            if (consume("String")) {f.children.push_back(frame(depth+1,"STRING"));continue;}
+            if (consume("Layer")) {f.children.push_back(frame(depth+1,"LAYER"));continue;}
             auto key=take(); std::vector<std::string> values;
             while(!empty() && peek().line==key.line && peek().value!="}" && peek().value!="Frame") { auto value=take().value; if(value!="," && value!=";") values.push_back(std::move(value)); }
             if(key.value=="SetPoint") f.points.push_back(std::move(values));else if(key.value=="MenuItem")f.menuItems.push_back(std::move(values));else f.properties[key.value]=std::move(values);
@@ -103,8 +105,10 @@ void FrameDefinitions::loadSource(Archives& archives,const std::string& member,c
             if(p.consume(",") || p.consume(";"))continue;
             if(p.consume("IncludeFile")) { auto include=p.take().value; loadSource(archives,include,source); }
             else if(p.consume("Frame"))registerFrame(p.frame());
+            else if(p.consume("Texture"))registerFrame(p.frame(0,"TEXTURE"));
+            else if(p.consume("String"))registerFrame(p.frame(0,"STRING"));
             else if(p.consume("StringList")) { p.expect("{"); while(!p.consume("}")) {if(p.consume(",") || p.consume(";"))continue; auto key=p.take().value; auto value=p.take().value;strings_[key]=std::move(value);} }
-            else throw std::runtime_error("Unsupported FDF declaration: "+p.take().value);
+            else {auto token=p.take();throw std::runtime_error("Unsupported FDF declaration: "+token.value+" at line "+std::to_string(token.line));}
         }
         if(!known)loaded_.push_back(member); loading_.pop_back();
     } catch (...) {loading_.pop_back();throw;}
