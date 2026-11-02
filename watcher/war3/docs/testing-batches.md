@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### 存档身份与即时物品订单批次结果
+
+范围：`fda84b4`、`f4632e5`、`f0312f6`，含补充 `7d8eab4`、`85185bd`。Win32 Release 客户端、order queue、clock 和 commerce 程序构建通过。`war3_order_queue_tests <data-root> <BootyBay.w3m>` 输出 34 项通过、0 项失败，覆盖失效目标、不能接收物品的单位、物品目标点回退及既有队列和实验联机订单；clock 的 `save_game_writes_checkpoint_and_preserves_caller`、`recovery_bundle_restores_active_ai` 各 1 项通过，commerce 消费者 1 项通过，共 **37 通过、0 失败**。日志位于 `tmp/docs-artifacts/war3/checkpoint-item-batch/`，commerce 使用 `tmp/docs-artifacts/war3/commerce-current/commerce.w3m`。
+
+脚本加载请求的摘要及同名文件替换拒绝在隔离会话中通过；战役窗口的异步加载交接、物品／可破坏物目标的原版接受条件、动态事件时序、实际窗口和联网行为仍待验证。下一功能批次 0/3。
+
+
 ### 物品目标订单的位置回退（待功能批次验证，3/3）
 
 路径：`src/session_inventory.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。即时物品订单及 `UnitDropItemTarget` 对无法接收物品的目标尝试目标位置丢弃，物品／可破坏物使用当前位置；单位命令或生命周期回调变化后不发出过期回退。原版 1.27 `0x6f1e9285`–`0x6f1e92c9` 先检查目标订单并在不通过时检查目标位置的点订单。合批运行 order queue、存档 clock 及相关物品／命令回归；原版具体接受条件、事件时序、地图动态目标和实际窗口待验证。本次提交前未执行功能测试。
