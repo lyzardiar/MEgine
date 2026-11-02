@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+## 无效建筑 ID 与排队命令（待功能批次验证，3/3）
+
+路径：`src/session_orders.cpp`、`tests/order_queue_tests.cpp`。`IssueBuildOrderById` 在清除排队命令前检查单位类型是否存在；零、未知 ID 或物品 ID 返回失败并保留当前及排队行动。Win32 Release 客户端、order-queue、construction 目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-build` 1 通过／0 失败，修复前在零 ID 清除队列处失败；综合建造夹具输出 1 条 PASS，覆盖有效名称与 ID 建造、施工和修理，未加载 Game.dll。order-queue 目标保留既有 C4456 变量遮蔽警告。原版无效 ID 的动态语义、自定义单位、失效工人和真实地图脚本待功能批次验证。
+
+
 ## 采集返仓绕行相位恢复（待功能批次验证，2/3）
 
 路径：`src/entities.h`、`src/session.h`、`src/session_entities.cpp`、`src/session_harvest.cpp`、`src/session_unit_movement.cpp`、`tests/clock_tests.cpp`、`tests/ai_tests.cpp`。工人返仓受阻时的备用接近点按单位稳定相位选择；已有单位与读档后新单位的相位随运动组件保存并恢复。`SMOV`／`SMPS` 版本 2 增加该状态，版本 1 继续读取，旧存档缺少的信息按恢复会话句柄回退。
