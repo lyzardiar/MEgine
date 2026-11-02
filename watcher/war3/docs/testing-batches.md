@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 脚本给予物品的物品栏能力检查（待功能批次验证，1/3）
+
+路径：`src/session_inventory.cpp`、`tests/commerce_tests.cpp`。`UnitAddItem` 要求单位具有可用的物品栏能力；没有物品栏的单位不能通过脚本直接消耗立即生效的物品。原版 1.27 的 `UnitAddItem` 和 `UnitInventorySize` 均先检查相同的单位物品栏对象（`0x6f6518d0`）。合批运行 `war3_commerce_tests <data-root> <commerce-fixture>`，检查无物品栏单位、英雄和金币箱；零槽位、自定义能力及原版动态事件仍需对照。本次未执行功能测试。
+
+
 ### 游戏内存档界面批次记录（窗口待验证）
 
 范围：`59854b4`、`f8535cc`、`d52aff0`。Win32 Release 客户端编译通过，批次差异格式检查通过；构建日志 `tmp/docs-artifacts/war3/save-dialog-ui-batch/build.log`。本批没有执行功能用例，不计为功能测试通过。
