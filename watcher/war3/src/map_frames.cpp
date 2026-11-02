@@ -1,11 +1,13 @@
 // Author: MiYu. Runtime FDF frame ownership and inherited visibility.
 #include "map_frames.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <stdexcept>
 
 namespace war3 {
 std::uint32_t modulateMapFrameAlpha(std::uint32_t color,std::uint8_t alpha){return (color&0x00ffffffu)|((((color>>24)*unsigned(alpha)+127)/255)<<24);}
+MapFrameRect solveSimpleFrameAnchor(MapFrameRect parent,float width,float height,std::string_view point,float x,float y){static constexpr std::array<std::string_view,9> points={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT"};auto found=std::find(points.begin(),points.end(),point);if(found==points.end() || !std::isfinite(parent.x) || !std::isfinite(parent.y) || !std::isfinite(parent.w) || !std::isfinite(parent.h) || !std::isfinite(width) || !std::isfinite(height) || !std::isfinite(x) || !std::isfinite(y) || parent.w<0 || parent.h<0 || width<0 || height<0)throw std::runtime_error("Invalid simple frame anchor");auto index=size_t(found-points.begin());return {parent.x+float(index%3)*.5f*(parent.w-width)+x,parent.y+float(index/3)*.5f*(parent.h-height)-y,width,height};}
 MapFrameRect solveMapFramePoints(float width,float height,std::span<const MapFramePoint> points){
     if(points.empty() || !std::isfinite(width) || !std::isfinite(height) || width<0 || height<0)throw std::runtime_error("Invalid map frame layout");
     auto axis=[&](bool vertical,float size){auto coefficient=[&](const MapFramePoint& p){return float(vertical?p.point/3:p.point%3)*.5f;};auto value=[&](const MapFramePoint& p){return vertical?p.y:p.x;};auto first=points.front();if(first.point>8 || !std::isfinite(first.x) || !std::isfinite(first.y))throw std::runtime_error("Invalid map frame point");float c=coefficient(first),v=value(first);bool sized=false;for(auto& p:points){if(p.point>8 || !std::isfinite(p.x) || !std::isfinite(p.y))throw std::runtime_error("Invalid map frame point");float d=coefficient(p)-c;if(d!=0 && !sized){size=(value(p)-v)/d;sized=true;}}if(!std::isfinite(size) || size<0)throw std::runtime_error("Invalid map frame extent");float origin=v-c*size;for(auto& p:points)if(std::abs(origin+coefficient(p)*size-value(p))>1e-5f)throw std::runtime_error("Conflicting map frame anchors");return std::pair{origin,size};};

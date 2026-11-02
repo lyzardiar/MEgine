@@ -7917,3 +7917,9 @@ Win32 Release `war3_native_tests` 编译通过；以原安装数据运行 17 通
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入 `FrameClearAllPoints`（`(I)V`），清除已有运行时锚点及 FDF `SetPoint`、`Anchor`、`SetAllPoints`，之后设置锚点参与现有布局；重复清除无变更，根帧暂不支持。标准 HUD 未纳入地图帧树，不能清除标准 HUD 锚点。
 
 Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖清除、重复调用、重设、签名和根帧拒绝。浏览器夹具新增布局断言，因既有 D3D9 设备创建失败未执行，画面和原版锚点行为待批次验证。隔离探针临时模拟查找返回句柄后观测到地图调用 `FrameClearAllPoints`，再访问该句柄；探针未作为生产实现，地图仍阻塞于标准 HUD 查找及真实平台身份。
+
+### 地图 SimpleFrame 基础绘制和锚点（部分验证，待批次验证）
+
+路径：`src/glue.cpp`、`src/map_frames.{h,cpp}`、`tests/{native_tests,browser_tests}.cpp`。地图帧树可接收并遍历 `LAYER`，绘制 `TEXTURE` 的 File 和 `STRING` 的 Font／Text，沿父层传递 `DecorateFileNames`；匿名层不参与名称索引。`Anchor` 按父矩形对应点和偏移计算，多个 FDF `SetPoint` 使用约束求解。只覆盖现有绘制器支持的属性，图层排序、其他纹理属性、完整字体行为及原版精度仍待实现或对照；相同 context 的重复名称仍无法在绘制树内解析。
+
+Win32 Release 客户端、native 和浏览器测试目标编译通过；`war3_native_tests <data-root> tmp/docs-artifacts/war3/simple-frame-layout-20261103` 为 18 通过／0 失败，新增父锚点位置及非法输入检查。浏览器夹具使用原版 `SimpleInfoPanelIconDamage` 并检查纹理位置与绘制读取，因既有 D3D9 设备创建失败未执行；实际画面、皮肤装饰、字体、多锚点、层顺序和原版 UI 一致性待验证。标准 HUD 仍由独立绘制路径驱动，地图查找和完整启动尚未接通。
