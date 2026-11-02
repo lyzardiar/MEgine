@@ -7782,3 +7782,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 2SAJ、Lua 哈希与技能句柄批次（部分通过，后续功能待测）
 
 集成版本 `78956d9`，功能提交 `72a8574`、`f2a915e`、`78956d9`。Win32 Release 客户端、Lua、2SAJ 与 clock 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`WAR3_CLOCK_FILTER=unit_casts_restore_spell_and_references war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败。scratch 位于 `tmp/docs-artifacts/war3/binary-lua-hash-batch-20261103/`。覆盖原图二进制函数进入 Lua 并计算内存宿主文件哈希、嵌套调用与预算、技能句柄及相关恢复；完整二进制主函数、正式客户端接线、平台服务和真实游戏画面未执行，保留待测。
+
+### 原图 2SAJ 主入口休眠探针（诊断通过，功能待实现）
+
+路径：`tests/lua_tests.cpp`。在隔离会话中绑定 Lua 表达式桥，用测试钩子替代原图二进制 `main` 的 `StartCampaignAI(..., "callback2")`，再实际执行主函数；当前推进至 `TriggerSleepAction`，因二进制执行尚无可恢复的脚本线程而明确失败。`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，包含此预期阻塞检查。测试钩子不启动真实插件，Storm／平台使用内存宿主，不代表文件校验、Lua 启动、脚本休眠或正式地图加载成功；实现线程续跑与正式宿主后需更新该检查。
