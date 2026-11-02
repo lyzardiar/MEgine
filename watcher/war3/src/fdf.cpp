@@ -88,9 +88,9 @@ void FrameDefinitions::registerFrame(const FrameDefinition& frame) {if(frames_.s
 void FrameDefinitions::load(Archives& archives,const std::string& member){loadSource(archives,member,{});}
 void FrameDefinitions::load(Archives& archives,const std::string& member,const FrameSource& source){if(!source)throw std::runtime_error("Missing FDF source");loadSource(archives,member,source);}
 void FrameDefinitions::loadSource(Archives& archives,const std::string& member,const FrameSource& source) {
-    if (std::find(loaded_.begin(),loaded_.end(),member)!=loaded_.end())return;
-    if (loading_.size()>=16 || loaded_.size()>=128 || std::find(loading_.begin(),loading_.end(),member)!=loading_.end()) throw std::runtime_error("Cyclic FDF include");
-    auto generated=source?source(member):std::optional<Bytes>{};auto archived=generated?std::shared_ptr<const Member>{}:archives.read(member);if(!generated && !archived)throw std::runtime_error("Missing or oversized FDF: "+member);auto& bytes=generated?*generated:archived->bytes;if(bytes.size()>2*1024*1024)throw std::runtime_error("Missing or oversized FDF: "+member);
+    bool known=std::find(loaded_.begin(),loaded_.end(),member)!=loaded_.end();if(known && !source)return;
+    if (loading_.size()>=16 || (!known && loaded_.size()>=128) || std::find(loading_.begin(),loading_.end(),member)!=loading_.end()) throw std::runtime_error("Cyclic FDF include");
+    auto generated=source?source(member):std::optional<Bytes>{};if(known && !generated)return;auto archived=generated?std::shared_ptr<const Member>{}:archives.read(member);if(!generated && !archived)throw std::runtime_error("Missing or oversized FDF: "+member);auto& bytes=generated?*generated:archived->bytes;if(bytes.size()>2*1024*1024)throw std::runtime_error("Missing or oversized FDF: "+member);
     if(bytes.size()>8*1024*1024-sourceBytes_)throw std::runtime_error("FDF source budget exceeded");sourceBytes_+=bytes.size();
     loading_.push_back(member);
     try {
@@ -102,7 +102,7 @@ void FrameDefinitions::loadSource(Archives& archives,const std::string& member,c
             else if(p.consume("StringList")) { p.expect("{"); while(!p.consume("}")) {if(p.consume(",") || p.consume(";"))continue; auto key=p.take().value; auto value=p.take().value;strings_[key]=std::move(value);} }
             else throw std::runtime_error("Unsupported FDF declaration: "+p.take().value);
         }
-        loaded_.push_back(member); loading_.pop_back();
+        if(!known)loaded_.push_back(member); loading_.pop_back();
     } catch (...) {loading_.pop_back();throw;}
 }
 FrameDefinition FrameDefinitions::resolve(const FrameDefinition& source, unsigned depth, unsigned& budget) const {
