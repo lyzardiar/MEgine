@@ -34,6 +34,7 @@ class FrameDefinitions {
 public:
     void load(Archives& archives, const std::string& member);
     void load(Archives& archives,const std::string& member,const FrameSource& source);
+    void loadToc(Archives& archives,const std::string& member,const FrameSource& source={});
     FrameDefinition frame(const std::string& name) const;
     std::string string(const std::string& key) const;
 };
