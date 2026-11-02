@@ -61,7 +61,8 @@ void ScriptSession::attachWorld(std::unique_ptr<World> world) {if(!world || worl
 void ScriptSession::activateRecoveredSession() {
     if(!configured() || !world_ || !setupApplied_ || failed_ || !recoveryBundleRestored_ || !unitRecoveryIncomplete_ || !gameLoadNotified_ || !recoverySourceMainCompleted_ || mainAttempted_ || exit_!=SessionExit::None || !runtime_.snapshotSafe() || !contexts_.empty() || experimentalSelectionSync_ || !networkPlayers_.empty())throw std::runtime_error("Recovered session is not ready to start");unitRecoveryIncomplete_=false;mainAttempted_=true;mainCompleted_=true;
 }
-void ScriptSession::startMain() {if(unitRecoveryIncomplete_)throw std::runtime_error("Unit state recovery is incomplete");if(!configured() || !world_ || !setupApplied_ || mainAttempted_)throw std::runtime_error("Map main requires a configured world and player setup");mainAttempted_=true;try{runtime_.start([this]{runtime_.invoke("main");mainCompleted_=true;});}catch(...){failed_=true;throw;}}
+void ScriptSession::startMain() {startMain([this]{runtime_.invoke("main");});}
+void ScriptSession::startMain(std::function<void()> entry) {if(unitRecoveryIncomplete_)throw std::runtime_error("Unit state recovery is incomplete");if(!entry || !configured() || !world_ || !setupApplied_ || mainAttempted_)throw std::runtime_error("Map main requires a configured world and player setup");mainAttempted_=true;try{runtime_.start([this,entry=std::move(entry)]{entry();mainCompleted_=true;});}catch(...){failed_=true;throw;}}
 void ScriptSession::bindNatives() {
     bindWorldNatives();bindCameraSetupNatives();bindSpatialEvents();bindFogNatives();bindTextNatives();bindTextTagNatives();bindIndicatorNatives();bindCacheNatives();bindCampaignNatives();bindHashtableNatives();
     bindSoundNatives();bindRescueNatives();bindWaygateNatives();

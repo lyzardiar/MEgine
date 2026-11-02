@@ -7818,3 +7818,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 归档宿主与视觉状态批次（部分通过，后续功能待测）
 
 集成版本 `d342411`，功能提交 `81b2db1`、`7096973`、`d342411`。Win32 Release 客户端、Lua、clock 和 native 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_clock_tests` 分别以 `unit_core_restores_hero_abilities_equipment_and_vitals`、`effects_rebuild_active_retiring_and_removed_targets` 筛选，各为 1 通过／0 失败；`war3_native_tests <data-root> <scratch>` 为 15 通过／0 失败。scratch 位于 `tmp/docs-artifacts/war3/storm-facing-effect-batch-20261103/`。覆盖归档／覆盖层、视觉朝向与特效坐标的状态恢复、原游戏资源和 FDF；正式客户端插件启动、持久文件、原版画面和完整地图未执行，保留待测。
+
+### 会话外部主脚本入口（部分验证，待批次验证）
+
+路径：`src/session.{h,cpp}`、`tests/session_thread_tests.cpp`。会话可在既有主线程状态管理中执行宿主提供的入口，休眠时保持未完成，恢复结束后标记完成；原文本 JASS 入口继续使用相同流程，重复启动被拒绝。Win32 Release 客户端及会话线程测试目标编译通过；`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败，覆盖外部入口与原入口的休眠、恢复、重复启动及会话生命周期。二进制地图运行时尚未接入正式加载器，休眠二进制状态存档和实际地图待实现／验证。

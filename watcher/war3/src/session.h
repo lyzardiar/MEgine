@@ -1343,6 +1343,7 @@ public:
     void restoreAIState(unsigned player,std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     const auto& ais() const {return ais_;}
     void startMain();
+    void startMain(std::function<void()> entry);
     void finishGame(bool scores,SessionExit action=SessionExit::Return);
     bool networkLocalEndPending() const{return networkLocalEndRequest_.has_value();}
     std::optional<bool> takeNetworkLocalEnd(){auto request=networkLocalEndRequest_;networkLocalEndRequest_.reset();return request;}
