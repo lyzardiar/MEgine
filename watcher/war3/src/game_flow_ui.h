@@ -46,6 +46,7 @@ class GameFlowUi {
     size_t saveScroll_=0,saveCursor_=0;
     std::string saveError_;
     std::vector<std::string> scoreModels_;
+    std::array<std::string,3> scoreFrameModels_;
     std::array<std::string,2> scoreBanners_;
     std::array<std::string,4> scoreRaceIcons_;
     std::optional<std::uint64_t> scoreAnimationStart_;
