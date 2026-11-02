@@ -7225,3 +7225,9 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 独立预加载脚本物品与背包（待功能阶段验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立脚本复用会话物品创建／删除、属性／位置、背包操作及拾取事件上下文；其他未绑定 native 仍明确失败。Win32 Release 客户端与 map 测试目标编译通过；运行 `war3_map_tests <data-root> <scratch> preloader_item_inventory` 和 `preloader_item_event`，分别为 1 通过／0 失败。前者覆盖真实英雄、物品、归属、次数、用户数据和子脚本结束后库存；后者覆盖拾取事件调用子脚本并修改事件物品与单位。首次检查因拾取会更新物品归属而失败，调整夹具在拾取后设置归属再通过。地面定位、丢弃／使用及复杂重入、真实地图、原版时序与其他接口待功能阶段验证。
+
+### DotA 原图自然购买与回城（部分验证，待功能阶段）
+
+路径：`tests/dota_heroes_tests.cpp`。新增 `natural-shop` 模式，从原 DotA_v6.83d 初始化，通过 `-sd` 购买英雄，再发出玩家移动命令、确认英雄移动至少 64、进入商店范围，以玩家命令购买回城卷轴并验证金币减少和 `I05I` 进入库存；随后向地图中央移动至少远离商店 500，使用卷轴并验证物品消耗、英雄位移及返回商店附近。Win32 Release 测试目标增量编译通过；执行 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> natural-shop` 输出 PASS，游戏时间 22.75 秒，无 Game.dll。首次增加金币检查时使用了 const map 的下标操作而编译失败，改用读取接口后编译通过。
+
+现有 `natural-flow` 同一源码构建在隔离会话中输出 PASS，覆盖选英雄、攻击移动、自然阵亡和复活至 360 秒；另通过客户端 `--main-check --simulate-ms 240000 --mute`，原图静音模拟到 240 秒。日志 `tmp/docs-artifacts/war3/dota-240-probe/client.log`。两项玩法检查由程序提交玩家命令，未覆盖实际鼠标／UI、全英雄／物品、完整对局、联机及原版时序；原图玩法和窗口对照仍按功能阶段继续验证。
