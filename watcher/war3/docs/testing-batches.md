@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 地面撤退恢复（待功能批次验证，1/3）
+
+路径：`src/ai.h`、`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。撤退时跟踪有效地面队员的命令轮次，对暂停恢复或寻路暂时失败且仍空闲的队员重试回家，保留后续新命令。合批编译客户端和 CampaignAI，运行 `retreat-retry`、`captain-home`、`armies` 及运输撤退回归；核对回调改派、失效成员、寻路和不可连通区域。原版动态时序与跨岛撤退待验证。本次未执行功能测试。
+
+
 ### 英雄令牌清理与 AI 时间批次结果
 
 范围：`e345dcf`、`2d10f9f`、`8276901`，含测试补充 `7aa9390`、`73590df`、`3d5313e`。Win32 Release 客户端、CampaignAI、revival、commerce 和 clock 构建通过。CampaignAI `hero-cost`、`hero-token`、`hero-token-cleanup`、`produce-zero`、`produce-many`、`produce-owner`、`produce-replacement`、`produce-builder` 各 2 项通过，`startup` 1 项；revival 4 项、commerce 1 项、clock 生产快照 1 项通过，共 **23 通过、0 失败**。覆盖祭坛死亡／移除返还与防重复、价格查询不写入缺省状态、已有英雄复活时间、生成的 v1 队列恢复及 v2 令牌退款。日志位于 `tmp/docs-artifacts/war3/hero-token-cleanup-batch/`。

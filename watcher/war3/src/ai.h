@@ -32,6 +32,7 @@ struct ScriptAI {
     std::set<std::uint32_t> captain,defenderUnits,guardUnits;
     std::map<std::uint32_t,int> suicideUnits;
     std::map<std::uint32_t,AIRetreatPassenger> retreatPassengers;
+    std::map<std::uint32_t,std::uint64_t> retreatOrders;
     std::map<std::uint64_t,AIGuardPost> guards;
     std::uint64_t guardTicket=0;
     bool fillGuards=false,groupTimedLife=true,newHeroes=true,slowChopping=false,captainChanges=true;
