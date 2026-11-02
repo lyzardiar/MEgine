@@ -7,7 +7,7 @@
 
 ### AI 地面撤退与增援批次结果
 
-范围：`3833572`、`de4d9b5`、`59da213`，含快照补充 `67f54cf`、`07618e0`。同一版本的 Win32 Release 客户端、CampaignAI 和 clock 构建通过。CampaignAI `retreat-retry`、`retreat-reinforce`、`retreat-reentrant`、`captain-home`、`armies` 各 2 项通过；`island-auto-retreat`、`island-boarded-retreat-home`、`island-flight-captain-home`、`island-flight-retreat-paused`、`island-flight-retreat-paused-reassign`、`island-naval-offshore-retreat`、`island-naval-enemyshore-retreat` 各 1 项通过；clock `recovery_bundle_restores_active_ai` 1 项通过，共 **18 通过、0 失败**。覆盖暂停后撤退、增援归队、发令回调改派、生成的 v1 和 v2 AI 状态恢复及载具撤退。日志和新增夹具位于 `tmp/docs-artifacts/war3/ai-retreat-ground-batch/`，运输夹具为 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`，构建日志为 `tmp/docs-artifacts/war3/retreat-ground-build.log`。自然长局、跨区域撤退、原版分类与动态时序、真实历史 v1 快照和联机仍待验证。下一功能批次 0/3。
+范围：`3833572`、`de4d9b5`、`59da213`，含快照补充 `67f54cf`、`07618e0`。同一版本的 Win32 Release 客户端、CampaignAI 和 clock 构建通过。CampaignAI `retreat-retry`、`retreat-reinforce`、`retreat-reentrant`、`captain-home`、`armies` 各 2 项通过；`island-auto-retreat`、`island-boarded-retreat-home`、`island-flight-captain-home`、`island-flight-retreat-paused`、`island-flight-retreat-paused-reassign`、`island-naval-offshore-retreat`、`island-naval-enemyshore-retreat` 各 1 项通过；clock `recovery_bundle_restores_active_ai` 1 项通过，共 **18 通过、0 失败**。覆盖暂停后撤退、增援归队、发令回调改派、生成的 v1 和 v2 AI 状态恢复及载具撤退。日志和新增夹具位于 `tmp/docs-artifacts/war3/ai-retreat-ground-batch/`，运输夹具为 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`，构建日志为 `tmp/docs-artifacts/war3/retreat-ground-build.log`。原版 Booty Bay 静音双 AI 隔离对局运行至模拟时间 4,200 秒仍无胜负：兽族 37 单位、13 建筑，7 名队长队员停在远离基地的区域，撤退状态仍阻塞进攻脚本；探针在终点采集信息时执行了扩张及生产查询，不能据此判定完整对局行为。日志 `tmp/docs-artifacts/war3/ai-retreat-ground-batch/duel.log`。跨区域撤退、原版分类与动态时序、真实历史 v1 快照和联机仍待验证。下一功能批次 0/3。
 
 
 ### AI 撤退发令回调改派（待功能批次验证，3/3）
