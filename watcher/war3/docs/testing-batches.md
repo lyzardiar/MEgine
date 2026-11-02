@@ -7017,3 +7017,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 沉默特殊攻击类别（待功能批次验证）
 
 路径：`src/combat.h`、`src/entities.h`、`src/session_arrow_status.cpp`、`src/session_attack_ground.cpp`、`src/session_combat_destructable.cpp`、`src/session_siege_attacks.cpp`、`src/session_weapons.cpp`、`tests/generate-harvest-fixture.py`、`tests/harvest_tests.cpp`、`docs/dark-arrows-silence.md`。Special 位作用于仅以 tree、debris 或 wall 为目标的单类武器，保留普通攻击和伐木能力；合批生成 `--special-silence` 地图，运行 `war3_harvest_tests <data-root> <fixture> silence-special`，并回归普通沉默与采集。必要定向用例 1 通过／0 失败，日志 `tmp/docs-artifacts/war3/silence-special/result-final.log`；原版 1.27 动态结果、其他特殊目标、混合目标及订单取消时机仍需对照。
+
+### 云雾自定义目标筛选（待功能批次验证）
+
+路径：`src/session.h`、`src/session_human_channels.cpp`、`src/session_spells.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`、`docs/human-casters.md`。云雾区域按源目标标志筛选单位类型及敌友，原版默认建筑配置继续生效；合批重建 caster 夹具，运行 `war3_caster_tests <data-root> <fixture> cloud-targets` 并覆盖既有施法目标。原版 1.27 的特殊目标、自己／非自己、不可见、魔免和区域刷新时序仍待动态对照。

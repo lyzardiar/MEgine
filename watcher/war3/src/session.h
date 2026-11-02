@@ -562,7 +562,6 @@ class ScriptSession {
     bool humanChannelTick(std::uint32_t source,double delta);
     void releaseHumanChannel(const CastOrder& cast);
     void releaseHumanClaim(std::uint32_t source,std::uint64_t ticket,std::uint32_t target,std::uint32_t buff);
-    bool cloudTarget(const UnitState& target,const SpellInfo& spell);
     void cloudPulse(std::uint32_t source,const CastOrder& cast);
     void aggregateCloud(UnitBuff& buff);
     float feedbackAttack(const CombatProjectile& projectile);
