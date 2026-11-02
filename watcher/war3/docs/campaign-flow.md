@@ -103,3 +103,5 @@ Win32 Release 客户端与相关测试目标编译通过；原图隔离会话手
 物品与可破坏物矩形枚举在动作回调期间保留当前筛选对象，并设置枚举对象；嵌套调用结束后恢复外层对象。原版 1.27 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 中，`GetFilterItem`／`GetEnumItem` 分别在 `0x6f1e2490`／`0x6f1e2170` 使用上下文编号 14／13；可破坏物对应 `0x6f1e2470`／`0x6f1e2150` 的编号 9／12。原版 `0x6f1e98ed`／`0x6f1df8ed` 设置筛选上下文，动作回调结束后才分别清理；这是只读静态指令证据，完整嵌套时序仍需运行对照。
 
 `GetLocalizedHotkey` 从原 `UI/MiscUI.txt` 的 `[Hotkeys]` 读取数值，支持单引号中最多四字节的整数和数字形式；找不到键时返回零。原版 `0x6f1e31a0` 查找配置项，`0x6f18ac30` 解析单引号字节和数字；实际窗口快捷键及地图覆盖待验证。
+
+亡灵资料片 `UndeadX06.w3x` 与 `UndeadX07a.w3x` 在独立用户目录、无玩家操作的静音会话中分别完成原图 main 并推进至模拟时间 600 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/undeadx06-diagnostic/session.log`、`tmp/docs-artifacts/war3/undeadx07a-diagnostic/session.log`。这仅覆盖隔离开场和空闲模拟，不包含前章英雄缓存、任务完成、自然战斗或实际窗口。
