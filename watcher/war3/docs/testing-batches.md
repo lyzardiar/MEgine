@@ -6973,3 +6973,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载脚本生成和回读（待功能批次验证）
 
 路径：`src/session_game.cpp`、`src/session.h`、`src/platform.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。接入生成开始、清除、结束以及用户目录脚本回读，隔离读写目录并限制文件大小；合批运行 `war3_map_tests <data-root> <scratch> preload_generator_roundtrip`，核对去重、重复开始、文件生成、路径约束和实际执行回读。缓存命中与原版文件打开时机、生成文件格式边界、读写失败、原版加载优先级及完整 native 环境仍待对照。本次功能测试待批次执行。
+
+### 预加载独立脚本公共声明（待功能批次验证）
+
+路径：`src/jass_runtime.h`、`src/jass_runtime.cpp`、`src/session_game.cpp`、`tests/jass_runtime_tests.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。预加载独立脚本读取原版 `common.j`，按兼容类型布局继承预加载、枚举转换、字符串及数学接口，未继承的 native 保留未绑定失败语义。合批运行 `war3_jass_runtime_tests <literal-fixture.json>` 和 `war3_map_tests <data-root> <scratch> preloader_common_natives`，覆盖类型布局、受限绑定及脚本调用；其他 native、临时脚本回调生命周期、原版动态行为和独立运行环境完整性仍待实现和对照。

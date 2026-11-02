@@ -47,6 +47,7 @@ public:
     void markNativeRestartable(const std::string& name);
     void shareThreads(Runtime& owner);
     void inheritNatives(const Runtime& owner);
+    void inheritNativesSubset(const Runtime& owner,const std::function<bool(std::string_view)>& include);
     void initialize();
     void initializeFromGlobals(std::span<const std::uint8_t> bytes,const StableHandleMap& decodeHandle={});
     bool ready() const;
