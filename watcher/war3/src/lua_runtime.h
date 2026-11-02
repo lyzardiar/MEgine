@@ -55,6 +55,8 @@ class LuaRuntime {
     static int slkWrite(lua_State* state);
     static int slkPairs(lua_State* state);
     static int archiveSearcher(lua_State* state);
+    static int runtimeGet(lua_State* state);
+    static int runtimeSet(lua_State* state);
     static int japiLookup(lua_State* state);
     static int japiCall(lua_State* state);
     static int japiUnsupported(lua_State* state);

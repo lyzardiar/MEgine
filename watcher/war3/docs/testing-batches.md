@@ -7614,3 +7614,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 原地图 Lua 入口和搜索顺序（部分验证，待功能阶段）
 
 路径：`src/lua_runtime.cpp`、`tests/lua_tests.cpp`。从地图匿名归档成员的 Lua 源路径定位到 `scripts/main.lua`、`scripts/lib/ecs/init.lua` 和地图自带的 `middleclass`、`IdHelp`；入口脚本将 `scripts\?.lua` 排在 `?.lua` 前，因此地图模块搜索调整为 `scripts/`、直接路径、`lua/`。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败：原始 `IdHelp` 转换 `I02D` 往返，原始 `middleclass` 创建实例并验证类型；在真实会话和测试控制台宿主中执行原 `scripts.main`，首个缺失模块为 `jass.runtime`。独立加载 `assetsmanager` 时只注入上述两个原图模块，其后缺少全局 `Component`。未加载 Game.dll；搜索路径冲突夹具、真实宿主初始化、完整入口、玩法及 UI 尚待验证。
+
+### Lua JASS 运行时配置与轻量句柄（部分验证，待功能阶段）
+
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。实验 `jass.runtime` 支持句柄模式 1／2 及读取／保持关闭的 `sleep`、`can_sleep`、`catch_crash`；不支持的模式或开启休眠、崩溃捕获明确报错。模式 1 使用绑定代次隔离的 Lua lightuserdata，缓存同一代句柄身份，旧句柄解绑后拒绝；为避免悬空指针，轻量句柄保留至 Lua 状态销毁，最多 262,144 个，模式 2 仍未实现原生引用计数。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖模式切换、比较、字符串、数组、过期句柄，以及原地图会话中的 2SAJ 玩家函数和特效 JAPI。原图入口在加载 `jass.runtime` 后推进至缺少全局 `register_japi`；入口脚本的模式设置依据字节码检查，尚未执行到该行。未加载 Game.dll；完整运行时属性、休眠、其他句柄模式和整图玩法 UI 待实现／验证。
