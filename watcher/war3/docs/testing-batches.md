@@ -7151,3 +7151,7 @@ Win32 Release 客户端和 `war3_passive_tests` 增量编译成功；功能断�
 Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图及隐藏实际客户端中，打开保存面板，输入 `abc中` 后执行 Home、右移、Delete、插入 `X`，画面显示 `aXc中`；确认保存后生成 `Saves/Manual/aXc中.w3z`（991918 字节），载入列表显示该文件。选中载入后客户端重新进入游戏，日志记录恢复会话的 `game_first_frame`、73 单位和未加载 Game.dll，截图时模拟时间为 12.656250 秒。操作通过自启动进程的 Windows 消息完成；截图及日志在 `tmp/docs-artifacts/war3/filename-ui-batch/`。
 
 该验证覆盖一张地图、一个早期存档和键盘输入，不能证明完整存档恢复或原版一致。合批继续覆盖装饰物／可破坏物重叠、静态地图阻挡、动态建筑与脚本路径更改，实际鼠标定位、长名称、补充平面字符、覆盖／删除、回放面板及原版画面对照。
+
+### 原图固定装饰物路径回归
+
+路径：`tests/clock_tests.cpp`。在 BootyBay 原图解析非可破坏装饰物或地形装饰物，选择不与可破坏物脚印重叠的阻挡单元，清除该单元的地形阻挡后检查会话初始化已建立固定阻挡，再对恢复前后的路径指纹和阻挡状态做对照。Win32 Release `war3_clock_tests` 增量编译通过；设置 `WAR3_CLOCK_FILTER=static_doodad_pathing_recovery` 后运行，实际结果 1 通过／0 失败。其他地图、动态修改及原版寻路精度继续合批验证。
