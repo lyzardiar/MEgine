@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 队员移除与撤退跟踪清理（待功能批次验证，1/3）
+
+路径：`src/session_food.cpp`、`src/session_ownership.cpp`、`tests/campaign_ai_tests.cpp`。单位移除时立即清除队长／防守／自杀队伍成员、撤退命令和队长路线成员引用；易主时同时清除撤退命令跟踪，避免这些地面队伍引用残留在 AI 快照中。合批运行 `retreat-removal`、`retreat-retry`、`armies`、AI 快照及所有权／载具相关回归；单位移除回调重入、运输中的移除与完整对局仍待验证。本次未执行功能测试。
+
+
 ### AI 地面撤退与增援批次结果
 
 范围：`3833572`、`de4d9b5`、`59da213`，含快照补充 `67f54cf`、`07618e0`。同一版本的 Win32 Release 客户端、CampaignAI 和 clock 构建通过。CampaignAI `retreat-retry`、`retreat-reinforce`、`retreat-reentrant`、`captain-home`、`armies` 各 2 项通过；`island-auto-retreat`、`island-boarded-retreat-home`、`island-flight-captain-home`、`island-flight-retreat-paused`、`island-flight-retreat-paused-reassign`、`island-naval-offshore-retreat`、`island-naval-enemyshore-retreat` 各 1 项通过；clock `recovery_bundle_restores_active_ai` 1 项通过，共 **18 通过、0 失败**。覆盖暂停后撤退、增援归队、发令回调改派、生成的 v1 和 v2 AI 状态恢复及载具撤退。日志和新增夹具位于 `tmp/docs-artifacts/war3/ai-retreat-ground-batch/`，运输夹具为 `tmp/docs-artifacts/war3/ai-naval-remote/fixture.w3m`，构建日志为 `tmp/docs-artifacts/war3/retreat-ground-build.log`。自然长局、跨区域撤退、原版分类与动态时序、真实历史 v1 快照和联机仍待验证。下一功能批次 0/3。
