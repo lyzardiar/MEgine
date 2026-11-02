@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 函数执行与原生调用基础（待功能批次验证，1/3）
+
+路径：`src/jass_binary_vm.h`、`src/jass_binary_vm.cpp`、`src/jass_binary_bridge.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。提供带步数、调用深度和参数栈上限的隔离执行入口，支持局部变量、反向栈序参数声明、字面量、寄存器复制、栈操作、现有 native 调用、脚本函数调用、整数转实数、取负、条件／无条件跳转和返回；未实现指令明确失败。夹具检查嵌套函数、非对称参数顺序、native 调用、跳转及步数上限，1 通过／0 失败。用户地图二进制 `config` 在已由文本 `config` 初始化的隔离会话中再次执行，完成 566 次原生调用；地图名／描述／玩家与队伍数量、16 个玩家的归属／颜色／控制／联盟和出生点／优先级与执行前一致，1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。该探针不能证明原版动态一致或从空状态构建配置；全局写入、数组、算术、函数引用、可挂起线程、会话入口、Lua 和平台接口仍待实现或验证，地图仍不能运行。
+
 ## 2SAJ 函数、初始化与类型桥批次（部分验证）
 
 范围：`411c017`、`3b3cdf1`、`fcea3ee`，集成版本 `fcea3ee`。Win32 Release 客户端、2SAJ 测试和 AI 目标构建通过；固定夹具和用户地图隔离探针各 1 通过／0 失败，后者检查 1,147 函数、2,166 标签、159 个初始化全局项和 `Player`／`GetPlayerId`／`I2S` 类型桥。BootyBay 人族 AI 两秒输出 1 条 PASS，DotA 静音 main 通过；带标记检查未加载 Game.dll。命令及输出见 `tmp/docs-artifacts/war3/jass-bridge-batch/results.txt`。这些是隔离基础检查，用户地图尚未执行；字节码调用、控制流、线程、Lua、平台接口和 UI 仍待实现或验证。下一功能批次从 0/3 开始。
