@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 无效点目标及零即时订单（待功能阶段验证）
+
+路径：`src/session_orders.cpp`、`tests/order_queue_tests.cpp`。点目标的坐标／地点字符串入口对空句柄和无法解析的非四字符名称返回失败；坐标／地点数字入口及即时数字入口对零订单返回失败，上述失败均不清空已有排队命令。四字符原始类型订单沿用已有路径。原版 1.27 点订单字符串入口 `0x6f1e9450` 在名称解析失败时直接返回，指令记录位于 `tmp/docs-artifacts/war3/ability-scan-current/order-full.txt`；数字入口零值的原版动态行为仍待对照。Win32 Release 客户端及订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-location` 和 `invalid-immediate` 各 1 通过、0 失败，覆盖无效名称、零订单、队列、四种有效点订单及有效停止命令，未加载 Game.dll。四字符未知名称、其他非零未知编号、脚本重入、原版事件时序及自然对局待功能阶段验证。
+
 ## 脚本即时命令名称与排队命令（待功能阶段验证）
 
 路径：`src/session_entities.cpp`、`tests/order_queue_tests.cpp`。空字符串句柄及非四字符、未注册的即时命令名称在清除排队命令前返回失败；四字符类型命令保留原有路径。原版 1.27 字符串入口 `0x6f1e9080` 对名称解析失败直接返回，指令记录位于 `tmp/docs-artifacts/war3/ability-scan-current/order-full.txt`。Win32 Release 客户端与订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-immediate` 1 通过、0 失败，覆盖空句柄、未知名称、队列续行和有效停止命令，未加载 Game.dll。四字符未知名称、自定义订单、数字入口、回调重入及自然地图／原版动态时序仍待功能阶段验证。
