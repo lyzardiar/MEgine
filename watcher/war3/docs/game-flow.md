@@ -38,3 +38,5 @@ cd watcher/war3
 游戏 HUD 顶部菜单、盟友和任务入口读取原 `GlobalStrings.fdf` 的 `KEY_MENU`、`KEY_ALLIES` 和 `KEY_QUESTS`，保留源热键颜色及任务提示闪烁；语言与文字由原资源决定。固定位置、长文裁剪和原版视觉仍待对照。
 
 结算界面原 `ScoreScreenTeamColorButton` 支持鼠标和 C 快捷键切换玩家原色与本人／盟友／敌人颜色，使用 `UI/MiscData.txt` 和地图覆盖的 `TeamColorFilter` 索引及地图皮肤的原按钮图标；观察者优先使用双向结盟玩家的颜色。切换只改变当前结算显示，按钮悬停使用源 `SCORESCREEN_TEAM_COLOR` 提示。1.27 Game.dll `0x6f2bef2b` 绑定按钮，`0x6f2e9e70` 选择原 MiniMapAllyButton 图标，`0x6f31f0d0` 使用本人／盟友／敌方映射；只读反汇编见 `tmp/docs-artifacts/war3/score-team-colors/original.txt`。原版初始状态、观察者、界面交互与布局和图标状态仍待集中对照。
+
+结算背景、页签和顶栏模型使用进入结算后的界面时钟推进动画；对局时长仍读取模拟时间。实际窗口中的模型动画、切换页签、后台恢复与原版节奏待验证。

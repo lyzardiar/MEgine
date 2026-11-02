@@ -46,6 +46,7 @@ class GameFlowUi {
     size_t saveScroll_=0,saveCursor_=0;
     std::string saveError_;
     std::vector<std::string> scoreModels_;
+    std::optional<std::uint64_t> scoreAnimationStart_;
     std::array<std::array<std::string,25>,16> scoreCache_{};
     std::string helpText_,helpMeasured_;
     std::vector<std::string> tips_;
