@@ -7854,3 +7854,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 地图 Lua 单人同步消息投递（部分验证，待批次验证）
 
 路径：`CMakeLists.txt`、`src/lua_local_sync.{h,cpp}`、`src/map_script_runtime.{h,cpp}`、`src/game_view.cpp`、`src/main.cpp`、`tests/lua_tests.cpp`。单人地图的 `SendCustomMessage` 按发送顺序排队，在游戏更新完成后以本地玩家身份投递，回调中新增的消息留待下一次更新；限制队列容量并保护宿主销毁后的调用。局域网会话不启用单人回环。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖消息发送者、顺序、延迟、容量、销毁及局域网拒绝。正式客户端 `--main-check --mute` 仍在 `EXGetPlayerRealName` 失败，日志位于 `tmp/docs-artifacts/war3/qcloud-local-sync-20261103.log`；真实地图内消息时序、联机消息传输、完整地图和画面尚未验证。
+
+### 地图 UI 根节点与标准 HUD 接线（部分验证，待批次验证）
+
+路径：`src/map_script_runtime.{h,cpp}`、`src/game_view.{h,cpp}`、`tests/lua_tests.cpp`。正式 2SAJ 地图运行时持有 FDF 定义和地图帧根节点，Lua 的 `GetGameUI`、`FrameShow` 和 `LoadToc` 使用该状态；根节点隐藏时标准 HUD 不绘制，底部界面和顶部按钮不响应鼠标，电影界面仍按原有 `ShowInterface` 状态处理。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖正式地图运行时根节点切换和隔离 Lua 帧／TOC 交互。正式客户端 `--main-check --mute` 仍停在 `EXGetPlayerRealName`，日志位于 `tmp/docs-artifacts/war3/qcloud-ui-root-20261103.log`。地图自建帧绘制、布局和交互未接入；根节点隐藏的真实画面、输入与原版差异及完整地图待批次／实际运行验证。11 平台官方接口声明将该函数描述为获取玩家平台昵称：https://github.com/11Platform/11Platform_YDWE/blob/8b1dfe07a7201cc83142dad2fe7c3454cd053183/ui/japi/call.txt 。

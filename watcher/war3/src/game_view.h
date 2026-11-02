@@ -70,6 +70,7 @@ class GameView {
     unsigned submitPlayerCommand(const PlayerCommand& command);
     void selectLocalUnit(std::uint32_t id,bool selected);
     void localMessage(unsigned owner,float x,float y,double duration,std::string message);
+    bool uiVisible() const;
     D3DVIEWPORT9 viewport_{};
     D3DMATRIX view_{},projection_{};
     enum class OrderMode {None,Move,Attack,AttackGround,Patrol,Harvest,Entangle,Repair};

@@ -11,6 +11,8 @@ class ScriptSession;
 class MapScriptRuntime {
     ScriptSession& session_;
     std::shared_ptr<JassBinarySession> binary_;
+    std::shared_ptr<FrameDefinitions> definitions_;
+    std::shared_ptr<MapFrames> frames_;
     LuaNativeConsole console_;
     LuaRuntime lua_;
     std::unique_ptr<LuaLocalSync> localSync_;
@@ -23,5 +25,7 @@ public:
     MapScriptRuntime& operator=(const MapScriptRuntime&)=delete;
     void start();
     void pump();
+    bool uiRootVisible() const;
+    const std::shared_ptr<MapFrames>& frames() const {return frames_;}
 };
 }
