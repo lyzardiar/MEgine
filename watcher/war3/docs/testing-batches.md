@@ -6969,3 +6969,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载兼容及资源记录批次结果
 
 范围：`0203e91`、`f46f034`、`b9905b0`，包含 `5620661`、`17248be` 两项既有回归补充。Win32 Release 客户端、归档、地图和兽族战役测试目标构建成功，构建日志未发现 warning/error。`war3_archive_tests` 10 通过／0 失败；`campaign_expansion_credits` 1／0；`zone-return` 和 `quest-shop-return` 各 1／0。日志与独立用户目录位于 `tmp/docs-artifacts/war3/preload-recording-batch/`，构建日志为 `tmp/docs-artifacts/war3/preload-recording-batch-build.log`。独立预加载脚本、原版异步资源时序、原版文件打开时机、实际窗口及自然战斗仍待验证；资源记录尚未接入生成器。
+
+### 预加载脚本生成和回读（待功能批次验证）
+
+路径：`src/session_game.cpp`、`src/session.h`、`src/platform.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。接入生成开始、清除、结束以及用户目录脚本回读，隔离读写目录并限制文件大小；合批运行 `war3_map_tests <data-root> <scratch> preload_generator_roundtrip`，核对去重、重复开始、文件生成、路径约束和实际执行回读。缓存命中与原版文件打开时机、生成文件格式边界、读写失败、原版加载优先级及完整 native 环境仍待对照。本次功能测试待批次执行。

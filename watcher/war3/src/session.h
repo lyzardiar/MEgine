@@ -328,6 +328,7 @@ class ScriptSession {
     std::vector<std::shared_ptr<const Member>> preloaded_;
     size_t preloadBytes_=0;
     unsigned preloadDepth_=0;
+    std::uint64_t preloadGenerationStarted_=0;
     std::vector<std::string> preloadMissing_;
     std::optional<FrameDefinitions> localized_;
     std::optional<SourceSettings> localizedHotkeys_;

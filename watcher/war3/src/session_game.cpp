@@ -3,6 +3,10 @@
 #include "binary.h"
 #include "snapshot_codec.h"
 #include <algorithm>
+#include <atomic>
+#include <iomanip>
+#include <locale>
+#include <sstream>
 #include <bit>
 #include <cmath>
 #include <set>
@@ -57,16 +61,37 @@ void ScriptSession::restoreSimulationClock(std::span<const std::uint8_t> bytes){
 }
 std::uint32_t ScriptSession::random() {return gameRandom_.next();}
 void ScriptSession::seedAuxiliaryRandom(std::uint32_t seed) {AudioRandom derivation(seed);for(auto& stream:auxiliaryRandom_)stream=AudioRandom(derivation.next());}
+namespace {
+struct PreloadFile {
+    fs::path path;
+    std::vector<std::shared_ptr<void>> directories;
+};
+std::optional<PreloadFile> preloadFile(const fs::path& dataRoot,const std::string& name,bool create) {
+    if(name.empty() || name.size()>1024 || name.find('\0')!=std::string::npos)return {};auto relative=fs::path(wide(name));if(relative.is_absolute() || relative.has_root_name() || relative.has_root_directory() || relative.filename().empty())return {};
+    for(auto& part:relative){auto value=part.wstring();if(value.empty() || value==L"." || value==L".." || value.back()==L'.' || value.back()==L' ')return {};for(auto c:value)if(c<32 || c==L':' || c==L'*' || c==L'?' || c==L'"' || c==L'<' || c==L'>' || c==L'|')return {};auto base=value.substr(0,value.find(L'.'));for(auto& c:base)if(c>=L'a' && c<=L'z')c-=L'a'-L'A';if(base==L"CON" || base==L"PRN" || base==L"AUX" || base==L"NUL" || (base.size()==4 && (base.starts_with(L"COM") || base.starts_with(L"LPT")) && base[3]>=L'1' && base[3]<=L'9'))return {};}
+    validateWar3UserDirectory(dataRoot);auto root=war3UserDirectory();if(create)fs::create_directories(root);PreloadFile result;auto hold=[&](const fs::path& path,bool make){if(make && !CreateDirectoryW(path.c_str(),nullptr) && GetLastError()!=ERROR_ALREADY_EXISTS)return false;auto handle=CreateFileW(path.c_str(),FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,nullptr);if(handle==INVALID_HANDLE_VALUE)return false;FILE_ATTRIBUTE_TAG_INFO info{};if(!GetFileInformationByHandleEx(handle,FileAttributeTagInfo,&info,sizeof(info)) || !(info.FileAttributes&FILE_ATTRIBUTE_DIRECTORY) || (info.FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)){CloseHandle(handle);return false;}result.directories.emplace_back(handle,[](void* p){CloseHandle(p);});return true;};
+    if(!hold(root,false))return {};root/=L"Preload";if(!hold(root,create))return {};for(auto& part:relative.parent_path()){root/=part;if(!hold(root,create))return {};}result.path=root/relative.filename();auto attributes=GetFileAttributesW(result.path.c_str());if(attributes!=INVALID_FILE_ATTRIBUTES && (attributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT)))return {};return result;
+}
+std::optional<Bytes> readPreloadFile(const fs::path& root,const std::string& name) {
+    auto path=preloadFile(root,name,false);if(!path)return {};auto handle=CreateFileW(path->path.c_str(),GENERIC_READ,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,nullptr);if(handle==INVALID_HANDLE_VALUE)return {};struct Close{HANDLE value;~Close(){CloseHandle(value);}}close{handle};FILE_ATTRIBUTE_TAG_INFO info{};LARGE_INTEGER size{};if(!GetFileInformationByHandleEx(handle,FileAttributeTagInfo,&info,sizeof(info)) || (info.FileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT)) || !GetFileSizeEx(handle,&size) || size.QuadPart<0 || size.QuadPart>1024*1024)throw std::runtime_error("Invalid user preload script");Bytes bytes(size_t(size.QuadPart));DWORD read=0;if(!bytes.empty() && (!ReadFile(handle,bytes.data(),DWORD(bytes.size()),&read,nullptr) || read!=bytes.size()))throw std::runtime_error("Cannot read user preload script");return bytes;
+}
+bool writePreloadFile(const fs::path& root,const std::string& name,const std::string& text) {
+    auto path=preloadFile(root,name,true);if(!path)return false;static std::atomic<unsigned> serial=0;auto temporary=path->path;temporary+=L"."+std::to_wstring(GetCurrentProcessId())+L"."+std::to_wstring(++serial)+L".tmp";auto file=CreateFileW(temporary.c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);if(file==INVALID_HANDLE_VALUE)return false;DWORD written=0;bool ok=WriteFile(file,text.data(),DWORD(text.size()),&written,nullptr) && written==text.size() && FlushFileBuffers(file);CloseHandle(file);if(ok)ok=MoveFileExW(temporary.c_str(),path->path.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH)!=0;if(!ok)DeleteFileW(temporary.c_str());return ok;
+}
+}
 void ScriptSession::preload(const std::string& name) {auto last=name.find_last_not_of(" \t\r\n");if(last==std::string::npos)return;auto path=name.substr(0,last+1);auto& resources=requireWorld().resources();auto member=resources.read(path);if(!member && path.size()>4 && path.substr(path.size()-4)==".mdl")member=resources.read(path.substr(0,path.size()-4)+".mdx");if(!member){if(preloadMissing_.size()<4096 && std::find(preloadMissing_.begin(),preloadMissing_.end(),path)==preloadMissing_.end())preloadMissing_.push_back(path);return;}if(std::find(preloaded_.begin(),preloaded_.end(),member)!=preloaded_.end())return;constexpr size_t budget=64*1024*1024;if(member->bytes.size()>budget)return;while(preloadBytes_>budget-member->bytes.size()){preloadBytes_-=preloaded_.front()->bytes.size();preloaded_.erase(preloaded_.begin());}preloadBytes_+=member->bytes.size();preloaded_.push_back(std::move(member));}
 void ScriptSession::preloader(const std::string& name) {
-    if(name.empty())return;if(preloadDepth_>=8)throw std::runtime_error("Preload script nesting exceeds budget");auto member=requireWorld().resources().read(name);if(!member)return;if(member->bytes.size()>1024*1024)throw std::runtime_error("Preload script exceeds budget");++preloadDepth_;struct Pop {unsigned& depth;~Pop(){--depth;}}guard{preloadDepth_};
-    std::string declarations="native Preload takes string filename returns nothing\nnative PreloadStart takes nothing returns nothing\nnative PreloadRefresh takes nothing returns nothing\nnative PreloadEnd takes real timeout returns nothing\nnative PreloadEndEx takes nothing returns nothing\n";jass::Runtime runtime(jass::Module::compile(jass::Program::parse({{"preloader.j",declarations+sourceText(member->bytes),member->source}})),{100000});
+    if(name.empty())return;if(preloadDepth_>=8)throw std::runtime_error("Preload script nesting exceeds budget");auto& resources=requireWorld().resources();auto local=readPreloadFile(resources.root(),name);auto member=local?std::shared_ptr<const Member>{}:resources.read(name);if(!local && !member)return;const auto& bytes=local?*local:member->bytes;if(bytes.size()>1024*1024)throw std::runtime_error("Preload script exceeds budget");++preloadDepth_;struct Pop {unsigned& depth;~Pop(){--depth;}}guard{preloadDepth_};
+    std::string declarations="native Preload takes string filename returns nothing\nnative PreloadStart takes nothing returns nothing\nnative PreloadRefresh takes nothing returns nothing\nnative PreloadEnd takes real timeout returns nothing\nnative PreloadEndEx takes nothing returns nothing\n";jass::Runtime runtime(jass::Module::compile(jass::Program::parse({{"preloader.j",declarations+sourceText(bytes),local?std::string("user preload"):member->source}})),{100000});
     runtime.bind("Preload",[this](auto& vm,auto args){if(args[0].text)preload(*args[0].text);return vm.nothing();});runtime.bind("PreloadStart",[this](auto& vm,auto){preloaded_.clear();preloadBytes_=0;return vm.nothing();});runtime.bind("PreloadRefresh",[](auto& vm,auto){return vm.nothing();});runtime.bind("PreloadEnd",[](auto& vm,auto){return vm.nothing();});runtime.bind("PreloadEndEx",[](auto& vm,auto){return vm.nothing();});runtime.initialize();runtime.invoke("PreloadFiles");
 }
 void ScriptSession::bindGameNatives() {
     bind("DoNotSaveReplay","nothing",{},[this](auto& vm,auto){replaySavingDisabled_=true;return vm.nothing();});
     bind("Preload","nothing",{"string"},[this](auto& vm,auto args){if(args[0].text)preload(*args[0].text);return vm.nothing();});
     bind("Preloader","nothing",{"string"},[this](auto& vm,auto args){if(args[0].text)preloader(*args[0].text);return vm.nothing();});
+    bind("PreloadGenStart","nothing",{},[this](auto& vm,auto){preloadGenerationStarted_=GetTickCount64();requireWorld().resources().startRecording();return vm.nothing();});
+    bind("PreloadGenClear","nothing",{},[this](auto& vm,auto){requireWorld().resources().clearRecording();return vm.nothing();});
+    bind("PreloadGenEnd","nothing",{"string"},[this](auto& vm,auto args){if(!args[0].text || args[0].text->empty())return vm.nothing();auto& resources=requireWorld().resources();auto names=resources.recordedMembers();if(!names)return vm.nothing();std::ostringstream out;out.imbue(std::locale::classic());out<<"function PreloadFiles takes nothing returns nothing\n";for(auto& name:*names){out<<"\tcall Preload( \"";for(char c:name){if(c=='\\' || c=='"')out<<'\\';out<<c;}out<<"\" )\n";if(out.tellp()>1024*1024)return vm.nothing();}auto elapsed=GetTickCount64()-preloadGenerationStarted_;out<<"\tcall PreloadEnd( "<<std::fixed<<std::setprecision(1)<<(double(elapsed)/1000.0)<<" )\nendfunction\n";auto content=out.str();if(content.size()>1024*1024)return vm.nothing();try{writePreloadFile(resources.root(),*args[0].text,content);}catch(const std::exception&){}return vm.nothing();});
     bind("PreloadStart","nothing",{},[this](auto& vm,auto){preloaded_.clear();preloadBytes_=0;return vm.nothing();});
     bind("PreloadRefresh","nothing",{},[](auto& vm,auto){return vm.nothing();});
     bind("PreloadEnd","nothing",{"real"},[](auto& vm,auto){return vm.nothing();});
