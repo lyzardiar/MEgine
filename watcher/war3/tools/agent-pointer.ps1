@@ -13,7 +13,7 @@ $ready=Join-Path $directory ('pointer-'+$id+'.ready')
 Move-Item -LiteralPath $temp -Destination $request -Force
 $deadline=[DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
 while([DateTime]::UtcNow -lt $deadline){
-    if(Test-Path -LiteralPath $ready){$response=[IO.File]::ReadAllText($ready,[Text.Encoding]::UTF8) | ConvertFrom-Json;if(!$response.ok){throw 'Pointer input unavailable: client must be in an interactive single-player game and not in the foreground'};$response | ConvertTo-Json -Compress;exit 0}
+    if(Test-Path -LiteralPath $ready){$response=[IO.File]::ReadAllText($ready,[Text.Encoding]::UTF8) | ConvertFrom-Json;if(!$response.ok){throw 'Pointer input unavailable: target must be an interactive background single-player game or its save-name edit box'};$response | ConvertTo-Json -Compress;exit 0}
     Start-Sleep -Milliseconds 50
 }
 throw 'Timed out waiting for the game pointer response'

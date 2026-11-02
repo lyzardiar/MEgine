@@ -61,6 +61,7 @@ public:
     GameFlowUi(GameData& data,Renderer& renderer,Text& text,std::function<unsigned(const PlayerCommand&)> submit={}) : data_(data),renderer_(renderer),text_(text),submit_(std::move(submit)) {}
     ~GameFlowUi();
     bool menuOpen() const {return panel_!=Panel::Closed;}
+    bool agentSaveNameHit(float x,float y) const;
     void toggleMenu();
     bool scriptDialog() const;
     bool drawMenu(const UiInput& input,bool network=false,bool allowNetworkLeave=false,std::wstring_view characters={});
