@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 建造命令与 AI 商店批次（部分验证）
+
+范围：`ce677ee`、`43a6860`、`f8e371e`，在 `f8e371e` 集成代码上执行。Win32 Release 客户端、订单、AI、被动和建造测试目标编译通过；订单目标有既有局部变量遮蔽警告。BootyBay 的 `invalid-build`、`hero-shop-range`、`hero-shop-blocked` 各 1 通过、0 失败；被动夹具 `shop-range` 7 通过、0 失败；均未加载 Game.dll。建造综合夹具首次失败：暗夜精灵工人需要移动才能开工，原夹具只等待一个模拟步；诊断中继续等待后，修理工人因目标旁位置被路径规则调整而无法完成原固定场景。夹具现等待新的实际开工事件，并仅在修理费用／生命检查期间关闭该工人的路径碰撞；修正后建造综合程序输出 1 条 PASS，未加载 Game.dll。日志及隔离诊断在 `tmp/docs-artifacts/war3/build-ai-shop-batch/`。寻路修理、购买途中动态封路、多商店选择、真实窗口及原版时序仍待验证；本次未修改产品建造或修理逻辑。
+
 ## AI 英雄购买路径可达性（待功能批次验证）
 
 路径：`src/session_ai.cpp`、`tests/ai_tests.cpp`，见[AI 英雄物品](ai-hero-items.md)。英雄在购买发令前检查路径终点是否进入商店交易范围，部分路径不足以交易时继续尝试其他落点或商店。Win32 Release 客户端及 AI 目标编译通过；`war3_ai_tests <data-root> <BootyBay.w3m> hero-shop-blocked` 与 `hero-shop-range` 各 1 通过、0 失败，前者在隔离会话中人工修改地面路径，验证包围商店时不发出部分路线、移除障碍后完成购买；未加载 Game.dll。多商店选取、发令后动态封路、移动障碍、回调重入、路径性能及原版策略待合批验证。
