@@ -7043,3 +7043,9 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 失效地点的移动与高度查询（待功能批次验证）
 
 路径：`src/session_world.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。地点移动与高度查询处理空、移除或不兼容句柄，避免脚本中断；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，覆盖空和已移除地点以及之后的脚本操作。固定版 1.27 的两个 native 入口对解析失败直接返回，注册与指令见本地 `tmp/docs-artifacts/war3/location-invalid/`；有效高度、错误类型和原版动态行为待阶段验证。
+
+### 失效矩形的创建和操作（待功能批次验证）
+
+路径：`src/session_world.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。矩形创建和操作复核地点／矩形句柄，失效时返回空句柄或直接返回；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，覆盖重复移除、失效矩形修改／移动、失效地点创建及脚本续行。原入口指令在 `tmp/docs-artifacts/war3/location-invalid/rect-assembly.txt`；有效矩形、错误类型和原版动态行为待阶段验证。
+
+地点与矩形句柄修正的合并增量编译：`cmake --build --preset release --target war3 war3_map_tests --parallel 8` 成功；新增行为回归尚未执行。

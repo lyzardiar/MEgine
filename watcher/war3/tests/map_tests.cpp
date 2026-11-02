@@ -89,7 +89,14 @@ call MoveRectToLoc(LoadRectHandle(a, 1, 4), LoadLocationHandle(a, 1, 3))
 call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_GOLD, R2I(GetRectCenterX(LoadRectHandle(a, 1, 4))))
 call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, R2I(GetRectCenterY(LoadRectHandle(a, 1, 4))))
 call RemoveRect(LoadRectHandle(a, 1, 4))
+call RemoveRect(LoadRectHandle(a, 1, 4))
+call SetRect(LoadRectHandle(a, 1, 4), 0.0, 0.0, 1.0, 1.0)
+call SetRectFromLoc(null, LoadLocationHandle(a, 1, 3), LoadLocationHandle(a, 1, 3))
+call MoveRectTo(LoadRectHandle(a, 1, 4), 0.0, 0.0)
 call RemoveLocation(LoadLocationHandle(a, 1, 3))
+if RectFromLoc(null, LoadLocationHandle(a, 1, 3)) != null then
+    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, -1)
+endif
 call MoveLocation(LoadLocationHandle(a, 1, 3), 50.0, 60.0)
 call MoveLocation(null, 50.0, 60.0)
 if GetLocationZ(LoadLocationHandle(a, 1, 3)) != 0.0 or GetLocationZ(null) != 0.0 then
