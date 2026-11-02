@@ -6953,3 +6953,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 招募队友跨区域回访回归（待功能批次验证）
 
 路径：`tests/orc_campaign_chain_tests.cpp`、`docs/save-runtime-foundation.md`。新增 `quest-shop-return` 模式，在原图 Strange Brew 任务招募陈后，经双区域切换和检查点回访核对队伍状态、用户数据及三件初始物品。等价隔离诊断通过，日志 `tmp/docs-artifacts/war3/orcx-chen-transfer/result2.log`；正式回归尚未编译执行，合批运行 `war3_orc_campaign_chain_tests <data-root> quest-shop-return <new-absolute-user-dir>`。自然行走、窗口加载、其他队员与原版存档格式待验证；此回归不单独计入功能批次。
+
+### 预加载空字符串（待功能批次验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。主脚本及独立预加载脚本的 `Preload` 接受空字符串句柄并无操作；有效名称沿用同步归档读取。原版 1.27 入口 `0x6f1f2020` 对空指针或空字符串返回。合批运行 `war3_map_tests <data-root> <scratch> campaign_expansion_credits`，覆盖空句柄／空字符串及原图片尾；独立预加载脚本与资源时序待验证。本次未执行功能测试。
