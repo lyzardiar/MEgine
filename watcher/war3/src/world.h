@@ -98,6 +98,7 @@ class World {
     std::vector<std::uint64_t> terrainChunks_;
     std::uint64_t terrainRevision_=1;
     std::vector<std::uint16_t> terrainSlots_;
+    std::vector<std::uint16_t> initialTerrain_;
     std::vector<std::uint32_t> terrainTypes_;
     mutable std::vector<std::string> terrainTextures_;
     mutable std::optional<std::map<std::uint32_t,std::string>> terrainTextureIndex_;
@@ -149,6 +150,7 @@ public:
     int terrainCliffLevel(WorldPoint point) const;
     void replaceCliffOverlay(std::vector<CliffCell>& current,std::vector<CliffCell> next);
     unsigned terrainSlot(size_t corner) const {return terrainSlots_.at(corner);}
+    const auto& initialTerrain() const {return initialTerrain_;}
     const auto& terrainTypes() const {return terrainTypes_;}
     const std::string& terrainTexture(unsigned slot) const;
     void setTerrainType(WorldPoint point,std::uint32_t type,int variation,int area,int shape,const std::function<std::uint32_t()>& random);

@@ -17,6 +17,7 @@ Image renderTerrainMinimap(const World& world,SceneAssets& assets,unsigned width
 MinimapTerrain::MinimapTerrain(const World& world):chunks_(world.terrainChunks()) {
     auto& corners=world.data().terrain.corners;corners_.reserve(corners.size());for(size_t i=0;i<corners.size();++i)corners_.push_back((world.terrainSlot(i)<<8)|(corners[i].variation&31));
 }
+MinimapTerrain MinimapTerrain::fromMap(const World& world) {MinimapTerrain result(world);result.corners_.assign(world.initialTerrain().begin(),world.initialTerrain().end());result.chunks_.clear();return result;}
 MinimapTerrain::MinimapTerrain(const World& world,const Image& original):MinimapTerrain(world) {source(original);}
 void MinimapTerrain::source(const Image& original) {if(!original.width || !original.height || original.pixels.size()!=size_t(original.width)*original.height)throw std::runtime_error("Invalid source minimap image");image_=original;}
 bool MinimapTerrain::refresh(const World& world,SceneAssets& assets) {

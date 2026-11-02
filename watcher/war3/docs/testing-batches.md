@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 小地图地图原始地表基线（待功能批次验证）
+
+路径：`src/world.h/.cpp`、`src/minimap_terrain.h/.cpp`、`src/game_loading.cpp`、`tests/live_world_tests.cpp`，见[小地图](minimap.md)。世界创建时保存地图原始地表类型槽与 variation；小地图使用这份基线，覆盖加载器接手之前的配置阶段变化。Win32 Release 客户端及测试目标编译通过；`war3_live_world_tests <data-root> <BootyBay.w3m> <log> minimap-terrain` 1 通过、0 失败，覆盖初始化后但建立小地图前改地以及旧底图其他区域保留，未加载 Game.dll。实际配置脚本、窗口显示、内存开销和原版行为待批次验证。
+
 ## 小地图与物品路径集成检查（批次部分验证）
 
 范围：`f55daaf`、`bb07196`、`99eece2`、`7f02ca7`、`70dba26`，在 `70dba26` 同一代码版本验证。Win32 Release 客户端、live world、订单及 AI 测试目标构建通过；BootyBay 的 `minimap-terrain`、`pickup-path` 和 `hero-powerup` 各 1 通过、0 失败，测试未加载 Game.dll。原安装资源 CPU 探针读到小／大营地模型及各 2000 毫秒循环 Stand；输出位于 `tmp/docs-artifacts/war3/minimap-integration-batch/creep-model-output.txt`。BootyBay 以 `war3.exe --data-root <data-root> --map <BootyBay.w3m> --play --hidden --mute --frames 600 --log <log> --capture <png>` 运行，日志显示游戏绘制 600 帧并关闭、未加载 Game.dll；截图与日志位于同一目录。截图中的迷雾遮住大部分地图，未验证营地模型实际显示、地表动态变更或原版对照。状态提示长文本 `59b5578` 未在本批执行窗口交互，继续留在队列；原版行为、设备恢复和高频改地性能也仍待验证。

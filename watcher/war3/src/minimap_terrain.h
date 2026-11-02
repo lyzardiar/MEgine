@@ -11,6 +11,7 @@ class MinimapTerrain {
     std::vector<std::uint64_t> chunks_;
 public:
     explicit MinimapTerrain(const World& world);
+    static MinimapTerrain fromMap(const World& world);
     MinimapTerrain(const World& world,const Image& original);
     void source(const Image& original);
     bool refresh(const World& world,SceneAssets& assets);
