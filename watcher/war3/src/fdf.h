@@ -18,6 +18,7 @@ struct FrameDefinition {
     std::vector<FrameDefinition> children;
     const std::vector<std::string>& property(const std::string& key) const;
     float number(const std::string& key, float fallback = 0) const;
+    std::uint32_t color(const std::string& key,std::uint32_t fallback) const;
 };
 FrameDefinition frameContext(FrameDefinition frame,const std::string& prefix);
 struct FrameFocus {std::string name,next;bool enabled=false,initial=false;};

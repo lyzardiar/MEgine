@@ -15,7 +15,7 @@ public:
     struct Choice {std::string text,image;};
     struct ChoiceChange {std::string frame;size_t index;};
 private:
-    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; std::vector<MapFrames::Anchor> anchors;std::optional<float> mapWidth,mapHeight; };
+    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; std::vector<MapFrames::Anchor> anchors;std::optional<float> mapWidth,mapHeight;std::optional<std::uint32_t> mapTextColor; };
     struct Texture { Com<IDirect3DTexture9> gpu; unsigned width,height; };
     Archives& archives_;
     Images& images_;
@@ -44,7 +44,7 @@ private:
     void quad(Rect rect, DWORD color, const std::string& member, float u0=0,float v0=0,float u1=1,float v1=1,bool tile=false,bool additive=false,bool transpose=false);
     void backdrop(const FrameDefinition& frame, Rect rect, DWORD color=0xffffffff);
     std::string drawNode(unsigned index,const UiInput& input,const std::set<std::string>& enabled);
-    void label(const FrameDefinition& frame,Rect rect,bool enabled,bool highlighted,size_t lineOffset=0);
+    void label(const FrameDefinition& frame,Rect rect,bool enabled,bool highlighted,size_t lineOffset=0,std::optional<std::uint32_t> color={});
     void relayout();
     void choiceControl(unsigned index,const UiInput& input,bool enabled);
     Rect menuBounds(unsigned index);
