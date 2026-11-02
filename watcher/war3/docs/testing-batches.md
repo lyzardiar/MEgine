@@ -7069,3 +7069,13 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 区域和距离事件的回调重入（待功能批次验证）
 
 路径：`src/session_spatial_events.cpp`、`tests/clock_tests.cpp`、`docs/jass.md`。空间事件分发前重新检查候选成员和目标生命周期；合批设置 `WAR3_CLOCK_FILTER=region_event_rechecks_after_callback` 运行 `war3_clock_tests <data-root> <output-root>`，验证首个回调移走后续单位及其再次进入。Win32 Release 客户端和 clock 目标编译成功；最小复现首轮缺少 `destructable` 类型声明，补充后该项重测 1 通过／0 失败。距离事件、退出、过滤器重入、恢复包和原版时序待阶段验证。
+
+### 区域格子边界（待功能批次验证）
+
+路径：`src/spatial_region.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。格子按左闭右开处理相邻边界；合批运行 `war3_map_tests <data-root> <scratch> region_subtraction_boundaries`，验证清除一格后边界归属相邻格。负坐标、地图原点、区域事件及原版网格对齐仍待验证。
+
+### 预加载与空间对象合批结果
+
+范围：`0a17102`、`43ab642`、`ce97edc`、`7c7ba37`、`495158f`、`8430793`、`476d13b`、`56dd780`、`32c8a9d`。在本组格子边界修改前，Win32 Release 已编译客户端、地图和 clock 目标；`preloader_hashtable_handles`、`region_subtraction_boundaries`、`preloader_common_natives`、`preload_generator_roundtrip`、`spatial_events_rebuild_members_filters_and_order`、`region_event_rechecks_after_callback` 各 1 通过／0 失败。前两项与后续格子边界相关，需在下一批重测；其他结果可复用。原版动态行为、距离事件重入、实际地图／窗口及原版网格对齐仍待验证。夹具输出目录 `tmp/docs-artifacts/war3/spatial-preloader-batch/`。
+
+格子边界变更后，Win32 Release 客户端及地图测试目标增量编译成功；新增断言和受影响项待下一批执行。
