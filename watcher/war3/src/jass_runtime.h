@@ -8,7 +8,8 @@
 
 namespace war3::jass {
 class Runtime;
-struct Value {Id type=none;std::uint32_t bits=0;std::shared_ptr<const std::string> text;Runtime* codeOwner=nullptr;};
+struct RuntimeLifetime;
+struct Value {Id type=none;std::uint32_t bits=0;std::shared_ptr<const std::string> text;Runtime* codeOwner=nullptr;std::weak_ptr<const RuntimeLifetime> codeLifetime;};
 struct PrimitiveGlobalSnapshot {std::vector<std::uint8_t> bytes;size_t excludedGlobals=0,excludedNonDefaultGlobals=0;};
 struct PrimitiveGlobalRestore {size_t excludedGlobals=0,excludedNonDefaultGlobals=0;};
 struct RuntimeLimits {std::uint64_t steps=5000000;size_t frames=1024,values=262144,stringBytes=16*1024*1024;bool debug=false;size_t threads=1024;};

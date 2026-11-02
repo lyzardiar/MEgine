@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 跨运行时 2SAJ 回调寿命检查（待功能阶段验证）
+
+路径：`src/jass_runtime.{h,cpp}`、`src/jass_binary_callbacks.cpp`、`tests/jass_binary_tests.cpp`。2SAJ 回调的 JASS code 值携带所属 Runtime 的弱寿命标记；`invoke`、`invokeNoYield`、`start` 和 `startDiscard` 在访问外部 Runtime 前检查标记。适配器销毁后保留的旧引用明确报错，已有不带标记的传统 code 引用仍沿用原有契约；该改动不实现 Lua 回调。
+
+Win32 Release 客户端、2SAJ、JASS 线程与 Lua 目标构建成功。`war3_jass_binary_tests` 为 1 通过／0 失败，覆盖存活期间同步／调度调用、适配器销毁后四种入口拒绝，以及其他代码仍持有寿命标记时的失效；`war3_jass_thread_tests` 为 36 通过／0 失败，原图 `war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 为 2 通过／0 失败。增加标记使 JASS Value 变大，性能和大规模存档开销尚未测量；其他 code 来源、并发销毁、快照恢复、Lua 回调与正式会话生命周期仍待验证。
+
 ## Lua 与 2SAJ 自有全局存储（待功能阶段验证）
 
 路径：`src/jass_binary_storage.{h,cpp}`、`src/jass_binary_session.h`、`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。实验桥可显式附加同一 JASS Runtime 所属的 2SAJ 会话；在 `jass.common`／`jass.globals` 访问其自有标量和数组，名称冲突时优先自有存储，其余全局仍走文本 JASS Runtime。类型、符号字符串、空值、常量、数组预算和边界由既有转换与存储规则处理；Lua 只弱引用 2SAJ 会话，宿主须保持会话及其 JASS Runtime 存活，销毁会话后旧数组访问明确失败。code 类型继续明确不支持。
