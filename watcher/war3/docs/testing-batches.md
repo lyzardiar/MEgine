@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 原版单位能力入口扫描（分析记录）
+
+在 `ce677ee` 代码版本读取 BootyBay 地图与原安装对象表，扫描英雄、四族和中立野怪单位的 `abilList`／`heroAbilList`，筛选 `spellInfo` 与 `passiveInfo` 均未归类的能力；探针及输出位于 `tmp/docs-artifacts/war3/source-ability-gap/`。候选包含物品栏、采集、运输、魔免、商店及建筑能力，它们还可能由独立消费者处理；已定点核对 `AInv`、`Ahar`、`Advc`、`Amim`、`Aamk` 和 `Aneu` 存在相应路径，因此不能将扫描结果当作功能缺失清单或完整玩法验证。该扫描不覆盖全部对象字段、地图派生能力、数值与实际施法。同步修正 [AI 随机路径](ai-random-paths.md) 的旧状态：当前 `true` 已使用侧向中途点近似，原版候选算法仍待还原。
+
 ## 无效建造名称与排队命令（待功能批次验证）
 
 路径：`src/session_orders.cpp`、`tests/order_queue_tests.cpp`，见[建造](construction.md)。`IssueBuildOrder` 的空或无法解析名称直接返回失败，不清除已有玩家排队命令。原版 1.27 native 注册将该入口映射至 `0x6f1e8fb0`，该函数在 `0x6f1fae10` 名称解析返回零时直接返回；只读反汇编见 `tmp/docs-artifacts/war3/ability-scan-current/order-full.txt`。Win32 Release 客户端和订单测试目标编译通过，测试目标报告既有局部变量遮蔽警告；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-build` 1 通过、0 失败，覆盖空名称、未知名称和队列继续移动，未加载 Game.dll。有效及自定义名称、数字入口、资源／位置失败、事件顺序与原版动态行为待合批验证。
