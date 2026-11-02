@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 祭坛死亡与移除返还英雄令牌（待功能批次验证，1/3）
+
+路径：`src/session_callbacks.cpp`、`src/session_food.cpp`、`tests/campaign_ai_tests.cpp`。生产建筑死亡或被移除时，清理队列并返还已预留的英雄令牌；死亡后再移除不重复返还。状态先完成更新，资源事件若重入并修改令牌则不再发出过时通知。合批运行 CampaignAI `hero-token-cleanup`、`hero-token`、生产／复活与状态回调回归；原版销毁／移除和转让动态时序、完整对局及联机仍待验证。本次未执行功能测试。
+
+
 ### 免费英雄令牌批次结果
 
 范围：`1f70769`、`e671ce3`、`41e505c`。Win32 Release 客户端、CampaignAI、revival、commerce 和 clock 目标构建通过。CampaignAI `hero-cost`、`hero-token`、`produce-zero`、`produce-many`、`produce-owner`、`produce-replacement`、`produce-builder` 各 2 项通过，`startup` 1 项通过；revival 4 项、clock 的 `production_snapshot_restores_paid_queue_rally_and_tickets` 1 项及 commerce 消费者 1 项通过，共 **21 通过、0 失败**。覆盖令牌费用查询、祭坛训练／取消、商店购买／按钮和队列快照恢复；原图 Booty Bay 静音隔离会话在 900 秒存在先知和牛头人酋长，未发生胜负。日志在 `tmp/docs-artifacts/war3/hero-token-batch/`。
