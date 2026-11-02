@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 脚本物品栏目标订单（待功能批次验证，1/3）
+
+路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。脚本 `IssueTargetOrderById` 使用 852002–852007 和持有物品时，按槽位交给已有物品换格消费者。原版 1.27 的 `UnitDropItemSlot` 在 `0x6f1facd0` 使用同一编号并调用目标订单入口。合批运行 order queue 和物品交易回归，核对持有／地面物品、槽位、队列及事件；原版动态时序和多人待验证。本次未执行功能测试。
+
+
 ### 存档身份与即时物品订单批次结果
 
 范围：`fda84b4`、`f4632e5`、`f0312f6`，含补充 `7d8eab4`、`85185bd`。Win32 Release 客户端、order queue、clock 和 commerce 程序构建通过。`war3_order_queue_tests <data-root> <BootyBay.w3m>` 输出 34 项通过、0 项失败，覆盖失效目标、不能接收物品的单位、物品目标点回退及既有队列和实验联机订单；clock 的 `save_game_writes_checkpoint_and_preserves_caller`、`recovery_bundle_restores_active_ai` 各 1 项通过，commerce 消费者 1 项通过，共 **37 通过、0 失败**。日志位于 `tmp/docs-artifacts/war3/checkpoint-item-batch/`，commerce 使用 `tmp/docs-artifacts/war3/commerce-current/commerce.w3m`。
