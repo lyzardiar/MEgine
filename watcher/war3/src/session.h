@@ -1333,6 +1333,7 @@ public:
     std::optional<bool> takeNetworkLocalEnd(){auto request=networkLocalEndRequest_;networkLocalEndRequest_.reset();return request;}
     void campaignContext(bool expansion,unsigned difficulty) {if(mainAttempted_ || difficulty>2)throw std::runtime_error("Invalid campaign session context");campaignExpansion_=expansion;gameDifficulty_=defaultDifficulty_=difficulty;}
     void versionContext(unsigned version) {if(version>1 || runtime_.ready() || failed_ || world_)throw std::runtime_error("Game version requires a fresh session");version_=version;versionSelected_=true;}
+    unsigned gameVersion() const {return version_;}
     const std::string& nextLevel() const {return nextLevel_;}
     const std::string& nextCheckpoint() const {return nextCheckpoint_;}
     const std::string& nextCheckpointDigest() const {return nextCheckpointDigest_;}
