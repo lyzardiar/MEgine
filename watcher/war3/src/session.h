@@ -323,7 +323,7 @@ class ScriptSession {
     std::array<AudioRandom,45> auxiliaryRandom_{};
     int stockItemSlots_=12,stockUnitSlots_=12;
     bool shopStockRestored_=false,unitSummonsRestored_=false,productionRestored_=false,cargoRestored_=false,harvestRestored_=false,constructionRestored_=false,corpsesRestored_=false,ambientRestored_=false,unitStealthRestored_=false,selectionRestored_=false,waygatesRestored_=false,revealStateRestored_=false,militiaRestored_=false,unitFormsRestored_=false,treeActionsRestored_=false;
-    unsigned futureMovementPhaseBias_=0;
+    unsigned futureMovementPhaseBias_=0,futureDepotApproachPhaseBias_=0;
     bool futureMovementPhaseRestored_=false;
     bool recoveryBundleRestored_=false,recoverySourceMainCompleted_=false,gameLoadNotified_=false,attackPassiveStateRestored_=false;
     std::vector<std::shared_ptr<const Member>> preloaded_;

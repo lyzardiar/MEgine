@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 采集返仓绕行相位恢复（待功能批次验证，2/3）
+
+路径：`src/entities.h`、`src/session.h`、`src/session_entities.cpp`、`src/session_harvest.cpp`、`src/session_unit_movement.cpp`、`tests/clock_tests.cpp`、`tests/ai_tests.cpp`。工人返仓受阻时的备用接近点按单位稳定相位选择；已有单位与读档后新单位的相位随运动组件保存并恢复。`SMOV`／`SMPS` 版本 2 增加该状态，版本 1 继续读取，旧存档缺少的信息按恢复会话句柄回退。
+
+Win32 Release 客户端、clock 与 AI 测试目标编译通过；`future_movement_phase_survives_rebuilt_handle_offsets`、`unit_core_restores_hero_abilities_equipment_and_vitals` 各 1 通过／0 失败。固定种子原版 BootyBay 兽族对人族电脑在 1,200 秒保存并加载，`war3_ai_tests <data-root> <BootyBay.w3m> duel-save` 续行至 1,260 秒、1 通过／0 失败，逐模拟步比较已有和新单位的生命、位置、朝向、订单、路径、相位及随机流和双方玩家状态；未加载 Game.dll。修复前在 1,249.81 秒，新工人受阻后两边选择不同仓库接近点；`war3_order_queue_tests <data-root> <BootyBay.w3m> return-queue` 1 通过／0 失败；该目标存在既有 C4456 变量遮蔽警告。旧版磁盘检查点另能恢复并推进 1 秒。测试须使用新隔离用户目录，产物与诊断在 `tmp/docs-artifacts/war3/duel-depot-phase-final-20261102/`、`tmp/docs-artifacts/war3/ai-production-probe/`。旧版存档没有相位记录，真实窗口存读档、不同拥堵布局、其他地图和长局继续待批次验证。
+
+
 ## 桥梁修理的完整接近范围（待功能批次验证）
 
 路径：`src/session_repair.cpp`、`tests/construction_tests.cpp`，见[基地升级与修理](base-development.md)。机械单位／桥梁追踪按完整修理距离搜索并校验终点，使接近范围边缘的可站立位置可用于修理。Win32 Release 客户端及建造目标编译通过；`war3_construction_tests <data-root> <fixture.w3m> repair-bridge-blocked`、`repair-unit-blocked`、`repair-approach` 各 1 通过、0 失败，`repair-callback` 和综合建造程序各输出 1 条 PASS，均未加载 Game.dll。桥梁场景覆盖封路时取消、移除障碍后从远处接近并恢复生命；之前范围预留导致该场景失败。隔离探针记录源桥死亡占地 192 格、修理距离约 194 及可达点，位于 `tmp/docs-artifacts/war3/bridge-approach-audit/`。不同桥型／旋转／路径纹理、边界精度、移动目标、真实窗口与原版距离语义待批次验证。
