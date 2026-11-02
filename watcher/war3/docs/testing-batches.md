@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 可破坏物变体索引（待功能批次验证，3/3）
+
+路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`。脚本动态创建可破坏物时，将超出来源变体数量的索引限制到最后一个变体；有效索引保持原值。原版 1.27 的 `0x6f6a3871` 读取变体数，`0x6f6a387f` 至 `0x6f6a3887` 以无符号比较限制索引。合批运行 `war3_destructable_tests <data-root> <fixture> invalid-handles`，覆盖负值、大索引及有效对象，同时执行原图电梯回归；零变体自定义对象和原版动态画面仍待对照。本次未执行功能测试。
+
+
 ### 未知可破坏物类型创建（待功能批次验证，2/3）
 
 路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`。四个动态创建可破坏物的脚本接口在对象类型不存在时返回空句柄，不创建地图对象；已定义类型继续按原路径创建。原版 1.27 创建入口汇入 `0x6f6a3650`，查不到对象类型时在 `0x6f6a3ae8` 返回零。合批运行 `war3_destructable_tests <data-root> <fixture> invalid-handles`，检查普通／指定高度和存活／死亡四种创建方式以及有效对象回归；自定义对象覆盖与原版动态行为待验证。本次未执行功能测试。
