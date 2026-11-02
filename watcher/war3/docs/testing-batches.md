@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### AI 自动战斗撤退批次结果
+
+范围：`e3de08c`、`643244e`、`64ebb4a`，含证据记录 `c077f41`、`edd7a96`。Win32 Release 客户端、CampaignAI、clock 和 AI 控制检查程序构建通过。CampaignAI `retreat-auto-cycle`、`retreat-auto`、`retreat-removal`、`retreat-retry`、`retreat-reentrant`、`retreat-reinforce`、`captain-home`、`armies` 各 2 项通过；`island-auto-retreat`、`island-flight-captain-home`、`island-flight-retreat-paused`、`island-flight-retreat-paused-reassign`、`island-naval-offshore-retreat`、`island-naval-enemyshore-retreat` 各 1 项通过；clock `recovery_bundle_restores_active_ai` 1 项及 AI 控制 4 项通过，共 **27 通过、0 失败**。覆盖自动索敌与目标失效、显式改派、单位移除／易主、快照和运输撤退。日志位于 `tmp/docs-artifacts/war3/ai-auto-retreat-batch/`。
+
+原图 Booty Bay 静音双 AI 隔离对局推进到模拟时间约 2,220 秒，兽族胜利、不死族失败；之前相同隔离场景在 4,200 秒仍因自动追击导致撤退停滞。探针按原策略运行到胜负，日志 `tmp/docs-artifacts/war3/ai-auto-retreat-batch/duel.log`。这是单地图、单种族组合和单次模拟，真实窗口操作、其他地图及种族、原版时序和联机尚待验证。下一功能批次 0/3。
+
+
 ### AI 连续自动战斗的撤退跟踪（待功能批次验证，3/3）
 
 路径：`src/session_combat.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。自动索敌、目标失效及守卫自动返回更新有效撤退跟踪的轮次；如果显式命令或回调已经改变轮次，不接续过期跟踪。合批运行 `retreat-auto-cycle`、`retreat-auto`、`retreat-retry`、`retreat-reentrant`、`retreat-reinforce`、`retreat-removal`、战斗及运输撤退回归，重跑 Booty Bay 双 AI 隔离对局；原版时序与联机待验证。本次提交前未执行功能测试。
