@@ -7049,3 +7049,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session_world.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。矩形创建和操作复核地点／矩形句柄，失效时返回空句柄或直接返回；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，覆盖重复移除、失效矩形修改／移动、失效地点创建及脚本续行。原入口指令在 `tmp/docs-artifacts/war3/location-invalid/rect-assembly.txt`；有效矩形、错误类型和原版动态行为待阶段验证。
 
 地点与矩形句柄修正的合并增量编译：`cmake --build --preset release --target war3 war3_map_tests --parallel 8` 成功；新增行为回归尚未执行。
+
+### 失效矩形边界与中心查询（待功能批次验证）
+
+路径：`src/session_world.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。六项矩形边界及中心查询对失效句柄返回零；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，覆盖空、已移除及错误类型句柄，并保留有效矩形中心查询。原版 1.27 入口和零值读取见 `tmp/docs-artifacts/war3/location-invalid/rect-query-assembly.txt`；原版动态行为和所有有效边界待阶段验证。
