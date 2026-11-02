@@ -264,7 +264,7 @@ struct DestructableState {
 };
 struct ItemState {
     std::map<std::uint32_t,BookSelection> bookSelections;
-    std::uint32_t type=0,owner=15,dropId=0;
+    std::uint32_t type=0,owner=15,dropId=0,teamColor=0;
     std::uint64_t lifeRevision=0;
     std::string name,model,icon;
     jass::Real x,y,life,maxLife;

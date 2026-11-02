@@ -7161,3 +7161,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 存档名称鼠标定位定向验证
 
 路径：`src/main.cpp`、`src/game_view.cpp`、`src/game_view.h`、`src/game_flow_ui.cpp`、`src/game_flow_ui.h`、`tools/agent-pointer.ps1`。后台单人 Agent 的菜单输入仅接受保存名称框内的左键点击；其余菜单区域、联机、回放和前台窗口继续拒绝。Win32 Release 客户端编译通过。BootyBay 隐藏客户端输入 `abcd`，通过 Agent 点击首字符后方并插入 `X`，截图显示 `aXbcd`；名称框外请求返回 `ok=false`，隔离目录原存档保留。截图和响应见 `tmp/docs-artifacts/war3/filename-ui-batch/agent7/`。该检查未覆盖真实前台鼠标、中文／代理对、长名称、回放面板及原版对照。
+
+### 物品归属颜色（待功能批次验证）
+
+路径：`src/entities.h`、`src/session_entities.cpp`、`src/session_item_snapshot.cpp`、`src/session_network_identity.cpp`、`src/game_view.cpp`、`tests/clock_tests.cpp`，依据及边界见 [物品句柄](dota-bkb-item-handles.md)。Win32 Release 客户端与 clock 目标编译通过；`WAR3_CLOCK_FILTER=item_owner_color_snapshot` 为 1 通过／0 失败，覆盖颜色开关、归属、版本 2 往返及版本 1 回退。合批验证实际团队颜色模型、多个共享模型、持有／掉落、玩家颜色变化、原版行为、联机及战役缓存；本次尚未进行窗口画面对照。
