@@ -7834,3 +7834,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 外部主入口、2SAJ 启动与控制台批次（部分通过，后续功能待测）
 
 集成版本 `13c998e`，功能提交 `f492ed3`、`593f151`、`13c998e`。Win32 Release 客户端、会话线程、Lua 和 Win32 控制台测试目标编译通过；`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败；`war3_lua_native_console_tests` 为 1 通过／0 失败。正式客户端 `--main-check --mute` 仍以 `EXGetPlayerRealName` 未实现失败，日志位于 `tmp/docs-artifacts/war3/qcloud-console-batch-20261103.log`。真实平台身份、原版控制台细节、动态 UI、存档、完整游戏启动和实际画面未通过验收，保留待测。
+
+### 2SAJ 二进制全局变量快照基础（部分验证，待批次验证）
+
+路径：`CMakeLists.txt`、`src/jass_binary_storage.{h,cpp}`、`tests/{jass_binary_snapshot_tests,lua_tests}.cpp`。提供带摘要和容量限制的二进制全局变量编码及原子恢复，保留稀疏数组、空／动态／符号字符串，并要求宿主显式映射非空句柄和代码引用；恢复时校验结构、常量、引用及数组索引。Win32 Release 测试目标编译通过；`war3_jass_binary_snapshot_tests` 为 1 通过／0 失败，覆盖映射、往返、损坏、篡改常量、缺失映射、无效回调和结构不匹配；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖原图初始化全局变量往返。宿主仍须校验二进制程序身份、实现真实引用映射并接入完整存读档；Lua 状态、归档覆盖层及休眠二进制线程未保存，不能将当前接口视为可用的地图存档。原图正式加载仍停在平台身份接口。

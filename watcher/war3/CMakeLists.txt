@@ -347,3 +347,7 @@ endif()
 add_executable(war3_lua_native_console_tests tests/lua_native_console_tests.cpp)
 target_link_libraries(war3_lua_native_console_tests PRIVATE war3_core)
 target_compile_options(war3_lua_native_console_tests PRIVATE /utf-8)
+
+add_executable(war3_jass_binary_snapshot_tests tests/jass_binary_snapshot_tests.cpp)
+target_link_libraries(war3_jass_binary_snapshot_tests PRIVATE war3_core)
+target_compile_options(war3_jass_binary_snapshot_tests PRIVATE /utf-8)

@@ -3,6 +3,11 @@
 #include "jass_binary_bridge.h"
 
 namespace war3 {
+struct JassBinarySnapshotRefs {
+    std::function<std::uint32_t(std::uint32_t)> handle;
+    std::function<std::string(const jass::Value&)> encodeCode;
+    std::function<jass::Value(std::string_view)> decodeCode;
+};
 class JassBinaryStorage {
     struct Entry {JassBinaryNativeValue value;bool constant=false;std::map<std::uint32_t,JassBinaryNativeValue> elements;};
     std::map<std::string,Entry> entries_;
@@ -15,5 +20,8 @@ public:
     void write(const std::string& name,JassBinaryNativeValue value);
     JassBinaryNativeValue readArray(const std::string& name,std::uint32_t index,std::uint8_t type) const;
     void writeArray(const std::string& name,std::uint32_t index,JassBinaryNativeValue value);
+    // Caller must bind snapshots to the same binary program and validate mapped identities.
+    Bytes encodeGlobals(const JassBinarySnapshotRefs& refs={}) const;
+    void restoreGlobals(std::span<const std::uint8_t> bytes,const JassBinarySnapshotRefs& refs={});
 };
 }
