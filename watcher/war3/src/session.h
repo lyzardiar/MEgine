@@ -57,6 +57,7 @@ struct SessionPlayer {
     std::map<std::uint32_t,int> techMaximum,research;
     std::map<std::uint32_t,bool> abilityAvailable;
     unsigned race=0;
+    unsigned displayRace() const {if(race)return race;switch(racePreference){case 1:return 1;case 2:return 2;case 8:return 3;case 4:return 4;default:return 0;}}
     bool observer=false;
 };
 struct SessionConfig {
@@ -728,6 +729,7 @@ class ScriptSession {
     std::uint64_t nextMinimapPing_=0;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> minimapPingColors_;
     std::optional<std::array<std::string,4>> attackAlertLabels_;
+    unsigned attackAlertRace_=0;
     double nextAttackAlert_=0,nextAllyAttackAlert_=0;
     std::pair<std::uint32_t,std::uint32_t> pingColors();
     void minimapPing(float x,float y,float duration,std::optional<std::uint32_t> color,bool extra);

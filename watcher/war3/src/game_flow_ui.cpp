@@ -40,7 +40,7 @@ size_t filenameClick(Text& text,const std::wstring& name,size_t cursor,bool edit
     cursor=std::min(cursor,name.size());auto [first,last]=filenameRange(text,name,cursor,editing,width,height);bool caret=editing && (GetTickCount64()/500)%2==0;auto position=[&](size_t at){auto value=name.substr(first,at-first);if(caret && at>cursor)value.insert(cursor-first,1,L'|');return text.width(value,height,false);};
     for(size_t at=first;at<last;){auto next=filenameNext(name,at);if(x<(position(at)+position(next))/2)return at;at=next;}return last;
 }
-unsigned scorePlayerRace(const SessionPlayer& player) {if(player.race)return player.race;switch(player.racePreference){case 1:return 1;case 2:return 2;case 8:return 3;case 4:return 4;default:return 0;}}
+unsigned scorePlayerRace(const SessionPlayer& player) {return player.displayRace();}
 std::string saveConfirmation(GlueScreen& screen,const char* key,std::string_view name){auto message=screen.localized(key);if(auto at=message.find("%s");at!=std::string::npos)message.replace(at,2,name);return message;}
 }
 GameFlowUi::~GameFlowUi()=default;

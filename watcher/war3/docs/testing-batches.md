@@ -7285,3 +7285,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 对局聊天前缀本地化（待功能阶段验证）
 
 路径：`src/game_loading.{h,cpp}`、`src/chat_editor_ui.h`、`src/game_view.cpp`、`tests/browser_tests.cpp`、`docs/chat-dialog.md`。对局输入框从原 `GlobalStrings.fdf` 读取四种收件人标签，私聊在源 `%s` 位置插入玩家名称；缺少对应文本时使用客户端回退。Win32 Release 客户端与 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> chat_localized_labels` 为 1 通过／0 失败，核对原资源键、私聊格式、名称包含 `%s` 及缺少占位符时的处理。离开状态文字仍为客户端文字；多语言真实窗口、长名称、输入框光标及联机／原版布局待功能阶段验证。
+
+### 受攻击警报的玩家种族（待功能阶段验证）
+
+路径：`src/session.h`、`src/session_text.cpp`、`src/game_flow_ui.cpp`、`tests/game_flow_tests.cpp`、`docs/attack-alert.md`。警报按已确定种族或唯一种族偏好选择源皮肤声音，并在种族解析或偏好变化后刷新缓存；结算复用同一非随机种族查询。Win32 Release 客户端和 game-flow 测试目标编译通过；`war3_game_flow_tests <data-root> <fixture> alert-race` 为 1 通过／0 失败，覆盖兽族未解析偏好、亡灵偏好切换、随机种族解析后的声音更新及同步随机数不受提示影响。修复前兽族场景错误选用人族声音；修复后首次检查因夹具单位自动交战提前占用警报间隔而失败，暂停夹具单位后通过。测试目标保留既有 C4389 警告。实际音频设备、地图皮肤覆盖、盟友及原版时序待功能阶段验证。
