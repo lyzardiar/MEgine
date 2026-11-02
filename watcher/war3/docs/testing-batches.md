@@ -7586,3 +7586,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 调用 2SAJ 函数（部分验证，待功能阶段）
 
 路径：`src/jass_binary_bridge.{h,cpp}`、`src/jass_binary_session.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。`jass.code` 优先解析绑定的 2SAJ 函数，依据指令中声明的参数次序与返回类型转换并执行；同步调用禁止经过 native 休眠，旧会话销毁后闭包失效，code 类型的非空参数和返回值暂不支持。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，夹具覆盖两个整数参数的顺序、字符串及空值、全局状态、休眠拒绝和失效，原图实际 2SAJ `GetConvertedPlayerId(Player(3))` 返回 4。未加载 Game.dll。可休眠的 Lua／2SAJ 调度、完整 code 类型、函数重载、其他 native 和整图启动仍待实现与验证。
+
+### Lua 遍历 JASS 自定义函数（部分验证，待功能阶段）
+
+路径：`src/jass_binary_session.h`、`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。`pairs(jass.code)` 枚举绑定会话的文本及 2SAJ 自定义函数，名称冲突时保留 2SAJ，排除 native；所返回的函数继续使用会话生命周期检查。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，夹具覆盖枚举及函数调用，实际地图检查能够找到 `GetConvertedPlayerId`；未加载 Game.dll。真实地图自然初始化中是否使用遍历、函数替换、`jass.hook`、完整加载及 UI 待验证。

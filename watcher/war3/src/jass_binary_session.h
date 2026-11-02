@@ -20,6 +20,7 @@ public:
     JassBinarySession(const JassBinarySession&)=delete;
     JassBinarySession& operator=(const JassBinarySession&)=delete;
     JassBinarySignature signature(const std::string& name) const;
+    const JassBinaryIndex& index() const{return index_;}
     bool hasFunction(const std::string& name) const{return index_.functions.contains(name);}
     JassBinaryNativeValue run(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
     JassBinaryNativeValue runNoYield(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
