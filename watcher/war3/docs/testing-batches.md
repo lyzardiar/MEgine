@@ -6945,3 +6945,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 亡灵原图引导、复活与资料片片尾合批结果
 
 范围：`7e776ec`、`17d5f29`、`dc1c93d`，含补充 `5f3407d`、`69e245d`。Win32 Release 客户端、map、game flow 和 revival 目标构建通过；game flow 测试文件原有两条 C4389 有符号／无符号比较警告，复活测试重新编译无警告。重新生成两个夹具：game flow 的 `cache-sync-unit` 输出 1 条 PASS，revival 的 `invalid-revive-location` 为 1 通过／0 失败；原图 map 检查 `campaign_restored_channel` 和 `campaign_expansion_credits` 各为 1 通过／0 失败。覆盖目标地图默认技能与磁盘恢复、空／失效复活位置、原图方尖碑引导和资料片片尾脚本返回。夹具及日志位于 `tmp/docs-artifacts/war3/campaign-credits-batch/`。单独预加载脚本、原版异步预热及能力覆盖语义、自然战斗、实际 UI 和过场画面仍待验证。
+
+### 兽族区域回访英雄状态回归（待功能批次验证）
+
+路径：`tests/orc_campaign_chain_tests.cpp`、`docs/save-runtime-foundation.md`。新增 `zone-return`，使用独立用户目录执行原图 OrcX01 至 OrcX01_02 再通过检查点回访，核对英雄用户数据、物品及恢复后的移动。等价临时探针已完成，日志 `tmp/docs-artifacts/war3/orcx-hero-return/result2.log`；正式回归尚未编译执行，合批命令为 `war3_orc_campaign_chain_tests <data-root> zone-return <new-absolute-user-dir>`。玩家实际操作、窗口加载、事件顺序及原版存档格式待验证；此测试补充不单独计入功能任务批次。
