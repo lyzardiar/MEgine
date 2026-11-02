@@ -7578,3 +7578,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 原图 Lua JASS 调试模块（部分验证，待功能阶段）
 
 路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。绑定真实 JASS 会话时提供 `jass.debug` 的函数签名、文本及 2SAJ 全局类型查询和句柄整数转换；解绑后旧接口失效，其他调试接口明确报未支持。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖实际会话中的地图 `scripts.assetsmanager` 从缺少 `jass.debug` 推进到缺少 `jass.code`，未加载 Game.dll。测试为隔离会话，正式加载入口尚未启用，地图启动、完整插件接口、玩法与 UI 仍待实现和验证。
+
+### Lua 调用文本 JASS 函数（部分验证，待功能阶段）
+
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`src/jass_binary_session.h`、`tests/lua_tests.cpp`。`jass.code` 可从绑定会话调用文本 JASS 自定义函数，函数调用连接原有 JASS 状态并在解绑后失效；函数替换和 2SAJ 函数调用明确报未实现。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，夹具覆盖状态写入与失效，原地图文本会话调用 `GetConvertedPlayerId` 返回 4；绑定 2SAJ 的实际地图依赖探针推进至缺少 `jass.hook`。未加载 Game.dll。该图的二进制程序也含同名函数，该调用只验证文本会话；2SAJ 函数、函数替换、可休眠调用、正式加载和 UI 均待实现与验证。

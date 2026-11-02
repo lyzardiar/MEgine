@@ -33,6 +33,8 @@ class LuaRuntime {
     bool jassAlive() const;
     std::shared_ptr<JassBinarySession> binarySession() const;
     static int archiveSearcher(lua_State* state);
+    static int jassCodeLookup(lua_State* state);
+    static int jassCodeWrite(lua_State* state);
     static int jassDebug(lua_State* state);
     static int jassDebugLookup(lua_State* state);
     static int jassLookup(lua_State* state);

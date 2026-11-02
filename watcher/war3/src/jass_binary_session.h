@@ -17,6 +17,7 @@ public:
     JassBinarySession(jass::Runtime& owner,std::shared_ptr<const JassBinaryProgram> program,const std::string& initializer);
     JassBinarySession(const JassBinarySession&)=delete;
     JassBinarySession& operator=(const JassBinarySession&)=delete;
+    bool hasFunction(const std::string& name) const{return index_.functions.contains(name);}
     JassBinaryNativeValue run(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
     JassBinaryNativeValue reference(const std::string& name);
     jass::Runtime& owner() const{return owner_;}
