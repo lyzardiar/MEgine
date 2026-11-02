@@ -7271,3 +7271,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 两栖队长路线候选（待功能阶段验证）
 
 路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/campaign-amphibious-ai.md`。点目标进攻选择共享路径起点时，当前合格两栖单位无路线则继续尝试后续队员。Win32 Release 客户端和 campaign AI 测试目标编译通过；`war3_campaign_ai_tests <data-root> <fixture> amphibious-trapped-lead` 输出 `RESULT passed=1 failed=0`，以动态障碍隔离首名单位、验证另一名单位建立共享路线并实际移动；修复前该检查失败。相关 `amphibious-reinforce` 为 2 通过／0 失败。原版候选顺序、多名不可达单位的计算开销、动态阻挡变化、战役自然对局和联机仍待功能阶段验证。
+
+### 受限生产计划的原脚本控制流（部分验证，待功能阶段）
+
+路径：`tests/campaign_ai_tests.cpp`、`docs/ai.md`。新增 `produce-plan-restricted`，直接调用原公共 AI 的 `InitBuildArray`、`SetBuildUnit` 和 `OneBuildLoop`；在资源充足、可用兽族兵营及 `otbk` 上限为零的混合种族夹具中，请求三个狂战士后检查其未入队且后续农民生产入队。Win32 Release campaign AI 目标编译成功，输出 `RESULT passed=1 failed=0`，不加载 Game.dll。首次夹具错误假设没有现存步兵而失败，改为记录已有数量，并改用实际受限单位后通过。该检查不复现旧 Booty Bay 长局、资金不足、生产者禁用／满队列或原版动态行为；长局停滞原因与自然胜负仍待验证。
