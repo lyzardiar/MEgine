@@ -25,3 +25,5 @@ Human01 到 Human02 的隔离会话复现覆盖原地图脚本的 `StoreUnitBJ`�
 单位缓存入口 `StoreUnit`、`HaveStoredUnit`、`FlushStoredUnit`、`RestoreUnit` 对无效缓存分别返回 false、false、无操作和空单位；`RestoreUnit` 对无效玩家也返回空单位。原版 1.27 的入口分别位于 `0x6f1f8380`、`0x6f1e71e0`、`0x6f1e0b20` 和 `0x6f1f3210`，均先解析缓存，恢复路径另检查玩家。
 
 数值／字符串缓存的 `Store*`、`GetStored*`、`HaveStored*`、`FlushStored*`，以及清空任务／缓存入口，对无效缓存按原版入口直接返回；查询数值为零、字符串为空句柄，字符串写入返回 false。原版 1.27 的整数与清空入口可见于 `0x6f1f8280`、`0x6f1e5710`、`0x6f1e70f0`、`0x6f1e09f0`、`0x6f1e0a40`、`0x6f1e0920`，字符串读取入口为 `0x6f1e57c0`。
+
+恢复缓存单位时先保留目标地图新建单位的默认能力，再合入缓存能力及等级，使跨图自定义能力可由目标地图消费。`UndeadX08` 原图为阿尔萨斯配置默认 `ANcl` 引导能力：隔离交接后在方尖碑区域触发 `channel`，修复后检测到 852600 号引导命令和持续施法，英雄在观测的 7 秒内留在区域；修复前能力缺失，英雄自动追击离开区域。原版恢复英雄路径 `0x6f227d92` 创建目标地图单位后再于 `0x6f227db4` 恢复英雄数据；原版动态能力覆盖、移除和永久能力语义仍待对照。日志 `tmp/docs-artifacts/war3/undead-08-transfer/obelisk-{abilities,channel-fixed}.log`。

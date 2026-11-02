@@ -6927,3 +6927,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 战役缓存句柄与英雄恢复合批结果
 
 范围：`9eaf6c7`、`4b812b3`、`8102e03`。Win32 Release 客户端及 game flow 测试目标构建通过；game flow 测试文件原有 `unsigned`／`int` 比较产生两条 C4389 警告。重新生成夹具后，`war3_game_flow_tests <data-root> <fixture> cache-sync-unit` 和不带模式的 game flow 检查均退出 0、各输出 1 条 PASS；覆盖四种数值类型及单位缓存的无效句柄、有效值保留、暂停状态的磁盘恢复和实验同步。亡灵原图隔离探针将英雄传送到首领区域并直接击杀首领，胜利换关后 `UndeadX07c` 的阿尔萨斯为 3 级、用户数据为 2468。日志和夹具位于 `tmp/docs-artifacts/war3/gamecache-handles-batch/`；原图探针为人为触发，不代表自然战斗。原版动态行为、创建事件重入、真实窗口及完整战役仍待验证。
+
+### 目标地图默认技能与缓存恢复（待功能批次验证）
+
+路径：`src/session_cache.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-gamecache.md`。恢复缓存单位时保留目标地图创建时已有能力，再合入缓存能力及等级，避免目标地图专用的默认引导能力丢失。Win32 Release 核心编译通过；`UndeadX08` 隔离探针中，恢复的阿尔萨斯含原图 `ANcl`，进入方尖碑后执行 852600 引导，观测 7 秒仍处于施法且留在区域；日志 `tmp/docs-artifacts/war3/undead-08-transfer/obelisk-channel-fixed.log`。合批运行 game flow `cache-sync-unit` 的目标默认能力和既有缓存回归，并在原图核对完整占领、打断与交接；原版动态覆盖／移除能力及窗口表现待验证。
