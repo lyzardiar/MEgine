@@ -7059,3 +7059,9 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session_spatial_events.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。失效区域及其矩形、地点、单位参数不再中断地图脚本；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，覆盖区域有效几何、空句柄与重复移除。区域事件重入、错误类型、实际地图和原版动态行为待阶段验证。原版 1.27 静态入口记录位于 `tmp/docs-artifacts/war3/location-invalid/region-assembly.txt`。
 
 矩形查询及区域操作合并增量编译：`cmake --build --preset release --target war3 war3_map_tests --parallel 8` 成功；新增行为回归尚未执行。
+
+### 区域清除边界（待功能批次验证）
+
+路径：`src/spatial_region.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。矩形减法清除边界并保留紧邻的浮点坐标；合批运行 `war3_map_tests <data-root> <scratch> region_subtraction_boundaries`，覆盖四边、角、邻近值、完整清除及零宽清除。地图事件、区域快照与原版网格对齐行为待批次验证。
+
+区域清除增量编译：`cmake --build --preset release --target war3 war3_map_tests --parallel 8` 成功；修正新增夹具的整数到浮点转换警告后单独重编译地图测试目标成功。新增行为回归未执行。
