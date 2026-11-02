@@ -7009,3 +7009,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载生成记录随存档恢复（待功能批次验证）
 
 路径：`src/archive.h`、`src/archive.cpp`、`src/session.h`、`src/session_game.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。恢复包保存并恢复资源记录及生成器计时，兼容版本 60 的既有恢复包。Win32 Release 核心及 clock 目标编译通过，必要定向检查 `preload_recording_recovery` 为 1 通过／0 失败，日志 `tmp/docs-artifacts/war3/preload-recovery/clock.log`；合批回归受影响的恢复包及已登记的 `campaign_nightelf_finale`。保存写盘、原版生成器跨存档语义及并发资源读取需进一步验证。
+
+### 预加载记录存档文件回归（待功能批次验证）
+
+路径：`tests/clock_tests.cpp`。扩展 `preload_recording_recovery`，在独立用户目录写入实际检查点，验证文件摘要、恢复启动、继续记录以及生成脚本保留存档前后资源；合批设置 `WAR3_CLOCK_FILTER=preload_recording_recovery` 运行 `war3_clock_tests <data-root> <output-root>`。新增文件往返断言尚未编译执行，原版文件格式和原版生成器跨存档语义仍待对照；此测试补充不单独计入功能任务批次。
