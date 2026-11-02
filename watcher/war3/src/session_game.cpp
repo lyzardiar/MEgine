@@ -61,7 +61,7 @@ void ScriptSession::preload(const std::string& name) {auto last=name.find_last_n
 void ScriptSession::preloader(const std::string& name) {
     if(name.empty())return;if(preloadDepth_>=8)throw std::runtime_error("Preload script nesting exceeds budget");auto member=requireWorld().resources().read(name);if(!member)return;if(member->bytes.size()>1024*1024)throw std::runtime_error("Preload script exceeds budget");++preloadDepth_;struct Pop {unsigned& depth;~Pop(){--depth;}}guard{preloadDepth_};
     std::string declarations="native Preload takes string filename returns nothing\nnative PreloadStart takes nothing returns nothing\nnative PreloadRefresh takes nothing returns nothing\nnative PreloadEnd takes real timeout returns nothing\nnative PreloadEndEx takes nothing returns nothing\n";jass::Runtime runtime(jass::Module::compile(jass::Program::parse({{"preloader.j",declarations+sourceText(member->bytes),member->source}})),{100000});
-    runtime.bind("Preload",[this](auto& vm,auto args){if(args[0].text)preload(*args[0].text);return vm.nothing();});runtime.bind("PreloadStart",[this](auto& vm,auto){preloaded_.clear();preloadBytes_=0;return vm.nothing();});runtime.bind("PreloadRefresh",[](auto& vm,auto){return vm.nothing();});runtime.bind("PreloadEnd",[](auto& vm,auto args){if(!std::isfinite(std::bit_cast<float>(args[0].bits)) || std::bit_cast<float>(args[0].bits)<0)throw std::runtime_error("Invalid preload timeout");return vm.nothing();});runtime.bind("PreloadEndEx",[](auto& vm,auto){return vm.nothing();});runtime.initialize();runtime.invoke("PreloadFiles");
+    runtime.bind("Preload",[this](auto& vm,auto args){if(args[0].text)preload(*args[0].text);return vm.nothing();});runtime.bind("PreloadStart",[this](auto& vm,auto){preloaded_.clear();preloadBytes_=0;return vm.nothing();});runtime.bind("PreloadRefresh",[](auto& vm,auto){return vm.nothing();});runtime.bind("PreloadEnd",[](auto& vm,auto){return vm.nothing();});runtime.bind("PreloadEndEx",[](auto& vm,auto){return vm.nothing();});runtime.initialize();runtime.invoke("PreloadFiles");
 }
 void ScriptSession::bindGameNatives() {
     bind("DoNotSaveReplay","nothing",{},[this](auto& vm,auto){replaySavingDisabled_=true;return vm.nothing();});
@@ -69,7 +69,7 @@ void ScriptSession::bindGameNatives() {
     bind("Preloader","nothing",{"string"},[this](auto& vm,auto args){if(args[0].text)preloader(*args[0].text);return vm.nothing();});
     bind("PreloadStart","nothing",{},[this](auto& vm,auto){preloaded_.clear();preloadBytes_=0;return vm.nothing();});
     bind("PreloadRefresh","nothing",{},[](auto& vm,auto){return vm.nothing();});
-    bind("PreloadEnd","nothing",{"real"},[](auto& vm,auto args){if(!std::isfinite(std::bit_cast<float>(args[0].bits)) || std::bit_cast<float>(args[0].bits)<0)throw std::runtime_error("Invalid preload timeout");return vm.nothing();});
+    bind("PreloadEnd","nothing",{"real"},[](auto& vm,auto){return vm.nothing();});
     bind("PreloadEndEx","nothing",{},[](auto& vm,auto){return vm.nothing();});
     bind("SetMapFlag","nothing",{"mapflag","boolean"},[this](auto& vm,auto args){if(args[1].bits)config_.mapFlags|=args[0].bits;else config_.mapFlags&=~args[0].bits;return vm.nothing();});
     bind("IsMapFlagSet","boolean",{"mapflag"},[this](auto& vm,auto args){return vm.boolean((config_.mapFlags&args[0].bits)!=0);});

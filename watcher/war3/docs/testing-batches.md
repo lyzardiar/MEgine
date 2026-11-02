@@ -6957,3 +6957,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载空字符串（待功能批次验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。主脚本及独立预加载脚本的 `Preload` 接受空字符串句柄并无操作；有效名称沿用同步归档读取。原版 1.27 入口 `0x6f1f2020` 对空指针或空字符串返回。合批运行 `war3_map_tests <data-root> <scratch> campaign_expansion_credits`，覆盖空句柄／空字符串及原图片尾；独立预加载脚本与资源时序待验证。本次未执行功能测试。
+
+### 预加载结束超时（待功能批次验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。同步预加载的主脚本与独立预加载脚本调用 `PreloadEnd` 时不再因超时参数抛出异常；原版 1.27 入口 `0x6f1f2050` 将超时传入资源队列等待。合批运行 `war3_map_tests <data-root> <scratch> campaign_expansion_credits`，覆盖负数超时及原图片尾；独立脚本、原版等待时序与特殊浮点值行为待验证。本次未执行功能测试。
