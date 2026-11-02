@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 脚本物品与随机池批次结果
+
+范围：`529dfb7`、`e662931`、`7acb4cc`。Win32 Release 客户端、`war3_commerce_tests` 和 `war3_clock_tests` 构建通过，构建日志未发现警告；commerce 输出 1 条 PASS，clock 的 `recovery_bundle_restores_random_pools` 输出 **1 通过、0 失败**。覆盖无物品栏单位与英雄拾取金币箱、随机池失效句柄、玩家句柄、重复类型权重及恢复后的选择。日志位于 `tmp/docs-artifacts/war3/item-pool-batch/`；原版动态事件、零槽位及自定义物品栏能力、其他随机权重和真实窗口仍待对照。下一功能批次从 0/3 计数。
+
+
 ### 随机对象池重复类型权重（待功能批次验证，3/3）
 
 路径：`src/session_game.cpp`、`tests/clock_tests.cpp`。向单位池或物品池重复添加同一类型时更新其权重，保留原有顺序；新增类型继续加入池尾。原版 1.27 的 `0x6f209ad0` 和 `0x6f2098a0` 查找到相同类型后直接覆盖权重。合批运行 `war3_clock_tests` 的 `recovery_bundle_restores_random_pools`，以零权重覆盖检查有效选择及存档恢复，并运行本批 commerce 回归；其他权重与原版随机序列仍需对照。本次未执行功能测试。
