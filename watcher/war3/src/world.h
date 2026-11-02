@@ -164,7 +164,7 @@ public:
     bool pathPointFree(WorldPoint point,float radius,PathMovement movement) const;
     bool pathSegmentFree(WorldPoint from,WorldPoint to,float radius,PathMovement movement) const;
     std::optional<bool> pathRegionsNear(WorldPoint from,WorldPoint to,float radius,PathMovement movement,float range) const;
-    std::optional<WorldPoint> pathAnchor(WorldPoint point,float radius,PathMovement movement,std::span<const PathCell> ignored={}) const;
+    std::optional<WorldPoint> pathAnchor(WorldPoint point,float radius,PathMovement movement,std::span<const PathCell> ignored={},const std::function<bool(WorldPoint)>& accept={}) const;
     std::optional<WorldPoint> coastalLanding(WorldPoint water,WorldPoint ground,float waterRadius,float groundRadius,float range) const;
     unsigned pathMask(WorldPoint point,std::span<const PathCell> ignored={}) const;
     bool terrainUnpathable(WorldPoint point,unsigned type) const;
