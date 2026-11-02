@@ -7168,4 +7168,4 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 
 ### 战役缓存物品颜色（待功能阶段验证）
 
-路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`。战役缓存版本 9 保存并恢复库存物品团队颜色，读取版本 1–8 时使用默认颜色；实验单位缓存同步使用同一格式。Win32 Release `war3_game_flow_tests` 增量编译成功；从仓库根目录执行 `war3_game_flow_tests <data-root> tmp/docs-artifacts/war3/game-flow/fixture.w3m cache-damage` 输出 PASS，覆盖版本 9 物品颜色磁盘往返和不含物品的版本 1–8 缓存读取。实验 `cache-sync-unit` 定向检查输出 PASS，覆盖物品颜色随单位同步及非法版本拒绝；实际双端与回放仍待验证。待功能阶段验证含物品旧版缓存、实际战役跨关、拾取回调与原版颜色规则。
+路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`。战役缓存版本 9 保存并恢复库存物品团队颜色，读取版本 1–8 时使用默认颜色；实验单位缓存同步使用同一格式。Win32 Release `war3_game_flow_tests` 增量编译成功；从仓库根目录执行 `war3_game_flow_tests <data-root> tmp/docs-artifacts/war3/game-flow/fixture.w3m cache-damage` 输出 PASS，覆盖版本 9 物品颜色磁盘往返和不含物品的版本 1–8 缓存读取。实验 `cache-sync-unit` 定向检查输出 PASS，覆盖物品颜色随单位同步及非法版本拒绝；实际双端与回放仍待验证。`cache-damage` 另以版本 9 带物品记录构造版本 8 缓存，读取并恢复物品后检查缺省颜色为 0，输出 PASS；旧版真实文件及其他复杂库存组合仍待验证。实际战役跨关、拾取回调与原版颜色规则待功能阶段验证。
