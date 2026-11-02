@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 追踪导弹的无图标眩晕（待功能批次验证，2/3）
+
+路径：`src/session_spells.cpp`、`src/session_spell_effects.cpp`、`tests/dota_heroes_tests.cpp`、`tests/spell_tests.cpp`。风暴之锤按源目标标记判断敌友；无 Buff ID 的眩晕保留实际控制和持续时间，并用独立内部键与其他匿名状态共存。DotA v6.83d `gyro-missile` 1 通过／0 失败：原图追踪导弹近距离造成 50 伤害、眩晕到期、重复施放正常，其他匿名状态保留；火箭弹幕亦观察到伤害。原版风暴之锤检查拒绝友军、命中敌人并维持原有状态移除，综合施法程序输出 1 条 PASS；未加载 Game.dll。修复前辅助单位目标订单被拒绝；放开目标后无图标眩晕仍被丢弃。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> gyro-missile`、`war3_spell_tests <data-root> <fixture.w3m>`。匿名眩晕的原版驱散规则、多个来源叠加、存档恢复、其他技能的目标标志、远距离导弹与完整窗口表现待批次验证。
+
 ## 矮人直升机弹幕与脚本形态（待功能批次验证，1/3）
 
 路径：`src/session_entities.cpp`、`src/session_siege_attacks.cpp`、`tests/dota_heroes_tests.cpp`、`tests/unit_forms_tests.cpp`。脚本移除非永久 Abrf 能力时，在当前单位处于技能备用形态且没有进行中形态转换的情况下切换至正常形态；弹幕支持 100 个源目标和仅第一武器启用的单位，并使用技能范围筛选额外目标。DotA v6.83d `gyro-barrage` 定向检查 1 通过／0 失败：原图脚本触发两次形态切换，主目标和武器射程外、技能半径内的敌人受伤，友军与范围外敌人未受伤，15 秒后恢复类型及英雄状态；未加载 Game.dll。`script-remove` 1 通过／0 失败，覆盖直接创建熊形态及正常形态移除能力；熊、乌鸦、恶魔变身及永久能力回归分别 3 和 1 通过／0 失败。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> gyro-barrage`、`war3_unit_forms_tests <data-root> <fixture.w3m> [script-remove|permanent]` 及无模式运行。补充修复：只有第一武器启用时不启动第二武器的独立炮火时钟；关闭自动索敌的直升机静止 3 秒不自行攻击，发出一次攻击并停止后两名敌人各受一次伤害。`war3_passive_tests <data-root> <fixture.w3m> barrage-second` 在原版双武器攻城单位检查对空自动攻击两名敌人及禁用技能后的停止，1 通过／0 失败；修复前直升机静止时已自行开火。第二次补充修复涉及 `src/combat.h`、`src/session.h`、`src/session_combat.cpp`、`src/session_projectiles.cpp`、`src/session_combat_snapshot.cpp`、`src/session_cast_snapshot.cpp` 和 `tests/clock_tests.cpp`：攻击前摇记录开始时的弹幕能力，使原图在第 4 次攻击事件中移除能力后，该次攻击仍命中额外目标。`gyro-barrage-count` 1 通过／0 失败，覆盖四次攻击、恢复形态、下一次攻击不触发及取消前摇；修复前第 4 次未命中额外目标。`unit_core_restores_hero_abilities_equipment_and_vitals` 与 `unit_casts_restore_spell_and_references` 各 1 通过／0 失败，检查战斗前摇与施法恢复订单中的能力记录往返；`SCBO` 版本 2、`SCST` 版本 3 保留旧版本读取分支。弹幕同时存在弹道上限为 8192；目标数量边界、实际存读档续打、旧版本样本、重入、各形态标志、原版时序及窗口表现待批次验证。
