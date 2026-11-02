@@ -12,6 +12,7 @@ namespace war3 {
 class Archives;
 class JassBinarySession;
 class ObjectData;
+class ScriptSession;
 class LuaJassCallbacks;
 namespace jass {class Runtime;struct RuntimeLifetime;struct Value;}
 struct LuaResult {enum class Kind {Nil,Boolean,Integer,Number,String,Other};Kind kind=Kind::Nil;bool boolean=false;std::int64_t integer=0;double number=0;std::string text;};
@@ -24,6 +25,7 @@ class LuaRuntime {
     std::unique_ptr<ObjectData> slkObjects_;
     LuaChunkFormat archiveFormat_=LuaChunkFormat::Standard;
     jass::Runtime* jass_=nullptr;
+    ScriptSession* japiSession_=nullptr;
     std::weak_ptr<const jass::RuntimeLifetime> jassLifetime_;
     std::weak_ptr<JassBinarySession> binary_;
     bool binaryAttached_=false;
@@ -45,6 +47,9 @@ class LuaRuntime {
     static int slkWrite(lua_State* state);
     static int slkPairs(lua_State* state);
     static int archiveSearcher(lua_State* state);
+    static int japiLookup(lua_State* state);
+    static int japiCall(lua_State* state);
+    static int japiUnsupported(lua_State* state);
     static int jassBinaryCall(lua_State* state);
     static int jassHookLookup(lua_State* state);
     static int jassHookWrite(lua_State* state);
@@ -68,6 +73,7 @@ public:
     void attachArchive(const Archives& archives,LuaChunkFormat format);
     // Both runtimes are used on their owner thread; destroyed JASS bindings become invalid.
     void attachJass(jass::Runtime& runtime,std::shared_ptr<JassBinarySession> binary={});
+    void attachJapi(ScriptSession& session);
     void detachJass();
     LuaResult execute(std::span<const std::uint8_t> chunk,const std::string& name,std::uint64_t instructionLimit=1000000,LuaChunkFormat format=LuaChunkFormat::Standard,std::string_view moduleName={});
 };

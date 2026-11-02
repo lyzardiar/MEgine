@@ -7598,3 +7598,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 地图对象表只读查询（部分验证，待功能阶段）
 
 路径：`src/object_data.{h,cpp}`、`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。地图归档绑定后提供 `jass.slk` 的单位和物品查询，依据原元数据解析部分非 Profile、非索引标量字段并使用现有对象继承与地图覆盖；数字 ID 和四字节字符串 ID 均可查询。其他类别、字段、遍历及写入明确报未支持；Profile、等级、元数据未映射项、字符串本地化和动态对象修改尚未覆盖。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，实际地图自定义单位 `m000` 的种族为 `undead`、金币为 5，物品 `I02D` 金币为 10，覆盖数字 ID、缺失对象、只读及不支持访问；`assetsmanager` 隔离依赖检查推进到缺少 `jass.japi`，未加载 Game.dll。完整对象表兼容、地图初始化、玩法和 UI 待验证。
+
+### Lua JAPI 特效高度与缩放（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/session.{h}`、`src/session_effects.cpp`、`src/effects.h`、`src/game_effects.cpp`、`src/session_effect_snapshot.cpp`、`tests/lua_tests.cpp`、`tests/clock_tests.cpp`。`jass.japi` 在显式绑定同一 `ScriptSession` 后支持独立特效的 `EXSetEffectZ`／`EXGetEffectZ` 及特效缩放读写；世界高度与渲染状态连接，特效快照版本 3 保存该高度并兼容读取版本 2，附着特效高度及未知接口明确报未支持。Win32 Release 客户端及 Lua、clock 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖真实地图会话中创建特效、设置和读取高度／缩放、销毁及解绑；`WAR3_CLOCK_FILTER=effects_rebuild_active_retiring_and_removed_targets war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖高度恢复。隔离依赖检查推进到缺少 `jass.console`，未加载 Game.dll。版本 2 旧快照实物、实际画面、附着特效、其他 JAPI 和整图自然启动仍待验证。

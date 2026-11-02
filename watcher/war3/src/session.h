@@ -1240,6 +1240,10 @@ public:
     const auto& spellMissiles() const {return spellMissiles_;}
     const auto& spellWaves() const {return spellWaves_;}
     const auto& groundSpells() const {return groundSpells_;}
+    void setJapiEffectZ(std::uint32_t id,float value);
+    float japiEffectZ(std::uint32_t id);
+    void setJapiEffectSize(std::uint32_t id,float value);
+    float japiEffectSize(std::uint32_t id) const;
     const auto& effects() const {return effects_;}
     const auto& trackables() const {return trackables_;}
     void trackableEvent(std::uint32_t id,bool hit);
