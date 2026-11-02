@@ -72,7 +72,7 @@ int LuaRuntime::archiveSearcher(lua_State* state){
     try {
         if(!self || !self->archives_ || !length || length>1024)throw std::runtime_error("Invalid Lua map module name");std::string path;path.reserve(length+4);bool separator=true;
         for(size_t i=0;i<length;++i){unsigned char c=raw[i];if(c=='.'){if(separator)throw std::runtime_error("Invalid Lua map module name");path+='\\';separator=true;}else{if(c<=32 || c==127 || c=='/' || c=='\\' || c==':')throw std::runtime_error("Invalid Lua map module name");path+=char(c);separator=false;}}
-        if(separator)throw std::runtime_error("Invalid Lua map module name");path+=".lua";auto member=self->archives_->readCandidates({path,"scripts\\"+path,"lua\\"+path},ArchiveScope::Map);if(!member){lua_pushfstring(state,"\n\tno map module '%s'",path.c_str());return 1;}
+        if(separator)throw std::runtime_error("Invalid Lua map module name");path+=".lua";auto member=self->archives_->readCandidates({"scripts\\"+path,path,"lua\\"+path},ArchiveScope::Map);if(!member){lua_pushfstring(state,"\n\tno map module '%s'",path.c_str());return 1;}
         auto format=!member->bytes.empty() && member->bytes[0]==0x1b?self->archiveFormat_:LuaChunkFormat::Standard;load(state,member->bytes,member->name,format);lua_pushlstring(state,member->name.data(),member->name.size());return 2;
     }catch(const std::exception& e){lua_pushstring(state,e.what());}
     return lua_error(state);

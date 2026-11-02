@@ -7610,3 +7610,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 地图模块搜索路径（部分验证，待功能阶段）
 
 路径：`src/lua_runtime.cpp`、`tests/lua_tests.cpp`。地图模块搜索依次检查归档内直接路径、`scripts/` 和 `lua/`，加载器返回实际归档成员名；保持地图作用域和路径检查。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，直接加载地图 `scripts/Const/layer_const.lua`，并在提供 `IdHelp.Str2Id` 夹具后让 `assetsmanager` 越过原缺失的类模块，推进到依赖启动环境全局 `class`。未加载 Game.dll。`lua/` 目录分支、同名路径优先级、实际启动初始化及整图玩法 UI 仍待验证。
+
+### 原地图 Lua 入口和搜索顺序（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.cpp`、`tests/lua_tests.cpp`。从地图匿名归档成员的 Lua 源路径定位到 `scripts/main.lua`、`scripts/lib/ecs/init.lua` 和地图自带的 `middleclass`、`IdHelp`；入口脚本将 `scripts\?.lua` 排在 `?.lua` 前，因此地图模块搜索调整为 `scripts/`、直接路径、`lua/`。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败：原始 `IdHelp` 转换 `I02D` 往返，原始 `middleclass` 创建实例并验证类型；在真实会话和测试控制台宿主中执行原 `scripts.main`，首个缺失模块为 `jass.runtime`。独立加载 `assetsmanager` 时只注入上述两个原图模块，其后缺少全局 `Component`。未加载 Game.dll；搜索路径冲突夹具、真实宿主初始化、完整入口、玩法及 UI 尚待验证。
