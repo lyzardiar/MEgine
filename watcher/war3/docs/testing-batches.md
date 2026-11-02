@@ -7105,3 +7105,9 @@ Win32 Release 客户端和 `war3_passive_tests` 增量编译成功；功能断�
 ### 即用物品拾取事件内移动（待功能批次验证）
 
 路径：`src/session_entities.cpp`、`src/session_inventory.cpp`、`tests/clock_tests.cpp`、`docs/campaign-flow.md`。拾取回调移动临时持有的即用物品后，保留物品和目标位置，不继续发放效果；合批设置 `WAR3_CLOCK_FILTER=powerup_pickup_callback_moves_item` 运行 `war3_clock_tests <data-root> <output-root>`，并回归正常金币、符文及普通背包物品。Win32 Release 客户端及 clock 测试目标编译通过；最小回归首次将玩家事件编号用于单位事件，修正为单位拾取事件编号 86 后重测 1 通过／0 失败。原版 `SetItemPosition` 先尝试从持有者移除再设置坐标，指令在 `tmp/docs-artifacts/war3/powerup-pickup-reentry/source-assembly.txt`；即用物品事件时序和商店场景仍待动态对照。
+
+### 持有物品特效的可见性与高度（待功能批次验证）
+
+路径：`src/game_effects.cpp`、`docs/dota-bkb-item-handles.md`。物品由单位持有时，特效绘制使用持有者可见性与当前飞行高度；地面物品沿用迷雾和地形高度。合批在实际窗口覆盖友敌、隐身／侦测、隐藏、空中高度、拾取／丢弃和原版效果；本次尚未执行窗口验证。
+
+物品特效可见性与高度的 Win32 Release 客户端增量编译成功，实际窗口和原版表现尚未验证。
