@@ -6965,3 +6965,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 对局归档读取记录基础（待功能批次验证）
 
 路径：`src/archive.h`、`src/archive.cpp`、`src/world.cpp`、`tests/archive_tests.cpp`。对局资源视图及其派生视图可记录成功读取的实际成员名，包括缓存命中和候选回退；记录去重、并发保护和溢出标记，独立对局与后台资源视图隔离。合批构建并运行 `war3_archive_tests <scratch-root> <data-root>`，覆盖缓存、候选、并发和隔离。此基础尚未绑定 `PreloadGen*` 或生成文件；原版资源打开时序、路径格式和多线程排序仍待对照。本次未执行功能测试。
+
+### 预加载兼容及资源记录批次结果
+
+范围：`0203e91`、`f46f034`、`b9905b0`，包含 `5620661`、`17248be` 两项既有回归补充。Win32 Release 客户端、归档、地图和兽族战役测试目标构建成功，构建日志未发现 warning/error。`war3_archive_tests` 10 通过／0 失败；`campaign_expansion_credits` 1／0；`zone-return` 和 `quest-shop-return` 各 1／0。日志与独立用户目录位于 `tmp/docs-artifacts/war3/preload-recording-batch/`，构建日志为 `tmp/docs-artifacts/war3/preload-recording-batch-build.log`。独立预加载脚本、原版异步资源时序、原版文件打开时机、实际窗口及自然战斗仍待验证；资源记录尚未接入生成器。
