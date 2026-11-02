@@ -7858,3 +7858,9 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 地图 UI 根节点与标准 HUD 接线（部分验证，待批次验证）
 
 路径：`src/map_script_runtime.{h,cpp}`、`src/game_view.{h,cpp}`、`tests/lua_tests.cpp`。正式 2SAJ 地图运行时持有 FDF 定义和地图帧根节点，Lua 的 `GetGameUI`、`FrameShow` 和 `LoadToc` 使用该状态；根节点隐藏时标准 HUD 不绘制，底部界面和顶部按钮不响应鼠标，电影界面仍按原有 `ShowInterface` 状态处理。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖正式地图运行时根节点切换和隔离 Lua 帧／TOC 交互。正式客户端 `--main-check --mute` 仍停在 `EXGetPlayerRealName`，日志位于 `tmp/docs-artifacts/war3/qcloud-ui-root-20261103.log`。地图自建帧绘制、布局和交互未接入；根节点隐藏的真实画面、输入与原版差异及完整地图待批次／实际运行验证。11 平台官方接口声明将该函数描述为获取玩家平台昵称：https://github.com/11Platform/11Platform_YDWE/blob/8b1dfe07a7201cc83142dad2fe7c3454cd053183/ui/japi/call.txt 。
+
+### Lua 地图帧创建与基础 FDF 绘制（部分验证，待批次验证）
+
+路径：`src/{lua_jass_bridge,map_frames,glue,game_view}.{h,cpp}`（按实际存在文件）、`tests/{lua_tests,browser_tests}.cpp`。从 SHA-256 为 `4e479624787c77ce4ff44e4257e1c72e1fca9a247e49899ba7ae7f64622a54d6` 的地图插件外层资源提取 DLL；其注册表显示 `CreateFrame` 使用 `(SII)I`、`DestroyFrame` 使用 `(I)V`。Lua 帧创建和销毁作用于会话帧树，保留创建上下文，帧树更新时重建 FDF 绘制节点；普通地图不创建该绘制器。当前绘制仅接受 FRAME、SIMPLEFRAME、BACKDROP、TEXT，其余类型明确报错，控件交互、动态锚点／文本／纹理、完整帧类型和资源覆盖层尚未接入。
+
+Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖创建、上下文、销毁和无效帧。新增 `war3_browser_tests <data-root> tmp/docs-artifacts/war3/map-frame-render-20261103 map_frames_fdf_render`，本机创建 D3D9 设备失败，测试未进入执行；像素、布局、显示／隐藏、普通地图 UI 回归与原版一致性待有图形设备的批次验证，不能据此声称画面通过。正式地图启动仍停于 `EXGetPlayerRealName`；`tmp/docs-artifacts/war3/qcloud-map-frame-20261103.log` 保存诊断。

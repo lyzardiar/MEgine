@@ -1,5 +1,6 @@
 // Author: MiYu. Render original glue definitions in Warcraft's 0.8 by 0.6 UI space.
 #include "glue.h"
+#include "map_frames.h"
 #include <cmath>
 #include <cwctype>
 
@@ -19,6 +20,11 @@ std::vector<LabelLine> labelLines(Text& text,const std::wstring& content,float w
 GlueScreen::GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const std::string& member,const std::string& root) : archives_(archives),images_(images),renderer_(renderer),text_(text) {
     definitions_.load(archives,"UI\\FrameDef\\GlobalStrings.fdf");definitions_.load(archives,member);add(definitions_.frame(root),-1);
     relayout();
+}
+GlueScreen::GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const MapFrames& frames):archives_(archives),images_(images),renderer_(renderer),text_(text),definitions_(*frames.definitions()) {
+    std::map<std::pair<std::uint32_t,std::string>,std::string> names;auto gather=[&](auto&& self,std::uint32_t id)->void{auto& node=frames.node(id);if(!names.try_emplace({node.context,node.definition.name},id==frames.root()?"GameUI":"MapFrame/"+std::to_string(id)).second)throw std::runtime_error("Duplicate map frame name in context: "+node.definition.name);for(auto child:node.children)self(self,child);};gather(gather,frames.root());
+    const std::set<std::string> references={"ControlBackdrop","ControlDisabledBackdrop","ControlPushedBackdrop","ControlMouseOverHighlight","ButtonText","PopupTitleFrame","PopupArrowFrame","PopupMenuFrame","TabFocusNext","EditTextFrame","SliderThumbButtonFrame","ScrollBarIncButtonFrame","ScrollBarDecButtonFrame","ListBoxScrollBar"};
+    auto append=[&](auto&& self,std::uint32_t id,int parent)->unsigned{auto& source=frames.node(id);auto frame=source.definition;if(frame.type!="FRAME" && frame.type!="SIMPLEFRAME" && frame.type!="BACKDROP" && frame.type!="TEXT")throw std::runtime_error("Unsupported map frame rendering type: "+frame.type);auto resolve=[&](std::string& name){if(name.empty())return;auto found=names.find({source.context,name});if(found==names.end())found=names.find({0,name});if(found!=names.end())name=found->second;};for(auto& point:frame.points)if(point.size()>1)resolve(point[1]);for(auto& [key,values]:frame.properties)if(references.contains(key))for(auto& value:values)resolve(value);frame.name=id==frames.root()?"GameUI":"MapFrame/"+std::to_string(id);auto index=add(std::move(frame),parent);nodes_[index].hidden=!source.visible;for(auto child:source.children){auto next=self(self,child,int(index));nodes_[index].children.push_back(next);}return index;};append(append,frames.root(),-1);focusEnabled_=false;relayout();
 }
 unsigned GlueScreen::add(FrameDefinition frame,int parent) {unsigned index=static_cast<unsigned>(nodes_.size());auto children=std::move(frame.children);frame.children.clear();names_.try_emplace(frame.name,index);nodes_.push_back({std::move(frame),parent,{ },0,{ }});for(auto& child:children){auto id=add(std::move(child),int(index));nodes_[index].children.push_back(id);}auto menu=first(nodes_[index].frame,"PopupMenuFrame");for(auto child:nodes_[index].children)if(nodes_[child].frame.name==menu)for(auto& item:nodes_[child].frame.menuItems)if(!item.empty())nodes_[index].choices.push_back({item[0],{}});return index;}
 GlueScreen::Rect GlueScreen::layout(unsigned index) {
@@ -81,7 +87,7 @@ std::string GlueScreen::drawNode(unsigned index,const UiInput& input,const std::
         auto shortcut=first(f,"ControlShortcutKey");if(active && ((hover&&origin&&input.pressed) || (shortcut.size()==1 && input.key==unsigned(std::towupper(shortcut[0])))))return f.name;
         return {};
     }
-    std::string action;if(f.type=="FRAME" || f.type=="BACKDROP" || f.type=="DIALOG")for(auto child:n.children){auto next=drawNode(child,input,enabled);if(action.empty())action=std::move(next);}return action;
+    std::string action;if(f.type=="FRAME" || f.type=="SIMPLEFRAME" || f.type=="BACKDROP" || f.type=="DIALOG")for(auto child:n.children){auto next=drawNode(child,input,enabled);if(action.empty())action=std::move(next);}return action;
 }
 std::string GlueScreen::draw(const std::string& subtree,const UiInput& input,const std::set<std::string>& enabled,bool deferOverlay) {
     auto node=names_.find(subtree);if(node==names_.end())throw std::runtime_error("Missing glue subtree: "+subtree);

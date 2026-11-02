@@ -7,6 +7,7 @@
 #include <set>
 
 namespace war3 {
+class MapFrames;
 struct UiInput { float x=0,y=0,startX=0,startY=0; bool pressed=false,down=false; unsigned key=0; int wheel=0; bool doubleClick=false,shift=false,control=false,keyRepeat=false,keyShift=false,keyAlt=false,pointerControl=false,pointerAlt=false; };
 class GlueScreen {
 public:
@@ -51,6 +52,7 @@ private:
     void openPopup(unsigned index,const UiInput& input);
 public:
     GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const std::string& member,const std::string& root);
+    GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const MapFrames& frames);
     std::pair<float,float> center(const std::string& name) const;
     void focusEnabled(bool enabled) {focusEnabled_=enabled;if(!enabled)focused_.clear();}
     void skinSection(const std::string& section) {if(skinSection_!=section){skinSection_=section;skinTextures_.clear();}}

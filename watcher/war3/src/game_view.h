@@ -41,7 +41,8 @@ class GameView {
     std::array<unsigned,4> teamFilterIndices_{};
     std::array<DWORD,4> minimapFilterColors_{};
     bool allyFilterButtonDown_=false,creepFilterButtonDown_=false,terrainFilterButtonDown_=false,signalButtonDown_=false,signalMode_=false,minimapTerrainVisible_=true;
-    std::unique_ptr<GlueScreen> allyFilterTooltip_;
+    std::unique_ptr<GlueScreen> allyFilterTooltip_,mapFramesScreen_;
+    std::uint64_t mapFramesRevision_=0;
     struct CreepCamp {float x=0,y=0;std::vector<std::uint32_t> units;};
     std::vector<CreepCamp> creepCamps_;
     std::map<std::uint32_t,ModelInstance> creepCampInstances_;
