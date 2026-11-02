@@ -2,7 +2,7 @@
 
 ## 狙击手施法、武器与有符号伤害批次（部分验证）
 
-范围：`998f0ab`、`b3ad484`、`90ee9d7`、`8896eb8`，集成版本 `8896eb8`。Win32 Release 客户端、DotA 英雄、被动、施法与 clock 目标构建通过。`sniper-assassinate`、`sniper-headshot`、`sniper-shrapnel`、`gyro-missile`、`negative-damage`、`bounce-100`、`weapon-ui` 和 `attack_projectiles_restore_flight_and_removed_handles` 各 1 通过／0 失败；综合施法输出 1 条 PASS。带 Game.dll 标记的检查均报告未加载。日志和复现参数见 `tmp/docs-artifacts/war3/sniper-batch/results.txt`。夹具中的弹射和伤害检查不代表原版动态对照；原版施法与事件时序、魔免目标变化、真实存读档续打、音效、窗口和 UI 仍未验证。下一功能批次从 0/3 开始。
+范围：`998f0ab`、`b3ad484`、`90ee9d7`、`8896eb8`，集成版本 `8896eb8`。Win32 Release 客户端、DotA 英雄、被动、施法与 clock 目标构建通过。`sniper-assassinate`、`sniper-headshot`、`sniper-shrapnel`、`gyro-missile`、`negative-damage`、`bounce-100`、`weapon-ui` 和 `attack_projectiles_restore_flight_and_removed_handles` 各 1 通过／0 失败；综合施法输出 1 条 PASS。带 Game.dll 标记的检查均报告未加载。日志和复现参数见 `tmp/docs-artifacts/war3/sniper-batch/results.txt`。夹具中的弹射和伤害检查不代表原版动态对照；原版施法与事件时序、魔免目标变化、真实存读档续打、音效、窗口和 UI 仍未验证。补充 `sniper-aim` 原图检查 1 通过／0 失败：四级射程分别增加 100／200／300／400，一级攻击可在基础射程外命中且英雄未移动，数据面板与攻击距离一致；未加载 Game.dll。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> sniper-aim`。该检查为上一批的补充，不单独计数；实际界面悬停和原版动态对照仍待验证。下一功能批次从 0/3 开始。
 
 ## 风暴之锤类施法时间（批次部分验证）
 
