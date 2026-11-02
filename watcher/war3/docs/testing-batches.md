@@ -7770,3 +7770,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua／JASS 按 ID 查询单位技能（部分验证，待批次验证）
 
 路径：`src/session.h`、`src/session_spells.cpp`、`src/session_entities.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。实现 `EXGetUnitAbility(unit, id)` 和 `EXGetAbilityId(ability)`，复用单位已有技能状态及稳定技能句柄；技能移除后原句柄失效。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖单位添加、重复查询、Lua／JASS 句柄一致、移除及旧句柄。当前仅查询会话单位技能集合，物品技能、状态效果和原版隐藏技能的完整枚举及原生行为待验证；按索引查询仍未实现，原图隔离入口仍停于 `EXSetUnitFacing`，正式客户端尚未接线。
+
+### 2SAJ 到 Lua 表达式执行桥（部分验证，待批次验证）
+
+路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。显式绑定后将二进制脚本的 `EXExecuteScript` 函数接到同一 Lua 状态，按原图插件的 `return (表达式)` 形式执行，字符串和数字转为 JASS 字符串，其余结果及普通表达式错误返回空；嵌套执行共享指令预算，解绑移除桥接并恢复原函数。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖真实地图 2SAJ 函数读取 Lua SLK、嵌套调用、错误、超时及解绑。该桥须由宿主显式启用；正式客户端、文本 JASS 入口、原图二进制主函数的休眠续跑、平台服务及完整地图尚未接入或验证。

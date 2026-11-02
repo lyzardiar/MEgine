@@ -54,7 +54,8 @@ class LuaRuntime {
     std::optional<LuaSyncHost> japiSyncHost_;
     std::weak_ptr<const jass::RuntimeLifetime> jassLifetime_;
     std::weak_ptr<JassBinarySession> binary_;
-    bool binaryAttached_=false;
+    bool binaryAttached_=false,binaryScriptAttached_=false;
+    char binaryScriptOwner_=0;
     std::uint64_t jassGeneration_=0;
     std::unique_ptr<LuaJassCallbacks> callbacks_;
     lua_State* activeJassState_=nullptr;
@@ -141,6 +142,7 @@ public:
     // Both runtimes are used on their owner thread; destroyed JASS bindings become invalid.
     void attachJass(jass::Runtime& runtime,std::shared_ptr<JassBinarySession> binary={});
     void attachJapi(ScriptSession& session);
+    void attachBinaryExecuteScript();
     // Provider supplies platform identities by session slot; missing identities remain unavailable.
     void attachJapiPlayerNames(std::function<std::optional<std::string>(unsigned)> provider);
     // Provider reports the actual JAPI host version when one is available.
