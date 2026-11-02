@@ -7123,3 +7123,7 @@ Win32 Release 客户端和 `war3_passive_tests` 增量编译成功；功能断�
 实际客户端用原 Footman 模型作为物品特效定位标记，分别在英雄原位置及脚本即时移动 300 单位后启动并捕获画面；两次各运行 600 游戏帧，选中英雄并可见其库存物品，标记均位于英雄处，控制图无该标记。已查看 `effect-marker.png`、`effect-marker-moved.png` 和 `control.png`；日志均记录未加载 Game.dll。本检查验证所选模型与移动场景的绘制位置，不代表原技能效果或原版视觉一致。隐身／侦测、飞行高度、掉落过程、真实鼠标操作、物品附件点及原版动态时序仍待验证。
 
 复现入口和产物：`tmp/docs-artifacts/war3/item-spatial-batch/summary.txt`、`passive.w3m`、`commerce.w3m`、`effect-marker*.w3m`、对应 PNG 与日志；临时产物不提交。
+
+### 游戏存档名称编辑（待功能批次验证）
+
+路径：`src/game_flow_ui.cpp`、`src/game_flow_ui.h`。存档输入框支持左右、Home、End、Delete、退格和光标处插入；UTF-16 代理对按完整字符移动和删除，选择已有存档或点击输入框时光标移至末尾。Win32 Release 客户端增量编译通过。合批在实际客户端验证中英文与补充平面字符的插入、移动、删除、长度边界、列表选择、焦点切换、覆盖与取消，并检查光标及长名称显示；原版交互和画面一致性尚未验证。

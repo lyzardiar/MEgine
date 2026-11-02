@@ -42,7 +42,7 @@ class GameFlowUi {
     std::wstring saveName_;
     wchar_t saveHigh_=0;
     std::vector<std::wstring> saveFiles_;
-    size_t saveScroll_=0;
+    size_t saveScroll_=0,saveCursor_=0;
     std::string saveError_;
     std::vector<std::string> scoreModels_;
     std::array<std::array<std::string,25>,16> scoreCache_{};
