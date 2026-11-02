@@ -17,6 +17,7 @@ public:
 private:
     std::shared_ptr<FrameDefinitions> definitions_;
     std::map<std::uint32_t,Node> nodes_;
+    std::map<std::pair<std::uint32_t,std::string>,std::vector<std::uint32_t>> names_;
     std::uint32_t next_=2;
     std::uint64_t revision_=0;
     size_t textBytes_=0,textureBytes_=0;
@@ -26,6 +27,7 @@ public:
     std::uint32_t root() const {return 1;}
     const std::shared_ptr<FrameDefinitions>& definitions() const {return definitions_;}
     const Node& node(std::uint32_t id) const;
+    std::uint32_t resolveReference(std::uint32_t source,const std::string& name) const;
     std::uint32_t create(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     void destroy(std::uint32_t id);
     void setPoint(std::uint32_t id,std::uint32_t point,std::uint32_t target,std::uint32_t targetPoint,float x,float y);

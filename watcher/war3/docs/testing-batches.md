@@ -7920,6 +7920,12 @@ Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_t
 
 ### 地图 SimpleFrame 基础绘制和锚点（部分验证，待批次验证）
 
-路径：`src/glue.cpp`、`src/map_frames.{h,cpp}`、`tests/{native_tests,browser_tests}.cpp`。地图帧树可接收并遍历 `LAYER`，绘制 `TEXTURE` 的 File 和 `STRING` 的 Font／Text，沿父层传递 `DecorateFileNames`；匿名层不参与名称索引。`Anchor` 按父矩形对应点和偏移计算，多个 FDF `SetPoint` 使用约束求解。只覆盖现有绘制器支持的属性，图层排序、其他纹理属性、完整字体行为及原版精度仍待实现或对照；相同 context 的重复名称仍无法在绘制树内解析。
+路径：`src/glue.cpp`、`src/map_frames.{h,cpp}`、`tests/{native_tests,browser_tests}.cpp`。地图帧树可接收并遍历 `LAYER`，绘制 `TEXTURE` 的 File 和 `STRING` 的 Font／Text，沿父层传递 `DecorateFileNames`；匿名层不参与名称索引。`Anchor` 按父矩形对应点和偏移计算，多个 FDF `SetPoint` 使用约束求解。只覆盖现有绘制器支持的属性，图层排序、其他纹理属性、完整字体行为及原版精度仍待实现或对照。
 
 Win32 Release 客户端、native 和浏览器测试目标编译通过；`war3_native_tests <data-root> tmp/docs-artifacts/war3/simple-frame-layout-20261103` 为 18 通过／0 失败，新增父锚点位置及非法输入检查。浏览器夹具使用原版 `SimpleInfoPanelIconDamage` 并检查纹理位置与绘制读取，因既有 D3D9 设备创建失败未执行；实际画面、皮肤装饰、字体、多锚点、层顺序和原版 UI 一致性待验证。标准 HUD 仍由独立绘制路径驱动，地图查找和完整启动尚未接通。
+
+### 地图帧重复名称的局部引用（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/glue.cpp`、`tests/{native_tests,browser_tests}.cpp`。按 context 建立实例名称索引，FDF 布局和控件引用优先解析到帧树距离最近的同名实例；同距离歧义明确失败，当前 context 无名称时回退 context 0。创建及销毁维护索引，避免多个伤害／护甲信息面板引用彼此的同名子帧。该局部引用规则尚需对照原版 `UseActiveContext`，不作为地图脚本全局名称查找接口的语义依据。
+
+Win32 Release 客户端、native 和浏览器测试目标编译通过；`war3_native_tests <data-root> tmp/docs-artifacts/war3/simple-frame-context-20261103` 为 19 通过／0 失败，使用原版伤害和护甲面板覆盖局部引用、歧义、销毁和 context 0 回退。浏览器夹具增加同 context 双面板布局；因既有 D3D9 设备创建失败未执行，实际绘制、原版重名解析、标准 HUD 实例与完整地图启动待验证。
