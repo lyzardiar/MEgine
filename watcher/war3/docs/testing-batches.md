@@ -7814,3 +7814,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI 特效平面移动（部分验证，待批次验证）
 
 路径：`src/session.h`、`src/session_effects.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`、`tests/clock_tests.cpp`。`EXSetEffectXY` 更新未附着特效的世界平面位置并保持原世界高度；附着特效明确报告未实现，非法浮点参数被拒绝。Win32 Release 客户端、Lua 和 clock 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖坐标、显式及地形高度保持与签名；`WAR3_CLOCK_FILTER=effects_rebuild_active_retiring_and_removed_targets war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖移动后的特效快照恢复。scratch 位于 `tmp/docs-artifacts/war3/effect-xy-20261103/`。附着对象行为、实际画面、地图完整启动与原版细节待验证。
+
+### 归档宿主与视觉状态批次（部分通过，后续功能待测）
+
+集成版本 `d342411`，功能提交 `81b2db1`、`7096973`、`d342411`。Win32 Release 客户端、Lua、clock 和 native 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_clock_tests` 分别以 `unit_core_restores_hero_abilities_equipment_and_vitals`、`effects_rebuild_active_retiring_and_removed_targets` 筛选，各为 1 通过／0 失败；`war3_native_tests <data-root> <scratch>` 为 15 通过／0 失败。scratch 位于 `tmp/docs-artifacts/war3/storm-facing-effect-batch-20261103/`。覆盖归档／覆盖层、视觉朝向与特效坐标的状态恢复、原游戏资源和 FDF；正式客户端插件启动、持久文件、原版画面和完整地图未执行，保留待测。
