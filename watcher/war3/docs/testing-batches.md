@@ -7065,3 +7065,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/spatial_region.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。矩形减法清除边界并保留紧邻的浮点坐标；合批运行 `war3_map_tests <data-root> <scratch> region_subtraction_boundaries`，覆盖四边、角、邻近值、完整清除及零宽清除。地图事件、区域快照与原版网格对齐行为待批次验证。
 
 区域清除增量编译：`cmake --build --preset release --target war3 war3_map_tests --parallel 8` 成功；修正新增夹具的整数到浮点转换警告后单独重编译地图测试目标成功。新增行为回归未执行。
+
+### 区域和距离事件的回调重入（待功能批次验证）
+
+路径：`src/session_spatial_events.cpp`、`tests/clock_tests.cpp`、`docs/jass.md`。空间事件分发前重新检查候选成员和目标生命周期；合批设置 `WAR3_CLOCK_FILTER=region_event_rechecks_after_callback` 运行 `war3_clock_tests <data-root> <output-root>`，验证首个回调移走后续单位及其再次进入。Win32 Release 客户端和 clock 目标编译成功；最小复现首轮缺少 `destructable` 类型声明，补充后该项重测 1 通过／0 失败。距离事件、退出、过滤器重入、恢复包和原版时序待阶段验证。

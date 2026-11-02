@@ -1510,6 +1510,51 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";auto make=[&](bool start){auto module=Module::compile(Program::parse({{"stock-snapshot.j",source,"shop stock snapshot"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(start)result->startMain();return result;};auto original=make(true),target=make(false);auto& a=original->runtime();auto unit=a.invoke("CreateUnit",std::array{a.invoke("Player",std::array{a.integer(0)}),a.integer(int(ObjectData::code("hfoo"))),a.real(real(0)),a.real(real(0)),a.real(real(0))});auto state=original->units().at(unit.bits);a.invoke("SetAllItemTypeSlots",std::array{a.integer(4)});a.invoke("AddItemToAllStock",std::array{a.integer(int(ObjectData::code("phea"))),a.integer(1),a.integer(3)});a.invoke("RemoveUnitFromAllStock",std::array{a.integer(int(ObjectData::code("hfoo")))});state->stock={{ObjectData::code("phea"),true,1,3,10,17.25},{0,false,0,0,0,0}};state->unitStockSlots=2;state->itemStockSlots=5;auto identity=[](std::string_view,std::uint32_t id){return id;};auto ids=original->encodeUnitIdentities(identity),core=original->encodeUnitCore(identity),stock=original->encodeShopStock(identity);auto units=target->rebuildUnitIdentities(ids);auto decode=[&](std::string_view type,std::uint32_t id){return type=="unit" && units.contains(id)?units.at(id):0u;};target->prepareUnitCore(core,decode);target->finishUnitCore(core,decode);auto damaged=stock;damaged.back()^=1;rejects([&]{target->restoreShopStock(damaged,decode);},"digest");rejects([&]{target->restoreShopStock(stock,[](std::string_view,std::uint32_t){return 0u;});},"mapping");require(target->units().at(units.at(unit.bits))->stock.empty(),"Rejected stock snapshot modified unit");target->restoreShopStock(stock,decode);auto restored=target->units().at(units.at(unit.bits));require(restored->stock.size()==2 && restored->stock[0].current==1 && restored->stock[0].due==17.25 && restored->unitStockSlots==2 && restored->itemStockSlots==5,"Shop stock state differs");auto reverse=[&](std::string_view,std::uint32_t id){return id==units.at(unit.bits)?unit.bits:0u;};require(target->encodeShopStock(reverse)==stock,"Shop stock did not round trip");rejects([&]{target->restoreShopStock(stock,decode);},"");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("region_event_rechecks_after_callback",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ type region extends handle
+ type rect extends handle
+ type boolexpr extends handle
+ native Player takes integer id returns player
+ native CreateUnit takes player owner, integer id, real x, real y, real facing returns unit
+ native SetUnitX takes unit u, real x returns nothing
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code c returns triggeraction
+ native CreateRegion takes nothing returns region
+ native Rect takes real x1, real y1, real x2, real y2 returns rect
+ native RegionAddRect takes region r, rect b returns nothing
+ native TriggerRegisterEnterRegion takes trigger t, region r, boolexpr f returns event
+ native GetTriggerUnit takes nothing returns unit
+ globals
+ unit first=null
+ unit second=null
+ integer enters=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function onEnter takes nothing returns nothing
+ set enters=enters+1
+ if GetTriggerUnit()==first then
+ call SetUnitX(second,200.0)
+ endif
+ endfunction
+ function main takes nothing returns nothing
+ local region r=CreateRegion()
+ local trigger t=CreateTrigger()
+ set first=CreateUnit(Player(0),'hfoo',200.0,0.0,0.0)
+ set second=CreateUnit(Player(0),'hfoo',250.0,0.0,0.0)
+ call RegionAddRect(r,Rect(-50.0,-50.0,50.0,50.0))
+ call TriggerAddAction(t,function onEnter)
+ call TriggerRegisterEnterRegion(t,r,null)
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"region-reentry.j",source,"region callback test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();for(auto name:{"first","second"})vm.invoke("SetUnitX",std::array{vm.global(name),vm.real(real(0))});session.advance(.03125);require(vm.global("enters").bits==1,"Region fired stale entry after callback moved another unit");vm.invoke("SetUnitX",std::array{vm.global("second"),vm.real(real(0))});session.advance(.03125);require(vm.global("enters").bits==2,"Region lost the later valid entry");
+    });
     test("spatial_events_rebuild_members_filters_and_order",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle
