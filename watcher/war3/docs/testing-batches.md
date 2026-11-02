@@ -7774,3 +7774,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 2SAJ 到 Lua 表达式执行桥（部分验证，待批次验证）
 
 路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。显式绑定后将二进制脚本的 `EXExecuteScript` 函数接到同一 Lua 状态，按原图插件的 `return (表达式)` 形式执行，字符串和数字转为 JASS 字符串，其余结果及普通表达式错误返回空；嵌套执行共享指令预算，解绑移除桥接并恢复原函数。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖真实地图 2SAJ 函数读取 Lua SLK、嵌套调用、错误、超时及解绑。该桥须由宿主显式启用；正式客户端、文本 JASS 入口、原图二进制主函数的休眠续跑、平台服务及完整地图尚未接入或验证。
+
+### Lua JAPI MD5 与原图文件哈希链路（部分验证，待批次验证）
+
+路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。实现插件 `md5(string) -> string` 的小写十六进制结果，按原插件的零字节终止规则取输入并校验签名。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖标准摘要、零字节、声明校验，并由原图 2SAJ 的 `EXLoadFileHashKey` 经 Lua 表达式、Storm 内存宿主计算夹具文件哈希。该检查未执行完整二进制主函数或真实平台文件校验，正式客户端接线和实际地图仍待完成。
