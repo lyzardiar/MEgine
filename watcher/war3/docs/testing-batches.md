@@ -1,14 +1,18 @@
 # 独立客户端测试队列
 
-## 风暴之锤类施法时间（待功能批次验证，3/3）
+## 狙击手施法、武器与有符号伤害批次（部分验证）
+
+范围：`998f0ab`、`b3ad484`、`90ee9d7`、`8896eb8`，集成版本 `8896eb8`。Win32 Release 客户端、DotA 英雄、被动、施法与 clock 目标构建通过。`sniper-assassinate`、`sniper-headshot`、`sniper-shrapnel`、`gyro-missile`、`negative-damage`、`bounce-100`、`weapon-ui` 和 `attack_projectiles_restore_flight_and_removed_handles` 各 1 通过／0 失败；综合施法输出 1 条 PASS。带 Game.dll 标记的检查均报告未加载。日志和复现参数见 `tmp/docs-artifacts/war3/sniper-batch/results.txt`。夹具中的弹射和伤害检查不代表原版动态对照；原版施法与事件时序、魔免目标变化、真实存读档续打、音效、窗口和 UI 仍未验证。下一功能批次从 0/3 开始。
+
+## 风暴之锤类施法时间（批次部分验证）
 
 路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`tests/dota_heroes_tests.cpp`。风暴之锤及地图派生技能读取源 `Cast` 字段，施法前摇取该字段与单位施法点的较大值，期间可正常取消；源值为零时沿用单位施法点。DotA v6.83d `sniper-assassinate` 1 通过／0 失败：`A04P` 配置 1.7 秒，施法 1 秒内未伤害、停止后不伤害，重新施放造成 355 点伤害；未加载 Game.dll。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> sniper-assassinate`。原版动态施法点与事件时序、目标状态变化、移动目标、音效及窗口表现仍待对照；与前两项在同一集成版本合批验证。
 
-## 有符号脚本伤害（待功能批次验证，2/3）
+## 有符号脚本伤害（批次部分验证）
 
 路径：`src/session_damage.cpp`、`tests/dota_heroes_tests.cpp`、`tests/spell_tests.cpp`、`tests/generate-spell-fixture.py`。`UnitDamageTarget` 接受有界负数，保留有符号伤害事件并通过生命上限更新单位、可破坏物和物品；负值不消耗／增加护盾资源。DotA v6.83d `sniper-headshot` 1 通过／0 失败：观察到爆头附加控制、技能移除后继续攻击，地图触发器的负数伤害不再中断，并检查单位、可破坏物、物品及魔法护盾。`negative-damage` 1 通过／0 失败，检查事件来源、负数事件值、生命上限和护盾魔法；综合施法输出 1 条 PASS，原图 `sniper-shrapnel`、`gyro-missile` 和 `hardened-source` 各 1 通过／0 失败；带 Game.dll 标记的检查均未加载。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> sniper-headshot`、`war3_spell_tests <data-root> <fixture.w3m> negative-damage`。原版 1.27 native、单位及物件虚函数的只读指令证据在 `tmp/docs-artifacts/war3/signed-damage/source-evidence.txt`；原版实际运行、不同护甲／减伤／护盾、事件重入、死亡对象与 UI 表现仍待批次验证。
 
-## 榴霰弹特效炮击与源武器数据（待功能批次验证，1/3）
+## 榴霰弹特效炮击与源武器数据（批次部分验证）
 
 路径：`src/session_weapons.cpp`、`src/session_research.cpp`、`src/session_projectile_snapshot.cpp`、`tests/dota_heroes_tests.cpp`、`tests/clock_tests.cpp`、`tests/passive_tests.cpp`、`tests/generate-passive-fixture.py`。允许源武器骰面为零并沿用实际攻击时的一面骰回退；保留有限的负弹道弧度；武器目标数预算由 64 提升至 8192，并同步实际武器及弹道快照检查。DotA v6.83d `sniper-shrapnel` 1 通过／0 失败：学习后施放充能技能，原图累计造成 120 伤害、15% 减速，友军／远处敌人不受伤，特效弹道为零伤害且弧度 -0.05，消耗充能并在 40 秒周期后恢复；未加载 Game.dll。修复前特效单位的零骰面、负弧度及其未启用第二武器的 100 目标参数先后使技能中断。`attack_projectiles_restore_flight_and_removed_handles` 1 通过／0 失败，使用测试载荷检查 100 目标与负弧度弹道的状态往返；`weapon-ui` 和原图 `gyro-barrage-count` 各 1 通过／0 失败。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> sniper-shrapnel`、`war3_passive_tests <data-root> <fixture.w3m> weapon-ui`，以及设置 `WAR3_CLOCK_FILTER=attack_projectiles_restore_flight_and_removed_handles` 后运行 `war3_clock_tests <data-root> <output-root>`。补充 `bounce-100` 夹具检查 1 通过／0 失败：以原版女猎手为基础，将弹射目标数改为 100、伤害衰减设为零；一次攻击命中 101 个敌人中的 100 个不同目标且停止，未加载 Game.dll。命令：`python tests/generate-passive-fixture.py --data-root <data-root>` 后运行 `war3_passive_tests <data-root> <fixture.w3m> bounce-100`。目标数预算边界、原版动态弹射语义、炮击在途源死亡、实际存档续打、音效及窗口画面待批次验证。
 
