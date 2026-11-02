@@ -1,14 +1,18 @@
 # 独立客户端测试队列
 
-## 2SAJ 二进制触发回调适配（待功能批次验证，3/3）
+## 2SAJ 比较与回调批次（部分验证）
+
+范围：`e0a8546`、`46f38c1`、`4186f72`，集成版本 `4186f72`。Win32 Release 客户端、2SAJ 测试和 AI 目标构建通过；固定夹具和用户地图隔离探针各 1 通过／0 失败，后者检查字符串分支及原图 `R3` 经触发器两次调用后的全局变化；BootyBay 人族 AI 两秒输出 1 条 PASS，DotA 静音 main 通过，带标记检查未加载 Game.dll。命令和输出见 `tmp/docs-artifacts/war3/jass-callback-batch/results.txt`。原版动态比较、回调休眠与快照、宿主生命周期、地图会话接入、Lua、平台接口及窗口仍待实现或验证；下一功能批次从 0/3 开始。
+
+## 2SAJ 二进制触发回调适配（批次部分验证）
 
 路径：`src/jass_binary_callbacks.h`、`src/jass_binary_callbacks.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。为无参数、返回 `nothing` 或 `boolean` 的二进制函数建立类型正确的 JASS native 包装，使用与宿主共享的线程调度器，在回调触发时执行二进制函数；不支持其他签名。固定夹具检查同步回调、调度回调、布尔条件和未知函数拒绝，1 通过／0 失败。用户地图隔离会话将原图 `R3` 注册为触发器动作，两次触发使 `mElapsed` 从 20 增至 40；`config`、`Nm` 与字符串分支检查仍通过，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。适配器与宿主捕获必须活到所有引用销毁并由会话统一关闭；现有共享 Runtime 析构会取消共享调度器的全部线程。挂起／快照恢复、重入、所有权销毁及会话集成未验证；地图主入口、Lua 与平台接口仍未完成，地图尚不能运行。
 
-## 2SAJ 函数引用桥（待功能批次验证，2/3）
+## 2SAJ 函数引用桥（批次部分验证）
 
 路径：`src/jass_binary_vm.h`、`src/jass_binary_vm.cpp`、`src/jass_binary_bridge.h`、`src/jass_binary_bridge.cpp`、`tests/jass_binary_tests.cpp`。`MOVRCODE` 通过宿主解析函数引用，保留已有 JASS 运行时所有者并通过 code 参数调用 native；不提供解析器或返回无效引用时明确失败。代码引用比较考虑运行时所有者。固定夹具通过 native 同步调用文本 JASS 回调并得到 42，覆盖缺少解析器失败，1 通过／0 失败。用户地图隔离会话用二进制夹具将文本 `DoNothing` 注册到触发器并发起 `TriggerExecute`，检查动作注册，原图 `config`、`R3`、`Nm` 和字符串分支探针仍通过，1 通过／0 失败，未加载 Game.dll；`DoNothing` 无可观察副作用，探针只证明注册和派发入口未报错。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。该桥目前仅能使用宿主提供的现有 JASS 引用，尚不能把二进制函数作为触发器回调执行；挂起／恢复、生命周期、代码比较、Lua 和地图主入口仍待实现或验证。
 
-## 2SAJ 字符串与句柄比较（待功能批次验证，1/3）
+## 2SAJ 字符串与句柄比较（批次部分验证）
 
 路径：`src/jass_binary_vm.cpp`、`tests/jass_binary_tests.cpp`。相等／不等指令按内容比较符号字符串和动态字符串，区分空字符串与空值；句柄及布尔值按数值比较，非法非零 null 字面量被拒绝。夹具检查相同／不同字符串、null／空字符串、句柄和布尔比较，1 通过／0 失败。用户地图的 `SetNextLevelBJ` 在隔离宿主中对 `next.w3x` 写入路径、对空字符串写入 null，两条原图分支均通过；同一探针 `config`、`R3` 与 `Nm` 通过，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。原版动态字符串和句柄等价语义、代码引用比较、地图会话入口、线程和 Lua／平台接口仍待验证或实现；地图尚不能运行。
 
