@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 全局初始化执行基础（待功能批次验证，2/3）
+
+路径：`src/jass_binary.h`、`src/jass_binary.cpp`、`tests/jass_binary_tests.cpp`。在隔离状态执行指定初始化函数的全局声明、字面量、整数转实数、标量赋值和返回；数组保留声明，字符串暂存符号编号，未知操作、类型不匹配或非法数据明确失败。夹具检查整型、实数、空句柄、数组声明及未实现指令拒绝，1 通过／0 失败。原图 `MainInitGlobalsFunction____3` 隔离执行产生 159 个全局项，`HU=4`、`HT=1`、`Hd=1`、`tt=8` 与对应记录一致，1 通过／0 失败。命令：`war3_jass_binary_tests` 及 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。初始化结果尚未接入会话，也未实现数组读写、函数／native 调用、分支、线程、Lua 和平台接口；原版动态行为及其他地图待批次验证，用户地图仍不能运行。
+
 ## 2SAJ 函数与跳转索引（待功能批次验证，1/3）
 
 路径：`src/jass_binary.h`、`src/jass_binary.cpp`、`tests/jass_binary_tests.cpp`。按原始 `r3/r2/r1/op/arg` 顺序保存指令，建立函数起止和标签索引，并拒绝无效操作码、符号索引、函数边界、重复名称／标签及缺失跳转目标；字符串常量使用零索引表示空值。结构依据 [YDWE opcode.h](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Core/ydwar3/warcraft3/jass/opcode.h) 与地图模块 `0x10082f40–0x10083031` 的重定位分支，函数与标签索引使用一基符号编号、原始标签编号。定向测试 1 通过／0 失败，检查正确索引、无效符号、缺失标签、未结束函数及重复标签。原图探针 1 通过／0 失败，识别 1,147 个函数、2,166 个标签，`main` 起点为第 577 条记录。命令：`war3_jass_binary_tests` 及 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。尚未执行指令或连接会话、Lua 及平台接口；标签跨函数、更多输入和原版动态行为待批次验证，用户地图仍无法运行。
