@@ -27,6 +27,7 @@ struct GameData {
     std::array<float,4> combatSpeedThresholds{1,1.5f,2,3};
     float meleeRangeMax=128;
     std::array<std::string,4> hudLabels,hudDisabledLabels;
+    std::array<std::string,4> chatLabels;
     std::array<std::array<std::string,3>,3> allyFilterIcons;
     std::array<std::array<std::string,3>,2> creepFilterIcons;
     std::array<std::array<std::string,3>,2> terrainFilterIcons;

@@ -158,7 +158,7 @@ void GameView::selection() {
 
 }
 unsigned GameView::unitTeamColor(const UnitState& unit) const {return worldTeamColor(*data_->session,unit,data_->session->localPlayer().value_or(0),teamFilterIndices_);}
-std::wstring GameView::chatPrefix() const {return chatRecipient_?L"发送给 "+wide(data_->session->config().players[*chatRecipient_].name)+(data_->session->config().players[*chatRecipient_].slotState!=1 || data_->session->config().players[*chatRecipient_].controller!=0?L"（已离开）：":L"："):chatChannel_==ChatChannel::Allies?std::wstring(L"发送给盟友："):chatChannel_==ChatChannel::Observers?std::wstring(L"发送给观察者："):std::wstring(L"发送给所有人：");}
+std::wstring GameView::chatPrefix() const {if(chatRecipient_){auto& player=data_->session->config().players[*chatRecipient_];auto name=player.name;if(player.slotState!=1 || player.controller!=0)name+="（已离开）";return wide(chatPrivateLabel(data_->chatLabels[3],name));}return wide(data_->chatLabels[chatChannel_==ChatChannel::Allies?1:chatChannel_==ChatChannel::Observers?2:0]);}
 void GameView::hud(const GameInput& input) {
     float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;auto quad=[&](float x,float y,float w,float h,DWORD color,IDirect3DTexture9* image=nullptr){renderer_.rect(left+x*scale,top+y*scale,w*scale,h*scale,color,image);};auto label=[&](const std::wstring& text,float x,float y,float height,DWORD color=0xffffcc55){text_.draw(text,left+x*scale,top+y*scale,height*scale,color);};
     auto centerInfo=[&](const std::wstring& value,float y,float height,DWORD color){auto count=text_.fit(value,.208f*scale,height*scale);text_.draw(std::wstring_view(value).substr(0,count),left+.405f*scale,top+y*scale,height*scale,color,true);};

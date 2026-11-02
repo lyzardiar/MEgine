@@ -7281,3 +7281,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 原图双电脑自然胜负（部分验证，待功能阶段）
 
 路径：`tests/ai_tests.cpp`、`docs/ai.md`。Win32 Release `war3_ai_tests <data-root> <BootyBay.w3m> duel` 为 1 通过／0 失败；固定初始种子 `0x69707365`，原地图和原 AI 脚本运行兽族对不死族，没有手动创建、移动或击杀战斗单位。兽族建筑从初始非零降至零，兽族失败、不死族胜利，采样模拟时间 2,880 秒，未加载 Game.dll。首次诊断记录 `tmp/docs-artifacts/war3/ai-production-probe/fixed-seed-4200.log`；正式测试独立运行并得到相同时间。仅覆盖一张地图、一组种族和种子，实际窗口、原版动态、联机、其余配置及旧局停滞仍待功能阶段验证。
+
+### 对局聊天前缀本地化（待功能阶段验证）
+
+路径：`src/game_loading.{h,cpp}`、`src/chat_editor_ui.h`、`src/game_view.cpp`、`tests/browser_tests.cpp`、`docs/chat-dialog.md`。对局输入框从原 `GlobalStrings.fdf` 读取四种收件人标签，私聊在源 `%s` 位置插入玩家名称；缺少对应文本时使用客户端回退。Win32 Release 客户端与 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> chat_localized_labels` 为 1 通过／0 失败，核对原资源键、私聊格式、名称包含 `%s` 及缺少占位符时的处理。离开状态文字仍为客户端文字；多语言真实窗口、长名称、输入框光标及联机／原版布局待功能阶段验证。
