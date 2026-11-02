@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 失效目标订单保留队列（待功能批次验证，1/3）
+
+路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。脚本 `IssueTargetOrder`／ById 在单位或目标句柄失效时返回 false，不清除已有排队动作；有效单位、物品与可破坏物继续走原订单逻辑。原版 1.27 的 `0x6f1e96c0` 在单位或目标解析失败时直接返回。合批运行 order queue、目标技能与物品回归；有效目标但订单失败及原版动态时序仍待验证。本次未执行功能测试。
+
+
 ### 物品命令验证批次结果
 
 范围：`9e9fb42`、`078f16d`、`1dccf29`，含测试变量补充 `c87137f`。Win32 Release 客户端、order queue、commerce 和 consumption 程序构建通过；order queue 使用原图 Booty Bay 输出 35 项通过、0 失败，commerce 消费者 1 项通过，consumption `protection` 1 项通过，共 **37 通过、0 失败**。覆盖脚本物品栏目标订单、空／地面物品及非法槽位不覆盖排队命令、即时目标／点订单、物品转移和交易。构建中的既有局部变量遮蔽警告仍存在；日志 `tmp/docs-artifacts/war3/item-command-batch/`，交易夹具 `tmp/docs-artifacts/war3/commerce-current/commerce.w3m`、消耗品夹具 `tmp/docs-artifacts/war3/eat-magic/fixture.w3m`。

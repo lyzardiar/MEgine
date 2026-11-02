@@ -22,8 +22,9 @@ bool ScriptSession::targetOrder(std::uint32_t source,std::uint32_t target,std::u
 }
 void ScriptSession::bindCombatNatives() {
     auto order=[](const jass::Value& value){return value.text?orderId(*value.text):0u;};
-    bind("IssueTargetOrder","boolean",{"unit","string","widget"},[this,order](auto& vm,auto a){clearPlayerOrders(a[0].bits);return vm.boolean(targetOrder(a[0].bits,a[2].bits,order(a[1]),true));});
-    bind("IssueTargetOrderById","boolean",{"unit","integer","widget"},[this](auto& vm,auto a){clearPlayerOrders(a[0].bits);return vm.boolean(targetOrder(a[0].bits,a[2].bits,a[1].bits,true));});
+    auto validTargetOrder=[this](std::uint32_t unit,std::uint32_t target){return alive(unit,NativeKind::Unit) && (alive(target,NativeKind::Unit) || alive(target,NativeKind::Item) || alive(target,NativeKind::Destructable));};
+    bind("IssueTargetOrder","boolean",{"unit","string","widget"},[this,order,validTargetOrder](auto& vm,auto a){if(!validTargetOrder(a[0].bits,a[2].bits))return vm.boolean(false);clearPlayerOrders(a[0].bits);return vm.boolean(targetOrder(a[0].bits,a[2].bits,order(a[1]),true));});
+    bind("IssueTargetOrderById","boolean",{"unit","integer","widget"},[this,validTargetOrder](auto& vm,auto a){if(!validTargetOrder(a[0].bits,a[2].bits))return vm.boolean(false);clearPlayerOrders(a[0].bits);return vm.boolean(targetOrder(a[0].bits,a[2].bits,a[1].bits,true));});
     bind("GetAttacker","unit",{},[this](auto& vm,auto){return vm.handle("unit",contexts_.empty()?0:contexts_.back().attacker);});
     bind("GetEventTargetUnit","unit",{},[this](auto& vm,auto){return vm.handle("unit",contexts_.empty()?0:contexts_.back().eventTargetUnit);});
     bind("GetOrderTarget","widget",{},[this](auto& vm,auto){auto id=contexts_.empty()?0:contexts_.back().orderTarget;return vm.handle("widget",alive(id,NativeKind::Unit) || alive(id,NativeKind::Item) || alive(id,NativeKind::Destructable)?id:0);});
