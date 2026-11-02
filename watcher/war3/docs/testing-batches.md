@@ -7734,3 +7734,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 时钟、消息与版本宿主批次（部分通过，后续功能待测）
 
 集成版本 `efe24ed`，功能提交 `00202d3`、`4515f79`、`efe24ed`。Win32 Release 客户端、Lua 与 JASS 线程测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。隔离宿主覆盖消息回调、事件拦截与改键、版本缺失和失效；原图在测试版本 6000 下停于 `RegisterMessageEvent`。正式窗口输入、真实版本来源、跨玩家消息、实际地图和 UI 未执行，保留待测。
+
+### Lua 自定义同步消息事件（部分验证，待批次验证）
+
+路径：`src/script_state.h`、`src/session.{h,cpp}`、`src/session_callbacks.cpp`、`src/session_threads.cpp`、`src/session_recovery_bundle.cpp`、`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。显式宿主接收发送请求，稍后按同步顺序投递玩家和正文；会话使用真实触发器执行条件及动作，隔离聊天上下文，并清理销毁的注册。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖发送、禁止重入、延迟投递、玩家和正文、禁用／销毁及聊天隔离。原图测试版本 6000 下越过消息注册，停在 `Unsupported Lua JAPI: ConvertRace`；6000 仅为测试值。真实 LAN 传输、宿主接线和原版行为尚未验证；包含消息注册或保留句柄的恢复包以及消息睡眠上下文快照当前明确拒绝，存读档和完整地图待实现。
