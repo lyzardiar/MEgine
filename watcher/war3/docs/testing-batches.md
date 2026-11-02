@@ -7231,3 +7231,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 路径：`tests/dota_heroes_tests.cpp`。新增 `natural-shop` 模式，从原 DotA_v6.83d 初始化，通过 `-sd` 购买英雄，再发出玩家移动命令、确认英雄移动至少 64、进入商店范围，以玩家命令购买回城卷轴并验证金币减少和 `I05I` 进入库存；随后向地图中央移动至少远离商店 500，使用卷轴并验证物品消耗、英雄位移及返回商店附近。Win32 Release 测试目标增量编译通过；执行 `war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> natural-shop` 输出 PASS，游戏时间 22.75 秒，无 Game.dll。首次增加金币检查时使用了 const map 的下标操作而编译失败，改用读取接口后编译通过。
 
 现有 `natural-flow` 同一源码构建在隔离会话中输出 PASS，覆盖选英雄、攻击移动、自然阵亡和复活至 360 秒；另通过客户端 `--main-check --simulate-ms 240000 --mute`，原图静音模拟到 240 秒。日志 `tmp/docs-artifacts/war3/dota-240-probe/client.log`。两项玩法检查由程序提交玩家命令，未覆盖实际鼠标／UI、全英雄／物品、完整对局、联机及原版时序；原图玩法和窗口对照仍按功能阶段继续验证。
+
+### 独立预加载脚本单位订单（待功能阶段验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立脚本复用单位即时／地点／目标／建造命令、订单查询和事件上下文，以及单位寻路状态；其他未绑定 native 仍明确失败。Win32 Release 客户端与 map 测试目标增量编译通过；`war3_map_tests <data-root> <scratch> preloader_unit_orders` 为 1 通过／0 失败：BootyBay 地图会话中检查字符串与 ID 订单、地点句柄、目标订单、订单事件内嵌套预加载读取上下文，及子脚本结束后单位继续移动；未加载 Game.dll。为隔离事件及运动，该用例对测试单位关闭寻路，未执行真实建造、障碍寻路、物品／可破坏物目标、失败和复杂回调重入；实际地图与原版时序待功能阶段验证。

@@ -138,6 +138,57 @@ call UnitAddItem(hero, held)
 endfunction
 )jass";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"item-event.j",script,"preloader item event fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("pick");auto hero=vm.global("hero"),held=vm.global("held");require(session.units().at(hero.bits)->userData==6789 && session.items().at(held.bits)->userData==4312 && session.items().at(held.bits)->holder==hero.bits,"Preloader pickup context or inventory state was lost");
     });
+    test("preloader_unit_orders",[&]{
+        auto dir=fs::absolute(argv[2])/L"preloader-orders"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
+        {std::ofstream file(dir/L"Preload"/L"orders.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing
+local unit u=CreateUnit(Player(0), 'hfoo', 0.0, 0.0, 0.0)
+local unit target=CreateUnit(Player(0), 'hfoo', 500.0, 0.0, 0.0)
+local location p=Location(500.0, 0.0)
+call SetUnitPathing(u, false)
+if IssuePointOrder(u, "move", 500.0, 0.0) and GetUnitUserData(u) == 42 and GetUnitCurrentOrder(u) == OrderId("move") then
+    if IssueTargetOrder(u, "smart", target) and GetUnitUserData(u) == 84 and IssueTargetOrderById(u, OrderId("smart"), target) then
+        if OrderId2String(OrderId("move")) == "move" and IssueImmediateOrder(u, "stop") and IssuePointOrderById(u, OrderId("move"), 500.0, 0.0) and IssueImmediateOrderById(u, OrderId("stop")) and IssuePointOrderLoc(u, "move", p) and IssuePointOrderByIdLoc(u, OrderId("move"), p) then
+            call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_GOLD, 3691)
+        endif
+    endif
+endif
+call RemoveLocation(p)
+endfunction
+)jass";require(bool(file),"Cannot create preload source");}
+        {std::ofstream file(dir/L"Preload"/L"point.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing
+local unit u=GetOrderedUnit()
+local location p=GetOrderPointLoc()
+if u != null and GetIssuedOrderId() == OrderId("move") and GetOrderPointX() == 500.0 and GetOrderPointY() == 0.0 and GetLocationX(p) == 500.0 then
+    call SetUnitUserData(u, 42)
+endif
+call RemoveLocation(p)
+endfunction
+)jass";require(bool(file),"Cannot create point-event source");}
+        {std::ofstream file(dir/L"Preload"/L"target.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing
+local unit u=GetOrderedUnit()
+local unit target=GetOrderTargetUnit()
+if u != null and target != null and GetIssuedOrderId() == OrderId("smart") and GetUnitTypeId(target) == 'hfoo' then
+    call SetUnitUserData(u, 84)
+endif
+endfunction
+)jass";require(bool(file),"Cannot create target-event source");}Archives archives(argv[1]);archives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");auto world=World::read(archives);auto info=world->data().info;auto common=archives.readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Missing common script");std::string script=R"jass(function onPoint takes nothing returns nothing
+call Preloader("point.j")
+endfunction
+function onTarget takes nothing returns nothing
+call Preloader("target.j")
+endfunction
+function config takes nothing returns nothing
+endfunction
+function main takes nothing returns nothing
+local trigger p=CreateTrigger()
+local trigger t=CreateTrigger()
+call TriggerRegisterPlayerUnitEvent(p, Player(0), EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, null)
+call TriggerAddAction(p, function onPoint)
+call TriggerRegisterPlayerUnitEvent(t, Player(0), EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, null)
+call TriggerAddAction(t, function onTarget)
+endfunction
+)jass";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"order-events.j",script,"preloader order fixture"}})),info);session.attachWorld(std::move(world));session.audioMuted(true);session.audioSimulationClock();session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("Preloader",std::array{vm.string("orders.j")});auto player=vm.invoke("Player",std::array{vm.integer(0)});require(vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_GOLD")}).bits==3691,"Preloader order or nested event context failed");auto found=std::find_if(session.units().begin(),session.units().end(),[](auto& entry){return entry.second->userData==42;});require(found!=session.units().end(),"Ordered unit or final point event missing");auto unit=found->second;auto x=std::bit_cast<float>(unit->x.bits());session.advance(1);require(std::bit_cast<float>(unit->x.bits())>x+1,"Preloader order did not continue after child runtime");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("preloader_unit_event_context",[&]{
         auto dir=fs::absolute(argv[2])/L"preloader-unit-event"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
         {std::ofstream file(dir/L"Preload"/L"unit-event.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing
