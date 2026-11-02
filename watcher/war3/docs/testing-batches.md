@@ -7766,3 +7766,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 特效与本地聊天批次（部分通过，后续功能待测）
 
 集成版本 `c772b36`，功能提交 `566c431`、`286ffa1`、`c772b36`。Win32 Release 客户端、Lua、clock 和 native 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败；`war3_clock_tests` 分别以 `effects_rebuild_active_retiring_and_removed_targets`、`recovery_bundle_restores_presentation` 筛选，各为 1 通过／0 失败；`war3_native_tests <data-root> <scratch>` 为 15 通过／0 失败。scratch 位于 `tmp/docs-artifacts/war3/effect-chat-batch-20261103/`。覆盖特效矩阵及当前格式快照、展示状态恢复、资源和 FDF；旧格式快照、附着特效画面、原版聊天表现、联网和完整地图未执行，保留待测。
+
+### Lua／JASS 按 ID 查询单位技能（部分验证，待批次验证）
+
+路径：`src/session.h`、`src/session_spells.cpp`、`src/session_entities.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。实现 `EXGetUnitAbility(unit, id)` 和 `EXGetAbilityId(ability)`，复用单位已有技能状态及稳定技能句柄；技能移除后原句柄失效。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖单位添加、重复查询、Lua／JASS 句柄一致、移除及旧句柄。当前仅查询会话单位技能集合，物品技能、状态效果和原版隐藏技能的完整枚举及原生行为待验证；按索引查询仍未实现，原图隔离入口仍停于 `EXSetUnitFacing`，正式客户端尚未接线。
