@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 受阻返还路线重选入口（待合批验证，3/3）
+
+路径：`src/session.h`、`src/session_harvest.cpp`、`tests/harvest_tests.cpp`。携资源返回建筑的工人持续停滞 8 秒后，按单位与时间选择其他入口并重新规划；无有效路线时保留原路线，保留订单、资源和回收建筑。合批运行 harvest `depot-stuck`、`depot-route` 与采集回归、movement 避让批次和原图经济探针；入口选择、动态阻挡、反复拥堵、大规模性能及原版时序待验证。本次提交前未执行功能测试。
+
+
 ### 携资源工人的拥堵优先级（待功能批次验证，2/3）
 
 路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`。两个采集工人相互停滞时，携资源返回的工人优先于正在前往采集的工人；同阶段继续以句柄确定让行方。让行仍保留原订单、路线和资源，受保护单位不参与。合批运行 `worker-return`、`worker-march`、`workers`、`yield` 和经济探针；金币／木材交付、双向密集拥堵、原版让行及联机待验证。本次未执行功能测试。
