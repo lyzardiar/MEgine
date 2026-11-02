@@ -1,13 +1,13 @@
 // Author: MiYu. Source FDF glue-screen layout, atlas borders and localized labels.
 #pragma once
 #include "fdf.h"
+#include "map_frames.h"
 #include "media.h"
 #include "image.h"
 #include "map_ui.h"
 #include <set>
 
 namespace war3 {
-class MapFrames;
 struct UiInput { float x=0,y=0,startX=0,startY=0; bool pressed=false,down=false; unsigned key=0; int wheel=0; bool doubleClick=false,shift=false,control=false,keyRepeat=false,keyShift=false,keyAlt=false,pointerControl=false,pointerAlt=false; };
 class GlueScreen {
 public:
@@ -15,7 +15,7 @@ public:
     struct Choice {std::string text,image;};
     struct ChoiceChange {std::string frame;size_t index;};
 private:
-    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; };
+    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; std::vector<MapFrames::Anchor> anchors; };
     struct Texture { Com<IDirect3DTexture9> gpu; unsigned width,height; };
     Archives& archives_;
     Images& images_;

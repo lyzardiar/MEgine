@@ -7864,3 +7864,9 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 路径：`src/{lua_jass_bridge,map_frames,glue,game_view}.{h,cpp}`（按实际存在文件）、`tests/{lua_tests,browser_tests}.cpp`。从 SHA-256 为 `4e479624787c77ce4ff44e4257e1c72e1fca9a247e49899ba7ae7f64622a54d6` 的地图插件外层资源提取 DLL；其注册表显示 `CreateFrame` 使用 `(SII)I`、`DestroyFrame` 使用 `(I)V`。Lua 帧创建和销毁作用于会话帧树，保留创建上下文，帧树更新时重建 FDF 绘制节点；普通地图不创建该绘制器。当前绘制仅接受 FRAME、SIMPLEFRAME、BACKDROP、TEXT，其余类型明确报错，控件交互、动态锚点／文本／纹理、完整帧类型和资源覆盖层尚未接入。
 
 Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖创建、上下文、销毁和无效帧。新增 `war3_browser_tests <data-root> tmp/docs-artifacts/war3/map-frame-render-20261103 map_frames_fdf_render`，本机创建 D3D9 设备失败，测试未进入执行；像素、布局、显示／隐藏、普通地图 UI 回归与原版一致性待有图形设备的批次验证，不能据此声称画面通过。正式地图启动仍停于 `EXGetPlayerRealName`；`tmp/docs-artifacts/war3/qcloud-map-frame-20261103.log` 保存诊断。
+
+### Lua 地图帧相对锚点（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/glue.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入地图插件的 `FrameSetPoint`（`(IIIIRR)V`），按帧句柄保存九种锚点、目标、偏移并使绘制版本失效；相同源点后设覆盖，销毁目标时清理相关引用。绘制时结合 FDF 原有锚点及脚本锚点求位置和尺寸，循环、冲突与非法坐标明确报错；未改普通地图的 FDF 布局。锚点编号采用 1.31 `common.j` 常量顺序（https://wc3jass.com/jassdoc.php?file=common.j&line=112），该参考不证明 1.27 插件所有边界行为。
+
+Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖单点／双点计算、冲突、脚本参数、失败后的版本、帧销毁和悬空引用清理。浏览器绘制夹具扩充为锚点移动与尺寸检查；前一次 D3D9 设备创建失败，本次未重复运行，真实 GPU 画面、文本自然尺寸、复杂 FDF 锚点组合、销毁后的原版语义及普通地图视觉回归保留待批次验证。绝对锚点、尺寸／文本／纹理动态修改、事件与完整地图仍未实现。

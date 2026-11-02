@@ -2,11 +2,16 @@
 #pragma once
 #include "fdf.h"
 #include <memory>
+#include <span>
 
 namespace war3 {
+struct MapFramePoint {std::uint32_t point=0;float x=0,y=0;};
+struct MapFrameRect {float x=0,y=0,w=0,h=0;};
+MapFrameRect solveMapFramePoints(float width,float height,std::span<const MapFramePoint> points);
 class MapFrames {
 public:
-    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;};
+    struct Anchor {std::uint32_t point=0,target=0,targetPoint=0;float x=0,y=0;};
+    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;};
 private:
     std::shared_ptr<FrameDefinitions> definitions_;
     std::map<std::uint32_t,Node> nodes_;
@@ -20,6 +25,7 @@ public:
     const Node& node(std::uint32_t id) const;
     std::uint32_t create(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     void destroy(std::uint32_t id);
+    void setPoint(std::uint32_t id,std::uint32_t point,std::uint32_t target,std::uint32_t targetPoint,float x,float y);
     void visible(std::uint32_t id,bool value);
     bool visible(std::uint32_t id) const;
     size_t size() const {return nodes_.size();}
