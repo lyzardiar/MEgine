@@ -1,6 +1,7 @@
 // Author: MiYu. Source camera presets, rendered world, unit selection and local player commands.
 #pragma once
 #include "game_loading.h"
+#include "minimap_terrain.h"
 #include "game_preferences.h"
 #include "glue.h"
 #include "scene_streaming.h"
@@ -33,6 +34,10 @@ class GameView {
     unsigned minimapFogPlayer_=~0u;
     bool minimapFogDynamic_=false,minimapFogDiscard_=false;
     IDirect3DTexture9* minimapFog(unsigned player);
+    Com<IDirect3DTexture9> minimapTerrainTexture_,minimapTerrainStaging_;
+    std::optional<MinimapTerrain> minimapImage_;
+    bool minimapTerrainDynamic_=false,minimapTerrainDiscard_=false;
+    IDirect3DTexture9* minimapTerrain();
     std::array<unsigned,4> teamFilterIndices_{};
     std::array<DWORD,4> minimapFilterColors_{};
     bool allyFilterButtonDown_=false,creepFilterButtonDown_=false,terrainFilterButtonDown_=false,signalButtonDown_=false,signalMode_=false,minimapTerrainVisible_=true;
