@@ -8,6 +8,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <vector>
 struct lua_State;
 
 namespace war3 {
@@ -19,6 +20,7 @@ class LuaJassCallbacks;
 namespace jass {class Runtime;struct RuntimeLifetime;struct Value;}
 struct LuaResult {enum class Kind {Nil,Boolean,Integer,Number,String,Other};Kind kind=Kind::Nil;bool boolean=false;std::int64_t integer=0;double number=0;std::string text;};
 enum class LuaChunkFormat {Standard, MapOpcodes};
+struct LuaJapiSignature {std::string result;std::vector<std::string> parameters;bool operator==(const LuaJapiSignature&) const = default;};
 struct LuaConsoleHost {std::function<bool()> enabled;std::function<void(bool)> setEnabled;std::function<void(std::string_view)> write;std::function<std::optional<std::string>()> read;};
 class LuaRuntime {
     friend class LuaJassCallbacks;
@@ -38,6 +40,7 @@ class LuaRuntime {
     lua_State* activeJassState_=nullptr;
     unsigned callbackDepth_=0;
     std::map<std::string,int> hookRefs_;
+    std::map<std::string,LuaJapiSignature> japiSignatures_;
     void clearHooks();
     void protectedCallback(lua_State* state,int arguments,int results);
     jass::Value invokeJassHook(const std::string& name,std::span<const jass::Value> arguments);
@@ -57,6 +60,8 @@ class LuaRuntime {
     static int archiveSearcher(lua_State* state);
     static int runtimeGet(lua_State* state);
     static int runtimeSet(lua_State* state);
+    static int registerJapi(lua_State* state);
+    static int japiUnavailable(lua_State* state);
     static int japiLookup(lua_State* state);
     static int japiCall(lua_State* state);
     static int japiUnsupported(lua_State* state);

@@ -7618,3 +7618,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JASS 运行时配置与轻量句柄（部分验证，待功能阶段）
 
 路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。实验 `jass.runtime` 支持句柄模式 1／2 及读取／保持关闭的 `sleep`、`can_sleep`、`catch_crash`；不支持的模式或开启休眠、崩溃捕获明确报错。模式 1 使用绑定代次隔离的 Lua lightuserdata，缓存同一代句柄身份，旧句柄解绑后拒绝；为避免悬空指针，轻量句柄保留至 Lua 状态销毁，最多 262,144 个，模式 2 仍未实现原生引用计数。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖模式切换、比较、字符串、数组、过期句柄，以及原地图会话中的 2SAJ 玩家函数和特效 JAPI。原图入口在加载 `jass.runtime` 后推进至缺少全局 `register_japi`；入口脚本的模式设置依据字节码检查，尚未执行到该行。未加载 Game.dll；完整运行时属性、休眠、其他句柄模式和整图玩法 UI 待实现／验证。
+
+### Lua JAPI 声明注册（部分验证，待功能阶段）
+
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。实验入口提供 `register_japi`，解析并原子登记 JASS native 签名，已有原生函数连接当前 JASS 会话，已支持特效 JAPI 校验签名；声明存在但尚未实现的函数在调用时明确报错。重复冲突、声明预算、解绑失效受检查，不将声明视为接口已实现。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖原生转发、未实现接口、冲突回滚和解绑。原图在加载地形并完成玩家设置的隔离会话、测试控制台宿主中执行 `scripts.main`，实际解析地图声明并推进到日志模块调用未实现的 `EXGetPlayerRealName`；未加载 Game.dll。原始平台玩家身份、后续注册函数、完整脚本初始化、玩法和 UI 仍待实现／验证。
