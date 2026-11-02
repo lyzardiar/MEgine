@@ -7251,3 +7251,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 独立预加载脚本单位能力（待功能阶段验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立脚本继承实际会话的单位能力添加、移除、查询、等级调整和永久状态接口，继续沿用已有能力生命周期。Win32 Release 客户端与 map 测试目标编译成功；`war3_map_tests <data-root> <scratch> preloader_unit_state` 为 1 通过／0 失败，覆盖添加两种能力、等级增减、永久标记、移除及子脚本结束后的状态保留。首次夹具使用步兵已有的防御能力导致添加失败，改用未持有的技能后通过。实际施法、变形保留、能力移除回调、无效句柄、自定义能力及原版时序待功能阶段验证。
+
+### 移除能力后的永久标记（待功能阶段验证）
+
+路径：`src/session_entities.cpp`、`tests/unit_forms_tests.cpp`、`docs/unit-forms.md`。真正移除能力时清理其永久标记；仅移除增益或仍有定时生命能力时保留仍存在能力的标记。Win32 Release 客户端和形态测试目标编译通过；`war3_unit_forms_tests <data-root> <fixture> permanent` 定向检查 1 通过／0 失败：两名熊德鲁伊均将返老还童设为永久，一名移除并重新添加后变形，另一名直接变形，分别检查新能力不再沿用旧标记、未移除的永久能力仍保留。修复前同一检查在旧标记继承处失败。实际原版、定时生命叠加、装备／法术书授予、存档及其他变形与回调仍待功能阶段验证。

@@ -28,3 +28,5 @@ python tests/generate-unit-forms-fixture.py --data-root "E:/Program Files (x86)/
 ```
 
 原始证据：仓库根tmp/docs-artifacts/war3/unit-forms/{source.json,source-rows.log,read-source.py,build.log,check-build.log,flow.log,fixture.w3m}。不提交原地图、资源或诊断产物。
+
+脚本实际移除单位能力时同步清理该能力的永久标记；稍后重新添加从普通状态开始。移除增益或仍保留定时生命能力时，不清理仍存在的能力标记。熊德鲁伊定向检查覆盖移除后重新添加返老还童并变形，以及未移除的永久能力在变形后保留；实际原版的移除、重加和变形时序仍待对照。
