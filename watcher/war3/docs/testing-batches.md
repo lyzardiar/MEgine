@@ -7111,3 +7111,7 @@ Win32 Release 客户端和 `war3_passive_tests` 增量编译成功；功能断�
 路径：`src/game_effects.cpp`、`docs/dota-bkb-item-handles.md`。物品由单位持有时，特效绘制使用持有者可见性与当前飞行高度；地面物品沿用迷雾和地形高度。合批在实际窗口覆盖友敌、隐身／侦测、隐藏、空中高度、拾取／丢弃和原版效果；本次尚未执行窗口验证。
 
 物品特效可见性与高度的 Win32 Release 客户端增量编译成功，实际窗口和原版表现尚未验证。
+
+### 普通背包物品脚本定位回归（待功能批次验证）
+
+路径：`tests/passive_tests.cpp`。扩展 `invalid-item`：重新拾取普通背包物品后调用 `SetItemPosition`，检查库存释放及物品／物件坐标一致；与即用物品拾取事件内移动、特效位置一起合批运行 `war3_passive_tests <data-root> <fixture> invalid-item`。新增断言尚未执行，掉落回调重入和原版时序仍待对照。
