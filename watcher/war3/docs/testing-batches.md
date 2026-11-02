@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 脚本加载请求固定检查点（待功能批次验证，1/3）
+
+路径：`src/session_campaign.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。脚本 `LoadGame` 将已检查检查点的文件摘要传入地图切换请求，复用加载阶段的摘要校验，防止准备期间同名存档变化导致加载其他内容。合批运行 clock `save_game_writes_checkpoint_and_preserves_caller`、检查点地图解析与加载切换相关回归；窗口交接、原版格式和脚本加载时序待验证。本次未执行功能测试。
+
+
 ### 原图人族对暗夜精灵隔离观察
 
 在 `6e3b99f` 对应的 Win32 Release 代码上使用原图 Booty Bay，启动静音人族与暗夜精灵 AI，模拟时间约 2,460 秒人族获胜；双方在对局中完成采集、建造、训练和交战。探针与日志位于 `tmp/docs-artifacts/war3/human-night-probe/`。此观察覆盖单次隔离对局，不代表原版策略、数值或完整玩法一致。
