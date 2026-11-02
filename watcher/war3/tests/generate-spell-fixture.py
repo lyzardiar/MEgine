@@ -21,6 +21,9 @@ integer probe_end=0
 integer probe_summons=0
 boolean probe_interrupt=false
 boolean probe_remove=false
+real probe_damage_amount=0.
+unit probe_damage_source=null
+integer probe_damage_count=0
 integer poison_effect=0
 integer poison_marked_damage=0
 item rebirth_dropped=null
@@ -89,6 +92,16 @@ function ProbeRegister takes nothing returns nothing
     set t=CreateTrigger()
     call TriggerRegisterUnitEvent(t,probe_caster,EVENT_UNIT_SUMMON)
     call TriggerAddAction(t,function ProbeSummon)
+endfunction
+function ProbeDamageAction takes nothing returns nothing
+    set probe_damage_amount=GetEventDamage()
+    set probe_damage_source=GetEventDamageSource()
+    set probe_damage_count=probe_damage_count+1
+endfunction
+function ProbeDamageRegister takes unit u returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,u,EVENT_UNIT_DAMAGED)
+    call TriggerAddAction(t,function ProbeDamageAction)
 endfunction
 function PoisonEffect takes nothing returns nothing
     if GetSpellAbilityId()=='A0PA' then
