@@ -7235,3 +7235,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 独立预加载脚本单位订单（待功能阶段验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立脚本复用单位即时／地点／目标／建造命令、订单查询和事件上下文，以及单位寻路状态；其他未绑定 native 仍明确失败。Win32 Release 客户端与 map 测试目标增量编译通过；`war3_map_tests <data-root> <scratch> preloader_unit_orders` 为 1 通过／0 失败：BootyBay 地图会话中检查字符串与 ID 订单、地点句柄、目标订单、订单事件内嵌套预加载读取上下文，及子脚本结束后单位继续移动；未加载 Game.dll。为隔离事件及运动，该用例对测试单位关闭寻路，未执行真实建造、障碍寻路、物品／可破坏物目标、失败和复杂回调重入；实际地图与原版时序待功能阶段验证。
+
+### 单位警报与小地图图标存档（部分验证，待功能阶段）
+
+路径：`tests/clock_tests.cpp`。既有 `SMLT` 保存单位忽略警报状态，`SHID` 保存替代小地图图标标志；新增实际磁盘检查点回归验证两种状态随单位重建，并在加载启动后可再次修改。Win32 Release 客户端及 clock 目标编译通过；`WAR3_CLOCK_FILTER=checkpoint_preserves_unit_alarm_and_minimap_icon` 和 `unit_core_restores_hero_abilities_equipment_and_vitals` 各为 1 通过／0 失败。后者首次运行发现旧断言没有区分地形与障碍路径指纹错误，已按现有两种诊断修正并通过。隔离目录位于 `tmp/docs-artifacts/war3/unit-core-diagnostic/`；本次未更改存档格式或产品状态。实际受攻击提示、小地图窗口、原版存档格式和其他地图仍待功能阶段验证。
