@@ -231,7 +231,7 @@ struct UnitState {
     unsigned preventedAttacks() const {unsigned result=0;for(auto& [id,b]:buffs)if(b.kind==BuffKind::Silence || b.kind==BuffKind::DrunkenHaze || b.kind==BuffKind::SoulBurn || b.kind==BuffKind::Cloud)result|=b.disableMask;return result;}
     bool doomed() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Doom)return true;return false;}
     bool silenced() const {return doomed() || (preventedAttacks()&8)!=0;}
-    bool attackPrevented(bool ranged) const {return (preventedAttacks()&(ranged?2u:1u))!=0;}
+    bool attackPrevented(bool ranged,bool special=false) const {return (preventedAttacks()&(special?4u:ranged?2u:1u))!=0;}
     bool abilitiesDisabled() const {return stunned() || morphed() || spinning();}
     bool rooted() const {for(auto& [id,b]:buffs)if(b.kind==BuffKind::Roots || b.kind==BuffKind::Net || (b.kind==BuffKind::Purge && b.lockRemaining>0))return true;return false;}
     float spellBonus(float UnitBuff::* field) const {if(buffs.empty())return 0;std::array<float,size_t(BuffKind::Count)> positive{},negative{};for(auto& [id,b]:buffs){auto kind=size_t(b.kind);positive[kind]=std::max(positive[kind],b.*field);negative[kind]=std::min(negative[kind],b.*field);}float value=0;for(size_t i=0;i<positive.size();++i)value+=positive[i]+negative[i];return value;}

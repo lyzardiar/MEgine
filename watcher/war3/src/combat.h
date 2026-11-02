@@ -14,6 +14,7 @@ struct WeaponDefinition {
     std::string kind,model;
     std::set<std::string> targets,splashTargets;
 };
+inline bool specialTargetWeapon(const WeaponDefinition& weapon) {return weapon.targets.size()==1 && (weapon.targets.contains("tree") || weapon.targets.contains("debris") || weapon.targets.contains("wall"));}
 struct UnitWeaponDisplay {bool enabled=false;float minimum=0,maximum=0;unsigned attackType=0;float baseMinimum=0,baseMaximum=0,bonus=0;bool splitBonus=false;float range=0,period=0;};
 struct UnitCombatDisplay {std::array<UnitWeaponDisplay,2> weapons{};float armor=0;unsigned defenseType=8,attackUpgrade=0,armorUpgrade=0;float baseArmor=0,armorBonus=0,armorReduction=0;};
 struct WidgetAttackTarget {WorldPoint point;float radius=0;std::uint64_t revision=0;bool item=false;};

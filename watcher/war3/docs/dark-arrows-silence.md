@@ -23,7 +23,7 @@ ANbs作为被动攻击效果能力接入；单位能力或库存直接提供ANbs
 
 ## 沉默与物品
 
-原silenceFlags的位0/1/2/3分别标记Melee/Ranged/Special/Spells。标准ANsi使用8，禁止新单位法术、普通自动施法和新的自动开关，打断已有单位施法/Channel，并禁用实际能力按钮/清除目标光标；正常移动、普通攻击和库存使用继续各自流程。已有攻击修饰仍沿攻击驱动，原件对该组合的行为待对照。自定义Melee/Ranged位进入武器可用性/前摇，已发射弹道保留快照；Special位4尚未实现，出现该配置会明确报错。
+原silenceFlags的位0/1/2/3分别标记Melee/Ranged/Special/Spells。标准ANsi使用8，禁止新单位法术、普通自动施法和新的自动开关，打断已有单位施法/Channel，并禁用实际能力按钮/清除目标光标；正常移动、普通攻击和库存使用继续各自流程。已有攻击修饰仍沿攻击驱动，原件对该组合的行为待对照。自定义 Melee／Ranged 位进入武器可用性和前摇；Special 位对仅以 tree、debris 或 wall 为目标的单类武器生效，伐木采集能力继续工作，已发射弹道保留快照。分类和采集行为依据 [地图作者的实测记录](https://www.hiveworkshop.com/threads/what-is-special-silence-drunken-haze-etc.305032/)；其他特殊目标、混合目标、订单取消及本机 1.27 动态行为仍需对照。
 
 Silence状态单独保存禁用掩码、失误几率和移动/攻速调整，原BNsi查询/驱散/到期/死亡/移除使用共享Buff流程。普通沉默没有调整移动或攻击速度；自定义字段的叠加/换算精度留阶段验证。沉默与眩晕分别消费，不将普通沉默误作全面动作锁。
 
@@ -44,3 +44,5 @@ ssil权杖的点输入、脚本目标位置和六槽订单接入既有CastOrder�
 | UI/UnitEditorData.txt | War3Patch.mpq | 7297c5a4462c1aa419c0a23b02aa9daf4a54b5394b8e6510da1d7b6cf5004061 |
 
 原表/元数据/枚举读取脚本、所选字段、必要编译日志及产品receipt位于tmp/docs-artifacts/war3/dark-arrows-silence/。构建命令为cmake --build watcher/war3/build/windows-x86 --config Release --target war3 -- /m:1 /nologo /v:minimal。新增专项、原版指令、三图、窗口/GPU和性能没有在本轮执行，见[阶段待测队列](testing-batches.md)。
+
+Special 类别必要检查：Win32 Release 核心及 harvest 目标编译成功；隔离地图以 `Nsi1=4` 施放实际沉默，定向用例 1 通过／0 失败，覆盖树木手动攻击禁用、普通物品攻击、近战类别区分、采集继续和移除状态后恢复。日志 `tmp/docs-artifacts/war3/silence-special/result-final.log`。

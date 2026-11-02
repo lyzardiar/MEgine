@@ -7013,3 +7013,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载记录存档文件回归（待功能批次验证）
 
 路径：`tests/clock_tests.cpp`。扩展 `preload_recording_recovery`，在独立用户目录写入实际检查点，验证文件摘要、恢复启动、继续记录以及生成脚本保留存档前后资源；合批设置 `WAR3_CLOCK_FILTER=preload_recording_recovery` 运行 `war3_clock_tests <data-root> <output-root>`。新增文件往返断言尚未编译执行，原版文件格式和原版生成器跨存档语义仍待对照；此测试补充不单独计入功能任务批次。
+
+### 沉默特殊攻击类别（待功能批次验证）
+
+路径：`src/combat.h`、`src/entities.h`、`src/session_arrow_status.cpp`、`src/session_attack_ground.cpp`、`src/session_combat_destructable.cpp`、`src/session_siege_attacks.cpp`、`src/session_weapons.cpp`、`tests/generate-harvest-fixture.py`、`tests/harvest_tests.cpp`、`docs/dark-arrows-silence.md`。Special 位作用于仅以 tree、debris 或 wall 为目标的单类武器，保留普通攻击和伐木能力；合批生成 `--special-silence` 地图，运行 `war3_harvest_tests <data-root> <fixture> silence-special`，并回归普通沉默与采集。必要定向用例 1 通过／0 失败，日志 `tmp/docs-artifacts/war3/silence-special/result-final.log`；原版 1.27 动态结果、其他特殊目标、混合目标及订单取消时机仍需对照。
