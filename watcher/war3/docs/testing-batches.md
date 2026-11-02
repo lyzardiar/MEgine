@@ -7674,3 +7674,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 缺失 JASS 函数的 Lua 赋值（部分验证，待功能阶段）
 
 路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。对 `jass.code` 中不存在的名称赋值不创建函数；已有文本 JASS 自定义函数替换仍明确报未实现。依据原图内嵌插件模块注册及 `__newindex` 的静态机器码：名称查找失败直接返回。原图 2SAJ 程序中不存在 `DzAPI_Map_GetMallItemCount`，隔离入口越过该赋值，下一处缺少 `jass.storm`；未将商城函数视为已实现。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖未知名称、native 名称、真实文本函数拒绝以及原图入口；正式平台状态、原插件运行时行为、完整 UI 和地图启动待验证。静态分析使用 `tmp/docs-artifacts/war3/source-ability-gap/`，测试宿主未发送网络请求。
+
+### Lua Storm 文件宿主桥（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。显式绑定宿主后提供 `jass.storm.load`／`save`，文件内容按字节传递，读取缺失返回 nil、写入失败返回 false；路径解释和真实持久化由宿主决定，限制名称及内容长度。原图内嵌插件的 Storm 脚本使用文件读写；隔离测试使用内存文件宿主，不写入真实用户目录。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖二进制内容、缺失文件及拒绝写入。原图加载 Storm 模块后停在 UI 扩展 `GetGameUI`，尚未执行到写入 FDF 的语句。真实文件策略、FDF 加载、动态帧、正式客户端接入和完整 UI 待实现／验证。

@@ -22,6 +22,7 @@ namespace jass {class Runtime;struct RuntimeLifetime;struct Value;}
 struct LuaResult {enum class Kind {Nil,Boolean,Integer,Number,String,Other};Kind kind=Kind::Nil;bool boolean=false;std::int64_t integer=0;double number=0;std::string text;};
 enum class LuaChunkFormat {Standard, MapOpcodes};
 struct LuaJapiSignature {std::string result;std::vector<std::string> parameters;bool operator==(const LuaJapiSignature&) const = default;};
+struct LuaStormHost {std::function<std::optional<std::string>(std::string_view)> load;std::function<bool(std::string_view,std::string_view)> save;};
 struct LuaPostHost {std::function<void(std::uint64_t,std::string_view,std::string_view)> submit;};
 struct LuaLogHost {std::function<std::string()> path;std::function<void(std::string_view)> setPath;std::function<void(std::string_view)> write;};
 struct LuaConsoleHost {std::function<bool()> enabled;std::function<void(bool)> setEnabled;std::function<void(std::string_view)> write;std::function<std::optional<std::string>()> read;};
@@ -32,6 +33,7 @@ class LuaRuntime {
     std::unique_ptr<Archives> archives_;
     std::unique_ptr<ObjectData> slkObjects_;
     std::optional<LuaConsoleHost> console_;
+    std::optional<LuaStormHost> stormHost_;
     std::optional<LuaPostHost> postHost_;
     std::map<std::uint64_t,int> postCallbacks_;
     std::uint64_t nextPostId_=1;
@@ -73,6 +75,8 @@ class LuaRuntime {
     static int consoleWrite(lua_State* state);
     static int consoleRead(lua_State* state);
     static int postMessage(lua_State* state);
+    static int stormLoad(lua_State* state);
+    static int stormSave(lua_State* state);
     static int slkCategory(lua_State* state);
     static int slkObject(lua_State* state);
     static int slkField(lua_State* state);
@@ -110,6 +114,7 @@ public:
     void preload(std::string_view moduleName,std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format=LuaChunkFormat::Standard);
     void attachArchive(const Archives& archives,LuaChunkFormat format);
     void attachConsole(LuaConsoleHost host);
+    void attachStormHost(LuaStormHost host);
     // Submit and completion run on the owning thread; submit copies both views before returning.
     // Complete only while Lua is idle and stop using this runtime after destruction.
     void attachPostHost(LuaPostHost host);
