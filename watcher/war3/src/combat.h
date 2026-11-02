@@ -19,7 +19,7 @@ struct UnitWeaponDisplay {bool enabled=false;float minimum=0,maximum=0;unsigned 
 struct UnitCombatDisplay {std::array<UnitWeaponDisplay,2> weapons{};float armor=0;unsigned defenseType=8,attackUpgrade=0,armorUpgrade=0;float baseArmor=0,armorBonus=0,armorReduction=0;};
 struct WidgetAttackTarget {WorldPoint point;float radius=0;std::uint64_t revision=0;bool item=false;};
 struct SiegeFire {PassiveInfo definition;std::uint32_t source=0;unsigned owner=0;WorldPoint point;double elapsed=0,nextPulse=0;bool burn=false;std::vector<std::uint32_t> visuals;};
-struct AttackWindup {std::uint32_t target=0;unsigned weapon=0;double due=0;std::uint64_t revision=0;float stealthDamage=0;bool backstab=false;std::uint32_t ability=0;};
+struct AttackWindup {std::uint32_t target=0;unsigned weapon=0;double due=0;std::uint64_t revision=0;float stealthDamage=0;bool backstab=false;std::uint32_t ability=0,barrage=0;unsigned barrageLevel=0;};
 struct ItemMoveOrder {enum class Kind {Point,Unit,Slot};Kind kind=Kind::Point;std::uint32_t item=0,target=0;unsigned player=0,slot=0;WorldPoint point;};
 struct CombatOrder {
     std::uint32_t target=0,widgetTarget=0,follow=0,pickup=0,board=0,attackAbility=0,rechargeAbility=0,lureTarget=0;

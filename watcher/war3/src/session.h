@@ -1028,7 +1028,7 @@ class ScriptSession {
     bool cancelCombat(UnitState& unit);
     bool chase(UnitState& unit,WorldPoint target,float standoff,bool allowPartial=false,bool requireReach=false);
     void combat(double delta);
-    void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon,float stealthDamage=0,bool backstab=false,std::uint32_t ability=0);
+    void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon,float stealthDamage=0,bool backstab=false,std::uint32_t ability=0,std::uint32_t barrage=0,unsigned barrageLevel=0);
     void projectiles(double delta);
     void impact(const CombatProjectile& projectile);
     void spiderAttackVisual(const CombatProjectile& projectile,std::uint32_t target,std::uint64_t revision);

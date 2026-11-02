@@ -15,3 +15,5 @@
 源1.27 MPQ的AbilityData／AbilityMetaData、Profile、原说明与摘要位于tmp/docs-artifacts/war3/siege-attacks/source.json。REA只读定位CAbilityFlakCannon、CAbilityFragShards、CArtilleryFragShards、CAbilityBarrage及液体炸弹／燃烧之油类。0x6f5725e0及0x6f573800提供高射炮主目标排除；0x6f572710、0x6f56aef0及0x6f573a40提供碎片弹道和护甲类别1／7筛选；0x6f571fa0提供弹幕原多目标弹道入口。原件SHA256 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a，分析未修改原件，不等同于玩法验收。
 
 集中核对源伤害分类、半径与碰撞边缘、Afsh非递增半径的优先级、弹幕目标／伤害预算与原第二武器伤害关系、独立时钟／起手／停止及事件顺序、全部科技／w3a派生与多能力叠加、主目标死亡或回调移除／传送／易主、火场叠加和持续时间／音效、液体炸弹驱散／魔免及修理恢复、源投射／附件／UI／GPU／AI和三图长局性能。攻击地形对象的完整能力效果、疾病云雾和其他攻城规则继续实现；完整客户端目标未完成。
+
+攻击前摇记录开始时已生效的弹幕能力；攻击事件移除该能力或切换形态后，未取消的当前攻击仍带有该弹幕，取消前摇则不发射。DotA v6.83d 四次攻击及后续攻击的隔离检查已通过，原版攻击事件时序与实际存读档续打仍待对照。
