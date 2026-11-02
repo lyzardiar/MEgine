@@ -43,6 +43,9 @@ public:
     std::weak_ptr<const RuntimeLifetime> lifetimeToken() const {return lifetime_;}
     size_t instructionCount() const;
     void bind(const std::string& name,Native function);
+    void setNativeHook(const std::string& name,const void* owner,Native function);
+    void removeNativeHooks(const void* owner);
+    Value invokeNativeOriginalNoYield(const std::string& name,std::span<const Value> arguments={});
     void bindSleep(const std::string& name);
     // A suspended native marked here must have completed its side effects before yielding.
     void markNativeCompletedOnResume(const std::string& name);

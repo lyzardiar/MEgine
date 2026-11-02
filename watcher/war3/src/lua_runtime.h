@@ -2,6 +2,7 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <map>
 #include <span>
 #include <string>
 #include <string_view>
@@ -28,12 +29,18 @@ class LuaRuntime {
     std::unique_ptr<LuaJassCallbacks> callbacks_;
     lua_State* activeJassState_=nullptr;
     unsigned callbackDepth_=0;
+    std::map<std::string,int> hookRefs_;
+    void clearHooks();
+    void protectedCallback(lua_State* state,int arguments,int results);
+    jass::Value invokeJassHook(const std::string& name,std::span<const jass::Value> arguments);
     jass::Value callbackReference(lua_State* state,int index,bool predicate);
     bool invokeLuaCallback(int reference,bool predicate);
     bool jassAlive() const;
     std::shared_ptr<JassBinarySession> binarySession() const;
     static int archiveSearcher(lua_State* state);
     static int jassBinaryCall(lua_State* state);
+    static int jassHookLookup(lua_State* state);
+    static int jassHookWrite(lua_State* state);
     static int jassCodePairs(lua_State* state);
     static int jassCodeLookup(lua_State* state);
     static int jassCodeWrite(lua_State* state);
