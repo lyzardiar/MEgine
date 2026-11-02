@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 撤退增援归队（待功能批次验证，2/3）
+
+路径：`src/session.h`、`src/session_ai.cpp`、`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。撤退期间新加入且空闲的队长队员向家移动并跟踪命令轮次，保留已有订单；重试及回调保护与原队员一致。合批运行 `retreat-reinforce`、`retreat-retry`、`armies`、`captain-home` 和运输撤退回归；实际对局、跨区域、编组重入与原版时序待验证。本次未执行功能测试。
+
+
 ### AI 地面撤退恢复（待功能批次验证，1/3）
 
 路径：`src/ai.h`、`src/session_ai.cpp`、`src/session_ai_snapshot.cpp`、`tests/campaign_ai_tests.cpp`、`tests/clock_tests.cpp`、`docs/ai.md`。AI 快照 v2 保存撤退跟踪并兼容 v1，新增生成旧版快照的恢复用例；撤退时跟踪有效地面队员的命令轮次，对暂停恢复或寻路暂时失败且仍空闲的队员重试回家，保留后续新命令。合批编译客户端和 CampaignAI，运行 `retreat-retry`、`captain-home`、`armies`、AI 状态快照及运输撤退回归；核对回调改派、失效成员、寻路和不可连通区域。原版动态时序与跨岛撤退待验证。本次未执行功能测试。

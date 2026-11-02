@@ -288,6 +288,7 @@ class ScriptSession {
     void aiRetreatPassengersTick(ScriptAI& ai);
     std::optional<WorldPoint> aiReturnLanding(const UnitState& carrier,const UnitState& passenger,WorldPoint origin);
     void aiRetreat(ScriptAI& ai);
+    void aiRetreatMember(ScriptAI& ai,std::uint32_t id);
     void aiAttack(ScriptAI& ai,WorldPoint point,std::uint32_t target=0);
     std::array<std::optional<unsigned>,16> results_;
     std::array<PlayerStatistics,16> statistics_{};
