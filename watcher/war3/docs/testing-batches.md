@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 单位碰撞与创建批次结果
+
+范围：`4940cfe`、`e2b1d90`、`05cdbda`。Win32 Release 客户端、commerce、map、corpse 与人族战役测试目标构建通过，日志未发现警告；commerce 输出 1 条 PASS，`campaign_elevator_surface`、corpse `flow` 和人族 `victory` 各 **1 通过、0 失败**，未加载 Game.dll。覆盖脚本定位避让活动单位、无寻路单位、失效类型／玩家创建、人口开关、尸体消费与复活，以及人族第六至第九章隔离链；日志位于 `tmp/docs-artifacts/war3/script-unit-collision-batch/`。密集单位性能、空地碰撞分类、原版最近点与事件时序、自然战斗及真实窗口仍待验证；下一功能批次从 0/3 计数。
+
+
 ### 无效单位人口开关（待功能批次验证，3/3）
 
 路径：`src/session_food.cpp`、`tests/commerce_tests.cpp`。`SetUnitUseFood` 对空、已移除和类型不匹配的单位句柄无操作；有效单位继续更新人口和相关状态。原版 1.27 的 `0x6f1f7b40` 在单位解析失败后直接返回。合批运行 `war3_commerce_tests <data-root> <fixture>`，核对无效句柄不改变人口、有效英雄关停／恢复及正常训练；原版动态事件时序及其他单位状态待对照。本次未执行功能测试。
