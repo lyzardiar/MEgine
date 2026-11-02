@@ -80,6 +80,7 @@ class LuaRuntime {
     static int japiUnavailable(lua_State* state);
     static int japiLookup(lua_State* state);
     static int japiCall(lua_State* state);
+    static int japiDispatch(lua_State* state);
     static int japiUnsupported(lua_State* state);
     static int jassBinaryCall(lua_State* state);
     static int jassHookLookup(lua_State* state);

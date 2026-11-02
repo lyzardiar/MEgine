@@ -7642,3 +7642,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 替换 2SAJ 函数（部分验证，待功能阶段）
 
 路径：`src/jass_binary_vm.{h,cpp}`、`src/jass_binary_session.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`、`tests/jass_binary_tests.cpp`。`jass.code` 可替换受支持签名的 2SAJ 函数，直接入口、二进制脚本内部调用和回调引用均经过替换；替换前保存的闭包调用原函数，移除或销毁 Lua 会话后恢复原实现。桥接参数与返回值，限制重入和 Lua 指令；code 类型签名及文本 JASS 函数替换仍明确不支持。Win32 Release 客户端及 Lua、2SAJ 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖整数、字符串、空值、嵌套、原函数重入、回调及销毁清理；原图在测试宿主下成功安装并由 2SAJ 调用原始 `print` 替换，入口推进到未实现的 `DzFrameShow` 钩子。`war3_jass_binary_tests` 为 1 通过／0 失败，覆盖零指令预算限制，未加载 Game.dll。2SAJ／Lua 保存恢复、可休眠替换、完整 UI 接口与整图自然启动仍待实现／验证。
+
+### Lua 已声明 JAPI 钩子（部分验证，待功能阶段）
+
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。支持为 `register_japi` 声明的扩展接口安装、查询、替换和移除 Lua 钩子；Lua 侧保存的接口闭包也观察后续钩子，回调可调用原接口，未实现的原接口仍报错。Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖参数、返回值、回调错误、移除、未实现原接口及转发到真实特效状态；原图隔离入口已安装 `DzFrameShow` 钩子，下一处为缺少 `jass.dzapi` 模块。当前钩子覆盖 Lua 的 JAPI 调用，扩展 native 从 2SAJ／其他宿主调用的分发、动态 UI 帧及显示、正式客户端接入和整图运行待实现／验证；测试版本、身份、日志与控制台均为测试宿主，未加载 Game.dll。
