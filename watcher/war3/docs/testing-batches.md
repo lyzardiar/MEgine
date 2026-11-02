@@ -7622,3 +7622,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI 声明注册（部分验证，待功能阶段）
 
 路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。实验入口提供 `register_japi`，解析并原子登记 JASS native 签名，已有原生函数连接当前 JASS 会话，已支持特效 JAPI 校验签名；声明存在但尚未实现的函数在调用时明确报错。重复冲突、声明预算、解绑失效受检查，不将声明视为接口已实现。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖原生转发、未实现接口、冲突回滚和解绑。原图在加载地形并完成玩家设置的隔离会话、测试控制台宿主中执行 `scripts.main`，实际解析地图声明并推进到日志模块调用未实现的 `EXGetPlayerRealName`；未加载 Game.dll。原始平台玩家身份、后续注册函数、完整脚本初始化、玩法和 UI 仍待实现／验证。
+
+### Lua 平台玩家身份接口（部分验证，待功能阶段）
+
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。实验 `EXGetPlayerRealName` 通过显式绑定的宿主身份提供者按真实会话玩家槽查询，槽 ID 通过原生 `GetPlayerId` 验证并绕过脚本钩子；身份缺失时报错，地图可修改的 `GetPlayerName` 不作为平台身份替代。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖中文身份、显示名修改、玩家 ID 钩子及缺失身份；原图在测试身份提供者和控制台宿主下运行入口，越过该接口并在缺少 `jass.log` 时停止。未加载 Game.dll。真实平台身份来源尚未绑定；实际联机、平台身份、后续初始化和整图玩法 UI 待验证。

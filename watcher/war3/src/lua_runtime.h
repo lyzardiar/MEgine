@@ -32,6 +32,7 @@ class LuaRuntime {
     LuaChunkFormat archiveFormat_=LuaChunkFormat::Standard;
     jass::Runtime* jass_=nullptr;
     ScriptSession* japiSession_=nullptr;
+    std::function<std::optional<std::string>(unsigned)> japiPlayerName_;
     std::weak_ptr<const jass::RuntimeLifetime> jassLifetime_;
     std::weak_ptr<JassBinarySession> binary_;
     bool binaryAttached_=false;
@@ -90,6 +91,8 @@ public:
     // Both runtimes are used on their owner thread; destroyed JASS bindings become invalid.
     void attachJass(jass::Runtime& runtime,std::shared_ptr<JassBinarySession> binary={});
     void attachJapi(ScriptSession& session);
+    // Provider supplies platform identities by session slot; missing identities remain unavailable.
+    void attachJapiPlayerNames(std::function<std::optional<std::string>(unsigned)> provider);
     void detachJass();
     LuaResult execute(std::span<const std::uint8_t> chunk,const std::string& name,std::uint64_t instructionLimit=1000000,LuaChunkFormat format=LuaChunkFormat::Standard,std::string_view moduleName={});
 };
