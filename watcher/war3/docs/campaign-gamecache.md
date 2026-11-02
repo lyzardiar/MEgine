@@ -21,3 +21,5 @@ Human01 到 Human02 的隔离会话复现覆盖原地图脚本的 `StoreUnitBJ`�
 独立 gamecache v7 保存哨兵能力已初始化的剩余次数，包括已耗尽的零；恢复到新单位后沿用施法和命令按钮消费。版本 1–6 文件保持可读取，旧记录无次数状态；实验单位同步支持 v4–v7。技能／物品冷却与外观状态分别见[单位冷却](campaign-unit-cooldowns.md)和[单位外观](campaign-unit-appearance.md)。原版 StoreUnit 的次数语义、对象覆盖和实际跨关尚待对照，完整存档与原版格式仍未实现。
 
 英雄的经验暂停属于当前单位状态；`RestoreUnit` 重建单位时保留新单位已有的暂停状态，不应用缓存中的暂停标志。原版 1.27 `RestoreUnit` 路径 `0x6f227d92` 创建单位，`0x6f227db4` 调用英雄数据恢复；`IsSuspendedXP` 读取英雄对象 `+0xec`，英雄恢复函数 `0x6f50d6d0–0x6f50d8d6` 不直接恢复该字段。旧独立缓存仍可读取。`UndeadX07b` 至 `UndeadX07c` 的隔离诊断中，原图脚本保存暂停经验的 4 级阿尔萨斯；下一关按脚本降级和升级后为 3 级，自定义数据 2468 保留，日志 `tmp/docs-artifacts/war3/undead-exit-probe/chain-fixed.log`。原版动态跨关、创建事件重入及完整缓存兼容仍待验证。
+
+单位缓存入口 `StoreUnit`、`HaveStoredUnit`、`FlushStoredUnit`、`RestoreUnit` 对无效缓存分别返回 false、false、无操作和空单位；`RestoreUnit` 对无效玩家也返回空单位。原版 1.27 的入口分别位于 `0x6f1f8380`、`0x6f1e71e0`、`0x6f1e0b20` 和 `0x6f1f3210`，均先解析缓存，恢复路径另检查玩家。

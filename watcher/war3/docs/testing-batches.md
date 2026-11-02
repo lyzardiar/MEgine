@@ -6915,3 +6915,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 战役缓存英雄经验暂停（待功能批次验证）
 
 路径：`src/session_cache.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-gamecache.md`。恢复单位不覆盖新英雄的经验暂停状态，使原图跨关脚本能按自身流程调整英雄等级；旧缓存格式继续读取。Win32 Release 核心编译通过，`UndeadX07b` 人为击杀首领并加载 `UndeadX07c` 的定向诊断中，暂停经验的源英雄等级 4，恢复后的英雄等级 3、用户数据 2468；日志 `tmp/docs-artifacts/war3/undead-exit-probe/chain-fixed.log`。合批生成 game flow 夹具并运行 `war3_game_flow_tests <data-root> <fixture> cache-sync-unit`，覆盖暂停标志的磁盘重载及实验同步；同时回归原图跨关链。原版动态行为、创建事件重入及实际窗口待验证。
+
+### 单位缓存的失效句柄（待功能批次验证）
+
+路径：`src/session_cache.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-gamecache.md`。`StoreUnit`、`HaveStoredUnit`、`FlushStoredUnit` 和 `RestoreUnit` 安全处理空或类型不匹配的缓存，恢复时还检查玩家；有效缓存内容不受影响。原版 1.27 对应入口 `0x6f1f8380`、`0x6f1e71e0`、`0x6f1e0b20`、`0x6f1f3210` 在句柄解析失败时返回。合批运行 `war3_game_flow_tests <data-root> <fixture> cache-sync-unit`，覆盖无效缓存与玩家、有效缓存不变以及恢复流程；原版动态行为和实际地图仍待验证。本次未执行功能测试。
