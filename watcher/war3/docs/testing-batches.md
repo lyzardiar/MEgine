@@ -2,7 +2,7 @@
 
 ## 矮人直升机弹幕与脚本形态（待功能批次验证，1/3）
 
-路径：`src/session_entities.cpp`、`src/session_siege_attacks.cpp`、`tests/dota_heroes_tests.cpp`、`tests/unit_forms_tests.cpp`。脚本移除非永久 Abrf 能力时，在当前单位处于技能备用形态且没有进行中形态转换的情况下切换至正常形态；弹幕支持 100 个源目标和仅第一武器启用的单位，并使用技能范围筛选额外目标。DotA v6.83d `gyro-barrage` 定向检查 1 通过／0 失败：原图脚本触发两次形态切换，主目标和武器射程外、技能半径内的敌人受伤，友军与范围外敌人未受伤，15 秒后恢复类型及英雄状态；未加载 Game.dll。`script-remove` 1 通过／0 失败，覆盖直接创建熊形态及正常形态移除能力；熊、乌鸦、恶魔变身及永久能力回归分别 3 和 1 通过／0 失败。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> gyro-barrage`、`war3_unit_forms_tests <data-root> <fixture.w3m> [script-remove|permanent]` 及无模式运行。弹幕同时存在弹道上限为 8192；双武器原版攻城单位、弹幕目标数量边界、存读档、攻击次数结束、重入、各形态标志、原版时序及窗口表现待批次验证。
+路径：`src/session_entities.cpp`、`src/session_siege_attacks.cpp`、`tests/dota_heroes_tests.cpp`、`tests/unit_forms_tests.cpp`。脚本移除非永久 Abrf 能力时，在当前单位处于技能备用形态且没有进行中形态转换的情况下切换至正常形态；弹幕支持 100 个源目标和仅第一武器启用的单位，并使用技能范围筛选额外目标。DotA v6.83d `gyro-barrage` 定向检查 1 通过／0 失败：原图脚本触发两次形态切换，主目标和武器射程外、技能半径内的敌人受伤，友军与范围外敌人未受伤，15 秒后恢复类型及英雄状态；未加载 Game.dll。`script-remove` 1 通过／0 失败，覆盖直接创建熊形态及正常形态移除能力；熊、乌鸦、恶魔变身及永久能力回归分别 3 和 1 通过／0 失败。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> gyro-barrage`、`war3_unit_forms_tests <data-root> <fixture.w3m> [script-remove|permanent]` 及无模式运行。补充修复：只有第一武器启用时不启动第二武器的独立炮火时钟；关闭自动索敌的直升机静止 3 秒不自行攻击，发出一次攻击并停止后两名敌人各受一次伤害。`war3_passive_tests <data-root> <fixture.w3m> barrage-second` 在原版双武器攻城单位检查对空自动攻击两名敌人及禁用技能后的停止，1 通过／0 失败；修复前直升机静止时已自行开火。弹幕同时存在弹道上限为 8192；弹幕目标数量边界、存读档、攻击次数结束、重入、各形态标志、原版时序及窗口表现待批次验证。
 
 ## 工人修理、存档与建造命令批次（部分验证）
 
