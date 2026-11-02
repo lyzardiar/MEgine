@@ -2,7 +2,7 @@
 
 ## 追踪导弹的无图标眩晕（待功能批次验证，2/3）
 
-路径：`src/session_spells.cpp`、`src/session_spell_effects.cpp`、`tests/dota_heroes_tests.cpp`、`tests/spell_tests.cpp`。风暴之锤按源目标标记判断敌友；无 Buff ID 的眩晕保留实际控制和持续时间，并用独立内部键与其他匿名状态共存。DotA v6.83d `gyro-missile` 1 通过／0 失败：原图追踪导弹近距离造成 50 伤害、眩晕到期、重复施放正常，其他匿名状态保留；火箭弹幕亦观察到伤害。原版风暴之锤检查拒绝友军、命中敌人并维持原有状态移除，综合施法程序输出 1 条 PASS；未加载 Game.dll。修复前辅助单位目标订单被拒绝；放开目标后无图标眩晕仍被丢弃。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> gyro-missile`、`war3_spell_tests <data-root> <fixture.w3m>`。匿名眩晕的原版驱散规则、多个来源叠加、存档恢复、其他技能的目标标志、远距离导弹与完整窗口表现待批次验证。
+路径：`src/session_spells.cpp`、`src/session_spell_effects.cpp`、`tests/dota_heroes_tests.cpp`、`tests/spell_tests.cpp`。风暴之锤按源目标标记判断敌友；无 Buff ID 的眩晕保留实际控制和持续时间，并用独立内部键与其他匿名状态共存。DotA v6.83d `gyro-missile` 1 通过／0 失败：原图追踪导弹近距离造成 50 伤害、眩晕到期、重复施放正常，其他匿名状态保留；火箭弹幕亦观察到伤害。原版风暴之锤检查拒绝友军、命中敌人并维持原有状态移除，综合施法程序输出 1 条 PASS；未加载 Game.dll。修复前辅助单位目标订单被拒绝；放开目标后无图标眩晕仍被丢弃。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> gyro-missile`、`war3_spell_tests <data-root> <fixture.w3m>`。补充 `gyro-calldown` 原图检查 1 通过／0 失败：一级大招两波分别造成 250／100 伤害，减速分别为 30%／60%，友军和范围外敌人未受伤，减速结束后恢复；未加载 Game.dll。该检查是本任务的补充，不单独计数。匿名眩晕的原版驱散规则、多个来源叠加、存档恢复、其他技能的目标标志、远距离导弹、移动中的受击者与完整窗口表现待批次验证。
 
 ## 矮人直升机弹幕与脚本形态（待功能批次验证，1/3）
 
