@@ -7650,3 +7650,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua DZAPI 地图覆盖表（部分验证，待功能阶段）
 
 路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。绑定 JASS 会话时提供可写 `jass.dzapi` 表，地图可通过普通赋值或 `rawset` 安装自身包装；尚未连接平台的名称访问明确报错，会话解绑后旧表的宿主查询失效。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖模块缓存、覆盖、缺失接口与解绑。原图在测试宿主中加载该表，并进入本地环境后停在日志脚本使用缺失的 `os`；尚未执行到地图安装 DZAPI 包装的位置。平台数据、平台原生函数、原图完整启动及 UI 待实现／验证，未加载 Game.dll。
+
+### Lua／2SAJ 扩展批次（部分通过，后续功能待测）
+
+集成版本 `4490678`，功能提交 `9a2ac8e`、`ad49128`、`4490678`。Win32 Release 客户端、Lua、2SAJ 和 JASS 线程测试目标编译通过；同版本执行 `war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。Lua 检查使用隔离会话和测试身份、版本、控制台、日志宿主，不加载 Game.dll；原图入口停于缺失 `os` 时间接口。扩展 native 的 2SAJ 分发、平台数据、动态 UI、正式客户端启动、存档及实际游戏和原版一致性均未执行，继续保留待测。
