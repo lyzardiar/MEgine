@@ -14,6 +14,7 @@ struct lua_State;
 namespace war3 {
 class Archives;
 class JassBinarySession;
+class FrameDefinitions;
 struct JassBinaryNativeValue;
 class ObjectData;
 class ScriptSession;
@@ -31,6 +32,7 @@ class LuaRuntime {
     lua_State* state_=nullptr;
     std::uint64_t remaining_=0;
     std::unique_ptr<Archives> archives_;
+    std::shared_ptr<FrameDefinitions> frameDefinitions_;
     std::unique_ptr<ObjectData> slkObjects_;
     std::optional<LuaConsoleHost> console_;
     std::optional<LuaStormHost> stormHost_;
@@ -115,6 +117,7 @@ public:
     void attachArchive(const Archives& archives,LuaChunkFormat format);
     void attachConsole(LuaConsoleHost host);
     void attachStormHost(LuaStormHost host);
+    void attachFrameDefinitions(std::shared_ptr<FrameDefinitions> definitions);
     // Submit and completion run on the owning thread; submit copies both views before returning.
     // Complete only while Lua is idle and stop using this runtime after destruction.
     void attachPostHost(LuaPostHost host);

@@ -7694,3 +7694,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 生成 TOC 文件到 FDF 的加载（部分验证，待功能阶段）
 
 路径：`src/fdf.{h,cpp}`、`tests/lua_tests.cpp`。FDF 定义加载器可读取宿主生成或归档内的 TOC，按行加载 FDF，处理空白、CRLF 和注释，并限制文件大小、条目数量及非法名称；同名生成文件按当前内容重载。Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，内存宿主测试覆盖多条 TOC、Lua 写文件、同名覆写、FDF 包含、原游戏归档回退及非法条目。原图 `LoadToc` 仍未绑定此入口，动态帧、原版 TOC 边界、加载失败回滚、真实文件和渲染交互待验证；测试未发送网络请求。
+
+### Lua JAPI LoadToc 与 FDF 定义（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。JASS、地图归档和共享 FDF 定义集合显式绑定后，Lua `jass.japi.LoadToc` 从 Storm 宿主或归档读取 TOC／FDF 并更新该集合；宿主文件优先，声明签名校验为 `takes string returns nothing`，解绑后旧闭包失效。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖 Lua 写文件、LoadToc、同名重载、钩子转发、缺失文件、声明冲突及解绑。原图实际入口仍在更早的 `GetGameUI` 停止，测试调用来自夹具；正式客户端定义集合、动态帧创建／绘制／交互、FDF 生命周期和 UI 一致性待实现／验证。
