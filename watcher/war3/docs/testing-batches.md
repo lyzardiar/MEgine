@@ -7678,3 +7678,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua Storm 文件宿主桥（部分验证，待功能阶段）
 
 路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。显式绑定宿主后提供 `jass.storm.load`／`save`，文件内容按字节传递，读取缺失返回 nil、写入失败返回 false；路径解释和真实持久化由宿主决定，限制名称及内容长度。原图内嵌插件的 Storm 脚本使用文件读写；隔离测试使用内存文件宿主，不写入真实用户目录。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖二进制内容、缺失文件及拒绝写入。原图加载 Storm 模块后停在 UI 扩展 `GetGameUI`，尚未执行到写入 FDF 的语句。真实文件策略、FDF 加载、动态帧、正式客户端接入和完整 UI 待实现／验证。
+
+### 宿主生成 FDF 与归档包含（部分验证，待功能阶段）
+
+路径：`src/fdf.{h,cpp}`、`tests/lua_tests.cpp`。FDF 加载器可通过显式来源读取地图生成的文件，未命中时回退游戏归档；嵌套 `IncludeFile` 沿用同一来源及既有限额，空文件可解析。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，测试通过 `jass.storm.save` 内存宿主生成两个 FDF，解析嵌套文件及原游戏 `GlobalStrings.fdf` 包含并验证内容，另覆盖空文件。原图仍在 `GetGameUI` 停止，测试尚未执行地图自身的 FDF 生成；动态帧状态、界面渲染和输入、真实文件宿主及实际 UI 一致性待实现／验证。

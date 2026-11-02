@@ -1,6 +1,7 @@
 // Author: MiYu. Classic FDF definitions, includes and template inheritance.
 #pragma once
 #include "archive.h"
+#include <functional>
 #include <map>
 #include <set>
 
@@ -21,15 +22,18 @@ struct FrameDefinition {
 FrameDefinition frameContext(FrameDefinition frame,const std::string& prefix);
 struct FrameFocus {std::string name,next;bool enabled=false,initial=false;};
 std::string nextFrameFocus(const std::vector<FrameFocus>& frames,const std::string& current,bool reverse=false);
+using FrameSource=std::function<std::optional<Bytes>(const std::string&)>;
 class FrameDefinitions {
     std::map<std::string,FrameDefinition> frames_;
     std::map<std::string,std::string> strings_;
     std::vector<std::string> loaded_, loading_;
     size_t sourceBytes_=0;
     void registerFrame(const FrameDefinition& frame);
+    void loadSource(Archives& archives,const std::string& member,const FrameSource& source);
     FrameDefinition resolve(const FrameDefinition& frame, unsigned depth, unsigned& budget) const;
 public:
     void load(Archives& archives, const std::string& member);
+    void load(Archives& archives,const std::string& member,const FrameSource& source);
     FrameDefinition frame(const std::string& name) const;
     std::string string(const std::string& key) const;
 };

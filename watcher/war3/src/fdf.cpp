@@ -12,7 +12,7 @@ std::string sourceText(std::span<const std::uint8_t> bytes) {
     if(bytes.size()>=2 && ((bytes[0]==0xff && bytes[1]==0xfe)||(bytes[0]==0xfe && bytes[1]==0xff))) {
         bool little=bytes[0]==0xff;bytes=bytes.subspan(2);if(bytes.size()%2)throw std::runtime_error("Truncated UTF-16 source");std::wstring value;value.reserve(bytes.size()/2);for(size_t i=0;i<bytes.size();i+=2)value+=wchar_t(little?bytes[i]|(unsigned(bytes[i+1])<<8):(unsigned(bytes[i])<<8)|bytes[i+1]);return utf8(value);
     }
-    std::string value(reinterpret_cast<const char*>(bytes.data()),bytes.size());if(value.empty())return value;
+    if(bytes.empty())return {};std::string value(reinterpret_cast<const char*>(bytes.data()),bytes.size());
     if(MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,value.data(),static_cast<int>(value.size()),nullptr,0)>0)return value;
     int count=MultiByteToWideChar(CP_ACP,MB_ERR_INVALID_CHARS,value.data(),static_cast<int>(value.size()),nullptr,0);if(!count)throw std::runtime_error("Invalid source text encoding");std::wstring legacy(count,0);MultiByteToWideChar(CP_ACP,MB_ERR_INVALID_CHARS,value.data(),static_cast<int>(value.size()),legacy.data(),count);return utf8(legacy);
 }
@@ -85,17 +85,19 @@ std::string nextFrameFocus(const std::vector<FrameFocus>& frames,const std::stri
 }
 float FrameDefinition::number(const std::string& key, float fallback) const { auto& p=property(key); if(p.empty())return fallback; size_t end=0; float value=std::stof(p.front(),&end); if(end<p.front().size() && p.front()[end]=='f')++end; if(end!=p.front().size() || !std::isfinite(value))throw std::runtime_error("Invalid FDF number"); return value; }
 void FrameDefinitions::registerFrame(const FrameDefinition& frame) {if(frames_.size()>=16384)throw std::runtime_error("FDF definition budget exceeded");if(!frame.name.empty())frames_[frame.name]=frame;for(auto& child:frame.children)registerFrame(child);}
-void FrameDefinitions::load(Archives& archives, const std::string& member) {
+void FrameDefinitions::load(Archives& archives,const std::string& member){loadSource(archives,member,{});}
+void FrameDefinitions::load(Archives& archives,const std::string& member,const FrameSource& source){if(!source)throw std::runtime_error("Missing FDF source");loadSource(archives,member,source);}
+void FrameDefinitions::loadSource(Archives& archives,const std::string& member,const FrameSource& source) {
     if (std::find(loaded_.begin(),loaded_.end(),member)!=loaded_.end())return;
     if (loading_.size()>=16 || loaded_.size()>=128 || std::find(loading_.begin(),loading_.end(),member)!=loading_.end()) throw std::runtime_error("Cyclic FDF include");
-    auto bytes=archives.read(member); if(!bytes || bytes->bytes.size()>2*1024*1024)throw std::runtime_error("Missing or oversized FDF: "+member);
-    if(bytes->bytes.size()>8*1024*1024-sourceBytes_)throw std::runtime_error("FDF source budget exceeded");sourceBytes_+=bytes->bytes.size();
+    auto generated=source?source(member):std::optional<Bytes>{};auto archived=generated?std::shared_ptr<const Member>{}:archives.read(member);if(!generated && !archived)throw std::runtime_error("Missing or oversized FDF: "+member);auto& bytes=generated?*generated:archived->bytes;if(bytes.size()>2*1024*1024)throw std::runtime_error("Missing or oversized FDF: "+member);
+    if(bytes.size()>8*1024*1024-sourceBytes_)throw std::runtime_error("FDF source budget exceeded");sourceBytes_+=bytes.size();
     loading_.push_back(member);
     try {
-        auto text=sourceText(bytes->bytes);Parser p(text);
+        auto text=sourceText(bytes);Parser p(text);
         while(!p.empty()) {
             if(p.consume(",") || p.consume(";"))continue;
-            if(p.consume("IncludeFile")) { auto include=p.take().value; load(archives,include); }
+            if(p.consume("IncludeFile")) { auto include=p.take().value; loadSource(archives,include,source); }
             else if(p.consume("Frame"))registerFrame(p.frame());
             else if(p.consume("StringList")) { p.expect("{"); while(!p.consume("}")) {if(p.consume(",") || p.consume(";"))continue; auto key=p.take().value; auto value=p.take().value;strings_[key]=std::move(value);} }
             else throw std::runtime_error("Unsupported FDF declaration: "+p.take().value);
