@@ -7033,3 +7033,9 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载脚本空间操作（待功能批次验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立预加载脚本继承地点移动及矩形创建、修改、查询、移除和世界边界接口，复用会话空间对象；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，核对地点与矩形句柄经哈希表保存、加载、移动和状态消费。地形高度、无效句柄及原版行为待阶段验证。
+
+### 预加载脚本随机流（待功能批次验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立预加载脚本的随机种子、整数与实数查询共享所在会话的实际随机流；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，核对预加载脚本生成并保存的整数及主脚本继续获取的随机数，与相同种子下的序列一致。随机实数和原版动态行为待阶段验证。
+
+本组预加载接口增量编译：`cmake --build --preset release --target war3 war3_map_tests --parallel 8` 成功；行为回归及原版对照仍按上述待测项合批执行。
