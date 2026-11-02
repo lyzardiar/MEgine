@@ -7630,3 +7630,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 日志宿主桥（部分验证，待功能阶段）
 
 路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。显式绑定日志宿主后提供 `jass.log` 的路径、等级过滤和六种日志方法，按时间及等级格式化后将内容交给宿主；路径变更由宿主实际处理。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖中文、多参数、过滤、路径和非法等级；原图在测试日志、控制台及平台身份宿主下越过 `jass.log`，随后遇到未实现的 `jass.runtime.error_handle`。未加载 Game.dll。真实客户端日志宿主及文件路径策略、原版时间格式一致性、后续入口与整图玩法 UI 待验证。
+
+### Lua JASS 错误处理回调（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`jass.runtime.error_handle` 可设置、读取和清除函数；触发器及 native 钩子的 Lua 回调出错时将原始错误交给处理函数，并继续向宿主传播失败，处理函数自身失败会附带诊断，预算耗尽时不再运行处理函数。解绑／重绑定清除引用。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖错误回调、处理函数自身失败、触发器错误及重新绑定；测试日志、控制台和平台身份宿主下，原图入口越过该属性后停在未实现的 `GetPluginVersion`。未加载 Game.dll。错误继续传播与原插件的错误恢复策略未完全对齐；真实日志宿主、其他错误路径、后续入口与整图玩法 UI 待验证。

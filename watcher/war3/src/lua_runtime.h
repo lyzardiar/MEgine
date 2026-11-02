@@ -43,9 +43,13 @@ class LuaRuntime {
     std::unique_ptr<LuaJassCallbacks> callbacks_;
     lua_State* activeJassState_=nullptr;
     unsigned callbackDepth_=0;
+    std::optional<int> errorHandler_;
+    bool handlingError_=false;
     std::map<std::string,int> hookRefs_;
     std::map<std::string,LuaJapiSignature> japiSignatures_;
     void clearHooks();
+    void clearErrorHandler();
+    std::string callbackError(lua_State* state,std::string_view prefix);
     void protectedCallback(lua_State* state,int arguments,int results);
     jass::Value invokeJassHook(const std::string& name,std::span<const jass::Value> arguments);
     jass::Value callbackReference(lua_State* state,int index,bool predicate);
