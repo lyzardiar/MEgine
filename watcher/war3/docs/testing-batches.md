@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 函数与跳转索引（待功能批次验证，1/3）
+
+路径：`src/jass_binary.h`、`src/jass_binary.cpp`、`tests/jass_binary_tests.cpp`。按原始 `r3/r2/r1/op/arg` 顺序保存指令，建立函数起止和标签索引，并拒绝无效操作码、符号索引、函数边界、重复名称／标签及缺失跳转目标；字符串常量使用零索引表示空值。结构依据 [YDWE opcode.h](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Core/ydwar3/warcraft3/jass/opcode.h) 与地图模块 `0x10082f40–0x10083031` 的重定位分支，函数与标签索引使用一基符号编号、原始标签编号。定向测试 1 通过／0 失败，检查正确索引、无效符号、缺失标签、未结束函数及重复标签。原图探针 1 通过／0 失败，识别 1,147 个函数、2,166 个标签，`main` 起点为第 577 条记录。命令：`war3_jass_binary_tests` 及 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。尚未执行指令或连接会话、Lua 及平台接口；标签跨函数、更多输入和原版动态行为待批次验证，用户地图仍无法运行。
+
 ## 2SAJ 加载基础批次（部分验证）
 
 范围：`8c23576`、`42c1e79`、`8d46cbf`，集成版本 `8d46cbf`。Win32 Release 客户端、2SAJ 检查及 AI 目标构建通过；固定容器／结构／损坏输入检查和原图结构探针各 1 通过／0 失败；DotA 静音 main 通过、BootyBay 人族 AI 两秒输出 1 条 PASS，均未加载 Game.dll。用户地图按预期以缺少插件／2SAJ 运行环境退出 1，仍不可玩。命令与实际输出见 `tmp/docs-artifacts/war3/jass-binary-batch/results.txt`。其他样本、完整损坏输入、指令语义与执行、Lua 和真实窗口仍待验证；下一功能批次从 0/3 开始。
