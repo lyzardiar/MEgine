@@ -7135,3 +7135,7 @@ Win32 Release 客户端和 `war3_passive_tests` 增量编译成功；功能断�
 ### 存档与回放名称的光标显示（待功能批次验证）
 
 路径：`src/game_flow_ui.cpp`。名称按输入框宽度显示光标附近的完整 UTF-16 字符，绘制前转义文本标记，保存仍使用完整名称。Win32 Release 客户端增量编译通过；合批在实际界面检查光标位于 n、r 和颜色标记前时的显示，以及长名称滚动、中英文和补充平面字符的编辑与保存。
+
+### 科技效果与有限上限（待功能批次验证）
+
+路径：`tests/research_tests.cpp`。新增原始 `Rhrt` 的科技上限断言：无限旧单位上限变为零、零新单位上限变为无限，并覆盖原有有限上限保持不变；Win32 Release 研究测试目标增量编译通过，断言与 `war3_research_tests <data-root> <fixture>` 合批执行。静态核对原版 `CUpgradeAddTechMaxAllowed` 入口 `0x6f6985d0` 的无限／零／有限分支；原版动态对局与实际训练菜单仍待验证。
