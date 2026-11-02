@@ -7670,3 +7670,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 时间、请求与未绑定 native 钩子批次（部分通过，后续功能待测）
 
 集成版本 `65b3647`，功能提交 `a9ae661`、`01d8368`、`65b3647`。Win32 Release 客户端、Lua、2SAJ 和 JASS 线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。Lua 使用内存日志请求、测试身份和版本宿主，没有发送网络请求；原图入口停在 `DzAPI_Map_GetMallItemCount` 函数替换。真实客户端启动、平台 API、网络请求和回调协议、存档、动态 UI、联机时钟及完整玩法未执行，继续保留待测。
+
+### 缺失 JASS 函数的 Lua 赋值（部分验证，待功能阶段）
+
+路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。对 `jass.code` 中不存在的名称赋值不创建函数；已有文本 JASS 自定义函数替换仍明确报未实现。依据原图内嵌插件模块注册及 `__newindex` 的静态机器码：名称查找失败直接返回。原图 2SAJ 程序中不存在 `DzAPI_Map_GetMallItemCount`，隔离入口越过该赋值，下一处缺少 `jass.storm`；未将商城函数视为已实现。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖未知名称、native 名称、真实文本函数拒绝以及原图入口；正式平台状态、原插件运行时行为、完整 UI 和地图启动待验证。静态分析使用 `tmp/docs-artifacts/war3/source-ability-gap/`，测试宿主未发送网络请求。
