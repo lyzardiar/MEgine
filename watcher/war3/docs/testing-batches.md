@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## AI 英雄购买途中失效（待功能批次验证）
+
+路径：`src/session_ai.cpp`、`tests/ai_tests.cpp`，见[AI 英雄物品](ai-hero-items.md)。购买途中路径阻挡变化后检查剩余路线能否进入当前商店范围；商店变为不可交易的归属或开始反召唤时取消预约，并保留已替换的单位命令。Win32 Release 客户端及 AI 目标编译通过；`war3_ai_tests <data-root> <BootyBay.w3m> hero-shop-invalid` 1 通过、0 失败，覆盖途中封路、商店易主和替换移动命令；`hero-shop-blocked`、`hero-shop-range` 各 1 通过、0 失败，未加载 Game.dll。夹具暂停 AI 脚本并人工改变地面路径和归属；移动障碍、暂停／眩晕恢复、共享控制变化、回调重入、多商店重选及性能待批次验证。
+
 ## 建筑修理与施工的绕行接近（待功能批次验证）
 
 路径：`src/session_construction.cpp`、`tests/construction_tests.cpp`，见[建造](construction.md)。正对建筑的接近点被阻挡或寻路终点不在工作范围时，工人按距离尝试建筑其他侧，并校验终点位于占地外且在工作范围内；施工和建筑修理共用该路径。Win32 Release 客户端及建造测试目标编译通过；`war3_construction_tests <data-root> <fixture.w3m> repair-approach` 1 通过、0 失败，覆盖人工阻挡正面后绕至另一侧、开始修理并扣费；同夹具综合建造程序及 `stunned-work` 各输出 1 条 PASS，均未加载 Game.dll。将提交前旧 `session_construction.cpp` 与相同定向检查链接时，工人停在范围外且测试失败；探针位于 `tmp/docs-artifacts/war3/repair-approach-before/`。多工人拥堵、动态封路、所有侧不可达、不同建筑占地及原版路径时序仍待批次验证。
