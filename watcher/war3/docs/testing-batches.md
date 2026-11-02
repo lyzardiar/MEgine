@@ -7762,3 +7762,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI 本地聊天显示（部分验证，待批次验证）
 
 路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`EXDisplayChat(player, channel, message)` 只向当前本地玩家的现有聊天展示与记录写入十秒消息，不发送网络消息或触发玩家聊天事件；支持全部、盟友、观察者和私聊样式并校验签名及参数。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖本地显示、时长、通道、错误参数和无事件；原图隔离入口继续停在 `EXSetUnitFacing`。原版具体显示格式、其他通道、实际画面与网络客户端待验证。
+
+### Lua 特效与本地聊天批次（部分通过，后续功能待测）
+
+集成版本 `c772b36`，功能提交 `566c431`、`286ffa1`、`c772b36`。Win32 Release 客户端、Lua、clock 和 native 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败；`war3_clock_tests` 分别以 `effects_rebuild_active_retiring_and_removed_targets`、`recovery_bundle_restores_presentation` 筛选，各为 1 通过／0 失败；`war3_native_tests <data-root> <scratch>` 为 15 通过／0 失败。scratch 位于 `tmp/docs-artifacts/war3/effect-chat-batch-20261103/`。覆盖特效矩阵及当前格式快照、展示状态恢复、资源和 FDF；旧格式快照、附着特效画面、原版聊天表现、联网和完整地图未执行，保留待测。
