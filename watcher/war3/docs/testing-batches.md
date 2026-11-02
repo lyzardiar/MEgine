@@ -6980,4 +6980,4 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 
 ### 预加载脚本失败隔离（待功能批次验证）
 
-路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/campaign-preloader.md`。独立预加载脚本编译或执行失败时记录调试信息并返回主脚本，原版 `0x6f1f2232` 编译失败和 `0x6f1f225c` 执行后均清理返回。合批运行 `war3_map_tests <data-root> <scratch> preloader_common_natives`，在坏语法及未绑定 native 后执行有效脚本；原版诊断、资源读取失败和预算边界仍待动态对照。
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/campaign-preloader.md`。独立预加载脚本编译或执行失败时记录调试信息并返回主脚本，原版 `0x6f1f2232` 编译失败和 `0x6f1f225c` 执行后均清理返回。合批运行 `war3_map_tests <data-root> <scratch> preloader_common_natives`，覆盖坏语法隔离、未绑定 native 明确报错及随后执行有效脚本；原版诊断、资源读取失败和预算边界仍待动态对照。
