@@ -7025,3 +7025,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载记录、特殊沉默与云雾批次结果
 
 范围：`28fbfd7`、`c6f159d`、`76e0a32`，包含回归补充 `e9f526a`、`b114218` 和测试修正 `2811aa2`。Win32 Release 客户端、clock、map、harvest、caster 和 control 目标构建成功；control 测试文件有 3 条既有 C4456 局部变量遮蔽警告。clock 首轮 120 通过／1 失败：英雄夹具将保留小数成长余量的内部属性误判为必须等于整数；改用脚本可见基础属性后该项重测 1／0，其余 120 项复用首轮结果。云雾自定义用例首轮将敌对中立单位误判为不匹配，修正预期后 1／0；预加载真实检查点文件往返、暗夜末章和终章、特殊沉默、复合沉默物品各 1／0，既有 caster 目标筛选 6／0；普通采集和 caster 默认流程均退出 0 并输出 PASS。日志位于 `tmp/docs-artifacts/war3/cloud-recovery-batch/`，构建日志为 `tmp/docs-artifacts/war3/cloud-recovery-batch-build.log`。原版 1.27 特殊攻击和云雾自定义目标动态行为、原版存档格式及实际窗口仍待对照。
+
+### 预加载脚本哈希表句柄与地点（待功能批次验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立预加载脚本继承已绑定的哈希表句柄读写及地点创建、查询和移除接口；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，核对地点句柄通过哈希表读回并作用于玩家状态。其他对象创建及回调生命周期、原版动态行为仍待验证。
