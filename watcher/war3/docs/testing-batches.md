@@ -6919,3 +6919,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 单位缓存的失效句柄（待功能批次验证）
 
 路径：`src/session_cache.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-gamecache.md`。`StoreUnit`、`HaveStoredUnit`、`FlushStoredUnit` 和 `RestoreUnit` 安全处理空或类型不匹配的缓存，恢复时还检查玩家；有效缓存内容不受影响。原版 1.27 对应入口 `0x6f1f8380`、`0x6f1e71e0`、`0x6f1e0b20`、`0x6f1f3210` 在句柄解析失败时返回。合批运行 `war3_game_flow_tests <data-root> <fixture> cache-sync-unit`，覆盖无效缓存与玩家、有效缓存不变以及恢复流程；原版动态行为和实际地图仍待验证。本次未执行功能测试。
+
+### 数值战役缓存的失效句柄（待功能批次验证）
+
+路径：`src/session_cache.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-gamecache.md`。数值／字符串的存取、查询和清除，以及任务／缓存清空，对无效缓存返回对应默认结果或无操作。原版 1.27 整数与清空入口 `0x6f1f8280`、`0x6f1e5710`、`0x6f1e70f0`、`0x6f1e09f0`、`0x6f1e0a40`、`0x6f1e0920` 均先检查缓存；字符串读取入口 `0x6f1e57c0` 返回空句柄。合批执行 game flow 的 `cache-sync-unit`，核对四种类型的失效句柄和有效数据保留；原版动态行为与原图异常路径待验证。本次未执行功能测试。
