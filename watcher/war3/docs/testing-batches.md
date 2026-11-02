@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 二进制触发回调适配（待功能批次验证，3/3）
+
+路径：`src/jass_binary_callbacks.h`、`src/jass_binary_callbacks.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。为无参数、返回 `nothing` 或 `boolean` 的二进制函数建立类型正确的 JASS native 包装，使用与宿主共享的线程调度器，在回调触发时执行二进制函数；不支持其他签名。固定夹具检查同步回调、调度回调、布尔条件和未知函数拒绝，1 通过／0 失败。用户地图隔离会话将原图 `R3` 注册为触发器动作，两次触发使 `mElapsed` 从 20 增至 40；`config`、`Nm` 与字符串分支检查仍通过，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。适配器与宿主捕获必须活到所有引用销毁并由会话统一关闭；现有共享 Runtime 析构会取消共享调度器的全部线程。挂起／快照恢复、重入、所有权销毁及会话集成未验证；地图主入口、Lua 与平台接口仍未完成，地图尚不能运行。
+
 ## 2SAJ 函数引用桥（待功能批次验证，2/3）
 
 路径：`src/jass_binary_vm.h`、`src/jass_binary_vm.cpp`、`src/jass_binary_bridge.h`、`src/jass_binary_bridge.cpp`、`tests/jass_binary_tests.cpp`。`MOVRCODE` 通过宿主解析函数引用，保留已有 JASS 运行时所有者并通过 code 参数调用 native；不提供解析器或返回无效引用时明确失败。代码引用比较考虑运行时所有者。固定夹具通过 native 同步调用文本 JASS 回调并得到 42，覆盖缺少解析器失败，1 通过／0 失败。用户地图隔离会话用二进制夹具将文本 `DoNothing` 注册到触发器并发起 `TriggerExecute`，检查动作注册，原图 `config`、`R3`、`Nm` 和字符串分支探针仍通过，1 通过／0 失败，未加载 Game.dll；`DoNothing` 无可观察副作用，探针只证明注册和派发入口未报错。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。该桥目前仅能使用宿主提供的现有 JASS 引用，尚不能把二进制函数作为触发器回调执行；挂起／恢复、生命周期、代码比较、Lua 和地图主入口仍待实现或验证。
