@@ -7794,3 +7794,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 2SAJ 插件式 Lua 入口与哈希预算（部分验证，待批次验证）
 
 路径：`src/lua_runtime.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。显式绑定后，`AbilityId("exec-lua:...")` 在同一 Lua 状态中加载模块，再调用原始 `AbilityId`；非特殊名称沿用原行为，解绑移除钩子。二进制 Lua 表达式桥允许宿主配置有限指令预算，嵌套调用仍共享外层预算。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖模块缓存、参数与错误、解绑、预算及普通函数回退。继续开发所需的原图探针使用真实地图归档读取、测试替代 `callback2`、静音和内存写入宿主，二进制 `main` 实际调用 `scripts.main` 后停于 `Unsupported Lua JAPI: EXSetUnitFacing`；真实插件、平台数据、正式加载器、完整玩法和 UI 未验证。
+
+### 中立玩家缺失 AI 文件处理（部分验证，待批次验证）
+
+路径：`src/session_ai.cpp`、`tests/lua_tests.cpp`。中立玩家请求不存在的 AI 文件时沿用缺失脚本的诊断和空操作；存在的中立 AI 源码仍明确报告未实现，避免假装 AI 已启动。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，确认原图 `callback2` 不存在、存在的中立脚本不被忽略，并在不替代该 AI 调用的隔离二进制主入口中到达 `EXSetUnitFacing`。原始文本入口的 `callback` 插件、正式客户端、中立 AI 执行和原版行为仍待实现／验证。
