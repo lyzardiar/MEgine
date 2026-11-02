@@ -6,7 +6,7 @@
 namespace war3 {
 // Owner must outlive this context; remove all callback references before destroying it.
 struct JassBinarySignature {std::uint8_t result=0;std::vector<std::uint8_t> parameters;};
-class JassBinarySession {
+class JassBinarySession : public std::enable_shared_from_this<JassBinarySession> {
     jass::Runtime& owner_;
     std::shared_ptr<const JassBinaryProgram> program_;
     JassBinaryIndex index_;
@@ -28,6 +28,7 @@ public:
     const JassBinaryIndex& index() const{return index_;}
     bool hasFunction(const std::string& name) const{return index_.functions.contains(name);}
     JassBinaryNativeValue run(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
+    jass::ThreadId start(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
     JassBinaryNativeValue runOriginalNoYield(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
     JassBinaryNativeValue reference(const std::string& name);
     jass::Runtime& owner() const{return owner_;}
