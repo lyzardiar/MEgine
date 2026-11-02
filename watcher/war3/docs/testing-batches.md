@@ -7021,3 +7021,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 云雾自定义目标筛选（待功能批次验证）
 
 路径：`src/session.h`、`src/session_human_channels.cpp`、`src/session_spells.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`、`docs/human-casters.md`。云雾区域按源目标标志筛选单位类型及敌友，原版默认建筑配置继续生效；合批重建 caster 夹具，运行 `war3_caster_tests <data-root> <fixture> cloud-targets` 并覆盖既有施法目标。原版 1.27 的特殊目标、自己／非自己、不可见、魔免和区域刷新时序仍待动态对照。
+
+### 预加载记录、特殊沉默与云雾批次结果
+
+范围：`28fbfd7`、`c6f159d`、`76e0a32`，包含回归补充 `e9f526a`、`b114218` 和测试修正 `2811aa2`。Win32 Release 客户端、clock、map、harvest、caster 和 control 目标构建成功；control 测试文件有 3 条既有 C4456 局部变量遮蔽警告。clock 首轮 120 通过／1 失败：英雄夹具将保留小数成长余量的内部属性误判为必须等于整数；改用脚本可见基础属性后该项重测 1／0，其余 120 项复用首轮结果。云雾自定义用例首轮将敌对中立单位误判为不匹配，修正预期后 1／0；预加载真实检查点文件往返、暗夜末章和终章、特殊沉默、复合沉默物品各 1／0，既有 caster 目标筛选 6／0；普通采集和 caster 默认流程均退出 0 并输出 PASS。日志位于 `tmp/docs-artifacts/war3/cloud-recovery-batch/`，构建日志为 `tmp/docs-artifacts/war3/cloud-recovery-batch-build.log`。原版 1.27 特殊攻击和云雾自定义目标动态行为、原版存档格式及实际窗口仍待对照。
