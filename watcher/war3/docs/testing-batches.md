@@ -7698,3 +7698,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI LoadToc 与 FDF 定义（部分验证，待功能阶段）
 
 路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。JASS、地图归档和共享 FDF 定义集合显式绑定后，Lua `jass.japi.LoadToc` 从 Storm 宿主或归档读取 TOC／FDF 并更新该集合；宿主文件优先，声明签名校验为 `takes string returns nothing`，解绑后旧闭包失效。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖 Lua 写文件、LoadToc、同名重载、钩子转发、缺失文件、声明冲突及解绑。原图实际入口仍在更早的 `GetGameUI` 停止，测试调用来自夹具；正式客户端定义集合、动态帧创建／绘制／交互、FDF 生命周期和 UI 一致性待实现／验证。
+
+### 生成 FDF 重载与 LoadToc 批次（部分通过，后续功能待测）
+
+集成版本 `b3ee47f`，功能提交 `aec9e16`、`c6ade59`、`b3ee47f`。Win32 Release 客户端、Lua 与 native 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> <scratch>` 为 15 通过／0 失败。内存宿主检查 Lua 生成／重写 TOC 与 FDF、JAPI 钩子和共享定义，原游戏归档检查既有 FDF 模板、字符串及循环边界。scratch 位于 `tmp/docs-artifacts/war3/toc-batch-20261103/`。原图入口仍停在 `GetGameUI`，真实宿主、动态帧、实际画面、输入及完整游戏未执行，保留待测。
