@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 随机对象池重复类型权重（待功能批次验证，3/3）
+
+路径：`src/session_game.cpp`、`tests/clock_tests.cpp`。向单位池或物品池重复添加同一类型时更新其权重，保留原有顺序；新增类型继续加入池尾。原版 1.27 的 `0x6f209ad0` 和 `0x6f2098a0` 查找到相同类型后直接覆盖权重。合批运行 `war3_clock_tests` 的 `recovery_bundle_restores_random_pools`，以零权重覆盖检查有效选择及存档恢复，并运行本批 commerce 回归；其他权重与原版随机序列仍需对照。本次未执行功能测试。
+
+
 ### 随机对象池失效句柄（待功能批次验证，2/3）
 
 路径：`src/session_game.cpp`、`tests/clock_tests.cpp`。随机单位池与物品池的销毁、添加、移除和放置接口对空、销毁或类型不匹配的对象池安全返回；随机单位放置还检查玩家句柄。原版 1.27 对应入口在句柄解析失败后直接返回，包括 `0x6f1fb070`、`0x6f1e9980`、`0x6f1f1d00` 和 `0x6f1f1cc0`。合批运行 `war3_clock_tests` 的 `recovery_bundle_restores_random_pools`，核对失效句柄、有效随机序列和恢复；原版随机权重与动态时序仍需验证。本次未执行功能测试。
