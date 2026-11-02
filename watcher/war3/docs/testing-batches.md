@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 位置挤出与创建缩放批次结果
+
+范围：`e58792a`、`31e7307`、`c015a92`，测试补充 `97c06ae`。Win32 Release 客户端、可破坏物、地图和人族战役测试目标构建通过，日志未发现警告。可破坏物 `invalid-handles` 输出 1 条 PASS、完整流程输出 2 条 PASS；原图 `campaign_elevator_surface` 与 `campaign_walkable_stairs` 各 **1 通过、0 失败**；`war3_human_campaign_chain_tests <data-root> <new-user-dir> victory` **1 通过、0 失败**，未加载 Game.dll。覆盖缩放上下限、电梯阻挡格中的单位／物品挤出、无寻路单位坐标、重叠占地排除、楼梯及人族第六至第九章隔离链。日志位于 `tmp/docs-artifacts/war3/elevator-nudge-batch/`。动态单位与物品相互碰撞、真实建筑移动、邻近点选择的原版精度、自然战斗、窗口和完整战役仍待验证；下一功能批次从 0/3 计数。
+
+
 ### 脚本移动单位的地形阻挡修正（待功能批次验证，3/3）
 
 路径：`src/session_entities.cpp`、`src/world.h`、`src/world_path.cpp`、`tests/map_tests.cpp`。启用寻路的单位通过 `SetUnitPosition`／`SetUnitPositionLoc` 移动到阻挡位置时寻找附近可通行坐标，查询排除单位自身的建筑占地；禁用寻路的单位保留脚本指定坐标。原图电梯墙体调用 `NudgeObjectsInRect` 时，单位可离开新阻挡格。合批执行 `war3_map_tests <data-root> <scratch-directory> campaign_elevator_surface`、可破坏物及战役移动回归；单位之间碰撞、建筑重叠、极大障碍和原版动态时序仍待验证。
