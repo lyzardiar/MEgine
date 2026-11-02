@@ -275,7 +275,8 @@ endfunction
     combined_tome = b'tstr' + b'I0PC' + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + b'A0PX,AIgo\0' + b'I0PC'
     files['war3map.w3t'] = struct.pack('<III', 2, 0, 6) + sight_item + ethereal_item + drop_item + keep_flag + attribute_tome + combined_tome
     units = [(b'hpea', b'z0u1', b'uwu2'), (b'hfoo', b'z0u2', b'uwu1')]
-    files['war3map.w3u'] = struct.pack('<III', 2, 0, len(units))+b''.join(base+custom+struct.pack('<I', 1)+field+struct.pack('<II', 0, 0)+custom for base, custom, field in units)
+    bounce = b'ensh' + b'z0bn' + struct.pack('<I', 2) + b'utc1' + struct.pack('<II', 0, 100) + b'z0bn' + b'udl1' + struct.pack('<If', 2, 0.) + b'z0bn'
+    files['war3map.w3u'] = struct.pack('<III', 2, 0, len(units)+1)+b''.join(base+custom+struct.pack('<I', 1)+field+struct.pack('<II', 0, 0)+custom for base, custom, field in units)+bounce
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+helper.build_archive(files))
     print('fixture='+str(args.output.resolve()))
