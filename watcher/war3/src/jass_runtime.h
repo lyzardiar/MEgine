@@ -12,6 +12,7 @@ struct Value {Id type=none;std::uint32_t bits=0;std::shared_ptr<const std::strin
 struct PrimitiveGlobalSnapshot {std::vector<std::uint8_t> bytes;size_t excludedGlobals=0,excludedNonDefaultGlobals=0;};
 struct PrimitiveGlobalRestore {size_t excludedGlobals=0,excludedNonDefaultGlobals=0;};
 struct RuntimeLimits {std::uint64_t steps=5000000;size_t frames=1024,values=262144,stringBytes=16*1024*1024;bool debug=false;size_t threads=1024;};
+struct RuntimeLifetime {bool alive=true;};
 struct RuntimeSlotInspection {Value value;bool initialized=false,array=false;std::map<std::uint32_t,Value> elements;};
 struct RuntimeFrameInspection {Id function=none;size_t pc=0,base=0;std::vector<RuntimeSlotInspection> locals;};
 struct RuntimeExecutionInspection {ThreadId thread=0;size_t depth=0,localCount=0;Position caller;std::vector<Value> values;std::vector<RuntimeFrameInspection> frames;Id pendingNative=none;std::vector<Value> pendingArguments;};
@@ -26,6 +27,7 @@ struct RuntimeSharedSleepEntry {std::uint32_t owner=0;RuntimeSleepSnapshot threa
 struct RuntimeSharedSleepBatch {std::vector<std::vector<Source>> sources;std::vector<bool> paused;std::vector<RuntimeSharedSleepEntry> threads;};
 class Runtime {
     struct Impl;
+    std::shared_ptr<RuntimeLifetime> lifetime_=std::make_shared<RuntimeLifetime>();
     std::unique_ptr<Impl> impl_;
     void restoreGlobalsImpl(std::span<const std::uint8_t> bytes,const StableHandleMap& decodeHandle,bool initializing);
     RuntimeSleepSnapshot snapshotSleepingThreadImpl(const ThreadInspection& task,const StableHandleMap& encodeHandle,const ThreadContextTransfer& captureContext,bool includeSources,bool allowShared=false) const;
@@ -37,6 +39,7 @@ public:
     Runtime(const Runtime&)=delete;
     Runtime& operator=(const Runtime&)=delete;
     const Module& module() const;
+    std::weak_ptr<const RuntimeLifetime> lifetimeToken() const {return lifetime_;}
     size_t instructionCount() const;
     void bind(const std::string& name,Native function);
     void bindSleep(const std::string& name);

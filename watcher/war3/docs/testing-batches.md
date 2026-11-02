@@ -1,8 +1,16 @@
 # 独立客户端测试队列
 
+## Lua JASS 句柄与运行时寿命（待功能阶段验证）
+
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`src/jass_runtime.{h,cpp}`、`tests/lua_tests.cpp`。实验桥将非零 JASS 句柄表示为带弱值缓存的 Lua userdata，零句柄表示为 nil；同一绑定代次内相同句柄保持对象身份，参数按目标 native 声明交给真实会话校验。解绑或重新绑定会使旧句柄及闭包失效；JASS Runtime 销毁开始时标记寿命结束，即便有其他代码持有标记对象也不会继续访问已销毁运行时。双方仍须在所有者线程操作。userdata 外观参考 [YDWE class_handle.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/class_handle.cpp) 的默认句柄模式；本实现未接入原版句柄引用计数及其配置模式。
+
+Win32 Release 客户端、Lua、JASS 线程与二进制测试目标构建成功。`war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 为 2 通过／0 失败：原图隔离会话检查 `Player(3)`／`GetPlayerId`、同句柄身份、无效玩家与 nil、重新绑定后的旧句柄拒绝；另检查先销毁 JASS Runtime、外部仍持有寿命标记、重新绑定及旧句柄／闭包失效。`war3_jass_thread_tests` 为 36 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败。未加载 Game.dll。
+
+待验证：单位／物品／计时器等其他句柄及销毁重用、原版句柄引用计数和垃圾回收语义、回调／休眠、并发与实际对局；实验桥仍未接入正式地图入口，不代表用户地图已经可运行。
+
 ## Lua 到 JASS 基本类型桥（待功能阶段验证）
 
-路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`、`CMakeLists.txt`。实验运行时显式绑定已初始化的 JASS Runtime，`jass.common` 按声明查找 native，基本整数／实数／布尔／字符串参数与返回值经过现有 Runtime 实际调用；不支持的句柄／code、全局写入和可休眠调用明确报错，解绑或重新绑定后旧闭包失效。调用者必须先解绑或销毁 Lua Runtime，再销毁 JASS Runtime，且两者在同一所有者线程操作。转换参考固定版本 [YDWE jassbind.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/jassbind.cpp) 和 [common.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/common.cpp)，仅覆盖上述子集，不声明完整原版兼容。
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`、`CMakeLists.txt`。实验运行时显式绑定已初始化的 JASS Runtime，`jass.common` 按声明查找 native，基本整数／实数／布尔／字符串参数与返回值经过现有 Runtime 实际调用；code、全局写入和可休眠调用明确报错，解绑或重新绑定后旧闭包失效。句柄与宿主销毁处理见上方后续记录。转换参考固定版本 [YDWE jassbind.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/jassbind.cpp) 和 [common.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/common.cpp)，仅覆盖上述子集，不声明完整原版兼容。
 
 Win32 Release 客户端与 Lua 测试目标构建成功；`war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 输出 2 通过／0 失败：夹具检查基本类型、null 字符串、缺参、未知 native、未支持签名、禁止休眠与解绑／重新绑定；对用户原图建立实际 `ScriptSession` 后，从 Lua 调用 `SetMapName` 和 `I2S`，检查会话名称变化及返回 `123`，未加载 Game.dll。此时测试通过显式附加运行时，不是正式地图入口；Lua 句柄及引用、回调、全局／数组、休眠和跨线程／销毁时序、其他地图、原版动态行为与完整会话仍待实现或验证。
 
