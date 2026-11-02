@@ -7255,3 +7255,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 移除能力后的永久标记（待功能阶段验证）
 
 路径：`src/session_entities.cpp`、`tests/unit_forms_tests.cpp`、`docs/unit-forms.md`。真正移除能力时清理其永久标记；仅移除增益或仍有定时生命能力时保留仍存在能力的标记。Win32 Release 客户端和形态测试目标编译通过；`war3_unit_forms_tests <data-root> <fixture> permanent` 定向检查 1 通过／0 失败：两名熊德鲁伊均将返老还童设为永久，一名移除并重新添加后变形，另一名直接变形，分别检查新能力不再沿用旧标记、未移除的永久能力仍保留。修复前同一检查在旧标记继承处失败。实际原版、定时生命叠加、装备／法术书授予、存档及其他变形与回调仍待功能阶段验证。
+
+### 法术书能力的永久标记（待功能阶段验证）
+
+路径：`src/session_entities.cpp`、`src/session_spellbooks.cpp`、`tests/passive_tests.cpp`、`docs/unit-forms.md`。法术书刷新完成后，借用能力不再存在时清理其永久标记；能力仍由单位或其他法术书提供时保留。脚本移除单位来源也以装备刷新后的实际能力为准。Win32 Release 客户端、passive 和形态测试目标编译通过；`war3_passive_tests <data-root> <fixture> hidden-book` 为 4 通过／0 失败，检查刷新、法术书移除／重加、独立单位来源和共同来源；修复前分别复现遗留标记及过早清理。`war3_unit_forms_tests <data-root> <fixture> permanent` 为 1 通过／0 失败，回归普通移除后的熊形态。测试使用自定义法术书，未覆盖物品法术书、多个物品来源、回调重入、原版动态规则及实际存档；这些留待功能阶段。夹具位于 `tmp/docs-artifacts/war3/book-permanent/fixture.w3m`。
