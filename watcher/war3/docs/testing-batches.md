@@ -6993,3 +6993,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载脚本游戏缓存（待功能批次验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立预加载脚本继承游戏缓存的基础值读取、写入、清理与持久化接口，复用当前会话缓存。合批运行 `war3_map_tests <data-root> <scratch> preloader_gamecache_persistence`，检查独立运行时销毁后的整数和字符串，以及清空后磁盘重载；单位快照、同步和原版行为仍待对照。
+
+### 预加载脚本哈希表（待功能批次验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立预加载脚本继承哈希表基础值和玩家、哈希表句柄读写接口，其他句柄接口保持未绑定。合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，覆盖跨 native 的玩家句柄、嵌套表和字符串读取；其余句柄类型及原版行为待对照。
