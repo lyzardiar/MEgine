@@ -54,8 +54,8 @@ class LuaRuntime {
     std::optional<LuaSyncHost> japiSyncHost_;
     std::weak_ptr<const jass::RuntimeLifetime> jassLifetime_;
     std::weak_ptr<JassBinarySession> binary_;
-    bool binaryAttached_=false,binaryScriptAttached_=false;
-    char binaryScriptOwner_=0;
+    bool binaryAttached_=false,binaryScriptAttached_=false,mapEntryAttached_=false;
+    char binaryScriptOwner_=0,mapEntryOwner_=0;
     std::uint64_t jassGeneration_=0;
     std::unique_ptr<LuaJassCallbacks> callbacks_;
     lua_State* activeJassState_=nullptr;
@@ -68,12 +68,13 @@ class LuaRuntime {
     std::map<std::string,int> codeRefs_;
     std::map<std::string,LuaJapiSignature> japiSignatures_;
     void clearHooks();
+    void clearMapEntryHook();
     void clearMessage();
     void clearCodeOverrides();
     JassBinaryNativeValue invokeBinaryOverride(const std::string& name,std::span<const JassBinaryNativeValue> arguments);
     void clearErrorHandler();
     std::string callbackError(lua_State* state,std::string_view prefix);
-    void protectedCallback(lua_State* state,int arguments,int results);
+    void protectedCallback(lua_State* state,int arguments,int results,std::uint64_t instructionLimit=1000000);
     jass::Value invokeJassHook(const std::string& name,std::span<const jass::Value> arguments);
     jass::Value callbackReference(lua_State* state,int index,bool predicate);
     bool invokeLuaCallback(int reference,bool predicate);
@@ -142,7 +143,8 @@ public:
     // Both runtimes are used on their owner thread; destroyed JASS bindings become invalid.
     void attachJass(jass::Runtime& runtime,std::shared_ptr<JassBinarySession> binary={});
     void attachJapi(ScriptSession& session);
-    void attachBinaryExecuteScript();
+    void attachBinaryExecuteScript(std::uint64_t instructionLimit=1000000);
+    void attachMapEntryHook(std::uint64_t instructionLimit=1000000);
     // Provider supplies platform identities by session slot; missing identities remain unavailable.
     void attachJapiPlayerNames(std::function<std::optional<std::string>(unsigned)> provider);
     // Provider reports the actual JAPI host version when one is available.

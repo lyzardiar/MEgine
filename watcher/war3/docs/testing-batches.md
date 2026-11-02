@@ -7790,3 +7790,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 2SAJ 会话线程入口与休眠续跑（部分验证，待批次验证）
 
 路径：`src/jass_binary_session.{h,cpp}`、`tests/lua_tests.cpp`。提供持有二进制会话的调度线程入口，允许脚本在既有 JASS 纤程中等待并从原调用栈恢复；仅接受无返回值且参数数量匹配的入口。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖等待、恢复、会话生命周期与拒绝保存休眠线程。原图二进制 `main` 在测试替代 `callback2`、内存宿主及静音条件下越过此前的休眠并返回；此探针不证明文件校验、插件初始化或 Lua 入口成功。休眠二进制线程尚不能快照，正式加载器接线、实际地图和联机待实现／验证。该结果更新前述同步直接调用的休眠阻塞记录。
+
+### 2SAJ 插件式 Lua 入口与哈希预算（部分验证，待批次验证）
+
+路径：`src/lua_runtime.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。显式绑定后，`AbilityId("exec-lua:...")` 在同一 Lua 状态中加载模块，再调用原始 `AbilityId`；非特殊名称沿用原行为，解绑移除钩子。二进制 Lua 表达式桥允许宿主配置有限指令预算，嵌套调用仍共享外层预算。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖模块缓存、参数与错误、解绑、预算及普通函数回退。继续开发所需的原图探针使用真实地图归档读取、测试替代 `callback2`、静音和内存写入宿主，二进制 `main` 实际调用 `scripts.main` 后停于 `Unsupported Lua JAPI: EXSetUnitFacing`；真实插件、平台数据、正式加载器、完整玩法和 UI 未验证。
