@@ -7798,3 +7798,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 中立玩家缺失 AI 文件处理（部分验证，待批次验证）
 
 路径：`src/session_ai.cpp`、`tests/lua_tests.cpp`。中立玩家请求不存在的 AI 文件时沿用缺失脚本的诊断和空操作；存在的中立 AI 源码仍明确报告未实现，避免假装 AI 已启动。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，确认原图 `callback2` 不存在、存在的中立脚本不被忽略，并在不替代该 AI 调用的隔离二进制主入口中到达 `EXSetUnitFacing`。原始文本入口的 `callback` 插件、正式客户端、中立 AI 执行和原版行为仍待实现／验证。
+
+### 2SAJ 启动与 Lua 入口批次（部分通过，后续功能待测）
+
+集成版本 `1aee26a`，功能提交 `28c1c01`、`80ea262`、`1aee26a`，诊断提交 `059e652`。Win32 Release 客户端、Lua、JASS 线程及 CampaignAI 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败，`war3_campaign_ai_tests <data-root> <fixture> startup` 为 1 通过／0 失败。原图隔离探针读取真实地图文件、按二进制主入口进入 Lua 后停在 `EXSetUnitFacing`；平台服务与写入使用测试宿主，真实插件、正式客户端、原版 UI、休眠线程存档及完整游戏未执行，保留待测。CampaignAI 使用 `tmp/docs-artifacts/war3/campaign-ai/fixture.w3m`。
