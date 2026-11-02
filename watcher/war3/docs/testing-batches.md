@@ -2,7 +2,7 @@
 
 ### 无效可破坏物遮挡高度查询（待功能批次验证，1/3）
 
-路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`。`GetDestructableOccluderHeight` 对空、已移除或类型不匹配句柄返回零，有效对象读取当前高度。原版 1.27 `0x6f1e2010` 在解析失败时返回零；原图 UndeadX07c 进行静音开场模拟时曾在该调用处中断。必要复现检查：Win32 Release 客户端构建通过，修复后原图隔离静音模拟完成开场并推进 600 秒，日志 `tmp/docs-artifacts/war3/UndeadX07c-fixed/session.log`。合批运行 `war3_destructable_tests <data-root> <fixture> invalid-handles`，验证失效／有效对象；实际窗口及完整战役仍待验证。
+路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`、`tests/map_tests.cpp`。`GetDestructableOccluderHeight` 对空、已移除或类型不匹配句柄返回零，有效对象读取当前高度。原版 1.27 `0x6f1e2010` 在解析失败时返回零；原图 UndeadX07c 进行静音开场模拟时曾在该调用处中断。必要复现检查：Win32 Release 客户端构建通过，修复后原图隔离静音模拟完成开场并推进 600 秒，日志 `tmp/docs-artifacts/war3/UndeadX07c-fixed/session.log`。合批运行 `war3_destructable_tests <data-root> <fixture> invalid-handles` 和 `war3_map_tests <data-root> <scratch-directory> campaign_elevator_surface`，验证失效／有效对象、原图电梯动态高度及站立单位；实际单位上下平台、窗口及完整战役仍待验证。
 
 
 ### 随机池选择与存档批次结果
