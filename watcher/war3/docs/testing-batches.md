@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 英雄生产时间查询（待合批验证，3/3）
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`。`GetUnitBuildTime` 对己方已有英雄返回按等级和源参数计算的复活时间；未持有英雄或未知单位返回零，普通单位沿用源训练时间。原版 1.27 的 `0x6f890700` 将英雄查询交给 `0x6f89ba40`，后者按类型查玩家英雄，调用使用 `ReviveTimeFactor` 的 `0x6f40f5f0`，未找到返回零。合批运行 `hero-cost`、`hero-token-cleanup`、`hero-token`、clock 生产快照及生产／复活回归；多个同类型英雄、原版动态精度和联机待验证。本次提交前未执行功能测试。
+
+
 ### 英雄令牌价格只读查询（待功能批次验证，2/3）
 
 路径：`src/session_ai_natives.cpp`、`src/session_commerce.cpp`、`src/session_production.cpp`、`tests/campaign_ai_tests.cpp`。AI 费用及命令按钮读取未设置的英雄令牌时不创建玩家状态；普通训练、购买和队列取消不再因读取令牌写入默认值。合批运行 `hero-cost`、`hero-token`、生产与商店回归，核对状态缺省、显示和费用；真实窗口及多人同步待验证。本次未执行功能测试。
