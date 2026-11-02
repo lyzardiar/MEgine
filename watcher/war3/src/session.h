@@ -1245,6 +1245,7 @@ public:
     void setJapiEffectZ(std::uint32_t id,float value);
     float japiEffectZ(std::uint32_t id);
     float japiEffectCoordinate(std::uint32_t id,bool x) const;
+    void japiEffectMatrix(std::uint32_t id,unsigned operation,std::array<float,3> values);
     void setJapiEffectSize(std::uint32_t id,float value);
     float japiEffectSize(std::uint32_t id) const;
     const auto& effects() const {return effects_;}

@@ -7754,3 +7754,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI 特效平面坐标（部分验证，待批次验证）
 
 路径：`src/session.h`、`src/session_effects.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`EXGetEffectX`／`EXGetEffectY` 从会话未附着特效读取平面坐标，无效或销毁句柄返回零；附着特效的渲染挂点坐标尚未实现，明确报错。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，对照会话中非零位置、销毁后的值及声明签名。原图隔离入口越过坐标函数查找，停于 `Unsupported Lua JAPI: EXEffectMatRotateX`；附着挂点、原版坐标边界和正式游戏画面待验证。
+
+### Lua JAPI 特效矩阵旋转与缩放（部分验证，待批次验证）
+
+路径：`src/effects.h`、`src/session.h`、`src/session_effects.cpp`、`src/session_effect_snapshot.cpp`、`src/lua_jass_bridge.cpp`、`src/game_effects.cpp`、`tests/lua_tests.cpp`、`tests/clock_tests.cpp`。支持三个角度制旋转、三轴缩放和矩阵重置，按原图内插件的矩阵乘法次序累乘，绘制时应用矩阵；特效快照升级至版本 4 并保留版本 2／3 的读取。Win32 Release 客户端和测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖轴向旋转、累乘、缩放、重置和签名；`WAR3_CLOCK_FILTER=effects_rebuild_active_retiring_and_removed_targets war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖矩阵快照往返。scratch 位于 `tmp/docs-artifacts/war3/effect-matrix-20261103/`。原图隔离入口继续停在 `EXDisplayChat`；旧版本快照兼容、真实渲染效果、附着模型和完整地图尚需验证。
