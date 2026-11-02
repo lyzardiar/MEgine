@@ -20,6 +20,7 @@ class LanHostUi {
     GlueScreen create_,lobby_;
     Archives& archives_;
     Renderer& renderer_;
+    Text& text_;
     Log& log_;
     fs::path root_,directory_;
     std::vector<MapEntry> entries_;
@@ -34,6 +35,8 @@ class LanHostUi {
     std::vector<bool> computerOnly_;
     unsigned mapOptions_=0;
     wchar_t surrogate_=0;
+    wchar_t chatSurrogate_=0;
+    size_t chatCursor_=0;
     size_t selected_=0,scroll_=0,slotScroll_=0;
     bool nameFocus_=true,chatFocus_=true,handoffEnabled_=false;
     std::uint64_t countdownStarted_=0;

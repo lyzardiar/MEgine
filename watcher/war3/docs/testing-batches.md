@@ -7243,3 +7243,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 对局聊天光标编辑（部分验证，待功能阶段）
 
 路径：`src/chat_editor.h`、`src/game_view.{h,cpp}`、`tests/browser_tests.cpp`、`docs/chat-dialog.md`。对局聊天支持光标插入／移动／删除和光标附近长文本显示，保留完整发送内容及原有长度限制；聊天频道和既有命令分发不变。Win32 Release 客户端及 browser 测试目标增量编译通过；`war3_browser_tests <data-root> <scratch> chat_edit_utf16` 为 1 通过／0 失败，覆盖中间插入／删除、Home／End、代理对及长度边界。BootyBay 隐藏客户端通过窗口消息输入 `abcd`、左移两次、Delete、插入 `X`，截图显示 `abXd`；证据 `tmp/docs-artifacts/war3/chat-editor/live/`。该检查未验证真实前台输入、中文输入法、鼠标定位、长文本可见范围、发送／事件、联机、原版布局及大厅输入，这些留待功能阶段。
+
+### 局域网大厅聊天光标编辑（待功能阶段验证）
+
+路径：`src/chat_editor{,_ui}.h`、`src/lan_host_ui.{h,cpp}`、`src/lan_lobby.{h,cpp}`、`tests/browser_tests.cpp`、`docs/chat-dialog.md`。主机与加入方大厅聊天支持光标插入、移动、删除、鼠标定位和长文本可见范围；UTF-16 成对处理与对局共用，严格保留原 254 UTF-8 字节限制及原始发送内容。Win32 Release 客户端与 browser 测试目标增量编译通过；`war3_browser_tests <data-root> <scratch> chat_edit_protocol_limit`、`chat_edit_lobby_layout`、`chat_edit_utf16` 各 1 通过／0 失败，覆盖中英文／代理对字节边界、点击字符边界、转义、原 FDF 输入框绘制和对局编辑回归。已查看临时截图 `tmp/docs-artifacts/war3/chat-lobby/chat-edit-lobby.png`；该截图仅验证控件绘制。实际主机／加入方键鼠输入、双端消息、输入法、焦点变化与长名称、原版 UI 和协议互通仍待功能阶段验证。

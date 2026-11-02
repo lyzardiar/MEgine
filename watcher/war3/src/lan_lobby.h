@@ -25,12 +25,15 @@ struct LanLobbyHandoff {
 class LanLobby {
     GlueScreen screen_;
     Archives& archives_;
+    Renderer& renderer_;
+    Text& text_;
     LanGame game_;
     std::string playerName_;
     std::unique_ptr<LanJoin> join_;
     enum class MapStatus {Waiting,WaitingWorker,Checking,Downloading,WaitingDownloadWorker,CheckingDownload,Matched,Downloaded,Failed};
     std::string error_,snapshot_,mapError_,chatError_;
     std::wstring chatDraft_;
+    size_t chatCursor_=0;
     wchar_t chatHighSurrogate_=0;
     bool chatFocus_=true,handoffEnabled_=false;
     std::optional<LanMapAnnouncement> expectedMap_;
