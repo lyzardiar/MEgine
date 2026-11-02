@@ -31,7 +31,7 @@ struct GameData {
     std::array<std::array<std::string,3>,3> allyFilterIcons;
     std::array<std::array<std::string,3>,2> creepFilterIcons;
     std::array<std::array<std::string,3>,2> terrainFilterIcons;
-    std::array<std::string,2> creepCampIcons;
+    std::array<std::string,2> creepCampIcons,creepCampModels;
     std::array<std::string,3> signalIcons;
     std::array<GameCommand,6> commands;
     std::array<GameCommand,6> buildCommands;

@@ -39,6 +39,7 @@ class GameView {
     std::unique_ptr<GlueScreen> allyFilterTooltip_;
     struct CreepCamp {float x=0,y=0;std::vector<std::uint32_t> units;};
     std::vector<CreepCamp> creepCamps_;
+    std::map<std::uint32_t,ModelInstance> creepCampInstances_;
     std::vector<std::uint32_t> creepCampCandidates_;
     std::uint64_t nextCreepCampRefresh_=0;
     std::array<DWORD,3> creepCampColors_{};
@@ -160,6 +161,7 @@ class GameView {
     bool multiboardMinimized(std::uint32_t id,const ScriptMultiboard& board) const;
     bool multiboardHit(float x,float y) const;
     void drawMinimapPings();
+    bool drawCreepCampModel(Model& model,std::uint32_t id,float x,float y,float size,DWORD color);
     void startMinimapSignal();
     std::optional<std::array<float,3>> ground(float x,float y) const;
     std::optional<std::pair<float,float>> project(float x,float y,float z) const;

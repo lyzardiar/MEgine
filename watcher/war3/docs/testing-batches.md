@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 小地图野怪营地模型（待功能阶段验证）
+
+路径：`src/game_loading.h/.cpp`、`src/game_view.h/.cpp`，见[小地图野怪营地](creep-camps.md)。原皮肤小／大营地模型通过现有后台流式加载及小地图正交绘制，使用源 Stand 循环、类别颜色和中型缩放，模型未就绪时保留已有静态标记。原安装模型只读 CPU 探针确认两种模型均可加载且各有 2000 毫秒循环动画；Win32 Release 客户端编译通过，未执行实际窗口检查。阶段验证资源就绪前后切换、自定义皮肤、叠放／迷雾、过滤开关、单位死亡／移动、颜色／动画／尺寸及原版画面对照、设备恢复与大地图帧耗时。
+
 ## 物品拾取路径与 AI 候选（待功能阶段验证）
 
 路径：`src/session.h`、`src/session_combat_orders.cpp`、`src/session_combat.cpp`、`tests/order_queue_tests.cpp`、`tests/ai_tests.cpp`，见[物品栏移动与转交](inventory-interactions.md)及[AI 英雄物品](ai-hero-items.md)。拾取发令及途中重寻路要求到达交互范围；路径失效结束该拾取，零移速／定身期间保留。Win32 Release 客户端、订单及 AI 目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> pickup-path` 与 `war3_ai_tests <data-root> <BootyBay.w3m> hero-powerup` 各 1 通过、0 失败，覆盖拒绝不可达、保留原路线、动态封路、零移速等待、重开路径与 AI 选取可达候选，未加载 Game.dll。AI 场景暂停脚本并人工放置障碍；原版事件和寻路策略、目标移动、共享控制、脚本重入、实际窗口和自然对局待验证。
