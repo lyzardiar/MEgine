@@ -20,6 +20,7 @@ struct JassBinaryNativeValue;
 class ObjectData;
 class ScriptSession;
 class LuaJassCallbacks;
+struct StormArchiveOverlay;
 namespace jass {class Runtime;struct RuntimeLifetime;struct Value;}
 struct LuaResult {enum class Kind {Nil,Boolean,Integer,Number,String,Other};Kind kind=Kind::Nil;bool boolean=false;std::int64_t integer=0;double number=0;std::string text;};
 enum class LuaChunkFormat {Standard, MapOpcodes};
@@ -40,6 +41,7 @@ class LuaRuntime {
     std::unique_ptr<ObjectData> slkObjects_;
     std::optional<LuaConsoleHost> console_;
     std::optional<LuaStormHost> stormHost_;
+    std::shared_ptr<StormArchiveOverlay> stormOverlay_;
     std::optional<LuaPostHost> postHost_;
     std::map<std::uint64_t,int> postCallbacks_;
     std::uint64_t nextPostId_=1;
@@ -131,6 +133,8 @@ public:
     void attachConsole(LuaConsoleHost host);
     void attachStormHost(LuaStormHost host);
     void attachStormArchiveOverlay(const Archives& archives);
+    std::vector<std::uint8_t> encodeStormOverlay() const;
+    void restoreStormOverlay(std::span<const std::uint8_t> bytes);
     void attachFrameDefinitions(std::shared_ptr<FrameDefinitions> definitions);
     void attachMapFrames(std::shared_ptr<MapFrames> frames);
     // Attach and dispatch on the owner thread while Lua is idle.

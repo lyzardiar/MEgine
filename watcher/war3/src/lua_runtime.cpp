@@ -5,6 +5,7 @@
 #include "lua_jass_callbacks.h"
 #include "archive.h"
 #include "object_data.h"
+#include "snapshot_codec.h"
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -19,8 +20,6 @@ extern "C" {
 #include <utility>
 
 namespace war3 {
-namespace {
-struct StackReset {lua_State* state;int top;~StackReset(){lua_settop(state,top);}};
 struct StormArchiveOverlay {
     std::unique_ptr<Archives> archives;std::map<std::string,std::string> files;size_t bytes=0;
     explicit StormArchiveOverlay(const Archives& source):archives(source.fork()){}
@@ -28,6 +27,8 @@ struct StormArchiveOverlay {
     std::optional<std::string> load(std::string_view name){auto path=key(name);if(auto found=files.find(path);found!=files.end())return found->second;auto member=archives->readCandidates({path});if(!member)return {};return std::string(member->bytes.begin(),member->bytes.end());}
     bool save(std::string_view name,std::string_view value){constexpr size_t budget=64u*1024u*1024u;auto path=key(name);auto found=files.find(path);size_t previous=found==files.end()?0:found->second.size();if((found==files.end() && files.size()>=4096) || value.size()>budget-(bytes-previous))return false;files.insert_or_assign(std::move(path),std::string(value));bytes=bytes-previous+value.size();return true;}
 };
+namespace {
+struct StackReset {lua_State* state;int top;~StackReset(){lua_settop(state,top);}};
 void instructionHook(lua_State* state,lua_Debug*){auto budget=*static_cast<std::uint64_t**>(lua_getextraspace(state));if(!budget || *budget<=1000){if(budget)*budget=0;luaL_error(state,"Lua instruction budget exceeded");}*budget-=1000;}
 int protectedWrapper(lua_State* state){auto count=lua_gettop(state);lua_pushvalue(state,lua_upvalueindex(1));lua_insert(state,1);lua_call(state,count,LUA_MULTRET);auto budget=*static_cast<std::uint64_t**>(lua_getextraspace(state));if(budget && !*budget)return luaL_error(state,"Lua instruction budget exceeded");return lua_gettop(state);}
 void wrap(lua_State* state,int table,const char* name){table=lua_absindex(state,table);lua_getfield(state,table,name);lua_pushcclosure(state,protectedWrapper,1);lua_setfield(state,table,name);}
@@ -54,7 +55,14 @@ bool LuaRuntime::invokeLuaCallback(int reference,bool predicate){
 void LuaRuntime::compile(std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format){StackReset reset{state_,lua_gettop(state_)};load(state_,chunk,name,format);}
 void LuaRuntime::preload(std::string_view moduleName,std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format){if(moduleName.empty() || moduleName.size()>4096 || moduleName.find('\0')!=std::string_view::npos)throw std::runtime_error("Invalid Lua module name");StackReset reset{state_,lua_gettop(state_)};load(state_,chunk,name,format);luaL_getsubtable(state_,LUA_REGISTRYINDEX,LUA_PRELOAD_TABLE);lua_pushlstring(state_,moduleName.data(),moduleName.size());lua_pushvalue(state_,-3);lua_rawset(state_,-3);}
 void LuaRuntime::attachArchive(const Archives& archives,LuaChunkFormat format){if(archives_)throw std::runtime_error("Lua map archive already attached");StackReset reset{state_,lua_gettop(state_)};lua_getglobal(state_,"package");if(!lua_istable(state_,-1))throw std::runtime_error("Lua package table unavailable");lua_getfield(state_,-1,"searchers");if(!lua_istable(state_,-1))throw std::runtime_error("Lua package searchers unavailable");auto copy=archives.fork();lua_pushlightuserdata(state_,this);lua_pushcclosure(state_,archiveSearcher,1);lua_rawseti(state_,-2,2);archives_=std::move(copy);archiveFormat_=format;luaL_getsubtable(state_,LUA_REGISTRYINDEX,LUA_LOADED_TABLE);lua_newtable(state_);lua_newtable(state_);lua_pushlightuserdata(state_,this);lua_pushcclosure(state_,slkCategory,1);lua_setfield(state_,-2,"__index");lua_pushcfunction(state_,slkWrite);lua_setfield(state_,-2,"__newindex");lua_pushcfunction(state_,slkPairs);lua_setfield(state_,-2,"__pairs");lua_setmetatable(state_,-2);lua_setfield(state_,-2,"jass.slk");}
-void LuaRuntime::attachStormArchiveOverlay(const Archives& archives){auto overlay=std::make_shared<StormArchiveOverlay>(archives);attachStormHost({[overlay](std::string_view name){return overlay->load(name);},[overlay](std::string_view name,std::string_view data){return overlay->save(name,data);}});}
+void LuaRuntime::attachStormArchiveOverlay(const Archives& archives){auto overlay=std::make_shared<StormArchiveOverlay>(archives);attachStormHost({[overlay](std::string_view name){return overlay->load(name);},[overlay](std::string_view name,std::string_view data){return overlay->save(name,data);}});stormOverlay_=std::move(overlay);}
+
+std::vector<std::uint8_t> LuaRuntime::encodeStormOverlay() const{
+    if(!stormOverlay_ || lua_gethook(state_) || callbackDepth_ || activeJassState_)throw std::runtime_error("Storm overlay snapshot requires an idle attached archive");constexpr size_t budget=100u*1024u*1024u,fileBudget=16u*1024u*1024u,totalBudget=64u*1024u*1024u;SnapshotWriter out(budget-64);out.u32(tag("LSOV"));out.u32(1);out.text(stormOverlay_->archives->mapDigest(),64);out.size(stormOverlay_->files.size());size_t total=0;for(auto& [name,data]:stormOverlay_->files){if(StormArchiveOverlay::key(name)!=name || data.size()>fileBudget || data.size()>totalBudget-total)throw std::runtime_error("Invalid storm overlay snapshot entry");total+=data.size();out.text(name,8192);out.text(data,fileBudget);}if(stormOverlay_->files.size()>4096 || total!=stormOverlay_->bytes)throw std::runtime_error("Invalid storm overlay snapshot size");return sealSnapshot(out.finish(),budget);
+}
+void LuaRuntime::restoreStormOverlay(std::span<const std::uint8_t> bytes){
+    if(!stormOverlay_ || lua_gethook(state_) || callbackDepth_ || activeJassState_)throw std::runtime_error("Storm overlay restore requires an idle attached archive");constexpr size_t budget=100u*1024u*1024u,fileBudget=16u*1024u*1024u,totalBudget=64u*1024u*1024u;Binary in(openSnapshot(bytes,budget));in.expect(tag("LSOV"));if(in.u32()!=1 || snapshotText(in,64)!=stormOverlay_->archives->mapDigest())throw std::runtime_error("Storm overlay snapshot map differs");auto count=in.count(8,4096);std::map<std::string,std::string> pending;size_t total=0;for(unsigned i=0;i<count;++i){auto name=snapshotText(in,8192);if(StormArchiveOverlay::key(name)!=name)throw std::runtime_error("Invalid storm overlay snapshot path");auto data=snapshotText(in,fileBudget);if(data.size()>totalBudget-total)throw std::runtime_error("Storm overlay snapshot exceeds budget");total+=data.size();if(!pending.emplace(std::move(name),std::move(data)).second)throw std::runtime_error("Duplicate storm overlay snapshot path");}in.finish();stormOverlay_->files=std::move(pending);stormOverlay_->bytes=total;
+}
 void LuaRuntime::attachStormHost(LuaStormHost host){
     if(stormHost_ || !host.load || !host.save)throw std::runtime_error("Invalid Lua storm host");StackReset reset{state_,lua_gettop(state_)};stormHost_=std::move(host);luaL_getsubtable(state_,LUA_REGISTRYINDEX,LUA_LOADED_TABLE);lua_newtable(state_);for(auto [name,fn]:{std::pair{"load",stormLoad},std::pair{"save",stormSave}}){lua_pushlightuserdata(state_,this);lua_pushcclosure(state_,fn,1);lua_setfield(state_,-2,name);}lua_setfield(state_,-2,"jass.storm");
 }

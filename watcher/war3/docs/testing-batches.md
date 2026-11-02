@@ -7842,3 +7842,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 2SAJ 会话快照程序和回调身份（部分验证，待批次验证）
 
 路径：`src/jass_binary.{cpp}`、`src/jass_binary_callbacks.{h,cpp}`、`src/jass_binary_session.{h,cpp}`、`src/jass_binary_storage.{h,cpp}`、`src/jass_runtime.{h,cpp}`、`tests/{jass_binary_snapshot_tests,lua_tests}.cpp`。会话快照绑定二进制程序和宿主 JASS 源码摘要，将二进制及文本 JASS 回调编码为可恢复的名称；句柄映射要求非零且一一对应，并校验符号字符串索引。支持初始化空代码全局变量；快照和恢复目前要求共享调度器空闲。Win32 Release 测试目标编译通过；`war3_jass_binary_snapshot_tests` 为 1 通过／0 失败，覆盖跨会话回调调用、句柄映射及冲突、程序／源码不匹配、过期引用、无效符号和活动线程；`war3_jass_binary_tests` 为 1 通过／0 失败；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖原图初始化状态的会话快照。尚未与游戏存读档接线；运行中 Lua 状态、归档覆盖层、休眠线程以及跨组件句柄和回调恢复仍需实现，原图仍未完整加载。
+
+### Lua 地图归档覆盖层快照（部分验证，待批次验证）
+
+路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。对内置 Storm 归档覆盖层提供带地图摘要及容量限制的快照和原子恢复，保留二进制文件内容与覆盖优先级；拒绝地图身份不匹配、损坏数据、非法路径和重复条目，外部自定义 Storm 宿主不被误认为支持快照。Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖原图归档上写入、跨 Lua 实例恢复、二进制内容、拒绝非法数据及失败后原状态不变。该接口尚未接入游戏存档；Lua 内存状态、脚本线程和跨组件引用仍需恢复，原图正式启动与实际画面仍未通过验收。
