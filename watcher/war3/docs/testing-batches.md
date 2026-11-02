@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 工人接近与 AI 商店预约批次（部分验证）
+
+范围：`359fc79`、`7bad556`、`77b9ce4`，在 `77b9ce4` 同一集成代码上执行。Win32 Release 客户端、AI 和建造目标编译通过；BootyBay 的 `hero-shop-invalid`、`hero-shop-blocked`、`hero-shop-range`，以及建造夹具的 `repair-approach`、`repair-unit-blocked`、`repair-bridge-blocked` 各 1 通过、0 失败。`repair-callback`、`stunned-work` 和综合建造程序各输出 1 条 PASS，未加载 Game.dll。日志位于 `tmp/docs-artifacts/war3/work-shop-batch/`。测试使用隔离夹具和人工路径障碍，综合修理检查局部关闭工人路径碰撞；桥梁检查仅验证不可达时结束订单，远处接近并修复桥梁仍未解决。动态移动障碍、多工人拥堵、共享控制、真实窗口、性能与原版行为继续留在队列。
+
 ## 机械单位与桥梁的修理路径（待功能批次验证）
 
 路径：`src/session_repair.cpp`、`tests/construction_tests.cpp`，见[基地升级与修理](base-development.md)。追踪机械单位或桥梁时核对路径终点是否进入实际修理范围，不可达则结束订单并清除路线。Win32 Release 客户端及建造测试目标编译通过；`war3_construction_tests <data-root> <fixture.w3m> repair-unit-blocked`、`repair-bridge-blocked`、`repair-approach` 各 1 通过、0 失败，`repair-callback` 和综合建造程序各输出 1 条 PASS，均未加载 Game.dll。机械单位场景覆盖封路及打开后重新修理；旧修理代码链接相同检查时保留不可达路线并失败，探针在 `tmp/docs-artifacts/war3/repair-unit-before/`。桥梁场景只验证不可达时结束订单：移除人工障碍后，从远处仍未能修复该桥，按 32 单位间距采样的修理范围内也未找到可站立点；桥体占地、接近与恢复保持未解决。移动目标、动态封路、原版订单时序及真实地图仍待批次验证。
