@@ -6923,3 +6923,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 数值战役缓存的失效句柄（待功能批次验证）
 
 路径：`src/session_cache.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-gamecache.md`。数值／字符串的存取、查询和清除，以及任务／缓存清空，对无效缓存返回对应默认结果或无操作。原版 1.27 整数与清空入口 `0x6f1f8280`、`0x6f1e5710`、`0x6f1e70f0`、`0x6f1e09f0`、`0x6f1e0a40`、`0x6f1e0920` 均先检查缓存；字符串读取入口 `0x6f1e57c0` 返回空句柄。合批执行 game flow 的 `cache-sync-unit`，核对四种类型的失效句柄和有效数据保留；原版动态行为与原图异常路径待验证。本次未执行功能测试。
+
+### 战役缓存句柄与英雄恢复合批结果
+
+范围：`9eaf6c7`、`4b812b3`、`8102e03`。Win32 Release 客户端及 game flow 测试目标构建通过；game flow 测试文件原有 `unsigned`／`int` 比较产生两条 C4389 警告。重新生成夹具后，`war3_game_flow_tests <data-root> <fixture> cache-sync-unit` 和不带模式的 game flow 检查均退出 0、各输出 1 条 PASS；覆盖四种数值类型及单位缓存的无效句柄、有效值保留、暂停状态的磁盘恢复和实验同步。亡灵原图隔离探针将英雄传送到首领区域并直接击杀首领，胜利换关后 `UndeadX07c` 的阿尔萨斯为 3 级、用户数据为 2468。日志和夹具位于 `tmp/docs-artifacts/war3/gamecache-handles-batch/`；原图探针为人为触发，不代表自然战斗。原版动态行为、创建事件重入、真实窗口及完整战役仍待验证。
