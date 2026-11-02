@@ -54,7 +54,7 @@ class LuaRuntime {
     std::optional<LuaSyncHost> japiSyncHost_;
     std::weak_ptr<const jass::RuntimeLifetime> jassLifetime_;
     std::weak_ptr<JassBinarySession> binary_;
-    bool binaryAttached_=false,binaryScriptAttached_=false,mapEntryAttached_=false;
+    bool binaryAttached_=false,binaryScriptAttached_=false,mapEntryAttached_=false,mapEntryExecuted_=false;
     char binaryScriptOwner_=0,mapEntryOwner_=0;
     std::uint64_t jassGeneration_=0;
     std::unique_ptr<LuaJassCallbacks> callbacks_;
@@ -146,6 +146,7 @@ public:
     void attachJapi(ScriptSession& session);
     void attachBinaryExecuteScript(std::uint64_t instructionLimit=1000000);
     void attachMapEntryHook(std::uint64_t instructionLimit=1000000);
+    bool mapEntryExecuted() const {return mapEntryExecuted_;}
     // Provider supplies platform identities by session slot; missing identities remain unavailable.
     void attachJapiPlayerNames(std::function<std::optional<std::string>(unsigned)> provider);
     // Provider reports the actual JAPI host version when one is available.

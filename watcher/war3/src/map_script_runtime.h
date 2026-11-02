@@ -1,0 +1,22 @@
+// Author: MiYu. Own the supported 2SAJ map script and Lua bridge alongside its session.
+#pragma once
+#include "lua_runtime.h"
+#include "jass_binary_session.h"
+#include <memory>
+
+namespace war3 {
+class ScriptSession;
+class MapScriptRuntime {
+    ScriptSession& session_;
+    std::shared_ptr<JassBinarySession> binary_;
+    LuaRuntime lua_;
+    bool started_=false,requiresLuaEntry_=false;
+    MapScriptRuntime(ScriptSession& session,std::shared_ptr<const JassBinaryProgram> program,const std::string& initializer);
+public:
+    static std::unique_ptr<MapScriptRuntime> create(ScriptSession& session);
+    ~MapScriptRuntime();
+    MapScriptRuntime(const MapScriptRuntime&)=delete;
+    MapScriptRuntime& operator=(const MapScriptRuntime&)=delete;
+    void start();
+};
+}

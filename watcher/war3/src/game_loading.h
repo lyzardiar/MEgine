@@ -4,12 +4,14 @@
 #include "terrain_scene.h"
 #include "scene_objects.h"
 #include "minimap_terrain.h"
+#include "map_script_runtime.h"
 
 namespace war3 {
 struct ConsolePiece {float x,y,w,h,u0,v0,u1,v1;std::string image;};
 struct GameCommand {std::string icon,hotkey,name,tip;unsigned x=0,y=0;};
 struct GameData {
     std::unique_ptr<ScriptSession> session;
+    std::unique_ptr<MapScriptRuntime> mapScript;
     std::unique_ptr<SceneAssets> assets;
     std::unique_ptr<TerrainScene> terrain;
     std::unique_ptr<SceneObjects> objects;
