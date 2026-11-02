@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 矮人直升机弹幕与脚本形态（待功能批次验证，1/3）
+
+路径：`src/session_entities.cpp`、`src/session_siege_attacks.cpp`、`tests/dota_heroes_tests.cpp`、`tests/unit_forms_tests.cpp`。脚本移除非永久 Abrf 能力时，在当前单位处于技能备用形态且没有进行中形态转换的情况下切换至正常形态；弹幕支持 100 个源目标和仅第一武器启用的单位，并使用技能范围筛选额外目标。DotA v6.83d `gyro-barrage` 定向检查 1 通过／0 失败：原图脚本触发两次形态切换，主目标和武器射程外、技能半径内的敌人受伤，友军与范围外敌人未受伤，15 秒后恢复类型及英雄状态；未加载 Game.dll。`script-remove` 1 通过／0 失败，覆盖直接创建熊形态及正常形态移除能力；熊、乌鸦、恶魔变身及永久能力回归分别 3 和 1 通过／0 失败。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> gyro-barrage`、`war3_unit_forms_tests <data-root> <fixture.w3m> [script-remove|permanent]` 及无模式运行。弹幕同时存在弹道上限为 8192；双武器原版攻城单位、弹幕目标数量边界、存读档、攻击次数结束、重入、各形态标志、原版时序及窗口表现待批次验证。
+
 ## 工人修理、存档与建造命令批次（部分验证）
 
 范围：`7860754`、`8a2db00`、`abccb5f`，集成版本 `abccb5f`。Win32 Release 客户端、construction、order-queue、clock 和 AI 目标构建通过。`invalid-build`、`repair-bridge-blocked`、`repair-unit-blocked`、`repair-approach`、两项单位恢复检查及 `duel-save` 各 1 通过／0 失败；修理回调和综合建造程序各输出 1 条 PASS。原图双电脑在 1,200 秒存档、恢复后对照至 1,260 秒；标有 Game.dll 检查的程序均报告未加载。汇总 `tmp/docs-artifacts/war3/worker-save-build-batch/results.txt`，存档在 `tmp/docs-artifacts/war3/batch-duel-save-20261102/`。不同桥型／占地、自然对局、更长恢复、旧存档相位、原版命令语义和实际窗口仍待功能阶段验证。下一功能批次从 0/3 开始。

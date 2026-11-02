@@ -30,3 +30,5 @@ python tests/generate-unit-forms-fixture.py --data-root "E:/Program Files (x86)/
 原始证据：仓库根tmp/docs-artifacts/war3/unit-forms/{source.json,source-rows.log,read-source.py,build.log,check-build.log,flow.log,fixture.w3m}。不提交原地图、资源或诊断产物。
 
 脚本移除单位能力后，若法术书刷新仍提供该能力则保留永久标记；最后一个来源消失时清理标记，稍后重新添加从普通状态开始。移除增益或仍保留定时生命能力时，不清理仍存在的能力标记。熊德鲁伊定向检查覆盖移除后重新添加返老还童并变形，以及未移除的永久能力在变形后保留；实际原版的移除、重加和变形时序仍待对照。
+
+脚本移除 `Abrf` 能力时，若单位处于该能力指定的备用形态、没有活动或过渡形态且不含永久标志，则切换到该能力的正常形态；移除前后检查单位生命周期与能力状态。DotA v6.83d 矮人直升机的临时能力增删、弹幕结束返回，以及熊形态直接创建／移除的定向检查通过；其他标志组合和原版时序仍待核对。
