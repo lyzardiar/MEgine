@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 容器解码基础（待功能批次验证，2/3）
+
+路径：`src/jass_binary.h`、`src/jass_binary.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。独立读取 `2SAJ` 的两字随机状态，使用经典随机流还原完整非末尾字，保留最后 0–4 字节；拒绝错误头、无效随机状态与超过 16 MiB 的输入，不修改会话随机流。`war3_jass_binary_tests` 固定向量、末尾字节及无效输入检查 1 通过／0 失败。对 `G:/qcloud_20144088.w3x` 的只读探针解出 493,650 字节，其中起始符号表包含 5,686 个以零结束的字符串；C++ 与独立 Python 探针输出 SHA-256 均为 `1eebcffb4479a6835862cdcec386d03130c7ad5a7b4b6a96e787fba8d00d2ced`，本地产物在 `tmp/docs-artifacts/war3/qcloud-decoded-cpp.bin`。解码循环依据地图内模块的只读反汇编 `0x10082911–0x10082a9d`：暂存并恢复两字随机状态，每次调用 `GetRandomInt(1,29)` 后以两字之和异或；原模块未执行。此提交仅建立解码基础，尚未解析后续字节码、连接 JASS／Lua、实现平台原生接口或运行地图；其他格式样本、资源上限与损坏输入仍待批次验证。
+
 ## 内存插件地图的加载诊断（待功能批次验证，1/3）
 
 路径：`src/session_ai.cpp`。中立敌对玩家启动地图内 `callback` 时，仅在地图还含 `2SAJ` 头的 `war3map.bin`、且回调包含 `newUnlockMemory` 和 `ExportFileFromMpq` 标记时，报告缺少原生插件与脚本运行环境；保持失败，不跳过地图主逻辑。`G:/qcloud_20144088.w3x` 的 `--main-check` 如预期退出 1 并给出该诊断，原入口此前报 AI 玩家无效；`--mute` 的 DotA 主入口退出 0，BootyBay 原版人族 AI 两秒运行输出 1 条 PASS，均未加载 Game.dll。命令见 `tmp/docs-artifacts/war3/qcloud-diagnostic*.log` 和 `war3_ai_tests <data-root> <BootyBay.w3m> 0 2`。该地图仍不能运行：回调按原版内存布局加载地图中的两层 x86 模块，内层包含 Lua 与 JASS 运行组件，`war3map.bin` 及其依赖尚未实现。其他同类地图、标记误判、图形窗口的错误呈现和原版兼容执行仍待验证。
