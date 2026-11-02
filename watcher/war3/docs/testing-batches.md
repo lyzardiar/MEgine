@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### 英雄令牌清理与 AI 时间批次结果
+
+范围：`e345dcf`、`2d10f9f`、`8276901`，含测试补充 `7aa9390`、`73590df`、`3d5313e`。Win32 Release 客户端、CampaignAI、revival、commerce 和 clock 构建通过。CampaignAI `hero-cost`、`hero-token`、`hero-token-cleanup`、`produce-zero`、`produce-many`、`produce-owner`、`produce-replacement`、`produce-builder` 各 2 项通过，`startup` 1 项；revival 4 项、commerce 1 项、clock 生产快照 1 项通过，共 **23 通过、0 失败**。覆盖祭坛死亡／移除返还与防重复、价格查询不写入缺省状态、已有英雄复活时间、生成的 v1 队列恢复及 v2 令牌退款。日志位于 `tmp/docs-artifacts/war3/hero-token-cleanup-batch/`。
+
+首轮构建发现测试夹具试图修改只读配置，修正后构建及功能测试通过；测试局部变量遮蔽警告修正后仅重新编译 clock 目标，语义不变的通过结果复用。历史真实 v1 文件、英雄令牌转让归属、原版死亡／移除及查询时序、实际窗口和联机仍待验证。下一功能批次 0/3。
+
+
 ### AI 英雄生产时间查询（待合批验证，3/3）
 
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`。`GetUnitBuildTime` 对己方已有英雄返回按等级和源参数计算的复活时间；未持有英雄或未知单位返回零，普通单位沿用源训练时间。原版 1.27 的 `0x6f890700` 将英雄查询交给 `0x6f89ba40`，后者按类型查玩家英雄，调用使用 `ReviveTimeFactor` 的 `0x6f40f5f0`，未找到返回零。合批运行 `hero-cost`、`hero-token-cleanup`、`hero-token`、clock 生产快照及生产／复活回归；多个同类型英雄、原版动态精度和联机待验证。本次提交前未执行功能测试。
