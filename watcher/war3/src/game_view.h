@@ -137,6 +137,7 @@ class GameView {
     bool videoPersistable_=true;
     bool appExit_=false;
     std::wstring chatText_;
+    size_t chatCursor_=0;
     wchar_t chatHighSurrogate_=0;
     ChatChannel chatChannel_=ChatChannel::Allies;
     std::optional<unsigned> chatRecipient_;

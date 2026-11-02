@@ -1,5 +1,6 @@
 // Author: MiYu. Focused native drawing/input checks for map browsing and setup controls.
 #include "map_browser.h"
+#include "chat_editor.h"
 #include <StormLib.h>
 #include <functional>
 #include <iostream>
@@ -23,6 +24,8 @@ void failingConfig(const fs::path& path) {
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3 && argc!=4){std::cerr<<"Usage: war3_browser_tests <data-root> <scratch-root> [name-prefix]\n";return 2;}
     auto filter=argc==4?utf8(argv[3]):std::string{};unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){if(!std::string_view(name).starts_with(filter))return;try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};
+    test("chat_edit_utf16",[&]{std::wstring value=L"ab\U0001F600中";size_t cursor=value.size();wchar_t pending=0;editChat(value,cursor,pending,VK_LEFT,{});editChat(value,cursor,pending,VK_LEFT,{});require(cursor==2,"Cursor split a surrogate pair");editChat(value,cursor,pending,0,L"X");require(value==L"abX\U0001F600中" && cursor==3,"Insertion did not use cursor");editChat(value,cursor,pending,VK_DELETE,{});require(value==L"abX中" && cursor==3,"Delete split a surrogate pair");editChat(value,cursor,pending,0,L"\b");require(value==L"ab中" && cursor==2,"Backspace did not remove previous character");editChat(value,cursor,pending,VK_HOME,{});editChat(value,cursor,pending,0,L"中");editChat(value,cursor,pending,VK_END,{});editChat(value,cursor,pending,0,L"\xD83D");editChat(value,cursor,pending,0,L"\xDE00");require(value==L"中ab中\U0001F600" && cursor==value.size(),"Unicode insertion or end failed");editChat(value,cursor,pending,0,L"\b");require(value==L"中ab中" && cursor==value.size(),"Backspace split a surrogate pair");value.assign(255,L'a');cursor=value.size();editChat(value,cursor,pending,0,L"\xD83D\xDE00");require(value.size()==255 && cursor==255 && !pending,"Length limit split a surrogate pair");editChat(value,cursor,pending,0,L"b");editChat(value,cursor,pending,0,L"c");require(value.size()==256 && value.back()==L'b',"Chat length limit differs");});
+    if(filter=="chat_edit_utf16"){std::cout<<"RESULT passed="<<passed<<" failed="<<failed<<'\n';return failed?1:0;}
     try {
         auto dataRoot=fs::canonical(argv[1]),output=fs::absolute(argv[2]);fs::create_directories(output);auto scratch=output/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(!fs::exists(scratch),"Scratch already exists");fs::create_directories(scratch/L"Folder");fs::create_directory(scratch/L"Vanishing");
         auto source=dataRoot/L"Maps/(2)BootyBay.w3m",valid=scratch/L"a-valid.w3m",bad=scratch/L"b-bad.w3x",missing=scratch/L"c-missing.w3x",truncated=scratch/L"d-truncated.w3x";fs::copy_file(source,valid);{std::ofstream file(bad,std::ios::binary);file<<"broken archive";}mapArchive(missing,"other.txt","not a map");mapArchive(truncated,"war3map.w3i","short");

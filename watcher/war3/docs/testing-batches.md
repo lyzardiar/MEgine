@@ -7239,3 +7239,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 单位警报与小地图图标存档（部分验证，待功能阶段）
 
 路径：`tests/clock_tests.cpp`。既有 `SMLT` 保存单位忽略警报状态，`SHID` 保存替代小地图图标标志；新增实际磁盘检查点回归验证两种状态随单位重建，并在加载启动后可再次修改。Win32 Release 客户端及 clock 目标编译通过；`WAR3_CLOCK_FILTER=checkpoint_preserves_unit_alarm_and_minimap_icon` 和 `unit_core_restores_hero_abilities_equipment_and_vitals` 各为 1 通过／0 失败。后者首次运行发现旧断言没有区分地形与障碍路径指纹错误，已按现有两种诊断修正并通过。隔离目录位于 `tmp/docs-artifacts/war3/unit-core-diagnostic/`；本次未更改存档格式或产品状态。实际受攻击提示、小地图窗口、原版存档格式和其他地图仍待功能阶段验证。
+
+### 对局聊天光标编辑（部分验证，待功能阶段）
+
+路径：`src/chat_editor.h`、`src/game_view.{h,cpp}`、`tests/browser_tests.cpp`、`docs/chat-dialog.md`。对局聊天支持光标插入／移动／删除和光标附近长文本显示，保留完整发送内容及原有长度限制；聊天频道和既有命令分发不变。Win32 Release 客户端及 browser 测试目标增量编译通过；`war3_browser_tests <data-root> <scratch> chat_edit_utf16` 为 1 通过／0 失败，覆盖中间插入／删除、Home／End、代理对及长度边界。BootyBay 隐藏客户端通过窗口消息输入 `abcd`、左移两次、Delete、插入 `X`，截图显示 `abXd`；证据 `tmp/docs-artifacts/war3/chat-editor/live/`。该检查未验证真实前台输入、中文输入法、鼠标定位、长文本可见范围、发送／事件、联机、原版布局及大厅输入，这些留待功能阶段。
