@@ -7095,3 +7095,9 @@ Win32 Release 客户端与 `war3_passive_tests` 增量编译成功；新增物�
 路径：`tests/clock_tests.cpp`。新增 `region_leave_rechecks_after_callback`，覆盖首个离开回调将后续候选送回区域，撤销过期离开并允许其随后真正离开；合批设置 `WAR3_CLOCK_FILTER=region_leave_rechecks_after_callback` 运行 `war3_clock_tests <data-root> <output-root>`。新增回归尚未执行，事件销毁、过滤器重入和原版时序仍待对照。
 
 距离事件和区域离开事件新增夹具已合并增量编译 `war3_clock_tests` 成功；两项行为回归尚未执行。
+
+### 物品特效位置（待功能批次验证）
+
+路径：`src/session_effects.cpp`、`src/game_effects.cpp`、`tests/passive_tests.cpp`、`docs/dota-bkb-item-handles.md`。附到物品的特效创建、状态更新和绘制读取当前地面或持有者坐标；合批运行 `war3_passive_tests <data-root> <fixture> invalid-item`，检查创建位置，并在实际窗口检查即时移动、拾取／丢弃、迷雾及附着效果。原模型附件点、空中高度、持有状态可见性与原版动态行为仍待核对。
+
+Win32 Release 客户端和 `war3_passive_tests` 增量编译成功；功能断言与窗口画面尚未执行。
