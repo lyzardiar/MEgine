@@ -7263,3 +7263,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 遗忘之书与借用技能永久标记（待功能阶段验证）
 
 路径：`src/session_spellbooks.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`、`docs/spellbooks-retraining.md`。重训清理已学技能时，仍由法术书提供的能力保留永久标记，实际消失的能力清理标记。Win32 Release 客户端及 passive 测试目标编译通过；`war3_passive_tests <data-root> <fixture> retrain-book` 为 1 通过／0 失败，使用原 `tret` 和自定义法术书检查技能点退还、物品消耗、借用技能／标记保留、最后来源移除，以及没有借用来源时的技能／标记清理；修复前在共享技能标记处失败。相关 `hidden-book` 为 4 通过／0 失败。夹具在 `tmp/docs-artifacts/war3/retrain-book/fixture.w3m`；多本物品书、自动施法、重训回调、原版时序与窗口待功能阶段验证。
+
+### 对局聊天鼠标定位（待功能阶段验证）
+
+路径：`src/chat_editor_ui.h`、`src/game_view.{h,cpp}`、`tests/browser_tests.cpp`、`docs/chat-dialog.md`。对局聊天在输入框内按可见文本定位插入点，绘制与点击共享滚动范围，点击重置未完成的 UTF-16 代理对；输入继续隔离于世界命令。Win32 Release 客户端和 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> chat_edit_lobby_layout` 为 1 通过／0 失败，覆盖原字符显示、中文／代理对边界、长文本可见范围及两端点击限制，另保留大厅控件检查。该检查未驱动实际对局鼠标，前台焦点、输入法、发送、不同窗口尺寸、联机及原版表现待功能阶段验证。

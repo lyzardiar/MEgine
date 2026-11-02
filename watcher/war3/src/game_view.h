@@ -165,6 +165,7 @@ class GameView {
     static std::string portraitModelPath(const std::string& model);
     unsigned unitTeamColor(const UnitState& unit) const;
     void drawUnitPortrait();
+    std::wstring chatPrefix() const;
     void hud(const GameInput& input);
     void commandPanel(const GameInput& input,std::uint32_t unit);
     void cargoPanel(const GameInput& input,std::uint32_t unit);
