@@ -7654,3 +7654,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua／2SAJ 扩展批次（部分通过，后续功能待测）
 
 集成版本 `4490678`，功能提交 `9a2ac8e`、`ad49128`、`4490678`。Win32 Release 客户端、Lua、2SAJ 和 JASS 线程测试目标编译通过；同版本执行 `war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。Lua 检查使用隔离会话和测试身份、版本、控制台、日志宿主，不加载 Game.dll；原图入口停于缺失 `os` 时间接口。扩展 native 的 2SAJ 分发、平台数据、动态 UI、正式客户端启动、存档及实际游戏和原版一致性均未执行，继续保留待测。
+
+### Lua 日期与时间标准库（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.cpp`、`tests/lua_tests.cpp`。开放 Lua 5.3 的 `os.time`、`os.date`、`os.difftime`，使用进程本地时钟与时区；其余 OS 文件、进程、环境和区域设置操作未开放。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖日期表与时间戳往返、时间差和未开放接口。原图隔离入口越过日志时间调用，下一处为未绑定的 `post_message`；测试未发送网络请求。时间随机器和时区变化，联机脚本若将其用于同步状态可能分歧；正式宿主、地图完整启动、网络上传策略及实际联机尚待验证。
