@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 无效建造名称与排队命令（待功能批次验证）
+
+路径：`src/session_orders.cpp`、`tests/order_queue_tests.cpp`，见[建造](construction.md)。`IssueBuildOrder` 的空或无法解析名称直接返回失败，不清除已有玩家排队命令。原版 1.27 native 注册将该入口映射至 `0x6f1e8fb0`，该函数在 `0x6f1fae10` 名称解析返回零时直接返回；只读反汇编见 `tmp/docs-artifacts/war3/ability-scan-current/order-full.txt`。Win32 Release 客户端和订单测试目标编译通过，测试目标报告既有局部变量遮蔽警告；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-build` 1 通过、0 失败，覆盖空名称、未知名称和队列继续移动，未加载 Game.dll。有效及自定义名称、数字入口、资源／位置失败、事件顺序与原版动态行为待合批验证。
+
 ## 小地图配置脚本验证（部分验证）
 
 范围：`ae782e1`、`tests/live_world_tests.cpp`。Win32 Release live world 目标编译通过；`war3_live_world_tests <data-root> <BootyBay.w3m> <log> minimap-config` 1 通过、0 失败，隔离会话运行自编 JASS `config` 调用 `SetTerrainType`，验证小地图检测改地并保留其他底图像素，未加载 Game.dll。该检查使用 BootyBay 地形和自编脚本，实际地图脚本、窗口、存档恢复及原版颜色仍待验证。
