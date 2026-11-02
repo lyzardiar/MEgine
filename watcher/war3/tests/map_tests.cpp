@@ -88,6 +88,35 @@ call RemoveUnit(discarded)
 endfunction
 )jass";require(bool(file),"Cannot create preload source");}Archives archives(argv[1]);auto map=archives.readCandidates({"Maps\\FrozenThrone\\Campaign\\War3XBonusCredits.w3x"},ArchiveScope::Common);require(bool(map),"Missing source map");archives.mountMap(std::make_shared<const Bytes>(map->bytes),"War3XBonusCredits.w3x");auto world=World::read(archives);auto info=world->data().info;ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);auto& vm=session.runtime();auto before=session.units().size();vm.invoke("Preloader",std::array{vm.string("unit.j")});auto player=vm.invoke("Player",std::array{vm.integer(0)});require(vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_GOLD")}).bits==1357,"Preloader could not read created unit");require(session.units().size()==before+1,"Preloader unit creation or removal did not persist");auto found=std::find_if(session.units().begin(),session.units().end(),[](auto& entry){return entry.second->userData==2468;});require(found!=session.units().end() && found->second->type==ObjectData::code("hfoo") && found->second->owner==1 && std::bit_cast<float>(found->second->maxMana.bits())==100 && std::bit_cast<float>(found->second->mana.bits())==42 && std::bit_cast<float>(found->second->x.bits())==128 && std::bit_cast<float>(found->second->y.bits())==256,"Preloader unit state did not survive child runtime");
     });
+    test("preloader_unit_event_context",[&]{
+        auto dir=fs::absolute(argv[2])/L"preloader-unit-event"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
+        {std::ofstream file(dir/L"Preload"/L"unit-event.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing
+local unit u=GetTriggerUnit()
+if u != null and GetTriggeringTrigger() != null and GetTriggerPlayer() == Player(0) and GetUnitState(u, UNIT_STATE_LIFE) == 50.0 then
+    call SetUnitUserData(u, 2468)
+endif
+endfunction
+)jass";require(bool(file),"Cannot create preload source");}Archives archives(argv[1]);auto map=archives.readCandidates({"Maps\\FrozenThrone\\Campaign\\War3XBonusCredits.w3x"},ArchiveScope::Common);require(bool(map),"Missing source map");archives.mountMap(std::make_shared<const Bytes>(map->bytes),"War3XBonusCredits.w3x");auto world=World::read(archives);auto info=world->data().info;auto common=archives.readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Missing common script");std::string script=R"jass(globals
+unit subject=null
+integer observed=0
+endglobals
+function onUnitState takes nothing returns nothing
+call Preloader("unit-event.j")
+set observed=GetUnitUserData(GetTriggerUnit())
+endfunction
+function config takes nothing returns nothing
+endfunction
+function main takes nothing returns nothing
+local trigger t=CreateTrigger()
+set subject=CreateUnit(Player(0), 'hfoo', 0.0, 0.0, 0.0)
+call TriggerRegisterUnitStateEvent(t, subject, UNIT_STATE_LIFE, LESS_THAN, 100.0)
+call TriggerAddAction(t, function onUnitState)
+endfunction
+function runPreloaderEvent takes nothing returns nothing
+call SetUnitState(subject, UNIT_STATE_LIFE, 50.0)
+endfunction
+)jass";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"unit-event-fixture.j",script,"preloader unit event fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("runPreloaderEvent");require(vm.global("observed").bits==2468,"Preloader lost main unit event context or state change");auto subject=vm.global("subject");require(session.units().at(subject.bits)->userData==2468,"Preloader event unit state did not persist");
+    });
     test("preloader_gamecache_persistence",[&]{
         auto dir=fs::absolute(argv[2])/L"preloader-cache"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
         {std::ofstream file(dir/L"Preload"/L"cache.j",std::ios::binary);file<<"function PreloadFiles takes nothing returns nothing\nlocal gamecache c=InitGameCache(\"preload.w3v\")\ncall StoreInteger(c, \"mission\", \"score\", 2468)\ncall StoreString(c, \"mission\", \"name\", \"from preload\")\ncall SaveGameCache(c)\nendfunction\n";require(bool(file),"Cannot create preload source");}Archives archives(argv[1]);auto map=archives.readCandidates({"Maps\\FrozenThrone\\Campaign\\War3XBonusCredits.w3x"},ArchiveScope::Common);require(bool(map),"Missing source map");archives.mountMap(std::make_shared<const Bytes>(map->bytes),"War3XBonusCredits.w3x");auto world=World::read(archives);auto info=world->data().info;ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);auto& vm=session.runtime();vm.invoke("Preloader",std::array{vm.string("cache.j")});auto cache=vm.invoke("InitGameCache",std::array{vm.string("preload.w3v")});auto mission=vm.string("mission"),score=vm.string("score"),name=vm.string("name");require(cache.bits && vm.invoke("GetStoredInteger",std::array{cache,mission,score}).bits==2468,"Preloader gamecache integer missing");auto value=vm.invoke("GetStoredString",std::array{cache,mission,name});require(value.text && *value.text=="from preload","Preloader gamecache string did not survive runtime destruction");vm.invoke("FlushGameCache",std::array{cache});require(vm.invoke("ReloadGameCachesFromDisk").bits && vm.invoke("GetStoredInteger",std::array{cache,mission,score}).bits==2468,"Preloader gamecache did not persist");value=vm.invoke("GetStoredString",std::array{cache,mission,name});require(value.text && *value.text=="from preload","Preloader gamecache string did not reload");

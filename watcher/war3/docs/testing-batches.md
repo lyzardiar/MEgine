@@ -7181,3 +7181,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 独立预加载脚本的单位生命、魔法与归属（待功能阶段验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`。独立脚本复用会话的单位状态和归属读写，沿用生命事件、资源边界及所有权变更流程。Win32 Release 客户端与 map 测试目标编译成功；`war3_map_tests <data-root> <scratch> preloader_unit_state` 结果 1 通过／0 失败，覆盖魔法上限／当前值、归属转移、单位状态在子脚本结束后保留，以及无位移的 `SetUnitPosition` 调用。生命变化／死亡事件、状态观察器、转让回调重入、有位移的区域事件、跨脚本句柄和原版时序待功能阶段验证。
+
+### 独立预加载脚本的触发器上下文（待功能阶段验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`。独立脚本读取主会话当前触发器、事件 ID、触发玩家及单位；无上下文时沿用主会话接口的空值。Win32 Release 客户端及 map 测试目标编译成功；`war3_map_tests <data-root> <scratch> preloader_unit_event_context` 结果 1 通过／0 失败：主地图单位生命越过阈值时调用独立脚本，子脚本读取触发器、玩家和单位并修改该单位用户数据，返回后主地图读取到结果。事件 ID、无上下文、嵌套事件、销毁／转让回调、睡眠和原版动态时序仍待验证。
