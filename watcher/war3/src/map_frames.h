@@ -11,13 +11,13 @@ MapFrameRect solveMapFramePoints(float width,float height,std::span<const MapFra
 class MapFrames {
 public:
     struct Anchor {std::uint32_t point=0,target=0,targetPoint=0;float x=0,y=0;};
-    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;size_t dynamicTextBytes=0;};
+    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;size_t dynamicTextBytes=0,dynamicTextureBytes=0;};
 private:
     std::shared_ptr<FrameDefinitions> definitions_;
     std::map<std::uint32_t,Node> nodes_;
     std::uint32_t next_=2;
     std::uint64_t revision_=0;
-    size_t textBytes_=0;
+    size_t textBytes_=0,textureBytes_=0;
     std::uint32_t add(FrameDefinition definition,std::uint32_t parent,std::uint32_t context,unsigned depth);
 public:
     explicit MapFrames(std::shared_ptr<FrameDefinitions> definitions);
@@ -29,6 +29,7 @@ public:
     void setPoint(std::uint32_t id,std::uint32_t point,std::uint32_t target,std::uint32_t targetPoint,float x,float y);
     void setSize(std::uint32_t id,std::optional<float> width,std::optional<float> height);
     void setText(std::uint32_t id,std::string text);
+    void setTexture(std::uint32_t id,std::string name,bool tiled);
     std::string text(std::uint32_t id) const;
     void visible(std::uint32_t id,bool value);
     bool visible(std::uint32_t id) const;

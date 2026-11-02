@@ -7882,3 +7882,9 @@ Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_t
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入地图插件的 `FrameSetText`／`FrameGetText`，仅支持已接入绘制的 TEXT 帧；动态字符串走现有 FDF 的文本排版和颜色标记路径，修改触发帧树重绘。单条限制 65536 字节、所有动态文本限制 16 MiB，更新或销毁帧释放相应计数；非法类型、NUL 和超长文本明确失败。插件注册签名为 `(IS)V`、`(I)S`。
 
 Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖中文和颜色标记往返、非法参数及失败时版本不变。浏览器绘制夹具新增文本帧；因前次 D3D9 设备创建失败，本次未重复执行，字体、颜色、自然宽度、UI 像素和原版行为待批次验证。TEXT 以外的文本控件、动态纹理与其平铺／归档覆盖、事件及实际地图入口仍待实现；正式地图依然缺少真实平台身份。
+
+### Lua 地图 BACKDROP 纹理与归档覆盖（部分验证，待批次验证）
+
+路径：`src/{map_frames,lua_runtime,lua_jass_bridge,map_script_runtime,glue,game_view}.{h,cpp}`（按实际存在文件）、`tests/{lua_tests,browser_tests}.cpp`。接入地图插件 `FrameSetTexture`（`(ISI)V`），目前支持 BACKDROP、标志 0／1，使用后者控制平铺；路径校验、长度和累计预算保护帧状态。动态纹理直接使用指定路径，避免皮肤键替换。地图帧绘制优先读取 Storm 内存覆盖文件，再回退地图／公共归档；BLP／TGA 使用双向别名，覆盖层写入或恢复后刷新帧绘制缓存，不同文件的写入目前也会触发整树重建。平铺含义参考 https://github.com/h-lua/h-lua/blob/main/depend/h-lua/lib/japi.lua ，实际原插件的其他标志和精确平铺行为待核验。
+
+Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖纹理替换、平铺状态、非法输入、覆盖优先级／别名、相同写入、快照恢复与版本。浏览器测试新增纹理覆盖和平铺的实际绘制夹具；前次 D3D9 设备创建失败，本次未重复执行，画面、平铺比例、覆盖层运行时刷新、性能及原版一致性待批次验证。其他帧类型和标志、事件、平台身份及完整地图仍待实现或验证。

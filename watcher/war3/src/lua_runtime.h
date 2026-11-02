@@ -133,6 +133,8 @@ public:
     void attachConsole(LuaConsoleHost host);
     void attachStormHost(LuaStormHost host);
     void attachStormArchiveOverlay(const Archives& archives);
+    std::optional<std::vector<std::uint8_t>> stormTextureOverride(std::string_view name) const;
+    std::uint64_t stormOverlayRevision() const;
     std::vector<std::uint8_t> encodeStormOverlay() const;
     void restoreStormOverlay(std::span<const std::uint8_t> bytes);
     void attachFrameDefinitions(std::shared_ptr<FrameDefinitions> definitions);

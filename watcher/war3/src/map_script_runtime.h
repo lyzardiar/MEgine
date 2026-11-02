@@ -26,6 +26,8 @@ public:
     void start();
     void pump();
     bool uiRootVisible() const;
+    std::optional<std::vector<std::uint8_t>> frameTextureOverride(std::string_view name) const {return lua_.stormTextureOverride(name);}
+    std::uint64_t frameTextureRevision() const {return lua_.stormOverlayRevision();}
     const std::shared_ptr<MapFrames>& frames() const {return frames_;}
 };
 }

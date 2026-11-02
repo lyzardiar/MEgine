@@ -22,6 +22,7 @@ private:
     Renderer& renderer_;
     Text& text_;
     FrameDefinitions definitions_;
+    FrameSource frameTextureSource_;
     std::vector<Node> nodes_;
     std::map<std::string,unsigned> names_;
     std::map<std::string,Texture> textures_;
@@ -52,7 +53,7 @@ private:
     void openPopup(unsigned index,const UiInput& input);
 public:
     GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const std::string& member,const std::string& root);
-    GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const MapFrames& frames);
+    GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const MapFrames& frames,FrameSource textureSource={});
     std::pair<float,float> center(const std::string& name) const;
     void focusEnabled(bool enabled) {focusEnabled_=enabled;if(!enabled)focused_.clear();}
     void skinSection(const std::string& section) {if(skinSection_!=section){skinSection_=section;skinTextures_.clear();}}
