@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## AI 英雄购买路径可达性（待功能批次验证）
+
+路径：`src/session_ai.cpp`、`tests/ai_tests.cpp`，见[AI 英雄物品](ai-hero-items.md)。英雄在购买发令前检查路径终点是否进入商店交易范围，部分路径不足以交易时继续尝试其他落点或商店。Win32 Release 客户端及 AI 目标编译通过；`war3_ai_tests <data-root> <BootyBay.w3m> hero-shop-blocked` 与 `hero-shop-range` 各 1 通过、0 失败，前者在隔离会话中人工修改地面路径，验证包围商店时不发出部分路线、移除障碍后完成购买；未加载 Game.dll。多商店选取、发令后动态封路、移动障碍、回调重入、路径性能及原版策略待合批验证。
+
 ## AI 英雄购买的商店范围（待功能批次验证）
 
 路径：`src/session.h`、`src/session_commerce.cpp`、`src/session_ai.cpp`、`tests/ai_tests.cpp`，见[AI 英雄物品](ai-hero-items.md)。前往商店的落点与交易资格共用 `Aall`／`Aneu` 范围及自定义覆盖，避免英雄停在实际购买范围外。Win32 Release 客户端和 AI 测试目标编译通过；`war3_ai_tests <data-root> <BootyBay.w3m> hero-shop-range` 1 通过、0 失败，检查人族商店路线、扣款与库存消耗，未加载 Game.dll。夹具暂停 AI 脚本，隐藏其他单位并预置科技和资源；地图自定义小范围、阻挡、多名英雄竞争、预约变化及原版策略待批次验证。
