@@ -7911,3 +7911,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/fdf.cpp`、`tests/native_tests.cpp`。支持顶层和子级命名 `String`／`Texture`、模板继承与 `Layer` 容器，同时保留匿名纹理语法；原版信息面板图标尺寸、字体属性和建筑队列层级现可读取。重复名称的运行时上下文和层绘制尚未接入，不能据此实现 `SimpleTextureFindByName` 或认为标准 HUD 已还原。
 
 Win32 Release `war3_native_tests` 编译通过；以原安装数据运行 17 通过／0 失败，覆盖原版 `SimpleInfoPanel.fdf`、继承、层级和匿名纹理。地图正式启动仍受真实平台身份接口阻塞，隔离启动仍缺少 HUD 纹理查找；完整地图启动、图形渲染、UI 一致性和原版上下文语义待验证。
+
+### Lua 地图帧清除锚点（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入 `FrameClearAllPoints`（`(I)V`），清除已有运行时锚点及 FDF `SetPoint`、`Anchor`、`SetAllPoints`，之后设置锚点参与现有布局；重复清除无变更，根帧暂不支持。标准 HUD 未纳入地图帧树，不能清除标准 HUD 锚点。
+
+Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖清除、重复调用、重设、签名和根帧拒绝。浏览器夹具新增布局断言，因既有 D3D9 设备创建失败未执行，画面和原版锚点行为待批次验证。隔离探针临时模拟查找返回句柄后观测到地图调用 `FrameClearAllPoints`，再访问该句柄；探针未作为生产实现，地图仍阻塞于标准 HUD 查找及真实平台身份。

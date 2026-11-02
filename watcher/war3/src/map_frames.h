@@ -28,6 +28,7 @@ public:
     std::uint32_t create(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     void destroy(std::uint32_t id);
     void setPoint(std::uint32_t id,std::uint32_t point,std::uint32_t target,std::uint32_t targetPoint,float x,float y);
+    void clearPoints(std::uint32_t id);
     void setSize(std::uint32_t id,std::optional<float> width,std::optional<float> height);
     void setText(std::uint32_t id,std::string text);
     void setTexture(std::uint32_t id,std::string name,bool tiled);
