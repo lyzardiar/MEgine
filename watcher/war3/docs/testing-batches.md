@@ -7870,3 +7870,9 @@ Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_t
 路径：`src/map_frames.{h,cpp}`、`src/glue.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入地图插件的 `FrameSetPoint`（`(IIIIRR)V`），按帧句柄保存九种锚点、目标、偏移并使绘制版本失效；相同源点后设覆盖，销毁目标时清理相关引用。绘制时结合 FDF 原有锚点及脚本锚点求位置和尺寸，循环、冲突与非法坐标明确报错；未改普通地图的 FDF 布局。锚点编号采用 1.31 `common.j` 常量顺序（https://wc3jass.com/jassdoc.php?file=common.j&line=112），该参考不证明 1.27 插件所有边界行为。
 
 Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖单点／双点计算、冲突、脚本参数、失败后的版本、帧销毁和悬空引用清理。浏览器绘制夹具扩充为锚点移动与尺寸检查；前一次 D3D9 设备创建失败，本次未重复运行，真实 GPU 画面、文本自然尺寸、复杂 FDF 锚点组合、销毁后的原版语义及普通地图视觉回归保留待批次验证。绝对锚点、尺寸／文本／纹理动态修改、事件与完整地图仍未实现。
+
+### Lua 地图帧绝对锚点与尺寸（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/glue.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入 `FrameSetAbsolutePoint`、`FrameSetSize`、`FrameSetWidth` 和 `FrameSetHeight`；绝对坐标以 UI 左下角为原点，尺寸修改进入帧树并触发 FDF 重布局，保留另一轴尺寸，非法尺寸在修改前拒绝。多锚点确定的轴使用约束推导尺寸，原版优先级与边界行为尚需对照。地图插件注册签名分别为 `(IIRR)V`、`(IRR)V` 和 `(IR)V`。
+
+Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖绝对锚点状态、单轴／双轴尺寸、非法参数和状态不变。浏览器绘制夹具新增绝对坐标及尺寸断言；此前 D3D9 设备创建失败，本次未重复执行，实际画面、尺寸与锚点优先级、标准 HUD 回归及原版一致性待批次验证。正式地图仍停在 `EXGetPlayerRealName`，玩家显示名并非已验证的平台身份；动态文本、纹理、事件、平台服务和整图玩法仍待实现。

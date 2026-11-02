@@ -15,7 +15,7 @@ public:
     struct Choice {std::string text,image;};
     struct ChoiceChange {std::string frame;size_t index;};
 private:
-    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; std::vector<MapFrames::Anchor> anchors; };
+    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; std::vector<MapFrames::Anchor> anchors;std::optional<float> mapWidth,mapHeight; };
     struct Texture { Com<IDirect3DTexture9> gpu; unsigned width,height; };
     Archives& archives_;
     Images& images_;
