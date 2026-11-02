@@ -111,3 +111,5 @@ Win32 Release 客户端与相关测试目标编译通过；原图隔离会话手
 `UndeadX07c` 的电梯初始化将 `udg_zElevatorsC[2]` 设为空，周期更新仍对该项执行 `ChangeElevatorHeight` 和 `GetElevatorHeight`；后者的遮挡高度查询按零处理空句柄。原图脚本摘录于 `tmp/docs-artifacts/war3/elevator-script-probe/war3map.j`；实际电梯移动、路径及窗口表现仍待验证。
 
 `UndeadX07c` 隔离诊断选取坐标 `(640, 2176)` 的可见可行走电梯，隐藏其他可行走对象后分别指定 `stand`、`stand second`、`stand third`；模型表面中心高度约为 26.40、154.43、282.29，表明会话的动画几何查询能区分三个静止层级。日志 `tmp/docs-artifacts/war3/elevator-motion-probe/probe-visible.log`；该诊断未下达单位移动命令，也未验证原版动态时序或窗口画面。
+
+`UndeadX07b` 隔离诊断：推进至 300 秒后将阿尔萨斯送入被遗忘者区域，推进至 400 秒后直接击杀首领，420.5 秒通过胜利对话请求进入 `UndeadX07c`。随后在同一隔离用户目录启动下一关，英雄自定义数据 2468 得以恢复；源英雄经验处于暂停状态、等级 4，下一关脚本执行降级后为等级 1 且经验仍暂停，需对照原版缓存恢复与脚本等级行为。`UndeadX07c` 单独隔离诊断将英雄直接送入出口，328.625 秒通过胜利对话并请求 `UndeadX07Interlude`。日志 `tmp/docs-artifacts/war3/undead-exit-probe/`；均为人为触发的诊断，不代表自然战斗、完整缓存兼容或窗口验收。
