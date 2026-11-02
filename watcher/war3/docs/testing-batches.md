@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 会话级全局存储基础（待功能批次验证，2/3）
+
+路径：`src/jass_binary_storage.h`、`src/jass_binary_storage.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。将初始化结果保存在可复用的标量与稀疏数组容器中，跨函数及回调保留动态字符串和句柄值；检查常量、类型、空值、数组默认／越界及总元素预算。固定夹具验证持久值、越界默认、常量保护和错误类型不改变原值，1 通过／0 失败。用户地图隔离探针将临时全局／数组映射替换为该容器后，`R3` 直接及触发器调用累计使 `mElapsed=40`，`Nm` 的 `BQ[2]=ABC`，原图 `config` 与字符串分支仍通过，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。存储尚未由正式会话持有；跨存档、回调生命周期、预算边界、Lua 和地图主入口待批次验证或实现，地图仍不能运行。
+
 ## 共享回调运行时的作用域关闭（待功能批次验证，1/3）
 
 路径：`src/jass_threads.h`、`src/jass_threads.cpp`、`src/jass_runtime.h`、`src/jass_runtime.cpp`、`src/jass_binary_callbacks.h`、`src/jass_binary_callbacks.cpp`、`tests/jass_thread_tests.cpp`。回调适配器使用显式作用域关闭：销毁其共享 Runtime 时只取消它拥有的线程，以及其他所有者中正在执行该 Runtime 的挂起调用栈；其他线程保留。普通 Runtime 的关闭及显式 `cancelThreads` 保持原有全调度器语义。`scoped_shared_runtime_destruction_preserves_other_threads` 1 通过／0 失败：同时挂起独立宿主线程、宿主进入共享运行时的嵌套栈和共享运行时线程；销毁共享运行时后两条相关栈被展开，独立宿主线程保留并正常恢复。`war3_jass_binary_tests` 输出 1 通过／0 失败。命令：`war3_jass_thread_tests scoped_shared_runtime_destruction_preserves_other_threads`、`war3_jass_binary_tests`。仍须保证适配器和捕获状态在所有 code 引用移除前存活，禁止在脚本线程中销毁；等待依赖、外部等待、可挂起二进制回调、快照和会话接入待批次验证。
