@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 自动索敌后的撤退恢复（待功能批次验证，2/3）
+
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。撤退队员自动索敌造成单次战斗轮次变化时保留跟踪，离家超过 350 时继续回家；显式新订单仍取消跟踪。合批运行 `retreat-auto`、`retreat-retry`、`retreat-reentrant`、`retreat-reinforce`、`retreat-removal` 和运输撤退回归，并重跑原图长局定位；多次连续战斗变化、复杂回调、原版时序和联机待验证。本次未执行功能测试。
+
+
 ### AI 队员移除与撤退跟踪清理（待功能批次验证，1/3）
 
 路径：`src/session_food.cpp`、`src/session_ownership.cpp`、`tests/campaign_ai_tests.cpp`。单位移除时立即清除队长／防守／自杀队伍成员、撤退命令和队长路线成员引用；易主时同时清除撤退命令跟踪，避免这些地面队伍引用残留在 AI 快照中。合批运行 `retreat-removal`、`retreat-retry`、`armies`、AI 快照及所有权／载具相关回归；单位移除回调重入、运输中的移除与完整对局仍待验证。本次未执行功能测试。
