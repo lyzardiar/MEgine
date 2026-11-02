@@ -7750,3 +7750,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 同步消息与 JAPI 查找批次（部分通过，后续功能待测）
 
 集成版本 `421f053`，功能提交 `5e333ef`、`3137e66`、`421f053`。Win32 Release 客户端、Lua 及 JASS 线程测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。覆盖内存宿主投递、消息上下文、标准原生函数查找及技能扩展声明，原图隔离入口停在 `EXGetEffectX`。技能扩展调用、真实网络传输、正式客户端和 UI 未执行，存读档限制与本批各项记录所列一致，保留待测。
+
+### Lua JAPI 特效平面坐标（部分验证，待批次验证）
+
+路径：`src/session.h`、`src/session_effects.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`EXGetEffectX`／`EXGetEffectY` 从会话未附着特效读取平面坐标，无效或销毁句柄返回零；附着特效的渲染挂点坐标尚未实现，明确报错。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，对照会话中非零位置、销毁后的值及声明签名。原图隔离入口越过坐标函数查找，停于 `Unsupported Lua JAPI: EXEffectMatRotateX`；附着挂点、原版坐标边界和正式游戏画面待验证。
