@@ -7802,3 +7802,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 2SAJ 启动与 Lua 入口批次（部分通过，后续功能待测）
 
 集成版本 `1aee26a`，功能提交 `28c1c01`、`80ea262`、`1aee26a`，诊断提交 `059e652`。Win32 Release 客户端、Lua、JASS 线程及 CampaignAI 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败，`war3_campaign_ai_tests <data-root> <fixture> startup` 为 1 通过／0 失败。原图隔离探针读取真实地图文件、按二进制主入口进入 Lua 后停在 `EXSetUnitFacing`；平台服务与写入使用测试宿主，真实插件、正式客户端、原版 UI、休眠线程存档及完整游戏未执行，保留待测。CampaignAI 使用 `tmp/docs-artifacts/war3/campaign-ai/fixture.w3m`。
+
+### Lua JAPI 单位渲染朝向（部分验证，待批次验证）
+
+路径：`src/entities.h`、`src/game_morph.cpp`、`src/lua_jass_bridge.cpp`、`src/session.h`、`src/session_entities.cpp`、`src/session_unit_visual.cpp`、`src/session_unit_identity.cpp`、`src/session_{combat,concoction,locust,orders,roots,spells}.cpp`、`tests/{lua_tests,clock_tests}.cpp`。`EXSetUnitFacing` 单独设置单位视觉角度，不修改模拟朝向；单位正常转向时清除视觉覆盖，单位视觉快照升级至版本 3 并保留版本 1／2 读取。Win32 Release 客户端、Lua 与 clock 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖视觉／模拟分离和普通转向；`WAR3_CLOCK_FILTER=unit_core_restores_hero_abilities_equipment_and_vitals war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖视觉角度快照恢复及旧版视觉快照。scratch 位于 `tmp/docs-artifacts/war3/visual-facing-20261103/`。原图隔离入口继续停于 `EXSetUnitCollisionType`；视觉覆盖被原版运动更新取代的具体时序、实际画面和完整地图尚待验证。

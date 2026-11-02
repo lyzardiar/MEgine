@@ -1244,6 +1244,7 @@ public:
     const auto& groundSpells() const {return groundSpells_;}
     void setJapiEffectZ(std::uint32_t id,float value);
     float japiEffectZ(std::uint32_t id);
+    void setJapiVisualFacing(std::uint32_t unit,float facing);
     std::uint32_t japiUnitAbility(std::uint32_t unit,std::uint32_t ability);
     std::uint32_t japiAbilityId(std::uint32_t ability) const;
     float japiEffectCoordinate(std::uint32_t id,bool x) const;

@@ -43,6 +43,8 @@ struct UnitState {
     bool militiaBell=false,ignoreAlarm=false;
     std::string name,model,icon;
     jass::Real x,y,facing,life,maxLife,mana,maxMana,moveSpeed,defaultMoveSpeed,acquireRange;
+    std::optional<float> visualFacing;
+    void setFacing(jass::Real value){facing=value;visualFacing.reset();}
     float turnSpeed=0.6f,defaultTurnSpeed=0.6f,propWindow=1.04719755f,defaultPropWindow=60;
     bool turnApplied=false;
     int resources=0,userData=0,level=1,foodUsed=0,foodMade=0;
