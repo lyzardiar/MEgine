@@ -1,5 +1,7 @@
 // Author: MiYu. Map precedence, strict read errors and in-memory MPQ ownership.
 #include "archive.h"
+#include <atomic>
+#include <unordered_set>
 #include <StormLib.h>
 #include <bcrypt.h>
 #include <algorithm>
@@ -83,9 +85,17 @@ struct Archives::Store {
     size_t bytes=0,budget=0;
     std::uint64_t stamp=0;
 };
+struct Archives::Recording {
+    std::atomic<bool> active=false;
+    std::mutex mutex;
+    std::unordered_set<std::string> unique;
+    std::vector<std::string> names;
+    size_t bytes=0;
+    bool overflow=false;
+};
 std::vector<std::string> Archive::members(const std::string& pattern) const {SFILE_FIND_DATA found{};auto search=SFileFindFirstFile(handle_,pattern.c_str(),&found,nullptr);if(!search || search==INVALID_HANDLE_VALUE){auto error=GetLastError();if(error==ERROR_NO_MORE_FILES || error==ERROR_FILE_NOT_FOUND)return {};throw std::runtime_error("Cannot enumerate archive members: "+winError(error));}struct Close {HANDLE value;~Close(){SFileFindClose(value);}}close{search};std::vector<std::string> result;do{if(result.size()>=65536)throw std::runtime_error("Archive enumeration exceeds budget");result.emplace_back(found.cFileName);}while(SFileFindNextFile(search,&found));auto error=GetLastError();if(error!=ERROR_NO_MORE_FILES && error!=ERROR_SUCCESS)throw std::runtime_error("Archive enumeration failed: "+winError(error));return result;}
 std::vector<std::string> Archives::members(const std::string& pattern,ArchiveScope scope) const {if(pattern.empty() || pattern.front()=='/' || pattern.front()=='\\' || pattern.find(':')!=std::string::npos || pattern.find("..")!=std::string::npos)throw std::runtime_error("Invalid archive enumeration pattern");std::map<std::string,std::string> unique;auto scan=[&](Store& store){std::lock_guard lock(store.mutex);for(auto& archive:store.archives)for(auto& member:archive->members(pattern)){auto key=member;for(auto& c:key){if(c=='/')c='\\';c=char(std::tolower(static_cast<unsigned char>(c)));}unique.try_emplace(std::move(key),std::move(member));if(unique.size()>65536)throw std::runtime_error("Archive enumeration exceeds shared budget");}};if(map_ && scope!=ArchiveScope::Common)scan(*map_);if(scope!=ArchiveScope::Map)scan(*common_);std::vector<std::string> result;for(auto& [key,name]:unique)result.push_back(std::move(name));return result;}
-Archives::Archives(const fs::path& root) {
+Archives::Archives(const fs::path& root) : recording_(std::make_shared<Recording>()) {
     struct Less {bool operator()(const fs::path& a,const fs::path& b) const {return CompareStringOrdinal(a.c_str(),-1,b.c_str(),-1,TRUE)==CSTR_LESS_THAN;}};
     static std::mutex mutex;static std::map<fs::path,std::weak_ptr<Store>,Less> roots;auto key=fs::canonical(root);std::lock_guard lock(mutex);
     for(auto it=roots.begin();it!=roots.end();)if(it->second.expired())it=roots.erase(it);else ++it;
@@ -98,7 +108,14 @@ Archives::Archives(const fs::path& root) {
     if (!fs::exists(key / L"war3.mpq")) throw std::runtime_error("Missing base war3.mpq");
     common_=std::move(store);roots[key]=common_;
 }
-std::unique_ptr<Archives> Archives::fork() const {return std::unique_ptr<Archives>(new Archives(common_,map_));}
+std::unique_ptr<Archives> Archives::fork() const {return std::unique_ptr<Archives>(new Archives(common_,map_,recording_));}
+std::unique_ptr<Archives> Archives::forkIsolatedRecording() const {return std::unique_ptr<Archives>(new Archives(common_,map_,std::make_shared<Recording>()));}
+void Archives::startRecording() {std::lock_guard lock(recording_->mutex);recording_->active=true;}
+void Archives::clearRecording() {std::lock_guard lock(recording_->mutex);recording_->active=false;recording_->unique.clear();recording_->names.clear();recording_->bytes=0;recording_->overflow=false;}
+std::optional<std::vector<std::string>> Archives::recordedMembers() const {std::lock_guard lock(recording_->mutex);if(recording_->overflow)return {};return recording_->names;}
+void Archives::record(const std::shared_ptr<const Member>& member) {
+    if(!member || !recording_->active.load(std::memory_order_relaxed))return;std::lock_guard lock(recording_->mutex);if(!recording_->active || recording_->overflow || recording_->unique.contains(member->name))return;constexpr size_t limit=4u*1024u*1024u;if(recording_->names.size()>=65536 || member->name.size()>limit-recording_->bytes){recording_->overflow=true;return;}recording_->bytes+=member->name.size();recording_->unique.insert(member->name);recording_->names.push_back(member->name);
+}
 const fs::path& Archives::root() const {return common_->root;}
 fs::path Archives::mapPath() const {return map_?map_->archives.front()->path():fs::path{};}
 std::string Archives::mapDigest() const {if(!map_)throw std::runtime_error("Mounted map identity unavailable");std::lock_guard lock(map_->mutex);return map_->archives.front()->digest();}
@@ -117,7 +134,7 @@ std::shared_ptr<const Member> Archives::readStore(Store& store,const std::vector
     for(size_t i=0;i<store.archives.size();++i)for(auto& name:names){
         auto base=std::to_string(i)+":"+name;auto key=wavAudio?"wav:"+base:base;if(auto found=store.cache.find(key);found!=store.cache.end()){found->second.stamp=++store.stamp;return found->second.member;}if(wavAudio)if(auto found=store.cache.find(base);found!=store.cache.end()){found->second.stamp=++store.stamp;return found->second.member;}
         auto& archive=*store.archives[i];std::string diagnostic;auto bytes=wavAudio?archive.readWavForAudio(name,diagnostic):archive.read(name);if(bytes){
-            auto source=utf8(archive.path().wstring());if(!diagnostic.empty()){auto warning="WAV recovery in "+source+": "+diagnostic;OutputDebugStringA((warning+"\n").c_str());source+=" ["+diagnostic+"]";}else key=base;auto member=std::make_shared<Member>(Member{std::move(*bytes),std::move(source)});if(member->bytes.size()>store.budget)return member;
+            auto source=utf8(archive.path().wstring());if(!diagnostic.empty()){auto warning="WAV recovery in "+source+": "+diagnostic;OutputDebugStringA((warning+"\n").c_str());source+=" ["+diagnostic+"]";}else key=base;auto member=std::make_shared<Member>(Member{std::move(*bytes),std::move(source),name});if(member->bytes.size()>store.budget)return member;
             while(store.bytes>store.budget-member->bytes.size()){auto oldest=store.cache.end();std::uint64_t stamp=UINT64_MAX;for(auto it=store.cache.begin();it!=store.cache.end();++it)if(it->second.stamp<stamp){oldest=it;stamp=it->second.stamp;}if(oldest==store.cache.end())break;store.bytes-=oldest->second.member->bytes.size();store.cache.erase(oldest);}
             store.bytes+=member->bytes.size();store.cache.emplace(std::move(key),Cached{member,++store.stamp});return member;
         }
@@ -128,7 +145,7 @@ std::shared_ptr<const Member> Archives::read(std::string name) {
     return readCandidates({std::move(name)});
 }
 std::shared_ptr<const Member> Archives::readWavForAudio(std::string name) {
-    if(name.empty() || name.front()=='/' || name.front()=='\\' || name.find(':')!=std::string::npos || name.find("..")!=std::string::npos)throw std::runtime_error("Invalid archive path");for(auto& c:name){if(c=='/')c='\\';c=char(std::tolower(static_cast<unsigned char>(c)));}if(!name.ends_with(".wav"))throw std::runtime_error("WAV audio read requires a WAV path");std::vector<std::string> names{std::move(name)};if(map_)if(auto member=readStore(*map_,names,true))return member;return readStore(*common_,names,true);
+    if(name.empty() || name.front()=='/' || name.front()=='\\' || name.find(':')!=std::string::npos || name.find("..")!=std::string::npos)throw std::runtime_error("Invalid archive path");for(auto& c:name){if(c=='/')c='\\';c=char(std::tolower(static_cast<unsigned char>(c)));}if(!name.ends_with(".wav"))throw std::runtime_error("WAV audio read requires a WAV path");std::vector<std::string> names{std::move(name)};std::shared_ptr<const Member> member;if(map_)member=readStore(*map_,names,true);if(!member)member=readStore(*common_,names,true);record(member);return member;
 }
 std::shared_ptr<const Member> Archives::readTexture(std::string name) {
     auto other = name; auto dot = other.find_last_of('.');
@@ -143,10 +160,9 @@ std::shared_ptr<const Member> Archives::readCandidates(std::vector<std::string> 
         if (name.empty() || name.front() == '/' || name.front() == '\\' || name.find(':') != std::string::npos || name.find("..") != std::string::npos) throw std::runtime_error("Invalid archive path");
         for (auto& c : name) { if (c == '/') c = '\\'; c = static_cast<char>(std::tolower(static_cast<unsigned char>(c))); }
     }
-    if (map_ && scope!=ArchiveScope::Common) {
-        if(auto member=readStore(*map_,names))return member;
-    }
-    if(scope!=ArchiveScope::Map)return readStore(*common_,names);
-    return {};
+    std::shared_ptr<const Member> member;
+    if(map_ && scope!=ArchiveScope::Common)member=readStore(*map_,names);
+    if(!member && scope!=ArchiveScope::Map)member=readStore(*common_,names);
+    record(member);return member;
 }
 }

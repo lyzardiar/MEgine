@@ -26,19 +26,27 @@ public:
 struct Member {
     Bytes bytes;
     std::string source;
+    std::string name;
 };
 enum class ArchiveScope {Overlay,Common,Map};
 class Archives {
     struct Cached { std::shared_ptr<const Member> member; std::uint64_t stamp; };
     struct Store;
+    struct Recording;
     std::shared_ptr<Store> common_,map_;
-    Archives(std::shared_ptr<Store> common,std::shared_ptr<Store> map) : common_(std::move(common)),map_(std::move(map)) {}
+    std::shared_ptr<Recording> recording_;
+    Archives(std::shared_ptr<Store> common,std::shared_ptr<Store> map,std::shared_ptr<Recording> recording) : common_(std::move(common)),map_(std::move(map)),recording_(std::move(recording)) {}
+    void record(const std::shared_ptr<const Member>& member);
     static std::shared_ptr<const Member> readStore(Store& store,const std::vector<std::string>& names,bool wavAudio=false);
 public:
     explicit Archives(const fs::path& root);
     Archives(const Archives&)=delete;
     Archives& operator=(const Archives&)=delete;
     std::unique_ptr<Archives> fork() const;
+    std::unique_ptr<Archives> forkIsolatedRecording() const;
+    void startRecording();
+    void clearRecording();
+    std::optional<std::vector<std::string>> recordedMembers() const;
     const fs::path& root() const;
     fs::path mapPath() const;
     std::string mapDigest() const;

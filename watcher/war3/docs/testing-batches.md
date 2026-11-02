@@ -6961,3 +6961,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载结束超时（待功能批次验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。同步预加载的主脚本与独立预加载脚本调用 `PreloadEnd` 时不再因超时参数抛出异常；原版 1.27 入口 `0x6f1f2050` 将超时传入资源队列等待。合批运行 `war3_map_tests <data-root> <scratch> campaign_expansion_credits`，覆盖负数超时及原图片尾；独立脚本、原版等待时序与特殊浮点值行为待验证。本次未执行功能测试。
+
+### 对局归档读取记录基础（待功能批次验证）
+
+路径：`src/archive.h`、`src/archive.cpp`、`src/world.cpp`、`tests/archive_tests.cpp`。对局资源视图及其派生视图可记录成功读取的实际成员名，包括缓存命中和候选回退；记录去重、并发保护和溢出标记，独立对局与后台资源视图隔离。合批构建并运行 `war3_archive_tests <scratch-root> <data-root>`，覆盖缓存、候选、并发和隔离。此基础尚未绑定 `PreloadGen*` 或生成文件；原版资源打开时序、路径格式和多线程排序仍待对照。本次未执行功能测试。
