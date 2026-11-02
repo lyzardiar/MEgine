@@ -7275,3 +7275,5 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 受限生产计划的原脚本控制流（部分验证，待功能阶段）
 
 路径：`tests/campaign_ai_tests.cpp`、`docs/ai.md`。新增 `produce-plan-restricted`，直接调用原公共 AI 的 `InitBuildArray`、`SetBuildUnit` 和 `OneBuildLoop`；在资源充足、可用兽族兵营及 `otbk` 上限为零的混合种族夹具中，请求三个狂战士后检查其未入队且后续农民生产入队。Win32 Release campaign AI 目标编译成功，输出 `RESULT passed=1 failed=0`，不加载 Game.dll。首次夹具错误假设没有现存步兵而失败，改为记录已有数量，并改用实际受限单位后通过。该检查不复现旧 Booty Bay 长局、资金不足、生产者禁用／满队列或原版动态行为；长局停滞原因与自然胜负仍待验证。
+
+当前构建补充原图现场：隔离探针在 BootyBay 兽族对不死族推进到 1,500 秒，兽族已拥有灵魂归宿和要塞；直接请求受限 `otbk` 和后续灵魂归宿均返回 1。日志 `tmp/docs-artifacts/war3/ai-production-probe/current-1500.log`。该局生产计划与旧长局不同、随机初态未对齐，未验证后续胜负或原版行为，不将旧停滞标记为修复。
