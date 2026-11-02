@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### 经济拥堵批次结果
+
+范围：`8335349`（补充 `4bc3c32`）、`64a0998`、`98a3c4f`。Win32 Release 客户端、movement avoidance 和 harvest 目标构建通过。原 Booty Bay 地图的 `worker-march`、`worker-return`、`workers`、`march`、`yield`、`compact`、`retreat`、`chase`、`approach`、`sealed` 各 1 项通过；采集夹具的 `depot-stuck`、`depot-route`、`stunned`、`mine-paused` 和默认流程各 1 项通过，共 **15 通过、0 失败**。覆盖采集／进军混合让行、创建顺序、携资源优先、受阻回收入口重选、订单和资源保留，以及相关移动与采集回归。日志位于 `tmp/docs-artifacts/war3/economy-congestion-batch/`。
+
+Booty Bay 兽族对不死族静音隔离对局运行至 4,200 秒仍未结束；兽族金币在 1,500／1,800 秒分别为 854／2,643，原基地金矿在最终快照已耗尽。先前探针在 3,000–4,200 秒金币停留 381 且原矿尚有 2,640；两次对局因路径变化而分叉，不能把结果归因于某一项修改。当前对局在 3,000–4,200 秒资源与部队数量再次不变，未能验证完整对局。实际窗口、原版让行／入口时序、密集单位性能及联机同步仍待验证；下一功能批次 0/3。
+
+
 ### 受阻返还路线重选入口（待合批验证，3/3）
 
 路径：`src/session.h`、`src/session_harvest.cpp`、`tests/harvest_tests.cpp`。携资源返回建筑的工人持续停滞 8 秒后，按单位与时间选择其他入口并重新规划；无有效路线时保留原路线，保留订单、资源和回收建筑。合批运行 harvest `depot-stuck`、`depot-route` 与采集回归、movement 避让批次和原图经济探针；入口选择、动态阻挡、反复拥堵、大规模性能及原版时序待验证。本次提交前未执行功能测试。
