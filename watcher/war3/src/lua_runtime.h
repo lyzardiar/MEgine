@@ -14,6 +14,7 @@ struct lua_State;
 namespace war3 {
 class Archives;
 class JassBinarySession;
+struct JassBinaryNativeValue;
 class ObjectData;
 class ScriptSession;
 class LuaJassCallbacks;
@@ -47,8 +48,11 @@ class LuaRuntime {
     std::optional<int> errorHandler_;
     bool handlingError_=false;
     std::map<std::string,int> hookRefs_;
+    std::map<std::string,int> codeRefs_;
     std::map<std::string,LuaJapiSignature> japiSignatures_;
     void clearHooks();
+    void clearCodeOverrides();
+    JassBinaryNativeValue invokeBinaryOverride(const std::string& name,std::span<const JassBinaryNativeValue> arguments);
     void clearErrorHandler();
     std::string callbackError(lua_State* state,std::string_view prefix);
     void protectedCallback(lua_State* state,int arguments,int results);

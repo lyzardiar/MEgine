@@ -5,6 +5,7 @@
 
 namespace war3 {
 struct JassBinaryHost {
+    std::function<std::optional<JassBinaryNativeValue>(const std::string&,std::span<const JassBinaryNativeValue>)> functionOverride;
     std::function<JassBinaryNativeValue(const std::string&)> codeReference;
     std::function<size_t(const std::string&)> nativeArity;
     std::function<JassBinaryNativeValue(const std::string&,std::span<const JassBinaryNativeValue>)> nativeCall;
@@ -13,5 +14,5 @@ struct JassBinaryHost {
     std::function<JassBinaryNativeValue(const std::string&,std::uint32_t,std::uint8_t)> arrayRead;
     std::function<void(const std::string&,std::uint32_t,const JassBinaryNativeValue&)> arrayWrite;
 };
-JassBinaryNativeValue runJass2Function(const JassBinaryProgram& program,const JassBinaryIndex& index,const std::string& name,const JassBinaryHost& host,std::span<const JassBinaryNativeValue> arguments={},size_t stepLimit=1000000);
+JassBinaryNativeValue runJass2Function(const JassBinaryProgram& program,const JassBinaryIndex& index,const std::string& name,const JassBinaryHost& host,std::span<const JassBinaryNativeValue> arguments={},size_t stepLimit=1000000,bool skipRootOverride=false);
 }

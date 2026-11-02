@@ -7638,3 +7638,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI 版本查询（部分验证，待功能阶段）
 
 路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。`GetPluginVersion` 从显式绑定的 JAPI 宿主版本提供者读取字符串；未提供版本时报错，不构造插件版本。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖缺失与已提供版本；原图在测试版本、身份、日志及控制台宿主下越过版本查询，推进到未实现的 JASS 函数替换 `print`。未加载 Game.dll。测试版本仅为夹具，真实 JAPI 版本来源、函数替换、实际入口、玩法与 UI 待验证。
+
+### Lua 替换 2SAJ 函数（部分验证，待功能阶段）
+
+路径：`src/jass_binary_vm.{h,cpp}`、`src/jass_binary_session.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`、`tests/jass_binary_tests.cpp`。`jass.code` 可替换受支持签名的 2SAJ 函数，直接入口、二进制脚本内部调用和回调引用均经过替换；替换前保存的闭包调用原函数，移除或销毁 Lua 会话后恢复原实现。桥接参数与返回值，限制重入和 Lua 指令；code 类型签名及文本 JASS 函数替换仍明确不支持。Win32 Release 客户端及 Lua、2SAJ 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖整数、字符串、空值、嵌套、原函数重入、回调及销毁清理；原图在测试宿主下成功安装并由 2SAJ 调用原始 `print` 替换，入口推进到未实现的 `DzFrameShow` 钩子。`war3_jass_binary_tests` 为 1 通过／0 失败，覆盖零指令预算限制，未加载 Game.dll。2SAJ／Lua 保存恢复、可休眠替换、完整 UI 接口与整图自然启动仍待实现／验证。
