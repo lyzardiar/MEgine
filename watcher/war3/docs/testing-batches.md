@@ -2,7 +2,7 @@
 
 ### AI 自动索敌后的撤退恢复（待功能批次验证，2/3）
 
-路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。撤退队员自动索敌造成单次战斗轮次变化时保留跟踪，离家超过 350 时继续回家；显式新订单仍取消跟踪。合批运行 `retreat-auto`、`retreat-retry`、`retreat-reentrant`、`retreat-reinforce`、`retreat-removal` 和运输撤退回归，并重跑原图长局定位；多次连续战斗变化、复杂回调、原版时序和联机待验证。本次未执行功能测试。
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。撤退队员自动索敌造成单次战斗轮次变化时保留跟踪，离家超过 350 时继续回家；显式新订单仍取消跟踪。合批运行 `retreat-auto`、`retreat-retry`、`retreat-reentrant`、`retreat-reinforce`、`retreat-removal` 和运输撤退回归，并重跑原图长局定位；原图 Booty Bay 隔离探针确认远处队员与基地地面连通，队员自动索敌后撤退跟踪消失并向目标追击；证据见 `tmp/docs-artifacts/war3/ai-retreat-ground-batch/tracking.log` 和 `timeline.log`。多次连续战斗变化、复杂回调、原版时序和联机待验证。本次未执行功能测试。
 
 
 ### AI 队员移除与撤退跟踪清理（待功能批次验证，1/3）
