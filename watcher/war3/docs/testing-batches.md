@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 无效物品栏目标订单保留队列（待功能批次验证，3/3）
+
+路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。脚本物品栏目标订单在清除排队命令前检查目标物品是否持有和槽位是否有效；地面物品或无效槽位返回 false 并保留队列。原版 `UnitDropItemSlot` 在调用目标订单前检查持有与容量，直接目标订单的动态时序待对照。合批运行 order queue、物品交易及目标技能回归。本次提交前未执行功能测试。
+
+
 ### 未知脚本目标订单保留队列（待功能批次验证，2/3）
 
 路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。脚本 `IssueTargetOrder` 遇到无法解析的名称或 ById 遇到零订单时返回 false，不清除已有排队动作。原版 1.27 目标订单派发 `0x6f1e9710` 先查询订单定义，查无定义时不进入后续派发。合批运行 order queue、目标技能与物品回归；其他非零未知编号、有效但不可执行订单及原版动态时序待验证。本次未执行功能测试。
