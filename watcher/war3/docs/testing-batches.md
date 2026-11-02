@@ -7682,3 +7682,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 宿主生成 FDF 与归档包含（部分验证，待功能阶段）
 
 路径：`src/fdf.{h,cpp}`、`tests/lua_tests.cpp`。FDF 加载器可通过显式来源读取地图生成的文件，未命中时回退游戏归档；嵌套 `IncludeFile` 沿用同一来源及既有限额，空文件可解析。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，测试通过 `jass.storm.save` 内存宿主生成两个 FDF，解析嵌套文件及原游戏 `GlobalStrings.fdf` 包含并验证内容，另覆盖空文件。原图仍在 `GetGameUI` 停止，测试尚未执行地图自身的 FDF 生成；动态帧状态、界面渲染和输入、真实文件宿主及实际 UI 一致性待实现／验证。
+
+### Lua 函数赋值、Storm 与生成 FDF 批次（部分通过，后续功能待测）
+
+集成版本 `bb09056`，功能提交 `daedb86`、`12aea04`、`bb09056`。Win32 Release 客户端、Lua、2SAJ、native 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`war3_native_tests <data-root> <scratch>` 为 15 通过／0 失败，覆盖原游戏 FDF 模板、字符串、包含循环和编码。scratch 位于 `tmp/docs-artifacts/war3/fdf-batch-20261103/`。Lua 使用内存宿主，原图入口仍停在 `GetGameUI`；真实宿主文件、动态帧、实际画面及完整游戏未执行，保留待测。
