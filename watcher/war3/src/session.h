@@ -1057,6 +1057,7 @@ class ScriptSession {
     std::set<std::uint32_t> pawningItems_,purchasedItems_,consumedPurchases_;
     bool pawnTarget(unsigned player,const UnitState& seller,std::uint32_t item,const UnitState& shop);
     bool pawnItem(unsigned player,std::uint32_t seller,std::uint32_t item,std::uint32_t shop);
+    float shopRange(const UnitState& seller);
     std::shared_ptr<UnitState> shopper(std::uint32_t shop,unsigned owner,std::uint32_t requested=0,bool inventory=false);
     bool productAllowed(unsigned owner,const ProductInfo& product,std::string& reason,bool food=true);
     bool techEquivalent(std::uint32_t actual,std::uint32_t required);

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## AI 英雄购买的商店范围（待功能批次验证）
+
+路径：`src/session.h`、`src/session_commerce.cpp`、`src/session_ai.cpp`、`tests/ai_tests.cpp`，见[AI 英雄物品](ai-hero-items.md)。前往商店的落点与交易资格共用 `Aall`／`Aneu` 范围及自定义覆盖，避免英雄停在实际购买范围外。Win32 Release 客户端和 AI 测试目标编译通过；`war3_ai_tests <data-root> <BootyBay.w3m> hero-shop-range` 1 通过、0 失败，检查人族商店路线、扣款与库存消耗，未加载 Game.dll。夹具暂停 AI 脚本，隐藏其他单位并预置科技和资源；地图自定义小范围、阻挡、多名英雄竞争、预约变化及原版策略待批次验证。
+
 ## 原版单位能力入口扫描（分析记录）
 
 在 `ce677ee` 代码版本读取 BootyBay 地图与原安装对象表，扫描英雄、四族和中立野怪单位的 `abilList`／`heroAbilList`，筛选 `spellInfo` 与 `passiveInfo` 均未归类的能力；探针及输出位于 `tmp/docs-artifacts/war3/source-ability-gap/`。候选包含物品栏、采集、运输、魔免、商店及建筑能力，它们还可能由独立消费者处理；已定点核对 `AInv`、`Ahar`、`Advc`、`Amim`、`Aamk` 和 `Aneu` 存在相应路径，因此不能将扫描结果当作功能缺失清单或完整玩法验证。该扫描不覆盖全部对象字段、地图派生能力、数值与实际施法。同步修正 [AI 随机路径](ai-random-paths.md) 的旧状态：当前 `true` 已使用侧向中途点近似，原版候选算法仍待还原。
