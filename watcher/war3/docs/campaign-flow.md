@@ -105,3 +105,5 @@ Win32 Release 客户端与相关测试目标编译通过；原图隔离会话手
 `GetLocalizedHotkey` 从原 `UI/MiscUI.txt` 的 `[Hotkeys]` 读取数值，支持单引号中最多四字节的整数和数字形式；找不到键时返回零。原版 `0x6f1e31a0` 查找配置项，`0x6f18ac30` 解析单引号字节和数字；实际窗口快捷键及地图覆盖待验证。
 
 亡灵资料片 `UndeadX06.w3x` 与 `UndeadX07a.w3x` 在独立用户目录、无玩家操作的静音会话中分别完成原图 main 并推进至模拟时间 600 秒，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/undeadx06-diagnostic/session.log`、`tmp/docs-artifacts/war3/undeadx07a-diagnostic/session.log`。这仅覆盖隔离开场和空闲模拟，不包含前章英雄缓存、任务完成、自然战斗或实际窗口。
+
+亡灵资料片 `UndeadX07b`、`UndeadX07c`、`UndeadX08` 与人族资料片 `HumanX06` 在独立用户目录静音完成开场并各推进 600 秒；`UndeadX07Interlude` 在约 115 秒发出切换请求。日志分别位于 `tmp/docs-artifacts/war3/UndeadX07b-probe/`、`UndeadX07c-fixed/`、`UndeadX08-probe/`、`HumanX06-probe/` 和 `UndeadX07Interlude-probe/`。这些诊断无玩家操作和前章缓存，不覆盖自然通关、跨章交接或实际窗口。
