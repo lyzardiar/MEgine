@@ -1,14 +1,18 @@
 # 独立客户端测试队列
 
-## 2SAJ 数组读写与字符串拼接（待功能批次验证，3/3）
+## 2SAJ 函数执行、全局和数组批次（部分验证）
+
+范围：`4702f48`、`7c52401`、`6ec2590`，集成版本 `6ec2590`。Win32 Release 客户端、2SAJ 测试与 AI 目标构建通过；固定夹具和用户地图隔离探针各 1 通过／0 失败，后者检查二进制 `config` 的 566 次 native 调用、`R3` 的全局加法及 `Nm` 的字符串数组操作；BootyBay 人族 AI 两秒输出 1 条 PASS，DotA 静音 main 通过，带标记的检查未加载 Game.dll。命令和输出见 `tmp/docs-artifacts/war3/jass-vm-batch/results.txt`。原图只在已初始化的隔离会话中测试部分函数；可挂起线程、函数引用、其余操作码、地图主入口、Lua、平台接口与窗口仍待实现或验证。下一功能批次从 0/3 开始。
+
+## 2SAJ 数组读写与字符串拼接（批次部分验证）
 
 路径：`src/jass_binary_vm.h`、`src/jass_binary_vm.cpp`、`tests/jass_binary_tests.cpp`。支持局部数组和宿主全局数组读写，索引 0–8191 使用实际元素、越界读取默认值并忽略写入；局部元素校验类型，宿主全局元素由回调验证。字符串相加支持符号、动态字符串及空值，结果使用有界动态存储。夹具检查局部数组、越界和符号字符串拼接，1 通过／0 失败。用户地图的 `Nm` 函数在隔离全局数组上对索引 2 连续追加 `AB` 与 `C` 得到 `ABC`，索引 8192 写入被忽略；同时 `R3` 与二进制 `config` 检查仍通过，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。数组时序和字符串语义尚未对照原版；全局容器目前由隔离宿主提供，函数引用、线程调度、地图入口、Lua 和平台接口仍未完成，地图尚不能运行。
 
-## 2SAJ 标量全局写入与数值运算（待功能批次验证，2/3）
+## 2SAJ 标量全局写入与数值运算（批次部分验证）
 
 路径：`src/jass_binary_vm.h`、`src/jass_binary_vm.cpp`、`tests/jass_binary_tests.cpp`。通过宿主回调写入标量全局值，支持整数／实数加减乘除及数值比较、布尔与／或／非；整数溢出按 32 位回绕，除零与有符号除法溢出拒绝，实数复用既有 JASS 数值运算。夹具检查全局反复更新、整数／实数及零除拒绝，1 通过／0 失败。用户地图的初始化全局值经隔离宿主保存后，原图函数 `R3` 连续执行两次将 `mElapsed` 从 0 增至 20；同一探针原图 `config` 仍执行 566 次 native 调用且相关配置保持一致，1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。全局类型／常量约束由宿主负责；字符串／句柄比较、数组、函数引用、计时器调度、会话入口和 Lua 等仍待实现或验证，地图尚不能运行。
 
-## 2SAJ 函数执行与原生调用基础（待功能批次验证，1/3）
+## 2SAJ 函数执行与原生调用基础（批次部分验证）
 
 路径：`src/jass_binary_vm.h`、`src/jass_binary_vm.cpp`、`src/jass_binary_bridge.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。提供带步数、调用深度和参数栈上限的隔离执行入口，支持局部变量、反向栈序参数声明、字面量、寄存器复制、栈操作、现有 native 调用、脚本函数调用、整数转实数、取负、条件／无条件跳转和返回；未实现指令明确失败。夹具检查嵌套函数、非对称参数顺序、native 调用、跳转及步数上限，1 通过／0 失败。用户地图二进制 `config` 在已由文本 `config` 初始化的隔离会话中再次执行，完成 566 次原生调用；地图名／描述／玩家与队伍数量、16 个玩家的归属／颜色／控制／联盟和出生点／优先级与执行前一致，1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。该探针不能证明原版动态一致或从空状态构建配置；全局写入、数组、算术、函数引用、可挂起线程、会话入口、Lua 和平台接口仍待实现或验证，地图仍不能运行。
 
