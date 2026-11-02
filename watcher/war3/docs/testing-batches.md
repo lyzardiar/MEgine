@@ -7101,3 +7101,7 @@ Win32 Release 客户端与 `war3_passive_tests` 增量编译成功；新增物�
 路径：`src/session_effects.cpp`、`src/game_effects.cpp`、`tests/passive_tests.cpp`、`docs/dota-bkb-item-handles.md`。附到物品的特效创建、状态更新和绘制读取当前地面或持有者坐标；合批运行 `war3_passive_tests <data-root> <fixture> invalid-item`，检查创建位置，并在实际窗口检查即时移动、拾取／丢弃、迷雾及附着效果。原模型附件点、空中高度、持有状态可见性与原版动态行为仍待核对。
 
 Win32 Release 客户端和 `war3_passive_tests` 增量编译成功；功能断言与窗口画面尚未执行。
+
+### 即用物品拾取事件内移动（待功能批次验证）
+
+路径：`src/session_entities.cpp`、`src/session_inventory.cpp`、`tests/clock_tests.cpp`、`docs/campaign-flow.md`。拾取回调移动临时持有的即用物品后，保留物品和目标位置，不继续发放效果；合批设置 `WAR3_CLOCK_FILTER=powerup_pickup_callback_moves_item` 运行 `war3_clock_tests <data-root> <output-root>`，并回归正常金币、符文及普通背包物品。Win32 Release 客户端及 clock 测试目标编译通过；最小回归首次将玩家事件编号用于单位事件，修正为单位拾取事件编号 86 后重测 1 通过／0 失败。原版 `SetItemPosition` 先尝试从持有者移除再设置坐标，指令在 `tmp/docs-artifacts/war3/powerup-pickup-reentry/source-assembly.txt`；即用物品事件时序和商店场景仍待动态对照。

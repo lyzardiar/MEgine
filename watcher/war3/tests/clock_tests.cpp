@@ -1510,6 +1510,51 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";auto make=[&](bool start){auto module=Module::compile(Program::parse({{"stock-snapshot.j",source,"shop stock snapshot"}}));auto result=std::make_unique<ScriptSession>(std::move(module),map().info);result->attachWorld(world());result->configure();PlayerSetup setup(map().info,result->config());result->applySetup(setup);if(start)result->startMain();return result;};auto original=make(true),target=make(false);auto& a=original->runtime();auto unit=a.invoke("CreateUnit",std::array{a.invoke("Player",std::array{a.integer(0)}),a.integer(int(ObjectData::code("hfoo"))),a.real(real(0)),a.real(real(0)),a.real(real(0))});auto state=original->units().at(unit.bits);a.invoke("SetAllItemTypeSlots",std::array{a.integer(4)});a.invoke("AddItemToAllStock",std::array{a.integer(int(ObjectData::code("phea"))),a.integer(1),a.integer(3)});a.invoke("RemoveUnitFromAllStock",std::array{a.integer(int(ObjectData::code("hfoo")))});state->stock={{ObjectData::code("phea"),true,1,3,10,17.25},{0,false,0,0,0,0}};state->unitStockSlots=2;state->itemStockSlots=5;auto identity=[](std::string_view,std::uint32_t id){return id;};auto ids=original->encodeUnitIdentities(identity),core=original->encodeUnitCore(identity),stock=original->encodeShopStock(identity);auto units=target->rebuildUnitIdentities(ids);auto decode=[&](std::string_view type,std::uint32_t id){return type=="unit" && units.contains(id)?units.at(id):0u;};target->prepareUnitCore(core,decode);target->finishUnitCore(core,decode);auto damaged=stock;damaged.back()^=1;rejects([&]{target->restoreShopStock(damaged,decode);},"digest");rejects([&]{target->restoreShopStock(stock,[](std::string_view,std::uint32_t){return 0u;});},"mapping");require(target->units().at(units.at(unit.bits))->stock.empty(),"Rejected stock snapshot modified unit");target->restoreShopStock(stock,decode);auto restored=target->units().at(units.at(unit.bits));require(restored->stock.size()==2 && restored->stock[0].current==1 && restored->stock[0].due==17.25 && restored->unitStockSlots==2 && restored->itemStockSlots==5,"Shop stock state differs");auto reverse=[&](std::string_view,std::uint32_t id){return id==units.at(unit.bits)?unit.bits:0u;};require(target->encodeShopStock(reverse)==stock,"Shop stock did not round trip");rejects([&]{target->restoreShopStock(stock,decode);},"");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("powerup_pickup_callback_moves_item",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type item extends widget
+ type player extends handle
+ type playerstate extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ type unitevent extends handle
+ native Player takes integer id returns player
+ native ConvertUnitEvent takes integer n returns unitevent
+ native ConvertPlayerState takes integer n returns playerstate
+ native GetPlayerState takes player p, playerstate s returns integer
+ native CreateUnit takes player p, integer id, real x, real y, real face returns unit
+ native CreateItem takes integer id, real x, real y returns item
+ native UnitAddItem takes unit u, item i returns boolean
+ native GetManipulatedItem takes nothing returns item
+ native SetItemPosition takes item i, real x, real y returns nothing
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code c returns triggeraction
+ native TriggerRegisterUnitEvent takes trigger t, unit u, unitevent e returns event
+ globals
+ unit hero=null
+ item coin=null
+ boolean accepted=false
+ integer goldBefore=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function onPickup takes nothing returns nothing
+ call SetItemPosition(GetManipulatedItem(),300.0,0.0)
+ endfunction
+ function main takes nothing returns nothing
+ local trigger t=CreateTrigger()
+ set hero=CreateUnit(Player(0),'Hpal',0.0,0.0,0.0)
+ set coin=CreateItem('gold',0.0,0.0)
+ call TriggerAddAction(t,function onPickup)
+ call TriggerRegisterUnitEvent(t,hero,ConvertUnitEvent(86))
+ set goldBefore=GetPlayerState(Player(0),ConvertPlayerState(1))
+ set accepted=UnitAddItem(hero,coin)
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"powerup-move.j",source,"powerup pickup reentry"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.audioMuted(true);session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto coin=vm.global("coin");require(vm.global("accepted").bits && session.items().contains(coin.bits),"Moved powerup was consumed");auto item=session.items().at(coin.bits);require(!item->holder && std::bit_cast<float>(item->x.bits())>100.f,"Pickup callback failed to move the powerup");auto gold=vm.invoke("GetPlayerState",std::array{vm.invoke("Player",std::array{vm.integer(0)}),vm.invoke("ConvertPlayerState",std::array{vm.integer(1)})});require(gold.bits==vm.global("goldBefore").bits,"Moved powerup still awarded resources");
+    });
     test("region_event_rechecks_after_callback",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle
