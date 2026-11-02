@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 风暴之锤类施法时间（待功能批次验证，3/3）
+
+路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`tests/dota_heroes_tests.cpp`。风暴之锤及地图派生技能读取源 `Cast` 字段，施法前摇取该字段与单位施法点的较大值，期间可正常取消；源值为零时沿用单位施法点。DotA v6.83d `sniper-assassinate` 1 通过／0 失败：`A04P` 配置 1.7 秒，施法 1 秒内未伤害、停止后不伤害，重新施放造成 355 点伤害；未加载 Game.dll。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> sniper-assassinate`。原版动态施法点与事件时序、目标状态变化、移动目标、音效及窗口表现仍待对照；与前两项在同一集成版本合批验证。
+
 ## 有符号脚本伤害（待功能批次验证，2/3）
 
 路径：`src/session_damage.cpp`、`tests/dota_heroes_tests.cpp`、`tests/spell_tests.cpp`、`tests/generate-spell-fixture.py`。`UnitDamageTarget` 接受有界负数，保留有符号伤害事件并通过生命上限更新单位、可破坏物和物品；负值不消耗／增加护盾资源。DotA v6.83d `sniper-headshot` 1 通过／0 失败：观察到爆头附加控制、技能移除后继续攻击，地图触发器的负数伤害不再中断，并检查单位、可破坏物、物品及魔法护盾。`negative-damage` 1 通过／0 失败，检查事件来源、负数事件值、生命上限和护盾魔法；综合施法输出 1 条 PASS，原图 `sniper-shrapnel`、`gyro-missile` 和 `hardened-source` 各 1 通过／0 失败；带 Game.dll 标记的检查均未加载。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> sniper-headshot`、`war3_spell_tests <data-root> <fixture.w3m> negative-damage`。原版 1.27 native、单位及物件虚函数的只读指令证据在 `tmp/docs-artifacts/war3/signed-damage/source-evidence.txt`；原版实际运行、不同护甲／减伤／护盾、事件重入、死亡对象与 UI 表现仍待批次验证。
