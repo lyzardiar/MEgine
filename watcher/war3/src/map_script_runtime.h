@@ -2,6 +2,7 @@
 #pragma once
 #include "lua_runtime.h"
 #include "lua_native_console.h"
+#include "lua_local_sync.h"
 #include "jass_binary_session.h"
 #include <memory>
 
@@ -12,6 +13,7 @@ class MapScriptRuntime {
     std::shared_ptr<JassBinarySession> binary_;
     LuaNativeConsole console_;
     LuaRuntime lua_;
+    std::unique_ptr<LuaLocalSync> localSync_;
     bool started_=false,requiresLuaEntry_=false;
     MapScriptRuntime(ScriptSession& session,std::shared_ptr<const JassBinaryProgram> program,const std::string& initializer);
 public:
@@ -20,5 +22,6 @@ public:
     MapScriptRuntime(const MapScriptRuntime&)=delete;
     MapScriptRuntime& operator=(const MapScriptRuntime&)=delete;
     void start();
+    void pump();
 };
 }
