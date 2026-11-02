@@ -7155,3 +7155,5 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 原图固定装饰物路径回归
 
 路径：`tests/clock_tests.cpp`。在 BootyBay 原图解析非可破坏装饰物或地形装饰物，选择不与可破坏物脚印重叠的阻挡单元，清除该单元的地形阻挡后检查会话初始化已建立固定阻挡，再对恢复前后的路径指纹和阻挡状态做对照。Win32 Release `war3_clock_tests` 增量编译通过；设置 `WAR3_CLOCK_FILTER=static_doodad_pathing_recovery` 后运行，实际结果 1 通过／0 失败。其他地图、动态修改及原版寻路精度继续合批验证。
+
+名称框鼠标定位尚未通过交互验收：后台单人 Agent 在菜单打开时拒绝指针请求；向隐藏窗口发送鼠标消息后插入字符仍出现在末尾，不能据此区分消息未送达与定位逻辑问题。Windows 窗口自动化未列出隐藏的独立测试窗口。相关实际鼠标操作和回放保存面板保留待测，日志及截图见 `tmp/docs-artifacts/war3/filename-ui-batch/`。
