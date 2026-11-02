@@ -7778,3 +7778,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI MD5 与原图文件哈希链路（部分验证，待批次验证）
 
 路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。实现插件 `md5(string) -> string` 的小写十六进制结果，按原插件的零字节终止规则取输入并校验签名。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖标准摘要、零字节、声明校验，并由原图 2SAJ 的 `EXLoadFileHashKey` 经 Lua 表达式、Storm 内存宿主计算夹具文件哈希。该检查未执行完整二进制主函数或真实平台文件校验，正式客户端接线和实际地图仍待完成。
+
+### 2SAJ、Lua 哈希与技能句柄批次（部分通过，后续功能待测）
+
+集成版本 `78956d9`，功能提交 `72a8574`、`f2a915e`、`78956d9`。Win32 Release 客户端、Lua、2SAJ 与 clock 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`WAR3_CLOCK_FILTER=unit_casts_restore_spell_and_references war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败。scratch 位于 `tmp/docs-artifacts/war3/binary-lua-hash-batch-20261103/`。覆盖原图二进制函数进入 Lua 并计算内存宿主文件哈希、嵌套调用与预算、技能句柄及相关恢复；完整二进制主函数、正式客户端接线、平台服务和真实游戏画面未执行，保留待测。
