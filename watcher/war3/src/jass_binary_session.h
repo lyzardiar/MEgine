@@ -5,20 +5,24 @@
 
 namespace war3 {
 // Owner must outlive this context; remove all callback references before destroying it.
+struct JassBinarySignature {std::uint8_t result=0;std::vector<std::uint8_t> parameters;};
 class JassBinarySession {
     jass::Runtime& owner_;
     std::shared_ptr<const JassBinaryProgram> program_;
     JassBinaryIndex index_;
     JassBinaryStorage storage_;
     JassBinaryHost host_;
+    unsigned noYieldDepth_=0;
     std::unique_ptr<JassBinaryCallbacks> callbacks_;
     jass::Id globalType(const std::string& name,bool array) const;
 public:
     JassBinarySession(jass::Runtime& owner,std::shared_ptr<const JassBinaryProgram> program,const std::string& initializer);
     JassBinarySession(const JassBinarySession&)=delete;
     JassBinarySession& operator=(const JassBinarySession&)=delete;
+    JassBinarySignature signature(const std::string& name) const;
     bool hasFunction(const std::string& name) const{return index_.functions.contains(name);}
     JassBinaryNativeValue run(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
+    JassBinaryNativeValue runNoYield(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
     JassBinaryNativeValue reference(const std::string& name);
     jass::Runtime& owner() const{return owner_;}
     const JassBinaryProgram& program() const{return *program_;}
