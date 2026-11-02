@@ -7706,3 +7706,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 动态 TOC 加载失败回滚（部分验证，待功能阶段）
 
 路径：`src/fdf.cpp`、`tests/lua_tests.cpp`。TOC 多文件加载在临时定义集合中执行，全部成功后更新原集合；缺失文件或解析失败不会留下部分定义、已加载名称或源码预算，允许修正后重试。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖第一个 FDF 成功、第二个缺失、回滚及修正后重试。加载时会复制现有定义，真实大地图开销、原版失败行为及完整 UI 待验证；原图仍停在 `GetGameUI`，未发送网络请求。
+
+### 地图帧层级与 Lua UI 根句柄（部分验证，待功能阶段）
+
+路径：`CMakeLists.txt`、`src/map_frames.{h,cpp}`、`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。新增关联 FDF 定义的地图帧层级，维护根句柄、模板子树、父子关系、继承可见性和递归销毁；Lua 显式绑定同一定义集合和帧层级后，`GetGameUI` 返回根句柄、`FrameShow` 修改帧状态，非法句柄及错误签名明确报错。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖子树、父节点隐藏、销毁、无效操作、Lua 修改及解绑。原图隔离入口获取根句柄并在内存宿主初始化空 `ui\loaded.fdf`，随后停在 `jass.debug.handle_ref`。帧层级尚未连接 `GameView`、实际 HUD、布局、绘制或输入，创建／事件类 JAPI 和真实游戏启动未实现；根状态测试不代表 UI 一致，继续待测。
