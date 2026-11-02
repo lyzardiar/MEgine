@@ -117,6 +117,47 @@ call SetUnitState(subject, UNIT_STATE_LIFE, 50.0)
 endfunction
 )jass";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"unit-event-fixture.j",script,"preloader unit event fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("runPreloaderEvent");require(vm.global("observed").bits==2468,"Preloader lost main unit event context or state change");auto subject=vm.global("subject");require(session.units().at(subject.bits)->userData==2468,"Preloader event unit state did not persist");
     });
+    test("preloader_nested_unit_death",[&]{
+        auto dir=fs::absolute(argv[2])/L"preloader-unit-death"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
+        {std::ofstream file(dir/L"Preload"/L"kill.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing
+local unit u=GetTriggerUnit()
+call KillUnit(u)
+if GetTriggerUnit() == u and GetDyingUnit() == null and GetUnitUserData(u) == 9000 then
+    call SetUnitUserData(u, 9001)
+endif
+endfunction
+)jass";require(bool(file),"Cannot create kill preload source");}{std::ofstream file(dir/L"Preload"/L"death.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing
+if GetDyingUnit() == GetTriggerUnit() and GetDyingUnit() != null and GetKillingUnit() == null then
+    call SetUnitUserData(GetDyingUnit(), 9000)
+endif
+endfunction
+)jass";require(bool(file),"Cannot create death preload source");}Archives archives(argv[1]);auto map=archives.readCandidates({"Maps\\FrozenThrone\\Campaign\\War3XBonusCredits.w3x"},ArchiveScope::Common);require(bool(map),"Missing source map");archives.mountMap(std::make_shared<const Bytes>(map->bytes),"War3XBonusCredits.w3x");auto world=World::read(archives);auto info=world->data().info;auto common=archives.readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Missing common script");std::string script=R"jass(globals
+unit subject=null
+integer observed=0
+endglobals
+function onDeath takes nothing returns nothing
+call Preloader("death.j")
+endfunction
+function onUnitState takes nothing returns nothing
+call Preloader("kill.j")
+set observed=GetUnitUserData(GetTriggerUnit())
+endfunction
+function config takes nothing returns nothing
+endfunction
+function main takes nothing returns nothing
+local trigger stateTrigger=CreateTrigger()
+local trigger deathTrigger=CreateTrigger()
+set subject=CreateUnit(Player(0), 'hfoo', 0.0, 0.0, 0.0)
+call TriggerRegisterUnitStateEvent(stateTrigger, subject, UNIT_STATE_LIFE, LESS_THAN, 100.0)
+call TriggerAddAction(stateTrigger, function onUnitState)
+call TriggerRegisterUnitEvent(deathTrigger, subject, EVENT_UNIT_DEATH)
+call TriggerAddAction(deathTrigger, function onDeath)
+endfunction
+function runDeath takes nothing returns nothing
+call SetUnitState(subject, UNIT_STATE_LIFE, 50.0)
+endfunction
+)jass";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"unit-death-fixture.j",script,"preloader nested death fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("runDeath");require(vm.global("observed").bits==9001,"Nested preload death context or outer context restoration failed");auto subject=vm.global("subject");require(session.units().at(subject.bits)->userData==9001 && std::bit_cast<float>(session.units().at(subject.bits)->life.bits())==0,"Nested preload death state did not persist");
+    });
     test("preloader_gamecache_persistence",[&]{
         auto dir=fs::absolute(argv[2])/L"preloader-cache"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
         {std::ofstream file(dir/L"Preload"/L"cache.j",std::ios::binary);file<<"function PreloadFiles takes nothing returns nothing\nlocal gamecache c=InitGameCache(\"preload.w3v\")\ncall StoreInteger(c, \"mission\", \"score\", 2468)\ncall StoreString(c, \"mission\", \"name\", \"from preload\")\ncall SaveGameCache(c)\nendfunction\n";require(bool(file),"Cannot create preload source");}Archives archives(argv[1]);auto map=archives.readCandidates({"Maps\\FrozenThrone\\Campaign\\War3XBonusCredits.w3x"},ArchiveScope::Common);require(bool(map),"Missing source map");archives.mountMap(std::make_shared<const Bytes>(map->bytes),"War3XBonusCredits.w3x");auto world=World::read(archives);auto info=world->data().info;ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);auto& vm=session.runtime();vm.invoke("Preloader",std::array{vm.string("cache.j")});auto cache=vm.invoke("InitGameCache",std::array{vm.string("preload.w3v")});auto mission=vm.string("mission"),score=vm.string("score"),name=vm.string("name");require(cache.bits && vm.invoke("GetStoredInteger",std::array{cache,mission,score}).bits==2468,"Preloader gamecache integer missing");auto value=vm.invoke("GetStoredString",std::array{cache,mission,name});require(value.text && *value.text=="from preload","Preloader gamecache string did not survive runtime destruction");vm.invoke("FlushGameCache",std::array{cache});require(vm.invoke("ReloadGameCachesFromDisk").bits && vm.invoke("GetStoredInteger",std::array{cache,mission,score}).bits==2468,"Preloader gamecache did not persist");value=vm.invoke("GetStoredString",std::array{cache,mission,name});require(value.text && *value.text=="from preload","Preloader gamecache string did not reload");
