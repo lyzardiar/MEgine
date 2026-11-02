@@ -7602,3 +7602,11 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI 特效高度与缩放（部分验证，待功能阶段）
 
 路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/session.{h}`、`src/session_effects.cpp`、`src/effects.h`、`src/game_effects.cpp`、`src/session_effect_snapshot.cpp`、`tests/lua_tests.cpp`、`tests/clock_tests.cpp`。`jass.japi` 在显式绑定同一 `ScriptSession` 后支持独立特效的 `EXSetEffectZ`／`EXGetEffectZ` 及特效缩放读写；世界高度与渲染状态连接，特效快照版本 3 保存该高度并兼容读取版本 2，附着特效高度及未知接口明确报未支持。Win32 Release 客户端及 Lua、clock 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖真实地图会话中创建特效、设置和读取高度／缩放、销毁及解绑；`WAR3_CLOCK_FILTER=effects_rebuild_active_retiring_and_removed_targets war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖高度恢复。隔离依赖检查推进到缺少 `jass.console`，未加载 Game.dll。版本 2 旧快照实物、实际画面、附着特效、其他 JAPI 和整图自然启动仍待验证。
+
+### Lua 控制台宿主桥（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。显式绑定控制台宿主后提供 `jass.console` 启用状态、制表符分隔输出及非阻塞输入回调；输出、输入与启用状态由宿主处理，回调错误向脚本传播。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，夹具覆盖中文、类型转换、启用、输入回调、无输入及回调失败；在提供 `IdHelp.Str2Id` 测试夹具后，原地图 `assetsmanager` 推进到 `Const.hero_class_const` 加载失败，未加载 Game.dll。地图归档内实际模块位于 `scripts\Const\hero_class_const.lua`，模块搜索路径兼容仍待实现；真实客户端尚未绑定控制台宿主，窗口交互和整图启动待验证。
+
+### Lua 地图模块搜索路径（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.cpp`、`tests/lua_tests.cpp`。地图模块搜索依次检查归档内直接路径、`scripts/` 和 `lua/`，加载器返回实际归档成员名；保持地图作用域和路径检查。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，直接加载地图 `scripts/Const/layer_const.lua`，并在提供 `IdHelp.Str2Id` 夹具后让 `assetsmanager` 越过原缺失的类模块，推进到依赖启动环境全局 `class`。未加载 Game.dll。`lua/` 目录分支、同名路径优先级、实际启动初始化及整图玩法 UI 仍待验证。
