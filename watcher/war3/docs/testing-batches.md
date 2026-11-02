@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 字符串与句柄比较（待功能批次验证，1/3）
+
+路径：`src/jass_binary_vm.cpp`、`tests/jass_binary_tests.cpp`。相等／不等指令按内容比较符号字符串和动态字符串，区分空字符串与空值；句柄及布尔值按数值比较，非法非零 null 字面量被拒绝。夹具检查相同／不同字符串、null／空字符串、句柄和布尔比较，1 通过／0 失败。用户地图的 `SetNextLevelBJ` 在隔离宿主中对 `next.w3x` 写入路径、对空字符串写入 null，两条原图分支均通过；同一探针 `config`、`R3` 与 `Nm` 通过，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。原版动态字符串和句柄等价语义、代码引用比较、地图会话入口、线程和 Lua／平台接口仍待验证或实现；地图尚不能运行。
+
 ## 2SAJ 函数执行、全局和数组批次（部分验证）
 
 范围：`4702f48`、`7c52401`、`6ec2590`，集成版本 `6ec2590`。Win32 Release 客户端、2SAJ 测试与 AI 目标构建通过；固定夹具和用户地图隔离探针各 1 通过／0 失败，后者检查二进制 `config` 的 566 次 native 调用、`R3` 的全局加法及 `Nm` 的字符串数组操作；BootyBay 人族 AI 两秒输出 1 条 PASS，DotA 静音 main 通过，带标记的检查未加载 Game.dll。命令和输出见 `tmp/docs-artifacts/war3/jass-vm-batch/results.txt`。原图只在已初始化的隔离会话中测试部分函数；可挂起线程、函数引用、其余操作码、地图主入口、Lua、平台接口与窗口仍待实现或验证。下一功能批次从 0/3 开始。
