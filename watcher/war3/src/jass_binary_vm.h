@@ -5,6 +5,7 @@
 
 namespace war3 {
 struct JassBinaryHost {
+    std::function<JassBinaryNativeValue(const std::string&)> codeReference;
     std::function<size_t(const std::string&)> nativeArity;
     std::function<JassBinaryNativeValue(const std::string&,std::span<const JassBinaryNativeValue>)> nativeCall;
     std::function<JassBinaryNativeValue(const std::string&)> globalRead;

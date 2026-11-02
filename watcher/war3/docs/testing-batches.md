@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 函数引用桥（待功能批次验证，2/3）
+
+路径：`src/jass_binary_vm.h`、`src/jass_binary_vm.cpp`、`src/jass_binary_bridge.h`、`src/jass_binary_bridge.cpp`、`tests/jass_binary_tests.cpp`。`MOVRCODE` 通过宿主解析函数引用，保留已有 JASS 运行时所有者并通过 code 参数调用 native；不提供解析器或返回无效引用时明确失败。代码引用比较考虑运行时所有者。固定夹具通过 native 同步调用文本 JASS 回调并得到 42，覆盖缺少解析器失败，1 通过／0 失败。用户地图隔离会话用二进制夹具将文本 `DoNothing` 注册到触发器并发起 `TriggerExecute`，检查动作注册，原图 `config`、`R3`、`Nm` 和字符串分支探针仍通过，1 通过／0 失败，未加载 Game.dll；`DoNothing` 无可观察副作用，探针只证明注册和派发入口未报错。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。该桥目前仅能使用宿主提供的现有 JASS 引用，尚不能把二进制函数作为触发器回调执行；挂起／恢复、生命周期、代码比较、Lua 和地图主入口仍待实现或验证。
+
 ## 2SAJ 字符串与句柄比较（待功能批次验证，1/3）
 
 路径：`src/jass_binary_vm.cpp`、`tests/jass_binary_tests.cpp`。相等／不等指令按内容比较符号字符串和动态字符串，区分空字符串与空值；句柄及布尔值按数值比较，非法非零 null 字面量被拒绝。夹具检查相同／不同字符串、null／空字符串、句柄和布尔比较，1 通过／0 失败。用户地图的 `SetNextLevelBJ` 在隔离宿主中对 `next.w3x` 写入路径、对空字符串写入 null，两条原图分支均通过；同一探针 `config`、`R3` 与 `Nm` 通过，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。原版动态字符串和句柄等价语义、代码引用比较、地图会话入口、线程和 Lua／平台接口仍待验证或实现；地图尚不能运行。
