@@ -6911,3 +6911,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 尸体暂停与复活生命周期（待功能批次验证）
 
 路径：`src/session_corpses.cpp`、`tests/corpse_tests.cpp`、`docs/corpses.md`。存活单位不保存衰变暂停，复活清除尸体暂停状态，后续死亡正常计时；已死亡且有尸体的单位沿用暂停与恢复。原版 1.27 的 `UnitSuspendDecay` 检查死亡标志 `0x100` 及尸体状态。合批运行 corpse 夹具 `animation-lifecycle`、`decay` 与 `flow`；英雄、特殊尸体、原版动态时序和实际窗口待验证。本次未执行功能测试。
+
+### 战役缓存英雄经验暂停（待功能批次验证）
+
+路径：`src/session_cache.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-gamecache.md`。恢复单位不覆盖新英雄的经验暂停状态，使原图跨关脚本能按自身流程调整英雄等级；旧缓存格式继续读取。Win32 Release 核心编译通过，`UndeadX07b` 人为击杀首领并加载 `UndeadX07c` 的定向诊断中，暂停经验的源英雄等级 4，恢复后的英雄等级 3、用户数据 2468；日志 `tmp/docs-artifacts/war3/undead-exit-probe/chain-fixed.log`。合批生成 game flow 夹具并运行 `war3_game_flow_tests <data-root> <fixture> cache-sync-unit`，覆盖暂停标志的磁盘重载及实验同步；同时回归原图跨关链。原版动态行为、创建事件重入及实际窗口待验证。

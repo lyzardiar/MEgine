@@ -19,3 +19,5 @@ SetItemDropID 保存物品的来源类型，单位物品快照写入独立 gamec
 Human01 到 Human02 的隔离会话复现覆盖原地图脚本的 `StoreUnitBJ`、`SaveGameCacheBJ` 和 `RestoreUnitLocFacingAngleBJ`：Human01 胜利前将阿尔萨斯设为 4 级、用户数据 123456 并给予 `ratf`，触发首领组死亡后由原脚本保存；销毁前一会话，Human02 原脚本恢复相同等级、用户数据和物品。探针采用独立用户目录、直接击杀首领组并直接构造下一会话，日志见 `tmp/docs-artifacts/war3/campaign-transfer-1030/transfer-first.log`。此结果只覆盖列出的字段和脚本路径；真实窗口、CampaignBrowser 自动换关、其他状态及原版格式一致性仍待验证。
 
 独立 gamecache v7 保存哨兵能力已初始化的剩余次数，包括已耗尽的零；恢复到新单位后沿用施法和命令按钮消费。版本 1–6 文件保持可读取，旧记录无次数状态；实验单位同步支持 v4–v7。技能／物品冷却与外观状态分别见[单位冷却](campaign-unit-cooldowns.md)和[单位外观](campaign-unit-appearance.md)。原版 StoreUnit 的次数语义、对象覆盖和实际跨关尚待对照，完整存档与原版格式仍未实现。
+
+英雄的经验暂停属于当前单位状态；`RestoreUnit` 重建单位时保留新单位已有的暂停状态，不应用缓存中的暂停标志。原版 1.27 `RestoreUnit` 路径 `0x6f227d92` 创建单位，`0x6f227db4` 调用英雄数据恢复；`IsSuspendedXP` 读取英雄对象 `+0xec`，英雄恢复函数 `0x6f50d6d0–0x6f50d8d6` 不直接恢复该字段。旧独立缓存仍可读取。`UndeadX07b` 至 `UndeadX07c` 的隔离诊断中，原图脚本保存暂停经验的 4 级阿尔萨斯；下一关按脚本降级和升级后为 3 级，自定义数据 2468 保留，日志 `tmp/docs-artifacts/war3/undead-exit-probe/chain-fixed.log`。原版动态跨关、创建事件重入及完整缓存兼容仍待验证。
