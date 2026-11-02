@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 榴霰弹特效炮击与源武器数据（待功能批次验证，1/3）
+
+路径：`src/session_weapons.cpp`、`src/session_research.cpp`、`src/session_projectile_snapshot.cpp`、`tests/dota_heroes_tests.cpp`、`tests/clock_tests.cpp`。允许源武器骰面为零并沿用实际攻击时的一面骰回退；保留有限的负弹道弧度；武器目标数预算由 64 提升至 8192，并同步实际武器及弹道快照检查。DotA v6.83d `sniper-shrapnel` 1 通过／0 失败：学习后施放充能技能，原图累计造成 120 伤害、15% 减速，友军／远处敌人不受伤，特效弹道为零伤害且弧度 -0.05，消耗充能并在 40 秒周期后恢复；未加载 Game.dll。修复前特效单位的零骰面、负弧度及其未启用第二武器的 100 目标参数先后使技能中断。`attack_projectiles_restore_flight_and_removed_handles` 1 通过／0 失败，使用测试载荷检查 100 目标与负弧度弹道的状态往返；`weapon-ui` 和原图 `gyro-barrage-count` 各 1 通过／0 失败。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> sniper-shrapnel`、`war3_passive_tests <data-root> <fixture.w3m> weapon-ui`，以及设置 `WAR3_CLOCK_FILTER=attack_projectiles_restore_flight_and_removed_handles` 后运行 `war3_clock_tests <data-root> <output-root>`。真实 100 目标弹射、目标数预算边界、原版零骰面语义、炮击在途源死亡、存档续打、音效、原版与窗口画面待批次验证。
+
 ## 直升机与硬化皮肤批次（部分验证）
 
 范围：`5e87c1b`、`7f5d36c`、`f51f692`、`68bd71b`、`c93d177`、`bea3e0e`，集成版本 `bea3e0e`。Win32 Release 客户端、DotA 英雄、被动、形态、施法及 clock 目标构建通过。七项 `gyro-barrage`、`gyro-barrage-count`、`gyro-missile`、`gyro-calldown`、`gyro-missile-move`、`gyro-missile-end`、`gyro-missile-attack` 各 1 通过／0 失败；形态综合 3 通过／0 失败，`script-remove`、`permanent`、`barrage-second`、`hardened-source` 及两项 clock 恢复检查各 1 通过／0 失败；综合施法程序输出 1 条 PASS。标有 Game.dll 结果的定向程序均报告未加载。复现命令及结果摘要在 `tmp/docs-artifacts/war3/gyro-batch/results.txt`。类别优先级与叠加、无图标眩晕驱散、来源失效后的在途攻击、实际存档续打与旧存档、原版动态对照、窗口及 UI 仍未验证。下一功能批次从 0/3 开始。

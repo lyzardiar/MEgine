@@ -7,3 +7,5 @@
 原 1.27 Units/CommandFunc.txt 中 CmdAttackGround 使用 CommandAttackGround、按钮位置 3,1，Units/CommandStrings.txt 定义 G 热键及持续射击提示；源 UnitWeapons 中迫击炮、投石车和绞肉车为 artillery，刃车为 aline。当前支持这两种武器类型；原版其他类型的资格、最小射程、路径阻挡、友伤、动画、燃烧油、落点高度、碰撞和延迟行为尚待对照。实际窗口、小地图、脚本事件重入、中止／继续、Shift 队列、迷雾和实验双端均待集中验证。
 
 源查询脚本位于仓库根目录 tmp/docs-artifacts/war3/inspect-attackground.py 和 inspect-line-weapons.py；原资源只读，客户端不加载 Game.dll。
+
+源武器允许零骰面配置，实际攻击沿用一面骰回退，并保留负弹道弧度；武器目标数支持至 8192。DotA v6.83d 榴霰弹的辅助炮击、持续伤害、减速及充能恢复已有隔离检查；原版弹道表现和大目标数实际弹射仍待验证。
