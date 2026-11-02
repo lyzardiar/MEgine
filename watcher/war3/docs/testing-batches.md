@@ -7742,3 +7742,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI 标准原生函数查找（部分验证，待批次验证）
 
 路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。JAPI 查找支持会话中已声明的标准 JASS 原生函数，并继续使用原有调用和钩子机制；未知函数仍明确报错。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，验证 `ConvertRace` 与 common 路径结果一致。原图隔离启动越过该查找，继续停于 `Unsupported Lua JAPI: EXGetUnitAbilityByIndex`；正式客户端、其他 JAPI 和完整地图待验证。
+
+### Lua 技能扩展声明（待批次验证）
+
+路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。绑定会话时暴露原图插件中存在的 `EXGetUnitAbilityByIndex(unit, integer) -> ability` 和 `EXGetAbilityId(ability) -> integer` 声明，冲突声明会拒绝；两者调用仍明确报未实现，不返回伪造数据。Win32 Release 客户端和 Lua 测试目标编译通过，`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖声明、冲突和未实现调用；原图隔离初始化继续到 `Unsupported Lua JAPI: EXGetEffectX`。单位技能链顺序、技能句柄生命周期、两项接口的真实实现、正式客户端及完整地图待验证。
