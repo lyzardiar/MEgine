@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### 物品命令验证批次结果
+
+范围：`9e9fb42`、`078f16d`、`1dccf29`，含测试变量补充 `c87137f`。Win32 Release 客户端、order queue、commerce 和 consumption 程序构建通过；order queue 使用原图 Booty Bay 输出 35 项通过、0 失败，commerce 消费者 1 项通过，consumption `protection` 1 项通过，共 **37 通过、0 失败**。覆盖脚本物品栏目标订单、空／地面物品及非法槽位不覆盖排队命令、即时目标／点订单、物品转移和交易。构建中的既有局部变量遮蔽警告仍存在；日志 `tmp/docs-artifacts/war3/item-command-batch/`，交易夹具 `tmp/docs-artifacts/war3/commerce-current/commerce.w3m`、消耗品夹具 `tmp/docs-artifacts/war3/eat-magic/fixture.w3m`。
+
+原版动态失败／事件时序、其他玩家持有的物品、各种物品能力组合、实际窗口和联机互通仍待验证。下一功能批次 0/3。
+
+
 ### 即时丢弃订单的物品归属（待功能批次验证，3/3）
 
 路径：`src/session_inventory.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。即时点／目标丢弃订单在清除排队命令前确认物品由发令单位持有；空、地面或其他单位持有的物品返回失败并保留队列。原版即时点订单 `0x6f1e9140` 在派发前检查订单可用性，专用丢弃入口先校验物品持有关系；原版动态队列时序待对照。合批运行 order queue、物品交易及相关队列回归。本次提交前未执行功能测试。
