@@ -7115,3 +7115,11 @@ Win32 Release 客户端和 `war3_passive_tests` 增量编译成功；功能断�
 ### 普通背包物品脚本定位回归（待功能批次验证）
 
 路径：`tests/passive_tests.cpp`。扩展 `invalid-item`：重新拾取普通背包物品后调用 `SetItemPosition`，检查库存释放及物品／物件坐标一致；与即用物品拾取事件内移动、特效位置一起合批运行 `war3_passive_tests <data-root> <fixture> invalid-item`。新增断言尚未执行，掉落回调重入和原版时序仍待对照。
+
+### 物品与空间回调批次结果
+
+范围：`ef4780e`、`9121d9c`、`756b264`、`7c9ce95`、`780d312`、`d172c38`、`cf0b4d6`、`f32d236`，基于本批相同源码构建。Win32 Release 客户端、passive、commerce、clock、map 目标编译成功；重新生成隔离 passive／commerce 夹具。`invalid-item`、`range_event_rechecks_after_callback`、`region_leave_rechecks_after_callback`、`powerup_pickup_callback_moves_item`、`region_subtraction_boundaries`、`preloader_hashtable_handles` 各 1 通过／0 失败；commerce 消费者退出 0 并输出一条 PASS。覆盖普通与即用物品、即时移动坐标、物品特效初始状态、区域格边界及回调重入。
+
+实际客户端用原 Footman 模型作为物品特效定位标记，分别在英雄原位置及脚本即时移动 300 单位后启动并捕获画面；两次各运行 600 游戏帧，选中英雄并可见其库存物品，标记均位于英雄处，控制图无该标记。已查看 `effect-marker.png`、`effect-marker-moved.png` 和 `control.png`；日志均记录未加载 Game.dll。本检查验证所选模型与移动场景的绘制位置，不代表原技能效果或原版视觉一致。隐身／侦测、飞行高度、掉落过程、真实鼠标操作、物品附件点及原版动态时序仍待验证。
+
+复现入口和产物：`tmp/docs-artifacts/war3/item-spatial-batch/summary.txt`、`passive.w3m`、`commerce.w3m`、`effect-marker*.w3m`、对应 PNG 与日志；临时产物不提交。
