@@ -7267,3 +7267,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 对局聊天鼠标定位（待功能阶段验证）
 
 路径：`src/chat_editor_ui.h`、`src/game_view.{h,cpp}`、`tests/browser_tests.cpp`、`docs/chat-dialog.md`。对局聊天在输入框内按可见文本定位插入点，绘制与点击共享滚动范围，点击重置未完成的 UTF-16 代理对；输入继续隔离于世界命令。Win32 Release 客户端和 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> chat_edit_lobby_layout` 为 1 通过／0 失败，覆盖原字符显示、中文／代理对边界、长文本可见范围及两端点击限制，另保留大厅控件检查。该检查未驱动实际对局鼠标，前台焦点、输入法、发送、不同窗口尺寸、联机及原版表现待功能阶段验证。
+
+### 两栖队长路线候选（待功能阶段验证）
+
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`docs/campaign-amphibious-ai.md`。点目标进攻选择共享路径起点时，当前合格两栖单位无路线则继续尝试后续队员。Win32 Release 客户端和 campaign AI 测试目标编译通过；`war3_campaign_ai_tests <data-root> <fixture> amphibious-trapped-lead` 输出 `RESULT passed=1 failed=0`，以动态障碍隔离首名单位、验证另一名单位建立共享路线并实际移动；修复前该检查失败。相关 `amphibious-reinforce` 为 2 通过／0 失败。原版候选顺序、多名不可达单位的计算开销、动态阻挡变化、战役自然对局和联机仍待功能阶段验证。
