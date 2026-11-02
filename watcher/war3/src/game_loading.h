@@ -3,6 +3,7 @@
 #include "map_preparation.h"
 #include "terrain_scene.h"
 #include "scene_objects.h"
+#include "minimap_terrain.h"
 
 namespace war3 {
 struct ConsolePiece {float x,y,w,h,u0,v0,u1,v1;std::string image;};
@@ -12,6 +13,7 @@ struct GameData {
     std::unique_ptr<SceneAssets> assets;
     std::unique_ptr<TerrainScene> terrain;
     std::unique_ptr<SceneObjects> objects;
+    std::optional<MinimapTerrain> minimapTerrain;
     std::vector<ConsolePiece> console;
     std::string minimap,autocastModel,minimapPingModel,idleWorkerIcon,waypointModel,upperMenuTexture;
     std::string groupButtonBorder,subgroupHighlight,groupHeroGlow,heroBarBorder,smallHealthBar,smallManaBar,heroExperienceBar,heroExperienceBorder,heroLevelFormat;

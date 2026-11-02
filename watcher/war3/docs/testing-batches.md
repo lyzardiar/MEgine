@@ -1,8 +1,12 @@
 # 独立客户端测试队列
 
+## 小地图开局地表基线（待功能阶段验证）
+
+路径：`src/minimap_terrain.h/.cpp`、`src/game_loading.h/.cpp`、`src/game_view.cpp`、`tests/live_world_tests.cpp`，见[小地图](minimap.md)。在主脚本或存档恢复前保存地表基线，底图加载后继续检测其后的地表变化。Win32 Release 客户端及测试目标编译通过；`war3_live_world_tests <data-root> <BootyBay.w3m> <log> minimap-terrain` 1 通过、0 失败，覆盖地表变化后才提供底图的基线更新，未加载 Game.dll。测试直接修改地表，实际开局脚本、读档窗口、配置阶段改地和原版视觉仍待验证。
+
 ## 小地图动态地表（待功能阶段验证）
 
-路径：`CMakeLists.txt`、`src/minimap_terrain.h/.cpp`、`src/game_loading.cpp`、`src/game_view.h/.cpp`、`tests/live_world_tests.cpp`，见[小地图](minimap.md)。运行时地形类型和 variation 变化后，纹理就绪时更新相应底图像素，并保留其他地图原图像素。Win32 Release 客户端与测试目标编译通过；`war3_live_world_tests <data-root> <BootyBay.w3m> <log> minimap-terrain` 1 通过、0 失败，覆盖纹理未就绪、局部更新及后续变化，未加载 Game.dll。初始化前的脚本修改、原版颜色及混合、水面／荒芜、实际窗口和设备恢复、大尺寸底图与高频修改的性能待阶段验证。
+路径：`CMakeLists.txt`、`src/minimap_terrain.h/.cpp`、`src/game_loading.cpp`、`src/game_view.h/.cpp`、`tests/live_world_tests.cpp`，见[小地图](minimap.md)。运行时地形类型和 variation 变化后，纹理就绪时更新相应底图像素，并保留其他地图原图像素。Win32 Release 客户端与测试目标编译通过；`war3_live_world_tests <data-root> <BootyBay.w3m> <log> minimap-terrain` 1 通过、0 失败，覆盖纹理未就绪、局部更新及后续变化，未加载 Game.dll。配置阶段的脚本修改、原版颜色及混合、水面／荒芜、实际窗口和设备恢复、大尺寸底图与高频修改的性能待阶段验证。
 
 ## 小地图野怪营地模型（待功能阶段验证）
 
