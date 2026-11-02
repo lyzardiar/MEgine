@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 脚本移动单位的地形阻挡修正（待功能批次验证，3/3）
+
+路径：`src/session_entities.cpp`、`src/world.h`、`src/world_path.cpp`、`tests/map_tests.cpp`。启用寻路的单位通过 `SetUnitPosition`／`SetUnitPositionLoc` 移动到阻挡位置时寻找附近可通行坐标，查询排除单位自身的建筑占地；禁用寻路的单位保留脚本指定坐标。原图电梯墙体调用 `NudgeObjectsInRect` 时，单位可离开新阻挡格。合批执行 `war3_map_tests <data-root> <scratch-directory> campaign_elevator_surface`、可破坏物及战役移动回归；单位之间碰撞、建筑重叠、极大障碍和原版动态时序仍待验证。
+
+
 ### 脚本移动物品的地形阻挡修正（待功能批次验证，2/3）
 
 路径：`src/session_entities.cpp`、`tests/map_tests.cpp`。脚本设置物品位置时，目标被地形或静态占地阻挡则使用附近可通行位置；原图电梯墙体使用 `NudgeObjectsInRect` 重新设置物品坐标，避免物品留在墙中。原版 1.27 `SetItemPosition` 经 `0x6f63cc10` 进入位置处理；必要复现检查：Win32 Release 核心构建通过，原图阻挡格诊断中物品从 `(640,2176)` 移至 `(624,2160)`；日志 `tmp/docs-artifacts/war3/elevator-motion-probe/nudge-item-fixed.log`。单位位置修正尚待实现。合批运行 `war3_map_tests <data-root> <scratch-directory> campaign_elevator_surface` 并回归物品拖放；动态单位／物品碰撞、邻近位置选择和原版时序仍待对照。
