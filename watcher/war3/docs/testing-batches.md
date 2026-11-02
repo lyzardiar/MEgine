@@ -7714,3 +7714,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 显式句柄引用计数（部分验证，待功能阶段）
 
 路径：`src/session.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。绑定真实 `ScriptSession` 后，`jass.debug.handle_ref`／`handle_unref` 修改会话内显式引用计数并返回原参数，空句柄不变；无效句柄、缺少宿主和释放次数不足明确报错。当前会话句柄编号本身不复用，计数与销毁分离；尚未实现原版的回收、JASS／Lua 全部隐式引用及引用计数存读档。Win32 Release 客户端及 Lua 测试目标编译通过；原图在隔离会话中越过 UI 计时器的 `handle_ref`，继续到缺少 `jass.message`。`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖真实计时器保留两次、销毁后剩余引用、释放和下溢；使用测试宿主，未发送网络请求。原版句柄回收、其他对象生命周期、快照、实际地图和 UI 待验证。
+
+### 地图帧根、引用与 TOC 回滚批次（部分通过，后续功能待测）
+
+集成版本 `4c7ca22`，功能提交 `4db3034`、`a729b73`、`4c7ca22`。Win32 Release 客户端、Lua、native、2SAJ 和 JASS 线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> <scratch>` 为 15 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。scratch 位于 `tmp/docs-artifacts/war3/map-frames-batch-20261103/`。隔离原图越过帧根及计时器引用后停在 `jass.message`；帧绘制和输入、真实句柄回收与存档、平台／网络宿主、正式客户端及实际 UI 未执行，保留待测。
