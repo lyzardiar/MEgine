@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 机械单位与桥梁的修理路径（待功能批次验证）
+
+路径：`src/session_repair.cpp`、`tests/construction_tests.cpp`，见[基地升级与修理](base-development.md)。追踪机械单位或桥梁时核对路径终点是否进入实际修理范围，不可达则结束订单并清除路线。Win32 Release 客户端及建造测试目标编译通过；`war3_construction_tests <data-root> <fixture.w3m> repair-unit-blocked`、`repair-bridge-blocked`、`repair-approach` 各 1 通过、0 失败，`repair-callback` 和综合建造程序各输出 1 条 PASS，均未加载 Game.dll。机械单位场景覆盖封路及打开后重新修理；旧修理代码链接相同检查时保留不可达路线并失败，探针在 `tmp/docs-artifacts/war3/repair-unit-before/`。桥梁场景只验证不可达时结束订单：移除人工障碍后，从远处仍未能修复该桥，按 32 单位间距采样的修理范围内也未找到可站立点；桥体占地、接近与恢复保持未解决。移动目标、动态封路、原版订单时序及真实地图仍待批次验证。
+
 ## AI 英雄购买途中失效（待功能批次验证）
 
 路径：`src/session_ai.cpp`、`tests/ai_tests.cpp`，见[AI 英雄物品](ai-hero-items.md)。购买途中路径阻挡变化后检查剩余路线能否进入当前商店范围；商店变为不可交易的归属或开始反召唤时取消预约，并保留已替换的单位命令。Win32 Release 客户端及 AI 目标编译通过；`war3_ai_tests <data-root> <BootyBay.w3m> hero-shop-invalid` 1 通过、0 失败，覆盖途中封路、商店易主和替换移动命令；`hero-shop-blocked`、`hero-shop-range` 各 1 通过、0 失败，未加载 Game.dll。夹具暂停 AI 脚本并人工改变地面路径和归属；移动障碍、暂停／眩晕恢复、共享控制变化、回调重入、多商店重选及性能待批次验证。
