@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 namespace war3 {
+std::uint32_t modulateMapFrameAlpha(std::uint32_t color,std::uint8_t alpha){return (color&0x00ffffffu)|((((color>>24)*unsigned(alpha)+127)/255)<<24);}
 MapFrameRect solveMapFramePoints(float width,float height,std::span<const MapFramePoint> points){
     if(points.empty() || !std::isfinite(width) || !std::isfinite(height) || width<0 || height<0)throw std::runtime_error("Invalid map frame layout");
     auto axis=[&](bool vertical,float size){auto coefficient=[&](const MapFramePoint& p){return float(vertical?p.point/3:p.point%3)*.5f;};auto value=[&](const MapFramePoint& p){return vertical?p.y:p.x;};auto first=points.front();if(first.point>8 || !std::isfinite(first.x) || !std::isfinite(first.y))throw std::runtime_error("Invalid map frame point");float c=coefficient(first),v=value(first);bool sized=false;for(auto& p:points){if(p.point>8 || !std::isfinite(p.x) || !std::isfinite(p.y))throw std::runtime_error("Invalid map frame point");float d=coefficient(p)-c;if(d!=0 && !sized){size=(value(p)-v)/d;sized=true;}}if(!std::isfinite(size) || size<0)throw std::runtime_error("Invalid map frame extent");float origin=v-c*size;for(auto& p:points)if(std::abs(origin+coefficient(p)*size-value(p))>1e-5f)throw std::runtime_error("Conflicting map frame anchors");return std::pair{origin,size};};
@@ -22,6 +23,8 @@ void MapFrames::setTexture(std::uint32_t id,std::string name,bool tiled){auto& c
 std::string MapFrames::text(std::uint32_t id) const{auto& current=node(id);if(current.definition.type!="TEXT")throw std::runtime_error("Unsupported map frame text type: "+current.definition.type);auto& values=current.definition.property("Text");auto value=values.empty()?std::string{}:values.front();return current.definition.properties.contains("RuntimeText")?value:definitions_->string(value);}
 void MapFrames::setTextColor(std::uint32_t id,std::uint32_t color){auto& current=node(id);if(current.definition.type!="TEXT")throw std::runtime_error("Unsupported map frame text color type: "+current.definition.type);if(textColor(id)==color)return;nodes_.at(id).textColor=color;++revision_;}
 std::uint32_t MapFrames::textColor(std::uint32_t id) const{auto& current=node(id);if(current.definition.type!="TEXT")throw std::runtime_error("Unsupported map frame text color type: "+current.definition.type);return current.textColor?*current.textColor:current.definition.color("FontColor",0xffffcc55);}
+void MapFrames::setAlpha(std::uint32_t id,std::uint8_t alpha){node(id);if(id==root())throw std::runtime_error("Game UI root alpha is not implemented");auto& current=nodes_.at(id).alpha;if(current && *current==alpha)return;current=alpha;++revision_;}
+std::uint8_t MapFrames::alpha(std::uint32_t id) const{node(id);for(unsigned depth=0;id;++depth){if(depth>34)throw std::runtime_error("Invalid map frame hierarchy");auto& current=node(id);if(current.alpha)return *current.alpha;id=current.parent;}return 255;}
 void MapFrames::visible(std::uint32_t id,bool value){node(id);auto& current=nodes_.at(id).visible;if(current!=value){current=value;++revision_;}}
 bool MapFrames::visible(std::uint32_t id) const{node(id);for(unsigned depth=0;id;++depth){if(depth>34)throw std::runtime_error("Invalid map frame hierarchy");auto& current=node(id);if(!current.visible)return false;id=current.parent;}return true;}
 }

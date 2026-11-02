@@ -7894,3 +7894,9 @@ Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_t
 路径：`src/fdf.{h,cpp}`、`src/map_frames.{h,cpp}`、`src/glue.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入 TEXT 帧 `FrameSetTextColor`／`FrameGetTextColor`，保留 32 位 ARGB 值并传递给 FDF 绘制；默认值与普通 FDF 绘制共用颜色分量转换，重复设置同色不触发重建。地图插件注册签名为 `(II)V`／`(I)I`，其 setter 比较旧值后写回；其他文本控件尚未支持。
 
 Win32 Release 客户端、Lua、浏览器和 native 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖默认颜色、ARGB 往返、重复赋值及非法类型；`war3_native_tests <data-root> tmp/docs-artifacts/war3/frame-color-20261103` 为 15 通过／0 失败，覆盖既有 FDF、资源和图像读取，不代替 UI 像素回归。浏览器夹具添加文本颜色和内嵌颜色标记，前次 D3D9 设备创建失败，本次未重复执行；实际颜色／透明度、内嵌颜色与默认色交互、普通界面和原版一致性待批次验证。正式地图仍缺少平台身份，完整启动和玩法未验证。
+
+### Lua 地图帧透明度（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/glue.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入地图插件 `FrameSetAlpha`／`FrameGetAlpha`（`(II)V`／`(I)I`），范围 0–255；自建帧无独立值时继承最近父帧值，有独立值时覆盖，并将结果作用于 BACKDROP、TEXT、内嵌颜色和文本阴影。相同值不触发帧树重建；标准 HUD 尚未接入根帧透明度，设置根帧会明确报未实现。父子策略参考 1.31 描述 https://lep.nrw/jassbot/doc/BlzFrameSetAlpha ，不能视作 1.27 地图插件完整行为证据。
+
+Win32 Release 客户端、Lua 与浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖父子继承／覆盖、重复赋值、范围、根帧拒绝和颜色 alpha 合成。浏览器夹具添加半透明背景与文本；本次以 `war3.exe --renderer d3d9-reference --window-check --hidden --frames 120` 验证参考设备也在创建 D3D9 时失败，日志 `tmp/docs-artifacts/war3/reference-device-probe.log`。透明度像素、父子行为、标准 HUD、原版一致性及完整地图启动仍待图形环境和后续功能验证。

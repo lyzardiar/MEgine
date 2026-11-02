@@ -8,10 +8,11 @@ namespace war3 {
 struct MapFramePoint {std::uint32_t point=0;float x=0,y=0;};
 struct MapFrameRect {float x=0,y=0,w=0,h=0;};
 MapFrameRect solveMapFramePoints(float width,float height,std::span<const MapFramePoint> points);
+std::uint32_t modulateMapFrameAlpha(std::uint32_t color,std::uint8_t alpha);
 class MapFrames {
 public:
     struct Anchor {std::uint32_t point=0,target=0,targetPoint=0;float x=0,y=0;};
-    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;size_t dynamicTextBytes=0,dynamicTextureBytes=0;};
+    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;};
 private:
     std::shared_ptr<FrameDefinitions> definitions_;
     std::map<std::uint32_t,Node> nodes_;
@@ -33,6 +34,8 @@ public:
     std::string text(std::uint32_t id) const;
     void setTextColor(std::uint32_t id,std::uint32_t color);
     std::uint32_t textColor(std::uint32_t id) const;
+    void setAlpha(std::uint32_t id,std::uint8_t alpha);
+    std::uint8_t alpha(std::uint32_t id) const;
     void visible(std::uint32_t id,bool value);
     bool visible(std::uint32_t id) const;
     size_t size() const {return nodes_.size();}
