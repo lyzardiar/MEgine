@@ -261,6 +261,7 @@ endfunction
         (b'AUau', b'A0PL', [('atar', 3, 'air,ground,invulnerable,player,vulnerable', 0)]),
         (b'Aasl', b'A0SL', [('Slo1', 2, .2, 1), ('atar', 3, 'self', 0), ('aare', 2, 0., 0)]),
         (b'Aspb', b'A0PB', [('spb1', 3, 'A0SL', 1), ('spb3', 0, 1, 3), ('spb4', 0, 1, 4)]),
+        (b'Aspb', b'A0PR', [('spb1', 3, 'AHhb', 1), ('spb3', 0, 1, 3), ('spb4', 0, 1, 4)]),
         (b'Aamk', b'A0AT', [('Istr', 2, -1.75, 3), ('Iagi', 2, 2.75, 1), ('Iint', 2, -3.75, 2)]),
         (b'AIxm', b'A0PX', [('Istr', 2, -2.75, 3), ('Iagi', 2, 3.75, 1), ('Iint', 2, -4.75, 2)])
     ]:

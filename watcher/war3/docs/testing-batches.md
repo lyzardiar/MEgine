@@ -7259,3 +7259,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 法术书能力的永久标记（待功能阶段验证）
 
 路径：`src/session_entities.cpp`、`src/session_spellbooks.cpp`、`tests/passive_tests.cpp`、`docs/unit-forms.md`。法术书刷新完成后，借用能力不再存在时清理其永久标记；能力仍由单位或其他法术书提供时保留。脚本移除单位来源也以装备刷新后的实际能力为准。Win32 Release 客户端、passive 和形态测试目标编译通过；`war3_passive_tests <data-root> <fixture> hidden-book` 为 4 通过／0 失败，检查刷新、法术书移除／重加、独立单位来源和共同来源；修复前分别复现遗留标记及过早清理。`war3_unit_forms_tests <data-root> <fixture> permanent` 为 1 通过／0 失败，回归普通移除后的熊形态。测试使用自定义法术书，未覆盖物品法术书、多个物品来源、回调重入、原版动态规则及实际存档；这些留待功能阶段。夹具位于 `tmp/docs-artifacts/war3/book-permanent/fixture.w3m`。
+
+### 遗忘之书与借用技能永久标记（待功能阶段验证）
+
+路径：`src/session_spellbooks.cpp`、`tests/generate-passive-fixture.py`、`tests/passive_tests.cpp`、`docs/spellbooks-retraining.md`。重训清理已学技能时，仍由法术书提供的能力保留永久标记，实际消失的能力清理标记。Win32 Release 客户端及 passive 测试目标编译通过；`war3_passive_tests <data-root> <fixture> retrain-book` 为 1 通过／0 失败，使用原 `tret` 和自定义法术书检查技能点退还、物品消耗、借用技能／标记保留、最后来源移除，以及没有借用来源时的技能／标记清理；修复前在共享技能标记处失败。相关 `hidden-book` 为 4 通过／0 失败。夹具在 `tmp/docs-artifacts/war3/retrain-book/fixture.w3m`；多本物品书、自动施法、重训回调、原版时序与窗口待功能阶段验证。
