@@ -7666,3 +7666,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 未绑定 JASS native 的脚本钩子（部分验证，待功能阶段）
 
 路径：`src/jass_runtime.cpp`、`tests/lua_tests.cpp`。允许对已声明但未绑定的非休眠 JASS native 安装钩子；调用时有钩子则执行钩子，直接调用原实现或移除钩子后继续报告未绑定，仍禁止拦截可休眠 native。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖 Lua 直接调用、文本 JASS 内部调用、原函数错误及移除；原图隔离入口安装 `DzAPI_Map_GetMapLevel` 钩子，推进到未实现的 `DzAPI_Map_GetMallItemCount` 函数替换。测试使用日志上传等内存宿主，未加载 Game.dll；2SAJ 调用、平台真实值、完整初始化和 UI 待验证。
+
+### Lua 时间、请求与未绑定 native 钩子批次（部分通过，后续功能待测）
+
+集成版本 `65b3647`，功能提交 `a9ae661`、`01d8368`、`65b3647`。Win32 Release 客户端、Lua、2SAJ 和 JASS 线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。Lua 使用内存日志请求、测试身份和版本宿主，没有发送网络请求；原图入口停在 `DzAPI_Map_GetMallItemCount` 函数替换。真实客户端启动、平台 API、网络请求和回调协议、存档、动态 UI、联机时钟及完整玩法未执行，继续保留待测。
