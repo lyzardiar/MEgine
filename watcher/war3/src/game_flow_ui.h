@@ -28,6 +28,7 @@ class GameFlowUi {
     bool scoreSavePanel_=false,scoreReplaySaved_=false;
     wchar_t scoreReplayHigh_=0;
     std::wstring scoreReplayName_;
+    size_t scoreReplayCursor_=0;
     std::string scoreModalFocus_="SaveReplayFileEditBox";
     std::string scoreReplayMessage_;
     std::function<std::pair<bool,std::string>(const std::wstring&)> scoreReplaySaver_;
