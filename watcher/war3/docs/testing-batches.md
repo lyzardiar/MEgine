@@ -7173,3 +7173,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 游戏速度名称本地化（待功能阶段验证）
 
 路径：`src/game_flow_ui.cpp`。游戏选项中的五档速度名称读取原 `GlobalStrings.fdf` 的 `SLOWEST`、`SLOW`、`NORMAL`、`FAST` 和 `FASTEST`，随所用资源语言显示；速度数值与提交逻辑沿用原流程。Win32 Release 客户端增量编译成功；待功能阶段在实际窗口检查五档名称、切换与应用／取消，并对照不同语言资源和原版布局。
+
+### 独立预加载脚本的单位状态（待功能阶段验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立 `Preloader` 脚本复用会话单位创建、移除、类型、用户数据和位置读写；其余未绑定 native 仍报错。Win32 Release 客户端和 map 测试目标编译成功，`war3_map_tests <data-root> <scratch> preloader_unit_state` 结果 1 通过／0 失败，覆盖创建与移除、位置和用户数据读写，以及子脚本结束后单位状态保留。`SetUnitPosition`、单位事件／区域回调重入、句柄跨脚本保存与销毁、实际地图和原版时序待功能阶段验证。
