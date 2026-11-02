@@ -120,6 +120,8 @@ class GameView {
     std::map<std::uint32_t,BuffPanelInfo> buffPanelInfo_;
     std::map<std::string,bool> buffPanelImages_;
     std::unique_ptr<GlueScreen> buffTooltip_;
+    std::uint32_t buffTooltipUnit_=0,buffTooltipId_=0;
+    size_t buffTooltipScroll_=0;
     const BuffPanelInfo& buffPanelInfo(std::uint32_t id);
     std::vector<std::uint32_t> buffPanelIds(std::uint32_t unit);
     void streamBuffPanel(std::vector<std::string>& textures);
