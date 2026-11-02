@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 建筑修理与施工的绕行接近（待功能批次验证）
+
+路径：`src/session_construction.cpp`、`tests/construction_tests.cpp`，见[建造](construction.md)。正对建筑的接近点被阻挡或寻路终点不在工作范围时，工人按距离尝试建筑其他侧，并校验终点位于占地外且在工作范围内；施工和建筑修理共用该路径。Win32 Release 客户端及建造测试目标编译通过；`war3_construction_tests <data-root> <fixture.w3m> repair-approach` 1 通过、0 失败，覆盖人工阻挡正面后绕至另一侧、开始修理并扣费；同夹具综合建造程序及 `stunned-work` 各输出 1 条 PASS，均未加载 Game.dll。将提交前旧 `session_construction.cpp` 与相同定向检查链接时，工人停在范围外且测试失败；探针位于 `tmp/docs-artifacts/war3/repair-approach-before/`。多工人拥堵、动态封路、所有侧不可达、不同建筑占地及原版路径时序仍待批次验证。
+
 ## 建造命令与 AI 商店批次（部分验证）
 
 范围：`ce677ee`、`43a6860`、`f8e371e`，在 `f8e371e` 集成代码上执行。Win32 Release 客户端、订单、AI、被动和建造测试目标编译通过；订单目标有既有局部变量遮蔽警告。BootyBay 的 `invalid-build`、`hero-shop-range`、`hero-shop-blocked` 各 1 通过、0 失败；被动夹具 `shop-range` 7 通过、0 失败；均未加载 Game.dll。建造综合夹具首次失败：暗夜精灵工人需要移动才能开工，原夹具只等待一个模拟步；诊断中继续等待后，修理工人因目标旁位置被路径规则调整而无法完成原固定场景。夹具现等待新的实际开工事件，并仅在修理费用／生命检查期间关闭该工人的路径碰撞；修正后建造综合程序输出 1 条 PASS，未加载 Game.dll。日志及隔离诊断在 `tmp/docs-artifacts/war3/build-ai-shop-batch/`。寻路修理、购买途中动态封路、多商店选择、真实窗口及原版时序仍待验证；本次未修改产品建造或修理逻辑。
