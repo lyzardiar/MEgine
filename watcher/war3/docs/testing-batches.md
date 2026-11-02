@@ -6937,3 +6937,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 英雄复活的失效位置（待功能批次验证）
 
 路径：`src/session_revival.cpp`、`tests/revival_tests.cpp`、`docs/heroes.md`。`ReviveHeroLoc` 对空、已移除和错误类型的位置返回 false；原版 1.27 入口 `0x6f1f3380` 在位置解析失败时返回零。Win32 Release 核心编译通过；`UndeadX08` 隔离诊断依次传送阿尔萨斯到四处并暂停伊利丹、保护玩家建筑，修复后四处计数达到 4，胜利过场推进至 379.656 秒发出 `ArthasIllidanFight.mdl` 请求，日志 `tmp/docs-artifacts/war3/undead-08-transfer/four-obelisks-fixed.log`。合批运行 `war3_revival_tests <data-root> <fixture> invalid-revive-location`，回归有效复活和失效英雄／位置；原版动态、自然战斗和窗口过场仍待验证。
+
+### 资料片片尾的预加载刷新（待功能批次验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。同步预加载立即读取资源，主脚本与预加载脚本可调用 `PreloadRefresh` 完成当前刷新步骤；原版 1.27 `0x6f1f2160` 调用资源队列处理。Win32 Release 核心编译通过；此前 `War3XBonusCredits` 在原图 `PreloadRefresh` 中断，修复后携带胜利缓存的隔离会话运行至约 566.7 秒并返回，日志 `tmp/docs-artifacts/war3/undead-08-transfer/credits-fixed.log`。合批运行 `war3_map_tests <data-root> <scratch> campaign_expansion_credits` 并回归英雄引导／复活；原版异步时序、完整模型预热、音频和窗口片尾待验证。
