@@ -37,6 +37,10 @@ SessionPlayer& ScriptSession::player(jass::Value handle) {return config_.players
 SessionStart& ScriptSession::start(std::uint32_t index) {return config_.starts[checked(index,16,"Start location")];}
 void ScriptSession::destroy(jass::Value handle,NativeKind kind) {if(!handle.bits)return;auto& value=object(handle,kind);if(kind==NativeKind::Destructable){auto state=std::get<std::shared_ptr<DestructableState>>(value.state);removeDoodad(state->doodadIndex);animatedDestructables_.erase(handle.bits);}if(kind==NativeKind::Event)++staleEventHandles_;value.alive=false;value.state=std::monostate{};}
 size_t ScriptSession::liveObjects(NativeKind kind) const {return std::count_if(objects_.begin(),objects_.end(),[&](auto& value){return value.alive && value.kind==kind;});}
+
+void ScriptSession::retainHandle(std::uint32_t id){if(!id)return;if(id<handleBase || id-handleBase>=objects_.size())throw std::runtime_error("Unknown session native handle");auto found=retainedHandles_.find(id);if(found!=retainedHandles_.end()){if(found->second==UINT32_MAX)throw std::runtime_error("Session handle reference budget exceeded");++found->second;}else retainedHandles_.emplace(id,1);}
+void ScriptSession::releaseHandle(std::uint32_t id){if(!id)return;auto found=retainedHandles_.find(id);if(found==retainedHandles_.end())throw std::runtime_error("Session handle reference underflow");if(!--found->second)retainedHandles_.erase(found);}
+std::uint32_t ScriptSession::retainedHandleCount(std::uint32_t id) const{auto found=retainedHandles_.find(id);return found==retainedHandles_.end()?0:found->second;}
 void ScriptSession::initialize() {if(failed_ || runtime_.ready())throw std::runtime_error("Session initialization requires a fresh instance");try{runtime_.initialize();}catch(...){failed_=true;throw;}}
 void ScriptSession::configure() {if(failed_ || configured_)throw std::runtime_error("Session configuration requires an unconfigured instance");try{if(!runtime_.ready())initialize();runtime_.invoke("config");configured_=true;}catch(...){failed_=true;throw;}}
 void ScriptSession::initializeTeamAlliances(SessionConfig& config) const {

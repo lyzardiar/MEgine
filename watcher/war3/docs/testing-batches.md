@@ -7710,3 +7710,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 地图帧层级与 Lua UI 根句柄（部分验证，待功能阶段）
 
 路径：`CMakeLists.txt`、`src/map_frames.{h,cpp}`、`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。新增关联 FDF 定义的地图帧层级，维护根句柄、模板子树、父子关系、继承可见性和递归销毁；Lua 显式绑定同一定义集合和帧层级后，`GetGameUI` 返回根句柄、`FrameShow` 修改帧状态，非法句柄及错误签名明确报错。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖子树、父节点隐藏、销毁、无效操作、Lua 修改及解绑。原图隔离入口获取根句柄并在内存宿主初始化空 `ui\loaded.fdf`，随后停在 `jass.debug.handle_ref`。帧层级尚未连接 `GameView`、实际 HUD、布局、绘制或输入，创建／事件类 JAPI 和真实游戏启动未实现；根状态测试不代表 UI 一致，继续待测。
+
+### Lua 显式句柄引用计数（部分验证，待功能阶段）
+
+路径：`src/session.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。绑定真实 `ScriptSession` 后，`jass.debug.handle_ref`／`handle_unref` 修改会话内显式引用计数并返回原参数，空句柄不变；无效句柄、缺少宿主和释放次数不足明确报错。当前会话句柄编号本身不复用，计数与销毁分离；尚未实现原版的回收、JASS／Lua 全部隐式引用及引用计数存读档。Win32 Release 客户端及 Lua 测试目标编译通过；原图在隔离会话中越过 UI 计时器的 `handle_ref`，继续到缺少 `jass.message`。`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖真实计时器保留两次、销毁后剩余引用、释放和下溢；使用测试宿主，未发送网络请求。原版句柄回收、其他对象生命周期、快照、实际地图和 UI 待验证。

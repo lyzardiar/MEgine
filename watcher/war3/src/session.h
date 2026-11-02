@@ -95,6 +95,7 @@ class ScriptSession {
     std::array<std::array<unsigned,16>,16> configuredAllianceWrites_{};
     void initializeTeamAlliances(SessionConfig& config) const;
     std::vector<Object> objects_;
+    std::map<std::uint32_t,std::uint32_t> retainedHandles_;
     std::vector<std::uint32_t> localNetworkObjects_;
     std::vector<std::uint32_t> localNetworkUiObjects_;
     std::vector<std::uint32_t> eventHandles_,spatialEventHandles_,timerHandles_,timerTriggerEvents_;
@@ -1621,6 +1622,9 @@ public:
     jass::Runtime& runtime() {return runtime_;}
     const jass::Runtime& runtime() const {return runtime_;}
     size_t liveObjects(NativeKind kind) const;
+    void retainHandle(std::uint32_t id);
+    void releaseHandle(std::uint32_t id);
+    std::uint32_t retainedHandleCount(std::uint32_t id) const;
     const std::map<std::uint32_t,std::shared_ptr<UnitState>>& units() const {return units_;}
     const std::map<std::uint32_t,std::shared_ptr<ItemState>>& items() const {return items_;}
     const std::vector<std::string>& preloadMissing() const {return preloadMissing_;}
