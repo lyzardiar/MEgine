@@ -2489,6 +2489,7 @@ endfunction
  call ItemPoolAddItemType(items, 'phea', 1.)
  call ItemPoolAddItemType(items, 'pman', 2.)
  call ItemPoolAddItemType(items, 'phea', 0.)
+ call ItemPoolAddItemType(items, 'phea', -1.)
  set retired = CreateUnitPool()
  call DestroyUnitPool(retired)
  set table = InitHashtable()

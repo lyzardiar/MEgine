@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 随机池有限负权重与存档（待功能批次验证，3/3）
+
+路径：`src/session_game.cpp`、`tests/clock_tests.cpp`。随机池允许脚本写入有限负权重，并在存档中保留；选择沿用权重累计和首项回退规则。原版 1.27 的单位池／物品池添加实现 `0x6f209ad0`／`0x6f2098a0` 直接存储传入权重。合批运行 `WAR3_CLOCK_FILTER=recovery_bundle_restores_random_pools war3_clock_tests <data-root> <output-root>`，检查负权重保存／恢复、选择和前两项回归；原版负权重动态结果及非有限数仍待对照。本次未执行功能测试。
+
+
 ### 随机对象池的未知类型（待功能批次验证，2/3）
 
 路径：`src/session_game.cpp`、`tests/clock_tests.cpp`。随机单位池或物品池选中不存在的对象类型时返回空句柄，保留已推进的随机状态；有效类型沿用创建流程。原版 1.27 的 `0x6f63a040` 与 `0x6f65a140` 在对象数据创建失败时返回空。合批运行 `WAR3_CLOCK_FILTER=recovery_bundle_restores_random_pools war3_clock_tests <data-root> <output-root>`，检查未知类型不创建实体和正常随机池恢复；原版动态随机状态、地图自定义对象覆盖待验证。本次未执行功能测试。
