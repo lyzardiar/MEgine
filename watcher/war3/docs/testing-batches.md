@@ -7276,4 +7276,8 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 
 路径：`tests/campaign_ai_tests.cpp`、`docs/ai.md`。新增 `produce-plan-restricted`，直接调用原公共 AI 的 `InitBuildArray`、`SetBuildUnit` 和 `OneBuildLoop`；在资源充足、可用兽族兵营及 `otbk` 上限为零的混合种族夹具中，请求三个狂战士后检查其未入队且后续农民生产入队。Win32 Release campaign AI 目标编译成功，输出 `RESULT passed=1 failed=0`，不加载 Game.dll。首次夹具错误假设没有现存步兵而失败，改为记录已有数量，并改用实际受限单位后通过。该检查不复现旧 Booty Bay 长局、资金不足、生产者禁用／满队列或原版动态行为；长局停滞原因与自然胜负仍待验证。
 
-当前构建补充原图现场：隔离探针在 BootyBay 兽族对不死族推进到 1,500 秒，兽族已拥有灵魂归宿和要塞；直接请求受限 `otbk` 和后续灵魂归宿均返回 1。日志 `tmp/docs-artifacts/war3/ai-production-probe/current-1500.log`。该局生产计划与旧长局不同、随机初态未对齐，未验证后续胜负或原版行为，不将旧停滞标记为修复。
+当前构建补充原图现场：隔离探针在 BootyBay 兽族对不死族推进到 1,500 秒，兽族已拥有灵魂归宿和要塞；直接请求受限 `otbk` 和后续灵魂归宿均返回 1。日志 `tmp/docs-artifacts/war3/ai-production-probe/current-1500.log`。该局生产计划与旧长局不同，旧日志未记录和核验随机状态，未验证后续胜负或原版行为，不将旧停滞标记为修复。
+
+### 原图双电脑自然胜负（部分验证，待功能阶段）
+
+路径：`tests/ai_tests.cpp`、`docs/ai.md`。Win32 Release `war3_ai_tests <data-root> <BootyBay.w3m> duel` 为 1 通过／0 失败；固定初始种子 `0x69707365`，原地图和原 AI 脚本运行兽族对不死族，没有手动创建、移动或击杀战斗单位。兽族建筑从初始非零降至零，兽族失败、不死族胜利，采样模拟时间 2,880 秒，未加载 Game.dll。首次诊断记录 `tmp/docs-artifacts/war3/ai-production-probe/fixed-seed-4200.log`；正式测试独立运行并得到相同时间。仅覆盖一张地图、一组种族和种子，实际窗口、原版动态、联机、其余配置及旧局停滞仍待功能阶段验证。
