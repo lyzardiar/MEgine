@@ -7165,3 +7165,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 物品归属颜色（待功能批次验证）
 
 路径：`src/entities.h`、`src/session_entities.cpp`、`src/session_item_snapshot.cpp`、`src/session_network_identity.cpp`、`src/game_view.cpp`、`tests/clock_tests.cpp`，依据及边界见 [物品句柄](dota-bkb-item-handles.md)。Win32 Release 客户端与 clock 目标编译通过；`WAR3_CLOCK_FILTER=item_owner_color_snapshot` 为 1 通过／0 失败，覆盖颜色开关、归属、版本 2 往返及版本 1 回退。合批验证实际团队颜色模型、多个共享模型、持有／掉落、玩家颜色变化、原版行为、联机及战役缓存；本次尚未进行窗口画面对照。
+
+### 战役缓存物品颜色（待功能阶段验证）
+
+路径：`src/script_state.h`、`src/session_cache.cpp`、`tests/game_flow_tests.cpp`。战役缓存版本 9 保存并恢复库存物品团队颜色，读取版本 1–8 时使用默认颜色；实验单位缓存同步使用同一格式。Win32 Release `war3_game_flow_tests` 增量编译成功；从仓库根目录执行 `war3_game_flow_tests <data-root> tmp/docs-artifacts/war3/game-flow/fixture.w3m cache-damage` 输出 PASS，覆盖版本 9 物品颜色磁盘往返和不含物品的版本 1–8 缓存读取。待功能阶段验证含物品旧版缓存、实验同步、实际战役跨关、拾取回调与原版颜色规则。
