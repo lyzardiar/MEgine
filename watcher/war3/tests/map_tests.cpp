@@ -90,6 +90,11 @@ call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_GOLD, R2I(GetRectCenterX(Lo
 call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, R2I(GetRectCenterY(LoadRectHandle(a, 1, 4))))
 call RemoveRect(LoadRectHandle(a, 1, 4))
 call RemoveLocation(LoadLocationHandle(a, 1, 3))
+call MoveLocation(LoadLocationHandle(a, 1, 3), 50.0, 60.0)
+call MoveLocation(null, 50.0, 60.0)
+if GetLocationZ(LoadLocationHandle(a, 1, 3)) != 0.0 or GetLocationZ(null) != 0.0 then
+    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_GOLD, -1)
+endif
 call SaveStr(b, 2, 1, "Table Player")
 call SetPlayerName(LoadPlayerHandle(a, 1, 1), LoadStr(LoadHashtableHandle(a, 1, 2), 2, 1))
 endfunction

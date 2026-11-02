@@ -61,11 +61,11 @@ void ScriptSession::bindWorldNatives() {
     auto rect=[this](jass::Value value)->WorldRect&{return std::get<WorldRect>(object(value,NativeKind::Rect).state);};
     auto makeRect=[this](WorldRect value){auto handle=create(NativeKind::Rect);std::get<WorldRect>(object(handle,NativeKind::Rect).state)=value;return handle;};
     bind("Location","location",{"real","real"},[this](auto&,auto args){auto value=create(NativeKind::Location);std::get<WorldPoint>(object(value,NativeKind::Location).state)={jass::Real::fromBits(args[0].bits),jass::Real::fromBits(args[1].bits)};return value;});
-    bind("MoveLocation","nothing",{"location","real","real"},[point](auto& vm,auto args){point(args[0])={jass::Real::fromBits(args[1].bits),jass::Real::fromBits(args[2].bits)};return vm.nothing();});
+    bind("MoveLocation","nothing",{"location","real","real"},[this,point](auto& vm,auto args){if(alive(args[0].bits,NativeKind::Location))point(args[0])={jass::Real::fromBits(args[1].bits),jass::Real::fromBits(args[2].bits)};return vm.nothing();});
     bind("RemoveLocation","nothing",{"location"},[this](auto& vm,auto args){if(alive(args[0].bits,NativeKind::Location))destroy(args[0],NativeKind::Location);return vm.nothing();});
     bind("GetLocationX","real",{"location"},[this,point](auto& vm,auto args){return vm.real(alive(args[0].bits,NativeKind::Location)?point(args[0]).x:jass::Real{});});
     bind("GetLocationY","real",{"location"},[this,point](auto& vm,auto args){return vm.real(alive(args[0].bits,NativeKind::Location)?point(args[0]).y:jass::Real{});});
-    bind("GetLocationZ","real",{"location"},[this,point](auto& vm,auto args){return vm.real(jass::Real::fromBits(std::bit_cast<std::uint32_t>(surfaceHeight(point(args[0])))));});
+    bind("GetLocationZ","real",{"location"},[this,point](auto& vm,auto args){return vm.real(alive(args[0].bits,NativeKind::Location)?jass::Real::fromBits(std::bit_cast<std::uint32_t>(surfaceHeight(point(args[0])))):jass::Real{});});
     bind("Rect","rect",{"real","real","real","real"},[this,makeRect](auto&,auto args){return makeRect(requireWorld().rectangle({jass::Real::fromBits(args[0].bits),jass::Real::fromBits(args[1].bits)},{jass::Real::fromBits(args[2].bits),jass::Real::fromBits(args[3].bits)}));});
     bind("RectFromLoc","rect",{"location","location"},[this,point,makeRect](auto&,auto args){return makeRect(requireWorld().rectangle(point(args[0]),point(args[1])));});
     bind("SetRect","nothing",{"rect","real","real","real","real"},[this,rect](auto& vm,auto args){rect(args[0])=requireWorld().rectangle({jass::Real::fromBits(args[1].bits),jass::Real::fromBits(args[2].bits)},{jass::Real::fromBits(args[3].bits),jass::Real::fromBits(args[4].bits)});return vm.nothing();});

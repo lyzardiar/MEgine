@@ -7039,3 +7039,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立预加载脚本的随机种子、整数与实数查询共享所在会话的实际随机流；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，核对预加载脚本生成并保存的整数及主脚本继续获取的随机数，与相同种子下的序列一致。随机实数和原版动态行为待阶段验证。
 
 本组预加载接口增量编译：`cmake --build --preset release --target war3 war3_map_tests --parallel 8` 成功；行为回归及原版对照仍按上述待测项合批执行。
+
+### 失效地点的移动与高度查询（待功能批次验证）
+
+路径：`src/session_world.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。地点移动与高度查询处理空、移除或不兼容句柄，避免脚本中断；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，覆盖空和已移除地点以及之后的脚本操作。固定版 1.27 的两个 native 入口对解析失败直接返回，注册与指令见本地 `tmp/docs-artifacts/war3/location-invalid/`；有效高度、错误类型和原版动态行为待阶段验证。
