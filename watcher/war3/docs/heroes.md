@@ -25,3 +25,5 @@ SetAltMinimapIcon写入WorldEnvironment，地图归档资源经现有后台队�
 英雄经验条标题使用 `GlobalStrings.fdf` 的 `INFOPANEL_LEVEL_CLASS`，按源格式填入等级和单位类型名称；资源缺失时使用英文默认格式。经验悬浮提示和实际画面仍待原版对照。
 
 经验条悬停以 `当前经验 / 等级阈值` 显示数值；非满级使用下一等级阈值，满级使用最高等级阈值。固定版界面调用使用 `%u / %u`，并以当前经验及下一等级阈值填充，阈值查询限制在 `MaxHeroLevel`；只读指令记录 `tmp/docs-artifacts/war3/hero-reference-render/original-xp-disassembly.txt`。满级和实际画面仍需动态对照。
+
+`ReviveHeroLoc` 对空、已移除或类型不匹配的位置返回 false；有效位置仍由英雄复活流程处理。原版 1.27 入口 `0x6f1f3380` 先解析位置，失败直接返回零。亡灵资料片 `UndeadX08` 原图胜利设置会调用复活辅助触发器，未设置的位置按失败返回后过场可继续。

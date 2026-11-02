@@ -61,7 +61,7 @@ void ScriptSession::revivalButtons(std::uint32_t building,std::array<bool,12>& o
 }
 void ScriptSession::bindRevivalNatives(){
     bind("ReviveHero","boolean",{"unit","real","real","boolean"},[this](auto& vm,auto args){return vm.boolean(reviveHero(args[0].bits,{jass::Real::fromBits(args[1].bits),jass::Real::fromBits(args[2].bits)},args[3].bits!=0));});
-    bind("ReviveHeroLoc","boolean",{"unit","location","boolean"},[this](auto& vm,auto args){return vm.boolean(reviveHero(args[0].bits,std::get<WorldPoint>(object(args[1],NativeKind::Location).state),args[2].bits!=0));});
+    bind("ReviveHeroLoc","boolean",{"unit","location","boolean"},[this](auto& vm,auto args){if(!alive(args[1].bits,NativeKind::Location))return vm.boolean(false);return vm.boolean(reviveHero(args[0].bits,std::get<WorldPoint>(object(args[1],NativeKind::Location).state),args[2].bits!=0));});
     bind("GetRevivableUnit","unit",{},[this](auto& vm,auto){auto event=contexts_.empty()?UINT_MAX:contexts_.back().event;return vm.handle("unit",event==43 || event==80?contexts_.back().triggerUnit:0);});
     bind("GetRevivingUnit","unit",{},[this](auto& vm,auto){auto event=contexts_.empty()?UINT_MAX:contexts_.back().event;return vm.handle("unit",(event>=44 && event<=46) || (event>=81 && event<=83)?contexts_.back().triggerUnit:0);});
 }

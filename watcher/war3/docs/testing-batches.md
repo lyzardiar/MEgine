@@ -6933,3 +6933,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session_cache.cpp`、`tests/game_flow_tests.cpp`、`docs/campaign-gamecache.md`。恢复缓存单位时保留目标地图创建时已有能力，再合入缓存能力及等级，避免目标地图专用的默认引导能力丢失。Win32 Release 核心编译通过；`UndeadX08` 隔离探针中，恢复的阿尔萨斯含原图 `ANcl`，进入方尖碑后执行 852600 引导，观测 7 秒仍处于施法且留在区域；日志 `tmp/docs-artifacts/war3/undead-08-transfer/obelisk-channel-fixed.log`。合批运行 game flow `cache-sync-unit` 的目标默认能力和既有缓存回归，并在原图核对完整占领、打断与交接；原版动态覆盖／移除能力及窗口表现待验证。
 
 目标地图默认技能的补充回归路径：`tests/map_tests.cpp` 新增 `campaign_restored_channel`，隔离用户目录中保存 `UndeadX07c` 英雄、由 `UndeadX08` 原图脚本恢复并在方尖碑引导，核对原图 `ANcl`、英雄身份数据和占领；合批运行 `war3_map_tests <data-root> <scratch-directory> campaign_restored_channel`。定向探针观察第二方尖碑完整 30 秒引导和占领，日志 `tmp/docs-artifacts/war3/undead-08-transfer/obelisk-channel-complete.log`；新回归尚未编译执行，原版动态及实际窗口仍待验证。此项属于 `7e776ec` 的补充，不单独计入功能批次。
+
+### 英雄复活的失效位置（待功能批次验证）
+
+路径：`src/session_revival.cpp`、`tests/revival_tests.cpp`、`docs/heroes.md`。`ReviveHeroLoc` 对空、已移除和错误类型的位置返回 false；原版 1.27 入口 `0x6f1f3380` 在位置解析失败时返回零。Win32 Release 核心编译通过；`UndeadX08` 隔离诊断依次传送阿尔萨斯到四处并暂停伊利丹、保护玩家建筑，修复后四处计数达到 4，胜利过场推进至 379.656 秒发出 `ArthasIllidanFight.mdl` 请求，日志 `tmp/docs-artifacts/war3/undead-08-transfer/four-obelisks-fixed.log`。合批运行 `war3_revival_tests <data-root> <fixture> invalid-revive-location`，回归有效复活和失效英雄／位置；原版动态、自然战斗和窗口过场仍待验证。
