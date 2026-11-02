@@ -93,6 +93,7 @@ public:
     Bytes encodeSleepingThreads(const RuntimeSleepBatch& snapshot) const;
     RuntimeSleepBatch decodeSleepingThreads(std::span<const std::uint8_t> bytes) const;
     Value global(const std::string& name,std::optional<std::uint32_t> index={}) const;
+    void setGlobal(const std::string& name,Value value,std::optional<std::uint32_t> index={});
     PrimitiveGlobalSnapshot encodePrimitiveGlobals() const;
     PrimitiveGlobalRestore restorePrimitiveGlobals(std::span<const std::uint8_t> bytes);
     Bytes encodeGlobals(const StableHandleMap& encodeHandle={}) const;

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 执行上下文与共享全局（待功能批次验证，3/3）
+
+路径：`src/jass_binary_session.h`、`src/jass_binary_session.cpp`、`src/jass_binary_bridge.h`、`src/jass_binary_bridge.cpp`、`src/jass_runtime.h`、`src/jass_runtime.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。组合二进制程序、函数索引、持久全局、native 桥与回调适配；二进制自有全局使用类型化存储，其他 JASS 标量／数组使用宿主 Runtime，并对写入检查声明、类型、常量及原有变量事件钩子。固定夹具检查自有／共享标量、共享数组、写入钩子、触发回调状态和常量写入拒绝，1 通过／0 失败。用户地图隔离会话验证二进制 `config` 的配置结果、`R3` 的直接及触发器调用、`Nm` 的数组值，以及 `SetNextLevelBJ` 对共享全局的路径／null 写入，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。上下文仍由探针显式创建；回调引用须先移除、宿主须比上下文存活更久。正式会话生命周期、持久化／休眠、其他 native 与 Lua／平台接口尚待验证或实现，用户地图仍不能运行。
+
 ## 2SAJ 会话级全局存储基础（待功能批次验证，2/3）
 
 路径：`src/jass_binary_storage.h`、`src/jass_binary_storage.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。将初始化结果保存在可复用的标量与稀疏数组容器中，跨函数及回调保留动态字符串和句柄值；检查常量、类型、空值、数组默认／越界及总元素预算。固定夹具验证持久值、越界默认、常量保护和错误类型不改变原值，1 通过／0 失败。用户地图隔离探针将临时全局／数组映射替换为该容器后，`R3` 直接及触发器调用累计使 `mElapsed=40`，`Nm` 的 `BQ[2]=ABC`，原图 `config` 与字符串分支仍通过，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。存储尚未由正式会话持有；跨存档、回调生命周期、预算边界、Lua 和地图主入口待批次验证或实现，地图仍不能运行。
