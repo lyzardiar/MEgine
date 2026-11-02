@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 脚本即时命令名称与排队命令（待功能阶段验证）
+
+路径：`src/session_entities.cpp`、`tests/order_queue_tests.cpp`。空字符串句柄及非四字符、未注册的即时命令名称在清除排队命令前返回失败；四字符类型命令保留原有路径。原版 1.27 字符串入口 `0x6f1e9080` 对名称解析失败直接返回，指令记录位于 `tmp/docs-artifacts/war3/ability-scan-current/order-full.txt`。Win32 Release 客户端与订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-immediate` 1 通过、0 失败，覆盖空句柄、未知名称、队列续行和有效停止命令，未加载 Game.dll。四字符未知名称、自定义订单、数字入口、回调重入及自然地图／原版动态时序仍待功能阶段验证。
+
 ### 单位碰撞与创建批次结果
 
 范围：`4940cfe`、`e2b1d90`、`05cdbda`。Win32 Release 客户端、commerce、map、corpse 与人族战役测试目标构建通过，日志未发现警告；commerce 输出 1 条 PASS，`campaign_elevator_surface`、corpse `flow` 和人族 `victory` 各 **1 通过、0 失败**，未加载 Game.dll。覆盖脚本定位避让活动单位、无寻路单位、失效类型／玩家创建、人口开关、尸体消费与复活，以及人族第六至第九章隔离链；日志位于 `tmp/docs-artifacts/war3/script-unit-collision-batch/`。密集单位性能、空地碰撞分类、原版最近点与事件时序、自然战斗及真实窗口仍待验证；下一功能批次从 0/3 计数。
