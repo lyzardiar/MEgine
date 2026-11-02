@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 小地图地表局部采样（待功能阶段验证）
+
+路径：`src/minimap_terrain.cpp`、`tests/live_world_tests.cpp`。地表变化时直接采样受影响的底图像素，省去完整临时图的生成；变化检测及 GPU 上传仍扫描或上传整图。Win32 Release 客户端及测试目标编译通过；`war3_live_world_tests <data-root> <BootyBay.w3m> <log> minimap-terrain` 1 通过、0 失败，检查更新像素与完整地表采样一致及其他底图像素保留，未加载 Game.dll。大尺寸地图、频繁改地的实际帧耗时和窗口显示待阶段验证，本次未做性能基准。
+
 ## 小地图开局地表基线（待功能阶段验证）
 
 路径：`src/minimap_terrain.h/.cpp`、`src/game_loading.h/.cpp`、`src/game_view.cpp`、`tests/live_world_tests.cpp`，见[小地图](minimap.md)。在主脚本或存档恢复前保存地表基线，底图加载后继续检测其后的地表变化。Win32 Release 客户端及测试目标编译通过；`war3_live_world_tests <data-root> <BootyBay.w3m> <log> minimap-terrain` 1 通过、0 失败，覆盖地表变化后才提供底图的基线更新，未加载 Game.dll。测试直接修改地表，实际开局脚本、读档窗口、配置阶段改地和原版视觉仍待验证。
