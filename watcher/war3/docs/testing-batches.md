@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 原生函数类型桥（待功能批次验证，3/3）
+
+路径：`src/jass_binary_bridge.h`、`src/jass_binary_bridge.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。按现有 JASS native 签名转换二进制整数、实数、布尔、字符串、空值及句柄，交由会话已有绑定调用并保留动态字符串返回；拒绝未知 native、参数数量／类型不符和不支持的返回类型。夹具测试字符串往返、整数、空值和类型拒绝，1 通过／0 失败。用户地图的隔离会话直接调用 `Player(3)`、`GetPlayerId`、`I2S` 得到字符串 `3`，1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。字节码调用栈、函数引用、句柄子类型来源、可挂起 native、重入、会话入口与 Lua／平台接口仍待实现或验证；地图仍不能运行。
+
 ## 2SAJ 全局初始化执行基础（待功能批次验证，2/3）
 
 路径：`src/jass_binary.h`、`src/jass_binary.cpp`、`tests/jass_binary_tests.cpp`。在隔离状态执行指定初始化函数的全局声明、字面量、整数转实数、标量赋值和返回；数组保留声明，字符串暂存符号编号，未知操作、类型不匹配或非法数据明确失败。夹具检查整型、实数、空句柄、数组声明及未实现指令拒绝，1 通过／0 失败。原图 `MainInitGlobalsFunction____3` 隔离执行产生 159 个全局项，`HU=4`、`HT=1`、`Hd=1`、`tt=8` 与对应记录一致，1 通过／0 失败。命令：`war3_jass_binary_tests` 及 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。初始化结果尚未接入会话，也未实现数组读写、函数／native 调用、分支、线程、Lua 和平台接口；原版动态行为及其他地图待批次验证，用户地图仍不能运行。
