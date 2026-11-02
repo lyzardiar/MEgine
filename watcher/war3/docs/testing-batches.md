@@ -7381,3 +7381,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### AI 多商店路径候选（部分验证，待功能阶段）
 
 路径：`tests/ai_tests.cpp`。Win32 Release `war3_ai_tests <data-root> <BootyBay.w3m> hero-shop-fallback` 为 1 通过／0 失败：近处商店被地形封锁时，英雄选择较远可达商店并购买，近处库存未变化；未加载 Game.dll。夹具暂停原 AI 脚本并人工设置地形、库存和资源；自然对局、移动中阻挡变化、多种商品与原版策略仍待功能阶段验证。该检查补充既有商店路径任务，不单独计入功能批次。
+
+### 原图电脑玩家磁盘存读档（部分验证，待功能阶段）
+
+路径：`tests/ai_tests.cpp`。原 BootyBay 人族电脑以固定种子运行 60 秒，调用本地保存接口写入隔离用户目录；恢复会话后与原会话分别续行至 300 秒，比较电脑玩家资源状态、存活单位类型数量和生产队列数量，并检查 AI 线程存在及金币发生变化。Win32 Release `war3_ai_tests <data-root> <BootyBay.w3m> live-save` 为 1 通过／0 失败，保存时单位总数 78、AI 线程 5；未加载 Game.dll。执行前须将 `MEGINE_WAR3_USER_DIR` 指向新的隔离目录，已有同名存档不会覆盖。产物 `tmp/docs-artifacts/war3/live-ai-save-final2-20261102/`。该检查未覆盖 UI 操作、实际玩家输入、战斗中保存、完整胜负、其他种族与地图或原版存档兼容；测试补充不单独计入功能批次。
