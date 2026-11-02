@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 未知单位类型创建（待功能批次验证，2/3）
+
+路径：`src/session_entities.cpp`、`src/session_corpses.cpp`、`tests/commerce_tests.cpp`。`CreateUnit`、`CreateUnitAtLoc` 和 `CreateCorpse` 对不存在的单位类型返回空句柄，尸体创建还校验玩家句柄，保持地图单位列表不变；有效类型沿用创建流程。原版 1.27 `CreateUnit` 经 `0x6f630f20` 调用对象创建，数据查找失败返回零；`CreateUnitAtLoc` 调用同一入口，`CreateCorpse` 的 `0x6f1ddab0` 在玩家或创建结果无效时返回零。合批运行 `war3_commerce_tests <data-root> <fixture>`，检查零／未知类型、无效玩家及有效训练流程，并回归尸体创建和战役脚本定位；自定义缺失基类和原版动态事件仍待对照。本次未执行功能测试。
+
+
 ### 脚本位置的单位碰撞（待功能批次验证，1/3）
 
 路径：`src/session_entities.cpp`、`src/world.h`、`src/world_path.cpp`、`tests/map_tests.cpp`。启用寻路的单位通过脚本设置位置时，附近活动单位与地形、建筑占地一起参与落点选择；地面／空中单位按现有落点规则分别处理，无寻路单位继续使用脚本坐标。合批运行 `war3_map_tests <data-root> <scratch-directory> campaign_elevator_surface`，覆盖原图电梯附近的单位重叠、阻挡和无寻路行为，并回归战役传送；单位挤压顺序、密集群体、空地分类及原版动态时序仍待对照。本次未执行功能测试。
