@@ -7005,3 +7005,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 暗夜精灵末章和终章回归（待功能批次验证）
 
 路径：`tests/map_tests.cpp`。新增 `campaign_nightelf_finale`，在隔离用户目录中以原图检查开场控制、直接清理水坝任务目标、清除敌方目标建筑、胜利切换请求及终章过场返回。等价分段诊断：末章开场推进 600 秒、胜利请求在约 288.6 秒、终章约 93.75 秒返回，水坝任务在直接击杀四个目标后完成；日志位于 `tmp/docs-artifacts/war3/nightelf-final-diagnostic/`。正式回归待合批编译执行；直接击杀和分段手动载入不代表自然战斗、自动窗口交接或视觉验收。该测试补充不单独计入功能任务批次。
+
+### 预加载生成记录随存档恢复（待功能批次验证）
+
+路径：`src/archive.h`、`src/archive.cpp`、`src/session.h`、`src/session_game.cpp`、`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。恢复包保存并恢复资源记录及生成器计时，兼容版本 60 的既有恢复包。Win32 Release 核心及 clock 目标编译通过，必要定向检查 `preload_recording_recovery` 为 1 通过／0 失败，日志 `tmp/docs-artifacts/war3/preload-recovery/clock.log`；合批回归受影响的恢复包及已登记的 `campaign_nightelf_finale`。保存写盘、原版生成器跨存档语义及并发资源读取需进一步验证。

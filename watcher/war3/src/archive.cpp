@@ -112,6 +112,10 @@ std::unique_ptr<Archives> Archives::fork() const {return std::unique_ptr<Archive
 std::unique_ptr<Archives> Archives::forkIsolatedRecording() const {return std::unique_ptr<Archives>(new Archives(common_,map_,std::make_shared<Recording>()));}
 void Archives::startRecording() {std::lock_guard lock(recording_->mutex);recording_->active=true;}
 void Archives::clearRecording() {std::lock_guard lock(recording_->mutex);recording_->active=false;recording_->unique.clear();recording_->names.clear();recording_->bytes=0;recording_->overflow=false;}
+Archives::RecordingSnapshot Archives::snapshotRecording() const {std::lock_guard lock(recording_->mutex);return {recording_->active.load(),recording_->overflow,recording_->names};}
+void Archives::restoreRecording(RecordingSnapshot snapshot) {
+    constexpr size_t limit=4u*1024u*1024u;if(snapshot.names.size()>65536)throw std::runtime_error("Preload recording count exceeds budget");size_t bytes=0;std::unordered_set<std::string> unique;for(auto& name:snapshot.names){if(name.empty() || name.size()>limit-bytes || !unique.insert(name).second)throw std::runtime_error("Invalid preload recording name");bytes+=name.size();}std::lock_guard lock(recording_->mutex);recording_->active=false;recording_->unique.swap(unique);recording_->names.swap(snapshot.names);recording_->bytes=bytes;recording_->overflow=snapshot.overflow;recording_->active=snapshot.active;
+}
 std::optional<std::vector<std::string>> Archives::recordedMembers() const {std::lock_guard lock(recording_->mutex);if(recording_->overflow)return {};return recording_->names;}
 void Archives::record(const std::shared_ptr<const Member>& member) {
     if(!member || !recording_->active.load(std::memory_order_relaxed))return;std::lock_guard lock(recording_->mutex);if(!recording_->active || recording_->overflow || recording_->unique.contains(member->name))return;constexpr size_t limit=4u*1024u*1024u;if(recording_->names.size()>=65536 || member->name.size()>limit-recording_->bytes){recording_->overflow=true;return;}recording_->bytes+=member->name.size();recording_->unique.insert(member->name);recording_->names.push_back(member->name);

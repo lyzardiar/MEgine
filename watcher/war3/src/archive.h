@@ -44,8 +44,11 @@ public:
     Archives& operator=(const Archives&)=delete;
     std::unique_ptr<Archives> fork() const;
     std::unique_ptr<Archives> forkIsolatedRecording() const;
+    struct RecordingSnapshot {bool active=false,overflow=false;std::vector<std::string> names;};
     void startRecording();
     void clearRecording();
+    RecordingSnapshot snapshotRecording() const;
+    void restoreRecording(RecordingSnapshot snapshot);
     std::optional<std::vector<std::string>> recordedMembers() const;
     const fs::path& root() const;
     fs::path mapPath() const;

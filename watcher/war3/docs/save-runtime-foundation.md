@@ -800,3 +800,7 @@ JASS 运行时允许将已绑定、返回 `nothing` 的挂起 native 标记为�
 兽族原图 Strange Brew 任务招募陈后，隔离会话将雷克萨送入区域切换点；第二地区恢复了陈的队伍状态、用户数据及 `kgal`、`shrs`、`stwp` 三件物品。修改陈的数据并触发回访后，第一地区检查点重建和加载事件再次恢复上述状态。日志 `tmp/docs-artifacts/war3/orcx-chen-transfer/result2.log`；诊断直接传送并调用会话恢复，不覆盖自然行走、窗口加载或原版存档格式。
 
 兽族资料片 `OrcX01` 的野兽巢穴、雷霆山和回音群岛入口隔离诊断均请求对应区域，并在新区域恢复雷克萨；随后从三处返回奥格瑞玛检查点，继续模拟 30 秒时英雄存在且控制可用。野兽巢穴再次回访时，前次在该区域创建的测试单位及其暂停／用户数据状态保留；另一轮直接击杀 50 个原图任务单位，计数板由 50 降至 0、任务进度达到 4 并获得技能点，离开再回访后任务进度和计数板仍为 4／0。日志 `tmp/docs-artifacts/war3/orcx-hero-return/{beast2,ridge2,isles2,beast-quest-complete}.log`。诊断使用传送、直接击杀、手动构造和恢复会话，不覆盖自然战斗、窗口加载或原版存档格式。
+
+### 预加载生成记录恢复（待功能批次验证）
+
+恢复包 `SRBF` 版本 61 增加 `SPRL` 记录生成器启停、溢出标记、成员顺序和已用时间；恢复后继续记录新资源，重建过程自身的读取不混入已保存记录。版本 60 仍可读取，按无预加载历史初始化。合批运行 `WAR3_CLOCK_FILTER=preload_recording_recovery` 的 `war3_clock_tests <data-root> <output-root>`，覆盖记录续行、旧版本与损坏标志拒绝。Win32 Release 核心及 clock 目标编译通过，定向检查 1 通过／0 失败，日志 `tmp/docs-artifacts/war3/preload-recovery/clock.log`。实际文件保存、原版保存时的生成器状态与计时、异步读取竞态及完整原版存档格式仍需验证。
