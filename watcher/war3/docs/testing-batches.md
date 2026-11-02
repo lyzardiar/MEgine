@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 电脑英雄的即用物品拾取（待功能阶段验证）
+
+路径：`src/session_ai.cpp`、`tests/ai_tests.cpp`，见[AI 英雄物品](ai-hero-items.md)。英雄依据真实背包容量筛选普通物品，满背包仍可拾取即用物品；候选失效及命令回调变化时复核状态。Win32 Release 客户端和 AI 测试目标编译通过；`war3_ai_tests <data-root> <BootyBay.w3m> hero-powerup` 1 通过、0 失败，覆盖满六槽拾取原版治疗符文、保留普通地面物品、策略关闭与空槽拾取，未加载 Game.dll。测试直接创建物品和英雄并暂停 AI 脚本线程；野外掉落、容量变化、无法到达、命令回调、原版策略及自然对局仍待验证。
+
 ## 无效点目标及零即时订单（待功能阶段验证）
 
 路径：`src/session_orders.cpp`、`tests/order_queue_tests.cpp`。点目标的坐标／地点字符串入口对空句柄和无法解析的非四字符名称返回失败；坐标／地点数字入口及即时数字入口对零订单返回失败，上述失败均不清空已有排队命令。四字符原始类型订单沿用已有路径。原版 1.27 点订单字符串入口 `0x6f1e9450` 在名称解析失败时直接返回，指令记录位于 `tmp/docs-artifacts/war3/ability-scan-current/order-full.txt`；数字入口零值的原版动态行为仍待对照。Win32 Release 客户端及订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-location` 和 `invalid-immediate` 各 1 通过、0 失败，覆盖无效名称、零订单、队列、四种有效点订单及有效停止命令，未加载 Game.dll。四字符未知名称、其他非零未知编号、脚本重入、原版事件时序及自然对局待功能阶段验证。
