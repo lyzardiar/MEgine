@@ -9,6 +9,7 @@ struct lua_State;
 
 namespace war3 {
 class Archives;
+class JassBinarySession;
 namespace jass {class Runtime;struct RuntimeLifetime;}
 struct LuaResult {enum class Kind {Nil,Boolean,Integer,Number,String,Other};Kind kind=Kind::Nil;bool boolean=false;std::int64_t integer=0;double number=0;std::string text;};
 enum class LuaChunkFormat {Standard, MapOpcodes};
@@ -19,8 +20,11 @@ class LuaRuntime {
     LuaChunkFormat archiveFormat_=LuaChunkFormat::Standard;
     jass::Runtime* jass_=nullptr;
     std::weak_ptr<const jass::RuntimeLifetime> jassLifetime_;
+    std::weak_ptr<JassBinarySession> binary_;
+    bool binaryAttached_=false;
     std::uint64_t jassGeneration_=0;
     bool jassAlive() const;
+    std::shared_ptr<JassBinarySession> binarySession() const;
     static int archiveSearcher(lua_State* state);
     static int jassLookup(lua_State* state);
     static int jassCall(lua_State* state);
@@ -36,7 +40,7 @@ public:
     void preload(std::string_view moduleName,std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format=LuaChunkFormat::Standard);
     void attachArchive(const Archives& archives,LuaChunkFormat format);
     // Both runtimes are used on their owner thread; destroyed JASS bindings become invalid.
-    void attachJass(jass::Runtime& runtime);
+    void attachJass(jass::Runtime& runtime,std::shared_ptr<JassBinarySession> binary={});
     void detachJass();
     LuaResult execute(std::span<const std::uint8_t> chunk,const std::string& name,std::uint64_t instructionLimit=1000000,LuaChunkFormat format=LuaChunkFormat::Standard,std::string_view moduleName={});
 };

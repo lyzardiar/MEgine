@@ -10,6 +10,7 @@ class JassBinaryStorage {
 public:
     explicit JassBinaryStorage(const std::map<std::string,JassBinaryGlobal>& globals);
     bool contains(const std::string& name) const;
+    std::uint8_t type(const std::string& name) const;
     JassBinaryNativeValue read(const std::string& name) const;
     void write(const std::string& name,JassBinaryNativeValue value);
     JassBinaryNativeValue readArray(const std::string& name,std::uint32_t index,std::uint8_t type) const;

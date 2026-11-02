@@ -1,12 +1,20 @@
 # 独立客户端测试队列
 
+## Lua 与 2SAJ 自有全局存储（待功能阶段验证）
+
+路径：`src/jass_binary_storage.{h,cpp}`、`src/jass_binary_session.h`、`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。实验桥可显式附加同一 JASS Runtime 所属的 2SAJ 会话；在 `jass.common`／`jass.globals` 访问其自有标量和数组，名称冲突时优先自有存储，其余全局仍走文本 JASS Runtime。类型、符号字符串、空值、常量、数组预算和边界由既有转换与存储规则处理；Lua 只弱引用 2SAJ 会话，宿主须保持会话及其 JASS Runtime 存活，销毁会话后旧数组访问明确失败。code 类型继续明确不支持。
+
+Win32 Release 客户端、Lua 及 2SAJ 测试目标构建成功；`war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 输出 2 通过／0 失败，夹具检查整数／实数／布尔／字符串／句柄、符号字符串与 nil、数组、常量、同名遮蔽、宿主更新、所属 Runtime 不匹配及会话销毁。原图隔离会话中，Lua 读取常量 `HU=4` 并确认不能写入，写入字符串数组 `BQ[2]` 和 `mElapsed`；执行原图二进制 `R3` 后，Lua 读到 `mElapsed=10`。`war3_jass_binary_tests` 为 1 通过／0 失败，未加载 Game.dll。首次原图检查尝试写 `HU` 时被常量保护拒绝，修正测试预期后通过。
+
+待验证：2SAJ 自有变量事件、所有类型与原版语义、数组迭代、Lua 回调／休眠、会话自动创建和销毁；此测试显式建立隔离上下文，用户地图尚未从正式入口运行。
+
 ## Lua 与 JASS 共享全局变量（待功能阶段验证）
 
 路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。实验桥在 `jass.common` 和 `jass.globals` 暴露同一 JASS Runtime 的标量及数组，基本类型与句柄沿用 native 桥转换；标量写入复用 `Runtime::setGlobal` 的常量保护和全局写入钩子，数组代理读写真实 Runtime。下标 0–8191 可访问，越界读取 nil、写入忽略；解绑或重绑定后旧数组代理拒绝访问。接口行为参考 [YDWE libs_globals.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/libs_globals.cpp) 和 [class_array.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/class_array.cpp)。
 
 Win32 Release 客户端和 Lua 测试目标构建成功；`war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 输出 2 通过／0 失败。夹具覆盖两模块共享、整数／实数／布尔／字符串／句柄、整数与句柄数组、上下界、常量拒绝、写入钩子、宿主写入后 Lua 读取及解绑；原图隔离 `ScriptSession` 中由 Lua 修改 `bj_forLoopAIndex`，再从两模块和 Runtime 验证值为 73。未加载 Game.dll。
 
-待验证：数组长度／迭代、原版对无效名称及下标的细节、同步事件重入和实际玩法；2SAJ 自有存储尚未暴露到该桥，Lua 回调、可休眠调用和正式地图会话接入仍未完成，用户地图尚不能运行。
+待验证：数组长度／迭代、原版对无效名称及下标的细节、同步事件重入和实际玩法；2SAJ 自有存储实验桥见上方记录，Lua 回调、可休眠调用和正式地图会话接入仍未完成，用户地图尚不能运行。
 
 ## Lua JASS 句柄与运行时寿命（待功能阶段验证）
 
