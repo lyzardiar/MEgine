@@ -7029,3 +7029,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载脚本哈希表句柄与地点（待功能批次验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立预加载脚本继承已绑定的哈希表句柄读写及地点创建、查询和移除接口；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，核对地点句柄通过哈希表读回并作用于玩家状态。其他对象创建及回调生命周期、原版动态行为仍待验证。
+
+### 预加载脚本空间操作（待功能批次验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立预加载脚本继承地点移动及矩形创建、修改、查询、移除和世界边界接口，复用会话空间对象；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，核对地点与矩形句柄经哈希表保存、加载、移动和状态消费。地形高度、无效句柄及原版行为待阶段验证。
