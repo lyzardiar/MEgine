@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### 免费英雄令牌批次结果
+
+范围：`1f70769`、`e671ce3`、`41e505c`。Win32 Release 客户端、CampaignAI、revival、commerce 和 clock 目标构建通过。CampaignAI `hero-cost`、`hero-token`、`produce-zero`、`produce-many`、`produce-owner`、`produce-replacement`、`produce-builder` 各 2 项通过，`startup` 1 项通过；revival 4 项、clock 的 `production_snapshot_restores_paid_queue_rally_and_tickets` 1 项及 commerce 消费者 1 项通过，共 **21 通过、0 失败**。覆盖令牌费用查询、祭坛训练／取消、商店购买／按钮和队列快照恢复；原图 Booty Bay 静音隔离会话在 900 秒存在先知和牛头人酋长，未发生胜负。日志在 `tmp/docs-artifacts/war3/hero-token-batch/`。
+
+已知缺口：建筑死亡或移除时直接清空生产队列，目前不会返还队列中的英雄令牌；建筑转让后的令牌归属与退款、v1 快照兼容、商店事件重入、原版事件时序、实际窗口和联机还需检查。复活英雄继续使用单独费用；本批不代表完整英雄生命周期通过。下一功能批次 0/3。
+
+
 ### 免费英雄购买与命令价格（待合批验证，3/3）
 
 路径：`src/session_commerce.cpp`、`tests/campaign_ai_tests.cpp`。祭坛训练和单位商店的英雄按钮按拥有者令牌显示零金币／木材并使用相同费用检查；购买新英雄时扣除令牌，不扣金币／木材。死亡英雄复活使用既有独立费用。固定版 1.27 `0x6f5683a6` 按状态 3 产生零费用与令牌标记，`0x6f58b8ff` 消费标记。合批运行 CampaignAI `hero-token`／`hero-cost`、commerce、revival 和生产快照；原版实际窗口、商店事件重入、建筑死亡／转让和局域网仍待对照。本次提交前未执行功能测试。
