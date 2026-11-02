@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### 脚本目标订单批次结果
+
+范围：`209c250`、`9faf65c`、`e50dd7e`。Win32 Release 客户端、order queue、spell 和 commerce 程序构建通过；order queue 使用原图 Booty Bay 输出 36 项通过、0 失败，spell 消费者 1 项通过，commerce 消费者 1 项通过，共 **38 通过、0 失败**。覆盖失效目标、未知名称／零编号、地面物品换格失败时保留队列，以及已有技能、物品和实验联机订单。既有测试局部变量遮蔽警告仍存在；日志与新生成技能夹具位于 `tmp/docs-artifacts/war3/target-command-batch/`，交易夹具为 `tmp/docs-artifacts/war3/commerce-current/commerce.w3m`。
+
+非零未知编号、有效但不适用的订单、原版动态事件时序、实际窗口和联机互通仍待验证。下一功能批次 0/3。
+
+
 ### 无效物品栏目标订单保留队列（待功能批次验证，3/3）
 
 路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。脚本物品栏目标订单在清除排队命令前检查目标物品是否持有和槽位是否有效；地面物品或无效槽位返回 false 并保留队列。原版 `UnitDropItemSlot` 在调用目标订单前检查持有与容量，直接目标订单的动态时序待对照。合批运行 order queue、物品交易及目标技能回归。本次提交前未执行功能测试。
