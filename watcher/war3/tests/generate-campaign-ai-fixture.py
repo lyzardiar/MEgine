@@ -19,7 +19,19 @@ integer stopOverrideCount=0
 boolean carrierOverridePause=false
 boolean carrierOverrideOnce=false
 unit carrierOtherOverride=null
+unit retreatOtherOverride=null
+integer retreatOverrideCount=0
 endglobals
+function OverrideRetreatOrder takes nothing returns nothing
+    set retreatOverrideCount=retreatOverrideCount+1
+    call IssuePointOrder(retreatOtherOverride,"move",-1400,-1200)
+endfunction
+function InstallRetreatOrderOverride takes unit source, unit target returns nothing
+    local trigger t=CreateTrigger()
+    set retreatOtherOverride=target
+    call TriggerRegisterUnitEvent(t,source,EVENT_UNIT_ISSUED_POINT_ORDER)
+    call TriggerAddAction(t,function OverrideRetreatOrder)
+endfunction
 function OverrideBoardOrder takes nothing returns nothing
     if GetIssuedOrderId()==852043 then
         set boardOverrideCount=boardOverrideCount+1

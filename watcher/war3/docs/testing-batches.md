@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 撤退发令回调改派（待功能批次验证，3/3）
+
+路径：`src/session_ai.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`、`docs/ai.md`。群体撤退发令前记录队员命令轮次，单个队员的发令回调若改派其他队员，不覆盖其新命令。重生成 CampaignAI 夹具，合批运行 `retreat-reentrant`、`retreat-reinforce`、`retreat-retry`、`captain-home`、`armies`、AI 快照及运输撤退回归；同时检查嵌套队长命令和成员生命周期。原版动态时序与实际长局待验证。本次提交前未执行功能测试。
+
+
 ### AI 撤退增援归队（待功能批次验证，2/3）
 
 路径：`src/session.h`、`src/session_ai.cpp`、`src/session_ai_armies.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。撤退期间新加入且空闲的队长队员向家移动并跟踪命令轮次，保留已有订单；重试及回调保护与原队员一致。合批运行 `retreat-reinforce`、`retreat-retry`、`armies`、`captain-home` 和运输撤退回归；实际对局、跨区域、编组重入与原版时序待验证。本次未执行功能测试。
