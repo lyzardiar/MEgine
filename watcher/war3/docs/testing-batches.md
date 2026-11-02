@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 脚本移动物品的地形阻挡修正（待功能批次验证，2/3）
+
+路径：`src/session_entities.cpp`、`tests/map_tests.cpp`。脚本设置物品位置时，目标被地形或静态占地阻挡则使用附近可通行位置；原图电梯墙体使用 `NudgeObjectsInRect` 重新设置物品坐标，避免物品留在墙中。原版 1.27 `SetItemPosition` 经 `0x6f63cc10` 进入位置处理；必要复现检查：Win32 Release 核心构建通过，原图阻挡格诊断中物品从 `(640,2176)` 移至 `(624,2160)`；日志 `tmp/docs-artifacts/war3/elevator-motion-probe/nudge-item-fixed.log`。单位位置修正尚待实现。合批运行 `war3_map_tests <data-root> <scratch-directory> campaign_elevator_surface` 并回归物品拖放；动态单位／物品碰撞、邻近位置选择和原版时序仍待对照。
+
+
 ### 可破坏物脚本创建缩放（待功能批次验证，1/3）
 
 路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`。四个动态创建可破坏物的脚本入口将有限缩放限制在 0.1 至 10，有效范围内保持原值；地图预放置对象沿用来源数据。原版 1.27 `0x6f6a3833` 至 `0x6f6a3869` 对动态创建缩放执行同样的上下限处理。合批运行 `war3_destructable_tests <data-root> <fixture> invalid-handles`，覆盖负值、零、常规值和超上限；自定义对象、非有限数与实际画面待验证。本次未执行功能测试。
