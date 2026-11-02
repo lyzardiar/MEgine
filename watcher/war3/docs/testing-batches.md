@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 无效物品操作保留排队命令（待功能批次验证，2/3）
+
+路径：`src/session_inventory.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。脚本物品使用和丢弃入口在清空排队命令前检查单位、物品持有关系，以及丢弃槽位／目标；无效或非持有物品不破坏排队命令。原版 1.27 在 `0x6f1fb430`、`0x6f1fac20` 等入口先验证句柄和物品归属再派发订单。合批运行 order queue 与 commerce 回归，检查有效操作、空／地面物品和槽位；原版动态事件及联网待验证。本次未执行功能测试。
+
+
 ### 脚本物品栏目标订单（待功能批次验证，1/3）
 
 路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。脚本 `IssueTargetOrderById` 使用 852002–852007 和持有物品时，按槽位交给已有物品换格消费者。原版 1.27 的 `UnitDropItemSlot` 在 `0x6f1facd0` 使用同一编号并调用目标订单入口。合批运行 order queue 和物品交易回归，核对持有／地面物品、槽位、队列及事件；原版动态时序和多人待验证。本次未执行功能测试。
