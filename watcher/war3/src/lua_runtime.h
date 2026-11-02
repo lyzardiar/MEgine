@@ -24,6 +24,9 @@ class LuaRuntime {
     static int archiveSearcher(lua_State* state);
     static int jassLookup(lua_State* state);
     static int jassCall(lua_State* state);
+    static int jassWrite(lua_State* state);
+    static int jassArrayRead(lua_State* state);
+    static int jassArrayWrite(lua_State* state);
 public:
     LuaRuntime();
     ~LuaRuntime();
