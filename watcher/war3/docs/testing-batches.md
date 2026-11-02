@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### AI 免费英雄费用查询（待功能批次验证，1/3）
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`。玩家英雄令牌大于零时，AI 查询大写首字节英雄 ID 的金币与木材价格返回零，查询不消费令牌；其他单位按源价格，未知单位价格返回零。原版 1.27 `0x6f890800`／`0x6f890860` 检查英雄 ID 与玩家状态槽 `+0x70`；`GetPlayerState` 的状态 3 映射至该槽。合批运行 CampaignAI `hero-cost` 和相关生产回归；令牌在实际训练、取消与购买中的完整消费尚未接入，原版动态时序及实际对局待验证。本次未执行功能测试。
+
+
 ### 经济拥堵批次结果
 
 范围：`8335349`（补充 `4bc3c32`）、`64a0998`、`98a3c4f`。Win32 Release 客户端、movement avoidance 和 harvest 目标构建通过。原 Booty Bay 地图的 `worker-march`、`worker-return`、`workers`、`march`、`yield`、`compact`、`retreat`、`chase`、`approach`、`sealed` 各 1 项通过；采集夹具的 `depot-stuck`、`depot-route`、`stunned`、`mine-paused` 和默认流程各 1 项通过，共 **15 通过、0 失败**。覆盖采集／进军混合让行、创建顺序、携资源优先、受阻回收入口重选、订单和资源保留，以及相关移动与采集回归。日志位于 `tmp/docs-artifacts/war3/economy-congestion-batch/`。
