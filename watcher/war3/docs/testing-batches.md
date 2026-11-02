@@ -7838,3 +7838,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 2SAJ 二进制全局变量快照基础（部分验证，待批次验证）
 
 路径：`CMakeLists.txt`、`src/jass_binary_storage.{h,cpp}`、`tests/{jass_binary_snapshot_tests,lua_tests}.cpp`。提供带摘要和容量限制的二进制全局变量编码及原子恢复，保留稀疏数组、空／动态／符号字符串，并要求宿主显式映射非空句柄和代码引用；恢复时校验结构、常量、引用及数组索引。Win32 Release 测试目标编译通过；`war3_jass_binary_snapshot_tests` 为 1 通过／0 失败，覆盖映射、往返、损坏、篡改常量、缺失映射、无效回调和结构不匹配；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖原图初始化全局变量往返。宿主仍须校验二进制程序身份、实现真实引用映射并接入完整存读档；Lua 状态、归档覆盖层及休眠二进制线程未保存，不能将当前接口视为可用的地图存档。原图正式加载仍停在平台身份接口。
+
+### 2SAJ 会话快照程序和回调身份（部分验证，待批次验证）
+
+路径：`src/jass_binary.{cpp}`、`src/jass_binary_callbacks.{h,cpp}`、`src/jass_binary_session.{h,cpp}`、`src/jass_binary_storage.{h,cpp}`、`src/jass_runtime.{h,cpp}`、`tests/{jass_binary_snapshot_tests,lua_tests}.cpp`。会话快照绑定二进制程序和宿主 JASS 源码摘要，将二进制及文本 JASS 回调编码为可恢复的名称；句柄映射要求非零且一一对应，并校验符号字符串索引。支持初始化空代码全局变量；快照和恢复目前要求共享调度器空闲。Win32 Release 测试目标编译通过；`war3_jass_binary_snapshot_tests` 为 1 通过／0 失败，覆盖跨会话回调调用、句柄映射及冲突、程序／源码不匹配、过期引用、无效符号和活动线程；`war3_jass_binary_tests` 为 1 通过／0 失败；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖原图初始化状态的会话快照。尚未与游戏存读档接线；运行中 Lua 状态、归档覆盖层、休眠线程以及跨组件句柄和回调恢复仍需实现，原图仍未完整加载。

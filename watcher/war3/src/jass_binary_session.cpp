@@ -1,5 +1,6 @@
 // Author: MiYu. Bind persistent binary globals, source globals, native calls and callback dispatch.
 #include "jass_binary_session.h"
+#include "snapshot_codec.h"
 #include <stdexcept>
 
 namespace war3 {
@@ -17,4 +18,23 @@ JassBinaryNativeValue JassBinarySession::run(const std::string& name,std::span<c
 jass::ThreadId JassBinarySession::start(const std::string& name,std::span<const JassBinaryNativeValue> arguments){auto sig=signature(name);auto self=weak_from_this().lock();if(!self || sig.result || sig.parameters.size()!=arguments.size())throw std::runtime_error("Invalid 2SAJ thread entry: "+name);std::vector<JassBinaryNativeValue> values(arguments.begin(),arguments.end());return owner_.start([self,name,values=std::move(values)]{auto result=self->run(name,values);if(result.type)throw std::runtime_error("2SAJ thread returned a value: "+name);});}
 JassBinaryNativeValue JassBinarySession::runOriginalNoYield(const std::string& name,std::span<const JassBinaryNativeValue> arguments){++noYieldDepth_;struct Guard{unsigned& depth;~Guard(){--depth;}}guard{noYieldDepth_};return runJass2Function(*program_,index_,name,host_,arguments,1000000,true);}
 JassBinaryNativeValue JassBinarySession::reference(const std::string& name){if(!callbacks_)throw std::runtime_error("2SAJ callbacks not initialized");return callbacks_->reference(name);}
+
+namespace {
+std::string binaryProgramDigest(const JassBinaryProgram& program){
+    SnapshotWriter out(32u*1024u*1024u);out.size(program.symbols.size());for(auto& symbol:program.symbols)out.text(symbol,1024u*1024u);out.size(program.instructions.size());for(auto& item:program.instructions){out.u32(std::uint32_t(item.r3)|(std::uint32_t(item.r2)<<8)|(std::uint32_t(item.r1)<<16)|(std::uint32_t(item.opcode)<<24));out.u32(item.operand);}return sha256(out.finish());
+}
+std::string sourceDigest(const jass::Source& source){return sha256({reinterpret_cast<const std::uint8_t*>(source.text.data()),source.text.size()});}
+}
+JassBinarySnapshotRefs JassBinarySession::snapshotRefs(const std::function<std::uint32_t(std::uint32_t)>& mapper) const{
+    JassBinarySnapshotRefs refs;refs.symbolCount=program_->symbols.size();if(mapper){struct Mapped{std::map<std::uint32_t,std::uint32_t> forward,reverse;};auto mapped=std::make_shared<Mapped>();refs.handle=[mapper,mapped](std::uint32_t value){if(auto found=mapped->forward.find(value);found!=mapped->forward.end())return found->second;auto result=mapper(value);if(!result || !mapped->reverse.emplace(result,value).second)throw std::runtime_error("Invalid 2SAJ snapshot handle identity");mapped->forward.emplace(value,result);return result;};}
+    refs.encodeCode=[this](const jass::Value& code){if(auto name=callbacks_->name(code))return std::string("B:")+*name;if(code.codeOwner!=&owner_ || code.type!=owner_.module().typeId("code") || !code.bits || code.bits-1>=owner_.module().functions().size())throw std::runtime_error("Unsupported 2SAJ snapshot code owner");std::weak_ptr<const jass::RuntimeLifetime> empty;auto token=owner_.lifetimeToken();if((code.codeLifetime.owner_before(empty) || empty.owner_before(code.codeLifetime)) && (code.codeLifetime.owner_before(token) || token.owner_before(code.codeLifetime)))throw std::runtime_error("Stale 2SAJ snapshot code owner");return std::string("J:")+owner_.module().program().functions()[code.bits-1].name;};
+    refs.decodeCode=[this](std::string_view name){if(name.starts_with("B:"))return callbacks_->reference(std::string(name.substr(2))).code;if(!name.starts_with("J:"))throw std::runtime_error("Unknown 2SAJ snapshot code origin");auto id=owner_.module().functionId(std::string(name.substr(2)));if(id==jass::none)throw std::runtime_error("Unknown JASS snapshot callback");return jass::Value{owner_.module().typeId("code"),id+1,{},&owner_,owner_.lifetimeToken()};};return refs;
+}
+Bytes JassBinarySession::encodeGlobals(const std::function<std::uint32_t(std::uint32_t)>& encodeHandle) const{
+    if(!owner_.idleForExternalSnapshot())throw std::runtime_error("2SAJ global snapshot requires an idle runtime");constexpr size_t budget=40u*1024u*1024u;SnapshotWriter out(budget-64);out.u32(tag("BSGS"));out.u32(1);out.text(binaryProgramDigest(*program_),64);auto& sources=owner_.module().program().sources();if(sources.size()>4096)throw std::runtime_error("2SAJ snapshot source budget exceeded");out.size(sources.size());for(auto& source:sources){out.text(source.name,65536);out.text(sourceDigest(source),64);}auto globals=storage_.encodeGlobals(snapshotRefs(encodeHandle));out.size(globals.size());out.raw(globals);return sealSnapshot(out.finish(),budget);
+}
+void JassBinarySession::restoreGlobals(std::span<const std::uint8_t> bytes,const std::function<std::uint32_t(std::uint32_t)>& decodeHandle){
+    if(!owner_.idleForExternalSnapshot())throw std::runtime_error("2SAJ global restore requires an idle runtime");constexpr size_t budget=40u*1024u*1024u;Binary in(openSnapshot(bytes,budget));in.expect(tag("BSGS"));if(in.u32()!=1 || snapshotText(in,64)!=binaryProgramDigest(*program_))throw std::runtime_error("2SAJ snapshot program differs");auto& sources=owner_.module().program().sources();auto count=in.count(8,4096);if(count!=sources.size())throw std::runtime_error("2SAJ snapshot JASS source differs");for(auto& source:sources)if(snapshotText(in,65536)!=source.name || snapshotText(in,64)!=sourceDigest(source))throw std::runtime_error("2SAJ snapshot JASS source differs");auto size=in.u32();auto globals=in.take(size);in.finish();storage_.restoreGlobals(globals,snapshotRefs(decodeHandle));
+}
+
 }

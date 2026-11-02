@@ -7,6 +7,7 @@ struct JassBinarySnapshotRefs {
     std::function<std::uint32_t(std::uint32_t)> handle;
     std::function<std::string(const jass::Value&)> encodeCode;
     std::function<jass::Value(std::string_view)> decodeCode;
+    std::optional<size_t> symbolCount;
 };
 class JassBinaryStorage {
     struct Entry {JassBinaryNativeValue value;bool constant=false;std::map<std::uint32_t,JassBinaryNativeValue> elements;};

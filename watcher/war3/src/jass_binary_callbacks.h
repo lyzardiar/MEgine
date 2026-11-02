@@ -10,10 +10,12 @@ class JassBinaryCallbacks {
     JassBinaryHost host_;
     std::unique_ptr<jass::Runtime> runtime_;
     std::map<std::string,std::string> names_;
+    std::map<jass::Id,std::string> reverse_;
 public:
     JassBinaryCallbacks(jass::Runtime& owner,std::shared_ptr<const JassBinaryProgram> program,JassBinaryIndex index,JassBinaryHost host);
     JassBinaryCallbacks(const JassBinaryCallbacks&)=delete;
     JassBinaryCallbacks& operator=(const JassBinaryCallbacks&)=delete;
     JassBinaryNativeValue reference(const std::string& name);
+    std::optional<std::string> name(const jass::Value& code) const;
 };
 }

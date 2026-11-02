@@ -18,6 +18,7 @@ class JassBinarySession : public std::enable_shared_from_this<JassBinarySession>
     std::map<std::string,FunctionOverride> overrides_;
     std::unique_ptr<JassBinaryCallbacks> callbacks_;
     jass::Id globalType(const std::string& name,bool array) const;
+    JassBinarySnapshotRefs snapshotRefs(const std::function<std::uint32_t(std::uint32_t)>& mapHandle) const;
 public:
     JassBinarySession(jass::Runtime& owner,std::shared_ptr<const JassBinaryProgram> program,const std::string& initializer);
     JassBinarySession(const JassBinarySession&)=delete;
@@ -31,6 +32,8 @@ public:
     jass::ThreadId start(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
     JassBinaryNativeValue runOriginalNoYield(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
     JassBinaryNativeValue reference(const std::string& name);
+    Bytes encodeGlobals(const std::function<std::uint32_t(std::uint32_t)>& encodeHandle={}) const;
+    void restoreGlobals(std::span<const std::uint8_t> bytes,const std::function<std::uint32_t(std::uint32_t)>& decodeHandle={});
     jass::Runtime& owner() const{return owner_;}
     const JassBinaryProgram& program() const{return *program_;}
     JassBinaryStorage& storage(){return storage_;}
