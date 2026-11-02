@@ -7718,3 +7718,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 地图帧根、引用与 TOC 回滚批次（部分通过，后续功能待测）
 
 集成版本 `4c7ca22`，功能提交 `4db3034`、`a729b73`、`4c7ca22`。Win32 Release 客户端、Lua、native、2SAJ 和 JASS 线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> <scratch>` 为 15 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。scratch 位于 `tmp/docs-artifacts/war3/map-frames-batch-20261103/`。隔离原图越过帧根及计时器引用后停在 `jass.message`；帧绘制和输入、真实句柄回收与存档、平台／网络宿主、正式客户端及实际 UI 未执行，保留待测。
+
+### Lua 进程时钟（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.cpp`、`tests/lua_tests.cpp`。开放 Lua 5.3 标准 `os.clock`，读取进程使用的 CPU 时间；原图 `scripts/lib/ui/base/detail/game.lua` 顶层字节码会调用该函数。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，检查时钟返回非负数，其余受限 OS 接口仍不可用。原图入口当前仍在更早的 `jass.message` 停止，未实际执行该调用；进程时钟在联机客户端之间不同，地图对同步状态的使用和实际 UI 计时待验证。
