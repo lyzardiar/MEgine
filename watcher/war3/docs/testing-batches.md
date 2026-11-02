@@ -7079,3 +7079,9 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 范围：`0a17102`、`43ab642`、`ce97edc`、`7c7ba37`、`495158f`、`8430793`、`476d13b`、`56dd780`、`32c8a9d`。在本组格子边界修改前，Win32 Release 已编译客户端、地图和 clock 目标；`preloader_hashtable_handles`、`region_subtraction_boundaries`、`preloader_common_natives`、`preload_generator_roundtrip`、`spatial_events_rebuild_members_filters_and_order`、`region_event_rechecks_after_callback` 各 1 通过／0 失败。前两项与后续格子边界相关，需在下一批重测；其他结果可复用。原版动态行为、距离事件重入、实际地图／窗口及原版网格对齐仍待验证。夹具输出目录 `tmp/docs-artifacts/war3/spatial-preloader-batch/`。
 
 格子边界变更后，Win32 Release 客户端及地图测试目标增量编译成功；新增断言和受影响项待下一批执行。
+
+### 持有物品的通用物件坐标（待功能批次验证）
+
+路径：`src/session_destructables.cpp`、`tests/passive_tests.cpp`、`docs/dota-bkb-item-handles.md`。物品持有者即时移动后，`GetWidgetX/Y` 与 `GetItemX/Y` 返回同一实时坐标，丢弃后读取地面坐标；合批运行 `war3_passive_tests <data-root> <fixture> invalid-item`，覆盖已有物品句柄及新增物件查询。单位移除／转交、脚本事件重入和原版动态行为待验证；原版同一虚函数入口证据位于 `tmp/docs-artifacts/war3/widget-item-position/`。
+
+Win32 Release 客户端与 `war3_passive_tests` 增量编译成功；新增物件查询断言待批次执行。
