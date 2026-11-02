@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 小地图配置脚本验证（部分验证）
+
+范围：`ae782e1`、`tests/live_world_tests.cpp`。Win32 Release live world 目标编译通过；`war3_live_world_tests <data-root> <BootyBay.w3m> <log> minimap-config` 1 通过、0 失败，隔离会话运行自编 JASS `config` 调用 `SetTerrainType`，验证小地图检测改地并保留其他底图像素，未加载 Game.dll。该检查使用 BootyBay 地形和自编脚本，实际地图脚本、窗口、存档恢复及原版颜色仍待验证。
+
 ## 小地图地图原始地表基线（待功能批次验证）
 
 路径：`src/world.h/.cpp`、`src/minimap_terrain.h/.cpp`、`src/game_loading.cpp`、`tests/live_world_tests.cpp`，见[小地图](minimap.md)。世界创建时保存地图原始地表类型槽与 variation；小地图使用这份基线，覆盖加载器接手之前的配置阶段变化。Win32 Release 客户端及测试目标编译通过；`war3_live_world_tests <data-root> <BootyBay.w3m> <log> minimap-terrain` 1 通过、0 失败，覆盖初始化后但建立小地图前改地以及旧底图其他区域保留，未加载 Game.dll。实际配置脚本、窗口显示、内存开销和原版行为待批次验证。
