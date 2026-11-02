@@ -7247,3 +7247,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 局域网大厅聊天光标编辑（待功能阶段验证）
 
 路径：`src/chat_editor{,_ui}.h`、`src/lan_host_ui.{h,cpp}`、`src/lan_lobby.{h,cpp}`、`tests/browser_tests.cpp`、`docs/chat-dialog.md`。主机与加入方大厅聊天支持光标插入、移动、删除、鼠标定位和长文本可见范围；UTF-16 成对处理与对局共用，严格保留原 254 UTF-8 字节限制及原始发送内容。Win32 Release 客户端与 browser 测试目标增量编译通过；`war3_browser_tests <data-root> <scratch> chat_edit_protocol_limit`、`chat_edit_lobby_layout`、`chat_edit_utf16` 各 1 通过／0 失败，覆盖中英文／代理对字节边界、点击字符边界、转义、原 FDF 输入框绘制和对局编辑回归。已查看临时截图 `tmp/docs-artifacts/war3/chat-lobby/chat-edit-lobby.png`；该截图仅验证控件绘制。实际主机／加入方键鼠输入、双端消息、输入法、焦点变化与长名称、原版 UI 和协议互通仍待功能阶段验证。
+
+### 独立预加载脚本单位能力（待功能阶段验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立脚本继承实际会话的单位能力添加、移除、查询、等级调整和永久状态接口，继续沿用已有能力生命周期。Win32 Release 客户端与 map 测试目标编译成功；`war3_map_tests <data-root> <scratch> preloader_unit_state` 为 1 通过／0 失败，覆盖添加两种能力、等级增减、永久标记、移除及子脚本结束后的状态保留。首次夹具使用步兵已有的防御能力导致添加失败，改用未持有的技能后通过。实际施法、变形保留、能力移除回调、无效句柄、自定义能力及原版时序待功能阶段验证。
