@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 可破坏物与电梯批次结果
+
+范围：`c647b4d`、`2ca0d0c`、`e4c70bf` 及测试补充 `7f69b86`。Win32 Release 客户端、可破坏物和地图测试目标构建通过；使用当前生成器生成隔离夹具后，可破坏物 `invalid-handles` 输出 1 条 PASS，完整流程输出 2 条 PASS；原图 `campaign_elevator_surface` 输出 **1 通过、0 失败**。覆盖失效查询、未知类型、变体索引、有效创建／事件／路径占用／采木和电梯动态表面；日志及夹具位于 `tmp/docs-artifacts/war3/destructable-elevator-batch/`。原版动态边界、自定义对象、单位实际上下电梯、真实窗口与完整战役仍待验证；下一功能批次从 0/3 计数。
+
+
 ### 可破坏物变体索引（待功能批次验证，3/3）
 
 路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`。脚本动态创建可破坏物时，将超出来源变体数量的索引限制到最后一个变体；有效索引保持原值。原版 1.27 的 `0x6f6a3871` 读取变体数，`0x6f6a387f` 至 `0x6f6a3887` 以无符号比较限制索引。合批运行 `war3_destructable_tests <data-root> <fixture> invalid-handles`，覆盖负值、大索引及有效对象，同时执行原图电梯回归；零变体自定义对象和原版动态画面仍待对照。本次未执行功能测试。
