@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+### 生产队列旧版快照回归（待功能批次验证）
+
+路径：`tests/clock_tests.cpp`。在同一生产队列夹具生成 v1 格式并恢复，检查普通队列与未记录的令牌标记默认值；合批执行 clock `production_snapshot_restores_paid_queue_rally_and_tickets`，并回归 v2 令牌退款。此测试补充不单独计入功能任务，本次未执行。
+
 ### 祭坛死亡与移除返还英雄令牌（待功能批次验证，1/3）
 
 路径：`src/session_callbacks.cpp`、`src/session_food.cpp`、`tests/campaign_ai_tests.cpp`。生产建筑死亡或被移除时，清理队列并返还已预留的英雄令牌；死亡后再移除不重复返还。状态先完成更新，资源事件若重入并修改令牌则不再发出过时通知。合批运行 CampaignAI `hero-token-cleanup`、`hero-token`、生产／复活与状态回调回归；原版销毁／移除和转让动态时序、完整对局及联机仍待验证。本次未执行功能测试。
