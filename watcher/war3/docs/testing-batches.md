@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 随机对象池的权重回退（待功能批次验证，1/3）
+
+路径：`src/session_game.cpp`、`tests/clock_tests.cpp`。非空随机单位池和物品池按源权重累计选择；没有命中区间或选中 `-1` 时回退首项，全零权重也推进随机状态。原版 1.27 对应实现为 `0x6f222820`／`0x6f222910`，随机数调用位于 `0x6f8806a0`。合批执行 `WAR3_CLOCK_FILTER=recovery_bundle_restores_random_pools war3_clock_tests <data-root> <output-root>`，检查全零池、回退、随机状态及存档恢复；正权重边界和原版动态序列仍需对照。本次未执行功能测试。
+
+
 ### 脚本物品与随机池批次结果
 
 范围：`529dfb7`、`e662931`、`7acb4cc`。Win32 Release 客户端、`war3_commerce_tests` 和 `war3_clock_tests` 构建通过，构建日志未发现警告；commerce 输出 1 条 PASS，clock 的 `recovery_bundle_restores_random_pools` 输出 **1 通过、0 失败**。覆盖无物品栏单位与英雄拾取金币箱、随机池失效句柄、玩家句柄、重复类型权重及恢复后的选择。日志位于 `tmp/docs-artifacts/war3/item-pool-batch/`；原版动态事件、零槽位及自定义物品栏能力、其他随机权重和真实窗口仍待对照。下一功能批次从 0/3 计数。
