@@ -109,3 +109,5 @@ Win32 Release 客户端与相关测试目标编译通过；原图隔离会话手
 亡灵资料片 `UndeadX07b`、`UndeadX07c`、`UndeadX08` 与人族资料片 `HumanX06` 在独立用户目录静音完成开场并各推进 600 秒；`UndeadX07Interlude` 在约 115 秒发出切换请求。日志分别位于 `tmp/docs-artifacts/war3/UndeadX07b-probe/`、`UndeadX07c-fixed/`、`UndeadX08-probe/`、`HumanX06-probe/` 和 `UndeadX07Interlude-probe/`。这些诊断无玩家操作和前章缓存，不覆盖自然通关、跨章交接或实际窗口。
 
 `UndeadX07c` 的电梯初始化将 `udg_zElevatorsC[2]` 设为空，周期更新仍对该项执行 `ChangeElevatorHeight` 和 `GetElevatorHeight`；后者的遮挡高度查询按零处理空句柄。原图脚本摘录于 `tmp/docs-artifacts/war3/elevator-script-probe/war3map.j`；实际电梯移动、路径及窗口表现仍待验证。
+
+`UndeadX07c` 隔离诊断选取坐标 `(640, 2176)` 的可见可行走电梯，隐藏其他可行走对象后分别指定 `stand`、`stand second`、`stand third`；模型表面中心高度约为 26.40、154.43、282.29，表明会话的动画几何查询能区分三个静止层级。日志 `tmp/docs-artifacts/war3/elevator-motion-probe/probe-visible.log`；该诊断未下达单位移动命令，也未验证原版动态时序或窗口画面。
