@@ -6949,3 +6949,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 兽族区域回访英雄状态回归（待功能批次验证）
 
 路径：`tests/orc_campaign_chain_tests.cpp`、`docs/save-runtime-foundation.md`。新增 `zone-return`，使用独立用户目录执行原图 OrcX01 至 OrcX01_02 再通过检查点回访，核对英雄用户数据、物品及恢复后的移动。等价临时探针已完成，日志 `tmp/docs-artifacts/war3/orcx-hero-return/result2.log`；正式回归尚未编译执行，合批命令为 `war3_orc_campaign_chain_tests <data-root> zone-return <new-absolute-user-dir>`。玩家实际操作、窗口加载、事件顺序及原版存档格式待验证；此测试补充不单独计入功能任务批次。
+
+### 招募队友跨区域回访回归（待功能批次验证）
+
+路径：`tests/orc_campaign_chain_tests.cpp`、`docs/save-runtime-foundation.md`。新增 `quest-shop-return` 模式，在原图 Strange Brew 任务招募陈后，经双区域切换和检查点回访核对队伍状态、用户数据及三件初始物品。等价隔离诊断通过，日志 `tmp/docs-artifacts/war3/orcx-chen-transfer/result2.log`；正式回归尚未编译执行，合批运行 `war3_orc_campaign_chain_tests <data-root> quest-shop-return <new-absolute-user-dir>`。自然行走、窗口加载、其他队员与原版存档格式待验证；此回归不单独计入功能批次。
