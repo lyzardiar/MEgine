@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <span>
 #include <vector>
 
 namespace war3::jass {
@@ -41,6 +42,7 @@ public:
     bool cancelExternalWait(ExternalWaitToken token);
     void clock(double time);
     void advance(double time);
+    void cancel(std::span<const ThreadId> ids);
     void cancelAll();
     ThreadId current() const;
     size_t count() const;

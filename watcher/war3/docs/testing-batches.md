@@ -1,12 +1,16 @@
 # 独立客户端测试队列
 
+## 共享回调运行时的作用域关闭（待功能批次验证，1/3）
+
+路径：`src/jass_threads.h`、`src/jass_threads.cpp`、`src/jass_runtime.h`、`src/jass_runtime.cpp`、`src/jass_binary_callbacks.h`、`src/jass_binary_callbacks.cpp`、`tests/jass_thread_tests.cpp`。回调适配器使用显式作用域关闭：销毁其共享 Runtime 时只取消它拥有的线程，以及其他所有者中正在执行该 Runtime 的挂起调用栈；其他线程保留。普通 Runtime 的关闭及显式 `cancelThreads` 保持原有全调度器语义。`scoped_shared_runtime_destruction_preserves_other_threads` 1 通过／0 失败：同时挂起独立宿主线程、宿主进入共享运行时的嵌套栈和共享运行时线程；销毁共享运行时后两条相关栈被展开，独立宿主线程保留并正常恢复。`war3_jass_binary_tests` 输出 1 通过／0 失败。命令：`war3_jass_thread_tests scoped_shared_runtime_destruction_preserves_other_threads`、`war3_jass_binary_tests`。仍须保证适配器和捕获状态在所有 code 引用移除前存活，禁止在脚本线程中销毁；等待依赖、外部等待、可挂起二进制回调、快照和会话接入待批次验证。
+
 ## 2SAJ 比较与回调批次（部分验证）
 
 范围：`e0a8546`、`46f38c1`、`4186f72`，集成版本 `4186f72`。Win32 Release 客户端、2SAJ 测试和 AI 目标构建通过；固定夹具和用户地图隔离探针各 1 通过／0 失败，后者检查字符串分支及原图 `R3` 经触发器两次调用后的全局变化；BootyBay 人族 AI 两秒输出 1 条 PASS，DotA 静音 main 通过，带标记检查未加载 Game.dll。命令和输出见 `tmp/docs-artifacts/war3/jass-callback-batch/results.txt`。原版动态比较、回调休眠与快照、宿主生命周期、地图会话接入、Lua、平台接口及窗口仍待实现或验证；下一功能批次从 0/3 开始。
 
 ## 2SAJ 二进制触发回调适配（批次部分验证）
 
-路径：`src/jass_binary_callbacks.h`、`src/jass_binary_callbacks.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。为无参数、返回 `nothing` 或 `boolean` 的二进制函数建立类型正确的 JASS native 包装，使用与宿主共享的线程调度器，在回调触发时执行二进制函数；不支持其他签名。固定夹具检查同步回调、调度回调、布尔条件和未知函数拒绝，1 通过／0 失败。用户地图隔离会话将原图 `R3` 注册为触发器动作，两次触发使 `mElapsed` 从 20 增至 40；`config`、`Nm` 与字符串分支检查仍通过，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。适配器与宿主捕获必须活到所有引用销毁并由会话统一关闭；现有共享 Runtime 析构会取消共享调度器的全部线程。挂起／快照恢复、重入、所有权销毁及会话集成未验证；地图主入口、Lua 与平台接口仍未完成，地图尚不能运行。
+路径：`src/jass_binary_callbacks.h`、`src/jass_binary_callbacks.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。为无参数、返回 `nothing` 或 `boolean` 的二进制函数建立类型正确的 JASS native 包装，使用与宿主共享的线程调度器，在回调触发时执行二进制函数；不支持其他签名。固定夹具检查同步回调、调度回调、布尔条件和未知函数拒绝，1 通过／0 失败。用户地图隔离会话将原图 `R3` 注册为触发器动作，两次触发使 `mElapsed` 从 20 增至 40；`config`、`Nm` 与字符串分支检查仍通过，原图探针 1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。适配器与宿主捕获必须活到所有引用销毁并由会话统一关闭；原实现共享 Runtime 析构会取消共享调度器全部线程，作用域关闭的后续修复见上方记录。挂起／快照恢复、重入、所有权销毁及会话集成未验证；地图主入口、Lua 与平台接口仍未完成，地图尚不能运行。
 
 ## 2SAJ 函数引用桥（批次部分验证）
 

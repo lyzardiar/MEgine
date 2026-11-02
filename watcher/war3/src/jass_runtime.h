@@ -46,6 +46,7 @@ public:
     // The native must safely re-enter with its saved arguments after external state is restored.
     void markNativeRestartable(const std::string& name);
     void shareThreads(Runtime& owner);
+    void scopedSharedDestruction();
     void inheritNatives(const Runtime& owner);
     void inheritNativesSubset(const Runtime& owner,const std::function<bool(std::string_view)>& include);
     void initialize();

@@ -3,8 +3,7 @@
 #include "jass_binary_vm.h"
 
 namespace war3 {
-// Keep this adapter and its host captures alive until all references are destroyed and the owner is shutting down.
-// Destroying its shared Runtime currently cancels all threads in the shared scheduler.
+// Keep this adapter and its host captures alive until all references are destroyed; never destroy it on a script thread.
 class JassBinaryCallbacks {
     std::shared_ptr<const JassBinaryProgram> program_;
     JassBinaryIndex index_;
