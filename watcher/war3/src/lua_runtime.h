@@ -130,6 +130,7 @@ public:
     void attachArchive(const Archives& archives,LuaChunkFormat format);
     void attachConsole(LuaConsoleHost host);
     void attachStormHost(LuaStormHost host);
+    void attachStormArchiveOverlay(const Archives& archives);
     void attachFrameDefinitions(std::shared_ptr<FrameDefinitions> definitions);
     void attachMapFrames(std::shared_ptr<MapFrames> frames);
     // Attach and dispatch on the owner thread while Lua is idle.

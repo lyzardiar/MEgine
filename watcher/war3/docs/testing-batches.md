@@ -7806,3 +7806,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI 单位渲染朝向（部分验证，待批次验证）
 
 路径：`src/entities.h`、`src/game_morph.cpp`、`src/lua_jass_bridge.cpp`、`src/session.h`、`src/session_entities.cpp`、`src/session_unit_visual.cpp`、`src/session_unit_identity.cpp`、`src/session_{combat,concoction,locust,orders,roots,spells}.cpp`、`tests/{lua_tests,clock_tests}.cpp`。`EXSetUnitFacing` 单独设置单位视觉角度，不修改模拟朝向；单位正常转向时清除视觉覆盖，单位视觉快照升级至版本 3 并保留版本 1／2 读取。Win32 Release 客户端、Lua 与 clock 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖视觉／模拟分离和普通转向；`WAR3_CLOCK_FILTER=unit_core_restores_hero_abilities_equipment_and_vitals war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖视觉角度快照恢复及旧版视觉快照。scratch 位于 `tmp/docs-artifacts/war3/visual-facing-20261103/`。原图隔离入口继续停于 `EXSetUnitCollisionType`；视觉覆盖被原版运动更新取代的具体时序、实际画面和完整地图尚待验证。
+
+### Lua Storm 归档与会话写入宿主（部分验证，待批次验证）
+
+路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。提供显式归档宿主：读取优先使用会话内写入内容，再查询地图和公共归档；路径统一大小写与分隔符并限制路径、文件数和写入总量。归档引用独立于外部卸载，写入目前仅保留在会话内。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖真实归档读取、覆盖、二进制数据、路径校验、卸载后的引用以及原图入口生成 FDF。继续开发所需的正式客户端 `war3.exe --data-root <data-root> --map G:\qcloud_20144088.w3x --main-check --mute --log <scratch>` 检查仍在文本入口报告不支持原生插件和 2SAJ，日志位于 `tmp/docs-artifacts/war3/qcloud-client-20261103.log`；正式客户端接线、持久文件、存档和完整地图待实现／验证。
