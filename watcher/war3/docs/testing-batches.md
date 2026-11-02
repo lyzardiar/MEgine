@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 存档界面更新错误提示（待功能批次验证，1/3）
+
+路径：`src/game_flow_ui.cpp`。游戏内存档／读档界面在选择另一份存档或修改存档名称时清除旧错误提示；未更改选择或名称时保留提示。合批验证坏存档后更换选择、名称错误后编辑、输入中代理对与同项重复选择，以及真实窗口文本布局；本次仅差异检查，未执行窗口测试。
+
+
 ### 脚本目标订单批次结果
 
 范围：`209c250`、`9faf65c`、`e50dd7e`。Win32 Release 客户端、order queue、spell 和 commerce 程序构建通过；order queue 使用原图 Booty Bay 输出 36 项通过、0 失败，spell 消费者 1 项通过，commerce 消费者 1 项通过，共 **38 通过、0 失败**。覆盖失效目标、未知名称／零编号、地面物品换格失败时保留队列，以及已有技能、物品和实验联机订单。既有测试局部变量遮蔽警告仍存在；日志与新生成技能夹具位于 `tmp/docs-artifacts/war3/target-command-batch/`，交易夹具为 `tmp/docs-artifacts/war3/commerce-current/commerce.w3m`。
