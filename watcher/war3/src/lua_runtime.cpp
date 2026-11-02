@@ -1,0 +1,46 @@
+// Author: MiYu. Keep Lua errors, stack cleanup and instruction hooks within protected execution.
+#include "lua_runtime.h"
+#include "lua_binary.h"
+#include "lua_verify.h"
+#include "archive.h"
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+#include <lstate.h>
+#include <lopcodes.h>
+}
+#include <stdexcept>
+#include <utility>
+
+namespace war3 {
+namespace {
+struct StackReset {lua_State* state;int top;~StackReset(){lua_settop(state,top);}};
+void instructionHook(lua_State* state,lua_Debug*){auto budget=*static_cast<std::uint64_t**>(lua_getextraspace(state));if(!budget || *budget<=1000){if(budget)*budget=0;luaL_error(state,"Lua instruction budget exceeded");}*budget-=1000;}
+int protectedWrapper(lua_State* state){auto count=lua_gettop(state);lua_pushvalue(state,lua_upvalueindex(1));lua_insert(state,1);lua_call(state,count,LUA_MULTRET);auto budget=*static_cast<std::uint64_t**>(lua_getextraspace(state));if(budget && !*budget)return luaL_error(state,"Lua instruction budget exceeded");return lua_gettop(state);}
+void wrap(lua_State* state,int table,const char* name){table=lua_absindex(state,table);lua_getfield(state,table,name);lua_pushcclosure(state,protectedWrapper,1);lua_setfield(state,table,name);}
+void translate(Proto* proto,unsigned depth){
+    if(depth>200)throw std::runtime_error("Lua prototype nesting exceeds budget");
+    constexpr OpCode map[]={OP_BXOR,OP_BAND,OP_BOR,OP_SHR,OP_SHL,OP_BNOT,OP_UNM,OP_LEN,OP_NOT,OP_JMP,OP_CONCAT,OP_LT,OP_EQ,OP_TEST,OP_LE,OP_CALL,OP_TESTSET,OP_RETURN,OP_TAILCALL,OP_FORPREP,OP_FORLOOP,OP_TFORCALL,OP_TFORLOOP,OP_CLOSURE,OP_SETLIST,OP_EXTRAARG,OP_LOADK,OP_MOVE,OP_LOADBOOL,OP_LOADKX,OP_GETUPVAL,OP_LOADNIL,OP_GETTABLE,OP_GETTABUP,OP_SETUPVAL,OP_SETTABUP,OP_NEWTABLE,OP_SETTABLE,OP_ADD,OP_SELF,OP_MUL,OP_SUB,OP_POW,OP_MOD,OP_IDIV,OP_DIV,OP_VARARG};
+    for(int i=0;i<proto->sizecode;++i){auto& instruction=proto->code[i];auto op=static_cast<unsigned>(GET_OPCODE(instruction));if(op>=std::size(map))throw std::runtime_error("Unknown map Lua opcode");SET_OPCODE(instruction,map[op]);}
+    for(int i=0;i<proto->sizep;++i)translate(proto->p[i],depth+1);
+}
+void load(lua_State* state,std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format){if(chunk.size()>16*1024*1024 || name.size()>4096)throw std::runtime_error("Lua chunk exceeds budget");if(format==LuaChunkFormat::MapOpcodes || (!chunk.empty() && chunk[0]==0x1b))validateLuaBinaryStructure(chunk);if(luaL_loadbufferx(state,reinterpret_cast<const char*>(chunk.data()),chunk.size(),name.c_str(),format==LuaChunkFormat::MapOpcodes?"b":"bt")!=LUA_OK){auto message=lua_tostring(state,-1);throw std::runtime_error(std::string("Lua load failed: ")+(message?message:"unknown error"));}if(format==LuaChunkFormat::MapOpcodes || (!chunk.empty() && chunk[0]==0x1b)){auto closure=static_cast<const LClosure*>(lua_topointer(state,-1));if(!closure)throw std::runtime_error("Invalid Lua binary closure");if(format==LuaChunkFormat::MapOpcodes)translate(closure->p,0);validateLuaInstructions(closure->p);}}
+}
+LuaRuntime::LuaRuntime(){state_=luaL_newstate();if(!state_)throw std::runtime_error("Cannot create Lua state");for(auto [name,open]:{std::pair{"_G",luaopen_base},std::pair{LUA_TABLIBNAME,luaopen_table},std::pair{LUA_STRLIBNAME,luaopen_string},std::pair{LUA_MATHLIBNAME,luaopen_math},std::pair{LUA_UTF8LIBNAME,luaopen_utf8},std::pair{LUA_COLIBNAME,luaopen_coroutine},std::pair{LUA_LOADLIBNAME,luaopen_package}}){luaL_requiref(state_,name,open,1);lua_pop(state_,1);}lua_pushglobaltable(state_);wrap(state_,-1,"pcall");wrap(state_,-1,"xpcall");lua_getfield(state_,-1,"coroutine");wrap(state_,-1,"resume");lua_pop(state_,2);lua_getglobal(state_,"package");lua_getfield(state_,-1,"searchers");for(int i=2;i<=4;++i){lua_pushnil(state_);lua_rawseti(state_,-2,i);}lua_pop(state_,1);for(auto name:{"path","cpath"}){lua_pushliteral(state_,"");lua_setfield(state_,-2,name);}for(auto name:{"loadlib","searchpath"}){lua_pushnil(state_);lua_setfield(state_,-2,name);}lua_pop(state_,1);}
+LuaRuntime::~LuaRuntime(){if(state_)lua_close(state_);}
+void LuaRuntime::compile(std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format){StackReset reset{state_,lua_gettop(state_)};load(state_,chunk,name,format);}
+void LuaRuntime::preload(std::string_view moduleName,std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format){if(moduleName.empty() || moduleName.size()>4096 || moduleName.find('\0')!=std::string_view::npos)throw std::runtime_error("Invalid Lua module name");StackReset reset{state_,lua_gettop(state_)};load(state_,chunk,name,format);luaL_getsubtable(state_,LUA_REGISTRYINDEX,LUA_PRELOAD_TABLE);lua_pushlstring(state_,moduleName.data(),moduleName.size());lua_pushvalue(state_,-3);lua_rawset(state_,-3);}
+void LuaRuntime::attachArchive(const Archives& archives,LuaChunkFormat format){if(archives_)throw std::runtime_error("Lua map archive already attached");StackReset reset{state_,lua_gettop(state_)};lua_getglobal(state_,"package");if(!lua_istable(state_,-1))throw std::runtime_error("Lua package table unavailable");lua_getfield(state_,-1,"searchers");if(!lua_istable(state_,-1))throw std::runtime_error("Lua package searchers unavailable");auto copy=archives.fork();lua_pushlightuserdata(state_,this);lua_pushcclosure(state_,archiveSearcher,1);lua_rawseti(state_,-2,2);archives_=std::move(copy);archiveFormat_=format;}
+int LuaRuntime::archiveSearcher(lua_State* state){
+    auto self=static_cast<LuaRuntime*>(lua_touserdata(state,lua_upvalueindex(1)));size_t length=0;auto raw=luaL_checklstring(state,1,&length);
+    try {
+        if(!self || !self->archives_ || !length || length>1024)throw std::runtime_error("Invalid Lua map module name");std::string path;path.reserve(length+4);bool separator=true;
+        for(size_t i=0;i<length;++i){unsigned char c=raw[i];if(c=='.'){if(separator)throw std::runtime_error("Invalid Lua map module name");path+='\\';separator=true;}else{if(c<=32 || c==127 || c=='/' || c=='\\' || c==':')throw std::runtime_error("Invalid Lua map module name");path+=char(c);separator=false;}}
+        if(separator)throw std::runtime_error("Invalid Lua map module name");path+=".lua";auto member=self->archives_->readCandidates({path},ArchiveScope::Map);if(!member){lua_pushfstring(state,"\n\tno map module '%s'",path.c_str());return 1;}
+        auto format=!member->bytes.empty() && member->bytes[0]==0x1b?self->archiveFormat_:LuaChunkFormat::Standard;load(state,member->bytes,path,format);lua_pushlstring(state,path.data(),path.size());return 2;
+    }catch(const std::exception& e){lua_pushstring(state,e.what());}
+    return lua_error(state);
+}
+LuaResult LuaRuntime::execute(std::span<const std::uint8_t> chunk,const std::string& name,std::uint64_t instructionLimit,LuaChunkFormat format,std::string_view moduleName){if(instructionLimit<1000 || instructionLimit>1000000000)throw std::runtime_error("Invalid Lua instruction budget");if(moduleName.size()>4096 || moduleName.find('\0')!=std::string_view::npos)throw std::runtime_error("Invalid Lua module name");StackReset reset{state_,lua_gettop(state_)};load(state_,chunk,name,format);remaining_=instructionLimit;*static_cast<std::uint64_t**>(lua_getextraspace(state_))=&remaining_;lua_sethook(state_,instructionHook,LUA_MASKCOUNT,1000);if(!moduleName.empty())lua_pushlstring(state_,moduleName.data(),moduleName.size());auto status=lua_pcall(state_,moduleName.empty()?0:1,1,0);lua_sethook(state_,nullptr,0,0);if(status!=LUA_OK){auto message=lua_tostring(state_,-1);throw std::runtime_error(std::string("Lua execution failed: ")+(message?message:"unknown error"));}LuaResult result;switch(lua_type(state_,-1)){case LUA_TNIL:break;case LUA_TBOOLEAN:result.kind=LuaResult::Kind::Boolean;result.boolean=lua_toboolean(state_,-1)!=0;break;case LUA_TNUMBER:if(lua_isinteger(state_,-1)){result.kind=LuaResult::Kind::Integer;result.integer=lua_tointeger(state_,-1);}else{result.kind=LuaResult::Kind::Number;result.number=lua_tonumber(state_,-1);}break;case LUA_TSTRING:{result.kind=LuaResult::Kind::String;size_t length=0;auto text=lua_tolstring(state_,-1,&length);result.text.assign(text,length);break;}default:result.kind=LuaResult::Kind::Other;break;}return result;}
+}
