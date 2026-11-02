@@ -7085,3 +7085,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 路径：`src/session_destructables.cpp`、`tests/passive_tests.cpp`、`docs/dota-bkb-item-handles.md`。物品持有者即时移动后，`GetWidgetX/Y` 与 `GetItemX/Y` 返回同一实时坐标，丢弃后读取地面坐标；合批运行 `war3_passive_tests <data-root> <fixture> invalid-item`，覆盖已有物品句柄及新增物件查询。单位移除／转交、脚本事件重入和原版动态行为待验证；原版同一虚函数入口证据位于 `tmp/docs-artifacts/war3/widget-item-position/`。
 
 Win32 Release 客户端与 `war3_passive_tests` 增量编译成功；新增物件查询断言待批次执行。
+
+### 距离事件目标移动回归（待功能批次验证）
+
+路径：`tests/clock_tests.cpp`。新增 `range_event_rechecks_after_callback`，覆盖首个进入回调移动距离事件中心，后续候选不能收到过期事件，中心返回后仍能收到有效事件；合批设置 `WAR3_CLOCK_FILTER=range_event_rechecks_after_callback` 运行 `war3_clock_tests <data-root> <output-root>`，并回归区域事件、事件销毁和过滤器重入。新增回归尚未执行，原版时序仍需对照。

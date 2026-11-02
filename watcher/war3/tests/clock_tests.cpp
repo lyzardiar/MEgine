@@ -1555,6 +1555,46 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";auto module=Module::compile(Program::parse({{"region-reentry.j",source,"region callback test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();for(auto name:{"first","second"})vm.invoke("SetUnitX",std::array{vm.global(name),vm.real(real(0))});session.advance(.03125);require(vm.global("enters").bits==1,"Region fired stale entry after callback moved another unit");vm.invoke("SetUnitX",std::array{vm.global("second"),vm.real(real(0))});session.advance(.03125);require(vm.global("enters").bits==2,"Region lost the later valid entry");
     });
+    test("range_event_rechecks_after_callback",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ type boolexpr extends handle
+ native Player takes integer id returns player
+ native CreateUnit takes player owner, integer id, real x, real y, real facing returns unit
+ native SetUnitX takes unit u, real x returns nothing
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code c returns triggeraction
+ native TriggerRegisterUnitInRange takes trigger t, unit u, real radius, boolexpr f returns event
+ native GetTriggerUnit takes nothing returns unit
+ globals
+ unit anchor=null
+ unit first=null
+ unit second=null
+ integer enters=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function onEnter takes nothing returns nothing
+ set enters=enters+1
+ if GetTriggerUnit()==first and enters==1 then
+ call SetUnitX(anchor,200.0)
+ endif
+ endfunction
+ function main takes nothing returns nothing
+ local trigger t=CreateTrigger()
+ set anchor=CreateUnit(Player(0),'hfoo',0.0,0.0,0.0)
+ set first=CreateUnit(Player(0),'hfoo',200.0,0.0,0.0)
+ set second=CreateUnit(Player(0),'hfoo',250.0,0.0,0.0)
+ call TriggerAddAction(t,function onEnter)
+ call TriggerRegisterUnitInRange(t,anchor,50.0,null)
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"range-reentry.j",source,"range callback test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();for(auto name:{"first","second"})vm.invoke("SetUnitX",std::array{vm.global(name),vm.real(real(0))});session.advance(.03125);require(vm.global("enters").bits==1,"Range fired stale entry after callback moved the anchor");vm.invoke("SetUnitX",std::array{vm.global("anchor"),vm.real(real(0))});session.advance(.03125);require(vm.global("enters").bits==2,"Range lost the later valid entry");
+    });
     test("spatial_events_rebuild_members_filters_and_order",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle
