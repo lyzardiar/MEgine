@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 随机对象池的未知类型（待功能批次验证，2/3）
+
+路径：`src/session_game.cpp`、`tests/clock_tests.cpp`。随机单位池或物品池选中不存在的对象类型时返回空句柄，保留已推进的随机状态；有效类型沿用创建流程。原版 1.27 的 `0x6f63a040` 与 `0x6f65a140` 在对象数据创建失败时返回空。合批运行 `WAR3_CLOCK_FILTER=recovery_bundle_restores_random_pools war3_clock_tests <data-root> <output-root>`，检查未知类型不创建实体和正常随机池恢复；原版动态随机状态、地图自定义对象覆盖待验证。本次未执行功能测试。
+
+
 ### 随机对象池的权重回退（待功能批次验证，1/3）
 
 路径：`src/session_game.cpp`、`tests/clock_tests.cpp`。非空随机单位池和物品池按源权重累计选择；没有命中区间或选中 `-1` 时回退首项，全零权重也推进随机状态。原版 1.27 对应实现为 `0x6f222820`／`0x6f222910`，随机数调用位于 `0x6f8806a0`。合批执行 `WAR3_CLOCK_FILTER=recovery_bundle_restores_random_pools war3_clock_tests <data-root> <output-root>`，检查全零池、回退、随机状态及存档恢复；正权重边界和原版动态序列仍需对照。本次未执行功能测试。
