@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## Lua 到 JASS 基本类型桥（待功能阶段验证）
+
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`、`CMakeLists.txt`。实验运行时显式绑定已初始化的 JASS Runtime，`jass.common` 按声明查找 native，基本整数／实数／布尔／字符串参数与返回值经过现有 Runtime 实际调用；不支持的句柄／code、全局写入和可休眠调用明确报错，解绑或重新绑定后旧闭包失效。调用者必须先解绑或销毁 Lua Runtime，再销毁 JASS Runtime，且两者在同一所有者线程操作。转换参考固定版本 [YDWE jassbind.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/jassbind.cpp) 和 [common.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/common.cpp)，仅覆盖上述子集，不声明完整原版兼容。
+
+Win32 Release 客户端与 Lua 测试目标构建成功；`war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 输出 2 通过／0 失败：夹具检查基本类型、null 字符串、缺参、未知 native、未支持签名、禁止休眠与解绑／重新绑定；对用户原图建立实际 `ScriptSession` 后，从 Lua 调用 `SetMapName` 和 `I2S`，检查会话名称变化及返回 `123`，未加载 Game.dll。此时测试通过显式附加运行时，不是正式地图入口；Lua 句柄及引用、回调、全局／数组、休眠和跨线程／销毁时序、其他地图、原版动态行为与完整会话仍待实现或验证。
+
 ## 用户地图 Lua 指令排查（实现中，尚未接入）
 
 `G:/qcloud_20144088.w3x` 的 `data/cfg_item.lua` 带 Lua 5.3 头，但指令编号与标准 Lua 不同；标准运行时能读取头和函数结构，直接执行在第 4 行失败，不能据此判断为正常 Lua 兼容。隔离探针结合地图内模块 `0x101117b6` 的 47 项分发表和各处理分支，推导了指令映射；对该文件的指令在内存转换后，提供测试用 `IdHelp.Str2Id`，执行得到首项 `攻击之爪LV1`。探针源码与构建位于 `tmp/docs-artifacts/war3/source-ability-gap/`，没有执行或加载地图原生模块。
@@ -10,7 +16,7 @@
 
 追加 `src/lua_verify.{h,cpp}`，在重排转换后检查寄存器、常量／上值／子函数索引、跳转边界、条件跳转和扩展指令配对；对标准二进制也执行同样检查。Release 客户端及 Lua 目标构建成功，`war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 输出 2 通过／0 失败，新增无效寄存器、常量、跳转及扩展指令拒绝检查，覆盖正常条件、循环、迭代、方法调用和闭包。隔离探针对 Lua 5.3 上游测试目录的源码进行编译、序列化并检查字节码，28 通过、2 个源码编译失败而跳过、0 个验证失败；没有执行这些上游脚本。探针在 `tmp/docs-artifacts/war3/source-ability-gap/lua_suite_probe.cpp`。
 
-继续补充模块名参数和显式预加载：使用 Lua 5.3 的 `require`／`package.loaded` 缓存。Release 客户端及 Lua 目标构建成功，原图测试输出 2 通过／0 失败：在测试 `IdHelp.Str2Id` 环境中读取 `data.cfg_item` 的 `I02D` 第一项名称 `攻击之爪LV1`，重复调用不重新执行；另检查模块名传参、返回 nil、缺失模块和失败后重试。原图 `scripts.assetsmanager` 首个请求为 `jass.debug`；静态常量还包含 `jass.code`、`jass.hook`、`jass.slk`、`jass.common`、`jass.globals`、`jass.japi` 等依赖。未实现或伪造这些模块。
+继续补充模块名参数和显式预加载：使用 Lua 5.3 的 `require`／`package.loaded` 缓存。Release 客户端及 Lua 目标构建成功，原图测试输出 2 通过／0 失败：在测试 `IdHelp.Str2Id` 环境中读取 `data.cfg_item` 的 `I02D` 第一项名称 `攻击之爪LV1`，重复调用不重新执行；另检查模块名传参、返回 nil、缺失模块和失败后重试。原图 `scripts.assetsmanager` 首个请求为 `jass.debug`；静态常量还包含 `jass.code`、`jass.hook`、`jass.slk`、`jass.common`、`jass.globals`、`jass.japi` 等依赖。此前未实现这些模块；`jass.common` 的基本类型子集见上方记录。
 
 实验运行时追加地图归档搜索器：按模块名从地图作用域读取 `.lua`，源码按标准模式、二进制按绑定时明确指定的格式加载；显式预加载优先，继续沿用 Lua 缓存。运行时持有独立归档视图，原调用方卸载自己的视图后仍可读取；非法路径与缺失模块明确失败。Release 客户端及 Lua 目标增量构建成功，`war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 输出 2 通过／0 失败，原图物品配置和 `assetsmanager` 均通过实际归档搜索器读取，后者真实报缺少 `jass.debug`。该搜索器尚未接入正式会话或针对不可信脚本开放。
 
