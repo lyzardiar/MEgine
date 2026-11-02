@@ -1,6 +1,8 @@
 // Author: MiYu. Lua 5.3 chunk execution with an instruction hook; bytecode inputs must be trusted.
 #pragma once
 #include <cstdint>
+#include <functional>
+#include <optional>
 #include <memory>
 #include <map>
 #include <span>
@@ -17,12 +19,14 @@ class LuaJassCallbacks;
 namespace jass {class Runtime;struct RuntimeLifetime;struct Value;}
 struct LuaResult {enum class Kind {Nil,Boolean,Integer,Number,String,Other};Kind kind=Kind::Nil;bool boolean=false;std::int64_t integer=0;double number=0;std::string text;};
 enum class LuaChunkFormat {Standard, MapOpcodes};
+struct LuaConsoleHost {std::function<bool()> enabled;std::function<void(bool)> setEnabled;std::function<void(std::string_view)> write;std::function<std::optional<std::string>()> read;};
 class LuaRuntime {
     friend class LuaJassCallbacks;
     lua_State* state_=nullptr;
     std::uint64_t remaining_=0;
     std::unique_ptr<Archives> archives_;
     std::unique_ptr<ObjectData> slkObjects_;
+    std::optional<LuaConsoleHost> console_;
     LuaChunkFormat archiveFormat_=LuaChunkFormat::Standard;
     jass::Runtime* jass_=nullptr;
     ScriptSession* japiSession_=nullptr;
@@ -41,6 +45,10 @@ class LuaRuntime {
     bool invokeLuaCallback(int reference,bool predicate);
     bool jassAlive() const;
     std::shared_ptr<JassBinarySession> binarySession() const;
+    static int consoleGet(lua_State* state);
+    static int consoleSet(lua_State* state);
+    static int consoleWrite(lua_State* state);
+    static int consoleRead(lua_State* state);
     static int slkCategory(lua_State* state);
     static int slkObject(lua_State* state);
     static int slkField(lua_State* state);
@@ -71,6 +79,7 @@ public:
     void compile(std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format=LuaChunkFormat::Standard);
     void preload(std::string_view moduleName,std::span<const std::uint8_t> chunk,const std::string& name,LuaChunkFormat format=LuaChunkFormat::Standard);
     void attachArchive(const Archives& archives,LuaChunkFormat format);
+    void attachConsole(LuaConsoleHost host);
     // Both runtimes are used on their owner thread; destroyed JASS bindings become invalid.
     void attachJass(jass::Runtime& runtime,std::shared_ptr<JassBinarySession> binary={});
     void attachJapi(ScriptSession& session);
