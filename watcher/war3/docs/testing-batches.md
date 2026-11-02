@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 物品目标订单的位置回退（待功能批次验证，3/3）
+
+路径：`src/session_inventory.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。即时物品订单及 `UnitDropItemTarget` 对无法接收物品的目标尝试目标位置丢弃，物品／可破坏物使用当前位置；单位命令或生命周期回调变化后不发出过期回退。原版 1.27 `0x6f1e9285`–`0x6f1e92c9` 先检查目标订单并在不通过时检查目标位置的点订单。合批运行 order queue、存档 clock 及相关物品／命令回归；原版具体接受条件、事件时序、地图动态目标和实际窗口待验证。本次提交前未执行功能测试。
+
+
 ### 即时物品订单失效目标（待功能批次验证，2/3）
 
 路径：`src/session_inventory.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。`IssueInstantTargetOrder` 和 ById 的物品移动目标已移除或失效时按空目标使用发令单位当前位置，继续由现有物品丢弃流程处理。原版 1.27 入口 `0x6f1e91f0` 在目标句柄解析为空时读取发令单位位置；合批运行 order queue 物品及即时订单场景，核对字符串／ID、失效目标、队列与物品状态；有效非单位目标及原版动态时序待验证。本次未执行功能测试。
