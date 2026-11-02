@@ -7722,3 +7722,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 进程时钟（部分验证，待功能阶段）
 
 路径：`src/lua_runtime.cpp`、`tests/lua_tests.cpp`。开放 Lua 5.3 标准 `os.clock`，读取进程使用的 CPU 时间；原图 `scripts/lib/ui/base/detail/game.lua` 顶层字节码会调用该函数。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，检查时钟返回非负数，其余受限 OS 接口仍不可用。原图入口当前仍在更早的 `jass.message` 停止，未实际执行该调用；进程时钟在联机客户端之间不同，地图对同步状态的使用和实际 UI 计时待验证。
+
+### Lua 输入消息回调桥（部分验证，待功能阶段）
+
+路径：`CMakeLists.txt`、`src/lua_message.cpp`、`src/lua_runtime.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。显式绑定会话后提供 `jass.message.hook`，宿主在 Lua 空闲时投递键盘／鼠标按下与弹起事件；Lua 回调可放行或拦截事件，并可修改键码，错误、非法键码和解绑后调用明确失败。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖键盘改键、鼠标拦截、异常、移除及解绑；原图在测试消息宿主下越过模块加载，停在未实现的 `GetGameVersion`。目前事件只由显式宿主投递，未连接正式窗口／GameView；鼠标查询、键盘常量、其他消息、原版事件顺序与同步策略、实际交互和 UI 待实现／验证。

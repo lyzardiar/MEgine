@@ -25,6 +25,7 @@ struct LuaResult {enum class Kind {Nil,Boolean,Integer,Number,String,Other};Kind
 enum class LuaChunkFormat {Standard, MapOpcodes};
 struct LuaJapiSignature {std::string result;std::vector<std::string> parameters;bool operator==(const LuaJapiSignature&) const = default;};
 struct LuaStormHost {std::function<std::optional<std::string>(std::string_view)> load;std::function<bool(std::string_view,std::string_view)> save;};
+struct LuaInputMessage {enum class Kind {KeyDown,KeyUp,MouseDown,MouseUp};Kind kind=Kind::KeyDown;std::uint32_t code=0,state=0;double x=0,y=0;};
 struct LuaPostHost {std::function<void(std::uint64_t,std::string_view,std::string_view)> submit;};
 struct LuaLogHost {std::function<std::string()> path;std::function<void(std::string_view)> setPath;std::function<void(std::string_view)> write;};
 struct LuaConsoleHost {std::function<bool()> enabled;std::function<void(bool)> setEnabled;std::function<void(std::string_view)> write;std::function<std::optional<std::string>()> read;};
@@ -56,11 +57,14 @@ class LuaRuntime {
     lua_State* activeJassState_=nullptr;
     unsigned callbackDepth_=0;
     std::optional<int> errorHandler_;
+    std::optional<int> messageHook_;
+    bool messageAttached_=false;
     bool handlingError_=false;
     std::map<std::string,int> hookRefs_;
     std::map<std::string,int> codeRefs_;
     std::map<std::string,LuaJapiSignature> japiSignatures_;
     void clearHooks();
+    void clearMessage();
     void clearCodeOverrides();
     JassBinaryNativeValue invokeBinaryOverride(const std::string& name,std::span<const JassBinaryNativeValue> arguments);
     void clearErrorHandler();
@@ -79,6 +83,8 @@ class LuaRuntime {
     static int consoleWrite(lua_State* state);
     static int consoleRead(lua_State* state);
     static int postMessage(lua_State* state);
+    static int messageGet(lua_State* state);
+    static int messageSet(lua_State* state);
     static int stormLoad(lua_State* state);
     static int stormSave(lua_State* state);
     static int slkCategory(lua_State* state);
@@ -121,6 +127,9 @@ public:
     void attachStormHost(LuaStormHost host);
     void attachFrameDefinitions(std::shared_ptr<FrameDefinitions> definitions);
     void attachMapFrames(std::shared_ptr<MapFrames> frames);
+    // Attach and dispatch on the owner thread while Lua is idle.
+    void attachMessageHost();
+    bool dispatchMessage(LuaInputMessage& message);
     // Submit and completion run on the owning thread; submit copies both views before returning.
     // Complete only while Lua is idle and stop using this runtime after destruction.
     void attachPostHost(LuaPostHost host);
