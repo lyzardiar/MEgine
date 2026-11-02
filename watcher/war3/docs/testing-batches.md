@@ -7221,3 +7221,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 结算顶栏玩家颜色（部分验证，待功能阶段）
 
 路径：`src/game_flow_ui.cpp`、`docs/game-flow.md`。按原模型序列索引选择玩家颜色，超出范围回退首序列；源模型序列名称与颜色不对应。Win32 Release 客户端增量编译成功；两张隔离 BootyBay 派生地图在隐藏客户端进入 2 秒结算，截图分别显示红色与蓝色顶栏，日志记录未加载 Game.dll。截图和日志位于 `tmp/docs-artifacts/war3/score-screen-colors/check/`。其余颜色、无效索引、地图模型覆盖及原版调用与画面对照待功能阶段验证；本次没有运行完整 UI 回归。
+
+### 独立预加载脚本物品与背包（待功能阶段验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立脚本复用会话物品创建／删除、属性／位置、背包操作及拾取事件上下文；其他未绑定 native 仍明确失败。Win32 Release 客户端与 map 测试目标编译通过；运行 `war3_map_tests <data-root> <scratch> preloader_item_inventory` 和 `preloader_item_event`，分别为 1 通过／0 失败。前者覆盖真实英雄、物品、归属、次数、用户数据和子脚本结束后库存；后者覆盖拾取事件调用子脚本并修改事件物品与单位。首次检查因拾取会更新物品归属而失败，调整夹具在拾取后设置归属再通过。地面定位、丢弃／使用及复杂重入、真实地图、原版时序与其他接口待功能阶段验证。
