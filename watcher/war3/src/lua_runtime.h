@@ -36,6 +36,7 @@ class LuaRuntime {
     jass::Runtime* jass_=nullptr;
     ScriptSession* japiSession_=nullptr;
     std::function<std::optional<std::string>(unsigned)> japiPlayerName_;
+    std::function<std::optional<std::string>()> japiVersion_;
     std::weak_ptr<const jass::RuntimeLifetime> jassLifetime_;
     std::weak_ptr<JassBinarySession> binary_;
     bool binaryAttached_=false;
@@ -104,6 +105,8 @@ public:
     void attachJapi(ScriptSession& session);
     // Provider supplies platform identities by session slot; missing identities remain unavailable.
     void attachJapiPlayerNames(std::function<std::optional<std::string>(unsigned)> provider);
+    // Provider reports the actual JAPI host version when one is available.
+    void attachJapiVersion(std::function<std::optional<std::string>()> provider);
     void detachJass();
     LuaResult execute(std::span<const std::uint8_t> chunk,const std::string& name,std::uint64_t instructionLimit=1000000,LuaChunkFormat format=LuaChunkFormat::Standard,std::string_view moduleName={});
 };
