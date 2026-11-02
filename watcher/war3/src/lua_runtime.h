@@ -10,10 +10,12 @@ struct lua_State;
 namespace war3 {
 class Archives;
 class JassBinarySession;
-namespace jass {class Runtime;struct RuntimeLifetime;}
+class LuaJassCallbacks;
+namespace jass {class Runtime;struct RuntimeLifetime;struct Value;}
 struct LuaResult {enum class Kind {Nil,Boolean,Integer,Number,String,Other};Kind kind=Kind::Nil;bool boolean=false;std::int64_t integer=0;double number=0;std::string text;};
 enum class LuaChunkFormat {Standard, MapOpcodes};
 class LuaRuntime {
+    friend class LuaJassCallbacks;
     lua_State* state_=nullptr;
     std::uint64_t remaining_=0;
     std::unique_ptr<Archives> archives_;
@@ -23,6 +25,11 @@ class LuaRuntime {
     std::weak_ptr<JassBinarySession> binary_;
     bool binaryAttached_=false;
     std::uint64_t jassGeneration_=0;
+    std::unique_ptr<LuaJassCallbacks> callbacks_;
+    lua_State* activeJassState_=nullptr;
+    unsigned callbackDepth_=0;
+    jass::Value callbackReference(lua_State* state,int index,bool predicate);
+    bool invokeLuaCallback(int reference,bool predicate);
     bool jassAlive() const;
     std::shared_ptr<JassBinarySession> binarySession() const;
     static int archiveSearcher(lua_State* state);

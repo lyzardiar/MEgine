@@ -1,8 +1,16 @@
 # 独立客户端测试队列
 
+## Lua 函数作为 JASS 条件与动作（待功能阶段验证）
+
+路径：`src/lua_jass_callbacks.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`、`CMakeLists.txt`。实验桥将 Lua 闭包注册为受寿命保护的 JASS code，在共享调度器中分别适配无参数、返回布尔的条件和无返回值的动作；相同闭包与用途复用引用。条件／过滤、触发动作、计时器及部分枚举入口已连接，未知 code 参数用途明确失败。回调保留到解绑，每种用途最多 2048 个不同闭包；首次创建适配器要求 JASS 调度器空闲。解绑禁止在正在执行的脚本线程或回调内进行，调用者不得在执行期间销毁 Lua Runtime。
+
+Win32 Release 客户端、Lua、2SAJ 和 JASS 线程目标构建成功。`war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 输出 2 通过／0 失败：在原图隔离 `ScriptSession` 中人工创建触发器，检查条件真假及异常、动作修改真实会话名称、同步重入、Lua 协程内触发及全局变量事件回调、Lua 主调用返回后的再次触发、重复注册同一闭包、延后回调指令预算、解绑或销毁后旧条件／动作拒绝；解绑后原图 2SAJ `R3` 仍可继续执行。`war3_jass_thread_tests` 为 36 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，未加载 Game.dll。首次夹具使用不存在的触发器全局名而失败，改为选择原图可用的 trigger 全局后通过。
+
+待验证：这些是人工注册的触发器，不是地图原生流程；计时器／枚举等已连接入口、回调休眠、全部返回类型、原版时序、注册与回收规模、存档、复杂重入和正式会话生命周期尚未验证。执行期内存限制与不可信字节码安全仍不完整，正式地图入口没有启用该桥，用户地图尚不能运行。
+
 ## 跨运行时 2SAJ 回调寿命检查（待功能阶段验证）
 
-路径：`src/jass_runtime.{h,cpp}`、`src/jass_binary_callbacks.cpp`、`tests/jass_binary_tests.cpp`。2SAJ 回调的 JASS code 值携带所属 Runtime 的弱寿命标记；`invoke`、`invokeNoYield`、`start` 和 `startDiscard` 在访问外部 Runtime 前检查标记。适配器销毁后保留的旧引用明确报错，已有不带标记的传统 code 引用仍沿用原有契约；该改动不实现 Lua 回调。
+路径：`src/jass_runtime.{h,cpp}`、`src/jass_binary_callbacks.cpp`、`tests/jass_binary_tests.cpp`。2SAJ 回调的 JASS code 值携带所属 Runtime 的弱寿命标记；`invoke`、`invokeNoYield`、`start` 和 `startDiscard` 在访问外部 Runtime 前检查标记。适配器销毁后保留的旧引用明确报错，已有不带标记的传统 code 引用仍沿用原有契约；Lua 回调的后续实验见上方记录。
 
 Win32 Release 客户端、2SAJ、JASS 线程与 Lua 目标构建成功。`war3_jass_binary_tests` 为 1 通过／0 失败，覆盖存活期间同步／调度调用、适配器销毁后四种入口拒绝，以及其他代码仍持有寿命标记时的失效；`war3_jass_thread_tests` 为 36 通过／0 失败，原图 `war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 为 2 通过／0 失败。增加标记使 JASS Value 变大，性能和大规模存档开销尚未测量；其他 code 来源、并发销毁、快照恢复、Lua 回调与正式会话生命周期仍待验证。
 
@@ -32,7 +40,7 @@ Win32 Release 客户端、Lua、JASS 线程与二进制测试目标构建成功�
 
 ## Lua 到 JASS 基本类型桥（待功能阶段验证）
 
-路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`、`CMakeLists.txt`。实验运行时显式绑定已初始化的 JASS Runtime，`jass.common` 按声明查找 native，基本整数／实数／布尔／字符串参数与返回值经过现有 Runtime 实际调用；code 和可休眠调用明确报错，解绑或重新绑定后旧闭包失效。句柄、全局变量与宿主销毁处理见上方后续记录。转换参考固定版本 [YDWE jassbind.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/jassbind.cpp) 和 [common.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/common.cpp)，仅覆盖上述子集，不声明完整原版兼容。
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`、`CMakeLists.txt`。实验运行时显式绑定已初始化的 JASS Runtime，`jass.common` 按声明查找 native，基本整数／实数／布尔／字符串参数与返回值经过现有 Runtime 实际调用；可休眠调用明确报错，解绑或重新绑定后旧闭包失效。部分 code 回调、句柄、全局变量与宿主销毁处理见上方后续记录。转换参考固定版本 [YDWE jassbind.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/jassbind.cpp) 和 [common.cpp](https://github.com/actboy168/YDWE/blob/a69c315ebf2886ec54d66200707ab6e38bd3484d/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/common.cpp)，仅覆盖上述子集，不声明完整原版兼容。
 
 Win32 Release 客户端与 Lua 测试目标构建成功；`war3_lua_tests <data-root> G:/qcloud_20144088.w3x` 输出 2 通过／0 失败：夹具检查基本类型、null 字符串、缺参、未知 native、未支持签名、禁止休眠与解绑／重新绑定；对用户原图建立实际 `ScriptSession` 后，从 Lua 调用 `SetMapName` 和 `I2S`，检查会话名称变化及返回 `123`，未加载 Game.dll。此时测试通过显式附加运行时，不是正式地图入口；Lua 句柄及引用、回调、全局／数组、休眠和跨线程／销毁时序、其他地图、原版动态行为与完整会话仍待实现或验证。
 
