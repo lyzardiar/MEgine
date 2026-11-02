@@ -7730,3 +7730,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua JAPI 游戏版本宿主（部分验证，待功能阶段）
 
 路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`GetGameVersion` 从显式宿主获取非负整数，缺失或无效时报错，声明签名校验为 `takes nothing returns integer`，解绑后旧闭包失效；不使用仅表示原版／资料片的会话版本替代。原图字节码以 7000 为阈值选择同步事件分支。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖缺值、无效值、签名冲突和解绑。原图在测试值 6000 下越过版本查询，停在 `RegisterMessageEvent`；6000 仅为夹具，真实客户端版本来源、两条同步分支、网络行为和完整地图仍待实现／验证。
+
+### Lua 时钟、消息与版本宿主批次（部分通过，后续功能待测）
+
+集成版本 `efe24ed`，功能提交 `00202d3`、`4515f79`、`efe24ed`。Win32 Release 客户端、Lua 与 JASS 线程测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。隔离宿主覆盖消息回调、事件拦截与改键、版本缺失和失效；原图在测试版本 6000 下停于 `RegisterMessageEvent`。正式窗口输入、真实版本来源、跨玩家消息、实际地图和 UI 未执行，保留待测。
