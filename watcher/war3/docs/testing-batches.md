@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 内存插件地图的加载诊断（待功能批次验证，1/3）
+
+路径：`src/session_ai.cpp`。中立敌对玩家启动地图内 `callback` 时，仅在地图还含 `2SAJ` 头的 `war3map.bin`、且回调包含 `newUnlockMemory` 和 `ExportFileFromMpq` 标记时，报告缺少原生插件与脚本运行环境；保持失败，不跳过地图主逻辑。`G:/qcloud_20144088.w3x` 的 `--main-check` 如预期退出 1 并给出该诊断，原入口此前报 AI 玩家无效；`--mute` 的 DotA 主入口退出 0，BootyBay 原版人族 AI 两秒运行输出 1 条 PASS，均未加载 Game.dll。命令见 `tmp/docs-artifacts/war3/qcloud-diagnostic*.log` 和 `war3_ai_tests <data-root> <BootyBay.w3m> 0 2`。该地图仍不能运行：回调按原版内存布局加载地图中的两层 x86 模块，内层包含 Lua 与 JASS 运行组件，`war3map.bin` 及其依赖尚未实现。其他同类地图、标记误判、图形窗口的错误呈现和原版兼容执行仍待验证。
+
 ## 狙击手施法、武器与有符号伤害批次（部分验证）
 
 范围：`998f0ab`、`b3ad484`、`90ee9d7`、`8896eb8`，集成版本 `8896eb8`。Win32 Release 客户端、DotA 英雄、被动、施法与 clock 目标构建通过。`sniper-assassinate`、`sniper-headshot`、`sniper-shrapnel`、`gyro-missile`、`negative-damage`、`bounce-100`、`weapon-ui` 和 `attack_projectiles_restore_flight_and_removed_handles` 各 1 通过／0 失败；综合施法输出 1 条 PASS。带 Game.dll 标记的检查均报告未加载。日志和复现参数见 `tmp/docs-artifacts/war3/sniper-batch/results.txt`。夹具中的弹射和伤害检查不代表原版动态对照；原版施法与事件时序、魔免目标变化、真实存读档续打、音效、窗口和 UI 仍未验证。补充 `sniper-aim` 原图检查 1 通过／0 失败：四级射程分别增加 100／200／300／400，一级攻击可在基础射程外命中且英雄未移动，数据面板与攻击距离一致；未加载 Game.dll。命令：`war3_dota_heroes_tests <data-root> <DotA_v6.83d.w3x> sniper-aim`。该检查为上一批的补充，不单独计数；实际界面悬停和原版动态对照仍待验证。下一功能批次从 0/3 开始。
