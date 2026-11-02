@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+### 原图人族对暗夜精灵隔离观察
+
+在 `6e3b99f` 对应的 Win32 Release 代码上使用原图 Booty Bay，启动静音人族与暗夜精灵 AI，模拟时间约 2,460 秒人族获胜；双方在对局中完成采集、建造、训练和交战。探针与日志位于 `tmp/docs-artifacts/war3/human-night-probe/`。此观察覆盖单次隔离对局，不代表原版策略、数值或完整玩法一致。
+
+同一机器尝试启动客户端窗口，D3D9 HAL 与参考设备均在能力／显示模式查询处返回 `0x8876086c`，D3D9Ex 与 D3D9On12Ex 不可用；本次未获得游戏画面。记录 `tmp/docs-artifacts/war3/human-night-probe/ui.log`、`ui-reference.log`。实际窗口、UI 和画面对照仍待可用显示会话验证。此观察不计入功能批次。
+
+
 ### AI 自动战斗撤退批次结果
 
 范围：`e3de08c`、`643244e`、`64ebb4a`，含证据记录 `c077f41`、`edd7a96`。Win32 Release 客户端、CampaignAI、clock 和 AI 控制检查程序构建通过。CampaignAI `retreat-auto-cycle`、`retreat-auto`、`retreat-removal`、`retreat-retry`、`retreat-reentrant`、`retreat-reinforce`、`captain-home`、`armies` 各 2 项通过；`island-auto-retreat`、`island-flight-captain-home`、`island-flight-retreat-paused`、`island-flight-retreat-paused-reassign`、`island-naval-offshore-retreat`、`island-naval-enemyshore-retreat` 各 1 项通过；clock `recovery_bundle_restores_active_ai` 1 项及 AI 控制 4 项通过，共 **27 通过、0 失败**。覆盖自动索敌与目标失效、显式改派、单位移除／易主、快照和运输撤退。日志位于 `tmp/docs-artifacts/war3/ai-auto-retreat-batch/`。
