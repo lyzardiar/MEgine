@@ -2,7 +2,7 @@
 
 ### 脚本加载请求固定检查点（待功能批次验证，1/3）
 
-路径：`src/session_campaign.cpp`、`src/campaign_browser.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。脚本 `LoadGame` 与战役地图加载入口使用同一次检查结果传递地图和检查点文件摘要，复用加载阶段的摘要校验，防止准备期间同名存档变化导致加载其他内容。合批运行 clock `save_game_writes_checkpoint_and_preserves_caller`、检查点地图解析与加载切换相关回归；窗口交接、原版格式和脚本加载时序待验证。本次未执行功能测试。
+路径：`src/session_campaign.cpp`、`src/campaign_browser.cpp`、`tests/clock_tests.cpp`、`docs/save-runtime-foundation.md`。脚本 `LoadGame` 与战役地图加载入口使用同一次检查结果传递地图和检查点文件摘要，复用加载阶段的摘要校验，防止准备期间同名存档变化导致加载其他内容。新增脚本加载选定后替换同名文件的拒绝用例；合批运行 clock `save_game_writes_checkpoint_and_preserves_caller`、检查点地图解析与加载切换相关回归；窗口交接、原版格式和脚本加载时序待验证。本次未执行功能测试。
 
 
 ### 原图人族对暗夜精灵隔离观察
