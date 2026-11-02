@@ -7001,3 +7001,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载脚本玩家状态、缓存与哈希表批次结果
 
 范围：`6b7ba54`、`b24fc96`、`3965f8d`。Win32 Release 客户端与地图测试目标构建成功，构建日志未发现 warning/error。`preloader_player_state_event`、`preloader_gamecache_persistence`、`preloader_hashtable_handles`、`preloader_common_natives`、`preload_generator_roundtrip` 各 1 通过／0 失败，覆盖主脚本嵌套触发玩家状态事件、子运行时销毁后的缓存值及磁盘重载、玩家及嵌套表句柄、生成与回读。日志位于 `tmp/docs-artifacts/war3/preloader-state-batch/`，构建日志位于 `tmp/docs-artifacts/war3/preloader-state-batch-build.log`。其余 native、异步回调、原版动态对照及实际窗口仍待验证。
+
+### 暗夜精灵末章和终章回归（待功能批次验证）
+
+路径：`tests/map_tests.cpp`。新增 `campaign_nightelf_finale`，在隔离用户目录中以原图检查开场控制、直接清理水坝任务目标、清除敌方目标建筑、胜利切换请求及终章过场返回。等价分段诊断：末章开场推进 600 秒、胜利请求在约 288.6 秒、终章约 93.75 秒返回，水坝任务在直接击杀四个目标后完成；日志位于 `tmp/docs-artifacts/war3/nightelf-final-diagnostic/`。正式回归待合批编译执行；直接击杀和分段手动载入不代表自然战斗、自动窗口交接或视觉验收。该测试补充不单独计入功能任务批次。
