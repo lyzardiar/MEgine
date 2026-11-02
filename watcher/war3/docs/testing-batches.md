@@ -7089,3 +7089,9 @@ Win32 Release 客户端与 `war3_passive_tests` 增量编译成功；新增物�
 ### 距离事件目标移动回归（待功能批次验证）
 
 路径：`tests/clock_tests.cpp`。新增 `range_event_rechecks_after_callback`，覆盖首个进入回调移动距离事件中心，后续候选不能收到过期事件，中心返回后仍能收到有效事件；合批设置 `WAR3_CLOCK_FILTER=range_event_rechecks_after_callback` 运行 `war3_clock_tests <data-root> <output-root>`，并回归区域事件、事件销毁和过滤器重入。新增回归尚未执行，原版时序仍需对照。
+
+### 区域离开事件回调回归（待功能批次验证）
+
+路径：`tests/clock_tests.cpp`。新增 `region_leave_rechecks_after_callback`，覆盖首个离开回调将后续候选送回区域，撤销过期离开并允许其随后真正离开；合批设置 `WAR3_CLOCK_FILTER=region_leave_rechecks_after_callback` 运行 `war3_clock_tests <data-root> <output-root>`。新增回归尚未执行，事件销毁、过滤器重入和原版时序仍待对照。
+
+距离事件和区域离开事件新增夹具已合并增量编译 `war3_clock_tests` 成功；两项行为回归尚未执行。

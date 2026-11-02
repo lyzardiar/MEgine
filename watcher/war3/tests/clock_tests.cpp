@@ -1555,6 +1555,51 @@ int wmain(int argc,wchar_t** argv) {
  endfunction
  )jass";auto module=Module::compile(Program::parse({{"region-reentry.j",source,"region callback test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();for(auto name:{"first","second"})vm.invoke("SetUnitX",std::array{vm.global(name),vm.real(real(0))});session.advance(.03125);require(vm.global("enters").bits==1,"Region fired stale entry after callback moved another unit");vm.invoke("SetUnitX",std::array{vm.global("second"),vm.real(real(0))});session.advance(.03125);require(vm.global("enters").bits==2,"Region lost the later valid entry");
     });
+    test("region_leave_rechecks_after_callback",[&]{
+        std::string source=R"jass(type destructable extends handle
+ type widget extends handle
+ type unit extends widget
+ type player extends handle
+ type trigger extends handle
+ type triggeraction extends handle
+ type event extends handle
+ type region extends handle
+ type rect extends handle
+ type boolexpr extends handle
+ native Player takes integer id returns player
+ native CreateUnit takes player owner, integer id, real x, real y, real facing returns unit
+ native SetUnitX takes unit u, real x returns nothing
+ native CreateTrigger takes nothing returns trigger
+ native TriggerAddAction takes trigger t, code c returns triggeraction
+ native CreateRegion takes nothing returns region
+ native Rect takes real x1, real y1, real x2, real y2 returns rect
+ native RegionAddRect takes region r, rect b returns nothing
+ native TriggerRegisterLeaveRegion takes trigger t, region r, boolexpr f returns event
+ native GetTriggerUnit takes nothing returns unit
+ globals
+ unit first=null
+ unit second=null
+ integer leaves=0
+ endglobals
+ function config takes nothing returns nothing
+ endfunction
+ function onLeave takes nothing returns nothing
+ set leaves=leaves+1
+ if GetTriggerUnit()==first then
+ call SetUnitX(second,0.0)
+ endif
+ endfunction
+ function main takes nothing returns nothing
+ local region r=CreateRegion()
+ local trigger t=CreateTrigger()
+ set first=CreateUnit(Player(0),'hfoo',0.0,0.0,0.0)
+ set second=CreateUnit(Player(0),'hfoo',10.0,0.0,0.0)
+ call RegionAddRect(r,Rect(-50.0,-50.0,50.0,50.0))
+ call TriggerAddAction(t,function onLeave)
+ call TriggerRegisterLeaveRegion(t,r,null)
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"region-leave-reentry.j",source,"region leave callback test"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();for(auto name:{"first","second"})vm.invoke("SetUnitX",std::array{vm.global(name),vm.real(real(200))});session.advance(.03125);require(vm.global("leaves").bits==1,"Region fired stale leave after callback returned another unit");vm.invoke("SetUnitX",std::array{vm.global("second"),vm.real(real(200))});session.advance(.03125);require(vm.global("leaves").bits==2,"Region lost the later valid leave");
+    });
     test("range_event_rechecks_after_callback",[&]{
         std::string source=R"jass(type destructable extends handle
  type widget extends handle
