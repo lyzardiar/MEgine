@@ -150,6 +150,7 @@ public:
     // Both runtimes are used on their owner thread; destroyed JASS bindings become invalid.
     void attachJass(jass::Runtime& runtime,std::shared_ptr<JassBinarySession> binary={});
     void attachJapi(ScriptSession& session);
+    bool attachKnownPluginJapi(std::span<const std::uint8_t> bytes);
     void attachBinaryExecuteScript(std::uint64_t instructionLimit=1000000);
     void attachMapEntryHook(std::uint64_t instructionLimit=1000000);
     bool mapEntryExecuted() const {return mapEntryExecuted_;}
