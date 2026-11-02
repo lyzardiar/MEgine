@@ -7658,3 +7658,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 日期与时间标准库（部分验证，待功能阶段）
 
 路径：`src/lua_runtime.cpp`、`tests/lua_tests.cpp`。开放 Lua 5.3 的 `os.time`、`os.date`、`os.difftime`，使用进程本地时钟与时区；其余 OS 文件、进程、环境和区域设置操作未开放。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖日期表与时间戳往返、时间差和未开放接口。原图隔离入口越过日志时间调用，下一处为未绑定的 `post_message`；测试未发送网络请求。时间随机器和时区变化，联机脚本若将其用于同步状态可能分歧；正式宿主、地图完整启动、网络上传策略及实际联机尚待验证。
+
+### Lua post_message 宿主桥（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。显式绑定宿主后，`post_message(url, body, callback)` 将请求交给宿主并登记回调；宿主在 Lua 空闲时按请求 ID 完成，响应参数由宿主提供。限制请求／响应大小及待完成数量，宿主拒绝、重复完成和回调异常明确报告。地图字节码显示实际调用三个参数，其回调不使用参数；原插件网络和回调协议尚未确认。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖请求提交、拒绝、禁止同步重入、延迟完成、重复完成及回调失败。原图使用内存测试宿主提交并完成请求，越过日志上传调用，停在未绑定的 `DzAPI_Map_GetMapLevel` 原生钩子。测试未发送网络请求，真实网络宿主、取消和销毁协议、原版响应、线程调度、完整入口及 UI 待实现／验证；未加载 Game.dll。
