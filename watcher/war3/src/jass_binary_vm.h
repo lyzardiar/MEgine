@@ -8,6 +8,7 @@ struct JassBinaryHost {
     std::function<size_t(const std::string&)> nativeArity;
     std::function<JassBinaryNativeValue(const std::string&,std::span<const JassBinaryNativeValue>)> nativeCall;
     std::function<JassBinaryNativeValue(const std::string&)> globalRead;
+    std::function<void(const std::string&,const JassBinaryNativeValue&)> globalWrite;
 };
 JassBinaryNativeValue runJass2Function(const JassBinaryProgram& program,const JassBinaryIndex& index,const std::string& name,const JassBinaryHost& host,std::span<const JassBinaryNativeValue> arguments={},size_t stepLimit=1000000);
 }

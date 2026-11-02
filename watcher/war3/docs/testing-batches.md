@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 2SAJ 标量全局写入与数值运算（待功能批次验证，2/3）
+
+路径：`src/jass_binary_vm.h`、`src/jass_binary_vm.cpp`、`tests/jass_binary_tests.cpp`。通过宿主回调写入标量全局值，支持整数／实数加减乘除及数值比较、布尔与／或／非；整数溢出按 32 位回绕，除零与有符号除法溢出拒绝，实数复用既有 JASS 数值运算。夹具检查全局反复更新、整数／实数及零除拒绝，1 通过／0 失败。用户地图的初始化全局值经隔离宿主保存后，原图函数 `R3` 连续执行两次将 `mElapsed` 从 0 增至 20；同一探针原图 `config` 仍执行 566 次 native 调用且相关配置保持一致，1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。全局类型／常量约束由宿主负责；字符串／句柄比较、数组、函数引用、计时器调度、会话入口和 Lua 等仍待实现或验证，地图尚不能运行。
+
 ## 2SAJ 函数执行与原生调用基础（待功能批次验证，1/3）
 
 路径：`src/jass_binary_vm.h`、`src/jass_binary_vm.cpp`、`src/jass_binary_bridge.cpp`、`tests/jass_binary_tests.cpp`、`CMakeLists.txt`。提供带步数、调用深度和参数栈上限的隔离执行入口，支持局部变量、反向栈序参数声明、字面量、寄存器复制、栈操作、现有 native 调用、脚本函数调用、整数转实数、取负、条件／无条件跳转和返回；未实现指令明确失败。夹具检查嵌套函数、非对称参数顺序、native 调用、跳转及步数上限，1 通过／0 失败。用户地图二进制 `config` 在已由文本 `config` 初始化的隔离会话中再次执行，完成 566 次原生调用；地图名／描述／玩家与队伍数量、16 个玩家的归属／颜色／控制／联盟和出生点／优先级与执行前一致，1 通过／0 失败，未加载 Game.dll。命令：`war3_jass_binary_tests` 和 `tmp/docs-artifacts/war3/source-ability-gap/build/Release/ability_level_scan.exe <data-root> G:/qcloud_20144088.w3x`。该探针不能证明原版动态一致或从空状态构建配置；全局写入、数组、算术、函数引用、可挂起线程、会话入口、Lua 和平台接口仍待实现或验证，地图仍不能运行。
