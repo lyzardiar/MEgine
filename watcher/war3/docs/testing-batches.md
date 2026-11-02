@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 可破坏物脚本创建缩放（待功能批次验证，1/3）
+
+路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`。四个动态创建可破坏物的脚本入口将有限缩放限制在 0.1 至 10，有效范围内保持原值；地图预放置对象沿用来源数据。原版 1.27 `0x6f6a3833` 至 `0x6f6a3869` 对动态创建缩放执行同样的上下限处理。合批运行 `war3_destructable_tests <data-root> <fixture> invalid-handles`，覆盖负值、零、常规值和超上限；自定义对象、非有限数与实际画面待验证。本次未执行功能测试。
+
+
 ### 可破坏物与电梯批次结果
 
 范围：`c647b4d`、`2ca0d0c`、`e4c70bf` 及测试补充 `7f69b86`。Win32 Release 客户端、可破坏物和地图测试目标构建通过；使用当前生成器生成隔离夹具后，可破坏物 `invalid-handles` 输出 1 条 PASS，完整流程输出 2 条 PASS；原图 `campaign_elevator_surface` 输出 **1 通过、0 失败**。覆盖失效查询、未知类型、变体索引、有效创建／事件／路径占用／采木和电梯动态表面；日志及夹具位于 `tmp/docs-artifacts/war3/destructable-elevator-batch/`。原版动态边界、自定义对象、单位实际上下电梯、真实窗口与完整战役仍待验证；下一功能批次从 0/3 计数。
