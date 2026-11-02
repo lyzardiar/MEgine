@@ -77,6 +77,7 @@ class LuaRuntime {
     static int runtimeGet(lua_State* state);
     static int runtimeSet(lua_State* state);
     static int registerJapi(lua_State* state);
+    static int dzapiLookup(lua_State* state);
     static int japiUnavailable(lua_State* state);
     static int japiLookup(lua_State* state);
     static int japiCall(lua_State* state);

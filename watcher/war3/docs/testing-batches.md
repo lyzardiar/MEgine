@@ -7646,3 +7646,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 已声明 JAPI 钩子（部分验证，待功能阶段）
 
 路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。支持为 `register_japi` 声明的扩展接口安装、查询、替换和移除 Lua 钩子；Lua 侧保存的接口闭包也观察后续钩子，回调可调用原接口，未实现的原接口仍报错。Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖参数、返回值、回调错误、移除、未实现原接口及转发到真实特效状态；原图隔离入口已安装 `DzFrameShow` 钩子，下一处为缺少 `jass.dzapi` 模块。当前钩子覆盖 Lua 的 JAPI 调用，扩展 native 从 2SAJ／其他宿主调用的分发、动态 UI 帧及显示、正式客户端接入和整图运行待实现／验证；测试版本、身份、日志与控制台均为测试宿主，未加载 Game.dll。
+
+### Lua DZAPI 地图覆盖表（部分验证，待功能阶段）
+
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。绑定 JASS 会话时提供可写 `jass.dzapi` 表，地图可通过普通赋值或 `rawset` 安装自身包装；尚未连接平台的名称访问明确报错，会话解绑后旧表的宿主查询失效。Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖模块缓存、覆盖、缺失接口与解绑。原图在测试宿主中加载该表，并进入本地环境后停在日志脚本使用缺失的 `os`；尚未执行到地图安装 DZAPI 包装的位置。平台数据、平台原生函数、原图完整启动及 UI 待实现／验证，未加载 Game.dll。
