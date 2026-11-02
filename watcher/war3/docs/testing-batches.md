@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 无效单位人口开关（待功能批次验证，3/3）
+
+路径：`src/session_food.cpp`、`tests/commerce_tests.cpp`。`SetUnitUseFood` 对空、已移除和类型不匹配的单位句柄无操作；有效单位继续更新人口和相关状态。原版 1.27 的 `0x6f1f7b40` 在单位解析失败后直接返回。合批运行 `war3_commerce_tests <data-root> <fixture>`，核对无效句柄不改变人口、有效英雄关停／恢复及正常训练；原版动态事件时序及其他单位状态待对照。本次未执行功能测试。
+
+
 ### 未知单位类型创建（待功能批次验证，2/3）
 
 路径：`src/session_entities.cpp`、`src/session_corpses.cpp`、`tests/commerce_tests.cpp`。`CreateUnit`、`CreateUnitAtLoc` 和 `CreateCorpse` 对不存在的单位类型返回空句柄，尸体创建还校验玩家句柄，保持地图单位列表不变；有效类型沿用创建流程。原版 1.27 `CreateUnit` 经 `0x6f630f20` 调用对象创建，数据查找失败返回零；`CreateUnitAtLoc` 调用同一入口，`CreateCorpse` 的 `0x6f1ddab0` 在玩家或创建结果无效时返回零。合批运行 `war3_commerce_tests <data-root> <fixture>`，检查零／未知类型、无效玩家及有效训练流程，并回归尸体创建和战役脚本定位；自定义缺失基类和原版动态事件仍待对照。本次未执行功能测试。
