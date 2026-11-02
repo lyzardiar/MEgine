@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 随机对象池失效句柄（待功能批次验证，2/3）
+
+路径：`src/session_game.cpp`、`tests/clock_tests.cpp`。随机单位池与物品池的销毁、添加、移除和放置接口对空、销毁或类型不匹配的对象池安全返回；随机单位放置还检查玩家句柄。原版 1.27 对应入口在句柄解析失败后直接返回，包括 `0x6f1fb070`、`0x6f1e9980`、`0x6f1f1d00` 和 `0x6f1f1cc0`。合批运行 `war3_clock_tests` 的 `recovery_bundle_restores_random_pools`，核对失效句柄、有效随机序列和恢复；原版随机权重与动态时序仍需验证。本次未执行功能测试。
+
+
 ### 脚本给予物品的物品栏能力检查（待功能批次验证，1/3）
 
 路径：`src/session_inventory.cpp`、`tests/commerce_tests.cpp`。`UnitAddItem` 要求单位具有可用的物品栏能力；没有物品栏的单位不能通过脚本直接消耗立即生效的物品。原版 1.27 的 `UnitAddItem` 和 `UnitInventorySize` 均先检查相同的单位物品栏对象（`0x6f6518d0`）。合批运行 `war3_commerce_tests <data-root> <commerce-fixture>`，检查无物品栏单位、英雄和金币箱；零槽位、自定义能力及原版动态事件仍需对照。本次未执行功能测试。
