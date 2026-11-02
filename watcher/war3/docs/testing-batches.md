@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 祭坛免费英雄训练（待功能批次验证，2/3）
+
+路径：`src/commerce.h`、`src/session_production.cpp`、`src/session_network_identity.cpp`、`tests/campaign_ai_tests.cpp`、`tests/clock_tests.cpp`。祭坛训练新英雄时预留英雄令牌并免除金币／木材费用，取消退还；队列快照 v2 保存令牌标记并保留 v1 读取，联机校验包含标记。原版 1.27 `0x6f3dc221` 检查状态 3 并生成零费用及令牌标记，`0x6f3eefd1` 扣除，`0x6f3dd9d6` 按标记返还。合批运行 CampaignAI `hero-token`／`hero-cost`、clock 生产快照和英雄复活回归；命令按钮费用、商店英雄、建筑死亡／转让、原版动态时序及实际对局仍待验证或接入。本次未执行功能测试。
+
+
 ### AI 免费英雄费用查询（待功能批次验证，1/3）
 
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`。玩家英雄令牌大于零时，AI 查询大写首字节英雄 ID 的金币与木材价格返回零，查询不消费令牌；其他单位按源价格，未知单位价格返回零。原版 1.27 `0x6f890800`／`0x6f890860` 检查英雄 ID 与玩家状态槽 `+0x70`；`GetPlayerState` 的状态 3 映射至该槽。合批运行 CampaignAI `hero-cost` 和相关生产回归；令牌在实际训练、取消与购买中的完整消费尚未接入，原版动态时序及实际对局待验证。本次未执行功能测试。
