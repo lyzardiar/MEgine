@@ -1,5 +1,10 @@
 # 独立客户端测试队列
 
+### 无效可破坏物遮挡高度查询（待功能批次验证，1/3）
+
+路径：`src/session_destructables.cpp`、`tests/destructable_tests.cpp`。`GetDestructableOccluderHeight` 对空、已移除或类型不匹配句柄返回零，有效对象读取当前高度。原版 1.27 `0x6f1e2010` 在解析失败时返回零；原图 UndeadX07c 进行静音开场模拟时曾在该调用处中断。必要复现检查：Win32 Release 客户端构建通过，修复后原图隔离静音模拟完成开场并推进 600 秒，日志 `tmp/docs-artifacts/war3/UndeadX07c-fixed/session.log`。合批运行 `war3_destructable_tests <data-root> <fixture> invalid-handles`，验证失效／有效对象；实际窗口及完整战役仍待验证。
+
+
 ### 随机池选择与存档批次结果
 
 范围：`659547b`、`a4eda12`、`f83996f`。Win32 Release 客户端及 `war3_clock_tests` 构建通过，构建日志未发现警告；`WAR3_CLOCK_FILTER=recovery_bundle_restores_random_pools` 输出 **1 通过、0 失败**，覆盖非空全零池的首项回退与随机状态、`-1` 类型回退、未知单位／物品类型、有限负权重和存档恢复。日志位于 `tmp/docs-artifacts/war3/random-pool-fidelity-batch/`。原版正负权重动态序列、浮点边界、非有限数及真实地图仍待对照；下一功能批次从 0/3 计数。
