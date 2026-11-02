@@ -6997,3 +6997,7 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 预加载脚本哈希表（待功能批次验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。独立预加载脚本继承哈希表基础值和玩家、哈希表句柄读写接口，其他句柄接口保持未绑定。合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，覆盖跨 native 的玩家句柄、嵌套表和字符串读取；其余句柄类型及原版行为待对照。
+
+### 预加载脚本玩家状态、缓存与哈希表批次结果
+
+范围：`6b7ba54`、`b24fc96`、`3965f8d`。Win32 Release 客户端与地图测试目标构建成功，构建日志未发现 warning/error。`preloader_player_state_event`、`preloader_gamecache_persistence`、`preloader_hashtable_handles`、`preloader_common_natives`、`preload_generator_roundtrip` 各 1 通过／0 失败，覆盖主脚本嵌套触发玩家状态事件、子运行时销毁后的缓存值及磁盘重载、玩家及嵌套表句柄、生成与回读。日志位于 `tmp/docs-artifacts/war3/preloader-state-batch/`，构建日志位于 `tmp/docs-artifacts/war3/preloader-state-batch-build.log`。其余 native、异步回调、原版动态对照及实际窗口仍待验证。
