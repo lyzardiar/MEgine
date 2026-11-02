@@ -7574,3 +7574,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### 原图电脑玩家磁盘存读档（部分验证，待功能阶段）
 
 路径：`tests/ai_tests.cpp`。原 BootyBay 人族电脑以固定种子运行 60 秒，调用本地保存接口写入隔离用户目录；恢复会话后与原会话分别续行至 300 秒，比较电脑玩家资源状态、存活单位类型数量和生产队列数量，并检查 AI 线程存在及金币发生变化。Win32 Release `war3_ai_tests <data-root> <BootyBay.w3m> live-save` 为 1 通过／0 失败，保存时单位总数 78、AI 线程 5；未加载 Game.dll。执行前须将 `MEGINE_WAR3_USER_DIR` 指向新的隔离目录，已有同名存档不会覆盖。产物 `tmp/docs-artifacts/war3/live-ai-save-final2-20261102/`。该检查未覆盖 UI 操作、实际玩家输入、战斗中保存、完整胜负、其他种族与地图或原版存档兼容；测试补充不单独计入功能批次。
+
+### 原图 Lua JASS 调试模块（部分验证，待功能阶段）
+
+路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。绑定真实 JASS 会话时提供 `jass.debug` 的函数签名、文本及 2SAJ 全局类型查询和句柄整数转换；解绑后旧接口失效，其他调试接口明确报未支持。Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖实际会话中的地图 `scripts.assetsmanager` 从缺少 `jass.debug` 推进到缺少 `jass.code`，未加载 Game.dll。测试为隔离会话，正式加载入口尚未启用，地图启动、完整插件接口、玩法与 UI 仍待实现和验证。
