@@ -7626,3 +7626,7 @@ Win32 Release 客户端增量编译通过。隔离用户目录、BootyBay 原图
 ### Lua 平台玩家身份接口（部分验证，待功能阶段）
 
 路径：`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`tests/lua_tests.cpp`。实验 `EXGetPlayerRealName` 通过显式绑定的宿主身份提供者按真实会话玩家槽查询，槽 ID 通过原生 `GetPlayerId` 验证并绕过脚本钩子；身份缺失时报错，地图可修改的 `GetPlayerName` 不作为平台身份替代。Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖中文身份、显示名修改、玩家 ID 钩子及缺失身份；原图在测试身份提供者和控制台宿主下运行入口，越过该接口并在缺少 `jass.log` 时停止。未加载 Game.dll。真实平台身份来源尚未绑定；实际联机、平台身份、后续初始化和整图玩法 UI 待验证。
+
+### Lua 日志宿主桥（部分验证，待功能阶段）
+
+路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。显式绑定日志宿主后提供 `jass.log` 的路径、等级过滤和六种日志方法，按时间及等级格式化后将内容交给宿主；路径变更由宿主实际处理。Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖中文、多参数、过滤、路径和非法等级；原图在测试日志、控制台及平台身份宿主下越过 `jass.log`，随后遇到未实现的 `jass.runtime.error_handle`。未加载 Game.dll。真实客户端日志宿主及文件路径策略、原版时间格式一致性、后续入口与整图玩法 UI 待验证。
