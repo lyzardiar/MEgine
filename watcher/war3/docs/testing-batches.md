@@ -7053,3 +7053,9 @@ Strange Brew 原图自然脚本路径补充：`war3_orc_campaign_chain_tests <da
 ### 失效矩形边界与中心查询（待功能批次验证）
 
 路径：`src/session_world.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。六项矩形边界及中心查询对失效句柄返回零；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，覆盖空、已移除及错误类型句柄，并保留有效矩形中心查询。原版 1.27 入口和零值读取见 `tmp/docs-artifacts/war3/location-invalid/rect-query-assembly.txt`；原版动态行为和所有有效边界待阶段验证。
+
+### 失效区域的几何操作与包含查询（待功能批次验证）
+
+路径：`src/session_spatial_events.cpp`、`tests/map_tests.cpp`、`docs/jass.md`。失效区域及其矩形、地点、单位参数不再中断地图脚本；合批运行 `war3_map_tests <data-root> <scratch> preloader_hashtable_handles`，覆盖区域有效几何、空句柄与重复移除。区域事件重入、错误类型、实际地图和原版动态行为待阶段验证。原版 1.27 静态入口记录位于 `tmp/docs-artifacts/war3/location-invalid/region-assembly.txt`。
+
+矩形查询及区域操作合并增量编译：`cmake --build --preset release --target war3 war3_map_tests --parallel 8` 成功；新增行为回归尚未执行。
