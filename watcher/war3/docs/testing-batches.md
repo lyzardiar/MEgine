@@ -8209,3 +8209,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 ### 2026-11-03：模型帧与动画批次
 
 范围：`515bfb9`、`46a7841`、`a415dd1`。同一集成版本 Win32 Release 客户端、Lua 和 native 目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败（`tmp/docs-artifacts/war3/animation-offset-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/sprite-animation-batch` 为 22 通过／0 失败（`tmp/docs-artifacts/war3/sprite-animation-native.log`）。模型内存解析输入和实现未变，沿用前批 1 通过／0 失败的结果。原图 N1 继续停于 `FrameSetModelSize`；GPU 绘制、动画进度换算、相机、动态贴图、界面视觉及完整对局未验证，仍保留为待测项。
+
+### 2026-11-03：地图模型帧大小与缩放（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。接入 `FrameSetModelSize`、`FrameGetModelSize` 和 `FrameSetModelScale`，分别保存大小与三轴缩放并用于模型绘制，拒绝非有限数；模型大小与三轴缩放在原插件中是独立状态，绘制时的组合方式仍需原版画面比对。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖读写、无效值与原图生成模型大小 1、缩放 (19, 10.5, 1)。N1 路径越过模型大小与缩放，停于 `FrameSetModelRotateX`，日志 `tmp/docs-artifacts/war3/sprite-scale-final.log`。GPU 画面、大小组合方式及完整对局待批次验证。

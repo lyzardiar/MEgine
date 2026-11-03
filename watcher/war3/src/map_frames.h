@@ -16,7 +16,7 @@ std::uint32_t modulateMapFrameAlpha(std::uint32_t color,std::uint8_t alpha);
 class MapFrames {
 public:
     struct Anchor {std::uint32_t point=0,target=0,targetPoint=0;float x=0,y=0;};
-    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;bool standardInfo=false,anchorsCleared=false;std::int32_t level=0;bool enabled=true;std::string model;std::optional<double> animationStart;bool animationLoop=false;float animationOffset=0;};
+    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;bool standardInfo=false,anchorsCleared=false;std::int32_t level=0;bool enabled=true;std::string model;std::optional<double> animationStart;bool animationLoop=false;float animationOffset=0,modelSize=1;std::array<float,3> modelScale{1,1,1};};
 private:
     std::shared_ptr<FrameDefinitions> definitions_;
     std::map<std::uint32_t,Node> nodes_;
@@ -72,6 +72,8 @@ public:
     void setModel(std::uint32_t id,std::string_view path);
     void setAnimation(std::uint32_t id,std::uint32_t animation,bool loop,double now);
     void setAnimationOffset(std::uint32_t id,float offset);
+    void setModelSize(std::uint32_t id,float value);
+    void setModelScale(std::uint32_t id,std::array<float,3> value);
     void visible(std::uint32_t id,bool value);
     bool visible(std::uint32_t id) const;
     size_t size() const {return nodes_.size();}
