@@ -11,9 +11,10 @@ class ScriptSession;
 class LuaLocalSync {
     LuaRuntime& lua_;
     unsigned player_;
-    struct State {std::deque<std::string> pending;size_t bytes=0;};
+    struct Message {bool dz=false;std::string prefix,text;};
+    struct State {std::deque<Message> pending;size_t bytes=0;};
     std::shared_ptr<State> state_=std::make_shared<State>();
-    static void send(State& state,std::string_view message);
+    static void send(State& state,bool dz,std::string_view prefix,std::string_view message);
 public:
     LuaLocalSync(LuaRuntime& lua,ScriptSession& session);
     LuaLocalSync(const LuaLocalSync&)=delete;

@@ -8011,3 +8011,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 ### 2026-11-03：地图帧、日志及输入集成批次
 
 检查范围：自上次脚本状态批次 `506b2d5` 后截至 `dfb669d` 的已提交地图帧、插件版本、日志与回调，以及本次输入接线工作树；使用同一集成工作树。Win32 Release 客户端、Lua、native、2SAJ 与 JASS 线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/map-input-batch-20261103` 为 22 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。正式 `--main-check --mute` 日志 `tmp/docs-artifacts/war3/map-input-batch-20261103-main.log` 记录 `EXGetPlayerRealName` 不可用、`main_completed=false`。既有 D3D9 设备创建故障未变化，未重复运行图形夹具；实际画面、输入操作、平台身份、同步及完整玩法保留待测，不能由上述测试视为通过。
+
+### 2026-11-03：单人 DZ 前缀同步消息（部分验证，待批次验证）
+
+路径：`src/lua_{runtime.h,jass_bridge.cpp,local_sync.h,local_sync.cpp}`、`src/{session.h,session.cpp,session_callbacks.cpp,session_recovery_bundle.cpp,session_threads.cpp,script_state.h}`、`tests/lua_tests.cpp`。单人会话将 `DzTriggerRegisterSyncData`、`DzSyncData`、`DzGetTriggerSyncData`、`DzGetTriggerSyncPlayer` 接入统一的本地有序队列；按前缀选择存活且启用的触发器，分派时保留发送玩家和消息，触发器发送的后续消息在下一次 pump 执行。销毁触发器移除注册；当前快照与恢复明确拒绝包含该注册或上下文。服务器来源注册、无同步宿主的联机会话明确失败，未实现平台服务或跨客户端传输。接口声明参考 [JapiNative](https://github.com/yefq/JapiNative/blob/master/JapiNative.j)。
+
+Win32 Release 客户端、Lua 与会话线程测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖前缀隔离、顺序、发送玩家、触发器销毁、回调内追加、队列预算、服务器及联机拒绝；`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。仅在模拟玩家 0 平台身份和只收集请求 ID 的 post 宿主下，原图真实版本 7000 已完成 `main`；推进计时器时停于 `Unimplemented Lua JAPI: GetTargetObject`，并出现地图错误处理器访问受限 `debug` 的次级错误。未发送网络请求；真实平台身份、平台服务、联机同步、完整计时器流程和实际画面仍待实现或验证。

@@ -97,6 +97,7 @@ class ScriptSession {
     std::vector<Object> objects_;
     std::map<std::uint32_t,std::uint32_t> retainedHandles_;
     std::vector<std::uint32_t> customMessageTriggers_;
+    std::vector<std::pair<std::uint32_t,std::string>> dzSyncTriggers_;
     std::vector<std::uint32_t> localNetworkObjects_;
     std::vector<std::uint32_t> localNetworkUiObjects_;
     std::vector<std::uint32_t> eventHandles_,spatialEventHandles_,timerHandles_,timerTriggerEvents_;
@@ -1636,6 +1637,9 @@ public:
     void registerCustomMessage(std::uint32_t trigger);
     void dispatchCustomMessage(unsigned player,std::string_view message);
     std::optional<std::pair<std::uint32_t,std::string>> currentCustomMessage() const;
+    void registerDzSync(std::uint32_t trigger,std::string_view prefix);
+    void dispatchDzSync(unsigned player,std::string_view prefix,std::string_view message);
+    std::optional<std::pair<std::uint32_t,std::string>> currentDzSync() const;
     const std::map<std::uint32_t,std::shared_ptr<UnitState>>& units() const {return units_;}
     const std::map<std::uint32_t,std::shared_ptr<ItemState>>& items() const {return items_;}
     const std::vector<std::string>& preloadMissing() const {return preloadMissing_;}

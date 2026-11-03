@@ -29,7 +29,7 @@ struct LuaJapiSignature {std::string result;std::vector<std::string> parameters;
 std::optional<std::int32_t> knownPluginGameVersion(std::span<const std::uint8_t> image);
 struct LuaStormHost {std::function<std::optional<std::string>(std::string_view)> load;std::function<bool(std::string_view,std::string_view)> save;};
 struct LuaInputMessage {enum class Kind {KeyDown,KeyUp,MouseDown,MouseUp};Kind kind=Kind::KeyDown;std::uint32_t code=0,state=0;double x=0,y=0;};
-struct LuaSyncHost {std::function<void(std::string_view)> send;};
+struct LuaSyncHost {std::function<void(std::string_view)> send;std::function<void(std::string_view,std::string_view)> sendDz;};
 struct LuaPostHost {std::function<void(std::uint64_t,std::string_view,std::string_view)> submit;};
 struct LuaLogHost {std::function<std::string()> path;std::function<void(std::string_view)> setPath;std::function<void(std::string_view)> write;};
 struct LuaConsoleHost {std::function<bool()> enabled;std::function<void(bool)> setEnabled;std::function<void(std::string_view)> write;std::function<std::optional<std::string>()> read;};
@@ -173,6 +173,7 @@ public:
     // Sender copies the view and later delivers synchronized messages on the owner thread.
     void attachJapiSyncHost(LuaSyncHost host);
     void deliverJapiMessage(unsigned player,std::string_view message);
+    void deliverDzMessage(unsigned player,std::string_view prefix,std::string_view message);
     void detachJass();
     LuaResult execute(std::span<const std::uint8_t> chunk,const std::string& name,std::uint64_t instructionLimit=1000000,LuaChunkFormat format=LuaChunkFormat::Standard,std::string_view moduleName={});
 };

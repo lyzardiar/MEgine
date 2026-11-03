@@ -62,7 +62,7 @@ struct ScriptContext {
     std::uint32_t researched=0,clickedDialog=0,clickedButton=0,triggeringTrackable=0;
     std::uint32_t constructing=0,cancelled=0,constructed=0;
     std::uint32_t triggerWidget=0,triggerDestructable=0,filterDestructable=0,enumDestructable=0,filterItem=0,enumItem=0;
-    bool damageAttack=false,damageRanged=false,customMessage=false;
+    bool damageAttack=false,damageRanged=false,customMessage=false,dzSync=false;
     jass::Real damage;
     std::string chat,chatMatch,saveName,customText;
 };
