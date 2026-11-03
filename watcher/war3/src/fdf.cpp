@@ -8,6 +8,7 @@
 namespace war3 {
 std::optional<std::uint32_t> inlineTextColor(std::string_view token) {if(token.size()!=10 || token[0]!='|' || (token[1]!='c' && token[1]!='C'))return std::nullopt;std::uint32_t value=0;auto [end,error]=std::from_chars(token.data()+2,token.data()+10,value,16);if(error!=std::errc{} || end!=token.data()+10)return std::nullopt;return value|0xff000000u;}
 std::string plainFrameText(std::string_view value){std::string result;for(size_t i=0;i<value.size();){if(value[i]=='|' && i+1<value.size()){char c=value[i+1];if(inlineTextColor(value.substr(i,10))){i+=10;continue;}if(c=='r' || c=='R'){i+=2;continue;}if(c=='n' || c=='N'){result+='\n';i+=2;continue;}}result+=value[i++];}return result;}
+std::wstring frameTextContent(std::string_view value){std::wstring result;for(size_t i=0;i<value.size() && result.size()<65536;){if(value[i]=='|' && i+1<value.size()){char c=value[i+1];if(inlineTextColor(value.substr(i,10))){i+=10;continue;}if(c=='|'){result+='|';i+=2;continue;}if(c=='r' || c=='R'){i+=2;continue;}if(c=='n' || c=='N'){result+='\n';i+=2;continue;}}size_t start=i++;while(i<value.size() && value[i]!='|')++i;for(auto c:wide(value.substr(start,i-start))){if(result.size()>=65536)break;if(c!='\r')result+=c;}}return result;}
 std::string sourceText(std::span<const std::uint8_t> bytes) {
     if(bytes.size()>=3 && bytes[0]==0xef && bytes[1]==0xbb && bytes[2]==0xbf)bytes=bytes.subspan(3);
     if(bytes.size()>=2 && ((bytes[0]==0xff && bytes[1]==0xfe)||(bytes[0]==0xfe && bytes[1]==0xff))) {

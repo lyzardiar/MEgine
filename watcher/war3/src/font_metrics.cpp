@@ -1,6 +1,8 @@
 // Author: MiYu. Use the original font for script and rendered text metrics.
 #include "font_metrics.h"
+#include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace war3 {
 namespace {
@@ -12,4 +14,7 @@ FontMetrics::FontMetrics(std::span<const std::uint8_t> font){auto name=family(fo
 FontMetrics::~FontMetrics(){if(font_)DeleteObject(font_);if(resource_)RemoveFontMemResourceEx(resource_);}
 float FontMetrics::width(HDC context,std::wstring_view text,float height,bool padding){if(text.empty())return 0;SIZE size{};if(text.size()>4096 || !std::isfinite(height) || height<0 || !GetTextExtentPoint32W(context,text.data(),int(text.size()),&size))throw std::runtime_error("Font measurement failed");return height*(size.cx+(padding?4:0))/(size.cy+4);}
 float FontMetrics::width(std::wstring_view text,float height,bool padding) const{if(text.empty())return 0;auto dc=CreateCompatibleDC(nullptr);if(!dc)throw std::runtime_error("Cannot create font measurement context");auto previous=SelectObject(dc,font_);if(!previous || previous==HGDI_ERROR){DeleteDC(dc);throw std::runtime_error("Cannot select original font");}try{auto result=width(dc,text,height,padding);SelectObject(dc,previous);DeleteDC(dc);return result;}catch(...){SelectObject(dc,previous);DeleteDC(dc);throw;}}
+size_t FontMetrics::fit(HDC context,std::wstring_view text,float width,float height){if(text.empty() || width<=0 || height<=0)return 0;TEXTMETRICW metrics{};if(!GetTextMetricsW(context,&metrics))throw std::runtime_error("Font metrics failed");if(text.size()>4096 || !std::isfinite(width) || !std::isfinite(height))throw std::runtime_error("Font fit failed");int count=0;SIZE size{};auto extent=std::min(double(std::numeric_limits<int>::max()),double(width)*(metrics.tmHeight+4)/height);if(!GetTextExtentExPointW(context,text.data(),int(text.size()),int(extent),&count,nullptr,&size))throw std::runtime_error("Font fit failed");return size_t(count);}
+size_t FontMetrics::fit(std::wstring_view text,float width,float height) const{if(text.empty() || width<=0 || height<=0)return 0;auto dc=CreateCompatibleDC(nullptr);if(!dc)throw std::runtime_error("Cannot create font measurement context");auto previous=SelectObject(dc,font_);if(!previous || previous==HGDI_ERROR){DeleteDC(dc);throw std::runtime_error("Cannot select original font");}try{auto result=fit(dc,text,width,height);SelectObject(dc,previous);DeleteDC(dc);return result;}catch(...){SelectObject(dc,previous);DeleteDC(dc);throw;}}
+std::vector<FontLine> wrapFontLines(std::wstring_view text,float width,float height,size_t limit,const std::function<size_t(std::wstring_view,float,float)>& fit){std::vector<FontLine> lines;for(size_t at=0;at<text.size() && lines.size()<limit;){auto end=text.find(L'\n',at);if(end==text.npos)end=text.size();auto part=text.substr(at,end-at);auto count=fit(part.substr(0,4096),width,height);if(!part.empty() && !count)count=1;if(count<part.size()){auto space=part.substr(0,count).find_last_of(L' ');if(space!=part.npos && space)count=space;}lines.push_back({at,at+count});at+=count;if(at<text.size() && (text[at]=='\n' || text[at]==' '))++at;}return lines;}
 }

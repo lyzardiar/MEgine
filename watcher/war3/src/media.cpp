@@ -35,7 +35,7 @@ const Text::Label& Text::label(std::wstring_view text) {
     return found->second;
 }
 float Text::width(std::wstring_view text,float height,bool padding){return FontMetrics::width(context_,text,height,padding);}
-size_t Text::fit(std::wstring_view text,float width,float height) {if(text.empty() || width<=0 || height<=0)return 0;TEXTMETRICW metrics{};if(!GetTextMetricsW(context_,&metrics))throw std::runtime_error("Font metrics failed");int count=0;SIZE size{};if(text.size()>4096 || !GetTextExtentExPointW(context_,text.data(),static_cast<int>(text.size()),static_cast<int>(width*(metrics.tmHeight+4)/height),&count,nullptr,&size))throw std::runtime_error("Font fit failed");return size_t(count);}
+size_t Text::fit(std::wstring_view text,float width,float height){return FontMetrics::fit(context_,text,width,height);}
 void Text::draw(std::wstring_view text, float x, float y, float height, DWORD color, bool centered) {
     if(text.empty())return;auto& value=label(text);float width=height*value.width/value.height;
     renderer_.rect(centered ? x-width/2 : x,y,width,height,color,value.texture.Get());
