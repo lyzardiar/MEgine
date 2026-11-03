@@ -51,7 +51,7 @@ jass::Value argument(lua_State* L,int index,jass::Runtime& vm,jass::Id type,std:
     if(category==jass::Category::Boolean){if(kind==LUA_TBOOLEAN)return vm.boolean(lua_toboolean(L,index)!=0);return vm.boolean(lua_tonumber(L,index)!=0);}
     if(category==jass::Category::Real){if(kind!=LUA_TNIL && kind!=LUA_TNUMBER)throw std::runtime_error("Unsupported Lua JASS real argument");float value=kind==LUA_TNIL?0.0f:static_cast<float>(lua_tonumber(L,index));return vm.real(jass::Real::fromBits(std::bit_cast<std::uint32_t>(value)));}
     if(category==jass::Category::String){size_t length=0;auto value=lua_tolstring(L,index,&length);if(value)return vm.string(std::string(value,length));return {vm.module().typeId("<null>"),0,{}};}
-    if(category==jass::Category::Handle){if(kind==LUA_TNIL)return vm.handle(vm.module().type(type).name,0);auto h=getHandle(L,index);if(!h || h->generation!=generation)throw std::runtime_error("Invalid or stale Lua JASS handle");return vm.handle(vm.module().type(type).name,h->bits);}
+    if(category==jass::Category::Handle){if(kind==LUA_TNIL || (handleLevel(L)==1 && kind!=LUA_TLIGHTUSERDATA && kind!=LUA_TUSERDATA))return vm.handle(vm.module().type(type).name,0);auto h=getHandle(L,index);if(!h || h->generation!=generation)throw std::runtime_error("Invalid or stale Lua JASS handle");return vm.handle(vm.module().type(type).name,h->bits);}
     throw std::runtime_error("Unsupported Lua JASS argument type: "+vm.module().type(type).name);
 }
 int result(lua_State* L,jass::Runtime& vm,const jass::Value& value,std::uint64_t generation){

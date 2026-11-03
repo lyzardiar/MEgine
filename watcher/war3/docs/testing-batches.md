@@ -8127,3 +8127,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/session.h`、`src/session_entities.cpp`、`src/session_ability_commands.cpp`、`src/session_recovery_bundle.cpp`、`tests/lua_tests.cpp`。实现 `EXGetAbilityDataString`／`EXSetAbilityDataString` 的图标及技能提示字段（204、214–220），按技能类型和等级共享覆盖，并接入命令栏图标、标题及说明；无效句柄和等级返回失败，空缺按钮坐标按零处理。其他字符串字段尚未实现；覆盖数据目前不包含在恢复快照中，因此存在覆盖时明确拒绝创建恢复包。原版字段数组长度及各种技能类型的共享规则仍需更广泛验证。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖跨单位共享、图标与提示命令栏读取、无效输入及原图 `,2` 坐标。模拟点击原图“N1 初出茅庐”后，英雄初始化已写入技能图标；随后对话框销毁调用 `TriggerRemoveAction` 时遇到句柄格式不兼容，日志 `tmp/docs-artifacts/war3/ability-ui-final.log`。此为脚本模拟，实际图形及后续对局待验证。
+
+### 2026-11-03：轻量句柄参数转换（部分验证，待批次验证）
+
+路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。轻量句柄模式向 JASS 句柄参数传入函数等非 userdata 值时按空句柄处理；完整 userdata 模式仍拒绝该值，未知或过期 userdata 仍拒绝。原图对话框销毁把 Lua 回调传给 `TriggerRemoveAction`；此转换依据本机 YDWE Lua 引擎静态代码。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖两种模式及真实动作不被错误移除。模拟点击原图 N1 后对话框销毁已完成，推进至约 2.75 秒自定义 UI 初始化，停于未实现的 `FrameSetLevel`，日志 `tmp/docs-artifacts/war3/light-handle-arg-final.log`。实际画面和完整对局待验证。
