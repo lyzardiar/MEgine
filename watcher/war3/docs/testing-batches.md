@@ -8033,3 +8033,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 ### 2026-11-03：DZ 同步、鼠标目标与句柄统计批次
 
 检查范围：已提交 `5e41ef2`、`39a1912` 及本次句柄统计工作树。Win32 Release 客户端、Lua、native 和会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/dz-pointer-debug-batch-20261103` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。真实平台身份、跨客户端同步、窗口鼠标拾取和实际画面未执行；既有 D3D9 设备创建故障未变化，图形夹具继续保留待测。模拟身份结果不代表正式加载成功。
+
+### 2026-11-03：Lua 错误调用栈（部分验证，待批次验证）
+
+路径：`src/lua_runtime.cpp`、`tests/lua_tests.cpp`。向脚本提供 Lua 5.3 原生 `debug.traceback`，同时通过全局 `debug` 和 `require('debug')` 暴露；其余调试库成员不开放。地图的 `jass.runtime.error_handle` 使用该函数记录调用栈时不再因 `debug` 为空而产生次级错误。
+
+Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖普通调用栈、协程、非字符串消息、未开放成员及真实 JASS 回调错误处理。模拟全部槽位平台身份、非激活窗口及仅收集请求的 post 宿主后，原图定期诊断在未实现的 `handledef` 处输出自身错误与调用栈；未发送网络请求。真实平台身份、`handledef` 的原版对象类型和引用语义、实际画面及完整玩法仍待实现或验证。
