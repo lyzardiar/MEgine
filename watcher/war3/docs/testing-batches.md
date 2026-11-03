@@ -8161,3 +8161,7 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/glue.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。支持通过 `CreateFrameByTagName` 创建 `GLUETEXTBUTTON` 并使用已有按钮模板绘制路径；`FrameSetEnable` 更新控件状态和界面修订，禁用的控件不再进入悬停集合，重新启用后可再次触发悬停。当前地图控件点击事件、按钮按压／悬停皮肤及跨父层级命中尚未完成，不代表完整按钮交互或视觉一致。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖按钮创建、启用、禁用、悬停离开和重新进入。原图选择 N1 后越过按钮创建，停于模型控件所需的 `FrameGetPortrait`，日志 `tmp/docs-artifacts/war3/map-button-final.log`。实际画面、鼠标点击和完整对局待验证。
+
+### 2026-11-03：地图文本与按钮批次
+
+范围：`91d108c`、`0521cbe`、`9a45521`。Win32 Release 客户端、Lua、native 和会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/text-button-batch` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。实际画面、鼠标点击、横向多锚点文本高度、原版字体尺寸比较及完整对局未验证；当前原图阻塞为 `FrameGetPortrait`。
