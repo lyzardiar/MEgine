@@ -8297,3 +8297,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 ### 2026-11-03：伤害事件与文本按钮批次
 
 范围：`c2172dd`、`ee86aff`、`b4966c8`。同一集成版本 Win32 Release 客户端、Lua、native、地图、会话线程与时钟测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败（`tmp/docs-artifacts/war3/button-inherit-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/damage-button-batch` 为 22／0，`war3_map_tests <data-root> tmp/docs-artifacts/war3/damage-button-map preloader_nested_damage` 为 1／0，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7／0，`WAR3_CLOCK_FILTER=recovery_bundle_restores_point_damage war3_clock_tests <data-root> tmp/docs-artifacts/war3/damage-button-clock` 为 1／0。日志位于 `tmp/docs-artifacts/war3/damage-button-{native,map,threads,clock}.log`。原图 N1 推进至约 30 秒，停于 JASS 调试对象类型 32；伤害物理标志、内建武器类型、按钮 GPU 画面及完整对局未验证，保留待测。
+
+### 2026-11-03：附着特效的 JASS 调试类型（部分验证，待批次验证）
+
+路径：`src/session.cpp`、`tests/lua_tests.cpp`。`handledef` 可读取附着特效，当前返回普通附着特效类型 `+EIm`，点特效继续返回 `+EIP`；销毁后句柄无类型。原版还存在迷雾附着特效 `+EIf`，当前尚未区分其创建条件，统计类型可能不同。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖点特效、附着特效与销毁状态。原图 N1 约 30 秒的清理统计越过附着特效，接着停于 `JASS debug object type unavailable: 31`（技能句柄），日志 `tmp/docs-artifacts/war3/debug-attached-final.log`。原版迷雾类型、其他对象类型和完整对局待验证。
