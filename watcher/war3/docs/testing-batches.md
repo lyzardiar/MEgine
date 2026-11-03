@@ -8117,3 +8117,7 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/session.cpp`、`tests/lua_tests.cpp`。`handledef` 对地面特效返回 `+EIP`：原版 `AddSpecialEffect` 创建路径使用 `CEffectImagePos` 类型及该类型码。附着特效的原版类型取决于目标状态，当前仍明确报未支持，避免误报。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖地面特效诊断。原图逐帧约 30 秒时仍因附着特效类型未支持而停止，日志 `tmp/docs-artifacts/war3/effect-type-probe.log`。类型码依据原版二进制静态追踪；附着特效、实际画面和完整玩法待验证。
+
+### 2026-11-03：作者信息与句柄诊断批次
+
+范围：`7f4f64c`、`86bf5dc`、`024a2b8`。Win32 Release 客户端、Lua、native、会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/owner-ref-effect-batch` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。未执行实际画面、难度选择或完整对局；附着特效类型仍待实现。未访问外网。
