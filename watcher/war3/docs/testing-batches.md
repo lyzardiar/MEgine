@@ -8415,3 +8415,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 范围：`1132b26`、`04abb4c`、`8d453bf`，以及原图物品操作测试补充 `0098607`。同一集成版本 Win32 Release 客户端、Lua 和 native 测试目标编译通过；复用代码及验证输入未变的 `war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 2 通过／0 失败（`tmp/docs-artifacts/war3/simple-button-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/simple-button-batch` 为 22／0（`tmp/docs-artifacts/war3/simple-button-batch-native.log`）。覆盖原图快进、英雄物品操作、按钮命中和 SIMPLEBUTTON 源模板。
 
 真实 GPU 贴图与文字、鼠标层级和事件顺序、简单纹理及文字动态修改和完整对局仍待验证。
+
+### 2026-11-03：简易文字与贴图动态更新（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/glue.cpp`、`tests/lua_tests.cpp`。`STRING` 支持文字和颜色的读写，`TEXTURE` 支持运行时替换贴图；`jass.dzapi` 增加文字读写及颜色设置别名。简易贴图绘制使用源 `TexCoord`，按钮可引用同一实例内动态修改的纹理和文字，同时保留运行时资源路径和状态。平铺标志的原版采样、字体与颜色及其他简单控件仍需画面对照。
+
+Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖两个同名实例隔离、文字／颜色／贴图修改、路径校验、UV 与无效 UV（`tmp/docs-artifacts/war3/dynamic-simple-final.log`）。GPU 图集采样、按钮绘制与真实鼠标未验证。
