@@ -8187,3 +8187,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 ### 2026-11-03：肖像与模型帧基础批次
 
 范围：`6b87b0c`、`65ac3bd`、`49c4d6b`。Win32 Release 客户端、Lua、native、会话线程与模型测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/portrait-sprite-batch` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败，`war3_effects_tests <data-root> tmp/docs-artifacts/war3/memory-model-batch.log --memory-model tmp/docs-artifacts/war3/generated-map-model.mdx` 为 1 通过／0 失败。肖像父节点为近似实现；`FrameSetModel`、模型帧绘制、GPU 及完整对局未验证。
+
+### 2026-11-03：模型帧绑定与基础绘制（部分验证，待批次验证）
+
+路径：`CMakeLists.txt`、`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/glue.{h,cpp}`、`src/game_view.{h,cpp}`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetModel` 接受零选项，规范化资源路径并绑定到 SPRITE；绘制遍历中按帧位置加载本地归档或内存覆盖的 MDX，内容变更时重建缓存，使用模型相机或默认相机绘制，并在销毁帧后释放缓存。其他选项明确报未支持。
+
+Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖路径、非法输入及原图生成模型绑定。原图 N1 路径越过 `FrameSetModel`，停于 `FrameSetAnimate`，日志 `tmp/docs-artifacts/war3/sprite-model-final.log`。当前 GPU 设备不可用，绘制未进行画面验证；自定义相机、动画、模型附属资源及动态纹理尚未接入，默认相机和边界裁剪只是基础实现；模型首次加载和上传在渲染线程进行，性能待验证。

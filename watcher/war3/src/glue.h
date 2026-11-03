@@ -14,8 +14,9 @@ public:
     struct Rect { float x=0,y=0,w=.8f,h=.6f; };
     struct Choice {std::string text,image;};
     struct ChoiceChange {std::string frame;size_t index;};
+    using SpriteDraw=std::function<void(std::uint32_t,Rect,unsigned)>;
 private:
-    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; std::vector<MapFrames::Anchor> anchors;std::optional<float> mapWidth,mapHeight;std::optional<std::uint32_t> mapTextColor;std::optional<std::uint8_t> mapAlpha;std::optional<bool> mapEnabled; };
+    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; std::vector<MapFrames::Anchor> anchors;std::optional<float> mapWidth,mapHeight;std::optional<std::uint32_t> mapTextColor;std::optional<std::uint8_t> mapAlpha;std::optional<bool> mapEnabled;std::uint32_t mapId=0; };
     struct Texture { Com<IDirect3DTexture9> gpu; unsigned width,height; };
     Archives& archives_;
     Images& images_;
@@ -23,6 +24,7 @@ private:
     Text& text_;
     FrameDefinitions definitions_;
     FrameSource frameTextureSource_;
+    SpriteDraw spriteDraw_;
     std::vector<Node> nodes_;
     std::map<std::string,unsigned> names_;
     std::map<std::string,Texture> textures_;
@@ -53,7 +55,7 @@ private:
     void openPopup(unsigned index,const UiInput& input);
 public:
     GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const std::string& member,const std::string& root);
-    GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const MapFrames& frames,FrameSource textureSource={});
+    GlueScreen(Archives& archives,Images& images,Renderer& renderer,Text& text,const MapFrames& frames,FrameSource textureSource={},SpriteDraw spriteDraw={});
     std::pair<float,float> center(const std::string& name) const;
     void focusEnabled(bool enabled) {focusEnabled_=enabled;if(!enabled)focused_.clear();}
     void skinSection(const std::string& section) {if(skinSection_!=section){skinSection_=section;skinTextures_.clear();}}

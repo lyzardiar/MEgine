@@ -46,6 +46,9 @@ class GameView {
     std::uint32_t hoveredCommandFrame_=0;
     std::uint32_t hoveredItemFrame_=0;
     std::uint64_t mapFramesRevision_=0,mapFramesTextureRevision_=0;
+    struct MapSpriteModel {std::string path,source;std::uint64_t overlayRevision=UINT64_MAX;std::unique_ptr<Model> model;};
+    std::map<std::uint32_t,MapSpriteModel> mapSpriteModels_;
+    void drawMapSprite(std::uint32_t id,GlueScreen::Rect rect,unsigned alpha);
     struct CreepCamp {float x=0,y=0;std::vector<std::uint32_t> units;};
     std::vector<CreepCamp> creepCamps_;
     std::map<std::uint32_t,ModelInstance> creepCampInstances_;
