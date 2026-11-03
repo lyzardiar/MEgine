@@ -159,6 +159,7 @@ public:
     void attachLog(LuaLogHost host);
     // Both runtimes are used on their owner thread; destroyed JASS bindings become invalid.
     void attachJass(jass::Runtime& runtime,std::shared_ptr<JassBinarySession> binary={});
+    void prepareJassCallbacks();
     void attachJapi(ScriptSession& session);
     bool attachKnownPluginJapi(std::span<const std::uint8_t> bytes);
     void attachBinaryExecuteScript(std::uint64_t instructionLimit=1000000);

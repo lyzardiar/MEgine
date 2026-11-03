@@ -7995,3 +7995,9 @@ Win32 Release 客户端、Lua、native 和浏览器测试目标编译通过；`w
 路径：`src/lua_runtime.h`、`src/lua_plugin_catalog.cpp`、`src/lua_jass_bridge.cpp`、`src/map_script_runtime.{h,cpp}`、`tests/{lua_tests,native_tests}.cpp`。对外层 SHA-256 为 `4e479624787c77ce4ff44e4257e1c72e1fca9a247e49899ba7ae7f64622a54d6` 的插件，提供静态版本 `插件版本1.48`；真实宿主显式提供版本时优先使用宿主值。游戏版本读取安装目录只读的 Win32 `Game.dll`，不加载执行；唯一的 `Warcraft III (build N)` 标记按插件规则解析，52240 映射为 7000，缺失、歧义或异常标记不提供版本。`MapScriptRuntime` 增加启动前的平台玩家身份提供者接口，未连接实际平台时仍明确失败，不以可更改的玩家显示名代替。
 
 依据内嵌 DLL（SHA-256 `cc8daa2b9c157ecbc7236a291a1ae349c98fd34779c6b3b636a1baf4b71428b0`）静态代码：`0x10016519` 使用版本字面量，`0x100d6d70–0x100d6e2b` 解析 build 并将 52240 映射为 7000。本机安装文件的标记为 build 52240。Win32 Release 客户端及测试目标编译通过；`war3_native_tests <data-root> tmp/docs-artifacts/war3/plugin-version-20261103` 为 21 通过／0 失败，覆盖原始文件、解析、截断和歧义；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖插件摘要隔离、版本及身份提供者时序。正式运行时仅模拟玩家 0 身份后，下一阻塞为缺失 `jass.log`；带模拟日志等宿主的临时探针使用真实版本 7000 时，下一阻塞为 `DzTriggerRegisterSyncData`。此前 `main` 返回来自模拟游戏版本 6000，不能代表真实 7000 分支已启动；真实平台身份、日志宿主、同步服务、画面和完整玩法均待接通或验证。
+
+### 2026-11-03：地图 Lua 文件日志与回调初始化
+
+路径：`CMakeLists.txt`、`src/lua_file_log.{h,cpp}`、`src/platform.cpp`、`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`src/map_script_runtime.{h,cpp}`、`tests/{lua_tests,native_tests}.cpp`。生产地图运行时接入 `jass.log`，默认逻辑路径为 `logs\jass.log`，写入用户目录下的 `LuaLogs`；限制路径并拒绝日志目录及目标文件的重解析点，避免写入原版安装。地图启动前准备 Lua/JASS 回调适配器，避免运行中的调度器首次创建适配器失败。新增显式注入 post 宿主接口，本身不发送网络请求。
+
+快速检查：Win32 Release 客户端及上述两个测试目标编译通过；`war3_native_tests <data-root> tmp/docs-artifacts/war3/lua-file-log-20261103` 为 22 通过／0 失败，覆盖中文目录、追加、非法路径和安装目录保护；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败。真实版本 7000 测试使用模拟平台身份和仅收集请求 ID 的 post 宿主，地图初始化已越过日志与回调适配器，当前明确停在缺少 `jass.message`；这不是正式加载成功。重解析点专项、真实平台身份、输入消息链路、同步服务、实际画面及完整玩法仍待批次验证或实现。

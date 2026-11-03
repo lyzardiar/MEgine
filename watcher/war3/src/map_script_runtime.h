@@ -2,6 +2,7 @@
 #pragma once
 #include "lua_runtime.h"
 #include "lua_native_console.h"
+#include "lua_file_log.h"
 #include "lua_local_sync.h"
 #include "jass_binary_session.h"
 #include <memory>
@@ -14,6 +15,7 @@ class MapScriptRuntime {
     std::shared_ptr<FrameDefinitions> definitions_;
     std::shared_ptr<MapFrames> frames_;
     LuaNativeConsole console_;
+    LuaFileLog log_;
     LuaRuntime lua_;
     std::unique_ptr<LuaLocalSync> localSync_;
     bool started_=false,requiresLuaEntry_=false;
@@ -25,6 +27,8 @@ public:
     MapScriptRuntime& operator=(const MapScriptRuntime&)=delete;
     void start();
     void attachPlatformPlayerNames(std::function<std::optional<std::string>(unsigned)> provider);
+    void attachPostHost(LuaPostHost host);
+    void completePost(std::uint64_t id,std::span<const LuaResult> values);
     void pump();
     bool uiRootVisible() const;
     std::vector<std::uint32_t> frameEventTargets() {return lua_.frameEventTargets();}
