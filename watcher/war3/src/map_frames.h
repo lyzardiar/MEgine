@@ -15,7 +15,7 @@ std::uint32_t modulateMapFrameAlpha(std::uint32_t color,std::uint8_t alpha);
 class MapFrames {
 public:
     struct Anchor {std::uint32_t point=0,target=0,targetPoint=0;float x=0,y=0;};
-    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;bool standardInfo=false,anchorsCleared=false;std::int32_t level=0;};
+    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;bool standardInfo=false,anchorsCleared=false;std::int32_t level=0;bool enabled=true;};
 private:
     std::shared_ptr<FrameDefinitions> definitions_;
     std::map<std::uint32_t,Node> nodes_;
@@ -63,6 +63,8 @@ public:
     std::uint8_t alpha(std::uint32_t id) const;
     void setLevel(std::uint32_t id,std::int32_t level);
     std::vector<std::uint32_t> orderedChildren(std::uint32_t id) const;
+    void enable(std::uint32_t id,bool value);
+    bool enabled(std::uint32_t id) const;
     void visible(std::uint32_t id,bool value);
     bool visible(std::uint32_t id) const;
     size_t size() const {return nodes_.size();}
