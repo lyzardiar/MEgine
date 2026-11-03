@@ -37,6 +37,7 @@ private:
     std::uint32_t add(FrameDefinition definition,std::uint32_t parent,std::uint32_t context,unsigned depth);
     void requireMutable(std::uint32_t id) const;
     bool supportedStandardInfo(const Node& frame) const;
+    std::uint32_t textTarget(std::uint32_t id) const;
     void multiplyModelMatrix(std::uint32_t id,const std::array<float,9>& value);
 public:
     explicit MapFrames(std::shared_ptr<FrameDefinitions> definitions);

@@ -8421,3 +8421,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/glue.cpp`、`tests/lua_tests.cpp`。`STRING` 支持文字和颜色的读写，`TEXTURE` 支持运行时替换贴图；`jass.dzapi` 增加文字读写及颜色设置别名。简易贴图绘制使用源 `TexCoord`，按钮可引用同一实例内动态修改的纹理和文字，同时保留运行时资源路径和状态。平铺标志的原版采样、字体与颜色及其他简单控件仍需画面对照。
 
 Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖两个同名实例隔离、文字／颜色／贴图修改、路径校验、UV 与无效 UV（`tmp/docs-artifacts/war3/dynamic-simple-final.log`）。GPU 图集采样、按钮绘制与真实鼠标未验证。
+
+### 2026-11-03：地图文字按钮的动态文字（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/glue.cpp`、`tests/lua_tests.cpp`。对带有 `ButtonText` 文字子帧的 `GLUETEXTBUTTON`，文字和颜色读写转发到该实例的文字子帧，绘制也使用子帧的运行时颜色。缺少或存在多个匹配子帧时明确报错；独立外部文字帧和无文字模板按钮的原版行为仍待还原。
+
+Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖按钮文字／颜色读写、子帧状态、实例隔离及缺失子帧（`tmp/docs-artifacts/war3/button-text-final.log`）。GPU 字体颜色、悬停文字及真实画面待验证。
