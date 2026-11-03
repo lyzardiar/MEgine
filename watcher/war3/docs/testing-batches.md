@@ -8231,3 +8231,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 ### 2026-11-03：模型帧变换批次
 
 范围：`44615ce`、`868f034`、`9bf617d`。同一集成版本 Win32 Release 客户端、Lua 和 native 目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败（`tmp/docs-artifacts/war3/sprite-offset-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/sprite-transform-batch` 为 22 通过／0 失败（`tmp/docs-artifacts/war3/sprite-transform-native.log`）。原图 N1 路径停于 `FrameSetModelTexture`。GPU 绘制、坐标及大小与旋转组合的原版画面对比、模型替换后变换生命周期和完整对局未验证，保留待测。
+
+### 2026-11-03：地图模型帧可替换贴图（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_view.h`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetModelTexture` 按帧及替换编号保存资源路径；绘制时优先从本地 Storm 内存归档读取，回退到地图或游戏归档，内容变化时重新解码上传并应用到模型可替换贴图。路径、数量和累计文本大小有界；贴图更换与帧销毁时缓存随帧释放。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖多编号、更新、路径校验及原图 TeamColor00 编号 1。N1 路径越过贴图替换，停于 `FrameAddModel`，日志 `tmp/docs-artifacts/war3/sprite-texture-final.log`。替换编号在多贴图模型上的原版语义、内存贴图 GPU 更新、画面和性能均未验证；原模型引用的非替换动态贴图仍走普通归档。
