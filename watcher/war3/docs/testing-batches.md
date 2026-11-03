@@ -8337,3 +8337,9 @@ Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`tests/lua_tests.cpp`。原图 N1 离线运行 300 秒后选取地图实际生成的本地玩家英雄，通过玩家命令分发移动并推进模拟，检查英雄实际位移，再发送停止命令并检查移动路线清除。测试不假设停止后单位永久静止，因为可自动索敌。
 
 Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，日志 `tmp/docs-artifacts/war3/hero-input-final.log`。该检查未经过真实鼠标、屏幕坐标和 GPU 绘制；攻击、施法、物品操作与通关仍待验证。该测试补充不计入功能／修复批次计数。
+
+### 2026-11-03：原图英雄攻击命令验证
+
+路径：`tests/lua_tests.cpp`。在原图 N1 快进及英雄移动验证之后，按敌对关系和可见性选择地图实际生成的单位，通过玩家命令分发目标攻击，推进模拟并检查英雄攻击计时和目标生命值变化。
+
+Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，日志 `tmp/docs-artifacts/war3/hero-attack-final.log`。测试期间目标可能也受到其他单位影响，因此生命值变化不能单独证明伤害来源；真实鼠标、画面、施法、物品及完整通关仍待验证。本项测试补充不计入功能／修复批次计数。
