@@ -1,6 +1,7 @@
 // Author: MiYu. Runtime FDF frame ownership and inherited visibility.
 #pragma once
 #include "fdf.h"
+#include <array>
 #include <memory>
 #include <span>
 
@@ -9,6 +10,7 @@ struct MapFramePoint {std::uint32_t point=0;float x=0,y=0;};
 struct MapFrameRect {float x=0,y=0,w=0,h=0;};
 MapFrameRect solveMapFramePoints(float width,float height,std::span<const MapFramePoint> points);
 MapFrameRect solveSimpleFrameAnchor(MapFrameRect parent,float width,float height,std::string_view point,float x,float y);
+MapFrameRect commandButtonRect(int row,int column);
 std::uint32_t modulateMapFrameAlpha(std::uint32_t color,std::uint8_t alpha);
 class MapFrames {
 public:
@@ -18,10 +20,12 @@ private:
     std::shared_ptr<FrameDefinitions> definitions_;
     std::map<std::uint32_t,Node> nodes_;
     std::map<std::pair<std::uint32_t,std::string>,std::vector<std::uint32_t>> names_;
+    std::array<std::uint32_t,12> commandButtons_{};
     std::uint32_t next_=2;
     std::uint64_t revision_=0;
     size_t textBytes_=0,textureBytes_=0;
     std::uint32_t add(FrameDefinition definition,std::uint32_t parent,std::uint32_t context,unsigned depth);
+    void requireMutable(std::uint32_t id) const;
 public:
     explicit MapFrames(std::shared_ptr<FrameDefinitions> definitions);
     std::uint32_t root() const {return 1;}
@@ -29,6 +33,7 @@ public:
     const Node& node(std::uint32_t id) const;
     std::uint32_t resolveReference(std::uint32_t source,const std::string& name) const;
     std::uint32_t findSimple(const std::string& name,std::uint32_t context,std::string_view type) const;
+    std::uint32_t commandButton(unsigned row,unsigned column);
     std::uint32_t create(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     std::uint32_t createSimple(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     std::uint32_t createByType(const std::string& type,const std::string& name,std::uint32_t parent,const std::string& inherits,std::uint32_t context=0);
