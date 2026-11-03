@@ -5,6 +5,7 @@
 #include "lua_file_log.h"
 #include "lua_local_sync.h"
 #include "lua_local_post.h"
+#include "lua_local_platform.h"
 #include "jass_binary_session.h"
 #include <memory>
 
@@ -20,6 +21,7 @@ class MapScriptRuntime {
     LuaRuntime lua_;
     std::unique_ptr<LuaLocalSync> localSync_;
     std::unique_ptr<LuaLocalPost> localPost_;
+    std::unique_ptr<LuaLocalPlatform> localPlatform_;
     bool started_=false,requiresLuaEntry_=false;
     std::uint32_t pointerTarget_=0;
     bool windowActive_=false;
@@ -34,6 +36,7 @@ public:
     static std::optional<std::string> defaultLocalPlatformName(unsigned id);
     void attachDefaultLocalPlatformNames();
     void attachDefaultLocalPost();
+    void attachDefaultLocalPlatformStorage();
     void attachPostHost(LuaPostHost host);
     void completePost(std::uint64_t id,std::span<const LuaResult> values);
     bool dispatchMessage(LuaInputMessage& message) {return lua_.dispatchMessage(message);}

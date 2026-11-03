@@ -8067,3 +8067,13 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`CMakeLists.txt`、`src/lua_local_post.{h,cpp}`、`src/map_script_runtime.{h,cpp}`、`src/game_loading.cpp`、`src/main.cpp`、`tests/lua_tests.cpp`。根据用户选择，单人本地 `post_message` 不访问网络，也不保存请求地址或正文；请求 ID 按顺序排队，在后续 pump 以空字符串作为模拟回调结果。回调里追加的请求留到下一次 pump，队列限制 256 条；局域网会话不使用此单人宿主。日志标记 `map_post=local_simulated`。空字符串是明确的本地默认数据，并非真实服务器响应；依赖服务器返回内容的玩法仍需后续实现本地数据模型。
 
 Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖异步顺序、回调追加、容量、宿主销毁、启动时序与局域网拒绝。正式单人 `--main-check --mute` 退出码 0，`main_completed=true`、生成 19 个单位，日志 `tmp/docs-artifacts/war3/local-post-main-20261103.log`；`--main-check --mute --simulate-ms 1000` 退出码 0、模拟时间 1 秒，日志 `tmp/docs-artifacts/war3/local-post-simulation-20261103.log`。更长的逐帧隔离测试中，地图调用未实现的 `EXNetSaveRemoteData`，错误处理随后耗尽 Lua 指令预算，详见 `tmp/docs-artifacts/war3/local-post-lua-20261103.log`。上述测试没有网络请求；实际图形、长期运行、本地平台存档与完整玩法仍待实现或验证。
+
+### 2026-11-03：单人本地平台存档（部分验证）
+
+路径：`CMakeLists.txt`、`src/lua_local_platform.{h,cpp}`、`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/map_script_runtime.{h,cpp}`、`src/game_loading.cpp`、`src/main.cpp`、`tests/lua_tests.cpp`。单人本地模拟实现 `EXNetSaveRemoteData` 和 `EXNetLoadRemoteData`：以地图摘要和默认玩家名隔离记录，利用用户目录 `GameCache` 的现有原子持久化；加载成功时将值写入地图使用的 `11.s` 缓存。缺失数据返回 false；持久化失败会回滚内存变更，局域网不启用本地宿主。没有访问外网。当前按地图文件摘要隔离，因此地图文件更新后不会自动迁移旧记录；跨进程同时写入和平台原有服务语义仍待验证。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖跨会话持久化、玩家隔离、空值、越界、写入失败回滚、宿主销毁和联机／延迟绑定拒绝。正式 `--main-check --mute --simulate-ms 1000` 使用临时用户目录时退出码 0，完成 `main` 和单次 1 秒模拟，日志 `tmp/docs-artifacts/war3/local-platform-main-20261103.log`。更长逐帧测试已越过平台存档调用，但在约 0.375 秒的地图日志 Base64 编码回调中耗尽 Lua 指令预算；定位探针 `tmp/docs-artifacts/war3/local-platform-trace-probe.log`，正式测试日志 `tmp/docs-artifacts/war3/local-platform-final-20261103.log`。图形、长期运行与完整玩法仍待实现或验证。
+
+### 2026-11-03：单人本地平台模拟批次
+
+范围：已提交 `2cb2be9`、`88130db` 及本次本地平台存档工作树。Win32 Release 客户端、Lua、native 与会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/local-platform-batch-20261103` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。网络请求未执行；图形设备故障未变化，实际鼠标、画面、长时间对局和全部玩法保留待测。

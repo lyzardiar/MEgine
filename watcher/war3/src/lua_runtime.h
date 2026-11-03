@@ -31,6 +31,7 @@ struct LuaStormHost {std::function<std::optional<std::string>(std::string_view)>
 struct LuaInputMessage {enum class Kind {KeyDown,KeyUp,MouseDown,MouseUp};Kind kind=Kind::KeyDown;std::uint32_t code=0,state=0;double x=0,y=0;};
 struct LuaSyncHost {std::function<void(std::string_view)> send;std::function<void(std::string_view,std::string_view)> sendDz;};
 struct LuaPostHost {std::function<void(std::uint64_t,std::string_view,std::string_view)> submit;};
+struct LuaPlatformStorageHost {std::function<bool(unsigned,std::string_view,std::string_view)> save;std::function<bool(unsigned,std::string_view)> load;};
 struct LuaLogHost {std::function<std::string()> path;std::function<void(std::string_view)> setPath;std::function<void(std::string_view)> write;};
 struct LuaConsoleHost {std::function<bool()> enabled;std::function<void(bool)> setEnabled;std::function<void(std::string_view)> write;std::function<std::optional<std::string>()> read;};
 class LuaRuntime {
@@ -59,6 +60,7 @@ class LuaRuntime {
     std::optional<std::string> knownPluginVersion_;
     std::function<std::optional<std::int32_t>()> japiGameVersion_;
     std::optional<LuaSyncHost> japiSyncHost_;
+    std::optional<LuaPlatformStorageHost> japiPlatformStorage_;
     std::weak_ptr<const jass::RuntimeLifetime> jassLifetime_;
     std::weak_ptr<JassBinarySession> binary_;
     bool binaryAttached_=false,binaryScriptAttached_=false,mapEntryAttached_=false,mapEntryExecuted_=false;
@@ -179,6 +181,7 @@ public:
     void attachJapiGameVersion(std::function<std::optional<std::int32_t>()> provider);
     // Sender copies the view and later delivers synchronized messages on the owner thread.
     void attachJapiSyncHost(LuaSyncHost host);
+    void attachJapiPlatformStorage(LuaPlatformStorageHost host);
     void deliverJapiMessage(unsigned player,std::string_view message);
     void deliverDzMessage(unsigned player,std::string_view prefix,std::string_view message);
     void detachJass();
