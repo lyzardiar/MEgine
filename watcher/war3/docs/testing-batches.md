@@ -8183,3 +8183,7 @@ Win32 Release 客户端和测试编译通过；`war3_lua_tests <data-root> G:\qc
 路径：`src/map_frames.cpp`、`src/glue.cpp`、`tests/lua_tests.cpp`。支持创建空 `SPRITE` 帧，并纳入现有帧树、布局、可见性及销毁路径。模型绑定仍明确报未实现，尚未把内存 MDX、相机、动画及 GPU 绘制接入该帧；空帧创建成功不代表模型可见。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖帧类型、父节点、尺寸、可见性与销毁。原图 N1 路径越过 `SPRITE` 创建，停于 `FrameSetModel`，日志 `tmp/docs-artifacts/war3/sprite-create-final.log`。实际图形与完整对局待验证。
+
+### 2026-11-03：肖像与模型帧基础批次
+
+范围：`6b87b0c`、`65ac3bd`、`49c4d6b`。Win32 Release 客户端、Lua、native、会话线程与模型测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/portrait-sprite-batch` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败，`war3_effects_tests <data-root> tmp/docs-artifacts/war3/memory-model-batch.log --memory-model tmp/docs-artifacts/war3/generated-map-model.mdx` 为 1 通过／0 失败。肖像父节点为近似实现；`FrameSetModel`、模型帧绘制、GPU 及完整对局未验证。
