@@ -29,6 +29,7 @@ public:
     void attachPlatformPlayerNames(std::function<std::optional<std::string>(unsigned)> provider);
     void attachPostHost(LuaPostHost host);
     void completePost(std::uint64_t id,std::span<const LuaResult> values);
+    bool dispatchMessage(LuaInputMessage& message) {return lua_.dispatchMessage(message);}
     void pump();
     bool uiRootVisible() const;
     std::vector<std::uint32_t> frameEventTargets() {return lua_.frameEventTargets();}

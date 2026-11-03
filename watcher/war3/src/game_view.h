@@ -1,6 +1,7 @@
 // Author: MiYu. Source camera presets, rendered world, unit selection and local player commands.
 #pragma once
 #include "game_loading.h"
+#include "map_input_keys.h"
 #include "minimap_terrain.h"
 #include "game_preferences.h"
 #include "glue.h"
@@ -105,6 +106,7 @@ class GameView {
     std::optional<std::pair<std::uint32_t,std::uint32_t>> buildTarget_;
     bool buildTargetQueued_=false;
     bool chatOpen_=false;
+    MapInputKeys mapInputKeys_;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> itemTarget_;
     bool itemTargetQueued_=false;
     struct InventoryDrag {std::uint32_t holder=0,item=0;unsigned slot=0;bool moving=false;};
@@ -284,6 +286,9 @@ public:
     GameView(std::unique_ptr<GameData> data,Renderer& renderer,Text& text,Log& log);
     ~GameView();
     bool draw(const GameInput& input);
+    bool filterMapInput(MSG& message);
+    bool mapInputKeyDown(unsigned key) const;
+    void clearMapInput() {mapInputKeys_.clear();}
     // Configure before first draw. sendSelection and submit enqueue in order without reentry;
     // the owner consumes complete slots on this thread and must not submit selection separately.
     bool enableLan(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wireObject,std::function<bool(std::span<const std::uint8_t>)> sendSelection,std::function<unsigned(const PlayerCommand&)> submit,bool experimental=false);

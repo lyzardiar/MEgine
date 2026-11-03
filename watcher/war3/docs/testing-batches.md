@@ -8001,3 +8001,13 @@ Win32 Release 客户端、Lua、native 和浏览器测试目标编译通过；`w
 路径：`CMakeLists.txt`、`src/lua_file_log.{h,cpp}`、`src/platform.cpp`、`src/lua_jass_bridge.cpp`、`src/lua_runtime.h`、`src/map_script_runtime.{h,cpp}`、`tests/{lua_tests,native_tests}.cpp`。生产地图运行时接入 `jass.log`，默认逻辑路径为 `logs\jass.log`，写入用户目录下的 `LuaLogs`；限制路径并拒绝日志目录及目标文件的重解析点，避免写入原版安装。地图启动前准备 Lua/JASS 回调适配器，避免运行中的调度器首次创建适配器失败。新增显式注入 post 宿主接口，本身不发送网络请求。
 
 快速检查：Win32 Release 客户端及上述两个测试目标编译通过；`war3_native_tests <data-root> tmp/docs-artifacts/war3/lua-file-log-20261103` 为 22 通过／0 失败，覆盖中文目录、追加、非法路径和安装目录保护；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败。真实版本 7000 测试使用模拟平台身份和仅收集请求 ID 的 post 宿主，地图初始化已越过日志与回调适配器，当前明确停在缺少 `jass.message`；这不是正式加载成功。重解析点专项、真实平台身份、输入消息链路、同步服务、实际画面及完整玩法仍待批次验证或实现。
+
+### 2026-11-03：地图输入消息接线（部分验证）
+
+路径：`src/map_script_runtime.{h,cpp}`、`src/map_input_keys.h`、`src/game_view.{h,cpp}`、`src/main.cpp`、`tests/lua_tests.cpp`。地图启动前注册 `jass.message`，游戏窗口队列中的键盘事件在字符翻译前交给 Lua；允许屏蔽和改键，并用过滤后的状态驱动持续方向键。聊天输入不调用键盘 hook，失焦及离开游戏画面清除按键状态。游戏世界视口内的鼠标左右键事件经地形拾取提供世界坐标；被屏蔽的弹起事件清理鼠标捕获，避免残留拖拽状态。插件 [message hook 说明](https://japi.war3rpg.top/Lua/message/hook.html) 记载左键代码 1、右键 4、键盘组合状态和世界坐标。当前仅覆盖窗口消息队列中的按键及世界鼠标，选择、技能／物品消息、直接发送的窗口消息、重叠帧遮挡和原版完整事件顺序尚未实现或核验。
+
+Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，包含 Lua 改键、屏蔽和按键保持／释放／清理。模拟玩家身份及 post 宿主的版本 7000 原图启动已越过 `jass.message`，下一阻塞是 `DzTriggerRegisterSyncData`，并未实际发送网络请求。真实窗口鼠标拾取、游戏操作、图形和原版对照尚未实测，正式地图仍因真实平台身份不可用而无法启动。
+
+### 2026-11-03：地图帧、日志及输入集成批次
+
+检查范围：自上次脚本状态批次 `506b2d5` 后截至 `dfb669d` 的已提交地图帧、插件版本、日志与回调，以及本次输入接线工作树；使用同一集成工作树。Win32 Release 客户端、Lua、native、2SAJ 与 JASS 线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/map-input-batch-20261103` 为 22 通过／0 失败，`war3_jass_binary_tests` 为 1 通过／0 失败，`war3_jass_thread_tests` 为 36 通过／0 失败。正式 `--main-check --mute` 日志 `tmp/docs-artifacts/war3/map-input-batch-20261103-main.log` 记录 `EXGetPlayerRealName` 不可用、`main_completed=false`。既有 D3D9 设备创建故障未变化，未重复运行图形夹具；实际画面、输入操作、平台身份、同步及完整玩法保留待测，不能由上述测试视为通过。
