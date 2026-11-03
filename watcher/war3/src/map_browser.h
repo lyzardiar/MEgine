@@ -12,6 +12,8 @@ class MapBrowser {
     MapUiData source_;
     PlayerSetupUi players_;
     std::unique_ptr<PlayerSetup> setup_;
+    std::optional<PlayerSetup> lastSetup_,restartSetup_;
+    fs::path lastSetupMap_;
     std::unique_ptr<ScriptSession> session_;
     Renderer& renderer_;
     Log& log_;
@@ -36,7 +38,9 @@ public:
     MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred,bool muted=false);
     std::string draw(const UiInput& input);
     std::unique_ptr<ScriptSession> takeSession();
-    void reload();
+    void reload(bool restart=false);
+    void cancelRestart() {restartSetup_.reset();}
+    fs::path selectedPath() const;
     const MapInfo* info() const {return info_?&*info_:nullptr;}
     const PlayerSetup* setup() const {return setup_.get();}
     const ScriptSession* session() const {return session_.get();}

@@ -29,7 +29,7 @@ void MapBrowser::enter(const fs::path& path,const fs::path& preferred) {
         log_.write("map_directory="+utf8(directory_.wstring())+" entries="+std::to_string(entries_.size()));
     }catch(const std::exception& e){error_="无法打开地图文件夹。";log_.write(std::string("map_directory_error=")+e.what());}
 }
-void MapBrowser::clearSelection() {preparation_.clear();loading_=false;info_.reset();players_.bind(nullptr);setup_.reset();session_.reset();error_.clear();screen_.visible("MapInfoPane",false);screen_.image("MinimapImage",nullptr);}
+void MapBrowser::clearSelection() {preparation_.clear();restartSetup_.reset();loading_=false;info_.reset();players_.bind(nullptr);setup_.reset();session_.reset();error_.clear();screen_.visible("MapInfoPane",false);screen_.image("MinimapImage",nullptr);}
 void MapBrowser::select(size_t index) {
     if(index>=entries_.size() || (index==selected_ && (loading_ || (info_ && error_.empty()))))return;selected_=index;if(index<scroll_)scroll_=index;if(index>=scroll_+rows_)scroll_=index-rows_+1;clearSelection();if(entries_[index].directory)return;
     request_=preparation_.request(entries_[index].path);loading_=true;log_.write("map_preparation_requested="+utf8(entries_[index].path.wstring()));
@@ -37,7 +37,7 @@ void MapBrowser::select(size_t index) {
 void MapBrowser::prepared() {
     auto result=preparation_.poll();if(!result || result->request!=request_ || !loading_)return;loading_=false;
     try {
-        if(!result->error.empty())throw std::runtime_error(result->error);if(!result->session || !result->session->configured())throw std::runtime_error("Map configuration did not complete");auto& info=result->info;auto setup=std::make_unique<PlayerSetup>(info,result->session->config());setup->defaultMeleeOpponent();result->session->applySetup(*setup);
+        if(!result->error.empty())throw std::runtime_error(result->error);if(!result->session || !result->session->configured())throw std::runtime_error("Map configuration did not complete");auto& info=result->info;auto setup=restartSetup_?std::make_unique<PlayerSetup>(*restartSetup_):std::make_unique<PlayerSetup>(info,result->session->config());if(!restartSetup_)setup->defaultMeleeOpponent();restartSetup_.reset();result->session->applySetup(*setup);
         screen_.image("MinimapImage","UI\\Widgets\\Glues\\Minimap-Unknown.blp");
         if(!result->previewError.empty())log_.write("map_preview_unavailable="+result->previewError);
         try {if(result->preview){auto& image=*result->preview;auto gpu=renderer_.texture(image.width,image.height,image.pixels);screen_.image("MinimapImage",gpu.Get());}}catch(const std::exception& e){log_.write(std::string("map_preview_unavailable=")+e.what());}
@@ -81,6 +81,7 @@ std::string MapBrowser::draw(const UiInput& input) {
     if(loading_)screen_.textAt("StandardValueTextTemplate","正在读取地图配置…",{.02f,.185f,.45f,.06f},true,false,true);
     players_.headings();screen_.overlay();if(action=="PlayGameButton")return action;return action=="CancelButton" || (input.key==VK_ESCAPE && !screen_.inputConsumed())?"CancelButton":std::string{};
 }
-std::unique_ptr<ScriptSession> MapBrowser::takeSession() {if(!session_ || !setup_ || loading_)throw std::runtime_error("Map is not ready to start");session_->applySetup(*setup_);players_.bind(nullptr);setup_.reset();return std::move(session_);}
-void MapBrowser::reload() {auto index=selected_;clearSelection();select(index);}
+std::unique_ptr<ScriptSession> MapBrowser::takeSession() {if(!session_ || !setup_ || loading_)throw std::runtime_error("Map is not ready to start");session_->applySetup(*setup_);lastSetup_=*setup_;lastSetupMap_=selectedPath();players_.bind(nullptr);setup_.reset();return std::move(session_);}
+void MapBrowser::reload(bool restart) {auto index=selected_;clearSelection();select(index);if(restart && loading_ && lastSetup_ && selectedPath()==lastSetupMap_)restartSetup_=lastSetup_;}
+fs::path MapBrowser::selectedPath() const {return selected_<entries_.size() && !entries_[selected_].directory?entries_[selected_].path:fs::path{};}
 }
