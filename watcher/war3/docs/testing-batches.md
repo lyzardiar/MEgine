@@ -8343,3 +8343,9 @@ Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qclo
 路径：`tests/lua_tests.cpp`。在原图 N1 快进及英雄移动验证之后，按敌对关系和可见性选择地图实际生成的单位，通过玩家命令分发目标攻击，推进模拟并检查英雄攻击计时和目标生命值变化。
 
 Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，日志 `tmp/docs-artifacts/war3/hero-attack-final.log`。测试期间目标可能也受到其他单位影响，因此生命值变化不能单独证明伤害来源；真实鼠标、画面、施法、物品及完整通关仍待验证。本项测试补充不计入功能／修复批次计数。
+
+### 2026-11-03：原图英雄技能命令验证
+
+路径：`tests/lua_tests.cpp`。在原图 N1 快进与英雄操作场景中，向地图生成的英雄发出即时技能 `A0IJ` 和点目标位移技能 `A008`；临时单位事件监听验证各自的技能效果事件，位移技能同时检查冷却和英雄位置变化。位移后的自动索敌可能继续移动英雄，不能由最终位置单独确认精确落点。
+
+Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，日志 `tmp/docs-artifacts/war3/hero-spells-final.log`。技能按钮、目标指示器、特效与其他技能及完整对局仍待实际画面和操作验证。本项测试补充不计入功能／修复批次计数。
