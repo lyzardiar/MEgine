@@ -8227,3 +8227,7 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。接入 `FrameSetModelXY` 和坐标读取，保存有限的界面坐标偏移；绘制时按视口与界面比例偏移投影。原插件直接保存两项坐标，地图脚本将像素坐标换算到界面坐标并反转纵轴。投影和裁剪处理仍需原版画面比对。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖偏移读写、非法值及原图零偏移初始化。N1 路径越过位置接口，停于 `FrameSetModelTexture`，日志 `tmp/docs-artifacts/war3/sprite-offset-final.log`。GPU 画面、非零偏移和边界裁剪待验证。
+
+### 2026-11-03：模型帧变换批次
+
+范围：`44615ce`、`868f034`、`9bf617d`。同一集成版本 Win32 Release 客户端、Lua 和 native 目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败（`tmp/docs-artifacts/war3/sprite-offset-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/sprite-transform-batch` 为 22 通过／0 失败（`tmp/docs-artifacts/war3/sprite-transform-native.log`）。原图 N1 路径停于 `FrameSetModelTexture`。GPU 绘制、坐标及大小与旋转组合的原版画面对比、模型替换后变换生命周期和完整对局未验证，保留待测。
