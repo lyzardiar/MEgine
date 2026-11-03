@@ -8391,3 +8391,9 @@ Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/game_view.cpp`、`src/map_frame_pointer.h`、`tests/lua_tests.cpp`。地图按钮捕获左键后，为下层游戏、顶部菜单、小地图开关、计分板和弹窗使用清除左键状态的输入副本，保留键盘及滚轮；地图按钮自身仍使用实际指针状态绘制和判断悬停。强制界面按键的空闲检查继续使用实际鼠标状态，避免按下按钮时误判为空闲。
 
 Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖左键隔离、未捕获输入和键盘／滚轮保留（`tmp/docs-artifacts/war3/frame-input-isolation-final.log`）。真实 GPU 窗口中重叠小地图、菜单和地图按钮的命中与事件顺序仍待验证。
+
+### 2026-11-03：原图初始装备操作验证
+
+路径：`tests/lua_tests.cpp`。原图 N1 快进后使用英雄实际持有的初始装备 `I02D`，通过玩家命令移动物品栏格子、丢弃并重新拾取，验证持有者、格子和各一次丢弃／拾取事件；随后继续运行已有英雄移动、攻击和技能路径。
+
+Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，日志 `tmp/docs-artifacts/war3/map-item-events-final.log`。该装备为被动物品，未覆盖主动消耗、真实鼠标拖放、画面及完整对局；本项测试补充不计入功能／修复批次计数。
