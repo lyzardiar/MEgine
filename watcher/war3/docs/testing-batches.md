@@ -8315,3 +8315,7 @@ Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/map_script_runtime.{h,cpp}`、`src/game_view.cpp`、`tests/lua_tests.cpp`。`GetFps` 读取游戏视图本地帧采样，按至少一秒的帧数与实际时间计算，首次采样前为 0；离线无渲染模拟也返回 0。该数据属于本地显示状态，原插件的采样窗口和暂停行为仍需比对。
 
 Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖帧率计算、时钟回退和 Lua 接口。原图 N1 离线模拟完成 60 秒且清理统计可读取帧率，日志 `tmp/docs-artifacts/war3/fps-60-probe.log`。实际画面帧率及完整对局待验证。
+
+### 2026-11-03：调试句柄与帧率批次
+
+范围：`d934941`、`c0969c3`、`06ee682`。同一集成版本 Win32 Release 客户端、Lua 与 native 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/debug-fps-batch-native` 为 22 通过／0 失败，日志分别为 `tmp/docs-artifacts/war3/debug-fps-batch-lua.log` 和 `tmp/docs-artifacts/war3/debug-fps-batch-native.log`。原图 N1 离线模拟运行至 60 秒，附着特效与技能调试类型和本地帧率接口已覆盖。原版迷雾附着特效、特殊技能类型、实际 GPU 帧率、UI 画面及完整对局未验证，保留待测。
