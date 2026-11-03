@@ -8253,3 +8253,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 ### 2026-11-03：模型贴图、子控件与相机批次
 
 范围：`83a89c4`、`1a9067f`、`e458b90`。同一集成版本 Win32 Release 客户端、Lua、native 和模型测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败（`tmp/docs-artifacts/war3/sprite-camera-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/sprite-camera-batch` 为 22 通过／0 失败（`tmp/docs-artifacts/war3/sprite-camera-native.log`），`war3_effects_tests <data-root> tmp/docs-artifacts/war3/sprite-camera-model.log --memory-model tmp/docs-artifacts/war3/generated-map-model.mdx` 为 1 通过／0 失败，仅验证模型内存解析及截断输入。原图 N1 路径停于 `FrameSetModelX`；GPU 绘制、动态贴图替换、子控件布局、相机视角和完整对局未验证，保留待测。
+
+### 2026-11-03：地图模型帧三轴位置（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。接入 `FrameSetModelX/Y/Z` 与 `FrameGetModelZ`，单轴与已有 XY 接口共享状态，互不覆盖其他轴。模型子控件按三维平移处理，普通模型帧保留界面 XY 偏移并应用 Z 平移；两种坐标到绘制变换的映射仍需原版画面对照。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖各轴读写、二维接口交互和非法数。原图 N1 路径越过模型位置接口，停于 `FrameSetViewPort`，日志 `tmp/docs-artifacts/war3/sprite-xyz-final.log`。GPU 位置、投影与完整对局待验证。
