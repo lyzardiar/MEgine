@@ -8367,3 +8367,9 @@ Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/map_frame_pointer.h`、`src/game_view.{h,cpp}`、`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/map_script_runtime.h`、`tests/lua_tests.cpp`。对自定义 `GLUETEXTBUTTON` 支持 `DzFrameSetScriptByCode` 的本地点击事件 1：按下时按帧层级选择可见启用按钮并捕获，松开仍在裁剪范围内时触发回调，同时屏蔽底层游戏鼠标输入；拖出、失焦或遮挡取消。回调读取本地玩家与触发控件，回调异常后清除事件上下文。原版鼠标消息顺序、无监听的覆盖帧遮挡和实际层级行为仍需比对；命令／物品栏、其他按钮类型及同步事件暂不支持此点击回调。
 
 Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖状态机按下、松开、拖入／拖出、同帧点击、失焦取消，以及回调上下文、禁用、隐藏、移除和异常清理（`tmp/docs-artifacts/war3/frame-click-final.log`）。原图 N1 快进与现有英雄操作通过；尚未在真实 GPU 窗口验证鼠标命中、画面反馈和完整对局。
+
+### 2026-11-03：单人地图界面同步标志（部分验证，待批次验证）
+
+路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。单人会话支持以 `sync=true` 注册已实现的界面点击和悬停回调，在本地调用并保留事件玩家／控件上下文；缺少玩家或局域网会话继续明确拒绝，避免在多端未经同步地执行。单人执行的时序与原平台同步调度仍需对照，联机同步分发尚未实现。
+
+Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖单人点击和悬停注册、事件上下文，以及局域网两类事件拒绝（`tmp/docs-artifacts/war3/frame-sync-final.log`）。原图 N1 快进与现有英雄操作保持通过；真实鼠标与画面、其他事件及联机待验证。
