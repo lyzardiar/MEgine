@@ -8143,3 +8143,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 ### 2026-11-03：难度选择与地图 UI 批次
 
 范围：`cbc0bc8`、`380eec7`、`bccf716`。Win32 Release 客户端、Lua、native 和会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/difficulty-frame-batch` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。实际图形、鼠标操作、跨父层级、技能界面快照及完整对局未验证；当前原图阻塞为 `FrameGetTextWidth`。
+
+### 2026-11-03：地图文本宽度（部分验证，待批次验证）
+
+路径：`CMakeLists.txt`、`src/font_metrics.{h,cpp}`、`src/media.{h,cpp}`、`src/fdf.{h,cpp}`、`src/glue.cpp`、`src/lua_runtime.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。将原始字体 GDI 度量与绘制共享，不依赖图形设备；`FrameGetTextWidth` 对 TEXT 控件按其字高、文本和颜色标记返回客户端的测量宽度。脚本在首次查询时加载当前归档的 MasterFont，未实现其他控件类型或地图专用字体选择；每次脚本查询创建短生命周期 GDI 上下文，以避免加载线程退出后遗留上下文。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，验证空文本、颜色标记、无效控件和与字体度量一致的宽度。原图模拟选择 N1 后越过宽度查询，停于 `FrameGetTextHeight`，日志 `tmp/docs-artifacts/war3/frame-text-width-final.log`。实际画面、长文本换行、自定义字体与其他地图仍待验证。

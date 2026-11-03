@@ -2,13 +2,13 @@
 #pragma once
 #include "audio.h"
 #include "renderer.h"
+#include "font_metrics.h"
 #include <unordered_map>
 
 namespace war3 {
 class Text {
     Renderer& renderer_;
-    HANDLE resource_ = nullptr;
-    HFONT font_ = nullptr;
+    FontMetrics metrics_;
     HDC context_ = nullptr;
     struct Label { Com<IDirect3DTexture9> texture; unsigned width, height; };
     std::unordered_map<std::wstring, Label> cache_;

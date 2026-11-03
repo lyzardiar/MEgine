@@ -1,5 +1,6 @@
 // Author: MiYu. Keep Lua errors, stack cleanup and instruction hooks within protected execution.
 #include "lua_runtime.h"
+#include "font_metrics.h"
 #include "lua_binary.h"
 #include "lua_verify.h"
 #include "lua_jass_callbacks.h"

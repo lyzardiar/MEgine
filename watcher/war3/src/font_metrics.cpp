@@ -1,0 +1,15 @@
+// Author: MiYu. Use the original font for script and rendered text metrics.
+#include "font_metrics.h"
+#include <cmath>
+
+namespace war3 {
+namespace {
+unsigned big16(std::span<const std::uint8_t> b,size_t at){if(at>b.size() || b.size()-at<2)throw std::runtime_error("Truncated font");return (unsigned(b[at])<<8)|b[at+1];}
+unsigned big32(std::span<const std::uint8_t> b,size_t at){return (big16(b,at)<<16)|big16(b,at+2);}
+std::wstring family(std::span<const std::uint8_t> b){auto count=big16(b,4);for(unsigned i=0;i<count;++i){size_t at=12+i*16;if(big32(b,at)!=0x6e616d65)continue;size_t start=big32(b,at+8),strings=start+big16(b,start+4);unsigned records=big16(b,start+2);for(unsigned j=0;j<records;++j){auto row=start+6+j*12;if(big16(b,row)!=3 || big16(b,row+6)!=1)continue;size_t length=big16(b,row+8),offset=strings+big16(b,row+10);if(length%2 || length>512 || offset>b.size() || length>b.size()-offset)throw std::runtime_error("Invalid font family");std::wstring result;for(size_t k=0;k<length;k+=2)result+=wchar_t(big16(b,offset+k));return result;}}throw std::runtime_error("Font has no Windows family name");}
+}
+FontMetrics::FontMetrics(std::span<const std::uint8_t> font){auto name=family(font);if(font.size()>UINT32_MAX)throw std::runtime_error("Font exceeds budget");DWORD count=0;resource_=AddFontMemResourceEx(const_cast<std::uint8_t*>(font.data()),DWORD(font.size()),nullptr,&count);if(!resource_ || !count){if(resource_)RemoveFontMemResourceEx(resource_);resource_=nullptr;throw std::runtime_error("Cannot register original font");}font_=CreateFontW(-32,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_TT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,DEFAULT_PITCH,name.c_str());if(!font_){RemoveFontMemResourceEx(resource_);resource_=nullptr;throw std::runtime_error("Cannot rasterize original font");}}
+FontMetrics::~FontMetrics(){if(font_)DeleteObject(font_);if(resource_)RemoveFontMemResourceEx(resource_);}
+float FontMetrics::width(HDC context,std::wstring_view text,float height,bool padding){if(text.empty())return 0;SIZE size{};if(text.size()>4096 || !std::isfinite(height) || height<0 || !GetTextExtentPoint32W(context,text.data(),int(text.size()),&size))throw std::runtime_error("Font measurement failed");return height*(size.cx+(padding?4:0))/(size.cy+4);}
+float FontMetrics::width(std::wstring_view text,float height,bool padding) const{if(text.empty())return 0;auto dc=CreateCompatibleDC(nullptr);if(!dc)throw std::runtime_error("Cannot create font measurement context");auto previous=SelectObject(dc,font_);if(!previous || previous==HGDI_ERROR){DeleteDC(dc);throw std::runtime_error("Cannot select original font");}try{auto result=width(dc,text,height,padding);SelectObject(dc,previous);DeleteDC(dc);return result;}catch(...){SelectObject(dc,previous);DeleteDC(dc);throw;}}
+}

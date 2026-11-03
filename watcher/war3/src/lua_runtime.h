@@ -17,6 +17,7 @@ class Archives;
 class JassBinarySession;
 class FrameDefinitions;
 class MapFrames;
+class FontMetrics;
 struct JassBinaryNativeValue;
 class ObjectData;
 class ScriptSession;
@@ -42,6 +43,7 @@ class LuaRuntime {
     std::unique_ptr<Archives> archives_;
     std::shared_ptr<FrameDefinitions> frameDefinitions_;
     std::shared_ptr<MapFrames> mapFrames_;
+    std::unique_ptr<FontMetrics> fontMetrics_;
     std::unique_ptr<ObjectData> slkObjects_;
     std::optional<LuaConsoleHost> console_;
     std::optional<LuaStormHost> stormHost_;

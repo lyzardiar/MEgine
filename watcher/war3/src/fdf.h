@@ -8,6 +8,7 @@
 namespace war3 {
 std::string sourceText(std::span<const std::uint8_t> bytes);
 std::optional<std::uint32_t> inlineTextColor(std::string_view token);
+std::string plainFrameText(std::string_view value);
 std::string skinValue(Archives& archives,const std::string& key,const std::string& fallback);
 struct FrameDefinition {
     std::string type, name, inherits;
