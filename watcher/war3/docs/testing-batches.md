@@ -8237,3 +8237,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_view.h`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetModelTexture` 按帧及替换编号保存资源路径；绘制时优先从本地 Storm 内存归档读取，回退到地图或游戏归档，内容变化时重新解码上传并应用到模型可替换贴图。路径、数量和累计文本大小有界；贴图更换与帧销毁时缓存随帧释放。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖多编号、更新、路径校验及原图 TeamColor00 编号 1。N1 路径越过贴图替换，停于 `FrameAddModel`，日志 `tmp/docs-artifacts/war3/sprite-texture-final.log`。替换编号在多贴图模型上的原版语义、内存贴图 GPU 更新、画面和性能均未验证；原模型引用的非替换动态贴图仍走普通归档。
+
+### 2026-11-03：地图模型子控件（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameAddModel` 创建受父帧管理的模型子控件，`FrameSetModel2` 设置模型路径和 0–15 队伍颜色；使用现有模型绘制及队伍颜色／光环替换，父帧销毁时递归释放子控件。当前将该控件映射到现有 SPRITE 帧，原版布局、独立相机、位置和完整模型行为仍需补齐。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖父子关系、路径和颜色设置、无效输入及递归销毁。原图创建了队伍颜色 0 的 Peasant 模型子控件，越过 `FrameAddModel` 和 `FrameSetModel2`，停于 `FrameSetModelCameraTarget`，日志 `tmp/docs-artifacts/war3/added-model-final.log`。GPU、相机、模型子控件视觉和完整对局待验证。

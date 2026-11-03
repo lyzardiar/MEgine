@@ -16,7 +16,7 @@ std::uint32_t modulateMapFrameAlpha(std::uint32_t color,std::uint8_t alpha);
 class MapFrames {
 public:
     struct Anchor {std::uint32_t point=0,target=0,targetPoint=0;float x=0,y=0;};
-    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;bool standardInfo=false,anchorsCleared=false;std::int32_t level=0;bool enabled=true;std::string model;std::optional<double> animationStart;bool animationLoop=false;float animationOffset=0,modelSize=1;std::array<float,9> modelMatrix{1,0,0,0,1,0,0,0,1};std::array<float,2> modelOffset{};std::map<std::uint32_t,std::string> modelTextures;};
+    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;bool standardInfo=false,anchorsCleared=false;std::int32_t level=0;bool enabled=true,model2=false;std::string model;std::optional<unsigned> modelTeamColor;std::optional<double> animationStart;bool animationLoop=false;float animationOffset=0,modelSize=1;std::array<float,9> modelMatrix{1,0,0,0,1,0,0,0,1};std::array<float,2> modelOffset{};std::map<std::uint32_t,std::string> modelTextures;};
 private:
     std::shared_ptr<FrameDefinitions> definitions_;
     std::map<std::uint32_t,Node> nodes_;
@@ -71,6 +71,8 @@ public:
     void enable(std::uint32_t id,bool value);
     bool enabled(std::uint32_t id) const;
     void setModel(std::uint32_t id,std::string_view path);
+    std::uint32_t addModel(std::uint32_t parent);
+    void setModel2(std::uint32_t id,std::string_view path,unsigned teamColor);
     void setAnimation(std::uint32_t id,std::uint32_t animation,bool loop,double now);
     void setAnimationOffset(std::uint32_t id,float offset);
     void setModelSize(std::uint32_t id,float value);
