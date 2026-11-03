@@ -8403,3 +8403,9 @@ Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qclo
 路径：`src/map_frames.{h,cpp}`、`src/game_view.cpp`、`tests/lua_tests.cpp`。文本按钮命中统一按帧层级、可见性和已裁剪范围选择最上层；禁用按钮仍遮挡底层，点击回调继续按启用状态拒绝。鼠标移动和点击更新地图脚本的 `GetTargetObject` 前，若位于地图文本按钮上则清空世界目标，避免取到按钮下方单位或物品。当前覆盖范围仅限 `GLUETEXTBUTTON`，其他帧的原版鼠标遮挡规则仍需对照。
 
 Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖帧前后顺序、裁剪、禁用和隐藏状态（`tmp/docs-artifacts/war3/map-button-occlusion-final.log`）。真实窗口鼠标消息、精确遮挡和画面仍待验证。
+
+### 2026-11-03：地图 SIMPLEBUTTON 帧（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/glue.cpp`、`tests/lua_tests.cpp`。支持创建、查找、销毁及命中 `SIMPLEBUTTON`，接入现有本地点击与悬停回调；按 FDF 的普通／按下／禁用贴图、UV、高亮、文字模板和按下偏移绘制，缺失状态资源回退普通资源。当前尚未支持简单纹理及文字的动态修改，嵌套资源覆盖、其他简单控件及原版像素行为仍需对照。
+
+Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖自定义模板创建、查找、命中、点击、销毁及状态资源选择，并读取原版 `UpperButtonBar.fdf` 核对继承资源（`tmp/docs-artifacts/war3/simple-button-final.log`）。GPU 贴图、文字及真实鼠标交互未验证。
