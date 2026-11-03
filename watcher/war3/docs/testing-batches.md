@@ -8196,6 +8196,12 @@ Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> 
 
 ### 2026-11-03：地图模型帧基础动画（部分验证，待批次验证）
 
-路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetAnimate` 的已观察编号 0 接入模型首个序列，记录调用时刻及循环状态，重复调用重启计时；单次播放保持末帧，循环播放按序列时长回绕。其他编号明确报未支持。原插件将动画编号传入引擎，编号与序列的通用对应关系尚未证实；目前仅以本地图生成模型的唯一 `Stand` 序列验证该近似。
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetAnimate` 的已观察编号 0 接入模型首个序列，记录调用时刻及循环状态，重复调用重启计时；循环播放按序列时长回绕。非循环播放的初始近似已由下方进度实现替代。其他编号明确报未支持。原插件将动画编号传入引擎，编号与序列的通用对应关系尚未证实；目前仅以本地图生成模型的唯一 `Stand` 序列验证该近似。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖调用状态、无效编号、循环及非循环时钟边界。原图 N1 路径越过 `FrameSetAnimate`，接着停于 `FrameSetAnimateOffset`，日志 `tmp/docs-artifacts/war3/animation-final.log`。GPU 设备不可用，动画画面、实际循环语义及其他模型尚未验证；批次需复测模型帧及动画场景。
+
+### 2026-11-03：地图模型动画进度（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetAnimateOffset` 保存有限进度值，非循环动画按夹取至 0–1 的进度采样序列，循环动画继续按时钟播放。地图脚本将该参数作为进度并默认设为 1，原插件只在非循环路径安装读取该值的回调；具体换算为序列时间的方式仍为近似，需画面及原版行为验证。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖进度状态、非法值与采样边界。原图 N1 路径越过 `FrameSetAnimateOffset`，接着停于 `FrameSetModelSize`，日志 `tmp/docs-artifacts/war3/animation-offset-final.log`。GPU 画面、非循环进度与边界值行为待批次验证。
