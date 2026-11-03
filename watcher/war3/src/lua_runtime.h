@@ -75,6 +75,7 @@ class LuaRuntime {
     bool messageAttached_=false;
     bool handlingError_=false;
     std::map<std::string,int> hookRefs_;
+    std::vector<std::string> activeNativeHooks_;
     std::map<std::string,int> codeRefs_;
     std::map<std::pair<std::uint32_t,std::uint32_t>,int> frameEventRefs_;
     std::set<std::uint32_t> hoveredFrames_;

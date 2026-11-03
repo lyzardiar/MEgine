@@ -8089,3 +8089,9 @@ Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/jass_binary_session.{h,cpp}`、`src/session.h`、`src/session_callbacks.cpp`、`src/map_script_runtime.cpp`、`tests/lua_tests.cpp`。`ExecuteFunc` 在源码函数不存在时解析 2SAJ 地图函数，以独立脚本线程执行零参数函数并丢弃返回值；源码函数仍优先，未知函数和带参数入口报错。解析器按宿主所有者注册和解除，线程持有二进制会话；活动二进制线程的快照支持仍有限。
 
 Win32 Release 客户端和测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖原图函数调用、未知函数、解绑及所有者冲突；`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败，覆盖源码返回值函数的等待行为。原图本地模拟越过 `Base__Init`，在约 0.40625 秒战斗初始化时因 `UnitRemoveAbility` Lua 钩子递归触发原生重入限制，日志 `tmp/docs-artifacts/war3/binary-executefunc-final.log`。真实画面、钩子兼容、长期运行及完整玩法待验证；未访问外网。
+
+### 2026-11-03：Lua 原生钩子内调用（部分验证，待批次验证）
+
+路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。原图 `CodeFix.lua` 的 `UnitRemoveAbility` 钩子使用 `jass.common.UnitRemoveAbility` 调用原函数；同名钩子活动期间从 Lua 调用该原生函数时转到原实现，其他钩子继续生效，退出或异常时恢复调用状态。既有显式 original 参数保持可用。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖同名调用及既有显式 original；原图越过递归并在战斗初始化遇到未实现的 JAPI `SetOwner`，日志 `tmp/docs-artifacts/war3/native-hook-final.log`。调用行为依据原图字节码推断，其他地图的复杂重入、真实画面与完整玩法待验证；未访问外网。
