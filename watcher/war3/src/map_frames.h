@@ -29,7 +29,9 @@ public:
     const Node& node(std::uint32_t id) const;
     std::uint32_t resolveReference(std::uint32_t source,const std::string& name) const;
     std::uint32_t create(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
+    std::uint32_t createSimple(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     void destroy(std::uint32_t id);
+    void destroySimple(std::uint32_t id);
     void setPoint(std::uint32_t id,std::uint32_t point,std::uint32_t target,std::uint32_t targetPoint,float x,float y);
     void clearPoints(std::uint32_t id);
     void setSize(std::uint32_t id,std::optional<float> width,std::optional<float> height);

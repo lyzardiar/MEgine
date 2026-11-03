@@ -7929,3 +7929,9 @@ Win32 Release 客户端、native 和浏览器测试目标编译通过；`war3_na
 路径：`src/map_frames.{h,cpp}`、`src/glue.cpp`、`tests/{native_tests,browser_tests}.cpp`。按 context 建立实例名称索引，FDF 布局和控件引用优先解析到帧树距离最近的同名实例；同距离歧义明确失败，当前 context 无名称时回退 context 0。创建及销毁维护索引，避免多个伤害／护甲信息面板引用彼此的同名子帧。该局部引用规则尚需对照原版 `UseActiveContext`，不作为地图脚本全局名称查找接口的语义依据。
 
 Win32 Release 客户端、native 和浏览器测试目标编译通过；`war3_native_tests <data-root> tmp/docs-artifacts/war3/simple-frame-context-20261103` 为 19 通过／0 失败，使用原版伤害和护甲面板覆盖局部引用、歧义、销毁和 context 0 回退。浏览器夹具增加同 context 双面板布局；因既有 D3D9 设备创建失败未执行，实际绘制、原版重名解析、标准 HUD 实例与完整地图启动待验证。
+
+### Lua SimpleFrame 创建与销毁（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入地图插件 `CreateSimpleFrame`／`DestroySimpleFrame`（`(SII)I`／`(I)V`），目前仅接受根类型为 `SIMPLEFRAME` 的 FDF 定义；创建的子树进入现有地图帧布局、显示与销毁流程，并复用 context 和名称索引。其他 simple 控件根类型及原版非法输入语义待对照。
+
+Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖创建、尺寸、父子可见性、非法类型、签名及销毁后的失效。浏览器双面板夹具改用 `createSimple`，因既有 D3D9 设备创建失败未执行；实际绘制、复杂控件、原版行为、标准 HUD 查找、平台身份和完整地图启动仍待验证。
