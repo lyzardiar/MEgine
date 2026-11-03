@@ -4,6 +4,7 @@
 namespace war3 {
 enum class MapButtonVisual {Normal,Hover,Pressed,Disabled};
 inline MapButtonVisual mapButtonVisual(bool enabled,bool hovered,bool pressed){return !enabled?MapButtonVisual::Disabled:pressed && hovered?MapButtonVisual::Pressed:hovered?MapButtonVisual::Hover:MapButtonVisual::Normal;}
+template<class Input> void suppressCapturedMapPointer(Input& input,bool captured){if(captured){input.pressed=false;input.down=false;}}
 class MapFramePointer {
     std::uint32_t capture_=0;
     bool down_=false,blocked_=false;

@@ -8385,3 +8385,9 @@ Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-
 范围：`51b2ec9`、`bcd21cf`、`544e5e3`。同一集成版本 Win32 Release 客户端、Lua 和 native 测试目标编译通过；复用代码和输入未变化的 `war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 2 通过／0 失败（`tmp/docs-artifacts/war3/map-button-visual-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/button-interaction-batch` 为 22／0（`tmp/docs-artifacts/war3/button-interaction-native.log`）。覆盖本地点击捕获、单人同步标志、回调上下文、按钮视觉状态选择和原图快进。
 
 实际 GPU 按钮皮肤、鼠标事件命中与遮挡、原版同步时序、局域网点击同步和完整对局未验证，保留待测。
+
+### 2026-11-03：地图按钮覆盖层的底层输入隔离（部分验证，待批次验证）
+
+路径：`src/game_view.cpp`、`src/map_frame_pointer.h`、`tests/lua_tests.cpp`。地图按钮捕获左键后，为下层游戏、顶部菜单、小地图开关、计分板和弹窗使用清除左键状态的输入副本，保留键盘及滚轮；地图按钮自身仍使用实际指针状态绘制和判断悬停。强制界面按键的空闲检查继续使用实际鼠标状态，避免按下按钮时误判为空闲。
+
+Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖左键隔离、未捕获输入和键盘／滚轮保留（`tmp/docs-artifacts/war3/frame-input-isolation-final.log`）。真实 GPU 窗口中重叠小地图、菜单和地图按钮的命中与事件顺序仍待验证。
