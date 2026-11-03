@@ -8133,3 +8133,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。轻量句柄模式向 JASS 句柄参数传入函数等非 userdata 值时按空句柄处理；完整 userdata 模式仍拒绝该值，未知或过期 userdata 仍拒绝。原图对话框销毁把 Lua 回调传给 `TriggerRemoveAction`；此转换依据本机 YDWE Lua 引擎静态代码。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖两种模式及真实动作不被错误移除。模拟点击原图 N1 后对话框销毁已完成，推进至约 2.75 秒自定义 UI 初始化，停于未实现的 `FrameSetLevel`，日志 `tmp/docs-artifacts/war3/light-handle-arg-final.log`。实际画面和完整对局待验证。
+
+### 2026-11-03：地图控件层级（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/glue.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。地图 `FrameSetLevel` 保存有符号层级；同一父节点的子控件按层级稳定排序后构建渲染树，层级变化触发界面重建。当前仅实现同父节点排序，跨父节点的层级关系和鼠标命中优先级尚未还原，不作为原版视觉一致性证明。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖排序、重复设置和无效句柄。原图模拟点击 N1 后进入自定义 UI，越过 `FrameSetLevel`，停于未实现的 `FrameGetTextWidth`，日志 `tmp/docs-artifacts/war3/frame-level-final.log`。实际画面及交互待验证。
