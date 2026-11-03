@@ -8259,3 +8259,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。接入 `FrameSetModelX/Y/Z` 与 `FrameGetModelZ`，单轴与已有 XY 接口共享状态，互不覆盖其他轴。模型子控件按三维平移处理，普通模型帧保留界面 XY 偏移并应用 Z 平移；两种坐标到绘制变换的映射仍需原版画面对照。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖各轴读写、二维接口交互和非法数。原图 N1 路径越过模型位置接口，停于 `FrameSetViewPort`，日志 `tmp/docs-artifacts/war3/sprite-xyz-final.log`。GPU 位置、投影与完整对局待验证。
+
+### 2026-11-03：地图帧视口裁剪（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/glue.{h,cpp}`、`src/game_view.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetViewPort` 保存帧标志；当前按帧边界裁剪子控件，嵌套时取交集，文字和模型帧保留父级裁剪，指针命中也按祖先裁剪边界限制。原插件设置帧标志位，标志具体的原版裁剪范围与命中行为仍需画面和交互对照。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖标志切换、矩形交集及原图背景帧标志。N1 路径越过视口接口，停于 `FrameSetAnimationByIndex`，日志 `tmp/docs-artifacts/war3/viewport-final.log`。GPU 嵌套裁剪、模型帧与文字边缘、点击和原版交互待验证。

@@ -11,12 +11,13 @@ struct MapFrameRect {float x=0,y=0,w=0,h=0;};
 MapFrameRect solveMapFramePoints(float width,float height,std::span<const MapFramePoint> points);
 MapFrameRect solveSimpleFrameAnchor(MapFrameRect parent,float width,float height,std::string_view point,float x,float y);
 MapFrameRect commandButtonRect(int row,int column);
+MapFrameRect intersectMapFrameRects(MapFrameRect a,MapFrameRect b);
 std::uint64_t mapFrameAnimationTime(std::uint64_t elapsed,std::uint64_t duration,bool loop,float offset);
 std::uint32_t modulateMapFrameAlpha(std::uint32_t color,std::uint8_t alpha);
 class MapFrames {
 public:
     struct Anchor {std::uint32_t point=0,target=0,targetPoint=0;float x=0,y=0;};
-    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;bool standardInfo=false,anchorsCleared=false;std::int32_t level=0;bool enabled=true,model2=false;std::string model;std::optional<unsigned> modelTeamColor;std::optional<std::array<float,3>> cameraSource,cameraTarget;std::optional<double> animationStart;bool animationLoop=false;float animationOffset=0,modelSize=1;std::array<float,9> modelMatrix{1,0,0,0,1,0,0,0,1};std::array<float,3> modelOffset{};std::map<std::uint32_t,std::string> modelTextures;};
+    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;bool standardInfo=false,anchorsCleared=false;std::int32_t level=0;bool enabled=true,model2=false,viewport=false;std::string model;std::optional<unsigned> modelTeamColor;std::optional<std::array<float,3>> cameraSource,cameraTarget;std::optional<double> animationStart;bool animationLoop=false;float animationOffset=0,modelSize=1;std::array<float,9> modelMatrix{1,0,0,0,1,0,0,0,1};std::array<float,3> modelOffset{};std::map<std::uint32_t,std::string> modelTextures;};
 private:
     std::shared_ptr<FrameDefinitions> definitions_;
     std::map<std::uint32_t,Node> nodes_;
@@ -82,6 +83,7 @@ public:
     void setModelOffset(std::uint32_t id,float x,float y);
     void setModelOffsetAxis(std::uint32_t id,unsigned axis,float value);
     void setModelTexture(std::uint32_t id,std::uint32_t replacement,std::string_view path);
+    void setViewport(std::uint32_t id,bool enabled);
     void visible(std::uint32_t id,bool value);
     bool visible(std::uint32_t id) const;
     size_t size() const {return nodes_.size();}

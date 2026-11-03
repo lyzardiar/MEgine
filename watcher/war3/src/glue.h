@@ -16,7 +16,7 @@ public:
     struct ChoiceChange {std::string frame;size_t index;};
     using SpriteDraw=std::function<void(std::uint32_t,Rect,unsigned)>;
 private:
-    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; std::vector<MapFrames::Anchor> anchors;std::optional<float> mapWidth,mapHeight;std::optional<std::uint32_t> mapTextColor;std::optional<std::uint8_t> mapAlpha;std::optional<bool> mapEnabled;std::uint32_t mapId=0; };
+    struct Node { FrameDefinition frame; int parent=-1; Rect rect; unsigned mark=0; std::vector<unsigned> children; bool hidden=false; std::optional<Rect> placed; Com<IDirect3DTexture9> image; std::vector<Choice> choices;size_t selected=0;float menuWidth=0;bool literalChoices=false,choiceLabel=true,colorMenu=false; std::vector<MapFrames::Anchor> anchors;std::optional<float> mapWidth,mapHeight;std::optional<std::uint32_t> mapTextColor;std::optional<std::uint8_t> mapAlpha;std::optional<bool> mapEnabled;bool viewport=false;std::uint32_t mapId=0; };
     struct Texture { Com<IDirect3DTexture9> gpu; unsigned width,height; };
     Archives& archives_;
     Images& images_;
@@ -61,6 +61,7 @@ public:
     void skinSection(const std::string& section) {if(skinSection_!=section){skinSection_=section;skinTextures_.clear();}}
     std::string draw(const std::string& subtree,const UiInput& input,const std::set<std::string>& enabled,bool deferOverlay=false);
     Rect bounds(const std::string& name) const;
+    Rect clippedBounds(const std::string& name) const;
     void attach(const std::string& member,const std::string& root,const std::string& container,const std::string& context={});
     void focus(const std::string& name);
     const std::string& focus() const {return focused_;}
