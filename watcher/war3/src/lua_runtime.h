@@ -59,6 +59,7 @@ class LuaRuntime {
     std::function<std::optional<std::string>(unsigned)> japiPlayerName_;
     std::function<std::uint32_t()> japiTargetObject_;
     std::function<bool()> japiWindowActive_;
+    std::function<float()> japiFps_;
     std::function<std::optional<std::string>()> japiVersion_;
     std::optional<std::string> knownPluginVersion_;
     std::function<std::optional<std::int32_t>()> japiGameVersion_;
@@ -181,6 +182,7 @@ public:
     void attachJapiPlayerNames(std::function<std::optional<std::string>(unsigned)> provider);
     void attachJapiTargetObject(std::function<std::uint32_t()> provider);
     void attachJapiWindowActive(std::function<bool()> provider);
+    void attachJapiFps(std::function<float()> provider);
     // Provider reports the actual JAPI host version when one is available.
     void attachJapiVersion(std::function<std::optional<std::string>()> provider);
     void attachJapiGameVersion(std::function<std::optional<std::int32_t>()> provider);

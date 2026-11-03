@@ -25,6 +25,9 @@ class MapScriptRuntime {
     bool started_=false,requiresLuaEntry_=false;
     std::uint32_t pointerTarget_=0;
     bool windowActive_=false;
+    std::optional<std::uint64_t> fpsStart_;
+    std::uint64_t fpsFrames_=0;
+    float fps_=0;
     MapScriptRuntime(ScriptSession& session,std::shared_ptr<const JassBinaryProgram> program,const std::string& initializer);
 public:
     static std::unique_ptr<MapScriptRuntime> create(ScriptSession& session);
@@ -42,6 +45,8 @@ public:
     bool dispatchMessage(LuaInputMessage& message) {return lua_.dispatchMessage(message);}
     void pointerTarget(std::uint32_t target) {pointerTarget_=target;}
     void windowActive(bool active) {windowActive_=active;}
+    void sampleFrame(std::uint64_t milliseconds);
+    float fps() const {return fps_;}
     void pump();
     bool uiRootVisible() const;
     bool portraitVisible() const;

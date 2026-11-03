@@ -8309,3 +8309,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/session.{h,cpp}`、`tests/lua_tests.cpp`。`handledef` 从技能对象数据的 `AbilityData.code` 返回四字节原始类别代码；字段缺失或无效时仍明确报告不支持。原版游戏 DLL 的静态反汇编显示 `ANcl` 类注册使用该代码；特殊技能类别仍需与原版运行结果比对。
 
 Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖地图自定义技能 `A0IJ` 的 `ANcl` 类型和移除后的句柄状态。原图 N1 离线模拟越过技能类型检查，在约 30 秒的清理统计中停于 `GetFps`，日志 `tmp/docs-artifacts/war3/debug-ability-final.log`。画面及完整对局待验证。
+
+### 2026-11-03：地图脚本读取本地帧率（部分验证，待批次验证）
+
+路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/map_script_runtime.{h,cpp}`、`src/game_view.cpp`、`tests/lua_tests.cpp`。`GetFps` 读取游戏视图本地帧采样，按至少一秒的帧数与实际时间计算，首次采样前为 0；离线无渲染模拟也返回 0。该数据属于本地显示状态，原插件的采样窗口和暂停行为仍需比对。
+
+Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖帧率计算、时钟回退和 Lua 接口。原图 N1 离线模拟完成 60 秒且清理统计可读取帧率，日志 `tmp/docs-artifacts/war3/fps-60-probe.log`。实际画面帧率及完整对局待验证。
