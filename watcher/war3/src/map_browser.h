@@ -31,14 +31,14 @@ class MapBrowser {
     void clearSelection();
     void prepared();
     void enter(const fs::path& path,const fs::path& preferred={});
-    void select(size_t index);
+    void select(size_t index,std::optional<std::pair<unsigned,unsigned>> difficulty={});
     void infoLayout();
     const MapHeader* header(const fs::path& path);
 public:
     MapBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,const fs::path& preferred,bool muted=false);
     std::string draw(const UiInput& input);
     std::unique_ptr<ScriptSession> takeSession();
-    void reload(bool restart=false);
+    void reload(bool restart=false,std::optional<std::pair<unsigned,unsigned>> difficulty={});
     void cancelRestart() {restartSetup_.reset();}
     fs::path selectedPath() const;
     const MapInfo* info() const {return info_?&*info_:nullptr;}

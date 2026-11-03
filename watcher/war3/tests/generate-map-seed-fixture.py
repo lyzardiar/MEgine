@@ -19,7 +19,7 @@ helper = fixture.fixture.fixture
 archive = helper.mpyq.MPQArchive(io.BytesIO(original[offset:]), listfile=False)
 names = helper.read_archive(archive, '(listfile)').decode('ascii').splitlines()
 files = {name: helper.read_archive(archive, name) for name in names if name and name != '(listfile)'}
-files['war3map.j'] = b'globals\ninteger seed_probe = 0\nendglobals\nfunction config takes nothing returns nothing\nset seed_probe = GetRandomInt(0, 1000000)\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n'
+files['war3map.j'] = b'globals\ninteger seed_probe = 0\ninteger difficulty_probe = 0\nendglobals\nfunction config takes nothing returns nothing\nset seed_probe = GetRandomInt(0, 1000000)\nif GetGameDifficulty() == MAP_DIFFICULTY_EASY then\nset difficulty_probe = difficulty_probe + 1\nendif\nif GetDefaultDifficulty() == MAP_DIFFICULTY_HARD then\nset difficulty_probe = difficulty_probe + 2\nendif\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n'
 args.output.parent.mkdir(parents=True, exist_ok=True)
 args.output.write_bytes(original[:offset]+helper.build_archive(files))
 print('fixture='+str(args.output.resolve()))

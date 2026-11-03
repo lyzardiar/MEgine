@@ -39,8 +39,8 @@ fs::path CampaignBrowser::resolvePath(const std::string& path,const fs::path& ex
     return validatePath(candidate,externalRoot);
 }
 void CampaignBrowser::clearPreparation(){preparation_.clear();loading_=false;autoStart_=false;session_.reset();setup_.reset();checkpoint_.clear();checkpointDigest_.clear();error_.clear();}
-void CampaignBrowser::beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign,const fs::path& externalRoot,std::optional<unsigned> version){
-    auto resolved=validatePath(path,externalRoot);clearPreparation();request_=preparation_.request(resolved,campaign?std::optional<std::pair<bool,unsigned>>{std::pair{expansion,difficulty}}:std::nullopt,false,{},version);loading_=true;autoStart_=autoStart;currentPath_=resolved;currentExpansion_=expansion;currentDifficulty_=difficulty;currentCampaignSession_=campaign;currentExternalRoot_=externalRoot;log_.write("campaign_map_requested="+utf8(resolved.wstring()));
+void CampaignBrowser::beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign,const fs::path& externalRoot,std::optional<unsigned> version,std::optional<std::pair<unsigned,unsigned>> restartDifficulty){
+    auto resolved=validatePath(path,externalRoot);clearPreparation();request_=preparation_.request(resolved,campaign?std::optional<std::pair<bool,unsigned>>{std::pair{expansion,difficulty}}:std::nullopt,false,{},version,restartDifficulty);loading_=true;autoStart_=autoStart;currentPath_=resolved;currentExpansion_=expansion;currentDifficulty_=difficulty;currentCampaignSession_=campaign;currentExternalRoot_=externalRoot;log_.write("campaign_map_requested="+utf8(resolved.wstring()));
 }
 bool CampaignBrowser::entryAvailable(const Campaign& campaign,const Entry& entry) const {return entry.missionEntry?profile_.mission(campaign.expansion,campaign.offset,entry.mission,entry.mission==0):(entry.intro || profile_.cinematic(campaign.expansion,campaign.offset,entry.ending,false));}
 void CampaignBrowser::prepareSelected(bool autoStart){
@@ -95,5 +95,5 @@ void CampaignBrowser::nextCheckpointPrepared(const std::string& name,const Recov
 }
 std::string CampaignBrowser::takeCheckpoint(){auto name=std::move(checkpoint_);checkpoint_.clear();return name;}
 std::string CampaignBrowser::takeCheckpointDigest(){auto digest=std::move(checkpointDigest_);checkpointDigest_.clear();return digest;}
-void CampaignBrowser::restart(){try{if(currentPath_.empty())throw std::runtime_error("No map to restart");beginPath(currentPath_,currentExpansion_,currentDifficulty_,true,currentCampaignSession_,currentExternalRoot_);}catch(const std::exception& e){clearPreparation();error_="无法重新载入当前地图。";log_.write(std::string("campaign_restart_error=")+e.what());}}
+void CampaignBrowser::restart(std::pair<unsigned,unsigned> difficulty){try{if(currentPath_.empty())throw std::runtime_error("No map to restart");beginPath(currentPath_,currentExpansion_,currentDifficulty_,true,currentCampaignSession_,currentExternalRoot_,{},difficulty);}catch(const std::exception& e){clearPreparation();error_="无法重新载入当前地图。";log_.write(std::string("campaign_restart_error=")+e.what());}}
 }

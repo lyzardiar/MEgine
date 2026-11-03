@@ -30,9 +30,9 @@ void MapBrowser::enter(const fs::path& path,const fs::path& preferred) {
     }catch(const std::exception& e){error_="无法打开地图文件夹。";log_.write(std::string("map_directory_error=")+e.what());}
 }
 void MapBrowser::clearSelection() {preparation_.clear();restartSetup_.reset();loading_=false;info_.reset();players_.bind(nullptr);setup_.reset();session_.reset();error_.clear();screen_.visible("MapInfoPane",false);screen_.image("MinimapImage",nullptr);}
-void MapBrowser::select(size_t index) {
+void MapBrowser::select(size_t index,std::optional<std::pair<unsigned,unsigned>> difficulty) {
     if(index>=entries_.size() || (index==selected_ && (loading_ || (info_ && error_.empty()))))return;selected_=index;if(index<scroll_)scroll_=index;if(index>=scroll_+rows_)scroll_=index-rows_+1;clearSelection();if(entries_[index].directory)return;
-    request_=preparation_.request(entries_[index].path);loading_=true;log_.write("map_preparation_requested="+utf8(entries_[index].path.wstring()));
+    request_=preparation_.request(entries_[index].path,{},true,{},{},difficulty);loading_=true;log_.write("map_preparation_requested="+utf8(entries_[index].path.wstring()));
 }
 void MapBrowser::prepared() {
     auto result=preparation_.poll();if(!result || result->request!=request_ || !loading_)return;loading_=false;
@@ -82,6 +82,6 @@ std::string MapBrowser::draw(const UiInput& input) {
     players_.headings();screen_.overlay();if(action=="PlayGameButton")return action;return action=="CancelButton" || (input.key==VK_ESCAPE && !screen_.inputConsumed())?"CancelButton":std::string{};
 }
 std::unique_ptr<ScriptSession> MapBrowser::takeSession() {if(!session_ || !setup_ || loading_)throw std::runtime_error("Map is not ready to start");session_->applySetup(*setup_);lastSetup_=*setup_;lastSetupMap_=selectedPath();players_.bind(nullptr);setup_.reset();return std::move(session_);}
-void MapBrowser::reload(bool restart) {auto index=selected_;clearSelection();select(index);if(restart && loading_ && lastSetup_ && selectedPath()==lastSetupMap_)restartSetup_=lastSetup_;}
+void MapBrowser::reload(bool restart,std::optional<std::pair<unsigned,unsigned>> difficulty) {auto index=selected_;clearSelection();select(index,restart?difficulty:std::nullopt);if(restart && loading_ && lastSetup_ && selectedPath()==lastSetupMap_)restartSetup_=lastSetup_;}
 fs::path MapBrowser::selectedPath() const {return selected_<entries_.size() && !entries_[selected_].directory?entries_[selected_].path:fs::path{};}
 }

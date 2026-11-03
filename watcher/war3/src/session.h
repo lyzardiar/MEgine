@@ -1357,6 +1357,8 @@ public:
     void finishGame(bool scores,SessionExit action=SessionExit::Return);
     bool networkLocalEndPending() const{return networkLocalEndRequest_.has_value();}
     std::optional<bool> takeNetworkLocalEnd(){auto request=networkLocalEndRequest_;networkLocalEndRequest_.reset();return request;}
+    std::pair<unsigned,unsigned> difficultyContext() const {return {gameDifficulty_,defaultDifficulty_};}
+    void difficultyContext(std::pair<unsigned,unsigned> value) {if(mainAttempted_ || value.first>3 || value.second>3)throw std::runtime_error("Invalid difficulty context");gameDifficulty_=value.first;defaultDifficulty_=value.second;}
     void campaignContext(bool expansion,unsigned difficulty) {if(mainAttempted_ || difficulty>2)throw std::runtime_error("Invalid campaign session context");campaignExpansion_=expansion;gameDifficulty_=defaultDifficulty_=difficulty;}
     void versionContext(unsigned version) {if(version>1 || runtime_.ready() || failed_ || world_)throw std::runtime_error("Game version requires a fresh session");version_=version;versionSelected_=true;}
     unsigned gameVersion() const {return version_;}

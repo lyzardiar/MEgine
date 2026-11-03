@@ -8463,3 +8463,9 @@ Win32 Release 客户端、Lua 和 clock 测试目标编译通过。原图 N1 快
 路径：`tests/lua_tests.cpp`。N1 持续攻击快进至失败后，使用独立本地数据目录分别点击四个选项：“重新开始”和“降低难度”产生重新开始请求，“装载游戏”产生加载界面请求，“退出战役”产生返回及结算请求。N1 是最低难度，此验证不证明更高难度的降级效果。
 
 Win32 Release Lua 测试目标编译通过；原图测试 2／0，四条路径均在模拟时间 111.125 秒达到失败对话框，日志 `tmp/docs-artifacts/war3/defeat-all-choices-final.log`。上述检查覆盖会话请求，不代表实际重载、结算画面、真实鼠标或完整对局通过；本项测试补充不计入功能／修复批次。
+
+### 2026-11-03：重新开始保留魔兽难度（部分验证，待批次验证）
+
+路径：`src/session.h`、`src/map_preparation.{h,cpp}`、`src/map_browser.{h,cpp}`、`src/campaign_browser.{h,cpp}`、`src/main.cpp`、`tests/lua_tests.cpp`、`tests/map_seed_tests.cpp`、`tests/generate-map-seed-fixture.py`。原版失败对话框降低的是魔兽当前战役难度，并非地图自定义 N1/N2；重启时保留当前难度和默认难度，并在新地图 `config` 前设置，普通选图继续使用其默认配置。
+
+Win32 Release 客户端和 Lua、地图准备测试目标编译通过。原图 N1 与 N2 的失败选项均验证普通难度降为简单并发出重启请求，Lua 测试 2／0（`tmp/docs-artifacts/war3/restart-difficulty-final.log`）；地图准备定向测试 5／0，验证重启难度可在 `config` 中读取。真实客户端重新载入、战役入口及画面仍待批次验证。

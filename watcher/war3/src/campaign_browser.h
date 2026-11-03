@@ -30,7 +30,7 @@ class CampaignBrowser {
     void updateBackdrop();
     void refreshDifficulty();
     void clearPreparation();
-    void beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign=true,const fs::path& externalRoot={},std::optional<unsigned> version={});
+    void beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign=true,const fs::path& externalRoot={},std::optional<unsigned> version={},std::optional<std::pair<unsigned,unsigned>> restartDifficulty={});
     void prepareSelected(bool autoStart=false);
     void prepared();
     void selectCampaign(size_t index);
@@ -53,7 +53,7 @@ public:
     std::string takeCheckpoint();
     std::string takeCheckpointDigest();
     bool campaignSession() const {return currentCampaignSession_;}
-    void restart();
+    void restart(std::pair<unsigned,unsigned> difficulty);
     bool loading() const {return loading_;}
     const std::string& error() const {return error_;}
     std::string backdrop() const {return backdrop_;}
