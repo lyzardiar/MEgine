@@ -8099,3 +8099,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 ### 2026-11-03：二进制调用与 Lua 钩子批次
 
 范围：`959bd2c`、`ff813a8`、`64a8f1f`。Win32 Release 客户端、Lua、native 和会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/binary-hook-batch-20261103` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。实际画面、完整对局及其他地图的复杂重入未执行；本地图的 `SetOwner` 仍待实现。未访问外网。
+
+### 2026-11-03：单人本地地图作者信息（部分验证，待批次验证）
+
+路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/lua_local_platform.cpp`、`tests/lua_tests.cpp`。单人本地平台宿主支持插件 `SetOwner`，在会话内保存地图传入的作者名，并限制输入长度和内嵌 NUL；宿主销毁后拒绝调用。原插件静态分析显示该接口保存作者名并启动远程查询线程；本地模拟不启动线程，不访问外网，服务端响应相关行为未模拟。原图 `Battle.lua` 传入作者名“问号”。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖调用、无效输入和宿主销毁。原图逐帧推进至约 1.1875 秒，进入难度对话框初始化，随后因 `handle_ref` 无法识别句柄而停止；日志 `tmp/docs-artifacts/war3/setowner-final.log`。图形、完整对局及平台服务语义待验证。

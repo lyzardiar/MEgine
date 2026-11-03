@@ -31,7 +31,7 @@ struct LuaStormHost {std::function<std::optional<std::string>(std::string_view)>
 struct LuaInputMessage {enum class Kind {KeyDown,KeyUp,MouseDown,MouseUp};Kind kind=Kind::KeyDown;std::uint32_t code=0,state=0;double x=0,y=0;};
 struct LuaSyncHost {std::function<void(std::string_view)> send;std::function<void(std::string_view,std::string_view)> sendDz;};
 struct LuaPostHost {std::function<void(std::uint64_t,std::string_view,std::string_view)> submit;};
-struct LuaPlatformStorageHost {std::function<bool(unsigned,std::string_view,std::string_view)> save;std::function<bool(unsigned,std::string_view)> load;};
+struct LuaPlatformStorageHost {std::function<bool(unsigned,std::string_view,std::string_view)> save;std::function<bool(unsigned,std::string_view)> load;std::function<void(std::string_view)> setOwner;};
 struct LuaLogHost {std::function<std::string()> path;std::function<void(std::string_view)> setPath;std::function<void(std::string_view)> write;};
 struct LuaConsoleHost {std::function<bool()> enabled;std::function<void(bool)> setEnabled;std::function<void(std::string_view)> write;std::function<std::optional<std::string>()> read;};
 class LuaRuntime {
