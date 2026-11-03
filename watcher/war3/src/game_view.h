@@ -49,6 +49,7 @@ class GameView {
     std::uint64_t mapFramesRevision_=0,mapFramesTextureRevision_=0;
     MapFramePointer mapFramePointer_;
     void prepareMapFrames();
+    std::uint32_t mapButtonAt(float x,float y);
     bool mapFrameInput(const GameInput& input);
     struct MapSpriteTexture {std::string path,source;std::uint64_t overlayRevision=UINT64_MAX;Com<IDirect3DTexture9> texture;};
     struct MapSpriteModel {std::string path,source;std::uint64_t overlayRevision=UINT64_MAX;std::unique_ptr<Model> model;std::map<std::uint32_t,MapSpriteTexture> textures;};

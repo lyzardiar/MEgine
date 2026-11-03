@@ -8373,3 +8373,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。单人会话支持以 `sync=true` 注册已实现的界面点击和悬停回调，在本地调用并保留事件玩家／控件上下文；缺少玩家或局域网会话继续明确拒绝，避免在多端未经同步地执行。单人执行的时序与原平台同步调度仍需对照，联机同步分发尚未实现。
 
 Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖单人点击和悬停注册、事件上下文，以及局域网两类事件拒绝（`tmp/docs-artifacts/war3/frame-sync-final.log`）。原图 N1 快进与现有英雄操作保持通过；真实鼠标与画面、其他事件及联机待验证。
+
+### 2026-11-03：地图文本按钮的指针视觉状态（部分验证，待批次验证）
+
+路径：`src/map_frame_pointer.h`、`src/game_view.{h,cpp}`、`src/glue.{h,cpp}`、`tests/lua_tests.cpp`。地图 `GLUETEXTBUTTON` 按可见启用层级和裁剪范围选择悬停目标，并将鼠标捕获状态用于普通、悬停、按下和禁用皮肤；缺少按下或禁用背景时回退普通背景，背景、文字及高亮继承透明度。无回调按钮也捕获左键，防止点击穿透。原版覆盖遮挡、禁用父级视觉和鼠标消息顺序仍需对照。
+
+Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖视觉状态选择及已有捕获、回调和原图快进测试（`tmp/docs-artifacts/war3/map-button-visual-final.log`）。GPU 绘制、真实鼠标和原版像素对照未执行，仍待验证。

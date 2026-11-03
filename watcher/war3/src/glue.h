@@ -38,6 +38,7 @@ private:
     float popupX_=0,popupY_=0;
     std::optional<ChoiceChange> change_;
     bool consumed_=false;
+    std::uint32_t mapHoveredButton_=0,mapPressedButton_=0;
     std::optional<FrameDefinition> menuTemplate_,colorMenuTemplate_;
     unsigned add(FrameDefinition frame, int parent);
     Rect layout(unsigned index);
@@ -62,6 +63,7 @@ public:
     std::string draw(const std::string& subtree,const UiInput& input,const std::set<std::string>& enabled,bool deferOverlay=false);
     Rect bounds(const std::string& name) const;
     Rect clippedBounds(const std::string& name) const;
+    void mapButtonState(std::uint32_t hovered,std::uint32_t pressed) {mapHoveredButton_=hovered;mapPressedButton_=pressed;}
     void attach(const std::string& member,const std::string& root,const std::string& container,const std::string& context={});
     void focus(const std::string& name);
     const std::string& focus() const {return focused_;}

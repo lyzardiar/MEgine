@@ -1,6 +1,7 @@
 // Author: MiYu. Render original glue definitions in Warcraft's 0.8 by 0.6 UI space.
 #include "glue.h"
 #include "map_frames.h"
+#include "map_frame_pointer.h"
 #include <cmath>
 #include <cwctype>
 
@@ -84,10 +85,10 @@ std::string GlueScreen::drawNode(unsigned index,const UiInput& input,const std::
     if((f.type=="SPRITE" || f.type=="BACKDROP") && n.image){auto r=n.rect;float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f);renderer_.rect((renderer_.width()-.8f*scale)/2+r.x*scale,(renderer_.height()-.6f*scale)/2+r.y*scale,r.w*scale,r.h*scale,(alpha<<24)|0x00ffffffu,n.image.Get());}
     bool button=f.type=="GLUETEXTBUTTON" || f.type=="TEXTBUTTON" || f.type=="GLUEBUTTON" || f.type=="BUTTON";
     if(button) {
-        bool active=n.mapEnabled.value_or(enabled.contains(f.name)),hover=input.x>=n.rect.x && input.y>=n.rect.y && input.x<n.rect.x+n.rect.w && input.y<n.rect.y+n.rect.h;
-        bool origin=input.startX>=n.rect.x && input.startY>=n.rect.y && input.startX<n.rect.x+n.rect.w && input.startY<n.rect.y+n.rect.h;
-        auto backdropName=first(f,!active?"ControlDisabledBackdrop":hover&&origin&&input.down?"ControlPushedBackdrop":"ControlBackdrop");auto labelName=first(f,"ButtonText"),highlight=first(f,"ControlMouseOverHighlight");
-        bool highlighted=hover || (focusEnabled_ && focused_==f.name);for(auto child:n.children) {auto& c=nodes_[child];if(c.frame.name==backdropName)backdrop(c.frame,n.rect);if(c.frame.name==labelName)label(c.frame,n.rect,active,highlighted);if(active&&highlighted&&c.frame.name==highlight){auto file=decoratedTexture(c.frame,first(c.frame,"HighlightAlphaFile"));if(!file.empty())quad(n.rect,0xffffffff,file,0,0,1,1,false,first(c.frame,"HighlightAlphaMode")=="ADD");}}
+        bool active=n.mapEnabled.value_or(enabled.contains(f.name)),hover=n.mapId?mapHoveredButton_==n.mapId:input.x>=n.rect.x && input.y>=n.rect.y && input.x<n.rect.x+n.rect.w && input.y<n.rect.y+n.rect.h;
+        bool origin=n.mapId?mapPressedButton_==n.mapId:input.startX>=n.rect.x && input.startY>=n.rect.y && input.startX<n.rect.x+n.rect.w && input.startY<n.rect.y+n.rect.h;auto visual=mapButtonVisual(active,hover,n.mapId?origin:origin && input.down);
+        auto backdropName=first(f,visual==MapButtonVisual::Disabled?"ControlDisabledBackdrop":visual==MapButtonVisual::Pressed?"ControlPushedBackdrop":"ControlBackdrop");if(backdropName.empty())backdropName=first(f,"ControlBackdrop");auto labelName=first(f,"ButtonText"),highlight=first(f,"ControlMouseOverHighlight");
+        bool highlighted=hover || (focusEnabled_ && focused_==f.name);for(auto child:n.children) {auto& c=nodes_[child];if(c.frame.name==backdropName)backdrop(c.frame,n.rect,(alpha<<24)|0x00ffffffu);if(c.frame.name==labelName)label(c.frame,n.rect,active,highlighted,0,{},alpha);if(active&&highlighted&&c.frame.name==highlight){auto file=decoratedTexture(c.frame,first(c.frame,"HighlightAlphaFile"));if(!file.empty())quad(n.rect,(alpha<<24)|0x00ffffffu,file,0,0,1,1,false,first(c.frame,"HighlightAlphaMode")=="ADD");}}
         if(active && hover && origin && input.pressed && focusEnabled_)focused_=f.name;
         auto shortcut=first(f,"ControlShortcutKey");if(active && ((hover&&origin&&input.pressed) || (shortcut.size()==1 && input.key==unsigned(std::towupper(shortcut[0])))))return f.name;
         return {};
