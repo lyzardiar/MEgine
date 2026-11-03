@@ -7977,3 +7977,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/lua_runtime.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/map_frames.{h,cpp}`、`src/map_script_runtime.h`、`src/game_view.{h,cpp}`、`src/game_commands.cpp`、`tests/lua_tests.cpp`。`jass.dzapi.DzFrameSetScriptByCode` 支持本地事件 2／3 和 Lua 函数，帧命中状态变化时分发进入／离开；命令栏目标使用实际显示按钮的命中结果，自建帧使用当前帧布局，隐藏或销毁后不再命中。回调替换、注销、销毁及会话解绑释放引用；同步事件和其他事件类型明确失败。事件号参考 [FrameEvents](https://xgm.guru/p/wc3/UI-FrameEvents-Bkc) 的 2／3 定义，原 1.27 插件的排序、遮挡和事件上下文仍需对照；当前重叠自建帧可同时命中，尚未建立原版层级阻挡、同步和 `DzGetTriggerUIEventFrame/Player`。
 
 Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖进入／停留／离开、替换／注销、销毁、同步拒绝、无效回调及解绑。隔离探针模拟标准信息面板查找后，原图的 `DzFrameSetScriptByCode(frame,2,function,false)` 已注册，下一阻塞为 `Unimplemented Lua JAPI: DzFrameGetItemBarButton`；探针已移除。实际鼠标操作与画面因既有 D3D9 设备创建失败未执行，真实标准 HUD、物品栏、平台身份和完整玩法仍待验证。
+
+### 物品栏按钮定位与悬停事件（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_view.{h,cpp}`、`tests/{lua_tests,browser_tests}.cpp`。DZAPI 与 JAPI 的 `DzFrameGetItemBarButton`、JAPI 的 `FrameGetItemBarButton` 返回 0–5 槽的稳定定位节点，矩形沿用物品绘制、点击和拖拽共用的 `inventorySlotRect`；选中可显示物品栏的单位时，鼠标命中可驱动既有本地进入／离开事件。节点当前只支持定位与事件，移动、隐藏及其他修改明确失败。
+
+Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖三个入口、索引、坐标、修改拒绝及悬停事件。浏览器夹具新增第 5 格定位检查，因既有 D3D9 设备创建失败未执行。隔离探针使用模拟平台身份、版本、控制台、内存宿主并将标准信息面板查询重定向到测试帧时，原图 `main` 已返回、Lua 地图入口已执行，帧树 32 个节点、18 个事件目标；探针已移除，此结果不代表真实 HUD、正式地图加载或玩法通过。物品栏实际鼠标、图形与原版行为、真实标准 HUD／平台身份及运行时后续流程待验证。

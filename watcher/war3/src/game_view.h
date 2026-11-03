@@ -43,6 +43,7 @@ class GameView {
     bool allyFilterButtonDown_=false,creepFilterButtonDown_=false,terrainFilterButtonDown_=false,signalButtonDown_=false,signalMode_=false,minimapTerrainVisible_=true;
     std::unique_ptr<GlueScreen> allyFilterTooltip_,mapFramesScreen_;
     std::uint32_t hoveredCommandFrame_=0;
+    std::uint32_t hoveredItemFrame_=0;
     std::uint64_t mapFramesRevision_=0,mapFramesTextureRevision_=0;
     struct CreepCamp {float x=0,y=0;std::vector<std::uint32_t> units;};
     std::vector<CreepCamp> creepCamps_;
