@@ -31,9 +31,12 @@ public:
     std::uint32_t root() const {return 1;}
     const std::shared_ptr<FrameDefinitions>& definitions() const {return definitions_;}
     const Node& node(std::uint32_t id) const;
+    bool contains(std::uint32_t id) const {return nodes_.contains(id);}
     std::uint32_t resolveReference(std::uint32_t source,const std::string& name) const;
     std::uint32_t findSimple(const std::string& name,std::uint32_t context,std::string_view type) const;
     std::uint32_t commandButton(unsigned row,unsigned column);
+    std::uint32_t existingCommandButton(unsigned row,unsigned column) const;
+    bool isCommandButton(std::uint32_t id) const;
     std::uint32_t create(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     std::uint32_t createSimple(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     std::uint32_t createByType(const std::string& type,const std::string& name,std::uint32_t parent,const std::string& inherits,std::uint32_t context=0);

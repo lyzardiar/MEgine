@@ -7971,3 +7971,9 @@ Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_t
 路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`jass.dzapi.DzFrameShow` 接入既有帧树可见性和绘制路径，保持父子可见性及会话解绑保护；命令栏节点仍只作定位参照，直接修改会明确失败。`jass.japi.DzFrameGetCommandBarButton` 和 `FrameGetCommandBarButton` 与已有 DZAPI 查找共用同一节点和坐标，并校验注册签名。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖帧显示、父子继承、失效句柄、解绑、命令栏三个入口及修改限制。临时模拟标准信息面板查找的隔离探针中，原图已越过显示和命令栏查找，下一阻塞为 `Unimplemented Lua DZAPI: DzFrameSetScriptByCode`；探针已移除。真实信息面板、命令按钮修改、帧事件、平台身份、图形显示及完整玩法仍待实现或验证。
+
+### 本地帧鼠标进入与离开事件（部分验证，待批次验证）
+
+路径：`src/lua_runtime.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/map_frames.{h,cpp}`、`src/map_script_runtime.h`、`src/game_view.{h,cpp}`、`src/game_commands.cpp`、`tests/lua_tests.cpp`。`jass.dzapi.DzFrameSetScriptByCode` 支持本地事件 2／3 和 Lua 函数，帧命中状态变化时分发进入／离开；命令栏目标使用实际显示按钮的命中结果，自建帧使用当前帧布局，隐藏或销毁后不再命中。回调替换、注销、销毁及会话解绑释放引用；同步事件和其他事件类型明确失败。事件号参考 [FrameEvents](https://xgm.guru/p/wc3/UI-FrameEvents-Bkc) 的 2／3 定义，原 1.27 插件的排序、遮挡和事件上下文仍需对照；当前重叠自建帧可同时命中，尚未建立原版层级阻挡、同步和 `DzGetTriggerUIEventFrame/Player`。
+
+Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖进入／停留／离开、替换／注销、销毁、同步拒绝、无效回调及解绑。隔离探针模拟标准信息面板查找后，原图的 `DzFrameSetScriptByCode(frame,2,function,false)` 已注册，下一阻塞为 `Unimplemented Lua JAPI: DzFrameGetItemBarButton`；探针已移除。实际鼠标操作与画面因既有 D3D9 设备创建失败未执行，真实标准 HUD、物品栏、平台身份和完整玩法仍待验证。

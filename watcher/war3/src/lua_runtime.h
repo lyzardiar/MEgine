@@ -6,6 +6,7 @@
 #include <memory>
 #include <map>
 #include <span>
+#include <set>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -68,8 +69,12 @@ class LuaRuntime {
     bool handlingError_=false;
     std::map<std::string,int> hookRefs_;
     std::map<std::string,int> codeRefs_;
+    std::map<std::pair<std::uint32_t,std::uint32_t>,int> frameEventRefs_;
+    std::set<std::uint32_t> hoveredFrames_;
     std::map<std::string,LuaJapiSignature> japiSignatures_;
     void clearHooks();
+    void clearFrameEvents();
+    void pruneFrameEvents();
     void clearMapEntryHook();
     void clearMessage();
     void clearCodeOverrides();
@@ -104,6 +109,7 @@ class LuaRuntime {
     static int runtimeSet(lua_State* state);
     static int registerJapi(lua_State* state);
     static int dzapiLookup(lua_State* state);
+    static int dzapiSetFrameScript(lua_State* state);
     static int japiUnavailable(lua_State* state);
     static int japiLookup(lua_State* state);
     static int japiCall(lua_State* state);
@@ -139,6 +145,8 @@ public:
     void restoreStormOverlay(std::span<const std::uint8_t> bytes);
     void attachFrameDefinitions(std::shared_ptr<FrameDefinitions> definitions);
     void attachMapFrames(std::shared_ptr<MapFrames> frames);
+    std::vector<std::uint32_t> frameEventTargets();
+    void updateFramePointer(std::span<const std::uint32_t> hovered);
     // Attach and dispatch on the owner thread while Lua is idle.
     void attachMessageHost();
     bool dispatchMessage(LuaInputMessage& message);
