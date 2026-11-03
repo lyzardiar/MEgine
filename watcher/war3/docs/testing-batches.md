@@ -8379,3 +8379,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/map_frame_pointer.h`、`src/game_view.{h,cpp}`、`src/glue.{h,cpp}`、`tests/lua_tests.cpp`。地图 `GLUETEXTBUTTON` 按可见启用层级和裁剪范围选择悬停目标，并将鼠标捕获状态用于普通、悬停、按下和禁用皮肤；缺少按下或禁用背景时回退普通背景，背景、文字及高亮继承透明度。无回调按钮也捕获左键，防止点击穿透。原版覆盖遮挡、禁用父级视觉和鼠标消息顺序仍需对照。
 
 Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖视觉状态选择及已有捕获、回调和原图快进测试（`tmp/docs-artifacts/war3/map-button-visual-final.log`）。GPU 绘制、真实鼠标和原版像素对照未执行，仍待验证。
+
+### 2026-11-03：地图按钮交互批次
+
+范围：`51b2ec9`、`bcd21cf`、`544e5e3`。同一集成版本 Win32 Release 客户端、Lua 和 native 测试目标编译通过；复用代码和输入未变化的 `war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 2 通过／0 失败（`tmp/docs-artifacts/war3/map-button-visual-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/button-interaction-batch` 为 22／0（`tmp/docs-artifacts/war3/button-interaction-native.log`）。覆盖本地点击捕获、单人同步标志、回调上下文、按钮视觉状态选择和原图快进。
+
+实际 GPU 按钮皮肤、鼠标事件命中与遮挡、原版同步时序、局域网点击同步和完整对局未验证，保留待测。
