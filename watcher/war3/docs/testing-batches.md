@@ -7941,3 +7941,9 @@ Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_t
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。接入 `SimpleFrameFindByName`、`SimpleTextureFindByName`、`SimpleFontStringFindByName`（均为 `(SI)I`），按名称、context 和帧类型查找已创建的唯一实例；返回的句柄可继续用于现有帧锚点和显示状态。重名歧义或无对应实例时明确失败，原版缺失／重名行为及其他 simple 控件类型尚待对照；尚未建立标准 HUD 实例，不能把其缺失作为空句柄伪装完成。
 
 Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖三种查找、上下文和类型隔离、锚点使用、重名、销毁、签名校验。原图模拟宿主启动现明确报告 `Simple frame lookup unavailable: InfoPanelIconBackdrop`；真实平台身份、标准 HUD 实例与消费、实际绘制和完整地图启动待验证。
+
+### Lua 按类型和模板创建地图帧（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。接入 `CreateFrameByTagName`（`(SSISI)I`），支持已接入绘制的 `FRAME`、`BACKDROP`、`TEXT`，可从同类型 FDF 模板继承属性和子帧，将子帧指向模板根名称的锚点重定向至新帧。新实例接入地图帧树、context、动态纹理和销毁；其他类型、模板缺失时的原版处理及继承边界待对照。
+
+Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖中文名称、模板属性与子锚点、动态纹理、错误类型和签名。隔离探针临时将尚未建立的标准 HUD 查找重定向到测试帧，观测到原图先后将 context 0、2 的信息纹理移出屏幕，再操作 context 6 的英雄属性文字；其 `BACKDROP/底图/tooltip_backdrop` 调用已通过新建帧路径，下一调用为 `TEXT/物品属性/template`，当前加载定义中缺少 `template` 而明确失败。探针已移除，不能代表真实 HUD 或整图启动通过；标准实例 context、缺失模板行为、平台身份、实际画面和完整玩法待验证。

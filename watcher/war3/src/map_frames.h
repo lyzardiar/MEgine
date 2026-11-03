@@ -31,6 +31,7 @@ public:
     std::uint32_t findSimple(const std::string& name,std::uint32_t context,std::string_view type) const;
     std::uint32_t create(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     std::uint32_t createSimple(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
+    std::uint32_t createByType(const std::string& type,const std::string& name,std::uint32_t parent,const std::string& inherits,std::uint32_t context=0);
     void destroy(std::uint32_t id);
     void destroySimple(std::uint32_t id);
     void setPoint(std::uint32_t id,std::uint32_t point,std::uint32_t target,std::uint32_t targetPoint,float x,float y);
