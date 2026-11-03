@@ -8249,3 +8249,7 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`src/model.h`、`src/model_pose.cpp`、`tests/lua_tests.cpp`。接入模型子控件相机源点和目标点；部分设置时沿用模型内置相机的另一端或默认相机位置，绘制时重新构造视图；共点及竖直视线使用有限的回退方向。自定义相机的默认值、滚转及裁剪参数目前为近似，需原版画面对照。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖源点、目标点、非法值、非模型子控件拒绝及原图零目标。N1 路径越过相机接口，停于 `FrameSetModelX`，日志 `tmp/docs-artifacts/war3/sprite-camera-final.log`。GPU 视角、回退方向、滚转及完整对局待验证。
+
+### 2026-11-03：模型贴图、子控件与相机批次
+
+范围：`83a89c4`、`1a9067f`、`e458b90`。同一集成版本 Win32 Release 客户端、Lua、native 和模型测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败（`tmp/docs-artifacts/war3/sprite-camera-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/sprite-camera-batch` 为 22 通过／0 失败（`tmp/docs-artifacts/war3/sprite-camera-native.log`），`war3_effects_tests <data-root> tmp/docs-artifacts/war3/sprite-camera-model.log --memory-model tmp/docs-artifacts/war3/generated-map-model.mdx` 为 1 通过／0 失败，仅验证模型内存解析及截断输入。原图 N1 路径停于 `FrameSetModelX`；GPU 绘制、动态贴图替换、子控件布局、相机视角和完整对局未验证，保留待测。
