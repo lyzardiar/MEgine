@@ -8243,3 +8243,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameAddModel` 创建受父帧管理的模型子控件，`FrameSetModel2` 设置模型路径和 0–15 队伍颜色；使用现有模型绘制及队伍颜色／光环替换，父帧销毁时递归释放子控件。当前将该控件映射到现有 SPRITE 帧，原版布局、独立相机、位置和完整模型行为仍需补齐。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖父子关系、路径和颜色设置、无效输入及递归销毁。原图创建了队伍颜色 0 的 Peasant 模型子控件，越过 `FrameAddModel` 和 `FrameSetModel2`，停于 `FrameSetModelCameraTarget`，日志 `tmp/docs-artifacts/war3/added-model-final.log`。GPU、相机、模型子控件视觉和完整对局待验证。
+
+### 2026-11-03：地图模型子控件相机（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`src/model.h`、`src/model_pose.cpp`、`tests/lua_tests.cpp`。接入模型子控件相机源点和目标点；部分设置时沿用模型内置相机的另一端或默认相机位置，绘制时重新构造视图；共点及竖直视线使用有限的回退方向。自定义相机的默认值、滚转及裁剪参数目前为近似，需原版画面对照。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖源点、目标点、非法值、非模型子控件拒绝及原图零目标。N1 路径越过相机接口，停于 `FrameSetModelX`，日志 `tmp/docs-artifacts/war3/sprite-camera-final.log`。GPU 视角、回退方向、滚转及完整对局待验证。
