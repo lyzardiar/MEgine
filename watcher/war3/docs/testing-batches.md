@@ -8171,3 +8171,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/map_script_runtime.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_view.cpp`、`tests/lua_tests.cpp`。`FrameGetPortrait` 返回稳定标准肖像句柄，`FrameGetParent` 查询帧树父节点；肖像显示状态控制 HUD 的实际单位肖像绘制，标准肖像禁止销毁及尚未接入的尺寸、锚点等修改。当前以 GameUI 根节点近似表示原版肖像父节点，并沿用现有 HUD 肖像固定位置；原版完整控件层级及可修改布局仍待核实。
 
 Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖句柄稳定性、父节点、显示状态和不支持的修改。原图选择 N1 后越过肖像查询，进入自定义 `SPRITE` 创建并因类型未支持停止，日志 `tmp/docs-artifacts/war3/portrait-parent-final.log`。实际肖像画面与完整对局待验证。
+
+### 2026-11-03：内存 MDX 解析入口（部分验证，待批次验证）
+
+路径：`src/model.{h,cpp}`、`tests/effects_tests.cpp`、`tests/lua_tests.cpp`。模型解析器新增内存字节入口，复用归档模型的解析和贴图准备流程；原图测试确认 N1 后本地归档生成 `ui\\_model_backdrop.mdx`。此入口是自定义模型控件的基础，尚未接入 `SPRITE` 渲染、资源更新及图形设备。
+
+Win32 Release 客户端和测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败；`war3_effects_tests <data-root> tmp/docs-artifacts/war3/memory-model-check.log --memory-model tmp/docs-artifacts/war3/generated-map-model.mdx` 为 1 通过／0 失败，对照归档模型、拒绝截断输入并解析原图生成的 1,324 字节模型。生成探针使用隔离用户目录，产物位于 `tmp/docs-artifacts/war3/generated-map-model.mdx`；GPU、模型动画和实际界面待验证。

@@ -41,6 +41,7 @@ class Model {
     std::unique_ptr<Data> data_;
 public:
     Model(Archives& archives, Images& images, Renderer* renderer, const char* name, Log& log,SceneAssets* shared=nullptr);
+    Model(Archives& archives, Images& images, Renderer* renderer,std::span<const std::uint8_t> bytes,Log& log,SceneAssets* shared=nullptr);
     ~Model();
     Model(const Model&) = delete;
     Model& operator=(const Model&) = delete;
@@ -75,6 +76,7 @@ public:
     bool sequenceLoops() const;
     std::optional<D3DMATRIX> attachment(const std::string& name,const D3DMATRIX& world,std::uint64_t elapsed,const D3DMATRIX& view,ModelInstance* instance=nullptr,float blendSeconds=0,std::uint64_t clock=UINT64_MAX,std::span<const ModelLookAt> lookAt={},std::uint64_t blendClock=UINT64_MAX,std::uint64_t animationGeneration=0) const;
 private:
+    void load(Archives& archives,Images& images,Renderer* renderer,std::span<const std::uint8_t> bytes,Log& log,SceneAssets* shared);
     void ribbons(std::uint64_t elapsed,const D3DMATRIX& view,const D3DMATRIX& world,DWORD tint,ModelInstance& instance,bool emit,float delta);
     void particles(std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& view,const D3DMATRIX& world,DWORD tint,ModelInstance& instance,bool emit);
     void modelParticles(std::uint64_t elapsed,std::uint64_t clock,const D3DMATRIX& view,const D3DMATRIX& projection,const D3DMATRIX& world,DWORD tint,ModelInstance& instance,bool emit);
