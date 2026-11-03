@@ -8095,3 +8095,7 @@ Win32 Release 客户端和测试编译通过；`war3_lua_tests <data-root> G:\qc
 路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。原图 `CodeFix.lua` 的 `UnitRemoveAbility` 钩子使用 `jass.common.UnitRemoveAbility` 调用原函数；同名钩子活动期间从 Lua 调用该原生函数时转到原实现，其他钩子继续生效，退出或异常时恢复调用状态。既有显式 original 参数保持可用。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖同名调用及既有显式 original；原图越过递归并在战斗初始化遇到未实现的 JAPI `SetOwner`，日志 `tmp/docs-artifacts/war3/native-hook-final.log`。调用行为依据原图字节码推断，其他地图的复杂重入、真实画面与完整玩法待验证；未访问外网。
+
+### 2026-11-03：二进制调用与 Lua 钩子批次
+
+范围：`959bd2c`、`ff813a8`、`64a8f1f`。Win32 Release 客户端、Lua、native 和会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/binary-hook-batch-20261103` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。实际画面、完整对局及其他地图的复杂重入未执行；本地图的 `SetOwner` 仍待实现。未访问外网。
