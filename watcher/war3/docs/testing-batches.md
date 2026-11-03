@@ -8475,3 +8475,9 @@ Win32 Release 客户端和 Lua、地图准备测试目标编译通过。原图 N
 范围：`f9eb5d5`、`52c807d`、`791ddce`，以及测试补充 `0d2dbe9`。同一集成版本 Win32 Release 客户端、Lua、地图准备、clock 和 game-flow 目标编译通过；game-flow 目标保留已有 C4389 告警。复用当次代码与输入一致的原图 Lua 测试 2／0（`tmp/docs-artifacts/war3/restart-difficulty-final.log`）及地图准备测试 5／0；定向 `recovery_bundle_restores_ui_requests` 1／0，game-flow 测试退出 0 并输出 1 条 PASS。覆盖失败对话框请求、降难度、配置阶段难度、加载请求快照以及脚本对话框／退出流程。
 
 实际窗口中重启、玩家配置保留、取消与切换地图、加载存档和结算画面未执行，保留待测；真实 GPU 和鼠标及完整对局仍需验收。
+
+### 2026-11-03：保留的已移除单位句柄类型（部分验证，待批次验证）
+
+路径：`src/session.cpp`、`tests/lua_tests.cpp`。原图人工清除可见敌人的诊断过程中，Lua 查询显式保留但已移除单位的句柄类型时抛错；保留引用存在时按单位类型返回 `+w3u`，释放最后一个显式引用后返回空。其他已销毁的保留对象类型仍需分别确认，单位类型在原版相同生命周期下的行为也待对照。
+
+Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／0，覆盖单位引用、移除、查询及释放（`tmp/docs-artifacts/war3/retained-unit-final.log`）。人工清除单位的诊断越过原句柄异常后在模拟时间 62.0938 秒进入暂停（`tmp/docs-artifacts/war3/waves-retained-fix-probe.log`）；该探测改变战局，不代表正常波次或通关。真实游戏、其他句柄生命周期及完整玩法待验证。
