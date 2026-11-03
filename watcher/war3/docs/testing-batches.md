@@ -8165,3 +8165,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 ### 2026-11-03：地图文本与按钮批次
 
 范围：`91d108c`、`0521cbe`、`9a45521`。Win32 Release 客户端、Lua、native 和会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/text-button-batch` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。实际画面、鼠标点击、横向多锚点文本高度、原版字体尺寸比较及完整对局未验证；当前原图阻塞为 `FrameGetPortrait`。
+
+### 2026-11-03：标准肖像句柄与父节点（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/map_script_runtime.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_view.cpp`、`tests/lua_tests.cpp`。`FrameGetPortrait` 返回稳定标准肖像句柄，`FrameGetParent` 查询帧树父节点；肖像显示状态控制 HUD 的实际单位肖像绘制，标准肖像禁止销毁及尚未接入的尺寸、锚点等修改。当前以 GameUI 根节点近似表示原版肖像父节点，并沿用现有 HUD 肖像固定位置；原版完整控件层级及可修改布局仍待核实。
+
+Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖句柄稳定性、父节点、显示状态和不支持的修改。原图选择 N1 后越过肖像查询，进入自定义 `SPRITE` 创建并因类型未支持停止，日志 `tmp/docs-artifacts/war3/portrait-parent-final.log`。实际肖像画面与完整对局待验证。

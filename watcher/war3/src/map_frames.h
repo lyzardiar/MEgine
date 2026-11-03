@@ -23,6 +23,7 @@ private:
     std::array<std::uint32_t,12> commandButtons_{};
     std::array<std::uint32_t,6> itemButtons_{};
     std::array<std::uint32_t,8> infoPanels_{};
+    std::uint32_t portrait_=0;
     std::uint32_t next_=2;
     std::uint64_t revision_=0;
     size_t textBytes_=0,textureBytes_=0;
@@ -42,6 +43,8 @@ public:
     bool isCommandButton(std::uint32_t id) const;
     std::uint32_t itemButton(unsigned slot);
     std::uint32_t existingItemButton(unsigned slot) const;
+    std::uint32_t portrait();
+    bool portraitVisible() const;
     bool isItemButton(std::uint32_t id) const;
     void installStandardInfo();
     std::uint32_t standardInfo(unsigned context,const std::string& name) const;

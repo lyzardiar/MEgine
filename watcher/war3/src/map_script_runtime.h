@@ -44,6 +44,7 @@ public:
     void windowActive(bool active) {windowActive_=active;}
     void pump();
     bool uiRootVisible() const;
+    bool portraitVisible() const;
     std::vector<std::uint32_t> frameEventTargets() {return lua_.frameEventTargets();}
     void updateFramePointer(std::span<const std::uint32_t> hovered) {lua_.updateFramePointer(hovered);}
     std::optional<std::vector<std::uint8_t>> frameTextureOverride(std::string_view name) const {return lua_.stormTextureOverride(name);}

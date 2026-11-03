@@ -25,6 +25,7 @@ void MapScriptRuntime::attachDefaultLocalPlatformStorage(){auto local=session_.l
 void MapScriptRuntime::attachPostHost(LuaPostHost host){if(started_)throw std::runtime_error("Cannot attach post host after map start");lua_.attachPostHost(std::move(host));}
 void MapScriptRuntime::completePost(std::uint64_t id,std::span<const LuaResult> values){lua_.completePost(id,values);}
 bool MapScriptRuntime::uiRootVisible() const{return frames_->visible(frames_->root());}
+bool MapScriptRuntime::portraitVisible() const{return frames_->portraitVisible();}
 void MapScriptRuntime::pump(){if(localSync_)localSync_->pump();if(localPost_)localPost_->pump();}
 void MapScriptRuntime::start(){if(started_)throw std::runtime_error("Binary map runtime already started");started_=true;session_.startMain([this]{auto result=binary_->run("main");if(result.type)throw std::runtime_error("Binary map main returned a value");if(requiresLuaEntry_ && !lua_.mapEntryExecuted())throw std::runtime_error("Binary map main did not initialize its Lua entry");});}
 }
