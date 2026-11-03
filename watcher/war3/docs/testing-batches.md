@@ -7947,3 +7947,9 @@ Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。接入 `CreateFrameByTagName`（`(SSISI)I`），支持已接入绘制的 `FRAME`、`BACKDROP`、`TEXT`，可从同类型 FDF 模板继承属性和子帧，将子帧指向模板根名称的锚点重定向至新帧。新实例接入地图帧树、context、动态纹理和销毁；其他类型、模板缺失时的原版处理及继承边界待对照。
 
 Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖中文名称、模板属性与子锚点、动态纹理、错误类型和签名。隔离探针临时将尚未建立的标准 HUD 查找重定向到测试帧，观测到原图先后将 context 0、2 的信息纹理移出屏幕，再操作 context 6 的英雄属性文字；其 `BACKDROP/底图/tooltip_backdrop` 调用已通过新建帧路径，下一调用为 `TEXT/物品属性/template`，当前加载定义中缺少 `template` 而明确失败。探针已移除，不能代表真实 HUD 或整图启动通过；标准实例 context、缺失模板行为、平台身份、实际画面和完整玩法待验证。
+
+### 地图动态帧缺失模板处理（部分验证，待批次验证）
+
+路径：`src/fdf.h`、`src/map_frames.cpp`、`tests/lua_tests.cpp`。`CreateFrameByTagName` 的模板不存在时保留类型默认定义并继续创建，存在模板则仍继承；模板内部存在缺失依赖时仍明确失败。依据地图内嵌 DLL（SHA-256 `cc8daa2b9c157ecbc7236a291a1ae349c98fd34779c6b3b636a1baf4b71428b0`）静态代码：`0x10077b5a` 执行模板查找，`0x10077b60–0x10077b62` 对空结果跳到 `0x10077b85` 继续帧创建。共同资源可枚举的 86 个 FDF 均未找到字面量 `"template"`，不排除未枚举资源或其他运行时来源。
+
+Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖缺失模板的 TEXT 创建、读写及销毁。模拟标准 HUD 查找的隔离探针中，原图成功创建 `物品属性`、`物品名字`、`小图标`、`小图标数值`，下一阻塞为 `Unimplemented Lua DZAPI: DzFrameSetTexture`；探针已移除。真实 HUD 实例、平台身份、实际画面和完整地图启动仍待接通与验证。

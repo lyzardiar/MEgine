@@ -37,6 +37,7 @@ public:
     void load(Archives& archives,const std::string& member,const FrameSource& source);
     void loadToc(Archives& archives,const std::string& member,const FrameSource& source={});
     FrameDefinition frame(const std::string& name) const;
+    bool hasFrame(const std::string& name) const {return frames_.contains(name);}
     std::string string(const std::string& key) const;
 };
 }
