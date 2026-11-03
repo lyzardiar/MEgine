@@ -44,7 +44,7 @@ struct ScriptEvent {
     std::string match;
     bool exact=false;
 };
-struct ScriptDamageEvent {jass::Real amount;bool active=true;};
+struct ScriptDamageEvent {jass::Real amount;std::uint32_t attackType=0,damageType=0,weaponType=0;bool active=true,physical=false,attack=false,ranged=false;};
 struct ScriptContext {
     std::uint32_t trigger=0,event=0,expiredTimer=0,triggerPlayer=0,triggerUnit=0;
     std::uint32_t filterUnit=0,enumUnit=0,filterPlayer=0,enumPlayer=0;

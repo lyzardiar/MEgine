@@ -8281,3 +8281,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/script_state.h`、`src/session.h`、`src/session_damage.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`EXSetEventDamage` 在同步单位伤害事件中修改共享伤害值，后续监听器和 `GetEventDamage` 可读取更新，事件结束后应用到生命值；嵌套伤害使用独立状态，事件外或无效数值返回 false。事件结束后不再允许修改；睡眠回调与原版事件数据失效时机仍需比对。
 
 Win32 Release 客户端、Lua、地图和会话线程测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖多监听器修改、嵌套伤害、事件外调用及最终生命值（`tmp/docs-artifacts/war3/damage-set-probe2.log`）。`war3_map_tests <data-root> tmp/docs-artifacts/war3/damage-set-map preloader_nested_damage` 为 1 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。原图 N1 路径越过 `EXSetEventDamage`，停于 `EXGetEventDamageData`；完整伤害类别、睡眠触发器、技能与实际对局待验证。
+
+### 2026-11-03：伤害事件分类数据（部分验证，待批次验证）
+
+路径：`src/script_state.h`、`src/session.h`、`src/session_damage.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`、`tests/clock_tests.cpp`。`EXGetEventDamageData` 支持事件有效性、物理、攻击、远程、伤害类型、武器类型与攻击类型（0–6）；事件外及未知字段返回 0。脚本直接和范围伤害传递武器类型，延迟范围伤害快照升级至版本 2，并兼容版本 1 的默认武器类型。物理标志暂按普通／强化伤害推断；内建单位攻击尚未解析武器音效类型，当前返回默认值，需继续还原并与原版比对。
+
+Win32 Release 客户端和 Lua、时钟测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖嵌套事件、字段、脚本直接及范围伤害（`tmp/docs-artifacts/war3/damage-data-probe2.log`）。`WAR3_CLOCK_FILTER=recovery_bundle_restores_point_damage war3_clock_tests <data-root> tmp/docs-artifacts/war3/damage-data-clock` 为 1 通过／0 失败，覆盖非零武器类型往返与旧版快照恢复（`tmp/docs-artifacts/war3/damage-data-clock.log`）。原图 N1 推进至约 5.875 秒，停于 `Map frame template type differs: bb`；物理标志、内建攻击武器类型和完整对局待验证。

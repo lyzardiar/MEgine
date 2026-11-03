@@ -226,13 +226,13 @@ class ScriptSession {
     double simulationTime_=0,accumulator_=0;
     std::uint32_t routeRetryCursor_=0;
     struct PointDamage {
-        std::uint32_t source=0,attackType=0,damageType=0;
+        std::uint32_t source=0,attackType=0,damageType=0,weaponType=0;
         float x=0,y=0,radius=0,amount=0;
         bool attack=false,ranged=false;
     };
     std::multimap<double,PointDamage> pointDamageQueue_;
     bool pointDamageRestored_=false;
-    bool scriptDamageWidget(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack,bool ranged);
+    bool scriptDamageWidget(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack,bool ranged,unsigned weaponType=0);
     void applyPointDamage(const PointDamage& damage);
     void pointDamageTick();
     IndicatorState indicators_;
@@ -1297,7 +1297,8 @@ public:
     std::uint32_t itemBuilding(std::uint32_t unit,std::uint32_t item);
     bool mechanicalDisguised(const UnitState& unit,unsigned viewer) const;
     bool setJapiEventDamage(jass::Real value);
-    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false,bool diseaseAura=false,bool nonlethal=false);
+    std::uint32_t japiEventDamageData(std::uint32_t selector) const;
+    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false,bool diseaseAura=false,bool nonlethal=false,unsigned weaponType=0);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);
