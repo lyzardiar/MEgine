@@ -8349,3 +8349,9 @@ Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qclo
 路径：`tests/lua_tests.cpp`。在原图 N1 快进与英雄操作场景中，向地图生成的英雄发出即时技能 `A0IJ` 和点目标位移技能 `A008`；临时单位事件监听验证各自的技能效果事件，位移技能同时检查冷却和英雄位置变化。位移后的自动索敌可能继续移动英雄，不能由最终位置单独确认精确落点。
 
 Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，日志 `tmp/docs-artifacts/war3/hero-spells-final.log`。技能按钮、目标指示器、特效与其他技能及完整对局仍待实际画面和操作验证。本项测试补充不计入功能／修复批次计数。
+
+### 2026-11-03：地图界面事件上下文（部分验证，待批次验证）
+
+路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。本地悬停进入／离开回调期间，`DzGetTriggerUIEventPlayer` 返回本地玩家，`DzGetTriggerUIEventFrame` 返回触发控件；`jass.dzapi` 和 `jass.japi` 均可调用，回调正常返回或抛错后清除上下文。事件外返回空玩家和 0。原版事件外返回值、其他事件类型和同步回调仍需比对。
+
+Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖两个模块的玩家／控件值、正常及异常清理。原图 N1 快进后对 18 个已注册事件目标依次模拟悬停进入／离开，可见且启用的目标回调不再因玩家查询中断，日志 `tmp/docs-artifacts/war3/frame-context-final.log`。实际鼠标命中、帧叠层、点击与画面待验证。

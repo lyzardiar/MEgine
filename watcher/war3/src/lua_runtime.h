@@ -82,6 +82,7 @@ class LuaRuntime {
     std::map<std::string,int> codeRefs_;
     std::map<std::pair<std::uint32_t,std::uint32_t>,int> frameEventRefs_;
     std::set<std::uint32_t> hoveredFrames_;
+    std::optional<std::uint32_t> frameEvent_;
     std::map<std::string,LuaJapiSignature> japiSignatures_;
     void clearHooks();
     void clearFrameEvents();
