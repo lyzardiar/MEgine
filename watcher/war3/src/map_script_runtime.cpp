@@ -18,6 +18,8 @@ MapScriptRuntime::MapScriptRuntime(ScriptSession& session,std::shared_ptr<const 
 }
 MapScriptRuntime::~MapScriptRuntime(){if(started_)session_.runtime().cancelThreads();}
 void MapScriptRuntime::attachPlatformPlayerNames(std::function<std::optional<std::string>(unsigned)> provider){if(started_)throw std::runtime_error("Cannot attach platform identity after map start");lua_.attachJapiPlayerNames(std::move(provider));}
+std::optional<std::string> MapScriptRuntime::defaultLocalPlatformName(unsigned id){if(id>=16)return {};return "Player "+std::to_string(id+1);}
+void MapScriptRuntime::attachDefaultLocalPlatformNames(){auto local=session_.localPlayer();if(!local || session_.networkPlayerSlot(*local))throw std::runtime_error("Default platform identities require a single-player session");attachPlatformPlayerNames(defaultLocalPlatformName);}
 void MapScriptRuntime::attachPostHost(LuaPostHost host){if(started_)throw std::runtime_error("Cannot attach post host after map start");lua_.attachPostHost(std::move(host));}
 void MapScriptRuntime::completePost(std::uint64_t id,std::span<const LuaResult> values){lua_.completePost(id,values);}
 bool MapScriptRuntime::uiRootVisible() const{return frames_->visible(frames_->root());}

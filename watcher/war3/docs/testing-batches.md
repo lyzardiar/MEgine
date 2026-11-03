@@ -8055,3 +8055,9 @@ Win32 Release 客户端、Lua 测试编译通过；`war3_lua_tests <data-root> G
 ### 2026-11-03：Lua 诊断批次
 
 检查范围：已提交 `9281114`、`0f7edc4` 及本次句柄类型工作树。Win32 Release 客户端、Lua、native 与会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/debug-handles-batch-20261103` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。实际图形、平台和完整玩法未执行；既有 D3D9 设备故障未变化，图形验收保留待测。
+
+### 2026-11-03：单人默认平台身份（部分验证，待批次验证）
+
+路径：`src/map_script_runtime.{h,cpp}`、`src/game_loading.cpp`、`src/main.cpp`、`tests/lua_tests.cpp`。按用户要求，正式单人本地地图加载和 `--main-check` 使用模拟平台身份：槽位 0–15 分别返回 `Player 1`–`Player 16`，日志标记 `map_platform_identity=local_default`。已显式接入真实身份提供者的其他调用路径仍可使用其提供者；局域网会话拒绝启用单人默认身份，避免将本地值当作跨客户端真实身份。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖默认槽位名称、越界、启动时序和局域网拒绝，并在使用默认身份与模拟 post 宿主时推进原图运行。正式 `war3.exe --data-root <data-root> --map G:\qcloud_20144088.w3x --main-check --mute --log tmp/docs-artifacts/war3/default-identity-main-20261103.log` 退出码 1：已越过身份检查，停在地图日志所需的 `post_message` 宿主缺失；未发送网络请求。图形加载、跨客户端身份、网络请求和完整玩法仍待实现或验证。

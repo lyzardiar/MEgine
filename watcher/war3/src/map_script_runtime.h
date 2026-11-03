@@ -29,6 +29,8 @@ public:
     MapScriptRuntime& operator=(const MapScriptRuntime&)=delete;
     void start();
     void attachPlatformPlayerNames(std::function<std::optional<std::string>(unsigned)> provider);
+    static std::optional<std::string> defaultLocalPlatformName(unsigned id);
+    void attachDefaultLocalPlatformNames();
     void attachPostHost(LuaPostHost host);
     void completePost(std::uint64_t id,std::span<const LuaResult> values);
     bool dispatchMessage(LuaInputMessage& message) {return lua_.dispatchMessage(message);}
