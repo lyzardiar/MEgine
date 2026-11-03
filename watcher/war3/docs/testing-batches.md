@@ -8105,3 +8105,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/lua_local_platform.cpp`、`tests/lua_tests.cpp`。单人本地平台宿主支持插件 `SetOwner`，在会话内保存地图传入的作者名，并限制输入长度和内嵌 NUL；宿主销毁后拒绝调用。原插件静态分析显示该接口保存作者名并启动远程查询线程；本地模拟不启动线程，不访问外网，服务端响应相关行为未模拟。原图 `Battle.lua` 传入作者名“问号”。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖调用、无效输入和宿主销毁。原图逐帧推进至约 1.1875 秒，进入难度对话框初始化，随后因 `handle_ref` 无法识别句柄而停止；日志 `tmp/docs-artifacts/war3/setowner-final.log`。图形、完整对局及平台服务语义待验证。
+
+### 2026-11-03：轻量句柄引用兼容（部分验证，待批次验证）
+
+路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。轻量句柄模式的 `handle_ref`／`handle_unref` 对函数等非 userdata 值按空句柄处理并原样返回；真实句柄仍检查会话并维护引用数，完整 userdata 模式继续拒绝函数。原图对难度对话框回调使用此调用，行为依据本机 YDWE Lua 引擎静态代码。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖两种模式、回调原样返回及有效句柄引用计数。原图逐帧推进至约 30 秒，在定期清理中遇到未知特效句柄类型，日志 `tmp/docs-artifacts/war3/handle-ref-final.log`。未操作难度对话框，真实画面和完整玩法待验证。
