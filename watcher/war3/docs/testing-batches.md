@@ -8061,3 +8061,9 @@ Win32 Release 客户端、Lua 测试编译通过；`war3_lua_tests <data-root> G
 路径：`src/map_script_runtime.{h,cpp}`、`src/game_loading.cpp`、`src/main.cpp`、`tests/lua_tests.cpp`。按用户要求，正式单人本地地图加载和 `--main-check` 使用模拟平台身份：槽位 0–15 分别返回 `Player 1`–`Player 16`，日志标记 `map_platform_identity=local_default`。已显式接入真实身份提供者的其他调用路径仍可使用其提供者；局域网会话拒绝启用单人默认身份，避免将本地值当作跨客户端真实身份。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖默认槽位名称、越界、启动时序和局域网拒绝，并在使用默认身份与模拟 post 宿主时推进原图运行。正式 `war3.exe --data-root <data-root> --map G:\qcloud_20144088.w3x --main-check --mute --log tmp/docs-artifacts/war3/default-identity-main-20261103.log` 退出码 1：已越过身份检查，停在地图日志所需的 `post_message` 宿主缺失；未发送网络请求。图形加载、跨客户端身份、网络请求和完整玩法仍待实现或验证。
+
+### 2026-11-03：单人本地 POST 模拟（部分验证，待批次验证）
+
+路径：`CMakeLists.txt`、`src/lua_local_post.{h,cpp}`、`src/map_script_runtime.{h,cpp}`、`src/game_loading.cpp`、`src/main.cpp`、`tests/lua_tests.cpp`。根据用户选择，单人本地 `post_message` 不访问网络，也不保存请求地址或正文；请求 ID 按顺序排队，在后续 pump 以空字符串作为模拟回调结果。回调里追加的请求留到下一次 pump，队列限制 256 条；局域网会话不使用此单人宿主。日志标记 `map_post=local_simulated`。空字符串是明确的本地默认数据，并非真实服务器响应；依赖服务器返回内容的玩法仍需后续实现本地数据模型。
+
+Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖异步顺序、回调追加、容量、宿主销毁、启动时序与局域网拒绝。正式单人 `--main-check --mute` 退出码 0，`main_completed=true`、生成 19 个单位，日志 `tmp/docs-artifacts/war3/local-post-main-20261103.log`；`--main-check --mute --simulate-ms 1000` 退出码 0、模拟时间 1 秒，日志 `tmp/docs-artifacts/war3/local-post-simulation-20261103.log`。更长的逐帧隔离测试中，地图调用未实现的 `EXNetSaveRemoteData`，错误处理随后耗尽 Lua 指令预算，详见 `tmp/docs-artifacts/war3/local-post-lua-20261103.log`。上述测试没有网络请求；实际图形、长期运行、本地平台存档与完整玩法仍待实现或验证。
