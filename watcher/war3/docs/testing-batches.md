@@ -8205,3 +8205,7 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetAnimateOffset` 保存有限进度值，非循环动画按夹取至 0–1 的进度采样序列，循环动画继续按时钟播放。地图脚本将该参数作为进度并默认设为 1，原插件只在非循环路径安装读取该值的回调；具体换算为序列时间的方式仍为近似，需画面及原版行为验证。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖进度状态、非法值与采样边界。原图 N1 路径越过 `FrameSetAnimateOffset`，接着停于 `FrameSetModelSize`，日志 `tmp/docs-artifacts/war3/animation-offset-final.log`。GPU 画面、非循环进度与边界值行为待批次验证。
+
+### 2026-11-03：模型帧与动画批次
+
+范围：`515bfb9`、`46a7841`、`a415dd1`。同一集成版本 Win32 Release 客户端、Lua 和 native 目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败（`tmp/docs-artifacts/war3/animation-offset-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/sprite-animation-batch` 为 22 通过／0 失败（`tmp/docs-artifacts/war3/sprite-animation-native.log`）。模型内存解析输入和实现未变，沿用前批 1 通过／0 失败的结果。原图 N1 继续停于 `FrameSetModelSize`；GPU 绘制、动画进度换算、相机、动态贴图、界面视觉及完整对局未验证，仍保留为待测项。
