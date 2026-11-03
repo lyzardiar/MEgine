@@ -8193,3 +8193,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`CMakeLists.txt`、`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/glue.{h,cpp}`、`src/game_view.{h,cpp}`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetModel` 接受零选项，规范化资源路径并绑定到 SPRITE；绘制遍历中按帧位置加载本地归档或内存覆盖的 MDX，内容变更时重建缓存，使用模型相机或默认相机绘制，并在销毁帧后释放缓存。其他选项明确报未支持。
 
 Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖路径、非法输入及原图生成模型绑定。原图 N1 路径越过 `FrameSetModel`，停于 `FrameSetAnimate`，日志 `tmp/docs-artifacts/war3/sprite-model-final.log`。当前 GPU 设备不可用，绘制未进行画面验证；自定义相机、动画、模型附属资源及动态纹理尚未接入，默认相机和边界裁剪只是基础实现；模型首次加载和上传在渲染线程进行，性能待验证。
+
+### 2026-11-03：地图模型帧基础动画（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetAnimate` 的已观察编号 0 接入模型首个序列，记录调用时刻及循环状态，重复调用重启计时；单次播放保持末帧，循环播放按序列时长回绕。其他编号明确报未支持。原插件将动画编号传入引擎，编号与序列的通用对应关系尚未证实；目前仅以本地图生成模型的唯一 `Stand` 序列验证该近似。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖调用状态、无效编号、循环及非循环时钟边界。原图 N1 路径越过 `FrameSetAnimate`，接着停于 `FrameSetAnimateOffset`，日志 `tmp/docs-artifacts/war3/animation-final.log`。GPU 设备不可用，动画画面、实际循环语义及其他模型尚未验证；批次需复测模型帧及动画场景。
