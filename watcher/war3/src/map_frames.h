@@ -12,6 +12,7 @@ struct MapFramePoint {std::uint32_t point=0;float x=0,y=0;};
 struct MapFrameRect {float x=0,y=0,w=0,h=0;};
 struct SimpleButtonStyle {std::string texture,highlight,textTemplate,text;};
 SimpleButtonStyle simpleButtonStyle(const FrameDefinition& frame,MapButtonVisual visual);
+bool mapButtonVisualChild(const FrameDefinition& frame,std::string_view name);
 std::array<float,4> mapTextureCoordinates(const FrameDefinition& frame);
 MapFrameRect solveMapFramePoints(float width,float height,std::span<const MapFramePoint> points);
 MapFrameRect solveSimpleFrameAnchor(MapFrameRect parent,float width,float height,std::string_view point,float x,float y);

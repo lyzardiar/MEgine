@@ -8427,3 +8427,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/map_frames.{h,cpp}`、`src/glue.cpp`、`tests/lua_tests.cpp`。对带有 `ButtonText` 文字子帧的 `GLUETEXTBUTTON`，文字和颜色读写转发到该实例的文字子帧，绘制也使用子帧的运行时颜色。缺少或存在多个匹配子帧时明确报错；独立外部文字帧和无文字模板按钮的原版行为仍待还原。
 
 Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖按钮文字／颜色读写、子帧状态、实例隔离及缺失子帧（`tmp/docs-artifacts/war3/button-text-final.log`）。GPU 字体颜色、悬停文字及真实画面待验证。
+
+### 2026-11-03：地图按钮独立子帧绘制（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/glue.cpp`、`tests/lua_tests.cpp`。地图文本按钮和简易按钮除状态皮肤外，还递归绘制独立子帧；正常、按下、禁用、高亮及文字模板子帧继续由按钮状态路径处理，避免重复绘制。该地图快进后存在大量没有 `ButtonText` 但包含独立 BACKDROP 的按钮，先前按钮绘制提前返回会遗漏这些子帧。按钮自身视口裁剪、叠层及实际画面仍需核验。
+
+Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖状态资源分类并确认原图存在独立按钮背景（`tmp/docs-artifacts/war3/button-children-final.log`）。本机图形设备仍无法验收，未声称子帧像素绘制通过。另一次持续攻击探测在约 111 秒进入暂停并写入本地进度，尚未判定是否属于正常结束流程，日志 `tmp/docs-artifacts/war3/autoplay-result.log`。
