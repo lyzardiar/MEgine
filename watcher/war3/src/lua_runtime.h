@@ -85,6 +85,8 @@ class LuaRuntime {
     JassBinaryNativeValue invokeBinaryOverride(const std::string& name,std::span<const JassBinaryNativeValue> arguments);
     void clearErrorHandler();
     std::string callbackError(lua_State* state,std::string_view prefix);
+    static int callbackErrorHandler(lua_State* state);
+    int protectedCall(lua_State* state,int arguments,int results);
     void protectedCallback(lua_State* state,int arguments,int results,std::uint64_t instructionLimit=1000000);
     jass::Value invokeJassHook(const std::string& name,std::span<const jass::Value> arguments);
     jass::Value callbackReference(lua_State* state,int index,bool predicate);

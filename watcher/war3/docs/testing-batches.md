@@ -8039,3 +8039,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/lua_runtime.cpp`、`tests/lua_tests.cpp`。向脚本提供 Lua 5.3 原生 `debug.traceback`，同时通过全局 `debug` 和 `require('debug')` 暴露；其余调试库成员不开放。地图的 `jass.runtime.error_handle` 使用该函数记录调用栈时不再因 `debug` 为空而产生次级错误。
 
 Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖普通调用栈、协程、非字符串消息、未开放成员及真实 JASS 回调错误处理。模拟全部槽位平台身份、非激活窗口及仅收集请求的 post 宿主后，原图定期诊断在未实现的 `handledef` 处输出自身错误与调用栈；未发送网络请求。真实平台身份、`handledef` 的原版对象类型和引用语义、实际画面及完整玩法仍待实现或验证。
+
+### 2026-11-03：保留 Lua 故障现场调用栈（部分验证，待批次验证）
+
+路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。Lua 触发器回调和 JASS hook 通过受保护调用的错误处理函数在栈展开前执行 `jass.runtime.error_handle`，因此地图的 `debug.traceback` 能看到故障函数；处理器再次出错仍保留原错误和处理器错误，指令预算耗尽时不递归执行处理器。
+
+Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖故障来源栈帧、错误处理器自身失败和既有指令预算。模拟平台身份、非激活窗口及仅收集请求的 post 宿主下，原图 `handledef` 故障栈定位到 `scripts/lib/ecs/lib/CleanMemory.lua` 第 79 行和第 175 行；未发送网络请求。`handledef` 的对象类型与引用语义、真实平台身份、图形和完整地图运行仍待实现或验证。
