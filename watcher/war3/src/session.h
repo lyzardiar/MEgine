@@ -1296,6 +1296,7 @@ public:
     bool itemAutoTargetsBase(std::uint32_t item);
     std::uint32_t itemBuilding(std::uint32_t unit,std::uint32_t item);
     bool mechanicalDisguised(const UnitState& unit,unsigned viewer) const;
+    bool setJapiEventDamage(jass::Real value);
     bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false,bool diseaseAura=false,bool nonlethal=false);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);

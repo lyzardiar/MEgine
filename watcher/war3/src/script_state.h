@@ -44,6 +44,7 @@ struct ScriptEvent {
     std::string match;
     bool exact=false;
 };
+struct ScriptDamageEvent {jass::Real amount;bool active=true;};
 struct ScriptContext {
     std::uint32_t trigger=0,event=0,expiredTimer=0,triggerPlayer=0,triggerUnit=0;
     std::uint32_t filterUnit=0,enumUnit=0,filterPlayer=0,enumPlayer=0;
@@ -63,7 +64,7 @@ struct ScriptContext {
     std::uint32_t constructing=0,cancelled=0,constructed=0;
     std::uint32_t triggerWidget=0,triggerDestructable=0,filterDestructable=0,enumDestructable=0,filterItem=0,enumItem=0;
     bool damageAttack=false,damageRanged=false,customMessage=false,dzSync=false;
-    jass::Real damage;
+    jass::Real damage;std::shared_ptr<ScriptDamageEvent> damageEvent;
     std::string chat,chatMatch,saveName,customText;
 };
 struct ScriptTimerDialog {

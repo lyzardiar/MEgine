@@ -8275,3 +8275,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 ### 2026-11-03：模型位置、视口与动画索引批次
 
 范围：`bfb378b`、`b906840`、`141da5d`。同一集成版本 Win32 Release 客户端、Lua 和 native 目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败（`tmp/docs-artifacts/war3/anim-index-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/sprite-index-batch` 为 22 通过／0 失败（`tmp/docs-artifacts/war3/sprite-index-native.log`）。模型解析实现和输入未变化，沿用前批 1 通过／0 失败结果。原图 N1 推进至约 4.5625 秒，伤害回调停于 `EXSetEventDamage`；GPU 绘制、裁剪与点击、动画和完整对局未验证，保留待测。
+
+### 2026-11-03：伤害事件数值修改（部分验证，待批次验证）
+
+路径：`src/script_state.h`、`src/session.h`、`src/session_damage.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`EXSetEventDamage` 在同步单位伤害事件中修改共享伤害值，后续监听器和 `GetEventDamage` 可读取更新，事件结束后应用到生命值；嵌套伤害使用独立状态，事件外或无效数值返回 false。事件结束后不再允许修改；睡眠回调与原版事件数据失效时机仍需比对。
+
+Win32 Release 客户端、Lua、地图和会话线程测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖多监听器修改、嵌套伤害、事件外调用及最终生命值（`tmp/docs-artifacts/war3/damage-set-probe2.log`）。`war3_map_tests <data-root> tmp/docs-artifacts/war3/damage-set-map preloader_nested_damage` 为 1 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。原图 N1 路径越过 `EXSetEventDamage`，停于 `EXGetEventDamageData`；完整伤害类别、睡眠触发器、技能与实际对局待验证。
