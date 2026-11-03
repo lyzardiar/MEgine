@@ -2,9 +2,11 @@
 // Outer SHA-256 4e479624787c77ce4ff44e4257e1c72e1fca9a247e49899ba7ae7f64622a54d6; embedded DLL SHA-256 cc8daa2b9c157ecbc7236a291a1ae349c98fd34779c6b3b636a1baf4b71428b0.
 #include "lua_runtime.h"
 #include "platform.h"
+#include <charconv>
 #include <stdexcept>
 
 namespace war3 {
+std::optional<std::int32_t> knownPluginGameVersion(std::span<const std::uint8_t> image){if(image.empty() || image.size()>64u*1024u*1024u)return {};std::string_view bytes(reinterpret_cast<const char*>(image.data()),image.size());constexpr std::string_view marker="Warcraft III (build ";auto at=bytes.find(marker);if(at==bytes.npos || bytes.find(marker,at+marker.size())!=bytes.npos)return {};at+=marker.size();auto end=at;while(end<bytes.size() && bytes[end]>='0' && bytes[end]<='9')++end;if(end==at || end>=bytes.size() || bytes[end]!=')' || end-at>10)return {};std::int32_t value=0;auto [last,error]=std::from_chars(bytes.data()+at,bytes.data()+end,value);if(error!=std::errc{} || last!=bytes.data()+end || value<=0)return {};return value==52240?7000:value;}
 bool LuaRuntime::attachKnownPluginJapi(std::span<const std::uint8_t> bytes){
     if(!jassAlive() || !japiSession_)throw std::runtime_error("Known Lua JAPI plugin requires an attached session");if(sha256(bytes)!="4e479624787c77ce4ff44e4257e1c72e1fca9a247e49899ba7ae7f64622a54d6")return false;auto signatures=japiSignatures_;
     for(auto [name,signature]:{
@@ -276,6 +278,6 @@ bool LuaRuntime::attachKnownPluginJapi(std::span<const std::uint8_t> bytes){
         std::pair{"wait_execute_func3",LuaJapiSignature{"nothing",{"real","string","integer","integer","integer"}}},
         std::pair{"wait_execute_func4",LuaJapiSignature{"nothing",{"real","string","integer","integer","integer","integer"}}},
         std::pair{"wait_execute_func5",LuaJapiSignature{"nothing",{"real","string","integer","integer","integer","integer","integer"}}}
-    }){auto [found,inserted]=signatures.emplace(name,signature);if(!inserted && !(found->second==signature))throw std::runtime_error("Conflicting Lua JAPI plugin declaration: "+std::string(name));}japiSignatures_.swap(signatures);return true;
+    }){auto [found,inserted]=signatures.emplace(name,signature);if(!inserted && !(found->second==signature))throw std::runtime_error("Conflicting Lua JAPI plugin declaration: "+std::string(name));}japiSignatures_.swap(signatures);knownPluginVersion_="插件版本1.48";return true;
 }
 }

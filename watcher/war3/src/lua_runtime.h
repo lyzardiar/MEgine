@@ -26,6 +26,7 @@ namespace jass {class Runtime;struct RuntimeLifetime;struct Value;}
 struct LuaResult {enum class Kind {Nil,Boolean,Integer,Number,String,Other};Kind kind=Kind::Nil;bool boolean=false;std::int64_t integer=0;double number=0;std::string text;};
 enum class LuaChunkFormat {Standard, MapOpcodes};
 struct LuaJapiSignature {std::string result;std::vector<std::string> parameters;bool operator==(const LuaJapiSignature&) const = default;};
+std::optional<std::int32_t> knownPluginGameVersion(std::span<const std::uint8_t> image);
 struct LuaStormHost {std::function<std::optional<std::string>(std::string_view)> load;std::function<bool(std::string_view,std::string_view)> save;};
 struct LuaInputMessage {enum class Kind {KeyDown,KeyUp,MouseDown,MouseUp};Kind kind=Kind::KeyDown;std::uint32_t code=0,state=0;double x=0,y=0;};
 struct LuaSyncHost {std::function<void(std::string_view)> send;};
@@ -53,6 +54,7 @@ class LuaRuntime {
     ScriptSession* japiSession_=nullptr;
     std::function<std::optional<std::string>(unsigned)> japiPlayerName_;
     std::function<std::optional<std::string>()> japiVersion_;
+    std::optional<std::string> knownPluginVersion_;
     std::function<std::optional<std::int32_t>()> japiGameVersion_;
     std::optional<LuaSyncHost> japiSyncHost_;
     std::weak_ptr<const jass::RuntimeLifetime> jassLifetime_;

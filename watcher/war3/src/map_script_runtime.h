@@ -24,6 +24,7 @@ public:
     MapScriptRuntime(const MapScriptRuntime&)=delete;
     MapScriptRuntime& operator=(const MapScriptRuntime&)=delete;
     void start();
+    void attachPlatformPlayerNames(std::function<std::optional<std::string>(unsigned)> provider);
     void pump();
     bool uiRootVisible() const;
     std::vector<std::uint32_t> frameEventTargets() {return lua_.frameEventTargets();}
