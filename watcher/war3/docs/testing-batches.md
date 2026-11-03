@@ -8397,3 +8397,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`tests/lua_tests.cpp`。原图 N1 快进后使用英雄实际持有的初始装备 `I02D`，通过玩家命令移动物品栏格子、丢弃并重新拾取，验证持有者、格子和各一次丢弃／拾取事件；随后继续运行已有英雄移动、攻击和技能路径。
 
 Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，日志 `tmp/docs-artifacts/war3/map-item-events-final.log`。该装备为被动物品，未覆盖主动消耗、真实鼠标拖放、画面及完整对局；本项测试补充不计入功能／修复批次计数。
+
+### 2026-11-03：地图按钮遮挡世界鼠标目标（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/game_view.cpp`、`tests/lua_tests.cpp`。文本按钮命中统一按帧层级、可见性和已裁剪范围选择最上层；禁用按钮仍遮挡底层，点击回调继续按启用状态拒绝。鼠标移动和点击更新地图脚本的 `GetTargetObject` 前，若位于地图文本按钮上则清空世界目标，避免取到按钮下方单位或物品。当前覆盖范围仅限 `GLUETEXTBUTTON`，其他帧的原版鼠标遮挡规则仍需对照。
+
+Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖帧前后顺序、裁剪、禁用和隐藏状态（`tmp/docs-artifacts/war3/map-button-occlusion-final.log`）。真实窗口鼠标消息、精确遮挡和画面仍待验证。

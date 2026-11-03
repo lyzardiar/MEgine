@@ -2,6 +2,7 @@
 #pragma once
 #include "fdf.h"
 #include <array>
+#include <functional>
 #include <memory>
 #include <span>
 
@@ -69,6 +70,7 @@ public:
     std::uint8_t alpha(std::uint32_t id) const;
     void setLevel(std::uint32_t id,std::int32_t level);
     std::vector<std::uint32_t> orderedChildren(std::uint32_t id) const;
+    std::uint32_t buttonAt(float x,float y,const std::function<MapFrameRect(std::uint32_t)>& bounds) const;
     void enable(std::uint32_t id,bool value);
     bool enabled(std::uint32_t id) const;
     void setModel(std::uint32_t id,std::string_view path);
