@@ -108,7 +108,7 @@ int LuaRuntime::registerJapi(lua_State* L){
 }
 int LuaRuntime::japiUnavailable(lua_State* L){auto self=static_cast<LuaRuntime*>(lua_touserdata(L,lua_upvalueindex(1)));auto generation=std::uint64_t(lua_tointeger(L,lua_upvalueindex(2)));if(!self || !self->jassAlive() || self->jassGeneration_!=generation)return luaL_error(L,"Lua JASS runtime detached");return luaL_error(L,"Unimplemented Lua JAPI: %s",lua_tostring(L,lua_upvalueindex(3)));}
 int LuaRuntime::dzapiLookup(lua_State* L){
-    try{auto self=static_cast<LuaRuntime*>(lua_touserdata(L,lua_upvalueindex(1)));auto generation=std::uint64_t(lua_tointeger(L,lua_upvalueindex(2)));if(!self || !self->jassAlive() || self->jassGeneration_!=generation)throw std::runtime_error("Lua JASS runtime detached");throw std::runtime_error("Unimplemented Lua DZAPI: "+key(L,2));}catch(const std::exception& e){lua_pushstring(L,e.what());}return lua_error(L);
+    try{auto self=static_cast<LuaRuntime*>(lua_touserdata(L,lua_upvalueindex(1)));auto generation=std::uint64_t(lua_tointeger(L,lua_upvalueindex(2)));if(!self || !self->jassAlive() || self->jassGeneration_!=generation)throw std::runtime_error("Lua JASS runtime detached");auto name=key(L,2);if(name=="DzFrameSetTexture" && self->mapFrames_){lua_pushlightuserdata(L,self);lua_pushinteger(L,lua_Integer(generation));lua_pushliteral(L,"FrameSetTexture");lua_pushcclosure(L,japiCall,3);return 1;}throw std::runtime_error("Unimplemented Lua DZAPI: "+name);}catch(const std::exception& e){lua_pushstring(L,e.what());}return lua_error(L);
 }
 int LuaRuntime::japiUnsupported(lua_State* L){return luaL_error(L,"Unsupported Lua JAPI operation");}
 int LuaRuntime::japiLookup(lua_State* L){
