@@ -8457,3 +8457,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/session_match.cpp`、`src/session_text.cpp`、`src/game_view.cpp`、`src/game_flow_ui.h`、`tests/lua_tests.cpp`、`tests/clock_tests.cpp`。绑定 `DisplayLoadDialog`，本地对局将脚本请求接到现有加载存档界面；待处理请求随 UI 请求快照保存，支持读取原版本快照。回放及局域网不弹出本地加载界面。
 
 Win32 Release 客户端、Lua 和 clock 测试目标编译通过。原图 N1 快进失败后选择“装载游戏”，不再报未绑定 native，并产生加载界面请求；同次 Lua 测试 2／0（`tmp/docs-artifacts/war3/defeat-load-final.log`）。定向 `WAR3_CLOCK_FILTER=recovery_bundle_restores_ui_requests` 为 1／0，覆盖请求保存和恢复。真实 GPU 弹窗、取消、选择存档并重载以及局域网原版行为待批次验证；地图其他失败选项和完整对局尚未验收。
+
+### 2026-11-03：原图失败对话框四个选项验证
+
+路径：`tests/lua_tests.cpp`。N1 持续攻击快进至失败后，使用独立本地数据目录分别点击四个选项：“重新开始”和“降低难度”产生重新开始请求，“装载游戏”产生加载界面请求，“退出战役”产生返回及结算请求。N1 是最低难度，此验证不证明更高难度的降级效果。
+
+Win32 Release Lua 测试目标编译通过；原图测试 2／0，四条路径均在模拟时间 111.125 秒达到失败对话框，日志 `tmp/docs-artifacts/war3/defeat-all-choices-final.log`。上述检查覆盖会话请求，不代表实际重载、结算画面、真实鼠标或完整对局通过；本项测试补充不计入功能／修复批次。
