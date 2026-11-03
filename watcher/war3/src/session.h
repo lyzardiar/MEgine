@@ -1633,6 +1633,7 @@ public:
     size_t liveObjects(NativeKind kind) const;
     size_t handleTableSlots() const;
     size_t handleTableCount() const;
+    std::optional<std::string_view> debugHandleType(std::uint32_t id) const;
     void retainHandle(std::uint32_t id);
     void releaseHandle(std::uint32_t id);
     std::uint32_t retainedHandleCount(std::uint32_t id) const;

@@ -8045,3 +8045,13 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/lua_runtime.{h,cpp}`、`tests/lua_tests.cpp`。Lua 触发器回调和 JASS hook 通过受保护调用的错误处理函数在栈展开前执行 `jass.runtime.error_handle`，因此地图的 `debug.traceback` 能看到故障函数；处理器再次出错仍保留原错误和处理器错误，指令预算耗尽时不递归执行处理器。
 
 Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖故障来源栈帧、错误处理器自身失败和既有指令预算。模拟平台身份、非激活窗口及仅收集请求的 post 宿主下，原图 `handledef` 故障栈定位到 `scripts/lib/ecs/lib/CleanMemory.lua` 第 79 行和第 175 行；未发送网络请求。`handledef` 的对象类型与引用语义、真实平台身份、图形和完整地图运行仍待实现或验证。
+
+### 2026-11-03：JASS 句柄类型诊断（部分验证）
+
+路径：`src/session.{h,cpp}`、`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`jass.debug.handledef` 接受数字或会话句柄，对已知对象提供类型码，并识别计时、玩家、单位等事件子类；无效低位句柄返回空值。无法可靠确定的特效类型、已销毁但仍显式保留的对象和隐式引用计数明确报错，不伪造 `reference`。已知类型码依据原图 `CleanMemory.lua` 字节码常量和 [Agent type counter](https://www.hiveworkshop.com/threads/agent-type-counter.300235/) 的类型清单；临时静态探针输出位于 `tmp/docs-artifacts/war3/cleanmemory-probe/`。当前对象表没有原版完整隐式引用和回收，诊断结果不代表原版精确句柄表。
+
+Win32 Release 客户端、Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖玩家、计时器、计时事件、销毁、显式引用以及未知特效的拒绝。模拟身份和网络宿主时，原图定期清理已越过常见对象和事件类型，下一阻塞为特效类型码；未发送网络请求。真实平台、特效细分、完整引用计数和画面仍待实现或验证。
+
+### 2026-11-03：Lua 诊断批次
+
+检查范围：已提交 `9281114`、`0f7edc4` 及本次句柄类型工作树。Win32 Release 客户端、Lua、native 与会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/debug-handles-batch-20261103` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。实际图形、平台和完整玩法未执行；既有 D3D9 设备故障未变化，图形验收保留待测。
