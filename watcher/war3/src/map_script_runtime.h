@@ -52,6 +52,8 @@ public:
     bool portraitVisible() const;
     std::vector<std::uint32_t> frameEventTargets() {return lua_.frameEventTargets();}
     void updateFramePointer(std::span<const std::uint32_t> hovered) {lua_.updateFramePointer(hovered);}
+    bool hasFrameClick(std::uint32_t id) {return lua_.hasFrameClick(id);}
+    bool clickFrame(std::uint32_t id) {return lua_.clickFrame(id);}
     std::optional<std::vector<std::uint8_t>> frameTextureOverride(std::string_view name) const {return lua_.stormTextureOverride(name);}
     std::uint64_t frameTextureRevision() const {return lua_.stormOverlayRevision();}
     const std::shared_ptr<MapFrames>& frames() const {return frames_;}

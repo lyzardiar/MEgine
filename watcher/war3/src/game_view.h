@@ -2,6 +2,7 @@
 #pragma once
 #include "game_loading.h"
 #include "map_input_keys.h"
+#include "map_frame_pointer.h"
 #include "minimap_terrain.h"
 #include "game_preferences.h"
 #include "glue.h"
@@ -46,6 +47,9 @@ class GameView {
     std::uint32_t hoveredCommandFrame_=0;
     std::uint32_t hoveredItemFrame_=0;
     std::uint64_t mapFramesRevision_=0,mapFramesTextureRevision_=0;
+    MapFramePointer mapFramePointer_;
+    void prepareMapFrames();
+    bool mapFrameInput(const GameInput& input);
     struct MapSpriteTexture {std::string path,source;std::uint64_t overlayRevision=UINT64_MAX;Com<IDirect3DTexture9> texture;};
     struct MapSpriteModel {std::string path,source;std::uint64_t overlayRevision=UINT64_MAX;std::unique_ptr<Model> model;std::map<std::uint32_t,MapSpriteTexture> textures;};
     std::map<std::uint32_t,MapSpriteModel> mapSpriteModels_;

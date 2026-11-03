@@ -87,6 +87,7 @@ class LuaRuntime {
     void clearHooks();
     void clearFrameEvents();
     void pruneFrameEvents();
+    void dispatchFrameEvent(std::uint32_t frame,std::uint32_t event);
     void clearMapEntryHook();
     void clearMessage();
     void clearCodeOverrides();
@@ -162,6 +163,8 @@ public:
     void attachMapFrames(std::shared_ptr<MapFrames> frames);
     std::vector<std::uint32_t> frameEventTargets();
     void updateFramePointer(std::span<const std::uint32_t> hovered);
+    bool hasFrameClick(std::uint32_t frame);
+    bool clickFrame(std::uint32_t frame);
     // Attach and dispatch on the owner thread while Lua is idle.
     void attachMessageHost();
     void callbackInstructionLimit(std::uint64_t limit);

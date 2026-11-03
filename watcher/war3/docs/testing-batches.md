@@ -8361,3 +8361,9 @@ Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-
 范围：`6ed0ad0`、`cc2a411`、`88fa077`，以及英雄移动、攻击和技能测试补充 `cdb43e8`、`07e6fa7`、`7c1fe8b`。同一集成版本 Win32 Release 客户端、Lua、native 和时钟测试目标编译通过；复用无输入变化的 `war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 2 通过／0 失败（`tmp/docs-artifacts/war3/frame-context-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/text-cool-frame-native` 为 22／0；`WAR3_CLOCK_FILTER=recovery_bundle_restores_text_tags war3_clock_tests <data-root> tmp/docs-artifacts/war3/text-cool-frame-clock-tag` 为 1／0，`WAR3_CLOCK_FILTER=item_objects_restore_inventory_and_tombstones war3_clock_tests <data-root> tmp/docs-artifacts/war3/text-cool-frame-clock-item` 为 1／0。对应日志位于 `tmp/docs-artifacts/war3/text-cool-frame-{native,clock-tag,clock-item}.log`。
 
 本批次覆盖原图快进、英雄命令和可见启用控件的悬停回调，以及漂浮文字和冷却快照既有路径。原版漂浮文字句柄、技能冷却边界、界面点击、真实画面及完整对局未验证，保留待测。
+
+### 2026-11-03：地图文本按钮的本地点击（部分验证，待批次验证）
+
+路径：`src/map_frame_pointer.h`、`src/game_view.{h,cpp}`、`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/map_script_runtime.h`、`tests/lua_tests.cpp`。对自定义 `GLUETEXTBUTTON` 支持 `DzFrameSetScriptByCode` 的本地点击事件 1：按下时按帧层级选择可见启用按钮并捕获，松开仍在裁剪范围内时触发回调，同时屏蔽底层游戏鼠标输入；拖出、失焦或遮挡取消。回调读取本地玩家与触发控件，回调异常后清除事件上下文。原版鼠标消息顺序、无监听的覆盖帧遮挡和实际层级行为仍需比对；命令／物品栏、其他按钮类型及同步事件暂不支持此点击回调。
+
+Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖状态机按下、松开、拖入／拖出、同帧点击、失焦取消，以及回调上下文、禁用、隐藏、移除和异常清理（`tmp/docs-artifacts/war3/frame-click-final.log`）。原图 N1 快进与现有英雄操作通过；尚未在真实 GPU 窗口验证鼠标命中、画面反馈和完整对局。
