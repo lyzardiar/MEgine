@@ -8265,3 +8265,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/glue.{h,cpp}`、`src/game_view.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetViewPort` 保存帧标志；当前按帧边界裁剪子控件，嵌套时取交集，文字和模型帧保留父级裁剪，指针命中也按祖先裁剪边界限制。原插件设置帧标志位，标志具体的原版裁剪范围与命中行为仍需画面和交互对照。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖标志切换、矩形交集及原图背景帧标志。N1 路径越过视口接口，停于 `FrameSetAnimationByIndex`，日志 `tmp/docs-artifacts/war3/viewport-final.log`。GPU 嵌套裁剪、模型帧与文字边缘、点击和原版交互待验证。
+
+### 2026-11-03：地图模型按索引播放动画（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetAnimationByIndex` 保存序列索引并重置播放时钟，绘制时按模型序列索引选择动画并采用序列自身循环标志；随后调用 `FrameSetAnimate` 会切换回该接口的播放状态。模型全局动画使用独立的会话时钟。负索引拒绝，超出模型序列数量时明确报错；原版越界处理和播放标志仍待比对。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖索引状态、接口切换与负值。原图 N1 路径越过动画索引并推进至约 4.5625 秒，战斗伤害回调停于 `EXSetEventDamage`，日志 `tmp/docs-artifacts/war3/anim-index-final.log`。GPU 动画、粒子、原版序列循环及完整对局待验证。
