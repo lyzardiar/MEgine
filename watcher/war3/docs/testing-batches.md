@@ -8433,3 +8433,9 @@ Win32 Release 客户端及 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/map_frames.{h,cpp}`、`src/glue.cpp`、`tests/lua_tests.cpp`。地图文本按钮和简易按钮除状态皮肤外，还递归绘制独立子帧；正常、按下、禁用、高亮及文字模板子帧继续由按钮状态路径处理，避免重复绘制。该地图快进后存在大量没有 `ButtonText` 但包含独立 BACKDROP 的按钮，先前按钮绘制提前返回会遗漏这些子帧。按钮自身视口裁剪、叠层及实际画面仍需核验。
 
 Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖状态资源分类并确认原图存在独立按钮背景（`tmp/docs-artifacts/war3/button-children-final.log`）。本机图形设备仍无法验收，未声称子帧像素绘制通过。另一次持续攻击探测在约 111 秒进入暂停并写入本地进度，尚未判定是否属于正常结束流程，日志 `tmp/docs-artifacts/war3/autoplay-result.log`。
+
+### 2026-11-03：动态界面与按钮子帧批次
+
+范围：`9a4162d`、`544f1e3`、`ea9e41f`。同一集成版本 Win32 Release 客户端、Lua 和 native 测试目标编译通过；复用代码及验证输入未变的 `war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 2 通过／0 失败（`tmp/docs-artifacts/war3/button-children-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/button-children-batch` 为 22／0（`tmp/docs-artifacts/war3/button-children-native.log`）。覆盖简易文字和贴图状态、按钮文字实例隔离及原图独立按钮子帧结构。
+
+GPU 图集、字体、按钮子帧的视口与层级、真实鼠标交互及完整对局仍待验证；持续攻击探测的暂停原因尚未确认。
