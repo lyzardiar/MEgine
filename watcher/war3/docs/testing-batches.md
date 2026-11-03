@@ -8469,3 +8469,9 @@ Win32 Release Lua 测试目标编译通过；原图测试 2／0，四条路径�
 路径：`src/session.h`、`src/map_preparation.{h,cpp}`、`src/map_browser.{h,cpp}`、`src/campaign_browser.{h,cpp}`、`src/main.cpp`、`tests/lua_tests.cpp`、`tests/map_seed_tests.cpp`、`tests/generate-map-seed-fixture.py`。原版失败对话框降低的是魔兽当前战役难度，并非地图自定义 N1/N2；重启时保留当前难度和默认难度，并在新地图 `config` 前设置，普通选图继续使用其默认配置。
 
 Win32 Release 客户端和 Lua、地图准备测试目标编译通过。原图 N1 与 N2 的失败选项均验证普通难度降为简单并发出重启请求，Lua 测试 2／0（`tmp/docs-artifacts/war3/restart-difficulty-final.log`）；地图准备定向测试 5／0，验证重启难度可在 `config` 中读取。真实客户端重新载入、战役入口及画面仍待批次验证。
+
+### 2026-11-03：失败后重启与装载批次
+
+范围：`f9eb5d5`、`52c807d`、`791ddce`，以及测试补充 `0d2dbe9`。同一集成版本 Win32 Release 客户端、Lua、地图准备、clock 和 game-flow 目标编译通过；game-flow 目标保留已有 C4389 告警。复用当次代码与输入一致的原图 Lua 测试 2／0（`tmp/docs-artifacts/war3/restart-difficulty-final.log`）及地图准备测试 5／0；定向 `recovery_bundle_restores_ui_requests` 1／0，game-flow 测试退出 0 并输出 1 条 PASS。覆盖失败对话框请求、降难度、配置阶段难度、加载请求快照以及脚本对话框／退出流程。
+
+实际窗口中重启、玩家配置保留、取消与切换地图、加载存档和结算画面未执行，保留待测；真实 GPU 和鼠标及完整对局仍需验收。
