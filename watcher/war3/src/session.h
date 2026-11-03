@@ -802,6 +802,7 @@ class ScriptSession {
     void carapaceReflect(const CombatProjectile& projectile,float damage,const PassiveInfo& passive,std::uint64_t attackerRevision,std::uint64_t defenderRevision);
     void attackPassives(const CombatProjectile& projectile,float damage,const AuraBonuses& defense,std::uint64_t sourceRevision,std::uint64_t targetRevision);
     std::map<std::pair<std::uint32_t,std::uint32_t>,std::uint32_t> abilityHandles_;
+    std::map<std::tuple<std::uint32_t,unsigned,std::string>,std::string> abilityUiStrings_;
     std::map<std::uint64_t,SpellMissile> spellMissiles_;
     std::uint64_t spellTicket_=0;
     std::map<std::uint64_t,SpellWave> spellWaves_;
@@ -1252,6 +1253,7 @@ public:
     void setJapiVisualFacing(std::uint32_t unit,float facing);
     std::uint32_t japiUnitAbility(std::uint32_t unit,std::uint32_t ability);
     std::uint32_t japiAbilityId(std::uint32_t ability) const;
+    std::optional<std::string> japiAbilityUiString(std::uint32_t ability,unsigned level,const std::string& field) const;
     float japiEffectCoordinate(std::uint32_t id,bool x) const;
     void japiEffectMatrix(std::uint32_t id,unsigned operation,std::array<float,3> values);
     void setJapiEffectSize(std::uint32_t id,float value);
