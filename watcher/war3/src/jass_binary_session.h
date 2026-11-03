@@ -30,6 +30,7 @@ public:
     bool hasFunction(const std::string& name) const{return index_.functions.contains(name);}
     JassBinaryNativeValue run(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
     jass::ThreadId start(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
+    jass::ThreadId startDiscard(const std::string& name);
     JassBinaryNativeValue runOriginalNoYield(const std::string& name,std::span<const JassBinaryNativeValue> arguments={});
     JassBinaryNativeValue reference(const std::string& name);
     Bytes encodeGlobals(const std::function<std::uint32_t(std::uint32_t)>& encodeHandle={}) const;

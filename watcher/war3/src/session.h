@@ -96,6 +96,8 @@ class ScriptSession {
     void initializeTeamAlliances(SessionConfig& config) const;
     std::vector<Object> objects_;
     std::map<std::uint32_t,std::uint32_t> retainedHandles_;
+    const void* externalExecuteOwner_=nullptr;
+    std::function<bool(const std::string&)> externalExecute_;
     std::vector<std::uint32_t> customMessageTriggers_;
     std::vector<std::pair<std::uint32_t,std::string>> dzSyncTriggers_;
     std::vector<std::uint32_t> localNetworkObjects_;
@@ -1142,6 +1144,7 @@ class ScriptSession {
     MusicScene& requireThematicMusic();
     World& requireWorld();
 public:
+    void setExternalExecute(const void* owner,std::function<bool(const std::string&)> handler);
     std::string unitUiField(std::uint32_t type,const char* field) {return definitions().field(type,"UnitUI",field);}
     unsigned buildCommandIndex(const UnitState& unit);
     float unitUiNumber(std::uint32_t type,const char* field) {return definitions().number(type,"UnitUI",field);}

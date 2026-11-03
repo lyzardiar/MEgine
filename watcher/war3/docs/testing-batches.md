@@ -8083,3 +8083,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/lua_runtime.{h,cpp}`、`src/map_script_runtime.cpp`、`tests/lua_tests.cpp`。独立 JASS 到 Lua 回调的默认预算保持 100 万条，正式 2SAJ 地图宿主在启动前设为 1,000 万条；嵌套调用继续共用当前预算，配置超出范围或执行期间修改明确拒绝。无限循环仍受有限预算终止。
 
 Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，包含 1,000 万条预算下无限循环终止、非法配置拒绝和原图逐帧路径。使用本地模拟身份、POST 和平台存档时，原图越过日志 Base64 回调，在约 0.40625 秒进入战斗初始化并停于 `ExecuteFunc("Base__Init")` 未找到二进制函数；完整测试本机耗时约 7.59 秒，日志 `tmp/docs-artifacts/war3/callback-budget-final-20261103.log`。这是有限测试时间，不代表实际帧耗时或性能达标；真实画面、长时间运行和完整玩法待验证。
+
+### 2026-11-03：二进制地图 ExecuteFunc（部分验证，待批次验证）
+
+路径：`src/jass_binary_session.{h,cpp}`、`src/session.h`、`src/session_callbacks.cpp`、`src/map_script_runtime.cpp`、`tests/lua_tests.cpp`。`ExecuteFunc` 在源码函数不存在时解析 2SAJ 地图函数，以独立脚本线程执行零参数函数并丢弃返回值；源码函数仍优先，未知函数和带参数入口报错。解析器按宿主所有者注册和解除，线程持有二进制会话；活动二进制线程的快照支持仍有限。
+
+Win32 Release 客户端和测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖原图函数调用、未知函数、解绑及所有者冲突；`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败，覆盖源码返回值函数的等待行为。原图本地模拟越过 `Base__Init`，在约 0.40625 秒战斗初始化时因 `UnitRemoveAbility` Lua 钩子递归触发原生重入限制，日志 `tmp/docs-artifacts/war3/binary-executefunc-final.log`。真实画面、钩子兼容、长期运行及完整玩法待验证；未访问外网。
