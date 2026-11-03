@@ -1253,6 +1253,8 @@ public:
     void setJapiVisualFacing(std::uint32_t unit,float facing);
     std::uint32_t japiUnitAbility(std::uint32_t unit,std::uint32_t ability);
     std::uint32_t japiAbilityId(std::uint32_t ability) const;
+    float japiAbilityState(std::uint32_t ability,std::uint32_t state) const;
+    bool setJapiAbilityState(std::uint32_t ability,std::uint32_t state,float value);
     std::optional<std::string> japiAbilityUiString(std::uint32_t ability,unsigned level,const std::string& field) const;
     float japiEffectCoordinate(std::uint32_t id,bool x) const;
     void japiEffectMatrix(std::uint32_t id,unsigned operation,std::array<float,3> values);

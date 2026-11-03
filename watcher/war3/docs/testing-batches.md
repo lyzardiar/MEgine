@@ -8325,3 +8325,9 @@ Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/session.cpp`、`tests/lua_tests.cpp`。地图清理脚本扫描内部句柄时，漂浮文字返回空类型，避免将其当成未知的普通对象而中断。原版 DLL 静态分析显示 CreateTextTag 通过独立管理器返回索引，DestroyTextTag 先按 100 个槽位范围检查；当前客户端仍将其映射到普通内部句柄，因此句柄值、`handledef` 表存在性及 `handlecount` 与原版尚不一致，需继续还原。
 
 Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖创建和销毁后的调试类型。原图 N1 离线模拟以直接推进时钟方式运行至 300 秒，越过出现漂浮文字后的周期统计，日志 `tmp/docs-artifacts/war3/texttag-300-probe.log`。重连快进、实际渲染和完整对局待验证。
+
+### 2026-11-03：技能剩余冷却的 JAPI 接口（部分验证，待批次验证）
+
+路径：`src/session.h`、`src/session_spells.cpp`、`src/session_entities.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`EXGetAbilityState` 与 `EXSetAbilityState` 的状态 1 读取和修改单位技能剩余冷却，复用施法限制与命令按钮的数据；0 清除冷却，未知状态、无效句柄或负数设置失败。参考本地 YDWE 声明中的 `ABILITY_STATE_COOLDOWN = 1`；原插件对负数、非法状态和特殊技能的行为仍需比对。
+
+Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖技能与单位隔离、冷却设置、时钟推进、重置及失效句柄（`tmp/docs-artifacts/war3/ability-cooldown-final.log`）。另将相同模拟循环延长至 900 秒，越过小娜迦阶段，Lua 测试为 2 通过／0 失败（`tmp/docs-artifacts/war3/ability-cooldown-probe.log`）；该模拟未覆盖玩家完整操作、画面和通关。
