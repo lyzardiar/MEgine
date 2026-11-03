@@ -8303,3 +8303,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/session.cpp`、`tests/lua_tests.cpp`。`handledef` 可读取附着特效，当前返回普通附着特效类型 `+EIm`，点特效继续返回 `+EIP`；销毁后句柄无类型。原版还存在迷雾附着特效 `+EIf`，当前尚未区分其创建条件，统计类型可能不同。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖点特效、附着特效与销毁状态。原图 N1 约 30 秒的清理统计越过附着特效，接着停于 `JASS debug object type unavailable: 31`（技能句柄），日志 `tmp/docs-artifacts/war3/debug-attached-final.log`。原版迷雾类型、其他对象类型和完整对局待验证。
+
+### 2026-11-03：技能句柄的 JASS 调试类型（部分验证，待批次验证）
+
+路径：`src/session.{h,cpp}`、`tests/lua_tests.cpp`。`handledef` 从技能对象数据的 `AbilityData.code` 返回四字节原始类别代码；字段缺失或无效时仍明确报告不支持。原版游戏 DLL 的静态反汇编显示 `ANcl` 类注册使用该代码；特殊技能类别仍需与原版运行结果比对。
+
+Win32 Release 客户端及 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖地图自定义技能 `A0IJ` 的 `ANcl` 类型和移除后的句柄状态。原图 N1 离线模拟越过技能类型检查，在约 30 秒的清理统计中停于 `GetFps`，日志 `tmp/docs-artifacts/war3/debug-ability-final.log`。画面及完整对局待验证。
