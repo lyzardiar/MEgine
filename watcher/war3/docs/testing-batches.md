@@ -7965,3 +7965,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/game_commands.cpp`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入 `jass.dzapi.DzFrameGetCommandBarButton(row,column)`，按 3 行 4 列惰性生成稳定的命令按钮定位节点；节点的矩形与 HUD 命令按钮绘制、命中使用同一坐标函数，自建帧可用其作为锚点。节点目前只提供定位参照，移动、尺寸、显示、透明度和销毁操作明确拒绝，按钮图像、事件及其他子帧尚未接入；此限制不代表原版行为。
 
 Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖行列、句柄稳定、实际 HUD 坐标、无效索引、修改拒绝及自建帧锚定。浏览器夹具添加按钮参照的布局断言，因既有 D3D9 设备创建失败未执行。模拟标准信息面板查找的隔离探针中，地图取得 `(0,1)` 命令按钮并成功用于自建帧锚定，下一阻塞为 `Unimplemented Lua DZAPI: DzFrameShow`；探针已移除。真实 HUD 其他部分、按钮修改、图形画面、平台身份和整图玩法仍待验证。
+
+### DZAPI 帧显示与 JAPI 命令栏入口（部分验证，待批次验证）
+
+路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`jass.dzapi.DzFrameShow` 接入既有帧树可见性和绘制路径，保持父子可见性及会话解绑保护；命令栏节点仍只作定位参照，直接修改会明确失败。`jass.japi.DzFrameGetCommandBarButton` 和 `FrameGetCommandBarButton` 与已有 DZAPI 查找共用同一节点和坐标，并校验注册签名。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖帧显示、父子继承、失效句柄、解绑、命令栏三个入口及修改限制。临时模拟标准信息面板查找的隔离探针中，原图已越过显示和命令栏查找，下一阻塞为 `Unimplemented Lua DZAPI: DzFrameSetScriptByCode`；探针已移除。真实信息面板、命令按钮修改、帧事件、平台身份、图形显示及完整玩法仍待实现或验证。
