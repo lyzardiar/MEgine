@@ -8287,3 +8287,9 @@ Win32 Release 客户端、Lua、地图和会话线程测试目标编译通过；
 路径：`src/script_state.h`、`src/session.h`、`src/session_damage.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`、`tests/clock_tests.cpp`。`EXGetEventDamageData` 支持事件有效性、物理、攻击、远程、伤害类型、武器类型与攻击类型（0–6）；事件外及未知字段返回 0。脚本直接和范围伤害传递武器类型，延迟范围伤害快照升级至版本 2，并兼容版本 1 的默认武器类型。物理标志暂按普通／强化伤害推断；内建单位攻击尚未解析武器音效类型，当前返回默认值，需继续还原并与原版比对。
 
 Win32 Release 客户端和 Lua、时钟测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖嵌套事件、字段、脚本直接及范围伤害（`tmp/docs-artifacts/war3/damage-data-probe2.log`）。`WAR3_CLOCK_FILTER=recovery_bundle_restores_point_damage war3_clock_tests <data-root> tmp/docs-artifacts/war3/damage-data-clock` 为 1 通过／0 失败，覆盖非零武器类型往返与旧版快照恢复（`tmp/docs-artifacts/war3/damage-data-clock.log`）。原图 N1 推进至约 5.875 秒，停于 `Map frame template type differs: bb`；物理标志、内建攻击武器类型和完整对局待验证。
+
+### 2026-11-03：地图文本按钮模板继承（部分验证，待批次验证）
+
+路径：`src/map_frames.cpp`、`tests/lua_tests.cpp`。支持以 `TEXTBUTTON` 模板创建 `GLUETEXTBUTTON`，保留模板属性、背景子控件及指向模板根的锚点；其他不兼容类型继续拒绝。原图 `bb` 模板属于此组合，实际生成的按钮保留 `AA5UP` 背景。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖模板属性、子控件、锚点与不兼容类型。N1 离线模拟越过按钮创建并推进至约 30 秒，定期清理脚本停于 `JASS debug object type unavailable: 32`，日志 `tmp/docs-artifacts/war3/button-inherit-final.log`。按钮画面、点击与完整对局仍待验证。
