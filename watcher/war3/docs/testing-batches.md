@@ -8023,3 +8023,13 @@ Win32 Release 客户端、Lua 与会话线程测试目标编译通过；`war3_lu
 路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/map_script_runtime.{h,cpp}`、`src/game_view.{h,cpp}`、`src/main.cpp`、`tests/lua_tests.cpp`。将 `GetTargetObject` 连接游戏世界视口已有的鼠标拾取，返回单位、物品或可破坏物的实际句柄；对象移除后不再返回失效目标。`IsWindowActive` 读取客户端游戏窗口的前台状态。鼠标移动和点击在本地消息回调前更新目标，进入对局后每帧刷新；聊天或菜单遮挡、失焦和世界视口外清空目标。目标查询语义参考 [CustomUIMap 的接口声明](https://github.com/w4454962/CustomUIMap/blob/master/CustomUI/map/war3map.j)。当前拾取沿用客户端现有的投影近邻算法，动态地图帧遮挡、原版精确拾取、图形焦点交互以及对局首帧前的窗口状态仍需对照。
 
 Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖单位／物品目标、移除后失效、窗口激活／失活和注册签名校验。仅在模拟全部玩家槽位的平台身份、模拟非激活窗口及仅收集请求 ID 的 post 宿主条件下，原图真实版本 7000 完成 `main` 并推进五秒模拟时间；未发送网络请求。正式平台身份、网络服务、长期运行、交互画面和完整玩法仍待实现或验证；既有 D3D9 设备创建故障未变化，图形验收未执行。
+
+### 2026-11-03：JASS 句柄表统计（部分验证）
+
+路径：`src/session.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`jass.debug.handlemax` 返回当前会话对象表槽位数，`handlecount` 返回表内存活对象数；创建和销毁对象时分别反映当前模型的分配与存活状态，没有会话宿主时明确失败。参考 [YDWE libs_debug.cpp](https://github.com/actboy168/YDWE/blob/master/Development/Plugin/Warcraft3/yd_lua_engine/lua_engine/libs_debug.cpp) 中 `handlemax` 返回句柄表 size、`handlecount` 统计非空对象。当前模型不复用槽位，也未完整建模原版隐式引用与回收，因此数值不能视为原版实际内存占用或精确复刻。
+
+Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖创建、销毁和无宿主拒绝。模拟全部槽位身份、非激活窗口和仅收集请求的 post 宿主时，原图真实版本的计时器推进超过五秒，定期诊断已越过 `handlemax`，随后明确停于未实现的 `handledef`；未发送网络请求。原版引用和对象类型、真实平台身份及完整地图运行仍待实现或验证。
+
+### 2026-11-03：DZ 同步、鼠标目标与句柄统计批次
+
+检查范围：已提交 `5e41ef2`、`39a1912` 及本次句柄统计工作树。Win32 Release 客户端、Lua、native 和会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/dz-pointer-debug-batch-20261103` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。真实平台身份、跨客户端同步、窗口鼠标拾取和实际画面未执行；既有 D3D9 设备创建故障未变化，图形夹具继续保留待测。模拟身份结果不代表正式加载成功。

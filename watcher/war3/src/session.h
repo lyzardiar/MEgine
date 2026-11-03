@@ -1631,6 +1631,8 @@ public:
     jass::Runtime& runtime() {return runtime_;}
     const jass::Runtime& runtime() const {return runtime_;}
     size_t liveObjects(NativeKind kind) const;
+    size_t handleTableSlots() const;
+    size_t handleTableCount() const;
     void retainHandle(std::uint32_t id);
     void releaseHandle(std::uint32_t id);
     std::uint32_t retainedHandleCount(std::uint32_t id) const;
