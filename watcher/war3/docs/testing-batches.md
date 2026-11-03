@@ -8319,3 +8319,9 @@ Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-
 ### 2026-11-03：调试句柄与帧率批次
 
 范围：`d934941`、`c0969c3`、`06ee682`。同一集成版本 Win32 Release 客户端、Lua 与 native 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/debug-fps-batch-native` 为 22 通过／0 失败，日志分别为 `tmp/docs-artifacts/war3/debug-fps-batch-lua.log` 和 `tmp/docs-artifacts/war3/debug-fps-batch-native.log`。原图 N1 离线模拟运行至 60 秒，附着特效与技能调试类型和本地帧率接口已覆盖。原版迷雾附着特效、特殊技能类型、实际 GPU 帧率、UI 画面及完整对局未验证，保留待测。
+
+### 2026-11-03：漂浮文字的调试统计与长时模拟（部分验证，待批次验证）
+
+路径：`src/session.cpp`、`tests/lua_tests.cpp`。地图清理脚本扫描内部句柄时，漂浮文字返回空类型，避免将其当成未知的普通对象而中断。原版 DLL 静态分析显示 CreateTextTag 通过独立管理器返回索引，DestroyTextTag 先按 100 个槽位范围检查；当前客户端仍将其映射到普通内部句柄，因此句柄值、`handledef` 表存在性及 `handlecount` 与原版尚不一致，需继续还原。
+
+Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖创建和销毁后的调试类型。原图 N1 离线模拟以直接推进时钟方式运行至 300 秒，越过出现漂浮文字后的周期统计，日志 `tmp/docs-artifacts/war3/texttag-300-probe.log`。重连快进、实际渲染和完整对局待验证。
