@@ -8409,3 +8409,9 @@ Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/glue.cpp`、`tests/lua_tests.cpp`。支持创建、查找、销毁及命中 `SIMPLEBUTTON`，接入现有本地点击与悬停回调；按 FDF 的普通／按下／禁用贴图、UV、高亮、文字模板和按下偏移绘制，缺失状态资源回退普通资源。当前尚未支持简单纹理及文字的动态修改，嵌套资源覆盖、其他简单控件及原版像素行为仍需对照。
 
 Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖自定义模板创建、查找、命中、点击、销毁及状态资源选择，并读取原版 `UpperButtonBar.fdf` 核对继承资源（`tmp/docs-artifacts/war3/simple-button-final.log`）。GPU 贴图、文字及真实鼠标交互未验证。
+
+### 2026-11-03：界面输入隔离与简易按钮批次
+
+范围：`1132b26`、`04abb4c`、`8d453bf`，以及原图物品操作测试补充 `0098607`。同一集成版本 Win32 Release 客户端、Lua 和 native 测试目标编译通过；复用代码及验证输入未变的 `war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 2 通过／0 失败（`tmp/docs-artifacts/war3/simple-button-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/simple-button-batch` 为 22／0（`tmp/docs-artifacts/war3/simple-button-batch-native.log`）。覆盖原图快进、英雄物品操作、按钮命中和 SIMPLEBUTTON 源模板。
+
+真实 GPU 贴图与文字、鼠标层级和事件顺序、简单纹理及文字动态修改和完整对局仍待验证。
