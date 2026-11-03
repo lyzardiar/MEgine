@@ -8293,3 +8293,7 @@ Win32 Release 客户端和 Lua、时钟测试目标编译通过；`war3_lua_test
 路径：`src/map_frames.cpp`、`tests/lua_tests.cpp`。支持以 `TEXTBUTTON` 模板创建 `GLUETEXTBUTTON`，保留模板属性、背景子控件及指向模板根的锚点；其他不兼容类型继续拒绝。原图 `bb` 模板属于此组合，实际生成的按钮保留 `AA5UP` 背景。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖模板属性、子控件、锚点与不兼容类型。N1 离线模拟越过按钮创建并推进至约 30 秒，定期清理脚本停于 `JASS debug object type unavailable: 32`，日志 `tmp/docs-artifacts/war3/button-inherit-final.log`。按钮画面、点击与完整对局仍待验证。
+
+### 2026-11-03：伤害事件与文本按钮批次
+
+范围：`c2172dd`、`ee86aff`、`b4966c8`。同一集成版本 Win32 Release 客户端、Lua、native、地图、会话线程与时钟测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败（`tmp/docs-artifacts/war3/button-inherit-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/damage-button-batch` 为 22／0，`war3_map_tests <data-root> tmp/docs-artifacts/war3/damage-button-map preloader_nested_damage` 为 1／0，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7／0，`WAR3_CLOCK_FILTER=recovery_bundle_restores_point_damage war3_clock_tests <data-root> tmp/docs-artifacts/war3/damage-button-clock` 为 1／0。日志位于 `tmp/docs-artifacts/war3/damage-button-{native,map,threads,clock}.log`。原图 N1 推进至约 30 秒，停于 JASS 调试对象类型 32；伤害物理标志、内建武器类型、按钮 GPU 画面及完整对局未验证，保留待测。
