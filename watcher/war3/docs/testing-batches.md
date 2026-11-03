@@ -7983,3 +7983,9 @@ Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_view.{h,cpp}`、`tests/{lua_tests,browser_tests}.cpp`。DZAPI 与 JAPI 的 `DzFrameGetItemBarButton`、JAPI 的 `FrameGetItemBarButton` 返回 0–5 槽的稳定定位节点，矩形沿用物品绘制、点击和拖拽共用的 `inventorySlotRect`；选中可显示物品栏的单位时，鼠标命中可驱动既有本地进入／离开事件。节点当前只支持定位与事件，移动、隐藏及其他修改明确失败。
 
 Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖三个入口、索引、坐标、修改拒绝及悬停事件。浏览器夹具新增第 5 格定位检查，因既有 D3D9 设备创建失败未执行。隔离探针使用模拟平台身份、版本、控制台、内存宿主并将标准信息面板查询重定向到测试帧时，原图 `main` 已返回、Lua 地图入口已执行，帧树 32 个节点、18 个事件目标；探针已移除，此结果不代表真实 HUD、正式地图加载或玩法通过。物品栏实际鼠标、图形与原版行为、真实标准 HUD／平台身份及运行时后续流程待验证。
+
+### 标准信息面板帧与 HUD 连接（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/map_script_runtime.cpp`、`src/lua_jass_bridge.cpp`、`src/glue.cpp`、`src/game_commands.cpp`、`tests/{lua_tests,native_tests,browser_tests}.cpp`。加载原版 `SimpleInfoPanel.fdf`，建立伤害 0／1、护甲 2、英雄属性 6 的标准帧实例，脚本名称查找返回这些真实节点；现有 HUD 消费相应图标和英雄属性文字的可见性与根坐标锚点，清除锚点后无新锚点时暂不绘制。该 context 顺序依据原版 1.27 `Game.dll` 静态反汇编 `0x6f396520–0x6f3965a7`。标准帧不由通用地图帧绘制器重复绘制；其他标准子帧修改、尺寸、透明度、非根锚点和帧事件明确拒绝，完整原版行为与清除锚点的画面语义待对照。
+
+Win32 Release 客户端、Lua、native 和浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，模拟平台身份、版本、控制台和内存宿主，但不再使用标准 HUD 句柄替身，原图 `main` 已返回并验证伤害／护甲图标和英雄属性文字的脚本定位状态；`war3_native_tests <data-root> tmp/docs-artifacts/war3/standard-info-20261103` 为 20 通过／0 失败，覆盖 context、实际坐标、清除、隐藏和未支持操作。浏览器布局夹具已添加，因既有 D3D9 设备创建失败未执行。正式 `--main-check --mute` 退出码 1，仍因 `EXGetPlayerRealName` 缺少真实平台身份失败，日志 `tmp/docs-artifacts/war3/qcloud-standard-info-20261103.log`；实际画面、后续运行及完整玩法未验证。
