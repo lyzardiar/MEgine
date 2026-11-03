@@ -8355,3 +8355,9 @@ Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qclo
 路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。本地悬停进入／离开回调期间，`DzGetTriggerUIEventPlayer` 返回本地玩家，`DzGetTriggerUIEventFrame` 返回触发控件；`jass.dzapi` 和 `jass.japi` 均可调用，回调正常返回或抛错后清除上下文。事件外返回空玩家和 0。原版事件外返回值、其他事件类型和同步回调仍需比对。
 
 Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖两个模块的玩家／控件值、正常及异常清理。原图 N1 快进后对 18 个已注册事件目标依次模拟悬停进入／离开，可见且启用的目标回调不再因玩家查询中断，日志 `tmp/docs-artifacts/war3/frame-context-final.log`。实际鼠标命中、帧叠层、点击与画面待验证。
+
+### 2026-11-03：漂浮文字、技能冷却与界面事件批次
+
+范围：`6ed0ad0`、`cc2a411`、`88fa077`，以及英雄移动、攻击和技能测试补充 `cdb43e8`、`07e6fa7`、`7c1fe8b`。同一集成版本 Win32 Release 客户端、Lua、native 和时钟测试目标编译通过；复用无输入变化的 `war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 2 通过／0 失败（`tmp/docs-artifacts/war3/frame-context-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/text-cool-frame-native` 为 22／0；`WAR3_CLOCK_FILTER=recovery_bundle_restores_text_tags war3_clock_tests <data-root> tmp/docs-artifacts/war3/text-cool-frame-clock-tag` 为 1／0，`WAR3_CLOCK_FILTER=item_objects_restore_inventory_and_tombstones war3_clock_tests <data-root> tmp/docs-artifacts/war3/text-cool-frame-clock-item` 为 1／0。对应日志位于 `tmp/docs-artifacts/war3/text-cool-frame-{native,clock-tag,clock-item}.log`。
+
+本批次覆盖原图快进、英雄命令和可见启用控件的悬停回调，以及漂浮文字和冷却快照既有路径。原版漂浮文字句柄、技能冷却边界、界面点击、真实画面及完整对局未验证，保留待测。
