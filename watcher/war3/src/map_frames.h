@@ -28,6 +28,7 @@ public:
     const std::shared_ptr<FrameDefinitions>& definitions() const {return definitions_;}
     const Node& node(std::uint32_t id) const;
     std::uint32_t resolveReference(std::uint32_t source,const std::string& name) const;
+    std::uint32_t findSimple(const std::string& name,std::uint32_t context,std::string_view type) const;
     std::uint32_t create(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     std::uint32_t createSimple(const std::string& name,std::uint32_t parent,std::uint32_t context=0);
     void destroy(std::uint32_t id);

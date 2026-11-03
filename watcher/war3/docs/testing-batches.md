@@ -7935,3 +7935,9 @@ Win32 Release 客户端、native 和浏览器测试目标编译通过；`war3_na
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/{lua_tests,browser_tests}.cpp`。接入地图插件 `CreateSimpleFrame`／`DestroySimpleFrame`（`(SII)I`／`(I)V`），目前仅接受根类型为 `SIMPLEFRAME` 的 FDF 定义；创建的子树进入现有地图帧布局、显示与销毁流程，并复用 context 和名称索引。其他 simple 控件根类型及原版非法输入语义待对照。
 
 Win32 Release 客户端、Lua 和浏览器测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖创建、尺寸、父子可见性、非法类型、签名及销毁后的失效。浏览器双面板夹具改用 `createSimple`，因既有 D3D9 设备创建失败未执行；实际绘制、复杂控件、原版行为、标准 HUD 查找、平台身份和完整地图启动仍待验证。
+
+### Lua SimpleFrame 子帧名称查找（部分验证，待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。接入 `SimpleFrameFindByName`、`SimpleTextureFindByName`、`SimpleFontStringFindByName`（均为 `(SI)I`），按名称、context 和帧类型查找已创建的唯一实例；返回的句柄可继续用于现有帧锚点和显示状态。重名歧义或无对应实例时明确失败，原版缺失／重名行为及其他 simple 控件类型尚待对照；尚未建立标准 HUD 实例，不能把其缺失作为空句柄伪装完成。
+
+Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖三种查找、上下文和类型隔离、锚点使用、重名、销毁、签名校验。原图模拟宿主启动现明确报告 `Simple frame lookup unavailable: InfoPanelIconBackdrop`；真实平台身份、标准 HUD 实例与消费、实际绘制和完整地图启动待验证。
