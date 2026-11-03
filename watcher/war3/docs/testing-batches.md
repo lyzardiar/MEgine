@@ -8139,3 +8139,7 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/glue.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。地图 `FrameSetLevel` 保存有符号层级；同一父节点的子控件按层级稳定排序后构建渲染树，层级变化触发界面重建。当前仅实现同父节点排序，跨父节点的层级关系和鼠标命中优先级尚未还原，不作为原版视觉一致性证明。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖排序、重复设置和无效句柄。原图模拟点击 N1 后进入自定义 UI，越过 `FrameSetLevel`，停于未实现的 `FrameGetTextWidth`，日志 `tmp/docs-artifacts/war3/frame-level-final.log`。实际画面及交互待验证。
+
+### 2026-11-03：难度选择与地图 UI 批次
+
+范围：`cbc0bc8`、`380eec7`、`bccf716`。Win32 Release 客户端、Lua、native 和会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/difficulty-frame-batch` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。实际图形、鼠标操作、跨父层级、技能界面快照及完整对局未验证；当前原图阻塞为 `FrameGetTextWidth`。
