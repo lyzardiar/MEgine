@@ -8111,3 +8111,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。轻量句柄模式的 `handle_ref`／`handle_unref` 对函数等非 userdata 值按空句柄处理并原样返回；真实句柄仍检查会话并维护引用数，完整 userdata 模式继续拒绝函数。原图对难度对话框回调使用此调用，行为依据本机 YDWE Lua 引擎静态代码。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖两种模式、回调原样返回及有效句柄引用计数。原图逐帧推进至约 30 秒，在定期清理中遇到未知特效句柄类型，日志 `tmp/docs-artifacts/war3/handle-ref-final.log`。未操作难度对话框，真实画面和完整玩法待验证。
+
+### 2026-11-03：地面特效诊断类型（部分验证，待批次验证）
+
+路径：`src/session.cpp`、`tests/lua_tests.cpp`。`handledef` 对地面特效返回 `+EIP`：原版 `AddSpecialEffect` 创建路径使用 `CEffectImagePos` 类型及该类型码。附着特效的原版类型取决于目标状态，当前仍明确报未支持，避免误报。
+
+Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖地面特效诊断。原图逐帧约 30 秒时仍因附着特效类型未支持而停止，日志 `tmp/docs-artifacts/war3/effect-type-probe.log`。类型码依据原版二进制静态追踪；附着特效、实际画面和完整玩法待验证。
