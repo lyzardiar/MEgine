@@ -8271,3 +8271,7 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`src/game_map_sprite.cpp`、`tests/lua_tests.cpp`。`FrameSetAnimationByIndex` 保存序列索引并重置播放时钟，绘制时按模型序列索引选择动画并采用序列自身循环标志；随后调用 `FrameSetAnimate` 会切换回该接口的播放状态。模型全局动画使用独立的会话时钟。负索引拒绝，超出模型序列数量时明确报错；原版越界处理和播放标志仍待比对。
 
 Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖索引状态、接口切换与负值。原图 N1 路径越过动画索引并推进至约 4.5625 秒，战斗伤害回调停于 `EXSetEventDamage`，日志 `tmp/docs-artifacts/war3/anim-index-final.log`。GPU 动画、粒子、原版序列循环及完整对局待验证。
+
+### 2026-11-03：模型位置、视口与动画索引批次
+
+范围：`bfb378b`、`b906840`、`141da5d`。同一集成版本 Win32 Release 客户端、Lua 和 native 目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败（`tmp/docs-artifacts/war3/anim-index-final.log`），`war3_native_tests <data-root> tmp/docs-artifacts/war3/sprite-index-batch` 为 22 通过／0 失败（`tmp/docs-artifacts/war3/sprite-index-native.log`）。模型解析实现和输入未变化，沿用前批 1 通过／0 失败结果。原图 N1 推进至约 4.5625 秒，伤害回调停于 `EXSetEventDamage`；GPU 绘制、裁剪与点击、动画和完整对局未验证，保留待测。
