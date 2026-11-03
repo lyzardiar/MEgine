@@ -199,6 +199,7 @@ class GameView {
     void drawWeather(std::uint64_t elapsed);
     void command(float x,float y,OrderMode mode,bool queued,bool subgroup);
     std::uint32_t widget(float x,float y,bool items) const;
+    void updatePointerTarget(float x,float y,bool active);
     std::uint32_t selectedGroundItem() const;
     void clearGroundItem();
     void drawProjectiles(std::uint64_t elapsed,const DirectX::XMMATRIX& vp);
@@ -289,6 +290,7 @@ public:
     bool filterMapInput(MSG& message);
     bool mapInputKeyDown(unsigned key) const;
     void clearMapInput() {mapInputKeys_.clear();}
+    void windowActive(bool active) {if(data_->mapScript)data_->mapScript->windowActive(active);}
     // Configure before first draw. sendSelection and submit enqueue in order without reentry;
     // the owner consumes complete slots on this thread and must not submit selection separately.
     bool enableLan(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wireObject,std::function<bool(std::span<const std::uint8_t>)> sendSelection,std::function<unsigned(const PlayerCommand&)> submit,bool experimental=false);

@@ -19,6 +19,8 @@ class MapScriptRuntime {
     LuaRuntime lua_;
     std::unique_ptr<LuaLocalSync> localSync_;
     bool started_=false,requiresLuaEntry_=false;
+    std::uint32_t pointerTarget_=0;
+    bool windowActive_=false;
     MapScriptRuntime(ScriptSession& session,std::shared_ptr<const JassBinaryProgram> program,const std::string& initializer);
 public:
     static std::unique_ptr<MapScriptRuntime> create(ScriptSession& session);
@@ -30,6 +32,8 @@ public:
     void attachPostHost(LuaPostHost host);
     void completePost(std::uint64_t id,std::span<const LuaResult> values);
     bool dispatchMessage(LuaInputMessage& message) {return lua_.dispatchMessage(message);}
+    void pointerTarget(std::uint32_t target) {pointerTarget_=target;}
+    void windowActive(bool active) {windowActive_=active;}
     void pump();
     bool uiRootVisible() const;
     std::vector<std::uint32_t> frameEventTargets() {return lua_.frameEventTargets();}

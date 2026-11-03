@@ -8017,3 +8017,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/lua_{runtime.h,jass_bridge.cpp,local_sync.h,local_sync.cpp}`、`src/{session.h,session.cpp,session_callbacks.cpp,session_recovery_bundle.cpp,session_threads.cpp,script_state.h}`、`tests/lua_tests.cpp`。单人会话将 `DzTriggerRegisterSyncData`、`DzSyncData`、`DzGetTriggerSyncData`、`DzGetTriggerSyncPlayer` 接入统一的本地有序队列；按前缀选择存活且启用的触发器，分派时保留发送玩家和消息，触发器发送的后续消息在下一次 pump 执行。销毁触发器移除注册；当前快照与恢复明确拒绝包含该注册或上下文。服务器来源注册、无同步宿主的联机会话明确失败，未实现平台服务或跨客户端传输。接口声明参考 [JapiNative](https://github.com/yefq/JapiNative/blob/master/JapiNative.j)。
 
 Win32 Release 客户端、Lua 与会话线程测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖前缀隔离、顺序、发送玩家、触发器销毁、回调内追加、队列预算、服务器及联机拒绝；`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。仅在模拟玩家 0 平台身份和只收集请求 ID 的 post 宿主下，原图真实版本 7000 已完成 `main`；推进计时器时停于 `Unimplemented Lua JAPI: GetTargetObject`，并出现地图错误处理器访问受限 `debug` 的次级错误。未发送网络请求；真实平台身份、平台服务、联机同步、完整计时器流程和实际画面仍待实现或验证。
+
+### 2026-11-03：地图鼠标目标与窗口状态（部分验证，待批次验证）
+
+路径：`src/lua_runtime.h`、`src/lua_jass_bridge.cpp`、`src/map_script_runtime.{h,cpp}`、`src/game_view.{h,cpp}`、`src/main.cpp`、`tests/lua_tests.cpp`。将 `GetTargetObject` 连接游戏世界视口已有的鼠标拾取，返回单位、物品或可破坏物的实际句柄；对象移除后不再返回失效目标。`IsWindowActive` 读取客户端游戏窗口的前台状态。鼠标移动和点击在本地消息回调前更新目标，进入对局后每帧刷新；聊天或菜单遮挡、失焦和世界视口外清空目标。目标查询语义参考 [CustomUIMap 的接口声明](https://github.com/w4454962/CustomUIMap/blob/master/CustomUI/map/war3map.j)。当前拾取沿用客户端现有的投影近邻算法，动态地图帧遮挡、原版精确拾取、图形焦点交互以及对局首帧前的窗口状态仍需对照。
+
+Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖单位／物品目标、移除后失效、窗口激活／失活和注册签名校验。仅在模拟全部玩家槽位的平台身份、模拟非激活窗口及仅收集请求 ID 的 post 宿主条件下，原图真实版本 7000 完成 `main` 并推进五秒模拟时间；未发送网络请求。正式平台身份、网络服务、长期运行、交互画面和完整玩法仍待实现或验证；既有 D3D9 设备创建故障未变化，图形验收未执行。
