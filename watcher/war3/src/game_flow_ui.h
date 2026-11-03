@@ -67,6 +67,7 @@ public:
     bool menuOpen() const {return panel_!=Panel::Closed;}
     bool agentSaveNameHit(float x,float y) const;
     void toggleMenu();
+    void scriptLoadDialog() {menuPanel(Panel::Main);openSave(true);}
     bool scriptDialog() const;
     bool drawMenu(const UiInput& input,bool network=false,bool allowNetworkLeave=false,std::wstring_view characters={});
     std::optional<bool> takeNetworkLeave(){auto result=networkLeave_;networkLeave_.reset();return result;}

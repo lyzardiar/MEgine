@@ -8451,3 +8451,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/main.cpp`、`src/map_browser.{h,cpp}`。记录启动时的玩家槽位配置；重新开始时仅对原地图恢复配置并自动启动。准备期间取消、切换地图或准备失败时清除自动启动请求及待恢复配置，避免之后误启动另一张地图。
 
 快速检查：Win32 Release 客户端编译通过。待批次验证：使用原图及可编辑玩家槽位的地图分别失败后重新开始，检查实际重新载入和设置保留；在准备期间分别取消、切换地图、触发准备失败并确认不会意外启动。真实窗口、画面和完整对局尚未验收。
+
+### 2026-11-03：原图失败后的装载界面请求（部分验证，待批次验证）
+
+路径：`src/session_match.cpp`、`src/session_text.cpp`、`src/game_view.cpp`、`src/game_flow_ui.h`、`tests/lua_tests.cpp`、`tests/clock_tests.cpp`。绑定 `DisplayLoadDialog`，本地对局将脚本请求接到现有加载存档界面；待处理请求随 UI 请求快照保存，支持读取原版本快照。回放及局域网不弹出本地加载界面。
+
+Win32 Release 客户端、Lua 和 clock 测试目标编译通过。原图 N1 快进失败后选择“装载游戏”，不再报未绑定 native，并产生加载界面请求；同次 Lua 测试 2／0（`tmp/docs-artifacts/war3/defeat-load-final.log`）。定向 `WAR3_CLOCK_FILTER=recovery_bundle_restores_ui_requests` 为 1／0，覆盖请求保存和恢复。真实 GPU 弹窗、取消、选择存档并重载以及局域网原版行为待批次验证；地图其他失败选项和完整对局尚未验收。
