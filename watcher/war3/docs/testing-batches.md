@@ -8331,3 +8331,9 @@ Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-
 路径：`src/session.h`、`src/session_spells.cpp`、`src/session_entities.cpp`、`src/lua_jass_bridge.cpp`、`tests/lua_tests.cpp`。`EXGetAbilityState` 与 `EXSetAbilityState` 的状态 1 读取和修改单位技能剩余冷却，复用施法限制与命令按钮的数据；0 清除冷却，未知状态、无效句柄或负数设置失败。参考本地 YDWE 声明中的 `ABILITY_STATE_COOLDOWN = 1`；原插件对负数、非法状态和特殊技能的行为仍需比对。
 
 Win32 Release 客户端与 Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，覆盖技能与单位隔离、冷却设置、时钟推进、重置及失效句柄（`tmp/docs-artifacts/war3/ability-cooldown-final.log`）。另将相同模拟循环延长至 900 秒，越过小娜迦阶段，Lua 测试为 2 通过／0 失败（`tmp/docs-artifacts/war3/ability-cooldown-probe.log`）；该模拟未覆盖玩家完整操作、画面和通关。
+
+### 2026-11-03：原图英雄移动命令验证
+
+路径：`tests/lua_tests.cpp`。原图 N1 离线运行 300 秒后选取地图实际生成的本地玩家英雄，通过玩家命令分发移动并推进模拟，检查英雄实际位移，再发送停止命令并检查移动路线清除。测试不假设停止后单位永久静止，因为可自动索敌。
+
+Win32 Release Lua 测试目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，日志 `tmp/docs-artifacts/war3/hero-input-final.log`。该检查未经过真实鼠标、屏幕坐标和 GPU 绘制；攻击、施法、物品操作与通关仍待验证。该测试补充不计入功能／修复批次计数。
