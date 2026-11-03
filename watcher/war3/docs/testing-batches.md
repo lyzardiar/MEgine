@@ -8077,3 +8077,9 @@ Win32 Release 客户端和 Lua 测试编译通过；`war3_lua_tests <data-root> 
 ### 2026-11-03：单人本地平台模拟批次
 
 范围：已提交 `2cb2be9`、`88130db` 及本次本地平台存档工作树。Win32 Release 客户端、Lua、native 与会话线程目标编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，`war3_native_tests <data-root> tmp/docs-artifacts/war3/local-platform-batch-20261103` 为 22 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7 通过／0 失败。网络请求未执行；图形设备故障未变化，实际鼠标、画面、长时间对局和全部玩法保留待测。
+
+### 2026-11-03：地图 Lua 回调预算（部分验证，待批次验证）
+
+路径：`src/lua_runtime.{h,cpp}`、`src/map_script_runtime.cpp`、`tests/lua_tests.cpp`。独立 JASS 到 Lua 回调的默认预算保持 100 万条，正式 2SAJ 地图宿主在启动前设为 1,000 万条；嵌套调用继续共用当前预算，配置超出范围或执行期间修改明确拒绝。无限循环仍受有限预算终止。
+
+Win32 Release 客户端与 Lua 测试编译通过；`war3_lua_tests <data-root> G:\qcloud_20144088.w3x` 为 2 通过／0 失败，包含 1,000 万条预算下无限循环终止、非法配置拒绝和原图逐帧路径。使用本地模拟身份、POST 和平台存档时，原图越过日志 Base64 回调，在约 0.40625 秒进入战斗初始化并停于 `ExecuteFunc("Base__Init")` 未找到二进制函数；完整测试本机耗时约 7.59 秒，日志 `tmp/docs-artifacts/war3/callback-budget-final-20261103.log`。这是有限测试时间，不代表实际帧耗时或性能达标；真实画面、长时间运行和完整玩法待验证。

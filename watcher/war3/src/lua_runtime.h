@@ -38,6 +38,7 @@ class LuaRuntime {
     friend class LuaJassCallbacks;
     lua_State* state_=nullptr;
     std::uint64_t remaining_=0;
+    std::uint64_t callbackInstructionLimit_=1000000;
     std::unique_ptr<Archives> archives_;
     std::shared_ptr<FrameDefinitions> frameDefinitions_;
     std::shared_ptr<MapFrames> mapFrames_;
@@ -158,6 +159,7 @@ public:
     void updateFramePointer(std::span<const std::uint32_t> hovered);
     // Attach and dispatch on the owner thread while Lua is idle.
     void attachMessageHost();
+    void callbackInstructionLimit(std::uint64_t limit);
     bool dispatchMessage(LuaInputMessage& message);
     // Submit and completion run on the owning thread; submit copies both views before returning.
     // Complete only while Lua is idle and stop using this runtime after destruction.
