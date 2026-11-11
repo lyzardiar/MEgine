@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## AI 伐木选择可达树木（待批次验证）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。AI 新分配伐木时复用采集系统的有界可达树搜索，根据工人能力和目标配置检查树木；单轮最多探测四个候选，未找到时保留轮转位置供后续心跳继续，避免反复选择最近但被地形隔离的树。
+
+必要检查：Win32 Release `war3_campaign_ai_tests` 编译通过；`war3_campaign_ai_tests <root> tmp/docs-artifacts/war3/campaign-ai/fixture.w3m harvest-reachable-tree` 为 1 通过／0 失败，隔离五棵较近树后检查轮转、选择更远可达树和实际伐木；修复前未选择可达树。`harvest-town` 为 2／0；均未加载 Game.dll。
+
+本批 1/3；合并验证多工人、多城镇、地形变化、采集目标筛选和性能。原版候选顺序、自然对局及实际窗口仍待对照。
+
+
 ## 预加载对象与脚本回调批次（已验证所列范围）
 
 范围：`e5e6977`、`7e45385`、`ee92059`，集成版本 `ee92059`。Win32 Release 客户端、map、JASS runtime 和 thread 目标编译通过。
