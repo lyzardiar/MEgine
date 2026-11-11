@@ -8675,3 +8675,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`tower` 均退出 0，各输出 1 条 PASS；`war3_order_queue_tests <data-root> <BootyBay.w3m>` 退出 0，输出 37 条 PASS。日志 `tmp/docs-artifacts/war3/work-callback-batch-*.log`。覆盖多选余量与可用者选择的会话辅助逻辑、施工／桥梁回调、路径、停工续行、显形及订单队列。
 
 未覆盖真实窗口中的鼠标与多选聚合、多等级及有限／无限混合、资源回调导致工人易主／能力变化、真实双端、跨关以及原版事件和施法者选择顺序；保留后续对照，不作为完整对局验收。下一功能批次从 0/3 开始。
+
+### 字符串自动施法订单状态校验（待批次验证）
+
+路径：`src/session_entities.cpp`、`tests/caster_tests.cpp`。字符串自动施法开关的回退路径复用已有校验与事件，不再绕过沉默或其他无法施法状态；修理开关仍使用既有修理入口。
+
+快速检查：Win32 Release 客户端和 caster 测试目标编译通过；生成 `python tests/generate-caster-fixture.py --data-root <data-root>` 后执行 `war3_caster_tests <data-root> <fixture> autocast-silence`，修复前失败、修复后退出 0、输出 1 条 PASS。覆盖沉默下字符串与 ID 开关、移除沉默后启停；实际事件时序、其他禁用状态、修理开关、未知能力及原版差异留待批次验证。本批 1/3。
