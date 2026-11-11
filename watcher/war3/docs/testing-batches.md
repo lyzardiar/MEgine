@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 旧攻击弹道与被动目标缩写恢复（待批次验证）
+
+路径：`src/session_projectile_snapshot.cpp`、`tests/clock_tests.cpp`。恢复飞行攻击弹道的武器主目标、范围目标与捕获的被动定义时展开旧目标缩写；超过 4096 项时保存等价缩写，再次读取恢复完整目标集合。共享被动解码器也覆盖使用该接口的其他保存状态。
+
+必要检查：Win32 Release 客户端、clock 和 caster 目标编译通过；`WAR3_CLOCK_FILTER=attack_projectiles_restore_flight_and_removed_handles war3_clock_tests <root> <scratch>` 为 1 通过／0 失败，覆盖旧目标恢复、4096 项重存、损坏摘要和句柄映射拒绝，以及恢复后命中时友方限定毒素不作用于敌人。`war3_caster_tests <root> <fixture> aura-alias-restore` 为 2／0，验证旧光环摘要和错误摘要拒绝；未加载 Game.dll。
+
+本批 2/3；其他弹道范围目标及被动效果、吸血增益目标列表、原版窗口与完整对局待处理或集中验证。
+
+
 ## 旧技能快照目标缩写恢复（待批次验证）
 
 路径：`src/target_aliases.h`、`src/session_spell_snapshot.cpp`、`tests/caster_tests.cpp`。恢复直接保存的技能定义时展开旧目标缩写，覆盖活动施法及复用同一解码器的技能状态和飞行技能弹道；目标集合超过存档上限时保存等价缩写，再次读取时恢复全名。

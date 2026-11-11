@@ -2,6 +2,7 @@
 #include "session.h"
 #include "snapshot_codec.h"
 #include "passive_snapshot_codec.h"
+#include "target_aliases.h"
 #include <bit>
 #include <cmath>
 #include <set>
@@ -18,8 +19,8 @@ float real(Binary& in){auto value=std::bit_cast<float>(in.u32());if(!std::isfini
 bool flag(Binary& in){auto value=in.u32();if(value>1)throw std::runtime_error("Invalid projectile flag");return value!=0;}
 void point(SnapshotWriter& out,WorldPoint value){real(out,std::bit_cast<float>(value.x.bits()));real(out,std::bit_cast<float>(value.y.bits()));}
 WorldPoint point(Binary& in){return {jass::Real::fromBits(std::bit_cast<std::uint32_t>(real(in))),jass::Real::fromBits(std::bit_cast<std::uint32_t>(real(in)))};}
-void strings(SnapshotWriter& out,const std::set<std::string>& values){if(values.size()>4096)throw std::runtime_error("Projectile string count exceeds budget");out.size(values.size());for(auto& value:values)out.text(value,65536);}
-std::set<std::string> strings(Binary& in){std::set<std::string> values;auto count=in.count(4,4096);for(unsigned i=0;i<count;++i)if(!values.insert(snapshotText(in,65536)).second)throw std::runtime_error("Duplicate projectile string");return values;}
+void strings(SnapshotWriter& out,const std::set<std::string>& values){auto compact=values;if(compact.size()>4096)compactTargetAliases(compact,4096);if(compact.size()>4096)throw std::runtime_error("Projectile string count exceeds budget");out.size(compact.size());for(auto& value:compact)out.text(value,65536);}
+std::set<std::string> strings(Binary& in){std::set<std::string> values;auto count=in.count(4,4096);for(unsigned i=0;i<count;++i)if(!values.insert(snapshotText(in,65536)).second)throw std::runtime_error("Duplicate projectile string");addTargetAliases(values);return values;}
 void weapon(SnapshotWriter& out,const WeaponDefinition& w){out.u32(w.enabled?1:0);out.u32(w.homing?1:0);for(auto v:{w.slot,w.attackType,w.dice,w.sides,w.maxTargets})out.u32(v);for(auto field:weaponFloats)real(out,w.*field);out.text(w.kind,65536);out.text(w.model,65536);strings(out,w.targets);strings(out,w.splashTargets);}
 WeaponDefinition weapon(Binary& in){WeaponDefinition w;w.enabled=flag(in);w.homing=flag(in);w.slot=in.u32();w.attackType=in.u32();w.dice=in.u32();w.sides=in.u32();w.maxTargets=in.u32();for(auto field:weaponFloats)w.*field=real(in);w.kind=snapshotText(in,65536);w.model=snapshotText(in,65536);w.targets=strings(in);w.splashTargets=strings(in);if(w.slot>=2 || w.attackType>6 || w.speed<=0 || !w.maxTargets || w.maxTargets>8192)throw std::runtime_error("Invalid projectile weapon");return w;}
 void passive(SnapshotWriter& out,const PassiveInfo& p){out.u32(p.ability);out.u32(p.buff);out.u32(p.corpseType);out.u32(p.level);out.u32(unsigned(p.kind));for(bool v:{p.aura,p.percent,p.melee,p.ranged,p.neverMiss})out.u32(v?1:0);for(auto field:passiveFloats)real(out,p.*field);out.text(p.attackMissile,65536);out.text(p.lightningType,65536);out.u32(p.effectBuff);for(auto value:p.splashRadii)real(out,value);for(auto value:p.splashDamage)real(out,value);out.u32(p.maxTargets);out.u32(p.stackFlags);out.u32(p.enabledWeapon);out.u32(p.procAbility);for(auto value:p.procChance)real(out,value);out.u32(p.repairAllowed?1:0);out.u32(p.missileHoming?1:0);strings(out,p.allowed);if(p.prerequisites.size()>4096 || p.visualModels.size()>4096 || p.targetModels.size()>4096)throw std::runtime_error("Projectile passive count exceeds budget");out.size(p.prerequisites.size());for(auto [id,count]:p.prerequisites){out.u32(id);out.u32(count);}out.size(p.visualModels.size());for(auto& value:p.visualModels)out.text(value,65536);out.size(p.targetModels.size());for(auto& [model,attachment]:p.targetModels){out.text(model,65536);out.text(attachment,65536);}}
