@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 单位攻击分类与飘字字号批次（部分验证）
+
+范围：`a715a22`、`d41d641`、`051a255`，集成代码版本 `051a255`，本记录补充双武器夹具。Win32 Release 客户端、research 和 clock 目标编译通过；`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 为 2 通过／0 失败，覆盖负字号及 v1–v6 恢复；重新生成地图后 `war3_research_tests <root> <fixture>` 输出 PASS，检查地面、近战／远程特殊与混合目标，以及第二武器启用／禁用的实例和 ID 查询。
+
+`python watcher/war3/tools/verify_unit_weapon_types_cpu.py --output tmp/docs-artifacts/war3/unit-text-batch/weapon-reference.json` 的合成原版武器探针通过（6 组目标位、10 组近远程类别）；`python watcher/war3/tools/verify_texttag_capacity_cpu.py --output tmp/docs-artifacts/war3/unit-text-batch/text-reference.json` 通过，包含合成视口负／零／正字号。探针未执行原版 JASS 或实际窗口。
+
+Blizzard TD 原图隐藏运行 60 游戏帧并正常退出，未加载 Game.dll；截图与日志位于 `tmp/docs-artifacts/war3/unit-text-batch/`。实际动态变形、更多目标组合、负字号窗口、原版实机对照和完整对局仍待验证。批次已执行，未完成项保留；下一功能批次从 0/3 开始。
+
+
 ## 近战与远程攻击类型判定（待批次验证）
 
 路径：`src/session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`、`tools/verify_unit_weapon_types_cpu.py`、`docs/unit-classifications.md`、`docs/unit-id-classification.md`。实例与 ID 查询同时消费启用武器类型和目标掩码；仅以 none、树木、墙或残骸为目标时不算近战或远程，混合有效目标保留分类。
