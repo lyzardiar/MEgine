@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 旧光环缩写摘要恢复（待批次验证）
+
+路径：`src/session_aura_snapshot.cpp`、`tests/caster_tests.cpp`、`docs/caster-spells.md`。目标缩写展开改变被动能力摘要后，恢复时允许与当前地图原始目标字段精确对应的旧摘要；其他字段或摘要不匹配仍拒绝。恢复使用当前能力目标规则，不更改存档格式。
+
+必要检查：Win32 Release 客户端和 caster 编译通过；`war3_caster_tests <root> <fixture> aura-alias-restore` 为 2 通过／0 失败，使用自定义友方光环，将真实恢复包中的摘要改为旧规则后恢复，并验证篡改摘要被拒绝，未加载 Game.dll。
+
+本批 3/3；集中验证武器／技能缩写、旧光环恢复、原图会话。活动技能、被动效果和弹道内的旧目标列表、原版存档格式及实际窗口仍待处理或验证。
+
+
 ## 技能与光环目标缩写（待批次验证）
 
 路径：`src/target_aliases.h`、`src/session_spell_info.cpp`、`src/session_passive_info.cpp`、`src/session_weapons.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`、`docs/caster-spells.md`。主动技能、被动能力及武器共用原版目标缩写映射，保留原词并增加对应全名；目标表的固定原件依据见单位分类文档。
