@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 编队限速与生命条快捷键批次（部分验证）
+
+范围：`bf3a939`、`41f0284`、`1b93316`，集成版本 `1b93316`。Win32 Release 客户端、订单、clock 和 movement avoidance 目标编译通过。`war3_order_queue_tests <data-root> <BootyBay.w3m> formation-speed|formation-completion|formation-facing|formation-wire|smart-bridge` 五个入口各为 1 通过／0 失败，默认入口退出 0、输出 38 条 PASS；`WAR3_CLOCK_FILTER=unit_core_restores_hero_abilities_equipment_and_vitals war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败。`war3_movement_avoidance_tests <data-root> <BootyBay.w3m>` 默认入口输出 9 条 PASS，`ally-yield` 为 1 通过／0 失败。共 9 个进程成功、54 条 PASS；部分入口未输出 RESULT。
+
+隔离地图分别放置受伤的己方和敌方单位并开启常显生命条，画面中双方生命条均可见；人工暂停单位防止战斗。向后台窗口投递 `[` 按键消息未改变该线程的物理按键状态，无法验证筛选行为，不作为通过。夹具、截图及客户端日志在 `tmp/docs-artifacts/war3/formation-health-batch-20261112/`，测试进程已关闭。
+
+实际 `[`／`]` 按住与释放、动态联盟、菜单／聊天和地图键盘过滤仍待窗口验证；编队成员死亡／易主／Buff 变化、攻击目标变化、旧存档及真实读档、双端联机、真实路径碰撞与大规模性能仍待验证。原版的速度协调和等待时序未对照；上述会话测试不代表完整对局验收。未执行项保留待测，下一功能批次从 0/3 开始。
+
 ## 按阵营显示生命条快捷键（待批次验证）
 
 路径：`src/game_view.{h,cpp}`。按住 `[` 仅显示己方与盟友生命条，按住 `]` 显示敌方生命条，同时按下显示两类；联盟关系采用本地玩家的被动联盟状态。地图键盘过滤、窗口焦点、聊天及菜单状态参与快捷键判断；未按快捷键时保留既有 Alt 与选项行为。原版操作见[暴雪快捷操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)。
