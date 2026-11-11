@@ -207,7 +207,7 @@ class GameView {
     void streamWeather(std::vector<std::string>& textures);
     void drawWeather(std::uint64_t elapsed);
     void command(float x,float y,OrderMode mode,bool queued,bool subgroup);
-    std::uint32_t widget(float x,float y,bool items,bool deadBridge=false) const;
+    std::uint32_t widget(float x,float y,bool items,bool deadBridge=false,bool destructables=true) const;
     void updatePointerTarget(float x,float y,bool active);
     std::uint32_t selectedGroundItem() const;
     void clearGroundItem();
