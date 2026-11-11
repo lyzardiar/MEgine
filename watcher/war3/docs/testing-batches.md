@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字裁剪、长文字与多面板转义批次（部分验证）
+
+范围：`670c657`、`1921362`、`531c278`，集成版本 `531c278`。Win32 Release 客户端和 browser 测试目标编译通过。5 个测试进程共 9 通过／0 失败：长文字绘制 1 项、聊天编辑及布局 4 项、FDF 地图界面绘制 1 项、飘字位移及存档恢复 2 项、多面板存档恢复 1 项。测试命令分别运行 `war3_browser_tests <root> <scratch> text_long_render|chat|map_frames_fdf_render` 及带 `WAR3_CLOCK_FILTER=text_tag|recovery_bundle_restores_multiboards` 的 `war3_clock_tests <root> <scratch>`；竖线表示分别执行。
+
+Blizzard TD 隔离副本临时注入多面板，标题和单元格使用 `A||cB||rC||nD`，开启界面后隐藏窗口运行 60 游戏帧并正常退出，截图显示字面竖线；地图副本、注入脚本、截图、日志和工具位于 `tmp/docs-artifacts/war3/ui-batch-20261112/`，未加载 Game.dll。原图窗口边界检查见上一条任务记录；仍能看到波次飘字重叠。
+
+未覆盖全部边界和分辨率、文字分段接缝及缓存清理、多面板所有颜色／中文组合、原版动态与视觉对照或完整对局；保留待测。批次已执行，下一功能批次从 0/3 开始。
+
+
 ## 多面板竖线转义（待批次验证）
 
 路径：`src/game_multiboard.cpp`，说明见 `docs/multiboard.md`。标题和单元格将 `||` 作为字面竖线，防止 `||c`、`||r`、`||n` 的第二个竖线被当作格式标记。
