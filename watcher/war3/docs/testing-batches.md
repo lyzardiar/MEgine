@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 中立槽战役 AI 脚本（待批次验证）
+
+路径：`src/session_ai.cpp`、`src/session_ai_snapshot.cpp`、`src/session_recovery_bundle.cpp`、`tests/campaign_ai_tests.cpp`，说明见 `docs/ai.md`。经典玩家槽 12–15 可通过现有 AI 脚本调度执行策略、消费单位／经济和保存恢复；包含中立 AI 的恢复包使用 SAIL 版本 2，仅含普通槽时仍写版本 1，读取兼容两版。已识别的外部原生插件／2SAJ 回调继续拒绝。
+
+快速检查：Win32 Release CampaignAI 目标编译通过；`war3_campaign_ai_tests <data-root> <campaign-ai-fixture> neutral-ai` 为 2 通过／0 失败，覆盖普通玩家 AI 启动、普通槽恢复包、中立槽 12 策略执行和经济订单，以及中立 AI 内存恢复后继续推进，未加载 Game.dll。测试通过脚本预置建筑、工人和资源，不代表真实战役验收。
+
+本批 2/3；集中检查槽 12–15、重复启动／不存在脚本、暂停与命令栈、单位易主／死亡、守卫和自动施法、恢复与旧版快照、真实自定义地图及实验联机。原版中立槽 AI 的创建条件、行为和完整兼容性未动态对照，外部插件仍未实现。
+
 ## 排队编队落点占用（待批次验证）
 
 路径：`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。同一编队的排队命令分单位启动时，后启动成员在选择落点前收集已启动成员的移动终点或攻击移动／巡逻目标，并按碰撞半径和地空类型避开；成员停止、隐藏、死亡或既无路线也无攻击移动目标时不占用该位置。它不保证路线部分可达或落点移动后的最终队形。

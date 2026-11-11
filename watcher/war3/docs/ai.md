@@ -1,6 +1,8 @@
 # 原版AI脚本与对局控制
 
-StartMeleeAI/StartCampaignAI从挂载归档读取策略成员，地图覆盖优先，再查Scripts路径。common.j/common.ai固定来自公共归档；每个电脑玩家拥有独立VM/globals、策略状态及命令队列，句柄/单位/经济与地图共享。资源内存直读，最多12个竞争玩家；对已有策略的玩家再次调用保持原策略及其脚本运行状态。
+StartMeleeAI/StartCampaignAI从挂载归档读取策略成员，地图覆盖优先，再查Scripts路径。common.j/common.ai固定来自公共归档；每个电脑玩家拥有独立VM/globals、策略状态及命令队列，句柄/单位/经济与地图共享。资源内存直读，支持经典16个玩家槽，包括中立槽；对已有策略的玩家再次调用保持原策略及其脚本运行状态。
+
+中立槽 AI 脚本使用相同的私有 VM、单位和经济消费者；独立恢复包的 AI 列表在包含中立槽时使用 SAIL 版本 2，只有普通槽时继续写版本 1，读取兼容两种版本。外部原生插件／2SAJ 的已知回调仍明确拒绝。原版中立槽 AI 对象的创建条件、守卫与战斗自动策略交互、完整地图脚本及原版互通尚待对照。
 
 策略文件缺失时输出地图设计者诊断并返回，地图脚本继续运行，缺失策略不会创建AI。原版 1.27 的 `0x6f89d6f0` 在文件名和 `Scripts\` 路径均未找到时输出诊断并返回空，调用方 `0x6f8a0b00` 处理编译与启动结果；反汇编见 `tmp/docs-artifacts/war3/orc-late-probe/ai-loader-asm.txt` 和 `start-ai-asm.txt`。原图 `OrcX03a.w3x` 引用的 `o03Ax11.ai` 在当前安装地图及公共归档均缺失；无前章 gamecache 的独立静音探针完成 main 并推进 600 秒，未加载 Game.dll，日志见 `tmp/docs-artifacts/war3/orc-late-probe/OrcX03a-ai-after.log`。缺失AI不能视为对局AI完整运行；跨关存档与实际游戏画面仍待验证。
 
