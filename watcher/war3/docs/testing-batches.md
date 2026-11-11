@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 采金归属、矿井类型与 AI 选矿批次（已验证所列范围）
+
+范围：`02cd83b`、`fc6347a`、`8f425d4`，集成版本 `8f425d4`。Win32 Release 客户端、caster、harvest、CampaignAI 目标编译通过；重新生成 CampaignAI 夹具，复用未变化的 caster 与 economy 夹具。
+
+运行 caster 的 `harvest-mixed-abilities`、`harvest-mine-owner`、`harvest-cancel-mine`，harvest 默认、`mine-paused`、`stunned`、`depot-route`，CampaignAI 的 `harvest-compatible-mine`、`harvest-town`、`harvest` 和 Booty Bay 原图 `melee-mines`；11 个进程均退出 0。覆盖矿内与途中易主、携金返还、混合能力、普通／荒芜／缠绕矿、暂停、耗尽、AI 配额和亡灵／暗夜起始覆盖矿。命令、输出及退出码见 `tmp/docs-artifacts/war3/harvest-ai-batch.cjs` 与 `harvest-ai-batch.log`。部分测试明确检查 Game.dll 未加载，全部测试未调用原版进程。
+
+原版动态易主、多能力矿类型和 AI 选矿优先级仍未对照；矿井不可达、混合工人、性能、真实窗口和完整对局未覆盖。本批不代表全部玩法验收；下一功能批次从 0/3 开始。
+
+
 ## 多能力矿井采集类型匹配（待批次验证）
 
 路径：`src/session_harvest.cpp`、`tests/caster_tests.cpp`。采集执行阶段按工人能力和矿井归属选择与接单一致的普通、荒芜或缠绕矿类型，按选中类型处理范围、进矿和收益；避免自定义矿井的其他能力改变正在执行的采集流程。
