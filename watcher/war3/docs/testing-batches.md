@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 载尸自动施法与技能目标关系批次（部分验证）
+
+范围：`16db61d`、`a26fc85`、`727fe2f`，含测试修正 `11d4b48`、`7136321`，集成版本 `727fe2f`。Win32 Release 客户端、corpse-cargo、corpse、caster、control 目标编译通过，重新生成默认夹具。以原版安装目录为 `<root>`，`war3_corpse_cargo_tests <root> tmp/docs-artifacts/war3/corpse-cargo/fixture.w3m <autocast|cargo>` 和 `war3_corpse_tests <root> tmp/docs-artifacts/war3/corpses/fixture.w3m <spirit|items>` 各 1／0；上一批三个失败项均已在集成版本通过。
+
+`war3_caster_tests <root> tmp/docs-artifacts/war3/caster-spells/fixture.w3m <player-targets|targets>` 分别 4／0、13／0；`war3_control_tests <root> tmp/docs-artifacts/war3/control-spells/fixture.w3m <flow|purge>` 各 1／0；三张 `tmp/docs-artifacts/war3/control-player/` 夹具对应 `control-player`、`control-player-enemy`、`control-player-notself` 各 1／0。`war3_campaign_ai_tests <root> <root>/Maps/Scenario/(4)WarChasers.w3m warchasers-spell` 为 2／0。共 12 个进程、28 通过／0 失败；明确检查 Game.dll 的用例未加载该 DLL。
+
+852051／852052 原版精确映射、其他控制技能与动态目标关系、真实窗口及完整对局仍待验证；本批不代表全部玩法验收。下一功能批次从 0/3 开始。
+
+
 ## 控制技能玩家与自身目标筛选（待批次验证）
 
 路径：`src/session_control_spells.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。控制技能将 player／play 纳入关系并集，并按 notself／nots 排除施法者；使用施法归属判断 player。
