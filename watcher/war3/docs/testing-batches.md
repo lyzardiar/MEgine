@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 原图楼梯斜射线补充检查
+
+路径：`tests/campaign_ai_tests.cpp`。HumanX03 原图可行走楼梯附近新增 16 个从地表上方出发、水平跨度 8192 单位的斜射线，与同一真实地表的 4096 段密集采样首个交点对照，容差为射线长度的 0.5%。`war3_campaign_ai_tests <data-root> humanx03-tag-surface` 在 Win32 Release 为 1 通过／0 失败，未加载 Game.dll。密集采样是参考近似，不代表精确三角形射线相交；其他窄模型、相机／窗口坐标、模型边缘和性能仍待验证。本补充不单独计入功能批次。
+
 ## 鼠标射线楼梯与水面补充检查
 
 路径：`src/surface_ray.h`、`src/game_view.cpp`、`tests/campaign_ai_tests.cpp`。将鼠标射线采样和细化提取为客户端与测试共用的求交函数，保留既有 128 段采样及 12 次细化；原图 HumanX03 楼梯与 BootyBay 水域分别从表面上方垂直投射，检查命中高于底层地形的实际表面。
