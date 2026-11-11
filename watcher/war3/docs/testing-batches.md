@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 传送技能玩家与盟友目标（待批次验证）
+
+路径：`src/session_teleport.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。传送目标在既有友方前提下将 player、friend／allies 和 neutral 作为并集；allies 可选择同玩家单位及友方中立单位，self 不再指代其他同玩家单位。城镇传送卷轴的既有城镇目标规则保持不变。
+
+必要检查：Win32 Release 客户端及 control 目标编译通过。以 `generate-control-fixture.py --data-root <root> --teleport-targets <player|allies|self> --output <fixture>` 生成地图，运行 `war3_control_tests <root> <fixture> teleport-<variant>` 各 1／0，覆盖同玩家、其他盟友、友方中立、敌人、自身及实际群体传送；allies 与 self 在修复前各失败。夹具位于 `tmp/docs-artifacts/war3/teleport-relations/`。
+
+本批 3/3，先集中验证传送、控制权和资源技能；原版关系语义、动态联盟、目的地移动和真实窗口待验证。
+
+
 ## 控制权技能关系目标筛选（待批次验证）
 
 路径：`src/session_ownership.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。魅惑、占据和控制魔法在既有敌对限制内检查目标关系配置；只允许中立时不再接受其他敌人，只允许玩家时不再放行敌方。敌人和中立条件可组合，未指定关系时保留原筛选。
