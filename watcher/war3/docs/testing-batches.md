@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 毁坏桥梁右键画面补充验证
+
+在 BootyBay 几何副本中，地图脚本创建已毁坏的 `YT00` 桥梁和一名人族农民，关闭工人路径碰撞，设置资源并用单位目标订单事件记录桥梁句柄。Win32 Release 客户端以隔离用户目录和后台 Agent 运行；选中农民后在逻辑坐标 `(400,245)` 右键，之后的呈现帧显示事件文本 `BRIDGE TARGET ORDER` 和恢复的桥面，金矿从 10000 降到 9998、木材从 10000 降到 9999。该检查覆盖从画面输入到断桥目标订单及实际修复；夹具和两帧截图位于 `tmp/docs-artifacts/war3/dead-bridge-window-20261111/`，测试进程已关闭。
+
+测试使用脚本创建的单座桥、关闭路径碰撞和人工坐标；其他桥型、自然路径、完整修理、多选／Shift、双端联机及原版画面对照仍待验证。本补充不单独计入功能批次。
+
 ## 场景移动与桥梁右键批次（部分验证）
 
 功能范围 `f2393e6`、`3c6f45d`、`609ecbd`；在 `609ecbd` 代码加本次测试补充上执行。Win32 Release 客户端、order_queue、construction、clock 目标构建通过；order_queue 有既有 C4456 变量遮蔽告警。原图 `war3_order_queue_tests <data-root> <BootyBay.w3m> smart-bridge` 为 1 通过／0 失败，覆盖混合选区、受损和已毁桥梁、点击点、Shift 队列和目标移除。完整 order_queue 进程退出 0、输出 38 条 PASS（无 RESULT 汇总），包含新增实验联机目标坐标编码、时间片消费及队列；`war3_construction_tests <data-root> <construction-fixture> repair-bridge-blocked` 为 1 通过／0 失败；`WAR3_CLOCK_FILTER=unit_core_restores_hero_abilities_equipment_and_vitals war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖排队目标移除与桥梁 `(0,0)` 点击点恢复。
