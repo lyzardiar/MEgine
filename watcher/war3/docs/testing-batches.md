@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 旧技能快照目标缩写恢复（待批次验证）
+
+路径：`src/target_aliases.h`、`src/session_spell_snapshot.cpp`、`tests/caster_tests.cpp`。恢复直接保存的技能定义时展开旧目标缩写，覆盖活动施法及复用同一解码器的技能状态和飞行技能弹道；目标集合超过存档上限时保存等价缩写，再次读取时恢复全名。
+
+必要检查：Win32 Release 客户端及 caster 目标编译通过；`war3_caster_tests <root> <fixture> spell-alias-restore` 为 2 通过／0 失败，验证旧式目标列表的活动诅咒恢复后命中、4096 项旧列表展开和再次保存恢复；未加载 Game.dll。
+
+本批 1/3；技能弹道及其他技能状态消费者、旧被动和武器弹道目标列表、原版实际窗口与对局待集中验证。
+
+
 ## 武器、技能缩写与旧光环恢复批次（部分验证）
 
 范围：`f30cee4`、`c36e92c`、`de79eb5`，集成版本 `de79eb5`。Win32 Release 客户端、caster、research、clock 和 campaign AI 目标编译通过。`war3_caster_tests <root> <caster-fixture> targets` 13 通过／0 失败，`aura-alias-restore` 2／0；`WAR3_CLOCK_FILTER=unit_auras_restore war3_clock_tests <root> <scratch>` 1／0；生成地图的 `war3_research_tests <root> <research-fixture>` 输出 PASS，覆盖真实攻击及武器分类。原版合成武器指令探针通过，结果 `tmp/docs-artifacts/war3/target-alias-batch/original-weapon.json`。
