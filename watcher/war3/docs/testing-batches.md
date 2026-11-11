@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 吞噬魔法目标与回调批次（存在失败）
+
+范围：`94d988e`、`35f7f47`、`540dde0`，集成版本 `540dde0`。Win32 Release 客户端、control、consumption 和 campaign AI 目标编译通过，重新生成夹具。`war3_control_tests <root> <fixture> <mode>` 对 `tmp/docs-artifacts/war3/devour-relations/` 的 player／enemy／mixed／player-notself、`devour-categories/` 的 hero／nonhero／organic，以及 reentry 夹具的 `devour-reentry`／`devour-caster-reentry` 共 9 项各 1／0；默认 control 夹具的 `purge` 为 1／0。
+
+`war3_consumption_tests <root> tmp/docs-artifacts/war3/eat-magic/fixture.w3m <devour|absorb>` 各 1／0；`war3_campaign_ai_tests <root> <root>/Maps/Scenario/(4)WarChasers.w3m warchasers-spell` 为 2／0。合计 14 通过、1 失败，明确检查 Game.dll 的用例未加载该 DLL；输出与退出码在 `tmp/docs-artifacts/war3/devour-batch.log`。
+
+失败项保留：同一 consumption 夹具的 `orb` 在效果检查前因 `Destroyer source ability order or primary position differs` 失败。定向诊断显示实际按钮为 `Advm(0,2)`、`Afak(1,2)`、`Aabs(3,2)`、`ACmi(2,2)`，测试固定要求前三个且总数为 3；记录 `tmp/docs-artifacts/war3/devour-orb-diagnostic.log`。需对照原版魔免图标后修正产品或测试，再重测该项。目标其他类别、回调生命周期、原版行为和实际窗口未覆盖；本批不代表完整玩法验收。
+
+
 ## 吞噬魔法单位类别目标（待批次验证）
 
 路径：`src/session_spells.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。吞噬魔法范围目标按 hero／nonhero 及 organic／orga 过滤，避免驱散不符合地图能力配置的单位；原有关系与地空规则继续参与筛选。
