@@ -6,6 +6,8 @@
 
 必要检查：Win32 Release 客户端与 CampaignAI 测试编译通过；原图 `blizzardtd-texttags` 为 2 通过／0 失败，覆盖失效句柄及原图 main 后 300 秒推进，未加载 Game.dll。修复前原图在刷新波次飘字时因重复销毁终止，修复后同样的 `--main-check --simulate-ms 300000 --mute` 通过，日志 `tmp/docs-artifacts/war3/td-probe/blizzard-tags-after.log`。该检查未进行窗口操作或完整塔防对局。
 
+验证补充：同一原图隔离探针在 300 秒读取 `udg_CurrentWave=3`，说明早期波次已有推进；在 `blizzardtd-texttags` 中加入至少进入第 3 波的断言，待本批执行。此为上一修复的测试补充，不增加功能批次计数。
+
 本批 2/3；集中检查飘字过期／显式销毁／重复刷新、全部 setter、位置绑定、有效对象不受影响、恢复及原版行为，并与游戏内提示换行验证合并。
 
 
