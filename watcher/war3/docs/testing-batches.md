@@ -8619,3 +8619,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`tests/clock_tests.cpp`。从包含两个休眠消息线程的共享快照构造 JSSH 1 格式，保留旧格式的线程、上下文和触发器序列，检查解码及缺省消息字段。该兼容性补充不计入新功能批次。
 
 快速检查：Win32 Release `war3_clock_tests` 编译通过；`WAR3_CLOCK_FILTER=recovery_bundle_restores_sleeping_message_context war3_clock_tests <data-root> <output-root>` 为 1 通过／0 失败。旧格式使用当前编码内容转换构造，尚未用历史版本实际生成的快照对照；真实窗口存读档与原版格式仍待验证。
+
+### 负数范围伤害恢复生命（待批次验证）
+
+路径：`src/session_damage.cpp`、`tests/clock_tests.cpp`，原版汇编依据及限制见[脚本伤害](widget-damage.md)。即时和延迟负数范围金额恢复候选对象生命，延迟队列可存档恢复，不触发普通伤害事件。
+
+快速检查：Win32 Release 客户端与 clock 目标编译通过；`WAR3_CLOCK_FILTER=negative_point_damage_heals war3_clock_tests <data-root> <output-root>` 为 1 通过／0 失败，检查即时恢复、伤害事件不触发及延迟恢复后检查点续行。首次测试未计单位自然回血而失败，修正预期后通过。批次需覆盖无敌、目标类型、死亡和生命上限、来源删除、延迟／暂停、存档、事件重入及原版动态行为；原版治疗拦截能力尚未实现。本批 1/3。
