@@ -8921,3 +8921,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_building_upgrades.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`。建筑中断施法后重新检查身份、归属／死亡轮次、建筑类型、升级资格及当前资源；条件失效时拒绝旧升级，不再扣费。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> upgrade-cancel-pause`、`upgrade-cancel-spend`，两例修复前失败、修复后各输出 1 条 PASS。批次合并升级、取消退款和换令回归；生产队列／类型／归属变化、新订单、实际窗口和原版事件时序待验证。本批 1/3。
+
+### 背包操作换令回调状态复核（待批次验证）
+
+路径：`src/session_inventory.cpp`、`tests/caster_tests.cpp`。中断施法后重新检查操作者身份、死亡／归属轮次、控制状态、物品身份及实际持有关系，失效时拒绝格子移动、丢弃和交付订单。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> item-slot-cancel-pause`、`item-drop-cancel-pause`、`item-give-cancel-pause`，三例修复前失败、修复后各输出 1 条 PASS。批次合并背包移动、丢弃、交付、典当和订单队列；物品／单位移除与归属变化、新订单、原版事件时序和实际窗口待验证。本批 2/3。
