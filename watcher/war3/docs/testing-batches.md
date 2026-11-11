@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 尸体目标玩家与中立关系组合（待批次验证）
+
+路径：`src/session_corpses.cpp`、`src/session_transport.cpp`、`tests/generate-corpse-cargo-fixture.py`、`tests/corpse_cargo_tests.cpp`。尸体技能和载尸车将 player、友方、敌方、中立目标作为可组合关系处理，避免 player 与其他关系互相排斥，并使中立限定参与载尸筛选。
+
+必要检查：Win32 Release 客户端与 corpse-cargo 目标编译通过；`generate-corpse-cargo-fixture.py --data-root <root> --corpse-targets <player-enemy|neutral> --output <fixture>` 后，`war3_corpse_cargo_tests <root> <fixture> <relation-own|relation-enemy|relation-neutral>` 各为 1 通过／0 失败，覆盖载尸和 Raise Dead 的允许／排除选择；未加载 Game.dll。夹具位于 `tmp/docs-artifacts/war3/corpse-alias/`。
+
+本批 3/3；集中验证尸体与运输关系、真实载入和已有运输／尸体生命周期。原版动态关系对照及完整对局待验证。
+
+
 ## 运输目标的关系组合（待批次验证）
 
 路径：`src/session_transport.cpp`、`tests/generate-transport-fixture.py`、`tests/transport_tests.cpp`。货舱与装载目标各自按玩家、友方、敌方和中立关系的并集筛选，再共同约束乘客；敌方限定不再接受己方，友敌混合与玩家加盟友不再错误交叉限制。

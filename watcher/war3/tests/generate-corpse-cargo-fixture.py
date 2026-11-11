@@ -67,7 +67,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=ROOT/'tmp/docs-artifacts/war3/corpse-cargo/fixture.w3m')
-    parser.add_argument('--corpse-targets', choices=['ally', 'enemy', 'plural-enemy'])
+    parser.add_argument('--corpse-targets', choices=['ally', 'enemy', 'plural-enemy', 'player-enemy', 'neutral'])
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only installation')
@@ -78,7 +78,7 @@ def main():
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
     if args.corpse_targets:
-        target = dict(ally=b'grou,dead,alli', enemy=b'grou,dead,enem', **{'plural-enemy': b'grou,dead,enemies'})[args.corpse_targets]
+        target = dict(ally=b'grou,dead,alli', enemy=b'grou,dead,enem', neutral=b'grou,dead,neut', **{'plural-enemy': b'grou,dead,enemies', 'player-enemy': b'grou,dead,play,enem'})[args.corpse_targets]
         files['war3map.w3a'] = struct.pack('<II', 2, 2) + b''.join(ability + bytes(4) + struct.pack('<I', 1) + b'atar' + struct.pack('<III', 3, 1, 0) + target + b'\0' + ability for ability in (b'Amel', b'Arai')) + struct.pack('<I', 0)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
