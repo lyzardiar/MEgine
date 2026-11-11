@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 小地图输入与场景表面批次（部分验证）
+
+集成版本 `5389977`，范围 `b7ff22f`、`082f68b`、`5389977`。Win32 Release 客户端、map、roots、order_queue 构建通过；order_queue 编译显示既有 C4456 变量遮蔽警告。`war3_map_tests <data-root> <scratch> campaign_walkable_stairs` 为 1 通过／0 失败；`war3_roots_tests <data-root> <ancient-roots-fixture>` 为 3 通过／0 失败，未加载 Game.dll；`war3_order_queue_tests <data-root> <BootyBay.w3m>` 退出 0，输出 37 条 PASS（无 RESULT 汇总）。
+
+隔离用户目录以 `--play --mute` 启动 BootyBay，日志确认进入游戏和首帧；窗口截图采集报 `FrameArrived timed out`，重新选窗后激活报 `failed to activate captured window`，未进行输入或画面验收。测试进程已关闭。本地产物：`tmp/docs-artifacts/war3/placement-input-batch-20261111/`。上述会话检查不覆盖本批 GameView 鼠标射线、小地图输入或建造网格绘制；这些窗口项目、桥面边缘与性能及原版对照仍保留在队列。下一功能批次从 0/3 开始。
+
 ## 建造占地网格可见表面（待批次验证）
 
 路径：`src/game_building.cpp`。建造、物品建造及古树扎根的红绿占地网格逐点使用现有地形、水面和可行走模型表面高度，使高架区域的可建造性提示不会落在模型底下；建筑模型高度与建造合法性沿用现有规则。
