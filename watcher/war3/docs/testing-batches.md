@@ -9047,3 +9047,11 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 ### 人族第六章无人操作结局（上项补充，不单独计数）
 
 路径：`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`war3_campaign_ai_tests <data-root> human06-no-action-defeat` 使用原图及静音隔离会话，不人为移动／创建／击杀单位；模拟到 1955.25 秒时感染数 59、玩家 1 失败、显示带按钮对话框并暂停，报告 1 通过／0 失败，未加载 Game.dll。诊断循环遇暂停即结束，避免模拟时间停滞时空转。该结果补充盟友堵路任务的真实流程证据，仍待本批集中回归；玩家操作、胜利路线、窗口表现和完整战役未覆盖。当前批次仍为 1/3。
+
+### 战役脚本对话框地图文案解析（待批次验证）
+
+路径：`src/session_script_dialogs.cpp`、`tests/campaign_ai_tests.cpp`、`docs/campaign-wts-text.md`。脚本对话框标题、普通按钮和退出按钮使用当前地图 WTS 解析；普通文本和不存在的条目保留，解析后的长度在创建按钮前校验。
+
+必要检查：Win32 Release 客户端及 CampaignAI 目标编译通过；`war3_campaign_ai_tests <data-root> human06-dialog-text` 读取人族第六章原图 WTS，修复前失败、修复后 1 通过／0 失败，覆盖标题、两种按钮、缺失项和普通文字。`human06-no-action-defeat` 原图无操作推进至模拟 1955.25 秒，失败对话标题与 WTS 条目一致，1 通过／0 失败且未加载 Game.dll。
+
+本批 2/3，合并验证移动、战役、对话框交互与恢复；真实窗口／字体／布局、旧存档中已保存的未解析文字和原版动态语义待验证。
