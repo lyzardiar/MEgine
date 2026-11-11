@@ -8933,3 +8933,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_construction.cpp`、`tests/caster_tests.cpp`。工人中断施法后重新核对自身、施工建筑身份／生命周期／归属、施工状态和当前施工者；建筑失效或工人不可用时拒绝旧施工订单。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> resume-cancel-pause`、`resume-cancel-remove`，两例修复前失败、修复后各输出 1 条 PASS；夹具人工设置未完工状态。批次合并四族施工、协助建造、背包和升级换令；回调替换施工任务／归属、新订单、原版时序和实际窗口待验证。本批 3/3，先集中验证。
+
+### 升级、背包与恢复施工换令批次（部分验证）
+
+范围：`35bf4d7`、`1e6202b`、`640290f`，集成版本 `640290f`。Win32 Release 客户端、caster、construction、passive 和 order queue 目标编译通过，重新生成相关夹具。升级暂停／资源变化、背包三种操作暂停、恢复施工暂停／目标移除、通用换令、建造暂停、协助建造移除／进度、眩晕施工及典当／消耗品购买共 14 个入口均退出 0、各输出 1 条 PASS；caster、construction 默认入口各输出 1 条 PASS，order queue 默认入口输出 37 条 PASS，共 17 个进程成功。日志 `tmp/docs-artifacts/war3/upgrade-inventory-construction-batch.log`；部分入口不输出 RESULT。
+
+恢复施工回调夹具人工设置未完工状态；施工任务替换、物品／工人归属变化、新订单与真实窗口、多人及原版事件时序仍待验证。本批不代表完整对局验收，下一功能批次从 0/3 开始。
