@@ -1,5 +1,17 @@
 # 独立客户端测试队列
 
+## 尸体与运输关系批次（存在失败，待修复）
+
+范围：`a48e54f`、`19ee214`、`2bffb83`，集成版本 `2bffb83`。Win32 Release 客户端、corpse-cargo、corpse、transport、campaign AI 目标编译通过。尸体关系夹具六个模式、载尸 `cargo`／`lifecycle`／`exhume`、尸体 `flow`／`autocast`、运输关系四个模式及缩写／坠落／原始运输六个模式、War Chasers `warchasers-kill` 3／0 和 `warchasers-spell` 2／0，合计 26 通过。明确检查 Game.dll 的用例均未加载该 DLL。
+
+失败 3 项，均保留待修复：
+- `war3_corpse_cargo_tests <root> tmp/docs-artifacts/war3/corpse-cargo/fixture.w3m autocast`：`Corpse loading autocast-on order was rejected`；诊断显示 Amel 的开关号为 852051／852052，数字命令入口还需核对原版映射。
+- `war3_corpse_tests <root> tmp/docs-artifacts/war3/corpses/fixture.w3m spirit`：`Ancestral Spirit ignored source restoration factors`，恢复值及测试预期待定位。
+- `war3_corpse_tests <root> tmp/docs-artifacts/war3/corpses/fixture.w3m items`：`Resurrection rune did not activate without inventory and consume itself`，触发、消耗及复活路径待定位。
+
+尸体主流程首次误用了 corpse-cargo 地图，生成并切换至 `generate-corpse-fixture.py --data-root <root>` 的专用夹具后 `flow` 和 `autocast` 均为 1／0；原误用不作为产品失败。载尸地图由 `generate-corpse-cargo-fixture.py --data-root <root>` 生成，关系地图参数见各任务记录；载具夹具见 `tmp/docs-artifacts/war3/transport-relations/` 和 `transport-alias/`。修复后只重测失败及受影响范围。原版动态目标关系、窗口及完整对局仍未验证；下一功能批次从 0/3 开始。
+
+
 ## 尸体目标玩家与中立关系组合（待批次验证）
 
 路径：`src/session_corpses.cpp`、`src/session_transport.cpp`、`tests/generate-corpse-cargo-fixture.py`、`tests/corpse_cargo_tests.cpp`。尸体技能和载尸车将 player、友方、敌方、中立目标作为可组合关系处理，避免 player 与其他关系互相排斥，并使中立限定参与载尸筛选。
