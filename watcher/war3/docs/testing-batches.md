@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## Esc、计时器与凤凰对象批次（部分验证）
+
+范围：`7dfcaf5`、`349c22b`、`3c35bd1`，集成版本 `3c35bd1`；`2e17aae`、`1189542` 为测试补充，不单独计数。Win32 Release 客户端、CampaignAI 和 clock 目标编译通过。5 个测试进程共 9 通过／0 失败：clock 的 `timer` 筛选 5 项，`death_restarts` 和 `phoenix_fire` 各 1 项；原版 The Death Sheep `deathsheep-controls` 和 Blizzard TD `blizzardtd-phoenix` 各 1 项。日志位于 `tmp/docs-artifacts/war3/batch-esc-timer-phoenix-20261112/`。Blizzard TD 原图 main 与 60 秒模拟另通过，日志见 `tmp/docs-artifacts/war3/td-probe/after2.log`。
+
+检查覆盖时间事件中计时器查询／暂停／恢复、计时器及窗口恢复、正常凤凰变蛋与恢复、缺失类型对象的初始化，以及地图监听器和特殊技能命令；没有覆盖实际窗口 Esc、输入优先级、实验 LAN 双端与回放、凤凰完整孵化及对象缺失时的原版行为，也没有完成塔防波次。原版时序、画面与完整对局未验收；上述未执行项继续保留。Azure Tower Defense 的缺失路径纹理阻塞另行处理。批次已执行，下一功能批次从 0/3 开始。
+
+
 ## Blizzard TD 凤凰对象缺失（待批次验证）
 
 路径：`src/session_rebirth.cpp`、`src/session_passive_info.cpp`、`tests/campaign_ai_tests.cpp`。原版 `(6)BlizzardTD.w3x` 中 `A01J` 凤凰被动的鸟型 `o00R` 不存在，而蛋型 `o00S` 存在；创建单位时不再因缺失对象终止地图，并跳过无法完成的凤凰变形／孵化。有效鸟蛋定义仍使用既有凤凰流程；原版对缺失对象的具体动态行为待对照。
