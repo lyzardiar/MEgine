@@ -8741,3 +8741,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`。施法结束事件中下发新的点移动订单，验证外层攻击返回失败且保留新订单与路线；此项补充 `0f68a5d`，不单独计入功能批次。
 
 快速检查：生成 caster 夹具并编译 Win32 Release caster 目标后，`war3_caster_tests <data-root> <fixture> cancel-new-order` 退出 0、输出 1 条 PASS。批次继续覆盖普通移动、攻击移动、待命和物品攻击的回调换令，以及原版事件次序；本批仍为 1/3。
+
+### 跟随目标的换令回调复核（待批次验证）
+
+路径：`src/session_combat_orders.cpp`、`tests/caster_tests.cpp`。普通、旋风和变形状态的跟随订单在打断施法后复核单位和目标，目标失效时清理旧路线，目标移动时重算接近路线；回调发出新订单时沿用修订号保护。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> follow-cancel-target` 和 `follow-cancel-move`，均退出 0、各输出 1 条 PASS；移除目标复现修复前失败。批次合并普通跟随、特殊形态、目标死亡／易主和回调新订单；真实窗口、多人及原版事件时序仍待对照。本批 2/3。
