@@ -1146,6 +1146,7 @@ class ScriptSession {
     MusicScene& requireThematicMusic();
     World& requireWorld();
 public:
+    bool validOrderTarget(std::uint32_t id) const {return alive(id,NativeKind::Unit) || alive(id,NativeKind::Item) || alive(id,NativeKind::Destructable);}
     void setExternalExecute(const void* owner,std::function<bool(const std::string&)> handler);
     std::string unitUiField(std::uint32_t type,const char* field) {return definitions().field(type,"UnitUI",field);}
     unsigned buildCommandIndex(const UnitState& unit);

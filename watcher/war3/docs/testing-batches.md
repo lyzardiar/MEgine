@@ -8541,3 +8541,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。玩家物品命令在替换已有队列前核验高级库存权限、物品仍由发令单位持有、基本槽位范围及不能向自身转交；入队命令消费时也重新核验。校验失败保留现有动作与后续队列，有效命令沿用原有替换流程。其他因距离、冷却、目标等原因拒绝的命令仍需核验，不能据此认定所有无效命令均保留队列。
 
 快速检查：Win32 Release 客户端与 order queue 测试目标编译通过，目标保留既有 C4456 告警；已针对该缺陷运行 `war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-player-item`，1 通过／0 失败，覆盖未持有物品、向自身转移、越界槽位、队列续行及有效换槽，日志 `tmp/docs-artifacts/war3/invalid-player-item-fast.log`。集中验证整组物品／移动／共享控制、重入、联机和原版行为；本批 2/3。
+
+### 无效玩家目标命令保留队列（待批次验证）
+
+路径：`src/session.h`、`src/session_combat_orders.cpp`、`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。玩家目标命令与脚本目标命令共用单位、物品和可破坏物句柄有效性检查；已移除或其他类型的目标在清除队列及排队之前拒绝，死亡但未移除的实体仍由具体命令决定。目标在入队后消失时由既有队列消费逻辑跳过，不改变其他后续命令。
+
+快速检查：Win32 Release 客户端、订单与 native 测试目标编译；新增用例待运行。与 Unicode 折行和物品命令合批执行 `war3_order_queue_tests <data-root> <BootyBay.w3m>`、`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-player-target` 和 `war3_native_tests <data-root> <scratch-root>`，核对失效目标、排队／替换、有效目标和既有订单；原版时序、动态目标变化及真实鼠标仍待对照。本项提交后本批达到 3/3，先完成集中验证。
