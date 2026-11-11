@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 预加载对象与脚本回调批次（已验证所列范围）
+
+范围：`e5e6977`、`7e45385`、`ee92059`，集成版本 `ee92059`。Win32 Release 客户端、map、JASS runtime 和 thread 目标编译通过。
+
+`war3_map_tests <root> <scratch> <mode>` 的 14 个预加载模式各 1 通过／0 失败，覆盖普通 native、玩家／单位／物品与订单、伤害／死亡嵌套、物体状态、即时和延迟范围伤害、可破坏物创建／移除／死亡、过滤枚举、缓存及哈希表。`war3_jass_runtime_tests <literal-fixture>` 为 18／0，`war3_jass_thread_tests` 为 36／0。共 16 个进程、68 项通过／0 失败；原始命令、输出和退出码在 `tmp/docs-artifacts/war3/preloader-batch.cjs`、`preloader-batch.log`。部分 map 用例明确检查 Game.dll 未加载。
+
+子脚本退出后的回调目前被安全拒绝，长期回调跨运行时生命周期仍待实现；原版时序、真实地图、物品／可破坏物范围伤害和枚举重入未完全覆盖，实际窗口及完整对局未验证。下一功能批次从 0/3 开始。
+
+
 ## 预加载脚本可破坏物过滤枚举（待批次验证）
 
 路径：`src/session_game.cpp`、`src/jass_runtime.cpp`、`tests/map_tests.cpp`。独立 Preloader 子脚本可使用过滤／组合条件枚举矩形内可破坏物并在回调中操作对象。函数值记录所属运行时的生命令牌；脚本退出后遗留的过滤器会报失效，不能作为长期回调使用，完整跨子脚本生命周期仍待实现。
