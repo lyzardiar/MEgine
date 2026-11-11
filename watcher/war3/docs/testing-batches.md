@@ -8517,3 +8517,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/glue.cpp`、`src/lua_jass_bridge.cpp`、`src/game_commands.cpp`、`tests/native_tests.cpp`、`tests/lua_tests.cpp`。界面自然宽度、地图文字宽度查询与工具提示行数按实际可见文字解析颜色、换行和 `||` 转义；工具提示计算复用绘制侧换行算法，避免对单个竖线重复计宽。
 
 快速检查：Win32 Release 客户端、Lua 和 native 测试目标编译通过；新增用例未执行。批次与跨锚点任务合并运行 `war3_native_tests <data-root> <scratch-root>`、`war3_lua_tests <data-root> G:/qcloud_20144088.w3x`，检查转义竖线、颜色、换行、宽度及折行；实际工具提示高度、地图标题位置、原版文本显示及 GPU 画面待对照。本批 2/3。
+
+### 多行界面文字宽度（待批次验证）
+
+路径：`src/font_metrics.cpp`、`tests/native_tests.cpp`、`tests/lua_tests.cpp`。字体宽度按可见文本中最宽的一行计算，空行不增加宽度；地图脚本宽度查询及界面自然布局复用相同 GDI 度量。单行保留原有留白规则。
+
+快速检查：Win32 Release 客户端、Lua 和 native 测试目标编译通过，新增用例未执行。与本批跨锚点和转义文字任务合并验证原字体单行／多行／空行、地图脚本查询、窗口显示与布局；原版对空行、字距和自定义字体的处理仍待对照。本项提交后本批达到 3/3，先完成集中验证。
