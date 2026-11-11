@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 毁灭者魔免按钮与法球复测（上批补充）
+
+路径：`tests/consumption_tests.cpp`。原版 1.27 的 `War3Patch.mpq` 中 `Units/UnitAbilities.slk` 的毁灭者 `ubsp` 能力列表为 `Advm,Afak,Aave,Aabs,ACmi`；`Units/NeutralAbilityFunc.txt` 的 `ACmi` 提供 `PASBTNGenericSpellImmunity.blp` 和 `Buttonpos=2,2`，`AbilityData.slk` 将其定义为 `Amim` 派生魔免。测试据此检查四个显示按钮及魔免被动图标、位置，不再固定为三个。源数据提取脚本与输出在 `tmp/docs-artifacts/war3/devour-immune-source.py`、`devour-immune-source.log`。
+
+Win32 Release consumption 目标编译通过；上批失败项 `war3_consumption_tests <root> tmp/docs-artifacts/war3/eat-magic/fixture.w3m orb` 复测 1 通过／0 失败，继续覆盖手动／自动法球、魔法扣除、弹道与溅射及无魔法回退，未加载 Game.dll。该补测不单独计入功能批次；当前新批次 0/3。对象表证明源配置，不证明原版实际窗口显示及运行时位置，仍待窗口对照。
+
+
 ## 吞噬魔法目标与回调批次（存在失败）
 
 范围：`94d988e`、`35f7f47`、`540dde0`，集成版本 `540dde0`。Win32 Release 客户端、control、consumption 和 campaign AI 目标编译通过，重新生成夹具。`war3_control_tests <root> <fixture> <mode>` 对 `tmp/docs-artifacts/war3/devour-relations/` 的 player／enemy／mixed／player-notself、`devour-categories/` 的 hero／nonhero／organic，以及 reentry 夹具的 `devour-reentry`／`devour-caster-reentry` 共 9 项各 1／0；默认 control 夹具的 `purge` 为 1／0。
