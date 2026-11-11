@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## War Chasers 移动选角验证补充
+
+路径：`tests/campaign_ai_tests.cpp`。原版 War Chasers 与 The Death Sheep 原图各完成初始化和 300 秒空转模拟，日志为 `tmp/docs-artifacts/war3/warchasers-probe.log`、`deathsheep-probe.log`；这不表示完成对局。War Chasers 额外以两次玩家地面移动命令让初始精灵沿中间通道进入弓箭手区域，脚本移除精灵、创建弓箭手并给予复活十字章，定向测试为 1 通过／0 失败。直接朝目标走会先进入其他英雄区域并选中该英雄，属于地图脚本行为。
+
+复现：`war3_campaign_ai_tests <root> <root>/Maps/Scenario/(4)WarChasers.w3m warchasers-move`。未进行鼠标窗口操作、完整地下城或原版动态对照。此为测试补充，不计入功能批次；当前 0/3。
+
+
 ## 飘字裁剪、长文字与多面板转义批次（部分验证）
 
 范围：`670c657`、`1921362`、`531c278`，集成版本 `531c278`。Win32 Release 客户端和 browser 测试目标编译通过。5 个测试进程共 9 通过／0 失败：长文字绘制 1 项、聊天编辑及布局 4 项、FDF 地图界面绘制 1 项、飘字位移及存档恢复 2 项、多面板存档恢复 1 项。测试命令分别运行 `war3_browser_tests <root> <scratch> text_long_render|chat|map_frames_fdf_render` 及带 `WAR3_CLOCK_FILTER=text_tag|recovery_bundle_restores_multiboards` 的 `war3_clock_tests <root> <scratch>`；竖线表示分别执行。
