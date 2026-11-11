@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 建筑路径纹理扩展名兼容（待批次验证）
+
+路径：`src/session_footprints.cpp`、`tests/campaign_ai_tests.cpp`。建筑及可破坏物路径纹理采用共享 `readTexture` 的 BLP／TGA 别名与地图覆盖优先级，再按文件内容解码和生成实际阻挡。原版 `(8)AzureTowerDefense.w3x` 请求 `PathTextures\\8x8SimpleSolid.blp`，公共归档提供同名 TGA；修复前创建建筑时终止，修复后 main 初始化完成。
+
+必要检查：Win32 Release 客户端和 CampaignAI 测试目标编译通过；原图 `azure-footprint` 为 1 通过／0 失败，检查原请求缺失、别名读取及实际建筑阻挡，未加载 Game.dll。`--main-check --simulate-ms 60000 --mute` 的 main 已通过，但模拟阶段因 `Unknown source attack type: unknown` 失败，日志 `tmp/docs-artifacts/war3/td-probe/azure-after.log`；地图不能据此视为可玩。
+
+本批 1/3；集中验证地图覆盖与公共归档同名扩展、两方向别名、真实 BLP／TGA、建筑／可破坏物创建和移除、旋转与存档／联机，另解决攻击类型阻塞后验证原图波次。
+
+
 ## Esc、计时器与凤凰对象批次（部分验证）
 
 范围：`7dfcaf5`、`349c22b`、`3c35bd1`，集成版本 `3c35bd1`；`2e17aae`、`1189542` 为测试补充，不单独计数。Win32 Release 客户端、CampaignAI 和 clock 目标编译通过。5 个测试进程共 9 通过／0 失败：clock 的 `timer` 筛选 5 项，`death_restarts` 和 `phoenix_fire` 各 1 项；原版 The Death Sheep `deathsheep-controls` 和 Blizzard TD `blizzardtd-phoenix` 各 1 项。日志位于 `tmp/docs-artifacts/war3/batch-esc-timer-phoenix-20261112/`。Blizzard TD 原图 main 与 60 秒模拟另通过，日志见 `tmp/docs-artifacts/war3/td-probe/after2.log`。
