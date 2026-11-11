@@ -8885,3 +8885,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_commerce.cpp`、`tests/construction_tests.cpp`。购买扣费后，单位／物品创建或金币事件回调若改变后续余额或英雄令牌，跳过对应过期事件。
 
 快速检查：Win32 Release 客户端及 construction 目标编译通过；生成施工夹具后执行 `war3_construction_tests <data-root> <fixture> shop-payment-state`，修复前失败、修复后退出 0 并输出 1 条 PASS；夹具仅在商店周围人工放开地面寻路。批次合并单位／物品商店、库存、交易、施工与资源回调；创建回调改余额或令牌、典当、原版时序及真实窗口待验证。本批 3/3，先集中验证。
+
+### 建筑与商店支付回调批次（部分验证）
+
+范围：`b6059b4`、`36a0a74`、`4ff6574`，集成版本 `4ff6574`。Win32 Release 客户端、construction、commerce、revival 和 order queue 目标编译通过，重新生成施工、商店和复活夹具。施工夹具的升级支付／退款、开工支付／退款、商店支付、维修支付、训练支付／退款、研究支付、协助移除／进度共 11 个入口各退出 0、输出 1 条 PASS；construction 和 commerce 默认入口各输出 1 条 PASS，revival 默认入口 4／0，order queue 默认入口输出 37 条 PASS。共 15 个进程成功，日志 `tmp/docs-artifacts/war3/build-shop-payment-batch.log`；部分入口不输出 RESULT。
+
+商店定向夹具人工放开周边地面寻路；人口／创建／物品回调改余额或令牌、典当及英雄复活支付的独立事件路径、实际窗口、多人和原版事件时序仍待验证或处理；本批不代表完整对局验收。下一功能批次从 0/3 开始。
