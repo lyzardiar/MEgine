@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 非树木场景物件右键与混合选区（待批次验证）
+
+路径：`src/game_view.cpp`、`src/player_commands.{h,cpp}`、`src/lan_local_identity.cpp`、`src/lan_action_encoder.cpp`、`src/lan_simulation.cpp`、`src/session_order_snapshot.cpp`、`tests/order_queue_tests.cpp`。右键非树木可破坏物时保留地面点击点；逐单位优先处理目标命令，失败且目标仍有效时让可移动单位向点击点移动。队列快照保存该点标志并兼容旧版本，实验联机在目标动作中传递坐标。
+
+快速检查：Win32 Release 客户端和 order_queue 目标构建；`war3_order_queue_tests <data-root> <BootyBay.w3m> smart-bridge` 为 1 通过／0 失败，覆盖受损桥梁、工人和战斗单位混合选区、点击点、Shift 队列及目标移除；未加载 Game.dll。
+
+待批次检查：实际窗口右键桥面不同位置、完整及受损桥梁、其他可破坏物和树木；检查混合选区、阵型、不可达、Shift 队列和失效目标。检查实验联机坐标及队列恢复／旧版快照，并与原版交互对照；未验证真实窗口、联机互通及存档恢复。本项为当前功能批次 2/3。
+
 ## 移动命令点击场景物件（待批次验证）
 
 路径：`src/game_view.cpp`。玩家通过移动按钮或热键选取树木、桥梁和地面物品时，按鼠标射线地面落点发送移动命令；点击单位仍走跟随目标路径，右键的采集、修理和拾取语义保持原有处理。此前非单位目标被送入不支持该组合的目标命令而被拒绝。
