@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 伐木途中地形封路恢复（待批次验证）
+
+路径：`src/session_lumber.cpp`、`tests/campaign_ai_tests.cpp`。工人接近树木时若地形阻挡版本变化，重新计算到采集范围的路线；无法抵达时进入现有换树／等待流程。暂停期间保留任务，其他树不可用时等待，并在道路重新开放后继续。
+
+必要检查：Win32 Release `war3_campaign_ai_tests` 编译通过；`war3_campaign_ai_tests <root> tmp/docs-artifacts/war3/campaign-ai/fixture.w3m <harvest-tree-blocked-later|harvest-tree-reopen>` 各 1 通过／0 失败，覆盖实际伐木订单、接单后封路、暂停、换树和重新开放；修复前保留不可达树木。均未加载 Game.dll。
+
+本批 1/3；合并验证玩家与 AI 伐木、返还、地形变化和拥堵。频繁阻挡变化的开销、持有木材／目标切换回调、原版路线选择和真实对局仍待验证。
+
+
 ## AI 采集可达性批次（已验证所列范围）
 
 范围：`7b6750b`、`f489aa4`、`167fcd7`，集成版本 `167fcd7`。Win32 Release 客户端、CampaignAI 和 harvest 目标编译通过，复用未变化的隔离夹具。
