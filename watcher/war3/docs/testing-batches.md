@@ -8667,3 +8667,11 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/session_repair.cpp`、`src/session_construction.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。扣费事件移除后续工人时跳过失效对象；逐个复查工人工作状态，建筑生命、所有权轮次或施工进度在回调中改变时不继续使用旧施工帧。
 
 快速检查：Win32 Release 客户端及 construction 测试目标编译通过；生成施工夹具后 `war3_construction_tests <data-root> <fixture> assist-removal` 修复前失败、修复后输出 1 条 PASS，`assist-progress` 输出 1 条 PASS，均退出 0。前者验证回调移除后续工人并继续施工，后者验证脚本进度不被旧帧覆盖及下一帧续行。合批验证施工、修理、命令与资源回调；工人易主／停止／能力变化、多人及原版事件时序仍待对照。本项提交后本批 3/3，先集中验证。
+
+### 多选技能与施工回调批次（部分验证）
+
+范围：`99dac2c`、`2fce0ec`、`03ab411`，集成版本 `03ab411`。Win32 Release 客户端、construction、stealth 及 order queue 目标编译通过；订单目标保留既有 C4456 隐藏变量告警。施工默认消费者及 `assist-removal`、`assist-progress`、`repair-bridge-callback`、`repair-callback`、`repair-bridge-blocked`、`repair-unit-blocked`、`repair-approach`、`repair-visibility`、`stunned-work` 均退出 0，各输出 1 条 PASS；其中部分模式没有输出 RESULT 或检查 Game.dll。
+
+Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`tower` 均退出 0，各输出 1 条 PASS；`war3_order_queue_tests <data-root> <BootyBay.w3m>` 退出 0，输出 37 条 PASS。日志 `tmp/docs-artifacts/war3/work-callback-batch-*.log`。覆盖多选余量与可用者选择的会话辅助逻辑、施工／桥梁回调、路径、停工续行、显形及订单队列。
+
+未覆盖真实窗口中的鼠标与多选聚合、多等级及有限／无限混合、资源回调导致工人易主／能力变化、真实双端、跨关以及原版事件和施法者选择顺序；保留后续对照，不作为完整对局验收。下一功能批次从 0/3 开始。
