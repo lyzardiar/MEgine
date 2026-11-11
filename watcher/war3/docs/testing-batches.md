@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 吞噬魔法守卫、古树与无敌目标（待批次验证）
+
+路径：`src/session_spells.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。吞噬魔法按 ward、nonancient 和 invu／invulnerable 配置检查守卫、古树及无敌状态；原始 `Advm` 的源目标包含 ward 与 invu，默认继续允许这些类别。
+
+必要检查：Win32 Release 客户端、control 与 consumption 目标编译通过。`generate-control-fixture.py --data-root <root> --devour-targets <ward|no-ward|invulnerable|vulnerable|nonancient> --output <fixture>` 后，`war3_control_tests <root> <fixture> devour-<variant>` 各 1／0，覆盖步兵、无敌步兵、蛇形守卫和生命之树的实际驱散；vulnerable 与 nonancient 配置在修复前失败；不含 ward 的修复前失败使用了错误单位，不能作为守卫复现证据。原始 `war3_consumption_tests <root> tmp/docs-artifacts/war3/eat-magic/fixture.w3m devour` 为 1／0；均未加载 Game.dll。夹具在 `tmp/docs-artifacts/war3/devour-special/`。
+
+测试初次误将幽灵狼 `osw1` 当作守卫；核对原 `UnitBalance.slk` 后改为蛇形守卫 `osp1`，五项通过。本批 1/3；旋风／睡眠保护、其他守卫类别、原版语义与实际窗口待集中验证。
+
+
 ## 毁灭者魔免按钮与法球复测（上批补充）
 
 路径：`tests/consumption_tests.cpp`。原版 1.27 的 `War3Patch.mpq` 中 `Units/UnitAbilities.slk` 的毁灭者 `ubsp` 能力列表为 `Advm,Afak,Aave,Aabs,ACmi`；`Units/NeutralAbilityFunc.txt` 的 `ACmi` 提供 `PASBTNGenericSpellImmunity.blp` 和 `Buttonpos=2,2`，`AbilityData.slk` 将其定义为 `Amim` 派生魔免。测试据此检查四个显示按钮及魔免被动图标、位置，不再固定为三个。源数据提取脚本与输出在 `tmp/docs-artifacts/war3/devour-immune-source.py`、`devour-immune-source.log`。
