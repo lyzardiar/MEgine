@@ -9023,3 +9023,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_revival.cpp`、`tests/revival_tests.cpp`、`tests/generate-revival-fixture.py`。复活扣费事件后核对祭坛与英雄生命周期、归属轮次、英雄关联和队列票据，取消或替换原任务时不派发旧目标订单；订单事件后再次核对，再启动仍有效的任务。
 
 快速检查：Win32 Release 客户端及 revival 目标编译通过；生成复活夹具，执行 `war3_revival_tests <data-root> <fixture> altar-payment-cancel`、`altar-payment-reissue`，两例修复前失败、修复后各报告 1 通过／0 失败，覆盖取消和同英雄重排。批次合并训练、研究、英雄复活、人口及队列回调回归；死亡复活／易主及原版事件时序、真实窗口和多人待验证。本批 2/3。
+
+### 同类型死亡英雄的复活候选选择（待批次验证）
+
+路径：`src/session_production.cpp`、`tests/revival_tests.cpp`。祭坛按英雄类型接受训练／复活请求时，遍历同类型死亡英雄并选择当前满足复活条件的候选；全部候选不可用时拒绝，不创建重复英雄。
+
+快速检查：Win32 Release 客户端及 revival 目标编译通过；`war3_revival_tests <data-root> <fixture> same-type-revival` 修复前失败、修复后报告 1 通过／0 失败，覆盖首个英雄已排队、第二英雄复活以及重复请求拒绝。批次合并生产、复活、人口及队列回调；原版多同型英雄选择次序、真实窗口和多人待验证。本批 3/3，先集中验证。
