@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 飘字阴影透明度历史（待批次验证）
+
+路径：`src/script_state.h`、`src/session_text_tag.cpp`、`src/game_text_tag.cpp`、`tests/clock_tests.cpp`、`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。可见文字绘制时阴影 alpha 保留观察过的最低正文 alpha，重新设置文字时重建；STTX v5 保存该值，v1–v4 以正文 alpha 初始化，不能还原旧档阴影历史。原版固定版本指令隔离探针覆盖降低与恢复；该探针模拟文字对象并关闭重绘回调，不执行原版窗口。
+
+必要检查：Win32 Release 客户端与 clock 编译通过；`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 2 通过／0 失败，覆盖阴影最低值、文字重设、v5 存档及 v1–v4 恢复。`python watcher/war3/tools/verify_texttag_capacity_cpu.py --output tmp/docs-artifacts/war3/texttag-shadow-history/reference.json` 隔离探针通过。新批 1/3；原版窗口、内联颜色交互和波次文字重叠待集中验证。
+
+
 ## 飘字默认值、透明度与阴影批次（部分验证）
 
 范围：`f25263e`、`9ae861d`、`9bb1d63`，集成版本 `9bb1d63`。Win32 Release 客户端编译通过；三次测试进程共 5 通过／0 失败：`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 验证默认值、透明度和 v1–v4 恢复 2 项，`war3_campaign_ai_tests <root> <BlizzardTD> blizzardtd-texttags` 验证失效句柄和原图推进 2 项，`blizzardtd-wts` 验证原图文字 1 项，均未加载 Game.dll。`python watcher/war3/tools/verify_texttag_capacity_cpu.py` 的模拟管理器原版指令探针通过，覆盖透明度切换；不执行原版 JASS 或窗口。

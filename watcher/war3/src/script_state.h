@@ -77,7 +77,8 @@ struct ScriptTimerDialog {
 };
 struct ScriptTextTag {
     std::string text;float x=0,y=0,z=0,height=0.05f,vx=0,vy=0,screenX=0,screenY=0,age=0,lifespan=100,fadepoint=90;
-    std::array<std::uint8_t,4> color{255,255,255,255};bool visible=true,suspended=false,permanent=true;
+    std::array<std::uint8_t,4> color{255,255,255,255};std::uint8_t shadowAlpha=255;bool visible=true,suspended=false,permanent=true;
+    void observeColor(){if(color[3]<shadowAlpha)shadowAlpha=color[3];}
 };
 struct ScriptText {unsigned owner=0;float x=0,y=0;double expires=0;std::string text;std::uint16_t audience=0xffff;bool chat=false;};
 struct ScriptMinimapPing {std::uint64_t id=0;float x=0,y=0;double started=0,expires=0;std::uint32_t color=0xff00ff00;bool extra=false;};

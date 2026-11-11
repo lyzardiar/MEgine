@@ -110,9 +110,23 @@ assert cpu.mem_read(record + 0x27, 1)[0] == 126
 invoke(0x6f8774b0, pool, 42, 1)
 invoke(0x6f8781e0, pool, step)
 assert cpu.mem_read(record + 0x27, 1)[0] == 255
+# Exercise the original text object's shadow alpha setters with redraw callbacks disabled.
+text_object, offsets, shadow_color = 0x10050000, 0x10051000, 0x10052000
+put(text_object + 0x70, 8)
+put(text_object + 0x2c, 0x80112233)
+put(offsets, 0x3ac49ba6)
+put(offsets + 4, 0xbac49ba6)
+put(shadow_color, 0xff000000)
+invoke(0x6f0e06d0, text_object, offsets, shadow_color)
+assert cpu.mem_read(text_object + 0x33, 1)[0] == 128
+for current, expected in [(64, 64), (255, 64), (16, 16), (192, 16)]:
+    put(color, current << 24 | 0x112233)
+    invoke(0x6f0dfcd0, text_object, color)
+    assert cpu.mem_read(text_object + 0x33, 1)[0] == expected
+
 result = dict(binarySha256=digest, slots=100, first=created[0], last=created[-1], fullReturn=0,
-              zeroSlotAllocated=True, zeroSlotReusable=True, nonzeroSlotReusable=True, alphaTransitions=True, passed=True,
-              boundaries=['Synthetic manager and prepopulated free list', 'Virtual callbacks replaced by returns'],
+              zeroSlotAllocated=True, zeroSlotReusable=True, nonzeroSlotReusable=True, alphaTransitions=True, shadowAlphaHistory=True, passed=True,
+              boundaries=['Synthetic manager and prepopulated free list', 'Virtual callbacks replaced by returns', 'Text redraw callbacks disabled'],
               limitations=['Raw x86 entry points only; JASS null mapping, runtime initialization, UI and gameplay were not executed.'])
 args.output.parent.mkdir(parents=True, exist_ok=True)
 args.output.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
