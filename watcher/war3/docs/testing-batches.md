@@ -8583,3 +8583,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 范围：`0685810`、`86f4cd9`、`7771e2f` 及先前补充 `7d4a60f`，集成版本 `7771e2f`。Win32 Release 客户端和订单测试目标编译通过，目标保留既有 C4456 告警。`war3_order_queue_tests <data-root> <BootyBay.w3m>` 退出码 0、输出 37 条 PASS，包含局域网隐藏槽位编码与接收；`slot-order-permission`、`raw-item-order`、`invalid-player-ability`、`invalid-player-item` 各为 1 通过／0 失败。日志 `tmp/docs-artifacts/war3/inventory-orders-batch-*.log`。
 
 本批覆盖普通／高级共享、库存能力移除、源槽和目标槽、原始物品订单、队列以及隔离联机编解码；未验证真实双端、玩家界面、原版共享权限和事件时序、槽位变化后的所有组合及完整对局。下一功能批次从 0/3 开始。
+
+### 技能界面覆盖的检查点恢复（待批次验证）
+
+路径：`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[存档运行时](save-runtime-foundation.md)。恢复包 SRBF 版本 62 新增技能类型／等级对应的图标与提示覆盖组件，恢复时校验字段、等级、类型、重复项和大小预算；版本 60、61 按无覆盖读取。保存不再仅因技能界面覆盖而拒绝，其他未支持的 Lua／平台状态及保留句柄仍受原有保护。
+
+快速检查：Win32 Release 客户端和 clock 测试目标编译通过；针对格式兼容和磁盘检查点的定向测试 `WAR3_CLOCK_FILTER=recovery_bundle_restores_ability_ui war3_clock_tests <data-root> <output-root>` 及 `WAR3_CLOCK_FILTER=preload_recording_recovery` 各为 1 通过／0 失败，日志 `tmp/docs-artifacts/war3/ability-ui-recovery-{final,legacy}.log`。首次夹具因重复声明类型及选择单等级技能失败，修正夹具后通过。批次验证旧版本、损坏／预算边界、多技能覆盖、命令按钮与真实窗口存读档；原版格式和完整 Lua 会话恢复尚未实现。本批 1/3。
