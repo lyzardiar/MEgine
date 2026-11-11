@@ -8891,3 +8891,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`b6059b4`、`36a0a74`、`4ff6574`，集成版本 `4ff6574`。Win32 Release 客户端、construction、commerce、revival 和 order queue 目标编译通过，重新生成施工、商店和复活夹具。施工夹具的升级支付／退款、开工支付／退款、商店支付、维修支付、训练支付／退款、研究支付、协助移除／进度共 11 个入口各退出 0、输出 1 条 PASS；construction 和 commerce 默认入口各输出 1 条 PASS，revival 默认入口 4／0，order queue 默认入口输出 37 条 PASS。共 15 个进程成功，日志 `tmp/docs-artifacts/war3/build-shop-payment-batch.log`；部分入口不输出 RESULT。
 
 商店定向夹具人工放开周边地面寻路；人口／创建／物品回调改余额或令牌、典当及英雄复活支付的独立事件路径、实际窗口、多人和原版事件时序仍待验证或处理；本批不代表完整对局验收。下一功能批次从 0/3 开始。
+
+### 英雄复活支付的资源事件重入（待批次验证）
+
+路径：`src/session_revival.cpp`、`tests/revival_tests.cpp`、`tests/generate-revival-fixture.py`。祭坛排队和酒馆唤醒支付时，金币事件回调修改木材后跳过过期木材事件。
+
+快速检查：Win32 Release 客户端及 revival 目标编译通过；执行 `python tests/generate-revival-fixture.py --data-root <data-root> --revival-lumber --output <fixture>` 后运行 `war3_revival_tests <data-root> <fixture> altar-payment-state`、`awaken-payment-state`，两例修复前失败、修复后各 1 通过／0 失败。祭坛案例用自定义木材费用，酒馆使用原有费用；批次合并祭坛／酒馆、退款及事件，原版时序与实际窗口待验证。本批 1/3。

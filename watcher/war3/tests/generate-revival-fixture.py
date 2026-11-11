@@ -28,7 +28,24 @@ integer leaveSyncDone=0
 integer levelCalls=0
 integer levelObserved=0
 integer levelMode=0
+integer paymentGoldEvents=0
+integer paymentLumberEvents=0
 endglobals
+function ChangeLumberOnGold takes nothing returns nothing
+    set paymentGoldEvents=paymentGoldEvents+1
+    call SetPlayerState(Player(0),PLAYER_STATE_RESOURCE_LUMBER,200)
+endfunction
+function RecordLumberPayment takes nothing returns nothing
+    set paymentLumberEvents=paymentLumberEvents+1
+endfunction
+function InstallPaymentTest takes nothing returns nothing
+    local trigger gold=CreateTrigger()
+    local trigger lumber=CreateTrigger()
+    call TriggerRegisterPlayerStateEvent(gold,Player(0),PLAYER_STATE_RESOURCE_GOLD,LESS_THAN,100.0)
+    call TriggerRegisterPlayerStateEvent(lumber,Player(0),PLAYER_STATE_RESOURCE_LUMBER,LESS_THAN,100.0)
+    call TriggerAddAction(gold,function ChangeLumberOnGold)
+    call TriggerAddAction(lumber,function RecordLumberPayment)
+endfunction
 function RecordLevel takes nothing returns nothing
     set levelCalls=levelCalls+1
     set levelObserved=GetHeroLevel(GetLevelingUnit())
@@ -133,6 +150,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data-root',type=Path,required=True)
     parser.add_argument('--output',type=Path,default=ROOT/'tmp/docs-artifacts/war3/hero-revival/fixture.w3m')
+    parser.add_argument('--revival-lumber',action='store_true')
     args=parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture must stay outside the read-only installation')
@@ -147,7 +165,7 @@ def main():
     repair=b'Ahrp'+bytes(4)+struct.pack('<I',1)+b'aub1'+struct.pack('<III',3,1,0)+b'Repair, rate <Ahrp,DataA1>\0Ahrp'
     files['war3map.w3a']=struct.pack('<II',2,2)+b'AHbz'+bytes(4)+struct.pack('<I',3)+changes+title+repair+struct.pack('<I',0)
     files['revival.ai']=b'function main takes nothing returns nothing\ncall SetNewHeroes(false)\nendfunction\n'
-    files['war3mapMisc.txt']=MISC.encode('utf-8')
+    files['war3mapMisc.txt']=(MISC+('ReviveBaseLumberFactor=1.0\nHeroMaxReviveCostLumber=1000\n' if args.revival_lumber else '')).encode('utf-8')
     files.pop('war3map.doo',None)
     pathing=files['war3map.wpm']
     files['war3map.wpm']=pathing[:16]+bytes(len(pathing)-16)
