@@ -8535,3 +8535,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/font_metrics.cpp`、`tests/native_tests.cpp`。界面及地图文字共用的折行在 GDI 返回的切分位置落在 UTF-16 高／低代理之间时向前调整；首个字符的代理对比可用宽度更宽时整体放入一行。测量输入 4096 单元的边界同样不能拆分代理对，避免文字出现半个字符。
 
 快速检查：Win32 Release 客户端及 native 测试目标编译通过，新增用例未执行。批次运行 `war3_native_tests <data-root> <scratch-root>` 验证窄行、普通字符混排与 4096 单元边界，并检查地图文字高度及实际窗口；原版字体是否包含对应字形、组合字符／字形簇和像素一致性仍待验证。本批 1/3。
+
+### 无效玩家物品命令保留队列（待批次验证）
+
+路径：`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。玩家物品命令在替换已有队列前核验高级库存权限、物品仍由发令单位持有、基本槽位范围及不能向自身转交；入队命令消费时也重新核验。校验失败保留现有动作与后续队列，有效命令沿用原有替换流程。其他因距离、冷却、目标等原因拒绝的命令仍需核验，不能据此认定所有无效命令均保留队列。
+
+快速检查：Win32 Release 客户端与 order queue 测试目标编译通过，目标保留既有 C4456 告警；已针对该缺陷运行 `war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-player-item`，1 通过／0 失败，覆盖未持有物品、向自身转移、越界槽位、队列续行及有效换槽，日志 `tmp/docs-artifacts/war3/invalid-player-item-fast.log`。集中验证整组物品／移动／共享控制、重入、联机和原版行为；本批 2/3。
