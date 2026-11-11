@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 编队前后排序与行进方向（待批次验证）
+
+路径：`src/player_commands.cpp`、`src/session.h`、`src/session_research.cpp`、`tests/order_queue_tests.cpp`。编队地面移动、攻击移动、巡逻和桥梁智能命令的落点以行进方向为前方，依据当前有效武器将近战、远程和无普通武器单位分排；同排按句柄稳定排序，排队时优先以前一移动终点计算方向，关闭编队不分配队形落点。近战前、远程后的依据为[暴雪编队说明](https://classic.battle.net/war3/basics/specialcommands.shtml)。
+
+必要检查：Win32 Release 客户端和订单目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> formation-facing` 为 1 通过／0 失败，覆盖步兵与火枪手向东、排队反向及无编队命令，未加载 Game.dll。测试目标保留既有 C4456 告警。
+
+本批 3/3，先集中验证；队形布局和无武器类别为当前近似，实际原版单位优先级、障碍绕路、状态变化、空地混编、多人及速度协调仍待验证或实现。
+
 ## 队形移动开关与 Alt 选项分离（待批次验证）
 
 路径：`src/game_preferences.{h,cpp}`、`src/front_options.cpp`、`src/game_flow_ui.cpp`、`src/game_loading.{h,cpp}`、`src/game_view.{h,cpp}`、`tests/order_queue_tests.cpp`。原版 `GlobalStrings.fdf` 的 `FORMATION_TOGGLE_INFO` 将 Alt 反转选项与队形开关分别说明；选项控制按 Alt 是否可以从关闭状态临时开启队形，小地图队形按钮和 Alt+F 控制持久状态。采用原版皮肤的开／关／按下／禁用纹理及提示，地图自定义皮肤可覆盖；新增的 V7 偏好保存两项，V5／V6 旧值分别迁移为两项初值。此项修正上一条将两个状态合并的行为。

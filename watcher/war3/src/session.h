@@ -1199,6 +1199,7 @@ public:
     World* world() {return world_.get();}
     bool unitSelectable(std::uint32_t handle);
     std::optional<UnitCombatDisplay> unitCombatDisplay(std::uint32_t handle);
+    unsigned formationRank(const UnitState& unit);
     unsigned heroPrimaryAttribute(const UnitState& unit);
     std::array<float,3> heroAttributeEffects();
     std::optional<std::array<int,3>> heroExperienceDisplay(std::uint32_t handle);
