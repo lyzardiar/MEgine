@@ -8909,3 +8909,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_unsummon.cpp`、`tests/unsummon_tests.cpp`、`tests/generate-unsummon-fixture.py`。亡灵建筑取消召唤返还资源时，金币事件回调修改木材后跳过过期木材事件。
 
 快速检查：Win32 Release 客户端及 unsummon 目标编译通过；生成 `python tests/generate-unsummon-fixture.py --data-root <data-root>` 后执行 `war3_unsummon_tests <data-root> <fixture> refund-state`，修复前失败、修复后 1 通过／0 失败。定向夹具将消退速度设为即时以在同一模拟步返还两种资源；批次合并正常渐进返还、暂停／易主及 AI，原版时序和实际窗口待验证。本批 3/3，先集中验证。
+
+### 复活、典当与取消召唤资源事件批次（部分验证）
+
+范围：`b682870`、`812c38b`、`a5c0abf`，集成版本 `a5c0abf`。Win32 Release 客户端、revival、passive、unsummon 和 commerce 目标编译通过，重新生成相关夹具。祭坛／酒馆支付回调、酒馆唤醒、典当回调／正常典当、消耗品购买、选购者、取消召唤退款回调／正常流程／暂停易主／AI 共 11 个定向入口各报告 1／0；revival 默认入口 4／0，commerce 默认入口退出 0、输出 1 条 PASS，共 13 个进程成功。日志 `tmp/docs-artifacts/war3/revive-pawn-unsummon-batch.log`，部分入口未报告 Game.dll 状态。
+
+祭坛支付回调用自定义木材费用，取消召唤回调用即时消退；正常渐进返还另有测试。物品移除及木材回调、人口／令牌重入、实际窗口、多人和原版时序仍待验证；本批不代表完整对局验收。下一功能批次从 0/3 开始。
