@@ -8529,3 +8529,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 范围：`cf7b156`、`ad74c1b`、`44e38d8`，集成版本 `44e38d8`。Win32 Release 客户端、native 和 Lua 测试目标编译通过。使用本机原版资源目录执行 `war3_native_tests <data-root> tmp/docs-artifacts/war3/text-layout-batch-native` 为 25 通过／0 失败，覆盖锚点尺寸、循环拒绝、转义字符及原字体多行宽度；日志 `tmp/docs-artifacts/war3/text-layout-batch-native.log`。
 
 使用同一版本和 `G:/qcloud_20144088.w3x` 的 `war3_lua_tests <data-root> <map>` 为 2 通过／0 失败、未加载 Game.dll，覆盖地图文字宽度和跨锚点换行；日志 `tmp/docs-artifacts/war3/text-layout-batch-lua.log`。Lua 测试工作区包含原有人工清怪探针，因此不表示正常对局或通关。未执行真实窗口、原版文字／像素对照、复杂 FDF 和自定义字体；这些保留待测。下一功能批次从 0/3 开始。
+
+### 界面文字折行保留 Unicode 代理对（待批次验证）
+
+路径：`src/font_metrics.cpp`、`tests/native_tests.cpp`。界面及地图文字共用的折行在 GDI 返回的切分位置落在 UTF-16 高／低代理之间时向前调整；首个字符的代理对比可用宽度更宽时整体放入一行。测量输入 4096 单元的边界同样不能拆分代理对，避免文字出现半个字符。
+
+快速检查：Win32 Release 客户端及 native 测试目标编译通过，新增用例未执行。批次运行 `war3_native_tests <data-root> <scratch-root>` 验证窄行、普通字符混排与 4096 单元边界，并检查地图文字高度及实际窗口；原版字体是否包含对应字形、组合字符／字形簇和像素一致性仍待验证。本批 1/3。
