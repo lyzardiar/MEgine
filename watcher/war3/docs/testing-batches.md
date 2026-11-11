@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## War Chasers 移动触发与首场攻击验证补充
+
+路径：`tests/campaign_ai_tests.cpp`。继实际玩家命令移动选角后，弓箭手通过玩家地面移动进入首个刷怪区域，触发四组刷怪并等待怪物生成；再移动到目标进入玩家视野，使用玩家目标攻击命令，验证怪物生命实际下降。原图定向检查 2 通过／0 失败，未加载 Game.dll。地图和脚本未修改，没有传送英雄或关闭战争迷雾。
+
+复现：`war3_campaign_ai_tests <root> <root>/Maps/Scenario/(4)WarChasers.w3m warchasers-walk-spawn`。仅覆盖首场攻击和刷怪，未验证击杀掉落、后续关卡、鼠标窗口操作、多人或原版动态一致性。此为测试补充，不计入功能批次；当前 0/3。
+
+
 ## War Chasers 移动选角验证补充
 
 路径：`tests/campaign_ai_tests.cpp`。原版 War Chasers 与 The Death Sheep 原图各完成初始化和 300 秒空转模拟，日志为 `tmp/docs-artifacts/war3/warchasers-probe.log`、`deathsheep-probe.log`；这不表示完成对局。War Chasers 额外以两次玩家地面移动命令让初始精灵沿中间通道进入弓箭手区域，脚本移除精灵、创建弓箭手并给予复活十字章，定向测试为 1 通过／0 失败。直接朝目标走会先进入其他英雄区域并选中该英雄，属于地图脚本行为。
