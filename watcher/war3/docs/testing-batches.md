@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 占据与控制魔法流程补测（上批补充）
+
+路径：`tests/control_tests.cpp`。使用默认 control 夹具、女妖训练和控制魔法科技前置，`war3_control_tests <root> tmp/docs-artifacts/war3/control-spells/fixture.w3m ownership-flow` 报告 3 通过／0 失败且未加载 Game.dll：原始占据完成后转移目标并消耗女妖，控制魔法转移敌方召唤单位，占据期间目标易主后清除通道和占用且女妖存活。Win32 Release control 目标编译通过。
+
+首次未设置科技时占据被拒；补齐科技及相应能力后通过。`Aps2` 不可直接添加，故中断场景使用原 `Apos`，未覆盖 Aps2 保护状态。其他事件回调、动态关系、原版时序及实际窗口仍待验证。本项为上一批测试补充，不单独计数；当前功能批次 0/3。
+
+
 ## 资源、控制权与传送目标关系批次（部分验证）
 
 范围：`9ec4bbc`、`ef63bb2`、`e61b1fe`，集成版本 `e61b1fe`。Win32 Release 客户端、control、caster 和 campaign AI 目标编译通过。以 `<root>` 为原版安装目录，`war3_control_tests <root> <fixture> <mode>` 对 `tmp/docs-artifacts/war3/resource-player/` 的 player／player-enemy、`charm-relations/` 的 player／neutral／enemy、`teleport-relations/` 的 player／allies／self 各执行对应名称模式，8 项各 1／0；默认 `control-spells/fixture.w3m` 的 `dark-summoning`、`flow`、`purge` 各 1／0。
