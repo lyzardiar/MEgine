@@ -8819,3 +8819,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`0ed2c6c`、`bc5fb9a`、`3fc9a49`，以及透明度补充 `838d32e`；集成版本 `3fc9a49`。Win32 Release 客户端、caster、harvest、passive 和 order queue 目标编译通过，重新生成相关夹具。caster 的 `harvest-cancel-mine`、`ground-cancel-pause`、`cancel-new-order` 和默认入口，以及 harvest 的 `mine-paused` 和默认入口均退出 0、各输出 1 条 PASS；passive 的 `line-weapon` 为 4／0、`weapon-ui` 为 1／0；order queue 默认入口退出 0、输出 37 条 PASS。部分入口没有 RESULT，带标记入口报告 `game_dll_loaded=false`；日志 `tmp/docs-artifacts/war3/alpha-harvest-batch-*.log`。
 
 隐藏客户端使用静态 0.5 透明度夹具显示半透明农民，原 BootyBay 农场预览分别显示绿色和红色模型；截图位于 `tmp/docs-artifacts/war3/alpha-animation/batch.png` 与 `tmp/docs-artifacts/war3/alpha-harvest-batch-preview/`。普通采集默认消费者包含多种矿井流程；回调改变矿量／归属／能力、其他种族建筑、原模型动画与透明排序、真实窗口、多人及原版时序和画面仍待验证。下一功能批次从 0/3 开始。
+
+### 伐木换令回调的树木复核（待批次验证）
+
+路径：`src/session_lumber.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`。中断施法后复核工人、树木和采集能力；树木失效时拒绝旧采集订单，位置或接近范围变化时重算路线，回调发出新订单时沿用修订号保护。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> harvest-tree-cancel-remove`，修复前失败、修复后退出 0 并输出 1 条 PASS。批次合并伐木、采集与订单回归；回调改变树木生命／能力／工人状态、真实窗口及原版事件时序待验证。本批 1/3。

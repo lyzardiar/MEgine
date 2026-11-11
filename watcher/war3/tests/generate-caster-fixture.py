@@ -25,6 +25,7 @@ def main():
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = b'''globals
 unit interruptedTarget=null
+destructable interruptedTree=null
 item interruptedItem=null
 integer interruptCount=0
 real interruptX=0
@@ -38,6 +39,16 @@ function InstallInterruptRemove takes unit caster, unit target returns nothing
     set interruptedTarget=target
     call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
     call TriggerAddAction(t,function InterruptRemoveTarget)
+endfunction
+function InterruptRemoveTree takes nothing returns nothing
+    set interruptCount=interruptCount+1
+    call RemoveDestructable(interruptedTree)
+endfunction
+function InstallInterruptRemoveTree takes unit caster, destructable target returns nothing
+    local trigger t=CreateTrigger()
+    set interruptedTree=target
+    call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
+    call TriggerAddAction(t,function InterruptRemoveTree)
 endfunction
 function InterruptMoveTarget takes nothing returns nothing
     set interruptCount=interruptCount+1
