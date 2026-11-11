@@ -167,7 +167,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data-root', type=pathlib.Path, required=True)
     parser.add_argument('--output', type=pathlib.Path, default=ROOT/'tmp/docs-artifacts/war3/construction/fixture.w3m')
-    parser.add_argument('--repair-targets', choices=['partial', 'positive', 'vulnerable', 'invu', 'invulnerable'])
+    parser.add_argument('--repair-targets', choices=['partial', 'positive', 'vulnerable', 'invu', 'invulnerable', 'alias-ground', 'alias-structure', 'alias-bridge', 'alias-bridge-long'])
     parser.add_argument('--race-overrides', action='store_true')
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
@@ -179,7 +179,7 @@ def main():
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
     if args.repair_targets:
-        targets = {'partial': 'notground,notstructure,notair', 'positive': 'ground,notair,notnonancient', 'vulnerable': 'ground', 'invu': 'ground,invu', 'invulnerable': 'ground,invulnerable'}[args.repair_targets]
+        targets = {'partial': 'notground,notstructure,notair', 'positive': 'ground,notair,notnonancient', 'vulnerable': 'ground', 'invu': 'ground,invu', 'invulnerable': 'ground,invulnerable', 'alias-ground': 'grou,notair', 'alias-structure': 'stru,notair', 'alias-bridge': 'bridge,aliv,dead,vuln,invu', 'alias-bridge-long': 'bridge, alive, dead, vulnerable, invulnerable'}[args.repair_targets]
         files['war3map.w3a'] = struct.pack('<II', 2, 2) + b''.join(ability + bytes(4) + struct.pack('<I', 1) + b'atar' + struct.pack('<III', 3, 1, 0) + targets.encode('ascii') + b'\0' + ability for ability in (b'Arep', b'Ahrp')) + struct.pack('<I', 0)
     if args.race_overrides:
         units = [(b'z0r1', b'_'), (b'z0r2', b'mystery'), (b'z0r3', b'NAGA'), (b'z0r4', b'naga')]

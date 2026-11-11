@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 修理目标缩写及桥梁状态（待批次验证）
+
+路径：`src/session_repair.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。单位修理识别 `grou`、`stru`；桥梁修理识别 `aliv` 及无敌／可伤害状态的缩写和全名，完整词匹配允许字段中空格。
+
+必要检查：Win32 Release 客户端和 construction 目标编译通过；使用 `generate-construction-fixture.py --data-root <root> --repair-targets <alias-ground|alias-structure|alias-bridge|alias-bridge-long> --output <fixture>` 生成夹具，对应 `war3_construction_tests <root> <fixture> repair-alias-unit` 或 `repair-alias-bridge`，各 1 通过／0 失败，覆盖单位筛选、桥梁生死与无敌状态、实际修理回血；未加载 Game.dll。夹具位于 `tmp/docs-artifacts/war3/repair-alias/`。
+
+本批 3/3；集中验证消耗品、运输和修理目标筛选及原版地图会话。其他修理对象、原版实机与完整对局仍待验证。
+
+
 ## 运输装载与坠落目标缩写（待批次验证）
 
 路径：`src/session_transport.cpp`、`tests/generate-transport-fixture.py`、`tests/transport_tests.cpp`。运输能力、装载能力和坠落效果的目标字段展开原版缩写；装载判定识别 allies，同一解析器中的单位类型白名单保留原始 ID。
