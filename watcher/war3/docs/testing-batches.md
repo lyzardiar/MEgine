@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字创建默认寿命（待批次验证）
+
+路径：`src/script_state.h`、`tests/clock_tests.cpp`，说明见 `docs/text-tags.md`。新飘字默认字号 0.05、寿命 100 秒、淡出点 90 秒；关闭永久标志但不设寿命时不会立即消失。依据本机 1.27 Game.dll 创建实参及字段写入，地址和二进制摘要见说明。
+
+必要检查：Win32 Release 客户端及 clock 编译通过；`text_tag_screen_velocity_and_reposition` 为 1 通过／0 失败，检查默认值和关闭永久后的 99.5／100 秒寿命边界。首次探针因单次推进 99.5 秒超过模拟接口上限而失败，拆成 60 秒和 39.5 秒后通过。
+
+本批 1/3；集中验证默认／显式寿命、淡出、永久和暂停切换、存档、原版窗口与多个不同脚本入口。
+
+
 ## 飘字速度、负时间与颜色批次（部分验证）
 
 范围：`bda2800`、`150b822`、`a79bd93`，集成版本 `a79bd93`。Win32 Release 客户端、clock 和 CampaignAI 编译通过；3 个测试进程共 5 通过／0 失败：飘字速度／年龄／负时间／颜色边界与 v1–v3 存档恢复 2 项、Blizzard TD WTS 1 项、失效句柄及原图推进至少至第 3 波 2 项。复现分别使用 `WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>`，以及 `war3_campaign_ai_tests <root> <BlizzardTD> blizzardtd-wts`／`blizzardtd-texttags`。
