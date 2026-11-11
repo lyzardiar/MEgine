@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 临时绕过编队及联机命令标志（待批次验证）
+
+路径：`src/main.cpp`、`src/game_view.{h,cpp}`、`src/game_flow_ui.cpp`、`src/lan_action_encoder.cpp`、`src/lan_simulation.{h,cpp}`、`tests/order_queue_tests.cpp`。按下 Alt 时的右键、地面／小地图目标及命令目标点击可绕过现有队形落点分配；联机和回放通过能力命令 `0x0010` 标志携带该状态，排队标志可组合，联机选项及 Alt+F 沿用本地设置。右键捕获失焦或取消时清理修饰键。操作依据：[暴雪操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)；标志依据：[回放格式](https://github.com/scopatz/w3g/blob/master/w3g_actions.txt)。
+
+必要检查：Win32 Release 客户端及订单测试目标编译通过（测试目标保留既有 C4456 告警）；`war3_order_queue_tests <data-root> <BootyBay.w3m> formation-wire` 为 1 通过／0 失败，覆盖两单位的有／无编队排队命令编码、接收和落点状态，未加载 Game.dll。
+
+本批 1/3；集中验证实际鼠标与 Alt、地面／小地图／桥梁、Shift／Ctrl、经典回放、设置持久化和双端同步。现有编队只实现目的地点分配，原版的单位排序、速度协调及设置语义仍待对照与实现；该会话检查不代表原版或双端验收。
+
 ## 子组与导航批次（部分验证）
 
 范围：`72d299b`、`488af25`、`fbda0d5`，集成版本 `fbda0d5`。Win32 Release 客户端和 stealth 目标编译通过；`war3_stealth_tests <data-root> <stealth-fixture> group-target` 为 1 通过／0 失败，`group-counts` 退出 0 并输出 1 条 PASS（未输出 RESULT），均为会话及按钮检查，未驱动 GameView。

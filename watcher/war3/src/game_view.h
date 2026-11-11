@@ -19,7 +19,7 @@ class QuestDialog;
 class MessageLog;
 class ChatDialog;
 class GameFlowUi;
-struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;bool rightShift=false,rightControl=false;};
+struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;bool rightShift=false,rightControl=false,rightAlt=false;};
 class GameView {
     std::unique_ptr<GameData> data_;
     Renderer& renderer_;
@@ -206,7 +206,7 @@ class GameView {
     void stream();
     void streamWeather(std::vector<std::string>& textures);
     void drawWeather(std::uint64_t elapsed);
-    void command(float x,float y,OrderMode mode,bool queued,bool subgroup);
+    void command(float x,float y,OrderMode mode,bool queued,bool subgroup,bool noFormation);
     std::uint32_t widget(float x,float y,bool items,bool deadBridge=false,bool destructables=true) const;
     void updatePointerTarget(float x,float y,bool active);
     std::uint32_t selectedGroundItem() const;
