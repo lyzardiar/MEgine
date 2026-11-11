@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 魔法回流载荷归属轮次（待批次验证）
+
+路径：`src/spells.h`、`src/session_magic_consumption.cpp`、`src/session_spell_snapshot.cpp`、`tests/control_tests.cpp`、`docs/save-runtime-foundation.md`。吸收与吞噬回流载荷记录来源归属轮次；施法者转移给其他玩家再转回后，旧载荷不再生效。`SSMS` 版本 3 保存该轮次，旧版本恢复时以来源当前轮次补足缺失历史。
+
+必要检查：Win32 Release 客户端及 control、consumption、clock 目标编译通过。`war3_control_tests <root> tmp/docs-artifacts/war3/control-spells/fixture.w3m <absorb-transfer|devour-transfer>` 各 1／0，覆盖普通和恢复后会话，修复前均失败；同时构造版本 1／2 格式并验证来源轮次补足。`absorb-revival`／`devour-revival` 各 1／0。测试未加载 Game.dll。
+
+本批 3/3，先集中验证特殊目标、回流、快照及原始技能；历史真实快照、原版易主时序和实际窗口仍待验证。
+
+
 ## 吸收与吞噬回流载荷死亡轮次（待批次验证）
 
 路径：`src/session_magic_consumption.cpp`、`src/session_spell_snapshot.cpp`、`tests/control_tests.cpp`、`docs/save-runtime-foundation.md`。吸收与吞噬载荷绑定发射者死亡轮次，飞行中死亡复活后不向新生命回流；吸收生命扣除回调后也复核来源。`SSMS` 写入版本 2；读取版本 1 的回流载荷以恢复时来源死亡轮次初始化，旧格式无法还原发射后的历史。
