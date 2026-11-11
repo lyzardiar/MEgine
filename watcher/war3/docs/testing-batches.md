@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 吸血药水目标缩写与增益恢复（待批次验证）
+
+路径：`src/session_attack_passives.cpp`、`src/session_buff_snapshot.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。药水目标缩写在施加和旧增益恢复时展开；吸血判定识别 allies、enemies、player 和 notself 等关系，超过 4096 项的目标列表以等价缩写保存。
+
+必要检查：Win32 Release 客户端和 control 目标编译通过；`python watcher/war3/tests/generate-combined-item-fixture.py --data-root <root>` 后，`war3_control_tests <root> <fixture> item-vampirism-alias` 为 2 通过／0 失败，覆盖新药水敌友过滤、4096 项旧目标列表恢复重存和恢复后实际攻击；未加载 Game.dll。
+
+本批 3/3；集中验证技能、弹道、增益的目标缩写与恢复，以及原版地图会话。原版实机对照与完整对局仍待验证。
+
+
 ## 旧攻击弹道与被动目标缩写恢复（待批次验证）
 
 路径：`src/session_projectile_snapshot.cpp`、`tests/clock_tests.cpp`。恢复飞行攻击弹道的武器主目标、范围目标与捕获的被动定义时展开旧目标缩写；超过 4096 项时保存等价缩写，再次读取恢复完整目标集合。共享被动解码器也覆盖使用该接口的其他保存状态。
