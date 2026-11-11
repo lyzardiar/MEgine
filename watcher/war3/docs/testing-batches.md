@@ -8759,3 +8759,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`a1edaee`、`8f79840`、`26b1712`，以及移动寻路补充 `d2e67cc` 和回调测试补充 `42199ba`；集成版本 `26b1712`。Win32 Release 客户端、caster 和 order queue 目标编译通过，重新生成 caster 夹具。`war3_caster_tests` 的停止、跟随目标移除／移动、拾取目标移除、回调新订单、移动／攻击移动暂停、巡逻起点、自动施法及默认入口均退出 0、各输出 1 条 PASS；默认入口实际输出 caster consumers 结果。`targets`、`chain-targets`、`battle-roar`、`cloud-targets` 分别报告 6／0、4／0、4／0、1／0。`war3_order_queue_tests` 的 `pickup-path`、`pathing-toggle`、`combat-pathing-toggle` 各报告 1／0，默认入口退出 0 并输出 37 条 PASS。部分入口没有 RESULT，带标记的入口报告 `game_dll_loaded=false`；日志 `tmp/docs-artifacts/war3/follow-pickup-batch-*.log`。
 
 覆盖施法回调后的暂停、目标移除／移动和回调换令，以及既有拾取路径和订单队列。特殊形态跟随、物品被移动／转移、目标死亡／易主、建筑内工人退出、真实窗口、多人及原版事件次序仍待验证；不作为完整对局验收。下一功能批次从 0/3 开始。
+
+### 未知目标订单保留队列（待批次验证）
+
+路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。脚本目标订单在清除队列前检查非零编号是否为已注册订单或当前对象定义；未知编号返回失败，保留现有操作。
+
+快速检查：Win32 Release 客户端及 order queue 目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-target-id` 修复前失败、修复后为 1 通过／0 失败，覆盖未知编号、队列续行及已注册跟随订单。批次合并目标／点／即时订单、物品栏和自定义对象回归；原版动态注册边界、真实窗口及多人仍待对照。本批 1/3。
