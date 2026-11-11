@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 攻击移动完成后的编队清理（待批次验证）
+
+路径：`src/session_combat.cpp`、`tests/order_queue_tests.cpp`。攻击移动到达终点并结束时清除该单位的编队关联，避免其随后临时让路时参与旧编队的速度计算；巡逻抵达端点进入返程时保留关联。
+
+必要检查：Win32 Release 客户端与订单目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> formation-completion` 修复前因完成单位残留关联失败，修复后为 1 通过／0 失败，另覆盖巡逻返程关联；未加载 Game.dll。测试目标保留既有 C4456 告警。
+
+本批 2/3；集中验证攻击目标获取与丢失、巡逻多次往返、让路、死亡／易主、排队、恢复和联机；实际原版及窗口对照仍待执行。
+
 ## 编队移动速度协调（待批次验证）
 
 路径：`src/entities.h`、`src/player_commands.{h,cpp}`、`src/session.h`、`src/session_combat_orders.cpp`、`src/session_orders.cpp`、`src/session_unit_movement.cpp`、`src/session_order_snapshot.cpp`、`tests/order_queue_tests.cpp`、`tests/clock_tests.cpp`。同一编队移动订单关联成员，移动时取当前活动成员计算后的最低速度；速度变化随模拟步更新。停止或替换订单解除该单位关联，完成普通移动后解除；排队命令保留关联，SMOV／SPQO 版本 3 保存并恢复活动及排队关联，旧版本读取时不建立关联。暂停、隐藏、眩晕、定身、死亡及当前无路线的成员暂不参与限速。
