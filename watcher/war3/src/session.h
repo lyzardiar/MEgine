@@ -1385,6 +1385,7 @@ public:
     bool setAllianceSnapshot(unsigned from,unsigned to,unsigned flags,bool victory);
     bool transferResources(unsigned from,unsigned to,int gold,int lumber);
     void leaveGame();
+    bool hasEndCinematicListener(unsigned owner,bool input=false) const;
     bool endCinematic(unsigned owner);
     void commandMenuOpened(bool skills);
     void notifyGameSaved(const std::string& filename);
