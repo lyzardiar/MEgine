@@ -8963,3 +8963,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`b793974`、`3636220`、`282a8b0`，集成代码版本 `282a8b0`；本记录同时补充正常右键骑乘和补给消费者测试，不单独计数。Win32 Release 客户端、caster、waygate 和 order queue 目标编译通过。caster 的传送门四种回调、月亮井四种回调、合体两种回调、正常右键骑乘／补给、跟随目标移除及回调新订单共 14 个入口均退出 0、各输出 1 条 PASS；waygate 默认入口覆盖配置、传送和双向门，order queue 默认入口输出 37 条 PASS，共 16 个进程成功。日志 `tmp/docs-artifacts/war3/smart-waygate-coupling-batch.log`；这些入口未输出 RESULT。
 
 正常骑乘夹具关闭单位寻路碰撞，补给检查覆盖生命恢复及月亮井魔法消耗。目标能力／归属变化、多个合体候选、实际窗口、多人及原版事件时序仍待验证；本批不代表完整对局验收。下一功能批次从 0/3 开始。
+
+### 登船换令回调状态复核（待批次验证）
+
+路径：`src/session_transport.cpp`、`tests/caster_tests.cpp`。乘员中断施法后复核自身和运输工具的身份、生命周期、装载资格及视野；运输工具位置或登船范围改变时重算路线，回调新订单继续保留。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> board-cancel-pause`、`board-cancel-remove`、`board-cancel-move`、`board-cancel-order`，前三例修复前失败、修复后通过，新订单例前后均通过；各输出 1 条 PASS。批次合并运输、登船、装载容量与订单；载具容量／归属变化、原版时序及真实窗口待验证。本批 1/3。
