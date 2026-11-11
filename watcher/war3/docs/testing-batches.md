@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## AI 采金按工人能力选择矿井（待批次验证）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。AI 采集配额在城镇搜索范围内按工人能力、矿井类型、归属与可用状态选取最近的兼容矿井，保留有效采集订单；全镇配额继续保留有效的既有矿井。原版矿井选择和优先级尚未对照，其他矿井查询及建造选址未改变。
+
+必要检查：Win32 Release `war3_campaign_ai_tests` 编译通过；`war3_campaign_ai_tests <root> tmp/docs-artifacts/war3/campaign-ai/fixture.w3m harvest-compatible-mine` 为 1 通过／0 失败，验证近处不可用缠绕矿、较远普通矿、订单稳定和实际扣矿，修复前失败；`harvest-town` 为 2／0，覆盖原有城镇配额与资源返还。未加载 Game.dll。
+
+本批 2/3；集中验证各族采集、矿井转换、归属变化和其他批次变更。原版 AI 选择、混合工人／矿井、不可达矿井、对局性能及实际长局仍待验证。
+
+
 ## 普通金矿归属变化时的采集校验（待批次验证）
 
 路径：`src/session_harvest.cpp`、`tests/caster_tests.cpp`。普通金矿在采集中转给其他非中立玩家时，工人停止采集并清理路线与矿内状态；中立和己方矿继续有效，携带的黄金先完成返还。该行为与当前接单校验一致，原版动态易主语义尚待对照。
