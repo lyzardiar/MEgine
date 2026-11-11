@@ -8729,3 +8729,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_orders.cpp`、`tests/caster_tests.cpp`。停止或待命打断施法后复核单位身份、所有权／死亡轮次和状态；回调导致单位无法接受命令时清理旧路线和订单，不写入待命状态。回调替换订单沿用既有修订号保护。
 
 快速检查：Win32 Release 客户端和 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> hold-cancel-pause`，修复前失败、修复后退出 0 并输出 1 条 PASS。批次合并停止、待命、攻击／移动换令及回调新订单回归；单位死亡／易主、脚本隐藏、真实窗口、多人和原版事件时序仍需对照。本批 1/3。
+
+### 移动回调复核的寻路补充（待批次验证）
+
+路径：`src/session_orders.cpp`、`src/session_combat_orders.cpp`。普通移动和攻击移动仅在中断施法或退出建筑内施工时重新寻路；其他情况复用换令前已计算的路线，仍复核换令后的单位状态。此项补充 `3a16659`、`9313da4`，不单独计入功能批次。
+
+快速检查：Win32 Release 客户端和 caster 目标编译通过；`war3_caster_tests <data-root> <fixture>` 的 `move-cancel-pause`、`attackmove-cancel-pause`、`patrol-cancel-move` 均退出 0、各输出 1 条 PASS。批次回归无施法的普通／攻击移动、建筑内工人退出、路径阻挡变化和回调新订单；大量单位实际性能尚未测量。本批仍为 1/3。
