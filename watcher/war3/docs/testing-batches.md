@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 飘字 WTS、转义和屏幕速度批次（部分验证）
+
+范围：`1fd2483`、`e3d2a21`、`f8050c5`，集成版本 `f8050c5`。Win32 Release 客户端、clock 和 CampaignAI 编译通过。3 个测试进程共 5 通过／0 失败：飘字位移、暂停、改速、重定位及 v1/v2 存档恢复 2 项；Blizzard TD WTS 拼接 1 项；失效飘字句柄和原图 300 秒自然推进至至少第 3 波 2 项。clock 日志及窗口产物位于 `tmp/docs-artifacts/war3/texttag-batch-20261112/`。
+
+Blizzard TD 隐藏窗口运行 60 游戏帧，文字中的 WTS 已展开，但波次文字仍互相遮挡；截图与日志为 `blizzard.png`、`blizzard.log`，未加载 Game.dll。该静态截图未验证移动或转义。相机旋转／缩放、屏幕边界、颜色与竖线转义的真实窗口、不同分辨率、原版动态行为和完整对局仍未验收；遮挡保留为待解决 UI 问题。批次已执行，未执行项保留，下一功能批次从 0/3 开始。
+
+
 ## 飘字屏幕相对速度（待批次验证）
 
 路径：`src/script_state.h`、`src/session_text_tag.cpp`、`src/game_text_tag.cpp`、`tests/clock_tests.cpp`，说明见 `docs/text-tags.md`。速度累计为屏幕位移，投影后应用；重定位清零位移，暂停不推进。STTX v2 保存位移，v1 保留存储的世界位置并从零开始屏幕位移。依据：本机原版 `tmp/docs-artifacts/war3/11platform-ydwe-reference/share/zh-CN/mpq/Scripts/Blizzard.j` 的 `TextTagSpeed2Velocity` 和屏幕相对速度注释；重定位细节仍需原版动态对照。
