@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字默认值、透明度与阴影批次（部分验证）
+
+范围：`f25263e`、`9ae861d`、`9bb1d63`，集成版本 `9bb1d63`。Win32 Release 客户端编译通过；三次测试进程共 5 通过／0 失败：`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 验证默认值、透明度和 v1–v4 恢复 2 项，`war3_campaign_ai_tests <root> <BlizzardTD> blizzardtd-texttags` 验证失效句柄和原图推进 2 项，`blizzardtd-wts` 验证原图文字 1 项，均未加载 Game.dll。`python watcher/war3/tools/verify_texttag_capacity_cpu.py` 的模拟管理器原版指令探针通过，覆盖透明度切换；不执行原版 JASS 或窗口。
+
+Blizzard TD 原图及颜色夹具各在隐藏窗口运行 60 游戏帧并正常退出，未加载 Game.dll；颜色夹具显示红色文字，原图波次文字仍重叠。复现使用 `war3 --data-root <root> --map <map> --play --hidden --mute --frames 60 --capture <png> --log <log>`；截图、日志和探针结果位于 `tmp/docs-artifacts/war3/texttag-shadow-batch/`。
+
+原版动态窗口、阴影透明度历史与内联颜色、字号及重叠原因、不同相机和完整对局仍待验证。批次已执行，未完成项保留；下一功能批次从 0/3 开始。
+
+
 ## 飘字阴影（待批次验证）
 
 路径：`src/game_text_tag.cpp`、`docs/text-tags.md`。为飘字增加黑色阴影并按原版指令中的屏幕坐标偏移；支持颜色分段与换行，先绘制阴影后绘制正文。当前阴影透明度跟随飘字透明度，原版透明度历史变化及内联颜色交互尚待对照。
