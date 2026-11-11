@@ -13,6 +13,12 @@
 
 主菜单/地图资源仍直接从MPQ读取；原安装只读，运行不加载Game.dll，不生成地图解包工程。
 
+## 待实现：游戏胜利事件
+
+`TriggerRegisterGameEvent` 已接受 `EVENT_GAME_VICTORY`（编号 0），但当前没有该事件的派发路径，`GetWinningPlayer` 也没有绑定。`RemovePlayer` 目前只派发对应的玩家胜负事件，不能据此认定游戏胜利事件已经触发；依赖该事件或查询的地图仍不能完整执行。
+
+对 1.27 `Game.dll`（SHA-256 见下文）的注册代码和 x86 指令静态检查：`GetWinningPlayer` 注册地址为 `0x6f1e67e0`，它先检查当前触发事件编号是否为 0；不匹配时返回空，匹配时从触发上下文读取玩家。该观察只约束查询上下文，尚未确定游戏胜利事件的生产时机、多人胜利顺序和嵌套触发行为。需要在可控原版会话中对照后，再将事件生产者和查询一起接入，覆盖回调重入、玩家胜负、局域网及存档恢复。
+
 ## 来源及开发检查
 
 原Blizzard.j的MeleeInitVictoryDefeat、MeleeCheckForLosersAndVictors、MeleeVictoryDialogBJ、MeleeDefeatDialogBJ和CustomVictory/Defeat调用链保留为脚本执行。所需FDF来源清单为tmp/docs-artifacts/war3/game-flow/source-manifest.json；内部单位名与原字段为typed-unit-source.json。
