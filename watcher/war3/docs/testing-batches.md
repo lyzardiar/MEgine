@@ -8783,3 +8783,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_entities.cpp`、`src/session_orders.cpp`、`src/session_combat_orders.cpp`、`tests/research_tests.cpp`、`docs/instant-orders.md`。批次发现名称表缺少取消和物品栏移动编号，订单身份检查误拦截这些已有消费者；现在显式保留取消字符串／编号及六个物品栏编号，并继续校验槽位。此项补充本批订单修复，不单独计数。
 
 修复前 order queue 默认入口在物品栏订单失败，commerce 和 research 在取消订单处失败；修复后三个入口均退出 0，分别输出 37、1、1 条 PASS。research 另以数字取消订单检查研究退款和事件，字符串取消通过研究开始回调及 commerce 脚本检查。批次最终结果另记。
+
+### 订单身份与建造回调批次（部分验证）
+
+范围：`d88417f`、`5a8ee43`、`4e00956`，以及批次修复 `366ff95`；集成版本 `366ff95`。Win32 Release 客户端、order queue、caster、construction、commerce 和 research 目标编译通过，重新生成各隔离夹具。order queue 的 `invalid-target-id`、`invalid-immediate-id`、`invalid-point-id`、`invalid-immediate`、`invalid-build`、`raw-item-order` 各退出 0、输出 1 条 PASS，默认入口退出 0、输出 37 条 PASS；caster 的 `build-cancel-pause`、`autocast-silence` 和默认入口及 construction、commerce、research 默认入口均退出 0、各输出 1 条 PASS。部分入口没有 RESULT，带标记入口报告 `game_dll_loaded=false`；日志 `tmp/docs-artifacts/war3/order-build-batch-final-*.log`。
+
+首次集中运行发现物品栏与取消订单被身份检查拦截，修复后在最终集成版本重跑受影响范围，包含物品栏移动、训练／研究取消及退款。回调改变资源／占地／金矿、工人死亡或易主、原版动态注册、实际窗口、多人及原版事件时序仍待验证；不作为完整对局验收。下一功能批次从 0/3 开始。
