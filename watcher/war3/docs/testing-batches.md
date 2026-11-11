@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 武器目标缩写与实际攻击（待批次验证）
+
+路径：`src/session_weapons.cpp`、`src/combat.h`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`、`docs/combat.md`。主目标与范围目标保留原词并识别原版缩写；纯 `debr` 保持残骸专用武器判定。地图对象覆盖通过实际攻击命令验证 `grou` 与 `enem`／`alli` 的同阵营筛选；目标表及合成指令证据见单位分类文档。
+
+必要检查：Win32 Release 客户端及 research 目标编译通过；重新生成地图后 `war3_research_tests <root> <fixture>` 输出 PASS，覆盖地面目标、同阵营限制及纯残骸武器判断。本批 1/3；范围攻击、敌方与中立、旧存档的飞行弹道、实际地图和原版动态行为待集中验证。
+
+
 ## 单位攻击分类与飘字字号批次（部分验证）
 
 范围：`a715a22`、`d41d641`、`051a255`，集成代码版本 `051a255`，本记录补充双武器夹具。Win32 Release 客户端、research 和 clock 目标编译通过；`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 为 2 通过／0 失败，覆盖负字号及 v1–v6 恢复；重新生成地图后 `war3_research_tests <root> <fixture>` 输出 PASS，检查地面、近战／远程特殊与混合目标，以及第二武器启用／禁用的实例和 ID 查询。
