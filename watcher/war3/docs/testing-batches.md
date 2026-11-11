@@ -2,7 +2,7 @@
 
 ## The Death Sheep 原图碰撞和重开（验证补充）
 
-`tests/campaign_ai_tests.cpp` 新增 `deathsheep-hazards`：Win32 Release CampaignAI 目标编译通过，原版 `(1)TheDeathSheep.w3m` 定向检查为 1 通过／0 失败，未加载 Game.dll。地图生成的猪和村民分别通过移动进入角色范围，验证扣命与加命；预置生命为零后再次碰撞，验证失败状态、倒计时以及重开后恢复控制和五条生命。测试关闭了自然刷怪定时器并手动放置与指定移动目标，不代表完整对局、窗口操作、画面或原版动态对照。此为玩法链验证补充，不增加功能批次计数；当前批次 1/3。
+`tests/campaign_ai_tests.cpp` 新增 `deathsheep-hazards`：Win32 Release CampaignAI 目标编译通过，原版 `(1)TheDeathSheep.w3m` 定向检查为 1 通过／0 失败，未加载 Game.dll。地图生成的猪和村民分别通过移动进入角色范围，验证扣命与加命；预置生命为零后再次碰撞，验证失败状态、倒计时以及重开后恢复控制和五条生命，并在独立新会话读回预置最高分。入口要求额外传入一个不存在的绝对用户目录，验证路径为 `tmp/docs-artifacts/war3/deathsheep-probe/isolated-20261112-a/`；省略目录或传入现有目录会失败，避免地图写入实际用户缓存。测试关闭了自然刷怪定时器并手动放置与指定移动目标，不代表完整对局、窗口操作、画面或原版动态对照。此为玩法链验证补充，不增加功能批次计数；当前批次 1/3。
 
 ## 游戏中 Esc 地图事件（待批次验证）
 
