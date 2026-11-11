@@ -30,6 +30,9 @@ integer levelObserved=0
 integer levelMode=0
 integer paymentGoldEvents=0
 integer paymentLumberEvents=0
+integer revivalOrderEvents=0
+integer revivalPaymentMode=0
+boolean revivalPaymentHandled=false
 endglobals
 function ChangeLumberOnGold takes nothing returns nothing
     set paymentGoldEvents=paymentGoldEvents+1
@@ -45,6 +48,29 @@ function InstallPaymentTest takes nothing returns nothing
     call TriggerRegisterPlayerStateEvent(lumber,Player(0),PLAYER_STATE_RESOURCE_LUMBER,LESS_THAN,100.0)
     call TriggerAddAction(gold,function ChangeLumberOnGold)
     call TriggerAddAction(lumber,function RecordLumberPayment)
+endfunction
+function CancelRevivalOnPayment takes nothing returns nothing
+    if not revivalPaymentHandled then
+        set revivalPaymentHandled=true
+        call IssueImmediateOrderById(altar,851976)
+        if revivalPaymentMode==2 then
+            call IssueTargetOrderById(altar,852039,hero)
+        endif
+    endif
+endfunction
+function RecordRevivalOrder takes nothing returns nothing
+    if GetIssuedOrderId()==852039 then
+        set revivalOrderEvents=revivalOrderEvents+1
+    endif
+endfunction
+function InstallRevivalPaymentOrderTest takes integer mode returns nothing
+    local trigger gold=CreateTrigger()
+    local trigger order=CreateTrigger()
+    set revivalPaymentMode=mode
+    call TriggerRegisterPlayerStateEvent(gold,Player(0),PLAYER_STATE_RESOURCE_GOLD,LESS_THAN,100.0)
+    call TriggerAddAction(gold,function CancelRevivalOnPayment)
+    call TriggerRegisterUnitEvent(order,altar,EVENT_UNIT_ISSUED_TARGET_ORDER)
+    call TriggerAddAction(order,function RecordRevivalOrder)
 endfunction
 function RecordLevel takes nothing returns nothing
     set levelCalls=levelCalls+1

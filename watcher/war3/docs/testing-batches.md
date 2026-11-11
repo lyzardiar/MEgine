@@ -9017,3 +9017,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_production.cpp`、`tests/commerce_tests.cpp`、`tests/generate-commerce-fixture.py`。生产步启动队首后核对票据；开始事件回调取消并重新训练时，替代项目不会消耗原项目的模拟步。其他回调提前清空生产队列时安全跳过。
 
 快速检查：Win32 Release 客户端及 commerce 目标编译；生成 commerce 夹具，执行 `war3_commerce_tests <data-root> <fixture> train-start-reissue`，修复前失败、修复后输出 1 条 PASS，下一步正常计时。批次合并训练、研究、复活、人口及队列回调回归；原版事件时序、实际窗口与多人仍待验证。本批 1/3。
+
+### 祭坛复活扣费回调订单校验（待批次验证）
+
+路径：`src/session_revival.cpp`、`tests/revival_tests.cpp`、`tests/generate-revival-fixture.py`。复活扣费事件后核对祭坛与英雄生命周期、归属轮次、英雄关联和队列票据，取消或替换原任务时不派发旧目标订单；订单事件后再次核对，再启动仍有效的任务。
+
+快速检查：Win32 Release 客户端及 revival 目标编译通过；生成复活夹具，执行 `war3_revival_tests <data-root> <fixture> altar-payment-cancel`、`altar-payment-reissue`，两例修复前失败、修复后各报告 1 通过／0 失败，覆盖取消和同英雄重排。批次合并训练、研究、英雄复活、人口及队列回调回归；死亡复活／易主及原版事件时序、真实窗口和多人待验证。本批 2/3。
