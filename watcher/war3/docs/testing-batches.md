@@ -8843,3 +8843,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`cb82110`、`7292566`、`fb493eb`，集成版本 `fb493eb`。Win32 Release 客户端、caster、harvest、construction 和 order queue 目标编译通过，重新生成 caster、harvest 和 construction 夹具。caster 的伐木／采金目标移除、回收目标移除／移动、工人暂停、回调新订单、修理目标移除／暂停／新订单及通用新订单共 10 个入口，各退出 0、输出 1 条 PASS；harvest 的 `stunned`、`depot-stuck`、`depot-route` 与 construction 的 `repair-callback`、`repair-bridge-callback`、`repair-approach`、`repair-unit-blocked`、`repair-bridge-blocked`、`stunned-work` 共 9 个入口均退出 0、各输出 1 条 PASS。caster、harvest、construction 默认入口各输出 1 条 PASS，order queue 默认入口输出 37 条 PASS；共 23 个进程成功。部分入口没有 RESULT，带标记的修理路径入口报告 `game_dll_loaded=false`。日志 `tmp/docs-artifacts/war3/worker-callback-batch.log`。
 
 工人／目标死亡后复活、易主、能力或携带资源变化、桥梁在施法中断回调中变化、真实窗口、多人及原版事件时序仍待验证；本批结果不代表完整对局验收。下一功能批次从 0/3 开始。
+
+### 维修支付资源事件重入（待批次验证）
+
+路径：`src/session_repair.cpp`、`tests/construction_tests.cpp`、`tests/generate-construction-fixture.py`。维修及协助建造的资源支付同时扣除金币和木材；金币事件回调改变木材后，跳过基于旧木材值的过期事件，保留回调修改的余额。
+
+快速检查：Win32 Release 客户端与 construction 目标编译通过；生成 `python tests/generate-construction-fixture.py --data-root <data-root>` 后执行 `war3_construction_tests <data-root> <fixture> repair-payment-state`，修复前复现金币事件一次、木材余额 200 且错误木材事件一次；修复后退出 0、输出 1 条 PASS。批次合并普通和桥梁修理、协助建造、资源变化及回调重入；其他资源交易路径、原版事件时序和真实窗口待验证。本批 1/3。

@@ -11,6 +11,8 @@ fixture = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(fixture)
 
 SCRIPT = '''globals
+integer probe_lumber_events=0
+integer probe_gold_events=0
 integer probe_started=0
 integer probe_cancelled=0
 integer probe_finished=0
@@ -29,6 +31,21 @@ unit probe_assist_remove=null
 integer probe_assist_changed=0
 unit probe_assist_building=null
 endglobals
+function ProbeGoldChangesLumber takes nothing returns nothing
+    set probe_gold_events=probe_gold_events+1
+    call SetPlayerState(Player(0),PLAYER_STATE_RESOURCE_LUMBER,200)
+endfunction
+function ProbeLumberEvent takes nothing returns nothing
+    set probe_lumber_events=probe_lumber_events+1
+endfunction
+function ProbePaymentStateSetup takes nothing returns nothing
+    local trigger g=CreateTrigger()
+    local trigger l=CreateTrigger()
+    call TriggerRegisterPlayerStateEvent(g,Player(0),PLAYER_STATE_RESOURCE_GOLD,LESS_THAN,100.0)
+    call TriggerRegisterPlayerStateEvent(l,Player(0),PLAYER_STATE_RESOURCE_LUMBER,LESS_THAN,100.0)
+    call TriggerAddAction(g,function ProbeGoldChangesLumber)
+    call TriggerAddAction(l,function ProbeLumberEvent)
+endfunction
 function ProbeStart takes nothing returns nothing
     set probe_started=probe_started+1
     set probe_structure=GetConstructingStructure()
