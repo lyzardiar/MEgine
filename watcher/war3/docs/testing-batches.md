@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 同子组目标技能的可用施法者（待批次验证）
+
+路径：`src/player_commands.{h,cpp}`、`src/game_commands.cpp`、`src/game_spells.cpp`、`tests/stealth_tests.cpp`。普通非通道目标技能的多选按钮在主单位不可用时选择同类型、同目标模式的可用施法者；目标确认时重新检查候选，每次命令只交给一名单位。按钮魔法、图标、名称、说明和冷却按选中施法者显示；有限次数哨兵／照明弹保留既有聚合与候选路径。通道和无目标技能沿用现有处理。原版多施法者只发送一名单位的规则见[暴雪子组说明](https://classic.battle.net/war3/basics/specialcommands.shtml)。
+
+快速检查：Win32 Release 客户端和 stealth 目标编译通过；`war3_stealth_tests <data-root> <stealth-fixture> group-target` 为 1 通过／0 失败，检查首单位缺蓝、次单位接替治疗和全部缺蓝；`group-counts` 退出 0 并输出 1 条 PASS。两者检查按钮合并及会话命令，不驱动 GameView。
+
+待批次检查：实际窗口中多选同类型施法者，交替消耗魔法与冷却并对不同目标连续施法；覆盖不同技能等级、目标模式变化、施法者失效、共享控制、Shift 排队、法术书、有限次数和实验联机。普通经典联机多同类型子组仍受现有协议限制；实际窗口、双端与原版选择次序待对照。本项为功能批次 2/3。
+
 ## 多选面板的子组点击（待批次验证）
 
 路径：`src/game_selection_panel.cpp`、`docs/selection-panel.md`。普通点击其他单位类型头像时只切换当前子组并保留完整选区；再点击当前子组头像选择该单位。Shift 移除、Ctrl 同类型及目标模式点击沿用既有分支。原版交互依据为暴雪 [Sub Groups 操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)。
