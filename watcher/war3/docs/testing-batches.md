@@ -8957,3 +8957,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_coupling.cpp`、`tests/caster_tests.cpp`。合体施法尝试因回调移除伙伴或替换订单而失败后，停止遍历后续合体能力；旧订单失效时清理路线，回调新订单保留。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> couple-cancel-remove`、`couple-cancel-order`，两例修复前失败、修复后各输出 1 条 PASS；夹具给弓箭手添加两种合体能力以覆盖遍历。批次合并正常骑乘、传送门、月亮井及智能订单；能力移除／易主、原版时序与实际窗口待验证。本批 3/3，先集中验证。
+
+### 传送门、月亮井与合体智能命令批次（部分验证）
+
+范围：`b793974`、`3636220`、`282a8b0`，集成代码版本 `282a8b0`；本记录同时补充正常右键骑乘和补给消费者测试，不单独计数。Win32 Release 客户端、caster、waygate 和 order queue 目标编译通过。caster 的传送门四种回调、月亮井四种回调、合体两种回调、正常右键骑乘／补给、跟随目标移除及回调新订单共 14 个入口均退出 0、各输出 1 条 PASS；waygate 默认入口覆盖配置、传送和双向门，order queue 默认入口输出 37 条 PASS，共 16 个进程成功。日志 `tmp/docs-artifacts/war3/smart-waygate-coupling-batch.log`；这些入口未输出 RESULT。
+
+正常骑乘夹具关闭单位寻路碰撞，补给检查覆盖生命恢复及月亮井魔法消耗。目标能力／归属变化、多个合体候选、实际窗口、多人及原版事件时序仍待验证；本批不代表完整对局验收。下一功能批次从 0/3 开始。
