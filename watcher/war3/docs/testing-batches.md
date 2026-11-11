@@ -1,5 +1,16 @@
 # 独立客户端测试队列
 
+## 消耗品、运输与修理目标缩写批次（部分验证）
+
+范围：`365d4ad`、`e2ea11c`、`07d4de1`，集成代码版本 `07d4de1`。Win32 Release 客户端及 control、transport、construction、campaign AI 目标编译通过。control 的 `item-consumable-alias`、`item-combined`、`item-vampirism-alias` 分别为 3／0、1／0、2／0；transport 的 cargo、load、both、crash 缩写夹具及原始 `flow`、`crash` 各为 1／0；construction 的四个缩写夹具各为 1／0。
+
+首次 `transport crash` 失败：旧测试期望 `UnitRemoveBuffs` 保留不可普通驱散状态，与既有脚本清除语义不符。依据本队列脚本清除记录及 `src/session_spell_natives.cpp` 修正断言后，仅重测失败项，`crash` 为 1／0；另构建 passive 并运行 `buff-script-remove` 为 1／0。construction 的 `repair-partial`、`repair-positive`、`repair-callback`、`repair-bridge-callback` 均输出 PASS、退出码 0，但未输出通过数。
+
+原图 `war3_campaign_ai_tests <root> <root>/Maps/Scenario/(4)WarChasers.w3m` 的 `warchasers-kill`、`warchasers-spell` 分别为 3／0、2／0。有明确计数的最终结果为 22 通过／0 失败，另有上述 4 项 PASS；明确检查 Game.dll 的用例未加载该 DLL。测试地图生成命令和路径见各任务记录与 `tmp/docs-artifacts/war3/transport/`、`construction/`、`auras-passives/`。
+
+其他物品目标类型、运输关系组合和修理对象，原版动态行为、窗口及完整对局仍待验证。批次已执行，未完成项保留；下一功能批次从 0/3 开始。
+
+
 ## 修理目标缩写及桥梁状态（待批次验证）
 
 路径：`src/session_repair.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。单位修理识别 `grou`、`stru`；桥梁修理识别 `aliv` 及无敌／可伤害状态的缩写和全名，完整词匹配允许字段中空格。
