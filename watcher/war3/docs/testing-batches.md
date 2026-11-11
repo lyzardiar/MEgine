@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字屏幕相对速度（待批次验证）
+
+路径：`src/script_state.h`、`src/session_text_tag.cpp`、`src/game_text_tag.cpp`、`tests/clock_tests.cpp`，说明见 `docs/text-tags.md`。速度累计为屏幕位移，投影后应用；重定位清零位移，暂停不推进。STTX v2 保存位移，v1 保留存储的世界位置并从零开始屏幕位移。依据：本机原版 `tmp/docs-artifacts/war3/11platform-ydwe-reference/share/zh-CN/mpq/Scripts/Blizzard.j` 的 `TextTagSpeed2Velocity` 和屏幕相对速度注释；重定位细节仍需原版动态对照。
+
+必要检查：Win32 Release 客户端、clock 与 CampaignAI 编译通过；`text_tag_screen_velocity_and_reposition` 和 `recovery_bundle_restores_text_tags` 各 1 通过／0 失败，后者包括 v1 和 v2 恢复。
+
+本批 3/3；集中验证速度正负、暂停、改速、重定位、恢复及 Blizzard TD 原图 WTS 和波次；相机旋转／缩放、屏幕边界、转义窗口显示及原版动态对照仍需验证。
+
+
 ## 飘字转义竖线显示（待批次验证）
 
 路径：`src/game_text_tag.cpp`，说明见 `docs/text-tags.md`。世界飘字将 `||` 绘制为字面竖线，防止紧随其后的 `c`、`r`、`n` 被误当作颜色或换行指令；普通颜色、重置、换行和透明度处理不变。

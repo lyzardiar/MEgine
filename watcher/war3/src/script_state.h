@@ -76,7 +76,7 @@ struct ScriptTimerDialog {
     std::optional<std::pair<std::uint64_t,float>> realTime;
 };
 struct ScriptTextTag {
-    std::string text;float x=0,y=0,z=0,height=0.023f,vx=0,vy=0,age=0,lifespan=0,fadepoint=0;
+    std::string text;float x=0,y=0,z=0,height=0.023f,vx=0,vy=0,screenX=0,screenY=0,age=0,lifespan=0,fadepoint=0;
     std::array<std::uint8_t,4> color{255,255,255,255};bool visible=true,suspended=false,permanent=true;
 };
 struct ScriptText {unsigned owner=0;float x=0,y=0;double expires=0;std::string text;std::uint16_t audience=0xffff;bool chat=false;};
