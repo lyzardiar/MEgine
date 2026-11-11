@@ -22,6 +22,9 @@ integer probe_upgrade_finished=0
 unit probe_repair_worker=null
 unit probe_repair_target=null
 integer probe_repair_reissued=0
+destructable probe_repair_bridge=null
+real probe_bridge_life=0
+integer probe_bridge_changed=0
 endglobals
 function ProbeStart takes nothing returns nothing
     set probe_started=probe_started+1
@@ -68,6 +71,18 @@ function ProbeRepairSetup takes unit worker, unit target returns nothing
     set probe_repair_reissued=0
     call TriggerRegisterPlayerStateEvent(t,Player(0),PLAYER_STATE_RESOURCE_GOLD,LESS_THAN,100.0)
     call TriggerAddAction(t,function ProbeRepairPayment)
+endfunction
+function ProbeBridgePayment takes nothing returns nothing
+    set probe_bridge_changed=probe_bridge_changed+1
+    call SetDestructableLife(probe_repair_bridge,probe_bridge_life)
+endfunction
+function ProbeBridgeSetup takes destructable target, real life returns nothing
+    local trigger t=CreateTrigger()
+    set probe_repair_bridge=target
+    set probe_bridge_life=life
+    set probe_bridge_changed=0
+    call TriggerRegisterPlayerStateEvent(t,Player(0),PLAYER_STATE_RESOURCE_GOLD,LESS_THAN,100.0)
+    call TriggerAddAction(t,function ProbeBridgePayment)
 endfunction
 function config takes nothing returns nothing
 endfunction

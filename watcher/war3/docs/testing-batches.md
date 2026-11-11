@@ -8655,3 +8655,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/commerce.h`、`src/player_commands.{h,cpp}`、`src/game_commands.cpp`、`src/game_spells.cpp`、`tests/stealth_tests.cpp`。同类型可控制单位的哨兵／照明弹按钮聚合最大余量；主选不可用时选择可用同组单位，发令跳过耗尽者并在首个接受后停止。经典联机编码保留单发令者限制，实验联机使用现有多发令者动作。原版静态数量聚合依据见[哨兵](sentinel.md)。
 
 快速检查：Win32 Release 客户端及 stealth 测试目标编译通过；已知问题最小复现 `war3_stealth_tests <data-root> ../../tmp/docs-artifacts/war3/stealth-reveal/fixture.w3m group-counts` 退出 0、输出 1 条 PASS，覆盖主单位耗尽、同组可用者及全组耗尽；该检查不经过真实窗口。批次验证不同数量、无限与有限混合、能力等级、共享控制、排队／冷却、法术书、实验网络以及实际窗口，原版候选选择次序仍待对照。本批 1/3。
+
+### 桥梁修理资源回调状态复核（待批次验证）
+
+路径：`src/session_repair.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。资源扣费回调改变桥梁生命、最大生命或工人身份／归属轮次时，拒绝应用基于旧状态计算的修理帧；后续修理按新状态继续，资源扣费沿用既有规则。
+
+快速检查：Win32 Release 客户端与 construction 测试目标编译通过；生成 `python tests/generate-construction-fixture.py --data-root <data-root>` 后运行 `war3_construction_tests <data-root> ../../tmp/docs-artifacts/war3/construction/fixture.w3m repair-bridge-callback`，修复前复现失败，修复后退出 0、输出 1 条 PASS。批次合并普通与桥梁修理、回调换令、生命／最大生命变化、移除和归属轮次、扣费边界及路径测试；真实地图和原版回调时序待对照。本批 2/3。
