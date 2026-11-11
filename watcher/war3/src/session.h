@@ -1034,6 +1034,7 @@ class ScriptSession {
     bool weaponTarget(const UnitState& source,const UnitState& target,const WeaponDefinition& weapon,bool automatic=false,bool splash=false,bool committed=false);
     std::optional<unsigned> weaponFor(const UnitState& source,const UnitState& target,bool automatic=false);
     bool cancelCombat(UnitState& unit);
+    std::uint64_t formationSerial_=0;
     bool chase(UnitState& unit,WorldPoint target,float standoff,bool allowPartial=false,bool requireReach=false);
     void combat(double delta);
     void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon,float stealthDamage=0,bool backstab=false,std::uint32_t ability=0,std::uint32_t barrage=0,unsigned barrageLevel=0);
@@ -1200,6 +1201,7 @@ public:
     bool unitSelectable(std::uint32_t handle);
     std::optional<UnitCombatDisplay> unitCombatDisplay(std::uint32_t handle);
     unsigned formationRank(const UnitState& unit);
+    std::uint64_t allocateFormationGroup() {if(formationSerial_==UINT64_MAX)throw std::runtime_error("Formation group sequence exhausted");return ++formationSerial_;}
     unsigned heroPrimaryAttribute(const UnitState& unit);
     std::array<float,3> heroAttributeEffects();
     std::optional<std::array<int,3>> heroExperienceDisplay(std::uint32_t handle);

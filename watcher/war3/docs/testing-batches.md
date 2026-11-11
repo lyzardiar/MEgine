@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 编队移动速度协调（待批次验证）
+
+路径：`src/entities.h`、`src/player_commands.{h,cpp}`、`src/session.h`、`src/session_combat_orders.cpp`、`src/session_orders.cpp`、`src/session_unit_movement.cpp`、`src/session_order_snapshot.cpp`、`tests/order_queue_tests.cpp`、`tests/clock_tests.cpp`。同一编队移动订单关联成员，移动时取当前活动成员计算后的最低速度；速度变化随模拟步更新。停止或替换订单解除该单位关联，完成普通移动后解除；排队命令保留关联，SMOV／SPQO 版本 3 保存并恢复活动及排队关联，旧版本读取时不建立关联。暂停、隐藏、眩晕、定身、死亡及当前无路线的成员暂不参与限速。
+
+必要检查：Win32 Release 客户端、订单与 clock 测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> formation-speed` 为 1 通过／0 失败，覆盖速度变化、停止解除、排队关联和无编队命令；`WAR3_CLOCK_FILTER=unit_core_restores_hero_abilities_equipment_and_vitals war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖活动／排队关联的快照恢复和编号续接，未进行实际游戏读档。
+
+本批 1/3；集中验证攻击移动／巡逻、桥梁混选、成员死亡／易主／复活、Buff 与光环变化、阻塞／传送、队列错开启动、脚本回调重入、旧快照兼容、真实读档、实验联机及大规模单位性能。实际原版对暂停及走散成员的处理、速度同步与阵型等待策略仍需对照。
+
 ## 队形控制与前后排列批次（部分验证）
 
 范围：`5e3fc01`、`52cf570`、`6f57958`，集成版本 `6f57958`。Win32 Release 客户端及订单测试目标编译通过。`war3_order_queue_tests <data-root> <BootyBay.w3m> formation-facing`、`formation-wire` 和使用空的隔离 `MEGINE_WAR3_USER_DIR` 的 `formation-settings` 各报告 1 通过／0 失败；默认入口退出 0、输出 38 条 PASS（不输出 RESULT），覆盖普通与排队订单、桥梁和网络编码。

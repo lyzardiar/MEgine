@@ -61,6 +61,7 @@ struct UnitState {
     std::map<std::uint32_t,int> abilities;
     std::map<std::uint32_t,bool> autocast;
     std::uint32_t currentOrder=0;
+    std::uint64_t formationGroup=0;
     std::vector<PlayerCommand> playerOrders;
     double stealthLastAction=0;
     bool shadowNight=false;
