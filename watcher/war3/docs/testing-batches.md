@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 预加载脚本范围伤害与物体状态（待批次验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`。独立 Preloader 子脚本继承 `UnitDamagePoint`、`GetWidgetLife`、`SetWidgetLife`、`GetWidgetX` 和 `GetWidgetY`，复用实际会话物体与伤害队列。
+
+必要检查：Win32 Release `war3_map_tests` 编译通过；`war3_map_tests <root> tmp/docs-artifacts/war3/map-preloader-point preloader_point_damage_widget` 为 1 通过／0 失败，覆盖单位物体状态、即时伤害以及子运行时结束后延迟伤害；修复前因 `SetWidgetLife` 未绑定失败。`preloader_nested_damage` 为 1／0。初版夹具未启动 main 导致模拟时钟拒绝运行，改为启动空 main 后通过。
+
+本批 1/3；集中验证子脚本与主会话之间的伤害事件、移除／死亡、物品／可破坏物、延迟队列和相关预加载功能。原版时序、具体地图使用场景和实际窗口仍待验证。
+
+
 ## 采金归属、矿井类型与 AI 选矿批次（已验证所列范围）
 
 范围：`02cd83b`、`fc6347a`、`8f425d4`，集成版本 `8f425d4`。Win32 Release 客户端、caster、harvest、CampaignAI 目标编译通过；重新生成 CampaignAI 夹具，复用未变化的 caster 与 economy 夹具。
