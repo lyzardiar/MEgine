@@ -8915,3 +8915,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`b682870`、`812c38b`、`a5c0abf`，集成版本 `a5c0abf`。Win32 Release 客户端、revival、passive、unsummon 和 commerce 目标编译通过，重新生成相关夹具。祭坛／酒馆支付回调、酒馆唤醒、典当回调／正常典当、消耗品购买、选购者、取消召唤退款回调／正常流程／暂停易主／AI 共 11 个定向入口各报告 1／0；revival 默认入口 4／0，commerce 默认入口退出 0、输出 1 条 PASS，共 13 个进程成功。日志 `tmp/docs-artifacts/war3/revive-pawn-unsummon-batch.log`，部分入口未报告 Game.dll 状态。
 
 祭坛支付回调用自定义木材费用，取消召唤回调用即时消退；正常渐进返还另有测试。物品移除及木材回调、人口／令牌重入、实际窗口、多人和原版时序仍待验证；本批不代表完整对局验收。下一功能批次从 0/3 开始。
+
+### 建筑升级换令回调状态复核（待批次验证）
+
+路径：`src/session_building_upgrades.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`。建筑中断施法后重新检查身份、归属／死亡轮次、建筑类型、升级资格及当前资源；条件失效时拒绝旧升级，不再扣费。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> upgrade-cancel-pause`、`upgrade-cancel-spend`，两例修复前失败、修复后各输出 1 条 PASS。批次合并升级、取消退款和换令回归；生产队列／类型／归属变化、新订单、实际窗口和原版事件时序待验证。本批 1/3。

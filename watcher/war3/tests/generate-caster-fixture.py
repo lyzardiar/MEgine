@@ -72,6 +72,16 @@ function InstallInterruptOrder takes unit caster, real x returns nothing
     call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
     call TriggerAddAction(t,function InterruptNewOrder)
 endfunction
+function InterruptSpendGold takes nothing returns nothing
+    set interruptCount=interruptCount+1
+    call SetPlayerState(GetOwningPlayer(interruptedTarget),PLAYER_STATE_RESOURCE_GOLD,0)
+endfunction
+function InstallInterruptSpend takes unit caster returns nothing
+    local trigger t=CreateTrigger()
+    set interruptedTarget=caster
+    call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
+    call TriggerAddAction(t,function InterruptSpendGold)
+endfunction
 function InterruptPause takes nothing returns nothing
     set interruptCount=interruptCount+1
     call PauseUnit(interruptedTarget,true)
