@@ -15,7 +15,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT / 'tmp/docs-artifacts/frost-siege-engine/dependencies'))
 import pefile
 import unicorn
-from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_ESP
+from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_XMM0
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--data-root', type=Path, default=Path('E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne'))
@@ -124,9 +124,22 @@ for current, expected in [(64, 64), (255, 64), (16, 16), (192, 16)]:
     invoke(0x6f0dfcd0, text_object, color)
     assert cpu.mem_read(text_object + 0x33, 1)[0] == expected
 
+# Original text-coordinate conversion, before its pixel rounding call.
+for entry, stop, global_dimension, dimension, value, expected in [
+        (0x6f0d0310, 0x6f0d0346, 0x6fbbd358, 480, 0.023, 11.04),
+        (0x6f0d0380, 0x6f0d03b6, 0x6fbbd354, 640, 0.25, 160.0)]:
+    put(global_dimension, dimension)
+    stack = 0x200f0000
+    cpu.mem_write(stack, struct.pack('<If', 0, value))
+    cpu.reg_write(UC_X86_REG_ESP, stack)
+    cpu.reg_write(UC_X86_REG_ECX, 0)
+    cpu.emu_start(entry, stop, count=1000)
+    pixels = struct.unpack('<f', struct.pack('<I', cpu.reg_read(UC_X86_REG_XMM0) & 0xffffffff))[0]
+    assert abs(pixels - expected) < 0.0001
+
 result = dict(binarySha256=digest, slots=100, first=created[0], last=created[-1], fullReturn=0,
-              zeroSlotAllocated=True, zeroSlotReusable=True, nonzeroSlotReusable=True, alphaTransitions=True, shadowAlphaHistory=True, passed=True,
-              boundaries=['Synthetic manager and prepopulated free list', 'Virtual callbacks replaced by returns', 'Text redraw callbacks disabled'],
+              zeroSlotAllocated=True, zeroSlotReusable=True, nonzeroSlotReusable=True, alphaTransitions=True, shadowAlphaHistory=True, textCoordinateScale=True, passed=True,
+              boundaries=['Synthetic manager and prepopulated free list', 'Virtual callbacks replaced by returns', 'Text redraw callbacks disabled', 'Synthetic 640x480 text viewport'],
               limitations=['Raw x86 entry points only; JASS null mapping, runtime initialization, UI and gameplay were not executed.'])
 args.output.parent.mkdir(parents=True, exist_ok=True)
 args.output.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')

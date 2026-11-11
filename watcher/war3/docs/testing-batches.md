@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字视口字号换算（待批次验证）
+
+路径：`src/game_text_tag.cpp`、`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。按 4:3 界面视口宽高转换字号、换行区域和阴影偏移，字号最小按两像素处理，不再限制最大值；依据原版文字视口指令，640×480 合成输入的隔离探针通过。原版窗口、像素取整、宽屏及非正字号边界仍待验证。
+
+必要检查：Win32 Release 客户端增量编译通过；`python watcher/war3/tools/verify_texttag_capacity_cpu.py --output tmp/docs-artifacts/war3/texttag-scale/reference.json` 通过。Blizzard TD 原图在上一版同等常用正字号绘制逻辑下隐藏运行 60 游戏帧，截图中当前视角波次标题不再重叠；截图及日志在 `tmp/docs-artifacts/war3/texttag-scale/`。后续对零字号分支的小幅调整已编译，需在本批验证。
+
+本批 3/3；集中验证字号边界、换行／颜色、阴影、存档及原图窗口，原版实际窗口对照仍待进行。
+
+
 ## 飘字自动换行（待批次验证）
 
 路径：`src/game_text_tag.cpp`、`docs/text-tags.md`。文字按原版对象的 0.25 × 0.25 屏幕坐标区域自动换行并限制行数；颜色分段、显式换行和转义竖线在布局后保留。客户端使用现有原字体测量；原版断词、字号、垂直锚点及内联颜色细节仍待对照。
