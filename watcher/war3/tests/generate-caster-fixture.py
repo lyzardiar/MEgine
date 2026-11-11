@@ -28,8 +28,18 @@ unit interruptedTarget=null
 destructable interruptedTree=null
 item interruptedItem=null
 integer interruptCount=0
+integer unloadOrderCount=0
 real interruptX=0
 endglobals
+function ObserveUnloadOrder takes nothing returns nothing
+    set unloadOrderCount=unloadOrderCount+1
+endfunction
+function InstallUnloadObserver takes unit carrier returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,carrier,EVENT_UNIT_ISSUED_TARGET_ORDER)
+    call TriggerRegisterUnitEvent(t,carrier,EVENT_UNIT_ISSUED_ORDER)
+    call TriggerAddAction(t,function ObserveUnloadOrder)
+endfunction
 function InterruptRemoveTarget takes nothing returns nothing
     set interruptCount=interruptCount+1
     call RemoveUnit(interruptedTarget)

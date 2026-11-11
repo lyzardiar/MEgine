@@ -8969,3 +8969,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_transport.cpp`、`tests/caster_tests.cpp`。乘员中断施法后复核自身和运输工具的身份、生命周期、装载资格及视野；运输工具位置或登船范围改变时重算路线，回调新订单继续保留。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> board-cancel-pause`、`board-cancel-remove`、`board-cancel-move`、`board-cancel-order`，前三例修复前失败、修复后通过，新订单例前后均通过；各输出 1 条 PASS。批次合并运输、登船、装载容量与订单；载具容量／归属变化、原版时序及真实窗口待验证。本批 1/3。
+
+### 卸载换令回调状态复核（待批次验证）
+
+路径：`src/session_transport.cpp`、`src/session_spells.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`。单个卸载和立即卸载全部在中断施法后检查载具状态；单个卸载还复核乘员身份、生命周期及当前落点，失效时不派发旧卸载订单事件。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> unload-cancel-pause`、`unloadall-cancel-pause`、`unload-cancel-remove`，三例修复前失败、修复后各输出 1 条 PASS。批次合并普通／矿井卸载、容量、运输与订单；回调移动载具／改变落点、新订单、原版时序及真实窗口待验证。本批 2/3。
