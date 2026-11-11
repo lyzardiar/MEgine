@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## The Death Sheep 原图碰撞和重开（验证补充）
+
+`tests/campaign_ai_tests.cpp` 新增 `deathsheep-hazards`：Win32 Release CampaignAI 目标编译通过，原版 `(1)TheDeathSheep.w3m` 定向检查为 1 通过／0 失败，未加载 Game.dll。地图生成的猪和村民分别通过移动进入角色范围，验证扣命与加命；预置生命为零后再次碰撞，验证失败状态、倒计时以及重开后恢复控制和五条生命。测试关闭了自然刷怪定时器并手动放置与指定移动目标，不代表完整对局、窗口操作、画面或原版动态对照。此为玩法链验证补充，不增加功能批次计数；当前批次 1/3。
+
 ## 游戏中 Esc 地图事件（待批次验证）
 
 路径：`src/game_view.cpp`、`src/session.h`、`src/session_match.cpp`、`tests/campaign_ai_tests.cpp`。玩家控制期间，Esc 在聊天、目标取消和弹窗等现有处理之后，可向启用的地图结束过场监听器发送同步玩家命令；没有有效监听器时仍可打开菜单。正常操作且过场场景已结束时，Blizzard 公共脚本保留的闲置过场监听器不阻止菜单；按键重复不重复发送事件。
