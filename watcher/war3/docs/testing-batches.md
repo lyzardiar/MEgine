@@ -8939,3 +8939,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`35bf4d7`、`1e6202b`、`640290f`，集成版本 `640290f`。Win32 Release 客户端、caster、construction、passive 和 order queue 目标编译通过，重新生成相关夹具。升级暂停／资源变化、背包三种操作暂停、恢复施工暂停／目标移除、通用换令、建造暂停、协助建造移除／进度、眩晕施工及典当／消耗品购买共 14 个入口均退出 0、各输出 1 条 PASS；caster、construction 默认入口各输出 1 条 PASS，order queue 默认入口输出 37 条 PASS，共 17 个进程成功。日志 `tmp/docs-artifacts/war3/upgrade-inventory-construction-batch.log`；部分入口不输出 RESULT。
 
 恢复施工回调夹具人工设置未完工状态；施工任务替换、物品／工人归属变化、新订单与真实窗口、多人及原版事件时序仍待验证。本批不代表完整对局验收，下一功能批次从 0/3 开始。
+
+### 传送门入门换令回调状态复核（待批次验证）
+
+路径：`src/session_waygate.cpp`、`src/session_combat_orders.cpp`、`tests/caster_tests.cpp`。进入传送门中断施法后复核单位与传送门身份、生命周期和可用性；传送门移动或入口范围变化时重算路线，回调换令后停止旧智能命令的后续派发。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> waygate-cancel-pause`、`waygate-cancel-remove`、`waygate-cancel-move`、`waygate-cancel-order`，四例修复前失败、修复后各输出 1 条 PASS。批次合并传送门入门、互通、智能命令和订单回归；回调改变目的地／入口能力／归属、真实窗口和原版时序待验证。本批 1/3。
