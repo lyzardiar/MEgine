@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 尸体技能与载尸车友敌筛选（待批次验证）
+
+路径：`src/session_corpses.cpp`、`src/session_transport.cpp`、`tests/generate-corpse-cargo-fixture.py`、`tests/corpse_cargo_tests.cpp`。尸体技能和载尸车识别 allies／enemies 关系词及已展开的缩写，继续保留现有玩家和中立判定。
+
+必要检查：Win32 Release 客户端与 corpse-cargo 目标编译通过；分别用 `generate-corpse-cargo-fixture.py --data-root <root> --corpse-targets <ally|enemy|plural-enemy> --output <fixture>` 生成地图，再运行 `war3_corpse_cargo_tests <root> <fixture> <alias-ally|alias-enemy>`，各 1 通过／0 失败。测试实际载尸与 Raise Dead，验证允许和排除的友敌尸体；未加载 Game.dll。夹具位于 `tmp/docs-artifacts/war3/corpse-alias/`。
+
+本批 1/3；其他尸体技能、中立和多关系组合、原版动态行为及完整对局待集中验证。
+
+
 ## 消耗品、运输与修理目标缩写批次（部分验证）
 
 范围：`365d4ad`、`e2ea11c`、`07d4de1`，集成代码版本 `07d4de1`。Win32 Release 客户端及 control、transport、construction、campaign AI 目标编译通过。control 的 `item-consumable-alias`、`item-combined`、`item-vampirism-alias` 分别为 3／0、1／0、2／0；transport 的 cargo、load、both、crash 缩写夹具及原始 `flow`、`crash` 各为 1／0；construction 的四个缩写夹具各为 1／0。
