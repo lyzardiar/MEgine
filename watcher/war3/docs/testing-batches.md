@@ -8631,3 +8631,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/session_damage.cpp`、`tests/clock_tests.cpp`，原版静态调用路径见[脚本伤害](widget-damage.md)。范围恢复对虚无单位读取 `EtherealHealBonus`，并与普通目标及延迟恢复共用状态流程。
 
 快速检查：Win32 Release 客户端和 clock 目标编译通过；`WAR3_CLOCK_FILTER=negative_point_damage_heals war3_clock_tests <data-root> <output-root>` 为 1 通过／0 失败，覆盖虚无能力添加、治疗倍率、移除及延迟存档续行。原版动态时序、地图覆盖与治疗拦截能力留待批次及原版对照；此为 `e92f4c8` 补充，当前批次仍为 1/3。
+
+### 照明弹有限施放次数（待批次验证）
+
+路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_ability_commands.cpp`、`tests/generate-stealth-fixture.py`、`tests/stealth_tests.cpp`；原版静态依据见[照明弹](flare.md)。自定义 `Afla` 的 `DataC` 支持有限次数、取消不消耗、释放时递减及耗尽禁用；按钮显示余量，默认零值保持不限次数。
+
+快速检查：Win32 Release 客户端和 stealth 测试目标编译通过，夹具脚本语法检查及差异检查通过；新增功能测试尚未执行。批次生成 `python tests/generate-stealth-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/flare-charges/fixture.w3m --flare-charges`，再运行 `war3_stealth_tests <data-root> <fixture> flare-charges`，并合并照明弹、隐身／显形和存档相关回归。实际窗口、多人、原版次数显示及等级变化尚待对照。本批 2/3。
