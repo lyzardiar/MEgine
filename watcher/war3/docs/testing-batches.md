@@ -8643,3 +8643,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/session_ability_commands.cpp`、`tests/stealth_tests.cpp`。有限次数哨兵按钮显示与实际释放共用的剩余数，无限次数不显示计数；原版静态调用依据见[哨兵](sentinel.md)。
 
 快速检查：Win32 Release 客户端及 stealth 测试目标编译通过，功能测试尚未执行。批次生成默认夹具 `python tests/generate-stealth-fixture.py --data-root <data-root>` 后运行 `war3_stealth_tests <data-root> <fixture> sentinel`，检查初始、取消、释放及无限次数显示；实际窗口、多选聚合、像素及原版时序仍待对照。本项提交后批次 3/3，先完成集中验证再开始下一批。
+
+### 范围恢复与有限技能次数批次（部分验证）
+
+范围：`e92f4c8`、`40491d0`、`441491b`，及前者补充 `80235ca`；集成版本 `441491b`。Win32 Release 客户端、clock 和 stealth 目标编译通过，两个隔离夹具生成成功。`war3_clock_tests` 的 `negative_point_damage_heals`、`recovery_bundle_restores_point_damage` 各为 1 通过／0 失败；`war3_stealth_tests` 的 `flare-charges`、`sentinel`、`flow`、`dust`、`tower`、`meld` 均退出 0，各输出 1 条 PASS（其中 `flare-charges` 提前返回，没有输出 RESULT 或检查 Game.dll）。
+
+覆盖虚无倍率与延迟恢复、点伤害队列检查点、有限照明弹／哨兵释放和取消、按钮计数、隐身与显形回归。物品／可破坏物负伤害、治疗拦截、真实窗口、原版动态时序、多选数量聚合、联机及跨关存档仍未验证；无完整原版验收结论。下一功能批次从 0/3 开始。
