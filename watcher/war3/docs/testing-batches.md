@@ -8687,3 +8687,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_orders.cpp`、`tests/order_queue_tests.cpp`。四个脚本点订单入口在清除队列前检查单位、订单和 Location；未知编号及未知四字节名称不会中断已有队列，已注册订单与当前对象定义仍可派发。原版静态入口见[即时目标订单](instant-orders.md)。
 
 快速检查：Win32 Release 客户端与订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-point-id` 修复前失败、修复后退出 0 并输出 1 条 PASS。批次运行完整订单套件，合并有效建造／技能点订单、自定义对象及 Location 边界；原版动态队列、注册表覆盖、真实窗口和多人仍待对照。本批 2/3。
+
+### 攻击换令回调后的目标复核（待批次验证）
+
+路径：`src/session_combat_orders.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`。打断施法回调后复核攻击双方状态与武器；目标失效时拒绝旧攻击，位置或射程变化时重算接近路线，保留回调中替换的订单。
+
+快速检查：Win32 Release 客户端、caster 和订单测试目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> attack-cancel-target` 和 `attack-cancel-move`，均退出 0、各输出 1 条 PASS。前者修复前复现失败。批次合并施法和订单回归；目标死亡／易主、施法者变化、远程弹道、回调新订单、真实窗口及原版事件时序仍需对照。本项提交后本批 3/3，先集中验证。

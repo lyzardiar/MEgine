@@ -23,7 +23,37 @@ def main():
     archive = fixture.mpyq.MPQArchive(io.BytesIO(original[offset:]), listfile=False)
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
-    files['war3map.j'] = b'function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n'
+    files['war3map.j'] = b'''globals
+unit interruptedTarget=null
+integer interruptCount=0
+real interruptX=0
+endglobals
+function InterruptRemoveTarget takes nothing returns nothing
+    set interruptCount=interruptCount+1
+    call RemoveUnit(interruptedTarget)
+endfunction
+function InstallInterruptRemove takes unit caster, unit target returns nothing
+    local trigger t=CreateTrigger()
+    set interruptedTarget=target
+    call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
+    call TriggerAddAction(t,function InterruptRemoveTarget)
+endfunction
+function InterruptMoveTarget takes nothing returns nothing
+    set interruptCount=interruptCount+1
+    call SetUnitX(interruptedTarget,interruptX)
+endfunction
+function InstallInterruptMove takes unit caster, unit target, real x returns nothing
+    local trigger t=CreateTrigger()
+    set interruptedTarget=target
+    set interruptX=x
+    call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
+    call TriggerAddAction(t,function InterruptMoveTarget)
+endfunction
+function config takes nothing returns nothing
+endfunction
+function main takes nothing returns nothing
+endfunction
+'''
     curse = b'AcrsA0CS'+struct.pack('<I', 1)+b'Crs1'+struct.pack('<III f', 2, 1, 1, 1.)+b'A0CS'
     def targets(base, custom, value):
         return base+custom+struct.pack('<I', 1)+b'atar'+struct.pack('<III', 3, 1, 0)+value+b'\0'+custom
