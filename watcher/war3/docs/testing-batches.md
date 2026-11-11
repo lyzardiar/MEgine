@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 边界射线、地面物品与波形表现批次（部分验证）
+
+集成版本 `5dce84f`，范围 `7bfd107`、`9a362a1`、`5dce84f`。Win32 Release 客户端、CampaignAI、control、commerce、clock 目标编译通过；control 目标有既有 C4456 变量遮蔽警告。`war3_campaign_ai_tests <data-root> humanx03-tag-surface`、`water-tag-surface`，`war3_control_tests <data-root> <wave-fixture> wave-target-reentry`，以及 `WAR3_CLOCK_FILTER=recovery_bundle_restores_area_wave war3_clock_tests <data-root> <scratch>` 各为 1 通过／0 失败；`war3_commerce_tests <data-root> <commerce-fixture>` 退出 0 并输出 1 条 PASS，无分项汇总。
+
+检查覆盖射线地图边界和原图楼梯／水面采样、波形伤害回调和恢复、商店与物品生命周期；未执行 GameView 中物品拾取投影、模型／波形绘制或实际窗口输入。桥面边缘、动态模型、不同水域、GPU／性能与原版视觉仍保留待验证；scratch 位于 `tmp/docs-artifacts/war3/surface-item-wave-batch-20261111/`。下一功能批次从 0/3 开始。
+
 ## 地面波形技能的可见表面高度（待批次验证）
 
 路径：`src/game_effects.cpp`。移动中的波形技能模型按当前位置的地形、水面及可行走模型表面较高值绘制，避免桥面、楼梯或水域将视觉效果埋在底层地形；波形的位置、碰撞、伤害与事件不变。
