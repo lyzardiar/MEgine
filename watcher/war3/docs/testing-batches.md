@@ -8589,3 +8589,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`；说明见[存档运行时](save-runtime-foundation.md)。恢复包 SRBF 版本 62 新增技能类型／等级对应的图标与提示覆盖组件，恢复时校验字段、等级、类型、重复项和大小预算；版本 60、61 按无覆盖读取。保存不再仅因技能界面覆盖而拒绝，其他未支持的 Lua／平台状态及保留句柄仍受原有保护。
 
 快速检查：Win32 Release 客户端和 clock 测试目标编译通过；针对格式兼容和磁盘检查点的定向测试 `WAR3_CLOCK_FILTER=recovery_bundle_restores_ability_ui war3_clock_tests <data-root> <output-root>` 及 `WAR3_CLOCK_FILTER=preload_recording_recovery` 各为 1 通过／0 失败，日志 `tmp/docs-artifacts/war3/ability-ui-recovery-{final,legacy}.log`。首次夹具因重复声明类型及选择单等级技能失败，修正夹具后通过。批次验证旧版本、损坏／预算边界、多技能覆盖、命令按钮与真实窗口存读档；原版格式和完整 Lua 会话恢复尚未实现。本批 1/3。
+
+### 外部脚本运行时的检查点保护（待批次验证）
+
+路径：`src/session_recovery_bundle.cpp`、`tests/clock_tests.cpp`。存在外部 ExecuteFunc 宿主时，检查点明确拒绝生成，防止遗漏尚未序列化的二进制／Lua 运行时状态；宿主解绑后仍可按已有规则保存。此限制不实现这些地图的存读档。
+
+快速检查：Win32 Release 客户端和 clock 目标编译通过；`WAR3_CLOCK_FILTER=recovery_bundle_restores_ability_ui war3_clock_tests <data-root> <output-root>` 为 1 通过／0 失败，覆盖外部宿主拒绝、解绑及后续技能界面检查点，日志 `tmp/docs-artifacts/war3/external-runtime-recovery-fast.log`。批次验证正式地图入口、保存错误显示及宿主生命周期。此项补充 `e713b76` 的保存保护，不单独计数；当前批次 1/3。
