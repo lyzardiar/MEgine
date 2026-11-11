@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 技能目标与预览高度批次（部分验证）
+
+集成版本 `b435a92`，范围 `49d0e3d`、`e6b9415`、`b435a92`。Win32 Release 客户端、stealth、CampaignAI、clock 目标编译通过。`war3_stealth_tests <data-root> <stealth-fixture> group-counts`、`sentinel` 与 `<flare-fixture> flare-charges` 均退出 0，各输出 1 条 PASS；其中 sentinel 输出 1 通过／0 失败并检查未加载 Game.dll，另外两项提前返回、未输出 RESULT。`war3_campaign_ai_tests <data-root> water-tag-surface`、`humanx03-tag-surface` 和以 `WAR3_CLOCK_FILTER=tree_actions_bundle_preserves_claims_and_club` 执行的 `war3_clock_tests <data-root> <scratch>` 均为 1 通过／0 失败。
+
+上述检查覆盖会话中的有限次数与施法者、战棍持有／动作恢复以及既有水面与楼梯高度消费者，并未驱动本批修改的 GameView 输入或预览渲染。本地 scratch：`tmp/docs-artifacts/war3/ui-spell-batch-20261111/`。拔树点击、多选目标模式、范围圈实际窗口／GPU、无效目标、Shift／取消、实验联机与原版视觉仍留待验证；这些未执行项保留在队列。下一功能批次从 0/3 开始。
+
 ## 范围技能预览的可见表面高度（待批次验证）
 
 路径：`src/game_spells.cpp`。范围预览网格的各顶点使用现有地形、水面与可行走模型表面中的较高高度，避免楼梯或水域上按地形底部绘制造成预览错位或被遮挡；范围、目标点及模拟不变。
