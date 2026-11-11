@@ -8717,3 +8717,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_orders.cpp`、`tests/caster_tests.cpp`。打断施法后复核单位状态，并使用回调后的坐标与寻路条件重算移动路线；回调替换订单时沿用修订号保护。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后 `war3_caster_tests <data-root> <fixture> move-cancel-pause` 修复前失败、修复后退出 0 并输出 1 条 PASS。批次合并普通移动、攻击移动、巡逻、物品攻击及订单回归；回调中移动、路径阻挡改变、所有权／死亡、真实窗口及原版时序仍需验证。本项提交后本批 3/3，先集中验证。
+
+### 移动与物品攻击回调批次（部分验证）
+
+范围：`d425319`、`3a16659`、`9313da4`，集成版本 `9313da4`。Win32 Release 客户端、caster、order queue 和 harvest 目标编译通过；重新生成 caster 和 `--special-silence` harvest 夹具。`war3_caster_tests` 的 `attack-cancel-item`、`attack-cancel-remove-item`、`attackmove-cancel-pause`、`patrol-cancel-move`、`move-cancel-pause`、`attack-cancel-target`、`attack-cancel-move` 及默认入口均退出 0，各输出 1 条 PASS；`war3_order_queue_tests` 的 `pathing-toggle`、`combat-pathing-toggle` 各 1 通过／0 失败，默认入口退出 0 并输出 37 条 PASS；`war3_harvest_tests ... silence-special` 为 1 通过／0 失败。部分入口没有输出 RESULT，订单定向入口报告 `game_dll_loaded=false`。日志 `tmp/docs-artifacts/war3/movement-callback-batch-*.log`。
+
+覆盖物品位置与移除、单位攻击目标变化、移动暂停、巡逻起点、寻路切换及普通树木／物品攻击。可破坏物在回调中移除／复活、回调中普通移动或改变障碍、新订单、所有权／死亡、远程弹道、真实窗口、多人及原版事件时序仍待验证；不作为完整原版对局验收。下一功能批次从 0/3 开始。
