@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## Human07 步行触发穆拉丁相遇（待批次验证）
+
+路径：`tests/human_campaign_chain_tests.cpp`。原图开场后向阿尔萨斯派发玩家地面移动命令，从初始位置走入原相遇区域；检查原触发器被禁用、英雄确在区域内、过场接管并归还控制且穆拉丁存在。未直接移动英雄或击杀目标，未带前章缓存。
+
+定向诊断：Win32 Release 战役链测试目标构建成功；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human07-walk` 在新建隔离目录下 1 通过／0 失败，模拟 186 秒，未加载 Game.dll。该回归不单独计入功能批次，当前仍为 1/3；真实窗口输入、音画、遭遇战、基地攻防和跨关仍待集中验证。
+
 ## 水面单位的漂浮文字高度（待批次验证）
 
 路径：`src/world.h`、`src/world_height.cpp`、`src/terrain_layout.cpp`、`src/terrain_scene.{h,cpp}`、`src/session_text_tag.cpp`、`tests/campaign_ai_tests.cpp`。将地图水位插值、源水域偏移和水面地形变形计算放在 World，渲染器与单位文字共用；水上／两栖单位文字取地形、适用的可行走表面和水面的较高值，再叠加单位飞行高度及脚本偏移。
