@@ -8873,3 +8873,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_building_upgrades.cpp`、`tests/construction_tests.cpp`。建筑升级支付或取消退款时，人口或金币事件回调改变后续金币／木材状态后，不再派发基于旧余额的事件。
 
 快速检查：Win32 Release 客户端及 construction 目标编译通过；生成施工夹具后运行 `war3_construction_tests <data-root> <fixture> upgrade-payment-state` 和 `upgrade-refund-state`，两例修复前失败、修复后各输出 1 条 PASS。批次合并建筑升级、施工、人口及资源回调；人口回调更改余额、升级能力／目标变化、原版时序和真实窗口待验证。本批 1/3。
+
+### 建筑开工与取消的资源事件重入（待批次验证）
+
+路径：`src/session_construction.cpp`、`tests/construction_tests.cpp`。工人开工扣费后，建筑创建、人口或金币事件回调若改变后续余额，跳过过期金币／木材事件；取消退款的金币回调改变木材后跳过过期木材事件。
+
+快速检查：Win32 Release 客户端及 construction 目标编译通过；生成施工夹具后运行 `war3_construction_tests <data-root> <fixture> build-payment-state` 和 `build-refund-state`，两例修复前失败、修复后各输出 1 条 PASS。批次合并四族施工、取消退款、人口与回调；建筑创建及人口事件修改余额、原版时序和实际窗口待验证。本批 2/3。
