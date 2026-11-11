@@ -14,6 +14,7 @@ struct ScriptBoolean {
     enum class Operation {Code,And,Or,Not};
     Operation operation=Operation::Code;
     jass::Value code;
+    std::shared_ptr<jass::Runtime> codeRuntime;
     std::shared_ptr<ScriptBoolean> left,right;
 };
 struct ScriptCallback {std::uint32_t owner=0;jass::Value code;std::shared_ptr<ScriptBoolean> condition;};

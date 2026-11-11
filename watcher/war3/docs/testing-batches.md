@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 预加载过滤器跨调用生命周期（待批次验证）
+
+路径：`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_game.cpp`、`tests/map_tests.cpp`。预加载创建的过滤器被布尔表达式引用时持有其运行时，子脚本返回后仍可使用并保留全局状态；最后的表达式引用释放后不再持有运行时。已保留的回调再次创建过滤器时，新过滤器独立保留相同运行时。
+
+必要检查：Win32 Release `war3_map_tests` 编译通过；`war3_map_tests <root> tmp/docs-artifacts/war3/map-preloader-keep preloader_destructable_enumeration` 为 1 通过／0 失败，覆盖组合表达式、原始句柄销毁、跨调用执行、运行时全局状态、回调中新建过滤器及依次释放。含外部回调的布尔快照明确拒绝，销毁后可编码；修复前跨调用报运行时销毁。`preloader_nested_damage`、`preloader_destructable_lifecycle`、`preloader_hashtable_handles` 各 1／0。
+
+本批 2/3；合并验证嵌套预加载、过滤／枚举、回调重入、保存限制、对象生命周期与 JASS 线程。长期触发器／计时器回调、完整回调存档、原版语义、实际地图与性能仍待实现或对照。
+
+
 ## 伐木途中地形封路恢复（待批次验证）
 
 路径：`src/session_lumber.cpp`、`tests/campaign_ai_tests.cpp`。工人接近树木时若地形阻挡版本变化，重新计算到采集范围的路线；无法抵达时进入现有换树／等待流程。暂停期间保留任务，其他树不可用时等待，并在道路重新开放后继续。

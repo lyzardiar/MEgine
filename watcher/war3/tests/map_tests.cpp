@@ -319,8 +319,17 @@ endfunction
         auto dir=fs::absolute(argv[2])/L"preloader-enum-tree"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
         {std::ofstream file(dir/L"Preload"/L"enum.j",std::ios::binary);file<<R"jass(globals
 integer selected=0
+integer filterCalls=0
+boolean createNext=false
+hashtable saved=null
 endglobals
 function filterTree takes nothing returns boolean
+set filterCalls=filterCalls+1
+if createNext then
+    set createNext=false
+    call SaveBooleanExprHandle(saved, 9, 9, Filter(function filterTree))
+endif
+call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, filterCalls)
 return GetDestructableTypeId(GetFilterDestructable()) == 'LTlt' and GetDestructableX(GetFilterDestructable()) == 64.0
 endfunction
 function never takes nothing returns boolean
@@ -341,20 +350,21 @@ local conditionfunc no=Condition(function never)
 local boolexpr inverse=Not(no)
 local boolexpr both=And(predicate, inverse)
 local boolexpr combined=Or(both, no)
-local hashtable saved=InitHashtable()
+set saved=InitHashtable()
 call EnumDestructablesInRect(area, combined, function selectTree)
 if selected == 1 and GetDestructableLife(first) == 10.0 and GetDestructableLife(second) != 10.0 then
     call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_GOLD, 401)
 endif
-call DestroyBoolExpr(combined)
 call DestroyBoolExpr(both)
 call DestroyBoolExpr(inverse)
 call DestroyCondition(no)
-call SaveBooleanExprHandle(saved, 1, 2, predicate)
+call DestroyFilter(predicate)
+call SaveBooleanExprHandle(saved, 1, 2, combined)
+set createNext=true
 call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_HERO_TOKENS, GetHandleId(saved))
 call RemoveRect(area)
 endfunction
-)jass";require(bool(file),"Cannot create enumeration preload source");}Archives archives(argv[1]);auto map=archives.readCandidates({"Maps\\FrozenThrone\\Campaign\\War3XBonusCredits.w3x"},ArchiveScope::Common);require(bool(map),"Missing source map");archives.mountMap(std::make_shared<const Bytes>(map->bytes),"War3XBonusCredits.w3x");auto world=World::read(archives);auto info=world->data().info;auto common=archives.readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Missing common script");std::string script="function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"enum-fixture.j",script,"preloader enumeration fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("Preloader",std::array{vm.string("enum.j")});auto player=vm.invoke("Player",std::array{vm.integer(0)});require(vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_GOLD")}).bits==401,"Preloader filter and enumeration did not run");auto table=vm.handle("hashtable",vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_HERO_TOKENS")}).bits);auto predicate=vm.invoke("LoadBooleanExprHandle",std::array{table,vm.integer(1),vm.integer(2)});auto area=vm.invoke("Rect",std::array{vm.real(jass::Real::fromInteger(32)),vm.real(jass::Real::fromInteger(32)),vm.real(jass::Real::fromInteger(160)),vm.real(jass::Real::fromInteger(96))});bool expired=false;try{vm.invoke("EnumDestructablesInRect",std::array{area,predicate,jass::Value{vm.module().typeId("code"),0,{}}});}catch(const std::exception& e){expired=std::string_view(e.what()).find("code owner has been destroyed")!=std::string_view::npos;}require(expired,"Expired child filter was not rejected safely");vm.invoke("DestroyBoolExpr",std::array{predicate});require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+)jass";require(bool(file),"Cannot create enumeration preload source");}Archives archives(argv[1]);auto map=archives.readCandidates({"Maps\\FrozenThrone\\Campaign\\War3XBonusCredits.w3x"},ArchiveScope::Common);require(bool(map),"Missing source map");archives.mountMap(std::make_shared<const Bytes>(map->bytes),"War3XBonusCredits.w3x");auto world=World::read(archives);auto info=world->data().info;auto common=archives.readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Missing common script");std::string script="function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"enum-fixture.j",script,"preloader enumeration fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("Preloader",std::array{vm.string("enum.j")});auto player=vm.invoke("Player",std::array{vm.integer(0)});require(vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_GOLD")}).bits==401,"Preloader filter and enumeration did not run");auto table=vm.handle("hashtable",vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_HERO_TOKENS")}).bits);auto predicate=vm.invoke("LoadBooleanExprHandle",std::array{table,vm.integer(1),vm.integer(2)});auto area=vm.invoke("Rect",std::array{vm.real(jass::Real::fromInteger(32)),vm.real(jass::Real::fromInteger(32)),vm.real(jass::Real::fromInteger(160)),vm.real(jass::Real::fromInteger(96))});auto calls=vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_LUMBER")}).bits;vm.invoke("EnumDestructablesInRect",std::array{area,predicate,jass::Value{vm.module().typeId("code"),0,{}}});require(vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_LUMBER")}).bits>calls,"Escaped child filter did not retain its runtime globals");auto nested=vm.invoke("LoadBooleanExprHandle",std::array{table,vm.integer(9),vm.integer(9)});require(nested.bits,"Retained callback did not create its nested filter");vm.invoke("DestroyBoolExpr",std::array{predicate});auto identity=[](std::string_view,std::uint32_t id){return id;};bool rejected=false;try{session.encodeBooleanExpressions(identity);}catch(const std::exception& e){rejected=std::string_view(e.what()).find("Invalid boolean callback")!=std::string_view::npos;}require(rejected,"Snapshot accepted an unrestorable preload callback");calls=vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_LUMBER")}).bits;vm.invoke("EnumDestructablesInRect",std::array{area,nested,jass::Value{vm.module().typeId("code"),0,{}}});require(vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_LUMBER")}).bits>calls,"Nested filter lost its runtime after parent destruction");vm.invoke("DestroyBoolExpr",std::array{nested});require(!session.encodeBooleanExpressions(identity).empty(),"Destroyed preload callback prevented snapshot");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
     test("preloader_destructable_lifecycle",[&]{
         auto dir=fs::absolute(argv[2])/L"preloader-destructable"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
