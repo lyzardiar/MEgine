@@ -8625,3 +8625,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/session_damage.cpp`、`tests/clock_tests.cpp`，原版汇编依据及限制见[脚本伤害](widget-damage.md)。即时和延迟负数范围金额恢复候选对象生命，延迟队列可存档恢复，不触发普通伤害事件。
 
 快速检查：Win32 Release 客户端与 clock 目标编译通过；`WAR3_CLOCK_FILTER=negative_point_damage_heals war3_clock_tests <data-root> <output-root>` 为 1 通过／0 失败，检查即时恢复、伤害事件不触发及延迟恢复后检查点续行。首次测试未计单位自然回血而失败，修正预期后通过。批次需覆盖无敌、目标类型、死亡和生命上限、来源删除、延迟／暂停、存档、事件重入及原版动态行为；原版治疗拦截能力尚未实现。本批 1/3。
+
+### 负数范围伤害的虚无治疗倍率（补充，待批次验证）
+
+路径：`src/session_damage.cpp`、`tests/clock_tests.cpp`，原版静态调用路径见[脚本伤害](widget-damage.md)。范围恢复对虚无单位读取 `EtherealHealBonus`，并与普通目标及延迟恢复共用状态流程。
+
+快速检查：Win32 Release 客户端和 clock 目标编译通过；`WAR3_CLOCK_FILTER=negative_point_damage_heals war3_clock_tests <data-root> <output-root>` 为 1 通过／0 失败，覆盖虚无能力添加、治疗倍率、移除及延迟存档续行。原版动态时序、地图覆盖与治疗拦截能力留待批次及原版对照；此为 `e92f4c8` 补充，当前批次仍为 1/3。
