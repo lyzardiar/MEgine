@@ -2725,6 +2725,31 @@ endfunction
  endfunction
  )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"variable-event.j",source,"variable event recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());auto& a=original->runtime();auto& b=target->runtime();require(b.global("hits").bits==2 && b.global("firstEvent").bits==ids.at(a.global("firstEvent").bits) && b.global("secondEvent").bits==ids.at(a.global("secondEvent").bits),"Variable event state or identity differs");for(auto* vm:{&a,&b}){vm->invoke("setWatched",std::array{vm->real(real(3))});require(vm->global("hits").bits==2,"Matched variable event fired again");vm->invoke("setWatched",std::array{vm->real(real(0))});vm->invoke("setWatched",std::array{vm->real(real(2))});require(vm->global("hits").bits==4,"Variable event did not fire after crossing");vm->invoke("DestroyTrigger",std::array{vm->global("first")});vm->invoke("setWatched",std::array{vm->real(real(0))});vm->invoke("setWatched",std::array{vm->real(real(2))});require(vm->global("hits").bits==5,"Destroyed variable trigger still fired");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("timer_elapsed_in_clock_event",[&]{
+        auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
+ timer sample = null
+ real seen = -1.
+ real remaining = -1.
+ trigger clockTrigger = null
+ endglobals
+ function onClock takes nothing returns nothing
+ set seen = TimerGetElapsed(sample)
+ set remaining = TimerGetRemaining(sample)
+ call PauseTimer(sample)
+ endfunction
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ call SetFloatGameState(GAME_STATE_TIME_OF_DAY, 5.)
+ call SetTimeOfDayScale(1.)
+ set sample = CreateTimer()
+ call TimerStart(sample, 10., false, null)
+ set clockTrigger = CreateTrigger()
+ call TriggerRegisterGameStateEvent(clockTrigger, GAME_STATE_TIME_OF_DAY, GREATER_THAN_OR_EQUAL, 5.001)
+ call TriggerAddAction(clockTrigger, function onClock)
+ endfunction
+ )jass";auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"timer-clock-event.j",source,"timer query during clock event"}}));ScriptSession session(std::move(module),map().info);session.attachWorld(world());session.audioMuted(true);session.configure();PlayerSetup setup(map().info,session.config());session.applySetup(setup);session.startMain();session.advance(1./32);auto& vm=session.runtime();float seen=std::bit_cast<float>(vm.global("seen").bits);require(std::abs(seen-1.f/32)<.00001f && std::abs(std::bit_cast<float>(vm.global("remaining").bits)-(10.f-1.f/32))<.00001f,"Clock callback observed stale timer time");auto timer=vm.global("sample");require(std::abs(std::bit_cast<float>(vm.invoke("TimerGetElapsed",std::array{timer}).bits)-seen)<.00001f,"Paused timer lost current elapsed time");session.advance(1);vm.invoke("ResumeTimer",std::array{timer});session.advance(1./32);require(std::abs(std::bit_cast<float>(vm.invoke("TimerGetElapsed",std::array{timer}).bits)-2.f/32)<.00001f,"Resumed timer lost a simulation step");
+    });
     test("recovery_bundle_restores_game_state_events",[&]{
         auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
  trigger clockTrigger = null

@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 同步回调中的计时器时间（待批次验证）
+
+路径：`src/session.cpp`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_dialogs.cpp`、`tests/clock_tests.cpp`。计时器运行时的已用／剩余时间及计时器窗口从当前模拟时间计算；暂停时先固定当前已用时间，使在时间事件等较早回调中暂停后恢复不会丢失一个模拟步。
+
+必要检查：Win32 Release 客户端和 `war3_clock_tests` 目标编译通过；`WAR3_CLOCK_FILTER=timer_elapsed_in_clock_event` 修复前为 0 通过／1 失败，修复后为 1 通过／0 失败，覆盖时间事件中的已用／剩余查询、暂停和恢复。
+
+本批 2/3。集中验证单次／周期计时器、时间事件及单位／伤害等同步回调中的查询与暂停、同一时刻的到期／重入／销毁、暂停恢复、计时器窗口、存档恢复和原版时序；固定 1/32 秒步进与原版精度仍待对照。
+
+
 ## The Death Sheep 原图碰撞和重开（验证补充）
 
 `tests/campaign_ai_tests.cpp` 新增 `deathsheep-hazards`：Win32 Release CampaignAI 目标编译通过，原版 `(1)TheDeathSheep.w3m` 定向检查为 1 通过／0 失败，未加载 Game.dll。地图生成的猪和村民分别通过移动进入角色范围，验证扣命与加命；预置生命为零后再次碰撞，验证失败状态、倒计时以及重开后恢复控制和五条生命，并在独立新会话读回预置最高分。入口要求额外传入一个不存在的绝对用户目录，验证路径为 `tmp/docs-artifacts/war3/deathsheep-probe/isolated-20261112-a/`；省略目录或传入现有目录会失败，避免地图写入实际用户缓存。测试关闭了自然刷怪定时器并手动放置与指定移动目标，不代表完整对局、窗口操作、画面或原版动态对照。此为玩法链验证补充，不增加功能批次计数；当前批次 1/3。

@@ -87,6 +87,7 @@ class ScriptSession {
     struct Group {std::vector<std::uint32_t> units;};
     struct RandomPool {std::vector<std::pair<std::uint32_t,float>> entries;};
     using Timer=ScriptTimer;
+    jass::Real timerElapsed(const Timer& timer) const;
     using Trigger=ScriptTrigger;
     struct Object {NativeKind kind;bool alive=true;std::variant<std::monostate,std::shared_ptr<ScriptTrackable>,std::shared_ptr<ScriptTextTag>,PlayerRef,Group,RandomPool,Timer,Trigger,WorldPoint,WorldRect,std::shared_ptr<ScriptSound>,std::shared_ptr<UnitState>,std::shared_ptr<ItemState>,std::shared_ptr<WeatherState>,ScriptForce,std::shared_ptr<ScriptBoolean>,ScriptCallback,ScriptEvent,std::shared_ptr<ScriptTimerDialog>,std::shared_ptr<ScriptLeaderboard>,std::shared_ptr<ScriptMultiboard>,ScriptMultiboardItem,std::shared_ptr<SpatialRegion>,std::shared_ptr<FogModifier>,std::shared_ptr<ScriptCache>,std::shared_ptr<ScriptHashtable>,std::shared_ptr<ScriptQuest>,std::shared_ptr<ScriptQuestItem>,std::shared_ptr<DestructableState>,std::shared_ptr<ScriptDialog>,std::shared_ptr<ScriptButton>,std::shared_ptr<ScriptDefeatCondition>,ScriptAbility,std::shared_ptr<ScriptEffect>,std::shared_ptr<ScriptLightning>,std::shared_ptr<ScriptImage>,std::shared_ptr<ScriptUbersplat>,ScriptCameraSetup> state;std::uint32_t localNetworkOrdinal=0;};
     static constexpr std::uint32_t handleBase=0x100000;
