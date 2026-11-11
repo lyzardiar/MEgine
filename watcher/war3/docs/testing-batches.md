@@ -8807,3 +8807,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/model_pose.cpp`、`tests/generate-model-opacity-fixture.py`。镂空阈值、Alpha 混合与深度写入根据几何／材质透明度和实例透明度的合成值处理，使模型自身淡出时不因固定阈值突然消失；不透明模型保留既有路径。此项补充 `bc5fb9a`，不单独计数。
 
 快速检查：Win32 Release 客户端编译通过；`python tests/generate-model-opacity-fixture.py --data-root <data-root>` 生成隔离地图，将原农民模型几何透明度设为 0.5。相同隐藏客户端画面修复前农民只剩影子，修复后模型半透明可见；截图 `tmp/docs-artifacts/war3/alpha-animation/{before,after}.png`。批次合并原模型动画、遮挡／排序、纹理 Alpha 边缘、其他材质和原版对照；当前夹具使用静态 0.5，不证明原动画时序或像素一致。本批仍为 2/3。
+
+### 采金换令回调的矿井复核（待批次验证）
+
+路径：`src/session_harvest.cpp`、`tests/caster_tests.cpp`。中断施法后复核工人、矿井、资源和采集能力；矿井失效时拒绝旧采集订单，位置或接近范围变化时重算路线，回调发出新订单时沿用修订号保护。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后 `war3_caster_tests <data-root> <fixture> harvest-cancel-mine` 修复前失败、修复后退出 0 并输出 1 条 PASS。批次合并普通／腐化／缠绕矿井、采集与订单回归；回调改变矿量／归属／能力、真实窗口和原版事件时序仍待验证。本项提交后本批 3/3，先集中验证。
