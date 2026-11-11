@@ -9035,3 +9035,11 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`fcbc1e4`、`36043da`、`90fc7ca`，集成版本 `90fc7ca`。Win32 Release 客户端、commerce、revival、research 与 order queue 目标编译通过，重新生成相关夹具。训练开始回调重排、祭坛扣费取消／重排、同类型英雄、祭坛／酒馆付款回调和酒馆唤醒共 7 个定向入口各输出 1 条 PASS；revival 默认入口报告 4 通过／0 失败，commerce、research 默认入口各输出 1 条 PASS，order queue 默认入口输出 37 条 PASS，共 11 个进程成功、50 条 PASS。部分程序不输出 RESULT。
 
 首次祭坛付款用默认夹具执行时因木材费用为零未进入测试；按用例要求使用 `--revival-lumber` 重新生成夹具后通过。日志 `tmp/docs-artifacts/war3/production-revival-batch.log`，保留首次配置失败和补测结果。多同型英雄的原版选择次序、死亡复活／易主回调、实际窗口、多人及原版事件时序仍待验证，本批不代表完整对局验收。下一功能批次从 0/3 开始。
+
+### 人族第六章盟友拥堵与让路（待批次验证）
+
+路径：`src/session_orders.cpp`、`tests/movement_avoidance_tests.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。运动受阻时，双方互为盟友的空闲单位可沿既有避让算法让路；其他玩家正执行命令的单位、敌人、单向联盟、驻守及暂停单位保持受保护。
+
+必要检查：Win32 Release 客户端及 movement avoidance／CampaignAI 目标编译通过。`war3_movement_avoidance_tests <data-root> <BootyBay> ally-yield` 修复前失败、修复后 1 通过／0 失败；`war3_campaign_ai_tests <data-root> human06-allied-yield` 使用原图无操作隔离会话，修复前模拟 600–1800 秒感染数停留 6，修复后于 851.5 秒达到 20，1 通过／0 失败且未加载 Game.dll。此前首栋受阻建筑诊断在当前基线 452.5 秒通过；未证明完整关卡胜负。
+
+本批 1/3，合并验证单位移动、原图战役与多人相关路径；实际窗口、复杂拥堵、联盟关系变化、原版让路策略和完整对局仍待验证。
