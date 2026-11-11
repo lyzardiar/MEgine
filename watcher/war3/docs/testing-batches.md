@@ -8547,3 +8547,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/session.h`、`src/session_combat_orders.cpp`、`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。玩家目标命令与脚本目标命令共用单位、物品和可破坏物句柄有效性检查；已移除或其他类型的目标在清除队列及排队之前拒绝，死亡但未移除的实体仍由具体命令决定。目标在入队后消失时由既有队列消费逻辑跳过，不改变其他后续命令。
 
 快速检查：Win32 Release 客户端、订单与 native 测试目标编译；新增用例待运行。与 Unicode 折行和物品命令合批执行 `war3_order_queue_tests <data-root> <BootyBay.w3m>`、`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-player-target` 和 `war3_native_tests <data-root> <scratch-root>`，核对失效目标、排队／替换、有效目标和既有订单；原版时序、动态目标变化及真实鼠标仍待对照。本项提交后本批达到 3/3，先完成集中验证。
+
+### 命令队列与 Unicode 折行批次（部分验证）
+
+范围：`e34903b`、`a9e7ed0`、`47e6513`，集成版本 `47e6513`。Win32 Release 客户端、订单和 native 测试目标编译通过，订单目标保留既有 C4456 告警。`war3_native_tests <data-root> tmp/docs-artifacts/war3/order-text-batch-native` 为 26 通过／0 失败，包含窄行及 4096 单元边界代理对检查；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-player-target` 与 `invalid-player-item` 均为 1 通过／0 失败，完整订单套件退出码 0、输出 36 条 PASS。日志 `tmp/docs-artifacts/war3/order-text-batch-{native,target,item,orders}.log`。
+
+验证覆盖失效目标／物品和已有队列、有效替换及现有订单回归；未执行实际窗口与鼠标、原版队列／事件时序对照、真实双端联机和完整对局，保留待测。下一功能批次从 0/3 开始。
