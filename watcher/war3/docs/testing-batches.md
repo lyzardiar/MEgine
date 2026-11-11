@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 水面与坐标高度批次（部分验证）
+
+范围：`24a871e`、`ab03bf8`、`0131bea`，含 Human07 步行与边界检查补充 `1567c7d`、`7cc822e`；集成版本 `7cc822e`。Win32 Release 客户端、CampaignAI、战役链、map、clock 目标构建成功。原版 BootyBay 水域的船只／飞行／两栖单位、空及已移除位置、水面变形开关与重新定位，HumanX03 楼梯单位／坐标文字、WTS 文字和蜘蛛区域事件，原图楼梯、空位置预加载、Human07 步行相遇，以及文字和地形变形恢复，共 9 个定向进程通过、0 失败。
+
+命令：`war3_campaign_ai_tests <data-root> <water-tag-surface|humanx03-tag-surface|humanx03-text-tags|humanx03-spider-enter>`；`war3_map_tests <data-root> <scratch> <campaign_walkable_stairs|preloader_hashtable_handles>`；`war3_human_campaign_chain_tests <data-root> <new-user-dir> human07-walk`；分别以 `WAR3_CLOCK_FILTER=recovery_bundle_restores_text_tags`、`recovery_bundle_restores_terrain_deformations` 运行 `war3_clock_tests <data-root> <scratch>`。本地产物：`tmp/docs-artifacts/war3/water-position-batch/`。水位的原版采样精度和边界、变形后位置查询、楼梯破坏、真实窗口和自然战斗未验证；下一功能批次从 0/3 开始。
+
 ## 水位与文字高度边界检查（待批次验证）
 
 路径：`tests/campaign_ai_tests.cpp`。扩充 BootyBay 水域检查，覆盖已移除和空 location、飞行与两栖单位、水面地形变形开关，以及变形后重新设置文字高度；本补充不单独计入功能批次。待在本批集成版本执行，并与楼梯、文字恢复和原版战役移动检查合并。
