@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 吞噬魔法范围回调状态复核（待批次验证）
+
+路径：`src/session_magic_consumption.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。范围目标记录死亡与归属轮次，逐个生效前重验目标及关系；伤害回调改变施法者订单、死亡或归属时停止旧效果，避免继续处理失效对象。
+
+必要检查：Win32 Release 客户端、control 和 consumption 目标编译通过。以 `generate-control-fixture.py --data-root <root> --devour-targets enemy --output tmp/docs-artifacts/war3/devour-relations/reentry.w3m` 生成夹具，`war3_control_tests <root> <fixture> devour-reentry`、`devour-caster-reentry` 各 1／0；前者修复前失败，覆盖第一个召唤物受伤回调转移后续目标，后者覆盖回调查停施法者。原 `war3_consumption_tests <root> tmp/docs-artifacts/war3/eat-magic/fixture.w3m devour` 为 1／0；均未加载 Game.dll。
+
+本批 2/3；合并验证范围驱散、目标关系、资源奖励和回调重入。目标移出范围、复活／移除、能力变化、原版回调时序和实际窗口待验证。
+
+
 ## 吞噬魔法目标关系（待批次验证）
 
 路径：`src/session_spells.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。吞噬魔法的范围单位筛选识别 player、friend／allies、enemy／enemies、neutral、self 及 notself，关系按并集匹配，并保留原有地空与建筑检查、驱散和召唤物效果。

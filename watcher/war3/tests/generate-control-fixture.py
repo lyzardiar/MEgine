@@ -27,7 +27,27 @@ integer conversionSummons=0
 integer conversionRemoveSource=0
 unit conversionSource=null
 unit conversionSummoned=null
+unit devourReentryTarget=null
+unit devourReentryCaster=null
 endglobals
+function devour_reentry takes nothing returns nothing
+    call SetUnitOwner(devourReentryTarget,Player(0),true)
+endfunction
+function devour_stop_caster takes nothing returns nothing
+    call IssueImmediateOrder(devourReentryCaster,"stop")
+endfunction
+function watch_devour_caster takes unit first,unit caster returns nothing
+    local trigger t=CreateTrigger()
+    set devourReentryCaster=caster
+    call TriggerRegisterUnitEvent(t,first,EVENT_UNIT_DAMAGED)
+    call TriggerAddAction(t,function devour_stop_caster)
+endfunction
+function watch_devour_reentry takes unit first,unit second returns nothing
+    local trigger t=CreateTrigger()
+    set devourReentryTarget=second
+    call TriggerRegisterUnitEvent(t,first,EVENT_UNIT_DAMAGED)
+    call TriggerAddAction(t,function devour_reentry)
+endfunction
 function quiet takes unit u returns nothing
     call SetUnitPathing(u,false)
     call SetUnitAcquireRange(u,0)
