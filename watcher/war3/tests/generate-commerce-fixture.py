@@ -13,6 +13,8 @@ spec.loader.exec_module(fixture)
 
 SCRIPT = '''globals
 unit probe_barracks=null
+unit probe_swap_barracks=null
+boolean probe_swapped=false
 unit probe_buyer=null
 unit probe_shop=null
 unit probe_ownshop=null
@@ -59,6 +61,19 @@ function ProbeOwnShopSetup takes nothing returns nothing
     call AddUnitToStock(probe_ownshop,'hfoo',1,1)
     call TriggerRegisterUnitEvent(t,probe_ownshop,EVENT_UNIT_SELL)
     call TriggerAddAction(t,function ProbeOwnSale)
+endfunction
+function ProbeSwapTrain takes nothing returns nothing
+    if not probe_swapped then
+        set probe_swapped=true
+        call IssueImmediateOrderById(probe_swap_barracks,851976)
+        call IssueImmediateOrderById(probe_swap_barracks,'hfoo')
+    endif
+endfunction
+function ProbeSwapSetup takes nothing returns nothing
+    local trigger t=CreateTrigger()
+    set probe_swap_barracks=CreateUnit(Player(0),'hbar',GetStartLocationX(1),GetStartLocationY(1),270)
+    call TriggerRegisterUnitEvent(t,probe_swap_barracks,EVENT_UNIT_TRAIN_START)
+    call TriggerAddAction(t,function ProbeSwapTrain)
 endfunction
 function ProbeTrain takes nothing returns nothing
     call ProbeAssert(GetTrainedUnitType()=='hfoo',"trained_type")

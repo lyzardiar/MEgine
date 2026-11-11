@@ -9011,3 +9011,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`78a589d`、`7f7e20f`、`b5663bd`，集成版本 `b5663bd`。Win32 Release 客户端、caster、construction、harvest 和 order queue 目标编译通过，重新生成相关夹具。caster 的缠绕启动四种回调、完成三种失效、即时命令重入、采金目标移除及回调新订单共 10 个入口各退出 0、输出 1 条 PASS；caster、construction、harvest 默认入口各输出 1 条 PASS，order queue 默认入口输出 37 条 PASS，共 14 个进程成功。日志 `tmp/docs-artifacts/war3/entangle-callback-batch.log`；这些入口未输出 RESULT。
 
 普通缠绕重入后完成由 caster 夹具覆盖，即时缠绕、金矿资源关联及移除由 construction 默认入口覆盖。目标移动／能力等级、死亡复活及真实窗口、多人和原版事件时序仍待验证；本批不代表完整对局验收，下一功能批次从 0/3 开始。
+
+### 训练开始回调替换队列的计时隔离（待批次验证）
+
+路径：`src/session_production.cpp`、`tests/commerce_tests.cpp`、`tests/generate-commerce-fixture.py`。生产步启动队首后核对票据；开始事件回调取消并重新训练时，替代项目不会消耗原项目的模拟步。其他回调提前清空生产队列时安全跳过。
+
+快速检查：Win32 Release 客户端及 commerce 目标编译；生成 commerce 夹具，执行 `war3_commerce_tests <data-root> <fixture> train-start-reissue`，修复前失败、修复后输出 1 条 PASS，下一步正常计时。批次合并训练、研究、复活、人口及队列回调回归；原版事件时序、实际窗口与多人仍待验证。本批 1/3。
