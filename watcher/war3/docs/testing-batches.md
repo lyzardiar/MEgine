@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 位置高度查询覆盖水面（待批次验证）
+
+路径：`src/session_world.cpp`、`tests/campaign_ai_tests.cpp`。`GetLocationZ` 在现有地形与可行走模型表面高度之外，将地图水面高度纳入比较；无效 location 仍返回零。固定版 Game.dll 的 `GetLocationZ`（`0x6f1e3280`）调用 `0x6f6320b0`，后者将地表查询结果与水面查询结果比较取高；当前复用渲染器的水面插值，原版采样精度和边界仍需对照。
+
+快速检查：Win32 Release 客户端及 CampaignAI 目标构建成功；`war3_campaign_ai_tests <data-root> water-tag-surface` 使用 BootyBay 原图水域，新增位置高度断言修复前失败、修复后 1 通过／0 失败，未加载 Game.dll。待批次验证陆地、楼梯、水面变形和无效句柄；当前功能批次 3/3，提交后统一验证。
+
 ## 坐标漂浮文字的可行走表面高度（待批次验证）
 
 路径：`src/session_text_tag.cpp`、`tests/campaign_ai_tests.cpp`。`SetTextTagPos` 在创建或重新定位时读取地形及可行走模型的表面高度，再叠加脚本偏移；资料片隐藏关的 `CreateTextTagLocBJ` 使用该入口。固定版 Game.dll 的 `SetTextTagPos`（`0x6f1f6e30`）调用 `0x6f76fab0` 查询位置高度，该函数在地形高度之外检查垂直射线命中并取较高值；本实现复用现有可行走表面查询，具体模型、边界与原版精度仍待对照。
