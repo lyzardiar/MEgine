@@ -15,7 +15,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT / 'tmp/docs-artifacts/frost-siege-engine/dependencies'))
 import pefile
 import unicorn
-from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_XMM0
+from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_XMM0, UC_X86_REG_EBP, UC_X86_REG_ESI
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--data-root', type=Path, default=Path('E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne'))
@@ -137,8 +137,18 @@ for entry, stop, global_dimension, dimension, value, expected in [
     pixels = struct.unpack('<f', struct.pack('<I', cpu.reg_read(UC_X86_REG_XMM0) & 0xffffffff))[0]
     assert abs(pixels - expected) < 0.0001
 
+# The text object retains the supplied size separately from its two-pixel minimum.
+put(0x6fbbd358, 480)
+for value, expected in [(-0.25, 2 / 480), (0, 2 / 480), (0.023, 0.023), (1, 1)]:
+    cpu.reg_write(UC_X86_REG_EBP, 0x200f0000)
+    cpu.reg_write(UC_X86_REG_ESI, text_object)
+    cpu.mem_write(0x200f0008, struct.pack('<f', value))
+    cpu.emu_start(0x6f0da74d, 0x6f0da794, count=1000)
+    stored, effective = struct.unpack('<ff', cpu.mem_read(text_object + 0x18, 8))
+    assert abs(stored - value) < 0.000001 and abs(effective - expected) < 0.000001
+
 result = dict(binarySha256=digest, slots=100, first=created[0], last=created[-1], fullReturn=0,
-              zeroSlotAllocated=True, zeroSlotReusable=True, nonzeroSlotReusable=True, alphaTransitions=True, shadowAlphaHistory=True, textCoordinateScale=True, passed=True,
+              zeroSlotAllocated=True, zeroSlotReusable=True, nonzeroSlotReusable=True, alphaTransitions=True, shadowAlphaHistory=True, textCoordinateScale=True, textSizeBounds=True, passed=True,
               boundaries=['Synthetic manager and prepopulated free list', 'Virtual callbacks replaced by returns', 'Text redraw callbacks disabled', 'Synthetic 640x480 text viewport'],
               limitations=['Raw x86 entry points only; JASS null mapping, runtime initialization, UI and gameplay were not executed.'])
 args.output.parent.mkdir(parents=True, exist_ok=True)

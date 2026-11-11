@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字负字号状态（待批次验证）
+
+路径：`src/session_text_tag.cpp`、`tests/clock_tests.cpp`、`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。保留有限负字号，绘制沿用两像素下限；STTX v6 保存该值并读取 v1–v5，旧客户端不能读取 v6。固定原版的合成文字对象指令探针覆盖负数、零、普通与大字号，不执行原版窗口。
+
+必要检查：Win32 Release 客户端与 clock 编译通过；`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 2 通过／0 失败，覆盖负字号及 v1–v6 恢复。`python watcher/war3/tools/verify_texttag_capacity_cpu.py --output tmp/docs-artifacts/war3/texttag-negative-size/reference.json` 通过。
+
+本批 1/3；实际窗口、字体像素取整、超大字号与旧客户端互读边界待集中验证。
+
+
 ## 飘字阴影、换行与字号批次（部分验证）
 
 范围：`c9419cc`、`51191b5`、`fd0cd5c`，集成版本 `fd0cd5c`。Win32 Release 客户端、clock 和 native 测试目标编译通过；4 个进程共 31 通过／0 失败：`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 2 项覆盖阴影状态与 v1–v5 恢复；`war3_campaign_ai_tests <root> <BlizzardTD> blizzardtd-texttags` 2 项、`blizzardtd-wts` 1 项；`war3_native_tests <root> <scratch>` 26 项包含字体换行、代理对和文字转义检查。均未加载 Game.dll。`python watcher/war3/tools/verify_texttag_capacity_cpu.py --output tmp/docs-artifacts/war3/texttag-scale/reference.json` 的固定原版指令隔离探针通过，含阴影 alpha 与合成 640×480 文字视口换算。
