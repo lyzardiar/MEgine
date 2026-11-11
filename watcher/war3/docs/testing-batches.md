@@ -8577,3 +8577,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。玩家通过原始订单 852008–852013 使用库存物品时，在目标／技能订单入口校验实际发令玩家的高级库存权限、当前槽位容量与物品归属；技能订单排队不再错误地将这些编号当作单位自身技能。发令与消费均检查当前槽位；脚本直接订单保持已有路径。
 
 快速检查：Win32 Release 客户端和订单目标编译通过，目标保留既有 C4456 告警；`war3_order_queue_tests <data-root> <BootyBay.w3m> raw-item-order` 为 1 通过／0 失败，覆盖普通／高级共享、隐藏槽位、立即与排队及真实药水使用，日志 `tmp/docs-artifacts/war3/raw-item-order-fast.log`。本项提交后本批达到 3/3，集中执行完整订单及局域网用例，原版时序、槽位变化与真实双端留待对照。
+
+### 物品权限与槽位订单批次（部分验证）
+
+范围：`0685810`、`86f4cd9`、`7771e2f` 及先前补充 `7d4a60f`，集成版本 `7771e2f`。Win32 Release 客户端和订单测试目标编译通过，目标保留既有 C4456 告警。`war3_order_queue_tests <data-root> <BootyBay.w3m>` 退出码 0、输出 37 条 PASS，包含局域网隐藏槽位编码与接收；`slot-order-permission`、`raw-item-order`、`invalid-player-ability`、`invalid-player-item` 各为 1 通过／0 失败。日志 `tmp/docs-artifacts/war3/inventory-orders-batch-*.log`。
+
+本批覆盖普通／高级共享、库存能力移除、源槽和目标槽、原始物品订单、队列以及隔离联机编解码；未验证真实双端、玩家界面、原版共享权限和事件时序、槽位变化后的所有组合及完整对局。下一功能批次从 0/3 开始。
