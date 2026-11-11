@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 飘字自动换行（待批次验证）
+
+路径：`src/game_text_tag.cpp`、`docs/text-tags.md`。文字按原版对象的 0.25 × 0.25 屏幕坐标区域自动换行并限制行数；颜色分段、显式换行和转义竖线在布局后保留。客户端使用现有原字体测量；原版断词、字号、垂直锚点及内联颜色细节仍待对照。
+
+必要检查：Win32 Release 客户端增量编译通过。Blizzard TD 原图隐藏窗口运行 60 游戏帧、正常退出且未加载 Game.dll；长波次名称已拆行，中央波次标题仍重叠。截图与日志在 `tmp/docs-artifacts/war3/texttag-wrap/`。本批 2/3；不同分辨率、颜色跨行、动态窗口及原版对照待集中验证。
+
+
 ## 飘字阴影透明度历史（待批次验证）
 
 路径：`src/script_state.h`、`src/session_text_tag.cpp`、`src/game_text_tag.cpp`、`tests/clock_tests.cpp`、`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。可见文字绘制时阴影 alpha 保留观察过的最低正文 alpha，重新设置文字时重建；STTX v5 保存该值，v1–v4 以正文 alpha 初始化，不能还原旧档阴影历史。原版固定版本指令隔离探针覆盖降低与恢复；该探针模拟文字对象并关闭重绘回调，不执行原版窗口。
