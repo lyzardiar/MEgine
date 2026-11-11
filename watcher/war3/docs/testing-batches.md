@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## AI 采金途中地形封路恢复（待批次验证）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。已分配矿井的 AI 工人在接近阶段遇到路线失效时复核可达性，无法抵达则按既有有界搜索选择其他矿井；暂停、受控、矿内和资源返还阶段保留现有任务，已携资源先入账。城镇和全局配额均执行复核。
+
+必要检查：Win32 Release `war3_campaign_ai_tests` 编译通过；`war3_campaign_ai_tests <root> tmp/docs-artifacts/war3/campaign-ai/fixture.w3m <harvest-mine-blocked-later|harvest-mine-blocked-global>` 各 1 通过／0 失败，覆盖接单后封路、暂停保留、交回黄金、替换矿井和继续采集；修复前保留不可达矿井。抽取公共矿工能力查询前 `harvest-reachable-mine` 为 1／0、`harvest-town` 为 2／0，均未加载 Game.dll。
+
+本批 3/3；先合并验证 AI 树木／矿井可达性、配额、暂停、返还、原图覆盖矿和采集回归。单位拥堵、矿井重新开放、动态变更频率／性能和原版规则仍待对照。
+
+
 ## AI 采金选择可达矿井（待批次验证）
 
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。AI 新分配采金时按距离和工人能力筛选矿井，并以独立探测状态检查路径能否进入采集范围；每个心跳最多探测四个候选，始终优先最近矿井，其余候选随模拟时间轮转。同城有效的现有采集任务继续保留，避免反复改派。
