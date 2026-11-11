@@ -119,6 +119,7 @@ def main():
     parser.add_argument('--steal-targets', choices=['player', 'player-enemy'])
     parser.add_argument('--charm-targets', choices=['player', 'neutral', 'enemy'])
     parser.add_argument('--teleport-targets', choices=['player', 'allies', 'self'])
+    parser.add_argument('--devour-targets', choices=['player', 'enemy', 'mixed', 'player-notself'])
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only installation')
@@ -138,6 +139,8 @@ def main():
         entries.append((b'ANch', {'player': 'grou,play', 'neutral': 'grou,neut', 'enemy': 'grou,enem'}[args.charm_targets]))
     if args.teleport_targets:
         entries.append((b'AHmt', {'player': 'grou,play', 'allies': 'grou,alli', 'self': 'grou,self'}[args.teleport_targets]))
+    if args.devour_targets:
+        entries.append((b'Advm', {'player': 'air,grou,play', 'enemy': 'air,grou,enem', 'mixed': 'air,grou,play,enem', 'player-notself': 'air,grou,play,nots'}[args.devour_targets]))
     if args.light_targets:
         targets = {'partial': 'ground,organic,notself,vuln,notinvu', 'invu': 'ground,organic,notself,vuln,invu', 'invulnerable': 'ground,organic,notself,vuln,invulnerable'}[args.light_targets]
         entries.extend((ability, targets) for ability in (b'AHhb', b'AUdc'))

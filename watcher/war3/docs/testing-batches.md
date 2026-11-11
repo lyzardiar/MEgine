@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 吞噬魔法目标关系（待批次验证）
+
+路径：`src/session_spells.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。吞噬魔法的范围单位筛选识别 player、friend／allies、enemy／enemies、neutral、self 及 notself，关系按并集匹配，并保留原有地空与建筑检查、驱散和召唤物效果。
+
+必要检查：Win32 Release 客户端、control、consumption 目标编译通过；以 `generate-control-fixture.py --data-root <root> --devour-targets <player|enemy|mixed|player-notself> --output <fixture>` 生成地图，再运行 `war3_control_tests <root> <fixture> devour-<variant>` 各 1／0，验证己方、其他盟友、敌方及自身状态的实际驱散。前三种关系修复前均失败。原始 `war3_consumption_tests <root> tmp/docs-artifacts/war3/eat-magic/fixture.w3m devour` 为 1／0，覆盖友方正面状态例外、召唤物伤害和奖励；均未加载 Game.dll。夹具位于 `tmp/docs-artifacts/war3/devour-relations/`。
+
+自身检查首次使用仅地面目标，未包含空中施法者；为夹具补充 air 后四项通过。本批 1/3；其他目标类别、回调重入、动态关系、原版语义和实际窗口待集中验证。
+
+
 ## 占据与控制魔法流程补测（上批补充）
 
 路径：`tests/control_tests.cpp`。使用默认 control 夹具、女妖训练和控制魔法科技前置，`war3_control_tests <root> tmp/docs-artifacts/war3/control-spells/fixture.w3m ownership-flow` 报告 3 通过／0 失败且未加载 Game.dll：原始占据完成后转移目标并消耗女妖，控制魔法转移敌方召唤单位，占据期间目标易主后清除通道和占用且女妖存活。Win32 Release control 目标编译通过。
