@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## AI 采集可达性批次（已验证所列范围）
+
+范围：`7b6750b`、`f489aa4`、`167fcd7`，集成版本 `167fcd7`。Win32 Release 客户端、CampaignAI 和 harvest 目标编译通过，复用未变化的隔离夹具。
+
+CampaignAI 运行 `harvest-reachable-tree`、`harvest-reachable-mine`、`harvest-mine-blocked-later`、`harvest-mine-blocked-global`、`harvest-compatible-mine`、`harvest-town`、`harvest`、`startup` 及 Booty Bay 原图 `melee-mines`；harvest 运行默认、`mine-paused`、`stunned`、`depot-route`。共 13 个进程、退出码均为 0，覆盖候选轮转、暂停、返还、动态封路、城镇配额及原图亡灵／暗夜覆盖矿。各命令、结果及单次进程耗时位于 `tmp/docs-artifacts/war3/ai-harvest-reach-batch.cjs` 和 `ai-harvest-reach-batch.log`；进程耗时不代表对局帧耗时。
+
+多工人拥堵、频繁地形变更、大规模寻路性能、矿井重新开放、原版 AI 优先级、实际窗口及完整对局未验证；该批不代表全部玩法验收。下一功能批次从 0/3 开始。
+
+
 ## AI 采金途中地形封路恢复（待批次验证）
 
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。已分配矿井的 AI 工人在接近阶段遇到路线失效时复核可达性，无法抵达则按既有有界搜索选择其他矿井；暂停、受控、矿内和资源返还阶段保留现有任务，已携资源先入账。城镇和全局配额均执行复核。
