@@ -9029,3 +9029,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_production.cpp`、`tests/revival_tests.cpp`。祭坛按英雄类型接受训练／复活请求时，遍历同类型死亡英雄并选择当前满足复活条件的候选；全部候选不可用时拒绝，不创建重复英雄。
 
 快速检查：Win32 Release 客户端及 revival 目标编译通过；`war3_revival_tests <data-root> <fixture> same-type-revival` 修复前失败、修复后报告 1 通过／0 失败，覆盖首个英雄已排队、第二英雄复活以及重复请求拒绝。批次合并生产、复活、人口及队列回调；原版多同型英雄选择次序、真实窗口和多人待验证。本批 3/3，先集中验证。
+
+### 训练与英雄复活队列批次（部分验证）
+
+范围：`fcbc1e4`、`36043da`、`90fc7ca`，集成版本 `90fc7ca`。Win32 Release 客户端、commerce、revival、research 与 order queue 目标编译通过，重新生成相关夹具。训练开始回调重排、祭坛扣费取消／重排、同类型英雄、祭坛／酒馆付款回调和酒馆唤醒共 7 个定向入口各输出 1 条 PASS；revival 默认入口报告 4 通过／0 失败，commerce、research 默认入口各输出 1 条 PASS，order queue 默认入口输出 37 条 PASS，共 11 个进程成功、50 条 PASS。部分程序不输出 RESULT。
+
+首次祭坛付款用默认夹具执行时因木材费用为零未进入测试；按用例要求使用 `--revival-lumber` 重新生成夹具后通过。日志 `tmp/docs-artifacts/war3/production-revival-batch.log`，保留首次配置失败和补测结果。多同型英雄的原版选择次序、死亡复活／易主回调、实际窗口、多人及原版事件时序仍待验证，本批不代表完整对局验收。下一功能批次从 0/3 开始。
