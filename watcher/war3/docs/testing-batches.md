@@ -8801,3 +8801,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/model_pose.cpp`、`docs/construction.md`。模型实例透明度低于不透明镂空阈值时同步缩放阈值，使建筑预览的镂空材质可见；不透明实例阈值保持原值。
 
 快速检查：Win32 Release 客户端编译通过；BootyBay 隐藏客户端通过命令面板选择农场，相同有效位置修复前只显示网格，修复后显示绿色半透明模型；工人占位时显示红色模型。截图 `tmp/docs-artifacts/war3/build-preview-{probe,fixed}/`。批次验证其他种族、透明单位／附件、粒子和不同 Alpha／镂空组合，以及原版画面、实际窗口和 GPU；本批 2/3。
+
+### 模型自身透明度的镂空与混合（补充，待批次验证）
+
+路径：`src/model_pose.cpp`、`tests/generate-model-opacity-fixture.py`。镂空阈值、Alpha 混合与深度写入根据几何／材质透明度和实例透明度的合成值处理，使模型自身淡出时不因固定阈值突然消失；不透明模型保留既有路径。此项补充 `bc5fb9a`，不单独计数。
+
+快速检查：Win32 Release 客户端编译通过；`python tests/generate-model-opacity-fixture.py --data-root <data-root>` 生成隔离地图，将原农民模型几何透明度设为 0.5。相同隐藏客户端画面修复前农民只剩影子，修复后模型半透明可见；截图 `tmp/docs-artifacts/war3/alpha-animation/{before,after}.png`。批次合并原模型动画、遮挡／排序、纹理 Alpha 边缘、其他材质和原版对照；当前夹具使用静态 0.5，不证明原动画时序或像素一致。本批仍为 2/3。
