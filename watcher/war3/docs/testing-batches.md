@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 多能力矿井采集类型匹配（待批次验证）
+
+路径：`src/session_harvest.cpp`、`tests/caster_tests.cpp`。采集执行阶段按工人能力和矿井归属选择与接单一致的普通、荒芜或缠绕矿类型，按选中类型处理范围、进矿和收益；避免自定义矿井的其他能力改变正在执行的采集流程。
+
+必要检查：Win32 Release `war3_caster_tests` 编译通过；`war3_caster_tests <root> tmp/docs-artifacts/war3/caster-spells/fixture.w3m harvest-mixed-abilities` 为 1 通过／0 失败，覆盖精灵采集同时具有普通能力的缠绕矿、人族采集同时具有荒芜能力的普通矿及实际扣矿；修复前精灵订单中断。
+
+本批 3/3，先集中验证普通／荒芜／缠绕矿、采金易主、混合能力、AI 配额和原图矿井流程。自定义多能力组合的原版优先级、能力动态变更及实际窗口待对照。
+
+
 ## AI 采金按工人能力选择矿井（待批次验证）
 
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。AI 采集配额在城镇搜索范围内按工人能力、矿井类型、归属与可用状态选取最近的兼容矿井，保留有效采集订单；全镇配额继续保留有效的既有矿井。原版矿井选择和优先级尚未对照，其他矿井查询及建造选址未改变。
