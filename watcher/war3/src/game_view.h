@@ -172,7 +172,7 @@ class GameView {
     void drawLeaderboard();
     void drawTimerDialogs();
     void drawTextTags();
-    void drawHealthBars();
+    void drawHealthBars(bool friendly,bool hostile);
     void openAlliance();
     bool drawAlliance(const GameInput& input);
     void drawMultiboards(const GameInput& input);
