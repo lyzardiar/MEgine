@@ -29,8 +29,23 @@ destructable interruptedTree=null
 item interruptedItem=null
 integer interruptCount=0
 integer unloadOrderCount=0
+integer entangleReissued=0
+boolean entangleReissueAccepted=false
+unit entangleMineTarget=null
 real interruptX=0
 endglobals
+function ReissueEntangle takes nothing returns nothing
+    if entangleReissued==0 then
+        set entangleReissued=1
+        set entangleReissueAccepted=IssueTargetOrderById(GetTriggerUnit(),852147,entangleMineTarget)
+    endif
+endfunction
+function InstallEntangleReissue takes unit tree, unit mine returns nothing
+    local trigger t=CreateTrigger()
+    set entangleMineTarget=mine
+    call TriggerRegisterUnitEvent(t,tree,EVENT_UNIT_ISSUED_TARGET_ORDER)
+    call TriggerAddAction(t,function ReissueEntangle)
+endfunction
 function ObserveUnloadOrder takes nothing returns nothing
     set unloadOrderCount=unloadOrderCount+1
 endfunction
