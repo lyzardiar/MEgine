@@ -11,7 +11,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT / 'tmp/docs-artifacts/frost-siege-engine/dependencies'))
 import pefile
 import unicorn
-from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_ESP
+from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_EDX
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--data-root', type=Path, default=Path('E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne'))
@@ -64,7 +64,25 @@ for enabled, first, second, ground, air in [
     put(weapon + 0x21c, second)
     assert invoke(0x6f47b9b0, weapon) == ground
     assert invoke(0x6f47b960, weapon) == air
-result = dict(binarySha256=digest, passed=True, cases=6, tableChecked=True,
+# Compare raw type and target-mask predicates, and the live two-weapon path.
+classification = [(1, 64, 0, 0), (1, 128, 0, 0), (1, 256, 0, 0), (1, 1, 0, 0),
+                  (1, 66, 1, 0), (2, 64, 0, 0), (2, 2, 0, 1), (8, 66, 0, 1),
+                  (0, 2, 0, 0), (9, 2, 0, 0)]
+for kind, mask, melee, ranged in classification:
+    for entry, expected in [(0x6f1e7f40, melee), (0x6f1e8350, ranged)]:
+        cpu.mem_write(0x200f0000, struct.pack('<I', 0x30000020))
+        cpu.reg_write(UC_X86_REG_ESP, 0x200f0000)
+        cpu.reg_write(UC_X86_REG_ECX, kind)
+        cpu.reg_write(UC_X86_REG_EDX, mask)
+        cpu.emu_start(entry, 0x30000020, count=10000)
+        assert cpu.reg_read(UC_X86_REG_EAX) == expected
+    put(weapon + 0x20, 0x80000)
+    put(weapon + 0xdc, kind)
+    put(weapon + 0x218, mask)
+    assert invoke(0x6f47ba00, weapon) == melee
+    assert invoke(0x6f47ba90, weapon) == ranged
+
+result = dict(binarySha256=digest, passed=True, cases=6, classificationCases=len(classification), tableChecked=True,
               limitations=['Synthetic weapon object; JASS runtime, maps and gameplay were not executed.'])
 args.output.parent.mkdir(parents=True, exist_ok=True)
 args.output.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')

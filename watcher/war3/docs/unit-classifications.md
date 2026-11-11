@@ -13,3 +13,5 @@
 `IsUnitType` 对空、已移除及非单位句柄返回 false，对超过 26 的类型编号返回 false；有效但已死亡的单位继续按死亡状态判断。原版 1.27 注册指向 `0x6f1e8cc0`，解析失败或类型越界进入 `0x6f1e8e0f` 的零返回分支，REA 证据 `ev_9ab375a1678fa6514c5842857b0fd2354b06ded01b09af4d98f8f1887d18fbaf`、`ev_2cb993b8f1329d57ae182b538ba6795b41526ea48386cdb0144a67c03731d623`。原件 SHA-256 如上；这是静态入口证据，脚本句柄生命周期仍待原版运行时对照。
 
 `IsUnitType` 的 `UNIT_TYPE_ATTACKS_GROUND` 按已启用武器目标中的 `ground`／`grou` 位判断，单独的 `structure` 不代表地面攻击；同一单位的任一启用武器包含地面位即可。固定版原件目标表中 ground／grou 为 2、structure／stru 为 8，`0x6f47b9b0` 只检查地面位及武器启用状态。`tools/verify_unit_weapon_types_cpu.py` 使用合成武器检查两槽位及启用状态，不执行原图或原版 JASS。地图覆盖的实例和 ID 查询已由 research 夹具检查；武器变形、禁用和原版动态对照待集中验证。
+
+`UNIT_TYPE_MELEE_ATTACKER`／`UNIT_TYPE_RANGED_ATTACKER` 同时按启用武器类型及目标掩码判断：目标掩码恰为 `none`、`tree`、`wall` 或 `debris/debr` 时不计入；与地面等其他有效位组合时仍可计入。固定版 `0x6f47ba00`／`0x6f47ba90` 及 ID 侧 `0x6f1e7f40`／`0x6f1e8350` 使用相同掩码排除，合成武器探针覆盖 10 组类型与掩码；地图覆盖夹具覆盖近战／远程实例与 ID。动态武器状态、原版实际地图及目标字符串的其他边界待验证。

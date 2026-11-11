@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 近战与远程攻击类型判定（待批次验证）
+
+路径：`src/session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`、`tools/verify_unit_weapon_types_cpu.py`、`docs/unit-classifications.md`、`docs/unit-id-classification.md`。实例与 ID 查询同时消费启用武器类型和目标掩码；仅以 none、树木、墙或残骸为目标时不算近战或远程，混合有效目标保留分类。
+
+必要检查：Win32 Release 客户端及 research 编译通过，生成地图的 research 消费者输出 PASS，覆盖近战／远程的纯特殊目标与混合目标。`python watcher/war3/tools/verify_unit_weapon_types_cpu.py` 的原版合成实例与 ID 指令探针 10 组通过，结果在 `tmp/docs-artifacts/war3/unit-attack-types/reference.json`；该探针不执行原版 JASS 或地图。
+
+本批 3/3；合并验证攻击分类、变形／双武器与飘字状态和存档，真实地图及原版运行仍待验证。
+
+
 ## 地面攻击类型判定（待批次验证）
 
 路径：`src/session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`、`tools/verify_unit_weapon_types_cpu.py`、`docs/unit-classifications.md`、`docs/unit-id-classification.md`。`IsUnitType`／`IsUnitIdType` 的地面攻击分类只检查已启用武器的 ground／grou，structure 单独存在时返回 false；目标攻击行为本身沿用既有逻辑。

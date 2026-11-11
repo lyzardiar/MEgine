@@ -9,3 +9,5 @@
 阶段验证：运行 `python watcher/war3/tests/generate-research-fixture.py --data-root <data-root>` 后执行 `watcher/war3/build/windows-x86/bin/Release/war3_research_tests.exe <data-root> tmp/docs-artifacts/war3/research/fixture.w3m`。夹具对照原单位实例和 ID 的静态分类，并覆盖自定义单位移动／类别继承、未知 ID、查询不创建实体与运行态分类返回 false、未知大写英雄 ID 和 `summoned` 精确分类。额外覆盖其他地图覆盖、两种武器、类型变形、魔免／抗性等原版行为和真实自定义地图。Win32 Release 客户端与 research 消费者已编译；尚未执行专项或原版对照。
 
 `UNIT_TYPE_ATTACKS_GROUND` 只匹配启用武器的 `ground`／`grou` 位，不将单独的 `structure` 当作地面；固定版原件 `0x6f1e875e`–`0x6f1e87aa` 合并启用武器目标位后检查位 2。合成实例指令探针和地图覆盖的 ID／实例检查见[单位分类](unit-classifications.md)；原图动态表现待验证。
+
+近战／远程 ID 查询与实例查询共用原版武器类型及目标掩码规则，纯树木、墙、残骸和 none 不计为单位攻击；原件指令及隔离验证见[单位分类](unit-classifications.md)。
