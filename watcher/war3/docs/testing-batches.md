@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 普通金矿归属变化时的采集校验（待批次验证）
+
+路径：`src/session_harvest.cpp`、`tests/caster_tests.cpp`。普通金矿在采集中转给其他非中立玩家时，工人停止采集并清理路线与矿内状态；中立和己方矿继续有效，携带的黄金先完成返还。该行为与当前接单校验一致，原版动态易主语义尚待对照。
+
+必要检查：Win32 Release `war3_caster_tests` 编译通过；`war3_caster_tests <root> tmp/docs-artifacts/war3/caster-spells/fixture.w3m harvest-mine-owner` 为 1 通过／0 失败，覆盖接近、矿内、合法归属及返还；修复前接近阶段失败。`harvest-cancel-mine` 为 1／0。测试未验证原版窗口或完整对局。
+
+本批 1/3；后续集中验证采集流程及本批其他变更。
+
+
 ## 吞噬目标与回流载荷生命周期批次（部分验证）
 
 范围：`c3f9c3f`、`c07bb13`、`da0cabc`，集成版本 `da0cabc`。Win32 Release 客户端、control、consumption、clock、campaign AI 目标编译通过，重新生成相关夹具。`war3_control_tests <root> <fixture> <mode>` 对 `tmp/docs-artifacts/war3/devour-special/` 五种配置、`devour-relations/` 四种关系及 reentry 夹具两种回调，各 1／0；默认 `control-spells/fixture.w3m` 的吸收／吞噬易主及复活四项各 1／0，含新快照恢复和构造的版本 1／2 读取。
