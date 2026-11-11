@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 空模型占位单位载图（待批次验证）
+
+路径：`src/source_model.h`、`src/session_entities.cpp`、`src/session_commerce.cpp`、`tests/campaign_ai_tests.cpp`、`tests/archive_tests.cpp`。单位、物品及商品模型字段为 `_` 时作为空模型；`_.mdl`／`_.mdx` 在没有实际 `_.mdx` 资源时作为空模型，有资源时保留原路径。实体仍保留类型、位置、脚本句柄和其他状态。
+
+必要检查：Win32 Release 客户端、CampaignAI 与 archive 测试目标编译通过；原版 Blizzard TD 的 `blizzardtd-phoenix` 为 1 通过／0 失败，附加检查地图 `o01G` 占位单位及商品模型为空。修复前进入游戏因 `Missing MDX: _.mdx` 失败，修复后隐藏窗口运行 60 游戏帧通过，截图和日志 `tmp/docs-artifacts/war3/td-probe/blizzard-model-after.png`、`blizzard-model-after.log`，未加载 Game.dll。截图中波次飘字仍含未展开的 `TRIGSTR`，待单独修复；窗口运行不代表完整视觉验收。
+
+本批 3/3，先集中验证占位／真实导入、单位／物品／商品及地图切换，飘字句柄与原图早期波次、提示换行及多分辨率；保留原版视觉与动态行为对照。
+
+
 ## 失效飘字句柄与 Blizzard TD 刷新（待批次验证）
 
 路径：`src/session_text_tag.cpp`、`tests/campaign_ai_tests.cpp`。已销毁、空或错误类型的飘字句柄再次销毁或设置属性时安全返回；为有效飘字设置单位位置时，失效单位也不改变该飘字。原版全部失效句柄细节仍需对照。
