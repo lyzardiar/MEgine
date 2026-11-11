@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字阴影、换行与字号批次（部分验证）
+
+范围：`c9419cc`、`51191b5`、`fd0cd5c`，集成版本 `fd0cd5c`。Win32 Release 客户端、clock 和 native 测试目标编译通过；4 个进程共 31 通过／0 失败：`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 2 项覆盖阴影状态与 v1–v5 恢复；`war3_campaign_ai_tests <root> <BlizzardTD> blizzardtd-texttags` 2 项、`blizzardtd-wts` 1 项；`war3_native_tests <root> <scratch>` 26 项包含字体换行、代理对和文字转义检查。均未加载 Game.dll。`python watcher/war3/tools/verify_texttag_capacity_cpu.py --output tmp/docs-artifacts/war3/texttag-scale/reference.json` 的固定原版指令隔离探针通过，含阴影 alpha 与合成 640×480 文字视口换算。
+
+Blizzard TD 原图和颜色夹具各在隐藏窗口运行 60 游戏帧并正常退出，未加载 Game.dll；当前 1258×904 截图的中央波次标题不再重叠，夹具显示红色文字。复现使用 `war3 --data-root <root> --map <map> --play --hidden --mute --frames 60 --capture <png> --log <log>`；截图、日志在 `tmp/docs-artifacts/war3/texttag-layout-batch/`。
+
+尚未覆盖零／负／极大字号的实际窗口、跨行颜色及阴影动态、其他分辨率、垂直锚点、原版实机或完整对局；隔离探针不能替代原版窗口验收。批次已执行，未完成项保留；下一功能批次从 0/3 开始。
+
+
 ## 飘字视口字号换算（待批次验证）
 
 路径：`src/game_text_tag.cpp`、`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。按 4:3 界面视口宽高转换字号、换行区域和阴影偏移，字号最小按两像素处理，不再限制最大值；依据原版文字视口指令，640×480 合成输入的隔离探针通过。原版窗口、像素取整、宽屏及非正字号边界仍待验证。
