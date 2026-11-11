@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## War Chasers 原图后续流程（验证补充）
+
+在 `a55b748` 的 ROC 英雄库存修复上，补充 `tests/campaign_ai_tests.cpp` 四个原图入口：`warchasers-death`、`warchasers-spell`、`warchasers-convert`、`warchasers-spawn`。四个进程均为 2 通过／0 失败，共 8 条 PASS，未加载 Game.dll。分别覆盖所选英雄初始十字章的致命伤害重生与消耗、圣光学习／治疗、岗哨守卫拾取后地图触发器兑换金币，以及首个区域激活四组生成点并产生怪物。日志位于 `tmp/docs-artifacts/war3/warchasers-probe/`。
+
+检查使用原始地图脚本和资源，但通过传送触发区域、直接设置治疗目标生命及预置伤害进行隔离验证；未覆盖实际行走、窗口输入、完整玩家数量、完整对局或原版动态对照。此为上一库存任务的验证补充，不单独计入功能批次；当前批次 0/3。
+
 ## 编队落点、中立 AI 与 ROC 英雄库存批次（部分验证）
 
 范围：`3c913f5`、`275fd58`、`98c4998`，集成版本 `98c4998`，含本次测试补充。Win32 Release 客户端、CampaignAI、订单、clock、commerce 目标编译通过；订单目标保留既有 C4456 告警。订单 `formation-queue-reservation`、`formation-speed`、`formation-facing`、`formation-completion`、`smart-bridge` 各 1 通过／0 失败，默认入口退出 0、输出 38 条 PASS。CampaignAI `neutral-ai` 为 2 通过／0 失败，`command-stack`、`warchasers-hero`、ROC 与 TFT `inventory-boundary` 各 1 通过／0 失败；commerce 入口退出 0、输出 1 条 PASS。clock `recovery_bundle_preserves_ai_link_order`、`unit_core_restores_hero_abilities_equipment_and_vitals` 各 1 通过／0 失败。共 14 个进程成功、52 条 PASS；部分入口未输出 RESULT。
