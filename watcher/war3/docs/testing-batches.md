@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 战役文字、英雄名称与楼梯高度批次（部分验证）
+
+范围：`ef83a64`、`cbe0577`、`b9d43f4`，包含事件检查补充 `e096287`、`0a44de2`；集成版本 `b9d43f4`。Win32 Release 客户端、CampaignAI、map、clock、revival 目标构建成功。定向执行原图漂浮文字 WTS、蜘蛛事件直接执行和区域进入、英雄名称、楼梯文字高度各 1 通过；原图楼梯路径、文字恢复、普通英雄名称池及编号恢复各 1 通过，共 8 通过／0 失败。名称池首次误用 BootyBay 地图，因缺少夹具全局 `hero` 失败；改用既有 `tmp/docs-artifacts/war3/hero-class-batch/hero.w3m` 后通过。
+
+命令与结果：`war3_campaign_ai_tests <data-root> <humanx03-text-tags|humanx03-spider-event|humanx03-spider-enter|humanx03-hero-names|humanx03-tag-surface>`；`war3_map_tests <data-root> <scratch> campaign_walkable_stairs`；`WAR3_CLOCK_FILTER=recovery_bundle_restores_text_tags war3_clock_tests <data-root> <scratch>`；`war3_revival_tests <data-root> <fixture> hero-names`。本地产物为 `tmp/docs-artifacts/war3/text-name-surface-batch/`。空中／水上单位、水面、楼梯移动或破坏、玩家实际步行和窗口画面未执行；原版高度精度与 B、D 空囚犯位置仍待对照。下一功能批次从 0/3 开始。
+
 ## 单位漂浮文字的可行走表面高度（待批次验证）
 
 路径：`src/session_text_tag.cpp`、`tests/campaign_ai_tests.cpp`。`SetTextTagPosUnit` 对地面及两栖单位读取会话可行走表面高度，再叠加飞行高度和脚本偏移，使原图楼梯上的文字定位与单位渲染共用表面；空中／水上单位保持既有地形基准。文字仍在调用时取位置，不跟随单位移动。
