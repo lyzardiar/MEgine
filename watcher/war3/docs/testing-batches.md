@@ -8777,3 +8777,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_construction.cpp`、`tests/caster_tests.cpp`。中断施法或退出建筑内施工后重新检查工人、资源和建造位置；回调使工人或地点不可用时拒绝旧建造订单，回调换令沿用修订号保护。
 
 快速检查：Win32 Release 客户端和 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> build-cancel-pause`，修复前失败、修复后退出 0 并输出 1 条 PASS。批次合并四族建造、建造点变化、订单和施法回归；回调改变资源／占地／金矿、工人死亡或易主、真实窗口及原版事件时序仍待验证。本项提交后本批 3/3，先集中验证。
+
+### 取消与物品栏订单派发补充（批次修复）
+
+路径：`src/session_entities.cpp`、`src/session_orders.cpp`、`src/session_combat_orders.cpp`、`tests/research_tests.cpp`、`docs/instant-orders.md`。批次发现名称表缺少取消和物品栏移动编号，订单身份检查误拦截这些已有消费者；现在显式保留取消字符串／编号及六个物品栏编号，并继续校验槽位。此项补充本批订单修复，不单独计数。
+
+修复前 order queue 默认入口在物品栏订单失败，commerce 和 research 在取消订单处失败；修复后三个入口均退出 0，分别输出 37、1、1 条 PASS。research 另以数字取消订单检查研究退款和事件，字符串取消通过研究开始回调及 commerce 脚本检查。批次最终结果另记。
