@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 吞噬魔法单位类别目标（待批次验证）
+
+路径：`src/session_spells.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。吞噬魔法范围目标按 hero／nonhero 及 organic／orga 过滤，避免驱散不符合地图能力配置的单位；原有关系与地空规则继续参与筛选。
+
+必要检查：Win32 Release 客户端及 control、consumption 目标编译通过。以 `generate-control-fixture.py --data-root <root> --devour-targets <hero|nonhero|organic> --output <fixture>` 生成地图，再运行 `war3_control_tests <root> <fixture> devour-<variant>` 各 1／0，检查英雄、步兵和攻城坦克实际驱散；未加载 Game.dll。夹具位于 `tmp/docs-artifacts/war3/devour-categories/`。初次机械单位 ID 填写错误导致创建失败，修正为 `hmtt` 后通过；早期类别测试在修复前失败。
+
+本批 3/3，先集中验证目标类别、关系、回调和原始吞噬流程；其他目标类别、原版语义和实际窗口仍待验证。
+
+
 ## 吞噬魔法范围回调状态复核（待批次验证）
 
 路径：`src/session_magic_consumption.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。范围目标记录死亡与归属轮次，逐个生效前重验目标及关系；伤害回调改变施法者订单、死亡或归属时停止旧效果，避免继续处理失效对象。
