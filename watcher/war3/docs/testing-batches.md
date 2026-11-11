@@ -8765,3 +8765,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。脚本目标订单在清除队列前检查非零编号是否为已注册订单或当前对象定义；未知编号返回失败，保留现有操作。
 
 快速检查：Win32 Release 客户端及 order queue 目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-target-id` 修复前失败、修复后为 1 通过／0 失败，覆盖未知编号、队列续行及已注册跟随订单。批次合并目标／点／即时订单、物品栏和自定义对象回归；原版动态注册边界、真实窗口及多人仍待对照。本批 1/3。
+
+### 未知即时订单保留队列（待批次验证）
+
+路径：`src/session_entities.cpp`、`src/session_orders.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。即时订单的未知非零编号及未知四字节名称在清除队列前拒绝，已注册订单及单位／科技定义继续使用既有处理。
+
+快速检查：Win32 Release 客户端与 order queue 目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-immediate-id` 修复前失败、修复后为 1 通过／0 失败，检查队列续行和有效停止订单。批次合并训练／研究、自动施法、取消和目标／点订单；原版特殊能力、自定义注册、实际窗口及多人行为仍待对照。本批 2/3。
