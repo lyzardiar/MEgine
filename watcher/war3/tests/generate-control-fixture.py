@@ -117,6 +117,7 @@ def main():
     parser.add_argument('--light-targets', choices=['partial', 'invu', 'invulnerable'])
     parser.add_argument('--ensnare-targets', choices=['player', 'player-enemy', 'player-notself'])
     parser.add_argument('--steal-targets', choices=['player', 'player-enemy'])
+    parser.add_argument('--charm-targets', choices=['player', 'neutral', 'enemy'])
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only installation')
@@ -132,6 +133,8 @@ def main():
         entries.append((b'Aens', targets))
     if args.steal_targets:
         entries.append((b'Aste', 'grou,play,enem' if args.steal_targets == 'player-enemy' else 'grou,play'))
+    if args.charm_targets:
+        entries.append((b'ANch', {'player': 'grou,play', 'neutral': 'grou,neut', 'enemy': 'grou,enem'}[args.charm_targets]))
     if args.light_targets:
         targets = {'partial': 'ground,organic,notself,vuln,notinvu', 'invu': 'ground,organic,notself,vuln,invu', 'invulnerable': 'ground,organic,notself,vuln,invulnerable'}[args.light_targets]
         entries.extend((ability, targets) for ability in (b'AHhb', b'AUdc'))

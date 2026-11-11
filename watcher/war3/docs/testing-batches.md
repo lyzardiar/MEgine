@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 控制权技能关系目标筛选（待批次验证）
+
+路径：`src/session_ownership.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。魅惑、占据和控制魔法在既有敌对限制内检查目标关系配置；只允许中立时不再接受其他敌人，只允许玩家时不再放行敌方。敌人和中立条件可组合，未指定关系时保留原筛选。
+
+必要检查：Win32 Release 客户端及 control 目标编译通过。以 `generate-control-fixture.py --data-root <root> --charm-targets <player|neutral|enemy> --output <fixture>` 生成地图，再运行 `war3_control_tests <root> <fixture> charm-<variant>` 各 1／0，覆盖敌人、中立的命令选择和中立单位实际转移；player／neutral 两例修复前均错误接受敌人。夹具位于 `tmp/docs-artifacts/war3/charm-relations/`。
+
+本批 2/3；合并验证魅惑、占据、控制魔法和资源技能。既有敌对限制是否符合所有原版自定义目标、动态关系及实际窗口待对照。
+
+
 ## 资源技能玩家目标关系组合（待批次验证）
 
 路径：`src/session_resource_spells.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。资源技能将 player／play 与敌友、中立作为关系并集，保留各技能自身的目标限制与施法归属检查。
