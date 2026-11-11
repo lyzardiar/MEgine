@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 吞噬目标与回流载荷生命周期批次（部分验证）
+
+范围：`c3f9c3f`、`c07bb13`、`da0cabc`，集成版本 `da0cabc`。Win32 Release 客户端、control、consumption、clock、campaign AI 目标编译通过，重新生成相关夹具。`war3_control_tests <root> <fixture> <mode>` 对 `tmp/docs-artifacts/war3/devour-special/` 五种配置、`devour-relations/` 四种关系及 reentry 夹具两种回调，各 1／0；默认 `control-spells/fixture.w3m` 的吸收／吞噬易主及复活四项各 1／0，含新快照恢复和构造的版本 1／2 读取。
+
+`war3_consumption_tests <root> tmp/docs-artifacts/war3/eat-magic/fixture.w3m <devour|absorb|orb>` 各 1／0；`WAR3_CLOCK_FILTER=spell_missiles_restore_flight_and_removed_handles war3_clock_tests <root> tmp/docs-artifacts/war3/clock-return-batch` 为 1／0；`war3_campaign_ai_tests <root> <root>/Maps/Scenario/(4)WarChasers.w3m warchasers-spell` 为 2／0。共 20 个进程、21 通过／0 失败；明确检查 Game.dll 的用例未加载该 DLL。输出与退出码在 `tmp/docs-artifacts/war3/return-lifecycle-batch.log`。
+
+旧版本样本由当前快照转换构造，非真实历史文件；原版易主／死亡时序、旋风与睡眠保护、实际窗口和完整对局仍待验证。本批不代表全部玩法验收；下一功能批次从 0/3 开始。
+
+
 ## 魔法回流载荷归属轮次（待批次验证）
 
 路径：`src/spells.h`、`src/session_magic_consumption.cpp`、`src/session_spell_snapshot.cpp`、`tests/control_tests.cpp`、`docs/save-runtime-foundation.md`。吸收与吞噬回流载荷记录来源归属轮次；施法者转移给其他玩家再转回后，旧载荷不再生效。`SSMS` 版本 3 保存该轮次，旧版本恢复时以来源当前轮次补足缺失历史。
