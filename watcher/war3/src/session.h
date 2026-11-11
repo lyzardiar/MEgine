@@ -1297,6 +1297,7 @@ public:
     bool useItem(std::uint32_t unit,std::uint32_t item,std::uint32_t target=0);
     bool useItemAt(std::uint32_t unit,std::uint32_t item,WorldPoint point);
     bool itemNeedsPoint(std::uint32_t item);
+    float itemDispelArea(std::uint32_t item);
     bool itemAllowsUnitAndPoint(std::uint32_t item);
     bool itemAutoTargetsBase(std::uint32_t item);
     std::uint32_t itemBuilding(std::uint32_t unit,std::uint32_t item);
