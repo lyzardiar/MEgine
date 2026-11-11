@@ -9069,3 +9069,11 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`54c7755`、`cc403a4`、`3cafe33`，含上项回归补充 `0cd41e7`，集成版本 `3cafe33`。Win32 Release 客户端、movement avoidance、CampaignAI、clock 和 human campaign chain 目标编译通过。移动避让 10 个定向入口各 1 条 PASS，默认入口 9 条 PASS；原图对话框和屏幕消息各 1 通过／0 失败，界面状态及脚本对话框恢复各 1 通过／0 失败。原图无人操作会话两条检查分别确认 WTS 失败对话、点击重开，均在模拟 1955.25 秒／感染数 59 完成，各 1 通过／0 失败。共 17 个进程成功、25 条 PASS；部分程序未输出 RESULT。
 
 初次批处理驱动因使用不可用的环境变量对象，在启动程序前报错；改正后重新运行，记录 `tmp/docs-artifacts/war3/allied-wts-batch/checks-driver-initial.log`。实际结果见同目录 `checks.log`，原图重开使用新建隔离用户目录。字符串拼接、旧存档未解析文字、原版动态语义、实际窗口／字体／布局、复杂拥堵、多人和完整胜利路线仍待验证；本批不代表完整战役验收。下一功能批次从 0/3 开始。
+
+### 资料片第三章漂浮文字地图文案（待批次验证）
+
+路径：`src/session_text_tag.cpp`、`tests/campaign_ai_tests.cpp`、`docs/text-tags.md`。漂浮文字设置时解析完整 WTS 标识，并按解析后内容检查既有长度上限；普通文字和缺失标识保留。
+
+必要检查：Win32 Release 客户端及 CampaignAI 目标编译通过；`war3_campaign_ai_tests <data-root> humanx03-text-tags` 读取原图 `HumanX03.w3x` 的囚犯提示 `TRIGSTR_503`，修复前失败、修复后 1 通过／0 失败，覆盖直接接口、原版 `CreateTextTagUnitBJ`、普通文字及缺失项，未加载 Game.dll。夹具手动调用 BJ，未触发真实囚犯流程。
+
+本批 1/3；合并验证漂浮文字、地图 WTS、场景及恢复。实际窗口字体／位置、原图自然触发、旧存档和原版动态字符串语义仍待验证。
