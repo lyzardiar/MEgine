@@ -33,7 +33,7 @@ class TerrainScene {
     std::vector<TerrainChunk> chunks_;
     std::map<std::tuple<unsigned,unsigned,std::string,bool>,size_t> lookup_;
     std::vector<std::string> waterFrames_;
-    float waterRate_=0,waterOffset_=0;
+    float waterRate_=0;
     std::array<float,4> waterAlpha_{};
     size_t uploaded_=0;
     size_t meshBytes_=0;

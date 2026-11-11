@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 水面单位的漂浮文字高度（待批次验证）
+
+路径：`src/world.h`、`src/world_height.cpp`、`src/terrain_layout.cpp`、`src/terrain_scene.{h,cpp}`、`src/session_text_tag.cpp`、`tests/campaign_ai_tests.cpp`。将地图水位插值、源水域偏移和水面地形变形计算放在 World，渲染器与单位文字共用；水上／两栖单位文字取地形、适用的可行走表面和水面的较高值，再叠加单位飞行高度及脚本偏移。
+
+快速检查：Win32 Release 客户端和 CampaignAI 目标构建成功；`war3_campaign_ai_tests <data-root> water-tag-surface` 检查原版 BootyBay 船只、源地形水位及文字高度，为 1 通过／0 失败；`humanx03-tag-surface` 楼梯回归 1 通过／0 失败，未加载 Game.dll。待批次验证水面变形、两栖／飞行单位、不同地形、实际窗口与原版高度；当前功能批次 1/3。
+
 ## 战役文字、英雄名称与楼梯高度批次（部分验证）
 
 范围：`ef83a64`、`cbe0577`、`b9d43f4`，包含事件检查补充 `e096287`、`0a44de2`；集成版本 `b9d43f4`。Win32 Release 客户端、CampaignAI、map、clock、revival 目标构建成功。定向执行原图漂浮文字 WTS、蜘蛛事件直接执行和区域进入、英雄名称、楼梯文字高度各 1 通过；原图楼梯路径、文字恢复、普通英雄名称池及编号恢复各 1 通过，共 8 通过／0 失败。名称池首次误用 BootyBay 地图，因缺少夹具全局 `hero` 失败；改用既有 `tmp/docs-artifacts/war3/hero-class-batch/hero.w3m` 后通过。

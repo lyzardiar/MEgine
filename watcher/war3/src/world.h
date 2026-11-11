@@ -66,6 +66,7 @@ class World {
     std::unique_ptr<Archives> resources_;
     Bytes obstacles_;
     std::vector<float> surface_;
+    mutable std::optional<float> waterOffset_;
     std::vector<TerrainDeformation> deformations_;
     std::vector<float> permanentHeights_;
     std::vector<std::uint8_t> permanentChunks_;
@@ -118,6 +119,7 @@ public:
     jass::Real cameraMargin(std::uint32_t side) const;
     WorldPoint clamp(WorldPoint point) const;
     float height(WorldPoint point) const;
+    std::optional<float> waterHeight(WorldPoint point) const;
     float deformation(float x,float y) const;
     float deformationBound() const;
     bool deformationIntersects(float minX,float minY,float maxX,float maxY) const;

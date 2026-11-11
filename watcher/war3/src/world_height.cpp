@@ -1,5 +1,6 @@
 // Author: MiYu. One source terrain/ramp surface supplies render heights, location queries and native effects.
 #include "world.h"
+#include "slk.h"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -13,6 +14,9 @@ void World::buildSurface() {
 }
 float World::height(WorldPoint point) const {
     auto& t=data_.terrain;float x=std::bit_cast<float>(point.x.bits()),y=std::bit_cast<float>(point.y.bits());if(!std::isfinite(x) || !std::isfinite(y))throw std::runtime_error("Non-finite height query");float offset=deformation(x,y);x=std::clamp((x-t.origin[0])/128,0.f,float(t.width-1));y=std::clamp((y-t.origin[1])/128,0.f,float(t.height-1));auto ix=std::min(unsigned(x),t.width-2),iy=std::min(unsigned(y),t.height-2);float u=x-ix,v=y-iy;auto at=size_t(iy)*t.width+ix;return (surface_[at]*(1-u)+surface_[at+1]*u)*(1-v)+(surface_[at+t.width]*(1-u)+surface_[at+t.width+1]*u)*v+offset;
+}
+std::optional<float> World::waterHeight(WorldPoint point) const {
+    auto& t=data_.terrain;float x=std::bit_cast<float>(point.x.bits()),y=std::bit_cast<float>(point.y.bits());if(!std::isfinite(x) || !std::isfinite(y))return {};float sx=std::clamp((x-t.origin[0])/128,0.f,float(t.width-1)),sy=std::clamp((y-t.origin[1])/128,0.f,float(t.height-1));auto ix=std::min(unsigned(sx),t.width-2),iy=std::min(unsigned(sy),t.height-2),at=iy*t.width+ix;float u=sx-ix,v=sy-iy;auto& a=t.corners[at];auto& b=t.corners[at+1];auto& c=t.corners[at+t.width];auto& d=t.corners[at+t.width+1];if(!((a.flags|b.flags|c.flags|d.flags)&0x40))return {};if(!waterOffset_){auto table=SourceTable::read(resources(),"TerrainArt\\Water.slk");auto id=std::string(1,t.tileset)+"Sha";for(auto& row:table.rows()){auto key=row.find(table.idColumn()),value=row.find("height");if(key==row.end() || key->second!=id)continue;if(value==row.end())throw std::runtime_error("Missing terrain source field: height");auto offset=std::stof(value->second)*128;if(!std::isfinite(offset))throw std::runtime_error("Non-finite terrain source field: height");waterOffset_=offset;break;}if(!waterOffset_)throw std::runtime_error("Missing terrain source row: "+id);}auto z=[this](const TerrainCorner& corner){return (float(corner.water&0x3fff)-8192)/4+*waterOffset_;};float za=z(a),zb=z(b),zc=z(c),zd=z(d);if(environment_.waterDeforms){float px=t.origin[0]+float(ix)*128,py=t.origin[1]+float(iy)*128;za+=deformation(px,py);zb+=deformation(px+128,py);zc+=deformation(px,py+128);zd+=deformation(px+128,py+128);}return u+v<=1?za+(zb-za)*u+(zc-za)*v:zd+(zc-zd)*(1-u)+(zb-zd)*(1-v);
 }
 namespace {
 struct DeformationClock {double cycle,progress,fade;};
