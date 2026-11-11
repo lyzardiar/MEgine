@@ -8559,3 +8559,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。将已实现的目标句柄检查扩展到目标技能、按订单施法、目标物品使用及物品转交；转交要求目标为有效单位。失效／错误类型目标在入队或替换现有队列前拒绝，技能目标仍允许单位、物品及可破坏物，并由技能自身判断具体合法性。
 
 快速检查：Win32 Release 客户端与订单测试目标编译通过，目标保留既有 C4456 告警；针对该缺陷运行 `war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-player-ability` 为 1 通过／0 失败，覆盖移除目标、错误类型、立即／排队、队列续行与有效转交，日志 `tmp/docs-artifacts/war3/invalid-player-ability-fast.log`。下一批合并订单、技能目标、物品、联机及原版时序验证。此项是 `47e6513` 的范围补充，不单独增加功能批次计数；当前新批次 0/3。
+
+### 共享控制的物品换槽权限（待批次验证）
+
+路径：`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。玩家通过目标订单 852002–852007 换槽时使用实际发令玩家的高级库存权限，并在入队／替换前检查物品归属和当前库存容量；直接换槽也按能力提供的实际容量校验。普通共享不能通过目标订单绕过限制，高级共享保留换槽能力；脚本发令仍按既有单位主人路径处理。
+
+快速检查：Win32 Release 客户端与订单测试目标编译通过，保留既有 C4456 告警；针对该缺陷运行 `war3_order_queue_tests <data-root> <BootyBay.w3m> slot-order-permission` 为 1 通过／0 失败，覆盖库存能力移除、直接／目标换槽、普通／高级共享及队列，日志 `tmp/docs-artifacts/war3/slot-order-permission-fast.log`。批次合并验证其他库存容量、权限变化、排队执行、联机编码、原版行为与真实窗口；本批 1/3。
