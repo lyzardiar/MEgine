@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 运输装载与坠落目标缩写（待批次验证）
+
+路径：`src/session_transport.cpp`、`tests/generate-transport-fixture.py`、`tests/transport_tests.cpp`。运输能力、装载能力和坠落效果的目标字段展开原版缩写；装载判定识别 allies，同一解析器中的单位类型白名单保留原始 ID。
+
+必要检查：Win32 Release 客户端和 transport 目标编译通过；`generate-transport-fixture.py --data-root <root> --target-aliases <cargo|load|both|crash> --output <fixture>` 分别生成夹具，前三项以 `war3_transport_tests <root> <fixture> target-alias` 测试、最后一项以 `crash-alias` 测试，各 1 通过／0 失败。覆盖各字段的地面友军登船、敌军拒绝及坠落时友敌筛选；未加载 Game.dll。夹具位于 `tmp/docs-artifacts/war3/transport-alias/`。
+
+本批 2/3；更多关系组合、不同运输单位和原版实际运行待集中验证。
+
+
 ## 消耗品目标缩写（待批次验证）
 
 路径：`src/session_consumables.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。消耗品解析使用共享目标缩写映射，使范围和单位目标筛选能够消费展开后的原版目标词。
