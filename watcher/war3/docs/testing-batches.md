@@ -8771,3 +8771,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_entities.cpp`、`src/session_orders.cpp`、`tests/order_queue_tests.cpp`、`docs/instant-orders.md`。即时订单的未知非零编号及未知四字节名称在清除队列前拒绝，已注册订单及单位／科技定义继续使用既有处理。
 
 快速检查：Win32 Release 客户端与 order queue 目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-immediate-id` 修复前失败、修复后为 1 通过／0 失败，检查队列续行和有效停止订单。批次合并训练／研究、自动施法、取消和目标／点订单；原版特殊能力、自定义注册、实际窗口及多人行为仍待对照。本批 2/3。
+
+### 建造换令回调状态复核（待批次验证）
+
+路径：`src/session_construction.cpp`、`tests/caster_tests.cpp`。中断施法或退出建筑内施工后重新检查工人、资源和建造位置；回调使工人或地点不可用时拒绝旧建造订单，回调换令沿用修订号保护。
+
+快速检查：Win32 Release 客户端和 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> build-cancel-pause`，修复前失败、修复后退出 0 并输出 1 条 PASS。批次合并四族建造、建造点变化、订单和施法回归；回调改变资源／占地／金矿、工人死亡或易主、真实窗口及原版事件时序仍待验证。本项提交后本批 3/3，先集中验证。
