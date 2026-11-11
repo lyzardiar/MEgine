@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 右键已毁坏桥梁（待批次验证）
+
+路径：`src/game_view.h`、`src/game_view.cpp`、`tests/order_queue_tests.cpp`。右键场景时将可见的已毁坏桥梁纳入目标拾取，交给现有智能命令和修理流程；死亡的非桥梁、其他场景选择与技能目标沿用原有过滤。显式修理命令仍可选取断桥。
+
+快速检查：Win32 Release 客户端编译通过；断桥智能修理测试已添加，留待本批执行。本项是输入命中修复，未驱动实际窗口。
+
+待批次检查：在原版可修桥上分别测试完整、受损、已毁坏状态，使用工人单选和混合选区右键，确认点击命中、靠近及修复；同时检查显式修理、普通右键、Shift 队列、无视野／隐藏／移除目标及实验联机。原版拾取精度、窗口和网络行为尚待对照。本项为功能批次 3/3，提交后统一验证。
+
 ## 非树木场景物件右键与混合选区（待批次验证）
 
 路径：`src/game_view.cpp`、`src/player_commands.{h,cpp}`、`src/lan_local_identity.cpp`、`src/lan_action_encoder.cpp`、`src/lan_simulation.cpp`、`src/session_order_snapshot.cpp`、`tests/order_queue_tests.cpp`。右键非树木可破坏物时保留地面点击点；逐单位优先处理目标命令，失败且目标仍有效时让可移动单位向点击点移动。队列快照保存该点标志并兼容旧版本，实验联机在目标动作中传递坐标。
