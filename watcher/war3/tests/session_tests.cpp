@@ -38,6 +38,32 @@ native RemoveLocation takes location p returns nothing
 native Rect takes real minx, real miny, real maxx, real maxy returns rect
 native RemoveRect takes rect r returns nothing
 )jass"),{});session.initialize();auto& vm=session.runtime();auto zero=vm.real(Real::fromBits(0));auto timer=vm.invoke("CreateTimer"),group=vm.invoke("CreateGroup"),force=vm.invoke("CreateForce"),location=vm.invoke("Location",std::array{zero,zero}),rect=vm.invoke("Rect",std::array{zero,zero,zero,zero});for(auto [value,type,remove]:std::initializer_list<std::tuple<Value,const char*,const char*>>{{timer,"+tmr","DestroyTimer"},{group,"+grp","DestroyGroup"},{force,"+frc","DestroyForce"},{location,"+loc","RemoveLocation"},{rect,"+rct","RemoveRect"}}){require(session.debugHandleType(value.bits)==type,"Live handle type differs");session.retainHandle(value.bits);session.retainHandle(value.bits);vm.invoke(remove,std::array{value});require(session.debugHandleType(value.bits)==type,"Retained destroyed handle type differs");session.releaseHandle(value.bits);require(session.debugHandleType(value.bits)==type,"Retained type disappeared before last release");session.releaseHandle(value.bits);require(!session.debugHandleType(value.bits),"Released destroyed handle type remained");}});
+    test("retained_destroyed_dynamic_handle_types",[]{ScriptSession session(compile(R"jass(type trigger extends handle
+type event extends handle
+type boolexpr extends handle
+type conditionfunc extends boolexpr
+native CreateTrigger takes nothing returns trigger
+native DestroyTrigger takes trigger t returns nothing
+native TriggerRegisterTimerEvent takes trigger t, real timeout, boolean periodic returns event
+native Condition takes code f returns conditionfunc
+native Not takes boolexpr b returns boolexpr
+native DestroyBoolExpr takes boolexpr b returns nothing
+globals
+trigger t
+event e
+conditionfunc c
+boolexpr b
+endglobals
+function yes takes nothing returns boolean
+return true
+endfunction
+function setup takes nothing returns nothing
+set t=CreateTrigger()
+set e=TriggerRegisterTimerEvent(t,1.0,false)
+set c=Condition(function yes)
+set b=Not(c)
+endfunction
+)jass"),{});session.initialize();auto& vm=session.runtime();vm.invoke("setup");auto event=vm.global("e"),condition=vm.global("c"),negation=vm.global("b"),trigger=vm.global("t");for(auto [value,type]:std::initializer_list<std::pair<Value,const char*>>{{event,"tmvt"},{condition,"+flt"},{negation,"bNot"}}){require(session.debugHandleType(value.bits)==type,"Live dynamic type differs");session.retainHandle(value.bits);session.retainHandle(value.bits);}vm.invoke("DestroyTrigger",std::array{trigger});vm.invoke("DestroyBoolExpr",std::array{condition});vm.invoke("DestroyBoolExpr",std::array{negation});for(auto [value,type]:std::initializer_list<std::pair<Value,const char*>>{{event,"tmvt"},{condition,"+flt"},{negation,"bNot"}}){require(session.debugHandleType(value.bits)==type,"Retained dynamic type differs");session.releaseHandle(value.bits);require(session.debugHandleType(value.bits)==type,"Dynamic type disappeared before last release");session.releaseHandle(value.bits);require(!session.debugHandleType(value.bits),"Released dynamic type remained");}});
     test("saved_event_filename_and_sleep_restore",[&]{
         const std::string source=R"jass(type trigger extends handle
 type triggeraction extends handle

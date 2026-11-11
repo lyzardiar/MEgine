@@ -95,7 +95,8 @@ class ScriptSession {
     std::array<std::array<unsigned,16>,16> configuredAllianceWrites_{};
     void initializeTeamAlliances(SessionConfig& config) const;
     std::vector<Object> objects_;
-    std::map<std::uint32_t,std::uint32_t> retainedHandles_;
+    struct RetainedHandle {std::uint32_t count=0;std::optional<std::string> debugType;};
+    std::map<std::uint32_t,RetainedHandle> retainedHandles_;
     const void* externalExecuteOwner_=nullptr;
     std::function<bool(const std::string&)> externalExecute_;
     std::vector<std::uint32_t> customMessageTriggers_;
