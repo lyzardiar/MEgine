@@ -8693,3 +8693,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_combat_orders.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`。打断施法回调后复核攻击双方状态与武器；目标失效时拒绝旧攻击，位置或射程变化时重算接近路线，保留回调中替换的订单。
 
 快速检查：Win32 Release 客户端、caster 和订单测试目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> attack-cancel-target` 和 `attack-cancel-move`，均退出 0、各输出 1 条 PASS。前者修复前复现失败。批次合并施法和订单回归；目标死亡／易主、施法者变化、远程弹道、回调新订单、真实窗口及原版事件时序仍需对照。本项提交后本批 3/3，先集中验证。
+
+### 自动施法、点订单与攻击回调批次（部分验证）
+
+范围：`7828b1b`、`448fa9d`、`0f68a5d`，集成版本 `0f68a5d`。Win32 Release 客户端、caster 和 order queue 目标编译通过，重新生成 caster 夹具。`war3_caster_tests` 的 `autocast-silence`、`attack-cancel-target`、`attack-cancel-move` 和默认入口均退出 0，各输出 1 条 PASS；`war3_order_queue_tests` 的 `invalid-point-id`、`invalid-immediate`、`invalid-location`、`invalid-build`、`combat-pathing-toggle` 各输出 1 条 PASS，默认入口输出 37 条 PASS，均退出 0。部分入口未输出 RESULT，带 RESULT 的入口报告 `game_dll_loaded=false`。日志 `tmp/docs-artifacts/war3/order-callback-batch-*.log`。
+
+覆盖沉默开关、未知点订单队列保留、位置参数与建造入口、战斗寻路切换及施法中断时目标移除和移动。目标死亡／易主、施法者变化、远程弹道、回调新订单、动态订单注册、真实窗口、多人及原版事件时序仍待验证；不作为完整原版对局验收。下一功能批次从 0/3 开始。
