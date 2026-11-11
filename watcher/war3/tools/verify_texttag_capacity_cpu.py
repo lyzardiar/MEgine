@@ -1,6 +1,6 @@
-"""Author: MiYu. Inspect pinned original text-tag slots under a synthetic manager.
+"""Author: MiYu. Inspect pinned original text-tag slots and alpha under a synthetic manager.
 
-Runs original create, lookup and destroy instructions under Unicorn. The manager,
+Runs original create, lookup, destroy and alpha-update instructions under Unicorn. The manager,
 free list and callback boundaries are controlled; this does not run JASS or UI.
 """
 import argparse
@@ -81,8 +81,37 @@ assert invoke(0x6f265f80, parent) == 0
 assert u32(pool + 0x24) == 0 and u32(pool + 0x14) == 100
 invoke(0x6f877060, pool, 42)
 assert invoke(0x6f265f80, parent) == 42
+color = 0x10040000
+record = array + 42 * 0x34
+put(color, 0x80112233)
+invoke(0x6f877f80, pool, 42, color)
+assert cpu.mem_read(record + 0x27, 2) == bytes([128, 255])
+step = struct.unpack('<I', struct.pack('<f', 1 / 32))[0]
+invoke(0x6f8781e0, pool, step)
+assert cpu.mem_read(record + 0x27, 1)[0] == 255
+invoke(0x6f878140, pool, 42, 1)
+put(color, 0x11112233)
+invoke(0x6f877f80, pool, 42, color)
+invoke(0x6f8781e0, pool, step)
+assert cpu.mem_read(record + 0x27, 1)[0] == 17
+invoke(0x6f878140, pool, 42, 0)
+invoke(0x6f8774b0, pool, 42, 0)
+invoke(0x6f877f60, pool, 42, struct.unpack('<I', struct.pack('<f', 50))[0])
+put(color, 0x80112233)
+invoke(0x6f877f80, pool, 42, color)
+invoke(0x6f8781e0, pool, step)
+assert cpu.mem_read(record + 0x27, 1)[0] == 128
+invoke(0x6f877f60, pool, 42, struct.unpack('<I', struct.pack('<f', 95))[0])
+invoke(0x6f8781e0, pool, step)
+assert cpu.mem_read(record + 0x27, 1)[0] == 126
+invoke(0x6f877fa0, pool, 42, struct.unpack('<I', struct.pack('<f', 98))[0])
+invoke(0x6f8781e0, pool, step)
+assert cpu.mem_read(record + 0x27, 1)[0] == 126
+invoke(0x6f8774b0, pool, 42, 1)
+invoke(0x6f8781e0, pool, step)
+assert cpu.mem_read(record + 0x27, 1)[0] == 255
 result = dict(binarySha256=digest, slots=100, first=created[0], last=created[-1], fullReturn=0,
-              zeroSlotAllocated=True, zeroSlotReusable=True, nonzeroSlotReusable=True, passed=True,
+              zeroSlotAllocated=True, zeroSlotReusable=True, nonzeroSlotReusable=True, alphaTransitions=True, passed=True,
               boundaries=['Synthetic manager and prepopulated free list', 'Virtual callbacks replaced by returns'],
               limitations=['Raw x86 entry points only; JASS null mapping, runtime initialization, UI and gameplay were not executed.'])
 args.output.parent.mkdir(parents=True, exist_ok=True)

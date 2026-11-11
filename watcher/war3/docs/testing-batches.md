@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字透明度状态（待批次验证）
+
+路径：`src/session_text_tag.cpp`、`src/game_text_tag.cpp`、`tests/clock_tests.cpp`、`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。模拟步按原版状态更新透明度，暂停保留当前值；STTX v4 保存当前值并读取 v1–v3。旧档下一步可能出现透明度跳变，旧客户端不能读取 v4。
+
+必要检查：Win32 Release 客户端及 clock 编译通过；`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 为 2 通过／0 失败，覆盖透明度切换与 v1–v4 恢复。`python watcher/war3/tools/verify_texttag_capacity_cpu.py` 隔离原版指令探针通过，结果在 `tmp/docs-artifacts/war3/texttag-capacity/reference.json`；模拟管理器不覆盖原版 JASS 或窗口。
+
+本批 2/3；实际窗口、原版动态对照及多脚本场景待集中验证。
+
+
 ## 原版飘字槽位容量探针（验证补充）
 
 路径：`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。在固定摘要的 1.27 Game.dll 上，使用模拟管理器及 100 项预置空闲表执行原始 x86 创建／查询／销毁指令，检查槽位耗尽和释放后的复用；脚本运行通过，结果 `tmp/docs-artifacts/war3/texttag-capacity/reference.json`。最后一次成功分配与满额失败的原始返回值均为 0，前者仍占用索引 0。
