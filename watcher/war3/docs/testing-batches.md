@@ -8753,3 +8753,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_combat_orders.cpp`、`tests/caster_tests.cpp`。打断施法后重新检查单位、物品及拾取权限，物品失效时清理旧订单，位置变化时重新计算接近路线；回调换令沿用修订号保护。
 
 快速检查：Win32 Release 客户端与 caster 目标编译通过；`war3_caster_tests <data-root> <fixture> pickup-cancel-item` 修复前失败、修复后退出 0 并输出 1 条 PASS。另恢复 `8f79840` 添加跟随用例时误删的自动施法测试分支条件；该提交上的 caster 默认入口会提前返回，不能作为默认套件验证。批次重新运行默认和定向 caster、拾取与订单回归；物品被移动／转移、单位状态变化、真实窗口与原版时序仍待对照。本项提交后本批 3/3，先集中验证。
+
+### 停止、跟随与拾取回调批次（部分验证）
+
+范围：`a1edaee`、`8f79840`、`26b1712`，以及移动寻路补充 `d2e67cc` 和回调测试补充 `42199ba`；集成版本 `26b1712`。Win32 Release 客户端、caster 和 order queue 目标编译通过，重新生成 caster 夹具。`war3_caster_tests` 的停止、跟随目标移除／移动、拾取目标移除、回调新订单、移动／攻击移动暂停、巡逻起点、自动施法及默认入口均退出 0、各输出 1 条 PASS；默认入口实际输出 caster consumers 结果。`targets`、`chain-targets`、`battle-roar`、`cloud-targets` 分别报告 6／0、4／0、4／0、1／0。`war3_order_queue_tests` 的 `pickup-path`、`pathing-toggle`、`combat-pathing-toggle` 各报告 1／0，默认入口退出 0 并输出 37 条 PASS。部分入口没有 RESULT，带标记的入口报告 `game_dll_loaded=false`；日志 `tmp/docs-artifacts/war3/follow-pickup-batch-*.log`。
+
+覆盖施法回调后的暂停、目标移除／移动和回调换令，以及既有拾取路径和订单队列。特殊形态跟随、物品被移动／转移、目标死亡／易主、建筑内工人退出、真实窗口、多人及原版事件次序仍待验证；不作为完整对局验收。下一功能批次从 0/3 开始。
