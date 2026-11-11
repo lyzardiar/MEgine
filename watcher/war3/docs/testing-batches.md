@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 复活符文拾取测试修正（已复测）
+
+上一批 `war3_corpse_tests <root> tmp/docs-artifacts/war3/corpses/fixture.w3m items` 的断言要求无物品栏单位通过 `UnitAddItem` 直接使用符文，与本队列 `UnitAddItem` 原版入口检查及 `src/session_inventory.cpp` 的现有规则冲突。`tests/corpse_tests.cpp` 改为检查脚本添加失败、物品留在地面，再使用实际智能拾取命令验证无物品栏单位触发符文、消耗物品并复活尸体。
+
+Win32 Release corpse 目标编译通过；失败项复测 1 通过／0 失败，并继续覆盖复活宝珠和操纵死尸权杖。此为测试修正，不单独计入功能任务；当前批次 1/3。上一批三个失败项均已定向复测通过，原版动态拾取事件和实际窗口待验证。
+
+
 ## 先祖之魂恢复比例测试修正（已复测）
 
 上一批 `war3_corpse_tests <root> tmp/docs-artifacts/war3/corpses/fixture.w3m spirit` 失败时生命为 620／620、魔法为 151.495／600；测试推进 1.5 秒后仍要求魔法精确等于 150，包含复活后的自然回魔。`tests/corpse_tests.cpp` 改在复活首个 1/32 秒步读取，允许该步至多 0.05 魔法变化，并保留生命、魔法比例和后续操纵死尸生命周期断言。
