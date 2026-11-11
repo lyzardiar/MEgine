@@ -9043,3 +9043,7 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 必要检查：Win32 Release 客户端及 movement avoidance／CampaignAI 目标编译通过。`war3_movement_avoidance_tests <data-root> <BootyBay> ally-yield` 修复前失败、修复后 1 通过／0 失败；`war3_campaign_ai_tests <data-root> human06-allied-yield` 使用原图无操作隔离会话，修复前模拟 600–1800 秒感染数停留 6，修复后于 851.5 秒达到 20，1 通过／0 失败且未加载 Game.dll。此前首栋受阻建筑诊断在当前基线 452.5 秒通过；未证明完整关卡胜负。
 
 本批 1/3，合并验证单位移动、原图战役与多人相关路径；实际窗口、复杂拥堵、联盟关系变化、原版让路策略和完整对局仍待验证。
+
+### 人族第六章无人操作结局（上项补充，不单独计数）
+
+路径：`tests/campaign_ai_tests.cpp`、`docs/ai.md`。`war3_campaign_ai_tests <data-root> human06-no-action-defeat` 使用原图及静音隔离会话，不人为移动／创建／击杀单位；模拟到 1955.25 秒时感染数 59、玩家 1 失败、显示带按钮对话框并暂停，报告 1 通过／0 失败，未加载 Game.dll。诊断循环遇暂停即结束，避免模拟时间停滞时空转。该结果补充盟友堵路任务的真实流程证据，仍待本批集中回归；玩家操作、胜利路线、窗口表现和完整战役未覆盖。当前批次仍为 1/3。
