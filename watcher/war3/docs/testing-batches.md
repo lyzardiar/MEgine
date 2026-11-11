@@ -8723,3 +8723,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`d425319`、`3a16659`、`9313da4`，集成版本 `9313da4`。Win32 Release 客户端、caster、order queue 和 harvest 目标编译通过；重新生成 caster 和 `--special-silence` harvest 夹具。`war3_caster_tests` 的 `attack-cancel-item`、`attack-cancel-remove-item`、`attackmove-cancel-pause`、`patrol-cancel-move`、`move-cancel-pause`、`attack-cancel-target`、`attack-cancel-move` 及默认入口均退出 0，各输出 1 条 PASS；`war3_order_queue_tests` 的 `pathing-toggle`、`combat-pathing-toggle` 各 1 通过／0 失败，默认入口退出 0 并输出 37 条 PASS；`war3_harvest_tests ... silence-special` 为 1 通过／0 失败。部分入口没有输出 RESULT，订单定向入口报告 `game_dll_loaded=false`。日志 `tmp/docs-artifacts/war3/movement-callback-batch-*.log`。
 
 覆盖物品位置与移除、单位攻击目标变化、移动暂停、巡逻起点、寻路切换及普通树木／物品攻击。可破坏物在回调中移除／复活、回调中普通移动或改变障碍、新订单、所有权／死亡、远程弹道、真实窗口、多人及原版事件时序仍待验证；不作为完整原版对局验收。下一功能批次从 0/3 开始。
+
+### 停止与待命的换令回调复核（待批次验证）
+
+路径：`src/session_orders.cpp`、`tests/caster_tests.cpp`。停止或待命打断施法后复核单位身份、所有权／死亡轮次和状态；回调导致单位无法接受命令时清理旧路线和订单，不写入待命状态。回调替换订单沿用既有修订号保护。
+
+快速检查：Win32 Release 客户端和 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> hold-cancel-pause`，修复前失败、修复后退出 0 并输出 1 条 PASS。批次合并停止、待命、攻击／移动换令及回调新订单回归；单位死亡／易主、脚本隐藏、真实窗口、多人和原版事件时序仍需对照。本批 1/3。
