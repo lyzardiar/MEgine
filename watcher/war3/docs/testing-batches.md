@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 消耗品目标缩写（待批次验证）
+
+路径：`src/session_consumables.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。消耗品解析使用共享目标缩写映射，使范围和单位目标筛选能够消费展开后的原版目标词。
+
+必要检查：Win32 Release 客户端和 control 目标编译通过；`python watcher/war3/tests/generate-combined-item-fixture.py --data-root <root>` 后，`war3_control_tests <root> <fixture> item-consumable-alias` 为 3 通过／0 失败，覆盖友方和敌方范围治疗、组合物品及消耗；未加载 Game.dll。
+
+本批 1/3；其他消耗品的目标类别、实际原版对照、完整对局和窗口表现待集中验证。
+
+
 ## 技能、弹道与吸血增益旧目标恢复批次（部分验证）
 
 范围：`8d8bc77`、`552f932`、`a0fc761`，集成版本 `a0fc761`。Win32 Release 客户端、caster、clock、control 和 campaign AI 目标编译通过。使用 `tmp/docs-artifacts/war3/caster-spells/fixture.w3m` 与 `tmp/docs-artifacts/war3/combined-item/fixture.w3m`：caster 的 `spell-alias-restore`、`aura-alias-restore`、`targets` 分别为 2／0、2／0、13／0；control 的 `item-vampirism-alias`、`item-combined` 分别为 2／0、1／0。

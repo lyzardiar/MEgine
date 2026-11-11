@@ -1,5 +1,6 @@
 // Author: MiYu. Potions, salves, scrolls and powerups update live resources, timed buffs and magical state.
 #include "session.h"
+#include "target_aliases.h"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -24,7 +25,7 @@ const ConsumableInfo* ScriptSession::consumableInfo(std::uint32_t ability){
         else {c.kind=ConsumableKind::Restoration;c.heal=code=="AImr"?0:s.amount;c.mana=code=="AImr"?s.amount:code=="AIra"?s.secondary:0;}
         for(auto n:{s.mana,s.cooldown,s.range,s.area,s.duration,s.heroDuration,s.secondary})if(!std::isfinite(n) || n<0 || n>1000000)throw std::runtime_error("Consumable parameter outside supported range: "+ObjectData::name(ability));if(!std::isfinite(s.amount) || std::abs(s.amount)>1000000 || (s.amount<0 && c.kind!=ConsumableKind::Protection))throw std::runtime_error("Consumable effect outside supported range: "+ObjectData::name(ability));
         if(c.kind==ConsumableKind::Regeneration && c.heal<=0 && c.mana<=0)throw std::runtime_error("Regeneration consumable requires a resource effect: "+ObjectData::name(ability));
-        std::stringstream targets(data.field(ability,"AbilityData","targs1"));std::string part;while(std::getline(targets,part,',')){auto first=part.find_first_not_of(" \t\"");if(first!=std::string::npos){part=part.substr(first,part.find_last_not_of(" \t\"")-first+1);if(part!="_" && part!="-")s.allowed.insert(part);}}
+        std::stringstream targets(data.field(ability,"AbilityData","targs1"));std::string part;while(std::getline(targets,part,',')){auto first=part.find_first_not_of(" \t\"");if(first!=std::string::npos){part=part.substr(first,part.find_last_not_of(" \t\"")-first+1);if(part!="_" && part!="-")s.allowed.insert(part);}}addTargetAliases(s.allowed);
         if(c.kind==ConsumableKind::Regeneration || c.kind==ConsumableKind::Invulnerability || c.kind==ConsumableKind::Speed || c.kind==ConsumableKind::Protection || c.kind==ConsumableKind::SpellShield){std::stringstream input(data.field(ability,"AbilityData","BuffID1"));std::vector<std::uint32_t> buffs;while(std::getline(input,part,',')){if(part.size()!=4)throw std::runtime_error("Invalid consumable source buff");buffs.push_back(ObjectData::code(part));}auto index=c.kind==ConsumableKind::Regeneration?(c.heal>0?(c.mana>0?0u:1u):2u):0u;if(index>=buffs.size() || (c.kind!=ConsumableKind::SpellShield && (s.duration<=0 || s.heroDuration<=0)))throw std::runtime_error("Timed consumable requires source buff and durations");s.buff=buffs[index];}
     }auto found=consumableInfo_.emplace(ability,std::move(value)).first;return found->second?&*found->second:nullptr;
 }
