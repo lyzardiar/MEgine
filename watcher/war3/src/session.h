@@ -99,6 +99,7 @@ class ScriptSession {
     std::map<std::uint32_t,RetainedHandle> retainedHandles_;
     const void* externalExecuteOwner_=nullptr;
     std::function<bool(const std::string&)> externalExecute_;
+    std::weak_ptr<void> localSyncState_;
     std::vector<std::uint32_t> customMessageTriggers_;
     std::vector<std::pair<std::uint32_t,std::string>> dzSyncTriggers_;
     std::vector<std::uint32_t> localNetworkObjects_;
@@ -1650,6 +1651,7 @@ public:
     void retainHandle(std::uint32_t id);
     void releaseHandle(std::uint32_t id);
     std::uint32_t retainedHandleCount(std::uint32_t id) const;
+    void attachLocalSyncState(std::weak_ptr<void> state) {if(!localSyncState_.expired() || state.expired())throw std::runtime_error("Invalid local sync state");localSyncState_=std::move(state);}
     void registerCustomMessage(std::uint32_t trigger);
     void dispatchCustomMessage(unsigned player,std::string_view message);
     std::optional<std::pair<std::uint32_t,std::string>> currentCustomMessage() const;
