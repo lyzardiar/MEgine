@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 坐标漂浮文字的可行走表面高度（待批次验证）
+
+路径：`src/session_text_tag.cpp`、`tests/campaign_ai_tests.cpp`。`SetTextTagPos` 在创建或重新定位时读取地形及可行走模型的表面高度，再叠加脚本偏移；资料片隐藏关的 `CreateTextTagLocBJ` 使用该入口。固定版 Game.dll 的 `SetTextTagPos`（`0x6f1f6e30`）调用 `0x6f76fab0` 查询位置高度，该函数在地形高度之外检查垂直射线命中并取较高值；本实现复用现有可行走表面查询，具体模型、边界与原版精度仍待对照。
+
+快速检查：Win32 Release 客户端和 CampaignAI 测试目标构建成功；原图楼梯检查 `war3_campaign_ai_tests <data-root> humanx03-tag-surface` 在新增坐标断言后修复前失败、修复后 1 通过／0 失败，未加载 Game.dll。待批次验证普通地面、水面、模型启停／破坏、恢复和实际窗口；当前功能批次 2/3。
+
 ## Human07 步行触发穆拉丁相遇（待批次验证）
 
 路径：`tests/human_campaign_chain_tests.cpp`。原图开场后向阿尔萨斯派发玩家地面移动命令，从初始位置走入原相遇区域；检查原触发器被禁用、英雄确在区域内、过场接管并归还控制且穆拉丁存在。未直接移动英雄或击杀目标，未带前章缓存。
