@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 编队命令重复成员去重（待批次验证）
+
+路径：`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。编队移动、攻击移动、巡逻及可破坏物智能命令的成员列表中，重复单位只派发一次，避免重复重置移动或重复插入 Shift 队列；其他命令保持原有行为。
+
+快速检查：Win32 Release 订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> formation-duplicates` 为 1 通过／0 失败，覆盖即时移动和排队订单。既有 C4456 编译告警仍在。
+
+本批 1/3；集中验证攻击移动、巡逻、智能目标回退及联机／回放中重复成员、权限变化和脚本回调重入。实际选择界面与原版对照仍待验证。
+
 ## 编队限速与生命条快捷键批次（部分验证）
 
 范围：`bf3a939`、`41f0284`、`1b93316`，集成版本 `1b93316`。Win32 Release 客户端、订单、clock 和 movement avoidance 目标编译通过。`war3_order_queue_tests <data-root> <BootyBay.w3m> formation-speed|formation-completion|formation-facing|formation-wire|smart-bridge` 五个入口各为 1 通过／0 失败，默认入口退出 0、输出 38 条 PASS；`WAR3_CLOCK_FILTER=unit_core_restores_hero_abilities_equipment_and_vitals war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败。`war3_movement_avoidance_tests <data-root> <BootyBay.w3m>` 默认入口输出 9 条 PASS，`ally-yield` 为 1 通过／0 失败。共 9 个进程成功、54 条 PASS；部分入口未输出 RESULT。
