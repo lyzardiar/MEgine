@@ -8951,3 +8951,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_restoration.cpp`、`src/session_combat_orders.cpp`、`tests/caster_tests.cpp`。单位中断施法后复核自身、月亮井、魔法和恢复能力；目标位置或补给范围变化时重算路线，回调换令后停止旧智能命令的后续派发。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> recharge-cancel-pause`、`recharge-cancel-remove`、`recharge-cancel-move`、`recharge-cancel-order`，四例修复前失败、修复后各输出 1 条 PASS。批次合并月亮井自动／右键补给、传送门和智能订单；能力／魔法／归属变化、真实窗口与原版事件时序待验证。本批 2/3。
+
+### 角鹰兽合体智能命令换令回调（待批次验证）
+
+路径：`src/session_coupling.cpp`、`tests/caster_tests.cpp`。合体施法尝试因回调移除伙伴或替换订单而失败后，停止遍历后续合体能力；旧订单失效时清理路线，回调新订单保留。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> couple-cancel-remove`、`couple-cancel-order`，两例修复前失败、修复后各输出 1 条 PASS；夹具给弓箭手添加两种合体能力以覆盖遍历。批次合并正常骑乘、传送门、月亮井及智能订单；能力移除／易主、原版时序与实际窗口待验证。本批 3/3，先集中验证。
