@@ -8945,3 +8945,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_waygate.cpp`、`src/session_combat_orders.cpp`、`tests/caster_tests.cpp`。进入传送门中断施法后复核单位与传送门身份、生命周期和可用性；传送门移动或入口范围变化时重算路线，回调换令后停止旧智能命令的后续派发。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> waygate-cancel-pause`、`waygate-cancel-remove`、`waygate-cancel-move`、`waygate-cancel-order`，四例修复前失败、修复后各输出 1 条 PASS。批次合并传送门入门、互通、智能命令和订单回归；回调改变目的地／入口能力／归属、真实窗口和原版时序待验证。本批 1/3。
+
+### 月亮井补给换令回调状态复核（待批次验证）
+
+路径：`src/session_restoration.cpp`、`src/session_combat_orders.cpp`、`tests/caster_tests.cpp`。单位中断施法后复核自身、月亮井、魔法和恢复能力；目标位置或补给范围变化时重算路线，回调换令后停止旧智能命令的后续派发。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> recharge-cancel-pause`、`recharge-cancel-remove`、`recharge-cancel-move`、`recharge-cancel-order`，四例修复前失败、修复后各输出 1 条 PASS。批次合并月亮井自动／右键补给、传送门和智能订单；能力／魔法／归属变化、真实窗口与原版事件时序待验证。本批 2/3。
