@@ -9,10 +9,27 @@ fixture = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(fixture)
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = '''globals
+integer refundGoldEvents=0
+integer refundLumberEvents=0
 unit caster=null
 unit building=null
 unit enemy_building=null
 endglobals
+function RefundChangeLumber takes nothing returns nothing
+    set refundGoldEvents=refundGoldEvents+1
+    call SetPlayerState(Player(0),PLAYER_STATE_RESOURCE_LUMBER,0)
+endfunction
+function RefundLumberEvent takes nothing returns nothing
+    set refundLumberEvents=refundLumberEvents+1
+endfunction
+function InstallRefundTest takes nothing returns nothing
+    local trigger g=CreateTrigger()
+    local trigger l=CreateTrigger()
+    call TriggerRegisterPlayerStateEvent(g,Player(0),PLAYER_STATE_RESOURCE_GOLD,GREATER_THAN,100.0)
+    call TriggerRegisterPlayerStateEvent(l,Player(0),PLAYER_STATE_RESOURCE_LUMBER,GREATER_THAN,100.0)
+    call TriggerAddAction(g,function RefundChangeLumber)
+    call TriggerAddAction(l,function RefundLumberEvent)
+endfunction
 function config takes nothing returns nothing
 endfunction
 function main takes nothing returns nothing
