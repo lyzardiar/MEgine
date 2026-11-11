@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 多选面板的子组点击（待批次验证）
+
+路径：`src/game_selection_panel.cpp`、`docs/selection-panel.md`。普通点击其他单位类型头像时只切换当前子组并保留完整选区；再点击当前子组头像选择该单位。Shift 移除、Ctrl 同类型及目标模式点击沿用既有分支。原版交互依据为暴雪 [Sub Groups 操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)。
+
+快速检查：Win32 Release 客户端编译；尚未进行窗口与联机验证。
+
+待批次检查：多选英雄、不同类型与同类型多个单位，点击切换子组、再次点击单选、Shift／Ctrl、多选技能目标及主单位移除；验证 Tab、命令卡、实验联机和回放隔离。原版背包／形态拆组、排序及双击时序仍待对照。本项为新功能批次 1/3。
+
 ## 技能与物品目标预览批次（部分验证）
 
 范围 `c3725d0`、`4363938`、`98ffa2e`，集成版本 `98ffa2e`。Win32 Release 客户端、control、stealth 目标编译通过；control 目标有既有 C4456 变量遮蔽告警。`war3_control_tests <data-root> <control-fixture> item-tree`、`war3_stealth_tests <data-root> <stealth-fixture> sentinel`、`war3_control_tests <data-root> <combined-fixture> item-combined-dispel` 各为 1 通过／0 失败，未加载 Game.dll。复合驱散首次使用旧夹具失败；由当前 `tests/generate-combined-item-fixture.py` 生成本批独立夹具后通过。
