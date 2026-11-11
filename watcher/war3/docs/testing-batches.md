@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 脚本自身联盟查询（待批次验证）
+
+路径：`src/session.cpp`、`src/session_match.cpp`、`tests/order_queue_tests.cpp`。新会话默认设置玩家对自身的被动联盟位，脚本设置该位后，`GetPlayerAlliance`、`IsPlayerAlly/Enemy` 和 `IsUnitAlly/Enemy` 按对应玩家方向读取同一状态；普通控制及战斗关系沿用现有逻辑。原 1.27 `IsUnitAlly` 地址 `0x6f1e8520` 按查询玩家的被动联盟位判断单位所有者，`IsUnitEnemy` 地址 `0x6f1e85c0` 对结果取反；`IsPlayerEnemy` 地址 `0x6f1e8090` 同样按传入玩家联盟位判断。新会话默认自身友军是当前默认处理，原版初始化细节待实际对照。
+
+快速检查：Win32 Release 订单测试目标编译通过，`war3_order_queue_tests <data-root> <BootyBay.w3m> self-alliance` 为 1 通过／0 失败，检查默认、自身被动联盟关闭与重开及玩家／单位查询；未加载 Game.dll。既有 C4456 告警仍在。
+
+本批 3/3，先集中验证：覆盖脚本跨玩家非对称联盟、空／失效句柄、设置前后、读档及旧存档自身位、联机／回放和正常单位控制。原版自身联盟默认值、脚本修改及实际对局表现仍需动态对照；不把静态指令解释为完整玩法验收。
+
 ## 变形单位攻击移动速度检查（待批次验证）
 
 路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`、`tests/morph_tests.cpp`。攻击移动和巡逻下令及取消施法后的复核读取当前形态移速，与普通移动和路径追击使用同一速度来源，避免基础移速为零而当前变形可移动时错误拒绝。
