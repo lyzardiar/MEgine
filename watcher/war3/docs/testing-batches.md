@@ -8699,3 +8699,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`7828b1b`、`448fa9d`、`0f68a5d`，集成版本 `0f68a5d`。Win32 Release 客户端、caster 和 order queue 目标编译通过，重新生成 caster 夹具。`war3_caster_tests` 的 `autocast-silence`、`attack-cancel-target`、`attack-cancel-move` 和默认入口均退出 0，各输出 1 条 PASS；`war3_order_queue_tests` 的 `invalid-point-id`、`invalid-immediate`、`invalid-location`、`invalid-build`、`combat-pathing-toggle` 各输出 1 条 PASS，默认入口输出 37 条 PASS，均退出 0。部分入口未输出 RESULT，带 RESULT 的入口报告 `game_dll_loaded=false`。日志 `tmp/docs-artifacts/war3/order-callback-batch-*.log`。
 
 覆盖沉默开关、未知点订单队列保留、位置参数与建造入口、战斗寻路切换及施法中断时目标移除和移动。目标死亡／易主、施法者变化、远程弹道、回调新订单、动态订单注册、真实窗口、多人及原版事件时序仍待验证；不作为完整原版对局验收。下一功能批次从 0/3 开始。
+
+### 攻击物品与可破坏物的换令回调复核（待批次验证）
+
+路径：`src/session_combat_destructable.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`。打断施法后复核攻击者、目标和武器，目标失效时清理旧订单，位置或攻击范围变化时重算路线；回调替换订单时沿用既有修订号保护。
+
+快速检查：Win32 Release 客户端与 caster 目标编译通过。生成 `python tests/generate-caster-fixture.py --data-root <data-root>` 后运行 `war3_caster_tests <data-root> <fixture> attack-cancel-item` 和 `attack-cancel-remove-item`，均退出 0、各输出 1 条 PASS；移动物品复现修复前失败。批次合并物品和可破坏物攻击、施法与订单回归；可破坏物移除／复活、攻击者状态变化、回调新订单、远程弹道、真实窗口及原版时序仍待验证。本批 1/3。

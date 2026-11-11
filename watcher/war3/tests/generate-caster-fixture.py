@@ -25,6 +25,7 @@ def main():
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = b'''globals
 unit interruptedTarget=null
+item interruptedItem=null
 integer interruptCount=0
 real interruptX=0
 endglobals
@@ -48,6 +49,27 @@ function InstallInterruptMove takes unit caster, unit target, real x returns not
     set interruptX=x
     call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
     call TriggerAddAction(t,function InterruptMoveTarget)
+endfunction
+function InterruptRemoveItem takes nothing returns nothing
+    set interruptCount=interruptCount+1
+    call RemoveItem(interruptedItem)
+endfunction
+function InstallInterruptRemoveItem takes unit caster, item target returns nothing
+    local trigger t=CreateTrigger()
+    set interruptedItem=target
+    call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
+    call TriggerAddAction(t,function InterruptRemoveItem)
+endfunction
+function InterruptMoveItem takes nothing returns nothing
+    set interruptCount=interruptCount+1
+    call SetItemPosition(interruptedItem,interruptX,GetItemY(interruptedItem))
+endfunction
+function InstallInterruptItem takes unit caster, item target, real x returns nothing
+    local trigger t=CreateTrigger()
+    set interruptedItem=target
+    set interruptX=x
+    call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
+    call TriggerAddAction(t,function InterruptMoveItem)
 endfunction
 function config takes nothing returns nothing
 endfunction
