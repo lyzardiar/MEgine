@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单位漂浮文字的可行走表面高度（待批次验证）
+
+路径：`src/session_text_tag.cpp`、`tests/campaign_ai_tests.cpp`。`SetTextTagPosUnit` 对地面及两栖单位读取会话可行走表面高度，再叠加飞行高度和脚本偏移，使原图楼梯上的文字定位与单位渲染共用表面；空中／水上单位保持既有地形基准。文字仍在调用时取位置，不跟随单位移动。
+
+快速检查：Win32 Release 客户端和 CampaignAI 测试目标构建成功；`war3_campaign_ai_tests <data-root> humanx03-tag-surface` 使用 HumanX03 原图楼梯，修复前失败、修复后 1 通过／0 失败，未加载 Game.dll。原版高度计算、空中与水上单位、水面、移动／破坏楼梯和窗口画面仍待验证；本项为当前功能批次 3/3，提交后执行集中验证。
+
 ## HumanX03 英雄名称列表地图文案（待批次验证）
 
 路径：`src/session_hero.cpp`、`tests/campaign_ai_tests.cpp`。先解析英雄名称列表整体的 WTS，再按逗号选择名称，保留各名称独立解析及现有随机和重复编号规则。原图 Hgam 的 `TRIGSTR_487` 包含四个名称、名称数量为 4；修复前显示整串，修复后四名原图大法师分别持有列表中的名称，`GetHeroProperName` 与会话状态一致。
