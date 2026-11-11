@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 停用武器的未知攻击类型（待批次验证）
+
+路径：`src/session_weapons.cpp`、`tests/campaign_ai_tests.cpp`。原版 `(8)AzureTowerDefense.w3x` 的 `uC00` 未启用武器，却为第一套武器配置 `unknown` 攻击类型；解析该停用占位字段时不再终止模拟，并阻止科技或武器切换启用这套不完整武器。已启用武器中的未知类型仍明确报告错误，其他有完整数据的停用武器继续可由既有机制启用。原版对占位字段和后续启用的行为尚需动态对照。
+
+必要检查：Win32 Release 客户端和 CampaignAI 测试目标编译通过；原图 `azure-disabled-weapon` 为 1 通过／0 失败，覆盖占位字段、强制科技位及普通步兵武器。原图 `--main-check --simulate-ms 60000 --mute` 初始化及模拟通过，未加载 Game.dll，日志 `tmp/docs-artifacts/war3/td-probe/azure-attack-after.log`；未建塔或完成波次。
+
+本批 2/3；集中验证有效／无效的双武器与研究切换、扎根／战棍／武器特效、原图塔防波次、联机及原版时序；与路径纹理兼容合并测试。
+
+
 ## 建筑路径纹理扩展名兼容（待批次验证）
 
 路径：`src/session_footprints.cpp`、`tests/campaign_ai_tests.cpp`。建筑及可破坏物路径纹理采用共享 `readTexture` 的 BLP／TGA 别名与地图覆盖优先级，再按文件内容解码和生成实际阻挡。原版 `(8)AzureTowerDefense.w3x` 请求 `PathTextures\\8x8SimpleSolid.blp`，公共归档提供同名 TGA；修复前创建建筑时终止，修复后 main 初始化完成。
