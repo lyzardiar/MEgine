@@ -8492,10 +8492,16 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 
 路径：`src/session.cpp`、`tests/session_tests.cpp`。显式引用仍存在时，已销毁的固定类型句柄使用其保留的类型标识供调试统计查询，最后一次释放后返回空；事件、布尔表达式、特效和技能的类型依赖已清除的对象状态，仍明确报告不可用。漂浮文字沿用空类型。
 
-快速检查：Win32 Release `cmake --build --preset release --target war3_session_tests --parallel 4` 编译通过；新增测试未执行。批次运行 `war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json`，检查计时器、单位组、玩家组、点和矩形在多次引用、销毁及逐次释放后的类型；结合原图 Lua 统计验证其他固定类型。原版已销毁对象的引用计数及类型生命周期、依赖状态的对象类型和真实对局仍需对照。与前一项已移除单位修复合计本批 2/3。
+快速检查：Win32 Release `cmake --build --preset release --target war3_session_tests --parallel 4` 编译通过；新增测试未执行。批次运行 `war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json`，检查计时器、单位组、玩家组和点在多次引用、销毁及逐次释放后的类型；矩形需带地图地形验证；结合原图 Lua 统计验证其他固定类型。原版已销毁对象的引用计数及类型生命周期、依赖状态的对象类型和真实对局仍需对照。与前一项已移除单位修复合计本批 2/3。
 
 ### 保留的动态类型句柄（待批次验证）
 
 路径：`src/session.{h,cpp}`、`tests/session_tests.cpp`。显式引用首次建立时为事件、布尔表达式、特效和技能保存当时可识别的调试类型；对象销毁后仍可查询，最后一次释放后丢弃。无法识别的类型继续报告不可用，不让调试信息阻止引用建立；已有引用不延长实际对象寿命。原版对引用和销毁的行为仍需对照，存档恢复及引用建立后类型变化也待验证。
 
 快速检查：Win32 Release 产品和 session、Lua 测试目标编译；功能测试合并至本批。集中执行 session 测试验证事件与表达式的引用、销毁及释放，并使用原图 Lua 路径核查单位、特效及技能统计。此项提交后批次达到 3/3，应先执行批次验证再开始下一任务。
+
+### 保留句柄类型批次（部分验证）
+
+范围：`ea0b273`、`e4648aa`、`c218352` 及本次测试修正。Win32 Release 客户端、session 和 Lua 测试目标编译通过；`war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 为 28 通过／0 失败，覆盖固定类型及事件、表达式的多次引用、销毁和释放。首次运行的矩形夹具因未附加地形失败，改为不在无地图夹具中创建矩形后重测通过，日志 `tmp/docs-artifacts/war3/handle-batch-session-{,final}.log`。
+
+原图 Lua 人工探针首次因旧计时器断言不符合新行为失败；更新断言并补充事件、点和附着特效、技能的保留查询后，使用本机原版资源及 `G:/qcloud_20144088.w3x` 重测为 2 通过／0 失败、未加载 Game.dll，日志 `tmp/docs-artifacts/war3/handle-batch-lua-final.log`。该运行包含工作区原有人工清怪探针，不代表正常对局或完整通关。矩形及其他类型、原版引用计数／销毁时序、存档恢复、真实窗口和对局仍待验证；下一功能批次从 0/3 开始。

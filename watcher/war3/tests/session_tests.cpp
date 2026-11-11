@@ -26,7 +26,6 @@ int wmain(int argc,wchar_t** argv) {
 type group extends handle
 type force extends handle
 type location extends handle
-type rect extends handle
 native CreateTimer takes nothing returns timer
 native DestroyTimer takes timer t returns nothing
 native CreateGroup takes nothing returns group
@@ -35,9 +34,7 @@ native CreateForce takes nothing returns force
 native DestroyForce takes force f returns nothing
 native Location takes real x, real y returns location
 native RemoveLocation takes location p returns nothing
-native Rect takes real minx, real miny, real maxx, real maxy returns rect
-native RemoveRect takes rect r returns nothing
-)jass"),{});session.initialize();auto& vm=session.runtime();auto zero=vm.real(Real::fromBits(0));auto timer=vm.invoke("CreateTimer"),group=vm.invoke("CreateGroup"),force=vm.invoke("CreateForce"),location=vm.invoke("Location",std::array{zero,zero}),rect=vm.invoke("Rect",std::array{zero,zero,zero,zero});for(auto [value,type,remove]:std::initializer_list<std::tuple<Value,const char*,const char*>>{{timer,"+tmr","DestroyTimer"},{group,"+grp","DestroyGroup"},{force,"+frc","DestroyForce"},{location,"+loc","RemoveLocation"},{rect,"+rct","RemoveRect"}}){require(session.debugHandleType(value.bits)==type,"Live handle type differs");session.retainHandle(value.bits);session.retainHandle(value.bits);vm.invoke(remove,std::array{value});require(session.debugHandleType(value.bits)==type,"Retained destroyed handle type differs");session.releaseHandle(value.bits);require(session.debugHandleType(value.bits)==type,"Retained type disappeared before last release");session.releaseHandle(value.bits);require(!session.debugHandleType(value.bits),"Released destroyed handle type remained");}});
+)jass"),{});session.initialize();auto& vm=session.runtime();auto zero=vm.real(Real::fromBits(0));auto timer=vm.invoke("CreateTimer"),group=vm.invoke("CreateGroup"),force=vm.invoke("CreateForce"),location=vm.invoke("Location",std::array{zero,zero});for(auto [value,type,remove]:std::initializer_list<std::tuple<Value,const char*,const char*>>{{timer,"+tmr","DestroyTimer"},{group,"+grp","DestroyGroup"},{force,"+frc","DestroyForce"},{location,"+loc","RemoveLocation"}}){require(session.debugHandleType(value.bits)==type,"Live handle type differs");session.retainHandle(value.bits);session.retainHandle(value.bits);vm.invoke(remove,std::array{value});require(session.debugHandleType(value.bits)==type,"Retained destroyed handle type differs");session.releaseHandle(value.bits);require(session.debugHandleType(value.bits)==type,"Retained type disappeared before last release");session.releaseHandle(value.bits);require(!session.debugHandleType(value.bits),"Released destroyed handle type remained");}});
     test("retained_destroyed_dynamic_handle_types",[]{ScriptSession session(compile(R"jass(type trigger extends handle
 type event extends handle
 type boolexpr extends handle
