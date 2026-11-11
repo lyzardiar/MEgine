@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 资源技能玩家目标关系组合（待批次验证）
+
+路径：`src/session_resource_spells.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。资源技能将 player／play 与敌友、中立作为关系并集，保留各技能自身的目标限制与施法归属检查。
+
+必要检查：Win32 Release 客户端及 control 目标编译通过。以 `generate-control-fixture.py --data-root <root> --steal-targets <player|player-enemy> --output <fixture>` 生成地图，再运行 `war3_control_tests <root> <fixture> resource-<variant>` 各 1／0，覆盖己方、其他盟友、敌方、自身拒绝及 Mana Steal 实际效果；混合关系在修复前因己方被拒绝而失败。夹具位于 `tmp/docs-artifacts/war3/resource-player/`。
+
+本批 1/3；批次合并资源技能正常流程与目标关系验证。其他资源技能、动态归属、原版目标语义及实际窗口待验证。
+
+
 ## 载尸自动施法与技能目标关系批次（部分验证）
 
 范围：`16db61d`、`a26fc85`、`727fe2f`，含测试修正 `11d4b48`、`7136321`，集成版本 `727fe2f`。Win32 Release 客户端、corpse-cargo、corpse、caster、control 目标编译通过，重新生成默认夹具。以原版安装目录为 `<root>`，`war3_corpse_cargo_tests <root> tmp/docs-artifacts/war3/corpse-cargo/fixture.w3m <autocast|cargo>` 和 `war3_corpse_tests <root> tmp/docs-artifacts/war3/corpses/fixture.w3m <spirit|items>` 各 1／0；上一批三个失败项均已在集成版本通过。
