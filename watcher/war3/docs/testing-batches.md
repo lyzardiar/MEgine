@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 编队订单、变形移动与自身联盟批次（部分验证）
+
+范围：`60d6030`、`7abe17e`（含补充 `8885bfc`）、`341b634`，集成版本 `341b634`。Win32 Release 客户端、订单、游戏流程、变形及 clock 目标编译通过，保留已有 C4456／C4389 告警。订单测试 `self-alliance`、`formation-duplicates`、`morph-movement`、`formation-speed`、`formation-completion`、`formation-facing`、`formation-wire`、`smart-bridge` 各 1 通过／0 失败，默认入口退出 0、输出 38 条 PASS；变形 `morph-orders`、`morph` 各 1 通过／0 失败，游戏流程入口退出 0、输出 1 条 PASS，clock 的 `player_configuration_restores_diplomacy_and_creation` 为 1 通过／0 失败。共 13 个进程成功、50 条 PASS，部分入口未输出 RESULT。日志与隔离用户目录位于 `tmp/docs-artifacts/war3/orders-alliance-batch-20261112/`。
+
+游戏流程检查包含双方非对称联盟方向和无效句柄；变形检查通过真实妖术和驱散路径，基础移速由测试设置为零。原版自身联盟默认值及修改语义、旧存档自身联盟位、真实读档与双端联机／回放、编队重复成员的其他订单类型与事件重入、真实窗口和原版对照尚待验证；游戏胜利事件仍未实现，见 `game-flow.md`。未执行项保留待测，下一功能批次从 0/3 开始。
+
 ## 脚本自身联盟查询（待批次验证）
 
 路径：`src/session.cpp`、`src/session_match.cpp`、`tests/order_queue_tests.cpp`。新会话默认设置玩家对自身的被动联盟位，脚本设置该位后，`GetPlayerAlliance`、`IsPlayerAlly/Enemy` 和 `IsUnitAlly/Enemy` 按对应玩家方向读取同一状态；普通控制及战斗关系沿用现有逻辑。原 1.27 `IsUnitAlly` 地址 `0x6f1e8520` 按查询玩家的被动联盟位判断单位所有者，`IsUnitEnemy` 地址 `0x6f1e85c0` 对结果取反；`IsPlayerEnemy` 地址 `0x6f1e8090` 同样按传入玩家联盟位判断。新会话默认自身友军是当前默认处理，原版初始化细节待实际对照。
