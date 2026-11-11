@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 控制技能玩家与自身目标筛选（待批次验证）
+
+路径：`src/session_control_spells.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。控制技能将 player／play 纳入关系并集，并按 notself／nots 排除施法者；使用施法归属判断 player。
+
+必要检查：Win32 Release 客户端及 control 目标编译通过；以 `generate-control-fixture.py --data-root <root> --ensnare-targets <player|player-enemy|player-notself> --output <fixture>` 生成地图，再运行 `war3_control_tests <root> <fixture> control-<variant>` 各 1／0，覆盖己方、盟友、敌方、敌对中立、自身及实际网缚。夹具在 `tmp/docs-artifacts/war3/control-player/`。
+
+本批 3/3，先集中验证尸体、普通施法及控制技能；其他控制技能、原版关系变化、实际窗口和完整对局待验证。
+
+
 ## 普通技能玩家目标关系（待批次验证）
 
 路径：`src/session_spells.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`。普通施法及通用技能目标判定识别 player／play，并将其与敌友、中立及自身目标条件组合；仅含 player 的目标不会放行其他玩家。
