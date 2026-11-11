@@ -92,6 +92,16 @@ function InstallInterruptSpend takes unit caster returns nothing
     call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
     call TriggerAddAction(t,function InterruptSpendGold)
 endfunction
+function InterruptStop takes nothing returns nothing
+    set interruptCount=interruptCount+1
+    call IssueImmediateOrder(interruptedTarget,"stop")
+endfunction
+function InstallInterruptStop takes unit caster returns nothing
+    local trigger t=CreateTrigger()
+    set interruptedTarget=caster
+    call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
+    call TriggerAddAction(t,function InterruptStop)
+endfunction
 function InterruptPause takes nothing returns nothing
     set interruptCount=interruptCount+1
     call PauseUnit(interruptedTarget,true)

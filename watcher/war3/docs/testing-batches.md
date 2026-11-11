@@ -8987,3 +8987,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`0a4a6be`、`1614771`、`d12e273`，集成版本 `d12e273`。Win32 Release 客户端、caster、transport、corpse cargo、orc cargo、harvest 和 order queue 目标编译通过，重新生成相关夹具。caster 的登船四种、卸载三种和装载移动两种回调共 9 个入口各输出 1 条 PASS；transport 的 `flow`、`boarding-route`、`orders`、`capacity`、`lifecycle`、`grid-drop`，corpse cargo 的 `cargo`，orc cargo 的 `flow`、`release` 共 9 个入口各报告 1／0；harvest 默认入口输出 1 条 PASS，order queue 默认入口输出 37 条 PASS，共 20 个进程成功。日志 `tmp/docs-artifacts/war3/transport-callback-batch.log`；部分入口不输出 RESULT。
 
 覆盖普通运输、尸体装载和吞噬的现有消费者；矿井卸载仅由 harvest 默认流程间接覆盖，回调改变载具容量／订单／归属、实际窗口、多人和原版事件时序仍待验证。本批不代表完整对局验收，下一功能批次从 0/3 开始。
+
+### 缠绕金矿换令回调状态复核（待批次验证）
+
+路径：`src/session_mines.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`。世界之树中断施法后重新检查自身与金矿身份、生命周期、能力、资源、覆盖状态及距离；回调换令时保留新订单，不启动失效缠绕。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> entangle-cancel-pause`、`entangle-cancel-remove`、`entangle-cancel-move`、`entangle-cancel-stop`，四例修复前失败、修复后各输出 1 条 PASS。批次合并普通／即时缠绕、金矿资源与生命周期；回调改变矿量／能力／归属、原版时序和实际窗口待验证。本批 1/3。
