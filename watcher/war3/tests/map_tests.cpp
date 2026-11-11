@@ -315,6 +315,47 @@ call SetUnitState(subject, UNIT_STATE_LIFE, 50.0)
 endfunction
 )jass";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"unit-damage-fixture.j",script,"preloader nested damage fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("runDamage");require(vm.global("observed").bits==333,"Nested preload damage, killer, or outer context restoration failed");auto subject=vm.global("subject");require(session.units().at(subject.bits)->userData==333 && std::bit_cast<float>(session.units().at(subject.bits)->life.bits())==0,"Nested preload damage state did not persist");
     });
+    test("preloader_destructable_enumeration",[&]{
+        auto dir=fs::absolute(argv[2])/L"preloader-enum-tree"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
+        {std::ofstream file(dir/L"Preload"/L"enum.j",std::ios::binary);file<<R"jass(globals
+integer selected=0
+endglobals
+function filterTree takes nothing returns boolean
+return GetDestructableTypeId(GetFilterDestructable()) == 'LTlt' and GetDestructableX(GetFilterDestructable()) == 64.0
+endfunction
+function never takes nothing returns boolean
+return false
+endfunction
+function selectTree takes nothing returns nothing
+if GetEnumDestructable() != null and GetDestructableX(GetEnumDestructable()) == 64.0 then
+    set selected=selected+1
+    call SetDestructableLife(GetEnumDestructable(), 10.0)
+endif
+endfunction
+function PreloadFiles takes nothing returns nothing
+local destructable first=CreateDestructable('LTlt', 64.0, 64.0, 0.0, 1.0, 0)
+local destructable second=CreateDestructable('LTlt', 128.0, 64.0, 0.0, 1.0, 0)
+local rect area=Rect(32.0, 32.0, 160.0, 96.0)
+local filterfunc predicate=Filter(function filterTree)
+local conditionfunc no=Condition(function never)
+local boolexpr inverse=Not(no)
+local boolexpr both=And(predicate, inverse)
+local boolexpr combined=Or(both, no)
+local hashtable saved=InitHashtable()
+call EnumDestructablesInRect(area, combined, function selectTree)
+if selected == 1 and GetDestructableLife(first) == 10.0 and GetDestructableLife(second) != 10.0 then
+    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_GOLD, 401)
+endif
+call DestroyBoolExpr(combined)
+call DestroyBoolExpr(both)
+call DestroyBoolExpr(inverse)
+call DestroyCondition(no)
+call SaveBooleanExprHandle(saved, 1, 2, predicate)
+call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_HERO_TOKENS, GetHandleId(saved))
+call RemoveRect(area)
+endfunction
+)jass";require(bool(file),"Cannot create enumeration preload source");}Archives archives(argv[1]);auto map=archives.readCandidates({"Maps\\FrozenThrone\\Campaign\\War3XBonusCredits.w3x"},ArchiveScope::Common);require(bool(map),"Missing source map");archives.mountMap(std::make_shared<const Bytes>(map->bytes),"War3XBonusCredits.w3x");auto world=World::read(archives);auto info=world->data().info;auto common=archives.readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Missing common script");std::string script="function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"enum-fixture.j",script,"preloader enumeration fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("Preloader",std::array{vm.string("enum.j")});auto player=vm.invoke("Player",std::array{vm.integer(0)});require(vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_GOLD")}).bits==401,"Preloader filter and enumeration did not run");auto table=vm.handle("hashtable",vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_HERO_TOKENS")}).bits);auto predicate=vm.invoke("LoadBooleanExprHandle",std::array{table,vm.integer(1),vm.integer(2)});auto area=vm.invoke("Rect",std::array{vm.real(jass::Real::fromInteger(32)),vm.real(jass::Real::fromInteger(32)),vm.real(jass::Real::fromInteger(160)),vm.real(jass::Real::fromInteger(96))});bool expired=false;try{vm.invoke("EnumDestructablesInRect",std::array{area,predicate,jass::Value{vm.module().typeId("code"),0,{}}});}catch(const std::exception& e){expired=std::string_view(e.what()).find("code owner has been destroyed")!=std::string_view::npos;}require(expired,"Expired child filter was not rejected safely");vm.invoke("DestroyBoolExpr",std::array{predicate});require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("preloader_destructable_lifecycle",[&]{
         auto dir=fs::absolute(argv[2])/L"preloader-destructable"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
         {std::ofstream file(dir/L"Preload"/L"tree.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing

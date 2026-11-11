@@ -84,7 +84,7 @@ struct Runtime::Impl {
             case ExpressionKind::Real:value.bits=e.realBits;break;
             case ExpressionKind::Boolean:value.bits=e.text=="true";break;
             case ExpressionKind::Null:break;
-            case ExpressionKind::Function:value.bits=module.binding(id).index+1;value.codeOwner=&owner;break;
+            case ExpressionKind::Function:value.bits=module.binding(id).index+1;value.codeOwner=&owner;value.codeLifetime=owner.lifetimeToken();break;
             case ExpressionKind::String:value=owner.string(decodeString(e.text,e.position));break;
             default:fail(e.position,"Invalid JASS literal");
         }return value;

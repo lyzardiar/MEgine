@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 预加载脚本可破坏物过滤枚举（待批次验证）
+
+路径：`src/session_game.cpp`、`src/jass_runtime.cpp`、`tests/map_tests.cpp`。独立 Preloader 子脚本可使用过滤／组合条件枚举矩形内可破坏物并在回调中操作对象。函数值记录所属运行时的生命令牌；脚本退出后遗留的过滤器会报失效，不能作为长期回调使用，完整跨子脚本生命周期仍待实现。
+
+必要检查：Win32 Release `war3_map_tests` 编译通过；`war3_map_tests <root> tmp/docs-artifacts/war3/map-preloader-enum preloader_destructable_enumeration` 为 1 通过／0 失败，覆盖过滤、And／Or／Not、实际树木修改及子运行时退出后的过滤器拒绝，未加载 Game.dll；修复前 `Filter` 未绑定。初版夹具使用木材传递大句柄时被资源上限截断，改用英雄令牌状态后通过。
+
+本批 3/3，先合并验证预加载范围伤害、对象生命周期、嵌套事件、枚举和 JASS 函数值相关回归。原版跨脚本回调生命周期、对象变更／枚举重入、真实地图和完整对局仍待验证。
+
+
 ## 预加载脚本可破坏物生命周期（待批次验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`。独立 Preloader 子脚本继承可破坏物创建、移除、击杀、生命／属性／外观操作及死亡事件目标查询，直接作用于共享会话对象；枚举和子脚本注册长期回调不在本项范围。
