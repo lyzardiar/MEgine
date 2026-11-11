@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 资源、控制权与传送目标关系批次（部分验证）
+
+范围：`9ec4bbc`、`ef63bb2`、`e61b1fe`，集成版本 `e61b1fe`。Win32 Release 客户端、control、caster 和 campaign AI 目标编译通过。以 `<root>` 为原版安装目录，`war3_control_tests <root> <fixture> <mode>` 对 `tmp/docs-artifacts/war3/resource-player/` 的 player／player-enemy、`charm-relations/` 的 player／neutral／enemy、`teleport-relations/` 的 player／allies／self 各执行对应名称模式，8 项各 1／0；默认 `control-spells/fixture.w3m` 的 `dark-summoning`、`flow`、`purge` 各 1／0。
+
+`war3_caster_tests <root> tmp/docs-artifacts/war3/caster-spells/fixture.w3m <player-targets|targets>` 分别 4／0、13／0；`war3_campaign_ai_tests <root> <root>/Maps/Scenario/(4)WarChasers.w3m warchasers-spell` 为 2／0。共 14 个进程、30 通过／0 失败，明确检查 Game.dll 的用例未加载该 DLL；进程输出与退出码记录在 `tmp/docs-artifacts/war3/target-relations-batch.log`。
+
+召回护符、召唤钻石、传送权杖和回城卷轴入口由 dark-summoning 用例覆盖；占据和控制魔法独立流程未执行，原版自定义目标与既有友敌前提、动态归属／联盟、真实窗口和完整对局仍待验证。本批不代表全部玩法验收；下一功能批次从 0/3 开始。
+
+
 ## 传送技能玩家与盟友目标（待批次验证）
 
 路径：`src/session_teleport.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。传送目标在既有友方前提下将 player、friend／allies 和 neutral 作为并集；allies 可选择同玩家单位及友方中立单位，self 不再指代其他同玩家单位。城镇传送卷轴的既有城镇目标规则保持不变。
