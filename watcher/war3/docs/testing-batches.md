@@ -8511,3 +8511,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/native_tests.cpp`、`tests/lua_tests.cpp`。地图文字高度查询按父级、模板锚点和运行时锚点计算控件宽度，再复用原字体度量与换行算法；支持父级尺寸变化、运行时覆盖模板锚点，并拒绝循环和过深的锚点链。已新增布局与宽窄文本用例。
 
 快速检查：Win32 Release 客户端、Lua 和 native 测试目标编译通过；新增用例未执行。集中运行 `war3_native_tests <data-root> <scratch-root>` 和 `war3_lua_tests <data-root> G:/qcloud_20144088.w3x`，核对父级缩放、单／双锚点、冲突和循环、宽窄换行与原图脚本；当前工作区 Lua 文件包含原有人工清怪探针，应分别记录其影响。布局查询与渲染器使用各自的布局入口，复杂 FDF、字体、实际窗口及原版像素／数值一致性待对照。本批 1/3。
+
+### 界面转义文字度量（待批次验证）
+
+路径：`src/glue.cpp`、`src/lua_jass_bridge.cpp`、`src/game_commands.cpp`、`tests/native_tests.cpp`、`tests/lua_tests.cpp`。界面自然宽度、地图文字宽度查询与工具提示行数按实际可见文字解析颜色、换行和 `||` 转义；工具提示计算复用绘制侧换行算法，避免对单个竖线重复计宽。
+
+快速检查：Win32 Release 客户端、Lua 和 native 测试目标编译通过；新增用例未执行。批次与跨锚点任务合并运行 `war3_native_tests <data-root> <scratch-root>`、`war3_lua_tests <data-root> G:/qcloud_20144088.w3x`，检查转义竖线、颜色、换行、宽度及折行；实际工具提示高度、地图标题位置、原版文本显示及 GPU 画面待对照。本批 2/3。
