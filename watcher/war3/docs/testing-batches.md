@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字视口边界裁剪（待批次验证）
+
+路径：`src/game_text_tag.cpp`，说明见 `docs/text-tags.md`。按世界视口及已有裁剪区域裁剪字形，锚点在视口外时仍绘制进入视口的文字，绘制结束恢复原有裁剪状态。
+
+必要检查：Win32 Release 客户端编译通过；Blizzard TD 隐藏窗口运行 60 游戏帧并正常退出，原图左边界出现部分可见的文字，右边界越界文字被裁剪，截图和日志为 `tmp/docs-artifacts/war3/texttag-batch-20261112/blizzard-clip.png`、`blizzard-clip.log`。波次文字仍互相遮挡，字号和布局尚未与原版对照。
+
+本批 1/3；集中验证四个边界、屏幕速度进出视口、多行和颜色片段、已有裁剪状态恢复、不同分辨率及原版边界行为。
+
+
 ## 飘字 WTS、转义和屏幕速度批次（部分验证）
 
 范围：`1fd2483`、`e3d2a21`、`f8050c5`，集成版本 `f8050c5`。Win32 Release 客户端、clock 和 CampaignAI 编译通过。3 个测试进程共 5 通过／0 失败：飘字位移、暂停、改速、重定位及 v1/v2 存档恢复 2 项；Blizzard TD WTS 拼接 1 项；失效飘字句柄和原图 300 秒自然推进至至少第 3 波 2 项。clock 日志及窗口产物位于 `tmp/docs-artifacts/war3/texttag-batch-20261112/`。
