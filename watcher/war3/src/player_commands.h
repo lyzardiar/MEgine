@@ -1,6 +1,8 @@
 // Author: MiYu. Explicit player-issued ground and stop commands shared by game input and simulation.
 #pragma once
 #include "chat_channel.h"
+#include "commerce.h"
+#include <span>
 #include <cstdint>
 #include <functional>
 #include <optional>
@@ -30,6 +32,7 @@ struct PlayerCommand {
     std::optional<unsigned> chatRecipient;
     std::uint32_t shop=0;
 };
+void mergeLimitedAbilityCommands(ScriptSession& session,unsigned player,std::uint32_t anchor,std::span<const std::uint32_t> selected,std::vector<CommandButton>& buttons,std::uint32_t book=0);
 bool playerCommandQueueable(PlayerCommandKind kind);
 unsigned dispatchPlayerCommand(ScriptSession& session,const PlayerCommand& command,const std::function<bool()>& keepGoing={},bool fromQueue=false);
 }

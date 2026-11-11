@@ -8649,3 +8649,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 范围：`e92f4c8`、`40491d0`、`441491b`，及前者补充 `80235ca`；集成版本 `441491b`。Win32 Release 客户端、clock 和 stealth 目标编译通过，两个隔离夹具生成成功。`war3_clock_tests` 的 `negative_point_damage_heals`、`recovery_bundle_restores_point_damage` 各为 1 通过／0 失败；`war3_stealth_tests` 的 `flare-charges`、`sentinel`、`flow`、`dust`、`tower`、`meld` 均退出 0，各输出 1 条 PASS（其中 `flare-charges` 提前返回，没有输出 RESULT 或检查 Game.dll）。
 
 覆盖虚无倍率与延迟恢复、点伤害队列检查点、有限照明弹／哨兵释放和取消、按钮计数、隐身与显形回归。物品／可破坏物负伤害、治疗拦截、真实窗口、原版动态时序、多选数量聚合、联机及跨关存档仍未验证；无完整原版验收结论。下一功能批次从 0/3 开始。
+
+### 多选有限技能次数与施法者（待批次验证）
+
+路径：`src/commerce.h`、`src/player_commands.{h,cpp}`、`src/game_commands.cpp`、`src/game_spells.cpp`、`tests/stealth_tests.cpp`。同类型可控制单位的哨兵／照明弹按钮聚合最大余量；主选不可用时选择可用同组单位，发令跳过耗尽者并在首个接受后停止。经典联机编码保留单发令者限制，实验联机使用现有多发令者动作。原版静态数量聚合依据见[哨兵](sentinel.md)。
+
+快速检查：Win32 Release 客户端及 stealth 测试目标编译通过；已知问题最小复现 `war3_stealth_tests <data-root> ../../tmp/docs-artifacts/war3/stealth-reveal/fixture.w3m group-counts` 退出 0、输出 1 条 PASS，覆盖主单位耗尽、同组可用者及全组耗尽；该检查不经过真实窗口。批次验证不同数量、无限与有限混合、能力等级、共享控制、排队／冷却、法术书、实验网络以及实际窗口，原版候选选择次序仍待对照。本批 1/3。
