@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## Blizzard TD 凤凰对象缺失（待批次验证）
+
+路径：`src/session_rebirth.cpp`、`src/session_passive_info.cpp`、`tests/campaign_ai_tests.cpp`。原版 `(6)BlizzardTD.w3x` 中 `A01J` 凤凰被动的鸟型 `o00R` 不存在，而蛋型 `o00S` 存在；创建单位时不再因缺失对象终止地图，并跳过无法完成的凤凰变形／孵化。有效鸟蛋定义仍使用既有凤凰流程；原版对缺失对象的具体动态行为待对照。
+
+必要检查：Win32 Release 客户端及 CampaignAI 目标编译通过；原图 `blizzardtd-phoenix` 为 1 通过／0 失败，覆盖缺失引用、蛋单位创建及正常凤凰变蛋。原图 `--main-check --simulate-ms 60000 --mute` 初始化与推进通过，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/td-probe/after2.log`。该探针未建塔或完成波次。
+
+本批 3/3，先统一验证：缺失鸟型／蛋型及正常凤凰、能力移除／变化和存档，原图波次及窗口；同时覆盖本批 Esc 事件、计时器查询／暂停与恢复。另一原图 `(8)AzureTowerDefense.w3x` 在初始化时因缺失 `PathTextures\\8x8SimpleSolid.blp` 阻塞，待单独定位。
+
+
 ## 同步回调中的计时器时间（待批次验证）
 
 路径：`src/session.cpp`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_dialogs.cpp`、`tests/clock_tests.cpp`。计时器运行时的已用／剩余时间及计时器窗口从当前模拟时间计算；暂停时先固定当前已用时间，使在时间事件等较早回调中暂停后恢复不会丢失一个模拟步。
