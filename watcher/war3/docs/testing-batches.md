@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 移动命令点击场景物件（待批次验证）
+
+路径：`src/game_view.cpp`。玩家通过移动按钮或热键选取树木、桥梁和地面物品时，按鼠标射线地面落点发送移动命令；点击单位仍走跟随目标路径，右键的采集、修理和拾取语义保持原有处理。此前非单位目标被送入不支持该组合的目标命令而被拒绝。
+
+快速检查：`cmake --build build/windows-x86 --config Release --target war3 -j 4` 编译通过；尚未执行窗口操作。
+
+待批次检查：实际窗口选择战斗单位和工人，使用移动命令点击树木、桥面、地面物品与单位，检查实际路径、落点、跟随、Shift 队列及 Ctrl 子组；回归右键采集／拾取／修理和实验联机。原版拾取边界及场景遮挡待对照。本项为当前功能批次 1/3。
+
 ## 边界射线、地面物品与波形表现批次（部分验证）
 
 集成版本 `5dce84f`，范围 `7bfd107`、`9a362a1`、`5dce84f`。Win32 Release 客户端、CampaignAI、control、commerce、clock 目标编译通过；control 目标有既有 C4456 变量遮蔽警告。`war3_campaign_ai_tests <data-root> humanx03-tag-surface`、`water-tag-surface`，`war3_control_tests <data-root> <wave-fixture> wave-target-reentry`，以及 `WAR3_CLOCK_FILTER=recovery_bundle_restores_area_wave war3_clock_tests <data-root> <scratch>` 各为 1 通过／0 失败；`war3_commerce_tests <data-root> <commerce-fixture>` 退出 0 并输出 1 条 PASS，无分项汇总。
