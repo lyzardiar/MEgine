@@ -1,5 +1,16 @@
 # 独立客户端测试队列
 
+## 运输目标的关系组合（待批次验证）
+
+路径：`src/session_transport.cpp`、`tests/generate-transport-fixture.py`、`tests/transport_tests.cpp`。货舱与装载目标各自按玩家、友方、敌方和中立关系的并集筛选，再共同约束乘客；敌方限定不再接受己方，友敌混合与玩家加盟友不再错误交叉限制。
+
+必要检查：Win32 Release 客户端和 transport 目标编译通过。使用 `generate-transport-fixture.py --data-root <root> --target-relations <enemy|mixed|player-allies|neutral> --output <fixture>` 生成地图，对应 `war3_transport_tests <root> <fixture> relations-<variant>` 各 1／0，覆盖四种关系组合的命令接受与实际装载。
+
+此前 `e2ea11c` 的飞艇货舱缩写夹具错误覆盖基类 `Acar`，实际飞艇使用 `Sch3`，所以当时 cargo／both 用例未证明货舱字段的缩写行为。现已修正夹具覆盖 `Sch3`，重新生成 cargo、load、both 并各取得 1／0；未加载 Game.dll。夹具位于 `tmp/docs-artifacts/war3/transport-relations/` 和 `transport-alias/`。
+
+本批 2/3；原版动态目标关系、不同运输单位及完整对局待集中验证。
+
+
 ## 尸体技能与载尸车友敌筛选（待批次验证）
 
 路径：`src/session_corpses.cpp`、`src/session_transport.cpp`、`tests/generate-corpse-cargo-fixture.py`、`tests/corpse_cargo_tests.cpp`。尸体技能和载尸车识别 allies／enemies 关系词及已展开的缩写，继续保留现有玩家和中立判定。

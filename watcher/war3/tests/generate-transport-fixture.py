@@ -57,6 +57,7 @@ def main():
     parser.add_argument('--data-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=ROOT/'tmp/docs-artifacts/war3/transport/fixture.w3m')
     parser.add_argument('--target-aliases', choices=['cargo', 'load', 'both', 'crash'])
+    parser.add_argument('--target-relations', choices=['enemy', 'mixed', 'player-allies', 'neutral'])
     parser.add_argument('--crash-damage', action='store_true')
     parser.add_argument('--crash-revive', action='store_true')
     parser.add_argument('--crash-remove', action='store_true')
@@ -78,10 +79,17 @@ def main():
     files['war3map.j'] = script.encode('utf-8')
     if args.crash_damage or args.crash_revive or args.crash_remove:
         files['war3map.w3a'] = struct.pack('<II', 2, 1) + b'Achd' + bytes(4) + struct.pack('<I', 1) + b'Chd3' + struct.pack('<III f', 1, 1, 3, 75.0) + b'Achd' + struct.pack('<I', 0)
+    if args.target_relations:
+        if args.target_aliases or args.crash_damage or args.crash_revive or args.crash_remove:
+            raise ValueError('Target relations require a separate fixture')
+        relation = dict(enemy=b'enem', mixed=b'frie,enem', neutral=b'neut', **{'player-allies': b'play,alli'})[args.target_relations]
+        def relation_override(ability):
+            return ability + bytes(4) + struct.pack('<I', 1) + b'atar' + struct.pack('<III', 3, 1, 0) + b'grou,' + relation + b',nonsapper\0' + ability
+        files['war3map.w3a'] = struct.pack('<II', 2, 2) + b''.join(relation_override(ability) for ability in (b'Sch3', b'Aloa')) + struct.pack('<I', 0)
     if args.target_aliases:
         if args.crash_damage or args.crash_revive or args.crash_remove:
             raise ValueError('Target aliases and crash overrides require separate fixtures')
-        abilities = [b'Acar', b'Aloa'] if args.target_aliases == 'both' else [dict(cargo=b'Acar', load=b'Aloa', crash=b'Achd')[args.target_aliases]]
+        abilities = [b'Sch3', b'Aloa'] if args.target_aliases == 'both' else [dict(cargo=b'Sch3', load=b'Aloa', crash=b'Achd')[args.target_aliases]]
         def target_override(ability):
             return ability + bytes(4) + struct.pack('<I', 1) + b'atar' + struct.pack('<III', 3, 1, 0) + b'grou,alli,nonsapper\0' + ability
         files['war3map.w3a'] = struct.pack('<II', 2, len(abilities)) + b''.join(target_override(ability) for ability in abilities) + struct.pack('<I', 0)
