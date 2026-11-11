@@ -50,6 +50,17 @@ function InstallInterruptMove takes unit caster, unit target, real x returns not
     call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
     call TriggerAddAction(t,function InterruptMoveTarget)
 endfunction
+function InterruptNewOrder takes nothing returns nothing
+    set interruptCount=interruptCount+1
+    call IssuePointOrder(interruptedTarget,"move",interruptX,GetUnitY(interruptedTarget))
+endfunction
+function InstallInterruptOrder takes unit caster, real x returns nothing
+    local trigger t=CreateTrigger()
+    set interruptedTarget=caster
+    set interruptX=x
+    call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
+    call TriggerAddAction(t,function InterruptNewOrder)
+endfunction
 function InterruptPause takes nothing returns nothing
     set interruptCount=interruptCount+1
     call PauseUnit(interruptedTarget,true)

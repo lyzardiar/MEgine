@@ -8735,3 +8735,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_orders.cpp`、`src/session_combat_orders.cpp`。普通移动和攻击移动仅在中断施法或退出建筑内施工时重新寻路；其他情况复用换令前已计算的路线，仍复核换令后的单位状态。此项补充 `3a16659`、`9313da4`，不单独计入功能批次。
 
 快速检查：Win32 Release 客户端和 caster 目标编译通过；`war3_caster_tests <data-root> <fixture>` 的 `move-cancel-pause`、`attackmove-cancel-pause`、`patrol-cancel-move` 均退出 0、各输出 1 条 PASS。批次回归无施法的普通／攻击移动、建筑内工人退出、路径阻挡变化和回调新订单；大量单位实际性能尚未测量。本批仍为 1/3。
+
+### 施法结束回调新订单（补充检查）
+
+路径：`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`。施法结束事件中下发新的点移动订单，验证外层攻击返回失败且保留新订单与路线；此项补充 `0f68a5d`，不单独计入功能批次。
+
+快速检查：生成 caster 夹具并编译 Win32 Release caster 目标后，`war3_caster_tests <data-root> <fixture> cancel-new-order` 退出 0、输出 1 条 PASS。批次继续覆盖普通移动、攻击移动、待命和物品攻击的回调换令，以及原版事件次序；本批仍为 1/3。
