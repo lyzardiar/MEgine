@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 队形移动开关与 Alt 选项分离（待批次验证）
+
+路径：`src/game_preferences.{h,cpp}`、`src/front_options.cpp`、`src/game_flow_ui.cpp`、`src/game_loading.{h,cpp}`、`src/game_view.{h,cpp}`、`tests/order_queue_tests.cpp`。原版 `GlobalStrings.fdf` 的 `FORMATION_TOGGLE_INFO` 将 Alt 反转选项与队形开关分别说明；选项控制按 Alt 是否可以从关闭状态临时开启队形，小地图队形按钮和 Alt+F 控制持久状态。采用原版皮肤的开／关／按下／禁用纹理及提示，地图自定义皮肤可覆盖；新增的 V7 偏好保存两项，V5／V6 旧值分别迁移为两项初值。此项修正上一条将两个状态合并的行为。
+
+必要检查：Win32 Release 客户端及订单目标编译通过（测试目标保留既有 C4456 告警）；在隔离 `MEGINE_WAR3_USER_DIR` 下执行 `war3_order_queue_tests <data-root> <BootyBay.w3m> formation-settings`，1 通过／0 失败，覆盖 V6 迁移、Alt 与两个开关组合和 V7 保存／读取。隔离窗口成功载入原版人族图标，点击队形按钮后图标及 V7 队形位由开变关；截图和配置位于 `tmp/docs-artifacts/war3/formation-settings-20261112/`。
+
+本批 2/3；集中验证不同种族、自定义皮肤、提示、Alt+F、选项开关组合、恢复、联机及原版布局。具体队形速度与排序仍待实现，窗口夹具尚未验证队伍实际移动。
+
 ## 临时绕过编队及联机命令标志（待批次验证）
 
 路径：`src/main.cpp`、`src/game_view.{h,cpp}`、`src/game_flow_ui.cpp`、`src/lan_action_encoder.cpp`、`src/lan_simulation.{h,cpp}`、`tests/order_queue_tests.cpp`。按下 Alt 时的右键、地面／小地图目标及命令目标点击可绕过现有队形落点分配；联机和回放通过能力命令 `0x0010` 标志携带该状态，排队标志可组合，联机选项及 Alt+F 沿用本地设置。右键捕获失焦或取消时清理修饰键。操作依据：[暴雪操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)；标志依据：[回放格式](https://github.com/scopatz/w3g/blob/master/w3g_actions.txt)。

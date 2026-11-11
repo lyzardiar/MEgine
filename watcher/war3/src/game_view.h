@@ -42,7 +42,7 @@ class GameView {
     IDirect3DTexture9* minimapTerrain();
     std::array<unsigned,4> teamFilterIndices_{};
     std::array<DWORD,4> minimapFilterColors_{};
-    bool allyFilterButtonDown_=false,creepFilterButtonDown_=false,terrainFilterButtonDown_=false,signalButtonDown_=false,signalMode_=false,minimapTerrainVisible_=true;
+    bool allyFilterButtonDown_=false,creepFilterButtonDown_=false,terrainFilterButtonDown_=false,signalButtonDown_=false,formationButtonDown_=false,signalMode_=false,minimapTerrainVisible_=true;
     std::unique_ptr<GlueScreen> allyFilterTooltip_,mapFramesScreen_;
     std::uint32_t hoveredCommandFrame_=0;
     std::uint32_t hoveredItemFrame_=0;

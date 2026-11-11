@@ -8,8 +8,10 @@ struct GameCameraPreferences {
     unsigned mouseSpeed=50,keySpeed=50;
     bool healthBars=false;
     bool enhancedTooltips=true;
-    bool formationMovement=true;
+    bool formationToggle=true;
     bool subgroupModifier=false;
+    bool formationMovement=true;
+    bool formationFor(bool alt) const {return alt?(formationToggle?!formationMovement:false):formationMovement;}
     bool operator==(const GameCameraPreferences&) const = default;
 };
 struct GameAudioPreferences {
