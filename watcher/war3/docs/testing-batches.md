@@ -8505,3 +8505,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 范围：`ea0b273`、`e4648aa`、`c218352` 及本次测试修正。Win32 Release 客户端、session 和 Lua 测试目标编译通过；`war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 为 28 通过／0 失败，覆盖固定类型及事件、表达式的多次引用、销毁和释放。首次运行的矩形夹具因未附加地形失败，改为不在无地图夹具中创建矩形后重测通过，日志 `tmp/docs-artifacts/war3/handle-batch-session-{,final}.log`。
 
 原图 Lua 人工探针首次因旧计时器断言不符合新行为失败；更新断言并补充事件、点和附着特效、技能的保留查询后，使用本机原版资源及 `G:/qcloud_20144088.w3x` 重测为 2 通过／0 失败、未加载 Game.dll，日志 `tmp/docs-artifacts/war3/handle-batch-lua-final.log`。该运行包含工作区原有人工清怪探针，不代表正常对局或完整通关。矩形及其他类型、原版引用计数／销毁时序、存档恢复、真实窗口和对局仍待验证；下一功能批次从 0/3 开始。
+
+### 跨锚点地图文字高度（待批次验证）
+
+路径：`src/map_frames.{h,cpp}`、`src/lua_jass_bridge.cpp`、`tests/native_tests.cpp`、`tests/lua_tests.cpp`。地图文字高度查询按父级、模板锚点和运行时锚点计算控件宽度，再复用原字体度量与换行算法；支持父级尺寸变化、运行时覆盖模板锚点，并拒绝循环和过深的锚点链。已新增布局与宽窄文本用例。
+
+快速检查：Win32 Release 客户端、Lua 和 native 测试目标编译通过；新增用例未执行。集中运行 `war3_native_tests <data-root> <scratch-root>` 和 `war3_lua_tests <data-root> G:/qcloud_20144088.w3x`，核对父级缩放、单／双锚点、冲突和循环、宽窄换行与原图脚本；当前工作区 Lua 文件包含原有人工清怪探针，应分别记录其影响。布局查询与渲染器使用各自的布局入口，复杂 FDF、字体、实际窗口及原版像素／数值一致性待对照。本批 1/3。

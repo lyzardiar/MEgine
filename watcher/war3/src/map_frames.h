@@ -45,6 +45,7 @@ public:
     std::uint32_t root() const {return 1;}
     const std::shared_ptr<FrameDefinitions>& definitions() const {return definitions_;}
     const Node& node(std::uint32_t id) const;
+    MapFrameRect layout(std::uint32_t id,const std::function<std::pair<float,float>(std::uint32_t)>& textSize) const;
     bool contains(std::uint32_t id) const {return nodes_.contains(id);}
     std::uint32_t resolveReference(std::uint32_t source,const std::string& name) const;
     std::uint32_t findSimple(const std::string& name,std::uint32_t context,std::string_view type) const;
