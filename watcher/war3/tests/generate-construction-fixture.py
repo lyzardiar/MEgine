@@ -25,6 +25,9 @@ integer probe_repair_reissued=0
 destructable probe_repair_bridge=null
 real probe_bridge_life=0
 integer probe_bridge_changed=0
+unit probe_assist_remove=null
+integer probe_assist_changed=0
+unit probe_assist_building=null
 endglobals
 function ProbeStart takes nothing returns nothing
     set probe_started=probe_started+1
@@ -83,6 +86,28 @@ function ProbeBridgeSetup takes destructable target, real life returns nothing
     set probe_bridge_changed=0
     call TriggerRegisterPlayerStateEvent(t,Player(0),PLAYER_STATE_RESOURCE_GOLD,LESS_THAN,100.0)
     call TriggerAddAction(t,function ProbeBridgePayment)
+endfunction
+function ProbeAssistPayment takes nothing returns nothing
+    set probe_assist_changed=probe_assist_changed+1
+    call RemoveUnit(probe_assist_remove)
+endfunction
+function ProbeAssistSetup takes unit target returns nothing
+    local trigger t=CreateTrigger()
+    set probe_assist_remove=target
+    set probe_assist_changed=0
+    call TriggerRegisterPlayerStateEvent(t,Player(0),PLAYER_STATE_RESOURCE_GOLD,LESS_THAN,100.0)
+    call TriggerAddAction(t,function ProbeAssistPayment)
+endfunction
+function ProbeAssistProgress takes nothing returns nothing
+    set probe_assist_changed=probe_assist_changed+1
+    call UnitSetConstructionProgress(probe_assist_building,50)
+endfunction
+function ProbeAssistProgressSetup takes unit target returns nothing
+    local trigger t=CreateTrigger()
+    set probe_assist_building=target
+    set probe_assist_changed=0
+    call TriggerRegisterPlayerStateEvent(t,Player(0),PLAYER_STATE_RESOURCE_GOLD,LESS_THAN,100.0)
+    call TriggerAddAction(t,function ProbeAssistProgress)
 endfunction
 function config takes nothing returns nothing
 endfunction

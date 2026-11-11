@@ -8661,3 +8661,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/session_repair.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。资源扣费回调改变桥梁生命、最大生命或工人身份／归属轮次时，拒绝应用基于旧状态计算的修理帧；后续修理按新状态继续，资源扣费沿用既有规则。
 
 快速检查：Win32 Release 客户端与 construction 测试目标编译通过；生成 `python tests/generate-construction-fixture.py --data-root <data-root>` 后运行 `war3_construction_tests <data-root> ../../tmp/docs-artifacts/war3/construction/fixture.w3m repair-bridge-callback`，修复前复现失败，修复后退出 0、输出 1 条 PASS。批次合并普通与桥梁修理、回调换令、生命／最大生命变化、移除和归属轮次、扣费边界及路径测试；真实地图和原版回调时序待对照。本批 2/3。
+
+### 协作施工资源回调重入（待批次验证）
+
+路径：`src/session_repair.cpp`、`src/session_construction.cpp`、`tests/generate-construction-fixture.py`、`tests/construction_tests.cpp`。扣费事件移除后续工人时跳过失效对象；逐个复查工人工作状态，建筑生命、所有权轮次或施工进度在回调中改变时不继续使用旧施工帧。
+
+快速检查：Win32 Release 客户端及 construction 测试目标编译通过；生成施工夹具后 `war3_construction_tests <data-root> <fixture> assist-removal` 修复前失败、修复后输出 1 条 PASS，`assist-progress` 输出 1 条 PASS，均退出 0。前者验证回调移除后续工人并继续施工，后者验证脚本进度不被旧帧覆盖及下一帧续行。合批验证施工、修理、命令与资源回调；工人易主／停止／能力变化、多人及原版事件时序仍待对照。本项提交后本批 3/3，先集中验证。
