@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 载尸自动施法数字订单（待批次验证）
+
+路径：`src/session_orders.cpp`、`tests/corpse_cargo_tests.cpp`。数字立即订单入口允许当前单位能力实际登记的自动施法开关通过，未登记订单继续拒绝；既有订单表与能力分发保持原规则。
+
+必要检查：Win32 Release 客户端和 corpse-cargo 目标编译通过；上一批失败项 `war3_corpse_cargo_tests <root> tmp/docs-artifacts/war3/corpse-cargo/fixture.w3m autocast` 复测 1 通过／0 失败，覆盖载尸开启、实际收集、关闭与未登记订单拒绝；未加载 Game.dll。
+
+本批 1/3；订单 852051／852052 的原版精确映射、其他能力和游戏窗口待集中验证。上一批先祖之魂 `spirit` 与复活符文 `items` 失败仍在队列。
+
+
 ## 尸体与运输关系批次（存在失败，待修复）
 
 范围：`a48e54f`、`19ee214`、`2bffb83`，集成版本 `2bffb83`。Win32 Release 客户端、corpse-cargo、corpse、transport、campaign AI 目标编译通过。尸体关系夹具六个模式、载尸 `cargo`／`lifecycle`／`exhume`、尸体 `flow`／`autocast`、运输关系四个模式及缩写／坠落／原始运输六个模式、War Chasers `warchasers-kill` 3／0 和 `warchasers-spell` 2／0，合计 26 通过。明确检查 Game.dll 的用例均未加载该 DLL。
