@@ -22,6 +22,22 @@ template<class F> void rejects(F run,std::string_view message) {try{run();}catch
 int wmain(int argc,wchar_t** argv) {
     if(argc!=2){std::cerr<<"Usage: war3_session_tests <enum-fixture.json>\n";return 2;}
     unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};
+    test("retained_destroyed_fixed_handle_types",[]{ScriptSession session(compile(R"jass(type timer extends handle
+type group extends handle
+type force extends handle
+type location extends handle
+type rect extends handle
+native CreateTimer takes nothing returns timer
+native DestroyTimer takes timer t returns nothing
+native CreateGroup takes nothing returns group
+native DestroyGroup takes group g returns nothing
+native CreateForce takes nothing returns force
+native DestroyForce takes force f returns nothing
+native Location takes real x, real y returns location
+native RemoveLocation takes location p returns nothing
+native Rect takes real minx, real miny, real maxx, real maxy returns rect
+native RemoveRect takes rect r returns nothing
+)jass"),{});session.initialize();auto& vm=session.runtime();auto zero=vm.real(Real::fromBits(0));auto timer=vm.invoke("CreateTimer"),group=vm.invoke("CreateGroup"),force=vm.invoke("CreateForce"),location=vm.invoke("Location",std::array{zero,zero}),rect=vm.invoke("Rect",std::array{zero,zero,zero,zero});for(auto [value,type,remove]:std::initializer_list<std::tuple<Value,const char*,const char*>>{{timer,"+tmr","DestroyTimer"},{group,"+grp","DestroyGroup"},{force,"+frc","DestroyForce"},{location,"+loc","RemoveLocation"},{rect,"+rct","RemoveRect"}}){require(session.debugHandleType(value.bits)==type,"Live handle type differs");session.retainHandle(value.bits);session.retainHandle(value.bits);vm.invoke(remove,std::array{value});require(session.debugHandleType(value.bits)==type,"Retained destroyed handle type differs");session.releaseHandle(value.bits);require(session.debugHandleType(value.bits)==type,"Retained type disappeared before last release");session.releaseHandle(value.bits);require(!session.debugHandleType(value.bits),"Released destroyed handle type remained");}});
     test("saved_event_filename_and_sleep_restore",[&]{
         const std::string source=R"jass(type trigger extends handle
 type triggeraction extends handle

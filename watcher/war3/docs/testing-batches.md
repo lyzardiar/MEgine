@@ -8487,3 +8487,9 @@ Win32 Release 客户端和 Lua、地图准备测试目标编译通过。原图 N
 路径：`src/session.cpp`、`tests/lua_tests.cpp`。原图人工清除可见敌人的诊断过程中，Lua 查询显式保留但已移除单位的句柄类型时抛错；保留引用存在时按单位类型返回 `+w3u`，释放最后一个显式引用后返回空。其他已销毁的保留对象类型仍需分别确认，单位类型在原版相同生命周期下的行为也待对照。
 
 Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／0，覆盖单位引用、移除、查询及释放（`tmp/docs-artifacts/war3/retained-unit-final.log`）。人工清除单位的诊断越过原句柄异常后在模拟时间 62.0938 秒进入暂停（`tmp/docs-artifacts/war3/waves-retained-fix-probe.log`）；该探测改变战局，不代表正常波次或通关。真实游戏、其他句柄生命周期及完整玩法待验证。
+
+### 保留的已销毁固定类型句柄（待批次验证）
+
+路径：`src/session.cpp`、`tests/session_tests.cpp`。显式引用仍存在时，已销毁的固定类型句柄使用其保留的类型标识供调试统计查询，最后一次释放后返回空；事件、布尔表达式、特效和技能的类型依赖已清除的对象状态，仍明确报告不可用。漂浮文字沿用空类型。
+
+快速检查：Win32 Release `cmake --build --preset release --target war3_session_tests --parallel 4` 编译通过；新增测试未执行。批次运行 `war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json`，检查计时器、单位组、玩家组、点和矩形在多次引用、销毁及逐次释放后的类型；结合原图 Lua 统计验证其他固定类型。原版已销毁对象的引用计数及类型生命周期、依赖状态的对象类型和真实对局仍需对照。与前一项已移除单位修复合计本批 2/3。
