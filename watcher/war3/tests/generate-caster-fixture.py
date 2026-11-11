@@ -50,6 +50,16 @@ function InstallInterruptMove takes unit caster, unit target, real x returns not
     call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
     call TriggerAddAction(t,function InterruptMoveTarget)
 endfunction
+function InterruptPause takes nothing returns nothing
+    set interruptCount=interruptCount+1
+    call PauseUnit(interruptedTarget,true)
+endfunction
+function InstallInterruptPause takes unit caster returns nothing
+    local trigger t=CreateTrigger()
+    set interruptedTarget=caster
+    call TriggerRegisterUnitEvent(t,caster,EVENT_UNIT_SPELL_ENDCAST)
+    call TriggerAddAction(t,function InterruptPause)
+endfunction
 function InterruptRemoveItem takes nothing returns nothing
     set interruptCount=interruptCount+1
     call RemoveItem(interruptedItem)

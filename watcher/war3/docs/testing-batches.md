@@ -8705,3 +8705,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_combat_destructable.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`。打断施法后复核攻击者、目标和武器，目标失效时清理旧订单，位置或攻击范围变化时重算路线；回调替换订单时沿用既有修订号保护。
 
 快速检查：Win32 Release 客户端与 caster 目标编译通过。生成 `python tests/generate-caster-fixture.py --data-root <data-root>` 后运行 `war3_caster_tests <data-root> <fixture> attack-cancel-item` 和 `attack-cancel-remove-item`，均退出 0、各输出 1 条 PASS；移动物品复现修复前失败。批次合并物品和可破坏物攻击、施法与订单回归；可破坏物移除／复活、攻击者状态变化、回调新订单、远程弹道、真实窗口及原版时序仍待验证。本批 1/3。
+
+### 攻击移动与巡逻的换令回调复核（待批次验证）
+
+路径：`src/session_combat_orders.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`。打断施法后复核单位状态并从当前位置重算攻击移动路线，巡逻起点采用回调后的坐标；回调替换订单时沿用修订号保护。
+
+快速检查：Win32 Release 客户端和 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> attackmove-cancel-pause` 和 `patrol-cancel-move`，两项修复前失败、修复后均退出 0 且各输出 1 条 PASS。批次合并攻击移动、巡逻、寻路障碍变化及回调新订单回归；所有权／死亡变化、实际窗口、多人及原版事件时序仍待对照。本批 2/3。
