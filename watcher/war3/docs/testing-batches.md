@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## AI 采金选择可达矿井（待批次验证）
+
+路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。AI 新分配采金时按距离和工人能力筛选矿井，并以独立探测状态检查路径能否进入采集范围；每个心跳最多探测四个候选，始终优先最近矿井，其余候选随模拟时间轮转。同城有效的现有采集任务继续保留，避免反复改派。
+
+必要检查：Win32 Release `war3_campaign_ai_tests` 编译通过；`war3_campaign_ai_tests <root> tmp/docs-artifacts/war3/campaign-ai/fixture.w3m harvest-reachable-mine` 为 1 通过／0 失败，检查八座较近矿井隔离、分轮探测、稳定订单和实际采金；修复前无法选择可达矿井。`harvest-compatible-mine` 为 1／0，`harvest-town` 为 2／0；BootyBay 原图 `melee-mines` 为 2／0，均未加载 Game.dll。
+
+本批 2/3；合并验证采集、配额、多工人、多个矿井与树木及路径开销。已接单后动态封路、地图变化、真实对局和原版 AI 选矿顺序仍待验证。
+
+
 ## AI 伐木选择可达树木（待批次验证）
 
 路径：`src/session_ai_economy.cpp`、`tests/campaign_ai_tests.cpp`。AI 新分配伐木时复用采集系统的有界可达树搜索，根据工人能力和目标配置检查树木；单轮最多探测四个候选，未找到时保留轮转位置供后续心跳继续，避免反复选择最近但被地形隔离的树。
