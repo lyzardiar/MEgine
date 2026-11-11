@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 游戏内地图提示换行（待批次验证）
+
+路径：`src/game_view.cpp`。地图提示和聊天消息使用共享字体换行与裁剪，按实际行数向上排列，保留地图颜色／换行标记及聊天中的字面竖线；消息区最多显示最近 20 行。原版消息区高度、时序和长消息截取规则仍需对照。
+
+必要检查：Win32 Release 客户端编译通过；原版 Azure TD 在隐藏窗口运行 60 游戏帧，原先超出屏幕右侧的地图提示已自动换行且消息行未重叠，截图与日志位于 `tmp/docs-artifacts/war3/td-probe/azure-wrap.png`、`azure-wrap.log`，未加载 Game.dll。截图仅为当前客户端的开发检查，不代表原版像素一致性。
+
+本批 1/3；集中检查长中英文、颜色跨行／重置、显式换行、字面竖线、长词、聊天、位置偏移、多消息与 20 行上限、不同分辨率、显示时长、过场／菜单和原版窗口。
+
+
 ## Azure TD 路径、武器与排行榜批次（部分验证）
 
 范围：`56bc0e8`、`e8ca9ee`、`75c3438`，集成版本 `75c3438`。Win32 Release 客户端及 CampaignAI、archive、roots、clock 目标编译通过。6 个进程共 18 通过／0 失败：Azure 原图 `azure-footprint` 1 项、`azure-disabled-weapon` 1 项、`azure-wave` 2 项；古树扎根与武器切换 3 项；排行榜恢复 1 项；归档及纹理别名优先级 10 项。日志位于 `tmp/docs-artifacts/war3/azure-batch-20261112/`。
