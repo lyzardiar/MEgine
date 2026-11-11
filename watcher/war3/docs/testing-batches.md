@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 基地与空闲工人导航快捷键（待批次验证）
+
+路径：`src/game_hero_bar.cpp`、`src/game_view.{h,cpp}`、`src/session.h`。`~` 与 F8 共用空闲工人循环；Backspace 按句柄循环定位己方存活、未隐藏的主基地，不改变选区，联机仅移动本地镜头。主基地分类沿用会话单位分类，单位动态类型修改也生效。操作依据：[暴雪快捷操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)。
+
+快速检查：Win32 Release 客户端编译通过。集中检查两个快捷键、多个基地和工人、无有效目标、选区保持、键盘重复、聊天／菜单屏蔽及实验联机；主基地施工状态、原版次序和实际窗口表现待对照。本批 3/3，先集中验证。
+
 ## 同子组目标技能的可用施法者（待批次验证）
 
 路径：`src/player_commands.{h,cpp}`、`src/game_commands.cpp`、`src/game_spells.cpp`、`tests/stealth_tests.cpp`。普通非通道目标技能的多选按钮在主单位不可用时选择同类型、同目标模式的可用施法者；目标确认时重新检查候选，每次命令只交给一名单位。按钮魔法、图标、名称、说明和冷却按选中施法者显示；有限次数哨兵／照明弹保留既有聚合与候选路径。通道和无目标技能沿用现有处理。原版多施法者只发送一名单位的规则见[暴雪子组说明](https://classic.battle.net/war3/basics/specialcommands.shtml)。

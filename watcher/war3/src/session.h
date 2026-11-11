@@ -1205,6 +1205,7 @@ public:
     void clearPlayerOrders(std::uint32_t handle);
     bool queuePlayerOrder(std::uint32_t handle,const PlayerCommand& command);
     bool idleWorker(std::uint32_t handle,unsigned player);
+    bool townHall(const UnitState& unit) {return unitClassContains(unit.classifications(definitions().unitClasses(unit.type)),"townhall");}
     void selectUnit(std::uint32_t handle,bool selected);
     bool setPlayerUnitSelected(unsigned player,std::uint32_t handle,bool selected);
     std::set<std::uint32_t> playerSelection(unsigned player);

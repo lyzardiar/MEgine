@@ -105,7 +105,7 @@ class GameView {
     std::uint32_t lastHeroShortcut_=0;
     std::uint64_t lastHeroShortcutTime_=0;
     std::vector<std::uint32_t> idleWorkers_;
-    std::uint32_t lastIdleWorker_=0;
+    std::uint32_t lastIdleWorker_=0,lastTownHall_=0;
     std::uint64_t nextIdleWorkerRefresh_=0;
     std::vector<std::uint32_t> spellBookStack_;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> spellTarget_;
@@ -291,6 +291,7 @@ class GameView {
     void drawHeroShortcuts();
     void refreshIdleWorkers(bool force=false);
     void idleWorkerInput(GameInput& input);
+    void townHallInput(GameInput& input);
     void drawIdleWorkers();
 public:
     GameView(std::unique_ptr<GameData> data,Renderer& renderer,Text& text,Log& log);
