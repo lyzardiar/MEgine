@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 吸收与吞噬回流载荷死亡轮次（待批次验证）
+
+路径：`src/session_magic_consumption.cpp`、`src/session_spell_snapshot.cpp`、`tests/control_tests.cpp`、`docs/save-runtime-foundation.md`。吸收与吞噬载荷绑定发射者死亡轮次，飞行中死亡复活后不向新生命回流；吸收生命扣除回调后也复核来源。`SSMS` 写入版本 2；读取版本 1 的回流载荷以恢复时来源死亡轮次初始化，旧格式无法还原发射后的历史。
+
+必要检查：Win32 Release 客户端、control、consumption、clock 目标编译通过；`war3_control_tests <root> tmp/docs-artifacts/war3/control-spells/fixture.w3m <absorb-revival|devour-revival>` 各 1／0，覆盖飞行中死亡复活及回收包恢复后的同一流程；移除命中轮次校验时两项均失败。`war3_consumption_tests <root> tmp/docs-artifacts/war3/eat-magic/fixture.w3m <absorb|devour>` 各 1／0；`WAR3_CLOCK_FILTER=spell_missiles_restore_flight_and_removed_handles war3_clock_tests <root> <scratch>` 为 1／0。资源技能测试未加载 Game.dll。复活后英雄自然回魔，测试以 5 魔法阈值区分至少 75 的旧载荷。
+
+本批 2/3；合并验证回流、快照与相关控制技能。真实第 1 版历史文件、来源易主再转回、回调和原版飞行／死亡语义仍待验证。
+
+
 ## 吞噬魔法守卫、古树与无敌目标（待批次验证）
 
 路径：`src/session_spells.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`。吞噬魔法按 ward、nonancient 和 invu／invulnerable 配置检查守卫、古树及无敌状态；原始 `Advm` 的源目标包含 ward 与 invu，默认继续允许这些类别。
