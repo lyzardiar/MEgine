@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 预加载脚本可破坏物生命周期（待批次验证）
+
+路径：`src/session_game.cpp`、`tests/map_tests.cpp`。独立 Preloader 子脚本继承可破坏物创建、移除、击杀、生命／属性／外观操作及死亡事件目标查询，直接作用于共享会话对象；枚举和子脚本注册长期回调不在本项范围。
+
+必要检查：Win32 Release `war3_map_tests` 编译通过；`war3_map_tests <root> tmp/docs-artifacts/war3/map-preloader-tree preloader_destructable_lifecycle` 为 1 通过／0 失败，覆盖创建死亡树、恢复、属性／无敌查询、移除、目标命令中击杀树以及嵌套死亡事件上下文；修复前因 `CreateDeadDestructable` 未绑定失败，未加载 Game.dll。其他位置／动画接口沿用会话实现，专项尚未覆盖。
+
+本批 2/3；集中验证预加载对象、范围伤害与事件生命周期，以及本批后续变更。原版时序、地图覆盖、枚举和实际地图仍待验证。
+
+
 ## 预加载脚本范围伤害与物体状态（待批次验证）
 
 路径：`src/session_game.cpp`、`tests/map_tests.cpp`。独立 Preloader 子脚本继承 `UnitDamagePoint`、`GetWidgetLife`、`SetWidgetLife`、`GetWidgetX` 和 `GetWidgetY`，复用实际会话物体与伤害队列。

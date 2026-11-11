@@ -315,6 +315,56 @@ call SetUnitState(subject, UNIT_STATE_LIFE, 50.0)
 endfunction
 )jass";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"unit-damage-fixture.j",script,"preloader nested damage fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("runDamage");require(vm.global("observed").bits==333,"Nested preload damage, killer, or outer context restoration failed");auto subject=vm.global("subject");require(session.units().at(subject.bits)->userData==333 && std::bit_cast<float>(session.units().at(subject.bits)->life.bits())==0,"Nested preload damage state did not persist");
     });
+    test("preloader_destructable_lifecycle",[&]{
+        auto dir=fs::absolute(argv[2])/L"preloader-destructable"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
+        {std::ofstream file(dir/L"Preload"/L"tree.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing
+local destructable target=GetOrderTargetDestructable()
+local destructable other=CreateDeadDestructable('LTlt', 512.0, 0.0, 0.0, 1.0, 0)
+call DestructableRestoreLife(other, 200.0, true)
+call SetDestructableMaxLife(other, 300.0)
+call SetDestructableLife(other, 200.0)
+call SetDestructableInvulnerable(other, true)
+if target != null and GetDestructableTypeId(target) == 'LTlt' and GetDestructableX(target) == 100.0 and GetDestructableY(target) == 0.0 and GetDestructableLife(other) == 200.0 and GetDestructableMaxLife(other) == 300.0 and IsDestructableInvulnerable(other) then
+    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_GOLD, 301)
+endif
+call RemoveDestructable(other)
+if GetDestructableTypeId(other) == 0 then
+    call KillDestructable(target)
+endif
+endfunction
+)jass";require(bool(file),"Cannot create tree preload source");}{std::ofstream file(dir/L"Preload"/L"death.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing
+if GetTriggerDestructable() != null and GetTriggerDestructable() == GetTriggerWidget() and GetDestructableTypeId(GetTriggerDestructable()) == 'LTlt' then
+    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 302)
+endif
+endfunction
+)jass";require(bool(file),"Cannot create tree death source");}Archives archives(argv[1]);archives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");auto world=World::read(archives);auto info=world->data().info;auto common=archives.readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Missing common script");std::string script=R"jass(globals
+destructable tree=null
+unit worker=null
+endglobals
+function onOrder takes nothing returns nothing
+call Preloader("tree.j")
+endfunction
+function onDeath takes nothing returns nothing
+call Preloader("death.j")
+endfunction
+function config takes nothing returns nothing
+endfunction
+function main takes nothing returns nothing
+local trigger orderTrigger=CreateTrigger()
+local trigger deathTrigger=CreateTrigger()
+set tree=CreateDestructable('LTlt', 100.0, 0.0, 0.0, 1.0, 0)
+set worker=CreateUnit(Player(0), 'hpea', 0.0, 0.0, 0.0)
+call SetUnitPathing(worker, false)
+call TriggerRegisterPlayerUnitEvent(orderTrigger, Player(0), EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, null)
+call TriggerAddAction(orderTrigger, function onOrder)
+call TriggerRegisterDeathEvent(deathTrigger, tree)
+call TriggerAddAction(deathTrigger, function onDeath)
+endfunction
+function runTree takes nothing returns nothing
+call IssueTargetOrder(worker, "harvest", tree)
+endfunction
+)jass";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"tree-fixture.j",script,"preloader destructable fixture"}})),info);session.attachWorld(std::move(world));session.audioMuted(true);session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("runTree");auto player=vm.invoke("Player",std::array{vm.integer(0)});require(vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_GOLD")}).bits==301 && vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_LUMBER")}).bits==302,"Preloader destructable lifecycle or nested death context failed");auto target=vm.global("tree");require(session.destructables().contains(target.bits) && session.destructables().at(target.bits)->life==0,"Preloader did not kill the actual tree");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("preloader_point_damage_widget",[&]{
         auto dir=fs::absolute(argv[2])/L"preloader-point-damage"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
         {std::ofstream file(dir/L"Preload"/L"point.j",std::ios::binary);file<<R"jass(function PreloadFiles takes nothing returns nothing
