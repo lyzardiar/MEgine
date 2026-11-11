@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 技能与物品目标预览批次（部分验证）
+
+范围 `c3725d0`、`4363938`、`98ffa2e`，集成版本 `98ffa2e`。Win32 Release 客户端、control、stealth 目标编译通过；control 目标有既有 C4456 变量遮蔽告警。`war3_control_tests <data-root> <control-fixture> item-tree`、`war3_stealth_tests <data-root> <stealth-fixture> sentinel`、`war3_control_tests <data-root> <combined-fixture> item-combined-dispel` 各为 1 通过／0 失败，未加载 Game.dll。复合驱散首次使用旧夹具失败；由当前 `tests/generate-combined-item-fixture.py` 生成本批独立夹具后通过。
+
+后台呈现的隔离地图中，圣骑士对投影位置与树木重叠的受伤步兵使用圣光，脚本的施法目标事件显示 `HEAL TARGET OK`；随后使用原版否定权杖 `wneg`，画面显示地面范围圈，点击后次数由 3 降到 2。该夹具人为放置目标并关闭单位路径碰撞；生成脚本、日志与截图位于 `tmp/docs-artifacts/war3/target-preview-batch-20261111/`，测试进程已关闭。
+
+树木／物品／尸体目标范围圈的位置、其他重叠对象与商店／拖动物品、`sneg` 和复合物品预览、无效目标与边界、原版视觉及双端联机尚未在窗口验证；上述会话测试不证明这些画面行为。下一功能批次从 0/3 开始。
+
 ## 驱散权杖地点范围预览（待批次验证）
 
 路径：`src/session.h`、`src/session_item_use.cpp`、`src/game_spells.cpp`。否定权杖、驱魔权杖及带 `AIdi` 的可用物品进入地点目标模式时，使用实际驱散消费的源范围绘制地面预览；复合物品按其已有目标选取路径定位，符文和建造预览不增加该范围。物品的支付、驱散和目标规则沿用现有会话逻辑。
