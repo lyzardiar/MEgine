@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 排队编队落点占用（待批次验证）
+
+路径：`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。同一编队的排队命令分单位启动时，后启动成员在选择落点前收集已启动成员的移动终点或攻击移动／巡逻目标，并按碰撞半径和地空类型避开；成员停止、隐藏、死亡或既无路线也无攻击移动目标时不占用该位置。它不保证路线部分可达或落点移动后的最终队形。
+
+快速检查：Win32 Release 订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> formation-queue-reservation` 为 1 通过／0 失败，测试将两个排队成员的预期落点手动设为相同以验证启动时的避让，未构造实际地形变化。未加载 Game.dll；既有 C4456 编译告警仍在。
+
+本批 1/3；集中验证地形阻挡／变化、部分路径、攻击移动及巡逻交战／返程、同组错时启动与停下、地空混编、桥梁智能命令、快照与联机、脚本重入和大规模单位性能；原版队形落点策略和实际窗口操作待对照。
+
 ## 编队订单、变形移动与自身联盟批次（部分验证）
 
 范围：`60d6030`、`7abe17e`（含补充 `8885bfc`）、`341b634`，集成版本 `341b634`。Win32 Release 客户端、订单、游戏流程、变形及 clock 目标编译通过，保留已有 C4456／C4389 告警。订单测试 `self-alliance`、`formation-duplicates`、`morph-movement`、`formation-speed`、`formation-completion`、`formation-facing`、`formation-wire`、`smart-bridge` 各 1 通过／0 失败，默认入口退出 0、输出 38 条 PASS；变形 `morph-orders`、`morph` 各 1 通过／0 失败，游戏流程入口退出 0、输出 1 条 PASS，clock 的 `player_configuration_restores_diplomacy_and_creation` 为 1 通过／0 失败。共 13 个进程成功、50 条 PASS，部分入口未输出 RESULT。日志与隔离用户目录位于 `tmp/docs-artifacts/war3/orders-alliance-batch-20261112/`。
