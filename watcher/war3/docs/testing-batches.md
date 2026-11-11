@@ -8831,3 +8831,15 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_harvest.cpp`、`tests/caster_tests.cpp`。施法中断后复核工人、携带资源、回收点及接收能力，失效时拒绝旧订单；位置或碰撞范围改变时重算回收路线，保留回调发出的新订单。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；执行 `war3_caster_tests <data-root> <fixture> <mode>`，`return-cancel-remove`、`return-cancel-move`、`return-cancel-pause` 修复前失败、修复后各输出 1 条 PASS，`return-cancel-order` 前后均输出 1 条 PASS。批次合并采集、木材与回收路线回归；携带资源／接收能力变化、单位死亡或易主、真实窗口及原版事件时序待验证。本批 2/3。
+
+### 修理换令回调的目标复核（待批次验证）
+
+路径：`src/session_repair.cpp`、`tests/caster_tests.cpp`。中断施法后重新检查工人、修理能力及单位／桥梁目标，失效时拒绝旧订单；回调发出新订单时沿用修订号保护。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；执行 `war3_caster_tests <data-root> <fixture> <mode>`，`repair-cancel-remove`、`repair-cancel-pause` 修复前失败、修复后各输出 1 条 PASS，`repair-cancel-order` 前后均输出 1 条 PASS。批次合并普通与桥梁修理、采集、资源回收及订单回归；回调改变能力／目标生命／归属、真实窗口及原版事件时序待验证。本批 3/3，先集中验证。
+
+### 伐木、资源回收与修理回调批次（部分验证）
+
+范围：`cb82110`、`7292566`、`fb493eb`，集成版本 `fb493eb`。Win32 Release 客户端、caster、harvest、construction 和 order queue 目标编译通过，重新生成 caster、harvest 和 construction 夹具。caster 的伐木／采金目标移除、回收目标移除／移动、工人暂停、回调新订单、修理目标移除／暂停／新订单及通用新订单共 10 个入口，各退出 0、输出 1 条 PASS；harvest 的 `stunned`、`depot-stuck`、`depot-route` 与 construction 的 `repair-callback`、`repair-bridge-callback`、`repair-approach`、`repair-unit-blocked`、`repair-bridge-blocked`、`stunned-work` 共 9 个入口均退出 0、各输出 1 条 PASS。caster、harvest、construction 默认入口各输出 1 条 PASS，order queue 默认入口输出 37 条 PASS；共 23 个进程成功。部分入口没有 RESULT，带标记的修理路径入口报告 `game_dll_loaded=false`。日志 `tmp/docs-artifacts/war3/worker-callback-batch.log`。
+
+工人／目标死亡后复活、易主、能力或携带资源变化、桥梁在施法中断回调中变化、真实窗口、多人及原版事件时序仍待验证；本批结果不代表完整对局验收。下一功能批次从 0/3 开始。
