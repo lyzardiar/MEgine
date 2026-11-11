@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 小地图目标命令与镜头（待批次验证）
+
+路径：`src/game_view.cpp`。处于移动、攻击移动、巡逻等目标模式时，小地图按下不再触发普通拖动镜头；目标单击继续按已有命令及 Shift／子组路径派发。非目标模式的小地图拖动照常移动镜头。此前按下目标时镜头先跳转，影响命令操作。
+
+快速检查：`cmake --build build/windows-x86 --config Release --target war3 -j 4` 编译通过；尚未执行窗口操作。
+
+待批次检查：在真实窗口分别使用移动、攻击移动、巡逻、地面攻击与右键小地图目标，检查镜头、落点和命令；覆盖按住拖动、取消、Shift、子组、普通小地图镜头及实验联机。原版拖拽边界与视觉反馈仍需对照。本项为当前功能批次 1/3。
+
 ## 技能目标与预览高度批次（部分验证）
 
 集成版本 `b435a92`，范围 `49d0e3d`、`e6b9415`、`b435a92`。Win32 Release 客户端、stealth、CampaignAI、clock 目标编译通过。`war3_stealth_tests <data-root> <stealth-fixture> group-counts`、`sentinel` 与 `<flare-fixture> flare-charges` 均退出 0，各输出 1 条 PASS；其中 sentinel 输出 1 通过／0 失败并检查未加载 Game.dll，另外两项提前返回、未输出 RESULT。`war3_campaign_ai_tests <data-root> water-tag-surface`、`humanx03-tag-surface` 和以 `WAR3_CLOCK_FILTER=tree_actions_bundle_preserves_claims_and_club` 执行的 `war3_clock_tests <data-root> <scratch>` 均为 1 通过／0 失败。
