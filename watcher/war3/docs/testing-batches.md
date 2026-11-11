@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 原版飘字槽位容量探针（验证补充）
+
+路径：`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。在固定摘要的 1.27 Game.dll 上，使用模拟管理器及 100 项预置空闲表执行原始 x86 创建／查询／销毁指令，检查槽位耗尽和释放后的复用；脚本运行通过，结果 `tmp/docs-artifacts/war3/texttag-capacity/reference.json`。最后一次成功分配与满额失败的原始返回值均为 0，前者仍占用索引 0。
+
+复现：`python watcher/war3/tools/verify_texttag_capacity_cpu.py`，需要既有 Unicorn 和 pefile 依赖。该探针不执行原版真实初始化、JASS 空句柄映射、画面或存档；现有客户端上限仍为 8192 且满额报错，尚未实现原版容量行为。此为验证补充，不计入功能批次；当前 1/3。
+
+
 ## 飘字创建默认寿命（待批次验证）
 
 路径：`src/script_state.h`、`tests/clock_tests.cpp`，说明见 `docs/text-tags.md`。新飘字默认字号 0.05、寿命 100 秒、淡出点 90 秒；关闭永久标志但不设寿命时不会立即消失。依据本机 1.27 Game.dll 创建实参及字段写入，地址和二进制摘要见说明。
