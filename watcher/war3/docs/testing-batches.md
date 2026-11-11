@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## HumanX03 英雄名称列表地图文案（待批次验证）
+
+路径：`src/session_hero.cpp`、`tests/campaign_ai_tests.cpp`。先解析英雄名称列表整体的 WTS，再按逗号选择名称，保留各名称独立解析及现有随机和重复编号规则。原图 Hgam 的 `TRIGSTR_487` 包含四个名称、名称数量为 4；修复前显示整串，修复后四名原图大法师分别持有列表中的名称，`GetHeroProperName` 与会话状态一致。
+
+快速检查：Win32 Release 客户端及 CampaignAI 测试目标构建成功；`war3_campaign_ai_tests <data-root> humanx03-hero-names` 修复前失败、修复后 1 通过／0 失败，未加载 Game.dll。待批次验证普通名称、更多 WTS／重复名称、战役窗口显示及恢复；本项为当前功能批次 2/3。
+
 ## HumanX03 蜘蛛事件文字调度（待批次验证）
 
 路径：`tests/campaign_ai_tests.cpp`。在原图开场结束后直接执行蜘蛛事件原触发器，检查三条 WTS 文案依次创建、可见并隐藏。Win32 Release 测试目标构建成功；即时定向检查 `war3_campaign_ai_tests <data-root> humanx03-spider-event` 为 1 通过／0 失败，未加载 Game.dll。另使用 `humanx03-spider-enter` 将玩家英雄由区域外直接移入原图区域，检查同一事件链，1 通过／0 失败；这是位置注入，不是实际步行。该检查补充上一项漂浮文字修复，不单独计入功能批次，当前仍为 1/3。
