@@ -8747,3 +8747,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_combat_orders.cpp`、`tests/caster_tests.cpp`。普通、旋风和变形状态的跟随订单在打断施法后复核单位和目标，目标失效时清理旧路线，目标移动时重算接近路线；回调发出新订单时沿用修订号保护。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> follow-cancel-target` 和 `follow-cancel-move`，均退出 0、各输出 1 条 PASS；移除目标复现修复前失败。批次合并普通跟随、特殊形态、目标死亡／易主和回调新订单；真实窗口、多人及原版事件时序仍待对照。本批 2/3。
+
+### 拾取目标的换令回调复核（待批次验证）
+
+路径：`src/session_combat_orders.cpp`、`tests/caster_tests.cpp`。打断施法后重新检查单位、物品及拾取权限，物品失效时清理旧订单，位置变化时重新计算接近路线；回调换令沿用修订号保护。
+
+快速检查：Win32 Release 客户端与 caster 目标编译通过；`war3_caster_tests <data-root> <fixture> pickup-cancel-item` 修复前失败、修复后退出 0 并输出 1 条 PASS。另恢复 `8f79840` 添加跟随用例时误删的自动施法测试分支条件；该提交上的 caster 默认入口会提前返回，不能作为默认套件验证。批次重新运行默认和定向 caster、拾取与订单回归；物品被移动／转移、单位状态变化、真实窗口与原版时序仍待对照。本项提交后本批 3/3，先集中验证。
