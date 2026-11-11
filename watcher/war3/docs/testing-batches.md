@@ -9055,3 +9055,11 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 必要检查：Win32 Release 客户端及 CampaignAI 目标编译通过；`war3_campaign_ai_tests <data-root> human06-dialog-text` 读取人族第六章原图 WTS，修复前失败、修复后 1 通过／0 失败，覆盖标题、两种按钮、缺失项和普通文字。`human06-no-action-defeat` 原图无操作推进至模拟 1955.25 秒，失败对话标题与 WTS 条目一致，1 通过／0 失败且未加载 Game.dll。
 
 本批 2/3，合并验证移动、战役、对话框交互与恢复；真实窗口／字体／布局、旧存档中已保存的未解析文字和原版动态语义待验证。
+
+### 战役屏幕消息的地图文案解析（待批次验证）
+
+路径：`src/session_text.cpp`、`tests/campaign_ai_tests.cpp`、`docs/campaign-wts-text.md`。三个脚本屏幕消息入口解析完整地图 WTS 标识，带玩家名的格式串在格式化前解析；原 `QuestMessageBJ` 使用这些入口显示任务提示，普通文本、未匹配标识和玩家聊天保持各自处理。
+
+必要检查：Win32 Release 客户端及 CampaignAI 目标编译通过；`war3_campaign_ai_tests <data-root> human06-message-text` 基于人族第六章原图 WTS，修复前失败、修复后 1 通过／0 失败，覆盖直接／定时消息、带玩家名和百分号的格式串、缺失项及原 `QuestMessageBJ`；未加载 Game.dll。格式串使用测试附加条目。
+
+本批 3/3，先合并验证移动、战役、对话框及屏幕消息。脚本字符串拼接、实际窗口、字体、原版动态文字语义和旧存档待验证。
