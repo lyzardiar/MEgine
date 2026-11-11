@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字转义竖线显示（待批次验证）
+
+路径：`src/game_text_tag.cpp`，说明见 `docs/text-tags.md`。世界飘字将 `||` 绘制为字面竖线，防止紧随其后的 `c`、`r`、`n` 被误当作颜色或换行指令；普通颜色、重置、换行和透明度处理不变。
+
+快速检查：Win32 Release 客户端编译通过，尚未执行窗口用例。
+
+本批 2/3；集中检查 `||`、`||c`、`||r`、`||n`、连续竖线、颜色／透明度／换行混合、中文和 WTS 文本，并与上一 WTS 解析修复及原版窗口对照合并验证。Blizzard TD 波次飘字的遮挡与尺寸仍待原版对照。
+
+
 ## 地图脚本 WTS 字面量解析（待批次验证）
 
 路径：`src/jass_runtime.cpp`、`src/jass_runtime.h`、`src/session.cpp`、`src/map.cpp`、`tests/campaign_ai_tests.cpp`，说明见 `docs/text-tags.md`。地图脚本的完整 WTS 引用在全局初始化和字符串拼接前按本地图解析，公共脚本及动态字符串不提前替换；未知和超大编号保持原文。
