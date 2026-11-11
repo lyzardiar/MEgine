@@ -8927,3 +8927,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_inventory.cpp`、`tests/caster_tests.cpp`。中断施法后重新检查操作者身份、死亡／归属轮次、控制状态、物品身份及实际持有关系，失效时拒绝格子移动、丢弃和交付订单。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> item-slot-cancel-pause`、`item-drop-cancel-pause`、`item-give-cancel-pause`，三例修复前失败、修复后各输出 1 条 PASS。批次合并背包移动、丢弃、交付、典当和订单队列；物品／单位移除与归属变化、新订单、原版事件时序和实际窗口待验证。本批 2/3。
+
+### 恢复施工换令回调状态复核（待批次验证）
+
+路径：`src/session_construction.cpp`、`tests/caster_tests.cpp`。工人中断施法后重新核对自身、施工建筑身份／生命周期／归属、施工状态和当前施工者；建筑失效或工人不可用时拒绝旧施工订单。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> resume-cancel-pause`、`resume-cancel-remove`，两例修复前失败、修复后各输出 1 条 PASS；夹具人工设置未完工状态。批次合并四族施工、协助建造、背包和升级换令；回调替换施工任务／归属、新订单、原版时序和实际窗口待验证。本批 3/3，先集中验证。
