@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 编队落点、中立 AI 与 ROC 英雄库存批次（部分验证）
+
+范围：`3c913f5`、`275fd58`、`98c4998`，集成版本 `98c4998`，含本次测试补充。Win32 Release 客户端、CampaignAI、订单、clock、commerce 目标编译通过；订单目标保留既有 C4456 告警。订单 `formation-queue-reservation`、`formation-speed`、`formation-facing`、`formation-completion`、`smart-bridge` 各 1 通过／0 失败，默认入口退出 0、输出 38 条 PASS。CampaignAI `neutral-ai` 为 2 通过／0 失败，`command-stack`、`warchasers-hero`、ROC 与 TFT `inventory-boundary` 各 1 通过／0 失败；commerce 入口退出 0、输出 1 条 PASS。clock `recovery_bundle_preserves_ai_link_order`、`unit_core_restores_hero_abilities_equipment_and_vitals` 各 1 通过／0 失败。共 14 个进程成功、52 条 PASS；部分入口未输出 RESULT。
+
+编队补充检查手动重合的移动／攻击移动／巡逻队列目标；中立 AI 检查四个中立槽的私有脚本、恢复和暂停／恢复，实际经济订单仅覆盖槽 12。War Chasers 原图用传送小精灵触发选英雄；两份临时地图分别验证 W3I 18／25、非英雄、已有自定义库存能力以及旧版补充库存可由脚本移除。临时地图、生成脚本和日志在 `tmp/docs-artifacts/war3/inventory-neutral-batch-20261112/`。
+
+真实地形变化与编队部分可达、原版队形策略、各中立槽完整战斗与实际地图／联机、旧版存档、ROC 原版兼容条件及显式移除库存、英雄死亡复活、实际选英雄窗口和完整战役仍待验证；不将本批视为完整原版验收。未执行项保留待测，下一功能批次从 0/3 开始。
+
 ## ROC 英雄物品栏兼容（待批次验证）
 
 路径：`src/session_entities.cpp`、`tests/campaign_ai_tests.cpp`，说明见 `docs/equipment.md`。W3I 版本 18 地图中，创建的英雄若普通能力没有任何 `AInv` 原型则补充英雄物品栏，不替换已有普通能力；版本 25 和非英雄不套用。兼容范围按地图格式暂定，原版编辑器版本阈值尚未证明。
