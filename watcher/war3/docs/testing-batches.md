@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## War Chasers 物品使用验证补充
+
+路径：`tests/campaign_ai_tests.cpp`。玩家移动选角后，以预设受伤及缺魔状态、脚本给予原图使用的治疗药水 `phea` 和恢复卷轴 `sres`，通过玩家物品命令验证生命／魔法恢复及物品消耗；定向检查 2 通过／0 失败，未加载 Game.dll。
+
+复现：`war3_campaign_ai_tests <root> <root>/Maps/Scenario/(4)WarChasers.w3m warchasers-items`。该检查不覆盖走到物品位置的拾取、队友范围恢复、所有物品组合、鼠标操作或原版动态对照。此为测试补充，不计入功能批次；当前 0/3。
+
+
 ## War Chasers 自然击杀与经验验证补充
 
 路径：`tests/campaign_ai_tests.cpp`。在原图玩家移动选角、行走触发刷怪及攻击后，保持正常战斗直至怪物死亡，确认死亡触发器将其移出刷怪组、英雄经验增加。定向检查 3 通过／0 失败，未加载 Game.dll；没有使用直接伤害或关闭战争迷雾。
