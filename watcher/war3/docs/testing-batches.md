@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 子组与导航批次（部分验证）
+
+范围：`72d299b`、`488af25`、`fbda0d5`，集成版本 `fbda0d5`。Win32 Release 客户端和 stealth 目标编译通过；`war3_stealth_tests <data-root> <stealth-fixture> group-target` 为 1 通过／0 失败，`group-counts` 退出 0 并输出 1 条 PASS（未输出 RESULT），均为会话及按钮检查，未驱动 GameView。
+
+后台隔离地图混选步兵和圣骑士，点击圣骑士头像后选区仍有两人且命令卡切换至圣骑士；再次点击后仅圣骑士留在选区。夹具为 `tmp/docs-artifacts/war3/target-preview-batch-20261111/fixture.w3m`，截图和客户端日志位于 `tmp/docs-artifacts/war3/selection-navigation-batch-20261112/`，进程已关闭。
+
+快捷键实际输入、多个基地与工人、无目标、重复按键、聊天／菜单与实验联机尚未执行；多选施法者在 GameView 的接替与 Shift、子组 Shift／Ctrl／目标模式、双端与回放及原版行为对照仍待验证，保留上述待测项。下一功能批次从 0/3 开始。
+
 ## 基地与空闲工人导航快捷键（待批次验证）
 
 路径：`src/game_hero_bar.cpp`、`src/game_view.{h,cpp}`、`src/session.h`。`~` 与 F8 共用空闲工人循环；Backspace 按句柄循环定位己方存活、未隐藏的主基地，不改变选区，联机仅移动本地镜头。主基地分类沿用会话单位分类，单位动态类型修改也生效。操作依据：[暴雪快捷操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)。
