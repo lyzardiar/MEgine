@@ -8613,3 +8613,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 范围：`e713b76`、`c51c527`、`725e324`，以及保护补充 `af241e5`，集成版本 `725e324`。Win32 Release 客户端、clock、session 和会话线程目标编译通过；`war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 为 28 通过／0 失败，`war3_session_thread_tests <data-root> tmp/docs-artifacts/war3/script-threads/fixture.w3m` 为 7／0。
 
 `war3_clock_tests` 的 `recovery_bundle_restores_ability_ui`、`recovery_bundle_restores_message_triggers`、`recovery_bundle_restores_sleeping_message_context`、`preload_recording_recovery` 各为 1／0；覆盖技能界面检查点、消息注册与休眠续行、旧格式及宿主保护。日志 `tmp/docs-artifacts/war3/message-context-batch-*.log`。非空旧 JSSH 1 快照、真实窗口存读档、Lua／平台状态、待发送消息及原版存档格式仍待验证或实现；下一功能批次从 0/3 开始。
+
+### 旧版非空共享线程快照兼容（补充验证）
+
+路径：`tests/clock_tests.cpp`。从包含两个休眠消息线程的共享快照构造 JSSH 1 格式，保留旧格式的线程、上下文和触发器序列，检查解码及缺省消息字段。该兼容性补充不计入新功能批次。
+
+快速检查：Win32 Release `war3_clock_tests` 编译通过；`WAR3_CLOCK_FILTER=recovery_bundle_restores_sleeping_message_context war3_clock_tests <data-root> <output-root>` 为 1 通过／0 失败。旧格式使用当前编码内容转换构造，尚未用历史版本实际生成的快照对照；真实窗口存读档与原版格式仍待验证。
