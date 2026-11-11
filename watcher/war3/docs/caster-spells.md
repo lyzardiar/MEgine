@@ -50,3 +50,5 @@ build/windows-x86/bin/Release/war3_caster_tests.exe 'E:/Program Files (x86)/dzcl
 当能力元数据包含三字符 `Crs` 而没有四字符 `Crs1` 条目时，将该行用于 `Crs1` 对象覆盖；显式四字符元数据优先。`Crs1` 对应公开脚本中的诅咒未命中概率字段，见 [Warcraft III 官方论坛讨论](https://us.forums.blizzard.com/en/warcraft3/t/fix-abilityrlfchancetomisscrs/37193)。本机 1.27 公共元数据的 `Crs` 行指向 AbilityData 的第一个 Data 字段；经典版编辑器导出与原版运行时的实际编号仍待对照。
 
 Win32 Release 客户端及 caster 测试目标编译通过；使用 `generate-caster-fixture.py` 生成的隔离地图，完整 caster 检查通过，核对原技能 0.33、自定义 `Crs1` 覆盖为 1.0 和实际攻击落空；目标筛选 6/6。未加载 Game.dll。多等级、经典版地图与原版编辑器输出、真实窗口及其他版本待验证。
+
+技能及被动能力读取目标列表时共享原版目标缩写映射，保留原词并增加对应全名，例如 `grou`、`enem`、`alli`、`neut`。地图覆盖夹具使用自定义诅咒、心灵之火和专注光环检查敌方／友方／中立及光环目标；固定版 Game.dll 的目标表和隔离探针见[单位分类](unit-classifications.md)。已恢复的旧活动技能／光环／弹道快照仍保留旧目标列表，完整别名语义及原版实际地图待验证。

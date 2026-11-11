@@ -1,5 +1,6 @@
 // Author: MiYu. Read classic weapon/profile fields once per type and validate live attack target capabilities.
 #include "session.h"
+#include "target_aliases.h"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -8,7 +9,7 @@
 namespace war3 {
 namespace {
 std::string part(const std::string& value,unsigned index){std::stringstream input(value);std::string result,first;for(unsigned i=0;std::getline(input,result,',');++i){auto begin=result.find_first_not_of(" \t");result=begin==std::string::npos?"":result.substr(begin,result.find_last_not_of(" \t")-begin+1);if(!i)first=result;if(i==index)return result;}return index?first:std::string{};}
-std::set<std::string> targets(const std::string& value){std::stringstream input(value);std::set<std::string> result;std::string token;while(std::getline(input,token,',')){auto begin=token.find_first_not_of(" \t");if(begin==std::string::npos)continue;token=token.substr(begin,token.find_last_not_of(" \t")-begin+1);if(token!="_"){result.insert(token);for(auto [alias,canonical]:std::initializer_list<std::pair<const char*,const char*>>{{"grou","ground"},{"stru","structure"},{"debr","debris"},{"deco","decoration"},{"tote","ward"},{"totem","ward"},{"enem","enemy"},{"alli","allies"},{"ally","allies"},{"frie","friend"},{"neut","neutral"},{"nonh","nonhero"},{"orga","organic"},{"mech","mechanical"},{"aliv","alive"},{"vuln","vulnerable"},{"invu","invulnerable"},{"play","player"},{"nots","notself"}})if(token==alias){result.insert(canonical);break;}}}return result;}
+std::set<std::string> targets(const std::string& value){std::stringstream input(value);std::set<std::string> result;std::string token;while(std::getline(input,token,',')){auto begin=token.find_first_not_of(" \t");if(begin==std::string::npos)continue;token=token.substr(begin,token.find_last_not_of(" \t")-begin+1);if(token!="_")result.insert(token);}addTargetAliases(result);return result;}
 unsigned count(float value,unsigned maximum){if(value<0 || value>maximum || value!=std::floor(value))throw std::runtime_error("Weapon integer outside supported range");return unsigned(value);}
 }
 const std::array<WeaponDefinition,2>& ScriptSession::weapons(std::uint32_t type) {

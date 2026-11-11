@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 技能与光环目标缩写（待批次验证）
+
+路径：`src/target_aliases.h`、`src/session_spell_info.cpp`、`src/session_passive_info.cpp`、`src/session_weapons.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`、`docs/caster-spells.md`。主动技能、被动能力及武器共用原版目标缩写映射，保留原词并增加对应全名；目标表的固定原件依据见单位分类文档。
+
+必要检查：Win32 Release 客户端、caster 和 research 目标编译通过；生成地图后 `war3_caster_tests <root> <fixture> targets` 为 13 通过／0 失败，覆盖自定义技能敌友中立筛选及友方光环；research 武器消费者输出 PASS。旧存档的活动技能、光环及弹道目标列表、更多缩写／目标组合和原版动态行为待验证。
+
+本批 2/3；合并验证实际技能与攻击、存档恢复和原版地图。
+
+
 ## 武器目标缩写与实际攻击（待批次验证）
 
 路径：`src/session_weapons.cpp`、`src/combat.h`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`、`docs/combat.md`。主目标与范围目标保留原词并识别原版缩写；纯 `debr` 保持残骸专用武器判定。地图对象覆盖通过实际攻击命令验证 `grou` 与 `enem`／`alli` 的同阵营筛选；目标表及合成指令证据见单位分类文档。
