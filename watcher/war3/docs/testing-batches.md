@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## ROC 英雄物品栏兼容（待批次验证）
+
+路径：`src/session_entities.cpp`、`tests/campaign_ai_tests.cpp`，说明见 `docs/equipment.md`。W3I 版本 18 地图中，创建的英雄若普通能力没有任何 `AInv` 原型则补充英雄物品栏，不替换已有普通能力；版本 25 和非英雄不套用。兼容范围按地图格式暂定，原版编辑器版本阈值尚未证明。
+
+必要检查：原版 `Maps/Scenario/(4)WarChasers.w3m` 在修复前运行选英雄触发器时，英雄被创建但库存为 0、初始复活十字章落地；修复后 Win32 Release `war3_campaign_ai_tests <data-root> <WarChasers.w3m> warchasers-hero` 为 1 通过／0 失败，覆盖原图弓箭手选择、六格与初始物品、另一个英雄的原有普通能力保留。测试将小精灵直接传送到选择区域，未模拟窗口操作，未加载 Game.dll。
+
+本批 3/3，先集中验证：旧／新版地图、非英雄与自定义库存能力、能力增删、物品事件／死亡／复活、形态和存档、真实选英雄 UI 及原版行为。WarChasers 的完整游戏与原版兼容阈值仍待验收。
+
 ## 中立槽战役 AI 脚本（待批次验证）
 
 路径：`src/session_ai.cpp`、`src/session_ai_snapshot.cpp`、`src/session_recovery_bundle.cpp`、`tests/campaign_ai_tests.cpp`，说明见 `docs/ai.md`。经典玩家槽 12–15 可通过现有 AI 脚本调度执行策略、消费单位／经济和保存恢复；包含中立 AI 的恢复包使用 SAIL 版本 2，仅含普通槽时仍写版本 1，读取兼容两版。已识别的外部原生插件／2SAJ 回调继续拒绝。
