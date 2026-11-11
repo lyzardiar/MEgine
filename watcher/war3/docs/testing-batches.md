@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字颜色通道整数转换（待批次验证）
+
+路径：`src/session_text_tag.cpp`、`tests/clock_tests.cpp`，说明见 `docs/text-tags.md`。颜色和透明度参数各取低 8 位，支持负数和超过 255 的值；依据本机 1.27 Game.dll 对四个参数的字节写入，地址和版本摘要见说明。
+
+必要检查：Win32 Release 客户端和 clock 编译通过；`text_tag_screen_velocity_and_reposition` 为 1 通过／0 失败，覆盖普通值、负数、256 和 511。
+
+本批 3/3；集中验证颜色、透明度与淡出、负时间、暂停、改速、重定位、存档及原图窗口；原版视觉与动态窗口对照仍需执行。
+
+
 ## 飘字负时间属性（待批次验证）
 
 路径：`src/session_text_tag.cpp`、`tests/clock_tests.cpp`，说明见 `docs/text-tags.md`。年龄、寿命和淡出点保留有限负值；存档重建允许这些值，负年龄参与屏幕位移，非永久文字到寿命边界时过期。依据本机 1.27 Game.dll 三个 setter 的直接字段写入；函数地址及二进制摘要见说明。
