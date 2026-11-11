@@ -8637,3 +8637,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/session_spell_info.cpp`、`src/session_spells.cpp`、`src/session_area_spells.cpp`、`src/session_ability_commands.cpp`、`tests/generate-stealth-fixture.py`、`tests/stealth_tests.cpp`；原版静态依据见[照明弹](flare.md)。自定义 `Afla` 的 `DataC` 支持有限次数、取消不消耗、释放时递减及耗尽禁用；按钮显示余量，默认零值保持不限次数。
 
 快速检查：Win32 Release 客户端和 stealth 测试目标编译通过，夹具脚本语法检查及差异检查通过；新增功能测试尚未执行。批次生成 `python tests/generate-stealth-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/flare-charges/fixture.w3m --flare-charges`，再运行 `war3_stealth_tests <data-root> <fixture> flare-charges`，并合并照明弹、隐身／显形和存档相关回归。实际窗口、多人、原版次数显示及等级变化尚待对照。本批 2/3。
+
+### 哨兵剩余次数显示（待批次验证）
+
+路径：`src/session_ability_commands.cpp`、`tests/stealth_tests.cpp`。有限次数哨兵按钮显示与实际释放共用的剩余数，无限次数不显示计数；原版静态调用依据见[哨兵](sentinel.md)。
+
+快速检查：Win32 Release 客户端及 stealth 测试目标编译通过，功能测试尚未执行。批次生成默认夹具 `python tests/generate-stealth-fixture.py --data-root <data-root>` 后运行 `war3_stealth_tests <data-root> <fixture> sentinel`，检查初始、取消、释放及无限次数显示；实际窗口、多选聚合、像素及原版时序仍待对照。本项提交后批次 3/3，先完成集中验证再开始下一批。
