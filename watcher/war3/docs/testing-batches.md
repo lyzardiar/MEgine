@@ -8993,3 +8993,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_mines.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`。世界之树中断施法后重新检查自身与金矿身份、生命周期、能力、资源、覆盖状态及距离；回调换令时保留新订单，不启动失效缠绕。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> entangle-cancel-pause`、`entangle-cancel-remove`、`entangle-cancel-move`、`entangle-cancel-stop`，四例修复前失败、修复后各输出 1 条 PASS。批次合并普通／即时缠绕、金矿资源与生命周期；回调改变矿量／能力／归属、原版时序和实际窗口待验证。本批 1/3。
+
+### 缠绕完成阶段的目标与能力复核（待批次验证）
+
+路径：`src/session_mines.cpp`、`tests/caster_tests.cpp`。缠绕完成前重新检查世界之树及缠绕能力、金矿可见性、金矿能力与资源；目标或能力失效时结束旧订单，不创建覆盖矿井。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> entangle-finish-depleted`、`entangle-finish-hidden`、`entangle-finish-ability`，三例修复前失败、修复后各输出 1 条 PASS。批次合并普通／即时缠绕、资源关联与移除；目标移动、能力等级变化、原版时序和实际窗口待验证。本批 2/3。
