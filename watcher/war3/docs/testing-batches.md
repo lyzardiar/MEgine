@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 地面攻击类型判定（待批次验证）
+
+路径：`src/session_entities.cpp`、`tests/generate-research-fixture.py`、`tests/research_tests.cpp`、`tools/verify_unit_weapon_types_cpu.py`、`docs/unit-classifications.md`、`docs/unit-id-classification.md`。`IsUnitType`／`IsUnitIdType` 的地面攻击分类只检查已启用武器的 ground／grou，structure 单独存在时返回 false；目标攻击行为本身沿用既有逻辑。
+
+必要检查：Win32 Release 客户端及 research 目标编译通过；重新生成地图后 `war3_research_tests <root> <fixture>` 输出 PASS，覆盖仅建筑、grou、普通单位和实例／ID 查询。`python watcher/war3/tools/verify_unit_weapon_types_cpu.py` 的原版合成武器探针 6 组通过，结果 `tmp/docs-artifacts/war3/unit-attack-types/reference.json`；不执行原版 JASS 或地图。
+
+本批 2/3；双武器地图覆盖、动态武器禁用／变形、真实地图脚本和原版运行行为待集中验证。
+
+
 ## 飘字负字号状态（待批次验证）
 
 路径：`src/session_text_tag.cpp`、`tests/clock_tests.cpp`、`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。保留有限负字号，绘制沿用两像素下限；STTX v6 保存该值并读取 v1–v5，旧客户端不能读取 v6。固定原版的合成文字对象指令探针覆盖负数、零、普通与大字号，不执行原版窗口。

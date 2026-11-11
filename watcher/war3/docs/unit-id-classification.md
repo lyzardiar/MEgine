@@ -7,3 +7,5 @@
 创建单位时根据源类型的精确 `summoned` 分类初始化实例状态；脚本查询、驱散、控制魔法、攻击效果、AI 与经验消费该状态，并保留原有召唤者、限时生命及显式添加／移除分类的路径。原版静态路径 `0x6f65af52–59` 将类型分类写入创建参数 `+0x5c`，`0x6f66ca45–48` 将其写入实例 `+0x248`；实际动态分派、与召唤者及限时生命的组合、变形和幻象行为仍待原版对照。上述组合是当前实现，不代表已验收。
 
 阶段验证：运行 `python watcher/war3/tests/generate-research-fixture.py --data-root <data-root>` 后执行 `watcher/war3/build/windows-x86/bin/Release/war3_research_tests.exe <data-root> tmp/docs-artifacts/war3/research/fixture.w3m`。夹具对照原单位实例和 ID 的静态分类，并覆盖自定义单位移动／类别继承、未知 ID、查询不创建实体与运行态分类返回 false、未知大写英雄 ID 和 `summoned` 精确分类。额外覆盖其他地图覆盖、两种武器、类型变形、魔免／抗性等原版行为和真实自定义地图。Win32 Release 客户端与 research 消费者已编译；尚未执行专项或原版对照。
+
+`UNIT_TYPE_ATTACKS_GROUND` 只匹配启用武器的 `ground`／`grou` 位，不将单独的 `structure` 当作地面；固定版原件 `0x6f1e875e`–`0x6f1e87aa` 合并启用武器目标位后检查位 2。合成实例指令探针和地图覆盖的 ID／实例检查见[单位分类](unit-classifications.md)；原图动态表现待验证。
