@@ -8825,3 +8825,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_lumber.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`。中断施法后复核工人、树木和采集能力；树木失效时拒绝旧采集订单，位置或接近范围变化时重算路线，回调发出新订单时沿用修订号保护。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> harvest-tree-cancel-remove`，修复前失败、修复后退出 0 并输出 1 条 PASS。批次合并伐木、采集与订单回归；回调改变树木生命／能力／工人状态、真实窗口及原版事件时序待验证。本批 1/3。
+
+### 资源回收换令回调状态复核（待批次验证）
+
+路径：`src/session_harvest.cpp`、`tests/caster_tests.cpp`。施法中断后复核工人、携带资源、回收点及接收能力，失效时拒绝旧订单；位置或碰撞范围改变时重算回收路线，保留回调发出的新订单。
+
+快速检查：Win32 Release 客户端及 caster 目标编译通过；执行 `war3_caster_tests <data-root> <fixture> <mode>`，`return-cancel-remove`、`return-cancel-move`、`return-cancel-pause` 修复前失败、修复后各输出 1 条 PASS，`return-cancel-order` 前后均输出 1 条 PASS。批次合并采集、木材与回收路线回归；携带资源／接收能力变化、单位死亡或易主、真实窗口及原版事件时序待验证。本批 2/3。
