@@ -9063,3 +9063,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 必要检查：Win32 Release 客户端及 CampaignAI 目标编译通过；`war3_campaign_ai_tests <data-root> human06-message-text` 基于人族第六章原图 WTS，修复前失败、修复后 1 通过／0 失败，覆盖直接／定时消息、带玩家名和百分号的格式串、缺失项及原 `QuestMessageBJ`；未加载 Game.dll。格式串使用测试附加条目。
 
 本批 3/3，先合并验证移动、战役、对话框及屏幕消息。脚本字符串拼接、实际窗口、字体、原版动态文字语义和旧存档待验证。
+
+### 盟友避让与战役文案批次（部分验证）
+
+范围：`54c7755`、`cc403a4`、`3cafe33`，含上项回归补充 `0cd41e7`，集成版本 `3cafe33`。Win32 Release 客户端、movement avoidance、CampaignAI、clock 和 human campaign chain 目标编译通过。移动避让 10 个定向入口各 1 条 PASS，默认入口 9 条 PASS；原图对话框和屏幕消息各 1 通过／0 失败，界面状态及脚本对话框恢复各 1 通过／0 失败。原图无人操作会话两条检查分别确认 WTS 失败对话、点击重开，均在模拟 1955.25 秒／感染数 59 完成，各 1 通过／0 失败。共 17 个进程成功、25 条 PASS；部分程序未输出 RESULT。
+
+初次批处理驱动因使用不可用的环境变量对象，在启动程序前报错；改正后重新运行，记录 `tmp/docs-artifacts/war3/allied-wts-batch/checks-driver-initial.log`。实际结果见同目录 `checks.log`，原图重开使用新建隔离用户目录。字符串拼接、旧存档未解析文字、原版动态语义、实际窗口／字体／布局、复杂拥堵、多人和完整胜利路线仍待验证；本批不代表完整战役验收。下一功能批次从 0/3 开始。
