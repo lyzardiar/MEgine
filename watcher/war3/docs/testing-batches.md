@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 队形控制与前后排列批次（部分验证）
+
+范围：`5e3fc01`、`52cf570`、`6f57958`，集成版本 `6f57958`。Win32 Release 客户端及订单测试目标编译通过。`war3_order_queue_tests <data-root> <BootyBay.w3m> formation-facing`、`formation-wire` 和使用空的隔离 `MEGINE_WAR3_USER_DIR` 的 `formation-settings` 各报告 1 通过／0 失败；默认入口退出 0、输出 38 条 PASS（不输出 RESULT），覆盖普通与排队订单、桥梁和网络编码。
+
+后台隔离地图人工创建步兵和火枪手并关闭路径碰撞，框选后右键移动，停止时步兵位置为 (252.05, 75.17)、火枪手为 (174.02, 57.50)，近战在行进方向前方；点击人族队形按钮关闭后再次右键，两者到达同一位置 (-21.50, -45.52)。悬停显示原版队形说明。夹具、截图、同帧状态和客户端日志在 `tmp/docs-artifacts/war3/formation-batch-20261112/`，测试进程已关闭。
+
+实际 Alt／Shift／Ctrl 输入、小地图与桥梁窗口操作、非人族及自定义皮肤、真实碰撞与动态障碍、录像和双端联机均未执行；现有分类与队形排列是近似，队员速度协调仍未实现，原版布局和动态语义待对照。未执行项保留待测，下一功能批次从 0/3 开始。
+
 ## 编队前后排序与行进方向（待批次验证）
 
 路径：`src/player_commands.cpp`、`src/session.h`、`src/session_research.cpp`、`tests/order_queue_tests.cpp`。编队地面移动、攻击移动、巡逻和桥梁智能命令的落点以行进方向为前方，依据当前有效武器将近战、远程和无普通武器单位分排；同排按句柄稳定排序，排队时优先以前一移动终点计算方向，关闭编队不分配队形落点。近战前、远程后的依据为[暴雪编队说明](https://classic.battle.net/war3/basics/specialcommands.shtml)。
