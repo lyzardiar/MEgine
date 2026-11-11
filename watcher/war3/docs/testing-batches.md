@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 鼠标射线楼梯与水面补充检查
+
+路径：`src/surface_ray.h`、`src/game_view.cpp`、`tests/campaign_ai_tests.cpp`。将鼠标射线采样和细化提取为客户端与测试共用的求交函数，保留既有 128 段采样及 12 次细化；原图 HumanX03 楼梯与 BootyBay 水域分别从表面上方垂直投射，检查命中高于底层地形的实际表面。
+
+Win32 Release 客户端及 CampaignAI 测试目标编译通过；`war3_campaign_ai_tests <data-root> humanx03-tag-surface` 和 `water-tag-surface` 均为 1 通过／0 失败，未加载 Game.dll。该检查补充 `082f68b`，不单独计入功能批次；窗口坐标到射线的转换、斜向射线、窄模型与边界、模型变动、实际鼠标和性能仍待验证。
+
 ## 小地图输入与场景表面批次（部分验证）
 
 集成版本 `5389977`，范围 `b7ff22f`、`082f68b`、`5389977`。Win32 Release 客户端、map、roots、order_queue 构建通过；order_queue 编译显示既有 C4456 变量遮蔽警告。`war3_map_tests <data-root> <scratch> campaign_walkable_stairs` 为 1 通过／0 失败；`war3_roots_tests <data-root> <ancient-roots-fixture>` 为 3 通过／0 失败，未加载 Game.dll；`war3_order_queue_tests <data-root> <BootyBay.w3m>` 退出 0，输出 37 条 PASS（无 RESULT 汇总）。
