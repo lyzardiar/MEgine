@@ -8795,3 +8795,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_attack_ground.cpp`、`tests/caster_tests.cpp`。攻城单位打断施法后复核自身状态与地面攻击武器，状态失效时拒绝旧命令，位置或射程变化时重算路线；回调换令沿用修订号保护。
 
 快速检查：Win32 Release 客户端和 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> ground-cancel-pause`，修复前失败、修复后退出 0 并输出 1 条 PASS。批次合并攻城弹道、地面攻击、普通攻击与施法回归；回调移动／易主／武器变化、新订单、实际窗口和原版时序仍待验证。本批 1/3。
+
+### 半透明建筑预览的镂空裁剪（待批次验证）
+
+路径：`src/model_pose.cpp`、`docs/construction.md`。模型实例透明度低于不透明镂空阈值时同步缩放阈值，使建筑预览的镂空材质可见；不透明实例阈值保持原值。
+
+快速检查：Win32 Release 客户端编译通过；BootyBay 隐藏客户端通过命令面板选择农场，相同有效位置修复前只显示网格，修复后显示绿色半透明模型；工人占位时显示红色模型。截图 `tmp/docs-artifacts/war3/build-preview-{probe,fixed}/`。批次验证其他种族、透明单位／附件、粒子和不同 Alpha／镂空组合，以及原版画面、实际窗口和 GPU；本批 2/3。
