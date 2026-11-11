@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 武器、技能缩写与旧光环恢复批次（部分验证）
+
+范围：`f30cee4`、`c36e92c`、`de79eb5`，集成版本 `de79eb5`。Win32 Release 客户端、caster、research、clock 和 campaign AI 目标编译通过。`war3_caster_tests <root> <caster-fixture> targets` 13 通过／0 失败，`aura-alias-restore` 2／0；`WAR3_CLOCK_FILTER=unit_auras_restore war3_clock_tests <root> <scratch>` 1／0；生成地图的 `war3_research_tests <root> <research-fixture>` 输出 PASS，覆盖真实攻击及武器分类。原版合成武器指令探针通过，结果 `tmp/docs-artifacts/war3/target-alias-batch/original-weapon.json`。
+
+`war3_campaign_ai_tests <root> <WarChasers> warchasers-kill` 为 3／0，覆盖玩家移动、刷怪、攻击击杀和经验；`warchasers-spell` 为 2／0，覆盖英雄选择及圣光施法；均未加载 Game.dll。夹具地图分别由 `python watcher/war3/tests/generate-caster-fixture.py --data-root <root>` 和 `generate-research-fixture.py --data-root <root>` 生成。
+
+旧存档活动技能、被动效果和弹道直接保存的目标列表尚未迁移；范围攻击、更多关系与目标组合、原版实机、窗口和完整对局待验证。批次已执行，未完成项保留；下一功能批次从 0/3 开始。
+
+
 ## 旧光环缩写摘要恢复（待批次验证）
 
 路径：`src/session_aura_snapshot.cpp`、`tests/caster_tests.cpp`、`docs/caster-spells.md`。目标缩写展开改变被动能力摘要后，恢复时允许与当前地图原始目标字段精确对应的旧摘要；其他字段或摘要不匹配仍拒绝。恢复使用当前能力目标规则，不更改存档格式。
