@@ -1,5 +1,7 @@
 # 战役入口与关卡切换
 
+当前集成版本 `f91c241` 对原版 `HumanX03Secret.w3x` 执行 `--main-check --mute --simulate-ms 600000`，main 完成；无玩家操作的模拟在 466.75 秒进入本地失败对话而停止，日志 `tmp/docs-artifacts/war3/human-secret-current.log`。这是无操作的失败路径，不代表自然对局或隐藏关通关。
+
 当前集成版本 `42199ba` 对原版资料片 `NightElfX08.w3x` 执行 `war3.exe --data-root <data-root> --map Maps/FrozenThrone/Campaign/NightElfX08.w3x --main-check --mute --simulate-ms 600000 --log <log>`，main 完成并静音推进 600 秒，`game_dll_loaded=false`；日志为 `tmp/docs-artifacts/war3/nightelf08-current.log`。本次没有玩家操作，也未携带前章状态，不能证明自然战斗、胜负、跨关或实际窗口通过。
 
 暗夜精灵第六章的隔离会话直接击毁恶魔之门、将伊利丹移入古尔丹之颅区域，再击杀提克迪奥斯；原图两段过场后进入胜利对话并指向 `NightElf06Interlude.w3m`。第七章另以五秒计时触发原图终局，结果为胜利并指向 `BonusCredits.w3m`。日志和临时探针位于 `tmp/docs-artifacts/war3/tft-ne4-next/nightelf06-quest.log`、`nightelf07-goal.log`；两次均直接调整目标或计时，未覆盖自然战斗、完整防守或实际窗口。
