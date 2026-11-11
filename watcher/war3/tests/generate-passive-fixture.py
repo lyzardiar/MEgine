@@ -39,6 +39,7 @@ trigger eventIndexC=null
 trigger eventIndexD=null
 trigger eventIndexE=null
 unit eventIndexUnit=null
+integer pawnGoldEvents=0
 integer pawnCount=0
 unit pawnSeller=null
 unit pawnBuyer=null
@@ -196,6 +197,21 @@ function DestroyEventIndex takes nothing returns nothing
     call DestroyTrigger(eventIndexB)
     call DestroyTrigger(eventIndexC)
     call DestroyTrigger(eventIndexE)
+endfunction
+function PawnChangeGold takes nothing returns nothing
+    call SetPlayerState(Player(0),PLAYER_STATE_RESOURCE_GOLD,0)
+    call SetPlayerState(Player(0),PLAYER_STATE_RESOURCE_GOLD,300)
+endfunction
+function PawnGoldEvent takes nothing returns nothing
+    set pawnGoldEvents=pawnGoldEvents+1
+endfunction
+function InstallPawnGoldTest takes unit seller returns nothing
+    local trigger p=CreateTrigger()
+    local trigger g=CreateTrigger()
+    call TriggerRegisterUnitEvent(p,seller,EVENT_UNIT_PAWN_ITEM)
+    call TriggerRegisterPlayerStateEvent(g,Player(0),PLAYER_STATE_RESOURCE_GOLD,GREATER_THAN,100.0)
+    call TriggerAddAction(p,function PawnChangeGold)
+    call TriggerAddAction(g,function PawnGoldEvent)
 endfunction
 function OnPawn takes nothing returns nothing
     set pawnCount=pawnCount+1

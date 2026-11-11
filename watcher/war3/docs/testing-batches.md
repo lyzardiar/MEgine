@@ -8897,3 +8897,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_revival.cpp`、`tests/revival_tests.cpp`、`tests/generate-revival-fixture.py`。祭坛排队和酒馆唤醒支付时，金币事件回调修改木材后跳过过期木材事件。
 
 快速检查：Win32 Release 客户端及 revival 目标编译通过；执行 `python tests/generate-revival-fixture.py --data-root <data-root> --revival-lumber --output <fixture>` 后运行 `war3_revival_tests <data-root> <fixture> altar-payment-state`、`awaken-payment-state`，两例修复前失败、修复后各 1 通过／0 失败。祭坛案例用自定义木材费用，酒馆使用原有费用；批次合并祭坛／酒馆、退款及事件，原版时序与实际窗口待验证。本批 1/3。
+
+### 物品典当的资源事件重入（待批次验证）
+
+路径：`src/session_commerce.cpp`、`tests/passive_tests.cpp`、`tests/generate-passive-fixture.py`。典当返还金币和木材后，出售／移除物品回调或金币事件回调改变余额时，不再派发基于旧值的重复事件。
+
+快速检查：Win32 Release 客户端及 passive 目标编译通过；生成 passive 夹具后执行 `war3_passive_tests <data-root> <fixture> pawn-callback-gold`，修复前失败、修复后 1 通过／0 失败。批次合并典当、物品购买、库存和事件；木材与物品移除回调、原版事件时序、实际窗口和联机待验证。本批 2/3。
