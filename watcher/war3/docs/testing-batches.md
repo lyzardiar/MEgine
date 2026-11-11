@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 飘字阴影（待批次验证）
+
+路径：`src/game_text_tag.cpp`、`docs/text-tags.md`。为飘字增加黑色阴影并按原版指令中的屏幕坐标偏移；支持颜色分段与换行，先绘制阴影后绘制正文。当前阴影透明度跟随飘字透明度，原版透明度历史变化及内联颜色交互尚待对照。
+
+必要检查：Win32 Release 客户端增量编译通过。本批 3/3，接下来集中验证创建默认值、透明度、阴影及存档，并检查 Blizzard TD 原图窗口；字号、重叠及原版窗口动态对照仍需独立核实。
+
+
 ## 飘字透明度状态（待批次验证）
 
 路径：`src/session_text_tag.cpp`、`src/game_text_tag.cpp`、`tests/clock_tests.cpp`、`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。模拟步按原版状态更新透明度，暂停保留当前值；STTX v4 保存当前值并读取 v1–v3。旧档下一步可能出现透明度跳变，旧客户端不能读取 v4。
