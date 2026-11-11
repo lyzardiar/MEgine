@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 技能、弹道与吸血增益旧目标恢复批次（部分验证）
+
+范围：`8d8bc77`、`552f932`、`a0fc761`，集成版本 `a0fc761`。Win32 Release 客户端、caster、clock、control 和 campaign AI 目标编译通过。使用 `tmp/docs-artifacts/war3/caster-spells/fixture.w3m` 与 `tmp/docs-artifacts/war3/combined-item/fixture.w3m`：caster 的 `spell-alias-restore`、`aura-alias-restore`、`targets` 分别为 2／0、2／0、13／0；control 的 `item-vampirism-alias`、`item-combined` 分别为 2／0、1／0。
+
+`WAR3_CLOCK_FILTER` 分别设为 `unit_buffs_restore`、`unit_auras_restore`、`spell_missiles_restore_flight`、`attack_projectiles_restore_flight` 运行 `war3_clock_tests <root> tmp/docs-artifacts/war3/alias-recovery-batch`，各为 1／0。`war3_campaign_ai_tests <root> <root>/Maps/Scenario/(4)WarChasers.w3m` 的 `warchasers-kill`、`warchasers-spell` 分别为 3／0、2／0。合计 29 通过／0 失败；明确检查 Game.dll 的用例未加载该 DLL。
+
+夹具由 `python watcher/war3/tests/generate-caster-fixture.py --data-root <root>` 和 `generate-combined-item-fixture.py --data-root <root>` 生成。覆盖旧目标缩写的施法、弹道、药水敌友筛选、目标列表上限和恢复重存，以及原地图短会话；其他范围目标、友方实际吸血、原版实机数值对照、窗口和完整对局仍待验证。批次已执行，未完成项保留；下一功能批次从 0/3 开始。
+
+
 ## 吸血药水目标缩写与增益恢复（待批次验证）
 
 路径：`src/session_attack_passives.cpp`、`src/session_buff_snapshot.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`。药水目标缩写在施加和旧增益恢复时展开；吸血判定识别 allies、enemies、player 和 notself 等关系，超过 4096 项的目标列表以等价缩写保存。
