@@ -8523,3 +8523,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/font_metrics.cpp`、`tests/native_tests.cpp`、`tests/lua_tests.cpp`。字体宽度按可见文本中最宽的一行计算，空行不增加宽度；地图脚本宽度查询及界面自然布局复用相同 GDI 度量。单行保留原有留白规则。
 
 快速检查：Win32 Release 客户端、Lua 和 native 测试目标编译通过，新增用例未执行。与本批跨锚点和转义文字任务合并验证原字体单行／多行／空行、地图脚本查询、窗口显示与布局；原版对空行、字距和自定义字体的处理仍待对照。本项提交后本批达到 3/3，先完成集中验证。
+
+### 地图文字布局批次（部分验证）
+
+范围：`cf7b156`、`ad74c1b`、`44e38d8`，集成版本 `44e38d8`。Win32 Release 客户端、native 和 Lua 测试目标编译通过。使用本机原版资源目录执行 `war3_native_tests <data-root> tmp/docs-artifacts/war3/text-layout-batch-native` 为 25 通过／0 失败，覆盖锚点尺寸、循环拒绝、转义字符及原字体多行宽度；日志 `tmp/docs-artifacts/war3/text-layout-batch-native.log`。
+
+使用同一版本和 `G:/qcloud_20144088.w3x` 的 `war3_lua_tests <data-root> <map>` 为 2 通过／0 失败、未加载 Game.dll，覆盖地图文字宽度和跨锚点换行；日志 `tmp/docs-artifacts/war3/text-layout-batch-lua.log`。Lua 测试工作区包含原有人工清怪探针，因此不表示正常对局或通关。未执行真实窗口、原版文字／像素对照、复杂 FDF 和自定义字体；这些保留待测。下一功能批次从 0/3 开始。
