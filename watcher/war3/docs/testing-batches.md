@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 场景移动与桥梁右键批次（部分验证）
+
+功能范围 `f2393e6`、`3c6f45d`、`609ecbd`；在 `609ecbd` 代码加本次测试补充上执行。Win32 Release 客户端、order_queue、construction、clock 目标构建通过；order_queue 有既有 C4456 变量遮蔽告警。原图 `war3_order_queue_tests <data-root> <BootyBay.w3m> smart-bridge` 为 1 通过／0 失败，覆盖混合选区、受损和已毁桥梁、点击点、Shift 队列和目标移除。完整 order_queue 进程退出 0、输出 38 条 PASS（无 RESULT 汇总），包含新增实验联机目标坐标编码、时间片消费及队列；`war3_construction_tests <data-root> <construction-fixture> repair-bridge-blocked` 为 1 通过／0 失败；`WAR3_CLOCK_FILTER=unit_core_restores_hero_abilities_equipment_and_vitals war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖排队目标移除与桥梁 `(0,0)` 点击点恢复。
+
+恢复测试首次失败：旧夹具先移除单位再提交目标订单，现有入口会拒绝该无效目标。改为先排队再移除后通过，同时增加桥梁坐标恢复断言。实验联机检查为同进程模拟，未验证双端互通；旧版队列快照兼容尚未直接测试。
+
+BootyBay 隔离用户目录以 `--play --mute --hidden --frames 3000` 启动，日志确认开局、首帧和正常结束；后台 Agent 选中农民、投递右键，前后快照的位置由 (-8119.51, 2233.85) 变为 (-8525.84, 2416.09)。该探针未确认目标类型或订单是否由该次输入触发，不能作为树木采集或桥梁命中验收。日志和截图位于 `tmp/docs-artifacts/war3/smart-bridge-batch-20261111/`。实际窗口中移动按钮对树木／桥面／物品的点击、断桥拾取及修复、原版比较、联机双端、旧版存档与性能仍待验证。下一功能批次从 0/3 开始。
+
 ## 右键已毁坏桥梁（待批次验证）
 
 路径：`src/game_view.h`、`src/game_view.cpp`、`tests/order_queue_tests.cpp`。右键场景时将可见的已毁坏桥梁纳入目标拾取，交给现有智能命令和修理流程；死亡的非桥梁、其他场景选择与技能目标沿用原有过滤。显式修理命令仍可选取断桥。
