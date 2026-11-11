@@ -46,6 +46,18 @@ function ProbePaymentStateSetup takes nothing returns nothing
     call TriggerAddAction(g,function ProbeGoldChangesLumber)
     call TriggerAddAction(l,function ProbeLumberEvent)
 endfunction
+function ProbeRefundGold takes nothing returns nothing
+    set probe_gold_events=probe_gold_events+1
+    call SetPlayerState(Player(0),PLAYER_STATE_RESOURCE_LUMBER,0)
+endfunction
+function ProbeRefundStateSetup takes nothing returns nothing
+    local trigger g=CreateTrigger()
+    local trigger l=CreateTrigger()
+    call TriggerRegisterPlayerStateEvent(g,Player(0),PLAYER_STATE_RESOURCE_GOLD,GREATER_THAN,100.0)
+    call TriggerRegisterPlayerStateEvent(l,Player(0),PLAYER_STATE_RESOURCE_LUMBER,GREATER_THAN,100.0)
+    call TriggerAddAction(g,function ProbeRefundGold)
+    call TriggerAddAction(l,function ProbeLumberEvent)
+endfunction
 function ProbeStart takes nothing returns nothing
     set probe_started=probe_started+1
     set probe_structure=GetConstructingStructure()

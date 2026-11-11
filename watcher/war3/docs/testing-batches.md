@@ -8849,3 +8849,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_repair.cpp`、`tests/construction_tests.cpp`、`tests/generate-construction-fixture.py`。维修及协助建造的资源支付同时扣除金币和木材；金币事件回调改变木材后，跳过基于旧木材值的过期事件，保留回调修改的余额。
 
 快速检查：Win32 Release 客户端与 construction 目标编译通过；生成 `python tests/generate-construction-fixture.py --data-root <data-root>` 后执行 `war3_construction_tests <data-root> <fixture> repair-payment-state`，修复前复现金币事件一次、木材余额 200 且错误木材事件一次；修复后退出 0、输出 1 条 PASS。批次合并普通和桥梁修理、协助建造、资源变化及回调重入；其他资源交易路径、原版事件时序和真实窗口待验证。本批 1/3。
+
+### 训练支付与取消退款的资源事件重入（待批次验证）
+
+路径：`src/session_production.cpp`、`tests/construction_tests.cpp`、`tests/generate-construction-fixture.py`。训练支付的金币事件回调修改木材时，不再派发过期木材事件；取消队列退款先派发人口变化，后续金币、木材和英雄令牌事件在回调改变对应状态时不再使用旧值。
+
+快速检查：Win32 Release 客户端及 construction 目标编译通过；生成 `python tests/generate-construction-fixture.py --data-root <data-root>` 后运行 `war3_construction_tests <data-root> <fixture> train-payment-state` 和 `train-refund-state`，两例修复前失败、修复后各输出 1 条 PASS。批次合并训练、研究、英雄复活、取消退款、人口与资源事件；人口回调和英雄令牌变更、原版时序及真实窗口待验证。本批 2/3。
