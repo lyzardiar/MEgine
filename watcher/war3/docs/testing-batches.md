@@ -8681,3 +8681,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_entities.cpp`、`tests/caster_tests.cpp`。字符串自动施法开关的回退路径复用已有校验与事件，不再绕过沉默或其他无法施法状态；修理开关仍使用既有修理入口。
 
 快速检查：Win32 Release 客户端和 caster 测试目标编译通过；生成 `python tests/generate-caster-fixture.py --data-root <data-root>` 后执行 `war3_caster_tests <data-root> <fixture> autocast-silence`，修复前失败、修复后退出 0、输出 1 条 PASS。覆盖沉默下字符串与 ID 开关、移除沉默后启停；实际事件时序、其他禁用状态、修理开关、未知能力及原版差异留待批次验证。本批 1/3。
+
+### 未知点订单保留排队操作（待批次验证）
+
+路径：`src/session_orders.cpp`、`tests/order_queue_tests.cpp`。四个脚本点订单入口在清除队列前检查单位、订单和 Location；未知编号及未知四字节名称不会中断已有队列，已注册订单与当前对象定义仍可派发。原版静态入口见[即时目标订单](instant-orders.md)。
+
+快速检查：Win32 Release 客户端与订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-point-id` 修复前失败、修复后退出 0 并输出 1 条 PASS。批次运行完整订单套件，合并有效建造／技能点订单、自定义对象及 Location 边界；原版动态队列、注册表覆盖、真实窗口和多人仍待对照。本批 2/3。
