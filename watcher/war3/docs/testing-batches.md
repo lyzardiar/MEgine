@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## Azure TD 路径、武器与排行榜批次（部分验证）
+
+范围：`56bc0e8`、`e8ca9ee`、`75c3438`，集成版本 `75c3438`。Win32 Release 客户端及 CampaignAI、archive、roots、clock 目标编译通过。6 个进程共 18 通过／0 失败：Azure 原图 `azure-footprint` 1 项、`azure-disabled-weapon` 1 项、`azure-wave` 2 项；古树扎根与武器切换 3 项；排行榜恢复 1 项；归档及纹理别名优先级 10 项。日志位于 `tmp/docs-artifacts/war3/azure-batch-20261112/`。
+
+Azure 检查使用原图和地图脚本，实际下达建塔命令并等待首波；攻击阶段移动并暂停一个怪物，余下怪物通过脚本处死以检查无击杀者和第二波倒计时。未覆盖真实窗口操作、自然完整波次、武器特效／战棍、全部无效句柄、地图 BLP 与公共 TGA 的所有优先级组合、双端联机及原版动态对照；这些项目继续待测。批次已执行，下一功能批次从 0/3 开始。
+
+
 ## 排行榜空玩家及 Azure TD 波次（待批次验证）
 
 路径：`src/session_leaderboard.cpp`、`tests/campaign_ai_tests.cpp`。排行榜玩家索引／存在查询遇到无效玩家分别返回 -1／false，按玩家移除则不操作；避免地图脚本在单位无击杀者死亡时把空玩家传入排行榜而中断。原版失效句柄的完整语义仍待对照。
