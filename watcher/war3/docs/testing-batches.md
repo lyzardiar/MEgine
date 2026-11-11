@@ -1,5 +1,12 @@
 # 独立客户端测试队列
 
+## 提示换行、飘字生命周期与空模型批次（部分验证）
+
+范围：`29ed6b3`、`28392b1`、`4422bae`，集成版本 `4422bae`，含测试补充 `84a838c`。Win32 Release 客户端、CampaignAI、archive、clock 和 browser 目标编译通过。5 个测试进程共 19 通过／0 失败：Blizzard TD 模型与凤凰 1 项、飘字及早期波次 2 项、飘字恢复 1 项、归档及实际导入模型优先级 11 项、聊天编辑与布局 4 项。日志位于 `tmp/docs-artifacts/war3/blizzard-batch-20261112/`。
+
+Azure TD 和 Blizzard TD 隐藏窗口均运行 60 游戏帧并生成截图；Azure 长地图提示可见自动换行，Blizzard 原图不再因空模型中断。Blizzard 截图中的波次飘字仍出现未解析的 `TRIGSTR` 且相互遮挡，属于未通过的 UI 项，保留待修复；原版文字布局、完整本地化、动态地图、不同分辨率及完整对局仍未验收。两张截图与日志同在上述临时目录，未加载 Game.dll。批次已执行，失败和未执行项保留；下一功能批次从 0/3 开始。
+
+
 ## 空模型占位单位载图（待批次验证）
 
 路径：`src/source_model.h`、`src/session_entities.cpp`、`src/session_commerce.cpp`、`tests/campaign_ai_tests.cpp`、`tests/archive_tests.cpp`。单位、物品及商品模型字段为 `_` 时作为空模型；`_.mdl`／`_.mdx` 在没有实际 `_.mdx` 资源时作为空模型，有资源时保留原路径。实体仍保留类型、位置、脚本句柄和其他状态。
