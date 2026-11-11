@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 飘字速度、负时间与颜色批次（部分验证）
+
+范围：`bda2800`、`150b822`、`a79bd93`，集成版本 `a79bd93`。Win32 Release 客户端、clock 和 CampaignAI 编译通过；3 个测试进程共 5 通过／0 失败：飘字速度／年龄／负时间／颜色边界与 v1–v3 存档恢复 2 项、Blizzard TD WTS 1 项、失效句柄及原图推进至少至第 3 波 2 项。复现分别使用 `WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>`，以及 `war3_campaign_ai_tests <root> <BlizzardTD> blizzardtd-wts`／`blizzardtd-texttags`。
+
+Blizzard TD 原图和隔离地图副本分别在隐藏窗口运行 60 游戏帧并正常退出，未加载 Game.dll。副本注入 `SetTextTagColor(t, -1, 256, 0, 255)`，截图显示红色文字；原图波次文字仍有重叠。原图与夹具截图、脚本、地图副本及日志保存在 `tmp/docs-artifacts/war3/texttag-native-batch/`。
+
+移动／改速／负时间／淡出的真实动态窗口、不同相机与分辨率、原版实机对照、全部颜色组合和完整对局仍未验收。批次已执行，未执行项与重叠问题保留；下一功能批次从 0/3 开始。
+
+
 ## 飘字颜色通道整数转换（待批次验证）
 
 路径：`src/session_text_tag.cpp`、`tests/clock_tests.cpp`，说明见 `docs/text-tags.md`。颜色和透明度参数各取低 8 位，支持负数和超过 255 的值；依据本机 1.27 Game.dll 对四个参数的字节写入，地址和版本摘要见说明。
