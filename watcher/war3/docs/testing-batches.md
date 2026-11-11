@@ -2,11 +2,11 @@
 
 ## 变形单位攻击移动速度检查（待批次验证）
 
-路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`。攻击移动和巡逻下令及取消施法后的复核读取当前形态移速，与普通移动和路径追击使用同一速度来源，避免基础移速为零而当前变形可移动时错误拒绝。
+路径：`src/session_combat_orders.cpp`、`tests/order_queue_tests.cpp`、`tests/morph_tests.cpp`。攻击移动和巡逻下令及取消施法后的复核读取当前形态移速，与普通移动和路径追击使用同一速度来源，避免基础移速为零而当前变形可移动时错误拒绝。
 
-快速检查：Win32 Release 订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> morph-movement` 为 1 通过／0 失败，使用手工构造的变形状态覆盖普通移动、攻击移动和巡逻接受及巡逻状态，未加载 Game.dll。既有 C4456 告警仍在。
+快速检查：Win32 Release 订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> morph-movement` 为 1 通过／0 失败，使用手工构造的变形状态覆盖普通移动、攻击移动和巡逻接受及巡逻状态，未加载 Game.dll。既有 C4456 告警仍在。补充编译 `war3_morph_tests`，使用 `tmp/docs-artifacts/war3/morph-cyclone/fixture.w3m` 执行 `morph-orders`，1 通过／0 失败：真实妖术施放后将基础移速设为零，攻击移动和巡逻能实际移动且未获取目标，驱散后恢复零基础移速。
 
-本批 2/3；集中验证真实变形施放／结束、变形后零移速、根须和眩晕、编队及排队、事件回调和实际移动；原版变形单位的具体命令规则及窗口操作尚待对照。
+本批 2/3；补充提交属于同一任务，不单独计数。集中验证变形后零移速、根须和眩晕、编队及排队、事件回调；原版变形单位的具体命令规则及窗口操作尚待对照。
 
 ## 编队命令重复成员去重（待批次验证）
 
