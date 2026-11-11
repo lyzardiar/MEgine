@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 采金途中目标或地形变化恢复（待批次验证）
+
+路径：`src/session_harvest.cpp`、`tests/campaign_ai_tests.cpp`。工人接近矿井时复核地形阻挡版本及路线终点；矿井移动或路线失效后重新寻路。暂时不可达时保留采矿命令并限频重试，道路开放后继续采集。
+
+必要检查：Win32 Release `war3_campaign_ai_tests` 编译通过；`war3_campaign_ai_tests <root> tmp/docs-artifacts/war3/campaign-ai/fixture.w3m <harvest-mine-reopen-player|harvest-mine-move-player>` 各 1 通过／0 失败，覆盖封路等待／重开及脚本移动矿井后重新接近和实际采金；封路测试修复前保留旧路线。未加载 Game.dll。
+
+本批 3/3；先合并验证伐木、采金、预加载过滤器生命周期和相关回归。矿井移动与动态阻挡的原版行为、频繁变化性能、实际窗口及完整对局仍待验证。
+
+
 ## 预加载过滤器跨调用生命周期（待批次验证）
 
 路径：`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_game.cpp`、`tests/map_tests.cpp`。预加载创建的过滤器被布尔表达式引用时持有其运行时，子脚本返回后仍可使用并保留全局状态；最后的表达式引用释放后不再持有运行时。已保留的回调再次创建过滤器时，新过滤器独立保留相同运行时。
