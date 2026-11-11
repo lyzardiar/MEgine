@@ -9005,3 +9005,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 路径：`src/session_mines.cpp`、`tests/caster_tests.cpp`、`tests/generate-caster-fixture.py`。即时缠绕派发订单事件后核对原订单修订号与双方生命周期；脚本对同一矿井重新下达普通缠绕时，外层调用不提前完成替代订单。
 
 快速检查：Win32 Release 客户端及 caster 目标编译通过；生成 caster 夹具后运行 `war3_caster_tests <data-root> <fixture> entangle-instant-reissue`，修复前失败、修复后输出 1 条 PASS，覆盖替代普通订单随后正常完成。批次合并即时／普通缠绕、生命周期与资源；回调死亡复活／易主、原版时序和实际窗口待验证。本批 3/3，先集中验证。
+
+### 缠绕金矿状态与订单重入批次（部分验证）
+
+范围：`78a589d`、`7f7e20f`、`b5663bd`，集成版本 `b5663bd`。Win32 Release 客户端、caster、construction、harvest 和 order queue 目标编译通过，重新生成相关夹具。caster 的缠绕启动四种回调、完成三种失效、即时命令重入、采金目标移除及回调新订单共 10 个入口各退出 0、输出 1 条 PASS；caster、construction、harvest 默认入口各输出 1 条 PASS，order queue 默认入口输出 37 条 PASS，共 14 个进程成功。日志 `tmp/docs-artifacts/war3/entangle-callback-batch.log`；这些入口未输出 RESULT。
+
+普通缠绕重入后完成由 caster 夹具覆盖，即时缠绕、金矿资源关联及移除由 construction 默认入口覆盖。目标移动／能力等级、死亡复活及真实窗口、多人和原版事件时序仍待验证；本批不代表完整对局验收，下一功能批次从 0/3 开始。
