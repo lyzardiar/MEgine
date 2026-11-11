@@ -8601,3 +8601,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 路径：`src/session.h`、`src/session_recovery_bundle.cpp`、`src/lua_local_sync.cpp`、`tests/clock_tests.cpp`。SRBF 版本 63 保存自定义消息和 DZ 同步注册的触发器、前缀及顺序，重建触发器后映射句柄并校验；60–62 版本按无注册读取。重复注册保留，销毁触发器沿用现有清理。活动消息上下文仍不能保存；本地 Lua 同步宿主或外部脚本运行时存在时仍拒绝检查点，避免遗漏待发送队列及外部状态。
 
 快速检查：Win32 Release 客户端和 clock 目标编译通过；`WAR3_CLOCK_FILTER=recovery_bundle_restores_message_triggers war3_clock_tests <data-root> <output-root>` 为 1 通过／0 失败，覆盖重复与禁用注册、前缀分派、销毁清理、宿主保护、旧版本及错误句柄。技能界面恢复与预加载旧版兼容各 1／0；日志 `tmp/docs-artifacts/war3/message-recovery-*.log`。批次验证完整检查点、异常／预算、休眠消息上下文、真实窗口及原版时序；Lua／平台状态和待发送队列恢复尚未实现。本批 2/3。
+
+### 休眠消息触发器上下文恢复（待批次验证）
+
+路径：`src/session_threads.cpp`、`tests/clock_tests.cpp`、`tests/session_tests.cpp`。JSSC 版本 4 和 JSSH 版本 2 保存自定义消息／DZ 同步上下文的种类和内容，并沿用现有触发器与玩家句柄映射；旧 JSSC 1–3 和 JSSH 1 继续读取。非法组合和超长／含零消息拒绝恢复；外部 Lua 运行时和本地同步宿主仍禁止检查点。
+
+快速检查：Win32 Release 客户端、clock 和 session 测试目标编译通过；针对故障运行 `WAR3_CLOCK_FILTER=recovery_bundle_restores_sleeping_message_context war3_clock_tests <data-root> <output-root>` 为 1 通过／0 失败，覆盖两种消息的休眠、检查点恢复后续行、玩家／文本、普通快照、非法标志及空的旧共享快照，日志 `tmp/docs-artifacts/war3/sleep-message-fast.log`。本项提交后本批 3/3，合并执行线程、消息注册、技能界面与旧版恢复回归；非空旧共享快照、实际窗口、原版时序及 Lua／平台状态仍待验证或实现。
