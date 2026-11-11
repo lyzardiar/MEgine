@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 普通技能玩家目标关系（待批次验证）
+
+路径：`src/session_spells.cpp`、`tests/generate-caster-fixture.py`、`tests/caster_tests.cpp`。普通施法及通用技能目标判定识别 player／play，并将其与敌友、中立及自身目标条件组合；仅含 player 的目标不会放行其他玩家。
+
+必要检查：Win32 Release 客户端和 caster 目标编译通过；`generate-caster-fixture.py --data-root <root>` 后，`war3_caster_tests <root> <fixture> player-targets` 为 4／0，覆盖己方、自身、其他盟友、敌方和中立目标及实际 Inner Fire；既有 `targets` 为 13／0。未加载 Game.dll 的检查见对应输出。
+
+本批 2/3；其他专用技能的玩家目标、原版动态目标关系和完整对局待集中验证。
+
+
 ## 复活符文拾取测试修正（已复测）
 
 上一批 `war3_corpse_tests <root> tmp/docs-artifacts/war3/corpses/fixture.w3m items` 的断言要求无物品栏单位通过 `UnitAddItem` 直接使用符文，与本队列 `UnitAddItem` 原版入口检查及 `src/session_inventory.cpp` 的现有规则冲突。`tests/corpse_tests.cpp` 改为检查脚本添加失败、物品留在地面，再使用实际智能拾取命令验证无物品栏单位触发符文、消耗物品并复活尸体。
