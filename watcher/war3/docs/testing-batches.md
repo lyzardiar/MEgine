@@ -8553,3 +8553,9 @@ Win32 Release 客户端和 Lua 测试目标编译通过；原图 Lua 测试 2／
 范围：`e34903b`、`a9e7ed0`、`47e6513`，集成版本 `47e6513`。Win32 Release 客户端、订单和 native 测试目标编译通过，订单目标保留既有 C4456 告警。`war3_native_tests <data-root> tmp/docs-artifacts/war3/order-text-batch-native` 为 26 通过／0 失败，包含窄行及 4096 单元边界代理对检查；`war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-player-target` 与 `invalid-player-item` 均为 1 通过／0 失败，完整订单套件退出码 0、输出 36 条 PASS。日志 `tmp/docs-artifacts/war3/order-text-batch-{native,target,item,orders}.log`。
 
 验证覆盖失效目标／物品和已有队列、有效替换及现有订单回归；未执行实际窗口与鼠标、原版队列／事件时序对照、真实双端联机和完整对局，保留待测。下一功能批次从 0/3 开始。
+
+### 目标技能与物品命令校验补充（待批次验证）
+
+路径：`src/player_commands.cpp`、`tests/order_queue_tests.cpp`。将已实现的目标句柄检查扩展到目标技能、按订单施法、目标物品使用及物品转交；转交要求目标为有效单位。失效／错误类型目标在入队或替换现有队列前拒绝，技能目标仍允许单位、物品及可破坏物，并由技能自身判断具体合法性。
+
+快速检查：Win32 Release 客户端与订单测试目标编译通过，目标保留既有 C4456 告警；针对该缺陷运行 `war3_order_queue_tests <data-root> <BootyBay.w3m> invalid-player-ability` 为 1 通过／0 失败，覆盖移除目标、错误类型、立即／排队、队列续行与有效转交，日志 `tmp/docs-artifacts/war3/invalid-player-ability-fast.log`。下一批合并订单、技能目标、物品、联机及原版时序验证。此项是 `47e6513` 的范围补充，不单独增加功能批次计数；当前新批次 0/3。
