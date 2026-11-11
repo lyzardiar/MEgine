@@ -8789,3 +8789,9 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 范围：`d88417f`、`5a8ee43`、`4e00956`，以及批次修复 `366ff95`；集成版本 `366ff95`。Win32 Release 客户端、order queue、caster、construction、commerce 和 research 目标编译通过，重新生成各隔离夹具。order queue 的 `invalid-target-id`、`invalid-immediate-id`、`invalid-point-id`、`invalid-immediate`、`invalid-build`、`raw-item-order` 各退出 0、输出 1 条 PASS，默认入口退出 0、输出 37 条 PASS；caster 的 `build-cancel-pause`、`autocast-silence` 和默认入口及 construction、commerce、research 默认入口均退出 0、各输出 1 条 PASS。部分入口没有 RESULT，带标记入口报告 `game_dll_loaded=false`；日志 `tmp/docs-artifacts/war3/order-build-batch-final-*.log`。
 
 首次集中运行发现物品栏与取消订单被身份检查拦截，修复后在最终集成版本重跑受影响范围，包含物品栏移动、训练／研究取消及退款。回调改变资源／占地／金矿、工人死亡或易主、原版动态注册、实际窗口、多人及原版事件时序仍待验证；不作为完整对局验收。下一功能批次从 0/3 开始。
+
+### 地面攻击换令回调状态复核（待批次验证）
+
+路径：`src/session_attack_ground.cpp`、`tests/caster_tests.cpp`。攻城单位打断施法后复核自身状态与地面攻击武器，状态失效时拒绝旧命令，位置或射程变化时重算路线；回调换令沿用修订号保护。
+
+快速检查：Win32 Release 客户端和 caster 目标编译通过；生成 caster 夹具后执行 `war3_caster_tests <data-root> <fixture> ground-cancel-pause`，修复前失败、修复后退出 0 并输出 1 条 PASS。批次合并攻城弹道、地面攻击、普通攻击与施法回归；回调移动／易主／武器变化、新订单、实际窗口和原版时序仍待验证。本批 1/3。
