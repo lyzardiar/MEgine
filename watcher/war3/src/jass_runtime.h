@@ -56,6 +56,7 @@ public:
     void scopedSharedDestruction();
     void inheritNatives(const Runtime& owner);
     void inheritNativesSubset(const Runtime& owner,const std::function<bool(std::string_view)>& include);
+    void resolveStringLiterals(const std::function<std::string(std::string_view,unsigned)>& resolve);
     void initialize();
     void initializeFromGlobals(std::span<const std::uint8_t> bytes,const StableHandleMap& decodeHandle={});
     bool ready() const;

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <cctype>
 
 namespace war3 {
 namespace {
@@ -17,6 +18,7 @@ constexpr EnumNative enums[]={
 };
 }
 ScriptSession::ScriptSession(jass::Module module,const MapInfo& info,MapStrings strings,std::optional<unsigned> gameType,std::optional<std::uint32_t> initialRandomSeed) : strings_(std::move(strings)),runtime_(std::move(module)) {
+    if(!strings_.empty())runtime_.resolveStringLiterals([this](std::string_view value,unsigned source){auto name=runtime_.module().program().sources().at(source).name;for(auto& c:name){if(c=='/')c='\\';c=char(std::tolower(static_cast<unsigned char>(c)));}return name=="war3map.j" || name=="scripts\\war3map.j"?mapString(std::string(value),strings_):std::string(value);});
     initialRandomSeed_=initialRandomSeed;if(initialRandomSeed)gameRandom_=AudioRandom(*initialRandomSeed);auto auxiliarySeed=gameRandom_;seedAuxiliaryRandom(auxiliarySeed.next());
     config_.name=info.name;config_.description=info.description;config_.playerCount=info.playablePlayers();config_.teamCount=unsigned(info.forces.size());config_.gameType=gameType.value_or((info.flags&4)?1u:4u);config_.supportedGameTypes=config_.gameType;
     for(unsigned i=0;i<16;++i){config_.players[i].team=i;config_.players[i].color=i;config_.players[i].alliances[i]=1;config_.players[i].name="Player "+std::to_string(i+1);config_.players[i].states[6]=100;objects_.push_back({NativeKind::Player,true,PlayerRef{i}});}

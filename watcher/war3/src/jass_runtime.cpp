@@ -47,6 +47,7 @@ struct Runtime::Impl {
     RuntimeLimits limits;
     std::vector<Code> code;
     std::vector<Value> literals;
+    std::vector<unsigned> literalSources;
     struct NativeHook {const void* owner=nullptr;Native callback;};
     std::vector<Native> natives;
     std::vector<NativeHook> nativeHooks;
@@ -102,7 +103,7 @@ struct Runtime::Impl {
             }
             if(e.kind==ExpressionKind::Variable){emit(out,Op::Read,item.id,e.position);continue;}
             if(e.kind==ExpressionKind::Call || e.kind==ExpressionKind::Array || e.kind==ExpressionKind::Unary || e.kind==ExpressionKind::Binary){work.push_back({item.id,1});if(e.kind==ExpressionKind::Binary && (e.text=="and" || e.text=="or"))work.push_back({e.operands[0]});else for(auto at=e.operands.rbegin();at!=e.operands.rend();++at)work.push_back({*at});continue;}
-            auto index=Id(literals.size());literals.push_back(literal(item.id));emit(out,Op::Literal,index,e.position);
+            auto index=Id(literals.size());literals.push_back(literal(item.id));literalSources.push_back(e.position.source);emit(out,Op::Literal,index,e.position);
         }
     }
     void statements(Code& out,const std::vector<Id>& body,std::vector<std::vector<size_t>>& loops,bool voidReturn) {
@@ -197,6 +198,7 @@ void Runtime::inheritNatives(const Runtime& owner){if(impl_->state!=State::Creat
 void Runtime::inheritNativesSubset(const Runtime& owner,const std::function<bool(std::string_view)>& include){
     if(impl_->state!=State::Created || !include)throw std::runtime_error("Native inheritance requires a fresh runtime and filter");auto& shared=owner.module();for(Id id=0;id<std::min(shared.types().size(),module().types().size());++id)if(module().type(id).name!=shared.type(id).name || module().type(id).parent!=shared.type(id).parent)throw std::runtime_error("Shared runtime type layout differs");for(Id id=0;id<module().functions().size();++id){auto& function=module().program().functions()[id];if(!function.native || !include(function.name))continue;auto other=shared.functionId(function.name);if(other==none || !shared.program().functions()[other].native || !owner.impl_->natives[other])continue;auto& expected=shared.functions()[other];auto& actual=module().functions()[id];if(expected.result!=actual.result || expected.parameters!=actual.parameters)throw std::runtime_error("Shared native signature differs: "+function.name);impl_->natives[id]=owner.impl_->natives[other];impl_->sleepNatives[id]=owner.impl_->sleepNatives[other];}
 }
+void Runtime::resolveStringLiterals(const std::function<std::string(std::string_view,unsigned)>& resolve) {if(impl_->state!=State::Created || impl_->active || !resolve)throw std::runtime_error("Literal resolution requires a fresh runtime");std::map<std::pair<unsigned,std::string>,Value> cache;for(size_t i=0;i<impl_->literals.size();++i){auto& value=impl_->literals[i];if(value.type!=impl_->string || !value.text || !value.text->starts_with("TRIGSTR_"))continue;auto key=std::pair{impl_->literalSources[i],*value.text};auto found=cache.find(key);if(found==cache.end()){auto resolved=resolve(key.second,key.first);found=cache.emplace(std::move(key),resolved==*value.text?value:string(std::move(resolved))).first;}value=found->second;}}
 void Runtime::initialize() {if(impl_->state!=State::Created)throw std::runtime_error("JASS runtime initialization requires a fresh instance");impl_->state=State::Initializing;try{impl_->run(Id(module().functions().size()),{},{});impl_->state=State::Ready;}catch(...){impl_->state=State::Failed;throw;}}
 void Runtime::initializeFromGlobals(std::span<const std::uint8_t> bytes,const StableHandleMap& decodeHandle) {if(impl_->state!=State::Created || impl_->active || impl_->domain->threads.current() || threadCount() || !impl_->runs.empty())throw std::runtime_error("JASS global recovery requires a fresh idle runtime");impl_->state=State::Initializing;try{restoreGlobalsImpl(bytes,decodeHandle,true);impl_->state=State::Ready;}catch(...){impl_->state=State::Failed;throw;}}
 bool Runtime::ready() const {return impl_->state==State::Ready;}

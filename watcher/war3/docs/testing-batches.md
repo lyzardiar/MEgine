@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 地图脚本 WTS 字面量解析（待批次验证）
+
+路径：`src/jass_runtime.cpp`、`src/jass_runtime.h`、`src/session.cpp`、`src/map.cpp`、`tests/campaign_ai_tests.cpp`，说明见 `docs/text-tags.md`。地图脚本的完整 WTS 引用在全局初始化和字符串拼接前按本地图解析，公共脚本及动态字符串不提前替换；未知和超大编号保持原文。
+
+必要检查：Win32 Release 客户端和 CampaignAI 目标编译通过；原版 `blizzardtd-wts` 为 1 通过／0 失败，检查地图全局、拼接后的飘字、公共脚本和动态字符串边界。原图隐藏窗口运行 60 游戏帧通过，波次飘字中的原始 `TRIGSTR` 已展开，截图和日志 `tmp/docs-artifacts/war3/td-probe/blizzard-wts-after.png`、`blizzard-wts-after.log`；飘字之间仍有遮挡，原版布局待单独处理。未加载 Game.dll，截图不代表完整视觉验收。
+
+本批 1/3；集中检查有效／缺失／溢出编号、全局和函数字面量、脚本路径及公共脚本隔离、动态拼接、中文与转义、地图切换、存档恢复、Lua／AI 入口和原版行为。
+
+
 ## 提示换行、飘字生命周期与空模型批次（部分验证）
 
 范围：`29ed6b3`、`28392b1`、`4422bae`，集成版本 `4422bae`，含测试补充 `84a838c`。Win32 Release 客户端、CampaignAI、archive、clock 和 browser 目标编译通过。5 个测试进程共 19 通过／0 失败：Blizzard TD 模型与凤凰 1 项、飘字及早期波次 2 项、飘字恢复 1 项、归档及实际导入模型优先级 11 项、聊天编辑与布局 4 项。日志位于 `tmp/docs-artifacts/war3/blizzard-batch-20261112/`。

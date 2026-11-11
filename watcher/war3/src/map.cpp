@@ -30,7 +30,7 @@ MapStrings mapStrings(std::span<const std::uint8_t> bytes) {
     }
     if(state)throw std::runtime_error("Truncated WTS string table");return result;
 }
-std::string mapString(const std::string& value,const MapStrings& strings) {if(!value.starts_with("TRIGSTR_") || value.size()==8)return value;auto id=value.substr(8);if(!std::all_of(id.begin(),id.end(),[](unsigned char c){return c>='0' && c<='9';}))return value;auto found=strings.find(integer(id));return found==strings.end()?value:found->second;}
+std::string mapString(const std::string& value,const MapStrings& strings) {if(!value.starts_with("TRIGSTR_") || value.size()==8)return value;auto id=value.substr(8);if(!std::all_of(id.begin(),id.end(),[](unsigned char c){return c>='0' && c<='9';}))return value;unsigned index=0;auto [end,error]=std::from_chars(id.data(),id.data()+id.size(),index);if(error!=std::errc{} || end!=id.data()+id.size())return value;auto found=strings.find(index);return found==strings.end()?value:found->second;}
 unsigned MapInfo::playablePlayers() const {return static_cast<unsigned>(std::count_if(players.begin(),players.end(),[](auto& p){return p.type==1 || p.type==2;}));}
 unsigned MapInfo::humanPlayers() const {return static_cast<unsigned>(std::count_if(players.begin(),players.end(),[](auto& p){return p.type==1;}));}
 MapInfo MapInfo::parse(std::span<const std::uint8_t> bytes,const MapStrings& strings) {
