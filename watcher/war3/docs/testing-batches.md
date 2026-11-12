@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 标准信息面板图标尺寸（待批次验证）
+
+路径：`src/map_frames.cpp`、`tests/browser_tests.cpp`、`docs/unit-combat-panel.md`。支持地图脚本为两种攻击、护甲及英雄属性图标设置宽高，现有 HUD 消费尺寸和命中矩形；其他标准信息文本尺寸保持明确未实现。
+
+必要检查：Win32 Release 客户端和 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> map_standard_info_icon_size` 修复前因尺寸未实现失败，修复后 1 通过／0 失败，覆盖四个图标的默认位置、锚点、尺寸、隐藏和无效参数。批次合并标准面板、地图 FDF 与脚本接口；实际地图、前台画面、原版缩放／锚点语义以及文本尺寸待验证。本批 1/3。
+
 ## FDF 与脚本锚点混用补充修复
 
 路径：`src/map_frames.h`、`src/map_frames.cpp`、`src/glue.cpp`、`tests/browser_tests.cpp`。保留每个约束的来源：脚本覆盖一个方向时，其余静态 FDF 的相对方向仍按对应轴约束；脚本锚点仍参与双轴冲突检查。逻辑布局和绘制布局使用相同规则。
