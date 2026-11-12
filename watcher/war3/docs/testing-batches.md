@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 寄生物品与战斗信息文字批次（部分验证）
+
+范围：`791e828`、`1db0461`、`5e17fbf` 及本次 native 测试修正。Win32 Release 客户端、browser、native 和 control 测试目标编译通过；集成版本的 browser `map_` 为 11 通过／0 失败，寄生物品及相关单技能、组合物品、目标重入和控制流程共 10 个测试进程各 1 通过／0 失败。首次 native 为 25 通过／1 失败：测试在检查尺寸前未恢复图标可见性；修正测试后 native 重跑 26 通过／0 失败。日志位于 `tmp/docs-artifacts/war3/combat-text-layout/batch-5e17fbf.log` 和 `native-retest.log`。
+
+面板测试验证帧状态、布局和颜色计算，未对真实 HUD 像素及原版锚点／透明度语义进行对照；寄生驱散、事件重入、原版时序、实际窗口和多人仍待验证。下一功能批次从 0/3 开始。
+
 ## 攻击与护甲文字布局和可见性（待批次验证）
 
 路径：`src/map_frames.cpp`、`src/game_commands.cpp`、`tests/browser_tests.cpp`、`tests/native_tests.cpp`、`docs/unit-combat-panel.md`。两种攻击和护甲的标签、数值及升级等级支持可见性和根节点锚点；HUD 绘制沿用相应帧状态。
