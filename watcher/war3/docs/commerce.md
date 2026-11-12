@@ -16,6 +16,8 @@ DotA `-sd` 模式创建玩家拥有的 `ncop` 商店，源能力包含 `Asud` �
 
 主要实现为 `src/session_commerce.cpp`、`src/session_production.cpp`、`src/session_food.cpp` 和 `src/game_commands.cpp`。没有添加成功占位native。
 
+中立即时、点和目标订单的名称／编号入口校验玩家与商店单位；目标入口也校验目标，失效句柄返回 false。固定版 1.27 编号入口 `0x6f1e9330`、`0x6f1e9390`、`0x6f1e9400` 先解析玩家和单位，失败时返回零。有效命令继续沿用购买、英雄复活和显形路径；隔离测试范围与批次状态见测试队列。
+
 ## 验证与待测
 
 必要Win32 Release产品及新增消费者程序编译通过，无编译警告。DotA开局阻塞已越过AddUnitToStock、GetObjectName，当前到 `Scripts/war3map.j:8416` 的SetPlayerHandicapXP；main仍未完成。这是最小阻塞定位，不代表DotA可玩。

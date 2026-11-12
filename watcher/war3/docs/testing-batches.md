@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 中立订单的无效玩家与单位（待批次验证）
+
+路径：`src/session_commerce.cpp`、`tests/commerce_tests.cpp`、`docs/commerce.md`。中立即时、点和目标订单的名称／编号入口在派发前检查玩家及商店单位；目标订单继续校验目标。失效时返回 false，不进入交易或显形逻辑。
+
+固定 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 的编号入口 `0x6f1e9330`、`0x6f1e9390`、`0x6f1e9400` 分别先解析玩家与单位并在失败时返回 0。Win32 Release 客户端及 commerce 目标编译通过；`war3_commerce_tests <root> <fixture> neutral-invalid` 的定向场景通过，覆盖六个入口的空、错型及不存在的玩家／商店，以及目标订单的无效目标，验证资源与单位数不变。修复前即时订单报未知句柄；这是隔离夹具，未覆盖真实窗口或完整原版订单语义。
+
+本批 3/3；先合并验证飘字、玩家胜负及中立商店相关消费者，覆盖原图、恢复和边界。原版有效订单组合、多人同步、事件时序及完整对局仍待验证。
+
 ## 无效玩家的胜负接口（待批次验证）
 
 路径：`src/session_match.cpp`、`tests/session_tests.cpp`、`docs/game-flow.md`。`RemovePlayer` 和 `CachePlayerHeroData` 对空、类型不符或不存在的玩家句柄直接返回；有效玩家仍沿用既有结果、事件及英雄缓存路径。
