@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单技能目标物品批次（部分验证）
+
+范围：`2bdbb2b`、`ce4d6c8`、`0740308`，集成版本 `0740308`。Win32 Release 客户端及 control 测试目标编译通过；使用重新生成的组合物品夹具，单技能治疗／减速、诱捕／放逐、蛛网／睡眠、已有组合施法与控制、普通控制流程／驱散／生命周期及物品目标回调共 11 个测试进程，每项 1 通过／0 失败。日志 `tmp/docs-artifacts/war3/single-web-sleep/batch-0740308.log`。
+
+夹具中蛛网预设科技；其他单技能原型、冷却与事件的完整边界、飞行落地表现、原版时序、实际窗口及多人尚待验证。本批不代表所有物品能力已完成；下一功能批次从 0/3 开始。
+
 ## 单技能蛛网与睡眠物品（待批次验证）
 
 路径：`src/session_spells.cpp`、`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/control-spells.md`。单主动蛛网与睡眠物品进入单位目标选择，复用控制状态、科技与目标校验、物品费用和施法流程。
