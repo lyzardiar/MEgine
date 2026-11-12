@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 采集路线与预加载过滤器批次（已验证所列范围）
+
+范围：`f054e26`、`1618c36`、`afe009f`，集成版本 `afe009f`。Win32 Release 客户端、CampaignAI、harvest、map 和 JASS thread 目标编译通过，复用未变化的地图夹具。
+
+CampaignAI 的伐木封路／重开／可达树、玩家采矿封路重开／矿井移动、AI 采矿封路／全局配额／可达矿及城镇配额、Booty Bay 两族覆盖矿，harvest 的默认／暂停／眩晕／返还，以及 7 个预加载对象、伤害、命令和缓存模式均退出 0；JASS thread 为 36 通过／0 失败。共 22 个进程、失败 0；命令、完整输出和退出码位于 `tmp/docs-artifacts/war3/routes-preload-batch.cjs` 与 `routes-preload-batch.log`。
+
+预加载过滤器的完整存档及触发器／计时器长期回调仍未实现；携带木材时封路、频繁地形变化、多工人拥堵／性能、原版时序、实际窗口和完整对局未覆盖。下一功能批次从 0/3 开始。
+
+
 ## 采金途中目标或地形变化恢复（待批次验证）
 
 路径：`src/session_harvest.cpp`、`tests/campaign_ai_tests.cpp`。工人接近矿井时复核地形阻挡版本及路线终点；矿井移动或路线失效后重新寻路。暂时不可达时保留采矿命令并限频重试，道路开放后继续采集。
