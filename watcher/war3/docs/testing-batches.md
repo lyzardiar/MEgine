@@ -1,10 +1,16 @@
 # 独立客户端测试队列
 
+## F6 快速保存（待批次验证）
+
+路径：`src/quick_save.h`、`src/game_view.cpp`、`src/game_flow_ui.cpp`、`src/saved_game_browser.cpp`、`tests/clock_tests.cpp`、`docs/game-help.md`。F6 在本地安全边界保存独立快速检查点，重复调用替换专用文件；手动同名存档不受影响，游戏内和主菜单载入列表可选择快速存档。联机、回放、聊天及其他覆盖界面不执行；保存失败显示提示并记录原因。
+
+必要检查：Win32 Release 客户端及 clock 目标编译通过；`WAR3_CLOCK_FILTER=quick_save_checkpoint war3_clock_tests <root> <scratch>` 为 1 通过／0 失败，覆盖隔离用户目录、快速存档覆盖、同名手动存档隔离、检查点恢复和载入请求。该检查未模拟窗口按键；存档使用独立格式，不支持原版存档互通。实际窗口、原版命名与提示、失败和多界面输入留待批次验证。本批 3/3，先集中验证。
+
 ## 游戏菜单快捷键（待批次验证）
 
 路径：`src/main.cpp`、`src/game_view.cpp`、`src/game_flow_ui.h`、`src/game_flow_ui.cpp`、`docs/game-help.md`。原版帮助列出的 Alt+Q／O／S／L／H 接入结束游戏、选项、保存、载入和帮助面板，沿用现有菜单布局、输入、对局状态和单机限制；窗口只在对局场景捕获新增组合，避免将按键落入单位命令或重复触发。
 
-必要检查：Win32 Release 客户端编译通过；依据原版 `UI/HelpStrings.txt` 快捷键说明。批次验证实际窗口中五种快捷键、Esc 返回、聊天／其他弹窗、按键重复和联机限制，并核对各面板与原版布局。F6 快速保存及原版动态输入时序尚未实现或验收。本批 2/3。
+必要检查：Win32 Release 客户端编译通过；依据原版 `UI/HelpStrings.txt` 快捷键说明。批次验证实际窗口中五种快捷键、Esc 返回、聊天／其他弹窗、按键重复和联机限制，并核对各面板与原版布局。F6 后续实现见上项，原版动态输入时序尚未验收。本批 2/3。
 
 ## 天气接口的失效句柄（待批次验证）
 
