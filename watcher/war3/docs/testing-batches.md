@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单技能诱捕与放逐物品（待批次验证）
+
+路径：`src/session_spells.cpp`、`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/control-spells.md`。单主动诱捕／放逐物品进入单位目标选择并复用已有控制法术与物品施法流程；无目标时拒绝且不消耗。
+
+必要检查：Win32 Release 客户端及 control 测试目标编译通过；生成组合物品夹具后执行 `war3_control_tests <data-root> <fixture> item-single-control-family`，修复前目标模式缺失而失败，修复后 1 通过／0 失败，覆盖诱捕、放逐、物品消耗和无目标拒绝。编译保留既有局部变量遮蔽警告；原版时序、飞行目标、其他控制物品、窗口和多人待批次验证。本批 2/3。
+
 ## 单技能物品的普通单位目标法术（待批次验证）
 
 路径：`src/spells.h`、`src/session_spells.cpp`、`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/caster-spells.md`。单主动治疗、减速及已支持单位增益／减益原型进入目标选择并复用物品施法流程，延续目标检查、事件、费用、冷却及次数处理；已有多主动组合路径保持。

@@ -44,3 +44,5 @@ autocast模式仅编译、未执行。阶段合并原等级/w3a/英雄与普通/
 本地产物为根tmp/docs-artifacts/war3/control-spells/中的source.json、rea-identity.json、fixture.w3m、build.log、check-build.log、diagnostic-build.log、fixture-build.log、final-build.log、delivery-build.log、movement-fixture-build.log、clean-build.log、flow.log、purge-first.log、purge-diagnostic.log、purge.log、lifecycle.log、lifecycle-final.log及review-notes.json；不提交原资源、地图、原始JSON或日志。旧MEngine延期队列与完整客户端范围保持开放。
 
 无 Buff 的睡眠技能以无图标内部状态执行持续和保护时间，并按现有状态生命周期清理；DotA 巫妖的 A05T 可触发地图连环霜冻，在隔离会话中对两个目标造成伤害。无 Buff 和亚帧持续时间的原版语义、弹射及实际窗口待阶段对照。
+
+单主动诱捕与放逐物品进入单位目标模式，复用既有控制效果、目标校验及物品施法事件、冷却和次数；无目标不会消耗。原版控制状态时序、其他控制物品及实际窗口仍待验证。
