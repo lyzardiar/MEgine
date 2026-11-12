@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 子组与界面焦点批次（有失败，待修复）
+
+范围：`ac730b7`、`6a789ee`、`21127ee`，集成版本 `21127ee`。Win32 Release 客户端及 browser 测试目标编译通过；隐藏对局子组 1 通过／0 失败、联盟窗口 5 通过／0 失败；`war3_browser_tests <data-root> <scratch>` 为 23 通过／1 失败，失败为 `map_standard_info_frame_layout: Conflicting map frame anchors`。完整输出 `tmp/docs-artifacts/war3/keyboard-input-probe/batch-21127ee.log`。
+
+失败项单独运行相同错误（0 通过／1 失败）；该用例在标准信息面板布局阶段失败，本批 `glue.cpp` 差异仅为 Tab 键分支，尚未建立旧版本运行结果。保留该项待定位修复及重测，并检查受修复影响的范围；真实前台键鼠、多盟友焦点、原版焦点与子组顺序及多人仍待验证。
+
 ## 联盟资源字段反向切换（待批次验证）
 
 路径：`src/game_alliance_dialog.cpp`、`src/game_view.h`、`src/game_view.cpp`、`src/main.cpp`、`docs/agent-keyboard.md`。联盟窗口 Tab 按可交易玩家的金币、木材顺序循环，Shift+Tab 按键盘事件的修饰状态逆序循环；无焦点时分别从首／末字段开始。隐藏本地 agent 仅在联盟窗口额外允许 Tab，并报告焦点。
