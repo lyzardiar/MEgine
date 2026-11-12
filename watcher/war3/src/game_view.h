@@ -19,7 +19,7 @@ class QuestDialog;
 class MessageLog;
 class ChatDialog;
 class GameFlowUi;
-struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;bool rightShift=false,rightControl=false,rightAlt=false;};
+struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;bool rightShift=false,rightControl=false,rightAlt=false,rotateLeft=false,rotateRight=false;};
 class GameView {
     std::unique_ptr<GameData> data_;
     Renderer& renderer_;
@@ -65,7 +65,7 @@ class GameView {
     std::vector<std::uint32_t> creepCandidates() const;
     void buildCreepCamps();
     std::vector<float> distances_,angles_,fovs_;
-    float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,roll_=0,zOffset_=0,near_=100,far_=5000,forwardSpeed_=3000,strafeSpeed_=3000;
+    float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,roll_=0,zOffset_=0,near_=100,far_=5000,forwardSpeed_=3000,strafeSpeed_=3000,rotationSpeed_=30;
     unsigned zoom_=0,frames_=0;
     std::uint64_t cameraRevision_=0;
     std::uint64_t recentPingId_=0;

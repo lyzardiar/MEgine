@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## Insert／Delete 镜头旋转（待批次验证）
+
+路径：`src/game_view.h`、`src/game_view.cpp`、`src/main.cpp`、`docs/game-help.md`。按键按帧使用资源表旋转速度，排除修饰键及覆盖界面；绑定单位继承朝向时保留脚本优先级。
+
+快速检查：Win32 Release 客户端编译通过；`node tmp/docs-artifacts/war3/keyboard-input-probe/rotation.cjs` 在隐藏隔离对局注入单帧键盘输入，检查 Insert、Delete、Ctrl／Alt／Shift 和有限角度，4 通过／0 失败，结果 `tmp/docs-artifacts/war3/keyboard-input-probe/rotation-result.json`。批次合并镜头缩放与快捷键验证；真实 Windows 持续按键、原版方向／速率、脚本镜头及联机待验证。本批 2/3。
+
 ## Page Up／Page Down 镜头缩放（待批次验证）
 
 路径：`src/game_view.cpp`、`docs/game-help.md`、`docs/agent-keyboard.md`。Page Up／Down 复用滚轮镜头预设逐级放大／缩小，允许按键重复并保留边界；聊天、覆盖面板、修饰键及回放不进入对局缩放。
