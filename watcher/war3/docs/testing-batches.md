@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 天气、菜单快捷键与快速存档批次（部分验证）
+
+范围：`a1cd3c8`、`99409f3`、`30485b9`，集成版本 `30485b9`。Win32 Release 客户端、map、clock 和 game-flow 目标已编译。6 个回归进程全部退出 0：天气无效句柄、快速存档覆盖与恢复、脚本存档及过渡调用者、天气恢复各 1／0，game-flow 消费者通过；命令和输出位于 `tmp/docs-artifacts/war3/weather-save-hotkeys-batch/checks.cjs` 与 `checks.log`。
+
+Amazonia 原图 `--main-check` 退出 0，日志报告 main 完成且未加载 Game.dll，见同目录 `amazonia.log`。隔离用户目录的 BootyBay 窗口启动至首帧，见 `ui.log`；窗口捕获连续两次超时，测试进程随后结束，未执行快捷键或视觉验收。
+
+**待测项保留：**实际窗口验证 Alt+Q／O／S／L／H、F6、两个载入列表、重复键、聊天／弹窗及联机限制；天气区域和视觉音频、原版动态时序、原版存档互通及完整对局亦未验收。可开展下一功能批次，以上未执行项保留在队列中。
+
 ## F6 快速保存（待批次验证）
 
 路径：`src/quick_save.h`、`src/game_view.cpp`、`src/game_flow_ui.cpp`、`src/saved_game_browser.cpp`、`tests/clock_tests.cpp`、`docs/game-help.md`。F6 在本地安全边界保存独立快速检查点，重复调用替换专用文件；手动同名存档不受影响，游戏内和主菜单载入列表可选择快速存档。联机、回放、聊天及其他覆盖界面不执行；保存失败显示提示并记录原因。
