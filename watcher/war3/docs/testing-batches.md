@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 联盟资源字段反向切换（待批次验证）
+
+路径：`src/game_alliance_dialog.cpp`、`src/game_view.h`、`src/game_view.cpp`、`src/main.cpp`、`docs/agent-keyboard.md`。联盟窗口 Tab 按可交易玩家的金币、木材顺序循环，Shift+Tab 按键盘事件的修饰状态逆序循环；无焦点时分别从首／末字段开始。隐藏本地 agent 仅在联盟窗口额外允许 Tab，并报告焦点。
+
+必要检查：Win32 Release 客户端编译通过；`python tmp/docs-artifacts/war3/keyboard-input-probe/make-alliance.py` 创建一名盟友，`node tmp/docs-artifacts/war3/keyboard-input-probe/alliance-tab.cjs` 在实际视图中检查初次反向、正反及双向回绕，修复前初次反向错误选择金币，修复后 5 通过／0 失败。输入绕过 Windows 消息；多个可交易玩家、禁用／变化、真实窗口和原版焦点规则待验证。本批 3/3，先集中验证。
+
 ## FDF 界面 Shift+Tab 焦点方向（待批次验证）
 
 路径：`src/glue.cpp`、`tests/browser_tests.cpp`。共用 FDF 控件焦点遍历读取键盘事件的 Shift 状态，避免修饰键已释放或鼠标状态不同步时反向遍历变为正向；鼠标事件仍使用自己的修饰状态。
