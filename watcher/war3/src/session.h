@@ -1125,6 +1125,7 @@ class ScriptSession {
     void preloader(const std::string& member);
     bool alive(std::uint32_t handle,NativeKind kind) const;
     std::shared_ptr<ScriptBoolean> expression(jass::Value handle);
+    std::shared_ptr<ScriptBoolean> eventExpression(jass::Value handle);
     bool evaluate(const std::shared_ptr<ScriptBoolean>& expression,unsigned depth=0);
     bool triggerEvaluate(std::uint32_t handle);
     jass::ThreadId triggerExecute(std::uint32_t handle,bool wait=false);

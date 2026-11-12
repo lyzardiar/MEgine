@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 事件注册的无效过滤器（待批次验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_spatial_events.cpp`、`tests/map_tests.cpp`。玩家单位、可过滤单位、区域进入／离开及单位范围事件将空、已销毁、错型或不存在的过滤器视为空过滤器；有效过滤器保留原有表达式和生命周期，其他布尔表达式接口不变。
+
+固定 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 的五个注册入口均调用 `0x6f1cec10` 转换过滤器，失效句柄转换为零后传入事件构造；玩家单位事件构造 `0x6f25c8e0` 将零保存为空过滤器。静态证据表明与空过滤器使用同一路径，不代表实际原版动态验收。
+
+必要检查：Win32 Release 客户端及 map 测试目标编译通过；`war3_map_tests <root> <scratch> event_registration_invalid_filters` 修复前因销毁句柄报错、修复后 1 通过／0 失败，覆盖五个入口四类句柄，以及即时命令下空过滤器放行、有效 false 过滤器拦截。未加载 Game.dll；区域和范围事件的实际派发、原版动态行为与完整地图仍待验证。
+
+本批 3/3，先集中验证事件注册、联盟派发、过滤、快照与游戏流程。
+
 ## 普通玩家联盟变化事件（待批次验证）
 
 路径：`src/session_callbacks.cpp`、`tests/session_tests.cpp`、`tests/clock_tests.cpp`、`docs/script-alliance.md`。`TriggerRegisterPlayerEvent` 的联盟变化事件 12 接入被动联盟类型 0 的现有事件派发；其他联盟类型不触发该注册。历史 actor 事件快照中按普通玩家事件保存的编号 12 在恢复时转换为同一被动联盟事件。
