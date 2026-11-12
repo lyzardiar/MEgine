@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单技能蛛网与睡眠物品（待批次验证）
+
+路径：`src/session_spells.cpp`、`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/control-spells.md`。单主动蛛网与睡眠物品进入单位目标选择，复用控制状态、科技与目标校验、物品费用和施法流程。
+
+必要检查：Win32 Release 客户端和 control 测试目标编译通过；生成组合物品夹具后执行 `war3_control_tests <data-root> <fixture> item-single-web-sleep`，修复前目标模式缺失，修复后 1 通过／0 失败，覆盖蛛网拒绝地面目标、合法飞行目标落地、睡眠及物品消耗。夹具预设蛛网科技；原版时序、不同科技、窗口和多人待验证。本批 3/3，先集中验证。
+
 ## 单技能诱捕与放逐物品（待批次验证）
 
 路径：`src/session_spells.cpp`、`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/control-spells.md`。单主动诱捕／放逐物品进入单位目标选择并复用已有控制法术与物品施法流程；无目标时拒绝且不消耗。
