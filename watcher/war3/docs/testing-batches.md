@@ -1,28 +1,38 @@
 # 独立客户端测试队列
 
-## 中立订单的无效玩家与单位（待批次验证）
+## 飘字槽位、胜负与中立订单批次（已验证所列范围）
+
+范围：`98d2da6`、`ba28cbc`、`be51ad2`，集成版本 `be51ad2`。Win32 Release 客户端、session、clock、commerce、game-flow、CampaignAI 和 JASS thread 目标编译通过；game-flow 测试编译出现既有有符号／无符号比较警告。
+
+9 个批次测试进程全部退出 0：session 30／0、飘字 clock 3／0、commerce 与 neutral-invalid 各通过、game-flow 通过、HumanX03 飘字 1／0、Blizzard TD 飘字 2／0 和 WTS 1／0、JASS thread 36／0。批次命令及输出在 `tmp/docs-artifacts/war3/slot-match-commerce-batch.cjs` 和 `tmp/docs-artifacts/war3/slot-match-commerce-batch.log`。
+
+另从提交版本提取 Lua 测试源到 `tmp/docs-artifacts/war3/lua-committed-batch/`，临时加入 Lua 零号槽测试并隔离编译；零号槽的 nil 显隐／销毁／复用及原测试的无地图基础模式通过（RESULT 1／0），未加载 Game.dll。用户工作区的 Lua 测试源未改动；该检查未运行原图 Lua 模式。
+
+原版动态画面、原版存档格式、旧档超 99 活动飘字、完整脚本句柄／睡眠恢复和原版多人订单时序仍待验证或实现。下一功能批次从 0/3 开始。
+
+## 中立订单的无效玩家与单位（已完成所列批次验证）
 
 路径：`src/session_commerce.cpp`、`tests/commerce_tests.cpp`、`docs/commerce.md`。中立即时、点和目标订单的名称／编号入口在派发前检查玩家及商店单位；目标订单继续校验目标。失效时返回 false，不进入交易或显形逻辑。
 
 固定 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 的编号入口 `0x6f1e9330`、`0x6f1e9390`、`0x6f1e9400` 分别先解析玩家与单位并在失败时返回 0。Win32 Release 客户端及 commerce 目标编译通过；`war3_commerce_tests <root> <fixture> neutral-invalid` 的定向场景通过，覆盖六个入口的空、错型及不存在的玩家／商店，以及目标订单的无效目标，验证资源与单位数不变。修复前即时订单报未知句柄；这是隔离夹具，未覆盖真实窗口或完整原版订单语义。
 
-本批 3/3；先合并验证飘字、玩家胜负及中立商店相关消费者，覆盖原图、恢复和边界。原版有效订单组合、多人同步、事件时序及完整对局仍待验证。
+本批 3/3；合并验证结果见上方批次记录。原版有效订单组合、多人同步、事件时序及完整对局仍待验证。
 
-## 无效玩家的胜负接口（待批次验证）
+## 无效玩家的胜负接口（已完成所列批次验证）
 
 路径：`src/session_match.cpp`、`tests/session_tests.cpp`、`docs/game-flow.md`。`RemovePlayer` 和 `CachePlayerHeroData` 对空、类型不符或不存在的玩家句柄直接返回；有效玩家仍沿用既有结果、事件及英雄缓存路径。
 
 依据固定版 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`：`0x6f1f2db0` 和 `0x6f1da970` 分别解析玩家并在失败时返回。Win32 Release 客户端与 session 目标编译通过；`war3_session_tests <enum-fixture>` 为 30 通过／0 失败，覆盖空句柄、计时器错型、未知 ID 和有效胜利结果；修复前 `CachePlayerHeroData` 报未知句柄。该测试为隔离会话，不代表实际战役或原版动态时序验收。
 
-本批 2/3；合批验证胜负事件及重入、缓存英雄、飘字与相关恢复和实际地图。游戏胜利事件生产时机、窗口及完整对局仍待实现或验证。
+本批 2/3；合并验证结果见上方批次记录。游戏胜利事件生产时机、窗口及完整对局仍待实现或验证。
 
-## 原版飘字槽位与恢复（待批次验证）
+## 原版飘字槽位与恢复（已完成所列批次验证）
 
 路径：`src/session.h`、`src/session.cpp`、`src/session_text_tag.cpp`、`tests/session_tests.cpp`、`tests/clock_tests.cpp`、`docs/text-tags.md`。按原版 100 槽空闲栈分配和回收，满额返回 0，零号槽可被相同数值访问；STTX v7 保存空闲顺序，v1–v6 普通句柄转换为槽位，超过 99 个活动旧句柄的旧档明确拒绝。
 
 必要检查：Win32 Release 客户端及 session／clock 编译通过；`war3_session_tests <enum-fixture>` 为 29 通过／0 失败，覆盖槽位顺序、满额、零值读写／销毁、重用及越界；`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 为 3 通过／0 失败，覆盖恢复后零值和空闲栈顺序、过期、显示状态及合成 v1–v5 格式转换。修复前槽位回归失败；未加载 Game.dll。
 
-本批 1/3；合批验证原图飘字、脚本全局／哈希表及休眠线程恢复、v1–v6 真实存档兼容和相关 UI。完整 JASS VM 原版动态行为、实际画面、多客户端本地显隐及原版存档格式仍待对照或实现。
+本批 1/3；合并验证结果见上方批次记录。完整 JASS VM 原版动态行为、实际画面、多客户端本地显隐及原版存档格式仍待对照或实现。
 
 ## 原版飘字零号槽原生入口探针（验证补充）
 
