@@ -68,6 +68,8 @@ class GameView {
     float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,roll_=0,zOffset_=0,near_=100,far_=5000,forwardSpeed_=3000,strafeSpeed_=3000;
     unsigned zoom_=0,frames_=0;
     std::uint64_t cameraRevision_=0;
+    std::uint64_t recentPingId_=0;
+    std::optional<std::pair<float,float>> recentPing_;
     std::uint64_t last_=0;
     std::unique_ptr<LanSimulation> lanSimulation_;
     std::function<unsigned(const PlayerCommand&)> lanSubmit_;
