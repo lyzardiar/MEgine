@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 聊天、截图与小地图输入批次（部分验证）
+
+范围：`27862d6`、`0d91bb8`、`356d684`，集成版本 `356d684`。Win32 Release 客户端及 session 测试目标编译通过。隐藏隔离对局依次执行三种 Enter 频道、截图成功与失败、小地图目标模式检查，共 9 通过／0 失败；`war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 为 31 通过／0 失败，含回放私聊受众。日志 `tmp/docs-artifacts/war3/keyboard-input-probe/batch-356d684.log` 和 `session-batch-356d684.log`。
+
+输入驱动绕过 Windows 消息；真实键鼠、截图内容和设备丢失、既有私聊切换与多人收发、技能／物品／建筑目标、普通右键真实移动、脚本绑定、联机回放和原版目标保留语义仍待验证。下一功能批次从 0/3 开始。
+
 ## 目标选择时小地图右键移动视角（待批次验证）
 
 路径：`src/game_view.cpp`、`docs/game-help.md`、`docs/agent-keyboard.md`。命令、技能、物品、建筑或中立显形等待目标时，在小地图右键移动镜头并保留目标；世界画面右键仍取消，普通小地图右键仍走单位命令。依据原版 `UI/HelpStrings.txt` 对目标模式下小地图右键的说明，目标是否持续保留仍待原版对照。
