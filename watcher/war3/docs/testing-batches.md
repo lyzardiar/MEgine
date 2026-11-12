@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 音频与镜头快捷键批次（部分验证）
+
+范围：`69bf994`、`448356d`、`841be2e`，集成版本 `841be2e`。Win32 Release 客户端、sound、game-flow 和 clock 目标编译通过；新增 `tests/sound_tests.cpp` 音频设置往返用例作为本批补充。
+
+6 个回归进程全部退出 0：音频设置往返、静音恢复和两个播放时钟用例各 1／0；game-flow 消费者通过并检查攻击警报进入小地图；presentation 恢复 1／0，覆盖脚本提示。命令和输出在 `tmp/docs-artifacts/war3/audio-camera-hotkeys-batch/checks.cjs` 与 `checks.log`。隔离用户目录的隐藏 BootyBay 对局到达首帧，日志和驱动在同目录 `bootybay.log`、`startup.cjs`；检查随后结束测试进程。
+
+**待测项保留：**上述测试没有注入或验证 Ctrl+M／S、空格、Ctrl+C／Alt+C；实际窗口、Tab 多子组、聊天与面板输入、相机边界／跟随、联机和原版动态对照均未执行，声音设备听感也未验收。上一批的窗口快捷键待测项仍保留；下一功能批次从 0/3 开始。
+
 ## 聚焦活动头像快捷键（待批次验证）
 
 路径：`src/main.cpp`、`src/game_view.cpp`、`docs/game-help.md`。Ctrl+C／Alt+C 使用现有活动子组的头像单位作为镜头中心，不改变选区和订单；组合键仅由对局接收，聊天／覆盖面板与脚本镜头保持既有优先级。

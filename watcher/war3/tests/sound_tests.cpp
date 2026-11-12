@@ -1,5 +1,6 @@
 // Author: MiYu. Original sound tables and typed MIDI natives with real muted Miles playback.
 #include "session.h"
+#include "game_preferences.h"
 #include "audio_duration.h"
 #include "setup.h"
 #include "snapshot_codec.h"
@@ -37,6 +38,9 @@ int wmain(int argc,wchar_t** argv) {
     unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){if(argc==4 && std::wstring(argv[3])!=wide(name))return;try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};
     try {
         Archives archives(argv[1]);archives.mountMap(fs::path(argv[1])/L"Maps/(2)BootyBay.w3m");auto scratch=fs::absolute(argv[2])/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));fs::create_directories(scratch);
+        test("audio_preferences_roundtrip",[&]{
+            auto user=scratch/L"audio-preferences";require(fs::create_directories(user),"Cannot create isolated preferences directory");wchar_t previous[32768]{};auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",user.c_str()),"Cannot set isolated preferences directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}guard{length,previous};auto prefs=loadAudioPreferences(argv[1]);prefs.soundVolume=37;prefs.musicVolume=64;prefs.sound=false;saveAudioPreferences(argv[1],prefs);auto first=loadAudioPreferences(argv[1]);require(first==prefs && first.soundGain()==0 && std::abs(first.musicGain()-.64f)<.0001f,"Sound mute did not persist with volumes");first.sound=true;first.music=false;saveAudioPreferences(argv[1],first);auto second=loadAudioPreferences(argv[1]);require(second==first && std::abs(second.soundGain()-.37f)<.0001f && second.musicGain()==0,"Music mute did not persist with volumes");
+        });
         test("sound_playback_state_miles_roundtrip",[&]{
             auto bytes=archives.read("Sound\\Interface\\QuestCompleted.wav");require(bool(bytes),"Missing sound fixture");auto device=MilesDevice::open(argv[1]);auto first=device->digital(bytes,".wav"),second=device->digital(bytes,".wav");first->volume(0);second->volume(0);first->start(true);first->pitch(.8f);first->position(125);auto playing=first->snapshotPlayback();require(playing.phase==AudioPlaybackState::Phase::Playing && playing.looping && playing.pitch==.8f,"Miles playback snapshot differs");second->restorePlayback(playing);auto result=second->snapshotPlayback();require(result.phase==AudioPlaybackState::Phase::Playing && result.looping && result.pitch==.8f && std::abs(result.position-playing.position)<150,"Miles restored playback differs");first->pause();auto paused=first->snapshotPlayback();require(paused.phase==AudioPlaybackState::Phase::Paused,"Miles pause was not observed");second->restorePlayback(paused);require(second->snapshotPlayback().phase==AudioPlaybackState::Phase::Paused,"Miles paused state was not restored");first->stop();second->stop();
         });
