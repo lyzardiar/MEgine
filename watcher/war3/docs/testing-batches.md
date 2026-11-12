@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单技能死亡缠绕、霜冻新星与根须物品（待批次验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/control-spells.md`。三个单主动英雄法术物品接入单位目标选择和已有物品施法、目标校验、法术效果及消耗流程。
+
+必要检查：Win32 Release 客户端和 control 测试目标编译通过；生成组合物品夹具并运行 `war3_control_tests <data-root> <fixture> item-single-hero-target`，修复前因目标选择缺失失败，修复后 1 通过／0 失败。覆盖死亡缠绕拒绝友方生者、伤害敌人和治疗友方亡灵，霜冻新星主目标／范围伤害和减速，根须控制／持续伤害及消耗。原版时序、其他目标、事件重入、窗口和多人待批次验证。本批 1/3。
+
 ## 原版营地坐标转换隔离探针（调查补充）
 
 路径：`tools/verify_creep_camp_selection_cpu.py`、`docs/ai.md`。`python watcher/war3/tools/verify_creep_camp_selection_cpu.py` 执行原始选择、成本及坐标转换指令，共 23 通过／0 失败；新增三个合成地图缩放情形，截获路径查询坐标。结果 `tmp/docs-artifacts/war3/creep-distance-analysis/selection.json`；地图参数和路径查询由探针注入，不代表真实地图和原版路径搜索。调查补充不计功能批次，当前 0/3。
