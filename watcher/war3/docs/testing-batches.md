@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## Page Up／Page Down 镜头缩放（待批次验证）
+
+路径：`src/game_view.cpp`、`docs/game-help.md`、`docs/agent-keyboard.md`。Page Up／Down 复用滚轮镜头预设逐级放大／缩小，允许按键重复并保留边界；聊天、覆盖面板、修饰键及回放不进入对局缩放。
+
+必要检查：Win32 Release 客户端编译通过；使用隔离测试地图与合成视图输入，`node tmp/docs-artifacts/war3/keyboard-input-probe/page-zoom.cjs` 为 5 通过／0 失败，覆盖上下缩放、重复、Shift 抑制及下限；输入绕过 Windows 消息。原版 `UI/HelpStrings.txt` 列出对应快捷键。批次合并滚轮、键盘、镜头脚本覆盖及其他输入；实际窗口、原版连续速率和联机／回放待验收。本批 1/3。
+
 ## 音频与镜头快捷键合成输入补充（不单独计数）
 
 路径：`src/agent_capture.h`、`src/main.cpp`、`src/game_view.cpp`、`docs/agent-keyboard.md`。隐藏本地对局的显式 agent 目录可提交键盘请求，快照提供镜头、子组、提示及音频状态，用于驱动实际视图消费者；前台、联机、回放及覆盖面板拒绝该入口。
