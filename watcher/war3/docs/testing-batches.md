@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 原版营地坐标转换隔离探针（调查补充）
+
+路径：`tools/verify_creep_camp_selection_cpu.py`、`docs/ai.md`。`python watcher/war3/tools/verify_creep_camp_selection_cpu.py` 执行原始选择、成本及坐标转换指令，共 23 通过／0 失败；新增三个合成地图缩放情形，截获路径查询坐标。结果 `tmp/docs-artifacts/war3/creep-distance-analysis/selection.json`；地图参数和路径查询由探针注入，不代表真实地图和原版路径搜索。调查补充不计功能批次，当前 0/3。
+
 ## 原版营地路径成本隔离探针（调查补充）
 
 路径：`tools/verify_creep_camp_selection_cpu.py`、`docs/ai.md`。同一命令执行原版筛选、节点链成本和注入直达结果路径，共 20 通过／0 失败；覆盖两倍整数坐标的直行、3-4-5、转折及特殊节点固定成本。原版寻路及世界坐标到节点的转换未运行，输出为 `tmp/docs-artifacts/war3/creep-distance-analysis/selection.json`。调查补充不计功能批次，当前 0/3。

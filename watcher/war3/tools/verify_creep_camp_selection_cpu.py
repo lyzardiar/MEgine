@@ -42,10 +42,19 @@ def get(address):
     return struct.unpack('<I', cpu.mem_read(address, 4))[0]
 
 current = 0
+transformed = None
 helpers = {0x6f891140: 4, 0x6f88eb10: 0, 0x6f03b720: 4, 0x6f03c310: 32, 0x6f107730: 0, 0x6f88ff40: 0, 0x6f890e80: 0, 0x6f111380: 24}
 
 def hook(uc, address, size, user):
-    global current
+    global current, transformed
+    if address == 0x6f10ef30 and transformed is not None:
+        stack = uc.reg_read(UC_X86_REG_ESP)
+        source, target = get(stack + 8), get(stack + 12)
+        transformed.extend((struct.unpack('<ff', uc.mem_read(source, 8)), struct.unpack('<ff', uc.mem_read(target, 8))))
+        uc.reg_write(UC_X86_REG_EAX, 123)
+        uc.reg_write(UC_X86_REG_EIP, get(stack))
+        uc.reg_write(UC_X86_REG_ESP, stack + 32)
+        return
     if address not in helpers:
         return
     ecx = uc.reg_read(UC_X86_REG_ECX)
@@ -156,6 +165,36 @@ for name, start, end, expected in [
     actual = direct_cost(start, end)
     assert actual == expected, f'{name}: expected {expected}, got {actual}'
     results.append({'name': name, 'actual': actual})
+def coordinate_transform(scale, start, end):
+    global transformed
+    actor, config, bounds, source, target, stack = 0x10002000, 0x10007000, 0x10008000, 0x10009000, 0x10009100, 0x200f0000
+    put(actor + 0x1c, config)
+    for offset, value in zip((0x64, 0x68), scale):
+        cpu.mem_write(config + offset, struct.pack('<f', value))
+    put(0x6fbb82bc, bounds)
+    put(bounds + 0x6c, 0)
+    put(bounds + 0x70, 0)
+    cpu.mem_write(source, struct.pack('<ff', *start))
+    cpu.mem_write(target, struct.pack('<ff', *end))
+    cpu.mem_write(stack, struct.pack('<IIIIIIIII', 0x30000020, 5000, 0, 0, 0, 0, 0, 0, 0))
+    cpu.reg_write(UC_X86_REG_ESP, stack)
+    cpu.reg_write(UC_X86_REG_ECX, source)
+    cpu.reg_write(UC_X86_REG_EDX, target)
+    transformed = []
+    cpu.emu_start(0x6f03c3b0, 0x30000020, count=100000)
+    result = transformed
+    transformed = None
+    assert cpu.reg_read(UC_X86_REG_EAX) == 123 and len(result) == 2
+    return result
+
+for name, scale, start, end, expected in [
+    ('transform_unit', (1, 1), (32, 64), (96, 128), [(1, 2), (3, 4)]),
+    ('transform_mixed_scales', (2, .5), (32, 64), (96, 128), [(.5, 1), (1.5, 2)]),
+    ('transform_small_scale', (.0625, .0625), (32, 64), (96, 128), [(.0625, .125), (.1875, .25)]),
+]:
+    actual = coordinate_transform(scale, start, end)
+    assert actual == expected, f'{name}: expected {expected}, got {actual}'
+    results.append({'name': name, 'actual': actual})
 args.output.parent.mkdir(parents=True, exist_ok=True)
-args.output.write_text(json.dumps({'sha256': digest, 'results': results, 'scope': 'synthetic camps and injected distance results; synthetic path nodes and injected direct-path result; no original path search'}, indent=2), encoding='utf-8')
+args.output.write_text(json.dumps({'sha256': digest, 'results': results, 'scope': 'synthetic camps and injected distance results; synthetic path nodes, map scales and injected path results; no original path search'}, indent=2), encoding='utf-8')
 print(f'RESULT passed={len(results)} failed=0 output={args.output}')
