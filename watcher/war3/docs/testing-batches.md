@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 英雄属性文字透明度（待批次验证）
+
+路径：`src/map_frames.cpp`、`src/game_commands.cpp`、`tests/browser_tests.cpp`、`docs/unit-combat-panel.md`。英雄力量／敏捷／智力标签与数值支持各自帧透明度，HUD 绘制将其应用于文字及数值加减符号，保留原有颜色和提示区域。攻击／护甲文字透明度仍未实现。
+
+必要检查：Win32 Release 客户端及 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> map_standard_info_text_alpha` 修复前因未实现失败，修复后 1 通过／0 失败，覆盖六个字段透明度及颜色合成。状态测试未对 HUD 像素做对照；实际地图、前台混合效果、原版动态行为及其他标准文字待验证。本批 3/3，先集中验证。
+
 ## 标准信息面板图标透明度（待批次验证）
 
 路径：`src/map_frames.cpp`、`src/game_commands.cpp`、`tests/browser_tests.cpp`、`docs/unit-combat-panel.md`。两种攻击、护甲和英雄属性图标支持脚本设置透明度；HUD 绘制从对应帧状态读取 alpha，尺寸和提示区域保持既有处理，标准文本透明度仍明确未实现。
