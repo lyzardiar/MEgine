@@ -27,8 +27,8 @@ void ScriptSession::updateWeatherAudio(float x,float y,float z) {
     for(auto& label:active)if(!weatherSounds_.contains(label)){try{weatherSounds_.emplace(label,requireAudio().loopFromLabel(label,{x,y,z},0));}catch(const std::runtime_error& e){auto message="weather_audio_error="+label+" "+e.what()+"\n";OutputDebugStringA(message.c_str());weatherSounds_.emplace(label,nullptr);}}
 }
 void ScriptSession::bindWeatherNatives() {
-    bind("AddWeatherEffect","weathereffect",{"rect","integer"},[this](auto&,auto args){auto region=std::get<WorldRect>(object(args[0],NativeKind::Rect).state);auto state=makeWeather(args[1].bits,region);auto handle=create(NativeKind::Weather);std::get<std::shared_ptr<WeatherState>>(object(handle,NativeKind::Weather).state)=state;weatherEffects_.emplace(handle.bits,std::move(state));return handle;});
-    bind("EnableWeatherEffect","nothing",{"weathereffect","boolean"},[this](auto& vm,auto args){if(args[0].bits)std::get<std::shared_ptr<WeatherState>>(object(args[0],NativeKind::Weather).state)->enabled=args[1].bits!=0;return vm.nothing();});
-    bind("RemoveWeatherEffect","nothing",{"weathereffect"},[this](auto& vm,auto args){if(args[0].bits){object(args[0],NativeKind::Weather);weatherEffects_.erase(args[0].bits);}destroy(args[0],NativeKind::Weather);return vm.nothing();});
+    bind("AddWeatherEffect","weathereffect",{"rect","integer"},[this](auto& vm,auto args){if(!alive(args[0].bits,NativeKind::Rect))return vm.handle("weathereffect",0);auto region=std::get<WorldRect>(object(args[0],NativeKind::Rect).state);auto state=makeWeather(args[1].bits,region);auto handle=create(NativeKind::Weather);std::get<std::shared_ptr<WeatherState>>(object(handle,NativeKind::Weather).state)=state;weatherEffects_.emplace(handle.bits,std::move(state));return handle;});
+    bind("EnableWeatherEffect","nothing",{"weathereffect","boolean"},[this](auto& vm,auto args){if(alive(args[0].bits,NativeKind::Weather))std::get<std::shared_ptr<WeatherState>>(object(args[0],NativeKind::Weather).state)->enabled=args[1].bits!=0;return vm.nothing();});
+    bind("RemoveWeatherEffect","nothing",{"weathereffect"},[this](auto& vm,auto args){if(alive(args[0].bits,NativeKind::Weather)){weatherEffects_.erase(args[0].bits);destroy(args[0],NativeKind::Weather);}return vm.nothing();});
 }
 }

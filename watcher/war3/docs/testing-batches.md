@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 天气接口的失效句柄（待批次验证）
+
+路径：`src/session_weather.cpp`、`tests/map_tests.cpp`、`docs/weather.md`。天气创建收到无效矩形时返回空句柄；启停和移除找不到天气时返回，重复移除不再中断地图脚本，其他有效天气保留。
+
+固定 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`：创建入口 `0x6f1da650` 在区域解析失败时返回；启停和移除分别到达 `0x6f746f30`、`0x6f746910`，共同通过 `0x6f745b10` 查找天气，未匹配时返回。原版可能输出天气告警；不同类型数值身份和动态行为尚未对照。
+
+必要检查：Win32 Release 客户端和 map 测试目标编译通过；`war3_map_tests <root> <scratch> weather_invalid_handles` 修复前报未知句柄，修复后 1 通过／0 失败；覆盖空、已移除、错型及未知句柄和有效天气的启停／移除，未加载 Game.dll。本批 1/3；合批验证天气状态、恢复、区域和原图。实际窗口、天气视觉音频和原版动态时序仍待验收。
+
 ## 事件注册与联盟派发批次（已验证所列范围）
 
 范围：`41bf14c`、`d1205a2`、`bd48973`，包含事件夹具补充 `400fec7`，集成版本 `bd48973`。Win32 Release 客户端、map、session、clock、control 和 game-flow 目标编译通过；control 报既有变量遮蔽警告，game-flow 报既有有符号比较警告。
