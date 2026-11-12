@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## Shift+Tab 子组方向（待批次验证）
+
+路径：`src/game_view.cpp`、`docs/subgroup-order.md`。子组切换读取 Tab 按下时保存的 Shift 状态，按键与鼠标事件的修饰状态各自独立。
+
+必要检查：Win32 Release 客户端编译通过；`python tmp/docs-artifacts/war3/keyboard-input-probe/make-subgroup.py` 创建三种单位并选中，`node tmp/docs-artifacts/war3/keyboard-input-probe/subgroup.cjs` 修复前反向输入错误回到首子组，修复后 1 通过／0 失败，覆盖两次正向和一次反向。合成视图输入绕过 Windows 消息；真实修饰键时序、原版子组顺序及多人待验证。本批 1/3。
+
 ## 聊天、截图与小地图输入批次（部分验证）
 
 范围：`27862d6`、`0d91bb8`、`356d684`，集成版本 `356d684`。Win32 Release 客户端及 session 测试目标编译通过。隐藏隔离对局依次执行三种 Enter 频道、截图成功与失败、小地图目标模式检查，共 9 通过／0 失败；`war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 为 31 通过／0 失败，含回放私聊受众。日志 `tmp/docs-artifacts/war3/keyboard-input-probe/batch-356d684.log` 和 `session-batch-356d684.log`。
