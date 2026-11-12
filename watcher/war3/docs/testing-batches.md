@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 复合英雄单位目标技能物品（待批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/control-spells.md`。死亡缠绕、霜冻新星、缠绕根须与其他已支持主动效果组合时，通过已有复合物品目标校验和效果流程即时执行法术命中。
+
+必要检查：Win32 Release 客户端和 control 测试目标编译通过；生成组合物品夹具后运行 `war3_control_tests <data-root> <fixture> item-combined-hero-target`，修复前因组合能力未实现失败，修复后 1 通过／0 失败。覆盖无效目标不消耗或发资源、死亡缠绕伤害及亡灵治疗、霜冻新星范围伤害和减速、根须及资源发放。组合效果顺序、飞行表现、事件重入、实际地图和原版时序待批次验证。本批 2/3。
+
 ## 单技能死亡缠绕、霜冻新星与根须物品（待批次验证）
 
 路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/control-spells.md`。三个单主动英雄法术物品接入单位目标选择和已有物品施法、目标校验、法术效果及消耗流程。
