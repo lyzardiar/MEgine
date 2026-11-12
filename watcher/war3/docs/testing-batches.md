@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 标准信息面板图标透明度（待批次验证）
+
+路径：`src/map_frames.cpp`、`src/game_commands.cpp`、`tests/browser_tests.cpp`、`docs/unit-combat-panel.md`。两种攻击、护甲和英雄属性图标支持脚本设置透明度；HUD 绘制从对应帧状态读取 alpha，尺寸和提示区域保持既有处理，标准文本透明度仍明确未实现。
+
+必要检查：Win32 Release 客户端及 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> map_standard_info_icon_alpha` 修复前因未实现失败，修复后 1 通过／0 失败，覆盖四个图标的默认、0／128／255 状态、颜色合成及未支持文本拒绝。测试检查状态和颜色计算，未进行 HUD 像素对照；实际地图、透明度继承、前台画面和原版动态语义待批次验证。本批 2/3。
+
 ## 标准信息面板图标尺寸（待批次验证）
 
 路径：`src/map_frames.cpp`、`tests/browser_tests.cpp`、`docs/unit-combat-panel.md`。支持地图脚本为两种攻击、护甲及英雄属性图标设置宽高，现有 HUD 消费尺寸和命中矩形；其他标准信息文本尺寸保持明确未实现。
