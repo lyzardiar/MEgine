@@ -5,3 +5,5 @@
 固定版 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 的 `IsUnitAlly` 注册入口 `0x6f1e8520` 读取传入玩家的联盟掩码并测试单位所有者位；`IsUnitEnemy` 入口 `0x6f1e85c0` 将其结果取反。`IsPlayerAlly`／`IsPlayerEnemy` 入口分别为 `0x6f1e8040`／`0x6f1e8090`；REA 记录为 `ev_efca4a6d67782ef93d25854a347586311127ec9b5a348ee3b11a72fe82adf4cc`。这覆盖固定版查询方向和无效对象分支的静态证据；不同联盟类型、自己玩家掩码初始化及原版实际运行仍需阶段对照。
 
 本机 WarChasers 地图脚本及 DotA 开局脚本均包含单位联盟查询。阶段验证应覆盖双向与单向联盟、同玩家、空／移除单位、调用时联盟切换和真实地图触发器，结合 `war3_game_flow_tests.exe <data-root> <fixture.w3m>` 执行。
+
+普通玩家联盟变化事件（`TriggerRegisterPlayerEvent`，编号 12）与被动联盟类型 0 的专用注册共用派发路径；其他联盟类型不会触发该注册，旧 actor 快照中的同编号普通玩家事件在恢复时转换。1.27 注册入口将该编号转交给 `TriggerRegisterPlayerAllianceChange` 并传入 0；动态原版时序与真实旧档留待验证。

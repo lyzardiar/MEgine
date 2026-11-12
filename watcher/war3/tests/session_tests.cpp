@@ -22,6 +22,55 @@ template<class F> void rejects(F run,std::string_view message) {try{run();}catch
 int wmain(int argc,wchar_t** argv) {
     if(argc!=2){std::cerr<<"Usage: war3_session_tests <enum-fixture.json>\n";return 2;}
     unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};
+    test("player_alliance_event_alias",[]{auto module=compile(R"jass(type player extends handle
+type event extends handle
+type eventid extends handle
+type playerevent extends eventid
+type alliancetype extends handle
+type trigger extends handle
+type triggeraction extends handle
+native Player takes integer n returns player
+native ConvertPlayerEvent takes integer n returns playerevent
+native ConvertAllianceType takes integer n returns alliancetype
+native CreateTrigger takes nothing returns trigger
+native DestroyTrigger takes trigger t returns nothing
+native TriggerAddAction takes trigger t, code f returns triggeraction
+native TriggerRegisterPlayerEvent takes trigger t, player p, playerevent e returns event
+native TriggerRegisterPlayerAllianceChange takes trigger t, player p, alliancetype a returns event
+native SetPlayerAlliance takes player p, player other, alliancetype a, boolean value returns nothing
+native GetTriggerPlayer takes nothing returns player
+native GetTriggerEventId takes nothing returns eventid
+globals
+integer genericHits=0
+integer passiveHits=0
+integer visionHits=0
+integer badContext=0
+trigger generic=null
+endglobals
+function genericAction takes nothing returns nothing
+if GetTriggerPlayer()!=Player(0) or GetTriggerEventId()!=ConvertPlayerEvent(12) then
+set badContext=badContext+1
+endif
+set genericHits=genericHits+1
+endfunction
+function passiveAction takes nothing returns nothing
+set passiveHits=passiveHits+1
+endfunction
+function visionAction takes nothing returns nothing
+set visionHits=visionHits+1
+endfunction
+function setup takes nothing returns nothing
+local trigger passive=CreateTrigger()
+local trigger vision=CreateTrigger()
+set generic=CreateTrigger()
+call TriggerRegisterPlayerEvent(generic,Player(0),ConvertPlayerEvent(12))
+call TriggerAddAction(generic,function genericAction)
+call TriggerRegisterPlayerAllianceChange(passive,Player(0),ConvertAllianceType(0))
+call TriggerAddAction(passive,function passiveAction)
+call TriggerRegisterPlayerAllianceChange(vision,Player(0),ConvertAllianceType(5))
+call TriggerAddAction(vision,function visionAction)
+endfunction
+)jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();vm.invoke("setup");auto player=vm.invoke("Player",std::array{vm.integer(0)}),other=vm.invoke("Player",std::array{vm.integer(1)});auto set=[&](int type,bool value){vm.invoke("SetPlayerAlliance",std::array{player,other,vm.handle("alliancetype",type),vm.boolean(value)});};set(5,true);require(vm.global("genericHits").bits==0 && vm.global("passiveHits").bits==0 && vm.global("visionHits").bits==1,"Generic alliance event fired for another alliance type");set(0,true);set(0,true);set(0,false);require(vm.global("genericHits").bits==2 && vm.global("passiveHits").bits==2 && vm.global("badContext").bits==0,"Generic alliance event or context differs");vm.invoke("DestroyTrigger",std::array{vm.global("generic")});set(0,true);require(vm.global("genericHits").bits==2 && vm.global("passiveHits").bits==3,"Destroyed generic alliance event fired");});
     test("match_natives_ignore_invalid_players",[]{auto module=compile(R"jass(type player extends handle
 type playergameresult extends handle
 type timer extends handle

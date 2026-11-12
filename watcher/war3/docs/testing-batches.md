@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 普通玩家联盟变化事件（待批次验证）
+
+路径：`src/session_callbacks.cpp`、`tests/session_tests.cpp`、`tests/clock_tests.cpp`、`docs/script-alliance.md`。`TriggerRegisterPlayerEvent` 的联盟变化事件 12 接入被动联盟类型 0 的现有事件派发；其他联盟类型不触发该注册。历史 actor 事件快照中按普通玩家事件保存的编号 12 在恢复时转换为同一被动联盟事件。
+
+依据固定 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`：注册入口 `0x6f1f9a98`–`0x6f1f9aac` 对事件 12 调用 `TriggerRegisterPlayerAllianceChange` 入口 `0x6f1f9880` 并传入联盟类型 0。Win32 Release 客户端、session 和 clock 编译通过；session 31／0 覆盖被动与视野变化、重复设置、事件上下文及销毁；`WAR3_CLOCK_FILTER=alliance_event_legacy_recovery war3_clock_tests <root> <scratch>` 1／0，覆盖合成旧版 actor 快照转换。修复前普通事件不触发；实际原版时序及真实旧档仍待对照。
+
+本批 2/3；合批验证普通／具体联盟事件、过滤注册、玩家状态、快照及原图脚本。动态原版、多玩家重入和完整对局未验收。
+
 ## 触发器事件类型范围（待批次验证）
 
 路径：`src/session_callbacks.cpp`、`tests/map_tests.cpp`、`tests/control_tests.cpp`、`tests/generate-game-flow-fixture.py`、`tests/game_flow_tests.cpp`。游戏、玩家、玩家单位、单位和过滤单位事件在创建对象前检查各自的原版编号范围；编号跨类型、落在空档或超出范围时返回空事件，过滤器也不被解析。有效编号保留既有注册与派发路径。
