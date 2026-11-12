@@ -42,6 +42,7 @@ struct ScriptEvent {
     double due=0,interval=0;
     bool periodic=false,stateMatched=false;
     std::shared_ptr<ScriptBoolean> filter;
+    std::shared_ptr<jass::Runtime> variableRuntime;
     std::set<std::uint32_t> inside;
     std::string match;
     bool exact=false;

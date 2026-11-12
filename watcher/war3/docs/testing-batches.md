@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 预加载变量事件（待批次验证）
+
+路径：`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_game.cpp`、`tests/map_tests.cpp`。变量事件按注册脚本的运行时监听并持有该运行时；外部变量事件尚不能恢复，快照明确拒绝。
+
+必要检查：Win32 Release `war3_map_tests` 编译通过；`preloader_variable_event` 为 1 通过／0 失败，覆盖主脚本同名变量隔离、预加载返回后的阈值跨越、事件上下文、回调内注册、自毁、恢复包编码及活动事件的快照拒绝。修复前报 native 未绑定，未加载 Game.dll。
+
+本批 3/3；需先合并验证变量事件、计时器、触发器和共享线程。多个预加载运行时交互、原版时序、外部事件存档及实际地图仍待验证或实现。
+
 ## 预加载触发器与长期动作（待批次验证）
 
 路径：`src/script_state.h`、`src/session_callbacks.cpp`、`src/session_game.cpp`、`tests/map_tests.cpp`。预加载脚本可创建和管理触发器，注册常见计时、玩家、单位、游戏状态及对象死亡事件，并通过共享会话执行条件与动作；动作执行或休眠时保留所属运行时，销毁触发器不终止已开始的动作。

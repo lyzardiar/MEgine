@@ -354,6 +354,48 @@ call TriggerAddAction(t, function onOrder)
 endfunction
 )jass";require(bool(file),"Cannot create trigger preload source");}Archives archives(argv[1]);auto map=archives.readCandidates({"Maps\\FrozenThrone\\Campaign\\War3XBonusCredits.w3x"},ArchiveScope::Common);require(bool(map),"Missing source map");archives.mountMap(std::make_shared<const Bytes>(map->bytes),"War3XBonusCredits.w3x");auto world=World::read(archives);auto info=world->data().info;auto common=archives.readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Missing common script");std::string script="function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"trigger-unit.j",script,"preloader unit trigger fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("Preloader",std::array{vm.string("unit-event.j")});auto real=[](float v){return jass::Real::fromBits(std::bit_cast<std::uint32_t>(v));};auto worker=vm.invoke("CreateUnit",std::array{vm.handle("player",0x100000),vm.integer(int(ObjectData::code("hpea"))),vm.real(real(0)),vm.real(real(0)),vm.real(real(0))});auto tree=vm.invoke("CreateDestructable",std::array{vm.integer(int(ObjectData::code("LTlt"))),vm.real(real(128)),vm.real(real(0)),vm.real(real(0)),vm.real(real(1)),vm.integer(0)});require(worker.bits && tree.bits,"Cannot create unit trigger fixtures");vm.invoke("SetUnitPathing",std::array{worker,vm.boolean(false)});require(session.harvest(worker.bits,tree.bits) && session.units().at(worker.bits)->userData==555,"Preload trigger did not process filtered player unit order");require(!session.encodeRecoveryBundle().empty(),"Destroyed unit trigger retained a preload runtime");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("preloader_variable_event",[&]{
+        auto dir=fs::absolute(argv[2])/L"preloader-variable"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
+        {std::ofstream file(dir/L"Preload"/L"variable.j",std::ios::binary);file<<R"jass(globals
+real tracked=0.0
+trigger saved=null
+trigger extra=null
+integer count=0
+integer ticks=0
+endglobals
+function action takes nothing returns nothing
+if GetTriggeringTrigger() == saved and GetTriggerEventId() == EVENT_GAME_VARIABLE_LIMIT then
+    set count=count+1
+    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_GOLD, count)
+    if count == 1 then
+        set extra=CreateTrigger()
+        call TriggerRegisterVariableEvent(extra, "tracked", GREATER_THAN, 1.0)
+    endif
+    if count == 2 then
+        call DestroyTrigger(extra)
+        call DestroyTrigger(saved)
+    endif
+endif
+endfunction
+function pulse takes nothing returns nothing
+set ticks=ticks+1
+if ticks == 2 then
+    set tracked=0.0
+else
+    set tracked=2.0
+endif
+if ticks == 3 then
+    call DestroyTimer(GetExpiredTimer())
+endif
+endfunction
+function PreloadFiles takes nothing returns nothing
+set saved=CreateTrigger()
+call TriggerRegisterVariableEvent(saved, "tracked", GREATER_THAN, 1.0)
+call TriggerAddAction(saved, function action)
+call TimerStart(CreateTimer(), 0.125, true, function pulse)
+endfunction
+)jass";require(bool(file),"Cannot create variable preload source");}Archives archives(argv[1]);auto map=archives.readCandidates({"Maps\\FrozenThrone\\Campaign\\War3XBonusCredits.w3x"},ArchiveScope::Common);require(bool(map),"Missing source map");archives.mountMap(std::make_shared<const Bytes>(map->bytes),"War3XBonusCredits.w3x");auto world=World::read(archives);auto info=world->data().info;auto common=archives.readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Missing common script");std::string script="globals\nreal tracked=0.0\nendglobals\nfunction config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\nfunction change takes nothing returns nothing\nset tracked=2.0\nendfunction\n";ScriptSession session(jass::Module::compile(jass::Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"variable-fixture.j",script,"preloader variable fixture"}})),info);session.attachWorld(std::move(world));session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();vm.invoke("Preloader",std::array{vm.string("variable.j")});auto identity=[](std::string_view,std::uint32_t id){return id;};bool rejected=false;try{session.encodeGameEvents(identity);}catch(const std::exception& e){rejected=std::string_view(e.what()).find("Unsupported external variable event")!=std::string_view::npos;}require(rejected,"Snapshot accepted an unrestorable preload variable event");auto player=vm.invoke("Player",std::array{vm.integer(0)});auto get=[&](){return vm.invoke("GetPlayerState",std::array{player,vm.global("PLAYER_STATE_RESOURCE_GOLD")}).bits;};vm.invoke("change");require(get()==0,"Map variable triggered preload event");session.advance(.2);require(get()==1,"First preload variable crossing did not fire");session.advance(.3);require(get()==2,"Second preload variable crossing did not fire");require(!session.encodeRecoveryBundle().empty(),"Destroyed variable event prevented recovery");require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("preloader_trigger_lifetime",[&]{
         auto dir=fs::absolute(argv[2])/L"preloader-trigger"/(std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));require(fs::create_directories(dir/L"Preload"),"Cannot create preload user directory");wchar_t previous[32768];auto length=GetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",previous,32768);require(length<32768 && SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",dir.c_str()),"Cannot set preload user directory");struct Restore{DWORD length;wchar_t* value;~Restore(){SetEnvironmentVariableW(L"MEGINE_WAR3_USER_DIR",length?value:nullptr);}}restore{length,previous};
         {std::ofstream file(dir/L"Preload"/L"trigger.j",std::ios::binary);file<<R"jass(globals
