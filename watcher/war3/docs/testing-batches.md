@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 事件注册与联盟派发批次（已验证所列范围）
+
+范围：`41bf14c`、`d1205a2`、`bd48973`，包含事件夹具补充 `400fec7`，集成版本 `bd48973`。Win32 Release 客户端、map、session、clock、control 和 game-flow 目标编译通过；control 报既有变量遮蔽警告，game-flow 报既有有符号比较警告。
+
+14 个测试进程全部退出 0：map 的编号范围、无效过滤器及三个预加载入口各 1／0；session 31／0；联盟旧快照、actor 和 spatial 事件快照、区域及范围回调各 1／0；control 的玩家区域及事件注册各 1／0；新生成夹具的 game-flow 通过。命令和输出见 `tmp/docs-artifacts/war3/event-registration-batch/checks.cjs`、`checks.log`。
+
+无效过滤器的区域／范围真实派发、原版动态行为和时序、真实旧档、实际窗口、多人及完整对局尚未验收；静态反汇编与隔离夹具不能替代原版验收。下一功能批次从 0/3 开始。
+
 ## 事件注册的无效过滤器（待批次验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_spatial_events.cpp`、`tests/map_tests.cpp`。玩家单位、可过滤单位、区域进入／离开及单位范围事件将空、已销毁、错型或不存在的过滤器视为空过滤器；有效过滤器保留原有表达式和生命周期，其他布尔表达式接口不变。
