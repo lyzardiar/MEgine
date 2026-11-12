@@ -1,29 +1,37 @@
 # 独立客户端测试队列
 
-## 预加载变量事件（待批次验证）
+## 预加载计时器、触发器和变量事件批次（已验证所列范围）
+
+范围：`3f86780`、`f7fa318`、`3162aeb`，集成版本 `3162aeb`。Win32 Release 客户端、map、session、clock 和 JASS thread 目标编译通过。
+
+8 个预加载变量事件、计时器、触发器、过滤器、伤害和命令模式各 1 通过／0 失败；session 28／0，JASS thread 36／0，clock 的 timer 5／0、variable_events 1／0、trigger 3／0。共 13 个进程，失败 0。命令与完整输出位于 `tmp/docs-artifacts/war3/preload-events-batch.cjs` 和 `tmp/docs-artifacts/war3/preload-events-batch.log`。
+
+外部回调及变量事件的存档恢复、多预加载运行时交互、原版时序、实际地图、窗口表现和完整对局仍未验证或实现。下一功能批次从 0/3 开始。
+
+## 预加载变量事件（已完成所列批次验证）
 
 路径：`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_game.cpp`、`tests/map_tests.cpp`。变量事件按注册脚本的运行时监听并持有该运行时；外部变量事件尚不能恢复，快照明确拒绝。
 
 必要检查：Win32 Release `war3_map_tests` 编译通过；`preloader_variable_event` 为 1 通过／0 失败，覆盖主脚本同名变量隔离、预加载返回后的阈值跨越、事件上下文、回调内注册、自毁、恢复包编码及活动事件的快照拒绝。修复前报 native 未绑定，未加载 Game.dll。
 
-本批 3/3；需先合并验证变量事件、计时器、触发器和共享线程。多个预加载运行时交互、原版时序、外部事件存档及实际地图仍待验证或实现。
+本批 3/3；合并验证结果见上方批次记录。多个预加载运行时交互、原版时序、外部事件存档及实际地图仍待验证或实现。
 
-## 预加载触发器与长期动作（待批次验证）
+## 预加载触发器与长期动作（已完成所列批次验证）
 
 路径：`src/script_state.h`、`src/session_callbacks.cpp`、`src/session_game.cpp`、`tests/map_tests.cpp`。预加载脚本可创建和管理触发器，注册常见计时、玩家、单位、游戏状态及对象死亡事件，并通过共享会话执行条件与动作；动作执行或休眠时保留所属运行时，销毁触发器不终止已开始的动作。
 
 必要检查：Win32 Release `war3_map_tests` 编译通过；`war3_map_tests <root> tmp/docs-artifacts/war3/map-preloader-trigger <preloader_trigger_lifetime|preloader_trigger_unit_event|preloader_trigger_wait>` 各 1 通过／0 失败，覆盖计时事件、过滤的玩家单位命令、条件／事件上下文、串行／并行动作、自毁后休眠、主脚本并行线程、等待动作以及完成后恢复包编码；活动外部触发器快照明确拒绝。修复前 `CreateTrigger` 未绑定，未加载 Game.dll。`preloader_timer_lifetime` 和 `preloader_destructable_enumeration` 各 1／0。
 
-本批 2/3；合并验证预加载计时器／触发器、事件回调与共享线程。其他事件与变量事件、活动回调存档、多次触发重入、原版时序和实际地图仍待验证或实现。
+本批 2/3；合并验证结果见上方批次记录。其他事件与变量事件、活动回调存档、多次触发重入、原版时序和实际地图仍待验证或实现。
 
 
-## 预加载计时器及休眠回调（待批次验证）
+## 预加载计时器及休眠回调（已完成所列批次验证）
 
 路径：`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_game.cpp`、`src/session_tick.cpp`、`tests/map_tests.cpp`。预加载脚本可创建、控制计时器并使用共享线程调度执行回调；计时器及尚在执行／休眠的线程分别保留回调运行时，完成后释放。
 
 必要检查：Win32 Release `war3_map_tests` 编译通过；`war3_map_tests <root> tmp/docs-artifacts/war3/map-preloader-timer preloader_timer_lifetime` 为 1 通过／0 失败，覆盖单次／周期计时、替换回调、暂停／恢复、回调销毁自身后休眠、并行主脚本线程、恢复事件上下文、活动外部回调快照拒绝及结束后恢复包编码。修复前 `CreateTimer` 未绑定，未加载 Game.dll。`preloader_destructable_enumeration`、`preloader_nested_damage`、`preloader_unit_orders` 各 1／0。
 
-本批 1/3；合并验证多计时器、取消／重启、嵌套预加载、睡眠线程／检查点及原有回调。存活外部回调及休眠线程的完整存档、触发器长期回调、原版时序和实际地图仍待实现或对照。
+本批 1/3；合并验证结果见上方批次记录。存活外部回调及休眠线程的完整存档、触发器长期回调、原版时序和实际地图仍待实现或对照。
 
 
 ## 采集路线与预加载过滤器批次（已验证所列范围）
