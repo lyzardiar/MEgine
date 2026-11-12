@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单技能寄生物品（待批次验证）
+
+路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/caster-spells.md`。单主动寄生物品进入单位目标选择，复用目标校验、寄生状态、死亡召唤和物品施法流程。
+
+必要检查：Win32 Release 客户端及 control 测试目标编译通过；生成组合物品夹具后执行 `war3_control_tests <data-root> <fixture> item-single-parasite`，修复前目标选择缺失，修复后 1 通过／0 失败，覆盖友方拒绝、敌方寄生、物品消耗及死亡召唤的数量与归属。驱散、事件重入、原版时序、实际窗口和多人待批次验证。本批 1/3。
+
 ## 单技能目标物品批次（部分验证）
 
 范围：`2bdbb2b`、`ce4d6c8`、`0740308`，集成版本 `0740308`。Win32 Release 客户端及 control 测试目标编译通过；使用重新生成的组合物品夹具，单技能治疗／减速、诱捕／放逐、蛛网／睡眠、已有组合施法与控制、普通控制流程／驱散／生命周期及物品目标回调共 11 个测试进程，每项 1 通过／0 失败。日志 `tmp/docs-artifacts/war3/single-web-sleep/batch-0740308.log`。
