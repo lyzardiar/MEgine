@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 中键拖动镜头（待批次验证）
+
+路径：`src/main.cpp`、`src/game_view.h`、`src/game_view.cpp`、`src/agent_capture.h`、`docs/game-help.md`、`docs/agent-keyboard.md`。世界画面中键拖动以地形拾取差值平移并遵循镜头边界、脚本跟随和覆盖界面；失焦或捕获丢失结束拖动。
+
+快速检查：Win32 Release 客户端编译通过；`node tmp/docs-artifacts/war3/keyboard-input-probe/middle.cjs` 在隐藏隔离对局注入视图输入，平移、界面区域起拖隔离、反向拖动共 3 通过／0 失败，结果见同目录 `middle-result.json`。真实窗口捕获、边缘、原版方向和灵敏度、联机及脚本交互待验证。本批 3/3，先集中验证。
+
 ## Insert／Delete 镜头旋转（待批次验证）
 
 路径：`src/game_view.h`、`src/game_view.cpp`、`src/main.cpp`、`docs/game-help.md`。按键按帧使用资源表旋转速度，排除修饰键及覆盖界面；绑定单位继承朝向时保留脚本优先级。

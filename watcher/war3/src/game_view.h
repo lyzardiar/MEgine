@@ -19,7 +19,7 @@ class QuestDialog;
 class MessageLog;
 class ChatDialog;
 class GameFlowUi;
-struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;bool rightShift=false,rightControl=false,rightAlt=false,rotateLeft=false,rotateRight=false;};
+struct GameInput {UiInput ui;bool right=false,active=false,left=false,up=false,rightKey=false,down=false;std::wstring characters;bool rightShift=false,rightControl=false,rightAlt=false,rotateLeft=false,rotateRight=false,middle=false,middlePressed=false;float middleStartX=0,middleStartY=0,middleDX=0,middleDY=0;};
 class GameView {
     std::unique_ptr<GameData> data_;
     Renderer& renderer_;
@@ -66,7 +66,7 @@ class GameView {
     void buildCreepCamps();
     std::vector<float> distances_,angles_,fovs_;
     float x_=0,y_=0,distance_=1650,angle_=56,fov_=70,rotation_=90,roll_=0,zOffset_=0,near_=100,far_=5000,forwardSpeed_=3000,strafeSpeed_=3000,rotationSpeed_=30;
-    unsigned zoom_=0,frames_=0;
+    unsigned zoom_=0,frames_=0;bool middleDrag_=false;
     std::uint64_t cameraRevision_=0;
     std::uint64_t recentPingId_=0;
     std::optional<std::pair<float,float>> recentPing_;
@@ -168,7 +168,7 @@ class GameView {
     std::optional<unsigned> chatRecipient_;
     std::array<float,3> eye_{};
     size_t drawnChunks_=0,drawnObjects_=0,drawnUnits_=0;
-    void camera(const GameInput& input,double delta);
+    void camera(const GameInput& input,double delta,bool processInput=true);
     void drawCineFilter();
     void drawCinematicPanel();
     void drawLeaderboard();
