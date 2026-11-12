@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## Print Screen 保存截图（待批次验证）
+
+路径：`src/main.cpp`、`docs/game-help.md`、`docs/agent-keyboard.md`。Print Screen 捕获当前渲染帧，原子预留不同文件名并保存至用户目录 `Screenshots`，提示结果；失败清理本次空文件、记录错误并继续运行。原版帮助列出该快捷键。
+
+快速检查：Win32 Release 客户端编译通过；`node tmp/docs-artifacts/war3/keyboard-input-probe/screenshot.cjs` 在隐藏隔离对局注入键盘请求，两张 PNG 签名及不同文件名 2 通过／0 失败；`screenshot-error.cjs` 将目标目录替换为测试文件，检查错误后该文件及对局仍在，1 通过／0 失败。测试绕过 Windows 按键消息，前台实际按键、屏幕内容和提示与原版对照、设备丢失及其他界面待验证。本批 2/3。
+
 ## Ctrl+Enter 盟友聊天目标（待批次验证）
 
 路径：`src/game_view.cpp`、`docs/chat-dialog.md`、`docs/agent-keyboard.md`。对局中 Ctrl+Enter 打开盟友频道并清除私聊目标，Shift+Enter 仍选所有人，普通 Enter 沿用当前频道；依据原版 `UI/HelpStrings.txt`。隐藏对局状态快照补充聊天输入和目标。
