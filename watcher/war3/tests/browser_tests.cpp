@@ -10,7 +10,7 @@
 using namespace war3;
 namespace {
 void require(bool value,const char* message) {if(!value)throw std::runtime_error(message);}
-UiInput key(unsigned code,bool shift=false) {UiInput i;i.x=i.y=-1;i.key=code;i.shift=shift;return i;}
+UiInput key(unsigned code,bool shift=false) {UiInput i;i.x=i.y=-1;i.key=code;i.keyShift=shift;return i;}
 UiInput click(float x,float y,bool twice=false) {UiInput i;i.x=i.startX=x;i.y=i.startY=y;i.pressed=true;i.doubleClick=twice;return i;}
 UiInput click(GlueScreen::Rect r) {return click(r.x+r.w/2,r.y+r.h/2);}
 void mapArchive(const fs::path& path,const std::string& member,const std::string& value) {

@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## FDF 界面 Shift+Tab 焦点方向（待批次验证）
+
+路径：`src/glue.cpp`、`tests/browser_tests.cpp`。共用 FDF 控件焦点遍历读取键盘事件的 Shift 状态，避免修饰键已释放或鼠标状态不同步时反向遍历变为正向；鼠标事件仍使用自己的修饰状态。
+
+必要检查：Win32 Release 客户端和 browser 测试目标编译通过；`war3_browser_tests <data-root> tmp/docs-artifacts/war3/browser-focus-20261112 setup_forward_and_reverse_focus` 使用独立 `keyShift` 模拟键盘事件，修复前 0 通过／1 失败，修复后 1 通过／0 失败，覆盖源配置页完整焦点链双向遍历。实际前台键盘、其他 FDF 页面和原版焦点顺序待验证。本批 2/3。
+
 ## Shift+Tab 子组方向（待批次验证）
 
 路径：`src/game_view.cpp`、`docs/subgroup-order.md`。子组切换读取 Tab 按下时保存的 Shift 状态，按键与鼠标事件的修饰状态各自独立。
