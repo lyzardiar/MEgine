@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 原版营地路径成本隔离探针（调查补充）
+
+路径：`tools/verify_creep_camp_selection_cpu.py`、`docs/ai.md`。同一命令执行原版筛选、节点链成本和注入直达结果路径，共 20 通过／0 失败；覆盖两倍整数坐标的直行、3-4-5、转折及特殊节点固定成本。原版寻路及世界坐标到节点的转换未运行，输出为 `tmp/docs-artifacts/war3/creep-distance-analysis/selection.json`。调查补充不计功能批次，当前 0/3。
+
 ## 原版野怪营地筛选隔离探针（调查补充）
 
 路径：`tools/verify_creep_camp_selection_cpu.py`、`docs/ai.md`。固定 1.27 Game.dll 哈希，使用合成营地和注入距离值执行原始筛选指令；`python watcher/war3/tools/verify_creep_camp_selection_cpu.py` 为 13 通过／0 失败，覆盖等级优先与回退、强营地和空中限制的 200 边界、顺序、平局和 999999 值。结果 `tmp/docs-artifacts/war3/creep-distance-analysis/selection.json`。外部查询与距离均为替身，不覆盖原版寻路或游戏对局；距离单位与受阻返回值待调查，当前客户端策略尚未按该规则调整。调查补充不计功能批次，当前 0/3。

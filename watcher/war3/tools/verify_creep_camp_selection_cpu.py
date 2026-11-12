@@ -42,7 +42,7 @@ def get(address):
     return struct.unpack('<I', cpu.mem_read(address, 4))[0]
 
 current = 0
-helpers = {0x6f891140: 4, 0x6f88eb10: 0, 0x6f03b720: 4, 0x6f03c310: 32, 0x6f107730: 0, 0x6f88ff40: 0, 0x6f890e80: 0}
+helpers = {0x6f891140: 4, 0x6f88eb10: 0, 0x6f03b720: 4, 0x6f03c310: 32, 0x6f107730: 0, 0x6f88ff40: 0, 0x6f890e80: 0, 0x6f111380: 24}
 
 def hook(uc, address, size, user):
     global current
@@ -50,7 +50,9 @@ def hook(uc, address, size, user):
         return
     ecx = uc.reg_read(UC_X86_REG_ECX)
     value = 0
-    if address == 0x6f88eb10:
+    if address == 0x6f111380:
+        value = 1
+    elif address == 0x6f88eb10:
         current = ecx
         value = get(ecx + 0x20)
     elif address == 0x6f03c310:
@@ -110,6 +112,50 @@ for name, camps, air, expected in cases:
     actual = select(camps, air=air)
     assert actual == expected, f'{name}: expected {expected}, got {actual}'
     results.append({'name': name, 'actual': actual})
+def path_cost(points):
+    actor, nodes, stack = 0x10005000, 0x10060000, 0x200f0000
+    put(actor + 0x5c, nodes)
+    put(actor + 0xa0, 0)
+    for index, (x, y, special) in enumerate(points):
+        node = nodes + index * 36
+        put(node, x & 0xffffffff)
+        put(node + 4, y & 0xffffffff)
+        put(node + 0x1c, index - 1 if index else 0xffffffff)
+        cpu.mem_write(node + 0x23, bytes([int(special)]))
+    cpu.mem_write(stack, struct.pack('<II', 0x30000020, len(points) - 1))
+    cpu.reg_write(UC_X86_REG_ESP, stack)
+    cpu.reg_write(UC_X86_REG_ECX, actor)
+    cpu.emu_start(0x6f10fb90, 0x30000020, count=10000)
+    return cpu.reg_read(UC_X86_REG_EAX), get(actor + 0xa0)
+
+path_cases = [
+    ('path_single', [(0, 0, False)], (0, 0)),
+    ('path_straight', [(0, 0, False), (3, 4, False)], (10, 0)),
+    ('path_turn', [(0, 0, False), (3, 0, False), (3, 4, False)], (14, 0)),
+    ('path_special', [(0, 0, True), (50, 50, False)], (2, 1)),
+]
+for name, points, expected in path_cases:
+    actual = path_cost(points)
+    assert actual == expected, f'{name}: expected {expected}, got {actual}'
+    results.append({'name': name, 'actual': actual})
+def direct_cost(start, end):
+    actor, source, target, result, stack = 0x10005000, 0x10006000, 0x10006100, 0x10006200, 0x200f0000
+    cpu.mem_write(source, struct.pack('<ff', *start))
+    cpu.mem_write(target, struct.pack('<ff', *end))
+    cpu.mem_write(stack, struct.pack('<IIIIIIII', 0x30000020, 0, source, target, 0, 0, result, 0))
+    cpu.reg_write(UC_X86_REG_ESP, stack)
+    cpu.reg_write(UC_X86_REG_ECX, actor)
+    cpu.emu_start(0x6f10ef30, 0x30000020, count=10000)
+    return cpu.reg_read(UC_X86_REG_EAX)
+
+for name, start, end, expected in [
+    ('direct_zero', (0, 0), (0, 0), 0),
+    ('direct_axis', (0, 0), (3, 0), 6),
+    ('direct_three_four', (0, 0), (3, 4), 10),
+]:
+    actual = direct_cost(start, end)
+    assert actual == expected, f'{name}: expected {expected}, got {actual}'
+    results.append({'name': name, 'actual': actual})
 args.output.parent.mkdir(parents=True, exist_ok=True)
-args.output.write_text(json.dumps({'sha256': digest, 'results': results, 'scope': 'synthetic camps and injected distance results; original selection instructions only'}, indent=2), encoding='utf-8')
+args.output.write_text(json.dumps({'sha256': digest, 'results': results, 'scope': 'synthetic camps and injected distance results; synthetic path nodes and injected direct-path result; no original path search'}, indent=2), encoding='utf-8')
 print(f'RESULT passed={len(results)} failed=0 output={args.output}')
