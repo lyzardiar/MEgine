@@ -74,6 +74,17 @@ assert u32(pool + 0x24) == 0 and u32(pool + 0x14) == 100
 assert u32(array + 0x30) & 0x10 == 0
 assert invoke(0x6f265f80, parent) == 0
 assert u32(pool + 0x24) == 0 and u32(pool + 0x14) == 100
+# The registered natives tail-call the same pool and accept index zero. Only the
+# global session lookup is replaced; all create/destroy instructions remain original.
+cpu.mem_write(0x6f1c3200, b'\xb8' + struct.pack('<I', parent) + b'\xc3')
+assert invoke(0x6f1dea90, 0) == 0
+assert u32(pool + 0x14) == 100
+invoke(0x6f1df760, 0, 0)
+assert u32(pool + 0x24) == 1 and u32(pool + 0x14) == 99
+assert invoke(0x6f1dea90, 0) == 0
+assert u32(pool + 0x24) == 0 and u32(pool + 0x14) == 100
+invoke(0x6f1df760, 0, 100)
+assert u32(pool + 0x24) == 0 and u32(pool + 0x14) == 100
 assert invoke(0x6f8770e0, pool, 0) == array
 invoke(0x6f877060, pool, 0)
 assert u32(pool + 0x24) == 1 and u32(pool + 0x14) == 99
@@ -148,9 +159,9 @@ for value, expected in [(-0.25, 2 / 480), (0, 2 / 480), (0.023, 0.023), (1, 1)]:
     assert abs(stored - value) < 0.000001 and abs(effective - expected) < 0.000001
 
 result = dict(binarySha256=digest, slots=100, first=created[0], last=created[-1], fullReturn=0,
-              zeroSlotAllocated=True, zeroSlotReusable=True, nonzeroSlotReusable=True, alphaTransitions=True, shadowAlphaHistory=True, textCoordinateScale=True, textSizeBounds=True, passed=True,
-              boundaries=['Synthetic manager and prepopulated free list', 'Virtual callbacks replaced by returns', 'Text redraw callbacks disabled', 'Synthetic 640x480 text viewport'],
-              limitations=['Raw x86 entry points only; JASS null mapping, runtime initialization, UI and gameplay were not executed.'])
+              zeroSlotAllocated=True, zeroSlotReusable=True, nativeZeroDestroy=True, nativeFullReturnsZero=True, nonzeroSlotReusable=True, alphaTransitions=True, shadowAlphaHistory=True, textCoordinateScale=True, textSizeBounds=True, passed=True,
+              boundaries=['Synthetic manager and prepopulated free list', 'Virtual callbacks replaced by returns', 'Native session lookup replaced with synthetic manager', 'Text redraw callbacks disabled', 'Synthetic 640x480 text viewport'],
+              limitations=['Raw registered native entry points only; JASS VM, runtime initialization, UI and gameplay were not executed.'])
 args.output.parent.mkdir(parents=True, exist_ok=True)
 args.output.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
 print(json.dumps(result))

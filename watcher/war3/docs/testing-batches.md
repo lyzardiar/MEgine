@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 原版飘字零号槽原生入口探针（验证补充）
+
+路径：`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。固定 1.27 Game.dll 的注册原生入口在合成会话下确认：满额创建返回 0；销毁参数 0 释放已占用的零号槽，重建再次占用；销毁参数 100 不改变池状态。`python watcher/war3/tools/verify_texttag_capacity_cpu.py` 通过，结果 `tmp/docs-artifacts/war3/texttag-capacity/reference.json`。探针替代会话查询并使用合成槽位池，不执行 JASS VM、真实初始化、窗口或玩法；当前客户端容量与身份行为仍待实现。纯验证补充不计功能批次，当前 0/3。
+
 ## 预加载计时器、触发器和变量事件批次（已验证所列范围）
 
 范围：`3f86780`、`f7fa318`、`3162aeb`，集成版本 `3162aeb`。Win32 Release 客户端、map、session、clock 和 JASS thread 目标编译通过。
