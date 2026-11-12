@@ -17,7 +17,7 @@ struct ScriptBoolean {
     std::shared_ptr<jass::Runtime> codeRuntime;
     std::shared_ptr<ScriptBoolean> left,right;
 };
-struct ScriptCallback {std::uint32_t owner=0;jass::Value code;std::shared_ptr<ScriptBoolean> condition;};
+struct ScriptCallback {std::uint32_t owner=0;jass::Value code;std::shared_ptr<ScriptBoolean> condition;std::shared_ptr<jass::Runtime> codeRuntime;};
 struct ScriptTimer {
     jass::Real timeout,elapsed;
     bool running=false,periodic=false;

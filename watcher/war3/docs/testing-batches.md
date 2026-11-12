@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 预加载触发器与长期动作（待批次验证）
+
+路径：`src/script_state.h`、`src/session_callbacks.cpp`、`src/session_game.cpp`、`tests/map_tests.cpp`。预加载脚本可创建和管理触发器，注册常见计时、玩家、单位、游戏状态及对象死亡事件，并通过共享会话执行条件与动作；动作执行或休眠时保留所属运行时，销毁触发器不终止已开始的动作。
+
+必要检查：Win32 Release `war3_map_tests` 编译通过；`war3_map_tests <root> tmp/docs-artifacts/war3/map-preloader-trigger <preloader_trigger_lifetime|preloader_trigger_unit_event|preloader_trigger_wait>` 各 1 通过／0 失败，覆盖计时事件、过滤的玩家单位命令、条件／事件上下文、串行／并行动作、自毁后休眠、主脚本并行线程、等待动作以及完成后恢复包编码；活动外部触发器快照明确拒绝。修复前 `CreateTrigger` 未绑定，未加载 Game.dll。`preloader_timer_lifetime` 和 `preloader_destructable_enumeration` 各 1／0。
+
+本批 2/3；合并验证预加载计时器／触发器、事件回调与共享线程。其他事件与变量事件、活动回调存档、多次触发重入、原版时序和实际地图仍待验证或实现。
+
+
 ## 预加载计时器及休眠回调（待批次验证）
 
 路径：`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_game.cpp`、`src/session_tick.cpp`、`tests/map_tests.cpp`。预加载脚本可创建、控制计时器并使用共享线程调度执行回调；计时器及尚在执行／休眠的线程分别保留回调运行时，完成后释放。
