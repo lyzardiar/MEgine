@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单技能物品的普通单位目标法术（待批次验证）
+
+路径：`src/spells.h`、`src/session_spells.cpp`、`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/caster-spells.md`。单主动治疗、减速及已支持单位增益／减益原型进入目标选择并复用物品施法流程，延续目标检查、事件、费用、冷却及次数处理；已有多主动组合路径保持。
+
+必要检查：Win32 Release 客户端和 control 测试目标编译通过；`python tests/generate-combined-item-fixture.py --data-root <data-root> --output <fixture>` 后执行 `war3_control_tests <data-root> <fixture> item-single-caster-family`，修复前因目标选择缺失失败，修复后 1 通过／0 失败，覆盖治疗／减速效果、消耗和错误目标拒绝。编译存在原有局部变量遮蔽警告。批次合并多主动组合、其他法术、物品事件、冷却及目标；原版时序、真实窗口和多人待验证。本批 1/3。
+
 ## 标准信息面板尺寸与透明度批次（部分验证）
 
 范围：`84eaefc`、`0dc6ea5`、`40775da`，集成版本 `40775da`。Win32 Release 客户端及 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> map_` 共 9 通过／0 失败，覆盖图标尺寸、图标和英雄属性文字透明度、FDF 渲染、静态／混合锚点及原标准面板布局。日志 `tmp/docs-artifacts/war3/info-panel-batch-40775da.log`。

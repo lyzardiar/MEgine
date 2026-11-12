@@ -23,6 +23,7 @@ inline bool cappedCorpseSummon(SpellKind kind){return kind==SpellKind::CarrionBe
 inline bool corpseSpell(SpellKind kind){return (kind>=SpellKind::Cannibalize && kind<=SpellKind::AncestralSpirit) || cappedCorpseSummon(kind);}
 inline bool unitCasterSpell(SpellKind kind){return kind>=SpellKind::LightningShield && kind<=SpellKind::Cripple;}
 inline bool humanCasterSpell(SpellKind kind){return kind>=SpellKind::SpellSteal && kind<=SpellKind::Cloud;}
+inline bool itemUnitBuffSpell(SpellKind kind){return (kind>=SpellKind::Heal && kind<=SpellKind::AntiMagicShell && kind!=SpellKind::Dispel) || kind==SpellKind::Invisibility || kind==SpellKind::FrostArmor;}
 inline bool casterSpell(SpellKind kind){return (kind>=SpellKind::Heal && kind<=SpellKind::AntiMagicShell) || kind==SpellKind::Invisibility || kind==SpellKind::FrostArmor || unitCasterSpell(kind) || kind==SpellKind::SpellSteal || kind==SpellKind::Parasite || kind==SpellKind::MindRot;}
 enum class SpellTargeting {Unit,Point,None,Either};
 struct SpellInfo {
