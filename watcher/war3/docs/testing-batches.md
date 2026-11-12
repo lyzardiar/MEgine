@@ -2,11 +2,11 @@
 
 ## 触发器事件类型范围（待批次验证）
 
-路径：`src/session_callbacks.cpp`、`tests/map_tests.cpp`。游戏、玩家、玩家单位、单位和过滤单位事件在创建对象前检查各自的原版编号范围；编号跨类型、落在空档或超出范围时返回空事件，过滤器也不被解析。有效编号保留既有注册与派发路径。
+路径：`src/session_callbacks.cpp`、`tests/map_tests.cpp`、`tests/control_tests.cpp`、`tests/generate-game-flow-fixture.py`、`tests/game_flow_tests.cpp`。游戏、玩家、玩家单位、单位和过滤单位事件在创建对象前检查各自的原版编号范围；编号跨类型、落在空档或超出范围时返回空事件，过滤器也不被解析。有效编号保留既有注册与派发路径。
 
 依据固定版 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`：游戏入口 `0x6f1f9570` 接受 0–10／256–260；玩家入口 `0x6f1f9a20` 接受 11–17／261–268；玩家单位入口 `0x6f1f9c60` 接受 18–51／269–280；单位入口 `0x6f1fa060` 接受 52–88／281–297；过滤单位入口 `0x6f1f9470` 接受 60–88／286–297。原始静态指令只证明入口范围，不证明所有事件已有生产者或实际触发语义。
 
-必要检查：Win32 Release 客户端及 map 目标编译通过；`war3_map_tests <root> <scratch> event_registration_type_ranges` 为 1 通过／0 失败，覆盖五类边界、非法编号不创建对象、过滤器跳过及触发器销毁。修复前非法事件可注册；未加载 Game.dll。
+必要检查：Win32 Release 客户端及 map 目标编译通过；`war3_map_tests <root> <scratch> event_registration_type_ranges` 为 1 通过／0 失败，覆盖五类边界、非法编号不创建对象、过滤器跳过及触发器销毁。修复前非法事件可注册；未加载 Game.dll。已有 control 夹具将玩家事件编号 0 和过滤单位事件编号 53 当成有效值，均与 1.27 入口范围不符；改为玩家胜利事件 14 和可过滤事件 60 后，`player-region-registration-handles`、`event-registration-handles` 各 1 通过／0 失败。control 编译报告既有变量遮蔽警告。游戏流程夹具先前对单位死亡事件使用过滤注册，亦超出原版范围；改为单位即时命令事件后，在 `tmp/docs-artifacts/war3/event-ranges-game-flow/fixture.w3m` 上检查过滤允许／拒绝、上下文和其他游戏流程通过，game-flow 编译报告既有有符号比较警告。
 
 本批 1/3；合批验证合法事件的注册／派发、过滤与上下文、预加载及快照恢复。原版动态事件时序、尚未实现的生产者和实际地图继续待验证。
 

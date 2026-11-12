@@ -61,7 +61,7 @@ function ProbeUnitDeny takes nothing returns boolean
     return false
 endfunction
 function ProbeFilteredEvent takes nothing returns nothing
-    if GetTriggerUnit()!=probe_filter_unit or GetTriggerEventId()!=EVENT_UNIT_DEATH then
+    if GetTriggerUnit()!=probe_filter_unit or GetTriggerEventId()!=EVENT_UNIT_ISSUED_ORDER then
         call ExecuteFunc("MatchFailure_unit_filter_context")
     endif
     set probe_filter_events=probe_filter_events+1
@@ -72,10 +72,10 @@ endfunction
 function ProbeFilterUnitSetup takes unit whichUnit returns nothing
     local trigger t=CreateTrigger()
     set probe_filter_unit=whichUnit
-    call TriggerRegisterFilterUnitEvent(t,whichUnit,EVENT_UNIT_DEATH,Filter(function ProbeUnitFilter))
+    call TriggerRegisterFilterUnitEvent(t,whichUnit,EVENT_UNIT_ISSUED_ORDER,Filter(function ProbeUnitFilter))
     call TriggerAddAction(t,function ProbeFilteredEvent)
     set t=CreateTrigger()
-    call TriggerRegisterFilterUnitEvent(t,whichUnit,EVENT_UNIT_DEATH,Filter(function ProbeUnitDeny))
+    call TriggerRegisterFilterUnitEvent(t,whichUnit,EVENT_UNIT_ISSUED_ORDER,Filter(function ProbeUnitDeny))
     call TriggerAddAction(t,function ProbeDeniedEvent)
 endfunction
 function ProbeDialogEvent takes nothing returns nothing
