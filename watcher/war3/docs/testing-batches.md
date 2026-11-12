@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 对局音乐和音效快捷开关（待批次验证）
+
+路径：`src/game_view.cpp`、`docs/game-help.md`。Ctrl+M 和 Ctrl+S 分别切换音乐与音效，复用设置页和本地音频增益、已有音量及持久化；重复键、聊天与其他覆盖界面不执行开关，组合键不进入单位命令。
+
+必要检查：Win32 Release 客户端增量编译通过；组合键依据原版 `UI/HelpStrings.txt`。本批 1/3，集中验证快捷键、声音播放与设置重开；实际窗口、音频设备、原版提示及联机／回放输入仍待验证。
+
 ## 天气、菜单快捷键与快速存档批次（部分验证）
 
 范围：`a1cd3c8`、`99409f3`、`30485b9`，集成版本 `30485b9`。Win32 Release 客户端、map、clock 和 game-flow 目标已编译。6 个回归进程全部退出 0：天气无效句柄、快速存档覆盖与恢复、脚本存档及过渡调用者、天气恢复各 1／0，game-flow 消费者通过；命令和输出位于 `tmp/docs-artifacts/war3/weather-save-hotkeys-batch/checks.cjs` 与 `checks.log`。
