@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 资料片人族第四章失败重开回归（验证补充，不单独计数）
+
+路径：`tests/campaign_ai_tests.cpp`、`docs/campaign-flow.md`。原图、静音及隔离会话不操作单位，推进至失败对话，检查本地失败结果和四个选项，再点击首个重开按钮并确认重开请求。
+
+Win32 Release CampaignAI 测试目标编译通过；`war3_campaign_ai_tests <data-root> humanx04-no-action-restart` 在模拟 331.969 秒报告 1 通过／0 失败且未加载 Game.dll，日志 `tmp/docs-artifacts/war3/tft-ne4-next/humanx04-no-action-restart.log`。此前临时探针也确认首项为“重新开始”；本测试未验证重载完成、其他按钮、自然胜利、实际窗口或跨关。纯回归补充不计功能批次，新功能批次为 0/3。
+
 ## FDF 方向锚点批次失败修复
 
 路径：`src/map_frames.h`、`src/map_frames.cpp`、`src/glue.cpp`、`tests/browser_tests.cpp`。原版 `SimpleInfoPanel.fdf` 的 `SimpleInfoPanelIconHeroText` 同时以 LEFT／RIGHT 约束水平边界、TOP／BOTTOM 约束垂直边界，四个锚点的交叉轴中心不同；静态 FDF 两个相对方向同时存在时按对应轴求解，逻辑布局和绘制布局共用该规则。脚本运行时锚点继续原有双轴冲突校验，其他单点、对角及冲突输入保留原行为。该规则依据源资源结构推定，原版动态结果仍待对照。
