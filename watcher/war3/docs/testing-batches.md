@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 原版飘字槽位与恢复（待批次验证）
+
+路径：`src/session.h`、`src/session.cpp`、`src/session_text_tag.cpp`、`tests/session_tests.cpp`、`tests/clock_tests.cpp`、`docs/text-tags.md`。按原版 100 槽空闲栈分配和回收，满额返回 0，零号槽可被相同数值访问；STTX v7 保存空闲顺序，v1–v6 普通句柄转换为槽位，超过 99 个活动旧句柄的旧档明确拒绝。
+
+必要检查：Win32 Release 客户端及 session／clock 编译通过；`war3_session_tests <enum-fixture>` 为 29 通过／0 失败，覆盖槽位顺序、满额、零值读写／销毁、重用及越界；`WAR3_CLOCK_FILTER=text_tag war3_clock_tests <root> <scratch>` 为 3 通过／0 失败，覆盖恢复后零值和空闲栈顺序、过期、显示状态及合成 v1–v5 格式转换。修复前槽位回归失败；未加载 Game.dll。
+
+本批 1/3；合批验证原图飘字、脚本全局／哈希表及休眠线程恢复、v1–v6 真实存档兼容和相关 UI。完整 JASS VM 原版动态行为、实际画面、多客户端本地显隐及原版存档格式仍待对照或实现。
+
 ## 原版飘字零号槽原生入口探针（验证补充）
 
 路径：`tools/verify_texttag_capacity_cpu.py`、`docs/text-tags.md`。固定 1.27 Game.dll 的注册原生入口在合成会话下确认：满额创建返回 0；销毁参数 0 释放已占用的零号槽，重建再次占用；销毁参数 100 不改变池状态。`python watcher/war3/tools/verify_texttag_capacity_cpu.py` 通过，结果 `tmp/docs-artifacts/war3/texttag-capacity/reference.json`。探针替代会话查询并使用合成槽位池，不执行 JASS VM、真实初始化、窗口或玩法；当前客户端容量与身份行为仍待实现。纯验证补充不计功能批次，当前 0/3。

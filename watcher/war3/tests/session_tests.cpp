@@ -22,6 +22,11 @@ template<class F> void rejects(F run,std::string_view message) {try{run();}catch
 int wmain(int argc,wchar_t** argv) {
     if(argc!=2){std::cerr<<"Usage: war3_session_tests <enum-fixture.json>\n";return 2;}
     unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};
+    test("text_tag_slots_and_zero_alias",[]{auto module=compile(R"jass(type texttag extends handle
+native CreateTextTag takes nothing returns texttag
+native DestroyTextTag takes texttag value returns nothing
+native SetTextTagVisibility takes texttag value, boolean flag returns nothing
+)jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();std::array<jass::Value,100> tags;for(unsigned i=0;i<100;++i){tags[i]=vm.invoke("CreateTextTag");require(tags[i].bits==99-i,"Text tag slot order differs");}require(session.textTags().size()==100 && !vm.invoke("CreateTextTag").bits,"Full text tag pool differs");vm.invoke("SetTextTagVisibility",std::array{vm.handle("texttag",0),vm.boolean(false)});require(!session.textTags().at(0)->visible,"Zero did not address live slot");vm.invoke("DestroyTextTag",std::array{vm.handle("texttag",0)});require(session.textTags().size()==99 && !vm.invoke("CreateTextTag").bits && session.textTags().size()==100,"Zero slot was not reused");vm.invoke("DestroyTextTag",std::array{tags[57]});vm.invoke("DestroyTextTag",std::array{tags[80]});require(vm.invoke("CreateTextTag").bits==tags[80].bits && vm.invoke("CreateTextTag").bits==tags[57].bits,"Freed text tag slot order differs");vm.invoke("DestroyTextTag",std::array{vm.handle("texttag",100)});require(session.textTags().size()==100,"Out-of-range text tag changed pool");});
     test("retained_destroyed_fixed_handle_types",[]{ScriptSession session(compile(R"jass(type timer extends handle
 type group extends handle
 type force extends handle

@@ -39,7 +39,7 @@ unsigned ScriptSession::playerId(jass::Value handle) {return std::get<PlayerRef>
 SessionPlayer& ScriptSession::player(jass::Value handle) {return config_.players[playerId(handle)];}
 SessionStart& ScriptSession::start(std::uint32_t index) {return config_.starts[checked(index,16,"Start location")];}
 void ScriptSession::destroy(jass::Value handle,NativeKind kind) {if(!handle.bits)return;auto& value=object(handle,kind);if(kind==NativeKind::Destructable){auto state=std::get<std::shared_ptr<DestructableState>>(value.state);removeDoodad(state->doodadIndex);animatedDestructables_.erase(handle.bits);}if(kind==NativeKind::Event)++staleEventHandles_;if(kind==NativeKind::Trigger){std::erase(customMessageTriggers_,handle.bits);std::erase_if(dzSyncTriggers_,[&](auto& entry){return entry.first==handle.bits;});}value.alive=false;value.state=std::monostate{};}
-size_t ScriptSession::liveObjects(NativeKind kind) const {return std::count_if(objects_.begin(),objects_.end(),[&](auto& value){return value.alive && value.kind==kind;});}
+size_t ScriptSession::liveObjects(NativeKind kind) const {if(kind==NativeKind::TextTag)return textTags_.size();return std::count_if(objects_.begin(),objects_.end(),[&](auto& value){return value.alive && value.kind==kind;});}
 size_t ScriptSession::handleTableSlots() const{return objects_.size();}
 size_t ScriptSession::handleTableCount() const{return std::count_if(objects_.begin(),objects_.end(),[](const auto& value){return value.alive;});}
 std::optional<std::string> ScriptSession::debugHandleType(std::uint32_t id){

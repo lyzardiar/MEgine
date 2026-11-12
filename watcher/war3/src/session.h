@@ -737,6 +737,7 @@ class ScriptSession {
     std::vector<ScriptText> textHistory_;
     size_t textHistoryBytes_=0;
     std::map<std::uint32_t,std::shared_ptr<ScriptTextTag>> textTags_;
+    std::vector<std::uint32_t> freeTextTags_=[](){std::vector<std::uint32_t> slots;for(unsigned i=0;i<100;++i)slots.push_back(i);return slots;}();
     std::vector<ScriptMinimapPing> minimapPings_;
     std::uint64_t nextMinimapPing_=0;
     std::optional<std::pair<std::uint32_t,std::uint32_t>> minimapPingColors_;
