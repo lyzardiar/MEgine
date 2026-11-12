@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## FDF 方向锚点批次失败修复
+
+路径：`src/map_frames.h`、`src/map_frames.cpp`、`src/glue.cpp`、`tests/browser_tests.cpp`。原版 `SimpleInfoPanel.fdf` 的 `SimpleInfoPanelIconHeroText` 同时以 LEFT／RIGHT 约束水平边界、TOP／BOTTOM 约束垂直边界，四个锚点的交叉轴中心不同；静态 FDF 两个相对方向同时存在时按对应轴求解，逻辑布局和绘制布局共用该规则。脚本运行时锚点继续原有双轴冲突校验，其他单点、对角及冲突输入保留原行为。该规则依据源资源结构推定，原版动态结果仍待对照。
+
+Win32 Release 客户端和 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> map_` 为 5 通过／0 失败，覆盖原失败项、逻辑／绘制矩形一致、单点与对角拉伸、运行时冲突及相关 FDF 渲染。原失败项已修复；本记录补充上一批验证，不单独计入新功能批次。实际地图脚本组合、前台画面及原版锚点语义仍待验证。
+
 ## 子组与界面焦点批次（有失败，待修复）
 
 范围：`ac730b7`、`6a789ee`、`21127ee`，集成版本 `21127ee`。Win32 Release 客户端及 browser 测试目标编译通过；隐藏对局子组 1 通过／0 失败、联盟窗口 5 通过／0 失败；`war3_browser_tests <data-root> <scratch>` 为 23 通过／1 失败，失败为 `map_standard_info_frame_layout: Conflicting map frame anchors`。完整输出 `tmp/docs-artifacts/war3/keyboard-input-probe/batch-21127ee.log`。

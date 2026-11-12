@@ -14,7 +14,7 @@ struct SimpleButtonStyle {std::string texture,highlight,textTemplate,text;};
 SimpleButtonStyle simpleButtonStyle(const FrameDefinition& frame,MapButtonVisual visual);
 bool mapButtonVisualChild(const FrameDefinition& frame,std::string_view name);
 std::array<float,4> mapTextureCoordinates(const FrameDefinition& frame);
-MapFrameRect solveMapFramePoints(float width,float height,std::span<const MapFramePoint> points);
+MapFrameRect solveMapFramePoints(float width,float height,std::span<const MapFramePoint> points,bool fdfCardinalAxes=false);
 MapFrameRect solveSimpleFrameAnchor(MapFrameRect parent,float width,float height,std::string_view point,float x,float y);
 MapFrameRect commandButtonRect(int row,int column);
 MapFrameRect intersectMapFrameRects(MapFrameRect a,MapFrameRect b);
