@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## Ctrl+Enter 盟友聊天目标（待批次验证）
+
+路径：`src/game_view.cpp`、`docs/chat-dialog.md`、`docs/agent-keyboard.md`。对局中 Ctrl+Enter 打开盟友频道并清除私聊目标，Shift+Enter 仍选所有人，普通 Enter 沿用当前频道；依据原版 `UI/HelpStrings.txt`。隐藏对局状态快照补充聊天输入和目标。
+
+必要检查：Win32 Release 客户端编译通过；`node tmp/docs-artifacts/war3/keyboard-input-probe/chat-channel.cjs 1 1` 修复前观察到频道 2（观察者）而失败，修复后通过；参数 `4 0`、`0 1` 分别检查 Shift 和普通 Enter，三次各 1 通过／0 失败。测试注入单帧视图键盘，不经过 Windows 消息；切换既有私聊目标、多人接收、真实窗口和原版动态行为待批次验证。本批 1/3。
+
 ## 键盘及中键镜头批次（部分验证）
 
 范围：`30ff9b7`、`567b492`、`019f3d4`，集成版本 `019f3d4`。Win32 Release 客户端编译通过；隐藏隔离对局依次执行 `page-zoom.cjs`、`rotation.cjs`、`middle.cjs`、`run.cjs`，分别报告 5／0、4／0、3／0、8／0，共 20 通过／0 失败；镜头脚本状态恢复以 `WAR3_CLOCK_FILTER=camera war3_clock_tests <data-root> <output-root>` 报告 1 通过／0 失败。日志 `tmp/docs-artifacts/war3/keyboard-input-probe/batch-019f3d4.log` 和 `camera-clock.log`。
