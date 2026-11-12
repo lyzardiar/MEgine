@@ -8,7 +8,7 @@
 #include <span>
 
 namespace war3 {
-struct MapFramePoint {std::uint32_t point=0;float x=0,y=0;};
+struct MapFramePoint {std::uint32_t point=0;float x=0,y=0;bool fromFdf=false;};
 struct MapFrameRect {float x=0,y=0,w=0,h=0;};
 struct SimpleButtonStyle {std::string texture,highlight,textTemplate,text;};
 SimpleButtonStyle simpleButtonStyle(const FrameDefinition& frame,MapButtonVisual visual);

@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## FDF 与脚本锚点混用补充修复
+
+路径：`src/map_frames.h`、`src/map_frames.cpp`、`src/glue.cpp`、`tests/browser_tests.cpp`。保留每个约束的来源：脚本覆盖一个方向时，其余静态 FDF 的相对方向仍按对应轴约束；脚本锚点仍参与双轴冲突检查。逻辑布局和绘制布局使用相同规则。
+
+必要检查：Win32 Release 客户端及 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> map_fdf_runtime_cardinal_anchor` 使用原版英雄信息面板模板，修复前静态与脚本混合锚点报冲突，修复后 1 通过／0 失败，验证逻辑／绘制矩形一致和冲突脚本锚点拒绝。原版动态语义、更多混合布局及实际地图待验证；这是上一项 FDF 修复的补充，不单独计入功能批次。
+
 ## 资料片人族第四章失败重开回归（验证补充，不单独计数）
 
 路径：`tests/campaign_ai_tests.cpp`、`docs/campaign-flow.md`。原图、静音及隔离会话不操作单位，推进至失败对话，检查本地失败结果和四个选项，再点击首个重开按钮并确认重开请求。
