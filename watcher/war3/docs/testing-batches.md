@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 标准信息面板尺寸与透明度批次（部分验证）
+
+范围：`84eaefc`、`0dc6ea5`、`40775da`，集成版本 `40775da`。Win32 Release 客户端及 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> map_` 共 9 通过／0 失败，覆盖图标尺寸、图标和英雄属性文字透明度、FDF 渲染、静态／混合锚点及原标准面板布局。日志 `tmp/docs-artifacts/war3/info-panel-batch-40775da.log`。
+
+检查覆盖帧状态、颜色计算和布局，不等于实际 HUD 像素或原版行为验收；实际地图脚本、前台混合效果、透明度继承、原版锚点与尺寸、攻击／护甲文字及标准文字尺寸仍待验证或实现。下一功能批次从 0/3 开始。
+
 ## 英雄属性文字透明度（待批次验证）
 
 路径：`src/map_frames.cpp`、`src/game_commands.cpp`、`tests/browser_tests.cpp`、`docs/unit-combat-panel.md`。英雄力量／敏捷／智力标签与数值支持各自帧透明度，HUD 绘制将其应用于文字及数值加减符号，保留原有颜色和提示区域。攻击／护甲文字透明度仍未实现。
