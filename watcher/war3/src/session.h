@@ -338,6 +338,8 @@ class ScriptSession {
     size_t preloadBytes_=0;
     unsigned preloadDepth_=0;
     std::map<jass::Runtime*,std::weak_ptr<jass::Runtime>> preloadRuntimes_;
+    std::vector<std::shared_ptr<jass::Runtime>> preloadRunning_;
+    std::shared_ptr<jass::Runtime> preloadCodeOwner(const jass::Value& code) const;
     std::uint64_t preloadGenerationStarted_=0,preloadGenerationElapsed_=0;
     std::vector<std::string> preloadMissing_;
     std::optional<FrameDefinitions> localized_;

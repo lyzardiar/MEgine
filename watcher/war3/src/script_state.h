@@ -24,6 +24,7 @@ struct ScriptTimer {
     double due=0,started=0;
     std::uint64_t revision=0;
     jass::Value callback;
+    std::shared_ptr<jass::Runtime> callbackRuntime;
 };
 struct ScriptTrigger {
     bool enabled=true,waitOnSleeps=true;

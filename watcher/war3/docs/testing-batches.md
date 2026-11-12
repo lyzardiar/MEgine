@@ -1,5 +1,14 @@
 # 独立客户端测试队列
 
+## 预加载计时器及休眠回调（待批次验证）
+
+路径：`src/script_state.h`、`src/session.h`、`src/session_callbacks.cpp`、`src/session_game.cpp`、`src/session_tick.cpp`、`tests/map_tests.cpp`。预加载脚本可创建、控制计时器并使用共享线程调度执行回调；计时器及尚在执行／休眠的线程分别保留回调运行时，完成后释放。
+
+必要检查：Win32 Release `war3_map_tests` 编译通过；`war3_map_tests <root> tmp/docs-artifacts/war3/map-preloader-timer preloader_timer_lifetime` 为 1 通过／0 失败，覆盖单次／周期计时、替换回调、暂停／恢复、回调销毁自身后休眠、并行主脚本线程、恢复事件上下文、活动外部回调快照拒绝及结束后恢复包编码。修复前 `CreateTimer` 未绑定，未加载 Game.dll。`preloader_destructable_enumeration`、`preloader_nested_damage`、`preloader_unit_orders` 各 1／0。
+
+本批 1/3；合并验证多计时器、取消／重启、嵌套预加载、睡眠线程／检查点及原有回调。存活外部回调及休眠线程的完整存档、触发器长期回调、原版时序和实际地图仍待实现或对照。
+
+
 ## 采集路线与预加载过滤器批次（已验证所列范围）
 
 范围：`f054e26`、`1618c36`、`afe009f`，集成版本 `afe009f`。Win32 Release 客户端、CampaignAI、harvest、map 和 JASS thread 目标编译通过，复用未变化的地图夹具。
