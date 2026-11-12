@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 音频与镜头快捷键合成输入补充（不单独计数）
+
+路径：`src/agent_capture.h`、`src/main.cpp`、`src/game_view.cpp`、`docs/agent-keyboard.md`。隐藏本地对局的显式 agent 目录可提交键盘请求，快照提供镜头、子组、提示及音频状态，用于驱动实际视图消费者；前台、联机、回放及覆盖面板拒绝该入口。
+
+Win32 Release 客户端编译通过；隔离地图和用户目录中，合成 Ctrl+C、空格、Alt+C、Ctrl+M／S 及重复／Shift 保护共 8 项通过／0 失败，镜头分别到达单位 (-400,-300) 和提示 (600,500)，音频开关独立变化并恢复。命令与结果在 `tmp/docs-artifacts/war3/keyboard-input-probe/`；测试初始夹具声明顺序错误及驱动复用旧日志的竞态已修正，独立日志重跑通过。
+
+这是对上一批的补充，当前功能批次仍为 0/3。该输入绕过 Windows 消息；实际键盘、Tab 多子组、音频设备、联机与原版动态对照仍留在队列。
+
 ## 音频与镜头快捷键批次（部分验证）
 
 范围：`69bf994`、`448356d`、`841be2e`，集成版本 `841be2e`。Win32 Release 客户端、sound、game-flow 和 clock 目标编译通过；新增 `tests/sound_tests.cpp` 音频设置往返用例作为本批补充。
