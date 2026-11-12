@@ -22,6 +22,14 @@ template<class F> void rejects(F run,std::string_view message) {try{run();}catch
 int wmain(int argc,wchar_t** argv) {
     if(argc!=2){std::cerr<<"Usage: war3_session_tests <enum-fixture.json>\n";return 2;}
     unsigned passed=0,failed=0;auto test=[&](const char* name,const std::function<void()>& run){try{run();++passed;std::cout<<"PASS "<<name<<'\n';}catch(const std::exception& e){++failed;std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';}};
+    test("match_natives_ignore_invalid_players",[]{auto module=compile(R"jass(type player extends handle
+type playergameresult extends handle
+type timer extends handle
+native Player takes integer n returns player
+native CreateTimer takes nothing returns timer
+native RemovePlayer takes player p, playergameresult r returns nothing
+native CachePlayerHeroData takes player p returns nothing
+)jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();auto timer=vm.invoke("CreateTimer");for(auto id:{0u,timer.bits,0x7fffffffu}){auto invalid=vm.handle("player",id);vm.invoke("CachePlayerHeroData",std::array{invalid});vm.invoke("RemovePlayer",std::array{invalid,vm.handle("playergameresult",0)});}for(auto result:session.results())require(!result,"Invalid player changed a result");auto player=vm.invoke("Player",std::array{vm.integer(0)});vm.invoke("CachePlayerHeroData",std::array{player});vm.invoke("RemovePlayer",std::array{player,vm.handle("playergameresult",0)});vm.invoke("RemovePlayer",std::array{player,vm.handle("playergameresult",1)});require(session.results()[0]==0u && session.config().players[0].slotState==2,"Valid player result changed");});
     test("text_tag_slots_and_zero_alias",[]{auto module=compile(R"jass(type texttag extends handle
 native CreateTextTag takes nothing returns texttag
 native DestroyTextTag takes texttag value returns nothing

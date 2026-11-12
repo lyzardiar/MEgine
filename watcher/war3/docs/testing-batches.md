@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 无效玩家的胜负接口（待批次验证）
+
+路径：`src/session_match.cpp`、`tests/session_tests.cpp`、`docs/game-flow.md`。`RemovePlayer` 和 `CachePlayerHeroData` 对空、类型不符或不存在的玩家句柄直接返回；有效玩家仍沿用既有结果、事件及英雄缓存路径。
+
+依据固定版 1.27 Game.dll SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`：`0x6f1f2db0` 和 `0x6f1da970` 分别解析玩家并在失败时返回。Win32 Release 客户端与 session 目标编译通过；`war3_session_tests <enum-fixture>` 为 30 通过／0 失败，覆盖空句柄、计时器错型、未知 ID 和有效胜利结果；修复前 `CachePlayerHeroData` 报未知句柄。该测试为隔离会话，不代表实际战役或原版动态时序验收。
+
+本批 2/3；合批验证胜负事件及重入、缓存英雄、飘字与相关恢复和实际地图。游戏胜利事件生产时机、窗口及完整对局仍待实现或验证。
+
 ## 原版飘字槽位与恢复（待批次验证）
 
 路径：`src/session.h`、`src/session.cpp`、`src/session_text_tag.cpp`、`tests/session_tests.cpp`、`tests/clock_tests.cpp`、`docs/text-tags.md`。按原版 100 槽空闲栈分配和回收，满额返回 0，零号槽可被相同数值访问；STTX v7 保存空闲顺序，v1–v6 普通句柄转换为槽位，超过 99 个活动旧句柄的旧档明确拒绝。
