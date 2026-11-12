@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 键盘及中键镜头批次（部分验证）
+
+范围：`30ff9b7`、`567b492`、`019f3d4`，集成版本 `019f3d4`。Win32 Release 客户端编译通过；隐藏隔离对局依次执行 `page-zoom.cjs`、`rotation.cjs`、`middle.cjs`、`run.cjs`，分别报告 5／0、4／0、3／0、8／0，共 20 通过／0 失败；镜头脚本状态恢复以 `WAR3_CLOCK_FILTER=camera war3_clock_tests <data-root> <output-root>` 报告 1 通过／0 失败。日志 `tmp/docs-artifacts/war3/keyboard-input-probe/batch-019f3d4.log` 和 `camera-clock.log`。
+
+输入驱动绕过 Windows 消息，未验证真实窗口按住及鼠标捕获、原版方向／速率、边缘拖动、脚本控制期间的实际画面、联机和回放。上述事项保留待验证，下一功能批次从 0/3 开始。
+
 ## 中键拖动镜头（待批次验证）
 
 路径：`src/main.cpp`、`src/game_view.h`、`src/game_view.cpp`、`src/agent_capture.h`、`docs/game-help.md`、`docs/agent-keyboard.md`。世界画面中键拖动以地形拾取差值平移并遵循镜头边界、脚本跟随和覆盖界面；失焦或捕获丢失结束拖动。
