@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 攻击与护甲文字布局和可见性（待批次验证）
+
+路径：`src/map_frames.cpp`、`src/game_commands.cpp`、`tests/browser_tests.cpp`、`tests/native_tests.cpp`、`docs/unit-combat-panel.md`。两种攻击和护甲的标签、数值及升级等级支持可见性和根节点锚点；HUD 绘制沿用相应帧状态。
+
+必要检查：Win32 Release 客户端和测试目标编译通过；`war3_browser_tests <data-root> <scratch> map_standard_combat_text_layout` 修复前因不支持可见性失败，修复后 1 通过／0 失败，覆盖默认、隐藏、清除锚点及根节点定位。同步更新标准面板 native 测试的过时限制。实际绘制、原版锚点语义、文字尺寸和地图脚本待验证。本批 3/3，先集中验证。
+
 ## 攻击与护甲文字透明度（待批次验证）
 
 路径：`src/map_frames.cpp`、`src/game_commands.cpp`、`tests/browser_tests.cpp`、`docs/unit-combat-panel.md`。两种攻击和护甲的标签、数值及升级等级支持独立透明度，数值范围和加成符号复用对应数值帧的透明度。
