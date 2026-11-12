@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 目标选择时小地图右键移动视角（待批次验证）
+
+路径：`src/game_view.cpp`、`docs/game-help.md`、`docs/agent-keyboard.md`。命令、技能、物品、建筑或中立显形等待目标时，在小地图右键移动镜头并保留目标；世界画面右键仍取消，普通小地图右键仍走单位命令。依据原版 `UI/HelpStrings.txt` 对目标模式下小地图右键的说明，目标是否持续保留仍待原版对照。
+
+必要检查：Win32 Release 客户端编译通过；`node tmp/docs-artifacts/war3/keyboard-input-probe/target-minimap.cjs` 使用隐藏隔离对局，修复前观察到目标被取消且镜头未动；修复后 3 通过／0 失败，检查移动目标下平移且不下命令、世界右键取消、普通右键进入命令路径。普通右键的目标在该夹具中被拒绝（accepted=0），未验证实际单位移动；技能／物品／建筑、真实窗口、脚本绑定、联机和原版目标保留语义待验证。本批 3/3，先集中验证。
+
 ## Print Screen 保存截图（待批次验证）
 
 路径：`src/main.cpp`、`docs/game-help.md`、`docs/agent-keyboard.md`。Print Screen 捕获当前渲染帧，原子预留不同文件名并保存至用户目录 `Screenshots`，提示结果；失败清理本次空文件、记录错误并继续运行。原版帮助列出该快捷键。
