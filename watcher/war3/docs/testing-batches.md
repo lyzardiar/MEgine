@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 攻击与护甲文字透明度（待批次验证）
+
+路径：`src/map_frames.cpp`、`src/game_commands.cpp`、`tests/browser_tests.cpp`、`docs/unit-combat-panel.md`。两种攻击和护甲的标签、数值及升级等级支持独立透明度，数值范围和加成符号复用对应数值帧的透明度。
+
+必要检查：Win32 Release 客户端及 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch> map_standard_combat_text_alpha` 修复前因不支持透明度失败，修复后 1 通过／0 失败，覆盖三个上下文的标签、数值、等级的默认及 0／128／255 透明度。测试检查帧状态和颜色计算；实际 HUD 像素、原版透明度继承和地图脚本待验证。本批 2/3。
+
 ## 单技能寄生物品（待批次验证）
 
 路径：`src/session_item_use.cpp`、`src/session_spells.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/caster-spells.md`。单主动寄生物品进入单位目标选择，复用目标校验、寄生状态、死亡召唤和物品施法流程。
