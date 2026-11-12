@@ -160,6 +160,8 @@ Win32 Release 客户端及 CampaignAI 测试目标编译通过；BootyBay 原图
 
 固定版 `GetCreepCamp` 内部在遍历营地时，对超过上限或不允许空中单位的营地，将距离返回值加 200 后收紧候选上界；已选的区间内和较弱候选若超出该上界会被清除，最后优先返回区间内候选。距离由 `0x6f03c310` 委派 `0x6f03c3b0`，后者转换坐标并调用 `0x6f10ef30`，并非已证实的简单直线距离；搜索上限、距离单位及不可达结果仍需受控探针确认。原版指令见 `tmp/docs-artifacts/war3/orc-undead-long/original-creep-camp-rizin.txt`，距离调用链的字节反汇编见 `tmp/docs-artifacts/war3/creep-distance-analysis/distance-call.txt`。当前客户端仍按现有等级和可达性选择，尚未应用此上界；不能据此宣称该规则或完整 AI 已还原。
 
+固定版原始筛选指令另由 `python watcher/war3/tools/verify_creep_camp_selection_cpu.py` 在合成营地和注入距离值下执行：13 项通过，覆盖等级优先／回退、较强或禁止空中营地的 200 边界、输入顺序、同距离、空列表及 999999 值。探针替换距离、营地查询及其他外部调用，不执行原版寻路、完整地图或 AI，不能据此判定距离单位、障碍物行为或客户端策略已还原。结果为 `tmp/docs-artifacts/war3/creep-distance-analysis/selection.json`。
+
 ## 较弱野怪营地回退
 
 `GetCreepCamp` 优先选择等级落在指定区间的可达营地；没有可达的区间内营地时，继续选择不超过上限的较弱可达营地。超过上限和不允许的空中营地仍被排除；已有单位移动类型、路径和战斗射程筛选继续生效。

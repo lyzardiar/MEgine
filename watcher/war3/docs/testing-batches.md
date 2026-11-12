@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 原版野怪营地筛选隔离探针（调查补充）
+
+路径：`tools/verify_creep_camp_selection_cpu.py`、`docs/ai.md`。固定 1.27 Game.dll 哈希，使用合成营地和注入距离值执行原始筛选指令；`python watcher/war3/tools/verify_creep_camp_selection_cpu.py` 为 13 通过／0 失败，覆盖等级优先与回退、强营地和空中限制的 200 边界、顺序、平局和 999999 值。结果 `tmp/docs-artifacts/war3/creep-distance-analysis/selection.json`。外部查询与距离均为替身，不覆盖原版寻路或游戏对局；距离单位与受阻返回值待调查，当前客户端策略尚未按该规则调整。调查补充不计功能批次，当前 0/3。
+
 ## 寄生物品与战斗信息文字批次（部分验证）
 
 范围：`791e828`、`1db0461`、`5e17fbf` 及本次 native 测试修正。Win32 Release 客户端、browser、native 和 control 测试目标编译通过；集成版本的 browser `map_` 为 11 通过／0 失败，寄生物品及相关单技能、组合物品、目标重入和控制流程共 10 个测试进程各 1 通过／0 失败。首次 native 为 25 通过／1 失败：测试在检查尺寸前未恢复图标可见性；修正测试后 native 重跑 26 通过／0 失败。日志位于 `tmp/docs-artifacts/war3/combat-text-layout/batch-5e17fbf.log` 和 `native-retest.log`。
