@@ -1,5 +1,7 @@
 # 战役入口与关卡切换
 
+当前集成版本 `f57f5f2` 使用 `--main-check --mute --simulate-ms 600000` 分别启动原版 `NightElfX03.w3x` 至 `NightElfX07.w3x`，五次 main 和模拟调用均返回成功，未加载 `Game.dll`；第六关结束状态存在一个对话框，其余四关未报告对话或退出请求。日志位于 `tmp/docs-artifacts/war3/nightelfx03-next/probe2.log` 和 `tmp/docs-artifacts/war3/campaign-next-probes/`。这些探针没有玩家操作或完整跨关状态，模拟调用期间可能出现暂停，不代表持续推进 600 秒、关卡胜负、自然对局、声音和窗口通过。
+
 当前集成版本 `f91c241` 对原版 `HumanX03Secret.w3x` 执行 `--main-check --mute --simulate-ms 600000`，main 完成；无玩家操作的模拟在 466.75 秒进入本地失败对话而停止，日志 `tmp/docs-artifacts/war3/human-secret-current.log`。这是无操作的失败路径，不代表自然对局或隐藏关通关。
 
 当前集成版本 `42199ba` 对原版资料片 `NightElfX08.w3x` 执行 `war3.exe --data-root <data-root> --map Maps/FrozenThrone/Campaign/NightElfX08.w3x --main-check --mute --simulate-ms 600000 --log <log>`，main 完成并静音推进 600 秒，`game_dll_loaded=false`；日志为 `tmp/docs-artifacts/war3/nightelf08-current.log`。本次没有玩家操作，也未携带前章状态，不能证明自然战斗、胜负、跨关或实际窗口通过。
