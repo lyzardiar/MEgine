@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单商店库存接口的无效单位句柄（待批次验证）
+
+路径：`src/session_commerce.cpp`、`tests/construction_tests.cpp`、`docs/commerce.md`。六个单商店添加／移除库存及设置槽位接口在处理其他参数前检查单位句柄，失效时直接返回。固定版 1.27 的对应入口依次为 `0x6f1da610`、`0x6f1d9fd0`、`0x6f1f2fc0`、`0x6f1f2d40`、`0x6f1f7b00`、`0x6f1f5d30`，单位解析失败直接返回。
+
+必要检查：Win32 Release 客户端和 construction 目标编译通过；`war3_construction_tests <data-root> <construction-fixture> shop-invalid-handles` 修复前因 Unknown session native handle 失败，修复后 1 通过／0 失败。覆盖空、已移除、错误类型及未知单位，失效单位配负数参数时不报错；有效商店完整库存及槽位不受无效调用影响，当前实现的正常增删仍可用。日志位于 `tmp/docs-artifacts/war3/shop-invalid/`。原版有效非商店单位、有效单位异常参数和动态句柄回收仍待对照；实际商店界面和地图待批次验证。本批 2/3。
+
 ## 救援接口的无效句柄（待批次验证）
 
 路径：`src/session_ownership.cpp`、`tests/passive_tests.cpp`、`docs/rescue.md`。SetUnitRescuable 对无效单位或玩家直接返回，SetUnitRescueRange 在无效单位时先返回；有效参数沿用既有处理。固定版 1.27 的入口 `0x6f1f79f0` 和 `0x6f1f7a20` 均先解析单位，前者再解析玩家，解析失败直接返回。

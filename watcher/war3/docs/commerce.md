@@ -55,3 +55,5 @@ Win32 Release 客户端、`war3_passive_tests` 和 `war3_revival_tests` 编译�
 商店交易在拾取后保留被自动消费的物品句柄，直至出售事件完成；消费后的物品不能再次拾取或使用，脚本仍可显式移除。原版 `OrcX01` 任务酒桶的出售触发器能够读取类型并移除库存。专项使用原图，手动创建买家、补足金币、添加库存并解除商店暂停；原版引擎的拾取／出售时序及回调重入仍待对照。
 
 隔离夹具 `war3_passive_tests <data-root> <fixture> shop-consumed` 覆盖购买灵魂链接符文及普通物品、出售回调重复拾取和显式删除物品／买家／商店、拾取回调删除物品／买家／商店；验证符文作用、出售上下文和清理。该测试未对照原版回调时序。夹具由 `python tests/generate-passive-fixture.py --data-root <data-root> --output ../../tmp/docs-artifacts/war3/shop-consumed/fixture.w3m` 生成。
+
+单商店的 AddUnitToStock、AddItemToStock、RemoveUnitFromStock、RemoveItemFromStock、SetUnitTypeSlots、SetItemTypeSlots 在单位句柄无效时直接返回，再处理库存或槽位参数。固定版 1.27 入口依次为 `0x6f1da610`、`0x6f1d9fd0`、`0x6f1f2fc0`、`0x6f1f2d40`、`0x6f1f7b00`、`0x6f1f5d30`，均在单位解析失败时返回。有效单位无商店能力、异常库存参数及动态句柄回收的原版语义仍待对照。
