@@ -1,22 +1,28 @@
 # 独立客户端测试队列
 
-## 魔法闪耀范围伤害与魔法池（本批 3/3，提交后集中验证）
+## 锁链、溅射未命中与魔法闪耀批次（已批次验证，仍有待验项）
+
+范围：`9597476`、`36bfd46`、`14876c5`，集成版本 `14876c5`。Win32 Release 客户端、control、passive、clock 目标构建通过；`mana-flare-mana-pool`、`item-combined-spirit-rune`、`item-combined-spirit-target`、`splash-miss`、`unit_buffs_restore_spirit_link_and_shield` 各 1 通过／0 失败，`line-weapon` 4 通过／0 失败，共 6 个进程、9 项通过。构建和测试日志位于 `tmp/docs-artifacts/war3/build-tools/batch-spirit-splash-flare-*.log`；复合技能夹具 `tmp/docs-artifacts/war3/mana-flare-pool/fixture.w3m`。
+
+原版伤害事件及重入、溅射目标闪避／地面攻击、魔法闪耀 0.75 秒反击频率和排队、完整对局及界面仍待对照。下一功能批次从 0/3 开始。
+
+## 魔法闪耀范围伤害与魔法池（已批次验证，仍有待验项）
 
 路径：`src/session_faerie_dragon.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`。地图将 `Amfl` 配置为范围命中时，范围目标必须有最大魔法值；当前魔法为零但有魔法池的单位仍可受伤，单目标模式保持既有处理。命中前再次检查魔法池，避免前序伤害回调改变后继续命中。暴雪 [Faerie Dragon 说明](https://classic.battle.net/war3/nightelf/units/faeriedragon.shtml) 指出范围伤害不伤没有魔法池的单位。
 
-必要检查：Win32 Release `war3_control_tests` 构建通过；`generate-combined-item-fixture.py --data-root <data-root> --output <fixture>` 后运行 `war3_control_tests <data-root> <fixture> mana-flare-mana-pool`，修复前无魔法池目标受到 75 点伤害，修复后退出 0、1 通过／0 失败；同时检查空魔法但有魔法池的敌人受伤和友军不受伤。日志 `tmp/docs-artifacts/war3/build-tools/mana-flare-pool-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/mana-flare-pool/fixture.w3m`。默认 `DataF1=1` 为当前实现的单目标配置；范围覆盖、目标回调、原版实际效果与 0.75 秒反击频率／排队时序仍待对照。提交后集中验证本批。
+必要检查：Win32 Release `war3_control_tests` 构建通过；`generate-combined-item-fixture.py --data-root <data-root> --output <fixture>` 后运行 `war3_control_tests <data-root> <fixture> mana-flare-mana-pool`，修复前无魔法池目标受到 75 点伤害，修复后退出 0、1 通过／0 失败；同时检查空魔法但有魔法池的敌人受伤和友军不受伤。日志 `tmp/docs-artifacts/war3/build-tools/mana-flare-pool-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/mana-flare-pool/fixture.w3m`。默认 `DataF1=1` 为当前实现的单目标配置；范围覆盖、目标回调、原版实际效果与 0.75 秒反击频率／排队时序仍待对照。本批集中验证结果见批次摘要。
 
-## 范围弹道强制未命中伤害（本批 2/3，待集中验证）
+## 范围弹道强制未命中伤害（已批次验证，仍有待验项）
 
 路径：`src/session_projectiles.cpp`、`tests/passive_tests.cpp`。对 `artillery`／`msplash` 目标攻击，发射时记录的强制未命中在命中范围单位、可破坏物和物品时将既有距离伤害系数减半；`neverMiss` 仍优先。暴雪 [Combat 说明](https://classic.battle.net/war3/basics/combat.shtml) 记载溅射单位因诅咒等未命中时造成一半伤害。
 
-必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> splash-miss` 修复前失败，修复后退出 0、1 通过／0 失败。实际迫击炮弹道分别在正常和 100% 诅咒下发射，按各次弹道真实伤害归一后检查中心及外围目标均减半。日志 `tmp/docs-artifacts/war3/build-tools/splash-miss-{before,after}.log`。目标闪避、攻击地面、范围特效、其他未命中来源及原版动态判定时机尚待对照，本次不推断其规则；集中验证按批次进行。
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> splash-miss` 修复前失败，修复后退出 0、1 通过／0 失败。实际迫击炮弹道分别在正常和 100% 诅咒下发射，按各次弹道真实伤害归一后检查中心及外围目标均减半。日志 `tmp/docs-artifacts/war3/build-tools/splash-miss-{before,after}.log`。目标闪避、攻击地面、范围特效、其他未命中来源及原版动态判定时机尚待对照，本次不推断其规则；本批集中验证结果见批次摘要。
 
-## 灵魂锁链致命分摊保护（本批 1/3，待集中验证）
+## 灵魂锁链致命分摊保护（已批次验证，仍有待验项）
 
 路径：`src/session.h`、`src/session_damage.cpp`、`src/session_unit_casters.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`。分摊伤害在伤害回调后按最终值判定：致命时保留 1 点生命，并只解除仍为原轮次的锁链；非致命伤害及其他关联单位保持既有处理。暴雪 [Spirit Walker 说明](https://classic.battle.net/war3/orc/units/spiritwalker.shtml) 指出致命分摊会保留 1 点生命并解除锁链。
 
-必要检查：因伤害函数签名变化，Win32 Release `war3_control_tests` 干净构建通过；`generate-combined-item-fixture.py --data-root <data-root> --output <fixture>` 后运行 `war3_control_tests <data-root> <fixture> item-combined-spirit-rune`，修复前致命分摊断言失败，修复后退出 0、1 通过／0 失败。覆盖真实锁链分摊、刚好降至 1 点的非致命伤害、伤害回调将伤害改为非致命、致命保护和移除锁链；日志 `tmp/docs-artifacts/war3/build-tools/spirit-nonlethal-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/spirit-nonlethal/combined-fixture.w3m`。原版伤害事件数值及回调时序、链接替换／死亡重入和实机对局仍待对照；集中验证按批次进行。
+必要检查：因伤害函数签名变化，Win32 Release `war3_control_tests` 干净构建通过；`generate-combined-item-fixture.py --data-root <data-root> --output <fixture>` 后运行 `war3_control_tests <data-root> <fixture> item-combined-spirit-rune`，修复前致命分摊断言失败，修复后退出 0、1 通过／0 失败。覆盖真实锁链分摊、刚好降至 1 点的非致命伤害、伤害回调将伤害改为非致命、致命保护和移除锁链；日志 `tmp/docs-artifacts/war3/build-tools/spirit-nonlethal-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/spirit-nonlethal/combined-fixture.w3m`。原版伤害事件数值及回调时序、链接替换／死亡重入和实机对局仍待对照；本批集中验证结果见批次摘要。
 
 ## 驱散与整数状态事件批次（已批次验证，仍有待验项）
 
