@@ -2,9 +2,9 @@
 
 ## 救援、商店与迷雾句柄批次（部分验证）
 
-范围：`7a86475`、`27a6cd5`、`c158667`，集成版本 `c158667`。Win32 Release 客户端、passive、construction 和 clock 目标编译通过。`rescue-invalid-handles`、`shop-invalid-handles`、`location-visibility-invalid` 各 1 通过／0 失败；`shop-payment-state` 退出 0、输出 1 条 PASS；`recovery_bundle_restores_rescue_membership`、`shop_stock_snapshot_restores_inventory_and_global_rules` 和 `fog_snapshot_restores_exploration_and_modifier_handles` 各 1 通过／0 失败。共 7 个进程成功、7 条 PASS；日志位于 `tmp/docs-artifacts/war3/batch-rescue-shop-fog/`。
+范围：`7a86475`、`27a6cd5`、`c158667`，集成版本 `c158667`。Win32 Release 客户端、passive、construction、commerce 和 clock 目标编译通过。`rescue-invalid-handles`、`shop-invalid-handles`、`location-visibility-invalid` 各 1 通过／0 失败；`shop-payment-state` 退出 0、输出 1 条 PASS；`recovery_bundle_restores_rescue_membership`、`shop_stock_snapshot_restores_inventory_and_global_rules` 和 `fog_snapshot_restores_exploration_and_modifier_handles` 各 1 通过／0 失败。另补测 passive 的 `sight` 为 1 通过／0 失败，commerce 默认入口退出 0、输出 1 条 PASS，覆盖视野装备及商店购买、库存和事件等消费者。共 9 个进程成功、9 条 PASS；日志位于 `tmp/docs-artifacts/war3/batch-rescue-shop-fog/`。
 
-执行命令：`war3_passive_tests <data-root> <passive-fixture> rescue-invalid-handles`；`war3_construction_tests <data-root> <construction-fixture> shop-invalid-handles|location-visibility-invalid|shop-payment-state`（分别运行）；`WAR3_CLOCK_FILTER=<上述恢复用例> war3_clock_tests <data-root> <scratch>`（分别运行）。覆盖的是隔离会话和状态快照；原版动态句柄回收、有效单位异常参数、非商店单位、实际商店 UI、地图和产品读档仍待对照或验证。下一功能批次从 0/3 开始。
+执行命令：`war3_passive_tests <data-root> <passive-fixture> rescue-invalid-handles`；`war3_construction_tests <data-root> <construction-fixture> shop-invalid-handles|location-visibility-invalid|shop-payment-state`（分别运行）；`WAR3_CLOCK_FILTER=<上述恢复用例> war3_clock_tests <data-root> <scratch>`（分别运行）；`war3_passive_tests <data-root> <passive-fixture> sight` 和 `war3_commerce_tests <data-root> <commerce-fixture>`。覆盖的是隔离会话和状态快照；原版动态句柄回收、有效单位异常参数、非商店单位、实际商店 UI、地图和产品读档仍待对照或验证。下一功能批次从 0/3 开始。
 
 ## 地点与坐标视野查询的无效句柄（已批次验证，仍有待验项）
 
