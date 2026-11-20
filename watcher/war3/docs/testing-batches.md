@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 疾病云非致死（本批 1/3，待批次验证）
+
+路径：`src/session_spell_effects.cpp`、`tests/passive_tests.cpp`。疾病云周期伤害使用已有非致死保护，不影响普通伤害；暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明疾病云不能杀死单位且不能驱散。
+
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> plague-nonlethal` 修复前失败，修复后退出 0、1 通过／0 失败。真实疾病光环感染后停用来源，普通驱散移除对照魔法状态而保留疾病，连续周期伤害保留低生命单位，普通伤害仍能击杀；日志 `tmp/docs-artifacts/war3/build-tools/plague-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。固定版最低生命值、伤害事件与灵魂锁链分摊时序和实际对局仍待对照；与后续任务集中验证。
+
 ## 荆棘与尖刺升级反伤分离（上一任务补充，待批次验证）
 
 路径：`src/session.h`、`src/session_projectiles.cpp`、`src/session_attack_passives.cpp`、`tests/passive_tests.cpp`。`1687bb2` 的魔免检查意外连同兽族建筑尖刺升级反伤一起屏蔽；本补充在命中前分别快照光环和尖刺升级反伤，魔免仅屏蔽光环部分，恢复尖刺升级此前行为。固定版尖刺升级对魔免的真实规则仍需对照，此处不将历史行为当作原版结论。
