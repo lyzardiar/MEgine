@@ -1,22 +1,28 @@
 # 独立客户端测试队列
 
-## 玩家状态事件注册范围（本批 3/3，提交后集中验证）
+## 状态事件与肖像批次（已批次验证，仍有待验项）
+
+范围：`e513ebd`、`7f21310`、`0c41429`，集成版本 `0c41429`。Win32 Release 客户端、clock、control、game-flow 目标构建通过。`actor_events_rebuild_filters_state_and_dispatch_order`、`player-region-registration-handles`、`unit-state-registration` 各退出 0、1 通过／0 失败，共 3 个测试进程、3 条 PASS；日志在 `tmp/docs-artifacts/war3/build-tools/batch-state-portrait-{build,clock,control,unit}.log`。隔离隐藏客户端使用虚拟指针点击毁灭者反向变形，确认变形前后肖像切换，类型 `ubsp`→`uobs`，金币 1000→1100、木材 1000→1050；日志 `tmp/docs-artifacts/war3/build-tools/batch-state-portrait-client.log`，帧在 `tmp/docs-artifacts/war3/batch-form-state/tooltip-agent-fyK3fw/`。
+
+尚未验证原版动态状态事件及载档、肖像序列回退优先级、其他动画属性或实际完整对局。序列名匹配允许附加词，只有 `Portrait Talk` 的模型可能被普通 `Portrait` 命中；四个候选均缺失时共享模型可能保留先前序列，均需原版对照。下一功能批次从 0/3 开始。
+
+## 玩家状态事件注册范围（已批次验证，仍有待验项）
 
 路径：`src/session_callbacks.cpp`、`tests/control_tests.cpp`。`TriggerRegisterPlayerStateEvent` 对超过 25 的状态编号返回空句柄，不创建事件；保留历史 SAEV 快照的既有读取行为。固定版入口 `0x6f1f9b98` 对状态编号无符号比较 `0x19`，越界返回空事件。
 
-必要检查：Win32 Release `war3_control_tests` 构建通过；`war3_control_tests <data-root> <control-fixture> player-region-registration-handles` 退出 0、1 通过／0 失败，覆盖状态 25 可注册、26 和 -1 返回空及不增加事件对象；原有玩家／区域句柄验证继续通过。日志位于 `tmp/docs-artifacts/war3/build-tools/player-state-boundary-{build,test}.log`。原版运行时、其他状态事件行为与历史异常快照仍待对照；本批提交后统一验证。
+必要检查：Win32 Release `war3_control_tests` 构建通过；`war3_control_tests <data-root> <control-fixture> player-region-registration-handles` 退出 0、1 通过／0 失败，覆盖状态 25 可注册、26 和 -1 返回空及不增加事件对象；原有玩家／区域句柄验证继续通过。日志位于 `tmp/docs-artifacts/war3/build-tools/player-state-boundary-{build,test}.log`。原版运行时、其他状态事件行为与历史异常快照仍待对照；本批已集中验证，详见批次摘要。
 
-## 单位肖像动画属性（本批 2/3，待集中验证）
+## 单位肖像动画属性（已批次验证，仍有待验项）
 
 路径：`src/game_portrait.cpp`。肖像优先使用单位当前动画属性选择 `Portrait` 序列；找不到时依次回退普通 `Portrait`、带属性 `Stand`、普通 `Stand`。毁灭者和十胜石雕像共用肖像模型，原始模型同时包含普通和 `Alternate` 序列，单位数据仅毁灭者启用 `alternate`。
 
 必要检查：Win32 Release 客户端构建通过，日志 `tmp/docs-artifacts/war3/build-tools/portrait-properties-build.log`；隔离隐藏客户端使用虚拟指针运行变形夹具，选中毁灭者后点击反向变形，前后肖像发生切换，单位由 `ubsp` 变为 `uobs`，金币／木材分别由 1000 增至 1100／1050。截图和日志位于 `tmp/docs-artifacts/war3/batch-form-state/tooltip-agent-fCYaMV/` 与 `portrait-properties-run.log`；Impeccable changed 检测无发现。原版动态画面、其他属性和模型缺失序列的回退仍待批次及实机对照。
 
-## 单位状态 NOT_EQUAL 注册（本批 1/3，待集中验证）
+## 单位状态 NOT_EQUAL 注册（已批次验证，仍有待验项）
 
 路径：`src/session_callbacks.cpp`、`tests/clock_tests.cpp`。生命／魔法的 `NOT_EQUAL` 注册仍返回事件句柄并归触发器管理，但不建立状态观察器；SAEV v2 重建采用相同规则。固定版 `0x6f25cfd0` 的比较分派仅处理 0–4，5 跳过底层观察器构建，事件处理 `0x6f25f768` 同样排除 5；外层保留事件及句柄。玩家状态使用独立路径，不据此更改。
 
-必要检查：Win32 Release `war3_clock_tests` 构建通过；`WAR3_CLOCK_FILTER=actor_events_rebuild_filters_state_and_dispatch_order war3_clock_tests <data-root> <scratch>` 退出 0、1 通过／0 失败，覆盖生命／魔法不等事件句柄、等值与非等值反复切换、SAEV 句柄映射及重建、销毁清理和既有小于条件对照。构建及测试日志位于 `tmp/docs-artifacts/war3/build-tools/unequal-state-{build,test}.log`。原版实机、原版动态载档及其他比较条件的完整时序仍待验证；下一批累计 3 项后统一验证。
+必要检查：Win32 Release `war3_clock_tests` 构建通过；`WAR3_CLOCK_FILTER=actor_events_rebuild_filters_state_and_dispatch_order war3_clock_tests <data-root> <scratch>` 退出 0、1 通过／0 失败，覆盖生命／魔法不等事件句柄、等值与非等值反复切换、SAEV 句柄映射及重建、销毁清理和既有小于条件对照。构建及测试日志位于 `tmp/docs-artifacts/war3/build-tools/unequal-state-{build,test}.log`。原版实机、原版动态载档及其他比较条件的完整时序仍待验证；本批已集中验证，详见批次摘要。
 
 ## 变形费用与单位状态事件批次（已批次验证，仍有待验项）
 
