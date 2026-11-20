@@ -1,28 +1,34 @@
 # 独立客户端测试队列
 
-## 牧师自身自动心灵之火（本批 3/3，待批次验证）
+## 疾病、毒伤与自动施法批次（已批次验证，仍有待验项）
+
+范围：`b95176b`、`14b35d7`、`f95b723`，另包含荆棘任务补充 `ee13465`；集成版本 `f95b723`。公共伤害接口变更后 Win32 Release passive 目标干净构建，随后在集成版本增量构建客户端、control、caster、consumption 和 passive 测试目标通过。`plague-nonlethal`、`poison-floor`、`inner-fire-self`、`thorns-immune`、`item-combined-spirit-rune`、`heal-hold-autocast`、`dryad-summon-autocast` 各退出 0、1 通过／0 失败，共 7 个进程、7 项通过。日志 `tmp/docs-artifacts/war3/build-tools/batch-plague-poison-inner-*.log`；passive 夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`，其他夹具分别为 `mana-flare-pool/fixture.w3m`、`caster-spells/hold-heal-fixture.w3m`、`eat-magic/fixture.w3m`（均位于 `tmp/docs-artifacts/war3/`）。
+
+固定版疾病最低生命、毒伤及伤害事件与锁链分摊时序、可致死毒剂、尖刺升级对魔免、牧师友军目标优先级和实际对局及 UI 仍待对照。下一功能批次从 0/3 开始。
+
+## 牧师自身自动心灵之火（已批次验证，仍有待验项）
 
 路径：`src/session_autocast.cpp`、`tests/passive_tests.cpp`。牧师自身作为心灵之火自动施法目标时要求正在攻击敌方单位；手动自施和对其他友军的目标选择沿用现有逻辑。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明独自的牧师攻击后才会自动对自己施放。
 
-必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> inner-fire-self` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖空闲、攻击敌人和手动自施；日志 `tmp/docs-artifacts/war3/build-tools/inner-fire-self-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。友军目标优先级、实际命中前后的原版时机及对局仍待对照；本任务完成后执行本批集中验证。
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> inner-fire-self` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖空闲、攻击敌人和手动自施；日志 `tmp/docs-artifacts/war3/build-tools/inner-fire-self-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。友军目标优先级、实际命中前后的原版时机及对局仍待对照；本批集中验证结果见批次摘要。
 
-## 攻击毒的生命下限（本批 2/3，待批次验证）
+## 攻击毒的生命下限（已批次验证，仍有待验项）
 
 路径：`src/spells.h`、`src/session.h`、`src/session_damage.cpp`、`src/session_spell_effects.cpp`、`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`。不可致死的攻击毒周期伤害保留 2 点生命；目标已低于 2 点时不增加生命，可致死毒剂、疾病和其他非致死伤害保留各自行为。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明毒伤保留 2 点生命。
 
-必要检查：Win32 Release `war3_passive_tests` 干净构建通过；`war3_passive_tests <data-root> <fixture> poison-floor` 修复前失败、修复后退出 0、1 通过／0 失败，验证真实毒攻击、2 点下限、低于下限不回血及普通伤害击杀；`plague-nonlethal` 重测退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/poison-floor-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。伤害事件回调与灵魂锁链分摊时序、可致死毒剂及原版对局仍待批次及固定版对照。
+必要检查：Win32 Release `war3_passive_tests` 干净构建通过；`war3_passive_tests <data-root> <fixture> poison-floor` 修复前失败、修复后退出 0、1 通过／0 失败，验证真实毒攻击、2 点下限、低于下限不回血及普通伤害击杀；`plague-nonlethal` 重测退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/poison-floor-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。伤害事件回调与灵魂锁链分摊时序、可致死毒剂及原版对局仍待专项验证和固定版对照。
 
-## 疾病云非致死（本批 1/3，待批次验证）
+## 疾病云非致死（已批次验证，仍有待验项）
 
 路径：`src/session_spell_effects.cpp`、`tests/passive_tests.cpp`。疾病云周期伤害使用已有非致死保护，不影响普通伤害；暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明疾病云不能杀死单位且不能驱散。
 
-必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> plague-nonlethal` 修复前失败，修复后退出 0、1 通过／0 失败。真实疾病光环感染后停用来源，普通驱散移除对照魔法状态而保留疾病，连续周期伤害保留低生命单位，普通伤害仍能击杀；日志 `tmp/docs-artifacts/war3/build-tools/plague-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。固定版最低生命值、伤害事件与灵魂锁链分摊时序和实际对局仍待对照；与后续任务集中验证。
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> plague-nonlethal` 修复前失败，修复后退出 0、1 通过／0 失败。真实疾病光环感染后停用来源，普通驱散移除对照魔法状态而保留疾病，连续周期伤害保留低生命单位，普通伤害仍能击杀；日志 `tmp/docs-artifacts/war3/build-tools/plague-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。固定版最低生命值、伤害事件与灵魂锁链分摊时序和实际对局仍待对照；本批集中验证结果见批次摘要。
 
-## 荆棘与尖刺升级反伤分离（上一任务补充，待批次验证）
+## 荆棘与尖刺升级反伤分离（上一任务补充，已批次验证）
 
 路径：`src/session.h`、`src/session_projectiles.cpp`、`src/session_attack_passives.cpp`、`tests/passive_tests.cpp`。`1687bb2` 的魔免检查意外连同兽族建筑尖刺升级反伤一起屏蔽；本补充在命中前分别快照光环和尖刺升级反伤，魔免仅屏蔽光环部分，恢复尖刺升级此前行为。固定版尖刺升级对魔免的真实规则仍需对照，此处不将历史行为当作原版结论。
 
-必要检查：由于内部函数签名变化，Win32 Release `war3_passive_tests` 干净构建通过；`war3_passive_tests <data-root> <fixture> thorns-immune` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖普通／魔免攻击者、移除魔免后的荆棘反伤和实际研究后的兽族地堡尖刺反伤。日志 `tmp/docs-artifacts/war3/build-tools/spikes-separation-{before,after}.log`。原版混合反伤、研究在伤害回调中变化及实际对局仍待对照；补充提交不另计批次数，后续随相关批次验证。
+必要检查：由于内部函数签名变化，Win32 Release `war3_passive_tests` 干净构建通过；`war3_passive_tests <data-root> <fixture> thorns-immune` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖普通／魔免攻击者、移除魔免后的荆棘反伤和实际研究后的兽族地堡尖刺反伤。日志 `tmp/docs-artifacts/war3/build-tools/spikes-separation-{before,after}.log`。原版混合反伤、研究在伤害回调中变化及实际对局仍待对照；补充提交不另计批次数，本批集中验证结果见批次摘要。
 
 ## 妖术与光环批次（已批次验证，仍有待验项）
 
