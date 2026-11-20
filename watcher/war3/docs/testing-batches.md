@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 救援接口的无效句柄（待批次验证）
+
+路径：`src/session_ownership.cpp`、`tests/passive_tests.cpp`、`docs/rescue.md`。SetUnitRescuable 对无效单位或玩家直接返回，SetUnitRescueRange 在无效单位时先返回；有效参数沿用既有处理。固定版 1.27 的入口 `0x6f1f79f0` 和 `0x6f1f7a20` 均先解析单位，前者再解析玩家，解析失败直接返回。
+
+必要检查：Win32 Release 客户端和 passive 目标编译通过；`war3_passive_tests <data-root> <passive-fixture> rescue-invalid-handles` 修复前因 Unknown session native handle 失败，修复后 1 通过／0 失败，覆盖空、已移除、错误类型、未知单位或玩家、无效单位配 NaN、有效启停及半径，并检查既有邻近集合不被错误调用清除。日志位于 `tmp/docs-artifacts/war3/rescue-invalid/`。有效单位下异常半径、原版动态句柄回收和实际救援事件待集中验证或原版对照。本批 1/3。
+
 ## 英雄排序、提示回溯与排队命令批次（部分验证）
 
 范围：`b8efd4c`、`396b7cd`、`3e700a1`，集成版本 `3e700a1` 加本次 `tests/clock_tests.cpp` 快照测试补充。Win32 Release 客户端、browser、order_queue 和 clock 目标编译通过。`selection_hero_priority` 与 `recent_ping_history` 各 1 通过／0 失败；`stop-hold-queue` 为 2 通过／0 失败；Booty Bay 的 order_queue 默认入口退出 0、输出 40 条 PASS；`unit_core_restores_hero_abilities_equipment_and_vitals` 为 1 通过／0 失败，包含 Stop／Hold 的 SPQO 重映射、类型及字节往返。该快照夹具未启动恢复会话，不证明实际读档后继续执行。
