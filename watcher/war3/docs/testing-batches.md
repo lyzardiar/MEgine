@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 付费变形遵守地图人口上限（待批次验证）
+
+路径：`src/session_unit_forms.cpp`、`tests/undead_forms_tests.cpp`、`tests/generate-undead-forms-fixture.py`。源 `DataB` 位 16 启用的付费变形按新旧单位类型人口费用的正差检查全局和玩家有效上限；实际人口预留仍依单位实例的计数状态。固定版 BearForm 的数据加载 `0x6f68a0ff–0x6f68a128` 将 DataB 写入等级记录，`0x6f53fc64` 将位 16 转为内部许可标志，`0x6f54e9b0` 使用该标志和类型人口差检查上限；Aave 开启、Abrf 未开启。
+
+必要检查：Win32 Release 客户端和 undead-forms 目标构建通过；`generate-undead-forms-fixture.py --low-food-ceiling` 创建地图上限为 10 的夹具，`war3_undead_forms_tests <data-root> <fixture> food-ceiling|reverse-food-ceiling` 两个入口修复前分别失败、修复后各退出 0、1 通过／0 失败，覆盖毁灭者越限拒绝无扣费、边界成功、关闭实例人口计数后的资格，以及自定义反向增人口时的拒绝和边界成功。构建日志和夹具位于 `tmp/docs-artifacts/war3/build-tools/avenger-food-final-build.log`、`tmp/docs-artifacts/war3/avenger-food/`。原版实机、反向费用、负值／回绕和作弊绕过仍待验证。本批 3/3，提交后集中验证。
+
 ## 先祖之魂的人口目标限制（待批次验证）
 
 路径：`src/session_corpses.cpp`、`tests/corpse_tests.cpp`、`tests/generate-corpse-fixture.py`。先祖之魂在可见目标许可和候选筛选时，按施法者的人口、尸体类型的 `GetFoodUsed` 费用、地图全局及有效容量检查；不依赖尸体实例 `useFood`。固定版 `CAbilityAncestralSpirit` 的目标许可 `0x6f4a1910` 和候选扫描调用该检查，生效阶段是否再次检查尚未证实。
