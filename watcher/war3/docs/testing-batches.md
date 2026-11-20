@@ -1,22 +1,28 @@
 # 独立客户端测试队列
 
-## 地点与坐标视野查询的无效句柄（待批次验证）
+## 救援、商店与迷雾句柄批次（部分验证）
+
+范围：`7a86475`、`27a6cd5`、`c158667`，集成版本 `c158667`。Win32 Release 客户端、passive、construction 和 clock 目标编译通过。`rescue-invalid-handles`、`shop-invalid-handles`、`location-visibility-invalid` 各 1 通过／0 失败；`shop-payment-state` 退出 0、输出 1 条 PASS；`recovery_bundle_restores_rescue_membership`、`shop_stock_snapshot_restores_inventory_and_global_rules` 和 `fog_snapshot_restores_exploration_and_modifier_handles` 各 1 通过／0 失败。共 7 个进程成功、7 条 PASS；日志位于 `tmp/docs-artifacts/war3/batch-rescue-shop-fog/`。
+
+执行命令：`war3_passive_tests <data-root> <passive-fixture> rescue-invalid-handles`；`war3_construction_tests <data-root> <construction-fixture> shop-invalid-handles|location-visibility-invalid|shop-payment-state`（分别运行）；`WAR3_CLOCK_FILTER=<上述恢复用例> war3_clock_tests <data-root> <scratch>`（分别运行）。覆盖的是隔离会话和状态快照；原版动态句柄回收、有效单位异常参数、非商店单位、实际商店 UI、地图和产品读档仍待对照或验证。下一功能批次从 0/3 开始。
+
+## 地点与坐标视野查询的无效句柄（已批次验证，仍有待验项）
 
 路径：`src/session_fog.cpp`、`tests/construction_tests.cpp`、`docs/visibility.md`。三个地点可见／迷雾／遮蔽查询在地点或玩家句柄无效时返回 false；对应坐标查询在玩家无效时返回 false。固定版 1.27 地点入口为 `0x6f1e7de0`、`0x6f1e7d20`、`0x6f1e7da0`，对应坐标入口为 `0x6f1e8f50`、`0x6f1e7a10`、`0x6f1e7ef0`；解析失败直接返回零。
 
-必要检查：Win32 Release 客户端和 construction 目标编译通过；`war3_construction_tests <data-root> <construction-fixture> location-visibility-invalid` 修复前因 Unknown session native handle 失败，修复后 1 通过／0 失败。覆盖空、已移除、错误类型和未知地点、无效玩家；构造可见、迷雾、遮蔽三种状态，验证地点与同坐标查询一致。日志位于 `tmp/docs-artifacts/war3/fog-invalid/`。原版动态视野、坐标异常和单位视野接口仍待对照；实际地图及视野更新待批次验证。本批 3/3，提交后先集中验证。
+必要检查：Win32 Release 客户端和 construction 目标编译通过；`war3_construction_tests <data-root> <construction-fixture> location-visibility-invalid` 修复前因 Unknown session native handle 失败，修复后 1 通过／0 失败。覆盖空、已移除、错误类型和未知地点、无效玩家；构造可见、迷雾、遮蔽三种状态，验证地点与同坐标查询一致。日志位于 `tmp/docs-artifacts/war3/fog-invalid/`。原版动态视野、坐标异常和单位视野接口仍待对照；实际地图及视野更新待批次验证。本批集中验证结果见上方记录。
 
-## 单商店库存接口的无效单位句柄（待批次验证）
+## 单商店库存接口的无效单位句柄（已批次验证，仍有待验项）
 
 路径：`src/session_commerce.cpp`、`tests/construction_tests.cpp`、`docs/commerce.md`。六个单商店添加／移除库存及设置槽位接口在处理其他参数前检查单位句柄，失效时直接返回。固定版 1.27 的对应入口依次为 `0x6f1da610`、`0x6f1d9fd0`、`0x6f1f2fc0`、`0x6f1f2d40`、`0x6f1f7b00`、`0x6f1f5d30`，单位解析失败直接返回。
 
-必要检查：Win32 Release 客户端和 construction 目标编译通过；`war3_construction_tests <data-root> <construction-fixture> shop-invalid-handles` 修复前因 Unknown session native handle 失败，修复后 1 通过／0 失败。覆盖空、已移除、错误类型及未知单位，失效单位配负数参数时不报错；有效商店完整库存及槽位不受无效调用影响，当前实现的正常增删仍可用。日志位于 `tmp/docs-artifacts/war3/shop-invalid/`。原版有效非商店单位、有效单位异常参数和动态句柄回收仍待对照；实际商店界面和地图待批次验证。本批 2/3。
+必要检查：Win32 Release 客户端和 construction 目标编译通过；`war3_construction_tests <data-root> <construction-fixture> shop-invalid-handles` 修复前因 Unknown session native handle 失败，修复后 1 通过／0 失败。覆盖空、已移除、错误类型及未知单位，失效单位配负数参数时不报错；有效商店完整库存及槽位不受无效调用影响，当前实现的正常增删仍可用。日志位于 `tmp/docs-artifacts/war3/shop-invalid/`。原版有效非商店单位、有效单位异常参数和动态句柄回收仍待对照；实际商店界面和地图待批次验证。本批集中验证结果见上方记录。
 
-## 救援接口的无效句柄（待批次验证）
+## 救援接口的无效句柄（已批次验证，仍有待验项）
 
 路径：`src/session_ownership.cpp`、`tests/passive_tests.cpp`、`docs/rescue.md`。SetUnitRescuable 对无效单位或玩家直接返回，SetUnitRescueRange 在无效单位时先返回；有效参数沿用既有处理。固定版 1.27 的入口 `0x6f1f79f0` 和 `0x6f1f7a20` 均先解析单位，前者再解析玩家，解析失败直接返回。
 
-必要检查：Win32 Release 客户端和 passive 目标编译通过；`war3_passive_tests <data-root> <passive-fixture> rescue-invalid-handles` 修复前因 Unknown session native handle 失败，修复后 1 通过／0 失败，覆盖空、已移除、错误类型、未知单位或玩家、无效单位配 NaN、有效启停及半径，并检查既有邻近集合不被错误调用清除。日志位于 `tmp/docs-artifacts/war3/rescue-invalid/`。有效单位下异常半径、原版动态句柄回收和实际救援事件待集中验证或原版对照。本批 1/3。
+必要检查：Win32 Release 客户端和 passive 目标编译通过；`war3_passive_tests <data-root> <passive-fixture> rescue-invalid-handles` 修复前因 Unknown session native handle 失败，修复后 1 通过／0 失败，覆盖空、已移除、错误类型、未知单位或玩家、无效单位配 NaN、有效启停及半径，并检查既有邻近集合不被错误调用清除。日志位于 `tmp/docs-artifacts/war3/rescue-invalid/`。有效单位下异常半径、原版动态句柄回收和实际救援事件待集中验证或原版对照。本批集中验证结果见上方记录。
 
 ## 英雄排序、提示回溯与排队命令批次（部分验证）
 
