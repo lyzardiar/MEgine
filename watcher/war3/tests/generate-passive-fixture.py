@@ -24,6 +24,8 @@ def main():
     names = helper.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: helper.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = b"""globals
+unit array flameChangeUnits
+integer flameChangeCount=0
 integer timerIndexTrace=0
 boolean timerIndexAdded=false
 timer timerIndexMain=null
@@ -170,6 +172,23 @@ function ProbeSummonIndex takes unit u returns nothing
     call TriggerAddAction(t,function EventIndexSeven)
     call TriggerRegisterPlayerUnitEvent(p,Player(0),EVENT_PLAYER_UNIT_SUMMON,null)
     call TriggerRegisterUnitEvent(t,u,EVENT_UNIT_SUMMON)
+endfunction
+function FlameChangeOnDamage takes nothing returns nothing
+    local integer i=0
+    loop
+        exitwhen i>=flameChangeCount
+        call SetUnitOwner(flameChangeUnits[i],Player(0),false)
+        set i=i+1
+    endloop
+endfunction
+function FlameAddChangeUnit takes unit u returns nothing
+    set flameChangeUnits[flameChangeCount]=u
+    set flameChangeCount=flameChangeCount+1
+endfunction
+function FlameRegisterChange takes unit u returns nothing
+    local trigger t=CreateTrigger()
+    call TriggerAddAction(t,function FlameChangeOnDamage)
+    call TriggerRegisterUnitEvent(t,u,EVENT_UNIT_DAMAGED)
 endfunction
 function EventIndexDamage takes nothing returns nothing
     if GetEventDamage()>0. then

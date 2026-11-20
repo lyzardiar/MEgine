@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 烈焰风暴超额伤害均分（本批 2/3，待批次验证）
+
+路径：`src/session_channels.cpp`、`tests/passive_tests.cpp`、`tests/generate-passive-fixture.py`。烈焰风暴每次脉冲按各阵营有效目标的预计伤害计算比例，超过该组上限时均分，不再按距离使前六个目标独占额度；未超过上限时保持原值。暴雪 [Blood Mage](https://classic.battle.net/war3/human/units/bloodmage.shtml) 说明超出六目标时将对应伤害在目标间均分；本机固定版物编一级每个强伤脉冲 15、上限 90。
+
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`flamestrike-cap-split` 修复前因末尾目标未受伤失败，修复后退出 0、1 通过／0 失败。真实技能首波对友、敌、中立各 8 个暂停战斗的同类目标验证独立均分与组上限，对 4 个目标验证未达上限时原始伤害，还通过伤害事件将后续目标易主以验证新阵营上限（移除保护时失败）；`blizzard-cap-relations` 重测退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/flamestrike-split-{before,after,blizzard}.log`、`flamestrike-callback-before.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。当前按脉冲开始时有效目标确定比例，后续伤害前重新检查目标并按当前阵营剩余额度限幅；回调改变目标时的原版比例重算、燃烧阶段及建筑／护盾减伤顺序尚待对照，与后续任务集中验证。
+
 ## 毒球与攻击增强优先级（本批 1/3，待批次验证）
 
 路径：`src/session_weapon_effects.cpp`、`src/session_orb_attacks.cpp`、`tests/passive_tests.cpp`、`tests/spell_tests.cpp`。毒球携带的攻击毒仅在该物品的法球效果选中时生效；单位原生和不属于毒球物品的毒能力仍独立处理。手动箭技能可覆盖毒球，自动箭在可作用的装备法球存在时让位。暴雪 [神器说明](https://classic.battle.net/war3/basics/heroitemsartifact.shtml) 记载法球顺序及手动／自动箭技能优先级。
