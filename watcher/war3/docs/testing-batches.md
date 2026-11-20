@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 复合圣光、风暴之锤与闪电链物品（待批次验证）
+
+路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/control-spells.md`。三个法术与其他已支持主动效果组合时，沿用复合物品目标校验、命中及弹跳流程。
+
+必要检查：旧版 Win32 Release `war3_control_tests <data-root> <fixture> item-combined-hero-impact` 修复前因复合能力未实现失败；本次修改后尚未编译或运行，需在批次编译客户端及 control 测试目标，验证合法／非法目标、圣光治疗、风暴之锤眩晕、闪电链弹跳、资源和消耗。复合物品视野校验、首目标护盾、来源死亡／易主回调及后续效果归属、原版时序和真实窗口仍待检查。本批 3/3，先集中验证。
+
 ## 复合英雄单位目标技能物品（待批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/control-spells.md`。死亡缠绕、霜冻新星、缠绕根须与其他已支持主动效果组合时，通过已有复合物品目标校验和效果流程即时执行法术命中。
