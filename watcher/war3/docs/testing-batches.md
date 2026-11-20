@@ -1,18 +1,24 @@
 # 独立客户端测试队列
 
-## 范围驱散树上哨兵（待批次验证）
+## 头像子组与哨兵批次（已批次验证，仍有待验项）
+
+范围：`af4b449`、`3cdc201`、`eca16b2`，集成版本 `eca16b2`。Win32 Release 客户端、stealth、browser 和 clock 目标编译通过。`selection_subgroup_clustering`、`selection_inventory_subgroups`、`selection_hero_priority` 和 `recovery_bundle_rebuilds_component_graph_but_blocks_main` 各退出 0、1 通过／0 失败；`sentinel-tree-damage`、`sentinel-tree-harvest`、`sentinel-tree-weapon`、`sentinel-dispel`、`sentinel-devour`、`sentinel` 各退出 0、1 通过／0 失败；分别生成 `partial`、`invu`、`invulnerable` 目标夹具后执行对应 sentinel 模式，各退出 0、输出 1 条 PASS。共 13 个有效进程、13 条 PASS，日志及专用夹具位于 `tmp/docs-artifacts/war3/batch-subgroup-sentinel/`。最初用通用夹具运行 `sentinel-partial` 失败，因该用例要求 `tree,notinvu` 专用配置；正确夹具重跑通过，失败日志保留。
+
+执行：`war3_browser_tests <data-root> <scratch> <上述 selection 模式>`；`WAR3_CLOCK_FILTER=recovery_bundle_rebuilds_component_graph_but_blocks_main war3_clock_tests <data-root> <scratch>`；`war3_stealth_tests <data-root> <fixture> <上述 sentinel 模式>`，每模式单独运行。恢复包测试覆盖哨兵状态重编码，不证明伤树或驱散后实际读档续跑。实际原版窗口、双端、头像边界、哨兵驱散敌我关系、飞行中、目标过滤、特效销毁和范围边缘仍待对照。七个测试目标对象曾因构建环境不一致产生不完整依赖记录，已以 `tmp/docs-artifacts/war3/build-tools/sentinel-dispel-build.mjs` 重编并核对 Ninja 依赖均为 VALID。下一功能批次从 0/3 开始。
+
+## 范围驱散树上哨兵（已批次验证，仍有待验项）
 
 路径：`src/session.h`、`src/session_stealth_reveal.cpp`、`src/session_area_spells.cpp`、`src/session_magic_consumption.cpp`、`tests/stealth_tests.cpp`、`docs/sentinel.md`。允许树目标的范围驱散和吞噬魔法清除范围内敌方已着陆哨兵并刷新视野，不损伤树，也不因哨兵产生吞噬收益。
 
 必要检查：Win32 Release 客户端及 stealth 目标干净重建通过；`war3_stealth_tests <data-root> <fixture> sentinel-dispel|sentinel-devour` 分别退出 0、各 1 通过／0 失败，覆盖实际施法、范围内外检测、树生命及吞噬魔法收益。日志位于 `tmp/docs-artifacts/war3/sentinel-area-dispel/`。特效释放尚未直接断言；己方与盟友、飞行中、目标过滤、无敌树、范围边缘、事件时序及原版动态表现待验证或对照。本批 3/3，提交后执行集中验证。
 
-## 树木受伤清除已着陆哨兵（待批次验证）
+## 树木受伤清除已着陆哨兵（已批次验证，仍有待验项）
 
 路径：`src/session.h`、`src/session_destructables.cpp`、`src/session_stealth_reveal.cpp`、`src/session_damage.cpp`、`src/session_lumber.cpp`、`src/session_channels.cpp`、`src/session_hero_ultimates.cpp`、`src/session_stampede.cpp`、`src/session_tinker.cpp`、`src/session_volcano.cpp`、`tests/stealth_tests.cpp`、`docs/sentinel.md`。附着树实际受伤且生命下降时清除其已着陆哨兵、特效和检测视野；零伤害和无敌树不触发，脚本直接设置生命保留既有路径。依据[暴雪哨兵说明](https://classic.battle.net/war3/nightelf/units/huntress.shtml)中攻击附着树可移除哨兵。
 
 必要检查：Win32 Release 客户端和 stealth 目标编译通过。`war3_stealth_tests <data-root> <fixture> sentinel-tree-damage|sentinel-tree-harvest|sentinel-tree-weapon` 分别运行，各 1 通过／0 失败；覆盖非致死脚本伤害、真实采木、真实武器、零伤害和无敌树。直接伤害用例修复前因哨兵仍侦测而失败。日志位于 `tmp/docs-artifacts/war3/sentinel-tree-damage/`。飞行中受伤、脚本直接改生命、各种范围法术、无敌树采木和死亡事件先后仍待验证或对照。本批 2/3。
 
-## 同子组普通单位头像聚合（待批次验证）
+## 同子组普通单位头像聚合（已批次验证，仍有待验项）
 
 路径：`src/game_subgroup.h`、`src/game_view.cpp`、`tests/browser_tests.cpp`、`docs/selection-panel.md`。依据[暴雪子组说明](https://classic.battle.net/war3/basics/specialcommands.shtml)的同类单位分组规则，显示顺序将非英雄的同一子组按首次出现顺序聚合，携物单位保持独立；英雄等级排序、命令和联机选区原始顺序保持现有行为。
 
