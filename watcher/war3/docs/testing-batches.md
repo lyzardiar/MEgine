@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 地点与坐标视野查询的无效句柄（待批次验证）
+
+路径：`src/session_fog.cpp`、`tests/construction_tests.cpp`、`docs/visibility.md`。三个地点可见／迷雾／遮蔽查询在地点或玩家句柄无效时返回 false；对应坐标查询在玩家无效时返回 false。固定版 1.27 地点入口为 `0x6f1e7de0`、`0x6f1e7d20`、`0x6f1e7da0`，对应坐标入口为 `0x6f1e8f50`、`0x6f1e7a10`、`0x6f1e7ef0`；解析失败直接返回零。
+
+必要检查：Win32 Release 客户端和 construction 目标编译通过；`war3_construction_tests <data-root> <construction-fixture> location-visibility-invalid` 修复前因 Unknown session native handle 失败，修复后 1 通过／0 失败。覆盖空、已移除、错误类型和未知地点、无效玩家；构造可见、迷雾、遮蔽三种状态，验证地点与同坐标查询一致。日志位于 `tmp/docs-artifacts/war3/fog-invalid/`。原版动态视野、坐标异常和单位视野接口仍待对照；实际地图及视野更新待批次验证。本批 3/3，提交后先集中验证。
+
 ## 单商店库存接口的无效单位句柄（待批次验证）
 
 路径：`src/session_commerce.cpp`、`tests/construction_tests.cpp`、`docs/commerce.md`。六个单商店添加／移除库存及设置槽位接口在处理其他参数前检查单位句柄，失效时直接返回。固定版 1.27 的对应入口依次为 `0x6f1da610`、`0x6f1d9fd0`、`0x6f1f2fc0`、`0x6f1f2d40`、`0x6f1f7b00`、`0x6f1f5d30`，单位解析失败直接返回。
