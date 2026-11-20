@@ -1,6 +1,7 @@
 // Author: MiYu. Source channel schedules, cancellable pulses and independent ground effects consume shared live state.
 #include "session.h"
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <cmath>
 #include <sstream>
@@ -33,9 +34,9 @@ void ScriptSession::startChannel(std::uint32_t id) {
 }
 void ScriptSession::persistentSpellPulse(std::uint32_t source,const SpellInfo& s,WorldPoint point,unsigned owner,float amount,bool percent,std::optional<std::uint64_t> ticket) {
     auto active=[&]{if(!alive(source,NativeKind::Unit))return false;auto u=units_.at(source);return !u->removing && (!ticket || (!u->paused && !u->stunned() && number(u->life)>0 && u->owner==owner && u->cast && u->cast->ticket==*ticket && !(u->cast->scriptOrder?u->hiddenByState():u->hidden())));};
-    if(!active())return;auto caster=units_.at(source);auto victims=spellTargets(source,s,point,owner);float allocated=0;
+    if(!active())return;auto caster=units_.at(source);auto victims=spellTargets(source,s,point,owner);std::array<float,3> allocated{};
     for(auto id:victims){
-        if(!active())return;if(!alive(id,NativeKind::Unit))continue;auto u=units_.at(id);if(!spellTarget(*caster,*u,s,false,owner))continue;float value=percent?number(u->maxLife)*amount:amount;if(s.maxDamage>0)value=std::min(value,std::max(0.f,s.maxDamage-allocated));if(value<=0)continue;allocated+=value;if(u->building)value*=s.buildingFactor;
+        if(!active())return;if(!alive(id,NativeKind::Unit))continue;auto u=units_.at(id);if(!spellTarget(*caster,*u,s,false,owner))continue;float value=percent?number(u->maxLife)*amount:amount;unsigned relation=s.kind==SpellKind::Tranquility || u->owner==owner?0:u->owner>=12?2:enemy(owner,u->owner)?1:0;if(s.maxDamage>0)value=std::min(value,std::max(0.f,s.maxDamage-allocated[relation]));if(value<=0)continue;allocated[relation]+=value;if(u->building)value*=s.buildingFactor;
         auto death=u->deathRevision;if(s.kind==SpellKind::Tranquility)unitLife(runtime_.handle("unit",id),real(number(u->life)+spellHealAmount(*u,value)));else damageUnit(source,id,value,0,percent?26:14);
         if(!active())return;if(alive(id,NativeKind::Unit) && !u->removing && number(u->life)>0 && u->deathRevision==death){if(s.kind==SpellKind::RainFire){applyBuff(id,source,s,BuffKind::RainBurn);auto found=u->buffs.find(s.buff);if(found!=u->buffs.end() && found->second.kind==BuffKind::RainBurn){found->second.damage=s.extraDamage*(u->building?s.buildingFactor:1);found->second.sourceOwner=owner;}}else {auto mark=s;mark.duration=mark.heroDuration=std::max(.0625f,s.period>0?s.period+.03125f:s.burnPeriod+.03125f);applyBuff(id,source,mark,BuffKind::Mark);}}
     }

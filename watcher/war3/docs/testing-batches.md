@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 范围法术的阵营伤害上限（本批 3/3，待批次验证）
+
+路径：`src/session_channels.cpp`、`tests/passive_tests.cpp`。暴风雪、火焰雨、烈焰风暴等共用持续范围伤害路径对友方、敌方和中立目标分别累计每次伤害上限，不再让先命中的目标耗尽其他阵营的额度；宁静的治疗沿用原有处理。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明范围伤害上限对友军、敌军和中立单位分别计算。当前以施法者自身及盟友、敌对玩家、其他中立玩家区分，特殊地图对中立玩家的联盟覆盖仍待原版对照。
+
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> blizzard-cap-relations` 修复前失败，修复后退出 0、1 通过／0 失败。真实暴风雪第一波命中各 6 个友方（含另一玩家盟友）、敌方及中立单位，验证三组均受伤且各不超过伤害上限；日志 `tmp/docs-artifacts/war3/build-tools/blizzard-cap-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。每组超过上限时的原版分配、动态联盟、其他法术及实际对局仍待专项对照；本任务完成后执行本批集中验证。
+
 ## 同来源攻击毒刷新（本批 2/3，待批次验证）
 
 路径：`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`。同一攻击者使用同一技能反复命中时刷新已有毒剂量并保留其周期，不再重复叠加；不同攻击者保留独立剂量。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明同一单位重复攻击不增加毒伤，而不同单位可叠加。
