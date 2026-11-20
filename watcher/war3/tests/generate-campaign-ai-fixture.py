@@ -21,7 +21,25 @@ boolean carrierOverrideOnce=false
 unit carrierOtherOverride=null
 unit retreatOtherOverride=null
 integer retreatOverrideCount=0
+unit pickupOverrideTarget=null
+integer pickupOverrideCount=0
 endglobals
+function OverridePickupPassenger takes nothing returns nothing
+    set pickupOverrideCount=pickupOverrideCount+1
+    call IssuePointOrder(pickupOverrideTarget,"move",3200,2050)
+endfunction
+function InstallPickupPassengerOverride takes unit carrier, unit passenger returns nothing
+    local trigger t=CreateTrigger()
+    set pickupOverrideTarget=passenger
+    call TriggerRegisterUnitEvent(t,carrier,EVENT_UNIT_ISSUED_TARGET_ORDER)
+    call TriggerAddAction(t,function OverridePickupPassenger)
+endfunction
+function InstallWaterPickupPassengerOverride takes unit carrier, unit passenger returns nothing
+    local trigger t=CreateTrigger()
+    set pickupOverrideTarget=passenger
+    call TriggerRegisterUnitEvent(t,carrier,EVENT_UNIT_ISSUED_POINT_ORDER)
+    call TriggerAddAction(t,function OverridePickupPassenger)
+endfunction
 function OverrideRetreatOrder takes nothing returns nothing
     set retreatOverrideCount=retreatOverrideCount+1
     call IssuePointOrder(retreatOtherOverride,"move",-1400,-1200)

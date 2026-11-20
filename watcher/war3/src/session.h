@@ -271,13 +271,13 @@ class ScriptSession {
     bool aiHasTransport(ScriptAI& ai);
     std::optional<bool> aiGroundReachable(const UnitState& passenger,WorldPoint destination,std::uint32_t target=0);
     bool aiCanTransportTo(ScriptAI& ai,const UnitState& passenger,WorldPoint destination,std::uint32_t target=0);
-    void aiLoadZeppelinWave(ScriptAI& ai,WorldPoint destination,bool disconnectedOnly=false,std::uint32_t target=0);
+    void aiLoadZeppelinWave(ScriptAI& ai,WorldPoint destination,bool disconnectedOnly=false,std::uint32_t target=0,bool retreat=false);
     void aiZeppelinWaveTick(ScriptAI& ai);
     void aiContinueZeppelinWave(ScriptAI& ai);
     void aiCancelBoarding(unsigned owner,std::uint32_t passenger,std::uint32_t carrier);
     void aiCancelPickupSailing(unsigned owner,std::uint32_t carrier,std::uint64_t revision);
     void aiReleaseReassignedCarrier(ScriptAI& ai,std::uint32_t carrier);
-    void aiCancelZeppelinWave(ScriptAI& ai);
+    void aiCancelZeppelinWave(ScriptAI& ai,std::map<std::uint32_t,std::uint64_t>* preserveCargo=nullptr);
     void aiHarvest(ScriptAI& ai);
     void aiFormCaptains(ScriptAI& ai,bool force=false);
     void aiCancelCaptainRoute(ScriptAI& ai);
@@ -297,7 +297,7 @@ class ScriptSession {
     std::vector<std::uint32_t> aiCaptain(ScriptAI& ai,bool includeTransport=false);
     void aiRetreatPassengersTick(ScriptAI& ai);
     std::optional<WorldPoint> aiReturnLanding(const UnitState& carrier,const UnitState& passenger,WorldPoint origin);
-    void aiRetreat(ScriptAI& ai);
+    void aiRetreat(ScriptAI& ai,bool ownedOnly=false);
     void aiRetreatMember(ScriptAI& ai,std::uint32_t id);
     void aiAttack(ScriptAI& ai,WorldPoint point,std::uint32_t target=0);
     std::array<std::optional<unsigned>,16> results_;

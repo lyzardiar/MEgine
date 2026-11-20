@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 隔岸队员的运输撤退（待批次验证）
+
+路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`src/session_ai_transport.cpp`、`src/session_ai_snapshot.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`、`tests/clock_tests.cpp`、`docs/ai.md`。对岸队员撤退时，空闲载具按容量分波接回；返程与进攻波次分开，重复撤退保留当前波次，基地变化时重新规划，命令回调改派的队员或载具不再由旧波次接管。AI 策略快照写 SAIS v3，读取 v1/v2 时返程标记默认为空；旧客户端不能读取 v3。
+
+必要检查：Win32 Release 客户端、CampaignAI 和 clock 目标编译通过。BootyBay 地形隔离夹具的飞艇／船舶返程、低血、重复指令、多波、无载具、队员／载具改派、接人及停止回调、途中换基地、暂停恢复、连续换基地及航行中再次换基地，以及已有进攻运输回归共 19 个进程各 1 通过／0 失败；AI 状态快照字段往返与合成 v1/v2 读取 1 通过／0 失败。结果 `tmp/docs-artifacts/war3/island-landed-retreat/verification.log`。夹具预置队员与载具，无法证明自然经济或完整对局；真实返程过程存档恢复、死亡／易主、复杂回调、长期等待、地图外基地、多人及原版策略仍待验证。本批 2/3。
+
 ## 集结点查询的无效单位句柄（待批次验证）
 
 路径：`src/session_production.cpp`、`tests/construction_tests.cpp`。GetUnitRallyPoint、GetUnitRallyUnit、GetUnitRallyDestructable 对空、失效或错误类型单位返回对应的空句柄，避免中断地图脚本；有效查询保留原有目标逻辑。固定 1.27 原版入口分别为 `0x6f1e64c0`、`0x6f1e6530`、`0x6f1e63f0`，单位解析失败直接返回零。
