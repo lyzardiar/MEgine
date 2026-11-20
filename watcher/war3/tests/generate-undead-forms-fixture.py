@@ -51,7 +51,10 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT/'tmp/docs-artifacts/war3/advanced-forms/fixture.w3m')
     parser.add_argument('--low-food-ceiling', action='store_true')
     parser.add_argument('--relative-upgrade-cost', choices=('0', '1'))
+    parser.add_argument('--zero-lumber-difference', action='store_true')
     args = parser.parse_args()
+    if args.zero_lumber_difference and args.relative_upgrade_cost != '0':
+        parser.error('--zero-lumber-difference requires --relative-upgrade-cost 0')
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only installation')
     original = (args.data_root/'Maps/(2)BootyBay.w3m').read_bytes()
@@ -68,6 +71,11 @@ def main():
         for code, normal, alternate in [(b'A0AV', b'ubsp', b'uobs'), (b'A0FR', b'uobs', b'ubsp')]:
             forms.append(b'Aave' + code + struct.pack('<I', 3) + b'Eme1' + struct.pack('<III', 3, 1, 1) + normal + b'\0' + code + b'Emeu' + struct.pack('<III', 3, 1, 0) + alternate + b'\0' + code + b'Eme2' + struct.pack('<IIII', 0, 1, 2, 16) + code)
     files['war3map.w3a'] = struct.pack('<III', 2, 0, 1 + len(forms)) + detector + b''.join(forms)
+    if args.zero_lumber_difference:
+        if 'war3map.w3u' in files:
+            raise ValueError('Fixture source already contains unit overrides')
+        changes = [(b'ubsp', 35), (b'hfoo', 25)]
+        files['war3map.w3u'] = struct.pack('<II', 2, len(changes)) + b''.join(unit + bytes(4) + struct.pack('<I', 1) + b'ulum' + struct.pack('<II', 0, value) + unit for unit, value in changes) + struct.pack('<I', 0)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
