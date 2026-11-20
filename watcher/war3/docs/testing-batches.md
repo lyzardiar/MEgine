@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 多火球溅射叠加（本批 2/3，待批次验证）
+
+路径：`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`。选中的法球为火球时，对其他有效火球逐件保留溅射效果，仍以主攻击实际命中且造成正伤害为触发条件；基础攻击加成沿用装备汇总。暴雪 [Hero Items](https://classic.battle.net/war3/basics/heroitemspermanent.shtml) 说明多个火球的溅射伤害可叠加。
+
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`fire-orb-stack` 修复前因两枚火球仍只有一次溅射失败，修复后退出 0、1 通过／0 失败。使用真实火球和武器命中验证单枚／两枚倍率，以及友军、范围外、强制未命中和能力禁用；日志 `tmp/docs-artifacts/war3/build-tools/fire-orb-stack-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。非火球排前或手动箭时的例外规则、同能力不同等级的自定义物品来源、伤害事件次数和护盾回调、火球溅射伤害类型／护甲／魔免及原版动态换装仍待对照，与后续任务集中验证。
+
 ## 吸血面具与法球优先级（本批 1/3，待批次验证）
 
 路径：`src/passives.h`、`src/combat.h`、`src/session_passive_info.cpp`、`src/session_weapon_effects.cpp`、`src/session_attack_passives.cpp`、`src/session_projectile_snapshot.cpp`、`tests/passive_tests.cpp`、`tests/spell_tests.cpp`、`tests/clock_tests.cpp`。吸血面具的攻击吸血参与现有法球选择，遵循背包顺序及手动／自动箭技能优先级；吸血光环和药剂仍独立结算。暴雪 [Hero Items](https://classic.battle.net/war3/basics/heroitemsartifact.shtml) 明确面具遵循法球规则。
