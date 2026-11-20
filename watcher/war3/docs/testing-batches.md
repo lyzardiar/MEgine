@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单位归属与视线接口的无效句柄（待批次验证）
+
+路径：`src/session_entities.cpp`、`tests/passive_tests.cpp`。IsUnitOwnedByPlayer 对无效单位或玩家返回 false；SetUnitLookAt 的无效来源或目标、ResetUnitLookAt 的无效单位直接返回，保留其他单位的视线状态。固定 1.27 原版入口分别在 `0x6f1e8b80`、`0x6f1f76e0` 和 `0x6f1f3180`，对应句柄解析失败直接返回；原版实际动画及其他异常参数仍需对照。
+
+必要检查：Win32 Release 客户端及 passive 测试目标编译通过；`war3_passive_tests <data-root> <fixture> unit-ownership-look-invalid` 修复前因 Unknown session native handle 失败，修复后 1 通过／0 失败，覆盖空、已移除、错误类型和未知句柄，以及有效归属、视线设置与重置。日志 `tmp/docs-artifacts/war3/unit-handle-natives/`。真实模型表现和原版动态行为待批次验证。本批 1/3。
+
 ## 来源生命周期、资源句柄与属性文字批次（部分验证）
 
 范围：`08cb32b`、`24b30b5`、`6742487`。Win32 Release 客户端及相关 control、construction、browser 目标编译通过；在集成版本运行链式法术来源易主／死亡复活、普通闪电链易主及组合技能正常弹跳，共 4 个测试进程各 1 通过／0 失败；资源无效句柄及覆盖矿为 1 通过／0 失败；browser `map_` 为 12 通过／0 失败。日志 `tmp/docs-artifacts/war3/attribute-layout/batch-6742487.log`。
