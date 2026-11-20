@@ -1,24 +1,30 @@
 # 独立客户端测试队列
 
-## 多选单位的携物子组（待批次验证）
+## 集结点、运输撤退与携物子组批次（部分验证）
+
+范围：`0ea1f24`、`429e183` 及同任务补充 `dee3224`、`fb5775a`；集成版本 `fb5775a`。Win32 Release 客户端、construction、CampaignAI、clock、browser 和 order_queue 目标编译通过。使用已有 Booty Bay 地形夹具，运输场景去重后 29 个进程各 1 通过／0 失败，覆盖多波、低血、无载具、换基地、回调改派、载具死亡／易主及原有运输回归；集结点无效句柄、AI 快照字段兼容和携物子组各 1 通过／0 失败。原版 Booty Bay 的 order_queue 默认入口退出 0，输出 40 条 PASS（无 RESULT 汇总），包含实验联机单会话的成员名单、库存变化、权限和异常报文。共 33 个进程成功；日志与构建记录位于 `tmp/docs-artifacts/war3/inventory-subgroups/batch-*.log`。
+
+执行命令：`war3_campaign_ai_tests <data-root> <fixture> <case>`（场景与夹具见 batch-campaign.log）、`war3_construction_tests <data-root> <construction-fixture> rally-invalid-handles`、`WAR3_CLOCK_FILTER=recovery_bundle_restores_active_ai war3_clock_tests <data-root> <scratch>`、`war3_browser_tests <data-root> <scratch> selection_inventory_subgroups`、`war3_order_queue_tests <data-root> <BootyBay.w3m>`。保留原测试夹具，测试输入未变；快照用例只覆盖字段往返和合成旧版本读取。真实返程存档恢复、自然经济与完整对局、双端联机、实际窗口和原版 UI／玩法对照仍待验证。下一功能批次从 0/3 开始。
+
+## 多选单位的携物子组（已批次验证，仍有待验项）
 
 路径：`src/game_subgroup.h`、`src/game_view.cpp`、`src/game_selection_panel.cpp`、`src/lan_actions.h`、`src/lan_actions.cpp`、`src/lan_action_encoder.cpp`、`src/lan_simulation.h`、`src/lan_simulation.cpp`、`tests/browser_tests.cpp`、`tests/order_queue_tests.cpp`、`docs/selection-panel.md`。实验局域网子组命令携带发送时的成员名单，执行时复核选区与控制权；该私有动作要求两端使用相同版本，经典报文不变。同类型空背包单位归为一组，携物单位分别成为子组；Tab、反向切换、头像点击／高亮和子组命令使用相同的实时背包分组。依据[暴雪原版子组说明](https://classic.battle.net/war3/basics/specialcommands.shtml)中的步兵携物示例；形态与完整排序仍待对照。
 
 必要检查：Win32 Release 客户端及 browser 目标编译通过；`war3_browser_tests <data-root> <scratch> selection_inventory_subgroups` 1 通过／0 失败，覆盖空背包、两个携物单位及物品移除后的合并。隐藏对局使用四名步兵、其中两名携物；修复前连续 Tab 的子组不变，修复后正向／反向切换及头像点击通过，切换时四人选区保留；日志和渲染帧位于 `tmp/docs-artifacts/war3/inventory-subgroups/`。`war3_order_queue_tests <data-root> <BootyBay.w3m>` 退出 0、40 条 PASS，包含实验子组成员固定、物品移除、混合及撤销控制、重复／截断报文和标准模式拒绝，日志 `tmp/docs-artifacts/war3/inventory-subgroups/order-booty-network.log`。自制子组地图运行完整订单入口因初始选区不满足测试前提而失败（`order-network.log`），不计为通过。合成输入和单会话测试不证明真实窗口、双端联机或原版像素一致，动态物品交互、形态和原版行为待集中验证。本批 3/3，先集中验证。
 
-## 隔岸撤退的载具失效恢复（同任务补充，待批次验证）
+## 隔岸撤退的载具失效恢复（同任务补充，已批次验证）
 
 路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`、`docs/ai.md`。接人载具死亡、易主或改派时，仍由撤退控制且尚未登舱的队员保留回家订单和重试资格；同载具的新登艇命令或停止回调改派不由旧波次取消。
 
 必要检查：Win32 Release 客户端和 CampaignAI 目标编译通过。BootyBay 地形双载具单人／三人夹具中，首艘载具死亡或易主后备用载具接回全部队员，修复前失败、修复后四项各 1 通过／0 失败；停止回调改派、重复登艇改派、首次及排队登艇事件改派载具及既有运输场景共 12 项各 1 通过／0 失败。日志 `tmp/docs-artifacts/war3/retreat-carrier-loss/final.log`。尚未覆盖在舱时失效、无备用载具后的长时间恢复、完整对局和原版策略；该补充属于 `429e183` 同一任务，本批仍为 2/3。
 
-## 隔岸队员的运输撤退（待批次验证）
+## 隔岸队员的运输撤退（已批次验证，仍有待验项）
 
 路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`src/session_ai_transport.cpp`、`src/session_ai_snapshot.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`、`tests/clock_tests.cpp`、`docs/ai.md`。对岸队员撤退时，空闲载具按容量分波接回；返程与进攻波次分开，重复撤退保留当前波次，基地变化时重新规划，命令回调改派的队员或载具不再由旧波次接管。AI 策略快照写 SAIS v3，读取 v1/v2 时返程标记默认为空；旧客户端不能读取 v3。
 
 必要检查：Win32 Release 客户端、CampaignAI 和 clock 目标编译通过。BootyBay 地形隔离夹具的飞艇／船舶返程、低血、重复指令、多波、无载具、队员／载具改派、接人及停止回调、途中换基地、暂停恢复、连续换基地及航行中再次换基地，以及已有进攻运输回归共 19 个进程各 1 通过／0 失败；AI 状态快照字段往返与合成 v1/v2 读取 1 通过／0 失败。结果 `tmp/docs-artifacts/war3/island-landed-retreat/verification.log`。夹具预置队员与载具，无法证明自然经济或完整对局；真实返程过程存档恢复、死亡／易主、复杂回调、长期等待、地图外基地、多人及原版策略仍待验证。本批 2/3。
 
-## 集结点查询的无效单位句柄（待批次验证）
+## 集结点查询的无效单位句柄（已批次验证，仍有待验项）
 
 路径：`src/session_production.cpp`、`tests/construction_tests.cpp`。GetUnitRallyPoint、GetUnitRallyUnit、GetUnitRallyDestructable 对空、失效或错误类型单位返回对应的空句柄，避免中断地图脚本；有效查询保留原有目标逻辑。固定 1.27 原版入口分别为 `0x6f1e64c0`、`0x6f1e6530`、`0x6f1e63f0`，单位解析失败直接返回零。
 
