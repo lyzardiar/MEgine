@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 同来源攻击毒刷新（本批 2/3，待批次验证）
+
+路径：`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`。同一攻击者使用同一技能反复命中时刷新已有毒剂量并保留其周期，不再重复叠加；不同攻击者保留独立剂量。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明同一单位重复攻击不增加毒伤，而不同单位可叠加。
+
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> poison-stack` 修复前因同源额外剂量失败，修复后退出 0、1 通过／0 失败，覆盖真实弹道、持续时间刷新、周期伤害和第二来源叠加。日志 `tmp/docs-artifacts/war3/build-tools/poison-stack-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。不同技能共用状态、来源易主或复活、等级改变、毒周期刷新时序及同类型不同来源的固定版行为仍待对照；与后续任务集中验证。
+
 ## 攻击毒与魔法免疫（本批 1/3，待批次验证）
 
 路径：`src/session_weapon_effects.cpp`、`src/session_arrow_status.cpp`、`src/session_spell_effects.cpp`、`src/session_damage.cpp`、`src/session.h`、`src/spells.h`、`tests/passive_tests.cpp`。普通被动攻击毒可感染魔免有机单位并造成周期伤害；单独标识该伤害，保留普通脚本毒伤、寄生虫及毒箭既有魔免规则。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 将普通毒列为可作用于魔免单位的物理能力。
