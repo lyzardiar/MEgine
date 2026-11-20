@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 整数游戏状态 NOT_EQUAL 事件（本批 2/3，待集中验证）
+
+路径：`src/session_callbacks.cpp`、`tests/clock_tests.cpp`。整数游戏状态的 `NOT_EQUAL` 事件在状态值每次实际变化时派发，同值写入不派发；保留状态快照匹配位和既有重入版本检查。固定版整数状态事件处理 `0x6f25ed00` 调用 `0x6f259e60`，后者对 `NOT_EQUAL` 无条件返回真；状态写入的 `0x6f10d5d0` 对同值不通知。此特例不推广到玩家、单位、变量或浮点游戏状态。
+
+必要检查：Win32 Release `war3_clock_tests` 构建通过；`WAR3_CLOCK_FILTER=recovery_bundle_restores_game_state_events war3_clock_tests <data-root> <scratch>` 修复前失败，修复后退出 0、1 通过／0 失败，覆盖恢复前后连续改变、回到阈值、重复同值、事件句柄和其他比较条件。日志 `tmp/docs-artifacts/war3/build-tools/integer-unequal-{before,after}.log`。原版动态加载、嵌套回调和实际存档仍待对照，集中验证按批次进行。
+
 ## 魔免召唤物抵抗驱散伤害（本批 1/3，待集中验证）
 
 路径：`src/session_caster_spells.cpp`、`src/session_magic_consumption.cpp`、`tests/consumption_tests.cpp`。范围驱散、自爆及吞噬魔法在移除状态前记录目标魔免，跳过对魔免召唤物的附加伤害；没有其他有效效果时吞噬魔法不产生收益。普通敌方召唤物和友方召唤物沿用既有伤害规则。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明魔免召唤物不受驱散伤害；幻象及各魔免来源的完整原版规则仍待对照。

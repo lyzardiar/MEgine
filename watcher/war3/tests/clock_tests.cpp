@@ -2831,6 +2831,9 @@ endfunction
         auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
  trigger clockTrigger = null
  trigger integerTrigger = null
+ trigger unequalTrigger = null
+ event unequalEvent = null
+ integer unequalHits = 0
  event clockEvent = null
  event integerEvent = null
  integer clockHits = 0
@@ -2841,6 +2844,9 @@ endfunction
  endfunction
  function integerAction takes nothing returns nothing
  set integerHits = integerHits + 1
+ endfunction
+ function unequalAction takes nothing returns nothing
+ set unequalHits = unequalHits + 1
  endfunction
  function config takes nothing returns nothing
  endfunction
@@ -2853,8 +2859,11 @@ endfunction
  set integerTrigger = CreateTrigger()
  set integerEvent = TriggerRegisterGameStateEvent(integerTrigger, GAME_STATE_DIVINE_INTERVENTION, GREATER_THAN_OR_EQUAL, 5.)
  call TriggerAddAction(integerTrigger, function integerAction)
+ set unequalTrigger = CreateTrigger()
+ set unequalEvent = TriggerRegisterGameStateEvent(unequalTrigger, GAME_STATE_DIVINE_INTERVENTION, NOT_EQUAL, 5.)
+ call TriggerAddAction(unequalTrigger, function unequalAction)
  endfunction
- )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"game-state-event.j",source,"game state recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());auto& a=original->runtime();auto& b=target->runtime();require(b.global("clockEvent").bits==ids.at(a.global("clockEvent").bits) && b.global("integerEvent").bits==ids.at(a.global("integerEvent").bits),"Game state event handles differ");require(b.invoke("GetIntegerGameState",std::array{b.global("GAME_STATE_DIVINE_INTERVENTION")}).bits==3,"Integer game state differs");for(auto* vm:{&a,&b}){vm->invoke("SetFloatGameState",std::array{vm->global("GAME_STATE_TIME_OF_DAY"),vm->real(real(7))});vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(6)});require(vm->global("clockHits").bits==1 && vm->global("integerHits").bits==1,"Recovered game state event did not fire");vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(7)});require(vm->global("integerHits").bits==1,"Integer state event fired twice while matched");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"game-state-event.j",source,"game state recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());auto& a=original->runtime();auto& b=target->runtime();require(b.global("clockEvent").bits==ids.at(a.global("clockEvent").bits) && b.global("integerEvent").bits==ids.at(a.global("integerEvent").bits) && b.global("unequalEvent").bits==ids.at(a.global("unequalEvent").bits),"Game state event handles differ");require(b.invoke("GetIntegerGameState",std::array{b.global("GAME_STATE_DIVINE_INTERVENTION")}).bits==3,"Integer game state differs");for(auto* vm:{&a,&b}){vm->invoke("SetFloatGameState",std::array{vm->global("GAME_STATE_TIME_OF_DAY"),vm->real(real(7))});vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(6)});require(vm->global("clockHits").bits==1 && vm->global("integerHits").bits==1,"Recovered game state event did not fire");vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(7)});require(vm->global("integerHits").bits==1 && vm->global("unequalHits").bits==2,"Integer state change events differ");vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(5)});vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(3)});vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(3)});require(vm->global("unequalHits").bits==4,"Integer NOT_EQUAL event did not track distinct changes");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
     test("invalid_limitop_events_recover_without_firing",[&]{
         auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals

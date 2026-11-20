@@ -50,7 +50,7 @@ void ScriptSession::dispatchDzSync(unsigned player,std::string_view prefix,std::
 std::optional<std::pair<std::uint32_t,std::string>> ScriptSession::currentDzSync() const{if(contexts_.empty() || !contexts_.back().dzSync)return {};return std::pair{contexts_.back().triggerPlayer,contexts_.back().customText};}
 void ScriptSession::setIntegerGameState(unsigned state,std::int32_t value) {
     if(state>=integerGameStates_.size() || integerGameStates_[state]==value)return;if(integerGameStateRevision_[state]==UINT64_MAX)throw std::runtime_error("Integer game state revision exhausted");integerGameStates_[state]=value;auto revision=++integerGameStateRevision_[state];std::vector<std::uint32_t> pending;
-    for(auto id:eventHandles_)if(alive(id,NativeKind::Event)){auto& event=std::get<ScriptEvent>(objects_[id-handleBase].state);if(event.kind!=ScriptEvent::Kind::IntegerGameState || event.target!=state)continue;bool matched=stateCompare(float(value),std::bit_cast<float>(event.limit.bits()),event.comparison);if(!event.stateMatched && matched)pending.push_back(id);event.stateMatched=matched;}
+    for(auto id:eventHandles_)if(alive(id,NativeKind::Event)){auto& event=std::get<ScriptEvent>(objects_[id-handleBase].state);if(event.kind!=ScriptEvent::Kind::IntegerGameState || event.target!=state)continue;bool matched=stateCompare(float(value),std::bit_cast<float>(event.limit.bits()),event.comparison);if(event.comparison==5 || (!event.stateMatched && matched))pending.push_back(id);event.stateMatched=matched;}
     for(auto id:pending){if(integerGameStateRevision_[state]!=revision)break;fire(id);}
 }
 std::vector<std::uint32_t> ScriptSession::unitEventSnapshot(unsigned owner,unsigned playerEvent,std::uint32_t unit,unsigned unitEventId) {
