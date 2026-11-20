@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## Shift 排队停止和保持（待批次验证）
+
+路径：`src/player_commands.cpp`、`src/game_commands.cpp`、`src/game_view.cpp`、`tests/order_queue_tests.cpp`、`docs/subgroup-order.md`。点击及热键保留 Shift 状态，Stop／Hold 进入既有玩家命令队列，经典和实验联机沿用既有排队位与成员校验；无 Shift 命令仍立即执行并清除旧队列。依据[暴雪命令说明](https://classic.battle.net/war3/basics/specialcommands.shtml)中的排队停止和保持。已有 SPQO 快照结构可表示这两种命令，旧构建会拒绝包含它们的队列。
+
+必要检查：Win32 Release 客户端和订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> stop-hold-queue` 为 2 通过／0 失败，覆盖移动中排队、停止后续移动、保持状态，以及标准／实验子组单会话的编码、入队、执行和成员范围。隐藏对局的 Shift+S、Shift+H 使用订单事件和生命值标记验证单位到达后执行，不带 Shift 的 S／H 即时停止对照通过。首次 Shift+S 断言因停止后的自然回血失败，修正期望区间后复跑通过；日志位于 `tmp/docs-artifacts/war3/stop-hold-queue/`。Shift 鼠标点击、回调改令、SPQO 实际往返、真实双端、原版保持后续队列及事件时序待集中验证或原版对照。本批 3/3，提交后先集中验证。
+
 ## 空格键回溯小地图提示（待批次验证）
 
 路径：`src/recent_ping_history.h`、`src/game_view.h`、`src/game_view.cpp`、`tests/browser_tests.cpp`、`docs/game-help.md`。对本次视图已接收的小地图提示保留最近八条，空格键从新到旧循环，新提示重置回溯位置；保持既有攻击、盟友及脚本 ping 来源。暴雪[操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)描述最多八条传讯，但普通 ping 是否属于原版传讯、末尾循环和重置时机尚未实机对照。
