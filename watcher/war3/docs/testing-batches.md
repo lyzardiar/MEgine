@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 保持位置时不自动治疗（待批次验证）
+
+路径：`src/session_autocast.cpp`、`tests/caster_tests.cpp`、`docs/human-casters.md`。保持位置的单位不自动施放 Heal，手动施法和其他自动技能保留；依据[暴雪牧师说明](https://classic.battle.net/war3/human/units/priest.shtml)。
+
+必要检查：Win32 Release 客户端与 caster 目标编译通过；`war3_caster_tests <data-root> <fixture> heal-hold-autocast` 退出 0、1 通过／0 失败，覆盖真实牧师驻守、手动治疗、停止后自动恢复；修复前驻守时发生自动治疗。日志位于 `tmp/docs-artifacts/war3/heal-hold/` 与 `tmp/docs-artifacts/war3/caster-spells/`。自定义 Heal 别名、其他自动技能、指令重入及原版时序仍待验证或对照。本批 1/3。
+
 ## 石像形态、维修费栏与变形术批次（已批次验证，仍有待验项）
 
 范围：`b35f092`、`0644af6`、`1a17b5c`，集成版本 `1a17b5c`。Win32 Release 客户端、undead-forms、harvest、morph、clock 目标编译通过；重新生成对应地图夹具。undead-forms 默认入口退出 0、3 通过／0 失败；morph 的 `polymorph-summoned` 和默认入口各退出 0、1 通过／0 失败；harvest 的 `upkeep-hud`、`upkeep-usage-short`、`upkeep-usage-zero`、`upkeep-short-tax`、`upkeep-unsorted`、`mine-paused` 与默认入口各退出 0、输出 1 条 PASS；clock 的 `food_callbacks_do_not_dispatch_stale_capacity`、`player_state_snapshot_preserves_all_players_transactionally`、`unit_core_restores_hero_abilities_equipment_and_vitals`、`recovery_bundle_rebuilds_component_graph_but_blocks_main` 各退出 0、1 通过／0 失败。共 14 个进程、16 条 PASS；部分 harvest 入口不输出 RESULT。日志位于 `tmp/docs-artifacts/war3/batch-forms-upkeep-morph/`。

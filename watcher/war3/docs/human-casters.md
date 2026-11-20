@@ -37,3 +37,5 @@ cmake --build --preset release --target war3 --parallel 8
 ~~~
 
 构建日志为tmp/docs-artifacts/war3/human-casters/product-build-final.log。阶段合并手动/自动盗取、原优先级与来源/持续状态迁移、接收者/已有状态/魔免、缓存失效与回调；反馈普通/英雄/召唤/实际魔法及同次命中/全部攻击组合；锁镣多来源/控制/伤害/光束/打断/驱散/死亡重启；乌云源目标/建筑武器/重叠/退出/移除/取消、库存目标/次数/费用/冷却/使用事件；三图长局、原UI/GPU/声音/AI、帧耗时/内存和连续切图释放。只做开发必需编译与差异审查，不执行新增专项、旧全套或性能基准。
+
+保持位置时牧师不自动施放治疗，手动治疗仍可用；停止保持位置后恢复自动治疗。依据[暴雪牧师说明](https://classic.battle.net/war3/human/units/priest.shtml)。原版自动施法选择与状态切换时序仍待对照。
