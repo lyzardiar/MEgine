@@ -810,7 +810,7 @@ class ScriptSession {
     float attackSpeed(const UnitState& unit);
     float attackDamageBeforeProc(const UnitState& unit,const WeaponDefinition& weapon,float damage);
     void carapaceReflect(const CombatProjectile& projectile,float damage,const PassiveInfo& passive,std::uint64_t attackerRevision,std::uint64_t defenderRevision);
-    void attackPassives(const CombatProjectile& projectile,float damage,const AuraBonuses& defense,std::uint64_t sourceRevision,std::uint64_t targetRevision);
+    void attackPassives(const CombatProjectile& projectile,float damage,const AuraBonuses& defense,float spikes,std::uint64_t sourceRevision,std::uint64_t targetRevision);
     std::map<std::pair<std::uint32_t,std::uint32_t>,std::uint32_t> abilityHandles_;
     std::map<std::tuple<std::uint32_t,unsigned,std::string>,std::string> abilityUiStrings_;
     std::map<std::uint64_t,SpellMissile> spellMissiles_;

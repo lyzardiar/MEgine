@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 荆棘与尖刺升级反伤分离（上一任务补充，待批次验证）
+
+路径：`src/session.h`、`src/session_projectiles.cpp`、`src/session_attack_passives.cpp`、`tests/passive_tests.cpp`。`1687bb2` 的魔免检查意外连同兽族建筑尖刺升级反伤一起屏蔽；本补充在命中前分别快照光环和尖刺升级反伤，魔免仅屏蔽光环部分，恢复尖刺升级此前行为。固定版尖刺升级对魔免的真实规则仍需对照，此处不将历史行为当作原版结论。
+
+必要检查：由于内部函数签名变化，Win32 Release `war3_passive_tests` 干净构建通过；`war3_passive_tests <data-root> <fixture> thorns-immune` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖普通／魔免攻击者、移除魔免后的荆棘反伤和实际研究后的兽族地堡尖刺反伤。日志 `tmp/docs-artifacts/war3/build-tools/spikes-separation-{before,after}.log`。原版混合反伤、研究在伤害回调中变化及实际对局仍待对照；补充提交不另计批次数，后续随相关批次验证。
+
 ## 妖术与光环批次（已批次验证，仍有待验项）
 
 范围：`389d7df`、`72a3b76`、`1687bb2`，集成版本 `1687bb2`。Win32 Release 客户端、control、passive 目标构建通过；`hex-summon`、`item-combined-control-family`、`invisible-aura`、`thorns-immune` 各 1 通过／0 失败，`player-aura` 3 通过／0 失败，`hidden-book` 4 通过／0 失败，共 6 个进程、11 项通过。构建和测试日志位于 `tmp/docs-artifacts/war3/build-tools/batch-hex-aura-thorns-*.log`；control 夹具 `tmp/docs-artifacts/war3/mana-flare-pool/fixture.w3m`，passive 夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。
