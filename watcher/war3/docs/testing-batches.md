@@ -1,18 +1,26 @@
 # 独立客户端测试队列
 
-## 变形术拒绝召唤单位（待批次验证）
+## 石像形态、维修费栏与变形术批次（已批次验证，仍有待验项）
+
+范围：`b35f092`、`0644af6`、`1a17b5c`，集成版本 `1a17b5c`。Win32 Release 客户端、undead-forms、harvest、morph、clock 目标编译通过；重新生成对应地图夹具。undead-forms 默认入口退出 0、3 通过／0 失败；morph 的 `polymorph-summoned` 和默认入口各退出 0、1 通过／0 失败；harvest 的 `upkeep-hud`、`upkeep-usage-short`、`upkeep-usage-zero`、`upkeep-short-tax`、`upkeep-unsorted`、`mine-paused` 与默认入口各退出 0、输出 1 条 PASS；clock 的 `food_callbacks_do_not_dispatch_stale_capacity`、`player_state_snapshot_preserves_all_players_transactionally`、`unit_core_restores_hero_abilities_equipment_and_vitals`、`recovery_bundle_rebuilds_component_graph_but_blocks_main` 各退出 0、1 通过／0 失败。共 14 个进程、16 条 PASS；部分 harvest 入口不输出 RESULT。日志位于 `tmp/docs-artifacts/war3/batch-forms-upkeep-morph/`。
+
+执行：`war3_undead_forms_tests <data-root> <forms-fixture>`、`war3_morph_tests <data-root> <morph-fixture> [模式]`、`war3_harvest_tests <data-root> <harvest-fixture> [模式]`；四种自定义维修费用 `generate-harvest-fixture.py --upkeep-usage short|zero|short-tax|unsorted` 分别生成夹具。clock 以 `WAR3_CLOCK_FILTER=<完整模式> war3_clock_tests <data-root> <scratch>` 独立运行。
+
+同一集成客户端在隔离隐藏对局中分别将已用人口设为 0、51、81；三个 1258×904 已呈现游戏帧显示绿色无维修、黄色低维修、红色高维修文本，未见与相邻资源栏重叠或裁切。临时地图、生成脚本、日志与截图位于 `tmp/docs-artifacts/war3/batch-forms-upkeep-morph/hud-visual/`；该地图无单位和视野，不能证明原版同场景或其他分辨率一致。石像中断与共享冷却、维修费观察者与特殊数字解析、变形术定时生命与原版召唤分类、弹道事件及真实对局仍待对照；组件快照不证明修复后实际产品读档。下一功能批次从 0/3 开始。
+
+## 变形术拒绝召唤单位（已批次验证，仍有待验项）
 
 路径：`src/session_control_spells.cpp`、`tests/morph_tests.cpp`、`docs/morph-cyclone.md`。变形术目标筛选排除召唤单位，普通合法目标仍可变形；依据[暴雪女巫说明](https://classic.battle.net/war3/human/units/sorceress.shtml)。
 
 必要检查：Win32 Release 客户端与 morph 目标编译通过；`war3_morph_tests <data-root> <fixture> polymorph-summoned` 退出 0、1 通过／0 失败，覆盖真实水元素、拒绝时法力及冷却、普通敌方目标正对照；修复前错误接受召唤物。日志位于 `tmp/docs-artifacts/war3/morph-cyclone/`。召唤类别覆盖、衍生能力、弹道途中类别变化、Hex 与原版事件时序仍待验证或对照。本批 3/3，提交后集中验证。
 
-## 维修费档位、版本阈值与 HUD 源文字（待批次验证）
+## 维修费档位、版本阈值与 HUD 源文字（已批次验证，仍有待验项）
 
 路径：`src/session.h`、`src/session_food.cpp`、`src/game_view.cpp`、`tests/harvest_tests.cpp`、`tests/generate-harvest-fixture.py`、`docs/economy.md`。顶部栏按已用人口档位显示原 `GlobalStrings.fdf` 文案及颜色；默认阈值按游戏版本选 ROC／TFT，自定义短列表缺项补零、遇零停止并按输入顺序比较。固定版 `0x6f02ac00` 选择版本阈值，`0x6f3b68e5–0x6f3b690b` 与 `0x6f241d40–0x6f241d67` 使用人口档位，`0x6f3b6aa7–0x6f3b6ac0` 选择 HUD 文案。
 
 必要检查：Win32 Release 客户端和 harvest 目标编译通过；`war3_harvest_tests <data-root> <fixture> upkeep-hud|upkeep-usage-short|upkeep-usage-zero|upkeep-short-tax|upkeep-unsorted` 各退出 0、1 通过／0 失败，分别覆盖两版本阈值、税率覆盖、源文案颜色、短列表、零终止、非递增项以及真实单位计食触发；后三类使用 `generate-harvest-fixture.py --upkeep-usage` 对应夹具。日志位于 `tmp/docs-artifacts/war3/upkeep-hud/`。观察者显示、多色文字、原版窗口位置、空配置和特殊数字解析仍待验证或对照。本批 2/3。
 
-## 石像形态冷却中允许退出（待批次验证）
+## 石像形态冷却中允许退出（已批次验证，仍有待验项）
 
 路径：`src/session_unit_forms.cpp`、`src/spells.h`、`src/session_ability_commands.cpp`、`tests/undead_forms_tests.cpp`、`docs/undead-forms.md`。石像形态的返回按钮与真实命令在正向冷却中可用，退出保留再次进入的原冷却；依据[暴雪石像鬼说明](https://classic.battle.net/war3/undead/units/gargoyle.shtml)。
 
