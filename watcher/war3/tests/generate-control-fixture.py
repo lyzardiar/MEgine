@@ -29,7 +29,19 @@ unit conversionSource=null
 unit conversionSummoned=null
 unit devourReentryTarget=null
 unit devourReentryCaster=null
+unit stasisReentryVictim=null
+integer stasisReentryCount=0
 endglobals
+function stasis_reentry_move takes nothing returns nothing
+    set stasisReentryCount=stasisReentryCount+1
+    call SetUnitPosition(stasisReentryVictim,2000,2000)
+endfunction
+function watch_stasis_reentry takes unit trap,unit victim returns nothing
+    local trigger t=CreateTrigger()
+    set stasisReentryVictim=victim
+    call TriggerRegisterUnitEvent(t,trap,EVENT_UNIT_DEATH)
+    call TriggerAddAction(t,function stasis_reentry_move)
+endfunction
 function devour_reentry takes nothing returns nothing
     call SetUnitOwner(devourReentryTarget,Player(0),true)
 endfunction

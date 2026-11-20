@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 静滞陷阱触发摧毁附近陷阱（待批次验证）
+
+路径：`src/session_wards_roar.cpp`、`tests/control_tests.cpp`、`tests/generate-control-fixture.py`、`docs/wards-roar.md`。静滞陷阱触发时通过单位死亡流程摧毁范围内其他静滞陷阱，回调后重新核验存活与范围；依据[暴雪巫医说明](https://classic.battle.net/war3/orc/units/witchdoctor.shtml)。
+
+必要检查：Win32 Release 客户端及 control 目标编译通过；`war3_control_tests <data-root> <fixture> stasis-destroys-nearby|stasis-reentry-move-victim` 分别退出 0、各 1 通过／0 失败，覆盖真实布置与触发、范围内同阵营及范围外陷阱、死亡回调移走受害者。修复前近处陷阱未死亡；日志位于 `tmp/docs-artifacts/war3/stasis-trap-chain/`。敌对及中立、未布防、碰撞边缘、击杀归因、重入效果顺序和原版动态行为仍待验证或对照。本批 1/3。
+
 ## 影遁反击、施工者死亡与诱捕批次（已批次验证，仍有待验项）
 
 范围：`784ebb5`、`196412e`（同任务补充）、`0fe1f05`、`f04f6b1`（同任务测试补充）、`9646b30`，集成版本 `f04f6b1`。Win32 Release 客户端、stealth、construction、control、clock 目标编译通过。stealth 的 `meld-retaliation`、`meld-retaliation-switch`、`hold-range-buffer`、`hold-min-range`、`meld`、`flow`、`dust`、`tower` 共 8 个进程各 1 通过／0 失败；construction 的 `wisp-building-death`、`wisp-death-remove-building`、`wisp-death-revive-building`、`assist-removal`、`assist-progress`、`build-payment-state`、`build-refund-state` 和默认入口共 8 个进程各退出 0、输出 1 条 PASS；control 的 `ensnare-interrupt-channel`、`flow`、`purge`、`lifecycle`、`autocast`、`item-single-web-sleep` 共 6 个进程各退出 0、1 通过／0 失败；clock 的 `unit_stealth_snapshot_restores_invisibility_and_minimap_flag`、`construction_snapshot_restores_paid_work_and_upgrade`、`attack_projectiles_restore_flight_and_removed_handles` 各退出 0、1 通过／0 失败。合计 25 个有效进程、25 条 PASS；部分 construction 入口不输出 RESULT。日志及新生成夹具位于 `tmp/docs-artifacts/war3/batch-meld-wisp-ensnare/`。
