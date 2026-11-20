@@ -18,7 +18,7 @@ def main():
     parser.add_argument('--tree-targets', choices=['partial', 'invu', 'invulnerable'])
     parser.add_argument('--special-silence', action='store_true')
     parser.add_argument('--invalid-advisor-color', action='store_true')
-    parser.add_argument('--upkeep-usage', choices=['short', 'zero', 'short-tax', 'unsorted'])
+    parser.add_argument('--upkeep-usage', choices=['short', 'zero', 'short-tax', 'unsorted', 'extended'])
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only game installation')
@@ -32,9 +32,11 @@ def main():
     if args.invalid_advisor_color:
         misc += b'[PingColor]\nPingAdvisorColor=invalid\n'
     if args.upkeep_usage:
-        usage = {'short': b'10', 'zero': b'10,0,20', 'short-tax': b'10,20', 'unsorted': b'10,5'}[args.upkeep_usage]
-        rates = b'0,0.3' if args.upkeep_usage == 'short-tax' else b'0,0.3,0.6'
+        usage = {'short': b'10', 'zero': b'10,0,20', 'short-tax': b'10,20', 'unsorted': b'10,5', 'extended': b'10,20,30'}[args.upkeep_usage]
+        rates = b'0,0.3' if args.upkeep_usage == 'short-tax' else b'0,0.306,0.6,0.8' if args.upkeep_usage == 'extended' else b'0,0.3,0.6'
         misc += b'[Misc]\nUpkeepUsage=' + usage + b'\nUpkeepGoldTax=' + rates + b'\n'
+        if args.upkeep_usage == 'extended':
+            misc += b'UpkeepLumberTax=0,0,0.106,0.2\n'
     if misc:
         files['war3mapMisc.txt'] = misc
     if args.tree_targets and args.special_silence:

@@ -343,7 +343,7 @@ class ScriptSession {
     std::shared_ptr<jass::Runtime> preloadCodeOwner(const jass::Value& code) const;
     std::uint64_t preloadGenerationStarted_=0,preloadGenerationElapsed_=0;
     std::vector<std::string> preloadMissing_;
-    std::optional<FrameDefinitions> localized_;
+    std::optional<FrameDefinitions> localized_,infoPanelStrings_;
     std::optional<SourceSettings> localizedHotkeys_;
     std::map<std::uint32_t,std::shared_ptr<ScriptTimerDialog>> timerDialogs_;
     std::array<std::unique_ptr<FogGrid>,16> fogGrids_;
@@ -756,7 +756,7 @@ class ScriptSession {
     std::unordered_map<std::string,float> gameplayNumbers_;
     std::array<std::optional<std::array<float,8>>,7> damageFactors_;
     std::optional<std::array<float,7>> etherealDamageFactors_;
-    struct UpkeepRules {std::array<int,10> usage{};std::array<std::array<int,10>,2> rates{};unsigned usageCount=10;};
+    struct UpkeepRules {std::array<int,10> usage{};std::array<std::array<int,10>,2> rates{},tooltipRates{};unsigned usageCount=10;};
     std::optional<UpkeepRules> upkeepRules_;
     std::vector<int> heroThresholds_;
     std::map<std::uint32_t,std::shared_ptr<ScriptQuest>> quests_;
@@ -1058,6 +1058,7 @@ class ScriptSession {
     void removeItem(std::uint32_t item);
     void consumeItem(std::uint32_t item);
     unsigned upkeepLevel(unsigned owner) const;
+    std::string upkeepTierLabel(unsigned level);
     void refreshUpkeep(unsigned owner);
     const SourceSettings& gameplay();
     float gameplayNumber(const char* key,float fallback);
@@ -1160,6 +1161,7 @@ class ScriptSession {
     World& requireWorld();
 public:
     std::string upkeepLabel(unsigned owner);
+    std::pair<std::string,std::string> resourceTooltip(unsigned owner,unsigned index);
     bool validOrderTarget(std::uint32_t id) const {return alive(id,NativeKind::Unit) || alive(id,NativeKind::Item) || alive(id,NativeKind::Destructable);}
     void setExternalExecute(const void* owner,std::function<bool(const std::string&)> handler);
     std::string unitUiField(std::uint32_t type,const char* field) {return definitions().field(type,"UnitUI",field);}

@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 资源栏悬停提示（待批次验证）
+
+路径：`src/game_view.cpp`、`src/session.h`、`src/session_food.cpp`、`tests/harvest_tests.cpp`、`tests/generate-harvest-fixture.py`。黄金、木材、食物和维修费栏使用源字符串显示提示；维修费列表按源门槛、人口上限和税率生成，扩展档位复用 HUD 标签。固定版静态路径显示短列表遇零停止，提示税率向零截断，玩家税率按四舍五入处理。
+
+本次快速检查：扩展夹具生成成功，Python 语法检查和 `git diff --check` 通过；Impeccable changed 检测无发现。本机缺少缓存所指的 CMake、MSVC 和 Windows SDK，本次未编译或运行新测试。批次执行 Win32 Release 客户端及 harvest 目标构建，生成默认、`--upkeep-usage short`、`--upkeep-usage extended` 夹具，分别运行 `war3_harvest_tests <data-root> <fixture> resource-tooltip-default|resource-tooltip-short|resource-tooltip-extended`；扩展夹具的小数税率区分提示截断与玩家税率取整。还需覆盖极值脚本税率、人口上限边界、地图覆盖文案及原版界面与多个分辨率的悬停范围、定位、宽度、字体和换行。本批 2/3。
+
 ## 保持位置时不自动治疗（待批次验证）
 
 路径：`src/session_autocast.cpp`、`tests/caster_tests.cpp`、`docs/human-casters.md`。保持位置的单位不自动施放 Heal，手动施法和其他自动技能保留；依据[暴雪牧师说明](https://classic.battle.net/war3/human/units/priest.shtml)。
