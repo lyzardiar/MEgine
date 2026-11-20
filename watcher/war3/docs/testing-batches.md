@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 不可通行起点的追击建区（本批 1/3，待批次验证）
+
+路径：`src/world_path.cpp`。目标范围回退在构建整图连通区前检查起点；原有区域标签对不可通行起点本就为零，结果保持为空。
+
+必要检查：Win32 Release 重建并以 Human08 原图对不可达船下真实玩家命令；人为将迫击炮碰撞半径设为 512，且在命令间变更远处路径格，修复前约 12.3–12.6 ms，修复后约 0.054–0.065 ms，均拒绝命令；正常碰撞 24 以及 64、128 的对照仍按既有结果拒绝。日志 `tmp/docs-artifacts/war3/path-review/chase-{new-b,production}.log`。这是诊断环境中单次命令时间，不是整局帧率；开放地图可通行大半径的建区成本及群体动态障碍仍待批次测量。
+
 ## 面具、火球与目标范围寻路批次（已执行，仍有待验项）
 
 范围：`1348104`、`0ee8de6`、`b5c6ae7`，集成版本 `b5c6ae7`。Win32 Release 公共头修改后 core 与 Human08 测试干净构建，再构建客户端及 passive、spell、clock、transport、harvest、waygate、caster、AI、world 目标通过。17 个测试进程均退出 0、各输出一条通过结果：面具与火球、驱散球及毒球、手动／自动箭、面具新旧弹道恢复、Human08 原图攻击范围、登船路径、采矿入口与阻塞恢复、树木部分路径、月井交互、目标攻击与登船／传送门取消回调、传送门配置。日志和执行脚本在 `tmp/docs-artifacts/war3/batch-mask-fire-path/` 与 `tmp/docs-artifacts/war3/build-tools/run-batch-mask-fire-path.mjs`。
