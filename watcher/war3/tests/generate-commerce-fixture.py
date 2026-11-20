@@ -229,6 +229,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data-root', required=True, type=pathlib.Path)
     parser.add_argument('--output', type=pathlib.Path, default=ROOT/'tmp/docs-artifacts/war3/commerce-fixture.w3m')
+    parser.add_argument('--low-food-ceiling', action='store_true')
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only game installation')
@@ -238,6 +239,8 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
+    if args.low_food_ceiling:
+        files['war3mapMisc.txt'] = b'[Misc]\nFoodCeiling=10\n'
     ability_id = b'A0IL'
     changes = b''.join(field + struct.pack('<III f', 2, 1, slot, value) + ability_id for field, slot, value in [(b'Iild', 1, .5), (b'Iilw', 2, 3.), (b'adur', 0, 2.), (b'ahdu', 0, 2.)])
     files['war3map.w3a'] = struct.pack('<III', 2, 0, 1) + b'AIil' + ability_id + struct.pack('<I', 4) + changes

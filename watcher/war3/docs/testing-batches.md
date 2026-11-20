@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 生产和购买遵守地图人口上限（待批次验证）
+
+路径：`src/session_commerce.cpp`、`src/session_production.cpp`、`src/session_building_upgrades.cpp`、`src/session_revival.cpp`、`tests/commerce_tests.cpp`、`tests/generate-commerce-fixture.py`、`tests/revival_tests.cpp`、`tests/generate-revival-fixture.py`。普通建造和单位购买、训练／复活队首、建筑升级及酒馆唤醒检查玩家有效人口容量，包含地图 `FoodCeiling`；人口费用为零仍跳过检查，非零人口相加和比较按固定版共享许可使用 32 位无符号语义，保持现有排队与扣费时机。唤醒资格使用英雄类型人口费用，另先执行有符号全局上限检查；实际计数仍按实例状态处理。固定版 CAbilityTrain、SellUnit、SellUnitDynamic、Upgrade、Revive 及建造能力的虚表通过 `0x6f3fc510→0x6f248a60→0x6f247ce0`。
+
+必要检查：Win32 Release 客户端、commerce、revival 目标构建通过；使用各自生成器的 `--low-food-ceiling` 创建上限为 10 的夹具。`war3_commerce_tests <data-root> <fixture> food-ceiling` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖训练排队阻塞与恢复、购买拒绝无扣费及边界成功；`war3_revival_tests <data-root> <fixture> awaken-food-ceiling` 类型费用修复前失败、修复后退出 0、1 通过／0 失败，覆盖普通越限、有符号全局检查、关闭实例人口计数及边界成功。构建日志和夹具位于 `tmp/docs-artifacts/war3/build-tools/food-ceiling-final-build.log`、`tmp/docs-artifacts/war3/food-ceiling/`。建筑、升级、祭坛复活、唤醒零费用需批次定向验证；原版作弊绕过标志、升级的类型与实例费用差异、回绕边界、队列时序及真实对局仍待验证。本批 1/3。
+
 ## 驻守治疗与资源栏批次（已批次验证，仍有待验项）
 
 范围：`570a765`、`83c0c29`、`6d5c50e`，集成版本 `6d5c50e`。使用 VS 2022 x86、Ninja 和隔离 SDK 干净构建 Win32 Release 客户端、harvest、caster 目标，退出 0，日志 `tmp/docs-artifacts/war3/build-tools/batch-resource-clean-build.log`。生成默认、短列表、扩展列表采集夹具；资源提示三个入口、`upkeep-hud`、短列表、零终止、短税率、非递增门槛及 `heal-hold-autocast` 共 9 个进程各退出 0、1 通过／0 失败；`mine-paused`、harvest 默认和 caster 默认共 3 个进程退出 0、各输出 PASS。共 12 个进程成功。命令分别为 `war3_harvest_tests <data-root> <fixture> <mode>`、`war3_caster_tests <data-root> <fixture> [heal-hold-autocast]`，对应夹具和模式见上述条目。
