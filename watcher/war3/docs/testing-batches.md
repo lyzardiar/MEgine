@@ -1,18 +1,26 @@
 # 独立客户端测试队列
 
-## 诱捕打断已开始的引导（待批次验证）
+## 影遁反击、施工者死亡与诱捕批次（已批次验证，仍有待验项）
+
+范围：`784ebb5`、`196412e`（同任务补充）、`0fe1f05`、`f04f6b1`（同任务测试补充）、`9646b30`，集成版本 `f04f6b1`。Win32 Release 客户端、stealth、construction、control、clock 目标编译通过。stealth 的 `meld-retaliation`、`meld-retaliation-switch`、`hold-range-buffer`、`hold-min-range`、`meld`、`flow`、`dust`、`tower` 共 8 个进程各 1 通过／0 失败；construction 的 `wisp-building-death`、`wisp-death-remove-building`、`wisp-death-revive-building`、`assist-removal`、`assist-progress`、`build-payment-state`、`build-refund-state` 和默认入口共 8 个进程各退出 0、输出 1 条 PASS；control 的 `ensnare-interrupt-channel`、`flow`、`purge`、`lifecycle`、`autocast`、`item-single-web-sleep` 共 6 个进程各退出 0、1 通过／0 失败；clock 的 `unit_stealth_snapshot_restores_invisibility_and_minimap_flag`、`construction_snapshot_restores_paid_work_and_upgrade`、`attack_projectiles_restore_flight_and_removed_handles` 各退出 0、1 通过／0 失败。合计 25 个有效进程、25 条 PASS；部分 construction 入口不输出 RESULT。日志及新生成夹具位于 `tmp/docs-artifacts/war3/batch-meld-wisp-ensnare/`。
+
+执行命令：`war3_stealth_tests <data-root> <stealth-fixture> <模式>`、`war3_construction_tests <data-root> <construction-fixture> [模式]`、`war3_control_tests <data-root> <control-fixture> <模式>`，每模式独立执行；clock 使用 `WAR3_CLOCK_FILTER=<模式> war3_clock_tests <data-root> <scratch>`。自动蛛网使用 `generate-control-fixture.py --web-unresearched` 生成的夹具；单技能物品使用 `tmp/docs-artifacts/war3/hero-item-batch/fixture.w3m`。默认控制夹具预先研究蛛网且不含定制物品，错误夹具产生的失败日志已保留，换用匹配夹具后通过。
+
+快照测试为隔离组件恢复，不证明三项新行为后的产品存读档；真实原版窗口和双端、影遁原版响应时机、施工死亡归因及非零人口事件重入、诱捕结束事件与后续波次仍待对照或验证。下一功能批次从 0/3 开始。
+
+## 诱捕打断已开始的引导（已批次验证，仍有待验项）
 
 路径：`src/session_spell_effects.cpp`、`tests/control_tests.cpp`、`docs/control-spells.md`。诱捕效果成功应用后结束目标正在进行的引导并保留网状态；依据[暴雪掠夺者说明](https://classic.battle.net/war3/orc/units/raider.shtml)。
 
 必要检查：Win32 Release 客户端及 control 目标编译通过；`war3_control_tests <data-root> <fixture> ensnare-interrupt-channel` 退出 0、1 通过／0 失败，使用暴风雪真实引导与诱捕弹道；修复前因引导未终止失败。日志位于 `tmp/docs-artifacts/war3/ensnare-interrupt/`。后续波次、结束事件和回调、无效或免疫目标、蛛网、施法前摇及原版时序仍待验证或对照。本批 3/3，提交后集中验证。
 
-## 上古建筑施工者随建筑死亡（待批次验证）
+## 上古建筑施工者随建筑死亡（已批次验证，仍有待验项）
 
 路径：`src/session_callbacks.cpp`、`tests/construction_tests.cpp`、`docs/construction.md`。施工中的上古建筑死亡时，通过正常单位死亡流程处理仍在建筑内的原小精灵；普通建筑死亡和取消施工保留释放行为。建筑人口结算后重新核验建筑及工人状态，防止回调中覆盖新状态。依据[暴雪小精灵说明](https://classic.battle.net/war3/nightelf/units/wisp.shtml)。
 
 必要检查：Win32 Release 客户端和 construction 目标编译通过；`war3_construction_tests <data-root> <fixture> wisp-building-death` 退出 0、1 通过／0 失败，覆盖真实建造、普通建筑受毁、上古建筑取消、上古建筑受毁、小精灵死亡事件一次及当前击杀统计。修复前在上古建筑受毁后小精灵仍存活处失败。日志位于 `tmp/docs-artifacts/war3/wisp-ancient-death/`。补充 `wisp-death-remove-building`、`wisp-death-revive-building`，真实死亡回调分别移除或复活建筑，两项各退出 0、1 通过／0 失败，检查事件及人口不重复结算；日志位于 `tmp/docs-artifacts/war3/batch-meld-wisp-ensnare/`。非零施工人口预留触发的回调、原版击杀归因、经验、悬赏与事件顺序仍待验证或对照。本批 2/3。
 
-## 手动影遁受到武器攻击后反击（待批次验证）
+## 手动影遁受到武器攻击后反击（已批次验证，仍有待验项）
 
 路径：`src/session_projectiles.cpp`、`tests/stealth_tests.cpp`、`docs/stealth-reveal.md`。手动影遁单位被可见敌方直接武器命中且受到正伤害时，在武器射程内选择攻击者并保持位置反击；暂停单位不排入反击，伤害回调后核验双方及防守者战斗状态。依据[暴雪弓箭手说明](https://classic.battle.net/war3/nightelf/units/archer.shtml)的保持位置和回应攻击。
 

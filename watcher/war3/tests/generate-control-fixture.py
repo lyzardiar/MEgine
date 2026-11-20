@@ -134,6 +134,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=ROOT/'tmp/docs-artifacts/war3/control-spells/fixture.w3m')
+    parser.add_argument('--web-unresearched', action='store_true')
     parser.add_argument('--light-targets', choices=['partial', 'invu', 'invulnerable'])
     parser.add_argument('--ensnare-targets', choices=['player', 'player-enemy', 'player-notself'])
     parser.add_argument('--steal-targets', choices=['player', 'player-enemy'])
@@ -148,7 +149,8 @@ def main():
     archive = fixture.mpyq.MPQArchive(io.BytesIO(original[offset:]), listfile=False)
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
-    files['war3map.j'] = SCRIPT.encode('utf-8')
+    script = SCRIPT.replace("    call SetPlayerTechResearched(Player(0),'Ruwb',1)\n", '') if args.web_unresearched else SCRIPT
+    files['war3map.j'] = script.encode('utf-8')
     entries = [(b'AIps', 'air,ground,ward,tree')]
     if args.ensnare_targets:
         targets = dict(player='grou,play', **{'player-enemy': 'grou,play,enem', 'player-notself': 'grou,play,nots'})[args.ensnare_targets]
