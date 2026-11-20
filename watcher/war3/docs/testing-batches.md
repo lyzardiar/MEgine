@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 空格键回溯小地图提示（待批次验证）
+
+路径：`src/recent_ping_history.h`、`src/game_view.h`、`src/game_view.cpp`、`tests/browser_tests.cpp`、`docs/game-help.md`。对本次视图已接收的小地图提示保留最近八条，空格键从新到旧循环，新提示重置回溯位置；保持既有攻击、盟友及脚本 ping 来源。暴雪[操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)描述最多八条传讯，但普通 ping 是否属于原版传讯、末尾循环和重置时机尚未实机对照。
+
+必要检查：Win32 Release 客户端和 browser 目标干净构建通过；`war3_browser_tests <data-root> <scratch> recent_ping_history` 为 1 通过／0 失败，覆盖空历史、九条淘汰、重复 ID、逆序循环及新事件重置。隐藏对局脚本发出三条 ping，四次空格的相机 X 为 512、0、-512、512，Y、最新标记与选区断言通过；日志及夹具位于 `tmp/docs-artifacts/war3/recent-ping-history/`。首次增量构建后的两次对局在首帧前异常退出，干净重建后通过；本机头文件依赖跟踪不完整，前两次不计作通过。当前仅采集视图看到的可视 ping，可能受并发容量及帧间时序影响；建造完成提示、真实攻击／盟友信号、被阻挡输入、原版来源和双端表现待验证。完整历史及游标未持久化，读档后可能从快照中的 ping 部分重建。本批 2/3。
+
 ## 多选英雄按等级排序（待批次验证）
 
 路径：`src/game_subgroup.h`、`src/game_view.h`、`src/game_view.cpp`、`src/game_selection_panel.cpp`、`tests/browser_tests.cpp`、`docs/selection-panel.md`。根据[暴雪子组说明](https://classic.battle.net/war3/basics/specialcommands.shtml)，头像、初始子组及 Tab 循环将英雄放在普通单位前，英雄按等级降序；同级及非英雄保持原相对顺序。命令与实验联机选区仍使用原始顺序。

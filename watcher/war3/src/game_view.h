@@ -4,6 +4,7 @@
 #include "map_input_keys.h"
 #include "map_frame_pointer.h"
 #include "minimap_terrain.h"
+#include "recent_ping_history.h"
 #include "game_preferences.h"
 #include "glue.h"
 #include "scene_streaming.h"
@@ -70,6 +71,7 @@ class GameView {
     std::uint64_t cameraRevision_=0;
     std::uint64_t recentPingId_=0;
     std::optional<std::pair<float,float>> recentPing_;
+    RecentPingHistory recentPingHistory_;
     std::uint64_t last_=0;
     std::unique_ptr<LanSimulation> lanSimulation_;
     std::function<unsigned(const PlayerCommand&)> lanSubmit_;
