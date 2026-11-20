@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 吸血面具与法球优先级（本批 1/3，待批次验证）
+
+路径：`src/passives.h`、`src/combat.h`、`src/session_passive_info.cpp`、`src/session_weapon_effects.cpp`、`src/session_attack_passives.cpp`、`src/session_projectile_snapshot.cpp`、`tests/passive_tests.cpp`、`tests/spell_tests.cpp`、`tests/clock_tests.cpp`。吸血面具的攻击吸血参与现有法球选择，遵循背包顺序及手动／自动箭技能优先级；吸血光环和药剂仍独立结算。暴雪 [Hero Items](https://classic.battle.net/war3/basics/heroitemsartifact.shtml) 明确面具遵循法球规则。
+
+弹道快照升级为 SPRJ v2，发射时保存所选面具效果；读取 v1 时为在途弹道保留旧版命中时读取装备的行为，v1 再保存为 v2 时保留该兼容标志。旧程序不支持读取新增的 v2 快照；发射前摇或在途期间换装的原版时序、目标变形／易主及多弹道仍待对照。
+
+必要检查：公共弹道结构和被动枚举变更后 Win32 Release passive、spell、clock 目标干净构建，随后增量构建通过。`mask-orb-priority` 和 `mask-arrow-priority` 在恢复旧结算的对照下分别因未选中面具吸血和手动箭未覆盖面具失败，修复后各退出 0、1 通过／0 失败；覆盖真实火球／面具顺序、能力禁用、原生能力及手动／自动箭。`mask_projectile_new_and_legacy_recovery` 退出 0、1 通过／0 失败，覆盖真实远程发射、新弹道卸装后恢复、旧 v1 恢复／再保存和卸装、被其他法球覆盖的新弹道以及非法旧版类型；既有弹道恢复、`orb-purge`、`venom-orb-priority`、`venom-arrow-priority` 各退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/mask-*.log`；夹具位于 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`、`spells/fixture.w3m`，clock 使用游戏原图。真实原版对局与 UI 尚未验收，与后续任务集中验证。
+
 ## 人族第六章玩家命令自然胜利回归（已执行，不计功能批次）
 
 路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。在原图中以玩家采矿、训练、攻击与探索命令推进，不直接创建目标或修改生命、计数；Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human06-player-victory` 退出 0、1 通过／0 失败，2033.69 秒到达胜利对话和下一关请求。日志 `tmp/docs-artifacts/war3/human06-player/regression-b.log`；具体范围与未验证项见[战役流程](campaign-flow.md)。这是原图玩法链路的必要探针，不作为独立功能／修复计入批次数。
