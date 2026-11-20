@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 隐身或影遁的光环来源（本批 2/3，待集中验证）
+
+路径：`src/session_auras.cpp`、`tests/passive_tests.cpp`。光环来源处于会话隐身状态时停止刷新光环；已有接收状态沿用当前剩余时间自然到期，显形后恢复刷新。不使用敌方是否能侦测到该单位判断来源状态，也不改变非光环被动效果。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明隐身或影遁时光环不生效。
+
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> invisible-aura` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖真实隐身术、影遁、提供者自身及友军的光环消失和显形后恢复。日志 `tmp/docs-artifacts/war3/build-tools/invisible-aura-{before,after}.log`。固定版消失／恢复时间、侦测、多个来源切换、其他隐身来源及实际对局仍待对照；集中验证按批次进行。
+
 ## 妖术与召唤单位（本批 1/3，待集中验证）
 
 路径：`src/session_control_spells.cpp`、`tests/control_tests.cpp`。妖术与变羊术共用召唤状态目标筛选，包含单位原始召唤属性、召唤来源／计时生命以及脚本类型增删。暴雪 [Shadow Hunter 说明](https://classic.battle.net/war3/orc/units/shadowhunter.shtml) 指出妖术不影响召唤单位；当前采用与现有变羊术相同的下单目标拒绝方式，原版具体拒绝及支付时机仍待验证。
