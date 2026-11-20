@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 先祖之魂的人口目标限制（待批次验证）
+
+路径：`src/session_corpses.cpp`、`tests/corpse_tests.cpp`、`tests/generate-corpse-fixture.py`。先祖之魂在可见目标许可和候选筛选时，按施法者的人口、尸体类型的 `GetFoodUsed` 费用、地图全局及有效容量检查；不依赖尸体实例 `useFood`。固定版 `CAbilityAncestralSpirit` 的目标许可 `0x6f4a1910` 和候选扫描调用该检查，生效阶段是否再次检查尚未证实。
+
+必要检查：Win32 Release 客户端及 corpse 目标编译通过；`generate-corpse-fixture.py --low-food-ceiling` 创建上限为 10 的夹具，并仅在此夹具为 Aast 增加盟友目标。`war3_corpse_tests <data-root> <fixture> food-ceiling` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖己方与盟友尸体、施法者和尸体所有者人口互换、禁用实例人口计数、越限时不复活且不消耗法力或冷却、边界成功。夹具和构建日志位于 `tmp/docs-artifacts/war3/ancestral-food/`、`tmp/docs-artifacts/war3/build-tools/ancestral-food-after-build.log`。原版实机、零费用、负值／回绕、作弊绕过、生效前人口变化与目标易主仍待验证。本批 2/3。
+
 ## 生产和购买遵守地图人口上限（待批次验证）
 
 路径：`src/session_commerce.cpp`、`src/session_production.cpp`、`src/session_building_upgrades.cpp`、`src/session_revival.cpp`、`tests/commerce_tests.cpp`、`tests/generate-commerce-fixture.py`、`tests/revival_tests.cpp`、`tests/generate-revival-fixture.py`。普通建造和单位购买、训练／复活队首、建筑升级及酒馆唤醒检查玩家有效人口容量，包含地图 `FoodCeiling`；人口费用为零仍跳过检查，非零人口相加和比较按固定版共享许可使用 32 位无符号语义，保持现有排队与扣费时机。唤醒资格使用英雄类型人口费用，另先执行有符号全局上限检查；实际计数仍按实例状态处理。固定版 CAbilityTrain、SellUnit、SellUnitDynamic、Upgrade、Revive 及建造能力的虚表通过 `0x6f3fc510→0x6f248a60→0x6f247ce0`。
