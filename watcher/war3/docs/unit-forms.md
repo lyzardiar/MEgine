@@ -18,6 +18,8 @@
 
 来源为本机Warcraft III 1.27.0.52240的AbilityData/AbilityMetaData、NightElfAbilityFunc/Strings、UnitAbilities/Balance/Data/UI/Weapons、NightElfUnitFunc、MiscGame与UI/UnitEditorData的morphFlags；各成员来源归档和SHA-256保存在本地证据source.json。morphFlags依次为1不可打断、2即时落地、4即时起飞、8永久、16需要付费。付费转换、毁灭者、石像形态与钻地已接入，见[亡灵形态](undead-forms.md)；复合变身、其他原型及完整战役能力继续实现。
 
+固定版变形时机静态调查：运动类型字典中 `fly=2`、`foot=1`，飞行转地面与地面转飞行分别走 `0x6f54c420` 和 `0x6f54c8a0`；后者存在直接执行资源调整和类型替换的路径，前者存在由 `d01c4` 定时事件触发该操作的路径。Aave 的源 `Dur1=1.1`、`DataC1=1`，定时参数还涉及能力对象的附加时长；该字段在构造时为零，施法前是否改变及单位状态位是否使其立即执行尚未确认。不能据此断言所有变形均延迟结算，也不能将当前预扣和取消回滚视为原版中断时序的证明。可复现只读探针及输出位于 `tmp/docs-artifacts/war3/form-timing-investigation/form_timing_probe.py`、`evidence.txt`。
+
 本批必要Win32 Release产品和新消费者编译通过。复制BootyBay地形的最小检查最终3通过/0失败，无Game.dll，覆盖熊往返/生命比例/人口/免费返回/动画状态，乌鸦起飞/高度/速度/落地，恶魔成长/库存/生命奖励/到期/死亡恢复。GPU、原版数值/转换时序、完整碰撞/路径类型、全部自定义覆盖/标志组合、取消/控制/所有权/回调重入、复活/运输/幻象组合、AI、音效和长局/性能/切图释放进入阶段合并验证，不能由上述结果推断通过。
 
 ```powershell
