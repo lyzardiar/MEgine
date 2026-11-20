@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 诱捕打断已开始的引导（待批次验证）
+
+路径：`src/session_spell_effects.cpp`、`tests/control_tests.cpp`、`docs/control-spells.md`。诱捕效果成功应用后结束目标正在进行的引导并保留网状态；依据[暴雪掠夺者说明](https://classic.battle.net/war3/orc/units/raider.shtml)。
+
+必要检查：Win32 Release 客户端及 control 目标编译通过；`war3_control_tests <data-root> <fixture> ensnare-interrupt-channel` 退出 0、1 通过／0 失败，使用暴风雪真实引导与诱捕弹道；修复前因引导未终止失败。日志位于 `tmp/docs-artifacts/war3/ensnare-interrupt/`。后续波次、结束事件和回调、无效或免疫目标、蛛网、施法前摇及原版时序仍待验证或对照。本批 3/3，提交后集中验证。
+
 ## 上古建筑施工者随建筑死亡（待批次验证）
 
 路径：`src/session_callbacks.cpp`、`tests/construction_tests.cpp`、`docs/construction.md`。施工中的上古建筑死亡时，通过正常单位死亡流程处理仍在建筑内的原小精灵；普通建筑死亡和取消施工保留释放行为。建筑人口结算后重新核验建筑及工人状态，防止回调中覆盖新状态。依据[暴雪小精灵说明](https://classic.battle.net/war3/nightelf/units/wisp.shtml)。
