@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 闪电链命中回调中的来源生命周期（待批次验证）
+
+路径：`src/session_spell_effects.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`、`docs/control-spells.md`。链式法术对首目标产生效果后重新检查来源死亡和归属轮次，来源在同步回调中死亡复活或易主时不继续选择下一跳。
+
+必要检查：Win32 Release 客户端和 control 测试目标编译通过；`war3_control_tests <data-root> <fixture> item-chain-source-transfer` 和 `item-chain-source-revive` 修复前各失败，修复后各 1 通过／0 失败；`chain-spell-source-transfer` 和 `item-combined-hero-impact` 各 1 通过／0 失败。覆盖复合物品两种来源变化、普通闪电链易主和正常弹跳。弹道跨帧期间的来源变化、后续目标护盾、存档恢复与原版时序仍待批次验证或对照。本批 1/3。
+
 ## 英雄目标技能物品批次（部分验证）
 
 范围：`8f8ebd1`、`37bcf79`、`a055f83`，含本批补充的复合物品目标可见性和施法者易主修复。Win32 Release 客户端及 control 测试目标在 VS 2022 和本地 SDK 的独立构建目录编译通过。生成组合物品夹具后，单技能、复合技能、首目标护盾、隐身目标、施法者易主、既有控制和回调共 17 个测试进程各 1 通过／0 失败。日志 `tmp/docs-artifacts/war3/hero-item-batch/batch-lifecycle-fix.log`，构建日志 `tmp/docs-artifacts/war3/hero-item-batch/build-lifecycle-fix.log`。

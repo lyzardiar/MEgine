@@ -105,6 +105,17 @@ function watch_item_source_transfer takes unit target, unit caster returns nothi
     call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_DAMAGED)
     call TriggerAddAction(t,function item_source_damaged)
 endfunction
+function item_source_revive takes nothing returns nothing
+    call DisableTrigger(GetTriggeringTrigger())
+    call KillUnit(transferredCaster)
+    call ReviveHero(transferredCaster,0.,-768.,false)
+endfunction
+function watch_item_source_revive takes unit target, unit caster returns nothing
+    local trigger t=CreateTrigger()
+    set transferredCaster=caster
+    call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_DAMAGED)
+    call TriggerAddAction(t,function item_source_revive)
+endfunction
 function config takes nothing returns nothing''')
     if 'local trigger summonTrigger=CreateTrigger()' not in script or 'call TriggerRegisterPlayerUnitEvent(summonTrigger,Player(0),EVENT_PLAYER_UNIT_SUMMON,null)' not in script:
         raise ValueError('Control fixture trigger layout changed')
