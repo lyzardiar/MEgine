@@ -99,3 +99,5 @@ Win32 Release 客户端和移动测试编译通过；BootyBay 定向检查覆盖
 Win32 Release 客户端与 AI 测试目标编译通过；BootyBay `melee-build` 定向检查真实 AI 建造命令、有效避障点保留、无效终点重算和祭坛完成，1/1 通过。原图兽族对不死族隔离会话中原先受阻的侍僧在 60 秒前开始召唤祭坛，随后墓地和死亡骑士出现；日志 `tmp/docs-artifacts/war3/orc-undead-duel/preserve-route.log`。检查中的人工避障路径注入临时关闭了工人单位碰撞；动态障碍变化、玩家取消／新命令、多工人、其他种族施工及真实窗口和联机仍待阶段验证。
 
 同一实现的 BootyBay 兽族对不死族隔离会话运行至 2,100 秒，双方仍有建筑和部队，尚未决出胜负；日志 `tmp/docs-artifacts/war3/orc-undead-duel/duel-after.log`。
+
+实际采金使余额由高于 `LowGoldAmount` 降至该值或以下但仍大于零时，向有资格的本地玩家排队低矿种族语音，并在矿位置显示 `PingAdvisorColor` 标记；采空走既有耗尽路径。阈值来自 `Units/MiscData.txt` 并接受地图覆盖，固定版默认 1500；`Game.dll` 的 `0x6f4d2371–0x6f4d23e1` 检查跨越并发送内部 223，`0x6f34fbda–0x6f34fbdf` 映射低矿音效。提示配置异常记录诊断，不阻断采矿。多人接收方向、重填后再次跨越、耗尽提示、实际声音与原版窗口仍待对照。

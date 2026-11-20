@@ -17,6 +17,7 @@ def main():
     parser.add_argument('--output', type=pathlib.Path, default=ROOT/'tmp/docs-artifacts/war3/economy/fixture.w3m')
     parser.add_argument('--tree-targets', choices=['partial', 'invu', 'invulnerable'])
     parser.add_argument('--special-silence', action='store_true')
+    parser.add_argument('--invalid-advisor-color', action='store_true')
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only game installation')
@@ -26,6 +27,8 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = b'function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n'
+    if args.invalid_advisor_color:
+        files['war3mapMisc.txt'] = b'[PingColor]\nPingAdvisorColor=invalid\n'
     if args.tree_targets and args.special_silence:
         raise ValueError('Choose one ability override per fixture')
     if args.special_silence:
