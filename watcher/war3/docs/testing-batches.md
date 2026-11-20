@@ -1,22 +1,28 @@
 # 独立客户端测试队列
 
-## 树妖自动驱逐召唤物（本批 3/3，提交后集中验证）
+## 驱散与整数状态事件批次（已批次验证，仍有待验项）
+
+范围：`d264bdf`、`02aaf08`、`9f16d38`，集成版本 `9f16d38`。Win32 Release 客户端、consumption、clock 目标构建通过；`devour-immune`、`dispel-immune`、`detonate-immune`、`dryad-summon-autocast`、`devour`、`recovery_bundle_restores_game_state_events`、`invalid_limitop_events_recover_without_firing` 各退出 0、1 通过／0 失败，共 7 个进程、7 条 PASS。构建及测试日志位于 `tmp/docs-artifacts/war3/build-tools/batch-dispel-state-*.log`，夹具为 `tmp/docs-artifacts/war3/eat-magic/fixture.w3m`。
+
+原版实机中各类魔免来源和状态移除时序、带状态召唤物与英雄技能的自动驱逐选择、整数状态事件重入及完整对局仍待对照。下一功能批次从 0/3 开始。
+
+## 树妖自动驱逐召唤物（已批次验证，仍有待验项）
 
 路径：`src/session_autocast.cpp`、`tests/consumption_tests.cpp`。自动驱逐选择需要有可驱散且符合敌友极性的魔法状态，不再仅因敌方单位是召唤物或幻象触发；手动驱逐和召唤伤害规则保持独立。暴雪 [树妖说明](https://classic.battle.net/war3/nightelf/units/dryad.shtml) 指出召唤单位需手动驱逐。带其他状态的召唤物和英雄技能的自动选择细节仍需固定版对照。
 
-必要检查：Win32 Release `war3_consumption_tests` 构建通过；`war3_consumption_tests <data-root> <fixture> dryad-summon-autocast` 修复前失败，修复后退出 0、1 通过／0 失败，覆盖研究完成后无状态水元素不触发自动施法、普通敌人正面状态的自动驱散及手动驱逐水元素。日志 `tmp/docs-artifacts/war3/build-tools/dryad-auto-{before,after}.log`。真实原版窗口、带状态召唤物、英雄技能及多目标优先级尚待验证；提交后集中验证本批。
+必要检查：Win32 Release `war3_consumption_tests` 构建通过；`war3_consumption_tests <data-root> <fixture> dryad-summon-autocast` 修复前失败，修复后退出 0、1 通过／0 失败，覆盖研究完成后无状态水元素不触发自动施法、普通敌人正面状态的自动驱散及手动驱逐水元素。日志 `tmp/docs-artifacts/war3/build-tools/dryad-auto-{before,after}.log`。真实原版窗口、带状态召唤物、英雄技能及多目标优先级尚待验证；本批集中验证结果见批次摘要。
 
-## 整数游戏状态 NOT_EQUAL 事件（本批 2/3，待集中验证）
+## 整数游戏状态 NOT_EQUAL 事件（已批次验证，仍有待验项）
 
 路径：`src/session_callbacks.cpp`、`tests/clock_tests.cpp`。整数游戏状态的 `NOT_EQUAL` 事件在状态值每次实际变化时派发，同值写入不派发；保留状态快照匹配位和既有重入版本检查。固定版整数状态事件处理 `0x6f25ed00` 调用 `0x6f259e60`，后者对 `NOT_EQUAL` 无条件返回真；状态写入的 `0x6f10d5d0` 对同值不通知。此特例不推广到玩家、单位、变量或浮点游戏状态。
 
-必要检查：Win32 Release `war3_clock_tests` 构建通过；`WAR3_CLOCK_FILTER=recovery_bundle_restores_game_state_events war3_clock_tests <data-root> <scratch>` 修复前失败，修复后退出 0、1 通过／0 失败，覆盖恢复前后连续改变、回到阈值、重复同值、事件句柄和其他比较条件。日志 `tmp/docs-artifacts/war3/build-tools/integer-unequal-{before,after}.log`。原版动态加载、嵌套回调和实际存档仍待对照，集中验证按批次进行。
+必要检查：Win32 Release `war3_clock_tests` 构建通过；`WAR3_CLOCK_FILTER=recovery_bundle_restores_game_state_events war3_clock_tests <data-root> <scratch>` 修复前失败，修复后退出 0、1 通过／0 失败，覆盖恢复前后连续改变、回到阈值、重复同值、事件句柄和其他比较条件。日志 `tmp/docs-artifacts/war3/build-tools/integer-unequal-{before,after}.log`。原版动态加载、嵌套回调和实际存档仍待对照，本批集中验证结果见批次摘要。
 
-## 魔免召唤物抵抗驱散伤害（本批 1/3，待集中验证）
+## 魔免召唤物抵抗驱散伤害（已批次验证，仍有待验项）
 
 路径：`src/session_caster_spells.cpp`、`src/session_magic_consumption.cpp`、`tests/consumption_tests.cpp`。范围驱散、自爆及吞噬魔法在移除状态前记录目标魔免，跳过对魔免召唤物的附加伤害；没有其他有效效果时吞噬魔法不产生收益。普通敌方召唤物和友方召唤物沿用既有伤害规则。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明魔免召唤物不受驱散伤害；幻象及各魔免来源的完整原版规则仍待对照。
 
-必要检查：Win32 Release `war3_consumption_tests` 构建通过；`war3_consumption_tests <data-root> <fixture> devour-immune|dispel-immune|detonate-immune` 各退出 0、1 通过／0 失败。修复前三种技能对普通与魔免敌方召唤物分别造成同样的 180、200、225 点伤害，友军未受伤；修复后只有普通敌方召唤物受伤，单独吞噬魔免召唤物不产生魔法收益。测试日志 `tmp/docs-artifacts/war3/build-tools/{devour,dispel,detonate}-immune-{before,after}.log`，原版动态、状态移除与魔免来源变更时序待验证，集中验证按批次进行。
+必要检查：Win32 Release `war3_consumption_tests` 构建通过；`war3_consumption_tests <data-root> <fixture> devour-immune|dispel-immune|detonate-immune` 各退出 0、1 通过／0 失败。修复前三种技能对普通与魔免敌方召唤物分别造成同样的 180、200、225 点伤害，友军未受伤；修复后只有普通敌方召唤物受伤，单独吞噬魔免召唤物不产生魔法收益。测试日志 `tmp/docs-artifacts/war3/build-tools/{devour,dispel,detonate}-immune-{before,after}.log`，原版动态、状态移除与魔免来源变更时序待验证，本批集中验证结果见批次摘要。
 
 ## 树上哨兵驱散与比较操作符批次（已批次验证，仍有待验项）
 
