@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 玩家状态事件注册范围（本批 3/3，提交后集中验证）
+
+路径：`src/session_callbacks.cpp`、`tests/control_tests.cpp`。`TriggerRegisterPlayerStateEvent` 对超过 25 的状态编号返回空句柄，不创建事件；保留历史 SAEV 快照的既有读取行为。固定版入口 `0x6f1f9b98` 对状态编号无符号比较 `0x19`，越界返回空事件。
+
+必要检查：Win32 Release `war3_control_tests` 构建通过；`war3_control_tests <data-root> <control-fixture> player-region-registration-handles` 退出 0、1 通过／0 失败，覆盖状态 25 可注册、26 和 -1 返回空及不增加事件对象；原有玩家／区域句柄验证继续通过。日志位于 `tmp/docs-artifacts/war3/build-tools/player-state-boundary-{build,test}.log`。原版运行时、其他状态事件行为与历史异常快照仍待对照；本批提交后统一验证。
+
 ## 单位肖像动画属性（本批 2/3，待集中验证）
 
 路径：`src/game_portrait.cpp`。肖像优先使用单位当前动画属性选择 `Portrait` 序列；找不到时依次回退普通 `Portrait`、带属性 `Stand`、普通 `Stand`。毁灭者和十胜石雕像共用肖像模型，原始模型同时包含普通和 `Alternate` 序列，单位数据仅毁灭者启用 `alternate`。
