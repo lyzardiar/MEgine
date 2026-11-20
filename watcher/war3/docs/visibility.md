@@ -24,6 +24,10 @@
 
 固定版坐标和节点的隔离指令探针补充了可复现证据：`fog-circle-x86-probe.py` 对半径 1–64 的中点圆行边界及三个行跨度下的 3×3 种子逐项对照；`fog-x86-probe.py` 对半径 2、3、4 的非种子节点、两个前驱索引和重排结果对照转录。`fog-coordinate-x86-probe.py` 在受控对象字段下对照位置获取、网格坐标夹紧、初始化和地形边界解码：常规地形记录坐标映射为 `index*128-32768`，宽高由边界跨度除以 128 取整，行跨度扩为不小于宽度的二次幂。主进程复验均退出 0，脚本位于 `tmp/docs-artifacts/war3/` 下的 `fog-circle-x86-probe.py`、`fog-x86-probe.py`、`fog-coordinate-x86-probe.py`，日志文件名分别为 `fog-circle-x86-main-verification.log`、`fog-x86-main-verification.log`、`fog-coordinate-x86-main-verification.log`；读取固定版 Game.dll 并用 Unicorn 隔离执行指令，未加载 DLL。探针模拟了部分调用和对象内存，地图地形表构建顺序、对象字段与世界位置的完整对应、原版全局初始化、动态遮挡以及单位／飞行／脚本显形行为仍待验证，不能将这些局部结果当作完整视野实现或实机验收。
 
+固定版视野的进一步隔离执行证据：`fog-height-x86-probe.py` 将底层 4×4 子格的地形级最大值乘以 128 写入迷雾高度；BootyBay 原图 W3E 的 105 个顶点样本与客户端悬崖层字段一致。附加高度层可以提高此值，真实图层来源和生命周期仍未知。`fog-destructable-footprint-x86-probe.py` 在模拟对象中验证单格破坏物高度更新，并发现受控的 4×4 全零足迹仍更新周围四个迷雾格，不能仅按非零足迹像素推断遮挡。`fog-observer-x86-probe.py` 的普通观察者分支在存在附加层时才会将较高的中心遮挡值用于观察高度，特殊观察者分支未覆盖。
+
+`fog-propagation-x86-probe.py` 对非边界路径的半径 2、3、4 各运行平地、单格高台和直墙，共 9 组；以 3×3 种子和两个前驱遮挡标记建立的独立模型与固定版指令结果逐节点一致，当前格可见性取决于前驱，当前格高度再传给后继。所测指令未触碰圆边界中的四个格，不能由此推断整个圆均被初始化或推断其他流程不会更新这些格。以上四个脚本由主进程以 `C:/Python313/python.exe` 复跑并均退出 0，对应日志位于 `tmp/docs-artifacts/war3/*-main-verification.log`。这些均为读取固定版 Game.dll 的 Unicorn 局部执行，包含模拟对象、内存和部分调用，不等于真实游戏运行；真实树木足迹、重叠物死亡重算、地图边界、飞行单位、脚本显形和整局传播仍需验证。
+
 ## 原件依据与检查
 
 源表、Profile、common.j声明、归档来源与摘要在根tmp/docs-artifacts/war3/invisibility/source.json。Aivs默认50魔法/120秒，Apiv淡入2秒；阴影等Rng=900，哨岗Rng=1100，源侦测类型为3。对象覆盖继续由现有ObjectData消费，资源只读、直接进内存，不产生解包工程。
