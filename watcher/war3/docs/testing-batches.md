@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 同子组普通单位头像聚合（待批次验证）
+
+路径：`src/game_subgroup.h`、`src/game_view.cpp`、`tests/browser_tests.cpp`、`docs/selection-panel.md`。依据[暴雪子组说明](https://classic.battle.net/war3/basics/specialcommands.shtml)的同类单位分组规则，显示顺序将非英雄的同一子组按首次出现顺序聚合，携物单位保持独立；英雄等级排序、命令和联机选区原始顺序保持现有行为。
+
+必要检查：Win32 Release 客户端和 browser 目标编译通过；`war3_browser_tests <data-root> <scratch> selection_subgroup_clustering` 为 1 通过／0 失败，覆盖交错类型、两个携物单位与移除物品后合组。隐藏对局按步兵、火枪手、步兵创建并选中，修复前点击第二头像切到火枪手子组，修复后两步兵相邻，切换与单选通过；携物子组及英雄排序对局回归通过。日志位于 `tmp/docs-artifacts/war3/subgroup-clustering/`。同类型英雄不同等级的分组顺序、非英雄优先级、原版实际窗口及真实双端仍待对照。本批 1/3。
+
 ## 救援、商店与迷雾句柄批次（部分验证）
 
 范围：`7a86475`、`27a6cd5`、`c158667`，集成版本 `c158667`。Win32 Release 客户端、passive、construction、commerce 和 clock 目标编译通过。`rescue-invalid-handles`、`shop-invalid-handles`、`location-visibility-invalid` 各 1 通过／0 失败；`shop-payment-state` 退出 0、输出 1 条 PASS；`recovery_bundle_restores_rescue_membership`、`shop_stock_snapshot_restores_inventory_and_global_rules` 和 `fog_snapshot_restores_exploration_and_modifier_handles` 各 1 通过／0 失败。另补测 passive 的 `sight` 为 1 通过／0 失败，commerce 默认入口退出 0、输出 1 条 PASS，覆盖视野装备及商店购买、库存和事件等消费者。共 9 个进程成功、9 条 PASS；日志位于 `tmp/docs-artifacts/war3/batch-rescue-shop-fog/`。
