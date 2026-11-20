@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 英雄属性数值移动后的字号（待批次验证）
+
+路径：`src/game_commands.cpp`、`src/game_info_layout.h`、`tests/browser_tests.cpp`。脚本移动英雄属性数值帧时沿用原位置的列宽预算计算字号，文字仍按帧的实际位置绘制；默认布局的计算保持不变。
+
+必要检查：Win32 Release 客户端和 browser 测试目标编译通过；`war3_browser_tests <data-root> <scratch-root> map_hero_attribute_value_font` 为 1 通过／0 失败，覆盖默认、双武器、长短数字及移动到 x=.60 的帧布局。日志 `tmp/docs-artifacts/war3/attribute-layout/`。原版自定义帧的裁剪与缩放、实际 HUD 像素及窗口行为仍待对照。本批 3/3，先集中验证。
+
 ## 资源接口的无效单位句柄（待批次验证）
 
 路径：`src/session_harvest.cpp`、`tests/construction_tests.cpp`、`docs/construction.md`。GetResourceAmount 对无效单位返回零，SetResourceAmount 和 AddResourceAmount 不再中断脚本，保留有效矿井与覆盖矿的共享储量。
