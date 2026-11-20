@@ -756,7 +756,7 @@ class ScriptSession {
     std::unordered_map<std::string,float> gameplayNumbers_;
     std::array<std::optional<std::array<float,8>>,7> damageFactors_;
     std::optional<std::array<float,7>> etherealDamageFactors_;
-    struct UpkeepRules {std::array<int,10> usage{};std::array<std::array<int,10>,2> rates{};};
+    struct UpkeepRules {std::array<int,10> usage{};std::array<std::array<int,10>,2> rates{};unsigned usageCount=10;};
     std::optional<UpkeepRules> upkeepRules_;
     std::vector<int> heroThresholds_;
     std::map<std::uint32_t,std::shared_ptr<ScriptQuest>> quests_;
@@ -1057,6 +1057,7 @@ class ScriptSession {
     std::vector<std::uint32_t> illusions(std::uint32_t caster,std::uint32_t original,unsigned count,float dealt,float taken,double duration,std::uint32_t buff,std::uint32_t ability=0);
     void removeItem(std::uint32_t item);
     void consumeItem(std::uint32_t item);
+    unsigned upkeepLevel(unsigned owner) const;
     void refreshUpkeep(unsigned owner);
     const SourceSettings& gameplay();
     float gameplayNumber(const char* key,float fallback);
@@ -1158,6 +1159,7 @@ class ScriptSession {
     MusicScene& requireThematicMusic();
     World& requireWorld();
 public:
+    std::string upkeepLabel(unsigned owner);
     bool validOrderTarget(std::uint32_t id) const {return alive(id,NativeKind::Unit) || alive(id,NativeKind::Item) || alive(id,NativeKind::Destructable);}
     void setExternalExecute(const void* owner,std::function<bool(const std::string&)> handler);
     std::string unitUiField(std::uint32_t type,const char* field) {return definitions().field(type,"UnitUI",field);}

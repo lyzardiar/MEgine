@@ -18,6 +18,7 @@ def main():
     parser.add_argument('--tree-targets', choices=['partial', 'invu', 'invulnerable'])
     parser.add_argument('--special-silence', action='store_true')
     parser.add_argument('--invalid-advisor-color', action='store_true')
+    parser.add_argument('--upkeep-usage', choices=['short', 'zero', 'short-tax', 'unsorted'])
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only game installation')
@@ -27,8 +28,15 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = b'function config takes nothing returns nothing\nendfunction\nfunction main takes nothing returns nothing\nendfunction\n'
+    misc = b''
     if args.invalid_advisor_color:
-        files['war3mapMisc.txt'] = b'[PingColor]\nPingAdvisorColor=invalid\n'
+        misc += b'[PingColor]\nPingAdvisorColor=invalid\n'
+    if args.upkeep_usage:
+        usage = {'short': b'10', 'zero': b'10,0,20', 'short-tax': b'10,20', 'unsorted': b'10,5'}[args.upkeep_usage]
+        rates = b'0,0.3' if args.upkeep_usage == 'short-tax' else b'0,0.3,0.6'
+        misc += b'[Misc]\nUpkeepUsage=' + usage + b'\nUpkeepGoldTax=' + rates + b'\n'
+    if misc:
+        files['war3mapMisc.txt'] = misc
     if args.tree_targets and args.special_silence:
         raise ValueError('Choose one ability override per fixture')
     if args.special_silence:

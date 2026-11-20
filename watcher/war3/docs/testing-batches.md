@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 维修费档位、版本阈值与 HUD 源文字（待批次验证）
+
+路径：`src/session.h`、`src/session_food.cpp`、`src/game_view.cpp`、`tests/harvest_tests.cpp`、`tests/generate-harvest-fixture.py`、`docs/economy.md`。顶部栏按已用人口档位显示原 `GlobalStrings.fdf` 文案及颜色；默认阈值按游戏版本选 ROC／TFT，自定义短列表缺项补零、遇零停止并按输入顺序比较。固定版 `0x6f02ac00` 选择版本阈值，`0x6f3b68e5–0x6f3b690b` 与 `0x6f241d40–0x6f241d67` 使用人口档位，`0x6f3b6aa7–0x6f3b6ac0` 选择 HUD 文案。
+
+必要检查：Win32 Release 客户端和 harvest 目标编译通过；`war3_harvest_tests <data-root> <fixture> upkeep-hud|upkeep-usage-short|upkeep-usage-zero|upkeep-short-tax|upkeep-unsorted` 各退出 0、1 通过／0 失败，分别覆盖两版本阈值、税率覆盖、源文案颜色、短列表、零终止、非递增项以及真实单位计食触发；后三类使用 `generate-harvest-fixture.py --upkeep-usage` 对应夹具。日志位于 `tmp/docs-artifacts/war3/upkeep-hud/`。观察者显示、多色文字、原版窗口位置、空配置和特殊数字解析仍待验证或对照。本批 2/3。
+
 ## 石像形态冷却中允许退出（待批次验证）
 
 路径：`src/session_unit_forms.cpp`、`src/spells.h`、`src/session_ability_commands.cpp`、`tests/undead_forms_tests.cpp`、`docs/undead-forms.md`。石像形态的返回按钮与真实命令在正向冷却中可用，退出保留再次进入的原冷却；依据[暴雪石像鬼说明](https://classic.battle.net/war3/undead/units/gargoyle.shtml)。
