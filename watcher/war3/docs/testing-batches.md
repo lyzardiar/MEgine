@@ -1,24 +1,30 @@
 # 独立客户端测试队列
 
-## 目标范围内可达位置回退（本批 3/3，待批次验证）
+## 面具、火球与目标范围寻路批次（已执行，仍有待验项）
+
+范围：`1348104`、`0ee8de6`、`b5c6ae7`，集成版本 `b5c6ae7`。Win32 Release 公共头修改后 core 与 Human08 测试干净构建，再构建客户端及 passive、spell、clock、transport、harvest、waygate、caster、AI、world 目标通过。17 个测试进程均退出 0、各输出一条通过结果：面具与火球、驱散球及毒球、手动／自动箭、面具新旧弹道恢复、Human08 原图攻击范围、登船路径、采矿入口与阻塞恢复、树木部分路径、月井交互、目标攻击与登船／传送门取消回调、传送门配置。日志和执行脚本在 `tmp/docs-artifacts/war3/batch-mask-fire-path/` 与 `tmp/docs-artifacts/war3/build-tools/run-batch-mask-fire-path.mjs`。
+
+尚未验证不可达群体和大碰撞单位的重复寻路性能、目标法术在复杂障碍下的回退、原版寻路对照与 Human08 实战命中；面具换装时序及火球的其他法球竞争、自定义等级和伤害事件等边界仍待对照。下一功能批次从 0/3 开始。
+
+## 目标范围内可达位置回退（已批次验证，仍有待验项）
 
 路径：`src/world.h`、`src/world_path.cpp`、`src/session_combat_orders.cpp`、`tests/human_campaign_chain_tests.cpp`。常规追击的圆周采样未找到完整路径时，限定地图尺寸与范围并按连通区域选取最多 8 个范围内格心，再逐个验证完整路径及终点距离；部分路径请求不使用该回退。追击也用于施法、登船、采矿等，需集中验证共享调用。
 
-必要检查：Win32 Release 目标干净构建及后续增量构建通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human08-reachable-ship` 修复前报告攻击命令被拒绝，修复后退出 0、1 通过／0 失败。原图两门迫击炮对可见的 0110 船均接受攻击命令，回归确认所选单位的路线终点进入射程；自然推进中两炮在路上被敌军击毁，未命中船。日志 `tmp/docs-artifacts/war3/human08-player/regression-{before,after}.log`、`run-f.log`。该回退是有界近似，8 个候选与单次路径节点预算不能保证找到所有可达位置；原版寻路行为、实际击中和完整关卡尚未对照。批次需覆盖攻击、不可达目标、动态障碍、目标法术、登船、月井、传送门及采矿共享路径，并观察群体及大碰撞单位的重复寻路成本。
+必要检查：Win32 Release 目标干净构建及后续增量构建通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human08-reachable-ship` 修复前报告攻击命令被拒绝，修复后退出 0、1 通过／0 失败。原图两门迫击炮对可见的 0110 船均接受攻击命令，回归确认所选单位的路线终点进入射程；自然推进中两炮在路上被敌军击毁，未命中船。日志 `tmp/docs-artifacts/war3/human08-player/regression-{before,after}.log`、`run-f.log`。该回退是有界近似，8 个候选与单次路径节点预算不能保证找到所有可达位置；原版寻路行为、实际击中和完整关卡尚未对照。共享调用的已验范围与未验性能见本批摘要。
 
-## 多火球溅射叠加（本批 2/3，待批次验证）
+## 多火球溅射叠加（已批次验证，仍有待验项）
 
 路径：`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`。选中的法球为火球时，对其他有效火球逐件保留溅射效果，仍以主攻击实际命中且造成正伤害为触发条件；基础攻击加成沿用装备汇总。暴雪 [Hero Items](https://classic.battle.net/war3/basics/heroitemspermanent.shtml) 说明多个火球的溅射伤害可叠加。
 
-必要检查：Win32 Release `war3_passive_tests` 构建通过；`fire-orb-stack` 修复前因两枚火球仍只有一次溅射失败，修复后退出 0、1 通过／0 失败。使用真实火球和武器命中验证单枚／两枚倍率，以及友军、范围外、强制未命中和能力禁用；日志 `tmp/docs-artifacts/war3/build-tools/fire-orb-stack-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。非火球排前或手动箭时的例外规则、同能力不同等级的自定义物品来源、伤害事件次数和护盾回调、火球溅射伤害类型／护甲／魔免及原版动态换装仍待对照，与后续任务集中验证。
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`fire-orb-stack` 修复前因两枚火球仍只有一次溅射失败，修复后退出 0、1 通过／0 失败。使用真实火球和武器命中验证单枚／两枚倍率，以及友军、范围外、强制未命中和能力禁用；日志 `tmp/docs-artifacts/war3/build-tools/fire-orb-stack-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。非火球排前或手动箭时的例外规则、同能力不同等级的自定义物品来源、伤害事件次数和护盾回调、火球溅射伤害类型／护甲／魔免及原版动态换装仍待对照，本批结果与待验项见批次摘要。
 
-## 吸血面具与法球优先级（本批 1/3，待批次验证）
+## 吸血面具与法球优先级（已批次验证，仍有待验项）
 
 路径：`src/passives.h`、`src/combat.h`、`src/session_passive_info.cpp`、`src/session_weapon_effects.cpp`、`src/session_attack_passives.cpp`、`src/session_projectile_snapshot.cpp`、`tests/passive_tests.cpp`、`tests/spell_tests.cpp`、`tests/clock_tests.cpp`。吸血面具的攻击吸血参与现有法球选择，遵循背包顺序及手动／自动箭技能优先级；吸血光环和药剂仍独立结算。暴雪 [Hero Items](https://classic.battle.net/war3/basics/heroitemsartifact.shtml) 明确面具遵循法球规则。
 
 弹道快照升级为 SPRJ v2，发射时保存所选面具效果；读取 v1 时为在途弹道保留旧版命中时读取装备的行为，v1 再保存为 v2 时保留该兼容标志。旧程序不支持读取新增的 v2 快照；发射前摇或在途期间换装的原版时序、目标变形／易主及多弹道仍待对照。
 
-必要检查：公共弹道结构和被动枚举变更后 Win32 Release passive、spell、clock 目标干净构建，随后增量构建通过。`mask-orb-priority` 和 `mask-arrow-priority` 在恢复旧结算的对照下分别因未选中面具吸血和手动箭未覆盖面具失败，修复后各退出 0、1 通过／0 失败；覆盖真实火球／面具顺序、能力禁用、原生能力及手动／自动箭。`mask_projectile_new_and_legacy_recovery` 退出 0、1 通过／0 失败，覆盖真实远程发射、新弹道卸装后恢复、旧 v1 恢复／再保存和卸装、被其他法球覆盖的新弹道以及非法旧版类型；既有弹道恢复、`orb-purge`、`venom-orb-priority`、`venom-arrow-priority` 各退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/mask-*.log`；夹具位于 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`、`spells/fixture.w3m`，clock 使用游戏原图。真实原版对局与 UI 尚未验收，与后续任务集中验证。
+必要检查：公共弹道结构和被动枚举变更后 Win32 Release passive、spell、clock 目标干净构建，随后增量构建通过。`mask-orb-priority` 和 `mask-arrow-priority` 在恢复旧结算的对照下分别因未选中面具吸血和手动箭未覆盖面具失败，修复后各退出 0、1 通过／0 失败；覆盖真实火球／面具顺序、能力禁用、原生能力及手动／自动箭。`mask_projectile_new_and_legacy_recovery` 退出 0、1 通过／0 失败，覆盖真实远程发射、新弹道卸装后恢复、旧 v1 恢复／再保存和卸装、被其他法球覆盖的新弹道以及非法旧版类型；既有弹道恢复、`orb-purge`、`venom-orb-priority`、`venom-arrow-priority` 各退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/mask-*.log`；夹具位于 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`、`spells/fixture.w3m`，clock 使用游戏原图。真实原版对局与 UI 尚未验收；本批结果见批次摘要。
 
 ## 人族第六章玩家命令自然胜利回归（已执行，不计功能批次）
 
