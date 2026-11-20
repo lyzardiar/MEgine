@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 人族第六章玩家命令自然胜利回归（已执行，不计功能批次）
+
+路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。在原图中以玩家采矿、训练、攻击与探索命令推进，不直接创建目标或修改生命、计数；Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human06-player-victory` 退出 0、1 通过／0 失败，2033.69 秒到达胜利对话和下一关请求。日志 `tmp/docs-artifacts/war3/human06-player/regression-b.log`；具体范围与未验证项见[战役流程](campaign-flow.md)。这是原图玩法链路的必要探针，不作为独立功能／修复计入批次数。
+
 ## 毒球、烈焰风暴与虚无批次（已批次验证，仍有待验项）
 
 范围：`41eba5d`、`2cf5ede`、`2b0e5f3`，集成版本 `2b0e5f3`。复用上批公共接口变更后的干净 core，在集成版本构建 Win32 Release 客户端、passive、spell、channel 和 control 目标通过。`venom-orb-priority`、`venom-arrow-priority`、`flamestrike-cap-split`、`poison-ethereal`、`poison-immune`、`poison-stack`、`poison-floor`、`orb-purge`、`blizzard-cap-relations`、`ethereal-ability`、`poison-arrow`、`item-combined-spirit-rune` 各退出 0、1 通过／0 失败；channel 程序退出 0 并输出 1 条 PASS，共 13 个进程、13 条通过结果。日志 `tmp/docs-artifacts/war3/build-tools/batch-venom-flame-ethereal-*.log`；使用 `tmp/docs-artifacts/war3/` 下的 `auras-passives/fixture.w3m`、`spells/fixture.w3m`、`channels/fixture.w3m`、`mana-flare-pool/fixture.w3m`。
