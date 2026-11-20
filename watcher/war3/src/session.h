@@ -1144,6 +1144,7 @@ class ScriptSession {
     float turnUnit(UnitState& unit,float target,double delta);
     void unitLife(jass::Value handle,jass::Real value,std::uint32_t killer=0,bool bounty=true,bool timedLifeExpiry=false);
     void observeUnitStates(std::uint32_t handle);
+    void observeUnitStates(std::uint32_t handle,unsigned mask);
     void observeUnitStatesTick();
     void playerChange(unsigned player,std::uint32_t field,int before,int after,bool alliance);
     void tick(double delta);

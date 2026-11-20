@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 英雄属性修改时观察生命阈值（待批次验证）
+
+路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_hero.cpp`、`tests/game_flow_tests.cpp`、`tests/generate-game-flow-fixture.py`、`docs/unit-state-events.md`。`SetHeroStr` 完成生命调整后同步检查生命观察器，`SetHeroInt` 对魔法做相同处理；敏捷修改不额外检查状态，上限状态继续沿用现有观察时机。固定版 `SetHeroStr` 经 `0x6f633000` 调用生命属性更新，`0x6f10d800→0x6f10dc00→0x6f10deb0` 在写入时通知并比较阈值；监听者最终 JASS 动作的调度仍待对照。
+
+必要检查：Win32 Release 客户端及 game-flow 目标构建通过；`generate-game-flow-fixture.py --data-root <data-root> --output <fixture>` 后运行 `war3_game_flow_tests <data-root> <fixture> hero-state-crossing`，修复前失败、修复后退出 0、1 通过／0 失败。用例覆盖同一模拟步内力量升降跨越生命阈值、触发上下文和下一步不重复。夹具与构建日志在 `tmp/docs-artifacts/war3/hero-state/`、`tmp/docs-artifacts/war3/build-tools/hero-state-final-build.log`。智力／魔法、回调移除与重入、多个观察器的派发顺序、最大状态注册及原版实机仍待验证；其他内部状态写入仍依既有处理。本批 2/3。
+
 ## 付费变形的双向资源差额（待批次验证）
 
 路径：`src/session.h`、`src/session_unit_forms.cpp`、`src/session_spell_info.cpp`、`src/session_ability_commands.cpp`、`src/game_commands.cpp`、`tests/undead_forms_tests.cpp`、`tests/generate-undead-forms-fixture.py`。`RelativeUpgradeCost=0` 时正反向资格、结算和命令费用按目标减当前类型的成本计算，可为负数并返还；非零时按目标类型全额计算。命令提示支持显示非零负费用。资源余额按源调整上限处理，取消记账采用实际变化值，零费用不改余额；资源回调使用版本检查防止派发过时的后续事件。固定版证据包括 `0x6f526f60` 资格、`0x6f5276f0` 调整和 `0x6f54b9b0` 命令费用。

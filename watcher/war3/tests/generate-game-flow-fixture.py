@@ -26,7 +26,41 @@ integer probe_state_life=0
 integer probe_state_mana=0
 integer probe_state_max_life=0
 integer probe_state_max_mana=0
+unit probe_hero_state_unit=null
+trigger probe_hero_state_up=null
+trigger probe_hero_state_down=null
+integer probe_hero_life_up=0
+integer probe_hero_life_down=0
 endglobals
+function ProbeHeroStateEvent takes nothing returns nothing
+    if GetTriggerUnit()!=probe_hero_state_unit or GetTriggerEventId()!=EVENT_UNIT_STATE_LIMIT then
+        call ExecuteFunc("MatchFailure_hero_state_context")
+    endif
+    if GetTriggeringTrigger()==probe_hero_state_up then
+        if GetEventUnitState()==UNIT_STATE_LIFE then
+            set probe_hero_life_up=probe_hero_life_up+1
+        else
+            call ExecuteFunc("MatchFailure_hero_state_type")
+        endif
+    elseif GetTriggeringTrigger()==probe_hero_state_down then
+        if GetEventUnitState()==UNIT_STATE_LIFE then
+            set probe_hero_life_down=probe_hero_life_down+1
+        else
+            call ExecuteFunc("MatchFailure_hero_state_type")
+        endif
+    else
+        call ExecuteFunc("MatchFailure_hero_state_trigger")
+    endif
+endfunction
+function ProbeHeroStateSetup takes unit whichUnit, real lifeLimit returns nothing
+    set probe_hero_state_unit=whichUnit
+    set probe_hero_state_up=CreateTrigger()
+    call TriggerRegisterUnitStateEvent(probe_hero_state_up,whichUnit,UNIT_STATE_LIFE,GREATER_THAN,lifeLimit)
+    call TriggerAddAction(probe_hero_state_up,function ProbeHeroStateEvent)
+    set probe_hero_state_down=CreateTrigger()
+    call TriggerRegisterUnitStateEvent(probe_hero_state_down,whichUnit,UNIT_STATE_LIFE,LESS_THAN,lifeLimit)
+    call TriggerAddAction(probe_hero_state_down,function ProbeHeroStateEvent)
+endfunction
 function ProbeStateEvent takes nothing returns nothing
     if GetTriggerUnit()!=probe_state_unit or GetTriggerEventId()!=EVENT_UNIT_STATE_LIMIT then
         call ExecuteFunc("MatchFailure_unit_state_context")
