@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 付费变形的双向资源差额（待批次验证）
+
+路径：`src/session.h`、`src/session_unit_forms.cpp`、`src/session_spell_info.cpp`、`src/session_ability_commands.cpp`、`src/game_commands.cpp`、`tests/undead_forms_tests.cpp`、`tests/generate-undead-forms-fixture.py`。`RelativeUpgradeCost=0` 时正反向资格、结算和命令费用按目标减当前类型的成本计算，可为负数并返还；非零时按目标类型全额计算。命令提示支持显示非零负费用。资源余额按源调整上限处理，取消记账采用实际变化值，零费用不改余额；资源回调使用版本检查防止派发过时的后续事件。固定版证据包括 `0x6f526f60` 资格、`0x6f5276f0` 调整和 `0x6f54b9b0` 命令费用。
+
+必要检查：Win32 Release 客户端及 undead-forms 目标构建通过；`generate-undead-forms-fixture.py --relative-upgrade-cost 0|1` 创建两套夹具，`war3_undead_forms_tests <data-root> <fixture> relative-cost` 两种配置修复前均失败、修复后各退出 0、1 通过／0 失败，覆盖正反向、资源不足、边界扣费、负差返还及命令模型；`form-cost-cancel` 退出 0、1 通过／0 失败，覆盖扣费取消及返还触及上限后的实际账目回滚。原有 `reverse-food-ceiling` 根据固定版资源差额更新预期并重测通过。夹具和日志位于 `tmp/docs-artifacts/war3/form-cost/`、`tmp/docs-artifacts/war3/build-tools/form-cost-cancel-build.log`；Impeccable changed 检测无发现。取消用例验证现有账目一致性，不证明原版中断时机。零差价且超限余额、资源回调重入、变形中死亡、自动到期、真实存档恢复、原版实际支付时机及负费用的窗口画面仍待批次或实机验证。本批 1/3。
+
 ## 人口上限与变形批次（已批次验证，仍有待验项）
 
 范围：`f8f1e32`、`faa683e`、`c881457`，集成版本 `c881457`。Win32 Release 客户端、commerce、revival、corpse、undead-forms、construction 目标构建通过；构建日志 `tmp/docs-artifacts/war3/build-tools/batch-food-cap-build.log`。新增批次测试 `tests/construction_tests.cpp`、`tests/generate-construction-fixture.py`、`tests/revival_tests.cpp`，分别在自定义建筑和升级的非零人口费用下检查越限拒绝及边界允许，并检查祭坛复活队首等待、人口下降后恢复及扣费事件。

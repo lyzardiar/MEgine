@@ -693,6 +693,7 @@ class ScriptSession {
     void cancelRoot(UnitState& unit,std::uint64_t ticket);
     std::set<std::uint32_t> unitFormActors_;
     bool alternateForm(const UnitState& unit,const SpellInfo& spell);
+    std::pair<int,int> unitFormCosts(const UnitState& unit,const SpellInfo& spell);
     bool submergeTerrainReady(const UnitState& unit,const SpellInfo& spell);
     bool unitFormReady(const UnitState& unit,const SpellInfo& spell,bool placement=true);
     void prepareUnitFormSpell(const UnitState& unit,SpellInfo& spell);

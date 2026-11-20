@@ -50,6 +50,7 @@ def main():
     parser.add_argument('--data-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=ROOT/'tmp/docs-artifacts/war3/advanced-forms/fixture.w3m')
     parser.add_argument('--low-food-ceiling', action='store_true')
+    parser.add_argument('--relative-upgrade-cost', choices=('0', '1'))
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only installation')
@@ -59,14 +60,14 @@ def main():
     names = fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
     files['war3map.j'] = SCRIPT.encode('utf-8')
-    if args.low_food_ceiling:
-        files['war3mapMisc.txt'] = b'[Misc]\nFoodCeiling=10\n'
+    if args.low_food_ceiling or args.relative_upgrade_cost is not None:
+        files['war3mapMisc.txt'] = ('[Misc]\n' + ('FoodCeiling=10\n' if args.low_food_ceiling else '') + (f'RelativeUpgradeCost={args.relative_upgrade_cost}\n' if args.relative_upgrade_cost is not None else '')).encode('ascii')
     detector = b'AbdtA0BD' + struct.pack('<I', 1) + b'Det1' + struct.pack('<IIII', 0, 1, 1, 2) + b'A0BD'
-    if args.low_food_ceiling:
-        reverse_form = b'AaveA0AV' + struct.pack('<I', 3) + b'Eme1' + struct.pack('<III', 3, 1, 1) + b'ubsp\0A0AV' + b'Emeu' + struct.pack('<III', 3, 1, 0) + b'uobs\0A0AV' + b'Eme2' + struct.pack('<IIII', 0, 1, 2, 16) + b'A0AV'
-        files['war3map.w3a'] = struct.pack('<III', 2, 0, 2) + detector + reverse_form
-    else:
-        files['war3map.w3a'] = struct.pack('<III', 2, 0, 1) + detector
+    forms = []
+    if args.low_food_ceiling or args.relative_upgrade_cost is not None:
+        for code, normal, alternate in [(b'A0AV', b'ubsp', b'uobs'), (b'A0FR', b'uobs', b'ubsp')]:
+            forms.append(b'Aave' + code + struct.pack('<I', 3) + b'Eme1' + struct.pack('<III', 3, 1, 1) + normal + b'\0' + code + b'Emeu' + struct.pack('<III', 3, 1, 0) + alternate + b'\0' + code + b'Eme2' + struct.pack('<IIII', 0, 1, 2, 16) + code)
+    files['war3map.w3a'] = struct.pack('<III', 2, 0, 1 + len(forms)) + detector + b''.join(forms)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
