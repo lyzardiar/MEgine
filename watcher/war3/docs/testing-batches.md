@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 多选英雄按等级排序（待批次验证）
+
+路径：`src/game_subgroup.h`、`src/game_view.h`、`src/game_view.cpp`、`src/game_selection_panel.cpp`、`tests/browser_tests.cpp`、`docs/selection-panel.md`。根据[暴雪子组说明](https://classic.battle.net/war3/basics/specialcommands.shtml)，头像、初始子组及 Tab 循环将英雄放在普通单位前，英雄按等级降序；同级及非英雄保持原相对顺序。命令与实验联机选区仍使用原始顺序。
+
+必要检查：Win32 Release 客户端与 browser 目标编译通过；`war3_browser_tests <data-root> <scratch> selection_hero_priority` 1 通过／0 失败，检查等级与稳定顺序。隐藏对局以一名步兵及三个不同等级英雄验证初始焦点、正反向 Tab、头像点击与四单位选区保持，日志和截图位于 `tmp/docs-artifacts/war3/hero-priority/`。合成输入不证明真实窗口与原版像素一致；升级时焦点、同级排序、非英雄优先级及真实双端联机待集中验证。本批 1/3。
+
 ## 集结点、运输撤退与携物子组批次（部分验证）
 
 范围：`0ea1f24`、`429e183` 及同任务补充 `dee3224`、`fb5775a`；集成版本 `fb5775a`。Win32 Release 客户端、construction、CampaignAI、clock、browser 和 order_queue 目标编译通过。使用已有 Booty Bay 地形夹具，运输场景去重后 29 个进程各 1 通过／0 失败，覆盖多波、低血、无载具、换基地、回调改派、载具死亡／易主及原有运输回归；集结点无效句柄、AI 快照字段兼容和携物子组各 1 通过／0 失败。原版 Booty Bay 的 order_queue 默认入口退出 0，输出 40 条 PASS（无 RESULT 汇总），包含实验联机单会话的成员名单、库存变化、权限和异常报文。共 33 个进程成功；日志与构建记录位于 `tmp/docs-artifacts/war3/inventory-subgroups/batch-*.log`。

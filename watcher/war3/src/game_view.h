@@ -282,6 +282,7 @@ class GameView {
     size_t inventoryTooltipScroll_=0,inventoryTooltipTitleLines_=0,inventoryTooltipBodyLines_=0;
     void drawInventoryTooltip(const GameInput& input);
     std::vector<std::uint32_t> selected(bool owned=false) const;
+    std::vector<std::uint32_t> displaySelection() const;
     std::vector<std::uint32_t> primarySelection(std::vector<std::uint32_t> units) const;
     std::vector<std::uint32_t> orderSelection(bool control) const;
     void resetSubgroupInput();
