@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 范围弹道强制未命中伤害（本批 2/3，待集中验证）
+
+路径：`src/session_projectiles.cpp`、`tests/passive_tests.cpp`。对 `artillery`／`msplash` 目标攻击，发射时记录的强制未命中在命中范围单位、可破坏物和物品时将既有距离伤害系数减半；`neverMiss` 仍优先。暴雪 [Combat 说明](https://classic.battle.net/war3/basics/combat.shtml) 记载溅射单位因诅咒等未命中时造成一半伤害。
+
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> splash-miss` 修复前失败，修复后退出 0、1 通过／0 失败。实际迫击炮弹道分别在正常和 100% 诅咒下发射，按各次弹道真实伤害归一后检查中心及外围目标均减半。日志 `tmp/docs-artifacts/war3/build-tools/splash-miss-{before,after}.log`。目标闪避、攻击地面、范围特效、其他未命中来源及原版动态判定时机尚待对照，本次不推断其规则；集中验证按批次进行。
+
 ## 灵魂锁链致命分摊保护（本批 1/3，待集中验证）
 
 路径：`src/session.h`、`src/session_damage.cpp`、`src/session_unit_casters.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`。分摊伤害在伤害回调后按最终值判定：致命时保留 1 点生命，并只解除仍为原轮次的锁链；非致命伤害及其他关联单位保持既有处理。暴雪 [Spirit Walker 说明](https://classic.battle.net/war3/orc/units/spiritwalker.shtml) 指出致命分摊会保留 1 点生命并解除锁链。
