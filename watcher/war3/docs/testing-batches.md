@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 树妖自动驱逐召唤物（本批 3/3，提交后集中验证）
+
+路径：`src/session_autocast.cpp`、`tests/consumption_tests.cpp`。自动驱逐选择需要有可驱散且符合敌友极性的魔法状态，不再仅因敌方单位是召唤物或幻象触发；手动驱逐和召唤伤害规则保持独立。暴雪 [树妖说明](https://classic.battle.net/war3/nightelf/units/dryad.shtml) 指出召唤单位需手动驱逐。带其他状态的召唤物和英雄技能的自动选择细节仍需固定版对照。
+
+必要检查：Win32 Release `war3_consumption_tests` 构建通过；`war3_consumption_tests <data-root> <fixture> dryad-summon-autocast` 修复前失败，修复后退出 0、1 通过／0 失败，覆盖研究完成后无状态水元素不触发自动施法、普通敌人正面状态的自动驱散及手动驱逐水元素。日志 `tmp/docs-artifacts/war3/build-tools/dryad-auto-{before,after}.log`。真实原版窗口、带状态召唤物、英雄技能及多目标优先级尚待验证；提交后集中验证本批。
+
 ## 整数游戏状态 NOT_EQUAL 事件（本批 2/3，待集中验证）
 
 路径：`src/session_callbacks.cpp`、`tests/clock_tests.cpp`。整数游戏状态的 `NOT_EQUAL` 事件在状态值每次实际变化时派发，同值写入不派发；保留状态快照匹配位和既有重入版本检查。固定版整数状态事件处理 `0x6f25ed00` 调用 `0x6f259e60`，后者对 `NOT_EQUAL` 无条件返回真；状态写入的 `0x6f10d5d0` 对同值不通知。此特例不推广到玩家、单位、变量或浮点游戏状态。
