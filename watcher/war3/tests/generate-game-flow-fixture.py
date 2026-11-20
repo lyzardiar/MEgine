@@ -41,7 +41,40 @@ trigger probe_hero_state_up=null
 trigger probe_hero_state_down=null
 integer probe_hero_life_up=0
 integer probe_hero_life_down=0
+unit probe_mana_unit=null
+trigger probe_mana_up_trigger=null
+trigger probe_mana_down_trigger=null
+integer probe_mana_up=0
+integer probe_mana_down=0
+boolean probe_mana_remove=false
 endglobals
+function ProbeHeroManaEvent takes nothing returns nothing
+    if GetTriggerUnit()!=probe_mana_unit or GetTriggerEventId()!=EVENT_UNIT_STATE_LIMIT or GetEventUnitState()!=UNIT_STATE_MANA then
+        call ExecuteFunc("MatchFailure_hero_mana_context")
+    endif
+    if GetTriggeringTrigger()==probe_mana_up_trigger then
+        set probe_mana_up=probe_mana_up+1
+        if probe_mana_remove then
+            call RemoveUnit(probe_mana_unit)
+        endif
+    elseif GetTriggeringTrigger()==probe_mana_down_trigger then
+        set probe_mana_down=probe_mana_down+1
+    else
+        call ExecuteFunc("MatchFailure_hero_mana_trigger")
+    endif
+endfunction
+function ProbeHeroManaSetup takes unit whichUnit, real limit, boolean removeUnit returns nothing
+    set probe_mana_unit=whichUnit
+    set probe_mana_remove=removeUnit
+    set probe_mana_up=0
+    set probe_mana_down=0
+    set probe_mana_up_trigger=CreateTrigger()
+    call TriggerRegisterUnitStateEvent(probe_mana_up_trigger,whichUnit,UNIT_STATE_MANA,GREATER_THAN,limit)
+    call TriggerAddAction(probe_mana_up_trigger,function ProbeHeroManaEvent)
+    set probe_mana_down_trigger=CreateTrigger()
+    call TriggerRegisterUnitStateEvent(probe_mana_down_trigger,whichUnit,UNIT_STATE_MANA,LESS_THAN,limit)
+    call TriggerAddAction(probe_mana_down_trigger,function ProbeHeroManaEvent)
+endfunction
 function ProbeLimitEvent takes nothing returns nothing
     if GetTriggerUnit()!=probe_limit_unit or GetTriggerEventId()!=EVENT_UNIT_STATE_LIMIT or GetTriggeringTrigger()!=probe_limit_trigger then
         call ExecuteFunc("MatchFailure_limit_context")

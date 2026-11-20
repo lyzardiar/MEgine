@@ -1,18 +1,26 @@
 # 独立客户端测试队列
 
-## 单位状态上限事件注册（待批次验证）
+## 变形费用与单位状态事件批次（已批次验证，仍有待验项）
+
+范围：`ecc3033`、`aea1b21`、`4669628`，含费用测试补充 `9ee0e46`；集成代码为 `4669628`，并含本记录提交中的测试修订。Win32 Release 客户端、undead-forms、game-flow、clock 目标构建通过；`relative-cost` 两种配置、`form-cost-cancel`、`form-zero-lumber`、`hero-state-crossing`、`hero-state-mana`、`unit-state-registration` 和 `actor_events_rebuild_filters_state_and_dispatch_order` 各退出 0、1 通过／0 失败；undead-forms 默认入口退出 0、3 通过／0 失败，game-flow 默认入口退出 0、输出 1 条 PASS。共 10 个最终成功进程、12 条 PASS，日志及生成夹具位于 `tmp/docs-artifacts/war3/batch-form-state/`。
+
+本批补充 `tests/game_flow_tests.cpp`、`tests/generate-game-flow-fixture.py` 的智力／魔法用例，覆盖同一模拟步内上下跨越、敏捷不触发和回调中移除英雄。`4669628` 提交时并行混入的 game-flow 恢复测试草稿尝试在不完整恢复会话中继续模拟而失败；本记录提交移除该无效重复块，事件恢复由独立 SAEV 测试在受控恢复流程验证，不代表完整产品读档已验收。最终四个 game-flow 入口使用更新后的夹具重新构建并通过。
+
+隔离隐藏客户端使用虚拟指针悬停付费变形按钮，1258×904 帧实际显示金币 `-100`、木材 `-50`；截图和脚本位于 `tmp/docs-artifacts/war3/batch-form-state/`。未覆盖真实鼠标、与原版画面逐像素对照、多分辨率、变形支付和中断时机、自动到期／死亡、旧存档、触发器多观察者重入及完整对局。新旧费用配置和原版动态载档仍需实机对照。下一功能批次从 0/3 开始。
+
+## 单位状态上限事件注册（已批次验证，仍有待验项）
 
 路径：`src/session_callbacks.cpp`、`tests/game_flow_tests.cpp`、`tests/generate-game-flow-fixture.py`、`tests/clock_tests.cpp`、`docs/unit-state-events.md`。单位生命与魔法状态继续订阅阈值；生命上限和魔法上限仍创建和管理事件句柄，但不加入观察索引，SAEV v2 恢复也按相同规则重建。固定版 `TriggerRegisterUnitStateEvent` 的构造函数 `0x6f25cf20` 在状态 1／3 跳过观察器安装，外层仍链接触发器并分配句柄；原始构造函数四状态受控探针使用外部模拟桩，不能替代原版实机或载档验证。
 
 必要检查：Win32 Release 客户端、game-flow 和 clock 目标构建通过；`generate-game-flow-fixture.py --data-root <data-root> --output <fixture>` 后运行 `war3_game_flow_tests <data-root> <fixture> unit-state-registration`，修复前失败、修复后退出 0、1 通过／0 失败，覆盖四个独立句柄、生命／魔法事件与上下文、上限不触发、销毁后不触发；`hero-state-crossing` 回归退出 0、1 通过／0 失败。`WAR3_CLOCK_FILTER=actor_events_rebuild_filters_state_and_dispatch_order war3_clock_tests <data-root> <scratch>` 退出 0、1 通过／0 失败，覆盖 SAEV v2 句柄映射／字节往返、恢复后上限不订阅和销毁。原始探针及夹具在 `tmp/docs-artifacts/war3/hero-state/`、`tmp/docs-artifacts/war3/state-registration/`，构建日志 `tmp/docs-artifacts/war3/build-tools/state-registration-after-build.log` 和 `state-registration-clock-build.log`。旧版本保存文件、原版动态载档、触发器动作调度与重入仍待本批或原版验证。本批 3/3，提交后集中验证。
 
-## 英雄属性修改时观察生命阈值（待批次验证）
+## 英雄属性修改时观察生命阈值（已批次验证，仍有待验项）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_hero.cpp`、`tests/game_flow_tests.cpp`、`tests/generate-game-flow-fixture.py`、`docs/unit-state-events.md`。`SetHeroStr` 完成生命调整后同步检查生命观察器，`SetHeroInt` 对魔法做相同处理；敏捷修改不额外检查状态，上限状态继续沿用现有观察时机。固定版 `SetHeroStr` 经 `0x6f633000` 调用生命属性更新，`0x6f10d800→0x6f10dc00→0x6f10deb0` 在写入时通知并比较阈值；监听者最终 JASS 动作的调度仍待对照。
 
 必要检查：Win32 Release 客户端及 game-flow 目标构建通过；`generate-game-flow-fixture.py --data-root <data-root> --output <fixture>` 后运行 `war3_game_flow_tests <data-root> <fixture> hero-state-crossing`，修复前失败、修复后退出 0、1 通过／0 失败。用例覆盖同一模拟步内力量升降跨越生命阈值、触发上下文和下一步不重复。夹具与构建日志在 `tmp/docs-artifacts/war3/hero-state/`、`tmp/docs-artifacts/war3/build-tools/hero-state-final-build.log`。智力／魔法、回调移除与重入、多个观察器的派发顺序、最大状态注册及原版实机仍待验证；其他内部状态写入仍依既有处理。本批 2/3。
 
-## 付费变形的双向资源差额（待批次验证）
+## 付费变形的双向资源差额（已批次验证，仍有待验项）
 
 路径：`src/session.h`、`src/session_unit_forms.cpp`、`src/session_spell_info.cpp`、`src/session_ability_commands.cpp`、`src/game_commands.cpp`、`tests/undead_forms_tests.cpp`、`tests/generate-undead-forms-fixture.py`。`RelativeUpgradeCost=0` 时正反向资格、结算和命令费用按目标减当前类型的成本计算，可为负数并返还；非零时按目标类型全额计算。命令提示支持显示非零负费用。资源余额按源调整上限处理，取消记账采用实际变化值，零费用不改余额；资源回调使用版本检查防止派发过时的后续事件。固定版证据包括 `0x6f526f60` 资格、`0x6f5276f0` 调整和 `0x6f54b9b0` 命令费用。
 
