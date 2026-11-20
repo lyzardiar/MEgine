@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 计时窗口与排行榜标题阴影（本批 2/3，待批次验证）
+
+路径：`src/glue.h`、`src/glue.cpp`、`src/game_timer_dialog.cpp`、`src/game_leaderboard.cpp`、`docs/campaign-leaderboard.md`。计时标题／时间与排行榜标题从源 FDF 读取阴影色和偏移，动态前景颜色保持原有脚本设置。
+
+必要检查：Win32 Release 客户端及战役测试干净构建通过；隐藏 D3D9 源 FDF 对照的三个原始文字样式及自定义正向偏移逐像素一致，自定义负向偏移因边界裁剪差 7 像素，比较结果为 4 通过／1 失败，未将该差异记作通过。Human08 原图隐藏客户端在玩家阶段显示 HUD、计时与排行榜，选择迫击炮并通过 F9 打开任务成功。证据和限制见[战役计数板](campaign-leaderboard.md)；实际原版视觉对照、自定义负向偏移裁剪及多分辨率仍待验证。
+
 ## 人族第八章玩家命令击沉三艘船（已执行，不计功能批次）
 
 路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原图玩家命令回归以英雄清路、迫击炮跟随并攻击，连续击沉三艘船并由只读伤害、死亡事件逐一确认迫击炮为击杀者；主进程 Win32 Release 复跑退出 0、1 通过／0 失败。命令、结果和未覆盖范围见[战役流程](campaign-flow.md)，日志 `tmp/docs-artifacts/war3/human08-strategy/three-ship-main.log`。测试工作不计功能批次。
