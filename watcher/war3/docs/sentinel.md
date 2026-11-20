@@ -16,4 +16,4 @@
 
 树上已着陆哨兵在附着树实际受到非零伤害时移除，同时释放特效并刷新视野；武器命中、采木和已有范围树伤害路径使用这一处理。零伤害、未造成生命下降和脚本直接设置生命不按伤害处理。依据[暴雪哨兵说明](https://classic.battle.net/war3/nightelf/units/huntress.shtml)中伤害附着树可移除哨兵；飞行途中、脚本改生命、无敌树采木及原版事件时序仍待对照。
 
-范围驱散和吞噬魔法在技能允许树目标时移除范围内敌方已着陆哨兵并刷新视野，不损伤树木；吞噬哨兵不产生生命或魔法收益。依据[暴雪毁灭者说明](https://classic.battle.net/war3/undead/units/destroyer.shtml)及[暗夜精灵说明](https://classic.battle.net/war3/nightelf/basics.shtml)。己方与盟友、飞行途中、无敌树、目标过滤、范围边缘及原版事件时序仍待对照。
+范围驱散、吞噬魔法、小精灵自爆及驱散物品在能力允许树目标时移除范围内敌方已着陆哨兵并刷新视野，不损伤树木；吞噬哨兵不产生生命或魔法收益。依据[暴雪毁灭者说明](https://classic.battle.net/war3/undead/units/destroyer.shtml)及[暗夜精灵说明](https://classic.battle.net/war3/nightelf/basics.shtml)。己方与盟友、飞行途中、无敌树、目标过滤、范围边缘及原版事件时序仍待对照。
