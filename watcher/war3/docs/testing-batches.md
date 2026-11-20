@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 妖术与召唤单位（本批 1/3，待集中验证）
+
+路径：`src/session_control_spells.cpp`、`tests/control_tests.cpp`。妖术与变羊术共用召唤状态目标筛选，包含单位原始召唤属性、召唤来源／计时生命以及脚本类型增删。暴雪 [Shadow Hunter 说明](https://classic.battle.net/war3/orc/units/shadowhunter.shtml) 指出妖术不影响召唤单位；当前采用与现有变羊术相同的下单目标拒绝方式，原版具体拒绝及支付时机仍待验证。
+
+必要检查：Win32 Release `war3_control_tests` 构建通过；`war3_control_tests <data-root> <fixture> hex-summon` 修复前失败（召唤水元素被变形），修复后退出 0、1 通过／0 失败，覆盖召唤单位、脚本增删召唤类型和普通敌人变形。日志 `tmp/docs-artifacts/war3/build-tools/hex-summon-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/mana-flare-pool/fixture.w3m`。真实原版拒绝／支付和事件时序、幻象、地图覆盖及命中前状态改变仍待对照；集中验证按批次进行。
+
 ## 锁链、溅射未命中与魔法闪耀批次（已批次验证，仍有待验项）
 
 范围：`9597476`、`36bfd46`、`14876c5`，集成版本 `14876c5`。Win32 Release 客户端、control、passive、clock 目标构建通过；`mana-flare-mana-pool`、`item-combined-spirit-rune`、`item-combined-spirit-target`、`splash-miss`、`unit_buffs_restore_spirit_link_and_shield` 各 1 通过／0 失败，`line-weapon` 4 通过／0 失败，共 6 个进程、9 项通过。构建和测试日志位于 `tmp/docs-artifacts/war3/build-tools/batch-spirit-splash-flare-*.log`；复合技能夹具 `tmp/docs-artifacts/war3/mana-flare-pool/fixture.w3m`。
