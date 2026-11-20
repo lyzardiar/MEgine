@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 毒球与攻击增强优先级（本批 1/3，待批次验证）
+
+路径：`src/session_weapon_effects.cpp`、`src/session_orb_attacks.cpp`、`tests/passive_tests.cpp`、`tests/spell_tests.cpp`。毒球携带的攻击毒仅在该物品的法球效果选中时生效；单位原生和不属于毒球物品的毒能力仍独立处理。手动箭技能可覆盖毒球，自动箭在可作用的装备法球存在时让位。暴雪 [神器说明](https://classic.battle.net/war3/basics/heroitemsartifact.shtml) 记载法球顺序及手动／自动箭技能优先级。
+
+必要检查：Win32 Release passive、spell 目标构建通过；`venom-orb-priority`、`venom-arrow-priority` 修复前分别因未选中毒球附毒和手动箭未覆盖毒球失败，修复后各退出 0、1 通过／0 失败。真实火球与毒球、原生毒、物品能力禁用、真实毒球与自定义毒箭手动／自动模式均已覆盖；既有 `orb-purge`、`poison-stack`、`poison-arrow` 各退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/venom-{orb,arrow}-priority-{before,after}.log` 及 `venom-orb-*.log`；夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`、`tmp/docs-artifacts/war3/spells/fixture.w3m`。前摇期间换装、独立物品提供毒能力、自定义组合及原版实机时序仍待对照；与后续任务集中验证。
+
 ## 攻击毒与范围伤害上限批次（已批次验证，仍有待验项）
 
 范围：`1c4417a`、`ead684d`、`f24406a`，集成版本 `f24406a`。公共伤害接口及状态布局变更后 Win32 Release passive 目标干净构建，随后在集成版本构建客户端、passive、spell、channel、control 目标通过。`poison-immune`、`poison-stack`、`poison-floor`、`blizzard-cap-relations`、`plague-nonlethal`、`item-combined-spirit-rune`、`poison-arrow` 各 1 通过／0 失败；`zero-blizzard` 2 通过／0 失败；channel 程序退出 0 并输出 1 条 PASS，共 9 个进程、10 条通过结果。日志 `tmp/docs-artifacts/war3/build-tools/batch-poison-aoe-*.log`；夹具分别为 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`、`mana-flare-pool/fixture.w3m`、`channels/fixture.w3m` 和 `spells/fixture.w3m`（后三项相对于 `tmp/docs-artifacts/war3/`）。
