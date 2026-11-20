@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 石像形态冷却中允许退出（待批次验证）
+
+路径：`src/session_unit_forms.cpp`、`src/spells.h`、`src/session_ability_commands.cpp`、`tests/undead_forms_tests.cpp`、`docs/undead-forms.md`。石像形态的返回按钮与真实命令在正向冷却中可用，退出保留再次进入的原冷却；依据[暴雪石像鬼说明](https://classic.battle.net/war3/undead/units/gargoyle.shtml)。
+
+必要检查：Win32 Release 客户端与 undead-forms 目标编译通过；`war3_undead_forms_tests <data-root> <fixture>` 退出 0、3 通过／0 失败，覆盖石像进入、反向按钮、立即退出、冷却保留及到期重入，另覆盖毁灭者和钻地。修复前反向按钮在冷却期间不可用；日志位于 `tmp/docs-artifacts/war3/stone-free-return/`。中断、死亡、落点、共享冷却、实际 UI 点击及原版时序仍待验证或对照。本批 1/3。
+
 ## 静滞陷阱与金矿提示批次（已批次验证，仍有待验项）
 
 范围：`122c067`、`452f945`、`fb0580f`、`09ef7bb`（采空提示补充），集成版本 `09ef7bb`。Win32 Release 客户端、control、harvest 和 clock 目标编译通过，重新生成 control、harvest 及错误颜色 harvest 夹具。control 的 `stasis-destroys-nearby`、`stasis-reentry-move-victim`、`flow` 各退出 0、1 通过／0 失败。harvest 的低矿和采空 18 个模式及 `mine-paused`、默认入口共 20 个进程均退出 0、各输出 1 条 PASS；其中部分入口不输出 RESULT。clock 的 `resource_callbacks_do_not_dispatch_stale_mined_total`、`created_blighted_mine_supports_harvesting_and_depletion`、`harvest_snapshot_restores_mine_worker_and_hidden_state`、`harvest_snapshot_preserves_entangled_mine_link`、`recovery_bundle_restores_stasis_ward`、`recovery_bundle_restores_presentation` 各退出 0、1 通过／0 失败。合计 29 个有效进程、29 条 PASS；日志与夹具位于 `tmp/docs-artifacts/war3/batch-stasis-mine/`。

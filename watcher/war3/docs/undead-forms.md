@@ -28,3 +28,5 @@ python tests/generate-undead-forms-fixture.py --data-root "E:/Program Files (x86
 古树扎根拔根已接入，见[古树流程](ancient-roots.md)。吞树、吞噬魔法、吸收魔法与毁灭之球已接入，见[消费能力](consumption.md)。待实现/阶段验证：其他原型与完整AI；全部等级/w3a/付费标志组合/永久语义、原版魔法与恢复/石像冷却起止精度、侦测分类/隐形组合、取消/脚本资源事件/人口关闭/转让/死亡移除/回调重入、特殊路径/合法落地、源动画/附件/音效/按钮画面、三图长局/帧耗时/内存/切图释放。测试夹具为便于隔离禁用了路径阻挡，不能作为WPM落地验证。
 
 原始证据位于仓库根tmp/docs-artifacts/war3/advanced-forms/：source.json、source-rows.log、rea-forms.json、rea-orders.json、model-sequences.log、detection-source.log、build.log、check-build.log、flow.log、shared-forms.log、fixture.w3m及读取脚本；均不提交。
+
+石像形态在进入后的冷却期间仍允许退出；退出不清除或重置再次进入的冷却。依据[暴雪石像鬼说明](https://classic.battle.net/war3/undead/units/gargoyle.shtml)；原版精确冷却起点、受控状态与窗口交互仍待对照。

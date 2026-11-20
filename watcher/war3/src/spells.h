@@ -95,7 +95,7 @@ struct SpellInfo {
     bool alwaysAuto=false;
     std::vector<std::pair<std::uint32_t,unsigned>> prerequisites;
 };
-inline bool freeFormReturn(const SpellInfo& s){return s.unorder && s.order==s.unorder && s.kind!=SpellKind::StoneForm && s.kind!=SpellKind::SpiritForm;}
+inline bool freeFormReturn(const SpellInfo& s){return s.unorder && s.order==s.unorder && s.kind!=SpellKind::SpiritForm;}
 struct CastOrder {
     enum class Phase {Approach,Windup,Backswing,Channel};
     Phase phase=Phase::Approach;
