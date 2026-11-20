@@ -4,7 +4,7 @@
 
 路径：`src/session_projectiles.cpp`、`tests/stealth_tests.cpp`、`docs/stealth-reveal.md`。手动影遁单位被可见敌方直接武器命中且受到正伤害时，在武器射程内选择攻击者并保持位置反击；暂停单位不排入反击，伤害回调后核验双方及防守者战斗状态。依据[暴雪弓箭手说明](https://classic.battle.net/war3/nightelf/units/archer.shtml)的保持位置和回应攻击。
 
-必要检查：Win32 Release 客户端和 stealth 目标编译通过。`war3_stealth_tests <data-root> <fixture> meld-retaliation` 退出 0、1 通过／0 失败，覆盖实际武器命中、选择攻击者、反击、保持位置与显形；修复前退出 1、未反击。日志位于 `tmp/docs-artifacts/war3/meld-retaliation/after.log` 和 `tmp/docs-artifacts/war3/build-tools/meld-retaliation-before.log`。攻击起手或命中时响应、零伤害、暂停和事件回调重入、目标离开射程、其他伤害类型与原版动态行为仍待验证或对照。本批 1/3。
+必要检查：Win32 Release 客户端和 stealth 目标编译通过。`war3_stealth_tests <data-root> <fixture> meld-retaliation` 退出 0、1 通过／0 失败，覆盖实际武器命中、选择攻击者、反击、保持位置与显形；修复前退出 1、未反击。补充修复保持位置的自动目标离开射程后不释放的问题；`meld-retaliation`、`meld-retaliation-switch`、`hold-range-buffer`、`hold-min-range` 分别退出 0、各 1 通过／0 失败，覆盖目标切换、前摇缓冲和最小射程；切换用例在修复前因持续锁定射程外目标失败。日志位于 `tmp/docs-artifacts/war3/meld-retaliation/` 和 `tmp/docs-artifacts/war3/build-tools/meld-retaliation-before.log`、`meld-retaliation-switch-before.log`。攻击起手或命中时响应、零伤害、暂停和事件回调重入、目标离开射程、其他伤害类型与原版动态行为仍待验证或对照。本批 1/3。
 
 ## 头像子组与哨兵批次（已批次验证，仍有待验项）
 

@@ -43,3 +43,4 @@ dust/meld/tower模式随实现编译，阶段合并执行：显形之尘移动/�
 Win32 Release 产品和 `war3_stealth_tests` 编译通过；`war3_stealth_tests.exe <data-root> <stealth-fixture.w3m> visible-ghost` 检查源标志、可见性、变形拒绝与能力移除，以及同一建造点的占位变化，1/1 通过且未加载 Game.dll。窗口、地图覆盖和原版精确语义不在此检查内。
 
 手动影遁单位受到敌方直接武器正伤害时，若攻击者可见且处于其武器射程内，则保持原地选择攻击者并经现有战斗流程反击；暂停单位不会排入反击。依据[暴雪弓箭手说明](https://classic.battle.net/war3/nightelf/units/archer.shtml)中影遁会保持位置且回应攻击。攻击起手或命中时响应、伤害为零、目标离开射程、技能伤害与脚本重入等原版边界仍待对照。
+保持位置的自动目标离开可攻击距离后释放目标，重新选择范围内敌人；手动影遁受击反击沿用此规则。原版切换时序仍待对照。
