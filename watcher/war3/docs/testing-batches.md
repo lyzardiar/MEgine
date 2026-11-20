@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单位肖像动画属性（本批 2/3，待集中验证）
+
+路径：`src/game_portrait.cpp`。肖像优先使用单位当前动画属性选择 `Portrait` 序列；找不到时依次回退普通 `Portrait`、带属性 `Stand`、普通 `Stand`。毁灭者和十胜石雕像共用肖像模型，原始模型同时包含普通和 `Alternate` 序列，单位数据仅毁灭者启用 `alternate`。
+
+必要检查：Win32 Release 客户端构建通过，日志 `tmp/docs-artifacts/war3/build-tools/portrait-properties-build.log`；隔离隐藏客户端使用虚拟指针运行变形夹具，选中毁灭者后点击反向变形，前后肖像发生切换，单位由 `ubsp` 变为 `uobs`，金币／木材分别由 1000 增至 1100／1050。截图和日志位于 `tmp/docs-artifacts/war3/batch-form-state/tooltip-agent-fCYaMV/` 与 `portrait-properties-run.log`；Impeccable changed 检测无发现。原版动态画面、其他属性和模型缺失序列的回退仍待批次及实机对照。
+
 ## 单位状态 NOT_EQUAL 注册（本批 1/3，待集中验证）
 
 路径：`src/session_callbacks.cpp`、`tests/clock_tests.cpp`。生命／魔法的 `NOT_EQUAL` 注册仍返回事件句柄并归触发器管理，但不建立状态观察器；SAEV v2 重建采用相同规则。固定版 `0x6f25cfd0` 的比较分派仅处理 0–4，5 跳过底层观察器构建，事件处理 `0x6f25f768` 同样排除 5；外层保留事件及句柄。玩家状态使用独立路径，不据此更改。
