@@ -12,4 +12,4 @@
 
 英雄光效使用原皮肤 `CommandButtonHeroGlow` 的加色混合，保留头像图像和光效边缘；该纹理中心为不透明黑色，按普通混合会遮住头像。Win32 Release 增量编译通过；游戏内 Agent 验证两个英雄及英雄／步兵混选的头像、生命条和头像物品目标操作。截图位于 `tmp/docs-artifacts/war3/agent-info/hero-portraits-additive/` 与 `mixed-portraits-agent/`。四族及地图自定义皮肤、资源载入时序、不同窗口比例和原版色彩仍待阶段对照。
 
-子组点击依据[暴雪原版操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)的 Sub Groups 规则；当前以单位类型区分子组，背包和形态导致的原版拆组及精确排序仍待实现或核对。
+子组点击依据[暴雪原版操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)的 Sub Groups 规则；同类型空背包单位归为一组，携带物品的单位各自成为独立子组；Tab、Shift+Tab、头像高亮、点击及子组命令共用实时分组规则。实验局域网子组命令固定发送时的成员名单，执行时复核选区和控制权；该私有协议要求两端使用相同版本。原版形态拆组、完整排序和真实窗口行为仍待对照。

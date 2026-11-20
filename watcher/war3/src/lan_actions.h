@@ -52,7 +52,8 @@ struct LanActionAbility {
     std::uint32_t secondaryXBits=0,secondaryYBits=0;
     bool operator==(const LanActionAbility&) const=default;
 };
-using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionEscape,LanActionMenu,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionMinimapSignal,LanActionCacheSync,LanActionGroundItem,LanActionGroupAssign,LanActionGroupSelect,LanActionExperimentalChat,LanActionExperimentalSelection,LanActionExperimentalPurchase,LanActionExperimentalLeave,LanActionExperimentalSpell,LanActionExperimentalUnit,LanActionExperimentalDialog>;
+struct LanActionExperimentalGroup {LanActionAbility order;std::vector<LanObjectId> actors;bool operator==(const LanActionExperimentalGroup&) const=default;};
+using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionEscape,LanActionMenu,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionMinimapSignal,LanActionCacheSync,LanActionGroundItem,LanActionGroupAssign,LanActionGroupSelect,LanActionExperimentalChat,LanActionExperimentalSelection,LanActionExperimentalPurchase,LanActionExperimentalLeave,LanActionExperimentalSpell,LanActionExperimentalUnit,LanActionExperimentalDialog,LanActionExperimentalGroup>;
 
 // Classic 1.13+ action layout, bounded to 256 KiB and 4096 actions per block.
 // Experimental actions require explicit opt-in; malformed or unsupported opcodes fail the block.

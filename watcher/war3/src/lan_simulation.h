@@ -33,10 +33,11 @@ private:
     struct MinimapSignal {unsigned player;std::uint32_t xBits,yBits;};
     struct GroundItem {unsigned player;std::uint32_t handle;};
     struct ExperimentalSpell {PlayerCommand command;};
+    struct ExperimentalGroup {PlayerCommand command;};
     struct ExperimentalUnit {PlayerCommand command;std::uint64_t ticket=0;};
     struct ExperimentalDialog {unsigned player;std::uint32_t dialog,button;std::uint64_t generation;};
     struct Command {unsigned player;PlayerCommandKind kind;std::uint32_t order=0,target=0,xBits=0,yBits=0,expectedUnit=0,queueIndex=0,expectedType=0,expectedItem=0,itemSlot=0;bool cancelOrder=false,subgroup=false,itemOrder=false,itemById=false,queued=false,formationMovement=true;};
-    using Event=std::variant<LanActionPause,LanActionResume,LanActionCacheSync,Escape,Menu,Chat,SelectionSync,Purchase,Departure,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable,MinimapSignal,GroundItem,ExperimentalSpell,ExperimentalUnit,ExperimentalDialog>;
+    using Event=std::variant<LanActionPause,LanActionResume,LanActionCacheSync,Escape,Menu,Chat,SelectionSync,Purchase,Departure,Selection,Subgroup,GroupAssign,GroupSelect,Command,CancelRevival,Transfer,Alliance,Trackable,MinimapSignal,GroundItem,ExperimentalSpell,ExperimentalGroup,ExperimentalUnit,ExperimentalDialog>;
     ScriptSession& session_;
     ObjectResolver resolve_;
     std::vector<std::vector<Event>> decoded_;
