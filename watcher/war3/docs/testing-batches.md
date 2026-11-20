@@ -4,7 +4,7 @@
 
 路径：`src/session.h`、`src/session_harvest.cpp`、`src/session_text.cpp`、`tests/harvest_tests.cpp`、`docs/economy.md`。最后一笔采矿耗尽金矿时排队 `GoldMineCollapseSound`、advisor 色标记和 10 秒 `Goldminedestroyed` 文本；低矿提示补充 `Goldminelow` 文本。普通采矿按工人、覆盖矿按矿能力宿主选择事件位置与种族；文字、声音、标记各自隔离配置异常。固定版 `Game.dll` 的 `0x6f4d240d–0x6f4d2453`、`0x6f41ac1a–0x6f41aca7` 发送采空事件 222 并标记，`0x6f34fbc0` 映射原文本和声音；`CAbilityHarvest` 及覆盖矿能力的宿主身份经 RTTI 核对。
 
-必要检查：Win32 Release 客户端和 harvest 目标编译通过；`war3_harvest_tests <data-root> <fixture> <mode>` 的低矿与采空共 18 个模式各退出 0、1 通过／0 失败，包括普通／闹鬼／缠绕实际采矿、声音与文本请求、标记位置颜色、共享控制、远端／空矿和两项错误颜色隔离；采空三种正例修复前缺少音效。日志 `tmp/docs-artifacts/war3/mine-exhaust-sound/`。实际原版窗口和播放、默认皮肤回退、多人、脚本设量、攻击摧毁及触发时序仍待对照。本批 3/3，提交后集中验证。
+必要检查：Win32 Release 客户端和 harvest 目标编译通过；`war3_harvest_tests <data-root> <fixture> <mode>` 的低矿与采空共 18 个模式各退出 0、1 通过／0 失败，包括普通／闹鬼／缠绕实际采矿、声音与文本请求、标记位置颜色、共享控制、远端／空矿和两项错误颜色隔离；采空三种正例修复前缺少音效。日志 `tmp/docs-artifacts/war3/mine-exhaust-sound/`。补充按原版默认规则设置标记时长：普通 advisor 色为 1.5 秒，颜色等于攻击标记色时为 3 秒；六项普通／覆盖矿低矿及采空检查各退出 0、1 通过／0 失败，覆盖默认 1.5 秒。固定版 `0x6f35a010` 传零时长，`0x6f393424–0x6f393487` 按颜色选择默认值。实际原版窗口和播放、默认皮肤回退、多人、脚本设量、攻击摧毁及触发时序仍待对照。本批 3/3，提交后集中验证。
 
 ## 采矿低余额提示（待批次验证）
 
