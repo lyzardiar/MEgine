@@ -1,12 +1,18 @@
 # 独立客户端测试队列
 
+## 单位状态 NOT_EQUAL 注册（本批 1/3，待集中验证）
+
+路径：`src/session_callbacks.cpp`、`tests/clock_tests.cpp`。生命／魔法的 `NOT_EQUAL` 注册仍返回事件句柄并归触发器管理，但不建立状态观察器；SAEV v2 重建采用相同规则。固定版 `0x6f25cfd0` 的比较分派仅处理 0–4，5 跳过底层观察器构建，事件处理 `0x6f25f768` 同样排除 5；外层保留事件及句柄。玩家状态使用独立路径，不据此更改。
+
+必要检查：Win32 Release `war3_clock_tests` 构建通过；`WAR3_CLOCK_FILTER=actor_events_rebuild_filters_state_and_dispatch_order war3_clock_tests <data-root> <scratch>` 退出 0、1 通过／0 失败，覆盖生命／魔法不等事件句柄、等值与非等值反复切换、SAEV 句柄映射及重建、销毁清理和既有小于条件对照。构建及测试日志位于 `tmp/docs-artifacts/war3/build-tools/unequal-state-{build,test}.log`。原版实机、原版动态载档及其他比较条件的完整时序仍待验证；下一批累计 3 项后统一验证。
+
 ## 变形费用与单位状态事件批次（已批次验证，仍有待验项）
 
 范围：`ecc3033`、`aea1b21`、`4669628`，含费用测试补充 `9ee0e46`；集成代码为 `4669628`，并含本记录提交中的测试修订。Win32 Release 客户端、undead-forms、game-flow、clock 目标构建通过；`relative-cost` 两种配置、`form-cost-cancel`、`form-zero-lumber`、`hero-state-crossing`、`hero-state-mana`、`unit-state-registration` 和 `actor_events_rebuild_filters_state_and_dispatch_order` 各退出 0、1 通过／0 失败；undead-forms 默认入口退出 0、3 通过／0 失败，game-flow 默认入口退出 0、输出 1 条 PASS。共 10 个最终成功进程、12 条 PASS，日志及生成夹具位于 `tmp/docs-artifacts/war3/batch-form-state/`。
 
 本批补充 `tests/game_flow_tests.cpp`、`tests/generate-game-flow-fixture.py` 的智力／魔法用例，覆盖同一模拟步内上下跨越、敏捷不触发和回调中移除英雄。`4669628` 提交时并行混入的 game-flow 恢复测试草稿尝试在不完整恢复会话中继续模拟而失败；本记录提交移除该无效重复块，事件恢复由独立 SAEV 测试在受控恢复流程验证，不代表完整产品读档已验收。最终四个 game-flow 入口使用更新后的夹具重新构建并通过。
 
-隔离隐藏客户端使用虚拟指针悬停付费变形按钮，1258×904 帧实际显示金币 `-100`、木材 `-50`；截图和脚本位于 `tmp/docs-artifacts/war3/batch-form-state/`。未覆盖真实鼠标、与原版画面逐像素对照、多分辨率、变形支付和中断时机、自动到期／死亡、旧存档、触发器多观察者重入及完整对局。新旧费用配置和原版动态载档仍需实机对照。下一功能批次从 0/3 开始。
+隔离隐藏客户端使用虚拟指针悬停付费变形按钮，1258×904 帧实际显示金币 `-100`、木材 `-50`；另一次点击后单位类型由 `ubsp` 变为 `uobs`，金币由 1000 增至 1100、木材由 1000 增至 1050，人口由 5/90 变为 3/90。截图和脚本位于 `tmp/docs-artifacts/war3/batch-form-state/`；点击后的截帧仍可能处于模型过渡，不能证明最终视觉。未覆盖真实鼠标、与原版画面逐像素对照、多分辨率、变形支付和中断时机、自动到期／死亡、旧存档、触发器多观察者重入及完整对局。新旧费用配置和原版动态载档仍需实机对照。本批完成后开始下一功能批次。
 
 ## 单位状态上限事件注册（已批次验证，仍有待验项）
 
