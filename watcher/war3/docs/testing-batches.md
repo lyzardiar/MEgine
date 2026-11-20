@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 状态事件越界比较操作符（本批 3/3，提交后集中验证）
+
+路径：`src/session_callbacks.cpp`、`src/session_tick.cpp`、`tests/clock_tests.cpp`。状态／变量事件保留越界比较值和事件句柄，比较时恒不匹配；单位状态不建立观察器。SAEV、SGEV 编码与恢复保留原始操作数，有限阈值限制不变。固定版比较器 `0x6f1e0540` 对超出 0–5 的比较返回假，单位状态构造及事件分发对越界操作跳过观察器与分支；原版整数游戏状态的 `NOT_EQUAL` 特例不属于本次修改。
+
+必要检查：Win32 Release `war3_clock_tests` 构建通过；`WAR3_CLOCK_FILTER=invalid_limitop_events_recover_without_firing war3_clock_tests <data-root> <scratch>` 退出 0、1 通过／0 失败，覆盖操作符 6／-1 的变量、单位、玩家、整数游戏状态和时间事件，恢复后句柄、触发器销毁、不触发及合法对照。日志 `tmp/docs-artifacts/war3/build-tools/invalid-limitop-{build,test}.log`。原版实际载档和非有限阈值尚未验证；提交后集中验证本批。
+
 ## 小精灵自爆清除树上哨兵（本批 2/3，待集中验证）
 
 路径：`src/session_caster_spells.cpp`、`tests/stealth_tests.cpp`。原始 `Adtn` 的目标含 `tree`；小精灵自爆时先快照范围内已着陆的敌方哨兵，死亡回调后对仍有效的候选结算，避免清除回调中新出现的哨兵。单位驱散、魔法损失和自毁继续沿现有流程。

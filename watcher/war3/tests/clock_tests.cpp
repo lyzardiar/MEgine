@@ -2856,6 +2856,60 @@ endfunction
  endfunction
  )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"game-state-event.j",source,"game state recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());auto& a=original->runtime();auto& b=target->runtime();require(b.global("clockEvent").bits==ids.at(a.global("clockEvent").bits) && b.global("integerEvent").bits==ids.at(a.global("integerEvent").bits),"Game state event handles differ");require(b.invoke("GetIntegerGameState",std::array{b.global("GAME_STATE_DIVINE_INTERVENTION")}).bits==3,"Integer game state differs");for(auto* vm:{&a,&b}){vm->invoke("SetFloatGameState",std::array{vm->global("GAME_STATE_TIME_OF_DAY"),vm->real(real(7))});vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(6)});require(vm->global("clockHits").bits==1 && vm->global("integerHits").bits==1,"Recovered game state event did not fire");vm->invoke("SetIntegerGameState",std::array{vm->global("GAME_STATE_DIVINE_INTERVENTION"),vm->integer(7)});require(vm->global("integerHits").bits==1,"Integer state event fired twice while matched");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
     });
+    test("invalid_limitop_events_recover_without_firing",[&]{
+        auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
+ real watched=0.
+ integer badHits=0
+ integer goodHits=0
+ unit subject=null
+ trigger bad=null
+ trigger good=null
+ event e1=null
+ event e2=null
+ event e3=null
+ event e4=null
+ event e5=null
+ event e6=null
+ event e7=null
+ event e8=null
+ event e9=null
+ event e10=null
+ endglobals
+ function badAction takes nothing returns nothing
+ set badHits=badHits+1
+ endfunction
+ function goodAction takes nothing returns nothing
+ set goodHits=goodHits+1
+ endfunction
+ function config takes nothing returns nothing
+ endfunction
+ function main takes nothing returns nothing
+ set subject=CreateUnit(Player(0),'hfoo',0.,0.,0.)
+ set bad=CreateTrigger()
+ set good=CreateTrigger()
+ call TriggerAddAction(bad,function badAction)
+ call TriggerAddAction(good,function goodAction)
+ set e1=TriggerRegisterVariableEvent(bad,"watched",ConvertLimitOp(6),1.)
+ set e2=TriggerRegisterVariableEvent(bad,"watched",ConvertLimitOp(-1),1.)
+ set e3=TriggerRegisterUnitStateEvent(bad,subject,UNIT_STATE_LIFE,ConvertLimitOp(6),100.)
+ set e4=TriggerRegisterUnitStateEvent(bad,subject,UNIT_STATE_LIFE,ConvertLimitOp(-1),100.)
+ set e5=TriggerRegisterPlayerStateEvent(bad,Player(0),PLAYER_STATE_RESOURCE_GOLD,ConvertLimitOp(6),100.)
+ set e6=TriggerRegisterPlayerStateEvent(bad,Player(0),PLAYER_STATE_RESOURCE_GOLD,ConvertLimitOp(-1),100.)
+ set e7=TriggerRegisterGameStateEvent(bad,GAME_STATE_DIVINE_INTERVENTION,ConvertLimitOp(6),1.)
+ set e8=TriggerRegisterGameStateEvent(bad,GAME_STATE_DIVINE_INTERVENTION,ConvertLimitOp(-1),1.)
+ set e9=TriggerRegisterGameStateEvent(bad,GAME_STATE_TIME_OF_DAY,ConvertLimitOp(6),6.)
+ set e10=TriggerRegisterGameStateEvent(bad,GAME_STATE_TIME_OF_DAY,ConvertLimitOp(-1),6.)
+ call TriggerRegisterVariableEvent(good,"watched",GREATER_THAN,1.)
+ endfunction
+ function drive takes nothing returns nothing
+ set watched=2.
+ call SetUnitState(subject,UNIT_STATE_LIFE,50.)
+ call SetPlayerState(Player(0),PLAYER_STATE_RESOURCE_GOLD,50)
+ call SetIntegerGameState(GAME_STATE_DIVINE_INTERVENTION,2)
+ call SetFloatGameState(GAME_STATE_TIME_OF_DAY,7.)
+ endfunction
+ )jass";auto make=[&]{auto module=Module::compile(Program::parse({{"Scripts\\common.j",sourceText(common->bytes),common->source},{"invalid-limitop.j",source,"invalid comparison recovery"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->audioMuted(true);session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=make(),target=make();original->startMain();target->runtime().invoke("CreateTimer");auto ids=target->restoreRecoveryBundle(original->encodeRecoveryBundle());target->notifyGameLoaded();target->activateRecoveredSession();auto& a=original->runtime();auto& b=target->runtime();for(auto name:{"e1","e2","e3","e4","e5","e6","e7","e8","e9","e10"})require(a.global(name).bits && b.global(name).bits==ids.at(a.global(name).bits),"Invalid comparison event handle did not restore");for(auto* session:{original.get(),target.get()}){auto& vm=session->runtime();vm.invoke("drive");session->advance(1./32);require(!vm.global("badHits").bits && vm.global("goodHits").bits==1,"Invalid comparison event fired or valid event failed");auto count=session->liveObjects(NativeKind::Event);vm.invoke("DestroyTrigger",std::array{vm.global("bad")});require(session->liveObjects(NativeKind::Event)+10==count,"Invalid comparison events survived trigger destruction");}require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+    });
     test("recovery_bundle_restores_random_pools",[&]{
         auto common=testArchives->readCandidates({"Scripts\\common.j"},ArchiveScope::Common);require(bool(common),"Common source missing");std::string source=R"jass(globals
  unitpool units = null
