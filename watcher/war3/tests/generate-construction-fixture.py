@@ -192,6 +192,7 @@ def main():
     parser.add_argument('--output', type=pathlib.Path, default=ROOT/'tmp/docs-artifacts/war3/construction/fixture.w3m')
     parser.add_argument('--repair-targets', choices=['partial', 'positive', 'vulnerable', 'invu', 'invulnerable', 'alias-ground', 'alias-structure', 'alias-bridge', 'alias-bridge-long'])
     parser.add_argument('--race-overrides', action='store_true')
+    parser.add_argument('--low-food-ceiling', action='store_true')
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only game installation')
@@ -207,6 +208,11 @@ def main():
     if args.race_overrides:
         units = [(b'z0r1', b'_'), (b'z0r2', b'mystery'), (b'z0r3', b'NAGA'), (b'z0r4', b'naga')]
         files['war3map.w3u'] = struct.pack('<III', 2, 0, len(units)) + b''.join(b'hpea' + unit + struct.pack('<I', 1) + b'urac' + struct.pack('<I', 3) + race + b'\0' + unit for unit, race in units)
+    if args.low_food_ceiling:
+        if args.race_overrides:
+            raise ValueError('Choose one unit override per fixture')
+        files['war3mapMisc.txt'] = b'[Misc]\nFoodCeiling=10\n'
+        files['war3map.w3u'] = struct.pack('<II', 2, 2) + b''.join(unit + bytes(4) + struct.pack('<I', 1) + b'ufoo' + struct.pack('<II', 0, 2) + unit for unit in (b'hhou', b'hkee')) + struct.pack('<I', 0)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
