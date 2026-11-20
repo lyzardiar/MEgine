@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 隔岸撤退的载具失效恢复（同任务补充，待批次验证）
+
+路径：`src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`、`docs/ai.md`。接人载具死亡、易主或改派时，仍由撤退控制且尚未登舱的队员保留回家订单和重试资格；同载具的新登艇命令或停止回调改派不由旧波次取消。
+
+必要检查：Win32 Release 客户端和 CampaignAI 目标编译通过。BootyBay 地形双载具单人／三人夹具中，首艘载具死亡或易主后备用载具接回全部队员，修复前失败、修复后四项各 1 通过／0 失败；停止回调改派、重复登艇改派、首次及排队登艇事件改派载具及既有运输场景共 12 项各 1 通过／0 失败。日志 `tmp/docs-artifacts/war3/retreat-carrier-loss/final.log`。尚未覆盖在舱时失效、无备用载具后的长时间恢复、完整对局和原版策略；该补充属于 `429e183` 同一任务，本批仍为 2/3。
+
 ## 隔岸队员的运输撤退（待批次验证）
 
 路径：`src/ai.h`、`src/session.h`、`src/session_ai.cpp`、`src/session_ai_natives.cpp`、`src/session_ai_transport.cpp`、`src/session_ai_snapshot.cpp`、`tests/campaign_ai_tests.cpp`、`tests/generate-campaign-ai-fixture.py`、`tests/clock_tests.cpp`、`docs/ai.md`。对岸队员撤退时，空闲载具按容量分波接回；返程与进攻波次分开，重复撤退保留当前波次，基地变化时重新规划，命令回调改派的队员或载具不再由旧波次接管。AI 策略快照写 SAIS v3，读取 v1/v2 时返程标记默认为空；旧客户端不能读取 v3。

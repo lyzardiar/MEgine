@@ -16,6 +16,7 @@ destructable tree=null
 integer boardOverrideCount=0
 integer carrierOverrideCount=0
 integer stopOverrideCount=0
+boolean stopOverrideAccepted=false
 boolean carrierOverridePause=false
 boolean carrierOverrideOnce=false
 unit carrierOtherOverride=null
@@ -101,7 +102,7 @@ endfunction
 function OverrideBoardStop takes nothing returns nothing
     if GetIssuedOrderId()==851972 then
         set stopOverrideCount=stopOverrideCount+1
-        call IssuePointOrder(GetTriggerUnit(),"move",3200,2050)
+        set stopOverrideAccepted=IssuePointOrder(GetTriggerUnit(),"move",3200,2050)
     endif
 endfunction
 function InstallBoardStopOverride takes unit target returns nothing
