@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 魔免攻击者与荆棘光环（本批 3/3，提交后集中验证）
+
+路径：`src/session_attack_passives.cpp`、`tests/passive_tests.cpp`。敌方近战攻击者具有魔免时跳过荆棘光环反伤；普通攻击者和移除魔免后的攻击继续反伤。该判断仅应用于光环反伤，不修改通用伤害类型或尖刺外壳等其他反伤。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明魔免单位不受敌方荆棘光环影响。
+
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> thorns-immune` 修复前失败、修复后退出 0、1 通过／0 失败，通过实际近战命中检查普通／魔免攻击者及魔免移除后的反伤。日志 `tmp/docs-artifacts/war3/build-tools/thorns-immune-{before,after}.log`。原版混合荆棘与其他反伤、魔免来源变化和实际伤害事件时序仍待对照；提交后集中验证本批。
+
 ## 隐身或影遁的光环来源（本批 2/3，待集中验证）
 
 路径：`src/session_auras.cpp`、`tests/passive_tests.cpp`。光环来源处于会话隐身状态时停止刷新光环；已有接收状态沿用当前剩余时间自然到期，显形后恢复刷新。不使用敌方是否能侦测到该单位判断来源状态，也不改变非光环被动效果。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明隐身或影遁时光环不生效。
