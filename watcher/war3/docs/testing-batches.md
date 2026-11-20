@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 灵魂锁链致命分摊保护（本批 1/3，待集中验证）
+
+路径：`src/session.h`、`src/session_damage.cpp`、`src/session_unit_casters.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`。分摊伤害在伤害回调后按最终值判定：致命时保留 1 点生命，并只解除仍为原轮次的锁链；非致命伤害及其他关联单位保持既有处理。暴雪 [Spirit Walker 说明](https://classic.battle.net/war3/orc/units/spiritwalker.shtml) 指出致命分摊会保留 1 点生命并解除锁链。
+
+必要检查：因伤害函数签名变化，Win32 Release `war3_control_tests` 干净构建通过；`generate-combined-item-fixture.py --data-root <data-root> --output <fixture>` 后运行 `war3_control_tests <data-root> <fixture> item-combined-spirit-rune`，修复前致命分摊断言失败，修复后退出 0、1 通过／0 失败。覆盖真实锁链分摊、刚好降至 1 点的非致命伤害、伤害回调将伤害改为非致命、致命保护和移除锁链；日志 `tmp/docs-artifacts/war3/build-tools/spirit-nonlethal-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/spirit-nonlethal/combined-fixture.w3m`。原版伤害事件数值及回调时序、链接替换／死亡重入和实机对局仍待对照；集中验证按批次进行。
+
 ## 驱散与整数状态事件批次（已批次验证，仍有待验项）
 
 范围：`d264bdf`、`02aaf08`、`9f16d38`，集成版本 `9f16d38`。Win32 Release 客户端、consumption、clock 目标构建通过；`devour-immune`、`dispel-immune`、`detonate-immune`、`dryad-summon-autocast`、`devour`、`recovery_bundle_restores_game_state_events`、`invalid_limitop_events_recover_without_firing` 各退出 0、1 通过／0 失败，共 7 个进程、7 条 PASS。构建及测试日志位于 `tmp/docs-artifacts/war3/build-tools/batch-dispel-state-*.log`，夹具为 `tmp/docs-artifacts/war3/eat-magic/fixture.w3m`。

@@ -1325,7 +1325,7 @@ public:
     bool mechanicalDisguised(const UnitState& unit,unsigned viewer) const;
     bool setJapiEventDamage(jass::Real value);
     std::uint32_t japiEventDamageData(std::uint32_t selector) const;
-    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false,bool diseaseAura=false,bool nonlethal=false,unsigned weaponType=0);
+    bool damageUnit(std::uint32_t source,std::uint32_t target,float amount,unsigned attackType,unsigned damageType,bool attack=false,bool ranged=false,float* dealt=nullptr,bool deflected=false,bool useEtherealBonus=true,std::optional<unsigned> orphanOwner={},bool redistributed=false,bool diseaseAura=false,bool nonlethal=false,unsigned weaponType=0,bool* preventedDeath=nullptr);
     const ProductInfo& product(std::uint32_t type,bool item=false);
     const ResearchInfo& researchInfo(std::uint32_t type,unsigned level);
     bool research(std::uint32_t unit,std::uint32_t type);

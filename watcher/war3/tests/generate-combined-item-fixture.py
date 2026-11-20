@@ -23,8 +23,17 @@ def main():
     archive = control.fixture.mpyq.MPQArchive(io.BytesIO(original[offset:]), listfile=False)
     names = control.fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: control.fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
-    script = control.SCRIPT.replace('integer soulPickups=0', 'integer soulPickups=0\ninteger combinedUses=0\ninteger combinedEvents=0\nboolean removeCombined=false\nitem reentryItem=null\nunit changedTarget=null\nunit revivedTarget=null\nunit transferredCaster=null')
-    script = script.replace('function config takes nothing returns nothing', '''function combined_used takes nothing returns nothing
+    script = 'native ProbeOverrideDamage takes real value returns nothing\n' + control.SCRIPT.replace('integer soulPickups=0', 'integer soulPickups=0\ninteger combinedUses=0\ninteger combinedEvents=0\nboolean removeCombined=false\nitem reentryItem=null\nunit changedTarget=null\nunit revivedTarget=null\nunit transferredCaster=null')
+    script = script.replace('function config takes nothing returns nothing', '''function spirit_override_damage takes nothing returns nothing
+    call ProbeOverrideDamage(2.)
+endfunction
+function watch_spirit_override takes unit u returns trigger
+    local trigger t=CreateTrigger()
+    call TriggerRegisterUnitEvent(t,u,EVENT_UNIT_DAMAGED)
+    call TriggerAddAction(t,function spirit_override_damage)
+    return t
+endfunction
+function combined_used takes nothing returns nothing
     set combinedEvents=combinedEvents+1
     if GetItemTypeId(GetManipulatedItem())=='I0CM' then
         set combinedUses=combinedUses+1
