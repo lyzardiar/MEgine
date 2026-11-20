@@ -1,18 +1,24 @@
 # 独立客户端测试队列
 
-## 状态事件越界比较操作符（本批 3/3，提交后集中验证）
+## 树上哨兵驱散与比较操作符批次（已批次验证，仍有待验项）
+
+范围：`2f9f0fe`、`a7662bf`、`1b4b4f4`，集成版本 `1b4b4f4`。Win32 Release 客户端、stealth、clock 目标构建通过；`sentinel-item-dispel`、`sentinel-combined-dispel`、`sentinel-rune-dispel`、`sentinel-detonate`、`sentinel-dispel`、`sentinel-devour`、`invalid_limitop_events_recover_without_firing` 和 `actor_events_rebuild_filters_state_and_dispatch_order` 各退出 0、1 通过／0 失败，共 8 个进程、8 条 PASS。构建日志 `tmp/docs-artifacts/war3/build-tools/batch-sentinel-limitop-build.log`，夹具和测试日志 `tmp/docs-artifacts/war3/item-sentinel/`。
+
+原版实机的树上哨兵友敌／距离边界、自爆死亡回调与驱散时序、状态事件实际载档及完整对局仍未验证。原版整数游戏状态 `NOT_EQUAL` 有独立特殊分支，本批未更改。下一功能批次从 0/3 开始。
+
+## 状态事件越界比较操作符（已批次验证，仍有待验项）
 
 路径：`src/session_callbacks.cpp`、`src/session_tick.cpp`、`tests/clock_tests.cpp`。状态／变量事件保留越界比较值和事件句柄，比较时恒不匹配；单位状态不建立观察器。SAEV、SGEV 编码与恢复保留原始操作数，有限阈值限制不变。固定版比较器 `0x6f1e0540` 对超出 0–5 的比较返回假，单位状态构造及事件分发对越界操作跳过观察器与分支；原版整数游戏状态的 `NOT_EQUAL` 特例不属于本次修改。
 
-必要检查：Win32 Release `war3_clock_tests` 构建通过；`WAR3_CLOCK_FILTER=invalid_limitop_events_recover_without_firing war3_clock_tests <data-root> <scratch>` 退出 0、1 通过／0 失败，覆盖操作符 6／-1 的变量、单位、玩家、整数游戏状态和时间事件，恢复后句柄、触发器销毁、不触发及合法对照。日志 `tmp/docs-artifacts/war3/build-tools/invalid-limitop-{build,test}.log`。原版实际载档和非有限阈值尚未验证；提交后集中验证本批。
+必要检查：Win32 Release `war3_clock_tests` 构建通过；`WAR3_CLOCK_FILTER=invalid_limitop_events_recover_without_firing war3_clock_tests <data-root> <scratch>` 退出 0、1 通过／0 失败，覆盖操作符 6／-1 的变量、单位、玩家、整数游戏状态和时间事件，恢复后句柄、触发器销毁、不触发及合法对照。日志 `tmp/docs-artifacts/war3/build-tools/invalid-limitop-{build,test}.log`。原版实际载档和非有限阈值尚未验证；本批已集中验证，详见批次摘要。
 
-## 小精灵自爆清除树上哨兵（本批 2/3，待集中验证）
+## 小精灵自爆清除树上哨兵（已批次验证，仍有待验项）
 
 路径：`src/session_caster_spells.cpp`、`tests/stealth_tests.cpp`。原始 `Adtn` 的目标含 `tree`；小精灵自爆时先快照范围内已着陆的敌方哨兵，死亡回调后对仍有效的候选结算，避免清除回调中新出现的哨兵。单位驱散、魔法损失和自毁继续沿现有流程。
 
 必要检查：Win32 Release `war3_stealth_tests` 构建通过；`war3_stealth_tests <data-root> <fixture> sentinel-detonate` 退出 0、1 通过／0 失败，覆盖近远树哨兵、树生命、小精灵死亡和附近英雄的魔法损失（含模拟期间回复）。日志 `tmp/docs-artifacts/war3/item-sentinel/detonate.log`，构建日志 `tmp/docs-artifacts/war3/build-tools/detonate-sentinel-build.log`。固定版实际自爆、死亡回调重入、友敌与边界及原版事件顺序尚待对照；集中验证按批次进行。
 
-## 驱散物品清除树上哨兵（本批 1/3，待集中验证）
+## 驱散物品清除树上哨兵（已批次验证，仍有待验项）
 
 路径：`src/session_consumables.cpp`、`src/session_item_use.cpp`、`tests/stealth_tests.cpp`、`tests/generate-stealth-fixture.py`。普通消耗品和复合物品在有效结算时按实际作用中心调用现有树上哨兵驱散逻辑；源 `AIdi` 的目标包含 `tree`，否定权杖和驱魔符文均使用该能力。施法回调取消或改变施法者状态后的既有检查继续生效。
 
