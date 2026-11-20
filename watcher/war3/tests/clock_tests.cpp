@@ -1880,6 +1880,7 @@ endfunction
  native SetPlayerState takes player p, playerstate state, integer value returns nothing
  native SetPlayerAlliance takes player p, player other, alliancetype a, boolean value returns nothing
  native CreateTrigger takes nothing returns trigger
+ native DestroyTrigger takes trigger t returns nothing
  native TriggerAddAction takes trigger t, code c returns triggeraction
  native Filter takes code c returns filterfunc
  native TriggerRegisterPlayerUnitEvent takes trigger t, player p, playerunitevent e, boolexpr f returns event
@@ -1895,6 +1896,10 @@ endfunction
  trigger second=null
  trigger third=null
  trigger stateTrigger=null
+ trigger maximumTrigger=null
+ event maxLifeEvent=null
+ event maxManaEvent=null
+ integer maximumCrossings=0
  trigger playerTrigger=null
  trigger allianceTrigger=null
  integer playerCrossings=0
@@ -1925,6 +1930,9 @@ endfunction
  function crossing takes nothing returns nothing
  set crossings=crossings+1
  endfunction
+ function maximumCrossing takes nothing returns nothing
+ set maximumCrossings=maximumCrossings+1
+ endfunction
  function playerCrossing takes nothing returns nothing
  set playerCrossings=playerCrossings+1
  endfunction
@@ -1936,6 +1944,7 @@ endfunction
  set second=CreateTrigger()
  set third=CreateTrigger()
  set stateTrigger=CreateTrigger()
+ set maximumTrigger=CreateTrigger()
  set playerTrigger=CreateTrigger()
  set allianceTrigger=CreateTrigger()
  call SetPlayerState(Player(0),ConvertPlayerState(1),200)
@@ -1943,6 +1952,7 @@ endfunction
  call TriggerAddAction(second,function secondAction)
  call TriggerAddAction(third,function thirdAction)
  call TriggerAddAction(stateTrigger,function crossing)
+ call TriggerAddAction(maximumTrigger,function maximumCrossing)
  call TriggerAddAction(playerTrigger,function playerCrossing)
  call TriggerAddAction(allianceTrigger,function allianceChanged)
  call TriggerRegisterPlayerUnitEvent(first,Player(0),ConvertPlayerUnitEvent(20),Filter(function accepts))
@@ -1951,8 +1961,20 @@ endfunction
  call RemoveUnit(doomed)
  call TriggerRegisterPlayerUnitEvent(third,Player(0),ConvertPlayerUnitEvent(20),null)
  call TriggerRegisterUnitStateEvent(stateTrigger,subject,ConvertUnitState(0),ConvertLimitOp(0),100.0)
+ call SetUnitState(subject,ConvertUnitState(1),300.0)
+ call SetUnitState(subject,ConvertUnitState(3),100.0)
+ set maxLifeEvent=TriggerRegisterUnitStateEvent(maximumTrigger,subject,ConvertUnitState(1),ConvertLimitOp(0),200.0)
+ set maxManaEvent=TriggerRegisterUnitStateEvent(maximumTrigger,subject,ConvertUnitState(3),ConvertLimitOp(0),70.0)
  call TriggerRegisterPlayerStateEvent(playerTrigger,Player(0),ConvertPlayerState(1),ConvertLimitOp(0),100.0)
  call TriggerRegisterPlayerAllianceChange(allianceTrigger,Player(0),ConvertAllianceType(0))
+ endfunction
+ function maxHigh takes nothing returns nothing
+ call SetUnitState(subject,ConvertUnitState(1),300.0)
+ call SetUnitState(subject,ConvertUnitState(3),100.0)
+ endfunction
+ function maxLow takes nothing returns nothing
+ call SetUnitState(subject,ConvertUnitState(1),150.0)
+ call SetUnitState(subject,ConvertUnitState(3),50.0)
  endfunction
  function low takes nothing returns nothing
  call SetUnitState(subject,ConvertUnitState(0),50.0)
@@ -1968,7 +1990,7 @@ endfunction
  function die takes nothing returns nothing
  call KillUnit(subject)
  endfunction
- )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"actor-snapshot.j",source,"authored actor event persistence test"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("makeUnit");a.invoke("setup");a.invoke("low");require(a.global("crossings").bits==1,"Actor event fixture did not cross state");auto identity=[](std::string_view,std::uint32_t id){return id;};auto triggers=original->encodeTriggers(identity),events=original->encodeActorEvents(identity),globals=a.encodeGlobals(identity);b.invoke("CreateTimer");b.invoke("makeUnit");b.invoke("low");auto sourceUnit=a.global("subject"),targetUnit=b.global("subject"),sourceDoomed=a.global("doomed"),targetDoomed=b.global("doomed");auto tm=restored->restoreTriggers(triggers);auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==sourceUnit.bits?targetUnit.bits:id==sourceDoomed.bits?targetDoomed.bits:0u;auto it=tm.find({std::string(type),id});return it==tm.end()?0u:it->second;};rejects([&]{restored->rebuildActorEvents(events,decode);},"handle mapping");b.invoke("RemoveUnit",std::array{targetDoomed});auto bad=events;bad.back()^=1;rejects([&]{restored->rebuildActorEvents(bad,decode);},"digest");rejects([&]{restored->rebuildActorEvents(events,[&](std::string_view type,std::uint32_t id){return type=="unit"?0u:decode(type,id);});},"handle mapping");require(restored->liveObjects(NativeKind::Event)==0,"Rejected actor restore created events");auto em=restored->rebuildActorEvents(events,decode);auto inverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==targetUnit.bits?sourceUnit.bits:id==targetDoomed.bits?sourceDoomed.bits:0u;if(type=="event"){for(auto [stable,local]:em)if(local==id)return stable;}for(auto& [key,local]:tm)if(key.first==type && local==id)return key.second;return 0u;};require(restored->encodeActorEvents(inverse)==events,"Actor event snapshot did not round-trip");b.restoreGlobals(globals,decode);restored->startMain();b.invoke("low");require(b.global("crossings").bits==1,"Restored unit state fired again");for(auto* session:{original.get(),restored.get()}){session->runtime().invoke("high");session->runtime().invoke("low");session->runtime().invoke("ally");session->runtime().invoke("die");}require(a.global("crossings").bits==2 && b.global("crossings").bits==2 && a.global("playerCrossings").bits==2 && b.global("playerCrossings").bits==2 && a.global("alliances").bits==1 && b.global("alliances").bits==1 && a.global("order").bits==123 && b.global("order").bits==123,"Restored actor events diverged");
+ )jass";auto create=[&]{auto module=Module::compile(Program::parse({{"actor-snapshot.j",source,"authored actor event persistence test"}}));auto session=std::make_unique<ScriptSession>(std::move(module),map().info);session->attachWorld(world());session->configure();PlayerSetup setup(map().info,session->config());session->applySetup(setup);return session;};auto original=create(),restored=create();auto& a=original->runtime();auto& b=restored->runtime();original->startMain();a.invoke("makeUnit");a.invoke("setup");a.invoke("low");require(a.global("crossings").bits==1,"Actor event fixture did not cross state");auto identity=[](std::string_view,std::uint32_t id){return id;};auto triggers=original->encodeTriggers(identity),events=original->encodeActorEvents(identity),globals=a.encodeGlobals(identity);b.invoke("CreateTimer");b.invoke("makeUnit");b.invoke("maxHigh");b.invoke("low");auto sourceUnit=a.global("subject"),targetUnit=b.global("subject"),sourceDoomed=a.global("doomed"),targetDoomed=b.global("doomed");auto tm=restored->restoreTriggers(triggers);std::map<std::uint32_t,std::uint32_t> em;auto decode=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==sourceUnit.bits?targetUnit.bits:id==sourceDoomed.bits?targetDoomed.bits:0u;if(type=="event"){auto it=em.find(id);return it==em.end()?0u:it->second;}auto it=tm.find({std::string(type),id});return it==tm.end()?0u:it->second;};rejects([&]{restored->rebuildActorEvents(events,decode);},"handle mapping");b.invoke("RemoveUnit",std::array{targetDoomed});auto bad=events;bad.back()^=1;rejects([&]{restored->rebuildActorEvents(bad,decode);},"digest");rejects([&]{restored->rebuildActorEvents(events,[&](std::string_view type,std::uint32_t id){return type=="unit"?0u:decode(type,id);});},"handle mapping");require(restored->liveObjects(NativeKind::Event)==0,"Rejected actor restore created events");em=restored->rebuildActorEvents(events,decode);auto inverse=[&](std::string_view type,std::uint32_t id){if(type=="unit")return id==targetUnit.bits?sourceUnit.bits:id==targetDoomed.bits?sourceDoomed.bits:0u;if(type=="event"){for(auto [stable,local]:em)if(local==id)return stable;}for(auto& [key,local]:tm)if(key.first==type && local==id)return key.second;return 0u;};require(restored->encodeActorEvents(inverse)==events,"Actor event snapshot did not round-trip");b.restoreGlobals(globals,decode);auto sourceMaxLife=a.global("maxLifeEvent"),sourceMaxMana=a.global("maxManaEvent"),targetMaxLife=b.global("maxLifeEvent"),targetMaxMana=b.global("maxManaEvent");require(sourceMaxLife.bits && sourceMaxMana.bits && sourceMaxLife.bits!=sourceMaxMana.bits && em.at(sourceMaxLife.bits)==targetMaxLife.bits && em.at(sourceMaxMana.bits)==targetMaxMana.bits && targetMaxLife.bits && targetMaxMana.bits && targetMaxLife.bits!=targetMaxMana.bits,"Maximum state event handles did not restore");restored->startMain();for(auto* session:{original.get(),restored.get()}){auto& vm=session->runtime();vm.invoke("maxLow");session->advance(1./32);vm.invoke("maxHigh");vm.invoke("maxLow");session->advance(1./32);require(vm.global("maximumCrossings").bits==0,"Restored maximum state event subscribed");auto count=session->liveObjects(NativeKind::Event);vm.invoke("DestroyTrigger",std::array{vm.global("maximumTrigger")});require(session->liveObjects(NativeKind::Event)+2==count,"Maximum state event handles survived trigger destruction");vm.invoke("maxHigh");vm.invoke("maxLow");session->advance(1./32);require(vm.global("maximumCrossings").bits==0,"Destroyed maximum state event fired");}b.invoke("low");require(b.global("crossings").bits==1,"Restored unit state fired again");for(auto* session:{original.get(),restored.get()}){session->runtime().invoke("high");session->runtime().invoke("low");session->runtime().invoke("ally");session->runtime().invoke("die");}require(a.global("crossings").bits==2 && b.global("crossings").bits==2 && a.global("playerCrossings").bits==2 && b.global("playerCrossings").bits==2 && a.global("alliances").bits==1 && b.global("alliances").bits==1 && a.global("order").bits==123 && b.global("order").bits==123,"Restored actor events diverged");
     });
     test("camera_snapshot_restores_setups_and_active_motion",[&]{
         std::string source=R"jass(type destructable extends handle

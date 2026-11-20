@@ -26,12 +26,47 @@ integer probe_state_life=0
 integer probe_state_mana=0
 integer probe_state_max_life=0
 integer probe_state_max_mana=0
+trigger probe_limit_trigger=null
+event probe_limit_life_event=null
+event probe_limit_max_life_event=null
+event probe_limit_mana_event=null
+event probe_limit_max_mana_event=null
+unit probe_limit_unit=null
+integer probe_limit_life=0
+integer probe_limit_max_life=0
+integer probe_limit_mana=0
+integer probe_limit_max_mana=0
 unit probe_hero_state_unit=null
 trigger probe_hero_state_up=null
 trigger probe_hero_state_down=null
 integer probe_hero_life_up=0
 integer probe_hero_life_down=0
 endglobals
+function ProbeLimitEvent takes nothing returns nothing
+    if GetTriggerUnit()!=probe_limit_unit or GetTriggerEventId()!=EVENT_UNIT_STATE_LIMIT or GetTriggeringTrigger()!=probe_limit_trigger then
+        call ExecuteFunc("MatchFailure_limit_context")
+    endif
+    if GetEventUnitState()==UNIT_STATE_LIFE then
+        set probe_limit_life=probe_limit_life+1
+    elseif GetEventUnitState()==UNIT_STATE_MAX_LIFE then
+        set probe_limit_max_life=probe_limit_max_life+1
+    elseif GetEventUnitState()==UNIT_STATE_MANA then
+        set probe_limit_mana=probe_limit_mana+1
+    elseif GetEventUnitState()==UNIT_STATE_MAX_MANA then
+        set probe_limit_max_mana=probe_limit_max_mana+1
+    else
+        call ExecuteFunc("MatchFailure_limit_state")
+    endif
+endfunction
+function ProbeLimitSetup takes unit whichUnit returns nothing
+    set probe_limit_unit=whichUnit
+    set probe_limit_trigger=CreateTrigger()
+    set probe_limit_life_event=TriggerRegisterUnitStateEvent(probe_limit_trigger,whichUnit,UNIT_STATE_LIFE,LESS_THAN,50)
+    set probe_limit_max_life_event=TriggerRegisterUnitStateEvent(probe_limit_trigger,whichUnit,UNIT_STATE_MAX_LIFE,LESS_THAN,200)
+    set probe_limit_mana_event=TriggerRegisterUnitStateEvent(probe_limit_trigger,whichUnit,UNIT_STATE_MANA,LESS_THAN,40)
+    set probe_limit_max_mana_event=TriggerRegisterUnitStateEvent(probe_limit_trigger,whichUnit,UNIT_STATE_MAX_MANA,LESS_THAN,70)
+    call TriggerAddAction(probe_limit_trigger,function ProbeLimitEvent)
+endfunction
 function ProbeHeroStateEvent takes nothing returns nothing
     if GetTriggerUnit()!=probe_hero_state_unit or GetTriggerEventId()!=EVENT_UNIT_STATE_LIMIT then
         call ExecuteFunc("MatchFailure_hero_state_context")

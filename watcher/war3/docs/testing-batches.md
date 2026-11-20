@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 单位状态上限事件注册（待批次验证）
+
+路径：`src/session_callbacks.cpp`、`tests/game_flow_tests.cpp`、`tests/generate-game-flow-fixture.py`、`tests/clock_tests.cpp`、`docs/unit-state-events.md`。单位生命与魔法状态继续订阅阈值；生命上限和魔法上限仍创建和管理事件句柄，但不加入观察索引，SAEV v2 恢复也按相同规则重建。固定版 `TriggerRegisterUnitStateEvent` 的构造函数 `0x6f25cf20` 在状态 1／3 跳过观察器安装，外层仍链接触发器并分配句柄；原始构造函数四状态受控探针使用外部模拟桩，不能替代原版实机或载档验证。
+
+必要检查：Win32 Release 客户端、game-flow 和 clock 目标构建通过；`generate-game-flow-fixture.py --data-root <data-root> --output <fixture>` 后运行 `war3_game_flow_tests <data-root> <fixture> unit-state-registration`，修复前失败、修复后退出 0、1 通过／0 失败，覆盖四个独立句柄、生命／魔法事件与上下文、上限不触发、销毁后不触发；`hero-state-crossing` 回归退出 0、1 通过／0 失败。`WAR3_CLOCK_FILTER=actor_events_rebuild_filters_state_and_dispatch_order war3_clock_tests <data-root> <scratch>` 退出 0、1 通过／0 失败，覆盖 SAEV v2 句柄映射／字节往返、恢复后上限不订阅和销毁。原始探针及夹具在 `tmp/docs-artifacts/war3/hero-state/`、`tmp/docs-artifacts/war3/state-registration/`，构建日志 `tmp/docs-artifacts/war3/build-tools/state-registration-after-build.log` 和 `state-registration-clock-build.log`。旧版本保存文件、原版动态载档、触发器动作调度与重入仍待本批或原版验证。本批 3/3，提交后集中验证。
+
 ## 英雄属性修改时观察生命阈值（待批次验证）
 
 路径：`src/session.h`、`src/session_callbacks.cpp`、`src/session_hero.cpp`、`tests/game_flow_tests.cpp`、`tests/generate-game-flow-fixture.py`、`docs/unit-state-events.md`。`SetHeroStr` 完成生命调整后同步检查生命观察器，`SetHeroInt` 对魔法做相同处理；敏捷修改不额外检查状态，上限状态继续沿用现有观察时机。固定版 `SetHeroStr` 经 `0x6f633000` 调用生命属性更新，`0x6f10d800→0x6f10dc00→0x6f10deb0` 在写入时通知并比较阈值；监听者最终 JASS 动作的调度仍待对照。
