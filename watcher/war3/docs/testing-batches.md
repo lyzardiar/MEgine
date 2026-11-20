@@ -1,22 +1,28 @@
 # 独立客户端测试队列
 
-## 魔免攻击者与荆棘光环（本批 3/3，提交后集中验证）
+## 妖术与光环批次（已批次验证，仍有待验项）
+
+范围：`389d7df`、`72a3b76`、`1687bb2`，集成版本 `1687bb2`。Win32 Release 客户端、control、passive 目标构建通过；`hex-summon`、`item-combined-control-family`、`invisible-aura`、`thorns-immune` 各 1 通过／0 失败，`player-aura` 3 通过／0 失败，`hidden-book` 4 通过／0 失败，共 6 个进程、11 项通过。构建和测试日志位于 `tmp/docs-artifacts/war3/build-tools/batch-hex-aura-thorns-*.log`；control 夹具 `tmp/docs-artifacts/war3/mana-flare-pool/fixture.w3m`，passive 夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。
+
+固定版妖术拒绝／支付时机、隐身光环消失及多来源切换、魔免与多种反伤混合及实际对局仍待对照。下一功能批次从 0/3 开始。
+
+## 魔免攻击者与荆棘光环（已批次验证，仍有待验项）
 
 路径：`src/session_attack_passives.cpp`、`tests/passive_tests.cpp`。敌方近战攻击者具有魔免时跳过荆棘光环反伤；普通攻击者和移除魔免后的攻击继续反伤。该判断仅应用于光环反伤，不修改通用伤害类型或尖刺外壳等其他反伤。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明魔免单位不受敌方荆棘光环影响。
 
-必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> thorns-immune` 修复前失败、修复后退出 0、1 通过／0 失败，通过实际近战命中检查普通／魔免攻击者及魔免移除后的反伤。日志 `tmp/docs-artifacts/war3/build-tools/thorns-immune-{before,after}.log`。原版混合荆棘与其他反伤、魔免来源变化和实际伤害事件时序仍待对照；提交后集中验证本批。
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> thorns-immune` 修复前失败、修复后退出 0、1 通过／0 失败，通过实际近战命中检查普通／魔免攻击者及魔免移除后的反伤。日志 `tmp/docs-artifacts/war3/build-tools/thorns-immune-{before,after}.log`。原版混合荆棘与其他反伤、魔免来源变化和实际伤害事件时序仍待对照；本批集中验证结果见批次摘要。
 
-## 隐身或影遁的光环来源（本批 2/3，待集中验证）
+## 隐身或影遁的光环来源（已批次验证，仍有待验项）
 
 路径：`src/session_auras.cpp`、`tests/passive_tests.cpp`。光环来源处于会话隐身状态时停止刷新光环；已有接收状态沿用当前剩余时间自然到期，显形后恢复刷新。不使用敌方是否能侦测到该单位判断来源状态，也不改变非光环被动效果。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明隐身或影遁时光环不生效。
 
-必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> invisible-aura` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖真实隐身术、影遁、提供者自身及友军的光环消失和显形后恢复。日志 `tmp/docs-artifacts/war3/build-tools/invisible-aura-{before,after}.log`。固定版消失／恢复时间、侦测、多个来源切换、其他隐身来源及实际对局仍待对照；集中验证按批次进行。
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> invisible-aura` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖真实隐身术、影遁、提供者自身及友军的光环消失和显形后恢复。日志 `tmp/docs-artifacts/war3/build-tools/invisible-aura-{before,after}.log`。固定版消失／恢复时间、侦测、多个来源切换、其他隐身来源及实际对局仍待对照；本批集中验证结果见批次摘要。
 
-## 妖术与召唤单位（本批 1/3，待集中验证）
+## 妖术与召唤单位（已批次验证，仍有待验项）
 
 路径：`src/session_control_spells.cpp`、`tests/control_tests.cpp`。妖术与变羊术共用召唤状态目标筛选，包含单位原始召唤属性、召唤来源／计时生命以及脚本类型增删。暴雪 [Shadow Hunter 说明](https://classic.battle.net/war3/orc/units/shadowhunter.shtml) 指出妖术不影响召唤单位；当前采用与现有变羊术相同的下单目标拒绝方式，原版具体拒绝及支付时机仍待验证。
 
-必要检查：Win32 Release `war3_control_tests` 构建通过；`war3_control_tests <data-root> <fixture> hex-summon` 修复前失败（召唤水元素被变形），修复后退出 0、1 通过／0 失败，覆盖召唤单位、脚本增删召唤类型和普通敌人变形。日志 `tmp/docs-artifacts/war3/build-tools/hex-summon-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/mana-flare-pool/fixture.w3m`。真实原版拒绝／支付和事件时序、幻象、地图覆盖及命中前状态改变仍待对照；集中验证按批次进行。
+必要检查：Win32 Release `war3_control_tests` 构建通过；`war3_control_tests <data-root> <fixture> hex-summon` 修复前失败（召唤水元素被变形），修复后退出 0、1 通过／0 失败，覆盖召唤单位、脚本增删召唤类型和普通敌人变形。日志 `tmp/docs-artifacts/war3/build-tools/hex-summon-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/mana-flare-pool/fixture.w3m`。真实原版拒绝／支付和事件时序、幻象、地图覆盖及命中前状态改变仍待对照；本批集中验证结果见批次摘要。
 
 ## 锁链、溅射未命中与魔法闪耀批次（已批次验证，仍有待验项）
 
