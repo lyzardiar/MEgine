@@ -1,8 +1,8 @@
 # 独立客户端测试队列
 
-## 人族第八章玩家命令击沉船只（已执行，不计功能批次）
+## 人族第八章玩家命令击沉三艘船（已执行，不计功能批次）
 
-路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原图玩家命令回归以英雄清路、迫击炮跟随并攻击，实际击沉一艘船并由只读伤害、死亡事件确认迫击炮为击杀者；主进程 Win32 Release 复跑退出 0、1 通过／0 失败。命令、结果和未覆盖范围见[战役流程](campaign-flow.md)，日志 `tmp/docs-artifacts/war3/human08-strategy/main-verification.log`。测试工作不计功能批次。
+路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原图玩家命令回归以英雄清路、迫击炮跟随并攻击，连续击沉三艘船并由只读伤害、死亡事件逐一确认迫击炮为击杀者；主进程 Win32 Release 复跑退出 0、1 通过／0 失败。命令、结果和未覆盖范围见[战役流程](campaign-flow.md)，日志 `tmp/docs-artifacts/war3/human08-strategy/three-ship-main.log`。测试工作不计功能批次。
 
 ## 不可通行起点的追击建区（本批 1/3，待批次验证）
 
