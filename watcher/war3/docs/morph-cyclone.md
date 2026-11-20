@@ -42,3 +42,5 @@ python tests/generate-morph-fixture.py --data-root "E:/Program Files (x86)/dzcli
 lifecycle模式仅编译、未执行。阶段合并所有权/施法者移除/原生属性/死亡/隐藏/暂停/重入、重叠/刷新/驱散/免疫/英雄及野怪上限、四类形态/随机候选/w3a/光环开关/物品/运输/采集生产、原选取/图标/附件/Birth/Stand/Death过渡/声音及三图长局/CPU/GPU/内存/切图释放。变形/气旋与其余能力、AI/native/存档回放/局域网和完整客户端继续推进，原版公式/时序/分类/规则精度保持开放。
 
 原始记录位于根tmp/docs-artifacts/war3/morph-cyclone/：source.json、rea-identity.json、fixture.w3m、core-build.log、render-build.log、check-build.log、fixture-build.log、final-build.log、delivery-build.log、morph.log、cyclone.log、models.log和models-import.log。原资源、地图、JSON、日志均不提交；旧MEngine延期队列保持原状态。
+
+变形术目标筛选拒绝召唤单位，普通敌方单位保持原变形路径；依据[暴雪女巫说明](https://classic.battle.net/war3/human/units/sorceress.shtml)。召唤分类覆盖、弹道途中类别变化及原版动态事件时序仍待对照。

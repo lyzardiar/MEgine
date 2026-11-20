@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 变形术拒绝召唤单位（待批次验证）
+
+路径：`src/session_control_spells.cpp`、`tests/morph_tests.cpp`、`docs/morph-cyclone.md`。变形术目标筛选排除召唤单位，普通合法目标仍可变形；依据[暴雪女巫说明](https://classic.battle.net/war3/human/units/sorceress.shtml)。
+
+必要检查：Win32 Release 客户端与 morph 目标编译通过；`war3_morph_tests <data-root> <fixture> polymorph-summoned` 退出 0、1 通过／0 失败，覆盖真实水元素、拒绝时法力及冷却、普通敌方目标正对照；修复前错误接受召唤物。日志位于 `tmp/docs-artifacts/war3/morph-cyclone/`。召唤类别覆盖、衍生能力、弹道途中类别变化、Hex 与原版事件时序仍待验证或对照。本批 3/3，提交后集中验证。
+
 ## 维修费档位、版本阈值与 HUD 源文字（待批次验证）
 
 路径：`src/session.h`、`src/session_food.cpp`、`src/game_view.cpp`、`tests/harvest_tests.cpp`、`tests/generate-harvest-fixture.py`、`docs/economy.md`。顶部栏按已用人口档位显示原 `GlobalStrings.fdf` 文案及颜色；默认阈值按游戏版本选 ROC／TFT，自定义短列表缺项补零、遇零停止并按输入顺序比较。固定版 `0x6f02ac00` 选择版本阈值，`0x6f3b68e5–0x6f3b690b` 与 `0x6f241d40–0x6f241d67` 使用人口档位，`0x6f3b6aa7–0x6f3b6ac0` 选择 HUD 文案。
