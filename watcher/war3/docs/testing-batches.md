@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 非矿单位的资源接口（待批次验证）
+
+路径：`src/session_harvest.cpp`、`tests/construction_tests.cpp`。GetResourceAmount 对没有矿井能力的单位返回零，SetResourceAmount 和 AddResourceAmount 不修改其储量；普通矿和覆盖矿沿用共享储量。固定 1.27 原版三个接口先查找 `Agmb` 类型；静态类注册显示 `Agld`、`Abgm`、`Aegm` 继承该类型。原版对象状态、动态能力变化和覆盖矿关系仍待对照。
+
+必要检查：Win32 Release 客户端及 construction 测试目标编译通过；`resource-non-mine` 修复前失败、修复后 1 通过／0 失败，`resource-invalid-handles` 包含普通矿和覆盖矿共享储量，1 通过／0 失败。日志 `tmp/docs-artifacts/war3/resource-non-mine/`。原版负数及溢出在隔离指令中直接写入和回绕，但通知路径未验证，本次保留现有截断，实际地图及原版动态行为待测。本批 2/3。
+
 ## 单位归属与视线接口的无效句柄（待批次验证）
 
 路径：`src/session_entities.cpp`、`tests/passive_tests.cpp`。IsUnitOwnedByPlayer 对无效单位或玩家返回 false；SetUnitLookAt 的无效来源或目标、ResetUnitLookAt 的无效单位直接返回，保留其他单位的视线状态。固定 1.27 原版入口分别在 `0x6f1e8b80`、`0x6f1f76e0` 和 `0x6f1f3180`，对应句柄解析失败直接返回；原版实际动画及其他异常参数仍需对照。
