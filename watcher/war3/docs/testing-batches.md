@@ -10,7 +10,7 @@
 
 路径：`src/session_callbacks.cpp`、`tests/construction_tests.cpp`、`docs/construction.md`。施工中的上古建筑死亡时，通过正常单位死亡流程处理仍在建筑内的原小精灵；普通建筑死亡和取消施工保留释放行为。建筑人口结算后重新核验建筑及工人状态，防止回调中覆盖新状态。依据[暴雪小精灵说明](https://classic.battle.net/war3/nightelf/units/wisp.shtml)。
 
-必要检查：Win32 Release 客户端和 construction 目标编译通过；`war3_construction_tests <data-root> <fixture> wisp-building-death` 退出 0、1 通过／0 失败，覆盖真实建造、普通建筑受毁、上古建筑取消、上古建筑受毁、小精灵死亡事件一次及当前击杀统计。修复前在上古建筑受毁后小精灵仍存活处失败。日志位于 `tmp/docs-artifacts/war3/wisp-ancient-death/`。人口和死亡触发器重入、原版击杀归因、经验、悬赏与事件顺序仍待验证或对照。本批 2/3。
+必要检查：Win32 Release 客户端和 construction 目标编译通过；`war3_construction_tests <data-root> <fixture> wisp-building-death` 退出 0、1 通过／0 失败，覆盖真实建造、普通建筑受毁、上古建筑取消、上古建筑受毁、小精灵死亡事件一次及当前击杀统计。修复前在上古建筑受毁后小精灵仍存活处失败。日志位于 `tmp/docs-artifacts/war3/wisp-ancient-death/`。补充 `wisp-death-remove-building`、`wisp-death-revive-building`，真实死亡回调分别移除或复活建筑，两项各退出 0、1 通过／0 失败，检查事件及人口不重复结算；日志位于 `tmp/docs-artifacts/war3/batch-meld-wisp-ensnare/`。非零施工人口预留触发的回调、原版击杀归因、经验、悬赏与事件顺序仍待验证或对照。本批 2/3。
 
 ## 手动影遁受到武器攻击后反击（待批次验证）
 

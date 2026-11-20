@@ -30,7 +30,30 @@ integer probe_bridge_changed=0
 unit probe_assist_remove=null
 integer probe_assist_changed=0
 unit probe_assist_building=null
+integer probe_wisp_deaths=0
+integer probe_building_deaths=0
+integer probe_wisp_reentry=0
 endglobals
+function ProbeWispReentry takes nothing returns nothing
+    set probe_wisp_deaths=probe_wisp_deaths+1
+    if probe_wisp_reentry==1 then
+        call RemoveUnit(probe_structure)
+    elseif probe_wisp_reentry==2 then
+        call SetWidgetLife(probe_structure,100.0)
+    endif
+endfunction
+function ProbeBuildingDeath takes nothing returns nothing
+    set probe_building_deaths=probe_building_deaths+1
+endfunction
+function ProbeWispReentrySetup takes unit wisp, unit building, integer mode returns nothing
+    local trigger w=CreateTrigger()
+    local trigger b=CreateTrigger()
+    set probe_wisp_reentry=mode
+    call TriggerRegisterUnitEvent(w,wisp,EVENT_UNIT_DEATH)
+    call TriggerRegisterUnitEvent(b,building,EVENT_UNIT_DEATH)
+    call TriggerAddAction(w,function ProbeWispReentry)
+    call TriggerAddAction(b,function ProbeBuildingDeath)
+endfunction
 function ProbeGoldChangesLumber takes nothing returns nothing
     set probe_gold_events=probe_gold_events+1
     call SetPlayerState(Player(0),PLAYER_STATE_RESOURCE_LUMBER,200)
