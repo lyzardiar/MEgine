@@ -1,18 +1,24 @@
 # 独立客户端测试队列
 
-## 食物栏有效容量与超限颜色（待批次验证）
+## 驻守治疗与资源栏批次（已批次验证，仍有待验项）
+
+范围：`570a765`、`83c0c29`、`6d5c50e`，集成版本 `6d5c50e`。使用 VS 2022 x86、Ninja 和隔离 SDK 干净构建 Win32 Release 客户端、harvest、caster 目标，退出 0，日志 `tmp/docs-artifacts/war3/build-tools/batch-resource-clean-build.log`。生成默认、短列表、扩展列表采集夹具；资源提示三个入口、`upkeep-hud`、短列表、零终止、短税率、非递增门槛及 `heal-hold-autocast` 共 9 个进程各退出 0、1 通过／0 失败；`mine-paused`、harvest 默认和 caster 默认共 3 个进程退出 0、各输出 PASS。共 12 个进程成功。命令分别为 `war3_harvest_tests <data-root> <fixture> <mode>`、`war3_caster_tests <data-root> <fixture> [heal-hold-autocast]`，对应夹具和模式见上述条目。
+
+隔离隐藏客户端使用虚拟指针捕获并查看 7 帧：金币、木材、食物、维修费悬停及移开；白色 `35/60`、红色 `61/60`、零容量顶栏 `0` 与提示 `0/0`。维修费三档及收入完整显示，截图与场景数据在 `tmp/docs-artifacts/war3/resource-ui-batch/`。首次临时地图引用不存在的 JASS 常量而启动失败，改用 `ConvertPlayerState(6)` 后三场成功，自启进程均已停止。真实鼠标、原版实机画面对照、不同 DPI／分辨率、地图帧遮挡和回放悬停仍未验证；无视野夹具的黑色场景不代表真实地图表现。酒馆唤醒和先祖之魂的人口许可与全局上限仍待单独修复和验证。下一功能批次从 0/3 开始。
+
+## 食物栏有效容量与超限颜色（已批次验证，仍有待验项）
 
 路径：`src/game_view.cpp`、`src/session.h`、`src/session_food.cpp`、`tests/harvest_tests.cpp`。显示容量取玩家状态 4、状态 6 和 `FoodCeiling` 的有符号最小值；HUD 使用无符号人口数和比较，超限时标红，容量为零时只显示人口数且为白色。提示使用相同容量、无符号比较及有符号文本，原始 `GetPlayerState` 不变。固定版对应人口容量读取 `0x6f247ce0`、HUD `0x6f3b39a8–0x6f3b3a26`、提示 `0x6f3ac70d`。
 
-待集中构建并运行资源提示定向用例与界面画面检查，覆盖玩家上限、地图上限、0 容量、负值、超限颜色和恢复；实际原版画面及玩法人口许可与该显示上限的一致性仍待核对。本批 3/3，提交后集中验证。
+批次检查覆盖玩家上限、地图上限、0 容量、负值提示和超限画面；实际原版画面及玩法人口许可与该显示上限的一致性仍待核对。本项为批次第 3 项。
 
-## 资源栏悬停提示（待批次验证）
+## 资源栏悬停提示（已批次验证，仍有待验项）
 
 路径：`src/game_view.cpp`、`src/session.h`、`src/session_food.cpp`、`tests/harvest_tests.cpp`、`tests/generate-harvest-fixture.py`。黄金、木材、食物和维修费栏使用源字符串显示提示；维修费列表按源门槛、人口上限和税率生成，扩展档位复用 HUD 标签。固定版静态路径显示短列表遇零停止，提示税率向零截断，玩家税率按四舍五入处理。
 
 本次快速检查：扩展夹具生成成功，Python 语法检查和 `git diff --check` 通过；Impeccable changed 检测无发现。本机缺少缓存所指的 CMake、MSVC 和 Windows SDK，本次未编译或运行新测试。批次执行 Win32 Release 客户端及 harvest 目标构建，生成默认、`--upkeep-usage short`、`--upkeep-usage extended` 夹具，分别运行 `war3_harvest_tests <data-root> <fixture> resource-tooltip-default|resource-tooltip-short|resource-tooltip-extended`；扩展夹具的小数税率区分提示截断与玩家税率取整。还需覆盖极值脚本税率、人口上限边界、地图覆盖文案及原版界面与多个分辨率的悬停范围、定位、宽度、字体和换行。本批 2/3。
 
-## 保持位置时不自动治疗（待批次验证）
+## 保持位置时不自动治疗（已批次验证，仍有待验项）
 
 路径：`src/session_autocast.cpp`、`tests/caster_tests.cpp`、`docs/human-casters.md`。保持位置的单位不自动施放 Heal，手动施法和其他自动技能保留；依据[暴雪牧师说明](https://classic.battle.net/war3/human/units/priest.shtml)。
 
