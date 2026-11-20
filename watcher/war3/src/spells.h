@@ -123,7 +123,7 @@ enum class BuffKind {Stun,Roots,Frost,Slow,Mark,InnerFire,Bloodlust,Rejuvenation
 struct SpellSuppression {std::uint64_t ticket=0;unsigned disableMask=0;float missChance=0,moveReduction=0,attackReduction=0;};
 struct PoisonDose {std::uint32_t source=0,ability=0;unsigned owner=0,flags=0;float damage=0,moveReduction=0,attackReduction=0;double remaining=0,period=0;};
 struct CorrosiveDose {std::uint32_t source=0;unsigned owner=0;std::uint64_t targetDeathRevision=0;float damage=0;double remaining=0,period=0;};
-struct StatusDamage {std::uint32_t source=0;float amount=0;unsigned type=14;std::optional<unsigned> owner;bool diseaseAura=false,nonlethal=false;float lifeFloor=1;};
+struct StatusDamage {std::uint32_t source=0;float amount=0;unsigned type=14;std::optional<unsigned> owner;bool diseaseAura=false,nonlethal=false;float lifeFloor=1;bool physicalPoison=false;};
 struct UnitBuff {
     std::vector<PoisonDose> poison;
     bool preventsRepair=false;

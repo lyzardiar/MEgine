@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 攻击毒与魔法免疫（本批 1/3，待批次验证）
+
+路径：`src/session_weapon_effects.cpp`、`src/session_arrow_status.cpp`、`src/session_spell_effects.cpp`、`src/session_damage.cpp`、`src/session.h`、`src/spells.h`、`tests/passive_tests.cpp`。普通被动攻击毒可感染魔免有机单位并造成周期伤害；单独标识该伤害，保留普通脚本毒伤、寄生虫及毒箭既有魔免规则。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 将普通毒列为可作用于魔免单位的物理能力。
+
+必要检查：伤害接口及状态布局变更后 Win32 Release `war3_passive_tests` 干净构建，之后补充毒箭原判定及测试并增量构建通过。`war3_passive_tests <data-root> <fixture> poison-immune` 修复前因拒绝感染失败，仅修感染后因周期伤害被过滤失败，修复后退出 0、1 通过／0 失败；覆盖真实攻击、魔免移除及恢复、普通目标和脚本毒伤对照。`poison-floor`、`plague-nonlethal` 各退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/poison-immune-*.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。毒箭、虚无、护盾／法术减伤、地图覆盖的 `MagicImmunesResistDamage`、固定版时序及实际对局仍待专项对照；与后续任务集中验证。
+
 ## 疾病、毒伤与自动施法批次（已批次验证，仍有待验项）
 
 范围：`b95176b`、`14b35d7`、`f95b723`，另包含荆棘任务补充 `ee13465`；集成版本 `f95b723`。公共伤害接口变更后 Win32 Release passive 目标干净构建，随后在集成版本增量构建客户端、control、caster、consumption 和 passive 测试目标通过。`plague-nonlethal`、`poison-floor`、`inner-fire-self`、`thorns-immune`、`item-combined-spirit-rune`、`heal-hold-autocast`、`dryad-summon-autocast` 各退出 0、1 通过／0 失败，共 7 个进程、7 项通过。日志 `tmp/docs-artifacts/war3/build-tools/batch-plague-poison-inner-*.log`；passive 夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`，其他夹具分别为 `mana-flare-pool/fixture.w3m`、`caster-spells/hold-heal-fixture.w3m`、`eat-magic/fixture.w3m`（均位于 `tmp/docs-artifacts/war3/`）。
