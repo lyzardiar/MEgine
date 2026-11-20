@@ -1,22 +1,30 @@
 # 独立客户端测试队列
 
-## Shift 排队停止和保持（待批次验证）
+## 英雄排序、提示回溯与排队命令批次（部分验证）
+
+范围：`b8efd4c`、`396b7cd`、`3e700a1`，集成版本 `3e700a1` 加本次 `tests/clock_tests.cpp` 快照测试补充。Win32 Release 客户端、browser、order_queue 和 clock 目标编译通过。`selection_hero_priority` 与 `recent_ping_history` 各 1 通过／0 失败；`stop-hold-queue` 为 2 通过／0 失败；Booty Bay 的 order_queue 默认入口退出 0、输出 40 条 PASS；`unit_core_restores_hero_abilities_equipment_and_vitals` 为 1 通过／0 失败，包含 Stop／Hold 的 SPQO 重映射、类型及字节往返。该快照夹具未启动恢复会话，不证明实际读档后继续执行。
+
+同一集成版本重跑六个隐藏对局进程：英雄初始焦点、Tab／Shift+Tab 与头像点击；三条脚本 ping 的空格回溯和循环；Shift+S／Shift+H 在移动结束后发令；不带 Shift 的 S／H 即时停止对照，均退出 0。五个测试进程共 45 条 PASS（其中默认订单入口不输出 RESULT），另六个对局进程各输出 PASS；日志位于 `tmp/docs-artifacts/war3/batch-hero-ping-stop/`，夹具分别位于 `tmp/docs-artifacts/war3/hero-priority/`、`recent-ping-history/` 和 `stop-hold-queue/`。
+
+执行命令：`war3_browser_tests <data-root> <scratch> selection_hero_priority|recent_ping_history`（分别运行）、`war3_order_queue_tests <data-root> <BootyBay.w3m> [stop-hold-queue]`（分别运行有／无 case）、`WAR3_CLOCK_FILTER=unit_core_restores_hero_abilities_equipment_and_vitals war3_clock_tests <data-root> <scratch>`；对局脚本见上述夹具目录。真实窗口、原版子组排序和提示来源、建造完成传讯、Shift 鼠标点击、回调重入、真实双端、旧客户端及恢复后续执行、保持后的原版队列行为仍待验证。下一功能批次从 0/3 开始。
+
+## Shift 排队停止和保持（已批次验证，仍有待验项）
 
 路径：`src/player_commands.cpp`、`src/game_commands.cpp`、`src/game_view.cpp`、`tests/order_queue_tests.cpp`、`docs/subgroup-order.md`。点击及热键保留 Shift 状态，Stop／Hold 进入既有玩家命令队列，经典和实验联机沿用既有排队位与成员校验；无 Shift 命令仍立即执行并清除旧队列。依据[暴雪命令说明](https://classic.battle.net/war3/basics/specialcommands.shtml)中的排队停止和保持。已有 SPQO 快照结构可表示这两种命令，旧构建会拒绝包含它们的队列。
 
-必要检查：Win32 Release 客户端和订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> stop-hold-queue` 为 2 通过／0 失败，覆盖移动中排队、停止后续移动、保持状态，以及标准／实验子组单会话的编码、入队、执行和成员范围。隐藏对局的 Shift+S、Shift+H 使用订单事件和生命值标记验证单位到达后执行，不带 Shift 的 S／H 即时停止对照通过。首次 Shift+S 断言因停止后的自然回血失败，修正期望区间后复跑通过；日志位于 `tmp/docs-artifacts/war3/stop-hold-queue/`。Shift 鼠标点击、回调改令、SPQO 实际往返、真实双端、原版保持后续队列及事件时序待集中验证或原版对照。本批 3/3，提交后先集中验证。
+必要检查：Win32 Release 客户端和订单测试目标编译通过；`war3_order_queue_tests <data-root> <BootyBay.w3m> stop-hold-queue` 为 2 通过／0 失败，覆盖移动中排队、停止后续移动、保持状态，以及标准／实验子组单会话的编码、入队、执行和成员范围。隐藏对局的 Shift+S、Shift+H 使用订单事件和生命值标记验证单位到达后执行，不带 Shift 的 S／H 即时停止对照通过。首次 Shift+S 断言因停止后的自然回血失败，修正期望区间后复跑通过；日志位于 `tmp/docs-artifacts/war3/stop-hold-queue/`。Shift 鼠标点击、回调改令、SPQO 实际往返、真实双端、原版保持后续队列及事件时序待集中验证或原版对照。本批集中验证结果见上方记录。
 
-## 空格键回溯小地图提示（待批次验证）
+## 空格键回溯小地图提示（已批次验证，仍有待验项）
 
 路径：`src/recent_ping_history.h`、`src/game_view.h`、`src/game_view.cpp`、`tests/browser_tests.cpp`、`docs/game-help.md`。对本次视图已接收的小地图提示保留最近八条，空格键从新到旧循环，新提示重置回溯位置；保持既有攻击、盟友及脚本 ping 来源。暴雪[操作说明](https://classic.battle.net/war3/basics/specialcommands.shtml)描述最多八条传讯，但普通 ping 是否属于原版传讯、末尾循环和重置时机尚未实机对照。
 
-必要检查：Win32 Release 客户端和 browser 目标干净构建通过；`war3_browser_tests <data-root> <scratch> recent_ping_history` 为 1 通过／0 失败，覆盖空历史、九条淘汰、重复 ID、逆序循环及新事件重置。隐藏对局脚本发出三条 ping，四次空格的相机 X 为 512、0、-512、512，Y、最新标记与选区断言通过；日志及夹具位于 `tmp/docs-artifacts/war3/recent-ping-history/`。首次增量构建后的两次对局在首帧前异常退出，干净重建后通过；本机头文件依赖跟踪不完整，前两次不计作通过。当前仅采集视图看到的可视 ping，可能受并发容量及帧间时序影响；建造完成提示、真实攻击／盟友信号、被阻挡输入、原版来源和双端表现待验证。完整历史及游标未持久化，读档后可能从快照中的 ping 部分重建。本批 2/3。
+必要检查：Win32 Release 客户端和 browser 目标干净构建通过；`war3_browser_tests <data-root> <scratch> recent_ping_history` 为 1 通过／0 失败，覆盖空历史、九条淘汰、重复 ID、逆序循环及新事件重置。隐藏对局脚本发出三条 ping，四次空格的相机 X 为 512、0、-512、512，Y、最新标记与选区断言通过；日志及夹具位于 `tmp/docs-artifacts/war3/recent-ping-history/`。首次增量构建后的两次对局在首帧前异常退出，干净重建后通过；本机头文件依赖跟踪不完整，前两次不计作通过。当前仅采集视图看到的可视 ping，可能受并发容量及帧间时序影响；建造完成提示、真实攻击／盟友信号、被阻挡输入、原版来源和双端表现待验证。完整历史及游标未持久化，读档后可能从快照中的 ping 部分重建。本批集中验证结果见上方记录。
 
-## 多选英雄按等级排序（待批次验证）
+## 多选英雄按等级排序（已批次验证，仍有待验项）
 
 路径：`src/game_subgroup.h`、`src/game_view.h`、`src/game_view.cpp`、`src/game_selection_panel.cpp`、`tests/browser_tests.cpp`、`docs/selection-panel.md`。根据[暴雪子组说明](https://classic.battle.net/war3/basics/specialcommands.shtml)，头像、初始子组及 Tab 循环将英雄放在普通单位前，英雄按等级降序；同级及非英雄保持原相对顺序。命令与实验联机选区仍使用原始顺序。
 
-必要检查：Win32 Release 客户端与 browser 目标编译通过；`war3_browser_tests <data-root> <scratch> selection_hero_priority` 1 通过／0 失败，检查等级与稳定顺序。隐藏对局以一名步兵及三个不同等级英雄验证初始焦点、正反向 Tab、头像点击与四单位选区保持，日志和截图位于 `tmp/docs-artifacts/war3/hero-priority/`。合成输入不证明真实窗口与原版像素一致；升级时焦点、同级排序、非英雄优先级及真实双端联机待集中验证。本批 1/3。
+必要检查：Win32 Release 客户端与 browser 目标编译通过；`war3_browser_tests <data-root> <scratch> selection_hero_priority` 1 通过／0 失败，检查等级与稳定顺序。隐藏对局以一名步兵及三个不同等级英雄验证初始焦点、正反向 Tab、头像点击与四单位选区保持，日志和截图位于 `tmp/docs-artifacts/war3/hero-priority/`。合成输入不证明真实窗口与原版像素一致；升级时焦点、同级排序、非英雄优先级及真实双端联机待集中验证。本批集中验证结果见上方记录。
 
 ## 集结点、运输撤退与携物子组批次（部分验证）
 
