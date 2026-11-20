@@ -41,3 +41,5 @@ dust/meld/tower模式随实现编译，阶段合并执行：显形之尘移动/�
 本机 1.27 `War3Patch.mpq` 的 AbilityData 中 `Aeth` 两个标志均为 1；原 AbilityMetaData 的 `Eth1`／`Eth2` 标签对应变形免疫和不阻塞建筑。固定版 `Game.dll` SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a` 含独立 `CAbilityGhostVisible` 与 `CAbilityGhost` 类型，原标识指令保存在 `tmp/docs-artifacts/war3/visible-ghost-original-asm.txt`。
 
 Win32 Release 产品和 `war3_stealth_tests` 编译通过；`war3_stealth_tests.exe <data-root> <stealth-fixture.w3m> visible-ghost` 检查源标志、可见性、变形拒绝与能力移除，以及同一建造点的占位变化，1/1 通过且未加载 Game.dll。窗口、地图覆盖和原版精确语义不在此检查内。
+
+手动影遁单位受到敌方直接武器正伤害时，若攻击者可见且处于其武器射程内，则保持原地选择攻击者并经现有战斗流程反击；暂停单位不会排入反击。依据[暴雪弓箭手说明](https://classic.battle.net/war3/nightelf/units/archer.shtml)中影遁会保持位置且回应攻击。攻击起手或命中时响应、伤害为零、目标离开射程、技能伤害与脚本重入等原版边界仍待对照。

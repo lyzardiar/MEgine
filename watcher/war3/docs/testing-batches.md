@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 手动影遁受到武器攻击后反击（待批次验证）
+
+路径：`src/session_projectiles.cpp`、`tests/stealth_tests.cpp`、`docs/stealth-reveal.md`。手动影遁单位被可见敌方直接武器命中且受到正伤害时，在武器射程内选择攻击者并保持位置反击；暂停单位不排入反击，伤害回调后核验双方及防守者战斗状态。依据[暴雪弓箭手说明](https://classic.battle.net/war3/nightelf/units/archer.shtml)的保持位置和回应攻击。
+
+必要检查：Win32 Release 客户端和 stealth 目标编译通过。`war3_stealth_tests <data-root> <fixture> meld-retaliation` 退出 0、1 通过／0 失败，覆盖实际武器命中、选择攻击者、反击、保持位置与显形；修复前退出 1、未反击。日志位于 `tmp/docs-artifacts/war3/meld-retaliation/after.log` 和 `tmp/docs-artifacts/war3/build-tools/meld-retaliation-before.log`。攻击起手或命中时响应、零伤害、暂停和事件回调重入、目标离开射程、其他伤害类型与原版动态行为仍待验证或对照。本批 1/3。
+
 ## 头像子组与哨兵批次（已批次验证，仍有待验项）
 
 范围：`af4b449`、`3cdc201`、`eca16b2`，集成版本 `eca16b2`。Win32 Release 客户端、stealth、browser 和 clock 目标编译通过。`selection_subgroup_clustering`、`selection_inventory_subgroups`、`selection_hero_priority` 和 `recovery_bundle_rebuilds_component_graph_but_blocks_main` 各退出 0、1 通过／0 失败；`sentinel-tree-damage`、`sentinel-tree-harvest`、`sentinel-tree-weapon`、`sentinel-dispel`、`sentinel-devour`、`sentinel` 各退出 0、1 通过／0 失败；分别生成 `partial`、`invu`、`invulnerable` 目标夹具后执行对应 sentinel 模式，各退出 0、输出 1 条 PASS。共 13 个有效进程、13 条 PASS，日志及专用夹具位于 `tmp/docs-artifacts/war3/batch-subgroup-sentinel/`。最初用通用夹具运行 `sentinel-partial` 失败，因该用例要求 `tree,notinvu` 专用配置；正确夹具重跑通过，失败日志保留。
