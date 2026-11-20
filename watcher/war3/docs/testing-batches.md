@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 攻击毒的生命下限（本批 2/3，待批次验证）
+
+路径：`src/spells.h`、`src/session.h`、`src/session_damage.cpp`、`src/session_spell_effects.cpp`、`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`。不可致死的攻击毒周期伤害保留 2 点生命；目标已低于 2 点时不增加生命，可致死毒剂、疾病和其他非致死伤害保留各自行为。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明毒伤保留 2 点生命。
+
+必要检查：Win32 Release `war3_passive_tests` 干净构建通过；`war3_passive_tests <data-root> <fixture> poison-floor` 修复前失败、修复后退出 0、1 通过／0 失败，验证真实毒攻击、2 点下限、低于下限不回血及普通伤害击杀；`plague-nonlethal` 重测退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/poison-floor-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。伤害事件回调与灵魂锁链分摊时序、可致死毒剂及原版对局仍待批次及固定版对照。
+
 ## 疾病云非致死（本批 1/3，待批次验证）
 
 路径：`src/session_spell_effects.cpp`、`tests/passive_tests.cpp`。疾病云周期伤害使用已有非致死保护，不影响普通伤害；暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明疾病云不能杀死单位且不能驱散。
