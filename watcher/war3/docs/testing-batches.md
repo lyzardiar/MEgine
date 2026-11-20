@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 驱散物品清除树上哨兵（本批 1/3，待集中验证）
+
+路径：`src/session_consumables.cpp`、`src/session_item_use.cpp`、`tests/stealth_tests.cpp`、`tests/generate-stealth-fixture.py`。普通消耗品和复合物品在有效结算时按实际作用中心调用现有树上哨兵驱散逻辑；源 `AIdi` 的目标包含 `tree`，否定权杖和驱魔符文均使用该能力。施法回调取消或改变施法者状态后的既有检查继续生效。
+
+必要检查：Win32 Release `war3_stealth_tests` 构建通过；`generate-stealth-fixture.py --data-root <data-root> --combined-dispel --output <fixture>` 创建夹具，`war3_stealth_tests <data-root> <fixture> sentinel-item-dispel|sentinel-combined-dispel|sentinel-rune-dispel` 各退出 0、1 通过／0 失败，分别通过原始权杖、定制复合物品、拾取驱魔符文实际入口，检查近处敌方哨兵移除、远处保留、树生命不变及物品消耗。日志和夹具在 `tmp/docs-artifacts/war3/item-sentinel/`，构建日志 `tmp/docs-artifacts/war3/build-tools/item-sentinel-build.log`。原版实机的友敌、距离边界、目标过滤与回调时序仍待对照；集中验证按批次进行。
+
 ## 状态事件与肖像批次（已批次验证，仍有待验项）
 
 范围：`e513ebd`、`7f21310`、`0c41429`，集成版本 `0c41429`。Win32 Release 客户端、clock、control、game-flow 目标构建通过。`actor_events_rebuild_filters_state_and_dispatch_order`、`player-region-registration-handles`、`unit-state-registration` 各退出 0、1 通过／0 失败，共 3 个测试进程、3 条 PASS；日志在 `tmp/docs-artifacts/war3/build-tools/batch-state-portrait-{build,clock,control,unit}.log`。隔离隐藏客户端使用虚拟指针点击毁灭者反向变形，确认变形前后肖像切换，类型 `ubsp`→`uobs`，金币 1000→1100、木材 1000→1050；日志 `tmp/docs-artifacts/war3/build-tools/batch-state-portrait-client.log`，帧在 `tmp/docs-artifacts/war3/batch-form-state/tooltip-agent-fyK3fw/`。

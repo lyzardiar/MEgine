@@ -68,6 +68,7 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT/'tmp/docs-artifacts/war3/stealth-reveal/fixture.w3m')
     parser.add_argument('--sentinel-targets', choices=['partial', 'invu', 'invulnerable'])
     parser.add_argument('--flare-charges', action='store_true')
+    parser.add_argument('--combined-dispel', action='store_true')
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.data_root.resolve()):
         raise ValueError('Fixture output must stay outside the read-only installation')
@@ -84,6 +85,8 @@ def main():
         if args.sentinel_targets:
             raise ValueError('Flare and sentinel fixture overrides must be generated separately')
         files['war3map.w3a'] = struct.pack('<II', 2, 1) + b'Afla' + bytes(4) + struct.pack('<I', 2) + b'Fla3' + struct.pack('<IIII', 0, 1, 0, 2) + b'Afla' + b'acdn' + struct.pack('<III', 1, 1, 0) + struct.pack('<f', 0) + b'Afla' + struct.pack('<I', 0)
+    if args.combined_dispel:
+        files['war3map.w3t'] = struct.pack('<III', 2, 0, 1) + b'pheaI0DI' + struct.pack('<I', 1) + b'iabi' + struct.pack('<I', 3) + b'AIdi,AIgo\0I0DI'
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(original[:offset]+fixture.build_archive(files))
     print('fixture='+str(args.output.resolve()))
