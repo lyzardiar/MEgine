@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 树木受伤清除已着陆哨兵（待批次验证）
+
+路径：`src/session.h`、`src/session_destructables.cpp`、`src/session_stealth_reveal.cpp`、`src/session_damage.cpp`、`src/session_lumber.cpp`、`src/session_channels.cpp`、`src/session_hero_ultimates.cpp`、`src/session_stampede.cpp`、`src/session_tinker.cpp`、`src/session_volcano.cpp`、`tests/stealth_tests.cpp`、`docs/sentinel.md`。附着树实际受伤且生命下降时清除其已着陆哨兵、特效和检测视野；零伤害和无敌树不触发，脚本直接设置生命保留既有路径。依据[暴雪哨兵说明](https://classic.battle.net/war3/nightelf/units/huntress.shtml)中攻击附着树可移除哨兵。
+
+必要检查：Win32 Release 客户端和 stealth 目标编译通过。`war3_stealth_tests <data-root> <fixture> sentinel-tree-damage|sentinel-tree-harvest|sentinel-tree-weapon` 分别运行，各 1 通过／0 失败；覆盖非致死脚本伤害、真实采木、真实武器、零伤害和无敌树。直接伤害用例修复前因哨兵仍侦测而失败。日志位于 `tmp/docs-artifacts/war3/sentinel-tree-damage/`。飞行中受伤、脚本直接改生命、各种范围法术、无敌树采木和死亡事件先后仍待验证或对照。本批 2/3。
+
 ## 同子组普通单位头像聚合（待批次验证）
 
 路径：`src/game_subgroup.h`、`src/game_view.cpp`、`tests/browser_tests.cpp`、`docs/selection-panel.md`。依据[暴雪子组说明](https://classic.battle.net/war3/basics/specialcommands.shtml)的同类单位分组规则，显示顺序将非英雄的同一子组按首次出现顺序聚合，携物单位保持独立；英雄等级排序、命令和联机选区原始顺序保持现有行为。

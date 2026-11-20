@@ -41,7 +41,7 @@ void ScriptSession::persistentSpellPulse(std::uint32_t source,const SpellInfo& s
     }
     if(!active() || (!s.allowed.contains("tree") && !s.allowed.contains("debris")))return;std::vector<std::pair<float,std::uint32_t>> props;
     for(auto& [id,d]:destructables_){if(d->removed || d->life<=0 || d->invulnerable || (d->tree?!s.allowed.contains("tree"):!s.allowed.contains("debris")))continue;float distance=std::hypot(number(d->position.x)-number(point.x),number(d->position.y)-number(point.y));if(distance<=s.area+d->radius)props.emplace_back(distance,id);}std::sort(props.begin(),props.end());
-    for(auto [distance,id]:props){if(!active())return;if(!alive(id,NativeKind::Destructable))continue;auto d=destructables_.at(id);if(d->removed || d->life<=0 || d->invulnerable)continue;float value=percent?d->maxLife*amount:amount;destructableLife(id,d->life-value);}
+    for(auto [distance,id]:props){if(!active())return;if(!alive(id,NativeKind::Destructable))continue;auto d=destructables_.at(id);if(d->removed || d->life<=0 || d->invulnerable)continue;float value=percent?d->maxLife*amount:amount;destructableLife(id,d->life-value,{},true);}
 }
 void ScriptSession::channelPulse(std::uint32_t id,const CastOrder& cast) {
     auto& s=cast.spell;if(s.kind==SpellKind::Cloud){cloudPulse(id,cast);return;}if(s.kind==SpellKind::ClusterRockets){tinkerVolley(id,cast);return;}if(s.kind==SpellKind::HealingSpray){healingSprayPulse(id,cast);return;}if(s.kind==SpellKind::Stampede){stampedePulse(id,cast);return;}if(s.kind==SpellKind::Drain){drainPulse(id,cast);return;}if(s.kind==SpellKind::Channel)return;
