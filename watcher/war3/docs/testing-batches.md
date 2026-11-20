@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 食物栏有效容量与超限颜色（待批次验证）
+
+路径：`src/game_view.cpp`、`src/session.h`、`src/session_food.cpp`、`tests/harvest_tests.cpp`。显示容量取玩家状态 4、状态 6 和 `FoodCeiling` 的有符号最小值；HUD 使用无符号人口数和比较，超限时标红，容量为零时只显示人口数且为白色。提示使用相同容量、无符号比较及有符号文本，原始 `GetPlayerState` 不变。固定版对应人口容量读取 `0x6f247ce0`、HUD `0x6f3b39a8–0x6f3b3a26`、提示 `0x6f3ac70d`。
+
+待集中构建并运行资源提示定向用例与界面画面检查，覆盖玩家上限、地图上限、0 容量、负值、超限颜色和恢复；实际原版画面及玩法人口许可与该显示上限的一致性仍待核对。本批 3/3，提交后集中验证。
+
 ## 资源栏悬停提示（待批次验证）
 
 路径：`src/game_view.cpp`、`src/session.h`、`src/session_food.cpp`、`tests/harvest_tests.cpp`、`tests/generate-harvest-fixture.py`。黄金、木材、食物和维修费栏使用源字符串显示提示；维修费列表按源门槛、人口上限和税率生成，扩展档位复用 HUD 标签。固定版静态路径显示短列表遇零停止，提示税率向零截断，玩家税率按四舍五入处理。

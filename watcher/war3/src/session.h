@@ -756,7 +756,7 @@ class ScriptSession {
     std::unordered_map<std::string,float> gameplayNumbers_;
     std::array<std::optional<std::array<float,8>>,7> damageFactors_;
     std::optional<std::array<float,7>> etherealDamageFactors_;
-    struct UpkeepRules {std::array<int,10> usage{};std::array<std::array<int,10>,2> rates{},tooltipRates{};unsigned usageCount=10;};
+    struct UpkeepRules {std::array<int,10> usage{};std::array<std::array<int,10>,2> rates{},tooltipRates{};unsigned usageCount=10;int foodCeiling=100;};
     std::optional<UpkeepRules> upkeepRules_;
     std::vector<int> heroThresholds_;
     std::map<std::uint32_t,std::shared_ptr<ScriptQuest>> quests_;
@@ -1161,6 +1161,7 @@ class ScriptSession {
     World& requireWorld();
 public:
     std::string upkeepLabel(unsigned owner);
+    int foodCapacity(unsigned owner) const;
     std::pair<std::string,std::string> resourceTooltip(unsigned owner,unsigned index);
     bool validOrderTarget(std::uint32_t id) const {return alive(id,NativeKind::Unit) || alive(id,NativeKind::Item) || alive(id,NativeKind::Destructable);}
     void setExternalExecute(const void* owner,std::function<bool(const std::string&)> handler);
