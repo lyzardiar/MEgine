@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 英雄目标技能物品批次（部分验证）
+
+范围：`8f8ebd1`、`37bcf79`、`a055f83`，含本批补充的复合物品目标可见性和施法者易主修复。Win32 Release 客户端及 control 测试目标在 VS 2022 和本地 SDK 的独立构建目录编译通过。生成组合物品夹具后，单技能、复合技能、首目标护盾、隐身目标、施法者易主、既有控制和回调共 17 个测试进程各 1 通过／0 失败。日志 `tmp/docs-artifacts/war3/hero-item-batch/batch-lifecycle-fix.log`，构建日志 `tmp/docs-artifacts/war3/hero-item-batch/build-lifecycle-fix.log`。
+
+新增回归在修复前分别复现隐身目标被接受、施法者易主后资源发给新所有者；修复后均通过。复合效果顺序、闪电链后续弹跳的来源死亡／易主和护盾、原版时序、实际地图与窗口及多人仍待验证。下一功能批次从 0/3 开始。
+
 ## 复合圣光、风暴之锤与闪电链物品（待批次验证）
 
 路径：`src/session_item_use.cpp`、`tests/generate-combined-item-fixture.py`、`tests/control_tests.cpp`、`docs/control-spells.md`。三个法术与其他已支持主动效果组合时，沿用复合物品目标校验、命中及弹跳流程。

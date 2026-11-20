@@ -23,7 +23,7 @@ def main():
     archive = control.fixture.mpyq.MPQArchive(io.BytesIO(original[offset:]), listfile=False)
     names = control.fixture.read_archive(archive, '(listfile)').decode('ascii').splitlines()
     files = {name: control.fixture.read_archive(archive, name) for name in names if name and name != '(listfile)'}
-    script = control.SCRIPT.replace('integer soulPickups=0', 'integer soulPickups=0\ninteger combinedUses=0\ninteger combinedEvents=0\nboolean removeCombined=false\nitem reentryItem=null\nunit changedTarget=null\nunit revivedTarget=null')
+    script = control.SCRIPT.replace('integer soulPickups=0', 'integer soulPickups=0\ninteger combinedUses=0\ninteger combinedEvents=0\nboolean removeCombined=false\nitem reentryItem=null\nunit changedTarget=null\nunit revivedTarget=null\nunit transferredCaster=null')
     script = script.replace('function config takes nothing returns nothing', '''function combined_used takes nothing returns nothing
     set combinedEvents=combinedEvents+1
     if GetItemTypeId(GetManipulatedItem())=='I0CM' then
@@ -94,6 +94,16 @@ function watch_spell_death takes unit u returns nothing
     local trigger t=CreateTrigger()
     call TriggerRegisterUnitEvent(t,u,EVENT_UNIT_DEATH)
     call TriggerAddAction(t,function spell_death_revive)
+endfunction
+function item_source_damaged takes nothing returns nothing
+    call DisableTrigger(GetTriggeringTrigger())
+    call SetUnitOwner(transferredCaster,Player(1),false)
+endfunction
+function watch_item_source_transfer takes unit target, unit caster returns nothing
+    local trigger t=CreateTrigger()
+    set transferredCaster=caster
+    call TriggerRegisterUnitEvent(t,target,EVENT_UNIT_DAMAGED)
+    call TriggerAddAction(t,function item_source_damaged)
 endfunction
 function config takes nothing returns nothing''')
     if 'local trigger summonTrigger=CreateTrigger()' not in script or 'call TriggerRegisterPlayerUnitEvent(summonTrigger,Player(0),EVENT_PLAYER_UNIT_SUMMON,null)' not in script:
