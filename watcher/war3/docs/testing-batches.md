@@ -1,10 +1,16 @@
 # 独立客户端测试队列
 
+## 金矿采空提示及低矿文字（待批次验证）
+
+路径：`src/session.h`、`src/session_harvest.cpp`、`src/session_text.cpp`、`tests/harvest_tests.cpp`、`docs/economy.md`。最后一笔采矿耗尽金矿时排队 `GoldMineCollapseSound`、advisor 色标记和 10 秒 `Goldminedestroyed` 文本；低矿提示补充 `Goldminelow` 文本。普通采矿按工人、覆盖矿按矿能力宿主选择事件位置与种族；文字、声音、标记各自隔离配置异常。固定版 `Game.dll` 的 `0x6f4d240d–0x6f4d2453`、`0x6f41ac1a–0x6f41aca7` 发送采空事件 222 并标记，`0x6f34fbc0` 映射原文本和声音；`CAbilityHarvest` 及覆盖矿能力的宿主身份经 RTTI 核对。
+
+必要检查：Win32 Release 客户端和 harvest 目标编译通过；`war3_harvest_tests <data-root> <fixture> <mode>` 的低矿与采空共 18 个模式各退出 0、1 通过／0 失败，包括普通／闹鬼／缠绕实际采矿、声音与文本请求、标记位置颜色、共享控制、远端／空矿和两项错误颜色隔离；采空三种正例修复前缺少音效。日志 `tmp/docs-artifacts/war3/mine-exhaust-sound/`。实际原版窗口和播放、默认皮肤回退、多人、脚本设量、攻击摧毁及触发时序仍待对照。本批 3/3，提交后集中验证。
+
 ## 采矿低余额提示（待批次验证）
 
-路径：`src/session.h`、`src/session_harvest.cpp`、`src/session_text.cpp`、`tests/harvest_tests.cpp`、`tests/generate-harvest-fixture.py`、`docs/economy.md`。实际采矿跨越源 `LowGoldAmount` 且尚未采空时排队种族语音与矿位置的 advisor 标记；提示配置解析异常不阻断采矿。固定版 `Game.dll` 的 `0x6f4d2371–0x6f4d23e1` 检查跨越并发送内部 223，`0x6f34fbda–0x6f34fbdf` 映射低矿音效；资源默认阈值为 1500。
+路径：`src/session.h`、`src/session_harvest.cpp`、`src/session_text.cpp`、`tests/harvest_tests.cpp`、`tests/generate-harvest-fixture.py`、`docs/economy.md`。实际采矿跨越源 `LowGoldAmount` 且尚未采空时排队种族语音和事件对象位置的 advisor 标记；提示配置解析异常不阻断采矿。固定版 `Game.dll` 的 `0x6f4d2371–0x6f4d23e1` 检查跨越并发送内部 223，`0x6f34fbda–0x6f34fbdf` 映射低矿音效；资源默认阈值为 1500。
 
-必要检查：Win32 Release 客户端和 harvest 目标编译通过；`war3_harvest_tests <data-root> <fixture> <mode>` 的 `low-mine-warning`、`low-mine-boundary`、`low-mine-no-repeat`、`mine-exhaust-warning`、`low-mine-cover-haunted`、`low-mine-cover-entangled`、`low-mine-share-none`、`low-mine-share-advanced`、`low-mine-share-normal`、`low-mine-share-normal-flag`、`low-mine-share-reverse`、`low-mine-invalid-color` 共 12 个进程各退出 0、1 通过／0 失败；最后一项使用 `generate-harvest-fixture.py --invalid-advisor-color` 夹具。覆盖真实采矿及覆盖矿代理、阈值边界、共享控制当前规则、损坏颜色不阻断结算。修复前两项跨阈值提示失败。日志位于 `tmp/docs-artifacts/war3/low-gold-warning/`。多人共享控制方向及地图标志、重填后再跨越、实际音频和窗口仍待原版对照；直接耗尽告警本身未实现。本批 2/3。
+必要检查：Win32 Release 客户端和 harvest 目标编译通过；`war3_harvest_tests <data-root> <fixture> <mode>` 的 `low-mine-warning`、`low-mine-boundary`、`low-mine-no-repeat`、`mine-exhaust-warning`、`low-mine-cover-haunted`、`low-mine-cover-entangled`、`low-mine-share-none`、`low-mine-share-advanced`、`low-mine-share-normal`、`low-mine-share-normal-flag`、`low-mine-share-reverse`、`low-mine-invalid-color` 共 12 个进程各退出 0、1 通过／0 失败；最后一项使用 `generate-harvest-fixture.py --invalid-advisor-color` 夹具。覆盖真实采矿及覆盖矿代理、阈值边界、共享控制当前规则、损坏颜色不阻断结算。修复前两项跨阈值提示失败。日志位于 `tmp/docs-artifacts/war3/low-gold-warning/`。多人共享控制方向及地图标志、重填后再跨越、实际音频和窗口仍待原版对照；采空告警和原版文本已在后续任务补充，见上方记录。本批 2/3。
 
 ## 静滞陷阱触发摧毁附近陷阱（待批次验证）
 

@@ -747,7 +747,7 @@ class ScriptSession {
     std::pair<std::uint32_t,std::uint32_t> pingColors();
     void minimapPing(float x,float y,float duration,std::optional<std::uint32_t> color,bool extra);
     void attackAlert(const UnitState& unit);
-    void lowGoldAlert(unsigned owner,WorldPoint point);
+    void mineGoldAlert(unsigned owner,unsigned race,WorldPoint point,bool exhausted);
     std::map<std::pair<std::uint32_t,bool>,ProductInfo> products_;
     std::map<std::pair<std::uint32_t,unsigned>,ResearchInfo> researchInfo_;
     std::map<std::pair<std::uint32_t,bool>,std::optional<std::pair<int,int>>> globalStock_;
