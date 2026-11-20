@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 牧师自身自动心灵之火（本批 3/3，待批次验证）
+
+路径：`src/session_autocast.cpp`、`tests/passive_tests.cpp`。牧师自身作为心灵之火自动施法目标时要求正在攻击敌方单位；手动自施和对其他友军的目标选择沿用现有逻辑。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明独自的牧师攻击后才会自动对自己施放。
+
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> inner-fire-self` 修复前失败、修复后退出 0、1 通过／0 失败，覆盖空闲、攻击敌人和手动自施；日志 `tmp/docs-artifacts/war3/build-tools/inner-fire-self-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。友军目标优先级、实际命中前后的原版时机及对局仍待对照；本任务完成后执行本批集中验证。
+
 ## 攻击毒的生命下限（本批 2/3，待批次验证）
 
 路径：`src/spells.h`、`src/session.h`、`src/session_damage.cpp`、`src/session_spell_effects.cpp`、`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`。不可致死的攻击毒周期伤害保留 2 点生命；目标已低于 2 点时不增加生命，可致死毒剂、疾病和其他非致死伤害保留各自行为。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明毒伤保留 2 点生命。
