@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 目标范围内可达位置回退（本批 3/3，待批次验证）
+
+路径：`src/world.h`、`src/world_path.cpp`、`src/session_combat_orders.cpp`、`tests/human_campaign_chain_tests.cpp`。常规追击的圆周采样未找到完整路径时，限定地图尺寸与范围并按连通区域选取最多 8 个范围内格心，再逐个验证完整路径及终点距离；部分路径请求不使用该回退。追击也用于施法、登船、采矿等，需集中验证共享调用。
+
+必要检查：Win32 Release 目标干净构建及后续增量构建通过；`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human08-reachable-ship` 修复前报告攻击命令被拒绝，修复后退出 0、1 通过／0 失败。原图两门迫击炮对可见的 0110 船均接受攻击命令，回归确认所选单位的路线终点进入射程；自然推进中两炮在路上被敌军击毁，未命中船。日志 `tmp/docs-artifacts/war3/human08-player/regression-{before,after}.log`、`run-f.log`。该回退是有界近似，8 个候选与单次路径节点预算不能保证找到所有可达位置；原版寻路行为、实际击中和完整关卡尚未对照。批次需覆盖攻击、不可达目标、动态障碍、目标法术、登船、月井、传送门及采矿共享路径，并观察群体及大碰撞单位的重复寻路成本。
+
 ## 多火球溅射叠加（本批 2/3，待批次验证）
 
 路径：`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`。选中的法球为火球时，对其他有效火球逐件保留溅射效果，仍以主攻击实际命中且造成正伤害为触发条件；基础攻击加成沿用装备汇总。暴雪 [Hero Items](https://classic.battle.net/war3/basics/heroitemspermanent.shtml) 说明多个火球的溅射伤害可叠加。
