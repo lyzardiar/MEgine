@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 范围驱散树上哨兵（待批次验证）
+
+路径：`src/session.h`、`src/session_stealth_reveal.cpp`、`src/session_area_spells.cpp`、`src/session_magic_consumption.cpp`、`tests/stealth_tests.cpp`、`docs/sentinel.md`。允许树目标的范围驱散和吞噬魔法清除范围内敌方已着陆哨兵并刷新视野，不损伤树，也不因哨兵产生吞噬收益。
+
+必要检查：Win32 Release 客户端及 stealth 目标干净重建通过；`war3_stealth_tests <data-root> <fixture> sentinel-dispel|sentinel-devour` 分别退出 0、各 1 通过／0 失败，覆盖实际施法、范围内外检测、树生命及吞噬魔法收益。日志位于 `tmp/docs-artifacts/war3/sentinel-area-dispel/`。特效释放尚未直接断言；己方与盟友、飞行中、目标过滤、无敌树、范围边缘、事件时序及原版动态表现待验证或对照。本批 3/3，提交后执行集中验证。
+
 ## 树木受伤清除已着陆哨兵（待批次验证）
 
 路径：`src/session.h`、`src/session_destructables.cpp`、`src/session_stealth_reveal.cpp`、`src/session_damage.cpp`、`src/session_lumber.cpp`、`src/session_channels.cpp`、`src/session_hero_ultimates.cpp`、`src/session_stampede.cpp`、`src/session_tinker.cpp`、`src/session_volcano.cpp`、`tests/stealth_tests.cpp`、`docs/sentinel.md`。附着树实际受伤且生命下降时清除其已着陆哨兵、特效和检测视野；零伤害和无敌树不触发，脚本直接设置生命保留既有路径。依据[暴雪哨兵说明](https://classic.battle.net/war3/nightelf/units/huntress.shtml)中攻击附着树可移除哨兵。

@@ -1013,6 +1013,7 @@ class ScriptSession {
     const std::shared_ptr<WalkableGeometry>& walkableModel(const std::string& path);
     void destructableLife(std::uint32_t id,float value,ScriptContext context={},bool damage=false);
     void removePerchedSentinels(std::uint32_t tree);
+    void dispelPerchedSentinels(const SpellInfo& spell,WorldPoint point,unsigned owner);
     void widgetDeath(std::uint32_t id,ScriptContext context={});
     std::uint32_t nearestTree(WorldPoint point,float range,std::uint32_t exclude=0);
     std::uint32_t reachableHarvestTree(const UnitState& unit,WorldPoint point,float range,bool direct,float workRange,bool allowInvulnerable,unsigned& cursor,bool& any);
