@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 集结点查询的无效单位句柄（待批次验证）
+
+路径：`src/session_production.cpp`、`tests/construction_tests.cpp`。GetUnitRallyPoint、GetUnitRallyUnit、GetUnitRallyDestructable 对空、失效或错误类型单位返回对应的空句柄，避免中断地图脚本；有效查询保留原有目标逻辑。固定 1.27 原版入口分别为 `0x6f1e64c0`、`0x6f1e6530`、`0x6f1e63f0`，单位解析失败直接返回零。
+
+必要检查：Win32 Release 客户端和 construction 测试目标编译通过；`war3_construction_tests <data-root> <fixture> rally-invalid-handles` 修复前以 Unknown session native handle 失败，修复后 1 通过／0 失败，覆盖空、已移除、错误类型和未知句柄及点、单位、可破坏物集结目标。日志 `tmp/docs-artifacts/war3/rally-invalid-handles/`。实际地图与原版动态行为待验证。本批 1/3。
+
 ## 单位句柄与非矿资源批次（部分验证）
 
 范围：`af84875`、`e230c6e`、`2722b8a`。Win32 Release 客户端、passive 和 construction 目标在集成版本编译通过；单位归属／视线、单位身份、非矿资源、无效资源句柄与覆盖矿各 1 通过／0 失败，既有无效单位能力测试 4 通过／0 失败，总计 8 通过／0 失败。日志 `tmp/docs-artifacts/war3/unit-identity/batch-2722b8a.log`。

@@ -40,8 +40,8 @@ void ScriptSession::restoreProduction(std::span<const std::uint8_t> bytes,const 
 void ScriptSession::bindProductionNatives() {
     bind("GetTrainedUnitType","integer",{},[this](auto& vm,auto){return vm.integer(contexts_.empty()?0:std::bit_cast<std::int32_t>(contexts_.back().trainedType));});
     bind("GetTrainedUnit","unit",{},[this](auto& vm,auto){return vm.handle("unit",contexts_.empty()?0:contexts_.back().trainedUnit);});
-    bind("GetUnitRallyPoint","location",{"unit"},[this](auto& vm,auto a){auto point=unit(a[0]).rally;if(!point)return vm.handle("location",0);auto handle=create(NativeKind::Location);std::get<WorldPoint>(object(handle,NativeKind::Location).state)=*point;return handle;});
-    bind("GetUnitRallyDestructable","destructable",{"unit"},[this](auto& vm,auto a){auto target=unit(a[0]).rallyTarget;return vm.handle("destructable",alive(target,NativeKind::Destructable)?target:0);});
-    bind("GetUnitRallyUnit","unit",{"unit"},[this](auto& vm,auto a){auto target=unit(a[0]).rallyTarget;return vm.handle("unit",alive(target,NativeKind::Unit)?target:0);});
+    bind("GetUnitRallyPoint","location",{"unit"},[this](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Unit))return vm.handle("location",0);auto point=unit(a[0]).rally;if(!point)return vm.handle("location",0);auto handle=create(NativeKind::Location);std::get<WorldPoint>(object(handle,NativeKind::Location).state)=*point;return handle;});
+    bind("GetUnitRallyDestructable","destructable",{"unit"},[this](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Unit))return vm.handle("destructable",0);auto target=unit(a[0]).rallyTarget;return vm.handle("destructable",alive(target,NativeKind::Destructable)?target:0);});
+    bind("GetUnitRallyUnit","unit",{"unit"},[this](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Unit))return vm.handle("unit",0);auto target=unit(a[0]).rallyTarget;return vm.handle("unit",alive(target,NativeKind::Unit)?target:0);});
 }
 }
