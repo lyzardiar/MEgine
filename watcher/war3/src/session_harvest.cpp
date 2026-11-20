@@ -64,8 +64,8 @@ void ScriptSession::harvestTick(double delta) {
     }
 }
 void ScriptSession::bindHarvestNatives() {
-    bind("GetResourceAmount","integer",{"unit"},[this](auto& vm,auto a){return vm.integer(resourceAmount(unit(a[0])));});
-    bind("SetResourceAmount","nothing",{"unit","integer"},[this](auto& vm,auto a){resourceAmount(unit(a[0]))=std::max(0,std::bit_cast<std::int32_t>(a[1].bits));return vm.nothing();});
-    bind("AddResourceAmount","nothing",{"unit","integer"},[this](auto& vm,auto a){auto& u=unit(a[0]);auto amount=std::int64_t(resourceAmount(u))+std::bit_cast<std::int32_t>(a[1].bits);resourceAmount(u)=int(std::clamp<std::int64_t>(amount,0,INT_MAX));return vm.nothing();});
+    bind("GetResourceAmount","integer",{"unit"},[this](auto& vm,auto a){return vm.integer(alive(a[0].bits,NativeKind::Unit)?resourceAmount(unit(a[0])):0);});
+    bind("SetResourceAmount","nothing",{"unit","integer"},[this](auto& vm,auto a){if(alive(a[0].bits,NativeKind::Unit))resourceAmount(unit(a[0]))=std::max(0,std::bit_cast<std::int32_t>(a[1].bits));return vm.nothing();});
+    bind("AddResourceAmount","nothing",{"unit","integer"},[this](auto& vm,auto a){if(!alive(a[0].bits,NativeKind::Unit))return vm.nothing();auto& u=unit(a[0]);auto amount=std::int64_t(resourceAmount(u))+std::bit_cast<std::int32_t>(a[1].bits);resourceAmount(u)=int(std::clamp<std::int64_t>(amount,0,INT_MAX));return vm.nothing();});
 }
 }

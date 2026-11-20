@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 资源接口的无效单位句柄（待批次验证）
+
+路径：`src/session_harvest.cpp`、`tests/construction_tests.cpp`、`docs/construction.md`。GetResourceAmount 对无效单位返回零，SetResourceAmount 和 AddResourceAmount 不再中断脚本，保留有效矿井与覆盖矿的共享储量。
+
+必要检查：Win32 Release 客户端及 construction 测试目标编译通过；`war3_construction_tests <data-root> <fixture> resource-invalid-handles` 修复前报 Unknown session native handle，修复后 1 通过／0 失败，覆盖空、已移除、不兼容及未知句柄和有效矿／覆盖矿读写。地图 main 中调用 `SetResourceAmount(null,1)` 的最小复现修复前失败、修复后通过，日志 `tmp/docs-artifacts/war3/resource-handles/main-check.log`。固定版原版入口对解析失败返回零或直接返回；有效非矿单位、完整地图及原版动态行为待批次验证。本批 2/3。
+
 ## 闪电链命中回调中的来源生命周期（待批次验证）
 
 路径：`src/session_spell_effects.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`、`docs/control-spells.md`。链式法术对首目标产生效果后重新检查来源死亡和归属轮次，来源在同步回调中死亡复活或易主时不继续选择下一跳。
