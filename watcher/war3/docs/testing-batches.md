@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 魔法闪耀范围伤害与魔法池（本批 3/3，提交后集中验证）
+
+路径：`src/session_faerie_dragon.cpp`、`tests/control_tests.cpp`、`tests/generate-combined-item-fixture.py`。地图将 `Amfl` 配置为范围命中时，范围目标必须有最大魔法值；当前魔法为零但有魔法池的单位仍可受伤，单目标模式保持既有处理。命中前再次检查魔法池，避免前序伤害回调改变后继续命中。暴雪 [Faerie Dragon 说明](https://classic.battle.net/war3/nightelf/units/faeriedragon.shtml) 指出范围伤害不伤没有魔法池的单位。
+
+必要检查：Win32 Release `war3_control_tests` 构建通过；`generate-combined-item-fixture.py --data-root <data-root> --output <fixture>` 后运行 `war3_control_tests <data-root> <fixture> mana-flare-mana-pool`，修复前无魔法池目标受到 75 点伤害，修复后退出 0、1 通过／0 失败；同时检查空魔法但有魔法池的敌人受伤和友军不受伤。日志 `tmp/docs-artifacts/war3/build-tools/mana-flare-pool-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/mana-flare-pool/fixture.w3m`。默认 `DataF1=1` 为当前实现的单目标配置；范围覆盖、目标回调、原版实际效果与 0.75 秒反击频率／排队时序仍待对照。提交后集中验证本批。
+
 ## 范围弹道强制未命中伤害（本批 2/3，待集中验证）
 
 路径：`src/session_projectiles.cpp`、`tests/passive_tests.cpp`。对 `artillery`／`msplash` 目标攻击，发射时记录的强制未命中在命中范围单位、可破坏物和物品时将既有距离伤害系数减半；`neverMiss` 仍优先。暴雪 [Combat 说明](https://classic.battle.net/war3/basics/combat.shtml) 记载溅射单位因诅咒等未命中时造成一半伤害。
