@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## IsUnit 的失效句柄比较（待批次验证）
+
+路径：`src/session_entities.cpp`、`tests/passive_tests.cpp`。IsUnit 比较解析后的单位身份，两个无法解析的句柄比较相等，其他有效单位按身份比较。固定 1.27 入口 `0x6f1e84f0` 分别解析两个单位后比较指针；实际原版动态回收行为仍待对照。
+
+必要检查：Win32 Release 客户端和 passive 测试目标编译通过；`war3_passive_tests <data-root> <fixture> unit-identity-invalid` 修复前失败、修复后 1 通过／0 失败，覆盖有效同异单位、空、已移除及错误类型句柄。日志 `tmp/docs-artifacts/war3/unit-identity/`。实际地图和原版动态行为待测。本批 3/3，先集中验证。
+
 ## 非矿单位的资源接口（待批次验证）
 
 路径：`src/session_harvest.cpp`、`tests/construction_tests.cpp`。GetResourceAmount 对没有矿井能力的单位返回零，SetResourceAmount 和 AddResourceAmount 不修改其储量；普通矿和覆盖矿沿用共享储量。固定 1.27 原版三个接口先查找 `Agmb` 类型；静态类注册显示 `Agld`、`Abgm`、`Aegm` 继承该类型。原版对象状态、动态能力变化和覆盖矿关系仍待对照。
