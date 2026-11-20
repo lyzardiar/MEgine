@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 虚无目标与攻击毒（本批 3/3，待批次验证）
+
+路径：`src/session_weapon_effects.cpp`、`src/session_damage.cpp`、`tests/passive_tests.cpp`。虚无单位不接收新的攻击毒，已有攻击毒在虚无期间不造成周期伤害，剂量继续计时；解除虚无后尚未到期的毒可继续伤害。普通脚本毒伤害类型和寄生虫沿用既有处理。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 将普通毒列为不影响虚无单位的物理能力。
+
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`poison-ethereal` 修复前因虚无目标中毒失败，仅阻止新感染后因已有毒伤害虚无单位失败，修复后退出 0、1 通过／0 失败。真实牧师魔法弹道、虚无能力、血法师放逐及解除、普通脚本毒伤对照均已覆盖。日志 `tmp/docs-artifacts/war3/build-tools/poison-ethereal-{before,infection-only,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。毒箭共用感染路径但本次未单独覆盖；已有毒状态在原版进入虚无时的图标、减速、状态保留和计时细节，以及虚无与毒球／暗影突袭的真实对局仍需对照；本任务完成后执行本批集中验证。
+
 ## 烈焰风暴超额伤害均分（本批 2/3，待批次验证）
 
 路径：`src/session_channels.cpp`、`tests/passive_tests.cpp`、`tests/generate-passive-fixture.py`。烈焰风暴每次脉冲按各阵营有效目标的预计伤害计算比例，超过该组上限时均分，不再按距离使前六个目标独占额度；未超过上限时保持原值。暴雪 [Blood Mage](https://classic.battle.net/war3/human/units/bloodmage.shtml) 说明超出六目标时将对应伤害在目标间均分；本机固定版物编一级每个强伤脉冲 15、上限 90。
