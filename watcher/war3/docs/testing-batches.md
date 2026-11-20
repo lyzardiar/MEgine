@@ -1,22 +1,28 @@
 # 独立客户端测试队列
 
-## 范围法术的阵营伤害上限（本批 3/3，待批次验证）
+## 攻击毒与范围伤害上限批次（已批次验证，仍有待验项）
+
+范围：`1c4417a`、`ead684d`、`f24406a`，集成版本 `f24406a`。公共伤害接口及状态布局变更后 Win32 Release passive 目标干净构建，随后在集成版本构建客户端、passive、spell、channel、control 目标通过。`poison-immune`、`poison-stack`、`poison-floor`、`blizzard-cap-relations`、`plague-nonlethal`、`item-combined-spirit-rune`、`poison-arrow` 各 1 通过／0 失败；`zero-blizzard` 2 通过／0 失败；channel 程序退出 0 并输出 1 条 PASS，共 9 个进程、10 条通过结果。日志 `tmp/docs-artifacts/war3/build-tools/batch-poison-aoe-*.log`；夹具分别为 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`、`mana-flare-pool/fixture.w3m`、`channels/fixture.w3m` 和 `spells/fixture.w3m`（后三项相对于 `tmp/docs-artifacts/war3/`）。
+
+火焰雨独立运行、范围伤害超额分配与特殊中立联盟、毒球竞争、虚无、法术减伤、原版动态时序和实际对局仍待专项对照。下一功能批次从 0/3 开始。
+
+## 范围法术的阵营伤害上限（已批次验证，仍有待验项）
 
 路径：`src/session_channels.cpp`、`tests/passive_tests.cpp`。暴风雪、火焰雨、烈焰风暴等共用持续范围伤害路径对友方、敌方和中立目标分别累计每次伤害上限，不再让先命中的目标耗尽其他阵营的额度；宁静的治疗沿用原有处理。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明范围伤害上限对友军、敌军和中立单位分别计算。当前以施法者自身及盟友、敌对玩家、其他中立玩家区分，特殊地图对中立玩家的联盟覆盖仍待原版对照。
 
-必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> blizzard-cap-relations` 修复前失败，修复后退出 0、1 通过／0 失败。真实暴风雪第一波命中各 6 个友方（含另一玩家盟友）、敌方及中立单位，验证三组均受伤且各不超过伤害上限；日志 `tmp/docs-artifacts/war3/build-tools/blizzard-cap-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。每组超过上限时的原版分配、动态联盟、其他法术及实际对局仍待专项对照；本任务完成后执行本批集中验证。
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> blizzard-cap-relations` 修复前失败，修复后退出 0、1 通过／0 失败。真实暴风雪第一波命中各 6 个友方（含另一玩家盟友）、敌方及中立单位，验证三组均受伤且各不超过伤害上限；日志 `tmp/docs-artifacts/war3/build-tools/blizzard-cap-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。每组超过上限时的原版分配、动态联盟、其他法术及实际对局仍待专项对照；本批集中验证结果见批次摘要。
 
-## 同来源攻击毒刷新（本批 2/3，待批次验证）
+## 同来源攻击毒刷新（已批次验证，仍有待验项）
 
 路径：`src/session_weapon_effects.cpp`、`tests/passive_tests.cpp`。同一攻击者使用同一技能反复命中时刷新已有毒剂量并保留其周期，不再重复叠加；不同攻击者保留独立剂量。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 说明同一单位重复攻击不增加毒伤，而不同单位可叠加。
 
-必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> poison-stack` 修复前因同源额外剂量失败，修复后退出 0、1 通过／0 失败，覆盖真实弹道、持续时间刷新、周期伤害和第二来源叠加。日志 `tmp/docs-artifacts/war3/build-tools/poison-stack-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。不同技能共用状态、来源易主或复活、等级改变、毒周期刷新时序及同类型不同来源的固定版行为仍待对照；与后续任务集中验证。
+必要检查：Win32 Release `war3_passive_tests` 构建通过；`war3_passive_tests <data-root> <fixture> poison-stack` 修复前因同源额外剂量失败，修复后退出 0、1 通过／0 失败，覆盖真实弹道、持续时间刷新、周期伤害和第二来源叠加。日志 `tmp/docs-artifacts/war3/build-tools/poison-stack-{before,after}.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。不同技能共用状态、来源易主或复活、等级改变、毒周期刷新时序及同类型不同来源的固定版行为仍待对照；本批集中验证结果见批次摘要。
 
-## 攻击毒与魔法免疫（本批 1/3，待批次验证）
+## 攻击毒与魔法免疫（已批次验证，仍有待验项）
 
 路径：`src/session_weapon_effects.cpp`、`src/session_arrow_status.cpp`、`src/session_spell_effects.cpp`、`src/session_damage.cpp`、`src/session.h`、`src/spells.h`、`tests/passive_tests.cpp`。普通被动攻击毒可感染魔免有机单位并造成周期伤害；单独标识该伤害，保留普通脚本毒伤、寄生虫及毒箭既有魔免规则。暴雪 [Spell Basics](https://classic.battle.net/war3/basics/spellbasics.shtml) 将普通毒列为可作用于魔免单位的物理能力。
 
-必要检查：伤害接口及状态布局变更后 Win32 Release `war3_passive_tests` 干净构建，之后补充毒箭原判定及测试并增量构建通过。`war3_passive_tests <data-root> <fixture> poison-immune` 修复前因拒绝感染失败，仅修感染后因周期伤害被过滤失败，修复后退出 0、1 通过／0 失败；覆盖真实攻击、魔免移除及恢复、普通目标和脚本毒伤对照。`poison-floor`、`plague-nonlethal` 各退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/poison-immune-*.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。毒箭、虚无、护盾／法术减伤、地图覆盖的 `MagicImmunesResistDamage`、固定版时序及实际对局仍待专项对照；与后续任务集中验证。
+必要检查：伤害接口及状态布局变更后 Win32 Release `war3_passive_tests` 干净构建，之后补充毒箭原判定及测试并增量构建通过。`war3_passive_tests <data-root> <fixture> poison-immune` 修复前因拒绝感染失败，仅修感染后因周期伤害被过滤失败，修复后退出 0、1 通过／0 失败；覆盖真实攻击、魔免移除及恢复、普通目标和脚本毒伤对照。`poison-floor`、`plague-nonlethal` 各退出 0、1 通过／0 失败。日志 `tmp/docs-artifacts/war3/build-tools/poison-immune-*.log`，夹具 `tmp/docs-artifacts/war3/auras-passives/fixture.w3m`。毒箭、虚无、护盾／法术减伤、地图覆盖的 `MagicImmunesResistDamage`、固定版时序及实际对局仍待专项对照；本批集中验证结果见批次摘要。
 
 ## 疾病、毒伤与自动施法批次（已批次验证，仍有待验项）
 
