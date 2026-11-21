@@ -1,12 +1,18 @@
 # 独立客户端测试队列
 
-## 重合目标的最小射程退让（本批 3/3，待批次验证）
+## 路径、阴影与最小射程批次（已执行，仍有待验项）
+
+范围：`7fb2853`、`84877e0`（补充 `6fd711e`）、`ef5a148`，集成版本 `ef5a148`。Win32 Release 公共头变更后客户端及 destructable、human campaign、transport、harvest、caster、stealth、passive、browser 目标干净构建通过。11 个测试进程均退出 0、各 1 条通过结果，覆盖迫击炮重合／近距和封路、Human08 可达船与三船实战、溅射未命中、保持位置最小射程、登船路径、采集部分路径与卡住恢复，以及 FDF 渲染、标准信息透明度和长文本；隐藏 D3D9 阴影像素对照 7 通过／0 失败，包含负偏移和 scissor 状态恢复。脚本与日志分别为 `tmp/docs-artifacts/war3/build-tools/run-batch-path-shadow-mortar.mjs`、`tmp/docs-artifacts/war3/batch-path-shadow-mortar/` 和 `tmp/docs-artifacts/war3/path-review/{shadow-batch.log,compare-production.py}`。
+
+Human08 原图人为碰撞半径 512 且起点不可通行的完整玩家攻击命令，在变更路径格后约 0.054–0.064 ms；开放 1024×1024 合成网格直接调用 `reachablePointsNear`，首次建区在半径 32、128、512 时分别约 34、92、1072 ms，缓存后约 0.22–0.24 ms。日志为 `batch-path-shadow-mortar/path-{command,open-grid}.log`；这是局部诊断，不是整局帧率。开放大半径与频繁路径变化的开销仍需优化；最小射程退让方向受阻时的替代路径、原版对局行为、UI 原版位置及多分辨率仍待验证。下一功能批次从 0/3 开始。
+
+## 重合目标的最小射程退让（已批次验证，仍有待验项）
 
 路径：`src/session_combat.cpp`、`src/session_combat_destructable.cpp`、`tests/destructable_tests.cpp`。有最小射程的攻击单位与单位／可破坏物目标完全重合时，采用已有攻击地面逻辑的默认方向后退，避免反复清空路线；非零距离仍沿目标反方向移动。
 
 必要检查：Win32 Release `war3_destructable_tests <data-root> <generated-map> minimum-range` 退出 0、1 通过／0 失败；真实迫击炮覆盖单位、树和地面目标的重合及 64 单位近距、开放地面路径开启、封闭路径不移动或开火。修复前隔离探针中重合单位和树在原地不攻击，攻击地面可后退；日志 `tmp/docs-artifacts/war3/mortar-overlap-probe/`。重合由测试构造，退让方向受阻时的替代方向、实际原版行为与自然对局仍待对照。
 
-## 计时窗口与排行榜标题阴影（本批 2/3，待批次验证）
+## 计时窗口与排行榜标题阴影（已批次验证，仍有待验项）
 
 路径：`src/glue.h`、`src/glue.cpp`、`src/game_timer_dialog.cpp`、`src/game_leaderboard.cpp`、`docs/campaign-leaderboard.md`。计时标题／时间与排行榜标题从源 FDF 读取阴影色和偏移，动态前景颜色保持原有脚本设置。
 
@@ -16,11 +22,11 @@
 
 路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原图玩家命令回归以英雄清路、迫击炮跟随并攻击，连续击沉三艘船并由只读伤害、死亡事件逐一确认迫击炮为击杀者；主进程 Win32 Release 复跑退出 0、1 通过／0 失败。命令、结果和未覆盖范围见[战役流程](campaign-flow.md)，日志 `tmp/docs-artifacts/war3/human08-strategy/three-ship-main.log`。测试工作不计功能批次。
 
-## 不可通行起点的追击建区（本批 1/3，待批次验证）
+## 不可通行起点的追击建区（已批次验证，仍有待验项）
 
 路径：`src/world_path.cpp`。目标范围回退在构建整图连通区前检查起点；原有区域标签对不可通行起点本就为零，结果保持为空。
 
-必要检查：Win32 Release 重建并以 Human08 原图对不可达船下真实玩家命令；人为将迫击炮碰撞半径设为 512，且在命令间变更远处路径格，修复前约 12.3–12.6 ms，修复后约 0.054–0.065 ms，均拒绝命令；正常碰撞 24 以及 64、128 的对照仍按既有结果拒绝。日志 `tmp/docs-artifacts/war3/path-review/chase-{new-b,production}.log`。这是诊断环境中单次命令时间，不是整局帧率；开放地图可通行大半径的建区成本及群体动态障碍仍待批次测量。
+必要检查：Win32 Release 重建并以 Human08 原图对不可达船下真实玩家命令；人为将迫击炮碰撞半径设为 512，且在命令间变更远处路径格，修复前约 12.3–12.6 ms，修复后约 0.054–0.065 ms，均拒绝命令；正常碰撞 24 以及 64、128 的对照仍按既有结果拒绝。日志 `tmp/docs-artifacts/war3/path-review/chase-{new-b,production}.log`。这是诊断环境中单次命令时间，不是整局帧率；开放地图可通行大半径的建区样本与剩余性能风险见本批摘要。
 
 ## 面具、火球与目标范围寻路批次（已执行，仍有待验项）
 
