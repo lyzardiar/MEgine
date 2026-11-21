@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 编队通过窄口与动态障碍（已执行，不计功能批次）
+
+路径为 `tests/movement_avoidance_tests.cpp` 和 `tests/generate-formation-passage.py`。在自有合成地图上以正式本地选择和编队移动命令派出四个不同碰撞半径的单位。各单位通过 96 单位宽的窄口后到达各自预约点。另一用例在编队已行进时用地形占地封堵窄口 8 个模拟秒。成员留在障碍前并保留编队及原目的地，解封后自动继续并重新集结。逐模拟步校验路径段与成员间距，确认未穿越阻挡或彼此重叠。
+
+Win32 Release 移动避让及订单测试目标编译通过。用 `python watcher/war3/tests/generate-formation-passage.py <passage.w3m>` 生成夹具。`war3_movement_avoidance_tests <data-root> <passage.w3m> <mode>` 的 `formation-passage`、`formation-dynamic-passage`、`restored-path` 各 1 通过／0 失败。`war3_order_queue_tests <data-root> <passage.w3m> <mode>` 的 `formation-speed`、`formation-queue-reservation` 各 1 通过／0 失败。日志和夹具在 `tmp/docs-artifacts/war3/p1-formation-congestion/`。合成场景未验证正式客户端的窗口操作、对向编队、大规模拥堵或联机同步。功能批次仍为 1/3。
+
 ## 空运和海运动态卸载阻挡（已执行，不计功能批次）
 
 路径为 `tests/campaign_ai_tests.cpp`。使用 `python watcher/war3/tests/generate-ai-transport-islands.py <islands.w3m>` 生成已有合成双岛夹具。飞艇载客起飞后临时封锁目标岛地面。船只载客驶近卸载点时，使用暂停的地面单位占用目标岸边，测试将占位单位的碰撞半径设置为 192。每项阻挡维持 20 个模拟秒，核对运输进入原卸载施法范围、最初的卸载施法已结束、乘客仍存活且留在同一运输波次。解除阻挡后沿原 AI 会话继续，分别于模拟 23.25 秒和 24.25 秒成功卸载到目标连通区。
