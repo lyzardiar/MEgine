@@ -79,6 +79,8 @@ Win32 Release `war3_orc_campaign_chain_tests` 实际 1 通过、0 失败，未�
 
 人族第八章原图玩家命令回归以阿尔萨斯、穆拉丁的攻击和技能清路，迫击炮跟进攻击船只，并使用静态 WPM 规划路线、只对可见且可攻击的树下令；不更改目标生命、计数、敌军 AI 或地图。只读触发器逐船记录伤害和击杀来源：0108、0098、0110、0111、0112 分别在 300.5、339、420.5、780、1052 秒被击沉，计数由 5 降至 0，均由原图迫击炮击杀。胜利对话通过后，约 1107.53 秒记录胜利并请求 `Maps\Campaign\Human09.w3m`。`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human08-player-ship` 在多个独立用户目录退出 0、1 通过／0 失败，日志 `tmp/docs-artifacts/war3/human08-strategy/five-final-main.log`。该回归是隔离模拟中的玩家命令，不代表人工窗口操作、完整画面及音效、实际切入下一关或原版时序验收。
 
+人族第九章另以独立原图会话执行玩家命令：护卫随英雄进入山谷并击杀原守卫，自然完成霜之哀伤剧情；工人接受采金和采木命令，兵营／狮鹫笼接受训练命令，部队进攻可见目标。只读伤害与死亡观察确认 P1 击杀守卫、玛尔加尼斯及全部 9 栋初始目标建筑；约 980.219 秒结果为胜利、请求返回战役选择，记录 HumanEd 终章和亡灵战役及首关解锁。`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human09-player-victory` 退出 0、1 通过／0 失败，日志 `tmp/docs-artifacts/war3/batch-clearance-retreat-fdf/campaign-human09-player-victory.log`。采金观察到携带，采木仅确认命令受理；隔离会话不证明前章存档承接、前台 UI 操作或原版时序。
+
 继续探索剩余两船时，炮击破坏的东侧树木已释放其动态路径足迹；停点东侧和南侧另有原图 WPM 的地面禁行格，炮兵碰撞半径 32 也使紧邻禁行格的位置不可通行。对照开场至模拟 760 秒，WPM 地面禁行位变化 0 格，其他位有变化；局部足迹与 WPM 取样见 `tmp/docs-artifacts/war3/human08-strategy/run-u-audit.log`。正常攻击清树与北侧分段绕行仍未击中剩余两船，不能据此断言没有其他路径或原版表现有误。
 
 人族第六至第九章原图连续隔离检查已延伸至最终胜利：第九章将英雄移入守护者区域并击杀守护者，剧情替换阿尔萨斯后检查等级和同一物品句柄，再击杀玛尔加尼斯及目标建筑，检查胜利、`HumanEd` 影片请求、返回战役选择和亡灵战役／首章及人族结尾解锁。`ReplaceUnitBJ` 从原英雄转移经验和物品，用户数据不转移。检查使用原版战役上下文、新建用户目录及直接移动和击杀；Win32 Release 测试目标的 `victory`、`defeat` 各 1 通过、0 失败，未加载 Game.dll。自然战斗、画面、影片播放和客户端自动切关仍待阶段验证。

@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 人族第九章玩家命令自然胜利（已执行，不计功能批次）
+
+路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原图隔离会话经正常玩家战斗、采集及训练命令完成守卫、霜之哀伤和敌军基地目标；只读事件核实玩家击杀，胜利后记录终章及战役解锁。Win32 Release 回归退出 0、1 通过／0 失败；命令、范围和日志见[战役流程](campaign-flow.md)。测试工作不计功能批次。
+
 ## 普通 FDF 多锚点布局（本批 3/3，待批次验证）
 
 路径：`src/glue.cpp`、`src/map_frames.h`、`src/map_frames.cpp`、`tests/browser_tests.cpp`。普通 GlueScreen 同时求解多个源 SetPoint；对负尺寸或矛盾的普通 FDF 约束回退首锚，缺失引用、循环及非法数值仍报错；脚本 MapFrame 的冲突继续拒绝。原版 TimerDialog 标题框、双锚按钮命中和重复 attach 的独立上下文由新增回归检查。
