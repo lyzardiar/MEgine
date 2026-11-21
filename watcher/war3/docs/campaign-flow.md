@@ -76,6 +76,8 @@ Human02 正式客户端此前因原图列出但未使用的 `CLno` 悬崖类型�
 
 临时 Win32 前端驱动继续使用 Human02 实际存档副本，在 Human03 以玩家命令完成原剧情和仓库目标，经 GameView 与 CampaignBrowser 自然进入 Human04；两位英雄的等级、经验、已检查技能、六格背包和难度保持一致，阿尔萨斯为 4 级、913 经验，吉安娜为 2 级、463 经验。日志及驱动 `tmp/docs-artifacts/war3/frontend-chain3/`；固定模拟步长、模拟音频时钟和注入命令，未要求背包非空，不证明人工操作或原版画面一致。
 
+集成追近修复后的正式人族玩家整链调整了治疗、目标选择、撤退和援军战术，并在 Human08 原图保存剧情开始后的首个 0.25 秒模拟步记录状态：阿尔萨斯 8 级、3885 经验、一级圣光、一级圣盾，穆拉丁 6 级、2491 经验、二级风暴之锤；Human09 初始化连同已检查技能及六个背包槽位一致。原图保存后剧情期间穆拉丁继续获得经验，退出时 2584 不代表已保存值。Human09 玩家训练援军、对空并摧毁 9 座目标，模拟 966.219 秒胜利；`human01-09-player-chain` 1 通过、0 失败，日志 `tmp/docs-artifacts/war3/human07-final-audit/complete-final.log`。Human04、Human06、Human08 的独立默认英雄入口也分别通过；Human06 城镇被毁但兵营存活。保存时点采样、空背包、自动切关和界面限制仍适用，详见测试批次。
+
 亡灵第一章原图治疗药水箱的玩家回归：英雄以移动及攻击命令击破箱子，再对生成的 `phea` 发出一次拾取命令。修复前路径终点距离为 128.0000458，超过拾取阈值 128，英雄反复寻路并最终阵亡；修复后按路径既有 0.01 单位精度容差判定到达，于模拟 144 秒拾取，正式 Win32 入口 `war3_undead_campaign_tests <data-root> <new-absolute-user-dir> potion` 1 通过、0 失败。日志 `tmp/docs-artifacts/war3/undead01-player/potion-{before,after}.log`；尚未对照原版精确拾取半径或前台鼠标操作。
 
 亡灵第一章普通难度原图的开场玩家命令回归从控制权恢复后开始，按已知侍僧位置移动并与可见卫兵交战：桥头剧情和普通接触触发器各执行一次，两名侍僧经原图召唤与到达流程加入救援编组，计数于模拟 147.25 秒达到 2，阿尔萨斯存活。`war3_undead_campaign_tests <data-root> <new-absolute-user-dir>` Win32 正式入口 1 通过、0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/undead01-player/formal2.log`。更深入的探索在守卫战中失败，仅救出 3 至 5 人；正常难度要求 20 人，完整胜利、前台操作、迷雾探索及 UI 一致性尚未验证。
