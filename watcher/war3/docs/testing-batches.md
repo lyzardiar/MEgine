@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 局域网缺图下载与跨机链路（分项已验证，跨机产品验收待完成）
+
+在 `6d62f9c` 的 Win32 Release 客户端上，同机使用两个隔离数据根与用户目录。只有主机预置自有合成地图 `CrossTest.w3m`。从正式大厅发现房间、用不同玩家名加入后，加入端显示地图接收及校验完成。主机开局，两端均记录 `EnterLanGame` 并采集到 GameView 渲染帧。两端初始化随机种子均为 `3931708862`，加入端的数据根测试后仍无该地图文件。正式客户端缺图下载至开局的场景为 1 通过／0 失败。启动脚本、双端日志、渲染记录及摘要在 `tmp/docs-artifacts/war3/p1-cross-machine/{drive-product.ps1,product-run-*/agent/,product-summary.json}`。复验使用 `--hidden --mute --experimental-local-lan` 与本机已有游戏数据，每端单独指定 `--data-root`。
+
+两台独立 Windows 主机另通过同一 SHA-256 的网络探针复验。TL-AI-2026 建房，本机经 CloudLan 对主机地址发起 UDP 单播查询，获得房间后使用正式的 `LanHost`、`LanJoin` 与 `LanMapCheckTask` 实现完成握手、请求下载和校验。合成地图为 6,956 字节，下载后在内存直接挂载，SHA-256 与主机相同，加入端无地图文件。两端通过加载屏障，加入端收到第一个 32 毫秒时间片。探针的主机和加入端各 1 通过／0 失败。复验使用同目录的 `fixture.py`、`build-probe.mjs` 及 `probe.exe <host|peer> <data-root> <room> <host-ip> <broadcast-ip> <tcp-port> <map-sha256>`，记录为 `reverse-host.log`、`reverse-peer.log`。远端仅使用自有合成测试数据。
+
+当前 CloudLan 链路未收到客户端默认发现广播及定向广播的响应，从远端单播查询本机时亦未收到应答。候选远端常用路径和安装信息未找到正式客户端所需的游戏数据。两机正式客户端的自动发现、开局和端到端下载仍待验，功能批次仍为 2/3。
+
 ## 局域网三进程异常断线（已执行，不计功能批次）
 
 路径为 `tests/lan_process_tests.cpp` 和 `tests/run-lan-process-tests.py`。三个独立进程使用本机 TCP，在 LostTemple 经房间发现、实验握手和加载屏障进入脚本会话。前 80 个 32 毫秒时间片中，主机和幸存端分别发令，两方单位实际移动，三端状态摘要与位置轨迹一致。驱动随后强制结束最后加入的进程。主机和幸存端均取得该玩家唯一一次离开事件，确认其连接已失效且幸存端仍活跃，此后继续推进九个时间片，双方的断线后轨迹与状态摘要一致。
