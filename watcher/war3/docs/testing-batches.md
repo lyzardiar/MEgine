@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 路径连通区离散圆扫描（本批 1/3，待批次验证）
+
+路径：`src/world_path.cpp`、`tests/world_tests.cpp`。碰撞级别至少为 2 时，按行预计算最近阻挡格并以整数圆行跨度判断可通行，保留地面／空中／水上／两栖掩码、地图边界及原有防斜角穿越的连通洪泛；小半径继续使用既有逐格检查。
+
+必要检查：Win32 Release 定向构建通过；`war3_world_tests <data-root> <clamp-fixture.json> world_path_regions_clearance_equivalence`、`world_coastal_landing_grid_and_invalidation`、`world_blocked_goal_reachable_alternative` 各退出 0、1 通过／0 失败，原图 Human08 三船玩家战斗回归 1 通过／0 失败。独立探针按未修改的 `pathPointFree` 与独立 BFS 比对 2612 场景、6018048 参考格、11837681 次区域和 41472 次范围候选查询，1 通过／0 失败，覆盖四移动类型、碰撞阈值、随机地图、边界、足迹叠加及修订；日志 `tmp/docs-artifacts/war3/path-region-equivalence/`。同一 1024×1024 开放合成网格、半径 512 的首次完整连通区与候选查询从约 1072 ms 降至约 27 ms，缓存查询约 0.23 ms；日志 `tmp/docs-artifacts/war3/batch-path-shadow-mortar/path-open-grid.log`、`tmp/docs-artifacts/war3/path-review/perf-optimized.log`。合成查询耗时不代表整局帧率；大量动态障碍频繁变化、真实对局及原版寻路一致性仍待验证。
+
 ## 路径、阴影与最小射程批次（已执行，仍有待验项）
 
 范围：`7fb2853`、`84877e0`（补充 `6fd711e`）、`ef5a148`，集成版本 `ef5a148`。Win32 Release 公共头变更后客户端及 destructable、human campaign、transport、harvest、caster、stealth、passive、browser 目标干净构建通过。11 个测试进程均退出 0、各 1 条通过结果，覆盖迫击炮重合／近距和封路、Human08 可达船与三船实战、溅射未命中、保持位置最小射程、登船路径、采集部分路径与卡住恢复，以及 FDF 渲染、标准信息透明度和长文本；隐藏 D3D9 阴影像素对照 7 通过／0 失败，包含负偏移和 scissor 状态恢复。脚本与日志分别为 `tmp/docs-artifacts/war3/build-tools/run-batch-path-shadow-mortar.mjs`、`tmp/docs-artifacts/war3/batch-path-shadow-mortar/` 和 `tmp/docs-artifacts/war3/path-review/{shadow-batch.log,compare-production.py}`。
