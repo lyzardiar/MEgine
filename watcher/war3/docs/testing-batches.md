@@ -10,6 +10,8 @@ Human07 后续修复见下方“建筑攻击受阻接近点”。原失败入口
 
 必要检查：Win32 Release 客户端及 Human campaign、movement 测试目标构建通过。`occupied-approach` 修复前因终点未更换失败，修复后 1 通过／0 失败，覆盖保持位置的占位者、攻击伤害、空中与风步非阻挡单位和监视状态；原 `human07-assault` 以正式构建在模拟 396.25 秒完成，首目标英雄伤害 176.538，1 通过／0 失败。直接受影响的 `chase`、`approach`、`windwalk`、`ally-yield`、`retreat`、`march` 和 movement 默认入口通过，Human08 五船及 Human09 玩家命令胜利各 1 通过／0 失败。Human08、Human09 和部分移动检查在增加已移除单位防护前执行；最终代码重编译并重跑了失败入口与新夹具。日志 `tmp/docs-artifacts/war3/human07-assault-audit/`。多单位持续拥堵的公平性和性能、移动目标、建筑以外的攻击目标、实际窗口及原版避让一致性仍待验证；本任务计入新批次 1/3。
 
+同任务补充：候选落点全部被占用后的三秒换点退避，不再阻止失效攻击路线按最多 0.25 秒的原间隔重算。`occupied-retarget` 在合成夹具中占住全部八个落点后移动建筑，修复前因重算延迟失败，修复后 1 通过／0 失败；`occupied-approach` 与 `chase` 通过，原图 `human07-assault` 再次 1 通过／0 失败。建筑由夹具直接移动，动态地形与其他原因导致路线失效仍待批次验证；同一任务补充不增加批次数量。
+
 范围：`a10f511`、`18bddff`、`ba139ea`，测试源码版本 `db8a822`。Win32 Release 客户端及 world、destructable、human campaign、browser、transport、harvest、caster、stealth 目标干净构建通过。17 个测试进程中 16 个退出 0，合计 52 项通过：包括碰撞连通等价及路径失效、五类最小射程退让、Human08 五船和 Human09 自然胜利、密室路径及登船／采集／月井／守位，以及 browser 全部 37 项。`human07-assault` 退出 1：目标建筑被其他玩家部队摧毁时，阿尔萨斯未对该目标造成测试要求的伤害；该项仍在队列，尚未判定根因。批次脚本与日志为 `tmp/docs-artifacts/war3/build-tools/run-batch-clearance-retreat-fdf.mjs`、`tmp/docs-artifacts/war3/batch-clearance-retreat-fdf/`。
 
 Human07 重跑同样失败；移除 Human09 新观察器后输出不变，以 `a10f511` 的四个旧攻击对象覆盖链接当前 core 也复现失败，说明该复现不依赖新观察器或新退让对象，但混合版本不代表完整旧版。追击时英雄位于攻击范围外且附近友军与其前路相交，正常命令移开友军可改变结果；是否存在动态避让缺陷仍待验证。证据 `tmp/docs-artifacts/war3/human07-compare/`、`human07-assault-audit/`。集成版另在独立隐藏客户端自然运行 Human08 到玩家阶段，迫击炮选择和 F9 任务请求均成功，画面位于 `tmp/docs-artifacts/war3/human08-ui-probe/agent-MX5Fky/`；不代表前台输入或原版视觉对照。失败修复后只重测失败项及其影响范围。
