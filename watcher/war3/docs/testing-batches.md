@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 战役章节标题同步（新功能批次 1/3，待集中验证）
+
+路径：`src/campaign_browser.cpp`。章节选择由键盘或鼠标更新后，在绘制原版 FDF 界面前同步章节标题与名称，避免首帧空标题或切换时显示上一章节。差异及绘制顺序已审查，Win32 Release 客户端编译通过；集中验证需覆盖首次进入、键盘及鼠标切换、返回重入和实际窗口画面，并对照原版布局。当前远程会话 D3D9 创建设备失败，不能据此声称画面已验证；诊断日志 `tmp/docs-artifacts/war3/frontend-chain4/`。
+
 ## 原版模型挂点尾部空格（批次 3/3，失败项补测通过）
 
 路径：`src/model_particles.cpp`、`tests/morph_tests.cpp`、`docs/campaign-flow.md`。Human02 原图对 Feranor 的迫击炮模型添加头顶任务提示，原始 MDX 挂点名为 `OverHead Ref `，尾部空格使匹配失败、客户端跳过绘制。挂点名称比较现在先去掉尾部空格，再移除原有 ` ref` 后缀；匹配仍共享现有大小写和逗号规则。
