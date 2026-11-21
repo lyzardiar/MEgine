@@ -52,6 +52,8 @@ Human03 另有原图玩家命令胜利回归：测试读取粮仓区域中心与
 
 Human04 隔离探针将阿尔萨斯移入原图剧情区域，再移至克尔苏加德附近下达攻击命令；原图死亡事件及结尾进入胜利对话框，下一关目标为 `Maps\Campaign\Human05.w3m`，日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/human04-objective.log`。探针直接调整单位位置，未覆盖自然寻路、界面、基地建设或完整关卡。
 
+Human04 另有原图玩家命令胜利回归：测试读取剧情区域中心和克尔苏加德当前位置作为行军目的地，以攻击移动进入剧情区域，观察触发器关闭及控制权暂时丢失，再攻击可见的克尔苏加德。只读事件确认目标由玩家单位击杀、累计伤害 306；期间受理 12 次英雄治疗命令，胜利对话继续后于模拟 493.875 秒请求 `Human05.w3m`。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human04-player-victory` 1 通过、0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/human07-assault-audit/human04-formal.log`。测试使用独立用户目录和已知目的地，技能数字为受理数；前章存档承接、基地建设、迷雾探索、前台操作、自动切关、实际 UI 和原版时序仍未验证。
+
 资料片暗夜精灵第一章的隔离开场已恢复玩家控制；真实任务、窗口及地图中战争践踏的参数处理仍待完成或验证，见[关卡状态](campaign-nightelfx01-status.md)。
 
 亡灵第二章至第三章的隔离链路：开场恢复控制后将阿尔萨斯设为 5 级并写入用户数据 24168，直接完成基地与圣物任务并触发原结束过场；胜利对话框选择继续后请求 `Undead02Interlude.w3m`。单独启动间章并运行原脚本后请求 `Undead03.w3m`；第三个会话从同一独立 gamecache 恢复到 5 级及相同用户数据，玩家控制已恢复。三个探针及日志位于 `tmp/docs-artifacts/war3/undead02-probe-1031/`。该检查手动创建会话并直接完成任务，未覆盖真实战斗、产品窗口自动切关、音画和原版缓存格式。
