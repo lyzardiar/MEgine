@@ -15,6 +15,7 @@ class LanBrowser {
     Renderer& renderer_;
     Text& text_;
     Log& log_;
+    std::string discoveryAddress_;
     std::unique_ptr<LanDiscovery> discovery_;
     std::unique_ptr<LanLobby> lobby_;
     std::unique_ptr<LanHostUi> host_;
@@ -26,7 +27,7 @@ class LanBrowser {
     bool nameFocus_=true,matchHandoffEnabled_=false;
     void start();
 public:
-    LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log);
+    LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress={});
     std::string draw(const UiInput& input,std::wstring_view characters);
     std::string pollMinimized();
     void reportError(const std::string& message){error_=message;}

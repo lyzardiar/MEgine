@@ -5,6 +5,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace war3 {
@@ -22,10 +23,13 @@ class LanDiscovery {
     std::uintptr_t socket_=~std::uintptr_t{};
     bool winsock_=false,expansion_=true;
     std::uint32_t version_=27;
+    std::uint32_t unicast_=0;
     std::chrono::steady_clock::time_point lastSearch_{};
     std::vector<LanGame> games_;
 public:
-    explicit LanDiscovery(bool expansion=true,std::uint32_t version=27);
+    static constexpr std::uint32_t defaultVersion=27;
+    explicit LanDiscovery(bool expansion=true,std::uint32_t version=defaultVersion);
+    LanDiscovery(bool expansion,std::uint32_t version,std::string_view address);
     ~LanDiscovery();
     LanDiscovery(const LanDiscovery&)=delete;
     LanDiscovery& operator=(const LanDiscovery&)=delete;

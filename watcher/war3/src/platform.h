@@ -31,6 +31,7 @@ struct Options {
     fs::path agentDirectory;
     std::string renderer = "d3d9";
     std::string agentSelectUnit;
+    std::string lanDiscoveryAddress;
     unsigned frames = 0;
     bool probe = false;
     bool hidden = false;

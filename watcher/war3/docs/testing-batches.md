@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 局域网按地址发现与 HY2026 跨机开局（新功能批次 1/3，待集中验证）
+
+路径为 `src/platform.h`、`src/platform.cpp`、`src/main.cpp`、`src/lan_browser.h`、`src/lan_browser.cpp`、`src/lan_discovery.h` 和 `src/lan_discovery.cpp`。加入端以 `--experimental-local-lan --lan-discovery-address <房主IPv4>` 启动并打开局域网大厅时，向该地址的 UDP 6112 询问房间，按现有发现、握手、地图校验与加载流程加入。省略地址仍使用默认广播和本机回环。无法解析为单播 IPv4 的地址会在开启局域网发现时报告错误。
+
+HY2026 与本机经 CloudLan 同一虚拟子网运行正式 Win32 Release 客户端。原构建中 HY2026 已建房并监听 UDP 6112，本机默认大厅观察 27 秒未发现房间，定向广播也未收到回应；向 HY2026 地址的单播收到有效房间应答。启用定向发现后，同一 SHA-256 的新版客户端在 HY2026 建房，本机正常发现、加入并下载自有合成地图 `CrossTest.w3m`。加入端显示「地图接收并校验完成」，开局后两端均记录 `EnterLanGame`、呈现 GameView 帧，随机种子同为 `1081089400`。加入端的地图目录在验收前后均无该文件。跨机定向产品场景 1 通过／0 失败。
+
+Win32 Release 产品和局域网测试目标编译通过。`python watcher/war3/tests/run-lan-process-tests.py <war3_lan_process_tests.exe> <data-root> <output> --mode sync` 默认同机发现及同步 1 通过／0 失败；输入 `256.1.1.1` 时大厅记录无效 IPv4 诊断，负例 1 通过／0 失败。HY2026 使用自身已安装游戏数据，部署文件仅为 MEgine 测试构建和自有夹具。两端测试进程已退出。日志、启动及复验脚本和结果位于 `tmp/docs-artifacts/war3/p1-hy2026/`，其中 `hy2026-acceptance.json` 汇总双端结果，`discovery-route.json` 记录定向查询。其他物理子网的默认广播、反向建房、跨机断线、大地图和长局同步待验。
+
 ## 游戏胜利、跨进程存档和房主断线（功能批次 3/3，已集中验证）
 
 集成版本为 `562c3ab`。本批包含游戏胜利事件与获胜玩家 `cbd21c2`、单人存档结算返回 `cb9ab32`、局域网房主断线返回 `562c3ab`。Win32 Release 的 `war3`、`war3_session_tests`、`war3_clock_tests` 和 `war3_lan_process_tests` 构建通过。
@@ -16,13 +24,13 @@
 
 Win32 Release 构建通过。运行 `tmp/docs-artifacts/war3/p1-lan-host-exit/v3/verify.ps1`，在两正式客户端经大厅进入 BootyBay 后，只强制结束该轮主机。修复前加入端因 Winsock 10054 作为致命错误退出。修复后 1 通过／0 失败，加入端在本次复验的 975 毫秒内取得返回列表的渲染帧，已建立的 TCP 连接从 1 降为 0，旧 GameView 已关闭，部分回放写盘；同一进程重新建房并监听 6112 端口，新大厅帧无旧提示，之后以退出码 0 关闭。日志、帧和脚本位于 `tmp/docs-artifacts/war3/p1-lan-host-exit/`。跨机、网络静默超时、最小化和过场中的断线留待后续验收。
 
-## 局域网缺图下载与跨机链路（分项已验证，跨机产品验收待完成）
+## 局域网缺图下载与跨机链路（AI2026 阶段证据）
 
 在 `6d62f9c` 的 Win32 Release 客户端上，同机使用两个隔离数据根与用户目录。只有主机预置自有合成地图 `CrossTest.w3m`。从正式大厅发现房间、用不同玩家名加入后，加入端显示地图接收及校验完成。主机开局，两端均记录 `EnterLanGame` 并采集到 GameView 渲染帧。两端初始化随机种子均为 `3931708862`，加入端的数据根测试后仍无该地图文件。正式客户端缺图下载至开局的场景为 1 通过／0 失败。启动脚本、双端日志、渲染记录及摘要在 `tmp/docs-artifacts/war3/p1-cross-machine/{drive-product.ps1,product-run-*/agent/,product-summary.json}`。复验使用 `--hidden --mute --experimental-local-lan` 与本机已有游戏数据，每端单独指定 `--data-root`。
 
 两台独立 Windows 主机另通过同一 SHA-256 的网络探针复验。TL-AI-2026 建房，本机经 CloudLan 对主机地址发起 UDP 单播查询，获得房间后使用正式的 `LanHost`、`LanJoin` 与 `LanMapCheckTask` 实现完成握手、请求下载和校验。合成地图为 6,956 字节，下载后在内存直接挂载，SHA-256 与主机相同，加入端无地图文件。两端通过加载屏障，加入端收到第一个 32 毫秒时间片。探针的主机和加入端各 1 通过／0 失败。复验使用同目录的 `fixture.py`、`build-probe.mjs` 及 `probe.exe <host|peer> <data-root> <room> <host-ip> <broadcast-ip> <tcp-port> <map-sha256>`，记录为 `reverse-host.log`、`reverse-peer.log`。远端仅使用自有合成测试数据。
 
-当前 CloudLan 链路未收到客户端默认发现广播及定向广播的响应，从远端单播查询本机时亦未收到应答。候选远端常用路径和安装信息未找到正式客户端所需的游戏数据。两机正式客户端的自动发现、开局和端到端下载仍待验，功能批次仍为 2/3。
+该轮 CloudLan 链路未收到默认发现广播及定向广播的响应，从 AI2026 单播查询本机时亦未收到应答。该机常用路径和安装信息未找到正式客户端所需游戏数据。后续正式客户端跨机结果见上方 HY2026 验收记录。
 
 ## 局域网三进程异常断线（已执行，不计功能批次）
 
