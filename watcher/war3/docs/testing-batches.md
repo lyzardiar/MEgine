@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 原版模型挂点尾部空格（新功能批次 3/3，待集中验证）
+
+路径：`src/model_particles.cpp`、`tests/morph_tests.cpp`、`docs/campaign-flow.md`。Human02 原图对 Feranor 的迫击炮模型添加头顶任务提示，原始 MDX 挂点名为 `OverHead Ref `，尾部空格使匹配失败、客户端跳过绘制。挂点名称比较现在先去掉尾部空格，再移除原有 ` ref` 后缀；匹配仍共享现有大小写和逗号规则。
+
+必要检查：Win32 客户端及 morph 目标构建通过；`war3_morph_tests <data-root> <morph-fixture> attachments` 使用安装中原始 MortarTeam 模型，修复前无法找到 overhead，修复后 overhead/origin 均返回有限姿态，Cyclone 的 `sprite,first` 及未知名称检查通过，1 通过／0 失败。正式隐藏客户端 Human02 运行 20 游戏帧正常退出，不再报告该挂点缺失；日志 `tmp/docs-artifacts/war3/human02-overhead-review/`。原版画面、动态动画与附件组合尚需对照。该任务计入批次 3/3，需合并地形、攻击追近及挂点相关验证。
+
 ## 普通单位攻击受阻接近点（新功能批次 2/3）
 
 路径：`src/session_combat.cpp`、`tests/movement_avoidance_tests.cpp`。亡灵第一章玩家部队集中攻击一名步兵时，阿尔萨斯的攻击路线终点被食尸鬼占住而持续停在射程外。目标为原地不动的普通单位时，现沿用建筑攻击的有界落点搜索：保留目标与命令，检查实际路径、攻击射程和同层目标碰撞，移动中的目标仍沿用追击逻辑。
