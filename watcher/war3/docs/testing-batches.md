@@ -1,6 +1,16 @@
 # 独立客户端测试队列
 
-## 局域网房主异常退出（功能批次 3/3，待集中验证）
+## 游戏胜利、跨进程存档和房主断线（功能批次 3/3，已集中验证）
+
+集成版本为 `562c3ab`。本批包含游戏胜利事件与获胜玩家 `cbd21c2`、单人存档结算返回 `cb9ab32`、局域网房主断线返回 `562c3ab`。Win32 Release 的 `war3`、`war3_session_tests`、`war3_clock_tests` 和 `war3_lan_process_tests` 构建通过。
+
+本次执行 4 通过／0 失败。`WAR3_CLOCK_FILTER=recovery_bundle_restores_sleeping_message_context war3_clock_tests <data-root> <scratch>` 为 1 通过／0 失败，覆盖旧版休眠消息上下文和恢复后的回调。`python watcher/war3/tests/run-lan-process-tests.py <war3_lan_process_tests.exe> <data-root> <output> --mode <sync|abrupt|three>` 三种模式各 1 通过／0 失败，覆盖双端正常同步、加入端异常退出，以及主机和幸存端在第三端退出后继续推进。构建、运行摘要及各进程日志在 `tmp/docs-artifacts/war3/batch-victory-save-lan/`。
+
+复用 34 通过／0 失败。`cbd21c2` 的 `war3_session_tests` 为 32 通过／0 失败，含胜利回调上下文、重入、不同结果和休眠胜利上下文恢复，集成构建保留该测试及其链接输入。`cb9ab32` 的单人跨进程保存、恢复、结算及返回存档列表为 1 通过／0 失败，后续产品源码差异位于局域网断开分支。`562c3ab` 的同机正式双客户端房主断线、返回大厅及重新建房为 1 通过／0 失败。对应证据为 `tmp/docs-artifacts/war3/game-victory-event/session-clean.log`、`tmp/docs-artifacts/war3/p0-save-resume/v3/acceptance-result.json` 和 `tmp/docs-artifacts/war3/p1-lan-host-exit/v3/host-exit-result.json`。
+
+暂未执行实际对局胜利事件的双端核对、含休眠胜利回调的完整存档恢复、原版事件时序、同进程载档、战役存档返回、普通自定义结算返回及跨机正式客户端验收。网络静默超时、最小化及过场断线继续保留在队列。下一功能批次从 0/3 开始。
+
+## 局域网房主异常退出（功能批次 3/3，已集中验证）
 
 路径为 `src/lan_join.cpp`、`src/lan_runtime.h`、`src/lan_browser.h`、`src/main.cpp`。对局中与房主的 TCP 连接正常关闭或被重置时，加入端清理旧对局和连接，保存部分回放，返回可搜索的局域网列表并显示「房主已断开连接。」；进入新房间时提示清除。其他同步或运行错误沿用现有诊断路径。
 
@@ -20,23 +30,23 @@ Win32 Release 构建通过。运行 `tmp/docs-artifacts/war3/p1-lan-host-exit/v3
 
 当前集成版本 `cb9ab32` 的 Win32 Release 测试目标编译通过。运行 `python watcher/war3/tests/run-lan-process-tests.py <war3_lan_process_tests.exe> <data-root> tmp/docs-artifacts/war3/p1-lan-three-process --mode <three|abrupt|sync>`，三种模式各 1 通过／0 失败。构建、驱动摘要及各进程日志位于 `tmp/docs-artifacts/war3/p1-lan-three-process/`。该检查覆盖 `LanHost`／`LanJoin` 与 `LanSimulation` 的本机断线传播，正式客户端的三端路径、跨机、地图传输及主机异常退出仍待验收。功能批次仍为 2/3。
 
-## 单人存档跨进程续玩及结算返回（功能批次 2/3，待集中验证）
+## 单人存档跨进程续玩及结算返回（功能批次 2/3，已集中验证）
 
 路径为 `src/main.cpp`、`tests/generate-save-resume-fixture.py`。从主菜单载入非战役存档的会话在结算确认后返回存档列表，普通选图与战役的返回流程继续使用各自入口。修复前新进程未建立自定义地图浏览器，结束时访问该对象触发 `0xc0000005`。
 
 Win32 Release 两次构建通过。运行 `python watcher/war3/tests/generate-save-resume-fixture.py`，在两个 D3D9Ex 后台渲染的正式客户端复验。第一进程用 `--play --map <checkpoint-patrol.w3m>` 启动，选英雄向东移动到训练触发区，两个步兵入队后经 Esc 的保存面板在隔离用户目录写入 `patrol.w3z`，再关闭进程。第二进程使用同一 `MEGINE_WAR3_USER_DIR`，从单人模式的存档列表打开该文件。地图加载回调核对 3 级英雄、自定义数据、药水及活动任务，并确认两条训练尚未完成。玩家向西下达移动命令，两条训练均在恢复后完成，模拟至 42.75 秒自然进入结算。确认后返回存档列表并正常关闭，两进程退出码均为 0，文件有 `WSAV` 标记且读档前后 SHA-256 一致，未加载 `Game.dll`。正式验收 1 通过／0 失败，步骤、运行摘要、日志及必要画面位于 `tmp/docs-artifacts/war3/p0-save-resume/{drive.ps1,v3/}`。
 
-集中验证待覆盖同进程存档载入、战役存档返回及普通自定义对局的结算返回；大型战役进度、原版存档格式和人工前台操作仍待验收。
+同进程存档载入、战役存档返回、普通自定义对局的结算返回、大型战役进度、原版存档格式及人工前台操作仍待验收。
 
 ## 亡灵第一章普通难度完整救援（已执行，不计功能批次）
 
 路径为 `tests/undead_campaign_tests.cpp`。Win32 Release 隔离构建通过。运行 `war3_undead_campaign_tests <data-root> <new-absolute-user-dir> full`，读取会话中的待救目标、地形和威胁选择行进路线，经正式玩家命令移动、战斗、使用治疗药水，在荒芜地恢复后继续救援。原图在模拟 745.5 秒达到 20 人，随后触发胜利。确认继续后，于 776.469 秒请求 `Maps\Campaign\Undead02.w3m`，英雄存活。`full`、`rescues` 和 `potion` 各 1 通过／0 失败，记录位于 `tmp/docs-artifacts/war3/p0-undead01/formal-{full,rescues,potion}.log`。前台操作、逐步探索迷雾、实际载入下一章和原版对照待验。当前功能批次为 1/3。
 
-## 游戏胜利事件与获胜玩家（新功能批次 1/3，待集中验证）
+## 游戏胜利事件与获胜玩家（功能批次 1/3，已集中验证）
 
 路径为 `src/session_match.cpp`、`src/session.h`、`src/script_state.h`、`src/session_threads.cpp`、`tests/session_tests.cpp` 和 `tests/clock_tests.cpp`。独立客户端在首次记录玩家胜利后，先执行既有玩家胜利回调，再派发游戏胜利；脚本通过 `GetWinningPlayer` 读取当前回调的玩家。两种休眠线程快照保存获胜玩家句柄并继续接受旧版快照。
 
-Win32 Release 隔离构建通过。`war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 为 32 通过／0 失败，覆盖负、平、中立、重复结果、两个获胜者、嵌套回调及两种休眠线程恢复。`war3_clock_tests` 已编译，`WAR3_CLOCK_FILTER=recovery_bundle_restores_sleeping_message_context war3_clock_tests <data-root> <scratch>` 待批次执行。实际对局胜负、局域网双方一致性、完整存档恢复及原版事件产生时序均待验收。构建和定向检查日志在 `tmp/docs-artifacts/war3/game-victory-event/`。
+Win32 Release 隔离构建通过。`war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 为 32 通过／0 失败，覆盖负、平、中立、重复结果、两个获胜者、嵌套回调及两种休眠线程恢复。休眠消息旧格式检查见本批集中验证记录。实际对局胜利事件、局域网双方一致性、完整存档恢复及原版事件产生时序仍待验收。构建和定向检查日志在 `tmp/docs-artifacts/war3/game-victory-event/`。
 
 ## AI 跨岛运输卸载点（功能批次 3/3，已集中验证）
 
