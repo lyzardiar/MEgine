@@ -1046,6 +1046,7 @@ class ScriptSession {
     bool cancelCombat(UnitState& unit);
     std::uint64_t formationSerial_=0;
     bool chase(UnitState& unit,WorldPoint target,float standoff,bool allowPartial=false,bool requireReach=false);
+    bool retreatForAttack(UnitState& unit,WorldPoint target,float minimum,float maximum,float preferred);
     void combat(double delta);
     void launchAttack(std::uint32_t source,std::uint32_t target,unsigned weapon,float stealthDamage=0,bool backstab=false,std::uint32_t ability=0,std::uint32_t barrage=0,unsigned barrageLevel=0);
     void projectiles(double delta);

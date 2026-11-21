@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 最小射程的受阻退让（本批 2/3，待批次验证）
+
+路径：`src/session.h`、`src/session_combat_orders.cpp`、`src/session_combat.cpp`、`src/session_combat_destructable.cpp`、`src/session_attack_ground.cpp`、`tests/destructable_tests.cpp`。单位、可破坏物和攻击地面在最小射程内优先沿原方向退让；该方向不可达时，最多尝试其他七个固定方向，并仅接受实际终点处于武器射程内的完整路径。移动目标使旧路径失效且退让全部失败时清除该路线、保留攻击命令以便开路后重试。
+
+必要检查：公共头修改后 Win32 Release 干净构建通过；`war3_destructable_tests <data-root> <generated-map> <minimum-range|minimum-range-alternate|minimum-range-moving|minimum-range-throttle|minimum-range-revision>` 各退出 0、1 通过／0 失败。绕行与移动目标专项修复前分别因无法开火和无效旧路径保留而失败；覆盖单位／树／地面、目标重合与近距、封闭和移除障碍后恢复，以及目标移动导致旧路线失效、定身期间无关路径修订和第二段实际受阻；树为去除自身占地的合成夹具。日志 `tmp/docs-artifacts/war3/mortar-overlap-probe/`。无渲染合成压力样本中 100 门同坐标炮兵受阻运行 2 模拟秒，静态约 35 ms、8 次路径修订约 37 ms；共享位置和失败缓存，不代表实际帧率或最坏开销，日志 `tmp/docs-artifacts/war3/mortar-blocked-load/summary.log`。完整 Human08 五船回归在限定最小射程内处理路线后退出 0、1 通过／0 失败，日志 `tmp/docs-artifacts/war3/human08-strategy/restricted-victory.log`；此前更广范围追击改动的回归失败日志 `retreat-victory.log` 保留，失败具体原因未定位。八方向是有界近似，窄角通道、复杂动态障碍和原版退让选点仍待对照。
+
 ## 路径连通区离散圆扫描（本批 1/3，待批次验证）
 
 路径：`src/world_path.cpp`、`tests/world_tests.cpp`。碰撞级别至少为 2 时，按行预计算最近阻挡格并以整数圆行跨度判断可通行，保留地面／空中／水上／两栖掩码、地图边界及原有防斜角穿越的连通洪泛；小半径继续使用既有逐格检查。
