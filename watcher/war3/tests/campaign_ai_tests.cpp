@@ -10,6 +10,40 @@
 using namespace war3;
 namespace {
 float number(jass::Real value){return std::bit_cast<float>(value.bits());}
+void islandUnloadSite(const wchar_t* root,const wchar_t* map,bool blocked,bool naval=false){
+    Archives archives(root);archives.mountMap(map);auto world=World::read(archives);auto info=world->data().info;ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info);session.attachWorld(std::move(world));session.audioMuted(true);session.audioSimulationClock();session.configure();PlayerSetup setup(info,session.config());setup.control(1,SlotControl::ComputerNormal);session.applySetup(setup);session.startMain();session.advance(.25);
+    if(!session.ais()[0] || !session.ais()[0]->runtime)throw std::runtime_error("Island transport AI failed to start");
+    auto& ai=*session.ais()[0];auto& avm=*ai.runtime;auto& vm=session.runtime();auto& terrain=*session.world();ai.captainChanges=false;
+    auto real=[](int v){return jass::Real::fromInteger(v);};
+    auto spawn=[&](int owner,const char* type,int x,int y){auto player=vm.invoke("Player",std::array{vm.integer(owner)});return vm.invoke("CreateUnit",std::array{player,vm.integer(int(ObjectData::code(type))),vm.real(real(x)),vm.real(real(y)),vm.real(real(0))});};
+    constexpr int targetX=2704,targetY=1040;
+    auto soldier=spawn(0,"hfoo",752,1040),carrier=spawn(0,naval?"hbot":"nzep",naval?848:752,1040),creep=spawn(12,"ngns",targetX,targetY);
+    auto u=session.units().at(soldier.bits),ship=session.units().at(carrier.bits);auto destination=WorldPoint{real(targetX),real(targetY)};auto startX=number(ship->x);
+    vm.invoke("PauseUnit",std::array{creep,vm.boolean(true)});vm.invoke("FogEnable",std::array{vm.boolean(false)});vm.invoke("FogMaskEnable",std::array{vm.boolean(false)});ai.captain.insert(soldier.bits);
+    auto select=[&]{return avm.invoke("GetCreepCamp",std::array{avm.integer(0),avm.integer(100),avm.boolean(true)});};
+    auto attack=[&](jass::Value target){avm.invoke("AttackMoveKill",std::array{avm.handle("unit",target.bits)});};
+    if(terrain.pathRegionsNear({u->x,u->y},destination,u->collision,PathMovement::Ground,128)!=false)throw std::runtime_error("Synthetic islands are not disconnected");
+    if(blocked){
+        auto setLanding=[&](bool open){for(int dy=-384;dy<=384;dy+=32)for(int dx=-384;dx<=384;dx+=32)vm.invoke("SetTerrainPathable",std::array{vm.real(real(targetX+dx)),vm.real(real(targetY+dy)),vm.handle("pathingtype",1),vm.boolean(open)});};
+        setLanding(false);
+        auto chosen=select();attack(creep);session.advance(1);
+        if(chosen.bits || ai.zeppelinWave || u->transport || u->combat.board || !ship->cargo.empty() || ship->currentOrder)throw std::runtime_error("Blocked island was selected or transport was issued");
+        setLanding(true);
+    }
+    auto chosen=select();if(chosen.bits!=creep.bits)throw std::runtime_error("Available island target was not selected");
+    attack(chosen);if(!ai.zeppelinWave || !ai.zeppelinWave->passengers.contains(soldier.bits))throw std::runtime_error("Available island did not reserve its passenger");
+    bool loaded=false,travelled=false;
+    for(int n=0;n<240;++n){
+        session.advance(.25);
+        loaded|=u->transport==carrier.bits && !ship->cargo.empty();
+        travelled|=loaded && std::abs(number(ship->x)-startX)>1000;
+        if(travelled && !u->transport && ship->cargo.empty() && terrain.pathRegionsNear({u->x,u->y},destination,u->collision,PathMovement::Ground,0)==true){
+            if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll loaded");
+            std::cout<<"PASS "<<(blocked?"blocked_then_reopened":naval?"open_naval":"open_air")<<" island unload time="<<session.simulationTime()<<"\n";return;
+        }
+    }
+    throw std::runtime_error("Transport did not load, cross and unload on the target island");
+}
 void deathSheepControls(const wchar_t* root,const wchar_t* map){
     Archives archives(root);archives.mountMap(map);auto world=World::read(archives);auto info=world->data().info;MapStrings strings;if(auto member=archives.readCandidates({"war3map.wts"},ArchiveScope::Map))strings=mapStrings(member->bytes);ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info,std::move(strings));session.attachWorld(std::move(world));session.audioMuted(true);session.audioSimulationClock();session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();session.advance(14);auto& vm=session.runtime();auto knight=vm.global("gg_unit_hkni_0000"),actor=vm.global("gg_unit_Hpal_0001");if(!vm.global("udg_GameStarted").bits || !session.units().contains(knight.bits) || !session.units().contains(actor.bits))throw std::runtime_error("Death Sheep controls fixture unavailable");auto u=session.units().at(actor.bits);float start=number(u->x);if(!vm.invoke("IssueImmediateOrder",std::array{knight,vm.string("holdposition")}).bits)throw std::runtime_error("Death Sheep move-right order rejected");session.advance(.5);if(number(u->x)<=start+5)throw std::runtime_error("Death Sheep right order did not move player");float right=number(u->x);if(!vm.invoke("IssueImmediateOrder",std::array{knight,vm.string("stop")}).bits)throw std::runtime_error("Death Sheep move-left order rejected");session.advance(.5);if(number(u->x)>=right-5)throw std::runtime_error("Death Sheep left order did not move player");auto give=vm.global("gg_trg_Give_Special_Move");if(!give.bits)throw std::runtime_error("Death Sheep special trigger missing");vm.invoke("TriggerExecute",std::array{give});session.advance(.125);if(!vm.global("udg_PlayerSpecialMove").bits)throw std::runtime_error("Death Sheep special charge was not granted");auto player=vm.invoke("Player",std::array{vm.integer(11)});auto pig=vm.invoke("CreateUnit",std::array{player,vm.integer(int(ObjectData::code("npig"))),vm.real(u->x),vm.real(u->y),vm.real(jass::Real{})});if(!pig.bits || !session.units().contains(pig.bits))throw std::runtime_error("Death Sheep pig fixture unavailable");vm.invoke("GroupAddUnit",std::array{vm.global("udg_SwervingPigs"),pig});auto score=std::bit_cast<std::int32_t>(vm.global("udg_PlayerScore").bits);auto special=vm.global("gg_trg_Special_Move");if(!session.hasEndCinematicListener(0,true) || session.hasEndCinematicListener(1,true))throw std::runtime_error("Death Sheep listener player mismatch");vm.invoke("DisableTrigger",std::array{special});if(session.hasEndCinematicListener(0,true))throw std::runtime_error("Disabled Death Sheep listener accepted input");vm.invoke("EnableTrigger",std::array{special});if(!session.userControl() || !session.hasEndCinematicListener(0,true) || !dispatchPlayerCommand(session,{0,PlayerCommandKind::EndCinematic}))throw std::runtime_error("Death Sheep special input was not registered");session.advance(1);if(vm.global("udg_PlayerSpecialMove").bits || (session.units().contains(pig.bits) && number(session.units().at(pig.bits)->life)>0) || std::bit_cast<std::int32_t>(vm.global("udg_PlayerScore").bits)<=score)throw std::runtime_error("Death Sheep special move did not consume its charge and score a pig");if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll loaded");std::cout<<"PASS deathsheep_real_control_orders\n";
 }
@@ -278,6 +312,9 @@ int wmain(int argc,wchar_t** argv){
         if(argc==4 && std::wstring_view(argv[3])==L"island-ranged"){islandRangedReach(argv[1],argv[2]);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
         if(argc==4 && std::wstring_view(argv[3])==L"island-nearby"){islandNearbyTransport(argv[1],argv[2]);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
         if(argc==4 && std::wstring_view(argv[3])==L"island-auto-script"){islandAutomatic(argv[1],argv[2],true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
+        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-reopen"){islandUnloadSite(argv[1],argv[2],true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
+        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-open"){islandUnloadSite(argv[1],argv[2],false);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
+        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-naval"){islandUnloadSite(argv[1],argv[2],false,true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
         if(argc==4 && std::wstring_view(argv[3])==L"island-auto"){islandAutomatic(argv[1],argv[2]);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
         if(argc==4 && std::wstring_view(argv[3])==L"island-target-small-move"){islandWave(argv[1],argv[2],false,true,false,true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
         if(argc==4 && std::wstring_view(argv[3])==L"island-target-change"){islandWave(argv[1],argv[2],false,true,true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}

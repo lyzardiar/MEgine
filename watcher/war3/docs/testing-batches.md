@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## AI 跨岛运输卸载点（功能批次 3/3）
+
+路径为 `src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp` 和 `tests/generate-ai-transport-islands.py`。自动跨岛运输在筛选目标和为飞艇分配乘客时调用实际卸载的落点检查，按乘客碰撞范围和当前占用判断能否卸载。卸载区重新开放后，下一次 AI 目标查询可选中该目标。
+
+Win32 Release 客户端和 AI 测试目标构建通过。先用 `python watcher/war3/tests/generate-ai-transport-islands.py <islands.w3m>` 生成合成双岛地图，再运行 `war3_campaign_ai_tests <data-root> <islands.w3m> <mode>`。修复前 `island-unload-reopen` 因封锁目标仍被选中或发出运输指令失败。修复后该用例通过，并验证解除封锁后选中同一目标，乘客实际装载、跨岛并在目标连通区卸载。`island-unload-open` 和 `island-unload-naval` 分别验证持续可用的空运与海运。合成夹具共 3 通过／0 失败。日志与地图在 `tmp/docs-artifacts/war3/ai-unload-selection/`。起飞后新增阻挡的回退策略由现有运输流程处理。
+
 ## 局域网正式客户端双进程验收（4 通过／0 失败，不计功能批次）
 
 在 `708ef8e` 增量构建 Win32 Release `war3.exe`，同机启动两个独立进程，使用 `--hidden --mute --experimental-local-lan --agent-dir <agent-dir> --data-root <data-root> --log client.log`。用定向窗口消息操作实际大厅及对局，客户端采集接口保存后台渲染帧与 GameView 状态。受测路径经过 `src/main.cpp`、`src/lan_browser.cpp`、`src/lan_host_ui.cpp`、`src/lan_match_loading.cpp`、`src/game_view.cpp` 和 `src/lan_runtime.cpp`。
