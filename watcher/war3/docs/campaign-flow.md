@@ -44,6 +44,8 @@ Human01 原胜利脚本保存阿尔萨斯并请求 Human02 后，隔离探针销
 
 Human02 原图胜利流程的隔离探针在开场控制恢复后，通过辅助脚本标记基地任务已完成，再对原图剑圣调用 KillUnit；原地图触发器进入胜利对话框，选择继续后发出 `Maps\Campaign\Human02Interlude.w3m` 换关请求，日志位于 `tmp/docs-artifacts/war3/human02-victory-1030/victory.log`。该复现跳过真实基地建造、战斗和窗口操作，未验证间章加载或完整关卡。
 
+Human02 另有原图玩家命令胜利回归：使用原始资源和工人，实际观察采金、采木，建成兵营及两座农场，并由地图事件记录训练六名步兵、完成基地任务；玩家部队击杀原剑圣后，胜利对话于模拟 636.656 秒请求 `Human02Interlude.w3m`。原图在基地任务完成后销毁排行榜，剑圣过场仍调用旧句柄；`LeaderboardDisplay` 已按原版无效句柄返回分支处理。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human02-player-victory` 1 通过、0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/human07-assault-audit/human02-formal.log`。测试读取剑圣当前位置作为行军目的地，使用独立用户目录；前章存档承接、迷雾探索、前台操作、自动切关、实际 UI 和原版时序仍未验证。
+
 Human02 至 Human03 的隔离链路中，将阿尔萨斯设为 5 级后直接执行 Human02 原图的关卡准备函数；间章发出 Human03 换关请求，手动载入 Human03 后恢复了 5 级阿尔萨斯，开场结束后玩家控制权恢复。日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/cache-chain.log`。该检查未自然完成 Human02，也未经过产品窗口自动切关、真实战斗和完整战役。
 
 Human03 隔离探针将阿尔萨斯移入原图粮仓区域并对目标仓库下达攻击命令；原图受击和死亡触发后出现胜利对话框，下一关目标为 `Maps\Campaign\Human04.w3m`，日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/attack-ending.log`。探针直接调整单位位置，未覆盖自然寻路、鼠标输入、实际窗口或完整关卡。

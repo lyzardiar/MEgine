@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 已销毁排行榜的显示调用（新功能批次 2/3）
+
+路径：`src/session_leaderboard.cpp`、`tests/clock_tests.cpp`、`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。Human02 原图在基地任务完成后销毁步兵排行榜，剑圣过场稍后仍以旧句柄调用 `LeaderboardDisplayBJ`；此前因已销毁句柄抛错中断。`LeaderboardDisplay` 现在对无效排行榜句柄安全返回，活动排行榜保持原行为；其他排行榜接口未扩大修改。原安装 `Game.dll` 注册指向 `0x6f1efd70`，解析器返回空时入口直接返回；静态证据 `tmp/docs-artifacts/war3/human07-assault-audit/leaderboard-native.py`。
+
+必要检查：Win32 Release 客户端、clock 和 Human campaign 目标构建通过；`WAR3_CLOCK_FILTER=recovery_bundle_restores_leaderboards war3_clock_tests <data-root> <scratch>` 修复前对恢复的已销毁句柄调用失败，修复后 1 通过／0 失败，覆盖空句柄及活动排行榜未受影响。`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human02-player-victory` 从正常资源开始，观察采金采木，玩家建成兵营和两座农场并训练六名步兵，原图基地任务与剑圣过场继续运行；玩家击败剑圣后胜利对话请求间章，1 通过／0 失败，模拟 636.656 秒。日志 `tmp/docs-artifacts/war3/human07-assault-audit/human02-{sequential,formal}.log`。前章存档、迷雾探索、前台窗口、自动切关及原版时序待验证；批次合并排行榜、战役和相关 UI，当前 2/3。
+
 ## 连通区、退让与 FDF 批次（失败项已补测通过）
 
 Human07 后续修复见下方“建筑攻击受阻接近点”。原失败入口在修复后的正式构建以原测试断言通过；Human08、Human09 与移动避让受影响范围亦已补测。原批次其余 16 个进程沿用当次结果，未在修复版本重跑整个批次；原始失败和诊断记录保留。

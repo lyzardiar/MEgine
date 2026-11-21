@@ -26,7 +26,7 @@ void ScriptSession::bindLeaderboardNatives() {
     bind("DestroyLeaderboard","nothing",{"leaderboard"},[this](auto& vm,auto a){if(alive(a[0].bits,NativeKind::Leaderboard)){for(auto& id:playerLeaderboards_)if(id==a[0].bits)id=0;destroy(a[0],NativeKind::Leaderboard);}return vm.nothing();});
     bind("PlayerSetLeaderboard","nothing",{"player","leaderboard"},[this,board](auto& vm,auto a){auto owner=playerId(a[0]);if(a[1].bits)board(a[1]);playerLeaderboards_[owner]=a[1].bits;return vm.nothing();});
     bind("PlayerGetLeaderboard","leaderboard",{"player"},[this](auto& vm,auto a){return vm.handle("leaderboard",playerLeaderboards_[playerId(a[0])]);});
-    bind("LeaderboardDisplay","nothing",{"leaderboard","boolean"},[board](auto& vm,auto a){if(auto b=board(a[0]))b->visible=a[1].bits!=0;return vm.nothing();});
+    bind("LeaderboardDisplay","nothing",{"leaderboard","boolean"},[this,board](auto& vm,auto a){if(alive(a[0].bits,NativeKind::Leaderboard))if(auto b=board(a[0]))b->visible=a[1].bits!=0;return vm.nothing();});
     bind("IsLeaderboardDisplayed","boolean",{"leaderboard"},[board](auto& vm,auto a){auto b=board(a[0]);return vm.boolean(b && b->visible);});
     bind("LeaderboardGetItemCount","integer",{"leaderboard"},[board](auto& vm,auto a){auto b=board(a[0]);return vm.integer(b?int(b->items.size()):0);});
     bind("LeaderboardSetSizeByItemCount","nothing",{"leaderboard","integer"},[board,integer](auto& vm,auto a){if(auto b=board(a[0]))b->sizeCount=unsigned(std::clamp(integer(a[1]),0,256));return vm.nothing();});
