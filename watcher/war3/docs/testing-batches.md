@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 未使用的悬崖资源槽位（新功能批次 1/3）
+
+路径：`src/terrain_scene.cpp`、`src/terrain_scene.h`、`src/terrain_layout.cpp`、`docs/campaign-flow.md`。原版 Human02 的悬崖列表包含未被任何角点使用且资源表无定义的 `CLno`；地形编译此前提前解析所有槽位，正式客户端无法载入。现在保留缺失槽位，只有实际悬崖或坡道引用它时才报缺失原始类型，不替换为其他地形。
+
+必要检查：Win32 客户端构建通过。正式隐藏客户端直接启动原版 Human02，修复前报 `Missing terrain source row: CLno`，修复后渲染游戏并正常退出；把原图副本一个实际悬崖单元改用该缺失槽位后仍按预期拒绝加载。另用临时客户端以玩家命令完成 Human01，通过实际前端切关进入 Human02 并核对难度及英雄继承；日志和限制见[战役流程](campaign-flow.md)。批次需覆盖多地形槽位、坡道、资源缺失、真实窗口与视觉；本任务计入新批次 1/3。
+
 ## 物品拾取距离边界（批次 3/3，已集中验证）
 
 路径：`src/session_combat.cpp`、`tests/undead_campaign_tests.cpp`。亡灵第一章原图箱子掉落治疗药水后，玩家单次拾取命令受理，但路线终点距离为 128.0000458，严格的 128 拾取判定使英雄持续寻路；拾取到达判定采用追近路线已有的 0.01 单位容差，不改变路径规划或物品范围配置。原图命令回归 `war3_undead_campaign_tests <data-root> <new-absolute-user-dir> potion` 修复前未拾取并阵亡，修复后于模拟 144 秒拾取，1 通过／0 失败；日志 `tmp/docs-artifacts/war3/undead01-player/potion-{before,after}.log`。原版拾取精确半径及前台交互仍待对照。

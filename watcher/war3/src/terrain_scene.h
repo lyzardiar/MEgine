@@ -55,7 +55,7 @@ class TerrainScene {
     bool deformationVisible(const TerrainChunk& chunk,const DirectX::XMMATRIX& viewProjection) const;
     size_t drawBlight(Renderer& renderer,const DirectX::XMMATRIX& viewProjection);
     void compile(Log& log);
-    std::vector<TerrainCell> layout(const std::vector<TerrainCliff>& definitions,Log& log);
+    std::vector<TerrainCell> layout(const std::vector<std::optional<TerrainCliff>>& definitions,Log& log);
     TerrainChunk& chunk(unsigned x,unsigned y,const std::string& texture,bool water=false);
     void append(TerrainChunk& target,std::span<const SceneVertex> vertices,std::span<const std::uint32_t> indices);
     float relief(std::span<const float> heights,float x,float y) const;
