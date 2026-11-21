@@ -48,6 +48,8 @@ Human02 至 Human03 的隔离链路中，将阿尔萨斯设为 5 级后直接执
 
 Human03 隔离探针将阿尔萨斯移入原图粮仓区域并对目标仓库下达攻击命令；原图受击和死亡触发后出现胜利对话框，下一关目标为 `Maps\Campaign\Human04.w3m`，日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/attack-ending.log`。探针直接调整单位位置，未覆盖自然寻路、鼠标输入、实际窗口或完整关卡。
 
+Human03 另有原图玩家命令胜利回归：测试读取粮仓区域中心与仓库坐标作为行军目的地，以攻击移动进入剧情区域，观察触发器关闭及控制权暂时丢失，再攻击可见的原目标仓库。只读事件确认仓库由玩家单位击毁、累计伤害 400.25；期间受理 10 次英雄治疗命令，胜利对话继续后于模拟 538.375 秒请求 `Human04.w3m`。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human03-player-victory` 1 通过、0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/human07-assault-audit/human03-formal.log`。测试使用独立用户目录和已知目的地，技能数字为受理数；前章存档承接、迷雾探索、前台操作、自动切关、实际 UI 和原版时序仍未验证。
+
 Human04 隔离探针将阿尔萨斯移入原图剧情区域，再移至克尔苏加德附近下达攻击命令；原图死亡事件及结尾进入胜利对话框，下一关目标为 `Maps\Campaign\Human05.w3m`，日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/human04-objective.log`。探针直接调整单位位置，未覆盖自然寻路、界面、基地建设或完整关卡。
 
 资料片暗夜精灵第一章的隔离开场已恢复玩家控制；真实任务、窗口及地图中战争践踏的参数处理仍待完成或验证，见[关卡状态](campaign-nightelfx01-status.md)。
