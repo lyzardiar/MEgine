@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 单人存档跨进程续玩及结算返回（功能批次 2/3，待集中验证）
+
+路径为 `src/main.cpp`、`tests/generate-save-resume-fixture.py`。从主菜单载入非战役存档的会话在结算确认后返回存档列表，普通选图与战役的返回流程继续使用各自入口。修复前新进程未建立自定义地图浏览器，结束时访问该对象触发 `0xc0000005`。
+
+Win32 Release 两次构建通过。运行 `python watcher/war3/tests/generate-save-resume-fixture.py`，在两个 D3D9Ex 后台渲染的正式客户端复验。第一进程用 `--play --map <checkpoint-patrol.w3m>` 启动，选英雄向东移动到训练触发区，两个步兵入队后经 Esc 的保存面板在隔离用户目录写入 `patrol.w3z`，再关闭进程。第二进程使用同一 `MEGINE_WAR3_USER_DIR`，从单人模式的存档列表打开该文件。地图加载回调核对 3 级英雄、自定义数据、药水及活动任务，并确认两条训练尚未完成。玩家向西下达移动命令，两条训练均在恢复后完成，模拟至 42.75 秒自然进入结算。确认后返回存档列表并正常关闭，两进程退出码均为 0，文件有 `WSAV` 标记且读档前后 SHA-256 一致，未加载 `Game.dll`。正式验收 1 通过／0 失败，步骤、运行摘要、日志及必要画面位于 `tmp/docs-artifacts/war3/p0-save-resume/{drive.ps1,v3/}`。
+
+集中验证待覆盖同进程存档载入、战役存档返回及普通自定义对局的结算返回；大型战役进度、原版存档格式和人工前台操作仍待验收。
+
 ## 亡灵第一章普通难度完整救援（已执行，不计功能批次）
 
 路径为 `tests/undead_campaign_tests.cpp`。Win32 Release 隔离构建通过。运行 `war3_undead_campaign_tests <data-root> <new-absolute-user-dir> full`，读取会话中的待救目标、地形和威胁选择行进路线，经正式玩家命令移动、战斗、使用治疗药水，在荒芜地恢复后继续救援。原图在模拟 745.5 秒达到 20 人，随后触发胜利。确认继续后，于 776.469 秒请求 `Maps\Campaign\Undead02.w3m`，英雄存活。`full`、`rescues` 和 `potion` 各 1 通过／0 失败，记录位于 `tmp/docs-artifacts/war3/p0-undead01/formal-{full,rescues,potion}.log`。前台操作、逐步探索迷雾、实际载入下一章和原版对照待验。当前功能批次为 1/3。
