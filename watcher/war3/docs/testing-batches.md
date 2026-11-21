@@ -1,10 +1,14 @@
 # 独立客户端测试队列
 
-## AI 跨岛运输卸载点（功能批次 3/3）
+## AI 跨岛运输卸载点（功能批次 3/3，已集中验证）
 
 路径为 `src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp` 和 `tests/generate-ai-transport-islands.py`。自动跨岛运输在筛选目标和为飞艇分配乘客时调用实际卸载的落点检查，按乘客碰撞范围和当前占用判断能否卸载。卸载区重新开放后，下一次 AI 目标查询可选中该目标。
 
-Win32 Release 客户端和 AI 测试目标构建通过。先用 `python watcher/war3/tests/generate-ai-transport-islands.py <islands.w3m>` 生成合成双岛地图，再运行 `war3_campaign_ai_tests <data-root> <islands.w3m> <mode>`。修复前 `island-unload-reopen` 因封锁目标仍被选中或发出运输指令失败。修复后该用例通过，并验证解除封锁后选中同一目标，乘客实际装载、跨岛并在目标连通区卸载。`island-unload-open` 和 `island-unload-naval` 分别验证持续可用的空运与海运。合成夹具共 3 通过／0 失败。日志与地图在 `tmp/docs-artifacts/war3/ai-unload-selection/`。起飞后新增阻挡的回退策略由现有运输流程处理。
+Win32 Release 客户端和 AI 测试目标构建通过。先用 `python watcher/war3/tests/generate-ai-transport-islands.py <islands.w3m>` 生成合成双岛地图，再运行 `war3_campaign_ai_tests <data-root> <islands.w3m> <mode>`。修复前 `island-unload-reopen` 因封锁目标仍被选中或发出运输指令失败。修复后该用例通过，并验证解除封锁后选中同一目标，乘客实际装载、跨岛并在目标连通区卸载。`island-unload-open` 和 `island-unload-naval` 分别验证持续可用的空运与海运。合成夹具共 3 通过／0 失败。日志与地图在 `tmp/docs-artifacts/war3/ai-unload-selection/`。飞行中新增阻挡及海运动态岸边占用留待后续验证。
+
+批次集成版本为 `5447a0e`，包含 `858075e`、`e62d3ca` 和本次卸载点修复。自动检查合计 12 通过／0 失败，包含上述 3 个合成运输用例、既有 `camp-overlap` 与 `reachable` 的 4 项、`island-auto`、`island-naval`、`island-auto-multiwave-script` 各 1 项，以及合成营地的正序与反序生成、移动和死亡各 1 项。营地补测可用同目录的 `build-camp-lifecycle.mjs` 构建后运行 `camp-lifecycle.exe <data-root> <islands.w3m>`。原版地图长局沿用下方已有结果。
+
+同一版本的正式 Win32 客户端在隐藏窗口使用 D3D9Ex 实际渲染。进入序幕显示「第一章／对梦想的追逐」，按向下键显示「第二章／离开」，鼠标点选过场显示「介绍／预言」，返回后重新进入恢复第一章。4 项均核对了渲染帧与选中行。通过 `chapter/drive.ps1` 在隔离用户目录执行窗口输入和 `capture.request` 取帧，日志与截图在 `tmp/docs-artifacts/war3/ai-unload-selection/chapter/hidden-host/`。尚未覆盖逐帧时序、原版窗口布局对照及原版营地分组精度。
 
 ## 局域网正式客户端双进程验收（4 通过／0 失败，不计功能批次）
 
@@ -24,13 +28,13 @@ Win32 Release 客户端和 AI 测试目标构建通过。先用 `python watcher/
 
 固定种子原版 BootyBay 隔离对局使用两方原电脑脚本，不注入单位或战斗命令；模拟 4380 秒以人族胜、暗夜负结束，进程退出 0。日志 `tmp/docs-artifacts/war3/ai-camp-overlap/duel-human-elf-extended.log`。该结果仅覆盖单图单种子静音模拟，不代表四族组合、原版 AI 精度、窗口或联机验收；当前功能批次仍为 2/3。
 
-## AI 重叠营地成员归属（新功能批次 2/3，待集中验证）
+## AI 重叠营地成员归属（功能批次 2/3，已集中验证）
 
-路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。已归属营地的野怪不再在后续重叠营地重复计数或被再次选为目标；合成强弱相邻营地检查及已有可达营地检查分别 2 通过／0 失败。集中验证需覆盖不同营地顺序、移动或死亡的成员、真实地图攻击及跨岛运输；原版分组和路径成本规则仍待对照。命令为 `war3_campaign_ai_tests <data-root> <campaign-ai-fixture> camp-overlap` 与 `reachable`，临时探针在 `tmp/docs-artifacts/war3/ai-camp-overlap/`。
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。已归属营地的野怪不再在后续重叠营地重复计数或被再次选为目标；合成强弱相邻营地检查及已有可达营地检查分别 2 通过／0 失败。集中验证结果见本批次 3/3 记录。原版分组和路径成本规则仍待对照。命令为 `war3_campaign_ai_tests <data-root> <campaign-ai-fixture> camp-overlap` 与 `reachable`，临时探针在 `tmp/docs-artifacts/war3/ai-camp-overlap/`。
 
-## 战役章节标题同步（新功能批次 1/3，待集中验证）
+## 战役章节标题同步（功能批次 1/3，已集中验证）
 
-路径：`src/campaign_browser.cpp`。章节选择由键盘或鼠标更新后，在绘制原版 FDF 界面前同步章节标题与名称，避免首帧空标题或切换时显示上一章节。差异及绘制顺序已审查，Win32 Release 客户端编译通过；集中验证需覆盖首次进入、键盘及鼠标切换、返回重入和实际窗口画面，并对照原版布局。当前远程会话 D3D9 创建设备失败，不能据此声称画面已验证；诊断日志 `tmp/docs-artifacts/war3/frontend-chain4/`。
+路径：`src/campaign_browser.cpp`。章节选择由键盘或鼠标更新后，在绘制原版 FDF 界面前同步章节标题与名称，避免首帧空标题或切换时显示上一章节。差异及绘制顺序已审查，Win32 Release 客户端编译通过。集中验证结果及原版对照边界见本批次 3/3 记录。
 
 ## 原版模型挂点尾部空格（批次 3/3，失败项补测通过）
 
