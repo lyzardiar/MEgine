@@ -6,8 +6,10 @@
 #include <functional>
 #include <memory>
 #include <span>
+#include <stdexcept>
 
 namespace war3 {
+class MapFrameAnchorConflict : public std::runtime_error {public:using std::runtime_error::runtime_error;};
 struct MapFramePoint {std::uint32_t point=0;float x=0,y=0;bool fromFdf=false;};
 struct MapFrameRect {float x=0,y=0,w=0,h=0;};
 struct SimpleButtonStyle {std::string texture,highlight,textTemplate,text;};

@@ -9,6 +9,8 @@
 #include <StormLib.h>
 #include <functional>
 #include <iostream>
+#include <limits>
+#include <tuple>
 
 using namespace war3;
 namespace {
@@ -43,6 +45,94 @@ int wmain(int argc,wchar_t** argv) {
         WNDCLASSW type{};type.hInstance=GetModuleHandleW(nullptr);type.lpfnWndProc=DefWindowProcW;type.lpszClassName=L"War3BrowserChecks";require(RegisterClassW(&type)!=0,"Cannot register check window");auto window=CreateWindowW(type.lpszClassName,L"War3 UI checks",WS_OVERLAPPEDWINDOW,0,0,1280,960,nullptr,nullptr,type.hInstance,nullptr);require(window!=nullptr,"Cannot create check window");struct Close {HWND value;~Close(){DestroyWindow(value);}} close{window};
         Renderer renderer(window);Archives archives(dataRoot);Images images(dataRoot);auto font=archives.read(skinValue(archives,"MasterFont","Fonts\\FRIZQT__.TTF"));require(bool(font),"Missing font");Text text(renderer,font->bytes);Log log(output/L"browser-events.log");std::cout<<"DRIVER "<<renderer.driver()<<" fixture="<<utf8(scratch.wstring())<<'\n';
         auto render=[&](const std::function<void()>& draw,const fs::path& capture=fs::path{}){MSG message;while(PeekMessageW(&message,nullptr,0,0,PM_REMOVE)){TranslateMessage(&message);DispatchMessageW(&message);}require(renderer.begin(),"Device unavailable during check");draw();require(renderer.end(capture),"Present failed during check");renderer.device()->SetTexture(0,nullptr);};
+        test("fdf_glue_multi_anchor",[&]{
+            auto same=[](float a,float b){return std::abs(a-b)<1e-5f;};GlueScreen timer(archives,images,renderer,text,"UI\\FrameDef\\UI\\TimerDialog.fdf","TimerDialog");timer.place("TimerDialog",{.445f,.035f,.17f,.03f});auto title=timer.bounds("TimerDialogTitle"),value=timer.bounds("TimerDialogValue");require(same(title.x,.455f) && same(title.y,.0445f) && same(title.w,.14f) && same(title.h,.011f) && same(value.x,.545f) && same(value.w,.06f),"Original timer FDF anchors differ");
+            std::string source=R"fdf(
+Frame "FRAME" "Panel" {
+ Width 0.4,
+ Height 0.3,
+ Frame "GLUETEXTBUTTON" "Action" {
+  Width 0.04,
+  Height 0.03,
+  SetPoint TOPLEFT, "Panel", TOPLEFT, 0.02, -0.03,
+  SetPoint BOTTOMRIGHT, "Panel", BOTTOMRIGHT, -0.02, 0.03,
+ }
+}
+Frame "FRAME" "Card" {
+ Width 0.12,
+ Height 0.1,
+ Frame "FRAME" "CardBody" {
+  Width 0.01,
+  Height 0.01,
+  SetPoint TOPLEFT, "Card", TOPLEFT, 0.01, -0.01,
+  SetPoint BOTTOMRIGHT, "Card", BOTTOMRIGHT, -0.01, 0.01,
+ }
+}
+Frame "FRAME" "Negative" {
+ Width 0.4,
+ Height 0.3,
+ Frame "FRAME" "NegativeChild" {
+  SetPoint TOPLEFT, "Negative", TOPLEFT, 0.2, -0.2,
+  SetPoint BOTTOMRIGHT, "Negative", TOPLEFT, 0.1, -0.1,
+ }
+}
+Frame "FRAME" "Conflict" {
+ Width 0.4,
+ Height 0.3,
+ Frame "FRAME" "ConflictChild" {
+  SetPoint TOPLEFT, "Conflict", TOPLEFT, 0.02, -0.03,
+  SetPoint BOTTOMLEFT, "Conflict", BOTTOMLEFT, 0.03, 0.03,
+ }
+}
+
+Frame "FRAME" "Duplicate" {
+ Width 0.4,
+ Height 0.3,
+ Frame "FRAME" "DuplicateChild" {
+  Width 0.05,
+  Height 0.05,
+  SetPoint TOPLEFT, "Duplicate", TOPLEFT, 0.01, -0.02,
+  SetPoint TOPLEFT, "Duplicate", TOPLEFT, 0.1, -0.2,
+ }
+}
+Frame "FRAME" "Missing" {
+ Frame "FRAME" "MissingChild" {
+  SetPoint TOPLEFT, "Missing", TOPLEFT, 0, 0,
+  SetPoint BOTTOMRIGHT, "Ghost", BOTTOMRIGHT, 0, 0,
+ }
+}
+Frame "FRAME" "BadNumber" {
+ Frame "FRAME" "BadNumberChild" {
+  SetPoint TOPLEFT, "BadNumber", TOPLEFT, 0, 0,
+  SetPoint BOTTOMRIGHT, "BadNumber", BOTTOMRIGHT, nan, 0,
+ }
+}
+Frame "FRAME" "Overflow" {
+ Frame "FRAME" "OverflowChild" {
+  SetPoint TOPLEFT, "Overflow", TOPLEFT, -3.4e38, 0,
+  SetPoint BOTTOMRIGHT, "Overflow", BOTTOMRIGHT, 3.4e38, 0,
+ }
+}
+Frame "FRAME" "DuplicateOverflow" {
+ Frame "FRAME" "DuplicateOverflowChild" {
+  SetPoint TOPLEFT, "DuplicateOverflow", TOPLEFT, 0, 0,
+  SetPoint TOPLEFT, "DuplicateOverflow", TOPLEFT, 0.1, 0,
+  SetPoint LEFT, "DuplicateOverflow", LEFT, -3.4e38, 0,
+  SetPoint RIGHT, "DuplicateOverflow", RIGHT, 3.4e38, 0,
+ }
+}
+Frame "FRAME" "Cycle" {
+ Frame "FRAME" "CycleA" {
+  SetPoint TOPLEFT, "Cycle", TOPLEFT, 0, 0,
+  SetPoint BOTTOMRIGHT, "CycleB", BOTTOMRIGHT, 0, 0,
+ }
+ Frame "FRAME" "CycleB" {
+  SetPoint TOPLEFT, "CycleA", TOPLEFT, 0, 0,
+ }
+}
+)fdf";auto fixture=scratch/L"ordinary-fdf-multi.w3x";mapArchive(fixture,"multianchor.fdf",source);auto local=archives.fork();local->mountMap(fixture);GlueScreen screen(*local,images,renderer,text,"multianchor.fdf","Panel");screen.place("Panel",{.1f,.1f,.4f,.3f});auto button=screen.bounds("Action");require(same(button.x,.12f) && same(button.y,.13f) && same(button.w,.36f) && same(button.h,.24f),"Ordinary FDF two-point extent differs");std::string hit;render([&]{hit=screen.draw("Panel",click(.4f,.3f),{"Action"});});require(hit=="Action","Stretched button did not accept click");screen.attach("multianchor.fdf","Card","Panel","First");screen.attach("multianchor.fdf","Card","Panel","Second");screen.place("First/Card",{.15f,.15f,.1f,.08f});screen.place("Second/Card",{.38f,.2f,.12f,.1f});auto first=screen.bounds("First/CardBody"),second=screen.bounds("Second/CardBody");require(same(first.x,.16f) && same(first.y,.16f) && same(first.w,.08f) && same(first.h,.06f) && same(second.x,.39f) && same(second.y,.21f) && same(second.w,.1f) && same(second.h,.08f),"Attached contexts shared anchor targets");screen.place("First/Card",{.2f,.25f,.14f,.1f});first=screen.bounds("First/CardBody");auto unchanged=screen.bounds("Second/CardBody");require(same(first.x,.21f) && same(first.w,.12f) && same(unchanged.x,second.x) && same(unchanged.y,second.y) && same(unchanged.w,second.w) && same(unchanged.h,second.h),"Relayout changed another attached context");
+            for(auto [rootName,childName,x,y]:{std::tuple{"Negative","NegativeChild",.2f,.2f},std::tuple{"Conflict","ConflictChild",.02f,.03f},std::tuple{"Duplicate","DuplicateChild",.01f,.02f}}){GlueScreen fallback(*local,images,renderer,text,"multianchor.fdf",rootName);auto child=fallback.bounds(childName);require(same(child.x,x) && same(child.y,y),"Conflicting FDF did not fall back to first anchor");}auto rejects=[&](const char* rootName,const char* diagnostic){try{GlueScreen invalid(*local,images,renderer,text,"multianchor.fdf",rootName);}catch(const std::exception& e){return std::string(e.what()).find(diagnostic)!=std::string::npos;}return false;};require(rejects("Missing","Missing map frame anchor") && rejects("BadNumber","Invalid glue coordinate") && rejects("Overflow","Invalid map frame extent") && rejects("DuplicateOverflow","Invalid map frame extent") && rejects("Cycle","Cyclic FDF anchors"),"Invalid FDF error was suppressed");bool mapRejected=false;try{solveMapFramePoints(.2f,.1f,std::array{MapFramePoint{0,.1f,.2f},MapFramePoint{6,.2f,.4f}});}catch(const MapFrameAnchorConflict&){mapRejected=true;}require(mapRejected,"Runtime map frame conflict was not rejected");bool invalidRejected=false;try{solveMapFramePoints(.2f,.1f,std::array{MapFramePoint{0,std::numeric_limits<float>::quiet_NaN(),.2f}});}catch(const MapFrameAnchorConflict&){}catch(const std::runtime_error&){invalidRejected=true;}require(invalidRejected,"Invalid map frame number became a recoverable conflict");
+        });
         test("text_long_render",[&]{std::wstring longText(1000,L'W');longText+=L"\U0001F600End";std::wstring mixed;for(int i=0;i<800;++i)mixed+=L"中\U0001F600";render([&]{text.draw(longText,10,10,24,0xffffffff);text.draw(longText,640,60,24,0xffffffff,true);text.draw(longText,30-text.width(std::wstring_view(longText).substr(0,1000),24,false),110,24,0xffffffff);text.draw(mixed,10,160,24,0xffffffff);},output/L"text-long.png");});
         test("map_frames_fdf_render",[&]{auto definitions=std::make_shared<FrameDefinitions>();std::string source="Frame \"FRAME\" \"Panel\" {\n Width 0.2,\n Height 0.1,\n SetPoint TOPLEFT, \"\", TOPLEFT, 0.1, -0.1,\n Frame \"BACKDROP\" \"Fill\" {\n Width 0.1,\n Height 0.05,\n SetPoint TOPLEFT, \"Panel\", TOPLEFT, 0.02, -0.01,\n BackdropBackground \"ReplaceableTextures\\CommandButtons\\BTNFootman.blp\",\n }\n}\n";source+="Frame \"TEXT\" \"Caption\" {\n Width 0.2,\n Height 0.03,\n FrameFont \"MasterFont\", 0.015, \"\",\n}\n";definitions->load(archives,"generated.fdf",[&](const std::string&)->std::optional<Bytes>{return Bytes(source.begin(),source.end());});MapFrames frames(definitions);auto first=frames.create("Panel",frames.root(),1),second=frames.create("Panel",frames.root(),2);auto child=frames.node(second).children.at(0);auto caption=frames.create("Caption",frames.root(),3);frames.setPoint(caption,0,frames.root(),0,.15f,-.2f);frames.setText(caption,"地图|cff00ff00文本|r色");frames.setTextColor(caption,0xff3366ee);GlueScreen shown(archives,images,renderer,text,frames);auto rect=shown.bounds("MapFrame/"+std::to_string(child));require(std::abs(rect.x-.12f)<.00001f && std::abs(rect.y-.11f)<.00001f,"Map frame context anchor differs");render([&]{shown.draw("GameUI",{},{});},output/L"map-frame-shown.png");frames.setPoint(second,0,frames.root(),4,.1f,-.05f);frames.setPoint(second,8,frames.root(),4,.3f,-.2f);GlueScreen moved(archives,images,renderer,text,frames);auto box=moved.bounds("MapFrame/"+std::to_string(second)),movedChild=moved.bounds("MapFrame/"+std::to_string(child));require(std::abs(box.x-.5f)<.00001f && std::abs(box.y-.35f)<.00001f && std::abs(box.w-.2f)<.00001f && std::abs(box.h-.15f)<.00001f && std::abs(movedChild.x-.52f)<.00001f && std::abs(movedChild.y-.36f)<.00001f,"Runtime map anchor layout differs");render([&]{moved.draw("GameUI",{},{});},output/L"map-frame-moved.png");frames.setTexture(child,"override.blp",true);unsigned overrideReads=0;FrameSource overrideSource=[&](const std::string& path)->std::optional<Bytes>{if(path!="override.blp")return {};auto member=archives.readTexture("ReplaceableTextures\\CommandButtons\\BTNFootman.blp");if(!member)throw std::runtime_error("Missing texture fixture");++overrideReads;return member->bytes;};GlueScreen textured(archives,images,renderer,text,frames,overrideSource);render([&]{textured.draw("GameUI",{},{});},output/L"map-frame-texture.png");require(overrideReads==1,"Map texture override was not consumed");frames.setPoint(first,0,frames.root(),6,.25f,.45f);frames.setSize(first,.3f,.2f);GlueScreen resized(archives,images,renderer,text,frames,overrideSource);auto absolute=resized.bounds("MapFrame/"+std::to_string(first));require(std::abs(absolute.x-.25f)<.00001f && std::abs(absolute.y-.15f)<.00001f && std::abs(absolute.w-.3f)<.00001f && std::abs(absolute.h-.2f)<.00001f,"Absolute map anchor or dynamic size differs");render([&]{resized.draw("GameUI",{},{});},output/L"map-frame-resized.png");frames.setAlpha(first,128);frames.setAlpha(caption,200);GlueScreen faded(archives,images,renderer,text,frames,overrideSource);render([&]{faded.draw("GameUI",{},{});},output/L"map-frame-alpha.png");frames.visible(first,false);frames.visible(second,false);frames.visible(caption,false);GlueScreen hidden(archives,images,renderer,text,frames,overrideSource);render([&]{hidden.draw("GameUI",{},{});},output/L"map-frame-hidden.png");frames.clearPoints(first);frames.setPoint(first,0,frames.root(),6,.05f,.55f);GlueScreen cleared(archives,images,renderer,text,frames,overrideSource);auto clearedRect=cleared.bounds("MapFrame/"+std::to_string(first));require(std::abs(clearedRect.x-.05f)<.00001f && std::abs(clearedRect.y-.05f)<.00001f && std::abs(clearedRect.w-.3f)<.00001f && std::abs(clearedRect.h-.2f)<.00001f,"Cleared FDF anchors affected new layout");});
         test("map_simple_frame_original_render",[&]{auto definitions=std::make_shared<FrameDefinitions>();definitions->load(archives,"UI\\FrameDef\\GlobalStrings.fdf");definitions->load(archives,"UI\\FrameDef\\InfoPanelStrings.fdf");definitions->load(archives,"UI\\FrameDef\\UI\\SimpleInfoPanel.fdf");MapFrames frames(definitions);auto panel=frames.createSimple("SimpleInfoPanelIconDamage",frames.root(),7),armor=frames.createSimple("SimpleInfoPanelIconArmor",frames.root(),7);auto icon=frames.node(panel).children.at(0),armorIcon=frames.node(armor).children.at(0);frames.setSize(panel,.1f,.04f);frames.setPoint(panel,0,frames.root(),0,.1f,-.2f);frames.setSize(armor,.1f,.04f);frames.setPoint(armor,0,frames.root(),0,.3f,-.2f);unsigned reads=0;FrameSource texture=[&](const std::string&)->std::optional<Bytes>{auto original=archives.readTexture("ReplaceableTextures\\CommandButtons\\BTNFootman.blp");if(!original)throw std::runtime_error("Missing texture fixture");++reads;return original->bytes;};GlueScreen screen(archives,images,renderer,text,frames,texture);auto bounds=screen.bounds("MapFrame/"+std::to_string(icon));require(std::abs(bounds.x-.104f)<.00001f && std::abs(bounds.y-.201f)<.00001f && std::abs(bounds.w-.032f)<.00001f && std::abs(bounds.h-.032f)<.00001f,"Simple texture inherited anchor differs");auto armorBounds=screen.bounds("MapFrame/"+std::to_string(armorIcon));require(std::abs(armorBounds.x-.304f)<.00001f && std::abs(armorBounds.y-.201f)<.00001f,"Duplicate simple texture context resolved to wrong panel");render([&]{screen.draw("GameUI",{},{});},output/L"map-simple-frame.png");require(reads==1,"Simple texture was not drawn");});

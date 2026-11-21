@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 普通 FDF 多锚点布局（本批 3/3，待批次验证）
+
+路径：`src/glue.cpp`、`src/map_frames.h`、`src/map_frames.cpp`、`tests/browser_tests.cpp`。普通 GlueScreen 同时求解多个源 SetPoint；对负尺寸或矛盾的普通 FDF 约束回退首锚，缺失引用、循环及非法数值仍报错；脚本 MapFrame 的冲突继续拒绝。原版 TimerDialog 标题框、双锚按钮命中和重复 attach 的独立上下文由新增回归检查。
+
+必要检查：Win32 Release 客户端及 browser 测试干净构建通过；同一 `fdf_glue_multi_anchor` 回归在旧实现因原 FDF 计时框几何错误失败，在新实现退出 0、1 通过／0 失败；MapFrame 轴求解、源帧锚点、渲染和评分界面 attach 各 1 通过／0 失败。隔离重放计时框、排行榜、多榜及单条任务界面四图前后像素一致。日志 `tmp/docs-artifacts/war3/fdf-multianchor-audit/`。源中后续锚点缺失或循环现会参与解析并报错，其与原版及自定义资源的兼容性尚待对照；上述重放不是完整 GameView 或真实 UI 验收。
+
 ## 最小射程的受阻退让（本批 2/3，待批次验证）
 
 路径：`src/session.h`、`src/session_combat_orders.cpp`、`src/session_combat.cpp`、`src/session_combat_destructable.cpp`、`src/session_attack_ground.cpp`、`tests/destructable_tests.cpp`。单位、可破坏物和攻击地面在最小射程内优先沿原方向退让；该方向不可达时，最多尝试其他七个固定方向，并仅接受实际终点处于武器射程内的完整路径。移动目标使旧路径失效且退让全部失败时清除该路线、保留攻击命令以便开路后重试。
