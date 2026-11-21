@@ -6,6 +6,8 @@
 
 Human07 重跑同样失败；移除 Human09 新观察器后输出不变，以 `a10f511` 的四个旧攻击对象覆盖链接当前 core 也复现失败，说明该复现不依赖新观察器或新退让对象，但混合版本不代表完整旧版。追击时英雄位于攻击范围外且附近友军与其前路相交，正常命令移开友军可改变结果；是否存在动态避让缺陷仍待验证。证据 `tmp/docs-artifacts/war3/human07-compare/`、`human07-assault-audit/`。集成版另在独立隐藏客户端自然运行 Human08 到玩家阶段，迫击炮选择和 F9 任务请求均成功，画面位于 `tmp/docs-artifacts/war3/human08-ui-probe/agent-MX5Fky/`；不代表前台输入或原版视觉对照。失败修复后只重测失败项及其影响范围。
 
+历史对照：将 `20f692b` 的 War3 源码导出至隔离目录，以同一 VS2022 x86、SDK 和 Release 配置构建，使用同一游戏数据路径及独立用户目录运行相同 Human07 测试：旧版首目标在 367.25 秒死亡、英雄伤害 503.077，三目标于 464.5 秒通过；当前首目标在 347.75 秒死亡、英雄伤害 0。两次未记录原始游戏归档哈希，同路径不证明数据内容相同。将旧 `session_orders.cpp` 和 `player_commands.cpp` 单独或共同覆盖链接当前 core 均仍失败，虽改变时序，但不能单独归因；混合对象不代表完整旧版。日志 `tmp/docs-artifacts/war3/historical-20f692b/`、`human07-compare/20f-*.log`。原失败仍待定位。
+
 另以同一原图增加独立 `human07-coordinated-assault`：英雄靠近目标时用正常移动命令暂时撤开友军，英雄实际造成伤害后再集火，并在低血量时使用已学圣盾；三座建筑均被摧毁且英雄分别造成 466.923、492.692、742.307 伤害，Win32 Release 退出 0、1 通过／0 失败，日志 `tmp/docs-artifacts/war3/human07-compare/coordinated-main.log`。原 `human07-assault` 未修改，其失败仍保留；受控对照中移开友军后英雄无需重新下令即可命中，证据 `tmp/docs-artifacts/war3/human07-assault-audit/clearance.log`，不能据此判定原版动态避让一致或永久卡死。
 
 ## 人族第九章玩家命令自然胜利（已执行，不计功能批次）
