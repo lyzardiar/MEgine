@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 局域网正式客户端双进程验收（4 通过／0 失败，不计功能批次）
+
+在 `708ef8e` 增量构建 Win32 Release `war3.exe`，同机启动两个独立进程，使用 `--hidden --mute --experimental-local-lan --agent-dir <agent-dir> --data-root <data-root> --log client.log`。用定向窗口消息操作实际大厅及对局，客户端采集接口保存后台渲染帧与 GameView 状态。受测路径经过 `src/main.cpp`、`src/lan_browser.cpp`、`src/lan_host_ui.cpp`、`src/lan_match_loading.cpp`、`src/game_view.cpp` 和 `src/lan_runtime.cpp`。
+
+- 建房和加入各通过。主机选择原版 `(2)BootyBay.w3m`，加入端发现并加入房间。主机大厅显示两名玩家已准备，双方通过加载屏障并记录 `EnterLanGame`，GameView 视角为玩家 0 和 1。
+- 发令同步通过。两端分别选择己方工人并右键移动，位移为 231.32 和 293.75。用仓库的回放和 LAN 动作解码器检查主机记录，双方选择均在第 202 个时间片，移动均在第 296 个时间片。对局运行期间无状态摘要失配或运行错误。
+- 异常断线通过。强制结束加入进程后，主机画面显示该玩家已离开并弹出胜利对话框。主机记录在第 748 个时间片恰好收到一次玩家 2 的离开动作，之后继续应用 503 个时间片。点击继续游戏后，主机执行新移动指令，所选单位再次改变坐标。
+
+复验操作为分别用 `drive.ps1` 启动两端，进入局域网，选中 BootyBay 建房，加入端选择房间加入，主机开始对局。用客户端的 `capture.request` 捕获双方选中与移动后的状态，再强制结束加入端，捕获主机提示、继续对局并关闭主机以保存部分回放。执行 `verify-replay.exe host-partial.w3g` 检查按序应用的动作。脚本、双端 `client.log`、渲染帧、回放和 `acceptance-check.log` 均在 `tmp/docs-artifacts/war3/lan-product-20261121/`。本次覆盖同机同版本双端和加入端异常退出。跨机、地图传输、主机异常退出、原版互通及完整同步状态留待后续验收。当前功能批次为 2/3。
+
 ## 局域网双进程模拟（已执行，不计功能批次）
 
 路径：`tests/lan_process_tests.cpp`、`tests/run-lan-process-tests.py`、`CMakeLists.txt`。独立主机和加入进程以本机 TCP、实验握手及加载屏障连接，分别核验原版 BootyBay 地图并运行真实脚本会话，双方各自选择、移动单位；80 个 32 毫秒时间片的状态摘要及位置逐项一致。异常断线模式在此后强制结束加入进程，主机会话观察到一次正确玩家的离开事件，并继续消费九个时间片。Win32 Release 目标编译通过，运行 `python watcher/war3/tests/run-lan-process-tests.py tmp/docs-artifacts/war3/build-tools/build-ninja/bin/war3_lan_process_tests.exe <data-root> tmp/docs-artifacts/war3/lan-two-process/formal --mode <sync|abrupt>` 两种模式各 1 通过／0 失败；日志分别为 `tmp/docs-artifacts/war3/lan-two-process/formal/lan-two-process-py6k4b92/` 和 `lan-two-process-ebxgx9d_/`。这是同机的 LanHost／LanJoin 与 ScriptSession／LanSimulation 检查，未覆盖 GameView／LanRuntime、地图传输、跨机、原版互通或全部同步状态；当前功能批次仍为 2/3。
