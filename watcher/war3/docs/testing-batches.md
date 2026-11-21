@@ -34,6 +34,10 @@ Human07 后续修复见下方“建筑攻击受阻接近点”。原失败入口
 
 路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human04-player-victory` 在原图隔离会话中以玩家命令进入剧情区域并击败克尔苏加德，胜利对话继续后请求 Human05；Win32 Release 正式构建报告 1 通过／0 失败，模拟 493.875 秒。详细边界与日志见[战役流程](campaign-flow.md)。测试工作不计功能批次，当前仍为 1/3。
 
+## 人族第五章自然计时与玩家防守（已执行，不计功能批次）
+
+路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human05-player-defense` 使用原图 1800 秒计时，观察金木采集并以玩家命令训练、治疗和迎战外围敌军；计时到期后胜利对话请求间章。Win32 Release 正式构建报告 1 通过／0 失败，模拟 1964.31 秒；详细范围与日志见[战役流程](campaign-flow.md)。测试工作不计功能批次，当前仍为 2/3。
+
 范围：`a10f511`、`18bddff`、`ba139ea`，测试源码版本 `db8a822`。Win32 Release 客户端及 world、destructable、human campaign、browser、transport、harvest、caster、stealth 目标干净构建通过。17 个测试进程中 16 个退出 0，合计 52 项通过：包括碰撞连通等价及路径失效、五类最小射程退让、Human08 五船和 Human09 自然胜利、密室路径及登船／采集／月井／守位，以及 browser 全部 37 项。`human07-assault` 退出 1：目标建筑被其他玩家部队摧毁时，阿尔萨斯未对该目标造成测试要求的伤害；该项仍在队列，尚未判定根因。批次脚本与日志为 `tmp/docs-artifacts/war3/build-tools/run-batch-clearance-retreat-fdf.mjs`、`tmp/docs-artifacts/war3/batch-clearance-retreat-fdf/`。
 
 Human07 重跑同样失败；移除 Human09 新观察器后输出不变，以 `a10f511` 的四个旧攻击对象覆盖链接当前 core 也复现失败，说明该复现不依赖新观察器或新退让对象，但混合版本不代表完整旧版。追击时英雄位于攻击范围外且附近友军与其前路相交，正常命令移开友军可改变结果；是否存在动态避让缺陷仍待验证。证据 `tmp/docs-artifacts/war3/human07-compare/`、`human07-assault-audit/`。集成版另在独立隐藏客户端自然运行 Human08 到玩家阶段，迫击炮选择和 F9 任务请求均成功，画面位于 `tmp/docs-artifacts/war3/human08-ui-probe/agent-MX5Fky/`；不代表前台输入或原版视觉对照。失败修复后只重测失败项及其影响范围。
