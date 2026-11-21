@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 物品拾取距离边界（新功能批次 3/3，待集中验证）
+
+路径：`src/session_combat.cpp`、`tests/undead_campaign_tests.cpp`。亡灵第一章原图箱子掉落治疗药水后，玩家单次拾取命令受理，但路线终点距离为 128.0000458，严格的 128 拾取判定使英雄持续寻路；拾取到达判定采用追近路线已有的 0.01 单位容差，不改变路径规划或物品范围配置。原图命令回归 `war3_undead_campaign_tests <data-root> <new-absolute-user-dir> potion` 修复前未拾取并阵亡，修复后于模拟 144 秒拾取，1 通过／0 失败；日志 `tmp/docs-artifacts/war3/undead01-player/potion-{before,after}.log`。原版拾取精确半径及前台交互仍待对照。
+
+该修复计入新批次 3/3；合并验证本项、建筑追近和排行榜修复，覆盖受影响的移动、物品、战役和相关界面，记录实际结果。
+
 ## 已销毁排行榜的显示调用（新功能批次 2/3）
 
 路径：`src/session_leaderboard.cpp`、`tests/clock_tests.cpp`、`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。Human02 原图在基地任务完成后销毁步兵排行榜，剑圣过场稍后仍以旧句柄调用 `LeaderboardDisplayBJ`；此前因已销毁句柄抛错中断。`LeaderboardDisplay` 现在对无效排行榜句柄安全返回，活动排行榜保持原行为；其他排行榜接口未扩大修改。原安装 `Game.dll` 注册指向 `0x6f1efd70`，解析器返回空时入口直接返回；静态证据 `tmp/docs-artifacts/war3/human07-assault-audit/leaderboard-native.py`。
