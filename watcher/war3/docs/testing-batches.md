@@ -1,10 +1,10 @@
 # 独立客户端测试队列
 
-## 物品拾取距离边界（新功能批次 3/3，待集中验证）
+## 物品拾取距离边界（批次 3/3，已集中验证）
 
 路径：`src/session_combat.cpp`、`tests/undead_campaign_tests.cpp`。亡灵第一章原图箱子掉落治疗药水后，玩家单次拾取命令受理，但路线终点距离为 128.0000458，严格的 128 拾取判定使英雄持续寻路；拾取到达判定采用追近路线已有的 0.01 单位容差，不改变路径规划或物品范围配置。原图命令回归 `war3_undead_campaign_tests <data-root> <new-absolute-user-dir> potion` 修复前未拾取并阵亡，修复后于模拟 144 秒拾取，1 通过／0 失败；日志 `tmp/docs-artifacts/war3/undead01-player/potion-{before,after}.log`。原版拾取精确半径及前台交互仍待对照。
 
-该修复计入新批次 3/3；合并验证本项、建筑追近和排行榜修复，覆盖受影响的移动、物品、战役和相关界面，记录实际结果。
+批次范围：建筑追近、排行榜和物品拾取修复，集成版本 `6a96ed7`。Win32 客户端及关联测试目标构建通过；`node tmp/docs-artifacts/war3/build-tools/run-batch-pickup-20261121.mjs` 共 18 个进程，18 成功、0 失败：包括排行榜恢复、9 个移动入口、Human07 原失败入口、Human01–09 玩家整链、亡灵开场救援及药水拾取、AI 满背包／不可达物品、拾取取消回调，以及选择和按钮几何。日志 `tmp/docs-artifacts/war3/batch-pickup-20261121/`，构建日志 `tmp/docs-artifacts/war3/undead01-player/batch-build.log`。独立 `human01-08-player-chain` 命令未单独执行，相关代码作为 Human01–09 链的一部分执行。实际前台输入、原版拾取精确半径与 UI 视觉一致性未验证；Human02 正式客户端另发现未使用悬崖类型导致的地形加载失败，待独立修复。
 
 ## 已销毁排行榜的显示调用（新功能批次 2/3）
 
