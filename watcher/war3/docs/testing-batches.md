@@ -6,6 +6,8 @@
 
 必要检查：Win32 Release 客户端及 movement 目标构建通过；`occupied-unit` 修复前因落点未更换失败，修复后绕行并实际造成伤害；`occupied-unit-retarget`、`occupied-unit-filter` 和既有 `occupied-approach`、`occupied-retarget` 各通过，覆盖目标位置变化、移动目标、飞行与疾风步非阻挡以及建筑路径。亡灵原图相同单次命令的临时前后探针中，修复前英雄在模拟 182.25–186.25 秒保持射程外，修复后 182.25 秒英雄与一名食尸鬼同时进入射程并观察到目标受伤；另一次注入只读受伤观察器后记录阿尔萨斯造成 175（包含死缠）、诱饵食尸鬼造成 129.464 伤害；观察器版本与无观察器版本句柄分配不同。日志 `tmp/docs-artifacts/war3/undead-approach-audit/`。极短射程、大规模拥堵、持续移动目标、原版避让一致性和完整任务胜利留待批次验证；本任务计入新批次 2/3。
 
+同任务补充：目标先接收移动命令、随后被暂停、眩晕或缠绕时，路线保留但单位实际不能移动；现在将这三类状态纳入静止目标的有界绕点检查。三名暂停友军占位的自然步进夹具修复前 30 模拟秒无法攻击，修复后 `occupied-unit-disabled` 对三种状态均造成伤害，解除后目标继续移动且攻击命令保留；`occupied-unit-moving` 验证目标以正常命令移动 128 后被继续追击并受伤，非阻挡、建筑及先前单位追近用例通过。眩晕与缠绕由夹具直接施加状态，不代表技能动画或原版时序验证；日志 `tmp/docs-artifacts/war3/undead-approach-audit/review-{paused,stunned,rooted}-wall*.log`。同一任务补充不增加批次数量。
+
 ## 未使用的悬崖资源槽位（新功能批次 1/3）
 
 路径：`src/terrain_scene.cpp`、`src/terrain_scene.h`、`src/terrain_layout.cpp`、`docs/campaign-flow.md`。原版 Human02 的悬崖列表包含未被任何角点使用且资源表无定义的 `CLno`；地形编译此前提前解析所有槽位，正式客户端无法载入。现在保留缺失槽位，只有实际悬崖或坡道引用它时才报缺失原始类型，不替换为其他地形。
