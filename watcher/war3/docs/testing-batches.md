@@ -11321,3 +11321,7 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 必要检查：Win32 Release 客户端及 CampaignAI 目标编译通过；`war3_campaign_ai_tests <data-root> humanx03-text-tags` 读取原图 `HumanX03.w3x` 的囚犯提示 `TRIGSTR_503`，修复前失败、修复后 1 通过／0 失败，覆盖直接接口、原版 `CreateTextTagUnitBJ`、普通文字及缺失项，未加载 Game.dll。夹具手动调用 BJ，未触发真实囚犯流程。
 
 本批 1/3；合并验证漂浮文字、地图 WTS、场景及恢复。实际窗口字体／位置、原图自然触发、旧存档和原版动态字符串语义仍待验证。
+
+## 人族第一至九章玩家流程与双英雄继承（已执行，不计功能批次）
+
+路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human01-09-player-chain` 在同一目录接续前八章，核对 Human09 两位实际游玩英雄状态，以玩家指令完成守卫、霜之哀伤剧情和最终战斗。正式 Win32 入口报告 1 通过、0 失败，范围、局限和日志见[战役流程](campaign-flow.md)。测试工作不计功能批次，当前仍为 2/3；前八章作为此链的一部分已执行，独立 `human01-08-player-chain` 入口仍待批次执行。
