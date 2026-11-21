@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 空运和海运动态卸载阻挡（已执行，不计功能批次）
+
+路径为 `tests/campaign_ai_tests.cpp`。使用 `python watcher/war3/tests/generate-ai-transport-islands.py <islands.w3m>` 生成已有合成双岛夹具。飞艇载客起飞后临时封锁目标岛地面。船只载客驶近卸载点时，使用暂停的地面单位占用目标岸边，测试将占位单位的碰撞半径设置为 192。每项阻挡维持 20 个模拟秒，核对运输进入原卸载施法范围、最初的卸载施法已结束、乘客仍存活且留在同一运输波次。解除阻挡后沿原 AI 会话继续，分别于模拟 23.25 秒和 24.25 秒成功卸载到目标连通区。
+
+Win32 Release AI 测试目标构建通过。运行 `war3_campaign_ai_tests <data-root> <islands.w3m> <mode>`，`island-unload-dynamic-air`、`island-unload-dynamic-naval`、`island-unload-reopen`、`island-unload-open`、`island-unload-naval` 各 1 通过／0 失败，日志在 `tmp/docs-artifacts/war3/p1-ai-dynamic-unload/`。长于当前波次时限的封锁、多乘客和多人联机留待验证。功能批次仍为 1/3。
+
 ## 局域网三进程长局与回放（已执行，不计功能批次）
 
 路径为 `CMakeLists.txt`、`tests/lan_process_tests.cpp`、`tests/lan_long_match.cpp`、`tests/lan_long_match.h`、`tests/run-lan-process-tests.py` 和 `tests/generate-lan-long-match.py`。合成三人地图通过独立主机及两个加入进程的实际 TCP、地图校验、加载屏障和 LanSimulation 入口运行 22,500 个 32 毫秒时间片（模拟 12 分钟）。三个玩家使用同步选择和玩家命令完成农场建造、六次分散训练、一次对受伤友军施法、一次消耗药水以及末段移动。三个会话各自验到真实治疗增量、任务触发、唯一胜利回调、同一个获胜者与结算请求。每时间片校验和与按序动作摘要三端一致，实跑有 2 个时片含不同玩家的动作；主机写盘并读取回放，逐时间片比较玩家、动作字节及顺序一致。

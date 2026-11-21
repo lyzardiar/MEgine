@@ -10,7 +10,8 @@
 using namespace war3;
 namespace {
 float number(jass::Real value){return std::bit_cast<float>(value.bits());}
-void islandUnloadSite(const wchar_t* root,const wchar_t* map,bool blocked,bool naval=false){
+enum class IslandLandingBlock {None, BeforeSelection, InTransit};
+void islandUnloadSite(const wchar_t* root,const wchar_t* map,IslandLandingBlock block,bool naval=false){
     Archives archives(root);archives.mountMap(map);auto world=World::read(archives);auto info=world->data().info;ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info);session.attachWorld(std::move(world));session.audioMuted(true);session.audioSimulationClock();session.configure();PlayerSetup setup(info,session.config());setup.control(1,SlotControl::ComputerNormal);session.applySetup(setup);session.startMain();session.advance(.25);
     if(!session.ais()[0] || !session.ais()[0]->runtime)throw std::runtime_error("Island transport AI failed to start");
     auto& ai=*session.ais()[0];auto& avm=*ai.runtime;auto& vm=session.runtime();auto& terrain=*session.world();ai.captainChanges=false;
@@ -23,7 +24,7 @@ void islandUnloadSite(const wchar_t* root,const wchar_t* map,bool blocked,bool n
     auto select=[&]{return avm.invoke("GetCreepCamp",std::array{avm.integer(0),avm.integer(100),avm.boolean(true)});};
     auto attack=[&](jass::Value target){avm.invoke("AttackMoveKill",std::array{avm.handle("unit",target.bits)});};
     if(terrain.pathRegionsNear({u->x,u->y},destination,u->collision,PathMovement::Ground,128)!=false)throw std::runtime_error("Synthetic islands are not disconnected");
-    if(blocked){
+    if(block==IslandLandingBlock::BeforeSelection){
         auto setLanding=[&](bool open){for(int dy=-384;dy<=384;dy+=32)for(int dx=-384;dx<=384;dx+=32)vm.invoke("SetTerrainPathable",std::array{vm.real(real(targetX+dx)),vm.real(real(targetY+dy)),vm.handle("pathingtype",1),vm.boolean(open)});};
         setLanding(false);
         auto chosen=select();attack(creep);session.advance(1);
@@ -32,14 +33,47 @@ void islandUnloadSite(const wchar_t* root,const wchar_t* map,bool blocked,bool n
     }
     auto chosen=select();if(chosen.bits!=creep.bits)throw std::runtime_error("Available island target was not selected");
     attack(chosen);if(!ai.zeppelinWave || !ai.zeppelinWave->passengers.contains(soldier.bits))throw std::runtime_error("Available island did not reserve its passenger");
-    bool loaded=false,travelled=false;
+    auto setIslandWalkable=[&](bool open){for(int y=400;y<=1680;y+=32)for(int x=2224;x<=3280;x+=32)vm.invoke("SetTerrainPathable",std::array{vm.real(real(x)),vm.real(real(y)),vm.handle("pathingtype",1),vm.boolean(open)});};
+    bool loaded=false,travelled=false,reopened=false;
+    double blockedUntil=0;
+    WorldPoint blockedDrop{};
+    float unloadRange=0;
+    std::uint64_t blockedCast=0;
+    auto waveTicket=ai.zeppelinWave->ticket;
+    std::vector<jass::Value> shoreOccupants;
     for(int n=0;n<240;++n){
         session.advance(.25);
-        loaded|=u->transport==carrier.bits && !ship->cargo.empty();
+        bool aboard=u->transport==carrier.bits && ship->cargo.size()==1 && ship->cargo.front()==soldier.bits;
+        loaded|=aboard;
         travelled|=loaded && std::abs(number(ship->x)-startX)>1000;
-        if(travelled && !u->transport && ship->cargo.empty() && terrain.pathRegionsNear({u->x,u->y},destination,u->collision,PathMovement::Ground,0)==true){
+        if(blockedUntil && !reopened){
+            if(!aboard || !session.units().contains(soldier.bits) || number(u->life)<=0 || !ai.zeppelinWave || ai.zeppelinWave->ticket!=waveTicket)throw std::runtime_error("Blocked landing lost its passenger or active transport wave");
+            if(session.simulationTime()>=blockedUntil){
+                auto remaining=std::hypot(number(ship->x)-number(blockedDrop.x),number(ship->y)-number(blockedDrop.y));
+                if(!travelled || remaining>unloadRange || (ship->cast && ship->cast->ticket==blockedCast))throw std::runtime_error("Carrier did not finish its approach to the blocked unload point");
+                if(naval){for(auto occupant:shoreOccupants)vm.invoke("RemoveUnit",std::array{occupant});}
+                else setIslandWalkable(true);
+                std::cout<<"REOPEN distance="<<remaining<<" range="<<unloadRange<<" time="<<session.simulationTime()<<"\n";
+                reopened=true;
+            }
+        }else if(block==IslandLandingBlock::InTransit && !blockedUntil && aboard && number(ship->x)-startX>(naval?800.f:256.f) && ship->cast && ship->cast->spell.kind==SpellKind::Unload){
+            blockedDrop=ship->cast->point;unloadRange=ship->cast->spell.range+ship->collision;blockedCast=ship->cast->ticket;
+            if(naval){
+                for(int y=400;y<=1680;y+=224)for(int x=2224;x<=3280;x+=224){
+                    auto occupant=spawn(15,"hfoo",x,y);
+                    session.units().at(occupant.bits)->collision=192;
+                    vm.invoke("PauseUnit",std::array{occupant,vm.boolean(true)});
+                    shoreOccupants.push_back(occupant);
+                }
+            }else setIslandWalkable(false);
+            blockedUntil=session.simulationTime()+20;
+            std::cout<<"BLOCK carrier="<<number(ship->x)<<","<<number(ship->y)<<" drop="<<number(blockedDrop.x)<<","<<number(blockedDrop.y)<<" time="<<session.simulationTime()<<"\n";
+        }
+        if(travelled && !u->transport && ship->cargo.empty() && session.units().contains(soldier.bits) && number(u->life)>0 && terrain.pathRegionsNear({u->x,u->y},destination,u->collision,PathMovement::Ground,0)==true){
+            if(block==IslandLandingBlock::InTransit && !reopened)throw std::runtime_error("Dynamic blockade did not exercise interrupted transport");
             if(GetModuleHandleW(L"Game.dll"))throw std::runtime_error("Game.dll loaded");
-            std::cout<<"PASS "<<(blocked?"blocked_then_reopened":naval?"open_naval":"open_air")<<" island unload time="<<session.simulationTime()<<"\n";return;
+            const char* name=block==IslandLandingBlock::BeforeSelection?"blocked_then_reopened":block==IslandLandingBlock::InTransit?(naval?"dynamic_naval":"dynamic_air"):(naval?"open_naval":"open_air");
+            std::cout<<"PASS "<<name<<" island unload time="<<session.simulationTime()<<"\n";return;
         }
     }
     throw std::runtime_error("Transport did not load, cross and unload on the target island");
@@ -312,9 +346,11 @@ int wmain(int argc,wchar_t** argv){
         if(argc==4 && std::wstring_view(argv[3])==L"island-ranged"){islandRangedReach(argv[1],argv[2]);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
         if(argc==4 && std::wstring_view(argv[3])==L"island-nearby"){islandNearbyTransport(argv[1],argv[2]);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
         if(argc==4 && std::wstring_view(argv[3])==L"island-auto-script"){islandAutomatic(argv[1],argv[2],true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
-        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-reopen"){islandUnloadSite(argv[1],argv[2],true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
-        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-open"){islandUnloadSite(argv[1],argv[2],false);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
-        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-naval"){islandUnloadSite(argv[1],argv[2],false,true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
+        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-reopen"){islandUnloadSite(argv[1],argv[2],IslandLandingBlock::BeforeSelection);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
+        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-open"){islandUnloadSite(argv[1],argv[2],IslandLandingBlock::None);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
+        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-naval"){islandUnloadSite(argv[1],argv[2],IslandLandingBlock::None,true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
+        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-dynamic-air"){islandUnloadSite(argv[1],argv[2],IslandLandingBlock::InTransit);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
+        if(argc==4 && std::wstring_view(argv[3])==L"island-unload-dynamic-naval"){islandUnloadSite(argv[1],argv[2],IslandLandingBlock::InTransit,true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
         if(argc==4 && std::wstring_view(argv[3])==L"island-auto"){islandAutomatic(argv[1],argv[2]);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
         if(argc==4 && std::wstring_view(argv[3])==L"island-target-small-move"){islandWave(argv[1],argv[2],false,true,false,true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
         if(argc==4 && std::wstring_view(argv[3])==L"island-target-change"){islandWave(argv[1],argv[2],false,true,true);std::cout<<"RESULT passed=1 failed=0 game_dll_loaded=false\n";return 0;}
