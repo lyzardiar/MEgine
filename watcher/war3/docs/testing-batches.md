@@ -2,7 +2,11 @@
 
 ## 局域网双进程模拟（已执行，不计功能批次）
 
-路径：`tests/lan_process_tests.cpp`、`tests/run-lan-process-tests.py`、`CMakeLists.txt`。独立主机和加入进程以本机 TCP、实验握手及加载屏障连接，分别核验原版 BootyBay 地图并运行真实脚本会话，双方各自选择、移动单位；80 个 32 毫秒时间片的状态摘要及位置逐项一致。Win32 Release 目标编译通过，运行 `python watcher/war3/tests/run-lan-process-tests.py tmp/docs-artifacts/war3/build-tools/build-ninja/bin/war3_lan_process_tests.exe <data-root> tmp/docs-artifacts/war3/lan-two-process/formal` 报告 1 通过／0 失败；日志 `tmp/docs-artifacts/war3/lan-two-process/formal/lan-two-process-vvi9q1bl/`。这是同机的 LanHost／LanJoin 与 ScriptSession／LanSimulation 检查，未覆盖 GameView／LanRuntime、地图传输、跨机、原版互通或全部同步状态；当前功能批次仍为 2/3。
+路径：`tests/lan_process_tests.cpp`、`tests/run-lan-process-tests.py`、`CMakeLists.txt`。独立主机和加入进程以本机 TCP、实验握手及加载屏障连接，分别核验原版 BootyBay 地图并运行真实脚本会话，双方各自选择、移动单位；80 个 32 毫秒时间片的状态摘要及位置逐项一致。异常断线模式在此后强制结束加入进程，主机会话观察到一次正确玩家的离开事件，并继续消费九个时间片。Win32 Release 目标编译通过，运行 `python watcher/war3/tests/run-lan-process-tests.py tmp/docs-artifacts/war3/build-tools/build-ninja/bin/war3_lan_process_tests.exe <data-root> tmp/docs-artifacts/war3/lan-two-process/formal --mode <sync|abrupt>` 两种模式各 1 通过／0 失败；日志分别为 `tmp/docs-artifacts/war3/lan-two-process/formal/lan-two-process-py6k4b92/` 和 `lan-two-process-ebxgx9d_/`。这是同机的 LanHost／LanJoin 与 ScriptSession／LanSimulation 检查，未覆盖 GameView／LanRuntime、地图传输、跨机、原版互通或全部同步状态；当前功能批次仍为 2/3。
+
+## 人族对暗夜 AI 长局（已执行，不计功能批次）
+
+固定种子原版 BootyBay 隔离对局使用两方原电脑脚本，不注入单位或战斗命令；模拟 4380 秒以人族胜、暗夜负结束，进程退出 0。日志 `tmp/docs-artifacts/war3/ai-camp-overlap/duel-human-elf-extended.log`。该结果仅覆盖单图单种子静音模拟，不代表四族组合、原版 AI 精度、窗口或联机验收；当前功能批次仍为 2/3。
 
 ## AI 重叠营地成员归属（新功能批次 2/3，待集中验证）
 
