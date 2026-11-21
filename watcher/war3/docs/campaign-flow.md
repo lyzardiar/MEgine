@@ -66,6 +66,8 @@ Human05 原图玩家防守回归保留地图启动的 1800 秒计时，模拟 12
 
 同一玩家链路继续手动启动 Human06 间章及 Human07：Human06 胜利后阿尔萨斯为 7 级、2712 经验、一级圣光，Human07 初始化时等级、经验、已检查技能和六个背包槽位一致；玩家命令完成穆拉丁相遇并击毁八座初始任务建筑，胜利对话于模拟 755.375 秒请求 `Human08.w3m`。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human01-07-player-chain` 1 通过、0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/human07-assault-audit/chain07-formal.log`。未要求背包非空，未覆盖原版存档格式、窗口自动切关、迷雾探索及 UI 一致性。
 
+前八章玩家链路的等价临时 Win32 Release 候选接续同一目录：Human07 结束时阿尔萨斯为 7 级、2974 经验、一级圣光，穆拉丁为 5 级、1662 经验、二级风暴之锤；Human08 初始化分别恢复一致，并比较两人六个背包槽位。原单章战术在继承状态下使穆拉丁阵亡；调整为玩家学习圣盾、优先治疗并在可见防御塔附近让英雄守位、炮兵先清塔后，五艘原船均由迫击炮击沉，模拟 1348.22 秒请求 Human09，候选报告 1 通过／0 失败。首次整合遗漏清塔步骤时也失败，之后补回并重跑通过；日志 `tmp/docs-artifacts/war3/human07-assault-audit/chain08-{trace,full,full2}.log`。正式 `human01-08-player-chain` 目标已编译并待批次执行；本次未要求背包非空，未证明窗口自动切关、原版存档格式、迷雾探索和 UI 一致性。
+
 资料片暗夜精灵第一章的隔离开场已恢复玩家控制；真实任务、窗口及地图中战争践踏的参数处理仍待完成或验证，见[关卡状态](campaign-nightelfx01-status.md)。
 
 亡灵第二章至第三章的隔离链路：开场恢复控制后将阿尔萨斯设为 5 级并写入用户数据 24168，直接完成基地与圣物任务并触发原结束过场；胜利对话框选择继续后请求 `Undead02Interlude.w3m`。单独启动间章并运行原脚本后请求 `Undead03.w3m`；第三个会话从同一独立 gamecache 恢复到 5 级及相同用户数据，玩家控制已恢复。三个探针及日志位于 `tmp/docs-artifacts/war3/undead02-probe-1031/`。该检查手动创建会话并直接完成任务，未覆盖真实战斗、产品窗口自动切关、音画和原版缓存格式。
