@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 局域网三进程长局与回放（已执行，不计功能批次）
+
+路径为 `CMakeLists.txt`、`tests/lan_process_tests.cpp`、`tests/lan_long_match.cpp`、`tests/lan_long_match.h`、`tests/run-lan-process-tests.py` 和 `tests/generate-lan-long-match.py`。合成三人地图通过独立主机及两个加入进程的实际 TCP、地图校验、加载屏障和 LanSimulation 入口运行 22,500 个 32 毫秒时间片（模拟 12 分钟）。三个玩家使用同步选择和玩家命令完成农场建造、六次分散训练、一次对受伤友军施法、一次消耗药水以及末段移动。三个会话各自验到真实治疗增量、任务触发、唯一胜利回调、同一个获胜者与结算请求。每时间片校验和与按序动作摘要三端一致，实跑有 2 个时片含不同玩家的动作；主机写盘并读取回放，逐时间片比较玩家、动作字节及顺序一致。
+
+Win32 Release 局域网测试目标构建通过。运行 `python watcher/war3/tests/generate-lan-long-match.py <fixture.w3m>`，再运行 `python watcher/war3/tests/run-lan-process-tests.py <war3_lan_process_tests.exe> <data-root> <output> --mode long --map <fixture.w3m>`，为 1 通过／0 失败；同入口已有 `sync`、`abrupt`、`three` 各 1 通过／0 失败。完整日志、主机回放和构建输出位于 `tmp/docs-artifacts/war3/p1-lan-long-match/`，本次长局目录为 `lan-multi-process-wn6ek0uq/`。正式 GameView 多端长局、跨机长局、实际结算界面和界面回放播放待验。功能批次仍为 1/3。
+
 ## 局域网按地址发现与 HY2026 跨机开局（新功能批次 1/3，待集中验证）
 
 路径为 `src/platform.h`、`src/platform.cpp`、`src/main.cpp`、`src/lan_browser.h`、`src/lan_browser.cpp`、`src/lan_discovery.h` 和 `src/lan_discovery.cpp`。加入端以 `--experimental-local-lan --lan-discovery-address <房主IPv4>` 启动并打开局域网大厅时，向该地址的 UDP 6112 询问房间，按现有发现、握手、地图校验与加载流程加入。省略地址仍使用默认广播和本机回环。无法解析为单播 IPv4 的地址会在开启局域网发现时报告错误。
