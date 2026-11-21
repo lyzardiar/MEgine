@@ -44,6 +44,7 @@ public:
     bool requestLeave();
     bool leaveComplete() const {return leaveComplete_;}
     bool isHost() const {return bool(host_);}
+    bool hostDisconnected() const {return join_ && join_->state()==LanJoinState::Closed;}
     // Optional recorder must be attached before the first pump; errors stop recording only.
     bool observeSlots(SlotObserver observer);
     const std::string& observerError() const {return observerError_;}

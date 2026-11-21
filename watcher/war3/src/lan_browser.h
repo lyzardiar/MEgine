@@ -29,6 +29,7 @@ public:
     LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log);
     std::string draw(const UiInput& input,std::wstring_view characters);
     std::string pollMinimized();
+    void reportError(const std::string& message){error_=message;}
     void enableMatchHandoff();
     std::optional<LanLobbyHandoff> takeHandoff();
     std::optional<LanHostHandoff> takeHostHandoff();

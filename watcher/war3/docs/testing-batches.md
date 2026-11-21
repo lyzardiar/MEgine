@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 局域网房主异常退出（功能批次 3/3，待集中验证）
+
+路径为 `src/lan_join.cpp`、`src/lan_runtime.h`、`src/lan_browser.h`、`src/main.cpp`。对局中与房主的 TCP 连接正常关闭或被重置时，加入端清理旧对局和连接，保存部分回放，返回可搜索的局域网列表并显示「房主已断开连接。」；进入新房间时提示清除。其他同步或运行错误沿用现有诊断路径。
+
+Win32 Release 构建通过。运行 `tmp/docs-artifacts/war3/p1-lan-host-exit/v3/verify.ps1`，在两正式客户端经大厅进入 BootyBay 后，只强制结束该轮主机。修复前加入端因 Winsock 10054 作为致命错误退出。修复后 1 通过／0 失败，加入端在本次复验的 975 毫秒内取得返回列表的渲染帧，已建立的 TCP 连接从 1 降为 0，旧 GameView 已关闭，部分回放写盘；同一进程重新建房并监听 6112 端口，新大厅帧无旧提示，之后以退出码 0 关闭。日志、帧和脚本位于 `tmp/docs-artifacts/war3/p1-lan-host-exit/`。跨机、网络静默超时、最小化和过场中的断线留待后续验收。
+
 ## 局域网缺图下载与跨机链路（分项已验证，跨机产品验收待完成）
 
 在 `6d62f9c` 的 Win32 Release 客户端上，同机使用两个隔离数据根与用户目录。只有主机预置自有合成地图 `CrossTest.w3m`。从正式大厅发现房间、用不同玩家名加入后，加入端显示地图接收及校验完成。主机开局，两端均记录 `EnterLanGame` 并采集到 GameView 渲染帧。两端初始化随机种子均为 `3931708862`，加入端的数据根测试后仍无该地图文件。正式客户端缺图下载至开局的场景为 1 通过／0 失败。启动脚本、双端日志、渲染记录及摘要在 `tmp/docs-artifacts/war3/p1-cross-machine/{drive-product.ps1,product-run-*/agent/,product-summary.json}`。复验使用 `--hidden --mute --experimental-local-lan` 与本机已有游戏数据，每端单独指定 `--data-root`。
