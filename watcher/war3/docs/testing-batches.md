@@ -1,22 +1,28 @@
 # 独立客户端测试队列
 
+## 连通区、退让与 FDF 批次（已执行，1 项失败待处理）
+
+范围：`a10f511`、`18bddff`、`ba139ea`，测试源码版本 `db8a822`。Win32 Release 客户端及 world、destructable、human campaign、browser、transport、harvest、caster、stealth 目标干净构建通过。17 个测试进程中 16 个退出 0，合计 52 项通过：包括碰撞连通等价及路径失效、五类最小射程退让、Human08 五船和 Human09 自然胜利、密室路径及登船／采集／月井／守位，以及 browser 全部 37 项。`human07-assault` 退出 1：目标建筑被其他玩家部队摧毁时，阿尔萨斯未对该目标造成测试要求的伤害；该项仍在队列，尚未判定根因。批次脚本与日志为 `tmp/docs-artifacts/war3/build-tools/run-batch-clearance-retreat-fdf.mjs`、`tmp/docs-artifacts/war3/batch-clearance-retreat-fdf/`。
+
+Human07 重跑同样失败；移除 Human09 新观察器后输出不变，以 `a10f511` 的四个旧攻击对象覆盖链接当前 core 也复现失败，说明该复现不依赖新观察器或新退让对象，但混合版本不代表完整旧版。追击时英雄位于攻击范围外且附近友军与其前路相交，正常命令移开友军可改变结果；是否存在动态避让缺陷仍待验证。证据 `tmp/docs-artifacts/war3/human07-compare/`、`human07-assault-audit/`。集成版另在独立隐藏客户端自然运行 Human08 到玩家阶段，迫击炮选择和 F9 任务请求均成功，画面位于 `tmp/docs-artifacts/war3/human08-ui-probe/agent-MX5Fky/`；不代表前台输入或原版视觉对照。失败修复后只重测失败项及其影响范围。
+
 ## 人族第九章玩家命令自然胜利（已执行，不计功能批次）
 
 路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原图隔离会话经正常玩家战斗、采集及训练命令完成守卫、霜之哀伤和敌军基地目标；只读事件核实玩家击杀，胜利后记录终章及战役解锁。Win32 Release 回归退出 0、1 通过／0 失败；命令、范围和日志见[战役流程](campaign-flow.md)。测试工作不计功能批次。
 
-## 普通 FDF 多锚点布局（本批 3/3，待批次验证）
+## 普通 FDF 多锚点布局（批次已执行，失败项待处理）
 
 路径：`src/glue.cpp`、`src/map_frames.h`、`src/map_frames.cpp`、`tests/browser_tests.cpp`。普通 GlueScreen 同时求解多个源 SetPoint；对负尺寸或矛盾的普通 FDF 约束回退首锚，缺失引用、循环及非法数值仍报错；脚本 MapFrame 的冲突继续拒绝。原版 TimerDialog 标题框、双锚按钮命中和重复 attach 的独立上下文由新增回归检查。
 
 必要检查：Win32 Release 客户端及 browser 测试干净构建通过；同一 `fdf_glue_multi_anchor` 回归在旧实现因原 FDF 计时框几何错误失败，在新实现退出 0、1 通过／0 失败；MapFrame 轴求解、源帧锚点、渲染和评分界面 attach 各 1 通过／0 失败。隔离重放计时框、排行榜、多榜及单条任务界面四图前后像素一致。日志 `tmp/docs-artifacts/war3/fdf-multianchor-audit/`。源中后续锚点缺失或循环现会参与解析并报错，其与原版及自定义资源的兼容性尚待对照；上述重放不是完整 GameView 或真实 UI 验收。
 
-## 最小射程的受阻退让（本批 2/3，待批次验证）
+## 最小射程的受阻退让（批次已执行，失败项待处理）
 
 路径：`src/session.h`、`src/session_combat_orders.cpp`、`src/session_combat.cpp`、`src/session_combat_destructable.cpp`、`src/session_attack_ground.cpp`、`tests/destructable_tests.cpp`。单位、可破坏物和攻击地面在最小射程内优先沿原方向退让；该方向不可达时，最多尝试其他七个固定方向，并仅接受实际终点处于武器射程内的完整路径。移动目标使旧路径失效且退让全部失败时清除该路线、保留攻击命令以便开路后重试。
 
 必要检查：公共头修改后 Win32 Release 干净构建通过；`war3_destructable_tests <data-root> <generated-map> <minimum-range|minimum-range-alternate|minimum-range-moving|minimum-range-throttle|minimum-range-revision>` 各退出 0、1 通过／0 失败。绕行与移动目标专项修复前分别因无法开火和无效旧路径保留而失败；覆盖单位／树／地面、目标重合与近距、封闭和移除障碍后恢复，以及目标移动导致旧路线失效、定身期间无关路径修订和第二段实际受阻；树为去除自身占地的合成夹具。日志 `tmp/docs-artifacts/war3/mortar-overlap-probe/`。无渲染合成压力样本中 100 门同坐标炮兵受阻运行 2 模拟秒，静态约 35 ms、8 次路径修订约 37 ms；共享位置和失败缓存，不代表实际帧率或最坏开销，日志 `tmp/docs-artifacts/war3/mortar-blocked-load/summary.log`。完整 Human08 五船回归在限定最小射程内处理路线后退出 0、1 通过／0 失败，日志 `tmp/docs-artifacts/war3/human08-strategy/restricted-victory.log`；此前更广范围追击改动的回归失败日志 `retreat-victory.log` 保留，失败具体原因未定位。八方向是有界近似，窄角通道、复杂动态障碍和原版退让选点仍待对照。
 
-## 路径连通区离散圆扫描（本批 1/3，待批次验证）
+## 路径连通区离散圆扫描（批次已执行，失败项待处理）
 
 路径：`src/world_path.cpp`、`tests/world_tests.cpp`。碰撞级别至少为 2 时，按行预计算最近阻挡格并以整数圆行跨度判断可通行，保留地面／空中／水上／两栖掩码、地图边界及原有防斜角穿越的连通洪泛；小半径继续使用既有逐格检查。
 
