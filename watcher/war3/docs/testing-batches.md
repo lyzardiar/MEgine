@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## AI 重叠营地成员归属（新功能批次 2/3，待集中验证）
+
+路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。已归属营地的野怪不再在后续重叠营地重复计数或被再次选为目标；合成强弱相邻营地检查及已有可达营地检查分别 2 通过／0 失败。集中验证需覆盖不同营地顺序、移动或死亡的成员、真实地图攻击及跨岛运输；原版分组和路径成本规则仍待对照。命令为 `war3_campaign_ai_tests <data-root> <campaign-ai-fixture> camp-overlap` 与 `reachable`，临时探针在 `tmp/docs-artifacts/war3/ai-camp-overlap/`。
+
 ## 战役章节标题同步（新功能批次 1/3，待集中验证）
 
 路径：`src/campaign_browser.cpp`。章节选择由键盘或鼠标更新后，在绘制原版 FDF 界面前同步章节标题与名称，避免首帧空标题或切换时显示上一章节。差异及绘制顺序已审查，Win32 Release 客户端编译通过；集中验证需覆盖首次进入、键盘及鼠标切换、返回重入和实际窗口画面，并对照原版布局。当前远程会话 D3D9 创建设备失败，不能据此声称画面已验证；诊断日志 `tmp/docs-artifacts/war3/frontend-chain4/`。
