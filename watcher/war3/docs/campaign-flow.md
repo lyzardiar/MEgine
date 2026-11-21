@@ -48,6 +48,8 @@ Human02 另有原图玩家命令胜利回归：使用原始资源和工人，实
 
 Human02 至 Human03 的隔离链路中，将阿尔萨斯设为 5 级后直接执行 Human02 原图的关卡准备函数；间章发出 Human03 换关请求，手动载入 Human03 后恢复了 5 级阿尔萨斯，开场结束后玩家控制权恢复。日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/cache-chain.log`。该检查未自然完成 Human02，也未经过产品窗口自动切关、真实战斗和完整战役。
 
+另以同一独立用户目录依次运行 Human01、Human02 和 Human03 玩家命令胜利回归，按请求手动启动后续关卡及 Human02 间章，不人为设置英雄等级、经验或物品。Human01 胜利后阿尔萨斯为 2 级、244 经验、一级圣光，Human02 开场恢复一致；Human02 胜利后为 2 级、490 经验、一级圣光，经间章进入 Human03 后恢复一致。每次还比较六个背包槽位的物品类型与次数，但本次未要求非空物品。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human01-03-player-chain` 1 通过、0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/human07-assault-audit/chain-formal.log`。此检查不证明原版存档格式、非空背包继承、窗口自动切关、迷雾探索或 UI 一致性。
+
 Human03 隔离探针将阿尔萨斯移入原图粮仓区域并对目标仓库下达攻击命令；原图受击和死亡触发后出现胜利对话框，下一关目标为 `Maps\Campaign\Human04.w3m`，日志位于 `tmp/docs-artifacts/war3/human03-continuation-1031/attack-ending.log`。探针直接调整单位位置，未覆盖自然寻路、鼠标输入、实际窗口或完整关卡。
 
 Human03 另有原图玩家命令胜利回归：测试读取粮仓区域中心与仓库坐标作为行军目的地，以攻击移动进入剧情区域，观察触发器关闭及控制权暂时丢失，再攻击可见的原目标仓库。只读事件确认仓库由玩家单位击毁、累计伤害 400.25；期间受理 10 次英雄治疗命令，胜利对话继续后于模拟 538.375 秒请求 `Human04.w3m`。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human03-player-victory` 1 通过、0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/human07-assault-audit/human03-formal.log`。测试使用独立用户目录和已知目的地，技能数字为受理数；前章存档承接、迷雾探索、前台操作、自动切关、实际 UI 和原版时序仍未验证。
