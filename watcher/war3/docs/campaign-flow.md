@@ -79,6 +79,8 @@ Win32 Release `war3_orc_campaign_chain_tests` 实际 1 通过、0 失败，未�
 
 人族第八章另有原图玩家命令回归：以阿尔萨斯、穆拉丁的攻击和技能清路，迫击炮跟进并攻击原有船只，不更改目标生命、计数、敌军 AI 或地图；只读触发器记录每艘船的伤害和击杀来源。独立用户目录复跑分别在 300.5、339、420.5 秒击沉 0108、0098、0110 三艘船，剩余数由 5 依次降到 2；三艘船记录迫击炮伤害分别为 234、224、222，击杀者均为原图迫击炮。`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human08-player-ship` 退出 0、1 通过／0 失败，日志 `tmp/docs-artifacts/war3/human08-strategy/three-ship-main.log`。第四、第五艘、整关胜利、窗口及 UI 未覆盖。
 
+继续探索剩余两船时，炮击破坏的东侧树木已释放其动态路径足迹；停点东侧和南侧另有原图 WPM 的地面禁行格，炮兵碰撞半径 32 也使紧邻禁行格的位置不可通行。对照开场至模拟 760 秒，WPM 地面禁行位变化 0 格，其他位有变化；局部足迹与 WPM 取样见 `tmp/docs-artifacts/war3/human08-strategy/run-u-audit.log`。正常攻击清树与北侧分段绕行仍未击中剩余两船，不能据此断言没有其他路径或原版表现有误。
+
 人族第六至第九章原图连续隔离检查已延伸至最终胜利：第九章将英雄移入守护者区域并击杀守护者，剧情替换阿尔萨斯后检查等级和同一物品句柄，再击杀玛尔加尼斯及目标建筑，检查胜利、`HumanEd` 影片请求、返回战役选择和亡灵战役／首章及人族结尾解锁。`ReplaceUnitBJ` 从原英雄转移经验和物品，用户数据不转移。检查使用原版战役上下文、新建用户目录及直接移动和击杀；Win32 Release 测试目标的 `victory`、`defeat` 各 1 通过、0 失败，未加载 Game.dll。自然战斗、画面、影片播放和客户端自动切关仍待阶段验证。
 
 人族第六章补充玩家命令驱动的原图胜利回归：进入玩家控制后，使用正式采矿、步兵训练、目标攻击和探索命令，不创建目标、直接击杀或改写生命、计数。该局 2033.69 秒通过胜利对话并请求 `Human06Interlude`；净化 100、玛尔加尼斯转换 4，17 栋曾被下令攻击的目标房屋被摧毁，49 条训练命令受理，45 名非初始步兵实际持有攻击目标。Win32 Release `war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human06-player-victory` 退出 0、1 通过／0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/human06-player/regression-b.log`。此局未单独证明房屋最终击杀归属或与玛尔加尼斯部队的实际交战，也不代表原版固定时序、窗口 UI、完整玩家操作或后续章节自然胜利。
