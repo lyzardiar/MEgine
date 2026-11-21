@@ -26,9 +26,9 @@ Human08 原图人为碰撞半径 512 且起点不可通行的完整玩家攻击�
 
 必要检查：Win32 Release 客户端及战役测试干净构建通过；隐藏 D3D9 源 FDF 对照的三个原始文字样式及自定义正向偏移逐像素一致，自定义负向偏移最初因边界裁剪差 7 像素（4 通过／1 失败）；补充当前手绘区域裁剪后 7 组逐像素通过，包括正负偏移、已有裁剪交集和空交集及状态恢复。Human08 原图隐藏客户端在玩家阶段显示 HUD、计时与排行榜，选择迫击炮并通过 F9 打开任务成功。证据和限制见[战役计数板](campaign-leaderboard.md)；实际原版视觉对照、源子帧与当前近似布局的差异及多分辨率仍待验证。
 
-## 人族第八章玩家命令击沉三艘船（已执行，不计功能批次）
+## 人族第八章玩家命令自然胜利（已执行，不计功能批次）
 
-路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原图玩家命令回归以英雄清路、迫击炮跟随并攻击，连续击沉三艘船并由只读伤害、死亡事件逐一确认迫击炮为击杀者；主进程 Win32 Release 复跑退出 0、1 通过／0 失败。命令、结果和未覆盖范围见[战役流程](campaign-flow.md)，日志 `tmp/docs-artifacts/war3/human08-strategy/three-ship-main.log`。测试工作不计功能批次。
+路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原图玩家命令回归以英雄清路、迫击炮跟随并攻击，连续击沉五艘船并由只读伤害、死亡事件逐一确认迫击炮为击杀者，胜利对话后请求 Human09；主进程 Win32 Release 复跑退出 0、1 通过／0 失败。命令、结果和未覆盖范围见[战役流程](campaign-flow.md)，日志 `tmp/docs-artifacts/war3/human08-strategy/five-final-main.log`。测试工作不计功能批次。
 
 ## 不可通行起点的追击建区（已批次验证，仍有待验项）
 
