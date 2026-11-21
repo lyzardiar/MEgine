@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 亡灵第一章普通难度完整救援（已执行，不计功能批次）
+
+路径为 `tests/undead_campaign_tests.cpp`。Win32 Release 隔离构建通过。运行 `war3_undead_campaign_tests <data-root> <new-absolute-user-dir> full`，读取会话中的待救目标、地形和威胁选择行进路线，经正式玩家命令移动、战斗、使用治疗药水，在荒芜地恢复后继续救援。原图在模拟 745.5 秒达到 20 人，随后触发胜利。确认继续后，于 776.469 秒请求 `Maps\Campaign\Undead02.w3m`，英雄存活。`full`、`rescues` 和 `potion` 各 1 通过／0 失败，记录位于 `tmp/docs-artifacts/war3/p0-undead01/formal-{full,rescues,potion}.log`。前台操作、逐步探索迷雾、实际载入下一章和原版对照待验。当前功能批次为 1/3。
+
 ## 游戏胜利事件与获胜玩家（新功能批次 1/3，待集中验证）
 
 路径为 `src/session_match.cpp`、`src/session.h`、`src/script_state.h`、`src/session_threads.cpp`、`tests/session_tests.cpp` 和 `tests/clock_tests.cpp`。独立客户端在首次记录玩家胜利后，先执行既有玩家胜利回调，再派发游戏胜利；脚本通过 `GetWinningPlayer` 读取当前回调的玩家。两种休眠线程快照保存获胜玩家句柄并继续接受旧版快照。

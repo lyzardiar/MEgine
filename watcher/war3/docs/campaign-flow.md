@@ -80,7 +80,9 @@ Human02 正式客户端此前因原图列出但未使用的 `CLno` 悬崖类型�
 
 亡灵第一章原图治疗药水箱的玩家回归：英雄以移动及攻击命令击破箱子，再对生成的 `phea` 发出一次拾取命令。修复前路径终点距离为 128.0000458，超过拾取阈值 128，英雄反复寻路并最终阵亡；修复后按路径既有 0.01 单位精度容差判定到达，于模拟 144 秒拾取，正式 Win32 入口 `war3_undead_campaign_tests <data-root> <new-absolute-user-dir> potion` 1 通过、0 失败。日志 `tmp/docs-artifacts/war3/undead01-player/potion-{before,after}.log`；尚未对照原版精确拾取半径或前台鼠标操作。
 
-亡灵第一章普通难度原图的开场玩家命令回归从控制权恢复后开始，按已知侍僧位置移动并与可见卫兵交战：桥头剧情和普通接触触发器各执行一次，两名侍僧经原图召唤与到达流程加入救援编组，计数于模拟 147.25 秒达到 2，阿尔萨斯存活。`war3_undead_campaign_tests <data-root> <new-absolute-user-dir>` Win32 正式入口 1 通过、0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/undead01-player/formal2.log`。更深入的探索在守卫战中失败，仅救出 3 至 5 人；正常难度要求 20 人，完整胜利、前台操作、迷雾探索及 UI 一致性尚未验证。
+亡灵第一章普通难度原图的开场玩家命令回归从控制权恢复后开始，按已知侍僧位置移动并与可见卫兵交战：桥头剧情和普通接触触发器各执行一次，两名侍僧经原图召唤与到达流程加入救援编组，计数于模拟 147.25 秒达到 2，阿尔萨斯存活。`war3_undead_campaign_tests <data-root> <new-absolute-user-dir>` Win32 正式入口 1 通过、0 失败，未加载 Game.dll；日志 `tmp/docs-artifacts/war3/undead01-player/formal2.log`。
+
+普通难度完整救援回归使用 `war3_undead_campaign_tests <data-root> <new-absolute-user-dir> full`。隔离会话读取待救位置及威胁状态规划路线，经玩家命令交战、拾取和使用药水、在荒芜地恢复。模拟 745.5 秒救满 20 人，关卡记录胜利，英雄存活，点继续后于 776.469 秒请求 `Maps\Campaign\Undead02.w3m`。Win32 Release 入口 1 通过、0 失败，日志 `tmp/docs-artifacts/war3/p0-undead01/formal-full.log`。实际载入第二章、前台操作、逐步探索迷雾及界面对照仍待验证。
 
 资料片暗夜精灵第一章的隔离开场已恢复玩家控制；真实任务、窗口及地图中战争践踏的参数处理仍待完成或验证，见[关卡状态](campaign-nightelfx01-status.md)。
 
