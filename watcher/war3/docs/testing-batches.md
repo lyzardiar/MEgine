@@ -46,6 +46,10 @@ Human07 后续修复见下方“建筑攻击受阻接近点”。原失败入口
 
 路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human01-05-player-chain` 延续同一独立用户目录的前述链路，手动启动 Human04 和 Human05，以玩家命令完成剧情战斗和原图计时防守；检查两位实际游玩英雄的等级、经验、技能和背包槽位，并核对 Human05 原图初始化对吉安娜的升级。Win32 Release 正式构建报告 1 通过／0 失败；详细范围与日志见[战役流程](campaign-flow.md)。测试工作不计功能批次，当前仍为 2/3。
 
+## 人族第一至六章玩家流程与英雄继承（已执行，不计功能批次）
+
+路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human01-06-player-chain` 延续同一独立用户目录的玩家链路，手动启动 Human05 间章与 Human06；初始化时核对实际游玩的阿尔萨斯状态，再以玩家命令完成 Human06 胜利。Win32 Release 正式构建报告 1 通过／0 失败；详细范围与日志见[战役流程](campaign-flow.md)。测试工作不计功能批次，当前仍为 2/3。
+
 范围：`a10f511`、`18bddff`、`ba139ea`，测试源码版本 `db8a822`。Win32 Release 客户端及 world、destructable、human campaign、browser、transport、harvest、caster、stealth 目标干净构建通过。17 个测试进程中 16 个退出 0，合计 52 项通过：包括碰撞连通等价及路径失效、五类最小射程退让、Human08 五船和 Human09 自然胜利、密室路径及登船／采集／月井／守位，以及 browser 全部 37 项。`human07-assault` 退出 1：目标建筑被其他玩家部队摧毁时，阿尔萨斯未对该目标造成测试要求的伤害；该项仍在队列，尚未判定根因。批次脚本与日志为 `tmp/docs-artifacts/war3/build-tools/run-batch-clearance-retreat-fdf.mjs`、`tmp/docs-artifacts/war3/batch-clearance-retreat-fdf/`。
 
 Human07 重跑同样失败；移除 Human09 新观察器后输出不变，以 `a10f511` 的四个旧攻击对象覆盖链接当前 core 也复现失败，说明该复现不依赖新观察器或新退让对象，但混合版本不代表完整旧版。追击时英雄位于攻击范围外且附近友军与其前路相交，正常命令移开友军可改变结果；是否存在动态避让缺陷仍待验证。证据 `tmp/docs-artifacts/war3/human07-compare/`、`human07-assault-audit/`。集成版另在独立隐藏客户端自然运行 Human08 到玩家阶段，迫击炮选择和 F9 任务请求均成功，画面位于 `tmp/docs-artifacts/war3/human08-ui-probe/agent-MX5Fky/`；不代表前台输入或原版视觉对照。失败修复后只重测失败项及其影响范围。
