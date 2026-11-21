@@ -1,5 +1,9 @@
 # 独立客户端测试队列
 
+## 局域网双进程模拟（已执行，不计功能批次）
+
+路径：`tests/lan_process_tests.cpp`、`tests/run-lan-process-tests.py`、`CMakeLists.txt`。独立主机和加入进程以本机 TCP、实验握手及加载屏障连接，分别核验原版 BootyBay 地图并运行真实脚本会话，双方各自选择、移动单位；80 个 32 毫秒时间片的状态摘要及位置逐项一致。Win32 Release 目标编译通过，运行 `python watcher/war3/tests/run-lan-process-tests.py tmp/docs-artifacts/war3/build-tools/build-ninja/bin/war3_lan_process_tests.exe <data-root> tmp/docs-artifacts/war3/lan-two-process/formal` 报告 1 通过／0 失败；日志 `tmp/docs-artifacts/war3/lan-two-process/formal/lan-two-process-vvi9q1bl/`。这是同机的 LanHost／LanJoin 与 ScriptSession／LanSimulation 检查，未覆盖 GameView／LanRuntime、地图传输、跨机、原版互通或全部同步状态；当前功能批次仍为 2/3。
+
 ## AI 重叠营地成员归属（新功能批次 2/3，待集中验证）
 
 路径：`src/session_ai_natives.cpp`、`tests/campaign_ai_tests.cpp`、`docs/ai.md`。已归属营地的野怪不再在后续重叠营地重复计数或被再次选为目标；合成强弱相邻营地检查及已有可达营地检查分别 2 通过／0 失败。集中验证需覆盖不同营地顺序、移动或死亡的成员、真实地图攻击及跨岛运输；原版分组和路径成本规则仍待对照。命令为 `war3_campaign_ai_tests <data-root> <campaign-ai-fixture> camp-overlap` 与 `reachable`，临时探针在 `tmp/docs-artifacts/war3/ai-camp-overlap/`。
