@@ -11325,3 +11325,7 @@ Stealth 的 `group-counts`、`sentinel`、`flare-charges`、`flow`、`dust`、`t
 ## 人族第一至九章玩家流程与双英雄继承（已执行，不计功能批次）
 
 路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。`war3_human_campaign_chain_tests <data-root> <new-absolute-user-dir> human01-09-player-chain` 在同一目录接续前八章，核对 Human09 两位实际游玩英雄状态，以玩家指令完成守卫、霜之哀伤剧情和最终战斗。正式 Win32 入口报告 1 通过、0 失败，范围、局限和日志见[战役流程](campaign-flow.md)。测试工作不计功能批次，当前仍为 2/3；前八章作为此链的一部分已执行，独立 `human01-08-player-chain` 入口仍待批次执行。
+
+## 亡灵第一章开场玩家救援（已执行，不计功能批次）
+
+路径：`CMakeLists.txt`、`tests/undead_campaign_tests.cpp`、`docs/campaign-flow.md`。新增 `war3_undead_campaign_tests <data-root> <new-absolute-user-dir>`，以玩家移动、攻击和技能命令验证桥头剧情及普通接触两类侍僧救援，检查原图触发和到达编组。Win32 正式入口 1 通过、0 失败；完整 20 人任务仍待验证，日志与局限见[战役流程](campaign-flow.md)。测试工作不计功能批次，当前仍为 2/3。
