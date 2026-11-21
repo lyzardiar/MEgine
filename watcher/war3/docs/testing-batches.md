@@ -1,10 +1,10 @@
 # 独立客户端测试队列
 
-## 原版模型挂点尾部空格（新功能批次 3/3，待集中验证）
+## 原版模型挂点尾部空格（批次 3/3，失败项待处理）
 
 路径：`src/model_particles.cpp`、`tests/morph_tests.cpp`、`docs/campaign-flow.md`。Human02 原图对 Feranor 的迫击炮模型添加头顶任务提示，原始 MDX 挂点名为 `OverHead Ref `，尾部空格使匹配失败、客户端跳过绘制。挂点名称比较现在先去掉尾部空格，再移除原有 ` ref` 后缀；匹配仍共享现有大小写和逗号规则。
 
-必要检查：Win32 客户端及 morph 目标构建通过；`war3_morph_tests <data-root> <morph-fixture> attachments` 使用安装中原始 MortarTeam 模型，修复前无法找到 overhead，修复后 overhead/origin 均返回有限姿态，Cyclone 的 `sprite,first` 及未知名称检查通过，1 通过／0 失败。正式隐藏客户端 Human02 运行 20 游戏帧正常退出，不再报告该挂点缺失；日志 `tmp/docs-artifacts/war3/human02-overhead-review/`。原版画面、动态动画与附件组合尚需对照。该任务计入批次 3/3，需合并地形、攻击追近及挂点相关验证。
+必要检查：Win32 客户端及 morph 目标构建通过；`war3_morph_tests <data-root> <morph-fixture> attachments` 使用安装中原始 MortarTeam 模型，修复前无法找到 overhead，修复后 overhead/origin 均返回有限姿态，Cyclone 的 `sprite,first` 及未知名称检查通过，1 通过／0 失败。正式隐藏客户端 Human02 运行 20 游戏帧正常退出，不再报告该挂点缺失；日志 `tmp/docs-artifacts/war3/human02-overhead-review/`。原版画面、动态动画与附件组合尚需对照。批次在集成版本 `a339f3a` 执行，19 个进程中 18 个成功、1 个失败：移动追近、模型挂点、亡灵开场与药水、Human07、三张正式客户端载图和缺失悬崖负例通过；Human01–09 玩家链在 Human04 阿尔萨斯阵亡，尚未判断引擎问题或战术变化，失败保留并只重测受影响范围。本地候选调整 Human04 测试的法力保留及自疗优先后，正式测试入口越过 Human04、Human05，但 Human06 计数停在 19 后基地被毁，未达到胜利；日志 `tmp/docs-artifacts/war3/human04-batch-audit/chain-fixed.log`。Human06 的有界目标暂缓候选在正式整链中达到 100 并请求间章，Human07 初始化恢复 7 级、2712 经验和一级圣光；但 Human07 后续英雄阵亡，整链仍失败，日志 `tmp/docs-artifacts/war3/human06-batch-audit/final-chain.log`。日志 `tmp/docs-artifacts/war3/batch-cliff-unit-attachment-20261121/`；脚本 `tmp/docs-artifacts/war3/build-tools/run-batch-cliff-unit-attachment-20261121.mjs`。Human02 原图副本的实际悬崖及坡道分别将槽位 1 改为 15 后均成功绘制，坡道使用缺失槽位 2 则报 CLno，地形统计与原图一致；日志 `tmp/docs-artifacts/war3/terrain-slot15-probe/`，不证明像素一致。
 
 ## 普通单位攻击受阻接近点（新功能批次 2/3）
 
@@ -12,7 +12,7 @@
 
 必要检查：Win32 Release 客户端及 movement 目标构建通过；`occupied-unit` 修复前因落点未更换失败，修复后绕行并实际造成伤害；`occupied-unit-retarget`、`occupied-unit-filter` 和既有 `occupied-approach`、`occupied-retarget` 各通过，覆盖目标位置变化、移动目标、飞行与疾风步非阻挡以及建筑路径。亡灵原图相同单次命令的临时前后探针中，修复前英雄在模拟 182.25–186.25 秒保持射程外，修复后 182.25 秒英雄与一名食尸鬼同时进入射程并观察到目标受伤；另一次注入只读受伤观察器后记录阿尔萨斯造成 175（包含死缠）、诱饵食尸鬼造成 129.464 伤害；观察器版本与无观察器版本句柄分配不同。日志 `tmp/docs-artifacts/war3/undead-approach-audit/`。极短射程、大规模拥堵、持续移动目标、原版避让一致性和完整任务胜利留待批次验证；本任务计入新批次 2/3。
 
-同任务补充：目标先接收移动命令、随后被暂停、眩晕或缠绕时，路线保留但单位实际不能移动；现在将这三类状态纳入静止目标的有界绕点检查。三名暂停友军占位的自然步进夹具修复前 30 模拟秒无法攻击，修复后 `occupied-unit-disabled` 对三种状态均造成伤害，解除后目标继续移动且攻击命令保留；`occupied-unit-moving` 验证目标以正常命令移动 128 后被继续追击并受伤，非阻挡、建筑及先前单位追近用例通过。眩晕与缠绕由夹具直接施加状态，不代表技能动画或原版时序验证；日志 `tmp/docs-artifacts/war3/undead-approach-audit/review-{paused,stunned,rooted}-wall*.log`。同一任务补充不增加批次数量。
+同任务补充：目标先接收移动命令、随后被暂停、眩晕或缠绕时，路线保留但单位实际不能移动；现在将这三类状态纳入静止目标的有界绕点检查。三名暂停友军占位的自然步进夹具修复前 30 模拟秒无法攻击，修复后 `occupied-unit-disabled` 对三种状态均造成伤害，解除后目标继续移动且攻击命令保留；`occupied-unit-moving` 验证目标以正常命令移动 128 后被继续追击并受伤，非阻挡、建筑及先前单位追近用例通过。眩晕与缠绕由夹具直接施加状态，不代表技能动画或原版时序验证；日志 `tmp/docs-artifacts/war3/undead-approach-audit/review-{paused,stunned,rooted}-wall*.log`。测试证据补充：`occupied-unit` 和 `occupied-unit-moving` 中挡路友军现同时暂停，确保受测目标的伤害只能来自攻击者；两项重编译后均通过。同一任务补充不增加批次数量。
 
 ## 未使用的悬崖资源槽位（新功能批次 1/3）
 
