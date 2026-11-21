@@ -15,7 +15,7 @@ constexpr EnumNative enums[]={
 void require(bool value,const char* message) {if(!value)throw std::runtime_error(message);}
 Module compile(std::string text) {return Module::compile(Program::parse({{"session.j",std::move(text),"authored native session test"}}));}
 Bytes legacyContextWire(const Bytes& bytes,unsigned version=1){
-    constexpr size_t budget=64u*1024u*1024u;Binary in(openSnapshot(bytes,budget));in.expect(tag("JSSC"));require(in.u32()==4,"Expected version 4 context");SnapshotWriter out(budget);out.u32(tag("JSSC"));out.u32(version);auto scripts=in.u32();out.u32(scripts);out.raw(in.take(scripts));auto threads=in.u32();out.u32(threads);for(unsigned i=0;i<threads;++i){auto contexts=in.u32();out.u32(contexts);for(unsigned j=0;j<contexts;++j){out.raw(in.take(54*4+28));for(int text=0;text<2;++text){auto size=in.u32();out.u32(size);out.raw(in.take(size));}auto name=in.u32();if(version>=2){out.u32(name);out.raw(in.take(name));}else in.take(name);require(in.u32()==0 && in.u32()==0,"Legacy context cannot contain custom messages");}auto selections=in.u32();out.u32(selections);if(selections)for(int player=0;player<16;++player){auto count=in.u32();out.u32(count);out.raw(in.take(size_t(count)*4));}require(in.u32()==0,"Legacy context cannot contain a trigger sequence");if(version>=3)out.u32(0);}in.finish();return sealSnapshot(out.finish(),budget);
+    constexpr size_t budget=64u*1024u*1024u;Binary in(openSnapshot(bytes,budget));in.expect(tag("JSSC"));require(in.u32()==5,"Expected version 5 context");SnapshotWriter out(budget);out.u32(tag("JSSC"));out.u32(version);auto scripts=in.u32();out.u32(scripts);out.raw(in.take(scripts));auto threads=in.u32();out.u32(threads);for(unsigned i=0;i<threads;++i){auto contexts=in.u32();out.u32(contexts);for(unsigned j=0;j<contexts;++j){out.raw(in.take(54*4+28));for(int text=0;text<2;++text){auto size=in.u32();out.u32(size);out.raw(in.take(size));}auto name=in.u32();if(version>=2){out.u32(name);out.raw(in.take(name));}else in.take(name);require(in.u32()==0 && in.u32()==0 && in.u32()==0,"Legacy context cannot contain message or victory data");if(version>=4){out.u32(0);out.u32(0);}}auto selections=in.u32();out.u32(selections);if(selections)for(int player=0;player<16;++player){auto count=in.u32();out.u32(count);out.raw(in.take(size_t(count)*4));}require(in.u32()==0,"Legacy context cannot contain a trigger sequence");if(version>=3)out.u32(0);}in.finish();return sealSnapshot(out.finish(),budget);
 }
 template<class F> void rejects(F run,std::string_view message) {try{run();}catch(const std::exception& e){require(std::string_view(e.what()).find(message)!=std::string_view::npos,"Unexpected session diagnostic");return;}throw std::runtime_error("Invalid session operation accepted");}
 }
@@ -79,6 +79,89 @@ native CreateTimer takes nothing returns timer
 native RemovePlayer takes player p, playergameresult r returns nothing
 native CachePlayerHeroData takes player p returns nothing
 )jass");ScriptSession session(std::move(module),{});session.initialize();auto& vm=session.runtime();auto timer=vm.invoke("CreateTimer");for(auto id:{0u,timer.bits,0x7fffffffu}){auto invalid=vm.handle("player",id);vm.invoke("CachePlayerHeroData",std::array{invalid});vm.invoke("RemovePlayer",std::array{invalid,vm.handle("playergameresult",0)});}for(auto result:session.results())require(!result,"Invalid player changed a result");auto player=vm.invoke("Player",std::array{vm.integer(0)});vm.invoke("CachePlayerHeroData",std::array{player});vm.invoke("RemovePlayer",std::array{player,vm.handle("playergameresult",0)});vm.invoke("RemovePlayer",std::array{player,vm.handle("playergameresult",1)});require(session.results()[0]==0u && session.config().players[0].slotState==2,"Valid player result changed");});
+    test("match_victory_event_context_and_reentry",[]{
+        const std::string source=R"jass(type player extends handle
+type playergameresult extends handle
+type trigger extends handle
+type triggeraction extends handle
+type event extends handle
+type eventid extends handle
+type gameevent extends eventid
+type playerevent extends eventid
+native Player takes integer id returns player
+native GetPlayerId takes player p returns integer
+native RemovePlayer takes player p, playergameresult result returns nothing
+native ConvertPlayerGameResult takes integer id returns playergameresult
+native CreateTrigger takes nothing returns trigger
+native TriggerAddAction takes trigger t, code action returns triggeraction
+native TriggerRegisterGameEvent takes trigger t, gameevent e returns event
+native TriggerRegisterPlayerEvent takes trigger t, player p, playerevent e returns event
+native ConvertGameEvent takes integer id returns gameevent
+native ConvertPlayerEvent takes integer id returns playerevent
+native GetTriggerEventId takes nothing returns eventid
+native GetTriggerPlayer takes nothing returns player
+native GetWinningPlayer takes nothing returns player
+native TriggerSleepAction takes real seconds returns nothing
+globals
+trigger victory=null
+integer gameOrder=0
+integer playerOrder=0
+integer lossEvents=0
+integer resumed=0
+integer contextErrors=0
+endglobals
+function playerWon takes nothing returns nothing
+if GetWinningPlayer() != null or GetTriggerPlayer() == null then
+set contextErrors=contextErrors+1
+endif
+set playerOrder=playerOrder*10+GetPlayerId(GetTriggerPlayer())+1
+endfunction
+function playerLost takes nothing returns nothing
+if GetWinningPlayer() != null or GetTriggerPlayer() != Player(2) then
+set contextErrors=contextErrors+1
+endif
+set lossEvents=lossEvents+1
+endfunction
+function gameWon takes nothing returns nothing
+local player winner=GetWinningPlayer()
+if winner == null or GetTriggerEventId() != ConvertGameEvent(0) then
+set contextErrors=contextErrors+1
+return
+endif
+set gameOrder=gameOrder*10+GetPlayerId(winner)+1
+if winner == Player(0) then
+call RemovePlayer(winner,ConvertPlayerGameResult(0))
+call RemovePlayer(Player(1),ConvertPlayerGameResult(0))
+endif
+if GetWinningPlayer() != winner then
+set contextErrors=contextErrors+1
+endif
+call TriggerSleepAction(0.125)
+if GetWinningPlayer() != winner then
+set contextErrors=contextErrors+1
+endif
+set resumed=resumed+GetPlayerId(winner)+1
+endfunction
+function setup takes nothing returns nothing
+local trigger winners=CreateTrigger()
+local trigger loser=CreateTrigger()
+set victory=CreateTrigger()
+call TriggerRegisterGameEvent(victory,ConvertGameEvent(0))
+call TriggerAddAction(victory,function gameWon)
+call TriggerRegisterPlayerEvent(winners,Player(0),ConvertPlayerEvent(14))
+call TriggerRegisterPlayerEvent(winners,Player(1),ConvertPlayerEvent(14))
+call TriggerAddAction(winners,function playerWon)
+call TriggerRegisterPlayerEvent(loser,Player(2),ConvertPlayerEvent(13))
+call TriggerAddAction(loser,function playerLost)
+endfunction
+)jass";
+        ScriptSession original(compile(source),{}),restored(compile(source),{}),sharedRestored(compile(source),{});original.initialize();restored.initialize();sharedRestored.initialize();auto& a=original.runtime();auto& b=restored.runtime();auto& c=sharedRestored.runtime();a.invoke("setup");for(auto* vm:{&b,&c}){vm->invoke("CreateTrigger");vm->invoke("setup");}
+        auto player=[&](int id){return a.invoke("Player",std::array{a.integer(id)});};auto remove=[&](int id,unsigned result){a.invoke("RemovePlayer",std::array{player(id),a.handle("playergameresult",result)});};
+        require(!a.invoke("GetWinningPlayer").bits,"Winner leaked outside victory event");remove(2,1);remove(3,2);remove(4,3);require(a.global("lossEvents").bits==1 && !a.global("gameOrder").bits,"A non-victory result emitted game victory");remove(0,0);remove(0,1);remove(1,0);require(original.results()[0]==0u && original.results()[1]==0u && a.global("gameOrder").bits==12 && a.global("playerOrder").bits==12 && !a.global("contextErrors").bits && a.threadCount()==2,"Victory dispatch, context or reentry differed");require(!a.invoke("GetWinningPlayer").bits,"Winner leaked after callback yielded");
+        auto first=player(0).bits,second=player(1).bits,trigger=a.global("victory").bits;auto encode=[&](std::string_view type,std::uint32_t id){if(type=="player" && (id==first || id==second))return 11u+(id-first);require(type=="trigger" && id==trigger,"Unexpected victory context handle");return 77u;};auto decode=[&](Runtime& vm,std::string_view type,std::uint32_t id){if(type=="player" && (id==11 || id==12))return vm.invoke("Player",std::array{vm.integer(int(id)-11)}).bits;require(type=="trigger" && id==77,"Unexpected victory context mapping");return vm.global("victory").bits;};
+        auto single=original.encodeSleepingScripts(original.snapshotSleepingScripts(encode));restored.restoreSleepingScripts(restored.decodeSleepingScripts(single),[&](auto type,auto id){return decode(b,type,id);});std::array<Runtime*,1> sourceRuntimes{&a},targetRuntimes{&c};auto shared=original.encodeSharedSleepingScripts(sourceRuntimes,original.snapshotSharedSleepingScripts(sourceRuntimes,encode));sharedRestored.restoreSharedSleepingScripts(targetRuntimes,sharedRestored.decodeSharedSleepingScripts(targetRuntimes,shared),[&](auto type,auto id){return decode(c,type,id);});
+        for(auto* vm:{&a,&b,&c}){vm->advanceThreads(.125);require(vm->global("resumed").bits==3 && !vm->global("contextErrors").bits && !vm->invoke("GetWinningPlayer").bits,"Victory context did not round trip or leaked after resume");}
+    });
     test("text_tag_slots_and_zero_alias",[]{auto module=compile(R"jass(type texttag extends handle
 native CreateTextTag takes nothing returns texttag
 native DestroyTextTag takes texttag value returns nothing
@@ -158,7 +241,7 @@ set active=CreateTrigger()
 call TriggerAddAction(active,function action)
 call TriggerRegisterGameEvent(active,ConvertGameEvent(259))
 endfunction
-)jass";ScriptSession original(compile(source),{}),restored(compile(source),{});original.initialize();restored.initialize();auto& a=original.runtime();auto& b=restored.runtime();a.invoke("setup");b.invoke("CreateTrigger");b.invoke("setup");auto first=a.global("active").bits,second=b.global("active").bits;require(!a.invoke("GetSaveBasicFilename").text,"Filename leaked outside save event");original.notifyGameSaved("Blizzard\\Slot.one.w3z");original.notifyGameSaved("Other/Slot.two.w3z");original.notifyGameSaved("Blizzard/存档三.w3z");require(a.threadCount()==3,"Save event actions did not sleep");auto saved=original.encodeSleepingScripts(original.snapshotSleepingScripts([&](std::string_view type,std::uint32_t id){require(type=="trigger" && id==first,"Unexpected save trigger");return 77u;}));auto batch=restored.decodeSleepingScripts(saved);auto malformed=batch;malformed.threads[0].contexts.back().saveName=std::string("a\0b",3);rejects([&]{original.encodeSleepingScripts(malformed);},"context filename");auto v3=restored.decodeSleepingScripts(legacyContextWire(saved,3));require(v3.threads.size()==3 && v3.threads[0].contexts.back().saveName=="Blizzard\\Slot.one.w3z" && !v3.threads[0].contexts.back().customMessage,"Version 3 context compatibility failed");auto v2=restored.decodeSleepingScripts(legacyContextWire(saved,2));require(v2.threads.size()==3 && v2.threads[0].contexts.back().saveName=="Blizzard\\Slot.one.w3z","Version 2 context compatibility failed");auto legacy=restored.decodeSleepingScripts(legacyContextWire(saved));require(legacy.threads.size()==3 && !legacy.threads[0].contexts.empty() && legacy.threads[0].contexts.back().event==259 && legacy.threads[0].contexts.back().saveName.empty(),"Version 1 context compatibility failed");restored.restoreSleepingScripts(batch,[&](std::string_view type,std::uint32_t id){require(type=="trigger" && id==77,"Unexpected save trigger mapping");return second;});a.advanceThreads(.125);b.advanceThreads(.125);for(auto* vm:{&a,&b}){require(vm->global("count").bits==3 && vm->global("first").text && *vm->global("first").text=="Slot.one" && vm->global("second").text && *vm->global("second").text=="Slot.two" && vm->global("third").text && *vm->global("third").text=="存档三","Save event filename did not survive sleep");require(!vm->invoke("GetSaveBasicFilename").text,"Save event filename leaked after completion");}auto empty=original.encodeSleepingScripts(original.snapshotSleepingScripts({}));empty[4]=1;auto digest=sha256(std::span<const std::uint8_t>(empty.data(),empty.size()-64));std::copy(digest.begin(),digest.end(),empty.end()-64);require(restored.decodeSleepingScripts(empty).threads.empty(),"Version 1 empty batch was rejected");rejects([&]{original.notifyGameSaved("");},"filename");
+)jass";ScriptSession original(compile(source),{}),restored(compile(source),{});original.initialize();restored.initialize();auto& a=original.runtime();auto& b=restored.runtime();a.invoke("setup");b.invoke("CreateTrigger");b.invoke("setup");auto first=a.global("active").bits,second=b.global("active").bits;require(!a.invoke("GetSaveBasicFilename").text,"Filename leaked outside save event");original.notifyGameSaved("Blizzard\\Slot.one.w3z");original.notifyGameSaved("Other/Slot.two.w3z");original.notifyGameSaved("Blizzard/存档三.w3z");require(a.threadCount()==3,"Save event actions did not sleep");auto saved=original.encodeSleepingScripts(original.snapshotSleepingScripts([&](std::string_view type,std::uint32_t id){require(type=="trigger" && id==first,"Unexpected save trigger");return 77u;}));auto batch=restored.decodeSleepingScripts(saved);auto malformed=batch;malformed.threads[0].contexts.back().saveName=std::string("a\0b",3);rejects([&]{original.encodeSleepingScripts(malformed);},"context filename");auto v4=restored.decodeSleepingScripts(legacyContextWire(saved,4));require(v4.threads.size()==3 && !v4.threads[0].contexts.back().winningPlayer,"Version 4 context compatibility failed");auto v3=restored.decodeSleepingScripts(legacyContextWire(saved,3));require(v3.threads.size()==3 && v3.threads[0].contexts.back().saveName=="Blizzard\\Slot.one.w3z" && !v3.threads[0].contexts.back().customMessage,"Version 3 context compatibility failed");auto v2=restored.decodeSleepingScripts(legacyContextWire(saved,2));require(v2.threads.size()==3 && v2.threads[0].contexts.back().saveName=="Blizzard\\Slot.one.w3z","Version 2 context compatibility failed");auto legacy=restored.decodeSleepingScripts(legacyContextWire(saved));require(legacy.threads.size()==3 && !legacy.threads[0].contexts.empty() && legacy.threads[0].contexts.back().event==259 && legacy.threads[0].contexts.back().saveName.empty(),"Version 1 context compatibility failed");restored.restoreSleepingScripts(batch,[&](std::string_view type,std::uint32_t id){require(type=="trigger" && id==77,"Unexpected save trigger mapping");return second;});a.advanceThreads(.125);b.advanceThreads(.125);for(auto* vm:{&a,&b}){require(vm->global("count").bits==3 && vm->global("first").text && *vm->global("first").text=="Slot.one" && vm->global("second").text && *vm->global("second").text=="Slot.two" && vm->global("third").text && *vm->global("third").text=="存档三","Save event filename did not survive sleep");require(!vm->invoke("GetSaveBasicFilename").text,"Save event filename leaked after completion");}auto empty=original.encodeSleepingScripts(original.snapshotSleepingScripts({}));empty[4]=1;auto digest=sha256(std::span<const std::uint8_t>(empty.data(),empty.size()-64));std::copy(digest.begin(),digest.end(),empty.end()-64);require(restored.decodeSleepingScripts(empty).threads.empty(),"Version 1 empty batch was rejected");rejects([&]{original.notifyGameSaved("");},"filename");
     });
     test("restore_sleeping_trigger_context",[&]{
         const std::string source=R"jass(type widget extends handle

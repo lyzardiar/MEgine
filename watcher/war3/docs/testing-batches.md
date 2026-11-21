@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 游戏胜利事件与获胜玩家（新功能批次 1/3，待集中验证）
+
+路径为 `src/session_match.cpp`、`src/session.h`、`src/script_state.h`、`src/session_threads.cpp`、`tests/session_tests.cpp` 和 `tests/clock_tests.cpp`。独立客户端在首次记录玩家胜利后，先执行既有玩家胜利回调，再派发游戏胜利；脚本通过 `GetWinningPlayer` 读取当前回调的玩家。两种休眠线程快照保存获胜玩家句柄并继续接受旧版快照。
+
+Win32 Release 隔离构建通过。`war3_session_tests tmp/docs-artifacts/war3/jass/session-enums-native.json` 为 32 通过／0 失败，覆盖负、平、中立、重复结果、两个获胜者、嵌套回调及两种休眠线程恢复。`war3_clock_tests` 已编译，`WAR3_CLOCK_FILTER=recovery_bundle_restores_sleeping_message_context war3_clock_tests <data-root> <scratch>` 待批次执行。实际对局胜负、局域网双方一致性、完整存档恢复及原版事件产生时序均待验收。构建和定向检查日志在 `tmp/docs-artifacts/war3/game-victory-event/`。
+
 ## AI 跨岛运输卸载点（功能批次 3/3，已集中验证）
 
 路径为 `src/session_ai_transport.cpp`、`tests/campaign_ai_tests.cpp` 和 `tests/generate-ai-transport-islands.py`。自动跨岛运输在筛选目标和为飞艇分配乘客时调用实际卸载的落点检查，按乘客碰撞范围和当前占用判断能否卸载。卸载区重新开放后，下一次 AI 目标查询可选中该目标。

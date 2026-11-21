@@ -1123,6 +1123,7 @@ class ScriptSession {
     void bindScriptDialogNatives();
     void bindMatchNatives();
     void playerEvent(unsigned player,unsigned event);
+    void gameEvent(unsigned event,ScriptContext context={});
     void clearDialog(std::uint32_t dialog);
     unsigned playerUnitCount(unsigned player,bool structures,bool incomplete,std::optional<std::uint32_t> type={},bool upgrades=false);
     std::string localized(const std::string& key);
