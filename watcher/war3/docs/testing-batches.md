@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 局域网三进程异常断线（已执行，不计功能批次）
+
+路径为 `tests/lan_process_tests.cpp` 和 `tests/run-lan-process-tests.py`。三个独立进程使用本机 TCP，在 LostTemple 经房间发现、实验握手和加载屏障进入脚本会话。前 80 个 32 毫秒时间片中，主机和幸存端分别发令，两方单位实际移动，三端状态摘要与位置轨迹一致。驱动随后强制结束最后加入的进程。主机和幸存端均取得该玩家唯一一次离开事件，确认其连接已失效且幸存端仍活跃，此后继续推进九个时间片，双方的断线后轨迹与状态摘要一致。
+
+当前集成版本 `cb9ab32` 的 Win32 Release 测试目标编译通过。运行 `python watcher/war3/tests/run-lan-process-tests.py <war3_lan_process_tests.exe> <data-root> tmp/docs-artifacts/war3/p1-lan-three-process --mode <three|abrupt|sync>`，三种模式各 1 通过／0 失败。构建、驱动摘要及各进程日志位于 `tmp/docs-artifacts/war3/p1-lan-three-process/`。该检查覆盖 `LanHost`／`LanJoin` 与 `LanSimulation` 的本机断线传播，正式客户端的三端路径、跨机、地图传输及主机异常退出仍待验收。功能批次仍为 2/3。
+
 ## 单人存档跨进程续玩及结算返回（功能批次 2/3，待集中验证）
 
 路径为 `src/main.cpp`、`tests/generate-save-resume-fixture.py`。从主菜单载入非战役存档的会话在结算确认后返回存档列表，普通选图与战役的返回流程继续使用各自入口。修复前新进程未建立自定义地图浏览器，结束时访问该对象触发 `0xc0000005`。
