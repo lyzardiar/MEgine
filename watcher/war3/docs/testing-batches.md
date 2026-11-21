@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 重合目标的最小射程退让（本批 3/3，待批次验证）
+
+路径：`src/session_combat.cpp`、`src/session_combat_destructable.cpp`、`tests/destructable_tests.cpp`。有最小射程的攻击单位与单位／可破坏物目标完全重合时，采用已有攻击地面逻辑的默认方向后退，避免反复清空路线；非零距离仍沿目标反方向移动。
+
+必要检查：Win32 Release `war3_destructable_tests <data-root> <generated-map> minimum-range` 退出 0、1 通过／0 失败；真实迫击炮覆盖单位、树和地面目标的重合及 64 单位近距、开放地面路径开启、封闭路径不移动或开火。修复前隔离探针中重合单位和树在原地不攻击，攻击地面可后退；日志 `tmp/docs-artifacts/war3/mortar-overlap-probe/`。重合由测试构造，退让方向受阻时的替代方向、实际原版行为与自然对局仍待对照。
+
 ## 计时窗口与排行榜标题阴影（本批 2/3，待批次验证）
 
 路径：`src/glue.h`、`src/glue.cpp`、`src/game_timer_dialog.cpp`、`src/game_leaderboard.cpp`、`docs/campaign-leaderboard.md`。计时标题／时间与排行榜标题从源 FDF 读取阴影色和偏移，动态前景颜色保持原有脚本设置。
