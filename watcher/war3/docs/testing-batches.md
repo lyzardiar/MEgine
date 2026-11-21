@@ -10,6 +10,8 @@ Human07 重跑同样失败；移除 Human09 新观察器后输出不变，以 `a
 
 另以同一原图增加独立 `human07-coordinated-assault`：英雄靠近目标时用正常移动命令暂时撤开友军，英雄实际造成伤害后再集火，并在低血量时使用已学圣盾；三座建筑均被摧毁且英雄分别造成 466.923、492.692、742.307 伤害，Win32 Release 退出 0、1 通过／0 失败，日志 `tmp/docs-artifacts/war3/human07-compare/coordinated-main.log`。原 `human07-assault` 未修改，其失败仍保留；受控对照中移开友军后英雄无需重新下令即可命中，证据 `tmp/docs-artifacts/war3/human07-assault-audit/clearance.log`，不能据此判定原版动态避让一致或永久卡死。
 
+延时诊断在相同原图及攻击指令下，从模拟 340 秒开始每当目标生命低于 500 时人工恢复至 1300，其余不主动改变单位或命令。英雄在 386.25 秒仍距目标 311.8、目标未受其伤害；426.25 秒已进入攻击距离，444.25 秒前累计伤害 238.846，之后持续攻击，最终死亡。诊断按原测试要求目标被摧毁，因此人为续命后退出 1；日志 `tmp/docs-artifacts/war3/human07-assault-audit/extended.log`。这表明该干预场景下英雄可以自行脱离拥堵并攻击，不能证明无干预场景的避让时序或原版一致；原失败继续保留。
+
 ## 人族第九章玩家命令自然胜利（已执行，不计功能批次）
 
 路径：`tests/human_campaign_chain_tests.cpp`、`docs/campaign-flow.md`。原图隔离会话经正常玩家战斗、采集及训练命令完成守卫、霜之哀伤和敌军基地目标；只读事件核实玩家击杀，胜利后记录终章及战役解锁。Win32 Release 回归退出 0、1 通过／0 失败；命令、范围和日志见[战役流程](campaign-flow.md)。测试工作不计功能批次。
