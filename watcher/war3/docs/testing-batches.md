@@ -1,5 +1,17 @@
 # 独立客户端测试队列
 
+## 亡灵第一章至第二章继承与第二章通关（功能批次 2/3，待集中验证）
+
+路径为 `src/session_sound.cpp` 和 `tests/sound_tests.cpp`。第二章墓地过场对已移除的绞肉车调用 `AttachSoundToUnit`，修复前抛出 `Invalid sound attachment unit` 并中断战役。已移除的单位句柄现在返回，保留声音现有的附着状态，未知或类型错误的句柄仍报告原诊断。
+
+Win32 Release 从独立构建目录构建 `war3` 和 `war3_sound_tests`。用 `war3_sound_tests <data-root> <scratch-root> <test-name>` 执行 `sound_attach_removed_unit_preserves_live_attachment`，修复前 0 通过／1 失败，修复后 1 通过／0 失败。`sound_wait_snapshot_restarts_against_restored_playback` 为 1 通过／0 失败。
+
+同进程战役验收 1 通过／0 失败。基于正式客户端构建的后台探针用固定随机种子和模拟音频时钟驱动玩家命令，读取本机未改动的游戏数据。第一章在达到 20 人的救援目标后触发胜利，结算后实际载入并渲染 `Undead02.w3m`。两章英雄均为 2 级、218 XP，保留第一章拾取的 1 次充能治疗药水。第二章恢复控制后移动、战斗、采矿、建造、训练并取得骨灰瓮，于模拟 1603.844 秒确认胜利结算，随后实际载入并渲染 `Undead02Interlude.w3m`，进程以 0 退出，全程未加载 `Game.dll`。
+
+复验从 `tmp/docs-artifacts/war3/p2-campaign-paths/live/` 执行 `node build-clean.mjs --build --target war3 war3_sound_tests`、`node build-frontend.mjs` 和 `./run-probe.ps1 -Mode full -Preserve -Timeout 150`。本次串联证据为 `run-d42c5275395c4e96aa98e1eebfc849c6/{frontend,player}.log`，第二章独立胜利见 `play02-v9.log`，首个阻塞见 `play02-trace.log`，测试结果见 `sound-before.log`、`sound-after.log` 和 `sound-wait-snapshot.log`。
+
+集中批次复验战役切章、声音附着及声音存档恢复。实际前台操作、设备音频及原版声音行为待验。下一项从 `Undead02Interlude.w3m` 继续进入 `Undead03.w3m`，核对阿尔赛斯与背包继承，再以正常玩家命令完成第三章。
+
 ## 编队通过窄口与动态障碍（已执行，不计功能批次）
 
 路径为 `tests/movement_avoidance_tests.cpp` 和 `tests/generate-formation-passage.py`。在自有合成地图上以正式本地选择和编队移动命令派出四个不同碰撞半径的单位。各单位通过 96 单位宽的窄口后到达各自预约点。另一用例在编队已行进时用地形占地封堵窄口 8 个模拟秒。成员留在障碍前并保留编队及原目的地，解封后自动继续并重新集结。逐模拟步校验路径段与成员间距，确认未穿越阻挡或彼此重叠。
