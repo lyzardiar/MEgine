@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 同构联机摘要覆盖玩家经验倍率（功能批次 1/3，待集中验证）
+
+路径为 `src/session_network_identity.cpp` 和 `tests/clock_tests.cpp`。同构联机摘要纳入 `SessionPlayer::handicapXP` 的原始浮点位，倍数差异可在后续英雄经验结算前被发现。存档的 `PCFG` v1 已序列化该字段，实验联机和实验录像沿用同一可执行文件指纹要求。
+
+Win32 Release 产品及 `war3_clock_tests` 构建通过。`WAR3_CLOCK_FILTER=network_checksum_tracks_player_xp_handicap` 经实际 `SetPlayerHandicapXP` 将经验倍率由 1 调为 0.5，修复前摘要相同且断言失败，修复后摘要改变，恢复原值后摘要与基线相同。既有 `player_resource_natives_follow_original_bounds` 同时通过，合计 2 通过／0 失败。收据见 `tmp/docs-artifacts/war3/p1-xp-handicap-checksum/`。集中批次覆盖同构局域网对局持续同步及退场后的校验。
+
 ## 联机发现、拒绝及地图脚本纹理（已集中验证）
 
 集成版本 `c82d92c`，覆盖 `c71af03`、`1c0c185` 及无扩展名纹理修复。Win32 Release 产品、`war3_lan_departure_tests`、`war3_lan_process_tests` 构建通过。联机 9 通过／0 失败。`join-close` 覆盖 5 个断开及拒绝用例，`game-info-capacity` 覆盖广播容量，默认测试覆盖持续时片和有序退场。`run-lan-process-tests.py` 两端 `sync` 和三端 `three` 均完成 80 个公共时片，后者覆盖异常退场。
