@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 识别商店科技条件中的基地等级别名（功能批次 3/3，待集中验证）
+
+路径为 `src/session_commerce.cpp`。非单位对象的科技别名从物编 `udep` 对应的 `Profile.DependencyOr` 读取，沿现有建筑升级图解析。商店继续按所属玩家和建筑完工状态检查科技条件。
+
+Win32 Release 隔离候选用四族实际基地建筑验证 `TWN2` 和 `TWN3`，4 通过／0 失败。原实现在四族完工二本时均未解锁；候选正常以 150 金币购得 `phea`，三本同时满足两个等级条件，一本、敌方三本和在建二本均无法满足相同的购买条件。夹具未设置玩家已研究科技。构建、输入哈希和各族日志位于 `tmp/docs-artifacts/war3/p2-batch-play-shop-script-effect/run-a41b5d4b-20261123040605620/faction-shop-catalog/tier-alias-candidate/`。集中验证重跑四族及购物、AI 相关回归。
+
 ## 串行化 IJL JPEG 解码生命周期（功能批次 2/3，待集中验证）
 
 路径为 `src/image.cpp`。多个 `Images` 实例共用进程内互斥锁保护 IJL 初始化、两次读取和释放。像素转换在锁外进行。失败继续报出原异常，后续合法位图可继续解码。
@@ -15,6 +21,8 @@ Human05 候选复验守满原 1,800 秒，记录缺失的 Heal 资源后继续�
 `test_126.w3g` 的 TurtleRock 地图 SHA-1 与录制值一致，原解析在 17 个悬崖声明处报告 `Binary array exceeds bounds`。该图 16,641 个顶点实际只引用悬崖索引 0 和 1。Win32 Release 候选成功解析同一归档并完成独立 ReplayPreparation 诊断，前三个时片推进到 750 毫秒，第 4 个时片在经典选择对象 `4188:418e` 处返回 `Unsupported or invalid LAN action`。完整产品播放仍受经典对象身份和回放视角限制。`test_130.w3g` 的本地同名 EchoIsles 地图仍与录制摘要不符。
 
 同一地图的前 16 项等价对照与三个坏输入边界通过。原始地图和录像的 SHA-256 保持一致。补丁、构建和验证日志位于 `tmp/docs-artifacts/war3/p3-replay-reference/cliff-tail-7231e93b/`。集中回归覆盖地形读取、现有地图准备与经典回放现有拒绝路径。
+
+集成版本 `3b1e354` 通过正式 D3D9 客户端 `--play --map` 打开同一 TurtleRock。首帧呈现 9 个区块、86 个对象及 7 个可见单位，按 180 个游戏帧的设置完成并退出 0。地图 SHA-256 未变。运行收据在 `tmp/docs-artifacts/war3/p3-turtlerock-product/run-dd049802/result.json`。
 
 ## 启动超时、阵营商店与脚本特效（批次已集中验证）
 
