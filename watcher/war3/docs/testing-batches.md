@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 六人编队通过窄口（功能批次 3/3，待集中验证）
+
+路径为 `src/session_orders.cpp` 和 `tests/movement_avoidance_tests.cpp`。普通编队移动连续两秒没有取得足够进展，且下一路点方向的近段被地形挡住时，按现有轮转重算到原落点的路线。每模拟步的四次完整重算限额由原动态阻挡和此恢复路径共用。重算前复核路径，保留当步已经生效的让路点。
+
+用 `python watcher/war3/tests/generate-ai-transport-islands.py <islands.w3m>` 生成双岛夹具，执行 `war3_movement_avoidance_tests <data-root> <islands.w3m> formation-rear-choke`。旧 Win32 核心的第六名队员等到 60.25 秒仍未过口。新 Win32 Release 核心 1 通过／0 失败，六人于 5.4375 秒到达各自落点并结束移动。编译及新旧日志见 `tmp/docs-artifacts/war3/player-formation-rear-stall-20261123/`。集中批次复验动态阻挡、存档路线恢复、盟友让路、订单队列和编队速度，以及同构联机摘要与录像。多编队同时拥堵的表现待测。
+
 ## 回放浏览器显示开局参赛席数（功能批次 2/3，待集中验证）
 
 路径为 `src/replay_browser.cpp`。读取到首个时片前的非空槽表后，使用已占用参赛席算出显示人数，含电脑席并排除版本对应的观察席。缺少有效槽表时沿用宣告人数。每次选中录像只计算一次，切换选择时清除旧人数。
