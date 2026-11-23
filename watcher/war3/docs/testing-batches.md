@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## AI 覆矿建筑的扩张落点（功能批次 2/3，待集中验证）
+
+路径为 `src/session_ai_natives.cpp` 和 `tests/campaign_ai_tests.cpp`。`SetExpansion` 为要求覆盖矿井的建筑选择已选矿心，普通大厅保留现有 512 单位落点环，仍经同一建造校验与下单路径。
+
+Win32 Release 隔离链接后执行 `war3_campaign_ai_tests <data-root> <campaign-ai-fixture> expansion-cover`。旧实现通过开局对照后在覆矿下单断言失败。修复后 2 通过／0 失败，验证普通大厅落点、覆矿完工关联，以及同一侍僧实收 28 金。日志与复验说明在 `tmp/docs-artifacts/war3/p2-ai-expansion/`。
+
+Echo Isles `0x12345678` 的亡灵实际扩张两次由拒绝变为受理，但到场重新校验时均缺木材，推进至 1,920 模拟秒仍未恢复采金。该长局停滞与建造途中资源消耗留待后续定位和验证。
+
 ## 自研长局记录的完整重新模拟（专项验收）
 
 使用三进程长局留下的 `host.w3g`、合成地图与主机逐时片日志，基于 `8de82eb` 的 Win32 Release 核心按回放配置创建新会话。实际通过 `ReplayCursor` 和 `LanSimulation` 执行 22,500 个 32 ms 时间片。每个时间片的本地状态校验和与原主机一致，最终记录 1 次建造、6 次训练、1 次施法、1 次物品使用及一次由玩家 2 触发的胜利。
