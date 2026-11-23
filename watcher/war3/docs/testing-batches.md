@@ -6,7 +6,9 @@
 
 正式客户端已有 D3D9Ex 回退。既有 `p0-save-resume/v3/` 的两个正式窗口以 `driver=d3d9ex` 呈现。独立 SDK 探针在本机 AMD Radeon RX 6800 XT 实际调用 `ResetEx`，从 320×240 调整至 480×320，上传的同一纹理仍回读到 RGB `21a652`，随后成功呈现。相关调用返回 `S_OK`，探针退出 0。
 
-正式显存短测和 SDK 探针各 1 通过／0 失败。运行脚本、显存采样、退出收据及重设调用日志在 `tmp/docs-artifacts/war3/p2-gpu-memory/` 的 `verify.ps1`、`summary.json`、`run-d6b07e24/result.json` 和 `ex-40f550be/probe.log`。实际设备丢失、移除或挂起时的客户端恢复以及更长负载下的显存趋势待验。专项验证不计功能批次。
+正式显存短测和 SDK 探针各 1 通过／0 失败。运行脚本、显存采样、退出收据及重设调用日志在 `tmp/docs-artifacts/war3/p2-gpu-memory/` 的 `verify.ps1`、`summary.json`、`run-d6b07e24/result.json` 和 `ex-40f550be/probe.log`。
+
+在隔离链接副本中注入 D3D9 `HRESULT`，用实际 GameView 验证现有处理分支。可恢复用例注入 `DEVICELOST`、`DEVICENOTRESET` 和一次重设失败，触发重试后实际 `Reset` 成功。呈现再次收到一次 `DEVICELOST` 后恢复，帧号由 50 推进到 58，模拟由 0.8125 推进到 1.125 秒，退出 0。移除用例注入 `DEVICEREMOVED` 后，客户端记录 cooperative state 错误并以 1 退出，符合现有处理判据。两项均通过，运行脚本、注入差异、日志及收据在 `tmp/docs-artifacts/war3/p2-device-injection/`。实际驱动级设备丢失、移除或挂起，以及更长负载下的显存趋势待验。专项验证不计功能批次。
 
 ## 亡灵第五章继承、通关与第六章首帧（专项验收）
 
