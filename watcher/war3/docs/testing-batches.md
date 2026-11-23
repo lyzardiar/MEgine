@@ -1,6 +1,14 @@
 # 独立客户端测试队列
 
-## 复合道具链式驱散（功能批次 3/3，待集中验证）
+## 定向发现、战役声音与复合驱散批次（已执行，保留一项失败）
+
+集成版本为 `8de82eb`，覆盖 `6cd2ddc`、`953baa8` 和本次复合道具修复。独立 Win32 Release 构建四个目标。实际执行 8 通过／2 失败。通过项为局域网默认与定向各 80 个时间片、无效 IPv4 拒绝、移除单位的声音附着状态、休眠声音恢复、复合连锁驱散、复合英雄技能冲击和复合单位目标的易主保护。复用 HY2026 实际缺图跨机开局和亡灵第一章至第二章间幕各 1 通过／0 失败。
+
+两次失败均为 `item-combined` 自用生命／法力道具，分别使用修改前后的合成夹具。生命回调中移除道具并改变使用者归属后，生命为 237，法力为 88，累计使用事件为 3，期望法力 155、事件 4。该项留在队列中。修复需保留复合单位目标的易主保护，并复测聚合、目标技能及链式驱散。原始结果与字段诊断在 `tmp/docs-artifacts/war3/p2-batch-lan-sound-item/`。
+
+默认跨机广播、设备音频、实际前台操作、联机施法及存档续行留待后续验收。下一功能批次从 0/3 开始。
+
+## 复合道具链式驱散（功能批次 3/3，已集中验证）
 
 路径为 `src/session_item_use.cpp`、`tests/control_tests.cpp` 和 `tests/generate-combined-item-fixture.py`。复合道具将 `AIdc` 识别为单位目标效果，沿用现有链式驱散首目标及跳转路径。目标检查先于资源、法力、冷却和物品次数的变更。已存在的普通单效果权杖仍经施法入口。
 
@@ -22,7 +30,7 @@ Win32 x86 Release 隔离链接通过。`war3.exe --hidden --mute --menu-check --
 
 本次仅登记验收结果，功能批次仍为 2/3。实际前台操作、设备音频、原版对照和第四章英雄及背包状态待验。下一项从 `Undead04.w3m` 开场核对第三章的英雄和背包继承，再用正常玩家命令完成第四章及结算。
 
-## 亡灵第一章至第二章继承与第二章通关（功能批次 2/3，待集中验证）
+## 亡灵第一章至第二章继承与第二章通关（功能批次 2/3，已集中验证）
 
 路径为 `src/session_sound.cpp` 和 `tests/sound_tests.cpp`。第二章墓地过场对已移除的绞肉车调用 `AttachSoundToUnit`，修复前抛出 `Invalid sound attachment unit` 并中断战役。已移除的单位句柄现在返回，保留声音现有的附着状态，未知或类型错误的句柄仍报告原诊断。
 
@@ -52,7 +60,7 @@ Win32 Release AI 测试目标构建通过。运行 `war3_campaign_ai_tests <data
 
 Win32 Release 局域网测试目标构建通过。运行 `python watcher/war3/tests/generate-lan-long-match.py <fixture.w3m>`，再运行 `python watcher/war3/tests/run-lan-process-tests.py <war3_lan_process_tests.exe> <data-root> <output> --mode long --map <fixture.w3m>`，为 1 通过／0 失败；同入口已有 `sync`、`abrupt`、`three` 各 1 通过／0 失败。完整日志、主机回放和构建输出位于 `tmp/docs-artifacts/war3/p1-lan-long-match/`，本次长局目录为 `lan-multi-process-wn6ek0uq/`。正式 GameView 多端长局、跨机长局、实际结算界面和界面回放播放待验。功能批次仍为 1/3。
 
-## 局域网按地址发现与 HY2026 跨机开局（新功能批次 1/3，待集中验证）
+## 局域网按地址发现与 HY2026 跨机开局（功能批次 1/3，已集中验证）
 
 路径为 `src/platform.h`、`src/platform.cpp`、`src/main.cpp`、`src/lan_browser.h`、`src/lan_browser.cpp`、`src/lan_discovery.h` 和 `src/lan_discovery.cpp`。加入端以 `--experimental-local-lan --lan-discovery-address <房主IPv4>` 启动并打开局域网大厅时，向该地址的 UDP 6112 询问房间，按现有发现、握手、地图校验与加载流程加入。省略地址仍使用默认广播和本机回环。无法解析为单播 IPv4 的地址会在开启局域网发现时报告错误。
 
