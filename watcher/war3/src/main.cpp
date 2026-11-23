@@ -193,7 +193,7 @@ int run(HINSTANCE instance) {
         }
         if(options.menuCheck) {
             if(frames==10)PostMessageW(window,WM_KEYDOWN,VK_RETURN,0);
-            if(frames==25)PostMessageW(window,WM_KEYDOWN,VK_SPACE,0);
+            if(frames==25)PostMessageW(window,WM_KEYDOWN,'G',0);
             if(frames>=40 && !menuReadyFrame){if(screen!=Screen::Maps || !browser || !browser->error().empty())throw std::runtime_error("Menu selection check failed");if(GetTickCount64()-started>30000)throw std::runtime_error("Menu configuration check timed out");if(!browser->loading()){if(!browser->info() || !browser->setup() || !browser->session() || !browser->session()->configured() || !fs::equivalent(browser->selectedMap(),options.map))throw std::runtime_error("Menu configured selection unavailable");auto local=browser->setup()->localPlayer();if(!local || browser->session()->localPlayer()!=local)throw std::runtime_error("Menu local player session differs");menuReadyFrame=frames;log.write("menu_check=selected "+utf8(browser->selectedMap().wstring())+" local="+std::to_string(*local)+" config=true");}}
             if(menuReadyFrame && frames==menuReadyFrame+2){auto [x,y]=browser->selectedCenter();float scale=std::min(renderer.width()/.8f,renderer.height()/.6f);auto pos=MAKELPARAM(int((renderer.width()-.8f*scale)/2+x*scale),int((renderer.height()-.6f*scale)/2+y*scale));SendMessageW(window,WM_MOUSEMOVE,0,pos);SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,pos);SendMessageW(window,WM_LBUTTONUP,0,pos);}
             if(menuReadyFrame && frames==menuReadyFrame+5)SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,-WHEEL_DELTA),0);
@@ -209,7 +209,7 @@ int run(HINSTANCE instance) {
                 case 7:if(screen!=Screen::Maps || browser->popupOpen())throw std::runtime_error("Popup Escape left map browser");++menuStage;break;
                 case 8:if(browser->focus()!="CancelButton"){if(++menuTabs>128)throw std::runtime_error("Tab did not reach map cancel");key(VK_TAB);}else{key(VK_SPACE);++menuStage;}break;
                 case 9:if(screen!=Screen::Single)throw std::runtime_error("Map browser cancel check failed");key(VK_TAB);++menuStage;break;
-                case 10:if(singleMenu->focus()!="CancelButton")throw std::runtime_error("Single-player cancel focus differs");key(VK_RETURN);++menuStage;break;
+                case 10:if(singleMenu->focus()!="CancelButton"){if(++menuTabs>128)throw std::runtime_error("Tab did not reach single-player cancel");key(VK_TAB);}else{key(VK_RETURN);++menuStage;}break;
                 case 11:if(screen!=Screen::Main)throw std::runtime_error("Single-player keyboard cancel check failed");key('S');++menuStage;break;
                 case 12:if(screen!=Screen::Single)throw std::runtime_error("Single-player shortcut check failed");key('G');++menuStage;break;
                 case 13:if(screen!=Screen::Maps)throw std::runtime_error("Map browser shortcut check failed");key('A');++menuStage;break;
