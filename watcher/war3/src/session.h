@@ -1022,7 +1022,7 @@ class ScriptSession {
     void dispelPerchedSentinels(const SpellInfo& spell,WorldPoint point,unsigned owner);
     void widgetDeath(std::uint32_t id,ScriptContext context={});
     std::uint32_t nearestTree(WorldPoint point,float range,std::uint32_t exclude=0);
-    std::uint32_t reachableHarvestTree(const UnitState& unit,WorldPoint point,float range,bool direct,float workRange,bool allowInvulnerable,unsigned& cursor,bool& any);
+    std::uint32_t reachableHarvestTree(const UnitState& unit,WorldPoint point,float range,bool direct,float workRange,bool allowInvulnerable,unsigned& cursor,bool& any,std::uint32_t excluded=0,std::vector<WorldPoint>* destination=nullptr);
     std::pair<std::uint32_t,unsigned> sourceAbility(const UnitState& unit,const char* code);
     std::pair<std::uint32_t,unsigned> shadowMeldAbility(const UnitState& unit);
     void initializeHarvest(UnitState& unit);
