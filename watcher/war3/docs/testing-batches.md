@@ -1,10 +1,18 @@
 # 独立客户端测试队列
 
-## 无扩展名的地图脚本纹理可解析为 BLP 或 TGA（功能批次 3/3，待集中验证）
+## 联机发现、拒绝及地图脚本纹理（已集中验证）
+
+集成版本 `c82d92c`，覆盖 `c71af03`、`1c0c185` 及无扩展名纹理修复。Win32 Release 产品、`war3_lan_departure_tests`、`war3_lan_process_tests` 构建通过。联机 9 通过／0 失败。`join-close` 覆盖 5 个断开及拒绝用例，`game-info-capacity` 覆盖广播容量，默认测试覆盖持续时片和有序退场。`run-lan-process-tests.py` 两端 `sync` 和三端 `three` 均完成 80 个公共时片，后者覆盖异常退场。
+
+同一核心的两组纹理检查通过。原版 `War3x.mpq` 裸名和显式后缀解析到同一张 16×16 图标。合成地图覆盖公共包、带点的父目录、裸名优先、确实缺失及其他显式后缀均符合预期。复用下列 HumanX01 前端定向结果。原版客户端加入后的持续同步、HY2026 跨机三端与 HumanX01 完整通关继续验收。输出和二进制摘要见 `tmp/docs-artifacts/war3/p1-batch-lobby-and-map-texture/`。下一功能批次从 0/3 开始。
+
+## 无扩展名的地图脚本纹理可解析为 BLP 或 TGA（功能批次 3/3，已集中验证）
 
 路径为 `src/archive.cpp`。无扩展名的纹理请求在地图包和公共包各按裸名、`.blp`、`.tga` 查找，继续使用现有归档层级和缓存。只认最终路径分段里的扩展名。显式后缀沿用既有解析。集中验证覆盖实际战役切入及持续呈现、原地图和公共归档优先级，以及同批联机发现、拒绝和同步。
 
 HumanX01 原图脚本调用 `SetAltMinimapIcon` 请求 `UI\Minimap\Minimap-Tower`。`War3x.mpq` 中对应资源是 `UI\Minimap\MiniMap-Tower.blp`。基线前端完成首帧后因找不到该纹理退出 1。Win32 Release 产品及两个联机测试目标编译通过。使用同样的原图和人族第九章胜利缓存，修复候选通过原崩溃点，完成普通玩家第一塔维修及娜迦过场。完整关卡及下一章交接待验。对照和构建收据见 `tmp/docs-artifacts/war3/p2-humanx01/{verified-input,minimap-resolution,fixed-texture}/`。
+
+监督轮累计呈现 11,205 帧。原过场后农夫登船，卡尔登船命令受理后停在岸边，夹具到达 2,800 模拟秒路线时限并退出 1。纹理错误未再出现，输入缓存与八项原版资源摘要一致。后两塔、胜利及 HumanX02 继承未验。路线记录位于 `fixed-texture/run-5ffa5ea5549c4a13a6578ef719f66c63/`。
 
 ## 标准联机满房拒绝及腾位重进（专项验收）
 
@@ -18,7 +26,7 @@ HumanX01 原图脚本调用 `SetAltMinimapIcon` 请求 `UI\Minimap\Minimap-Tower
 
 共呈现 2,689 帧，退出 0，原图及 MPQ 摘要一致。正式前端验收 1 通过／0 失败，收据及构建命令见 `tmp/docs-artifacts/war3/p2-ai-skirmish/echo-frontend/`。专项不计功能批次。
 
-## 标准联机房间广播真人占用与容量（功能批次 2/3，待集中验证）
+## 标准联机房间广播真人占用与容量（功能批次 2/3，已集中验证）
 
 路径为 `src/lan_host.cpp`、`src/lan_browser.cpp` 与 `tests/lan_departure_tests.cpp`。标准项目房主公告真人占用及真人容量，容量计入空位和已入房真人席位。依据同图原版 1.27 的一人两席报文，容量字段为 2。旧房主实现对同一字段存在固定值和空位数等不同写法，标准发现页展示广播总槽数，是否仍能入房由 TCP 房主判断。同构实验模式沿用既有空位计数。原版客户端接受修复后的报文尚待实际加入验证。
 
@@ -94,7 +102,7 @@ Win32 Release 客户端和定向测试编译通过。`war3_lan_departure_tests g
 
 标准项目房间修复通过本机双前端后，于 06:29:36 UTC 复核原版 A/B 槽位。输入桌面一直有操作，原版与接收器未启动，修正广告的原版加入和 `0x27` 继续待验。见 `tmp/docs-artifacts/war3/p1-classic-keepalive/wire-observation/desktop-recheck-20261123-062936.json`。
 
-## 局域网加入保留断开前的拒绝消息（功能批次 1/3，待集中验证）
+## 局域网加入保留断开前的拒绝消息（功能批次 1/3，已集中验证）
 
 路径为 `src/lan_join.cpp`、`src/lan_join.h` 和 `tests/lan_departure_tests.cpp`。TCP 读取到完整拒绝包和流结束时，先消费已接收的协议包，再处理断开。房主拒绝原因由原协议分支交给界面，未收到消息的裸断开仍显示连接关闭。
 
