@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 跨镇采金使用实际入矿距离（同任务补充，待增量验证）
+
+路径为 `src/session_ai_economy.cpp`。原跨镇预检采用采金指令的目标范围，封闭地形上的小精灵可到达距矿约 796 的路点，实际入矿距离却只有 186。跨镇派工改按采集阶段使用的距离检查完整路径终点，包含亡灵覆盖矿和暗夜覆盖矿各自的能力数据。
+
+Win32 Release 隔离候选两个进程均退出 0。可达对照仍有三名工人进矿并入账 748 金。封闭负例完成覆矿后未派采金工，矿量未变。复验收据和日志在 `tmp/docs-artifacts/war3/p2-amazonia-entangle/candidates/` 的 `reach-fix-summary.json`、`reach-fix-control-23bec43d/` 和 `reach-fix-blocked-path-1bb4fda2/`。正式增量回归覆盖近镇、远矿、兼容矿和 Amazonia 正负场景。同任务补充不计入下一功能批次。
+
 ## AI 远矿发现、伐木解堵与本镇覆矿（批次已集中验证）
 
 集成版本 `cb69087`，范围为 `0be3a15`、`aaa6309` 和 `cb69087`。独立 Win32 Release CMake 构建完成 514/514，`war3_campaign_ai_tests` 和 `war3_harvest_tests` 共用同一个 `war3_core`。10 个正式测试或快照进程均退出 0。六个 AI 测试模式原始结果合计 9 通过／0 失败，覆盖远矿、近镇、覆矿、兼容矿、可达树和封路后恢复。玩家普通采集与眩晕后继续采集各通过一项。
