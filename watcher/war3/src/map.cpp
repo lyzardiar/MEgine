@@ -4,6 +4,7 @@
 #include "fdf.h"
 #include <charconv>
 #include <cctype>
+#include <limits>
 
 namespace war3 {
 namespace {
@@ -50,7 +51,10 @@ MapInfo MapInfo::parse(std::span<const std::uint8_t> bytes,const MapStrings& str
     b.finish();return m;
 }
 MapTerrain MapTerrain::parse(std::span<const std::uint8_t> bytes) {
-    Binary b(bytes);b.expect(tag("W3E!"));b.expect(11);MapTerrain m;m.tileset=char(b.u8());m.customTileset=b.u32();auto n=b.count(4,16);for(unsigned i=0;i<n;++i)m.groundTiles.push_back(b.u32());n=b.count(4,16);for(unsigned i=0;i<n;++i)m.cliffTiles.push_back(b.u32());
+    Binary b(bytes);b.expect(tag("W3E!"));b.expect(11);MapTerrain m;m.tileset=char(b.u8());m.customTileset=b.u32();auto n=b.count(4,16);for(unsigned i=0;i<n;++i)m.groundTiles.push_back(b.u32());
+    // W3E corners use a four-bit cliff index. Consume unreachable trailing declarations without retaining them.
+    n=b.count(4,std::numeric_limits<unsigned>::max());const auto reachable=std::min(n,16u);
+    for(unsigned i=0;i<reachable;++i)m.cliffTiles.push_back(b.u32());b.take(size_t(n-reachable)*4);
     m.width=b.u32();m.height=b.u32();m.origin=point(b);auto count=std::uint64_t(m.width)*m.height;if(m.width<2 || m.height<2 || count>4*1024*1024 || count*7!=b.left())throw std::runtime_error("Invalid W3E vertex payload");
     m.corners.reserve(static_cast<size_t>(count));for(size_t i=0;i<count;++i)m.corners.push_back({std::bit_cast<std::int16_t>(b.u16()),b.u16(),b.u8(),b.u8(),b.u8()});return m;
 }
