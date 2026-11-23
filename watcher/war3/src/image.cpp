@@ -4,6 +4,7 @@
 #include <array>
 #include <cstring>
 #include <limits>
+#include <mutex>
 
 namespace war3 {
 namespace {
@@ -91,16 +92,22 @@ Images::Images(const fs::path& dataRoot) : ijl_(dataRoot / L"ijl15.dll", "334aa1
 Image Images::jpeg(std::span<const std::uint8_t> bytes, unsigned width, unsigned height, bool alpha) const {
     auto image = output(width, height);
     if (bytes.size() > INT_MAX) throw std::runtime_error("JPEG input exceeds IJL limit");
-    auto core = std::make_unique<IjlCore>();
-    if (init_(core.get()) != 0) throw std::runtime_error("IJL initialization failed");
-    struct Free { Init release; void* core; ~Free() { release(core); } } release{free_, core.get()};
-    core->jpg = const_cast<std::uint8_t*>(bytes.data()); core->jpgSize = static_cast<int>(bytes.size());
-    if (read_(core.get(), 1) != 0 || core->jpgWidth != int(width) || core->jpgHeight != int(height) || (core->jpgChannels != 3 && core->jpgChannels != 4)) throw std::runtime_error("JPEG header disagrees with BLP");
-    auto channels = core->jpgChannels;
-    Bytes raw(size_t(width) * height * channels);
-    core->dib = raw.data(); core->width = width; core->height = height; core->channels = channels; core->pad = 0;
-    core->color = 255; core->jpgColor = 255; core->jpgSubsampling = 0;
-    if (read_(core.get(), 3) != 0) throw std::runtime_error("IJL JPEG decode failed");
+    Bytes raw;
+    int channels=0;
+    {
+        static std::mutex decoderMutex;
+        std::lock_guard lock(decoderMutex);
+        auto core = std::make_unique<IjlCore>();
+        if (init_(core.get()) != 0) throw std::runtime_error("IJL initialization failed");
+        struct Free { Init release; void* core; ~Free() { release(core); } } release{free_, core.get()};
+        core->jpg = const_cast<std::uint8_t*>(bytes.data()); core->jpgSize = static_cast<int>(bytes.size());
+        if (read_(core.get(), 1) != 0 || core->jpgWidth != int(width) || core->jpgHeight != int(height) || (core->jpgChannels != 3 && core->jpgChannels != 4)) throw std::runtime_error("JPEG header disagrees with BLP");
+        channels = core->jpgChannels;
+        raw.resize(size_t(width) * height * channels);
+        core->dib = raw.data(); core->width = width; core->height = height; core->channels = channels; core->pad = 0;
+        core->color = 255; core->jpgColor = 255; core->jpgSubsampling = 0;
+        if (read_(core.get(), 3) != 0) throw std::runtime_error("IJL JPEG decode failed");
+    }
     for (size_t i = 0; i < image.pixels.size(); ++i) image.pixels[i] = raw[i * channels] | (unsigned(raw[i * channels + 1]) << 8) | (unsigned(raw[i * channels + 2]) << 16) | ((alpha && channels == 4 ? unsigned(raw[i * channels + 3]) : 255) << 24);
     return image;
 }
