@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 复合道具链式驱散（功能批次 3/3，待集中验证）
+
+路径为 `src/session_item_use.cpp`、`tests/control_tests.cpp` 和 `tests/generate-combined-item-fixture.py`。复合道具将 `AIdc` 识别为单位目标效果，沿用现有链式驱散首目标及跳转路径。目标检查先于资源、法力、冷却和物品次数的变更。已存在的普通单效果权杖仍经施法入口。
+
+用 `generate-combined-item-fixture.py` 准备合成夹具后运行 `war3_control_tests <data-root> <fixture> item-combined-chain-dispel`。隔离 Win32 Release 基线 0 通过／1 失败，候选 1 通过／0 失败，覆盖两个目标、两种效果顺序、越距无副作用及未知效果对照。独立合成道具、普通权杖、`I0Q4` 与英雄技能冲击四项对照各 1 通过／0 失败。旧 `item-combined` 聚合模式在未修改基线和候选上均因生命回调移除或易主断言失败，该失败留在批次队列中。构建、夹具与日志在 `tmp/docs-artifacts/war3/p2-gameplay-audit/candidate/`。现有窗口真实操作、联机和存档续行仍待验证。
+
 ## 单人菜单与选图自检（已执行，不计功能批次）
 
 路径为 `src/main.cpp` 的 `--menu-check` 分支。自检使用现有 `G` 快捷键进入选图，并通过 Tab 查找单人菜单的取消按钮。基线两张图均在自检误入战役菜单后失败。仅纠正进入按键后，两图均在取消焦点的旧假设处失败。
