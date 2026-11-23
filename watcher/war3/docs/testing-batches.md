@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 亡灵第五章继承、通关与第六章首帧（专项验收）
+
+隔离 Win32 Release 前端从第四章实际胜利后的缓存副本启动。阿尔萨斯恢复为 5 级、1,409 XP，背包携带 `ktrm`。以 3,164 条正常玩家命令推进，记录 10 次建造和 53 次训练，击败四位太阳之井守卫。模拟 1,322.5625 秒触发胜利，阿尔萨斯保持 1,000 点生命。
+
+确认战绩后前端自动加载并渲染 `Undead05interlude.w3m`。间章在模拟 88.65625 秒结束并请求 `Undead06.w3m`，正式加载并渲染第六章首帧，包含 14 个区块、84 个物体和 50 个单位。1 通过／0 失败，进程退出码 0，未加载 `Game.dll`。执行 `node tmp/docs-artifacts/war3/p2-undead05/from05-v2/run-from05-v2b.mjs` 可复跑，原始前端与实战日志在同目录的 `run-48da5fccceba4d71bc8123a26b24d0d9/`，退出记录在上一层的 `launch-front-fifth-v2b.log`。本轮通过自动输入和加速模拟覆盖切章，实时音画、人工操作与第六章实战待验。专项验证不计功能批次。
+
 ## AI 远端覆盖矿的发现与采金（功能批次 1/3，待集中验证）
 
 路径为 `src/session.h`、`src/session_ai_economy.cpp`、`src/session_ai_natives.cpp` 和 `tests/campaign_ai_tests.cpp`。本方完工且超出真实大厅采集范围的覆盖矿进入独立采金槽。大厅继续承担主镇、生产归属、木材和扩张距离判断。矿井数量与金量共用底矿身份，避免重复计数。有效槽位保持身份，耗尽、易主或销毁的槽位清除旧配额后可复用。读档沿用既有单位身份与空槽字段。
@@ -18,7 +24,7 @@ Win32 Release 候选执行 `war3_campaign_ai_tests <data-root> <campaign-ai-fixt
 
 隔离 Win32 Release 前端从第三章通关缓存启动 `Undead04.w3m`，使用固定种子、模拟音频时钟和自动玩家输入。全程发出 4,376 条玩家命令，摧毁三个祭坛并集齐三个钥匙碎片，模拟 1,909.3125 秒触发胜利，阿尔萨斯剩余约 60 点生命。确认战绩后战役浏览器请求、载入并渲染 `Undead05.w3m`，首帧包含 13 个区块、91 个物体及 24 个单位。早期使用另一条突击路线只取得一片，英雄阵亡。
 
-独立从三片钥匙已在船上的原生存档载入，于 1,909.4375 秒胜利，同样通过结算进入第五章首帧。两项通过，退出码均为 0，未加载 `Game.dll`。完整路线的 `frontend.log` 和 `player.log` 在 `tmp/docs-artifacts/war3/p2-undead04/from04-v23/run-ded28ef4830948b6a05fcbc58c66c285/`，存档复验在同一根目录的 `from04-v22/run-79ce7669a46d41e39508e1905000d13e/`。隔离构建和进程退出记录在根目录的 `build-front-v23.log`、`launch-front-v23.log` 和 `launch-front-v22b.log`。第五章英雄继承、通关、前台人工操作及设备音频待验。专项验证不计功能批次。
+独立从三片钥匙已在船上的原生存档载入，于 1,909.4375 秒胜利，同样通过结算进入第五章首帧。两项通过，退出码均为 0，未加载 `Game.dll`。完整路线的 `frontend.log` 和 `player.log` 在 `tmp/docs-artifacts/war3/p2-undead04/from04-v23/run-ded28ef4830948b6a05fcbc58c66c285/`，存档复验在同一根目录的 `from04-v22/run-79ce7669a46d41e39508e1905000d13e/`。隔离构建和进程退出记录在根目录的 `build-front-v23.log`、`launch-front-v23.log` 和 `launch-front-v22b.log`。前台人工操作及设备音频待验。专项验证不计功能批次。
 
 ## 经典形态局域网发现与就绪边界（专项验收）
 
