@@ -25,7 +25,9 @@
 
 路径为 `src/main.cpp`。`--play` 从进程启动到首次成功构造 GameView 仍受 120 秒启动超时约束。首次成立后结束启动检查，避免正常退场、重开、读档或切章的中间阶段误报启动超时。
 
-Win32 Release 隔离前端矩阵 12 通过／0 失败。测试夹具仅为 watchdog 注入计时值，实际进入前端状态。首次加载在 120,001 毫秒仍然报错，在 120,000 毫秒可以继续。原构建在超过期限后退出、重开、载入存档与切章的四种对照均误报，候选分别渲染地图菜单、重开后的 GameView、恢复模拟时钟的 GameView 与下一章首帧。无注入的 `--play` 启动也正常渲染。命令与日志在 `tmp/docs-artifacts/war3/play-start-watchdog/` 的 `run.mjs` 和 `lifecycle-matrix-c.log`。实际超过 120 秒的墙钟路径待复验。
+Win32 Release 隔离前端矩阵 12 通过／0 失败。测试夹具仅为 watchdog 注入计时值，实际进入前端状态。首次加载在 120,001 毫秒仍然报错，在 120,000 毫秒可以继续。原构建在超过期限后退出、重开、载入存档与切章的四种对照均误报，候选分别渲染地图菜单、重开后的 GameView、恢复模拟时钟的 GameView 与下一章首帧。无注入的 `--play` 启动也正常渲染。命令与日志在 `tmp/docs-artifacts/war3/play-start-watchdog/` 的 `run.mjs` 和 `lifecycle-matrix-c.log`。
+
+用 `ddd4907` 的候选复跑原 `--play` 第八章路径，使用真实启动时钟并完整播放结尾。守满原 1,800 模拟秒，确认战绩后实际呈现战役菜单。进程墙钟 203.722 秒、退出 0，1 通过／0 失败。命令为 `node tmp/docs-artifacts/war3/p2-undead08/from08-watchdog/run-from08.mjs`，前端产物在同目录的 `run-a7a662630de0477a84a36115b404c584/`，墙钟与退出码记录在上一层的 `launch-front-eighth-watchdog.log`。
 
 ## 亡灵第八章完整防守、结尾与战役菜单返回（专项验收）
 
