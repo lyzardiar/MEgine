@@ -152,8 +152,8 @@ std::shared_ptr<const Member> Archives::readWavForAudio(std::string name) {
     if(name.empty() || name.front()=='/' || name.front()=='\\' || name.find(':')!=std::string::npos || name.find("..")!=std::string::npos)throw std::runtime_error("Invalid archive path");for(auto& c:name){if(c=='/')c='\\';c=char(std::tolower(static_cast<unsigned char>(c)));}if(!name.ends_with(".wav"))throw std::runtime_error("WAV audio read requires a WAV path");std::vector<std::string> names{std::move(name)};std::shared_ptr<const Member> member;if(map_)member=readStore(*map_,names,true);if(!member)member=readStore(*common_,names,true);record(member);return member;
 }
 std::shared_ptr<const Member> Archives::readTexture(std::string name) {
-    auto other = name; auto dot = other.find_last_of('.');
-    if (dot == std::string::npos) return read(name);
+    auto other = name; auto dot = other.find_last_of('.'), separator = other.find_last_of("\\/");
+    if (dot == std::string::npos || (separator != std::string::npos && dot < separator)) return readCandidates({name, name + ".blp", name + ".tga"});
     auto ext = other.substr(dot); for (auto& c : ext) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     if (ext != ".blp" && ext != ".tga") return read(name);
     other.replace(dot, std::string::npos, ext == ".tga" ? ".blp" : ".tga");
