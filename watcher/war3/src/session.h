@@ -901,7 +901,7 @@ class ScriptSession {
     std::map<std::uint32_t,std::shared_ptr<ScriptUbersplat>> ubersplats_;
     std::map<std::string,UbersplatInfo> ubersplatInfo_;
     void ubersplatTick(double delta);
-    jass::Value createEffect(const std::string& model,WorldPoint point,std::uint32_t target=0,const std::string& attachment={},bool automatic=false);
+    jass::Value createEffect(const std::string& model,WorldPoint point,std::uint32_t target=0,const std::string& attachment={},bool automatic=false,bool allowMissingModel=false);
     void destroyEffect(std::uint32_t id);
     void effectsTick();
     std::vector<std::uint32_t> spellVisual(const SpellInfo& spell,const char* field,std::uint32_t target,WorldPoint point,bool automatic=true);

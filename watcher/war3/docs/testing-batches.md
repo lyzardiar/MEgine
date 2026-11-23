@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 缺失的脚本特效模型继续场景运行（功能批次 3/3，待集中验证）
+
+路径为 `src/effects.h`、`src/session.h`、`src/session_effects.cpp`、`src/session_effect_snapshot.cpp`、`src/scene_streaming.h`、`src/scene_streaming.cpp`、`src/game_view.cpp`。脚本直接创建的表现效果带有资源缺失标记。后台流送确认归档无模型时记录路径，并保留效果句柄、附件和正常销毁。同名必需模型、解析失败和必需贴图按原错误路径报告。效果分段写 v5，继续读取既有 v2 至 v4。
+
+Win32 Release 隔离候选构建通过。初始和后续 GameView 的自有地图夹具均正常呈现并退出 0。流送覆盖缺失表现、同路径必需请求、损坏成员、必需贴图和真实有效模型。运行旧 v4 与新 v5 快照，各恢复三个句柄，新快照保持脚本来源和附件。
+
+从同一人族第五章缓存重新防守，原 1,800 秒计时自然到期，尾声记录缺失的 Heal 模型后继续，实际触发胜利并确认战绩。随后遇到间歇 `IJL JPEG decode failed`，进程退出 1，间章及第六章尚未进入。候选构建、存档和流送夹具、关卡及错误日志在 `tmp/docs-artifacts/war3/p2-human05/effect-candidate/`。集中回归将覆盖正式启动、商店与效果三个功能。
+
 ## 阵营商店加载 Makeitems 库存（功能批次 2/3，待集中验证）
 
 路径为 `src/session_commerce.cpp`。商店初始化合并 `Sellitems` 和 `Makeitems`，重叠商品复用一个库存槽。价格、科技、买方资格、初始延迟、补货和脚本库存覆盖沿用正式交易流程。旧 `SSHP` v1 库存按照存档完整恢复，新建和升级后的商店使用商品配置。
