@@ -259,6 +259,9 @@ class ScriptSession {
     bool aiEnemyBaseCandidate(const ScriptAI& ai,const UnitState& unit);
     void aiEnemyBaseSearchTick(ScriptAI& ai);
     void aiTowns(ScriptAI& ai);
+    bool aiTownHall(const ScriptAI& ai,const UnitState& unit);
+    bool aiRemoteCoveredMine(const ScriptAI& ai,const UnitState& unit);
+    std::set<std::uint32_t> aiMineSources(ScriptAI& ai);
     int aiTown(ScriptAI& ai,const UnitState& unit);
     unsigned aiCount(ScriptAI& ai,std::uint32_t type,bool done,int town=-1);
     bool aiConstructionBudget(unsigned owner,const ProductInfo& cost,std::uint32_t replacingWorker=0);

@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## AI 远端覆盖矿的发现与采金（功能批次 1/3，待集中验证）
+
+路径为 `src/session.h`、`src/session_ai_economy.cpp`、`src/session_ai_natives.cpp` 和 `tests/campaign_ai_tests.cpp`。本方完工且超出真实大厅采集范围的覆盖矿进入独立采金槽。大厅继续承担主镇、生产归属、木材和扩张距离判断。矿井数量与金量共用底矿身份，避免重复计数。有效槽位保持身份，耗尽、易主或销毁的槽位清除旧配额后可复用。读档沿用既有单位身份与空槽字段。
+
+Win32 Release 候选执行 `war3_campaign_ai_tests <data-root> <campaign-ai-fixture> <mode>`，`harvest-remote-mine`、`harvest-town` 和 `expansion-cover` 各 2 通过／0 失败，包含共同开局检查。独立生命周期与回档检查 1 通过／0 失败，回归覆盖施工中、完工、耗尽、易主、销毁、空槽复用及近镇工人保留。基线在完工后的远矿可用断言失败。
+
+从 Echo Isles 种子 `0x12345678` 的同一 1,405 秒快照续行。亡灵 AI 于 1,541.125 秒识别远矿并发出 5 人采金命令。至 1,770 秒远矿减少 918 金，五名采金工人继续工作，矿产累计入账由基线的 13,500 升至 14,418。实际复跑命令、收据及日志在 `tmp/docs-artifacts/war3/p2-ai-remote-mine/` 的 `handoff.md`、`campaign-results.json` 和 `replay-after-final.log`。完整长局胜负、产品窗口和联机待验。
+
 ## 正式局域网客户端三端发令与一端退出（专项验收）
 
 三个独立的隐藏 Win32 Release 正式客户端在本机通过局域网大厅加入自有地图 `Quartermaster`，以相同随机种子进入 GameView，本地玩家槽为 0、1、2。三端分别从游戏内聊天入口发送消息，三份产品录像在时片 1,456、1,458、1,460 记录对应发送者和动作。第三端通过游戏菜单确认退出并返回局域网，三份录像均在时片 1,953 记录第三端离开。主机和第二端继续呈现，随后在时片 1,958 和 1,961 分别发送消息。
