@@ -261,6 +261,7 @@ class ScriptSession {
     void aiTowns(ScriptAI& ai);
     int aiTown(ScriptAI& ai,const UnitState& unit);
     unsigned aiCount(ScriptAI& ai,std::uint32_t type,bool done,int town=-1);
+    bool aiConstructionBudget(unsigned owner,const ProductInfo& cost,std::uint32_t replacingWorker=0);
     bool aiProduce(ScriptAI& ai,unsigned quantity,std::uint32_t type,int town);
     bool aiUpgrade(ScriptAI& ai,std::uint32_t type);
     bool aiMergeUnits(ScriptAI& ai,int quantity,std::uint32_t first,std::uint32_t second,std::uint32_t result);
