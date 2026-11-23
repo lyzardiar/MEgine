@@ -56,6 +56,45 @@ void joinBeforeClose(std::span<const std::uint8_t> suffix,LanJoinState expected,
     if(expected==LanJoinState::Rejected)requireJoin(join.rejectionCode()==9,"Join rejection code was lost before TCP close");
     if(expected==LanJoinState::Error)requireJoin(join.error()=="Invalid LAN packet header","Invalid final header was not reported");
 }
+void discoveryCapacity(){
+    LanHostSettings settings;
+    settings.gameName="CapacityTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";
+    settings.width=64;settings.height=64;settings.map.size=1;settings.slots.resize(4);
+    for(unsigned i=0;i<settings.slots.size();++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}
+    settings.slots[2].status=2;settings.slots[2].computer=1;settings.slots[3].status=1;
+    LanHost host(settings);
+    TestSocket request{socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP)};
+    requireJoin(request.handle!=INVALID_SOCKET,"Cannot create discovery test socket");
+    sockaddr_in destination{};destination.sin_family=AF_INET;destination.sin_addr.s_addr=htonl(INADDR_LOOPBACK);destination.sin_port=htons(6112);
+    auto expect=[&](unsigned used,unsigned capacity){
+        constexpr std::array<std::uint8_t,16> search{0xf7,0x2f,16,0,'P','X','3','W',27,0,0,0,0,0,0,0};
+        requireJoin(sendto(request.handle,reinterpret_cast<const char*>(search.data()),int(search.size()),0,reinterpret_cast<const sockaddr*>(&destination),sizeof(destination))==int(search.size()),"Cannot send discovery request");
+        const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(3);
+        for(;;){
+            host.poll();fd_set readable;FD_ZERO(&readable);FD_SET(request.handle,&readable);timeval timeout{0,10000};
+            const auto result=select(0,&readable,nullptr,nullptr,&timeout);
+            requireJoin(result>=0 && std::chrono::steady_clock::now()<deadline,"Discovery response did not arrive");
+            if(result==1)break;
+        }
+        std::array<std::uint8_t,4096> packet{};const auto size=recv(request.handle,reinterpret_cast<char*>(packet.data()),int(packet.size()),0);
+        requireJoin(size>=22,"Discovery response is truncated");
+        auto field=[&](int offset){const auto* data=packet.data()+size-22+offset;return std::uint32_t(data[0])|std::uint32_t(data[1])<<8|std::uint32_t(data[2])<<16|std::uint32_t(data[3])<<24;};
+        requireJoin(field(0)==4 && field(8)==used && field(12)==capacity,"Discovery wire counts do not match occupied human seats and capacity");
+        auto game=parseLanGameInfo(std::span(packet).first(std::size_t(size)),"127.0.0.1");
+        requireJoin(game && game->slotsTotal==4 && game->slotsAvailable==capacity,"Discovery did not retain the advertised slot count");
+        return *game;
+    };
+    const auto open=expect(1,2);
+    auto closed=settings.slots[1];closed.status=1;
+    requireJoin(host.setSlot(1,closed),"Cannot close discovery test slot");expect(1,1);
+    requireJoin(host.setSlot(1,settings.slots[1]),"Cannot reopen discovery test slot");
+    LanJoin guest(open,"Guest");const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(3);
+    while(guest.state()!=LanJoinState::Lobby){
+        requireJoin((guest.state()==LanJoinState::Connecting || guest.state()==LanJoinState::Joining) && std::chrono::steady_clock::now()<deadline,"Discovery guest did not join");
+        host.poll();guest.poll();std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    expect(2,2);
+}
 }
 int main(int argc,char** argv){
     try{
@@ -66,6 +105,9 @@ int main(int argc,char** argv){
             joinBeforeClose({},LanJoinState::Closed);joinBeforeClose(reject,LanJoinState::Rejected);joinBeforeClose(reject,LanJoinState::Rejected,256);
             joinBeforeClose(truncated,LanJoinState::Closed,256);joinBeforeClose(badHeader,LanJoinState::Error,256);
             std::cout<<"PASS bare_close_and_join_rejection_before_close\nRESULT passed=5 failed=0\n";return 0;
+        }
+        if(argc==2 && std::string_view(argv[1])=="game-info-capacity"){
+            discoveryCapacity();std::cout<<"PASS discovery_packet_human_capacity\nRESULT passed=1 failed=0\n";return 0;
         }
         auto require=[](bool ok,const char* text){if(!ok)throw std::runtime_error(text);};LanHostSettings settings;settings.gameName="M3LeaveTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.map.info=2;settings.map.crc=3;settings.width=64;settings.height=64;settings.experimentalHandshake=true;settings.slots.resize(3);for(unsigned i=0;i<3;++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}LanHost host(settings);LanDiscovery discovery;discovery.refresh();std::unique_ptr<LanJoin> first,second;
         auto tick=[&]{host.poll();discovery.poll();if(first)first->poll();if(second)second->poll();};auto wait=[&](const std::function<bool()>& done,const char* message){auto limit=std::chrono::steady_clock::now()+std::chrono::seconds(15);while(!done()){tick();if(std::chrono::steady_clock::now()>limit)throw std::runtime_error(message);std::this_thread::sleep_for(std::chrono::milliseconds(1));}};
