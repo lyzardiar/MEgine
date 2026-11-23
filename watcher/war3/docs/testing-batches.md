@@ -56,9 +56,11 @@
 
 ## 局域网加入保留断开前的拒绝消息（功能批次 1/3，待集中验证）
 
-路径为 `src/lan_join.cpp` 和 `tests/lan_departure_tests.cpp`。TCP 同一轮读取到完整拒绝包和流结束时，先消费已接收的协议包，再处理断开。房主拒绝原因由原协议分支交给界面，未收到消息的裸断开仍显示连接关闭。
+路径为 `src/lan_join.cpp`、`src/lan_join.h` 和 `tests/lan_departure_tests.cpp`。TCP 读取到完整拒绝包和流结束时，先消费已接收的协议包，再处理断开。房主拒绝原因由原协议分支交给界面，未收到消息的裸断开仍显示连接关闭。
 
 同机真实 1.27 房主可被正式客户端发现。房主发送 `F7 05 08 00 09 00 00 00` 拒绝加入，修复前的项目客户端界面只显示连接关闭。以自有环回监听器复现同轮 `REJECTJOIN` 和 FIN，修复前同样丢失拒绝码。Win32 Release 客户端及 `war3_lan_departure_tests` 已编译，通过 `war3_lan_departure_tests join-close` 的纯 FIN 和拒绝后 FIN 两项。构建、对照和冻结二进制见 `tmp/docs-artifacts/war3/p1-join-fin/`。集中测试覆盖联机退出和同步回归，经典客户端成功加入、地图校验及对局时间片待验。
+
+补充同一修复的处理预算边界。环回房主一次送 256 条 PING 和 `REJECTJOIN(9)` 后结束发送，原修复只处理前 256 包，结果报连接关闭。正在加入时，补充后保留已确认的流结束状态，下一轮继续有界解析，最终返回拒绝码 9。进入房间后沿用已有断开行为。验收命令 `war3_lan_departure_tests join-close` 覆盖裸 FIN、普通拒绝、跨预算拒绝、末尾截断和非法帧头，共 5 通过／0 失败。Win32 Release 客户端和定向目标构建通过，收据见上述目录的 `budget-baseline/` 与 `budget-final/`。功能批次仍为 1/3。
 
 ## 亡灵第六章切章的 JPEG 修复后复验（专项验收）
 

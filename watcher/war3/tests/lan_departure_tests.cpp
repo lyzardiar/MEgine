@@ -10,9 +10,11 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <span>
 #include <stdexcept>
 #include <string_view>
 #include <thread>
+#include <vector>
 using namespace war3;
 namespace {
 void requireJoin(bool ok,const char* text){if(!ok)throw std::runtime_error(text);}
@@ -20,7 +22,7 @@ struct TestSocket {
     SOCKET handle;
     ~TestSocket(){if(handle!=INVALID_SOCKET)closesocket(handle);}
 };
-void joinBeforeClose(bool reject){
+void joinBeforeClose(std::span<const std::uint8_t> suffix,LanJoinState expected,unsigned precedingPings=0){
     struct Winsock {
         Winsock(){WSADATA data{};requireJoin(WSAStartup(MAKEWORD(2,2),&data)==0,"Winsock startup failed");}
         ~Winsock(){WSACleanup();}
@@ -36,9 +38,12 @@ void joinBeforeClose(bool reject){
     requireJoin(select(0,&readable,nullptr,nullptr,&timeout)==1,"Client did not connect to rejection listener");
     TestSocket peer{accept(listener.handle,nullptr,nullptr)};
     requireJoin(peer.handle!=INVALID_SOCKET,"Cannot accept rejection test client");
-    if(reject){
-        constexpr std::array<std::uint8_t,8> packet{0xf7,0x05,8,0,9,0,0,0};
-        requireJoin(send(peer.handle,reinterpret_cast<const char*>(packet.data()),int(packet.size()),0)==int(packet.size()),"Cannot send join rejection");
+    if(!suffix.empty()){
+        constexpr std::array<std::uint8_t,8> ping{0xf7,0x01,8,0,0,0,0,0};
+        std::vector<std::uint8_t> stream;
+        for(unsigned i=0;i<precedingPings;++i)stream.insert(stream.end(),ping.begin(),ping.end());
+        stream.insert(stream.end(),suffix.begin(),suffix.end());
+        requireJoin(send(peer.handle,reinterpret_cast<const char*>(stream.data()),int(stream.size()),0)==int(stream.size()),"Cannot send join test packets");
     }
     requireJoin(shutdown(peer.handle,SD_SEND)==0,"Cannot close rejection test write stream");
     const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(3);
@@ -47,15 +52,20 @@ void joinBeforeClose(bool reject){
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         join.poll();
     }
-    if(reject)requireJoin(join.state()==LanJoinState::Rejected && join.rejectionCode()==9,"Join rejection was lost before TCP close");
-    else requireJoin(join.state()==LanJoinState::Closed && join.rejectionCode()==0,"Bare TCP close should report Closed");
+    requireJoin(join.state()==expected,"Unexpected join state after TCP close");
+    if(expected==LanJoinState::Rejected)requireJoin(join.rejectionCode()==9,"Join rejection code was lost before TCP close");
+    if(expected==LanJoinState::Error)requireJoin(join.error()=="Invalid LAN packet header","Invalid final header was not reported");
 }
 }
 int main(int argc,char** argv){
     try{
         if(argc==2 && std::string_view(argv[1])=="join-close"){
-            joinBeforeClose(false);joinBeforeClose(true);
-            std::cout<<"PASS bare_close_and_join_rejection_before_close\nRESULT passed=2 failed=0\n";return 0;
+            constexpr std::array<std::uint8_t,8> reject{0xf7,0x05,8,0,9,0,0,0};
+            constexpr std::array<std::uint8_t,5> truncated{0xf7,0x05,8,0,9};
+            constexpr std::array<std::uint8_t,5> badHeader{0,0x05,8,0,9};
+            joinBeforeClose({},LanJoinState::Closed);joinBeforeClose(reject,LanJoinState::Rejected);joinBeforeClose(reject,LanJoinState::Rejected,256);
+            joinBeforeClose(truncated,LanJoinState::Closed,256);joinBeforeClose(badHeader,LanJoinState::Error,256);
+            std::cout<<"PASS bare_close_and_join_rejection_before_close\nRESULT passed=5 failed=0\n";return 0;
         }
         auto require=[](bool ok,const char* text){if(!ok)throw std::runtime_error(text);};LanHostSettings settings;settings.gameName="M3LeaveTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.map.info=2;settings.map.crc=3;settings.width=64;settings.height=64;settings.experimentalHandshake=true;settings.slots.resize(3);for(unsigned i=0;i<3;++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}LanHost host(settings);LanDiscovery discovery;discovery.refresh();std::unique_ptr<LanJoin> first,second;
         auto tick=[&]{host.poll();discovery.poll();if(first)first->poll();if(second)second->poll();};auto wait=[&](const std::function<bool()>& done,const char* message){auto limit=std::chrono::steady_clock::now()+std::chrono::seconds(15);while(!done()){tick();if(std::chrono::steady_clock::now()>limit)throw std::runtime_error(message);std::this_thread::sleep_for(std::chrono::milliseconds(1));}};

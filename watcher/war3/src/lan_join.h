@@ -25,7 +25,7 @@ struct LanMapAnnouncement {bool received=false;std::string path;std::uint32_t si
 struct LanMapCheck;
 class LanJoin {
     std::uintptr_t socket_=~std::uintptr_t{};
-    bool winsock_=false;
+    bool winsock_=false,endOfStream_=false;
     LanJoinState state_=LanJoinState::Connecting;
     std::string error_,name_;
     std::uint32_t rejectionCode_=0,hostCounter_=0,entryKey_=0;
