@@ -6,11 +6,13 @@
 
 前端完整播放约 123 秒的 `UndeadEd`，自然触发 `CinematicEnd`。Escape 确认战绩后记录 `LeaveGame`，战役菜单成功呈现，进程退出 0。标准入口 1 通过／0 失败。首轮使用 `--play`，同样获胜并完成影片，退场时触发 `Map start timed out`、退出 1，作为独立启动参数故障保留。运行 `node tmp/docs-artifacts/war3/p2-undead08/from08-menu/run-from08-menu.mjs`，通过日志在同目录的 `run-cc5937de4af34100a2bd4aa55e88537a/`，首轮错误在 `../from08-v1/run-04880a374c5c4a119dee92e0c53514c0/`。此轮使用自动输入及加速模拟，人工操作和设备音频待验。专项验证不计功能批次。
 
-## 跨镇采金使用实际入矿距离（同任务补充，待增量验证）
+## 跨镇采金使用实际入矿距离（同任务补充，增量回归通过）
 
 路径为 `src/session_ai_economy.cpp`。原跨镇预检采用采金指令的目标范围，封闭地形上的小精灵可到达距矿约 796 的路点，实际入矿距离却只有 186。跨镇派工改按采集阶段使用的距离检查完整路径终点，包含亡灵覆盖矿和暗夜覆盖矿各自的能力数据。
 
-Win32 Release 隔离候选两个进程均退出 0。可达对照仍有三名工人进矿并入账 748 金。封闭负例完成覆矿后未派采金工，矿量未变。复验收据和日志在 `tmp/docs-artifacts/war3/p2-amazonia-entangle/candidates/` 的 `reach-fix-summary.json`、`reach-fix-control-23bec43d/` 和 `reach-fix-blocked-path-1bb4fda2/`。正式增量回归覆盖近镇、远矿、兼容矿和 Amazonia 正负场景。同任务补充不计入下一功能批次。
+Win32 Release 隔离候选两个进程均退出 0，证据在 `tmp/docs-artifacts/war3/p2-amazonia-entangle/candidates/reach-fix-summary.json`。集成版本 `eddb91c` 增量重编经济源文件及重新链接核心库和正式测试。近镇、远矿、兼容矿共 5 通过／0 失败。Amazonia 可达对照仍有三名工人进矿并入账 748 金。封闭负例在 6,085 秒保持零派工、原矿 20,000 金。正式正负场景各通过一次，五个进程均退出 0。收据和日志在 `tmp/docs-artifacts/war3/p2-batch-ai-economy/range-regression-eddb91c/`。同任务补充不计入下一功能批次。
+
+另使用 `cb69087` 集成核心从 Amazonia 开局复跑同一种子 `0x12345678`。暗夜精灵自然完成覆矿，目标矿从 20,000 降至 19,728，采金统计增加 272。在 1,960 秒采样到亡灵获胜，进程退出 0。原开局基线达到 6,000 秒仍未分胜负。开局命令、退出码和日志在 `tmp/docs-artifacts/war3/p2-amazonia-opening/from-opening-eb289a0d/`，该轮使用跨镇距离补充修复前的核心库。
 
 ## AI 远矿发现、伐木解堵与本镇覆矿（批次已集中验证）
 
