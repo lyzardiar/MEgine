@@ -165,7 +165,9 @@ Win32 Release 候选执行 `war3_campaign_ai_tests <data-root> <campaign-ai-fixt
 
 使用 `1f585ba` 正式 Win32 产物复跑默认大厅入口。环回查询实际收到 `F7 30` 响应、产品 `PX3W`、版本 27、TCP 端口 6112。另一正式客户端从大厅按钮加入，双方建立 TCP 并呈现加入后的大厅，两个进程退出 0。1 通过／0 失败，收据与帧在 `tmp/docs-artifacts/war3/p1-classic-launch/standard-07b677e3/`。
 
-早期公开形态报文对照、地图大小与整文件 CRC32 独立核对保留在 `tmp/docs-artifacts/war3/p3-classic-lan/`。真实原版客户端互通、地图成员校验算法、对象身份和锁步仍待实测。本次专项不计功能批次。
+签名有效的 1.27.0.52240 原客户端副本在私有桌面启动，进程使用临时副本中的 Game.dll 及四个归档。OpenGL 捕获为空白，Direct3D 显示初始化失败。原版大厅未能呈现，发现和加入尚未执行。测试进程均已退出，隔离收据和画面在 `tmp/docs-artifacts/war3/p1-classic-launch/native-903ebf6d/`。
+
+早期公开形态报文对照、地图大小与整文件 CRC32 独立核对保留在 `tmp/docs-artifacts/war3/p3-classic-lan/`。原版互通、地图成员校验算法、对象身份和锁步仍待实测。本次专项不计功能批次。
 
 ## 自用回复、覆矿落点和 AI 费用保护批次（已集中验证）
 
