@@ -32,6 +32,16 @@ Win32 Release `7250357` 在独立用户目录使用合成地图。同一进程�
 
 Win32 x86 Release 隔离链接通过。`war3.exe --hidden --mute --menu-check --frames 1000 --data-root <data-root> --map <map> --log client.log` 在 BootyBay 和 Amazonia 各 1 通过／0 失败，检查实际窗口消息、地图配置、让分草稿重新选择、弹层关闭、取消与快捷键导航。证据及复验脚本在 `tmp/docs-artifacts/war3/p2-window-menu-acceptance/run-ba4a50a8/`。完整游戏内 HUD、任务、结算和设备音频留待后续验收，功能批次仍为 2/3。
 
+## 亡灵第三章至第四章继承与第四章玩法（专项验收）
+
+第三章自然胜利后，同一 Win32 Release 后台客户端确认结算，正式加载并渲染第四章。英雄在第四章模拟 0.03125 秒恢复为 4 级、909 XP、0 点技能点，六个背包槽与第三章结算一致，第 2 槽为骨灰瓮。开场战斗后恢复操作时 XP 为 925，难度保持一致。固定随机种子和模拟音频时钟，进程以 0 退出，未加载 `Game.dll`。
+
+同进程继承及恢复玩家控制 1 通过／0 失败。从 `tmp/docs-artifacts/war3/p2-undead04/` 运行 `node build-frontend.mjs` 和 `./run-probe.ps1 -PlayThird -Timeout 210`。证据为 `run-427621ea514243a7a2c4eff172a5caec/{frontend,player}.log` 与 `inheritance.log`。本次专项不计功能批次。
+
+用第三章胜利后产生的独立 gamecache 副本运行第四章。以玩家命令采金、采木、建造、训练、购买飞艇、装载及卸载。强化运输候选搭载 22 名单位抵达第一战区，击毁祭坛并在模拟 1060 秒拾取首枚钥匙碎片。另一次尝试将英雄与突击船队分开，15 名部队抵达第二战区，此后飞艇耗尽，英雄在 1260 秒阵亡。第四章自然通关 0 通过／1 失败，最高进展为 1/3 枚碎片。第五章实际载入待验。
+
+从 `tmp/docs-artifacts/war3/p2-undead04/` 运行 `node build-survey.mjs fourth`，再执行 `fourth.exe <data-root> <third-win-user-dir-copy>`。证据为 `fourth-v7.log`，先前正面运输及地面路线见 `fourth-v{1,3,4,6}.log`。为后续验收保留第三章结束后的独立缓存，下一次从控制第二战区防空和补充运力继续。
+
 ## 亡灵第二章至第三章继承与第三章通关（已执行，不计功能批次）
 
 以 `953baa8` 的 Win32 Release 客户端为基础，后台探针使用固定随机种子、模拟音频时钟与本机游戏数据。从第二章胜利结算进入 `Undead02Interlude.w3m`，等待过场自然结束，再经客户端正式载入并渲染 `Undead03.w3m`。在第三章模拟 0.0625 秒核对恢复值。英雄仍为 3 级、549 XP、2 点技能点，背包第 1 槽是 1 次充能的治疗药水，第 2 槽是骨灰瓮。开场战斗后恢复玩家控制时 XP 为 565。
