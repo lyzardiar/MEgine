@@ -1,28 +1,37 @@
 # 独立客户端测试队列
 
-## 局域网停片等待提示（功能批次 3/3）
+## 局域网离场、终局与停片提示（功能批次 3/3，已集中验证）
+
+集成实现为 `af14aee`，覆盖最小化房主掉线 `56bf70c`、尾时片和双端计分 `57f0cd2`、本机环回补充 `ae6a2fa` 及停片等待提示。使用同一 Win32 Release 构建，本批 **13 通过／0 失败**。
+
+- `war3_lan_departure_tests` 的终局、加入关闭、正常离场和发现容量共 8 通过。`run-lan-process-tests.py --mode three` 验证三端 80 个公共时片及异常离场后的推进。`--mode long --map <quartermaster.w3m>` 验证三端 22,500 时片、720,000 模拟毫秒及建造、训练、施法、物品和胜利事件。后两项各 1 通过。日志见 `tmp/docs-artifacts/war3/lan-sync-wait/batch-*.log` 和同目录 `batch-process/`。
+- 三项正式客户端后台复验各 1 通过。停片等待和恢复回执为 `lan-sync-wait/run-878d4c6003`。双端计分、各自保存完整 15,000 毫秒录像并返回大厅的回执为 `p0-lan-victory-product/run-cf32814855`。最小化时房主掉线、保存部分录像、完成离场和恢复后返回大厅的回执为 `p1-lan-cinematic-disconnect/run-d7e4ab41ae`。三个目录均在 `tmp/docs-artifacts/war3/`。
+
+正式客户端三端结算、加载中掉线、房主 300 秒墙钟超时及跨机待验。HY2026 本轮 CloudLan 查询为离线。下一批从 0/3 开始。
+
+## 局域网停片等待提示（功能批次 3/3，已集中验证）
 
 路径为 `src/lan_runtime.*` 和 `src/main.cpp`。连接仍有效且连续 5 秒没有应用时片时，正常对局和过场顶部显示「正在等待联机同步…」。应用首个恢复时片后清除提示。离场和连接错误沿用现有处理。
 
 Win32 Release 构建通过。在专用后台桌面的环回对局暂停本轮加入端，房主在校验积压后停于 26.875 模拟秒。采样间隔 5.578 实秒，期间继续渲染 334 帧并显示等待提示。恢复加入端后双端越过 35 模拟秒，提示消失，两端退出码均为 0。入口为 `tmp/docs-artifacts/war3/lan-sync-wait/verify-wait.ps1`，回执及停片、恢复画面在 `run-878d4c6003/`。正式客户端三端结算、跨机及主机静默 300 秒墙钟待复验。
 
-## 局域网脚本终局时片与双端计分（功能批次 2/3）
+## 局域网脚本终局时片与双端计分（功能批次 2/3，已集中验证）
 
 路径为 `src/lan_host.*`、`src/lan_join.*`、`src/lan_runtime.*`、`src/main.cpp`、`src/session.h`、`src/session_match.cpp` 和 `tests/lan_departure_tests.cpp`。房主逐时片推进模拟，脚本结束整局后停止发射，逐连接排空已产生的时片并半关闭发送，最长等待 5 秒。加入端先应用干净 EOF 前的完整时片，再按本机脚本的计分选项结算，普通离场沿用有序离场路径。
 
-Win32 Release 构建通过。`war3_lan_departure_tests game-end` 验证两个加入端均在 TCP 关闭后取到同一条分片尾时片，为 1 通过／0 失败。`join-close` 和默认离场测试共 6 通过／0 失败。正式双客户端在专用后台桌面进入同一局，两端均显示计分，确认后各保存一份完整 15,000 毫秒录像并返回大厅，退出码均为 0。产品入口为 `tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script <verify-terminal.ps1> -Executable <war3.exe>`，回执在 `run-a5348ffbd1/receipt.json`。批次待验持续同步、多端结算和跨机条件下的尾时片传送。
+Win32 Release 构建通过。`war3_lan_departure_tests game-end` 验证两个加入端均在 TCP 关闭后取到同一条分片尾时片，为 1 通过／0 失败。`join-close` 和默认离场测试共 6 通过／0 失败。正式双客户端在专用后台桌面进入同一局，两端均显示计分，确认后各保存一份完整 15,000 毫秒录像并返回大厅，退出码均为 0。产品入口为 `tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script <verify-terminal.ps1> -Executable <war3.exe>`，回执在 `run-a5348ffbd1/receipt.json`。持续同步见集中验证。正式客户端三端结算和跨机尾时片传送待验。
 
 ## 本机局域网环回验收（终局任务补充）
 
 路径为 `src/platform.*`、`src/main.cpp`、`src/lan_browser.*`、`src/lan_host_ui.*`、`src/lan_host.*`、`src/lan_discovery.cpp`、`tests/lan_departure_tests.cpp` 和 `tests/lan_process_tests.cpp`。本机回归默认使用环回。后台正式客户端通过 `--lan-loopback` 启用本机发现与监听。使用新路径的可执行文件实测房主 TCP 和 UDP 6112 均绑定 `127.0.0.1`，Windows 桌面检查未出现防火墙提示。监听证据见 `tmp/docs-artifacts/war3/p0-lan-victory-product/run-a5348ffbd1/listeners.txt`。
 
-Win32 Release 的客户端与两个联机回归程序构建通过。`war3_lan_departure_tests` 的终局、加入关闭、默认离场和发现容量四种入口共 8 通过／0 失败。`run-lan-process-tests.py --mode sync` 完成 80 时片，为 1 通过／0 失败。最小化期间异常关房的后台复验为 1 通过／0 失败，加入端保存部分回放并返回局域网列表。命令日志在 `tmp/docs-artifacts/war3/p0-lan-victory-product/terminal-20261125044302/`，掉线回执在 `tmp/docs-artifacts/war3/p1-lan-cinematic-disconnect/run-09011ec659/receipt.json`。跨机监听及多端长局待批次复验。
+Win32 Release 的客户端与两个联机回归程序构建通过。`war3_lan_departure_tests` 的终局、加入关闭、默认离场和发现容量四种入口共 8 通过／0 失败。`run-lan-process-tests.py --mode sync` 完成 80 时片，为 1 通过／0 失败。最小化期间异常关房的后台复验为 1 通过／0 失败，加入端保存部分回放并返回局域网列表。命令日志在 `tmp/docs-artifacts/war3/p0-lan-victory-product/terminal-20261125044302/`，掉线回执在 `tmp/docs-artifacts/war3/p1-lan-cinematic-disconnect/run-09011ec659/receipt.json`。本机三端长局见集中验证。跨机监听待验。
 
-## 最小化期间房主掉线返回局域网列表（功能批次 1/3）
+## 最小化期间房主掉线返回局域网列表（功能批次 1/3，已集中验证）
 
 路径为 `src/main.cpp`。加入端在最小化期间收到房主 TCP 关闭或重置时，与正常对局共用房主断开处理，保存部分回放、释放对局并返回局域网列表。恢复绘制时列表显示「房主已断开连接。」。静默超时沿现有中断路径报错。
 
-Win32 Release 构建通过。专用后台 Windows 桌面上的两个正式客户端通过大厅进入自有图的脚本过场。用定向 `WM_SIZE(SIZE_MINIMIZED)` 触发加入端最小化分支，再结束该轮自建房主进程。旧版恢复绘制后显示含 Winsock 10054 的通用中断提示。修复版在恢复绘制前已记录房主断开和离场，保存一份部分录像，恢复后实际显示专用提示。另在过场正常持续绘制时重复断开，专用提示和回放保存仍通过。修复版两轮加入端退出均为 0。脚本与收据见 `tmp/docs-artifacts/war3/p1-lan-cinematic-disconnect/`，旧版 `run-e21bbd01c6`，修复版 `run-23f092c1b7`、`run-0710ee5a7e`。待随批次复验双端同步、主动离场、加载中掉线与正常终局。
+Win32 Release 构建通过。专用后台 Windows 桌面上的两个正式客户端通过大厅进入自有图的脚本过场。用定向 `WM_SIZE(SIZE_MINIMIZED)` 触发加入端最小化分支，再结束该轮自建房主进程。旧版恢复绘制后显示含 Winsock 10054 的通用中断提示。修复版在恢复绘制前已记录房主断开和离场，保存一份部分录像，恢复后实际显示专用提示。另在过场正常持续绘制时重复断开，专用提示和回放保存仍通过。修复版两轮加入端退出均为 0。脚本与收据见 `tmp/docs-artifacts/war3/p1-lan-cinematic-disconnect/`，旧版 `run-e21bbd01c6`，修复版 `run-23f092c1b7`、`run-0710ee5a7e`。双端同步、主动离场和正常终局见集中验证。加载中掉线待验。
 
 ## 休眠胜利回调随 WSAV 恢复（专项验收）
 
