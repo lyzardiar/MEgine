@@ -26,6 +26,30 @@ Win32 Release 产品编译通过。快验 4 通过／0 失败，比较 65,536 �
 
 HumanX03Interlude 的 W3E 悬崖槽为 `COdi, COdt, COrd`，原安装包的 CliffTypes.slk 有 `COdi` 和 `COrd`。可渲染的悬崖没有直接使用 `COdt`。原异常来自 29 个缺省崖面被固定映射到缺定义的槽 1，29 格各自的同格明确角点均指向 `COdi`。所需原版模型和纹理存在。Win32 Release 产品编译通过。源表证据在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/assets/cliff-source.log`；构建回执见 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/interlude-cliff-build-exit.txt`。即时验收从同一守卫清零档复走正式胜利确认和计分，间章已通过崖面生成，随后暴露原始地表图集尺寸检查。回执见 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/cliff-fix/run-139d9536231845a1bace70a958d8c484/frontend.log`。集成版探针验证原间章 29 处缺省槽回退、同格候选冲突拒绝、显式缺定义槽拒绝、HumanX03 的 Dalaran 可用默认槽，共 4 项通过，退出 0。复验入口及日志见 `tmp/docs-artifacts/war3/terrain-cache-batch-11ae165/run.cmd` 和 `probe.log`。
 
+## HumanX05 第一座蓝门防守与引导存档（验收补充）
+
+使用 `11ae165` Win32 Release 核心及 HumanX04 正常获胜缓存的隔离副本。无渲染原图于模拟 56.625 秒开始引导，57.625 秒交还玩家控制。零指令对照中伊利丹在约 187.625 秒阵亡，蓝门未关。仅调整站位和仅施放技能的两组对照也未完成。
+
+常规守门用普通攻击移动组织剑士、弓箭手、掠夺者和海妖，用普通移动安排牧师，并对伊利丹施放治疗、对来袭部队施放烈焰风暴和叉状闪电。共 26 次普通玩家指令，236.625 秒首门自然关闭，击毁计数 1，伊利丹回归玩家，生命 817.881/1,150。245.625 秒三位英雄仍活，生成标准快速存档，SHA-256 为 `6952e8bfec15100c86ce3dc738964518b7df7798e38fd4a76338f36a6e25fb4b`。入口、日志、源档副本在 `tmp/docs-artifacts/war3/p2-humanx05/first-gate-headless/`，接续源在该目录的 `checkpoint-user`。
+
+三种依靠部队编队、普通跟进集火和牧师治疗的无渲染变体均在 236.625 秒完成。最佳 rear 方案将前排攻击移动至 `(-3920,-1350)`，远程和英雄移动至 `(-3630,-1550)`，牧师移动至 `(-3440,-1435)`。集中攻击可见且接近伊利丹的恶魔，伊利丹缺血超过 35 时补治疗。伊利丹最低 1,054.14/1,150，关门时剩 1,138.908，8 秒后满血。三项 3 通过／0 失败，入口和日志在 `tmp/docs-artifacts/war3/p2-humanx05/first-gate-formation/`。
+
+rear 方案另在 244.625 秒保存并由新运行时读回，伊利丹满血、引导剩余 0、首门关闭且计数 1，294 个单位和三英雄、任务快照一致。标准快速存档在 `first-gate-formation/rear-checkpoint/write/user/Saves/Quick/QuickSave.w3z`，SHA-256 为 `b4f86b691c469502e2db21f1ba40d5036cf13b9ab12c3f665a144380cad32bd5`。增援对照 2 项通过。boosted 方案用 650 金、40 木训练两牧师、两弓手和一名穆格尔掠夺者，配合两座既有防御塔，236.625 秒自然封门，结算后伊利丹 899.007/1,150。固定塔位和缺少治疗的增援对照未完成。执行 `tmp/docs-artifacts/war3/p2-humanx05/first-gate-economy/run.cmd boosted`，日志在同目录。
+
+引导存读档专项 1 通过／0 失败。从另一份 HumanX04 正常胜利缓存隔离启动，于 80 秒写入 1,787,197 字节的本地存档，通过新运行时正式恢复入口回到同一时刻。蓝门引导进度、倒计时 156.594 秒、伊利丹的 Player(11) 所有权、共享控制和引导命令，以及 265 个活单位和两项任务均一致。续跑 10 秒后，计时器、经验、单位状态、任务项与未中断对照相同。入口为 `tmp/docs-artifacts/war3/p2-humanx05/channel-save-probe/run.cmd <新运行名>`，回执见同目录 `channel-save.log`。
+
+失去伊利丹及正常重开引导专项 1 通过／0 失败。从 80 秒档副本继续零指令，183.125 秒伊利丹阵亡，回归本地玩家并保留尸体，关闭数仍为 0，引导和可见倒计时框取消。原脚本保留的旧计时器自然到期。使用国王祭坛花 552 金复活，80 秒后同一伊利丹满血，保留等级和经验。只用普通移动重入引导圈，265.875 秒重新开始，首个样本剩 179.938 秒。入口为 `tmp/docs-artifacts/war3/p2-humanx05/gate1-retry/run.cmd <新运行名>`，结果见同目录 `gate1-retry-verified.log`。
+
+正式隐藏 D3D9 从原 HumanX04 胜利缓存以战役入口启动。零指令对照在 175 秒余 224 生命，180 秒伊利丹已阵亡且首门未关。正常编队、牧师治疗和英雄法术轮在 240.03125 秒已观测到首门关闭、计数 1、伊利丹回归玩家；271.21875 秒用 F6 生成 1,902,475 字节快存，SHA-256 为 `c4cad6df5268bd5e3e4247aeeb7a3cee5045891e5ef63651d97dc888f1634f74`。首次探针误将第四门才更新的任务项完成位作为通过条件。独立客户端以修正后的任务文字条件走单人读档菜单，首门计数、原图 WTS 211/212 两项目标描述、有效的已发现任务、三英雄和玩家控制均通过，退出 0。运行及读回送检见 `tmp/docs-artifacts/war3/p2-humanx05/first-gate-d3d/run-1138d8e061f642e89225a990b9c92f70/`、`readback-35e72c3bc4dc43dfbb6fc43160ac79a8/`。
+
+## HumanX05 第二、三座传送门（无渲染验收补充）
+
+青门使用首门后的真实存档，正常训练五名弓手共 650 金、50 木，带三名牧师和凯尔正常学习、召出的凤凰，分段穿过南谷。449.625 秒进入白圈并开始引导，629.625 秒自然封门，伊利丹回归本地玩家且余 1,087.748/1,150 生命，三英雄、五弓三牧均存活。637.625 秒生成存档。独立进程读回两门关闭、计数 2、主线提示 2/4，25 个单位和三英雄同保存前逐项匹配，再保存及重新读回并自然续跑 8 秒的状态一致。入口和日志为 `tmp/docs-artifacts/war3/p2-humanx05/gate2-headless/run.cmd`、`air.log`、`verify.log`。存档为同目录 `air-user/Saves/humanx05-after-teal.w3z`，SHA-256 为 `f63bfd30647cf6895838ab3e334912c942c58efb7b2912d567e469369f6566c3`。独立保存比较见 `tmp/docs-artifacts/war3/p2-humanx05/gate2-save-audit/second-verified/`。隐藏 D3D9 已读回首门档进入正式青门复跑。
+
+粉门实跑从上述青门档的隔离副本继续。东侧直行对照被敌军削减护送队，西侧经基地绕行保留完整随队人手进入防守。原图 812.625 秒开始引导，992.625 秒自然封门，计数 3，伊利丹回归本地玩家。1001.625 秒标准快存时三英雄存活，伊利丹 389.831/1,150，保留三名牧师和八名工人。独立进程读回三门关闭、第四门开启，用户根为 `tmp/docs-artifacts/war3/p2-humanx05/gate3-headless/pink-west-user`，文件 `Saves/Quick/QuickSave.w3z`，SHA-256 为 `671ad4f6c7dc0ecd924d777db1739daa2f96de7776644506945129f17d81c794`。同级 `pink-west.log` 保留完整运行。第三、四门地形路径、刷兵与基地实际受袭见 `tmp/docs-artifacts/war3/p2-humanx05/later-gates-review/`。
+
+青门档内正常分派五名工人去 `(-2624,-64)` 金矿和三名工人伐木，120 秒后资源从 100 金、200 木增到 500 金、440 木，实际完成两弓一牧，日志见 `tmp/docs-artifacts/war3/p2-humanx05/gate2-economy/worker.log`。独立首门后留守试验至 725.625 秒，零指令保 19/24 座原建筑，两座新防御塔配一名弓手保 23/24；开销 375 金、182 木。日志见 `tmp/docs-artifacts/war3/p2-humanx05/base-defense-economy/towerarch.log`。留守配置尚待随实际远征复验。
+
 ## HumanX04 夺车、护送与胜利（验收补充）
 
 沿用 `11ae165` Win32 Release 核心，从上项正式 F6 档恢复到模拟 43.09375 秒。无渲染试跑以普通移动和技能夺回囚车，首次转权为 106.09375 秒。地面攻击移动对照于 214 秒失车。改用右键跟随囚车，施法后恢复跟随，两名英雄始终存活，囚车只转权一次，约 402.09 秒两项主线完成，450.15625 秒自然进入胜利对话，确认后请求 HumanX04Interlude。复演源码和日志见 `tmp/docs-artifacts/war3/p2-humanx04/route-headless-review/follow-long/`。
