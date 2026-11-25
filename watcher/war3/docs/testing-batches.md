@@ -78,6 +78,18 @@ rear 方案另在 244.625 秒保存并由新运行时读回，伊利丹满血、
 
 同一正式 D3D9 连续进程中，首帧和 111.3125 秒接管时，凯尔 8 级、3,500 经验、2 技能点，瓦丝琪 7 级、3,411 经验、1 技能点，伊利丹 10 级、5,400 经验、0 技能点并保留 gldo。英雄技能和六格物品逐项符合该轮 HumanX05 胜利快照。阿卡玛按原脚本创建为 7 级，114.3125 秒自然发现「影之钥匙」主线。独立无渲染对照使用另一份经原图胜利确认的缓存，111.375 秒接管，114.375 秒自然发现两项尚未达成的副官目标，生成标准快存并由新进程读回。接续快存为 `tmp/docs-artifacts/war3/p2-humanx05/x06-handoff-review/late-confirm-user/Saves/Quick/QuickSave.w3z`，1,544,029 字节，SHA-256 为 `071e99d2115aefe9ce5db267b8624cdf5355105ec005d164eca942be1c140ee4`。日志为同级工作目录的 `late-confirm.log`、`late-confirm-readback.log`。两副官和后续关卡尚待正常实战验收。
 
+## HumanX06 队伍会合、右踏板与发电机（阶段验收）
+
+原生隐藏 D3D9 通过正式菜单读回 114.375 秒首任务档，四英雄、两项未完成目标及南 12、中 6、东 8 人均一致。南队 12 个普通移动命令均接受，和阿卡玛的中队在 `(-1088,-2760)` 周围 450 范围会合。东队八人仍在。124.000 秒以 F6 写出 1,544,391 字节，SHA-256 为 `9f0793151e9565ed39992b71a872577ab3d07438c05d2c03bf595e8274eb861a`。独立进程经菜单恢复，在呈现前同一模拟时刻核对四英雄坐标、生命、魔法、命令和路径均完全匹配。首帧正常推进到 124.03125 秒。两次进程退出 0，原档及地图摘要一致。回执和快存见 `tmp/docs-artifacts/war3/p2-humanx06/rendezvous-d3d/run-adfb8a61c9cf4292b75907ea08224fe9/`。
+
+独立无渲染续跑中，开场三名原有牧师用 27 次普通 Ahea 命令将伊利丹从 485.106 补至 1,150，131.000 秒原生快存读回通过。阿卡玛走近后正常移交大生命药剂，伊利丹使用增加 500 生命。恶魔变身按原技能临时增加当前和最大生命 500，消耗 150 魔法。起点原地治疗、药剂与变身的单项证据在 `tmp/docs-artifacts/war3/p2-humanx06/illidan-healing/`。满血快存的 SHA-256 为 `50b2fd0e695d6c2c015a45b1dc12f74d68c42b6d811a8850bd4be7bd76b7dc14`。
+
+东队以五次普通整队移动走两栖路线到 `(2752,4864)`，163.875 秒触发右踏板，八人全活，两副官均在。167.875 秒标准存档独立读回，右开左关。档为 `tmp/docs-artifacts/war3/p2-humanx06/east-mistress/direct-user/Saves/EastPlate.w3z`，SHA-256 为 `92068892cc38530b3a6c879091f5484593d14524ab8677f08c762df00d11f42f`。实际地形查询见 `route-audit/bridge-northern.log`。首次双踏板 D3D9 试验遇地图流送内存分配失败，后续单独复跑通过读档但西队凯尔在北廊伏击阵亡，双板同时解锁和过桥待正式实战验证。
+
+西侧采用普通攻击，278.250 秒击毁第二发电机并写标准档。在独立进程从此档无输入续跑，279.750 秒原脚本同一帧清除两座毁灭塔、两艘地狱战舰和两段 Dofw 墙，其余十二座防御仍活。288.250 秒可选任务文字更新为发电机 1/4。存档为 `tmp/docs-artifacts/war3/p2-humanx06/lieutenants-headless/west-first-user/Saves/X06-GeneratorTwoDown.w3z`，SHA-256 为 `b28651462559934e6d503a4bc641d5f6b62d06ed7dc05d64b2821973751810fd`，独立读回见 `generator02-review/readback/inspect.log`。
+
+从西线另一路满血编队继续，英雄在南岸，369.125 秒由非英雄普通攻击击毁第三发电机。其标准档为 `tmp/docs-artifacts/war3/p2-humanx06/lieutenants-headless/west-siege-user/Saves/X06-GeneratorThreeDown.w3z`，SHA-256 为 `60f88b303cedd7e499c23829ab18bc26d5433860d7e5e3106f71fed8ac5652c6`。长距离直冲西院真门会在 y8200–9000 让前后排脱节并损失英雄或牧师，目前以该档做小段推进。双副官、主门和玛瑟里顿仍待实战。
+
 ## HumanX04 夺车、护送与胜利（验收补充）
 
 沿用 `11ae165` Win32 Release 核心，从上项正式 F6 档恢复到模拟 43.09375 秒。无渲染试跑以普通移动和技能夺回囚车，首次转权为 106.09375 秒。地面攻击移动对照于 214 秒失车。改用右键跟随囚车，施法后恢复跟随，两名英雄始终存活，囚车只转权一次，约 402.09 秒两项主线完成，450.15625 秒自然进入胜利对话，确认后请求 HumanX04Interlude。复演源码和日志见 `tmp/docs-artifacts/war3/p2-humanx04/route-headless-review/follow-long/`。
