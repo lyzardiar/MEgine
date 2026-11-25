@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 三端计分、加载中掉线与房主超时（专项验收）
+
+使用集成实现 `af14aee` 的 Win32 Release 客户端和同版传输对象。本机环回专项 **3 通过／0 失败**，正式客户端均在专用后台桌面运行。
+
+- 三个正式客户端在自有三席夹具内自然结算。各席在 15.0 模拟秒显示计分，确认后返回大厅，各保存完整 15,000 毫秒录像，退出码均为 0。执行 `verify-private-desktop.ps1 -Script <verify-three-settlement.ps1> -Executable <war3.exe>`，脚本、夹具及回执见 `tmp/docs-artifacts/war3/lan-three-settlement/`，运行目录为 `run-65c581d1b7`。
+- 加载屏障中终止本轮房主，加入端记录 Winsock 10054，返回局域网列表。重进前生成 0 份回放。同一加入端进程连接替代房主，进入新局第二席，退出码为 0。后台脚本与回执见 `tmp/docs-artifacts/war3/lan-loading-disconnect/`，运行目录为 `run-d3e1617990`。
+- 使用实际单调时钟的三端传输探针在 256 个未确认时片后停发。299 秒时仍有三席，300.009 秒时房主摘除静默端。幸存加入端保持 Ready，收到恰好一次正确席位的有序离场事件，后续时片和校验恢复。执行 `tmp/docs-artifacts/war3/lan-real-timeout/build.cmd` 后运行同目录 `probe.exe`，回执为 `probe.log`。
+
+本轮跨机待验，HY2026 在 CloudLan 查询中仍离线。专项不计功能批次。
+
 ## 局域网离场、终局与停片提示（功能批次 3/3，已集中验证）
 
 集成实现为 `af14aee`，覆盖最小化房主掉线 `56bf70c`、尾时片和双端计分 `57f0cd2`、本机环回补充 `ae6a2fa` 及停片等待提示。使用同一 Win32 Release 构建，本批 **13 通过／0 失败**。
@@ -7,19 +17,19 @@
 - `war3_lan_departure_tests` 的终局、加入关闭、正常离场和发现容量共 8 通过。`run-lan-process-tests.py --mode three` 验证三端 80 个公共时片及异常离场后的推进。`--mode long --map <quartermaster.w3m>` 验证三端 22,500 时片、720,000 模拟毫秒及建造、训练、施法、物品和胜利事件。后两项各 1 通过。日志见 `tmp/docs-artifacts/war3/lan-sync-wait/batch-*.log` 和同目录 `batch-process/`。
 - 三项正式客户端后台复验各 1 通过。停片等待和恢复回执为 `lan-sync-wait/run-878d4c6003`。双端计分、各自保存完整 15,000 毫秒录像并返回大厅的回执为 `p0-lan-victory-product/run-cf32814855`。最小化时房主掉线、保存部分录像、完成离场和恢复后返回大厅的回执为 `p1-lan-cinematic-disconnect/run-d7e4ab41ae`。三个目录均在 `tmp/docs-artifacts/war3/`。
 
-正式客户端三端结算、加载中掉线、房主 300 秒墙钟超时及跨机待验。HY2026 本轮 CloudLan 查询为离线。下一批从 0/3 开始。
+同机三端计分、加载中掉线及 300 秒超时见专项。跨机待验。下一批从 0/3 开始。
 
 ## 局域网停片等待提示（功能批次 3/3，已集中验证）
 
 路径为 `src/lan_runtime.*` 和 `src/main.cpp`。连接仍有效且连续 5 秒没有应用时片时，正常对局和过场顶部显示「正在等待联机同步…」。应用首个恢复时片后清除提示。离场和连接错误沿用现有处理。
 
-Win32 Release 构建通过。在专用后台桌面的环回对局暂停本轮加入端，房主在校验积压后停于 26.875 模拟秒。采样间隔 5.578 实秒，期间继续渲染 334 帧并显示等待提示。恢复加入端后双端越过 35 模拟秒，提示消失，两端退出码均为 0。入口为 `tmp/docs-artifacts/war3/lan-sync-wait/verify-wait.ps1`，回执及停片、恢复画面在 `run-878d4c6003/`。正式客户端三端结算、跨机及主机静默 300 秒墙钟待复验。
+Win32 Release 构建通过。在专用后台桌面的环回对局暂停本轮加入端，房主在校验积压后停于 26.875 模拟秒。采样间隔 5.578 实秒，期间继续渲染 334 帧并显示等待提示。恢复加入端后双端越过 35 模拟秒，提示消失，两端退出码均为 0。入口为 `tmp/docs-artifacts/war3/lan-sync-wait/verify-wait.ps1`，回执及停片、恢复画面在 `run-878d4c6003/`。三端计分及房主 300 秒真实超时见专项。跨机待验。
 
 ## 局域网脚本终局时片与双端计分（功能批次 2/3，已集中验证）
 
 路径为 `src/lan_host.*`、`src/lan_join.*`、`src/lan_runtime.*`、`src/main.cpp`、`src/session.h`、`src/session_match.cpp` 和 `tests/lan_departure_tests.cpp`。房主逐时片推进模拟，脚本结束整局后停止发射，逐连接排空已产生的时片并半关闭发送，最长等待 5 秒。加入端先应用干净 EOF 前的完整时片，再按本机脚本的计分选项结算，普通离场沿用有序离场路径。
 
-Win32 Release 构建通过。`war3_lan_departure_tests game-end` 验证两个加入端均在 TCP 关闭后取到同一条分片尾时片，为 1 通过／0 失败。`join-close` 和默认离场测试共 6 通过／0 失败。正式双客户端在专用后台桌面进入同一局，两端均显示计分，确认后各保存一份完整 15,000 毫秒录像并返回大厅，退出码均为 0。产品入口为 `tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script <verify-terminal.ps1> -Executable <war3.exe>`，回执在 `run-a5348ffbd1/receipt.json`。持续同步见集中验证。正式客户端三端结算和跨机尾时片传送待验。
+Win32 Release 构建通过。`war3_lan_departure_tests game-end` 验证两个加入端均在 TCP 关闭后取到同一条分片尾时片，为 1 通过／0 失败。`join-close` 和默认离场测试共 6 通过／0 失败。正式双客户端在专用后台桌面进入同一局，两端均显示计分，确认后各保存一份完整 15,000 毫秒录像并返回大厅，退出码均为 0。产品入口为 `tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script <verify-terminal.ps1> -Executable <war3.exe>`，回执在 `run-a5348ffbd1/receipt.json`。持续同步见集中验证，正式客户端三端计分见专项。跨机尾时片传送待验。
 
 ## 本机局域网环回验收（终局任务补充）
 
@@ -31,7 +41,7 @@ Win32 Release 的客户端与两个联机回归程序构建通过。`war3_lan_de
 
 路径为 `src/main.cpp`。加入端在最小化期间收到房主 TCP 关闭或重置时，与正常对局共用房主断开处理，保存部分回放、释放对局并返回局域网列表。恢复绘制时列表显示「房主已断开连接。」。静默超时沿现有中断路径报错。
 
-Win32 Release 构建通过。专用后台 Windows 桌面上的两个正式客户端通过大厅进入自有图的脚本过场。用定向 `WM_SIZE(SIZE_MINIMIZED)` 触发加入端最小化分支，再结束该轮自建房主进程。旧版恢复绘制后显示含 Winsock 10054 的通用中断提示。修复版在恢复绘制前已记录房主断开和离场，保存一份部分录像，恢复后实际显示专用提示。另在过场正常持续绘制时重复断开，专用提示和回放保存仍通过。修复版两轮加入端退出均为 0。脚本与收据见 `tmp/docs-artifacts/war3/p1-lan-cinematic-disconnect/`，旧版 `run-e21bbd01c6`，修复版 `run-23f092c1b7`、`run-0710ee5a7e`。双端同步、主动离场和正常终局见集中验证。加载中掉线待验。
+Win32 Release 构建通过。专用后台 Windows 桌面上的两个正式客户端通过大厅进入自有图的脚本过场。用定向 `WM_SIZE(SIZE_MINIMIZED)` 触发加入端最小化分支，再结束该轮自建房主进程。旧版恢复绘制后显示含 Winsock 10054 的通用中断提示。修复版在恢复绘制前已记录房主断开和离场，保存一份部分录像，恢复后实际显示专用提示。另在过场正常持续绘制时重复断开，专用提示和回放保存仍通过。修复版两轮加入端退出均为 0。脚本与收据见 `tmp/docs-artifacts/war3/p1-lan-cinematic-disconnect/`，旧版 `run-e21bbd01c6`，修复版 `run-23f092c1b7`、`run-0710ee5a7e`。双端同步、主动离场和正常终局见集中验证。加载中掉线见专项。
 
 ## 休眠胜利回调随 WSAV 恢复（专项验收）
 
@@ -43,7 +53,7 @@ Win32 Release 构建通过。专用后台 Windows 桌面上的两个正式客户
 
 ## 局域网静默超时与恢复（环回专项验收）
 
-实际 `LanJoin` 在 Ready 状态接到的 TCP 保持打开且房主完全静默，于 60,028 毫秒报 `LAN connection timed out`。`LanRuntime::pump` 定向测试核对原错误透传。可控时钟确认主机大厅在 59 秒仍保留静默端、61 秒摘除。三席对局在缺少校验时发完 256 个 32 毫秒时片后暂停。主机仍发心跳，幸存加入端保持 Ready。第 299 秒静默端仍在场，第 301 秒被摘除，幸存端收到一次正确玩家的离开事件，校验及后续时片恢复。环回三项与 Runtime 一项通过。停片期间的正式前端告知见上。跨机与主机 300 秒真实墙钟仍待验。复验入口及日志见 `tmp/docs-artifacts/war3/lan-silence-headless/`。专项不计功能批次。
+实际 `LanJoin` 在 Ready 状态接到的 TCP 保持打开且房主完全静默，于 60,028 毫秒报 `LAN connection timed out`。`LanRuntime::pump` 定向测试核对原错误透传。可控时钟确认主机大厅在 59 秒仍保留静默端、61 秒摘除。三席对局在缺少校验时发完 256 个 32 毫秒时片后暂停。主机仍发心跳，幸存加入端保持 Ready。第 299 秒静默端仍在场，第 301 秒被摘除，幸存端收到一次正确玩家的离开事件，校验及后续时片恢复。环回三项与 Runtime 一项通过。停片期间的正式前端告知及房主 300 秒真实超时见专项。跨机待验。复验入口及日志见 `tmp/docs-artifacts/war3/lan-silence-headless/`。专项不计功能批次。
 
 ## 普通自定义地图自然结算并返回地图列表（专项验收）
 
