@@ -17,21 +17,24 @@ private:
     Replay replay_;
     SlotConsumer consume_;
     RecordHandler handle_;
-    std::size_t index_=0,fragmentBytes_=0;
+    std::size_t index_=0,fragmentBytes_=0,lastSlotEnd_=0;
     std::vector<LanAction> fragments_;
-    bool fragmentPending_=false,running_=false;
+    bool fragmentPending_=false,running_=false,stepRequested_=false;
     ReplayRuntimeState state_=ReplayRuntimeState::Playing;
     std::optional<Clock::time_point> last_;
     double budgetMs_=0,speed_=1;
     std::uint64_t elapsedMs_=0,totalMs_=0;
     std::string error_;
     void fail(std::string message);
+    bool updateClock(Clock::time_point now);
 public:
     ReplayRuntime(Replay replay,SlotConsumer consume,RecordHandler handle);
     ReplayRuntime(const ReplayRuntime&)=delete;
     ReplayRuntime& operator=(const ReplayRuntime&)=delete;
     // A maximum of 256 records is processed per call; remaining clock debt is retained.
     void tick(Clock::time_point now);
+    // Queues one complete time slot while paused. Subsequent ticks service the request.
+    bool requestStep();
     void pause(bool paused,Clock::time_point now);
     void speed(double value,Clock::time_point now);
     void stop();
