@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 回放返回列表后恢复选中预览（定向验证）
+
+`src/replay_browser.cpp` 在交接选中的录像后记录一次重读请求。再次显示列表时，使用原索引后台读取文件并恢复详情，完成后可直接再次播放。
+
+Win32 Release 增量构建通过。两轮私有桌面 D3D9Ex 使用各自构建的有效合成回放，从单人菜单首次播放，Esc 返回原列表后按 R。基线需先按 Home 重选才播放，修复版直接按 R 即再次进入并呈现运行帧。两轮只从单人菜单打开一次列表，回放摘要保持一致，客户端退出 0。脚本与回执在 `tmp/docs-artifacts/war3/replay-return-selection-v1/` 的 `verify.py`、`baseline-90a0f1877c17/receipt.json` 和 `fixed-951c2bff6199/receipt.json`。
+
 ## F9 长按保持任务面板状态（定向验证）
 
 `src/game_view.cpp` 与 `src/quest_dialog.cpp` 仅在 F9 首次按下时处理面板切换。按住产生的重复消息保持面板状态，松开后再次按下可关闭。

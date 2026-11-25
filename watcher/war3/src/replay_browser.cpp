@@ -67,7 +67,7 @@ void ReplayBrowser::prepared(){std::optional<Result> result;{std::lock_guard loc
 void ReplayBrowser::removeSelected(){
     if(selected_>=entries_.size() || entries_[selected_].directory || deleting_)return;if(!selectedReplay_ || loading_ || selectedDigest_.empty()){confirmDelete_=false;error_="回放尚未读取完成或无法读取，不能确定关联地图。";return;}auto path=selectedPath_;auto digest=experimentalLanReplayMapDigest(selectedReplay_->game()).value_or("");auto replayDigest=selectedDigest_;clearSelection();{std::lock_guard lock(mutex_);request_=++generation_;pending_=Request{Operation::Remove,request_,std::move(path),std::move(replayDigest),std::move(digest),{}};deleting_=true;}error_.clear();wake_.notify_one();
 }
-std::optional<ReplaySelection> ReplayBrowser::takeSelection(){if(!selectedReplay_ || selectedPath_.empty() || loading_)return {};ReplaySelection result{selectedPath_,std::move(selectedReplay_)};selectedPath_.clear();return result;}
+std::optional<ReplaySelection> ReplayBrowser::takeSelection(){if(!selectedReplay_ || selectedPath_.empty() || loading_)return {};ReplaySelection result{selectedPath_,std::move(selectedReplay_)};selectedPath_.clear();reloadSelection_=true;return result;}
 std::string ReplayBrowser::draw(const UiInput& input){
     if(reloadSelection_){reloadSelection_=false;choose(selected_);}
     prepared();auto list=screen_.bounds("FileListFrame");constexpr float step=.01875f;rows_=std::max(1u,unsigned(std::max(0.f,list.h-.008f)/step));auto maximum=entries_.size()>rows_?entries_.size()-rows_:0;scroll_=std::min(scroll_,maximum);auto controls=(confirmDelete_ || deleting_)?UiInput{}:input;
