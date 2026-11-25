@@ -4,7 +4,9 @@
 
 `src/main.cpp` 在正式自研回放暂停时，用无修饰的主键区句号键提交一次单步请求，长按重复键不会触发。暂停状态行显示快捷键和毫秒。空格继续，Esc 返回回放列表。`src/replay_runtime.*` 沿用现有记录游标和消费者，一步交付一个完整时片，支持零时长和分片。每帧最多处理 256 条原始记录。最后一步继续处理尾部记录，全部完成后进入结束态。
 
-Win32 Release 产品与 `war3_replay_step_tests` 增量构建通过。运行该测试程序，六组定向用例通过，覆盖连续零时长片、分片跨帧、末片后的记录顺序及跨帧收尾、暂停调速与继续、停止及回调失败。回执 `tmp/docs-artifacts/war3/replay-step-prep/build-receipt.json`。正常回放列表和原生按键验证待执行，入口为同目录的 `verify.ps1`。
+Win32 Release 产品与 `war3_replay_step_tests` 增量构建通过。运行该测试程序，六组定向用例通过，覆盖连续零时长片、分片跨帧、末片后的记录顺序及跨帧收尾、暂停调速与继续、停止及回调失败。回执 `tmp/docs-artifacts/war3/replay-step-prep/build-receipt.json`。
+
+通过 `verify.ps1` 从正式单人回放列表打开同构建的合成录像。隐藏 D3D9 窗口的原生键盘消息确认播放中按句号、暂停等待及重复键均未推进时钟。三次独立单步分别推进 10,000、0 和 1,375 ms，空格继续后自动推进 1,000 ms，Esc 返回列表并实际呈现，正常退出 0。证据 `tmp/docs-artifacts/war3/replay-step-prep/run-808941dc29bd/result.json`。窗口使用无动作载荷。末片收尾由 CPU 用例覆盖，窗口最小化恢复留待回放功能批次。
 
 ## F9 任务面板滚轮与战场镜头（定向验证）
 
@@ -20,7 +22,9 @@ Win32 Release 产品增量构建通过。独立隐藏 D3D9 观察程序经正常
 
 `98b4634` 的短目录基线通过。233 个 UTF-16 字符的中文空格用户目录中，正式目标路径为 252–254 字符并可读取，旧临时路径为 264–266 字符，四类实际保存均返回 Win32 错误 3。独立进程读回旧值，四个原文件摘要保持一致。基线回执 `tmp/docs-artifacts/war3/preferences-long-path-baseline/run-86efce148ce0/receipt.json`。
 
-修后 Win32 x86 探针编译通过，真实设置接口定向验证 16 项通过。四类设置在短目录、233 字符中文空格目录和带尾点别名的长目录均替换有效旧档，独立的新旧读盘进程均读到新值。四类同长度但文件头损坏的旧档拒绝写入，原摘要保持一致。各轮只更新目标设置且无临时文件残留。回执 `tmp/docs-artifacts/war3/preferences-long-path-fixed/run-ddc7167680fa/receipt.json`。正式选项页面保存与窗口重启留到设置功能批次。
+修后 Win32 x86 探针编译通过，真实设置接口定向验证 16 项通过。四类设置在短目录、233 字符中文空格目录和带尾点别名的长目录均替换有效旧档，独立的新旧读盘进程均读到新值。四类同长度但文件头损坏的旧档拒绝写入，原摘要保持一致。各轮只更新目标设置且无临时文件残留。回执 `tmp/docs-artifacts/war3/preferences-long-path-fixed/run-ddc7167680fa/receipt.json`。
+
+正式隐藏 D3D9 图像选项复现了旧版错误 3。在新的 233 字符中文空格用户目录中，修复版从正式菜单保存低粒子和低灯光。`video.bin` 路径为 252 字符，写入 12 字节且无临时文件。两个后续独立进程分别完成冷启动首帧及图像选项读回，页面两项均显示低，文件摘要一致，三个修复版进程退出 0。入口和回执在 `tmp/docs-artifacts/war3/p2-video-preferences-longpath-ui-v1/` 的 `run-fixed.ps1`、`run-ab181b4a5654/receipt.json` 和 `run-e586987e10e3/receipt.json`。其余三类设置由上述 CPU 探针覆盖。
 
 ## 回放列表取消过期读取（定向验证）
 
