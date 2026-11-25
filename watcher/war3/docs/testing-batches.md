@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 快存与单机录像同构建集成验证（批次 3/3）
+
+本批次合并 `f45b630`、`8cfe6c2`、`8fb4ef6`，使用同一 Win32 Release 可执行文件，SHA-256 为 `061a0b3660c2929bb19c13db0ae39a41d84aa4762dedf00d91b0f03001783b5f`。11 项回放 CPU 用例通过。使用 `war3_ai_tests.exe <安装资源目录> <BootyBay 地图> <0–3> 15`，人族、兽族、亡灵、暗夜精灵 4 项均通过。实际加载四个内置 AI，推进 15 模拟秒，均有一个城镇、执行中的订单、采集工人和生产队列。这里的四族检查只在会话层运行。
+
+私有桌面 D3D9Ex 复验普通单机录像中文命名、同名错误保留原文件、改名重试、同进程重开列表和独立进程播放。手动存档目录置为普通文件后，主菜单和对局内入口均成功载入快存，并呈现模拟时刻 7.9375 秒。以上进程均正常退出。
+
+原创三席 EastGateDrill 的电脑 1 下令守卫移动，越线后触发 `phea`。电脑 2 延迟下令攻击，实际击中英雄后触发 `pman`。正式开局录制，计分命名保存，再由两个独立进程分别以 1× 和 8× 回放同一 W3G。暂停及调速时模拟保持，按住句号的重复消息无效，重新按键单步实际推进 0.03125 秒后保持暂停。三进程的自然胜利时刻均为 9.25 秒，英雄位置、生命 640.7229／650、两个物品和终局摘要一致。8× 进程呈现「回放结束  Esc 返回  8x」，稳定停帧后返回正式列表。三进程退出 0，W3G 摘要不变。已安装的 Booty Bay 47.4375 秒录像也经过独立 8× 进程完成暂停、单步和终局。这些运行覆盖确定性结果和控制操作，长局和音效表现仍待验证。
+
+复现与证据见 `tmp/docs-artifacts/war3/solo-replay-combat-v1/` 下的 `verify-record-and-1x.py`、`verify-playback-controls.py`、`run-a9747d25d7/receipt.json`、`playback-controls-65df851108/receipt.json`、`playback-controls-ba8fec304e/receipt.json` 和 `builtin-ai/run-c1be254a90/receipt.json`。普通录像见 `tmp/docs-artifacts/war3/solo-replay-v1/run-751a59aa15/receipt.json`。快存见 `tmp/docs-artifacts/war3/quick-save-list-isolation-v1/fixed-menu-138c6c8a8e8d/result.json` 与 `fixed-ingame-2a0b576c2f50/result.json`。
+
 ## 人机遭遇战的单机录像（定向验证）
 
 `src/map_browser.cpp` 和 `src/map_preparation.*` 从配置阶段启用录像运行时检查。`src/session_ai.cpp`、`src/session_game.cpp` 和 `src/replay_solo_script.cpp` 检查实际 AI 模块和预加载模块。录制保留原对局中的用户预加载行为，播放拒绝用户文件。单机回放列表按参赛席位计数。`src/session_visibility.cpp` 在录制和播放的相同操作边界准备本地雾图和共享侦测缓存。
@@ -10,7 +20,7 @@ Win32 Release 的 `war3`、`war3_replay_step_tests`、`war3_ai_tests` 构建通�
 
 使用同一 Booty Bay 录像验证用户目录中的普通同名及超过 1 MiB 的 `SharedMelee.pld`。两种情况均在启动对局前拒绝播放、返回列表显示错误，录像摘要不变，进程正常退出。
 
-复现脚本与证据位于 `tmp/docs-artifacts/war3/solo-replay-melee-v1/`，包括 `build-delivery.log`、`build-final.log`、`verify.py`、`verify-standard.py`、`verify-preload-rejection.py`，以及 `run-e5a1e17dda`、`run-9f796e1a9a`、`run-c440a4e04e`、`preload-rejection-5278ef2295` 内的 `receipt.json`。四族长局、多人机席位的完整胜负及倍速交战仍待批次验证。
+复现脚本与证据位于 `tmp/docs-artifacts/war3/solo-replay-melee-v1/`，包括 `build-delivery.log`、`build-final.log`、`verify.py`、`verify-standard.py`、`verify-preload-rejection.py`，以及 `run-e5a1e17dda`、`run-9f796e1a9a`、`run-c440a4e04e`、`preload-rejection-5278ef2295` 内的 `receipt.json`。多电脑与倍速交战见本页的同构建集成验证。四族长局仍待验证。
 
 ## 单人遭遇战结算保存和回放（定向验证）
 
