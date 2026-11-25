@@ -84,7 +84,7 @@ rear 方案另在 244.625 秒保存并由新运行时读回，伊利丹满血、
 
 独立无渲染续跑中，开场三名原有牧师用 27 次普通 Ahea 命令将伊利丹从 485.106 补至 1,150，131.000 秒原生快存读回通过。阿卡玛走近后正常移交大生命药剂，伊利丹使用增加 500 生命。恶魔变身按原技能临时增加当前和最大生命 500，消耗 150 魔法。起点原地治疗、药剂与变身的单项证据在 `tmp/docs-artifacts/war3/p2-humanx06/illidan-healing/`。满血快存的 SHA-256 为 `50b2fd0e695d6c2c015a45b1dc12f74d68c42b6d811a8850bd4be7bd76b7dc14`。
 
-东队以五次普通整队移动走两栖路线到 `(2752,4864)`，163.875 秒触发右踏板，八人全活，两副官均在。167.875 秒标准存档独立读回，右开左关。档为 `tmp/docs-artifacts/war3/p2-humanx06/east-mistress/direct-user/Saves/EastPlate.w3z`，SHA-256 为 `92068892cc38530b3a6c879091f5484593d14524ab8677f08c762df00d11f42f`。实际地形查询见 `route-audit/bridge-northern.log`。首次双踏板 D3D9 试验遇地图流送内存分配失败，后续单独复跑通过读档但西队凯尔在北廊伏击阵亡，两侧均解锁并过桥待正式实战验证。
+东队以五次普通整队移动走两栖路线到 `(2752,4864)`，163.875 秒触发右踏板，八人全活，两副官均在。167.875 秒标准存档独立读回，右开左关。档为 `tmp/docs-artifacts/war3/p2-humanx06/east-mistress/direct-user/Saves/EastPlate.w3z`，SHA-256 为 `92068892cc38530b3a6c879091f5484593d14524ab8677f08c762df00d11f42f`。实际地形查询见 `route-audit/bridge-northern.log`。首次双踏板 D3D9 试验遇地图流送内存分配失败，后续单独复跑通过读档但西队凯尔在北廊伏击阵亡，随后完成两侧解锁、过桥和读回，见下文。
 
 西侧采用普通攻击，278.250 秒击毁第二发电机并写标准档。在独立进程从此档无输入续跑，279.750 秒原脚本同一帧清除两座毁灭塔、两艘地狱战舰和两段 Dofw 墙，其余十二座防御仍活。288.250 秒可选任务文字更新为发电机 1/4。存档为 `tmp/docs-artifacts/war3/p2-humanx06/lieutenants-headless/west-first-user/Saves/X06-GeneratorTwoDown.w3z`，SHA-256 为 `b28651462559934e6d503a4bc641d5f6b62d06ed7dc05d64b2821973751810fd`，独立读回见 `generator02-review/readback/inspect.log`。
 
@@ -97,6 +97,18 @@ rear 方案另在 244.625 秒保存并由新运行时读回，伊利丹满血、
 第三发电机以同一方式在正式隐藏 D3D9 从 369.125 秒开始，第二发电机的清除保持，第四、第五仍活。370.53125 秒原图同帧清除第三的四个防御单位和两段墙，379.03125 秒目标 2/4。379.15625 秒 F6 写入 1,539,145 字节，SHA-256 为 `ee9bafd319a2b6a57afcc03d6404f464a5c62ad1bd9966399cdc73a345115c1b`。独立菜单读回在同一时刻与四英雄状态、等级、技能、背包、原防御和任务逐项匹配，首帧正常推进至 379.1875 秒。两进程退出 0，十个源用户文件及五个原盘条目摘要一致。回执 `tmp/docs-artifacts/war3/p2-humanx06/generator03-d3d-v2/run-dd318c31bba74f2d9465707997fabffb/receipt.json`。
 
 可选任务「攻城要塞」使用同一 Win32 核心无渲染实跑。以正常命令入区，443.875 秒发现，472.000 秒击破原 DTg3 外门，494.250 秒击败第七名原守军。地图完成可选任务、开启两释放门并将四台 ocat 交给玩家。500.250 秒档独立读回，四英雄及两副官活着，副官任务两项未完成，释放门保持开启，四台车的正常移动命令均接受且分别实移 192 世界单位。存档 1,522,046 字节，SHA-256 为 `e75a987ef49a5b210bb59f102d8956257ef5817d518cf5e3da7dbedec38700a0`。入口、原跑、读回及存档为 `tmp/docs-artifacts/war3/p2-humanx06/rescue-v2/` 下的 `run.cmd`、`test.log`、`verify.log`、`test-user/Saves/Quick/HumanX06SiegeRescue.w3z`。攻城援军档已交西线。双踏板、双副官和后段继续实战。
+
+攻城援军另经两次正式隐藏 D3D9 验收。首次从 500.250 秒读回四台原 ocat 均归 P0、两释放门开启、可选任务完成及四英雄和两副官存活。四次普通移动均接受，四车各实移 192，501.34375 秒 F6 写出 1,510,096 字节。独立菜单读回车位置、门、英雄技能和背包、两副官及任务逐项一致。两次均渲染首帧并退出 0，四份源文件及五个地图或归档摘要一致。新存档 SHA-256 为 `e64d0e2d3284ee59eedfb402933fe8ae80aad2bb94d0b7c255a126e20d993fa5`，回执 `tmp/docs-artifacts/war3/p2-humanx06/rescue-d3d-v2/run-18be66284b6a4bb59464d2c24d921c9e/receipt.json`。
+
+## HumanX06 双桥与两路副官（阶段验收）
+
+隐藏原生 D3D9 从 167.875 秒右板档经正式菜单恢复右开左关，地面路径终点差为 1,264.101。普通地面单位 n006 于 208.65625 秒脚踏左板，左桥逐段抬起，210.4375 秒双侧旗标均真，地面路径终点差归零。215.000 秒同一单位以 525/525 生命实际跨到右岸，四英雄与两副官存活。F6 新档 1,508,351 字节，SHA-256 为 `cca4ab9a53f03a762d848f50e099d7f14ab9d728eeaf3d90e0514d6a74ba0be2`，独立正式菜单读回通过，六段桥面均为 `stand third`、高度 533.041、仍然连通。原盘、源存档和缓存摘要一致。回执和帧见 `tmp/docs-artifacts/war3/p2-humanx06/bridge-d3d-v2/run-472f47fb09e7489aba664aae10d27c42/` 及 `readback-05dc2547de384032af9dbb4ba240dc49/`。独立无渲染复验两轮均通过，推荐过桥档 t214.750 保留六名东队成员、四英雄及两副官，在 `bridge-headless-v2/ground-all-east-final-user/Saves/AcrossBridge.w3z`，SHA-256 `eb3da202cbb1855b0e6dc5a84388101d2d11b52d39034bdbf18ea67a29a34caa`。
+
+东线从 167.875 秒右板档走东北水路，集合并回血后以普通命令分散清守军。488.000 秒击败 3,400 生命的痛苦女王，东任务项完成，西侧 Master of Pain 保留 2,500/2,500，瓦丝琪 22.311/825 存活，东队五人仍在。普通命令尝试 131 次、接受 130 次。独立无渲染及正式 D3D9 菜单首帧均核对右任务、左副官、两板和瓦丝琪状态。首帧仍有活动敌人且瓦丝琪低血，D3D9 首帧验证后退出 0，保留源档。东线存档 `tmp/docs-artifacts/war3/p2-humanx06/east-assault-v2/t-user/Saves/EastMistress.w3z`，SHA-256 `58221aa523d4635d6582bfdc90d61d3f394960d4deef7c45477d198a609fd073`，实跑和读回为同工作目录 `t.log`、`z.log`。D3D9 回执在 `east-lieutenant-d3d/run-16f636bb35e148e186c82a3000022373/receipt.json`。
+
+西线从第三发电机档继续，普通命令先护住后排并清炮塔与移动守军，在 877.375 秒保留门外阵地。五牧师到位，伊利丹独自引怪并正常变身，989.625 秒普通攻击拆原 DTg1，副官一次倒地并恢复后，再于 1133.750 秒最终击杀，西侧目标完成。东侧 Mistress 保持 3,400/3,400，四英雄、五牧师仍活。独立读回同一时刻和两项目标，退出 0。存档为 `tmp/docs-artifacts/war3/p2-humanx06/west-assault-v2/tactical-5-user/Saves/X06-MasterDown.w3z`，SHA-256 `e938ae2f2c9b666773ac4c5e69a23b75f87a3214c8fc760e7cde07a98ee25bd4`，实跑和读回为同工作目录 `tactical-5.log`、`western-verify.log`。
+
+两名副官的击杀来自不同真实续跑。联合验收分别从两份源档独立恢复并以普通玩家命令完成另一侧。主门和玛瑟里顿仍待同一真实分支实战。
 
 ## HumanX04 夺车、护送与胜利（验收补充）
 
