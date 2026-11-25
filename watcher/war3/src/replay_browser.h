@@ -22,6 +22,8 @@ class ReplayBrowser {
     size_t selected_=0,scroll_=0;
     unsigned rows_=1;
     std::string error_;
+    struct PlaybackNotice {fs::path path;std::string digest,message;};
+    std::optional<PlaybackNotice> playbackNotice_;
     std::shared_ptr<const Replay> selectedReplay_;
     fs::path selectedPath_;
     bool loading_=false,confirmDelete_=false,deleting_=false,pendingPlay_=false,reloadSelection_=false;
@@ -46,6 +48,8 @@ public:
     ~ReplayBrowser();
     std::string draw(const UiInput& input);
     std::optional<ReplaySelection> takeSelection();
+    void setPlaybackNotice(std::string message);
+    std::string_view playbackNotice() const {return playbackNotice_?std::string_view(playbackNotice_->message):std::string_view{};}
     const std::string& error() const {return error_;}
 };
 }
