@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 长用户目录下的命名回放发布（定向验证）
+
+结算保存使用的 `ExperimentalLanRecorder::save` 将临时文件放在 `Replays` 目录，改用 `src/temporary_file_path.h` 的同目录唯一临时路径。普通、partial 和自动命名沿用原规则，发布保留独占创建、刷盘、写穿透和已有回放保护。
+
+同一自研录制有 150 个时片、15 秒。旧版短目录命名写入通过。233 个 UTF-16 字符的中文空格用户目录中，普通和 partial 正式路径分别为 251 与 259 字符，旧临时路径分别为 280 与 289，Win32 临时文件创建均返回错误 3，目标目录保持空。基线回执在 `tmp/docs-artifacts/war3/replay-longpath-baseline-v1/`。
+
+Win32 Release 产品增量构建通过。离线 CPU 夹具使用实际保存实现执行 7 组，覆盖短目录普通和 partial 命名、长目录普通和 partial 命名、拒绝尾点名称、短目录自动命名和自动 partial。长目录发布成功，同名发布返回 183 并保留原文件。七组均可解析、与原 378 字节回放逐字节一致、无临时文件残留。复验入口与回执在 `tmp/docs-artifacts/war3/replay-longpath-fixed-v1/` 的 `run.py` 和 `receipt.json`。正式结算窗口和关联地图保存留到回放功能批次。
+
 ## NightElfX01 自然胜利与 NightElfX02 接管（阶段验收）
 
 从 103.343750 秒正式 F6 档，以普通命令移除起点的活树占地，149.343750 秒抵达首村。随后沿原生路线到第三村并完成「怒兽」。从同一北西分路档续战，以普通攻击打开两座原牢门，751.718750 秒完成「搜寻与救援」，四弓手和一树妖归玩家。781.718750 秒全队 16 人集合，独立进程读回任务、两门状态和玩家控制，退出 0。集合档 `tmp/docs-artifacts/war3/p2-nightelfx01/rescue-side-v2/north/rally-user/Saves/NE1-RescueRallied.w3z`，SHA-256 `4e22cd2a00895ebe0c14ce47eab420a439b838ed85d272489e6bf475d45953a9`。
