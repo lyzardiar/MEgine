@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 对局内设置保存失败后的重新写入（定向验证）
+
+`src/game_view.cpp` 的相机、音频和视频设置保存失败后记录错误，保留已应用值。下一次实际修改该类设置时重新尝试保存。入局读取失败保护、旧档验证和原子替换沿用现有实现。
+
+Win32 Release 增量构建通过。隐藏 D3D9 客户端分别通过编队和声音热键、F10 视频菜单写入有效设置，再持有现有文件的读取句柄阻止替换。三类设置在锁定时各记录一次发布错误 5，原文件摘要保持一致。释放句柄后在同一对局继续改值。基线三类都停留在旧值，修复版写入启用编队、音效关闭且音乐开启、高档粒子。客户端退出 0，独立脚本随后核对文件版本、值、摘要及临时文件清理。
+
+入口 `tmp/docs-artifacts/war3/ingame-preferences-retry-v1/drive-retry.ps1`。相机／音频回执为 `run-baseline-ffa68091/receipt.json` 和 `run-fixed-8160f69a/receipt.json`，视频回执为 `run-baseline-6ae0023e/receipt.json` 和 `run-fixed-c1443cfc/receipt.json`，退出后读盘见同目录的 `saved-values-after-exit.json`。
+
 ## 同一条存档的预览重试（定向验证）
 
 `src/saved_game_browser.cpp` 和 `src/saved_game_browser.h` 允许点击或首次按键重试当前预览失败的条目。加载中或已成功的同一条目复用结果。按键自动重复仍可在列表中导航，停留在失败条目时不会反复发起请求。
