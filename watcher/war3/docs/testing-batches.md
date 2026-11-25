@@ -26,6 +26,18 @@ Win32 Release 产品编译通过。快验 4 通过／0 失败，比较 65,536 �
 
 HumanX03Interlude 的 W3E 悬崖槽为 `COdi, COdt, COrd`，原安装包的 CliffTypes.slk 有 `COdi` 和 `COrd`。可渲染的悬崖没有直接使用 `COdt`。原异常来自 29 个缺省崖面被固定映射到缺定义的槽 1，29 格各自的同格明确角点均指向 `COdi`。所需原版模型和纹理存在。Win32 Release 产品编译通过。源表证据在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/assets/cliff-source.log`；构建回执见 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/interlude-cliff-build-exit.txt`。即时验收从同一守卫清零档复走正式胜利确认和计分，间章已通过崖面生成，随后暴露原始地表图集尺寸检查。回执见 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/cliff-fix/run-139d9536231845a1bace70a958d8c484/frontend.log`。集成版探针验证原间章 29 处缺省槽回退、同格候选冲突拒绝、显式缺定义槽拒绝、HumanX03 的 Dalaran 可用默认槽，共 4 项通过，退出 0。复验入口及日志见 `tmp/docs-artifacts/war3/terrain-cache-batch-11ae165/run.cmd` 和 `probe.log`。
 
+## HumanX04 夺车、护送与胜利（验收补充）
+
+沿用 `11ae165` Win32 Release 核心，从上项正式 F6 档恢复到模拟 43.09375 秒。无渲染试跑以普通移动和技能夺回囚车，首次转权为 106.09375 秒。地面攻击移动对照于 214 秒失车。改用右键跟随囚车，施法后恢复跟随，两名英雄始终存活，囚车只转权一次，约 402.09 秒两项主线完成，450.15625 秒自然进入胜利对话，确认后请求 HumanX04Interlude。复演源码和日志见 `tmp/docs-artifacts/war3/p2-humanx04/route-headless-review/follow-long/`。
+
+隐藏原生 D3D9 从同一开场档通过正式菜单读档。以普通移动、烈焰风暴、虚无和叉状闪电开路，108.09375 秒首度采样到囚车归己方。108.375 秒的早期 F6 读回保留车归属和返程路线，此时护送任务尚未发现，验收探针提前要求该状态。等任务出现后，147.28125 秒正式 F6 生成 1,131,607 字节检查点，新进程通过正式菜单精确读回同一时刻、车归属和返程路线、两名英雄、已发现的护送任务及阵亡的玛维。夺车日志在 `tmp/docs-artifacts/war3/p2-humanx04/escort-live/run-5609eb282fc24cab980465133cf70bf3/`。
+
+续跑改用普通右键跟随。223.34375 秒两英雄距车约 101、105，重生的玛维贴车时囚车仍归己方。368.15625 秒另留近终点正式 F6 档（1,323,540 字节），SHA-256 为 `d8febb9848efecdda0f6a927726a9ff1b807eac1537a7cd90558881ce7b5899f`。囚车于 404.125 秒满血进入血精灵基地 `(-2414,12673)`，两项主线均完成，两英雄满血。453.96875 秒确认原脚本胜利，经正式计分进入间章首帧，退出 0。胜利缓存由 6,306 更新为 6,914 字节，SHA-256 为 `9eaf7fca0f3ef305ea695c7dfe60804a20e35e8b9afff71d266e8db519911c18`。源存档、源缓存和安装资源摘要前后一致。续跑日志、回执和近终点档在 `tmp/docs-artifacts/war3/p2-humanx04/escort-follow/run-8ffda5831e6d451991a81f594d9614c3/`。
+
+从同一 368.15625 秒近终点档独立读回并复跑，第二条正式链同于 404.125 秒满血送达，453.96875 秒胜利确认，经计分进入间章。间章在模拟 145.375 秒自然切至 HumanX05。首帧及 57.59375 秒玩家自然接管时，凯尔均为 6 级、2,090 经验、1 技能点、AHbn 2 级、AHfs 3 级；瓦丝琪均为 5 级、1,682 经验、0 技能点、ANfa 2 级、ANfl 2 级、ANms 1 级。两人六格背包均为空，难度为 1/1，与该轮 HumanX04 胜利快照一致。伊利丹 Eevi 首帧由原图建给本地玩家，接管时按原图传送门脚本临时归 Player(11)。三段分别呈现 4,968、8,721 和 3,449 帧，进程退出 0。该轮正式缓存由 6,306 更新为 6,914 字节，SHA-256 为 `6766dcbbface60ac39d351be3a1f33134282a0975f0848e9061f8b900e670289`。源近终点档、三张地图和四个 MPQ 的摘要一致。
+
+从仓库根复验连续链时，运行 `tmp/docs-artifacts/war3/p2-humanx04/escort-humanx05-chain/run.cmd`，参数为近终点档的用户根目录 `tmp/docs-artifacts/war3/p2-humanx04/escort-follow/run-8ffda5831e6d451991a81f594d9614c3/base-approach-user` 的绝对路径。回执与日志在连续链目录的 `run-828f193e6605411abcc9c1a311b22484/`。后续传送门和 HumanX05 整章胜利另行验收。
+
 ## HumanX04 开场接管与快速存档（验收补充）
 
 沿用 `11ae165` Win32 Release 核心及正式跨章成功的档案和战役缓存副本。隐藏原生 D3D9 通过战役浏览器的正式切关入口启动 HumanX04，两个战役标志均为真。原脚本于模拟 41.96875 秒自然交还控制和界面，42.96875 秒发现主线「牢笼中的恶魔」。该任务尚未完成或失败，两个目标项未完成，「护送尤迪安」尚未发现。
