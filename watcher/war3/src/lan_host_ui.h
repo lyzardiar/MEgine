@@ -38,7 +38,7 @@ class LanHostUi {
     wchar_t chatSurrogate_=0;
     size_t chatCursor_=0;
     size_t selected_=0,scroll_=0,slotScroll_=0;
-    bool nameFocus_=true,chatFocus_=true,handoffEnabled_=false;
+    bool nameFocus_=true,chatFocus_=true,handoffEnabled_=false,loopbackOnly_=false;
     std::uint64_t countdownStarted_=0;
     void enter(const fs::path& path);
     void begin();
@@ -50,7 +50,7 @@ class LanHostUi {
     std::string drawCreate(const UiInput& input,std::wstring_view characters);
     std::string drawLobby(const UiInput& input,std::wstring_view characters);
 public:
-    LanHostUi(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string playerName);
+    LanHostUi(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string playerName,bool loopbackOnly=false);
     std::string draw(const UiInput& input,std::wstring_view characters);
     std::string pollMinimized();
     void enableMatchHandoff() {if(!host_)handoffEnabled_=true;}

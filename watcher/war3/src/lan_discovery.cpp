@@ -36,7 +36,7 @@ LanDiscovery::LanDiscovery(bool expansion,std::uint32_t version,std::string_view
         if(!first || first>=224)throw std::runtime_error("LAN discovery address must be a numeric IPv4 unicast address");
         unicast_=parsed.s_addr;
     }
-    WSADATA data{};auto code=WSAStartup(MAKEWORD(2,2),&data);if(code)throw socketError("WSAStartup",code);winsock_=true;SOCKET sock=::socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);if(sock==INVALID_SOCKET){code=WSAGetLastError();WSACleanup();winsock_=false;throw socketError("UDP socket",code);}socket_=std::uintptr_t(sock);BOOL broadcast=TRUE;u_long nonblocking=1;sockaddr_in bindAddress{};bindAddress.sin_family=AF_INET;bindAddress.sin_addr.s_addr=htonl(INADDR_ANY);bindAddress.sin_port=0;
+    WSADATA data{};auto code=WSAStartup(MAKEWORD(2,2),&data);if(code)throw socketError("WSAStartup",code);winsock_=true;SOCKET sock=::socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);if(sock==INVALID_SOCKET){code=WSAGetLastError();WSACleanup();winsock_=false;throw socketError("UDP socket",code);}socket_=std::uintptr_t(sock);BOOL broadcast=TRUE;u_long nonblocking=1;sockaddr_in bindAddress{};bindAddress.sin_family=AF_INET;bindAddress.sin_addr.s_addr=unicast_==htonl(INADDR_LOOPBACK)?unicast_:htonl(INADDR_ANY);bindAddress.sin_port=0;
     if(setsockopt(sock,SOL_SOCKET,SO_BROADCAST,reinterpret_cast<const char*>(&broadcast),sizeof(broadcast))==SOCKET_ERROR || ioctlsocket(sock,FIONBIO,&nonblocking)==SOCKET_ERROR || bind(sock,reinterpret_cast<const sockaddr*>(&bindAddress),sizeof(bindAddress))==SOCKET_ERROR){code=WSAGetLastError();closesocket(sock);socket_=invalidSocket;WSACleanup();winsock_=false;throw socketError("UDP setup",code);}
 }
 LanDiscovery::~LanDiscovery(){if(socket_!=invalidSocket)closesocket(SOCKET(socket_));if(winsock_)WSACleanup();}

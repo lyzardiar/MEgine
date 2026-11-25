@@ -93,12 +93,14 @@ Options Options::parse() {
         else if (argument == L"--main-check") options.mainCheck = true;
         else if (argument == L"--play") options.play = true;
         else if (argument == L"--experimental-local-lan") options.experimentalLocalLan = true;
+        else if (argument == L"--lan-loopback") options.lanLoopbackOnly = true;
         else if (argument == L"--lan-discovery-address") {options.lanDiscoveryAddress=utf8(value(i));if(options.lanDiscoveryAddress.empty() || options.lanDiscoveryAddress.size()>15)throw std::runtime_error("LAN discovery address must be a numeric IPv4 unicast address");}
         else if(argument==L"--simulate-ms"){auto text=value(i);size_t end=0;auto n=std::stoul(text,&end);if(end!=text.size() || n>600000)throw std::runtime_error("Invalid simulation interval");options.simulateMs=unsigned(n);}
         else if (argument == L"--time-ms") {auto text=value(i);size_t end=0;auto n=std::stoull(text,&end);if(end!=text.size() || n>86400000)throw std::runtime_error("Invalid animation time");options.timeMs=n;}
         else throw std::runtime_error("Unknown option: " + utf8(argument));
     }
     if (options.dataRoot.empty()) throw std::runtime_error("Usage: war3.exe --data-root <Warcraft III directory> [--map <w3x/w3m>] [--renderer d3d9]");
+    if(options.lanLoopbackOnly){if(!options.lanDiscoveryAddress.empty() && options.lanDiscoveryAddress!="127.0.0.1")throw std::runtime_error("LAN loopback requires 127.0.0.1 discovery");options.lanDiscoveryAddress="127.0.0.1";}
     options.dataRoot = fs::canonical(options.dataRoot);
     if (options.renderer != "d3d9" && options.renderer != "d3d9-reference") throw std::runtime_error("Renderer not implemented: " + options.renderer);
     if(!options.agentSelectUnit.empty() && !options.play)throw std::runtime_error("Agent unit selection requires --play");

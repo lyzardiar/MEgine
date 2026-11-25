@@ -32,6 +32,7 @@ struct Options {
     std::string renderer = "d3d9";
     std::string agentSelectUnit;
     std::string lanDiscoveryAddress;
+    bool lanLoopbackOnly=false;
     unsigned frames = 0;
     bool probe = false;
     bool hidden = false;

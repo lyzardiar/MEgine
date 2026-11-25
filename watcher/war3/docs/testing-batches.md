@@ -6,6 +6,12 @@
 
 Win32 Release 构建通过。`war3_lan_departure_tests game-end` 验证两个加入端均在 TCP 关闭后取到同一条分片尾时片，为 1 通过／0 失败。`join-close` 和默认离场测试共 6 通过／0 失败。正式双客户端在专用后台桌面进入同一局，两端均显示计分，确认后各保存一份完整 15,000 毫秒录像并返回大厅，退出码均为 0。产品入口为 `tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script <verify-terminal.ps1> -Executable <war3.exe>`，回执在 `run-a5348ffbd1/receipt.json`。批次待验持续同步、多端结算和跨机条件下的尾时片传送。
 
+## 本机局域网环回验收（终局任务补充）
+
+路径为 `src/platform.*`、`src/main.cpp`、`src/lan_browser.*`、`src/lan_host_ui.*`、`src/lan_host.*`、`src/lan_discovery.cpp`、`tests/lan_departure_tests.cpp` 和 `tests/lan_process_tests.cpp`。本机回归默认使用环回。后台正式客户端通过 `--lan-loopback` 启用本机发现与监听。使用新路径的可执行文件实测房主 TCP 和 UDP 6112 均绑定 `127.0.0.1`，Windows 桌面检查未出现防火墙提示。监听证据见 `tmp/docs-artifacts/war3/p0-lan-victory-product/run-a5348ffbd1/listeners.txt`。
+
+Win32 Release 的客户端与两个联机回归程序构建通过。`war3_lan_departure_tests` 的终局、加入关闭、默认离场和发现容量四种入口共 8 通过／0 失败。`run-lan-process-tests.py --mode sync` 完成 80 时片，为 1 通过／0 失败。最小化期间异常关房的后台复验为 1 通过／0 失败，加入端保存部分回放并返回局域网列表。命令日志在 `tmp/docs-artifacts/war3/p0-lan-victory-product/terminal-20261125044302/`，掉线回执在 `tmp/docs-artifacts/war3/p1-lan-cinematic-disconnect/run-09011ec659/receipt.json`。跨机监听及多端长局待批次复验。
+
 ## 最小化期间房主掉线返回局域网列表（功能批次 1/3）
 
 路径为 `src/main.cpp`。加入端在最小化期间收到房主 TCP 关闭或重置时，与正常对局共用房主断开处理，保存部分回放、释放对局并返回局域网列表。恢复绘制时列表显示「房主已断开连接。」。静默超时沿现有中断路径报错。

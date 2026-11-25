@@ -24,10 +24,10 @@ class LanBrowser {
     wchar_t highSurrogate_=0;
     std::uint64_t nextSearch_=0;
     size_t selected_=0,scroll_=0;
-    bool nameFocus_=true,matchHandoffEnabled_=false;
+    bool nameFocus_=true,matchHandoffEnabled_=false,loopbackOnly_=false;
     void start();
 public:
-    LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress={});
+    LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress={},bool loopbackOnly=false);
     std::string draw(const UiInput& input,std::wstring_view characters);
     std::string pollMinimized();
     void reportError(const std::string& message){error_=message;}
