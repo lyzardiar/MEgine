@@ -26,6 +26,14 @@ Win32 Release 产品编译通过。快验 4 通过／0 失败，比较 65,536 �
 
 HumanX03Interlude 的 W3E 悬崖槽为 `COdi, COdt, COrd`，原安装包的 CliffTypes.slk 有 `COdi` 和 `COrd`。可渲染的悬崖没有直接使用 `COdt`。原异常来自 29 个缺省崖面被固定映射到缺定义的槽 1，29 格各自的同格明确角点均指向 `COdi`。所需原版模型和纹理存在。Win32 Release 产品编译通过。源表证据在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/assets/cliff-source.log`；构建回执见 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/interlude-cliff-build-exit.txt`。即时验收从同一守卫清零档复走正式胜利确认和计分，间章已通过崖面生成，随后暴露原始地表图集尺寸检查。回执见 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/cliff-fix/run-139d9536231845a1bace70a958d8c484/frontend.log`。集成版探针验证原间章 29 处缺省槽回退、同格候选冲突拒绝、显式缺定义槽拒绝、HumanX03 的 Dalaran 可用默认槽，共 4 项通过，退出 0。复验入口及日志见 `tmp/docs-artifacts/war3/terrain-cache-batch-11ae165/run.cmd` 和 `probe.log`。
 
+## HumanX04 开场接管与快速存档（验收补充）
+
+沿用 `11ae165` Win32 Release 核心及正式跨章成功的档案和战役缓存副本。隐藏原生 D3D9 通过战役浏览器的正式切关入口启动 HumanX04，两个战役标志均为真。原脚本于模拟 41.96875 秒自然交还控制和界面，42.96875 秒发现主线「牢笼中的恶魔」。该任务尚未完成或失败，两个目标项未完成，「护送尤迪安」尚未发现。
+
+正式 F6 于模拟 43.09375 秒生成 1,011,710 字节快速存档。第二个隐藏客户端通过单人游戏的读取存档菜单在同一模拟时刻读回，玩家可控制，两名英雄的等级、经验、技能、技能点和背包，难度 1/1，以及两个任务和三个目标项的状态均一致。两进程退出 0，专项 1 通过／0 失败。源战役档案和缓存、地图与四项安装资源摘要前后一致，读取前后快速存档 SHA-256 均为 `98d1041e420adc845372f4477fc607199838270230559704411df87412944376`。
+
+入口为 `tmp/docs-artifacts/war3/p2-humanx04/opening-progress/run.cmd`，回执和前端日志见同目录 `run-9a34397a1f8b4d5b9f31481224661c6f/`。后续可使用其中的 `save/user/Saves/Quick/QuickSave.w3z` 作为只读任务检查点，实际夺车、护送及整章胜利待验收。
+
 ## 统一可破坏物路径贴图的朝向（功能批次 3/3，已集中验证）
 
 路径为 `src/session_destructables.cpp`、`src/session_unit_movement.cpp`、`src/world.h`、`src/world_path.cpp`、`tests/blight_fingerprint_tests.cpp` 和 `tests/clock_tests.cpp`。普通可破坏物采用与可行走可破坏物一致的路径贴图角度，覆盖存活和死亡占地。移动段 SMOV 写入 v4。v1–v3 的障碍摘要与当前占地不同时，用旧朝向在临时计数中复算并逐字匹配摘要，匹配后将移动和重试的路径版本置为过期。旧活动部分路线的原目标重规划见后续补充。
