@@ -1,6 +1,7 @@
 // Author: MiYu. Focused local transport check for ordered departures and checksum backpressure.
 #include <winsock2.h>
 #include "lan_actions.h"
+#include "lan_address.h"
 #include "lan_discovery.h"
 #include "lan_host.h"
 #include "lan_join.h"
@@ -18,6 +19,15 @@
 using namespace war3;
 namespace {
 void requireJoin(bool ok,const char* text){if(!ok)throw std::runtime_error(text);}
+void discoveryAddress(){
+    auto loopback=parseLanDiscoveryAddress("127.0.0.1");
+    auto privateAddress=parseLanDiscoveryAddress("192.168.1.10");
+    requireJoin(loopback && *loopback==htonl(INADDR_LOOPBACK) && privateAddress && *privateAddress==htonl(0xc0a8010a),"Valid LAN address did not parse in network byte order");
+    constexpr std::array invalid{"","0.0.0.0","0.1.2.3","127.0.0.256","224.0.0.1","240.0.0.1","255.255.255.255",
+                                 "localhost","::1","127.0.0.1:6112","127.0.0.1/8","127.0.0,1","127.0.0.1."," 127.0.0.1"};
+    for(auto candidate:invalid)requireJoin(!parseLanDiscoveryAddress(candidate),"Invalid LAN address accepted");
+    requireJoin(!parseLanDiscoveryAddress(std::string_view("127.0.0.1\0x",11)),"A LAN address with an embedded NUL was accepted");
+}
 struct TestSocket {
     SOCKET handle;
     ~TestSocket(){if(handle!=INVALID_SOCKET)closesocket(handle);}
@@ -108,6 +118,9 @@ int main(int argc,char** argv){
         }
         if(argc==2 && std::string_view(argv[1])=="game-info-capacity"){
             discoveryCapacity();std::cout<<"PASS discovery_packet_human_capacity\nRESULT passed=1 failed=0\n";return 0;
+        }
+        if(argc==2 && std::string_view(argv[1])=="discovery-address"){
+            discoveryAddress();std::cout<<"PASS numeric_ipv4_discovery_address\nRESULT passed=1 failed=0\n";return 0;
         }
         auto require=[](bool ok,const char* text){if(!ok)throw std::runtime_error(text);};LanHostSettings settings;settings.gameName="M3LeaveTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.map.info=2;settings.map.crc=3;settings.width=64;settings.height=64;settings.experimentalHandshake=true;settings.loopbackOnly=true;settings.slots.resize(3);for(unsigned i=0;i<3;++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}LanHost host(settings);LanDiscovery discovery(true,LanDiscovery::defaultVersion,"127.0.0.1");discovery.refresh();std::unique_ptr<LanJoin> first,second;
         auto tick=[&]{host.poll();discovery.poll();if(first)first->poll();if(second)second->poll();};auto wait=[&](const std::function<bool()>& done,const char* message){auto limit=std::chrono::steady_clock::now()+std::chrono::seconds(15);while(!done()){tick();if(std::chrono::steady_clock::now()>limit)throw std::runtime_error(message);std::this_thread::sleep_for(std::chrono::milliseconds(1));}};

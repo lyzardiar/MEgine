@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 局域网列表按 IPv4 搜索（定向验证）
+
+`src/lan_browser.*` 在正式房间列表接入「按 IP 搜索 (F3)」。Enter 应用，Esc 取消，清空恢复自动搜索，F5 刷新当前模式。成功切换使用新的发现套接字并清除旧选区。无效输入或首次发送失败时保留当前列表。`src/main.cpp` 在程序运行期间保留已应用地址，重开列表和对局返回时沿用。`src/lan_address.h`、`src/lan_discovery.cpp` 共用 IPv4 解析，定向搜索只向目标发送和接收，回环模式保持 127.0.0.1。
+
+Win32 Release 的 `war3`、`war3_lan_departure_tests` 构建通过。分别运行 `war3_lan_departure_tests.exe discovery-address` 和 `game-info-capacity`，均为 1 通过、0 失败。最终构建摘要前缀为 `6f37ed55b23c`。
+
+两轮私有桌面 D3D9Ex 从正式菜单启动，使用本机回环房主。回环轮输入 127.0.0.1 成功，拒绝 127.0.0.2，取消保留旧地址，清空仍使用回环。普通轮从 127.0.0.2 切换到 127.0.0.1，清空进入广播模式，F5 分别保持广播和定向，返回主菜单并重新打开仍保留 127.0.0.1。两轮均选中实际房间并进入大厅，核对房主和来客两个 PID 的 TCP 连接互相对应，全部正常退出。
+
+复现命令是 `python -B tmp/docs-artifacts/war3/lan-address-ui-v1/verify.py --executable <Win32 Release 客户端>`。普通轮另加 `--normal-peer`。回执在 `tmp/docs-artifacts/war3/lan-address-ui-v1/run-4057ed9a93/receipt.json` 和 `run-6e9c4ab646/receipt.json`。本轮验证覆盖本机双进程，跨机路由、系统剪贴板以及对局结束回列表仍待阶段验证。
+
 ## 快存与单机录像同构建集成验证（批次 3/3）
 
 本批次合并 `f45b630`、`8cfe6c2`、`8fb4ef6`，使用同一 Win32 Release 可执行文件，SHA-256 为 `061a0b3660c2929bb19c13db0ae39a41d84aa4762dedf00d91b0f03001783b5f`。11 项回放 CPU 用例通过。使用 `war3_ai_tests.exe <安装资源目录> <BootyBay 地图> <0–3> 15`，人族、兽族、亡灵、暗夜精灵 4 项均通过。实际加载四个内置 AI，推进 15 模拟秒，均有一个城镇、执行中的订单、采集工人和生产队列。这里的四族检查只在会话层运行。
