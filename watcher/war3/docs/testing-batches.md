@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## NightElfX01 自然胜利与 NightElfX02 接管（阶段验收）
+
+从 103.343750 秒正式 F6 档，以普通命令移除起点的活树占地，149.343750 秒抵达首村。随后沿原生路线到第三村并完成「怒兽」。从同一北西分路档续战，以普通攻击打开两座原牢门，751.718750 秒完成「搜寻与救援」，四弓手和一树妖归玩家。781.718750 秒全队 16 人集合，独立进程读回任务、两门状态和玩家控制，退出 0。集合档 `tmp/docs-artifacts/war3/p2-nightelfx01/rescue-side-v2/north/rally-user/Saves/NE1-RescueRallied.w3z`，SHA-256 `4e22cd2a00895ebe0c14ce47eab420a439b838ed85d272489e6bf475d45953a9`。
+
+救援集合档的连续分支以普通攻击打开港门。908.593750 秒追踪任务及两目标完成，921.093750 秒采样到「燃烧之船」已发现。常规移动、技能和攻击护住两艘船。983.468750 秒标准续战档保留最后一名原登记敌人 211.9062 生命、已接受的普通攻击、玛维存活和两船 679/1,500、1,500/1,500。末敌随后自然阵亡，两主线及四目标均完成。玛维完成生存目标，娜萨在港区终盘战斗中阵亡。尾档为 `tmp/docs-artifacts/war3/p2-nightelfx01/play-headless-v2/final-fight-user/Saves/NE1-LastNaga.w3z`，SHA-256 `407d4d9d005c0b80b06719d24cf40f6e011ddfa227ee2ab63420e170ffae2dfa`。同工作目录 `reinforced-harbor.log`、`reinforced-coast.log`、`final-fight.log` 记录实战；`tail-confirm.log` 独立读回尾档后只推进时间，1034.906250 秒出现原胜利对话，正常继续请求 X02 和计分。
+
+正式 Win32 Release D3D9 从该胜前尾档经加载菜单进入，原存档保留的战斗自然完成，1034.906250 秒胜利对话实际呈现。按 C 确认后实际显示计分页，按 Esc 后同一进程自动进入 `NightElfX02.w3x` 并呈现首帧。X02 开场自然运行，35.187500 秒取得可见过场帧，73.906250 秒原本地 P1 可实际选择玛维；原生 F6 写入 90.406250 秒档，1,755,645 字节，SHA-256 `0b6960ea89b1c082d7bcb297b589342a9a160a8899b76e052fbce374ae6bf680`。两章普通难度，客户端正常退出 0。回执、日志及实际帧见 `tmp/docs-artifacts/war3/p2-nightelfx01/native-handoff/run-c3793c2dfe7f4927b97b9ddde34d854b/`。
+
+同一进程在胜利对话确认前保存本轮新写的 `NightElfX02/Maiev` 原始缓存，347 字节，SHA-256 `045008c5fbc369e6d76e3e3e7255f4b1ba77c2cfff18599c9085024512df8c2c`。X02 F6 独立读回，玛维类型、3 级、608 经验、0 技能点、五项技能等级和六格背包与胜利缓存逐项一致。608 经验及 2 级刀阵旋风可区分本章默认创建角色。原尾档与六个安装文件摘要一致。继承对照在同验收根 `handoff-proof/x02-inheritance.json`。
+
 ## 长用户目录下的战役进度写入（定向验证）
 
 `src/campaign_profile.cpp` 与已有存档写入和复制共用 `src/temporary_file_path.h` 的同目录唯一临时路径。进度写入保留进程锁、独占创建、刷盘与原子替换，`profile.bin` 继续使用现有格式。
