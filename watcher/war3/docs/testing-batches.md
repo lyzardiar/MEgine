@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 手动存档目录异常时保留快速存档（定向验证）
+
+`src/saved_game_browser.cpp` 和 `src/game_flow_ui.cpp` 在验证用户存档根目录后，独立检查快存。手动目录无法读取时，列表保留有效快存，并提示「无法读取手动存档。」。主菜单和对局内载入均可使用该快存。
+
+Win32 Release 增量构建通过。四轮私有桌面 D3D9Ex 使用同一自研快存，将 `Saves/Manual` 置为普通文件。旧版在主菜单和对局内都无法选取快存。修复版从正式主菜单载入快存，首帧验证时刻为 7.96875 秒；对局内经 F10 载入，同一进程恢复到 7.9375 秒。原快存记录为 7.875 秒，文件和地图摘要一致，四轮正常退出 0。
+
+脚本和回执位于 `tmp/docs-artifacts/war3/quick-save-list-isolation-v1/` 的 `verify.py`、`baseline-menu-9580624a3364/result.json`、`baseline-ingame-c2aa97e46774/result.json`、`fixed-menu-e9e88b5dae94/result.json` 与 `fixed-ingame-c84463b3dfa7/result.json`。
+
 ## 回放准备失败提示跟随原录像（定向验证）
 
 `src/main.cpp` 与 `src/replay_browser.*` 将回放列表上的播放提示关联到发起播放的路径和摘要。同一录像返回后自动重读时保留提示，切换条目、F5 刷新或原内容被替换时清理。
