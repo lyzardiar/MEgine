@@ -1,6 +1,6 @@
 # 独立客户端测试队列
 
-## 长用户目录下的战役缓存写入（功能批次 3/3）
+## 长用户目录下的战役缓存写入（功能批次 3/3，已集中验证）
 
 路径为 `src/session_cache.cpp` 和 `tests/game_flow_tests.cpp`。战役缓存使用同目录短临时名，保留独占创建、刷盘、原子替换和失败清理。缓存目标名与读取格式沿用原规则。
 
@@ -8,19 +8,23 @@ Win32 实测中，241 字符的目标路径使用 263 字符的旧临时名时�
 
 Win32 Release 客户端和 game-flow 目标增量编译通过。修复后的 `cache-damage` 通过，退出 0，覆盖同目录重复写入、缓存重载、物品及单位字段、v1–v8 兼容和临时文件清理。日志见 `tmp/docs-artifacts/war3/gamecache-long-path-qa/fixed-cache-damage.log`。
 
-本批待验证 241 字符目录的正式 HumanX03 胜利、计分、间章及 HumanX04 双英雄继承，并集中检查缺省崖面及动态地表、小地图的采样。关注旧缓存兼容、重复写入、临时文件清理，以及两个英雄的经验、等级、技能、技能点和物品。
+集成版本 `11ae165` 的隐藏原生 D3D9 探针从原始守卫清零档恢复，于模拟 1984.5625 秒进入 HumanX03 正式胜利，确认胜利和计分后，间章于 82.40625 秒自然结束并进入 HumanX04 首帧。正式缓存路径为 241 字符，缓存从 5,694 更新至 6,306 字节，摘要与此前 226 字符路径的成功写入一致，目录仅留正式缓存文件。源存档、输入胜利缓存和九项安装资源摘要前后一致，进程退出 0。
 
-## 原版低分辨率地表图集（功能批次 2/3）
+凯尔保留 5 级、AHbn 2 级、AHfs 3 级和 0 技能点，经验按 HumanX04 原图增加 400，1,403 → 1,803。瓦丝琪保留 5 级、1,413 经验、ANfa 2 级、ANfl 2 级和 1 技能点。两人六格背包均为空，难度为 1/1；非空缓存物品由 `cache-damage` 用例覆盖。复验入口为 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/atlas-fix/carry-fixed-01/run.cmd`，使用同一 Win32 Release 构建目录。回执和前端日志在同目录的 `run-7efdce11fa8542e486279fb91b9a2e33/`。
+
+本批提交范围为 `2945520`、`53e337b` 与 `11ae165`。共 13 通过／0 失败，含崖面 4 项、图集采样 4 项、动态地表与小地图 3 项、磁盘缓存 1 项和正式跨章 1 项。基线的预期失败单独记录。HumanX04 后续关卡流程、其他原图主题和崖面布局待后续验收。
+
+## 原版低分辨率地表图集（功能批次 2/3，已集中验证）
 
 路径为 `src/ground_texture.h`、`src/terrain_scene.cpp`、`src/terrain_blight.cpp` 和 `src/minimap_terrain.cpp`。地表首帧、动态地表和小地图采用同一采样。原版 Outland 的 `Oaby` 来自 `War3x.mpq/TerrainArt/Outland/Outland_Abyss.blp`，64×64，16 个 16×16 源块的透明掩码排列与其他 4×4 地表图集相同。采样保留掩码和变体索引，合成输出维持 64×64。两种原有图集的采样公式与像素一致。
 
-Win32 Release 产品编译通过。快验 4 通过／0 失败，比较 65,536 个低分辨率 RGBA 样本、196,608 个原尺寸图集样本、96 个变体及 8 组非法尺寸。入口和日志见 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/interlude-atlas-qa/run.cmd`、`probe.log`。源 BLP 头记录在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/cliff-fix/ground-atlas-assets/cliff-source.log`。正式 D3D9 由原 HumanX03 胜利确认及计分进入间章，间章和 HumanX04 均呈现首帧。日志在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/atlas-fix/run-2e1d868a5950482083a88ae6e884f4a3/frontend.log`。待批次覆盖源地表改变后的动态重建及小地图更新。
+Win32 Release 产品编译通过。快验 4 通过／0 失败，比较 65,536 个低分辨率 RGBA 样本、196,608 个原尺寸图集样本、96 个变体及 8 组非法尺寸。入口和日志见 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/interlude-atlas-qa/run.cmd`、`probe.log`。源 BLP 头记录在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/cliff-fix/ground-atlas-assets/cliff-source.log`。正式 D3D9 由原 HumanX03 胜利确认及计分进入间章，间章和 HumanX04 均呈现首帧。日志在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/atlas-fix/run-2e1d868a5950482083a88ae6e884f4a3/frontend.log`。集成版重跑图集采样 4 项全过。真实 Oaby 小地图逐像素核对 27,968 个源样本，SetTerrainType 更新 144 个预期像素并保留其余 409,456 个像素。隐藏 D3D9 读回的动态地表有 5,184 个中心像素按预期改变，中心和混合区域与修改后重新建场景的对照均无超容差差异。批次入口为 `tmp/docs-artifacts/war3/terrain-cache-batch-11ae165/run.cmd` 和同目录的 `atlas-sampling/run.cmd`，日志分别为 `probe.log` 和 `atlas-sampling/probe.log`。
 
-## 缺省崖面纹理引用未定义槽（功能批次 1/3）
+## 缺省崖面纹理引用未定义槽（功能批次 1/3，已集中验证）
 
 路径为 `src/terrain_layout.cpp`。W3E 悬崖纹理值 15 的缺省槽若没有可用定义，从同一格四角取唯一明确且有资源的悬崖槽。缺省槽可用时沿用现有取法。显式槽按原定义检查。
 
-HumanX03Interlude 的 W3E 悬崖槽为 `COdi, COdt, COrd`，原安装包的 CliffTypes.slk 有 `COdi` 和 `COrd`。可渲染的悬崖没有直接使用 `COdt`。原异常来自 29 个缺省崖面被固定映射到缺定义的槽 1，29 格各自的同格明确角点均指向 `COdi`。所需原版模型和纹理存在。Win32 Release 产品编译通过。源表证据在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/assets/cliff-source.log`；构建回执见 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/interlude-cliff-build-exit.txt`。即时验收从同一守卫清零档复走正式胜利确认和计分，间章已通过崖面生成，随后暴露原始地表图集尺寸检查。回执见 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/cliff-fix/run-139d9536231845a1bace70a958d8c484/frontend.log`。后续批次覆盖更多地形主题和缺省崖面布局。
+HumanX03Interlude 的 W3E 悬崖槽为 `COdi, COdt, COrd`，原安装包的 CliffTypes.slk 有 `COdi` 和 `COrd`。可渲染的悬崖没有直接使用 `COdt`。原异常来自 29 个缺省崖面被固定映射到缺定义的槽 1，29 格各自的同格明确角点均指向 `COdi`。所需原版模型和纹理存在。Win32 Release 产品编译通过。源表证据在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/assets/cliff-source.log`；构建回执见 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/interlude-cliff-build-exit.txt`。即时验收从同一守卫清零档复走正式胜利确认和计分，间章已通过崖面生成，随后暴露原始地表图集尺寸检查。回执见 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/cliff-fix/run-139d9536231845a1bace70a958d8c484/frontend.log`。集成版探针验证原间章 29 处缺省槽回退、同格候选冲突拒绝、显式缺定义槽拒绝、HumanX03 的 Dalaran 可用默认槽，共 4 项通过，退出 0。复验入口及日志见 `tmp/docs-artifacts/war3/terrain-cache-batch-11ae165/run.cmd` 和 `probe.log`。
 
 ## 统一可破坏物路径贴图的朝向（功能批次 3/3，已集中验证）
 
