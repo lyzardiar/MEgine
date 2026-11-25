@@ -84,11 +84,19 @@ rear 方案另在 244.625 秒保存并由新运行时读回，伊利丹满血、
 
 独立无渲染续跑中，开场三名原有牧师用 27 次普通 Ahea 命令将伊利丹从 485.106 补至 1,150，131.000 秒原生快存读回通过。阿卡玛走近后正常移交大生命药剂，伊利丹使用增加 500 生命。恶魔变身按原技能临时增加当前和最大生命 500，消耗 150 魔法。起点原地治疗、药剂与变身的单项证据在 `tmp/docs-artifacts/war3/p2-humanx06/illidan-healing/`。满血快存的 SHA-256 为 `50b2fd0e695d6c2c015a45b1dc12f74d68c42b6d811a8850bd4be7bd76b7dc14`。
 
-东队以五次普通整队移动走两栖路线到 `(2752,4864)`，163.875 秒触发右踏板，八人全活，两副官均在。167.875 秒标准存档独立读回，右开左关。档为 `tmp/docs-artifacts/war3/p2-humanx06/east-mistress/direct-user/Saves/EastPlate.w3z`，SHA-256 为 `92068892cc38530b3a6c879091f5484593d14524ab8677f08c762df00d11f42f`。实际地形查询见 `route-audit/bridge-northern.log`。首次双踏板 D3D9 试验遇地图流送内存分配失败，后续单独复跑通过读档但西队凯尔在北廊伏击阵亡，双板同时解锁和过桥待正式实战验证。
+东队以五次普通整队移动走两栖路线到 `(2752,4864)`，163.875 秒触发右踏板，八人全活，两副官均在。167.875 秒标准存档独立读回，右开左关。档为 `tmp/docs-artifacts/war3/p2-humanx06/east-mistress/direct-user/Saves/EastPlate.w3z`，SHA-256 为 `92068892cc38530b3a6c879091f5484593d14524ab8677f08c762df00d11f42f`。实际地形查询见 `route-audit/bridge-northern.log`。首次双踏板 D3D9 试验遇地图流送内存分配失败，后续单独复跑通过读档但西队凯尔在北廊伏击阵亡，两侧均解锁并过桥待正式实战验证。
 
 西侧采用普通攻击，278.250 秒击毁第二发电机并写标准档。在独立进程从此档无输入续跑，279.750 秒原脚本同一帧清除两座毁灭塔、两艘地狱战舰和两段 Dofw 墙，其余十二座防御仍活。288.250 秒可选任务文字更新为发电机 1/4。存档为 `tmp/docs-artifacts/war3/p2-humanx06/lieutenants-headless/west-first-user/Saves/X06-GeneratorTwoDown.w3z`，SHA-256 为 `b28651462559934e6d503a4bc641d5f6b62d06ed7dc05d64b2821973751810fd`，独立读回见 `generator02-review/readback/inspect.log`。
 
 从西线另一路满血编队继续，英雄在南岸，369.125 秒由非英雄普通攻击击毁第三发电机。其标准档为 `tmp/docs-artifacts/war3/p2-humanx06/lieutenants-headless/west-siege-user/Saves/X06-GeneratorThreeDown.w3z`，SHA-256 为 `60f88b303cedd7e499c23829ab18bc26d5433860d7e5e3106f71fed8ac5652c6`。长距离直冲西院真门会在 y8200–9000 让前后排脱节并损失英雄或牧师，目前以该档做小段推进。双副官、主门和玛瑟里顿仍待实战。
+
+## HumanX06 发电机正式复跑与攻城援军（验收补充）
+
+第二发电机正式隐藏 D3D9 从 278.250 秒菜单读回，279.65625 秒通过原脚本清四个防御单位与两段墙，288.15625 秒更新目标 1/4。288.28125 秒 F6 写入 1,532,277 字节，SHA-256 为 `b634612c67f9a5afe8bddcd85754866f29b543c259f5c9e03f766e1a7bf1d104`。新进程从正式菜单读回，在呈现前逐项核对四英雄身份、位置、血蓝、命令和剩余路径，发电机、防御状态与任务均一致。两进程均渲染首帧并退出 0，九个源用户文件和五个地图或归档摘要一致。入口为 `tmp/docs-artifacts/war3/p2-humanx06/generator02-d3d-v2/run.mjs`，回执 `run-87f3cd9a40fa499f97e81ea745c033ed/receipt.json`。
+
+第三发电机以同一方式在正式隐藏 D3D9 从 369.125 秒开始，第二发电机的清除保持，第四、第五仍活。370.53125 秒原图同帧清除第三的四个防御单位和两段墙，379.03125 秒目标 2/4。379.15625 秒 F6 写入 1,539,145 字节，SHA-256 为 `ee9bafd319a2b6a57afcc03d6404f464a5c62ad1bd9966399cdc73a345115c1b`。独立菜单读回在同一时刻与四英雄状态、等级、技能、背包、原防御和任务逐项匹配，首帧正常推进至 379.1875 秒。两进程退出 0，十个源用户文件及五个原盘条目摘要一致。回执 `tmp/docs-artifacts/war3/p2-humanx06/generator03-d3d-v2/run-dd318c31bba74f2d9465707997fabffb/receipt.json`。
+
+可选任务「攻城要塞」使用同一 Win32 核心无渲染实跑。以正常命令入区，443.875 秒发现，472.000 秒击破原 DTg3 外门，494.250 秒击败第七名原守军。地图完成可选任务、开启两释放门并将四台 ocat 交给玩家。500.250 秒档独立读回，四英雄及两副官活着，副官任务两项未完成，释放门保持开启，四台车的正常移动命令均接受且分别实移 192 世界单位。存档 1,522,046 字节，SHA-256 为 `e75a987ef49a5b210bb59f102d8956257ef5817d518cf5e3da7dbedec38700a0`。入口、原跑、读回及存档为 `tmp/docs-artifacts/war3/p2-humanx06/rescue-v2/` 下的 `run.cmd`、`test.log`、`verify.log`、`test-user/Saves/Quick/HumanX06SiegeRescue.w3z`。攻城援军档已交西线。双踏板、双副官和后段继续实战。
 
 ## HumanX04 夺车、护送与胜利（验收补充）
 
