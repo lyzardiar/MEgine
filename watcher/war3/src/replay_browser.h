@@ -36,7 +36,8 @@ class ReplayBrowser {
     std::jthread worker_;
     void run(std::stop_token stop);
     void clearSelection();
-    void enter(const fs::path& path);
+    bool enter(const fs::path& path,const fs::path& preferred={},size_t fallback=0);
+    void refresh();
     void choose(size_t index);
     void prepared();
     void removeSelected();
