@@ -14,7 +14,9 @@ Win32 Release 增量构建通过。以隔离资源根经正式单人菜单打开
 
 Win32 Release 产品与 `war3_replay_step_tests` 增量构建通过。运行该测试程序，六组定向用例通过，覆盖连续零时长片、分片跨帧、末片后的记录顺序及跨帧收尾、暂停调速与继续、停止及回调失败。回执 `tmp/docs-artifacts/war3/replay-step-prep/build-receipt.json`。
 
-通过 `verify.ps1` 从正式单人回放列表打开同构建的合成录像。隐藏 D3D9 窗口的原生键盘消息确认播放中按句号、暂停等待及重复键均未推进时钟。三次独立单步分别推进 10,000、0 和 1,375 ms，空格继续后自动推进 1,000 ms，Esc 返回列表并实际呈现，正常退出 0。证据 `tmp/docs-artifacts/war3/replay-step-prep/run-808941dc29bd/result.json`。窗口使用无动作载荷。末片收尾由 CPU 用例覆盖，窗口最小化恢复留待回放功能批次。
+通过 `verify.ps1` 从正式单人回放列表打开同构建的合成录像。隐藏 D3D9 窗口的原生键盘消息确认播放中按句号、暂停等待及重复键均未推进时钟。三次独立单步分别推进 10,000、0 和 1,375 ms，空格继续后自动推进 1,000 ms，Esc 返回列表并实际呈现，正常退出 0。证据 `tmp/docs-artifacts/war3/replay-step-prep/run-808941dc29bd/result.json`。窗口使用无动作载荷，末片收尾由 CPU 用例覆盖。
+
+`verify-minimize.ps1` 复用同一冻结构建，在私有桌面顺序测试两个实际最小化窗口。播放中最小化 11,068 ms，恢复首帧仍停在 1,250 ms，随后无需按键继续推进到 11,250 ms。手动暂停后最小化 11,061 ms，恢复仍停在 1,250 ms，单步至 11,250 ms 后保持暂停，按空格才继续至 12,625 ms。两轮均实际经历窗口最小化和恢复，Esc 返回列表，退出 0。回执 `tmp/docs-artifacts/war3/replay-step-prep/minimize-08228496d5ce/result.json`。
 
 ## F9 任务面板滚轮与战场镜头（定向验证）
 
