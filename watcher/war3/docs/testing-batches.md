@@ -1,5 +1,17 @@
 # 独立客户端测试队列
 
+## 双编队同时通过窄口（专项验收）
+
+用同版 Win32 Release 核心和自有 `p1-formation-congestion/passage.w3m` 同时向两支六人编队下达独立移动命令。每模拟步检查成员不穿越阻挡，任意两名成员保持碰撞间距。两队均在同一采样步接近窄口，全部 12 人到达各自落点并结束移动。同向、临时封路再打开、对向三项分别用 133、387、208 个 1/32 秒模拟步，**3 通过／0 失败**。临时封路持续 8 秒，两队均保留原订单和落点。执行 `tmp/docs-artifacts/war3/lan-independent-multi-formation/build.cmd`，然后 `probe.exe <data-root> <passage.w3m> <same|dynamic|opposite>`，各模式日志同目录。专项不计功能批次。
+
+## 旧版 AI 僵局存档续跑（专项验收）
+
+用当前 Win32 Release 核心从种子 `0x12345678` 的两份原始 6,000 秒旧档连续运行。Echo Isles 自然结算于 6,970 模拟秒，亡灵获胜，双方结果为 `r0=1 r1=0`。截至 6,600 秒的独立诊断中，亡灵已开始拆除人族建筑。另由该检查点续行 60 秒，人族建筑由 11 减至 8，农场目标与城堡相继被摧毁。
+
+Amazonia 连续运行到 7,200 秒仍未结算。单独采集探针到 6,900 秒时，远矿扣减和入账均为 4,708 金。暗夜继续生产与研究，采样中的两支部队没有恢复接战。从 7,200 秒检查点再自然运行 60 秒，暗夜回撤队伍全员满血且无运输等待，两名成员仍距回撤点约 355 与 396，超过 350 的到家判据，回撤状态持续。现有 `aiRetreatMember` 给各成员同一个回撤点。回撤落点分配及 Amazonia 自然结算待查。
+
+原始存档哈希一致，两局退出码均为 0，未加载 `Game.dll`。当前探针、构建脚本、连续续跑和现场诊断日志位于 `tmp/docs-artifacts/war3/ai-restored-match-20261125/`。连续续跑日志为 `echo-7200-or-finish.log` 和 `amazonia-7200.log`，回撤数据在 `amazonia-retreat-followup.log`。专项不计功能批次。
+
 ## 三端计分、加载中掉线与房主超时（专项验收）
 
 使用集成实现 `af14aee` 的 Win32 Release 客户端和同版传输对象。本机环回专项 **3 通过／0 失败**，正式客户端均在专用后台桌面运行。
@@ -75,7 +87,7 @@ Win32 Release 构建通过。专用后台 Windows 桌面上的两个正式客户
 
 路径为 `src/session_orders.cpp` 和 `tests/movement_avoidance_tests.cpp`。普通编队移动连续两秒没有取得足够进展，且下一路点方向的近段被地形挡住时，按现有轮转重算到原落点的路线。每模拟步的四次完整重算限额由原动态阻挡和此恢复路径共用。重算前复核路径，保留当步已经生效的让路点。
 
-用 `python watcher/war3/tests/generate-ai-transport-islands.py <islands.w3m>` 生成双岛夹具，执行 `war3_movement_avoidance_tests <data-root> <islands.w3m> formation-rear-choke`。旧 Win32 核心的第六名队员等到 60.25 秒仍未过口。新 Win32 Release 核心 1 通过／0 失败，六人于 5.4375 秒到达各自落点并结束移动。编译及新旧日志见 `tmp/docs-artifacts/war3/player-formation-rear-stall-20261123/`。集中批次复验动态阻挡、存档路线恢复、盟友让路、订单队列和编队速度，以及同构联机摘要与录像。多编队同时拥堵的表现待测。
+用 `python watcher/war3/tests/generate-ai-transport-islands.py <islands.w3m>` 生成双岛夹具，执行 `war3_movement_avoidance_tests <data-root> <islands.w3m> formation-rear-choke`。旧 Win32 核心的第六名队员等到 60.25 秒仍未过口。新 Win32 Release 核心 1 通过／0 失败，六人于 5.4375 秒到达各自落点并结束移动。编译及新旧日志见 `tmp/docs-artifacts/war3/player-formation-rear-stall-20261123/`。集中批次复验动态阻挡、存档路线恢复、盟友让路、订单队列和编队速度，以及同构联机摘要与录像。同向、封路和对向的双编队验证见专项。
 
 ## 回放浏览器显示开局参赛席数（功能批次 2/3，已集中验证）
 
