@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 回到存档列表时刷新存档和预览（定向验证）
+
+`src/main.cpp` 在非战役对局返回单人存档列表时，重新读取目录并启动当前选择的异步预览。`src/saved_game_browser.*` 按档名恢复选择，快存置顶，原条目消失时选择首项或显示空列表。读档继续校验本次预览所对应的摘要。
+
+Win32 Release 增量构建通过。三轮使用同一自研存档和地图，从正式单人菜单进入，实际按 F6 写盘并退出回原列表。基线覆盖快存后第二次载入仍使用旧摘要，后台客户端报告 `Checkpoint changed after selection` 并退出 1。修复版覆盖后的新存档时间为 7.875 秒，原列表再次载入后实际呈现 7.90625 秒。另一轮从手动档进入并首次创建快存，返回后一键仍载入原手动档，按 Home 则选到新快存并载入。修复版两轮退出 0，源档和地图摘要一致。
+
+复验入口与回执在 `tmp/docs-artifacts/war3/save-list-refresh-v1/` 的 `verify.py`、`baseline-overwrite-553a4009852e/receipt.json`、`fixed-overwrite-3310860d4032/receipt.json` 和 `fixed-first-create-008807dc042f/receipt.json`。
+
 ## 对局内设置保存失败后的重新写入（定向验证）
 
 `src/game_view.cpp` 的相机、音频和视频设置保存失败后记录错误，保留已应用值。下一次实际修改该类设置时重新尝试保存。入局读取失败保护、旧档验证和原子替换沿用现有实现。

@@ -32,9 +32,10 @@ class SavedGameBrowser {
     void infoLayout();
     void select(size_t index,size_t rows,bool retryFailed=true);
 public:
-    SavedGameBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot);
+    SavedGameBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,std::wstring_view preferred={});
     std::string draw(const UiInput& input);
     ~SavedGameBrowser();
     std::optional<SavedGameSelection> selected() const;
+    std::wstring selectedEntry() const;
 };
 }
