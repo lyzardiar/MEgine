@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## AI 回撤到被建筑占据的默认基地（功能批次 1/3）
+
+路径为 `src/session_ai.cpp`。AI 管理的地面回撤命令长期停在默认归队范围外，且己方城镇建筑占据默认归队点时，以受当前地形约束的实际路线入口计算剩余距离。入口贴近该建筑，剩余路径在 350 以内才计入归队。当前回撤命令的修订号、有效路线、队伍健康及运输状态参与判断。
+
+Win32 Release 客户端和 Campaign AI 目标构建通过。从两份未修改的 Amazonia 旧档连续运行，6,000 秒原始档于 6,600 秒记录暗夜获胜，7,200 秒检查点于 7,760 秒记录暗夜获胜。两次均实际恢复接战并摧毁对方全部建筑，结果为 `r0=1 r1=0`，退出码 0。复验入口为 `tmp/docs-artifacts/war3/ai-retreat-congestion-20261125/build-candidate.cmd`，再执行 `retreat-candidate.exe <data-root> <Amazonia.w3x> 3 4 0x12345678 7800 <旧档>`，连续日志为 `amazonia-final-6000.log` 和 `amazonia-final-7200.log`。
+
+用 `war3_campaign_ai_tests <data-root> <fixture.w3m> <mode>` 复验 `retreat-retry`、`retreat-reentrant`、`retreat-auto-cycle`、`island-flight-captain-home`、`island-flight-retreat-paused-reassign` 和 `island-naval-homeshore-retreat`。六个入口全部退出 0，Runner 共 9 通过／0 失败，含三个相同的启动断言。夹具分别为 `ai-retreat-ground-batch/fixture.w3m` 和 `ai-naval-remote/fixture.w3m`，输出同上方目录。待批次验证其他地形、不同体积部队及多次改变基地归队点。
+
 ## 双编队同时通过窄口（专项验收）
 
 用同版 Win32 Release 核心和自有 `p1-formation-congestion/passage.w3m` 同时向两支六人编队下达独立移动命令。每模拟步检查成员不穿越阻挡，任意两名成员保持碰撞间距。两队均在同一采样步接近窄口，全部 12 人到达各自落点并结束移动。同向、临时封路再打开、对向三项分别用 133、387、208 个 1/32 秒模拟步，**3 通过／0 失败**。临时封路持续 8 秒，两队均保留原订单和落点。执行 `tmp/docs-artifacts/war3/lan-independent-multi-formation/build.cmd`，然后 `probe.exe <data-root> <passage.w3m> <same|dynamic|opposite>`，各模式日志同目录。专项不计功能批次。
@@ -8,7 +16,7 @@
 
 用当前 Win32 Release 核心从种子 `0x12345678` 的两份原始 6,000 秒旧档连续运行。Echo Isles 自然结算于 6,970 模拟秒，亡灵获胜，双方结果为 `r0=1 r1=0`。截至 6,600 秒的独立诊断中，亡灵已开始拆除人族建筑。另由该检查点续行 60 秒，人族建筑由 11 减至 8，农场目标与城堡相继被摧毁。
 
-Amazonia 连续运行到 7,200 秒仍未结算。单独采集探针到 6,900 秒时，远矿扣减和入账均为 4,708 金。暗夜继续生产与研究，采样中的两支部队没有恢复接战。从 7,200 秒检查点再自然运行 60 秒，暗夜回撤队伍全员满血且无运输等待，两名成员仍距回撤点约 355 与 396，超过 350 的到家判据，回撤状态持续。现有 `aiRetreatMember` 给各成员同一个回撤点。回撤落点分配及 Amazonia 自然结算待查。
+Amazonia 连续运行到 7,200 秒仍未结算。单独采集探针到 6,900 秒时，远矿扣减和入账均为 4,708 金。暗夜继续生产与研究，采样中的两支部队没有恢复接战。从 7,200 秒检查点再自然运行 60 秒，暗夜回撤队伍全员满血且无运输等待，两名成员仍距回撤点约 355 与 396，超过 350 的到家判据，回撤状态持续。现有 `aiRetreatMember` 给各成员同一个回撤点。默认回撤点被己方建筑占据时的归队修复以及 Amazonia 连续完赛见上。
 
 原始存档哈希一致，两局退出码均为 0，未加载 `Game.dll`。当前探针、构建脚本、连续续跑和现场诊断日志位于 `tmp/docs-artifacts/war3/ai-restored-match-20261125/`。连续续跑日志为 `echo-7200-or-finish.log` 和 `amazonia-7200.log`，回撤数据在 `amazonia-retreat-followup.log`。专项不计功能批次。
 
