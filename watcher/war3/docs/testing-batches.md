@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 缺省崖面纹理引用未定义槽（功能批次 1/3）
+
+路径为 `src/terrain_layout.cpp`。W3E 悬崖纹理值 15 的缺省槽若没有可用定义，从同一格四角取唯一明确且有资源的悬崖槽。缺省槽可用时沿用现有取法。显式槽按原定义检查。
+
+HumanX03Interlude 的 W3E 悬崖槽为 `COdi, COdt, COrd`，原安装包的 CliffTypes.slk 有 `COdi` 和 `COrd`。可渲染的悬崖没有直接使用 `COdt`。原异常来自 29 个缺省崖面被固定映射到缺定义的槽 1，29 格各自的同格明确角点均指向 `COdi`。所需原版模型和纹理存在。Win32 Release 产品编译通过。源表证据在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/assets/cliff-source.log`；构建回执见 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/interlude-cliff-build-exit.txt`。即时验收从同一守卫清零档复走正式胜利确认和计分，间章已通过崖面生成，随后暴露原始地表图集尺寸检查。回执见 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/cliff-fix/run-139d9536231845a1bace70a958d8c484/frontend.log`。后续批次覆盖更多地形主题和缺省崖面布局。
+
 ## 统一可破坏物路径贴图的朝向（功能批次 3/3，已集中验证）
 
 路径为 `src/session_destructables.cpp`、`src/session_unit_movement.cpp`、`src/world.h`、`src/world_path.cpp`、`tests/blight_fingerprint_tests.cpp` 和 `tests/clock_tests.cpp`。普通可破坏物采用与可行走可破坏物一致的路径贴图角度，覆盖存活和死亡占地。移动段 SMOV 写入 v4。v1–v3 的障碍摘要与当前占地不同时，用旧朝向在临时计数中复算并逐字匹配摘要，匹配后将移动和重试的路径版本置为过期。旧活动部分路线的原目标重规划见后续补充。
@@ -63,6 +69,12 @@ Win32 Release 客户端、可破坏物和移动测试目标构建通过。自有
 含破法者的分支继续用普通命令抵达北侧入口，在 1,072.25 秒写入并独立读回 v4 存档。原破法者余 207.96 生命，双英雄和两名牧师可恢复，敌对狱卒余 6,000 生命。存档位于 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/escort-precharge/held-1072/Saves/Quick/QuickSave.w3z`，SHA-256 为 `d5575ee4fe48107093bbf6af1f134a7b381172dfc94bd2ed4298b268713b6a82`。提前南引让双英雄与破法者抵达站位，追击的步枪手击杀了两名牧师。含增援的安全预充能档仍待验。
 
 并行战斗分支从满血的 1,227.25 秒整备档恢复。双英雄轮换放逐，牧师留在后排，四名骑士在模拟 1,301.25 秒前被普通战斗消灭。原敌对狱卒在 1,308.75 秒阵亡，凯尔及瓦丝琪剩余 304.77、99.48 生命。后台 F6 回执确认写入 989,325 字节的 v4 档。正式胜利要求原狱卒守卫组全部阵亡，续扫守卫在探针时限内未完成，两位英雄还存活。狱卒倒地后的存档正式读回至 1,335.0625 秒，狱卒保持死亡，两位英雄分别余 316.17、175.71 生命。用原守卫组成员查询确认仍有 16 名在世敌军，包括 1 迫击炮、4 骑士、7 步兵及 4 火枪手。回读日志为同任务目录的 `run-271da2779d8642bc8c9374ab7c644216/frontend.log`。实跑日志 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/run-3e44b2a45ddd4ac58c57b6414a461a7f/frontend.log`，续战档为同任务目录的 `checkpoint-post-jailor/QuickSave.w3z`，SHA-256 为 `c977480682a4d740838291b99b32bac61b7959f8019432530c9cd5c07c37a336`。向更深的南侧撤退时，在约 `(3800,-1800)` 仍遭两名组外火枪手追击，瓦丝琪阵亡，试跑退出 1。自然胜利、间章与 HumanX04 继承仍待验。
+
+## HumanX03 自然胜利与出场过场（专项验收）
+
+从狱卒倒地后的原 v4 中，正式后台客户端以普通战斗击败两名南侧火枪手。在两个英雄连续 28.5 个模拟秒未被锁定后，于 1,393.59375 秒 F6 写出南侧恢复档。两位英雄分别恢复到 260.30、208.37 生命，原弓手存活。输出为 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/post-jailor-rifles/checkpoint-rifles-cleared/QuickSave.w3z`，SHA-256 为 `e634b9f04c9259a81d794d0740c02d83629d6c7c45d95f9c6e7b2ebc05d5ad7d`。
+
+无渲染试跑从此档恢复，使用正式核心和正常玩家命令，轮换双英雄前位。模拟 1,965.09 秒原胜利组 16 名全部阵亡，原图胜利触发器执行一次，`GameOver` 置位，胜利过场入队。使用与产品快速模拟一致的音频模拟时钟，原图于 1,984.56 秒记入胜利，进程退出 0。入口和日志在 `tmp/docs-artifacts/war3/p2-humanx03/post-jailor-fast/sweep-audio.cmd`、`audio-15.log`。正式 D3D9 前端读回守卫刚清零的快照，实际播放两段对白，走完胜利确认与计分。原构建切入间章时因悬崖槽缺定义退出 1，见 `final-battle-agent/all-gone-frontend/run-ceb6f7fe85274bb7bcf2a58554835168/frontend.log`。原快照、缓存及九项安装资源摘要一致。
 
 ## HumanX03 南侧补兵与城门占地（专项验收）
 
