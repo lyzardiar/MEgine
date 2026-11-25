@@ -76,7 +76,12 @@ bool ThreadScheduler::wakeExternal(ExternalWaitToken token){
     std::lock_guard lock(impl_->mutex);auto found=impl_->externalWaits.find(token);if(found==impl_->externalWaits.end())return false;auto task=impl_->tasks.find(found->second);if(task==impl_->tasks.end() || task->second->external!=token || task->second->cancelled || task->second->externalSignaled || (task->second->state!=Impl::State::Running && task->second->state!=Impl::State::External))return false;task->second->externalSignaled=true;if(task->second->state==Impl::State::External)task->second->state=Impl::State::Ready;return true;
 }
 bool ThreadScheduler::cancelExternalWait(ExternalWaitToken token){
-    std::lock_guard lock(impl_->mutex);if(!impl_->current || !token)return false;auto& task=*impl_->tasks.at(impl_->current);if(task.external!=token || task.state!=Impl::State::Running)return false;impl_->clearExternal(task);return true;
+    std::lock_guard lock(impl_->mutex);if(!token)return false;
+    if(impl_->current){auto& task=*impl_->tasks.at(impl_->current);if(task.external!=token || task.state!=Impl::State::Running)return false;impl_->clearExternal(task);return true;}
+    auto wait=impl_->externalWaits.find(token);if(wait==impl_->externalWaits.end())return false;
+    auto id=wait->second;auto task=impl_->tasks.find(id);
+    if(task==impl_->tasks.end() || task->second->external!=token || task->second->state!=Impl::State::External)return false;
+    cancel(std::span<const ThreadId>(&id,1));return true;
 }
 void ThreadScheduler::clock(double time){std::lock_guard lock(impl_->mutex);if(!std::isfinite(time) || time<impl_->time)throw std::runtime_error("Script clock must be finite and monotonic");impl_->time=time;}
 void ThreadScheduler::advance(double time){

@@ -161,6 +161,7 @@ class ScriptSession {
     void selectionEvent(std::uint32_t unit,unsigned player,bool selected,std::uint64_t revision);
     struct PendingSave {std::string name;jass::ExternalWaitToken token=0;};
     std::optional<PendingSave> pendingSave_;
+    std::string scriptSaveError_;
     bool localSaveInProgress_=false;
     void processPendingSave();
     std::unique_ptr<World> world_;
@@ -1472,6 +1473,7 @@ public:
     Bytes encodeRecoveryBundle() const;
     void saveRecoveryCheckpoint(const std::string& name,bool overwrite=true) const;
     void saveLocalGame(const std::string& name,bool overwrite=false);
+    std::string takeScriptSaveError();
     void requestLocalLoad(const std::string& name);
     static RecoveryCheckpointInfo inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,std::stop_token stop={});
     static fs::path resolveRecoveryCheckpointMap(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={},std::stop_token stop={});

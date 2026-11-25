@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 脚本 SaveGame 写盘失败时继续对局（定向验证）
+
+`src/session_campaign.cpp` 将创建目录、打开临时文件、写入及发布失败交给脚本保存分支处理。失败请求取消对应的等待线程，清除待处理状态，`src/game_view.cpp` 提示「无法保存游戏。」。成功请求按发布、保存事件、脚本续行的顺序执行。路径校验、快照构造和保存后回调各自保留诊断。
+
+Win32 Release 增量构建通过。`war3_clock_tests <data-root> <output-root>` 配合 `WAR3_CLOCK_FILTER` 分别运行 `save_game_writes_checkpoint_and_preserves_caller`、`transition_save_discards_only_transition_caller` 与 `quick_save_checkpoint`，三项通过。新断言验证真实文件替换失败时旧档摘要完整，失败线程停止、无保存事件、独立休眠线程继续、清理临时文件，并在同一会话接受新的显式保存请求。
+
+原创计时器地图通过私有桌面 D3D9Ex 对照。持有目标文件时基线在发布错误 5 后退出 1。修复版同一错误只记录一次并实际呈现提示，失败调用后续动作未执行，其他计时器照常运行。解除占用后第二次调用生成时间为 14 秒的有效 WSAV，保存后动作继续，退出 0。脚本与证据在 `tmp/docs-artifacts/war3/script-save-recovery-v1/` 的 `verify.py`、`baseline-79cce03b/receipt.json`、`fixed-dfbc0760/receipt.json` 和 `clock-final-*`。
+
 ## 回放返回列表后恢复选中预览（定向验证）
 
 `src/replay_browser.cpp` 在交接选中的录像后记录一次重读请求。再次显示列表时，使用原索引后台读取文件并恢复详情，完成后可直接再次播放。
