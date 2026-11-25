@@ -24,7 +24,7 @@ private:
     SlotObserver slotObserver_;
     std::string observerError_;
     std::uint16_t interval_;
-    std::uint64_t nextFrame_=0,lastClock_=0;
+    std::uint64_t nextFrame_=0,lastClock_=0,lastSlotClock_=0;
     std::optional<std::uint64_t> selectionSendBlockedAt_,leaveStartedAt_;
     std::optional<std::uint64_t> cacheSendBlockedAt_;
     bool started_=false,failed_=false,leaveRequested_=false,leaveSent_=false,leaveComplete_=false,sharedGameEnd_=false;
@@ -43,6 +43,7 @@ public:
     bool pump(std::uint64_t now);
     bool requestLeave(bool sharedGameEnd=false);
     bool leaveComplete() const {return leaveComplete_;}
+    bool waitingForSync() const;
     bool isHost() const {return bool(host_);}
     bool sharedGameEnd() const {return sharedGameEnd_;}
     bool hostDisconnected() const {return join_ && join_->state()==LanJoinState::Closed;}
