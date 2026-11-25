@@ -15,6 +15,15 @@ std::optional<size_t> World::pathCell(float x,float y) const {if(!data_.pathing 
 std::pair<std::string,std::string> World::movementFingerprint() const {
     if(obstacleOwners_.size()>2000000)throw std::runtime_error("Movement footprint fingerprint exceeds budget");std::vector<std::pair<size_t,ObstacleOwners>> owners(obstacleOwners_.begin(),obstacleOwners_.end());std::sort(owners.begin(),owners.end(),[](auto& a,auto& b){return a.first<b.first;});SnapshotWriter out(64u*1024u*1024u);out.size(owners.size());for(auto& [index,owner]:owners){out.u64(index);out.u32(owner.fixed);for(auto count:owner.counts)out.u32(count);}auto footprint=sha256(obstacles_)+sha256(out.finish());return {sha256(data_.pathing?std::span<const std::uint8_t>(data_.pathing->cells):std::span<const std::uint8_t>{}),sha256({reinterpret_cast<const std::uint8_t*>(footprint.data()),footprint.size()})};
 }
+std::string World::movementObstacleFingerprint(std::span<const PathCell> removed,std::span<const PathCell> added) const {
+    // Reuse the exact ownership and hashing rules without changing the live navigation grid.
+    World comparison;
+    comparison.obstacles_=obstacles_;
+    comparison.obstacleOwners_=obstacleOwners_;
+    comparison.footprint(removed,false);
+    comparison.footprint(added,true);
+    return comparison.movementFingerprint().second;
+}
 Bytes World::encodePathingState() const {
     constexpr size_t budget=64*1024*1024+128;auto& terrain=data_.terrain;SnapshotWriter out(budget-64);out.u32(tag("SPTH"));out.u32(1);out.u32(terrain.width);out.u32(terrain.height);out.u32(std::bit_cast<std::uint32_t>(terrain.origin[0]));out.u32(std::bit_cast<std::uint32_t>(terrain.origin[1]));out.u32(data_.pathing?1:0);if(data_.pathing){auto& path=*data_.pathing;out.u32(path.width);out.u32(path.height);out.size(path.cells.size());if(path.cells.size()>budget-128)throw std::runtime_error("Pathing snapshot exceeds budget");Bytes cells=path.cells;for(auto& cell:cells)cell&=0xdfu;out.raw(cells);}return sealSnapshot(out.finish(),budget);
 }

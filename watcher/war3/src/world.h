@@ -73,6 +73,7 @@ class World {
     double permanentBound_=0;
     double deformationTime_=0;
     std::uint64_t deformationRevision_=1;
+    World()=default;
     void buildSurface();
     void bakeCrater(const TerrainDeformation& crater,float factor);
     struct ObstacleOwners {std::array<std::uint32_t,3> counts{};std::uint8_t fixed=0;std::uint32_t bridgeDecks=0;};
@@ -141,6 +142,7 @@ public:
     void restoreTerrainGridState(std::span<const std::uint8_t> bytes,std::string_view mapDigest);
     Bytes encodePathingState() const;
     std::pair<std::string,std::string> movementFingerprint() const;
+    std::string movementObstacleFingerprint(std::span<const PathCell> removed,std::span<const PathCell> added) const;
     void restorePathingState(std::span<const std::uint8_t> bytes);
     Bytes encodeTerrainState() const;
     void restoreTerrainState(std::span<const std::uint8_t> bytes);

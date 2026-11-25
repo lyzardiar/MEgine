@@ -18,5 +18,20 @@ void check(bool pathing){
     auto a=make(map(pathing)),b=make(map(pathing));auto left=rect(0,0,128,256),right=rect(128,0,256,256);a.blight(left,true);a.blight(right,true);b.blight(right,true);b.blight(left,true);require(a.blightFingerprint()==b.blightFingerprint(),"Overlapping additions depend on order");a.blight(rect(-200,-200,400,400),false);require(a.blightFingerprint()==clean.blightFingerprint(),"Boundary clear did not restore fingerprint");
     if(pathing){world.terrainPathable(point(16,16),5,false);auto changed=world.blightFingerprint();world.terrainPathable(point(16,16),5,false);require(world.blightFingerprint()==changed,"Repeated pathing write changed fingerprint");auto rebuilt=make(world.data());require(world.blightFingerprint()==rebuilt.blightFingerprint(),"Incremental pathing or corner fingerprint differs from fresh initialization");world.terrainPathable(point(16,16),5,true);require(world.blightFingerprint()==removed,"Clearing pathing bit did not restore fingerprint");}
 }
+void checkObstacleReplacement(){
+    auto current=make(map(true)),legacy=make(map(true));
+    const std::array<PathCell,1> shared{{{5,2}}};
+    const std::array<PathCell,2> corrected{{{5,2},{13,4}}},previous{{{6,2},{13,8}}};
+    for(auto world:{&current,&legacy}){
+        world->block(208,16);
+        world->footprint(shared,true);
+    }
+    current.footprint(corrected,true);
+    legacy.footprint(previous,true);
+    const auto fingerprint=current.movementFingerprint();
+    const auto pathing=current.pathingRevision(),blocking=current.blockingRevision();
+    require(current.movementObstacleFingerprint(corrected,previous)==legacy.movementFingerprint().second,"Legacy obstacle digest lost fixed or overlapping owners");
+    require(current.movementFingerprint()==fingerprint && current.pathingRevision()==pathing && current.blockingRevision()==blocking,"Legacy digest modified the world");
 }
-int main(){try{check(true);check(false);std::cout<<"PASS blight fingerprint initialization and mutation\n";return 0;}catch(const std::exception& e){std::cerr<<"FAIL "<<e.what()<<"\n";return 1;}}
+}
+int main(){try{check(true);check(false);checkObstacleReplacement();std::cout<<"PASS blight fingerprints and obstacle ownership replacement\n";return 0;}catch(const std::exception& e){std::cerr<<"FAIL "<<e.what()<<"\n";return 1;}}
