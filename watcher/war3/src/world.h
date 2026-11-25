@@ -17,7 +17,7 @@ struct WorldRect {jass::Real minX,minY,maxX,maxY;};
 enum class TerrainDeformationKind {Ripple,Crater,Wave,Random};
 struct TerrainDeformation {std::uint32_t handle=0;TerrainDeformationKind kind=TerrainDeformationKind::Ripple;float x=0,y=0,radius=0,depth=0,spaceWaves=0,timeWaves=0,startRadius=0,dirX=0,dirY=0,distance=0,randomMin=0,randomMax=0;double started=0,duration=0,stopStarted=0,stopDuration=0,travelTime=0,trailTime=0,updateInterval=0,nextUpdate=0;int count=1,sampleLeft=0,sampleBottom=0,sampleWidth=0,sampleHeight=0;bool limitNegative=false,stopping=false,persistent=false,permanent=false;std::vector<float> samples;};
 struct DeformationSnapshot {std::vector<TerrainDeformation> active;std::vector<float> permanent;std::vector<std::uint8_t> chunks;double bound=0,time=0;};
-struct PathCell {size_t index=0;std::uint8_t mask=0;};
+struct PathCell {size_t index=0;std::uint8_t mask=0;bool bridgeDeck=false;};
 struct CliffCell {size_t index=0;int level=0;};
 struct DoodadAnimation {std::uint32_t type=0;std::string animation;WorldRect rectangle{};float x=0,y=0,radius=0;double started=0;bool circular=false,nearest=false,random=false;};
 struct CameraScalar {
@@ -75,8 +75,10 @@ class World {
     std::uint64_t deformationRevision_=1;
     void buildSurface();
     void bakeCrater(const TerrainDeformation& crater,float factor);
-    struct ObstacleOwners {std::array<std::uint32_t,3> counts{};std::uint8_t fixed=0;};
+    struct ObstacleOwners {std::array<std::uint32_t,3> counts{};std::uint8_t fixed=0;std::uint32_t bridgeDecks=0;};
     std::unordered_map<size_t,ObstacleOwners> obstacleOwners_;
+    std::vector<bool> bridgeGround_;
+    unsigned obstacleMask(size_t index,bool ground,std::span<const PathCell> ignored={}) const;
     struct FailedRoute {std::uint64_t revision=0;int sx=0,sy=0,gx=0,gy=0;std::uint32_t radius=0;PathMovement movement=PathMovement::Ground;bool partial=false;};
     mutable std::array<FailedRoute,512> failedRoutes_{};
     struct CachedRoute {FailedRoute key;std::uint8_t count=0;bool reachedGoal=false;std::array<WorldPoint,16> points{};};
