@@ -1,12 +1,13 @@
 // Author: MiYu. Ground changes update affected minimap pixels without replacing original map artwork.
 #include "minimap_terrain.h"
+#include "ground_texture.h"
 #include <algorithm>
 
 namespace war3 {
 namespace {
-std::vector<const Image*> terrainTextures(const World& world,SceneAssets& assets) {std::vector<const Image*> textures;for(unsigned i=0;i<world.terrainTypes().size();++i)textures.push_back(&assets.image(world.terrainTexture(i)));return textures;}
+std::vector<const Image*> terrainTextures(const World& world,SceneAssets& assets) {std::vector<const Image*> textures;for(unsigned i=0;i<world.terrainTypes().size();++i){auto& image=assets.image(world.terrainTexture(i));if(!validGroundTexture(image))throw std::runtime_error("Invalid minimap ground texture dimensions");textures.push_back(&image);}return textures;}
 std::uint32_t terrainPixel(const World& world,const std::vector<const Image*>& textures,float gx,float gy,unsigned tx,unsigned ty) {
-    auto& terrain=world.data().terrain;auto& corner=terrain.corners[size_t(ty)*terrain.width+tx];unsigned slot=world.terrainSlot(size_t(ty)*terrain.width+tx);if(slot>=textures.size())slot=0;auto& source=*textures[slot];unsigned variation=corner.variation&31,tile=source.width==512 && variation<16?16+variation:variation==16 || (source.width!=512 && variation)?15:0;unsigned sx=(tile<16?tile%4:4+(tile-16)%4)*64+std::min(63u,unsigned((gx-tx)*64)),sy=(tile<16?tile/4:(tile-16)/4)*64+std::min(63u,unsigned((1-(gy-ty))*64));auto color=source.pixels[size_t(sy)*source.width+sx]|0xff000000u;if(corner.flags&0x40){unsigned r=((color>>16)&255),g=((color>>8)&255),b=color&255;color=0xff000000u|(((r+49)/2)<<16)|(((g+88)/2)<<8)|((b+112)/2);}return color;
+    auto& terrain=world.data().terrain;auto& corner=terrain.corners[size_t(ty)*terrain.width+tx];unsigned slot=world.terrainSlot(size_t(ty)*terrain.width+tx);if(slot>=textures.size())slot=0;auto& source=*textures[slot];unsigned tile=groundBaseTile(source,corner.variation&31),sx=std::min(63u,unsigned((gx-tx)*64)),sy=std::min(63u,unsigned((1-(gy-ty))*64));auto color=groundTilePixel(source,tile,sx,sy)|0xff000000u;if(corner.flags&0x40){unsigned r=((color>>16)&255),g=((color>>8)&255),b=color&255;color=0xff000000u|(((r+49)/2)<<16)|(((g+88)/2)<<8)|((b+112)/2);}return color;
 }
 }
 Image renderTerrainMinimap(const World& world,SceneAssets& assets,unsigned width,unsigned height) {

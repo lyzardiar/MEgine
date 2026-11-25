@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 原版低分辨率地表图集（功能批次 2/3）
+
+路径为 `src/ground_texture.h`、`src/terrain_scene.cpp`、`src/terrain_blight.cpp` 和 `src/minimap_terrain.cpp`。地表首帧、动态地表和小地图采用同一采样。原版 Outland 的 `Oaby` 来自 `War3x.mpq/TerrainArt/Outland/Outland_Abyss.blp`，64×64，16 个 16×16 源块的透明掩码排列与其他 4×4 地表图集相同。采样保留掩码和变体索引，合成输出维持 64×64。两种原有图集的采样公式与像素一致。
+
+Win32 Release 产品编译通过。快验 4 通过／0 失败，比较 65,536 个低分辨率 RGBA 样本、196,608 个原尺寸图集样本、96 个变体及 8 组非法尺寸。入口和日志见 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/interlude-atlas-qa/run.cmd`、`probe.log`。源 BLP 头记录在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/cliff-fix/ground-atlas-assets/cliff-source.log`。正式 D3D9 由原 HumanX03 胜利确认及计分进入间章，间章和 HumanX04 均呈现首帧。日志在 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/atlas-fix/run-2e1d868a5950482083a88ae6e884f4a3/frontend.log`。待批次覆盖源地表改变后的动态重建及小地图更新。
+
 ## 缺省崖面纹理引用未定义槽（功能批次 1/3）
 
 路径为 `src/terrain_layout.cpp`。W3E 悬崖纹理值 15 的缺省槽若没有可用定义，从同一格四角取唯一明确且有资源的悬崖槽。缺省槽可用时沿用现有取法。显式槽按原定义检查。
@@ -75,6 +81,8 @@ Win32 Release 客户端、可破坏物和移动测试目标构建通过。自有
 从狱卒倒地后的原 v4 中，正式后台客户端以普通战斗击败两名南侧火枪手。在两个英雄连续 28.5 个模拟秒未被锁定后，于 1,393.59375 秒 F6 写出南侧恢复档。两位英雄分别恢复到 260.30、208.37 生命，原弓手存活。输出为 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/post-jailor-rifles/checkpoint-rifles-cleared/QuickSave.w3z`，SHA-256 为 `e634b9f04c9259a81d794d0740c02d83629d6c7c45d95f9c6e7b2ebc05d5ad7d`。
 
 无渲染试跑从此档恢复，使用正式核心和正常玩家命令，轮换双英雄前位。模拟 1,965.09 秒原胜利组 16 名全部阵亡，原图胜利触发器执行一次，`GameOver` 置位，胜利过场入队。使用与产品快速模拟一致的音频模拟时钟，原图于 1,984.56 秒记入胜利，进程退出 0。入口和日志在 `tmp/docs-artifacts/war3/p2-humanx03/post-jailor-fast/sweep-audio.cmd`、`audio-15.log`。正式 D3D9 前端读回守卫刚清零的快照，实际播放两段对白，走完胜利确认与计分。原构建切入间章时因悬崖槽缺定义退出 1，见 `final-battle-agent/all-gone-frontend/run-ceb6f7fe85274bb7bcf2a58554835168/frontend.log`。原快照、缓存及九项安装资源摘要一致。
+
+含原破法者的另一分支清掉三名南侧追击枪手，在 1,170.75 秒以正式 F6 保存南侧站位。独立进程读回通过，凯尔、瓦丝琪、破法者分别余 394.91、341.16、137.62 生命，一名牧师存活，四副官进度保留，狱卒仍敌对且余 6,000 生命。续战档见 `tmp/docs-artifacts/war3/rotate-destructable-pathing-089be5a/escort-range-cover/run-6ae6c602357e4d569f56623ae1b8992b/user/Saves/Quick/QuickSave.w3z`，SHA-256 为 `ae1de40d32ed0f2a1edf091389718b9c4980a671c1cf42d28865a1366cf9cf01`。回读日志在同一任务根目录的 `escort-range-readback/run-49da60f386314b9cba39c5563ef93a88/frontend.log`。
 
 ## HumanX03 南侧补兵与城门占地（专项验收）
 
