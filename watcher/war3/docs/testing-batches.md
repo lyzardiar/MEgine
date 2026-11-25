@@ -8,6 +8,10 @@ Win32 Release 客户端、可破坏物和移动测试目标构建通过。自有
 
 复现入口与日志位于 `tmp/docs-artifacts/war3/walkable-bridge-routing/`。先执行 `python generate.py` 和 `build.cmd`，再执行 `probe.exe data . live` 与 `probe.exe data . snapshot`，旧存档由修复前构建的 `old.exe data . export-old` 生成。原图只读验证使用 `build-actual.cmd` 和 `run-actual.cmd`。批次待测不同桥型、旋转、正式客户端操作下的第三章后续流程，以及桥上桥下和水面的场景交互。
 
+正式 D3D9 前端补验使用 `9614951` 的同一构建和上一章胜利缓存副本。凯尔和瓦丝琪分别通过普通玩家移动命令，于模拟 294.25 秒经过生命 2,500 的活桥占地格 29858，于 300.25 秒到达中央开关攻击位 `(-1456,-2320)`。到达时生命分别为 628.7 和 561.8。两轮呈现 1,251 和 1,250 帧，均退出 0，胜利缓存和九项安装资源摘要一致。过桥专项 2 通过／0 失败。本轮为同一功能的验收补充。
+
+入口为 `tmp/docs-artifacts/war3/p2-humanx03/walkable-bridge-9614951/build.cmd`，随后运行 `node run.mjs kael` 或 `node run.mjs vashj`。回执分别位于 `run-a3b4c6b10ae84e1e8d6b4ae447148f41`、`run-0399c20b2a164da38fc30477f92947a6`。同版侦察轮的牧师在 306.25 秒摧毁开关，两扇兽笼门随事件开启，去 Alarm02 的普通指令取得完整五点路径，牧师在到达前阵亡。侦察日志见同目录 `run-155d86babcfc4fdc817c584d0fc34831/frontend.log`。队伍会合后进入 Alarm02、后两名副官和整章胜利仍待验。
+
 ## AI 回撤到被建筑占据的默认基地（功能批次 1/3）
 
 路径为 `src/session_ai.cpp`。AI 管理的地面回撤命令长期停在默认归队范围外，且己方城镇建筑占据默认归队点时，以受当前地形约束的实际路线入口计算剩余距离。入口贴近该建筑，剩余路径在 350 以内才计入归队。当前回撤命令的修订号、有效路线、队伍健康及运输状态参与判断。
