@@ -74,6 +74,9 @@ class GameView {
     RecentPingHistory recentPingHistory_;
     std::uint64_t last_=0;
     std::unique_ptr<LanSimulation> lanSimulation_;
+    std::optional<SoloReplayPlayer> soloReplay_;
+    bool soloReplayOffered_=false;
+    void prepareSoloReplaySave();
     std::function<unsigned(const PlayerCommand&)> lanSubmit_;
     LanWireObjectResolver lanWireObject_;
     std::function<bool(std::span<const std::uint8_t>)> lanSendSelection_;
@@ -310,6 +313,9 @@ public:
     // the owner consumes complete slots on this thread and must not submit selection separately.
     bool enableLan(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wireObject,std::function<bool(std::span<const std::uint8_t>)> sendSelection,std::function<unsigned(const PlayerCommand&)> submit,bool experimental=false);
     bool enableReplay(std::uint8_t peer,LanSimulation::ObjectResolver resolve);
+    void enableSoloReplay();
+    std::optional<std::string> consumeSoloReplaySlot(const LanTimeSlot& slot);
+    bool soloReplayFinished() const {return soloReplay_ && soloReplay_->finished();}
     void scoreReplaySaver(std::function<std::pair<bool,std::string>(const std::wstring&)> saver);
     std::optional<LanStepResult> consumeLanSlot(std::uint64_t sequence,const LanTimeSlot& slot);
     bool consumeReplayDeparture(std::uint8_t peer);

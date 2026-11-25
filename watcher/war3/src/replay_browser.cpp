@@ -1,6 +1,7 @@
 // Author: MiYu. Replay file browsing and bounded asynchronous W3G metadata loading.
 #include "replay_browser.h"
 #include "replay_experimental.h"
+#include "replay_solo.h"
 #include <bcrypt.h>
 #include <algorithm>
 #include <array>
@@ -80,7 +81,7 @@ void ReplayBrowser::prepared(){std::optional<Result> result;{std::lock_guard loc
     screen_.setText("NumPlayersValue",std::to_string(playerCount));
 }
 void ReplayBrowser::removeSelected(){
-    if(selected_>=entries_.size() || entries_[selected_].directory || deleting_)return;if(!selectedReplay_ || loading_ || selectedDigest_.empty()){confirmDelete_=false;error_="回放尚未读取完成或无法读取，不能确定关联地图。";return;}auto path=selectedPath_;auto digest=experimentalLanReplayMapDigest(selectedReplay_->game()).value_or("");auto replayDigest=selectedDigest_;playbackNotice_.reset();clearSelection();{std::lock_guard lock(mutex_);request_=++generation_;pending_=Request{Operation::Remove,request_,std::move(path),std::move(replayDigest),std::move(digest),{}};deleting_=true;}error_.clear();wake_.notify_one();
+    if(selected_>=entries_.size() || entries_[selected_].directory || deleting_)return;if(!selectedReplay_ || loading_ || selectedDigest_.empty()){confirmDelete_=false;error_="回放尚未读取完成或无法读取，不能确定关联地图。";return;}auto path=selectedPath_;auto digest=selectedReplay_->header().product==soloReplayProduct?std::string{}:experimentalLanReplayMapDigest(selectedReplay_->game()).value_or("");auto replayDigest=selectedDigest_;playbackNotice_.reset();clearSelection();{std::lock_guard lock(mutex_);request_=++generation_;pending_=Request{Operation::Remove,request_,std::move(path),std::move(replayDigest),std::move(digest),{}};deleting_=true;}error_.clear();wake_.notify_one();
 }
 std::optional<ReplaySelection> ReplayBrowser::takeSelection(){if(!selectedReplay_ || selectedPath_.empty() || loading_)return {};ReplaySelection result{selectedPath_,std::move(selectedReplay_)};selectedPath_.clear();reloadSelection_=true;playbackNotice_.reset();return result;}
 void ReplayBrowser::setPlaybackNotice(std::string message){
@@ -97,6 +98,6 @@ std::string ReplayBrowser::draw(const UiInput& input){
     auto pane=screen_.bounds("MapInfoPaneContainer");if(selectedReplay_){auto& info=selectedReplay_->game();screen_.textAt("StandardInfoTextTemplate",info.name,{pane.x,pane.y,pane.w,.024f},true,false,true,.013f);screen_.textAt("StandardValueTextTemplate",info.mapPath,{pane.x,pane.y+.03f,pane.w,.045f},true,false,true,.011f);screen_.textAt("StandardValueTextTemplate",info.hostName,{pane.x,pane.y+.08f,pane.w,.025f},true,false,true,.011f);screen_.textAt("StandardValueTextTemplate",duration(selectedReplay_->header().durationMs),{pane.x,pane.y+.11f,pane.w,.025f},true,false,true,.011f);}else screen_.setText("NumPlayersValue","");if(deleting_)screen_.textAt("StandardValueTextTemplate","正在删除回放并检查关联地图…",{pane.x,pane.y,pane.w,.04f},true,false,true,.011f);else if(loading_)screen_.textAt("StandardValueTextTemplate","正在读取回放…",{pane.x,pane.y,pane.w,.04f},true,false,true,.011f);else if(!error_.empty())screen_.textAt("StandardValueTextTemplate",error_,{pane.x,pane.y,pane.w,.05f},true,false,true,.011f);screen_.textAt("StandardSmallTextTemplate","Delete：删除所选回放",{list.x,list.y+list.h+.004f,list.w,.016f},true,false,true,.01f);screen_.overlay();
     if(deleting_)return {};
     if(confirmDelete_){auto box=GlueScreen::Rect{.18f,.205f,.44f,.15f},yes=GlueScreen::Rect{.22f,.29f,.14f,.03f},no=GlueScreen::Rect{.44f,.29f,.14f,.03f};renderer_.rect(0,0,float(renderer_.width()),float(renderer_.height()),0x99000000);screen_.backdropAt("StandardEditBoxBackdropTemplate",box);screen_.textAt("StandardInfoTextTemplate","删除所选回放？",{box.x+.02f,box.y+.02f,box.w-.04f,.03f},true,false,true,.013f);if(selected_<entries_.size())screen_.textAt("StandardSmallTextTemplate",utf8(entries_[selected_].path.filename().wstring()),{box.x+.02f,box.y+.055f,box.w-.04f,.025f},true,false,true,.01f);screen_.backdropAt("StandardMenuButtonBaseBackdrop",yes);screen_.backdropAt("StandardMenuButtonBaseBackdrop",no);screen_.textAt("StandardInfoTextTemplate","删除",yes,true,false,false,.012f);screen_.textAt("StandardInfoTextTemplate","取消",no,true,false,false,.012f);if(input.key==VK_ESCAPE || input.key=='N' || click(no,input))confirmDelete_=false;else if(input.key==VK_RETURN || input.key=='Y' || click(yes,input))removeSelected();return {};}
-    if(action=="CancelButton" || (input.key==VK_ESCAPE && !screen_.inputConsumed())){if(loading_){clearSelection();reloadSelection_=true;}playbackNotice_.reset();pendingPlay_=false;return "CancelButton";}if((action=="OKButton" || pendingPlay_) && selectedReplay_){pendingPlay_=false;return "PlayReplay";}return {};
+    if(action=="CancelButton" || (input.key==VK_ESCAPE && !screen_.inputConsumed())){if(loading_)clearSelection();reloadSelection_=true;playbackNotice_.reset();pendingPlay_=false;return "CancelButton";}if((action=="OKButton" || pendingPlay_) && selectedReplay_){pendingPlay_=false;return "PlayReplay";}return {};
 }
 }

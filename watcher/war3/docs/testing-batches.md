@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 单人遭遇战结算保存和回放（定向验证）
+
+`src/replay_solo*`、`src/replay_preparation.*`、`src/map_preparation.*`、`src/game_loading.*`、`src/main.cpp`、`src/game_view.*`、`src/game_commands.cpp`、`src/game_flow_ui.cpp`、`src/replay_browser.cpp` 接入同构建普通 JASS 单机录像。地图和基础归档摘要校验依赖 `src/archive.*`。录像与 LAN 共用防覆盖发布，见 `src/replay_experimental.*`。支持范围见 [单人遭遇战录像](replay-experimental.md#单人遭遇战录像)。
+
+Win32 Release 的 `war3` 和 `war3_replay_step_tests` 构建通过。运行 `war3_replay_step_tests.exe`，9 项通过，覆盖回放时片、单机命令编解码、损坏输入及 JASS 可达调用审查。
+
+私有桌面 D3D9Ex 用原创 EastGateDrill 从正式单人菜单开局，选中英雄后右键东移，自然胜利。计分界面中文命名时，同名文件的摘要和修改时间保持一致，改名后保存成功。之前打开过的列表在同一进程重开即显示新录像；独立进程也从正式列表播放该文件。英雄终局横坐标均为 1410.33374，模拟时刻均为 1.75 秒，胜利记录和结算摘要通过。两进程退出 0，录像摘要保持一致。同构建 LAN 格式夹具从正式列表实际播放，退出后无需重新选择即可再次播放。
+
+证据位于 `tmp/docs-artifacts/war3/solo-replay-v1/run-1e720f8d0a/receipt.json`、`tmp/docs-artifacts/war3/solo-replay-v1/build-delivery.log` 和 `tmp/docs-artifacts/war3/replay-return-selection-v1/fixed-a0225690e9f1/receipt.json`。单机命令为 `python -B tmp/docs-artifacts/war3/solo-replay-v1/verify.py --executable <同构建程序> --check-same-process-list --check-name-collision`。多席位战斗和长录像仍待批次验证，LAN 实录发布和双端连接未纳入本轮定向检查。
+
 ## 手动存档目录异常时保留快速存档（定向验证）
 
 `src/saved_game_browser.cpp` 和 `src/game_flow_ui.cpp` 在验证用户存档根目录后，独立检查快存。手动目录无法读取时，列表保留有效快存，并提示「无法读取手动存档。」。主菜单和对局内载入均可使用该快存。

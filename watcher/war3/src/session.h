@@ -1472,7 +1472,7 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildFogState(std::span<const std::uint8_t> bytes);
     Bytes encodeRecoveryBundle() const;
     void saveRecoveryCheckpoint(const std::string& name,bool overwrite=true) const;
-    void saveLocalGame(const std::string& name,bool overwrite=false);
+    void saveLocalGame(const std::string& name,bool overwrite=false,const std::function<void()>& onPublished={});
     std::string takeScriptSaveError();
     void requestLocalLoad(const std::string& name);
     static RecoveryCheckpointInfo inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,std::stop_token stop={});

@@ -3,6 +3,7 @@
 #include "lan_mapcheck.h"
 #include "map_preparation.h"
 #include "replay.h"
+#include "replay_solo.h"
 #include <memory>
 #include <optional>
 #include <string>
@@ -29,6 +30,7 @@ class ReplayPreparation {
     bool sidecarAttempted_=false;
     std::uint8_t perspectivePeer_=0;
     std::optional<unsigned> gameVersion_;
+    std::optional<SoloReplaySetup> solo_;
     std::string error_;
     enum class Phase {Checking,Preparing,Ready,Failed,Transferred} phase_=Phase::Checking;
     std::unique_ptr<ScriptSession> prepared_;

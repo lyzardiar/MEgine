@@ -33,8 +33,8 @@ Archive::Archive(std::shared_ptr<const Bytes> bytes,std::string_view label) {
     auto source=L"map://"+name;if(!SFileOpenArchive(source.c_str(),0,MPQ_OPEN_READ_ONLY,&handle_))throw std::runtime_error("Cannot mount in-memory map "+std::string(label)+": "+winError());
 }
 Archive::~Archive() { if (handle_) SFileCloseArchive(handle_); }
-std::string Archive::digest() const {
-    if(!memoryDigest_.empty())return memoryDigest_;if(!identity_)throw std::runtime_error("Mounted map identity unavailable");auto handle=CreateFileW(identityPath_.c_str(),FILE_READ_ATTRIBUTES,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);if(handle==INVALID_HANDLE_VALUE)throw std::runtime_error("Cannot lock mounted map for identity");struct Close {HANDLE value;~Close(){CloseHandle(value);}}close{handle};BY_HANDLE_FILE_INFORMATION before{},after{};if(!GetFileInformationByHandle(handle,&before) || !sameArchiveFile(*identity_,before))throw std::runtime_error("Mounted map changed since opening");auto result=sha256(identityPath_);if(!GetFileInformationByHandle(handle,&after) || !sameArchiveFile(before,after))throw std::runtime_error("Mounted map changed during identity check");return result;
+std::string Archive::digest(std::stop_token stop) const {
+    if(!memoryDigest_.empty())return memoryDigest_;if(!identity_)throw std::runtime_error("Mounted map identity unavailable");auto handle=CreateFileW(identityPath_.c_str(),FILE_READ_ATTRIBUTES,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);if(handle==INVALID_HANDLE_VALUE)throw std::runtime_error("Cannot lock mounted map for identity");struct Close {HANDLE value;~Close(){CloseHandle(value);}}close{handle};BY_HANDLE_FILE_INFORMATION before{},after{};if(!GetFileInformationByHandle(handle,&before) || !sameArchiveFile(*identity_,before))throw std::runtime_error("Mounted map changed since opening");auto result=sha256(identityPath_,stop);if(!GetFileInformationByHandle(handle,&after) || !sameArchiveFile(before,after))throw std::runtime_error("Mounted map changed during identity check");return result;
 }
 std::optional<Bytes> Archive::read(const std::string& name) const {
     HANDLE handle = nullptr;
@@ -123,6 +123,11 @@ void Archives::record(const std::shared_ptr<const Member>& member) {
 const fs::path& Archives::root() const {return common_->root;}
 fs::path Archives::mapPath() const {return map_?map_->archives.front()->path():fs::path{};}
 std::string Archives::mapDigest() const {if(!map_)throw std::runtime_error("Mounted map identity unavailable");std::lock_guard lock(map_->mutex);return map_->archives.front()->digest();}
+std::string Archives::commonDigest(std::stop_token stop) const {
+    std::string content;
+    for(const auto& archive:common_->archives)content+=utf8(archive->path().filename().wstring())+":"+archive->digest(stop)+"\n";
+    return sha256({reinterpret_cast<const std::uint8_t*>(content.data()),content.size()});
+}
 size_t Archives::commonCount() const {return common_->archives.size();}
 size_t Archives::cachedBytes() const {if(map_){std::scoped_lock lock(common_->mutex,map_->mutex);return common_->bytes+map_->bytes;}std::lock_guard lock(common_->mutex);return common_->bytes;}
 void Archives::mountMap(const fs::path& path) {

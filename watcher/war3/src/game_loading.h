@@ -5,6 +5,7 @@
 #include "scene_objects.h"
 #include "minimap_terrain.h"
 #include "map_script_runtime.h"
+#include "replay_solo.h"
 
 namespace war3 {
 struct ConsolePiece {float x,y,w,h,u0,v0,u1,v1;std::string image;};
@@ -12,6 +13,7 @@ struct GameCommand {std::string icon,hotkey,name,tip;unsigned x=0,y=0;};
 struct GameData {
     std::unique_ptr<ScriptSession> session;
     std::unique_ptr<MapScriptRuntime> mapScript;
+    std::unique_ptr<SoloReplayRecorder> soloRecorder;
     std::unique_ptr<SceneAssets> assets;
     std::unique_ptr<TerrainScene> terrain;
     std::unique_ptr<SceneObjects> objects;
@@ -47,7 +49,7 @@ struct GameData {
 };
 struct GameLoadResult {std::uint64_t request=0;std::unique_ptr<GameData> data;std::string error;bool checkpointChanged=false;};
 class GameLoading {
-    struct Request {std::uint64_t id;std::unique_ptr<ScriptSession> session;std::string checkpoint,checkpointDigest;};
+    struct Request {std::uint64_t id;std::unique_ptr<ScriptSession> session;std::string checkpoint,checkpointDigest;SoloReplayMode soloReplay;};
     Log& log_;
     std::atomic<std::uint64_t> generation_=0;
     std::atomic<unsigned> phase_=0;
@@ -60,7 +62,7 @@ class GameLoading {
 public:
     explicit GameLoading(Log& log);
     ~GameLoading();
-    std::uint64_t request(std::unique_ptr<ScriptSession> session,std::string checkpoint={},std::string checkpointDigest={});
+    std::uint64_t request(std::unique_ptr<ScriptSession> session,std::string checkpoint={},std::string checkpointDigest={},SoloReplayMode soloReplay=SoloReplayMode::None);
     void cancel();
     std::optional<GameLoadResult> poll();
     unsigned phase() const {return phase_.load();}

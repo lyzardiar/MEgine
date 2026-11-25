@@ -1,6 +1,8 @@
 // Author: MiYu. CPU regression checks for stepping complete replay time slots while paused.
 #include "replay_runtime.h"
 #include "replay_writer.h"
+#include "replay_solo.h"
+#include "jass_module.h"
 #include <array>
 #include <iostream>
 #include <stdexcept>
@@ -229,6 +231,129 @@ void failsAtTheRejectedRecord(){
     tailReplay.tick(start);
     require(tailReplay.state()==ReplayRuntimeState::Failed && tailReplay.elapsedMs()==20 && tailFailure.slots.size()==1 && tailFailure.chatSenders.size()==1 && tailReplay.error().find("chat veto")!=std::string::npos,"Final step lost the accepted slot or hid a trailing metadata failure");
 }
+
+template<class Function>
+void soloRejects(Function&& function,std::string_view message){
+    try{function();}
+    catch(const std::exception& error){
+        require(std::string_view(error.what()).find(message)!=std::string_view::npos,"Solo replay rejected for an unexpected reason");
+        return;
+    }
+    throw std::runtime_error("Solo replay accepted invalid input");
+}
+
+void soloCommandsRoundTrip(){
+    PlayerCommand original;
+    original.player=2;original.kind=PlayerCommandKind::TargetOrder;original.units={4,8,15};
+    original.xBits=0x41480000;original.yBits=0xc0400000;original.target=23;original.order=851971;original.ability=42;
+    original.stopOnSuccess=true;original.objectType=63;original.queueIndex=7;original.item=255;
+    original.otherPlayer=3;original.allianceOption=5;original.gold=-17;original.lumber=100;original.enabled=true;
+    original.text="cursor context";original.queued=true;original.hasFormationDestination=true;
+    original.formationXBits=0x40000000;original.formationYBits=0x40800000;
+    original.shop=57;original.hasTargetPoint=true;original.formationGroup=0x100000005ull;
+    auto bytes=encodeSoloCommand(original);
+    auto decoded=decodeSoloCommand(bytes);
+    require(decoded.player==original.player && decoded.kind==original.kind && decoded.units==original.units,"Solo replay lost command identity or selection");
+    require(decoded.xBits==original.xBits && decoded.yBits==original.yBits && decoded.target==original.target && decoded.order==original.order && decoded.ability==original.ability && decoded.hasTargetPoint,"Solo replay lost target data");
+    require(decoded.stopOnSuccess && decoded.objectType==original.objectType && decoded.queueIndex==original.queueIndex && decoded.item==original.item && decoded.shop==original.shop,"Solo replay lost command options");
+    require(decoded.otherPlayer==original.otherPlayer && decoded.allianceOption==original.allianceOption && decoded.gold==-17 && decoded.lumber==100 && decoded.enabled && decoded.text==original.text,"Solo replay lost auxiliary command data");
+    require(decoded.queued && decoded.hasFormationDestination && decoded.formationXBits==original.formationXBits && decoded.formationYBits==original.formationYBits && decoded.formationMovement && decoded.formationGroup==original.formationGroup,"Solo replay lost queued formation data");
+    require(encodeSoloCommand(decoded)==bytes,"Solo replay command encoding is not stable");
+
+    PlayerCommand chatCommand;
+    chatCommand.player=8;chatCommand.kind=PlayerCommandKind::Chat;
+    chatCommand.text="hello \xe4\xb8\x96\xe7\x95\x8c";chatCommand.chatRecipient=0;
+    auto message=decodeSoloCommand(encodeSoloCommand(chatCommand));
+    require(message.kind==PlayerCommandKind::Chat && message.player==8 && message.text==chatCommand.text && message.chatChannel==ChatChannel::All && message.chatRecipient==std::optional<unsigned>{0},"Solo replay lost UTF-8 private chat");
+    chatCommand.chatRecipient.reset();chatCommand.chatChannel=ChatChannel::Observers;
+    message=decodeSoloCommand(encodeSoloCommand(chatCommand));
+    require(message.chatChannel==ChatChannel::Observers && !message.chatRecipient,"Solo replay lost observer chat audience");
+}
+
+void soloCommandsRejectCorruption(){
+    PlayerCommand command;
+    auto bytes=encodeSoloCommand(command);
+    auto patched=[&](std::size_t field,std::uint32_t value){
+        auto copy=bytes;
+        for(unsigned i=0;i<4;++i)copy.at(field+i)=std::uint8_t(value>>(8*i));
+        return copy;
+    };
+    auto shortBytes=bytes;shortBytes.pop_back();
+    auto longBytes=bytes;longBytes.push_back(0);
+    soloRejects([&]{decodeSoloCommand(shortBytes);},"command length");
+    soloRejects([&]{decodeSoloCommand(longBytes);},"Unconsumed binary record");
+    // Fixed v1 fields before the unit array are player, kind and unit count.
+    soloRejects([&]{decodeSoloCommand(patched(4,0xffffffffu));},"command kind");
+    soloRejects([&]{decodeSoloCommand(patched(8,16001));},"Binary array exceeds bounds");
+    soloRejects([&]{decodeSoloCommand(patched(8,1));},"command unit count");
+    // With no units, the first coordinate follows the count and the flag follows five fields.
+    soloRejects([&]{decodeSoloCommand(patched(12,0x7f800000u));},"command coordinate");
+    soloRejects([&]{decodeSoloCommand(patched(32,2));},"command flag");
+    command.kind=PlayerCommandKind::SetGameSpeed;command.objectType=5;
+    soloRejects([&]{encodeSoloCommand(command);},"game speed");
+    command.kind=PlayerCommandKind::Chat;command.text="\xc0\xaf";
+    soloRejects([&]{encodeSoloCommand(command);},"chat text");
+}
+
+void soloScriptAuditTracksReachableFunctions(){
+    auto compile=[](std::string script){
+        return jass::Module::compile(jass::Program::parse({{"solo-replay.j",std::move(script),"authored replay CPU fixture"}}));
+    };
+    auto allowed=compile(R"jass(
+native ExecuteFunc takes string name returns nothing
+native GetRandomInt takes integer low, integer high returns integer
+native GetCameraTargetPositionX takes nothing returns real
+native QueueCallback takes code handler returns nothing
+function unreachable takes nothing returns nothing
+    local real x = GetCameraTargetPositionX()
+endfunction
+function callback takes nothing returns nothing
+    local integer roll = GetRandomInt(1, 2)
+endfunction
+function safe takes nothing returns nothing
+    call QueueCallback(function callback)
+endfunction
+function config takes nothing returns nothing
+endfunction
+function main takes nothing returns nothing
+    call ExecuteFunc("safe")
+endfunction
+)jass");
+    validateSoloReplayScript(allowed);
+
+    auto unsafeCallback=compile(R"jass(
+native ExecuteFunc takes string name returns nothing
+native GetCameraTargetPositionX takes nothing returns real
+native QueueCallback takes code handler returns nothing
+function cameraCallback takes nothing returns nothing
+    local real x = GetCameraTargetPositionX()
+endfunction
+function indirect takes nothing returns nothing
+    if true then
+        call QueueCallback(function cameraCallback)
+    endif
+endfunction
+function config takes nothing returns nothing
+    call ExecuteFunc("indirect")
+endfunction
+function main takes nothing returns nothing
+endfunction
+)jass");
+    soloRejects([&]{validateSoloReplayScript(unsafeCallback);},"GetCameraTargetPositionX");
+
+    auto dynamicTarget=compile(R"jass(
+native ExecuteFunc takes string name returns nothing
+globals
+    string callbackName = "safe"
+endglobals
+function safe takes nothing returns nothing
+endfunction
+function main takes nothing returns nothing
+    call ExecuteFunc(callbackName)
+endfunction
+)jass");
+    soloRejects([&]{validateSoloReplayScript(dynamicTarget);},"ExecuteFunc");
+}
 }
 
 int main(){
@@ -239,6 +364,9 @@ int main(){
         resumesWithThePlaybackClock();
         stopsWithAQueuedStep();
         failsAtTheRejectedRecord();
+        soloCommandsRoundTrip();
+        soloCommandsRejectCorruption();
+        soloScriptAuditTracksReachableFunctions();
         std::cout<<"Replay step tests passed\n";
         return 0;
     }catch(const std::exception& error){

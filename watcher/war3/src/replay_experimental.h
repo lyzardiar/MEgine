@@ -12,6 +12,7 @@ class LanHost;
 class LanJoin;
 class LanRuntime;
 class ScriptSession;
+std::filesystem::path publishNamedReplay(const std::filesystem::path& root,const std::wstring& name,std::span<const std::uint8_t> bytes);
 
 // The title marker is a compatibility discriminator, not an authenticated signature.
 std::optional<std::string> experimentalLanReplayDigest(const ReplayGame& game);
