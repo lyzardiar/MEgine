@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <optional>
 #include <span>
+#include <stop_token>
 #include <string>
 #include <vector>
 
@@ -27,6 +28,7 @@ class Replay {
     std::vector<ReplayRecord> records_;
 public:
     static Replay read(std::span<const std::uint8_t> bytes);
+    static Replay read(std::span<const std::uint8_t> bytes,std::stop_token stop);
     static Replay read(const std::filesystem::path& path);
     const ReplayHeader& header() const {return header_;}
     const ReplayGame& game() const {return game_;}

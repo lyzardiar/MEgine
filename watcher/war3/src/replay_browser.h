@@ -12,7 +12,7 @@ struct ReplaySelection {fs::path path;std::shared_ptr<const Replay> replay;};
 class ReplayBrowser {
     struct Entry {fs::path path;bool directory=false;};
     enum class Operation {Read,Remove};
-    struct Request {Operation operation=Operation::Read;std::uint64_t request=0;fs::path path;std::string replayDigest,mapDigest;};
+    struct Request {Operation operation=Operation::Read;std::uint64_t request=0;fs::path path;std::string replayDigest,mapDigest;std::stop_token readStop;};
     struct Result {Operation operation=Operation::Read;std::uint64_t request=0;fs::path path;std::shared_ptr<const Replay> replay;std::string replayDigest,error;bool deleted=false,mapCleaned=true;};
     GlueScreen screen_;
     Renderer& renderer_;
@@ -24,13 +24,14 @@ class ReplayBrowser {
     std::string error_;
     std::shared_ptr<const Replay> selectedReplay_;
     fs::path selectedPath_;
-    bool loading_=false,confirmDelete_=false,deleting_=false,pendingPlay_=false;
+    bool loading_=false,confirmDelete_=false,deleting_=false,pendingPlay_=false,reloadSelection_=false;
     std::string selectedDigest_;
     std::uint64_t request_=0;
     std::atomic<std::uint64_t> generation_=0;
     std::mutex mutex_;
     std::condition_variable wake_;
     std::optional<Request> pending_;
+    std::stop_source readStop_{std::nostopstate};
     std::optional<Result> ready_;
     std::jthread worker_;
     void run(std::stop_token stop);
