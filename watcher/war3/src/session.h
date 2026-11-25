@@ -132,6 +132,7 @@ class ScriptSession {
     std::set<std::uint8_t> networkActivePeers_;
     bool experimentalSelectionSync_=false;
     std::optional<bool> networkLocalEndRequest_;
+    bool networkSharedEndPending_=false;
     std::vector<unsigned> networkSlotPlayers_;
     std::array<std::uint32_t,16> playerLeaderboards_{};
     bool leaderboardsRebuilt_=false;
@@ -1387,7 +1388,8 @@ public:
     void startMain(std::function<void()> entry);
     void finishGame(bool scores,SessionExit action=SessionExit::Return);
     bool networkLocalEndPending() const{return networkLocalEndRequest_.has_value();}
-    std::optional<bool> takeNetworkLocalEnd(){auto request=networkLocalEndRequest_;networkLocalEndRequest_.reset();return request;}
+    bool networkSharedEndPending() const{return networkSharedEndPending_;}
+    std::optional<bool> takeNetworkLocalEnd(){auto request=networkLocalEndRequest_;networkLocalEndRequest_.reset();networkSharedEndPending_=false;return request;}
     std::pair<unsigned,unsigned> difficultyContext() const {return {gameDifficulty_,defaultDifficulty_};}
     void difficultyContext(std::pair<unsigned,unsigned> value) {if(mainAttempted_ || value.first>3 || value.second>3)throw std::runtime_error("Invalid difficulty context");gameDifficulty_=value.first;defaultDifficulty_=value.second;}
     void campaignContext(bool expansion,unsigned difficulty) {if(mainAttempted_ || difficulty>2)throw std::runtime_error("Invalid campaign session context");campaignExpansion_=expansion;gameDifficulty_=defaultDifficulty_=difficulty;}

@@ -47,6 +47,8 @@ public:
     bool submitHostAction(std::span<const std::uint8_t> action);
     bool emitTimeSlot(std::uint16_t elapsedMs);
     std::optional<LanTimeSlot> takeTimeSlot();
+    bool beginGameEnd();
+    bool gameEndComplete() const;
     bool submitHostChecksum(std::uint32_t checksum);
     std::optional<LanChecksumMismatch> checksumMismatch() const;
     // The remote peer's assertion, not host-side verification of its file.

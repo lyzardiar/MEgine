@@ -33,7 +33,7 @@ LanJoin::LanJoin(const LanGame& game,std::string playerName):name_(std::move(pla
 LanJoin::~LanJoin(){cancel();}
 void LanJoin::clearDownload(){downloadState_=LanMapDownloadState::Idle;downloadHostId_=0;std::vector<std::uint8_t>().swap(downloading_);downloadedMap_.reset();}
 void LanJoin::discardDownloadedMap(){clearDownload();}
-void LanJoin::closeSocket(){chat_.clear();clearDownload();timeSlotsEnabled_=false;timeSlotFragments_.clear();timeSlots_.clear();fragmentBytes_=queuedTimeSlotBytes_=fragmentCount_=0;if(socket_!=invalidSocket){closesocket(SOCKET(socket_));socket_=invalidSocket;}if(winsock_){WSACleanup();winsock_=false;}}
+void LanJoin::closeSocket(bool keepTimeSlots){chat_.clear();clearDownload();timeSlotsEnabled_=false;gameStreamClosed_=keepTimeSlots;timeSlotFragments_.clear();fragmentBytes_=fragmentCount_=0;if(!keepTimeSlots){timeSlots_.clear();queuedTimeSlotBytes_=0;}if(socket_!=invalidSocket){closesocket(SOCKET(socket_));socket_=invalidSocket;}if(winsock_){WSACleanup();winsock_=false;}}
 void LanJoin::fail(std::string reason){error_=std::move(reason);if(loadPhase_!=LanLoadPhase::Lobby)loadPhase_=LanLoadPhase::Failed;state_=LanJoinState::Error;closeSocket();}
 void LanJoin::connected(){
     sockaddr_in local{};int length=sizeof(local);if(getsockname(SOCKET(socket_),reinterpret_cast<sockaddr*>(&local),&length)==SOCKET_ERROR){fail("Cannot read LAN local address");return;}output_={0xf7,0x1e,0,0};put32(output_,hostCounter_);put32(output_,entryKey_);output_.push_back(0);output_.push_back(0);output_.push_back(0);put32(output_,GetTickCount());output_.insert(output_.end(),name_.begin(),name_.end());output_.push_back(0);output_.push_back(1);output_.push_back(0);output_.push_back(2);output_.push_back(0);output_.push_back(0);output_.push_back(0);auto bytes=reinterpret_cast<const std::uint8_t*>(&local.sin_addr.s_addr);output_.insert(output_.end(),bytes,bytes+4);for(unsigned i=0;i<8;++i)output_.push_back(0);output_[2]=std::uint8_t(output_.size());output_[3]=std::uint8_t(output_.size()>>8);if(experimentalHandshake_){deferredJoin_=std::move(output_);output_=handshakePacket_;}sent_=0;state_=LanJoinState::Joining;activity_=Clock::now();
@@ -108,7 +108,7 @@ void LanJoin::process(const std::uint8_t* p,std::size_t n){
     }
 }
 void LanJoin::poll(){
-    auto closed=[this](int code){if(loadPhase_!=LanLoadPhase::Lobby)loadPhase_=LanLoadPhase::Failed;state_=LanJoinState::Closed;error_="LAN host closed connection";if(code)error_+=" (Winsock "+std::to_string(code)+")";closeSocket();};
+    auto closed=[this](int code){bool keepTimeSlots=!code && timeSlotsEnabled_ && loadPhase_==LanLoadPhase::Ready;if(loadPhase_!=LanLoadPhase::Lobby)loadPhase_=LanLoadPhase::Failed;state_=LanJoinState::Closed;error_="LAN host closed connection";if(code)error_+=" (Winsock "+std::to_string(code)+")";closeSocket(keepTimeSlots);};
     auto transportFailed=[&](const char* operation,int code){if(loadPhase_==LanLoadPhase::Ready && (code==WSAECONNRESET || code==WSAECONNABORTED || code==WSAENETRESET)){closed(code);return;}fail(std::string("LAN ")+operation+" failed: "+std::to_string(code));};
     if(socket_==invalidSocket)return;
     if(!endOfStream_){
@@ -118,6 +118,8 @@ void LanJoin::poll(){
     }
     constexpr unsigned packetBudget=256;
     std::size_t offset=0;unsigned packets=0;for(;packets<packetBudget && input_.size()-offset>=4;++packets){auto* p=input_.data()+offset;auto length=u16(p+2);if(p[0]!=0xf7 || length<4){fail("Invalid LAN packet header");return;}if(input_.size()-offset<length)break;if(!timeSlotsEnabled_ && loadPhase_==LanLoadPhase::Ready && (p[1]==0x0c || p[1]==0x48))break;process(p,length);if(socket_==invalidSocket)return;offset+=length;}if(offset)input_.erase(input_.begin(),input_.begin()+offset);
-    if(endOfStream_ && (state_!=LanJoinState::Joining || packets<packetBudget || input_.size()<4))closed(0);
+    if(!endOfStream_)return;bool inGame=timeSlotsEnabled_ && loadPhase_==LanLoadPhase::Ready;
+    if((state_==LanJoinState::Joining || inGame) && packets==packetBudget && input_.size()>=4)return;
+    if(inGame && (!input_.empty() || fragmentCount_)){fail("Incomplete LAN packet at host close");return;}closed(0);
 }
 }

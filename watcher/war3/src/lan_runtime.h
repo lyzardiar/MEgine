@@ -27,7 +27,7 @@ private:
     std::uint64_t nextFrame_=0,lastClock_=0;
     std::optional<std::uint64_t> selectionSendBlockedAt_,leaveStartedAt_;
     std::optional<std::uint64_t> cacheSendBlockedAt_;
-    bool started_=false,failed_=false,leaveRequested_=false,leaveSent_=false,leaveComplete_=false;
+    bool started_=false,failed_=false,leaveRequested_=false,leaveSent_=false,leaveComplete_=false,sharedGameEnd_=false;
     std::string error_;
     bool fail(std::string message);
     bool flushSync(std::uint64_t now);
@@ -41,9 +41,10 @@ public:
     LanRuntime& operator=(const LanRuntime&)=delete;
     // Called on the same thread as GameView with a monotonic millisecond clock.
     bool pump(std::uint64_t now);
-    bool requestLeave();
+    bool requestLeave(bool sharedGameEnd=false);
     bool leaveComplete() const {return leaveComplete_;}
     bool isHost() const {return bool(host_);}
+    bool sharedGameEnd() const {return sharedGameEnd_;}
     bool hostDisconnected() const {return join_ && join_->state()==LanJoinState::Closed;}
     // Optional recorder must be attached before the first pump; errors stop recording only.
     bool observeSlots(SlotObserver observer);

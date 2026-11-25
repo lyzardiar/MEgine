@@ -31,7 +31,7 @@ LanRuntime::LanRuntime(GameView& game,ScriptSession& session,std::unique_ptr<Lan
 }
 LanRuntime::~LanRuntime(){if(bridge_)bridge_->active=false;}
 bool LanRuntime::fail(std::string message){failed_=true;if(bridge_)bridge_->active=false;error_=std::move(message);return false;}
-bool LanRuntime::requestLeave(){if(failed_ || !bridge_ || !bridge_->active || !bridge_->experimental)return false;if(leaveRequested_)return true;leaveRequested_=true;bridge_->inputEnabled=false;if(host_)leaveComplete_=true;return true;}
+bool LanRuntime::requestLeave(bool sharedGameEnd){if(failed_ || !bridge_ || !bridge_->active || !bridge_->experimental)return false;if(leaveRequested_)return true;if(host_ && sharedGameEnd && !host_->beginGameEnd())return false;leaveRequested_=true;sharedGameEnd_=sharedGameEnd;bridge_->inputEnabled=false;if(host_ && !sharedGameEnd_)leaveComplete_=true;return true;}
 bool LanRuntime::observeSlots(SlotObserver observer){if(started_ || failed_ || !observer || slotObserver_ || !observerError_.empty())return false;slotObserver_=std::move(observer);return true;}
 bool LanRuntime::flushSync(std::uint64_t now){
     if(!bridge_ || !bridge_->active)return true;unsigned selections=0,caches=0;
@@ -44,12 +44,33 @@ bool LanRuntime::flushSync(std::uint64_t now){
     selectionSendBlockedAt_.reset();cacheSendBlockedAt_.reset();return true;
 }
 bool LanRuntime::pump(std::uint64_t now) {
-    if(failed_)return false;if(leaveComplete_)return true;if(started_ && now<lastClock_)return fail("LAN clock moved backwards");lastClock_=now;if(leaveRequested_){if(!leaveStartedAt_)leaveStartedAt_=now;else if(now-*leaveStartedAt_>=30000)return fail("LAN leave request timed out");}
+    if(failed_)return false;if(leaveComplete_)return true;if(started_ && now<lastClock_)return fail("LAN clock moved backwards");lastClock_=now;if(leaveRequested_ && join_){if(!leaveStartedAt_)leaveStartedAt_=now;else if(now-*leaveStartedAt_>=30000)return fail("LAN leave request timed out");}
     try{
-        if(host_){host_->poll();if(!host_->running() || host_->loadPhase()!=LanLoadPhase::Ready)return fail("LAN host disconnected");if(host_->checksumMismatch())return fail("LAN simulation checksum mismatch");if(!started_){if(now>std::numeric_limits<std::uint64_t>::max()-interval_)return fail("LAN clock exceeds limit");nextFrame_=now+interval_;started_=true;}for(unsigned count=0;count<8 && now>=nextFrame_;++count){if(!host_->emitTimeSlot(interval_))break;if(nextFrame_>std::numeric_limits<std::uint64_t>::max()-interval_)return fail("LAN clock exceeds limit");nextFrame_+=interval_;}}
-        else{join_->poll();if(join_->state()!=LanJoinState::Lobby || join_->loadPhase()!=LanLoadPhase::Ready)return fail(join_->error().empty()?"LAN host disconnected":join_->error());started_=true;}
-        if(game_.lanLocalExitPending() && !leaveRequested_)return true;for(unsigned count=0;count<256;++count){auto slot=host_?host_->takeTimeSlot():join_->takeTimeSlot();if(!slot)break;auto simulation=game_.lanSimulation();if(!simulation)return fail("LAN simulation unavailable");auto result=game_.consumeLanSlot(simulation->nextSequence(),*slot);if(!result || *result!=LanStepResult::Applied)return fail("LAN time slot application failed");if(slotObserver_){try{slotObserver_(*slot);}catch(const std::exception& e){observerError_=e.what();if(observerError_.empty())observerError_="Replay slot observer failed";slotObserver_={};}catch(...){observerError_="Replay slot observer failed";slotObserver_={};}}if(leaveRequested_ && !session_.networkPeerActive(bridge_->peer)){leaveComplete_=true;bridge_->active=false;return true;}auto value=checksum_(session_);if(!value || !(host_?host_->submitHostChecksum(*value):join_->sendChecksum(*value)))return fail("LAN checksum unavailable or could not be sent");if(host_ && host_->checksumMismatch())return fail("LAN simulation checksum mismatch");if(game_.lanLocalExitPending())return true;}
-        if(leaveSent_)return true;if(!flushSync(now))return false;if(leaveRequested_ && join_ && !session_.pendingSelectionSync() && !session_.pendingCacheSync() && join_->requestLeave())leaveSent_=true;return true;
+        bool streamClosed=false;
+        if(host_){
+            host_->poll();
+            if(leaveRequested_ && sharedGameEnd_){leaveComplete_=host_->gameEndComplete();return true;}
+            if(!host_->running() || host_->loadPhase()!=LanLoadPhase::Ready)return fail("LAN host disconnected");if(host_->checksumMismatch())return fail("LAN simulation checksum mismatch");if(!started_){if(now>std::numeric_limits<std::uint64_t>::max()-interval_)return fail("LAN clock exceeds limit");nextFrame_=now+interval_;started_=true;}
+        }else{
+            join_->poll();streamClosed=join_->gameStreamClosed();if(!streamClosed && (join_->state()!=LanJoinState::Lobby || join_->loadPhase()!=LanLoadPhase::Ready))return fail(join_->error().empty()?"LAN host disconnected":join_->error());started_=true;
+            if(streamClosed && leaveRequested_ && sharedGameEnd_){leaveComplete_=true;bridge_->active=false;return true;}
+        }
+        unsigned emitted=0;
+        if(!game_.lanLocalExitPending() || leaveRequested_)for(unsigned count=0;count<256;++count){
+            auto slot=host_?host_->takeTimeSlot():join_->takeTimeSlot();
+            if(!slot && host_ && emitted<8 && now>=nextFrame_){
+                if(!host_->emitTimeSlot(interval_))break;if(nextFrame_>std::numeric_limits<std::uint64_t>::max()-interval_)return fail("LAN clock exceeds limit");nextFrame_+=interval_;++emitted;slot=host_->takeTimeSlot();
+            }
+            if(!slot)break;auto simulation=game_.lanSimulation();if(!simulation)return fail("LAN simulation unavailable");auto result=game_.consumeLanSlot(simulation->nextSequence(),*slot);if(!result || *result!=LanStepResult::Applied)return fail("LAN time slot application failed");
+            if(slotObserver_){try{slotObserver_(*slot);}catch(const std::exception& e){observerError_=e.what();if(observerError_.empty())observerError_="Replay slot observer failed";slotObserver_={};}catch(...){observerError_="Replay slot observer failed";slotObserver_={};}}
+            if(leaveRequested_ && !session_.networkPeerActive(bridge_->peer)){leaveComplete_=true;bridge_->active=false;return true;}
+            if(!join_ || !join_->endOfStream()){auto value=checksum_(session_);if(!value || !(host_?host_->submitHostChecksum(*value):join_->sendChecksum(*value)))return fail("LAN checksum unavailable or could not be sent");}
+            if(host_ && host_->checksumMismatch())return fail("LAN simulation checksum mismatch");
+            if(game_.lanLocalExitPending())break;
+        }
+        if(game_.lanLocalExitPending() && (!streamClosed || (!leaveRequested_ && session_.networkSharedEndPending())))return true;
+        if(streamClosed)return fail(join_->error());
+        if(leaveSent_ || (join_ && join_->endOfStream()))return true;if(!flushSync(now))return false;if(leaveRequested_ && join_ && !session_.pendingSelectionSync() && !session_.pendingCacheSync() && join_->requestLeave())leaveSent_=true;return true;
     }catch(const std::exception& e){return fail(e.what());}
 }
 }

@@ -25,7 +25,7 @@ struct LanMapAnnouncement {bool received=false;std::string path;std::uint32_t si
 struct LanMapCheck;
 class LanJoin {
     std::uintptr_t socket_=~std::uintptr_t{};
-    bool winsock_=false,endOfStream_=false;
+    bool winsock_=false,endOfStream_=false,gameStreamClosed_=false;
     LanJoinState state_=LanJoinState::Connecting;
     std::string error_,name_;
     std::uint32_t rejectionCode_=0,hostCounter_=0,entryKey_=0;
@@ -58,7 +58,7 @@ class LanJoin {
     void connected();
     void process(const std::uint8_t* data,std::size_t length);
     void fail(std::string reason);
-    void closeSocket();
+    void closeSocket(bool keepTimeSlots=false);
     void clearDownload();
     void updateLoadPhase();
     void receiveTimeSlot(const std::uint8_t* data,std::size_t length);
@@ -86,6 +86,8 @@ public:
     bool requestLeave();
     bool sendChecksum(std::uint32_t checksum);
     std::optional<LanTimeSlot> takeTimeSlot();
+    bool endOfStream() const {return endOfStream_;}
+    bool gameStreamClosed() const {return gameStreamClosed_;}
     LanLoadPhase loadPhase() const {return loadPhase_;}
     const std::vector<std::uint8_t>& loadPlayers() const {return loadPlayers_;}
     const std::vector<std::uint8_t>& loadedPlayers() const {return loadedPlayers_;}

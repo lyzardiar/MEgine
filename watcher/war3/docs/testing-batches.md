@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## 局域网脚本终局时片与双端计分（功能批次 2/3）
+
+路径为 `src/lan_host.*`、`src/lan_join.*`、`src/lan_runtime.*`、`src/main.cpp`、`src/session.h`、`src/session_match.cpp` 和 `tests/lan_departure_tests.cpp`。房主逐时片推进模拟，脚本结束整局后停止发射，逐连接排空已产生的时片并半关闭发送，最长等待 5 秒。加入端先应用干净 EOF 前的完整时片，再按本机脚本的计分选项结算，普通离场沿用有序离场路径。
+
+Win32 Release 构建通过。`war3_lan_departure_tests game-end` 验证两个加入端均在 TCP 关闭后取到同一条分片尾时片，为 1 通过／0 失败。`join-close` 和默认离场测试共 6 通过／0 失败。正式双客户端在专用后台桌面进入同一局，两端均显示计分，确认后各保存一份完整 15,000 毫秒录像并返回大厅，退出码均为 0。产品入口为 `tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script <verify-terminal.ps1> -Executable <war3.exe>`，回执在 `run-a5348ffbd1/receipt.json`。批次待验持续同步、多端结算和跨机条件下的尾时片传送。
+
 ## 最小化期间房主掉线返回局域网列表（功能批次 1/3）
 
 路径为 `src/main.cpp`。加入端在最小化期间收到房主 TCP 关闭或重置时，与正常对局共用房主断开处理，保存部分回放、释放对局并返回局域网列表。恢复绘制时列表显示「房主已断开连接。」。静默超时沿现有中断路径报错。
@@ -12,7 +18,7 @@ Win32 Release 构建通过。专用后台 Windows 桌面上的两个正式客户
 
 ## 同构对局双端胜利事件与终局时片（专项验收）
 
-集成 `58c91d5` 的两个正式 D3D9 客户端在未切换到前台的专用 Windows 桌面，经发现、入房及加载屏障进入自有 `CombatOutcome.w3m`。地图等两个真人席位均就绪后发正常攻击命令。两端在约 10.3 模拟秒均实显同一次战斗死亡、一次 `EVENT_GAME_VICTORY`、获胜者玩家 2。15 秒触发 `EndGame(true)` 时房主进入计分，加入方却返回局域网列表并显示房主断开。录像记录的末尾分别为房主 15,000 毫秒、加入方 14,900 毫秒，加入方未消费产生终局的时片。两进程均退出 0。胜利回调专项通过，加入方终局结算失败并保留在队列。脚本和收据见 `tmp/docs-artifacts/war3/p0-lan-victory-product/`，本轮为 `run-575690a922/`。
+集成 `58c91d5` 的两个正式 D3D9 客户端在未切换到前台的专用 Windows 桌面，经发现、入房及加载屏障进入自有 `CombatOutcome.w3m`。地图等两个真人席位均就绪后发正常攻击命令。两端在约 10.3 模拟秒均实显同一次战斗死亡、一次 `EVENT_GAME_VICTORY`、获胜者玩家 2。15 秒触发 `EndGame(true)` 时房主进入计分，加入方却返回局域网列表并显示房主断开。录像记录的末尾分别为房主 15,000 毫秒、加入方 14,900 毫秒，加入方未消费产生终局的时片。两进程均退出 0。胜利回调专项通过，加入方当时结算失败，修复与后台复验见上。脚本和收据见 `tmp/docs-artifacts/war3/p0-lan-victory-product/`，本轮为 `run-575690a922/`。
 
 ## 局域网静默超时与恢复（环回专项验收）
 
@@ -651,7 +657,7 @@ Win32 Release 产品和局域网测试目标编译通过。`python watcher/war3/
 
 复用 34 通过／0 失败。`cbd21c2` 的 `war3_session_tests` 为 32 通过／0 失败，含胜利回调上下文、重入、不同结果和休眠胜利上下文恢复，集成构建保留该测试及其链接输入。`cb9ab32` 的单人跨进程保存、恢复、结算及返回存档列表为 1 通过／0 失败，后续产品源码差异位于局域网断开分支。`562c3ab` 的同机正式双客户端房主断线、返回大厅及重新建房为 1 通过／0 失败。对应证据为 `tmp/docs-artifacts/war3/game-victory-event/session-clean.log`、`tmp/docs-artifacts/war3/p0-save-resume/v3/acceptance-result.json` 和 `tmp/docs-artifacts/war3/p1-lan-host-exit/v3/host-exit-result.json`。
 
-双端胜利回调、休眠胜利回调的 WSAV 恢复及普通自定义结算返回见各专项。加入端终局计分、原版事件时序、跨机正式客户端及静默停片提示待验。下一功能批次从 0/3 开始。
+双端胜利回调与终局计分、休眠胜利回调的 WSAV 恢复及普通自定义结算返回见各专项。原版事件时序、跨机正式客户端及静默停片提示待验。下一功能批次从 0/3 开始。
 
 ## 局域网房主异常退出（功能批次 3/3，已集中验证）
 
