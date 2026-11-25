@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 单人存档被替换后返回原列表（定向验证）
+
+正式读取入口保存当前选中档名。对应加载请求报告有效存档摘要变化时，界面返回原列表，重新预览同名条目并提示确认。新预览呈现后才能接受下一次确认，过滤键盘重复消息及等待预览期间开始的鼠标确认。正式加载仍校验所选摘要。来自存档列表的加载取消会回原列表。
+
+Win32 Release 增量构建和 `war3_clock_tests` 的 `save_game_writes_checkpoint_and_preserves_caller` 通过。私有桌面 D3D9Ex 中，确认 A 已实际呈现预览后，原子替换为同地图、不同摘要的 B。基线正确拒绝旧摘要，后台模式退出 1。修复版实际返回原列表并显示新预览与确认提示，自动重复 L 和 Enter 均留在列表，新按 Enter 后读取 B 并呈现 7.875 秒。另一次先用 Esc 取消正式加载，回到同一列表后重复 Esc 保持该页，随后成功完成替换和确认。两次修复版均退出 0。
+
+脚本和回执在 `tmp/docs-artifacts/war3/save-preview-replaced-v1/` 的 `verify.py`、`baseline-bd4917ad5b10/receipt.json`、`fixed-d08760d7730d/receipt.json`、`fixed-aa9c07835e27/receipt.json` 与 `clock-checkpoint-type/test.log`。
+
 ## 回放返回列表时同步目录变化（定向验证）
 
 `src/replay_browser.*` 在播放返回与 F5 刷新时重新枚举当前目录，按路径保留仍存在的选择。原条目移除时选择相邻项。目录已消失时回到根目录，无法读取根目录时清空过期列表并提示。

@@ -3,6 +3,7 @@
 #include "manual_save_deletion.h"
 #include "campaign_profile.h"
 #include "snapshot_codec.h"
+#include "recovery_checkpoint_changed.h"
 #include "temporary_file_path.h"
 #include <algorithm>
 #include <bit>
@@ -58,7 +59,7 @@ std::pair<RecoveryCheckpointInfo,fs::path> ScriptSession::inspectAndResolveRecov
 }
 fs::path ScriptSession::resolveRecoveryCheckpointMap(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot,std::stop_token stop) {return inspectAndResolveRecoveryCheckpoint(dataRoot,name,externalRoot,stop).second;}
 std::map<std::uint32_t,std::uint32_t> ScriptSession::restoreRecoveryCheckpoint(const std::string& name,const std::string& expectedDigest) {
-    if(!world_)throw std::runtime_error("Checkpoint requires a mounted map");auto data=readCheckpoint(world_->resources().root(),name);if(!expectedDigest.empty() && data.info.fileDigest!=expectedDigest)throw std::runtime_error("Checkpoint changed after selection");if(data.info.mapDigest!=world_->resources().mapDigest())throw std::runtime_error("Checkpoint map differs");return restoreRecoveryBundle(std::span<const std::uint8_t>(data.bytes).subspan(data.offset,data.length));
+    if(!world_)throw std::runtime_error("Checkpoint requires a mounted map");auto data=readCheckpoint(world_->resources().root(),name);if(!expectedDigest.empty() && data.info.fileDigest!=expectedDigest)throw RecoveryCheckpointChanged{};if(data.info.mapDigest!=world_->resources().mapDigest())throw std::runtime_error("Checkpoint map differs");return restoreRecoveryBundle(std::span<const std::uint8_t>(data.bytes).subspan(data.offset,data.length));
 }
 void ScriptSession::processPendingSave() {
     if(!pendingSave_)return;

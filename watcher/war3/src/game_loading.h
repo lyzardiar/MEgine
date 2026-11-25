@@ -45,7 +45,7 @@ struct GameData {
     size_t uploadCount() const {return assets->uploadCount()+terrain->uploadCount();}
     size_t uploaded() const {return assets->uploaded()+terrain->uploaded();}
 };
-struct GameLoadResult {std::uint64_t request=0;std::unique_ptr<GameData> data;std::string error;};
+struct GameLoadResult {std::uint64_t request=0;std::unique_ptr<GameData> data;std::string error;bool checkpointChanged=false;};
 class GameLoading {
     struct Request {std::uint64_t id;std::unique_ptr<ScriptSession> session;std::string checkpoint,checkpointDigest;};
     Log& log_;

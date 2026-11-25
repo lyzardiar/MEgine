@@ -25,14 +25,14 @@ class SavedGameBrowser {
     struct Result {std::uint64_t request=0;std::optional<SavedGameSelection> value;std::optional<Image> image;std::string imageError,error;std::optional<std::string> missingMap;};
     std::optional<Result> ready_;
     std::optional<SavedGameSelection> preview_;
-    bool loading_=false,openWhenReady_=false;
+    bool loading_=false,openWhenReady_=false,requireVisiblePreview_=false,previewPresented_=false;
     std::jthread worker_;
     void run(std::stop_token stop);
     void prepared();
     void infoLayout();
     void select(size_t index,size_t rows,bool retryFailed=true);
 public:
-    SavedGameBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,std::wstring_view preferred={});
+    SavedGameBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,const fs::path& dataRoot,std::wstring_view preferred={},bool waitForFreshPreview=false);
     std::string draw(const UiInput& input);
     ~SavedGameBrowser();
     std::optional<SavedGameSelection> selected() const;
