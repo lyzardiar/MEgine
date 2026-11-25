@@ -1,8 +1,8 @@
 // Author: MiYu. Persist local preferences separately from the original game resources.
 #include "game_preferences.h"
+#include "temporary_file_path.h"
 #include <algorithm>
 #include <array>
-#include <atomic>
 
 namespace war3 {
 namespace {
@@ -21,13 +21,12 @@ constexpr std::array<std::uint8_t,8> videoMagic{'W','3','V','I','D',1,0,0};
 constexpr std::array<std::uint8_t,8> videoMagicV2{'W','3','V','I','D',2,0,0};
 constexpr std::array<std::uint8_t,8> videoMagicV3{'W','3','V','I','D',3,0,0};
 constexpr std::array<std::uint8_t,8> videoMagicV4{'W','3','V','I','D',4,0,0};
-std::atomic<unsigned> serial=0;
 fs::path path(const fs::path& root,const wchar_t* name){validateWar3UserDirectory(root);return war3UserDirectory()/L"Settings"/name;}
 std::optional<Bytes> read(const fs::path& file,std::span<const std::uint8_t> magic,size_t size){
     std::error_code error;if(!fs::exists(file,error)){if(error)throw std::runtime_error("Cannot inspect preferences");return {};}auto length=fs::file_size(file,error);if(error || length!=size)throw std::runtime_error("Unsupported preferences size");std::ifstream input(file,std::ios::binary);Bytes bytes(size);if(!input || !input.read(reinterpret_cast<char*>(bytes.data()),std::streamsize(bytes.size())) || input.peek()!=std::char_traits<char>::eof())throw std::runtime_error("Cannot read preferences");if(!std::equal(magic.begin(),magic.end(),bytes.begin()))throw std::runtime_error("Unsupported preferences format");return bytes;
 }
 void publish(const fs::path& file,std::span<const std::uint8_t> bytes){
-    fs::create_directories(file.parent_path());fs::path temp;HANDLE handle=INVALID_HANDLE_VALUE;DWORD createError=ERROR_FILE_EXISTS;for(unsigned attempt=0;attempt<32 && handle==INVALID_HANDLE_VALUE;++attempt){temp=file;temp+=L"."+std::to_wstring(GetCurrentProcessId())+L"."+std::to_wstring(++serial)+L".tmp";handle=CreateFileW(temp.c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);if(handle==INVALID_HANDLE_VALUE){createError=GetLastError();if(createError!=ERROR_FILE_EXISTS && createError!=ERROR_ALREADY_EXISTS)break;}}if(handle==INVALID_HANDLE_VALUE)throw std::runtime_error("Cannot create preferences: "+winError(createError));DWORD written=0;bool good=WriteFile(handle,bytes.data(),DWORD(bytes.size()),&written,nullptr) && written==bytes.size() && FlushFileBuffers(handle);DWORD error=good?ERROR_SUCCESS:GetLastError();CloseHandle(handle);if(!good){DeleteFileW(temp.c_str());throw std::runtime_error("Cannot write preferences: "+winError(error));}if(!MoveFileExW(temp.c_str(),file.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH)){error=GetLastError();DeleteFileW(temp.c_str());throw std::runtime_error("Cannot publish preferences: "+winError(error));}
+    fs::create_directories(file.parent_path());fs::path temp;HANDLE handle=INVALID_HANDLE_VALUE;DWORD createError=ERROR_FILE_EXISTS;for(unsigned attempt=0;attempt<32 && handle==INVALID_HANDLE_VALUE;++attempt){temp=sameDirectoryTemporaryPath(file);handle=CreateFileW(temp.c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);if(handle==INVALID_HANDLE_VALUE){createError=GetLastError();if(createError!=ERROR_FILE_EXISTS && createError!=ERROR_ALREADY_EXISTS)break;}}if(handle==INVALID_HANDLE_VALUE)throw std::runtime_error("Cannot create preferences: "+winError(createError));DWORD written=0;bool good=WriteFile(handle,bytes.data(),DWORD(bytes.size()),&written,nullptr) && written==bytes.size() && FlushFileBuffers(handle);DWORD error=good?ERROR_SUCCESS:GetLastError();CloseHandle(handle);if(!good){DeleteFileW(temp.c_str());throw std::runtime_error("Cannot write preferences: "+winError(error));}if(!MoveFileExW(temp.c_str(),file.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH)){error=GetLastError();DeleteFileW(temp.c_str());throw std::runtime_error("Cannot publish preferences: "+winError(error));}
 }
 }
 GameNetworkPreferences loadNetworkPreferences(const fs::path& root){auto bytes=read(path(root,L"network.bin"),networkMagic,networkMagic.size()+2);if(!bytes)return {};auto port=unsigned((*bytes)[networkMagic.size()])|(unsigned((*bytes)[networkMagic.size()+1])<<8);if(!port)throw std::runtime_error("Invalid network game port");return {std::uint16_t(port)};}
