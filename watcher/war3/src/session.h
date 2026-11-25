@@ -246,6 +246,10 @@ class ScriptSession {
     std::vector<unsigned> aiRuntimeOrder_;
     std::array<std::uint32_t,16> aiPauseDepth_{};
     std::array<bool,16> aiStateRestored_{};
+    SoloReplayMode soloReplayMode_=SoloReplayMode::None;
+    std::string soloReplayError_;
+    bool needsSoloReplayScriptAudit() const {return soloReplayMode_!=SoloReplayMode::None && soloReplayError_.empty();}
+    void rejectSoloReplay(std::string message);
     double nextNeutralCombatSpells_=0;
     void pauseAI(unsigned player,bool paused);
     void bindAiControlNatives();
@@ -1381,6 +1385,9 @@ public:
     void acknowledgeQuests() {questFlash_=false;}
     void displayText(unsigned owner,float x,float y,double duration,std::string text,std::uint16_t audience=0xffff,bool chat=false);
     void startAI(unsigned player,const std::string& script,bool campaign=false);
+    void soloReplayAudit(SoloReplayMode mode);
+    const std::string& soloReplayError() const {return soloReplayError_;}
+    void updateSoloReplayVisibility();
     void prepareAIRecovery(unsigned player,const std::string& script,bool campaign,std::span<const std::uint8_t> globals,const jass::StableHandleMap& decodeHandle);
     Bytes encodeAIState(unsigned player,const jass::StableHandleMap& encodeHandle) const;
     void restoreAIState(unsigned player,std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);

@@ -354,6 +354,82 @@ endfunction
 )jass");
     soloRejects([&]{validateSoloReplayScript(dynamicTarget);},"ExecuteFunc");
 }
+
+void soloScriptAuditScopesMeleeAi(){
+    auto compile=[](std::string source){
+        return jass::Module::compile(jass::Program::parse({{"melee-cpu.ai",std::move(source),"authored solo replay audit fixture"}}));
+    };
+    auto launcher=[&](std::string_view native){
+        const std::string name(native);
+        return compile("type player extends handle\n"
+            "native Player takes integer number returns player\n"
+            "native "+name+" takes player subject, string script returns nothing\n"
+            "function main takes nothing returns nothing\n"
+            "    call "+name+"(Player(1), \"melee-cpu.ai\")\n"
+            "endfunction\n");
+    };
+
+    const auto meleeLauncher=launcher("StartMeleeAI");
+    validateSoloReplayScript(meleeLauncher);
+    validateSoloReplayScript(meleeLauncher,SoloReplayScriptKind::Map);
+    soloRejects([&]{validateSoloReplayScript(meleeLauncher,SoloReplayScriptKind::MeleeAI);},"StartMeleeAI");
+
+    const auto campaignLauncher=launcher("StartCampaignAI");
+    soloRejects([&]{validateSoloReplayScript(campaignLauncher,SoloReplayScriptKind::Map);},"StartCampaignAI");
+
+    auto threaded=[&](std::string_view declarations,std::string_view body){
+        std::string source(declarations);
+        source+="\nnative StartThread takes code handler returns nothing\n"
+            "function worker takes nothing returns nothing\n";
+        source+=body;
+        source+="\nendfunction\n"
+            "function main takes nothing returns nothing\n"
+            "    call StartThread(function worker)\n"
+            "endfunction\n";
+        return compile(std::move(source));
+    };
+    const auto normal=threaded(
+        "native GetRandomInt takes integer lower, integer upper returns integer\n"
+        "native Sleep takes real duration returns nothing",
+        "    local integer roll = GetRandomInt(1, 4)\n"
+        "    call Sleep(0.25)");
+    validateSoloReplayScript(normal,SoloReplayScriptKind::MeleeAI);
+
+    const auto audio=threaded(
+        "type sound extends handle\nnative TriggerWaitForSound takes sound whichSound, real offset returns nothing",
+        "    call TriggerWaitForSound(null, 0.0)");
+    soloRejects([&]{validateSoloReplayScript(audio,SoloReplayScriptKind::MeleeAI);},"TriggerWaitForSound");
+
+    const auto storage=threaded(
+        "type gamecache extends handle\n"
+        "native InitGameCache takes string campaignFile returns gamecache",
+        "    local gamecache store = InitGameCache(\"audit-cache\")");
+    soloRejects([&]{validateSoloReplayScript(storage,SoloReplayScriptKind::MeleeAI);},"InitGameCache");
+}
+
+void soloScriptAuditScopesPreload(){
+    auto module=jass::Module::compile(jass::Program::parse({{"preload-audit.j",R"jass(
+native Preloader takes string fileName returns nothing
+native Preload takes string assetName returns nothing
+native PreloadGenEnd takes string outputFile returns nothing
+native GetCameraBoundMinX takes nothing returns real
+native GetLocalizedString takes string key returns string
+function main takes nothing returns nothing
+    local real mapLeft = GetCameraBoundMinX()
+    local string asset = GetLocalizedString("EXAMPLE_ASSET")
+    call Preloader(asset)
+endfunction
+function WriteToDisk takes nothing returns nothing
+    call PreloadGenEnd("destination")
+endfunction
+function PreloadFiles takes nothing returns nothing
+    call Preload("example")
+    call WriteToDisk()
+endfunction
+)jass","authored solo replay audit fixture"}}));
+    validateSoloReplayScript(module);
+    soloRejects([&]{validateSoloReplayScript(module,SoloReplayScriptKind::Preload);},"PreloadGenEnd");
+}
 }
 
 int main(){
@@ -367,6 +443,8 @@ int main(){
         soloCommandsRoundTrip();
         soloCommandsRejectCorruption();
         soloScriptAuditTracksReachableFunctions();
+        soloScriptAuditScopesMeleeAi();
+        soloScriptAuditScopesPreload();
         std::cout<<"Replay step tests passed\n";
         return 0;
     }catch(const std::exception& error){

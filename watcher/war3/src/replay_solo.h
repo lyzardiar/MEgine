@@ -2,13 +2,14 @@
 #pragma once
 #include "replay_writer.h"
 #include "player_commands.h"
+#include "game_state.h"
 
 namespace war3 {
 class ScriptSession;
 namespace jass {class Module;}
 
 inline constexpr std::uint32_t soloReplayProduct=0x4d534f4cu;
-enum class SoloReplayMode {None,Record,Play};
+enum class SoloReplayScriptKind {Map,MeleeAI,Preload};
 struct SoloReplaySetup {
     std::string mapDigest,commonDigest;
     std::uint32_t seed=0;
@@ -18,8 +19,7 @@ struct SoloReplaySetup {
 };
 SoloReplaySetup readSoloReplaySetup(const Replay& replay);
 void restoreSoloReplaySetup(ScriptSession& session,const SoloReplaySetup& setup);
-void updateSoloReplayVisibility(ScriptSession& session);
-void validateSoloReplayScript(const jass::Module& module);
+void validateSoloReplayScript(const jass::Module& module,SoloReplayScriptKind kind=SoloReplayScriptKind::Map);
 Bytes encodeSoloCommand(const PlayerCommand& command);
 PlayerCommand decodeSoloCommand(std::span<const std::uint8_t> bytes);
 

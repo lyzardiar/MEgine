@@ -6,20 +6,26 @@
 
 namespace war3 {
 namespace {
-bool outsideReplay(std::string_view name) {
-    for(auto prefix:{"Dz","EX","BlzGetLocal","Preload","GetCamera","GetSound","SaveGame","LoadGame","InitGameCache","IsFogged","IsMasked","IsVisible","IsLocationFogged","IsLocationMasked","IsLocationVisible"})
+bool outsideReplay(std::string_view name,SoloReplayScriptKind kind) {
+    if(kind!=SoloReplayScriptKind::Map && name=="StartMeleeAI")return true;
+    if(name.starts_with("GetCamera")){
+        for(auto query:{"GetCameraBoundMinX","GetCameraBoundMinY","GetCameraBoundMaxX","GetCameraBoundMaxY","GetCameraMargin"})if(name==query)return false;
+        return true;
+    }
+    for(auto prefix:{"Dz","EX","BlzGetLocal","PreloadGen","GetSound","SaveGame","LoadGame","InitGameCache","IsFogged","IsMasked","IsVisible","IsLocationFogged","IsLocationMasked","IsLocationVisible"})
         if(name.starts_with(prefix))return true;
-    for(auto native:{"ForceUIKey","ForceUICancel","DisplayLoadDialog","ChangeLevel","RestartGame","PlayModelCinematic","PlayCinematic","ReloadGameCachesFromDisk","RenameSaveDirectory","RemoveSaveDirectory","CopySaveGame","SaveDirectoryExists","SetCampaignAvailable","SetMissionAvailable","SetTutorialCleared","SetCampaignMenuRace","SetCampaignMenuRaceEx","TriggerWaitForSound","StartMeleeAI","StartCampaignAI","GetLocalizedString","GetLocalizedHotkey","FogEnable","IsUnitInvisible","IsUnitVisible"})
+    for(auto native:{"ForceUIKey","ForceUICancel","DisplayLoadDialog","ChangeLevel","RestartGame","PlayModelCinematic","PlayCinematic","ReloadGameCachesFromDisk","RenameSaveDirectory","RemoveSaveDirectory","CopySaveGame","SaveDirectoryExists","SetCampaignAvailable","SetMissionAvailable","SetTutorialCleared","SetCampaignMenuRace","SetCampaignMenuRaceEx","TriggerWaitForSound","StartCampaignAI","FogEnable","IsUnitInvisible","IsUnitVisible","IsUnitFogged","IsUnitMasked"})
         if(name==native)return true;
     return false;
 }
 }
 
-void validateSoloReplayScript(const jass::Module& module) {
+void validateSoloReplayScript(const jass::Module& module,SoloReplayScriptKind kind) {
     using namespace jass;
     const auto& program=module.program();
     std::vector<bool> seenFunctions(program.functions().size()),seenExpressions(program.expressionCount()),seenStatements(program.statementCount());
-    std::vector<Id> functions{module.functionId("config"),module.functionId("main")},expressions,statements;
+    std::vector<Id> functions{module.functionId(kind==SoloReplayScriptKind::Preload?"PreloadFiles":"main")},expressions,statements;
+    if(kind==SoloReplayScriptKind::Map)functions.push_back(module.functionId("config"));
     for(const auto& global:program.globals())expressions.push_back(global.initializer);
     while(!functions.empty() || !expressions.empty() || !statements.empty()){
         if(!functions.empty()){
@@ -28,7 +34,7 @@ void validateSoloReplayScript(const jass::Module& module) {
             seenFunctions[id]=true;
             const auto& function=program.functions().at(id);
             if(function.native){
-                if(outsideReplay(function.name))throw std::runtime_error("单机回放不支持地图脚本调用 "+function.name);
+                if(outsideReplay(function.name,kind))throw std::runtime_error("单机回放不支持脚本调用 "+function.name);
                 continue;
             }
             for(const auto& local:function.locals)expressions.push_back(local.initializer);

@@ -1,5 +1,6 @@
 // Author: MiYu. Original common.ai and selected strategy execute in private globals on the shared map scheduler.
 #include "session.h"
+#include "replay_solo.h"
 #include <algorithm>
 #include <bit>
 #include <charconv>
@@ -10,7 +11,16 @@
 namespace war3 {
 namespace {float number(jass::Real value){return std::bit_cast<float>(value.bits());}float distance(const UnitState& a,WorldPoint b){return std::hypot(number(a.x)-number(b.x),number(a.y)-number(b.y));}float distance(const UnitState& a,const UnitState& b){return distance(a,{b.x,b.y});}}
 std::unique_ptr<ScriptAI> ScriptSession::makeAI(unsigned owner,const std::string& script,bool campaign,bool requireSource){
-    auto& resources=requireWorld().resources();std::vector<jass::Source> sources;for(auto path:{"Scripts\\common.j","Scripts\\common.ai"}){auto member=resources.readCandidates({path},ArchiveScope::Common);if(!member)throw std::runtime_error(std::string("Missing common AI source: ")+path);sources.push_back({path,sourceText(member->bytes),member->source});}auto member=resources.readCandidates({script,"Scripts\\"+script});if(!member){if(requireSource)throw std::runtime_error("Missing AI recovery source: "+script);OutputDebugStringA(("MAP DESIGNER: AI script '"+script+"' not found!\n").c_str());return {};}sources.push_back({script,sourceText(member->bytes),member->source});auto module=jass::Module::compile(jass::Program::parse(std::move(sources)));auto entry=module.functionId("main");if(entry==jass::none || module.program().functions()[entry].native || !module.functions()[entry].parameters.empty() || module.type(module.functions()[entry].result).name!="nothing")throw std::runtime_error("AI strategy requires main takes nothing returns nothing");auto ai=std::make_unique<ScriptAI>();ai->owner=owner;ai->file=script;ai->origin=member->source;ai->campaign=campaign;ai->runtime=std::make_unique<jass::Runtime>(std::move(module));ai->runtime->inheritNatives(runtime_);ai->runtime->shareThreads(runtime_);return ai;
+    auto& resources=requireWorld().resources();std::vector<jass::Source> sources;for(auto path:{"Scripts\\common.j","Scripts\\common.ai"}){auto member=resources.readCandidates({path},ArchiveScope::Common);if(!member)throw std::runtime_error(std::string("Missing common AI source: ")+path);sources.push_back({path,sourceText(member->bytes),member->source});}auto member=resources.readCandidates({script,"Scripts\\"+script});if(!member){if(requireSource)throw std::runtime_error("Missing AI recovery source: "+script);OutputDebugStringA(("MAP DESIGNER: AI script '"+script+"' not found!\n").c_str());return {};}sources.push_back({script,sourceText(member->bytes),member->source});auto module=jass::Module::compile(jass::Program::parse(std::move(sources)));auto entry=module.functionId("main");if(entry==jass::none || module.program().functions()[entry].native || !module.functions()[entry].parameters.empty() || module.type(module.functions()[entry].result).name!="nothing")throw std::runtime_error("AI strategy requires main takes nothing returns nothing");
+    if(needsSoloReplayScriptAudit()){
+        try{
+            if(campaign || config_.players[owner].controller!=1 || config_.players[owner].slotState!=1 || config_.players[owner].observer)throw std::runtime_error("单机回放只支持活跃电脑席位的遭遇战 AI。");
+            validateSoloReplayScript(module,SoloReplayScriptKind::MeleeAI);
+        }catch(const std::runtime_error& e){
+            rejectSoloReplay(e.what());
+        }
+    }
+    auto ai=std::make_unique<ScriptAI>();ai->owner=owner;ai->file=script;ai->origin=member->source;ai->campaign=campaign;ai->runtime=std::make_unique<jass::Runtime>(std::move(module));ai->runtime->inheritNatives(runtime_);ai->runtime->shareThreads(runtime_);return ai;
 }
 void ScriptSession::startAI(unsigned owner,const std::string& script,bool campaign){
     if(owner==12 && script=="callback"){auto binary=requireWorld().resources().readCandidates({"war3map.bin"},ArchiveScope::Map);auto loader=requireWorld().resources().readCandidates({script},ArchiveScope::Map);if(binary && binary->bytes.size()>=4 && std::equal(binary->bytes.begin(),binary->bytes.begin()+4,"2SAJ") && loader){std::string_view source(reinterpret_cast<const char*>(loader->bytes.data()),loader->bytes.size());if(source.find("newUnlockMemory")!=source.npos && source.find("ExportFileFromMpq")!=source.npos)throw std::runtime_error("Map uses an unsupported native plugin and 2SAJ script runtime (callback / war3map.bin)");}}

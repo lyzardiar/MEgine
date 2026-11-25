@@ -32,7 +32,7 @@ void MapBrowser::enter(const fs::path& path,const fs::path& preferred) {
 void MapBrowser::clearSelection() {preparation_.clear();restartSetup_.reset();loading_=false;info_.reset();players_.bind(nullptr);setup_.reset();session_.reset();error_.clear();screen_.visible("MapInfoPane",false);screen_.image("MinimapImage",nullptr);}
 void MapBrowser::select(size_t index,std::optional<std::pair<unsigned,unsigned>> difficulty) {
     if(index>=entries_.size() || (index==selected_ && (loading_ || (info_ && error_.empty()))))return;selected_=index;if(index<scroll_)scroll_=index;if(index>=scroll_+rows_)scroll_=index-rows_+1;clearSelection();if(entries_[index].directory)return;
-    request_=preparation_.request(entries_[index].path,{},true,{},{},difficulty);loading_=true;log_.write("map_preparation_requested="+utf8(entries_[index].path.wstring()));
+    request_=preparation_.request(entries_[index].path,{},true,{},{},difficulty,difficulty?SoloReplayMode::None:SoloReplayMode::Record);loading_=true;log_.write("map_preparation_requested="+utf8(entries_[index].path.wstring()));
 }
 void MapBrowser::prepared() {
     auto result=preparation_.poll();if(!result || result->request!=request_ || !loading_)return;loading_=false;

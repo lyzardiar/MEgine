@@ -23,6 +23,7 @@ bool digestValid(const std::string& value) {
 const World& recordingWorld(const ScriptSession& session) {
     if(!session.world() || !session.configured() || session.mainStarted() || !session.localPlayer() || !session.initialRandomSeed() || !session.units().empty() || session.runtime().threadCount())
         throw std::runtime_error("Solo replay needs an initialized local setup before map main");
+    if(!session.soloReplayError().empty())throw std::runtime_error(session.soloReplayError());
     return *session.world();
 }
 
@@ -84,11 +85,6 @@ void restoreSoloReplaySetup(ScriptSession& session,const SoloReplaySetup& record
     session.applySetup(setup);session.restorePlayerConfiguration(recorded.playerConfiguration);
 }
 
-void updateSoloReplayVisibility(ScriptSession& session) {
-    // Fog queries retain explored cells. Use the same local update points at all playback frame rates.
-    if(auto local=session.localPlayer())session.fog(*local);
-}
-
 SoloReplayRecorder::SoloReplayRecorder(const ScriptSession& session,std::stop_token stop):writer_(createWriter(session)),root_(session.world()->resources().root()) {
     validateSoloReplayScript(session.runtime().module());
     auto& archives=session.world()->resources();auto difficulty=session.difficultyContext();
@@ -103,27 +99,29 @@ void SoloReplayRecorder::append(std::uint16_t elapsed,Bytes bytes) {
     try{writer_.appendTimeSlot({elapsed,{{recorderId,std::move(bytes)}}});}catch(const std::exception& e){invalidate(e.what());}
 }
 void SoloReplayRecorder::advance(ScriptSession& session,double elapsed,std::uint16_t playbackMs) {
+    if(!session.soloReplayError().empty())invalidate(session.soloReplayError());
     if(sealed_ || !error_.empty())return;
     if(!std::isfinite(elapsed) || elapsed<0 || elapsed>.151 || playbackMs>100){invalidate("Invalid solo replay elapsed time");return;}
-    updateSoloReplayVisibility(session);
+    session.updateSoloReplayVisibility();
     SnapshotWriter out(12);out.u32(unsigned(Operation::Advance));out.u64(std::bit_cast<std::uint64_t>(elapsed));append(playbackMs,out.finish());
 }
 void SoloReplayRecorder::command(ScriptSession& session,const PlayerCommand& command,unsigned result) {
     if(sealed_ || !error_.empty())return;
-    updateSoloReplayVisibility(session);
+    session.updateSoloReplayVisibility();
     try{SnapshotWriter out(maxActionBytes);out.u32(unsigned(Operation::Command));out.u32(result);out.raw(encodeSoloCommand(command));append(0,out.finish());}catch(const std::exception& e){invalidate(e.what());}
 }
 void SoloReplayRecorder::leave(ScriptSession& session) {
     if(sealed_ || !error_.empty())return;
-    updateSoloReplayVisibility(session);
+    session.updateSoloReplayVisibility();
     SnapshotWriter out(4);out.u32(unsigned(Operation::Leave));append(0,out.finish());
 }
 void SoloReplayRecorder::commandMenuOpened(ScriptSession& session,bool skills) {
     if(sealed_ || !error_.empty())return;
-    updateSoloReplayVisibility(session);
+    session.updateSoloReplayVisibility();
     SnapshotWriter out(8);out.u32(unsigned(Operation::MenuOpened));out.u32(skills);append(0,out.finish());
 }
 bool SoloReplayRecorder::seal(const ScriptSession& session) {
+    if(!session.soloReplayError().empty())invalidate(session.soloReplayError());
     if(!sealed_ && error_.empty() && session.exitRequest()==SessionExit::Return && session.showScores() && !session.replaySavingDisabled()){
         SnapshotWriter out(20);out.u32(unsigned(Operation::End));out.u64(std::bit_cast<std::uint64_t>(session.simulationTime()));out.u32(result(session));out.u32(session.localNetworkChecksum());
         append(0,out.finish());sealed_=true;
@@ -170,7 +168,7 @@ std::optional<std::string> SoloReplayPlayer::consume(ScriptSession& session,cons
     }
     default:return "未知的单机回放操作。";
     }
-    updateSoloReplayVisibility(session);
+    session.updateSoloReplayVisibility();
     return {};
 }
 }

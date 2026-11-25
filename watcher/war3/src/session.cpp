@@ -49,6 +49,14 @@ std::optional<std::string> ScriptSession::debugHandleType(std::uint32_t id){
 void ScriptSession::retainHandle(std::uint32_t id){if(!id)return;if(id<handleBase || id-handleBase>=objects_.size())throw std::runtime_error("Unknown session native handle");auto found=retainedHandles_.find(id);if(found!=retainedHandles_.end()){if(found->second.count==UINT32_MAX)throw std::runtime_error("Session handle reference budget exceeded");++found->second.count;return;}RetainedHandle value;value.count=1;auto& entry=objects_[id-handleBase];if(entry.alive && (entry.kind==NativeKind::Event || entry.kind==NativeKind::Boolean || entry.kind==NativeKind::Effect || entry.kind==NativeKind::Ability)){try{value.debugType=debugHandleType(id);}catch(const std::runtime_error&){}}retainedHandles_.emplace(id,std::move(value));}
 void ScriptSession::releaseHandle(std::uint32_t id){if(!id)return;auto found=retainedHandles_.find(id);if(found==retainedHandles_.end())throw std::runtime_error("Session handle reference underflow");if(!--found->second.count)retainedHandles_.erase(found);}
 std::uint32_t ScriptSession::retainedHandleCount(std::uint32_t id) const{auto found=retainedHandles_.find(id);return found==retainedHandles_.end()?0:found->second.count;}
+void ScriptSession::soloReplayAudit(SoloReplayMode mode) {
+    if(runtime_.ready() || soloReplayMode_!=SoloReplayMode::None)throw std::runtime_error("Solo replay audit requires a fresh session");
+    soloReplayMode_=mode;
+}
+void ScriptSession::rejectSoloReplay(std::string message) {
+    if(soloReplayError_.empty())soloReplayError_=std::move(message);
+    if(soloReplayMode_==SoloReplayMode::Play)throw std::runtime_error(soloReplayError_);
+}
 void ScriptSession::initialize() {if(failed_ || runtime_.ready())throw std::runtime_error("Session initialization requires a fresh instance");try{runtime_.initialize();}catch(...){failed_=true;throw;}}
 void ScriptSession::configure() {if(failed_ || configured_)throw std::runtime_error("Session configuration requires an unconfigured instance");try{if(!runtime_.ready())initialize();runtime_.invoke("config");configured_=true;}catch(...){failed_=true;throw;}}
 void ScriptSession::initializeTeamAlliances(SessionConfig& config) const {

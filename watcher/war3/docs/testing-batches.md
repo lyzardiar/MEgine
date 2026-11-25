@@ -1,5 +1,17 @@
 # 独立客户端测试队列
 
+## 人机遭遇战的单机录像（定向验证）
+
+`src/map_browser.cpp` 和 `src/map_preparation.*` 从配置阶段启用录像运行时检查。`src/session_ai.cpp`、`src/session_game.cpp` 和 `src/replay_solo_script.cpp` 检查实际 AI 模块和预加载模块。录制保留原对局中的用户预加载行为，播放拒绝用户文件。单机回放列表按参赛席位计数。`src/session_visibility.cpp` 在录制和播放的相同操作边界准备本地雾图和共享侦测缓存。
+
+Win32 Release 的 `war3`、`war3_replay_step_tests`、`war3_ai_tests` 构建通过。11 项回放 CPU 用例通过，新增覆盖地图与 AI 模块的启动限制、归档预加载入口和磁盘写入的拒绝。Booty Bay 的 `war3_ai_tests.exe <安装资源目录> <BootyBay 地图> 0 2` 通过，2 秒内记录人族 AI 的 5 个订单和 2 个队列。
+
+私有桌面 D3D9Ex 开启原创双席 EastGateDrill。电脑步兵越过阈值后才给本地英雄发放药水并解锁胜利。录制和独立进程回放均有同一瓶药水，英雄横坐标均为 1477.522217，终局均为 2.25 秒，胜利及摘要校验通过。两进程正常退出。另用已安装的 Booty Bay 从正式菜单确认退局，在计分命名保存后从正式列表播放。两轮终局分别为 47.4375 秒和 32 秒，均核对主动离场记录及终局摘要。人工检查 47.4375 秒的实帧，电脑行显示单位得分 225、资源得分 300。两轮地图及归档摘要保持一致。
+
+使用同一 Booty Bay 录像验证用户目录中的普通同名及超过 1 MiB 的 `SharedMelee.pld`。两种情况均在启动对局前拒绝播放、返回列表显示错误，录像摘要不变，进程正常退出。
+
+复现脚本与证据位于 `tmp/docs-artifacts/war3/solo-replay-melee-v1/`，包括 `build-delivery.log`、`build-final.log`、`verify.py`、`verify-standard.py`、`verify-preload-rejection.py`，以及 `run-e5a1e17dda`、`run-9f796e1a9a`、`run-c440a4e04e`、`preload-rejection-5278ef2295` 内的 `receipt.json`。四族长局、多人机席位的完整胜负及倍速交战仍待批次验证。
+
 ## 单人遭遇战结算保存和回放（定向验证）
 
 `src/replay_solo*`、`src/replay_preparation.*`、`src/map_preparation.*`、`src/game_loading.*`、`src/main.cpp`、`src/game_view.*`、`src/game_commands.cpp`、`src/game_flow_ui.cpp`、`src/replay_browser.cpp` 接入同构建普通 JASS 单机录像。地图和基础归档摘要校验依赖 `src/archive.*`。录像与 LAN 共用防覆盖发布，见 `src/replay_experimental.*`。支持范围见 [单人遭遇战录像](replay-experimental.md#单人遭遇战录像)。

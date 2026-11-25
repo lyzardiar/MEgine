@@ -72,10 +72,11 @@ void ReplayBrowser::prepared(){std::optional<Result> result;{std::lock_guard loc
     auto playerCount=selectedReplay_->game().playerCount;
     // Patch 1.29 moved observers to team 24 when it expanded the player slots.
     const auto observerTeam=selectedReplay_->header().version<29?12:24;
+    const bool solo=selectedReplay_->header().product==soloReplayProduct;
     for(const auto& record:selectedReplay_->records()){
         if(record.kind==ReplayRecordKind::TimeSlot)break;
         if(record.kind!=ReplayRecordKind::Setup || record.setup.slots.empty())continue;
-        playerCount=std::uint32_t(std::count_if(record.setup.slots.begin(),record.setup.slots.end(),[observerTeam](const LanSlot& slot){return slot.status==2 && slot.team!=observerTeam;}));
+        playerCount=std::uint32_t(std::count_if(record.setup.slots.begin(),record.setup.slots.end(),[observerTeam,solo](const LanSlot& slot){return slot.status==2 && (solo || slot.team!=observerTeam);}));
         break;
     }
     screen_.setText("NumPlayersValue",std::to_string(playerCount));
