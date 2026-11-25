@@ -24,10 +24,88 @@ WorldPoint point(float x,float y){return {real(x),real(y)};}
 std::pair<float,float> openArea(ScriptSession& session){
     auto& world=*session.world();auto bounds=world.bounds();for(float y=number(bounds.minY)+256;y<number(bounds.maxY)-256;y+=128)for(float x=number(bounds.minX)+256;x<number(bounds.maxX)-256;x+=128){bool free=true;for(int dy=-160;dy<=160 && free;dy+=32)for(int dx=-160;dx<=160;dx+=32)if(!world.pathPointFree(point(x+dx,y+dy),24,PathMovement::Ground)){free=false;break;}if(!free)continue;for(auto& [id,u]:session.units())if(!u->removing && !u->hidden() && number(u->life)>0 && std::hypot(number(u->x)-x,number(u->y)-y)<384+std::max(0.f,u->collision)){free=false;break;}if(free)return {x,y};}throw std::runtime_error("No open test area on selected map");
 }
+jass::Module orderQueueTestModule(Archives& archives,bool targetCallback){
+    auto program=jass::Program::read(archives);
+    if(!targetCallback)return jass::Module::compile(std::move(program));
+    auto sources=program.sources();
+    sources.push_back({"queue-callback-test.j",R"JASS(
+native OrderQueueTestEnqueueOnAttack takes unit actor, unit target returns nothing
+
+function OrderQueueTestOnAttack takes nothing returns nothing
+    call OrderQueueTestEnqueueOnAttack(GetTriggerUnit(),GetOrderTargetUnit())
+endfunction
+
+function OrderQueueTestInstallAttackCallback takes unit actor returns trigger
+    local trigger t = CreateTrigger()
+    call TriggerRegisterUnitEvent(t,actor,EVENT_UNIT_ISSUED_TARGET_ORDER)
+    call TriggerAddAction(t,function OrderQueueTestOnAttack)
+    return t
+endfunction
+)JASS","authored queue regression"});
+    return jass::Module::compile(jass::Program::parse(std::move(sources)));
+}
 }
 int wmain(int argc,wchar_t** argv){try{
-    if(argc<3 || argc>4 || (argc==4 && std::wstring(argv[3])!=L"stop-hold-queue" && std::wstring(argv[3])!=L"formation-queue-reservation" && std::wstring(argv[3])!=L"self-alliance" && std::wstring(argv[3])!=L"morph-movement" && std::wstring(argv[3])!=L"formation-duplicates" && std::wstring(argv[3])!=L"formation-completion" && std::wstring(argv[3])!=L"formation-speed" && std::wstring(argv[3])!=L"formation-facing" && std::wstring(argv[3])!=L"formation-settings" && std::wstring(argv[3])!=L"formation-wire" && std::wstring(argv[3])!=L"smart-bridge" && std::wstring(argv[3])!=L"invalid-location" && std::wstring(argv[3])!=L"pathing-toggle" && std::wstring(argv[3])!=L"combat-pathing-toggle" && std::wstring(argv[3])!=L"return-queue" && std::wstring(argv[3])!=L"invalid-immediate" && std::wstring(argv[3])!=L"pickup-path" && std::wstring(argv[3])!=L"invalid-build" && std::wstring(argv[3])!=L"invalid-player-item" && std::wstring(argv[3])!=L"invalid-player-target" && std::wstring(argv[3])!=L"invalid-player-ability" && std::wstring(argv[3])!=L"slot-order-permission" && std::wstring(argv[3])!=L"raw-item-order" && std::wstring(argv[3])!=L"invalid-point-id" && std::wstring(argv[3])!=L"invalid-target-id" && std::wstring(argv[3])!=L"invalid-immediate-id"))throw std::runtime_error("Usage: war3_order_queue_tests <data-root> <map> [invalid-location|pathing-toggle|combat-pathing-toggle|return-queue|invalid-immediate|pickup-path|invalid-build|invalid-player-item|invalid-player-target|invalid-player-ability|slot-order-permission|raw-item-order]");Archives archives(argv[1]);archives.mountMap(argv[2]);auto world=World::read(archives);auto info=world->data().info;ScriptSession session(jass::Module::compile(jass::Program::read(archives)),info);session.attachWorld(std::move(world));session.audioMuted(true);session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto invoke=[&](const char* name,std::initializer_list<jass::Value> args){return vm.invoke(name,{args.begin(),args.size()});};auto player=invoke("Player",{vm.integer(0)});auto [x,y]=openArea(session);
+    if(argc<3 || argc>4 || (argc==4 && std::wstring(argv[3])!=L"stop-hold-queue" && std::wstring(argv[3])!=L"formation-queue-reservation" && std::wstring(argv[3])!=L"self-alliance" && std::wstring(argv[3])!=L"morph-movement" && std::wstring(argv[3])!=L"formation-duplicates" && std::wstring(argv[3])!=L"formation-completion" && std::wstring(argv[3])!=L"formation-speed" && std::wstring(argv[3])!=L"formation-facing" && std::wstring(argv[3])!=L"formation-settings" && std::wstring(argv[3])!=L"formation-wire" && std::wstring(argv[3])!=L"smart-bridge" && std::wstring(argv[3])!=L"invalid-location" && std::wstring(argv[3])!=L"pathing-toggle" && std::wstring(argv[3])!=L"combat-pathing-toggle" && std::wstring(argv[3])!=L"return-queue" && std::wstring(argv[3])!=L"invalid-immediate" && std::wstring(argv[3])!=L"pickup-path" && std::wstring(argv[3])!=L"invalid-build" && std::wstring(argv[3])!=L"invalid-player-item" && std::wstring(argv[3])!=L"invalid-player-target" && std::wstring(argv[3])!=L"rejected-player-attack" && std::wstring(argv[3])!=L"invalid-player-ability" && std::wstring(argv[3])!=L"slot-order-permission" && std::wstring(argv[3])!=L"raw-item-order" && std::wstring(argv[3])!=L"invalid-point-id" && std::wstring(argv[3])!=L"invalid-target-id" && std::wstring(argv[3])!=L"invalid-immediate-id"))throw std::runtime_error("Usage: war3_order_queue_tests <data-root> <map> [rejected-player-attack|invalid-location|pathing-toggle|combat-pathing-toggle|return-queue|invalid-immediate|pickup-path|invalid-build|invalid-player-item|invalid-player-target|invalid-player-ability|slot-order-permission|raw-item-order]");Archives archives(argv[1]);archives.mountMap(argv[2]);auto world=World::read(archives);auto info=world->data().info;ScriptSession session(orderQueueTestModule(archives,argc==4 && std::wstring(argv[3])==L"rejected-player-attack"),info);session.attachWorld(std::move(world));session.audioMuted(true);session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto invoke=[&](const char* name,std::initializer_list<jass::Value> args){return vm.invoke(name,{args.begin(),args.size()});};auto player=invoke("Player",{vm.integer(0)});auto [x,y]=openArea(session);
     auto spawn=[&](float px,float py){auto handle=invoke("CreateUnit",{player,vm.integer(int(ObjectData::code("hfoo"))),vm.real(real(px)),vm.real(real(py)),vm.real(real(0))});require(session.units().contains(handle.bits),"Unit creation failed");auto u=session.units().at(handle.bits);u->collision=16;u->moveSpeed=real(256);u->acquireRange=real(0);u->pathing=false;return handle;};auto remove=[&](jass::Value unit){invoke("RemoveUnit",{unit});};auto nearPoint=[&](jass::Value unit,float px,float py){auto u=session.units().at(unit.bits);return std::hypot(number(u->x)-px,number(u->y)-py)<9;};auto move=[&](jass::Value unit,float px,float py,bool queued){PlayerCommand command;command.player=0;command.kind=PlayerCommandKind::GroundMove;command.units={unit.bits};command.xBits=real(px).bits();command.yBits=real(py).bits();command.queued=queued;return dispatchPlayerCommand(session,command);};
+
+    if(argc==4 && std::wstring(argv[3])==L"rejected-player-attack"){
+        auto attack=[&](jass::Value actor,jass::Value target){
+            PlayerCommand command;
+            command.player=0;
+            command.kind=PlayerCommandKind::TargetOrder;
+            command.units={actor.bits};
+            command.target=target.bits;
+            command.order=851983;
+            return dispatchPlayerCommand(session,command);
+        };
+
+        const auto actor=spawn(x,y);
+        const auto state=session.units().at(actor.bits);
+        require(move(actor,x+96,y,false)==1 && move(actor,x+96,y+96,true)==1,"Self attack queue setup failed");
+        require(attack(actor,actor)==0,"Attack on self was accepted");
+        require(state->currentOrder==851986 && state->playerOrders.size()==1,"Rejected attack on self cleared the movement queue");
+        session.advance(2);
+        require(nearPoint(actor,x+96,y+96),"Second movement did not run after the rejected attack");
+        remove(actor);
+
+        const auto fighter=spawn(x,y);
+        const auto opponent=invoke("Player",{vm.integer(1)});
+        const auto target=invoke("CreateUnit",{opponent,vm.integer(int(ObjectData::code("hfoo"))),vm.real(real(x+136)),vm.real(real(y)),vm.real(real(0))});
+        require(session.units().contains(target.bits),"Enemy attack target creation failed");
+        const auto defender=session.units().at(target.bits);
+        defender->acquireRange=real(0);
+        const auto passive=invoke("ConvertAllianceType",{vm.integer(0)});
+        invoke("SetPlayerAlliance",{player,opponent,passive,vm.boolean(false)});
+        invoke("SetPlayerAlliance",{opponent,player,passive,vm.boolean(false)});
+        session.advance(.125);
+        require(session.unitVisibleTo(target.bits,0),"Enemy attack target is not visible");
+        require(move(fighter,x+96,y,false)==1 && move(fighter,x+96,y+96,true)==1,"Enemy attack queue setup failed");
+        const auto attacker=session.units().at(fighter.bits);
+        bool callbackRan=false;
+        vm.bind("OrderQueueTestEnqueueOnAttack",[&](auto& runtime,auto args){
+            require(args.size()==2 && args[0].bits==fighter.bits && args[1].bits==target.bits,"Attack callback context differs");
+            require(!callbackRan && attacker->playerOrders.empty(),"Attack callback saw the old queue");
+            callbackRan=true;
+            require(move(fighter,x-96,y+96,true)==1,"Attack callback could not enqueue new movement");
+            return runtime.nothing();
+        });
+        const auto trigger=invoke("OrderQueueTestInstallAttackCallback",{fighter});
+        const auto life=number(defender->life);
+        require(attack(fighter,target)==1 && attacker->combat.target==target.bits,"Enemy attack was not accepted");
+        require(callbackRan && attacker->playerOrders.size()==1,"Accepted attack lost callback movement");
+        const auto& queued=attacker->playerOrders.front();
+        require(queued.kind==PlayerCommandKind::GroundMove && queued.xBits==real(x-96).bits() && queued.yBits==real(y+96).bits(),"Old queued movement survived the accepted attack");
+        session.advance(2);
+        require(number(defender->life)<life,"Accepted attack did not damage the target");
+        invoke("DestroyTrigger",{trigger});
+        remove(target);
+        session.advance(2);
+        require(nearPoint(fighter,x-96,y+96),"Callback movement did not execute after the attack ended");
+        require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+        std::cout<<"PASS rejected_player_attack_preserves_queue\nRESULT passed=1 failed=0 game_dll_loaded=false\n";
+        return 0;
+    }
 
     if(argc==4 && std::wstring(argv[3])==L"stop-hold-queue") {
         for(auto kind:{PlayerCommandKind::Stop,PlayerCommandKind::Hold}){auto actor=spawn(x,y);auto u=session.units().at(actor.bits);require(move(actor,x+128,y,false)==1,"Initial movement rejected");PlayerCommand command;command.player=0;command.kind=kind;command.units={actor.bits};command.queued=true;require(dispatchPlayerCommand(session,command)==1 && u->currentOrder==851986 && u->playerOrders.size()==1 && u->playerOrders.front().kind==kind,"Queued stop or hold interrupted movement");session.advance(.125);require(!u->holding && u->playerOrders.size()==1,"Queued stop or hold executed early");session.advance(2);require(u->playerOrders.empty() && nearPoint(actor,x+128,y) && (kind==PlayerCommandKind::Hold?(u->holding && u->currentOrder==851993):(!u->holding && !u->currentOrder)),"Queued stop or hold did not execute after movement");remove(actor);}auto actor=spawn(x,y);auto u=session.units().at(actor.bits);require(move(actor,x+128,y,false)==1,"Stop sequence movement rejected");PlayerCommand stop;stop.player=0;stop.kind=PlayerCommandKind::Stop;stop.units={actor.bits};stop.queued=true;require(dispatchPlayerCommand(session,stop)==1 && move(actor,x+128,y+128,true)==1,"Stop sequence queue rejected");session.advance(3);require(u->playerOrders.empty() && nearPoint(actor,x+128,y+128),"Queued stop lost the following movement");require(move(actor,x,y,false)==1 && move(actor,x,y+128,true)==1,"Immediate stop lanSetup failed");stop.queued=false;require(dispatchPlayerCommand(session,stop)==1 && u->playerOrders.empty(),"Immediate stop retained queued movement");remove(actor);std::cout<<"PASS queued_stop_hold_lifecycle\n";

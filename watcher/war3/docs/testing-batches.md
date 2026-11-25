@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 立即攻击被拒时保留 Shift 队列（定向验证）
+
+`src/player_commands.cpp` 的立即显式目标攻击保留现有命令匹配及同步脚本回调。分派前暂移旧队列及其调度索引，合法攻击继续替换旧队列。攻击被拒且同一单位的所有权、生命周期、战斗及施法状态和队列均未改变时，按原顺序恢复旧指令。回调排入的新指令仍由队列调度。
+
+旧版 Win32 基线中，普通自攻返回 0，旧队列从 1 项变为 0，单位只抵达第一目标。有效敌方攻击返回 1，替换旧队列且造成伤害。实测日志 `tmp/docs-artifacts/war3/p2-shift-queue-baseline/baseline.log`。
+
+Win32 Release 产品和 `war3_order_queue_tests` 增量构建通过。用已安装的 Booty Bay 作只读场地，并生成测试单位。`rejected-player-attack` 验证自攻拒绝后队列保留且第二段移动执行。合法攻击回调观察到旧队列已移出，回调排入的新移动在伤害发生、目标移除后执行。`invalid-player-target`、`stop-hold-queue`、`formation-queue-reservation` 定向回归合计 4 项通过。日志为同验收根的 `callback-run.log` 和 `run-fixed-e4982cdd39/`。正式窗口与多端操作留到命令功能批次。
+
 ## 主菜单冷启动的粒子和灯光档位（定向验证）
 
 `src/main.cpp` 在渲染器创建后、菜单模型加载和首帧前，读取已保存的视频设置并应用粒子及灯光档位。文件缺失时使用默认档位，读取异常时记录原错误并继续启动。
