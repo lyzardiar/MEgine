@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 长用户目录下的战役缓存写入（功能批次 3/3）
+
+路径为 `src/session_cache.cpp` 和 `tests/game_flow_tests.cpp`。战役缓存使用同目录短临时名，保留独占创建、刷盘、原子替换和失败清理。缓存目标名与读取格式沿用原规则。
+
+Win32 实测中，241 字符的目标路径使用 263 字符的旧临时名时，`CreateFileW` 返回错误 3。同目录的 199 字符临时路径创建成功。旧实现运行加长至至少 250 字符的 `cache-damage` 用例在首次持久化失败，退出 1。命令为从仓库根执行 `war3_game_flow_tests <data-root> tmp/docs-artifacts/war3/game-flow/fixture.w3m cache-damage`，原生探针与基线日志分别见 `tmp/docs-artifacts/war3/p2-humanx03/final-battle-agent/all-gone-frontend/atlas-fix/carry-verified/cache-path-audit/cache-path.log` 和 `tmp/docs-artifacts/war3/gamecache-long-path-qa/baseline-cache-damage.log`。
+
+Win32 Release 客户端和 game-flow 目标增量编译通过。修复后的 `cache-damage` 通过，退出 0，覆盖同目录重复写入、缓存重载、物品及单位字段、v1–v8 兼容和临时文件清理。日志见 `tmp/docs-artifacts/war3/gamecache-long-path-qa/fixed-cache-damage.log`。
+
+本批待验证 241 字符目录的正式 HumanX03 胜利、计分、间章及 HumanX04 双英雄继承，并集中检查缺省崖面及动态地表、小地图的采样。关注旧缓存兼容、重复写入、临时文件清理，以及两个英雄的经验、等级、技能、技能点和物品。
+
 ## 原版低分辨率地表图集（功能批次 2/3）
 
 路径为 `src/ground_texture.h`、`src/terrain_scene.cpp`、`src/terrain_blight.cpp` 和 `src/minimap_terrain.cpp`。地表首帧、动态地表和小地图采用同一采样。原版 Outland 的 `Oaby` 来自 `War3x.mpq/TerrainArt/Outland/Outland_Abyss.blp`，64×64，16 个 16×16 源块的透明掩码排列与其他 4×4 地表图集相同。采样保留掩码和变体索引，合成输出维持 64×64。两种原有图集的采样公式与像素一致。
