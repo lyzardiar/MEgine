@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 主菜单冷启动的粒子和灯光档位（定向验证）
+
+`src/main.cpp` 在渲染器创建后、菜单模型加载和首帧前，读取已保存的视频设置并应用粒子及灯光档位。文件缺失时使用默认档位，读取异常时记录原错误并继续启动。
+
+旧版在独立用户目录中经现有设置写入接口生成低档 `video.bin`，产品视频页显示低档，但隐藏 D3D9 主菜单首帧的渲染器读值均为 2。旧诊断与正式菜单画面在 `tmp/docs-artifacts/war3/p2-video-cold-start-d3d-v2/old-observe-low/`、`stock-low/`。
+
+Win32 Release 增量构建通过。修后只读观察分三个独立隐藏 D3D9 进程呈现主菜单首帧，均为实际呈现的 1258×904 画面，退出 0。低档首帧的粒子和灯光为 0/0，设置文件摘要保持一致。缺失文件时为 2/2，保持无文件。损坏文件时为 2/2，日志记录 `Unsupported video preferences size`，坏文件摘要保持一致。两组默认帧摘要相同，低档帧与其不同。复验入口和回执位于 `tmp/docs-artifacts/war3/p2-video-cold-start-d3d-v2/` 的 `verify-first-frame.ps1` 与 `fixed-first-frame-922e93ce.json`。
+
 ## 长用户目录下的命名回放发布（定向验证）
 
 结算保存使用的 `ExperimentalLanRecorder::save` 将临时文件放在 `Replays` 目录，改用 `src/temporary_file_path.h` 的同目录唯一临时路径。普通、partial 和自动命名沿用原规则，发布保留独占创建、刷盘、写穿透和已有回放保护。

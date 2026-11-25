@@ -129,6 +129,7 @@ int run(HINSTANCE instance) {
     struct Close { HWND window; ~Close() { if (IsWindow(window)) DestroyWindow(window); } } close{window};
     Renderer renderer(window, options.renderer == "d3d9-reference");
     log.write(std::string("driver=") + renderer.driver());
+    try{auto video=loadVideoPreferences(options.dataRoot);renderer.particleDetail(video.particleDetail);renderer.lightDetail(video.lightDetail);}catch(const std::exception& e){log.write(std::string("video_preferences_load_error=")+e.what());}
     state.renderer = &renderer;
     struct ClearRenderer {WindowState& state;~ClearRenderer(){state.renderer=nullptr;}} clearRenderer{state};
     Text text(renderer, font->bytes);
