@@ -1,5 +1,17 @@
 # 独立客户端测试队列
 
+## 局域网房间详情布局（定向验证）
+
+`src/lan_browser.cpp` 将选中地图的路径限定在 F4 房间模式下方的独立区域。路径沿用原有多行排版和裁剪，IPv4 状态、两个按钮及创建者信息均有独立空间。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `1c69f882798d`。本机私有桌面在 1258×904 和 778×744 下核对未选中、短路径、三行长路径，以及 F3 弹窗开合。路径和地址状态分别可读，客户端正常退出。复现命令为 `python -B tmp/docs-artifacts/war3/lan-address-layout-v1/verify.py --executable <Win32 Release 客户端>`，回执 `tmp/docs-artifacts/war3/lan-address-layout-v1/run-82dfb0d73e/receipt.json`。
+
+## 局域网持续同步与定向路由（阶段验证）
+
+本机三端使用 `56d3ca04ad33`，从正式房间列表以 F4 进入原创 `Quartermaster-UnitAudit.w3m`。三端完成 2、4、6、8、10、11 分钟的移动、生产和状态核对。第三端正常离场后，房主再次发出移动指令，剩余两端推进到第 724 模拟秒。三端退出 0。录像逐片核对时长、发送席位和动作字节，第三端共同前缀 6,626 片，剩余两端共同前缀 7,252 片。复现脚本 `launch-private.ps1`、`verify-long.ps1` 和 `verify-long-replays.ps1` 位于 `tmp/docs-artifacts/war3/lan-playable-mode-v1/long-match/`，回执和内存采样在其 `long-12m-0cb4f41b/`。
+
+跨机路由使用 `1c69f882798d`。本机正式客户端通过 CloudLAN 定向发现 TL-AI-2026 上的临时经典房间，选中后通过实际 TCP 发送正确房间的加入请求。两端端口记录匹配，客户端呈现样本房间返回的经典拒绝码 9，并能回到房间列表。复现使用 `tmp/docs-artifacts/war3/lan-cross-route-v1/{respond.ps1,verify.py}`，复核回执为 `route-result.json`。远端临时监听与脚本已清理。双正式客户端跨机开局与同步仍待有资源的远端环境。
+
 ## 局域网加入拒绝提示与重试（定向验证）
 
 `src/lan_handshake.h`、`src/lan_host.cpp` 和 `src/lan_lobby.*` 让同构建房间在握手后分别提示玩家名已被使用或房间已满。经典房间继续使用原拒绝报文和原因码。`src/lan_browser.cpp` 在重名提示期间维持房间发现，返回时保留原房间选区及搜索设置，并将焦点移到玩家名。
@@ -14,7 +26,7 @@ Win32 Release 构建通过，客户端 SHA-256 前缀为 `56d3ca04ad33`。运行
 
 Win32 Release 的 `war3` 和 `war3_lan_departure_tests` 构建通过，客户端 SHA-256 前缀为 `606c596e7880`。运行 `war3_lan_departure_tests.exe discovery-address` 与 `game-info-capacity`，共 2 项通过、0 项失败。私有桌面 D3D9Ex 用本机两个独立客户端，验证 F4 切换、按钮切换、F4 连发及地址弹窗期间的输入隔离。普通来客将 `127.0.0.2` 改为 `127.0.0.1`，经典列表无法加入同构建房间，切换后经实际 TCP 连接开局。两端在原创夹具的第 15 模拟秒结算，各自保存 15 秒的完整录像并正常退出。来客从结算返回与从主菜单重开时，均保留上次模式和手动 IPv4 地址。
 
-复现命令为 `pwsh -File tmp/docs-artifacts/war3/lan-playable-mode-v1/verify.ps1 -Executable <Win32 Release 客户端>`。最终构建及回执为脚本目录下的 `frozen-606c596e7880/war3.exe` 和 `run-ae52235afc/receipt.json`，旧构建缺少 F4 的基线回执为 `run-d59355b68b/receipt.json`。跨机路由和长局同步安排在 LAN 阶段验收。
+复现命令为 `pwsh -File tmp/docs-artifacts/war3/lan-playable-mode-v1/verify.ps1 -Executable <Win32 Release 客户端>`。最终构建及回执为脚本目录下的 `frozen-606c596e7880/war3.exe` 和 `run-ae52235afc/receipt.json`，旧构建缺少 F4 的基线回执为 `run-d59355b68b/receipt.json`。本机长局和跨机定向路由见上方阶段验证。
 
 首轮三端长局使用 `606c596e7880` 和原创 `Quartermaster-UnitAudit.w3m`。三端经 F4 开局，移动、生产和状态在第 23 模拟秒一致。三份部分录像的前 500 个时间片及 3 个动作逐字节一致，覆盖 50 秒。第三端随后报告 `bad allocation` 并退出 1，剩余两端由验证脚本收尾。Windows 事件 2004 在同一运行窗口记录系统提交余量约 256 MiB。该轮未达到 2–12 分钟检查点。回执和系统事件摘要位于 `tmp/docs-artifacts/war3/lan-playable-mode-v1/long-match/long-12m-5295ca98/`。
 
@@ -26,7 +38,7 @@ Win32 Release 的 `war3`、`war3_lan_departure_tests` 构建通过。分别运�
 
 两轮私有桌面 D3D9Ex 从正式菜单启动，使用本机回环房主。回环轮输入 127.0.0.1 成功，拒绝 127.0.0.2，取消保留旧地址，清空仍使用回环。普通轮从 127.0.0.2 切换到 127.0.0.1，清空进入广播模式，F5 分别保持广播和定向，返回主菜单并重新打开仍保留 127.0.0.1。两轮均选中实际房间并进入大厅，核对房主和来客两个 PID 的 TCP 连接互相对应，全部正常退出。
 
-复现命令是 `python -B tmp/docs-artifacts/war3/lan-address-ui-v1/verify.py --executable <Win32 Release 客户端>`。普通轮另加 `--normal-peer`。回执在 `tmp/docs-artifacts/war3/lan-address-ui-v1/run-4057ed9a93/receipt.json` 和 `run-6e9c4ab646/receipt.json`。对局结束回列表的地址恢复见上方同构建对局入口。跨机路由和系统剪贴板仍待阶段验证。
+复现命令是 `python -B tmp/docs-artifacts/war3/lan-address-ui-v1/verify.py --executable <Win32 Release 客户端>`。普通轮另加 `--normal-peer`。回执在 `tmp/docs-artifacts/war3/lan-address-ui-v1/run-4057ed9a93/receipt.json` 和 `run-6e9c4ab646/receipt.json`。对局结束回列表的地址恢复和跨机定向路由见上方记录。系统剪贴板仍待独立 Windows 会话验证。本机隔离窗口站探针分别遇到命名站创建拒绝及自动命名站已存在，回执位于 `tmp/docs-artifacts/war3/lan-address-clipboard-v1/`。
 
 ## 快存与单机录像同构建集成验证（批次 3/3）
 

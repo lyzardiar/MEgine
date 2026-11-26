@@ -141,7 +141,16 @@ std::string LanBrowser::draw(const UiInput& rawInput,std::wstring_view character
     float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;auto quad=[&](GlueScreen::Rect r,DWORD color){renderer_.rect(left+r.x*scale,top+r.y*scale,r.w*scale,r.h*scale,color);};if(nameFocus_){quad({name.x,name.y,name.w,.001f},0xffffcc55);quad({name.x,name.y+name.h-.001f,name.w,.001f},0xffffcc55);}
     for(size_t row=0;row<rows && scroll_+row<games.size();++row){size_t index=scroll_+row;auto area=GlueScreen::Rect{list.x+.004f,list.y+.004f+float(row)*step,list.w-.0245f,step};if(!selection_.empty() && index==selected_)quad(area,0x9f344b6b);const auto& game=games[index];auto label=display(game.name)+(game.name.starts_with(experimentalLanPrefix)?"  (空位 "+std::to_string(game.slotsAvailable)+" / ":"  (槽位 ")+std::to_string(game.slotsTotal)+")";screen_.textAt("StandardInfoTextTemplate",label,area,true,!selection_.empty() && index==selected_,true,.013f);}
     screen_.backdropAt("StandardScrollBarBackdrop",track);screen_.backdropAt("StandardScrollBarIncButtonBackdrop",up);screen_.backdropAt("StandardScrollBarDecButtonBackdrop",down);screen_.backdropAt("StandardThumbButtonBackdrop",{track.x+.00325f,track.y+.015f+(maximum?float(scroll_)/float(maximum)*travel:0),.01f,.01f});
-    if(!selection_.empty())screen_.textAt("StandardInfoTextTemplate",display(games[selected_].mapPath),screen_.bounds("MapInfoPaneContainer"),true,false,true,.011f);else if(games.empty() && discovery_)screen_.textAt("StandardInfoTextTemplate","正在搜索局域网游戏…",{list.x+.01f,list.y+.01f,list.w-.03f,.025f},true,false,true,.011f);if(!error_.empty())screen_.textAt("StandardInfoTextTemplate",error_,{.025f,.46f,.42f,.025f},true,false,true,.011f);quad(addressButton,hit(addressButton,input.x,input.y)?0xff45668e:0xff304762);screen_.textAt("StandardInfoTextTemplate","按 IP 搜索 (F3)",addressButton,true,false,false,.012f);
+    if(!selection_.empty()){
+        auto mapPathBounds=screen_.bounds("MapInfoPaneContainer");
+        const float pathTop=roomModeButton.y+roomModeButton.h+.014f;
+        mapPathBounds.h=std::max(0.f,mapPathBounds.y+mapPathBounds.h-pathTop-.008f);
+        mapPathBounds.y=pathTop;
+        screen_.textAt("StandardInfoTextTemplate",display(games[selected_].mapPath),mapPathBounds,true,false,true,.011f);
+    }else if(games.empty() && discovery_)screen_.textAt("StandardInfoTextTemplate","正在搜索局域网游戏…",{list.x+.01f,list.y+.01f,list.w-.03f,.025f},true,false,true,.011f);
+    if(!error_.empty())screen_.textAt("StandardInfoTextTemplate",error_,{.025f,.46f,.42f,.025f},true,false,true,.011f);
+    quad(addressButton,hit(addressButton,input.x,input.y)?0xff45668e:0xff304762);
+    screen_.textAt("StandardInfoTextTemplate","按 IP 搜索 (F3)",addressButton,true,false,false,.012f);
     auto targetLabel=loopbackOnly_?"本机回环 127.0.0.1":discoveryAddress_.empty()?std::string("自动搜索"):"搜索地址 "+discoveryAddress_;
     screen_.textAt("StandardInfoTextTemplate",targetLabel,{addressButton.x,addressButton.y+addressButton.h+.006f,addressButton.w,.023f},true,false,true,.011f);
     quad(roomModeButton,hit(roomModeButton,input.x,input.y)?0xff45668e:0xff304762);
