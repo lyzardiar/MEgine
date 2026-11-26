@@ -6,7 +6,9 @@
 
 Win32 Release 构建通过，客户端 SHA-256 前缀为 `68b06976feb9`。执行 `war3_lan_departure_tests.exe handshake-failures`、`join-reasons`、`join-close`，共 13 项通过、0 项失败。其中 6 项验证在加入前处理不同摘要、旧拒绝、不同能力头、正常 FIN 和 15 秒超时，失败均未收到席位或地图通知。
 
-私有桌面执行 `python -B tmp/docs-artifacts/war3/lan-build-verification-v1/verify.py --executable <Win32 Release 客户端>`，用摘要不同的临时副本实测专用提示及鼠标取消。独立一轮用 `--legacy-host <58aea723f00c 构建> --esc` 实测通用提示和 Esc。两轮都核对实际 TCP 拒绝、原房间保留、直接按 Enter 重试，以及同构建来客随后入房。回执为 `overlay-0144acee00/receipt.json` 和 `legacy-b5455c4a51/receipt.json`，位于脚本目录。超时和中断目前有传输层定向覆盖，正式窗口上的呈现留待阶段验证。
+私有桌面执行 `python -B tmp/docs-artifacts/war3/lan-build-verification-v1/verify.py --executable <Win32 Release 客户端>`，用摘要不同的临时副本实测专用提示及鼠标取消。独立一轮用 `--legacy-host <58aea723f00c 构建> --esc` 实测通用提示和 Esc。两轮都核对实际 TCP 拒绝、原房间保留、直接按 Enter 重试，以及同构建来客随后入房。回执为 `overlay-0144acee00/receipt.json` 和 `legacy-b5455c4a51/receipt.json`，位于脚本目录。
+
+同一构建运行同目录的 `verify-timeout-ui.py`。本机样本房间保持静默时，正式客户端于 15.018 秒主动关闭连接并显示验证超时。返回后直接按 Enter 重试，样本房间发出 TCP FIN 后实际显示连接中断。两次都核对双方 TCP 端点与完整 80 字节握手，均未发送普通加入请求。鼠标取消和 Esc 都保留原选区。正式画面已查看，回执为 `timeout-ui-e3da863c81/receipt.json`。
 
 ## 局域网玩家名跨进程保留（定向验证）
 
