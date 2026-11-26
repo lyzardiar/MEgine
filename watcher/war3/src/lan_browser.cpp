@@ -31,7 +31,7 @@ std::optional<std::wstring> pasteAddress(){
 LanBrowser::LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress,bool loopbackOnly,bool matchHandoffEnabled) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\LocalMultiplayerJoin.fdf","LocalMultiplayerJoin"),archives_(archives),images_(images),renderer_(renderer),text_(text),log_(log),discoveryAddress_(discoveryAddress),matchHandoffEnabled_(matchHandoffEnabled),loopbackOnly_(loopbackOnly) {screen_.focusEnabled(false);start();}
 std::optional<LanLobbyHandoff> LanBrowser::takeHandoff(){if(!lobby_)return {};auto handoff=lobby_->takeHandoff();if(handoff)lobby_.reset();return handoff;}
 std::optional<LanHostHandoff> LanBrowser::takeHostHandoff(){if(!host_)return {};auto handoff=host_->takeHandoff();if(handoff)host_.reset();return handoff;}
-std::string LanBrowser::pollMinimized(){if(host_)return host_->pollMinimized();if(lobby_)return lobby_->pollMinimized();pollDiscovery();return {};}
+std::string LanBrowser::pollMinimized(){if(host_)return host_->pollMinimized();if(lobby_){auto action=lobby_->pollMinimized();if(lobby_->needsDifferentPlayerName())pollDiscovery();return action;}pollDiscovery();return {};}
 void LanBrowser::pollDiscovery(){
     if(discovery_)try{auto now=GetTickCount64();if(now>=nextSearch_){discovery_->refresh();nextSearch_=now+4000;}discovery_->poll();}
     catch(const std::exception& e){discovery_.reset();error_="局域网搜索中断。按 F5 重试。";log_.write(std::string("lan_discovery_failed=")+e.what());}
@@ -107,7 +107,18 @@ void LanBrowser::drawAddress(const UiInput& input){
     button(addressSearch,"搜索");button(addressCancel,"取消");
 }
 std::string LanBrowser::draw(const UiInput& rawInput,std::wstring_view characters,bool addressShortcut,bool roomModeShortcut){
-    if(host_){auto action=host_->draw(rawInput,characters);if(action=="CancelButton"){host_.reset();start();}else if(action=="PrepareGame")return action;return {};}if(lobby_){auto action=lobby_->draw(rawInput,characters);if(action=="CancelButton"){lobby_.reset();start();}else if(action=="PrepareGame")return action;return {};}
+    if(host_){auto action=host_->draw(rawInput,characters);if(action=="CancelButton"){host_.reset();start();}else if(action=="PrepareGame")return action;return {};}
+    if(lobby_){
+        auto action=lobby_->draw(rawInput,characters);
+        bool rename=lobby_->needsDifferentPlayerName();
+        if(rename)pollDiscovery();
+        if(action=="CancelButton"){
+            lobby_.reset();
+            if(rename)nameFocus_=true;
+            if(!rename || !discovery_)start();
+        }else if(action=="PrepareGame")return action;
+        return {};
+    }
     const bool opened=!addressOpen_ && (addressShortcut || (rawInput.key==VK_F3 && !rawInput.keyRepeat && !rawInput.control && !rawInput.keyAlt) || click(addressButton,rawInput));
     if(opened){addressOpen_=true;addressError_.clear();addressDraft_=wide(discoveryAddress_);addressCursor_=addressDraft_.size();addressSelected_=true;}
     const bool addressInput=addressOpen_;

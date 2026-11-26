@@ -3,6 +3,7 @@
 #include "lan_actions.h"
 #include "lan_address.h"
 #include "lan_discovery.h"
+#include "lan_handshake.h"
 #include "lan_host.h"
 #include "lan_join.h"
 #include <algorithm>
@@ -105,6 +106,32 @@ void discoveryCapacity(){
     }
     expect(2,2);
 }
+void joinRejectionReasons(bool sameBuild){
+    LanHostSettings settings;settings.gameName="JoinRejectionTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.width=64;settings.height=64;settings.loopbackOnly=true;settings.experimentalHandshake=sameBuild;settings.slots.resize(2);
+    for(unsigned i=0;i<settings.slots.size();++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}
+    LanHost host(settings);LanDiscovery discovery(true,LanDiscovery::defaultVersion,"127.0.0.1");discovery.refresh();
+    auto wait=[&](auto done,const char* failure){
+        auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(3);
+        while(!done()){requireJoin(std::chrono::steady_clock::now()<deadline,failure);host.poll();std::this_thread::sleep_for(std::chrono::milliseconds(1));}
+    };
+    wait([&]{discovery.poll();return !discovery.games().empty();},"Join rejection test room was not discovered");
+    auto room=discovery.games().front();requireJoin(room.name==settings.gameName,"Unexpected join rejection test room");
+    auto connect=[&](const char* name,LanJoinState expected){
+        auto peer=std::make_unique<LanJoin>(room,name);
+        if(sameBuild)requireJoin(peer->enableExperimentalHandshake(),"Cannot start join rejection test handshake");
+        wait([&]{peer->poll();return peer->state()!=LanJoinState::Connecting && peer->state()!=LanJoinState::Joining;},"Join rejection test connection did not finish");
+        requireJoin(peer->state()==expected,"Join rejection test reached an unexpected state");return peer;
+    };
+    auto duplicate=connect("hOsT",LanJoinState::Rejected);
+    requireJoin(duplicate->rejectionCode()==(sameBuild?lanRejectNameInUse:9) && host.players().size()==1,"Duplicate name rejection or seat allocation differs");
+    auto renamed=connect("Renamed",LanJoinState::Lobby);
+    requireJoin(host.players().size()==2,"Renamed player did not take the seat");
+    auto full=connect("Waiting",LanJoinState::Rejected);
+    requireJoin(full->rejectionCode()==(sameBuild?lanRejectRoomFull:9) && host.players().size()==2,"Full room rejection or seat allocation differs");
+    renamed->cancel();wait([&]{return host.players().size()==1;},"Departing player did not release the seat");
+    auto retry=connect("Waiting",LanJoinState::Lobby);
+    requireJoin(host.players().size()==2,"Retry did not take the released seat");
+}
 }
 int main(int argc,char** argv){
     try{
@@ -121,6 +148,10 @@ int main(int argc,char** argv){
         }
         if(argc==2 && std::string_view(argv[1])=="discovery-address"){
             discoveryAddress();std::cout<<"PASS numeric_ipv4_discovery_address\nRESULT passed=1 failed=0\n";return 0;
+        }
+        if(argc==2 && std::string_view(argv[1])=="join-reasons"){
+            joinRejectionReasons(false);std::cout<<"PASS classic_join_rejections\n";
+            joinRejectionReasons(true);std::cout<<"PASS same_build_join_rejections_and_retries\nRESULT passed=2 failed=0\n";return 0;
         }
         auto require=[](bool ok,const char* text){if(!ok)throw std::runtime_error(text);};LanHostSettings settings;settings.gameName="M3LeaveTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.map.info=2;settings.map.crc=3;settings.width=64;settings.height=64;settings.experimentalHandshake=true;settings.loopbackOnly=true;settings.slots.resize(3);for(unsigned i=0;i<3;++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}LanHost host(settings);LanDiscovery discovery(true,LanDiscovery::defaultVersion,"127.0.0.1");discovery.refresh();std::unique_ptr<LanJoin> first,second;
         auto tick=[&]{host.poll();discovery.poll();if(first)first->poll();if(second)second->poll();};auto wait=[&](const std::function<bool()>& done,const char* message){auto limit=std::chrono::steady_clock::now()+std::chrono::seconds(15);while(!done()){tick();if(std::chrono::steady_clock::now()>limit)throw std::runtime_error(message);std::this_thread::sleep_for(std::chrono::milliseconds(1));}};

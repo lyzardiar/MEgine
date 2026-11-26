@@ -5,6 +5,8 @@
 #include <vector>
 
 namespace war3 {
+inline constexpr std::uint32_t lanRejectNameInUse=0x4d334c01,lanRejectRoomFull=0x4d334c02;
+
 inline const std::string& executableDigest() {
     static const auto digest=[] {
         std::array<wchar_t,32768> path{};auto length=GetModuleFileNameW(nullptr,path.data(),DWORD(path.size()));

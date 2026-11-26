@@ -52,6 +52,7 @@ public:
     LanLobby(Archives& archives,Images& images,Renderer& renderer,Text& text,const LanGame& game,std::string playerName);
     std::string draw(const UiInput& input,std::wstring_view characters);
     std::string pollMinimized();
+    bool needsDifferentPlayerName() const;
     // Enables ready reporting and loading only when the caller can own the prepared match.
     bool enableMatchHandoff();
     // Valid only on the PrepareGame action; moves the live connection exactly once.

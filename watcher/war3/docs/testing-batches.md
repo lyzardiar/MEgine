@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 局域网加入拒绝提示与重试（定向验证）
+
+`src/lan_handshake.h`、`src/lan_host.cpp` 和 `src/lan_lobby.*` 让同构建房间在握手后分别提示玩家名已被使用或房间已满。经典房间继续使用原拒绝报文和原因码。`src/lan_browser.cpp` 在重名提示期间维持房间发现，返回时保留原房间选区及搜索设置，并将焦点移到玩家名。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `56d3ca04ad33`。运行 `war3_lan_departure_tests.exe join-reasons` 和 `join-close`，共 7 项通过、0 项失败。真实本机 TCP 检查验证重名、改名加入、满员及席位释放后重试。两个正式客户端均以默认名称进入同构建模式，来客收到重名提示。在提示上停留 38 秒后按 Esc 返回，原房间仍选中且名称输入已聚焦。改名后加入同一房主，双端退出 0。满员提示的呈现与鼠标取消路径待阶段验证。
+
+正式窗口复现使用 `pwsh -File tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script tmp/docs-artifacts/war3/lan-join-rejection-v1/verify.ps1 -Executable <Win32 Release 客户端>`。最终构建和回执位于 `tmp/docs-artifacts/war3/lan-join-rejection-v1/{frozen-56d3ca04ad33/war3.exe,run-162cb18cf4/receipt.json}`。
+
 ## 局域网同构建对局入口（定向验证）
 
 `src/lan_browser.*` 和 `src/main.cpp` 在房间列表增加 F4 和鼠标切换。默认经典房间，`--experimental-local-lan` 可选择初始同构建模式。两类列表按房间前缀分别显示，切换清除选区，返回列表恢复模式和 IPv4 地址。`src/lan_host_ui.cpp` 阻止经典建房使用同构建标记前缀。对局沿用现有握手、地图载入、时间片和录像。
@@ -7,6 +15,8 @@
 Win32 Release 的 `war3` 和 `war3_lan_departure_tests` 构建通过，客户端 SHA-256 前缀为 `606c596e7880`。运行 `war3_lan_departure_tests.exe discovery-address` 与 `game-info-capacity`，共 2 项通过、0 项失败。私有桌面 D3D9Ex 用本机两个独立客户端，验证 F4 切换、按钮切换、F4 连发及地址弹窗期间的输入隔离。普通来客将 `127.0.0.2` 改为 `127.0.0.1`，经典列表无法加入同构建房间，切换后经实际 TCP 连接开局。两端在原创夹具的第 15 模拟秒结算，各自保存 15 秒的完整录像并正常退出。来客从结算返回与从主菜单重开时，均保留上次模式和手动 IPv4 地址。
 
 复现命令为 `pwsh -File tmp/docs-artifacts/war3/lan-playable-mode-v1/verify.ps1 -Executable <Win32 Release 客户端>`。最终构建及回执为脚本目录下的 `frozen-606c596e7880/war3.exe` 和 `run-ae52235afc/receipt.json`，旧构建缺少 F4 的基线回执为 `run-d59355b68b/receipt.json`。跨机路由和长局同步安排在 LAN 阶段验收。
+
+首轮三端长局使用 `606c596e7880` 和原创 `Quartermaster-UnitAudit.w3m`。三端经 F4 开局，移动、生产和状态在第 23 模拟秒一致。三份部分录像的前 500 个时间片及 3 个动作逐字节一致，覆盖 50 秒。第三端随后报告 `bad allocation` 并退出 1，剩余两端由验证脚本收尾。Windows 事件 2004 在同一运行窗口记录系统提交余量约 256 MiB。该轮未达到 2–12 分钟检查点。回执和系统事件摘要位于 `tmp/docs-artifacts/war3/lan-playable-mode-v1/long-match/long-12m-5295ca98/`。
 
 ## 局域网列表按 IPv4 搜索（定向验证）
 
