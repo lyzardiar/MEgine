@@ -7,6 +7,7 @@
 #include "lan_setup.h"
 #include "lan_local_identity.h"
 #include "lan_long_match.h"
+#include "map_preparation.h"
 #include <bit>
 #include <chrono>
 #include <thread>
@@ -18,6 +19,23 @@
 using namespace war3;
 void need(bool x,const char* m){if(!x)throw std::runtime_error(m);}
 int wmain(int argc,wchar_t** argv){try{
+ if(argc==5 && std::wstring_view(argv[1])==L"verify-common-load"){
+     const auto mapPath=fs::path(argv[3]);const auto size=fs::file_size(mapPath);
+     need(size>0 && size<=256u*1024u*1024u,"Invalid map for LAN common resource preparation test");
+     auto bytes=std::make_shared<Bytes>(std::size_t(size));std::ifstream map(mapPath,std::ios::binary);
+     need(bool(map.read(reinterpret_cast<char*>(bytes->data()),std::streamsize(size))),"Cannot read preparation test map");
+     MapPreparation preparation(argv[2],true);LanSessionSetup setup;setup.randomSeed=1;
+     const auto request=preparation.requestLanMemory(bytes,"LAN common resource test",std::move(setup),true,{},utf8(argv[4]));
+     const auto until=std::chrono::steady_clock::now()+std::chrono::seconds(25);
+     while(std::chrono::steady_clock::now()<until){
+         if(auto result=preparation.poll()){
+             need(result->request==request && !result->session && result->error=="局域网载入需要相同的基础资源。","LAN preparation did not reject different mounted common archives");
+             std::cout<<"PASS lan_preparation_common_digest\nRESULT passed=1 failed=0\n";return 0;
+         }
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+     }
+     throw std::runtime_error("LAN common resource preparation test timed out");
+ }
  need(argc>=5,"Usage: war3_lan_process_tests <host|peer|victim|guest> <data-root> <unique-id> <sync|abrupt|three|long> [match-map output-dir]");
  const std::wstring_view mode=argv[4],role=argv[1];
  const bool longMatch=mode==L"long",three=mode==L"three",abrupt=three || mode==L"abrupt",multi=three || longMatch;

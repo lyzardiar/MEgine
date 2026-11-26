@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 同构建局域网基础归档一致性（定向验证）
+
+`src/lan_browser.*`、`src/lan_mapcheck.*` 在后台计算实际挂载的基础归档摘要。`src/lan_handshake.h`、`src/lan_host.*`、`src/lan_join.*` 在构建握手之后、普通加入之前交换并核对摘要。房主在摘要不符时拒绝分配席位，`src/lan_lobby.*` 显示基础资源不符。`src/map_preparation.*` 在加载线程对实际使用的归档复算，通过后才准备地图与会话。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `3a7de980656d`。运行 `war3_lan_departure_tests.exe` 的 `common-resources`、`handshake-failures`、`join-reasons`、`join-close`，以及 `war3_lan_process_tests.exe verify-common-load`，共 17 项通过、0 项失败。`war3_replay_step_tests.exe` 另行通过。
+
+三个正式客户端均使用同一构建和原创 `CombatOutcome.w3m`。仅在负例的 `War3Patch.mpq` 隔离副本增加测试成员，地图校验脚本的摘要保持一致。TCP 探针在发出普通加入请求前收到 `0x4d334c04`，原房间仍有 1 个空位。资源一致的来客随后加入，双方进入对局，在第 15 模拟秒结算并各保存 15 秒录像。三进程退出 0，已查看中文拒绝提示与双席结算实帧。
+
+复现使用 `pwsh -File tmp/docs-artifacts/war3/lan-common-resources-v1/verify.ps1 -Executable <Win32 Release 客户端>`，夹具清单 `fixture.json` 及回执 `run-fdfce3ffd7/receipt.json` 位于同一目录。
+
 ## 局域网构建验证失败与重试（定向验证）
 
 `src/lan_handshake.h`、`src/lan_host.cpp` 和 `src/lan_join.*` 在 TCP 建立后按阶段判定握手结果。同协议头且可执行摘要不同时，房主返回专用原因。来客区分摘要不符、无效或旧房主通用回应、验证超时及中断。`src/lan_lobby.*` 显示对应提示，`src/lan_browser.cpp` 在失败期间维持房间发现，返回时保留仍可发现的原选区。经典加入的原因码与席位分配流程沿用原有路径。

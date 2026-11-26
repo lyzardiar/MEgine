@@ -55,7 +55,7 @@ public:
     bool needsDifferentPlayerName() const;
     bool keepsRoomSelection() const;
     // Enables ready reporting and loading only when the caller can own the prepared match.
-    bool enableMatchHandoff();
+    bool enableMatchHandoff(std::string commonDigest);
     // Valid only on the PrepareGame action; moves the live connection exactly once.
     std::optional<LanLobbyHandoff> takeHandoff();
     // Available only after all fields match the host declaration.

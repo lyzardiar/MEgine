@@ -58,22 +58,26 @@ LanMapCheck calculateLanMapCheck(Archives& common,std::string_view advertisedPat
 LanMapCheck calculateLanMapCheck(Archives& common,std::shared_ptr<const Bytes> bytes,std::string_view label){return calculateMemory(common,std::move(bytes),label,nullptr);}
 struct LanMapCheckTaskState {
     std::atomic_bool canceled=false;
+    std::stop_source digestStop;
     std::mutex mutex;
     std::optional<LanMapCheckOutcome> outcome;
 };
 namespace {
-struct MapJob {std::unique_ptr<Archives> archives;std::string path,expectedSha256;fs::path replaySidecar;std::shared_ptr<const Bytes> bytes;std::shared_ptr<LanMapCheckTaskState> state;bool includeMapInfo=false,includeSnapshot=false;};
+struct MapJob {std::unique_ptr<Archives> archives;std::string path,expectedSha256;fs::path replaySidecar;std::shared_ptr<const Bytes> bytes;std::shared_ptr<LanMapCheckTaskState> state;bool includeMapInfo=false,includeSnapshot=false,includeCommonDigest=false;};
 class MapWorker {
     std::mutex mutex_;std::condition_variable changed_;std::unique_ptr<MapJob> job_;std::shared_ptr<LanMapCheckTaskState> active_;bool occupied_=false,stopping_=false;std::thread thread_;
     void run(){
-        for(;;){std::unique_ptr<MapJob> job;{std::unique_lock lock(mutex_);changed_.wait(lock,[this]{return stopping_ || job_;});if(!job_ && stopping_)return;job=std::move(job_);}LanMapCheckOutcome outcome;try{if(!job->state->canceled.load(std::memory_order_acquire)){MapInfo info;auto outInfo=job->includeMapInfo?&info:nullptr;if(job->includeSnapshot){auto snapshot=job->replaySidecar.empty()?readSnapshot(job->archives->root(),job->path,&job->state->canceled):readSnapshotFile(job->replaySidecar,&job->state->canceled);if(!job->expectedSha256.empty() && sha256(*snapshot.second)!=job->expectedSha256)throw std::runtime_error("Replay map SHA-256 mismatch");outcome.value=calculateMemory(*job->archives,snapshot.second,utf8(snapshot.first.wstring()),&job->state->canceled,outInfo);outcome.value->resolvedPath=std::move(snapshot.first);outcome.snapshot=std::move(snapshot.second);}else if(job->bytes){if(job->includeMapInfo)outcome.memorySha256=sha256(*job->bytes);checkCanceled(&job->state->canceled);outcome.value=calculateMemory(*job->archives,std::move(job->bytes),job->path,&job->state->canceled,outInfo);}else outcome.value=calculate(*job->archives,job->path,&job->state->canceled,outInfo);if(job->includeMapInfo)outcome.mapInfo=std::move(info);}}catch(const std::exception& e){outcome.error=e.what();}catch(...){outcome.error="LAN map verification failed";}{std::lock_guard lock(mutex_);occupied_=false;active_.reset();}{std::lock_guard lock(job->state->mutex);if(!job->state->canceled.load(std::memory_order_acquire))job->state->outcome=std::move(outcome);}}
+        for(;;){std::unique_ptr<MapJob> job;{std::unique_lock lock(mutex_);changed_.wait(lock,[this]{return stopping_ || job_;});if(!job_ && stopping_)return;job=std::move(job_);}LanMapCheckOutcome outcome;try{if(!job->state->canceled.load(std::memory_order_acquire)){if(job->includeCommonDigest)outcome.commonDigest=job->archives->commonDigest(job->state->digestStop.get_token());else{MapInfo info;auto outInfo=job->includeMapInfo?&info:nullptr;if(job->includeSnapshot){auto snapshot=job->replaySidecar.empty()?readSnapshot(job->archives->root(),job->path,&job->state->canceled):readSnapshotFile(job->replaySidecar,&job->state->canceled);if(!job->expectedSha256.empty() && sha256(*snapshot.second)!=job->expectedSha256)throw std::runtime_error("Replay map SHA-256 mismatch");outcome.value=calculateMemory(*job->archives,snapshot.second,utf8(snapshot.first.wstring()),&job->state->canceled,outInfo);outcome.value->resolvedPath=std::move(snapshot.first);outcome.snapshot=std::move(snapshot.second);}else if(job->bytes){if(job->includeMapInfo)outcome.memorySha256=sha256(*job->bytes);checkCanceled(&job->state->canceled);outcome.value=calculateMemory(*job->archives,std::move(job->bytes),job->path,&job->state->canceled,outInfo);}else outcome.value=calculate(*job->archives,job->path,&job->state->canceled,outInfo);if(job->includeMapInfo)outcome.mapInfo=std::move(info);}}}catch(const std::exception& e){outcome.error=e.what();}catch(...){outcome.error="LAN map verification failed";}{std::lock_guard lock(mutex_);occupied_=false;active_.reset();}{std::lock_guard lock(job->state->mutex);if(!job->state->canceled.load(std::memory_order_acquire))job->state->outcome=std::move(outcome);}}
     }
 public:
     MapWorker() : thread_([this]{run();}) {}
-    ~MapWorker(){{std::lock_guard lock(mutex_);stopping_=true;if(active_)active_->canceled.store(true,std::memory_order_release);}changed_.notify_one();if(thread_.joinable())thread_.join();}
+    ~MapWorker(){{std::lock_guard lock(mutex_);stopping_=true;if(active_){active_->canceled.store(true,std::memory_order_release);active_->digestStop.request_stop();}}changed_.notify_one();if(thread_.joinable())thread_.join();}
     bool submit(std::unique_ptr<MapJob> job){std::lock_guard lock(mutex_);if(stopping_ || occupied_)return false;occupied_=true;active_=job->state;job_=std::move(job);changed_.notify_one();return true;}
 };
 MapWorker& mapWorker(){static MapWorker worker;return worker;}
+}
+LanMapCheckTask::LanMapCheckTask(Archives& common) : state_(std::make_shared<LanMapCheckTaskState>()) {
+    auto job=std::make_unique<MapJob>();job->archives=common.fork();job->state=state_;job->includeCommonDigest=true;if(!mapWorker().submit(std::move(job)))throw LanMapCheckBusy();
 }
 LanMapCheckTask::LanMapCheckTask(Archives& common,std::string advertisedPath,bool includeMapInfo,bool includeSnapshot,std::string expectedSha256) : state_(std::make_shared<LanMapCheckTaskState>()) {
     if(!expectedSha256.empty() && (!includeSnapshot || expectedSha256.size()!=64))throw std::runtime_error("Invalid LAN map snapshot digest");auto job=std::make_unique<MapJob>();job->archives=common.fork();job->path=std::move(advertisedPath);job->expectedSha256=std::move(expectedSha256);job->state=state_;job->includeMapInfo=includeMapInfo;job->includeSnapshot=includeSnapshot;if(!mapWorker().submit(std::move(job)))throw LanMapCheckBusy();
@@ -86,5 +90,5 @@ LanMapCheckTask::LanMapCheckTask(Archives& common,const fs::path& sidecar,std::s
 }
 LanMapCheckTask::~LanMapCheckTask(){cancel();}
 std::optional<LanMapCheckOutcome> LanMapCheckTask::poll() const {if(!state_ || state_->canceled.load(std::memory_order_acquire))return {};std::lock_guard lock(state_->mutex);if(state_->canceled.load(std::memory_order_acquire))return {};return state_->outcome;}
-void LanMapCheckTask::cancel() noexcept {if(state_)state_->canceled.store(true,std::memory_order_release);}
+void LanMapCheckTask::cancel() noexcept {if(state_){state_->canceled.store(true,std::memory_order_release);state_->digestStop.request_stop();}}
 }

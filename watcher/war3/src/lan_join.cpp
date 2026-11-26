@@ -39,7 +39,7 @@ void LanJoin::failHandshake(LanHandshakeFailure failure,const char* reason){hand
 void LanJoin::connected(){
     sockaddr_in local{};int length=sizeof(local);if(getsockname(SOCKET(socket_),reinterpret_cast<sockaddr*>(&local),&length)==SOCKET_ERROR){fail("Cannot read LAN local address");return;}output_={0xf7,0x1e,0,0};put32(output_,hostCounter_);put32(output_,entryKey_);output_.push_back(0);output_.push_back(0);output_.push_back(0);put32(output_,GetTickCount());output_.insert(output_.end(),name_.begin(),name_.end());output_.push_back(0);output_.push_back(1);output_.push_back(0);output_.push_back(2);output_.push_back(0);output_.push_back(0);output_.push_back(0);auto bytes=reinterpret_cast<const std::uint8_t*>(&local.sin_addr.s_addr);output_.insert(output_.end(),bytes,bytes+4);for(unsigned i=0;i<8;++i)output_.push_back(0);output_[2]=std::uint8_t(output_.size());output_[3]=std::uint8_t(output_.size()>>8);if(experimentalHandshake_){deferredJoin_=std::move(output_);output_=handshakePacket_;}sent_=0;state_=LanJoinState::Joining;activity_=Clock::now();if(experimentalHandshake_)handshakeStarted_=activity_;
 }
-bool LanJoin::enableExperimentalHandshake(){if(experimentalHandshake_ || socket_==invalidSocket || (state_!=LanJoinState::Connecting && state_!=LanJoinState::Joining) || sent_)return false;handshakePacket_=localLanHandshake();experimentalHandshake_=true;handshakeStarted_=Clock::now();if(state_==LanJoinState::Joining){deferredJoin_=std::move(output_);output_=handshakePacket_;}return true;}
+bool LanJoin::enableExperimentalHandshake(std::string commonDigest){if(experimentalHandshake_ || socket_==invalidSocket || (state_!=LanJoinState::Connecting && state_!=LanJoinState::Joining) || sent_)return false;handshakePacket_=localLanHandshake();if(!commonDigest.empty())commonDigestPacket_=lanCommonDigestPacket(commonDigest);commonDigest_=std::move(commonDigest);experimentalHandshake_=true;handshakeStarted_=Clock::now();if(state_==LanJoinState::Joining){deferredJoin_=std::move(output_);output_=handshakePacket_;}return true;}
 void LanJoin::cancel(){if(socket_!=invalidSocket && state_==LanJoinState::Lobby && !leaveRequested_){const std::array<std::uint8_t,8> leave{0xf7,0x21,8,0,13,0,0,0};send(SOCKET(socket_),reinterpret_cast<const char*>(leave.data()),int(leave.size()),0);}if(loadPhase_!=LanLoadPhase::Lobby)loadPhase_=LanLoadPhase::Failed;if(state_!=LanJoinState::Rejected && state_!=LanJoinState::Error)state_=LanJoinState::Closed;closeSocket();}
 bool LanJoin::sendChat(std::string_view message) {
     if(state_!=LanJoinState::Lobby || socket_==invalidSocket || !localPlayerId_ || message.empty() || message.size()>254 || message.find('\0')!=std::string_view::npos)return false;for(unsigned char c:message)if(c<32 || c==127)return false;if(!MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,message.data(),int(message.size()),nullptr,0))return false;std::vector<std::uint8_t> targets;for(auto& slot:slots_)if(slot.status==2 && !slot.computer && slot.playerId && slot.playerId!=255 && std::find(targets.begin(),targets.end(),slot.playerId)==targets.end())targets.push_back(slot.playerId);if(std::find(targets.begin(),targets.end(),localPlayerId_)==targets.end())targets.push_back(localPlayerId_);if(targets.size()>24)return false;size_t packetSize=8+targets.size()+message.size();if(output_.size()-sent_+packetSize>65536)return false;if(sent_){output_.erase(output_.begin(),output_.begin()+sent_);sent_=0;}output_.insert(output_.end(),{0xf7,0x28,std::uint8_t(packetSize),std::uint8_t(packetSize>>8),std::uint8_t(targets.size())});output_.insert(output_.end(),targets.begin(),targets.end());output_.push_back(localPlayerId_);output_.push_back(0x10);output_.insert(output_.end(),message.begin(),message.end());output_.push_back(0);return true;
@@ -89,15 +89,28 @@ bool LanJoin::requestMapDownload() {
 }
 void LanJoin::process(const std::uint8_t* p,std::size_t n){
     if(experimentalHandshake_ && !handshakeVerified_){
-        if(state_!=LanJoinState::Joining || n!=handshakePacket_.size() || !std::equal(handshakePacket_.begin(),handshakePacket_.end(),p)){
-            const bool mismatch=(n==8 && p[1]==0x05 && u32(p+4)==lanRejectBuildMismatch) || hasLanHandshakeDigest(handshakePacket_,{p,n});
-            if(mismatch)failHandshake(LanHandshakeFailure::BuildMismatch,"LAN peer executable digest differs");
-            else failHandshake(LanHandshakeFailure::UnexpectedReply,"LAN build verification reply was rejected or invalid");
-            return;
+        if(waitingForCommonDigest_){
+            if(n!=commonDigestPacket_.size() || !std::equal(commonDigestPacket_.begin(),commonDigestPacket_.end(),p)){
+                const bool mismatch=(n==8 && p[1]==0x05 && u32(p+4)==lanRejectCommonResources) || hasLanCommonDigest({p,n});
+                if(mismatch)failHandshake(LanHandshakeFailure::ResourcesMismatch,"LAN common resource digest differs");
+                else failHandshake(LanHandshakeFailure::UnexpectedReply,"LAN common resource verification reply was rejected or invalid");
+                return;
+            }
+        }else{
+            if(state_!=LanJoinState::Joining || n!=handshakePacket_.size() || !std::equal(handshakePacket_.begin(),handshakePacket_.end(),p)){
+                const bool mismatch=(n==8 && p[1]==0x05 && u32(p+4)==lanRejectBuildMismatch) || hasLanHandshakeDigest(handshakePacket_,{p,n});
+                if(mismatch)failHandshake(LanHandshakeFailure::BuildMismatch,"LAN peer executable digest differs");
+                else failHandshake(LanHandshakeFailure::UnexpectedReply,"LAN build verification reply was rejected or invalid");
+                return;
+            }
         }
-        if(output_.size()-sent_+deferredJoin_.size()>65536){fail("LAN send queue exceeded");return;}
+        const bool sendCommonDigest=!waitingForCommonDigest_ && !commonDigestPacket_.empty();
+        const auto& next=sendCommonDigest?commonDigestPacket_:deferredJoin_;
+        if(output_.size()-sent_+next.size()>65536){fail("LAN send queue exceeded");return;}
         if(sent_){output_.erase(output_.begin(),output_.begin()+sent_);sent_=0;}
-        output_.insert(output_.end(),deferredJoin_.begin(),deferredJoin_.end());deferredJoin_.clear();handshakeVerified_=true;return;
+        output_.insert(output_.end(),next.begin(),next.end());
+        if(sendCommonDigest)waitingForCommonDigest_=true;else{deferredJoin_.clear();handshakeVerified_=true;}
+        return;
     }
     auto invalid=[&]{fail("Invalid LAN lobby packet");};switch(p[1]){
     case 0x01:if(n!=8){invalid();return;}if(output_.size()-sent_>65528){fail("LAN send queue exceeded");return;}output_.insert(output_.end(),{0xf7,0x46,8,0,p[4],p[5],p[6],p[7]});break;

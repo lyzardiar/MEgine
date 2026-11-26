@@ -22,6 +22,7 @@ struct LanMapCheckOutcome {
     // Present only for a successful file snapshot request; all fields describe these bytes.
     std::shared_ptr<const Bytes> snapshot;
     std::string memorySha256;
+    std::string commonDigest;
 };
 class LanMapCheckBusy : public std::runtime_error {
 public:
@@ -31,6 +32,8 @@ struct LanMapCheckTaskState;
 class LanMapCheckTask {
     std::shared_ptr<LanMapCheckTaskState> state_;
 public:
+    // Hash the mounted common archives on the same cancellable worker.
+    explicit LanMapCheckTask(Archives& common);
     // Only one map verification may run or wait at a time. Throws when busy. Snapshot requests retain at most 256 MiB.
     LanMapCheckTask(Archives& common,std::string advertisedPath,bool includeMapInfo=false,bool includeSnapshot=false,std::string expectedSha256={});
     LanMapCheckTask(Archives& common,std::shared_ptr<const Bytes> bytes,std::string label,bool includeMapInfo=false);

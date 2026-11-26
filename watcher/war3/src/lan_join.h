@@ -14,7 +14,7 @@
 
 namespace war3 {
 enum class LanJoinState {Connecting,Joining,Lobby,Rejected,Closed,Error};
-enum class LanHandshakeFailure {None,BuildMismatch,UnexpectedReply,TimedOut,Interrupted};
+enum class LanHandshakeFailure {None,BuildMismatch,ResourcesMismatch,UnexpectedReply,TimedOut,Interrupted};
 enum class LanMapDownloadState {Idle,Requested,Receiving,Complete};
 enum class LanLoadPhase {Lobby,Countdown,Loading,Ready,Failed};
 struct LanSlot {std::uint8_t playerId=0,download=0,status=0,computer=0,team=0,color=0,race=0,difficulty=0,handicap=0;};
@@ -37,9 +37,10 @@ class LanJoin {
     std::vector<LanChatMessage> chat_;
     LanMapAnnouncement map_;
     bool mapReadyReported_=false;
-    bool experimentalHandshake_=false,handshakeVerified_=false;
+    bool experimentalHandshake_=false,handshakeVerified_=false,waitingForCommonDigest_=false;
     LanHandshakeFailure handshakeFailure_=LanHandshakeFailure::None;
-    std::vector<std::uint8_t> handshakePacket_,deferredJoin_;
+    std::vector<std::uint8_t> handshakePacket_,commonDigestPacket_,deferredJoin_;
+    std::string commonDigest_;
     std::chrono::steady_clock::time_point handshakeStarted_{};
     bool loadingEnabled_=false,localLoaded_=false;
     LanLoadPhase loadPhase_=LanLoadPhase::Lobby;
@@ -73,9 +74,10 @@ public:
     void poll();
     void cancel();
     // Must be enabled before the first transport poll; waits for an identical executable response before joining.
-    bool enableExperimentalHandshake();
+    bool enableExperimentalHandshake(std::string commonDigest={});
     bool experimentalHandshakeVerified() const {return experimentalHandshake_ && handshakeVerified_;}
     LanHandshakeFailure handshakeFailure() const {return handshakeFailure_;}
+    const std::string& commonDigest() const {return commonDigest_;}
     bool sendChat(std::string_view message);
     bool requestSlotChange(std::uint8_t field,std::uint8_t value);
     // Queue readiness only after every announced map field has been checked.

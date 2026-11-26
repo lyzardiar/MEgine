@@ -7,8 +7,20 @@
 #include <vector>
 
 namespace war3 {
-inline constexpr std::uint32_t lanRejectNameInUse=0x4d334c01,lanRejectRoomFull=0x4d334c02,lanRejectBuildMismatch=0x4d334c03;
+inline constexpr std::uint32_t lanRejectNameInUse=0x4d334c01,lanRejectRoomFull=0x4d334c02,lanRejectBuildMismatch=0x4d334c03,lanRejectCommonResources=0x4d334c04;
 inline constexpr std::size_t lanHandshakeHeaderSize=16;
+inline constexpr std::uint8_t lanCommonDigestOpcode=0x71;
+
+template<class Range> bool validLanDigest(const Range& digest) {
+    return digest.size()==64 && std::all_of(digest.begin(),digest.end(),[](auto c){return (c>='0' && c<='9') || (c>='a' && c<='f');});
+}
+inline std::vector<std::uint8_t> lanCommonDigestPacket(std::string_view digest) {
+    if(!validLanDigest(digest))throw std::runtime_error("Invalid LAN common resource digest");
+    std::vector<std::uint8_t> bytes{0xf7,lanCommonDigestOpcode,68,0};bytes.insert(bytes.end(),digest.begin(),digest.end());return bytes;
+}
+inline bool hasLanCommonDigest(std::span<const std::uint8_t> packet) {
+    return packet.size()==68 && packet[0]==0xf7 && packet[1]==lanCommonDigestOpcode && packet[2]==68 && packet[3]==0 && validLanDigest(packet.subspan(4));
+}
 
 inline const std::string& executableDigest() {
     static const auto digest=[] {
@@ -23,6 +35,6 @@ inline std::vector<std::uint8_t> localLanHandshake() {
 }
 inline bool hasLanHandshakeDigest(std::span<const std::uint8_t> expected,std::span<const std::uint8_t> received) {
     return expected.size()==lanHandshakeHeaderSize+64 && received.size()==expected.size() && std::equal(expected.begin(),expected.begin()+lanHandshakeHeaderSize,received.begin()) &&
-        std::all_of(received.begin()+lanHandshakeHeaderSize,received.end(),[](std::uint8_t c){return (c>='0' && c<='9') || (c>='a' && c<='f');});
+        validLanDigest(received.subspan(lanHandshakeHeaderSize));
 }
 }

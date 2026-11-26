@@ -16,6 +16,7 @@ struct LanHostSettings {
     std::uint32_t mapOptions=0;
     std::vector<bool> computerOnly;
     bool experimentalHandshake=false;
+    std::string commonDigest;
     // Optional immutable snapshot used for in-memory map transfer; it must match map's declared fields.
     std::shared_ptr<const Bytes> mapBytes;
     bool loopbackOnly=false;

@@ -17,9 +17,9 @@ std::uint64_t MapPreparation::requestMemory(std::shared_ptr<const Bytes> bytes,s
     auto soloReplay=expectedCommonDigest.empty()?SoloReplayMode::None:SoloReplayMode::Play;
     if(!initialRandomSeed)initialRandomSeed=newMapSeed();std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,{},std::move(bytes),std::move(label),{},false,initialRandomSeed,{},version,{},std::move(expectedCommonDigest),soloReplay};ready_.reset();wake_.notify_one();return id;
 }
-std::uint64_t MapPreparation::requestLanMemory(std::shared_ptr<const Bytes> bytes,std::string label,LanSessionSetup setup,bool experimentalSelectionSync,std::optional<unsigned> version) {
+std::uint64_t MapPreparation::requestLanMemory(std::shared_ptr<const Bytes> bytes,std::string label,LanSessionSetup setup,bool experimentalSelectionSync,std::optional<unsigned> version,std::string expectedCommonDigest) {
     if(!bytes || bytes->empty() || bytes->size()>256u*1024u*1024u || label.empty() || label.size()>1024 || label.find('\0')!=std::string::npos || (version && *version>1))throw std::runtime_error("Invalid in-memory LAN map preparation request");
-    auto seed=setup.randomSeed;setup.experimentalSelectionSync=experimentalSelectionSync;std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,{},std::move(bytes),std::move(label),{},false,seed,std::move(setup),version,{},{}};ready_.reset();wake_.notify_one();return id;
+    auto seed=setup.randomSeed;setup.experimentalSelectionSync=experimentalSelectionSync;std::lock_guard lock(mutex_);auto id=++generation_;pending_=Request{id,{},std::move(bytes),std::move(label),{},false,seed,std::move(setup),version,{},std::move(expectedCommonDigest)};ready_.reset();wake_.notify_one();return id;
 }
 void MapPreparation::clear() {std::lock_guard lock(mutex_);++generation_;pending_.reset();ready_.reset();}
 std::optional<PreparedMap> MapPreparation::poll() {std::lock_guard lock(mutex_);auto result=std::move(ready_);ready_.reset();return result;}
@@ -29,12 +29,12 @@ void MapPreparation::run(std::stop_token stop) {
         Request request;{std::unique_lock lock(mutex_);wake_.wait(lock,[&]{return stop.stop_requested() || pending_.has_value();});if(stop.stop_requested())return;request=std::move(*pending_);pending_.reset();}
         auto stale=[&]{return stop.stop_requested() || generation_.load()!=request.id;};PreparedMap result;result.request=request.id;result.path=request.path;result.memoryLabel=request.label;
         try {
-            if(!archives)archives=std::make_unique<Archives>(dataRoot_);if(!request.expectedCommonDigest.empty() && archives->commonDigest(stop)!=request.expectedCommonDigest)throw std::runtime_error("单机回放需要相同的基础资源。");if(request.memory)archives->mountMap(std::move(request.memory),request.label);else archives->mountMap(request.path);
+            if(!archives)archives=std::make_unique<Archives>(dataRoot_);if(!request.expectedCommonDigest.empty() && archives->commonDigest(stop)!=request.expectedCommonDigest)throw std::runtime_error(request.lanSetup?"局域网载入需要相同的基础资源。":"单机回放需要相同的基础资源。");if(request.memory)archives->mountMap(std::move(request.memory),request.label);else archives->mountMap(request.path);
             MapStrings strings;if(auto wts=archives->readCandidates({"war3map.wts"},ArchiveScope::Map))strings=mapStrings(wts->bytes);
             auto w3i=archives->readCandidates({"war3map.w3i"},ArchiveScope::Map);if(!w3i)throw std::runtime_error("Missing war3map.w3i");result.info=MapInfo::parse(w3i->bytes,strings);
             if(!stale()){
                 auto module=jass::Module::compile(jass::Program::read(*archives));
-                if(!request.expectedCommonDigest.empty())validateSoloReplayScript(module);
+                if(!request.expectedCommonDigest.empty() && request.soloReplay==SoloReplayMode::Play)validateSoloReplayScript(module);
                 if(!stale()){auto world=World::read(*archives);if(!stale()){result.session=std::make_unique<ScriptSession>(std::move(module),result.info,std::move(strings),std::nullopt,request.initialRandomSeed);if(request.soloReplay!=SoloReplayMode::None)result.session->soloReplayAudit(request.soloReplay);if(request.version)result.session->versionContext(*request.version);if(request.campaign)result.session->campaignContext(request.campaign->first,request.campaign->second);else if(request.inferCampaign && under(request.path,dataRoot_/L"Maps"/L"Campaign"))result.session->campaignContext(false,1);if(request.difficulty)result.session->difficultyContext(*request.difficulty);result.session->attachWorld(std::move(world));result.session->audioMuted(muted_);try{auto preferences=loadAudioPreferences(dataRoot_);result.session->localAudioGains(preferences.soundGain(),preferences.musicGain());result.session->localAudioCategories(preferences.ambient,preferences.movement,preferences.unitSounds);}catch(const std::exception&){}result.session->configure();if(request.lanSetup)result.session->applyLanSetup(*request.lanSetup);}}
             }
             if(!stale())try {

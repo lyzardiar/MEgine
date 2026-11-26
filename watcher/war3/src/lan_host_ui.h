@@ -30,6 +30,7 @@ class LanHostUi {
     std::optional<LanSessionSetup> frozenSetup_;
     std::shared_ptr<const Bytes> frozenMap_;
     std::string playerName_,mapPath_,error_;
+    std::string commonDigest_;
     std::wstring gameName_=L"Warcraft III",chatDraft_;
     std::array<std::string,16> slotKeys_{};
     std::vector<bool> computerOnly_;
@@ -53,7 +54,7 @@ public:
     LanHostUi(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string playerName,bool loopbackOnly=false);
     std::string draw(const UiInput& input,std::wstring_view characters);
     std::string pollMinimized();
-    void enableMatchHandoff() {if(!host_)handoffEnabled_=true;}
+    void enableMatchHandoff(std::string commonDigest);
     std::optional<LanHostHandoff> takeHandoff();
     const std::optional<MapInfo>& mapInfo() const {return mapInfo_;}
     std::shared_ptr<const Bytes> mapBytes() const {return host_?host_->mapBytes():nullptr;}

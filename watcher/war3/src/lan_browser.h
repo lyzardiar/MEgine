@@ -19,18 +19,21 @@ class LanBrowser {
     std::unique_ptr<LanDiscovery> discovery_;
     std::unique_ptr<LanLobby> lobby_;
     std::unique_ptr<LanHostUi> host_;
+    std::unique_ptr<LanMapCheckTask> commonTask_;
     std::string error_,selection_,addressError_;
+    std::string commonDigest_,commonError_;
     std::string acceptedPlayerName_,savedPlayerName_="Player",playerNameError_;
     std::wstring playerName_=L"Player";
     std::wstring addressDraft_;
     wchar_t highSurrogate_=0;
-    std::uint64_t nextSearch_=0;
+    std::uint64_t nextSearch_=0,nextCommonAttempt_=0;
     size_t selected_=0,scroll_=0,addressCursor_=0;
     bool nameFocus_=true,matchHandoffEnabled_=false,loopbackOnly_=false;
     bool addressOpen_=false,addressSelected_=false;
     void start();
     void startDiscovery(std::string address);
     void pollDiscovery();
+    void pollCommonResources();
     void editAddress(const UiInput& input,std::wstring_view characters);
     void drawAddress(const UiInput& input);
 public:
