@@ -179,6 +179,10 @@ Shift 排队采用回放格式资料中的 `0x0001` 标志，接收端将其传�
 
 对本机 1.27 Game.dll 的只读反汇编显示，选择命令构造在 `0x6f69f7b0` 附近读取对象双字；`0x6f037350` 使用第一字的高位选择池、低位定位活动槽，并比较对象的第二字；`0x6f1ae1c0`／`0x6f1ae2b0` 维护槽及空闲链，分配路径按池维护递增的第二字。尚需核对初始值、哪些对象参与分配、特殊旧编号路径、跨客户端创建次序与实际报文，因此未将 JASS 句柄直接映射为原版对象 ID。原件摘要、工具、命令和输出保存在 `tmp/docs-artifacts/war3/object-id-research/`。
 
+离线原版 CPU 检查使用 `pefile==2024.8.26` 和 `unicorn==2.1.4`。复现命令为 `python -B watcher/war3/tools/verify_network_object_pool_cpu.py --data-root <原版安装目录>`。脚本按 `profiles/classic-1.27.json` 校验用户提供的 Game.dll 摘要、架构及基址，在合成内存中执行对象池分配、释放和解析指令，以有界替身提供 Storm 分配／重分配。检查覆盖双池交错增长、双池槽位复用、过期编号和越界拒绝。结果默认写入 `tmp/docs-artifacts/war3/network-object-pool-cpu/result.json`。原版运行时对象族、创建顺序、真实内存分配行为和联机互通仍待验证。
+
+2026-11-26 使用摘要前缀为 `e04d1716` 的本地原件复跑，26 项通过、0 项失败。回执位于 `tmp/docs-artifacts/war3/network-object-pool-cpu/followup-20261126.json`。
+
 `0x6f3130c0` 有多项状态的 xor／循环移位组合及写回；另有网络事件校验相关诊断字符串。该静态线索尚未证明与 W3GS 0x27 的关联、完整输入及发送频率，不能作为联网校验算法。只读研究及原始输出保存在 `tmp/docs-artifacts/war3/checksum-research/`。
 
 
