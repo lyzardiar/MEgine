@@ -12,6 +12,7 @@ std::string key(const LanGame& game){return game.address+":"+std::to_string(game
 std::string display(std::string_view input){try{return utf8(wide(input));}catch(const std::exception&){if(input.empty())return {};int size=MultiByteToWideChar(CP_ACP,0,input.data(),int(input.size()),nullptr,0);if(size<=0)return "?";std::wstring text(size,L'\0');MultiByteToWideChar(CP_ACP,0,input.data(),int(input.size()),text.data(),size);return utf8(text);}}
 constexpr std::size_t addressLimit=63;
 constexpr GlueScreen::Rect addressButton{.49f,.092f,.265f,.034f};
+constexpr GlueScreen::Rect roomModeButton{.49f,.165f,.265f,.034f};
 constexpr GlueScreen::Rect addressBox{.18f,.195f,.44f,.209f};
 constexpr GlueScreen::Rect addressEdit{.204f,.270f,.392f,.036f},addressSearch{.204f,.354f,.182f,.032f},addressCancel{.414f,.354f,.182f,.032f};
 std::optional<std::wstring> pasteAddress(){
@@ -27,8 +28,7 @@ std::optional<std::wstring> pasteAddress(){
     return first==std::wstring::npos?std::wstring{}:value.substr(first,last-first+1);
 }
 }
-LanBrowser::LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress,bool loopbackOnly) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\LocalMultiplayerJoin.fdf","LocalMultiplayerJoin"),archives_(archives),images_(images),renderer_(renderer),text_(text),log_(log),discoveryAddress_(discoveryAddress),loopbackOnly_(loopbackOnly) {screen_.focusEnabled(false);start();}
-void LanBrowser::enableMatchHandoff(){matchHandoffEnabled_=true;if(lobby_)lobby_->enableMatchHandoff();if(host_)host_->enableMatchHandoff();}
+LanBrowser::LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress,bool loopbackOnly,bool matchHandoffEnabled) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\LocalMultiplayerJoin.fdf","LocalMultiplayerJoin"),archives_(archives),images_(images),renderer_(renderer),text_(text),log_(log),discoveryAddress_(discoveryAddress),matchHandoffEnabled_(matchHandoffEnabled),loopbackOnly_(loopbackOnly) {screen_.focusEnabled(false);start();}
 std::optional<LanLobbyHandoff> LanBrowser::takeHandoff(){if(!lobby_)return {};auto handoff=lobby_->takeHandoff();if(handoff)lobby_.reset();return handoff;}
 std::optional<LanHostHandoff> LanBrowser::takeHostHandoff(){if(!host_)return {};auto handoff=host_->takeHandoff();if(handoff)host_.reset();return handoff;}
 std::string LanBrowser::pollMinimized(){if(host_)return host_->pollMinimized();if(lobby_)return lobby_->pollMinimized();pollDiscovery();return {};}
@@ -106,16 +106,22 @@ void LanBrowser::drawAddress(const UiInput& input){
     };
     button(addressSearch,"搜索");button(addressCancel,"取消");
 }
-std::string LanBrowser::draw(const UiInput& rawInput,std::wstring_view characters,bool addressShortcut){
+std::string LanBrowser::draw(const UiInput& rawInput,std::wstring_view characters,bool addressShortcut,bool roomModeShortcut){
     if(host_){auto action=host_->draw(rawInput,characters);if(action=="CancelButton"){host_.reset();start();}else if(action=="PrepareGame")return action;return {};}if(lobby_){auto action=lobby_->draw(rawInput,characters);if(action=="CancelButton"){lobby_.reset();start();}else if(action=="PrepareGame")return action;return {};}
     const bool opened=!addressOpen_ && (addressShortcut || (rawInput.key==VK_F3 && !rawInput.keyRepeat && !rawInput.control && !rawInput.keyAlt) || click(addressButton,rawInput));
     if(opened){addressOpen_=true;addressError_.clear();addressDraft_=wide(discoveryAddress_);addressCursor_=addressDraft_.size();addressSelected_=true;}
     const bool addressInput=addressOpen_;
     if(addressInput && !opened)editAddress(rawInput,characters);
     auto input=addressInput?UiInput{}:rawInput;
+    if(!addressInput && (roomModeShortcut || click(roomModeButton,input))){
+        matchHandoffEnabled_=!matchHandoffEnabled_;
+        selection_.clear();selected_=scroll_=0;
+        log_.write(matchHandoffEnabled_?"lan_room_mode=playable":"lan_room_mode=classic");
+        input={};
+    }
     if(input.keyRepeat && (input.key==VK_ESCAPE || input.key==VK_RETURN || input.key==VK_F5))input.key=0;
     if(input.key==VK_ESCAPE)return "CancelButton";if(input.key==VK_F5)start();pollDiscovery();
-    std::vector<LanGame> filtered;static const std::vector<LanGame> empty;if(discovery_ && matchHandoffEnabled_){for(auto& game:discovery_->games())if(game.name.starts_with(experimentalLanPrefix))filtered.push_back(game);}auto& games=discovery_?(matchHandoffEnabled_?filtered:discovery_->games()):empty;auto found=std::find_if(games.begin(),games.end(),[&](auto& item){return key(item)==selection_;});if(found==games.end()){selection_.clear();selected_=0;}else selected_=size_t(found-games.begin());auto list=screen_.bounds("GameListContainer"),name=screen_.bounds("PlayerNameEditBox");constexpr float step=.01875f;auto rows=std::max(1u,unsigned(std::max(0.f,list.h-.008f)/step));auto maximum=games.size()>rows?games.size()-rows:0;scroll_=std::min(scroll_,maximum);
+    std::vector<LanGame> games;if(discovery_)for(auto& game:discovery_->games())if(game.name.starts_with(experimentalLanPrefix)==matchHandoffEnabled_)games.push_back(game);auto found=std::find_if(games.begin(),games.end(),[&](auto& item){return key(item)==selection_;});if(found==games.end()){selection_.clear();selected_=0;}else selected_=size_t(found-games.begin());auto list=screen_.bounds("GameListContainer"),name=screen_.bounds("PlayerNameEditBox");constexpr float step=.01875f;auto rows=std::max(1u,unsigned(std::max(0.f,list.h-.008f)/step));auto maximum=games.size()>rows?games.size()-rows:0;scroll_=std::min(scroll_,maximum);
     auto choose=[&](size_t index){if(index>=games.size())return;selected_=index;selection_=key(games[index]);if(index<scroll_)scroll_=index;if(index>=scroll_+rows)scroll_=index-rows+1;};
     if(click(name,input))nameFocus_=true;if(click(list,input))nameFocus_=false;if(input.key==VK_TAB)nameFocus_=!nameFocus_;if(nameFocus_ && !addressInput){for(wchar_t c:characters){if(c==8){highSurrogate_=0;if(!playerName_.empty()){if(playerName_.back()>=0xdc00 && playerName_.back()<=0xdfff && playerName_.size()>1)playerName_.pop_back();playerName_.pop_back();}}else if(c>=0xd800 && c<=0xdbff)highSurrogate_=c;else if(c>=0xdc00 && c<=0xdfff){if(highSurrogate_ && playerName_.size()+2<=31){playerName_+=highSurrogate_;playerName_+=c;}highSurrogate_=0;}else {highSurrogate_=0;if(c>=32 && playerName_.size()<31)playerName_+=c;}}}else if(!games.empty()){if(input.key==VK_UP)choose(selected_?selected_-1:0);if(input.key==VK_DOWN)choose(std::min(selected_+1,games.size()-1));if(input.key==VK_HOME)choose(0);if(input.key==VK_END)choose(games.size()-1);if(input.key==VK_PRIOR)choose(selected_>=rows?selected_-rows:0);if(input.key==VK_NEXT)choose(std::min(selected_+rows,games.size()-1));}
     bool activate=false;if(hit(list,input.x,input.y) && input.wheel)scroll_=size_t(std::clamp<long long>(static_cast<long long>(scroll_)-input.wheel*3ll,0,static_cast<long long>(maximum)));for(size_t row=0;row<rows && scroll_+row<games.size();++row){auto area=GlueScreen::Rect{list.x+.004f,list.y+.004f+float(row)*step,list.w-.0245f,step};if(click(area,input)){nameFocus_=false;choose(scroll_+row);activate=input.doubleClick;break;}}
@@ -127,6 +133,8 @@ std::string LanBrowser::draw(const UiInput& rawInput,std::wstring_view character
     if(!selection_.empty())screen_.textAt("StandardInfoTextTemplate",display(games[selected_].mapPath),screen_.bounds("MapInfoPaneContainer"),true,false,true,.011f);else if(games.empty() && discovery_)screen_.textAt("StandardInfoTextTemplate","正在搜索局域网游戏…",{list.x+.01f,list.y+.01f,list.w-.03f,.025f},true,false,true,.011f);if(!error_.empty())screen_.textAt("StandardInfoTextTemplate",error_,{.025f,.46f,.42f,.025f},true,false,true,.011f);quad(addressButton,hit(addressButton,input.x,input.y)?0xff45668e:0xff304762);screen_.textAt("StandardInfoTextTemplate","按 IP 搜索 (F3)",addressButton,true,false,false,.012f);
     auto targetLabel=loopbackOnly_?"本机回环 127.0.0.1":discoveryAddress_.empty()?std::string("自动搜索"):"搜索地址 "+discoveryAddress_;
     screen_.textAt("StandardInfoTextTemplate",targetLabel,{addressButton.x,addressButton.y+addressButton.h+.006f,addressButton.w,.023f},true,false,true,.011f);
+    quad(roomModeButton,hit(roomModeButton,input.x,input.y)?0xff45668e:0xff304762);
+    screen_.textAt("StandardInfoTextTemplate",matchHandoffEnabled_?"同构建对局 (F4)":"经典房间 (F4)",roomModeButton,true,false,false,.012f);
     screen_.overlay();
     if(addressOpen_)drawAddress(rawInput);
     if(addressInput)return {};

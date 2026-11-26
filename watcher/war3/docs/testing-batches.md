@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 局域网同构建对局入口（定向验证）
+
+`src/lan_browser.*` 和 `src/main.cpp` 在房间列表增加 F4 和鼠标切换。默认经典房间，`--experimental-local-lan` 可选择初始同构建模式。两类列表按房间前缀分别显示，切换清除选区，返回列表恢复模式和 IPv4 地址。`src/lan_host_ui.cpp` 阻止经典建房使用同构建标记前缀。对局沿用现有握手、地图载入、时间片和录像。
+
+Win32 Release 的 `war3` 和 `war3_lan_departure_tests` 构建通过，客户端 SHA-256 前缀为 `606c596e7880`。运行 `war3_lan_departure_tests.exe discovery-address` 与 `game-info-capacity`，共 2 项通过、0 项失败。私有桌面 D3D9Ex 用本机两个独立客户端，验证 F4 切换、按钮切换、F4 连发及地址弹窗期间的输入隔离。普通来客将 `127.0.0.2` 改为 `127.0.0.1`，经典列表无法加入同构建房间，切换后经实际 TCP 连接开局。两端在原创夹具的第 15 模拟秒结算，各自保存 15 秒的完整录像并正常退出。来客从结算返回与从主菜单重开时，均保留上次模式和手动 IPv4 地址。
+
+复现命令为 `pwsh -File tmp/docs-artifacts/war3/lan-playable-mode-v1/verify.ps1 -Executable <Win32 Release 客户端>`。最终构建及回执为脚本目录下的 `frozen-606c596e7880/war3.exe` 和 `run-ae52235afc/receipt.json`，旧构建缺少 F4 的基线回执为 `run-d59355b68b/receipt.json`。跨机路由和长局同步安排在 LAN 阶段验收。
+
 ## 局域网列表按 IPv4 搜索（定向验证）
 
 `src/lan_browser.*` 在正式房间列表接入「按 IP 搜索 (F3)」。Enter 应用，Esc 取消，清空恢复自动搜索，F5 刷新当前模式。成功切换使用新的发现套接字并清除旧选区。无效输入或首次发送失败时保留当前列表。`src/main.cpp` 在程序运行期间保留已应用地址，重开列表和对局返回时沿用。`src/lan_address.h`、`src/lan_discovery.cpp` 共用 IPv4 解析，定向搜索只向目标发送和接收，回环模式保持 127.0.0.1。
@@ -8,7 +16,7 @@ Win32 Release 的 `war3`、`war3_lan_departure_tests` 构建通过。分别运�
 
 两轮私有桌面 D3D9Ex 从正式菜单启动，使用本机回环房主。回环轮输入 127.0.0.1 成功，拒绝 127.0.0.2，取消保留旧地址，清空仍使用回环。普通轮从 127.0.0.2 切换到 127.0.0.1，清空进入广播模式，F5 分别保持广播和定向，返回主菜单并重新打开仍保留 127.0.0.1。两轮均选中实际房间并进入大厅，核对房主和来客两个 PID 的 TCP 连接互相对应，全部正常退出。
 
-复现命令是 `python -B tmp/docs-artifacts/war3/lan-address-ui-v1/verify.py --executable <Win32 Release 客户端>`。普通轮另加 `--normal-peer`。回执在 `tmp/docs-artifacts/war3/lan-address-ui-v1/run-4057ed9a93/receipt.json` 和 `run-6e9c4ab646/receipt.json`。本轮验证覆盖本机双进程，跨机路由、系统剪贴板以及对局结束回列表仍待阶段验证。
+复现命令是 `python -B tmp/docs-artifacts/war3/lan-address-ui-v1/verify.py --executable <Win32 Release 客户端>`。普通轮另加 `--normal-peer`。回执在 `tmp/docs-artifacts/war3/lan-address-ui-v1/run-4057ed9a93/receipt.json` 和 `run-6e9c4ab646/receipt.json`。对局结束回列表的地址恢复见上方同构建对局入口。跨机路由和系统剪贴板仍待阶段验证。
 
 ## 快存与单机录像同构建集成验证（批次 3/3）
 

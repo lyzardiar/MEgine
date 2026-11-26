@@ -33,12 +33,12 @@ class LanBrowser {
     void editAddress(const UiInput& input,std::wstring_view characters);
     void drawAddress(const UiInput& input);
 public:
-    LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress={},bool loopbackOnly=false);
-    std::string draw(const UiInput& input,std::wstring_view characters,bool addressShortcut=false);
+    LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress,bool loopbackOnly,bool matchHandoffEnabled);
+    std::string draw(const UiInput& input,std::wstring_view characters,bool addressShortcut,bool roomModeShortcut);
     std::string pollMinimized();
     const std::string& discoveryAddress() const {return discoveryAddress_;}
     void reportError(const std::string& message){error_=message;}
-    void enableMatchHandoff();
+    bool matchHandoffEnabled() const {return matchHandoffEnabled_;}
     std::optional<LanLobbyHandoff> takeHandoff();
     std::optional<LanHostHandoff> takeHostHandoff();
 };
