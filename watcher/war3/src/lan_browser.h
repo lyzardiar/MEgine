@@ -20,6 +20,7 @@ class LanBrowser {
     std::unique_ptr<LanLobby> lobby_;
     std::unique_ptr<LanHostUi> host_;
     std::string error_,selection_,addressError_;
+    std::string acceptedPlayerName_,savedPlayerName_="Player",playerNameError_;
     std::wstring playerName_=L"Player";
     std::wstring addressDraft_;
     wchar_t highSurrogate_=0;
@@ -33,10 +34,12 @@ class LanBrowser {
     void editAddress(const UiInput& input,std::wstring_view characters);
     void drawAddress(const UiInput& input);
 public:
-    LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress,bool loopbackOnly,bool matchHandoffEnabled);
+    LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress,bool loopbackOnly,bool matchHandoffEnabled,std::string_view playerName);
     std::string draw(const UiInput& input,std::wstring_view characters,bool addressShortcut,bool roomModeShortcut);
     std::string pollMinimized();
     const std::string& discoveryAddress() const {return discoveryAddress_;}
+    const std::string& acceptedPlayerName() const {return acceptedPlayerName_;}
+    bool savePlayerName();
     void reportError(const std::string& message){error_=message;}
     bool matchHandoffEnabled() const {return matchHandoffEnabled_;}
     std::optional<LanLobbyHandoff> takeHandoff();

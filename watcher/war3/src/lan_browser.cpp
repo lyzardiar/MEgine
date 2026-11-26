@@ -1,6 +1,7 @@
 // Author: MiYu. Original local multiplayer browsing screen and live LAN discovery results.
 #include "lan_browser.h"
 #include "lan_address.h"
+#include "game_preferences.h"
 #include <algorithm>
 #include <cmath>
 
@@ -28,7 +29,19 @@ std::optional<std::wstring> pasteAddress(){
     return first==std::wstring::npos?std::wstring{}:value.substr(first,last-first+1);
 }
 }
-LanBrowser::LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress,bool loopbackOnly,bool matchHandoffEnabled) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\LocalMultiplayerJoin.fdf","LocalMultiplayerJoin"),archives_(archives),images_(images),renderer_(renderer),text_(text),log_(log),discoveryAddress_(discoveryAddress),matchHandoffEnabled_(matchHandoffEnabled),loopbackOnly_(loopbackOnly) {screen_.focusEnabled(false);start();}
+LanBrowser::LanBrowser(Archives& archives,Images& images,Renderer& renderer,Text& text,Log& log,std::string_view discoveryAddress,bool loopbackOnly,bool matchHandoffEnabled,std::string_view playerName) : screen_(archives,images,renderer,text,"UI\\FrameDef\\Glue\\LocalMultiplayerJoin.fdf","LocalMultiplayerJoin"),archives_(archives),images_(images),renderer_(renderer),text_(text),log_(log),discoveryAddress_(discoveryAddress),matchHandoffEnabled_(matchHandoffEnabled),loopbackOnly_(loopbackOnly) {
+    try{savedPlayerName_=loadLanPlayerName(archives_.root());}catch(const std::exception& e){log_.write(std::string("lan_player_name_load_failed=")+e.what());}
+    acceptedPlayerName_=playerName.empty()?savedPlayerName_:std::string(playerName);playerName_=wide(acceptedPlayerName_);
+    if(acceptedPlayerName_!=savedPlayerName_)playerNameError_="当前玩家名尚未保存到本机。";
+    screen_.focusEnabled(false);start();
+}
+bool LanBrowser::savePlayerName(){
+    auto name=utf8(playerName_);if(!validLanPlayerName(name))return false;
+    acceptedPlayerName_=std::move(name);
+    if(acceptedPlayerName_!=savedPlayerName_)try{saveLanPlayerName(archives_.root(),acceptedPlayerName_);savedPlayerName_=acceptedPlayerName_;}
+    catch(const std::exception& e){playerNameError_="玩家名已应用，无法保存到本机。";log_.write(std::string("lan_player_name_save_failed=")+e.what());return true;}
+    playerNameError_.clear();return true;
+}
 std::optional<LanLobbyHandoff> LanBrowser::takeHandoff(){if(!lobby_)return {};auto handoff=lobby_->takeHandoff();if(handoff)lobby_.reset();return handoff;}
 std::optional<LanHostHandoff> LanBrowser::takeHostHandoff(){if(!host_)return {};auto handoff=host_->takeHandoff();if(handoff)host_.reset();return handoff;}
 std::string LanBrowser::pollMinimized(){if(host_)return host_->pollMinimized();if(lobby_){auto action=lobby_->pollMinimized();if(lobby_->needsDifferentPlayerName())pollDiscovery();return action;}pollDiscovery();return {};}
@@ -131,7 +144,7 @@ std::string LanBrowser::draw(const UiInput& rawInput,std::wstring_view character
         input={};
     }
     if(input.keyRepeat && (input.key==VK_ESCAPE || input.key==VK_RETURN || input.key==VK_F5))input.key=0;
-    if(input.key==VK_ESCAPE)return "CancelButton";if(input.key==VK_F5)start();pollDiscovery();
+    if(input.key==VK_ESCAPE){savePlayerName();return "CancelButton";}if(input.key==VK_F5)start();pollDiscovery();
     std::vector<LanGame> games;if(discovery_)for(auto& game:discovery_->games())if(game.name.starts_with(experimentalLanPrefix)==matchHandoffEnabled_)games.push_back(game);auto found=std::find_if(games.begin(),games.end(),[&](auto& item){return key(item)==selection_;});if(found==games.end()){selection_.clear();selected_=0;}else selected_=size_t(found-games.begin());auto list=screen_.bounds("GameListContainer"),name=screen_.bounds("PlayerNameEditBox");constexpr float step=.01875f;auto rows=std::max(1u,unsigned(std::max(0.f,list.h-.008f)/step));auto maximum=games.size()>rows?games.size()-rows:0;scroll_=std::min(scroll_,maximum);
     auto choose=[&](size_t index){if(index>=games.size())return;selected_=index;selection_=key(games[index]);if(index<scroll_)scroll_=index;if(index>=scroll_+rows)scroll_=index-rows+1;};
     if(click(name,input))nameFocus_=true;if(click(list,input))nameFocus_=false;if(input.key==VK_TAB)nameFocus_=!nameFocus_;if(nameFocus_ && !addressInput){for(wchar_t c:characters){if(c==8){highSurrogate_=0;if(!playerName_.empty()){if(playerName_.back()>=0xdc00 && playerName_.back()<=0xdfff && playerName_.size()>1)playerName_.pop_back();playerName_.pop_back();}}else if(c>=0xd800 && c<=0xdbff)highSurrogate_=c;else if(c>=0xdc00 && c<=0xdfff){if(highSurrogate_ && playerName_.size()+2<=31){playerName_+=highSurrogate_;playerName_+=c;}highSurrogate_=0;}else {highSurrogate_=0;if(c>=32 && playerName_.size()<31)playerName_+=c;}}}else if(!games.empty()){if(input.key==VK_UP)choose(selected_?selected_-1:0);if(input.key==VK_DOWN)choose(std::min(selected_+1,games.size()-1));if(input.key==VK_HOME)choose(0);if(input.key==VK_END)choose(games.size()-1);if(input.key==VK_PRIOR)choose(selected_>=rows?selected_-rows:0);if(input.key==VK_NEXT)choose(std::min(selected_+rows,games.size()-1));}
@@ -148,6 +161,7 @@ std::string LanBrowser::draw(const UiInput& rawInput,std::wstring_view character
         mapPathBounds.y=pathTop;
         screen_.textAt("StandardInfoTextTemplate",display(games[selected_].mapPath),mapPathBounds,true,false,true,.011f);
     }else if(games.empty() && discovery_)screen_.textAt("StandardInfoTextTemplate","正在搜索局域网游戏…",{list.x+.01f,list.y+.01f,list.w-.03f,.025f},true,false,true,.011f);
+    if(!playerNameError_.empty())screen_.textAt("StandardInfoTextTemplate",playerNameError_,{name.x,name.y+name.h+.002f,name.w,.017f},true,false,true,.011f);
     if(!error_.empty())screen_.textAt("StandardInfoTextTemplate",error_,{.025f,.46f,.42f,.025f},true,false,true,.011f);
     quad(addressButton,hit(addressButton,input.x,input.y)?0xff45668e:0xff304762);
     screen_.textAt("StandardInfoTextTemplate","按 IP 搜索 (F3)",addressButton,true,false,false,.012f);
@@ -158,6 +172,6 @@ std::string LanBrowser::draw(const UiInput& rawInput,std::wstring_view character
     screen_.overlay();
     if(addressOpen_)drawAddress(rawInput);
     if(addressInput)return {};
-    if(action=="CreateButton" && enabled.contains("CreateButton")){try{auto hostPlayerName=utf8(playerName_);if(hostPlayerName.empty() || hostPlayerName.size()>15)error_="玩家名需为 1–15 字节。";else{host_=std::make_unique<LanHostUi>(archives_,images_,renderer_,text_,log_,std::move(hostPlayerName),loopbackOnly_);if(matchHandoffEnabled_)host_->enableMatchHandoff();discovery_.reset();error_.clear();}}catch(const std::exception& e){error_="无法打开建房界面。";log_.write(std::string("lan_host_ui_failed=")+e.what());}}if(activate && enabled.contains("JoinButton")){try{auto playerName=utf8(playerName_);if(playerName.empty() || playerName.size()>15)error_="玩家名需为 1–15 字节。";else{lobby_=std::make_unique<LanLobby>(archives_,images_,renderer_,text_,games[selected_],std::move(playerName));if(matchHandoffEnabled_)lobby_->enableMatchHandoff();error_.clear();}}catch(const std::exception& e){error_="无法连接所选房间。";log_.write(std::string("lan_join_failed=")+e.what());}}return action=="CancelButton"?action:std::string{};
+    if(action=="CreateButton" && enabled.contains("CreateButton")){try{if(!savePlayerName())error_="玩家名需为 1–15 字节。";else{host_=std::make_unique<LanHostUi>(archives_,images_,renderer_,text_,log_,acceptedPlayerName_,loopbackOnly_);if(matchHandoffEnabled_)host_->enableMatchHandoff();discovery_.reset();error_.clear();}}catch(const std::exception& e){error_="无法打开建房界面。";log_.write(std::string("lan_host_ui_failed=")+e.what());}}if(activate && enabled.contains("JoinButton")){try{if(!savePlayerName())error_="玩家名需为 1–15 字节。";else{lobby_=std::make_unique<LanLobby>(archives_,images_,renderer_,text_,games[selected_],acceptedPlayerName_);if(matchHandoffEnabled_)lobby_->enableMatchHandoff();error_.clear();}}catch(const std::exception& e){error_="无法连接所选房间。";log_.write(std::string("lan_join_failed=")+e.what());}}if(action=="CancelButton"){savePlayerName();return action;}return {};
 }
 }

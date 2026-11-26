@@ -36,6 +36,9 @@ struct GameNetworkPreferences {
 };
 GameNetworkPreferences loadNetworkPreferences(const fs::path& dataRoot);
 void saveNetworkPreferences(const fs::path& dataRoot,const GameNetworkPreferences& preferences);
+bool validLanPlayerName(std::string_view name);
+std::string loadLanPlayerName(const fs::path& dataRoot);
+void saveLanPlayerName(const fs::path& dataRoot,std::string_view name);
 GameCameraPreferences loadCameraPreferences(const fs::path& dataRoot);
 void saveCameraPreferences(const fs::path& dataRoot,const GameCameraPreferences& preferences);
 GameAudioPreferences loadAudioPreferences(const fs::path& dataRoot);

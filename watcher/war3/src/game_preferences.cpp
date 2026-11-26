@@ -7,6 +7,8 @@
 namespace war3 {
 namespace {
 constexpr std::array<std::uint8_t,8> networkMagic{'W','3','N','E','T',1,0,0};
+constexpr std::array<std::uint8_t,8> lanNameMagic{'W','3','N','A','M',1,0,0};
+constexpr size_t lanNameLimit=15;
 constexpr std::array<std::uint8_t,8> cameraMagic{'W','3','C','A','M',1,0,0};
 constexpr std::array<std::uint8_t,8> cameraMagicV2{'W','3','C','A','M',2,0,0};
 constexpr std::array<std::uint8_t,8> cameraMagicV3{'W','3','C','A','M',3,0,0};
@@ -31,6 +33,25 @@ void publish(const fs::path& file,std::span<const std::uint8_t> bytes){
 }
 GameNetworkPreferences loadNetworkPreferences(const fs::path& root){auto bytes=read(path(root,L"network.bin"),networkMagic,networkMagic.size()+2);if(!bytes)return {};auto port=unsigned((*bytes)[networkMagic.size()])|(unsigned((*bytes)[networkMagic.size()+1])<<8);if(!port)throw std::runtime_error("Invalid network game port");return {std::uint16_t(port)};}
 void saveNetworkPreferences(const fs::path& root,const GameNetworkPreferences& value){if(!value.gamePort)throw std::runtime_error("Invalid network game port");loadNetworkPreferences(root);Bytes bytes(networkMagic.begin(),networkMagic.end());bytes.push_back(std::uint8_t(value.gamePort));bytes.push_back(std::uint8_t(value.gamePort>>8));publish(path(root,L"network.bin"),bytes);}
+bool validLanPlayerName(std::string_view name){
+    if(name.empty() || name.size()>lanNameLimit || std::any_of(name.begin(),name.end(),[](unsigned char c){return c<32 || c==127;}))return false;
+    try{wide(name);return true;}catch(const std::runtime_error&){return false;}
+}
+std::string loadLanPlayerName(const fs::path& root){
+    auto bytes=read(path(root,L"lan-player-name.bin"),lanNameMagic,lanNameMagic.size()+1+lanNameLimit);
+    if(!bytes)return "Player";
+    auto size=(*bytes)[lanNameMagic.size()];
+    if(size>lanNameLimit)throw std::runtime_error("Invalid saved LAN player name");
+    std::string name(reinterpret_cast<const char*>(bytes->data()+lanNameMagic.size()+1),size);
+    if(!validLanPlayerName(name))throw std::runtime_error("Invalid saved LAN player name");
+    return name;
+}
+void saveLanPlayerName(const fs::path& root,std::string_view name){
+    if(!validLanPlayerName(name))throw std::runtime_error("Invalid LAN player name");
+    Bytes bytes(lanNameMagic.begin(),lanNameMagic.end());bytes.push_back(std::uint8_t(name.size()));bytes.insert(bytes.end(),name.begin(),name.end());
+    bytes.resize(lanNameMagic.size()+1+lanNameLimit);
+    publish(path(root,L"lan-player-name.bin"),bytes);
+}
 GameCameraPreferences loadCameraPreferences(const fs::path& root){
     auto file=path(root,L"camera.bin");std::error_code error;if(!fs::exists(file,error)){if(error)throw std::runtime_error("Cannot inspect camera preferences");return {};}auto length=fs::file_size(file,error);if(error)throw std::runtime_error("Cannot inspect camera preference size");bool legacy=length==cameraMagic.size()+1,version2=length==cameraMagicV2.size()+3,version3=length==cameraMagicV3.size()+4,version4=length==cameraMagicV4.size()+5,version5=length==cameraMagicV5.size()+6,version6=length==cameraMagicV6.size()+7,version7=length==cameraMagicV7.size()+8;if(!legacy && !version2 && !version3 && !version4 && !version5 && !version6 && !version7)throw std::runtime_error("Unsupported camera preferences size");auto bytes=legacy?read(file,cameraMagic,cameraMagic.size()+1):version2?read(file,cameraMagicV2,cameraMagicV2.size()+3):version3?read(file,cameraMagicV3,cameraMagicV3.size()+4):version4?read(file,cameraMagicV4,cameraMagicV4.size()+5):version5?read(file,cameraMagicV5,cameraMagicV5.size()+6):version6?read(file,cameraMagicV6,cameraMagicV6.size()+7):read(file,cameraMagicV7,cameraMagicV7.size()+8);if(!bytes)throw std::runtime_error("Camera preferences changed during read");auto at=cameraMagic.size();if((*bytes)[at]>1 || (!legacy && ((*bytes)[at+1]>100 || (*bytes)[at+2]>100)) || ((version3 || version4 || version5 || version6 || version7) && (*bytes)[at+3]>1) || ((version4 || version5 || version6 || version7) && (*bytes)[at+4]>1) || ((version5 || version6 || version7) && (*bytes)[at+5]>1) || ((version6 || version7) && (*bytes)[at+6]>1) || (version7 && (*bytes)[at+7]>1))throw std::runtime_error("Invalid camera preferences");return {(*bytes)[at]!=0,legacy?50u:unsigned((*bytes)[at+1]),legacy?50u:unsigned((*bytes)[at+2]),(version3 || version4 || version5 || version6 || version7) && (*bytes)[at+3]!=0,!(version4 || version5 || version6 || version7) || (*bytes)[at+4]!=0,!(version5 || version6 || version7) || (*bytes)[at+5]!=0,(version6 || version7) && (*bytes)[at+6]!=0,version7?(*bytes)[at+7]!=0:!(version5 || version6) || (*bytes)[at+5]!=0};
 }

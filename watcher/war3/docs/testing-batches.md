@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 局域网玩家名跨进程保留（定向验证）
+
+`src/game_preferences.*` 使用现有原子发布流程，将有效 LAN 玩家名单独保存在用户目录的 `Settings/lan-player-name.bin`。`src/lan_browser.*` 和 `src/main.cpp` 在发起建房、加入、离开列表及正常关窗时处理保存，并在重新创建列表时保留本进程确认的名称。玩家名按 UTF-8 的 1–15 字节验证，无效草稿不会覆盖已保存名称。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `58aea723f00c`。使用隔离用户目录，分别验证从列表退出和直接关窗。两轮均由新进程实际预填 15 字节中文名称，提交 16 字节草稿后再开仍读取之前的名称。锁定名称文件时，磁盘保留旧名，同进程重开预填新名并提示尚未保存。解锁关窗后重新写入，下一进程读取新名。各轮核对旧版 `network.bin` 字节和摘要一致。
+
+复现使用 `python -B tmp/docs-artifacts/war3/lan-player-name-v1/verify.py --executable <Win32 Release 客户端>` 和同目录的 `verify-lock.py`，关窗轮另加 `--save-on-close`。回执分别在 `run-ca12fd04a1/`、`run-51f013c631/` 和 `lock-36a6c976a3/`。
+
+同一构建使用该目录的 `verify-join.ps1` 复验正式双端。重名来客改名后加入原房主，名称文件写入 `PlayerRenamed`，两端正常退出，回执在 `run-319ae84bd2/`。
+
 ## 局域网房间详情布局（定向验证）
 
 `src/lan_browser.cpp` 将选中地图的路径限定在 F4 房间模式下方的独立区域。路径沿用原有多行排版和裁剪，IPv4 状态、两个按钮及创建者信息均有独立空间。
