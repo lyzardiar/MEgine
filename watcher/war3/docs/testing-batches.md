@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 局域网构建验证失败与重试（定向验证）
+
+`src/lan_handshake.h`、`src/lan_host.cpp` 和 `src/lan_join.*` 在 TCP 建立后按阶段判定握手结果。同协议头且可执行摘要不同时，房主返回专用原因。来客区分摘要不符、无效或旧房主通用回应、验证超时及中断。`src/lan_lobby.*` 显示对应提示，`src/lan_browser.cpp` 在失败期间维持房间发现，返回时保留仍可发现的原选区。经典加入的原因码与席位分配流程沿用原有路径。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `68b06976feb9`。执行 `war3_lan_departure_tests.exe handshake-failures`、`join-reasons`、`join-close`，共 13 项通过、0 项失败。其中 6 项验证在加入前处理不同摘要、旧拒绝、不同能力头、正常 FIN 和 15 秒超时，失败均未收到席位或地图通知。
+
+私有桌面执行 `python -B tmp/docs-artifacts/war3/lan-build-verification-v1/verify.py --executable <Win32 Release 客户端>`，用摘要不同的临时副本实测专用提示及鼠标取消。独立一轮用 `--legacy-host <58aea723f00c 构建> --esc` 实测通用提示和 Esc。两轮都核对实际 TCP 拒绝、原房间保留、直接按 Enter 重试，以及同构建来客随后入房。回执为 `overlay-0144acee00/receipt.json` 和 `legacy-b5455c4a51/receipt.json`，位于脚本目录。超时和中断目前有传输层定向覆盖，正式窗口上的呈现留待阶段验证。
+
 ## 局域网玩家名跨进程保留（定向验证）
 
 `src/game_preferences.*` 使用现有原子发布流程，将有效 LAN 玩家名单独保存在用户目录的 `Settings/lan-player-name.bin`。`src/lan_browser.*` 和 `src/main.cpp` 在发起建房、加入、离开列表及正常关窗时处理保存，并在重新创建列表时保留本进程确认的名称。玩家名按 UTF-8 的 1–15 字节验证，无效草稿不会覆盖已保存名称。
@@ -26,9 +34,11 @@ Win32 Release 构建通过，客户端 SHA-256 前缀为 `1c69f882798d`。本机
 
 `src/lan_handshake.h`、`src/lan_host.cpp` 和 `src/lan_lobby.*` 让同构建房间在握手后分别提示玩家名已被使用或房间已满。经典房间继续使用原拒绝报文和原因码。`src/lan_browser.cpp` 在重名提示期间维持房间发现，返回时保留原房间选区及搜索设置，并将焦点移到玩家名。
 
-Win32 Release 构建通过，客户端 SHA-256 前缀为 `56d3ca04ad33`。运行 `war3_lan_departure_tests.exe join-reasons` 和 `join-close`，共 7 项通过、0 项失败。真实本机 TCP 检查验证重名、改名加入、满员及席位释放后重试。两个正式客户端均以默认名称进入同构建模式，来客收到重名提示。在提示上停留 38 秒后按 Esc 返回，原房间仍选中且名称输入已聚焦。改名后加入同一房主，双端退出 0。满员提示的呈现与鼠标取消路径待阶段验证。
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `56d3ca04ad33`。运行 `war3_lan_departure_tests.exe join-reasons` 和 `join-close`，共 7 项通过、0 项失败。真实本机 TCP 检查验证重名、改名加入、满员及席位释放后重试。两个正式客户端均以默认名称进入同构建模式，来客收到重名提示。在提示上停留 38 秒后按 Esc 返回，原房间仍选中且名称输入已聚焦。改名后加入同一房主，双端退出 0。
 
 正式窗口复现使用 `pwsh -File tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script tmp/docs-artifacts/war3/lan-join-rejection-v1/verify.ps1 -Executable <Win32 Release 客户端>`。最终构建和回执位于 `tmp/docs-artifacts/war3/lan-join-rejection-v1/{frozen-56d3ca04ad33/war3.exe,run-162cb18cf4/receipt.json}`。
+
+在 `68b06976feb9` 的三个正式客户端上补验满员。来客 A 占用唯一开放席位后，来客 B 依据尚未刷新的列表发起加入，实际 TCP 请求被拒，界面显示满员提示。B 鼠标取消返回，A 退出后，B 用 F5 刷新并加入同一房间。收到的专用拒绝码以及房间空位 `1 → 0 → 1 → 0` 均已核对，三端退出 0。复现使用 `pwsh -File tmp/docs-artifacts/war3/lan-full-room-v1/verify.ps1 -Executable <Win32 Release 客户端>`，回执 `tmp/docs-artifacts/war3/lan-full-room-v1/run-273f661627/receipt.json`，满员和重新入房画面已查看。
 
 ## 局域网同构建对局入口（定向验证）
 

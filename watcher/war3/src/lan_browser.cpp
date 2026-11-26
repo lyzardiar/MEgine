@@ -44,7 +44,7 @@ bool LanBrowser::savePlayerName(){
 }
 std::optional<LanLobbyHandoff> LanBrowser::takeHandoff(){if(!lobby_)return {};auto handoff=lobby_->takeHandoff();if(handoff)lobby_.reset();return handoff;}
 std::optional<LanHostHandoff> LanBrowser::takeHostHandoff(){if(!host_)return {};auto handoff=host_->takeHandoff();if(handoff)host_.reset();return handoff;}
-std::string LanBrowser::pollMinimized(){if(host_)return host_->pollMinimized();if(lobby_){auto action=lobby_->pollMinimized();if(lobby_->needsDifferentPlayerName())pollDiscovery();return action;}pollDiscovery();return {};}
+std::string LanBrowser::pollMinimized(){if(host_)return host_->pollMinimized();if(lobby_){auto action=lobby_->pollMinimized();if(lobby_->keepsRoomSelection())pollDiscovery();return action;}pollDiscovery();return {};}
 void LanBrowser::pollDiscovery(){
     if(discovery_)try{auto now=GetTickCount64();if(now>=nextSearch_){discovery_->refresh();nextSearch_=now+4000;}discovery_->poll();}
     catch(const std::exception& e){discovery_.reset();error_="局域网搜索中断。按 F5 重试。";log_.write(std::string("lan_discovery_failed=")+e.what());}
@@ -123,12 +123,12 @@ std::string LanBrowser::draw(const UiInput& rawInput,std::wstring_view character
     if(host_){auto action=host_->draw(rawInput,characters);if(action=="CancelButton"){host_.reset();start();}else if(action=="PrepareGame")return action;return {};}
     if(lobby_){
         auto action=lobby_->draw(rawInput,characters);
-        bool rename=lobby_->needsDifferentPlayerName();
-        if(rename)pollDiscovery();
+        const bool keepSelection=lobby_->keepsRoomSelection();
+        if(keepSelection)pollDiscovery();
         if(action=="CancelButton"){
+            if(lobby_->needsDifferentPlayerName())nameFocus_=true;
             lobby_.reset();
-            if(rename)nameFocus_=true;
-            if(!rename || !discovery_)start();
+            if(!keepSelection || !discovery_)start();
         }else if(action=="PrepareGame")return action;
         return {};
     }

@@ -1,11 +1,14 @@
 // Author: MiYu. Same-executable capability handshake for opt-in local LAN experiments.
 #pragma once
 #include "platform.h"
+#include <algorithm>
 #include <array>
+#include <span>
 #include <vector>
 
 namespace war3 {
-inline constexpr std::uint32_t lanRejectNameInUse=0x4d334c01,lanRejectRoomFull=0x4d334c02;
+inline constexpr std::uint32_t lanRejectNameInUse=0x4d334c01,lanRejectRoomFull=0x4d334c02,lanRejectBuildMismatch=0x4d334c03;
+inline constexpr std::size_t lanHandshakeHeaderSize=16;
 
 inline const std::string& executableDigest() {
     static const auto digest=[] {
@@ -17,5 +20,9 @@ inline const std::string& executableDigest() {
 }
 inline std::vector<std::uint8_t> localLanHandshake() {
     const auto& digest=executableDigest();std::vector<std::uint8_t> bytes{0xf7,0x70,80,0,'M','3','L','H',1,0,0,0,15,0,0,0};bytes.insert(bytes.end(),digest.begin(),digest.end());return bytes;
+}
+inline bool hasLanHandshakeDigest(std::span<const std::uint8_t> expected,std::span<const std::uint8_t> received) {
+    return expected.size()==lanHandshakeHeaderSize+64 && received.size()==expected.size() && std::equal(expected.begin(),expected.begin()+lanHandshakeHeaderSize,received.begin()) &&
+        std::all_of(received.begin()+lanHandshakeHeaderSize,received.end(),[](std::uint8_t c){return (c>='0' && c<='9') || (c>='a' && c<='f');});
 }
 }

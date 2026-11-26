@@ -14,6 +14,7 @@
 
 namespace war3 {
 enum class LanJoinState {Connecting,Joining,Lobby,Rejected,Closed,Error};
+enum class LanHandshakeFailure {None,BuildMismatch,UnexpectedReply,TimedOut,Interrupted};
 enum class LanMapDownloadState {Idle,Requested,Receiving,Complete};
 enum class LanLoadPhase {Lobby,Countdown,Loading,Ready,Failed};
 struct LanSlot {std::uint8_t playerId=0,download=0,status=0,computer=0,team=0,color=0,race=0,difficulty=0,handicap=0;};
@@ -37,6 +38,7 @@ class LanJoin {
     LanMapAnnouncement map_;
     bool mapReadyReported_=false;
     bool experimentalHandshake_=false,handshakeVerified_=false;
+    LanHandshakeFailure handshakeFailure_=LanHandshakeFailure::None;
     std::vector<std::uint8_t> handshakePacket_,deferredJoin_;
     std::chrono::steady_clock::time_point handshakeStarted_{};
     bool loadingEnabled_=false,localLoaded_=false;
@@ -58,6 +60,7 @@ class LanJoin {
     void connected();
     void process(const std::uint8_t* data,std::size_t length);
     void fail(std::string reason);
+    void failHandshake(LanHandshakeFailure failure,const char* reason);
     void closeSocket(bool keepTimeSlots=false);
     void clearDownload();
     void updateLoadPhase();
@@ -72,6 +75,7 @@ public:
     // Must be enabled before the first transport poll; waits for an identical executable response before joining.
     bool enableExperimentalHandshake();
     bool experimentalHandshakeVerified() const {return experimentalHandshake_ && handshakeVerified_;}
+    LanHandshakeFailure handshakeFailure() const {return handshakeFailure_;}
     bool sendChat(std::string_view message);
     bool requestSlotChange(std::uint8_t field,std::uint8_t value);
     // Queue readiness only after every announced map field has been checked.

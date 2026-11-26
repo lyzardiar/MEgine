@@ -33,7 +33,7 @@ struct TestSocket {
     SOCKET handle;
     ~TestSocket(){if(handle!=INVALID_SOCKET)closesocket(handle);}
 };
-void joinBeforeClose(std::span<const std::uint8_t> suffix,LanJoinState expected,unsigned precedingPings=0){
+void joinBeforeClose(std::span<const std::uint8_t> suffix,LanJoinState expected,unsigned precedingPings=0,LanHandshakeFailure expectedHandshake=LanHandshakeFailure::None){
     struct Winsock {
         Winsock(){WSADATA data{};requireJoin(WSAStartup(MAKEWORD(2,2),&data)==0,"Winsock startup failed");}
         ~Winsock(){WSACleanup();}
@@ -45,6 +45,7 @@ void joinBeforeClose(std::span<const std::uint8_t> suffix,LanJoinState expected,
     int size=sizeof(address);requireJoin(getsockname(listener.handle,reinterpret_cast<sockaddr*>(&address),&size)==0,"Cannot find rejection listener port");
     LanGame game;game.address="127.0.0.1";game.port=ntohs(address.sin_port);
     LanJoin join(game,"Test");
+    if(expectedHandshake!=LanHandshakeFailure::None)requireJoin(join.enableExperimentalHandshake(),"Cannot enable verification for join test");
     fd_set readable;FD_ZERO(&readable);FD_SET(listener.handle,&readable);timeval timeout{3,0};
     requireJoin(select(0,&readable,nullptr,nullptr,&timeout)==1,"Client did not connect to rejection listener");
     TestSocket peer{accept(listener.handle,nullptr,nullptr)};
@@ -56,16 +57,19 @@ void joinBeforeClose(std::span<const std::uint8_t> suffix,LanJoinState expected,
         stream.insert(stream.end(),suffix.begin(),suffix.end());
         requireJoin(send(peer.handle,reinterpret_cast<const char*>(stream.data()),int(stream.size()),0)==int(stream.size()),"Cannot send join test packets");
     }
-    requireJoin(shutdown(peer.handle,SD_SEND)==0,"Cannot close rejection test write stream");
-    const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(3);
+    const bool waitForTimeout=expectedHandshake==LanHandshakeFailure::TimedOut;
+    if(!waitForTimeout)requireJoin(shutdown(peer.handle,SD_SEND)==0,"Cannot close rejection test write stream");
+    const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(waitForTimeout?18:3);
     while(join.state()==LanJoinState::Connecting || join.state()==LanJoinState::Joining){
         requireJoin(std::chrono::steady_clock::now()<deadline,"Join did not observe TCP close");
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         join.poll();
     }
     requireJoin(join.state()==expected,"Unexpected join state after TCP close");
+    requireJoin(join.handshakeFailure()==expectedHandshake,"Unexpected LAN verification failure");
     if(expected==LanJoinState::Rejected)requireJoin(join.rejectionCode()==9,"Join rejection code was lost before TCP close");
-    if(expected==LanJoinState::Error)requireJoin(join.error()=="Invalid LAN packet header","Invalid final header was not reported");
+    if(expected==LanJoinState::Error && expectedHandshake==LanHandshakeFailure::None)requireJoin(join.error()=="Invalid LAN packet header","Invalid final header was not reported");
+    if(expectedHandshake!=LanHandshakeFailure::None)requireJoin(!join.localPlayerId() && !join.mapCheck().received,"Verification failure assigned a seat or announced a map");
 }
 void discoveryCapacity(){
     LanHostSettings settings;settings.loopbackOnly=true;
@@ -142,6 +146,18 @@ int main(int argc,char** argv){
             joinBeforeClose({},LanJoinState::Closed);joinBeforeClose(reject,LanJoinState::Rejected);joinBeforeClose(reject,LanJoinState::Rejected,256);
             joinBeforeClose(truncated,LanJoinState::Closed,256);joinBeforeClose(badHeader,LanJoinState::Error,256);
             std::cout<<"PASS bare_close_and_join_rejection_before_close\nRESULT passed=5 failed=0\n";return 0;
+        }
+        if(argc==2 && std::string_view(argv[1])=="handshake-failures"){
+            constexpr std::array<std::uint8_t,8> buildRejected{0xf7,0x05,8,0,3,0x4c,0x33,0x4d},oldRejected{0xf7,0x05,8,0,9,0,0,0};
+            auto differentDigest=localLanHandshake();differentDigest[lanHandshakeHeaderSize]=differentDigest[lanHandshakeHeaderSize]=='0'?'1':'0';
+            auto differentHeader=localLanHandshake();differentHeader[12]^=0x80;
+            joinBeforeClose(buildRejected,LanJoinState::Error,0,LanHandshakeFailure::BuildMismatch);
+            joinBeforeClose(differentDigest,LanJoinState::Error,0,LanHandshakeFailure::BuildMismatch);
+            joinBeforeClose(oldRejected,LanJoinState::Error,0,LanHandshakeFailure::UnexpectedReply);
+            joinBeforeClose(differentHeader,LanJoinState::Error,0,LanHandshakeFailure::UnexpectedReply);
+            joinBeforeClose({},LanJoinState::Closed,0,LanHandshakeFailure::Interrupted);
+            joinBeforeClose({},LanJoinState::Error,0,LanHandshakeFailure::TimedOut);
+            std::cout<<"PASS same_build_handshake_failures\nRESULT passed=6 failed=0\n";return 0;
         }
         if(argc==2 && std::string_view(argv[1])=="game-info-capacity"){
             discoveryCapacity();std::cout<<"PASS discovery_packet_human_capacity\nRESULT passed=1 failed=0\n";return 0;
