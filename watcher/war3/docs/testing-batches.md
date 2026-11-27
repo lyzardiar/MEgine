@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 回放删除确认及关联地图保留（待窗口验证）
+
+`src/replay_browser.*` 与 `src/main.cpp` 固定确认框中的文件选择，只接受确认框打开后的新点击或独立确认键。删除失败后优先重新读取原路径，删除成功后选中邻近项。删除提示复用回放列表下方的通知位置，后续预览读取失败仍保留删除结果。
+
+Win32 Release 增量编译通过，最终客户端 SHA-256 前缀 `33c020eb5cc6`。由已有来客录像生成隔离夹具，保留 150 个时片及原地图、基础归档摘要。新版离线回执为 `tmp/docs-artifacts/war3/lan-replay-delete-sidecar-v1/run-35bf3b75ba/receipt.json`。基线及修复中间版均在 Windows 会话断开时于 D3D9 初始化退出，未进入回放列表，回执为同目录 `run-4a3754f0b6/receipt.json` 和 `run-0889228b19/receipt.json`。
+
+显示会话可用时运行 `python -B tmp/docs-artifacts/war3/lan-replay-delete-sidecar-v1/verify.py --exe <客户端> --verify-replaced --execute`。使用隔离用户目录，检查打开前的鼠标按下和之后的释放、Esc 取消、确认后同名回放替换、共享硬链接保留、摘要不符的地图保留与提示、空 Maps 资源根中幸存回放播放至 15 秒。正式交互、底部提示及本次共享链接删除后的播放均待验证。
+
 ## 同构建 LAN 大厅历史滚动（定向验证）
 
 `src/lan_host.cpp` 与 `src/lan_join.*` 为已接收的聊天记录分配本地序号。`src/lan_lobby_chat_history.h`、`src/lan_lobby.*` 与 `src/lan_host_ui.*` 让房主和来客共用折行、阅读位置、滚轮、滑块、箭头和键盘操作。历史区与编辑框相交时由编辑框接收点击，滚轮可在继续编辑草稿时翻阅历史。

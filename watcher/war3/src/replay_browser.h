@@ -26,7 +26,7 @@ class ReplayBrowser {
     std::optional<PlaybackNotice> playbackNotice_;
     std::shared_ptr<const Replay> selectedReplay_;
     fs::path selectedPath_;
-    bool loading_=false,confirmDelete_=false,deleting_=false,pendingPlay_=false,reloadSelection_=false;
+    bool loading_=false,confirmDelete_=false,confirmMouseReady_=false,deleting_=false,pendingPlay_=false,reloadSelection_=false;
     std::string selectedDigest_;
     std::uint64_t request_=0;
     std::atomic<std::uint64_t> generation_=0;
@@ -49,7 +49,6 @@ public:
     std::string draw(const UiInput& input);
     std::optional<ReplaySelection> takeSelection();
     void setPlaybackNotice(std::string message);
-    std::string_view playbackNotice() const {return playbackNotice_?std::string_view(playbackNotice_->message):std::string_view{};}
-    const std::string& error() const {return error_;}
+    std::string_view notice() const {if(!error_.empty())return error_;return playbackNotice_?std::string_view(playbackNotice_->message):std::string_view{};}
 };
 }
