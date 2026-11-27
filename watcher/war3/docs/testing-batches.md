@@ -12,7 +12,7 @@ Win32 Release 集成客户端编译与回放步骤测试通过。隔离 TCP 回�
 
 `src/session_commerce.cpp` 为选择买家、商品按钮及购买复用商店状态和阵营条件。敌方或停用的店面提示无法交易。店主眩晕时，已经发出的购买命令也会在消费时重新判定。
 
-Win32 Release 集成客户端编译通过，SHA-256 前缀 `05483ef2a7d9`。独立真实会话用玩家商店和中立商店各走商品按钮、买家、命令、扣费、库存和入包。基线敌方按钮会启用，冰冻吐息已令按钮禁用后仍能用原买家扣 125 金完成购买。候选两种情况均保持金币、木材、库存和背包，盟友、中立及暂停或眩晕解除后正常购买。7 项通过，地图摘要保持，未加载 `Game.dll`。运行 `pwsh -NoProfile -File tmp/docs-artifacts/war3/shop-eligibility-v1/verify.ps1`，回执见 `run-ffbf20a1bc0d/receipt.json`。
+Win32 Release 集成客户端编译通过，SHA-256 前缀 `05483ef2a7d9`。独立真实会话用玩家商店和中立商店各走商品按钮、买家、命令、扣费、库存和入包。基线敌方按钮会启用，冰冻吐息已令按钮禁用后仍能用原买家扣 125 金完成购买。候选两种情况均保持金币、木材、库存和背包，盟友、中立及暂停或眩晕解除后正常购买。自有单位商店无买家时仍正常出售单位并扣费。8 项通过，地图摘要保持，未加载 `Game.dll`。运行 `pwsh -NoProfile -File tmp/docs-artifacts/war3/shop-eligibility-v1/verify.ps1`，回执见 `run-031ab5e89ea1/receipt.json`。
 
 同一集成构建运行 `war3_commerce_tests <data-root> <commerce-current/commerce.w3m>` 默认及 `neutral-invalid` 模式，均通过。实际命令区绘制和实体鼠标交互待验证。
 
@@ -32,7 +32,9 @@ Win32 Release 集成客户端编译通过，SHA-256 前缀 `ef1dc26c7dd6`。`war
 
 Win32 Release 客户端编译通过，SHA-256 前缀 `014eea29dae2`。隔离探针运行产品图标判断、真正会话与退款逻辑。基线复现从图标外拖入、前项完成使队列左移、切换建筑三种误取消。候选三种情况均保留队列与资金，同槽正常点击和同帧快点击各正确退 135 金，共享控制在手势中撤回时无退款。6 通过、0 失败，地图摘要保持，未加载 `Game.dll`。
 
-操作复验用三个有各自票号的生产订单，覆盖图标外拖入、前项在按住时完成、切换建筑、共享权限撤回，以及正常点击。自动验证回执为 `tmp/docs-artifacts/war3/production-click-v1/{baseline-a6295b17ca34,candidate-3b80f994dd52}/receipt.json`。人工输入、原生窗口和联机延迟待验。
+操作复验用三个有各自票号的生产订单，覆盖图标外拖入、前项在按住时完成、切换建筑、共享权限撤回，以及正常点击。自动验证回执为 `tmp/docs-artifacts/war3/production-click-v1/{baseline-a6295b17ca34,candidate-3b80f994dd52}/receipt.json`。
+
+同帧快点击遇到队首完成也已通过，覆盖此场景的完整候选回执为 `tmp/docs-artifacts/war3/production-click-v1/candidate-055dbab326e0/receipt.json`。真实 TCP 延迟回显在集成构建复验 2 通过、0 失败。先发取消票 1，较早的时间片让同类型新票 2 前移到同槽。两端接收旧取消后均保留新票，金币保持 2730。再下发票 2，两端队列清空并各退 135 金。三轮状态校验逐轮一致。两端为同进程的独立正式会话，回执 `tmp/docs-artifacts/war3/lan-production-cancel-ticket-v1/run-9ac87934a7e5/receipt.json`，原生窗口与跨机延迟仍待验。
 
 ## LAN 断线返回后显示部分回放结果（定向验证）
 
