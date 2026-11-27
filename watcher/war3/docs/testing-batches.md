@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 同构建 LAN 私聊受众与离席草稿（定向验证）
+
+`src/game_view.cpp` 在编辑草稿时接入 F12 收件人面板，关闭后保留草稿和选择。失败提示与聊天记录分行显示。`src/chat_dialog.cpp` 忽略 F12 连发。`src/lan_simulation.cpp` 在应用私聊动作时复查收件人状态，允许先于离席的私聊，丢弃离席后到达的私聊及其脚本事件。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `5e5d2fae4ff5`。`war3_game_flow_tests.exe <资源目录> tmp/docs-artifacts/war3/game-flow/fixture.w3m lan-private-departure` 和 `lan-host-pause` 共 5 项通过、0 项失败。两种同槽动作顺序均执行了历史与 JASS 事件断言。
+
+私有桌面三端使用原创三席夹具，在同构建房主暂停时验证受众。发送者和收件人均看到中文私聊，第三席看到全体对照消息。收件人用正式菜单离场后，原收件人显示「已离开」，发送失败提示清楚可读，原草稿保留。第三席在失败后仍仅看到全体对照消息。发送者以 F12 切到所有人，按 Enter 后第三席和发送者各显示原草稿一次，原 TCP 连接保留。三进程均退出 0。
+
+复现使用 `pwsh -File tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script tmp/docs-artifacts/war3/lan-private-chat-v1/verify-private-chat.ps1 -Executable <Win32 Release 客户端>`。回执与实帧复核为 `tmp/docs-artifacts/war3/lan-private-chat-v1/run-db10a659/{receipt.json,visual-review.json}`。
+
 ## 同构建 LAN 大厅长消息折行（定向验证）
 
 `src/lan_lobby.*` 与 `src/lan_host_ui.cpp` 共用历史折行。此前，一条无空格长消息把正文推到第二行，而每条历史只画一行，因此界面只显示发送者。现在按实际宽度和字符边界折行，在固定历史区域按顺序显示最近的可见行。
