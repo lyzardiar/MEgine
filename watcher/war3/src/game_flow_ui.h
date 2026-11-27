@@ -45,6 +45,7 @@ class GameFlowUi {
     std::vector<std::wstring> saveFiles_;
     size_t saveScroll_=0,saveCursor_=0;
     std::string saveError_;
+    std::optional<LocalLoadRequest> localLoad_;
     std::vector<std::string> scoreModels_;
     std::array<std::string,3> scoreFrameModels_;
     std::array<std::string,2> scoreBanners_;
@@ -65,6 +66,8 @@ public:
     GameFlowUi(GameData& data,Renderer& renderer,Text& text,std::function<unsigned(const PlayerCommand&)> submit={}) : data_(data),renderer_(renderer),text_(text),submit_(std::move(submit)) {}
     ~GameFlowUi();
     bool menuOpen() const {return panel_!=Panel::Closed;}
+    std::optional<LocalLoadRequest> takeLocalLoad(){auto request=std::move(localLoad_);localLoad_.reset();return request;}
+    void localLoadError(std::string error){saveError_=std::move(error);}
     bool agentSaveNameHit(float x,float y) const;
     void toggleMenu();
     bool menuShortcut(unsigned key,bool network);

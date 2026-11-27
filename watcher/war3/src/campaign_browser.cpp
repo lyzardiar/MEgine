@@ -39,8 +39,8 @@ fs::path CampaignBrowser::resolvePath(const std::string& path,const fs::path& ex
     return validatePath(candidate,externalRoot);
 }
 void CampaignBrowser::clearPreparation(){preparation_.clear();loading_=false;autoStart_=false;session_.reset();setup_.reset();checkpoint_.clear();checkpointDigest_.clear();error_.clear();}
-void CampaignBrowser::beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign,const fs::path& externalRoot,std::optional<unsigned> version,std::optional<std::pair<unsigned,unsigned>> restartDifficulty){
-    auto resolved=validatePath(path,externalRoot);clearPreparation();request_=preparation_.request(resolved,campaign?std::optional<std::pair<bool,unsigned>>{std::pair{expansion,difficulty}}:std::nullopt,false,{},version,restartDifficulty);loading_=true;autoStart_=autoStart;currentPath_=resolved;currentExpansion_=expansion;currentDifficulty_=difficulty;currentCampaignSession_=campaign;currentExternalRoot_=externalRoot;log_.write("campaign_map_requested="+utf8(resolved.wstring()));
+void CampaignBrowser::beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign,const fs::path& externalRoot,std::optional<unsigned> version,std::optional<std::pair<unsigned,unsigned>> restartDifficulty,bool suppressAudio){
+    auto resolved=validatePath(path,externalRoot);clearPreparation();request_=preparation_.request(resolved,campaign?std::optional<std::pair<bool,unsigned>>{std::pair{expansion,difficulty}}:std::nullopt,false,{},version,restartDifficulty,SoloReplayMode::None,suppressAudio);loading_=true;autoStart_=autoStart;currentPath_=resolved;currentExpansion_=expansion;currentDifficulty_=difficulty;currentCampaignSession_=campaign;currentExternalRoot_=externalRoot;log_.write("campaign_map_requested="+utf8(resolved.wstring()));
 }
 bool CampaignBrowser::entryAvailable(const Campaign& campaign,const Entry& entry) const {return entry.missionEntry?profile_.mission(campaign.expansion,campaign.offset,entry.mission,entry.mission==0):(entry.intro || profile_.cinematic(campaign.expansion,campaign.offset,entry.ending,false));}
 void CampaignBrowser::prepareSelected(bool autoStart){
@@ -91,8 +91,13 @@ void CampaignBrowser::nextLevel(const std::string& path,const fs::path& external
 void CampaignBrowser::nextCheckpoint(const std::string& name,bool campaign,const fs::path& externalRoot,const std::string& expectedDigest){
     try{auto allowed=externalRoot.empty()?fs::path{}:fs::canonical(externalRoot);auto [info,path]=ScriptSession::inspectAndResolveRecoveryCheckpoint(dataRoot_,name,allowed);if(!expectedDigest.empty() && info.fileDigest!=expectedDigest)throw std::runtime_error("Checkpoint changed after selection");beginPath(path,info.expansion,std::min(info.defaultDifficulty,2u),true,true,allowed,info.version);currentCampaignSession_=campaign;checkpoint_=name;checkpointDigest_=info.fileDigest;}catch(const std::exception& e){clearPreparation();error_="无法载入存档地图。";log_.write(std::string("campaign_checkpoint_error=")+e.what());}
 }
-void CampaignBrowser::nextCheckpointPrepared(const std::string& name,const RecoveryCheckpointInfo& info,const fs::path& path,bool campaign,const fs::path& externalRoot){
-    try{auto allowed=externalRoot.empty()?fs::path{}:fs::canonical(externalRoot);beginPath(path,info.expansion,std::min(info.defaultDifficulty,2u),true,true,allowed,info.version);currentCampaignSession_=campaign;checkpoint_=name;checkpointDigest_=info.fileDigest;}catch(const std::exception& e){clearPreparation();error_="无法载入存档地图。";log_.write(std::string("campaign_checkpoint_error=")+e.what());}
+void CampaignBrowser::nextCheckpointPrepared(const std::string& name,const RecoveryCheckpointInfo& info,const fs::path& path,bool campaign,const fs::path& externalRoot,bool suppressAudio){
+    try{auto allowed=externalRoot.empty()?fs::path{}:fs::canonical(externalRoot);beginPath(path,info.expansion,std::min(info.defaultDifficulty,2u),true,true,allowed,info.version,{},suppressAudio);currentCampaignSession_=campaign;checkpoint_=name;checkpointDigest_=info.fileDigest;}catch(const std::exception& e){clearPreparation();error_="无法载入存档地图。";log_.write(std::string("campaign_checkpoint_error=")+e.what());}
+}
+std::unique_ptr<ScriptSession> CampaignBrowser::pollPreparedCheckpoint(){prepared();if(!autoStart_ || checkpoint_.empty() || !session_ || loading_)return {};autoStart_=false;return takeSession();}
+void CampaignBrowser::adoptCheckpointContext(CampaignBrowser& staged){
+    clearPreparation();currentPath_.swap(staged.currentPath_);currentExternalRoot_.swap(staged.currentExternalRoot_);
+    currentDifficulty_=staged.currentDifficulty_;currentExpansion_=staged.currentExpansion_;currentCampaignSession_=staged.currentCampaignSession_;
 }
 std::string CampaignBrowser::takeCheckpoint(){auto name=std::move(checkpoint_);checkpoint_.clear();return name;}
 std::string CampaignBrowser::takeCheckpointDigest(){auto digest=std::move(checkpointDigest_);checkpointDigest_.clear();return digest;}

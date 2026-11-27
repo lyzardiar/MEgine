@@ -49,9 +49,9 @@ void ScriptSession::saveLocalGame(const std::string& name,bool overwrite,const s
     if(!mainAttempted_ || !mainCompleted_ || failed_ || unitRecoveryIncomplete_ || experimentalSelectionSync_ || !networkPlayers_.empty() || pendingSave_ || localSaveInProgress_ || exitRequest()!=SessionExit::None || !runtime_.snapshotSafe() || !contexts_.empty())throw std::runtime_error("Local save requires an active local session at a safe boundary");
     localSaveInProgress_=true;struct Reset{bool& active;~Reset(){active=false;}}reset{localSaveInProgress_};saveRecoveryCheckpoint(name,overwrite);if(onPublished)onPublished();notifyGameSaved(name);
 }
-void ScriptSession::requestLocalLoad(const std::string& name) {
+LocalLoadRequest ScriptSession::prepareLocalLoad(const std::string& name) const {
     if(!world_ || !mainAttempted_ || failed_ || unitRecoveryIncomplete_ || experimentalSelectionSync_ || !networkPlayers_.empty() || pendingSave_ || localSaveInProgress_ || exitRequest()!=SessionExit::None || !runtime_.snapshotSafe() || !contexts_.empty())throw std::runtime_error("Local load requires an active local session at a safe boundary");
-    auto resolved=inspectAndResolveRecoveryCheckpoint(world_->resources().root(),name,{}, {},true);auto path=utf8(resolved.second.wstring());nextCheckpoint_=name;nextCheckpointDigest_=resolved.first.fileDigest;nextLevel_=std::move(path);finishGame(false,SessionExit::ChangeLevel);
+    auto resolved=inspectAndResolveRecoveryCheckpoint(world_->resources().root(),name,{}, {},true);return {name,std::move(resolved.first),std::move(resolved.second)};
 }
 RecoveryCheckpointInfo ScriptSession::inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,std::stop_token stop) {return readCheckpoint(dataRoot,name,stop).info;}
 std::pair<RecoveryCheckpointInfo,fs::path> ScriptSession::inspectAndResolveRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot,std::stop_token stop,bool exactExternalHint) {

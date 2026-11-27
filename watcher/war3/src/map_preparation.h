@@ -19,7 +19,7 @@ struct PreparedMap {
     std::string error,previewError;
 };
 class MapPreparation {
-    struct Request {std::uint64_t id;fs::path path;std::shared_ptr<const Bytes> memory;std::string label;std::optional<std::pair<bool,unsigned>> campaign;bool inferCampaign;std::optional<std::uint32_t> initialRandomSeed;std::optional<LanSessionSetup> lanSetup;std::optional<unsigned> version;std::optional<std::pair<unsigned,unsigned>> difficulty;std::string expectedCommonDigest;SoloReplayMode soloReplay=SoloReplayMode::None;};
+    struct Request {std::uint64_t id;fs::path path;std::shared_ptr<const Bytes> memory;std::string label;std::optional<std::pair<bool,unsigned>> campaign;bool inferCampaign;std::optional<std::uint32_t> initialRandomSeed;std::optional<LanSessionSetup> lanSetup;std::optional<unsigned> version;std::optional<std::pair<unsigned,unsigned>> difficulty;std::string expectedCommonDigest;SoloReplayMode soloReplay=SoloReplayMode::None;bool suppressAudio=false;};
     fs::path dataRoot_;
     bool muted_=false;
     std::atomic<std::uint64_t> generation_=0;
@@ -32,7 +32,7 @@ class MapPreparation {
 public:
     explicit MapPreparation(fs::path dataRoot,bool muted=false);
     ~MapPreparation();
-    std::uint64_t request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign={},bool inferCampaign=true,std::optional<std::uint32_t> initialRandomSeed={},std::optional<unsigned> version={},std::optional<std::pair<unsigned,unsigned>> difficulty={},SoloReplayMode soloReplay=SoloReplayMode::None);
+    std::uint64_t request(fs::path path,std::optional<std::pair<bool,unsigned>> campaign={},bool inferCampaign=true,std::optional<std::uint32_t> initialRandomSeed={},std::optional<unsigned> version={},std::optional<std::pair<unsigned,unsigned>> difficulty={},SoloReplayMode soloReplay=SoloReplayMode::None,bool suppressAudio=false);
     // The caller must retain only immutable aliases to these validated map bytes.
     std::uint64_t requestMemory(std::shared_ptr<const Bytes> bytes,std::string label,std::optional<std::uint32_t> initialRandomSeed={},std::optional<unsigned> version={},std::string expectedCommonDigest={});
     std::uint64_t requestLanMemory(std::shared_ptr<const Bytes> bytes,std::string label,LanSessionSetup setup,bool experimentalSelectionSync=false,std::optional<unsigned> version={},std::string expectedCommonDigest={});

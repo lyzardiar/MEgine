@@ -36,6 +36,7 @@
 
 namespace war3 {
 struct RecoveryCheckpointInfo {std::string mapPath,mapDigest,fileDigest;bool expansion=false;unsigned version=0,defaultDifficulty=0;};
+struct LocalLoadRequest {std::string name;RecoveryCheckpointInfo checkpoint;fs::path map;};
 struct RecoveryMapNotFound : std::runtime_error {std::string mapPath;explicit RecoveryMapNotFound(std::string path):std::runtime_error("Cannot locate checkpoint map with matching identity"),mapPath(std::move(path)) {}};
 class PlayerSetup;
 class WalkableGeometry;
@@ -178,6 +179,8 @@ class ScriptSession {
     void queueSpellSound(std::uint32_t ability,WorldPoint position);
     void queueLabelSound(const std::string& label,WorldPoint position);
     float localSoundGain_=1,localMusicGain_=1;
+    bool audioOutputSuppressed_=false;
+    float effectiveMusicGain() const {return audioOutputSuppressed_?0.f:localMusicGain_;}
     std::array<bool,3> localSoundCategories_{true,true,true};
     std::unique_ptr<ObjectData> definitions_;
     std::map<std::uint32_t,std::shared_ptr<UnitState>> units_;
@@ -1484,7 +1487,7 @@ public:
     void saveRecoveryCheckpoint(const std::string& name,bool overwrite=true) const;
     void saveLocalGame(const std::string& name,bool overwrite=false,const std::function<void()>& onPublished={});
     std::string takeScriptSaveError();
-    void requestLocalLoad(const std::string& name);
+    LocalLoadRequest prepareLocalLoad(const std::string& name) const;
     static RecoveryCheckpointInfo inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,std::stop_token stop={});
     static fs::path resolveRecoveryCheckpointMap(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={},std::stop_token stop={});
     static std::pair<RecoveryCheckpointInfo,fs::path> inspectAndResolveRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={},std::stop_token stop={},bool exactExternalHint=false);
@@ -1660,6 +1663,7 @@ public:
     double simulationTime() const {return simulationTime_;}
     double presentationTime() const {return simulationTime_+accumulator_;}
     void audioMuted(bool muted);
+    void suppressAudioOutput(bool suppressed);
     void localAudioGains(float sound,float music);
     void localAudioCategories(bool ambient,bool movement,bool units);
     void audioSimulationClock() {if(audio_)throw std::runtime_error("Audio simulation clock must be set before audio initialization");audioSimulationClock_=true;}

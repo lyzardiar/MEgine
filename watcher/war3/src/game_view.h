@@ -329,6 +329,8 @@ public:
     std::optional<bool> lanLocalExitScores() const {return lanLocalExitScores_;}
     void finishLanLocalScores(){lanLeavePending_=false;if(data_->session->exitRequest()==SessionExit::None)data_->session->finishGame(true);}
     GameAudioPreferences audioPreferences() const {return audioCommitted_;}
+    std::optional<LocalLoadRequest> takeLocalLoad();
+    void localLoadError(std::string error);
     bool restartRequested() const {return data_->session->exitRequest()==SessionExit::Restart;}
     const std::string& nextLevel() const {return data_->session->nextLevel();}
     const std::string& nextCheckpoint() const {return data_->session->nextCheckpoint();}

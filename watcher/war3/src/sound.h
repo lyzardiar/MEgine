@@ -49,7 +49,7 @@ class SoundScene {
     std::vector<Stacked> stacked_;
     std::array<float,3> listener_{},listenerRight_{1,0,0};
     bool listenerSet_=false;
-    bool muted_=false;
+    bool muted_=false,outputSuppressed_=false;
     std::array<bool,3> localCategories_{true,true,true};
     float localGain_=1;
     const double* simulationTime_=nullptr;
@@ -81,6 +81,7 @@ public:
     std::shared_ptr<ScriptSound> restoreObject(ScriptSound sound,bool hasDigital,const std::string& sourceDigest,const std::string& bankDigest,const std::optional<AudioPlaybackState>& playback);
     void adoptRestored(SoundScene& source,const std::vector<std::shared_ptr<ScriptSound>>& sounds);
     void muted(bool value);
+    void suppressOutput(bool suppressed);
     void localGain(float value);
     void localCategories(bool ambient,bool movement,bool units);
     void start(const std::shared_ptr<ScriptSound>& sound,bool fade=false);

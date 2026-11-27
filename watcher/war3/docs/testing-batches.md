@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 对局内读档取消与失败保留原对局（待窗口验证）
+
+`src/main.cpp`、`src/game_flow_ui.*`、`src/game_view.*` 与 `src/session_campaign.cpp` 将对局内读档作为候选请求，保存原视图和读档选中项。候选先完成地图准备、摘要校验及存档恢复，再上传与构造视图。Esc 或失败返回原对局，继续显示当前读档面板及相关错误。成功切换更新重开地图。输入捕获和加载画面视口在切换边界处理，准备期间抑制音频输出。
+
+Win32 Release 客户端、clock 与 sound 目标编译通过，客户端 SHA-256 前缀 `e047201ac341`。运行 `war3_clock_tests <data-root> <output-root>`，以 `WAR3_CLOCK_FILTER` 分别选取 `quick_save_checkpoint`、`save_game_writes_checkpoint_and_preserves_caller`、`transition_save_discards_only_transition_caller`、`recovery_bundle_restores_music`、`recovery_bundle_restores_sound_requests`，共 5 通过、0 失败。覆盖记录读取请求、摘要替换拒绝、原会话继续推进、脚本存档／切换及音频状态恢复。日志 `tmp/docs-artifacts/war3/ingame-manual-load-retain-v1/clock-96e88d566038/{checks,audio-checks}.log`。
+
+真实检查点检查器和地图准备通过隔离夹具。快存和手动档分别恢复至 5.53125 秒和 7.875 秒，第三个有完整外层校验的坏档仅在内部恢复阶段被拒绝。日志 `tmp/docs-artifacts/war3/ingame-manual-load-retain-v1/run-982a4f5d07/checkpoint-inspector.log`。显示会话可用后运行同功能目录的 `python -B verify.py --exe <客户端> --execute`，验证地图准备与 GPU 上传取消、坏档错误回到原对局、关闭面板后继续推进，以及成功切换。实际窗口、音频设备、两会话短时内存占用及 GPU 负载待验证。
+
+链接正式 `GameLoading` 的无窗口探针确认坏档和有效文件替换各自拒绝，原会话均可继续 0.25 模拟秒，成功候选提交给上传阶段前恢复至 7.875 秒，列出 155 项待上传资源。第二轮在临时加载源副本中暂停真实恢复完成后的工作线程，取消并重试后仅新的请求发布结果。两轮均退出 0，范围为准备与 CPU 加载。回执 `tmp/docs-artifacts/war3/ingame-manual-load-retain-v1/headless-worker/run-641e08f04f/receipt.json`。
+
 ## 检查点恢复先应用声音增益（待设备验证）
 
 `src/sound.cpp` 和 `src/music.cpp` 在恢复检查点的音效与音乐声道时，先应用目标会话的音量和声像，再恢复播放状态。普通声道开始播放也使用相同的调用顺序。

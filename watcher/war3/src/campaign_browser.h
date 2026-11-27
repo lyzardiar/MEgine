@@ -30,7 +30,7 @@ class CampaignBrowser {
     void updateBackdrop();
     void refreshDifficulty();
     void clearPreparation();
-    void beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign=true,const fs::path& externalRoot={},std::optional<unsigned> version={},std::optional<std::pair<unsigned,unsigned>> restartDifficulty={});
+    void beginPath(const fs::path& path,bool expansion,unsigned difficulty,bool autoStart,bool campaign=true,const fs::path& externalRoot={},std::optional<unsigned> version={},std::optional<std::pair<unsigned,unsigned>> restartDifficulty={},bool suppressAudio=false);
     void prepareSelected(bool autoStart=false);
     void prepared();
     void selectCampaign(size_t index);
@@ -49,7 +49,10 @@ public:
     void reload(bool campaignList=false);
     void nextLevel(const std::string& path,const fs::path& externalRoot={});
     void nextCheckpoint(const std::string& name,bool campaign,const fs::path& externalRoot={},const std::string& expectedDigest={});
-    void nextCheckpointPrepared(const std::string& name,const RecoveryCheckpointInfo& info,const fs::path& path,bool campaign,const fs::path& externalRoot={});
+    void nextCheckpointPrepared(const std::string& name,const RecoveryCheckpointInfo& info,const fs::path& path,bool campaign,const fs::path& externalRoot={},bool suppressAudio=false);
+    std::unique_ptr<ScriptSession> pollPreparedCheckpoint();
+    void adoptCheckpointContext(CampaignBrowser& staged);
+    void cancelPreparation(){clearPreparation();}
     std::string takeCheckpoint();
     std::string takeCheckpointDigest();
     bool campaignSession() const {return currentCampaignSession_;}
