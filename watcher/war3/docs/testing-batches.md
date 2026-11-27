@@ -96,6 +96,8 @@ Win32 Release 客户端编译通过，集成 SHA-256 前缀 `2553e6a76e92`，`wa
 
 补验重开 W3G 后的播放消费。使用正式 `ReplayPreparation`、`ReplayRuntime` 和 `LanSimulation`，房主和来客均挂载 A 并消费三轮各 100 毫秒的时间片，进入 `Finished`。两端逐轮模拟时间和校验相同，播放结束无未完的选区或缓存同步，3 通过、0 失败。运行 `python -B tmp/docs-artifacts/war3/lan-replay-frozen-map-playback-v1/verify.py`，回执为同目录 `run-073cc065cfc8/receipt.json`。夹具时间片无玩家动作，图形播放仍待验证。
 
+含玩家动作的 TCP 回环补验 3 通过、0 失败。来客选中并移动单位，现场两端消费 34 个 64 毫秒时间片，单位从 `(1664, 1024)` 移至 `(1728, 1440)`。安装图换为 B 后，各自保存 W3G 和关联图 A。重开录像均恢复各自视角、逐片重现动作字节和模拟状态，2176 毫秒到达 `Finished`，终态校验同为 `0xecd6322f`。执行 `python -B tmp/docs-artifacts/war3/lan-action-replay-v1/verify.py`，回执为 `run-1ec9a31ab626/receipt.json`。同进程独立会话通过临时适配将真实时片接入正式录制回调，正式窗口和 GameView 接线仍待验。
+
 ## 存档与回放文件选择后的确认焦点（定向验证）
 
 `src/saved_game_browser.cpp` 与 `src/replay_browser.*` 在鼠标或键盘选择文件后将焦点交给确认按钮。预览仍由各自的后台流程准备，回放确认继续复核磁盘内容。使用 Tab 选中取消后，Enter 返回。
