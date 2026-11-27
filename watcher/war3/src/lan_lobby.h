@@ -3,12 +3,12 @@
 #include "glue.h"
 #include "lan_discovery.h"
 #include "lan_join.h"
+#include "lan_lobby_chat_history.h"
 #include "lan_mapcheck.h"
 #include <memory>
 #include <string_view>
 namespace war3 {
 class MapPreparation;
-void drawLanLobbyChatHistory(GlueScreen& screen,Text& text,std::span<const LanChatMessage> messages);
 struct LanLobbyHandoff {
     std::unique_ptr<LanJoin> join;
     std::shared_ptr<const Bytes> map;
@@ -34,6 +34,7 @@ class LanLobby {
     enum class MapStatus {Waiting,WaitingWorker,Checking,Downloading,WaitingDownloadWorker,CheckingDownload,Matched,Downloaded,Failed};
     std::string error_,snapshot_,mapError_,chatError_;
     std::wstring chatDraft_;
+    LanLobbyChatHistory chatHistory_;
     size_t chatCursor_=0;
     wchar_t chatHighSurrogate_=0;
     bool chatFocus_=true,handoffEnabled_=false;

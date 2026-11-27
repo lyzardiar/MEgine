@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 同构建 LAN 大厅历史滚动（定向验证）
+
+`src/lan_host.cpp` 与 `src/lan_join.*` 为已接收的聊天记录分配本地序号。`src/lan_lobby_chat_history.h`、`src/lan_lobby.*` 与 `src/lan_host_ui.*` 让房主和来客共用折行、阅读位置、滚轮、滑块、箭头和键盘操作。历史区与编辑框相交时由编辑框接收点击，滚轮可在继续编辑草稿时翻阅历史。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `445e7df67dc1`。私有桌面双端在同一房间发送至第 205 条消息，核对滚轮、轨道翻页、滑块拖动、箭头逐行、Page Down、Home 和 End。草稿通过滚轮浏览期间保持原光标，并从该位置插入中文后成功发送。
+
+第 203 条送达后，房主浏览的第 1 条被淘汰，最上方改为第 4 条。来客仍显示第 7 至 12 条。回到底部后双方自动显示第 204 条。第 205 条为 254 个 UTF-8 字节，在编辑框边缘开始输入，发出后两端均显示折行后的首尾内容。房间与原 TCP 连接保留，双端退出 0，实帧已查看。
+
+复现使用 `pwsh -File tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script tmp/docs-artifacts/war3/lan-lobby-chat-scroll-v1/verify-lobby-chat-scroll.ps1 -Executable <Win32 Release 客户端>`。回执和画面位于 `tmp/docs-artifacts/war3/lan-lobby-chat-scroll-v1/run-135db69373/`。
+
 ## 同构建 LAN 大厅历史署名（定向验证）
 
 `src/lan_host.cpp` 和 `src/lan_join.*` 在消息进入历史时复制发送者名称。`src/lan_lobby.*` 与 `src/lan_host_ui.cpp` 显示记录名称，缺少名称时使用玩家编号。

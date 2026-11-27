@@ -20,7 +20,7 @@ enum class LanLoadPhase {Lobby,Countdown,Loading,Ready,Failed};
 enum class LanCountdownCancelReason : std::uint8_t;
 struct LanSlot {std::uint8_t playerId=0,download=0,status=0,computer=0,team=0,color=0,race=0,difficulty=0,handicap=0;};
 struct LanPlayer {std::uint8_t id=0;std::string name;};
-struct LanChatMessage {std::uint8_t sender=0;std::string text,senderName;};
+struct LanChatMessage {std::uint8_t sender=0;std::string text,senderName;std::uint64_t sequence=0;};
 struct LanAction {std::uint8_t playerId=0;std::vector<std::uint8_t> bytes;};
 struct LanTimeSlot {std::uint16_t elapsedMs=0;std::vector<LanAction> actions;};
 struct LanMapAnnouncement {bool received=false;std::string path;std::uint32_t size=0,info=0,crc=0;std::array<std::uint8_t,20> sha1{};};

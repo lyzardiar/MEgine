@@ -2,6 +2,7 @@
 #pragma once
 #include "glue.h"
 #include "lan_host.h"
+#include "lan_lobby_chat_history.h"
 #include "lan_setup.h"
 #include "map.h"
 #include <array>
@@ -32,6 +33,7 @@ class LanHostUi {
     std::string playerName_,mapPath_,error_;
     std::string commonDigest_;
     std::wstring gameName_=L"Warcraft III",chatDraft_;
+    LanLobbyChatHistory chatHistory_;
     std::array<std::string,16> slotKeys_{};
     std::vector<bool> computerOnly_;
     unsigned mapOptions_=0;

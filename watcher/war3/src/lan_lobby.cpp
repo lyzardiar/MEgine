@@ -15,20 +15,61 @@ std::string safeChat(std::string_view value){auto source=display(value);std::str
 bool inRect(GlueScreen::Rect r,float x,float y){return x>=r.x && y>=r.y && x<r.x+r.w && y<r.y+r.h;}
 std::string raceName(GlueScreen& screen,unsigned race){if(race&32)return screen.localized("RANDOM");if(race&1)return screen.localized("HUMAN");if(race&2)return screen.localized("ORC");if(race&4)return screen.localized("NIGHT_ELF");if(race&8)return screen.localized("UNDEAD");return "?";}
 }
-void drawLanLobbyChatHistory(GlueScreen& screen,Text& text,std::span<const LanChatMessage> messages) {
-    const auto area=screen.bounds("ChatTextArea");
-    if(messages.empty() || area.w<=0 || area.h<=0)return;
-    constexpr float font=.011f,rowHeight=.014f;
-    const auto capacity=std::max<size_t>(1,size_t(area.h/rowHeight));
-    std::vector<std::string> rows;rows.reserve(capacity);
-    auto fit=[&](std::wstring_view value,float width,float height){return text.fit(value,width,height);};
-    for(auto message=messages.rbegin();message!=messages.rend() && rows.size()<capacity;++message){
-        const auto name=message->senderName.empty()?"Player "+std::to_string(message->sender):safeChat(message->senderName);
-        const auto content=wide(name+": "+safeChat(message->text));
-        const auto lines=wrapFontLines(content,area.w,font,content.size(),fit);
-        for(auto line=lines.rbegin();line!=lines.rend() && rows.size()<capacity;++line)rows.push_back(utf8(std::wstring_view(content).substr(line->begin,line->end-line->begin)));
+namespace { constexpr float lobbyChatFont=.011f,lobbyChatRowHeight=.014f; }
+void LanLobbyChatHistory::update(Text& text,std::span<const LanChatMessage> messages,float width) {
+    const auto oldest=messages.empty()?0:messages.front().sequence,newest=messages.empty()?0:messages.back().sequence;
+    if(oldest==oldest_ && newest==newest_ && width==width_)return;
+    const auto anchor=rows_.empty()?RowPosition{}:rows_[top_].position;
+    oldest_=oldest;newest_=newest;width_=width;rows_.clear();
+    auto fit=[&](std::wstring_view value,float w,float h){return text.fit(value,w,h);};
+    for(const auto& message:messages){
+        const auto name=message.senderName.empty()?"Player "+std::to_string(message.sender):safeChat(message.senderName);
+        const auto content=wide(name+": "+safeChat(message.text));
+        for(const auto& line:wrapFontLines(content,width,lobbyChatFont,content.size(),fit))rows_.push_back({{message.sequence,line.begin},utf8(std::wstring_view(content).substr(line.begin,line.end-line.begin))});
     }
-    for(size_t i=0;i<rows.size();++i)screen.textAt("StandardInfoTextTemplate",rows[rows.size()-1-i],{area.x,area.y+float(i)*rowHeight,area.w,rowHeight},true,false,true,font);
+    top_=size_t(std::lower_bound(rows_.begin(),rows_.end(),anchor,[](const Row& row,const RowPosition& position){return row.position<position;})-rows_.begin());
+    if(rows_.empty())follow_=true;
+}
+void LanLobbyChatHistory::draw(GlueScreen& screen,Text& text,std::span<const LanChatMessage> messages,const UiInput& input,bool acceptInput) {
+    const auto area=screen.bounds("ChatTextArea");
+    constexpr float barWidth=.0165f,gap=.004f,arrowHeight=.015f,thumbHeight=.01f;
+    const float textWidth=area.w-barWidth-gap,travel=area.h-2*arrowHeight-thumbHeight;
+    if(textWidth<=0 || travel<=0)return;
+    update(text,messages,textWidth);
+    const auto capacity=std::max<size_t>(1,size_t(area.h/lobbyChatRowHeight));
+    const auto maximum=rows_.size()>capacity?rows_.size()-capacity:0;
+    top_=follow_?maximum:std::min(top_,maximum);
+    const GlueScreen::Rect bar{area.x+area.w-barWidth,area.y,barWidth,area.h};
+    const GlueScreen::Rect up{bar.x,bar.y,bar.w,arrowHeight},down{bar.x,bar.y+bar.h-arrowHeight,bar.w,arrowHeight};
+    const GlueScreen::Rect trough{bar.x,bar.y+arrowHeight,bar.w,bar.h-2*arrowHeight};
+    const auto editor=screen.bounds("ChatEditBox");
+    auto overHistory=[&](float x,float y){return inRect(area,x,y) && !inRect(editor,x,y);};
+    auto thumb=[&]{return GlueScreen::Rect{bar.x+.00325f,trough.y+(maximum?float(top_)/float(maximum)*travel:0),.01f,thumbHeight};};
+    auto click=[&](GlueScreen::Rect r){return input.pressed && inRect(r,input.x,input.y) && inRect(r,input.startX,input.startY) && overHistory(input.x,input.y) && overHistory(input.startX,input.startY);};
+    auto move=[&](std::int64_t delta){top_=size_t(std::clamp(std::int64_t(top_)+delta,std::int64_t(0),std::int64_t(maximum)));};
+    if(!acceptInput || !maximum)dragging_=false;
+    if(acceptInput){
+        if(input.pressed)focused_=click(area);
+        if(input.key==VK_TAB)focused_=false;
+        if(input.wheel && overHistory(input.x,input.y))move(-std::int64_t(input.wheel)*3);
+        if(focused_){
+            if(input.key==VK_HOME)top_=0;else if(input.key==VK_END)top_=maximum;
+            else if(input.key==VK_PRIOR)move(-std::int64_t(capacity));else if(input.key==VK_NEXT)move(std::int64_t(capacity));
+        }
+        const auto handle=thumb();
+        if(maximum && input.down && !dragging_ && inRect(handle,input.startX,input.startY)){dragging_=true;dragOffset_=input.startY-handle.y;}
+        if(dragging_){
+            if(input.down || input.pressed)top_=size_t(std::lround(std::clamp((input.y-trough.y-dragOffset_)/travel,0.f,1.f)*float(maximum)));
+            dragging_=input.down;
+        }else if(click(up))move(-1);else if(click(down))move(1);
+        else if(click(trough) && !inRect(handle,input.startX,input.startY))move(input.y<handle.y?-std::int64_t(capacity):std::int64_t(capacity));
+        follow_=top_==maximum;
+    }
+    for(size_t i=0;i<capacity && top_+i<rows_.size();++i)screen.textAt("StandardInfoTextTemplate",rows_[top_+i].text,{area.x,area.y+float(i)*lobbyChatRowHeight,textWidth,lobbyChatRowHeight},true,false,true,lobbyChatFont);
+    if(maximum){
+        screen.backdropAt("StandardScrollBarBackdrop",bar);screen.backdropAt("StandardScrollBarIncButtonBackdrop",up);
+        screen.backdropAt("StandardScrollBarDecButtonBackdrop",down);screen.backdropAt("StandardThumbButtonBackdrop",thumb());
+    }
 }
 std::uint64_t LanLobbyHandoff::requestPreparation(MapPreparation& preparation,std::vector<unsigned> slotPlayerIds) const {
     if(!join || join->state()!=LanJoinState::Lobby || join->loadPhase()!=LanLoadPhase::Loading || !map || slotPlayerIds.size()!=slots.size())throw std::runtime_error("Invalid LAN map preparation handoff");
@@ -74,7 +115,7 @@ std::string LanLobby::pollMinimized(){if(!join_)return "CancelButton";try{join_-
 bool LanLobby::needsDifferentPlayerName() const {return handoffEnabled_ && join_ && join_->state()==LanJoinState::Rejected && join_->rejectionCode()==lanRejectNameInUse;}
 bool LanLobby::keepsRoomSelection() const {return needsDifferentPlayerName() || (join_ && join_->handshakeFailure()!=LanHandshakeFailure::None);}
 std::string LanLobby::draw(const UiInput& input,std::wstring_view characters){
-    if(!join_)return "CancelButton";if(input.key==VK_ESCAPE && !input.keyRepeat && !screen_.popupOpen()){join_->cancel();return "CancelButton";}if(auto action=pollMinimized();!action.empty())return action;auto bounds=screen_.bounds("TeamSetupContainer");if(!screen_.popupOpen() && input.wheel && input.x>=bounds.x && input.y>=bounds.y && input.x<bounds.x+bounds.w && input.y<bounds.y+bounds.h){float height=screen_.bounds(prefix(0)+"/PlayerSlot").h;unsigned capacity=height>0?std::min(16u,std::max(1u,unsigned(std::floor((bounds.h-.02f)/height)))):1;auto maximum=join_->slots().size()>capacity?join_->slots().size()-capacity:0;scroll_=size_t(std::clamp<long long>(static_cast<long long>(scroll_)-input.wheel,0,static_cast<long long>(maximum)));}auto enabled=updateSlots();auto edit=screen_.bounds("ChatEditBox");float chatScale=std::min(renderer_.width()/.8f,renderer_.height()/.6f);if(!screen_.popupOpen() && input.pressed){bool focused=chatFocus_;chatFocus_=inRect(edit,input.x,input.y) && inRect(edit,input.startX,input.startY);if(chatFocus_)chatCursor_=chatUiClick(text_,chatDraft_,chatCursor_,focused,(edit.w-.01f)*chatScale,.012f*chatScale,(input.x-edit.x-.005f)*chatScale);else chatHighSurrogate_=0;}if(!screen_.popupOpen() && input.key==VK_TAB){chatFocus_=!chatFocus_;chatHighSurrogate_=0;}auto state=join_->state();if(!screen_.popupOpen() && chatFocus_ && state==LanJoinState::Lobby){editChat(chatDraft_,chatCursor_,chatHighSurrogate_,input.key,characters,254);if(input.key==VK_RETURN && !chatDraft_.empty()){if(join_->sendChat(utf8(chatDraft_))){chatDraft_.clear();chatCursor_=0;chatHighSurrogate_=0;chatError_.clear();}else chatError_="无法发送聊天消息。";}}auto controls=input;if(chatFocus_ && !screen_.popupOpen())controls.key=0;auto action=screen_.draw("GameChatroom",controls,enabled,true);if(auto change=screen_.takeChoice())changeSlot(*change);screen_.backdropAt("StandardEditBoxBackdropTemplate",edit);screen_.textAt("StandardEditBoxTextTemplate",chatUiDisplay(text_,chatDraft_,chatCursor_,chatFocus_ && !screen_.popupOpen() && state==LanJoinState::Lobby,(edit.w-.01f)*chatScale,.012f*chatScale),{edit.x+.005f,edit.y,edit.w-.01f,edit.h},state==LanJoinState::Lobby,false,true,.012f);drawLanLobbyChatHistory(screen_,text_,join_->chat());std::string status;if(!error_.empty())status="连接错误："+display(error_);
+    if(!join_)return "CancelButton";if(input.key==VK_ESCAPE && !input.keyRepeat && !screen_.popupOpen()){join_->cancel();return "CancelButton";}if(auto action=pollMinimized();!action.empty())return action;const bool historyInput=!screen_.popupOpen();auto bounds=screen_.bounds("TeamSetupContainer");if(!screen_.popupOpen() && input.wheel && input.x>=bounds.x && input.y>=bounds.y && input.x<bounds.x+bounds.w && input.y<bounds.y+bounds.h){float height=screen_.bounds(prefix(0)+"/PlayerSlot").h;unsigned capacity=height>0?std::min(16u,std::max(1u,unsigned(std::floor((bounds.h-.02f)/height)))):1;auto maximum=join_->slots().size()>capacity?join_->slots().size()-capacity:0;scroll_=size_t(std::clamp<long long>(static_cast<long long>(scroll_)-input.wheel,0,static_cast<long long>(maximum)));}auto enabled=updateSlots();auto edit=screen_.bounds("ChatEditBox");float chatScale=std::min(renderer_.width()/.8f,renderer_.height()/.6f);if(!screen_.popupOpen() && input.pressed){bool focused=chatFocus_;chatFocus_=inRect(edit,input.x,input.y) && inRect(edit,input.startX,input.startY);if(chatFocus_)chatCursor_=chatUiClick(text_,chatDraft_,chatCursor_,focused,(edit.w-.01f)*chatScale,.012f*chatScale,(input.x-edit.x-.005f)*chatScale);else chatHighSurrogate_=0;}if(!screen_.popupOpen() && input.key==VK_TAB){chatFocus_=!chatFocus_;chatHighSurrogate_=0;}auto state=join_->state();if(!screen_.popupOpen() && chatFocus_ && state==LanJoinState::Lobby){editChat(chatDraft_,chatCursor_,chatHighSurrogate_,input.key,characters,254);if(input.key==VK_RETURN && !chatDraft_.empty()){if(join_->sendChat(utf8(chatDraft_))){chatDraft_.clear();chatCursor_=0;chatHighSurrogate_=0;chatError_.clear();}else chatError_="无法发送聊天消息。";}}auto controls=input;if(chatFocus_ && !screen_.popupOpen())controls.key=0;auto action=screen_.draw("GameChatroom",controls,enabled,true);if(auto change=screen_.takeChoice())changeSlot(*change);screen_.backdropAt("StandardEditBoxBackdropTemplate",edit);screen_.textAt("StandardEditBoxTextTemplate",chatUiDisplay(text_,chatDraft_,chatCursor_,chatFocus_ && !screen_.popupOpen() && state==LanJoinState::Lobby,(edit.w-.01f)*chatScale,.012f*chatScale),{edit.x+.005f,edit.y,edit.w-.01f,edit.h},state==LanJoinState::Lobby,false,true,.012f);chatHistory_.draw(screen_,text_,join_->chat(),input,historyInput);std::string status;if(!error_.empty())status="连接错误："+display(error_);
     else if(join_->handshakeFailure()==LanHandshakeFailure::BuildMismatch)status="客户端构建与房主不同。请使用同一份客户端。";
     else if(join_->handshakeFailure()==LanHandshakeFailure::ResourcesMismatch)status="基础资源与房主不同。请使用相同的游戏资源。";
     else if(join_->handshakeFailure()==LanHandshakeFailure::UnexpectedReply)status="无法验证房间兼容性。请确认客户端和基础资源相同。";
