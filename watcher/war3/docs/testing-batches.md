@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 商店商品按钮与交易共用可用条件（定向验证）
+
+`src/session_commerce.cpp` 为选择买家、商品按钮及购买复用商店状态和阵营条件。敌方或停用的店面提示无法交易。店主眩晕时，已经发出的购买命令也会在消费时重新判定。
+
+Win32 Release 集成客户端编译通过，SHA-256 前缀 `05483ef2a7d9`。独立真实会话用玩家商店和中立商店各走商品按钮、买家、命令、扣费、库存和入包。基线敌方按钮会启用，冰冻吐息已令按钮禁用后仍能用原买家扣 125 金完成购买。候选两种情况均保持金币、木材、库存和背包，盟友、中立及暂停或眩晕解除后正常购买。7 项通过，地图摘要保持，未加载 `Game.dll`。运行 `pwsh -NoProfile -File tmp/docs-artifacts/war3/shop-eligibility-v1/verify.ps1`，回执见 `run-ffbf20a1bc0d/receipt.json`。
+
+同一集成构建运行 `war3_commerce_tests <data-root> <commerce-current/commerce.w3m>` 默认及 `neutral-invalid` 模式，均通过。实际命令区绘制和实体鼠标交互待验证。
+
 ## 手动存档覆盖确认绑定文件身份（定向验证）
 
 `src/game_flow_ui.*` 记录打开确认时的目标文件身份。`src/session_campaign.cpp` 在独占 `Saves/.write.lock` 期间校验文件标识、大小和最后写入时间，再沿用同目录临时文件和原子替换。过期确认返回保存列表提示重试，已有文件保持。手动保存、快存、脚本保存及复制、目录改名和删除共用写入锁，保存回调在释放锁后执行。目录改名传给 Win32 的目标名包含终止字符，长度字段仍为文件名的字节数。
