@@ -13,7 +13,7 @@ LanMatchLoading::LanMatchLoading(const fs::path& root,bool muted,Log& log,LanHos
     if(!handoff.host || !handoff.host->enableTimeSlotProtocol(handoff.host->settings().experimentalHandshake))throw std::runtime_error("Cannot arm LAN host while loading");mapRequest_=handoff.requestPreparation(preparation_);host_=std::move(handoff.host);
 }
 LanMatchLoading::LanMatchLoading(const fs::path& root,bool muted,Log& log,LanLobbyHandoff handoff,std::vector<unsigned> slotPlayerIds) : preparation_(root,muted),loader_(log) {
-    if(!handoff.join || !handoff.join->enableTimeSlotProtocol())throw std::runtime_error("Cannot arm LAN peer while loading");if(handoff.downloaded){replayMap_=handoff.map;replayMapDigest_=std::move(handoff.replayMapDigest);}mapRequest_=handoff.requestPreparation(preparation_,std::move(slotPlayerIds));join_=std::move(handoff.join);
+    if(!handoff.join || !handoff.join->enableTimeSlotProtocol())throw std::runtime_error("Cannot arm LAN peer while loading");replayMap_=handoff.map;replayMapDigest_=std::move(handoff.replayMapDigest);mapRequest_=handoff.requestPreparation(preparation_,std::move(slotPlayerIds));join_=std::move(handoff.join);
 }
 LanMatchLoading::~LanMatchLoading(){cancel();}
 bool LanMatchLoading::fail(std::string message){if(phase_==LanLoadingPhase::Failed || phase_==LanLoadingPhase::Transferred)return false;error_=std::move(message);preparation_.clear();loader_.cancel();prepared_.reset();data_.reset();replayMap_.reset();if(host_)host_->cancel();if(join_)join_->cancel();phase_=LanLoadingPhase::Failed;return false;}

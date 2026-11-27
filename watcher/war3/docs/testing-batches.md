@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 同构建 LAN 回放使用本局冻结地图（定向验证）
+
+`src/replay_experimental.*` 使用房主与来客实际加载的地图摘要及共享快照，`src/lan_match_loading.cpp` 从来客地图交接保留快照。保存时匹配原图则只写 W3G，安装图变化或移走时写入关联副本，播放沿用摘要校验和回退逻辑。
+
+Win32 Release 客户端编译通过，集成 SHA-256 前缀 `2553e6a76e92`，`war3_replay_step_tests.exe` 通过。隔离双端用原创 CombatOutcome 交换并消费三轮相同时片，安装图 A 替换为成员校验与尺寸相同、归档摘要不同的 B。基线 `162b111` 的房主和本地匹配来客录像均挂载 B。候选两端保存的地图摘要均为实际对局 A，B 仍在安装目录时，`ReplayPreparation` 使用分别保存的 12,952 字节 A 副本。安装图一致的对照仍只生成 W3G，原始夹具摘要保持。
+
+运行 `python -B tmp/docs-artifacts/war3/lan-replay-frozen-map-v1/verify.py --expect fixed`，基线使用 `--expect baseline`。回执为同目录的 `baseline-75a831cb23f2/receipt.json` 与 `fixed-21ffdd814793/receipt.json`，两轮均退出 0。探针将真实消费的回环时片接给产品录制器，来客快照交接经源码核对。正式窗口保存、图形播放和大地图内存占用待验收。
+
 ## 存档与回放文件选择后的确认焦点（定向验证）
 
 `src/saved_game_browser.cpp` 与 `src/replay_browser.*` 在鼠标或键盘选择文件后将焦点交给确认按钮。预览仍由各自的后台流程准备，回放确认继续复核磁盘内容。使用 Tab 选中取消后，Enter 返回。

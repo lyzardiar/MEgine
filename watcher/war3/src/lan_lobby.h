@@ -19,7 +19,6 @@ struct LanLobbyHandoff {
     std::vector<LanPlayer> players;
     std::uint8_t localPeerId=0;
     std::uint32_t randomSeed=0;
-    bool downloaded=false;
     std::string replayMapDigest;
     std::uint64_t requestPreparation(MapPreparation& preparation,std::vector<unsigned> slotPlayerIds) const;
 };

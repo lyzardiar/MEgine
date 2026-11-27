@@ -21,10 +21,10 @@ class ExperimentalLanRecorder {
     std::shared_ptr<State> state_;
     std::filesystem::path dataRoot_;
     bool attached_=false;
-    ExperimentalLanRecorder(const std::filesystem::path& dataRoot,ReplayHeader header,ReplayGame game,std::vector<ReplayPlayer> players,ReplaySetup setup,std::shared_ptr<const Bytes> replayMap={});
+    ExperimentalLanRecorder(const std::filesystem::path& dataRoot,ReplayHeader header,ReplayGame game,std::vector<ReplayPlayer> players,ReplaySetup setup,std::shared_ptr<const Bytes> replayMap);
 public:
     static std::unique_ptr<ExperimentalLanRecorder> fromHost(const std::filesystem::path& dataRoot,const ScriptSession& session,const LanHost& host);
-    static std::unique_ptr<ExperimentalLanRecorder> fromJoin(const std::filesystem::path& dataRoot,const ScriptSession& session,const LanJoin& join,std::shared_ptr<const Bytes> replayMap={},std::string mapDigest={});
+    static std::unique_ptr<ExperimentalLanRecorder> fromJoin(const std::filesystem::path& dataRoot,const ScriptSession& session,const LanJoin& join,std::shared_ptr<const Bytes> replayMap,std::string mapDigest={});
     // Attach before the first runtime pump. The observer owns only a weak recorder reference.
     bool attach(LanRuntime& runtime);
     // Seal applied slots and publish once. Caller invokes this when it intentionally ends a match.
