@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 主菜单读档初始化失败返回存档列表（待窗口验证）
+
+`src/main.cpp` 在主菜单读档交接失败时清理准备和载入状态，带原选中项返回存档列表并显示错误，允许选择另一份存档继续载入。
+
+Win32 Release 集成客户端编译通过。无窗口探针使用两张原创夹具图和正式客户端写出的存档，两份均解析、配置并恢复成功。调用载入画面所用的模型加载接口时，自定义模型缺失的 A 返回 `Missing MDX`，标准背景的 B 加载成功。2 通过、0 失败，夹具文件摘要保持。回执日志为 `tmp/docs-artifacts/war3/front-save-loader-error-ca218889/headless/probe.log`。
+
+显示会话恢复后运行 `python -B tmp/docs-artifacts/war3/front-save-loader-error-ca218889/verify.py <客户端> <data-root> --fixed`，核对 A 返回列表后选择 B 并进入首帧。去掉 `--fixed` 并传入冻结基线可检查旧行为。当前 D3D9 初始化失败，窗口返回、提示绘制和后续读档待验证。
+
 ## 拒绝单位目标技能时保留 Shift 队列（定向验证）
 
 `src/player_commands.cpp` 在按技能 ID 或订单 ID 对单位施法前暂存旧队列。目标被拒且单位和命令状态保持时恢复旧队列。施法受理后继续执行同步 JASS 回调新排入的命令。`tests/order_queue_tests.cpp` 新增两种施法入口的回归。
