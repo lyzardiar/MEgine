@@ -1,6 +1,7 @@
 // Author: MiYu. Resolve the recorded map and initialize the replay's player setup without unpacking assets.
 #include "replay_preparation.h"
 #include "replay_experimental.h"
+#include "replay_lan_metadata.h"
 #include "lan_setup.h"
 #include <algorithm>
 #include <map>
@@ -21,14 +22,29 @@ LanSessionSetup replaySetup(const Replay& replay,const MapInfo& info,std::uint8_
 }
 void PreparedReplay::startMain(){if(!session)throw std::runtime_error("Replay session already transferred");session->startMain();}
 ReplayPreparation::ReplayPreparation(Archives& archives,std::shared_ptr<const Replay> replay,bool muted,std::uint8_t perspectivePeer,fs::path replayPath) : replay_(std::move(replay)),archives_(archives.fork()),preparation_(archives.root(),muted),replayPath_(std::move(replayPath)),perspectivePeer_(perspectivePeer) {
-    if(!replay_)throw std::runtime_error("Missing replay");if(replay_->header().product==soloReplayProduct){solo_=readSoloReplaySetup(*replay_);mapDigest_=solo_->mapDigest;}else{gameVersion_=replayProductVersion(replay_->header().product);initialSetup(*replay_);mapDigest_=experimentalLanReplayMapDigest(replay_->game());}mapCheck_=std::make_unique<LanMapCheckTask>(archives,replay_->game().mapPath,true,true,mapDigest_.value_or(""));
+    if(!replay_)throw std::runtime_error("Missing replay");
+    if(replay_->header().product==soloReplayProduct){solo_=readSoloReplaySetup(*replay_);mapDigest_=solo_->mapDigest;}
+    else {
+        gameVersion_=replayProductVersion(replay_->header().product);initialSetup(*replay_);
+        const auto& name=replay_->game().name;auto metadata=readLanReplayMetadata(name);
+        if(metadata){mapDigest_=std::move(metadata->mapDigest);expectedCommonDigest_=std::move(metadata->commonDigest).value_or("");}
+        else if(name.starts_with(lanReplayV2Prefix))throw std::runtime_error("局域网回放的资源校验信息无效。");
+    }
+    if(expectedCommonDigest_.empty())mapCheck_=std::make_unique<LanMapCheckTask>(*archives_,replay_->game().mapPath,true,true,mapDigest_.value_or(""));
+    else{mapCheck_=std::make_unique<LanMapCheckTask>(*archives_);phase_=Phase::CheckingResources;}
 }
 ReplayPreparation::~ReplayPreparation(){cancel();}
 bool ReplayPreparation::fail(std::string message){if(phase_==Phase::Transferred || phase_==Phase::Failed)return false;error_=std::move(message);if(mapCheck_)mapCheck_->cancel();mapCheck_.reset();preparation_.clear();prepared_.reset();phase_=Phase::Failed;return false;}
 void ReplayPreparation::cancel(){if(phase_!=Phase::Transferred && phase_!=Phase::Failed)fail("Replay preparation canceled");}
 bool ReplayPreparation::poll(){
     if(phase_==Phase::Failed || phase_==Phase::Transferred)return false;if(phase_==Phase::Ready)return true;try {
-        if(phase_==Phase::Checking){auto result=mapCheck_->poll();if(!result)return true;auto& game=replay_->game();bool valid=result->error.empty() && result->value && result->mapInfo && result->snapshot;if(valid){auto& check=*result->value;valid=(!game.mapSha1 || !usableHash(*game.mapSha1) || *game.mapSha1==check.sha1) && (!game.mapChecksum || game.mapChecksum==0xffffffffu || game.mapChecksum==check.crc) && (!game.width || game.width==result->mapInfo->playable[0]) && (!game.height || game.height==result->mapInfo->playable[1]);}if(!valid){auto error=result->error.empty()?"Replay map does not match recorded identity":result->error;mapCheck_.reset();if(!solo_ && !sidecarAttempted_ && mapDigest_ && !replayPath_.empty()){sidecarAttempted_=true;mapCheck_=std::make_unique<LanMapCheckTask>(*archives_,experimentalLanReplayMapPath(replayPath_,*mapDigest_),*mapDigest_);return true;}return fail(error);}auto& check=*result->value;mapPath_=check.resolvedPath;if(solo_)request_=preparation_.requestMemory(std::move(result->snapshot),game.mapPath,solo_->seed,solo_->version,solo_->commonDigest);else{auto setup=replaySetup(*replay_,*result->mapInfo,perspectivePeer_);request_=preparation_.requestLanMemory(std::move(result->snapshot),game.mapPath,std::move(setup),true,gameVersion_);}mapCheck_.reset();phase_=Phase::Preparing;}
+        if(phase_==Phase::CheckingResources){
+            auto result=mapCheck_->poll();if(!result)return true;
+            if(!result->error.empty())return fail("无法校验回放的基础资源："+result->error);
+            if(result->commonDigest!=expectedCommonDigest_)return fail("局域网回放需要相同的基础资源。");
+            mapCheck_.reset();mapCheck_=std::make_unique<LanMapCheckTask>(*archives_,replay_->game().mapPath,true,true,mapDigest_.value_or(""));phase_=Phase::Checking;return true;
+        }
+        if(phase_==Phase::Checking){auto result=mapCheck_->poll();if(!result)return true;auto& game=replay_->game();bool valid=result->error.empty() && result->value && result->mapInfo && result->snapshot;if(valid){auto& check=*result->value;valid=(!game.mapSha1 || !usableHash(*game.mapSha1) || *game.mapSha1==check.sha1) && (!game.mapChecksum || game.mapChecksum==0xffffffffu || game.mapChecksum==check.crc) && (!game.width || game.width==result->mapInfo->playable[0]) && (!game.height || game.height==result->mapInfo->playable[1]);}if(!valid){auto error=result->error.empty()?"Replay map does not match recorded identity":result->error;mapCheck_.reset();if(!solo_ && !sidecarAttempted_ && mapDigest_ && !replayPath_.empty()){sidecarAttempted_=true;mapCheck_=std::make_unique<LanMapCheckTask>(*archives_,experimentalLanReplayMapPath(replayPath_,*mapDigest_),*mapDigest_);return true;}return fail(error);}auto& check=*result->value;mapPath_=check.resolvedPath;if(solo_)request_=preparation_.requestMemory(std::move(result->snapshot),game.mapPath,solo_->seed,solo_->version,solo_->commonDigest);else{auto setup=replaySetup(*replay_,*result->mapInfo,perspectivePeer_);request_=preparation_.requestLanMemory(std::move(result->snapshot),game.mapPath,std::move(setup),true,gameVersion_,expectedCommonDigest_);}mapCheck_.reset();phase_=Phase::Preparing;}
         if(phase_==Phase::Preparing)if(auto result=preparation_.poll();result && result->request==request_){if(!result->error.empty() || !result->session)return fail(result->error.empty()?"Replay session preparation failed":result->error);if(solo_)restoreSoloReplaySetup(*result->session,*solo_);prepared_=std::move(result->session);phase_=Phase::Ready;}return true;
     }catch(const std::exception& e){return fail(e.what());}
 }

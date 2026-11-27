@@ -14,12 +14,7 @@ class LanRuntime;
 class ScriptSession;
 std::filesystem::path publishNamedReplay(const std::filesystem::path& root,const std::wstring& name,std::span<const std::uint8_t> bytes);
 
-// The title marker is a compatibility discriminator, not an authenticated signature.
-std::optional<std::string> experimentalLanReplayDigest(const ReplayGame& game);
-std::optional<std::uint8_t> experimentalLanReplayPerspective(const ReplayGame& game);
-std::optional<std::string> experimentalLanReplayMapDigest(const ReplayGame& game);
 std::filesystem::path experimentalLanReplayMapPath(const std::filesystem::path& replayPath,std::string_view digest);
-bool experimentalLanReplayMatchesExecutable(const ReplayGame& game);
 
 class ExperimentalLanRecorder {
     struct State;

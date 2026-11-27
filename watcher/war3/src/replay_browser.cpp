@@ -1,6 +1,7 @@
 // Author: MiYu. Replay file browsing and bounded asynchronous W3G metadata loading.
 #include "replay_browser.h"
 #include "replay_experimental.h"
+#include "replay_lan_metadata.h"
 #include "replay_solo.h"
 #include <bcrypt.h>
 #include <algorithm>
@@ -82,7 +83,7 @@ void ReplayBrowser::prepared(){std::optional<Result> result;{std::lock_guard loc
     screen_.setText("NumPlayersValue",std::to_string(playerCount));
 }
 void ReplayBrowser::removeSelected(){
-    if(selected_>=entries_.size() || entries_[selected_].directory || deleting_)return;if(!selectedReplay_ || loading_ || selectedDigest_.empty()){confirmDelete_=false;error_="回放尚未读取完成或无法读取，不能确定关联地图。";return;}auto path=selectedPath_;auto digest=selectedReplay_->header().product==soloReplayProduct?std::string{}:experimentalLanReplayMapDigest(selectedReplay_->game()).value_or("");auto replayDigest=selectedDigest_;playbackNotice_.reset();clearSelection();{std::lock_guard lock(mutex_);request_=++generation_;pending_=Request{Operation::Remove,request_,std::move(path),std::move(replayDigest),std::move(digest),{}};deleting_=true;}error_.clear();wake_.notify_one();
+    if(selected_>=entries_.size() || entries_[selected_].directory || deleting_)return;if(!selectedReplay_ || loading_ || selectedDigest_.empty()){confirmDelete_=false;error_="回放尚未读取完成或无法读取，不能确定关联地图。";return;}auto path=selectedPath_;auto metadata=selectedReplay_->header().product==soloReplayProduct?std::nullopt:readLanReplayMetadata(selectedReplay_->game().name);auto digest=metadata?std::move(metadata->mapDigest).value_or(""):std::string{};auto replayDigest=selectedDigest_;playbackNotice_.reset();clearSelection();{std::lock_guard lock(mutex_);request_=++generation_;pending_=Request{Operation::Remove,request_,std::move(path),std::move(replayDigest),std::move(digest),{}};deleting_=true;}error_.clear();wake_.notify_one();
 }
 std::optional<ReplaySelection> ReplayBrowser::takeSelection(){if(!selectedReplay_ || selectedPath_.empty() || loading_)return {};ReplaySelection result{selectedPath_,std::move(selectedReplay_)};selectedPath_.clear();reloadSelection_=true;playbackNotice_.reset();return result;}
 void ReplayBrowser::setPlaybackNotice(std::string message){

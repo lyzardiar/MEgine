@@ -1,5 +1,17 @@
 # 独立客户端测试队列
 
+## 同构建 LAN 回放的基础归档一致性（定向验证）
+
+`src/replay_lan_metadata.h` 解析旧 `v1` 和新增 `v2` 元数据。`src/replay_experimental.*` 把会话已验证的基础归档摘要写入两端的新录像。`src/main.cpp` 校验格式与当前构建，`src/replay_preparation.*` 在地图校验前检查基础归档，并将摘要传给实际加载。`src/replay_browser.cpp` 使用同一解析结果定位删除操作涉及的关联地图。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `d264133296cb`。`war3_replay_step_tests.exe` 通过，新增覆盖 `v1`、`v2`、可选地图摘要、旧格式房名边界和 9 种无效 `v2` 头部。
+
+以同一构建在私有桌面用原创 `CombatOutcome.w3m` 录制双端对局。双方的录像有同一基础归档摘要，150 个时片逐一一致。正式回放列表从匹配资源播放到第 15 模拟秒，Esc 返回。将同一份房主 W3G 和同一构建换到隔离的异构资源目录后，正式列表显示基础资源不符，日志未进入 `LoadReplay` 或 `EnterGame`。四个进程均退出 0，已查看拒绝提示，测试输入和输出副本的 SHA-256 前后一致。
+
+在 `tmp/docs-artifacts/war3/lan-replay-resources-v1/` 中依次运行 `pwsh -File record.ps1 -Executable <Win32 Release 客户端>` 和 `python -B verify-playback.py --executable <同一客户端> --recording <录制目录>`。回执为 `recording-a02264943d/receipt.json` 和 `playback-23c059dba9/receipt.json`。另用同一构建运行 `tmp/docs-artifacts/war3/replay-step-prep/verify.ps1 -Run`，按回执中的资源根目录、地图相对路径、摘要和槽位数生成 `v1` 夹具，实测正式列表播放、暂停、单步、继续及退出。客户端退出 0，回执 `tmp/docs-artifacts/war3/replay-step-prep/run-50b3083af35f/result.json`。
+
+用同一构建让空 `Maps` 的来客从正式房间下载并校验原图，再从结算保存。来客 W3G 同时记录基础归档和地图摘要，12,952 字节的关联副本与房主原图逐字节一致。独立客户端在同一空 `Maps` 资源根，仅凭 W3G 和关联副本，从正式列表以原来客视角播放到第 15 模拟秒，Esc 返回。两场景共三进程退出 0，`Maps` 始终为空，输入摘要保持一致。复现用 `tmp/docs-artifacts/war3/lan-replay-downloaded-sidecar-v1/` 的 `record.ps1` 和 `verify-playback.py`，回执为 `recording-29e6253834/receipt.json` 和 `playback-3b9150dceb/receipt.json`。
+
 ## 同构建局域网房主暂停与继续（定向验证）
 
 `src/game_flow_ui.*` 和 `src/game_view.cpp` 在正式同构建对局的房主菜单接入暂停和继续。`src/lan_match_loading.cpp` 在加载阶段启用权限检查，`src/lan_host.*` 拦截来客提交的新旧暂停动作。`src/lan_runtime.cpp` 将房主操作放入有序时片，`src/lan_actions.*`、`src/lan_simulation.*` 和 `src/session*` 处理编码、模拟推进、普通命令及两种暂停状态的校验。

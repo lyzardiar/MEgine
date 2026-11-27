@@ -2,6 +2,7 @@
 #include "replay_runtime.h"
 #include "replay_writer.h"
 #include "replay_solo.h"
+#include "replay_lan_metadata.h"
 #include "jass_module.h"
 #include <array>
 #include <iostream>
@@ -430,6 +431,48 @@ endfunction
     validateSoloReplayScript(module);
     soloRejects([&]{validateSoloReplayScript(module,SoloReplayScriptKind::Preload);},"PreloadGenEnd");
 }
+
+void lanReplayMetadataVersions(){
+    const std::string executable(64,'a'),common(64,'b'),map(64,'c');
+    const auto legacy="MEgine LAN v1 sha256="+executable+" | ";
+    const auto current="MEgine LAN v2 sha256="+executable+" | peer=2 | commonsha256="+common+" | ";
+    const auto mapField="mapsha256="+map+" | ";
+    auto v1=readLanReplayMetadata(legacy+"peer=2 | Room");
+    require(v1 && v1->executableDigest==executable && v1->perspective==std::uint8_t{2} && !v1->commonDigest && !v1->mapDigest,"LAN v1 metadata without sidecar changed");
+    v1=readLanReplayMetadata(legacy+"peer=2 | "+mapField+"Room");
+    require(v1 && v1->perspective==std::uint8_t{2} && !v1->commonDigest && v1->mapDigest==map,"LAN v1 sidecar digest was lost");
+    for(const auto& title:{legacy+"Room",legacy+"peer=broken | "+mapField+"Room"}){
+        v1=readLanReplayMetadata(title);
+        require(v1 && v1->executableDigest==executable && !v1->perspective && !v1->commonDigest && !v1->mapDigest,"LAN v1 perspective fallback changed");
+    }
+    v1=readLanReplayMetadata(legacy+"peer=2 | mapsha256=broken | Room");
+    require(v1 && v1->perspective==std::uint8_t{2} && !v1->mapDigest,"LAN v1 malformed optional sidecar changed the fallback");
+    v1=readLanReplayMetadata(legacy+"peer=2 | commonsha256="+common+" | Room");
+    require(v1 && v1->perspective==std::uint8_t{2} && !v1->commonDigest && !v1->mapDigest,"LAN v1 room title was interpreted as a v2 metadata field");
+
+    auto v2=readLanReplayMetadata(current+"Room");
+    require(v2 && v2->executableDigest==executable && v2->perspective==std::uint8_t{2} && v2->commonDigest==common && !v2->mapDigest,"LAN v2 required metadata differs");
+    v2=readLanReplayMetadata(current+mapField+"Room");
+    require(v2 && v2->executableDigest==executable && v2->perspective==std::uint8_t{2} && v2->commonDigest==common && v2->mapDigest==map,"LAN v2 sidecar digest was lost");
+}
+
+void lanReplayMetadataRejectsMalformedV2(){
+    const std::string executable(64,'a'),common(64,'b');
+    const auto prefix="MEgine LAN v2 sha256="+executable+" | ";
+    const auto commonField="commonsha256="+common+" | Room";
+    const std::array malformed{
+        prefix+commonField,
+        prefix+"peer=0 | "+commonField,
+        prefix+"peer=255 | "+commonField,
+        prefix+"peer=2x | "+commonField,
+        prefix+"peer=2 | Room",
+        prefix+"peer=2 | commonsha256="+std::string(63,'b')+" | Room",
+        prefix+"peer=2 | commonsha256="+std::string(64,'B')+" | Room",
+        prefix+"peer=2 | commonsha256="+common+"| Room",
+        "MEgine LAN v2 sha256="+std::string(64,'X')+" | peer=2 | "+commonField
+    };
+    for(const auto& title:malformed)require(!readLanReplayMetadata(title),"Malformed LAN v2 metadata was accepted");
+}
 }
 
 int main(){
@@ -445,6 +488,8 @@ int main(){
         soloScriptAuditTracksReachableFunctions();
         soloScriptAuditScopesMeleeAi();
         soloScriptAuditScopesPreload();
+        lanReplayMetadataVersions();
+        lanReplayMetadataRejectsMalformedV2();
         std::cout<<"Replay step tests passed\n";
         return 0;
     }catch(const std::exception& error){
