@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 局域网回放地图副本锁定时独立写入（定向验证）
+
+`src/replay_experimental.cpp` 跳过不可读取的硬链接候选。链接后仍核对摘要，复核失败时移除新链接，再尝试独立写入冻结地图。
+
+基线 `7d07884` 在旧副本独占期间保存了新 W3G，但未写入地图。候选在锁定期间正常保存新 W3G 和独立的 12,952 字节地图，释放后仍复用硬链接。两份录像均经实际 `ReplayPreparation` 挂载其关联图，旧副本和原图摘要保持。运行 `python -B tmp/docs-artifacts/war3/lan-sidecar-lock-v1/verify.py --expect fixed`。基线和候选回执为同目录的 `baseline-50a205146843/receipt.json` 和 `fixed-3155ba0a090a/receipt.json`。
+
+Win32 Release 客户端编译通过，SHA-256 前缀 `aeeab67a2836`。同一集成构建的回放步骤测试通过，命令队列定向复验 7 通过、0 失败。原生窗口保存和播放待验证。
+
 ## 主菜单读档初始化失败返回存档列表（待窗口验证）
 
 `src/main.cpp` 在主菜单读档交接失败时清理准备和载入状态，带原选中项返回存档列表并显示错误，允许选择另一份存档继续载入。
@@ -23,6 +31,8 @@ Win32 Release 集成客户端编译通过。冻结版 `162b111` 用同一个测�
 Win32 Release 客户端编译通过，集成 SHA-256 前缀 `2553e6a76e92`，`war3_replay_step_tests.exe` 通过。隔离双端用原创 CombatOutcome 交换并消费三轮相同时片，安装图 A 替换为成员校验与尺寸相同、归档摘要不同的 B。基线 `162b111` 的房主和本地匹配来客录像均挂载 B。候选两端保存的地图摘要均为实际对局 A，B 仍在安装目录时，`ReplayPreparation` 使用分别保存的 12,952 字节 A 副本。安装图一致的对照仍只生成 W3G，原始夹具摘要保持。
 
 运行 `python -B tmp/docs-artifacts/war3/lan-replay-frozen-map-v1/verify.py --expect fixed`，基线使用 `--expect baseline`。回执为同目录的 `baseline-75a831cb23f2/receipt.json` 与 `fixed-21ffdd814793/receipt.json`，两轮均退出 0。探针将真实消费的回环时片接给产品录制器，来客快照交接经源码核对。正式窗口保存、图形播放和大地图内存占用待验收。
+
+正式构建 `2553e6a76e92` 的隔离播放夹具已就绪。无窗口预检 3 通过、0 失败，房主和来客均挂载 A，缺少 A 的对照拒绝播放。回执及日志位于 `tmp/docs-artifacts/war3/lan-replay-frozen-map-native-v1/run-61cbf92cd6/`。显示会话恢复后对该目录执行同级 `verify.py --staged <夹具目录> --execute`。
 
 ## 存档与回放文件选择后的确认焦点（定向验证）
 
