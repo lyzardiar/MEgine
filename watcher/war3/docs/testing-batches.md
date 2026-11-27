@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 同构建 LAN 大厅历史署名（定向验证）
+
+`src/lan_host.cpp` 和 `src/lan_join.*` 在消息进入历史时复制发送者名称。`src/lan_lobby.*` 与 `src/lan_host_ui.cpp` 显示记录名称，缺少名称时使用玩家编号。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `346d44baf051`。`war3_lan_departure_tests.exe` 的 `countdown-cancel` 和 `join-reasons` 共 6 项通过、0 项失败。
+
+三席正式大厅中，A 发送 `旧记录 OLD-173` 后离场。B 用独立进程占回唯一空席并发送 `新消息 NEXT-294`。基线中 A 的旧消息先显示 `Player 2`，随后改成 B 的名字。修复后房主和原来客均保留 A 的署名，B 的消息另以 B 署名。两端实帧与离线文字区域对照均通过。原房间及幸存来客 TCP 保持，空位从 0 变为 1 再回到 0，四进程正常退出。
+
+复现使用 `pwsh -File tmp/docs-artifacts/war3/lan-lobby-chat-author-v1/verify.ps1 -Executable <Win32 Release 客户端>`，再用同目录 `audit-frames.py --run <运行目录> --expect fixed` 核对截图。基线与最终证据分别在 `run-7ca5cad153/` 和 `run-39c16fda97/`。
+
 ## 同构建 LAN 私聊受众与离席草稿（定向验证）
 
 `src/game_view.cpp` 在编辑草稿时接入 F12 收件人面板，关闭后保留草稿和选择。失败提示与聊天记录分行显示。`src/chat_dialog.cpp` 忽略 F12 连发。`src/lan_simulation.cpp` 在应用私聊动作时复查收件人状态，允许先于离席的私聊，丢弃离席后到达的私聊及其脚本事件。
