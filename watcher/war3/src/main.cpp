@@ -330,10 +330,11 @@ int run(HINSTANCE instance) {
             if(input.key==VK_ESCAPE){loader.cancel();uploading.reset();loadingScreen.reset();if(replayOrigin){leaveReplay({});}else if(savedGameLoadingEntry)openSavedGames(*savedGameLoadingEntry);else if(campaignOrigin){campaign->reload();screen=Screen::Campaign;}else{browser->reload();screen=Screen::Maps;}menuMusic();action="CancelLoading";}
             else {
                 if(auto result=loader.poll();result && result->request==loadRequest){
-                    if(result->checkpointChanged && savedGameLoadingEntry){
+                    if(savedGameLoadingEntry && (result->checkpointChanged || (!options.hidden && !result->error.empty()))){
+                        if(!result->checkpointChanged)log.write("saved_game_load_failed="+result->error);
                         uploading.reset();loadingScreen.reset();openSavedGames(*savedGameLoadingEntry,true);
-                        if(screen==Screen::SavedGames)frontError="存档已更改，请查看新预览后重新确认。";
-                        menuMusic();action="RefreshChangedSave";
+                        if(screen==Screen::SavedGames)frontError=result->checkpointChanged?"存档已更改，请查看新预览后重新确认。":"无法载入所选存档。";
+                        menuMusic();action=result->checkpointChanged?"RefreshChangedSave":"ReturnFailedSave";
                     }else{loadError=std::move(result->error);uploading=std::move(result->data);}
                 }
                 if(screen==Screen::Loading){if(uploading && loadError.empty())try{auto budget=GetTickCount64()+4;while(GetTickCount64()<budget && uploading->uploadOne(renderer)){}if(uploading->uploaded()==uploading->uploadCount()){game=std::make_unique<GameView>(std::move(uploading),renderer,text,log);if(replayOrigin && replaySnapshot->header().product==soloReplayProduct){
