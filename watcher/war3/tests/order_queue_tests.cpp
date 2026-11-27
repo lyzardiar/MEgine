@@ -29,16 +29,16 @@ jass::Module orderQueueTestModule(Archives& archives,bool targetCallback){
     if(!targetCallback)return jass::Module::compile(std::move(program));
     auto sources=program.sources();
     sources.push_back({"queue-callback-test.j",R"JASS(
-native OrderQueueTestEnqueueOnAttack takes unit actor, unit target returns nothing
+native OrderQueueTestEnqueueOnTargetOrder takes unit actor, unit target returns nothing
 
-function OrderQueueTestOnAttack takes nothing returns nothing
-    call OrderQueueTestEnqueueOnAttack(GetTriggerUnit(),GetOrderTargetUnit())
+function OrderQueueTestOnTargetOrder takes nothing returns nothing
+    call OrderQueueTestEnqueueOnTargetOrder(GetTriggerUnit(),GetOrderTargetUnit())
 endfunction
 
-function OrderQueueTestInstallAttackCallback takes unit actor returns trigger
+function OrderQueueTestInstallTargetOrderCallback takes unit actor returns trigger
     local trigger t = CreateTrigger()
     call TriggerRegisterUnitEvent(t,actor,EVENT_UNIT_ISSUED_TARGET_ORDER)
-    call TriggerAddAction(t,function OrderQueueTestOnAttack)
+    call TriggerAddAction(t,function OrderQueueTestOnTargetOrder)
     return t
 endfunction
 )JASS","authored queue regression"});
@@ -46,8 +46,76 @@ endfunction
 }
 }
 int wmain(int argc,wchar_t** argv){try{
-    if(argc<3 || argc>4 || (argc==4 && std::wstring(argv[3])!=L"stop-hold-queue" && std::wstring(argv[3])!=L"formation-queue-reservation" && std::wstring(argv[3])!=L"self-alliance" && std::wstring(argv[3])!=L"morph-movement" && std::wstring(argv[3])!=L"formation-duplicates" && std::wstring(argv[3])!=L"formation-completion" && std::wstring(argv[3])!=L"formation-speed" && std::wstring(argv[3])!=L"formation-facing" && std::wstring(argv[3])!=L"formation-settings" && std::wstring(argv[3])!=L"formation-wire" && std::wstring(argv[3])!=L"smart-bridge" && std::wstring(argv[3])!=L"invalid-location" && std::wstring(argv[3])!=L"pathing-toggle" && std::wstring(argv[3])!=L"combat-pathing-toggle" && std::wstring(argv[3])!=L"return-queue" && std::wstring(argv[3])!=L"invalid-immediate" && std::wstring(argv[3])!=L"pickup-path" && std::wstring(argv[3])!=L"invalid-build" && std::wstring(argv[3])!=L"invalid-player-item" && std::wstring(argv[3])!=L"invalid-player-target" && std::wstring(argv[3])!=L"rejected-player-attack" && std::wstring(argv[3])!=L"invalid-player-ability" && std::wstring(argv[3])!=L"slot-order-permission" && std::wstring(argv[3])!=L"raw-item-order" && std::wstring(argv[3])!=L"invalid-point-id" && std::wstring(argv[3])!=L"invalid-target-id" && std::wstring(argv[3])!=L"invalid-immediate-id"))throw std::runtime_error("Usage: war3_order_queue_tests <data-root> <map> [rejected-player-attack|invalid-location|pathing-toggle|combat-pathing-toggle|return-queue|invalid-immediate|pickup-path|invalid-build|invalid-player-item|invalid-player-target|invalid-player-ability|slot-order-permission|raw-item-order]");Archives archives(argv[1]);archives.mountMap(argv[2]);auto world=World::read(archives);auto info=world->data().info;ScriptSession session(orderQueueTestModule(archives,argc==4 && std::wstring(argv[3])==L"rejected-player-attack"),info);session.attachWorld(std::move(world));session.audioMuted(true);session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto invoke=[&](const char* name,std::initializer_list<jass::Value> args){return vm.invoke(name,{args.begin(),args.size()});};auto player=invoke("Player",{vm.integer(0)});auto [x,y]=openArea(session);
+    const bool healOrder=argc==4 && std::wstring(argv[3])==L"rejected-player-heal-order";
+    const bool healCheck=healOrder || (argc==4 && std::wstring(argv[3])==L"rejected-player-heal");
+    if(argc<3 || argc>4 || (argc==4 && !healCheck && std::wstring(argv[3])!=L"stop-hold-queue" && std::wstring(argv[3])!=L"formation-queue-reservation" && std::wstring(argv[3])!=L"self-alliance" && std::wstring(argv[3])!=L"morph-movement" && std::wstring(argv[3])!=L"formation-duplicates" && std::wstring(argv[3])!=L"formation-completion" && std::wstring(argv[3])!=L"formation-speed" && std::wstring(argv[3])!=L"formation-facing" && std::wstring(argv[3])!=L"formation-settings" && std::wstring(argv[3])!=L"formation-wire" && std::wstring(argv[3])!=L"smart-bridge" && std::wstring(argv[3])!=L"invalid-location" && std::wstring(argv[3])!=L"pathing-toggle" && std::wstring(argv[3])!=L"combat-pathing-toggle" && std::wstring(argv[3])!=L"return-queue" && std::wstring(argv[3])!=L"invalid-immediate" && std::wstring(argv[3])!=L"pickup-path" && std::wstring(argv[3])!=L"invalid-build" && std::wstring(argv[3])!=L"invalid-player-item" && std::wstring(argv[3])!=L"invalid-player-target" && std::wstring(argv[3])!=L"rejected-player-attack" && std::wstring(argv[3])!=L"invalid-player-ability" && std::wstring(argv[3])!=L"slot-order-permission" && std::wstring(argv[3])!=L"raw-item-order" && std::wstring(argv[3])!=L"invalid-point-id" && std::wstring(argv[3])!=L"invalid-target-id" && std::wstring(argv[3])!=L"invalid-immediate-id"))throw std::runtime_error("Usage: war3_order_queue_tests <data-root> <map> [rejected-player-attack|rejected-player-heal|rejected-player-heal-order|invalid-location|pathing-toggle|combat-pathing-toggle|return-queue|invalid-immediate|pickup-path|invalid-build|invalid-player-item|invalid-player-target|invalid-player-ability|slot-order-permission|raw-item-order]");Archives archives(argv[1]);archives.mountMap(argv[2]);auto world=World::read(archives);auto info=world->data().info;ScriptSession session(orderQueueTestModule(archives,healCheck || (argc==4 && std::wstring(argv[3])==L"rejected-player-attack")),info);session.attachWorld(std::move(world));session.audioMuted(true);session.configure();PlayerSetup setup(info,session.config());session.applySetup(setup);session.startMain();auto& vm=session.runtime();auto invoke=[&](const char* name,std::initializer_list<jass::Value> args){return vm.invoke(name,{args.begin(),args.size()});};auto player=invoke("Player",{vm.integer(0)});auto [x,y]=openArea(session);
     auto spawn=[&](float px,float py){auto handle=invoke("CreateUnit",{player,vm.integer(int(ObjectData::code("hfoo"))),vm.real(real(px)),vm.real(real(py)),vm.real(real(0))});require(session.units().contains(handle.bits),"Unit creation failed");auto u=session.units().at(handle.bits);u->collision=16;u->moveSpeed=real(256);u->acquireRange=real(0);u->pathing=false;return handle;};auto remove=[&](jass::Value unit){invoke("RemoveUnit",{unit});};auto nearPoint=[&](jass::Value unit,float px,float py){auto u=session.units().at(unit.bits);return std::hypot(number(u->x)-px,number(u->y)-py)<9;};auto move=[&](jass::Value unit,float px,float py,bool queued){PlayerCommand command;command.player=0;command.kind=PlayerCommandKind::GroundMove;command.units={unit.bits};command.xBits=real(px).bits();command.yBits=real(py).bits();command.queued=queued;return dispatchPlayerCommand(session,command);};
+
+    if(healCheck){
+        const auto heal=ObjectData::code("Ahea");
+        const auto opponent=invoke("Player",{vm.integer(1)});
+        const auto passive=invoke("ConvertAllianceType",{vm.integer(0)});
+        invoke("SetPlayerAlliance",{player,opponent,passive,vm.boolean(false)});
+        invoke("SetPlayerAlliance",{opponent,player,passive,vm.boolean(false)});
+
+        for(bool hostile:{true,false}){
+            const auto caster=spawn(x,y);
+            const auto state=session.units().at(caster.bits);
+            require(invoke("UnitAddAbility",{caster,vm.integer(int(heal))}).bits,"Heal ability unavailable");
+            state->mana=state->maxMana=real(1000);
+            state->manaRegen=0;
+            state->autocast.clear();
+            const auto target=invoke("CreateUnit",{hostile?opponent:player,vm.integer(int(ObjectData::code("hfoo"))),vm.real(real(x-128)),vm.real(real(y)),vm.real(real(0))});
+            require(session.units().contains(target.bits),"Heal target creation failed");
+            const auto recipient=session.units().at(target.bits);
+            recipient->acquireRange=real(0);
+            recipient->life=real(50);
+            recipient->healthRegen=0;
+            session.advance(.125);
+            require(session.unitVisibleTo(target.bits,0),"Heal target is not visible");
+            require(move(caster,x+96,y,false)==1 && move(caster,x+96,y+96,true)==1 && state->playerOrders.size()==1,"Heal queue setup failed");
+
+            bool callbackRan=false;
+            jass::Value trigger;
+            if(!hostile){
+                vm.bind("OrderQueueTestEnqueueOnTargetOrder",[&](auto& runtime,auto args){
+                    require(args.size()==2 && args[0].bits==caster.bits && args[1].bits==target.bits,"Heal callback context differs");
+                    require(!callbackRan && state->playerOrders.empty(),"Heal callback saw the old queue");
+                    callbackRan=true;
+                    require(move(caster,x-96,y+96,true)==1,"Heal callback could not enqueue new movement");
+                    return runtime.nothing();
+                });
+                trigger=invoke("OrderQueueTestInstallTargetOrderCallback",{caster});
+            }
+
+            PlayerCommand command;
+            command.player=0;
+            command.kind=healOrder?PlayerCommandKind::SpellUnitOrder:PlayerCommandKind::SpellUnit;
+            command.units={caster.bits};
+            command.target=target.bits;
+            if(healOrder)command.order=session.spellInfo(heal,1).order;
+            else command.ability=heal;
+            const auto result=dispatchPlayerCommand(session,command);
+            if(hostile){
+                require(result==0 && state->currentOrder==851986,"Hostile Heal was accepted or replaced current movement");
+                require(state->playerOrders.size()==1,"Rejected hostile Heal discarded queued movement");
+                session.advance(3);
+                require(nearPoint(caster,x+96,y+96) && number(recipient->life)==50,"Rejected hostile Heal changed the queued destination or target life");
+                std::cout<<"PASS rejected_hostile_heal_preserves_queue\n";
+            }else{
+                invoke("DestroyTrigger",{trigger});
+                require(result==1 && callbackRan && state->playerOrders.size()==1,"Accepted friendly Heal lost the callback movement");
+                session.advance(3);
+                require(nearPoint(caster,x-96,y+96) && number(recipient->life)>50,"Accepted friendly Heal did not heal and execute the new movement");
+                std::cout<<"PASS accepted_friendly_heal_keeps_callback_queue\n";
+            }
+            remove(caster);
+            remove(target);
+        }
+        require(!GetModuleHandleW(L"Game.dll"),"Game.dll loaded");
+        std::cout<<"RESULT passed=2 failed=0 game_dll_loaded=false\n";
+        return 0;
+    }
 
     if(argc==4 && std::wstring(argv[3])==L"rejected-player-attack"){
         auto attack=[&](jass::Value actor,jass::Value target){
@@ -83,14 +151,14 @@ int wmain(int argc,wchar_t** argv){try{
         require(move(fighter,x+96,y,false)==1 && move(fighter,x+96,y+96,true)==1,"Enemy attack queue setup failed");
         const auto attacker=session.units().at(fighter.bits);
         bool callbackRan=false;
-        vm.bind("OrderQueueTestEnqueueOnAttack",[&](auto& runtime,auto args){
+        vm.bind("OrderQueueTestEnqueueOnTargetOrder",[&](auto& runtime,auto args){
             require(args.size()==2 && args[0].bits==fighter.bits && args[1].bits==target.bits,"Attack callback context differs");
             require(!callbackRan && attacker->playerOrders.empty(),"Attack callback saw the old queue");
             callbackRan=true;
             require(move(fighter,x-96,y+96,true)==1,"Attack callback could not enqueue new movement");
             return runtime.nothing();
         });
-        const auto trigger=invoke("OrderQueueTestInstallAttackCallback",{fighter});
+        const auto trigger=invoke("OrderQueueTestInstallTargetOrderCallback",{fighter});
         const auto life=number(defender->life);
         require(attack(fighter,target)==1 && attacker->combat.target==target.bits,"Enemy attack was not accepted");
         require(callbackRan && attacker->playerOrders.size()==1,"Accepted attack lost callback movement");

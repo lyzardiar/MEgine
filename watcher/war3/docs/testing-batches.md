@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 拒绝单位目标技能时保留 Shift 队列（定向验证）
+
+`src/player_commands.cpp` 在按技能 ID 或订单 ID 对单位施法前暂存旧队列。目标被拒且单位和命令状态保持时恢复旧队列。施法受理后继续执行同步 JASS 回调新排入的命令。`tests/order_queue_tests.cpp` 新增两种施法入口的回归。
+
+Win32 Release 集成客户端编译通过。冻结版 `162b111` 用同一个测试对象复现两种治疗敌军的入口均丢失第二段移动。候选两种入口的拒绝和受理对照均通过，连同攻击队列、无效技能目标及原生物品订单共 7 通过、0 失败。原图摘要保持，未加载 `Game.dll`。
+
+定向执行 `war3_order_queue_tests <data-root> <map> rejected-player-heal` 和 `rejected-player-heal-order`。隔离回执为 `tmp/docs-artifacts/war3/rejected-heal-queue-v1/product-check/run-81ee1cfcd2be/receipt.json`。原生窗口施法反馈待验证。
+
 ## 同构建 LAN 回放使用本局冻结地图（定向验证）
 
 `src/replay_experimental.*` 使用房主与来客实际加载的地图摘要及共享快照，`src/lan_match_loading.cpp` 从来客地图交接保留快照。保存时匹配原图则只写 W3G，安装图变化或移走时写入关联副本，播放沿用摘要校验和回退逻辑。
