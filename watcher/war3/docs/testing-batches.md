@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## LAN 地面物品选择遇到脚本重选时继续对局（定向验证）
+
+`src/lan_simulation.cpp` 在同构建时间片应用过程中遇到脚本重新选中单位时，清除被该选区取代的地面物品选择。前置动作校验沿用现有标志和对象身份检查。
+
+Win32 Release 集成客户端编译与回放步骤测试通过。隔离 TCP 回环使用与 GameView 相同的取消选择及地面物品组包。冻结基线 `b49df90` 的发起者在同步 JASS 回调重选后拒绝整个时片。候选双方都消费时片，发起者保留脚本选区，随后来客仍通过 TCP 下发移动，双方应用并取得一致校验。普通地面物品选择继续成功，非法标志和未知物品身份继续拒绝。
+
+执行 `python -B tmp/docs-artifacts/war3/lan-ground-item-reselection-v1/verify.py --expect fixed`。回执为同目录 `baseline-0a3e27f4cfe1/receipt.json` 和 `fixed-8a877fde6cb8/receipt.json`。原图摘要一致，原生鼠标交互与脚本本地选区同步仍待验证。
+
 ## 商店商品按钮与交易共用可用条件（定向验证）
 
 `src/session_commerce.cpp` 为选择买家、商品按钮及购买复用商店状态和阵营条件。敌方或停用的店面提示无法交易。店主眩晕时，已经发出的购买命令也会在消费时重新判定。
