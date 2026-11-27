@@ -1,5 +1,11 @@
 # 独立客户端测试队列
 
+## LAN 断线返回后显示部分回放结果（定向验证）
+
+`src/main.cpp` 在返回大厅后显示断线原因，在页脚显示自动保存结果。大厅重开失败时，主菜单页脚保留两项信息。正常离场沿用页脚保存提示。
+
+Win32 Release 客户端编译通过。基线原生客户端确实保存了部分 W3G，同一返回帧只显示断线原因。隔离探针用实际回调覆盖正常离场、断线保存成功和失败、无录像及大厅重开失败，候选 5 通过、0 失败。执行 `python -B tmp/docs-artifacts/war3/lan-leave-notice-v1/verify.py --expect fixed`。回执位于同目录 `baseline-35cdcb2ab628/receipt.json` 与 `fixed-b5462b3d26c0/receipt.json`。实际窗口布局和长文件名仍待验证。
+
 ## 局域网回放地图副本锁定时独立写入（定向验证）
 
 `src/replay_experimental.cpp` 跳过不可读取的硬链接候选。链接后仍核对摘要，复核失败时移除新链接，再尝试独立写入冻结地图。
@@ -33,6 +39,8 @@ Win32 Release 客户端编译通过，集成 SHA-256 前缀 `2553e6a76e92`，`wa
 运行 `python -B tmp/docs-artifacts/war3/lan-replay-frozen-map-v1/verify.py --expect fixed`，基线使用 `--expect baseline`。回执为同目录的 `baseline-75a831cb23f2/receipt.json` 与 `fixed-21ffdd814793/receipt.json`，两轮均退出 0。探针将真实消费的回环时片接给产品录制器，来客快照交接经源码核对。正式窗口保存、图形播放和大地图内存占用待验收。
 
 正式构建 `2553e6a76e92` 的隔离播放夹具已就绪。无窗口预检 3 通过、0 失败，房主和来客均挂载 A，缺少 A 的对照拒绝播放。回执及日志位于 `tmp/docs-artifacts/war3/lan-replay-frozen-map-native-v1/run-61cbf92cd6/`。显示会话恢复后对该目录执行同级 `verify.py --staged <夹具目录> --execute`。
+
+补验重开 W3G 后的播放消费。使用正式 `ReplayPreparation`、`ReplayRuntime` 和 `LanSimulation`，房主和来客均挂载 A 并消费三轮各 100 毫秒的时间片，进入 `Finished`。两端逐轮模拟时间和校验相同，播放结束无未完的选区或缓存同步，3 通过、0 失败。运行 `python -B tmp/docs-artifacts/war3/lan-replay-frozen-map-playback-v1/verify.py`，回执为同目录 `run-073cc065cfc8/receipt.json`。夹具时间片无玩家动作，图形播放仍待验证。
 
 ## 存档与回放文件选择后的确认焦点（定向验证）
 
