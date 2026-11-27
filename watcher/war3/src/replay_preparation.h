@@ -24,16 +24,16 @@ class ReplayPreparation {
     std::unique_ptr<LanMapCheckTask> mapCheck_;
     MapPreparation preparation_;
     std::uint64_t request_=0;
+    std::uint64_t nextMapAttempt_=0;
     fs::path mapPath_;
     fs::path replayPath_;
     std::optional<std::string> mapDigest_;
     std::string expectedCommonDigest_;
-    bool sidecarAttempted_=false;
     std::uint8_t perspectivePeer_=0;
     std::optional<unsigned> gameVersion_;
     std::optional<SoloReplaySetup> solo_;
     std::string error_;
-    enum class Phase {CheckingResources,Checking,Preparing,Ready,Failed,Transferred} phase_=Phase::Checking;
+    enum class Phase {CheckingResources,Checking,CheckingSidecar,Preparing,Ready,Failed,Transferred} phase_=Phase::Checking;
     std::unique_ptr<ScriptSession> prepared_;
     bool fail(std::string message);
 public:

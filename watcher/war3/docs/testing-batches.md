@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 回放地图校验槽位忙时重试（待窗口验证）
+
+`src/replay_preparation.*` 在基础归档、安装目录地图或关联地图校验槽位忙时保留当前准备请求，每 250 毫秒重试提交。回放仍可取消，实际资源或地图错误仍会结束准备。
+
+Win32 Release 增量编译通过，客户端 SHA-256 前缀 `2a507e0de623`。无窗口探针使用原创 `CombatOutcome.w3m`，在临时地图校验源副本中暂停首次快照读取后的后台线程。取消并销毁首个准备请求后立刻重播，旧版 `09c5df7` 构造请求时复现 `LAN map verification is busy`。修复版在旧工作线程继续占用的 400 毫秒内保持等待，释放后完成同一回放的地图及会话准备，交接视角 1，1 通过、0 失败。
+
+运行 `python -B tmp/docs-artifacts/war3/replay-prep-retry-v1/verify.py --revision 09c5df7 --expect baseline` 和 `python -B tmp/docs-artifacts/war3/replay-prep-retry-v1/verify.py --expect fixed`。回执位于同目录 `baseline-cb698b9b6f7e/receipt.json` 及 `fixed-765fb52bdb45/receipt.json`。原始地图和回放摘要一致。实际窗口中取消后立即重播、基础归档校验槽和关联地图候选的争用时序待验证。
+
 ## 播放确认复核回放文件（待窗口验证）
 
 `src/replay_browser.*` 在确认按钮、键盘与双击交接前使用现有后台线程复核回放摘要。内容一致时复用已有解析结果。同名文件被替换时显示新内容，等待再次确认。文件移走时刷新列表并清除旧播放请求。换选、刷新、返回或打开删除确认会取消校验。
@@ -15,6 +23,8 @@ Win32 Release 增量编译通过，客户端 SHA-256 前缀 `f46920426dc3`。隔
 `src/replay_browser.*` 与 `src/main.cpp` 固定确认框中的文件选择，只接受确认框打开后的新点击或独立确认键。删除失败后优先重新读取原路径，删除成功后选中邻近项。删除提示复用回放列表下方的通知位置，后续预览读取失败仍保留删除结果。
 
 Win32 Release 增量编译通过，最终客户端 SHA-256 前缀 `33c020eb5cc6`。由已有来客录像生成隔离夹具，保留 150 个时片及原地图、基础归档摘要。新版离线回执为 `tmp/docs-artifacts/war3/lan-replay-delete-sidecar-v1/run-35bf3b75ba/receipt.json`。基线及修复中间版均在 Windows 会话断开时于 D3D9 初始化退出，未进入回放列表，回执为同目录 `run-4a3754f0b6/receipt.json` 和 `run-0889228b19/receipt.json`。
+
+随后在 `a85cef5` 的正式浏览器和后台删除入口补测关联地图，2 通过、0 失败。摘要匹配时删除所选回放和对应链接，另一份回放的硬链接及摘要保持。地图摘要不符时保留原地图副本并产生清理提示，回放按确认删除。回执为 `tmp/docs-artifacts/war3/replay-confirm-headless-v1/sidecar-a1b2cf4f54/receipt.json`。
 
 显示会话可用时运行 `python -B tmp/docs-artifacts/war3/lan-replay-delete-sidecar-v1/verify.py --exe <客户端> --verify-replaced --execute`。使用隔离用户目录，检查打开前的鼠标按下和之后的释放、Esc 取消、确认后同名回放替换、共享硬链接保留、摘要不符的地图保留与提示、空 Maps 资源根中幸存回放播放至 15 秒。正式交互、底部提示及本次共享链接删除后的播放均待验证。
 
