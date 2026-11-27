@@ -61,7 +61,13 @@ struct LanHost::Impl {
     bool canBroadcast(size_t length) const {return std::all_of(peers.begin(),peers.end(),[&](const Peer& p){return !p.pid || p.eof || (!p.dead && !p.closing && p.output.size()-p.sent+length<=65536);});}
     void updateLoadPhase(){if(loadPhase==LanLoadPhase::Loading && std::all_of(loadPlayers.begin(),loadPlayers.end(),[&](auto id){return std::find(loadedPlayers.begin(),loadedPlayers.end(),id)!=loadedPlayers.end();}))loadPhase=LanLoadPhase::Ready;}
     bool markLoaded(std::uint8_t id){if(!alive || loadPhase!=LanLoadPhase::Loading || std::find(loadPlayers.begin(),loadPlayers.end(),id)==loadPlayers.end())return false;if(std::find(loadedPlayers.begin(),loadedPlayers.end(),id)!=loadedPlayers.end())return true;if(!canBroadcast(5))return false;auto b=packet(0x08);b.push_back(id);finish(b);broadcast(b);loadedPlayers.push_back(id);updateLoadPhase();return true;}
-    bool beginCountdown(){if(!alive || loadPhase!=LanLoadPhase::Lobby || !canBroadcast(4))return false;std::vector<std::uint8_t> participants;for(const auto& slot:slots)if(slot.status==2 && !slot.computer){if(!slot.playerId || slot.playerId==255 || std::find(participants.begin(),participants.end(),slot.playerId)!=participants.end())return false;participants.push_back(slot.playerId);}if(std::find(participants.begin(),participants.end(),1)==participants.end())return false;for(const auto& p:peers)if(p.pid && (!p.mapReady || (settings.experimentalHandshake && !p.handshakeVerified) || std::find(participants.begin(),participants.end(),p.pid)==participants.end()))return false;for(auto id:participants)if(id!=1 && std::none_of(peers.begin(),peers.end(),[&](const Peer& p){return p.pid==id && !p.dead && !p.closing;}))return false;for(auto& p:peers)if(!p.pid)p.dead=true;auto b=packet(0x0a);finish(b);broadcast(b);loadPlayers=std::move(participants);loadedPlayers.clear();loadPhase=LanLoadPhase::Countdown;loadStarted=Clock::now();return true;}
+    bool beginCountdown(){if(!alive || loadPhase!=LanLoadPhase::Lobby || !canBroadcast(4))return false;std::vector<std::uint8_t> participants;for(const auto& slot:slots)if(slot.status==2 && !slot.computer){if(!slot.playerId || slot.playerId==255 || std::find(participants.begin(),participants.end(),slot.playerId)!=participants.end())return false;participants.push_back(slot.playerId);}if(std::find(participants.begin(),participants.end(),1)==participants.end())return false;for(const auto& p:peers)if(p.pid && (!p.mapReady || (settings.experimentalHandshake && !p.handshakeVerified) || std::find(participants.begin(),participants.end(),p.pid)==participants.end()))return false;for(auto id:participants)if(id!=1 && std::none_of(peers.begin(),peers.end(),[&](const Peer& p){return p.pid==id && !p.dead && !p.eof && !p.closing;}))return false;for(auto& p:peers)if(!p.pid)p.dead=true;auto b=packet(0x0a);finish(b);broadcast(b);loadPlayers=std::move(participants);loadedPlayers.clear();loadPhase=LanLoadPhase::Countdown;loadStarted=Clock::now();return true;}
+    bool cancelCountdown(LanCountdownCancelReason reason){
+        if(!alive || !settings.experimentalHandshake || loadPhase!=LanLoadPhase::Countdown)return false;
+        const Bytes notice{0xf7,lanCountdownCancelOpcode,5,0,std::uint8_t(reason)};
+        for(auto& p:peers)if(p.pid && !p.dead && !p.eof && !p.closing)enqueue(p,notice);
+        loadPlayers.clear();loadedPlayers.clear();loadStarted={};loadPhase=LanLoadPhase::Lobby;return true;
+    }
     bool beginLoading(){if(!alive || loadPhase!=LanLoadPhase::Countdown || !canBroadcast(4))return false;auto b=packet(0x0b);finish(b);broadcast(b);loadPhase=LanLoadPhase::Loading;loadStarted=Clock::now();return true;}
     bool enableTimeSlotProtocol(){if(!alive || (loadPhase!=LanLoadPhase::Loading && loadPhase!=LanLoadPhase::Ready))return false;timeSlotsEnabled=true;return true;}
     bool actionCapacity(size_t size,bool departure=false) const {constexpr size_t reservedPeers=11,reservedBytes=reservedPeers*5;auto maxActions=departure?4096u:4096u-reservedPeers;auto maxBytes=departure?60u*1024u:60u*1024u-reservedBytes;return size<=1449 && pendingActions.size()<maxActions && pendingBytes+3+size<=maxBytes;}
@@ -109,7 +115,14 @@ struct LanHost::Impl {
         setSlot(index,next);
     }
     bool scheduleDeparture(Peer& p){if(p.leaving)return true;std::array<LanDecodedAction,1> event{LanActionExperimentalLeave{p.pid}};auto action=encodeLanActions(event,true);if(!queueAction(1,action,true)){lastError="Cannot queue LAN player departure";return false;}p.leaving=true;p.leaveAt=Clock::now();departedPeers.insert(p.pid);return true;}
-    void remove(Peer& p){if(p.socket!=INVALID_SOCKET){closesocket(p.socket);p.socket=INVALID_SOCKET;}if(!p.pid)return;auto id=p.pid;if(loadPhase!=LanLoadPhase::Lobby && std::find(loadPlayers.begin(),loadPlayers.end(),id)!=loadPlayers.end()){if(loadPhase==LanLoadPhase::Ready && settings.experimentalHandshake && timeSlotsEnabled){if(!scheduleDeparture(p))barrierFailed=true;}else{barrierFailed=true;lastError="LAN player left during loading";}}p.pid=0;for(auto& slot:slots)if(slot.playerId==id && slot.status==2 && !slot.computer){slot.playerId=0;slot.download=0;slot.status=0;break;}std::erase_if(players,[&](const LanPlayer& v){return v.id==id;});auto b=packet(0x07);b.push_back(id);u32(b,13);finish(b);broadcast(b);if(loadPhase==LanLoadPhase::Lobby)announceSlots();}
+    void remove(Peer& p){
+        if(p.socket!=INVALID_SOCKET){closesocket(p.socket);p.socket=INVALID_SOCKET;}if(!p.pid)return;auto id=p.pid;
+        if(loadPhase!=LanLoadPhase::Lobby && std::find(loadPlayers.begin(),loadPlayers.end(),id)!=loadPlayers.end()){
+            if(loadPhase==LanLoadPhase::Ready && settings.experimentalHandshake && timeSlotsEnabled){if(!scheduleDeparture(p))barrierFailed=true;}
+            else if(!cancelCountdown(LanCountdownCancelReason::Departure)){barrierFailed=true;lastError="LAN player left during loading";}
+        }
+        p.pid=0;for(auto& slot:slots)if(slot.playerId==id && slot.status==2 && !slot.computer){slot.playerId=0;slot.download=0;slot.status=0;break;}std::erase_if(players,[&](const LanPlayer& v){return v.id==id;});auto b=packet(0x07);b.push_back(id);u32(b,13);finish(b);broadcast(b);if(loadPhase==LanLoadPhase::Lobby)announceSlots();
+    }
     bool chatMessage(std::uint8_t sender,const std::vector<std::uint8_t>& recipients,std::string_view message){if(!safeText(message,254) || recipients.empty() || recipients.size()>24)return false;auto b=packet(0x0f);b.push_back(std::uint8_t(recipients.size()));b.insert(b.end(),recipients.begin(),recipients.end());b.push_back(sender);b.push_back(0x10);append(b,message);finish(b);for(auto& p:peers)if(p.pid && !p.closing && std::find(recipients.begin(),recipients.end(),p.pid)!=recipients.end())enqueue(p,b);if(std::find(recipients.begin(),recipients.end(),1)!=recipients.end()){if(chat.size()>=200)chat.erase(chat.begin());chat.push_back({sender,std::string(message)});}return true;}
     void downloadStatus(const Peer& p,std::uint8_t value){for(auto& slot:slots)if(slot.playerId==p.pid && slot.status==2 && !slot.computer){if(slot.download!=value){slot.download=value;announceSlots();}return;}}
     void mapState(Peer& p,const std::uint8_t* data,size_t n){
@@ -161,6 +174,7 @@ void LanHost::cancel(){impl_->stop();}
 bool LanHost::sendChat(std::string_view message){if(!impl_->alive)return false;std::vector<std::uint8_t> recipients;for(auto& p:impl_->players)recipients.push_back(p.id);return impl_->chatMessage(1,recipients,message);}
 bool LanHost::setSlot(std::size_t index,const LanSlot& slot){return impl_->setSlot(index,slot);}
 bool LanHost::beginCountdown(){return impl_->beginCountdown();}
+bool LanHost::cancelCountdown(){return impl_->cancelCountdown(LanCountdownCancelReason::Manual);}
 bool LanHost::beginLoading(){return impl_->beginLoading();}
 bool LanHost::reportHostLoaded(){return impl_->markLoaded(1);}
 LanLoadPhase LanHost::loadPhase() const{return impl_->loadPhase;}
@@ -180,7 +194,7 @@ bool LanHost::beginGameEnd(){return impl_->beginGameEnd();}
 bool LanHost::gameEndComplete() const{return impl_->gameEndStarted && impl_->peers.empty();}
 bool LanHost::submitHostChecksum(std::uint32_t checksum){return impl_->submitHostChecksum(checksum);}
 std::optional<LanChecksumMismatch> LanHost::checksumMismatch() const{return impl_->mismatch;}
-bool LanHost::playerReportsMapReady(std::uint8_t id) const{if(!impl_->alive || !id)return false;if(id==1)return true;auto peer=std::find_if(impl_->peers.begin(),impl_->peers.end(),[&](const Impl::Peer& p){return p.pid==id && !p.dead && !p.closing;});return peer!=impl_->peers.end() && peer->mapReady;}
+bool LanHost::playerReportsMapReady(std::uint8_t id) const{if(!impl_->alive || !id)return false;if(id==1)return true;auto peer=std::find_if(impl_->peers.begin(),impl_->peers.end(),[&](const Impl::Peer& p){return p.pid==id && !p.dead && !p.closing;});return peer!=impl_->peers.end() && !peer->eof && peer->mapReady;}
 bool LanHost::playerRequestsMap(std::uint8_t id) const{if(!impl_->alive || id<=1)return false;auto peer=std::find_if(impl_->peers.begin(),impl_->peers.end(),[&](const Impl::Peer& p){return p.pid==id && !p.dead && !p.closing;});return peer!=impl_->peers.end() && peer->mapRequested;}
 const std::vector<LanSlot>& LanHost::slots() const{return impl_->slots;}
 const std::vector<LanPlayer>& LanHost::players() const{return impl_->players;}

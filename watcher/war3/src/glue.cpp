@@ -124,6 +124,7 @@ void GlueScreen::anchor(const std::string& name,const std::string& point,const s
 void GlueScreen::size(const std::string& name,float width,float height) {if(!std::isfinite(width) || !std::isfinite(height) || width<0 || height<0)throw std::runtime_error("Invalid glue dimensions");auto& f=nodes_.at(names_.at(name)).frame;f.properties["Width"]={std::to_string(width)};f.properties["Height"]={std::to_string(height)};relayout();}
 float GlueScreen::textWidth(const std::string& name,const std::string& text) {auto& f=nodes_.at(names_.at(name)).frame;auto font=f.property("FrameFont");auto value=frameTextContent(text);if(value.size()>4096)value.resize(4096);return text_.width(value,font.size()>1?number(font[1]):.013f);}
 void GlueScreen::setText(const std::string& name,const std::string& text) {auto& f=nodes_.at(names_.at(name)).frame;if(f.properties.contains("RuntimeText") && first(f,"Text")==text)return;f.properties["Text"]={text};f.properties["RuntimeText"]={};relayout();}
+void GlueScreen::setButtonText(const std::string& name,const std::string& text) {setText(first(nodes_.at(names_.at(name)).frame,"ButtonText"),text);}
 void GlueScreen::image(const std::string& name,const std::string& member) {image(name,texture(member).gpu.Get());}
 void GlueScreen::image(const std::string& name,IDirect3DTexture9* texture) {nodes_.at(names_.at(name)).image=texture;}
 void GlueScreen::backdropAt(const std::string& frame,Rect rect) {backdrop(definitions_.frame(frame),rect);}

@@ -144,6 +144,77 @@ void joinRejectionReasons(bool sameBuild,std::string expectedCommonDigest={}){
     auto retry=connect("Waiting",LanJoinState::Lobby);
     requireJoin(host.players().size()==2,"Retry did not take the released seat");
 }
+struct CountdownRoom {
+    static LanHostSettings settings(bool sameBuild){
+        LanHostSettings settings;settings.gameName="CountdownTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.width=64;settings.height=64;settings.loopbackOnly=true;settings.experimentalHandshake=sameBuild;settings.slots.resize(3);
+        if(sameBuild)settings.commonDigest=std::string(64,'a');
+        for(unsigned i=0;i<settings.slots.size();++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}
+        return settings;
+    }
+    LanHost host;
+    LanDiscovery discovery{true,LanDiscovery::defaultVersion,"127.0.0.1"};
+    LanGame game;
+    std::vector<std::unique_ptr<LanJoin>> guests;
+
+    explicit CountdownRoom(bool sameBuild=true) : host(settings(sameBuild)) {
+        discovery.refresh();wait([&]{return !discovery.games().empty();},"Countdown room was not discovered");
+        game=discovery.games().front();requireJoin(game.name==host.settings().gameName,"Unexpected countdown test room");
+    }
+    void wait(const std::function<bool()>& done,const char* failure){
+        auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(3);
+        while(!done()){
+            requireJoin(std::chrono::steady_clock::now()<deadline,failure);
+            host.poll();discovery.poll();for(auto& guest:guests)guest->poll();std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+    LanJoin& addGuest(const char* name){
+        guests.push_back(std::make_unique<LanJoin>(game,name));auto& guest=*guests.back();
+        if(host.settings().experimentalHandshake)requireJoin(guest.enableExperimentalHandshake(host.settings().commonDigest),"Cannot enable countdown test handshake");
+        wait([&]{return guest.state()==LanJoinState::Lobby && guest.mapCheck().received;},"Countdown guest did not join and receive the map check");
+        requireJoin(guest.reportMapReady(host.settings().map) && guest.enableLoadingProtocol(),"Countdown guest could not report readiness");
+        wait([&]{return host.playerReportsMapReady(guest.localPlayerId());},"Countdown guest was not ready on the host");return guest;
+    }
+};
+void countdownCancellation(){
+    CountdownRoom room;auto& host=room.host;auto& first=room.addGuest("First");auto& second=room.addGuest("Second");
+    const auto seed=host.randomSeed();const auto firstId=first.localPlayerId(),secondId=second.localPlayerId();
+    auto start=[&](LanJoin& other){
+        requireJoin(host.beginCountdown(),"Host could not start countdown");
+        room.wait([&]{return first.loadPhase()==LanLoadPhase::Countdown && other.loadPhase()==LanLoadPhase::Countdown;},"Guests did not receive countdown");
+        requireJoin(!first.countdownCancelReason() && !other.countdownCancelReason(),"New countdown retained an old cancellation reason");
+    };
+    requireJoin(!host.cancelCountdown(),"Host cancelled a countdown that was not running");start(second);
+    requireJoin(host.cancelCountdown(),"Host could not cancel countdown manually");
+    room.wait([&]{return first.loadPhase()==LanLoadPhase::Lobby && second.loadPhase()==LanLoadPhase::Lobby;},"Manual cancellation did not return both guests to the lobby");
+    requireJoin(first.countdownCancelReason()==LanCountdownCancelReason::Manual && second.countdownCancelReason()==LanCountdownCancelReason::Manual,"Guests did not receive the manual cancellation reason");
+    requireJoin(host.running() && host.loadPhase()==LanLoadPhase::Lobby && host.loadPlayers().empty() && host.loadedPlayers().empty() && !host.beginLoading(),"Manual cancellation left an active loading attempt");
+    requireJoin(host.players().size()==3 && host.playerReportsMapReady(firstId) && host.playerReportsMapReady(secondId) && first.randomSeed()==seed && second.randomSeed()==seed,"Manual cancellation changed the lineup, readiness or seed");
+    std::cout<<"PASS countdown_manual_cancellation\n";
+
+    start(second);second.cancel();
+    room.wait([&]{return host.loadPhase()==LanLoadPhase::Lobby && first.loadPhase()==LanLoadPhase::Lobby && first.players().size()==2 && std::none_of(first.slots().begin(),first.slots().end(),[&](const LanSlot& slot){return slot.playerId==secondId;});},"Departing during countdown did not reopen the seat for the surviving guest");
+    requireJoin(first.state()==LanJoinState::Lobby && first.countdownCancelReason()==LanCountdownCancelReason::Departure && first.localPlayerId()==firstId && first.randomSeed()==seed,"Departure changed the surviving connection or reported the wrong reason");
+    requireJoin(host.running() && host.players().size()==2 && host.playerReportsMapReady(firstId) && !host.playerReportsMapReady(secondId) && host.loadPlayers().empty(),"Departure left stale participants on the host");
+    auto& replacement=room.addGuest("Replacement");requireJoin(replacement.localPlayerId()==secondId && replacement.randomSeed()==seed,"Replacement could not reuse the original room seat and seed");
+    start(replacement);
+    requireJoin(host.beginLoading() && !host.cancelCountdown() && host.enableTimeSlotProtocol(),"Host did not keep the new loading attempt after the countdown boundary");
+    room.wait([&]{return first.loadPhase()==LanLoadPhase::Loading && replacement.loadPhase()==LanLoadPhase::Loading;},"Guests did not reach loading after restarting");
+    requireJoin(first.enableTimeSlotProtocol() && replacement.enableTimeSlotProtocol() && host.reportHostLoaded() && first.reportLocalLoaded() && replacement.reportLocalLoaded(),"Restarted guests could not enter the loading barrier");
+    room.wait([&]{return host.loadPhase()==LanLoadPhase::Ready && first.loadPhase()==LanLoadPhase::Ready && replacement.loadPhase()==LanLoadPhase::Ready;},"Restarted countdown did not reach ready on all three seats");
+    requireJoin(host.emitTimeSlot(32),"Restarted match did not emit its first time slot");
+    std::optional<LanTimeSlot> firstFrame,replacementFrame;
+    room.wait([&]{if(!firstFrame)firstFrame=first.takeTimeSlot();if(!replacementFrame)replacementFrame=replacement.takeTimeSlot();return firstFrame && replacementFrame;},"Restarted guests did not receive their first time slot");
+    requireJoin(firstFrame->elapsedMs==32 && replacementFrame->elapsedMs==32,"Restarted match time slots did not agree");
+    std::cout<<"PASS countdown_departure_and_restart\n";
+}
+void countdownHostShutdown(bool sameBuild){
+    CountdownRoom room(sameBuild);auto& guest=room.addGuest("Guest");
+    requireJoin(room.host.beginCountdown(),"Host could not start shutdown test countdown");
+    room.wait([&]{return guest.loadPhase()==LanLoadPhase::Countdown;},"Guest did not receive shutdown test countdown");
+    if(!sameBuild)requireJoin(!room.host.cancelCountdown() && room.host.loadPhase()==LanLoadPhase::Countdown,"Classic host allowed a private countdown cancellation");
+    room.host.cancel();room.wait([&]{return guest.state()!=LanJoinState::Lobby;},"Host shutdown did not close guest connection");
+    requireJoin(!room.host.running() && guest.loadPhase()==LanLoadPhase::Failed && !guest.countdownCancelReason(),"Host shutdown was reported as a recoverable countdown cancellation");
+}
 }
 int main(int argc,char** argv){
     try{
@@ -179,6 +250,11 @@ int main(int argc,char** argv){
         }
         if(argc==2 && std::string_view(argv[1])=="common-resources"){
             joinRejectionReasons(true,std::string(64,'a'));std::cout<<"PASS common_resource_mismatch\nPASS required_common_resource_exchange\nPASS matching_common_resources_and_retries\nRESULT passed=3 failed=0\n";return 0;
+        }
+        if(argc==2 && std::string_view(argv[1])=="countdown-cancel"){
+            countdownCancellation();
+            countdownHostShutdown(true);std::cout<<"PASS countdown_host_shutdown\n";
+            countdownHostShutdown(false);std::cout<<"PASS countdown_classic_behavior\nRESULT passed=4 failed=0\n";return 0;
         }
         auto require=[](bool ok,const char* text){if(!ok)throw std::runtime_error(text);};LanHostSettings settings;settings.gameName="M3LeaveTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.map.info=2;settings.map.crc=3;settings.width=64;settings.height=64;settings.experimentalHandshake=true;settings.loopbackOnly=true;settings.slots.resize(3);for(unsigned i=0;i<3;++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}LanHost host(settings);LanDiscovery discovery(true,LanDiscovery::defaultVersion,"127.0.0.1");discovery.refresh();std::unique_ptr<LanJoin> first,second;
         auto tick=[&]{host.poll();discovery.poll();if(first)first->poll();if(second)second->poll();};auto wait=[&](const std::function<bool()>& done,const char* message){auto limit=std::chrono::steady_clock::now()+std::chrono::seconds(15);while(!done()){tick();if(std::chrono::steady_clock::now()>limit)throw std::runtime_error(message);std::this_thread::sleep_for(std::chrono::milliseconds(1));}};

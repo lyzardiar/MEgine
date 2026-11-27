@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 同构建局域网倒计时撤回（定向验证）
+
+`src/lan_host_ui.*` 在五秒倒计时内提供撤回按钮，`src/lan_host.*` 在房主撤回或来客离开时恢复大厅，`src/lan_join.*` 与 `src/lan_lobby.cpp` 接收通知并恢复席位操作。存活连接、地图就绪状态和房间种子保留。再次开局按当前席位冻结配置。测试同时覆盖房主关闭房间、经典房间限制和进入加载后的撤回边界。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `812dfd117e93`。`war3_lan_departure_tests.exe` 的 `countdown-cancel`、`common-resources`、`join-close` 共 12 项通过、0 项失败。
+
+私有桌面运行两轮正式客户端。第一轮房主鼠标撤回，第二轮第三席按 Esc 离场并释放席位。原倒计时结束后双方仍在大厅，房间标识和存活来客的 TCP 四元组保持一致。两轮均使用原创夹具从原大厅重开，经实际加载进入对局，在第 15 模拟秒结算。两轮各保存两份 15 秒录像，五个进程均退出 0。已查看倒计时按钮、手动撤回提示和离席后空位实帧。
+
+复现使用 `pwsh -File tmp/docs-artifacts/war3/lan-countdown-cancel-v1/verify.ps1 -Executable <Win32 Release 客户端> -Scenario <host-cancel|peer-departure>`，回执分别位于同目录的 `run-host-cancel-2cd568fced/receipt.json` 和 `run-peer-departure-994a16b67f/receipt.json`。
+
 ## 同构建局域网基础归档一致性（定向验证）
 
 `src/lan_browser.*`、`src/lan_mapcheck.*` 在后台计算实际挂载的基础归档摘要。`src/lan_handshake.h`、`src/lan_host.*`、`src/lan_join.*` 在构建握手之后、普通加入之前交换并核对摘要。房主在摘要不符时拒绝分配席位，`src/lan_lobby.*` 显示基础资源不符。`src/map_preparation.*` 在加载线程对实际使用的归档复算，通过后才准备地图与会话。

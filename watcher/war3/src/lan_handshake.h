@@ -10,6 +10,8 @@ namespace war3 {
 inline constexpr std::uint32_t lanRejectNameInUse=0x4d334c01,lanRejectRoomFull=0x4d334c02,lanRejectBuildMismatch=0x4d334c03,lanRejectCommonResources=0x4d334c04;
 inline constexpr std::size_t lanHandshakeHeaderSize=16;
 inline constexpr std::uint8_t lanCommonDigestOpcode=0x71;
+inline constexpr std::uint8_t lanCountdownCancelOpcode=0x72;
+enum class LanCountdownCancelReason : std::uint8_t {Manual=1,Departure=2};
 
 template<class Range> bool validLanDigest(const Range& digest) {
     return digest.size()==64 && std::all_of(digest.begin(),digest.end(),[](auto c){return (c>='0' && c<='9') || (c>='a' && c<='f');});

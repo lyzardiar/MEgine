@@ -82,6 +82,7 @@ public:
     void size(const std::string& name,float width,float height);
     float textWidth(const std::string& name,const std::string& text);
     void setText(const std::string& name,const std::string& text);
+    void setButtonText(const std::string& name,const std::string& text);
     void image(const std::string& name,const std::string& member);
     void image(const std::string& name,IDirect3DTexture9* texture);
     IDirect3DTexture9* image(const std::string& name) const {return nodes_.at(names_.at(name)).image.Get();}

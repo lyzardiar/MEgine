@@ -40,6 +40,7 @@ class LanHostUi {
     size_t chatCursor_=0;
     size_t selected_=0,scroll_=0,slotScroll_=0;
     bool nameFocus_=true,chatFocus_=true,handoffEnabled_=false,loopbackOnly_=false;
+    bool countdownButtonDown_=false;
     std::uint64_t countdownStarted_=0;
     void enter(const fs::path& path);
     void begin();
@@ -48,6 +49,7 @@ class LanHostUi {
     void changeSlot(const GlueScreen::ChoiceChange& change);
     bool canBeginMatch() const;
     void beginMatch();
+    void returnToLobby(LanCountdownCancelReason reason);
     std::string drawCreate(const UiInput& input,std::wstring_view characters);
     std::string drawLobby(const UiInput& input,std::wstring_view characters);
 public:

@@ -35,6 +35,7 @@ public:
     bool setSlot(std::size_t index,const LanSlot& slot);
     // Explicit loading protocol; no game simulation is started by these calls.
     bool beginCountdown();
+    bool cancelCountdown();
     bool beginLoading();
     bool reportHostLoaded();
     LanLoadPhase loadPhase() const;

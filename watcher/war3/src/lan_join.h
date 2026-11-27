@@ -17,6 +17,7 @@ enum class LanJoinState {Connecting,Joining,Lobby,Rejected,Closed,Error};
 enum class LanHandshakeFailure {None,BuildMismatch,ResourcesMismatch,UnexpectedReply,TimedOut,Interrupted};
 enum class LanMapDownloadState {Idle,Requested,Receiving,Complete};
 enum class LanLoadPhase {Lobby,Countdown,Loading,Ready,Failed};
+enum class LanCountdownCancelReason : std::uint8_t;
 struct LanSlot {std::uint8_t playerId=0,download=0,status=0,computer=0,team=0,color=0,race=0,difficulty=0,handicap=0;};
 struct LanPlayer {std::uint8_t id=0;std::string name;};
 struct LanChatMessage {std::uint8_t sender=0;std::string text;};
@@ -44,6 +45,7 @@ class LanJoin {
     std::chrono::steady_clock::time_point handshakeStarted_{};
     bool loadingEnabled_=false,localLoaded_=false;
     LanLoadPhase loadPhase_=LanLoadPhase::Lobby;
+    std::optional<LanCountdownCancelReason> countdownCancelReason_;
     std::chrono::steady_clock::time_point loadStarted_{};
     std::vector<std::uint8_t> loadPlayers_,loadedPlayers_;
     bool timeSlotsEnabled_=false,leaveRequested_=false;
@@ -95,6 +97,7 @@ public:
     bool endOfStream() const {return endOfStream_;}
     bool gameStreamClosed() const {return gameStreamClosed_;}
     LanLoadPhase loadPhase() const {return loadPhase_;}
+    std::optional<LanCountdownCancelReason> countdownCancelReason() const {return countdownCancelReason_;}
     const std::vector<std::uint8_t>& loadPlayers() const {return loadPlayers_;}
     const std::vector<std::uint8_t>& loadedPlayers() const {return loadedPlayers_;}
     bool requestMapDownload();
