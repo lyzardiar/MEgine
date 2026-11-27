@@ -1,5 +1,15 @@
 # 独立客户端测试队列
 
+## 播放确认复核回放文件（待窗口验证）
+
+`src/replay_browser.*` 在确认按钮、键盘与双击交接前使用现有后台线程复核回放摘要。内容一致时复用已有解析结果。同名文件被替换时显示新内容，等待再次确认。文件移走时刷新列表并清除旧播放请求。换选、刷新、返回或打开删除确认会取消校验。
+
+使用 `python -B tmp/docs-artifacts/war3/replay-confirm-headless-v1/verify.py --mode candidate` 检查正式浏览器、后台线程、W3G 解析和 Windows 文件操作。渲染与 FDF 输入适配由探针提供。6 通过、0 失败，覆盖未变文件、替换后新确认、移走后的邻项、冷读双击、Esc 取消与重新确认、删除模态的旧按压／混合输入与新确认。替换件交接维持原路径，时长 120 秒，首时片 2,500 毫秒。回执为同目录 `candidate-56a329f174/receipt.json`。
+
+使用 `--mode baseline` 对 `09c5df7` 复现替换后按 Enter 仍交接旧预览，时长 20 秒，首时片 1,250 毫秒。回执为同目录 `baseline-40b17b0239/receipt.json`。
+
+Win32 Release 增量编译通过，客户端 SHA-256 前缀 `f46920426dc3`。隔离原生夹具已通过离线准备，回执为 `tmp/docs-artifacts/war3/replay-confirm-current-v1/run-c9287f5d0d/receipt.json`。显示会话可用时运行 `python -B tmp/docs-artifacts/war3/replay-confirm-current-v1/verify.py --exe <客户端> --execute`，验证原生列表的提示、重确认、缺失后的选择、相应快照进入地图并消费首个时片。当前 Windows 会话断开，窗口与播放运行尚待验证。
+
 ## 回放删除确认及关联地图保留（待窗口验证）
 
 `src/replay_browser.*` 与 `src/main.cpp` 固定确认框中的文件选择，只接受确认框打开后的新点击或独立确认键。删除失败后优先重新读取原路径，删除成功后选中邻近项。删除提示复用回放列表下方的通知位置，后续预览读取失败仍保留删除结果。

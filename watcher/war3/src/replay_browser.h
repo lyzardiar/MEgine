@@ -11,7 +11,7 @@ namespace war3 {
 struct ReplaySelection {fs::path path;std::shared_ptr<const Replay> replay;};
 class ReplayBrowser {
     struct Entry {fs::path path;bool directory=false;};
-    enum class Operation {Read,Remove};
+    enum class Operation {Read,Confirm,Remove};
     struct Request {Operation operation=Operation::Read;std::uint64_t request=0;fs::path path;std::string replayDigest,mapDigest;std::stop_token readStop;};
     struct Result {Operation operation=Operation::Read;std::uint64_t request=0;fs::path path;std::shared_ptr<const Replay> replay;std::string replayDigest,error;bool deleted=false,mapCleaned=true;};
     GlueScreen screen_;
@@ -27,6 +27,7 @@ class ReplayBrowser {
     std::shared_ptr<const Replay> selectedReplay_;
     fs::path selectedPath_;
     bool loading_=false,confirmDelete_=false,confirmMouseReady_=false,deleting_=false,pendingPlay_=false,reloadSelection_=false;
+    bool confirmingPlay_=false,playReady_=false,suppressPlayInput_=false;
     std::string selectedDigest_;
     std::uint64_t request_=0;
     std::atomic<std::uint64_t> generation_=0;
@@ -37,10 +38,12 @@ class ReplayBrowser {
     std::optional<Result> ready_;
     std::jthread worker_;
     void run(std::stop_token stop);
+    void cancelRead();
     void clearSelection();
     bool enter(const fs::path& path,const fs::path& preferred={},size_t fallback=0);
     void refresh();
     void choose(size_t index);
+    void requestRead(Operation operation);
     void prepared();
     void removeSelected();
 public:
