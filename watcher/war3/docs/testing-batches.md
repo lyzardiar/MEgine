@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 存档与回放文件选择后的确认焦点（定向验证）
+
+`src/saved_game_browser.cpp` 与 `src/replay_browser.*` 在鼠标或键盘选择文件后将焦点交给确认按钮。预览仍由各自的后台流程准备，回放确认继续复核磁盘内容。使用 Tab 选中取消后，Enter 返回。
+
+Win32 Release 集成客户端编译通过，SHA-256 前缀 `2553e6a76e92`。使用产品浏览器、原 FDF、焦点分派和后台预览线程，绘制由探针替身提供。冻结版 `162b111` 复现两种列表各自通过鼠标和 Down 选择 B 后按 Enter 误退出。修复版两种列表均交接 B，两个显式取消对照均通过，共 6 通过、0 失败。回放使用实际后台重读。
+
+日志位于 `tmp/docs-artifacts/war3/saved-game-focus-162b111-fbe771d4/` 的 `baseline.log`、`candidate/candidate.log`、`replay-baseline/baseline.log` 与 `replay-candidate/candidate.log`。原生窗口聚焦外观待验证。
+
 ## 后台读档请求在读取和恢复期间响应取消（定向验证）
 
 `src/game_loading.*` 为每个请求保留停止信号，取消与新请求替换时通知旧任务。加载阶段和结果按代次发布。`src/session_campaign.cpp`、`src/session_recovery_bundle.cpp` 将停止检查接入块读取、存档摘要、恢复组件和 AI／线程恢复边界。

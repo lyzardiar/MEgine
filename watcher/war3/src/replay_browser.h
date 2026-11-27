@@ -42,7 +42,7 @@ class ReplayBrowser {
     void clearSelection();
     bool enter(const fs::path& path,const fs::path& preferred={},size_t fallback=0);
     void refresh();
-    void choose(size_t index);
+    void choose(size_t index,bool focusPlay=false);
     void requestRead(Operation operation);
     void prepared();
     void removeSelected();
