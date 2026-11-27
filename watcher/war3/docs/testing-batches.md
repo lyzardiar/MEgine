@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 同构建 LAN 大厅长消息折行（定向验证）
+
+`src/lan_lobby.*` 与 `src/lan_host_ui.cpp` 共用历史折行。此前，一条无空格长消息把正文推到第二行，而每条历史只画一行，因此界面只显示发送者。现在按实际宽度和字符边界折行，在固定历史区域按顺序显示最近的可见行。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `acfe6a0fb372`。私有桌面双端使用 Windows Unicode 消息驱动，核对中英文双向收发、键盘和鼠标定位、焦点切换和发送后清空。对恰好 254 字节的混合文本在首尾尝试追加字符，草稿边界保持。两端实帧均显示该消息从首标到尾标的多行正文。房间标识和 TCP 四元组保持，进程均退出 0。
+
+复现使用 `pwsh -File tmp/docs-artifacts/war3/p0-lan-victory-product/verify-private-desktop.ps1 -Script tmp/docs-artifacts/war3/lan-lobby-chat-wrap-v1/verify-lobby-chat.ps1 -Executable <Win32 Release 客户端>`。回执 `tmp/docs-artifacts/war3/lan-lobby-chat-wrap-v1/run-c0fd18d683/receipt.json`。基线 `tmp/docs-artifacts/war3/lan-lobby-chat-v1/run-eb50629d09/` 使用相同 Unicode 注入，显示正文缺失。早期基线脚本的 ANSI 注入输出未用于中文或字节边界结论。系统输入法和实机前台操作仍待验证。
+
 ## 同构建 LAN 回放的基础归档一致性（定向验证）
 
 `src/replay_lan_metadata.h` 解析旧 `v1` 和新增 `v2` 元数据。`src/replay_experimental.*` 把会话已验证的基础归档摘要写入两端的新录像。`src/main.cpp` 校验格式与当前构建，`src/replay_preparation.*` 在地图校验前检查基础归档，并将摘要传给实际加载。`src/replay_browser.cpp` 使用同一解析结果定位删除操作涉及的关联地图。

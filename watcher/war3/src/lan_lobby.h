@@ -8,6 +8,7 @@
 #include <string_view>
 namespace war3 {
 class MapPreparation;
+void drawLanLobbyChatHistory(GlueScreen& screen,Text& text,std::span<const LanChatMessage> messages,std::span<const LanPlayer> players);
 struct LanLobbyHandoff {
     std::unique_ptr<LanJoin> join;
     std::shared_ptr<const Bytes> map;
