@@ -44,7 +44,7 @@ class GameFlowUi {
     wchar_t saveHigh_=0;
     std::vector<std::wstring> saveFiles_;
     size_t saveScroll_=0,saveCursor_=0;
-    std::string saveError_;
+    std::string saveError_,saveWarning_;
     std::optional<LocalLoadRequest> localLoad_;
     std::vector<std::string> scoreModels_;
     std::array<std::string,3> scoreFrameModels_;
@@ -67,6 +67,7 @@ public:
     ~GameFlowUi();
     bool menuOpen() const {return panel_!=Panel::Closed;}
     std::optional<LocalLoadRequest> takeLocalLoad(){auto request=std::move(localLoad_);localLoad_.reset();return request;}
+    std::string takeSaveWarning(){return std::exchange(saveWarning_,{});}
     void localLoadError(std::string error){saveError_=std::move(error);}
     bool agentSaveNameHit(float x,float y) const;
     void toggleMenu();

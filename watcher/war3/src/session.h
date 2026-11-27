@@ -37,6 +37,7 @@
 namespace war3 {
 struct RecoveryCheckpointInfo {std::string mapPath,mapDigest,fileDigest;bool expansion=false;unsigned version=0,defaultDifficulty=0;};
 struct LocalLoadRequest {std::string name;RecoveryCheckpointInfo checkpoint;fs::path map;};
+struct LocalSaveResult {std::string postSaveError;};
 struct RecoveryMapNotFound : std::runtime_error {std::string mapPath;explicit RecoveryMapNotFound(std::string path):std::runtime_error("Cannot locate checkpoint map with matching identity"),mapPath(std::move(path)) {}};
 class PlayerSetup;
 class WalkableGeometry;
@@ -1485,7 +1486,7 @@ public:
     std::map<std::uint32_t,std::uint32_t> rebuildFogState(std::span<const std::uint8_t> bytes);
     Bytes encodeRecoveryBundle() const;
     void saveRecoveryCheckpoint(const std::string& name,bool overwrite=true) const;
-    void saveLocalGame(const std::string& name,bool overwrite=false,const std::function<void()>& onPublished={});
+    LocalSaveResult saveLocalGame(const std::string& name,bool overwrite=false,const std::function<void()>& onPublished={});
     std::string takeScriptSaveError();
     LocalLoadRequest prepareLocalLoad(const std::string& name) const;
     static RecoveryCheckpointInfo inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,std::stop_token stop={});

@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 本地保存与保存后回调分别报告（定向验证）
+
+`src/session_campaign.cpp` 在玩家触发的本地保存中返回发布完成后的同步处理错误。`src/game_flow_ui.*` 与 `src/game_view.cpp` 对手动保存和快存提示已保存并记录回调错误。文件创建、写入或发布失败时提示保存失败。
+
+Win32 Release 客户端、clock 和局域网目标编译通过，集成客户端 SHA-256 前缀 `63c16cb2691a`。运行 `war3_clock_tests <data-root> <output-root>`，以 `WAR3_CLOCK_FILTER` 选取 `local_save_reports_post_publication_failure`、`quick_save_checkpoint`、`save_game_writes_checkpoint_and_preserves_caller`、`transition_save_discards_only_transition_caller`，共 4 通过、0 失败。日志 `tmp/docs-artifacts/war3/local-save-post-publish-dfacb0a3/clock-82a36abd317b/checks.log`。
+
+同目录独立探针以手动覆盖和快存复现旧实现两次发布后抛错。候选 2 通过、0 失败。回调失败时新档可恢复，锁定和同名拒绝时文件摘要与回调计数保持。原会话均能继续模拟并成功重存。回执日志为 `probe.log` 及 `candidate/probe.log`。原生窗口提示待验证。
+
 ## 同构建局域网旧房间条目加入拒绝（定向验证）
 
 `src/lan_host.cpp` 在倒计时、加载和运行中接收同构建旧条目的 TCP 请求，以专用原因拒绝尚未入座的请求。倒计时开始时冻结已接收的待加入连接，撤回后接受主动发起的重试。`src/lan_join.cpp` 在构建和资源握手期间也识别此拒绝，`src/lan_lobby.cpp` 提示对局正在开始或已经开局。`tests/lan_departure_tests.cpp` 增加回环覆盖。
@@ -7,6 +15,8 @@
 Win32 Release 客户端编译通过，独立客户端 SHA-256 前缀 `ae769a7a7eab`。冻结基线 `9e92702` 的倒计时和 Ready 旧条目均在约 15 秒后报校验超时。候选在该回环中均于 31 毫秒获得专用拒绝，保留原房主和来客的槽位并交换真实时间片及校验。已接收而未入座的请求在倒计时立即撤回时也得到拒绝，主动重试后仍可加入同一房间。
 
 常规复验使用 `war3_lan_departure_tests.exe stale-room-join`。回执为 `tmp/docs-artifacts/war3/lan-stale-room-join-v1/{baseline-9152d3eb5f0c,fixed-e17eab7dd855}/receipt.json`。原生窗口提示待验证。
+
+集成目标中运行 `stale-room-join`、`countdown-cancel`、`countdown-chat`、`join-reasons`、`common-resources`、`handshake-failures`，共 18 通过、0 失败。日志 `tmp/docs-artifacts/war3/lan-stale-room-join-v1/product-checks.log`。
 
 ## 对局内读档取消与失败保留原对局（待窗口验证）
 
