@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 检查点恢复先应用声音增益（待设备验证）
+
+`src/sound.cpp` 和 `src/music.cpp` 在恢复检查点的音效与音乐声道时，先应用目标会话的音量和声像，再恢复播放状态。普通声道开始播放也使用相同的调用顺序。
+
+Win32 Release 客户端、clock 及 sound 目标编译通过。以独立输出目录执行 `war3_clock_tests <data-root> <output-root>`，分别设置 `WAR3_CLOCK_FILTER` 为 `recovery_bundle_restores_music`、`recovery_bundle_restores_sound_requests` 和 `recovery_bundle_preserves_retired_spatial_and_sound_references`，共 3 通过、0 失败。覆盖恢复后的播放状态、空间音效及声音句柄引用。日志 `tmp/docs-artifacts/war3/recovery-audio-initial-gain/checks-74292117b6c7/checks.log`。实际设备上从零音量和低音量恢复时的首帧输出待验证。
+
+同目录 `miles-roundtrip.log` 记录 `war3_sound_tests <data-root> <scratch-root> sound_playback_state_miles_roundtrip` 报告 0 通过、1 失败，测试在 `waveOutOpen` 创建设备时停止。
+
 ## 同构建局域网倒计时来客聊天（定向验证）
 
 `src/lan_host.cpp` 在同构建倒计时接收来客大厅聊天。倒计时开始后冻结原有槽位，撤回后复用原来的房间和连接。`tests/lan_departure_tests.cpp` 增加三端回环回归。
