@@ -46,7 +46,7 @@ public:
     std::shared_ptr<const Bytes> mapBytes() const;
     // Arm during loading before the final player reports ready; actions still require Ready.
     // Opaque W3GS action data requires separate simulation and original action semantics.
-    bool enableTimeSlotProtocol();
+    bool enableTimeSlotProtocol(bool restrictGuestPause=false);
     bool submitHostAction(std::span<const std::uint8_t> action);
     bool emitTimeSlot(std::uint16_t elapsedMs);
     std::optional<LanTimeSlot> takeTimeSlot();

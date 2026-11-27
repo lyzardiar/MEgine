@@ -68,6 +68,7 @@ std::vector<LanDecodedAction> decodeLanActions(std::span<const std::uint8_t> byt
         if(result.size()>=maxActions)throw std::runtime_error("LAN action count exceeds limit");auto offset=reader.position();auto opcode=reader.u8();
         if(opcode==0x01)result.emplace_back(LanActionPause{});
         else if(opcode==0x02)result.emplace_back(LanActionResume{});
+        else if(opcode==0xff && experimental){auto enabled=reader.u8();if(enabled>1)throw std::runtime_error("Invalid LAN host pause state");result.emplace_back(LanActionExperimentalHostPause{enabled!=0});}
         else if(opcode==0x61)result.emplace_back(LanActionEscape{});
         else if(opcode==0x66 || opcode==0x67)result.emplace_back(LanActionMenu{opcode==0x66?LanCommandMenu::Skills:LanCommandMenu::Build});
         else if(opcode==0xfb && experimental)result.emplace_back(LanActionMenu{LanCommandMenu::None});
@@ -103,6 +104,7 @@ std::vector<std::uint8_t> encodeLanActions(std::span<const LanDecodedAction> act
     for(const auto& action:actions)std::visit([&](const auto& value){using T=std::decay_t<decltype(value)>;
         if constexpr(std::is_same_v<T,LanActionPause>)writer.u8(0x01);
         else if constexpr(std::is_same_v<T,LanActionResume>)writer.u8(0x02);
+        else if constexpr(std::is_same_v<T,LanActionExperimentalHostPause>){if(!experimental)throw std::runtime_error("LAN host pause requires same-build actions");writer.u8(0xff);writer.u8(value.enabled?1:0);}
         else if constexpr(std::is_same_v<T,LanActionEscape>)writer.u8(0x61);
         else if constexpr(std::is_same_v<T,LanActionMenu>){if(value.menu==LanCommandMenu::None && experimental)writer.u8(0xfb);else if(value.menu==LanCommandMenu::Skills || value.menu==LanCommandMenu::Build)writer.u8(value.menu==LanCommandMenu::Skills?0x66:0x67);else throw std::runtime_error("Invalid LAN command menu");}
         else if constexpr(std::is_same_v<T,LanActionExperimentalChat>){auto channel=unsigned(value.channel);if(!experimental || channel>2 || !validChat(value.text) || (value.recipientSlot && (channel!=0 || *value.recipientSlot>=12)))throw std::runtime_error("Invalid experimental LAN chat");if(value.recipientSlot){writer.u8(0xfc);writer.u8(*value.recipientSlot);}else writer.u8(std::uint8_t(0xf0+channel));writer.u16(std::uint16_t(value.text.size()));for(unsigned char byte:value.text)writer.u8(byte);}

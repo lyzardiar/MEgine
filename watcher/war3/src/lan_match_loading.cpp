@@ -10,7 +10,7 @@ std::unique_ptr<LanRuntime> LanMatchReady::start(GameView& game,LanSimulation::O
     return std::make_unique<LanRuntime>(game,game.session(),std::move(join),std::move(resolve),std::move(wire),std::move(fields),std::move(checksum),true);
 }
 LanMatchLoading::LanMatchLoading(const fs::path& root,bool muted,Log& log,LanHostHandoff handoff) : preparation_(root,muted),loader_(log) {
-    if(!handoff.host || !handoff.host->enableTimeSlotProtocol())throw std::runtime_error("Cannot arm LAN host while loading");mapRequest_=handoff.requestPreparation(preparation_);host_=std::move(handoff.host);
+    if(!handoff.host || !handoff.host->enableTimeSlotProtocol(handoff.host->settings().experimentalHandshake))throw std::runtime_error("Cannot arm LAN host while loading");mapRequest_=handoff.requestPreparation(preparation_);host_=std::move(handoff.host);
 }
 LanMatchLoading::LanMatchLoading(const fs::path& root,bool muted,Log& log,LanLobbyHandoff handoff,std::vector<unsigned> slotPlayerIds) : preparation_(root,muted),loader_(log) {
     if(!handoff.join || !handoff.join->enableTimeSlotProtocol())throw std::runtime_error("Cannot arm LAN peer while loading");if(handoff.downloaded){replayMap_=handoff.map;replayMapDigest_=std::move(handoff.replayMapDigest);}mapRequest_=handoff.requestPreparation(preparation_,std::move(slotPlayerIds));join_=std::move(handoff.join);

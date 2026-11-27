@@ -1,5 +1,19 @@
 # 独立客户端测试队列
 
+## 同构建局域网房主暂停与继续（定向验证）
+
+`src/game_flow_ui.*` 和 `src/game_view.cpp` 在正式同构建对局的房主菜单接入暂停和继续。`src/lan_match_loading.cpp` 在加载阶段启用权限检查，`src/lan_host.*` 拦截来客提交的新旧暂停动作。`src/lan_runtime.cpp` 将房主操作放入有序时片，`src/lan_actions.*`、`src/lan_simulation.*` 和 `src/session*` 处理编码、模拟推进、普通命令及两种暂停状态的校验。
+
+Win32 Release 构建通过，客户端 SHA-256 前缀为 `803474e0e531`。运行 `war3_game_flow_tests.exe <资源目录> tmp/docs-artifacts/war3/game-flow/fixture.w3m lan-host-pause`，以及 `war3_lan_departure_tests.exe` 的 `host-pause-admission`、`countdown-cancel`，共 8 项通过、0 项失败。`war3_replay_step_tests.exe` 另行通过。
+
+私有桌面两个正式客户端在原创 `CombatOutcome.w3m` 上验证房主从 F10 菜单暂停和继续，来客按键与点击均无效。暂停期间约 6.95 秒观察窗口内，双方持续呈现画面，模拟时间保持一致，原 TCP 连接保留。继续后双方在第 15 模拟秒结算，进程退出 0。两份录像的 225 个时片逐一一致，总时长 22.5 秒，房主暂停记录占 7.5 秒。已查看暂停提示、双方继续按钮状态和结算实帧。
+
+复现使用 `pwsh -File tmp/docs-artifacts/war3/lan-game-pause-v1/verify.ps1 -Executable <Win32 Release 客户端>`，回执和逐时片比对位于同目录的 `run-a1215934f7/receipt.json` 和 `run-a1215934f7/replay-audit.json`。
+
+独立正式客户端从回放列表以 1× 播放房主录像。画面持续呈现，回放时钟继续走，模拟停在与实战相同的 1.875 秒。实测 7.498 秒后恢复，最终在第 15 模拟秒停帧，Esc 返回列表，进程退出 0。源文件及播放副本 SHA-256 一致。复现使用同目录的 `python -B verify-playback.py --executable <Win32 Release 客户端> --live-run <双端回执目录>`，回执为 `playback-9c456720a2/receipt.json`。
+
+同一构建在三席原创夹具实测暂停时第三席经正式菜单离场。房主与存活来客保持原 TCP，并继续停在 0.1875 模拟秒；房主恢复后双方在第 15 模拟秒结算，三进程退出 0。存活两端的 176 个时片逐一一致，依次包含暂停、第三席离场和继续。离场方录像匹配同一流的前 17 个时片。`departure-f6bfbd75ef/receipt.json` 保留首次审计脚本的比较错误，修正脚本后对该次原始录像重审通过，见同目录的 `replay-audit.json`。
+
 ## 同构建局域网倒计时撤回（定向验证）
 
 `src/lan_host_ui.*` 在五秒倒计时内提供撤回按钮，`src/lan_host.*` 在房主撤回或来客离开时恢复大厅，`src/lan_join.*` 与 `src/lan_lobby.cpp` 接收通知并恢复席位操作。存活连接、地图就绪状态和房间种子保留。再次开局按当前席位冻结配置。测试同时覆盖房主关闭房间、经典房间限制和进入加载后的撤回边界。

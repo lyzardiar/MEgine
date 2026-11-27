@@ -13,6 +13,7 @@ namespace war3 {
 struct LanObjectId {std::uint32_t first=0,second=0;bool operator==(const LanObjectId&) const=default;};
 struct LanActionPause {bool operator==(const LanActionPause&) const=default;};
 struct LanActionResume {bool operator==(const LanActionResume&) const=default;};
+struct LanActionExperimentalHostPause {bool enabled=false;bool operator==(const LanActionExperimentalHostPause&) const=default;};
 struct LanActionEscape {bool operator==(const LanActionEscape&) const=default;};
 enum class LanCommandMenu : std::uint8_t {None,Skills,Build};
 struct LanActionMenu {LanCommandMenu menu=LanCommandMenu::None;bool operator==(const LanActionMenu&) const=default;};
@@ -53,7 +54,7 @@ struct LanActionAbility {
     bool operator==(const LanActionAbility&) const=default;
 };
 struct LanActionExperimentalGroup {LanActionAbility order;std::vector<LanObjectId> actors;bool operator==(const LanActionExperimentalGroup&) const=default;};
-using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionEscape,LanActionMenu,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionMinimapSignal,LanActionCacheSync,LanActionGroundItem,LanActionGroupAssign,LanActionGroupSelect,LanActionExperimentalChat,LanActionExperimentalSelection,LanActionExperimentalPurchase,LanActionExperimentalLeave,LanActionExperimentalSpell,LanActionExperimentalUnit,LanActionExperimentalDialog,LanActionExperimentalGroup>;
+using LanDecodedAction=std::variant<LanActionPause,LanActionResume,LanActionEscape,LanActionMenu,LanActionSelection,LanActionAbility,LanActionCancelQueue,LanActionCancelRevival,LanActionTransfer,LanActionAlliance,LanActionPreSubselection,LanActionSubgroup,LanActionTrackable,LanActionMinimapSignal,LanActionCacheSync,LanActionGroundItem,LanActionGroupAssign,LanActionGroupSelect,LanActionExperimentalChat,LanActionExperimentalSelection,LanActionExperimentalPurchase,LanActionExperimentalLeave,LanActionExperimentalSpell,LanActionExperimentalUnit,LanActionExperimentalDialog,LanActionExperimentalGroup,LanActionExperimentalHostPause>;
 
 // Classic 1.13+ action layout, bounded to 256 KiB and 4096 actions per block.
 // Experimental actions require explicit opt-in; malformed or unsupported opcodes fail the block.

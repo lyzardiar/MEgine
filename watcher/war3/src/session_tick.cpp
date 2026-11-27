@@ -10,7 +10,7 @@ jass::Real real(double value) {return jass::Real::fromBits(std::bit_cast<std::ui
 bool limit(float value,float target,unsigned operation) {switch(operation){case 0:return value<target;case 1:return value<=target;case 2:return value==target;case 3:return value>=target;case 4:return value>target;case 5:return value!=target;default:return false;}}
 }
 void ScriptSession::advance(double elapsed) {
-    if(!mainStarted())throw std::runtime_error("Simulation requires started map main");if(!std::isfinite(elapsed) || elapsed<0 || elapsed>60)throw std::runtime_error("Invalid simulation elapsed interval");try{processPendingSave();if(simulationPaused_){updateAudio();return;}accumulator_+=elapsed;while(accumulator_>=1./32 && !simulationPaused_){accumulator_-=1./32;tick(1./32);}if(simulationPaused_)accumulator_=0;processPendingSave();}catch(...){failed_=true;throw;}updateAudio();
+    if(!mainStarted())throw std::runtime_error("Simulation requires started map main");if(!std::isfinite(elapsed) || elapsed<0 || elapsed>60)throw std::runtime_error("Invalid simulation elapsed interval");try{processPendingSave();if(simulationPaused_ || lanHostPaused_){updateAudio();return;}accumulator_+=elapsed;while(accumulator_>=1./32 && !simulationPaused_){accumulator_-=1./32;tick(1./32);}if(simulationPaused_)accumulator_=0;processPendingSave();}catch(...){failed_=true;throw;}updateAudio();
 }
 void ScriptSession::tick(double delta) {
     if(staleEventHandles_>=256 && (staleEventHandles_>=4096 || staleEventHandles_>=eventHandles_.size()/2)){std::erase_if(eventHandles_,[this](auto id){return !alive(id,NativeKind::Event);});staleEventHandles_=0;}

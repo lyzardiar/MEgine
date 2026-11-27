@@ -70,7 +70,7 @@ public:
     bool menuShortcut(unsigned key,bool network);
     void scriptLoadDialog() {menuPanel(Panel::Main);openSave(true);}
     bool scriptDialog() const;
-    bool drawMenu(const UiInput& input,bool network=false,bool allowNetworkLeave=false,std::wstring_view characters={});
+    bool drawMenu(const UiInput& input,bool network=false,bool allowNetworkLeave=false,std::wstring_view characters={},bool allowNetworkPause=false);
     std::optional<bool> takeNetworkLeave(){auto result=networkLeave_;networkLeave_.reset();return result;}
     std::uint32_t drawDialog(const UiInput& input,bool interactive=true);
     bool drawScores(const UiInput& input,std::wstring_view characters={});

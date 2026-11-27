@@ -215,6 +215,29 @@ void countdownHostShutdown(bool sameBuild){
     room.host.cancel();room.wait([&]{return guest.state()!=LanJoinState::Lobby;},"Host shutdown did not close guest connection");
     requireJoin(!room.host.running() && guest.loadPhase()==LanLoadPhase::Failed && !guest.countdownCancelReason(),"Host shutdown was reported as a recoverable countdown cancellation");
 }
+void hostPauseAdmission(){
+    CountdownRoom room;auto& host=room.host;auto& guest=room.addGuest("Guest");
+    requireJoin(host.beginCountdown() && host.beginLoading() && host.enableTimeSlotProtocol(true),"Could not enable the live pause policy");
+    room.wait([&]{return guest.loadPhase()==LanLoadPhase::Loading;},"Pause-policy guest did not enter loading");
+    requireJoin(guest.enableTimeSlotProtocol() && host.reportHostLoaded() && guest.reportLocalLoaded(),"Could not report loaded in pause-policy room");
+    room.wait([&]{return host.loadPhase()==LanLoadPhase::Ready && guest.loadPhase()==LanLoadPhase::Ready;},"Pause-policy room did not enter play");
+    const auto hostPause=encodeLanActions(std::array<LanDecodedAction,1>{LanActionExperimentalHostPause{true}},true);
+    const auto guestControls=encodeLanActions(std::array<LanDecodedAction,3>{LanActionMenu{LanCommandMenu::Build},LanActionPause{},LanActionResume{}},true);
+    LanActionCacheSync store;store.opcode=0x6b;store.cache="cache";store.mission="mission";store.key="key";store.value=0x02ff01;
+    const auto ordinary=encodeLanActions(std::array<LanDecodedAction,1>{store},true);
+    requireJoin(guest.sendAction(hostPause) && guest.sendAction(guestControls) && guest.sendAction(ordinary) && host.submitHostAction(hostPause),"Could not send pause-policy actions");
+    unsigned hostActions=0,guestActions=0;
+    room.wait([&]{
+        if(!host.emitTimeSlot(0))return false;
+        auto slot=host.takeTimeSlot();requireJoin(bool(slot),"Missing pause-policy slot");
+        for(const auto& action:slot->actions){
+            if(action.playerId==1){requireJoin(action.bytes==hostPause,"Unexpected host pause action");++hostActions;}
+            else{requireJoin(action.playerId==guest.localPlayerId() && action.bytes==ordinary,"A guest pause block reached the room");++guestActions;}
+        }
+        return hostActions==1 && guestActions==1;
+    },"Host pause and ordinary guest action did not reach the room");
+    requireJoin(host.running() && guest.state()==LanJoinState::Lobby && guest.loadPhase()==LanLoadPhase::Ready,"Guest pause attempt broke the live connection");
+}
 }
 int main(int argc,char** argv){
     try{
@@ -255,6 +278,9 @@ int main(int argc,char** argv){
             countdownCancellation();
             countdownHostShutdown(true);std::cout<<"PASS countdown_host_shutdown\n";
             countdownHostShutdown(false);std::cout<<"PASS countdown_classic_behavior\nRESULT passed=4 failed=0\n";return 0;
+        }
+        if(argc==2 && std::string_view(argv[1])=="host-pause-admission"){
+            hostPauseAdmission();std::cout<<"PASS live_host_pause_admission\nRESULT passed=1 failed=0\n";return 0;
         }
         auto require=[](bool ok,const char* text){if(!ok)throw std::runtime_error(text);};LanHostSettings settings;settings.gameName="M3LeaveTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.map.info=2;settings.map.crc=3;settings.width=64;settings.height=64;settings.experimentalHandshake=true;settings.loopbackOnly=true;settings.slots.resize(3);for(unsigned i=0;i<3;++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}LanHost host(settings);LanDiscovery discovery(true,LanDiscovery::defaultVersion,"127.0.0.1");discovery.refresh();std::unique_ptr<LanJoin> first,second;
         auto tick=[&]{host.poll();discovery.poll();if(first)first->poll();if(second)second->poll();};auto wait=[&](const std::function<bool()>& done,const char* message){auto limit=std::chrono::steady_clock::now()+std::chrono::seconds(15);while(!done()){tick();if(std::chrono::steady_clock::now()>limit)throw std::runtime_error(message);std::this_thread::sleep_for(std::chrono::milliseconds(1));}};
