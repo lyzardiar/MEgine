@@ -49,12 +49,13 @@ struct GameData {
 };
 struct GameLoadResult {std::uint64_t request=0;std::unique_ptr<GameData> data;std::string error;bool checkpointChanged=false;};
 class GameLoading {
-    struct Request {std::uint64_t id;std::unique_ptr<ScriptSession> session;std::string checkpoint,checkpointDigest;SoloReplayMode soloReplay;};
+    struct Request {std::uint64_t id;std::unique_ptr<ScriptSession> session;std::string checkpoint,checkpointDigest;SoloReplayMode soloReplay;std::stop_token stop;};
     Log& log_;
     std::atomic<std::uint64_t> generation_=0;
     std::atomic<unsigned> phase_=0;
     std::mutex mutex_;
     std::condition_variable wake_;
+    std::stop_source requestStop_{std::nostopstate};
     std::optional<Request> pending_;
     std::optional<GameLoadResult> ready_;
     std::jthread worker_;

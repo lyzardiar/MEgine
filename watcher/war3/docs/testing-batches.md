@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 后台读档请求在读取和恢复期间响应取消（定向验证）
+
+`src/game_loading.*` 为每个请求保留停止信号，取消与新请求替换时通知旧任务。加载阶段和结果按代次发布。`src/session_campaign.cpp`、`src/session_recovery_bundle.cpp` 将停止检查接入块读取、存档摘要、恢复组件和 AI／线程恢复边界。
+
+Win32 Release 客户端与 clock 目标编译通过，客户端 SHA-256 前缀 `ed60c0150d9c`。使用 `war3_clock_tests <data-root> <output-root>` 配合 `WAR3_CLOCK_FILTER` 分别执行 `quick_save_checkpoint`、`recovery_bundle_rebuilds_component_graph_but_blocks_main`、`save_game_writes_checkpoint_and_preserves_caller`、`local_save_reports_post_publication_failure`、`recovery_bundle_restores_message_triggers` 与 `recovery_bundle_restores_ability_ui`，共 6 通过、0 失败。预先取消后同一候选可以重试。日志为 `tmp/docs-artifacts/war3/ingame-manual-load-retain-v1/headless-worker/cooperative-clock-c9a2b895a31a/checks.log`。
+
+同目录的 `python -B verify_read_cancel.py --build <Win32 Release 构建目录> --expect cooperative` 定向验证真实后台加载。显式取消和直接替换请求均让旧任务在首个 65,536 字节块后退出。基线 `843a899` 在取消后仍读完整的 82,993 字节。组件探针在旧候选恢复至 7.875 秒后取消并确认其没有进入下一组件。三轮等待新请求时阶段均为 0，只有新请求发布结果，原会话均继续推进。三轮退出 0，回执位于同目录的 `read-cooperative-bf97c8fd2c/`、`read-cooperative-supersede-de146d4713/` 和 `component-cooperative-d31b23b0de/`。复测后两轮分别加 `--interrupt supersede` 与 `--gate component`。基线回执位于 `read-baseline-1ce4b48da9/`。单次同步读盘等待、原生加载画面和 GPU 行为仍待验收。
+
 ## 本地保存与保存后回调分别报告（定向验证）
 
 `src/session_campaign.cpp` 在玩家触发的本地保存中返回发布完成后的同步处理错误。`src/game_flow_ui.*` 与 `src/game_view.cpp` 对手动保存和快存提示已保存并记录回调错误。文件创建、写入或发布失败时提示保存失败。

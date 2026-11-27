@@ -1492,8 +1492,8 @@ public:
     static RecoveryCheckpointInfo inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,std::stop_token stop={});
     static fs::path resolveRecoveryCheckpointMap(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={},std::stop_token stop={});
     static std::pair<RecoveryCheckpointInfo,fs::path> inspectAndResolveRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,const fs::path& externalRoot={},std::stop_token stop={},bool exactExternalHint=false);
-    std::map<std::uint32_t,std::uint32_t> restoreRecoveryCheckpoint(const std::string& name,const std::string& expectedDigest={});
-    std::map<std::uint32_t,std::uint32_t> restoreRecoveryBundle(std::span<const std::uint8_t> bytes);
+    std::map<std::uint32_t,std::uint32_t> restoreRecoveryCheckpoint(const std::string& name,const std::string& expectedDigest={},std::stop_token stop={});
+    std::map<std::uint32_t,std::uint32_t> restoreRecoveryBundle(std::span<const std::uint8_t> bytes,std::stop_token stop={});
     Bytes encodeSelection(const jass::StableHandleMap& encodeHandle) const;
     void restoreSelection(std::span<const std::uint8_t> bytes,const jass::StableHandleMap& decodeHandle);
     Bytes encodeTreeActions(const jass::StableHandleMap& encodeHandle) const;
