@@ -4,7 +4,9 @@
 
 `src/game_flow_ui.*` 记录打开确认时的目标文件身份。`src/session_campaign.cpp` 在独占 `Saves/.write.lock` 期间校验文件标识、大小和最后写入时间，再沿用同目录临时文件和原子替换。过期确认返回保存列表提示重试，已有文件保持。手动保存、快存、脚本保存及复制、目录改名和删除共用写入锁，保存回调在释放锁后执行。目录改名传给 Win32 的目标名包含终止字符，长度字段仍为文件名的字节数。
 
-隔离双会话基线复现 A 的旧确认覆盖 B。候选拒绝旧确认，B 摘要一致且恢复标记 2，重新确认后 C 恢复标记 3。相同探针通过目标消失、目标文件锁定、写入锁占用、保留路径和回调再次写入检查。日志为 `tmp/docs-artifacts/war3/manual-overwrite-identity-2222d704/{baseline.log,proposed/enhanced.log}`。实测使用 128 位文件标识及真实独占句柄，原生窗口和跨进程同时操作待验收。
+隔离双会话基线复现 A 的旧确认覆盖 B。候选拒绝旧确认，B 摘要一致且恢复标记 2，重新确认后 C 恢复标记 3。相同探针通过目标消失、目标文件锁定、写入锁占用、保留路径和回调再次写入检查。日志为 `tmp/docs-artifacts/war3/manual-overwrite-identity-2222d704/{baseline.log,proposed/enhanced.log}`。实测使用 128 位文件标识及真实独占句柄，原生窗口待验收。
+
+固定 `b49df90` 的双进程补验通过，两端均退出 0。A 在 0.125 秒时取得确认，B 在 0.375 秒发布同名档后，A 的旧确认被拒、保存回调 0 次，B 的摘要与恢复时间保持。B 活进程独占写入锁时，A 在 15 毫秒返回忙。B 释放后，A 重新确认成功发布在 0.25 秒的 C，保存回调 1 次，B 独立读回 C。回执为 `tmp/docs-artifacts/war3/manual-overwrite-identity-2222d704/multiprocess-b49df90-97625a24/run-e41d5491f4/receipt.json`。
 
 Win32 Release 集成客户端编译通过，SHA-256 前缀 `ef1dc26c7dd6`。`war3_clock_tests` 定向检查快存、脚本保存、保存后回调失败及切换前保存共 4 通过、0 失败。`war3_save_exists_tests` 的查询、复制、目录改名及删除通过，环境无法创建符号链接，对应分支跳过。日志位于同夹具目录的 `final-clock/` 和 `final-file-operations/result.log`。
 
