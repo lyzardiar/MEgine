@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace war3 {
-inline constexpr std::uint32_t lanRejectNameInUse=0x4d334c01,lanRejectRoomFull=0x4d334c02,lanRejectBuildMismatch=0x4d334c03,lanRejectCommonResources=0x4d334c04;
+inline constexpr std::uint32_t lanRejectNameInUse=0x4d334c01,lanRejectRoomFull=0x4d334c02,lanRejectBuildMismatch=0x4d334c03,lanRejectCommonResources=0x4d334c04,lanRejectMatchStarting=0x4d334c05;
 inline constexpr std::size_t lanHandshakeHeaderSize=16;
 inline constexpr std::uint8_t lanCommonDigestOpcode=0x71;
 inline constexpr std::uint8_t lanCountdownCancelOpcode=0x72;

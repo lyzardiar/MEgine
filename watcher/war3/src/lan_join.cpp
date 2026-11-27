@@ -88,7 +88,8 @@ bool LanJoin::requestMapDownload() {
     output_.insert(output_.end(),{0xf7,0x42,13,0,1,0,0,0,1,0,0,0,0});downloadState_=LanMapDownloadState::Requested;downloadActivity_=Clock::now();return true;
 }
 void LanJoin::process(const std::uint8_t* p,std::size_t n){
-    if(experimentalHandshake_ && !handshakeVerified_){
+    const bool matchStarting=state_==LanJoinState::Joining && n==8 && p[1]==0x05 && u32(p+4)==lanRejectMatchStarting;
+    if(experimentalHandshake_ && !handshakeVerified_ && !matchStarting){
         if(waitingForCommonDigest_){
             if(n!=commonDigestPacket_.size() || !std::equal(commonDigestPacket_.begin(),commonDigestPacket_.end(),p)){
                 const bool mismatch=(n==8 && p[1]==0x05 && u32(p+4)==lanRejectCommonResources) || hasLanCommonDigest({p,n});

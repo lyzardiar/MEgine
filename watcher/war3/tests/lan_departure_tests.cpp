@@ -146,7 +146,7 @@ void joinRejectionReasons(bool sameBuild,std::string expectedCommonDigest={}){
 }
 struct CountdownRoom {
     static LanHostSettings settings(bool sameBuild,bool fixedTeams){
-        LanHostSettings settings;settings.gameName="CountdownTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.width=64;settings.height=64;settings.loopbackOnly=true;settings.experimentalHandshake=sameBuild;settings.slots.resize(fixedTeams?4:3);
+        LanHostSettings settings;settings.gameName=sameBuild?std::string(experimentalLanPrefix)+"CountdownTest":"CountdownTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.width=64;settings.height=64;settings.loopbackOnly=true;settings.experimentalHandshake=sameBuild;settings.slots.resize(fixedTeams?4:3);
         if(fixedTeams)settings.mapOptions=0x40;
         if(sameBuild)settings.commonDigest=std::string(64,'a');
         for(unsigned i=0;i<settings.slots.size();++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}
@@ -243,6 +243,122 @@ void countdownLobbyChat() {
     requireJoin(host.players().size()==3 && host.playerReportsMapReady(firstId) && first.localPlayerId()==firstId
         && first.countdownCancelReason()==LanCountdownCancelReason::Manual,"Countdown cancel consumed the original connection or readiness");
     std::cout<<"PASS existing lobby connection resumed ordinary chat after cancellation\n";
+}
+
+void staleRoomJoin() {
+    CountdownRoom room;
+    auto& host=room.host;
+    auto& survivor=room.addGuest("First");
+    const auto survivorId=survivor.localPlayerId();
+    const auto seed=host.randomSeed();
+    const auto stableLineup=[&](){
+        const auto occupied=std::count_if(host.slots().begin(),host.slots().end(),
+            [](const auto& slot){return !slot.computer && slot.status==2;});
+        const auto open=std::count_if(host.slots().begin(),host.slots().end(),
+            [](const auto& slot){return slot.status==0;});
+        return host.running() && host.players().size()==2 && occupied==2 && open==1
+            && host.playerReportsMapReady(survivorId) && survivor.state()==LanJoinState::Lobby
+            && survivor.localPlayerId()==survivorId && survivor.randomSeed()==seed;
+    };
+    room.discovery.refresh();
+    room.wait([&]{return std::any_of(room.discovery.games().begin(),room.discovery.games().end(),[&](const auto& game){
+        return game.hostCounter==room.game.hostCounter && game.slotsAvailable==1;
+    });},"Same-build discovery did not advertise the open seat");
+    const auto found=std::find_if(room.discovery.games().begin(),room.discovery.games().end(),
+        [&](const auto& game){return game.hostCounter==room.game.hostCounter && game.slotsAvailable==1;});
+    requireJoin(found!=room.discovery.games().end() && found->name.starts_with(experimentalLanPrefix) && stableLineup(),
+                "Expected a discoverable active room with one free seat");
+    const auto stale=*found;
+
+    using TestClock=std::chrono::steady_clock;
+    const auto unsettled=[](const LanJoin& late){
+        return late.state()==LanJoinState::Connecting || late.state()==LanJoinState::Joining;
+    };
+    const auto canNeverClaimSeat=[&](const LanJoin& late){
+        return !late.localPlayerId() && !late.mapCheck().received && stableLineup();
+    };
+    const auto openLate=[&](const char* name)->LanJoin&{
+        room.guests.push_back(std::make_unique<LanJoin>(stale,name));
+        auto& late=*room.guests.back();
+        requireJoin(late.enableExperimentalHandshake(host.settings().commonDigest),"Could not enable late join handshake");
+        return late;
+    };
+    const auto assertRejected=[&](LanJoin& late,const char* phase){
+        const auto begin=TestClock::now();
+        room.wait([&]{return !unsettled(late);},"Late join waited instead of receiving a rejection");
+        const auto ms=std::chrono::duration_cast<std::chrono::milliseconds>(TestClock::now()-begin).count();
+        std::cout<<phase<<" late join settled in "<<ms<<" ms, reject="<<late.rejectionCode()<<"\n";
+        requireJoin(late.state()==LanJoinState::Rejected && late.rejectionCode()==lanRejectMatchStarting
+                    && late.handshakeFailure()==LanHandshakeFailure::None && canNeverClaimSeat(late),
+                    "Late join did not report an immediate started-room rejection without changing seats");
+    };
+
+    requireJoin(host.beginCountdown(),"Could not start stale-room countdown");
+    room.wait([&]{return survivor.loadPhase()==LanLoadPhase::Countdown;},"Survivor never received countdown");
+    auto& lateCountdown=openLate("LateCountdown");
+    assertRejected(lateCountdown,"COUNTDOWN");
+
+    requireJoin(survivor.enableTimeSlotProtocol() && host.beginLoading() && host.enableTimeSlotProtocol(),
+                "Could not arm the original survivors");
+    room.wait([&]{return survivor.loadPhase()==LanLoadPhase::Loading;},"Survivor never reached loading");
+    requireJoin(host.reportHostLoaded() && survivor.reportLocalLoaded(),"Could not report original players loaded");
+    room.wait([&]{return host.loadPhase()==LanLoadPhase::Ready && survivor.loadPhase()==LanLoadPhase::Ready;},
+              "Original players did not reach readiness");
+
+    auto& lateReady=openLate("LateReady");
+    assertRejected(lateReady,"READY");
+
+    requireJoin(host.emitTimeSlot(32),"Live host could not emit a slot with the late requests");
+    auto hostSlot=host.takeTimeSlot();
+    std::optional<LanTimeSlot> survivorSlot;
+    room.wait([&]{survivorSlot=survivor.takeTimeSlot();return survivorSlot.has_value();},
+              "Original survivor did not receive a slot");
+    requireJoin(hostSlot && survivorSlot->elapsedMs==hostSlot->elapsedMs
+                && survivorSlot->actions.empty() && hostSlot->actions.empty()
+                && host.submitHostChecksum(41) && survivor.sendChecksum(41),
+                "Original live time slot or checksum differed");
+    std::cout<<"PASS original host and guest exchanged a real time slot and retained both occupied seats\n";
+
+    requireJoin(canNeverClaimSeat(lateCountdown) && canNeverClaimSeat(lateReady)
+                && !host.checksumMismatch(),"Rejection changed an active seat or checksum");
+    std::cout<<"PASS started-room rejection preserved original player IDs, free slot and live time slots\n";
+}
+
+void staleRoomRetryAfterCancel() {
+    CountdownRoom room;
+    auto& survivor=room.addGuest("First");
+    auto& host=room.host;
+    const auto survivorId=survivor.localPlayerId();
+    const auto seed=host.randomSeed();
+    const auto allocate=[&](const char* name)->LanJoin&{
+        room.guests.push_back(std::make_unique<LanJoin>(room.game,name));
+        auto& guest=*room.guests.back();
+        requireJoin(guest.enableExperimentalHandshake(host.settings().commonDigest),"Cannot enable retry fixture handshake");
+        return guest;
+    };
+    auto& pending=allocate("Preaccepted");
+    room.wait([&]{return pending.state()==LanJoinState::Joining;},"Preaccepted test connection was not established");
+    pending.poll();
+    host.poll();
+    requireJoin(!pending.experimentalHandshakeVerified() && !pending.localPlayerId() && host.players().size()==2,
+                "Preaccepted connection already finished joining before the countdown");
+    requireJoin(host.beginCountdown() && host.cancelCountdown(),"Could not begin and then withdraw the countdown");
+    room.wait([&]{return pending.state()!=LanJoinState::Connecting && pending.state()!=LanJoinState::Joining
+        && survivor.countdownCancelReason()==LanCountdownCancelReason::Manual;},
+        "Preaccepted connection or original survivor did not settle after countdown withdrawal");
+    requireJoin(pending.state()==LanJoinState::Rejected && pending.rejectionCode()==lanRejectMatchStarting,
+                "Previously accepted connection missed the room-starting rejection");
+    std::cout<<"PASS preaccepted unseated connection was rejected even when countdown was withdrawn before its next packet\n";
+    requireJoin(!pending.localPlayerId() && !pending.mapCheck().received && host.players().size()==2
+                && host.playerReportsMapReady(survivorId) && survivor.localPlayerId()==survivorId
+                && survivor.randomSeed()==seed,"Rejecting the pending connection changed original player or readiness");
+
+    auto& retry=allocate("Preaccepted");
+    room.wait([&]{return retry.state()==LanJoinState::Lobby && retry.mapCheck().received;},
+              "A new connection could not reuse the room after countdown withdrawal");
+    requireJoin(retry.localPlayerId() && retry.localPlayerId()!=survivorId && host.players().size()==3,
+                "Explicit retry did not independently occupy the free slot");
+    std::cout<<"PASS explicit retry after withdrawal joined the same room with the original guest still seated\n";
 }
 
 void countdownCancellation(){
@@ -343,6 +459,9 @@ int main(int argc,char** argv){
         }
         if(argc==2 && std::string_view(argv[1])=="common-resources"){
             joinRejectionReasons(true,std::string(64,'a'));std::cout<<"PASS common_resource_mismatch\nPASS required_common_resource_exchange\nPASS matching_common_resources_and_retries\nRESULT passed=3 failed=0\n";return 0;
+        }
+        if(argc==2 && std::string_view(argv[1])=="stale-room-join"){
+            staleRoomJoin();staleRoomRetryAfterCancel();std::cout<<"RESULT passed=2 failed=0\n";return 0;
         }
         if(argc==2 && std::string_view(argv[1])=="countdown-chat"){
             countdownLobbyChat();std::cout<<"RESULT passed=1 failed=0\n";return 0;
