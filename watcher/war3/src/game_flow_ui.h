@@ -40,6 +40,7 @@ class GameFlowUi {
     GameVideoPreferences videoPreferences_{},videoDraft_{};
     std::string sliderDrag_;
     std::unique_ptr<ManualSaveDeletion> saveDeletion_;
+    std::optional<ManualSaveIdentity> saveOverwrite_;
     std::wstring saveName_;
     wchar_t saveHigh_=0;
     std::vector<std::wstring> saveFiles_;

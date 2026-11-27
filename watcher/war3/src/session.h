@@ -38,6 +38,10 @@ namespace war3 {
 struct RecoveryCheckpointInfo {std::string mapPath,mapDigest,fileDigest;bool expansion=false;unsigned version=0,defaultDifficulty=0;};
 struct LocalLoadRequest {std::string name;RecoveryCheckpointInfo checkpoint;fs::path map;};
 struct LocalSaveResult {std::string postSaveError;};
+struct CheckpointWriteError : std::runtime_error {using std::runtime_error::runtime_error;};
+struct SaveDirectoryBusy : CheckpointWriteError {SaveDirectoryBusy():CheckpointWriteError("Save directory is busy"){}};
+struct ManualSaveOverwriteChanged : std::runtime_error {ManualSaveOverwriteChanged():std::runtime_error("Save target changed after confirmation was requested"){}};
+struct ManualSaveIdentity {std::uint64_t volume=0,size=0,modified=0;std::array<std::uint8_t,16> file{};bool legacy=false;bool operator==(const ManualSaveIdentity&) const = default;};
 struct RecoveryMapNotFound : std::runtime_error {std::string mapPath;explicit RecoveryMapNotFound(std::string path):std::runtime_error("Cannot locate checkpoint map with matching identity"),mapPath(std::move(path)) {}};
 class PlayerSetup;
 class WalkableGeometry;
@@ -1485,8 +1489,9 @@ public:
     Bytes encodeFogState(const jass::StableHandleMap& encodeHandle) const;
     std::map<std::uint32_t,std::uint32_t> rebuildFogState(std::span<const std::uint8_t> bytes);
     Bytes encodeRecoveryBundle() const;
-    void saveRecoveryCheckpoint(const std::string& name,bool overwrite=true) const;
-    LocalSaveResult saveLocalGame(const std::string& name,bool overwrite=false,const std::function<void()>& onPublished={});
+    static std::optional<ManualSaveIdentity> inspectManualSaveIdentity(const fs::path& dataRoot,const std::string& name);
+    void saveRecoveryCheckpoint(const std::string& name,bool overwrite=true,const std::optional<ManualSaveIdentity>& expected={}) const;
+    LocalSaveResult saveLocalGame(const std::string& name,bool overwrite=false,const std::function<void()>& onPublished={},const std::optional<ManualSaveIdentity>& expected={});
     std::string takeScriptSaveError();
     LocalLoadRequest prepareLocalLoad(const std::string& name) const;
     static RecoveryCheckpointInfo inspectRecoveryCheckpoint(const fs::path& dataRoot,const std::string& name,std::stop_token stop={});
