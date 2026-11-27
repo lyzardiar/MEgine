@@ -1,12 +1,22 @@
 # 独立客户端测试队列
 
+## 同构建局域网倒计时来客聊天（定向验证）
+
+`src/lan_host.cpp` 在同构建倒计时接收来客大厅聊天。倒计时开始后冻结原有槽位，撤回后复用原来的房间和连接。`tests/lan_departure_tests.cpp` 增加三端回环回归。
+
+Win32 Release 客户端和测试目标编译通过，客户端 SHA-256 前缀 `3866c3db7ea7`。执行 `war3_lan_departure_tests.exe countdown-chat` 与 `war3_lan_departure_tests.exe countdown-cancel`，共 5 通过、0 失败。三端均收到来客在倒计时发出的中文消息，各一条且署名为 First。迟到的固定队伍换座未改变倒计时阵容。撤回后原连接继续接收普通大厅聊天。
+
+旧版 `a876daf` 在同一回归中正常转发房主聊天，来客消息在三端均为 0 条。日志和回执位于 `tmp/docs-artifacts/war3/lan-countdown-chat-v1/` 的 `product-checks.log`、`baseline-9b47437637aa/receipt.json` 与 `fixed-80382b4ca04a/receipt.json`。原生倒计时画面及聊天输入待验证。
+
 ## 回放地图校验槽位忙时重试（待窗口验证）
 
 `src/replay_preparation.*` 在基础归档、安装目录地图或关联地图校验槽位忙时保留当前准备请求，每 250 毫秒重试提交。回放仍可取消，实际资源或地图错误仍会结束准备。
 
 Win32 Release 增量编译通过，客户端 SHA-256 前缀 `2a507e0de623`。无窗口探针使用原创 `CombatOutcome.w3m`，在临时地图校验源副本中暂停首次快照读取后的后台线程。取消并销毁首个准备请求后立刻重播，旧版 `09c5df7` 构造请求时复现 `LAN map verification is busy`。修复版在旧工作线程继续占用的 400 毫秒内保持等待，释放后完成同一回放的地图及会话准备，交接视角 1，1 通过、0 失败。
 
-运行 `python -B tmp/docs-artifacts/war3/replay-prep-retry-v1/verify.py --revision 09c5df7 --expect baseline` 和 `python -B tmp/docs-artifacts/war3/replay-prep-retry-v1/verify.py --expect fixed`。回执位于同目录 `baseline-cb698b9b6f7e/receipt.json` 及 `fixed-765fb52bdb45/receipt.json`。原始地图与回放的摘要各自保持一致。扩展探针确认等待期间取消会阻止会话交接，真实缺图仍报告终止错误，回执 `fixed-f6d05f7e2fe1/receipt.json`。实际窗口中取消后立即重播、基础归档校验槽和关联地图候选的争用时序待验证。
+运行 `python -B tmp/docs-artifacts/war3/replay-prep-retry-v1/verify.py --revision 09c5df7 --expect baseline` 和 `python -B tmp/docs-artifacts/war3/replay-prep-retry-v1/verify.py --expect fixed`。回执位于同目录 `baseline-cb698b9b6f7e/receipt.json` 及 `fixed-765fb52bdb45/receipt.json`。原始地图与回放的摘要各自保持一致。扩展探针确认等待期间取消会阻止会话交接，真实缺图仍报告终止错误，回执 `fixed-f6d05f7e2fe1/receipt.json`。
+
+同目录运行 `python -B verify_phases.py --revision a876daf` 补验基础归档与关联地图阶段，2 通过、0 失败。在临时 worker 源副本中分别暂停实际归档摘要和关联地图读盘后的线程，每轮观察到三次忙拒绝，取消请求未发布结果。释放后使用匹配的关联地图完成会话准备，视角为来客 2，本地玩家 1，安装地图目录保持为空。基础归档、地图和回放摘要各自保持。回执 `phases-cef4aade012e/receipt.json`，原生窗口取消后重播与运行帧仍待验证。
 
 ## 播放确认复核回放文件（待窗口验证）
 

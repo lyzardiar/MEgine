@@ -145,8 +145,9 @@ void joinRejectionReasons(bool sameBuild,std::string expectedCommonDigest={}){
     requireJoin(host.players().size()==2,"Retry did not take the released seat");
 }
 struct CountdownRoom {
-    static LanHostSettings settings(bool sameBuild){
-        LanHostSettings settings;settings.gameName="CountdownTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.width=64;settings.height=64;settings.loopbackOnly=true;settings.experimentalHandshake=sameBuild;settings.slots.resize(3);
+    static LanHostSettings settings(bool sameBuild,bool fixedTeams){
+        LanHostSettings settings;settings.gameName="CountdownTest";settings.playerName="Host";settings.mapPath="Maps\\test.w3x";settings.map.size=1;settings.width=64;settings.height=64;settings.loopbackOnly=true;settings.experimentalHandshake=sameBuild;settings.slots.resize(fixedTeams?4:3);
+        if(fixedTeams)settings.mapOptions=0x40;
         if(sameBuild)settings.commonDigest=std::string(64,'a');
         for(unsigned i=0;i<settings.slots.size();++i){settings.slots[i].team=std::uint8_t(i);settings.slots[i].color=std::uint8_t(i);settings.slots[i].race=1;settings.slots[i].handicap=100;}
         return settings;
@@ -156,7 +157,7 @@ struct CountdownRoom {
     LanGame game;
     std::vector<std::unique_ptr<LanJoin>> guests;
 
-    explicit CountdownRoom(bool sameBuild=true) : host(settings(sameBuild)) {
+    explicit CountdownRoom(bool sameBuild=true,bool fixedTeams=false) : host(settings(sameBuild,fixedTeams)) {
         discovery.refresh();wait([&]{return !discovery.games().empty();},"Countdown room was not discovered");
         game=discovery.games().front();requireJoin(game.name==host.settings().gameName,"Unexpected countdown test room");
     }
@@ -175,6 +176,75 @@ struct CountdownRoom {
         wait([&]{return host.playerReportsMapReady(guest.localPlayerId());},"Countdown guest was not ready on the host");return guest;
     }
 };
+void countdownLobbyChat() {
+    CountdownRoom room(true,true);auto& host=room.host;auto& first=room.addGuest("First");auto& second=room.addGuest("Second");
+    const auto firstId=first.localPlayerId();
+    const auto currentTeam=[&](const auto& participant){
+        const auto& slots=participant.slots();
+        auto found=std::find_if(slots.begin(),slots.end(),[&](const auto& slot){return slot.playerId==firstId;});
+        requireJoin(found!=slots.end(),"First no longer has a slot");
+        return found->team;
+    };
+    constexpr std::uint8_t targetTeam=3;
+    const auto originalTeam=currentTeam(host);
+    requireJoin(originalTeam!=targetTeam && first.requestSlotChange(0x11,targetTeam),"Could not request the open fixed-team seat");
+    room.wait([&]{return currentTeam(host)==targetTeam && currentTeam(first)==targetTeam;},"Fixed-team move did not work in the normal lobby");
+    requireJoin(first.requestSlotChange(0x11,originalTeam),"Could not restore the original lobby seat");
+    room.wait([&]{return currentTeam(host)==originalTeam && currentTeam(first)==originalTeam;},"Original lobby seat was not restored");
+
+    requireJoin(host.beginCountdown() && first.loadPhase()==LanLoadPhase::Lobby,"Could not stage a pre-countdown slot request");
+    requireJoin(first.requestSlotChange(0x11,targetTeam),"First could not queue a slot change before receiving countdown");
+    first.poll();
+    const auto countingDown=[&]{return host.running() && host.loadPhase()==LanLoadPhase::Countdown
+        && first.loadPhase()==LanLoadPhase::Countdown && second.loadPhase()==LanLoadPhase::Countdown;};
+    room.wait(countingDown,"Countdown did not reach both guests");
+    requireJoin(currentTeam(host)==originalTeam && currentTeam(first)==originalTeam && currentTeam(second)==originalTeam,
+                "Late fixed-team slot request changed the countdown lineup");
+    const auto preservedSlot=std::find_if(host.slots().begin(),host.slots().end(),[&](const auto& slot){return slot.team==targetTeam;});
+    requireJoin(preservedSlot!=host.slots().end() && preservedSlot->status==0,
+                "The target seat was no longer empty during countdown");
+    std::cout<<"PASS countdown preserved the existing fixed-team slot guard\n";
+
+    const auto received=[](const auto& participant,std::uint8_t sender,std::string_view name,std::string_view text){
+        const auto& history=participant.chat();
+        return std::count_if(history.begin(),history.end(),[&](const auto& entry){
+            return entry.sender==sender && entry.senderName==name && entry.text==text;
+        })==1;
+    };
+    constexpr std::string_view hostMessage="Host countdown message";
+    requireJoin(host.sendChat(hostMessage),"Host chat failed to queue during countdown");
+    room.wait([&]{return received(first,1,"Host",hostMessage) && received(second,1,"Host",hostMessage);},
+              "Host countdown chat did not reach both guests");
+    requireJoin(countingDown(),"Countdown ended before the guest sent chat");
+    std::cout<<"PASS host chat reached both guests during countdown\n";
+
+    constexpr std::string_view guestMessage="来客倒计时消息 QA-GUEST";
+    requireJoin(first.sendChat(guestMessage),"Guest countdown chat unexpectedly failed to queue");
+    const auto guestDelivered=[&]{return received(host,firstId,"First",guestMessage)
+        && received(first,firstId,"First",guestMessage) && received(second,firstId,"First",guestMessage);};
+    try{room.wait(guestDelivered,"countdown guest message not delivered on existing TCP connections");}
+    catch(const std::runtime_error&){
+        const auto copies=[&](const auto& participant){return std::count_if(participant.chat().begin(),participant.chat().end(),
+            [&](const auto& line){return line.text==guestMessage;});};
+        std::cerr<<"Guest countdown message copies: host="<<copies(host)<<" first="<<copies(first)<<" second="<<copies(second)<<"\n";
+        throw;
+    }
+    requireJoin(countingDown() && currentTeam(host)==originalTeam,"Guest chat changed the countdown phase or lineup");
+    std::cout<<"PASS guest countdown chat delivered once to host and both guests with sender attribution\n";
+
+    requireJoin(host.cancelCountdown(),"Could not cancel the countdown after chat");
+    room.wait([&]{return first.loadPhase()==LanLoadPhase::Lobby && second.loadPhase()==LanLoadPhase::Lobby;},
+              "Both guests did not return to the lobby");
+    constexpr std::string_view afterCancel="Guest lobby message after countdown";
+    requireJoin(first.sendChat(afterCancel),"Guest could not send after countdown cancel");
+    room.wait([&]{return received(host,firstId,"First",afterCancel) && received(first,firstId,"First",afterCancel)
+        && received(second,firstId,"First",afterCancel);},"Guest lobby chat was lost after countdown cancel");
+    requireJoin(guestDelivered(),"The guest countdown message was duplicated");
+    requireJoin(host.players().size()==3 && host.playerReportsMapReady(firstId) && first.localPlayerId()==firstId
+        && first.countdownCancelReason()==LanCountdownCancelReason::Manual,"Countdown cancel consumed the original connection or readiness");
+    std::cout<<"PASS existing lobby connection resumed ordinary chat after cancellation\n";
+}
+
 void countdownCancellation(){
     CountdownRoom room;auto& host=room.host;auto& first=room.addGuest("First");auto& second=room.addGuest("Second");
     const auto seed=host.randomSeed();const auto firstId=first.localPlayerId(),secondId=second.localPlayerId();
@@ -273,6 +343,9 @@ int main(int argc,char** argv){
         }
         if(argc==2 && std::string_view(argv[1])=="common-resources"){
             joinRejectionReasons(true,std::string(64,'a'));std::cout<<"PASS common_resource_mismatch\nPASS required_common_resource_exchange\nPASS matching_common_resources_and_retries\nRESULT passed=3 failed=0\n";return 0;
+        }
+        if(argc==2 && std::string_view(argv[1])=="countdown-chat"){
+            countdownLobbyChat();std::cout<<"RESULT passed=1 failed=0\n";return 0;
         }
         if(argc==2 && std::string_view(argv[1])=="countdown-cancel"){
             countdownCancellation();
