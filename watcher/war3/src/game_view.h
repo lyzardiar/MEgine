@@ -128,6 +128,11 @@ class GameView {
     struct InventoryDrag {std::uint32_t holder=0,item=0;unsigned slot=0;bool moving=false;};
     std::optional<InventoryDrag> inventoryDrag_;
     bool inventoryDragBlocked_=false;
+    struct ProductionClick {std::uint32_t unit;size_t slot;std::uint64_t ticket;};
+    std::optional<ProductionClick> productionClick_;
+    std::array<std::uint64_t,7> shownProductionTickets_{};
+    std::uint32_t shownProducer_=0;
+    bool productionPointerDown_=false;
     std::unique_ptr<QuestDialog> questDialog_;
     std::unique_ptr<MessageLog> messageLog_;
     std::unique_ptr<ChatDialog> chatDialog_;
@@ -199,6 +204,7 @@ class GameView {
     std::wstring chatPrefix() const;
     void hud(const GameInput& input);
     void commandPanel(const GameInput& input,std::uint32_t unit);
+    void productionQueueInput(const UiInput& raw,const GameInput& input);
     void cargoPanel(const GameInput& input,std::uint32_t unit);
     void selectionPanel(const GameInput& input);
     std::uint32_t corpseWidget(float x,float y) const;
@@ -307,7 +313,7 @@ public:
     bool draw(const GameInput& input);
     bool filterMapInput(MSG& message);
     bool mapInputKeyDown(unsigned key) const;
-    void clearMapInput() {mapInputKeys_.clear();}
+    void clearMapInput() {mapInputKeys_.clear();productionClick_.reset();shownProducer_=0;productionPointerDown_=false;}
     void windowActive(bool active) {if(data_->mapScript)data_->mapScript->windowActive(active);}
     // Configure before first draw. sendSelection and submit enqueue in order without reentry;
     // the owner consumes complete slots on this thread and must not submit selection separately.
