@@ -6,7 +6,7 @@
 
 Win32 Release 增量编译通过，客户端 SHA-256 前缀 `2a507e0de623`。无窗口探针使用原创 `CombatOutcome.w3m`，在临时地图校验源副本中暂停首次快照读取后的后台线程。取消并销毁首个准备请求后立刻重播，旧版 `09c5df7` 构造请求时复现 `LAN map verification is busy`。修复版在旧工作线程继续占用的 400 毫秒内保持等待，释放后完成同一回放的地图及会话准备，交接视角 1，1 通过、0 失败。
 
-运行 `python -B tmp/docs-artifacts/war3/replay-prep-retry-v1/verify.py --revision 09c5df7 --expect baseline` 和 `python -B tmp/docs-artifacts/war3/replay-prep-retry-v1/verify.py --expect fixed`。回执位于同目录 `baseline-cb698b9b6f7e/receipt.json` 及 `fixed-765fb52bdb45/receipt.json`。原始地图和回放摘要一致。实际窗口中取消后立即重播、基础归档校验槽和关联地图候选的争用时序待验证。
+运行 `python -B tmp/docs-artifacts/war3/replay-prep-retry-v1/verify.py --revision 09c5df7 --expect baseline` 和 `python -B tmp/docs-artifacts/war3/replay-prep-retry-v1/verify.py --expect fixed`。回执位于同目录 `baseline-cb698b9b6f7e/receipt.json` 及 `fixed-765fb52bdb45/receipt.json`。原始地图与回放的摘要各自保持一致。扩展探针确认等待期间取消会阻止会话交接，真实缺图仍报告终止错误，回执 `fixed-f6d05f7e2fe1/receipt.json`。实际窗口中取消后立即重播、基础归档校验槽和关联地图候选的争用时序待验证。
 
 ## 播放确认复核回放文件（待窗口验证）
 
