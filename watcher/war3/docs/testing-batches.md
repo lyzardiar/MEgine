@@ -1,5 +1,32 @@
 # 独立客户端测试队列
 
+## 2026-11-28 合并批次验证与回归修复（集成基线 `fa9230c`→`1c7f2e1`→`8a12ffe`）
+
+范围：合并验证 `352454b`、`2c29367`、`fa9230c`、`1c7f2e1` 及本批修复 `8a12ffe`（原批次分支提交 `d6354fd`）。Win32 Release（MSVC 14.43 x86 + Ninja）于 `tmp/docs-artifacts/war3/batch-build-v2/win32-release` 构建通过，最终 `war3.exe` SHA-256 前缀 `2f1c9bae4409`，全程未加载 `Game.dll`。
+
+- 既有基线（`fa9230c`）：677 项测试可执行用例中 641 通过、36 失败；三图回归（`BootyBay`、`Amazonia`、`DotA_v6.83d` `--main-check --simulate-ms 10000` 及 `BootyBay --play`）与全部 LAN 进程／离场／终局对话框探针均通过。结果位于 `tmp/docs-artifacts/war3/batch-2026-11-28/results.json` 与 `maps/summary.log`。
+- 36 项失败分诊与重跑（`8a12ffe`）：
+  - 剧情／战役测试按用户要求暂停（2 项，未执行）：`war3_live_world_tests [prologue-serial]`、`war3_live_world_tests [loading-background]`。
+  - 过时历史夹具重复运行（1 项，已由有效夹具覆盖）：`war3_commerce_tests [default@stationary]`（旧夹具缺少 `CommerceFailure_xp_handicap`，同目标 `default` 与 `default@commerce-current` 已通过）。
+  - 运行参数／环境变量／工作目录／夹具不匹配，按正确参数补跑 23 项全部通过（23／23）：`war3_save_exists_tests [default@OrcX01]`、`war3_ai_tests [duel-save/live-save]`（隔离 `MEGINE_WAR3_USER_DIR`）、`war3_order_queue_tests [formation-settings]`（隔离 `MEGINE_WAR3_USER_DIR`）、`war3_game_flow_tests [cache-damage/cache-sync-unit/cache-sync-unit-boundaries]`（短仓库根 cwd）、`war3_undead_forms_tests [form-cost-cancel]`（`undead-forms-rc0.w3m`）、`war3_harvest_tests [resource-tooltip-short]`（`harvest-upkeep-short.w3m`）及 `war3_control_tests` 14 项复合物品／重入模式（`combined-item.w3m`）。日志 `tmp/docs-artifacts/war3/batch-2026-11-28/rerun-v2/`。
+- 本批定位并修复的回归／缺陷（`8a12ffe`）：
+  - `src/session_combat_orders.cpp`：`IssueTargetOrderById` 此前仅按 `orderName` 判断订单合法性，误拦无名数字技能订单（如 DotA 幻象符文 `852274` `ItemIllusion`）。现放行单位已拥有技能的匹配 `s.order` 与物品槽订单 `852008..852013`，同时保持未知订单不清空队列。复验 `war3_dota_rune_tests [illusion/regen/damage]` 与 `war3_order_queue_tests [invalid-target-id/raw-item-order/slot-order-permission]` 6／6 通过。
+  - `src/audio.cpp`、`src/sound.cpp`：`AudioVoice::restorePlayback` 此前在应用 `state.pitch` 前比对 Miles 经播放率缩放的 `milliseconds().second`，且 `SoundScene::muted(false)` 取消静音时未先设音高即读取时长。修复后 `sound_playback_state_miles_roundtrip`、`sound_unmute_preserves_paused_playback`、`war3_audio_tests`（7／7）与 `war3_clock_tests` 音频恢复（2／2）均通过，`war3_sound_tests` 由 21／24 提升至 22／24。
+  - `tests/lua_tests.cpp`：更新 `qcloud` 中早已被 `275fd58`（中立槽战役 AI）、`2c29367`（无效 AI 脚本记入 `rejectedAIScripts_`）和 `98d2da6`（飘字 0..99 槽位 `handledef` 返回 `nil`）取代的两处旧断言。复验 `war3_lua_tests [no-data]`（1／1）与 `[qcloud]`（2／2）通过。
+- D3D9 GPU 与隐藏窗口／核心回归（`batch-build-v2`，全程 `--hidden --mute`）：
+  - `war3_effects_tests`：`default`、`--ribbons`、`--autocast`、`--prem`、`--prem-gpu`（`GPU=executed`）、`--memory-model generated-map-model.mdx` 共 6／6 通过；`1c7f2e1` 提取的 4 个 dz 导入模型完成解析无崩溃（`zhuangshiwu (10)` 退出 0，其余仅余夹具内容断言）。
+  - `war3.exe --window-check --hidden --mute --frames 120` 通过（`driver=d3d9ex`、`rendered_frames=92`）；`war3.exe --menu-check --hidden --mute --frames 10000` 通过（`menu_check=passed`、`rendered_frames=120`）。
+  - `war3_lan_departure_tests`、`war3_replay_step_tests`、`war3_jass_module_tests`（9／9）、`war3_jass_binary_tests`（1／1）、`war3_lua_tests` 均通过。日志 `tmp/docs-artifacts/war3/batch-2026-11-28/{d3d-and-core-v2,verify-fixes-v2}/`，汇总 `final-summary.json`。
+- 队列保留的既有失败项（8 项，均非本批新回归，保留待后续清理）：
+  1. `war3_sound_tests [default]`（22／24，余 2 项）：`sound_channel_preemption_and_owned_detach` 与 `sound_fade_pulses_drive_muted_miles_and_release` 仍断言静音后 `device->voices()==2`，与 `8dd5b3b` 静音改用 `AudioVoice::silent` 的现有行为不符。
+  2. `war3_map_tests [default]`（51／52，余 1 项）：`preloader_common_natives` 仍以 `TriggerSleepAction` 作为未绑定 native，而 `f7fa318` 已将其纳入 `Preloader` 允许列表。
+  3. `war3_world_tests [default]`（31／32，余 1 项）：`world_rect_query_mutation_and_full_extent` 仍断言销毁 Rect 后 `GetRectMinX` 抛错，而 `8430793` 已按原版改为返回 0。
+  4. `war3_morph_tests [cyclone]`：仍断言 `UnitRemoveBuffs` 受不可驱散保护，而 `769c15b` 已按原版允许脚本移除绕过驱散抗性。
+  5. `war3_corpse_tests [spirit]`：默认 `corpse.w3m` 人口上限为 0，`faa683e` 增加先祖之魂人口检查后该旧夹具无可用人口。
+  6. `war3_spell_tests [spirit-rune]`：仍对无物品栏的机械 `hfoo` 调用 `UnitAddItem`，与 `529dfb7` 的 `UnitAddItem` 物品栏能力检查冲突（与此前已更新的 `corpse_tests [items]` 同源）。
+  7. `war3_orc_cargo_tests [work-build]`：`596312a` 登记时即标注未运行，BootyBay `(640..1408, 512..1280)` 区间未找到 `obar` 合法建造落点。
+  8. `war3_ai_tests [duel]`：70 模拟分钟兽族对亡灵确定性对战（seed `0x69707365`）在后续 AI／寻路／战斗改动后未在时限内达到原预期胜负结果。
+
 ## 界面视觉与原版 1.27 对齐（已提交，待批次验证）
 
 路径：`src/model_pose.cpp`、`src/glue.cpp`、`src/game_loading.{h,cpp}`、`src/game_view.{h,cpp}`、`src/game_autocast.cpp`、`src/game_commands.cpp`、`src/game_hero_bar.cpp`、`src/game_effects.cpp`、`src/game_model_sound.cpp`、`src/lan_browser.cpp`、`src/replay_browser.cpp`。
