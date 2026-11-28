@@ -6,9 +6,10 @@ license.workspace = true
 description = "MEngine editor host: commands, viewport, undo"
 
 [features]
-default = ["v8-runtime"]
+default = ["v8-runtime", "warcraft"]
 v8-runtime = ["mengine-script/v8-runtime", "mengine-runtime/v8-runtime"]
 quickjs-runtime = ["mengine-script/quickjs-runtime", "mengine-runtime/quickjs-runtime"]
+warcraft = ["mengine-assets/warcraft"]
 
 [dependencies]
 mengine-core.workspace = true

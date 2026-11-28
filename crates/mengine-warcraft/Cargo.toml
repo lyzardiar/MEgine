@@ -1,0 +1,10 @@
+[package]
+name = "mengine-warcraft"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Optional Warcraft III / Frostbound asset & archive plugin for MEngine"
+
+[dependencies]
+mengine-assets = { path = "../mengine-assets", features = ["warcraft"] }
+mengine-mpq.workspace = true

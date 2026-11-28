@@ -1,7 +1,9 @@
 // Author: MiYu. Decode file and mounted byte textures through the same bounded RGBA interface.
 use crate::{AssetError, EnvironmentTexture, TextureRgba8};
 use image::{DynamicImage, ImageDecoder};
-use std::{io::{Cursor, Read}, path::Path};
+use std::{io::Cursor, path::Path};
+#[cfg(feature = "warcraft")]
+use std::io::Read;
 
 const MAX_TEXTURE_BYTES: usize = 256 * 1024 * 1024;
 
@@ -14,6 +16,7 @@ fn image_reader<'a>(bytes: &'a [u8], name: &str) -> Result<image::ImageReader<Cu
 fn texture_limits() -> image::Limits { let mut limits = image::Limits::default(); limits.max_image_width = Some(16384); limits.max_image_height = Some(16384); limits.max_alloc = Some(MAX_TEXTURE_BYTES as u64); limits }
 
 pub fn decode_texture_rgba8(bytes: &[u8], name: &str) -> Result<TextureRgba8, AssetError> {
+    #[cfg(feature = "warcraft")]
     if crate::blp::is_blp(bytes) { return crate::decode_blp_mip_rgba8(bytes, 0, MAX_TEXTURE_BYTES); }
     let mut decoder = image_reader(bytes, name)?.into_decoder()?; let (width, height) = decoder.dimensions();
     if u64::from(width) * u64::from(height) * 4 > MAX_TEXTURE_BYTES as u64 { return Err(AssetError::Invalid("decoded texture exceeds RGBA byte budget".into())); }
@@ -22,16 +25,19 @@ pub fn decode_texture_rgba8(bytes: &[u8], name: &str) -> Result<TextureRgba8, As
 }
 
 pub fn texture_dimensions_from_bytes(bytes: &[u8], name: &str) -> Result<[u32; 2], AssetError> {
+    #[cfg(feature = "warcraft")]
     if crate::blp::is_blp(bytes) { return crate::blp::dimensions(bytes); }
     let (width, height) = image_reader(bytes, name)?.into_dimensions()?; Ok([width, height])
 }
 
+#[cfg(feature = "warcraft")]
 fn blp_path(path: &Path) -> bool { path.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("blp")) }
 
 pub fn load_texture_rgba8(path: &Path) -> Result<TextureRgba8, AssetError> {
     if !path.is_file() {
         return Err(AssetError::NotFound(path.display().to_string()));
     }
+    #[cfg(feature = "warcraft")]
     if blp_path(path) { return decode_texture_rgba8(&std::fs::read(path)?, "texture.blp"); }
     let image = image::open(path)?.into_rgba8();
     let (width, height) = image.dimensions();
@@ -137,6 +143,7 @@ pub fn texture_dimensions(path: &Path) -> Result<[u32; 2], AssetError> {
     if !path.is_file() {
         return Err(AssetError::NotFound(path.display().to_string()));
     }
+    #[cfg(feature = "warcraft")]
     if blp_path(path) { let mut header = Vec::with_capacity(156); std::fs::File::open(path)?.take(156).read_to_end(&mut header)?; return crate::blp::dimensions(&header); }
     let (width, height) = image::image_dimensions(path)?;
     Ok([width, height])

@@ -5,11 +5,39 @@ use std::{sync::{Once, atomic::Ordering}, time::Duration};
 mod limits;
 use limits::{HeapLimit, Isolate, Watchdog};
 
+const DISPATCH_EVENT_JS: &str = r#"(kind, payloadJson) => {
+  const payload = JSON.parse(payloadJson);
+  if (kind === 'sceneLoaded') {
+    engine.scene = payload;
+    if (typeof onSceneLoaded === 'function') onSceneLoaded(engine.scene);
+  } else if (kind === 'contentImport') {
+    if (typeof onContentImport === 'function') onContentImport(payload);
+  } else if (kind === 'animationEvents') {
+    if (typeof onAnimationEvent === 'function') {
+      for (const ev of payload) onAnimationEvent(ev);
+    }
+  } else if (kind === 'timelineSignals') {
+    if (typeof onTimelineSignal === 'function') {
+      for (const sig of payload) onTimelineSignal(sig);
+    }
+  } else if (kind === 'pairEvents') {
+    const enterFn = globalThis[payload.enter];
+    if (typeof enterFn === 'function') {
+      for (const ev of payload.started) enterFn(ev);
+    }
+    const exitFn = globalThis[payload.exit];
+    if (typeof exitFn === 'function') {
+      for (const ev of payload.stopped) exitFn(ev);
+    }
+  }
+}"#;
+
 pub(crate) struct ScriptVm {
     // Stop the timer, release Globals and callback data, then dispose the exited isolate.
     watchdog: Watchdog,
     tick: Option<v8::Global<v8::Function>>,
     restore: Option<v8::Global<v8::Function>>,
+    dispatch_event: Option<v8::Global<v8::Function>>,
     context: v8::Global<v8::Context>,
     isolate: Isolate,
     heap_limit: Box<HeapLimit>,
@@ -37,8 +65,8 @@ impl ScriptVm {
             Ok(watchdog) => watchdog,
             Err(error) => { isolate.enter().isolate.remove_near_heap_limit_callback(limits::near_heap_limit, 0); return Err(error); }
         };
-        let mut vm = Self { watchdog, tick: None, restore: None, context, isolate, heap_limit };
-        let (restore, tick) = vm.with_scope(Duration::from_secs(1), |scope| {
+        let mut vm = Self { watchdog, tick: None, restore: None, dispatch_event: None, context, isolate, heap_limit };
+        let (restore, tick, dispatch_event) = vm.with_scope(Duration::from_secs(1), |scope| {
             let global = scope.get_current_context().global(scope);
             for (id, name) in ["__mengineAssetNodes", "__mengineStorage", "__mengineNetwork", "__mengineCommand", "__mengineSpriteBatch", "__mengineRequest", "__mengineRevision", "__mengineFindEntities", "__mengineSnapshot", "__mengineCommandBatch"].iter().enumerate() {
                 let key = v8::String::new(scope, name)?;
@@ -51,9 +79,11 @@ impl ScriptVm {
             let restore = v8::Global::new(scope, restore);
             let tick = run(scope, "(dt, frame) => { if (typeof onTick === 'function') onTick(dt, frame); }")?;
             let tick = v8::Local::<v8::Function>::try_from(tick).ok()?;
-            Some((restore, v8::Global::new(scope, tick)))
+            let dispatch = run(scope, DISPATCH_EVENT_JS)?;
+            let dispatch = v8::Local::<v8::Function>::try_from(dispatch).ok()?;
+            Some((restore, v8::Global::new(scope, tick), v8::Global::new(scope, dispatch)))
         })?;
-        vm.restore = Some(restore); vm.tick = Some(tick);
+        vm.restore = Some(restore); vm.tick = Some(tick); vm.dispatch_event = Some(dispatch_event);
         Ok(vm)
     }
     fn with_scope<T>(&mut self, budget: Duration, execute: impl FnOnce(&mut v8::PinScope) -> Option<T>) -> Result<T, ScriptError> {
@@ -94,6 +124,16 @@ impl ScriptVm {
         self.with_scope(Duration::from_secs(1), |scope| {
             let callback = v8::Local::new(scope, &restore); let receiver = v8::undefined(scope).into();
             callback.call(scope, receiver, &[]).map(|_| ())
+        })
+    }
+    pub fn dispatch_event(&mut self, kind: &str, payload_json: &str) -> Result<(), ScriptError> {
+        let dispatch = self.dispatch_event.as_ref().unwrap().clone();
+        self.with_scope(Duration::from_secs(1), |scope| {
+            let callback = v8::Local::new(scope, &dispatch);
+            let receiver = v8::undefined(scope).into();
+            let k = v8::String::new(scope, kind)?.into();
+            let p = v8::String::new(scope, payload_json)?.into();
+            callback.call(scope, receiver, &[k, p]).map(|_| ())
         })
     }
     pub fn set_input(&mut self, json: &str) -> Result<(), ScriptError> {

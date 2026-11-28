@@ -22,7 +22,10 @@ pub use wgpu::SurfaceTarget;
 pub use renderer::GpuAllocatorReport;
 pub use gpu_profiler::{GpuFrameProfile, GpuProfileStage};
 pub use readback::{recycle_readback_rgba, OffscreenReadbackTicket};
-pub use render_graph::{PassDesc, RenderGraph};
+pub use render_graph::{
+    CompiledGraph, PassDesc, RenderGraph, RenderGraphError, ResourceDecl, ResourceId,
+    ResourceLifetime, TransientTextureDesc,
+};
 pub use renderer::{
     look_at, orthographic, perspective, project_world_to_viewport, validate_surface_shader_hook,
     ClearColor, DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting, FrameSubmissionProfile,
@@ -52,4 +55,21 @@ pub enum RhiError {
     ReadbackBusy,
     #[error("invalid render target: {0}")]
     InvalidTarget(String),
+}
+
+impl RhiError {
+    pub fn is_surface_lost_or_outdated(&self) -> bool {
+        matches!(
+            self,
+            Self::Surface(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated)
+        )
+    }
+
+    pub fn is_surface_timeout(&self) -> bool {
+        matches!(self, Self::Surface(wgpu::SurfaceError::Timeout))
+    }
+
+    pub fn is_surface_out_of_memory(&self) -> bool {
+        matches!(self, Self::Surface(wgpu::SurfaceError::OutOfMemory))
+    }
 }

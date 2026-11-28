@@ -404,11 +404,16 @@ impl PlaySession {
         self.content_imports.update(&mut self.script, &mut self.scenes)?;
         self.script.set_input(&input).map_err(|error| error.to_string())?;
         stage("Input");
-        // Bound substeps so Agent stepping and realtime Play use the same collision solver.
-        let steps = (dt / (1.0 / 60.0)).ceil().max(1.0) as u32;
+        // Bound substeps through the shared runtime policy so Player and Editor Play stay aligned.
+        let timing = mengine_runtime::simulation::compute_fixed_substeps(
+            dt,
+            mengine_runtime::simulation::FixedStepConfig::default(),
+        );
+        let steps = timing.substeps.max(1);
+        let step_dt = if timing.substeps > 0 { timing.step_dt } else { dt };
         for _ in 0..steps {
-            let two = self.physics2d.step(world, dt / steps as f32);
-            let three = self.physics3d.step(world, dt / steps as f32);
+            let two = self.physics2d.step(world, step_dt);
+            let three = self.physics3d.step(world, step_dt);
             if !two.started.is_empty() || !two.stopped.is_empty() || !two.trigger_started.is_empty() || !two.trigger_stopped.is_empty() || !three.started.is_empty() || !three.stopped.is_empty() || !three.trigger_started.is_empty() || !three.trigger_stopped.is_empty() {
                 self.script.sync_world(world).map_err(|error| error.to_string())?;
             }

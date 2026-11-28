@@ -36,7 +36,8 @@ impl Watchdog {
         let state = Arc::new((Mutex::new(DeadlineState::default()), Condvar::new()));
         let worker_state = state.clone(); let worker_handle = handle.clone();
         let thread = std::thread::Builder::new().name("mengine-v8-deadline".into()).spawn(move || {
-            let (mutex, changed) = &*worker_state; let mut state = mutex.lock().unwrap();
+            let (mutex, changed) = &*worker_state;
+            let mut state = mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
             loop {
                 if state.stopped { break; }
                 match state.deadline {
@@ -44,26 +45,42 @@ impl Watchdog {
                         // The caller disarms under this same lock, so an old timer cannot terminate its next call.
                         worker_handle.terminate_execution(); state.timed_out = true; state.deadline = None;
                     }
-                    Some(deadline) => { state = changed.wait_timeout(state, deadline.saturating_duration_since(Instant::now())).unwrap().0; }
-                    None => { state = changed.wait(state).unwrap(); }
+                    Some(deadline) => {
+                        state = changed
+                            .wait_timeout(state, deadline.saturating_duration_since(Instant::now()))
+                            .unwrap_or_else(std::sync::PoisonError::into_inner)
+                            .0;
+                    }
+                    None => {
+                        state = changed
+                            .wait(state)
+                            .unwrap_or_else(std::sync::PoisonError::into_inner);
+                    }
                 }
             }
         })?;
         Ok(Self { state, handle, thread: Some(thread) })
     }
     pub fn arm(&self, duration: Duration) -> DeadlineGuard<'_> {
-        let mut state = self.state.0.lock().unwrap(); state.timed_out = false; state.deadline = Some(Instant::now() + duration); self.state.1.notify_one();
+        let mut state = self.state.0.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        state.timed_out = false; state.deadline = Some(Instant::now() + duration); self.state.1.notify_one();
         DeadlineGuard(self)
     }
     fn disarm(&self) {
-        let mut state = self.state.0.lock().unwrap(); state.deadline = None;
+        let mut state = self.state.0.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        state.deadline = None;
         self.handle.cancel_terminate_execution(); self.state.1.notify_one();
     }
-    pub fn timed_out(&self) -> bool { self.state.0.lock().unwrap().timed_out }
+    pub fn timed_out(&self) -> bool {
+        self.state.0.lock().unwrap_or_else(std::sync::PoisonError::into_inner).timed_out
+    }
 }
 impl Drop for Watchdog {
     fn drop(&mut self) {
-        { let mut state = self.state.0.lock().unwrap(); state.stopped = true; state.deadline = None; self.state.1.notify_one(); }
+        {
+            let mut state = self.state.0.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+            state.stopped = true; state.deadline = None; self.state.1.notify_one();
+        }
         if let Some(thread) = self.thread.take() { let _ = thread.join(); }
     }
 }

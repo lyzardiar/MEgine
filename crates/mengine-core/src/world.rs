@@ -156,7 +156,11 @@ impl World {
         }
         let rec = &mut self.entities[entity.index as usize];
         rec.alive = false;
-        for name in rec.components.keys() { self.component_entities.get_mut(name).expect("live component index").remove(&entity.index); }
+        for name in rec.components.keys() {
+            if let Some(set) = self.component_entities.get_mut(name) {
+                set.remove(&entity.index);
+            }
+        }
         rec.components.clear();
         rec.serialized_components.clear();
         rec.name = None;
@@ -319,7 +323,11 @@ impl World {
         let name = canonical_component_name(name);
         self.entities[entity.index as usize].revision += 1;
         if matches!(name, "Transform" | "Parent") { self.entities[entity.index as usize].hierarchy_revision += 1; }
-        if self.entities[entity.index as usize].components.remove(name).is_some() { self.component_entities.get_mut(name).expect("live component index").remove(&entity.index); }
+        if self.entities[entity.index as usize].components.remove(name).is_some() {
+            if let Some(set) = self.component_entities.get_mut(name) {
+                set.remove(&entity.index);
+            }
+        }
         self.entities[entity.index as usize]
             .serialized_components
             .remove(name);
@@ -652,6 +660,16 @@ fn canonical_component_name(component: &str) -> &str {
         "ParticleEmitter3D" | "particleEmitter3D" | "particleEmitter3d" => "ParticleEmitter3D",
         "SampledEffect" | "sampledEffect" => "SampledEffect",
         "SpineSkeleton" | "spineSkeleton" => "SpineSkeleton",
+        "EffekseerEffect" | "effekseerEffect" => "EffekseerEffect",
+        "SpriteBatch2D" | "spriteBatch2D" | "spriteBatch2d" => "SpriteBatch2D",
+        "Tilemap" | "tilemap" => "Tilemap",
+        "Grid" | "grid" => "Grid",
+        "TrailRenderer2D" | "trailRenderer2D" | "trailRenderer2d" => "TrailRenderer2D",
+        "TimelineDirector" | "timelineDirector" => "TimelineDirector",
+        "MaterialPropertyBlock" | "materialPropertyBlock" => "MaterialPropertyBlock",
+        "LayoutElement" | "layoutElement" => "LayoutElement",
+        "Mask" | "mask" => "Mask",
+        "CanvasRenderer" | "canvasRenderer" => "CanvasRenderer",
         other => other,
     }
 }

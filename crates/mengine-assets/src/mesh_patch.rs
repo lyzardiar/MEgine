@@ -49,13 +49,16 @@ impl MeshPatchSource {
         if cells.len() != self.columns * self.rows * 5 || !cells.is_ascii() || !cells.bytes().all(|b| b.is_ascii_hexdigit()) { return Err("invalid mesh patch cell encoding".into()); }
         let mut output = MeshData { positions: Vec::new(), normals: Vec::new(), uvs: Vec::new(), indices: Vec::new() };
         for (i, cell) in cells.as_bytes().chunks_exact(5).enumerate() {
-            let text = std::str::from_utf8(cell).unwrap();
-            let id = usize::from_str_radix(&text[..3], 16).unwrap();
+            let text = std::str::from_utf8(cell).map_err(|_| "invalid mesh patch UTF-8 cell")?;
+            let id = usize::from_str_radix(&text[..3], 16)
+                .map_err(|_| "invalid mesh patch template id")?;
             if id == 4095 { continue; }
             let mesh = self.templates.get(id).ok_or("mesh patch template is missing")?;
             if output.positions.len() + mesh.positions.len() > 2_000_000 || output.indices.len() + mesh.indices.len() > 12_000_000 { return Err("mesh patch output exceeds geometry limit".into()); }
             let base = output.positions.len() as u32;
-            let height = (i32::from_str_radix(&text[3..], 16).unwrap() - 128) as f32 * self.height_step;
+            let raw_height = i32::from_str_radix(&text[3..], 16)
+                .map_err(|_| "invalid mesh patch height byte")?;
+            let height = (raw_height - 128) as f32 * self.height_step;
             let offset = [self.origin[0] + (i % self.columns) as f32 * self.cell_size[0] + self.template_offset[0], height + self.template_offset[1], self.origin[1] + (i / self.columns) as f32 * self.cell_size[1] + self.template_offset[2]];
             output.positions.extend(mesh.positions.iter().map(|p| std::array::from_fn(|k| p[k] * self.scale + offset[k])));
             if output.positions[base as usize..].iter().flatten().any(|v| !v.is_finite()) { return Err("mesh patch transformed positions overflow".into()); }

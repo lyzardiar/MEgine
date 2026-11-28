@@ -39,7 +39,10 @@ pub fn terrain_mesh(key: &str) -> Result<MeshData, &'static str> {
     if let Some(data) = key.strip_prefix("terrain4r:") { return rocky_terrain(data,false,None); }
     let data = key.strip_prefix("terrain4:").ok_or("invalid terrain prefix")?;
     if data.len() != 64 || !data.bytes().all(|v| v.is_ascii_hexdigit()) { return Err("terrain patch requires 64 hexadecimal heights"); }
-    let heights: Vec<f32> = data.chars().map(|v| v.to_digit(16).unwrap() as f32).collect();
+    let heights: Vec<f32> = data
+        .chars()
+        .map(|v| v.to_digit(16).map(|d| d as f32).ok_or("invalid hexadecimal terrain height"))
+        .collect::<Result<_, _>>()?;
     let mut mesh = MeshData { positions: Vec::new(), normals: Vec::new(), uvs: Vec::new(), indices: Vec::new() };
     let mut quad = |points: [[f32; 3]; 4]| {
         let a = std::array::from_fn::<_,3,_>(|i| points[1][i] - points[0][i]);
@@ -68,10 +71,13 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
     let style=if sculpted&&data.len()==245 {let digit=data.as_bytes()[244];if !(b'0'..=b'2').contains(&digit) {return Err("invalid cliff geometry style");}digit-b'0'}else{0};
     let data=if sculpted&&(data.len()==245||styles.is_some()) {&data[..244]}else{data};
     if data.len()!=(if sculpted {244} else {146}) || !data.bytes().all(|v| v.is_ascii_hexdigit()) { return Err("invalid rock terrain height payload"); }
-    let digits:Vec<f32>=data[..146].chars().map(|v| v.to_digit(16).unwrap() as f32).collect();
+    let digits: Vec<f32> = data[..146]
+        .chars()
+        .map(|v| v.to_digit(16).map(|d| d as f32).ok_or("invalid rock terrain height digit"))
+        .collect::<Result<_, _>>()?;
     if digits[0]>7. || digits[1]>7. { return Err("rock terrain chunk coordinate exceeds eight patches"); }
     let origin=[digits[0]*8.-28.,digits[1]*8.-28.];let heights=&digits[2..];
-    let mut relief=[0.;49];if sculpted {for (i,value) in relief.iter_mut().enumerate() {*value=(u8::from_str_radix(&data[146+i*2..148+i*2],16).unwrap() as f32-128.)/16.;if value.abs()>1. {return Err("sculpted relief exceeds one world unit");}}}
+    let mut relief=[0.;49];if sculpted {for (i,value) in relief.iter_mut().enumerate() {let raw=u8::from_str_radix(&data[146+i*2..148+i*2],16).map_err(|_| "invalid sculpted relief byte")?;*value=(raw as f32-128.)/16.;if value.abs()>1. {return Err("sculpted relief exceeds one world unit");}}}
     let relief_height=|x:f32,z:f32| {
         let u=((x+6.)/2.).clamp(0.,6.);let v=((z+6.)/2.).clamp(0.,6.);let ix=(u.floor() as usize).min(5);let iz=(v.floor() as usize).min(5);let fx=u-ix as f32;let fz=v-iz as f32;let i=iz*7+ix;
         (relief[i]*(1.-fx)+relief[i+1]*fx)*(1.-fz)+(relief[i+7]*(1.-fx)+relief[i+8]*fx)*fz

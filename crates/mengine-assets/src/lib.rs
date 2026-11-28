@@ -7,12 +7,20 @@ pub use particle_definition::*;
 mod animator;
 mod asset_sidecar;
 mod asset_bytes;
+mod async_loader;
+#[cfg(feature = "warcraft")]
 mod warcraft_archives;
+#[cfg(feature = "warcraft")]
 mod warcraft_map;
+#[cfg(feature = "warcraft")]
 mod warcraft_slk;
+#[cfg(feature = "warcraft")]
 mod warcraft_definitions;
+#[cfg(feature = "warcraft")]
 mod warcraft_resources;
+#[cfg(feature = "warcraft")]
 mod warcraft_world;
+#[cfg(feature = "warcraft")]
 mod warcraft_terrain;
 mod avatar_mask;
 mod gltf_import;
@@ -28,7 +36,9 @@ mod sprite;
 mod surface_shader;
 mod terrain_mesh;
 mod texture;
+#[cfg(feature = "warcraft")]
 mod blp;
+#[cfg(feature = "warcraft")]
 mod mdx;
 mod timeline;
 
@@ -48,13 +58,22 @@ pub use asset_sidecar::{
     AssetSidecar, ASSET_SIDECAR_SCHEMA_VERSION,
 };
 pub use asset_bytes::{AssetByteCache, AssetByteCacheStats, AssetByteSource, AssetBytes, AssetLocation, AssetMounts, AssetSourceId, AssetSourceRead};
+pub use async_loader::{AssetLoadKind, AssetLoadPayload, AssetLoadResult, AsyncAssetLoader, AsyncLoadHandle};
+#[cfg(feature = "warcraft")]
 pub use warcraft_archives::{MpqAssetSource, WarcraftArchives};
+#[cfg(feature = "warcraft")]
 pub use warcraft_map::{WarcraftMapCancelToken,WarcraftMapError,WarcraftMapLimits,WarcraftMapLoadPhase,WarcraftMapLoadProgress,WarcraftMapPathing,WarcraftMapSession,WarcraftMapTerrain,WarcraftTerrainCorner,WarcraftStringTable};
+#[cfg(feature = "warcraft")]
 pub use warcraft_resources::{WarcraftResourceCache,WarcraftResourceCacheStats,WarcraftDecodedModel,WarcraftDecodedTexture};
+#[cfg(feature = "warcraft")]
 pub use warcraft_world::{WarcraftPlacedWorld,WarcraftWorldLimits,WarcraftWorldNode,WarcraftWorldNodeKind,WarcraftWorldAppearance,WarcraftWorldTransform,WarcraftTextureReplacement};
+#[cfg(feature = "warcraft")]
 pub use warcraft_definitions::{WarcraftMapDefinitions,WarcraftDefinitionTable,WarcraftDefinitionDomain,WarcraftDefinitionValue,WarcraftDefinitionLimits,WarcraftDefinitionCache,WarcraftDefinitionCacheStats,WarcraftDefinitionOverride,WarcraftDefinitionDisposition};
+#[cfg(feature = "warcraft")]
 pub use warcraft_map::{WarcraftMapWorldData,WarcraftMapDoodads,WarcraftMapDoodad,WarcraftMapTerrainDoodad,WarcraftMapUnits,WarcraftMapUnit,WarcraftMapItemChoice,WarcraftMapInventoryItem,WarcraftMapModifiedAbility,WarcraftMapRandomPlacement,WarcraftMapObjects,WarcraftMapObject,WarcraftMapObjectKind,WarcraftMapObjectModification,WarcraftMapObjectValue};
+#[cfg(feature = "warcraft")]
 pub use warcraft_map::{WarcraftMapInfo,WarcraftMapPlayer,WarcraftMapForce,WarcraftMapScreen,WarcraftMapFog,WarcraftMapUpgrade,WarcraftMapTech,WarcraftMapRandomUnits,WarcraftMapRandomUnitChoice,WarcraftMapRandomItems,WarcraftMapRandomItemChoice};
+#[cfg(feature = "warcraft")]
 pub use warcraft_terrain::{WarcraftTerrain,WarcraftTerrainLimits,WarcraftTerrainLayout,WarcraftGroundTile,WarcraftCliffPlacement,WarcraftTerrainChunk,WarcraftTerrainMaterial,WarcraftTerrainResource,WarcraftWater,WarcraftWaterSettings,WarcraftGroundLayers,warcraft_ground_layers};
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
@@ -81,7 +100,9 @@ pub use surface_shader::{
     SURFACE_SHADER_HOOK_NAME, UI_SHADER_HOOK_NAME,
 };
 pub use texture::{decode_texture_rgba8, load_environment_texture, load_texture_rgba8, texture_dimensions, texture_dimensions_from_bytes};
+#[cfg(feature = "warcraft")]
 pub use blp::decode_blp_mip_rgba8;
+#[cfg(feature = "warcraft")]
 pub use mdx::{MdxAttachmentPose, MdxBillboardCamera, MdxGeosetPose, MdxLayerPose, MdxModel, MdxPose, MdxReadLimits, MdxSequence, MdxTexture};
 pub use timeline::{
     load_timeline_asset, normalize_prefab_asset_path, normalize_timeline_asset_path,

@@ -124,7 +124,8 @@ impl GltfPoseSource {
             }
             let decoded=String::from_utf8(decoded).map_err(|_|fail("invalid pose dependency URI"))?;
             if decoded.contains([':', '\0']) || Path::new(&decoded).is_absolute() { return Err(fail("pose dependency must be project relative")); }
-            let dependency=DependencyStamp::read(&path.parent().unwrap().join(decoded))?;
+            let parent_dir = path.parent().unwrap_or_else(|| Path::new("."));
+            let dependency = DependencyStamp::read(&parent_dir.join(decoded))?;
             if !dependency.path.starts_with(&root) { return Err(fail("pose dependency is outside the project")); }
             if !dependencies.contains(&dependency) {dependencies.push(dependency);}
         }

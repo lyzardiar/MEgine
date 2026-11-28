@@ -1,5 +1,6 @@
 //! Shared runtime library (PC player binary + mobile stubs).
 
+pub mod android_entry;
 pub mod animation;
 pub mod audio;
 pub mod build_manifest;
@@ -11,6 +12,7 @@ pub mod lighting2d;
 pub mod materials;
 pub mod meshes;
 pub mod mobile_stub;
+pub mod panic_hook;
 pub mod particles;
 pub mod imported_particles;
 pub mod imported_particle_world;
@@ -19,6 +21,7 @@ pub mod player_config;
 pub mod prefabs;
 pub mod scenes;
 pub mod script_requests;
+pub mod simulation;
 pub mod sorting;
 pub mod sprites;
 pub mod textures;

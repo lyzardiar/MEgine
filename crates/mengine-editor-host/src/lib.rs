@@ -9,12 +9,18 @@ mod session;
 mod undo;
 mod viewport;
 mod scene_snapshot_world;
+#[cfg(feature = "warcraft")]
 mod warcraft_model;
+#[cfg(feature = "warcraft")]
 mod warcraft_world;
+#[cfg(feature = "warcraft")]
 pub use warcraft_world::{MountedWarcraftPlacedWorld,WarcraftPlacedWorldView,WarcraftWorldRenderLimits};
+#[cfg(feature = "warcraft")]
 mod warcraft_terrain;
+#[cfg(feature = "warcraft")]
 pub use warcraft_terrain::{MountedWarcraftTerrain,WarcraftTerrainView,WarcraftTerrainRenderLimits,WarcraftTerrainUploadStats};
 pub use scene_snapshot_world::SceneSnapshotWorld;
+#[cfg(feature = "warcraft")]
 pub use warcraft_model::{MountedWarcraftModel,WarcraftModelRenderLimits};
 
 pub use gizmo::{GizmoMode, GizmoState};

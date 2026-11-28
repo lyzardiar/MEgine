@@ -1764,7 +1764,26 @@ function onTick(dt, frame) {
                         if let Some(window) = &self.window { window.set_ime_allowed(false); }
                     }
                     if let Err(e) = r.submit_frame(&frame.render_frame()) {
-                        log::warn!("render: {e}");
+                        if e.is_surface_lost_or_outdated() {
+                            if let Some(w) = &self.window {
+                                let size = w.inner_size();
+                                if size.width > 0 && size.height > 0 {
+                                    log::info!(
+                                        "Surface lost/outdated; reconfiguring to {}x{}",
+                                        size.width,
+                                        size.height
+                                    );
+                                    r.resize(size);
+                                }
+                            }
+                        } else if e.is_surface_timeout() {
+                            log::debug!("render surface acquire timeout; skipping frame");
+                        } else if e.is_surface_out_of_memory() {
+                            log::error!("render surface out of memory: {e}");
+                            event_loop.exit();
+                        } else {
+                            log::warn!("render: {e}");
+                        }
                     }
                     let pipeline_stats = r.material_pipeline_stats();
                     if self.last_material_pipeline_stats != Some(pipeline_stats) {
@@ -1811,6 +1830,14 @@ function onTick(dt, frame) {
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        let minimized = self.window.as_ref().is_some_and(|w| {
+            let size = w.inner_size();
+            size.width == 0 || size.height == 0 || w.is_minimized().unwrap_or(false)
+        });
+        if minimized {
+            event_loop.set_control_flow(ControlFlow::Wait);
+            return;
+        }
         event_loop.set_control_flow(ControlFlow::Poll);
         if let Some(w) = &self.window {
             w.request_redraw();
@@ -1936,6 +1963,7 @@ fn packaged_surface_shader_materials(project_root: &Path) -> Result<Vec<RenderMa
 
 fn main() -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    mengine_runtime::panic_hook::install_panic_hook();
     let mut args = Args::parse();
     if args.runtime_info {
         println!("{}", mengine_script::runtime_identity());

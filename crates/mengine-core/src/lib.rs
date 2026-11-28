@@ -1,4 +1,4 @@
-//! MEngine core: World, ECS, schedule, commands, time.
+//! MEngine core: World, ECS, sparse-set columns, schedule, commands, time.
 
 pub mod command;
 pub mod component;
@@ -9,6 +9,7 @@ pub mod hierarchy;
 pub mod query;
 pub mod schedule;
 pub mod snapshot;
+pub mod sparse_set;
 pub mod surface_shader;
 pub mod time;
 pub mod transform_hierarchy;
@@ -20,8 +21,9 @@ pub use entity::Entity;
 pub use handle::{AssetId, Handle};
 pub use hierarchy::{Children, Parent};
 pub use query::Query;
-pub use schedule::{Schedule, Stage, SystemDesc};
+pub use schedule::{Schedule, Stage, SystemBatch, SystemDesc};
 pub use snapshot::{EntitySnapshot, WorldSnapshot};
+pub use sparse_set::{ComponentColumns, SparseSet};
 pub use time::Time;
 pub use transform_hierarchy::{TransformHierarchy, WorldTransform};
 pub use world::World;

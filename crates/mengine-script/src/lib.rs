@@ -26,8 +26,10 @@ mod input;
 mod network;
 mod storage;
 mod asset_nodes;
+pub mod web_host;
 pub use asset_nodes::AssetNodeProfile;
 pub use storage::project_storage_root;
+pub use web_host::{WebCommandBridge, WebScriptIdentity, WEB_NATIVE_IDENTITY};
 
 pub use bridge::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTickProfile, ScriptTimelineSignal};
 pub use input::{ScriptInput, ScriptUiSubmit};

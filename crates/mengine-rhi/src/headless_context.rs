@@ -29,9 +29,19 @@ impl GpuContext {
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor { label: Some("mengine"), required_features: profiling_features(adapter.features(), true), required_limits, memory_hints: Default::default() }, None).await.map_err(|error| RhiError::RequestDevice(error.to_string()))?;
         let lost = Arc::new(AtomicBool::new(false));
         let notification = Arc::clone(&lost);
-        device.set_device_lost_callback(move |_, _| notification.store(true, Ordering::Release));
+        device.set_device_lost_callback(move |reason, message| {
+            log::error!("wgpu device lost ({reason:?}): {message}");
+            notification.store(true, Ordering::Release);
+        });
+        device.on_uncaptured_error(Box::new(|error| {
+            log::error!("wgpu uncaptured error: {error}");
+        }));
         static NEXT_ID: AtomicU64 = AtomicU64::new(1);
         Ok(Self { id: NEXT_ID.fetch_add(1, Ordering::Relaxed), _instance: instance, adapter, device, queue, poll_gate: Arc::new(Mutex::new(())), shared_vertices: Arc::new(Mutex::new(crate::mesh::SharedVertexCache::default())), shared_material_textures: Arc::new(Mutex::new(super::SharedMaterialTextureCache::default())), supports_anisotropy, indexed_objects, lost })
+    }
+
+    pub fn is_lost(&self) -> bool {
+        self.lost.load(Ordering::Acquire)
     }
 }
 

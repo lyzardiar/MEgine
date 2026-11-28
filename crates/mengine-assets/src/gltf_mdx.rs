@@ -60,7 +60,11 @@ impl Track {
         let x=Self::value(&self.values,a);let y=Self::value(&self.values,b);
         if self.interpolation==0 { return x; }
         if self.interpolation==1 { return if rotation {slerp(x,y,t)} else {x.lerp(y,t)}; }
-        let out=Self::value(self.out_tangents.as_ref().unwrap(),a);let input=Self::value(self.in_tangents.as_ref().unwrap(),b);
+        let (Some(out_tangents), Some(in_tangents)) = (self.out_tangents.as_ref(), self.in_tangents.as_ref()) else {
+            return if rotation { slerp(x, y, t) } else { x.lerp(y, t) };
+        };
+        let out = Self::value(out_tangents, a);
+        let input = Self::value(in_tangents, b);
         if rotation { return slerp(slerp(x,y,t),slerp(out,input,t),2.0*t*(1.0-t)); }
         if self.interpolation==2 { let t2=t*t;let t3=t2*t;x*(2.0*t3-3.0*t2+1.0)+y*(-2.0*t3+3.0*t2)+out*(t3-2.0*t2+t)+input*(t3-t2) }
         else { let u=1.0-t;x*(u*u*u)+out*(3.0*u*u*t)+input*(3.0*u*t*t)+y*(t*t*t) }

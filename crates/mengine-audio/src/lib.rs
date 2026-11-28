@@ -148,11 +148,25 @@ struct BackendState {
     buses: HashMap<AudioBus, TrackHandle>,
 }
 
+/// Default upper bound for resident decoded audio clips in RAM (128 MiB / 256 clips).
+const DEFAULT_CLIP_CACHE_BYTES: usize = 128 * 1024 * 1024;
+const DEFAULT_MAX_CACHED_CLIPS: usize = 256;
+
+struct CachedClip {
+    data: StaticSoundData,
+    estimated_bytes: usize,
+    last_used: u64,
+}
+
 /// Owns the platform audio device. The runtime may keep this object in a
 /// disabled state when no output device is available (for CI/headless builds).
 pub struct AudioEngine {
     backend: Option<BackendState>,
-    clips: HashMap<PathBuf, StaticSoundData>,
+    clips: HashMap<PathBuf, CachedClip>,
+    clip_cache_bytes: usize,
+    clip_cache_budget: usize,
+    max_cached_clips: usize,
+    clip_access_seq: u64,
     sources: HashMap<u64, LiveSource>,
     mixer: AudioMixerSettings,
 }
@@ -168,8 +182,39 @@ impl AudioEngine {
         Self {
             backend: None,
             clips: HashMap::new(),
+            clip_cache_bytes: 0,
+            clip_cache_budget: DEFAULT_CLIP_CACHE_BYTES,
+            max_cached_clips: DEFAULT_MAX_CACHED_CLIPS,
+            clip_access_seq: 0,
             sources: HashMap::new(),
             mixer: AudioMixerSettings::default(),
+        }
+    }
+
+    pub fn cached_clip_count(&self) -> usize {
+        self.clips.len()
+    }
+
+    pub fn cached_clip_bytes(&self) -> usize {
+        self.clip_cache_bytes
+    }
+
+    pub fn clear_unused_clips(&mut self) {
+        let active_paths: std::collections::HashSet<&Path> = self
+            .sources
+            .values()
+            .map(|src| src.restart_key.clip.as_path())
+            .collect();
+        let remove_keys: Vec<PathBuf> = self
+            .clips
+            .keys()
+            .filter(|path| !active_paths.contains(path.as_path()))
+            .cloned()
+            .collect();
+        for key in remove_keys {
+            if let Some(removed) = self.clips.remove(&key) {
+                self.clip_cache_bytes = self.clip_cache_bytes.saturating_sub(removed.estimated_bytes);
+            }
         }
     }
 
@@ -360,21 +405,59 @@ impl AudioEngine {
         backend
             .buses
             .get_mut(&AudioBus::Sfx)
-            .expect("SFX bus exists")
+            .ok_or_else(|| AudioError::Resource("SFX bus unavailable".into()))?
             .play(data)
             .map_err(|error| AudioError::Resource(error.to_string()))?;
         Ok(())
     }
 
+    fn evict_clips_to_budget(&mut self, incoming_bytes: usize) {
+        while self.clips.len() >= self.max_cached_clips
+            || (self.clip_cache_bytes.saturating_add(incoming_bytes) > self.clip_cache_budget
+                && !self.clips.is_empty())
+        {
+            let Some(oldest_key) = self
+                .clips
+                .iter()
+                .min_by_key(|(_, entry)| entry.last_used)
+                .map(|(path, _)| path.clone())
+            else {
+                break;
+            };
+            if let Some(removed) = self.clips.remove(&oldest_key) {
+                self.clip_cache_bytes = self
+                    .clip_cache_bytes
+                    .saturating_sub(removed.estimated_bytes);
+            }
+        }
+    }
+
     fn load_clip(&mut self, path: &Path) -> Result<StaticSoundData, AudioError> {
-        if let Some(data) = self.clips.get(path) {
-            return Ok(data.clone());
+        self.clip_access_seq = self.clip_access_seq.wrapping_add(1);
+        let seq = self.clip_access_seq;
+        if let Some(entry) = self.clips.get_mut(path) {
+            entry.last_used = seq;
+            return Ok(entry.data.clone());
         }
         let data = StaticSoundData::from_file(path).map_err(|error| AudioError::Clip {
             path: path.to_path_buf(),
             message: error.to_string(),
         })?;
-        self.clips.insert(path.to_path_buf(), data.clone());
+        // Conservative decoded PCM estimate (compressed files expand ~4x in RAM).
+        let file_bytes = std::fs::metadata(path)
+            .map(|m| m.len() as usize)
+            .unwrap_or(64 * 1024);
+        let estimated_bytes = file_bytes.saturating_mul(4).max(4096);
+        self.evict_clips_to_budget(estimated_bytes);
+        self.clip_cache_bytes = self.clip_cache_bytes.saturating_add(estimated_bytes);
+        self.clips.insert(
+            path.to_path_buf(),
+            CachedClip {
+                data: data.clone(),
+                estimated_bytes,
+                last_used: seq,
+            },
+        );
         Ok(data)
     }
 
@@ -397,7 +480,7 @@ impl AudioEngine {
         let bus = backend
             .buses
             .get_mut(&settings.bus)
-            .expect("all audio buses exist");
+            .ok_or_else(|| AudioError::Resource("audio bus unavailable".into()))?;
         let (sound, spatial_track) = if settings.spatial_blend > 0.0001 {
             let builder = SpatialTrackBuilder::new()
                 .distances((settings.min_distance, settings.max_distance))

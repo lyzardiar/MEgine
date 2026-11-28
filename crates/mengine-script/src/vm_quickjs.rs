@@ -3,9 +3,37 @@ use crate::{bridge::NativeBindings, ScriptError};
 use rquickjs::{CaughtError, Context, Ctx, Function, Object, Persistent, Runtime};
 use std::{cell::Cell, rc::Rc, time::{Duration, Instant}};
 
+const DISPATCH_EVENT_JS: &str = r#"(kind, payloadJson) => {
+  const payload = JSON.parse(payloadJson);
+  if (kind === 'sceneLoaded') {
+    engine.scene = payload;
+    if (typeof onSceneLoaded === 'function') onSceneLoaded(engine.scene);
+  } else if (kind === 'contentImport') {
+    if (typeof onContentImport === 'function') onContentImport(payload);
+  } else if (kind === 'animationEvents') {
+    if (typeof onAnimationEvent === 'function') {
+      for (const ev of payload) onAnimationEvent(ev);
+    }
+  } else if (kind === 'timelineSignals') {
+    if (typeof onTimelineSignal === 'function') {
+      for (const sig of payload) onTimelineSignal(sig);
+    }
+  } else if (kind === 'pairEvents') {
+    const enterFn = globalThis[payload.enter];
+    if (typeof enterFn === 'function') {
+      for (const ev of payload.started) enterFn(ev);
+    }
+    const exitFn = globalThis[payload.exit];
+    if (typeof exitFn === 'function') {
+      for (const ev of payload.stopped) exitFn(ev);
+    }
+  }
+}"#;
+
 pub(crate) struct ScriptVm {
     tick: Persistent<Function<'static>>,
     restore: Persistent<Function<'static>>,
+    dispatch_event: Persistent<Function<'static>>,
     context: Context,
     _runtime: Runtime,
     deadline: Rc<Cell<Instant>>,
@@ -28,7 +56,7 @@ impl ScriptVm {
         let limit = deadline.clone();
         runtime.set_interrupt_handler(Some(Box::new(move || Instant::now() >= limit.get())));
         let context = Context::full(&runtime).map_err(|e| ScriptError::Js(e.to_string()))?;
-        let (restore, tick) = context.with(|ctx| {
+        let (restore, tick, dispatch_event) = context.with(|ctx| {
             let install = || -> rquickjs::Result<_> {
                 let b = bindings.clone();
                 ctx.globals().set("__mengineAssetNodes", Function::new(ctx.clone(), move |a: String, o: String| b.asset_nodes(&a, &o))?)?;
@@ -55,11 +83,12 @@ impl ScriptVm {
                 ctx.globals().set("__mengineSnapshot", Function::new(ctx.clone(), move || bindings.snapshot())?)?;
                 let restore = Persistent::save(&ctx, ctx.eval::<Function, _>(include_str!("engine_api.js"))?);
                 let tick = Persistent::save(&ctx, ctx.eval::<Function, _>("(dt, frame) => { if (typeof onTick === 'function') onTick(dt, frame); }")?);
-                Ok((restore, tick))
+                let dispatch_event = Persistent::save(&ctx, ctx.eval::<Function, _>(DISPATCH_EVENT_JS)?);
+                Ok((restore, tick, dispatch_event))
             };
             install().map_err(|e| error(&ctx, e))
         })?;
-        Ok(Self { tick, restore, context, _runtime: runtime, deadline })
+        Ok(Self { tick, restore, dispatch_event, context, _runtime: runtime, deadline })
     }
     pub fn eval(&mut self, source: &str) -> Result<(), ScriptError> {
         self.deadline.set(Instant::now() + Duration::from_secs(1));
@@ -73,6 +102,16 @@ impl ScriptVm {
     pub fn restore_snapshot(&mut self) -> Result<(), ScriptError> {
         self.deadline.set(Instant::now() + Duration::from_secs(1));
         self.context.with(|ctx| self.restore.clone().restore(&ctx).and_then(|f| f.call::<_, ()>(())).map_err(|e| error(&ctx, e)))
+    }
+    pub fn dispatch_event(&mut self, kind: &str, payload_json: &str) -> Result<(), ScriptError> {
+        self.deadline.set(Instant::now() + Duration::from_secs(1));
+        self.context.with(|ctx| {
+            self.dispatch_event
+                .clone()
+                .restore(&ctx)
+                .and_then(|f| f.call::<_, ()>((kind, payload_json)))
+                .map_err(|e| error(&ctx, e))
+        })
     }
     pub fn set_input(&mut self, json: &str) -> Result<(), ScriptError> {
         self.deadline.set(Instant::now() + Duration::from_secs(1));

@@ -319,8 +319,17 @@ impl ScriptHost {
 
     pub fn take_runtime_requests(&mut self) -> Vec<ScriptRuntimeRequest> { std::mem::take(&mut *self.requests.borrow_mut()) }
 
+    fn dispatch_event(&mut self, kind: &str, payload: &JsonValue) -> Result<(), ScriptError> {
+        let json = serde_json::to_string(payload)
+            .map_err(|error| ScriptError::Other(error.to_string()))?;
+        let result = self.vm.dispatch_event(kind, &json);
+        self.finish_call(result)
+    }
+
     /// MiYu: converters publish progress and one terminal receipt on the script's owning thread.
-    pub fn notify_content_import(&mut self, event: &JsonValue) -> Result<(), ScriptError> { self.eval(&format!("if (typeof onContentImport === 'function') {{ onContentImport({event}); }}")) }
+    pub fn notify_content_import(&mut self, event: &JsonValue) -> Result<(), ScriptError> {
+        self.dispatch_event("contentImport", event)
+    }
 
     pub fn notify_scene_loaded(
         &mut self,
@@ -335,9 +344,7 @@ impl ScriptHost {
             "buildIndex": build_index,
             "buildSceneCount": build_scene_count,
         });
-        self.eval(&format!(
-            "engine.scene = {scene}; if (typeof onSceneLoaded === 'function') {{ onSceneLoaded(engine.scene); }}"
-        ))
+        self.dispatch_event("sceneLoaded", &scene)
     }
 
     /// Delivers fixed-step collision transitions to the project's global script hooks.
@@ -406,12 +413,13 @@ impl ScriptHost {
         if started.is_empty() && stopped.is_empty() {
             return Ok(());
         }
-        let started = collision_events_json(started, dimension);
-        let stopped = collision_events_json(stopped, dimension);
-        self.eval(&format!(
-            "for (const event of {started}) {{ if (typeof {enter_callback} === 'function') {enter_callback}(event); }}\
-             for (const event of {stopped}) {{ if (typeof {exit_callback} === 'function') {exit_callback}(event); }}"
-        ))
+        let payload = serde_json::json!({
+            "enter": enter_callback,
+            "exit": exit_callback,
+            "started": collision_events_json(started, dimension),
+            "stopped": collision_events_json(stopped, dimension),
+        });
+        self.dispatch_event("pairEvents", &payload)
     }
 
     /// Delivers clip events after animation sampling and before the project's `onTick` callback.
@@ -437,9 +445,7 @@ impl ScriptHost {
                 })
                 .collect(),
         );
-        self.eval(&format!(
-            "for (const event of {events}) {{ if (typeof onAnimationEvent === 'function') onAnimationEvent(event); }}"
-        ))
+        self.dispatch_event("animationEvents", &events)
     }
 
     /// Delivers Sequencer signal markers after timeline evaluation and before `onTick`.
@@ -464,9 +470,7 @@ impl ScriptHost {
                 })
                 .collect(),
         );
-        self.eval(&format!(
-            "for (const event of {signals}) {{ if (typeof onTimelineSignal === 'function') onTimelineSignal(event); }}"
-        ))
+        self.dispatch_event("timelineSignals", &signals)
     }
 
     pub fn push_json_commands(world: &mut World, value: JsonValue) {

@@ -5,9 +5,13 @@ edition.workspace = true
 license.workspace = true
 description = "MEngine asset handles, loading, import cache"
 
+[features]
+default = ["warcraft"]
+warcraft = ["dep:mengine-mpq"]
+
 [dependencies]
 mengine-core.workspace = true
-mengine-mpq.workspace = true
+mengine-mpq = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
