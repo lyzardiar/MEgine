@@ -6,13 +6,17 @@ import {
   Copy,
   Eye,
   EyeOff,
+  History,
   KeyRound,
   Layers,
   Loader2,
+  MessageSquare,
+  MessageSquarePlus,
   PackageCheck,
   Plus,
   RefreshCw,
   RotateCcw,
+  Search,
   SendHorizontal,
   SlidersHorizontal,
   Sparkles,
@@ -48,19 +52,21 @@ import {
   COPILOT_TOOLS,
   buildCompactSceneSummary,
   executeCopilotTool,
-  type CopilotToolExecution,
 } from '../ai/copilotTools';
+import {
+  appendMessagesToSession,
+  createSession,
+  deleteChatSession,
+  formatSessionTime,
+  loadCopilotSessionStore,
+  saveCopilotSessionStore,
+  sessionHasUserMessages,
+  startNewChatSession,
+  type CopilotChatMessage,
+  type CopilotSessionStore,
+} from '../ai/copilotSessions';
 
-type ChatMessage = {
-  id: string;
-  role: 'assistant' | 'user';
-  text: string;
-  code?: string;
-  meta?: string;
-  isError?: boolean;
-  suggestConfig?: boolean;
-  toolExecutions?: CopilotToolExecution[];
-};
+type SidebarView = 'chat' | 'settings' | 'history';
 
 export type AiAgentSidebarProps = {
   store: EditorStore;
@@ -77,14 +83,10 @@ export type AiAgentSidebarProps = {
   onClose: () => void;
 };
 
-function makeWelcomeMessage(zh: boolean): ChatMessage {
-  return {
-    id: 'welcome',
-    role: 'assistant',
-    text: zh
-      ? '你好，我是 MEngine AI Copilot。你可以点击右上角配置大模型供应商与 API Key，在下方切换使用的模型直接对话；也可以随时执行场景诊断、实体操作或接入 MCP Agent。'
-      : 'Hi, I am MEngine AI Copilot. Configure your LLM provider & API key via the top-right settings button and pick a model below, or run instant local scene & MCP actions.',
-  };
+function welcomeMessageText(zh: boolean): string {
+  return zh
+    ? '你好，我是 MEngine AI Copilot。你可以点击右上角配置大模型供应商与 API Key，在下方切换使用的模型直接对话；也可以随时新建会话、回看历史记录或直接操控编辑器。'
+    : 'Hi, I am MEngine AI Copilot. Configure your LLM provider & API key via the top-right settings button and pick a model below, or switch between saved chat sessions anytime.';
 }
 
 export function AiAgentSidebar(props: AiAgentSidebarProps) {
@@ -92,21 +94,47 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
   const zh = locale === 'zh-CN';
   const projectName = getDesktopProject()?.projectName || 'MEngine Project';
   const displayScene = props.sceneName ? sceneFileName(props.sceneName) : (zh ? '未命名场景' : 'Untitled');
+  const defaultChatTitle = zh ? '新对话' : 'New Chat';
 
   const [config, setConfig] = useState<AiCopilotConfig>(() => loadCopilotConfig());
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [view, setView] = useState<SidebarView>('chat');
   const [showKey, setShowKey] = useState(false);
   const [customModelInput, setCustomModelInput] = useState('');
   const [fetchingModels, setFetchingModels] = useState(false);
   const [fetchStatus, setFetchStatus] = useState<{ ok: boolean; text: string } | null>(null);
+  const [historyQuery, setHistoryQuery] = useState('');
 
+  const [sessionStore, setSessionStore] = useState<CopilotSessionStore>(() =>
+    loadCopilotSessionStore({
+      welcomeText: welcomeMessageText(zh),
+      defaultTitle: defaultChatTitle,
+      sceneName: displayScene,
+    }),
+  );
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [activeToolHint, setActiveToolHint] = useState<string | null>(null);
   const [toolsEnabled, setToolsEnabled] = useState(true);
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [makeWelcomeMessage(zh)]);
   const listRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  const activeSession = useMemo(
+    () => sessionStore.sessions.find((s) => s.id === sessionStore.activeSessionId) ?? sessionStore.sessions[0],
+    [sessionStore],
+  );
+  const messages = activeSession?.messages ?? [];
+
+  const filteredSessions = useMemo(() => {
+    const q = historyQuery.trim().toLowerCase();
+    if (!q) return sessionStore.sessions;
+    return sessionStore.sessions.filter(
+      (s) =>
+        s.title.toLowerCase().includes(q)
+        || (s.sceneName ?? '').toLowerCase().includes(q)
+        || s.messages.some((m) => m.text.toLowerCase().includes(q)),
+    );
+  }, [historyQuery, sessionStore.sessions]);
 
   const activePreset = getProviderPreset(config.activeProviderId);
   const activeProfile = config.providers[config.activeProviderId];
@@ -123,6 +151,10 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
     saveCopilotConfig(config);
   }, [config]);
 
+  useEffect(() => {
+    saveCopilotSessionStore(sessionStore);
+  }, [sessionStore]);
+
   useEffect(() => () => {
     abortRef.current?.abort();
   }, []);
@@ -135,9 +167,65 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
     });
   };
 
-  const appendMessages = (...next: ChatMessage[]) => {
-    setMessages((prev) => [...prev, ...next]);
+  const appendMessages = (...next: CopilotChatMessage[]) => {
+    const targetId = activeSession?.id;
+    if (!targetId) return;
+    setSessionStore((prev) =>
+      appendMessagesToSession(prev, targetId, next, {
+        sceneName: displayScene,
+        providerId: config.activeProviderId,
+        model: activeProfile.selectedModel,
+      }),
+    );
     scrollToBottom();
+  };
+
+  const handleNewChat = () => {
+    handleStop();
+    setSessionStore((prev) => {
+      const { store: nextStore } = startNewChatSession(prev, {
+        welcomeText: welcomeMessageText(zh),
+        defaultTitle: defaultChatTitle,
+        sceneName: displayScene,
+      });
+      return nextStore;
+    });
+    setDraft('');
+    setView('chat');
+    window.requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
+  const handleSelectSession = (sessionId: string) => {
+    if (sessionId !== sessionStore.activeSessionId) {
+      handleStop();
+      setSessionStore((prev) => ({ ...prev, activeSessionId: sessionId }));
+    }
+    setView('chat');
+    scrollToBottom();
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    if (sessionId === sessionStore.activeSessionId) handleStop();
+    setSessionStore((prev) =>
+      deleteChatSession(prev, sessionId, {
+        welcomeText: welcomeMessageText(zh),
+        defaultTitle: defaultChatTitle,
+        sceneName: displayScene,
+      }),
+    );
+  };
+
+  const handleClearAllHistory = () => {
+    handleStop();
+    const fresh = createSession({
+      welcomeText: welcomeMessageText(zh),
+      defaultTitle: defaultChatTitle,
+      sceneName: displayScene,
+    });
+    setSessionStore({ activeSessionId: fresh.id, sessions: [fresh] });
+    setHistoryQuery('');
+    setView('chat');
+    pushToast(zh ? '已清空全部历史会话' : 'Cleared all chat history', 'info');
   };
 
   const updateActiveProfile = (patch: Partial<AiCopilotConfig['providers'][AiProviderId]>) => {
@@ -511,11 +599,30 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
         <div className="ide-ai-header-actions">
           <button
             type="button"
-            className={`ide-ghost-icon ${settingsOpen ? 'is-open' : ''}`}
+            className="ide-ghost-icon"
+            title={zh ? '新建会话' : 'New Chat'}
+            aria-label="New AI chat"
+            onClick={handleNewChat}
+          >
+            <MessageSquarePlus size={14} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={`ide-ghost-icon ${view === 'history' ? 'is-open' : ''}`}
+            title={zh ? `历史会话 (${sessionStore.sessions.length})` : `Chat History (${sessionStore.sessions.length})`}
+            aria-label="Toggle AI chat history"
+            aria-pressed={view === 'history'}
+            onClick={() => setView((v) => (v === 'history' ? 'chat' : 'history'))}
+          >
+            <History size={14} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={`ide-ghost-icon ${view === 'settings' ? 'is-open' : ''}`}
             title={zh ? '供应商与模型配置' : 'Provider & Model Settings'}
             aria-label="Configure AI Provider"
-            aria-pressed={settingsOpen}
-            onClick={() => setSettingsOpen((open) => !open)}
+            aria-pressed={view === 'settings'}
+            onClick={() => setView((v) => (v === 'settings' ? 'chat' : 'settings'))}
           >
             <SlidersHorizontal size={14} aria-hidden="true" />
           </button>
@@ -531,18 +638,6 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
           <button
             type="button"
             className="ide-ghost-icon"
-            title={zh ? '清空对话记录' : 'Clear conversation'}
-            aria-label="Clear AI chat"
-            onClick={() => {
-              handleStop();
-              setMessages([makeWelcomeMessage(zh)]);
-            }}
-          >
-            <Trash2 size={13} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="ide-ghost-icon"
             title={zh ? '收起 AI 侧栏' : 'Collapse AI Copilot'}
             aria-label="Close AI Copilot"
             onClick={props.onClose}
@@ -552,7 +647,111 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
         </div>
       </header>
 
-      {settingsOpen ? (
+      {view === 'history' ? (
+        <div className="ide-ai-history" aria-label={zh ? 'AI 历史会话' : 'AI Chat History'}>
+          <div className="ide-ai-history-head">
+            <div>
+              <strong>{zh ? '历史会话' : 'Chat History'}</strong>
+              <span>{zh ? `共 ${sessionStore.sessions.length} 个会话，自动保存在本地` : `${sessionStore.sessions.length} saved locally`}</span>
+            </div>
+            <div className="ide-ai-history-head-btns">
+              <button
+                type="button"
+                className="ide-ai-link-btn"
+                onClick={handleNewChat}
+              >
+                <Plus size={11} aria-hidden="true" />
+                {zh ? '新会话' : 'New'}
+              </button>
+              <button
+                type="button"
+                className="ide-ai-link-btn is-danger"
+                title={zh ? '清空全部历史记录' : 'Clear all history'}
+                onClick={handleClearAllHistory}
+              >
+                <Trash2 size={11} aria-hidden="true" />
+                {zh ? '清空' : 'Clear'}
+              </button>
+            </div>
+          </div>
+
+          <label className="ide-ai-history-search">
+            <Search size={12} aria-hidden="true" />
+            <input
+              type="search"
+              value={historyQuery}
+              placeholder={zh ? '搜索历史会话标题或内容…' : 'Search chat history…'}
+              aria-label="Search AI chat history"
+              onChange={(e) => setHistoryQuery(e.target.value)}
+            />
+          </label>
+
+          <div className="ide-ai-history-list">
+            {filteredSessions.length === 0 ? (
+              <div className="ide-ai-history-empty">
+                {zh ? '没有匹配的历史会话' : 'No matching conversations'}
+              </div>
+            ) : (
+              filteredSessions.map((session) => {
+                const isActive = session.id === activeSession?.id;
+                const userMsgCount = session.messages.filter((m) => m.role === 'user').length;
+                const hasContent = sessionHasUserMessages(session);
+                return (
+                  <div
+                    key={session.id}
+                    className={`ide-ai-history-item${isActive ? ' is-active' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      className="ide-ai-history-select"
+                      onClick={() => handleSelectSession(session.id)}
+                    >
+                      <div className="ide-ai-history-item-top">
+                        <MessageSquare size={12} aria-hidden="true" />
+                        <strong title={session.title}>{session.title}</strong>
+                        <span className="ide-ai-history-time">
+                          {formatSessionTime(session.updatedAt, zh)}
+                        </span>
+                      </div>
+                      <div className="ide-ai-history-item-meta">
+                        <span>
+                          {hasContent
+                            ? (zh ? `${userMsgCount} 轮提问` : `${userMsgCount} turns`)
+                            : (zh ? '空白会话' : 'Empty')}
+                        </span>
+                        {session.sceneName && <span>· {session.sceneName}</span>}
+                        {session.model && <span>· {session.model}</span>}
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className="ide-ai-history-del"
+                      title={zh ? '删除此会话' : 'Delete chat'}
+                      aria-label={`Delete chat ${session.title}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSession(session.id);
+                      }}
+                    >
+                      <Trash2 size={12} aria-hidden="true" />
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="ide-ai-config-actions">
+            <button
+              type="button"
+              className="ide-ai-primary-btn"
+              onClick={() => setView('chat')}
+            >
+              {zh ? '返回当前对话' : 'Back to Chat'}
+            </button>
+          </div>
+        </div>
+      ) : view === 'settings' ? (
         <div className="ide-ai-config" aria-label={zh ? 'AI 供应商配置' : 'AI Provider Configuration'}>
           <div className="ide-ai-config-head">
             <div>
@@ -730,7 +929,7 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
               type="button"
               className="ide-ai-primary-btn"
               onClick={() => {
-                setSettingsOpen(false);
+                setView('chat');
                 pushToast(
                   zh ? `已应用供应商：${activePreset.zhName}` : `Active provider: ${activePreset.name}`,
                   'success',
@@ -748,7 +947,7 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
               <button
                 type="button"
                 className={`ide-ai-pill ide-ai-pill-btn ${providerReady && !config.useLocalMcpOnly ? 'is-live' : 'is-warn'}`}
-                onClick={() => setSettingsOpen(true)}
+                onClick={() => setView('settings')}
                 title={zh ? '点击切换供应商或配置 API Key' : 'Click to configure provider & API key'}
               >
                 <CheckCircle2 size={11} aria-hidden="true" />
@@ -848,7 +1047,7 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
                     <button
                       type="button"
                       className="ide-ai-inline-cfg-btn"
-                      onClick={() => setSettingsOpen(true)}
+                      onClick={() => setView('settings')}
                     >
                       <KeyRound size={11} aria-hidden="true" />
                       <span>{zh ? '配置供应商与 API Key' : 'Configure Provider & API Key'}</span>
@@ -879,6 +1078,7 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
             }}
           >
             <textarea
+              ref={inputRef}
               className="ide-ai-composer-input"
               rows={2}
               value={draft}
@@ -917,7 +1117,7 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
                 type="button"
                 className="ide-ai-provider-chip"
                 title={zh ? '切换供应商或配置 API Key' : 'Switch provider or configure API key'}
-                onClick={() => setSettingsOpen(true)}
+                onClick={() => setView('settings')}
               >
                 <SlidersHorizontal size={11} aria-hidden="true" />
                 <span>{activePreset.name}</span>

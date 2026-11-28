@@ -14,6 +14,15 @@ import {
   saveCopilotConfig,
   sendCopilotCompletion,
 } from '../src/ai/copilotProviders.ts';
+import {
+  appendMessagesToSession,
+  deleteChatSession,
+  deriveSessionTitle,
+  formatSessionTime,
+  loadCopilotSessionStore,
+  saveCopilotSessionStore,
+  startNewChatSession,
+} from '../src/ai/copilotSessions.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -86,6 +95,60 @@ test('copilot system prompt injects active MEngine scene context and tool instru
   assert.match(prompt, /HeroCamera \[Transform, Camera3D\]/);
   assert.match(prompt, /LIVE FULL-EDITOR TOOLS ARE ENABLED/);
   assert.match(prompt, /Reply in Chinese/);
+});
+
+test('copilot session store persists chat history, auto-titles conversations, and manages new/delete flows', () => {
+  const prevStorage = globalThis.localStorage;
+  globalThis.localStorage = createMemoryStorage();
+  try {
+    const opts = { welcomeText: 'Hi', defaultTitle: '新对话', sceneName: 'MainScene.mscene' };
+    let store = loadCopilotSessionStore(opts);
+    assert.equal(store.sessions.length, 1);
+    const firstId = store.activeSessionId;
+
+    // Starting a new chat when current is still empty reuses the empty session
+    const reused = startNewChatSession(store, opts);
+    assert.equal(reused.reusedEmpty, true);
+    assert.equal(reused.store.sessions.length, 1);
+
+    // Appending a user message auto-titles the session and persists across reloads
+    store = appendMessagesToSession(
+      store,
+      firstId,
+      [
+        { id: 'u1', role: 'user', text: '把 Button 放到左上角并保存' },
+        { id: 'a1', role: 'assistant', text: '已设置完成' },
+      ],
+      { sceneName: 'MainScene.mscene', providerId: 'deepseek', model: 'deepseek-reasoner', now: 1_000_000 },
+    );
+    assert.equal(store.sessions[0].title, '把 Button 放到左上角并保存');
+    assert.equal(store.sessions[0].untitled, false);
+    saveCopilotSessionStore(store);
+
+    // Starting a new chat now creates a 2nd session while keeping the 1st in history
+    const created = startNewChatSession(store, { ...opts, now: 1_005_000 });
+    assert.equal(created.reusedEmpty, false);
+    assert.equal(created.store.sessions.length, 2);
+    saveCopilotSessionStore(created.store);
+
+    const reloaded = loadCopilotSessionStore(opts);
+    assert.equal(reloaded.sessions.length, 2);
+    assert.equal(reloaded.activeSessionId, created.store.activeSessionId);
+
+    // Deleting both sessions always leaves 1 clean fresh session
+    let afterDel = deleteChatSession(reloaded, created.store.activeSessionId, opts);
+    assert.equal(afterDel.sessions.length, 1);
+    assert.equal(afterDel.activeSessionId, firstId);
+    afterDel = deleteChatSession(afterDel, firstId, opts);
+    assert.equal(afterDel.sessions.length, 1);
+    assert.equal(afterDel.sessions[0].untitled, true);
+
+    assert.equal(deriveSessionTitle('   hello   world   '), 'hello world');
+    assert.equal(formatSessionTime(1_000_000, true, 1_000_030), '刚刚');
+    assert.equal(formatSessionTime(1_000_000, true, 1_300_000), '5 分钟前');
+  } finally {
+    globalThis.localStorage = prevStorage;
+  }
 });
 
 test('copilot tools mutate EditorStore with RectTransform alias normalization, Undo, AgentBridge meta-tools, and DeepSeek Reasoner loop', async () => {

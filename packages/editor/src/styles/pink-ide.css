@@ -1433,8 +1433,9 @@ button.ide-ai-inline-cfg-btn:hover:not(:disabled) {
   color: #ffffff;
 }
 
-/* Inline Provider & API Config Panel */
-.ide-ai-config {
+/* Inline Provider & API Config Panel + Chat History Panel */
+.ide-ai-config,
+.ide-ai-history {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -1442,6 +1443,189 @@ button.ide-ai-inline-cfg-btn:hover:not(:disabled) {
   display: flex;
   flex-direction: column;
   gap: 11px;
+}
+
+.ide-ai-history-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.ide-ai-history-head strong {
+  display: block;
+  font-size: 12px;
+  color: var(--me-text-primary);
+}
+
+.ide-ai-history-head span {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--me-text-muted);
+}
+
+.ide-ai-history-head-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+button.ide-ai-link-btn.is-danger {
+  color: var(--me-danger);
+}
+
+button.ide-ai-link-btn.is-danger:hover:not(:disabled) {
+  background: var(--me-danger-bg);
+  color: var(--me-danger);
+}
+
+.ide-ai-history-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-input);
+  color: var(--me-text-muted);
+}
+
+.ide-ai-history-search:focus-within {
+  border-color: var(--me-accent);
+  box-shadow: 0 0 0 2px var(--me-accent-muted);
+}
+
+.ide-ai-history-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--me-text-primary);
+  font-size: 11.5px;
+  user-select: text;
+}
+
+.ide-ai-history-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ide-ai-history-empty {
+  padding: 28px 12px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--me-text-muted);
+}
+
+.ide-ai-history-item {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-elevated);
+  overflow: hidden;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.ide-ai-history-item:hover {
+  border-color: var(--me-border-default);
+  background: var(--u-hover);
+}
+
+.ide-ai-history-item.is-active {
+  border-color: var(--me-accent-border);
+  background: var(--me-accent-muted);
+  box-shadow: inset 3px 0 0 var(--me-accent);
+}
+
+button.ide-ai-history-select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 6px 8px 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+button.ide-ai-history-select:hover:not(:disabled) {
+  background: transparent;
+  box-shadow: none;
+}
+
+.ide-ai-history-item-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--me-text-primary);
+}
+
+.ide-ai-history-item-top > svg {
+  flex-shrink: 0;
+  color: var(--me-accent);
+}
+
+.ide-ai-history-item-top strong {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ide-ai-history-time {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--me-text-muted);
+}
+
+.ide-ai-history-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 18px;
+  font-size: 10px;
+  color: var(--me-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.ide-ai-history-del {
+  width: 28px;
+  flex: 0 0 28px;
+  border: 0;
+  border-left: 1px solid var(--me-border-subtle);
+  border-radius: 0;
+  background: transparent;
+  color: var(--me-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+button.ide-ai-history-del:hover:not(:disabled) {
+  background: var(--me-danger-bg);
+  color: var(--me-danger);
+  box-shadow: none;
 }
 
 .ide-ai-config-head {
