@@ -368,7 +368,9 @@ export type CopilotCompletionResult = {
 export type CopilotToolRunner = (
   name: string,
   args: Record<string, unknown>,
-) => { ok: boolean; summary: string; result: unknown; argsPreview: string };
+) =>
+  | { ok: boolean; summary: string; result: unknown; argsPreview: string }
+  | Promise<{ ok: boolean; summary: string; result: unknown; argsPreview: string }>;
 
 export function buildCopilotSystemPrompt(ctx: CopilotSceneContext, extraPrompt: string): string {
   const parts = [
@@ -377,8 +379,9 @@ export function buildCopilotSystemPrompt(ctx: CopilotSceneContext, extraPrompt: 
   ];
   if (ctx.toolsEnabled) {
     parts.push(
-      'LIVE EDITOR TOOLS ARE ENABLED in this session! Whenever the user asks you to move, anchor, resize, rename, recolor, create, delete, inspect, undo, save, or modify anything in the scene, CALL THE PROVIDED TOOLS DIRECTLY instead of merely telling the user which fields to type.',
-      'All tool mutations automatically record Undo history in the editor and immediately refresh the Viewport, Hierarchy, and Inspector.',
+      'LIVE FULL-EDITOR TOOLS ARE ENABLED in this session! You have 11 fast scene tools (list_entities, get_entity, select_entity, patch_component, add_component, remove_component, spawn_entity, update_entity, delete_entity, duplicate_entity, editor_action) PLUS 3 AgentBridge meta-tools (editor_discover, editor_query, editor_command) covering ALL 171 MEngine editor operations (assets, TypeScript scripts, shaders, materials, prefabs, multi-scene management, console logs, script diagnostics, profiler, project settings, build/export, viewport camera/resolution, playback stepping/input, menus, and batch transactions).',
+      'Whenever the user asks you to inspect or change ANYTHING in the editor, CALL THE TOOLS DIRECTLY instead of only telling the user how to do it manually. Use editor_discover(kind="query_schema" | "command_schema") if you need exact arguments for any AgentBridge API.',
+      'All scene mutations automatically record Undo history in the editor and immediately refresh the Viewport, Hierarchy, and Inspector.',
       'For UI RectTransform edits, use snake_case keys (anchor_min, anchor_max, pivot, anchored_position, size_delta, local_rotation, local_scale) in Unity bottom-left Y-up coordinates (e.g. top-left anchor is [0, 1], bottom-right is [1, 0]).',
     );
   }
@@ -428,7 +431,7 @@ export async function sendCopilotCompletion(options: {
     tools = [],
     executeTool,
     onToolStep,
-    maxToolSteps = 6,
+    maxToolSteps = 10,
     signal,
   } = options;
   const providerId = config.activeProviderId;
@@ -500,7 +503,7 @@ export async function sendCopilotCompletion(options: {
         const resultBlocks: Array<Record<string, unknown>> = [];
         for (const call of toolUses) {
           const callId = call.id || `tool-${step}-${toolExecutions.length}`;
-          const exec = executeTool(call.name!, safeParseJsonObject(call.input));
+          const exec = await executeTool(call.name!, safeParseJsonObject(call.input));
           const record: CopilotToolExecution = {
             id: callId,
             name: call.name!,
@@ -587,7 +590,7 @@ export async function sendCopilotCompletion(options: {
         const fnResponses: Array<Record<string, unknown>> = [];
         for (const part of calls) {
           const fn = part.functionCall!;
-          const exec = executeTool(fn.name!, safeParseJsonObject(fn.args));
+          const exec = await executeTool(fn.name!, safeParseJsonObject(fn.args));
           const record: CopilotToolExecution = {
             id: `gem-${step}-${toolExecutions.length}`,
             name: fn.name!,
@@ -706,7 +709,7 @@ export async function sendCopilotCompletion(options: {
         const fnName = call.function?.name ?? '';
         const callId = call.id || `call_${step}_${toolExecutions.length}`;
         const parsedArgs = safeParseJsonObject(call.function?.arguments);
-        const exec = executeTool(fnName, parsedArgs);
+        const exec = await executeTool(fnName, parsedArgs);
         const record: CopilotToolExecution = {
           id: callId,
           name: fnName,

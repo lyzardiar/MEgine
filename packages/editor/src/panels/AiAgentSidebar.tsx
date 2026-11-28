@@ -439,6 +439,7 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
         executeTool: toolsEnabled
           ? (toolName, toolArgs) => executeCopilotTool(toolName, toolArgs, {
               store: props.store,
+              signal: controller.signal,
               onRefresh: props.onRefresh,
               onSave: props.onSave,
               onTogglePlay: props.onTogglePlay,
@@ -762,10 +763,10 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
                 className={`ide-ai-pill ide-ai-pill-btn ${toolsEnabled ? 'is-live' : ''}`}
                 aria-pressed={toolsEnabled}
                 onClick={() => setToolsEnabled((on) => !on)}
-                title={zh ? '开关 AI 直接读写场景与组件的工具权限（每次改动均支持 Ctrl+Z 撤销）' : 'Toggle live editor tool access (all edits support Undo)'}
+                title={zh ? '开关 AI 操作全编辑器的工具权限（覆盖场景/资产/脚本/Prefab/构建等 171 项能力）' : 'Toggle live full-editor tool access (171 AgentBridge operations)'}
               >
                 <Wrench size={10} aria-hidden="true" />
-                {toolsEnabled ? (zh ? '可操作场景' : 'Tools ON') : (zh ? '只读问答' : 'Read-only')}
+                {toolsEnabled ? (zh ? '全工具已开启' : 'Full Tools ON') : (zh ? '只读问答' : 'Read-only')}
               </button>
               <span className="ide-ai-pill">{displayScene}</span>
               <span className="ide-ai-pill">{props.entityCount} {zh ? '实体' : 'Entities'}</span>

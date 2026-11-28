@@ -1,9 +1,21 @@
+import { agentBridge } from '../agent/AgentBridge';
+import { COMMAND_PARAMS_SCHEMAS } from '../agent/commandSchemas';
+import { QUERY_PARAMS_SCHEMAS } from '../agent/querySchemas';
 import { createComponentDefaults } from '../componentCatalog';
 import { eulerXYZToQuat, type Quat } from '../math3d';
 import type { EditorStore } from '../store';
 import type { PanelKind } from '../panels/DockWorkspace';
 
 type SnapshotEntity = ReturnType<EditorStore['snapshot']>['entities'][number];
+
+export type CopilotBridgeAdapter = {
+  query: (queryId: string, params?: Record<string, unknown>, options?: { signal?: AbortSignal }) => Promise<unknown>;
+  execute: (
+    commandId: string,
+    args?: Record<string, unknown>,
+    options?: { screenshot?: boolean; expectedSceneRevision?: number },
+  ) => Promise<unknown>;
+};
 
 export type CopilotToolDef = {
   name: string;
@@ -25,6 +37,8 @@ export type CopilotToolExecution = {
 
 export type CopilotToolContext = {
   store: EditorStore;
+  bridge?: CopilotBridgeAdapter;
+  signal?: AbortSignal;
   onRefresh: () => void;
   onSave: () => void;
   onTogglePlay: () => void;
@@ -272,7 +286,104 @@ export const COPILOT_TOOLS: readonly CopilotToolDef[] = [
       required: ['action'],
     },
   },
+  {
+    name: 'editor_discover',
+    description: 'Discover any of the 171 full-editor AgentBridge APIs (63 read queries + 108 write commands) and component schemas on demand. Use this before calling unfamiliar editor_query or editor_command operations.',
+    parameters: {
+      type: 'object',
+      properties: {
+        kind: {
+          type: 'string',
+          enum: ['queries', 'commands', 'query_schema', 'command_schema', 'components', 'component_schema'],
+          description: 'What to list or inspect.',
+        },
+        name: {
+          type: 'string',
+          description: 'Exact query id, command id, or component type when kind is *_schema.',
+        },
+        filter: {
+          type: 'string',
+          description: 'Optional case-insensitive substring filter when listing (e.g. "asset", "prefab", "scene", "build", "console", "view", "profiler", "script").',
+        },
+      },
+      required: ['kind'],
+    },
+  },
+  {
+    name: 'editor_query',
+    description: 'Run any read-only AgentBridge editor query (63 total): assets (asset.list, asset.read_text, asset.find_references, sprite.list), scenes (scene.list, scene.hierarchy), prefabs (prefab.instance), console & diagnostics (console.get_logs, project.script_diagnostics), profiler (profiler.get_samples, profiler.get_timeline), project/build settings (project.settings, build.settings, build.status, build.history), UI/panels/menus (panel.list, menu.list), etc.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Exact AgentBridge query id, e.g. "asset.list", "asset.read_text", "console.get_logs", "scene.list", "build.settings".' },
+        params: { type: 'object', description: 'Query parameters object (optional; use editor_discover(kind="query_schema") if unsure).' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'editor_command',
+    description: 'Execute any write AgentBridge editor command (108 total): assets & scripts (asset.create, asset.write_text, asset.rename, asset.duplicate, asset.trash, asset.restore, asset.import_file, asset.instantiate, sprite.import_settings.set), prefabs (prefab.create, prefab.apply, prefab.revert, prefab.unpack), scenes (scene.new, scene.open, scene.save_all, scene.rename, scene.delete), project settings (project.settings.set_tags_and_layers, project.settings.set_sorting_layers), build (build.settings.set_scenes, build.start, build.verify, build.run), viewport/playback (view.set_camera, view.set_game_resolution, view.set_game_display, gizmo.set, playback.step, playback.input), menus/panels/batch (menu.invoke, panel.reset_layout, effekseer.compose, figma.import_ui, batch.apply, console.clear).',
+    parameters: {
+      type: 'object',
+      properties: {
+        command: { type: 'string', description: 'Exact AgentBridge command id, e.g. "asset.write_text", "prefab.create", "scene.open", "view.set_game_resolution", "build.start".' },
+        args: { type: 'object', description: 'Command arguments object (use editor_discover(kind="command_schema") if unsure).' },
+      },
+      required: ['command'],
+    },
+  },
 ];
+
+const MAX_TOOL_PAYLOAD_CHARS = 14_000;
+
+function stripHugeBlobs(value: unknown, depth = 0): unknown {
+  if (depth > 8) return '[max-depth]';
+  if (typeof value === 'string') {
+    if (value.startsWith('data:image/') && value.length > 256) {
+      return `[base64 image omitted, ${value.length} chars]`;
+    }
+    if (value.length > 6000) {
+      return `${value.slice(0, 6000)}… [truncated ${value.length - 6000} chars]`;
+    }
+    return value;
+  }
+  if (Array.isArray(value)) {
+    const cap = 120;
+    const mapped = value.slice(0, cap).map((item) => stripHugeBlobs(item, depth + 1));
+    if (value.length > cap) {
+      mapped.push(`[... ${value.length - cap} more items truncated]`);
+    }
+    return mapped;
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (k === 'screenshot' && typeof v === 'string' && v.length > 256) {
+        out[k] = `[screenshot omitted, ${v.length} chars]`;
+        continue;
+      }
+      out[k] = stripHugeBlobs(v, depth + 1);
+    }
+    return out;
+  }
+  return value;
+}
+
+export function compactToolResult(value: unknown): unknown {
+  const cleaned = stripHugeBlobs(value);
+  try {
+    const serialized = JSON.stringify(cleaned);
+    if (serialized.length <= MAX_TOOL_PAYLOAD_CHARS) return cleaned;
+    return {
+      truncated: true,
+      totalChars: serialized.length,
+      preview: `${serialized.slice(0, MAX_TOOL_PAYLOAD_CHARS)}…`,
+    };
+  } catch {
+    return String(cleaned);
+  }
+}
 
 function summarizeArgs(args: Record<string, unknown>): string {
   try {
@@ -283,11 +394,11 @@ function summarizeArgs(args: Record<string, unknown>): string {
   }
 }
 
-export function executeCopilotTool(
+export async function executeCopilotTool(
   name: string,
   rawArgs: Record<string, unknown>,
   ctx: CopilotToolContext,
-): { ok: boolean; summary: string; result: unknown; argsPreview: string } {
+): Promise<{ ok: boolean; summary: string; result: unknown; argsPreview: string }> {
   const args = rawArgs && typeof rawArgs === 'object' ? rawArgs : {};
   const argsPreview = summarizeArgs(args);
   const { store } = ctx;
@@ -587,6 +698,174 @@ export function executeCopilotTool(
       }
       default:
         return { ok: false, summary: `未知动作: ${action}`, argsPreview, result: { error: `Unknown editor_action "${action}"` } };
+    }
+  }
+
+  const bridge: CopilotBridgeAdapter = ctx.bridge ?? agentBridge;
+
+  if (name === 'editor_discover') {
+    const kind = typeof args.kind === 'string' ? args.kind : '';
+    const filter = typeof args.filter === 'string' ? args.filter.trim().toLowerCase() : '';
+    const targetName = typeof args.name === 'string' ? args.name.trim() : '';
+
+    if (kind === 'queries') {
+      const all = Object.keys(QUERY_PARAMS_SCHEMAS);
+      const matched = filter ? all.filter((id) => id.toLowerCase().includes(filter)) : all;
+      return {
+        ok: true,
+        summary: `发现 ${matched.length} 项查询 API`,
+        argsPreview,
+        result: { total: all.length, matched },
+      };
+    }
+    if (kind === 'commands') {
+      const all = Object.keys(COMMAND_PARAMS_SCHEMAS);
+      const matched = filter ? all.filter((id) => id.toLowerCase().includes(filter)) : all;
+      return {
+        ok: true,
+        summary: `发现 ${matched.length} 项命令 API`,
+        argsPreview,
+        result: { total: all.length, matched },
+      };
+    }
+    if (kind === 'query_schema') {
+      const schema = QUERY_PARAMS_SCHEMAS[targetName];
+      if (!schema) {
+        return {
+          ok: false,
+          summary: `未知查询: ${targetName}`,
+          argsPreview,
+          result: { error: `Unknown query "${targetName}"`, hint: 'Call editor_discover(kind="queries") to list valid ids.' },
+        };
+      }
+      return {
+        ok: true,
+        summary: `查询参数: ${targetName}`,
+        argsPreview,
+        result: { query: targetName, paramsSchema: schema },
+      };
+    }
+    if (kind === 'command_schema') {
+      const schema = COMMAND_PARAMS_SCHEMAS[targetName];
+      if (!schema) {
+        return {
+          ok: false,
+          summary: `未知命令: ${targetName}`,
+          argsPreview,
+          result: { error: `Unknown command "${targetName}"`, hint: 'Call editor_discover(kind="commands") to list valid ids.' },
+        };
+      }
+      return {
+        ok: true,
+        summary: `命令参数: ${targetName}`,
+        argsPreview,
+        result: { command: targetName, argsSchema: schema },
+      };
+    }
+    if (kind === 'components') {
+      try {
+        const raw = await bridge.query('schema.components', {}, { signal: ctx.signal });
+        return {
+          ok: true,
+          summary: '已获取组件类型目录',
+          argsPreview,
+          result: compactToolResult(raw),
+        };
+      } catch (reason) {
+        return {
+          ok: false,
+          summary: '读取组件目录失败',
+          argsPreview,
+          result: { error: reason instanceof Error ? reason.message : String(reason) },
+        };
+      }
+    }
+    if (kind === 'component_schema') {
+      try {
+        const raw = await bridge.query('schema.component', { type: targetName }, { signal: ctx.signal });
+        return {
+          ok: true,
+          summary: `组件定义: ${targetName}`,
+          argsPreview,
+          result: compactToolResult(raw),
+        };
+      } catch (reason) {
+        return {
+          ok: false,
+          summary: `读取组件 ${targetName} 失败`,
+          argsPreview,
+          result: { error: reason instanceof Error ? reason.message : String(reason) },
+        };
+      }
+    }
+    return {
+      ok: false,
+      summary: `未知 discover 类型: ${kind}`,
+      argsPreview,
+      result: { error: `Unknown discover kind "${kind}"` },
+    };
+  }
+
+  if (name === 'editor_query') {
+    const queryId = typeof args.query === 'string' ? args.query.trim() : '';
+    const params = args.params && typeof args.params === 'object' && !Array.isArray(args.params)
+      ? (args.params as Record<string, unknown>)
+      : {};
+    if (!queryId) {
+      return { ok: false, summary: '缺少 query 名称', argsPreview, result: { error: 'query string is required' } };
+    }
+    try {
+      const raw = await bridge.query(queryId, params, { signal: ctx.signal });
+      return {
+        ok: true,
+        summary: `查询 ${queryId}`,
+        argsPreview,
+        result: compactToolResult(raw),
+      };
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : String(reason);
+      const schema = QUERY_PARAMS_SCHEMAS[queryId];
+      return {
+        ok: false,
+        summary: `查询 ${queryId} 失败`,
+        argsPreview,
+        result: {
+          error: message,
+          ...(schema ? { expectedParamsSchema: schema } : { hint: 'Use editor_discover(kind="queries") to check valid query ids.' }),
+        },
+      };
+    }
+  }
+
+  if (name === 'editor_command') {
+    const commandId = typeof args.command === 'string' ? args.command.trim() : '';
+    const cmdArgs = args.args && typeof args.args === 'object' && !Array.isArray(args.args)
+      ? (args.args as Record<string, unknown>)
+      : {};
+    if (!commandId) {
+      return { ok: false, summary: '缺少 command 名称', argsPreview, result: { error: 'command string is required' } };
+    }
+    try {
+      const raw = await bridge.execute(commandId, cmdArgs, { screenshot: false });
+      ctx.onRefresh();
+      return {
+        ok: true,
+        summary: `执行 ${commandId}`,
+        argsPreview,
+        result: compactToolResult(raw),
+      };
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : String(reason);
+      const schema = COMMAND_PARAMS_SCHEMAS[commandId];
+      return {
+        ok: false,
+        summary: `执行 ${commandId} 失败`,
+        argsPreview,
+        result: {
+          error: message,
+          ...(schema ? { expectedArgsSchema: schema } : { hint: 'Use editor_discover(kind="commands") to check valid command ids.' }),
+        },
+      };
     }
   }
 

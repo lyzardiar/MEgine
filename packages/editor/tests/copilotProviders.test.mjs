@@ -84,17 +84,18 @@ test('copilot system prompt injects active MEngine scene context and tool instru
   assert.match(prompt, /Frostbound/);
   assert.match(prompt, /MainScene\.mscene/);
   assert.match(prompt, /HeroCamera \[Transform, Camera3D\]/);
-  assert.match(prompt, /LIVE EDITOR TOOLS ARE ENABLED/);
+  assert.match(prompt, /LIVE FULL-EDITOR TOOLS ARE ENABLED/);
   assert.match(prompt, /Reply in Chinese/);
 });
 
-test('copilot tools mutate EditorStore with RectTransform alias normalization, Undo, and DeepSeek Reasoner tool loop', async () => {
+test('copilot tools mutate EditorStore with RectTransform alias normalization, Undo, AgentBridge meta-tools, and DeepSeek Reasoner loop', async () => {
   const server = await createServer({ root, server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
   try {
     const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
     const {
       COPILOT_TOOLS,
       buildCompactSceneSummary,
+      compactToolResult,
       executeCopilotTool,
       normalizeComponentPatch,
     } = await server.ssrLoadModule('/src/ai/copilotTools.ts');
@@ -102,8 +103,29 @@ test('copilot tools mutate EditorStore with RectTransform alias normalization, U
     const store = createEditorStore();
     let refreshes = 0;
     let saves = 0;
+    const bridgeCalls = [];
+    const mockBridge = {
+      async query(queryId, params) {
+        bridgeCalls.push({ kind: 'query', id: queryId, params });
+        if (queryId === 'asset.list') {
+          return { files: ['Assets/Scenes/MainScene.mscene', 'Assets/Scripts/Player.ts'] };
+        }
+        if (queryId === 'console.get_logs') {
+          return { logs: [{ level: 'error', message: 'Shader compile error' }] };
+        }
+        throw new Error(`Invalid params for ${queryId}`);
+      },
+      async execute(commandId, args) {
+        bridgeCalls.push({ kind: 'execute', id: commandId, args });
+        if (commandId === 'asset.write_text') {
+          return { ok: true, path: args.path, screenshot: `data:image/png;base64,${'A'.repeat(400)}` };
+        }
+        throw new Error(`Invalid args for ${commandId}`);
+      },
+    };
     const ctx = {
       store,
+      bridge: mockBridge,
       onRefresh: () => { refreshes += 1; },
       onSave: () => { saves += 1; },
       onTogglePlay: () => {},
@@ -111,12 +133,12 @@ test('copilot tools mutate EditorStore with RectTransform alias normalization, U
     };
 
     // 1. Spawn a UI Button and move it to top-left using camelCase aliases (as LLMs often emit)
-    const spawned = executeCopilotTool('spawn_entity', { preset: 'Button', name: 'StartBtn' }, ctx);
+    const spawned = await executeCopilotTool('spawn_entity', { preset: 'Button', name: 'StartBtn' }, ctx);
     assert.equal(spawned.ok, true);
     const btnId = spawned.result.entity;
     assert.equal(typeof btnId, 'number');
 
-    const patched = executeCopilotTool(
+    const patched = await executeCopilotTool(
       'patch_component',
       {
         entity: btnId,
@@ -142,13 +164,13 @@ test('copilot tools mutate EditorStore with RectTransform alias normalization, U
     assert.match(summary, /RectTransform/);
 
     // 2. Verify Undo reverts the tool edit
-    const undone = executeCopilotTool('editor_action', { action: 'undo' }, ctx);
+    const undone = await executeCopilotTool('editor_action', { action: 'undo' }, ctx);
     assert.equal(undone.ok, true);
     const afterUndo = store.snapshot().entities.find((e) => e.entity === btnId);
     assert.notDeepEqual(afterUndo.components.RectTransform.anchored_position, [16, -16]);
 
     // 3. Verify save action & Transform Euler conversion
-    const saved = executeCopilotTool('editor_action', { action: 'save_scene' }, ctx);
+    const saved = await executeCopilotTool('editor_action', { action: 'save_scene' }, ctx);
     assert.equal(saved.ok, true);
     assert.equal(saves, 1);
     assert.ok(refreshes >= 3);
@@ -157,6 +179,41 @@ test('copilot tools mutate EditorStore with RectTransform alias normalization, U
     assert.equal(Array.isArray(normalizedTransform.rotation), true);
     assert.equal(normalizedTransform.rotation.length, 4);
     assert.equal('rotation_euler' in normalizedTransform, false);
+
+    // 4. Verify AgentBridge full-editor discovery, query, command, schema feedback & blob compaction
+    const discQueries = await executeCopilotTool('editor_discover', { kind: 'queries', filter: 'asset' }, ctx);
+    assert.equal(discQueries.ok, true);
+    assert.ok(discQueries.result.total >= 60);
+    assert.ok(discQueries.result.matched.includes('asset.list'));
+    assert.ok(discQueries.result.matched.includes('asset.read_text'));
+
+    const discCommands = await executeCopilotTool('editor_discover', { kind: 'commands', filter: 'prefab' }, ctx);
+    assert.equal(discCommands.ok, true);
+    assert.ok(discCommands.result.total >= 100);
+    assert.ok(discCommands.result.matched.includes('prefab.create'));
+
+    const cmdSchema = await executeCopilotTool('editor_discover', { kind: 'command_schema', name: 'asset.write_text' }, ctx);
+    assert.equal(cmdSchema.ok, true);
+    assert.ok(cmdSchema.result.argsSchema);
+
+    const qRes = await executeCopilotTool('editor_query', { query: 'asset.list' }, ctx);
+    assert.equal(qRes.ok, true);
+    assert.equal(qRes.result.files.length, 2);
+
+    const cRes = await executeCopilotTool('editor_command', {
+      command: 'asset.write_text',
+      args: { path: 'Assets/Scripts/Player.ts', text: 'export class Player {}' },
+    }, ctx);
+    assert.equal(cRes.ok, true);
+    assert.match(cRes.result.screenshot, /screenshot omitted/);
+
+    const badCmd = await executeCopilotTool('editor_command', { command: 'prefab.create', args: {} }, ctx);
+    assert.equal(badCmd.ok, false);
+    assert.ok(badCmd.result.expectedArgsSchema);
+
+    const compacted = compactToolResult({ img: `data:image/png;base64,${'B'.repeat(400)}` });
+    assert.match(compacted.img, /base64 image omitted/);
+    assert.equal(COPILOT_TOOLS.length, 14);
 
     // 4. Verify multi-turn DeepSeek Reasoner tool calling + reasoning_content passthrough
     store.select(btnId);
