@@ -1,0 +1,1484 @@
+/* ============================================================================
+   MEngine Studio — Viewport Overlay, Animator State Graph, Timeline & Sequencer
+   Loaded after styles/tokens.css to elevate the remaining studio workbenches
+   with semantic Dark/Light surfaces, glassmorphic popovers, blueprint grids,
+   refined node cards, precision timecode/transport controls, and smooth clips.
+   ============================================================================ */
+
+/* ============================================================================
+   1. VIEWPORT OVERLAY TOOLBAR, POPOVERS & ORIENTATION HUD
+   ============================================================================ */
+
+.viewport-wrap {
+  background: var(--me-bg-base);
+}
+
+.game-toolbar,
+.scene-toolbar {
+  min-height: 32px;
+  gap: 8px;
+  padding: 4px 10px;
+  background: var(--me-bg-panel);
+  border-bottom: 1px solid var(--me-border-subtle);
+  box-shadow: inset 0 -1px 0 var(--me-border-subtle);
+}
+
+.game-toolbar label {
+  color: var(--me-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.game-toolbar select,
+.scene-toolbar .tile-tool-select,
+.scene-toolbar .tile-brush-select {
+  height: 24px;
+  padding: 0 22px 0 8px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background-color: var(--u-input);
+  color: var(--me-text-primary);
+  font-size: 11px;
+  transition: border-color var(--me-dur-fast) var(--me-ease),
+    background-color var(--me-dur-fast) var(--me-ease);
+}
+
+.game-toolbar select:hover:not(:disabled),
+.scene-toolbar .tile-tool-select:hover:not(:disabled),
+.scene-toolbar .tile-brush-select:hover:not(:disabled) {
+  border-color: var(--me-border-strong);
+}
+
+.game-toolbar select:focus-visible,
+.scene-toolbar .tile-tool-select:focus-visible,
+.scene-toolbar .tile-brush-select:focus-visible {
+  outline: none;
+  border-color: var(--me-accent);
+  box-shadow: 0 0 0 2px var(--me-accent-muted);
+}
+
+.game-resolution-fields {
+  gap: 5px;
+  padding: 2px 6px;
+  border-radius: var(--me-radius-sm);
+  background: var(--me-bg-well);
+  border: 1px solid var(--me-border-subtle);
+}
+
+.game-resolution-fields input {
+  width: 58px;
+  height: 20px;
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--u-input);
+  color: var(--me-text-primary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.game-resolution-fields input:focus-visible {
+  outline: none;
+  border-color: var(--me-accent);
+}
+
+.game-orientation-label {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--me-bg-elevated);
+  border: 1px solid var(--me-border-subtle);
+  color: var(--me-text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.game-hint {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--me-bg-well);
+  border: 1px solid var(--me-border-subtle);
+  color: var(--me-text-muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.scene-toolbar-group {
+  gap: 4px;
+}
+
+.scene-toolbar-group + .scene-toolbar-group {
+  padding-left: 8px;
+  border-left: 1px solid var(--me-border-default);
+}
+
+.orient-toggle,
+.scene-zoom,
+.scene-snap-buttons {
+  height: 24px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-well);
+  overflow: hidden;
+}
+
+.orient-toggle button,
+.scene-zoom button,
+.scene-snap-buttons button {
+  height: 100%;
+  background: transparent;
+  color: var(--me-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  transition: background-color var(--me-dur-fast) var(--me-ease),
+    color var(--me-dur-fast) var(--me-ease);
+}
+
+.orient-toggle button + button,
+.scene-zoom button + button,
+.scene-snap-buttons button + button {
+  border-left: 1px solid var(--me-border-subtle);
+}
+
+.orient-toggle button:hover:not(:disabled),
+.scene-zoom button:hover:not(:disabled),
+.scene-snap-buttons button:hover:not(:disabled) {
+  background: var(--u-hover);
+  color: var(--me-text-primary);
+}
+
+.orient-toggle button.active,
+.scene-zoom button.active,
+.scene-snap-buttons button.active {
+  background: var(--me-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.scene-zoom .scene-zoom-value {
+  color: var(--me-text-primary);
+  font-family: var(--u-mono);
+  font-size: 10.5px;
+}
+
+.scene-grid-toggle,
+.scene-align > button {
+  height: 24px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-well);
+  color: var(--me-text-secondary);
+  font-weight: 500;
+  transition: background-color var(--me-dur-fast) var(--me-ease),
+    border-color var(--me-dur-fast) var(--me-ease),
+    color var(--me-dur-fast) var(--me-ease);
+}
+
+.scene-grid-toggle:hover:not(:disabled),
+.scene-align > button:hover:not(:disabled) {
+  background: var(--u-hover);
+  border-color: var(--me-border-strong);
+  color: var(--me-text-primary);
+}
+
+.scene-grid-toggle.active,
+.scene-align > button.active {
+  background: var(--me-accent);
+  border-color: var(--me-accent-hover);
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.35);
+}
+
+/* Floating glassmorphic popovers inside Scene Viewport */
+.scene-snap-popup,
+.scene-align-popup,
+.scene-workspace-issues {
+  top: calc(100% + 6px);
+  padding: 10px;
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-strong);
+  background: var(--me-bg-popover);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--me-shadow-md);
+}
+
+.scene-snap-popup strong,
+.scene-align-popup strong {
+  color: var(--me-text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.scene-snap-popup label {
+  color: var(--me-text-secondary);
+}
+
+.scene-snap-popup input {
+  height: 24px;
+  padding: 0 6px;
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--u-input);
+  color: var(--me-text-primary);
+  font-family: var(--u-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.scene-snap-popup input:focus-visible {
+  outline: none;
+  border-color: var(--me-accent);
+  box-shadow: 0 0 0 2px var(--me-accent-muted);
+}
+
+.scene-align-grid {
+  gap: 4px;
+}
+
+.scene-align-grid button {
+  height: 26px;
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+  transition: background-color var(--me-dur-fast) var(--me-ease),
+    border-color var(--me-dur-fast) var(--me-ease),
+    color var(--me-dur-fast) var(--me-ease);
+}
+
+.scene-align-grid button:hover:not(:disabled) {
+  background: var(--me-accent-muted);
+  border-color: var(--me-accent-border);
+  color: var(--me-text-primary);
+}
+
+.scene-workspace-issue-list > button {
+  border-radius: var(--me-radius-xs);
+  border-top: 1px solid var(--me-border-subtle);
+  transition: background-color var(--me-dur-fast) var(--me-ease);
+}
+
+.scene-workspace-issue-list > button:hover,
+.scene-workspace-issue-list > button:focus-visible {
+  background: var(--me-accent-muted);
+}
+
+/* Orientation Gizmo HUD & Selection Overlays */
+.scene-orientation-gizmo {
+  top: 42px;
+  right: 12px;
+  border-radius: var(--me-radius-lg);
+  transition: background-color var(--me-dur-normal) var(--me-ease);
+}
+
+.scene-orientation-gizmo:hover {
+  background: rgba(16, 20, 28, 0.34);
+  backdrop-filter: blur(6px);
+}
+
+.scene-orientation-gizmo .axis-x { --scene-axis: var(--me-axis-x); }
+.scene-orientation-gizmo .axis-y { --scene-axis: var(--me-axis-y); }
+.scene-orientation-gizmo .axis-z { --scene-axis: var(--me-axis-z); }
+
+.scene-orientation-gizmo button:hover,
+.scene-orientation-gizmo button:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.42);
+  border-radius: 999px;
+}
+
+.scene-orientation-label {
+  bottom: 2px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  padding: 1px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(15, 18, 24, 0.72);
+  backdrop-filter: blur(8px);
+  color: #eef3fb;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 17px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.32);
+}
+
+.scene-marquee {
+  border: 1px solid var(--me-accent-hover);
+  border-radius: 2px;
+  background: rgba(59, 130, 246, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.28);
+}
+
+.scene-asset-drop-overlay {
+  border: 2px dashed var(--me-accent-hover);
+  border-radius: var(--me-radius-lg);
+  background: rgba(37, 99, 235, 0.18);
+  backdrop-filter: blur(4px);
+  color: #f0f6ff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.gizmo-hint {
+  top: 40px;
+  right: 124px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(15, 18, 24, 0.56);
+  color: rgba(232, 237, 245, 0.78);
+  font-size: 10.5px;
+}
+
+/* ============================================================================
+   2. ANIMATOR EDITOR & STATE MACHINE GRAPH
+   ============================================================================ */
+
+.animator-editor {
+  background: var(--me-bg-well);
+  color: var(--me-text-secondary);
+}
+
+.animator-scroll {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.animator-section {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-panel);
+  box-shadow: var(--me-shadow-sm);
+}
+
+.animator-section h3 {
+  color: var(--me-text-primary);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.animator-heading {
+  margin-bottom: 8px;
+}
+
+.animator-section input:not([type='checkbox']),
+.animator-section select {
+  height: 24px;
+  padding: 0 7px;
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--u-input);
+  color: var(--me-text-primary);
+  font-size: 11.5px;
+  transition: border-color var(--me-dur-fast) var(--me-ease),
+    box-shadow var(--me-dur-fast) var(--me-ease);
+}
+
+.animator-section input:not([type='checkbox']):focus-visible,
+.animator-section select:focus-visible {
+  outline: none;
+  border-color: var(--me-accent);
+  box-shadow: 0 0 0 2px var(--me-accent-muted);
+}
+
+.animator-section button {
+  height: 24px;
+  padding: 0 9px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-primary);
+  font-size: 11px;
+  font-weight: 500;
+  transition: background-color var(--me-dur-fast) var(--me-ease),
+    border-color var(--me-dur-fast) var(--me-ease),
+    color var(--me-dur-fast) var(--me-ease);
+}
+
+.animator-section button:hover:not(:disabled) {
+  background: var(--u-hover);
+  border-color: var(--me-border-strong);
+}
+
+.animator-section button:disabled {
+  opacity: 0.42;
+}
+
+.animator-state,
+.animator-transition,
+.animator-layer,
+.animator-layer-transition {
+  padding: 7px 9px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-well);
+  transition: border-color var(--me-dur-fast) var(--me-ease),
+    background-color var(--me-dur-fast) var(--me-ease),
+    box-shadow var(--me-dur-fast) var(--me-ease);
+}
+
+.animator-state {
+  border-left: 3px solid var(--me-text-muted);
+}
+
+.animator-state.default {
+  border-left-color: var(--me-warning);
+}
+
+.animator-layer {
+  border-left: 3px solid var(--me-accent);
+}
+
+.animator-layer.base {
+  border-left-color: var(--me-success);
+  color: var(--me-text-muted);
+}
+
+.animator-layer.base strong {
+  color: var(--me-text-primary);
+}
+
+.animator-state.selected,
+.animator-transition.selected {
+  outline: none;
+  border-color: var(--me-accent-border);
+  background: var(--me-accent-muted);
+  box-shadow: 0 0 0 1px var(--me-accent-border);
+}
+
+.animator-blend-tree,
+.animator-independent-layer {
+  border-top: 1px solid var(--me-border-subtle);
+  padding-top: 8px;
+  margin-top: 6px;
+}
+
+.animator-blend-tree .animator-heading label,
+.animator-layer-motions label,
+.animator-independent-layer > label {
+  color: var(--me-text-muted);
+}
+
+.animator-row.condition {
+  margin-left: 16px;
+  border-left: 2px solid var(--me-accent);
+  padding-left: 8px;
+}
+
+.animator-runtime-status {
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.38);
+  background: var(--me-success-bg);
+  color: var(--me-success);
+  font-family: var(--u-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.animator-instance-mode {
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-well);
+  color: var(--me-text-muted);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.animator-instance-mode.live {
+  border-color: rgba(34, 197, 94, 0.45);
+  background: var(--me-success-bg);
+  color: var(--me-success);
+}
+
+.animator-instance-layer {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--me-border-subtle);
+  border-radius: var(--me-radius-xs);
+}
+
+.animator-instance-layer small,
+.animator-layer-time {
+  color: var(--me-text-muted);
+}
+
+.animator-layer-live-progress {
+  height: 2.5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--me-accent), var(--me-accent-hover));
+}
+
+.animator-instance-parameter {
+  padding: 4px 8px;
+  border-top: 1px solid var(--me-border-subtle);
+  border-radius: var(--me-radius-xs);
+  background: var(--me-bg-well);
+}
+
+.animator-instance-parameter > span {
+  color: var(--me-text-primary);
+  font-weight: 500;
+}
+
+.animator-instance-parameter > small {
+  color: var(--me-text-muted);
+  font-family: var(--u-mono);
+  font-size: 9.5px;
+}
+
+.animator-instance-parameter > button.active {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: var(--me-warning-bg);
+  color: var(--me-warning);
+}
+
+/* Blueprint State Machine Graph Canvas & Floating Node Cards */
+.animator-graph-viewport {
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-base);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.24);
+}
+
+.animator-graph-canvas {
+  background-color: var(--me-bg-base);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+}
+
+:root[data-theme='light'] .animator-graph-viewport {
+  box-shadow: inset 0 1px 6px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme='light'] .animator-graph-canvas {
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+}
+
+.animator-graph-edge {
+  color: var(--me-text-muted);
+  transition: color var(--me-dur-fast) var(--me-ease);
+}
+
+.animator-graph-edge line:not(.hit) {
+  stroke-width: 1.75;
+  stroke-linecap: round;
+}
+
+.animator-graph-edge:hover {
+  color: var(--me-text-primary);
+}
+
+.animator-graph-edge.selected {
+  color: var(--me-accent-hover);
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.45));
+}
+
+.animator-graph-edge.active {
+  color: var(--me-success);
+  filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.55));
+}
+
+.animator-graph-state,
+.animator-any-state {
+  padding: 0 10px;
+  gap: 2px;
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-default);
+  border-left: 4px solid var(--me-text-muted);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: transform var(--me-dur-fast) var(--me-ease),
+    border-color var(--me-dur-fast) var(--me-ease),
+    box-shadow var(--me-dur-fast) var(--me-ease),
+    background-color var(--me-dur-fast) var(--me-ease);
+}
+
+.animator-graph-state:hover,
+.animator-any-state:hover {
+  transform: translateY(-1px);
+  border-color: var(--me-border-strong);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+
+.animator-graph-state strong {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--me-text-primary);
+}
+
+.animator-graph-state span {
+  color: var(--me-text-muted);
+  font-family: var(--u-mono);
+  font-size: 9.5px;
+}
+
+.animator-graph-state.default {
+  border-left-color: var(--me-warning);
+}
+
+.animator-graph-state.selected {
+  outline: none;
+  border-color: var(--me-accent);
+  box-shadow: 0 0 0 2px var(--me-accent-strong), 0 8px 20px rgba(0, 0, 0, 0.36);
+}
+
+.animator-graph-state.current {
+  border-color: var(--me-success);
+  border-left-color: var(--me-success);
+  background: linear-gradient(135deg, var(--me-success-bg), var(--me-bg-elevated));
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.45), 0 6px 18px rgba(34, 197, 94, 0.2);
+}
+
+.animator-any-state {
+  border-left-color: var(--me-prefab);
+  font-weight: 600;
+  font-size: 11px;
+  align-items: center;
+}
+
+.animator-transition-progress {
+  right: 10px;
+  bottom: 10px;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-panel);
+  box-shadow: var(--me-shadow-sm);
+}
+
+.animator-transition-progress i {
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--me-success), #4ade80);
+}
+
+.timeline-animator-state {
+  border-bottom: 1px solid var(--me-border-subtle);
+  background: var(--me-accent-muted);
+  color: var(--me-text-primary);
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   3. TIMELINE, CURVE EDITOR & SEQUENCER
+   ============================================================================ */
+
+@keyframes me-rec-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.52); }
+  50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+}
+
+.timeline-panel {
+  background: var(--me-bg-well);
+  color: var(--me-text-secondary);
+}
+
+.timeline-empty {
+  color: var(--me-text-muted);
+}
+
+.timeline-empty strong {
+  color: var(--me-text-primary);
+  font-size: 13px;
+}
+
+.timeline-empty-help,
+.timeline-empty-divider {
+  color: var(--me-text-muted);
+}
+
+.timeline-drop-zone {
+  outline: 1.5px dashed var(--me-border-strong);
+  outline-offset: -14px;
+  border-radius: var(--me-radius-md);
+}
+
+.timeline-toolbar,
+.timeline-track-tools,
+.timeline-new-clip {
+  min-height: 32px;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--me-bg-panel);
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.timeline-track-tools {
+  background: var(--me-bg-well);
+}
+
+.timeline-new-name input,
+.timeline-new-clip input,
+.timeline-property-path,
+.timeline-track-tools select,
+.timeline-details input:not([type='checkbox']),
+.timeline-details select {
+  height: 24px;
+  padding: 0 7px;
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--u-input);
+  color: var(--me-text-primary);
+}
+
+.timeline-new-name input:focus-visible,
+.timeline-new-clip input:focus-visible,
+.timeline-property-path:focus-visible,
+.timeline-track-tools select:focus-visible,
+.timeline-details input:focus-visible,
+.timeline-details select:focus-visible {
+  outline: none;
+  border-color: var(--me-accent);
+  box-shadow: 0 0 0 2px var(--me-accent-muted);
+}
+
+.timeline-empty button,
+.timeline-toolbar button,
+.timeline-track-tools button,
+.timeline-details button,
+.timeline-new-clip button {
+  min-height: 24px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-secondary);
+  font-weight: 500;
+  transition: background-color var(--me-dur-fast) var(--me-ease),
+    border-color var(--me-dur-fast) var(--me-ease),
+    color var(--me-dur-fast) var(--me-ease);
+}
+
+.timeline-toolbar button {
+  border-color: transparent;
+  background: transparent;
+}
+
+.timeline-empty button:hover:not(:disabled),
+.timeline-toolbar button:hover:not(:disabled),
+.timeline-track-tools button:hover:not(:disabled),
+.timeline-details button:hover:not(:disabled),
+.timeline-new-clip button:hover:not(:disabled) {
+  border-color: var(--me-border-strong);
+  background: var(--u-hover);
+  color: var(--me-text-primary);
+}
+
+.timeline-toolbar button.active,
+.timeline-details-toggle.active,
+.timeline-track-tools button.active {
+  border-color: var(--me-accent-border);
+  background: var(--me-accent-muted);
+  color: var(--me-text-primary);
+}
+
+/* Transport Pill Group & Precision Timecode */
+.timeline-transport {
+  padding: 2px;
+  gap: 2px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-well);
+}
+
+.timeline-toolbar .timeline-transport .timeline-icon-button {
+  width: 24px;
+  min-width: 24px;
+  height: 22px;
+  min-height: 22px;
+  border-radius: var(--me-radius-xs);
+}
+
+.timeline-toolbar button.recording {
+  border-color: rgba(239, 68, 68, 0.72);
+  background: var(--me-danger);
+  color: #ffffff;
+  animation: me-rec-pulse 1.6s ease-in-out infinite;
+}
+
+.timeline-toolbar button.recording:hover:not(:disabled) {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.timeline-toolbar .timeline-play-button.active {
+  border-color: var(--me-accent);
+  background: var(--me-accent);
+  color: #ffffff;
+}
+
+.timeline-time {
+  height: 24px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-base);
+  color: #f87171;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-theme='light'] .timeline-time {
+  color: #dc2626;
+}
+
+.timeline-time input {
+  height: 22px;
+  padding: 0 5px;
+  font-weight: 600;
+}
+
+.timeline-toolbar .timeline-time-unit {
+  height: 22px;
+  min-height: 22px;
+  border-radius: 0;
+  border-left: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-well);
+  color: var(--me-text-muted);
+  font-weight: 600;
+}
+
+.timeline-toolbar .timeline-time-unit:hover:not(:disabled) {
+  background: var(--me-accent-muted);
+  color: var(--me-text-primary);
+}
+
+.timeline-clip-path {
+  color: var(--me-text-muted);
+  font-family: var(--u-mono);
+  font-size: 10.5px;
+}
+
+/* Segmented Dopesheet / Curves Toggle */
+.timeline-view-modes {
+  height: 24px;
+  padding: 2px;
+  gap: 2px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-well);
+}
+
+.timeline-toolbar .timeline-view-modes button {
+  min-height: 18px;
+  padding: 0 9px;
+  border-radius: var(--me-radius-xs);
+  color: var(--me-text-muted);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.timeline-toolbar .timeline-view-modes button.active {
+  border-color: transparent;
+  background: var(--me-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.timeline-zoom > span {
+  color: var(--me-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Property Picker Popover */
+.timeline-property-popup {
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-strong);
+  background: var(--me-bg-popover);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--me-shadow-lg);
+}
+
+.timeline-property-search {
+  border-bottom: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-well);
+  color: var(--me-text-muted);
+}
+
+.timeline-property-search input {
+  border-radius: var(--me-radius-xs);
+}
+
+.timeline-property-group-label {
+  border-top: 1px solid var(--me-border-subtle);
+  border-bottom: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-panel);
+  color: var(--me-text-muted);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 9.5px;
+}
+
+.timeline-property-group > button {
+  border-bottom: 1px solid var(--me-border-subtle);
+  background: transparent;
+  color: var(--me-text-secondary);
+}
+
+.timeline-property-group > button:hover,
+.timeline-property-group > button.active {
+  background: var(--me-accent-muted);
+  color: var(--me-text-primary);
+}
+
+.timeline-property-popup > footer {
+  border-top: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-well);
+  color: var(--me-text-muted);
+}
+
+.timeline-track-tools .timeline-curve-track-picker {
+  border-color: var(--me-accent-border);
+  background: var(--me-accent-muted);
+}
+
+.timeline-track-tools .timeline-danger-button {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: var(--me-danger-bg);
+  color: var(--me-danger);
+}
+
+/* Dopesheet Grid, Sticky Ruler, Playhead & Keyframes */
+.timeline-grid-scroll,
+.timeline-grid {
+  background: var(--me-bg-base);
+}
+
+.timeline-lanes-scroll {
+  background: var(--me-bg-base);
+}
+
+.timeline-ruler-label,
+.timeline-ruler-value,
+.timeline-ruler {
+  height: 26px;
+  flex: 0 0 26px;
+  border-bottom: 1px solid var(--me-border-default);
+  background: var(--me-bg-panel);
+}
+
+.timeline-ruler-label {
+  border-right: 1px solid var(--me-border-subtle);
+  color: var(--me-text-muted);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.timeline-ruler-value {
+  border-left: 1px solid var(--me-border-subtle);
+  color: var(--me-text-muted);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.timeline-ruler span {
+  top: 6px;
+  color: var(--me-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-ruler i,
+.timeline-playhead {
+  width: 1.5px;
+  background: var(--me-danger);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.45);
+}
+
+.timeline-ruler i::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -4.5px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid var(--me-danger);
+}
+
+.timeline-track-label,
+.timeline-track-keys,
+.timeline-track-value {
+  border-bottom: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-well);
+}
+
+.timeline-track-label:nth-child(even),
+.timeline-track-keys:nth-child(even),
+.timeline-track-value:nth-child(even) {
+  background: var(--me-bg-panel);
+}
+
+.timeline-track-label {
+  border-right: 1px solid var(--me-border-subtle);
+}
+
+.timeline-track-label:hover {
+  background: var(--u-hover);
+}
+
+.timeline-track-label strong {
+  color: var(--me-text-primary);
+  font-weight: 500;
+}
+
+.timeline-track-label span {
+  color: var(--me-text-muted);
+}
+
+.timeline-track-value {
+  border-left: 1px solid var(--me-border-subtle);
+  color: var(--me-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-track-label.selected,
+.timeline-track-keys.selected,
+.timeline-track-value.selected {
+  background-color: var(--me-accent-muted);
+}
+
+.timeline-track-label.selected {
+  box-shadow: inset 2px 0 0 var(--me-accent);
+}
+
+:root[data-theme='light'] .timeline-track-keys {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(10% - 1px),
+    rgba(15, 23, 42, 0.06) calc(10% - 1px),
+    rgba(15, 23, 42, 0.06) 10%
+  );
+}
+
+.timeline-key {
+  border-radius: 1.5px;
+  border: 1px solid rgba(15, 23, 42, 0.72);
+  background: linear-gradient(135deg, #fde047, #eab308);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 80ms var(--me-ease), box-shadow 80ms var(--me-ease);
+}
+
+.timeline-key:hover {
+  background: linear-gradient(135deg, #fef08a, #facc15);
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.35);
+}
+
+.timeline-key.selected {
+  border-color: #ffffff;
+  background: linear-gradient(135deg, #60a5fa, #2563eb);
+  box-shadow: 0 0 0 1.5px rgba(15, 23, 42, 0.75), 0 0 8px rgba(59, 130, 246, 0.75);
+}
+
+.timeline-event-key {
+  background: linear-gradient(180deg, #fbbf24, #d97706);
+  border-color: rgba(15, 23, 42, 0.7);
+}
+
+.timeline-event-row {
+  background-color: var(--me-warning-bg);
+}
+
+.timeline-marquee {
+  border: 1px solid var(--me-accent-hover);
+  border-radius: 2px;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.timeline-empty-lane {
+  background: var(--me-bg-base);
+}
+
+/* Details Drawer & Curve Workspace */
+.timeline-details {
+  border-left: 1px solid var(--me-border-default);
+  background: var(--me-bg-panel);
+  box-shadow: -10px 0 24px rgba(0, 0, 0, 0.24);
+}
+
+.timeline-details > header {
+  border-bottom: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-primary);
+  font-weight: 600;
+}
+
+.timeline-details section {
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.timeline-details h3 {
+  color: var(--me-text-primary);
+}
+
+.timeline-multi-selection-summary {
+  border-radius: var(--me-radius-xs);
+  border-left: 3px solid var(--me-accent);
+  background: var(--me-accent-muted);
+  color: var(--me-text-primary);
+}
+
+.timeline-selection-frame-range {
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-well);
+  color: var(--me-text-muted);
+}
+
+.timeline-selection-frame-range strong {
+  color: var(--me-text-primary);
+}
+
+.timeline-details .timeline-selection-offset button,
+.timeline-details .timeline-selection-batch-tools button,
+.timeline-details .timeline-tangent-editors button {
+  background: var(--me-bg-elevated);
+  border-color: var(--me-border-default);
+  color: var(--me-text-secondary);
+}
+
+.timeline-details .timeline-delete-selection {
+  border-color: rgba(239, 68, 68, 0.42);
+  background: var(--me-danger-bg);
+  color: var(--me-danger);
+}
+
+.timeline-curve-editor {
+  border-bottom: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-base);
+}
+
+.timeline-curve-editor svg {
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+}
+
+.timeline-curve-workspace {
+  background: var(--me-bg-base);
+}
+
+.timeline-curve-workspace > header {
+  border-bottom: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-panel);
+}
+
+.timeline-curve-title strong {
+  color: var(--me-text-primary);
+  font-weight: 600;
+}
+
+.timeline-curve-title span {
+  color: var(--me-text-muted);
+}
+
+.timeline-curve-workspace header button {
+  border-radius: var(--me-radius-xs);
+  color: var(--me-text-secondary);
+}
+
+.timeline-curve-workspace header button:hover:not(:disabled),
+.timeline-curve-workspace header button.active {
+  background: var(--me-accent-muted);
+  color: var(--me-text-primary);
+}
+
+.timeline-curve-legend i {
+  border-radius: 999px;
+  border-color: rgba(0, 0, 0, 0.35);
+}
+
+.timeline-curve-workspace > svg {
+  background: var(--me-bg-base);
+}
+
+.timeline-curve-plot {
+  fill: var(--me-bg-well);
+  stroke: var(--me-border-default);
+}
+
+.timeline-curve-grid-line {
+  stroke: var(--me-border-subtle);
+}
+
+.timeline-curve-axis-label {
+  fill: var(--me-text-muted);
+}
+
+.timeline-curve-marquee {
+  fill: rgba(59, 130, 246, 0.18);
+  stroke: var(--me-accent-hover);
+}
+
+/* Sequencer Polish (Unified with Timeline) */
+.sequencer-toolbar {
+  background: var(--me-bg-panel);
+  border-bottom: 1px solid var(--me-border-subtle);
+  padding: 4px 8px;
+}
+
+.sequencer-live-status {
+  border-radius: 999px;
+  padding: 2px 9px;
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  background: var(--me-warning-bg);
+  color: var(--me-warning);
+  font-weight: 600;
+}
+
+.sequencer-live-status.playing {
+  border-color: rgba(34, 197, 94, 0.45);
+  background: var(--me-success-bg);
+  color: var(--me-success);
+}
+
+.sequencer-live-status.edit-preview {
+  border-color: var(--me-accent-border);
+  background: var(--me-accent-muted);
+  color: var(--me-accent-hover);
+}
+
+.sequencer-edit-controls,
+.sequencer-preview-range,
+.sequencer-zoom-controls {
+  border-color: var(--me-border-subtle);
+}
+
+.sequencer-preview-range input,
+.sequencer-director-select,
+.sequencer-tree-search {
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--u-input);
+  color: var(--me-text-primary);
+}
+
+.sequencer-tree-search input {
+  color: var(--me-text-primary);
+}
+
+.sequencer-add-track summary {
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-primary);
+  font-weight: 500;
+}
+
+.sequencer-add-track[open] summary,
+.sequencer-add-track summary:hover {
+  background: var(--u-hover);
+  border-color: var(--me-border-strong);
+}
+
+.sequencer-add-track > div {
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-strong);
+  background: var(--me-bg-popover);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--me-shadow-md);
+  padding: 4px;
+}
+
+.sequencer-toolbar .sequencer-add-track > div button {
+  border-radius: var(--me-radius-xs);
+}
+
+.sequencer-toolbar .sequencer-add-track > div button:hover {
+  background: var(--me-accent-muted);
+  color: var(--me-text-primary);
+}
+
+.sequencer-workspace {
+  background: var(--me-bg-base);
+}
+
+.sequencer-tracks {
+  border-right: 1px solid var(--me-border-subtle);
+}
+
+.sequencer-group-row,
+.sequencer-track-row {
+  border-top: 1px solid var(--me-border-subtle);
+}
+
+.sequencer-track-header {
+  border-right: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-panel);
+  color: var(--me-text-primary);
+}
+
+.sequencer-group-header {
+  background: var(--me-bg-elevated);
+}
+
+.sequencer-group-lane {
+  background: var(--me-bg-panel);
+  color: var(--me-text-muted);
+}
+
+.sequencer-ruler {
+  background: var(--me-bg-panel);
+  border-bottom: 1px solid var(--me-border-default);
+}
+
+.sequencer-lane {
+  background: var(--me-bg-base);
+}
+
+.sequencer-track-row:nth-child(even) .sequencer-lane {
+  background: var(--me-bg-well);
+}
+
+.sequencer-track-row.selected .sequencer-lane,
+.sequencer-track-row.header-selected .sequencer-track-header {
+  background: var(--me-accent-muted);
+}
+
+.sequencer-track-icon {
+  border-radius: var(--me-radius-xs);
+}
+
+.sequencer-track-state,
+.sequencer-group-header > button {
+  border-radius: var(--me-radius-xs);
+}
+
+.sequencer-playhead {
+  width: 1.5px;
+  background: var(--me-accent-hover);
+  box-shadow: 0 0 6px rgba(96, 165, 250, 0.55);
+}
+
+.sequencer-playhead::before {
+  left: -4.5px;
+  border-left-width: 5px;
+  border-right-width: 5px;
+  border-top: 7px solid var(--me-accent-hover);
+}
+
+/* Rounded, subtly beveled Sequencer track clips */
+.sequencer-activation-clip,
+.sequencer-audio-clip,
+.sequencer-animation-clip,
+.sequencer-particle-clip,
+.sequencer-control-clip,
+.sequencer-camera-clip {
+  border-radius: var(--me-radius-sm);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.28);
+  transition: filter var(--me-dur-fast) var(--me-ease),
+    box-shadow var(--me-dur-fast) var(--me-ease);
+}
+
+.sequencer-activation-clip.selected,
+.sequencer-audio-clip.selected,
+.sequencer-animation-clip.selected,
+.sequencer-particle-clip.selected,
+.sequencer-control-clip.selected,
+.sequencer-camera-clip.selected {
+  outline: none;
+  box-shadow: 0 0 0 1.5px #ffffff, 0 0 10px rgba(59, 130, 246, 0.55);
+}
+
+.sequencer-inspector {
+  background: var(--me-bg-panel);
+  color: var(--me-text-secondary);
+}
+
+.sequencer-inspector h3 {
+  color: var(--me-text-primary);
+}
+
+.sequencer-inspector input,
+.sequencer-inspector textarea,
+.sequencer-inspector button {
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+}
+
+.sequencer-inspector input,
+.sequencer-inspector textarea {
+  background: var(--u-input);
+  color: var(--me-text-primary);
+}
+
+.sequencer-inspector button {
+  background: var(--me-bg-elevated);
+  color: var(--me-text-primary);
+}
+
+.sequencer-inspector button:hover:not(:disabled) {
+  background: var(--u-hover);
+  border-color: var(--me-border-strong);
+}
+
+.sequencer-inspector button.sequencer-danger {
+  border-color: rgba(239, 68, 68, 0.42);
+  background: var(--me-danger-bg);
+  color: var(--me-danger);
+}
+
+/* Unified sleek scrollbars across Timeline & Sequencer */
+.timeline-grid-scroll,
+.timeline-details,
+.timeline-lanes-scroll,
+.sequencer-tracks,
+.sequencer-inspector {
+  scrollbar-width: thin;
+  scrollbar-color: var(--u-scroll-thumb) var(--u-scroll-track);
+}
+
+.timeline-grid-scroll::-webkit-scrollbar-track,
+.timeline-details::-webkit-scrollbar-track,
+.timeline-lanes-scroll::-webkit-scrollbar-track,
+.sequencer-tracks::-webkit-scrollbar-track,
+.sequencer-inspector::-webkit-scrollbar-track {
+  background: var(--u-scroll-track);
+}
+
+.timeline-grid-scroll::-webkit-scrollbar-thumb,
+.timeline-details::-webkit-scrollbar-thumb,
+.timeline-lanes-scroll::-webkit-scrollbar-thumb,
+.sequencer-tracks::-webkit-scrollbar-thumb,
+.sequencer-inspector::-webkit-scrollbar-thumb {
+  border: 2px solid var(--u-scroll-track);
+  border-radius: 999px;
+  background: var(--u-scroll-thumb);
+}
+
+.timeline-grid-scroll::-webkit-scrollbar-thumb:hover,
+.timeline-details::-webkit-scrollbar-thumb:hover,
+.timeline-lanes-scroll::-webkit-scrollbar-thumb:hover,
+.sequencer-tracks::-webkit-scrollbar-thumb:hover,
+.sequencer-inspector::-webkit-scrollbar-thumb:hover {
+  background: var(--u-scroll-thumb-hover);
+}

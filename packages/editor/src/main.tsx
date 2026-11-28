@@ -17,6 +17,7 @@ import { getEditorInstanceId } from './transport/editorTransport';
 import './editorWindow';
 import './styles.css';
 import './styles/tokens.css';
+import './styles/panels-polish.css';
 
 const App = lazy(async () => ({ default: (await import('./App')).App }));
 
