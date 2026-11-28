@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Pipette } from 'lucide-react';
 import { DraftNumberInput } from './DraftNumberInput';
 
 function clamp01(v: number): number {
@@ -67,6 +68,15 @@ const STUDIO_SWATCHES = [
   '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#a855f7', '#ec4899',
 ];
 
+type BrowserEyeDropper = {
+  open: () => Promise<{ sRGBHex?: string }>;
+};
+
+function createEyeDropper(): BrowserEyeDropper | null {
+  const ctor = (window as unknown as { EyeDropper?: new () => BrowserEyeDropper }).EyeDropper;
+  return typeof ctor === 'function' ? new ctor() : null;
+}
+
 export function ColorPickerPopover(props: {
   ariaLabel: string;
   r: number;
@@ -74,6 +84,7 @@ export function ColorPickerPopover(props: {
   b: number;
   a?: number;
   hasAlpha: boolean;
+  disabled?: boolean;
   onChange: (next: number[]) => void;
 }) {
   const r = clamp01(props.r);
@@ -83,15 +94,17 @@ export function ColorPickerPopover(props: {
   const hex = rgbToHex(r, g, b);
 
   const [open, setOpen] = useState(false);
+  const [unitMode, setUnitMode] = useState<'byte' | 'float'>('byte');
   const [hsv, setHsv] = useState<[number, number, number]>(() => rgbToHsv(r, g, b));
   const [hexDraft, setHexDraft] = useState(hex);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const svPadRef = useRef<HTMLDivElement>(null);
+  const supportsEyeDropper = typeof window !== 'undefined' && typeof (window as unknown as { EyeDropper?: unknown }).EyeDropper === 'function';
 
   useEffect(() => {
-    setHexDraft(hex);
+    setHexDraft(hex.toUpperCase());
     const [nh, ns, nv] = rgbToHsv(r, g, b);
     setHsv(([prevH]) => [ns > 1e-4 ? nh : prevH, ns, nv]);
   }, [r, g, b, hex]);
@@ -99,8 +112,8 @@ export function ColorPickerPopover(props: {
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
-    const width = 236;
-    const height = props.hasAlpha ? 278 : 250;
+    const width = 264;
+    const height = props.hasAlpha ? 334 : 302;
     const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
     const top = rect.bottom + 6 + height <= window.innerHeight - 8
       ? rect.bottom + 6
@@ -129,6 +142,7 @@ export function ColorPickerPopover(props: {
   }, [open]);
 
   const emitRgb = (nr: number, ng: number, nb: number, na = a) => {
+    if (props.disabled) return;
     props.onChange(props.hasAlpha ? [nr, ng, nb, na] : [nr, ng, nb]);
   };
 
@@ -146,7 +160,7 @@ export function ColorPickerPopover(props: {
   };
 
   const beginSvDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
+    if (event.button !== 0 || props.disabled) return;
     event.preventDefault();
     applySvFromClient(event.clientX, event.clientY);
     const onMove = (move: PointerEvent) => applySvFromClient(move.clientX, move.clientY);
@@ -160,24 +174,55 @@ export function ColorPickerPopover(props: {
     window.addEventListener('pointercancel', onUp);
   };
 
+  const pickWithEyeDropper = async () => {
+    const dropper = createEyeDropper();
+    if (!dropper) return;
+    try {
+      const result = await dropper.open();
+      if (result.sRGBHex) {
+        const parsed = hexToRgbNormalized(result.sRGBHex);
+        if (parsed) emitRgb(parsed[0], parsed[1], parsed[2]);
+      }
+    } catch {
+      // User cancelled eyedropper.
+    }
+  };
+
   const hueColor = rgbToHex(...hsvToRgb(hsv[0], 1, 1));
+  const rgbCss = `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
   const rgbaCss = `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${props.hasAlpha ? a : 1})`;
+  const alphaPct = Math.round(a * 100);
+  const labelSummary = props.hasAlpha && alphaPct < 100
+    ? `${hex.toUpperCase()} · ${alphaPct}%`
+    : hex.toUpperCase();
 
   return (
     <>
       <button
         ref={triggerRef}
         type="button"
+        disabled={props.disabled}
         className="me-color-trigger color-swatch"
         aria-label={props.ariaLabel}
         aria-haspopup="dialog"
         aria-expanded={open}
-        title={`${hex.toUpperCase()}${props.hasAlpha ? ` · A ${Math.round(a * 100)}%` : ''}`}
-        onClick={() => setOpen((v) => !v)}
+        title={`${hex.toUpperCase()}${props.hasAlpha ? ` · Alpha ${alphaPct}%` : ''}`}
+        onClick={() => {
+          if (!props.disabled) setOpen((v) => !v);
+        }}
       >
-        <span className="me-color-checker" aria-hidden="true" />
-        <span className="me-color-fill" style={{ backgroundColor: rgbaCss }} aria-hidden="true" />
-        <span className="me-color-hex-chip">{hex.toUpperCase()}</span>
+        <span className="me-color-split-swatch" aria-hidden="true">
+          <span className="me-color-split-solid" style={{ backgroundColor: rgbCss }} />
+          <span className="me-color-split-alpha">
+            <span className="me-color-split-alpha-fill" style={{ backgroundColor: rgbaCss }} />
+          </span>
+          {props.hasAlpha && (
+            <span className="me-color-alpha-bar">
+              <span className="me-color-alpha-bar-fill" style={{ width: `${alphaPct}%` }} />
+            </span>
+          )}
+        </span>
+        <span className="me-color-hex-chip">{labelSummary}</span>
       </button>
 
       {open && pos && createPortal(
@@ -188,6 +233,34 @@ export function ColorPickerPopover(props: {
           aria-label={`${props.ariaLabel} picker`}
           style={{ left: pos.left, top: pos.top }}
         >
+          <div className="me-color-pop-head">
+            <span className="me-color-pop-preview" aria-hidden="true">
+              <span style={{ backgroundColor: rgbaCss }} />
+            </span>
+            <span className="me-color-pop-title">{labelSummary}</span>
+            <div className="me-color-pop-tools">
+              {supportsEyeDropper && (
+                <button
+                  type="button"
+                  className="me-color-mini-btn"
+                  title="吸管取色 / Eyedropper"
+                  aria-label="Pick color from screen"
+                  onClick={() => void pickWithEyeDropper()}
+                >
+                  <Pipette size={12} aria-hidden="true" />
+                </button>
+              )}
+              <button
+                type="button"
+                className="me-color-mini-btn"
+                title="切换 0-255 / 0-1 通道数值格式"
+                onClick={() => setUnitMode((m) => (m === 'byte' ? 'float' : 'byte'))}
+              >
+                {unitMode === 'byte' ? '0–255' : '0–1'}
+              </button>
+            </div>
+          </div>
+
           <div
             ref={svPadRef}
             className="me-color-sv-pad"
@@ -223,68 +296,98 @@ export function ColorPickerPopover(props: {
             {props.hasAlpha && (
               <label className="me-color-slider-row">
                 <span>A</span>
-                <input
-                  type="range"
-                  className="me-color-alpha-range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={a}
-                  onChange={(event) => emitRgb(r, g, b, clamp01(Number(event.target.value)))}
-                />
+                <span className="me-color-alpha-track-wrap">
+                  <input
+                    type="range"
+                    className="me-color-alpha-range"
+                    aria-label="Alpha slider"
+                    style={{ background: `linear-gradient(to right, transparent, ${rgbCss})` }}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={a}
+                    onChange={(event) => emitRgb(r, g, b, clamp01(Number(event.target.value)))}
+                  />
+                </span>
               </label>
             )}
           </div>
 
-          <div className="me-color-inputs">
-            <input
-              type="text"
-              className="me-color-hex-input"
-              aria-label="Hex color"
-              value={hexDraft}
-              spellCheck={false}
-              onChange={(event) => setHexDraft(event.target.value)}
-              onBlur={() => {
-                const parsed = hexToRgbNormalized(hexDraft);
-                if (parsed) emitRgb(parsed[0], parsed[1], parsed[2]);
-                else setHexDraft(hex);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
+          <div className={`me-color-inputs${props.hasAlpha ? ' has-alpha' : ''}`}>
+            <label className="me-color-channel-box">
+              <input
+                type="text"
+                className="me-color-hex-input"
+                aria-label="Hex color"
+                value={hexDraft}
+                spellCheck={false}
+                onChange={(event) => setHexDraft(event.target.value)}
+                onBlur={() => {
                   const parsed = hexToRgbNormalized(hexDraft);
                   if (parsed) emitRgb(parsed[0], parsed[1], parsed[2]);
-                  else setHexDraft(hex);
-                  event.currentTarget.blur();
-                }
-              }}
-            />
-            <DraftNumberInput
-              value={Math.round(r * 255)}
-              min={0}
-              max={255}
-              step={1}
-              precision={0}
-              ariaLabel="Red channel"
-              onChange={(val) => emitRgb(clamp01(val / 255), g, b)}
-            />
-            <DraftNumberInput
-              value={Math.round(g * 255)}
-              min={0}
-              max={255}
-              step={1}
-              precision={0}
-              ariaLabel="Green channel"
-              onChange={(val) => emitRgb(r, clamp01(val / 255), b)}
-            />
-            <DraftNumberInput
-              value={Math.round(b * 255)}
-              min={0}
-              max={255}
-              step={1}
-              precision={0}
-              ariaLabel="Blue channel"
-              onChange={(val) => emitRgb(r, g, clamp01(val / 255))}
-            />
+                  else setHexDraft(hex.toUpperCase());
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    const parsed = hexToRgbNormalized(hexDraft);
+                    if (parsed) emitRgb(parsed[0], parsed[1], parsed[2]);
+                    else setHexDraft(hex.toUpperCase());
+                    event.currentTarget.blur();
+                  }
+                }}
+              />
+              <span>HEX</span>
+            </label>
+            <label className="me-color-channel-box">
+              <DraftNumberInput
+                value={unitMode === 'byte' ? Math.round(r * 255) : Number(r.toFixed(3))}
+                min={0}
+                max={unitMode === 'byte' ? 255 : 1}
+                step={unitMode === 'byte' ? 1 : 0.01}
+                precision={unitMode === 'byte' ? 0 : 3}
+                ariaLabel="Red channel"
+                onChange={(val) => emitRgb(clamp01(unitMode === 'byte' ? val / 255 : val), g, b)}
+              />
+              <span>R</span>
+            </label>
+            <label className="me-color-channel-box">
+              <DraftNumberInput
+                value={unitMode === 'byte' ? Math.round(g * 255) : Number(g.toFixed(3))}
+                min={0}
+                max={unitMode === 'byte' ? 255 : 1}
+                step={unitMode === 'byte' ? 1 : 0.01}
+                precision={unitMode === 'byte' ? 0 : 3}
+                ariaLabel="Green channel"
+                onChange={(val) => emitRgb(r, clamp01(unitMode === 'byte' ? val / 255 : val), b)}
+              />
+              <span>G</span>
+            </label>
+            <label className="me-color-channel-box">
+              <DraftNumberInput
+                value={unitMode === 'byte' ? Math.round(b * 255) : Number(b.toFixed(3))}
+                min={0}
+                max={unitMode === 'byte' ? 255 : 1}
+                step={unitMode === 'byte' ? 1 : 0.01}
+                precision={unitMode === 'byte' ? 0 : 3}
+                ariaLabel="Blue channel"
+                onChange={(val) => emitRgb(r, g, clamp01(unitMode === 'byte' ? val / 255 : val))}
+              />
+              <span>B</span>
+            </label>
+            {props.hasAlpha && (
+              <label className="me-color-channel-box">
+                <DraftNumberInput
+                  value={unitMode === 'byte' ? Math.round(a * 255) : Number(a.toFixed(3))}
+                  min={0}
+                  max={unitMode === 'byte' ? 255 : 1}
+                  step={unitMode === 'byte' ? 1 : 0.01}
+                  precision={unitMode === 'byte' ? 0 : 3}
+                  ariaLabel="Alpha channel"
+                  onChange={(val) => emitRgb(r, g, b, clamp01(unitMode === 'byte' ? val / 255 : val))}
+                />
+                <span>A</span>
+              </label>
+            )}
           </div>
 
           <div className="me-color-swatches">

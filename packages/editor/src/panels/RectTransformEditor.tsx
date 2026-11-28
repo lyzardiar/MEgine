@@ -19,6 +19,7 @@ function Axis(props: {
   ariaLabel: string;
   value: number;
   onChange: (v: number) => void;
+  onReset?: () => void;
   step?: number;
   disabled?: boolean;
   drivenBy?: string;
@@ -39,8 +40,9 @@ function Axis(props: {
         className={`scrub-label ${cls}${props.disabled ? ' disabled' : ''}`}
         data-agent-drag-by="true"
         aria-label={`Adjust ${props.ariaLabel}`}
-        title={props.drivenBy ? `Driven by ${props.drivenBy}` : '拖拽调节数值 · Shift 精细 · Alt 加速 · Ctrl 吸附'}
+        title={props.drivenBy ? `Driven by ${props.drivenBy}` : '拖拽调节数值 · Shift 精细 · Alt 加速 · 双击重置'}
         onPointerDown={props.disabled ? undefined : onPointerDown}
+        onDoubleClick={props.disabled ? undefined : props.onReset}
       >
         {props.label.toUpperCase()}
       </span>
@@ -143,6 +145,36 @@ export function RectTransformEditor(props: {
             {rt.anchor_min.map((value) => value.toFixed(2)).join(', ')} →{' '}
             {rt.anchor_max.map((value) => value.toFixed(2)).join(', ')}
           </span>
+          <div className="rect-quick-actions">
+            <button
+              type="button"
+              title="居中锚点并归零偏移 (0.5, 0.5)"
+              onClick={() => set({ anchor_min: [0.5, 0.5], anchor_max: [0.5, 0.5], pivot: [0.5, 0.5], anchored_position: [0, 0] })}
+            >
+              Center
+            </button>
+            <button
+              type="button"
+              title="铺满父容器 (Stretch 0,0 → 1,1)"
+              onClick={() => set({ anchor_min: [0, 0], anchor_max: [1, 1], pivot: [0.5, 0.5], anchored_position: [0, 0], size_delta: [0, 0] })}
+            >
+              Fill
+            </button>
+            <button
+              type="button"
+              title="归零当前位置偏移"
+              onClick={() => set({ anchored_position: [0, 0] })}
+            >
+              Pos 0
+            </button>
+            <button
+              type="button"
+              title="互换宽度与高度"
+              onClick={() => set({ size_delta: [rt.size_delta[1], rt.size_delta[0]] })}
+            >
+              W↔H
+            </button>
+          </div>
         </div>
         {presetOpen && (
           <div
@@ -222,8 +254,8 @@ export function RectTransformEditor(props: {
       )}
       <div className="axis-row">
         <label>Pivot</label>
-        <Axis label="x" ariaLabel="Pivot X" value={rt.pivot[0]} step={0.05} onChange={(v) => setV2('pivot', 0, v)} />
-        <Axis label="y" ariaLabel="Pivot Y" value={rt.pivot[1]} step={0.05} onChange={(v) => setV2('pivot', 1, v)} />
+        <Axis label="x" ariaLabel="Pivot X" value={rt.pivot[0]} step={0.05} onChange={(v) => setV2('pivot', 0, v)} onReset={() => setV2('pivot', 0, 0.5)} />
+        <Axis label="y" ariaLabel="Pivot Y" value={rt.pivot[1]} step={0.05} onChange={(v) => setV2('pivot', 1, v)} onReset={() => setV2('pivot', 1, 0.5)} />
       </div>
       <div className="axis-row">
         <label>Horizontal</label>
@@ -271,12 +303,13 @@ export function RectTransformEditor(props: {
           value={rt.local_rotation}
           step={1}
           onChange={(v) => set({ local_rotation: v })}
+          onReset={() => set({ local_rotation: 0 })}
         />
       </div>
       <div className="axis-row">
         <label>Scale</label>
-        <Axis label="x" ariaLabel="Scale X" value={rt.local_scale[0]} onChange={(v) => setV2('local_scale', 0, v)} />
-        <Axis label="y" ariaLabel="Scale Y" value={rt.local_scale[1]} onChange={(v) => setV2('local_scale', 1, v)} />
+        <Axis label="x" ariaLabel="Scale X" value={rt.local_scale[0]} onChange={(v) => setV2('local_scale', 0, v)} onReset={() => setV2('local_scale', 0, 1)} />
+        <Axis label="y" ariaLabel="Scale Y" value={rt.local_scale[1]} onChange={(v) => setV2('local_scale', 1, v)} onReset={() => setV2('local_scale', 1, 1)} />
       </div>
     </>
   );

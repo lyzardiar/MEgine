@@ -16,6 +16,7 @@ import {
   Box,
   ChevronDown,
   ChevronRight,
+  Link2,
   Plus,
   FoldVertical,
   Lock,
@@ -23,8 +24,10 @@ import {
   MoreVertical,
   Package,
   PanelTop,
+  RotateCcw,
   Search,
   UnfoldVertical,
+  Unlink2,
   X,
 } from 'lucide-react';
 import { getBehaviour } from '@mengine/behaviour';
@@ -205,6 +208,7 @@ function AxisInput(props: {
   ariaLabel?: string;
   value: number;
   onChange: (v: number) => void;
+  onReset?: () => void;
   step?: number;
   mixed?: boolean;
 }) {
@@ -216,8 +220,9 @@ function AxisInput(props: {
         className={`${props.label} scrub-label`}
         data-agent-drag-by="true"
         aria-label={`Adjust ${props.ariaLabel ?? props.label.toUpperCase()}`}
-        title="拖拽调节数值 · Shift 加速 · Alt 精细"
+        title={props.onReset ? '拖拽调节数值 · Shift 加速 · Alt 精细 · 双击重置' : '拖拽调节数值 · Shift 加速 · Alt 精细'}
         onPointerDown={onScrub}
+        onDoubleClick={props.onReset}
       >
         {props.label.toUpperCase()}
       </span>
@@ -385,6 +390,24 @@ function CompBlock(props: {
           <span className="comp-title">{props.title}</span>
         </button>
         <div className="comp-head-actions">
+          {(() => {
+            const resetItem = menuItems.find((item) => item.label === 'Reset' && !item.disabled);
+            if (!resetItem) return null;
+            return (
+              <button
+                type="button"
+                className="comp-quick-reset"
+                title={`Reset ${props.title}`}
+                aria-label={`Reset ${props.title}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  resetItem.onClick();
+                }}
+              >
+                <RotateCcw size={12} aria-hidden="true" />
+              </button>
+            );
+          })()}
           {menuItems.length > 0 && (
             <>
               <button
@@ -1977,6 +2000,8 @@ export function Inspector(props: {
     });
   };
 
+  const [uniformScale, setUniformScale] = useState(false);
+
   useEffect(() => {
     setNameDraft(inspectedEntity?.name ?? (inspectedEntity ? `Entity ${inspectedEntity.entity}` : ''));
   }, [inspectedEntity?.entity, inspectedEntity?.name]);
@@ -2099,7 +2124,22 @@ export function Inspector(props: {
   };
   const setScale = (i: number, v: number) => {
     const scale = [...t.scale] as [number, number, number];
-    scale[i] = v;
+    if (uniformScale) {
+      const prev = scale[i];
+      if (Math.abs(prev) > 1e-6) {
+        const ratio = v / prev;
+        scale[0] = Number((scale[0] * ratio).toFixed(4));
+        scale[1] = Number((scale[1] * ratio).toFixed(4));
+        scale[2] = Number((scale[2] * ratio).toFixed(4));
+        scale[i] = v;
+      } else {
+        scale[0] = v;
+        scale[1] = v;
+        scale[2] = v;
+      }
+    } else {
+      scale[i] = v;
+    }
     props.onChangeTransform(entity.entity, { ...t, scale });
   };
 
@@ -2291,34 +2331,50 @@ export function Inspector(props: {
           )}
         >
           <div className="axis-row">
-            <label>Position</label>
+            <label
+              className="insp-resettable-label"
+              title="双击重置 Position 为 (0, 0, 0)"
+              onDoubleClick={() => props.onChangeTransform(entity.entity, { ...t, position: [0, 0, 0] })}
+            >
+              Position
+            </label>
             <AxisInput
               ariaLabel={axisSemanticLabel('Transform', 'Position', 'x')}
               label="x"
               value={t.position[0]}
               onChange={(v) => setPos(0, v)}
+              onReset={() => setPos(0, 0)}
             />
             <AxisInput
               ariaLabel={axisSemanticLabel('Transform', 'Position', 'y')}
               label="y"
               value={t.position[1]}
               onChange={(v) => setPos(1, v)}
+              onReset={() => setPos(1, 0)}
             />
             <AxisInput
               ariaLabel={axisSemanticLabel('Transform', 'Position', 'z')}
               label="z"
               value={t.position[2]}
               onChange={(v) => setPos(2, v)}
+              onReset={() => setPos(2, 0)}
             />
           </div>
           <div className="axis-row">
-            <label>Rotation</label>
+            <label
+              className="insp-resettable-label"
+              title="双击重置 Rotation 为 (0, 0, 0)"
+              onDoubleClick={() => props.onChangeTransform(entity.entity, { ...t, rotation: [0, 0, 0, 1] })}
+            >
+              Rotation
+            </label>
             <AxisInput
               ariaLabel={axisSemanticLabel('Transform', 'Rotation', 'x')}
               label="x"
               value={euler[0]}
               step={1}
               onChange={(v) => setRot(0, v)}
+              onReset={() => setRot(0, 0)}
             />
             <AxisInput
               ariaLabel={axisSemanticLabel('Transform', 'Rotation', 'y')}
@@ -2326,6 +2382,7 @@ export function Inspector(props: {
               value={euler[1]}
               step={1}
               onChange={(v) => setRot(1, v)}
+              onReset={() => setRot(1, 0)}
             />
             <AxisInput
               ariaLabel={axisSemanticLabel('Transform', 'Rotation', 'z')}
@@ -2333,27 +2390,49 @@ export function Inspector(props: {
               value={euler[2]}
               step={1}
               onChange={(v) => setRot(2, v)}
+              onReset={() => setRot(2, 0)}
             />
           </div>
-          <div className="axis-row">
-            <label>Scale</label>
+          <div className="axis-row axis-row-scale">
+            <label className="insp-scale-label-wrap">
+              <span
+                className="insp-resettable-label"
+                title="双击重置 Scale 为 (1, 1, 1)"
+                onDoubleClick={() => props.onChangeTransform(entity.entity, { ...t, scale: [1, 1, 1] })}
+              >
+                Scale
+              </span>
+              <button
+                type="button"
+                className={`insp-scale-lock-btn${uniformScale ? ' active' : ''}`}
+                aria-label="Lock uniform scale"
+                aria-pressed={uniformScale}
+                title={uniformScale ? '已锁定等比缩放（点击解除）' : '点击锁定 XYZ 等比缩放'}
+                onClick={() => setUniformScale((locked) => !locked)}
+              >
+                {uniformScale ? <Link2 size={11} aria-hidden="true" /> : <Unlink2 size={11} aria-hidden="true" />}
+              </button>
+            </label>
             <AxisInput
               ariaLabel={axisSemanticLabel('Transform', 'Scale', 'x')}
               label="x"
               value={t.scale[0]}
               onChange={(v) => setScale(0, v)}
+              onReset={() => setScale(0, 1)}
             />
             <AxisInput
               ariaLabel={axisSemanticLabel('Transform', 'Scale', 'y')}
               label="y"
               value={t.scale[1]}
               onChange={(v) => setScale(1, v)}
+              onReset={() => setScale(1, 1)}
             />
             <AxisInput
               ariaLabel={axisSemanticLabel('Transform', 'Scale', 'z')}
               label="z"
               value={t.scale[2]}
               onChange={(v) => setScale(2, v)}
+              onReset={() => setScale(2, 1)}
             />
           </div>
         </CompBlock>

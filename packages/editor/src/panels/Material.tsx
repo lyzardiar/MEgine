@@ -32,6 +32,7 @@ import {
   type ProjectFileAsset,
 } from '../projectAssets';
 import { pingProjectAsset } from '../pingBus';
+import { ColorPickerPopover } from '../components/ui/ColorPickerPopover';
 import {
   registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
@@ -999,15 +1000,19 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
                 );
                 if (parameter.type === 'color') {
                   return (
-                    <label key={parameter.name} className="material-color-row">
-                      {parameter.label}
-                      <input type="color" value={colorHex(value)} onChange={(event) => {
-                        const [r, g, b] = parseHex(event.target.value);
-                        updateParameter([r, g, b, value[3]]);
-                      }} />
-                      <input aria-label={`${parameter.label} alpha`} type="number" min={0} max={1} step={0.01} value={value[3]} onChange={(event) => updateParameter([value[0], value[1], value[2], Number(event.target.value)])} />
+                    <div key={parameter.name} className="material-color-row">
+                      <span>{parameter.label}</span>
+                      <ColorPickerPopover
+                        ariaLabel={parameter.label}
+                        r={value[0]}
+                        g={value[1]}
+                        b={value[2]}
+                        a={value[3]}
+                        hasAlpha={true}
+                        onChange={(next) => updateParameter([next[0] ?? 1, next[1] ?? 1, next[2] ?? 1, next[3] ?? 1])}
+                      />
                       <button type="button" disabled={!overridden} onClick={reset}>Reset</button>
-                    </label>
+                    </div>
                   );
                 }
                 const components = surfaceShaderParameterComponents(parameter.type);
@@ -1079,13 +1084,18 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
             </span>
           </label>
 
-          <label className="material-color-row">Base Color
-            <input type="color" value={baseRgb} onChange={(event) => {
-              const [r, g, b] = parseHex(event.target.value);
-              update('base_color', [r, g, b, material.base_color[3]]);
-            }} />
-            <input aria-label="Base color alpha" type="number" min={0} max={1} step={0.01} value={material.base_color[3]} onChange={(event) => update('base_color', [material.base_color[0], material.base_color[1], material.base_color[2], Number(event.target.value)])} />
-          </label>
+          <div className="material-color-row">
+            <span>Base Color</span>
+            <ColorPickerPopover
+              ariaLabel="Base Color"
+              r={material.base_color[0]}
+              g={material.base_color[1]}
+              b={material.base_color[2]}
+              a={material.base_color[3]}
+              hasAlpha={true}
+              onChange={(next) => update('base_color', [next[0] ?? 1, next[1] ?? 1, next[2] ?? 1, next[3] ?? 1])}
+            />
+          </div>
 
           <label>Metallic <input type="range" min={0} max={1} step={0.01} value={material.metallic} onChange={(event) => update('metallic', Number(event.target.value))} /><output>{material.metallic.toFixed(2)}</output></label>
           <label>Roughness <input type="range" min={0.04} max={1} step={0.01} value={material.roughness} onChange={(event) => update('roughness', Number(event.target.value))} /><output>{material.roughness.toFixed(2)}</output></label>
@@ -1099,9 +1109,17 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
             {material.clearcoat > 0 && <label>Coat Roughness <input type="range" min={0.04} max={1} step={0.01} value={material.clearcoat_roughness} onChange={(event) => update('clearcoat_roughness', Number(event.target.value))} /><output>{material.clearcoat_roughness.toFixed(2)}</output></label>}
           </>}
 
-          <label className="material-color-row">Emissive
-            <input type="color" value={emissiveRgb} onChange={(event) => update('emissive', parseHex(event.target.value))} />
-          </label>
+          <div className="material-color-row">
+            <span>Emissive</span>
+            <ColorPickerPopover
+              ariaLabel="Emissive"
+              r={material.emissive[0]}
+              g={material.emissive[1]}
+              b={material.emissive[2]}
+              hasAlpha={false}
+              onChange={(next) => update('emissive', [next[0] ?? 0, next[1] ?? 0, next[2] ?? 0])}
+            />
+          </div>
           <label>Emission Strength <input type="number" min={0} step={0.1} value={material.emissive_strength} onChange={(event) => update('emissive_strength', Number(event.target.value))} /></label>
           <label className="material-check"><input type="checkbox" checked={material.double_sided} onChange={(event) => update('double_sided', event.target.checked)} /> Double Sided</label>
           {material.surface === 'cutout' && (

@@ -6,6 +6,7 @@ import {
   type FocusEvent as ReactFocusEvent,
 } from 'react';
 import { Redo2, Undo2 } from 'lucide-react';
+import { ColorPickerPopover } from '../components/ui/ColorPickerPopover';
 import { NativeMaterialPreview } from './NativeMaterialPreview';
 import {
   createMaterialAsset,
@@ -915,29 +916,42 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
             </select>
             <button type="button" disabled={parentMissing} onClick={() => props.onOpenAsset(instance.parent)}>Open</button>
           </label>
-          <label className={`material-instance-row material-instance-color${overridden('base_color') ? '' : ' inherited'}`}>
+          <div className={`material-instance-row material-instance-color${overridden('base_color') ? '' : ' inherited'}`}>
             <input aria-label="Override Base Color" type="checkbox" checked={overridden('base_color')} disabled={!effective} onChange={(event) => toggleOverride('base_color', event.target.checked)} />
             <span>Base Color<small>{overridden('base_color') ? 'Override' : 'Inherited'}</small></span>
             <span className="material-instance-color-controls">
-              <input aria-label="Base Color" type="color" disabled={!overridden('base_color')} value={colorHex(displayed.base_color)} onChange={(event) => {
-                const rgb = parseHex(event.target.value);
-                setOverride('base_color', [...rgb, displayed.base_color[3]]);
-              }} />
-              <input aria-label="Base Color Alpha" type="number" min={0} max={1} step={0.01} disabled={!overridden('base_color')} value={displayed.base_color[3]} onChange={(event) => setOverride('base_color', [
-                displayed.base_color[0], displayed.base_color[1], displayed.base_color[2], Number(event.target.value),
-              ])} />
+              <ColorPickerPopover
+                ariaLabel="Base Color"
+                disabled={!overridden('base_color')}
+                r={displayed.base_color[0]}
+                g={displayed.base_color[1]}
+                b={displayed.base_color[2]}
+                a={displayed.base_color[3]}
+                hasAlpha={true}
+                onChange={(next) => setOverride('base_color', [next[0] ?? 1, next[1] ?? 1, next[2] ?? 1, next[3] ?? 1])}
+              />
             </span>
-          </label>
+          </div>
           {scalarRow('metallic', 0, 1, 0.01)}
           {scalarRow('roughness', 0.04, 1, 0.01)}
           {scalarRow('ior', 1, 2.5, 0.01)}
           {scalarRow('clearcoat', 0, 1, 0.01)}
           {scalarRow('clearcoat_roughness', 0.04, 1, 0.01)}
-          <label className={`material-instance-row material-instance-color${overridden('emissive') ? '' : ' inherited'}`}>
+          <div className={`material-instance-row material-instance-color${overridden('emissive') ? '' : ' inherited'}`}>
             <input aria-label="Override Emission" type="checkbox" checked={overridden('emissive')} disabled={!effective} onChange={(event) => toggleOverride('emissive', event.target.checked)} />
             <span>Emission<small>{overridden('emissive') ? 'Override' : 'Inherited'}</small></span>
-            <input aria-label="Emission" type="color" disabled={!overridden('emissive')} value={colorHex(displayed.emissive)} onChange={(event) => setOverride('emissive', parseHex(event.target.value))} />
-          </label>
+            <span className="material-instance-color-controls">
+              <ColorPickerPopover
+                ariaLabel="Emission"
+                disabled={!overridden('emissive')}
+                r={displayed.emissive[0]}
+                g={displayed.emissive[1]}
+                b={displayed.emissive[2]}
+                hasAlpha={false}
+                onChange={(next) => setOverride('emissive', [next[0] ?? 0, next[1] ?? 0, next[2] ?? 0])}
+              />
+            </span>
+          </div>
           {scalarRow('emissive_strength', 0, 65_504, 0.1)}
           {displayed.shader === 'custom' && reflectedParameterError && (
             <div className="material-parameter-error">
@@ -1063,27 +1077,17 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
                 const componentCount = surfaceShaderParameterComponents(parameter.type);
                 const controls = parameter.type === 'color' ? (
                   <span className="material-instance-color-controls">
-                    <input
-                      aria-label={parameter.label}
-                      type="color"
+                    <ColorPickerPopover
+                      ariaLabel={parameter.label}
                       disabled={!isOverridden}
-                      value={colorHex(value)}
-                      onChange={(event) => {
-                        const [r, g, b] = parseHex(event.target.value);
-                        setCustomParameter(parameter.name, [r, g, b, value[3]]);
-                      }}
-                    />
-                    <input
-                      aria-label={`${parameter.label} Alpha`}
-                      type="number"
-                      min={parameter.min ?? undefined}
-                      max={parameter.max ?? undefined}
-                      step={0.01}
-                      disabled={!isOverridden}
-                      value={value[3]}
-                      onChange={(event) => setCustomParameter(
+                      r={value[0]}
+                      g={value[1]}
+                      b={value[2]}
+                      a={value[3]}
+                      hasAlpha={true}
+                      onChange={(next) => setCustomParameter(
                         parameter.name,
-                        [value[0], value[1], value[2], Number(event.target.value)],
+                        [next[0] ?? 1, next[1] ?? 1, next[2] ?? 1, next[3] ?? 1],
                       )}
                     />
                   </span>

@@ -94,7 +94,7 @@ export function ColorField(props: {
   return (
     <div className="field-row">
       <label>{props.label}</label>
-      <div className="color-field">
+      <div className="color-field color-field-unified">
         <ColorPickerPopover
           ariaLabel={`${props.label} color`}
           r={arr[0] ?? 1}
@@ -104,23 +104,6 @@ export function ColorField(props: {
           hasAlpha={hasAlpha}
           onChange={props.onChange}
         />
-        {hasAlpha && (
-          <label className="color-alpha-wrap" title="Alpha">
-            <span>A</span>
-            <DraftNumberInput
-              className="color-alpha"
-              ariaLabel={`${props.label} alpha`}
-              min={0}
-              max={1}
-              step={0.01}
-              precision={3}
-              value={a}
-              onChange={(next) => {
-                props.onChange([arr[0] ?? 1, arr[1] ?? 1, arr[2] ?? 1, next]);
-              }}
-            />
-          </label>
-        )}
       </div>
     </div>
   );
