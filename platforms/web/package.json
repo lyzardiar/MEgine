@@ -1,0 +1,11 @@
+{
+  "name": "@mengine/web-player",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lightweight Web/WASM MEngine Player using browser-native JS execution, WebGPU/WebGL2, and WebAudio",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build"
+  }
+}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>MEngine Web Player</title>
+    <style>
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #101318;
+        color: #e8edf5;
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+      }
+      #mengine-canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        touch-action: none;
+      }
+      #mengine-hud {
+        position: fixed;
+        left: 12px;
+        bottom: 12px;
+        padding: 5px 10px;
+        border-radius: 6px;
+        background: rgba(16, 19, 24, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        font: 11px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+        color: #b6c0cf;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="mengine-canvas" aria-label="MEngine Web Viewport"></canvas>
+    <div id="mengine-hud" role="status">Booting MEngine Web Player…</div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

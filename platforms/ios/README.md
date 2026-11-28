@@ -1,16 +1,8 @@
-# iOS Player (stub)
+# iOS Player (Adapter Reserved)
 
-MEngine iOS player will ship `mengine` as a static library + thin Swift entry, Metal via wgpu.
-
-## Planned layout
-
-```
-platforms/ios/
-  MEnginePlayer/       # Xcode project
-  bridging/            # Swift ↔ Rust C ABI
-```
-
-## Notes
-
-- App Store background / audio limits apply  
-- Authoring stays on PC editor  
+iOS support reserves a clean C-ABI + Swift/Metal adapter contract (`mengine-platform::IosAdapter`, `SupportStage::AdapterReserved`):
+- **Graphics**: Metal via `wgpu` (`CAMetalLayer`)
+- **Script Runtime**: `quickjs-runtime` (`NativeQuickJs`) to comply with Apple's W^X JIT restriction on iOS App Store builds.
+- **Files**:
+  - `bridging/mengine_ios.h` — C-ABI surface, lifecycle, safe-area, and touch declarations
+  - `MEnginePlayer/MEngineBridge.swift` — Swift adapter stub ready for XCFramework linking
