@@ -13,8 +13,12 @@ import {
   Grid3X3,
   Magnet,
   Minus,
+  Move,
   Paintbrush,
   Plus,
+  RotateCw,
+  Scaling,
+  Scan,
   ScanLine,
 } from 'lucide-react';
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
@@ -613,6 +617,9 @@ export function Viewport(props: {
   gizmo: GizmoMode;
   pivotMode: ToolPivotMode;
   handleOrientation: ToolHandleOrientation;
+  onGizmo?: (mode: GizmoMode) => void;
+  onPivotMode?: (mode: ToolPivotMode) => void;
+  onHandleOrientation?: (orientation: ToolHandleOrientation) => void;
   playing: boolean;
   onPlayInput?: (input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'wheelDelta' | 'viewport' | 'buttons'>>) => void;
   sceneCamera: SceneCamera;
@@ -5150,6 +5157,72 @@ export function Viewport(props: {
     <div className="viewport-wrap">
       {props.tab === 'scene' && (
         <div className="game-toolbar scene-toolbar">
+          {props.onGizmo && (
+            <div className="scene-toolbar-group scene-gizmo-hud" role="toolbar" aria-label="Transform tools">
+              <div className="orient-toggle">
+                <button
+                  type="button"
+                  className={props.gizmo === 'translate' ? 'active' : ''}
+                  aria-label="Move tool"
+                  aria-pressed={props.gizmo === 'translate'}
+                  title="Move (W)"
+                  onClick={() => props.onGizmo?.('translate')}
+                >
+                  <Move size={13} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className={props.gizmo === 'rotate' ? 'active' : ''}
+                  aria-label="Rotate tool"
+                  aria-pressed={props.gizmo === 'rotate'}
+                  title="Rotate (E)"
+                  onClick={() => props.onGizmo?.('rotate')}
+                >
+                  <RotateCw size={13} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className={props.gizmo === 'scale' ? 'active' : ''}
+                  aria-label="Scale tool"
+                  aria-pressed={props.gizmo === 'scale'}
+                  title="Scale (R)"
+                  onClick={() => props.onGizmo?.('scale')}
+                >
+                  <Scaling size={13} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className={props.gizmo === 'rect' ? 'active' : ''}
+                  aria-label="Rect tool"
+                  aria-pressed={props.gizmo === 'rect'}
+                  title="Rect Tool (T)"
+                  onClick={() => props.onGizmo?.('rect')}
+                >
+                  <Scan size={13} aria-hidden />
+                </button>
+              </div>
+              {props.onPivotMode && (
+                <button
+                  type="button"
+                  className="scene-grid-toggle scene-hud-pill"
+                  title="Handle Position: Pivot / Center"
+                  onClick={() => props.onPivotMode?.(props.pivotMode === 'pivot' ? 'center' : 'pivot')}
+                >
+                  {props.pivotMode === 'pivot' ? 'Pivot' : 'Center'}
+                </button>
+              )}
+              {props.onHandleOrientation && (
+                <button
+                  type="button"
+                  className="scene-grid-toggle scene-hud-pill"
+                  title="Handle Orientation: Local / Global"
+                  onClick={() => props.onHandleOrientation?.(props.handleOrientation === 'local' ? 'global' : 'local')}
+                >
+                  {props.handleOrientation === 'local' ? 'Local' : 'Global'}
+                </button>
+              )}
+            </div>
+          )}
           <div className="scene-toolbar-group">
             <div className="orient-toggle" title="2D：锁定正视 Canvas，仅平移/缩放">
               <button

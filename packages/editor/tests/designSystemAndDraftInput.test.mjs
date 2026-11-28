@@ -31,7 +31,7 @@ test('i18n defaults to zh-CN, interpolates params, and toggles cleanly with them
   const server = await createServer({ root, server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
   try {
     const { getLocale, setLocale, t } = await server.ssrLoadModule('/src/i18n/index.ts');
-    const { getTheme, setTheme, toggleTheme } = await server.ssrLoadModule('/src/theme/index.ts');
+    const { getTheme, setTheme, toggleTheme, getAccent, setAccent, cycleAccent } = await server.ssrLoadModule('/src/theme/index.ts');
 
     assert.equal(getLocale(), 'zh-CN');
     assert.equal(t('hub.recentCount', { count: 3, limit: 12 }), '共 3/12 个最近工程');
@@ -43,6 +43,12 @@ test('i18n defaults to zh-CN, interpolates params, and toggles cleanly with them
     assert.equal(toggleTheme(), 'light');
     assert.equal(getTheme(), 'light');
     setTheme('dark');
+
+    assert.equal(getAccent(), 'pink');
+    assert.equal(cycleAccent(), 'cobalt');
+    assert.equal(cycleAccent(), 'emerald');
+    assert.equal(cycleAccent(), 'pink');
+    setAccent('pink');
   } finally {
     await server.close();
   }

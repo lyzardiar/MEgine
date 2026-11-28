@@ -44,7 +44,10 @@ import {
   writeScene,
 } from './sceneLibrary';
 import { MenuBar } from './panels/MenuBar';
-import { ToolBar } from './panels/ToolBar';
+import { IdeTopBar } from './panels/IdeTopBar';
+import { ActivityRail } from './panels/ActivityRail';
+import { AiAgentSidebar } from './panels/AiAgentSidebar';
+import { buildConsoleRows } from './consoleModel';
 import {
   broadcastProjectAssetsExternalChanges,
   OPEN_ANIMATION_CLIP_EVENT,
@@ -86,6 +89,7 @@ import { resourceEditorPreservesDrafts } from './agent/resourceTargets';
 import { formatConsoleLog, logService } from './agent/LogService';
 import { BridgeError, type PanelLayoutSnapshot } from './agent/protocol';
 import { EditorWindowHost } from './editorWindow';
+import { PreferencesWindow } from './editorWindow/windows/PreferencesWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
 import {
   refreshSprites,
@@ -272,6 +276,7 @@ const WORKSPACE_PEER_CHECK_MS = 1_000;
 export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const { t, toggleLocale } = useI18n();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const undoService = useMemo(() => createEditorUndoService(), []);
   const store = useMemo(() => createEditorStore(undoService), [undoService]);
   const [, setUndoRevision] = useState(undoService.revision);
@@ -2872,6 +2877,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         setPaletteOpen((open) => !open);
         return;
       }
+      if (ctrl && !e.altKey && e.shiftKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        setAiOpen((open) => !open);
+        return;
+      }
       if (isTypingTarget(e.target)) return;
       const playbackAction = playbackShortcut(e);
       if (playbackAction) {
@@ -3024,62 +3034,76 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const authoredInspectorEntities = timelinePreviewActive
     ? authoredEntities
     : snap.entities;
+  const ideLogCounts = useMemo(
+    () => buildConsoleRows(logs, new Set(['info', 'warn', 'error']), '', false).counts,
+    [logs],
+  );
+  const primarySelectedId = selectedIds[0] ?? null;
+  const primarySelectedEntity = useMemo(
+    () => (primarySelectedId != null ? snap.entities.find((entity) => entity.entity === primarySelectedId) ?? null : null),
+    [primarySelectedId, snap.entities],
+  );
+  const focusDockPanel = (panel: PanelKind) => {
+    window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: panel }));
+  };
+
+  const menuBarElement = (
+    <MenuBar
+      onNew={newScene}
+      onSave={saveScene}
+      onSaveAll={() => void saveEverything()}
+      onSaveAs={saveSceneAs}
+      onLoad={openSceneDialog}
+      onCloseProject={() => void requestProjectClose()}
+      onExit={() => void requestEditorClose('application')}
+      onUndo={() => {
+        store.undo();
+        refresh();
+      }}
+      onRedo={() => {
+        store.redo();
+        refresh();
+      }}
+      onCut={() => {
+        if (store.cutSelection()) log('Cut');
+      }}
+      onCopy={() => {
+        if (store.copySelection()) log('Copy');
+      }}
+      onPaste={() => {
+        if (!store.paste()) return;
+        log('Paste');
+        refresh();
+      }}
+      onDuplicate={() => {
+        if (store.duplicateSelection() == null) return;
+        log('Duplicate');
+        refresh();
+      }}
+      onDelete={() => {
+        if (!store.deleteSelection()) return;
+        log('Delete');
+        refresh();
+      }}
+      onSelectAll={() => {
+        store.selectAllVisible();
+        refresh();
+      }}
+      store={store}
+      selectedIds={selectedIds}
+      onRefresh={refresh}
+      onLog={log}
+    />
+  );
 
   return (
     <div className={`unity-shell${props.detachedPanel ? ' detached-shell' : ''}`}>
-      <MenuBar
-        onNew={newScene}
-        onSave={saveScene}
-        onSaveAll={() => void saveEverything()}
-        onSaveAs={saveSceneAs}
-        onLoad={openSceneDialog}
-        onCloseProject={() => void requestProjectClose()}
-        onExit={() => void requestEditorClose('application')}
-        onUndo={() => {
-          store.undo();
-          refresh();
-        }}
-        onRedo={() => {
-          store.redo();
-          refresh();
-        }}
-        onCut={() => {
-          if (store.cutSelection()) log('Cut');
-        }}
-        onCopy={() => {
-          if (store.copySelection()) log('Copy');
-        }}
-        onPaste={() => {
-          if (!store.paste()) return;
-          log('Paste');
-          refresh();
-        }}
-        onDuplicate={() => {
-          if (store.duplicateSelection() == null) return;
-          log('Duplicate');
-          refresh();
-        }}
-        onDelete={() => {
-          if (!store.deleteSelection()) return;
-          log('Delete');
-          refresh();
-        }}
-        onSelectAll={() => {
-          store.selectAllVisible();
-          refresh();
-        }}
-        store={store}
-        selectedIds={selectedIds}
-        onRefresh={refresh}
-        onLog={log}
-      />
-
-      <ToolBar
-        mode={mode}
-        gizmo={gizmo}
-        pivotMode={pivotMode}
-        handleOrientation={handleOrientation}
+      <IdeTopBar
+        menuSlot={menuBarElement}
+        sceneName={sceneName}
         sceneDirty={sceneDirty}
+        mode={mode}
+        aiOpen={aiOpen}
         onUndo={() => {
           store.undo();
           refresh();
@@ -3091,21 +3115,27 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         onSave={() => {
           void saveScene().then(() => pushToast(t('palette.cmd.save'), 'success'));
         }}
-        onOpenCommandPalette={() => setPaletteOpen(true)}
-        onGizmo={(m) => {
-          store.setGizmo(m);
-          refresh();
-        }}
-        onPivotMode={(next) => {
-          updateSceneViewPreferences({ pivotMode: next });
-        }}
-        onHandleOrientation={(next) => {
-          updateSceneViewPreferences({ handleOrientation: next });
-        }}
         onPlay={() => playback('toggle')}
         onPause={() => playback('pause')}
         onStep={() => playback('step')}
+        onOpenCommandPalette={() => setPaletteOpen(true)}
+        onToggleAi={() => setAiOpen((open) => !open)}
       />
+
+      <div className="ide-workbench-body">
+        {!props.detachedPanel && (
+          <ActivityRail
+            activePanels={visiblePanels}
+            aiOpen={aiOpen}
+            errorCount={ideLogCounts.error}
+            warnCount={ideLogCounts.warn}
+            isDesktop={isDesktopEditor()}
+            onFocusPanel={focusDockPanel}
+            onToggleAi={() => setAiOpen((open) => !open)}
+            onOpenPreferences={() => PreferencesWindow.openFromMenu(true)}
+            onCloseProject={() => void requestProjectClose()}
+          />
+        )}
 
       <DockWorkspace
         detachedPanel={props.detachedPanel}
@@ -3157,6 +3187,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               gizmo={gizmo}
               pivotMode={pivotMode}
               handleOrientation={handleOrientation}
+              onGizmo={(m) => {
+                store.setGizmo(m);
+                refresh();
+              }}
+              onPivotMode={(next) => {
+                updateSceneViewPreferences({ pivotMode: next });
+              }}
+              onHandleOrientation={(next) => {
+                updateSceneViewPreferences({ handleOrientation: next });
+              }}
               playing={mode !== 'edit'}
               onPlayInput={(input) => {
                 if (!props.detachedPanel) store.setPlayInput(input);
@@ -3961,6 +4001,26 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           profiler: <Profiler />,
         }}
       />
+
+        {aiOpen && !props.detachedPanel && (
+          <AiAgentSidebar
+            store={store}
+            sceneName={sceneName}
+            entityCount={snap.entities.length}
+            selectedName={primarySelectedEntity?.name ?? (primarySelectedEntity ? `Entity ${primarySelectedEntity.entity}` : null)}
+            selectedComponents={primarySelectedEntity ? Object.keys(primarySelectedEntity.components) : []}
+            errorCount={ideLogCounts.error}
+            warnCount={ideLogCounts.warn}
+            onRefresh={refresh}
+            onSave={() => {
+              void saveScene().then(() => pushToast(t('palette.cmd.save'), 'success'));
+            }}
+            onTogglePlay={() => playback('toggle')}
+            onFocusPanel={focusDockPanel}
+            onClose={() => setAiOpen(false)}
+          />
+        )}
+      </div>
 
       <StatusBar
         sceneName={sceneName}

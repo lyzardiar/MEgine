@@ -1,7 +1,7 @@
-import { Globe, Keyboard, Moon, SlidersHorizontal, Sun } from 'lucide-react';
+import { Globe, Keyboard, Moon, Palette, SlidersHorizontal, Sun } from 'lucide-react';
 import { EditorWindow } from '../EditorWindow.ts';
 import { registerEditorWindowType, registerMenuItem } from '../registry.ts';
-import { useTheme, type EditorDensity } from '../../theme';
+import { useTheme, type EditorAccent, type EditorDensity } from '../../theme';
 import { useI18n } from '../../i18n';
 
 const SHORTCUTS: Array<[string, string]> = [
@@ -17,8 +17,14 @@ const SHORTCUTS: Array<[string, string]> = [
 ];
 
 function PreferencesWindowBody() {
-  const { theme, setTheme, density, setDensity, fontSize, setFontSize } = useTheme();
+  const { theme, setTheme, accent, setAccent, density, setDensity, fontSize, setFontSize } = useTheme();
   const { locale, setLocale } = useI18n();
+
+  const accentOptions: Array<{ id: EditorAccent; label: string; color: string }> = [
+    { id: 'pink', label: locale === 'zh-CN' ? 'PinK 霓虹玫粉' : 'PinK Rose', color: '#f43f8e' },
+    { id: 'cobalt', label: locale === 'zh-CN' ? 'Cobalt 钴蓝' : 'Cobalt Blue', color: '#3b82f6' },
+    { id: 'emerald', label: locale === 'zh-CN' ? 'Emerald 翠绿' : 'Emerald', color: '#10b981' },
+  ];
 
   const densityOptions: Array<{ id: EditorDensity; label: string }> = [
     { id: 'compact', label: locale === 'zh-CN' ? '紧凑 Compact' : 'Compact' },
@@ -52,6 +58,22 @@ function PreferencesWindowBody() {
             >
               <Sun size={13} aria-hidden="true" /> Light
             </button>
+          </div>
+
+          <span>{locale === 'zh-CN' ? '强调色 / Accent' : 'Accent'}</span>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {accentOptions.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={accent === item.id ? 'me-btn-primary' : 'me-btn-secondary'}
+                style={{ height: 28, padding: '0 10px' }}
+                onClick={() => setAccent(item.id)}
+              >
+                <Palette size={12} style={{ color: accent === item.id ? '#fff' : item.color }} aria-hidden="true" />
+                {item.label}
+              </button>
+            ))}
           </div>
 
           <span>{locale === 'zh-CN' ? '语言 / Language' : 'Language'}</span>

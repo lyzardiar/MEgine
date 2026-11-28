@@ -20,6 +20,7 @@ import './styles.css';
 import './styles/tokens.css';
 import './styles/panels-polish.css';
 import './styles/subpanels-polish.css';
+import './styles/pink-ide.css';
 
 const App = lazy(async () => ({ default: (await import('./App')).App }));
 

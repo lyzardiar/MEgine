@@ -1,14 +1,19 @@
 import { useSyncExternalStore } from 'react';
 
 export type EditorTheme = 'dark' | 'light';
+export type EditorAccent = 'pink' | 'cobalt' | 'emerald';
 export type EditorDensity = 'compact' | 'standard' | 'comfortable';
 
 const THEME_STORAGE_KEY = 'mengine.editor.theme.v1';
+const ACCENT_STORAGE_KEY = 'mengine.editor.accent.v1';
 const DENSITY_STORAGE_KEY = 'mengine.editor.density.v1';
 const FONT_SIZE_STORAGE_KEY = 'mengine.editor.fontSize.v1';
 
+const ACCENT_CYCLE: readonly EditorAccent[] = ['pink', 'cobalt', 'emerald'];
+
 const listeners = new Set<() => void>();
 let currentTheme: EditorTheme = readInitialTheme();
+let currentAccent: EditorAccent = readInitialAccent();
 let currentDensity: EditorDensity = readInitialDensity();
 let currentFontSize: number = readInitialFontSize();
 
@@ -20,6 +25,16 @@ function readInitialTheme(): EditorTheme {
     // Ignore storage failures in SSR / restricted WebViews.
   }
   return 'dark';
+}
+
+function readInitialAccent(): EditorAccent {
+  try {
+    const saved = window.localStorage?.getItem(ACCENT_STORAGE_KEY);
+    if (saved === 'pink' || saved === 'cobalt' || saved === 'emerald') return saved;
+  } catch {
+    // Ignore storage failures.
+  }
+  return 'pink';
 }
 
 function readInitialDensity(): EditorDensity {
@@ -48,6 +63,11 @@ function applyThemeToDocument(theme: EditorTheme): void {
   document.documentElement.style.colorScheme = theme;
 }
 
+function applyAccentToDocument(accent: EditorAccent): void {
+  if (typeof document === 'undefined') return;
+  document.documentElement.dataset.accent = accent;
+}
+
 function applyDensityToDocument(density: EditorDensity): void {
   if (typeof document === 'undefined') return;
   document.documentElement.dataset.density = density;
@@ -65,9 +85,11 @@ function notify(): void {
 
 export function initializeTheme(): EditorTheme {
   currentTheme = readInitialTheme();
+  currentAccent = readInitialAccent();
   currentDensity = readInitialDensity();
   currentFontSize = readInitialFontSize();
   applyThemeToDocument(currentTheme);
+  applyAccentToDocument(currentAccent);
   applyDensityToDocument(currentDensity);
   applyFontSizeToDocument(currentFontSize);
   if (typeof window !== 'undefined') {
@@ -77,6 +99,15 @@ export function initializeTheme(): EditorTheme {
         if (next !== currentTheme) {
           currentTheme = next;
           applyThemeToDocument(next);
+          notify();
+        }
+      } else if (event.key === ACCENT_STORAGE_KEY) {
+        const next: EditorAccent = event.newValue === 'cobalt' || event.newValue === 'emerald'
+          ? event.newValue
+          : 'pink';
+        if (next !== currentAccent) {
+          currentAccent = next;
+          applyAccentToDocument(next);
           notify();
         }
       } else if (event.key === DENSITY_STORAGE_KEY) {
@@ -123,6 +154,32 @@ export function setTheme(theme: EditorTheme): void {
 export function toggleTheme(): EditorTheme {
   const next: EditorTheme = currentTheme === 'dark' ? 'light' : 'dark';
   setTheme(next);
+  return next;
+}
+
+export function getAccent(): EditorAccent {
+  return currentAccent;
+}
+
+export function setAccent(accent: EditorAccent): void {
+  if (accent === currentAccent) {
+    applyAccentToDocument(accent);
+    return;
+  }
+  currentAccent = accent;
+  applyAccentToDocument(accent);
+  try {
+    window.localStorage?.setItem(ACCENT_STORAGE_KEY, accent);
+  } catch {
+    // Ignore persistence error.
+  }
+  notify();
+}
+
+export function cycleAccent(): EditorAccent {
+  const idx = ACCENT_CYCLE.indexOf(currentAccent);
+  const next = ACCENT_CYCLE[(idx + 1) % ACCENT_CYCLE.length];
+  setAccent(next);
   return next;
 }
 
@@ -176,13 +233,28 @@ export function useTheme(): {
   theme: EditorTheme;
   setTheme: (theme: EditorTheme) => void;
   toggleTheme: () => EditorTheme;
+  accent: EditorAccent;
+  setAccent: (accent: EditorAccent) => void;
+  cycleAccent: () => EditorAccent;
   density: EditorDensity;
   setDensity: (density: EditorDensity) => void;
   fontSize: number;
   setFontSize: (size: number) => void;
 } {
   const theme = useSyncExternalStore<EditorTheme>(subscribeTheme, getTheme, () => 'dark');
+  const accent = useSyncExternalStore<EditorAccent>(subscribeTheme, getAccent, () => 'pink');
   const density = useSyncExternalStore<EditorDensity>(subscribeTheme, getDensity, () => 'standard');
   const fontSize = useSyncExternalStore<number>(subscribeTheme, getFontSize, () => 12);
-  return { theme, setTheme, toggleTheme, density, setDensity, fontSize, setFontSize };
+  return {
+    theme,
+    setTheme,
+    toggleTheme,
+    accent,
+    setAccent,
+    cycleAccent,
+    density,
+    setDensity,
+    fontSize,
+    setFontSize,
+  };
 }
