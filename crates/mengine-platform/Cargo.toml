@@ -3,10 +3,14 @@ name = "mengine-platform"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "MEngine platform: window, input, files, threads"
+description = "MEngine platform abstraction: adapters, lifecycle, input, VFS, files"
+
+[features]
+default = ["desktop-winit"]
+desktop-winit = ["dep:winit"]
 
 [dependencies]
-winit.workspace = true
+winit = { workspace = true, optional = true }
 log.workspace = true
 thiserror.workspace = true
 serde.workspace = true

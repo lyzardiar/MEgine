@@ -26,7 +26,7 @@ fn main() {
         manifest_dir.join("native/bridge.cpp").display()
     );
     println!("cargo:rerun-if-changed={}", sdk.display());
-    if cfg!(target_os = "windows") {
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
         println!("cargo:rustc-link-lib=ws2_32");
     }
 }
