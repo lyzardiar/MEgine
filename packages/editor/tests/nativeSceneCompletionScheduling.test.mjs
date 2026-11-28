@@ -27,7 +27,7 @@ function fixture(duration, playing = true, wakeDelay = 0) {
   const setTimeout = (callback, delay) => { const id = ++serial; tasks.set(id, { callback, at: now + Math.trunc(delay) + wakeDelay }); return id; };
   const canvasRef = { current: { width: 640, height: 360, toDataURL: () => 'data:image/png;frame=' + shown } };
   const env = { panelVisibleRef: { current: true }, window: { __TAURI_INTERNALS__: {}, setTimeout, clearTimeout: id => tasks.delete(id) }, performance: { now: () => now }, lastAnimationFrameAtRef: { current: -Infinity }, structuredClone, propsRef, nativeSceneRequestRef, nativeSceneFrameRef, nativeCameraPreviewRequestRef: { current: { inFlight: false, ready: null, lastRequestAt: 0 } }, scene2DRef, draggingRef, lastProfilerFrameRef, currentViewportOwner: () => propsRef.current, currentViewportProps: () => propsRef.current, nativeWorld: { frameWorld: () => ({ runtimeSessionId: 1 }) }, nativeViewportFrameWorldCurrent: (world, props) => world.runtimeSessionId === props.runtimeSessionId, releaseNativeViewportFrame: () => released++, uploadNativeViewportFrame: buffer => { uploaded.push(buffer); return { profile: {}, image: {}, width: 640, height: 360 }; }, recordNativeViewportProfile() {}, console: { warn() {} }, canvasRef, NATIVE_CAPTURE_READY_TIMEOUT_MS: 8000 };
-  Object.assign(env, { clearTimeout: env.window.clearTimeout, setTimeout, projectGeneration: 0, projectAssetSessionGeneration: () => 0, canvas: { getBoundingClientRect: () => ({ width: 640, height: 360 }) }, liveCam: { current: { pivot: 'camera-a' } }, orbitEye: pivot => [pivot, 4, 7], nativeSceneFrameRequestIdentity: camera => ({ key: camera.eye[0], presentationKey: 'size' }), MAX_NATIVE_SCENE_VIEW_DIMENSION: 4096, cameraPreviewKey: undefined, recordOwnedNativeViewportProfile() {}, isGame: false, p: propsRef.current });
+  Object.assign(env, { clearTimeout: env.window.clearTimeout, setTimeout, projectGeneration: 0, projectAssetSessionGeneration: () => 0, canvas: { getBoundingClientRect: () => ({ width: 640, height: 360 }) }, liveCam: { current: { pivot: 'camera-a' } }, orbitEye: pivot => [pivot, 4, 7], nativeSceneFrameRequestIdentity: camera => ({ key: camera.eye[0], presentationKey: 'size' }), MAX_NATIVE_SCENE_VIEW_DIMENSION: 4096, cameraPreviewPresentationKey: undefined, cameraPreviewKey: undefined, nativeCameraPreviewFrameRef: { current: null }, recordOwnedNativeViewportProfile() {}, isGame: false, p: propsRef.current });
   const context = vm.createContext(env); vm.runInContext(helpers, context); vm.runInContext(scheduler, context);
   nativeSceneRequestRef.current = vm.runInContext('createNativeViewportRequestState()', context);
   env.nativeCameraPreviewRequestRef.current = vm.runInContext('createNativeViewportRequestState(1)', context);
@@ -271,4 +271,85 @@ test('dock visibility suspends animation and cancels Scene, Game and preview tim
   const paintStart=source.indexOf('  const paint ='), guard=source.indexOf('    const paintStartedAt',paintStart);
   const early=vm.runInNewContext(compile(source.slice(paintStart,guard)+' return "paint"; }; paint;'),{panelVisibleRef:{current:false}});
   assert.equal(early(),undefined);assert.equal(early(false,false,false,true),'paint','explicit captures may render on request');
+});
+
+test('continuous runtime camera motion retains Camera Preview frames and completes without flicker', async () => {
+  const keyStart = source.indexOf('    const cameraPreviewPresentationKey =');
+  const keyEnd = source.indexOf('    const scene2DActive =', keyStart);
+  const previewStart = source.indexOf('    syncRequestOwner(nativeCameraPreviewRequestRef.current');
+  const previewEnd = source.indexOf('    if (skipUnchangedScenePaint', previewStart);
+  assert.ok(keyStart > 0 && keyEnd > keyStart && previewStart > 0 && previewEnd > previewStart);
+  const previewStep = compile(`(function(p, now, selectedCamera, requestWorldFrame) {
+${source.slice(keyStart, keyEnd)}
+${source.slice(previewStart, previewEnd)}
+return { cameraPreviewPresentationKey, cameraPreviewKey };
+  })`);
+  let now = 0, serial = 0, released = 0;
+  const tasks = new Map(), starts = [], uploaded = [];
+  const propsRef = { current: { tab: 'scene', playing: true, runtimeSessionId: 1, selected: 7, gameResolution: { width: 1280, height: 720 }, gameDisplay: 0, entities: [{ entity: 7 }] } };
+  const makeCamera = (x, entity = 7) => ({ entity, eye: [x, 2, -6], target: [x, 1, 0], up: [0, 1, 0], projection: 'perspective', fovYDeg: 60, near: 0.1, far: 1000, clearFlags: 'skybox', backgroundColor: [0, 0, 0, 1], targetDisplay: 0 });
+  let liveCamera = makeCamera(0);
+  const setTimeout = (callback, delay) => { const id = ++serial; tasks.set(id, { callback, at: now + Math.trunc(delay) }); return id; };
+  const env = {
+    panelVisibleRef: { current: true }, captureSceneFrame: false,
+    window: { __TAURI_INTERNALS__: {}, setTimeout, clearTimeout: id => tasks.delete(id) },
+    performance: { now: () => now }, lastProfilerFrameRef: { current: 0 },
+    propsRef, currentViewportProps: () => propsRef.current, currentViewportOwner: () => propsRef.current,
+    nativeWorld: { frameWorld: () => ({ runtimeSessionId: 1 }) },
+    nativeViewportFrameWorldCurrent: (world, props) => world.runtimeSessionId === props.runtimeSessionId,
+    gameCameraForEntity: (_entities, id) => id === liveCamera.entity ? liveCamera : null,
+    releaseNativeViewportFrame: () => released++,
+    uploadNativeViewportFrame: (buffer, previous) => { uploaded.push({ buffer, reused: previous != null }); return { image: previous ?? { id: uploaded.length } }; },
+    projectGeneration: 0, projectAssetSessionGeneration: () => 0,
+    nativeSceneRequestRef: { current: { captures: 0 } },
+    nativeCameraPreviewFrameRef: { current: null },
+    nativeCameraPreviewRequestRef: { current: null },
+    paint: () => {}, console: { warn() {} },
+  };
+  const context = vm.createContext(env);
+  vm.runInContext(helpers, context);
+  env.nativeCameraPreviewRequestRef.current = vm.runInContext('createNativeViewportRequestState(1)', context);
+  env.syncRequestOwner = vm.runInContext('(state, key) => synchronizeNativeViewportRequestOwner(state, propsRef.current.runtimeSessionId, key)', context);
+  env.scheduleRequest = () => {};
+  const runPreview = vm.runInContext(previewStep, context);
+  const step = (cameraX, entity = 7) => {
+    liveCamera = makeCamera(cameraX, entity);
+    propsRef.current.selected = entity;
+    return runPreview(propsRef.current, now, liveCamera, (_command, args) => {
+      starts.push({ at: now, eyeX: args.request.eye[0], entity: args.request.cameraEntity });
+      return new Promise(resolve => { const id = ++serial; tasks.set(id, { at: now + 24, callback: () => resolve({ eyeX: args.request.eye[0] }) }); });
+    });
+  };
+  async function advance(to) {
+    for (;;) {
+      const next = [...tasks].filter(([, t]) => t.at <= to).sort((a, b) => a[1].at - b[1].at || a[0] - b[0])[0];
+      if (!next) break;
+      const [id, task] = next; now = task.at; tasks.delete(id); task.callback();
+      for (let i = 0; i < 8; i++) await Promise.resolve();
+    }
+    now = to;
+  }
+  const initialGeneration = env.nativeCameraPreviewRequestRef.current.generation;
+  step(0);
+  // Camera moves while the first native preview frame is still in flight.
+  await advance(16); step(1);
+  assert.equal(env.nativeCameraPreviewRequestRef.current.generation, initialGeneration + 1);
+  await advance(32);
+  assert.equal(uploaded.length, 1, 'in-flight preview completes even after the camera moved');
+  assert.equal(released, 0);
+  const firstFrame = env.nativeCameraPreviewFrameRef.current;
+  assert.ok(firstFrame?.image);
+  // Subsequent runtime camera moves retain the displayed frame without clearing to placeholder.
+  for (let tick = 1; tick <= 16; tick++) {
+    await advance(32 + tick * 16);
+    const { cameraPreviewPresentationKey } = step(1 + tick);
+    assert.ok(env.nativeCameraPreviewFrameRef.current?.image, `frame retained at tick ${tick}`);
+    assert.equal(env.nativeCameraPreviewFrameRef.current.presentationKey, cameraPreviewPresentationKey);
+  }
+  assert.ok(uploaded.length >= 2, 'paced 120ms updates publish newer camera frames');
+  assert.equal(uploaded[1].reused, true, 'subsequent uploads reuse the preview canvas');
+  assert.equal(released, 0, 'continuous motion drops zero preview frames');
+  // Switching to another camera entity invalidates the retained preview immediately.
+  step(20, 8);
+  assert.equal(env.nativeCameraPreviewFrameRef.current, null);
 });

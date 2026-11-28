@@ -741,6 +741,7 @@ export function Viewport(props: {
     image: HTMLImageElement | HTMLCanvasElement;
     entity: number;
     key: string;
+    presentationKey: string;
     world: NativeViewportFrameWorld<Ent>;
   } | null>(null);
   const nativeCameraPreviewRequestRef = useRef(createNativeViewportRequestState(1));
@@ -1614,8 +1615,9 @@ export function Viewport(props: {
     const selectedCamera = !isGame && p.selected != null
       ? gameCameraForEntity(p.entities, p.selected)
       : null;
+    const cameraPreviewPresentationKey = selectedCamera ? JSON.stringify([selectedCamera.entity, p.gameResolution, p.gameDisplay]) : undefined;
     const cameraPreviewKey = selectedCamera ? JSON.stringify([selectedCamera, p.gameResolution, p.gameDisplay]) : undefined;
-    if (nativeCameraPreviewFrameRef.current?.key !== cameraPreviewKey) nativeCameraPreviewFrameRef.current = null;
+    if (nativeCameraPreviewFrameRef.current?.presentationKey !== cameraPreviewPresentationKey) nativeCameraPreviewFrameRef.current = null;
     const scene2DActive = !isGame && scene2DRef.current;
     const workspacePreferences = normalizeCanvasWorkspacePreferences(
       canvasWorkspaceRef.current,
@@ -1735,14 +1737,16 @@ export function Viewport(props: {
       });
     }
     if (!isGame && !scene2DActive && p.playing && '__TAURI_INTERNALS__' in window) scheduleRequest(sceneRequest, () => paint(false, false, true));
-    syncRequestOwner(nativeCameraPreviewRequestRef.current, JSON.stringify([p.tab, p.playing, p.runtimeSessionId, cameraPreviewKey]));
+    syncRequestOwner(nativeCameraPreviewRequestRef.current, JSON.stringify([p.tab, p.playing, p.runtimeSessionId, cameraPreviewPresentationKey]));
+    const cameraPreviewChanged = !nativeCameraPreviewRequestRef.current.reportedError && nativeCameraPreviewFrameRef.current?.key !== cameraPreviewKey;
+    const cameraPreviewInterval = p.playing ? 120 : cameraPreviewChanged ? 1000 / 60 : 500;
     if (
       selectedCamera
       && (nativeSceneRequestRef.current.captures === 0 || captureSceneFrame)
       && '__TAURI_INTERNALS__' in window
       && !nativeCameraPreviewRequestRef.current.full
       && now >= nativeCameraPreviewRequestRef.current.retryAt
-      && now - nativeCameraPreviewRequestRef.current.lastRequestAt >= (p.playing ? 120 : 500)
+      && now - nativeCameraPreviewRequestRef.current.lastRequestAt >= cameraPreviewInterval
     ) {
       const request = nativeCameraPreviewRequestRef.current;
       const generation = request.generation;
@@ -1773,15 +1777,16 @@ export function Viewport(props: {
       }).then((buffer) => {
         if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket)) { releaseNativeViewportFrame(buffer); return; }
         const current = currentViewportProps();
-        if (!nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), current)) { releaseNativeViewportFrame(buffer); return; }
+        if ((!panelVisibleRef.current && !captureSceneFrame) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), current)) { releaseNativeViewportFrame(buffer); return; }
         const camera = current.selected != null ? gameCameraForEntity(current.entities, current.selected) : null;
-        if (current.tab !== 'scene' || !camera || JSON.stringify([camera, current.gameResolution, current.gameDisplay]) !== cameraPreviewKey) { releaseNativeViewportFrame(buffer); return; }
+        if (current.tab !== 'scene' || !camera || JSON.stringify([camera.entity, current.gameResolution, current.gameDisplay]) !== cameraPreviewPresentationKey) { releaseNativeViewportFrame(buffer); return; }
         const { image } = uploadNativeViewportFrame(buffer, nativeCameraPreviewFrameRef.current?.image);
         const firstFrame = nativeCameraPreviewFrameRef.current == null;
         nativeCameraPreviewFrameRef.current = {
           image,
           entity: selectedCamera.entity,
           key: cameraPreviewKey!,
+          presentationKey: cameraPreviewPresentationKey!,
           world: nativeWorld.frameWorld(),
         };
         request.presentedSequence = ticket.sequence; request.retryAt = 0;
@@ -3498,7 +3503,7 @@ export function Viewport(props: {
       if (
         frame?.image
         && frame.entity === selectedCamera.entity
-        && frame.key === cameraPreviewKey
+        && frame.presentationKey === cameraPreviewPresentationKey
       ) {
         ctx.drawImage(frame.image, x + 1, y + headerHeight, panelWidth - 2, imageHeight - 1);
       } else {

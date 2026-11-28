@@ -2202,3 +2202,18 @@ GPU可见集选取Amazonia两个原始sheep节点，2实例／1pose／2绘制对
 源码已核对交接收据中的全部5个SHA-256，内容与既有通过记录一致。复用`cargo test -p mengine-assets --lib native_mdx_draw_order -- --test-threads=1`的2通过／0失败及`cargo test -p mengine-editor-host --lib native_warcraft_layer_order -- --test-threads=1`的1通过／0失败。范围包含opaque源序、正负priority与边界值、透明filter和源序tie、跨采样静态地址、解码预算以及Host可见阈值／实际提交计费。此次仅完成遗留源码审查与提交，没有重新运行功能测试或全库构建。
 
 161–163共3项的合并GPU／Host／Tauri、BanditMage附件与双视图验证按独立客户端主线决策延期，未关闭、未标记通过。新项目使用`watcher/war3/docs/testing-batches.md`的独立队列，不与本批计数混合。原始证据为`tmp/docs-artifacts/warcraft-archives/layer-order-{source,host}-tests.log`；源码补丁与摘要仍保留在`tmp/docs-artifacts/war3-handoff/`。此次不清理地图缓存、不变更用户编辑器进程与本地临时脚本。
+
+
+## 第一百六十四项：修复运行时 Camera Preview 持续闪烁（编辑器视口批次 1/3）
+
+变更：`packages/editor/src/panels/Viewport.tsx`、`packages/editor/tests/nativeSceneCompletionScheduling.test.mjs`、`packages/editor/tests/nativeViewportRequests.test.mjs`、`packages/editor/tests/viewportSceneCompletion.test.mjs`。
+
+原因与修复：此前 `cameraPreviewKey` 将随运行每帧变化的 `selectedCamera`（`eye`/`target`/`up` 等）整体序列化，导致 Play 模式下跟随相机移动时每帧清空 `nativeCameraPreviewFrameRef.current`（退回深色 `Preparing camera…` 占位）、触发 `syncRequestOwner` 递增 `generation` 中断在途请求，并在完成回调处丢弃已渲染帧。现拆分为稳定的 `cameraPreviewPresentationKey`（仅含 `selectedCamera.entity`、`gameResolution`、`gameDisplay`）与精确 `cameraPreviewKey`：相机移动期间保留上一完成帧与预览画布复用，不中断 120ms 节流刷新；切换相机实体、取消选中、改变分辨率／目标显示器、切换会话或面板隐藏时仍立即失效并释放过期帧；非播放态下相机参数变化按 60Hz 响应刷新。
+
+本次快速检查：
+- `node --test packages/editor/tests/nativeViewportRequests.test.mjs packages/editor/tests/nativeSceneCompletionScheduling.test.mjs packages/editor/tests/viewportSceneCompletion.test.mjs packages/editor/tests/nativeSceneFrame.test.mjs packages/editor/tests/nativeViewportRepaint.test.mjs`：**51 通过 / 0 失败**（含新增的运行时相机连续移动防闪烁回归用例及更新后的完成归属校验）。
+- `packages/editor/node_modules/.bin/tsc.cmd -p packages/editor/tsconfig.json --noEmit`：**0 错误通过**。
+
+待批次验证（1/3，未执行真实 Tauri 运行验收）：
+- 场景：在真实编辑器（含运行中的 `pelican-island-ride` 等跟随相机场景）进入 Play 并选中 `Main Camera`，观察 Scene 视口右下角 `Camera Preview` 连续运行不闪黑／不退回 `Preparing camera…`；验证 Pause 下调整 FOV／Transform、切换其他相机实体、取消选中、切换 `gameResolution`／`gameDisplay` 与 Stop 后恢复正常。
+- 风险：未重跑编辑器前端打包与原生 Tauri 集成测试；若当前已在运行旧版 dev/release 编辑器，需刷新前端或重新构建后生效。
