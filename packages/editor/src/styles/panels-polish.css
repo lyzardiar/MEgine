@@ -122,9 +122,12 @@
 }
 
 .orient-toggle button,
+.scene-toolbar .orient-toggle button,
 .scene-zoom button,
 .scene-snap-buttons button {
   height: 100%;
+  border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--me-text-secondary);
   font-size: 11px;
@@ -134,21 +137,31 @@
 }
 
 .orient-toggle button + button,
+.scene-toolbar .orient-toggle button + button,
 .scene-zoom button + button,
 .scene-snap-buttons button + button {
   border-left: 1px solid var(--me-border-subtle);
 }
 
 .orient-toggle button:hover:not(:disabled),
+.scene-toolbar .orient-toggle button:hover:not(:disabled),
 .scene-zoom button:hover:not(:disabled),
 .scene-snap-buttons button:hover:not(:disabled) {
+  border-color: transparent;
   background: var(--u-hover);
   color: var(--me-text-primary);
 }
 
 .orient-toggle button.active,
+.scene-toolbar .orient-toggle button.active,
+.orient-toggle button[aria-pressed='true'],
+.orient-toggle button.active:hover:not(:disabled),
+.scene-toolbar .orient-toggle button.active:hover:not(:disabled),
 .scene-zoom button.active,
-.scene-snap-buttons button.active {
+.scene-snap-buttons button.active,
+.scene-snap-buttons button[aria-pressed='true'],
+.scene-snap-buttons button.active:hover:not(:disabled) {
+  border-color: transparent;
   background: var(--me-accent);
   color: #ffffff;
   font-weight: 600;
@@ -160,7 +173,7 @@
   font-size: 10.5px;
 }
 
-.scene-grid-toggle,
+button.scene-grid-toggle,
 .scene-align > button {
   height: 24px;
   border-radius: var(--me-radius-sm);
@@ -173,15 +186,20 @@
     color var(--me-dur-fast) var(--me-ease);
 }
 
-.scene-grid-toggle:hover:not(:disabled),
+button.scene-grid-toggle:hover:not(:disabled),
 .scene-align > button:hover:not(:disabled) {
   background: var(--u-hover);
   border-color: var(--me-border-strong);
   color: var(--me-text-primary);
 }
 
-.scene-grid-toggle.active,
-.scene-align > button.active {
+button.scene-grid-toggle.active,
+button.scene-grid-toggle[aria-pressed='true'],
+button.scene-grid-toggle.active:hover:not(:disabled),
+button.scene-grid-toggle[aria-pressed='true']:hover:not(:disabled),
+.scene-align > button.active,
+.scene-align > button[aria-pressed='true'],
+.scene-align > button.active:hover:not(:disabled) {
   background: var(--me-accent);
   border-color: var(--me-accent-hover);
   color: #ffffff;

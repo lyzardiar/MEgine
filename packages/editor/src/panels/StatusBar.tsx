@@ -14,8 +14,9 @@ export function StatusBar(props: {
   logs: string[];
 }) {
   const { t } = useI18n();
+  const safeLogs = Array.isArray(props.logs) ? props.logs.filter((line): line is string => typeof line === 'string') : [];
   const consoleSummary = buildConsoleRows(
-    props.logs,
+    safeLogs,
     new Set(['info', 'warn', 'error']),
     '',
     false,

@@ -94,7 +94,7 @@
   background: var(--me-bg-panel);
 }
 
-.build-platform-card {
+button.build-platform-card {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -111,19 +111,21 @@
     transform var(--me-dur-fast) var(--me-ease);
 }
 
-.build-platform-card:hover {
+button.build-platform-card:hover:not(:disabled) {
   border-color: var(--me-border-strong);
   background: var(--me-bg-elevated);
   transform: translateY(-1px);
 }
 
-.build-platform-card.selected {
+button.build-platform-card.selected,
+button.build-platform-card.selected:hover:not(:disabled) {
   border-color: var(--me-accent);
   background: var(--me-accent-muted);
   box-shadow: 0 0 0 1px var(--me-accent-border);
+  transform: none;
 }
 
-.build-platform-card.reserved {
+button.build-platform-card.reserved {
   opacity: 0.84;
 }
 
@@ -660,7 +662,9 @@
   color: var(--me-text-primary);
 }
 
-.profiler-source-tabs button.active {
+.profiler-source-tabs button.active,
+.profiler-source-tabs button.active:hover:not(:disabled) {
+  border-color: transparent;
   background: var(--me-accent);
   color: #ffffff;
   font-weight: 600;
@@ -674,13 +678,14 @@
   color: var(--me-text-primary);
 }
 
-.profiler-toolbar > button:hover,
+.profiler-toolbar > button:hover:not(:disabled),
 .profiler-frame-navigator button:hover:not(:disabled) {
   background: var(--u-hover);
   border-color: var(--me-border-strong);
 }
 
-.profiler-frame-navigator button.active {
+.profiler-frame-navigator button.active,
+.profiler-frame-navigator button.active:hover:not(:disabled) {
   background: var(--me-accent);
   border-color: var(--me-accent);
   color: #ffffff;

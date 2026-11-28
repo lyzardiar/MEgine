@@ -12,6 +12,7 @@ import { initializeEditorInstance } from './editorInstance';
 import { initializeTimelineProfiler } from './timelineProfiler';
 import { initializeTheme } from './theme';
 import { initializeLocale, t } from './i18n';
+import { EditorErrorBoundary } from './components/ui/EditorErrorBoundary';
 import { ToastHost } from './components/ui/ToastHost';
 import { getEditorInstanceId } from './transport/editorTransport';
 import './editorWindow';
@@ -51,17 +52,21 @@ async function bootstrap(): Promise<void> {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <Fragment>
-        <DesktopProjectGate
-          detached={detachedPanel != null || detachedEditorWindow != null}
-          projectRequired={detachedEditorWindow == null
-            || detachedEditorDefinition?.requiresProject !== false}
-        >
-          {detachedEditorWindow
-            ? <RegisteredEditorWindowHost typeId={detachedEditorWindow} />
-            : <Suspense fallback={<div className="editor-app-loading" role="status">{t('common.loadingEditor')}</div>}>
-                <App detachedPanel={detachedPanel} />
-              </Suspense>}
-        </DesktopProjectGate>
+        <EditorErrorBoundary scope="ProjectGate">
+          <DesktopProjectGate
+            detached={detachedPanel != null || detachedEditorWindow != null}
+            projectRequired={detachedEditorWindow == null
+              || detachedEditorDefinition?.requiresProject !== false}
+          >
+            {detachedEditorWindow
+              ? <RegisteredEditorWindowHost typeId={detachedEditorWindow} />
+              : <EditorErrorBoundary scope="MainEditor">
+                  <Suspense fallback={<div className="editor-app-loading" role="status">{t('common.loadingEditor')}</div>}>
+                    <App detachedPanel={detachedPanel} />
+                  </Suspense>
+                </EditorErrorBoundary>}
+          </DesktopProjectGate>
+        </EditorErrorBoundary>
         <EditorDialogHost />
         <ToastHost />
       </Fragment>
