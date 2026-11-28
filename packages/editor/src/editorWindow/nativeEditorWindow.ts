@@ -18,12 +18,10 @@ export async function openNativeEditorWindow(options: {
   const url = editorWindowUrlFor(options.typeId, options.agentOwned === true);
   const activateWindow = options.activateWindow !== false;
   if (!isDesktopEditor()) {
-    if (!activateWindow) return false;
-    return window.open(
-      url,
-      editorWindowLabelFor(options.typeId),
-      `popup=yes,width=${options.width},height=${options.height},resizable=yes`,
-    ) != null;
+    // In browser/dev preview mode, render registered EditorWindows inside the
+    // themed in-app EditorWindowHost rather than spawning an OS browser popup
+    // that can flash white or fail when detached.
+    return false;
   }
 
   const label = editorWindowLabelFor(options.typeId);

@@ -3,9 +3,9 @@
   height: 100%;
   overflow: auto;
   padding: 20px 24px 32px;
-  color: var(--u-text, #d8dbe2);
-  background: var(--u-panel, #1c1f26);
-  line-height: 1.45;
+  color: var(--me-text-primary, var(--u-text, #d8dbe2));
+  background: var(--me-bg-panel, var(--u-panel, #14151c));
+  line-height: 1.5;
 }
 
 .agent-setup header {
