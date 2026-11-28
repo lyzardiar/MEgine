@@ -115,17 +115,20 @@ void LanBrowser::drawAddress(const UiInput& input){
     renderer_.rect(0,0,float(renderer_.width()),float(renderer_.height()),0xa6000000);
     const float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;
     auto quad=[&](GlueScreen::Rect r,DWORD color){renderer_.rect(left+r.x*scale,top+r.y*scale,r.w*scale,r.h*scale,color);};
-    quad(box,0xff18202b);quad({box.x,box.y,box.w,.002f},0xff7f9abc);
+    quad(box,0xdd080c14);
+    screen_.backdropAt("StandardEditBoxBackdropTemplate",box);
     screen_.textAt("StandardInfoTextTemplate","按 IP 搜索",{.204f,.209f,.392f,.026f},true,false,true,.016f);
     screen_.textAt("StandardInfoTextTemplate",loopbackOnly_?"输入房主地址。留空使用本机回环。":"输入房主的 IPv4 地址。留空恢复自动搜索。",{.204f,.241f,.392f,.022f},true,false,true,.011f);
     screen_.backdropAt("StandardEditBoxBackdropTemplate",edit);
     if(addressSelected_ && !addressDraft_.empty())quad({edit.x+.006f,edit.y+.005f,edit.w-.012f,edit.h-.010f},0xff33527c);
     auto value=addressDraft_;if(!addressSelected_)value.insert(addressCursor_,1,L'|');
     screen_.textAt("StandardEditBoxTextTemplate",utf8(value),{edit.x+.009f,edit.y,edit.w-.018f,edit.h},true,false,true,.014f);
-    if(!addressError_.empty())text_.draw(wide(addressError_),left+.204f*scale,top+.316f*scale,.012f*scale,0xffff8989);
+    if(!addressError_.empty()){text_.draw(wide(addressError_),left+.204f*scale+1,top+.316f*scale+1,.012f*scale,0xe6000000);text_.draw(wide(addressError_),left+.204f*scale,top+.316f*scale,.012f*scale,0xffff8989);}
     auto button=[&](GlueScreen::Rect bounds,const char* label){
-        quad(bounds,hit(bounds,input.x,input.y)?0xff45668e:0xff304762);
-        screen_.textAt("StandardInfoTextTemplate",label,bounds,true,false,false,.012f);
+        bool over=hit(bounds,input.x,input.y),down=over && input.down && hit(bounds,input.startX,input.startY);
+        screen_.backdropAt(down?"StandardBorderedButtonPushedBackdropTemplate":"StandardBorderedButtonBackdropTemplate",bounds);
+        if(over)screen_.highlightAt("StandardBorderedButtonMouseOverHighlightTemplate",bounds);
+        screen_.textAt("StandardButtonTextTemplate",label,bounds,true,over,false,.012f);
     };
     button(addressSearch,"搜索");button(addressCancel,"取消");
 }
@@ -176,12 +179,16 @@ std::string LanBrowser::draw(const UiInput& rawInput,std::wstring_view character
     if(!playerNameError_.empty())screen_.textAt("StandardInfoTextTemplate",playerNameError_,{name.x,name.y+name.h+.002f,name.w,.017f},true,false,true,.011f);
     const auto status=!error_.empty()?error_:resourcesReady?std::string{}:commonError_.empty()?std::string("正在校验基础资源…"):commonError_;
     if(!status.empty())screen_.textAt("StandardInfoTextTemplate",status,{.025f,.46f,.42f,.025f},true,false,true,.011f);
-    quad(addressButton,hit(addressButton,input.x,input.y)?0xff45668e:0xff304762);
-    screen_.textAt("StandardInfoTextTemplate","按 IP 搜索 (F3)",addressButton,true,false,false,.012f);
+    auto drawButton=[&](GlueScreen::Rect bounds,const char* label){
+        bool over=hit(bounds,input.x,input.y),down=over && input.down && hit(bounds,input.startX,input.startY);
+        screen_.backdropAt(down?"StandardBorderedButtonPushedBackdropTemplate":"StandardBorderedButtonBackdropTemplate",bounds);
+        if(over)screen_.highlightAt("StandardBorderedButtonMouseOverHighlightTemplate",bounds);
+        screen_.textAt("StandardButtonTextTemplate",label,bounds,true,over,false,.012f);
+    };
+    drawButton(addressButton,"按 IP 搜索 (F3)");
     auto targetLabel=loopbackOnly_?"本机回环 127.0.0.1":discoveryAddress_.empty()?std::string("自动搜索"):"搜索地址 "+discoveryAddress_;
     screen_.textAt("StandardInfoTextTemplate",targetLabel,{addressButton.x,addressButton.y+addressButton.h+.006f,addressButton.w,.023f},true,false,true,.011f);
-    quad(roomModeButton,hit(roomModeButton,input.x,input.y)?0xff45668e:0xff304762);
-    screen_.textAt("StandardInfoTextTemplate",matchHandoffEnabled_?"同构建对局 (F4)":"经典房间 (F4)",roomModeButton,true,false,false,.012f);
+    drawButton(roomModeButton,matchHandoffEnabled_?"同构建对局 (F4)":"经典房间 (F4)");
     screen_.overlay();
     if(addressOpen_)drawAddress(rawInput);
     if(addressInput)return {};

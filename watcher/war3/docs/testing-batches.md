@@ -1,5 +1,19 @@
 # 独立客户端测试队列
 
+## 界面视觉与原版 1.27 对齐（已提交，待批次验证）
+
+路径：`src/model_pose.cpp`、`src/glue.cpp`、`src/game_loading.{h,cpp}`、`src/game_view.{h,cpp}`、`src/game_autocast.cpp`、`src/game_commands.cpp`、`src/game_hero_bar.cpp`、`src/game_effects.cpp`、`src/game_model_sound.cpp`、`src/lan_browser.cpp`、`src/replay_browser.cpp`。
+
+- MDX 镜头投影（`Model::draw` 与模型过场镜头）按原版 1.27 对角线转垂直 FOV（`fov / sqrt(1 + aspect^2)`），消除主菜单／自定义游戏等 3D 背景底部水面截断和冰山底面露空，并还原单位头像景别。
+- 顶部居中接入原版种族 3D 昼夜时间球（`TimeOfDayIndicator`，24 小时完整周期 + 悬停时间提示框）；无物品栏单位在物品格上方绘制原版种族遮盖图（`ConsoleInventoryCoverTexture`）。
+- 命令卡基础指令与英雄经验条悬停改用原版边框提示框（`ToolTipBackground` + `ToolTipBorder` + 增强描述），接入 `CommandButtonActiveHighlight`、`CommandButtonNumberOverlay`、3D `UI-Cooldown-Indicator` 冷却遮罩及按压偏移；建造／训练／研究／升级／反召唤改用 `SimpleBuildTimeIndicator` 进度条与队列边框；空闲工人按钮改用 `HeroBarBorder` + 数量角标 + 悬停提示；聊天输入框改用原版边框面板；HUD 文本补齐 1px 阴影。
+- 3D 世界血条按单位选择圈缩放并使用原版血条贴图，英雄附加蓝条；静态建筑按 `UnitUI.slk` `uberSplat` + `UberSplatData.slk` 绘制地面底座贴花。
+- `GlueScreen::backdrop` 支持 `BackdropMirrored`；局域网浏览器的 IP 搜索弹窗／模式切换按钮与回放删除确认按钮改用原版 `StandardBorderedButton*` 与 `StandardEditBoxBackdropTemplate` 模板。
+
+快速检查：Win32 Release 客户端增量编译通过；隐藏后台运行 `--menu-check`（主菜单、单人菜单、自定义游戏列表与下拉框）退出 0、`menu_check=passed`；`BootyBay --play --hidden --frames 400 --agent-select-unit hpea` 退出 0；前后截图核对主菜单冰川海面完整、顶部时间球太阳显示正常、无物品栏狮子盾遮盖无偏移、头像与闲置农民按钮对齐原版。产物位于 `tmp/docs-artifacts/war3/ui-survey/{after1,after2,after3}/`。
+
+待批次验证：其余三种族（兽族／不死／暗夜）控制台遮盖与时间球、有物品栏英雄与冷却动画、建造与训练队列进度条、局域网搜索与回放删除确认窗口、四族建筑底座贴花与宽屏窗口表现。
+
 ## 导入模型的粒子参数、缺失贴图与矩阵组容错（已提交，待批次验证）
 
 路径：`src/model.cpp`。dz 地图导入模型此前因三类问题整模型拒绝，只能显示占位模型：PRE2 粒子的过滤模式、头尾、寿命、发射率、尾长、中点或变化量超出常规范围；模型引用的贴图不存在；顶点组没有矩阵组或越过最后一组。现仅对影响内存寻址的行列数和贴图索引严格拒绝，其余粒子参数夹到合法范围（变化量取绝对值，行列至少为 1）。缺失贴图记录 `mdx_texture_missing=` 并以白色 1×1 贴图代替；无矩阵组的顶点按静态网格处理，越界组绑定到首组。

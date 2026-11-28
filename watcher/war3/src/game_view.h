@@ -211,6 +211,9 @@ class GameView {
     std::uint32_t cargoPanelUnit_=0;
     unsigned cargoPage_=0;
     void drawAutocast(float x,float y,std::uint32_t unit,std::uint32_t ability);
+    void drawCooldown(float x,float y,float size,float elapsedFraction);
+    void drawTimeIndicator(const GameInput& input);
+    ModelInstance timeIndicatorInstance_;
     std::map<std::pair<std::uint32_t,std::uint32_t>,ModelInstance> autocastInstances_;
     void selection();
     bool castSelection(std::uint32_t caster,std::uint32_t ability,std::uint32_t target=0,std::optional<WorldPoint> point={},bool queued=false);
@@ -247,7 +250,9 @@ class GameView {
     bool spawnDataLoaded_=false;
     void modelSpawn(const std::string& code,const D3DMATRIX& transform,std::uint64_t clock);
     void drawModelSpawns(std::uint64_t clock,const DirectX::XMMATRIX& vp);
-    struct UnitShadow {std::string texture,buildingTexture;float width=0,height=0,x=0,y=0;bool onWater=false;};
+    void ensureModelUbersplats();
+    void drawBuildingUbersplats(const DirectX::XMMATRIX& vp);
+    struct UnitShadow {std::string texture,buildingTexture,ubersplat;float width=0,height=0,x=0,y=0;bool onWater=false;};
     std::map<std::uint32_t,UnitShadow> unitShadows_;
     struct BuildingShadowStamp {std::uint32_t id=0,type=0;int x=0,y=0;std::uint8_t alpha=0;bool operator==(const BuildingShadowStamp&) const = default;};
     struct BuildingShadowChunk {unsigned x=0,y=0;float low=0,high=0;std::array<std::uint8_t,256> cells{};};
@@ -306,7 +311,7 @@ class GameView {
     void refreshIdleWorkers(bool force=false);
     void idleWorkerInput(GameInput& input);
     void townHallInput(GameInput& input);
-    void drawIdleWorkers();
+    void drawIdleWorkers(const GameInput& input);
 public:
     GameView(std::unique_ptr<GameData> data,Renderer& renderer,Text& text,Log& log);
     ~GameView();

@@ -60,8 +60,8 @@ void GlueScreen::backdrop(const FrameDefinition& f,Rect r,DWORD color) {
     auto background=first(f,"BackdropBackground"),edge=first(f,"BackdropEdgeFile");auto inset=f.property("BackdropBackgroundInsets");Rect fill=r;
     if(!f.properties.contains("RuntimeTexture"))background=decoratedTexture(f,background);edge=decoratedTexture(f,edge);
     if(inset.size()==4){fill.x+=number(inset[0]);fill.y+=number(inset[2]);fill.w-=number(inset[0])+number(inset[1]);fill.h-=number(inset[2])+number(inset[3]);}
-    bool tile=f.properties.contains("BackdropTileBackground");float size=f.number("BackdropBackgroundSize",.032f);
-    if(!background.empty())quad(fill,color,background,0,0,tile&&size>0?fill.w/size:1,tile&&size>0?fill.h/size:1,tile);
+    bool tile=f.properties.contains("BackdropTileBackground"),mirrored=f.properties.contains("BackdropMirrored");float size=f.number("BackdropBackgroundSize",.032f);
+    if(!background.empty()){float u0=mirrored && !tile?1.f:0.f,u1=tile&&size>0?fill.w/size:(mirrored?0.f:1.f);quad(fill,color,background,u0,0,u1,tile&&size>0?fill.h/size:1,tile);}
     if(!edge.empty()) {
         float c=std::min({f.number("BackdropCornerSize",.016f),r.w/2,r.h/2});auto& t=texture(edge);auto flags=first(f,"BackdropCornerFlags");
         auto segment=[&](const char* name,unsigned index,Rect part){if(flags.empty() || ("|"+flags+"|").find("|"+std::string(name)+"|")!=std::string::npos)quad(part,color,edge,(index*t.height+.5f)/t.width,.5f/t.height,((index+1)*t.height-.5f)/t.width,1-.5f/t.height,false,false,index==2 || index==3);};

@@ -19,8 +19,10 @@ struct GameData {
     std::unique_ptr<SceneObjects> objects;
     std::optional<MinimapTerrain> minimapTerrain;
     std::vector<ConsolePiece> console;
-    std::string minimap,autocastModel,minimapPingModel,idleWorkerIcon,waypointModel,upperMenuTexture;
+    std::string minimap,autocastModel,cooldownModel,timeIndicatorModel,minimapPingModel,idleWorkerIcon,waypointModel,upperMenuTexture,inventoryCoverTexture;
     std::string groupButtonBorder,subgroupHighlight,groupHeroGlow,heroBarBorder,smallHealthBar,smallManaBar,heroExperienceBar,heroExperienceBorder,heroLevelFormat;
+    std::string commandActiveHighlight,commandNumberOverlay,buildProgressBar,buildProgressBorder,buildQueueBackdrop;
+    std::string timeOfDayTooltip,timeOfDayUbertip,idlePeonTitle,idlePeonDesc;
     std::array<std::string,3> resourceIcons;
     std::array<std::string,7> damageIcons,neutralDamageIcons;
     std::array<std::string,9> armorIcons,neutralArmorIcons;
