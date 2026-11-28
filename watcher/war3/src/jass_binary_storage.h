@@ -18,9 +18,10 @@ public:
     bool contains(const std::string& name) const;
     std::uint8_t type(const std::string& name) const;
     JassBinaryNativeValue read(const std::string& name) const;
-    void write(const std::string& name,JassBinaryNativeValue value);
+    // initializing permits the declaring initializer to assign constant globals once.
+    void write(const std::string& name,JassBinaryNativeValue value,bool initializing=false);
     JassBinaryNativeValue readArray(const std::string& name,std::uint32_t index,std::uint8_t type) const;
-    void writeArray(const std::string& name,std::uint32_t index,JassBinaryNativeValue value);
+    void writeArray(const std::string& name,std::uint32_t index,JassBinaryNativeValue value,bool initializing=false);
     // Caller must bind snapshots to the same binary program and validate mapped identities.
     Bytes encodeGlobals(const JassBinarySnapshotRefs& refs={}) const;
     void restoreGlobals(std::span<const std::uint8_t> bytes,const JassBinarySnapshotRefs& refs={});

@@ -267,6 +267,7 @@ class ScriptSession {
     void aiRemoveGuard(std::uint32_t unit);
     void aiRecycleGuard(std::uint32_t unit);
     std::unique_ptr<ScriptAI> makeAI(unsigned owner,const std::string& script,bool campaign,bool requireSource);
+    std::vector<std::string> rejectedAIScripts_;
     void bindAiNatives();
     void bindAiRuntime(ScriptAI& ai);
     void aiTick();
@@ -1406,6 +1407,7 @@ public:
     void finishGame(bool scores,SessionExit action=SessionExit::Return);
     bool networkLocalEndPending() const{return networkLocalEndRequest_.has_value();}
     bool networkSharedEndPending() const{return networkSharedEndPending_;}
+    const std::vector<std::string>& rejectedAIScripts() const{return rejectedAIScripts_;}
     void confirmNetworkMatchResults(unsigned player);
     std::optional<bool> takeNetworkLocalEnd(){auto request=networkLocalEndRequest_;networkLocalEndRequest_.reset();networkSharedEndPending_=false;return request;}
     std::pair<unsigned,unsigned> difficultyContext() const {return {gameDifficulty_,defaultDifficulty_};}

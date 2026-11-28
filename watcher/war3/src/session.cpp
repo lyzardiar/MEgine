@@ -26,7 +26,8 @@ ScriptSession::ScriptSession(jass::Module module,const MapInfo& info,MapStrings 
     bindThreadNatives();bindNatives();bindAiNatives();
 }
 void ScriptSession::bind(const char* name,const char* result,std::initializer_list<const char*> parameters,jass::Runtime::Native native) {
-    auto& module=runtime_.module();auto id=module.functionId(name);if(id==jass::none)return;auto& function=module.program().functions()[id];auto& signature=module.functions()[id];if(!function.native || module.type(signature.result).name!=result || signature.parameters.size()!=parameters.size())throw std::runtime_error("Invalid session native signature: "+std::string(name));size_t i=0;for(auto expected:parameters)if(module.type(signature.parameters[i++]).name!=expected)throw std::runtime_error("Invalid session native parameter: "+std::string(name));runtime_.bind(name,std::move(native));
+    auto& module=runtime_.module();auto id=module.functionId(name);if(id==jass::none)return;auto& function=module.program().functions()[id];auto& signature=module.functions()[id];if(!function.native)return; // The map supplies its own JASS implementation; keep it.
+    if(module.type(signature.result).name!=result || signature.parameters.size()!=parameters.size()){std::string declared;for(auto p:signature.parameters)declared+=(declared.empty()?"":",")+module.type(p).name;throw std::runtime_error("Invalid session native signature: "+std::string(name)+" declared ("+declared+") returns "+module.type(signature.result).name);}size_t i=0;for(auto expected:parameters)if(module.type(signature.parameters[i++]).name!=expected)throw std::runtime_error("Invalid session native parameter: "+std::string(name));runtime_.bind(name,std::move(native));
 }
 jass::Value ScriptSession::create(NativeKind kind) {
     if(objects_.size()>=1048576)throw std::runtime_error("Session native object budget exceeded");Object object{kind};const char* type;

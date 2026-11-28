@@ -13,7 +13,8 @@ struct JassBinaryProgram {std::vector<std::string> symbols;std::vector<JassBinar
 struct JassBinaryValue {std::uint8_t type=0;std::uint32_t bits=0;};
 struct JassBinaryGlobal {JassBinaryValue value;bool constant=false;};
 struct JassBinaryIndex {std::map<std::string,std::pair<size_t,size_t>> functions;std::map<std::uint32_t,size_t> labels;};
-std::map<std::string,JassBinaryGlobal> initializeJass2Globals(const JassBinaryProgram& program,const JassBinaryIndex& index,const std::string& function);
+// With deferred set, initializers needing natives or arrays return declarations only and report runtime evaluation.
+std::map<std::string,JassBinaryGlobal> initializeJass2Globals(const JassBinaryProgram& program,const JassBinaryIndex& index,const std::string& function,bool* deferred=nullptr);
 JassBinaryIndex indexJass2Binary(const JassBinaryProgram& program);
 JassBinaryProgram readJass2Binary(std::span<const std::uint8_t> decoded);
 std::vector<std::uint8_t> decodeJass2Binary(std::span<const std::uint8_t> bytes);

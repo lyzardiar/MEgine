@@ -16,7 +16,9 @@ std::string sourceText(std::span<const std::uint8_t> bytes) {
     }
     if(bytes.empty())return {};std::string value(reinterpret_cast<const char*>(bytes.data()),bytes.size());
     if(MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,value.data(),static_cast<int>(value.size()),nullptr,0)>0)return value;
-    int count=MultiByteToWideChar(CP_ACP,MB_ERR_INVALID_CHARS,value.data(),static_cast<int>(value.size()),nullptr,0);if(!count)throw std::runtime_error("Invalid source text encoding");std::wstring legacy(count,0);MultiByteToWideChar(CP_ACP,MB_ERR_INVALID_CHARS,value.data(),static_cast<int>(value.size()),legacy.data(),count);return utf8(legacy);
+    // Warcraft III consumes text members as raw bytes. Maps often mix UTF-8 with stray legacy bytes;
+    // keep such sources byte-exact instead of rejecting the whole map.
+    int count=MultiByteToWideChar(CP_ACP,MB_ERR_INVALID_CHARS,value.data(),static_cast<int>(value.size()),nullptr,0);if(!count)return value;std::wstring legacy(count,0);MultiByteToWideChar(CP_ACP,MB_ERR_INVALID_CHARS,value.data(),static_cast<int>(value.size()),legacy.data(),count);return utf8(legacy);
 }
 std::string skinValue(Archives& archives,const std::string& key,const std::string& fallback) {
     auto member=archives.read("UI\\war3skins.txt");if(!member)return fallback;auto text=sourceText(member->bytes);size_t at=0;

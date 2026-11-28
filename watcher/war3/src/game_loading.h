@@ -9,7 +9,7 @@
 
 namespace war3 {
 struct ConsolePiece {float x,y,w,h,u0,v0,u1,v1;std::string image;};
-struct GameCommand {std::string icon,hotkey,name,tip;unsigned x=0,y=0;};
+struct GameCommand {std::string icon,hotkey,name,tip;unsigned x=0,y=0;bool hidden=false;};
 struct GameData {
     std::unique_ptr<ScriptSession> session;
     std::unique_ptr<MapScriptRuntime> mapScript;

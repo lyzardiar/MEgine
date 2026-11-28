@@ -1,5 +1,27 @@
 # 独立客户端测试队列
 
+## dz 平台 RPG 地图加载兼容（第一轮，已提交，待批次验证）
+
+背景：`Maps\dz\rpg` 下 17 张 dz 平台大图（230–514MB）在脚本检查或载入阶段全部失败。本轮修复不依赖 Dz 平台 API 的通用兼容问题：
+
+- `src/fdf.cpp`：文本既非合法 UTF-8 也非合法系统代码页时按原始字节保留，不再报 "Invalid source text encoding" 拒绝整张图。
+- `src/jass.cpp`：字符串字面量允许跨行（rawcode 仍严格）；token 上限 4M→16M，表达式／语句 1M→8M，单个源 16MB→32MB、总量 32MB→64MB，覆盖 13–15MB 的大脚本。
+- `src/jass_module.cpp`、`src/jass_runtime.cpp`：`integer/real == null` 合法，运行时把 null 当 0 比较。
+- `src/jass_binary*.cpp`：2SAJ 全局初始化器遇到 native 调用、数组写入等无法静态求值的指令时，先登记全部声明，绑定宿主后由既有 VM 完整执行一次，仅在初始化期间允许写常量。
+- `src/lua_jass_bridge.cpp`：支持 YDWE `jass.runtime.handle_level=0`，句柄以整数传入／传出 Lua，`debug.handle_ref` 同样接受整数。
+- `src/session.cpp`：地图把已知 japi 名称声明成普通 JASS 函数时保留地图实现，不再报签名错误。
+- `src/session_ai.cpp`：`StartCampaignAI` 的脚本无法编译时（如 japi "callback" 内存类型转换加载器）按原版拒绝启动该 AI 并记录 `ai_script_rejected=`，不终止地图脚本。
+- `src/ground_texture.h`：地表贴图接受任意 4 倍数边长的方形或双宽图集，按比例采样高分辨率自定义地表。
+- `src/scene_assets.cpp`：单个导入模型解析失败时记录 `mdx_load_error=` 并以原版 `Objects\InvalidObject\InvalidObject.mdx` 替代，不中断整局加载。
+- `src/game_loading*.{h,cpp}`、`src/game_commands.cpp`：`CommandFunc` 按钮坐标超出 4×3 命令卡（如 `0,-11`）时隐藏按钮，热键保留。
+- `src/session_food.cpp`：`UpkeepUsage` 阈值上限放宽到 int 范围（地图用 1 亿关闭维护费）。
+
+快速检查：Win32 Release 集成构建通过；`war3_jass_binary_tests` 1 通过／0 失败；`war3_lua_tests`（无数据模式）1 通过／0 失败，其中光照句柄用例改为验证 level 0 整数句柄并拒绝 level 3。17 张图隐藏运行 `--main-check --simulate-ms 10000`：修复前 0 张完成 main，修复后 5 张完成 main 并模拟 10 秒；其中 `0B92DFB7`、`8450EABC` 以 `--play --hidden --frames 300` 进入游戏画面（自定义控制台显示，世界画面为黑，待查）。汇总 `tmp/docs-artifacts/war3/dz-rpg-maps/main-check-summary.log`，截图 `*.play.png`，驱动脚本 `run-maps.ps1`。
+
+仍未支持：Dz 平台 JASS API（`DzTriggerRegisterKeyEvent`、`DzFrame*`、`DzAPI_Map_*` 等，8+ 张图卡在此）、Lua `ffi` 模块（3 张）、MDX 粒子定义越界的导入模型（以占位模型显示）。
+
+待批次验证：三图及原有地图回归（JASS 前端预算、null 比较、2SAJ 初始化、地表采样、命令卡）、dz 图进入游戏后的实际画面与操作。
+
 ## 房主确认已决胜负后双方共同进入计分（已提交，待批次验证）
 
 路径：`src/lan_setup.cpp`、`src/lan_simulation.cpp`、`src/lan_runtime.cpp`、`src/main.cpp`、`src/session.h`。双方模拟消费到房主席位的计分确认按钮、且全部在线真人都已有胜／负／平结果时，`ScriptSession::confirmNetworkMatchResults` 在两端同时登记共享终局意图，沿用 JASS `EndGame` 的尾槽排空与计分路径。来客确认、结果未定或会话已退出时不触发，原有有序离场保持。本地已发起普通离场后又收到共享终局时，`requestLeave` 升级为共享排空；来客流关闭且共享终局待取时等待主循环接手，不报断线。

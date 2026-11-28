@@ -10,6 +10,7 @@ class JassBinarySession : public std::enable_shared_from_this<JassBinarySession>
     jass::Runtime& owner_;
     std::shared_ptr<const JassBinaryProgram> program_;
     JassBinaryIndex index_;
+    bool deferredInitializer_=false,initializing_=false;
     JassBinaryStorage storage_;
     JassBinaryHost host_;
     unsigned noYieldDepth_=0,overrideDepth_=0;
