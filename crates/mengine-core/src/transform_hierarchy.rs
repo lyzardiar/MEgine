@@ -198,7 +198,7 @@ fn resolve_node(world: &World, entity: Entity, nodes: &mut HierarchyNodes) -> Re
         |parent| resolve_node(world, parent, nodes),
     );
     let local = world
-        .get_component::<Transform>(entity)
+        .get_transform_fast(entity)
         .map(WorldTransform::from_local);
     let node = ResolvedNode {
         active: parent_node.active && world.entity_active(entity),

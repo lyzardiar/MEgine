@@ -22,6 +22,7 @@ mod ui_texture_retention_tests;
 
 const UI_MATERIAL_TEXTURE_GRACE_FRAMES: u64 = 120;
 const MAX_CACHED_UI_MATERIAL_TEXTURES: usize = 128;
+const MAX_SPRITE_CACHE_ENTRIES: usize = 4096;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TextureLoadFailure {
@@ -169,6 +170,11 @@ impl RuntimeTextureCache {
                 cached.texture_stamp != texture_stamp || cached.import_stamp != import_stamp
             });
             if stale {
+                if self.alpha_sprites.len() >= MAX_SPRITE_CACHE_ENTRIES
+                    && !self.alpha_sprites.contains_key(&original)
+                {
+                    self.alpha_sprites.clear();
+                }
                 self.alpha_sprites.insert(
                     original.clone(),
                     CachedAlphaSprite {
@@ -234,6 +240,11 @@ impl RuntimeTextureCache {
             });
             if stale {
                 let result = resolve_sprite_region(&texture_path, texture_reference, slice);
+                if self.sprite_regions.len() >= MAX_SPRITE_CACHE_ENTRIES
+                    && !self.sprite_regions.contains_key(&original)
+                {
+                    self.sprite_regions.clear();
+                }
                 self.sprite_regions.insert(
                     original.clone(),
                     CachedSpriteRegion {

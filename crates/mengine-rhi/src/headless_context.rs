@@ -43,6 +43,10 @@ impl GpuContext {
     pub fn is_lost(&self) -> bool {
         self.lost.load(Ordering::Acquire)
     }
+
+    pub fn lost_flag(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.lost)
+    }
 }
 
 struct ContextPool<T> { slots: Mutex<Vec<(ContextKey, Weak<T>)>> }

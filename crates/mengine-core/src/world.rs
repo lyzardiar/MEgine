@@ -54,6 +54,8 @@ pub struct World {
     free_list: Vec<u32>,
     component_entities: HashMap<String, BTreeSet<u32>>,
     component_types: HashMap<TypeId, Option<String>, BuildHasherDefault<ComponentTypeHasher>>,
+    /// Packed cache-friendly Transform column synchronized with entity components.
+    dense_transforms: crate::sparse_set::SparseSet<Transform>,
     pub time: Time,
     pub commands: CommandBuffer,
     pub schedule: Schedule,
@@ -84,6 +86,7 @@ impl World {
             free_list: Vec::new(),
             component_entities: HashMap::new(),
             component_types: HashMap::default(),
+            dense_transforms: crate::sparse_set::SparseSet::new(),
             time: Time::default(),
             commands: CommandBuffer::new(),
             schedule: Schedule::new(),
@@ -108,6 +111,7 @@ impl World {
             rec.active = true;
             rec.tag = "Untagged".into();
             rec.layer = 0;
+            self.dense_transforms.remove(index);
             Entity::new(index, rec.generation)
         } else {
             let index = self.entities.len() as u32;
@@ -164,6 +168,7 @@ impl World {
         rec.components.clear();
         rec.serialized_components.clear();
         rec.name = None;
+        self.dense_transforms.remove(entity.index);
         self.free_list.push(entity.index);
         if let Some(order) = &mut self.iteration_order { order.retain(|index| *index != entity.index); }
     }
@@ -220,7 +225,52 @@ impl World {
         self.entities[entity.index as usize].component_lookup_fallback |= fallback;
         self.entities[entity.index as usize].revision += 1;
         if matches!(name, "Transform" | "Parent") { self.entities[entity.index as usize].hierarchy_revision += 1; }
+        if let Some(transform) = value.as_any().downcast_ref::<Transform>() {
+            self.dense_transforms.insert(entity.index, transform.clone());
+        } else if name == "Transform" {
+            self.dense_transforms.remove(entity.index);
+        }
         if self.entities[entity.index as usize].components.insert(name.to_string(), Box::new(value)).is_none() { self.component_entities.entry(name.to_string()).or_default().insert(entity.index); }
+    }
+
+    /// O(1) cache-friendly Transform lookup backed by the packed `SparseSet<Transform>` column,
+    /// transparently falling back to `get_component::<Transform>` if mutated in place or projected.
+    pub fn get_transform_fast(&self, entity: Entity) -> Option<&Transform> {
+        let record = self.entities.get(entity.index as usize)?;
+        if !record.alive || record.generation != entity.generation {
+            return None;
+        }
+        if !record.component_lookup_fallback {
+            if let Some(transform) = self.dense_transforms.get(entity.index) {
+                return Some(transform);
+            }
+        }
+        self.get_component::<Transform>(entity)
+    }
+
+    /// Read-only view of the packed dense Transform column for cache-friendly linear iteration.
+    pub fn dense_transforms(&self) -> &crate::sparse_set::SparseSet<Transform> {
+        &self.dense_transforms
+    }
+
+    /// Re-synchronizes any live Transform components mutated via `get_component_mut` back into
+    /// the contiguous `SparseSet<Transform>` column.
+    pub fn sync_dense_transforms(&mut self) {
+        for index in 0..self.entities.len() {
+            let record = &self.entities[index];
+            if !record.alive || record.component_lookup_fallback {
+                continue;
+            }
+            if !self.dense_transforms.contains(index as u32) {
+                if let Some(transform) = record
+                    .components
+                    .get("Transform")
+                    .and_then(|component| component.as_any().downcast_ref::<Transform>())
+                {
+                    self.dense_transforms.insert(index as u32, transform.clone());
+                }
+            }
+        }
     }
 
     /// Read component state; serialized mutations must use `get_component_mut` or a World command.
@@ -240,6 +290,9 @@ impl World {
     pub fn get_component_mut<T: Any + Send + Sync>(&mut self, entity: Entity) -> Option<&mut T> {
         if !self.is_alive(entity) {
             return None;
+        }
+        if TypeId::of::<T>() == TypeId::of::<Transform>() {
+            self.dense_transforms.remove(entity.index);
         }
         let record = &mut self.entities[entity.index as usize];
         let value = if record.component_lookup_fallback {
@@ -323,6 +376,9 @@ impl World {
         let name = canonical_component_name(name);
         self.entities[entity.index as usize].revision += 1;
         if matches!(name, "Transform" | "Parent") { self.entities[entity.index as usize].hierarchy_revision += 1; }
+        if name == "Transform" {
+            self.dense_transforms.remove(entity.index);
+        }
         if self.entities[entity.index as usize].components.remove(name).is_some() {
             if let Some(set) = self.component_entities.get_mut(name) {
                 set.remove(&entity.index);

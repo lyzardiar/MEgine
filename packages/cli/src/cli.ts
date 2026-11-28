@@ -24,6 +24,8 @@ import {
   type BuildCacheStats,
   type BuildPatchStats,
 } from './pcPackage.js';
+import { listBuildTargets, resolveBuildTarget } from './platforms.js';
+import { buildWebPackage, WEB_MANIFEST_FILE } from './webPackage.js';
 
 const cliPackage = JSON.parse(
   readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'),
@@ -112,7 +114,8 @@ function help() {
 
 Commands:
   new <name>                  Create a new game project scaffold
-  build <project> [options]   Build a directly runnable PC player
+  targets [--active] [--json] List supported platform targets & script VM policies
+  build <project> [options]   Build a player package (PC default or --target web-wasm)
   export-pc <project>         Alias of build for compatibility
   verify-build <dir>          Verify payload hashes and its Ed25519 signature
   validate-scripts <project>  Type-check project scripts without emitting files
@@ -122,6 +125,7 @@ Commands:
   codegen                     Print the engine codegen command
 
 Build options:
+  --target <id>               Platform target (windows-x64, android-arm64, web-wasm, ...)
   --out <dir>                 Output directory (default: <project>/Builds/<platform>-<arch>-<profile>)
   --runtime <file>            Use an existing mengine-runtime executable
   --debug                     Build/use the debug runtime instead of release
@@ -334,6 +338,7 @@ function newProject(name: string) {
 
 interface BuildArguments {
   projectDir: string;
+  target?: string;
   outputDir?: string;
   runtimePath?: string;
   profile: 'debug' | 'release';
@@ -354,6 +359,7 @@ function takeOption(args: string[], index: number, name: string): string {
 
 function parseBuildArguments(values: string[]): BuildArguments {
   const args = [...values];
+  let target: string | undefined;
   let outputDir: string | undefined;
   let runtimePath: string | undefined;
   let profile: BuildArguments['profile'] = 'release';
@@ -365,7 +371,9 @@ function parseBuildArguments(values: string[]): BuildArguments {
   let clean = false;
   for (let index = 0; index < args.length;) {
     const value = args[index];
-    if (value === '--out') {
+    if (value === '--target') {
+      target = takeOption(args, index, '--target');
+    } else if (value === '--out') {
       outputDir = takeOption(args, index, '--out');
     } else if (value === '--runtime') {
       runtimePath = takeOption(args, index, '--runtime');
@@ -396,6 +404,7 @@ function parseBuildArguments(values: string[]): BuildArguments {
   if (args.length > 1) throw new Error(`unexpected build arguments: ${args.slice(1).join(' ')}`);
   return {
     projectDir: resolve(args[0] ?? '.'),
+    target,
     outputDir: outputDir ? resolve(outputDir) : undefined,
     runtimePath: runtimePath ? resolve(runtimePath) : undefined,
     profile,
@@ -480,8 +489,67 @@ function runtimeLicenseDirectory(): string {
   return join(root, 'packages', 'editor', 'licenses');
 }
 
+function printTargets(values: string[]) {
+  let activeOnly = false;
+  let asJson = false;
+  for (const arg of values) {
+    if (arg === '--active') activeOnly = true;
+    else if (arg === '--json') asJson = true;
+    else throw new Error(`unknown targets option: ${arg}`);
+  }
+  const targets = listBuildTargets(!activeOnly);
+  if (asJson) {
+    console.log(JSON.stringify(targets, null, 2));
+    return;
+  }
+  for (const item of targets) {
+    const gfx = item.graphicsFallback
+      ? `${item.graphicsPrimary} -> ${item.graphicsFallback}`
+      : item.graphicsPrimary;
+    console.log(
+      `${item.id.padEnd(15)} [${item.stage.padEnd(16)}] vm=${item.scriptBackend.padEnd(13)} gfx=${gfx.padEnd(16)} shell=${item.shellDir}`,
+    );
+  }
+}
+
 function buildProject(values: string[]) {
   const args = parseBuildArguments(values);
+  if (args.target) {
+    const target = resolveBuildTarget(args.target);
+    if (target.id === 'web-wasm') {
+      const cliDir = dirname(fileURLToPath(import.meta.url));
+      const engineRoot = findEngineRoot(process.cwd()) ?? findEngineRoot(cliDir);
+      if (!engineRoot) {
+        throw new Error('cannot locate the MEngine source root containing platforms/web');
+      }
+      const outputDir = args.outputDir ?? join(args.projectDir, 'Builds', `web-wasm-${args.profile}`);
+      const manifest = buildWebPackage({
+        projectDir: args.projectDir,
+        outputDir,
+        shellDir: join(engineRoot, target.shellDir),
+        engineVersion: ENGINE_VERSION,
+        clean: args.clean,
+      });
+      console.log(`Built ${manifest.project.name} (web-wasm) → ${outputDir}`);
+      console.log(`Script VM: ${manifest.scriptBackend} (zero embedded V8/QuickJS bloat)`);
+      console.log(`Graphics: ${manifest.graphicsPrimary} (fallback: ${manifest.graphicsFallback})`);
+      console.log(`Files: ${manifest.files.length} (${WEB_MANIFEST_FILE} written)`);
+      console.log(`Content: ${manifest.contentHash}`);
+      return;
+    }
+    if (target.stage === 'adapter-reserved') {
+      throw new Error(
+        `Target '${target.id}' (${target.label}, ${target.rustTriple}) is adapter-reserved. `
+        + `Platform shell lives in '${target.shellDir}' with script backend '${target.scriptBackend}'.`,
+      );
+    }
+    if (target.id === 'android-arm64') {
+      throw new Error(
+        `Target 'android-arm64' uses the Gradle/JNI shell in '${target.shellDir}' (cargo-ndk + v8-runtime). `
+        + `Build via platforms/android/build.gradle.kts on a host with Android NDK + Rust installed.`,
+      );
+    }
+  }
   const isCancelled = () => Boolean(args.cancelFile && existsSync(args.cancelFile));
   const assertNotCancelled = (stage: string) => {
     if (isCancelled()) throw new Error(`build cancelled during ${stage}`);
@@ -585,6 +653,9 @@ try {
       if (!rest[0]) throw new Error('new requires a project name');
       if (rest.length !== 1) throw new Error(`unexpected new arguments: ${rest.slice(1).join(' ')}`);
       newProject(rest[0]);
+      break;
+    case 'targets':
+      printTargets(rest);
       break;
     case 'build':
     case 'export-pc':

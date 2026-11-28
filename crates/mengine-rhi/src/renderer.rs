@@ -781,6 +781,7 @@ static NEXT_RENDERER_RESOURCE_ID: std::sync::atomic::AtomicU64 = std::sync::atom
 pub struct Renderer {
     resource_identity: u64,
     gpu_device_id: u64,
+    device_lost: Arc<std::sync::atomic::AtomicBool>,
     mesh_picking: bool,
     mesh_pick_order: Vec<usize>,
     world_bundles: WorldBundleCache,
@@ -1403,6 +1404,7 @@ impl Renderer {
         Ok(Self {
             resource_identity: NEXT_RENDERER_RESOURCE_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             gpu_device_id: context.id,
+            device_lost: context.lost_flag(),
             _headless_context: shared_headless_context,
             mesh_picking: false,
             mesh_pick_order: Vec::new(),
@@ -1500,6 +1502,17 @@ impl Renderer {
     }
 
     pub fn window_size(&self) -> Option<PhysicalSize<u32>> { self.surface.as_ref().map(|_| PhysicalSize::new(self.config.width, self.config.height)) }
+
+    /// Returns true once the underlying wgpu device reports a device-lost event.
+    pub fn is_device_lost(&self) -> bool {
+        self.device_lost.load(std::sync::atomic::Ordering::Acquire)
+    }
+
+    /// Compiles the current frame RenderGraph DAG (dead-pass culling, topological order,
+    /// and transient resource aliasing plan).
+    pub fn compiled_render_graph(&self) -> Result<crate::CompiledGraph, crate::RenderGraphError> {
+        self.graph.compile()
+    }
 
     /// Timings accumulated by the last submit_frame_to call, including embedded scene views.
     pub fn submission_profile(&self) -> FrameSubmissionProfile { self.submission_profile }
