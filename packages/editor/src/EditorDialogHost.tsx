@@ -19,6 +19,7 @@ export function EditorDialogHost() {
     getActiveEditorDialog,
   );
   const [value, setValue] = useState('');
+  const dialogRef = useRef<HTMLElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const confirmButton = useRef<HTMLButtonElement>(null);
 
@@ -60,6 +61,26 @@ export function EditorDialogHost() {
       data-editor-dialog-id={dialog.id}
       aria-label={`${dialog.title} dialog keyboard controls`}
       onKeyDown={(event) => {
+        if (event.key === 'Tab' && dialogRef.current) {
+          const focusable = Array.from(
+            dialogRef.current.querySelectorAll<HTMLElement>(
+              'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+            ),
+          );
+          if (focusable.length > 0) {
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            const active = document.activeElement as HTMLElement | null;
+            if (event.shiftKey && (active === first || !dialogRef.current.contains(active))) {
+              event.preventDefault();
+              last.focus();
+            } else if (!event.shiftKey && (active === last || !dialogRef.current.contains(active))) {
+              event.preventDefault();
+              first.focus();
+            }
+          }
+          return;
+        }
         if (event.key === 'Escape' && dialog.cancelLabel) {
           event.preventDefault();
           event.stopPropagation();
@@ -72,6 +93,7 @@ export function EditorDialogHost() {
       }}
     >
       <section
+        ref={dialogRef}
         className="editor-dialog"
         role="dialog"
         aria-modal="true"

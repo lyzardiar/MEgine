@@ -1,6 +1,7 @@
 // Author: MiYu
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, CircleAlert, Info } from 'lucide-react';
+import { AlertTriangle, CircleAlert, Copy, Info } from 'lucide-react';
+import { pushToast } from '../components/ui/ToastHost';
 import type { LogLevel } from '../agent/LogService';
 import { buildConsoleRows } from '../consoleModel';
 
@@ -74,7 +75,22 @@ export function Console(props: { lines: string[]; onClear?: () => void }) {
         {!rows.length && <div className="console-empty">{!props.lines.length ? 'Console is empty.' : 'No matching logs.'}</div>}
       </div>
       {selected && <div className="console-detail">
-        <div className="console-detail-heading">{selected.level.toUpperCase()}{collapse && selected.count > 1 ? ` · ${selected.count} occurrences` : ''}</div>
+        <div className="console-detail-heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>{selected.level.toUpperCase()}{collapse && selected.count > 1 ? ` · ${selected.count} occurrences` : ''}</span>
+          <button
+            type="button"
+            style={{ height: 20, padding: '0 7px', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11 }}
+            aria-label="Copy selected log"
+            onClick={() => {
+              void navigator.clipboard?.writeText(selected.line).then(
+                () => pushToast('Copied log entry', 'info', 1600),
+                () => undefined,
+              );
+            }}
+          >
+            <Copy size={11} aria-hidden="true" /> Copy
+          </button>
+        </div>
         <textarea readOnly aria-label="Selected log details" value={selected.line} spellCheck={false} />
       </div>}
       <div className="console-summary" role="status">{rows.length} {collapse ? 'groups' : 'messages'} shown · {props.lines.length} retained</div>

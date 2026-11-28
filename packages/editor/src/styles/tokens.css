@@ -1894,3 +1894,20 @@ body.dock-resizing-y .dock-splitter.vertical {
   width: 72px;
   accent-color: var(--me-accent);
 }
+
+/* Density presets controlled by PreferencesWindow & theme/index.ts */
+:root[data-density='compact'] {
+  --u-field-height: 21px;
+}
+
+:root[data-density='compact'] .tree-row {
+  height: 21px;
+}
+
+:root[data-density='comfortable'] {
+  --u-field-height: 28px;
+}
+
+:root[data-density='comfortable'] .tree-row {
+  height: 28px;
+}

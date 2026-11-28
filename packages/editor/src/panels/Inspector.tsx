@@ -527,16 +527,14 @@ function NumField(props: {
       >
         {props.label}
       </label>
-      <input
-        type="number"
+      <DraftNumberInput
         step={step}
         min={props.min}
         max={props.max}
-        aria-label={props.label}
-        value={props.mixed ? '' : Number(props.value.toFixed(3))}
-        placeholder={props.mixed ? 'Mixed' : undefined}
-        title={props.mixed ? 'Mixed values' : undefined}
-        onChange={(e) => props.onChange(clamp(parseFloat(e.target.value) || 0))}
+        ariaLabel={props.label}
+        value={props.value}
+        mixed={props.mixed}
+        onChange={(next) => props.onChange(clamp(next))}
       />
     </div>
   );

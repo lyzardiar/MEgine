@@ -34,6 +34,7 @@ import './windows/AgentSetupWindow';
 import './windows/FigmaSettingsWindow';
 import './windows/DecoratorGalleryWindow';
 import './windows/DocumentationWindow';
+import './windows/PreferencesWindow';
 import './assetMenuItems';
 import './assetImportMenuItem';
 import './componentMenuItems';

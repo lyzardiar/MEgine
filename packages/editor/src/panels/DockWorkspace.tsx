@@ -125,6 +125,9 @@ type DropTarget = { leafId: string; zone: DropZone };
 
 const DOCK_DRAG_TYPE = 'text/mengine-dock';
 const RESET_DOCK_LAYOUT_EVENT = 'mengine:reset-dock-layout';
+const APPLY_DOCK_PRESET_EVENT = 'mengine:apply-dock-preset';
+
+export type DockLayoutPresetId = 'default' | 'tall' | 'wide' | 'viewport';
 
 export type DockPanelContents = Omit<Record<PanelKind, ReactNode>, 'scene' | 'game'> & {
   /** Legacy authoring element; Dock clones it with an independent Scene/Game tab prop. */
@@ -164,6 +167,30 @@ registerMenuItem(
     agentInvokable: false,
     agentAlternative: 'reset_panel_layout',
   },
+);
+
+registerMenuItem(
+  'Window/Layout/Tall Layout',
+  () => {
+    window.dispatchEvent(new CustomEvent(APPLY_DOCK_PRESET_EVENT, { detail: 'tall' }));
+  },
+  { priority: 851 },
+);
+
+registerMenuItem(
+  'Window/Layout/Wide Layout',
+  () => {
+    window.dispatchEvent(new CustomEvent(APPLY_DOCK_PRESET_EVENT, { detail: 'wide' }));
+  },
+  { priority: 852 },
+);
+
+registerMenuItem(
+  'Window/Layout/Viewport Focus',
+  () => {
+    window.dispatchEvent(new CustomEvent(APPLY_DOCK_PRESET_EVENT, { detail: 'viewport' }));
+  },
+  { priority: 853 },
 );
 
 registerMenuItem(
@@ -221,6 +248,75 @@ export function defaultTree(): DockNode {
     },
     b: leaf(['inspector', 'material', 'shader', 'build', 'projectSettings']),
   };
+}
+
+export function presetTree(preset: DockLayoutPresetId): DockNode {
+  if (preset === 'tall') {
+    return {
+      kind: 'split',
+      id: nextId('root'),
+      dir: 'h',
+      ratio: 0.56,
+      a: leaf(['scene', 'game']),
+      b: {
+        kind: 'split',
+        id: nextId('col'),
+        dir: 'h',
+        ratio: 0.44,
+        a: {
+          kind: 'split',
+          id: nextId('row'),
+          dir: 'v',
+          ratio: 0.5,
+          a: leaf(['hierarchy']),
+          b: leaf(['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas', 'effekseer']),
+        },
+        b: leaf(['inspector', 'material', 'shader', 'build', 'projectSettings']),
+      },
+    };
+  }
+  if (preset === 'wide') {
+    return {
+      kind: 'split',
+      id: nextId('root'),
+      dir: 'v',
+      ratio: 0.72,
+      a: {
+        kind: 'split',
+        id: nextId('row'),
+        dir: 'h',
+        ratio: 0.66,
+        a: leaf(['scene', 'game']),
+        b: {
+          kind: 'split',
+          id: nextId('row'),
+          dir: 'h',
+          ratio: 0.42,
+          a: leaf(['hierarchy']),
+          b: leaf(['inspector', 'material', 'shader', 'build', 'projectSettings']),
+        },
+      },
+      b: leaf(['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas', 'effekseer']),
+    };
+  }
+  if (preset === 'viewport') {
+    return {
+      kind: 'split',
+      id: nextId('root'),
+      dir: 'h',
+      ratio: 0.82,
+      a: {
+        kind: 'split',
+        id: nextId('row'),
+        dir: 'v',
+        ratio: 0.84,
+        a: leaf(['scene', 'game']),
+        b: leaf(['console', 'project', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas', 'effekseer']),
+      },
+      b: leaf(['inspector', 'hierarchy', 'material', 'shader', 'build', 'projectSettings']),
+    };
+  }
+  return defaultTree();
 }
 
 function cloneNode(n: DockNode): DockNode {
@@ -1156,8 +1252,21 @@ export function DockWorkspace(props: {
           console.error('Failed to close detached panels before resetting layout', error);
         });
     };
+    const applyPreset = (ev: Event) => {
+      const preset = (ev as CustomEvent<DockLayoutPresetId>).detail;
+      if (preset !== 'default' && preset !== 'tall' && preset !== 'wide' && preset !== 'viewport') return;
+      void closeAllDetachedPanelWindows()
+        .then(() => setTree(presetTree(preset)))
+        .catch((error) => {
+          console.error('Failed to close detached panels before applying layout preset', error);
+        });
+    };
     window.addEventListener(RESET_DOCK_LAYOUT_EVENT, resetLayout);
-    return () => window.removeEventListener(RESET_DOCK_LAYOUT_EVENT, resetLayout);
+    window.addEventListener(APPLY_DOCK_PRESET_EVENT, applyPreset);
+    return () => {
+      window.removeEventListener(RESET_DOCK_LAYOUT_EVENT, resetLayout);
+      window.removeEventListener(APPLY_DOCK_PRESET_EVENT, applyPreset);
+    };
   }, [props.detachedPanel]);
 
   useEffect(() => {

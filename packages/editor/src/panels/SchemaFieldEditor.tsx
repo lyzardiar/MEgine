@@ -1,8 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { FieldMeta, MethodMeta } from '@mengine/behaviour';
 import { ENTITY_REFERENCE_FIELDS_KEY } from '@mengine/behaviour';
 import type { ProjectFileAsset } from '../projectAssets';
 import { parseSerializedEntityReference } from '../entityReferences';
+import { DraftNumberInput, useOnDemandScrubDrag } from '../components/ui/DraftNumberInput';
 import {
   ColorField,
   EntityReferenceField,
@@ -44,16 +46,27 @@ type AxisInputProps = {
 };
 
 function MiniAxis(props: AxisInputProps) {
+  const { onPointerDown } = useOnDemandScrubDrag({
+    value: props.value,
+    step: 0.05,
+    onChange: props.onChange,
+  });
   return (
     <div className="axis">
-      <span className={props.label}>{props.label.toUpperCase()}</span>
-      <input
-        type="number"
+      <span
+        className={`${props.label} scrub-label${props.disabled ? ' disabled' : ''}`}
+        title="拖拽调节数值 · Shift 精细 · Alt 加速"
+        onPointerDown={props.disabled ? undefined : onPointerDown}
+      >
+        {props.label.toUpperCase()}
+      </span>
+      <DraftNumberInput
         step={0.1}
-        aria-label={props.ariaLabel}
+        precision={3}
+        ariaLabel={props.ariaLabel}
         disabled={props.disabled}
-        value={Number(props.value.toFixed(3))}
-        onChange={(e) => props.onChange(parseFloat(e.target.value) || 0)}
+        value={props.value}
+        onChange={props.onChange}
       />
     </div>
   );
@@ -152,7 +165,19 @@ export function SchemaFieldEditor(props: {
           kind === 'spine-json'
           || kind === 'spine-binary'
           || kind === 'spine-atlas'
-          || kind === 'effekseer-effect',
+          || kind === 'effekseer-effect'
+          || kind === 'material'
+          || kind === 'shader'
+          || kind === 'prefab'
+          || kind === 'audio'
+          || kind === 'texture'
+          || kind === 'model'
+          || kind === 'font'
+          || kind === 'animation'
+          || kind === 'animator-controller'
+          || kind === 'timeline'
+          || kind === 'particle'
+          || kind === 'sprite-atlas',
       );
       return (
         <FieldChrome key={f.key} field={f}>
@@ -327,13 +352,16 @@ export function SchemaFieldEditor(props: {
                 onChange={(e) => setKey(f, clamp(parseFloat(e.target.value) || 0))}
               />
               <div className={`field-num-suffix${f.suffix ? ' has-suffix' : ''}`}>
-                <input
-                  type="number"
+                <DraftNumberInput
                   className="slider-num"
-                  aria-label={`${label} value`}
+                  ariaLabel={`${label} value`}
                   disabled={!enabled}
-                  value={Number(num.toFixed(3))}
-                  onChange={(e) => setKey(f, clamp(parseFloat(e.target.value) || 0))}
+                  min={lo}
+                  max={hi}
+                  step={(hi - lo) / 200 || 0.01}
+                  precision={3}
+                  value={num}
+                  onChange={(next) => setKey(f, clamp(next))}
                 />
                 {f.suffix && <span className="field-suffix">{f.suffix}</span>}
               </div>
@@ -348,13 +376,15 @@ export function SchemaFieldEditor(props: {
         <div className={`field-row${requiredEmpty ? ' field-required' : ''}`} title={title}>
           <label>{label}</label>
           <div className={`field-num-suffix${f.suffix ? ' has-suffix' : ''}`}>
-            <input
-              type="number"
-              aria-label={label}
+            <DraftNumberInput
+              ariaLabel={label}
               disabled={!enabled}
+              min={f.min}
+              max={f.max}
               step={f.min != null || f.max != null ? 0.1 : 1}
-              value={Number(num.toFixed(3))}
-              onChange={(e) => setKey(f, clamp(parseFloat(e.target.value) || 0))}
+              precision={3}
+              value={num}
+              onChange={(next) => setKey(f, clamp(next))}
             />
             {f.suffix && <span className="field-suffix">{f.suffix}</span>}
           </div>
@@ -442,7 +472,9 @@ export function SchemaFieldEditor(props: {
               aria-expanded={open}
               onClick={() => setFoldOpen((s) => ({ ...s, [b.name]: !open }))}
             >
-              <span aria-hidden>{open ? '▾' : '▸'}</span> {b.name}
+              <span aria-hidden style={{ display: 'inline-flex', alignItems: 'center' }}>
+                {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              </span> {b.name}
             </button>
             {open && b.fields.map(renderWidget)}
           </div>
