@@ -47,20 +47,20 @@ void MapBrowser::prepared() {
 }
 fs::path MapBrowser::selectedMap() const {return info_ && selected_<entries_.size()?entries_[selected_].path:fs::path{};}
 const MapHeader* MapBrowser::header(const fs::path& path) {auto found=headers_.find(path);if(found==headers_.end()){std::optional<MapHeader> h;try{h=MapHeader::read(path);}catch(const std::exception& e){log_.write("map_header_unavailable="+utf8(path.wstring())+": "+e.what());}found=headers_.emplace(path,std::move(h)).first;}return found->second?&*found->second:nullptr;}
-std::pair<float,float> MapBrowser::selectedCenter() const {auto r=screen_.bounds("MapListContainer");return {r.x+r.w/2,r.y+.004f+(float(selected_)-float(scroll_)+.5f)*.01875f};}
+std::pair<float,float> MapBrowser::selectedCenter() const {auto r=screen_.bounds("MapListContainer");return {r.x+r.w/2,r.y+.008f+(float(selected_)-float(scroll_)+.5f)*.01875f};}
 std::string MapBrowser::draw(const UiInput& input) {
     prepared();
     if(session_)session_->updateAudio();
-    auto r=screen_.bounds("MapListContainer");constexpr float step=.01875f;rows_=std::max(1u,unsigned((r.h-.008f)/step));auto maximum=entries_.size()>rows_?entries_.size()-rows_:0;
+    auto r=screen_.bounds("MapListContainer");constexpr float step=.01875f;rows_=std::max(1u,unsigned((r.h-.016f)/step));auto maximum=entries_.size()>rows_?entries_.size()-rows_:0;
     if(scroll_>maximum)scroll_=maximum;
     auto choose=[&](size_t n){if(n>=entries_.size())return;select(n);if(selected_<scroll_)scroll_=selected_;if(selected_>=scroll_+rows_)scroll_=selected_-rows_+1;};
     bool blocked=screen_.popupOpen(),listFocus=screen_.focus()=="MapListBox";auto controls=input;if(listFocus && !blocked && (controls.key==VK_RETURN || controls.key==VK_SPACE))controls.key=0;
-    auto track=GlueScreen::Rect{r.x+r.w-.0205f,r.y+.004f,.0165f,r.h-.008f};auto up=GlueScreen::Rect{track.x,track.y,track.w,.015f},down=GlueScreen::Rect{track.x,track.y+track.h-.015f,track.w,.015f};float travel=track.h-.04f;
+    auto track=GlueScreen::Rect{r.x+r.w-.0205f,r.y+.006f,.0165f,r.h-.012f};auto up=GlueScreen::Rect{track.x,track.y,track.w,.015f},down=GlueScreen::Rect{track.x,track.y+track.h-.015f,track.w,.015f};float travel=track.h-.04f;
     if(!blocked){players_.input(input);if(hit(r,input.x,input.y) && input.wheel)scroll_=size_t(std::clamp<long long>(static_cast<long long>(scroll_)-input.wheel*3ll,0,static_cast<long long>(maximum)));
         if(listFocus && !entries_.empty()){if(input.key==VK_UP)choose(selected_?selected_-1:0);if(input.key==VK_DOWN)choose(std::min(selected_+1,entries_.size()-1));if(input.key==VK_HOME)choose(0);if(input.key==VK_END)choose(entries_.size()-1);if(input.key==VK_PRIOR)choose(selected_>=rows_?selected_-rows_:0);if(input.key==VK_NEXT)choose(std::min(selected_+rows_,entries_.size()-1));}
         if(listFocus && input.key==VK_BACK && directory_!=root_)enter(directory_.parent_path());
         if(listFocus && input.key==VK_RETURN && selected_<entries_.size() && entries_[selected_].directory)enter(entries_[selected_].path);
-        for(size_t row=0;row<rows_ && scroll_+row<entries_.size();++row){auto area=GlueScreen::Rect{r.x+.004f,r.y+.004f+float(row)*step,r.w-.0245f,step};if(click(area,input)){screen_.focus("MapListBox");size_t index=scroll_+row;auto entry=entries_[index];choose(index);if(entry.directory && input.doubleClick)enter(entry.path);break;}}
+        for(size_t row=0;row<rows_ && scroll_+row<entries_.size();++row){auto area=GlueScreen::Rect{r.x+.010f,r.y+.008f+float(row)*step,r.w-.0315f,step};if(click(area,input)){screen_.focus("MapListBox");size_t index=scroll_+row;auto entry=entries_[index];choose(index);if(entry.directory && input.doubleClick)enter(entry.path);break;}}
         maximum=entries_.size()>rows_?entries_.size()-rows_:0;if(scroll_>maximum)scroll_=maximum;
         if(click(up,input) && scroll_)--scroll_;if(click(down,input) && scroll_<maximum)++scroll_;
         auto trough=GlueScreen::Rect{track.x,track.y+.015f,track.w,track.h-.03f};if(maximum && input.down && hit(trough,input.startX,input.startY))scroll_=size_t(std::clamp((input.y-trough.y-.005f)/travel,0.f,1.f)*float(maximum)+.5f);
@@ -69,7 +69,7 @@ std::string MapBrowser::draw(const UiInput& input) {
     screen_.backdropAt("MapListBoxBackdrop",r);
     float scale=std::min(renderer_.width()/.8f,renderer_.height()/.6f),left=(renderer_.width()-.8f*scale)/2,top=(renderer_.height()-.6f*scale)/2;
     auto quad=[&](GlueScreen::Rect area,DWORD color){renderer_.rect(left+area.x*scale,top+area.y*scale,area.w*scale,area.h*scale,color);};
-    for(size_t row=0;row<rows_ && scroll_+row<entries_.size();++row){size_t index=scroll_+row;auto area=GlueScreen::Rect{r.x+.004f,r.y+.004f+float(row)*step,r.w-.0245f,step};auto& entry=entries_[index];if(index==selected_)quad(area,0x9f344b6b);bool parent=entry.directory && entry.path==directory_.parent_path();auto h=entry.directory?nullptr:header(entry.path);auto name=parent?std::string(".."):h?h->name:utf8(entry.path.filename().wstring());if(info_ && index==selected_)name=info_->name;
+    for(size_t row=0;row<rows_ && scroll_+row<entries_.size();++row){size_t index=scroll_+row;auto area=GlueScreen::Rect{r.x+.010f,r.y+.008f+float(row)*step,r.w-.0315f,step};auto& entry=entries_[index];if(index==selected_)quad(area,0x9f344b6b);bool parent=entry.directory && entry.path==directory_.parent_path();auto h=entry.directory?nullptr:header(entry.path);auto name=parent?std::string(".."):h?h->name:utf8(entry.path.filename().wstring());if(info_ && index==selected_)name=info_->name;
         auto icon=GlueScreen::Rect{area.x,area.y,.01875f,.01875f};screen_.imageAt(entry.directory?(parent?"UI\\Widgets\\Glues\\icon-folder-up.blp":"UI\\Widgets\\Glues\\icon-folder.blp"):h?(h->flags&4?"UI\\Widgets\\Glues\\icon-file-melee.blp":"UI\\Widgets\\Glues\\icon-file-ums.blp"):"UI\\Widgets\\Glues\\icon-file.blp",icon);
         if(h)screen_.textAt("StandardSmallTextTemplate",std::to_string(h->players),icon,true,false,false,playersFont_);
         screen_.textAt("StandardInfoTextTemplate",name,{area.x+.022f,area.y,area.w-.022f,area.h},true,index==selected_,true,itemFont_);

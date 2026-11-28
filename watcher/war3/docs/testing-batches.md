@@ -1,5 +1,16 @@
 # 独立客户端测试队列
 
+## 界面视觉与原版 1.27 对齐（第二轮，已提交，待批次验证）
+
+路径：`src/game_view.{h,cpp}`、`src/map_browser.cpp`、`src/game_transport.cpp`、`src/game_selection_panel.cpp`、`src/game_hero_bar.cpp`。
+
+- 小地图绘制、镜头框、信号／野怪渲染与全部点击／右键／拖拽坐标统一对齐控制台内框（`x=0.0105, y=0.446, w=0.1395, h=0.146`），消除底部露出的深蓝空隙与顶部压边；右侧 5 个小地图按钮按原版 1.27 自上而下顺序（信号→地形→盟友→野怪→编队，步进 `0.0225`）落回各自槽位，填补顶部空金框并消除编队按钮溢出到底部石框。
+- 自定义游戏选图列表（`MapBrowser`）补齐内边距，避免左侧人数图标与高亮条压在列表金属边框上；运输舱面板补齐 `GroupButtonBorder`、血条贴图、文字阴影与悬停高亮；多选面板与英雄快捷头像栏补齐悬停高亮及英雄悬停提示框。
+
+快速检查：Win32 Release 增量编译通过；隐藏后台运行 `--menu-check` 与 `BootyBay --play --hidden --mute --frames 400 --agent-select-unit hpea` 均退出 0（`menu_check=passed`、`game_dll_loaded=false`），截图 `tmp/docs-artifacts/war3/ui-survey/after4/{ingame,menu-browser}.png` 核对小地图贴边、5 枚小地图按钮与选图列表边距均对齐原版。
+
+待批次验证：其余三种族（兽族／不死／暗夜）小地图与控制台贴合度、运输舱卸载与英雄快捷栏悬停提示、小地图点击与信号精准度。
+
 ## 2026-11-28 合并批次验证与回归修复（集成基线 `fa9230c`→`1c7f2e1`→`8a12ffe`）
 
 范围：合并验证 `352454b`、`2c29367`、`fa9230c`、`1c7f2e1` 及本批修复 `8a12ffe`（原批次分支提交 `d6354fd`）。Win32 Release（MSVC 14.43 x86 + Ninja）于 `tmp/docs-artifacts/war3/batch-build-v2/win32-release` 构建通过，最终 `war3.exe` SHA-256 前缀 `2f1c9bae4409`，全程未加载 `Game.dll`。

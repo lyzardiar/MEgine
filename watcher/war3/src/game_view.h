@@ -307,7 +307,7 @@ class GameView {
     void controlGroup(unsigned group,bool assign,bool append,bool repeat);
     void refreshHeroShortcuts();
     void heroShortcutInput(GameInput& input);
-    void drawHeroShortcuts();
+    void drawHeroShortcuts(const GameInput& input);
     void refreshIdleWorkers(bool force=false);
     void idleWorkerInput(GameInput& input);
     void townHallInput(GameInput& input);
