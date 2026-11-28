@@ -1819,7 +1819,12 @@ export function Viewport(props: {
     const sceneConsumers = !isGame ? displayedPresentation?.sceneConsumers() : undefined;
     if (browserWorld) {
       // Browser drawing and hit regions use the same owned entity records as the decoded image.
-      p = Object.assign(Object.create(requestedProps), { entities: browserWorld.entities, clearColor: browserWorld.clearColor, simulationTime: browserWorld.simulationTime });
+      // Define own properties instead of Object.assign so frozen React dev props on the prototype never throw.
+      p = Object.create(requestedProps, {
+        entities: { value: browserWorld.entities, enumerable: true, writable: true, configurable: true },
+        clearColor: { value: browserWorld.clearColor, enumerable: true, writable: true, configurable: true },
+        simulationTime: { value: browserWorld.simulationTime, enumerable: true, writable: true, configurable: true },
+      });
       isActive = displayedPresentation!.active;
       if (isGame) {
         gameCamera = displayedPresentation!.gameCamera(p.timelineCameraPreview, p.gameDisplay);
