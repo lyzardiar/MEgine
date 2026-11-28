@@ -25,7 +25,7 @@ std::uint32_t modulateMapFrameAlpha(std::uint32_t color,std::uint8_t alpha);
 class MapFrames {
 public:
     struct Anchor {std::uint32_t point=0,target=0,targetPoint=0;float x=0,y=0;};
-    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;bool standardInfo=false,anchorsCleared=false;std::int32_t level=0;bool enabled=true,model2=false,viewport=false;std::string model;std::optional<unsigned> modelTeamColor;std::optional<std::array<float,3>> cameraSource,cameraTarget;std::optional<double> animationStart;std::optional<std::uint32_t> animationIndex;bool animationLoop=false;float animationOffset=0,modelSize=1;std::array<float,9> modelMatrix{1,0,0,0,1,0,0,0,1};std::array<float,3> modelOffset{};std::map<std::uint32_t,std::string> modelTextures;};
+    struct Node {std::uint32_t id=0,parent=0,context=0;FrameDefinition definition;bool visible=true;std::vector<std::uint32_t> children;std::map<std::uint32_t,Anchor> anchors;std::optional<float> width,height;std::optional<std::uint32_t> textColor;std::optional<std::uint8_t> alpha;size_t dynamicTextBytes=0,dynamicTextureBytes=0;bool standardInfo=false,standardBuiltIn=false,anchorsCleared=false;std::int32_t level=0;bool enabled=true,model2=false,viewport=false;float scale=1.f;std::optional<std::uint32_t> vertexColor,textSizeLimit;float value=0.f,minValue=0.f,maxValue=1.f,stepValue=0.f;std::uint32_t tooltip=0;std::string model;std::optional<unsigned> modelTeamColor;std::optional<std::array<float,3>> cameraSource,cameraTarget;std::optional<double> animationStart;std::optional<std::uint32_t> animationIndex;bool animationLoop=false;float animationOffset=0,modelSize=1;std::array<float,9> modelMatrix{1,0,0,0,1,0,0,0,1};std::array<float,3> modelOffset{};std::map<std::uint32_t,std::string> modelTextures;};
 private:
     std::shared_ptr<FrameDefinitions> definitions_;
     std::map<std::uint32_t,Node> nodes_;
@@ -33,12 +33,17 @@ private:
     std::array<std::uint32_t,12> commandButtons_{};
     std::array<std::uint32_t,6> itemButtons_{};
     std::array<std::uint32_t,8> infoPanels_{};
-    std::uint32_t portrait_=0;
+    std::array<std::uint32_t,5> minimapButtons_{};
+    std::array<std::uint32_t,7> heroBarButtons_{};
+    std::array<std::uint32_t,7> heroHpBars_{};
+    std::array<std::uint32_t,7> heroManaBars_{};
+    std::uint32_t portrait_=0,minimap_=0,tooltip_=0,focused_=0;
     std::uint32_t next_=2;
     std::uint64_t revision_=0;
     size_t textBytes_=0,textureBytes_=0;
     std::uint32_t add(FrameDefinition definition,std::uint32_t parent,std::uint32_t context,unsigned depth);
-    void requireMutable(std::uint32_t id) const;
+    void requireMutable(std::uint32_t id,bool allowStandard=false) const;
+    bool isBuiltInStandard(std::uint32_t id) const;
     bool supportedStandardInfo(const Node& frame) const;
     std::uint32_t textTarget(std::uint32_t id) const;
     void multiplyModelMatrix(std::uint32_t id,const std::array<float,9>& value);
@@ -51,6 +56,9 @@ public:
     bool contains(std::uint32_t id) const {return nodes_.contains(id);}
     std::uint32_t resolveReference(std::uint32_t source,const std::string& name) const;
     std::uint32_t findSimple(const std::string& name,std::uint32_t context,std::string_view type) const;
+    // Most recently created frame with this name and context, or 0 (BlzGetFrameByName semantics).
+    std::uint32_t find(const std::string& name,std::uint32_t context) const;
+    void setFont(std::uint32_t id,std::string file,float height,std::uint32_t flags);
     std::uint32_t commandButton(unsigned row,unsigned column);
     std::uint32_t existingCommandButton(unsigned row,unsigned column) const;
     bool isCommandButton(std::uint32_t id) const;
@@ -58,6 +66,21 @@ public:
     std::uint32_t existingItemButton(unsigned slot) const;
     std::uint32_t portrait();
     bool portraitVisible() const;
+    std::uint32_t minimap();
+    std::uint32_t existingMinimap() const {return minimap_;}
+    bool minimapVisible() const;
+    std::uint32_t minimapButton(unsigned index);
+    std::uint32_t existingMinimapButton(unsigned index) const;
+    bool minimapButtonVisible(unsigned index) const;
+    std::uint32_t heroBarButton(unsigned index);
+    std::uint32_t existingHeroBarButton(unsigned index) const;
+    bool isHeroBarButton(std::uint32_t id) const;
+    bool heroBarButtonVisible(unsigned index) const;
+    std::uint32_t heroHpBar(unsigned index);
+    std::uint32_t heroManaBar(unsigned index);
+    std::uint32_t tooltip();
+    std::uint32_t existingTooltip() const {return tooltip_;}
+    bool tooltipVisible() const;
     bool isItemButton(std::uint32_t id) const;
     void installStandardInfo();
     std::uint32_t standardInfo(unsigned context,const std::string& name) const;
@@ -67,20 +90,34 @@ public:
     std::uint32_t createByType(const std::string& type,const std::string& name,std::uint32_t parent,const std::string& inherits,std::uint32_t context=0);
     void destroy(std::uint32_t id);
     void destroySimple(std::uint32_t id);
-    void setPoint(std::uint32_t id,std::uint32_t point,std::uint32_t target,std::uint32_t targetPoint,float x,float y);
-    void clearPoints(std::uint32_t id);
-    void setSize(std::uint32_t id,std::optional<float> width,std::optional<float> height);
+    void setParent(std::uint32_t id,std::uint32_t parent);
+    void setPoint(std::uint32_t id,std::uint32_t point,std::uint32_t target,std::uint32_t targetPoint,float x,float y,bool allowStandard=false);
+    void clearPoints(std::uint32_t id,bool allowStandard=false);
+    void setSize(std::uint32_t id,std::optional<float> width,std::optional<float> height,bool allowStandard=false);
+    void setScale(std::uint32_t id,float scale);
     void setText(std::uint32_t id,std::string text);
+    void setTextAlignment(std::uint32_t id,std::uint32_t align);
+    void setTextSizeLimit(std::uint32_t id,std::uint32_t limit);
+    std::uint32_t textSizeLimit(std::uint32_t id) const;
     void setTexture(std::uint32_t id,std::string name,bool tiled);
     std::string text(std::uint32_t id) const;
     void setTextColor(std::uint32_t id,std::uint32_t color);
     std::uint32_t textColor(std::uint32_t id) const;
-    void setAlpha(std::uint32_t id,std::uint8_t alpha);
+    void setVertexColor(std::uint32_t id,std::uint32_t color);
+    void setAlpha(std::uint32_t id,std::uint8_t alpha,bool allowStandard=false);
     std::uint8_t alpha(std::uint32_t id) const;
-    void setLevel(std::uint32_t id,std::int32_t level);
+    void setLevel(std::uint32_t id,std::int32_t level,bool allowStandard=false);
+    void setValue(std::uint32_t id,float value);
+    float value(std::uint32_t id) const;
+    void setMinMaxValue(std::uint32_t id,float minValue,float maxValue);
+    void setStepValue(std::uint32_t id,float step);
+    void setTooltip(std::uint32_t id,std::uint32_t tooltip);
+    std::uint32_t tooltipOf(std::uint32_t id) const;
+    bool setFocus(std::uint32_t id,bool enable);
+    std::uint32_t focused() const {return focused_;}
     std::vector<std::uint32_t> orderedChildren(std::uint32_t id) const;
     std::uint32_t buttonAt(float x,float y,const std::function<MapFrameRect(std::uint32_t)>& bounds) const;
-    void enable(std::uint32_t id,bool value);
+    void enable(std::uint32_t id,bool value,bool allowStandard=false);
     bool enabled(std::uint32_t id) const;
     void setModel(std::uint32_t id,std::string_view path);
     std::uint32_t addModel(std::uint32_t parent);
@@ -96,7 +133,7 @@ public:
     void setModelOffsetAxis(std::uint32_t id,unsigned axis,float value);
     void setModelTexture(std::uint32_t id,std::uint32_t replacement,std::string_view path);
     void setViewport(std::uint32_t id,bool enabled);
-    void visible(std::uint32_t id,bool value);
+    void visible(std::uint32_t id,bool value,bool allowStandard=false);
     bool visible(std::uint32_t id) const;
     size_t size() const {return nodes_.size();}
     std::uint64_t revision() const {return revision_;}

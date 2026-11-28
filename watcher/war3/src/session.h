@@ -35,6 +35,12 @@
 #include <stdexcept>
 
 namespace war3 {
+class MapFrames;
+class LocalPlatformStore;
+class LuaRuntime;
+enum class DzInputKind {Key,Mouse,MouseMove,Wheel,Resize};
+struct DzWindowState {std::int32_t x=0,y=0,width=0,height=0;bool active=false;bool operator==(const DzWindowState&) const=default;};
+struct DzPointerState {std::int32_t screenX=0,screenY=0,clientX=0,clientY=0;std::optional<std::array<float,3>> terrain;std::uint32_t focusFrame=0,unit=0;bool overUi=false;};
 struct RecoveryCheckpointInfo {std::string mapPath,mapDigest,fileDigest;bool expansion=false;unsigned version=0,defaultDifficulty=0;};
 struct LocalLoadRequest {std::string name;RecoveryCheckpointInfo checkpoint;fs::path map;};
 struct LocalSaveResult {std::string postSaveError;};
@@ -109,6 +115,46 @@ class ScriptSession {
     std::weak_ptr<void> localSyncState_;
     std::vector<std::uint32_t> customMessageTriggers_;
     std::vector<std::pair<std::uint32_t,std::string>> dzSyncTriggers_;
+    struct DzScriptCallback {std::string function;jass::Value code;std::shared_ptr<jass::Runtime> codeRuntime;bool sync=false;};
+    struct DzInputHook {DzInputKind kind=DzInputKind::Key;std::uint32_t trigger=0,code=0;bool press=false;DzScriptCallback callback;};
+    std::vector<DzInputHook> dzInputHooks_;
+    std::map<std::pair<std::uint32_t,std::uint32_t>,DzScriptCallback> dzFrameScripts_;
+    std::set<std::uint32_t> dzHoveredFrames_;
+    std::vector<DzScriptCallback> dzFrameUpdates_;
+    std::deque<std::pair<std::string,std::string>> dzSyncPending_;
+    size_t dzSyncPendingBytes_=0;
+    std::optional<DzWindowState> dzWindow_;
+    DzPointerState dzPointer_;
+    std::array<bool,256> dzKeys_{};
+    std::int64_t dzGameStartTime_=0;
+    std::shared_ptr<FrameDefinitions> frameDefinitions_;
+    std::shared_ptr<MapFrames> mapFrames_;
+    std::shared_ptr<LocalPlatformStore> dzPlatform_;
+    std::shared_ptr<LuaRuntime> dzLua_;
+    std::unique_ptr<Images> dzImages_;
+    std::map<std::string,Bytes> dzTextures_;
+    size_t dzTextureBytes_=0;
+    std::uint64_t dzTextureRevision_=0;
+    std::map<std::string,std::string> dzGlobalStore_;
+    std::map<std::pair<std::uint32_t,std::string>,std::string> itemDataStrings_;
+    std::map<std::tuple<std::uint32_t,unsigned,std::uint32_t>,std::variant<std::int32_t,float>> abilityDataOverrides_;
+    bool dzActive_=false,dzWideScreen_=false,dzInterfaceHidden_=false;
+    std::optional<std::pair<float,float>> dzBlackBorders_;
+    float dzCustomFovFix_=0.f;
+    std::optional<std::pair<int,int>> dzRequestedMousePos_;
+    std::uint32_t dzCagedFrame_=0;
+    void bindDzNatives();
+    void bindDzFrameNatives();
+    void bindDzPlatformNatives();
+    void registerDzInput(DzInputKind kind,jass::Value trigger,std::uint32_t code,std::uint32_t status,bool sync,const jass::Value& function,bool byCode);
+    void runDzCallback(const DzScriptCallback& callback,ScriptContext context,std::uint32_t trigger);
+    void dispatchDzInput(DzInputKind kind,std::uint32_t code,bool press,std::int32_t wheel);
+    void requireDzIdle(const char* operation) const;
+    void dispatchDzFrameEvent(std::uint32_t frame,std::uint32_t event);
+    void pumpDzSync();
+    LocalPlatformStore& dzPlatform();
+    LuaRuntime& dzLua();
+    MapFrames& dzFrames();
     std::vector<std::uint32_t> localNetworkObjects_;
     std::vector<std::uint32_t> localNetworkUiObjects_;
     std::vector<std::uint32_t> eventHandles_,spatialEventHandles_,timerHandles_,timerTriggerEvents_;
@@ -1298,6 +1344,7 @@ public:
     float japiEffectZ(std::uint32_t id);
     void setJapiVisualFacing(std::uint32_t unit,float facing);
     std::uint32_t japiUnitAbility(std::uint32_t unit,std::uint32_t ability);
+    std::uint32_t japiUnitAbilityByIndex(std::uint32_t unit,std::int32_t index);
     std::uint32_t japiAbilityId(std::uint32_t ability) const;
     float japiAbilityState(std::uint32_t ability,std::uint32_t state) const;
     bool setJapiAbilityState(std::uint32_t ability,std::uint32_t state,float value);
@@ -1714,6 +1761,35 @@ public:
     void registerDzSync(std::uint32_t trigger,std::string_view prefix);
     void dispatchDzSync(unsigned player,std::string_view prefix,std::string_view message);
     std::optional<std::pair<std::uint32_t,std::string>> currentDzSync() const;
+    // Shared runtime frame tree for JASS DzAPI and the Lua JAPI bridge; created on first use.
+    std::shared_ptr<MapFrames> ensureMapFrames();
+    const std::shared_ptr<MapFrames>& mapFrames() const {return mapFrames_;}
+    // DzAPI host input: the game view (or a headless host) reports the local window, pointer and input transitions.
+    bool dzActive() const {return dzActive_;}
+    bool dzWideScreen() const {return dzWideScreen_;}
+    bool dzInterfaceHidden() const {return dzInterfaceHidden_;}
+    const std::optional<std::pair<float,float>>& dzBlackBorders() const {return dzBlackBorders_;}
+    float dzCustomFovFix() const {return dzCustomFovFix_;}
+    std::optional<std::pair<int,int>> takeDzRequestedMousePos() {auto v=dzRequestedMousePos_;dzRequestedMousePos_.reset();return v;}
+    std::uint32_t dzCagedFrame() const {return dzCagedFrame_;}
+    void dzWindow(const DzWindowState& window);
+    const std::optional<DzWindowState>& dzWindowState() const {return dzWindow_;}
+    void dzPointer(const DzPointerState& pointer) {dzPointer_=pointer;}
+    void dzKeyInput(unsigned key,bool press);
+    void dzClearKeys() {dzKeys_.fill(false);}
+    void dzMouseButtonInput(unsigned button,bool press);
+    void dzMouseMoveInput();
+    void dzWheelInput(std::int32_t delta);
+    void dzFrameUpdate();
+    std::vector<std::uint32_t> dzFrameEventTargets();
+    void dzUpdateFramePointer(std::span<const std::uint32_t> hovered);
+    bool dzHasFrameClick(std::uint32_t frame);
+    bool dzClickFrame(std::uint32_t frame);
+    void dzFrameMouseButton(std::uint32_t frame,bool press);
+    void dzFrameWheel(std::uint32_t frame,std::int32_t delta);
+    std::optional<std::string> japiItemDataString(std::uint32_t itemType,const std::string& field) const;
+    std::optional<Bytes> dzTextureOverride(const std::string& path) const;
+    std::uint64_t dzTextureRevision() const {return dzTextureRevision_;}
     const std::map<std::uint32_t,std::shared_ptr<UnitState>>& units() const {return units_;}
     const std::map<std::uint32_t,std::shared_ptr<ItemState>>& items() const {return items_;}
     const std::vector<std::string>& preloadMissing() const {return preloadMissing_;}

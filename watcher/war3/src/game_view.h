@@ -47,8 +47,13 @@ class GameView {
     std::unique_ptr<GlueScreen> allyFilterTooltip_,mapFramesScreen_;
     std::uint32_t hoveredCommandFrame_=0;
     std::uint32_t hoveredItemFrame_=0;
+    std::uint32_t hoveredHeroFrame_=0;
+    std::uint32_t hoveredDzTooltipFrame_=0;
     std::uint64_t mapFramesRevision_=0,mapFramesTextureRevision_=0;
     MapFramePointer mapFramePointer_;
+    MapFrames* activeMapFrames() const;
+    std::pair<float,float> worldVerticalRange() const;
+    bool hitWorld(float x,float y) const;
     void prepareMapFrames();
     std::uint32_t mapButtonAt(float x,float y);
     bool mapFrameInput(const GameInput& input);
@@ -318,8 +323,9 @@ public:
     bool draw(const GameInput& input);
     bool filterMapInput(MSG& message);
     bool mapInputKeyDown(unsigned key) const;
-    void clearMapInput() {mapInputKeys_.clear();productionClick_.reset();shownProducer_=0;productionPointerDown_=false;}
+    void clearMapInput() {mapInputKeys_.clear();data_->session->dzClearKeys();productionClick_.reset();shownProducer_=0;productionPointerDown_=false;}
     void windowActive(bool active) {if(data_->mapScript)data_->mapScript->windowActive(active);}
+    void updateWindowState(HWND window,bool active);
     // Configure before first draw. sendSelection and submit enqueue in order without reentry;
     // the owner consumes complete slots on this thread and must not submit selection separately.
     bool enableLan(std::uint8_t peer,LanSimulation::ObjectResolver resolve,LanWireObjectResolver wireObject,std::function<bool(std::span<const std::uint8_t>)> sendSelection,std::function<unsigned(const PlayerCommand&)> submit,bool experimental=false);

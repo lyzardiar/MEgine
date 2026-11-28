@@ -1,5 +1,18 @@
 # 独立客户端测试队列
 
+## dz 平台 DzAPI 与 EX JAPI 原生实现及界面/输入管线接入（已提交，待批次验证）
+
+路径：`src/session_dz.cpp`、`src/local_platform_store.{h,cpp}`、`src/map_frames.{h,cpp}`、`src/glue.{h,cpp}`、`src/game_view.{h,cpp}`、`src/game_commands.cpp`、`src/game_hero_bar.cpp`、`src/game_map_sprite.cpp`、`src/main.cpp`、`src/object_data.{h,cpp}`、`src/lua_runtime.cpp`、`src/fdf.cpp`、`src/image.cpp`、`src/model.cpp`、`src/scene_assets.cpp`、`src/effects.h`、`src/game_effects.cpp`、`src/session.{h,cpp}`、`src/session_callbacks.cpp`、`src/session_entities.cpp`、`src/session_equipment.cpp`、`src/session_hero.cpp`、`src/session_siege_attacks.cpp`、`src/session_spellbooks.cpp`、`src/session_spells.cpp`、`tests/lua_tests.cpp`、`CMakeLists.txt`。
+
+- 完整绑定 `Maps\dz\rpg` 非 `ffi` 地图实际调用的 DzAPI 与 EX JAPI 原生函数，全部接入真实状态与消费者：本地离线平台存档（`LocalPlatformStore`）、键盘/鼠标/滚轮/窗口缩放事件、`DzFrame*` 帧树（含 `DzEnableWideScreen`、`DzFrameEditBlackBorders`、`DzFrameHideInterface`、`DzSetCustomFovFix`、`DzFrameSetParent`/`Scale`/`VertexColor`/`Tooltip`/`Value`/`Focus`、`DzFrameGetMinimap`/`MinimapButton`/`HeroBarButton`/`Tooltip`、`ResourceBarFrame` 与 `SimpleInfoPanel*` 标准帧）、`DzSetUnitModel`/`ID`、`EXExecuteScript`（接入 `LuaRuntime` 与 `jass.slk` 扩展，支持 `unit`/`item`/`ability`/`buff`/`upgrade`）、`EXBlendButtonIcon`（真实 RGBA 像素混合并输出到运行时纹理覆写表）、`EXDisplayChat`、`EXPauseUnit`、`EXSetEffectSpeed`、`EXSetUnitMoveType`、`EXGetUnitAbilityByIndex`、`EXGet/SetItemDataString`、`EXGet/SetAbilityData*`。
+- `GameView` 与 `main.cpp` 接通 DzAPI 窗口/指针状态、宽屏与黑边视口、隐藏原版 HUD 时保留自定义 Dz 帧渲染与交互、帧悬停 Tooltip 显隐、以及虚拟混合纹理覆写。
+- 兼容修复：FDF 帧类型大小写归一与匿名 `Texture INHERITS`、标准 8 位调色板 TGA（Type 1/9）解码、运行时 `MapFrames` 惰性父布局、`SceneAssets` 纹理预算提升至 512MB 与坏附件/贴图路径容错、`TriggerAddAction(t, null)` 返回 null、法术书容量钳制至 11、Barrage `Cool=0` 及 BonusMod 大属性上限。
+- 仍保持显式失败：3 张依赖 LuaJIT `ffi` 的 `2SAJ` 地图（`31955EF6`、`A2506D38`、`B58EEC4C`）；另确认早期 `0B92DFB7`/`8450EABC` 黑屏根因为两图主脚本仅靠未挂载的 `StartCampaignAI("callback")` + `exec-lua` 引导（前者 Lua 被平台私有加密且依赖 `ffi`，后者为明文 Lua 5.3 字节码），导致地图内 `units=0` 且全图未探索黑幕覆盖。
+
+快速检查：Win32 x86 Release（`dzapi-build-v2/win32-release`）集成构建 `war3`、`war3_lua_tests` 通过；`war3_lua_tests`（无数据模式）1 通过／0 失败（`game_dll_loaded=false`）；`run-maps.ps1` 全量 17 张 `Maps\dz\rpg` 地图 `--main-check --simulate-ms 10000`：**14/17 通过（全部 14 张非 `ffi` 地图 100% 通过）**，3 张 `ffi` 地图按预期显式失败（汇总 `tmp/docs-artifacts/war3/dz-rpg-maps/dz-final-summary.log`）；4 张代表性 JASS+DzAPI 地图（`20FF1083`、`67124577`、`0C3C75B5`、`56653186`）隐身 `--play --hidden --mute --frames 300 --capture` 全部 `exit=0` 并产出 300 帧实机截图（`tmp/docs-artifacts/war3/dz-rpg-maps/*.playfinal.png`），均清晰呈现 3D 场景与自定义 Dz 界面。
+
+待批次验证：与交互窗口中 DzAPI 键鼠/滚轮/Tooltip 实操、三图与既有战役/联机/回放回归合并执行。
+
 ## 界面视觉与原版 1.27 对齐（第二轮，已提交，待批次验证）
 
 路径：`src/game_view.{h,cpp}`、`src/map_browser.cpp`、`src/game_transport.cpp`、`src/game_selection_panel.cpp`、`src/game_hero_bar.cpp`。

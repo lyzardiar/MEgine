@@ -45,7 +45,80 @@ ObjectData::ObjectData(Archives& archives) {
     }
 }
 std::optional<std::variant<std::int32_t,float,std::string>> ObjectData::luaSlkField(std::uint32_t id,bool item,std::string_view key) const {
-    if(!contains(id,item))return {};auto lower=[](std::string_view value){std::string out(value);for(auto& c:out)c=char(std::tolower(static_cast<unsigned char>(c)));return out;};auto wanted=lower(key);const SourceTable::Row* selected=nullptr;for(auto& [raw,row]:metadata_){auto typeName=name(raw);if(typeName[0]!=(item?'i':'u') || lower(cell(row,"field"))!=wanted)continue;auto table=cell(row,"slk");if(table=="Profile" || !tables_.contains(table) || cell(row,"index","-1")!="-1")continue;if(selected)throw std::runtime_error("Ambiguous Lua SLK field: "+std::string(key));selected=&row;}if(!selected)throw std::runtime_error("Unsupported Lua SLK field: "+std::string(key));auto type=cell(*selected,"type"),table=cell(*selected,"slk"),fieldName=cell(*selected,"field");const std::string missing="\x01war3-missing-field\x01";auto value=field(id,table,fieldName,missing);if(value==missing)return {};if(type=="int" || type=="bool"){std::int32_t number=0;auto [end,error]=std::from_chars(value.data(),value.data()+value.size(),number);if(error!=std::errc{} || end!=value.data()+value.size())throw std::runtime_error("Invalid Lua SLK integer: "+fieldName);return number;}if(type=="real" || type=="unreal"){float number=0;auto [end,error]=std::from_chars(value.data(),value.data()+value.size(),number);if(error!=std::errc{} || end!=value.data()+value.size())throw std::runtime_error("Invalid Lua SLK real: "+fieldName);return number;}return value;
+    return luaSlkField(item?"item":"unit",id,key);
+}
+std::optional<std::variant<std::int32_t,float,std::string>> ObjectData::luaSlkField(std::string_view category,std::uint32_t id,std::string_view key) const {
+    bool isUnit=category=="unit",isItem=category=="item",isAbility=category=="ability",isBuff=category=="buff",isUpgrade=category=="upgrade";
+    if((isUnit && !contains(id,false)) || (isItem && !contains(id,true)) || (isAbility && !ability(id)) || (isBuff && !buff(id)) || (isUpgrade && !upgrade(id)))return {};
+    auto lower=[](std::string_view value){std::string out(value);for(auto& c:out)c=char(std::tolower(static_cast<unsigned char>(c)));return out;};
+    auto wanted=lower(key);
+    auto& meta=isAbility?abilityMetadata_:isBuff?buffMetadata_:isUpgrade?upgradeMetadata_:metadata_;
+    auto parseNumeric=[&](const std::string& type,const std::string& fieldName,const std::string& value)->std::optional<std::variant<std::int32_t,float,std::string>>{
+        if(type=="int" || type=="bool"){std::int32_t number=0;auto [end,error]=std::from_chars(value.data(),value.data()+value.size(),number);if(error!=std::errc{} || end!=value.data()+value.size())return std::int32_t(0);return number;}
+        if(type=="real" || type=="unreal"){float number=0;auto [end,error]=std::from_chars(value.data(),value.data()+value.size(),number);if(error!=std::errc{} || end!=value.data()+value.size())return 0.f;return number;}
+        return value;
+    };
+    const std::string missing="\x01war3-missing-field\x01";
+    // Strip trailing level digits for ability/upgrade levelled fields (e.g. Cool1, DataA1, Rng1, Area1).
+    std::string baseKey(key),levelDigits;
+    if(isAbility || isUpgrade){
+        size_t pos=baseKey.size();while(pos>0 && std::isdigit(static_cast<unsigned char>(baseKey[pos-1])))--pos;
+        if(pos>0 && pos<baseKey.size()){levelDigits=baseKey.substr(pos);baseKey.resize(pos);}
+    }
+    auto baseWanted=lower(baseKey);
+    const SourceTable::Row* selected=nullptr;
+    std::string matchedTable,matchedField,matchedType;
+    int matchedIndex=-1;
+    for(auto& [raw,row]:meta){
+        if(isUnit || isItem){auto typeName=name(raw);if(typeName[0]!=(isItem?'i':'u'))continue;}
+        auto table=cell(row,"slk"),fieldName=cell(row,"field");
+        if(table!="Profile" && !tables_.contains(table))continue;
+        auto candidate=lower(fieldName);
+        if(isAbility && candidate=="data"){auto slot=unsigned(std::strtoul(cell(row,"data","0").c_str(),nullptr,10));if(slot>=1 && slot<=26){fieldName+=char('A'+slot-1);candidate=lower(fieldName);}}
+        if(candidate==wanted || (!levelDigits.empty() && candidate==baseWanted && cell(row,"repeat","0")!="0")){
+            int idx=-1;auto idxText=cell(row,"index","-1");std::from_chars(idxText.data(),idxText.data()+idxText.size(),idx);
+            if(selected && table=="Profile" && matchedTable!="Profile")continue;
+            selected=&row;matchedTable=table;matchedField=fieldName;matchedType=cell(row,"type");matchedIndex=idx;
+            if(candidate==wanted && idx==-1 && table!="Profile")break;
+        }
+    }
+    if(!selected){
+        // Fallback: direct lookup in the category's primary SLK tables or Profile if present on the object.
+        if(isAbility){auto v=field(id,"AbilityData",std::string(key),missing);if(v!=missing)return v;}
+        if(isBuff){auto v=field(id,"AbilityBuffData",std::string(key),missing);if(v!=missing)return v;}
+        if(isUpgrade){auto v=field(id,"UpgradeData",std::string(key),missing);if(v!=missing)return v;}
+        auto pv=field(id,"Profile",std::string(key),missing);
+        if(pv!=missing)return pv;
+        // Known Profile-style fields that may be empty on default objects (return empty string rather than throwing).
+        for(auto known:{"name","art","unart","tip","untip","ubertip","unubertip","researchtip","researchubertip","description","hotkey","unhotkey","researchhotkey","effectart","casterart","targetart","specialart","missileart","areaeffectart","specialattach","casterattach","targetattach","effectattach","order","orderon","orderoff","editorsuffix","awakentip","revivetip","casterupgradename","casterupgradetip","requires","requiresamount","sellitems","abillist","buttonpos","unbuttonpos","researchbuttonpos","missilearc","missilespeed","missilehoming"}){
+            if(wanted==known)return std::string{};
+        }
+        throw std::runtime_error("Unsupported Lua SLK field: "+std::string(key));
+    }
+    if(matchedTable=="Profile"){
+        unsigned level=levelDigits.empty()?1u:unsigned(std::max(1ul,std::strtoul(levelDigits.c_str(),nullptr,10)));
+        if(matchedIndex>=0)level=unsigned(matchedIndex)+1;
+        auto value=(isAbility || isUpgrade)?profileLevelText(id,matchedField,level,missing):field(id,"Profile",matchedField,missing);
+        if(value==missing){
+            // Also try direct key if matchedField differed in casing/level.
+            value=field(id,"Profile",std::string(key),missing);
+            if(value==missing)return std::string{};
+        }
+        if(matchedIndex>=0 && !isAbility && !isUpgrade){
+            size_t start=0;for(int i=0;i<matchedIndex;++i){auto comma=value.find(',',start);if(comma==std::string::npos){start=value.size();break;}start=comma+1;}
+            auto end=value.find(',',start);value=start<value.size()?value.substr(start,end==std::string::npos?end:end-start):std::string{};
+        }
+        return parseNumeric(matchedType,matchedField,value);
+    }
+    std::string lookupField=matchedField;
+    if(!levelDigits.empty() && cell(*selected,"repeat","0")!="0"){
+        if(isAbility && matchedTable=="AbilityData")lookupField+=levelDigits;
+        else if(isUpgrade && cell(*selected,"appendIndex","0")=="1" && levelDigits!="1")lookupField+=std::to_string(std::strtoul(levelDigits.c_str(),nullptr,10)-1);
+    }
+    auto value=field(id,matchedTable,lookupField,missing);
+    if(value==missing && lookupField!=key)value=field(id,matchedTable,std::string(key),missing);
+    if(value==missing)return {};
+    return parseNumeric(matchedType,lookupField,value);
 }
 std::optional<std::string> ObjectData::displayName(std::uint32_t id) const {
     std::set<std::uint32_t> seen;for(;;){if(!seen.insert(id).second || seen.size()>64)throw std::runtime_error("Cyclic or excessive object inheritance");if(auto found=nameOverrides_.find(id);found!=nameOverrides_.end())return found->second;auto parent=parents_.find(id);if(parent==parents_.end())break;id=parent->second;}auto found=sourceNames_.find(name(id));if(found==sourceNames_.end())return {};return firstName(found->second);

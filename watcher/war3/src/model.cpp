@@ -123,7 +123,7 @@ void Model::load(Archives& archives,Images& images,Renderer* renderer,std::span<
     data_->parse(modelBytes,log);
     size_t decoded = 0; std::map<std::string,Com<IDirect3DTexture9>> local;
     for (auto& texture : data_->textures) {
-        if(shared){if(!texture.path.empty()){if(!shared->resources().readTexture(texture.path)){log.write("mdx_texture_missing="+texture.path);shared->image(texture.path,{1,1,{0xffffffff}});}else shared->prepareTexture(texture.path);}else shared->image("@white",{1,1,{0xffffffff}});continue;}
+        if(shared){if(!texture.path.empty()){bool ok=false;try{ok=bool(shared->resources().readTexture(texture.path));}catch(const std::exception&){ok=false;}if(!ok){log.write("mdx_texture_missing="+texture.path);shared->image(texture.path,{1,1,{0xffffffff}});}else shared->prepareTexture(texture.path);}else shared->image("@white",{1,1,{0xffffffff}});continue;}
         if (auto found = local.find(texture.path); found != local.end()) { texture.gpu = found->second; continue; }
         Image image; if (!texture.path.empty()) { auto bytes = archives.readTexture(texture.path); if (!bytes) throw std::runtime_error("Missing model texture: "+texture.path); image = images.decode(bytes->bytes); } else image = {1,1,{0xffffffff}};
         decoded += image.pixels.size()*4; if (decoded > 256*1024*1024) throw std::runtime_error("Model texture budget exceeded"); if (renderer) texture.gpu = renderer->texture(image.width,image.height,image.pixels); local.emplace(texture.path,texture.gpu);

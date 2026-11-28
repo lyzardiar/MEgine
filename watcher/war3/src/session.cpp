@@ -6,6 +6,7 @@
 #include <bit>
 #include <cmath>
 #include <cctype>
+#include <ctime>
 
 namespace war3 {
 namespace {
@@ -79,13 +80,13 @@ void ScriptSession::activateRecoveredSession() {
     if(!configured() || !world_ || !setupApplied_ || failed_ || !recoveryBundleRestored_ || !unitRecoveryIncomplete_ || !gameLoadNotified_ || !recoverySourceMainCompleted_ || mainAttempted_ || exit_!=SessionExit::None || !runtime_.snapshotSafe() || !contexts_.empty() || experimentalSelectionSync_ || !networkPlayers_.empty())throw std::runtime_error("Recovered session is not ready to start");unitRecoveryIncomplete_=false;mainAttempted_=true;mainCompleted_=true;
 }
 void ScriptSession::startMain() {startMain([this]{runtime_.invoke("main");});}
-void ScriptSession::startMain(std::function<void()> entry) {if(unitRecoveryIncomplete_)throw std::runtime_error("Unit state recovery is incomplete");if(!entry || !configured() || !world_ || !setupApplied_ || mainAttempted_)throw std::runtime_error("Map main requires a configured world and player setup");mainAttempted_=true;try{runtime_.start([this,entry=std::move(entry)]{entry();mainCompleted_=true;});}catch(...){failed_=true;throw;}}
+void ScriptSession::startMain(std::function<void()> entry) {if(unitRecoveryIncomplete_)throw std::runtime_error("Unit state recovery is incomplete");if(!entry || !configured() || !world_ || !setupApplied_ || mainAttempted_)throw std::runtime_error("Map main requires a configured world and player setup");mainAttempted_=true;dzGameStartTime_=std::int64_t(std::time(nullptr));try{runtime_.start([this,entry=std::move(entry)]{entry();mainCompleted_=true;});}catch(...){failed_=true;throw;}}
 void ScriptSession::bindNatives() {
     bindWorldNatives();bindCameraSetupNatives();bindSpatialEvents();bindFogNatives();bindTextNatives();bindTextTagNatives();bindIndicatorNatives();bindCacheNatives();bindCampaignNatives();bindHashtableNatives();
     bindSoundNatives();bindRescueNatives();bindWaygateNatives();
     bindMusicNatives();
     bindEntityNatives();bindCorpseNatives();bindControlNatives();bindTransportNatives();bindFoodNatives();bindCommerceNatives();bindProductionNatives();bindHeroNatives();bindSpellNatives();bindEffectNatives();bindTrackableNatives();bindLightningNatives();bindIllusionNatives();bindDamageNatives();bindQuestNatives();bindBlightNatives();bindCombatNatives();bindResearchNatives();bindHarvestNatives();bindDestructableNatives();bindConstructionNatives();bindScriptDialogNatives();bindMatchNatives();
-    bindWeatherNatives();
+    bindWeatherNatives();bindDzNatives();
     for(auto entry:enums)bind(entry.name,entry.type,{"integer"},[entry](auto& vm,auto args){return vm.handle(entry.type,args[0].bits);});
     bind("GetHandleId","integer",{"handle"},[](auto& vm,auto args){return vm.integer(integer(args[0]));});
     bind("Player","player",{"integer"},[this](auto& vm,auto args){return vm.handle("player",args[0].bits<16?handleBase+args[0].bits:0);});

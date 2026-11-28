@@ -58,7 +58,8 @@ public:
     void expect(std::string_view value) { if(!consume(value)) throw std::runtime_error("Expected FDF token: "+std::string(value)); }
     FrameDefinition frame(unsigned depth=0,std::string type={}) {
         if (depth>32 || ++frames_>16384) throw std::runtime_error("FDF frame budget exceeded");
-        FrameDefinition f;if(type.empty()){f.type=take().value;f.name=take().value;}else {f.type=std::move(type);if(f.type=="LAYER")f.properties["Layer"]={take().value};else if(peek().value!="{")f.name=take().value;}
+        FrameDefinition f;if(type.empty()){f.type=take().value;f.name=take().value;}else {f.type=std::move(type);if(f.type=="LAYER")f.properties["Layer"]={take().value};else if(peek().value!="{" && peek().value!="INHERITS")f.name=take().value;}
+        for(auto& c:f.type)c=char(std::toupper(static_cast<unsigned char>(c)));
         if (consume("INHERITS")) { f.inheritChildren=consume("WITHCHILDREN"); f.inherits=take().value; }
         expect("{");
         while (!consume("}")) {

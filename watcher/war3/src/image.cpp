@@ -68,12 +68,40 @@ void blockDecode(std::span<const std::uint8_t> bytes, Image& image, unsigned kin
 }
 Image tga(std::span<const std::uint8_t> bytes) {
     slice(bytes, 0, 18);
-    if (bytes[1] || (bytes[2] != 2 && bytes[2] != 10) || (bytes[16] != 24 && bytes[16] != 32)) throw std::runtime_error("Unsupported TGA encoding");
+    unsigned type = bytes[2], bpp = bytes[16];
+    bool colorMapped = (type == 1 || type == 9);
+    bool trueColor = (type == 2 || type == 10);
+    bool rle = (type == 9 || type == 10);
+    if ((!colorMapped && !trueColor) || (colorMapped && (bytes[1] != 1 || bpp != 8)) || (trueColor && (bytes[1] || (bpp != 24 && bpp != 32))))
+        throw std::runtime_error("Unsupported TGA encoding");
     auto image = output(shortWord(bytes, 12), shortWord(bytes, 14));
-    size_t at = 18 + bytes[0], pixel = 0, channels = bytes[16] / 8;
-    auto next = [&]() { auto p = slice(bytes, at, channels); at += channels; return p[0] | (unsigned(p[1]) << 8) | (unsigned(p[2]) << 16) | ((channels == 4 && (bytes[17] & 15) ? unsigned(p[3]) : 255) << 24); };
+    size_t at = 18 + bytes[0], pixel = 0, channels = bpp / 8;
+    std::vector<std::uint32_t> palette;
+    unsigned cmapOrigin = 0;
+    if (colorMapped) {
+        cmapOrigin = shortWord(bytes, 3);
+        unsigned cmapLen = shortWord(bytes, 5), cmapBits = bytes[7];
+        if (!cmapLen || (cmapBits != 24 && cmapBits != 32)) throw std::runtime_error("Unsupported TGA encoding");
+        size_t entryBytes = cmapBits / 8;
+        auto raw = slice(bytes, at, size_t(cmapLen) * entryBytes);
+        at += size_t(cmapLen) * entryBytes;
+        palette.resize(cmapLen);
+        for (unsigned i = 0; i < cmapLen; ++i) {
+            auto p = raw.subspan(i * entryBytes, entryBytes);
+            palette[i] = p[0] | (unsigned(p[1]) << 8) | (unsigned(p[2]) << 16) | ((entryBytes == 4 ? unsigned(p[3]) : 255u) << 24);
+        }
+    }
+    auto next = [&]() -> std::uint32_t {
+        auto p = slice(bytes, at, channels); at += channels;
+        if (colorMapped) {
+            unsigned idx = p[0];
+            if (idx < cmapOrigin || idx - cmapOrigin >= palette.size()) return 0;
+            return palette[idx - cmapOrigin];
+        }
+        return p[0] | (unsigned(p[1]) << 8) | (unsigned(p[2]) << 16) | ((channels == 4 && (bytes[17] & 15) ? unsigned(p[3]) : 255u) << 24);
+    };
     while (pixel < image.pixels.size()) {
-        unsigned packet = bytes[2] == 10 ? slice(bytes, at++, 1)[0] : 0;
+        unsigned packet = rle ? slice(bytes, at++, 1)[0] : 0;
         unsigned count = (packet & 127) + 1;
         if (count > image.pixels.size() - pixel) throw std::runtime_error("TGA run exceeds image");
         unsigned repeated = packet & 128 ? next() : 0;

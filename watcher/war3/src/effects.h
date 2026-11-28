@@ -9,7 +9,7 @@ struct ScriptEffect {
     std::optional<unsigned> teamColor;
     std::uint32_t tint=0xffffffff;
     WorldPoint point;
-    float z=0,facing=0,scale=1;
+    float z=0,facing=0,scale=1,speed=1;
     std::array<float,9> matrix{1,0,0,0,1,0,0,0,1};
     std::optional<float> moonWellWaterHeight,absoluteZ;
     double born=0;
