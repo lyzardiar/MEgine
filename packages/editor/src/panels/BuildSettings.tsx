@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check, Copy, Cpu, Globe, Monitor, Smartphone } from 'lucide-react';
 import { getDesktopProject } from '../transport/desktopProjectSession';
+import { pushToast } from '../components/ui/ToastHost';
 import {
   buildAssetPathsDirty,
   buildAssetPolicyUpdate,
@@ -45,6 +47,95 @@ import {
 
 const SHADER_VARIANT_LIMIT_OPTIONS = [64, 128, 256, 512, 1024, 2048, 4096, 8192];
 const MAX_RENDERED_SHADER_VARIANTS = 512;
+
+type BuildPlatformTargetId =
+  | 'windows-x64'
+  | 'android-arm64'
+  | 'web-wasm'
+  | 'macos-arm64'
+  | 'linux-x64'
+  | 'ios-arm64';
+
+interface BuildPlatformCardSpec {
+  id: BuildPlatformTargetId;
+  label: string;
+  family: 'desktop' | 'mobile' | 'web';
+  stage: 'active' | 'adapter-reserved';
+  scriptVm: string;
+  graphics: string;
+  rustTriple: string;
+  shellDir: string;
+  note: string;
+}
+
+const PLATFORM_TARGETS: BuildPlatformCardSpec[] = [
+  {
+    id: 'windows-x64',
+    label: 'Windows (x64)',
+    family: 'desktop',
+    stage: 'active',
+    scriptVm: 'V8',
+    graphics: 'DX12 → Vulkan',
+    rustTriple: 'x86_64-pc-windows-msvc',
+    shellDir: 'platforms/desktop',
+    note: 'Direct standalone Player packaging, Ed25519 signing, and incremental patch publishing.',
+  },
+  {
+    id: 'android-arm64',
+    label: 'Android (arm64-v8a)',
+    family: 'mobile',
+    stage: 'active',
+    scriptVm: 'V8',
+    graphics: 'Vulkan → GLES',
+    rustTriple: 'aarch64-linux-android',
+    shellDir: 'platforms/android',
+    note: 'Gradle + Kotlin JNI shell (mengine_android_*) with cargo-ndk + V8 runtime.',
+  },
+  {
+    id: 'web-wasm',
+    label: 'Web (WASM + Native JS)',
+    family: 'web',
+    stage: 'active',
+    scriptVm: 'Browser Native JS',
+    graphics: 'WebGPU → WebGL2',
+    rustTriple: 'wasm32-unknown-unknown',
+    shellDir: 'platforms/web',
+    note: 'Zero embedded V8/QuickJS bloat; exports platforms/web shell, Assets, and SHA-256 web manifest.',
+  },
+  {
+    id: 'macos-arm64',
+    label: 'macOS (Apple Silicon)',
+    family: 'desktop',
+    stage: 'adapter-reserved',
+    scriptVm: 'V8',
+    graphics: 'Metal',
+    rustTriple: 'aarch64-apple-darwin',
+    shellDir: 'platforms/desktop',
+    note: 'Adapter reserved; requires a macOS host with Xcode toolchain for native signing.',
+  },
+  {
+    id: 'linux-x64',
+    label: 'Linux (x64)',
+    family: 'desktop',
+    stage: 'adapter-reserved',
+    scriptVm: 'V8',
+    graphics: 'Vulkan → GLES',
+    rustTriple: 'x86_64-unknown-linux-gnu',
+    shellDir: 'platforms/desktop',
+    note: 'Adapter reserved; Wayland/X11 desktop adapter compiled on Linux host.',
+  },
+  {
+    id: 'ios-arm64',
+    label: 'iOS (arm64)',
+    family: 'mobile',
+    stage: 'adapter-reserved',
+    scriptVm: 'QuickJS (W^X)',
+    graphics: 'Metal',
+    rustTriple: 'aarch64-apple-ios',
+    shellDir: 'platforms/ios',
+    note: 'Adapter reserved; Swift/C-ABI Metal bridge with QuickJS for Apple W^X compliance.',
+  },
+];
 
 function scenePath(name: string): string {
   return `Assets/Scenes/${name}.mscene`;
@@ -174,6 +265,41 @@ export function BuildSettings(props: {
   const assetSettingsDirty = Boolean(
     settings && buildAssetPathsDirty(alwaysIncludeDraft, settings.alwaysInclude),
   );
+  const hostTargetId = useMemo<BuildPlatformTargetId>(() => {
+    const source = `${navigator.platform} ${navigator.userAgent}`.toLowerCase();
+    if (source.includes('win')) return 'windows-x64';
+    if (source.includes('mac')) return 'macos-arm64';
+    return 'linux-x64';
+  }, []);
+  const [selectedTargetId, setSelectedTargetId] = useState<BuildPlatformTargetId>(hostTargetId);
+  const [copiedTargetCmd, setCopiedTargetCmd] = useState(false);
+  const selectedTarget = useMemo(
+    () => PLATFORM_TARGETS.find((item) => item.id === selectedTargetId) ?? PLATFORM_TARGETS[0],
+    [selectedTargetId],
+  );
+  const isHostDesktopTarget = selectedTarget.id === hostTargetId;
+  const targetCliCommand = useMemo(() => {
+    const projArg = project?.projectRoot ? `"${project.projectRoot}"` : '.';
+    const profileFlag = profile === 'debug' ? ' --debug' : '';
+    const cleanFlag = clean ? ' --clean' : '';
+    if (selectedTarget.id === 'web-wasm') {
+      return `node packages/cli/dist/cli.js build ${projArg} --target web-wasm${profileFlag}${cleanFlag}`;
+    }
+    if (selectedTarget.id === 'android-arm64') {
+      return `cd platforms/android && ./gradlew assemble${profile === 'debug' ? 'Debug' : 'Release'}`;
+    }
+    return `node packages/cli/dist/cli.js build ${projArg} --target ${selectedTarget.id}${profileFlag}${cleanFlag}`;
+  }, [clean, profile, project?.projectRoot, selectedTarget.id]);
+  const copyTargetCommand = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(targetCliCommand);
+      setCopiedTargetCmd(true);
+      pushToast(`Copied ${selectedTarget.id} build command`, 'success');
+      window.setTimeout(() => setCopiedTargetCmd(false), 1800);
+    } catch {
+      pushToast('Clipboard unavailable in this environment', 'warn');
+    }
+  }, [selectedTarget.id, targetCliCommand]);
   const platform = useMemo(() => {
     const source = `${navigator.platform} ${navigator.userAgent}`.toLowerCase();
     if (source.includes('win')) return 'Windows (current host)';
@@ -878,13 +1004,69 @@ export function BuildSettings(props: {
     <div className="build-settings">
       <div className="build-settings-header">
         <div>
-          <strong>PC Build Settings</strong>
-          <span>Packages an ordered scene list into a self-validating standalone player.</span>
+          <strong>Build Settings</strong>
+          <span>Multi-platform target matrix, ordered scene packaging, signing, and incremental patch publishing.</span>
         </div>
         <span className={`build-status ${buildArtifactBusy || launching || verifying || settingsSaving || savingAll ? 'busy' : ''}`}>
           {building ? (cancelRequested ? 'CANCELLING' : 'BUILDING') : historyPatching ? 'PATCHING' : historyRestoringId ? 'RESTORING' : patchVerifyingId ? 'VERIFYING PATCH' : launching ? 'LAUNCHING' : verifying ? 'VERIFYING' : settingsSaving || savingAll ? 'SAVING' : lastVerification ? 'VERIFIED' : lastBuild ? 'SUCCEEDED' : 'READY'}
         </span>
       </div>
+
+      <section className="build-section build-platforms-section" aria-label="Target Platforms">
+        <div className="build-section-title">
+          <h3>Target Platforms</h3>
+          <span className="build-platform-summary">
+            {selectedTarget.label} · {selectedTarget.scriptVm} · {selectedTarget.graphics}
+          </span>
+        </div>
+        <div className="build-platform-grid" role="radiogroup" aria-label="Build target platform">
+          {PLATFORM_TARGETS.map((target) => {
+            const active = target.id === selectedTarget.id;
+            const PlatformIcon = target.family === 'web'
+              ? Globe
+              : target.family === 'mobile'
+                ? Smartphone
+                : Monitor;
+            return (
+              <button
+                key={target.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                className={`build-platform-card${active ? ' selected' : ''}${target.stage === 'adapter-reserved' ? ' reserved' : ''}`}
+                onClick={() => setSelectedTargetId(target.id)}
+              >
+                <div className="build-platform-card-top">
+                  <PlatformIcon size={14} aria-hidden="true" />
+                  <strong>{target.label}</strong>
+                  <em className={`build-platform-stage ${target.stage}`}>
+                    {target.stage === 'active' ? 'ACTIVE' : 'RESERVED'}
+                  </em>
+                </div>
+                <div className="build-platform-meta">
+                  <span><Cpu size={11} aria-hidden="true" /> {target.scriptVm}</span>
+                  <span>{target.graphics}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="build-platform-detail">
+          <div className="build-platform-detail-info">
+            <span>{selectedTarget.note}</span>
+            <code>{selectedTarget.rustTriple} · {selectedTarget.shellDir}</code>
+          </div>
+          {!isHostDesktopTarget && (
+            <div className="build-platform-cli-bar">
+              <code title={targetCliCommand}>{targetCliCommand}</code>
+              <button type="button" onClick={() => void copyTargetCommand()}>
+                {copiedTargetCmd ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}
+                {copiedTargetCmd ? 'Copied' : 'Copy CLI'}
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
 
       {building && buildProgress && (
         <section className="build-progress-panel">

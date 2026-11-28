@@ -1,0 +1,954 @@
+/* ============================================================================
+   MEngine Studio — Sub-Panels Full Polish (Dark & Light Semantic Parity)
+   Covers: BuildSettings (Multi-Platform Matrix), ProjectSettings, Material &
+   MaterialInstance, SurfaceShader, Profiler, Sprite & SpriteAtlas, Effekseer,
+   and floating EditorWindow chrome.
+   ============================================================================ */
+
+/* ============================================================================
+   1. BUILD SETTINGS & MULTI-PLATFORM TARGET MATRIX
+   ============================================================================ */
+
+.build-settings {
+  background: var(--me-bg-well);
+  color: var(--me-text-secondary);
+}
+
+.build-settings-header {
+  padding: 10px 14px;
+  background: var(--me-bg-panel);
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.build-settings-header strong {
+  color: var(--me-text-primary);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.build-settings-header span {
+  color: var(--me-text-muted);
+  font-size: 11px;
+}
+
+.build-status {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  background: var(--me-success-bg);
+  color: var(--me-success) !important;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.build-status.busy {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: var(--me-warning-bg);
+  color: var(--me-warning) !important;
+}
+
+.build-section {
+  margin: 10px 12px 0;
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-panel);
+  box-shadow: var(--me-shadow-sm);
+  overflow: hidden;
+}
+
+.build-section h3,
+.build-section-title {
+  background: var(--me-bg-elevated);
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.build-section h3 {
+  height: auto;
+  padding: 7px 11px;
+  color: var(--me-text-primary);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.build-section-title {
+  padding: 0 8px 0 0;
+}
+
+.build-section-title h3 {
+  background: transparent;
+}
+
+.build-platform-summary {
+  padding-right: 4px;
+  color: var(--me-text-muted);
+  font-family: var(--u-mono);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.build-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  padding: 10px;
+  background: var(--me-bg-panel);
+}
+
+.build-platform-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 10px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-well);
+  color: var(--me-text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--me-dur-fast) var(--me-ease),
+    background-color var(--me-dur-fast) var(--me-ease),
+    box-shadow var(--me-dur-fast) var(--me-ease),
+    transform var(--me-dur-fast) var(--me-ease);
+}
+
+.build-platform-card:hover {
+  border-color: var(--me-border-strong);
+  background: var(--me-bg-elevated);
+  transform: translateY(-1px);
+}
+
+.build-platform-card.selected {
+  border-color: var(--me-accent);
+  background: var(--me-accent-muted);
+  box-shadow: 0 0 0 1px var(--me-accent-border);
+}
+
+.build-platform-card.reserved {
+  opacity: 0.84;
+}
+
+.build-platform-card-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.build-platform-card-top strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.build-platform-stage {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-style: normal;
+  font-family: var(--u-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.build-platform-stage.active {
+  background: var(--me-success-bg);
+  color: var(--me-success);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.build-platform-stage.adapter-reserved {
+  background: var(--me-bg-elevated);
+  color: var(--me-text-muted);
+  border: 1px solid var(--me-border-default);
+}
+
+.build-platform-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--me-text-muted);
+  font-family: var(--u-mono);
+  font-size: 10px;
+}
+
+.build-platform-meta > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.build-platform-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-well);
+}
+
+.build-platform-detail-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  font-size: 11px;
+  color: var(--me-text-secondary);
+}
+
+.build-platform-detail-info code {
+  color: var(--me-text-muted);
+  font-family: var(--u-mono);
+  font-size: 10px;
+}
+
+.build-platform-cli-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-base);
+}
+
+.build-platform-cli-bar code {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--me-accent-hover);
+  font-family: var(--u-mono);
+  font-size: 10.5px;
+  user-select: text;
+}
+
+.build-platform-cli-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-primary);
+  font-size: 10.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.build-platform-cli-bar button:hover {
+  border-color: var(--me-accent-border);
+  background: var(--me-accent-muted);
+}
+
+.build-section-title button,
+.build-scene-actions button,
+.build-history-toolbar button,
+.build-patch-row button,
+.build-asset-path-editor button,
+.build-warning button,
+.build-actions button {
+  height: 24px;
+  padding: 0 9px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-primary);
+  font-size: 11px;
+  font-weight: 500;
+  transition: background-color var(--me-dur-fast) var(--me-ease),
+    border-color var(--me-dur-fast) var(--me-ease);
+}
+
+.build-section-title button:hover:not(:disabled),
+.build-scene-actions button:hover:not(:disabled),
+.build-history-toolbar button:hover:not(:disabled),
+.build-patch-row button:hover:not(:disabled),
+.build-asset-path-editor button:hover:not(:disabled),
+.build-warning button:hover:not(:disabled),
+.build-actions button:hover:not(:disabled) {
+  background: var(--u-hover);
+  border-color: var(--me-border-strong);
+}
+
+.build-scene-row,
+.build-history-row,
+.build-patch-row,
+.build-options > label {
+  border-bottom: 1px solid var(--me-border-subtle);
+  background: transparent;
+}
+
+.build-history-row:hover {
+  background: var(--u-hover);
+}
+
+.build-history-row.selected {
+  background: var(--me-accent-muted);
+}
+
+.build-history-row.published {
+  box-shadow: inset 3px 0 0 var(--me-success);
+}
+
+.build-history-row em,
+.build-patch-row em {
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+
+.build-options select,
+.build-asset-path-editor textarea,
+.build-readonly {
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--u-input);
+  color: var(--me-text-primary);
+}
+
+.build-options select {
+  height: 24px;
+  padding: 0 22px 0 7px;
+}
+
+.build-readonly {
+  background: var(--me-bg-well);
+  color: var(--me-text-secondary);
+}
+
+.build-content-note {
+  border-top: 1px solid var(--me-border-subtle);
+  background: var(--me-warning-bg);
+  color: var(--me-text-secondary);
+}
+
+.build-warning,
+.build-message,
+.build-progress-panel,
+.build-result {
+  margin: 10px 12px 0;
+  border-radius: var(--me-radius-md);
+}
+
+.build-warning {
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: var(--me-warning-bg);
+  color: var(--me-text-primary);
+}
+
+.build-warning.error,
+.build-message.error {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: var(--me-danger-bg);
+  color: var(--me-danger);
+}
+
+.build-message.success,
+.build-result {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: var(--me-success-bg);
+  color: var(--me-text-primary);
+}
+
+.build-progress-panel {
+  border: 1px solid var(--me-accent-border);
+  background: var(--me-accent-muted);
+}
+
+.build-progress-track {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--me-bg-base);
+}
+
+.build-progress-track > span {
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--me-accent), var(--me-accent-hover));
+}
+
+.build-actions {
+  padding: 10px 12px;
+  background: var(--me-bg-panel);
+  border-top: 1px solid var(--me-border-subtle);
+}
+
+.build-actions button {
+  min-height: 28px;
+  padding: 0 12px;
+}
+
+.build-actions button.primary {
+  border-color: var(--me-accent);
+  background: var(--me-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.build-actions button.primary:hover:not(:disabled) {
+  background: var(--me-accent-hover);
+  border-color: var(--me-accent-hover);
+}
+
+.build-actions button.danger {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: var(--me-danger-bg);
+  color: var(--me-danger);
+}
+
+/* ============================================================================
+   2. PROJECT SETTINGS
+   ============================================================================ */
+
+.project-settings-panel {
+  background: var(--me-bg-well);
+  color: var(--me-text-secondary);
+}
+
+.project-settings-panel > header,
+.project-settings-panel > footer {
+  background: var(--me-bg-panel);
+  border-color: var(--me-border-subtle);
+}
+
+.project-settings-panel > header strong,
+.project-settings-title h3 {
+  color: var(--me-text-primary);
+}
+
+.sorting-layer-table {
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-panel);
+  overflow: hidden;
+  box-shadow: var(--me-shadow-sm);
+}
+
+.sorting-layer-heading {
+  background: var(--me-bg-elevated);
+  border-bottom: 1px solid var(--me-border-subtle);
+  color: var(--me-text-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sorting-layer-row {
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.sorting-layer-row input {
+  height: 24px;
+  padding: 0 7px;
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--u-input);
+  color: var(--me-text-primary);
+}
+
+.project-settings-panel button {
+  height: 24px;
+  padding: 0 9px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-primary);
+  font-weight: 500;
+}
+
+.project-settings-panel button:hover:not(:disabled) {
+  background: var(--u-hover);
+  border-color: var(--me-border-strong);
+}
+
+.project-settings-message {
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-accent-border);
+  background: var(--me-accent-muted);
+  color: var(--me-text-primary);
+}
+
+.project-settings-message.error {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: var(--me-danger-bg);
+  color: var(--me-danger);
+}
+
+/* ============================================================================
+   3. MATERIAL & MATERIAL INSTANCE EDITOR
+   ============================================================================ */
+
+.material-editor {
+  background: var(--me-bg-well);
+  color: var(--me-text-secondary);
+}
+
+.material-toolbar,
+.material-footer {
+  min-height: 32px;
+  padding: 4px 10px;
+  background: var(--me-bg-panel);
+  border-color: var(--me-border-subtle);
+}
+
+.material-toolbar button,
+.material-footer button,
+.material-empty button,
+.material-fields button,
+.material-texture-slot button,
+.mpb-custom-head button {
+  height: 24px;
+  padding: 0 9px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-primary);
+  font-weight: 500;
+}
+
+.material-toolbar button:hover:not(:disabled),
+.material-footer button:hover:not(:disabled),
+.material-empty button:hover:not(:disabled),
+.material-fields button:hover:not(:disabled),
+.material-texture-slot button:hover:not(:disabled) {
+  background: var(--u-hover);
+  border-color: var(--me-border-strong);
+}
+
+.material-preview,
+.material-fields {
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-panel);
+  box-shadow: var(--me-shadow-sm);
+  overflow: hidden;
+}
+
+.material-preview {
+  padding: 8px;
+}
+
+.material-preview-frame {
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+}
+
+.material-preview-badge,
+.material-preview-reset {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(15, 18, 24, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.material-fields > label,
+.material-texture-slot,
+.mpb-custom-binding,
+.mpb-custom-binding > .field-row,
+.mpb-custom-binding > .axis-row {
+  border-color: var(--me-border-subtle);
+}
+
+.material-custom-parameters,
+.mpb-custom-section {
+  border-color: var(--me-border-subtle);
+  background: var(--me-bg-well);
+}
+
+/* ============================================================================
+   4. SURFACE SHADER EDITOR
+   ============================================================================ */
+
+.surface-shader-editor {
+  background: var(--me-bg-base);
+}
+
+.surface-shader-contract {
+  background: var(--me-bg-panel);
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.surface-shader-contract strong {
+  color: var(--me-accent-hover);
+}
+
+.surface-shader-targets {
+  background: var(--me-bg-well);
+  border-bottom: 1px solid var(--me-border-subtle);
+  gap: 6px;
+  padding: 6px 10px;
+}
+
+.surface-shader-targets button {
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-panel);
+  color: var(--me-text-primary);
+  transition: border-color var(--me-dur-fast) var(--me-ease),
+    background-color var(--me-dur-fast) var(--me-ease);
+}
+
+.surface-shader-targets button.active {
+  border-color: var(--me-accent-border);
+  background: var(--me-accent-muted);
+}
+
+.surface-shader-targets button i.ready {
+  background: var(--me-success);
+  box-shadow: 0 0 0 2px var(--me-success-bg);
+}
+
+.shader-completion-list {
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-strong);
+  background: var(--me-bg-popover);
+  box-shadow: var(--me-shadow-lg);
+  padding: 3px;
+}
+
+.shader-completion-list button {
+  border-radius: var(--me-radius-xs);
+}
+
+.shader-completion-list button.selected {
+  background: var(--me-accent-muted);
+}
+
+/* ============================================================================
+   5. PROFILER
+   ============================================================================ */
+
+.profiler-panel {
+  background: var(--me-bg-well);
+  color: var(--me-text-secondary);
+}
+
+.profiler-toolbar {
+  min-height: 32px;
+  padding: 4px 10px;
+  background: var(--me-bg-panel);
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.profiler-source-tabs {
+  padding: 2px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-well);
+  gap: 2px;
+}
+
+.profiler-source-tabs button {
+  border: 0;
+  border-radius: var(--me-radius-xs);
+  background: transparent;
+  color: var(--me-text-muted);
+  font-weight: 500;
+}
+
+.profiler-source-tabs button:hover:not(:disabled) {
+  background: var(--u-hover);
+  color: var(--me-text-primary);
+}
+
+.profiler-source-tabs button.active {
+  background: var(--me-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.profiler-toolbar > button,
+.profiler-frame-navigator button {
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-elevated);
+  color: var(--me-text-primary);
+}
+
+.profiler-toolbar > button:hover,
+.profiler-frame-navigator button:hover:not(:disabled) {
+  background: var(--u-hover);
+  border-color: var(--me-border-strong);
+}
+
+.profiler-frame-navigator button.active {
+  background: var(--me-accent);
+  border-color: var(--me-accent);
+  color: #ffffff;
+}
+
+.profiler-record-state i {
+  border-radius: 50%;
+  background: var(--me-danger);
+}
+
+.profiler-record-state.frozen i {
+  background: var(--me-warning);
+}
+
+.profiler-module-bar {
+  background: var(--me-bg-panel);
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.profiler-module-bar button.active {
+  border-bottom-color: var(--me-accent);
+  color: var(--me-text-primary);
+  font-weight: 600;
+}
+
+.profiler-frame-navigator {
+  background: var(--me-bg-well);
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.profiler-frame-navigator input[type='range'] {
+  accent-color: var(--me-accent);
+}
+
+.profiler-metric {
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-panel);
+  padding: 7px 10px;
+  box-shadow: var(--me-shadow-sm);
+}
+
+.profiler-metric strong {
+  color: var(--me-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.profiler-metric.warning {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: var(--me-warning-bg);
+}
+
+.profiler-metric.warning strong {
+  color: var(--me-warning);
+}
+
+.profiler-graph,
+.profiler-detail-section {
+  border-radius: var(--me-radius-md);
+  border: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-panel);
+  overflow: hidden;
+  box-shadow: var(--me-shadow-sm);
+}
+
+.profiler-graph header,
+.profiler-detail-section > header {
+  background: var(--me-bg-elevated);
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.profiler-detail-section > header input:not([type='checkbox']) {
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--u-input);
+  color: var(--me-text-primary);
+  padding: 0 7px;
+}
+
+.profiler-detail-table th {
+  background: var(--me-bg-well);
+}
+
+.profiler-detail-table th,
+.profiler-detail-table td {
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.profiler-detail-table tbody tr:hover {
+  background: var(--me-accent-muted);
+}
+
+.profiler-scope-note {
+  border-radius: var(--me-radius-xs);
+  border-left: 3px solid var(--me-accent);
+  background: var(--me-accent-muted);
+  color: var(--me-text-secondary);
+}
+
+.profiler-certainty {
+  border-radius: 999px;
+}
+
+/* ============================================================================
+   6. SPRITE EDITOR & SPRITE ATLAS EDITOR
+   ============================================================================ */
+
+.sprite-editor,
+.sprite-editor-empty,
+.sprite-atlas-editor,
+.sprite-atlas-empty {
+  background: var(--me-bg-well);
+  color: var(--me-text-secondary);
+}
+
+.sprite-editor-toolbar {
+  min-height: 32px;
+  padding: 0 10px;
+  background: var(--me-bg-panel);
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.sprite-editor-toolbar strong {
+  color: var(--me-text-primary);
+}
+
+.sprite-editor button,
+.sprite-editor input,
+.sprite-editor select,
+.sprite-atlas-inspector input,
+.sprite-atlas-inspector select,
+.sprite-native-size-row button {
+  border-radius: var(--me-radius-xs);
+  border: 1px solid var(--me-border-default);
+  background: var(--u-input);
+  color: var(--me-text-primary);
+}
+
+.sprite-editor button,
+.sprite-native-size-row button {
+  border-radius: var(--me-radius-sm);
+  background: var(--me-bg-elevated);
+}
+
+.sprite-editor button:hover:not(:disabled),
+.sprite-native-size-row button:hover:not(:disabled) {
+  background: var(--u-hover);
+  border-color: var(--me-border-strong);
+}
+
+.sprite-editor button.primary {
+  border-color: var(--me-accent);
+  background: var(--me-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.sprite-editor-inspector,
+.sprite-atlas-inspector {
+  background: var(--me-bg-panel);
+  border-left: 1px solid var(--me-border-subtle);
+}
+
+.sprite-editor-inspector section,
+.sprite-atlas-inspector section {
+  border-bottom: 1px solid var(--me-border-subtle);
+}
+
+.sprite-editor-inspector h3,
+.sprite-atlas-inspector h3 {
+  color: var(--me-text-primary);
+}
+
+.sprite-slice-list,
+.sprite-atlas-results,
+.sprite-pivot-presets,
+.sprite-atlas-output,
+.sprite-atlas-drop {
+  border-radius: var(--me-radius-sm);
+  border-color: var(--me-border-default);
+  background: var(--me-bg-well);
+}
+
+.sprite-slice-list button.active {
+  background: var(--me-accent);
+  color: #ffffff;
+}
+
+.sprite-pivot-presets button.active {
+  border-color: var(--me-accent);
+  background: var(--me-accent-muted);
+}
+
+:root[data-theme='light'] .sprite-editor-preview {
+  background-color: #e2e6ee;
+  background-image:
+    linear-gradient(45deg, #cfd6e3 25%, transparent 25%),
+    linear-gradient(-45deg, #cfd6e3 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #cfd6e3 75%),
+    linear-gradient(-45deg, transparent 75%, #cfd6e3 75%);
+}
+
+/* ============================================================================
+   7. EFFEKSEER PREVIEW & FLOATING EDITOR WINDOWS
+   ============================================================================ */
+
+.effekseer-preview-layout {
+  background: var(--me-bg-base);
+  color: var(--me-text-secondary);
+}
+
+.effekseer-preview-assets {
+  background: var(--me-bg-panel);
+  border-right: 1px solid var(--me-border-subtle);
+}
+
+.effekseer-preview-assets-title {
+  border-bottom: 1px solid var(--me-border-subtle);
+  color: var(--me-text-primary);
+}
+
+.effekseer-preview-asset-list button {
+  border-radius: var(--me-radius-sm);
+  color: var(--me-text-secondary);
+}
+
+.effekseer-preview-asset-list button:hover {
+  background: var(--u-hover);
+  color: var(--me-text-primary);
+}
+
+.effekseer-preview-asset-list button.active {
+  background: var(--me-accent-muted);
+  color: var(--me-text-primary);
+  box-shadow: inset 2px 0 0 var(--me-accent);
+}
+
+.effekseer-preview-controls {
+  border-top: 1px solid var(--me-border-subtle);
+  background: var(--me-bg-panel);
+}
+
+.effekseer-preview-segment {
+  border-radius: var(--me-radius-sm);
+  border: 1px solid var(--me-border-default);
+  background: var(--me-bg-well);
+}
+
+.effekseer-preview-segment button.active {
+  background: var(--me-accent);
+  color: #ffffff;
+}
+
+.effekseer-preview-backgrounds button.active {
+  border-color: var(--me-accent);
+}
+
+.editor-window {
+  border-radius: var(--me-radius-lg);
+  border: 1px solid var(--me-border-strong);
+  background: var(--me-bg-popover);
+  box-shadow: var(--me-shadow-lg);
+}
+
+.editor-window-title {
+  height: 32px;
+  padding: 0 8px 0 12px;
+  background: var(--me-bg-elevated);
+  border-bottom: 1px solid var(--me-border-subtle);
+  color: var(--me-text-primary);
+}
