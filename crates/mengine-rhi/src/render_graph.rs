@@ -400,7 +400,7 @@ mod tests {
             name: "p3_write_b".into(),
             color: true,
             depth: false,
-            reads: vec![],
+            reads: vec![out],
             writes: vec![b],
             side_effect: false,
         });

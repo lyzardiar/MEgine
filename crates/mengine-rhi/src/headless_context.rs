@@ -64,7 +64,7 @@ impl<T> ContextPool<T> {
 
 pub(super) fn shared(key: ContextKey) -> Result<Arc<GpuContext>, RhiError> {
     static POOL: OnceLock<ContextPool<GpuContext>> = OnceLock::new();
-    POOL.get_or_init(ContextPool::default).load(key, |context| !context.lost.load(Ordering::Acquire), || {
+    POOL.get_or_init(ContextPool::default).load(key, |context| !context.is_lost(), || {
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor { backends: key.backends, ..Default::default() });
         pollster::block_on(GpuContext::new(instance, None, key.uniform_objects))
     })

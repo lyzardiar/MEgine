@@ -3480,7 +3480,7 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.18",
  "uuid",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3513,6 +3513,14 @@ dependencies = [
  "sha2",
  "tar",
  "tempfile",
+]
+
+[[package]]
+name = "mengine-warcraft"
+version = "0.1.0"
+dependencies = [
+ "mengine-assets",
+ "mengine-mpq",
 ]
 
 [[package]]

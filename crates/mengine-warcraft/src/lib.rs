@@ -28,6 +28,6 @@ pub use mengine_assets::{
     WarcraftWorldAppearance, WarcraftWorldLimits, WarcraftWorldNode, WarcraftWorldNodeKind,
     WarcraftWorldTransform,
 };
-pub use mengine_mpq::MpqArchive;
+pub use mengine_mpq::{Archive, Archive as MpqArchive, MemberRead, MpqError};
 
 pub const PLUGIN_ID: &str = "mengine.warcraft";
