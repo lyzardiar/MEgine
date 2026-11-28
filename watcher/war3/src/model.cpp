@@ -2,6 +2,8 @@
 #include "model_data.h"
 #include "scene_assets.h"
 #include <map>
+#include <algorithm>
+#include <cmath>
 #include <numeric>
 #include <unordered_set>
 #include <cctype>
@@ -56,7 +58,9 @@ void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
                 g.expect(tag("GNDX")); auto groups = g.take(g.count(1,65536)); mesh.group.assign(groups.begin(),groups.end()); g.expect(tag("MTGC")); auto sizes = words(g,256); g.expect(tag("MATS")); auto matrices = words(g,4096*256); size_t at = 0;
                 for (auto size : sizes) { if (!size || size > matrices.size()-at) throw std::runtime_error("Invalid matrix group"); std::vector<int> ids; ids.reserve(size); for (unsigned j = 0; j < size; ++j) ids.push_back(int(matrices[at++])); mesh.matrices.push_back(std::move(ids)); }
                 if (at != matrices.size() || (!mesh.matrices.empty() && mesh.group.size() != mesh.positions.size())) throw std::runtime_error("Incomplete matrix groups");
-                for (auto group : mesh.group) if (group >= mesh.matrices.size()) throw std::runtime_error("Missing matrix group");
+                // Exporters sometimes leave vertex groups without matrix groups (static meshes) or past the last group; keep such
+                // geometry static or bound to the first group instead of rejecting the whole imported model.
+                if(mesh.matrices.empty())mesh.group.clear();else for(auto& group:mesh.group)if(group>=mesh.matrices.size())group=0;
                 mesh.material = g.u32(); g.take(8+28); g.take(size_t(g.count(28,65536))*28); g.expect(tag("UVAS")); auto sets = g.u32(); if (sets > 8) throw std::runtime_error("UV set count exceeded");
                 for (unsigned i = 0; i < sets; ++i) { g.expect(tag("UVBS")); auto uv = vectors(g,2,65536); if (uv.size() != mesh.positions.size()) throw std::runtime_error("UV count mismatch"); mesh.uv.push_back(std::move(uv)); }
                 g.finish(); mesh.sampled.resize(mesh.positions.size()); mesh.sampledNormals.resize(mesh.positions.size()); if (geosets.size() >= 4096) throw std::runtime_error("Geoset count exceeded"); geosets.push_back(std::move(mesh));
@@ -77,7 +81,9 @@ void Model::Data::parse(std::span<const std::uint8_t> bytes, Log& log) {
                     Light light;light.node=unsigned(nodes.size()-1);light.type=source.u32();light.attenuationStart=source.f32();light.attenuationEnd=source.f32();light.color=vector(source,3);light.intensity=source.f32();light.ambientColor=vector(source,3);light.ambientIntensity=source.f32();if(light.type>2 || lights.size()>=4096)throw std::runtime_error("Invalid MDX light");while(source.left()){auto k=source.u32();Track* t=k==tag("KLAS")?&light.attenuationStartTrack:k==tag("KLAE")?&light.attenuationEndTrack:k==tag("KLAC")?&light.colorTrack:k==tag("KLAI")?&light.intensityTrack:k==tag("KLBC")?&light.ambientColorTrack:k==tag("KLBI")?&light.ambientIntensityTrack:k==tag("KLAV")?&light.visibility:nullptr;if(!t)throw std::runtime_error("Unknown light animation");*t=track(source,k==tag("KLAC") || k==tag("KLBC")?3:1);}lights.push_back(std::move(light));
                 }else if(kind==tag("PRE2")){
                     ParticleEmitter2 p;p.node=unsigned(nodes.size()-1);p.speed=source.f32();p.variation=source.f32();p.latitude=source.f32();p.gravity=source.f32();p.life=source.f32();p.rate=source.f32();p.width=source.f32();p.length=source.f32();p.filter=source.u32();p.rows=source.u32();p.columns=source.u32();p.headOrTail=source.u32();p.tail=source.f32();p.middle=source.f32();for(auto& c:p.colors)c=vector(source,3);for(auto& c:p.colors)c.w=float(source.u8())/255;for(auto& scale:p.scales)scale=source.f32();for(auto& interval:p.intervals)for(auto& value:interval)value=source.u32();auto texture=source.i32();p.squirt=source.u32();p.priority=source.i32();p.replacement=source.u32();
-                    if(p.filter>4 || p.headOrTail>2 || p.rows>1024 || p.columns>1024 || p.life<0 || p.life>3600 || p.rate<0 || p.rate>100000 || p.tail<0 || p.middle<0 || p.middle>1 || p.variation<0 || (texture<0 && !p.replacement))throw std::runtime_error("MDX particle definition exceeds bounds");
+                    // Only fields that index memory are rejected; out-of-range tuning values in custom models are clamped like the game tolerates them.
+                    if(p.rows>1024 || p.columns>1024 || (texture<0 && !p.replacement))throw std::runtime_error("MDX particle definition exceeds bounds");
+                    auto finite=[](float v,float low,float high){return std::isfinite(v)?std::clamp(v,low,high):low;};p.rows=std::max(p.rows,1u);p.columns=std::max(p.columns,1u);p.filter=std::min(p.filter,4u);p.headOrTail=std::min(p.headOrTail,2u);p.life=finite(p.life,0,3600);p.rate=finite(p.rate,0,100000);p.tail=finite(p.tail,0,1e6f);p.middle=finite(p.middle,0,1);p.variation=std::isfinite(p.variation)?std::abs(p.variation):0;
                     p.texture=unsigned(std::max(0,texture));while(source.left()){auto k=source.u32();Track* t=k==tag("KP2S")?&p.speedTrack:k==tag("KP2R")?&p.variationTrack:k==tag("KP2L")?&p.latitudeTrack:k==tag("KP2G")?&p.gravityTrack:k==tag("KP2E")?&p.rateTrack:k==tag("KP2N")?&p.widthTrack:k==tag("KP2W")?&p.lengthTrack:k==tag("KP2V")?&p.visibility:nullptr;if(!t)throw std::runtime_error("Unknown PRE2 animation");*t=track(source,1);}emitters.push_back(std::move(p));
                 }else if(kind==tag("PREM")){
                     ParticleEmitter p;p.node=unsigned(nodes.size()-1);p.rate=source.f32();p.gravity=source.f32();p.longitude=source.f32();p.latitude=source.f32();p.path=source.string(260);p.life=source.f32();p.speed=source.f32();if(!std::isfinite(p.rate) || !std::isfinite(p.gravity) || !std::isfinite(p.longitude) || !std::isfinite(p.latitude) || !std::isfinite(p.life) || !std::isfinite(p.speed) || p.rate<0 || p.rate>100000 || p.life<0 || p.life>3600 || std::abs(p.speed)>1000000 || std::abs(p.gravity)>1000000 || modelEmitters.size()>=4096)throw std::runtime_error("Invalid MDX model particle emitter");while(source.left()){auto k=source.u32();Track* t=k==tag("KPEE")?&p.rateTrack:k==tag("KPEG")?&p.gravityTrack:k==tag("KPLN")?&p.longitudeTrack:k==tag("KPLT")?&p.latitudeTrack:k==tag("KPEL")?&p.lifeTrack:k==tag("KPES")?&p.speedTrack:k==tag("KPEV")?&p.visibility:nullptr;if(!t)throw std::runtime_error("Unknown PREM animation");*t=track(source,1);}modelEmitters.push_back(std::move(p));
@@ -117,7 +123,7 @@ void Model::load(Archives& archives,Images& images,Renderer* renderer,std::span<
     data_->parse(modelBytes,log);
     size_t decoded = 0; std::map<std::string,Com<IDirect3DTexture9>> local;
     for (auto& texture : data_->textures) {
-        if(shared){if(!texture.path.empty())shared->prepareTexture(texture.path);else shared->image("@white",{1,1,{0xffffffff}});continue;}
+        if(shared){if(!texture.path.empty()){if(!shared->resources().readTexture(texture.path)){log.write("mdx_texture_missing="+texture.path);shared->image(texture.path,{1,1,{0xffffffff}});}else shared->prepareTexture(texture.path);}else shared->image("@white",{1,1,{0xffffffff}});continue;}
         if (auto found = local.find(texture.path); found != local.end()) { texture.gpu = found->second; continue; }
         Image image; if (!texture.path.empty()) { auto bytes = archives.readTexture(texture.path); if (!bytes) throw std::runtime_error("Missing model texture: "+texture.path); image = images.decode(bytes->bytes); } else image = {1,1,{0xffffffff}};
         decoded += image.pixels.size()*4; if (decoded > 256*1024*1024) throw std::runtime_error("Model texture budget exceeded"); if (renderer) texture.gpu = renderer->texture(image.width,image.height,image.pixels); local.emplace(texture.path,texture.gpu);
