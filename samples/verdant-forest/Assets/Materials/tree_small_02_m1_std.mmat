@@ -1,0 +1,38 @@
+{
+  "version": 10,
+  "name": "tree_small_02 tree_small_02_leaves (std)",
+  "shader": "standard",
+  "surface": "transparent",
+  "alpha_cutoff": 0.5,
+  "base_color": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "metallic": 0.0,
+  "roughness": 0.85,
+  "double_sided": true,
+  "base_color_texture": "Assets/Textures/tree_small_02_tree_small_02_leaves_diff_1k.jpg",
+  "normal_texture": "Assets/Textures/tree_small_02_tree_small_02_leaves_nor_gl_1k.jpg",
+  "normal_scale": 1.0,
+  "metallic_roughness_texture": "Assets/Textures/tree_small_02_tree_small_02_leaves_arm_1k.jpg",
+  "occlusion_texture": "Assets/Textures/tree_small_02_tree_small_02_leaves_arm_1k.jpg",
+  "occlusion_strength": 1.0,
+  "anisotropy": 8,
+  "toon_steps": 3.0,
+  "toon_smoothness": 0.08,
+  "toon_specular_size": 0.25,
+  "toon_shadow_tint": [
+    0.18,
+    0.28,
+    0.34,
+    0.85
+  ],
+  "toon_rim_color": [
+    0.88,
+    0.96,
+    0.72,
+    0.3
+  ]
+}

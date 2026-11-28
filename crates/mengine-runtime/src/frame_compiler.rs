@@ -695,6 +695,7 @@ pub fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameL
                     background_intensity: environment.background_intensity,
                     exposure: environment.exposure,
                     tone_mapping: environment.tone_mapping,
+                    ..EnvironmentLightData::default()
                 };
                 environment_found = true;
             }

@@ -11,6 +11,7 @@ pub use particle_render::{ParticleGeometry, ParticleVertex, ParticleRenderData, 
 mod readback;
 mod render_graph;
 mod renderer;
+mod shadows;
 mod shader_targets;
 mod sky;
 mod spatial;
@@ -31,8 +32,8 @@ pub use renderer::{
     ClearColor, DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting, FrameSubmissionProfile,
     MaterialBlendFactor, MaterialBlendMode, MaterialFilter, MaterialPipelinePrewarmReport, MaterialPipelineStats,
     MaterialTextureStats, MaterialWrap, OffscreenReadbackProfile, OffscreenRenderTarget, PointLightData, RenderFrame,
-    RenderMaterial, RenderObject, SharedRenderMaterial, RenderTarget, Renderer, SceneTextureFrame, SpotLightData,
-    SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic, SpatialCullingStats,
+    RenderMaterial, RenderObject, ShadingModel, SharedRenderMaterial, RenderTarget, Renderer, SceneTextureFrame,
+    SpotLightData, SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic, SpatialCullingStats, ToneMapper,
 };
 pub use shader_targets::{compile_shader_backends, ShaderBackendArtifact, ShaderCompilationReport};
 pub use ui::{

@@ -12,8 +12,8 @@ use mengine_core::surface_shader::{
 };
 use mengine_rhi::{
     validate_surface_shader_hook, validate_ui_shader_hook, MaterialBlendMode, MaterialFilter,
-    MaterialWrap, RenderMaterial, SurfaceShaderParameterBinding, UiBlendMode, UiPrimitive,
-    UiRenderMaterial, SharedRenderMaterial,
+    MaterialWrap, RenderMaterial, ShadingModel, SurfaceShaderParameterBinding, UiBlendMode,
+    UiPrimitive, UiRenderMaterial, SharedRenderMaterial,
 };
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
@@ -742,7 +742,19 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         clearcoat_roughness: material.clearcoat_roughness,
         emissive: material.emissive,
         emissive_strength: material.emissive_strength,
+        shading_model: match material.shader {
+            MaterialShader::Pbr | MaterialShader::Custom => ShadingModel::Pbr,
+            MaterialShader::Toon => ShadingModel::Toon,
+            MaterialShader::Standard => ShadingModel::Standard,
+            MaterialShader::Unlit => ShadingModel::Unlit,
+        },
         unlit: material.shader == MaterialShader::Unlit,
+        toon_steps: material.toon_steps,
+        toon_smoothness: material.toon_smoothness,
+        toon_specular_size: material.toon_specular_size,
+        toon_rim_power: material.toon_rim_power,
+        toon_shadow_tint: material.toon_shadow_tint,
+        toon_rim_color: material.toon_rim_color,
         double_sided: material.double_sided,
         transparent: material.surface == MaterialSurface::Transparent,
         blend_mode: match material.blend_mode {

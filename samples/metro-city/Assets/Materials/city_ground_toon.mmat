@@ -1,0 +1,21 @@
+{
+  "version": 10,
+  "name": "City Ground (toon)",
+  "shader": "toon",
+  "surface": "opaque",
+  "base_color": [
+    0.16,
+    0.17,
+    0.19,
+    1.0
+  ],
+  "metallic": 0.0,
+  "roughness": 0.85,
+  "toon_steps": 2.0,
+  "toon_shadow_tint": [
+    0.14,
+    0.18,
+    0.28,
+    0.85
+  ]
+}

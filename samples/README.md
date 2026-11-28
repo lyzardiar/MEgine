@@ -27,6 +27,12 @@ TypeScript 示例以 `.ts` 为源码；包含独立生成器的示例按各自 R
 
 - [Ion Outpost / 离子前哨](ion-outpost/README.md)：CC0 真实角色、怪物与场景资产，双武器 FPS、机器人、房间、60 Hz 权威帧同步、预测校正、断线重连；含多进程原生验收与 Windows Player。
 
+- [Pelican Island Ride / 鹈鹕环岛骑行](pelican-island-ride/README.md)：原创 3D 海岛环游骑行场景——连续曲面鹈鹕骑着复古沙滩单车绕闭合热带海岛骑行，含实时踩踏曲柄联动、椰林灯塔渔村码头、盘旋海鸥、动态海面与晴昼/日落切换。
+
+- [Verdant Forest / 翠影幽林](verdant-forest/README.md)：大型写实 3D 森林场景（220m×220m）——从 Poly Haven 1:1 导入真实 CC0 摄影测量自然资产（冷杉、灌木、苔岩、倒木、蕨类）、PBR 林地贴图与 32-bit 森林 HDRI，支持按键 1/2/3 实时切换 PBR / 卡渲 Toon / 标准 Blinn-Phong 渲染与自由漫游。
+
+- [Metro City / 落日都市](metro-city/README.md)：大型 3D 现代都市街区（136m×136m，17×17 模块化网格）——从 Kenney CC0 商业/道路/车辆/植被资产包 1:1 导入 34 套真实建筑街道模型并搭配 32-bit 日落 HDRI、25 盏实时路灯点光源与动态车流，支持按键 1/2/3 实时切换 PBR / 卡渲 Toon / 标准渲染。
+
 - [Pelican Road Rage / 鹈鹕暴力摩托](pelican-road-rage/README.md)：六人海岸竞速、翼击战斗、漂移氮气、连续曲面角色、夕阳海面、三个跟随镜头；含实机截图、完整比赛验证和 Windows Player 构建入口。
 
 ## 原创 2D 游戏

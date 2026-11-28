@@ -1,0 +1,3989 @@
+{
+  "version": 1,
+  "name": "Pelican Island",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              66.71359086110198,
+              6.701980390758823,
+              -8.670924962793858
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              -0.0019175170852924195,
+              -0.9965020562491494,
+              -0.08006498422660116,
+              0.02386573527547034
+            ]
+          },
+          "Camera3D": {
+            "fov_y_degrees": 52.0,
+            "near": 0.2,
+            "far": 1800.0,
+            "primary": true,
+            "clear_flags": "skybox",
+            "background_color": [
+              0.35,
+              0.65,
+              0.85,
+              1.0
+            ]
+          },
+          "AudioListener": {
+            "primary": true
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Sun Light",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              60,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              -0.12418501346779941,
+              -0.8743615434527469,
+              -0.3036708277652652,
+              0.35756677995206904
+            ]
+          },
+          "DirectionalLight": {
+            "color": [
+              1.0,
+              0.96,
+              0.86,
+              1.0
+            ],
+            "intensity": 2.4,
+            "cast_shadows": true,
+            "shadow_strength": 0.78,
+            "shadow_distance": 140.0,
+            "shadow_bias": 0.0014,
+            "shadow_normal_bias": 0.02
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Environment",
+        "parent": null,
+        "siblingIndex": 2,
+        "active": true,
+        "components": {
+          "EnvironmentLight": {
+            "sky_color": [
+              0.07818742180518633,
+              0.2704977910130658,
+              0.6724431569576875,
+              1.0
+            ],
+            "equator_color": [
+              0.467783796112159,
+              0.7156935005064807,
+              0.8307698767746546,
+              1.0
+            ],
+            "ground_color": [
+              0.02315336617811041,
+              0.06124605423161761,
+              0.07421356838014963,
+              1.0
+            ],
+            "diffuse_intensity": 0.65,
+            "specular_intensity": 0.68,
+            "texture": "Assets/Textures/sky-day.png",
+            "background_enabled": false,
+            "background_intensity": 0.75,
+            "exposure": -0.05,
+            "tone_mapping": true
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Sky Dome",
+        "parent": null,
+        "siblingIndex": 3,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/sky-dome.glb",
+            "material": "Assets/Materials/Sky.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Ocean",
+        "parent": null,
+        "siblingIndex": 4,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/ocean.glb",
+            "material": "Assets/Materials/Ocean.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Island Terrain",
+        "parent": null,
+        "siblingIndex": 5,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island.glb",
+            "material": "Assets/Materials/Island.mmat",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Island Props",
+        "parent": null,
+        "siblingIndex": 6,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Prop / road",
+        "parent": 7,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-road.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.6583748172794485,
+              0.14412847085805777,
+              0.08437621154414882,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Prop / cream",
+        "parent": 7,
+        "siblingIndex": 8,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-cream.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9301108583754237,
+              0.8307698767746546,
+              0.6444796819705821,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Prop / white",
+        "parent": 7,
+        "siblingIndex": 9,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-white.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Prop / sand",
+        "parent": 7,
+        "siblingIndex": 10,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-sand.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.799102738014409,
+              0.6239603916750761,
+              0.3467040563550296,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Prop / teal",
+        "parent": 7,
+        "siblingIndex": 11,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-teal.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.012983032342173012,
+              0.3277780980565422,
+              0.33716361504833037,
+              1.0
+            ],
+            "roughness": 0.34,
+            "metallic": 0.14
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Prop / mint",
+        "parent": 7,
+        "siblingIndex": 12,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-mint.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12213877222960187,
+              0.5647115057049292,
+              0.4793201831008268,
+              1.0
+            ],
+            "roughness": 0.34,
+            "metallic": 0.14
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Prop / coral",
+        "parent": 7,
+        "siblingIndex": 13,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-coral.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.8069522576692516,
+              0.12477181756095049,
+              0.07036009569659588,
+              1.0
+            ],
+            "roughness": 0.34,
+            "metallic": 0.14
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Prop / yellow",
+        "parent": 7,
+        "siblingIndex": 14,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-yellow.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9215818562772946,
+              0.5520114015120001,
+              0.0595112381629812,
+              1.0
+            ],
+            "roughness": 0.34,
+            "metallic": 0.14
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Prop / red",
+        "parent": 7,
+        "siblingIndex": 15,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-red.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.6938717612919899,
+              0.06480326669290577,
+              0.043735029256973465,
+              1.0
+            ],
+            "roughness": 0.34,
+            "metallic": 0.14
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Prop / navy",
+        "parent": 7,
+        "siblingIndex": 16,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-navy.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.012286488356915872,
+              0.03560131487502034,
+              0.06662593864377289,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Prop / leather",
+        "parent": 7,
+        "siblingIndex": 17,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-leather.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.20863687014525575,
+              0.06662593864377289,
+              0.021219010376003555,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Prop / trunk",
+        "parent": 7,
+        "siblingIndex": 18,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-trunk.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.26225065752969623,
+              0.12477181756095049,
+              0.05780543019106723,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Prop / wood",
+        "parent": 7,
+        "siblingIndex": 19,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-wood.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.3419144249086609,
+              0.1651321945016676,
+              0.06662593864377289,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Prop / leaf",
+        "parent": 7,
+        "siblingIndex": 20,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-leaf.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.024157632448504756,
+              0.21586050011389926,
+              0.09989872824711389,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Prop / leafLight",
+        "parent": 7,
+        "siblingIndex": 21,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-leafLight.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.09989872824711389,
+              0.39157247774972326,
+              0.14412847085805777,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Prop / rock",
+        "parent": 7,
+        "siblingIndex": 22,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-rock.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.27467731206038465,
+              0.23455058216100522,
+              0.18782077230067787,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Prop / window",
+        "parent": 7,
+        "siblingIndex": 23,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-window.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.043735029256973465,
+              0.12213877222960187,
+              0.17788841598362912,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Prop / beacon",
+        "parent": 7,
+        "siblingIndex": 24,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island-beacon.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              1.0,
+              0.8069522576692516,
+              0.3419144249086609,
+              1.0
+            ],
+            "roughness": 0.34,
+            "metallic": 0.14,
+            "emissive": [
+              1.0,
+              0.84,
+              0.42
+            ]
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "Pelican Rider",
+        "parent": null,
+        "siblingIndex": 25,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              66.40527237382246,
+              3.1019803907588233,
+              0.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0.0,
+              -0.9782600507513073,
+              0.0,
+              0.2073819498028932
+            ]
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "Bike / teal",
+        "parent": 26,
+        "siblingIndex": 26,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/bike-teal.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.012983032342173012,
+              0.3277780980565422,
+              0.33716361504833037,
+              1.0
+            ],
+            "roughness": 0.34,
+            "metallic": 0.14
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Bike / cream",
+        "parent": 26,
+        "siblingIndex": 27,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/bike-cream.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9301108583754237,
+              0.8307698767746546,
+              0.6444796819705821,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "name": "Bike / metal",
+        "parent": 26,
+        "siblingIndex": 28,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/bike-metal.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.4793201831008268,
+              0.5711248294648731,
+              0.6038273388553378,
+              1.0
+            ],
+            "roughness": 0.22,
+            "metallic": 0.82
+          }
+        }
+      },
+      {
+        "entity": 30,
+        "name": "Bike / leather",
+        "parent": 26,
+        "siblingIndex": 29,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/bike-leather.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.20863687014525575,
+              0.06662593864377289,
+              0.021219010376003555,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 31,
+        "name": "Bike / wicker",
+        "parent": 26,
+        "siblingIndex": 30,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/bike-wicker.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.5775804404296506,
+              0.3277780980565422,
+              0.10461648409110419,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 32,
+        "name": "Bike / brass",
+        "parent": 26,
+        "siblingIndex": 31,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/bike-brass.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.7912979403326302,
+              0.4793201831008268,
+              0.07227185068231748,
+              1.0
+            ],
+            "roughness": 0.22,
+            "metallic": 0.82
+          }
+        }
+      },
+      {
+        "entity": 33,
+        "name": "Bike / silver",
+        "parent": 26,
+        "siblingIndex": 32,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/bike-silver.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.5711248294648731,
+              0.6938717612919899,
+              0.7605245046752924,
+              1.0
+            ],
+            "roughness": 0.22,
+            "metallic": 0.82
+          }
+        }
+      },
+      {
+        "entity": 34,
+        "name": "Bike / coral",
+        "parent": 26,
+        "siblingIndex": 33,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/bike-coral.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.8069522576692516,
+              0.12477181756095049,
+              0.07036009569659588,
+              1.0
+            ],
+            "roughness": 0.34,
+            "metallic": 0.14
+          }
+        }
+      },
+      {
+        "entity": 35,
+        "name": "Pelican / white",
+        "parent": 26,
+        "siblingIndex": 34,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-white.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 36,
+        "name": "Pelican / cream",
+        "parent": 26,
+        "siblingIndex": 35,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-cream.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9301108583754237,
+              0.8307698767746546,
+              0.6444796819705821,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 37,
+        "name": "Pelican / beak",
+        "parent": 26,
+        "siblingIndex": 36,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-beak.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.8879231178819663,
+              0.38132601143253014,
+              0.05126945837404324,
+              1.0
+            ],
+            "roughness": 0.48,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 38,
+        "name": "Pelican / pouch",
+        "parent": 26,
+        "siblingIndex": 37,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-pouch.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.7912979403326302,
+              0.2232279573168085,
+              0.03189603307301153,
+              1.0
+            ],
+            "roughness": 0.48,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 39,
+        "name": "Pelican / black",
+        "parent": 26,
+        "siblingIndex": 38,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-black.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.008568125618069307,
+              0.01599629336550963,
+              0.024157632448504756,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 40,
+        "name": "Pelican / wicker",
+        "parent": 26,
+        "siblingIndex": 39,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-wicker.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.5775804404296506,
+              0.3277780980565422,
+              0.10461648409110419,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 41,
+        "name": "Pelican / coral",
+        "parent": 26,
+        "siblingIndex": 40,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-coral.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.8069522576692516,
+              0.12477181756095049,
+              0.07036009569659588,
+              1.0
+            ],
+            "roughness": 0.34,
+            "metallic": 0.14
+          }
+        }
+      },
+      {
+        "entity": 42,
+        "name": "Wheel Front",
+        "parent": 26,
+        "siblingIndex": 41,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.5,
+              -0.92
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 43,
+        "name": "Wheel Front Tire",
+        "parent": 42,
+        "siblingIndex": 42,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/wheel-tire.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.010960094006488246,
+              0.017641954488384078,
+              0.024157632448504756,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 44,
+        "name": "Wheel Front Wall",
+        "parent": 42,
+        "siblingIndex": 43,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/wheel-wall.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9301108583754237,
+              0.8307698767746546,
+              0.6444796819705821,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 45,
+        "name": "Wheel Front Rim",
+        "parent": 42,
+        "siblingIndex": 44,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/wheel-rim.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.4793201831008268,
+              0.5711248294648731,
+              0.6038273388553378,
+              1.0
+            ],
+            "roughness": 0.22,
+            "metallic": 0.82
+          }
+        }
+      },
+      {
+        "entity": 46,
+        "name": "Wheel Rear",
+        "parent": 26,
+        "siblingIndex": 45,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.5,
+              0.92
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 47,
+        "name": "Wheel Rear Tire",
+        "parent": 46,
+        "siblingIndex": 46,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/wheel-tire.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.010960094006488246,
+              0.017641954488384078,
+              0.024157632448504756,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 48,
+        "name": "Wheel Rear Wall",
+        "parent": 46,
+        "siblingIndex": 47,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/wheel-wall.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9301108583754237,
+              0.8307698767746546,
+              0.6444796819705821,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 49,
+        "name": "Wheel Rear Rim",
+        "parent": 46,
+        "siblingIndex": 48,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/wheel-rim.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.4793201831008268,
+              0.5711248294648731,
+              0.6038273388553378,
+              1.0
+            ],
+            "roughness": 0.22,
+            "metallic": 0.82
+          }
+        }
+      },
+      {
+        "entity": 50,
+        "name": "Bike Crank",
+        "parent": 26,
+        "siblingIndex": 49,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.44,
+              0.08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 51,
+        "name": "Crank Metal",
+        "parent": 50,
+        "siblingIndex": 50,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/crank-metal.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.4793201831008268,
+              0.5711248294648731,
+              0.6038273388553378,
+              1.0
+            ],
+            "roughness": 0.22,
+            "metallic": 0.82
+          }
+        }
+      },
+      {
+        "entity": 52,
+        "name": "Crank Pedals",
+        "parent": 50,
+        "siblingIndex": 51,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/crank-pedal.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.20863687014525575,
+              0.06662593864377289,
+              0.021219010376003555,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 53,
+        "name": "Pelican Wing L",
+        "parent": 26,
+        "siblingIndex": 52,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.38,
+              1.8,
+              0.05
+            ],
+            "scale": [
+              -1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-wing.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 54,
+        "name": "Pelican Wing R",
+        "parent": 26,
+        "siblingIndex": 53,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.38,
+              1.8,
+              0.05
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-wing.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 55,
+        "name": "Pelican Scarf",
+        "parent": 26,
+        "siblingIndex": 54,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              2.34,
+              0.08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-scarf.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.8069522576692516,
+              0.12477181756095049,
+              0.07036009569659588,
+              1.0
+            ],
+            "roughness": 0.34,
+            "metallic": 0.14
+          }
+        }
+      },
+      {
+        "entity": 56,
+        "name": "Pelican Foot L",
+        "parent": 26,
+        "siblingIndex": 55,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.23,
+              0.44,
+              -0.13
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-foot.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.8713671191987972,
+              0.29177064981753587,
+              0.03688945040110004,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 57,
+        "name": "Pelican Foot R",
+        "parent": 26,
+        "siblingIndex": 56,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.23,
+              0.44,
+              0.29
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/pelican-foot.glb",
+            "material": "default",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.8713671191987972,
+              0.29177064981753587,
+              0.03688945040110004,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 58,
+        "name": "Seagull 0",
+        "parent": null,
+        "siblingIndex": 57,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              24,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 59,
+        "name": "Seagull 0 Body",
+        "parent": 58,
+        "siblingIndex": 58,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-body.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 60,
+        "name": "Seagull 0 Wing L",
+        "parent": 58,
+        "siblingIndex": 59,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              -1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 61,
+        "name": "Seagull 0 Wing R",
+        "parent": 58,
+        "siblingIndex": 60,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 62,
+        "name": "Seagull 1",
+        "parent": null,
+        "siblingIndex": 61,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              26,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 63,
+        "name": "Seagull 1 Body",
+        "parent": 62,
+        "siblingIndex": 62,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-body.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 64,
+        "name": "Seagull 1 Wing L",
+        "parent": 62,
+        "siblingIndex": 63,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              -1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 65,
+        "name": "Seagull 1 Wing R",
+        "parent": 62,
+        "siblingIndex": 64,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 66,
+        "name": "Seagull 2",
+        "parent": null,
+        "siblingIndex": 65,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              28,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 67,
+        "name": "Seagull 2 Body",
+        "parent": 66,
+        "siblingIndex": 66,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-body.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 68,
+        "name": "Seagull 2 Wing L",
+        "parent": 66,
+        "siblingIndex": 67,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              -1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 69,
+        "name": "Seagull 2 Wing R",
+        "parent": 66,
+        "siblingIndex": 68,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 70,
+        "name": "Seagull 3",
+        "parent": null,
+        "siblingIndex": 69,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              30,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 71,
+        "name": "Seagull 3 Body",
+        "parent": 70,
+        "siblingIndex": 70,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-body.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 72,
+        "name": "Seagull 3 Wing L",
+        "parent": 70,
+        "siblingIndex": 71,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              -1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 73,
+        "name": "Seagull 3 Wing R",
+        "parent": 70,
+        "siblingIndex": 72,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 74,
+        "name": "Seagull 4",
+        "parent": null,
+        "siblingIndex": 73,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              32,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 75,
+        "name": "Seagull 4 Body",
+        "parent": 74,
+        "siblingIndex": 74,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-body.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 76,
+        "name": "Seagull 4 Wing L",
+        "parent": 74,
+        "siblingIndex": 75,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              -1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 77,
+        "name": "Seagull 4 Wing R",
+        "parent": 74,
+        "siblingIndex": 76,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 78,
+        "name": "Seagull 5",
+        "parent": null,
+        "siblingIndex": 77,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              34,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 79,
+        "name": "Seagull 5 Body",
+        "parent": 78,
+        "siblingIndex": 78,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-body.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 80,
+        "name": "Seagull 5 Wing L",
+        "parent": 78,
+        "siblingIndex": 79,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              -1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 81,
+        "name": "Seagull 5 Wing R",
+        "parent": 78,
+        "siblingIndex": 80,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/gull-wing.glb",
+            "material": "default",
+            "cast_shadows": false,
+            "receive_shadows": true
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.9130986517934192,
+              0.8796223968878317,
+              0.7912979403326302,
+              1.0
+            ],
+            "roughness": 0.72,
+            "metallic": 0.0
+          }
+        }
+      },
+      {
+        "entity": 82,
+        "name": "Ocean Audio",
+        "parent": null,
+        "siblingIndex": 81,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/ocean-breeze.wav",
+            "volume": 0.26,
+            "looped": true,
+            "play_on_awake": true,
+            "playing": true
+          }
+        }
+      },
+      {
+        "entity": 83,
+        "name": "Bell Audio",
+        "parent": null,
+        "siblingIndex": 82,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/bike-bell.wav",
+            "volume": 0.55,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 84,
+        "name": "Audio Mixer",
+        "parent": null,
+        "siblingIndex": 83,
+        "active": true,
+        "components": {
+          "AudioMixer": {
+            "master_volume": 0.85,
+            "music_volume": 0.7
+          }
+        }
+      },
+      {
+        "entity": 85,
+        "name": "HUD Canvas",
+        "parent": null,
+        "siblingIndex": 84,
+        "active": true,
+        "components": {
+          "Canvas": {
+            "render_mode": "ScreenSpaceOverlay",
+            "pixel_perfect": false,
+            "sorting_order": 100
+          },
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              1920,
+              1080
+            ],
+            "screen_match_mode": "MatchWidthOrHeight",
+            "match_width_or_height": 0.5
+          },
+          "GraphicRaycaster": {
+            "enabled": false
+          }
+        }
+      },
+      {
+        "entity": 86,
+        "name": "hud-title-bg",
+        "parent": 85,
+        "siblingIndex": 85,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -692,
+              -464
+            ],
+            "size_delta": [
+              468,
+              92
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.025,
+              0.065,
+              0.095,
+              0.72
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 87,
+        "name": "hud-title-bar",
+        "parent": 85,
+        "siblingIndex": 86,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -922,
+              -464
+            ],
+            "size_delta": [
+              5,
+              62
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              1.0,
+              0.8,
+              0.38,
+              1.0
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 88,
+        "name": "hud-eyebrow",
+        "parent": 85,
+        "siblingIndex": 87,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -684,
+              -488
+            ],
+            "size_delta": [
+              420,
+              28
+            ]
+          },
+          "Text": {
+            "text": "MENGINE  \u00b7  3D COASTAL SAMPLE",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.46,
+              0.9,
+              0.84,
+              1.0
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.18,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 89,
+        "name": "hud-title",
+        "parent": 85,
+        "siblingIndex": 88,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -684,
+              -452
+            ],
+            "size_delta": [
+              420,
+              40
+            ]
+          },
+          "Text": {
+            "text": "\u9e48\u9e55\u73af\u5c9b\u9a91\u884c  \u00b7  PELICAN ISLAND",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 25,
+            "color": [
+              1,
+              1,
+              1,
+              0.98
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.18,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 90,
+        "name": "hud-mode-bg",
+        "parent": 85,
+        "siblingIndex": 89,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              722,
+              -464
+            ],
+            "size_delta": [
+              408,
+              92
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.025,
+              0.065,
+              0.095,
+              0.72
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 91,
+        "name": "hud-camera",
+        "parent": 85,
+        "siblingIndex": 90,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              722,
+              -484
+            ],
+            "size_delta": [
+              368,
+              30
+            ]
+          },
+          "Text": {
+            "text": "\u955c\u5934\uff1a\u4fa7\u540e\u8ddf\u968f  /  CHASE CAM",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 17,
+            "color": [
+              1.0,
+              0.8,
+              0.38,
+              1.0
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.18,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 92,
+        "name": "hud-lighting",
+        "parent": 85,
+        "siblingIndex": 91,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              722,
+              -448
+            ],
+            "size_delta": [
+              368,
+              28
+            ]
+          },
+          "Text": {
+            "text": "\u6674\u663c\u6d77\u98ce  \u00b7  TROPICAL DAY",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.46,
+              0.9,
+              0.84,
+              1.0
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.18,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 93,
+        "name": "hud-ride-bg",
+        "parent": 85,
+        "siblingIndex": 92,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -692,
+              422
+            ],
+            "size_delta": [
+              468,
+              124
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.025,
+              0.065,
+              0.095,
+              0.72
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 94,
+        "name": "hud-landmark",
+        "parent": 85,
+        "siblingIndex": 93,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -684,
+              388
+            ],
+            "size_delta": [
+              430,
+              32
+            ]
+          },
+          "Text": {
+            "text": "\u6930\u5f71\u767d\u6c99\u6e7e  \u00b7  PALM COVE",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 21,
+            "color": [
+              1.0,
+              0.8,
+              0.38,
+              1.0
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.18,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 95,
+        "name": "hud-stats",
+        "parent": 85,
+        "siblingIndex": 94,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -684,
+              428
+            ],
+            "size_delta": [
+              430,
+              32
+            ]
+          },
+          "Text": {
+            "text": "24 KM/H   \u00b7   \u7b2c 1 \u5708   \u00b7   \u81ea\u52a8\u5de1\u6e38",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "color": [
+              0.96,
+              0.98,
+              0.99,
+              0.96
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.18,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 96,
+        "name": "hud-bell-toast",
+        "parent": 85,
+        "siblingIndex": 95,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -684,
+              462
+            ],
+            "size_delta": [
+              430,
+              24
+            ]
+          },
+          "Text": {
+            "text": "\u6309 B \u6447\u54cd\u8f66\u94c3\uff0c\u9e48\u9e55\u4f1a\u5f00\u5fc3\u6325\u7fc5",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 14,
+            "color": [
+              0.76,
+              0.86,
+              0.9,
+              0.92
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.18,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 97,
+        "name": "hud-hint-bg",
+        "parent": 85,
+        "siblingIndex": 96,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              550,
+              458
+            ],
+            "size_delta": [
+              752,
+              52
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.02,
+              0.05,
+              0.08,
+              0.68
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 98,
+        "name": "hud-hint",
+        "parent": 85,
+        "siblingIndex": 97,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              550,
+              458
+            ],
+            "size_delta": [
+              716,
+              32
+            ]
+          },
+          "Text": {
+            "text": "WASD \u9a91\u884c\u8c03\u901f   C \u5207\u955c\u5934   L \u6674\u663c/\u65e5\u843d   B \u8f66\u94c3   SPACE \u6682\u505c   V \u9690\u85cfUI",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.76,
+              0.86,
+              0.9,
+              0.92
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.18,
+            "raycast_target": false
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [
+      0.35,
+      0.65,
+      0.85,
+      1.0
+    ],
+    "selected": 1
+  }
+}

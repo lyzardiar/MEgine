@@ -1,0 +1,35 @@
+{
+  "version": 10,
+  "name": "Forest Floor (pbr)",
+  "shader": "pbr",
+  "surface": "opaque",
+  "base_color": [
+    0.88,
+    0.9,
+    0.84,
+    1.0
+  ],
+  "metallic": 0.0,
+  "roughness": 0.92,
+  "base_color_texture": "Assets/Textures/forest_floor_diff.jpg",
+  "normal_texture": "Assets/Textures/forest_floor_nor.jpg",
+  "normal_scale": 1.15,
+  "metallic_roughness_texture": "Assets/Textures/forest_floor_arm.jpg",
+  "occlusion_texture": "Assets/Textures/forest_floor_arm.jpg",
+  "occlusion_strength": 0.9,
+  "anisotropy": 8,
+  "toon_steps": 3.0,
+  "toon_smoothness": 0.08,
+  "toon_shadow_tint": [
+    0.16,
+    0.25,
+    0.28,
+    0.85
+  ],
+  "toon_rim_color": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ]
+}

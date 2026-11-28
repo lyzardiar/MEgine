@@ -1,0 +1,15 @@
+{
+  "version": 10,
+  "name": "Pelican Island Ocean",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Ocean.mshader",
+  "custom_parameters": {
+    "clock": [0, 0, 0, 0]
+  },
+  "surface": "opaque",
+  "base_color": [0.02, 0.24, 0.32, 1],
+  "metallic": 0.02,
+  "roughness": 0.12,
+  "ior": 1.33,
+  "double_sided": true
+}

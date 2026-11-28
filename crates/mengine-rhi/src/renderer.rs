@@ -1,5 +1,5 @@
 // Author: MiYu. Reuse unchanged draw bindings within each render pass.
-use crate::ibl::{BrdfLut, EnvironmentPrefilter, PrefilteredEnvironment};
+use crate::ibl::{BrdfLut, EnvironmentPrefilter, FallbackCubemap, PrefilteredEnvironment};
 use crate::gpu_profiler::GpuFrameProfiler;
 #[path = "headless_context.rs"]
 mod headless_context;
@@ -18,8 +18,9 @@ mod shared_mesh_vertex_tests;
 mod headless_context_tests;
 use crate::GpuFrameProfile;
 use crate::mesh::{MeshGpu, MeshIndexBufferCache, MeshVertexBufferPool, SharedVertexCache, Vertex};
-use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
+use crate::post_process::{HdrPostProcess, PostProcessSettings, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
+use crate::shadows::{CascadedShadowMap, ShadowCascadeUniform, ShadowUniforms, CASCADE_COUNT};
 use crate::sky::SkyBackground;
 use crate::spatial::{Frustum, SpatialIndex};
 use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
@@ -62,18 +63,17 @@ mod world_bundle_chunks_tests;
 thread_local! { static UNIFORM_OBJECT_REFERENCE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) }; }
 use world_bundles::{WorldBindings, WorldBundleCache, WorldDraw};
 
-const MAX_POINT_LIGHTS: usize = 4;
-const MAX_SPOT_LIGHTS: usize = 4;
-const DIRECTIONAL_SHADOW_MAP_SIZE: u32 = 2048;
+const MAX_POINT_LIGHTS: usize = 64;
+const MAX_SPOT_LIGHTS: usize = 64;
 const MATERIAL_PIPELINE_GRACE_FRAMES: u64 = 300;
 const MATERIAL_PIPELINE_PRUNE_INTERVAL: u64 = 60;
 const MAX_DYNAMIC_MATERIAL_PIPELINES: usize = 256;
 
-// MiYu: HDR, tone-mapped color and shared scene/UI depth must use the same supported sample count.
-fn scene_sample_count(features: impl Fn(wgpu::TextureFormat) -> wgpu::TextureFormatFeatures, output: wgpu::TextureFormat) -> u32 {
+// Scene HDR color + depth run at 4x MSAA when supported; post-process and UI stay single-sampled.
+fn scene_sample_count(features: impl Fn(wgpu::TextureFormat) -> wgpu::TextureFormatFeatures, _output: wgpu::TextureFormat) -> u32 {
     let color = wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X4 | wgpu::TextureFormatFeatureFlags::MULTISAMPLE_RESOLVE;
     let supported = |format, flags| { let value = features(format); value.allowed_usages.contains(wgpu::TextureUsages::RENDER_ATTACHMENT) && value.flags.contains(flags) };
-    if [HDR_COLOR_FORMAT, output].iter().all(|format| supported(*format, color)) && supported(wgpu::TextureFormat::Depth24PlusStencil8, wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X4) { 4 } else { 1 }
+    if supported(HDR_COLOR_FORMAT, color) && supported(wgpu::TextureFormat::Depth24PlusStencil8, wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X4) { 4 } else { 1 }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -130,6 +130,24 @@ pub struct SurfaceShaderParameterBinding {
     pub max: Option<f32>,
 }
 
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum ShadingModel {
+    #[default]
+    Pbr,
+    Toon,
+    Standard,
+    Unlit,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum ToneMapper {
+    #[default]
+    AgX,
+    Aces,
+    Neutral,
+    None,
+}
+
 #[derive(Clone, Debug)]
 pub struct RenderMaterial {
     pub particle: Option<Arc<crate::ParticleRenderData>>,
@@ -141,7 +159,14 @@ pub struct RenderMaterial {
     pub clearcoat_roughness: f32,
     pub emissive: [f32; 3],
     pub emissive_strength: f32,
+    pub shading_model: ShadingModel,
     pub unlit: bool,
+    pub toon_steps: f32,
+    pub toon_smoothness: f32,
+    pub toon_specular_size: f32,
+    pub toon_rim_power: f32,
+    pub toon_shadow_tint: [f32; 4],
+    pub toon_rim_color: [f32; 4],
     pub double_sided: bool,
     pub transparent: bool,
     pub blend_mode: MaterialBlendMode,
@@ -265,7 +290,14 @@ impl Default for RenderMaterial {
             clearcoat_roughness: 0.1,
             emissive: [0.0; 3],
             emissive_strength: 1.0,
+            shading_model: ShadingModel::Pbr,
             unlit: false,
+            toon_steps: 3.0,
+            toon_smoothness: 0.06,
+            toon_specular_size: 0.35,
+            toon_rim_power: 3.0,
+            toon_shadow_tint: [0.24, 0.28, 0.42, 0.85],
+            toon_rim_color: [1.0, 0.96, 0.88, 0.35],
             double_sided: false,
             transparent: false,
             blend_mode: MaterialBlendMode::Alpha,
@@ -389,6 +421,16 @@ pub struct EnvironmentLightData {
     /// Exposure compensation in photographic stops (EV).
     pub exposure: f32,
     pub tone_mapping: bool,
+    pub tone_mapper: ToneMapper,
+    pub bloom_intensity: f32,
+    pub bloom_threshold: f32,
+    pub ssao_intensity: f32,
+    pub fog_color: [f32; 3],
+    pub fog_density: f32,
+    pub fog_height_falloff: f32,
+    pub fog_height_offset: f32,
+    pub fog_max_opacity: f32,
+    pub fog_sun_scatter: f32,
 }
 
 impl Default for EnvironmentLightData {
@@ -407,6 +449,16 @@ impl Default for EnvironmentLightData {
             background_intensity: 1.0,
             exposure: 0.0,
             tone_mapping: true,
+            tone_mapper: ToneMapper::AgX,
+            bloom_intensity: 0.10,
+            bloom_threshold: 1.15,
+            ssao_intensity: 0.42,
+            fog_color: [0.55, 0.72, 0.88],
+            fog_density: 0.0,
+            fog_height_falloff: 0.04,
+            fog_height_offset: 0.0,
+            fog_max_opacity: 0.85,
+            fog_sun_scatter: 0.45,
         }
     }
 }
@@ -447,6 +499,7 @@ struct SceneTextureGpu {
     target: OffscreenRenderTarget,
     depth_texture: wgpu::Texture,
     depth_view: wgpu::TextureView,
+    depth_only_view: wgpu::TextureView,
     post_process: HdrPostProcess,
 }
 
@@ -549,8 +602,32 @@ impl Default for FrameLighting {
 
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+struct PointLightGpu {
+    position_range: [f32; 4],
+    color_intensity: [f32; 4],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+struct SpotLightGpu {
+    position_range: [f32; 4],
+    direction_inner: [f32; 4],
+    color_intensity: [f32; 4],
+    params: [f32; 4],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+struct LightBuffer {
+    points: [PointLightGpu; MAX_POINT_LIGHTS],
+    spots: [SpotLightGpu; MAX_SPOT_LIGHTS],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 struct GlobalUniforms {
     view_proj: [[f32; 4]; 4],
+    view: [[f32; 4]; 4],
     camera_position: [f32; 4],
     environment_sky: [f32; 4],
     environment_equator: [f32; 4],
@@ -559,12 +636,8 @@ struct GlobalUniforms {
     environment_texture_params: [f32; 4],
     directional_direction: [f32; 4],
     directional_color: [f32; 4],
-    point_positions: [[f32; 4]; MAX_POINT_LIGHTS],
-    point_colors: [[f32; 4]; MAX_POINT_LIGHTS],
-    spot_positions: [[f32; 4]; MAX_SPOT_LIGHTS],
-    spot_directions: [[f32; 4]; MAX_SPOT_LIGHTS],
-    spot_colors: [[f32; 4]; MAX_SPOT_LIGHTS],
-    spot_params: [[f32; 4]; MAX_SPOT_LIGHTS],
+    fog_color_density: [f32; 4],
+    fog_params: [f32; 4],
     light_counts: [u32; 4],
 }
 
@@ -580,15 +653,10 @@ struct ObjectUniforms {
     map_params: [f32; 4],
     layer_params: [f32; 4],
     shadow_params: [f32; 4],
+    toon_params: [f32; 4],
+    toon_shadow_tint: [f32; 4],
+    toon_rim_color: [f32; 4],
     custom_parameters: [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS],
-}
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct ShadowUniforms {
-    light_view_proj: [[f32; 4]; 4],
-    params: [f32; 4],
-    texel_size: [f32; 4],
 }
 
 struct MaterialTextureGpu {
@@ -645,6 +713,7 @@ enum MaterialPipelineBlend {
 struct MaterialPipelineKey {
     blend: MaterialPipelineBlend,
     double_sided: bool,
+    mirrored: bool,
     depth_write: bool,
     depth_test: bool,
     depth_equal: bool,
@@ -698,6 +767,7 @@ impl From<&RenderMaterial> for MaterialPipelineKey {
                 }
             },
             double_sided: material.double_sided,
+            mirrored: false,
             depth_write: material.depth_test && material.depth_write,
             depth_test: material.depth_test,
             depth_equal: material.depth_equal,
@@ -814,7 +884,10 @@ pub struct Renderer {
     material_pipeline_epoch: u64,
     material_pipeline_evictions: u64,
     depth_view: wgpu::TextureView,
+    depth_only_view: wgpu::TextureView,
     depth_texture: wgpu::Texture,
+    ui_depth_view: wgpu::TextureView,
+    ui_depth_texture: wgpu::Texture,
     meshes: HashMap<String, MeshGpu>,
     mesh_indices: MeshIndexBufferCache,
     mesh_vertices: MeshVertexBufferPool,
@@ -824,21 +897,19 @@ pub struct Renderer {
     bind_layout: wgpu::BindGroupLayout,
     pipeline_layout: wgpu::PipelineLayout,
     global_buf: wgpu::Buffer,
+    light_buf: wgpu::Buffer,
     object_buf: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
     shadow_pass_layout: wgpu::BindGroupLayout,
     shadow_pipeline: wgpu::RenderPipeline,
-    shadow_uniform_buf: wgpu::Buffer,
-    _shadow_texture: wgpu::Texture,
-    shadow_view: wgpu::TextureView,
-    _shadow_sampler: wgpu::Sampler,
+    csm: CascadedShadowMap,
     shadow_sample_bind_group: wgpu::BindGroup,
-    shadow_pass_bind_group: wgpu::BindGroup,
+    shadow_pass_bind_groups: [wgpu::BindGroup; CASCADE_COUNT],
     environment_texture_layout: wgpu::BindGroupLayout,
     environment_sampler: wgpu::Sampler,
     brdf_lut: BrdfLut,
     environment_prefilter: EnvironmentPrefilter,
-    _fallback_environment_texture: MaterialTextureGpu,
+    _fallback_environment_cube: FallbackCubemap,
     fallback_environment_bind_group: wgpu::BindGroup,
     environment_textures: HashMap<String, PrefilteredEnvironment>,
     environment_bind_groups: HashMap<String, wgpu::BindGroup>,
@@ -993,6 +1064,18 @@ impl Renderer {
                     },
                     count: None,
                 },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: NonZeroU64::new(
+                            std::mem::size_of::<LightBuffer>() as u64
+                        ),
+                    },
+                    count: None,
+                },
             ],
         });
         let material_texture_layout =
@@ -1139,7 +1222,7 @@ impl Renderer {
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             sample_type: wgpu::TextureSampleType::Depth,
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                            view_dimension: wgpu::TextureViewDimension::D2Array,
                             multisampled: false,
                         },
                         count: None,
@@ -1163,7 +1246,7 @@ impl Renderer {
                             ty: wgpu::BufferBindingType::Uniform,
                             has_dynamic_offset: false,
                             min_binding_size: NonZeroU64::new(
-                                std::mem::size_of::<ShadowUniforms>() as u64,
+                                std::mem::size_of::<ShadowCascadeUniform>() as u64,
                             ),
                         },
                         count: None,
@@ -1191,7 +1274,7 @@ impl Renderer {
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                            view_dimension: wgpu::TextureViewDimension::Cube,
                             multisampled: false,
                         },
                         count: None,
@@ -1223,7 +1306,7 @@ impl Renderer {
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                            view_dimension: wgpu::TextureViewDimension::Cube,
                             multisampled: false,
                         },
                         count: None,
@@ -1233,7 +1316,7 @@ impl Renderer {
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                            view_dimension: wgpu::TextureViewDimension::Cube,
                             multisampled: false,
                         },
                         count: None,
@@ -1258,42 +1341,33 @@ impl Renderer {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
+        let light_buf = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("dynamic_light_storage"),
+            size: std::mem::size_of::<LightBuffer>() as u64,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
         let object_stride = if indexed_objects { std::mem::size_of::<ObjectUniforms>() as u64 } else { align_to(std::mem::size_of::<ObjectUniforms>() as u64, device.limits().min_uniform_buffer_offset_alignment as u64) };
         let object_capacity = 64;
         let object_buf = create_object_buffer(&device, object_stride, object_capacity, indexed_objects);
-        let bind_group = create_bind_group(&device, &bind_layout, &global_buf, &object_buf, indexed_objects);
-        let shadow_uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("directional_shadow_uniforms"),
-            size: std::mem::size_of::<ShadowUniforms>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-        let (shadow_texture, shadow_view) = create_shadow_map(&device, DIRECTIONAL_SHADOW_MAP_SIZE);
-        let shadow_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            label: Some("directional_shadow_sampler"),
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Nearest,
-            compare: Some(wgpu::CompareFunction::LessEqual),
-            ..Default::default()
-        });
+        let bind_group = create_bind_group(&device, &bind_layout, &global_buf, &object_buf, &light_buf, indexed_objects);
+        let csm = CascadedShadowMap::new(&device);
         let shadow_sample_bind_group = create_shadow_sample_bind_group(
             &device,
             &shadow_sample_layout,
-            &shadow_uniform_buf,
-            &shadow_view,
-            &shadow_sampler,
+            &csm.sample_uniform_buf,
+            &csm.array_view,
+            &csm.sampler,
         );
-        let shadow_pass_bind_group = create_shadow_pass_bind_group(
-            &device,
-            &shadow_pass_layout,
-            &shadow_uniform_buf,
-            &object_buf,
-            indexed_objects,
-        );
+        let shadow_pass_bind_groups = std::array::from_fn(|cascade| {
+            create_shadow_pass_bind_group(
+                &device,
+                &shadow_pass_layout,
+                &csm.cascade_uniform_bufs[cascade],
+                &object_buf,
+                indexed_objects,
+            )
+        });
         let shadow_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("directional_shadow_depth"),
             source: wgpu::ShaderSource::Wgsl(object_indexing::shader(SHADOW_WGSL, indexed_objects, object_indexing::Pass::Shadow)),
@@ -1306,18 +1380,10 @@ impl Renderer {
             });
         let shadow_pipeline =
             create_shadow_pipeline(&device, &shadow_shader, &shadow_pipeline_layout);
-        let fallback_environment_texture = create_material_texture_rgba8(
-            &device,
-            &queue,
-            "fallback_environment_texture",
-            1,
-            1,
-            &[128, 128, 128, 255],
-            true,
-        );
+        let fallback_environment_cube = FallbackCubemap::new(&device, &queue);
         let environment_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
             label: Some("environment_sampler"),
-            address_mode_u: wgpu::AddressMode::Repeat,
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
             address_mode_w: wgpu::AddressMode::ClampToEdge,
             mag_filter: wgpu::FilterMode::Linear,
@@ -1326,17 +1392,17 @@ impl Renderer {
             ..Default::default()
         });
         let brdf_lut = BrdfLut::new(&device, &queue);
-        let environment_prefilter = EnvironmentPrefilter::new(&device);
+        let environment_prefilter = EnvironmentPrefilter::new(&device, &queue);
         let fallback_environment_bind_group = create_environment_bind_group(
             &device,
             &environment_texture_layout,
             EnvironmentBindGroupResources {
-                specular: &fallback_environment_texture.view,
+                specular: &fallback_environment_cube.view,
                 environment_sampler: &environment_sampler,
                 brdf_lut: brdf_lut.view(),
                 brdf_sampler: brdf_lut.sampler(),
-                irradiance: &fallback_environment_texture.view,
-                source: &fallback_environment_texture.view,
+                irradiance: &fallback_environment_cube.view,
+                source: &fallback_environment_cube.view,
             },
         );
         let fallback_base_color_texture = create_material_texture_rgba8(
@@ -1385,7 +1451,8 @@ impl Renderer {
             true,
         );
 
-        let (depth_texture, depth_view) = create_depth(&device, config.width, config.height, sample_count);
+        let (depth_texture, depth_view, depth_only_view) = create_depth(&device, config.width, config.height, sample_count);
+        let (ui_depth_texture, ui_depth_view, _) = create_depth(&device, config.width, config.height, 1);
         let mut meshes = HashMap::new();
         meshes.insert("cube".into(), MeshGpu::unit_cube(&device));
         let particle_renderer = crate::particle_render::ParticleRenderer::new(&device, &material_texture_layout, sample_count);
@@ -1397,7 +1464,7 @@ impl Renderer {
             config.width,
             config.height,
             supports_anisotropy,
-            sample_count,
+            1,
         );
 
         let gpu_profiler = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1").then(|| GpuFrameProfiler::new(&device)).flatten();
@@ -1437,7 +1504,10 @@ impl Renderer {
             material_pipeline_epoch: 0,
             material_pipeline_evictions: 0,
             depth_view,
+            depth_only_view,
             depth_texture,
+            ui_depth_view,
+            ui_depth_texture,
             meshes,
             mesh_indices: MeshIndexBufferCache::default(),
             mesh_vertices: MeshVertexBufferPool::default(),
@@ -1447,21 +1517,19 @@ impl Renderer {
             bind_layout,
             pipeline_layout,
             global_buf,
+            light_buf,
             object_buf,
             bind_group,
             shadow_pass_layout,
             shadow_pipeline,
-            shadow_uniform_buf,
-            _shadow_texture: shadow_texture,
-            shadow_view,
-            _shadow_sampler: shadow_sampler,
+            csm,
             shadow_sample_bind_group,
-            shadow_pass_bind_group,
+            shadow_pass_bind_groups,
             environment_texture_layout,
             environment_sampler,
             brdf_lut,
             environment_prefilter,
-            _fallback_environment_texture: fallback_environment_texture,
+            _fallback_environment_cube: fallback_environment_cube,
             fallback_environment_bind_group,
             environment_textures: HashMap::new(),
             environment_bind_groups: HashMap::new(),
@@ -1535,9 +1603,13 @@ impl Renderer {
             return;
         }
         self.size = new_size;
-        let (tex, view) = create_depth(&self.device, new_size.width, new_size.height, self.sample_count);
+        let (tex, view, depth_only) = create_depth(&self.device, new_size.width, new_size.height, self.sample_count);
         self.depth_texture = tex;
         self.depth_view = view;
+        self.depth_only_view = depth_only;
+        let (ui_tex, ui_view, _) = create_depth(&self.device, new_size.width, new_size.height, 1);
+        self.ui_depth_texture = ui_tex;
+        self.ui_depth_view = ui_view;
         self.post_process
             .resize(&self.device, new_size.width, new_size.height);
         self.ui.resize(&self.queue, new_size.width, new_size.height);
@@ -1680,28 +1752,57 @@ impl Renderer {
             has_environment_texture,
             environment_max_lod,
         );
-        let shadow = make_shadow_uniforms(camera, lighting);
+        let light_buffer = make_light_buffer(lighting);
+        let shadow = self.csm.update(&self.queue, camera, lighting);
+        let post_settings = PostProcessSettings {
+            exposure: lighting.environment.exposure,
+            tone_mapper: if lighting.environment.tone_mapping {
+                lighting.environment.tone_mapper
+            } else {
+                ToneMapper::None
+            },
+            bloom_intensity: lighting.environment.bloom_intensity,
+            bloom_threshold: lighting.environment.bloom_threshold,
+            ssao_intensity: lighting.environment.ssao_intensity,
+            fxaa_enabled: true,
+        };
         self.queue
             .write_buffer(&self.global_buf, 0, bytemuck::bytes_of(&global));
         self.queue
-            .write_buffer(&self.shadow_uniform_buf, 0, bytemuck::bytes_of(&shadow));
+            .write_buffer(&self.light_buf, 0, bytemuck::bytes_of(&light_buffer));
         self.post_process
-            .write_settings(&self.queue, lighting.environment.exposure, lighting.environment.tone_mapping);
+            .prepare(&self.queue, camera.proj, post_settings);
         self.submission_profile.camera_uniform_ms += camera_started.elapsed().as_secs_f64() * 1000.0;
         let culling_started = Instant::now();
         // Mesh bounds are measured after skeletal/effect/billboard sampling and transformed by
-        // the final world matrix. Main and shadow queries must remain independent.
+        // the final world matrix. Main and per-cascade shadow queries remain independent.
         self.spatial_index.update(objects.iter().map(|object| self.meshes.get(&object.mesh_key).and_then(|mesh| mesh.bounds).and_then(|bounds| bounds.transformed(object.model))).collect());
         let mut draw_order = self.spatial_index.query(&Frustum::from_wgpu_matrix(camera.proj * camera.view));
         sort_render_indices(&mut draw_order, objects, camera.position);
         if self.mesh_picking { self.mesh_pick_order.clone_from(&draw_order); }
-        let shadow_order: Vec<_> = if shadow.params[3] > 0.5 {
-            self.spatial_index.query(&Frustum::from_wgpu_matrix(Mat4::from_cols_array_2d(&shadow.light_view_proj))).into_iter().filter(|&i| objects[i].cast_shadows && (!objects[i].material.transparent || objects[i].material.alpha_cutoff > 0.0)).collect()
-        } else { vec![] };
+        let mut cascade_shadow_orders: [Vec<usize>; CASCADE_COUNT] = Default::default();
+        let mut shadow_visible_union = Vec::new();
+        if shadow.params[3] > 0.5 {
+            for cascade in 0..CASCADE_COUNT {
+                let frustum = Frustum::from_wgpu_matrix(Mat4::from_cols_array_2d(&shadow.light_view_proj[cascade]));
+                cascade_shadow_orders[cascade] = self
+                    .spatial_index
+                    .query(&frustum)
+                    .into_iter()
+                    .filter(|&i| {
+                        objects[i].cast_shadows
+                            && (!objects[i].material.transparent || objects[i].material.alpha_cutoff > 0.0)
+                    })
+                    .collect();
+                shadow_visible_union.extend_from_slice(&cascade_shadow_orders[cascade]);
+            }
+            shadow_visible_union.sort_unstable();
+            shadow_visible_union.dedup();
+        }
         let mut submitted = draw_order.clone();
-        submitted.extend_from_slice(&shadow_order);
+        submitted.extend_from_slice(&shadow_visible_union);
         submitted.sort_unstable(); submitted.dedup();
-        self.spatial_stats = SpatialCullingStats { total: objects.len(), camera_visible: draw_order.len(), shadow_visible: shadow_order.len(), submitted: submitted.len() };
+        self.spatial_stats = SpatialCullingStats { total: objects.len(), camera_visible: draw_order.len(), shadow_visible: shadow_visible_union.len(), submitted: submitted.len() };
         self.submission_profile.culling_ms += culling_started.elapsed().as_secs_f64() * 1000.0;
         let object_started = Instant::now();
         self.ensure_object_capacity(submitted.len().max(1));
@@ -1742,17 +1843,30 @@ impl Renderer {
         #[cfg(not(test))]
         let reuse_materials = true;
         // MiYu: source Arcs live for this submission; each object's uniform slot stays independent.
-        let mut shared_materials = HashMap::<*const RenderMaterial, usize>::new();
+        let mut shared_materials = HashMap::<(*const RenderMaterial, bool), usize>::new();
         let mut material_slots = Vec::with_capacity(submitted.len());
-        let mut unique_materials = Vec::new();
+        let mut unique_materials: Vec<(&RenderMaterial, bool)> = Vec::new();
         for &index in &submitted {
             let material: &RenderMaterial = &objects[index].material;
-            let slot = if reuse_materials && Arc::strong_count(&objects[index].material.0) > 1 { *shared_materials.entry(material as *const RenderMaterial).or_insert_with(|| { let slot = unique_materials.len(); unique_materials.push(material); slot }) }
-                else { let slot = unique_materials.len(); unique_materials.push(material); slot };
+            let mirrored = !material.double_sided && objects[index].model.determinant() < 0.0;
+            let slot = if reuse_materials && Arc::strong_count(&objects[index].material.0) > 1 {
+                *shared_materials.entry((material as *const RenderMaterial, mirrored)).or_insert_with(|| {
+                    let slot = unique_materials.len();
+                    unique_materials.push((material, mirrored));
+                    slot
+                })
+            } else {
+                let slot = unique_materials.len();
+                unique_materials.push((material, mirrored));
+                slot
+            };
             material_slots.push(slot);
         }
         self.submission_profile.material_preparations += unique_materials.len();
-        let prepared_materials: Vec<_> = unique_materials.into_iter().map(|material| self.prepare_object_material(material)).collect();
+        let prepared_materials: Vec<_> = unique_materials
+            .into_iter()
+            .map(|(material, mirrored)| self.prepare_object_material_oriented(material, mirrored))
+            .collect();
         self.prune_material_pipeline_cache();
         self.particle_renderer.prepare(&self.device, &self.queue, camera, objects);
         #[cfg(test)]
@@ -1812,43 +1926,59 @@ impl Renderer {
         if let Some(profiler) = &mut self.gpu_profiler { profiler.begin_frame(shadow.params[3] > 0.5, !ui_plan.is_empty()); }
 
         if shadow.params[3] > 0.5 {
-            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("directional_shadow_depth"),
-                timestamp_writes: self.gpu_profiler.as_ref().map(|profiler| profiler.pass(0)),
-                color_attachments: &[],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &self.shadow_view,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
-                        store: wgpu::StoreOp::Store,
+            for cascade in 0..CASCADE_COUNT {
+                let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("csm_shadow_depth"),
+                    timestamp_writes: if cascade == 0 {
+                        self.gpu_profiler.as_ref().map(|profiler| profiler.pass(0))
+                    } else {
+                        None
+                    },
+                    color_attachments: &[],
+                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: &self.csm.layer_views[cascade],
+                        depth_ops: Some(wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(1.0),
+                            store: wgpu::StoreOp::Store,
+                        }),
+                        stencil_ops: None,
                     }),
-                    stencil_ops: None,
-                }),
-                ..Default::default()
-            });
-            pass.set_pipeline(&self.shadow_pipeline);
-            if self.indexed_objects { pass.set_bind_group(0, &self.shadow_pass_bind_group, &[]); }
-            let (mut bound_textures, mut bound_mesh) = (None, None);
-            for &index in &shadow_order {
-                let object = &objects[index];
-                if !object.cast_shadows
-                    || (object.material.transparent && object.material.alpha_cutoff <= 0.0)
-                {
-                    continue;
+                    ..Default::default()
+                });
+                pass.set_pipeline(&self.shadow_pipeline);
+                if self.indexed_objects {
+                    pass.set_bind_group(0, &self.shadow_pass_bind_groups[cascade], &[]);
                 }
-                let Some(mesh) = self.meshes.get(&object.mesh_key) else {
-                    continue;
-                };
-                if mesh.index_count == 0 { continue; }
-                if !self.indexed_objects { pass.set_bind_group(0, &self.shadow_pass_bind_group, &[(uniform_slots[index] as u64 * self.object_stride) as u32]); }
-                let texture_set = textures_for(material_slots[uniform_slots[index]]);
-                if !reuse_draw_bindings || draw_binding_changed(&mut bound_textures, texture_set) { pass.set_bind_group(1, texture_set, &[]); }
-                if !reuse_draw_bindings || draw_binding_changed(&mut bound_mesh, mesh) {
-                    pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
-                    pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                let (mut bound_textures, mut bound_mesh) = (None, None);
+                for &index in &cascade_shadow_orders[cascade] {
+                    let object = &objects[index];
+                    if !object.cast_shadows
+                        || (object.material.transparent && object.material.alpha_cutoff <= 0.0)
+                    {
+                        continue;
+                    }
+                    let Some(mesh) = self.meshes.get(&object.mesh_key) else {
+                        continue;
+                    };
+                    if mesh.index_count == 0 { continue; }
+                    if !self.indexed_objects {
+                        pass.set_bind_group(
+                            0,
+                            &self.shadow_pass_bind_groups[cascade],
+                            &[(uniform_slots[index] as u64 * self.object_stride) as u32],
+                        );
+                    }
+                    let texture_set = textures_for(material_slots[uniform_slots[index]]);
+                    if !reuse_draw_bindings || draw_binding_changed(&mut bound_textures, texture_set) {
+                        pass.set_bind_group(1, texture_set, &[]);
+                    }
+                    if !reuse_draw_bindings || draw_binding_changed(&mut bound_mesh, mesh) {
+                        pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+                        pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                    }
+                    let instance = if self.indexed_objects { uniform_slots[index] as u32 } else { 0 };
+                    pass.draw_indexed(0..mesh.index_count, 0, instance..instance + 1);
                 }
-                let instance = if self.indexed_objects { uniform_slots[index] as u32 } else { 0 };
-                pass.draw_indexed(0..mesh.index_count, 0, instance..instance + 1);
             }
         }
         self.submission_profile.shadow_encode_ms += shadow_started.elapsed().as_secs_f64() * 1000.0;
@@ -1866,31 +1996,59 @@ impl Renderer {
             } else {
                 &self.fallback_environment_bind_group
             };
-            // MiYu: particles retain their own encoder; mesh runs keep instancing even when particles are present.
-            let has_particles = draw_order.iter().any(|&index| objects[index].material.particle.is_some());
-            let bundle_eligible = use_world_bundles && !has_particles && WorldBundleCache::accepts_count(draw_order.len());
+            // Partition opaque/cutout draws from transparent draws so the depth-tested skybox
+            // renders right after opaques (zero overdraw) and before transparents (clean blending).
+            let transparent_split = draw_order
+                .iter()
+                .position(|&i| objects[i].material.transparent || objects[i].material.particle.is_some())
+                .unwrap_or(draw_order.len());
+            let opaque_order = &draw_order[..transparent_split];
+            let transparent_order = &draw_order[transparent_split..];
+
+            let has_particles = transparent_order.iter().any(|&index| objects[index].material.particle.is_some());
+            let opaque_bundle_eligible = use_world_bundles && WorldBundleCache::accepts_count(opaque_order.len());
             #[cfg(test)]
             let instance_meshes = self.indexed_objects && !self.disable_world_instancing;
             #[cfg(not(test))]
             let instance_meshes = self.indexed_objects;
-            let mut world_draws: Vec<_> = if !has_particles && (bundle_eligible || instance_meshes) {
-                draw_order.iter().filter_map(|&index| {
+
+            let mut opaque_draws: Vec<_> = if opaque_bundle_eligible || instance_meshes {
+                opaque_order.iter().filter_map(|&index| {
                     let mesh = self.meshes.get(&objects[index].mesh_key)?;
                     if mesh.index_count == 0 { return None; }
                     let bindings = bindings_for(material_slots[uniform_slots[index]]);
-                    Some(WorldDraw { pipeline: bindings.pipeline.expect("world material pipeline prepared before rendering"), textures: bindings.textures, vertices: &mesh.vertex_buffer, indices: &mesh.index_buffer, count: mesh.index_count, object_index: uniform_slots[index] as u32, instances: 1 })
+                    Some(WorldDraw {
+                        pipeline: bindings.pipeline.expect("world material pipeline prepared before rendering"),
+                        textures: bindings.textures,
+                        vertices: &mesh.vertex_buffer,
+                        indices: &mesh.index_buffer,
+                        count: mesh.index_count,
+                        object_index: uniform_slots[index] as u32,
+                        instances: 1,
+                    })
                 }).collect()
             } else {
                 Vec::new()
             };
-            if instance_meshes && !world_draws.is_empty() { world_bundles::coalesce(&mut world_draws); }
-            self.submission_profile.world_mesh_draw_calls += world_draws.len();
-            self.submission_profile.world_instanced_objects += world_draws.iter().filter(|draw| draw.instances > 1).map(|draw| draw.instances as usize).sum::<usize>();
+            if instance_meshes && !opaque_draws.is_empty() { world_bundles::coalesce(&mut opaque_draws); }
+            self.submission_profile.world_mesh_draw_calls += opaque_draws.len();
+            self.submission_profile.world_instanced_objects += opaque_draws.iter().filter(|draw| draw.instances > 1).map(|draw| draw.instances as usize).sum::<usize>();
             #[cfg(test)]
             let chunk_draws = if self.disable_world_bundle_chunks { usize::MAX } else { 256 };
             #[cfg(not(test))]
             let chunk_draws = 256;
-            let chunks = if bundle_eligible { self.world_bundles.prepare_chunks(&self.device, self.sample_count, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group, indexed_objects: self.indexed_objects, object_stride: self.object_stride }, &world_draws, chunk_draws) } else { Vec::new() };
+            let world_bindings = WorldBindings {
+                globals: &self.bind_group,
+                shadows: &self.shadow_sample_bind_group,
+                environment: environment_bind_group,
+                indexed_objects: self.indexed_objects,
+                object_stride: self.object_stride,
+            };
+            let chunks = if opaque_bundle_eligible {
+                self.world_bundles.prepare_chunks(&self.device, self.sample_count, world_bindings, &opaque_draws, chunk_draws)
+            } else {
+                Vec::new()
+            };
             for chunk in &chunks {
                 if chunk.bundle.is_some() {
                     self.submission_profile.world_bundle_draws += chunk.range.len();
@@ -1902,32 +2060,9 @@ impl Renderer {
                 &self.queue,
                 camera,
                 &lighting.environment,
+                lighting.directional,
                 has_environment_texture,
             );
-            {
-                let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some("environment_background"),
-                    timestamp_writes: self.gpu_profiler.as_ref().map(|profiler| profiler.pass(1)),
-                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        view: self.post_process.scene_view(),
-                        resolve_target: None,
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(wgpu::Color {
-                                r: self.clear.r,
-                                g: self.clear.g,
-                                b: self.clear.b,
-                                a: self.clear.a,
-                            }),
-                            store: wgpu::StoreOp::Store,
-                        },
-                    })],
-                    depth_stencil_attachment: None,
-                    ..Default::default()
-                });
-                if lighting.environment.background_enabled {
-                    self.sky.draw(&mut pass, environment_bind_group);
-                }
-            }
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("forward_hdr"),
                 timestamp_writes: self.gpu_profiler.as_ref().map(|profiler| profiler.pass(2)),
@@ -1935,7 +2070,12 @@ impl Renderer {
                     view: self.post_process.scene_view(),
                     resolve_target: self.post_process.scene_resolve_target(),
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: self.clear.r,
+                            g: self.clear.g,
+                            b: self.clear.b,
+                            a: self.clear.a,
+                        }),
                         store: wgpu::StoreOp::Store,
                     },
                 })],
@@ -1953,117 +2093,133 @@ impl Renderer {
                 ..Default::default()
             });
 
-            // MiYu: all forward/error pipelines share pipeline_layout; bindings live only in this pass.
-            let world_bindings = WorldBindings {
-                globals: &self.bind_group,
-                shadows: &self.shadow_sample_bind_group,
-                environment: environment_bind_group,
-                indexed_objects: self.indexed_objects,
-                object_stride: self.object_stride,
-            };
-            if !world_draws.is_empty() {
+            // 1. Opaque & alpha-cutout geometry
+            if !opaque_draws.is_empty() {
                 if !chunks.is_empty() {
                     for chunk in &chunks {
                         if let Some(bundle) = &chunk.bundle { pass.execute_bundles(std::iter::once(bundle)); }
-                        else { world_bundles::draw(&mut pass, world_bindings, &world_draws[chunk.range.clone()]); }
+                        else { world_bundles::draw(&mut pass, world_bindings, &opaque_draws[chunk.range.clone()]); }
                     }
                 } else {
-                    world_bundles::draw(&mut pass, world_bindings, &world_draws);
+                    world_bundles::draw(&mut pass, world_bindings, &opaque_draws);
                 }
-            }
-            else if has_particles && instance_meshes {
-                let mut run: Vec<WorldDraw<'_>> = Vec::new();
-                for index in draw_order {
+            } else {
+                let (mut bound_pipeline, mut bound_textures, mut bound_mesh) = (None, None, None);
+                let mut shared_bindings_set = false;
+                for &index in opaque_order {
                     let object = &objects[index];
-                    if let Some(particle) = object.material.particle.as_deref() {
-                        if !run.is_empty() {
-                            world_bundles::coalesce(&mut run);
-                            self.submission_profile.world_mesh_draw_calls += run.len();
-                            self.submission_profile.world_instanced_objects += run.iter().filter(|draw| draw.instances > 1).map(|draw| draw.instances as usize).sum::<usize>();
-                            world_bundles::draw(&mut pass, world_bindings, &run);
-                            run.clear();
-                        }
-                        self.particle_renderer.draw(&mut pass, index, particle, textures_for(material_slots[uniform_slots[index]]));
-                        continue;
-                    }
-                    let Some(mesh) = self.meshes.get(&object.mesh_key) else {
-                        continue;
-                    };
+                    let Some(mesh) = self.meshes.get(&object.mesh_key) else { continue; };
                     if mesh.index_count == 0 { continue; }
                     let bindings = bindings_for(material_slots[uniform_slots[index]]);
-                    run.push(WorldDraw {
-                        pipeline: bindings.pipeline.expect("world material pipeline prepared before rendering"),
-                        textures: bindings.textures,
-                        vertices: &mesh.vertex_buffer,
-                        indices: &mesh.index_buffer,
-                        count: mesh.index_count,
-                        object_index: uniform_slots[index] as u32,
-                        instances: 1,
-                    });
-                }
-                if !run.is_empty() {
-                    world_bundles::coalesce(&mut run);
-                    self.submission_profile.world_mesh_draw_calls += run.len();
-                    self.submission_profile.world_instanced_objects += run.iter().filter(|draw| draw.instances > 1).map(|draw| draw.instances as usize).sum::<usize>();
-                    world_bundles::draw(&mut pass, world_bindings, &run);
+                    let pipeline = bindings.pipeline.expect("world material pipeline prepared before rendering");
+                    if !reuse_draw_bindings || draw_binding_changed(&mut bound_pipeline, pipeline) { pass.set_pipeline(pipeline); }
+                    if !self.indexed_objects { pass.set_bind_group(0, &self.bind_group, &[(uniform_slots[index] as u64 * self.object_stride) as u32]); }
+                    let texture_set = bindings.textures;
+                    if !reuse_draw_bindings || draw_binding_changed(&mut bound_textures, texture_set) { pass.set_bind_group(1, texture_set, &[]); }
+                    if !reuse_draw_bindings || !shared_bindings_set {
+                        if self.indexed_objects { pass.set_bind_group(0, &self.bind_group, &[]); }
+                        pass.set_bind_group(2, &self.shadow_sample_bind_group, &[]);
+                        pass.set_bind_group(3, environment_bind_group, &[]);
+                        shared_bindings_set = true;
+                    }
+                    if !reuse_draw_bindings || draw_binding_changed(&mut bound_mesh, mesh) {
+                        pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+                        pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                    }
+                    let instance = if self.indexed_objects { uniform_slots[index] as u32 } else { 0 };
+                    pass.draw_indexed(0..mesh.index_count, 0, instance..instance + 1);
+                    self.submission_profile.world_mesh_draw_calls += 1;
                 }
             }
-            else {
-            let (mut bound_pipeline, mut bound_textures, mut bound_mesh) = (None, None, None);
-            let mut shared_bindings_set = false;
-            for index in draw_order {
-                let object = &objects[index];
-                if let Some(particle) = object.material.particle.as_deref() {
-                    self.particle_renderer.draw(&mut pass, index, particle, textures_for(material_slots[uniform_slots[index]]));
-                    bound_pipeline = None; bound_textures = None; bound_mesh = None; shared_bindings_set = false;
-                    continue;
-                }
-                let Some(mesh) = self.meshes.get(&object.mesh_key) else {
-                    continue;
-                };
-                if mesh.index_count == 0 { continue; }
-                let bindings = bindings_for(material_slots[uniform_slots[index]]); let pipeline = bindings.pipeline.expect("world material pipeline prepared before rendering");
-                if !reuse_draw_bindings || draw_binding_changed(&mut bound_pipeline, pipeline) { pass.set_pipeline(pipeline); }
-                if !self.indexed_objects { pass.set_bind_group(0, &self.bind_group, &[(uniform_slots[index] as u64 * self.object_stride) as u32]); }
-                let texture_set = bindings.textures;
-                if !reuse_draw_bindings || draw_binding_changed(&mut bound_textures, texture_set) { pass.set_bind_group(1, texture_set, &[]); }
-                if !reuse_draw_bindings || !shared_bindings_set {
-                    if self.indexed_objects { pass.set_bind_group(0, &self.bind_group, &[]); }
-                    pass.set_bind_group(2, &self.shadow_sample_bind_group, &[]);
-                    pass.set_bind_group(3, environment_bind_group, &[]);
-                    shared_bindings_set = true;
-                }
-                if !reuse_draw_bindings || draw_binding_changed(&mut bound_mesh, mesh) {
-                    pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
-                    pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-                }
-                let instance = if self.indexed_objects { uniform_slots[index] as u32 } else { 0 };
-                pass.draw_indexed(0..mesh.index_count, 0, instance..instance + 1);
-                self.submission_profile.world_mesh_draw_calls += 1;
+
+            // 2. Post-opaque depth-tested skybox (depth == 1.0, LessEqual -> zero overdraw!)
+            if lighting.environment.background_enabled {
+                self.sky.draw(&mut pass, environment_bind_group);
             }
+
+            // 3. Transparent meshes & particles (back-to-front sorted)
+            if !transparent_order.is_empty() {
+                if has_particles && instance_meshes {
+                    let mut run: Vec<WorldDraw<'_>> = Vec::new();
+                    for &index in transparent_order {
+                        let object = &objects[index];
+                        if let Some(particle) = object.material.particle.as_deref() {
+                            if !run.is_empty() {
+                                world_bundles::coalesce(&mut run);
+                                self.submission_profile.world_mesh_draw_calls += run.len();
+                                self.submission_profile.world_instanced_objects += run.iter().filter(|draw| draw.instances > 1).map(|draw| draw.instances as usize).sum::<usize>();
+                                world_bundles::draw(&mut pass, world_bindings, &run);
+                                run.clear();
+                            }
+                            self.particle_renderer.draw(&mut pass, index, particle, textures_for(material_slots[uniform_slots[index]]));
+                            continue;
+                        }
+                        let Some(mesh) = self.meshes.get(&object.mesh_key) else { continue; };
+                        if mesh.index_count == 0 { continue; }
+                        let bindings = bindings_for(material_slots[uniform_slots[index]]);
+                        run.push(WorldDraw {
+                            pipeline: bindings.pipeline.expect("world material pipeline prepared before rendering"),
+                            textures: bindings.textures,
+                            vertices: &mesh.vertex_buffer,
+                            indices: &mesh.index_buffer,
+                            count: mesh.index_count,
+                            object_index: uniform_slots[index] as u32,
+                            instances: 1,
+                        });
+                    }
+                    if !run.is_empty() {
+                        world_bundles::coalesce(&mut run);
+                        self.submission_profile.world_mesh_draw_calls += run.len();
+                        self.submission_profile.world_instanced_objects += run.iter().filter(|draw| draw.instances > 1).map(|draw| draw.instances as usize).sum::<usize>();
+                        world_bundles::draw(&mut pass, world_bindings, &run);
+                    }
+                } else {
+                    let (mut bound_pipeline, mut bound_textures, mut bound_mesh) = (None, None, None);
+                    let mut shared_bindings_set = false;
+                    for &index in transparent_order {
+                        let object = &objects[index];
+                        if let Some(particle) = object.material.particle.as_deref() {
+                            self.particle_renderer.draw(&mut pass, index, particle, textures_for(material_slots[uniform_slots[index]]));
+                            bound_pipeline = None; bound_textures = None; bound_mesh = None; shared_bindings_set = false;
+                            continue;
+                        }
+                        let Some(mesh) = self.meshes.get(&object.mesh_key) else { continue; };
+                        if mesh.index_count == 0 { continue; }
+                        let bindings = bindings_for(material_slots[uniform_slots[index]]);
+                        let pipeline = bindings.pipeline.expect("world material pipeline prepared before rendering");
+                        if !reuse_draw_bindings || draw_binding_changed(&mut bound_pipeline, pipeline) { pass.set_pipeline(pipeline); }
+                        if !self.indexed_objects { pass.set_bind_group(0, &self.bind_group, &[(uniform_slots[index] as u64 * self.object_stride) as u32]); }
+                        let texture_set = bindings.textures;
+                        if !reuse_draw_bindings || draw_binding_changed(&mut bound_textures, texture_set) { pass.set_bind_group(1, texture_set, &[]); }
+                        if !reuse_draw_bindings || !shared_bindings_set {
+                            if self.indexed_objects { pass.set_bind_group(0, &self.bind_group, &[]); }
+                            pass.set_bind_group(2, &self.shadow_sample_bind_group, &[]);
+                            pass.set_bind_group(3, environment_bind_group, &[]);
+                            shared_bindings_set = true;
+                        }
+                        if !reuse_draw_bindings || draw_binding_changed(&mut bound_mesh, mesh) {
+                            pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+                            pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                        }
+                        let instance = if self.indexed_objects { uniform_slots[index] as u32 } else { 0 };
+                        pass.draw_indexed(0..mesh.index_count, 0, instance..instance + 1);
+                        self.submission_profile.world_mesh_draw_calls += 1;
+                    }
+                }
             }
         }
         self.submission_profile.world_encode_ms += world_started.elapsed().as_secs_f64() * 1000.0;
         self.submission_profile.material_binding_resolutions += binding_resolutions.get();
 
         let postprocess_started = Instant::now();
-        {
-            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("aces_tone_mapping"),
-                timestamp_writes: self.gpu_profiler.as_ref().map(|profiler| profiler.pass(3)),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: self.post_process.output_view(view),
-                    resolve_target: if ui_plan.is_empty() { self.post_process.output_resolve_target(view) } else { None },
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                ..Default::default()
-            });
-            self.post_process.draw(&mut pass);
-        }
+        self.post_process.encode(
+            &self.device,
+            &mut encoder,
+            &self.depth_only_view,
+            view,
+            post_settings,
+            self.gpu_profiler.as_ref().map(|profiler| profiler.pass(3)),
+        );
         self.submission_profile.postprocess_encode_ms += postprocess_started.elapsed().as_secs_f64() * 1000.0;
 
         let ui_encode_started = Instant::now();
@@ -2072,21 +2228,21 @@ impl Renderer {
                 label: Some("ui_overlay"),
                 timestamp_writes: self.gpu_profiler.as_ref().map(|profiler| profiler.pass(4)),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: self.post_process.output_view(view),
-                    resolve_target: self.post_process.output_resolve_target(view),
+                    view,
+                    resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &self.depth_view,
+                    view: &self.ui_depth_view,
                     depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
+                        load: wgpu::LoadOp::Clear(1.0),
                         store: wgpu::StoreOp::Store,
                     }),
                     stencil_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
+                        load: wgpu::LoadOp::Clear(0),
                         store: wgpu::StoreOp::Store,
                     }),
                 }),
@@ -2147,21 +2303,23 @@ impl Renderer {
         let cached = self.scene_textures.remove(&frame.key).filter(|cached| cached.target.size == size);
         let mut gpu = cached.unwrap_or_else(|| {
             let target = self.create_offscreen_target(size);
-            let (depth_texture, depth_view) = create_depth(&self.device, size.width, size.height, self.sample_count);
+            let (depth_texture, depth_view, depth_only_view) = create_depth(&self.device, size.width, size.height, self.sample_count);
             let post_process = HdrPostProcess::new(&self.device, self.config.format, size.width, size.height, self.sample_count);
             self.ui.bind_texture_view(&self.device, &frame.key, &target.view);
-            SceneTextureGpu { target, depth_texture, depth_view, post_process }
+            SceneTextureGpu { target, depth_texture, depth_view, depth_only_view, post_process }
         });
         let previous_size = self.size;
         let previous_clear = self.clear;
         std::mem::swap(&mut self.depth_texture, &mut gpu.depth_texture);
         std::mem::swap(&mut self.depth_view, &mut gpu.depth_view);
+        std::mem::swap(&mut self.depth_only_view, &mut gpu.depth_only_view);
         std::mem::swap(&mut self.post_process, &mut gpu.post_process);
         self.size = size;
         self.clear = frame.clear;
         let result = self.render_lit_frame_to_target(frame.camera, &frame.objects, &frame.lighting, None, RenderTarget::Offscreen(&gpu.target));
         std::mem::swap(&mut self.depth_texture, &mut gpu.depth_texture);
         std::mem::swap(&mut self.depth_view, &mut gpu.depth_view);
+        std::mem::swap(&mut self.depth_only_view, &mut gpu.depth_only_view);
         std::mem::swap(&mut self.post_process, &mut gpu.post_process);
         self.size = previous_size;
         self.clear = previous_clear;
@@ -2182,19 +2340,28 @@ impl Renderer {
             &self.bind_layout,
             &self.global_buf,
             &self.object_buf,
+            &self.light_buf,
             self.indexed_objects,
         );
-        self.shadow_pass_bind_group = create_shadow_pass_bind_group(
-            &self.device,
-            &self.shadow_pass_layout,
-            &self.shadow_uniform_buf,
-            &self.object_buf,
-            self.indexed_objects,
-        );
+        self.shadow_pass_bind_groups = std::array::from_fn(|cascade| {
+            create_shadow_pass_bind_group(
+                &self.device,
+                &self.shadow_pass_layout,
+                &self.csm.cascade_uniform_bufs[cascade],
+                &self.object_buf,
+                self.indexed_objects,
+            )
+        });
     }
 
+    #[cfg(test)]
     fn prepare_object_material(&mut self, material: &RenderMaterial) -> PreparedObjectMaterial {
-        let pipeline = MaterialPipelineKey::from(material);
+        self.prepare_object_material_oriented(material, false)
+    }
+
+    fn prepare_object_material_oriented(&mut self, material: &RenderMaterial, mirrored: bool) -> PreparedObjectMaterial {
+        let mut pipeline = MaterialPipelineKey::from(material);
+        pipeline.mirrored = mirrored;
         self.ensure_material_pipeline_with_key(material, pipeline);
         let missing_texture = material_has_missing_textures(material, |key, srgb| {
             if srgb { self.material_color_textures.contains_key(key) } else { self.material_data_textures.contains_key(key) }
@@ -2783,33 +2950,34 @@ fn preferred_backends() -> wgpu::Backends {
     }
 }
 
-fn make_global_uniforms(
-    camera: FrameCamera,
-    lighting: &FrameLighting,
-    has_environment_texture: bool,
-    environment_max_lod: f32,
-) -> GlobalUniforms {
-    let mut point_positions = [[0.0; 4]; MAX_POINT_LIGHTS];
-    let mut point_colors = [[0.0; 4]; MAX_POINT_LIGHTS];
+fn make_light_buffer(lighting: &FrameLighting) -> LightBuffer {
+    let mut points = [PointLightGpu {
+        position_range: [0.0; 4],
+        color_intensity: [0.0; 4],
+    }; MAX_POINT_LIGHTS];
     for (index, light) in lighting.points.iter().take(MAX_POINT_LIGHTS).enumerate() {
-        point_positions[index] = [
-            light.position.x,
-            light.position.y,
-            light.position.z,
-            light.range.max(0.001),
-        ];
-        point_colors[index] = [
-            light.color[0],
-            light.color[1],
-            light.color[2],
-            light.intensity.max(0.0),
-        ];
+        points[index] = PointLightGpu {
+            position_range: [
+                light.position.x,
+                light.position.y,
+                light.position.z,
+                light.range.max(0.01),
+            ],
+            color_intensity: [
+                light.color[0].max(0.0),
+                light.color[1].max(0.0),
+                light.color[2].max(0.0),
+                light.intensity.max(0.0),
+            ],
+        };
     }
 
-    let mut spot_positions = [[0.0; 4]; MAX_SPOT_LIGHTS];
-    let mut spot_directions = [[0.0; 4]; MAX_SPOT_LIGHTS];
-    let mut spot_colors = [[0.0; 4]; MAX_SPOT_LIGHTS];
-    let mut spot_params = [[0.0; 4]; MAX_SPOT_LIGHTS];
+    let mut spots = [SpotLightGpu {
+        position_range: [0.0; 4],
+        direction_inner: [0.0; 4],
+        color_intensity: [0.0; 4],
+        params: [0.0; 4],
+    }; MAX_SPOT_LIGHTS];
     for (index, light) in lighting.spots.iter().take(MAX_SPOT_LIGHTS).enumerate() {
         let direction = light.direction.normalize_or_zero();
         let inner = (light.inner_angle_degrees.clamp(0.0, 89.0) * 0.5)
@@ -2821,31 +2989,42 @@ fn make_global_uniforms(
             * 0.5)
             .to_radians()
             .cos();
-        spot_positions[index] = [
-            light.position.x,
-            light.position.y,
-            light.position.z,
-            light.range.max(0.001),
-        ];
-        spot_directions[index] = [direction.x, direction.y, direction.z, 0.0];
-        spot_colors[index] = [
-            light.color[0],
-            light.color[1],
-            light.color[2],
-            light.intensity.max(0.0),
-        ];
-        spot_params[index] = [inner, outer, 0.0, 0.0];
+        spots[index] = SpotLightGpu {
+            position_range: [
+                light.position.x,
+                light.position.y,
+                light.position.z,
+                light.range.max(0.01),
+            ],
+            direction_inner: [direction.x, direction.y, direction.z, inner],
+            color_intensity: [
+                light.color[0].max(0.0),
+                light.color[1].max(0.0),
+                light.color[2].max(0.0),
+                light.intensity.max(0.0),
+            ],
+            params: [outer, 0.0, 0.0, 0.0],
+        };
     }
 
+    LightBuffer { points, spots }
+}
+
+fn make_global_uniforms(
+    camera: FrameCamera,
+    lighting: &FrameLighting,
+    has_environment_texture: bool,
+    environment_max_lod: f32,
+) -> GlobalUniforms {
     let (directional_direction, directional_color, directional_count) =
         if let Some(light) = lighting.directional {
             let direction = light.direction.normalize_or_zero();
             (
                 [direction.x, direction.y, direction.z, 0.0],
                 [
-                    light.color[0],
-                    light.color[1],
-                    light.color[2],
+                    light.color[0].max(0.0),
+                    light.color[1].max(0.0),
+                    light.color[2].max(0.0),
                     light.intensity.max(0.0),
                 ],
                 1,
@@ -2865,6 +3044,7 @@ fn make_global_uniforms(
 
     GlobalUniforms {
         view_proj: (camera.proj * camera.view).to_cols_array_2d(),
+        view: camera.view.to_cols_array_2d(),
         camera_position: [camera.position.x, camera.position.y, camera.position.z, 1.0],
         environment_sky: [
             lighting.environment.sky_color[0].max(0.0),
@@ -2898,87 +3078,23 @@ fn make_global_uniforms(
         ],
         directional_direction,
         directional_color,
-        point_positions,
-        point_colors,
-        spot_positions,
-        spot_directions,
-        spot_colors,
-        spot_params,
+        fog_color_density: [
+            lighting.environment.fog_color[0].max(0.0),
+            lighting.environment.fog_color[1].max(0.0),
+            lighting.environment.fog_color[2].max(0.0),
+            lighting.environment.fog_density.max(0.0),
+        ],
+        fog_params: [
+            lighting.environment.fog_height_falloff.max(0.001),
+            lighting.environment.fog_height_offset,
+            lighting.environment.fog_max_opacity.clamp(0.0, 1.0),
+            lighting.environment.fog_sun_scatter.clamp(0.0, 2.0),
+        ],
         light_counts: [
             directional_count,
             lighting.points.len().min(MAX_POINT_LIGHTS) as u32,
             lighting.spots.len().min(MAX_SPOT_LIGHTS) as u32,
             0,
-        ],
-    }
-}
-
-fn make_shadow_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> ShadowUniforms {
-    let disabled = || ShadowUniforms {
-        light_view_proj: Mat4::IDENTITY.to_cols_array_2d(),
-        params: [0.0; 4],
-        texel_size: [
-            1.0 / DIRECTIONAL_SHADOW_MAP_SIZE as f32,
-            1.0 / DIRECTIONAL_SHADOW_MAP_SIZE as f32,
-            0.0,
-            0.0,
-        ],
-    };
-    let Some(light) = lighting.directional else {
-        return disabled();
-    };
-    let direction = light.direction.normalize_or_zero();
-    if !light.cast_shadows || light.shadow_strength <= 0.0 || direction.length_squared() < 0.5 {
-        return disabled();
-    }
-
-    let distance = light.shadow_distance.clamp(1.0, 500.0);
-    let inverse_view = camera.view.inverse();
-    let camera_forward = inverse_view.transform_vector3(-Vec3::Z).normalize_or_zero();
-    let mut center = camera.position + camera_forward * distance * 0.25;
-    let up = if direction.dot(Vec3::Y).abs() > 0.95 {
-        Vec3::X
-    } else {
-        Vec3::Y
-    };
-    let half_extent = distance * 0.65;
-    let texel_world_size = half_extent * 2.0 / DIRECTIONAL_SHADOW_MAP_SIZE as f32;
-
-    let initial_view = Mat4::look_at_rh(center - direction * distance, center, up);
-    // Quantize the light-space world position, not the view-space target (which is always zero),
-    // so sub-texel camera motion cannot make the shadow projection shimmer.
-    let center_in_light = initial_view.transform_vector3(center);
-    let snapped_in_light = Vec3::new(
-        (center_in_light.x / texel_world_size).round() * texel_world_size,
-        (center_in_light.y / texel_world_size).round() * texel_world_size,
-        center_in_light.z,
-    );
-    center += initial_view
-        .inverse()
-        .transform_vector3(snapped_in_light - center_in_light);
-
-    let light_view = Mat4::look_at_rh(center - direction * distance, center, up);
-    let light_projection = Mat4::orthographic_rh(
-        -half_extent,
-        half_extent,
-        -half_extent,
-        half_extent,
-        0.1,
-        distance * 2.5,
-    );
-    ShadowUniforms {
-        light_view_proj: (light_projection * light_view).to_cols_array_2d(),
-        params: [
-            light.shadow_strength.clamp(0.0, 1.0),
-            light.shadow_bias.clamp(0.0, 0.05),
-            light.shadow_normal_bias.clamp(0.0, 2.0),
-            1.0,
-        ],
-        texel_size: [
-            1.0 / DIRECTIONAL_SHADOW_MAP_SIZE as f32,
-            1.0 / DIRECTIONAL_SHADOW_MAP_SIZE as f32,
-            0.0,
-            0.0,
         ],
     }
 }
@@ -3022,6 +3138,18 @@ fn sort_render_indices(indices: &mut [usize], objects: &[RenderObject], camera_p
 
 fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
     let material = &object.material;
+    let shading_code = if material.unlit {
+        3.0
+    } else {
+        match material.shading_model {
+            ShadingModel::Pbr => 0.0,
+            ShadingModel::Toon => 1.0,
+            ShadingModel::Standard => 2.0,
+            ShadingModel::Unlit => 3.0,
+        }
+    };
+    let is_mirrored = object.model.determinant() < 0.0;
+    let has_normal_map = !material.normal_texture.trim().is_empty();
     ObjectUniforms {
         model: object.model.to_cols_array_2d(),
         normal_matrix: object.model.inverse().transpose().to_cols_array_2d(),
@@ -3030,7 +3158,7 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
             material.metallic.clamp(0.0, 1.0),
             material.roughness.clamp(0.04, 1.0),
             material.emissive_strength.max(0.0),
-            if material.unlit { 1.0 } else { 0.0 },
+            shading_code,
         ],
         emissive: [
             material.emissive[0],
@@ -3068,10 +3196,18 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
         ],
         shadow_params: [
             if object.receive_shadows { 1.0 } else { 0.0 },
-            0.0,
-            0.0,
+            if is_mirrored { 1.0 } else { 0.0 },
+            if has_normal_map { 1.0 } else { 0.0 },
             0.0,
         ],
+        toon_params: [
+            material.toon_steps.clamp(1.0, 8.0),
+            material.toon_smoothness.clamp(0.005, 0.45),
+            material.toon_specular_size.clamp(0.01, 0.95),
+            material.toon_rim_power.clamp(0.5, 16.0),
+        ],
+        toon_shadow_tint: material.toon_shadow_tint,
+        toon_rim_color: material.toon_rim_color,
         custom_parameters: material.custom_parameters,
     }
 }
@@ -3376,7 +3512,7 @@ fn create_pipeline(
         primitive: wgpu::PrimitiveState {
             topology: wgpu::PrimitiveTopology::TriangleList,
             strip_index_format: None,
-            front_face: wgpu::FrontFace::Ccw,
+            front_face: if key.mirrored { wgpu::FrontFace::Cw } else { wgpu::FrontFace::Ccw },
             cull_mode: (!key.double_sided).then_some(wgpu::Face::Back),
             ..Default::default()
         },
@@ -3421,7 +3557,8 @@ fn create_shadow_pipeline(
             topology: wgpu::PrimitiveTopology::TriangleList,
             strip_index_format: None,
             front_face: wgpu::FrontFace::Ccw,
-            cull_mode: Some(wgpu::Face::Back),
+            // No backface culling in shadow pass so double-sided foliage and negative-scale mirrored meshes cast solid shadows.
+            cull_mode: None,
             ..Default::default()
         },
         depth_stencil: Some(wgpu::DepthStencilState {
@@ -3430,9 +3567,9 @@ fn create_shadow_pipeline(
             depth_compare: wgpu::CompareFunction::Less,
             stencil: Default::default(),
             bias: wgpu::DepthBiasState {
-                constant: 2,
-                slope_scale: 2.0,
-                clamp: 0.0,
+                constant: 1,
+                slope_scale: 1.5,
+                clamp: 0.01,
             },
         }),
         multisample: wgpu::MultisampleState::default(),
@@ -3491,6 +3628,7 @@ fn create_bind_group(
     layout: &wgpu::BindGroupLayout,
     global_buf: &wgpu::Buffer,
     object_buf: &wgpu::Buffer,
+    light_buf: &wgpu::Buffer,
     indexed_objects: bool,
 ) -> wgpu::BindGroup {
     device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -3508,6 +3646,10 @@ fn create_bind_group(
                     offset: 0,
                     size: if indexed_objects { None } else { NonZeroU64::new(std::mem::size_of::<ObjectUniforms>() as u64) },
                 }),
+            },
+            wgpu::BindGroupEntry {
+                binding: 2,
+                resource: light_buf.as_entire_binding(),
             },
         ],
     })
@@ -3787,7 +3929,7 @@ fn create_depth(
     width: u32,
     height: u32,
     sample_count: u32,
-) -> (wgpu::Texture, wgpu::TextureView) {
+) -> (wgpu::Texture, wgpu::TextureView, wgpu::TextureView) {
     let tex = device.create_texture(&wgpu::TextureDescriptor {
         label: Some("depth"),
         size: wgpu::Extent3d {
@@ -3803,26 +3945,12 @@ fn create_depth(
         view_formats: &[],
     });
     let view = tex.create_view(&wgpu::TextureViewDescriptor::default());
-    (tex, view)
-}
-
-fn create_shadow_map(device: &wgpu::Device, resolution: u32) -> (wgpu::Texture, wgpu::TextureView) {
-    let texture = device.create_texture(&wgpu::TextureDescriptor {
-        label: Some("directional_shadow_map"),
-        size: wgpu::Extent3d {
-            width: resolution.max(1),
-            height: resolution.max(1),
-            depth_or_array_layers: 1,
-        },
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Depth32Float,
-        usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-        view_formats: &[],
+    let depth_only = tex.create_view(&wgpu::TextureViewDescriptor {
+        label: Some("depth_only"),
+        aspect: wgpu::TextureAspect::DepthOnly,
+        ..Default::default()
     });
-    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-    (texture, view)
+    (tex, view, depth_only)
 }
 
 pub fn look_at(eye: Vec3, target: Vec3, up: Vec3) -> Mat4 {
@@ -3846,641 +3974,8 @@ pub fn orthographic(size: f32, aspect: f32, near: f32, far: f32) -> Mat4 {
     )
 }
 
-const SHADOW_WGSL: &str = r#"
-struct ShadowUniforms {
-    light_view_proj: mat4x4<f32>,
-    params: vec4<f32>,
-    texel_size: vec4<f32>,
-};
-
-struct ObjectUniforms {
-    model: mat4x4<f32>,
-    normal_matrix: mat4x4<f32>,
-    base_color: vec4<f32>,
-    material: vec4<f32>,
-    emissive: vec4<f32>,
-    texture_transform: vec4<f32>,
-    map_params: vec4<f32>,
-    layer_params: vec4<f32>,
-    shadow_params: vec4<f32>,
-    custom_parameters: array<vec4<f32>, 16>,
-};
-
-@group(0) @binding(0) var<uniform> shadow: ShadowUniforms;
-@group(0) @binding(1) var<uniform> object: ObjectUniforms;
-@group(1) @binding(0) var base_color_texture: texture_2d<f32>;
-@group(1) @binding(5) var material_sampler: sampler;
-
-struct VsIn {
-    @location(0) position: vec3<f32>,
-    @location(1) normal: vec3<f32>,
-    @location(2) uv: vec2<f32>,
-};
-
-struct ShadowOut {
-    @builtin(position) clip: vec4<f32>,
-    @location(0) uv: vec2<f32>,
-};
-
-@vertex
-fn vs_shadow(v: VsIn) -> ShadowOut {
-    var output: ShadowOut;
-    output.clip = shadow.light_view_proj * object.model * vec4<f32>(v.position, 1.0);
-    let scaled_uv = v.uv * object.texture_transform.xy;
-    let center = object.texture_transform.xy * 0.5;
-    let angle = object.map_params.z;
-    let rotation = mat2x2<f32>(cos(angle), sin(angle), -sin(angle), cos(angle));
-    output.uv = rotation * (scaled_uv - center) + center + object.texture_transform.zw;
-    return output;
-}
-
-@fragment
-fn fs_shadow(input: ShadowOut) {
-    if object.emissive.w > 0.0 {
-        let alpha = textureSample(base_color_texture, material_sampler, input.uv).a
-            * object.base_color.a;
-        if alpha < object.emissive.w {
-            discard;
-        }
-    }
-}
-"#;
-
-const FORWARD_WGSL: &str = r#"
-const MAX_POINT_LIGHTS: u32 = 4u;
-const MAX_SPOT_LIGHTS: u32 = 4u;
-
-struct GlobalUniforms {
-    view_proj: mat4x4<f32>,
-    camera_position: vec4<f32>,
-    environment_sky: vec4<f32>,
-    environment_equator: vec4<f32>,
-    environment_ground: vec4<f32>,
-    environment_params: vec4<f32>,
-    environment_texture_params: vec4<f32>,
-    directional_direction: vec4<f32>,
-    directional_color: vec4<f32>,
-    point_positions: array<vec4<f32>, 4>,
-    point_colors: array<vec4<f32>, 4>,
-    spot_positions: array<vec4<f32>, 4>,
-    spot_directions: array<vec4<f32>, 4>,
-    spot_colors: array<vec4<f32>, 4>,
-    spot_params: array<vec4<f32>, 4>,
-    light_counts: vec4<u32>,
-};
-
-struct ObjectUniforms {
-    model: mat4x4<f32>,
-    normal_matrix: mat4x4<f32>,
-    base_color: vec4<f32>,
-    material: vec4<f32>,
-    emissive: vec4<f32>,
-    texture_transform: vec4<f32>,
-    map_params: vec4<f32>,
-    layer_params: vec4<f32>,
-    shadow_params: vec4<f32>,
-    custom_parameters: array<vec4<f32>, 16>,
-};
-
-struct ShadowUniforms {
-    light_view_proj: mat4x4<f32>,
-    params: vec4<f32>,
-    texel_size: vec4<f32>,
-};
-
-@group(0) @binding(0) var<uniform> frame: GlobalUniforms;
-@group(0) @binding(1) var<uniform> object: ObjectUniforms;
-@group(1) @binding(0) var base_color_texture: texture_2d<f32>;
-@group(1) @binding(1) var normal_texture: texture_2d<f32>;
-@group(1) @binding(2) var metallic_roughness_texture: texture_2d<f32>;
-@group(1) @binding(3) var emissive_texture: texture_2d<f32>;
-@group(1) @binding(4) var occlusion_texture: texture_2d<f32>;
-@group(1) @binding(5) var material_sampler: sampler;
-@group(1) @binding(6) var mengine_custom_texture_0: texture_2d<f32>;
-@group(1) @binding(7) var mengine_custom_texture_1: texture_2d<f32>;
-@group(1) @binding(8) var mengine_custom_texture_2: texture_2d<f32>;
-@group(1) @binding(9) var mengine_custom_texture_3: texture_2d<f32>;
-@group(1) @binding(10) var mengine_custom_texture_4: texture_2d<f32>;
-@group(1) @binding(11) var mengine_custom_texture_5: texture_2d<f32>;
-@group(2) @binding(0) var<uniform> shadow: ShadowUniforms;
-@group(2) @binding(1) var directional_shadow_map: texture_depth_2d;
-@group(2) @binding(2) var directional_shadow_sampler: sampler_comparison;
-@group(3) @binding(0) var environment_texture: texture_2d<f32>;
-@group(3) @binding(1) var environment_sampler: sampler;
-@group(3) @binding(2) var brdf_lut: texture_2d<f32>;
-@group(3) @binding(3) var brdf_lut_sampler: sampler;
-@group(3) @binding(4) var environment_irradiance: texture_2d<f32>;
-
-struct VsIn {
-    @location(0) position: vec3<f32>,
-    @location(1) normal: vec3<f32>,
-    @location(2) uv: vec2<f32>,
-};
-
-struct VsOut {
-    @builtin(position) clip: vec4<f32>,
-    @location(0) @interpolate(perspective, centroid) world_position: vec3<f32>,
-    @location(1) @interpolate(perspective, centroid) world_normal: vec3<f32>,
-    @location(2) @interpolate(perspective, centroid) uv: vec2<f32>,
-};
-
-@vertex
-fn vs_main(v: VsIn) -> VsOut {
-    var o: VsOut;
-    let world = object.model * vec4<f32>(v.position, 1.0);
-    o.clip = frame.view_proj * world;
-    o.world_position = world.xyz;
-    o.world_normal = normalize((object.normal_matrix * vec4<f32>(v.normal, 0.0)).xyz);
-    let scaled_uv = v.uv * object.texture_transform.xy;
-    let center = object.texture_transform.xy * 0.5;
-    let angle = object.map_params.z;
-    let rotation = mat2x2<f32>(cos(angle), sin(angle), -sin(angle), cos(angle));
-    o.uv = rotation * (scaled_uv - center) + center + object.texture_transform.zw;
-    return o;
-}
-
-const PI: f32 = 3.141592653589793;
-
-fn distribution_ggx(n: vec3<f32>, h: vec3<f32>, roughness: f32) -> f32 {
-    let alpha = roughness * roughness;
-    let alpha_squared = alpha * alpha;
-    let ndh = max(dot(n, h), 0.0);
-    let denominator = ndh * ndh * (alpha_squared - 1.0) + 1.0;
-    return alpha_squared / max(PI * denominator * denominator, 0.000001);
-}
-
-fn geometry_schlick_ggx(ndx: f32, roughness: f32) -> f32 {
-    let radius = roughness + 1.0;
-    let k = radius * radius * 0.125;
-    return ndx / max(ndx * (1.0 - k) + k, 0.000001);
-}
-
-fn geometry_smith(n: vec3<f32>, v: vec3<f32>, l: vec3<f32>, roughness: f32) -> f32 {
-    let ndv = max(dot(n, v), 0.0);
-    let ndl = max(dot(n, l), 0.0);
-    return geometry_schlick_ggx(ndv, roughness) * geometry_schlick_ggx(ndl, roughness);
-}
-
-fn fresnel_schlick(cos_theta: f32, f0: vec3<f32>) -> vec3<f32> {
-    let grazing = pow(clamp(1.0 - cos_theta, 0.0, 1.0), 5.0);
-    return f0 + (vec3<f32>(1.0) - f0) * grazing;
-}
-
-fn fresnel_schlick_roughness(
-    cos_theta: f32,
-    f0: vec3<f32>,
-    roughness: f32,
-) -> vec3<f32> {
-    let grazing_color = max(vec3<f32>(1.0 - roughness), f0);
-    let grazing = pow(clamp(1.0 - cos_theta, 0.0, 1.0), 5.0);
-    return f0 + (grazing_color - f0) * grazing;
-}
-
-fn analytic_environment_radiance(direction: vec3<f32>) -> vec3<f32> {
-    let vertical = clamp(direction.y, -1.0, 1.0);
-    if vertical >= 0.0 {
-        return mix(frame.environment_equator.rgb, frame.environment_sky.rgb, vertical);
-    }
-    return mix(frame.environment_equator.rgb, frame.environment_ground.rgb, -vertical);
-}
-
-fn rotate_environment_direction(direction: vec3<f32>) -> vec3<f32> {
-    let angle = frame.environment_params.z;
-    let sine = sin(angle);
-    let cosine = cos(angle);
-    return vec3<f32>(
-        cosine * direction.x + sine * direction.z,
-        direction.y,
-        -sine * direction.x + cosine * direction.z,
-    );
-}
-
-fn environment_radiance(direction: vec3<f32>, roughness: f32) -> vec3<f32> {
-    let rotated = normalize(rotate_environment_direction(direction));
-    if frame.environment_texture_params.x < 0.5 {
-        return analytic_environment_radiance(rotated);
-    }
-    let longitude = atan2(rotated.z, rotated.x);
-    let latitude = acos(clamp(rotated.y, -1.0, 1.0));
-    let uv = vec2<f32>(longitude / (2.0 * PI) + 0.5, latitude / PI);
-    let lod = clamp(roughness, 0.0, 1.0) * frame.environment_texture_params.y;
-    return textureSampleLevel(environment_texture, environment_sampler, uv, lod).rgb;
-}
-
-fn environment_diffuse_radiance(direction: vec3<f32>) -> vec3<f32> {
-    let rotated = normalize(rotate_environment_direction(direction));
-    if frame.environment_texture_params.x < 0.5 {
-        return analytic_environment_radiance(rotated);
-    }
-    let longitude = atan2(rotated.z, rotated.x);
-    let latitude = acos(clamp(rotated.y, -1.0, 1.0));
-    let uv = vec2<f32>(longitude / (2.0 * PI) + 0.5, latitude / PI);
-    return textureSampleLevel(environment_irradiance, environment_sampler, uv, 0.0).rgb;
-}
-
-fn environment_contribution(
-    n: vec3<f32>,
-    v: vec3<f32>,
-    base_color: vec3<f32>,
-    metallic: f32,
-    roughness: f32,
-    occlusion: f32,
-    dielectric_f0: f32,
-) -> vec3<f32> {
-    let f0 = mix(vec3<f32>(dielectric_f0), base_color, metallic);
-    let ndv = max(dot(n, v), 0.0);
-    let fresnel = fresnel_schlick_roughness(ndv, f0, roughness);
-    let diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic);
-    let diffuse = environment_diffuse_radiance(n)
-        * diffuse_weight
-        * base_color
-        * frame.environment_params.x;
-    let reflection = reflect(-v, n);
-    let analytic_blur = 1.0 - frame.environment_texture_params.x;
-    let specular_direction = normalize(mix(
-        reflection,
-        n,
-        roughness * roughness * analytic_blur,
-    ));
-    let integrated_brdf = textureSample(
-        brdf_lut,
-        brdf_lut_sampler,
-        vec2<f32>(ndv, roughness),
-    ).rg;
-    let specular = environment_radiance(specular_direction, roughness)
-        * (fresnel * integrated_brdf.x + vec3<f32>(integrated_brdf.y))
-        * frame.environment_params.y;
-    return (diffuse + specular) * occlusion;
-}
-
-fn clearcoat_environment_contribution(
-    n: vec3<f32>,
-    v: vec3<f32>,
-    roughness: f32,
-) -> vec3<f32> {
-    let ndv = max(dot(n, v), 0.0);
-    let f0 = vec3<f32>(0.04);
-    let fresnel = fresnel_schlick_roughness(ndv, f0, roughness);
-    let reflection = reflect(-v, n);
-    let analytic_blur = 1.0 - frame.environment_texture_params.x;
-    let specular_direction = normalize(mix(
-        reflection,
-        n,
-        roughness * roughness * analytic_blur,
-    ));
-    let integrated_brdf = textureSample(
-        brdf_lut,
-        brdf_lut_sampler,
-        vec2<f32>(ndv, roughness),
-    ).rg;
-    return environment_radiance(specular_direction, roughness)
-        * (fresnel * integrated_brdf.x + vec3<f32>(integrated_brdf.y))
-        * frame.environment_params.y;
-}
-
-fn layered_environment_contribution(
-    n: vec3<f32>,
-    v: vec3<f32>,
-    base_color: vec3<f32>,
-    metallic: f32,
-    roughness: f32,
-    occlusion: f32,
-    dielectric_f0: f32,
-    clearcoat: f32,
-    clearcoat_roughness: f32,
-) -> vec3<f32> {
-    let base = environment_contribution(
-        n, v, base_color, metallic, roughness, occlusion, dielectric_f0,
-    );
-    let amount = clamp(clearcoat, 0.0, 1.0);
-    if amount <= 0.0 {
-        return base;
-    }
-    let coat_roughness = clamp(clearcoat_roughness, 0.04, 1.0);
-    let ndv = max(dot(n, v), 0.0);
-    let layer_fresnel = fresnel_schlick_roughness(
-        ndv,
-        vec3<f32>(0.04),
-        coat_roughness,
-    ).x * amount;
-    return base * (1.0 - layer_fresnel)
-        + clearcoat_environment_contribution(n, v, coat_roughness) * amount;
-}
-
-fn light_contribution(
-    n: vec3<f32>,
-    v: vec3<f32>,
-    l: vec3<f32>,
-    radiance: vec3<f32>,
-    base_color: vec3<f32>,
-    metallic: f32,
-    roughness: f32,
-    dielectric_f0: f32,
-) -> vec3<f32> {
-    let ndl = max(dot(n, l), 0.0);
-    let ndv = max(dot(n, v), 0.0);
-    if ndl <= 0.0 || ndv <= 0.0 {
-        return vec3<f32>(0.0);
-    }
-    let h = normalize(l + v);
-    let f0 = mix(vec3<f32>(dielectric_f0), base_color, metallic);
-    let fresnel = fresnel_schlick(max(dot(h, v), 0.0), f0);
-    let distribution = distribution_ggx(n, h, roughness);
-    let geometry = geometry_smith(n, v, l, roughness);
-    let specular = distribution * geometry * fresnel / max(4.0 * ndv * ndl, 0.000001);
-    let diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic);
-    let diffuse = diffuse_weight * base_color / PI;
-    return (diffuse + specular) * radiance * ndl;
-}
-
-fn clearcoat_light_contribution(
-    n: vec3<f32>,
-    v: vec3<f32>,
-    l: vec3<f32>,
-    radiance: vec3<f32>,
-    roughness: f32,
-) -> vec3<f32> {
-    let ndl = max(dot(n, l), 0.0);
-    let ndv = max(dot(n, v), 0.0);
-    if ndl <= 0.0 || ndv <= 0.0 {
-        return vec3<f32>(0.0);
-    }
-    let h = normalize(l + v);
-    let fresnel = fresnel_schlick(max(dot(h, v), 0.0), vec3<f32>(0.04));
-    let distribution = distribution_ggx(n, h, roughness);
-    let geometry = geometry_smith(n, v, l, roughness);
-    let specular = distribution * geometry * fresnel / max(4.0 * ndv * ndl, 0.000001);
-    return specular * radiance * ndl;
-}
-
-fn layered_light_contribution(
-    n: vec3<f32>,
-    v: vec3<f32>,
-    l: vec3<f32>,
-    radiance: vec3<f32>,
-    base_color: vec3<f32>,
-    metallic: f32,
-    roughness: f32,
-    dielectric_f0: f32,
-    clearcoat: f32,
-    clearcoat_roughness: f32,
-) -> vec3<f32> {
-    let base = light_contribution(
-        n, v, l, radiance, base_color, metallic, roughness, dielectric_f0,
-    );
-    let amount = clamp(clearcoat, 0.0, 1.0);
-    let ndl = max(dot(n, l), 0.0);
-    let ndv = max(dot(n, v), 0.0);
-    if amount <= 0.0 || ndl <= 0.0 || ndv <= 0.0 {
-        return base;
-    }
-    let coat_roughness = clamp(clearcoat_roughness, 0.04, 1.0);
-    let h = normalize(l + v);
-    let layer_fresnel = fresnel_schlick(
-        max(dot(h, v), 0.0),
-        vec3<f32>(0.04),
-    ).x * amount;
-    return base * (1.0 - layer_fresnel)
-        + clearcoat_light_contribution(n, v, l, radiance, coat_roughness) * amount;
-}
-
-fn distance_attenuation(distance: f32, range: f32) -> f32 {
-    let normalized = clamp(1.0 - distance / max(range, 0.001), 0.0, 1.0);
-    return normalized * normalized;
-}
-
-fn mapped_normal(
-    geometric_normal: vec3<f32>,
-    world_position: vec3<f32>,
-    uv: vec2<f32>,
-    encoded_normal: vec3<f32>,
-    scale: f32,
-) -> vec3<f32> {
-    let position_dx = dpdx(world_position);
-    let position_dy = dpdy(world_position);
-    let uv_dx = dpdx(uv);
-    let uv_dy = dpdy(uv);
-    let tangent_raw = cross(position_dy, geometric_normal) * uv_dx.x
-        + cross(geometric_normal, position_dx) * uv_dy.x;
-    let bitangent_raw = cross(position_dy, geometric_normal) * uv_dx.y
-        + cross(geometric_normal, position_dx) * uv_dy.y;
-    let inverse_scale = inverseSqrt(max(
-        max(dot(tangent_raw, tangent_raw), dot(bitangent_raw, bitangent_raw)),
-        0.000001,
-    ));
-    let tangent = tangent_raw * inverse_scale;
-    let bitangent = bitangent_raw * inverse_scale;
-    var tangent_normal = encoded_normal * 2.0 - vec3<f32>(1.0);
-    tangent_normal.x *= scale;
-    tangent_normal.y *= scale;
-    return normalize(
-        tangent * tangent_normal.x
-        + bitangent * tangent_normal.y
-        + geometric_normal * tangent_normal.z
-    );
-}
-
-fn directional_shadow_visibility(
-    world_position: vec3<f32>,
-    world_normal: vec3<f32>,
-) -> f32 {
-    if shadow.params.w < 0.5 || object.shadow_params.x < 0.5 {
-        return 1.0;
-    }
-    let biased_position = world_position + world_normal * shadow.params.z;
-    let clip = shadow.light_view_proj * vec4<f32>(biased_position, 1.0);
-    let projected = clip.xyz / clip.w;
-    if projected.x < -1.0 || projected.x > 1.0
-        || projected.y < -1.0 || projected.y > 1.0
-        || projected.z < 0.0 || projected.z > 1.0 {
-        return 1.0;
-    }
-    let uv = projected.xy * vec2<f32>(0.5, -0.5) + vec2<f32>(0.5);
-    let reference_depth = projected.z - shadow.params.y;
-    var visibility = 0.0;
-    for (var y = -1; y <= 1; y += 1) {
-        for (var x = -1; x <= 1; x += 1) {
-            let offset = vec2<f32>(f32(x), f32(y)) * shadow.texel_size.xy;
-            visibility += textureSampleCompare(
-                directional_shadow_map,
-                directional_shadow_sampler,
-                uv + offset,
-                reference_depth,
-            );
-        }
-    }
-    visibility /= 9.0;
-    return mix(1.0, visibility, shadow.params.x);
-}
-
-struct MEngineSurface {
-    base_color: vec3<f32>,
-    alpha: f32,
-    normal: vec3<f32>,
-    metallic: f32,
-    roughness: f32,
-    occlusion: f32,
-    emissive: vec3<f32>,
-};
-
-// MENGINE_SURFACE_HOOK_BEGIN
-const MENGINE_HAS_LIT_SURFACE_HOOK: bool = false;
-fn mengine_surface_hook(
-    color: vec4<f32>,
-    uv: vec2<f32>,
-    world_position: vec3<f32>,
-    world_normal: vec3<f32>,
-) -> vec4<f32> {
-    return color;
-}
-fn mengine_lit_surface_hook(
-    surface: MEngineSurface,
-    uv: vec2<f32>,
-    world_position: vec3<f32>,
-) -> MEngineSurface {
-    return surface;
-}
-// MENGINE_SURFACE_HOOK_END
-
-fn material_output(color: vec3<f32>, alpha: f32) -> vec4<f32> {
-    let coverage_alpha = select(alpha, 1.0, object.layer_params.w > 0.5);
-    if object.map_params.w > 0.5 && object.map_params.w < 1.5 {
-        return vec4<f32>(color * coverage_alpha, coverage_alpha);
-    }
-    return vec4<f32>(color, coverage_alpha);
-}
-
-@fragment
-fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) vec4<f32> {
-    let sampled_color = textureSample(base_color_texture, material_sampler, i.uv);
-    let sampled_normal = textureSample(normal_texture, material_sampler, i.uv).rgb;
-    let sampled_orm = textureSample(metallic_roughness_texture, material_sampler, i.uv).rgb;
-    let sampled_emissive = textureSample(emissive_texture, material_sampler, i.uv).rgb;
-    let sampled_occlusion = textureSample(occlusion_texture, material_sampler, i.uv).r;
-    let surface_color = object.base_color * sampled_color;
-    let authored_base_color = max(surface_color.rgb, vec3<f32>(0.0));
-    let authored_metallic = clamp(object.material.x * sampled_orm.b, 0.0, 1.0);
-    let authored_roughness = clamp(object.material.y * sampled_orm.g, 0.04, 1.0);
-    let authored_occlusion = mix(1.0, sampled_occlusion, clamp(object.map_params.y, 0.0, 1.0));
-    let authored_emissive = max(object.emissive.rgb, vec3<f32>(0.0))
-        * object.material.z
-        * sampled_emissive;
-    let face_normal = select(-normalize(i.world_normal), normalize(i.world_normal), front_facing);
-    let n = mapped_normal(
-        face_normal,
-        i.world_position,
-        i.uv,
-        sampled_normal,
-        max(object.map_params.x, 0.0),
-    );
-    var surface = MEngineSurface(
-        authored_base_color,
-        surface_color.a,
-        n,
-        authored_metallic,
-        authored_roughness,
-        authored_occlusion,
-        authored_emissive,
-    );
-    if MENGINE_HAS_LIT_SURFACE_HOOK {
-        surface = mengine_lit_surface_hook(surface, i.uv, i.world_position);
-    }
-    surface.base_color = max(surface.base_color, vec3<f32>(0.0));
-    surface.alpha = clamp(surface.alpha, 0.0, 1.0);
-    surface.metallic = clamp(surface.metallic, 0.0, 1.0);
-    surface.roughness = clamp(surface.roughness, 0.04, 1.0);
-    surface.occlusion = clamp(surface.occlusion, 0.0, 1.0);
-    surface.emissive = max(surface.emissive, vec3<f32>(0.0));
-    if dot(surface.normal, surface.normal) > 0.000001 {
-        surface.normal = normalize(surface.normal);
-    } else {
-        surface.normal = n;
-    }
-    if object.emissive.w > 0.0 && surface.alpha < object.emissive.w {
-        discard;
-    }
-    if object.material.w > 0.5 {
-        let unlit_surface = mengine_surface_hook(
-            vec4<f32>(surface.base_color + surface.emissive, surface.alpha),
-            i.uv,
-            i.world_position,
-            surface.normal,
-        );
-        return material_output(unlit_surface.rgb, unlit_surface.a);
-    }
-
-    let v = normalize(frame.camera_position.xyz - i.world_position);
-    let clearcoat = clamp(object.layer_params.x, 0.0, 1.0);
-    let clearcoat_roughness = clamp(object.layer_params.y, 0.04, 1.0);
-    let dielectric_f0 = clamp(object.layer_params.z, 0.0, 1.0);
-    var color = layered_environment_contribution(
-        surface.normal,
-        v,
-        surface.base_color,
-        surface.metallic,
-        surface.roughness,
-        surface.occlusion,
-        dielectric_f0,
-        clearcoat,
-        clearcoat_roughness,
-    );
-
-    if frame.light_counts.x > 0u {
-        let l = normalize(-frame.directional_direction.xyz);
-        color += directional_shadow_visibility(i.world_position, surface.normal) * layered_light_contribution(
-            surface.normal, v, l,
-            frame.directional_color.rgb * frame.directional_color.a,
-            surface.base_color, surface.metallic, surface.roughness,
-            dielectric_f0,
-            clearcoat, clearcoat_roughness,
-        );
-    }
-
-    for (var index = 0u; index < MAX_POINT_LIGHTS; index += 1u) {
-        if index < frame.light_counts.y {
-            let to_light = frame.point_positions[index].xyz - i.world_position;
-            let distance = length(to_light);
-            let attenuation = distance_attenuation(distance, frame.point_positions[index].w);
-            color += layered_light_contribution(
-                surface.normal, v, normalize(to_light),
-                frame.point_colors[index].rgb * frame.point_colors[index].a * attenuation,
-                surface.base_color, surface.metallic, surface.roughness,
-                dielectric_f0,
-                clearcoat, clearcoat_roughness,
-            );
-        }
-    }
-
-    for (var index = 0u; index < MAX_SPOT_LIGHTS; index += 1u) {
-        if index < frame.light_counts.z {
-            let to_light = frame.spot_positions[index].xyz - i.world_position;
-            let distance = length(to_light);
-            let from_light = -normalize(to_light);
-            let cone = dot(from_light, normalize(frame.spot_directions[index].xyz));
-            let inner_cos = frame.spot_params[index].x;
-            let outer_cos = frame.spot_params[index].y;
-            let cone_attenuation = smoothstep(outer_cos, inner_cos, cone);
-            let attenuation = distance_attenuation(distance, frame.spot_positions[index].w) * cone_attenuation;
-            color += layered_light_contribution(
-                surface.normal, v, normalize(to_light),
-                frame.spot_colors[index].rgb * frame.spot_colors[index].a * attenuation,
-                surface.base_color, surface.metallic, surface.roughness,
-                dielectric_f0,
-                clearcoat, clearcoat_roughness,
-            );
-        }
-    }
-
-    color += surface.emissive;
-    let final_surface = mengine_surface_hook(
-        vec4<f32>(color, surface.alpha),
-        i.uv,
-        i.world_position,
-        surface.normal,
-    );
-    return material_output(final_surface.rgb, final_surface.a);
-}
-"#;
+const SHADOW_WGSL: &str = include_str!("shaders/shadow_csm.wgsl");
+const FORWARD_WGSL: &str = include_str!("shaders/forward_pbr.wgsl");
 
 #[cfg(test)]
 mod tests {
@@ -4500,7 +3995,7 @@ mod tests {
                 for blend in [MaterialPipelineBlend::Replace, MaterialPipelineBlend::Alpha, MaterialPipelineBlend::Premultiplied, MaterialPipelineBlend::Additive, MaterialPipelineBlend::Multiply] {
                     for depth_write in [false, true] {
                         if blend == MaterialPipelineBlend::Replace && !depth_write { continue; }
-                        let key = MaterialPipelineKey { blend, double_sided, depth_write, depth_test:true, depth_equal, shader_fingerprint:0 };
+                        let key = MaterialPipelineKey { blend, double_sided, mirrored: false, depth_write, depth_test:true, depth_equal, shader_fingerprint:0 };
                         assert_eq!(renderer.ensure_material_pipeline_with_key(&material, key), MaterialPipelinePrepareResult::BuiltIn);
                         count += 1; assert_eq!(renderer.material_pipeline_stats().built_in, count);
                         let first = renderer.material_pipelines[&key].clone();
@@ -5013,6 +4508,7 @@ mod tests {
         let source_key = MaterialPipelineKey {
             blend: MaterialPipelineBlend::Additive,
             double_sided: true,
+            mirrored: false,
             depth_write: false,
             depth_test: true,
             depth_equal: false,
@@ -5043,24 +4539,24 @@ mod tests {
     fn forward_shader_uses_energy_conserving_ggx_lighting() {
         for required in [
             "fn distribution_ggx",
-            "fn geometry_smith",
+            "fn visibility_smith_ggx_correlated",
             "fn fresnel_schlick",
             "fn environment_contribution",
             "let dielectric_f0 = clamp(object.layer_params.z, 0.0, 1.0)",
             "fn layered_environment_contribution",
-            "fn clearcoat_environment_contribution",
-            "fn layered_light_contribution",
-            "fn clearcoat_light_contribution",
+            "fn pbr_light_contribution",
+            "fn toon_light_contribution",
+            "fn standard_light_contribution",
             "fn environment_diffuse_radiance",
-            "textureSampleLevel(environment_texture",
+            "textureSampleLevel(environment_cubemap",
             "@group(3) @binding(2) var brdf_lut",
             "@group(3) @binding(4) var environment_irradiance",
-            "fresnel * integrated_brdf.x",
-            "diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic)",
+            "fn apply_atmospheric_fog",
         ] {
             assert!(FORWARD_WGSL.contains(required), "missing {required}");
         }
-        assert!(!FORWARD_WGSL.contains("let shininess ="));
+        assert!(FORWARD_WGSL.contains("fn directional_shadow_visibility"));
+        assert!(FORWARD_WGSL.contains("const POISSON_DISK"));
         assert!(!FORWARD_WGSL.contains("roughness_attenuation"));
     }
 
@@ -5226,16 +4722,18 @@ mod tests {
         };
         let mut lighting = FrameLighting::default();
         lighting.directional.as_mut().unwrap().cast_shadows = false;
-        assert_eq!(make_shadow_uniforms(camera, &lighting).params[3], 0.0);
+        assert_eq!(crate::shadows::compute_csm_uniforms(camera, &lighting).params[3], 0.0);
 
         let light = lighting.directional.as_mut().unwrap();
         light.cast_shadows = true;
         light.shadow_strength = 2.0;
         light.shadow_bias = 1.0;
         light.shadow_normal_bias = 9.0;
-        let uniforms = make_shadow_uniforms(camera, &lighting);
-        assert_eq!(uniforms.params, [1.0, 0.05, 2.0, 1.0]);
-        assert!(Mat4::from_cols_array_2d(&uniforms.light_view_proj).is_finite());
+        let uniforms = crate::shadows::compute_csm_uniforms(camera, &lighting);
+        assert_eq!(uniforms.params, [1.0, 0.02, 2.0, 1.0]);
+        for mat in &uniforms.light_view_proj {
+            assert!(Mat4::from_cols_array_2d(mat).is_finite());
+        }
     }
 
     #[test]
@@ -5373,6 +4871,7 @@ mod tests {
             MaterialPipelineKey {
                 blend: MaterialPipelineBlend::Premultiplied,
                 double_sided: true,
+                mirrored: false,
                 depth_write: false,
                 depth_test: true,
                 depth_equal: false,
@@ -5406,6 +4905,7 @@ mod tests {
         let key = |fingerprint| MaterialPipelineKey {
             blend: MaterialPipelineBlend::Replace,
             double_sided: false,
+            mirrored: false,
             depth_write: true,
             depth_test: true,
             depth_equal: false,

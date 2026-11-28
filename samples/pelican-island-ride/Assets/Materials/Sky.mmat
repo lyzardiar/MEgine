@@ -1,0 +1,14 @@
+{
+  "version": 10,
+  "name": "Pelican Island Sky",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Sky.mshader",
+  "custom_parameters": {
+    "clock": [0, 0, 0, 0]
+  },
+  "surface": "opaque",
+  "base_color": [0.2, 0.5, 0.8, 1],
+  "metallic": 0.0,
+  "roughness": 1.0,
+  "double_sided": true
+}

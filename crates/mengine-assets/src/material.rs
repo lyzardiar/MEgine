@@ -47,11 +47,37 @@ fn default_anisotropy() -> u8 {
     1
 }
 
+fn default_toon_steps() -> f32 {
+    3.0
+}
+
+fn default_toon_smoothness() -> f32 {
+    0.06
+}
+
+fn default_toon_specular_size() -> f32 {
+    0.35
+}
+
+fn default_toon_rim_power() -> f32 {
+    3.0
+}
+
+fn default_toon_shadow_tint() -> [f32; 4] {
+    [0.24, 0.28, 0.42, 0.85]
+}
+
+fn default_toon_rim_color() -> [f32; 4] {
+    [1.0, 0.96, 0.88, 0.35]
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MaterialShader {
     #[default]
     Pbr,
+    Toon,
+    Standard,
     Unlit,
     Custom,
 }
@@ -159,6 +185,18 @@ pub struct MaterialAsset {
     pub mipmap_filter: MaterialFilter,
     #[serde(default = "default_anisotropy")]
     pub anisotropy: u8,
+    #[serde(default = "default_toon_steps")]
+    pub toon_steps: f32,
+    #[serde(default = "default_toon_smoothness")]
+    pub toon_smoothness: f32,
+    #[serde(default = "default_toon_specular_size")]
+    pub toon_specular_size: f32,
+    #[serde(default = "default_toon_rim_power")]
+    pub toon_rim_power: f32,
+    #[serde(default = "default_toon_shadow_tint")]
+    pub toon_shadow_tint: [f32; 4],
+    #[serde(default = "default_toon_rim_color")]
+    pub toon_rim_color: [f32; 4],
 }
 
 impl Default for MaterialAsset {
@@ -201,6 +239,12 @@ impl Default for MaterialAsset {
             filter: MaterialFilter::Linear,
             mipmap_filter: MaterialFilter::Linear,
             anisotropy: default_anisotropy(),
+            toon_steps: default_toon_steps(),
+            toon_smoothness: default_toon_smoothness(),
+            toon_specular_size: default_toon_specular_size(),
+            toon_rim_power: default_toon_rim_power(),
+            toon_shadow_tint: default_toon_shadow_tint(),
+            toon_rim_color: default_toon_rim_color(),
         }
     }
 }

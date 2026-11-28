@@ -1,0 +1,37 @@
+{
+  "version": 10,
+  "name": "City Material 0 (pbr)",
+  "shader": "pbr",
+  "surface": "opaque",
+  "base_color": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "metallic": 0.0,
+  "roughness": 0.62,
+  "emissive": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "emissive_strength": 1.0,
+  "base_color_texture": "Assets/Textures/city-commercial_colormap.png",
+  "anisotropy": 8,
+  "toon_steps": 3.0,
+  "toon_smoothness": 0.05,
+  "toon_specular_size": 0.35,
+  "toon_shadow_tint": [
+    0.2,
+    0.24,
+    0.38,
+    0.85
+  ],
+  "toon_rim_color": [
+    1.0,
+    0.84,
+    0.58,
+    0.42
+  ]
+}

@@ -1,31 +1,132 @@
+//! Modern Single-Sample HDR Post-Processing Stack:
+//!   1. Depth Resolve (1x or 4x MSAA scene depth -> single-sample R32Float)
+//!   2. Half-Resolution SSAO + Separable Depth-Aware Bilateral Blur
+//!   3. 5-Mip Dual-Kawase / Jimenez Anti-Flicker HDR Bloom
+//!   4. Final Composite: SSAO modulation + Bloom + Exposure + AgX / ACES / Neutral + sRGB FXAA
+//!      + Strict output colorspace encoding (linear for sRGB views, OETF sRGB for UNORM views).
+
+use crate::renderer::ToneMapper;
+use glam::Mat4;
 use std::num::NonZeroU64;
 
 pub(crate) const HDR_COLOR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba16Float;
+const SSAO_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::R8Unorm;
+const DEPTH_RESOLVED_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::R32Float;
+const BLOOM_MIPS: usize = 5;
 
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct ToneMappingUniforms {
-    params: [f32; 4],
+const DEPTH_RESOLVE_SINGLE_WGSL: &str = include_str!("shaders/depth_resolve.wgsl");
+const DEPTH_RESOLVE_MSAA_WGSL: &str = include_str!("shaders/depth_resolve_msaa.wgsl");
+const SSAO_WGSL: &str = include_str!("shaders/ssao.wgsl");
+const BLOOM_WGSL: &str = include_str!("shaders/bloom.wgsl");
+const POST_PROCESS_WGSL: &str = include_str!("shaders/post_process.wgsl");
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct PostProcessSettings {
+    pub(crate) exposure: f32,
+    pub(crate) tone_mapper: ToneMapper,
+    pub(crate) bloom_intensity: f32,
+    pub(crate) bloom_threshold: f32,
+    pub(crate) ssao_intensity: f32,
+    pub(crate) fxaa_enabled: bool,
 }
 
-impl ToneMappingUniforms {
-    fn new(exposure: f32, tone_mapping: bool) -> Self {
+impl Default for PostProcessSettings {
+    fn default() -> Self {
         Self {
-            params: [sanitize_exposure(exposure), if tone_mapping { 1.0 } else { 0.0 }, 0.0, 0.0],
+            exposure: 0.0,
+            tone_mapper: ToneMapper::AgX,
+            bloom_intensity: 0.14,
+            bloom_threshold: 1.05,
+            ssao_intensity: 0.45,
+            fxaa_enabled: true,
         }
     }
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+struct PostProcessUniforms {
+    params: [f32; 4], // exposure, tone_mapper, bloom_intensity, ssao_strength
+    flags: [f32; 4],  // output_is_srgb, fxaa_enabled, 0, 0
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+struct SsaoUniforms {
+    inv_proj: [[f32; 4]; 4],
+    proj: [[f32; 4]; 4],
+    params: [f32; 4],
+    texel_size: [f32; 4],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+struct BloomUniforms {
+    texel_size: [f32; 2],
+    threshold: f32,
+    knee: f32,
+}
+
+struct BloomMip {
+    _texture: wgpu::Texture,
+    view: wgpu::TextureView,
+    width: u32,
+    height: u32,
+}
+
 pub(crate) struct HdrPostProcess {
-    _hdr_texture: wgpu::Texture,
-    hdr_view: wgpu::TextureView,
-    multisampled_color: Option<[(wgpu::Texture, wgpu::TextureView); 2]>,
+    width: u32,
+    height: u32,
     sample_count: u32,
     surface_format: wgpu::TextureFormat,
-    tone_mapping_uniform: wgpu::Buffer,
-    tone_mapping_layout: wgpu::BindGroupLayout,
-    tone_mapping_bind_group: wgpu::BindGroup,
-    tone_mapping_pipeline: wgpu::RenderPipeline,
+    linear_sampler: wgpu::Sampler,
+
+    // Scene HDR target (single-sample resolved) + optional 4x MSAA scene HDR color attachment
+    _hdr_texture: wgpu::Texture,
+    hdr_view: wgpu::TextureView,
+    msaa_hdr_color: Option<(wgpu::Texture, wgpu::TextureView)>,
+
+    // Depth resolve (R32Float full-res) for SSAO
+    depth_resolve_bgl: wgpu::BindGroupLayout,
+    depth_resolve_pipeline: wgpu::RenderPipeline,
+    _resolved_depth_tex: wgpu::Texture,
+    resolved_depth_view: wgpu::TextureView,
+
+    // Half-resolution SSAO + separable bilateral blur
+    ssao_bgl: wgpu::BindGroupLayout,
+    ssao_pipeline: wgpu::RenderPipeline,
+    ssao_blur_pipeline: wgpu::RenderPipeline,
+    ssao_uniform_gen: wgpu::Buffer,
+    ssao_uniform_blur_h: wgpu::Buffer,
+    ssao_uniform_blur_v: wgpu::Buffer,
+    _ssao_raw_tex: wgpu::Texture,
+    ssao_raw_view: wgpu::TextureView,
+    _ssao_tmp_tex: wgpu::Texture,
+    ssao_tmp_view: wgpu::TextureView,
+    _ssao_final_tex: wgpu::Texture,
+    ssao_final_view: wgpu::TextureView,
+    ssao_bg_gen: wgpu::BindGroup,
+    ssao_bg_blur_h: wgpu::BindGroup,
+    ssao_bg_blur_v: wgpu::BindGroup,
+    _white_ao_tex: wgpu::Texture,
+    white_ao_view: wgpu::TextureView,
+
+    // 5-mip Dual-Kawase Bloom
+    bloom_bgl: wgpu::BindGroupLayout,
+    bloom_prefilter_pipeline: wgpu::RenderPipeline,
+    bloom_down_pipeline: wgpu::RenderPipeline,
+    bloom_up_pipeline: wgpu::RenderPipeline,
+    bloom_mips: Vec<BloomMip>,
+    bloom_down_uniforms: Vec<wgpu::Buffer>,
+    bloom_up_uniforms: Vec<wgpu::Buffer>,
+    bloom_down_bgs: Vec<wgpu::BindGroup>,
+    bloom_up_bgs: Vec<wgpu::BindGroup>,
+
+    // Final single-sample composite (SSAO + Bloom + AgX/ACES + FXAA + sRGB OETF)
+    composite_bgl: wgpu::BindGroupLayout,
+    composite_pipeline: wgpu::RenderPipeline,
+    composite_uniform: wgpu::Buffer,
+    composite_bg: wgpu::BindGroup,
 }
 
 impl HdrPostProcess {
@@ -36,163 +137,641 @@ impl HdrPostProcess {
         height: u32,
         sample_count: u32,
     ) -> Self {
+        let width = width.max(1);
+        let height = height.max(1);
+        let linear_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("post_linear_sampler"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+
         let (hdr_texture, hdr_view) = create_hdr_target(device, width, height);
-        let multisampled_color = create_multisampled_color(device, surface_format, width, height, sample_count);
-        let tone_mapping_uniform = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("tone_mapping_uniform"),
-            size: std::mem::size_of::<ToneMappingUniforms>() as u64,
+        let msaa_hdr_color = create_msaa_hdr(device, width, height, sample_count);
+
+        // ---- Depth resolve
+        let depth_resolve_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("depth_resolve_bgl"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Texture {
+                    sample_type: wgpu::TextureSampleType::Depth,
+                    view_dimension: wgpu::TextureViewDimension::D2,
+                    multisampled: sample_count > 1,
+                },
+                count: None,
+            }],
+        });
+        let depth_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("depth_resolve_shader"),
+            source: wgpu::ShaderSource::Wgsl(
+                if sample_count > 1 { DEPTH_RESOLVE_MSAA_WGSL } else { DEPTH_RESOLVE_SINGLE_WGSL }.into(),
+            ),
+        });
+        let depth_pl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("depth_resolve_pl"),
+            bind_group_layouts: &[&depth_resolve_bgl],
+            push_constant_ranges: &[],
+        });
+        let depth_resolve_pipeline = fullscreen_pipeline(
+            device,
+            "depth_resolve_pipeline",
+            &depth_pl,
+            &depth_shader,
+            "vs_main",
+            "fs_main",
+            DEPTH_RESOLVED_FORMAT,
+            None,
+        );
+        let (resolved_depth_tex, resolved_depth_view) = create_resolved_depth(device, width, height);
+
+        // ---- SSAO
+        let ssao_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("ssao_bgl"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 3,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: NonZeroU64::new(std::mem::size_of::<SsaoUniforms>() as u64),
+                    },
+                    count: None,
+                },
+            ],
+        });
+        let ssao_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("ssao_shader"),
+            source: wgpu::ShaderSource::Wgsl(SSAO_WGSL.into()),
+        });
+        let ssao_pl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("ssao_pl"),
+            bind_group_layouts: &[&ssao_bgl],
+            push_constant_ranges: &[],
+        });
+        let ssao_pipeline = fullscreen_pipeline(
+            device, "ssao_gen_pipeline", &ssao_pl, &ssao_shader, "vs_main", "fs_ssao", SSAO_FORMAT, None,
+        );
+        let ssao_blur_pipeline = fullscreen_pipeline(
+            device, "ssao_blur_pipeline", &ssao_pl, &ssao_shader, "vs_main", "fs_blur", SSAO_FORMAT, None,
+        );
+        let make_ssao_buf = |label| {
+            device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some(label),
+                size: std::mem::size_of::<SsaoUniforms>() as u64,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            })
+        };
+        let ssao_uniform_gen = make_ssao_buf("ssao_uniform_gen");
+        let ssao_uniform_blur_h = make_ssao_buf("ssao_uniform_blur_h");
+        let ssao_uniform_blur_v = make_ssao_buf("ssao_uniform_blur_v");
+
+        let (white_ao_tex, white_ao_view) = create_white_r8(device);
+        let (hw, hh) = (width.div_ceil(2).max(1), height.div_ceil(2).max(1));
+        let (ssao_raw_tex, ssao_raw_view) = create_ssao_tex(device, hw, hh, "ssao_raw");
+        let (ssao_tmp_tex, ssao_tmp_view) = create_ssao_tex(device, hw, hh, "ssao_tmp");
+        let (ssao_final_tex, ssao_final_view) = create_ssao_tex(device, hw, hh, "ssao_final");
+
+        let ssao_bg_gen = make_ssao_bg(device, &ssao_bgl, &resolved_depth_view, &white_ao_view, &linear_sampler, &ssao_uniform_gen);
+        let ssao_bg_blur_h = make_ssao_bg(device, &ssao_bgl, &resolved_depth_view, &ssao_raw_view, &linear_sampler, &ssao_uniform_blur_h);
+        let ssao_bg_blur_v = make_ssao_bg(device, &ssao_bgl, &resolved_depth_view, &ssao_tmp_view, &linear_sampler, &ssao_uniform_blur_v);
+
+        // ---- Bloom
+        let bloom_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("bloom_bgl"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: NonZeroU64::new(std::mem::size_of::<BloomUniforms>() as u64),
+                    },
+                    count: None,
+                },
+            ],
+        });
+        let bloom_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("bloom_shader"),
+            source: wgpu::ShaderSource::Wgsl(BLOOM_WGSL.into()),
+        });
+        let bloom_pl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("bloom_pl"),
+            bind_group_layouts: &[&bloom_bgl],
+            push_constant_ranges: &[],
+        });
+        let bloom_prefilter_pipeline = fullscreen_pipeline(
+            device, "bloom_prefilter", &bloom_pl, &bloom_shader, "vs_main", "fs_prefilter", HDR_COLOR_FORMAT, None,
+        );
+        let bloom_down_pipeline = fullscreen_pipeline(
+            device, "bloom_downsample", &bloom_pl, &bloom_shader, "vs_main", "fs_downsample", HDR_COLOR_FORMAT, None,
+        );
+        let additive_blend = wgpu::BlendState {
+            color: wgpu::BlendComponent {
+                src_factor: wgpu::BlendFactor::One,
+                dst_factor: wgpu::BlendFactor::One,
+                operation: wgpu::BlendOperation::Add,
+            },
+            alpha: wgpu::BlendComponent::REPLACE,
+        };
+        let bloom_up_pipeline = fullscreen_pipeline(
+            device, "bloom_upsample", &bloom_pl, &bloom_shader, "vs_main", "fs_upsample", HDR_COLOR_FORMAT, Some(additive_blend),
+        );
+        let bloom_down_uniforms: Vec<_> = (0..BLOOM_MIPS)
+            .map(|_| {
+                device.create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("bloom_down_uniform"),
+                    size: std::mem::size_of::<BloomUniforms>() as u64,
+                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                    mapped_at_creation: false,
+                })
+            })
+            .collect();
+        let bloom_up_uniforms: Vec<_> = (0..BLOOM_MIPS.saturating_sub(1))
+            .map(|_| {
+                device.create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("bloom_up_uniform"),
+                    size: std::mem::size_of::<BloomUniforms>() as u64,
+                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                    mapped_at_creation: false,
+                })
+            })
+            .collect();
+        let bloom_mips = create_bloom_mips(device, width, height);
+        let (bloom_down_bgs, bloom_up_bgs) = create_bloom_bind_groups(
+            device,
+            &bloom_bgl,
+            &hdr_view,
+            &bloom_mips,
+            &linear_sampler,
+            &bloom_down_uniforms,
+            &bloom_up_uniforms,
+        );
+
+        // ---- Final single-sample composite (NO wasted 4x MSAA on fullscreen post!)
+        let composite_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("post_composite_bgl"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 3,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 4,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: NonZeroU64::new(std::mem::size_of::<PostProcessUniforms>() as u64),
+                    },
+                    count: None,
+                },
+            ],
+        });
+        let composite_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("post_composite_shader"),
+            source: wgpu::ShaderSource::Wgsl(POST_PROCESS_WGSL.into()),
+        });
+        let composite_pl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("post_composite_pl"),
+            bind_group_layouts: &[&composite_bgl],
+            push_constant_ranges: &[],
+        });
+        let composite_pipeline = fullscreen_pipeline(
+            device, "post_composite_pipeline", &composite_pl, &composite_shader, "vs_main", "fs_main", surface_format, None,
+        );
+        let composite_uniform = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("post_composite_uniform"),
+            size: std::mem::size_of::<PostProcessUniforms>() as u64,
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let tone_mapping_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("tone_mapping_bgl"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            multisampled: false,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: NonZeroU64::new(
-                                std::mem::size_of::<ToneMappingUniforms>() as u64,
-                            ),
-                        },
-                        count: None,
-                    },
-                ],
-            });
-        let tone_mapping_bind_group = create_tone_mapping_bind_group(
+        let composite_bg = make_composite_bg(
             device,
-            &tone_mapping_layout,
+            &composite_bgl,
             &hdr_view,
-            &tone_mapping_uniform,
+            &bloom_mips[0].view,
+            &ssao_final_view,
+            &linear_sampler,
+            &composite_uniform,
         );
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("aces_tone_mapping"),
-            source: wgpu::ShaderSource::Wgsl(TONE_MAPPING_WGSL.into()),
-        });
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("tone_mapping_pipeline_layout"),
-            bind_group_layouts: &[&tone_mapping_layout],
-            push_constant_ranges: &[],
-        });
-        let tone_mapping_pipeline =
-            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                label: Some("aces_tone_mapping_pipeline"),
-                layout: Some(&pipeline_layout),
-                vertex: wgpu::VertexState {
-                    module: &shader,
-                    entry_point: Some("vs_main"),
-                    buffers: &[],
-                    compilation_options: Default::default(),
-                },
-                fragment: Some(wgpu::FragmentState {
-                    module: &shader,
-                    entry_point: Some("fs_main"),
-                    targets: &[Some(wgpu::ColorTargetState {
-                        format: surface_format,
-                        blend: None,
-                        write_mask: wgpu::ColorWrites::ALL,
-                    })],
-                    compilation_options: Default::default(),
-                }),
-                primitive: wgpu::PrimitiveState {
-                    topology: wgpu::PrimitiveTopology::TriangleList,
-                    cull_mode: None,
-                    ..Default::default()
-                },
-                depth_stencil: None,
-                multisample: wgpu::MultisampleState { count: sample_count, ..Default::default() },
-                multiview: None,
-                cache: None,
-            });
 
         Self {
-            _hdr_texture: hdr_texture,
-            hdr_view,
-            multisampled_color,
+            width,
+            height,
             sample_count,
             surface_format,
-            tone_mapping_uniform,
-            tone_mapping_layout,
-            tone_mapping_bind_group,
-            tone_mapping_pipeline,
+            linear_sampler,
+            _hdr_texture: hdr_texture,
+            hdr_view,
+            msaa_hdr_color,
+            depth_resolve_bgl,
+            depth_resolve_pipeline,
+            _resolved_depth_tex: resolved_depth_tex,
+            resolved_depth_view,
+            ssao_bgl,
+            ssao_pipeline,
+            ssao_blur_pipeline,
+            ssao_uniform_gen,
+            ssao_uniform_blur_h,
+            ssao_uniform_blur_v,
+            _ssao_raw_tex: ssao_raw_tex,
+            ssao_raw_view,
+            _ssao_tmp_tex: ssao_tmp_tex,
+            ssao_tmp_view,
+            _ssao_final_tex: ssao_final_tex,
+            ssao_final_view,
+            ssao_bg_gen,
+            ssao_bg_blur_h,
+            ssao_bg_blur_v,
+            _white_ao_tex: white_ao_tex,
+            white_ao_view,
+            bloom_bgl,
+            bloom_prefilter_pipeline,
+            bloom_down_pipeline,
+            bloom_up_pipeline,
+            bloom_mips,
+            bloom_down_uniforms,
+            bloom_up_uniforms,
+            bloom_down_bgs,
+            bloom_up_bgs,
+            composite_bgl,
+            composite_pipeline,
+            composite_uniform,
+            composite_bg,
         }
     }
 
     pub(crate) fn resize(&mut self, device: &wgpu::Device, width: u32, height: u32) {
-        let (hdr_texture, hdr_view) = create_hdr_target(device, width, height);
-        let tone_mapping_bind_group = create_tone_mapping_bind_group(
-            device,
-            &self.tone_mapping_layout,
-            &hdr_view,
-            &self.tone_mapping_uniform,
-        );
-        self._hdr_texture = hdr_texture;
+        self.width = width.max(1);
+        self.height = height.max(1);
+        let (hdr_tex, hdr_view) = create_hdr_target(device, self.width, self.height);
+        self._hdr_texture = hdr_tex;
         self.hdr_view = hdr_view;
-        self.multisampled_color = create_multisampled_color(device, self.surface_format, width, height, self.sample_count);
-        self.tone_mapping_bind_group = tone_mapping_bind_group;
-    }
+        self.msaa_hdr_color = create_msaa_hdr(device, self.width, self.height, self.sample_count);
 
-    pub(crate) fn write_settings(&self, queue: &wgpu::Queue, exposure: f32, tone_mapping: bool) {
-        queue.write_buffer(
-            &self.tone_mapping_uniform,
-            0,
-            bytemuck::bytes_of(&ToneMappingUniforms::new(exposure, tone_mapping)),
+        let (rd_tex, rd_view) = create_resolved_depth(device, self.width, self.height);
+        self._resolved_depth_tex = rd_tex;
+        self.resolved_depth_view = rd_view;
+
+        let (hw, hh) = (self.width.div_ceil(2).max(1), self.height.div_ceil(2).max(1));
+        let (raw_t, raw_v) = create_ssao_tex(device, hw, hh, "ssao_raw");
+        let (tmp_t, tmp_v) = create_ssao_tex(device, hw, hh, "ssao_tmp");
+        let (fin_t, fin_v) = create_ssao_tex(device, hw, hh, "ssao_final");
+        self._ssao_raw_tex = raw_t;
+        self.ssao_raw_view = raw_v;
+        self._ssao_tmp_tex = tmp_t;
+        self.ssao_tmp_view = tmp_v;
+        self._ssao_final_tex = fin_t;
+        self.ssao_final_view = fin_v;
+
+        self.ssao_bg_gen = make_ssao_bg(device, &self.ssao_bgl, &self.resolved_depth_view, &self.white_ao_view, &self.linear_sampler, &self.ssao_uniform_gen);
+        self.ssao_bg_blur_h = make_ssao_bg(device, &self.ssao_bgl, &self.resolved_depth_view, &self.ssao_raw_view, &self.linear_sampler, &self.ssao_uniform_blur_h);
+        self.ssao_bg_blur_v = make_ssao_bg(device, &self.ssao_bgl, &self.resolved_depth_view, &self.ssao_tmp_view, &self.linear_sampler, &self.ssao_uniform_blur_v);
+
+        self.bloom_mips = create_bloom_mips(device, self.width, self.height);
+        let (down_bgs, up_bgs) = create_bloom_bind_groups(
+            device,
+            &self.bloom_bgl,
+            &self.hdr_view,
+            &self.bloom_mips,
+            &self.linear_sampler,
+            &self.bloom_down_uniforms,
+            &self.bloom_up_uniforms,
+        );
+        self.bloom_down_bgs = down_bgs;
+        self.bloom_up_bgs = up_bgs;
+
+        self.composite_bg = make_composite_bg(
+            device,
+            &self.composite_bgl,
+            &self.hdr_view,
+            &self.bloom_mips[0].view,
+            &self.ssao_final_view,
+            &self.linear_sampler,
+            &self.composite_uniform,
         );
     }
 
-    pub(crate) fn scene_view(&self) -> &wgpu::TextureView { self.multisampled_color.as_ref().map_or(&self.hdr_view, |views| &views[0].1) }
+    pub(crate) fn scene_view(&self) -> &wgpu::TextureView {
+        self.msaa_hdr_color.as_ref().map_or(&self.hdr_view, |(_, view)| view)
+    }
 
-    pub(crate) fn scene_resolve_target(&self) -> Option<&wgpu::TextureView> { self.multisampled_color.as_ref().map(|_| &self.hdr_view) }
+    pub(crate) fn scene_resolve_target(&self) -> Option<&wgpu::TextureView> {
+        self.msaa_hdr_color.as_ref().map(|_| &self.hdr_view)
+    }
 
-    pub(crate) fn output_view<'a>(&'a self, target: &'a wgpu::TextureView) -> &'a wgpu::TextureView { self.multisampled_color.as_ref().map_or(target, |views| &views[1].1) }
+    pub(crate) fn prepare(
+        &self,
+        queue: &wgpu::Queue,
+        proj: Mat4,
+        settings: PostProcessSettings,
+    ) {
+        let tone_mode = match settings.tone_mapper {
+            ToneMapper::None => 0.0,
+            ToneMapper::AgX => 1.0,
+            ToneMapper::Aces => 2.0,
+            ToneMapper::Neutral => 3.0,
+        };
+        let ssao_strength = sanitize(settings.ssao_intensity, 0.0).clamp(0.0, 1.5);
+        let bloom_intensity = sanitize(settings.bloom_intensity, 0.0).clamp(0.0, 2.0);
+        let bloom_threshold = sanitize(settings.bloom_threshold, 1.05).clamp(0.0, 16.0);
 
-    pub(crate) fn output_resolve_target<'a>(&self, target: &'a wgpu::TextureView) -> Option<&'a wgpu::TextureView> { self.multisampled_color.as_ref().map(|_| target) }
+        let composite = PostProcessUniforms {
+            params: [
+                sanitize(settings.exposure, 0.0).clamp(-16.0, 16.0),
+                tone_mode,
+                bloom_intensity,
+                ssao_strength,
+            ],
+            flags: [
+                if self.surface_format.is_srgb() { 1.0 } else { 0.0 },
+                if settings.fxaa_enabled && self.sample_count == 1 { 1.0 } else { 0.0 },
+                0.0,
+                0.0,
+            ],
+        };
+        queue.write_buffer(&self.composite_uniform, 0, bytemuck::bytes_of(&composite));
 
-    pub(crate) fn draw<'pass>(&'pass self, pass: &mut wgpu::RenderPass<'pass>) {
-        pass.set_pipeline(&self.tone_mapping_pipeline);
-        pass.set_bind_group(0, &self.tone_mapping_bind_group, &[]);
-        pass.draw(0..3, 0..1);
+        if ssao_strength > 0.001 {
+            let inv_proj = proj.inverse().to_cols_array_2d();
+            let proj_arr = proj.to_cols_array_2d();
+            let (hw, hh) = (self.width.div_ceil(2).max(1) as f32, self.height.div_ceil(2).max(1) as f32);
+            let gen = SsaoUniforms {
+                inv_proj,
+                proj: proj_arr,
+                params: [0.85, 0.04, ssao_strength, 0.0],
+                texel_size: [1.0 / hw, 1.0 / hh, 0.0, 0.0],
+            };
+            let blur_h = SsaoUniforms {
+                texel_size: [1.0 / hw, 1.0 / hh, 1.0, 0.0],
+                ..gen
+            };
+            let blur_v = SsaoUniforms {
+                texel_size: [1.0 / hw, 1.0 / hh, 0.0, 1.0],
+                ..gen
+            };
+            queue.write_buffer(&self.ssao_uniform_gen, 0, bytemuck::bytes_of(&gen));
+            queue.write_buffer(&self.ssao_uniform_blur_h, 0, bytemuck::bytes_of(&blur_h));
+            queue.write_buffer(&self.ssao_uniform_blur_v, 0, bytemuck::bytes_of(&blur_v));
+        }
+
+        if bloom_intensity > 0.0001 {
+            let knee = (bloom_threshold * 0.5).max(0.15);
+            for (idx, buf) in self.bloom_down_uniforms.iter().enumerate() {
+                let (sw, sh) = if idx == 0 {
+                    (self.width, self.height)
+                } else {
+                    (self.bloom_mips[idx - 1].width, self.bloom_mips[idx - 1].height)
+                };
+                let u = BloomUniforms {
+                    texel_size: [1.0 / sw.max(1) as f32, 1.0 / sh.max(1) as f32],
+                    threshold: bloom_threshold,
+                    knee,
+                };
+                queue.write_buffer(buf, 0, bytemuck::bytes_of(&u));
+            }
+            for (idx, buf) in self.bloom_up_uniforms.iter().enumerate() {
+                let src = &self.bloom_mips[idx + 1];
+                let u = BloomUniforms {
+                    texel_size: [1.0 / src.width.max(1) as f32, 1.0 / src.height.max(1) as f32],
+                    threshold: bloom_threshold,
+                    knee,
+                };
+                queue.write_buffer(buf, 0, bytemuck::bytes_of(&u));
+            }
+        }
+    }
+
+    pub(crate) fn encode(
+        &self,
+        device: &wgpu::Device,
+        encoder: &mut wgpu::CommandEncoder,
+        scene_depth_only_view: &wgpu::TextureView,
+        output_view: &wgpu::TextureView,
+        settings: PostProcessSettings,
+        timestamp_writes: Option<wgpu::RenderPassTimestampWrites<'_>>,
+    ) {
+        // 1. Optional SSAO (depth resolve + half-res AO + H/V bilateral blur)
+        if settings.ssao_intensity > 0.001 {
+            let depth_bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("depth_resolve_bg"),
+                layout: &self.depth_resolve_bgl,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(scene_depth_only_view),
+                }],
+            });
+            run_fs_pass(encoder, "depth_resolve", &self.resolved_depth_view, &self.depth_resolve_pipeline, &depth_bg, false, None);
+            run_fs_pass(encoder, "ssao_generate", &self.ssao_raw_view, &self.ssao_pipeline, &self.ssao_bg_gen, false, None);
+            run_fs_pass(encoder, "ssao_blur_h", &self.ssao_tmp_view, &self.ssao_blur_pipeline, &self.ssao_bg_blur_h, false, None);
+            run_fs_pass(encoder, "ssao_blur_v", &self.ssao_final_view, &self.ssao_blur_pipeline, &self.ssao_bg_blur_v, false, None);
+        }
+
+        // 2. Optional 5-mip Dual-Kawase HDR Bloom
+        if settings.bloom_intensity > 0.0001 {
+            run_fs_pass(
+                encoder,
+                "bloom_prefilter",
+                &self.bloom_mips[0].view,
+                &self.bloom_prefilter_pipeline,
+                &self.bloom_down_bgs[0],
+                false,
+                None,
+            );
+            for mip in 1..BLOOM_MIPS {
+                run_fs_pass(
+                    encoder,
+                    "bloom_downsample",
+                    &self.bloom_mips[mip].view,
+                    &self.bloom_down_pipeline,
+                    &self.bloom_down_bgs[mip],
+                    false,
+                    None,
+                );
+            }
+            for mip in (0..BLOOM_MIPS - 1).rev() {
+                run_fs_pass(
+                    encoder,
+                    "bloom_upsample",
+                    &self.bloom_mips[mip].view,
+                    &self.bloom_up_pipeline,
+                    &self.bloom_up_bgs[mip],
+                    true, // additive load onto existing mip
+                    None,
+                );
+            }
+        }
+
+        // 3. Final single-sample composite (SSAO + Bloom + AgX/ACES + FXAA + sRGB OETF)
+        run_fs_pass(
+            encoder,
+            "post_composite",
+            output_view,
+            &self.composite_pipeline,
+            &self.composite_bg,
+            false,
+            timestamp_writes,
+        );
     }
 }
 
-fn create_multisampled_color(device: &wgpu::Device, format: wgpu::TextureFormat, width: u32, height: u32, sample_count: u32) -> Option<[(wgpu::Texture, wgpu::TextureView); 2]> {
-    if sample_count == 1 { return None; }
-    Some([HDR_COLOR_FORMAT, format].map(|format| {
-        let texture = device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("multisampled_scene_color"), size: wgpu::Extent3d { width: width.max(1), height: height.max(1), depth_or_array_layers: 1 },
-            mip_level_count: 1, sample_count, dimension: wgpu::TextureDimension::D2, format,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT, view_formats: &[],
-        });
-        let view = texture.create_view(&Default::default());
-        (texture, view)
-    }))
+fn run_fs_pass(
+    encoder: &mut wgpu::CommandEncoder,
+    label: &str,
+    target_view: &wgpu::TextureView,
+    pipeline: &wgpu::RenderPipeline,
+    bind_group: &wgpu::BindGroup,
+    load_existing: bool,
+    timestamp_writes: Option<wgpu::RenderPassTimestampWrites<'_>>,
+) {
+    let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        label: Some(label),
+        timestamp_writes,
+        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            view: target_view,
+            resolve_target: None,
+            ops: wgpu::Operations {
+                load: if load_existing { wgpu::LoadOp::Load } else { wgpu::LoadOp::Clear(wgpu::Color::BLACK) },
+                store: wgpu::StoreOp::Store,
+            },
+        })],
+        depth_stencil_attachment: None,
+        ..Default::default()
+    });
+    pass.set_pipeline(pipeline);
+    pass.set_bind_group(0, bind_group, &[]);
+    pass.draw(0..3, 0..1);
 }
 
-fn create_hdr_target(
+#[allow(clippy::too_many_arguments)]
+fn fullscreen_pipeline(
     device: &wgpu::Device,
-    width: u32,
-    height: u32,
-) -> (wgpu::Texture, wgpu::TextureView) {
-    let texture = device.create_texture(&wgpu::TextureDescriptor {
-        label: Some("forward_hdr_color"),
-        size: wgpu::Extent3d {
-            width: width.max(1),
-            height: height.max(1),
-            depth_or_array_layers: 1,
+    label: &str,
+    layout: &wgpu::PipelineLayout,
+    module: &wgpu::ShaderModule,
+    vs: &str,
+    fs: &str,
+    format: wgpu::TextureFormat,
+    blend: Option<wgpu::BlendState>,
+) -> wgpu::RenderPipeline {
+    device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: Some(label),
+        layout: Some(layout),
+        vertex: wgpu::VertexState {
+            module,
+            entry_point: Some(vs),
+            buffers: &[],
+            compilation_options: Default::default(),
         },
+        fragment: Some(wgpu::FragmentState {
+            module,
+            entry_point: Some(fs),
+            targets: &[Some(wgpu::ColorTargetState {
+                format,
+                blend,
+                write_mask: wgpu::ColorWrites::ALL,
+            })],
+            compilation_options: Default::default(),
+        }),
+        primitive: wgpu::PrimitiveState {
+            topology: wgpu::PrimitiveTopology::TriangleList,
+            cull_mode: None,
+            ..Default::default()
+        },
+        depth_stencil: None,
+        multisample: wgpu::MultisampleState::default(),
+        multiview: None,
+        cache: None,
+    })
+}
+
+fn create_hdr_target(device: &wgpu::Device, width: u32, height: u32) -> (wgpu::Texture, wgpu::TextureView) {
+    let tex = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("forward_hdr_color"),
+        size: wgpu::Extent3d { width: width.max(1), height: height.max(1), depth_or_array_layers: 1 },
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
@@ -200,186 +779,195 @@ fn create_hdr_target(
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
         view_formats: &[],
     });
-    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-    (texture, view)
+    let view = tex.create_view(&Default::default());
+    (tex, view)
 }
 
-fn create_tone_mapping_bind_group(
+fn create_msaa_hdr(device: &wgpu::Device, width: u32, height: u32, sample_count: u32) -> Option<(wgpu::Texture, wgpu::TextureView)> {
+    if sample_count <= 1 {
+        return None;
+    }
+    let tex = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("msaa_scene_hdr"),
+        size: wgpu::Extent3d { width: width.max(1), height: height.max(1), depth_or_array_layers: 1 },
+        mip_level_count: 1,
+        sample_count,
+        dimension: wgpu::TextureDimension::D2,
+        format: HDR_COLOR_FORMAT,
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        view_formats: &[],
+    });
+    let view = tex.create_view(&Default::default());
+    Some((tex, view))
+}
+
+fn create_resolved_depth(device: &wgpu::Device, width: u32, height: u32) -> (wgpu::Texture, wgpu::TextureView) {
+    let tex = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("resolved_scene_depth_r32f"),
+        size: wgpu::Extent3d { width: width.max(1), height: height.max(1), depth_or_array_layers: 1 },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: DEPTH_RESOLVED_FORMAT,
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+        view_formats: &[],
+    });
+    let view = tex.create_view(&Default::default());
+    (tex, view)
+}
+
+fn create_ssao_tex(device: &wgpu::Device, width: u32, height: u32, label: &str) -> (wgpu::Texture, wgpu::TextureView) {
+    let tex = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some(label),
+        size: wgpu::Extent3d { width: width.max(1), height: height.max(1), depth_or_array_layers: 1 },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: SSAO_FORMAT,
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+        view_formats: &[],
+    });
+    let view = tex.create_view(&Default::default());
+    (tex, view)
+}
+
+fn create_white_r8(device: &wgpu::Device) -> (wgpu::Texture, wgpu::TextureView) {
+    let tex = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("ssao_dummy_r8"),
+        size: wgpu::Extent3d { width: 1, height: 1, depth_or_array_layers: 1 },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: SSAO_FORMAT,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+        view_formats: &[],
+    });
+    let view = tex.create_view(&Default::default());
+    (tex, view)
+}
+
+fn create_bloom_mips(device: &wgpu::Device, width: u32, height: u32) -> Vec<BloomMip> {
+    let mut mips = Vec::with_capacity(BLOOM_MIPS);
+    let mut mw = width.div_ceil(2).max(1);
+    let mut mh = height.div_ceil(2).max(1);
+    for _ in 0..BLOOM_MIPS {
+        let tex = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("bloom_mip"),
+            size: wgpu::Extent3d { width: mw, height: mh, depth_or_array_layers: 1 },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: HDR_COLOR_FORMAT,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            view_formats: &[],
+        });
+        let view = tex.create_view(&Default::default());
+        mips.push(BloomMip { _texture: tex, view, width: mw, height: mh });
+        mw = mw.div_ceil(2).max(1);
+        mh = mh.div_ceil(2).max(1);
+    }
+    mips
+}
+
+fn create_bloom_bind_groups(
     device: &wgpu::Device,
     layout: &wgpu::BindGroupLayout,
     hdr_view: &wgpu::TextureView,
+    mips: &[BloomMip],
+    sampler: &wgpu::Sampler,
+    down_uniforms: &[wgpu::Buffer],
+    up_uniforms: &[wgpu::Buffer],
+) -> (Vec<wgpu::BindGroup>, Vec<wgpu::BindGroup>) {
+    let make = |src: &wgpu::TextureView, buf: &wgpu::Buffer| {
+        device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("bloom_bg"),
+            layout,
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(src) },
+                wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::Sampler(sampler) },
+                wgpu::BindGroupEntry { binding: 2, resource: buf.as_entire_binding() },
+            ],
+        })
+    };
+    let mut down = Vec::with_capacity(BLOOM_MIPS);
+    down.push(make(hdr_view, &down_uniforms[0]));
+    for i in 1..BLOOM_MIPS {
+        down.push(make(&mips[i - 1].view, &down_uniforms[i]));
+    }
+    let mut up = Vec::with_capacity(BLOOM_MIPS - 1);
+    for i in 0..BLOOM_MIPS - 1 {
+        up.push(make(&mips[i + 1].view, &up_uniforms[i]));
+    }
+    (down, up)
+}
+
+fn make_ssao_bg(
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    depth_view: &wgpu::TextureView,
+    ssao_view: &wgpu::TextureView,
+    sampler: &wgpu::Sampler,
     uniform: &wgpu::Buffer,
 ) -> wgpu::BindGroup {
     device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: Some("tone_mapping_bg"),
+        label: Some("ssao_bg"),
         layout,
         entries: &[
-            wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::TextureView(hdr_view),
-            },
-            wgpu::BindGroupEntry {
-                binding: 1,
-                resource: uniform.as_entire_binding(),
-            },
+            wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(depth_view) },
+            wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::TextureView(ssao_view) },
+            wgpu::BindGroupEntry { binding: 2, resource: wgpu::BindingResource::Sampler(sampler) },
+            wgpu::BindGroupEntry { binding: 3, resource: uniform.as_entire_binding() },
         ],
     })
 }
 
-fn sanitize_exposure(exposure: f32) -> f32 {
-    if exposure.is_finite() {
-        exposure.clamp(-16.0, 16.0)
-    } else {
-        0.0
-    }
+fn make_composite_bg(
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    hdr_view: &wgpu::TextureView,
+    bloom_view: &wgpu::TextureView,
+    ssao_view: &wgpu::TextureView,
+    sampler: &wgpu::Sampler,
+    uniform: &wgpu::Buffer,
+) -> wgpu::BindGroup {
+    device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("post_composite_bg"),
+        layout,
+        entries: &[
+            wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(hdr_view) },
+            wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::TextureView(bloom_view) },
+            wgpu::BindGroupEntry { binding: 2, resource: wgpu::BindingResource::TextureView(ssao_view) },
+            wgpu::BindGroupEntry { binding: 3, resource: wgpu::BindingResource::Sampler(sampler) },
+            wgpu::BindGroupEntry { binding: 4, resource: uniform.as_entire_binding() },
+        ],
+    })
 }
 
-const TONE_MAPPING_WGSL: &str = r#"
-struct ToneMappingUniforms {
-    params: vec4<f32>,
+fn sanitize(v: f32, fallback: f32) -> f32 {
+    if v.is_finite() { v } else { fallback }
 }
-
-@group(0) @binding(0) var hdr_color: texture_2d<f32>;
-@group(0) @binding(1) var<uniform> settings: ToneMappingUniforms;
-
-@vertex
-fn vs_main(@builtin(vertex_index) vertex_index: u32) -> @builtin(position) vec4<f32> {
-    let positions = array<vec2<f32>, 3>(
-        vec2<f32>(-1.0, -1.0),
-        vec2<f32>(3.0, -1.0),
-        vec2<f32>(-1.0, 3.0),
-    );
-    return vec4<f32>(positions[vertex_index], 0.0, 1.0);
-}
-
-fn aces_fitted(color: vec3<f32>) -> vec3<f32> {
-    let numerator = color * (2.51 * color + vec3<f32>(0.03));
-    let denominator = color * (2.43 * color + vec3<f32>(0.59)) + vec3<f32>(0.14);
-    return clamp(numerator / denominator, vec3<f32>(0.0), vec3<f32>(1.0));
-}
-
-fn mapped_pixel(pixel: vec2<i32>) -> vec4<f32> {
-    let dimensions = vec2<i32>(textureDimensions(hdr_color));
-    let coordinate = clamp(pixel, vec2<i32>(0), dimensions - vec2<i32>(1));
-    let hdr = textureLoad(hdr_color, coordinate, 0);
-    let exposed = max(hdr.rgb, vec3<f32>(0.0)) * exp2(settings.params.x);
-    if settings.params.y < 0.5 {
-        return vec4<f32>(exposed, clamp(hdr.a, 0.0, 1.0));
-    }
-    return vec4<f32>(aces_fitted(exposed), clamp(hdr.a, 0.0, 1.0));
-}
-
-// MiYu: FXAA operates on exposed, tone-mapped scene color before the UI overlay.
-fn mapped_sample(pixel: vec2<f32>) -> vec3<f32> {
-    let base = vec2<i32>(floor(pixel));
-    let blend = fract(pixel);
-    return mix(mix(mapped_pixel(base).rgb, mapped_pixel(base + vec2<i32>(1, 0)).rgb, blend.x), mix(mapped_pixel(base + vec2<i32>(0, 1)).rgb, mapped_pixel(base + vec2<i32>(1, 1)).rgb, blend.x), blend.y);
-}
-
-fn luma(color: vec3<f32>) -> f32 {
-    return sqrt(max(dot(color, vec3<f32>(0.299, 0.587, 0.114)), 0.0));
-}
-
-@fragment
-fn fs_main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
-    let pixel = vec2<i32>(position.xy);
-    let center = mapped_pixel(pixel);
-    let nw = luma(mapped_pixel(pixel + vec2<i32>(-1, -1)).rgb);
-    let ne = luma(mapped_pixel(pixel + vec2<i32>(1, -1)).rgb);
-    let sw = luma(mapped_pixel(pixel + vec2<i32>(-1, 1)).rgb);
-    let se = luma(mapped_pixel(pixel + vec2<i32>(1, 1)).rgb);
-    let middle = luma(center.rgb);
-    let low = min(middle, min(min(nw, ne), min(sw, se)));
-    let high = max(middle, max(max(nw, ne), max(sw, se)));
-    if high - low < max(0.0312, high * 0.125) { return center; }
-    let direction = vec2<f32>(-((nw + ne) - (sw + se)), (nw + sw) - (ne + se));
-    let reduction = max((nw + ne + sw + se) * 0.03125, 0.0078125);
-    let step = clamp(direction / (min(abs(direction.x), abs(direction.y)) + reduction), vec2<f32>(-8.0), vec2<f32>(8.0));
-    let p = vec2<f32>(pixel);
-    let narrow = (mapped_sample(p - step / 6.0) + mapped_sample(p + step / 6.0)) * 0.5;
-    let wide = narrow * 0.5 + (mapped_sample(p - step * 0.5) + mapped_sample(p + step * 0.5)) * 0.25;
-    let wide_luma = luma(wide);
-    return vec4<f32>(select(wide, narrow, wide_luma < low || wide_luma > high), center.a);
-}
-"#;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn exposure_is_finite_and_bounded() {
-        assert_eq!(sanitize_exposure(f32::NAN), 0.0);
-        assert_eq!(sanitize_exposure(f32::INFINITY), 0.0);
-        assert_eq!(sanitize_exposure(-20.0), -16.0);
-        assert_eq!(sanitize_exposure(20.0), 16.0);
-        assert_eq!(sanitize_exposure(1.25), 1.25);
-        assert_eq!(ToneMappingUniforms::new(1.25, true).params, [1.25, 1.0, 0.0, 0.0]);
-        assert_eq!(ToneMappingUniforms::new(1.25, false).params, [1.25, 0.0, 0.0, 0.0]);
-    }
-
-    #[test]
-    fn tone_mapping_shader_is_valid_wgsl() {
-        let module = naga::front::wgsl::parse_str(TONE_MAPPING_WGSL)
-            .expect("tone mapping shader must parse");
-        naga::valid::Validator::new(
-            naga::valid::ValidationFlags::all(),
-            naga::valid::Capabilities::all(),
-        )
-        .validate(&module)
-        .expect("tone mapping shader must validate");
-    }
-
-    #[test]
-    fn antialiasing_smooths_diagonals_and_preserves_flat_color_and_alpha() {
-        let instance = wgpu::Instance::default();
-        let Some(adapter) = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions::default())) else { eprintln!("SKIP: no headless GPU adapter"); return; };
-        let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor::default(), None)).expect("post-process test device");
-        device.push_error_scope(wgpu::ErrorFilter::Validation);
-        for size in [32, 1] {
-            let mut post = HdrPostProcess::new(&device, wgpu::TextureFormat::Rgba8Unorm, size, size, 1);
-            let input = device.create_texture(&wgpu::TextureDescriptor {
-                label: Some("antialiasing_test_input"), size: wgpu::Extent3d { width: size, height: size, depth_or_array_layers: 1 },
-                mip_level_count: 1, sample_count: 1, dimension: wgpu::TextureDimension::D2, format: wgpu::TextureFormat::Rgba8Unorm,
-                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST, view_formats: &[],
-            });
-            let pixels: Vec<u8> = (0..size).flat_map(|y| (0..size).flat_map(move |x| { let value = if size == 1 { 64 } else if x > y { 255 } else { 0 }; [value, value, value, 128] })).collect();
-            queue.write_texture(input.as_image_copy(), &pixels, wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(size * 4), rows_per_image: Some(size) }, input.size());
-            post.tone_mapping_bind_group = create_tone_mapping_bind_group(&device, &post.tone_mapping_layout, &input.create_view(&Default::default()), &post.tone_mapping_uniform);
-            post.write_settings(&queue, 0.0, false);
-            let output = device.create_texture(&wgpu::TextureDescriptor {
-                label: Some("antialiasing_test_output"), size: input.size(), mip_level_count: 1, sample_count: 1,
-                dimension: wgpu::TextureDimension::D2, format: wgpu::TextureFormat::Rgba8Unorm,
-                usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC, view_formats: &[],
-            });
-            let readback = device.create_buffer(&wgpu::BufferDescriptor { label: None, size: size as u64 * 256, usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ, mapped_at_creation: false });
-            let view = output.create_view(&Default::default());
-            let mut encoder = device.create_command_encoder(&Default::default());
-            {
-                let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    color_attachments: &[Some(wgpu::RenderPassColorAttachment { view: &view, resolve_target: None, ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color::BLACK), store: wgpu::StoreOp::Store } })],
-                    ..Default::default()
-                });
-                post.draw(&mut pass);
-            }
-            encoder.copy_texture_to_buffer(output.as_image_copy(), wgpu::TexelCopyBufferInfo { buffer: &readback, layout: wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(256), rows_per_image: Some(size) } }, output.size());
-            queue.submit([encoder.finish()]);
-            let (tx, rx) = std::sync::mpsc::channel();
-            readback.slice(..).map_async(wgpu::MapMode::Read, move |result| { tx.send(result).unwrap(); });
-            device.poll(wgpu::Maintain::Wait);
-            rx.recv().unwrap().unwrap();
-            let data = readback.slice(..).get_mapped_range();
-            if size == 1 {
-                assert_eq!(&data[..4], &[64, 64, 64, 128], "one-pixel border clamps without changing color or alpha");
-            } else {
-                assert_eq!(data[4 * 24 + 4 * 256], 255, "flat white stays white");
-                assert_eq!(data[4 * 4 + 24 * 256], 0, "flat black stays black");
-                assert!((4..28).any(|y| { let value = data[y * 256 + y * 4]; value > 0 && value < 255 }), "diagonal gets fractional coverage");
-                for y in 0..size as usize { for x in 0..size as usize { assert_eq!(data[y * 256 + x * 4 + 3], 128); } }
-            }
-            drop(data);readback.unmap();
+    fn all_post_process_shaders_validate() {
+        for (name, src) in [
+            ("depth_resolve_single", DEPTH_RESOLVE_SINGLE_WGSL),
+            ("depth_resolve_msaa", DEPTH_RESOLVE_MSAA_WGSL),
+            ("ssao", SSAO_WGSL),
+            ("bloom", BLOOM_WGSL),
+            ("post_process", POST_PROCESS_WGSL),
+        ] {
+            let module = naga::front::wgsl::parse_str(src)
+                .unwrap_or_else(|e| panic!("{name} failed to parse: {e}"));
+            naga::valid::Validator::new(
+                naga::valid::ValidationFlags::all(),
+                naga::valid::Capabilities::all(),
+            )
+            .validate(&module)
+            .unwrap_or_else(|e| panic!("{name} failed to validate: {e}"));
         }
-        let error = pollster::block_on(device.pop_error_scope());
-        assert!(error.is_none(), "post-process GPU validation: {error:?}");
     }
 }
