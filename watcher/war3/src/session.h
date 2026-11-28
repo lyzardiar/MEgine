@@ -1406,6 +1406,7 @@ public:
     void finishGame(bool scores,SessionExit action=SessionExit::Return);
     bool networkLocalEndPending() const{return networkLocalEndRequest_.has_value();}
     bool networkSharedEndPending() const{return networkSharedEndPending_;}
+    void confirmNetworkMatchResults(unsigned player);
     std::optional<bool> takeNetworkLocalEnd(){auto request=networkLocalEndRequest_;networkLocalEndRequest_.reset();networkSharedEndPending_=false;return request;}
     std::pair<unsigned,unsigned> difficultyContext() const {return {gameDifficulty_,defaultDifficulty_};}
     void difficultyContext(std::pair<unsigned,unsigned> value) {if(mainAttempted_ || value.first>3 || value.second>3)throw std::runtime_error("Invalid difficulty context");gameDifficulty_=value.first;defaultDifficulty_=value.second;}

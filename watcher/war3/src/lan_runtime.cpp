@@ -37,7 +37,7 @@ LanRuntime::LanRuntime(GameView& game,ScriptSession& session,std::unique_ptr<Lan
 }
 LanRuntime::~LanRuntime(){if(bridge_)bridge_->active=false;}
 bool LanRuntime::fail(std::string message){failed_=true;if(bridge_)bridge_->active=false;error_=std::move(message);return false;}
-bool LanRuntime::requestLeave(bool sharedGameEnd){if(failed_ || !bridge_ || !bridge_->active || !bridge_->experimental)return false;if(leaveRequested_)return true;if(host_ && sharedGameEnd && !host_->beginGameEnd())return false;leaveRequested_=true;sharedGameEnd_=sharedGameEnd;bridge_->inputEnabled=false;if(host_ && !sharedGameEnd_)leaveComplete_=true;return true;}
+bool LanRuntime::requestLeave(bool sharedGameEnd){if(failed_ || !bridge_ || !bridge_->active || !bridge_->experimental)return false;if(leaveRequested_ && (!sharedGameEnd || sharedGameEnd_))return true;if(host_ && sharedGameEnd && !host_->beginGameEnd())return false;leaveRequested_=true;sharedGameEnd_=sharedGameEnd;bridge_->inputEnabled=false;if(host_ && !sharedGameEnd_)leaveComplete_=true;return true;}
 bool LanRuntime::waitingForSync() const {return started_ && !failed_ && !leaveRequested_ && lastClock_-lastSlotClock_>=5000 && !game_.lanLocalExitPending();}
 bool LanRuntime::observeSlots(SlotObserver observer){if(started_ || failed_ || !observer || slotObserver_ || !observerError_.empty())return false;slotObserver_=std::move(observer);return true;}
 bool LanRuntime::flushSync(std::uint64_t now){
@@ -75,7 +75,7 @@ bool LanRuntime::pump(std::uint64_t now) {
             if(host_ && host_->checksumMismatch())return fail("LAN simulation checksum mismatch");
             if(game_.lanLocalExitPending())break;
         }
-        if(game_.lanLocalExitPending() && (!streamClosed || (!leaveRequested_ && session_.networkSharedEndPending())))return true;
+        if(game_.lanLocalExitPending() && (!streamClosed || session_.networkSharedEndPending()))return true;
         if(streamClosed)return fail(join_->error());
         if(leaveSent_ || (join_ && join_->endOfStream()))return true;if(!flushSync(now))return false;if(leaveRequested_ && join_ && !session_.pendingSelectionSync() && !session_.pendingCacheSync() && join_->requestLeave())leaveSent_=true;return true;
     }catch(const std::exception& e){return fail(e.what());}

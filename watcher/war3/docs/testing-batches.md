@@ -1,5 +1,13 @@
 # 独立客户端测试队列
 
+## 房主确认已决胜负后双方共同进入计分（已提交，待批次验证）
+
+路径：`src/lan_setup.cpp`、`src/lan_simulation.cpp`、`src/lan_runtime.cpp`、`src/main.cpp`、`src/session.h`。双方模拟消费到房主席位的计分确认按钮、且全部在线真人都已有胜／负／平结果时，`ScriptSession::confirmNetworkMatchResults` 在两端同时登记共享终局意图，沿用 JASS `EndGame` 的尾槽排空与计分路径。来客确认、结果未定或会话已退出时不触发，原有有序离场保持。本地已发起普通离场后又收到共享终局时，`requestLeave` 升级为共享排空；来客流关闭且共享终局待取时等待主循环接手，不报断线。
+
+快速检查：Win32 Release 集成构建 `war3` 无待编译项，客户端 SHA-256 前缀 `7ea3c16e749a`。沿用上项基线的原创地图、正式 `LanHost`／`LanJoin` 回环与双会话，候选探针（前缀 `acbe79a902ad`）5 通过、0 失败：房主先确认（立即／空闲后排空再关闭）双方均得到计分意图并以干净 EOF 结束；共享排空保留双方结果；来客先确认仍有序离场且房主无共享终局；结果未定时房主与来客确认均不触发。日志 `tmp/docs-artifacts/war3/lan-terminal-dialog-order-v1/candidate/run.log`。
+
+待批次验证：正式 `LanRuntime` 主循环与窗口计分界面、三席以上及来客已离场时的房主确认、录像回放中该动作的一致性、跨机网络。
+
 ## 同构建 LAN 已决胜负后的确认顺序（基线复现）
 
 原创地图在模拟 15 秒记录房主败、来客胜，并给双方显示各自计分确认按钮。正式 Win32 `LanHost`、`LanJoin` 与两个会话的回环对照中，来客先确认能有序离场，房主保持连接。房主先确认并立即关闭时，来客收到 WinSock 10054 并失去计分入口。普通关闭排完队列与 `beginGameEnd()` 都能产生干净 EOF，来客仍只有未确认对话框，缺少计分意图。四种基线对照均得到预期观察，回执 `tmp/docs-artifacts/war3/lan-terminal-dialog-order-v1/baseline-74dcf0f9/receipt.json`。

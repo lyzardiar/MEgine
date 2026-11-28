@@ -28,6 +28,12 @@ void ScriptSession::applyLanSetup(const LanSessionSetup& setup) {
 }
 std::optional<unsigned> ScriptSession::networkPlayer(std::uint8_t peerId) const {auto found=networkPlayers_.find(peerId);return found==networkPlayers_.end()?std::nullopt:std::optional<unsigned>{found->second};}
 bool ScriptSession::networkPeerActive(std::uint8_t peerId) const {return networkActivePeers_.contains(peerId);}
+void ScriptSession::confirmNetworkMatchResults(unsigned player) {
+    if(!experimentalSelectionSync_ || networkPlayer(1)!=player || !networkPeerActive(1) || exit_!=SessionExit::None)return;
+    for(auto peer:networkActivePeers_){auto seat=networkPlayer(peer);if(!seat || !results_[*seat] || *results_[*seat]>2)return;}
+    if(!networkLocalEndRequest_)networkLocalEndRequest_=true;
+    networkSharedEndPending_=true;
+}
 bool ScriptSession::networkPeerDeparted(std::uint8_t peerId) {
     auto found=networkPlayers_.find(peerId);if(peerId<=1 || found==networkPlayers_.end() || !networkActivePeers_.erase(peerId))return false;auto owner=found->second;config_.players[owner].slotState=2;synchronizedSelections_[owner].clear();std::vector<std::uint32_t> pending;for(auto it=selectionSyncRounds_.begin();it!=selectionSyncRounds_.end();){it->second.parts.erase(peerId);if(!it->second.requested && it->second.parts.empty()){it=selectionSyncRounds_.erase(it);continue;}if(it->second.requested && !it->second.result)pending.push_back(it->first);++it;}for(auto round:pending)finishSelectionSync(round);playerEvent(owner,15);return true;
 }
