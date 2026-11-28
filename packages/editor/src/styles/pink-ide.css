@@ -1323,6 +1323,47 @@ button.ide-ai-copy-btn:hover:not(:disabled) {
   margin-bottom: 4px;
 }
 
+.ide-ai-tool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 7px;
+}
+
+.ide-ai-tool-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border-radius: var(--me-radius-sm);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.08);
+  color: var(--me-text-primary);
+  font-size: 10.5px;
+  line-height: 1.3;
+}
+
+.ide-ai-tool-pill.is-err {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.ide-ai-tool-pill code {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.25);
+  font-family: var(--u-mono);
+  font-size: 9.5px;
+  color: var(--me-accent-hover);
+  flex-shrink: 0;
+}
+
+.ide-ai-tool-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ide-ai-bubble.is-error {
   border-color: rgba(239, 68, 68, 0.4);
   background: rgba(239, 68, 68, 0.1);

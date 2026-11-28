@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'vite';
 import {
   AI_PROVIDER_PRESETS,
   buildCopilotSystemPrompt,
@@ -9,7 +12,10 @@ import {
   isProviderReady,
   loadCopilotConfig,
   saveCopilotConfig,
+  sendCopilotCompletion,
 } from '../src/ai/copilotProviders.ts';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function createMemoryStorage() {
   const map = new Map();
@@ -61,7 +67,7 @@ test('copilot config persists provider selection, API keys, and deduplicated cus
   }
 });
 
-test('copilot system prompt injects active MEngine scene context cleanly', () => {
+test('copilot system prompt injects active MEngine scene context and tool instructions cleanly', () => {
   const prompt = buildCopilotSystemPrompt(
     {
       projectName: 'Frostbound',
@@ -71,11 +77,179 @@ test('copilot system prompt injects active MEngine scene context cleanly', () =>
       selectedComponents: ['Transform', 'Camera3D'],
       errorCount: 1,
       warnCount: 2,
+      toolsEnabled: true,
     },
     'Reply in Chinese',
   );
   assert.match(prompt, /Frostbound/);
   assert.match(prompt, /MainScene\.mscene/);
   assert.match(prompt, /HeroCamera \[Transform, Camera3D\]/);
+  assert.match(prompt, /LIVE EDITOR TOOLS ARE ENABLED/);
   assert.match(prompt, /Reply in Chinese/);
+});
+
+test('copilot tools mutate EditorStore with RectTransform alias normalization, Undo, and DeepSeek Reasoner tool loop', async () => {
+  const server = await createServer({ root, server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const {
+      COPILOT_TOOLS,
+      buildCompactSceneSummary,
+      executeCopilotTool,
+      normalizeComponentPatch,
+    } = await server.ssrLoadModule('/src/ai/copilotTools.ts');
+
+    const store = createEditorStore();
+    let refreshes = 0;
+    let saves = 0;
+    const ctx = {
+      store,
+      onRefresh: () => { refreshes += 1; },
+      onSave: () => { saves += 1; },
+      onTogglePlay: () => {},
+      onFocusPanel: () => {},
+    };
+
+    // 1. Spawn a UI Button and move it to top-left using camelCase aliases (as LLMs often emit)
+    const spawned = executeCopilotTool('spawn_entity', { preset: 'Button', name: 'StartBtn' }, ctx);
+    assert.equal(spawned.ok, true);
+    const btnId = spawned.result.entity;
+    assert.equal(typeof btnId, 'number');
+
+    const patched = executeCopilotTool(
+      'patch_component',
+      {
+        entity: btnId,
+        component: 'RectTransform',
+        patch: {
+          anchorMin: [0, 1],
+          anchorMax: [0, 1],
+          pivot: [0, 1],
+          anchoredPosition: [16, -16],
+          sizeDelta: [120, 44],
+        },
+      },
+      ctx,
+    );
+    assert.equal(patched.ok, true);
+    assert.deepEqual(patched.result.value.anchor_min, [0, 1]);
+    assert.deepEqual(patched.result.value.anchor_max, [0, 1]);
+    assert.deepEqual(patched.result.value.anchored_position, [16, -16]);
+    assert.deepEqual(patched.result.value.size_delta, [120, 44]);
+
+    const summary = buildCompactSceneSummary(store);
+    assert.match(summary, /StartBtn/);
+    assert.match(summary, /RectTransform/);
+
+    // 2. Verify Undo reverts the tool edit
+    const undone = executeCopilotTool('editor_action', { action: 'undo' }, ctx);
+    assert.equal(undone.ok, true);
+    const afterUndo = store.snapshot().entities.find((e) => e.entity === btnId);
+    assert.notDeepEqual(afterUndo.components.RectTransform.anchored_position, [16, -16]);
+
+    // 3. Verify save action & Transform Euler conversion
+    const saved = executeCopilotTool('editor_action', { action: 'save_scene' }, ctx);
+    assert.equal(saved.ok, true);
+    assert.equal(saves, 1);
+    assert.ok(refreshes >= 3);
+
+    const normalizedTransform = normalizeComponentPatch('Transform', { rotation_euler: [0, 90, 0] });
+    assert.equal(Array.isArray(normalizedTransform.rotation), true);
+    assert.equal(normalizedTransform.rotation.length, 4);
+    assert.equal('rotation_euler' in normalizedTransform, false);
+
+    // 4. Verify multi-turn DeepSeek Reasoner tool calling + reasoning_content passthrough
+    store.select(btnId);
+    const cfg = createDefaultCopilotConfig();
+    cfg.activeProviderId = 'deepseek';
+    cfg.providers.deepseek.apiKey = 'sk-mock-key';
+    cfg.providers.deepseek.selectedModel = 'deepseek-reasoner';
+
+    const requests = [];
+    const prevFetch = globalThis.fetch;
+    globalThis.fetch = async (_url, init) => {
+      const parsed = JSON.parse(init.body);
+      requests.push(parsed);
+      if (requests.length === 1) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            choices: [{
+              message: {
+                role: 'assistant',
+                content: null,
+                reasoning_content: 'User wants StartBtn pinned to top-left; calling patch_component.',
+                tool_calls: [{
+                  id: 'call_rect_1',
+                  type: 'function',
+                  function: {
+                    name: 'patch_component',
+                    arguments: JSON.stringify({
+                      entity: btnId,
+                      component: 'RectTransform',
+                      patch: { anchor_min: [0, 1], anchor_max: [0, 1], anchored_position: [16, -16] },
+                    }),
+                  },
+                }],
+              },
+            }],
+            usage: { total_tokens: 120 },
+          }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [{
+            message: {
+              role: 'assistant',
+              content: '已将 StartBtn 固定到左上角 (16, -16)。',
+            },
+          }],
+          usage: { total_tokens: 80 },
+        }),
+      };
+    };
+
+    try {
+      const result = await sendCopilotCompletion({
+        config: cfg,
+        history: [{ role: 'user', text: '把 Button 放到左上角' }],
+        sceneContext: {
+          projectName: 'Demo',
+          sceneName: 'MainScene.mscene',
+          entityCount: store.snapshot().entities.length,
+          selectedName: 'StartBtn',
+          selectedComponents: ['RectTransform', 'Image', 'Button'],
+          errorCount: 0,
+          warnCount: 0,
+          toolsEnabled: true,
+        },
+        tools: COPILOT_TOOLS,
+        executeTool: (name, args) => executeCopilotTool(name, args, ctx),
+      });
+
+      assert.equal(requests.length, 2);
+      assert.ok(Array.isArray(requests[0].tools) && requests[0].tools.length >= 10);
+      const assistantToolTurn = requests[1].messages.find((m) => m.role === 'assistant' && m.tool_calls);
+      assert.equal(assistantToolTurn.reasoning_content, 'User wants StartBtn pinned to top-left; calling patch_component.');
+      const toolResultTurn = requests[1].messages.find((m) => m.role === 'tool');
+      assert.equal(toolResultTurn.tool_call_id, 'call_rect_1');
+
+      assert.equal(result.totalTokens, 200);
+      assert.equal(result.toolExecutions.length, 1);
+      assert.equal(result.toolExecutions[0].ok, true);
+      assert.match(result.text, /左上角/);
+
+      const updated = store.snapshot().entities.find((e) => e.entity === btnId);
+      assert.deepEqual(updated.components.RectTransform.anchor_min, [0, 1]);
+      assert.deepEqual(updated.components.RectTransform.anchored_position, [16, -16]);
+    } finally {
+      globalThis.fetch = prevFetch;
+    }
+  } finally {
+    await server.close();
+  }
 });

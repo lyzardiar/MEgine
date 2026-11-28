@@ -20,6 +20,7 @@ import {
   Sun,
   Trash2,
   Wand2,
+  Wrench,
   X,
 } from 'lucide-react';
 import type { EditorStore } from '../store';
@@ -43,6 +44,12 @@ import {
   type AiCopilotConfig,
   type AiProviderId,
 } from '../ai/copilotProviders';
+import {
+  COPILOT_TOOLS,
+  buildCompactSceneSummary,
+  executeCopilotTool,
+  type CopilotToolExecution,
+} from '../ai/copilotTools';
 
 type ChatMessage = {
   id: string;
@@ -52,6 +59,7 @@ type ChatMessage = {
   meta?: string;
   isError?: boolean;
   suggestConfig?: boolean;
+  toolExecutions?: CopilotToolExecution[];
 };
 
 export type AiAgentSidebarProps = {
@@ -94,6 +102,8 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
 
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
+  const [activeToolHint, setActiveToolHint] = useState<string | null>(null);
+  const [toolsEnabled, setToolsEnabled] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [makeWelcomeMessage(zh)]);
   const listRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -371,7 +381,8 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
     if (!text || busy) return;
     setDraft('');
 
-    if (forceLocal || tryLocalEditorAction(text)) {
+    const useRemoteLlm = !forceLocal && !config.useLocalMcpOnly && providerReady;
+    if (forceLocal || (!useRemoteLlm && tryLocalEditorAction(text))) {
       if (forceLocal) tryLocalEditorAction(text);
       return;
     }
@@ -379,7 +390,7 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
     const uid = `u-${Date.now()}`;
     const aid = `a-${Date.now() + 1}`;
 
-    if (config.useLocalMcpOnly || !providerReady) {
+    if (!useRemoteLlm) {
       const mcpPrompt = `[MEngine MCP Context] Project: ${projectName} | Scene: ${displayScene} | Entities: ${props.entityCount} | Selected: ${props.selectedName ?? 'None'}\nTask: ${text}`;
       appendMessages(
         { id: uid, role: 'user', text },
@@ -405,6 +416,7 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
     ];
     appendMessages({ id: uid, role: 'user', text });
     setBusy(true);
+    setActiveToolHint(null);
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -420,15 +432,35 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
           selectedComponents: props.selectedComponents,
           errorCount: props.errorCount,
           warnCount: props.warnCount,
+          hierarchySummary: buildCompactSceneSummary(props.store),
+          toolsEnabled,
+        },
+        tools: toolsEnabled ? COPILOT_TOOLS : [],
+        executeTool: toolsEnabled
+          ? (toolName, toolArgs) => executeCopilotTool(toolName, toolArgs, {
+              store: props.store,
+              onRefresh: props.onRefresh,
+              onSave: props.onSave,
+              onTogglePlay: props.onTogglePlay,
+              onFocusPanel: props.onFocusPanel,
+            })
+          : undefined,
+        onToolStep: (exec) => {
+          setActiveToolHint(exec.summary);
+          scrollToBottom();
         },
         signal: controller.signal,
       });
       const tokenPart = result.totalTokens ? ` · ${result.totalTokens} tok` : '';
+      const toolPart = result.toolExecutions?.length
+        ? ` · ${result.toolExecutions.length} ${zh ? '次操作' : 'tools'}`
+        : '';
       appendMessages({
         id: aid,
         role: 'assistant',
-        meta: `${activePreset.name} · ${result.model}${tokenPart}`,
+        meta: `${activePreset.name} · ${result.model}${toolPart}${tokenPart}`,
         text: result.text,
+        toolExecutions: result.toolExecutions,
       });
     } catch (reason) {
       if (controller.signal.aborted) {
@@ -454,6 +486,7 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
       }
     } finally {
       abortRef.current = null;
+      setActiveToolHint(null);
       setBusy(false);
     }
   };
@@ -724,6 +757,16 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
                     ? activePreset.name
                     : `${activePreset.name} · ${zh ? '未配置 Key' : 'No Key'}`}
               </button>
+              <button
+                type="button"
+                className={`ide-ai-pill ide-ai-pill-btn ${toolsEnabled ? 'is-live' : ''}`}
+                aria-pressed={toolsEnabled}
+                onClick={() => setToolsEnabled((on) => !on)}
+                title={zh ? '开关 AI 直接读写场景与组件的工具权限（每次改动均支持 Ctrl+Z 撤销）' : 'Toggle live editor tool access (all edits support Undo)'}
+              >
+                <Wrench size={10} aria-hidden="true" />
+                {toolsEnabled ? (zh ? '可操作场景' : 'Tools ON') : (zh ? '只读问答' : 'Read-only')}
+              </button>
               <span className="ide-ai-pill">{displayScene}</span>
               <span className="ide-ai-pill">{props.entityCount} {zh ? '实体' : 'Entities'}</span>
             </div>
@@ -772,6 +815,17 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
               <div key={msg.id} className={`ide-ai-msg is-${msg.role}`}>
                 <div className={`ide-ai-bubble ${msg.isError ? 'is-error' : ''}`}>
                   {msg.meta && <div className="ide-ai-msg-meta">{msg.meta}</div>}
+                  {msg.toolExecutions && msg.toolExecutions.length > 0 && (
+                    <div className="ide-ai-tool-list" aria-label="Executed editor tools">
+                      {msg.toolExecutions.map((tool) => (
+                        <div key={tool.id} className={`ide-ai-tool-pill ${tool.ok ? 'is-ok' : 'is-err'}`}>
+                          <Wrench size={10} aria-hidden="true" />
+                          <code>{tool.name}</code>
+                          <span>{tool.summary}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <p>{msg.text}</p>
                   {msg.code && (
                     <div className="ide-ai-code-card">
@@ -806,7 +860,11 @@ export function AiAgentSidebar(props: AiAgentSidebarProps) {
               <div className="ide-ai-msg is-assistant">
                 <div className="ide-ai-bubble is-thinking">
                   <Loader2 size={12} className="ide-spin" aria-hidden="true" />
-                  <span>{zh ? `${activePreset.name} 正在思考…` : `${activePreset.name} is thinking…`}</span>
+                  <span>
+                    {activeToolHint
+                      ? `${zh ? '执行完成：' : 'Ran: '}${activeToolHint}`
+                      : (zh ? `${activePreset.name} 正在思考…` : `${activePreset.name} is thinking…`)}
+                  </span>
                 </div>
               </div>
             )}
