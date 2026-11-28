@@ -1,3 +1,4 @@
+import { DraftNumberInput } from '../components/ui/DraftNumberInput';
 import {
   Fragment,
   createContext,
@@ -134,7 +135,8 @@ function compareInspectorComponents(left: string, right: string, grouped = false
 
 const MIXED_SELECT_VALUE = '__mengine_mixed_value__';
 
-/** Unity-style: drag label horizontally to scrub number. Shift=快, Alt=细 */
+/** Unity-style: drag label horizontally to scrub number. Shift=快, Alt=细
+ * Attaches global window listeners ONLY while a drag is active (zero idle overhead). */
 function useScrubDrag(
   value: number,
   step: number,
@@ -147,54 +149,54 @@ function useScrubDrag(
   valueRef.current = value;
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
-  const drag = useRef<{ pointerId: number; startX: number; startV: number } | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => {
-    const onMove = (e: PointerEvent) => {
-      const d = drag.current;
-      if (!d || e.pointerId !== d.pointerId) return;
-      const dx = e.clientX - d.startX;
-      let sens = step;
-      if (e.shiftKey) sens *= 10;
-      if (e.altKey) sens *= 0.1;
-      // ~1 step per 5px
-      const next = d.startV + (dx / 5) * sens;
-      const places = Math.min(6, Math.max(0, Math.ceil(-Math.log10(Math.abs(sens) || 1)) + 1));
-      onChangeRef.current(parseFloat(next.toFixed(places)));
-    };
-    const onUp = (e: PointerEvent) => {
-      const d = drag.current;
-      if (!d || e.pointerId !== d.pointerId) return;
-      drag.current = null;
-      document.body.classList.remove('insp-scrubbing');
-      gestureRef.current.end();
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onUp);
-      if (drag.current) {
-        drag.current = null;
-        document.body.classList.remove('insp-scrubbing');
-        gestureRef.current.end();
-      }
-    };
-  }, [step]);
+  useEffect(() => () => {
+    cleanupRef.current?.();
+  }, []);
 
   return (e: ReactPointerEvent) => {
     if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
-    drag.current = {
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startV: valueRef.current,
-    };
+    cleanupRef.current?.();
+
+    const pointerId = e.pointerId;
+    const startX = e.clientX;
+    const startV = valueRef.current;
     gestureRef.current.begin();
     document.body.classList.add('insp-scrubbing');
+
+    const onMove = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
+      const dx = ev.clientX - startX;
+      let sens = step;
+      if (ev.shiftKey) sens *= 10;
+      if (ev.altKey) sens *= 0.1;
+      const next = startV + (dx / 5) * sens;
+      const places = Math.min(6, Math.max(0, Math.ceil(-Math.log10(Math.abs(sens) || 1)) + 1));
+      onChangeRef.current(parseFloat(next.toFixed(places)));
+    };
+    const finish = (ev?: PointerEvent) => {
+      if (ev && ev.pointerId !== pointerId) return;
+      const run = cleanupRef.current;
+      cleanupRef.current = null;
+      run?.();
+    };
+    const onBlur = () => finish();
+    const cleanup = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+      window.removeEventListener('blur', onBlur);
+      document.body.classList.remove('insp-scrubbing');
+      gestureRef.current.end();
+    };
+    cleanupRef.current = cleanup;
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
+    window.addEventListener('blur', onBlur);
   };
 }
 
@@ -219,14 +221,13 @@ function AxisInput(props: {
       >
         {props.label.toUpperCase()}
       </span>
-      <input
-        type="number"
+      <DraftNumberInput
         step={step}
-        aria-label={props.ariaLabel ?? props.label.toUpperCase()}
-        value={props.mixed ? '' : Number(props.value.toFixed(3))}
-        placeholder={props.mixed ? 'Mixed' : undefined}
-        title={props.mixed ? 'Mixed values' : undefined}
-        onChange={(e) => props.onChange(parseFloat(e.target.value) || 0)}
+        precision={3}
+        mixed={props.mixed}
+        ariaLabel={props.ariaLabel ?? props.label.toUpperCase()}
+        value={props.value}
+        onChange={props.onChange}
       />
     </div>
   );
@@ -1936,6 +1937,7 @@ export function Inspector(props: {
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [componentSearch, setComponentSearch] = useState('');
+  const [addCompIndex, setAddCompIndex] = useState(0);
   const [inspectorQuery, setInspectorQuery] = useState('');
   const [expansion, setExpansion] = useState<InspectorExpansionCommand>({ revision: 0, open: true });
   const [nameDraft, setNameDraft] = useState('');
@@ -2488,6 +2490,7 @@ export function Inspector(props: {
           className="add-comp"
           onClick={() => {
             setComponentSearch('');
+            setAddCompIndex(0);
             setMenuOpen((open) => !open);
           }}
         >
@@ -2503,17 +2506,40 @@ export function Inspector(props: {
                 aria-label="Search components"
                 placeholder="Search components…"
                 value={componentSearch}
-                onChange={(event) => setComponentSearch(event.target.value)}
+                onChange={(event) => {
+                  setComponentSearch(event.target.value);
+                  setAddCompIndex(0);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    setMenuOpen(false);
+                  } else if (event.key === 'ArrowDown' && filteredAvailable.length > 0) {
+                    event.preventDefault();
+                    setAddCompIndex((i) => (i + 1) % filteredAvailable.length);
+                  } else if (event.key === 'ArrowUp' && filteredAvailable.length > 0) {
+                    event.preventDefault();
+                    setAddCompIndex((i) => (i - 1 + filteredAvailable.length) % filteredAvailable.length);
+                  } else if (event.key === 'Enter' && filteredAvailable.length > 0) {
+                    event.preventDefault();
+                    const chosen = filteredAvailable[Math.min(addCompIndex, filteredAvailable.length - 1)];
+                    if (chosen) {
+                      props.onAddComponent(entity.entity, chosen.type, chosen.create());
+                      setMenuOpen(false);
+                    }
+                  }
+                }}
               />
             </div>
             {filteredAvailable.length === 0 && (
               <div className="add-comp-empty">No more components</div>
             )}
-            {filteredAvailable.map((c) => (
+            {filteredAvailable.map((c, idx) => (
               <button
                 key={c.type}
                 type="button"
-                className="add-comp-item"
+                className={`add-comp-item${idx === addCompIndex ? ' active' : ''}`}
+                onMouseEnter={() => setAddCompIndex(idx)}
                 onClick={() => {
                   props.onAddComponent(entity.entity, c.type, c.create());
                   setMenuOpen(false);

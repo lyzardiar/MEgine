@@ -111,6 +111,12 @@ import {
   getDesktopSceneRecovery,
   restoreDesktopSceneRecovery,
 } from './transport/desktopProjectSession';
+import { CommandPalette, type PaletteAction } from './components/ui/CommandPalette';
+import { pushToast } from './components/ui/ToastHost';
+import { StatusBar } from './panels/StatusBar';
+import { toggleTheme } from './theme';
+import { useI18n, type MessageKey } from './i18n';
+import { CORE_PANEL_IDS } from './panels/detachedPanelWindow';
 import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
 import {
   getGameLayerOptions,
@@ -264,6 +270,8 @@ const WORKSPACE_PEER_TIMEOUT_MS = 5_000;
 const WORKSPACE_PEER_CHECK_MS = 1_000;
 
 export function App(props: { detachedPanel?: PanelKind | null } = {}) {
+  const { t, toggleLocale } = useI18n();
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const undoService = useMemo(() => createEditorUndoService(), []);
   const store = useMemo(() => createEditorStore(undoService), [undoService]);
   const [, setUndoRevision] = useState(undoService.revision);
@@ -2859,6 +2867,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         void saveEverything();
         return;
       }
+      if (ctrl && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((open) => !open);
+        return;
+      }
       if (isTypingTarget(e.target)) return;
       const playbackAction = playbackShortcut(e);
       if (playbackAction) {
@@ -3066,6 +3079,19 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         gizmo={gizmo}
         pivotMode={pivotMode}
         handleOrientation={handleOrientation}
+        sceneDirty={sceneDirty}
+        onUndo={() => {
+          store.undo();
+          refresh();
+        }}
+        onRedo={() => {
+          store.redo();
+          refresh();
+        }}
+        onSave={() => {
+          void saveScene().then(() => pushToast(t('palette.cmd.save'), 'success'));
+        }}
+        onOpenCommandPalette={() => setPaletteOpen(true)}
         onGizmo={(m) => {
           store.setGizmo(m);
           refresh();
@@ -3936,23 +3962,146 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         }}
       />
 
-      <div className="status-bar">
-        <span>
-          {mode === 'edit' ? 'Edit Mode' : mode === 'play' ? (
-            <span className="on">Play Mode</span>
-          ) : (
-            <span className="on">Paused</span>
-          )}
-          {' · '}
-          {sceneDirty ? '* ' : ''}{sceneName ? sceneFileName(sceneName) : '未命名场景'}
-          {' · '}
-          {snap.entities.length} objects
-          {' · '}
-          {selectedIds.length > 1 ? `${selectedIds.length} selected · ` : ''}
-          gizmo: {gizmo}
-        </span>
-        <span>MEngine · Project/Assets/Scenes</span>
-      </div>
+      <StatusBar
+        sceneName={sceneName}
+        sceneDirty={sceneDirty}
+        entityCount={snap.entities.length}
+        selectedCount={selectedIds.length}
+        gizmo={gizmo}
+        logs={logs}
+      />
+
+      {paletteOpen && (
+        <CommandPalette
+          open={paletteOpen}
+          onClose={() => setPaletteOpen(false)}
+          actions={[
+            {
+              id: 'cmd:save',
+              group: 'commands',
+              label: t('palette.cmd.save'),
+              subtitle: 'Ctrl+S',
+              keywords: 'save scene',
+              run: () => {
+                void saveScene().then(() => pushToast(t('palette.cmd.save'), 'success'));
+              },
+            },
+            {
+              id: 'cmd:save-all',
+              group: 'commands',
+              label: t('palette.cmd.saveAll'),
+              subtitle: 'Ctrl+Alt+S',
+              keywords: 'save all',
+              run: () => {
+                void saveEverything().then(() => pushToast(t('palette.cmd.saveAll'), 'success'));
+              },
+            },
+            {
+              id: 'cmd:new-scene',
+              group: 'commands',
+              label: t('palette.cmd.newScene'),
+              subtitle: 'Ctrl+N',
+              keywords: 'new scene',
+              run: () => void newScene(),
+            },
+            {
+              id: 'cmd:play',
+              group: 'commands',
+              label: t('palette.cmd.togglePlay'),
+              subtitle: 'Ctrl+P',
+              keywords: 'play stop preview',
+              run: () => playback('toggle'),
+            },
+            {
+              id: 'cmd:theme',
+              group: 'commands',
+              label: t('palette.cmd.toggleTheme'),
+              keywords: 'theme dark light appearance',
+              run: () => {
+                const next = toggleTheme();
+                pushToast(next === 'dark' ? t('common.dark') : t('common.light'), 'info');
+              },
+            },
+            {
+              id: 'cmd:locale',
+              group: 'commands',
+              label: t('palette.cmd.toggleLocale'),
+              keywords: 'language locale chinese english',
+              run: () => {
+                const next = toggleLocale();
+                pushToast(next === 'zh-CN' ? '已切换至中文界面' : 'Switched to English UI', 'info');
+              },
+            },
+            {
+              id: 'cmd:reset-layout',
+              group: 'commands',
+              label: t('palette.cmd.resetLayout'),
+              keywords: 'layout reset dock',
+              run: () => window.dispatchEvent(new CustomEvent('mengine:reset-dock-layout')),
+            },
+            {
+              id: 'cmd:create-empty',
+              group: 'commands',
+              label: t('palette.cmd.createEmpty'),
+              keywords: 'create empty gameobject entity',
+              run: () => {
+                store.createEmpty(null);
+                refresh();
+              },
+            },
+            {
+              id: 'cmd:create-cube',
+              group: 'commands',
+              label: t('palette.cmd.createCube'),
+              keywords: 'create cube mesh 3d',
+              run: () => {
+                store.spawnPrefab('Cube');
+                refresh();
+              },
+            },
+            {
+              id: 'cmd:create-camera',
+              group: 'commands',
+              label: t('palette.cmd.createCamera'),
+              keywords: 'create camera',
+              run: () => {
+                store.spawnCamera();
+                refresh();
+              },
+            },
+            {
+              id: 'cmd:create-light',
+              group: 'commands',
+              label: t('palette.cmd.createLight'),
+              keywords: 'create directional light',
+              run: () => {
+                store.spawnDirectionalLight();
+                refresh();
+              },
+            },
+            ...CORE_PANEL_IDS.map((panelId): PaletteAction => ({
+              id: `panel:${panelId}`,
+              group: 'panels',
+              label: t(`panel.${panelId}` as MessageKey),
+              subtitle: panelId,
+              keywords: `panel window ${panelId}`,
+              run: () => window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: panelId })),
+            })),
+            ...snap.entities.slice(0, 120).map((entity): PaletteAction => ({
+              id: `entity:${entity.entity}`,
+              group: 'entities',
+              label: entity.name || `Entity ${entity.entity}`,
+              subtitle: `#${entity.entity}`,
+              keywords: Object.keys(entity.components).join(' '),
+              run: () => {
+                store.select(entity.entity);
+                refreshSelection();
+                window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'inspector' }));
+              },
+            })),
+          ]}
+        />
+      )}
 
       <EditorWindowHost />
     </div>

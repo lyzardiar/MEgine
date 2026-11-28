@@ -16,6 +16,7 @@ import {
   Clapperboard,
   ChevronDown,
   Clock3,
+  CornerDownLeft,
   ExternalLink,
   FileCode,
   FolderOpen,
@@ -29,7 +30,9 @@ import {
   Settings2,
   SlidersHorizontal,
   Sparkles,
+  Square,
   SquareTerminal,
+  X,
 } from 'lucide-react';
 import {
   CORE_PANEL_IDS,
@@ -79,7 +82,7 @@ const PANEL_TAB_LABELS: Record<PanelKind, string> = {
   inspector: 'Inspector',
   shader: 'Shader',
   build: 'Build',
-  projectSettings: 'Project',
+  projectSettings: 'Settings',
   spriteEditor: 'Sprite',
   spriteAtlas: 'Atlas',
   effekseer: 'Effekseer',
@@ -1398,7 +1401,7 @@ export function DockWorkspace(props: {
               disabled={detachedDirty}
               onClick={() => requestPanelDock(props.detachedPanel!)}
             >
-              ↙
+              <CornerDownLeft size={13} aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -1409,7 +1412,7 @@ export function DockWorkspace(props: {
                 if (isDesktopEditor()) void getCurrentWindow().toggleMaximize();
               }}
             >
-              □
+              <Square size={12} aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -1421,7 +1424,7 @@ export function DockWorkspace(props: {
                 else window.close();
               }}
             >
-              ×
+              <X size={14} aria-hidden="true" />
             </button>
           </div>
         </div>

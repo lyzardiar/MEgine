@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type DragEvent,
   type MouseEvent,
   type ReactNode,
@@ -164,6 +165,8 @@ export function Project(props: {
   const [folder, setFolder] = useState('Assets/Scenes');
   const [query, setQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [kindFilter, setKindFilter] = useState<string>('all');
+  const [tileScale, setTileScale] = useState<number>(96);
   const [expandedFolders, setExpandedFolders] = useState(() => new Set(['Assets']));
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
@@ -491,7 +494,17 @@ export function Project(props: {
         .some((value) => value?.toLocaleLowerCase().includes(normalizedQuery));
     }
     return folder === 'Assets' || asset.folder === folder;
-  }), [allAssets, normalizedQuery, folder]);
+  }).filter((asset) => {
+    if (kindFilter === 'all') return true;
+    if (kindFilter === 'scene') return asset.kind === 'scene';
+    if (kindFilter === 'prefab') return asset.kind === 'prefab';
+    if (kindFilter === 'material') return asset.kind === 'material' || asset.kind === 'shader';
+    if (kindFilter === 'texture') return asset.kind === 'sprite' || asset.kind === 'sprite-atlas' || asset.kind === 'texture';
+    if (kindFilter === 'script') return asset.kind === 'script';
+    if (kindFilter === 'audio') return asset.kind === 'audio';
+    if (kindFilter === 'animation') return asset.kind === 'animation' || asset.kind === 'animator-controller' || asset.kind === 'timeline';
+    return true;
+  }), [allAssets, normalizedQuery, folder, kindFilter]);
   const selectedAsset = useMemo(() => selected
     ? allAssets.find((asset) => asset.assetKey === selected) ?? null
     : null, [allAssets, selected]);
@@ -1261,7 +1274,45 @@ export function Project(props: {
             <button type="button" className={viewMode === 'list' ? 'active' : ''} aria-label="List view" aria-pressed={viewMode === 'list'} title="List view" onClick={() => setViewMode('list')}><List size={13} /></button>
           </div>
         </div>
+        <div className="proj-filter-strip" role="toolbar" aria-label="Asset type filter">
+          {[
+            ['all', 'All'],
+            ['scene', 'Scenes'],
+            ['prefab', 'Prefabs'],
+            ['material', 'Materials'],
+            ['texture', 'Sprites/Tex'],
+            ['script', 'Scripts'],
+            ['animation', 'Anim'],
+            ['audio', 'Audio'],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={`proj-filter-pill${kindFilter === id ? ' active' : ''}`}
+              aria-pressed={kindFilter === id}
+              onClick={() => setKindFilter(id)}
+            >
+              {label}
+            </button>
+          ))}
+          {viewMode === 'grid' && (
+            <label className="proj-zoom-wrap" title="Thumbnail size">
+              <span>{tileScale}px</span>
+              <input
+                type="range"
+                className="proj-zoom-slider"
+                aria-label="Asset thumbnail size"
+                min={68}
+                max={148}
+                step={4}
+                value={tileScale}
+                onChange={(e) => setTileScale(Number(e.target.value))}
+              />
+            </label>
+          )}
+        </div>
         <div
+          style={viewMode === 'grid' ? ({ '--proj-tile-size': `${tileScale}px`, gridTemplateColumns: `repeat(auto-fill, minmax(${tileScale}px, 1fr))` } as CSSProperties) : undefined}
           className={`project-grid ${viewMode === 'list' ? 'list-view' : 'grid-view'}${draggingFiles ? ' file-drop-active' : ''}${draggingEntities ? ' entity-drop-active' : ''}${draggingAsset ? ' asset-move-active' : ''}`}
           role="region"
           aria-label={`${folder} contents`}

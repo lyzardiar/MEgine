@@ -102,6 +102,7 @@ export function Hierarchy(props: {
   const [pingId, setPingId] = useState<number | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createSearch, setCreateSearch] = useState('');
+  const [createIndex, setCreateIndex] = useState(0);
   const createMenuRef = useRef<HTMLDivElement>(null);
   const createButtonRef = useRef<HTMLButtonElement>(null);
   const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -542,7 +543,7 @@ export function Hierarchy(props: {
 
   return (
     <>
-      <div className="dock-toolbar">
+      <div className="dock-toolbar hier-toolbar-v2">
         <input
           className="search"
           type="search"
@@ -551,75 +552,78 @@ export function Hierarchy(props: {
           value={props.filter}
           onChange={(e) => props.onFilter(e.target.value)}
         />
-        <button
-          type="button"
-          className="hier-tool hier-scene-tool"
-          title={hiddenCount ? `Show ${hiddenCount} hidden GameObjects` : 'No hidden GameObjects'}
-          aria-label={hiddenCount ? `Show all ${hiddenCount} hidden GameObjects` : 'No hidden GameObjects'}
-          disabled={hiddenCount === 0 || props.store.mode !== 'edit'}
-          onClick={() => {
-            if (props.store.showAllSceneObjects()) props.onRefresh();
-          }}
-        >
-          <Eye size={14} />
-          {hiddenCount > 0 && <span className="hier-tool-count">{hiddenCount}</span>}
-        </button>
-        <button
-          type="button"
-          className="hier-tool hier-scene-tool"
-          title={unpickableCount
-            ? `Enable Scene picking for ${unpickableCount} GameObjects`
-            : 'All GameObjects are pickable'}
-          aria-label={unpickableCount
-            ? `Enable Scene picking for all ${unpickableCount} blocked GameObjects`
-            : 'All GameObjects are pickable'}
-          disabled={unpickableCount === 0 || props.store.mode !== 'edit'}
-          onClick={() => {
-            if (props.store.enableAllScenePicking()) props.onRefresh();
-          }}
-        >
-          <MousePointer2 size={14} />
-          {unpickableCount > 0 && <span className="hier-tool-count">{unpickableCount}</span>}
-        </button>
-        <button
-          type="button"
-          className="hier-tool"
-          title="Collapse All"
-          aria-label="Collapse all hierarchy nodes"
-          onClick={() => {
-            props.store.collapseAll();
-            props.onHierarchyChange();
-          }}
-        >
-          <FoldVertical size={14} />
-        </button>
-        <button
-          type="button"
-          className="hier-tool"
-          title="Expand All"
-          aria-label="Expand all hierarchy nodes"
-          onClick={() => {
-            props.store.expandAll();
-            props.onHierarchyChange();
-          }}
-        >
-          <UnfoldVertical size={14} />
-        </button>
-        <button
-          ref={createButtonRef}
-          type="button"
-          className="hier-add"
-          title="Create GameObject"
-          aria-label="Create GameObject"
-          aria-haspopup="dialog"
-          aria-expanded={createOpen}
-          onClick={() => {
-            setCreateSearch('');
-            setCreateOpen((open) => !open);
-          }}
-        >
-          <Plus size={15} />
-        </button>
+        <div className="hier-tool-cluster">
+          <button
+            type="button"
+            className="hier-tool hier-scene-tool"
+            title={hiddenCount ? `Show ${hiddenCount} hidden GameObjects` : 'No hidden GameObjects'}
+            aria-label={hiddenCount ? `Show all ${hiddenCount} hidden GameObjects` : 'No hidden GameObjects'}
+            disabled={hiddenCount === 0 || props.store.mode !== 'edit'}
+            onClick={() => {
+              if (props.store.showAllSceneObjects()) props.onRefresh();
+            }}
+          >
+            <Eye size={13} />
+            {hiddenCount > 0 && <span className="hier-tool-count">{hiddenCount}</span>}
+          </button>
+          <button
+            type="button"
+            className="hier-tool hier-scene-tool"
+            title={unpickableCount
+              ? `Enable Scene picking for ${unpickableCount} GameObjects`
+              : 'All GameObjects are pickable'}
+            aria-label={unpickableCount
+              ? `Enable Scene picking for all ${unpickableCount} blocked GameObjects`
+              : 'All GameObjects are pickable'}
+            disabled={unpickableCount === 0 || props.store.mode !== 'edit'}
+            onClick={() => {
+              if (props.store.enableAllScenePicking()) props.onRefresh();
+            }}
+          >
+            <MousePointer2 size={13} />
+            {unpickableCount > 0 && <span className="hier-tool-count">{unpickableCount}</span>}
+          </button>
+          <button
+            type="button"
+            className="hier-tool"
+            title="Collapse All"
+            aria-label="Collapse all hierarchy nodes"
+            onClick={() => {
+              props.store.collapseAll();
+              props.onHierarchyChange();
+            }}
+          >
+            <FoldVertical size={13} />
+          </button>
+          <button
+            type="button"
+            className="hier-tool"
+            title="Expand All"
+            aria-label="Expand all hierarchy nodes"
+            onClick={() => {
+              props.store.expandAll();
+              props.onHierarchyChange();
+            }}
+          >
+            <UnfoldVertical size={13} />
+          </button>
+          <button
+            ref={createButtonRef}
+            type="button"
+            className="hier-add"
+            title="Create GameObject"
+            aria-label="Create GameObject"
+            aria-haspopup="dialog"
+            aria-expanded={createOpen}
+            onClick={() => {
+              setCreateSearch('');
+              setCreateIndex(0);
+              setCreateOpen((open) => !open);
+            }}
+          >
+            <Plus size={14} />
+          </button>
+        </div>
         {createOpen && (
           <div
             ref={createMenuRef}
@@ -633,24 +637,47 @@ export function Hierarchy(props: {
               value={createSearch}
               placeholder="Search GameObjects..."
               aria-label="Search GameObjects"
-              onChange={(event) => setCreateSearch(event.target.value)}
+              onChange={(event) => {
+                setCreateSearch(event.target.value);
+                setCreateIndex(0);
+              }}
               onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  event.preventDefault();
+                  setCreateOpen(false);
+                  return;
+                }
+                if (event.key === 'ArrowDown' && createItems.length > 0) {
+                  event.preventDefault();
+                  setCreateIndex((idx) => (idx + 1) % createItems.length);
+                  return;
+                }
+                if (event.key === 'ArrowUp' && createItems.length > 0) {
+                  event.preventDefault();
+                  setCreateIndex((idx) => (idx - 1 + createItems.length) % createItems.length);
+                  return;
+                }
                 if (event.key !== 'Enter') return;
-                const first = createItems.find((entry) => entry.validate?.(createContext) !== false);
-                if (!first) return;
-                void first.action(createContext);
+                const chosen = createItems[Math.min(createIndex, Math.max(0, createItems.length - 1))];
+                const target = (chosen && chosen.validate?.(createContext) !== false)
+                  ? chosen
+                  : createItems.find((entry) => entry.validate?.(createContext) !== false);
+                if (!target) return;
+                void target.action(createContext);
                 setCreateOpen(false);
               }}
             />
             <div className="hier-create-results" role="menu">
-              {createItems.map((entry) => {
+              {createItems.map((entry, idx) => {
                 const disabled = entry.validate?.(createContext) === false;
                 return (
                   <button
                     type="button"
                     role="menuitem"
                     key={entry.path}
+                    className={idx === createIndex ? 'active' : undefined}
                     disabled={disabled}
+                    onMouseEnter={() => setCreateIndex(idx)}
                     onClick={() => {
                       void entry.action(createContext);
                       setCreateOpen(false);
@@ -665,6 +692,10 @@ export function Hierarchy(props: {
             </div>
           </div>
         )}
+      </div>
+      <div className="hier-scene-header">
+        <span className="hier-scene-header-title">Scene</span>
+        <span className="hier-scene-header-count">{props.nodes.length}</span>
       </div>
       <div
         ref={hierarchyBodyRef}
@@ -775,7 +806,7 @@ export function Hierarchy(props: {
               data-agent-drag-by="true"
               data-prefab-source={prefabLink?.source}
               role="treeitem"
-              tabIndex={0}
+              tabIndex={selected || (props.selectedIds.length === 0 && rowIndex === 0) ? 0 : -1}
               aria-label={n.entity.name ?? `Entity ${id}`}
               aria-description={prefabLink ? `Prefab instance from ${prefabLink.source}` : undefined}
               aria-level={n.depth + 1}
@@ -803,11 +834,19 @@ export function Hierarchy(props: {
                   const index = indicesById.get(id) ?? 0;
                   const next = event.key === 'ArrowDown' ? index + 1 : index - 1;
                   const target = filtered[Math.max(0, Math.min(filtered.length - 1, next))];
-                  scrollRow(target.entity.entity, true);
+                  if (target) {
+                    props.store.select(target.entity.entity);
+                    props.onSelectionChange();
+                    scrollRow(target.entity.entity, true);
+                  }
                 } else if (event.key === 'Home' || event.key === 'End') {
                   event.preventDefault();
                   const target = event.key === 'Home' ? filtered[0] : filtered.at(-1);
-                  if (target) scrollRow(target.entity.entity, true);
+                  if (target) {
+                    props.store.select(target.entity.entity);
+                    props.onSelectionChange();
+                    scrollRow(target.entity.entity, true);
+                  }
                 } else if (event.key === 'ArrowRight') {
                   event.preventDefault();
                   if (n.hasChildren && !n.expanded && !props.filter.trim()) {
@@ -816,7 +855,11 @@ export function Hierarchy(props: {
                   } else {
                     const index = indicesById.get(id) ?? 0;
                     const child = filtered[index + 1];
-                    if (child?.depth === n.depth + 1) scrollRow(child.entity.entity, true);
+                    if (child?.depth === n.depth + 1) {
+                      props.store.select(child.entity.entity);
+                      props.onSelectionChange();
+                      scrollRow(child.entity.entity, true);
+                    }
                   }
                 } else if (event.key === 'ArrowLeft') {
                   event.preventDefault();
@@ -824,6 +867,8 @@ export function Hierarchy(props: {
                     props.store.collapse(id);
                     props.onHierarchyChange();
                   } else if (n.entity.parent != null) {
+                    props.store.select(n.entity.parent);
+                    props.onSelectionChange();
                     scrollRow(n.entity.parent, true);
                   }
                 }
@@ -838,6 +883,17 @@ export function Hierarchy(props: {
               }}
               onDrop={(e) => onDrop(e, id)}
             >
+              {n.depth > 0 && (
+                <span className="hier-guides" aria-hidden="true">
+                  {Array.from({ length: n.depth }, (_, level) => (
+                    <span
+                      key={level}
+                      className="hier-guide-line"
+                      style={{ left: 13 + level * 14 }}
+                    />
+                  ))}
+                </span>
+              )}
               <button
                 type="button"
                 className="hier-twist"

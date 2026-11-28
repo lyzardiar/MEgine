@@ -21,6 +21,8 @@ import { Box } from 'lucide-react';
 import { ComponentIcon } from './ComponentIcon';
 import { ObjectPicker } from './ObjectPicker';
 import { parseSerializedEntityReference } from '../entityReferences';
+import { ColorPickerPopover } from '../components/ui/ColorPickerPopover';
+import { DraftNumberInput } from '../components/ui/DraftNumberInput';
 
 export type UnityPersistentCall = {
   target: number | null;
@@ -93,30 +95,27 @@ export function ColorField(props: {
     <div className="field-row">
       <label>{props.label}</label>
       <div className="color-field">
-        <input
-          type="color"
-          className="color-swatch"
-          aria-label={`${props.label} color`}
-          value={colorToHex(arr)}
-          title={colorToHex(arr)}
-          onChange={(e) => {
-            const [r, g, b] = hexToRgb(e.target.value);
-            props.onChange(hasAlpha ? [r, g, b, a] : [r, g, b]);
-          }}
+        <ColorPickerPopover
+          ariaLabel={`${props.label} color`}
+          r={arr[0] ?? 1}
+          g={arr[1] ?? 1}
+          b={arr[2] ?? 1}
+          a={a}
+          hasAlpha={hasAlpha}
+          onChange={props.onChange}
         />
         {hasAlpha && (
           <label className="color-alpha-wrap" title="Alpha">
             <span>A</span>
-            <input
-              type="number"
+            <DraftNumberInput
               className="color-alpha"
-              aria-label={`${props.label} alpha`}
+              ariaLabel={`${props.label} alpha`}
               min={0}
               max={1}
               step={0.01}
-              value={Number(a.toFixed(3))}
-              onChange={(e) => {
-                const next = Math.min(1, Math.max(0, parseFloat(e.target.value) || 0));
+              precision={3}
+              value={a}
+              onChange={(next) => {
                 props.onChange([arr[0] ?? 1, arr[1] ?? 1, arr[2] ?? 1, next]);
               }}
             />

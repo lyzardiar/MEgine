@@ -1,5 +1,22 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import {
+  BookOpen,
+  Bot,
+  Box,
+  FolderOpen,
+  FolderPlus,
+  Globe,
+  Grid2x2,
+  Layout,
+  Moon,
+  Pin,
+  PinOff,
+  Search,
+  Sparkles,
+  Sun,
+  Trash2,
+} from 'lucide-react';
 import {
   agentBridge,
   type AgentProjectLifecycleProvider,
@@ -24,11 +41,17 @@ import {
 import { recentProjectsRevision } from './recentProjectsRevision';
 import { createRegisteredEditorWindow } from './editorWindow/registry.ts';
 import { openNativeEditorWindow } from './editorWindow/nativeEditorWindow.ts';
+import { BrandMark } from './components/ui/BrandMark';
+import { useTheme } from './theme';
+import { useI18n, type EditorLocale } from './i18n';
 
 const MAX_RECENT_PROJECTS = 12;
+const PINNED_STORAGE_KEY = 'mengine.hub.pinned.v1';
 
-type HubMode = 'welcome' | 'create';
-type ProjectHubOperation = 'attach' | 'open' | 'create' | 'choose' | 'browse' | 'agent-setup';
+type HubMode = 'welcome' | 'create' | 'tools';
+type ProjectSort = 'recent' | 'name';
+type StarterTemplateId = 'standard3d' | 'standard2d' | 'uiCanvas';
+type ProjectHubOperation = 'attach' | 'open' | 'create' | 'choose' | 'browse' | 'agent-setup' | 'docs';
 
 function errorMessage(reason: unknown): string {
   return reason && typeof reason === 'object' && 'message' in reason
@@ -63,10 +86,46 @@ function validProjectName(name: string): boolean {
     && !/[. ]$/.test(value);
 }
 
-function projectTime(timestamp: number): { iso: string; label: string } {
+function readPinnedPaths(): string[] {
+  try {
+    const raw = window.localStorage?.getItem(PINNED_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePinnedPaths(paths: string[]): void {
+  try {
+    window.localStorage?.setItem(PINNED_STORAGE_KEY, JSON.stringify(paths));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function formatRelativeTime(
+  timestamp: number,
+  locale: EditorLocale,
+  t: ReturnType<typeof useI18n>['t'],
+): { iso: string; label: string } {
   const date = new Date(timestamp);
-  if (Number.isNaN(date.valueOf())) return { iso: '', label: '未知时间' };
-  return { iso: date.toISOString(), label: date.toLocaleString('zh-CN') };
+  if (Number.isNaN(date.valueOf())) {
+    return { iso: '', label: t('hub.time.unknown') };
+  }
+  const diffSec = Math.max(0, Math.floor((Date.now() - date.valueOf()) / 1000));
+  if (diffSec < 60) return { iso: date.toISOString(), label: t('hub.time.justNow') };
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return { iso: date.toISOString(), label: t('hub.time.minutesAgo', { n: diffMin }) };
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return { iso: date.toISOString(), label: t('hub.time.hoursAgo', { n: diffHour }) };
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 14) return { iso: date.toISOString(), label: t('hub.time.daysAgo', { n: diffDay }) };
+  return {
+    iso: date.toISOString(),
+    label: date.toLocaleDateString(locale),
+  };
 }
 
 export function DesktopProjectGate(props: {
@@ -75,14 +134,21 @@ export function DesktopProjectGate(props: {
   projectRequired?: boolean;
 }) {
   const desktop = isDesktopEditor();
+  const { theme, toggleTheme } = useTheme();
+  const { locale, toggleLocale, t } = useI18n();
   const [ready, setReady] = useState(!desktop || props.projectRequired === false);
   const [mode, setMode] = useState<HubMode>('welcome');
   const [operation, setOperation] = useState<ProjectHubOperation | null>(null);
   const [projectName, setProjectName] = useState('NewProject');
   const [projectLocation, setProjectLocation] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<StarterTemplateId>('standard3d');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<ProjectSort>('recent');
+  const [pinnedPaths, setPinnedPaths] = useState<string[]>(() => readPinnedPaths());
   const [error, setError] = useState<string | null>(null);
   const [recentProjects, setRecentProjects] = useState<RecentProjectInfo[]>([]);
   const [openingPath, setOpeningPath] = useState<string | null>(null);
+
   const readyRef = useRef(ready);
   const operationRef = useRef<ProjectHubOperation | null>(operation);
   const errorRef = useRef<string | null>(error);
@@ -298,7 +364,34 @@ export function DesktopProjectGate(props: {
     };
   }, [desktop, props.detached, ready]);
 
+  const pinnedSet = useMemo(() => new Set(pinnedPaths), [pinnedPaths]);
+
+  const filteredProjects = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const list = recentProjects.filter((project) => {
+      if (!query) return true;
+      return project.name.toLowerCase().includes(query)
+        || project.path.toLowerCase().includes(query);
+    });
+    const sorted = [...list].sort((a, b) => {
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      return b.lastOpenedAt - a.lastOpenedAt;
+    });
+    return {
+      pinned: sorted.filter((project) => pinnedSet.has(project.path)),
+      regular: sorted.filter((project) => !pinnedSet.has(project.path)),
+    };
+  }, [pinnedSet, recentProjects, searchQuery, sortBy]);
+
   if (ready) return props.children;
+
+  const togglePin = (path: string) => {
+    setPinnedPaths((prev) => {
+      const next = prev.includes(path) ? prev.filter((item) => item !== path) : [path, ...prev];
+      writePinnedPaths(next);
+      return next;
+    });
+  };
 
   const openExisting = async () => {
     if (operationRef.current) return;
@@ -331,6 +424,7 @@ export function DesktopProjectGate(props: {
     updateError(null);
     try {
       await forgetRecentProjectAtPath(project.path);
+      if (pinnedSet.has(project.path)) togglePin(project.path);
     } catch (reason) {
       updateError(`移除最近工程失败：${errorMessage(reason)}`);
     }
@@ -351,181 +445,425 @@ export function DesktopProjectGate(props: {
   };
 
   const createNew = async () => {
-    if (!validProjectName(projectName) || !projectLocation) return;
-    await createProjectAtPath(projectLocation, projectName.trim()).catch(() => undefined);
+    const trimmedLocation = projectLocation.trim();
+    if (!validProjectName(projectName) || !trimmedLocation) return;
+    await createProjectAtPath(trimmedLocation, projectName.trim()).catch(() => undefined);
   };
 
-  const openAgentSetup = async () => {
+  const openRegisteredWindow = async (
+    typeId: string,
+    op: 'agent-setup' | 'docs',
+    label: string,
+  ) => {
     if (operationRef.current) return;
-    updateOperation('agent-setup');
+    updateOperation(op);
     updateError(null);
     try {
-      const definition = createRegisteredEditorWindow('EditorWindow.AgentSetupWindow');
-      if (!definition) throw new Error('AI Agent Setup window is not registered');
+      const definition = createRegisteredEditorWindow(typeId);
+      if (!definition) throw new Error(`${label} window is not registered`);
       const opened = await openNativeEditorWindow({
         typeId: definition.typeId,
         title: definition.title,
         width: definition.width,
         height: definition.height,
       });
-      if (!opened) throw new Error('无法创建 AI Agent Setup 窗口');
+      if (!opened) throw new Error(`无法创建 ${label} 窗口`);
     } catch (reason) {
-      updateError(`打开 AI Agent Setup 失败：${errorMessage(reason)}`);
+      updateError(`打开 ${label} 失败：${errorMessage(reason)}`);
     } finally {
       updateOperation(null);
     }
   };
 
-  const targetPath = projectLocation
-    ? `${projectLocation}${projectLocation.endsWith('\\') || projectLocation.endsWith('/') ? '' : '\\'}${projectName.trim()}`
+  const trimmedLocation = projectLocation.trim();
+  const targetPath = trimmedLocation
+    ? `${trimmedLocation}${trimmedLocation.endsWith('\\') || trimmedLocation.endsWith('/') ? '' : '\\'}${projectName.trim()}`
     : '';
+
+  const nameError = projectName.trim().length === 0
+    ? t('hub.validation.emptyName')
+    : !validProjectName(projectName)
+      ? t('hub.validation.invalidName')
+      : null;
+
+  const renderProjectCard = (project: RecentProjectInfo) => {
+    const isPinned = pinnedSet.has(project.path);
+    const time = formatRelativeTime(project.lastOpenedAt, locale, t);
+    const initial = (project.name.trim()[0] ?? 'M').toUpperCase();
+    return (
+      <div className="hub-project-card" key={project.path}>
+        <button
+          type="button"
+          className="hub-project-open"
+          disabled={busy}
+          title={`${t('common.open')} ${project.path}`}
+          onClick={() => void openRecent(project)}
+        >
+          <span className="hub-project-avatar" aria-hidden="true">{initial}</span>
+          <span className="hub-project-meta">
+            <span className="hub-project-title">
+              {openingPath === project.path ? t('hub.action.opening') : project.name}
+            </span>
+            <span className="hub-project-path">{project.path}</span>
+          </span>
+          <time className="hub-project-time" dateTime={time.iso}>{time.label}</time>
+        </button>
+        <div className="hub-project-actions">
+          <button
+            type="button"
+            className={`hub-icon-btn${isPinned ? ' is-pinned' : ''}`}
+            disabled={busy}
+            title={isPinned ? t('common.unpin') : t('common.pin')}
+            aria-label={isPinned ? `${t('common.unpin')} ${project.name}` : `${t('common.pin')} ${project.name}`}
+            onClick={() => togglePin(project.path)}
+          >
+            {isPinned ? <PinOff size={14} aria-hidden="true" /> : <Pin size={14} aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
+            className="hub-icon-btn is-danger"
+            disabled={busy}
+            title={`${t('common.remove')} ${project.name}`}
+            aria-label={`从最近工程中移除 ${project.name}`}
+            onClick={() => void forgetRecent(project)}
+          >
+            <Trash2 size={14} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <main className="project-hub">
-      <section className="project-hub-panel">
-        <div className="project-hub-mark">M</div>
-        <div>
-          <h1>MEngine Editor</h1>
-          <p>{mode === 'create' ? '创建本地 MEngine 工程。' : '打开最近工程，或创建一个新工程。'}</p>
+      <aside className="hub-sidebar">
+        <div className="hub-brand">
+          <BrandMark size={34} />
+          <div className="hub-brand-text">
+            <h1>{t('brand.name')}</h1>
+            <span>v0.1 · Rust + wgpu</span>
+          </div>
         </div>
 
-        {mode === 'welcome' ? (
-          <div className="project-hub-actions">
-            <button
-              type="button"
-              disabled={busy}
-              data-agent-interaction="blocked"
-              data-agent-alternative="open_project"
-              onClick={() => void openExisting()}
-            >
-              {busy && !openingPath ? '正在打开…' : '打开其他工程'}
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              disabled={busy}
-              onClick={() => {
-                setMode('create');
-                updateError(null);
-              }}
-            >
-              新建工程
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              disabled={busy}
-              data-agent-interaction="blocked"
-              data-agent-alternative="open_editor_window"
-              onClick={() => void openAgentSetup()}
-            >
-              AI Agent Setup
-            </button>
-          </div>
-        ) : (
-          <form
-            className="project-create-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void createNew();
+        <nav className="hub-nav" aria-label="Project Hub Navigation">
+          <button
+            type="button"
+            className={`hub-nav-item${mode === 'welcome' ? ' active' : ''}`}
+            onClick={() => {
+              setMode('welcome');
+              updateError(null);
             }}
           >
-            <label htmlFor="project-name">工程名称</label>
-            <input
-              id="project-name"
-              value={projectName}
-              maxLength={64}
-              autoFocus
-              spellCheck={false}
-              onChange={(event) => setProjectName(event.target.value)}
-            />
-            <label htmlFor="project-location">保存位置</label>
-            <div className="project-location-row">
-              <input
-                id="project-location"
-                value={projectLocation}
-                readOnly
-                placeholder="选择工程父目录"
-              />
-              <button
-                type="button"
-                className="secondary"
-                disabled={busy}
-                data-agent-interaction="blocked"
-                data-agent-alternative="create_project"
-                onClick={() => void browseLocation()}
-              >
-                浏览…
-              </button>
-            </div>
-            {targetPath && <div className="project-target-path" title={targetPath}>{targetPath}</div>}
-            <div className="project-create-actions">
-              <button
-                type="button"
-                className="secondary"
-                disabled={busy}
-                onClick={() => {
-                  setMode('welcome');
-                  updateError(null);
-                }}
-              >
-                取消
-              </button>
-              <button
-                type="submit"
-                disabled={busy || !projectLocation || !validProjectName(projectName)}
-              >
-                {busy ? '正在创建…' : '创建并打开'}
-              </button>
-            </div>
-          </form>
-        )}
+            <FolderOpen size={15} aria-hidden="true" />
+            <span>{t('hub.nav.projects')}</span>
+          </button>
+          <button
+            type="button"
+            className={`hub-nav-item${mode === 'create' ? ' active' : ''}`}
+            onClick={() => {
+              setMode('create');
+              updateError(null);
+            }}
+          >
+            <FolderPlus size={15} aria-hidden="true" />
+            <span>{t('hub.nav.templates')}</span>
+          </button>
+          <button
+            type="button"
+            className={`hub-nav-item${mode === 'tools' ? ' active' : ''}`}
+            onClick={() => {
+              setMode('tools');
+              updateError(null);
+            }}
+          >
+            <Sparkles size={15} aria-hidden="true" />
+            <span>{t('hub.nav.tools')}</span>
+          </button>
+        </nav>
 
+        <div className="hub-sidebar-footer">
+          <button
+            type="button"
+            className="me-btn-secondary"
+            disabled={busy}
+            data-agent-interaction="blocked"
+            data-agent-alternative="open_editor_window"
+            onClick={() => void openRegisteredWindow('EditorWindow.AgentSetupWindow', 'agent-setup', 'AI Agent Setup')}
+          >
+            <Bot size={14} aria-hidden="true" />
+            AI Agent Setup
+          </button>
+          <div className="hub-sidebar-prefs">
+            <button
+              type="button"
+              className="hub-pref-btn"
+              title={t('toolbar.theme')}
+              onClick={toggleTheme}
+            >
+              {theme === 'dark' ? <Sun size={13} aria-hidden="true" /> : <Moon size={13} aria-hidden="true" />}
+              <span>{theme === 'dark' ? t('common.light') : t('common.dark')}</span>
+            </button>
+            <button
+              type="button"
+              className="hub-pref-btn"
+              title={t('toolbar.locale')}
+              onClick={toggleLocale}
+            >
+              <Globe size={13} aria-hidden="true" />
+              <span>{t('common.langToggle')}</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <section className="hub-main">
         {mode === 'welcome' && (
-          <section className="recent-projects" aria-label="最近打开的工程">
-            <header className="recent-projects-header">
-              <span>最近打开的工程</span>
-              <span>{recentProjects.length}/{MAX_RECENT_PROJECTS}</span>
-            </header>
-            {recentProjects.length > 0 ? (
-              <div className="recent-project-list">
-                {recentProjects.map((project) => (
-                  <div className="recent-project-row" key={project.path}>
-                    <button
-                      type="button"
-                      className="recent-project-open"
-                      disabled={busy}
-                      title={`打开 ${project.path}`}
-                      onClick={() => void openRecent(project)}
-                    >
-                      <span className="recent-project-name">
-                        {openingPath === project.path ? '正在打开…' : project.name}
-                      </span>
-                      <span className="recent-project-path">{project.path}</span>
-                      <time dateTime={projectTime(project.lastOpenedAt).iso}>
-                        {projectTime(project.lastOpenedAt).label}
-                      </time>
-                    </button>
-                    <button
-                      type="button"
-                      className="recent-project-remove"
-                      disabled={busy}
-                      title={`从最近工程中移除 ${project.name}`}
-                      aria-label={`从最近工程中移除 ${project.name}`}
-                      onClick={() => void forgetRecent(project)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+          <>
+            <header className="hub-header">
+              <div>
+                <h2>{t('hub.title.projects')}</h2>
+                <p>{t('hub.subtitle.projects')}</p>
               </div>
-            ) : (
-              <div className="recent-project-empty">打开或创建工程后，会显示在这里。</div>
-            )}
-          </section>
+              <div className="hub-header-actions">
+                <button
+                  type="button"
+                  className="me-btn-secondary"
+                  disabled={busy}
+                  data-agent-interaction="blocked"
+                  data-agent-alternative="open_project"
+                  onClick={() => void openExisting()}
+                >
+                  <FolderOpen size={14} aria-hidden="true" />
+                  <span>{busy && !openingPath ? t('hub.action.opening') : t('hub.action.openExisting')}</span>
+                </button>
+                <button
+                  type="button"
+                  className="me-btn-primary"
+                  disabled={busy}
+                  onClick={() => {
+                    setMode('create');
+                    updateError(null);
+                  }}
+                >
+                  <FolderPlus size={14} aria-hidden="true" />
+                  <span>{t('hub.action.newProject')}</span>
+                </button>
+              </div>
+            </header>
+
+            <div className="hub-filter-bar">
+              <div className="hub-search-wrap">
+                <Search size={14} className="hub-search-icon" aria-hidden="true" />
+                <input
+                  type="search"
+                  className="hub-search-input"
+                  value={searchQuery}
+                  placeholder={t('hub.searchPlaceholder')}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                />
+              </div>
+              <select
+                className="hub-sort-select"
+                aria-label="Sort projects"
+                value={sortBy}
+                onChange={(event) => setSortBy(event.target.value as ProjectSort)}
+              >
+                <option value="recent">{t('hub.sortRecent')}</option>
+                <option value="name">{t('hub.sortName')}</option>
+              </select>
+              <span className="hub-count-pill">
+                {t('hub.recentCount', { count: recentProjects.length, limit: MAX_RECENT_PROJECTS })}
+              </span>
+            </div>
+
+            <section className="hub-project-list" aria-label="最近打开的工程">
+              {recentProjects.length === 0 ? (
+                <div className="hub-empty-state">
+                  <FolderOpen size={28} color="var(--me-text-muted)" aria-hidden="true" />
+                  <h3>{t('hub.emptyTitle')}</h3>
+                  <p>{t('hub.emptyHint')}</p>
+                </div>
+              ) : filteredProjects.pinned.length === 0 && filteredProjects.regular.length === 0 ? (
+                <div className="hub-empty-state">
+                  <Search size={24} color="var(--me-text-muted)" aria-hidden="true" />
+                  <h3>{t('hub.noMatch', { query: searchQuery })}</h3>
+                </div>
+              ) : (
+                <>
+                  {filteredProjects.pinned.length > 0 && (
+                    <>
+                      <div className="hub-section-label">{t('hub.pinned')}</div>
+                      {filteredProjects.pinned.map(renderProjectCard)}
+                    </>
+                  )}
+                  {filteredProjects.regular.length > 0 && (
+                    <>
+                      {filteredProjects.pinned.length > 0 && (
+                        <div className="hub-section-label">{t('hub.recent')}</div>
+                      )}
+                      {filteredProjects.regular.map(renderProjectCard)}
+                    </>
+                  )}
+                </>
+              )}
+            </section>
+          </>
         )}
 
-        {error && <pre className="project-hub-error">{error}</pre>}
+        {mode === 'create' && (
+          <>
+            <header className="hub-header">
+              <div>
+                <h2>{t('hub.title.create')}</h2>
+                <p>{t('hub.subtitle.create')}</p>
+              </div>
+            </header>
+
+            <div className="hub-section-label">{t('hub.form.template')}</div>
+            <div className="hub-template-grid" role="radiogroup" aria-label={t('hub.form.template')}>
+              {(
+                [
+                  { id: 'standard3d', icon: Box, name: t('hub.template.standard3d.name'), desc: t('hub.template.standard3d.desc') },
+                  { id: 'standard2d', icon: Grid2x2, name: t('hub.template.standard2d.name'), desc: t('hub.template.standard2d.desc') },
+                  { id: 'uiCanvas', icon: Layout, name: t('hub.template.uiCanvas.name'), desc: t('hub.template.uiCanvas.desc') },
+                ] as const
+              ).map((tpl) => {
+                const Icon = tpl.icon;
+                const active = selectedTemplate === tpl.id;
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    className={`hub-template-card${active ? ' selected' : ''}`}
+                    onClick={() => setSelectedTemplate(tpl.id)}
+                  >
+                    <span className="hub-template-icon"><Icon size={18} aria-hidden="true" /></span>
+                    <strong>{tpl.name}</strong>
+                    <span>{tpl.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <form
+              className="hub-create-card"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void createNew();
+              }}
+            >
+              <div className="hub-field">
+                <label htmlFor="project-name">{t('hub.form.name')}</label>
+                <input
+                  id="project-name"
+                  value={projectName}
+                  maxLength={64}
+                  autoFocus
+                  spellCheck={false}
+                  onChange={(event) => setProjectName(event.target.value)}
+                />
+                {nameError && <span className="hub-field-error">{nameError}</span>}
+              </div>
+
+              <div className="hub-field">
+                <label htmlFor="project-location">{t('hub.form.location')}</label>
+                <div className="hub-location-row">
+                  <input
+                    id="project-location"
+                    value={projectLocation}
+                    spellCheck={false}
+                    placeholder={t('hub.form.locationPlaceholder')}
+                    onChange={(event) => setProjectLocation(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="me-btn-secondary"
+                    disabled={busy}
+                    data-agent-interaction="blocked"
+                    data-agent-alternative="create_project"
+                    onClick={() => void browseLocation()}
+                  >
+                    {t('common.browse')}
+                  </button>
+                </div>
+                {!trimmedLocation && (
+                  <span className="hub-field-error">{t('hub.validation.emptyLocation')}</span>
+                )}
+              </div>
+
+              {targetPath && (
+                <div className="hub-field">
+                  <label>{t('hub.form.preview')}</label>
+                  <div className="hub-target-preview" title={targetPath}>{targetPath}</div>
+                </div>
+              )}
+
+              <div className="hub-form-footer">
+                <button
+                  type="button"
+                  className="me-btn-secondary"
+                  disabled={busy}
+                  onClick={() => {
+                    setMode('welcome');
+                    updateError(null);
+                  }}
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  className="me-btn-primary"
+                  disabled={busy || !trimmedLocation || !validProjectName(projectName)}
+                >
+                  {busy ? t('hub.action.creating') : t('hub.action.createAndOpen')}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
+
+        {mode === 'tools' && (
+          <>
+            <header className="hub-header">
+              <div>
+                <h2>{t('hub.nav.tools')}</h2>
+                <p>{t('brand.tagline')}</p>
+              </div>
+            </header>
+            <div className="hub-tools-grid">
+              <article className="hub-tool-card">
+                <Bot size={22} color="var(--me-accent-hover)" aria-hidden="true" />
+                <h3>{t('hub.tools.agentTitle')}</h3>
+                <p>{t('hub.tools.agentDesc')}</p>
+                <button
+                  type="button"
+                  className="me-btn-primary"
+                  disabled={busy}
+                  onClick={() => void openRegisteredWindow('EditorWindow.AgentSetupWindow', 'agent-setup', 'AI Agent Setup')}
+                >
+                  AI Agent Setup
+                </button>
+              </article>
+              <article className="hub-tool-card">
+                <BookOpen size={22} color="var(--me-accent-hover)" aria-hidden="true" />
+                <h3>{t('hub.tools.docsTitle')}</h3>
+                <p>{t('hub.tools.docsDesc')}</p>
+                <button
+                  type="button"
+                  className="me-btn-secondary"
+                  disabled={busy}
+                  onClick={() => void openRegisteredWindow('EditorWindow.DocumentationWindow', 'docs', 'Documentation')}
+                >
+                  {t('hub.tools.openDocs')}
+                </button>
+              </article>
+            </div>
+          </>
+        )}
+
+        {error && <pre className="hub-error-banner" role="alert">{error}</pre>}
       </section>
     </main>
   );

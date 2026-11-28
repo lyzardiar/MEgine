@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { readRectTransform, type Vec2 } from '../ui/rectLayout';
 import {
   ANCHOR_PRESETS,
@@ -10,55 +10,9 @@ import {
 } from '../ui/rectTransformModel';
 import type { RectLayoutDrive } from '../ui/rectLayoutDrive';
 import { useInspectorGesture } from './inspectorGesture';
+import { DraftNumberInput, useOnDemandScrubDrag } from '../components/ui/DraftNumberInput';
 
 type RT = ReturnType<typeof readRectTransform>;
-
-function useScrub(value: number, step: number, onChange: (v: number) => void) {
-  const gesture = useInspectorGesture();
-  const gestureRef = useRef(gesture);
-  gestureRef.current = gesture;
-  const valueRef = useRef(value);
-  valueRef.current = value;
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-  const drag = useRef<{ pointerId: number; startX: number; startV: number } | null>(null);
-
-  useEffect(() => {
-    const onMove = (e: PointerEvent) => {
-      const d = drag.current;
-      if (!d || e.pointerId !== d.pointerId) return;
-      let sens = step;
-      if (e.shiftKey) sens *= 10;
-      if (e.altKey) sens *= 0.1;
-      const next = d.startV + ((e.clientX - d.startX) / 5) * sens;
-      onChangeRef.current(parseFloat(next.toFixed(4)));
-    };
-    const onUp = (e: PointerEvent) => {
-      if (!drag.current || e.pointerId !== drag.current.pointerId) return;
-      drag.current = null;
-      gestureRef.current.end();
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onUp);
-      if (drag.current) {
-        drag.current = null;
-        gestureRef.current.end();
-      }
-    };
-  }, [step]);
-
-  return (e: ReactPointerEvent) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    drag.current = { pointerId: e.pointerId, startX: e.clientX, startV: valueRef.current };
-    gestureRef.current.begin();
-  };
-}
 
 function Axis(props: {
   label: string;
@@ -70,7 +24,14 @@ function Axis(props: {
   drivenBy?: string;
 }) {
   const step = props.step ?? 1;
-  const onScrub = useScrub(props.value, step, props.onChange);
+  const gesture = useInspectorGesture();
+  const { onPointerDown } = useOnDemandScrubDrag({
+    value: props.value,
+    step: step * 0.2,
+    onChange: props.onChange,
+    onBegin: () => gesture.begin(),
+    onEnd: () => gesture.end(),
+  });
   const cls = props.label === 'z' ? 'z' : props.label;
   return (
     <div className="axis">
@@ -78,19 +39,18 @@ function Axis(props: {
         className={`scrub-label ${cls}${props.disabled ? ' disabled' : ''}`}
         data-agent-drag-by="true"
         aria-label={`Adjust ${props.ariaLabel}`}
-        title={props.drivenBy ? `Driven by ${props.drivenBy}` : undefined}
-        onPointerDown={props.disabled ? undefined : onScrub}
+        title={props.drivenBy ? `Driven by ${props.drivenBy}` : '拖拽调节数值 · Shift 精细 · Alt 加速 · Ctrl 吸附'}
+        onPointerDown={props.disabled ? undefined : onPointerDown}
       >
         {props.label.toUpperCase()}
       </span>
-      <input
-        type="number"
+      <DraftNumberInput
         step={step}
-        aria-label={props.ariaLabel}
+        precision={4}
+        ariaLabel={props.ariaLabel}
         disabled={props.disabled}
-        title={props.drivenBy ? `Driven by ${props.drivenBy}` : undefined}
-        value={Number(props.value.toFixed(4))}
-        onChange={(e) => props.onChange(parseFloat(e.target.value) || 0)}
+        value={props.value}
+        onChange={props.onChange}
       />
     </div>
   );

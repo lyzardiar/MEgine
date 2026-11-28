@@ -10,13 +10,19 @@ import { initializeAssetEditorEvents } from './assetEditorEvents';
 import { initializeBuildEditorEvents } from './buildEditorEvents';
 import { initializeEditorInstance } from './editorInstance';
 import { initializeTimelineProfiler } from './timelineProfiler';
+import { initializeTheme } from './theme';
+import { initializeLocale, t } from './i18n';
+import { ToastHost } from './components/ui/ToastHost';
 import { getEditorInstanceId } from './transport/editorTransport';
 import './editorWindow';
 import './styles.css';
+import './styles/tokens.css';
 
 const App = lazy(async () => ({ default: (await import('./App')).App }));
 
 async function bootstrap(): Promise<void> {
+  initializeTheme();
+  initializeLocale();
   try {
     initializeEditorInstance(await getEditorInstanceId());
   } catch (reason) {
@@ -50,11 +56,12 @@ async function bootstrap(): Promise<void> {
         >
           {detachedEditorWindow
             ? <RegisteredEditorWindowHost typeId={detachedEditorWindow} />
-            : <Suspense fallback={<div className="editor-app-loading" role="status">Loading project editor…</div>}>
+            : <Suspense fallback={<div className="editor-app-loading" role="status">{t('common.loadingEditor')}</div>}>
                 <App detachedPanel={detachedPanel} />
               </Suspense>}
         </DesktopProjectGate>
         <EditorDialogHost />
+        <ToastHost />
       </Fragment>
     </StrictMode>,
   );
